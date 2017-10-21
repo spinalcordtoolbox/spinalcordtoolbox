@@ -232,20 +232,21 @@ def read_database(folder_dataset, specifications=None, fname_database='', verbos
     return subj_selected
 
 
-def process_results(results, subjects_name, function, folder_dataset):
-    try:
-        results_dataframe = pd.concat([result for result in results])
-        results_dataframe.loc[:, 'subject'] = pd.Series(subjects_name, index=results_dataframe.index)
-        results_dataframe.loc[:, 'script'] = pd.Series([function] * len(subjects_name), index=results_dataframe.index)
-        results_dataframe.loc[:, 'dataset'] = pd.Series([folder_dataset] * len(subjects_name), index=results_dataframe.index)
-        # results_dataframe.loc[:, 'parameters'] = pd.Series([parameters] * len(subjects_name), index=results_dataframe.index)
-        return results_dataframe
-    except KeyboardInterrupt:
-        return 'KeyboardException'
-    except Exception as e:
-        sct.log.error('Error on line {}'.format(sys.exc_info()[-1].tb_lineno))
-        sct.log.exception(e)
-        raise
+# Julien Cohen-Adad 2017-10-21
+# def process_results(results, subjects_name, function, folder_dataset):
+#     try:
+#         results_dataframe = pd.concat([result for result in results])
+#         results_dataframe.loc[:, 'subject'] = pd.Series(subjects_name, index=results_dataframe.index)
+#         results_dataframe.loc[:, 'script'] = pd.Series([function] * len(subjects_name), index=results_dataframe.index)
+#         results_dataframe.loc[:, 'dataset'] = pd.Series([folder_dataset] * len(subjects_name), index=results_dataframe.index)
+#         # results_dataframe.loc[:, 'parameters'] = pd.Series([parameters] * len(subjects_name), index=results_dataframe.index)
+#         return results_dataframe
+#     except KeyboardInterrupt:
+#         return 'KeyboardException'
+#     except Exception as e:
+#         sct.log.error('Error on line {}'.format(sys.exc_info()[-1].tb_lineno))
+#         sct.log.exception(e)
+#         raise
 
 def function_launcher(args):
     # append local script to PYTHONPATH for import
@@ -546,8 +547,8 @@ if __name__ == "__main__":
         pd.set_option('display.max_rows', 500)
         pd.set_option('display.max_columns', 500)
         pd.set_option('display.width', 1000)
-        results_subset = results.drop('script', 1).drop('dataset', 1).drop('output', 1)
-        # results_subset = results.drop('script', 1).drop('dataset', 1).drop('parameters', 1).drop('output', 1)
+        # drop entries for visibility
+        results_subset = results.drop('path_data', 1).drop('output', 1)
         results_display = results_subset
 
         # save panda structure
@@ -574,7 +575,7 @@ if __name__ == "__main__":
 
         # results_display = results_display.set_index('subject')
         # jcohenadad, 2015-10-27: added .reset_index() for better visual clarity
-        results_display = results_display.set_index('subject').reset_index()
+        # results_display = results_display.set_index('subject').reset_index()
 
         # display general results
         sct.log.info('\nGLOBAL RESULTS:')
