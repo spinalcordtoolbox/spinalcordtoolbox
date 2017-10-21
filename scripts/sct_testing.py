@@ -39,6 +39,7 @@ class Param:
         self.path_tmp = ''
         self.args = []  # list of input arguments to the function
         self.args_with_path = ''  # input arguments to the function, with path
+        self.list_fname_gt = []  # list of fname for ground truth data
         self.contrast = ''  # folder containing the data and corresponding to the contrast. Could be t2, t1, t2s, etc.
         self.output = ''  # output string
         self.results = ''  # results in Panda DataFrame

@@ -258,6 +258,9 @@ def function_launcher(args):
     param_testing.path_data = args[1]
     param_testing.args = args[2]
     param_testing.redirect_stdout = 1  # create individual logs for each subject.
+    # if list_fname_gt is not empty, assign it
+    if param_testing.list_fname_gt:
+        param_testing.fname_gt = param_testing.list_fname_gt[0]
     try:
         param_testing = sct_testing.test_function(param_testing)
         # param_testing = script_to_be_run.test(param_testing)
