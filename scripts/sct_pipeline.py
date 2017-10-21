@@ -597,7 +597,7 @@ if __name__ == "__main__":
         # sct.log.info(detailed results)
         sct.log.info('\nDETAILED RESULTS:')
         sct.log.info(results_display.to_string())
-        sct.log.info('Status Legend - 0: Passed | 1: Crashed | 99: Failed | 200: Input file(s) missing | 201: Ground-truth file(s) missing')
+        sct.log.info('Status Legend:\n  0: Passed\n  1: Function crashed\n  2: Integrity testing crashed\n  99: Failed\n  200: Input file(s) missing\n  201: Ground-truth file(s) missing')
 
         if verbose == 2:
             import seaborn as sns
