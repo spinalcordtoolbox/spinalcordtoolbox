@@ -344,8 +344,8 @@ def run_function(function, folder_dataset, list_subj, list_args=[], nb_cpu=None,
         pool.join()  # waiting for all the jobs to be done
         compute_time = time() - compute_time
         all_results = async_results.get()
-        results = process_results(all_results, list_subj, function, folder_dataset)  # get the sorted results once all jobs are finished
-
+        # concatenate all_results into single Panda structure
+        results_dataframe = pd.concat([result for result in all_results])
     except KeyboardInterrupt:
         sct.log.warning("\nCaught KeyboardInterrupt, terminating workers")
         pool.terminate()
@@ -357,7 +357,7 @@ def run_function(function, folder_dataset, list_subj, list_args=[], nb_cpu=None,
         pool.join()
         raise
 
-    return {'results': results, "compute_time": compute_time}
+    return {'results': results_dataframe, "compute_time": compute_time}
 
 
 def get_parser():

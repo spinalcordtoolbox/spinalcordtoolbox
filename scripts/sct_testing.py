@@ -388,7 +388,7 @@ def test_function(param_test):
         sys.stdout = stdout_log
 
     # initialize panda dataframe
-    param_test.results = DataFrame(index=[param_test.path_data], data={'status': 0, 'output': ''})
+    param_test.results = DataFrame(index=[subject_folder], data={'status': 0, 'output': '', 'path_data': param_test.path_data})
 
     # retrieve input file (will be used later for integrity testing)
     if '-i' in dict_args:
@@ -469,8 +469,9 @@ def update_param(param):
     """
     Update field "results" in param class
     """
-    param.results = DataFrame(index=[param.path_data],
-                              data={'status': param.status, 'output': param.output, 'param': param.args})
+    for param_attr in param.results.columns:
+        getattr(param, param_attr)
+        # param.results[field] = getattr(param, param_attr)
     return param
 
 
