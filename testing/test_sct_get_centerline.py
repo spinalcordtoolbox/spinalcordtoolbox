@@ -43,9 +43,8 @@ def init(param_test):
     Initialize class: param_test
     """
     # initialization
-    default_args = ['-i t2s/t2s.nii.gz -c t2s']  # default parameters
+    default_args = ['-i t2s/t2s.nii.gz -c t2s -igt t2s/t2s_seg.nii.gz']  # default parameters
     param_test.mse_threshold = 3.0
-    param_test.list_fname_gt = [param_test.path_data + 't2s/t2s_seg.nii.gz']
 
     # assign default params
     if not param_test.args:
