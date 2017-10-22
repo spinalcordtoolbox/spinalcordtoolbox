@@ -314,6 +314,10 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       type_value=None,
                       description='Prevent the generation of the QC report',
                       mandatory=False)
+    parser.add_option(name='-igt',
+                      type_value='image_nifti',
+                      description='File name of ground-truth segmentation.',
+                      mandatory=False)
     return parser
 
 

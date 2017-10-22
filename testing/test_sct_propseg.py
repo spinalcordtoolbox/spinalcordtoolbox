@@ -21,8 +21,8 @@ def init(param_test):
     Initialize class: param_test
     """
     # initialization
-    default_args = ['-i t2/t2.nii.gz -c t2']  # default parameters
-    param_test.list_fname_gt = [param_test.path_data + 't2/t2_seg_manual.nii.gz']  # file name suffix for ground truth (used for integrity testing)
+    default_args = ['-i t2/t2.nii.gz -c t2 -igt t2/t2_seg_manual.nii.gz']  # default parameters
+    # param_test.list_fname_gt = [param_test.path_data + 't2/t2_seg_manual.nii.gz']  # file name suffix for ground truth (used for integrity testing)
     param_test.dice_threshold = 0.9
 
     # check if isct_propseg compatibility

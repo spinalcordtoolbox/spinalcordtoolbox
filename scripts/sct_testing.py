@@ -39,7 +39,7 @@ class Param:
         self.path_tmp = ''
         self.args = []  # list of input arguments to the function
         self.args_with_path = ''  # input arguments to the function, with path
-        self.list_fname_gt = []  # list of fname for ground truth data
+        # self.list_fname_gt = []  # list of fname for ground truth data
         self.contrast = ''  # folder containing the data and corresponding to the contrast. Could be t2, t1, t2s, etc.
         self.output = ''  # output string
         self.results = ''  # results in Panda DataFrame
@@ -152,7 +152,7 @@ def main(args=None):
         module_testing = importlib.import_module('test_' + f)
         # initialize default parameters of function to test
         param.args = []
-        param.list_fname_gt = []
+        # param.list_fname_gt = []
         # param.fname_groundtruth = ''
         param = module_testing.init(param)
         # loop over parameters to test
@@ -163,8 +163,8 @@ def main(args=None):
             param_test.default_args = param.args
             param_test.args = param.args[i]
             # if list_fname_gt is not empty, assign it
-            if param_test.list_fname_gt:
-                param_test.fname_gt = param_test.list_fname_gt[i]
+            # if param_test.list_fname_gt:
+            #     param_test.fname_gt = param_test.list_fname_gt[i]
             # test function
             param_test = test_function(param_test)
             list_status_function.append(param_test.status)
@@ -410,20 +410,30 @@ def test_function(param_test):
                 write_to_log_file(param_test.fname_log, param_test.output, 'w')
                 return update_param(param_test)
 
+    # retrieve ground truth (will be used later for integrity testing)
+    if '-igt' in dict_args:
+        param_test.fname_gt = dict_args_with_path['-igt']
+        # Check if ground truth files exist
+        if not os.path.isfile(param_test.fname_gt):
+            param_test.status = 201
+            param_test.output += '\nERROR: The following file used for ground truth does not exist: ' + param_test.fname_gt
+            write_to_log_file(param_test.fname_log, param_test.output, 'w')
+            return update_param(param_test)
+
     # Extract contrast
     if '-c' in dict_args:
         param_test.contrast = dict_args['-c']
 
-    # Is there a ground truth for this data?
-    if hasattr(param_test, 'fname_gt'):
-        # check if ground truch file is defined
-        if not param_test.fname_gt == '':
-            # Check if ground truth files exist
-            if not os.path.isfile(param_test.fname_gt):
-                param_test.status = 201
-                param_test.output += '\nERROR: The following file used for ground truth does not exist: ' + param_test.fname_gt
-                write_to_log_file(param_test.fname_log, param_test.output, 'w')
-                return update_param(param_test)
+    # # Is there a ground truth for this data?
+    # if hasattr(param_test, 'fname_gt'):
+    #     # check if ground truch file is defined
+    #     if not param_test.fname_gt == '':
+    #         # Check if ground truth files exist
+    #         if not os.path.isfile(param_test.fname_gt):
+    #             param_test.status = 201
+    #             param_test.output += '\nERROR: The following file used for ground truth does not exist: ' + param_test.fname_gt
+    #             write_to_log_file(param_test.fname_log, param_test.output, 'w')
+    #             return update_param(param_test)
 
     # go to specific testing directory
     os.chdir(param_test.path_output)
