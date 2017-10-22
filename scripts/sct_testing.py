@@ -2,7 +2,7 @@
 #
 # Test major functions.
 #
-# The following fields should be defined under the init() function of each test script:
+# In The following fields should be defined under the init() function of each test script:
 #   param_test.list_fname_gt     list containing the relative file name for ground truth data. See test_sct_propseg
 #
 # Authors: Julien Cohen-Adad, Benjamin De Leener, Augustin Roux

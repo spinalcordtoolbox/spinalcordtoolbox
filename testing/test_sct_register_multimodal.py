@@ -19,14 +19,10 @@ def init(param_test):
     Initialize class: param_test
     """
     # initialization
-    default_args = ['-i mt/mt0.nii.gz -d mt/mt1.nii.gz -o mt0_reg.nii.gz -param step=1,algo=syn,type=im,iter=1,smooth=1,shrink=2,metric=MI -x linear -r 0',
-                    '-i mt/mt0.nii.gz -d mt/mt1.nii.gz -o mt0_reg.nii.gz -param step=1,algo=slicereg,type=im,iter=5,smooth=0,metric=MeanSquares -x linear -r 0',
+    default_args = ['-i mt/mt0.nii.gz -d mt/mt1.nii.gz -o mt0_reg.nii.gz -param step=1,algo=syn,type=im,iter=1,smooth=1,shrink=2,metric=MI -x linear -r 0 -igt mt/mt0_reg_syn_goldstandard.nii.gz',
+                    '-i mt/mt0.nii.gz -d mt/mt1.nii.gz -o mt0_reg.nii.gz -param step=1,algo=slicereg,type=im,iter=5,smooth=0,metric=MeanSquares -x linear -r 0 -igt mt/mt0_reg_slicereg_goldstandard.nii.gz',
                     '-i mt/mt0.nii.gz -iseg mt/mt0_seg.nii.gz -d mt/mt1.nii.gz -dseg mt/mt1_seg.nii.gz -o mt0_reg.nii.gz -param step=1,algo=centermassrot,type=seg,smooth=1 -x linear -r 0',
                     '-i mt/mt0.nii.gz -iseg mt/mt0_seg.nii.gz -d mt/mt1.nii.gz -dseg mt/mt1_seg.nii.gz -o mt0_reg.nii.gz -param step=1,algo=columnwise,type=seg,smooth=1 -x linear -r 0']
-    param_test.list_fname_gt = [param_test.path_data + 'mt/mt0_reg_syn_goldstandard.nii.gz',
-                                param_test.path_data + 'mt/mt0_reg_slicereg_goldstandard.nii.gz',
-                                '',
-                                '']
     # assign default params
     if not param_test.args:
         param_test.args = default_args
@@ -37,13 +33,10 @@ def test_integrity(param_test):
     """
     Test integrity of function
     """
-    # find the test that is performed and check the integrity of the output
-    index_args = param_test.default_args.index(param_test.args)
+    # check if ground truth exists.
+    if hasattr(param_test, 'fname_gt'):
     # compare result and groundtruth images
-    if index_args in [0, 1]:
         param_test = compare_two_images('mt0_reg.nii.gz', param_test.fname_gt, param_test)
-    else:
-        param_test.output += '\nNot implemented.'
     return param_test
 
 
