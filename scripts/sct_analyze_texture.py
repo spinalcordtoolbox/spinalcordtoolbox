@@ -68,6 +68,10 @@ def get_parser():
                       mandatory=False,
                       default_value=Param().path_results,
                       example='/my_texture/')
+    parser.add_option(name="-igt",
+                      type_value="image_nifti",
+                      description="File name of ground-truth segmentation.",
+                      mandatory=False)
     parser.add_option(name="-r",
                       type_value="multiple_choice",
                       description="Remove temporary files.",

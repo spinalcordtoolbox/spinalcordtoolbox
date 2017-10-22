@@ -21,9 +21,8 @@ def init(param_test):
     Initialize class: param_test
     """
     # initialization
-    default_args = ['-i t2/t2.nii.gz -m t2/t2_seg.nii.gz -feature contrast -distance 1 -ofolder .']  # default parameters
+    default_args = ['-i t2/t2.nii.gz -m t2/t2_seg.nii.gz -feature contrast -distance 1 -ofolder . -igt t2/t2_contrast_1_mean_ref.nii.gz']  # default parameters
     param_test.difference_threshold = 0.95
-    param_test.list_fname_gt = [param_test.path_data + 't2/t2_contrast_1_mean_ref.nii.gz']
 
     # assign default params
     if not param_test.args:
