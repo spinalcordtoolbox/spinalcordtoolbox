@@ -421,8 +421,8 @@ def test_function(param_test):
             return update_param(param_test)
 
     # Extract contrast
-    if '-c' in dict_args:
-        param_test.contrast = dict_args['-c']
+    # if '-c' in dict_args:
+    #     param_test.contrast = dict_args['-c']
 
     # # Is there a ground truth for this data?
     # if hasattr(param_test, 'fname_gt'):
