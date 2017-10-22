@@ -22,10 +22,8 @@ def init(param_test):
     Initialize class: param_test
     """
     # initialization
-    default_args = ['-i template/template/PAM50_small_t2.nii.gz -c t2']
+    default_args = ['-i template/template/PAM50_small_t2.nii.gz -c t2 -igt template/template/PAM50_small_t2_pmj_manual.nii.gz']
     param_test.dist_threshold = 10.0
-    # param_test.suffix_groundtruth = '_pmj_manual'  # file name suffix for ground truth (used for integrity testing)
-    param_test.list_fname_gt = [param_test.path_data + 'template/template/PAM50_small_t2_pmj_manual.nii.gz']
 
     # assign default params
     if not param_test.args:

@@ -70,7 +70,7 @@ def get_parser():
                       example='/my_texture/')
     parser.add_option(name="-igt",
                       type_value="image_nifti",
-                      description="File name of ground-truth segmentation.",
+                      description="File name of ground-truth texture metrics.",
                       mandatory=False)
     parser.add_option(name="-r",
                       type_value="multiple_choice",

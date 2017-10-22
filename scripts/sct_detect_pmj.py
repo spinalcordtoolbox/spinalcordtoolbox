@@ -58,6 +58,10 @@ def get_parser():
                         mandatory=False,
                         example=["0", "1"],
                         default_value="0")
+    parser.add_option(name="-igt",
+                      type_value="image_nifti",
+                      description="File name of ground-truth PMJ (single voxel).",
+                      mandatory=False)
     parser.add_option(name="-r",
                         type_value="multiple_choice",
                         description="Remove temporary files.",
