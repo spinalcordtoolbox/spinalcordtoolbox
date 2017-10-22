@@ -352,9 +352,6 @@ def test_function(param_test):
     module_function_to_test = importlib.import_module(param_test.function_to_test)
     module_testing = importlib.import_module('test_' + param_test.function_to_test)
 
-    # initialize testing parameters specific to this function
-    # param_test = module_testing.init(param_test)
-
     # retrieve subject name
     subject_folder = sct.slash_at_the_end(param_test.path_data, 0).split('/')
     subject_folder = subject_folder[-1]
@@ -419,21 +416,6 @@ def test_function(param_test):
             param_test.output += '\nERROR: The following file used for ground truth does not exist: ' + param_test.fname_gt
             write_to_log_file(param_test.fname_log, param_test.output, 'w')
             return update_param(param_test)
-
-    # Extract contrast
-    # if '-c' in dict_args:
-    #     param_test.contrast = dict_args['-c']
-
-    # # Is there a ground truth for this data?
-    # if hasattr(param_test, 'fname_gt'):
-    #     # check if ground truch file is defined
-    #     if not param_test.fname_gt == '':
-    #         # Check if ground truth files exist
-    #         if not os.path.isfile(param_test.fname_gt):
-    #             param_test.status = 201
-    #             param_test.output += '\nERROR: The following file used for ground truth does not exist: ' + param_test.fname_gt
-    #             write_to_log_file(param_test.fname_log, param_test.output, 'w')
-    #             return update_param(param_test)
 
     # go to specific testing directory
     os.chdir(param_test.path_output)
