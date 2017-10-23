@@ -22,6 +22,7 @@ file_atlas_txt = 'atlas_grays_cerv_sym_correc_r6_label.txt';
 path_template = ['/Users/julien/data/sct_dev/PAM50/template/'];
 % name of the WM template to build the atlas from. Don't put the extension.
 file_template = 'PAM50_wm';
+which_template = 'PAM50';
 % slice number corresponding to the mid-C4 level (where the atlas is derived from)
 z_slice_ref = 850;
 % interpolation factor for the template in order to match the hi-res grays atlas
