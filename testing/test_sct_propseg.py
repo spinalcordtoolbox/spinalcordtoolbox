@@ -56,7 +56,7 @@ def test_integrity(param_test):
     dice_segmentation = compute_dice(im_seg, im_seg_manual, mode='3d', zboundaries=False)
     # display
     param_test.output += 'Computed dice: '+str(dice_segmentation)
-    param_test.output += 'Dice threshold (if computed dice smaller: fail): '+str(param_test.dice_threshold)
+    param_test.output += '\nDice threshold (if computed Dice smaller: fail): '+str(param_test.dice_threshold)
 
     if dice_segmentation < param_test.dice_threshold:
         param_test.status = 99
