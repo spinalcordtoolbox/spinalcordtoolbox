@@ -28,14 +28,10 @@ def test_integrity(param_test):
     """
     from msct_image import Image
     # check if cropping was correct
-    try:
-        nx, ny, nz, nt, px, py, pz, pt = Image('cropped_normal.nii.gz').dim
-        if (ny != 41):
-            param_test.status = 99
-            param_test.output += '--> FAILED'
-        else:
-            param_test.output += '--> PASSED'
-    except Exception as err:
-        param_test.output += str(err)
-        raise
+    nx, ny, nz, nt, px, py, pz, pt = Image('cropped_normal.nii.gz').dim
+    if (ny != 41):
+        param_test.status = 99
+        param_test.output += '--> FAILED'
+    else:
+        param_test.output += '--> PASSED'
     return param_test

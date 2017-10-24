@@ -94,7 +94,7 @@ def test_integrity(param_test):
     else:
         param_test.output += '--> PASSED'
 
-    # transform results into Pandas structure
-    param_test.results = DataFrame(index=[param_test.path_data], data={'status': param_test.status, 'output': param_test.output, 'mse_detection': mse_detection, 'duration [s]': param_test.duration})
+    # update Panda structure
+    param_test.results['mse_detection'] = mse_detection
 
     return param_test
