@@ -337,7 +337,6 @@ def run_function(function, folder_dataset, list_subj, list_args=[], nb_cpu=None,
     # Computing Pool for parallel process, distribute2mpi.MpiPool in MPI environment, multiprocessing.Pool otherwise
     sct.log.debug("stating pool with {} thread(s)".format(nb_cpu))
     pool = Pool(nb_cpu)
-    results = None
     compute_time = None
     try:
         compute_time = time()
@@ -525,26 +524,21 @@ if __name__ == "__main__":
 
     # test function
     try:
-
         # retrieve subjects list
         list_subj = get_list_subj(path_data, data_specifications=data_specifications, fname_database=fname_database)
-
         # during testing, redirect to standard output to avoid stacking error messages in the general log
         if create_log:
             # handle_log.pause()
             sct.remove_handler(file_handler)
-
         # run function
         sct.log.debug("enter test fct")
         tests_ret = run_function(function_to_test, path_data, list_subj, list_args=list_args, nb_cpu=nb_cpu, verbose=1)
         sct.log.debug("exit test fct")
         results = tests_ret['results']
         compute_time = tests_ret['compute_time']
-
         # after testing, redirect to log file
         if create_log:
             sct.log.addHandler(file_handler)
-
         # build results
         pd.set_option('display.max_rows', 500)
         pd.set_option('display.max_columns', 500)
@@ -552,36 +546,24 @@ if __name__ == "__main__":
         # drop entries for visibility
         results_subset = results.drop('path_data', 1).drop('output', 1)
         results_display = results_subset
-
         # save panda structure
         if create_log:
             results_subset.to_pickle(file_log + '.pickle')
-
-        # mean
+        # compute mean
         results_mean = results_subset.query('status != 200 & status != 201').mean(numeric_only=True)
         results_mean['subject'] = 'Mean'
         results_mean.set_value('status', float('NaN'))  # set status to NaN
-        # results_display = results_display.append(results_mean, ignore_index=True)
-
-        # std
+        # compute std
         results_std = results_subset.query('status != 200 & status != 201').std(numeric_only=True)
         results_std['subject'] = 'STD'
         results_std.set_value('status', float('NaN'))  # set status to NaN
-        # results_display = results_display.append(results_std, ignore_index=True)
-
         # count tests that passed
         count_passed = results_subset.status[results_subset.status == 0].count()
         count_crashed = results_subset.status[results_subset.status == 1].count()
         # count tests that ran
         count_ran = results_subset.query('status != 200 & status != 201').count()['status']
-
-        # results_display = results_display.set_index('subject')
-        # jcohenadad, 2015-10-27: added .reset_index() for better visual clarity
-        # results_display = results_display.set_index('subject').reset_index()
-
         # display general results
         sct.log.info('\nGLOBAL RESULTS:')
-
         sct.log.info('Duration: ' + str(int(round(compute_time))) + 's')
         # display results
         sct.log.info('Passed: ' + str(count_passed) + '/' + str(count_ran))
@@ -595,11 +577,10 @@ if __name__ == "__main__":
         dict_std.pop('status')
         dict_std.pop('subject')
         sct.log.info('STD: ' + str(dict_std))
-
         # sct.log.info(detailed results)
         sct.log.info('\nDETAILED RESULTS:')
         sct.log.info(results_display.to_string())
-        sct.log.info('\nLegend status: 0: Passed | 1: Function crashed | 2: Integrity testing crashed | 99: Failed | 200: Input file(s) missing | 201: Ground-truth file(s) missing')
+        sct.log.info('\nLegend status:\n0: Passed | 1: Function crashed | 2: Integrity testing crashed | 99: Failed | 200: Input file(s) missing | 201: Ground-truth file(s) missing')
 
         if verbose == 2:
             import seaborn as sns
