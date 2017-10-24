@@ -403,7 +403,7 @@ def test_function(param_test):
             # Check if input files exist
             if not (os.path.isfile(file_to_check)):
                 param_test.status = 200
-                param_test.output += '\nERROR: the file provided to test function does not exist in folder: ' + param_test.path_data
+                param_test.output += '\nERROR: This input file does not exist: ' + file_to_check
                 write_to_log_file(param_test.fname_log, param_test.output, 'w')
                 return update_param(param_test)
 
