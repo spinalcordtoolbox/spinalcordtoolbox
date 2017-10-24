@@ -29,20 +29,18 @@ class CenterlineController(base.BaseController):
         super(CenterlineController, self).__init__(image, params, init_values)
 
     def reformat_image(self):
+        max_z = self.image.dim[2]
         super(CenterlineController, self).reformat_image()
-        self.INTERVAL = int(10 / self.image.dim[4]) or 1
-        if not self.params.num_points:
-            self.params.num_points = self.image.dim[0] / self.INTERVAL
+        self.params.num_points = self.params.num_points or 11
+        self.INTERVAL = max_z // (self.params.num_points - 1) or 3
 
-        starting_slice = self.params.starting_slice
-        if starting_slice < 0:
-            self._default_slice = self.default_position[0]
+        if self.params.starting_slice < 0:
+            self.params.starting_slice = self.default_position[0]
         # if the starting slice is a fraction, recalculate the starting slice as a ratio.
-        elif 0 < starting_slice < 1:
-            self._default_slice = int(10 / self.image.dim[4]) or 1
-        else:
-            self._default_slice = starting_slice
-        self._slice = self._default_slice
+        elif 0 < self.params.starting_slice < 1:
+            self.params.starting_slice = max_z // self.params.starting_slice
+
+        self._slice = self.params.starting_slice
         self.reset_position()
 
     def reset_position(self):
@@ -52,13 +50,7 @@ class CenterlineController(base.BaseController):
 
     def skip_slice(self):
         if self.mode == 'AUTO':
-            logger.debug('Advance slice from {} to {}'.format(self._slice,
-                                                              self.INTERVAL + self._slice))
-            self._slice += self.INTERVAL
-            if self._slice >= self.image.dim[0]:
-                self._slice -= self.INTERVAL
-                raise InvalidActionWarning('The slice can not exceed the height of the anatomy')
-            self.position = (self._slice, self.position[1], self.position[2])
+            self._next_slice()
 
     def select_point(self, x, y, z):
         if self.mode == 'CUSTOM' and not self._slice:
@@ -81,8 +73,11 @@ class CenterlineController(base.BaseController):
 
     def _next_slice(self):
         if self.mode == 'AUTO':
-            if self.valid_point(self._slice + self.INTERVAL, self.position[1], self.position[2]):
-                self._slice += self.INTERVAL
+            slice = self._slice + self.INTERVAL
+            if slice >= self.image.dim[0]:
+                slice = self.image.dim[0] - 1
+            if self.valid_point(slice, self.position[1], self.position[2]):
+                self._slice = slice
                 self.position = (self._slice, self.position[1], self.position[2])
         else:
             self._slice = 0
@@ -109,7 +104,7 @@ class CenterlineController(base.BaseController):
             raise ValueError('Invalid mode %', value)
 
         if value != self._mode:
-            self._slice = self._default_slice
+            self._slice = self.params.starting_slice
             self._mode = value
             self.points = []
             self.reset_position()

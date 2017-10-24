@@ -442,7 +442,8 @@ if __name__ == "__main__":
         params.starting_slice = starting_slice
         if use_viewer == 'mask':
             params.num_points = 3
-            params.starting_slice = int(round(nz/2))  # starting slice in the middle of the FOV
+            # starting slice in the middle of the FOV
+            params.starting_slice = round(nz / 2)
         if use_viewer == 'centerline' and not starting_slice:
             params.starting_slice = 0
         image = Image(fname_data)

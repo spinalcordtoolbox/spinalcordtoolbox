@@ -231,9 +231,7 @@ class BaseController(object):
         self.image = image
         self.params = params
         self.points = []
-
-        if init_values:
-            self._overlay_image = init_values
+        self._overlay_image = init_values
 
     def reformat_image(self):
         """Set the camera position and increase contrast.
