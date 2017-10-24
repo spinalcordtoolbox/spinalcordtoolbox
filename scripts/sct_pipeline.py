@@ -257,6 +257,10 @@ def function_launcher(args):
     param_testing.path_data = args[1]
     param_testing.args = args[2]
     param_testing.redirect_stdout = 1  # create individual logs for each subject.
+    # load modules of function to test
+    module_testing = importlib.import_module('test_' + param_testing.function_to_test)
+    # initialize parameters specific to the test
+    param_testing = module_testing.init(param_testing)
     try:
         param_testing = sct_testing.test_function(param_testing)
     except:
