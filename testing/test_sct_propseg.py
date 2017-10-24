@@ -64,7 +64,7 @@ def test_integrity(param_test):
     else:
         param_test.output += '\n--> PASSED'
 
-    # transform results into Pandas structure
-    param_test.results = DataFrame(index=[param_test.path_data], data={'status': param_test.status, 'output': param_test.output, 'dice_segmentation': dice_segmentation, 'duration [s]': param_test.duration})
+    # update Panda structure
+    param_test.results['dice_segmentation'] = dice_segmentation
 
     return param_test
