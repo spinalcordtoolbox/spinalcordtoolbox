@@ -251,19 +251,14 @@ def read_database(folder_dataset, specifications=None, fname_database='', verbos
 def function_launcher(args):
     # append local script to PYTHONPATH for import
     sys.path.append('{}/testing'.format(os.getenv('SCT_DIR')))
-    script_to_be_run = importlib.import_module('test_' + args[0])  # import function as a module
     # retrieve param class from sct_testing
     param_testing = sct_testing.Param()
     param_testing.function_to_test = args[0]
     param_testing.path_data = args[1]
     param_testing.args = args[2]
     param_testing.redirect_stdout = 1  # create individual logs for each subject.
-    # if list_fname_gt is not empty, assign it
-    if param_testing.list_fname_gt:
-        param_testing.fname_gt = param_testing.list_fname_gt[0]
     try:
         param_testing = sct_testing.test_function(param_testing)
-        # param_testing = script_to_be_run.test(param_testing)
     except:
         import traceback
         sct.log.error('%s: %s' % ('test_' + args[0], traceback.format_exc()))
@@ -600,7 +595,7 @@ if __name__ == "__main__":
         # sct.log.info(detailed results)
         sct.log.info('\nDETAILED RESULTS:')
         sct.log.info(results_display.to_string())
-        sct.log.info('Status Legend:\n  0: Passed\n  1: Function crashed\n  2: Integrity testing crashed\n  99: Failed\n  200: Input file(s) missing\n  201: Ground-truth file(s) missing')
+        sct.log.info('\nLegend status: 0: Passed | 1: Function crashed | 2: Integrity testing crashed | 99: Failed | 200: Input file(s) missing | 201: Ground-truth file(s) missing')
 
         if verbose == 2:
             import seaborn as sns
