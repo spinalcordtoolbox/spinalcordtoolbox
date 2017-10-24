@@ -617,14 +617,14 @@ tracts_norm = tracts;
 for ilabel = 1:length(tracts)
     tract_sum = tract_sum + tracts{ilabel};
 end
-imagesc(tract_sum(:,:,800)), axis square, title('tract sum'), colorbar
+imagesc(tract_sum(:,:,nb_slices)), axis square, title('tract sum'), colorbar
 % smooth with 3d isotropic kernel
 tract_sum_smooth = smooth3(tract_sum,'gaussian',[3 3 3]);
-imagesc(tract_sum_smooth(:,:,800)), axis square, title('tract sum smooth'), colorbar
+imagesc(tract_sum_smooth(:,:,nb_slices)), axis square, title('tract sum smooth'), colorbar
 % binarize
 tract_sum_smooth(tract_sum_smooth<0.5) = 0;
 tract_sum_smooth(tract_sum_smooth>=0.5) = 1;
-imagesc(tract_sum_smooth(:,:,800)), axis square, title('tract sum smooth binary'), colorbar
+imagesc(tract_sum_smooth(:,:,nb_slices)), axis square, title('tract sum smooth binary'), colorbar
 % get mask of non-null voxels
 nonnull = find(tract_sum_smooth);
 % loop across all labels and normalize to one
@@ -636,7 +636,7 @@ tract_sum_norm = zeros(size(tracts{1}));
 for ilabel = 1:length(tracts)
     tract_sum_norm = tract_sum_norm + tracts_norm{ilabel};
 end
-imagesc(tract_sum_norm(:,:,800)), axis square, title('tract norm sum'), colorbar
+imagesc(tract_sum_norm(:,:,nb_slices)), axis square, title('tract norm sum'), colorbar
 % update variable
 tracts = tracts_norm
 
