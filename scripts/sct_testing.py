@@ -16,6 +16,8 @@ import time, random
 from copy import deepcopy
 import os
 from pandas import DataFrame
+import shlex
+import importlib
 from msct_parser import Parser
 # get path of SCT
 path_script = os.path.dirname(__file__)
@@ -24,7 +26,6 @@ path_sct = os.path.dirname(path_script)
 sys.path.append(path_sct + '/scripts')
 sys.path.append(path_sct + '/testing')
 import sct_utils as sct
-import importlib
 
 
 # Parameters
@@ -258,6 +259,7 @@ def fill_functions():
         'sct_label_vertebrae',
         'sct_maths',
         'sct_merge_images',
+        'sct_pipeline',
         'sct_process_segmentation',
         'sct_propseg',
         'sct_register_graymatter',
@@ -363,7 +365,7 @@ def test_function(param_test):
 
     # get parser information
     parser = module_function_to_test.get_parser()
-    dict_args = parser.parse(param_test.args.split(), check_file_exist=False)
+    dict_args = parser.parse(shlex.split(param_test.args), check_file_exist=False)
     # TODO: if file in list does not exist, raise exception and assign status=200
     # add data path to each input argument
     dict_args_with_path = parser.add_path_to_file(deepcopy(dict_args), param_test.path_data, input_file=True)
@@ -378,11 +380,11 @@ def test_function(param_test):
         param_test.args_with_path += ' -ofolder ' + param_test.path_output
 
     # log file
-    param_test.fname_log = param_test.path_output + param_test.function_to_test + '.log'
-    stdout_log = file(param_test.fname_log, 'w')
-    # redirect to log file
-    param_test.stdout_orig = sys.stdout
     if param_test.redirect_stdout:
+        param_test.fname_log = param_test.path_output + param_test.function_to_test + '.log'
+        stdout_log = file(param_test.fname_log, 'w')
+        # redirect to log file
+        param_test.stdout_orig = sys.stdout
         sys.stdout = stdout_log
 
     # initialize panda dataframe
@@ -449,8 +451,8 @@ def test_function(param_test):
     if param_test.redirect_stdout:
         sys.stdout.close()
         sys.stdout = param_test.stdout_orig
-    # write log file
-    write_to_log_file(param_test.fname_log, param_test.output, mode='r+', prepend=True)
+        # write log file
+        write_to_log_file(param_test.fname_log, param_test.output, mode='r+', prepend=True)
 
     # go back to parent directory
     os.chdir(path_testing)
