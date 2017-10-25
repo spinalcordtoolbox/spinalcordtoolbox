@@ -32,7 +32,6 @@ class CenterlineController(base.BaseController):
         max_z = self.image.dim[2]
         super(CenterlineController, self).reformat_image()
         self.params.num_points = self.params.num_points or 11
-        self.INTERVAL = max_z // (self.params.num_points - 1) or 3
 
         if self.params.starting_slice < 0:
             self.params.starting_slice = self.default_position[0]
@@ -41,6 +40,7 @@ class CenterlineController(base.BaseController):
             self.params.starting_slice = max_z // self.params.starting_slice
 
         self._slice = self.params.starting_slice
+        self.INTERVAL = (max_z - self.params.starting_slice) // (self.params.num_points - 1) or 3
         self.reset_position()
 
     def reset_position(self):
