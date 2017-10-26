@@ -308,16 +308,19 @@ class AnalyzeLeion:
     def _measure_totLesion_distribution(self, im_lesion, atlas_data, im_vert, p_lst):
 
         sheet_name = 'ROI_occupied_by_lesion'
-        self.distrib_matrix_dct[sheet_name] = pd.DataFrame.from_dict({'vert': [str(v) for v in self.vert_lst]})
+        self.distrib_matrix_dct[sheet_name] = pd.DataFrame.from_dict({'vert': [str(v) for v in self.vert_lst] + ['total']})
 
         # initialized to 0 for each vertebral level and each PAM50 tract
         for tract_id in atlas_data:
-            self.distrib_matrix_dct[sheet_name]['PAM50_' + str(tract_id).zfill(2)] = [0] * len(self.vert_lst)
+            self.distrib_matrix_dct[sheet_name]['PAM50_' + str(tract_id).zfill(2)] = [0] * len(self.vert_lst + ['total'])
 
-        for vert in self.vert_lst:  # loop over the vertebral levels
-            im_vert_cur = np.copy(im_vert)
-            im_vert_cur[np.where(im_vert_cur != vert)] = 0
-            if np.count_nonzero(im_vert_cur * np.copy(im_lesion)):
+        for vert in self.vert_lst + ['total']:  # loop over the vertebral levels
+            if vert != 'total':
+                im_vert_cur = np.copy(im_vert)
+                im_vert_cur[np.where(im_vert_cur != vert)] = 0
+            else:
+                im_vert_cur = None
+            if im_vert_cur is None or np.count_nonzero(im_vert_cur * np.copy(im_lesion)):
                 res_perTract_dct = {}  # for each tract compute the volume occupied by lesion and the volume of the tract
                 idx = self.distrib_matrix_dct[sheet_name][self.distrib_matrix_dct[sheet_name].vert == str(vert)].index
                 for tract_id in atlas_data:  # loop over the tracts
