@@ -447,7 +447,11 @@ if __name__ == "__main__":
     function_to_test = arguments["-f"]
     path_data = sct.slash_at_the_end(os.path.expanduser(arguments["-d"]), slash=1)
     if "-p" in arguments:
-        list_args = arguments["-p"].split(',')
+        # in case users used more than one '-p' flag, the output will be a list of all arguments (for each -p)
+        if isinstance(arguments['-p'], list):
+            list_args = arguments['-p']
+        else:
+            list_args = [arguments['-p']]
     else:
         list_args = []
     data_specifications = None

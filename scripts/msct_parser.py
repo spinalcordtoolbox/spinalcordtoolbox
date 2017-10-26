@@ -7,13 +7,13 @@
 # If the user make a misspelling, the parser will search in the option list what are nearest option and suggests it to the user
 #
 # Type of options are:
-# - file, folder (check existence)
-# - folder_creation (check existence and if does not exist, create it if writing permission)
-# - file_output (check writing permission)
-# - str, int, float, long, complex (check if input is the correct type)
-# - multiple_choice
-# - coordinate [x, y, z, value]
-# - lists, for example list of coordinate:
+# - "file", "folder" (check existence)
+# - "folder_creation" (check existence and if does not exist, create it if writing permission)
+# - "file_output" (check writing permission)
+# - "str", "int", "float", "long", "complex" (check if input is the correct type)
+# - "multiple_choice"
+# - "Coordinate" [x, y, z, value]
+# - lists of types: example: [[','],'int'] or [[':'],'coordinate']
 # - None, return True when detected (example of boolean)
 #
 # The parser returns a dictionary with all mandatory arguments as well as optional arguments with default values.
@@ -359,7 +359,15 @@ class Parser:
                     if param in self.options:
                         self.usage.error("ERROR: Option " + self.options[arg].name + " needs an argument...")
 
-                    dictionary[arg] = self.options[arg].check_integrity(param)
+                    # check if this flag has already been used before, then create a list and append this string to the previous string
+                    if arg in dictionary:
+                        # check if dictionary[arg] is already a list
+                        if isinstance(dictionary[arg], list):
+                            dictionary[arg].append().check_integrity(param)
+                        else:
+                            dictionary[arg] = [dictionary[arg], self.options[arg].check_integrity(param)]
+                    else:
+                        dictionary[arg] = self.options[arg].check_integrity(param)
                     skip = True
                 else:
                     dictionary[arg] = True
