@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #########################################################################################
 #
-# Test function for sct_apply_transfo
+# Test function for sct_pipeline
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
@@ -10,20 +10,16 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-# TODO: generate warping field for dmri that makes sense (dmri --> T2).
 
 def init(param_test):
     """
     Initialize class: param_test
     """
     # initialization
-    default_args = ['-i template/template/PAM50_small_t2.nii.gz -d t2/t2.nii.gz -w t2/warp_template2anat.nii.gz',
-                    '-i dmri/dmri.nii.gz -d t2/t2.nii.gz -w t2/warp_template2anat.nii.gz']
-
+    default_args = ['-f sct_maths -d ../ -p \"-i mt/mt0.nii.gz -percent 95 -o mt0_95.nii.gz","-i mt/mt1.nii.gz -add 5 -o mt1_add5.nii.gz\"']
     # assign default params
     if not param_test.args:
         param_test.args = default_args
-
     return param_test
 
 
