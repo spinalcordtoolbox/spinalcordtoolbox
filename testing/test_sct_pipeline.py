@@ -16,7 +16,7 @@ def init(param_test):
     Initialize class: param_test
     """
     # initialization
-    default_args = ['-f sct_maths -d ../ -p \"-i mt/mt0.nii.gz -percent 95 -o mt0_95.nii.gz","-i mt/mt1.nii.gz -add 5 -o mt1_add5.nii.gz\"']
+    default_args = ['-f sct_maths -d ../ -p \"-i mt/mt0.nii.gz -percent 95 -o mt0_95.nii.gz\" -p \"-i mt/mt1.nii.gz -add 5 -o mt1_add5.nii.gz\"']
     # assign default params
     if not param_test.args:
         param_test.args = default_args
