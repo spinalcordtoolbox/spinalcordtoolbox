@@ -5,16 +5,16 @@
 
 **BUG**
 
- - BUG: fix errors in create_atlas.m [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1499)
+ - Fix errors in create_atlas.m [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1499)
  - Fix a regression bug. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1490)
  - Used the absolute path to create the temporary label file in propseg [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1487)
- - Fixes Optic is used by default if -init-mask is used with external file provided [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1485)
+ - Fixed: Optic is used by default if -init-mask is used with external file provided [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1485)
  - Fixed global dependency in sct_process_segmentation call [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1481)
  - Fixed z-regularization for slicereg [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1465)
 
 **ENHANCEMENT**
 
- - raise in sct.run in bad order. Also added specific sct errors [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1503)
+ - Fixed: Raise in sct.run in bad order. Also added specific sct errors [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1503)
  - More improvements to the viewer [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1496)
  - Refactored WM atlas creation pipeline and improved documentation  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1492)
  - Option to install SCT in development mode [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1491)
@@ -26,8 +26,8 @@
 **FEATURE**
 
  - Improvement of sct_analyze_lesions: compute percentage of a given tract occupied by lesions [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1500)
- - sct_get_centerline - new manual feature [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1467)
- - sct_detect_pmj - new_feature [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1466)
+ - sct_get_centerline: new manual feature [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1467)
+ - sct_detect_pmj: new_feature [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1466)
 
 **TESTING**
 
