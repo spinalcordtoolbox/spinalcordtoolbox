@@ -12,13 +12,9 @@
 #########################################################################################
 
 
-#import re
 import sys
-# import commands
-# import getopt
 import os
 import time
-
 from msct_parser import Parser
 import sct_utils as sct
 from sct_extract_metric import read_label_file
@@ -65,14 +61,6 @@ class WarpTemplate:
         self.folder_spinal_levels = param.folder_spinal_levels
         self.verbose = verbose
         self.qc = qc
-        start_time = time.time()
-
-        # add slash at the end of folder name (in case there is no slash)
-        # self.path_template = sct.slash_at_the_end(self.path_template, 1)
-        # self.folder_out = sct.slash_at_the_end(self.folder_out, 1)
-        # self.folder_template = sct.slash_at_the_end(self.folder_template, 1)
-        # self.folder_atlas = sct.slash_at_the_end(self.folder_atlas, 1)
-        # self.folder_spinal_levels = sct.slash_at_the_end(self.folder_spinal_levels, 1)
 
         # sct.printv(arguments)
         sct.printv('\nCheck parameters:')
@@ -85,9 +73,6 @@ class WarpTemplate:
         # create output folder
         if not os.path.exists(self.folder_out):
             os.makedirs(self.folder_out)
-            # sct.run('mkdir ' + self.folder_out)
-            # sct.printv('WARNING: Output folder already exists. Deleting it...', self.verbose, 'warning')
-            # sct.run('rm -rf ' + self.folder_out)
 
         # Warp template objects
         sct.printv('\nWARP TEMPLATE:', self.verbose)
@@ -146,7 +131,8 @@ def warp_label(path_label, folder_label, file_label, fname_src, fname_transfo, p
     #     sct.printv('\nERROR: ' + traceback.format_exc(), 1, 'error')
     else:
         # create output folder
-        sct.run('mkdir ' + path_out + folder_label, param.verbose)
+        if not os.path.exists(path_out + folder_label):
+            os.makedirs(path_out + folder_label)
         # Warp label
         for i in xrange(0, len(template_label_file)):
             fname_label = path_label + folder_label + template_label_file[i]
