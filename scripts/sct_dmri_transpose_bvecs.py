@@ -25,6 +25,7 @@
 import sys
 from msct_parser import Parser
 from sct_utils import extract_fname, printv
+import sct_utils as sct
 
 
 # PARSER
@@ -107,5 +108,6 @@ def main(args=None):
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
+    sct.start_stream_logger()
     # call main function
     main()

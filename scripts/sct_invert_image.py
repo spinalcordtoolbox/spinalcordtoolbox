@@ -1,42 +1,27 @@
 #!/usr/bin/env python
 #########################################################################################
 #
-# Register anatomical image to the template using the spinal cord centerline/segmentation.
-# we assume here that we have a RPI orientation, where Z axis is inferior-superior direction
+# Invert the intensity of the image
 #
 # ---------------------------------------------------------------------------------------
-# Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
+# Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Author: Benjamin De Leener, Julien Cohen-Adad
-# Modified: 2014-06-03
+# Modified: 2017-10-17
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-# TODO: currently it seems like cross_radius is given in pixel instead of mm
 
 import sys
 from msct_parser import Parser
 from msct_image import Image
+import sct_utils as sct
 
-# DEFAULT PARAMETERS
 
-
-class param:
-    # The constructor
-    def __init__(self):
-        self.debug = 0
-
-#=======================================================================================================================
-# Start program
-#=======================================================================================================================
-if __name__ == "__main__":
-    # initialize parameters
-    param = param()
-    # call main function
-
+def get_parser():
     # Initialize the parser
     parser = Parser(__file__)
-    parser.usage.set_description('Utility function for labels.')
+    parser.usage.set_description('This function inverts the image intensity using the maximum intensity in the image and 0.')
     parser.add_option(name="-i",
                       type_value="file",
                       description="Image to invert.",
@@ -49,11 +34,22 @@ if __name__ == "__main__":
                       mandatory=False,
                       example="output_image.nii.gz",
                       default_value="inverted_image.nii.gz")
+
+    return parser
+
+
+def main(args=None):
+    parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
 
     input_filename = arguments["-i"]
     image_input = Image(input_filename)
     image_output = image_input.invert()
-    if "-o" in arguments:
-        image_output.setFileName(arguments["-o"])
+    if '-o' in arguments:
+        image_output.setFileName(arguments['-o'])
     image_output.save(type='minimize')
+
+
+if __name__ == "__main__":
+    sct.start_stream_logger()
+    main()

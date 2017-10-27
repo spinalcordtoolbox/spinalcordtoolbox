@@ -2,36 +2,52 @@
 #
 # Test major functions.
 #
+# In The following fields should be defined under the init() function of each test script:
+#   param_test.list_fname_gt     list containing the relative file name for ground truth data. See test_sct_propseg
+#
 # Authors: Julien Cohen-Adad, Benjamin De Leener, Augustin Roux
-# Updated: 2014-10-06
 
 # TODO: list functions to test in help (do a search in testing folder)
+# TODO: find a way to be able to have list of arguments and loop across list elements.
 
 
 import sys
-import time
-
+import time, random
+from copy import deepcopy
 import os
+from pandas import DataFrame
+import shlex
+import importlib
 from msct_parser import Parser
-
-# get path of the toolbox
-# TODO: put it back below when working again (julien 2016-04-04)
-# <<<
-# OLD
-# status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
-# NEW
+# get path of SCT
 path_script = os.path.dirname(__file__)
 path_sct = os.path.dirname(path_script)
-# >>>
 # append path that contains scripts, to be able to load modules
 sys.path.append(path_sct + '/scripts')
 sys.path.append(path_sct + '/testing')
 import sct_utils as sct
-import importlib
+
+
+# Parameters
+class Param:
+    def __init__(self):
+        self.download = 0
+        self.path_data = 'sct_testing_data/'  # path to the testing data
+        self.path_output = []  # list of output folders
+        self.function_to_test = None
+        self.remove_tmp_file = 0
+        self.verbose = 1
+        self.path_tmp = ''
+        self.args = []  # list of input arguments to the function
+        self.args_with_path = ''  # input arguments to the function, with path
+        # self.list_fname_gt = []  # list of fname for ground truth data
+        self.contrast = ''  # folder containing the data and corresponding to the contrast. Could be t2, t1, t2s, etc.
+        self.output = ''  # output string
+        self.results = ''  # results in Panda DataFrame
+        self.redirect_stdout = 0  # for debugging, set to 0. Otherwise set to 1.
+
 
 # define nice colors
-
-
 class bcolors:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
@@ -40,33 +56,56 @@ class bcolors:
     FAIL = '\033[91m'
     ENDC = '\033[0m'
 
-# JULIEN: NOW THAT THE USER WILL HAVE ACCESS TO TEST_ALL, WE SHOULD NOT USE $SCT_TESTING_DATA_DIR ANYMORE.
-# get path of testing data
-# status, path_sct_testing = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
+
+# PARSER
+# ==========================================================================================
+def get_parser():
+    # initialize default param
+    param_default = Param()
+    # Initialize the parser
+    parser = Parser(__file__)
+    parser.usage.set_description(
+        'Crash and integrity testing for functions of the Spinal Cord Toolbox. Internet connection is required for downloading testing data.')
+    parser.add_option(name="-f",
+                      type_value="str",
+                      description="Test this specific script (do not add extension).",
+                      mandatory=False,
+                      example='sct_propseg')
+    parser.add_option(name="-d",
+                      type_value="multiple_choice",
+                      description="Download testing data.",
+                      mandatory=False,
+                      default_value=param_default.download,
+                      example=['0', '1'])
+    parser.add_option(name="-p",
+                      type_value="folder",
+                      description='Path to testing data. NB: no need to set if using "-d 1"',
+                      mandatory=False,
+                      default_value=param_default.path_data)
+    parser.add_option(name="-r",
+                      type_value="multiple_choice",
+                      description='Remove temporary files.',
+                      mandatory=False,
+                      default_value='1',
+                      example=['0', '1'])
+    return parser
 
 
-class param:
-    def __init__(self):
-        self.download = 0
-        self.path_data = 'sct_testing_data/'
-        self.function_to_test = None
-        # self.function_to_avoid = None
-        self.remove_tmp_file = 0
-        self.verbose = 1
-        # self.url_git = 'https://github.com/neuropoly/sct_testing_data.git'
-        self.path_tmp = ""
-
-
-# START MAIN
+# Main
 # ==========================================================================================
 def main(args=None):
+
+    # initializations
+    list_status = []
+    param = Param()
+
+    # check user arguments
     if args is None:
         args = sys.argv[1:]
 
-    # get parser
+    # get parser info
     parser = get_parser()
     arguments = parser.parse(args)
-
     if '-d' in arguments:
         param.download = int(arguments['-d'])
     if '-p' in arguments:
@@ -86,79 +125,141 @@ def main(args=None):
 
     # check existence of testing data folder
     if not os.path.isdir(param.path_data) or param.download:
-        downloaddata()
+        downloaddata(param)
 
     # display path to data
     sct.printv('\nPath to testing data: ' + param.path_data, param.verbose)
 
     # create temp folder that will have all results and go in it
-    param.path_tmp = sct.tmp_create()
+    param.path_tmp = sct.tmp_create(verbose=0)
     os.chdir(param.path_tmp)
+    param.full_path_tmp = os.getcwd() + '/'
 
     # get list of all scripts to test
-    functions = fill_functions()
+    list_functions = fill_functions()
     if function_to_test:
-        if not function_to_test in functions:
-            sct.printv('Function "%s" is not part of the list of testing functions' % function_to_test, type='warning')
-        # loop across all functions and test them
-        status = [test_function(f) for f in functions if function_to_test == f]
-    else:
-        status = [test_function(f) for f in functions]
-    print 'status: ' + str(status)
+        if function_to_test in list_functions:
+            # overwrite variable to include only the function to test
+            list_functions = [function_to_test]
+        else:
+            sct.printv('ERROR: Function "%s" is not part of the list of testing functions' % function_to_test, type='error')
+
+    # loop across functions and run tests
+    for f in list_functions:
+        param.function_to_test = f
+        # display script name
+        print_line('Checking ' + f)
+        # load modules of function to test
+        module_testing = importlib.import_module('test_' + f)
+        # initialize default parameters of function to test
+        param.args = []
+        # param.list_fname_gt = []
+        # param.fname_groundtruth = ''
+        param = module_testing.init(param)
+        # loop over parameters to test
+        list_status_function = []
+        list_output = []
+        for i in range(0, len(param.args)):
+            param_test = deepcopy(param)
+            param_test.default_args = param.args
+            param_test.args = param.args[i]
+            # if list_fname_gt is not empty, assign it
+            # if param_test.list_fname_gt:
+            #     param_test.fname_gt = param_test.list_fname_gt[i]
+            # test function
+            param_test = test_function(param_test)
+            list_status_function.append(param_test.status)
+            list_output.append(param_test.output)
+        # manage status
+        if any(list_status_function):
+            if 1 in list_status_function:
+                print_fail()
+                status = 1
+            else:
+                print_warning()
+                status = 99
+            print list_output
+        else:
+            print_ok()
+            status = 0
+        # append status function to global list of status
+        list_status.append(status)
+
+    print 'status: ' + str(list_status)
 
     # display elapsed time
     elapsed_time = time.time() - start_time
-    print 'Finished! Elapsed time: ' + str(int(round(elapsed_time))) + 's\n'
+    sct.printv('Finished! Elapsed time: ' + str(int(round(elapsed_time))) + 's\n')
 
     # remove temp files
     if param.remove_tmp_file:
-        sct.printv('\nRemove temporary files...', param.verbose)
-        sct.run('rm -rf ' + param.path_tmp, param.verbose)
+        sct.printv('\nRemove temporary files...', 0)
+        sct.run('rm -rf ' + param.path_tmp, 0)
 
     e = 0
-    if sum(status) != 0:
+    if sum(list_status) != 0:
         e = 1
-    print e
+    # print e
 
     sys.exit(e)
 
 
-def downloaddata():
+def downloaddata(param):
+    """
+    Download testing data from internet.
+    Parameters
+    ----------
+    param
+
+    Returns
+    -------
+    None
+    """
     sct.printv('\nDownloading testing data...', param.verbose)
     import sct_download_data
     sct_download_data.main(['-d', 'sct_testing_data'])
-    # sct.run('sct_download_data -d sct_testing_data')
 
 
 # list of all functions to test
 # ==========================================================================================
 def fill_functions():
     functions = [
+        'sct_analyze_lesion',
         'sct_analyze_texture',
         'sct_apply_transfo',
-        # 'sct_check_atlas_integrity',
+        'sct_compute_ernst_angle',
+        'sct_compute_hausdorff_distance',
         'sct_compute_mtr',
-        'sct_concat_transfo',
+        'sct_compute_mscc',
+        'sct_compute_snr',
+	    'sct_concat_transfo',
         'sct_convert',
         # 'sct_convert_binary_to_trilinear',  # not useful
         'sct_create_mask',
         'sct_crop_image',
+        'sct_dice_coefficient',
+        'sct_detect_pmj',
         'sct_dmri_compute_dti',
+        'sct_dmri_concat_bvals',
+        'sct_dmri_concat_bvecs',
         'sct_dmri_create_noisemask',
-        'sct_dmri_get_bvalue',
-        'sct_dmri_transpose_bvecs',
+        'sct_dmri_compute_bvalue',
         'sct_dmri_moco',
         'sct_dmri_separate_b0_and_dwi',
-        'sct_documentation',
+        'sct_dmri_transpose_bvecs',
+        # 'sct_documentation',
         'sct_extract_metric',
         # 'sct_flatten_sagittal',
         'sct_fmri_compute_tsnr',
         'sct_fmri_moco',
-        # 'sct_get_centerline',
+        'sct_get_centerline',
         'sct_image',
+        # 'sct_invert_image',  # function not available from command-line
         'sct_label_utils',
         'sct_label_vertebrae',
         'sct_maths',
+        'sct_merge_images',
+        # 'sct_pipeline',
         'sct_process_segmentation',
         'sct_propseg',
         'sct_register_graymatter',
@@ -194,15 +295,15 @@ def make_dot_lines(string):
 # print in color
 # ==========================================================================================
 def print_ok():
-    print "[" + bcolors.OKGREEN + "OK" + bcolors.ENDC + "]"
+    sct.log.info("[" + bcolors.OKGREEN + "OK" + bcolors.ENDC + "]")
 
 
 def print_warning():
-    print "[" + bcolors.WARNING + "WARNING" + bcolors.ENDC + "]"
+    sct.log.warning("[" + bcolors.WARNING + "WARNING" + bcolors.ENDC + "]")
 
 
 def print_fail():
-    print "[" + bcolors.FAIL + "FAIL" + bcolors.ENDC + "]"
+    sct.log.error("[" + bcolors.FAIL + "FAIL" + bcolors.ENDC + "]")
 
 
 # write to log file
@@ -225,7 +326,8 @@ def write_to_log_file(fname_log, string, mode='w', prepend=False):
         # if prepend, read current file and then overwrite
         if prepend:
             f = open(fname_log, 'r')
-            string_to_append = '\n\nOUTPUT:\n--\n' + f.read()
+            # string_to_append = '\n\nOUTPUT:\n--\n' + f.read()
+            string_to_append = f.read()
             f.close()
         f = open(fname_log, mode)
     except Exception as ex:
@@ -234,79 +336,148 @@ def write_to_log_file(fname_log, string, mode='w', prepend=False):
     f.close()
 
 
-# test function
+# init_testing
 # ==========================================================================================
-def test_function(script_name):
-    # if script_name == 'test_debug':
-    #     return test_debug()  # JULIEN
-    # else:
-    # build script name
-    fname_log = '../' + script_name + ".log"
-    tmp_script_name = script_name
-    result_folder = "results_" + script_name
-    script_name = "test_" + script_name
+def test_function(param_test):
+    """
 
-    sct.create_folder(result_folder)
-    os.chdir(result_folder)
+    Parameters
+    ----------
+    file_testing
 
-    # display script name
-    print_line('Checking ' + script_name)
-    # import function as a module
-    script_tested = importlib.import_module(script_name)
-    # test function
-    result_test = script_tested.test(param.path_data)
-    # test functions can return 2 or 3 variables, depending if there is results.
-    # In this script, we look only at the first two variables.
-    status, output = result_test[0], result_test[1]
-    # write log file
-    write_to_log_file(fname_log, output, 'w')
-    # manage status
-    if status == 0:
-        print_ok()
-    else:
-        if status == 99:
-            print_warning()
+    Returns
+    -------
+    path_output [str]: path where to output testing data
+    """
+
+    # load modules of function to test
+    module_function_to_test = importlib.import_module(param_test.function_to_test)
+    module_testing = importlib.import_module('test_' + param_test.function_to_test)
+
+    # retrieve subject name
+    subject_folder = sct.slash_at_the_end(param_test.path_data, 0).split('/')
+    subject_folder = subject_folder[-1]
+    # build path_output variable
+    path_testing = os.getcwd() + '/'
+    param_test.path_output = sct.slash_at_the_end(param_test.function_to_test + '_' + subject_folder + '_' + time.strftime("%y%m%d%H%M%S") + '_' + str(random.randint(1, 1000000)), slash=1)
+    sct.create_folder(param_test.path_output)
+    param_test.path_output = path_testing + param_test.path_output
+
+    # get parser information
+    parser = module_function_to_test.get_parser()
+    dict_args = parser.parse(shlex.split(param_test.args), check_file_exist=False)
+    # TODO: if file in list does not exist, raise exception and assign status=200
+    # add data path to each input argument
+    dict_args_with_path = parser.add_path_to_file(deepcopy(dict_args), param_test.path_data, input_file=True)
+    # add data path to each output argument
+    dict_args_with_path = parser.add_path_to_file(deepcopy(dict_args_with_path), param_test.path_output, input_file=False, output_file=True)
+    # save into class
+    param_test.dict_args_with_path = dict_args_with_path
+    param_test.args_with_path = parser.dictionary_to_string(dict_args_with_path)
+
+    # check if parser has key '-ofolder' that has not been added already. If so, then assign output folder
+    if parser.options.has_key('-ofolder') and '-ofolder' not in dict_args_with_path:
+        param_test.args_with_path += ' -ofolder ' + param_test.path_output
+
+    # open log file
+    # Note: the statement below is not included in the if, because even if redirection does not occur, we want the file to be create otherwise write_to_log will fail
+    param_test.fname_log = param_test.path_output + param_test.function_to_test + '.log'
+    stdout_log = file(param_test.fname_log, 'w')
+    # redirect to log file
+    if param_test.redirect_stdout:
+        param_test.stdout_orig = sys.stdout
+        sys.stdout = stdout_log
+
+    # initialize panda dataframe
+    param_test.results = DataFrame(index=[subject_folder], data={'status': 0, 'output': '', 'path_data': param_test.path_data})
+
+    # retrieve input file (will be used later for integrity testing)
+    if '-i' in dict_args:
+        # check if list in case of multiple input files
+        if not isinstance(dict_args_with_path['-i'], list):
+            list_file_to_check = [dict_args_with_path['-i']]
+            # assign field file_input for integrity testing
+            param_test.file_input = dict_args['-i'].split('/')[-1]
         else:
-            print_fail()
-        print output
-    # go back to parent folder
-    os.chdir('..')
+            list_file_to_check = dict_args_with_path['-i']
+            # TODO: assign field file_input for integrity testing
+        for file_to_check in list_file_to_check:
+            # file_input = file_to_check.split('/')[1]
+            # Check if input files exist
+            if not (os.path.isfile(file_to_check)):
+                param_test.status = 200
+                param_test.output += '\nERROR: This input file does not exist: ' + file_to_check
+                write_to_log_file(param_test.fname_log, param_test.output, 'w')
+                return update_param(param_test)
 
-    # return
-    return status
+    # retrieve ground truth (will be used later for integrity testing)
+    if '-igt' in dict_args:
+        param_test.fname_gt = dict_args_with_path['-igt']
+        # Check if ground truth files exist
+        if not os.path.isfile(param_test.fname_gt):
+            param_test.status = 201
+            param_test.output += '\nERROR: The following file used for ground truth does not exist: ' + param_test.fname_gt
+            write_to_log_file(param_test.fname_log, param_test.output, 'w')
+            return update_param(param_test)
+
+    # go to specific testing directory
+    os.chdir(param_test.path_output)
+
+    # run command
+    cmd = param_test.function_to_test + param_test.args_with_path
+    param_test.output += '\n====================================================================================================\n' + cmd + '\n====================================================================================================\n\n'  # copy command
+    time_start = time.time()
+    try:
+        param_test.status, o = sct.run(cmd, 0, error_exit='warning')
+        if param_test.status:
+            raise Exception
+    except Exception, err:
+        param_test.status = 1
+        param_test.output += str(err)
+        write_to_log_file(param_test.fname_log, param_test.output, 'w')
+        return update_param(param_test)
+
+    param_test.output += o
+    param_test.duration = time.time() - time_start
+
+    # test integrity
+    param_test.output += '\n\n====================================================================================================\n' + 'INTEGRITY TESTING' + '\n====================================================================================================\n\n'  # copy command
+    try:
+        param_test = module_testing.test_integrity(param_test)
+    except Exception, err:
+        param_test.status = 2
+        param_test.output += str(err)
+        write_to_log_file(param_test.fname_log, param_test.output, 'w')
+        return update_param(param_test)
+
+    # manage stdout
+    if param_test.redirect_stdout:
+        sys.stdout.close()
+        sys.stdout = param_test.stdout_orig
+        # write log file
+        write_to_log_file(param_test.fname_log, param_test.output, mode='r+', prepend=True)
+
+    # go back to parent directory
+    os.chdir(path_testing)
+
+    return update_param(param_test)
 
 
-def get_parser():
-    # Initialize the parser
-    parser = Parser(__file__)
-    parser.usage.set_description('Crash and integrity testing for functions of the Spinal Cord Toolbox. Internet connection is required for downloading testing data.')
-    parser.add_option(name="-f",
-                      type_value="str",
-                      description="Test this specific script (do not add extension).",
-                      mandatory=False,
-                      example='sct_propseg')
-    parser.add_option(name="-d",
-                      type_value="multiple_choice",
-                      description="Download testing data.",
-                      mandatory=False,
-                      default_value=param.download,
-                      example=['0', '1'])
-    parser.add_option(name="-p",
-                      type_value="folder",
-                      description='Path to testing data. NB: no need to set if using "-d 1"',
-                      mandatory=False,
-                      default_value=param.path_data)
-    parser.add_option(name="-r",
-                      type_value="multiple_choice",
-                      description='Remove temporary files.',
-                      mandatory=False,
-                      default_value='1',
-                      example=['0', '1'])
-    return parser
+def update_param(param):
+    """
+    Update field "results" in param class
+    """
+    for results_attr in param.results.columns:
+        if hasattr(param, results_attr):
+            param.results[results_attr] = getattr(param, results_attr)
+    return param
 
 
+# START PROGRAM
+# ==========================================================================================
 if __name__ == "__main__":
+    sct.start_stream_logger()
     # initialize parameters
-    param = param()
+    param = Param()
     # call main function
     main()

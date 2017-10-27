@@ -15,6 +15,7 @@ from msct_parser import Parser
 from dipy.data.fetcher import read_bvals_bvecs
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+import sct_utils as sct
 
 bzero = 0.0001  # b-zero threshold
 
@@ -58,6 +59,9 @@ def main():
     # Read bvecs
     bvecs = read_bvals_bvecs(fname_bvecs, None)
     bvecs = bvecs[0]
+    # if first dimension is not equal to 3 (x,y,z), transpose bvecs file
+    if not bvecs.shape[0] == 3:
+        bvecs = bvecs.transpose()
     x, y, z = bvecs[0], bvecs[1], bvecs[2]
 
     # Get total number of directions
@@ -108,7 +112,7 @@ def main():
     # plt.draw()
 
     # Save image
-    print "Saving figure: bvecs.png\n"
+    sct.printv("Saving figure: bvecs.png\n")
     plt.savefig('bvecs.png')
     plt.show()
 
@@ -116,5 +120,6 @@ def main():
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
+    sct.start_stream_logger()
     # call main function
     main()

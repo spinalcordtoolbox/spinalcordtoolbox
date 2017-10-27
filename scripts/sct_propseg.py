@@ -19,7 +19,7 @@ import shutil
 from scipy import ndimage as ndi
 import numpy as np
 from sct_image import orientation
-import nibabel as nib
+import sct_image
 
 from spinalcordtoolbox.centerline import optic
 
@@ -51,8 +51,9 @@ def check_and_correct_segmentation(fname_segmentation, fname_centerline, folder_
     # convert segmentation image to RPI
     im_input = Image('tmp.segmentation.nii.gz')
     image_input_orientation = orientation(im_input, get=True, verbose=False)
-    sct.run('sct_image -i tmp.segmentation.nii.gz -setorient RPI -o tmp.segmentation_RPI.nii.gz', verbose)
-    sct.run('sct_image -i tmp.centerline.nii.gz -setorient RPI -o tmp.centerline_RPI.nii.gz', verbose)
+
+    sct_image.main("-i tmp.segmentation.nii.gz -setorient RPI -o tmp.segmentation_RPI.nii.gz".split())
+    sct_image.main("-i tmp.centerline.nii.gz -setorient RPI -o tmp.centerline_RPI.nii.gz".split())
 
     # go through segmentation image, and compare with centerline from propseg
     im_seg = Image('tmp.segmentation_RPI.nii.gz')
@@ -124,7 +125,8 @@ def check_and_correct_segmentation(fname_segmentation, fname_centerline, folder_
     im_seg.save()
 
     # replacing old segmentation with the corrected one
-    sct.run('sct_image -i tmp.segmentation_RPI_c.nii.gz -setorient ' + image_input_orientation + ' -o ' + fname_seg_absolute, verbose)
+    sct_image.main('-i tmp.segmentation_RPI_c.nii.gz -setorient {} -o {}'.
+                   format(image_input_orientation, fname_seg_absolute).split())
 
     os.chdir('..')
 
@@ -312,10 +314,15 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       type_value=None,
                       description='Prevent the generation of the QC report',
                       mandatory=False)
+    parser.add_option(name='-igt',
+                      type_value='image_nifti',
+                      description='File name of ground-truth segmentation.',
+                      mandatory=False)
     return parser
 
 
 if __name__ == "__main__":
+    sct.start_stream_logger()
     parser = get_parser()
     args = sys.argv[1:]
     arguments = parser.parse(args)
@@ -336,7 +343,7 @@ if __name__ == "__main__":
         folder_output = './'
     cmd += ' -o "%s"' % folder_output
     if not os.path.isdir(folder_output) and os.path.exists(folder_output):
-        sct.printv("ERROR output directory %s is not a valid directory" % folder_output, 1, 'error')
+        sct.log.error("output directory %s is not a valid directory" % folder_output)
     if not os.path.exists(folder_output):
         os.makedirs(folder_output)
 
@@ -388,12 +395,12 @@ if __name__ == "__main__":
             use_optic = False
     if "-init" in arguments:
         init_option = float(arguments["-init"])
-        #cmd += " -init " + str(arguments["-init"])
     if "-init-mask" in arguments:
         if str(arguments["-init-mask"]) == "viewer":
             use_viewer = "mask"
         else:
             cmd += " -init-mask " + str(arguments["-init-mask"])
+            use_optic = False
     if "-mask-correction" in arguments:
         cmd += " -mask-correction " + str(arguments["-mask-correction"])
     if "-radius" in arguments:
@@ -424,66 +431,41 @@ if __name__ == "__main__":
     image_input = Image(fname_data)
     nx, ny, nz, nt, px, py, pz, pt = image_input.dim
     if nt > 1:
-        sct.printv('ERROR: your input image needs to be 3D in order to be segmented.', 1, 'error')
+        sct.log.error('ERROR: your input image needs to be 3D in order to be segmented.')
 
     path_data, file_data, ext_data = sct.extract_fname(fname_data)
 
     # if centerline or mask is asked using viewer
     if use_viewer:
-        # make sure image is in SAL orientation, as it is the orientation used by PropSeg
-        image_input_orientation = orientation(image_input, get=True, verbose=False)
-        reoriented_image_filename = 'tmp.' + sct.add_suffix(file_data + ext_data, "_SAL")
-        path_tmp_viewer = sct.tmp_create(verbose=verbose)
-        cmd_image = 'sct_image -i "%s" -o "%s" -setorient SAL -v 0' % (fname_data, os.path.join(path_tmp_viewer, reoriented_image_filename))
-        sct.run(cmd_image, verbose=False)
+        from spinalcordtoolbox.gui.base import AnatomicalParams
+        from spinalcordtoolbox.gui.centerline import launch_centerline_dialog
 
-        from sct_viewer import ClickViewerPropseg
-        image_input_reoriented = Image(path_tmp_viewer + reoriented_image_filename)
-        viewer = ClickViewerPropseg(image_input_reoriented)
-        if use_viewer == "mask":
-            viewer.input_type = 'mask'
-            viewer.number_of_slices = 3
-            viewer.gap_inter_slice = int(10 / pz)
-            if viewer.gap_inter_slice == 0:
-                viewer.gap_inter_slice = 1
+        starting_slice = arguments.get('-init', 0)
 
-            if '-init' in arguments:
-                starting_slice = arguments['-init']
-                cmd += " -init " + str(arguments["-init"])
+        params = AnatomicalParams()
+        params.starting_slice = starting_slice
+        if use_viewer == 'mask':
+            params.num_points = 3
+            # starting slice in the middle of the FOV
+            params.starting_slice = round(nz / 2)
+        if use_viewer == 'centerline' and not starting_slice:
+            params.starting_slice = 0
+        image = Image(fname_data)
+        tmp_output_file = Image(image)
+        tmp_output_file.data *= 0
+        tmp_output_file.setFileName(sct.add_suffix(fname_data, '_mask_viewer'))
+        controller = launch_centerline_dialog(image, tmp_output_file, params)
 
-                # starting_slice can be provided as a ratio of the number of slices
-                # we assume slice number/ratio is in RPI orientation, which is the inverse of the one used in viewer (SAL)
-                if 0 < starting_slice < 1:
-                    starting_slice = int((1.0 - starting_slice) * image_input_reoriented.data.shape[0])
-                else:
-                    starting_slice = image_input_reoriented.data.shape[0] - starting_slice
+        if not controller.saved:
+            sct.log.error('the viewer has been closed before entering all manual points. Please try again.')
+            sys.exit(1)
 
-                viewer.calculate_list_slices(starting_slice=starting_slice)
-            else:
-                viewer.calculate_list_slices()
-
-        # start the viewer that ask the user to enter a few points along the spinal cord
-        mask_points = viewer.start()
-
-        if not mask_points and viewer.closed:
-            mask_points = viewer.list_points_useful_notation
-
-        if mask_points:
-            # create the mask containing either the three-points or centerline mask for initialization
-            mask_filename = sct.add_suffix(reoriented_image_filename, "_mask_viewer")
-            sct.run("sct_label_utils -i " + path_tmp_viewer + reoriented_image_filename + " -create " + mask_points + " -o " + path_tmp_viewer + mask_filename, verbose=False)
-
-            # reorient the initialization mask to correspond to input image orientation
-            mask_reoriented_filename = sct.add_suffix(file_data + ext_data, "_mask_viewer")
-            sct.run('sct_image -i ' + path_tmp_viewer + mask_filename + ' -o ' + folder_output + mask_reoriented_filename + ' -setorient ' + image_input_orientation + ' -v 0', verbose=False)
-
-            # add mask filename to parameters string
-            if use_viewer == "centerline":
-                cmd += " -init-centerline " + folder_output + mask_reoriented_filename
-            elif use_viewer == "mask":
-                cmd += " -init-mask " + folder_output + mask_reoriented_filename
-        else:
-            sct.printv('\nERROR: the viewer has been closed before entering all manual points. Please try again.', 1, type='error')
+        controller.as_niftii(tmp_output_file.absolutepath)
+        # add mask filename to parameters string
+        if use_viewer == "centerline":
+            cmd += " -init-centerline " + tmp_output_file.absolutepath
+        elif use_viewer == "mask":
+            cmd += " -init-mask " + tmp_output_file.absolutepath
 
     # If using OptiC, enabled by default
     elif use_optic:
@@ -508,7 +490,9 @@ if __name__ == "__main__":
 
     # check status is not 0
     if not status == 0:
-        sct.printv('\nERROR: Automatic cord detection failed. Please initialize using -init-centerline or -init-mask (see help).', 1, type='error')
+        sct.log.error('Automatic cord detection failed. Please initialize using -init-centerline or '
+                      '-init-mask (see help).')
+        sys.exit(1)
 
     # build output filename
     file_seg = file_data + "_seg" + ext_data
@@ -525,10 +509,9 @@ if __name__ == "__main__":
     im_seg.save(type='int8')
 
     # remove temporary files
-    if remove_temp_files:
-        sct.printv("\nRemove temporary files...", verbose)
-        if use_viewer:
-            shutil.rmtree(path_tmp_viewer, ignore_errors=True)
+    if remove_temp_files and use_viewer:
+        sct.log.info("Remove temporary files...")
+        os.remove(tmp_output_file.absolutepath)
 
     if '-qc' in arguments and not arguments.get('-noqc', False):
         qc_path = arguments['-qc']
@@ -545,11 +528,11 @@ if __name__ == "__main__":
 
         try:
             test(qcslice.Axial(Image(fname_input_data), Image(fname_seg)))
-            sct.printv('Sucessfully generated the QC results in %s' % param.qc_results)
-            sct.printv('Use the following command to see the results in a browser:')
-            sct.printv('sct_qc -folder %s' % qc_path, type='info')
+            sct.log.info('Sucessfully generated the QC results in %s' % param.qc_results)
+            sct.log.info('Use the following command to see the results in a browser:')
+            sct.log.info('sct_qc -folder %s' % qc_path)
         except:
-            sct.printv('WARNING: Issue when creating QC report.', 1, 'warning')
+            sct.log.warning('Issue when creating QC report.')
 
     sct.printv('\nDone! To view results, type:', verbose)
     sct.printv("fslview " + fname_input_data + " " + fname_seg + " -l Red -b 0,1 -t 0.7 &\n", verbose, 'info')

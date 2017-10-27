@@ -164,6 +164,10 @@ def get_parser(paramreg=None):
                       description="Output folder",
                       mandatory=False,
                       example='reg_results/')
+    parser.add_option(name="-igt",
+                      type_value="image_nifti",
+                      description="File name of ground-truth registered data (nifti).",
+                      mandatory=False)
     parser.add_option(name="-r",
                       type_value="multiple_choice",
                       description="""Remove temporary files.""",
@@ -330,18 +334,18 @@ def main(args=None):
     remove_temp_files = int(arguments['-r'])
     verbose = int(arguments['-v'])
 
-    # print arguments
-    print '\nInput parameters:'
-    print '  Source .............. ' + fname_src
-    print '  Destination ......... ' + fname_dest
-    print '  Init transfo ........ ' + fname_initwarp
-    print '  Mask ................ ' + fname_mask
-    print '  Output name ......... ' + fname_output
-    # print '  Algorithm ........... '+paramreg.algo
-    # print '  Number of iterations  '+paramreg.iter
-    # print '  Metric .............. '+paramreg.metric
-    print '  Remove temp files ... ' + str(remove_temp_files)
-    print '  Verbose ............. ' + str(verbose)
+    # sct.printv(arguments)
+    sct.printv('\nInput parameters:')
+    sct.printv('  Source .............. ' + fname_src)
+    sct.printv('  Destination ......... ' + fname_dest)
+    sct.printv('  Init transfo ........ ' + fname_initwarp)
+    sct.printv('  Mask ................ ' + fname_mask)
+    sct.printv('  Output name ......... ' + fname_output)
+    # sct.printv('  Algorithm ........... '+paramreg.algo)
+    # sct.printv('  Number of iterations  '+paramreg.iter)
+    # sct.printv('  Metric .............. '+paramreg.metric)
+    sct.printv('  Remove temp files ... ' + str(remove_temp_files))
+    sct.printv('  Verbose ............. ' + str(verbose))
 
     # update param
     param.verbose = verbose
@@ -759,6 +763,7 @@ def register(src, dest, paramreg, param, i_step_str):
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
+    sct.start_stream_logger()
     # call main function
     main()
 
@@ -767,11 +772,11 @@ if __name__ == "__main__":
 # DONE: clean code below-- right now it does not work
 #===========
 # if convertDeformation:
-#    print('\nConvert deformation field...')
+#    sct.printv('\nConvert deformation field...'))
 #    cmd = 'sct_image -i tmp.regWarp.nii -mcs  -o tmp.regWarp.nii'
-#    print(">> "+cmd)
+#    sct.printv(">> "+cmd))
 #    os.system(cmd)
 #    cmd = 'fslmerge -t '+path_out+'warp_comp.nii tmp.regWarp_x.nii tmp.regWarp_y.nii tmp.regWarp_z.nii'
-#    print(">> "+cmd)
+#    sct.printv(">> "+cmd))
 #    os.system(cmd)
 #===========

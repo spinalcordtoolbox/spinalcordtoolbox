@@ -1,44 +1,43 @@
 #!/usr/bin/env python
 #########################################################################################
 #
-# Test function for sct_extract_metric script
+# Test function for sct_extract_metric
 #
 # ---------------------------------------------------------------------------------------
-# Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Augustin Roux
-# modified: 2014/09/28
+# Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
+# Author: Julien Cohen-Adad
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-# TODO: add integrity check
-
-#import sct_utils as sct
-import commands
+import pickle
 
 
-def test(path_data):
+def init(param_test):
+    """
+    Initialize class: param_test
+    """
+    # initialization
+    default_args = ['-i mt/mtr.nii.gz -f mt/label/atlas -method wa -vert 4:5 -l 51 -o quantif_mtr.pickle']
+    param_test.mtr_groundtruth = 32.7919  # ground truth value
+    param_test.threshold_diff = 0.001  # threshold for computing difference between result and ground truth
 
-    # parameters
-    folder_data = ['mt/', 'label/atlas']
-    file_data = ['mtr.nii.gz']
-    file_output = ['quantif_mtr.txt']
-
-    # define command
-    cmd = 'sct_extract_metric' \
-        ' -i '+path_data+folder_data[0]+file_data[0]+ \
-        ' -f '+path_data+folder_data[0]+folder_data[1]+ \
-        ' -method wath '+ \
-        ' -vert 1:3'+ \
-        ' -o '+file_output[0]+ \
-        ' -v 1'
-
-    # return
-    #return sct.run(cmd, 0)
-    return commands.getstatusoutput(cmd)
+    # assign default params
+    if not param_test.args:
+        param_test.args = default_args
+    return param_test
 
 
-# call to function
-if __name__ == "__main__":
-    # call main function
-    test()
+def test_integrity(param_test):
+    """
+    Test integrity of function
+    """
+    mtr_result = pickle.load(open(param_test.path_output +"quantif_mtr.pickle", "rb"))['Metric value'][0]
+    param_test.output += 'Computed MTR:     ' + str(mtr_result)
+    param_test.output += '\nGround truth MTR: ' + str(param_test.mtr_groundtruth) + '\n'
+    if abs(mtr_result - param_test.mtr_groundtruth) < param_test.threshold_diff:
+        param_test.output += '--> PASSED'
+    else:
+        param_test.status = 99
+        param_test.output += '--> FAILED'
+    return param_test

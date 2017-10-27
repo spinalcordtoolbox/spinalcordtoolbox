@@ -80,21 +80,21 @@ def main():
     if fname_data == '':
         usage()
 
-    # print arguments
-    print '\nCheck parameters:'
-    print '  segmentation ........... ' + fname_data
-    print '  interp factor .......... ' + str(interp_factor)
-    print '  smoothing sigma ........ ' + str(smoothing_sigma)
+    # sct.printv(arguments)
+    sct.printv('\nCheck parameters:')
+    sct.printv('  segmentation ........... ' + fname_data)
+    sct.printv('  interp factor .......... ' + str(interp_factor))
+    sct.printv('  smoothing sigma ........ ' + str(smoothing_sigma))
 
     # check existence of input files
-    print('\nCheck existence of input files...')
+    sct.printv('\nCheck existence of input files...')
     sct.check_file_exist(fname_data, verbose)
 
     # Extract path, file and extension
     path_data, file_data, ext_data = sct.extract_fname(fname_data)
 
     # create temporary folder
-    print('\nCreate temporary folder...')
+    sct.printv('\nCreate temporary folder...')
     path_tmp = 'tmp.' + time.strftime("%y%m%d%H%M%S")
     sct.run('mkdir ' + path_tmp)
 
@@ -126,50 +126,50 @@ def main():
     os.chdir('..')
 
     # Generate output files
-    print('\nGenerate output files...')
+    sct.printv('\nGenerate output files...')
     fname_out = sct.generate_output_file(path_tmp + '/data_up_smooth_down.nii', '' + file_data + suffix + ext_data)
 
     # Delete temporary files
     if remove_temp_files == 1:
-        print '\nRemove temporary files...'
+        sct.printv('\nRemove temporary files...')
         sct.run('rm -rf ' + path_tmp)
 
     # display elapsed time
     elapsed_time = time.time() - start_time
-    print '\nFinished! Elapsed time: ' + str(int(round(elapsed_time))) + 's'
+    sct.printv('\nFinished! Elapsed time: ' + str(int(round(elapsed_time))) + 's')
 
     # to view results
-    print '\nTo view results, type:'
-    print 'fslview ' + file_data + ' ' + file_data + suffix + ' &\n'
+    sct.printv('\nTo view results, type:')
+    sct.printv('fslview ' + file_data + ' ' + file_data + suffix + ' &\n')
 
 
-# Print usage
+# sct.printv(usage)
 # ==========================================================================================
 def usage():
-    print '\n' \
-        '' + os.path.basename(__file__) + '\n' \
-        '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n' \
-        'Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>\n' \
-        '\n'\
-        'DESCRIPTION\n' \
-        '  Convert binary spinal cord segmentation to trilinear-interpolated segmentation. Instead of simply\n' \
-        '  re-interpolating the image, this function oversamples the binary mask, smoothes along centerline\n' \
-        '  (to remove step-effects), then downsamples back to native resolution.\n' \
-        '\n' \
-        'USAGE\n' \
-        '  ' + os.path.basename(__file__) + ' -i <bin_seg>\n' \
-        '\n' \
-        'MANDATORY ARGUMENTS\n' \
-        '  -i <bin_seg>      binary segmentation of spinal cord\n' \
-        '\n' \
-        'OPTIONAL ARGUMENTS\n' \
-        '  -s                sigma of the smoothing Gaussian kernel (in voxel). Default=' + str(param_default.smoothing_sigma) + '\n' \
-        '  -r {0,1}          remove temporary files. Default=' + str(param_default.remove_temp_files) + '\n' \
-        '  -v {0,1}          verbose. Default=' + str(param_default.verbose) + '\n' \
-        '  -h                help. Show this message\n' \
-        '\n'\
-        'EXAMPLE\n' \
-        '  ' + os.path.basename(__file__) + ' -i segmentation.nii \n'
+    print('\n'
+        '' + os.path.basename(__file__) + '\n'
+        '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n'
+        'Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>\n'
+        '\n'
+        'DESCRIPTION\n'
+        '  Convert binary spinal cord segmentation to trilinear-interpolated segmentation. Instead of simply\n'
+        '  re-interpolating the image, this function oversamples the binary mask, smoothes along centerline\n'
+        '  (to remove step-effects), then downsamples back to native resolution.\n'
+        '\n'
+        'USAGE\n'
+        '  ' + os.path.basename(__file__) + ' -i <bin_seg>\n'
+        '\n'
+        'MANDATORY ARGUMENTS\n'
+        '  -i <bin_seg>      binary segmentation of spinal cord\n'
+        '\n'
+        'OPTIONAL ARGUMENTS\n'
+        '  -s                sigma of the smoothing Gaussian kernel (in voxel). Default=' + str(param_default.smoothing_sigma) + '\n'
+        '  -r {0,1}          remove temporary files. Default=' + str(param_default.remove_temp_files) + '\n'
+        '  -v {0,1}          verbose. Default=' + str(param_default.verbose) + '\n'
+        '  -h                help. Show this message\n' 
+        '\n'
+        'EXAMPLE\n' 
+        '  ' + os.path.basename(__file__) + ' -i segmentation.nii \n')
 
     # exit program
     sys.exit(2)
@@ -179,6 +179,7 @@ def usage():
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
+    sct.start_stream_logger()
     # initialize parameters
     param = Param()
     param_default = Param()

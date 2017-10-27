@@ -1,38 +1,30 @@
 #!/usr/bin/env python
 #########################################################################################
 #
-# Test function test_sct_dmri_compute_dti
+# Test function for sct_dmri_compute_dti
 #
 # ---------------------------------------------------------------------------------------
-# Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
+# Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Author: Julien Cohen-Adad
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-#import sct_utils as sct
-import commands
+def init(param_test):
+    """
+    Initialize class: param_test
+    """
+    # initialization
+    default_args = ['-i dmri/dmri.nii.gz -bvec dmri/bvecs.txt -bval dmri/bvals.txt']
+    # assign default params
+    if not param_test.args:
+        param_test.args = default_args
+    return param_test
 
 
-def test(path_data):
-
-    folder_data = 'dmri/'
-    file_data = ['dmri.nii.gz', 'bvecs.txt', 'bvals.txt']
-
-    output = ''
-    status = 0
-
-    cmd = 'sct_dmri_compute_dti -i ' + path_data + folder_data + file_data[0] \
-                + ' -bvec ' + path_data + folder_data + file_data[1] \
-                + ' -bval ' + path_data + folder_data + file_data[2]
-    output += '\n====================================================================================================\n'+cmd+'\n====================================================================================================\n\n'  # copy command
-
-    s, o = commands.getstatusoutput(cmd)
-    status += s
-    output += o
-
-    return status, output
-
-if __name__ == "__main__":
-    # call main function
-    test()
+def test_integrity(param_test):
+    """
+    Test integrity of function
+    """
+    param_test.output += '\nNot implemented.'
+    return param_test

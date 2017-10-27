@@ -37,7 +37,7 @@ def main():
     fname_segmentation = ''
 
     if param.debug:
-        print '\n*** WARNING: DEBUG MODE ON ***\n'
+        sct.printv( '\n*** WARNING: DEBUG MODE ON ***\n')
         status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
         fname_input = ''
         fname_segmentation = path_sct_data + '/t2/t2_seg.nii.gz'
@@ -46,7 +46,7 @@ def main():
         try:
             opts, args = getopt.getopt(sys.argv[1:], 'hi:t:')
         except getopt.GetoptError as err:
-            print str(err)
+            sct.log.error(str(err))
             usage()
         for opt, arg in opts:
             if opt == '-h':
@@ -94,7 +94,7 @@ def main():
 
 
 def usage():
-    print 'USAGE: \n' \
+    print( 'USAGE: \n' \
         'This script check if the point contained in inputdata is in the spinal cord segmentation.\n'\
         '  isct_check_detection -i <inputdata> -t <segmentationdata>\n' \
         '\n'\
@@ -104,7 +104,7 @@ def usage():
         '\n'\
         'OPTIONAL ARGUMENTS\n' \
         '  -h           help. Show this message.\n' \
-        '\n'\
+        '\n')
 
     sys.exit(2)
 
@@ -113,6 +113,7 @@ def usage():
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
+    sct.start_stream_logger()
     # initialize parameters
     param = Param()
     # call main function
