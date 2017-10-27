@@ -121,7 +121,7 @@ def get_parser():
                       mandatory=False,
                       deprecated_by='-vertfile')
     parser.add_option(name='-vertfile',
-                      type_value='image_nifti',
+                      type_value='str',
                       description='Vertebral labeling file. Only use with flag -vert',
                       default_value='./label/template/PAM50_levels.nii.gz',
                       mandatory=False)
