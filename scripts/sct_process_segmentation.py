@@ -123,6 +123,7 @@ def get_parser():
     parser.add_option(name='-vertfile',
                       type_value='image_nifti',
                       description='Vertebral labeling file. Only use with flag -vert',
+                      default_value='./label/template/PAM50_levels.nii.gz',
                       mandatory=False)
     parser.add_option(name='-discfile',
                       type_value='image_nifti',
