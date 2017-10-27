@@ -1,6 +1,6 @@
 # CHANGES TO RELEASE
 
-## v3.1 (2017-10-27)
+## v3.1.0 (2017-10-27)
 [View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.0.8...v3.1)
 
 **BUG**
