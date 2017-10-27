@@ -33,7 +33,7 @@ def find_contours(image, threshold=0.5, smooth_sigma=0.0, verbose=1):
     image_input = image
     if smooth_sigma != 0.0:
         image_input = smoothing(image_input, sigma=smooth_sigma, verbose=verbose)
-    print np.min(image_input), np.max(image_input)
+    sct.printv(np.min(image_input), np.max(image_input))
     contours = measure.find_contours(image_input, threshold)
 
     if verbose == 2:
@@ -407,7 +407,7 @@ def prepare_data():
                 else:
                     group_images.append('r')
 
-    print 'Number of images', len(fname_seg_images)
+    sct.printv('Number of images', len(fname_seg_images))
 
     property_list = ['area',
                      'equivalent_diameter',

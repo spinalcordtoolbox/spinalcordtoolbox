@@ -22,6 +22,7 @@ import os
 from numpy import asarray, sqrt
 import nibabel
 from sct_utils import printv
+import sct_utils as sct
 from msct_parser import Parser
 
 
@@ -60,13 +61,13 @@ def main():
         if '-v' in arguments:
             verbose = int(arguments['-v'])
 
-    # print arguments
+    # sct.printv(arguments)
     if verbose:
-        print '\nCheck input parameters...'
-        print '.. Image:    ' + fname_src
-        print '.. Mask:     ' + fname_mask
-        print '.. tmask:    ' + str(tmask)
-        print '.. zmask:    ' + str(zmask)
+        sct.printv('\nCheck input parameters...')
+        sct.printv('.. Image:    ' + fname_src)
+        sct.printv('.. Mask:     ' + fname_mask)
+        sct.printv('.. tmask:    ' + str(tmask))
+        sct.printv('.. zmask:    ' + str(zmask))
 
     # Extract path, file and extension
     #path_src, file_src, ext_src = extract_fname(fname_src)
@@ -128,7 +129,7 @@ def average_within_mask(fname_src, fname_mask, tmask='', zmask='', verbose=1):
     # compute weighted STD
     weighted_std = sqrt(sum(weight * (data - weighted_average)**2) / ((n / (n - 1)) * sum(weight)))
 
-    # print result
+    # sct.printv(result)
     printv('\n' + str(weighted_average) + ' +/- ' + str(weighted_std), verbose)
 
     return weighted_average, weighted_std
@@ -176,4 +177,5 @@ def get_parser():
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
+    sct.start_stream_logger()
     main()

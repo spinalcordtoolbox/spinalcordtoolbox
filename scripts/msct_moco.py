@@ -46,7 +46,7 @@ def moco(param):
     # get path of the toolbox
     status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 
-    # print arguments
+    # sct.printv(arguments)
     sct.printv('\nInput parameters:', param.verbose)
     sct.printv('  Input file ............' + file_data, param.verbose)
     sct.printv('  Reference file ........' + file_target, param.verbose)
@@ -102,7 +102,7 @@ def moco(param):
 
         # average registered volume with target image
         # N.B. use weighted averaging: (target * nb_it + moco) / (nb_it + 1)
-        if param.iterative_averaging and indice_index < 10 and failed_transfo[it] == 0:
+        if param.iterative_averaging and indice_index < 10 and failed_transfo[it] == 0 and not param.todo == 'apply':
             sct.run('sct_maths -i ' + file_target + ext + ' -mul ' + str(indice_index + 1) + ' -o ' + file_target + ext)
             sct.run('sct_maths -i ' + file_target + ext + ' -add ' + file_data_splitT_moco_num[it] + ext + ' -o ' + file_target + ext)
             sct.run('sct_maths -i ' + file_target + ext + ' -div ' + str(indice_index + 2) + ' -o ' + file_target + ext)

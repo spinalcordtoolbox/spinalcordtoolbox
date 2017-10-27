@@ -22,7 +22,7 @@ import numpy as np
 
 class Param:
     def __init__(self):
-        self.debug = 0
+        self.debug = 1
         self.verbose = 1
 
 
@@ -82,7 +82,7 @@ if __name__ == '__main__':
     param = Param()
 
     if param.debug:
-        print '\n*** WARNING: DEBUG MODE ON ***\n'
+        sct.printv('\n*** WARNING: DEBUG MODE ON ***\n')
     else:
         param_default = Param()
 
