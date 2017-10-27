@@ -197,11 +197,10 @@ def run(cmd, verbose=1, error_exit='error', raise_exception=False):
         # from inspect import stack
         printv(output_final[0:-1], 1, error_exit)
         # in case error_exit is not error (immediate exit), the line below can be run
-        return status_output, output_final[0:-1]
-        # printv('\nERROR in '+stack()[1][1]+'\n', 1, 'error')  # printv(name of parent function)
-        # sys.exit()
         if raise_exception:
-            raise Exception(output_final[0:-1])
+            raise RunError(output_final[0:-1])
+
+        return status_output, output_final[0:-1]
     else:
         # no need to output process.returncode (because different from 0)
         return status_output, output_final[0:-1]
@@ -793,7 +792,8 @@ def printv(string, verbose=1, type='normal'):
             log.error('\n' + bcolors.red + filename + traceback.format_exc() + bcolors.normal)
         else:
             log.error('\n' + filename + traceback.format_exc())
-        sys.exit(2)
+
+        raise RunError('raise in printv, read log above for more info')
 
 
 #=======================================================================================================================
@@ -1233,3 +1233,17 @@ class MsgUser(object):
         if cls.__quiet:
             return
         log.warning("".join((bcolors.yellow, bcolors.bold, "[Warning]", bcolors.normal, " ", msg)))
+
+
+class Error(Exception):
+    """
+    The sct Basic error class
+    """
+    pass
+
+
+class RunError(Error):
+    """
+    sct runtime error
+    """
+    pass
