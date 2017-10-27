@@ -32,7 +32,7 @@ class Param:
 
 # main
 #=======================================================================================================================
-def main():
+def main(args=None):
 
     # Initialization
     fname_mt0 = ''
@@ -42,12 +42,13 @@ def main():
     # remove_tmp_files = param.remove_tmp_files
     # verbose = param.verbose
 
-    # get path of the toolbox
-    # status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+    # check user arguments
+    if not args:
+        args = sys.argv[1:]
 
     # Check input parameters
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
+    arguments = parser.parse(args)
 
     fname_mt0 = arguments['-mt0']
     fname_mt1 = arguments['-mt1']
