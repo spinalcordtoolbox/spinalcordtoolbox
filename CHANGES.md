@@ -1,6 +1,53 @@
 # CHANGES TO RELEASE
 
-## v3.0.7 (2017-08-02)
+## v3.1 (2017-10-27)
+[View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.0.8...v3.1)
+
+**BUG**
+
+ - BUG: fix errors in create_atlas.m [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1499)
+ - Fix a regression bug. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1490)
+ - Used the absolute path to create the temporary label file in propseg [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1487)
+ - Fixes Optic is used by default if -init-mask is used with external file provided [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1485)
+ - Fixed global dependency in sct_process_segmentation call [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1481)
+ - Fixed z-regularization for slicereg [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1465)
+**ENHANCEMENT**
+
+ - raise in sct.run in bad order. Also added specific sct errors [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1503)
+ - More improvements to the viewer [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1496)
+ - Refactored WM atlas creation pipeline and improved documentation  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1492)
+ - Option to install SCT in development mode [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1491)
+ - Added key bindings to the undo, save and help actions. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1480)
+ - Introduced the zoom functionality to the anatomical canvas [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1477)
+ - Improvements on centerline for template generation [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1473)
+ - Major refactoring of testing framework [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1453)
+**FEATURE**
+
+ - Improvement of sct_analyze_lesions: compute percentage of a given tract occupied by lesions [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1500)
+ - sct_get_centerline - new manual feature [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1467)
+ - sct_detect_pmj - new_feature [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1466)
+**TESTING**
+
+ - Major refactoring of testing framework [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1453)
+
+ ## v3.0.8 (2017-09-13)
+[View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.0.7...v3.0.8)
+
+**BUG**
+
+ - Added try/except for QC report [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1457)
+ - Conversion issue for float32 images with large dynamic [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1450)
+ - (Partly-)Fixed bug related to memory issue with diagonalization [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1446)
+ - DEV: fixed bug on centerline when referencing to the PMJ [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1436)
+**ENHANCEMENT**
+
+ - Now possible to input single label at disc (instead of mid-body) [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1451)
+ - Now using N-1 instead of N as denominator for computing the STD. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1441)
+**FEATURE**
+
+ - Function to analyze lesions #1351 [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1439)
+
+ ## v3.0.7 (2017-08-02)
 [View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.0.6...v3.0.7)
 
 **BUG**
