@@ -79,12 +79,6 @@ def get_parser():
                       description='B-value threshold (in s/mm2) below which data is considered as b=0.',
                       mandatory=False,
                       example='50')
-    parser.add_option(name='-o',
-                      type_value='folder_creation',
-                      description='Output folder.',
-                      mandatory=False,
-                      default_value='./',
-                      deprecated_by='-ofolder')
     parser.add_option(name='-ofolder',
                       type_value='folder_creation',
                       description='Output folder.',
