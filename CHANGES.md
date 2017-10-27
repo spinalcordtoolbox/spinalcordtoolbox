@@ -11,6 +11,7 @@
  - Fixes Optic is used by default if -init-mask is used with external file provided [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1485)
  - Fixed global dependency in sct_process_segmentation call [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1481)
  - Fixed z-regularization for slicereg [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1465)
+
 **ENHANCEMENT**
 
  - raise in sct.run in bad order. Also added specific sct errors [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1503)
@@ -21,11 +22,13 @@
  - Introduced the zoom functionality to the anatomical canvas [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1477)
  - Improvements on centerline for template generation [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1473)
  - Major refactoring of testing framework [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1453)
+
 **FEATURE**
 
  - Improvement of sct_analyze_lesions: compute percentage of a given tract occupied by lesions [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1500)
  - sct_get_centerline - new manual feature [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1467)
  - sct_detect_pmj - new_feature [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1466)
+
 **TESTING**
 
  - Major refactoring of testing framework [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1453)
