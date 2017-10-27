@@ -28,7 +28,7 @@
 # viewer.calculate_list_slices()
 # # start the viewer that ask the user to enter a few points along the spinal cord
 # mask_points = viewer.start()
-# print mask_points
+# sct.printv(mask_points)
 
 #
 # About the license: see the file LICENSE.TXT
@@ -248,7 +248,7 @@ class SinglePlot:
             else:
                 # deal with something that should never happen
                 scale_factor = 1.0
-                print event.button
+                sct.printv(event.button)
 
             self.update_xy_lim(x_center=xdata, y_center=ydata,
                                x_scale_factor=scale_factor, y_scale_factor=scale_factor,
@@ -293,7 +293,7 @@ class Viewer(object):
             if isinstance(im, Image):
                 images.append(im)
             else:
-                print "Error, one of the images is actually not an image..."
+                sct.printv("Error, one of the images is actually not an image...")
         return images
 
     def compute_offset(self):
@@ -1878,8 +1878,8 @@ class ClickViewerGroundTruth(ClickViewer):
             self.update_title_text('confirm_to_quit')
 
     def print_useful_points(self):
-        print('Labels positions are : ')
-        print(self.list_points_useful_notation)
+        sct.printv('Labels positions are : ')
+        sct.printv(self.list_points_useful_notation)
 
     def press_save_and_quit(self, event):
         if event.inaxes == self.dic_axis_buttons['save_and_quit']:
@@ -2052,6 +2052,7 @@ def clean():
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
+    sct.start_stream_logger()
     parser = get_parser()
 
     arguments = parser.parse(sys.argv[1:])

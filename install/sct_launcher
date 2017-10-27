@@ -67,6 +67,7 @@ if [ -z "${SCT_LOADED_ONCE}" ]; then
     . ${HOME}/.sctrc
   fi
 
+
   # Will use system python if conda or virtual env are not used
   echo ""
   . ${SCT_PYTHON}/bin/activate ${SCT_PYTHON}

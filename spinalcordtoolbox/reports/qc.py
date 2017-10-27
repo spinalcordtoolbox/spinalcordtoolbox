@@ -17,9 +17,7 @@ import numpy as np
 from scipy import ndimage
 
 
-logging.basicConfig()
-logger = logging.getLogger(__file__)
-
+logger = logging.getLogger("sct.{}".format(__file__))
 
 class QcImage(object):
     """

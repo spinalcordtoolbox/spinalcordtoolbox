@@ -58,6 +58,7 @@ from msct_image import Image
 from msct_multiatlas_seg import Model, Param, ParamData, ParamModel
 from msct_parser import Parser
 from sct_image import set_orientation
+import sct_utils as sct
 from sct_utils import (add_suffix, extract_fname, printv, run,
                        slash_at_the_end, tmp_create)
 
@@ -81,9 +82,12 @@ def get_parser():
                       description="Spinal cord segmentation",
                       mandatory=True,
                       example='sc_seg.nii.gz')
+
+    parser.usage.addSection('SEGMENTATION OPTIONS')
+
     parser.add_option(name="-vertfile",
                       type_value="str",
-                      description='Labels of vertebral levels. This could either be an image (e.g., label/template/PAM50_levels.nii.gz) or a text file that specifies "slice,level" at each line. Example:\n'
+                      description='Labels of vertebral levels used as prior for the segmentation. This could either be an image (e.g., label/template/PAM50_levels.nii.gz) or a text file that specifies "slice,level" at each line. Example:\n'
                       "0,3\n"
                       "1,3\n"
                       "2,4\n"
@@ -98,7 +102,6 @@ def get_parser():
                       mandatory=False,
                       deprecated_by='-vertfile')
 
-    parser.usage.addSection('SEGMENTATION OPTIONS')
     parser.add_option(name="-denoising",
                       type_value='multiple_choice',
                       description="1: Adaptative denoising from F. Coupe algorithm, 0: no  WARNING: It affects the model you should use (if denoising is applied to the target, the model should have been computed with denoising too)",
@@ -140,7 +143,9 @@ def get_parser():
                       description="Path to the computed model",
                       mandatory=False,
                       example='/home/jdoe/gm_seg_model/')
-    parser.usage.addSection('\nOUTPUT OTIONS')
+
+    parser.usage.addSection('\nOUTPUT OPTIONS')
+
     parser.add_option(name="-res-type",
                       type_value='multiple_choice',
                       description="Type of result segmentation : binary or probabilistic",
@@ -149,22 +154,26 @@ def get_parser():
                       example=['bin', 'prob'])
     parser.add_option(name="-ratio",
                       type_value='multiple_choice',
-                      description="Compute GM/WM CSA ratio by slice or by vertebral level (average across levels)",
+                      description="Compute GM/WM CSA ratio by slice or by vertebral level (average across levels). For no computation of ratio, set to 0.",
                       mandatory=False,
                       default_value=ParamSeg().ratio,
                       example=['0', 'slice', 'level'])
-    parser.add_option(name="-ref",
-                      type_value="file",
-                      description="Reference segmentation of the gray matter for segmentation validation --> output Dice coefficient and Hausdorff's and median distances)",
-                      mandatory=False,
-                      example='manual_gm_seg.nii.gz')
     parser.add_option(name="-ofolder",
                       type_value="folder_creation",
                       description="Output folder",
                       mandatory=False,
                       default_value=ParamSeg().path_results,
                       example='gm_segmentation_results/')
-    parser.usage.addSection('MISC')
+
+    parser.usage.addSection('\nQC OPTIONS')
+
+    parser.add_option(name="-ref",
+                      type_value="file",
+                      description="Compute DICE coefficient, Hausdorff's and median distances between output segmentation and gold-standard segmentation specified here",
+                      mandatory=False,
+                      example='manual_gm_seg.nii.gz')
+
+    parser.usage.addSection('\nMISC')
     parser.add_option(name='-qc',
                       type_value='multiple_choice',
                       description='Output images for quality control.',
@@ -623,8 +632,8 @@ class SegmentGM:
             fname_gmseg = im_res_gmseg.absolutepath
             fname_wmseg = im_res_wmseg.absolutepath
 
-        sct_process_segmentation.main(['-i', fname_gmseg, '-p', 'csa', '-ofolder', 'gm_csa'])
-        sct_process_segmentation.main(['-i', fname_wmseg, '-p', 'csa', '-ofolder', 'wm_csa'])
+        sct_process_segmentation.main(['-i', fname_gmseg, '-p', 'csa', '-ofolder', 'gm_csa', '-no-angle', '1'])
+        sct_process_segmentation.main(['-i', fname_wmseg, '-p', 'csa', '-ofolder', 'wm_csa', '-no-angle', '1'])
 
         gm_csa = open('gm_csa/csa_per_slice.txt', 'r')
         wm_csa = open('wm_csa/csa_per_slice.txt', 'r')
@@ -728,7 +737,7 @@ def main(args=None):
     elapsed_time = time.time() - start_time
     printv('\nFinished! Elapsed time: ' + str(int(round(elapsed_time))) + 's', param.verbose)
 
-    # save quality control and print info
+    # save quality control and sct.printv(info)
     if param_seg.type_seg == 'bin':
         wm_col = 'Red'
         gm_col = 'Blue'
@@ -753,4 +762,5 @@ def main(args=None):
     printv('fslview ' + param_seg.fname_im_original + ' ' + seg_gm.fname_res_gmseg + ' -b ' + b + ' -l ' + gm_col + ' -t 0.7 ' + seg_gm.fname_res_wmseg + ' -b ' + b + ' -l ' + wm_col + ' -t 0.7  & \n', param.verbose, 'info')
 
 if __name__ == "__main__":
+    sct.start_stream_logger()
     main()

@@ -9,6 +9,9 @@
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
+
+# TODO: offer the option not to compute Hausdorff and Dice at the end: too long for testing.
+
 import os
 import sys
 from msct_parser import Parser
@@ -525,6 +528,7 @@ def get_parser():
 
 
 if __name__ == "__main__":
+    sct.start_stream_logger()
     parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
     ml_param = Param()

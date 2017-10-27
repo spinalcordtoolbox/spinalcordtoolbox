@@ -166,7 +166,6 @@ class Transform:
         if nt == 1:
             # Apply transformation
             sct.printv('\nApply transformation...', verbose)
-            # print 'HOLA1'
             if nz in [0, 1]:
                 dim = '2'
             else:
@@ -280,6 +279,7 @@ def main(args=None):
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
+    sct.start_stream_logger()
     # # initialize parameters
     param = Param()
     # call main function

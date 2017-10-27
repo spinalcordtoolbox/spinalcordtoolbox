@@ -40,25 +40,25 @@ procedures.
 ## References
 
 #### Spinal Cord Toolbox
-- [De Leener B, Levy S, Dupont SM, Fonov VS, Stikov N, Louis Collins D, Callot V, Cohen-Adad J. SCT: Spinal Cord Toolbox, an open-source software for processing spinal cord MRI data. Neuroimage 2016.](https://www.dropbox.com/s/mrv4uid659vp1qn/DeLeener16_SCT.pdf?dl=0)
+- [De Leener B, Levy S, Dupont SM, Fonov VS, Stikov N, Louis Collins D, Callot V, Cohen-Adad J. SCT: Spinal Cord Toolbox, an open-source software for processing spinal cord MRI data. Neuroimage. 2017 Jan 15;145(Pt A):24-43.](https://www.ncbi.nlm.nih.gov/pubmed/27720818)
 
 #### Template and Atlas
-- [Fonov et al. Framework for integrated MRI average of the spinal cord white and gray matter: The MNI-Poly-AMU template. Neuroimage 2014;102P2:817-827.](https://dl.dropboxusercontent.com/u/20592661/publications/Fonov_NIMG14_MNI-Poly-AMU.pdf)
-- [Taso et al. Construction of an in vivo human spinal cord atlas based on high-resolution MR images at cervical and thoracic levels: preliminary results. MAGMA, Magn Reson Mater Phy 2014;27(3):257-267](https://dl.dropboxusercontent.com/u/20592661/publications/taso_magma_2014.pdf)
-- [Lévy et al. White matter atlas of the human spinal cord with estimation of partial volume effect. Neuroimage 2015 (in press); doi: 10.1016/j.neuroimage.2015.06.040](http://www.sciencedirect.com/science/article/pii/S1053811915005431)
-- [Cadotte et al. Characterizing the Location of Spinal and Vertebral Levels in the Human Cervical Spinal Cord. AJNR Am J Neuroradiol 2014;36(5):1-8.](https://dl.dropboxusercontent.com/u/20592661/publications/Cadotte_AJNR14_SpinalLevel.pdf)
+- [Fonov et al. Framework for integrated MRI average of the spinal cord white and gray matter: The MNI-Poly-AMU template. Neuroimage 2014;102P2:817-827.](https://www.ncbi.nlm.nih.gov/pubmed/25204864)
+- [Taso et al. Construction of an in vivo human spinal cord atlas based on high-resolution MR images at cervical and thoracic levels: preliminary results. MAGMA, Magn Reson Mater Phy 2014;27(3):257-267](https://www.ncbi.nlm.nih.gov/pubmed/24052240)
+- [Lévy et al. White matter atlas of the human spinal cord with estimation of partial volume effect. Neuroimage. 2015 Oct 1;119:262-71](https://www.ncbi.nlm.nih.gov/pubmed/26099457)
+- [Cadotte et al. Characterizing the Location of Spinal and Vertebral Levels in the Human Cervical Spinal Cord. AJNR Am J Neuroradiol 2014;36(5):1-8.](https://www.ncbi.nlm.nih.gov/pubmed/25523587)
 
 #### Segmentation
-- [Dupont SM, De Leener B, Taso M, Le Troter A, Stikov N, Callot V, Cohen-Adad J. Fully-integrated framework for the segmentation and registration of the spinal cord white and gray matter. Neuroimage 2016. doi: 10.1016/j.neuroimage.2016.09.026](https://www.ncbi.nlm.nih.gov/pubmed/27663988)
-- [De Leener et al. Robust, accurate and fast automatic segmentation of the spinal cord. Neuroimage 2014;98:528-536.](https://dl.dropboxusercontent.com/u/20592661/publications/DeLeener_NIMG14_PropSeg.pdf)
+- [Dupont SM, De Leener B, Taso M, Le Troter A, Stikov N, Callot V, Cohen-Adad J. Fully-integrated framework for the segmentation and registration of the spinal cord white and gray matter. Neuroimage. 2017 Apr 15;150:358-372.](https://www.ncbi.nlm.nih.gov/pubmed/27663988)
+- [De Leener et al. Robust, accurate and fast automatic segmentation of the spinal cord. Neuroimage 2014;98:528-536.](https://www.ncbi.nlm.nih.gov/pubmed/24780696)
 - [Ullmann et al. Automatic labeling of vertebral levels using a robust template-based approach. Int J Biomed Imaging 2014;Article ID 719520.](http://downloads.hindawi.com/journals/ijbi/2014/719520.pdf)
-- [De Leener et al. Automatic segmentation of the spinal cord and spinal canal coupled with vertebral labeling. IEEE Transactions on Medical Imaging 2015;34(8):1705-1718](https://www.dropbox.com/s/2tsp1juxcvuq4bl/PID3727605.pdf)
+- [De Leener et al. Automatic segmentation of the spinal cord and spinal canal coupled with vertebral labeling. IEEE Transactions on Medical Imaging 2015;34(8):1705-1718](https://www.ncbi.nlm.nih.gov/pubmed/26011879)
 
 #### Registration
-- [De Leener B, Mangeat G, Dupont S, Martin AR, Callot V, Stikov N, Fehlings MG, Cohen-Adad J. Topologically-preserving straightening of spinal cord MRI. J Magn Reson Imaging 2016. doi: 10.1002/jmri.25622](https://www.dropbox.com/s/8bmnapj2bws7roc/De%20Leener%20et%20al.%202017%20-%20Topologically%20preserving%20straightening%20of%20spinal%20cord%20MRI.pdf?dl=0)
-- [De Leener et al. Template-based analysis of multi-parametric MRI data with the Spinal Cord Toolbox. Proc. ISMRM, Toronto, Canada 2015](https://dl.dropboxusercontent.com/u/20592661/publications/deleener_ismrm15_sct.pdf)
-- [Cohen-Adad et al. Slice-by-slice regularized registration for spinal cord MRI: SliceReg. Proc. ISMRM, Toronto, Canada 2015](https://dl.dropboxusercontent.com/u/20592661/publications/cohenadad_ismrm15_slicereg.pdf)
-- [Taso et al. A reliable spatially normalized template of the human spinal cord--Applications to automated white matter/gray matter segmentation and tensor-based morphometry (TBM) mapping of gray matter alterations occurring with age. Neuroimage 2015](https://www.ncbi.nlm.nih.gov/pubmed/26003856)
+- [De Leener B, Mangeat G, Dupont S, Martin AR, Callot V, Stikov N, Fehlings MG, Cohen-Adad J. Topologically-preserving straightening of spinal cord MRI. J Magn Reson Imaging. 2017 Oct;46(4):1209-1219](https://www.ncbi.nlm.nih.gov/pubmed/28130805)
+- [De Leener et al. Template-based analysis of multi-parametric MRI data with the Spinal Cord Toolbox. Proc. ISMRM, Toronto, Canada 2015](https://www.dropbox.com/s/zb2earfp7aqmfl2/deleener_ismrm15_sct.pdf?dl=0)
+- [Cohen-Adad et al. Slice-by-slice regularized registration for spinal cord MRI: SliceReg. Proc. ISMRM, Toronto, Canada 2015](https://www.dropbox.com/s/v3bb3etbq4gb1l1/cohenadad_ismrm15_slicereg.pdf?dl=0)
+- [Taso et al. A reliable spatially normalized template of the human spinal cord--Applications to automated white matter/gray matter segmentation and tensor-based morphometry (TBM) mapping of gray matter alterations occurring with age. Neuroimage. 2015 Aug 15;117:20-8](https://www.ncbi.nlm.nih.gov/pubmed/26003856)
 
 #### Applications
 - [Kong et al. Intrinsically organized resting state networks in the human spinal cord. PNAS 2014](http://www.pnas.org/content/111/50/18067.abstract)
@@ -88,6 +88,8 @@ procedures.
 - [Martin et al. Clinically Feasible Microstructural MRI to Quantify Cervical Spinal Cord Tissue Injury Using DTI, MT, and T2*-Weighted Imaging: Assessment of Normative Data and Reliability. AJNR 2017](https://www.ncbi.nlm.nih.gov/pubmed/28428213)
 - [Martin et al. A Novel MRI Biomarker of Spinal Cord White Matter Injury: T2*-Weighted White Matter to Gray Matter Signal Intensity Ratio. AJNR 2017](https://www.ncbi.nlm.nih.gov/pubmed/28428212)
 - [David et al. The efficiency of retrospective artifact correction methods in improving the statistical power of between-group differences in spinal cord DTI. Neuroimage 2017](http://www.sciencedirect.com/science/article/pii/S1053811917305220)
+- [Battiston et al. An optimized framework for quantitative Magnetization Transfer imaging of the cervical spinal cord in vivo. Magnetic Resonance in Medicine 2017](http://onlinelibrary.wiley.com/doi/10.1002/mrm.26909/full)
+- [Rasoanandrianina et al., Region-specific impairment of the cervical spinal cord (SC) in amyotrophic lateral sclerosis: A preliminary study using SC templates and quantitative MRI (diffusion tensor imaging/inhomogeneous magnetization transfer). NMR in Biomedicine 2017](http://onlinelibrary.wiley.com/doi/10.1002/nbm.3801/full)
 
 
 ## Citing spinalcordtoolbox

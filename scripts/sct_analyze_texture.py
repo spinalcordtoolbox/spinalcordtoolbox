@@ -19,6 +19,7 @@ from skimage.feature import greycomatrix, greycoprops
 from msct_image import Image
 from msct_parser import Parser
 from sct_image import set_orientation, get_orientation
+import sct_utils as sct
 from sct_utils import (add_suffix, extract_fname, printv, run,
                        slash_at_the_end, Timer, tmp_create)
 
@@ -67,6 +68,10 @@ def get_parser():
                       mandatory=False,
                       default_value=Param().path_results,
                       example='/my_texture/')
+    parser.add_option(name="-igt",
+                      type_value="image_nifti",
+                      description="File name of ground-truth texture metrics.",
+                      mandatory=False)
     parser.add_option(name="-r",
                       type_value="multiple_choice",
                       description="Remove temporary files.",
@@ -339,4 +344,5 @@ def main(args=None):
 
 
 if __name__ == "__main__":
+    sct.start_stream_logger()
     main()
