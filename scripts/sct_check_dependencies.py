@@ -60,7 +60,6 @@ def main():
     complete_test = param.complete_test
     os_running = 'not identified'
     dipy_version = '0.10.0dev'
-    print
 
     # Check input parameters
     parser = get_parser()
@@ -402,6 +401,7 @@ def get_parser():
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
+    sct.start_stream_logger()
     # initialize parameters
     param = Param()
     # call main function

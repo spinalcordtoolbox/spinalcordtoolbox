@@ -13,7 +13,7 @@
 import sys
 
 from msct_parser import Parser
-from sct_utils import printv
+import sct_utils as sct
 
 
 class Param:
@@ -100,7 +100,7 @@ def main(args = None):
 
     # compute DTI
     if not compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, file_mask):
-        printv('ERROR in compute_dti()', 1, 'error')
+        sct.printv('ERROR in compute_dti()', 1, 'error')
 
 
 # compute_dti
@@ -119,7 +119,7 @@ def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, file_mask):
     from msct_image import Image
     nii = Image(fname_in)
     data = nii.data
-    print('data.shape (%d, %d, %d, %d)' % data.shape)
+    sct.printv('data.shape (%d, %d, %d, %d)' % data.shape)
 
     # open bvecs/bvals
     from dipy.io import read_bvals_bvecs
@@ -129,13 +129,13 @@ def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, file_mask):
 
     # mask and crop the data. This is a quick way to avoid calculating Tensors on the background of the image.
     if not file_mask == '':
-        printv('Open mask file...', param.verbose)
+        sct.printv('Open mask file...', param.verbose)
         # open mask file
         nii_mask = Image(file_mask)
         mask = nii_mask.data
 
     # fit tensor model
-    printv('Computing tensor using "' + method + '" method...', param.verbose)
+    sct.printv('Computing tensor using "' + method + '" method...', param.verbose)
     import dipy.reconst.dti as dti
     if method == 'standard':
         tenmodel = dti.TensorModel(gtab)
@@ -153,7 +153,7 @@ def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, file_mask):
             tenfit = dti_restore.fit(data, mask)
 
     # Compute metrics
-    printv('Computing metrics...', param.verbose)
+    sct.printv('Computing metrics...', param.verbose)
     # FA
     from dipy.reconst.dti import fractional_anisotropy
     nii.data = fractional_anisotropy(tenfit.evals)
@@ -194,7 +194,7 @@ def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, file_mask):
 #     bvecs = array([[float(j.strip("\n")) for j in list_bvecs[i].split(" ")] for i in range(len(list_bvecs))])
 #     # make sure one dimension is "3"
 #     if not 3 in bvecs.shape:
-#         printv('ERROR: bvecs should be text file with 3 lines (or columns).', 1, 'error')
+#         sct.printv('ERROR: bvecs should be text file with 3 lines (or columns).', 1, 'error')
 #     return bvecs
 #
 
@@ -202,6 +202,7 @@ def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, file_mask):
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
+    sct.start_stream_logger()
     # initialize parameters
     param = Param()
     # call main function

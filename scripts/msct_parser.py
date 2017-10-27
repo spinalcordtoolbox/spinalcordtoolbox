@@ -7,13 +7,13 @@
 # If the user make a misspelling, the parser will search in the option list what are nearest option and suggests it to the user
 #
 # Type of options are:
-# - file, folder (check existence)
-# - folder_creation (check existence and if does not exist, create it if writing permission)
-# - file_output (check writing permission)
-# - str, int, float, long, complex (check if input is the correct type)
-# - multiple_choice
-# - coordinate [x, y, z, value]
-# - lists, for example list of coordinate:
+# - "file", "folder" (check existence)
+# - "folder_creation" (check existence and if does not exist, create it if writing permission)
+# - "file_output" (check writing permission)
+# - "str", "int", "float", "long", "complex" (check if input is the correct type)
+# - "multiple_choice"
+# - "Coordinate" [x, y, z, value]
+# - lists of types: example: [[','],'int'] or [[':'],'coordinate']
 # - None, return True when detected (example of boolean)
 #
 # The parser returns a dictionary with all mandatory arguments as well as optional arguments with default values.
@@ -61,7 +61,7 @@
 # if "-dim" in arguments:
 #     dim = arguments["-dim"]
 # else:
-#     print string_usage
+#     sct.printv(string_usage)
 # exit(1)
 # for non mandatory arguments :
 # if "-output" in arguments:
@@ -77,6 +77,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+import os
 import sct_utils as sct
 from msct_types import Coordinate  # DO NOT REMOVE THIS LINE!!!!!!! IT IS MANDATORY!
 
@@ -235,13 +236,11 @@ class Option:
     def checkFolder(self, param):
         # check if the folder exist. If not, create it.
         if self.parser.check_file_exist:
-            sct.printv("Check folder existence...")
             sct.check_folder_exist(param, 0)
         return param
 
     def checkFolderCreation(self, param):
         # check if the folder exist. If not, create it.
-        sct.printv("Check folder existence...")
         if self.parser.check_file_exist:
             result_creation = sct.create_folder(param)
         else:
@@ -277,13 +276,13 @@ class Parser:
         # if you only want to parse a string and not checking for file existence, change flag check_file_exist
         self.check_file_exist = check_file_exist
 
-        # if no arguments, print usage and quit
+        # if no arguments, sct.printv(usage and quit)
         if len(arguments) == 0 and len([opt for opt in self.options if self.options[opt].mandatory]) != 0:
             self.usage.error()
 
         # check if help is asked by the user
         if "-h" in arguments:
-            print(self.usage.generate())
+            sct.printv(self.usage.generate())
             exit(1)
 
         if "-sf" in arguments:
@@ -360,7 +359,15 @@ class Parser:
                     if param in self.options:
                         self.usage.error("ERROR: Option " + self.options[arg].name + " needs an argument...")
 
-                    dictionary[arg] = self.options[arg].check_integrity(param)
+                    # check if this flag has already been used before, then create a list and append this string to the previous string
+                    if arg in dictionary:
+                        # check if dictionary[arg] is already a list
+                        if isinstance(dictionary[arg], list):
+                            dictionary[arg].append().check_integrity(param)
+                        else:
+                            dictionary[arg] = [dictionary[arg], self.options[arg].check_integrity(param)]
+                    else:
+                        dictionary[arg] = self.options[arg].check_integrity(param)
                     skip = True
                 else:
                     dictionary[arg] = True
@@ -405,13 +412,19 @@ class Parser:
                 # if key is listed in the do_not_add_path variable, do nothing
                 if not key in do_not_add_path:
                     # If input file is a list, we need to check what type of list it is.
-                    # If it contains files, it must be updated.
-                    if (input_file and self.options[key].type_value in Option.OPTION_PATH_INPUT) or (output_file and self.options[key].type_value in Option.OPTION_PATH_OUTPUT):
-                        if isinstance(self.options[key].type_value, list):
-                            for i, value in enumerate(option):
-                                option[i] = path_to_add + value
-                            dictionary[key] = option
-                        else:
+                    if isinstance(self.options[key].type_value, list):
+                        for i, value in enumerate(option):
+                            # check if value is a string
+                            if isinstance(value, str):
+                                # If value is a file, path must be updated
+                                if os.path.isfile(path_to_add + value):
+                                    option[i] = path_to_add + value
+                    # if not a list:
+                    else:
+                        # If it contains files, it must be updated.
+                        if self.options[key].type_value is None:
+                            dictionary[key] = ''
+                        elif (input_file and self.options[key].type_value in Option.OPTION_PATH_INPUT) or (output_file and self.options[key].type_value in Option.OPTION_PATH_OUTPUT):
                             # if the option contains an "no image file", do nothing
                             if self.options[key].list_no_image is not None:
                                 if str(option) in self.options[key].list_no_image:
@@ -571,7 +584,7 @@ class Usage:
         if error:
             self.generate(error)
         else:
-            print self.generate()
+            sct.printv(self.generate())
             from sys import exit
             exit(0)
 
@@ -752,13 +765,13 @@ class DocSourceForge:
         file_doc_sf.write(doc)
         file_doc_sf.close()
 
-        print doc
+        sct.printv(doc)
 
     def error(self, error=None):
         if error:
             self.generate(error)
         else:
-            print self.generate()
+            sct.printv(self.generate())
             from sys import exit
             exit(0)
 

@@ -15,8 +15,8 @@
 from msct_image import Image
 from sct_utils import run, printv, extract_fname
 from scipy.misc import toimage
-# from sct_utils import tmp_create, tmp_copy_nifti
-# from os import chdir
+
+import sct_utils as sct
 
 
 class WarpingField(Image):
@@ -31,7 +31,7 @@ class WarpingField(Image):
     def next(self):
         if self.iteration <= self.num_of_frames:
             result = Image(self)
-            print "Iteration #" + str(self.iteration)
+            sct.printv("Iteration #" + str(self.iteration))
             result.data *= float(self.iteration) / float(self.num_of_frames)
             result.file_name = "tmp." + result.file_name + "_" + str(self.iteration)
             self.iteration += 1
@@ -40,6 +40,7 @@ class WarpingField(Image):
             raise StopIteration()
 
 if __name__ == "__main__":
+    sct.start_stream_logger()
     from msct_parser import Parser
     import sys
 

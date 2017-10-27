@@ -103,11 +103,11 @@ def main(args=None):
         verbose = int(arguments['-v'])
 
     # Display arguments
-    print '\nCheck input arguments...'
-    print '  Volume to smooth .................. ' + fname_anat
-    print '  Centerline ........................ ' + fname_centerline
-    print '  Sigma (mm) ........................ ' + str(sigma)
-    print '  Verbose ........................... ' + str(verbose)
+    sct.printv('\nCheck input arguments...')
+    sct.printv('  Volume to smooth .................. ' + fname_anat)
+    sct.printv('  Centerline ........................ ' + fname_centerline)
+    sct.printv('  Sigma (mm) ........................ ' + str(sigma))
+    sct.printv('  Verbose ........................... ' + str(verbose))
 
     # Check that input is 3D:
     from msct_image import Image
@@ -144,11 +144,11 @@ def main(args=None):
     convert('centerline' + ext_centerline, 'centerline.nii')
 
     # Change orientation of the input image into RPI
-    print '\nOrient input volume to RPI orientation...'
+    sct.printv('\nOrient input volume to RPI orientation...')
     fname_anat_rpi = set_orientation('anat.nii', 'RPI', filename=True)
     move(fname_anat_rpi, 'anat_rpi.nii')
     # Change orientation of the input image into RPI
-    print '\nOrient centerline to RPI orientation...'
+    sct.printv('\nOrient centerline to RPI orientation...')
     fname_centerline_rpi = set_orientation('centerline.nii', 'RPI', filename=True)
     move(fname_centerline_rpi, 'centerline_rpi.nii')
 
@@ -168,11 +168,11 @@ def main(args=None):
         sct.run('sct_straighten_spinalcord -i anat_rpi.nii -s centerline_rpi.nii -qc 0 -x spline', verbose)
 
     # Smooth the straightened image along z
-    print '\nSmooth the straightened image along z...'
+    sct.printv('\nSmooth the straightened image along z...')
     sct.run('sct_maths -i anat_rpi_straight.nii -smooth 0,0,' + str(sigma) + ' -o anat_rpi_straight_smooth.nii', verbose)
 
     # Apply the reversed warping field to get back the curved spinal cord
-    print '\nApply the reversed warping field to get back the curved spinal cord...'
+    sct.printv('\nApply the reversed warping field to get back the curved spinal cord...')
     sct.run('sct_apply_transfo -i anat_rpi_straight_smooth.nii -o anat_rpi_straight_smooth_curved.nii -d anat.nii -w warp_straight2curve.nii.gz -x spline', verbose)
 
     # replace zeroed voxels by original image (issue #937)
@@ -190,17 +190,18 @@ def main(args=None):
     os.chdir('..')
 
     # Generate output file
-    print '\nGenerate output file...'
-    sct.generate_output_file(path_tmp + '/anat_rpi_straight_smooth_curved_nonzero.nii', file_anat + '_smooth' + ext_anat)
+    sct.printv('\nGenerate output file...')
+    sct.generate_output_file(path_tmp + '/anat_rpi_straight_smooth_curved_nonzero.nii',
+                             file_anat + '_smooth' + ext_anat)
 
     # Remove temporary files
     if remove_temp_files == 1:
-        print('\nRemove temporary files...')
+        sct.printv('\nRemove temporary files...')
         sct.run('rm -rf ' + path_tmp)
 
     # Display elapsed time
     elapsed_time = time.time() - start_time
-    print '\nFinished! Elapsed time: ' + str(int(round(elapsed_time))) + 's\n'
+    sct.printv('\nFinished! Elapsed time: ' + str(int(round(elapsed_time))) + 's\n')
 
     # to view results
     sct.printv('Done! To view results, type:', verbose)
@@ -210,6 +211,7 @@ def main(args=None):
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
+    sct.start_stream_logger()
     # initialize parameters
     # param = Param()
     # call main function
@@ -236,12 +238,12 @@ if __name__ == "__main__":
 # z_centerline = [iz for iz in range(0, nz, 1) if data_c[:,:,iz].any() ]
 # nz_nonz = len(z_centerline)
 # if nz_nonz==0 :
-#     print '\nERROR: Centerline is empty'
+#     sct.printv('\nERROR: Centerline is empty')
 #     sys.exit()
 # x_centerline = [0 for iz in range(0, nz_nonz, 1)]
 # y_centerline = [0 for iz in range(0, nz_nonz, 1)]
-# #print("z_centerline", z_centerline,nz_nonz,len(x_centerline))
-# print '\nGet center of mass of the centerline ...'
+# #sct.printv("z_centerline", z_centerline,nz_nonz,len(x_centerline)))
+# sct.printv('\nGet center of mass of the centerline ...')
 # for iz in xrange(len(z_centerline)):
 #     x_centerline[iz], y_centerline[iz] = ndimage.measurements.center_of_mass(array(data_c[:,:,z_centerline[iz]]))
 #     data_temp[x_centerline[iz], y_centerline[iz], z_centerline[iz]] = 1

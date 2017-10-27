@@ -31,7 +31,7 @@ def spline_2D(z_centerline, x_centerline):
 
     m = mean(x_centerline)
     sigma = std(x_centerline)
-    print (m - sqrt(2 * m)) * (sigma**2), (m + sqrt(2 * m)) * (sigma**2)
+    sct.printv((m - sqrt(2 * m)) * (sigma**2), (m + sqrt(2 * m)) * (sigma**2))
 
     smoothing_param = (((m + sqrt(2 * m)) * (sigma**2)) + ((m - sqrt(2 * m)) * (sigma**2))) / 2
     sct.printv('\nSmoothing results with spline...')
@@ -75,7 +75,7 @@ def norm(x, y, z, p1, p2, p3):
     s = 0
     for i in xrange(len(x) - 1):
         s += sqrt((p1 * (x[i + 1] - x[i]))**2 + (p2 * (y[i + 1] - y[i]))**2 + (p3 * (z[i + 1] - z[i])**2))
-    print "centerline size: ", s
+    sct.printv("centerline size: ", s)
     return s
 
 
@@ -195,7 +195,7 @@ def non_parametric(x, y, f = 0.25, iter = 3):
 #=======================================================================================================================
 def opt_f(x, y, z):
     from numpy import max, mean, linalg
-    print 'optimizing f parameter in non-parametric...'
+    sct.printv('optimizing f parameter in non-parametric...')
     f_list = [0.1, 0.15, 0.20, 0.22, 0.25, 0.3, 0.35, 0.40, 0.45, 0.5]
     msx_min = 2
     msy_min = 2
@@ -240,13 +240,13 @@ def opt_f(x, y, z):
             # ax.legend(handles, labels)
             # plt.show()
 
-            print 'AMP', amp_xd, amp_yd
-            print 'MEAN', mean_xd, mean_yd, mean
+            sct.printv('AMP', amp_xd, amp_yd)
+            sct.printv('MEAN', mean_xd, mean_yd, mean)
 
         except linalg.linalg.LinAlgError:
-            print 'LinAlgError raised'
-    print msx_min, f_opt_x
-    print msy_min, f_opt_y
+            sct.printv('LinAlgError raised')
+    sct.printv(msx_min, f_opt_x)
+    sct.printv(msy_min, f_opt_y)
     return f_opt_x, f_opt_y
 
 
@@ -285,7 +285,7 @@ def b_spline_nurbs(x, y, z, fname_centerline=None, degree=3, point_number=3000, 
     # if control_points == 0:
     #     nurbs = NURBS(degree, point_number, data) # BE very careful with the spline order that you choose : if order is too high ( > 4 or 5) you need to set a higher number of Control Points (cf sct_nurbs ). For the third argument (number of points), give at least len(z_centerline)+500 or higher
     # else:
-    #     print 'In b_spline_nurbs we get control_point = ', control_points
+    #     sct.printv('In b_spline_nurbs we get control_point = ', control_points)
     #     nurbs = NURBS(degree, point_number, data, False, control_points)
 
     if nbControl == -1:
@@ -373,11 +373,11 @@ def b_spline_nurbs(x, y, z, fname_centerline=None, degree=3, point_number=3000, 
 #=======================================================================================================================
 def b_spline_nurbs_itk(fname_centerline, numberOfLevels=10):
 
-    print '\nFitting centerline using B-spline approximation (using ITK)...'
+    sct.printv('\nFitting centerline using B-spline approximation (using ITK)...')
     import sct_utils as sct
     status, output = sct.run("isct_bsplineapproximator -i " + fname_centerline + " -o tmp.centerline.txt -l " + str(numberOfLevels))
     if (status != 0):
-        print "WARNING: \n" + output
+        sct.printv("WARNING: \n" + output)
 
     f = open('tmp.centerline.txt', 'r')
     x_fit = []
@@ -422,7 +422,7 @@ def getSize(x, y, z, file_name=None):
     s = 0
     for i in xrange(len(x) - 1):
         s += sqrt((p1 * (x[i + 1] - x[i]))**2 + (p2 * (y[i + 1] - y[i]))**2 + (p3 * (z[i + 1] - z[i])**2))
-    # print "centerline size: ", s
+    # sct.printv("centerline size: ", s)
     return s
 
 
@@ -506,7 +506,7 @@ def mean_squared_error(x, x_fit):
         mse *= (1 / float(n))
         return mse
     else:
-        print "cannot calculate the mean squared error, check if the argument have the same length. \n"
+        sct.printv("cannot calculate the mean squared error, check if the argument have the same length. \n")
 
 
 #=======================================================================================================================

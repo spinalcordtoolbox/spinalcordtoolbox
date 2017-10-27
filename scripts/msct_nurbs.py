@@ -65,7 +65,7 @@ import math
 from sys import exit
 
 import numpy as np
-
+import sct_utils as sct
 
 class NURBS():
     def __init__(self, degre=3, precision=1000, liste=None, sens=False, nbControl=None, verbose=1, tolerance=0.01, maxControlPoints=50, all_slices=True, twodim=False, weights=True):
@@ -117,7 +117,7 @@ class NURBS():
                 self.nbControle = self.degre + 1
                 nb_points = len(P_x)
                 if self.nbControle > nb_points - 1:
-                    print 'ERROR : There are too few points to compute. The number of points of the curve must be strictly superior to degre +2 which is: ', self.nbControle, '. Either change degre to a lower value, either add points to the curve.'
+                    sct.printv('ERROR : There are too few points to compute. The number of points of the curve must be strictly superior to degre +2 which is: ', self.nbControle, '. Either change degre to a lower value, either add points to the curve.')
                     exit(2)
 
                 # compute weights based on curve density
@@ -147,7 +147,7 @@ class NURBS():
 
                     # compute the nurbs based on input data and number of controle points
                     if verbose >= 1:
-                        print 'Test: # of control points = ' + str(self.nbControle)
+                        sct.printv('Test: # of control points = ' + str(self.nbControle))
                     try:
                         if not twodim:
                             self.pointsControle = self.reconstructGlobalApproximation(P_x, P_y, P_z, self.degre, self.nbControle, w)
@@ -177,14 +177,14 @@ class NURBS():
                         error_curve /= float(len(P_x))
 
                         if verbose >= 1:
-                            print 'Error on approximation = ' + str(round(error_curve, 2)) + ' mm'
+                            sct.printv('Error on approximation = ' + str(round(error_curve, 2)) + ' mm')
 
                         # Create a list of parameters that have worked in order to call back the last one that has worked
                         list_param_that_worked.append([self.nbControle, self.pointsControle, error_curve])
 
                     except Exception as ex:
                         if verbose >= 1:
-                            print ex
+                            sct.log.error(ex)
                         error_curve = last_error_curve + 10000.0
 
                     # prepare for next iteration
@@ -205,12 +205,12 @@ class NURBS():
 
                 if verbose >= 1:
                     if self.nbControle != nbControle_that_last_worked:
-                        print 'The fitting of the curve was done using ', nbControle_that_last_worked, ' control points: the number that gave the best results. \nError on approximation = ' + str(round(self.error_curve_that_last_worked, 2)) + ' mm'
+                        sct.printv('The fitting of the curve was done using ', nbControle_that_last_worked, ' control points: the number that gave the best results. \nError on approximation = ' + str(round(self.error_curve_that_last_worked, 2)) + ' mm')
                     else:
-                        print 'Number of control points of the optimal NURBS = ' + str(self.nbControle)
+                        sct.printv('Number of control points of the optimal NURBS = ' + str(self.nbControle))
             else:
                 if verbose >= 1:
-                    print 'In NURBS we get nurbs_ctl_points = ', nbControl
+                    sct.printv('In NURBS we get nurbs_ctl_points = ', nbControl)
                 w = [1.0] * len(P_x)
                 self.nbControl = nbControl  # increase nbeControle if "short data"
                 if not twodim:
@@ -412,8 +412,8 @@ class NURBS():
             # not perfect but works (if "enough" points), in order to deal with missing z slices
             for i in range(min(P_z), max(P_z) + 1, 1):
                 if i not in P_z:
-                    # print ' Missing z slice '
-                    # print i
+                    # sct.printv(' Missing z slice ')
+                    # sct.printv(i)
                     P_z_temp = np.insert(P_z, np.where(P_z == i - 1)[-1][-1] + 1, i)
                     P_x_temp = np.insert(P_x, np.where(P_z == i - 1)[-1][-1] + 1, (P_x[np.where(P_z == i - 1)[-1][-1]] + P_x[np.where(P_z == i - 1)[-1][-1] + 1]) / 2)
                     P_y_temp = np.insert(P_y, np.where(P_z == i - 1)[-1][-1] + 1, (P_y[np.where(P_z == i - 1)[-1][-1]] + P_y[np.where(P_z == i - 1)[-1][-1] + 1]) / 2)
@@ -927,8 +927,8 @@ class NURBS():
             # not perfect but works (if "enough" points), in order to deal with missing z slices
             for i in range(min(P_z), max(P_z) + 1, 1):
                 if i not in P_z:
-                    # print ' Missing z slice '
-                    # print i
+                    # sct.printv(' Missing z slice ')
+                    # sct.printv(i)
                     P_z_temp = np.insert(P_z, np.where(P_z == i - 1)[-1][-1] + 1, i)
                     P_x_temp = np.insert(P_x, np.where(P_z == i - 1)[-1][-1] + 1,
                                          (P_x[np.where(P_z == i - 1)[-1][-1]] + P_x[np.where(P_z == i - 1)[-1][-1] + 1]) / 2)
