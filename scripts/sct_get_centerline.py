@@ -42,8 +42,8 @@ def viewer_centerline(image_fname, interslice_gap, verbose):
 
     return fname_output
 
-
-def run_main():
+def get_parser():
+    # Initialize the parser
     parser = Parser(__file__)
     parser.usage.set_description("""This function allows the extraction of the spinal cord centerline. Two methods are available: OptiC (automatic) and Viewer (manual).""")
 
@@ -52,27 +52,23 @@ def run_main():
                       description="input image.",
                       mandatory=True,
                       example="t1.nii.gz")
-
     parser.add_option(name="-c",
                       type_value="multiple_choice",
                       description="type of image contrast.",
                       mandatory=False,
                       example=['t1', 't2', 't2s', 'dwi'])
-
     parser.add_option(name="-ofolder",
                       type_value="folder_creation",
                       description="output folder.",
                       mandatory=False,
                       example="My_Output_Folder/",
                       default_value="")
-
     parser.add_option(name="-roi",
                       type_value="multiple_choice",
                       description="outputs a ROI file, compatible with JIM software.",
                       mandatory=False,
                       example=['0', '1'],
                       default_value='0')
-
     parser.add_option(name="-method",
                       type_value="multiple_choice",
                       description="Method used for extracting the centerline.\n"
@@ -81,27 +77,32 @@ def run_main():
                       mandatory=False,
                       example=['optic', 'viewer'],
                       default_value='optic')
-
     parser.add_option(name="-gap",
                       type_value="float",
                       description="Gap in mm between manually selected points when using the Viewer method.",
                       mandatory=False,
                       default_value='10.0')
-
+    parser.add_option(name="-igt",
+                      type_value="image_nifti",
+                      description="File name of ground-truth centerline or segmentation (binary nifti).",
+                      mandatory=False)
     parser.add_option(name="-r",
                       type_value="multiple_choice",
                       description="remove temporary files.",
                       mandatory=False,
                       example=['0', '1'],
                       default_value='1')
-
     parser.add_option(name="-v",
                       type_value="multiple_choice",
                       description="1: display on, 0: display off (default)",
                       mandatory=False,
                       example=["0", "1"],
                       default_value="1")
+    return parser
 
+def run_main():
+    sct.start_stream_logger()
+    parser = get_parser()
     args = sys.argv[1:]
     arguments = parser.parse(args)
 
