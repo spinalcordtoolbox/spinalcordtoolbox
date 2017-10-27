@@ -1,41 +1,33 @@
 #!/usr/bin/env python
 #########################################################################################
 #
-# Test function for sct_spinalcord script
-#
-#   replace the shell test script in sct 1.0
+# Test function for sct_smooth_spinalcord script
 #
 # ---------------------------------------------------------------------------------------
-# Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Augustin Roux
-# modified: 2014-08-10
+# Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
+# Author: charley
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
 
-import sct_utils as sct
-import commands
+def init(param_test):
+    """
+    Initialize class: param_test
+    """
+    # initialization
+    default_args = ['-i t2/t2.nii.gz -s t2/t2_seg.nii.gz -smooth 5']
+
+    # assign default params
+    if not param_test.args:
+        param_test.args = default_args
+
+    return param_test
 
 
-def test(path_data):
-
-    # parameters
-    folder_data = 't2/'
-    file_data = ['t2.nii.gz', 't2_seg.nii.gz']
-
-    # define command
-    cmd = 'sct_smooth_spinalcord' \
-        ' -i '+path_data+folder_data+file_data[0]+ \
-        ' -s '+path_data+folder_data+file_data[1]+ \
-        ' -smooth 5'
-
-    # return
-    #return sct.run(cmd, 0)
-    return commands.getstatusoutput(cmd)
-
-
-# call to function
-if __name__ == "__main__":
-    # call main function
-    test()
+def test_integrity(param_test):
+    """
+    Test integrity of function
+    """
+    param_test.output += '\nNot implemented.'
+    return param_test
