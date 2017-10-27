@@ -130,6 +130,18 @@ def get_parser():
     #                   description="Number of CPU used for straightening. 0: no multiprocessing. By default, uses all the available cores.",
     #                   mandatory=False,
     #                   example="8")
+    parser.add_option(name='-qc',
+                      type_value='folder_creation',
+                      description='The path where the quality control generated content will be saved',
+                      default_value=os.path.expanduser('~/qc_data'))
+    parser.add_option(name='-noqc',
+                      type_value=None,
+                      description='Prevent the generation of the QC report',
+                      mandatory=False)
+    parser.add_option(name="-igt",
+                      type_value="image_nifti",
+                      description="File name of ground-truth template cord segmentation (binary nifti).",
+                      mandatory=False)
     parser.add_option(name="-r",
                       type_value="multiple_choice",
                       description="""Remove temporary files.""",
@@ -142,14 +154,6 @@ def get_parser():
                       mandatory=False,
                       default_value=param.verbose,
                       example=['0', '1', '2'])
-    parser.add_option(name='-qc',
-                      type_value='folder_creation',
-                      description='The path where the quality control generated content will be saved',
-                      default_value=os.path.expanduser('~/qc_data'))
-    parser.add_option(name='-noqc',
-                      type_value=None,
-                      description='Prevent the generation of the QC report',
-                      mandatory=False)
     return parser
 
 
@@ -237,7 +241,7 @@ def main(args=None):
     sct.check_file_exist(fname_template_seg, verbose)
     path_data, file_data, ext_data = sct.extract_fname(fname_data)
 
-    # print arguments
+    # sct.printv(arguments)
     sct.printv('\nCheck parameters:', verbose)
     sct.printv('  Data:                 ' + fname_data, verbose)
     sct.printv('  Landmarks:            ' + fname_landmarks, verbose)
@@ -675,5 +679,6 @@ def check_labels(fname_landmarks, label_type='body'):
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
+    sct.start_stream_logger()
     # call main function
     main()

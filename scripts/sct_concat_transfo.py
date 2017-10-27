@@ -44,7 +44,7 @@ def main():
 
     # Parameters for debug mode
     if param.debug:
-        print '\n*** WARNING: DEBUG MODE ON ***\n'
+        sct.printv('\n*** WARNING: DEBUG MODE ON ***\n')
         status, path_sct_data = getstatusoutput('echo $SCT_TESTING_DATA_DIR')
         fname_warp_list = path_sct_data + '/t2/warp_template2anat.nii.gz,-' + path_sct_data + '/mt/warp_template2mt.nii.gz'
         fname_dest = path_sct_data + '/mt/mtr.nii.gz'
@@ -111,8 +111,6 @@ def main():
     sct.printv('\nGenerate output files...', verbose)
     sct.generate_output_file('warp_final' + ext_out, path_out + file_out + ext_out)
 
-    print ''
-
 
 # ==========================================================================================
 def get_parser():
@@ -148,6 +146,7 @@ def get_parser():
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
+    sct.start_stream_logger()
     # initialize parameters
     param = Param()
     # call main function

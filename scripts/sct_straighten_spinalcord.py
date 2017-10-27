@@ -380,12 +380,12 @@ class SpinalCordStraightener(object):
                               (z_centerline[superior_bound] - middle_slice) * factor_curved_straight + middle_slice]
 
             if verbose == 2:
-                print "Length of spinal cord = ", str(length_centerline)
-                print "Size of spinal cord in z direction = ", str(size_z_centerline)
-                print "Ratio length/size = ", str(factor_curved_straight)
-                print "Safe zone boundaries: "
-                print "Curved space = ", bound_curved
-                print "Straight space = ", bound_straight
+                sct.printv("Length of spinal cord = ", str(length_centerline))
+                sct.printv("Size of spinal cord in z direction = ", str(size_z_centerline))
+                sct.printv("Ratio length/size = ", str(factor_curved_straight))
+                sct.printv("Safe zone boundaries: ")
+                sct.printv("Curved space = ", bound_curved)
+                sct.printv("Straight space = ", bound_straight)
 
             # 4. compute and generate straight space
             # points along curved centerline are already regularly spaced.
@@ -617,7 +617,7 @@ class SpinalCordStraightener(object):
             # 5. compute transformations
             # Curved and straight images and the same dimensions, so we compute both warping fields at the same time.
             # b. determine which plane of spinal cord centreline it is included
-            # print nx * ny * nz, nx_s * ny_s * nz_s
+            # sct.printv(nx * ny * nz, nx_s * ny_s * nz_s)
 
             if self.curved2straight:
                 timer_straightening = sct.Timer(nz_s)
@@ -997,5 +997,6 @@ def main(args=None):
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
+    sct.start_stream_logger()
     # call main function
     main()

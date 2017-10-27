@@ -31,7 +31,7 @@ class LineBuilder:
         self.cid = line.figure.canvas.mpl_connect('button_press_event', self)
 
     def __call__(self, event):
-        print 'click', event
+        sct.printv('click', event)
         if event.inaxes != self.line.axes:
             # if user clicked outside the axis, ignore
             return
@@ -183,9 +183,9 @@ class ImageCropper(object):
             sct.printv('\nERROR in ' + os.path.basename(__file__) + ': Data should be 3D.\n', 1, 'error')
             sys.exit(2)
 
-        # print arguments
-        print '\nCheck parameters:'
-        print '  data ................... ' + fname_data
+        # sct.printv(arguments)
+        sct.printv('\nCheck parameters:')
+        sct.printv('  data ................... ' + fname_data)
 
         # Extract path/file/extension
         path_data, file_data, ext_data = sct.extract_fname(fname_data)
@@ -258,14 +258,13 @@ class ImageCropper(object):
 
         # Remove temporary files
         if remove_temp_files == 1:
-            print('\nRemove temporary files...')
+            sct.printv('\nRemove temporary files...')
             sct.run('rm -rf ' + path_tmp)
 
         # to view results
-        print '\nDone! To view results, type:'
-        print 'fslview ' + path_out + file_out + ext_out + ' &'
-        print
-
+        sct.printv('\nDone! To view results, type:')
+        sct.printv('fslview ' + path_out + file_out + ext_out + ' &')
+        sct.printv()
 
 def get_parser():
         # Initialize parser
@@ -394,6 +393,7 @@ def find_mask_boundaries(fname_mask):
 
 
 if __name__ == "__main__":
+    sct.start_stream_logger()
     parser = get_parser()
     # Fetching script arguments
     arguments = parser.parse(sys.argv[1:])
@@ -420,7 +420,7 @@ if __name__ == "__main__":
         if "-o" in arguments:
             cropper.output_filename = arguments["-o"]
         else:
-            print "An output file needs to be specified using the command line"
+            sct.printv("An output file needs to be specified using the command line")
             sys.exit(2)
         # Handling optional arguments
         if "-m" in arguments:

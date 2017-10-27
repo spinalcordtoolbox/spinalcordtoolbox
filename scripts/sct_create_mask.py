@@ -47,8 +47,8 @@ class Param:
         self.verbose = 1
         self.remove_tmp_files = 1
         self.offset = '0,0'
-param = Param()
-param_default = Param()
+# param = Param()
+# param_default = Param()
 
 
 # main
@@ -57,47 +57,36 @@ def main(args=None):
 
     if args is None:
         args = sys.argv[1:]
+    param = Param()
 
-    # Parameters for debug mode
-    if param.debug:
-        print '\n*** WARNING: DEBUG MODE ON ***\n'
-        # get path of the testing data
-        status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
-        param.fname_data = path_sct_data + '/mt/mt1.nii.gz'
-        param.process = 'point,' + path_sct_data + '/mt/mt1_point.nii.gz'  # 'centerline,/Users/julien/data/temp/sct_example_data/t2/t2_centerlinerpi.nii.gz'  #coord,68x69'
-        param.shape = 'cylinder'
-        param.size = '20'
-        param.remove_tmp_files = 1
-        param.verbose = 1
-    else:
-        # Check input parameters
-        parser = get_parser()
-        arguments = parser.parse(args)
+    # Check input parameters
+    parser = get_parser()
+    arguments = parser.parse(args)
 
-        param.fname_data = arguments['-i']
+    param.fname_data = arguments['-i']
 
-        if '-p' in arguments:
-            param.process = arguments['-p']
-            if param.process[0] not in param.process_list:
-                sct.printv(parser.usage.generate(error='ERROR: Process ' + param.process[0] + ' is not recognized.'))
-        if '-size' in arguments:
-            param.size = arguments['-size']
-        if '-f' in arguments:
-            param.shape = arguments['-f']
-        if '-o' in arguments:
-            param.fname_out = arguments['-o']
-        if '-r' in arguments:
-            param.remove_tmp_files = int(arguments['-r'])
-        if '-v' in arguments:
-            param.verbose = int(arguments['-v'])
+    if '-p' in arguments:
+        param.process = arguments['-p']
+        if param.process[0] not in param.process_list:
+            sct.printv(parser.usage.generate(error='ERROR: Process ' + param.process[0] + ' is not recognized.'))
+    if '-size' in arguments:
+        param.size = arguments['-size']
+    if '-f' in arguments:
+        param.shape = arguments['-f']
+    if '-o' in arguments:
+        param.fname_out = arguments['-o']
+    if '-r' in arguments:
+        param.remove_tmp_files = int(arguments['-r'])
+    if '-v' in arguments:
+        param.verbose = int(arguments['-v'])
 
     # run main program
-    create_mask()
+    create_mask(param)
 
 
 # create_mask
 #=======================================================================================================================
-def create_mask():
+def create_mask(param):
     fsloutput = 'export FSLOUTPUTTYPE=NIFTI; '  # for faster processing, all outputs are in NIFTI
 
     # parse argument for method
@@ -191,7 +180,7 @@ def create_mask():
     else:
         # generate volume with line along Z at coordinates 'coord'
         sct.printv('\nCreate line...', param.verbose)
-        fname_centerline = create_line('data_RPI.nii', coord, nz)
+        fname_centerline = create_line(param, 'data_RPI.nii', coord, nz)
 
     # create mask
     sct.printv('\nCreate mask...', param.verbose)
@@ -221,7 +210,7 @@ def create_mask():
             nibabel.save(img, (file_mask + str(iz) + '.nii'))
         else:
             center = numpy.array([cx[iz], cy[iz]])
-            mask2d = create_mask2d(center, param.shape, param.size, nx, ny, even=param.even, spacing=spacing)
+            mask2d = create_mask2d(param, center, param.shape, param.size, nx, ny, even=param.even, spacing=spacing)
             # Write NIFTI volumes
             img = nibabel.Nifti1Image(mask2d, None, hdr)
             nibabel.save(img, (file_mask + str(iz) + '.nii'))
@@ -277,12 +266,11 @@ def create_mask():
     # to view results
     sct.printv('\nDone! To view results, type:', param.verbose)
     sct.printv('fslview ' + param.fname_data + ' ' + param.fname_out + ' -l Red -t 0.5 &', param.verbose, 'info')
-    print
 
 
 # create_line
 # ==========================================================================================
-def create_line(fname, coord, nz):
+def create_line(param, fname, coord, nz):
 
     # duplicate volume (assumes input file is nifti)
     sct.run('cp ' + fname + ' line.nii', param.verbose)
@@ -304,7 +292,7 @@ def create_line(fname, coord, nz):
 
 # create_mask2d
 # ==========================================================================================
-def create_mask2d(center, shape, size, nx, ny, even=0, spacing=None):
+def create_mask2d(param, center, shape, size, nx, ny, even=0, spacing=None):
     # extract offset d = 2r+1 --> r=ceil((d-1)/2.0)
     # s=11 -> r=5
     # s=10 -> r=5
@@ -345,6 +333,8 @@ def create_mask2d(center, shape, size, nx, ny, even=0, spacing=None):
 
 
 def get_parser():
+    # Initialize default parameters
+    param_default = Param()
     # Initialize the parser
     parser = Parser(__file__)
     parser.usage.set_description('Create mask along z direction.')
@@ -388,7 +378,7 @@ def get_parser():
                       description='Shape of the mask.',
                       mandatory=False,
                       default_value=param_default.shape,
-                      example=param.shape_list)
+                      example=param_default.shape_list)
     parser.add_option(name='-o',
                       type_value='file_output',
                       description='Name of output mask.',
@@ -413,6 +403,5 @@ def get_parser():
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
-    param = Param()
-    param_default = Param()
+    sct.start_stream_logger()
     main()

@@ -79,7 +79,7 @@ class Coordinate(Point):
         return "(" + str(self.x) + ", " + str(self.y) + ", " + str(self.z) + ", " + str(self.value) + ")"
 
     def __str__(self):
-        return "(" + str(self.x) + ", " + str(self.y) + ", " + str(self.z) + ", " + str(self.value) + ")"
+        return str(self.x) + "," + str(self.y) + "," + str(self.z) + "," + str(self.value)
 
     def __eq__(self, other):
         if isinstance(other, self.__class__):
@@ -593,6 +593,29 @@ class Centerline:
         if isinstance(result, list) or isinstance(result, np.ndarray):
             result = result[0]
         return result
+
+    def get_coordinate_interpolated(self, vertebral_level, relative_position, backup_index=None, backup_centerline=None, mode='levels'):
+        index_closest = self.get_closest_to_absolute_position(vertebral_level, relative_position, backup_index=backup_index, backup_centerline=backup_centerline, mode=mode)
+        if index_closest is None:
+            return [np.nan, np.nan, np.nan]
+
+        relative_position_closest = self.dist_points_rel[index_closest]
+        coordinate_closest = self.get_point_from_index(index_closest)
+
+        if relative_position < relative_position_closest:
+            index_next = index_closest + 1
+        else:
+            index_next = index_closest - 1
+        relative_position_next = self.dist_points_rel[index_next]
+        coordinate_next = self.get_point_from_index(index_next)
+
+        weight_closest = abs(relative_position - relative_position_closest) / abs(relative_position_next - relative_position_closest)
+        weight_next = abs(relative_position - relative_position_next) / abs(relative_position_next - relative_position_closest)
+        coordinate_result = [weight_closest * coordinate_closest[0] + weight_next * coordinate_next[0],
+                             weight_closest * coordinate_closest[1] + weight_next * coordinate_next[1],
+                             weight_closest * coordinate_closest[2] + weight_next * coordinate_next[2]]
+
+        return coordinate_result
 
     def extract_perpendicular_square(self, image, index, size=20, resolution=0.5, interpolation_mode=0, border='constant', cval=0.0):
         x_grid, y_grid, z_grid = np.mgrid[-size:size:resolution, -size:size:resolution, 0:1]

@@ -34,14 +34,102 @@ class Param:
         self.bval_min = 100  # in case user does not have min bvalues at 0, set threshold.
 
 
+def get_parser():
+    # Initialize parser
+    param_default = Param()
+    parser = Parser(__file__)
+
+    # Mandatory arguments
+    parser.usage.set_description("Separate b=0 and DW images from diffusion dataset.")
+    parser.add_option(name='-i',
+                      type_value='image_nifti',
+                      description='Diffusion data',
+                      mandatory=True,
+                      example='dmri.nii.gz')
+    parser.add_option(name='-b',
+                      type_value='file',
+                      description='bvecs file',
+                      mandatory=False,
+                      example='bvecs.txt',
+                      deprecated_by='-bvec')
+    parser.add_option(name='-bvec',
+                      type_value='file',
+                      description='bvecs file',
+                      mandatory=True,
+                      example='bvecs.txt')
+
+    # Optional arguments
+    parser.add_option(name='-a',
+                      type_value='multiple_choice',
+                      description='average b=0 and DWI data.',
+                      mandatory=False,
+                      example=['0', '1'],
+                      default_value=str(param_default.average))
+    parser.add_option(name='-m',
+                      type_value='file',
+                      description='bvals file. Used to identify low b-values (in case different from 0).',
+                      mandatory=False,
+                      deprecated_by='-bval')
+    parser.add_option(name='-bval',
+                      type_value='file',
+                      description='bvals file. Used to identify low b-values (in case different from 0).',
+                      mandatory=False)
+    parser.add_option(name='-bvalmin',
+                      type_value='float',
+                      description='B-value threshold (in s/mm2) below which data is considered as b=0.',
+                      mandatory=False,
+                      example='50')
+    parser.add_option(name='-ofolder',
+                      type_value='folder_creation',
+                      description='Output folder.',
+                      mandatory=False,
+                      default_value='./')
+    parser.add_option(name='-v',
+                      type_value='multiple_choice',
+                      description='Verbose.',
+                      mandatory=False,
+                      example=['0', '1'],
+                      default_value=str(param_default.verbose))
+    parser.add_option(name='-r',
+                      type_value='multiple_choice',
+                      description='remove temporary files.',
+                      mandatory=False,
+                      example=['0', '1'],
+                      default_value=str(param_default.remove_tmp_files))
+
+    return parser
+
+
 # MAIN
 # ==========================================================================================
-def main(fname_data, fname_bvecs, fname_bvals, path_out, average, verbose, remove_tmp_files):
+def main(args=None):
+    if not args:
+        args = sys.argv[1:]
+
+    # initialize parameters
+    param = Param()
+    # call main function
+    parser = get_parser()
+    arguments = parser.parse(args)
+
+    fname_data = arguments['-i']
+    fname_bvecs = arguments['-bvec']
+    average = arguments['-a']
+    verbose = int(arguments['-v'])
+    remove_tmp_files = int(arguments['-r'])
+    path_out = arguments['-ofolder']
+
+    if '-bval' in arguments:
+        fname_bvals = arguments['-bval']
+    else:
+        fname_bvals = ''
+    if '-bvalmin' in arguments:
+        param.bval_min = arguments['-bvalmin']
 
     # Initialization
     start_time = time.time()
 
-    # print arguments
+    # sct.printv(arguments)
     sct.printv('\nInput parameters:', verbose)
     sct.printv('  input file ............' + fname_data, verbose)
     sct.printv('  bvecs file ............' + fname_bvecs, verbose)
@@ -90,7 +178,7 @@ def main(fname_data, fname_bvecs, fname_bvals, path_out, average, verbose, remov
     sct.printv('.. ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz) + ' x ' + str(nt), verbose)
 
     # Identify b=0 and DWI images
-    print fname_bvals
+    sct.printv(fname_bvals)
     index_b0, index_dwi, nb_b0, nb_dwi = identify_b0(fname_bvecs, fname_bvals, param.bval_min, verbose)
 
     # Split into T dimension
@@ -227,140 +315,8 @@ def identify_b0(fname_bvecs, fname_bvals, bval_min, verbose):
     return index_b0, index_dwi, nb_b0, nb_dwi
 
 
-# Print usage
-# ==========================================================================================
-def usage():
-    print """
-""" + os.path.basename(__file__) + """
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
-
-DESCRIPTION
-  Separate b=0 and DW images from diffusion dataset.
-
-USAGE
-  """ + os.path.basename(__file__) + """ -i <dmri> -b <bvecs>
-
-MANDATORY ARGUMENTS
-  -i <dmri>        diffusion data
-  -b <bvecs>       bvecs file
-
-OPTIONAL ARGUMENTS
-  -a {0,1}         average b=0 and DWI data. Default=""" + str(param_default.average) + """
-  -m <bvals>       bvals file. Used to identify low b-values (in case different from 0).
-  -o <output>      output folder. Default = local folder.
-  -v {0,1}         verbose. Default=""" + str(param_default.verbose) + """
-  -r {0,1}         remove temporary files. Default=""" + str(param_default.remove_tmp_files) + """
-  -h               help. Show this message
-
-EXAMPLE
-  """ + os.path.basename(__file__) + """ -i dmri.nii.gz -b bvecs.txt -a 1\n"""
-
-    # Exit Program
-    sys.exit(2)
-
-
-def get_parser():
-    # Initialize parser
-    param_default = Param()
-    parser = Parser(__file__)
-
-    # Mandatory arguments
-    parser.usage.set_description("Separate b=0 and DW images from diffusion dataset.")
-    parser.add_option(name='-i',
-                      type_value='image_nifti',
-                      description='Diffusion data',
-                      mandatory=True,
-                      example='dmri.nii.gz')
-    parser.add_option(name='-b',
-                      type_value='file',
-                      description='bvecs file',
-                      mandatory=False,
-                      example='bvecs.txt',
-                      deprecated_by='-bvec')
-    parser.add_option(name='-bvec',
-                      type_value='file',
-                      description='bvecs file',
-                      mandatory=True,
-                      example='bvecs.txt')
-
-    # Optional arguments
-    parser.add_option(name='-a',
-                      type_value='multiple_choice',
-                      description='average b=0 and DWI data.',
-                      mandatory=False,
-                      example=['0', '1'],
-                      default_value=str(param_default.average))
-    parser.add_option(name='-m',
-                      type_value='file',
-                      description='bvals file. Used to identify low b-values (in case different from 0).',
-                      mandatory=False,
-                      deprecated_by='-bval')
-    parser.add_option(name='-bval',
-                      type_value='file',
-                      description='bvals file. Used to identify low b-values (in case different from 0).',
-                      mandatory=False)
-    parser.add_option(name='-bvalmin',
-                      type_value='float',
-                      description='B-value threshold (in s/mm2) below which data is considered as b=0.',
-                      mandatory=False,
-                      example='50')
-    parser.add_option(name='-o',
-                      type_value='folder_creation',
-                      description='Output folder.',
-                      mandatory=False,
-                      default_value='./',
-                      deprecated_by='-ofolder')
-    parser.add_option(name='-ofolder',
-                      type_value='folder_creation',
-                      description='Output folder.',
-                      mandatory=False,
-                      default_value='./')
-    parser.add_option(name='-v',
-                      type_value='multiple_choice',
-                      description='Verbose.',
-                      mandatory=False,
-                      example=['0', '1'],
-                      default_value=str(param_default.verbose))
-    parser.add_option(name='-r',
-                      type_value='multiple_choice',
-                      description='remove temporary files.',
-                      mandatory=False,
-                      example=['0', '1'],
-                      default_value=str(param_default.remove_tmp_files))
-
-    return parser
-
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
-    # initialize parameters
-    param = Param()
-    param_default = Param()
-    # call main function
-    parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
-
-    fname_data = arguments['-i']
-    fname_bvecs = arguments['-bvec']
-
-    fname_bvals = ''
-    path_out = ''
-    average = param.average
-    verbose = param.verbose
-    remove_tmp_files = param.remove_tmp_files
-
-    if '-bval' in arguments:
-        fname_bvals = arguments['-bval']
-    if '-bvalmin' in arguments:
-        param.bval_min = arguments['-bvalmin']
-    if '-a' in arguments:
-        average = arguments['-a']
-    if '-ofolder' in arguments:
-        path_out = arguments['-ofolder']
-    if '-v' in arguments:
-        verbose = int(arguments['-v'])
-    if '-r' in arguments:
-        remove_tmp_files = int(arguments['-r'])
-
-    main(fname_data, fname_bvecs, fname_bvals, path_out, average, verbose, remove_tmp_files)
+    sct.start_stream_logger()
+    main()
