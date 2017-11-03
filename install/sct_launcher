@@ -46,6 +46,9 @@ function addtopath {
 
 
 if [ -z "${SCT_LOADED_ONCE}" ]; then
+  export SCT_START_PWD=$PWD
+  export SCT_WORK_DIR=$(mktemp -d -t sct_tmp.$(date +%d%m%y).XXXXXX)
+  cd $SCT_WORK_DIR
   # Do not needs to be reloaded on subsequent system calls
   export SCT_LOADED_ONCE="loaded"
   # exclude ~/.local/lib/python (linux) or ~/Library/Python (OSX) libraries
@@ -99,5 +102,6 @@ if [[ "${0}" == "${BASH_SOURCE}" ]] && [[ -n "${1}"  ]]; then
   echo "Running ${SCT_DIR}/scripts/${@}"
    python ${SCT_DIR}/scripts/${@}
 else
+  cd ${SCT_START_PWD}
   echo Sourcing sct_laucher in your environment ${SCT_DIR}
 fi
