@@ -1,25 +1,22 @@
 #!/usr/bin/env python
-#########################################################################################
+#############################################################################
 #
 # Image class implementation
 #
 #
-# ---------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
 # Copyright (c) 2015 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Authors: Augustin Roux, Benjamin De Leener
 # Modified: 2015-02-20
 #
 # About the license: see the file LICENSE.TXT
-#########################################################################################
+#############################################################################
 
-# TODO: update function to reflect the new get_dimension
-
+import math
 
 import numpy as np
 import sct_utils as sct
 from scipy.ndimage import map_coordinates
-import math
-import sct_utils as sct
 
 
 def striu2mat(striu):
@@ -202,7 +199,6 @@ class Image(object):
     """
 
     def __init__(self, param=None, hdr=None, orientation=None, absolutepath="", dim=None, verbose=1):
-        from sct_utils import extract_fname
         from nibabel import Nifti1Header
 
         # initialization of all parameters
@@ -236,7 +232,7 @@ class Image(object):
             self.hdr = hdr
             self.orientation = orientation
             self.absolutepath = absolutepath
-            self.path, self.file_name, self.ext = extract_fname(absolutepath)
+            self.path, self.file_name, self.ext = sct.extract_fname(absolutepath)
         # create a copy of im_ref
         elif isinstance(param, (np.ndarray, np.generic)):
             self.data = param
@@ -244,7 +240,7 @@ class Image(object):
             self.hdr = hdr
             self.orientation = orientation
             self.absolutepath = absolutepath
-            self.path, self.file_name, self.ext = extract_fname(absolutepath)
+            self.path, self.file_name, self.ext = sct.extract_fname(absolutepath)
         else:
             raise TypeError('Image constructor takes at least one argument.')
 
@@ -254,7 +250,6 @@ class Image(object):
 
     def copy(self, image=None):
         from copy import deepcopy
-        from sct_utils import extract_fname
         if image is not None:
             self.im_file = deepcopy(image.im_file)
             self.data = deepcopy(image.data)
@@ -262,9 +257,26 @@ class Image(object):
             self.hdr = deepcopy(image.hdr)
             self.orientation = deepcopy(image.orientation)
             self.absolutepath = deepcopy(image.absolutepath)
-            self.path, self.file_name, self.ext = extract_fname(self.absolutepath)
+            self.path, self.file_name, self.ext = sct.extract_fname(self.absolutepath)
         else:
             return deepcopy(self)
+
+    def get_orientation(self):
+        from nibabel import orientations
+        orientation_dic = {
+            (0, 1): 'L',
+            (0, -1): 'R',
+            (1, 1): 'P',
+            (1, -1): 'A',
+            (2, 1): 'I',
+            (2, -1): 'S',
+        }
+
+        orientation_matrix = orientations.io_orientation(self.hdr.get_best_affine())
+        ori = orientation_dic[tuple(orientation_matrix[0])] + orientation_dic[tuple(orientation_matrix[1])] + orientation_dic[tuple(orientation_matrix[2])]
+
+        ori = "".join([orientation_dic[tuple(i)] for i in orientation_matrix])
+        return ori
 
     def loadFromPath(self, path, verbose):
         """
@@ -273,31 +285,25 @@ class Image(object):
         :return:
         """
         from nibabel import load, spatialimages
-        from sct_utils import check_file_exist, printv, extract_fname, run
-        from sct_image import get_orientation
 
-        # check_file_exist(path, verbose=verbose)
         try:
             self.im_file = load(path)
         except spatialimages.ImageFileError:
-            printv('Error: make sure ' + path + ' is an image.', 1, 'error')
+            sct.printv('Error: make sure ' + path + ' is an image.', 1, 'error')
         self.data = self.im_file.get_data()
         self.hdr = self.im_file.get_header()
-        self.orientation = get_orientation(self)
+        self.orientation = self.get_orientation()
         self.absolutepath = path
-        self.path, self.file_name, self.ext = extract_fname(path)
+        self.path, self.file_name, self.ext = sct.extract_fname(path)
         self.dim = get_dimension(self.im_file)
-        # nx, ny, nz, nt, px, py, pz, pt = get_dimension(path)
-        # self.dim = [nx, ny, nz]
 
     def setFileName(self, filename):
         """
         :param filename: file name with extension
         :return:
         """
-        from sct_utils import extract_fname
         self.absolutepath = filename
-        self.path, self.file_name, self.ext = extract_fname(filename)
+        self.path, self.file_name, self.ext = sct.extract_fname(filename)
 
     def changeType(self, type=''):
         """
@@ -386,14 +392,12 @@ class Image(object):
                 data_rescaled = self.data * (max_out - min_out) / (max_in - min_in)
                 self.data = data_rescaled - ( data_rescaled.min() - min_out )
 
-        # print "The image has been set to "+type+" (previously "+str(self.hdr.get_data_dtype())+")"
         # change type of data in both numpy array and nifti header
         type_build = eval(type)
         self.data = type_build(self.data)
         self.hdr.set_data_dtype(type)
 
-
-    def save(self, type='', squeeze_data=True,  verbose=1):
+    def save(self, type='', squeeze_data=True, verbose=1):
         """
         Write an image in a nifti file
         :param type:    if not set, the image is saved in the same type as input data
@@ -414,7 +418,6 @@ class Image(object):
                         (2048, 'complex256', _complex256t, "NIFTI_TYPE_COMPLEX256"),
         """
         from nibabel import Nifti1Image, save
-        from sct_utils import printv
         from os import path, remove
         if squeeze_data:
             # remove singleton
@@ -427,7 +430,7 @@ class Image(object):
         img = Nifti1Image(self.data, None, self.hdr)
         fname_out = self.path + self.file_name + self.ext
         if path.isfile(fname_out):
-            printv('WARNING: File ' + fname_out + ' already exists. Deleting it.', verbose, 'warning')
+            sct.printv('WARNING: File ' + fname_out + ' already exists. Deleting it.', verbose, 'warning')
             remove(fname_out)
         # save file
         save(img, fname_out)
@@ -460,7 +463,6 @@ class Image(object):
         If reverse_coord is True, coordinate are sorted from larger to smaller.
         """
         from msct_types import Coordinate
-        from sct_utils import printv
         n_dim = 1
         if self.dim[3] == 1:
             n_dim = 3
@@ -621,16 +623,13 @@ class Image(object):
             buffer = []
 
         new_data = np.asarray(new_data)
-        # sct.printv(data_mask)
         self.data = new_data
-        #self.dim = self.data.shape
 
         self.change_orientation(original_orientation)
         mask.change_orientation(mask_original_orientation)
         if save:
-            from sct_utils import add_suffix
             self.file_name += suffix
-            add_suffix(self.absolutepath, suffix)
+            sct.add_suffix(self.absolutepath, suffix)
             self.save()
 
     def invert(self):
@@ -660,6 +659,14 @@ class Image(object):
 
         return perm, inversion
 
+    def get_orientation_3d(self):
+        status, output = sct.run("isct_orientation3d -i %s -get" % self.absolutepath, 0)
+
+        if status != 0:
+            sct.printv('ERROR in get_orientation.', 1, 'error')
+        orientation = output.split()[-1]
+        return orientation
+
     def change_orientation(self, orientation='RPI', inversion_orient=False):
         """
         This function changes the orientation of the data by swapping the image axis.
@@ -671,8 +678,7 @@ class Image(object):
         opposite_character = {'L': 'R', 'R': 'L', 'A': 'P', 'P': 'A', 'I': 'S', 'S': 'I'}
 
         if self.orientation is None:
-            from sct_image import get_orientation_3d
-            self.orientation = get_orientation_3d(self)
+            self.orientation = self.get_orientation_3d()
         # get orientation to return at the end of function
         raw_orientation = self.orientation
 
@@ -828,7 +834,7 @@ class Image(object):
 
         coord_origin = np.array([[m_p2f[0, 3]], [m_p2f[1, 3]], [m_p2f[2, 3]]])
 
-        if coordi != None:
+        if coordi is not None:
             coordi_phys = np.transpose(np.asarray(coordi))
             coordi_pix = np.transpose(np.dot(m_f2p_transfo, (coordi_phys - coord_origin)))
             coordi_pix_tmp = coordi_pix.tolist()
@@ -999,8 +1005,7 @@ class Image(object):
                 if seg is not None:
                     slice_seg = seg.data[:, :, index]
         else:
-            from sct_utils import printv
-            printv('ERROR: wrong plan input to save slice. Please choose "sagittal", "coronal" or "axial"', self.verbose, type='error')
+            sct.printv('ERROR: wrong plan input to save slice. Please choose "sagittal", "coronal" or "axial"', self.verbose, type='error')
 
         return (slice, slice_seg)
 
@@ -1028,12 +1033,11 @@ class Image(object):
         import matplotlib.pyplot as plt
         import matplotlib.cm as cm
         from math import sqrt
-        from sct_utils import slash_at_the_end
         if type(index) is not list:
             index = [index]
 
         slice_list = [self.get_slice(plane=plane, index=i, seg=seg) for i in index]
-        path_output = slash_at_the_end(path_output, 1)
+        path_output = sct.slash_at_the_end(path_output, 1)
         if seg is not None:
             import matplotlib.colors as col
             color_white = col.colorConverter.to_rgba('white', alpha=0.0)
@@ -1078,9 +1082,8 @@ class Image(object):
             plt.close(fig)
 
         except RuntimeError, e:
-            from sct_utils import printv
-            printv('WARNING: your device does not seem to have display feature', self.verbose, type='warning')
-            printv(str(e), self.verbose, type='warning')
+            sct.printv('WARNING: your device does not seem to have display feature', self.verbose, type='warning')
+            sct.printv(str(e), self.verbose, type='warning')
         return fname_png
 
     def save_quality_control(self, plane='sagittal', n_slices=1, seg=None, thr=0, cmap_col='red', format='.png', index_list=None, path_output='./', verbose=1):
@@ -1088,7 +1091,6 @@ class Image(object):
         if seg is not None:
             ori_seg = seg.change_orientation('RPI')
 
-        from sct_utils import printv
         nx, ny, nz, nt, px, py, pz, pt = self.dim
         if plane == 'sagittal':
             max_n_slices = nx
@@ -1098,7 +1100,7 @@ class Image(object):
             max_n_slices = nz
         else:
             max_n_slices = None
-            printv('ERROR: wrong plan input to save slice. Please choose "sagittal", "coronal" or "axial"', self.verbose, type='error')
+            sct.printv('ERROR: wrong plan input to save slice. Please choose "sagittal", "coronal" or "axial"', self.verbose, type='error')
 
         if index_list is None:
             if n_slices > max_n_slices:
@@ -1116,10 +1118,10 @@ class Image(object):
             if seg is not None:
                 filename_gmseg_image_png = self.save_plane(plane=plane, suffix='_' + plane + '_plane_seg', index=index_list, seg=seg, thr=thr, cmap_col=cmap_col, format=format, path_output=path_output)
                 info_str += ' & ' + filename_gmseg_image_png
-            printv(info_str, verbose, 'info')
+            sct.printv(info_str, verbose, 'info')
         except RuntimeError, e:
-            printv('WARNING: your device does not seem to have display feature', self.verbose, type='warning')
-            printv(str(e), self.verbose, type='warning')
+            sct.printv('WARNING: your device does not seem to have display feature', self.verbose, type='warning')
+            sct.printv(str(e), self.verbose, type='warning')
 
         self.change_orientation(ori)
         if seg is not None:
@@ -1197,7 +1199,6 @@ def compute_dice(image1, image2, mode='3d', label=1, zboundaries=False):
 
 
 def find_zmin_zmax(fname):
-    import sct_utils as sct
     # crop image
     status, output = sct.run('sct_crop_image -i ' + fname + ' -dim 2 -bmax -o tmp.nii')
     # parse output
@@ -1211,7 +1212,6 @@ def get_dimension(im_file, verbose=1):
     :return: nx, ny, nz, nt, px, py, pz, pt
     """
     import nibabel.nifti1
-    import sct_utils as sct
     # initialization
     nx, ny, nz, nt, px, py, pz, pt = 1, 1, 1, 1, 1, 1, 1, 1
     if type(im_file) is nibabel.nifti1.Nifti1Image:
@@ -1282,33 +1282,3 @@ def change_data_orientation(data, old_orientation='RPI', orientation="RPI"):
         sct.printv('Error: wrong orientation')
 
     return data
-
-# =======================================================================================================================
-# Start program
-#=======================================================================================================================
-if __name__ == "__main__":
-    sct.start_stream_logger()
-    from msct_parser import Parser
-    from sct_utils import add_suffix
-    import sys
-
-    parser = Parser(__file__)
-    parser.usage.set_description('Image processing functions')
-    parser.add_option(name="-i",
-                      type_value="file",
-                      description="Image input file.",
-                      mandatory=True,
-                      example='im.nii.gz')
-    parser.add_option(name="-o",
-                      type_value="file_output",
-                      description="Image output name.",
-                      mandatory=False,
-                      example='im_out.nii.gz')
-
-    arguments = parser.parse(sys.argv[1:])
-
-    image = Image(arguments["-i"])
-    image.changeType('minimize')
-    name_out = ''
-    if "-o" in arguments:
-        name_out = arguments["-o"]
