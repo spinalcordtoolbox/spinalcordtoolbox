@@ -68,7 +68,7 @@ class ErnstAngle:
 def get_parser():
     # Initialize the parser
     parser = Parser(__file__)
-    parser.usage.set_description('Function to compute the Ernst Angle. For examples of T1 values, see Stikov et al. MRM 2015. Example in the white matter at 3T: 850ms.')
+    parser.usage.set_description('Function to compute the Ernst Angle. For examples of T1 values in the brain, see Wansapura et al. NMR relaxation times in the human brain at 3.0 tesla. Journal of magnetic resonance imaging : JMRI (1999) vol. 9 (4) pp. 531-8. \nT1 in WM: 832ms\nT1 in GM: 1331ms')
     parser.add_option(name="-tr",
                       type_value='float',
                       description="Value of TR (in ms) to get the Ernst Angle. ",
@@ -78,8 +78,8 @@ def get_parser():
                       type_value="float",
                       description="T1 value (in ms).",
                       mandatory=False,
-                      default_value=850.0,
-                      example='800')
+                      default_value=832.0,
+                      example='832')
     parser.add_option(name="-b",
                       type_value=[[','], 'float'],
                       description="Boundaries TR parameter (in ms) in case -v 2 is used.",
