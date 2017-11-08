@@ -1,31 +1,31 @@
 #!/usr/bin/env python
 #########################################################################################
 #
-# Test function sct_dmri_create_noisemask
+# Test function for sct_dmri_create_noisemask
 #
 # ---------------------------------------------------------------------------------------
-# Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
+# Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Author: Charley Gros
-# modified: 2016/02/23
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import sct_utils as sct
-import commands
 
-def test(path_data):
-
-    folder_data = 'dmri/'
-    file_data = ['dwi.nii.gz']
-
-
-    cmd = 'sct_dmri_create_noisemask -i ' + path_data + folder_data + file_data[0] \
-                + ' -dof 1'\
-                + ' -o noise_mask.nii.gz'
-
-    return commands.getstatusoutput(cmd)
+def init(param_test):
+    """
+    Initialize class: param_test
+    """
+    # initialization
+    default_args = ['-i dmri/dmri.nii.gz -dof 1 -o noise_mask.nii.gz']  # default parameters
+    # assign default params
+    if not param_test.args:
+        param_test.args = default_args
+    return param_test
 
 
-if __name__ == "__main__":
-    test()
+def test_integrity(param_test):
+    """
+    Test integrity of function
+    """
+    param_test.output += '\nNot implemented.'
+    return param_test

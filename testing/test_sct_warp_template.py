@@ -3,44 +3,31 @@
 #
 # Test function for sct_warp_template script
 #
-#   replace the shell test script in sct 1.0
-#
 # ---------------------------------------------------------------------------------------
-# Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Augustin Roux
-# modified: 2014/09/28
+# Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
+# Author: charley
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
 
-#import sct_utils as sct
-import commands
+def init(param_test):
+    """
+    Initialize class: param_test
+    """
+    # initialization
+    default_args = ['-d mt/mt1.nii.gz -w mt/warp_template2mt.nii.gz -a 0 -t template/ -qc 0']  # default parameters
+
+    # assign default params
+    if not param_test.args:
+        param_test.args = default_args
+
+    return param_test
 
 
-def test(path_data):
-
-    # parameters
-    folder_data = ['mt/', 'template/']
-    file_data = ['mt1.nii.gz', 'warp_template2mt.nii.gz']
-
-    # define command
-    cmd = 'sct_warp_template' \
-        ' -d '+path_data+folder_data[0]+file_data[0]+ \
-        ' -w '+path_data+folder_data[0]+file_data[1]+ \
-        ' -a 0 '+ \
-        ' -s 0 '+ \
-        ' -ofolder label'+ \
-        ' -t '+path_data+folder_data[1]+ \
-        ' -qc 0'+ \
-        ' -v 1'
-
-    # return
-    #return sct.run(cmd, 0)
-    return commands.getstatusoutput(cmd)
-
-
-# call to function
-if __name__ == "__main__":
-    # call main function
-    test()
+def test_integrity(param_test):
+    """
+    Test integrity of function
+    """
+    param_test.output += '\nNot implemented.'
+    return param_test
