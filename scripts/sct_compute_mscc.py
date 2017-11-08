@@ -43,6 +43,10 @@ def get_parser():
     return parser
 
 
+def mscc(di, da, db):
+    return (1 - float(di) / ((da + db) / float(2))) * 100
+
+
 # MAIN
 # ==========================================================================================
 def main(args=None):
@@ -62,7 +66,7 @@ def main(args=None):
     db = arguments['-db']
 
     # Compute MSCC
-    MSCC = (1 - float(di) / ((da + db) / float(2))) * 100
+    MSCC = mscc(di, da, db)
 
     # Display results
     sct.printv('\nMSCC = ' + str(MSCC) + '\n', verbose, 'info')

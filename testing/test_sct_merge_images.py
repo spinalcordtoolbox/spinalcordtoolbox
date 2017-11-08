@@ -1,21 +1,22 @@
 #!/usr/bin/env python
 #########################################################################################
 #
-# Test function sct_maths
+# Test function for sct_merge_images
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Julien Cohen-Adad
+# Author: charley
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
+
 
 def init(param_test):
     """
     Initialize class: param_test
     """
     # initialization
-    default_args = ['-i mt/mtr.nii.gz -percent 95 -o test.nii.gz']
+    default_args = ['-i template/template/PAM50_small_cord.nii.gz,t2/t2_seg_manual.nii.gz -w mt/warp_template2mt.nii.gz,t2/warp_template2anat.nii.gz -d mt/mt1.nii.gz']
 
     # assign default params
     if not param_test.args:
