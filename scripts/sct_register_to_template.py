@@ -50,7 +50,7 @@ class Param:
 # get default parameters
 # Note: step0 is used as pre-registration
 step0 = Paramreg(step='0', type='label', dof='Tx_Ty_Tz_Sz')  # if ref=template, we only need translations and z-scaling because the cord is already straight
-step1 = Paramreg(step='1', type='seg', algo='centermassrot', smooth='2')
+step1 = Paramreg(step='1', type='seg', algo='centermass', smooth='2')
 # step2 = Paramreg(step='2', type='seg', algo='columnwise', smooth='0', smoothWarpXY='2')
 step2 = Paramreg(step='2', type='seg', algo='bsplinesyn', metric='MeanSquares', iter='3', smooth='1')
 # step3 = Paramreg(step='3', type='im', algo='syn', metric='CC', iter='1')
