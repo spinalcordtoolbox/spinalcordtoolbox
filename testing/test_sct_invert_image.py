@@ -1,21 +1,22 @@
 #!/usr/bin/env python
 #########################################################################################
 #
-# Test function sct_maths
+# Test function for sct_invert_image
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Julien Cohen-Adad
+# Author: Benjamin De Leener
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
+
 
 def init(param_test):
     """
     Initialize class: param_test
     """
     # initialization
-    default_args = ['-i mt/mtr.nii.gz -percent 95 -o test.nii.gz']
+    default_args = ['-i t2/t2.nii.gz -o t2_inverted.nii.gz']
 
     # assign default params
     if not param_test.args:
@@ -28,5 +29,6 @@ def test_integrity(param_test):
     """
     Test integrity of function
     """
+
     param_test.output += '\nNot implemented.'
     return param_test

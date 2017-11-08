@@ -39,13 +39,13 @@ def main():
 
     # sct.printv(arguments)
     sct.printv('\nCheck parameters:')
-    sct.printv('  gradient amplitude ..... ' + str(gradamp * 1000) + ' mT/m')
-    sct.printv('  big delta .............. ' + str(bigdelta * 1000) + ' ms')
-    sct.printv('  small delta ............ ' + str(smalldelta * 1000) + ' ms')
+    sct.printv('  gradient amplitude ..... ' + str(gradamp) + ' mT/m')
+    sct.printv('  big delta .............. ' + str(bigdelta) + ' ms')
+    sct.printv('  small delta ............ ' + str(smalldelta) + ' ms')
     sct.printv('  gyromagnetic ratio ..... ' + str(GYRO) + ' Hz/T')
     sct.printv('')
 
-    bvalue = (2 * math.pi * GYRO * gradamp * smalldelta) ** 2 * (bigdelta - smalldelta / 3)
+    bvalue = (2 * math.pi * GYRO * gradamp * 0.001 * smalldelta * 0.001) ** 2 * (bigdelta * 0.001 - smalldelta * 0.001 / 3)
 
     sct.printv('b-value = ' + str(bvalue / 10**6) + ' mm^2/s\n')
     return bvalue
@@ -57,19 +57,19 @@ def get_parser():
     parser.usage.set_description('Calculate b-value (in mm^2/s).')
     parser.add_option(name="-g",
                       type_value="float",
-                      description="Amplitude of diffusion gradients (in T/m)",
+                      description="Amplitude of diffusion gradients (in mT/m)",
                       mandatory=True,
-                      example='0.04')
+                      example='40')
     parser.add_option(name="-b",
                       type_value="float",
-                      description="Big delta: time between both diffusion gradients (in s)",
+                      description="Big delta: time between both diffusion gradients (in ms)",
                       mandatory=True,
-                      example='0.04')
+                      example='40')
     parser.add_option(name="-d",
                       type_value="float",
-                      description="Small delta: duration of each diffusion gradient (in s)",
+                      description="Small delta: duration of each diffusion gradient (in ms)",
                       mandatory=True,
-                      example='0.03')
+                      example='30')
 
     return parser
 
