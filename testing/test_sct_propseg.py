@@ -4,140 +4,67 @@
 # Test function sct_propseg
 #
 # ---------------------------------------------------------------------------------------
-# Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Augustin Roux
-# modified: 2014/10/09
+# Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
+# Author: Julien Cohen-Adad
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
 import sct_utils as sct
 import commands
-import sct_propseg
-from sct_testing import write_to_log_file
-from msct_parser import Parser
-from pandas import DataFrame
-import os.path
-import time, random
-from copy import deepcopy
 from msct_image import Image, compute_dice
+from pandas import DataFrame
 
 
-def test(path_data='', parameters=''):
-
+def init(param_test):
+    """
+    Initialize class: param_test
+    """
     # initialization
-    verbose = 0
-    output = ''
+    default_args = ['-i t2/t2.nii.gz -c t2 -igt t2/t2_seg_manual.nii.gz']  # default parameters
+    # param_test.list_fname_gt = [param_test.path_data + 't2/t2_seg_manual.nii.gz']  # file name suffix for ground truth (used for integrity testing)
+    param_test.dice_threshold = 0.9
 
     # check if isct_propseg compatibility
+    # TODO: MAKE SURE THIS CASE WORKS AFTER MAJOR REFACTORING
     status_isct_propseg, output_isct_propseg = commands.getstatusoutput('isct_propseg')
     isct_propseg_version = output_isct_propseg.split('\n')[0]
     if isct_propseg_version != 'sct_propseg - Version 1.1 (2015-03-24)':
         status = 99
-        output += '\nERROR: isct_propseg does not seem to be compatible with your system or is no up-to-date... Please contact SCT administrators.'
-        return status, output, DataFrame(data={'status': status, 'output': output}, index=[path_data])
+        param_test.output += '\nERROR: isct_propseg does not seem to be compatible with your system or is no up-to-date... Please contact SCT administrators.'
+        return param_test
 
-    # parameters
-    if not parameters:
-        parameters = '-i t2/t2.nii.gz -c t2'
+    # assign default params
+    if not param_test.args:
+        param_test.args = default_args
 
-    dice_threshold = 0.9
+    return param_test
 
-    parser = sct_propseg.get_parser()
-    dict_param = parser.parse(parameters.split(), check_file_exist=False)
-    dict_param_with_path = parser.add_path_to_file(deepcopy(dict_param), path_data, input_file=True)
-    param_with_path = parser.dictionary_to_string(dict_param_with_path)
 
-    # Extract contrast
-    contrast = ''
-    input_filename = ''
-    if dict_param['-i'][0] == '/':
-        dict_param['-i'] = dict_param['-i'][1:]
-    input_split = dict_param['-i'].split('/')
-    if len(input_split) == 2:
-        contrast = input_split[0]
-        input_filename = input_split[1]
-    else:
-        input_filename = input_split[0]
-    if not contrast:  # if no contrast folder, send error.
-        status = 1
-        output += '\nERROR: when extracting the contrast folder from input file in command line: ' + dict_param['-i'] + ' for ' + path_data
-        return status, output, DataFrame(data={'status': status, 'output': output, 'dice_segmentation': float('nan')}, index=[path_data])
-
-    import time, random
-    subject_folder = path_data.split('/')
-    if subject_folder[-1] == '' and len(subject_folder) > 1:
-        subject_folder = subject_folder[-2]
-    else:
-        subject_folder = subject_folder[-1]
-    path_output = sct.slash_at_the_end('sct_propseg_' + subject_folder + '_' + time.strftime("%y%m%d%H%M%S") + '_' + str(random.randint(1, 1000000)), slash=1)
-    param_with_path += ' -ofolder ' + path_output
-    sct.create_folder(path_output)
-
-    # log file
-    # import sys
-    # fname_log = path_output + 'output.log'
-    # stdout_log = file(fname_log, 'w')
-    # redirect to log file
-    # stdout_orig = sys.stdout
-    # sys.stdout = stdout_log
-
-    # Check if input files exist
-    if not (os.path.isfile(dict_param_with_path['-i'])):
-        status = 200
-        output += '\nERROR: the file(s) provided to test function do not exist in folder: ' + path_data
-        # write_to_log_file(fname_log, output, 'w')
-        return status, output, DataFrame(
-            data={'status': status, 'output': output, 'dice_segmentation': float('nan')}, index=[path_data])
-
-    # Check if ground truth files exist
-    if not os.path.isfile(path_data + contrast + '/' + contrast + '_seg_manual.nii.gz'):
-        status = 201
-        output += '\nERROR: the file *_labeled_center_manual.nii.gz does not exist in folder: ' + path_data
-        # write_to_log_file(fname_log, output, 'w')
-        return status, output, DataFrame(data={'status': int(status), 'output': output}, index=[path_data])
-
-    # run command
-    cmd = 'sct_propseg ' + param_with_path
-    output += '\n====================================================================================================\n'\
-             + cmd + \
-             '\n====================================================================================================\n\n'  # copy command
-    time_start = time.time()
-    try:
-        status, o = sct.run(cmd, 0)
-    except:
-        status, o = 1, 'ERROR: Function crashed!'
-    output += o
-    duration = time.time() - time_start
-
-    # extract name of manual segmentation
-    # by convention, manual segmentation are called inputname_seg_manual.nii.gz where inputname is the filename
-    # of the input image
-    segmentation_filename = path_output + sct.add_suffix(input_filename, '_seg')
-    manual_segmentation_filename = path_data + contrast + '/' + sct.add_suffix(input_filename, '_seg_manual')
-
+def test_integrity(param_test):
+    """
+    Test integrity of function
+    """
     dice_segmentation = float('nan')
+    # extract name of output segmentation: data_seg.nii.gz
+    file_seg = param_test.path_output + sct.add_suffix(param_test.file_input, '_seg')
+    # open output segmentation
+    im_seg = Image(file_seg)
+    # open ground truth
+    im_seg_manual = Image(param_test.fname_gt)
+    # compute dice coefficient between generated image and image from database
+    dice_segmentation = compute_dice(im_seg, im_seg_manual, mode='3d', zboundaries=False)
+    # display
+    param_test.output += 'Computed dice: '+str(dice_segmentation)
+    param_test.output += '\nDice threshold (if computed Dice smaller: fail): '+str(param_test.dice_threshold)
 
-    # if command ran without error, test integrity
-    if status == 0:
-        # compute dice coefficient between generated image and image from database
-        dice_segmentation = compute_dice(Image(segmentation_filename), Image(manual_segmentation_filename), mode='3d', zboundaries=False)
+    if dice_segmentation < param_test.dice_threshold:
+        param_test.status = 99
+        param_test.output += '\n--> FAILED'
+    else:
+        param_test.output += '\n--> PASSED'
 
-        if dice_segmentation < dice_threshold:
-            status = 99
+    # update Panda structure
+    param_test.results['dice_segmentation'] = dice_segmentation
 
-    # transform results into Pandas structure
-    results = DataFrame(data={'status': status, 'output': output, 'dice_segmentation': dice_segmentation, 'duration [s]': duration}, index=[path_data])
-
-    # sys.stdout.close()
-    # sys.stdout = stdout_orig
-
-    # write log file
-    # write_to_log_file(fname_log, output, mode='r+', prepend=True)
-
-    return status, output, results
-
-
-if __name__ == "__main__":
-    # call main function
-    test()
+    return param_test

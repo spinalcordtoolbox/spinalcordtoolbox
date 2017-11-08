@@ -1,21 +1,22 @@
 #!/usr/bin/env python
 #########################################################################################
 #
-# Test function sct_maths
+# Test function for sct_analyze_lesion script
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Julien Cohen-Adad
+# Author: charley
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
+
 
 def init(param_test):
     """
     Initialize class: param_test
     """
     # initialization
-    default_args = ['-i mt/mtr.nii.gz -percent 95 -o test.nii.gz']
+    default_args = ['-m t2/t2_seg_manual.nii.gz -s t2/t2_seg_manual.nii.gz']
 
     # assign default params
     if not param_test.args:
