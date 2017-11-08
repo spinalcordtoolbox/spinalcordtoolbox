@@ -79,7 +79,7 @@ class Coordinate(Point):
         return "(" + str(self.x) + ", " + str(self.y) + ", " + str(self.z) + ", " + str(self.value) + ")"
 
     def __str__(self):
-        return "(" + str(self.x) + ", " + str(self.y) + ", " + str(self.z) + ", " + str(self.value) + ")"
+        return str(self.x) + "," + str(self.y) + "," + str(self.z) + "," + str(self.value)
 
     def __eq__(self, other):
         if isinstance(other, self.__class__):
@@ -616,7 +616,6 @@ class Centerline:
                              weight_closest * coordinate_closest[2] + weight_next * coordinate_next[2]]
 
         return coordinate_result
-
 
     def extract_perpendicular_square(self, image, index, size=20, resolution=0.5, interpolation_mode=0, border='constant', cval=0.0):
         x_grid, y_grid, z_grid = np.mgrid[-size:size:resolution, -size:size:resolution, 0:1]

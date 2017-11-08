@@ -59,6 +59,9 @@ def main():
     # Read bvecs
     bvecs = read_bvals_bvecs(fname_bvecs, None)
     bvecs = bvecs[0]
+    # if first dimension is not equal to 3 (x,y,z), transpose bvecs file
+    if not bvecs.shape[0] == 3:
+        bvecs = bvecs.transpose()
     x, y, z = bvecs[0], bvecs[1], bvecs[2]
 
     # Get total number of directions
