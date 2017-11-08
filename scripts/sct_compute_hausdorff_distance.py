@@ -237,9 +237,16 @@ class ComputeDistances:
         if self.dim_im == 3:
             self.dist1_distribution = []
             self.dist2_distribution = []
+
             for d in self.distances:
-                self.dist1_distribution.append(d.min_distances_1[np.nonzero(d.min_distances_1)])
-                self.dist2_distribution.append(d.min_distances_2[np.nonzero(d.min_distances_2)])
+                if np.nonzero(d.min_distances_1)[0].size:  # Exist non zero values
+                    self.dist1_distribution.append(d.min_distances_1[np.nonzero(d.min_distances_1)])
+                else:  # all values are zero
+                    self.dist1_distribution.append(0)
+                if np.nonzero(d.min_distances_2)[0].size:  # Exist non zero values
+                    self.dist2_distribution.append(d.min_distances_2[np.nonzero(d.min_distances_2)])
+                else:  # all values are zero
+                    self.dist2_distribution.append(0)
 
             self.res = 'Hausdorff\'s distance  -  First relative Hausdorff\'s distance median - Second relative Hausdorff\'s distance median(all in mm)\n'
             for i, d in enumerate(self.distances):
@@ -512,11 +519,6 @@ if __name__ == "__main__":
             input_im2 = None
 
         computation = ComputeDistances(input_im1, im2=input_im2, param=param)
-        res_fic = open('../' + output_fname, 'w')
-        res_fic.write(computation.res)
-        res_fic.write('\n\nInput 1: ' + input_fname)
-        res_fic.write('\nInput 2: ' + input_second_fname)
-        res_fic.close()
 
         # TODO change back the orientatin of the thinned image
         if param.thinning:
@@ -525,4 +527,11 @@ if __name__ == "__main__":
                 sct.run('cp ' + computation.thinning2.thinned_image.file_name + computation.thinning2.thinned_image.ext + ' ../' + sct.extract_fname(input_second_fname)[1] + '_thinned' + sct.extract_fname(input_second_fname)[2])
 
         os.chdir('..')
+
+        res_fic = open(output_fname, 'w')
+        res_fic.write(computation.res)
+        res_fic.write('\n\nInput 1: ' + input_fname)
+        res_fic.write('\nInput 2: ' + input_second_fname)
+        res_fic.close()
+
         # sct.printv('Total time: ', time.time() - now)

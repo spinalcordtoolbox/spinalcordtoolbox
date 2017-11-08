@@ -20,7 +20,7 @@ import commands
 
 from msct_image import Image
 from msct_parser import Parser
-from sct_utils import tmp_create, extract_fname, slash_at_the_end, printv, run
+from sct_utils import tmp_create, extract_fname, slash_at_the_end, printv, run, start_stream_logger
 from sct_image import get_orientation, set_orientation
 
 
@@ -58,6 +58,10 @@ def get_parser():
                         mandatory=False,
                         example=["0", "1"],
                         default_value="0")
+    parser.add_option(name="-igt",
+                      type_value="image_nifti",
+                      description="File name of ground-truth PMJ (single voxel).",
+                      mandatory=False)
     parser.add_option(name="-r",
                         type_value="multiple_choice",
                         description="Remove temporary files.",
@@ -96,7 +100,7 @@ class DetectPMJ:
         self.dection_map_pmj = extract_fname(self.fname_im)[1] + '_map_pmj'  # file resulting from the detection
 
         # path to the pmj detector
-        self.pmj_model = os.path.join((commands.getoutput('$SCT_DIR')).split(': ')[1],
+        self.pmj_model = os.path.join(commands.getstatusoutput('echo $SCT_DIR')[1],
                                             'data/pmj_models',
                                             '{}_model'.format(self.contrast))
 
@@ -337,4 +341,5 @@ def main(args=None):
         printv('fslview ' + arguments["-i"] + ' ' + fname_out + ' -l Red & \n', verbose, 'info')
 
 if __name__ == "__main__":
+    start_stream_logger()
     main()
