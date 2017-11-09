@@ -12,16 +12,22 @@
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
+import os
+import sys
+
+if os.getenv("SCT_MOVE_CWD_TO_END_OFF_PATH"):
+    # Prevent looking at $PWD first in import since it is often slow
+    cwd = os.getcwd()
+    if cwd in sys.path:
+        sys.path.remove(cwd)
+        sys.path.append(cwd)
 
 import errno
-import sys
 import time
 
-import os
 import commands
 import subprocess
 import re
-from sys import stdout
 import logging
 
 import glob
@@ -54,7 +60,6 @@ def start_stream_logger():
 
     :return: 
     """
-
     formatter = logging.Formatter(LOG_FORMAT)
     stream_handler.setFormatter(formatter)
 
