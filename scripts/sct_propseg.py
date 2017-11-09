@@ -10,11 +10,10 @@
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
-
-from msct_parser import Parser
 import sys
-import sct_utils as sct
 import os
+from msct_parser import Parser
+import sct_utils as sct
 import shutil
 from scipy import ndimage as ndi
 import numpy as np
