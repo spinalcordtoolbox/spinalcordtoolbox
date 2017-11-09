@@ -114,12 +114,6 @@ def get_parser():
                       description='Output path.',
                       mandatory=False,
                       default_value='./')
-    parser.add_option(name='-o',
-                      type_value='folder_creation',
-                      description='Output path.',
-                      mandatory=False,
-                      default_value='./',
-                      deprecated_by='-ofolder')
     parser.add_option(name="-x",
                       type_value="multiple_choice",
                       description="""Final interpolation.""",

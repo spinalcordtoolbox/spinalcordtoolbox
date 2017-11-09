@@ -19,9 +19,9 @@ from spinalcordtoolbox.gui.base import TooManyPointsWarning, MissingLabelWarning
 logger = logging.getLogger(__name__)
 
 
-class SagittalControler(base.BaseController):
+class SagittalController(base.BaseController):
     def __init__(self, image, params, init_values=None):
-        super(SagittalControler, self).__init__(image, params, init_values)
+        super(SagittalController, self).__init__(image, params, init_values)
 
     def select_point(self, x, y, z, label):
         if not self.valid_point(x, y, z):
@@ -80,7 +80,7 @@ def launch_sagittal_dialog(input_file, output_file, params):
     if not params.vertebraes:
         params.vertebraes = [3, 5]
     params.input_file_name = input_file.absolutepath
-    controller = SagittalControler(input_file, params, output_file)
+    controller = SagittalController(input_file, params, output_file)
     controller.reformat_image()
 
     app = QtGui.QApplication([])

@@ -119,13 +119,12 @@ def get_parser():
                       type_value='image_nifti',
                       description='Vertebral labeling file. Only use with flag -vert',
                       mandatory=False,
-                      deprecated_by='-vertfile',
-                      default_value='label/template/PAM50_levels.nii.gz')
+                      deprecated_by='-vertfile')
     parser.add_option(name='-vertfile',
-                      type_value='image_nifti',
+                      type_value='str',
                       description='Vertebral labeling file. Only use with flag -vert',
-                      mandatory=False,
-                      default_value='./label/template/PAM50_levels.nii.gz')
+                      default_value='./label/template/PAM50_levels.nii.gz',
+                      mandatory=False)
     parser.add_option(name='-discfile',
                       type_value='image_nifti',
                       description='Disc labeling. Only use with -p label-vert',
@@ -195,6 +194,7 @@ def main(args):
     fname_segmentation = arguments['-i']
     name_process = arguments['-p']
     overwrite = 0
+    fname_vertebral_labeling = ''
     if "-ofolder" in arguments:
         output_folder = sct.slash_at_the_end(arguments["-ofolder"], slash=1)
     else:
