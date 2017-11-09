@@ -344,7 +344,7 @@ class AnalyzeLeion:
     def measure(self):
         im_lesion = Image(self.fname_label)
         im_lesion_data = im_lesion.data
-        p_lst = im_lesion.dim[3:6]
+        p_lst = im_lesion.dim[4:7] # voxel size
 
         label_lst = [l for l in np.unique(im_lesion_data) if l]  # lesion label IDs list
 
