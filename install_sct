@@ -414,7 +414,8 @@ else
     exit $e_status
   fi
   # reinstall numpy at the end to prevent some bugs
-  conda install -fy numpy=1.12.1
+  n_version=$(conda list  numpy | grep numpy |awk '{print $2}')
+  conda install -fy numpy=$n_version
 
 fi
 
