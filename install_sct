@@ -399,7 +399,7 @@ else
 
   # Install Python dependencies
   echo -e "\nInstalling Python dependencies..."
-  conda install --yes --file ${SCT_SOURCE}/install/requirements/requirementsConda.txt
+  conda install -c defaults --yes --file ${SCT_SOURCE}/install/requirements/requirementsConda.txt
   e_status=$?
   if [ ${e_status} != 0 ] ; then
     echo "conda install error with exit status $e_status. Check logs for more details
