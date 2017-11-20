@@ -206,6 +206,59 @@ def run(cmd, verbose=1, error_exit='error', raise_exception=False):
         return status_output, output_final[0:-1]
 
 
+def check_exe(name):
+    """
+    Ensure that a program exists
+    :type name: string
+    :param name: name or path to program
+    :return: path of the program or None
+    """
+    def is_exe(fpath):
+        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
+
+    fpath, fname = os.path.split(name)
+    if fpath and is_exe(name):
+        return fpath
+    else:
+        for path in os.environ["PATH"].split(os.pathsep):
+            path = path.strip('"')
+            exe_file = os.path.join(path, name)
+            if is_exe(exe_file):
+                return exe_file
+
+    return None
+
+
+def display_viewer(list_file=[]):
+    """
+    Print on stdout the syntax to open a viewer and display images for QC.
+    Returns
+    -------
+
+    """
+    list_viewer = ['fslview', 'fslview_deprecated', 'fsleyes']  # list of known viewers. Can add more.
+    selected_viewer = None
+
+    # find viewer
+    for viewer in list_viewer:
+        if check_exe(viewer):
+            selected_viewer = viewer
+            break
+    if selected_viewer == None:
+        # exit without error
+        return
+
+    # loop across files and build syntax
+    cmd = viewer
+    for file in list_file:
+        cmd += ' ' + file
+
+    # display
+    printv('\nDone! To view results, type:')
+    printv(cmd, verbose=1, type='info')
+    return None
+
+
 # =======================================================================================================================
 # Get SCT version
 # =======================================================================================================================
