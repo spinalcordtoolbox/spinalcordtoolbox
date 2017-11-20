@@ -122,9 +122,8 @@ class ImageCropper(object):
                 sct.printv("WARNING : Couldn't remove output file. Either it is opened elsewhere or "
                            "it doesn't exist.", self.verbose, 'warning')
         else:
-            # Complete message
-            sct.printv('\nDone! To view results, type:', self.verbose)
-            sct.printv("fslview " + self.output_filename + " &\n", self.verbose, 'info')
+            # display viewer syntax
+            sct.display_viewer([self.output_filename])
 
         return self.result
 
@@ -261,10 +260,9 @@ class ImageCropper(object):
             sct.printv('\nRemove temporary files...')
             sct.run('rm -rf ' + path_tmp)
 
-        # to view results
-        sct.printv('\nDone! To view results, type:')
-        sct.printv('fslview ' + path_out + file_out + ext_out + ' &')
-        sct.printv()
+        # display viewer syntax
+        sct.display_viewer(l_file=[path_out + file_out + ext_out])
+
 
 def get_parser():
         # Initialize parser

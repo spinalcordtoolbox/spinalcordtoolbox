@@ -239,9 +239,8 @@ def main(args):
         fname_output = extract_centerline(fname_segmentation, remove_temp_files, verbose=param.verbose, algo_fitting=param.algo_fitting, use_phys_coord=use_phys_coord)
         if os.path.abspath(fname_output) != output_folder + fname_output:
             shutil.copy(fname_output, output_folder)
-        # to view results
-        sct.printv('\nDone! To view results, type:', param.verbose)
-        sct.printv('fslview ' + fname_segmentation + ' ' + output_folder + fname_output + ' -l Red &\n', param.verbose, 'info')
+        # display viewer syntax
+        sct.display_viewer([fname_segmentation, output_folder + fname_output], l_colormap=['gray', 'red'], l_opacity=['', '1'])
 
     if name_process == 'csa':
         compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_temp_files, step, smoothing_param, slices, vert_lev, fname_vertebral_labeling, algo_fitting=param.algo_fitting, type_window=param.type_window, window_length=param.window_length, angle_correction=angle_correction, use_phys_coord=use_phys_coord)
