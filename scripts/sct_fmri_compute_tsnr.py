@@ -86,12 +86,12 @@ if __name__ == '__main__':
     else:
         param_default = Param()
 
-        parser = get_parser()
-        arguments = parser.parse(sys.argv[1:])
-        input_fmri = arguments['-i']
+    parser = get_parser()
+    arguments = parser.parse(sys.argv[1:])
+    input_fmri = arguments['-i']
 
-        if '-v' in arguments:
-            param.verbose = int(arguments['-v'])
+    if '-v' in arguments:
+        param.verbose = int(arguments['-v'])
 
-        tsnr = Tsnr(param=param, fmri=input_fmri)
-        tsnr.compute()
+    tsnr = Tsnr(param=param, fmri=input_fmri)
+    tsnr.compute()
