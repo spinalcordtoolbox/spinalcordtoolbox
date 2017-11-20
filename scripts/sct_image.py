@@ -276,12 +276,12 @@ def main(args=None):
                 fname_out.append(add_suffix(fname_in[0], '_' + dim_list[dim].upper() + str(i).zfill(4)))
                 im.setFileName(fname_out[i])
                 im.save()
+        # display viewer syntax
+        sct.display_viewer([str(fname_out)])
 
-        # To view results
-        printv('Finished. To view results, type:', param.verbose)
-        printv('fslview ' + str(fname_out) + ' &', param.verbose, 'info')
     elif "-getorient" in arguments:
         sct.printv(orient)
+
     elif '-display-warp' in arguments:
         printv('Warping grid generated.', verbose, 'info')
 

@@ -202,9 +202,8 @@ def main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, 
         sct.printv('\nDelete temporary files...')
         sct.run('rm -rf tmp.*')
 
-    # to view results
-    sct.printv('\nDone! To view results, type:')
-    sct.printv('fslview ' + file_anat + ext_anat + ' ' + file_anat + '_flatten' + ext_anat + ' &\n')
+    # display viewer syntax
+    sct.display_viewer([file_anat + ext_anat, file_anat + '_flatten' + ext_anat])
 
 
 def b_spline_centerline(x_centerline, y_centerline, z_centerline):

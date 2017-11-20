@@ -534,5 +534,5 @@ if __name__ == "__main__":
         except:
             sct.log.warning('Issue when creating QC report.')
 
-    sct.printv('\nDone! To view results, type:', verbose)
-    sct.printv("fslview " + fname_input_data + " " + fname_seg + " -l Red -b 0,1 -t 0.7 &\n", verbose, 'info')
+    # display viewer syntax
+    sct.display_viewer([fname_input_data, fname_seg], l_colormap=['gray', 'red'], l_opacity=['', '0.7'])
