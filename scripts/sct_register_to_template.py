@@ -282,6 +282,7 @@ def main(args=None):
     sct.run('sct_convert -i ' + fname_landmarks + ' -o ' + path_tmp + ftmp_label)
     sct.run('sct_convert -i ' + fname_template + ' -o ' + path_tmp + ftmp_template)
     sct.run('sct_convert -i ' + fname_template_seg + ' -o ' + path_tmp + ftmp_template_seg)
+    sct_convert.main(args=['-i', fname_template_vertebral_labeling, '-o', path_tmp + ftmp_template_label])
     if label_type == 'disc':
         sct_convert.main(args=['-i', fname_template_disc_labeling, '-o', path_tmp + ftmp_template_label])
     # sct.run('sct_convert -i '+fname_template_label+' -o '+path_tmp+ftmp_template_label)
@@ -292,7 +293,7 @@ def main(args=None):
     # Generate labels from template vertebral labeling
     if label_type == 'body':
         sct.printv('\nGenerate labels from template vertebral labeling', verbose)
-        sct_label_utils.main(args=['-i', fname_template_vertebral_labeling, '-vert-body', '0', '-o', ftmp_template_label])
+        sct_label_utils.main(args=['-i', ftmp_template_label, '-vert-body', '0', '-o', ftmp_template_label])
     # sct.run('sct_label_utils -i ' + fname_template_vertebral_labeling + ' -vert-body 0 -o ' + ftmp_template_label)
 
     # check if provided labels are available in the template
