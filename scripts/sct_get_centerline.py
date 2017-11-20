@@ -260,7 +260,7 @@ def run_main():
                                                     output_roi=output_roi,
                                                     verbose=verbose)
 
-    sct.display_viewer(list_file=[fname_input_data, centerline_filename])
+    sct.display_viewer(l_file=[fname_input_data, centerline_filename], l_colormap=['gray', 'red'], l_minmax=['', '0,1'], l_opacity=['', '1'])
     # sct.printv("fslview " + fname_input_data + " " + centerline_filename + " -l Red -b 0,1 -t 0.7 &\n", verbose, 'info')
 
 if __name__ == '__main__':
