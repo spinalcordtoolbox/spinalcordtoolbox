@@ -240,9 +240,10 @@ def main(args=None):
     # to view results
     sct.printv('\nTo view results, type: ', verbose)
     if average:
-        sct.printv('fslview b0 b0_mean dwi dwi_mean &\n', verbose)
+        # display viewer syntax
+        sct.display_viewer(['b0', 'b0_mean', 'dwi', 'dwi_mean'])
     else:
-        sct.printv('fslview b0 dwi &\n', verbose)
+        sct.display_viewer(['b0', 'dwi'])
 
 
 # ==========================================================================================

@@ -229,7 +229,7 @@ def check_exe(name):
     return None
 
 
-def display_viewer(l_file=[], l_colormap=[], l_minmax=[], l_opacity=[]):
+def display_viewer(l_file, l_colormap=[], l_minmax=[], l_opacity=[], mode=''):
     """
     Print the syntax to open a viewer and display images for QC. To use default values, enter empty string: ''
     Parameters
@@ -245,12 +245,12 @@ def display_viewer(l_file=[], l_colormap=[], l_minmax=[], l_opacity=[]):
 
     Example
     -------
-    sct.display_viewer(l_file=[fname_input_data, centerline_filename], l_colormap=['gray', 'red'], l_minmax=['', '0,1'], l_opacity=['', '0.7'])
-
+    sct.display_viewer([file1, file2, file3])
+    sct.display_viewer([file1, file2], l_colormap=['gray', 'red'], l_minmax=['', '0,1'], l_opacity=['', '0.7'])
     """
-    list_viewer = ['fslviews', 'fslview_deprecated', 'fsleyes']  # list of known viewers. Can add more.
-    dict_fslview = {'gray': 'Greyscale', 'red-yellow': 'Red-Yellow', 'blue-lightblue': 'Blue-Lightblue', 'red': 'Red'}
-    dict_fsleyes = {'gray': 'greyscale', 'red-yellow': 'red-yellow', 'blue-lightblue': 'blue-lightblue', 'red': 'red'}
+    list_viewer = ['fslview', 'fslview_deprecated', 'fsleyes']  # list of known viewers. Can add more.
+    dict_fslview = {'gray': 'Greyscale', 'red-yellow': 'Red-Yellow', 'blue-lightblue': 'Blue-Lightblue', 'red': 'Red', 'random': 'Random-Rainbow'}
+    dict_fsleyes = {'gray': 'greyscale', 'red-yellow': 'red-yellow', 'blue-lightblue': 'blue-lightblue', 'red': 'red', 'random': 'random'}
     selected_viewer = None
 
     # find viewer
@@ -264,28 +264,37 @@ def display_viewer(l_file=[], l_colormap=[], l_minmax=[], l_opacity=[]):
 
     # loop across files and build syntax
     cmd = viewer
+    # add mode (only supported by fslview for the moment)
+    if mode and selected_viewer in ['fslview', 'fslview_deprecated']:
+        cmd += ' -m ' + mode
     for i in range(len(l_file)):
         # add viewer-specific options
         if selected_viewer in ['fslview', 'fslview_deprecated']:
             cmd += ' ' + l_file[i]
-            if l_colormap[i]:
-                cmd += ' -l ' + dict_fslview[l_colormap[i]]
-            if l_minmax[i]:
-                cmd += ' -b ' + l_minmax[i]  # a,b
-            if l_opacity[i]:
-                cmd += ' -t ' + l_opacity[i]
+            if l_colormap:
+                if l_colormap[i]:
+                    cmd += ' -l ' + dict_fslview[l_colormap[i]]
+            if l_minmax:
+                if l_minmax[i]:
+                    cmd += ' -b ' + l_minmax[i]  # a,b
+            if l_opacity:
+                if l_opacity[i]:
+                    cmd += ' -t ' + l_opacity[i]
         if selected_viewer in ['fsleyes']:
             cmd += ' ' + l_file[i]
-            if l_colormap[i]:
-                cmd += ' -cm ' + dict_fsleyes[l_colormap[i]]
-            if l_minmax[i]:
-                cmd += ' -dr ' + ' '.join(l_minmax[i].split(','))  # a b
-            if l_opacity[i]:
-                cmd += ' -a ' + str(float(l_opacity[i])*100)  # in percentage
-
+            if l_colormap:
+                if l_colormap[i]:
+                    cmd += ' -cm ' + dict_fsleyes[l_colormap[i]]
+            if l_minmax:
+                if l_minmax[i]:
+                    cmd += ' -dr ' + ' '.join(l_minmax[i].split(','))  # a b
+            if l_opacity:
+                if l_opacity[i]:
+                    cmd += ' -a ' + str(float(l_opacity[i])*100)  # in percentage
+    cmd += ' &'
     # display
     printv('\nDone! To view results, type:')
-    printv(cmd, verbose=1, type='info')
+    printv(cmd + '\n', verbose=1, type='info')
     return None
 
 

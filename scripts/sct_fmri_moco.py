@@ -219,9 +219,8 @@ def main(args=None):
     elapsed_time = time.time() - start_time
     sct.printv('\nFinished! Elapsed time: ' + str(int(round(elapsed_time))) + 's', param.verbose)
 
-    # To view results
-    sct.printv('\nTo view results, type:', param.verbose)
-    sct.printv('fslview -m ortho,ortho ' + param.path_out + file_data + param.suffix + ' ' + file_data + ' &\n', param.verbose, 'info')
+    # display viewer syntax
+    sct.display_viewer([param.path_out + file_data + param.suffix, file_data], mode='ortho,ortho')
 
 
 #=======================================================================================================================

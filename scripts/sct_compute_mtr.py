@@ -97,9 +97,8 @@ def main(args=None):
         sct.printv('\nRemove temporary files...')
         sct.run('rm -rf ' + path_tmp)
 
-    # to view results
-    sct.printv('\nDone! To view results, type:', verbose)
-    sct.printv('fslview ' + fname_mt0 + ' ' + fname_mt1 + ' ' + file_out + ' &\n', verbose, 'info')
+    # display viewer syntax
+    sct.display_viewer([fname_mt0, fname_mt1, file_out])
 
 
 # ==========================================================================================

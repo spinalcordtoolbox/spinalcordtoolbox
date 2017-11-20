@@ -57,9 +57,8 @@ class Tsnr:
         nii_tsnr.setFileName(fname_tsnr)
         nii_tsnr.save(type='float32')
 
-        # to view results
-        sct.printv('\nDone! To view results, type:', self.param.verbose, 'normal')
-        sct.printv('fslview ' + fname_tsnr + ' &\n', self.param.verbose, 'info')
+        # display viewer syntax
+        sct.display_viewer([fname_tsnr])
 
 
 def get_parser():

@@ -357,9 +357,8 @@ def main(args=None):
         sct.printv(err, verbose, 'warning')
         sct.printv('WARNING: Cannot generate report.', verbose, 'warning')
 
-    # to view results
-    sct.printv('\nDone! To view results, type:', verbose)
-    sct.printv('fslview ' + fname_in + ' ' + path_output + file_seg + '_labeled' + ' -l Random-Rainbow -t 0.5 &\n', verbose, 'info')
+    # display viewer syntax
+    sct.display_viewer([fname_in, path_output + file_seg + '_labeled'], l_colormap=['', 'random'], l_opacity=['1', '0.5'])
 
 
 # Detect vertebral levels
