@@ -241,7 +241,7 @@ class Transform:
             # sct.run('sct_crop_image -i '+fname_out+' -o '+fname_out+' -ref '+warping_field)
 
         # display viewer syntax
-        sct.display_viewer([fname_dest, fname_dest])
+        sct.display_viewer([fname_dest, fname_dest], verbose=verbose)
 
 
 # MAIN
