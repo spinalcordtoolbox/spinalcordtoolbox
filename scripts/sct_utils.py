@@ -229,7 +229,7 @@ def check_exe(name):
     return None
 
 
-def display_viewer(l_file, l_colormap=[], l_minmax=[], l_opacity=[], mode=''):
+def display_viewer(l_file, l_colormap=[], l_minmax=[], l_opacity=[], mode='', verbose=1):
     """
     Print the syntax to open a viewer and display images for QC. To use default values, enter empty string: ''
     Parameters
@@ -293,8 +293,9 @@ def display_viewer(l_file, l_colormap=[], l_minmax=[], l_opacity=[], mode=''):
                     cmd += ' -a ' + str(float(l_opacity[i])*100)  # in percentage
     cmd += ' &'
     # display
-    printv('\nDone! To view results, type:')
-    printv(cmd + '\n', verbose=1, type='info')
+    if verbose:
+        printv('\nDone! To view results, type:')
+        printv(cmd + '\n', verbose=1, type='info')
     return None
 
 
