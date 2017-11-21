@@ -2,7 +2,6 @@
 import json
 import logging
 import os
-import subprocess
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -18,6 +17,7 @@ from scipy import ndimage
 
 
 logger = logging.getLogger("sct.{}".format(__file__))
+
 
 class QcImage(object):
     """
@@ -294,15 +294,9 @@ class QcReport(object):
             The dimension of the image frame
         """
         # get path of the toolbox
-        try:
-            cmd = 'git rev-parse --short HEAD'.split()
-            git_hash = subprocess.check_output(cmd).strip('"')
-        except (subprocess.CalledProcessError, OSError):
-            git_hash = "N/A"
 
         output = {
             'command': self.qc_params.command,
-            'version': git_hash,
             'args': ' '.join(self.qc_params.args),
             'subject': self.qc_params.subject,
             'contrast': self.qc_params.contrast,
