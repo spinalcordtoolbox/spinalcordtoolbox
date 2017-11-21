@@ -787,8 +787,8 @@ class SpinalCordStraightener(object):
             sct.printv('    including ' + str(int(np.round(self.elapsed_time_accuracy))) + ' s spent computing '
                                                                                       'accuracy results', verbose)
         if self.curved2straight:
-            sct.printv("\nTo view results, type:", verbose)
-            sct.printv("fslview " + fname_straight + " &\n", verbose, 'info')
+            # display viewer syntax
+            sct.display_viewer([fname_straight], verbose=verbose)
 
         # output QC image
         if qc and self.curved2straight:
