@@ -88,13 +88,14 @@ class WarpTemplate:
             sct.printv('\nWARP SPINAL LEVELS:', self.verbose)
             warp_label(self.path_template, self.folder_spinal_levels, param.file_info_label, self.fname_src, self.fname_transfo, self.folder_out)
 
-        # to view results
-        sct.printv('\nDone! To view results, type:', self.verbose)
-        sct.printv('fslview ' + self.fname_src + ' ' \
-                   + self.folder_out + self.folder_template + get_file_label(self.folder_out + self.folder_template, 'T2') + ' -b 0,4000 ' \
-                   + self.folder_out + self.folder_template + get_file_label(self.folder_out + self.folder_template, 'vertebral') + ' -l MGH-Cortical -t 0.5 ' \
-                   + self.folder_out + self.folder_template + get_file_label(self.folder_out + self.folder_template, 'gray matter') + ' -l Red-Yellow -b 0.5,1 ' \
-                   + self.folder_out + self.folder_template + get_file_label(self.folder_out + self.folder_template, 'white matter') + ' -l Blue-Lightblue -b 0.5,1 &\n', self.verbose, 'info')
+        # display viewer syntax
+        sct.display_viewer([self.fname_src,
+                            self.folder_out + self.folder_template + get_file_label(self.folder_out + self.folder_template, 'T2'),
+                            self.folder_out + self.folder_template + get_file_label(self.folder_out + self.folder_template, 'gray matter'),
+                            self.folder_out + self.folder_template + get_file_label(self.folder_out + self.folder_template, 'white matter')],
+                           l_colormap=['gray', 'gray', 'red-yellow', 'blue-lightblue'],
+                           l_opacity=['1', '1', '0.5', '0.5'],
+                           verbose=param.verbose)
 
         if self.qc:
             from msct_image import Image

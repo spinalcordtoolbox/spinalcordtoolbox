@@ -514,10 +514,10 @@ def main(args=None):
     # display elapsed time
     elapsed_time = time.time() - start_time
     sct.printv('\nFinished! Elapsed time: ' + str(int(round(elapsed_time))) + 's', verbose)
-    sct.printv('\nTo view results, type:', verbose)
+    # display viewer syntax
     if generate_warpinv:
-        sct.printv('fslview ' + fname_src + ' ' + fname_dest2src + ' &', verbose, 'info')
-    sct.printv('fslview ' + fname_dest + ' ' + fname_src2dest + ' &\n', verbose, 'info')
+        sct.display_viewer([fname_src, fname_dest2src], verbose=verbose)
+    sct.display_viewer([fname_dest, fname_src2dest], verbose=verbose)
 
 
 # register images
