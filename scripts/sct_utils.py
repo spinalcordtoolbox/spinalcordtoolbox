@@ -254,16 +254,14 @@ def display_viewer_syntax(files, colormaps=[], minmax=[], opacities=[], mode='',
     selected_viewer = None
 
     # find viewer
-    for viewer in list_viewer:
-        if check_exe(viewer):
-            selected_viewer = viewer
-            break
-    if selected_viewer == None:
-        # exit without error
+    exe_viewers = [viewer for viewer in list_viewer if check_exe(viewer)]
+    if exe_viewers:
+        selected_viewer = exe_viewers[0]
+    else:
         return
 
     # loop across files and build syntax
-    cmd = viewer
+    cmd = selected_viewer
     # add mode (only supported by fslview for the moment)
     if mode and selected_viewer in ['fslview', 'fslview_deprecated']:
         cmd += ' -m ' + mode
