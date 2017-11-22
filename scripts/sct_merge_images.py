@@ -205,8 +205,7 @@ def main(args=None):
     except Exception as e:
         sct.printv(str(e), 1, 'error')
 
-    # display viewer syntax
-    sct.display_viewer([fname_dest, os.path.abspath(param.fname_out)])
+    sct.display_viewer_syntax([fname_dest, os.path.abspath(param.fname_out)])
 
 
 if __name__ == "__main__":

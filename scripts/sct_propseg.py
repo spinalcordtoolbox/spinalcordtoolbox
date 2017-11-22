@@ -534,5 +534,4 @@ if __name__ == "__main__":
         except:
             sct.log.warning('Issue when creating QC report.')
 
-    # display viewer syntax
-    sct.display_viewer([fname_input_data, fname_seg], l_colormap=['gray', 'red'], l_opacity=['', '0.7'])
+    sct.display_viewer_syntax([fname_input_data, fname_seg], l_colormap=['gray', 'red'], l_opacity=['', '0.7'])

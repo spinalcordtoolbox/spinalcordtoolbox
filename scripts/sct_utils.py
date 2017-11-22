@@ -229,7 +229,7 @@ def check_exe(name):
     return None
 
 
-def display_viewer(l_file, l_colormap=[], l_minmax=[], l_opacity=[], mode='', verbose=1):
+def display_viewer_syntax(l_file, l_colormap=[], l_minmax=[], l_opacity=[], mode='', verbose=1):
     """
     Print the syntax to open a viewer and display images for QC. To use default values, enter empty string: ''
     Parameters

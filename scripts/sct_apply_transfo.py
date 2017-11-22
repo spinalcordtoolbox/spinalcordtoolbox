@@ -240,8 +240,7 @@ class Transform:
             ImageCropper(input_file=fname_out, output_file=fname_out, ref=warping_field).crop()
             # sct.run('sct_crop_image -i '+fname_out+' -o '+fname_out+' -ref '+warping_field)
 
-        # display viewer syntax
-        sct.display_viewer([fname_dest, fname_dest], verbose=verbose)
+        sct.display_viewer_syntax([fname_dest, fname_dest], verbose=verbose)
 
 
 # MAIN

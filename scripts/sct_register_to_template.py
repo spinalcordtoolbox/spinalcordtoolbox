@@ -612,9 +612,8 @@ def main(args=None):
         sct.printv('Use the following command to see the results in a browser')
         sct.printv('sct_qc -folder %s' % qc_path, type='info')
 
-    # display viewer syntax
-    sct.display_viewer([fname_data, path_output + 'template2anat'], verbose=verbose)
-    sct.display_viewer([fname_template, path_output + 'anat2template'], verbose=verbose)
+    sct.display_viewer_syntax([fname_data, path_output + 'template2anat'], verbose=verbose)
+    sct.display_viewer_syntax([fname_template, path_output + 'anat2template'], verbose=verbose)
 
 
 # Resample labels
