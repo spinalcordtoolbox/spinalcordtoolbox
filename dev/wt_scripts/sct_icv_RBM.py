@@ -96,7 +96,7 @@ def main():
     if output_path=='':
         output_path=path_input
     else:
-        output_path = os.path.normpath(output_path)+'/'
+        output_path = os.path.normpath(output_path)
     
     #check existence of directories (if exists, removes subdirectories; if not, creates directory)
     if not os.path.exists(output_path):
@@ -119,7 +119,7 @@ def main():
     # Note that N3 is implemented in BET, use -B parameter
     #-----------------------------------
     if N4Correct:
-        cmd='N4BiasFieldCorrection -d '+str(ImageDimension)+' -i '+input_path+' -o '+output_path+file_input+'_n4'+ext_input
+        cmd='N4BiasFieldCorrection -d '+str(ImageDimension)+' -i '+input_path+' -o ' + os.path.join(output_path, file_input + '_n4'+ext_input)
         print(">> "+cmd)
         os.system(cmd)
         file_input = file_input+'_n4'
@@ -133,21 +133,21 @@ def main():
         if contrast == 't2':
             frac_int = 0.2
             # note that -t2 parameter is important in SIENAx to estimate white matter volume properly
-            cmd='sienax '+output_path+file_input+ext_input+' -o '+output_path+file_input+'_sienax -B "-f '+str(frac_int)+' -R" -t2' 
+            cmd='sienax '+os.path.join(output_path, file_input+ext_input) +' -o '+os.path.join(output_path, file_input+'_sienax') + ' -B "-f '+str(frac_int)+' -R" -t2' 
             print(">> "+cmd)
             os.system(cmd)
         elif contrast == 't1':
             frac_int = 0.2
-            cmd='sienax '+output_path+file_input+ext_input+' -o '+output_path+file_input+'_sienax -B "-f '+str(frac_int)+' -R"'
+            cmd='sienax '+os.path.join(output_path, file_input+ext_input) +' -o '+os.path.join(output_path, file_input+'_sienax') + ' -B "-f '+str(frac_int)+' -R"'
             print(">> "+cmd)
             os.system(cmd)    
         
         #-----------------------------------    
         # Read SIENAx report to extract raw brain ICV in cubic millimeters
         #-----------------------------------   
-        report = parse_report(output_path+file_input+'_sienax/report.sienax')
+        report = parse_report(os.path.join(output_path, file_input+'_sienax', 'report.sienax'))
         
-        fo = open(output_path+"icv.txt", "wb")
+        fo = open(os.path.join(output_path, "icv.txt"), "wb")
         fo.write(str(report['brain']['raw']))
         fo.close()
     
@@ -155,49 +155,49 @@ def main():
         # Brain extraction
         frac_int = 0.2
         file_output='tmp.brain.'+file_input
-        cmd = 'bet '+output_path+file_input+ext_input+' '+output_path+file_output+ext_input+' -R -f '+str(frac_int)
+        cmd = 'bet '+os.path.join(output_path, file_input+ext_input) + ' '+ os.path.join(output_path, file_output+ext_input) +' -R -f '+str(frac_int)
         print(">> "+cmd)
         os.system(cmd)
         
         # Swap dimension to correspond to the template
         file_output='tmp.brain.RLPAIS.'+file_input
-        cmd = 'fslswapdim '+output_path+'tmp.brain.'+file_input+ext_input+' LR PA IS '+output_path+file_output+ext_input
+        cmd = 'fslswapdim '+os.path.join(output_path, 'tmp.brain.'+file_input+ext_input) +' LR PA IS '+ os.path.join(output_path, file_output+ext_input)
         print(">> "+cmd)
         os.system(cmd)
         
         # Resample in 2mm
-        cmd = 'c3d '+output_path+file_output+ext_input+' -resample-mm 2.0x2.0x2.0mm '+output_path+file_output+'_2mm'+ext_input
+        cmd = 'c3d '+ os.path.join(output_path, file_output+ext_input) +' -resample-mm 2.0x2.0x2.0mm '+ os.path.join(output_path, file_output+'_2mm'+ext_input)
         print(">> "+cmd)
         os.system(cmd)
         file_output=file_output+'_2mm' 
         
         # Registration on template        
-        cmd = 'flirt -ref '+path_atlas+' -in '+output_path+file_output+ext_input+' -out '+output_path+file_output+'_reg'+ext_input+' -omat '+output_path+'tmp.'+file_input+'_affine_transf.mat'
+        cmd = 'flirt -ref '+path_atlas+' -in '+ os.path.join(output_path, file_output+ext_input) +' -out '+ os.path.join(output_path, file_output+'_reg'+ext_input) +' -omat '+ os.path.join(output_path, 'tmp.'+file_input+'_affine_transf.mat')
         print(">> "+cmd)
         os.system(cmd)
         file_output = file_output+'_reg'   
         
         # Apply binary mask
-        cmd = 'fslmaths '+output_path+file_output+ext_input+' -mas '+path_mask_mni+' '+output_path+file_output+'_masked'+ext_input
+        cmd = 'fslmaths '+ os.path.join(output_path, file_output+ext_input)+' -mas '+path_mask_mni+' '+ os.path.join(output_path, file_output+'_masked'+ext_input)
         print(">> "+cmd)
         os.system(cmd)
         file_output = file_output+'_masked'
         
         # invert transformation matrix
-        cmd = 'convert_xfm -omat '+output_path+'tmp.'+file_input+'_affine_inverse_transf.mat -inverse '+output_path+'tmp.'+file_input+'_affine_transf.mat'
+        cmd = 'convert_xfm -omat '+ os.path.join(output_path, 'tmp.'+file_input+'_affine_inverse_transf.mat') + ' -inverse '+ os.path.join(output_path, 'tmp.'+file_input+'_affine_transf.mat')
         print(">> "+cmd)
         os.system(cmd)      
         
         # apply inverse transmation matrix 
-        cmd = 'flirt -ref '+output_path+file_input+ext_input+' -in '+output_path+file_output+ext_input+' -out '+output_path+file_input+'_brain'+ext_input+' -init '+output_path+'tmp.'+file_input+'_affine_inverse_transf.mat -applyxfm'
+        cmd = 'flirt -ref '+os.path.join(output_path, file_input+ext_input) +' -in '+ os.path.join(output_path, file_output+ext_input) +' -out '+ os.path.join(output_path, file_input+'_brain'+ext_input) +' -init '+ os.path.join(output_path, 'tmp.'+file_input+'_affine_inverse_transf.mat') + ' -applyxfm'
         print(">> "+cmd)
         os.system(cmd)
 
-        p = os.popen('fslstats '+output_path+file_input+'_brain'+ext_input+' -V')
+        p = os.popen('fslstats '+os.path.join(output_path, file_input+'_brain'+ext_input) +' -V')
         s = p.readline()
         p.close()
         
-        fo = open(output_path+"icv.txt", "wb")
+        fo = open(os.path.join(output_path, "icv.txt"), "wb")
         fo.write(s)
         fo.close()
 
@@ -228,13 +228,9 @@ def exist_image(fname):
 def extract_fname(fname):
     """ Extracts path, file and extension. """
     # extract path
-    path_fname = os.path.dirname(fname)+'/'
-    # check if only single file was entered (without path)
-    if path_fname == '/':
-        path_fname = ''
+    path_fname = os.path.dirname(fname)
     # extract file and extension
-    file_fname = fname
-    file_fname = file_fname.replace(path_fname,'')
+    file_fname = os.path.basename(fname)
     file_fname, ext_fname = os.path.splitext(file_fname)
     # check if .nii.gz file
     if ext_fname == '.gz':

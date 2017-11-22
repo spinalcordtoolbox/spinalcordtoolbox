@@ -18,9 +18,9 @@
 import sys
 import os
 import getopt
-import commands
-import sct_utils as sct
 import time
+
+import sct_utils as sct
 from sct_convert import convert
 from msct_image import Image
 
@@ -47,8 +47,8 @@ def main():
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
         # get path of the testing data
-        status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
-        param.fname_data = path_sct_data+'/fmri/fmri.nii.gz'
+        path_sct_data = os.environ.get("SCT_TESTING_DATA_DIR", os.path.join(os.path.dirname(os.path.dirname(__file__))), "testing_data")
+        param.fname_data = os.path.join(path_sct_data, 'fmri', 'fmri.nii.gz')
         param.factor = '2' #'0.5x0.5x1'
         param.remove_tmp_files = 0
         param.verbose = 1
@@ -118,10 +118,7 @@ def resample():
     path_data, file_data, ext_data = sct.extract_fname(param.fname_data)
     path_out, file_out, ext_out = '', file_data, ext_data
 
-    # create temporary folder
-    sct.printv('\nCreate temporary folder...', param.verbose)
-    path_tmp = sct.slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S"), 1)
-    sct.run('mkdir '+path_tmp, param.verbose)
+    path_tmp = sct.tmp_create(basename="resample_old", verbose=param.verbose)
 
     # Copying input data to tmp folder and convert to nii
     # NB: cannot use c3d here because c3d cannot convert 4D data.
@@ -129,6 +126,7 @@ def resample():
     sct.run('cp '+param.fname_data+' '+path_tmp+'data'+ext_data, param.verbose)
 
     # go to tmp folder
+    curdir = os.getcwd()
     os.chdir(path_tmp)
 
     # convert to nii format
@@ -184,8 +182,8 @@ def resample():
     import glob
     concat_data(glob.glob('data_T*r.nii'), file_data_resample, dim=3)
 
-    # come back to parent folder
-    os.chdir('..')
+    # come back
+    os.chdir(curdir)
 
     # Generate output files
     sct.printv('\nGenerate output files...', param.verbose)

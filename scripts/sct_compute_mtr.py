@@ -65,10 +65,11 @@ def main(args=None):
     # Copying input data to tmp folder and convert to nii
     sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
     from sct_convert import convert
-    convert(fname_mt0, path_tmp + 'mt0.nii', type='float32')
-    convert(fname_mt1, path_tmp + 'mt1.nii', type='float32')
+    convert(fname_mt0, os.path.join(path_tmp, "mt0.nii"), type='float32')
+    convert(fname_mt1, os.path.join(path_tmp, "mt1.nii"), type='float32')
 
     # go to tmp folder
+    curdir = os.getcwd()
     os.chdir(path_tmp)
 
     # compute MTR
@@ -85,12 +86,12 @@ def main(args=None):
     nii_mtr.save()
     # sct.run(fsloutput+'fslmaths -dt double mt0.nii -sub mt1.nii -mul 100 -div mt0.nii -thr 0 -uthr 100 mtr.nii', verbose)
 
-    # come back to parent folder
-    os.chdir('..')
+    # come back
+    os.chdir(curdir)
 
     # Generate output files
     sct.printv('\nGenerate output files...', verbose)
-    sct.generate_output_file(path_tmp + 'mtr.nii', path_out + file_out + ext_out)
+    sct.generate_output_file(os.path.join(path_tmp, "mtr.nii"), os.path.join(path_out, file_out + ext_out))
 
     # Remove temporary files
     if remove_tmp_files == 1:

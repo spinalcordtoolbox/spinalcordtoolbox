@@ -54,10 +54,6 @@ def test_integrity(param_test):
 # from msct_image import Image
 # import sct_utils as sct
 # from numpy import sum, mean
-# # append path that contains scripts, to be able to load modules
-# status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
-# sys.path.append(path_sct + '/scripts')
-#
 #
 #
 # def test(path_data, parameters=''):
@@ -94,8 +90,8 @@ def test_integrity(param_test):
 #     # initialization of results: must be NaN if test fails
 #     result_dice_gm, result_diff_dc_gm, result_dice_wm, result_diff_dc_wm, result_hausdorff, result_diff_hd, result_median_dist, result_diff_md = float('nan'), float('nan'), float('nan'), float('nan'), float('nan'), float('nan'), float('nan'), float('nan')
 #     if status == 0:
-#         dice_fname = path_output+'dice_multilabel_reg.txt'
-#         hausdorff_fname = path_output+'hd_md_multilabel_reg.txt'
+#         dice_fname = os.path.join(path_output, 'dice_multilabel_reg.txt')
+#         hausdorff_fname = os.path.join(path_output, 'hd_md_multilabel_reg.txt')
 #
 #         # Extracting dice results:
 #         dice = open(dice_fname, 'r')
@@ -181,4 +177,4 @@ def test_integrity(param_test):
 #
 # if __name__ == "__main__":
 #     # call main function
-#     test(path_sct+'/data')
+#     test(os.path.join(path_sct, 'data'))

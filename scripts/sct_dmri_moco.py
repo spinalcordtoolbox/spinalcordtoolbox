@@ -258,10 +258,7 @@ def main(args=None):
     path_data, file_data, ext_data = sct.extract_fname(param.fname_data)
     path_mask, file_mask, ext_mask = sct.extract_fname(param.fname_mask)
 
-    # create temporary folder
-    sct.printv('\nCreate temporary folder...', param.verbose)
-    path_tmp = sct.slash_at_the_end('tmp.' + time.strftime("%y%m%d%H%M%S"), 1)
-    sct.run('mkdir ' + path_tmp, param.verbose)
+    path_tmp = sct.tmp_create(basename="dmri_moco", verbose=param.verbose)
 
     # names of files in temporary folder
     ext = '.nii'
@@ -271,12 +268,13 @@ def main(args=None):
 
     # Copying input data to tmp folder
     sct.printv('\nCopying input data to tmp folder and convert to nii...', param.verbose)
-    convert(param.fname_data, path_tmp + dmri_name + ext)
-    sct.run('cp ' + param.fname_bvecs + ' ' + path_tmp + bvecs_fname, param.verbose)
+    convert(param.fname_data, os.path.join(path_tmp, dmri_name + ext))
+    sct.run('cp ' + param.fname_bvecs + ' ' + os.path.join(path_tmp, bvecs_fname), param.verbose)
     if param.fname_mask != '':
-        sct.run('cp ' + param.fname_mask + ' ' + path_tmp + mask_name + ext_mask, param.verbose)
+        sct.run('cp ' + param.fname_mask + ' ' + os.path.join(path_tmp, mask_name + ext_mask), param.verbose)
 
     # go to tmp folder
+    curdir = os.getcwd()
     os.chdir(path_tmp)
 
     # update field in param (because used later).
@@ -287,16 +285,15 @@ def main(args=None):
     # run moco
     dmri_moco(param)
 
-    # come back to parent folder
-    os.chdir('..')
+    # come back
+    os.chdir(curdir)
 
     # Generate output files
-    path_out = sct.slash_at_the_end(path_out, 1)
     sct.create_folder(path_out)
     sct.printv('\nGenerate output files...', param.verbose)
-    sct.generate_output_file(path_tmp + dmri_name + param.suffix + ext, path_out + file_data + param.suffix + ext_data, param.verbose)
-    sct.generate_output_file(path_tmp + 'b0_mean.nii', path_out + 'b0' + param.suffix + '_mean' + ext_data, param.verbose)
-    sct.generate_output_file(path_tmp + 'dwi_mean.nii', path_out + 'dwi' + param.suffix + '_mean' + ext_data, param.verbose)
+    sct.generate_output_file(os.path.join(path_tmp, dmri_name + param.suffix + ext), os.path.join(path_out, file_data + param.suffix + ext_data), param.verbose)
+    sct.generate_output_file(os.path.join(path_tmp, "b0_mean.nii"), os.path.join(path_out, 'b0' + param.suffix + '_mean' + ext_data), param.verbose)
+    sct.generate_output_file(os.path.join(path_tmp, "dwi_mean.nii"), os.path.join(path_out, 'dwi' + param.suffix + '_mean' + ext_data), param.verbose)
 
     # Delete temporary files
     if param.remove_tmp_files == 1:
@@ -309,7 +306,7 @@ def main(args=None):
 
     # To view results
     sct.printv('\nTo view results, type:', param.verbose)
-    sct.printv('fslview -m ortho,ortho ' + param.path_out + file_data + param.suffix + ' ' + file_data + ' &\n', param.verbose, 'info')
+    sct.printv('fslview -m ortho,ortho ' + os.path.join(param.path_out, file_data + param.suffix) + ' ' + file_data + ' &\n', param.verbose, 'info')
 
 
 #=======================================================================================================================
