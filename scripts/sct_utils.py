@@ -229,15 +229,15 @@ def check_exe(name):
     return None
 
 
-def display_viewer_syntax(l_file, l_colormap=[], l_minmax=[], l_opacity=[], mode='', verbose=1):
+def display_viewer_syntax(files, colormaps=[], minmax=[], opacities=[], mode='', verbose=1):
     """
     Print the syntax to open a viewer and display images for QC. To use default values, enter empty string: ''
     Parameters
     ----------
-    l_file [list:string]: list of NIFTI file names
-    l_colormap [list:string]: list of colormaps associated with each file. Available colour maps: blue, blue-lightblue, cool, copper, cortical, green, greyscale, hot, hsv, pink, random, red, red-yellow, render1, render1t, render2, render2t, render3, retino, subcortical, yellow. Default=greyscale.
-    l_minmax [list:string]: list of min,max brightness scale associated with each file. Separate with comma.
-    l_opacity [list:string]: list of opacity associated with each file. Between 0 and 1.
+    files [list:string]: list of NIFTI file names
+    colormaps [list:string]: list of colormaps associated with each file. Available colour maps: blue, blue-lightblue, cool, copper, cortical, green, greyscale, hot, hsv, pink, random, red, red-yellow, render1, render1t, render2, render2t, render3, retino, subcortical, yellow. Default=greyscale.
+    minmax [list:string]: list of min,max brightness scale associated with each file. Separate with comma.
+    opacities [list:string]: list of opacity associated with each file. Between 0 and 1.
 
     Returns
     -------
@@ -245,8 +245,8 @@ def display_viewer_syntax(l_file, l_colormap=[], l_minmax=[], l_opacity=[], mode
 
     Example
     -------
-    sct.display_viewer([file1, file2, file3])
-    sct.display_viewer([file1, file2], l_colormap=['gray', 'red'], l_minmax=['', '0,1'], l_opacity=['', '0.7'])
+    sct.display_viewer_syntax([file1, file2, file3])
+    sct.display_viewer_syntax([file1, file2], colormaps=['gray', 'red'], minmax=['', '0,1'], opacities=['', '0.7'])
     """
     list_viewer = ['fslview', 'fslview_deprecated', 'fsleyes']  # list of known viewers. Can add more.
     dict_fslview = {'gray': 'Greyscale', 'red-yellow': 'Red-Yellow', 'blue-lightblue': 'Blue-Lightblue', 'red': 'Red', 'random': 'Random-Rainbow'}
@@ -267,30 +267,30 @@ def display_viewer_syntax(l_file, l_colormap=[], l_minmax=[], l_opacity=[], mode
     # add mode (only supported by fslview for the moment)
     if mode and selected_viewer in ['fslview', 'fslview_deprecated']:
         cmd += ' -m ' + mode
-    for i in range(len(l_file)):
+    for i in range(len(files)):
         # add viewer-specific options
         if selected_viewer in ['fslview', 'fslview_deprecated']:
-            cmd += ' ' + l_file[i]
-            if l_colormap:
-                if l_colormap[i]:
-                    cmd += ' -l ' + dict_fslview[l_colormap[i]]
-            if l_minmax:
-                if l_minmax[i]:
-                    cmd += ' -b ' + l_minmax[i]  # a,b
-            if l_opacity:
-                if l_opacity[i]:
-                    cmd += ' -t ' + l_opacity[i]
+            cmd += ' ' + files[i]
+            if colormaps:
+                if colormaps[i]:
+                    cmd += ' -l ' + dict_fslview[colormaps[i]]
+            if minmax:
+                if minmax[i]:
+                    cmd += ' -b ' + minmax[i]  # a,b
+            if opacities:
+                if opacities[i]:
+                    cmd += ' -t ' + opacities[i]
         if selected_viewer in ['fsleyes']:
-            cmd += ' ' + l_file[i]
-            if l_colormap:
-                if l_colormap[i]:
-                    cmd += ' -cm ' + dict_fsleyes[l_colormap[i]]
-            if l_minmax:
-                if l_minmax[i]:
-                    cmd += ' -dr ' + ' '.join(l_minmax[i].split(','))  # a b
-            if l_opacity:
-                if l_opacity[i]:
-                    cmd += ' -a ' + str(float(l_opacity[i])*100)  # in percentage
+            cmd += ' ' + files[i]
+            if colormaps:
+                if colormaps[i]:
+                    cmd += ' -cm ' + dict_fsleyes[colormaps[i]]
+            if minmax:
+                if minmax[i]:
+                    cmd += ' -dr ' + ' '.join(minmax[i].split(','))  # a b
+            if opacities:
+                if opacities[i]:
+                    cmd += ' -a ' + str(float(opacities[i]) * 100)  # in percentage
     cmd += ' &'
     # display
     if verbose:
