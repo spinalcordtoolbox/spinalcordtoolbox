@@ -12,15 +12,14 @@
 #########################################################################################
 
 
-import sys
-import getopt
-import importlib
-import commands
-status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
-sys.path.append(path_sct + '/scripts')
+import sys, io, os, getopt, importlib
+
+# get path of SCT
+path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
+sys.path.append(os.path.join(path_sct, 'scripts'))
+
 import sct_utils
-from os import listdir
-from os.path import isfile, join
+
 
 
 def main(script_name = ''):

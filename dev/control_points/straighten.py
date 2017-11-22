@@ -76,7 +76,7 @@ def main():
     interpolation_warp = param.interpolation_warp
 
     # get path of the toolbox
-    status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+    path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
     print path_sct
     # extract path of the script
     path_script = os.path.dirname(__file__)+'/'
@@ -158,16 +158,15 @@ def main():
     # Extract path/file/extension
     path_anat, file_anat, ext_anat = sct.extract_fname(fname_anat)
     path_centerline, file_centerline, ext_centerline = sct.extract_fname(fname_centerline)
-    
-    # create temporary folder
-    path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S")
-    sct.run('mkdir '+path_tmp)
+
+    path_tmp = sct.tmp_create(basename="straighten", verbose=verbose)
 
     # copy files into tmp folder
     sct.run('cp '+fname_anat+' '+path_tmp)
     sct.run('cp '+fname_centerline+' '+path_tmp)
 
     # go to tmp folder
+    curdir = os.getcwd()
     os.chdir(path_tmp)
 
     # Open centerline
@@ -255,7 +254,7 @@ def main():
 
     # Fit the centerline points with the kind of curve given as argument of the script and return the new fitted coordinates
     if centerline_fitting == 'splines':
-        x_centerline_fit, y_centerline_fit, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = msct_smooth.b_spline_nurbs(x_centerline,y_centerline,z_centerline)
+        x_centerline_fit, y_centerline_fit, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = msct_smooth.b_spline_nurbs(x_centerline,y_centerline,z_centerline, path_qc=curdir)
         #x_centerline_fit, y_centerline_fit, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = b_spline_centerline(x_centerline,y_centerline,z_centerline)
     elif centerline_fitting == 'polynomial':
         x_centerline_fit, y_centerline_fit, polyx, polyy = polynome_centerline(x_centerline,y_centerline,z_centerline)
@@ -513,8 +512,8 @@ def main():
     sct.run('sct_WarpImageMultiTransform 3 '+file_anat+ext_anat+' tmp.anat_rigid_warp.nii.gz -R tmp.landmarks_straight.nii.gz '+interpolation_warp+ ' tmp.curve2straight.nii.gz')
     # sct.run('sct_WarpImageMultiTransform 3 '+fname_anat+' tmp.anat_rigid_warp.nii.gz -R tmp.landmarks_straight_crop.nii.gz '+interpolation_warp+ ' tmp.curve2straight.nii.gz')
     
-    # come back to parent folder
-    os.chdir('..')
+    # come back
+    os.chdir(curdir)
 
     # Generate output file (in current folder)
     # TODO: do not uncompress the warping field, it is too time consuming!

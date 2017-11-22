@@ -22,9 +22,13 @@ def generate_data_list(folder_dataset, verbose=1):
 
     # each directory in folder_dataset should be a directory of a subject
     for subject_dir in os.listdir(folder_dataset):
-        if not subject_dir.startswith('.') and os.path.isdir(folder_dataset + subject_dir):
-            data_subjects.append(folder_dataset + subject_dir + '/')
-            subjects_dir.append(subject_dir)
+        if subject_dir.startswith("."):
+            continue
+        if not os.path.isdir(os.path.join(folder_dataset, subject_dir)):
+            continue
+
+        data_subjects.append(os.path.join(folder_dataset, subject_dir))
+        subjects_dir.append(subject_dir)
 
     if not data_subjects:
         sct.printv('ERROR: No subject data were found in ' + folder_dataset + '. '

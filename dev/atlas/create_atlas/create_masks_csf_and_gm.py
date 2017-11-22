@@ -6,19 +6,19 @@
 # TODO: get GM
 # TODO: add tract corresponding to the undefined values in WM atlas
 
-import glob
-import sys
-import commands
+import sys, io, os, glob, commands
+
 import numpy as np
 import nibabel as nib
-status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+
+path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
 # append path that contains scripts, to be able to load modules
-sys.path.append(path_sct + '/scripts')
+sys.path.append(os.path.join(path_sct, 'scripts'))
 import sct_utils as sct
 
 # parameters
 tracts_to_sum_index = 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29
-folder_atlas = "WMtracts_outputs/final_results"
+folder_atlas = os.path.join("WMtracts_outputs", "final_results")
 file_csf = "WMtract__csf.nii.gz"
 file_gm = "WMtract__gm.nii.gz"
 file_label = 'info_label.txt'
@@ -31,22 +31,22 @@ def main():
     # Get the sum of the tracts
     tracts_sum = add_tracts(tracts, tracts_to_sum_index)
     # Save sum of the tracts to niftii
-    save_3D_nparray_nifti(tracts_sum, 'tmp.WM_all.nii.gz', folder_atlas+'/WMtract__00.nii.gz')
+    save_3D_nparray_nifti(tracts_sum, 'tmp.WM_all.nii.gz', os.path.join(folder_atlas, "WMtract__00.nii.gz"))
     # binarize it
     sct.run('fslmaths tmp.WM_all.nii.gz  -thr 0.5 -bin tmp.WM_all_bin.nii.gz')
     # dilate it
     sct.run('fslmaths tmp.WM_all_bin.nii.gz  -kernel boxv 5x5x1 -dilM tmp.WM_all_bin_dil.nii.gz')
     # subtract WM mask to obtain CSF mask
-    sct.run('fslmaths tmp.WM_all_bin_dil -sub tmp.WM_all '+folder_atlas+'/'+file_csf)
+    sct.run('fslmaths tmp.WM_all_bin_dil -sub tmp.WM_all '+os.path.join(os.path.join(folder_atlas, file_csf)))
     # add line in info_label.txt
     text_label = '\n'+str(nb_tracts)+', CSF, '+file_csf
-    open(folder_atlas+'/'+file_label, 'a+b').write(text_label)
+    io.open(os.path.join(folder_atlas, file_label) 'a+b').write(text_label)
 
 def get_tracts(tracts_folder):
     """Loads tracts in an atlas folder and converts them from .nii.gz format to numpy ndarray 
     Save path of each tracts
     Only the tract must be in tracts_format in the folder"""
-    fname_tract = glob.glob(tracts_folder + '/*' + '.nii.gz')
+    fname_tract = glob.glob(os.path.join(tracts_folder, "*.nii.gz"))
     
     #Initialise tracts variable as object because there are 4 dimensions
     tracts = np.empty([len(fname_tract), 1], dtype=object)

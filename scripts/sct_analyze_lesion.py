@@ -21,7 +21,7 @@ from msct_parser import Parser
 from msct_types import Centerline
 from sct_image import get_orientation, set_orientation
 from sct_straighten_spinalcord import smooth_centerline
-from sct_utils import extract_fname, printv, slash_at_the_end, tmp_create, start_stream_logger
+from sct_utils import extract_fname, printv, tmp_create, start_stream_logger
 from skimage.measure import label
 
 
@@ -120,8 +120,8 @@ class AnalyzeLeion:
 
         # initialization of proportion measures, related to registrated atlas
         if self.path_template is not None:
-            self.path_atlas = self.path_template + 'atlas/'
-            self.path_levels = self.path_template + 'template/PAM50_levels.nii.gz'
+            self.path_atlas = os.path.join(self.path_template, "atlas")
+            self.path_levels = os.path.join(self.path_template, "template", "PAM50_levels.nii.gz")
         else:
             self.path_atlas, self.path_levels = None, None
         self.vert_lst = None
@@ -167,8 +167,8 @@ class AnalyzeLeion:
         printv('\nSave results files...', self.verbose, 'normal')
         printv('\n... measures saved in the files:', self.verbose, 'normal')
         for file_ in [self.fname_label, self.excel_name, self.pickle_name]:
-            printv('\n  - ' + self.path_ofolder + file_, self.verbose, 'normal')
-            shutil.copy(self.tmp_dir + file_, self.path_ofolder + file_)
+            printv('\n  - ' + os.path.join(self.path_ofolder, file_), self.verbose, 'normal')
+            shutil.copy(os.path.join(self.tmp_dir, file_), os.path.join(self.path_ofolder, file_))
 
     def pack_measures(self):
         writer = pd.ExcelWriter(self.excel_name, engine='xlwt')
@@ -493,7 +493,7 @@ class AnalyzeLeion:
                 if fname_atlas_roi.endswith('.nii.gz'):
                     tract_id = int(fname_atlas_roi.split('_')[-1].split('.nii.gz')[0])
                     if tract_id < 36:  # Not interested in CSF
-                        shutil.copy(self.path_atlas + fname_atlas_roi, self.tmp_dir)
+                        shutil.copy(os.path.join(self.path_atlas, fname_atlas_roi), self.tmp_dir)
                         self.atlas_roi_lst.append(fname_atlas_roi)
 
         os.chdir(self.tmp_dir)  # go to tmp directory
@@ -530,7 +530,7 @@ def main(args=None):
 
     # Path to template
     if '-f' in arguments:
-        path_template = slash_at_the_end(arguments["-f"], slash=1)
+        path_template = arguments["-f"]
         if not os.path.isdir(path_template) and os.path.exists(path_template):
             path_template = None
             printv("ERROR output directory %s is not a valid directory" % path_template, 1, 'error')
@@ -539,7 +539,7 @@ def main(args=None):
 
     # Output Folder
     if '-ofolder' in arguments:
-        path_results = slash_at_the_end(arguments["-ofolder"], slash=1)
+        path_results = arguments["-ofolder"]
         if not os.path.isdir(path_results) and os.path.exists(path_results):
             printv("ERROR output directory %s is not a valid directory" % path_results, 1, 'error')
         if not os.path.exists(path_results):
@@ -576,9 +576,9 @@ def main(args=None):
 
     printv('\nDone! To view the labeled lesion file (one value per lesion), type:', verbose)
     if fname_ref is not None:
-        printv('fslview ' + fname_mask + ' ' + path_results + lesion_obj.fname_label + ' -l Red-Yellow -t 0.7 & \n', verbose, 'info')
+        printv('fslview ' + fname_mask + ' ' + os.path.join(path_results, lesion_obj.fname_label) + ' -l Red-Yellow -t 0.7 & \n', verbose, 'info')
     else:
-        printv('fslview ' + path_results + lesion_obj.fname_label + ' -l Red-Yellow -t 0.7 & \n', verbose, 'info')
+        printv('fslview ' + os.path.join(path_results, lesion_obj.fname_label) + ' -l Red-Yellow -t 0.7 & \n', verbose, 'info')
 
 
 if __name__ == "__main__":

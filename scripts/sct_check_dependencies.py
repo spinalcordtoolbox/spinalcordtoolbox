@@ -26,12 +26,8 @@ class Param:
         self.complete_test = 0
 
 
-import sys
+import sys, io, os, commands, platform, importlib
 
-import os
-import commands
-import platform
-import importlib
 import sct_utils as sct
 from msct_parser import Parser
 
@@ -81,12 +77,14 @@ def main():
         print sct.run('date', verbose)
         print sct.run('whoami', verbose)
         print sct.run('pwd', verbose)
-        if os.path.isfile('~/.bash_profile'):
-            (status, output) = sct.run('more ~/.bash_profile', verbose)
-            print output
-        if os.path.isfile('~/.bashrc'):
-            (status, output) = sct.run('more ~/.bashrc', verbose)
-            print output
+        bash_profile = os.path.expanduser("~/.bash_profile")
+        if os.path.isfile(bash_profile):
+            with io.open(bash_profile, "r") as f:
+                print(f.read())
+        bashrc = os.path.expanduser("~/.bashrc")
+        if os.path.isfile(bashrc):
+            with io.open(bashrc, "r") as f:
+                print(f.read())
 
     # check OS
     platform_running = sys.platform
@@ -104,10 +102,7 @@ def main():
     # check RAM
     sct.checkRAM(os_running, 0)
 
-    # get path of the toolbox
-    path_sct = os.path.dirname(os.path.dirname(__file__))
-    if path_sct is None:
-        raise EnvironmentError("SCT_DIR, which is the path SCT install needs to be set")
+    path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
     print ('SCT path: {0}'.format(path_sct))
 
     # fetch SCT version
@@ -128,7 +123,7 @@ def main():
 
     # check if data folder is empty
     print_line('Check if data are installed')
-    if os.listdir(path_sct + "/data"):
+    if os.listdir(os.path.join(path_sct, "data")):
         print_ok()
     else:
         print_fail()
@@ -323,15 +318,14 @@ def print_fail():
 
 
 def add_bash_profile(string):
-    from os.path import expanduser
-    home = expanduser("~")
-    with open(home + "/.bash_profile", "a") as file_bash:
+    bash_profile = os.path.expanduser("~/bash_profile")
+    with io.open(bash_profile, "a") as file_bash:
         file_bash.write("\n" + string)
 
 
 def get_version_requirements():
-    status, path_sct = sct.run('echo $SCT_DIR', 0)
-    file = open(path_sct + "/install/requirements/requirementsConda.txt")
+    path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
+    file = open(os.path.join(path_sct, "install", "requirements", "requirementsConda.txt"))
     dict = {}
     while True:
         line = file.readline()
@@ -344,8 +338,8 @@ def get_version_requirements():
 
 
 def get_version_requirements_pip():
-    status, path_sct = sct.run('echo $SCT_DIR', 0)
-    file = open(path_sct + "/install/requirements/requirementsPip.txt")
+    path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
+    file = open(os.path.join(path_sct, "install", "requirements", "requirementsPip.txt"))
     dict = {}
     while True:
         line = file.readline()

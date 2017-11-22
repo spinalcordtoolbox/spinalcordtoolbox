@@ -36,7 +36,7 @@ def test_integrity(param_test):
     Test integrity of function
     """
     # extract name of output texture file
-    # file_texture = param_test.path_output + sct.add_suffix(param_test.file_input, '_contrast_1_mean')
+    # file_texture = os.path.join(param_test.path_output, sct.add_suffix(param_test.file_input, '_contrast_1_mean'))
     file_texture = sct.add_suffix(param_test.file_input, '_contrast_1_mean')
 
     # open output
