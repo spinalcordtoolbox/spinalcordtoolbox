@@ -5,9 +5,9 @@ import commands, sys
 
 
 # Get path of the toolbox
-status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
 # Append path that contains scripts, to be able to load modules
-sys.path.append(path_sct + '/scripts')
+sys.path.append(os.path.join(path_sct, "scripts"))
 
 from msct_parser import Parser
 from nibabel import load, save, Nifti1Image
@@ -36,9 +36,7 @@ def main(list_file, param, output_file_name=None, remove_temp_files = 1, verbose
 
     path, file, ext = sct.extract_fname(list_file[0])
 
-    # create temporary folder
-    path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S")
-    sct.run('mkdir '+path_tmp)
+    path_tmp = sct.tmp_create(basename="centerline_from_labels", verbose=verbose)
 
     # copy files into tmp folder
     sct.printv('\nCopy files into tmp folder...', verbose)

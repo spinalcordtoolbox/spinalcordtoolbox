@@ -10,12 +10,12 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+import math, shutil, os
+
 import numpy as np
+
 import sct_utils as sct
 from msct_image import Image
-from pandas import DataFrame
-from math import sqrt
-
 
 def init(param_test):
     """
@@ -40,7 +40,7 @@ def test_integrity(param_test):
     distance_detection = float('nan')
 
     # extract name of output centerline: data_centerline_optic.nii.gz
-    file_pmj = param_test.path_output + sct.add_suffix(param_test.file_input, '_pmj')
+    file_pmj = os.path.join(param_test.path_output, sct.add_suffix(param_test.file_input, '_pmj'))
 
     # open output segmentation
     im_pmj = Image(file_pmj)
@@ -55,7 +55,7 @@ def test_integrity(param_test):
     x_true, y_true, z_true = im_pmj_manual.transfo_pix2phys([[x_true[0], y_true[0], z_true[0]]])[0]
     x_pred, y_pred, z_pred = im_pmj.transfo_pix2phys([[x_pred[0], y_pred[0], z_pred[0]]])[0]
 
-    distance_detection = sqrt(((x_true - x_pred))**2 + ((y_true - y_pred))**2 + ((z_true - z_pred))**2)
+    distance_detection = math.sqrt(((x_true - x_pred))**2 + ((y_true - y_pred))**2 + ((z_true - z_pred))**2)
 
     param_test.output += 'Computed distance: ' + str(distance_detection)
     param_test.output += 'Distance threshold (if computed Distance higher: fail): ' + str(param_test.dist_threshold)

@@ -34,7 +34,7 @@ required_minc_cmdline_tools = ['mincinfo', 'minctoraw']
 
 
 def console_log(message):
-    sct.printv(message))
+    sct.printv(message)
 
 
 def cmd(command):

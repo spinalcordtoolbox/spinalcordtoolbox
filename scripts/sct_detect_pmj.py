@@ -20,7 +20,7 @@ import commands
 
 from msct_image import Image
 from msct_parser import Parser
-from sct_utils import tmp_create, extract_fname, slash_at_the_end, printv, run, start_stream_logger
+from sct_utils import tmp_create, extract_fname, printv, run, start_stream_logger
 from sct_image import get_orientation, set_orientation
 
 
@@ -130,7 +130,7 @@ class DetectPMJ:
 
     def tmp2ofolder(self):
         """Copy output files to the ofolder."""
-        os.chdir('..')  # go back to original directory
+        os.chdir(self.curdir)  # go back to original directory
 
         if self.pa_coord != -1:  # If PMJ has been detected
             printv('\nSave resulting file...', self.verbose, 'normal')
@@ -269,6 +269,7 @@ class DetectPMJ:
             shutil.copy(self.fname_seg, self.tmp_dir)
             self.fname_seg = ''.join(extract_fname(self.fname_seg)[1:])
 
+        self.curdir = os.getcwd()
         os.chdir(self.tmp_dir)  # go to tmp directory
 
 
@@ -295,13 +296,13 @@ def main(args=None):
 
     # Output Folder
     if '-ofolder' in arguments:
-        path_results = slash_at_the_end(arguments["-ofolder"], slash=1)
+        path_results = arguments["-ofolder"]
         if not os.path.isdir(path_results) and os.path.exists(path_results):
             printv("ERROR output directory %s is not a valid directory" % path_results, 1, 'error')
         if not os.path.exists(path_results):
             os.makedirs(path_results)
     else:
-        path_results = './'
+        path_results = '.'
 
     if '-qc' in arguments:
         qc = bool(int(arguments['-qc']))

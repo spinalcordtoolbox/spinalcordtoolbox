@@ -98,6 +98,7 @@ if __name__ == "__main__":
     fname_input1 = ''.join(sct.extract_fname(fname_input1)[1:])
     fname_input2 = ''.join(sct.extract_fname(fname_input2)[1:])
 
+    curdir = os.getcwd()
     os.chdir(tmp_dir) # go to tmp directory
 
     if '-bin' in arguments:
@@ -139,11 +140,11 @@ if __name__ == "__main__":
 
     status, output = sct.run(cmd, verbose)
 
-    os.chdir('..') # go back to original directory
+    os.chdir(curdir) # go back to original directory
 
     # copy output file into original directory
     if '-o' in arguments:
-        shutil.copy(tmp_dir+'/'+fname_output+ext, path_output+fname_output+ext)
+        shutil.copy(os.path.join(tmp_dir, fname_output+ext), os.path.join(path_output, fname_output+ext))
 
     # remove tmp_dir
     if rm_tmp:

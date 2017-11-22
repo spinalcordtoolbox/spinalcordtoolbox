@@ -138,10 +138,7 @@ def segment_gm(target_fname='', sc_seg_fname='', path_to_label='', param=None):
 
 
 def main(seg_params, reg_param, target_fname='', sc_seg_fname='', path_to_label=''):
-    # create temporary folder
-    sct.printv('\nCreate temporary folder...', verbose, 'normal')
-    path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S")+'/'
-    sct.run('mkdir '+path_tmp)
+    path_tmp = sct.tmp_create(basename="register_graymatter_old", verbose=verbose) + "/"
 
     target = 'target.nii.gz'
     sc_seg = 'sc_seg.nii.gz'
