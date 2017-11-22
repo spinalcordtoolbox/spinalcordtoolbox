@@ -240,10 +240,9 @@ def main(args=None):
     # to view results
     sct.printv('\nTo view results, type: ', verbose)
     if average:
-        # display viewer syntax
-        sct.display_viewer(['b0', 'b0_mean', 'dwi', 'dwi_mean'])
+        sct.display_viewer_syntax(['b0', 'b0_mean', 'dwi', 'dwi_mean'])
     else:
-        sct.display_viewer(['b0', 'dwi'])
+        sct.display_viewer_syntax(['b0', 'dwi'])
 
 
 # ==========================================================================================

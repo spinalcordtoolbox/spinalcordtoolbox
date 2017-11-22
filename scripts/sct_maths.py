@@ -371,8 +371,7 @@ def main(args = None):
 
     # display message
     if data_out is not None:
-        # display viewer syntax
-        sct.display_viewer([fname_out])
+        sct.display_viewer_syntax([fname_out])
     else:
         printv('\nDone! File created: ' + fname_out, verbose, 'info')
 

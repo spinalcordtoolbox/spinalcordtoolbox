@@ -263,8 +263,7 @@ def create_mask(param):
         sct.printv('\nRemove temporary files...', param.verbose)
         sct.run('rm -rf ' + path_tmp, param.verbose, error_exit='warning')
 
-    # display viewer syntax
-    sct.display_viewer([param.fname_data, param.fname_out], l_colormap=['gray', 'red'], l_opacity=['', '0.5'])
+    sct.display_viewer_syntax([param.fname_data, param.fname_out], l_colormap=['gray', 'red'], l_opacity=['', '0.5'])
 
 
 # create_line

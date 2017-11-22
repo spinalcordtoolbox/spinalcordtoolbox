@@ -97,8 +97,7 @@ def main(args=None):
         sct.printv('\nRemove temporary files...')
         sct.run('rm -rf ' + path_tmp)
 
-    # display viewer syntax
-    sct.display_viewer([fname_mt0, fname_mt1, file_out])
+    sct.display_viewer_syntax([fname_mt0, fname_mt1, file_out])
 
 
 # ==========================================================================================

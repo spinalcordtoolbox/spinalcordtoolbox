@@ -219,8 +219,7 @@ def main(args=None):
     elapsed_time = time.time() - start_time
     sct.printv('\nFinished! Elapsed time: ' + str(int(round(elapsed_time))) + 's', param.verbose)
 
-    # display viewer syntax
-    sct.display_viewer([param.path_out + file_data + param.suffix, file_data], mode='ortho,ortho')
+    sct.display_viewer_syntax([param.path_out + file_data + param.suffix, file_data], mode='ortho,ortho')
 
 
 #=======================================================================================================================

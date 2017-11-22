@@ -203,8 +203,7 @@ def main(args=None):
     elapsed_time = time.time() - start_time
     sct.printv('\nFinished! Elapsed time: ' + str(int(round(elapsed_time))) + 's\n')
 
-    # display viewer syntax
-    sct.display_viewer([file_anat, file_anat+'_smooth'], verbose=verbose)
+    sct.display_viewer_syntax([file_anat, file_anat + '_smooth'], verbose=verbose)
 
 
 # START PROGRAM

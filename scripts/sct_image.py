@@ -276,8 +276,7 @@ def main(args=None):
                 fname_out.append(add_suffix(fname_in[0], '_' + dim_list[dim].upper() + str(i).zfill(4)))
                 im.setFileName(fname_out[i])
                 im.save()
-        # display viewer syntax
-        sct.display_viewer([str(fname_out)])
+        sct.display_viewer_syntax([str(fname_out)])
 
     elif "-getorient" in arguments:
         sct.printv(orient)

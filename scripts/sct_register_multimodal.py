@@ -514,10 +514,9 @@ def main(args=None):
     # display elapsed time
     elapsed_time = time.time() - start_time
     sct.printv('\nFinished! Elapsed time: ' + str(int(round(elapsed_time))) + 's', verbose)
-    # display viewer syntax
     if generate_warpinv:
-        sct.display_viewer([fname_src, fname_dest2src], verbose=verbose)
-    sct.display_viewer([fname_dest, fname_src2dest], verbose=verbose)
+        sct.display_viewer_syntax([fname_src, fname_dest2src], verbose=verbose)
+    sct.display_viewer_syntax([fname_dest, fname_src2dest], verbose=verbose)
 
 
 # register images

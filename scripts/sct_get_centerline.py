@@ -260,8 +260,7 @@ def run_main():
                                                     output_roi=output_roi,
                                                     verbose=verbose)
 
-    # display viewer syntax
-    sct.display_viewer([fname_input_data, centerline_filename], l_colormap=['gray', 'red'], l_opacity=['', '1'])
+    sct.display_viewer_syntax([fname_input_data, centerline_filename], l_colormap=['gray', 'red'], l_opacity=['', '1'])
 
 if __name__ == '__main__':
     run_main()
