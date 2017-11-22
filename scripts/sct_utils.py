@@ -294,7 +294,6 @@ def display_viewer_syntax(files, colormaps=[], minmax=[], opacities=[], mode='',
     if verbose:
         printv('\nDone! To view results, type:')
         printv(cmd + '\n', verbose=1, type='info')
-    return None
 
 
 # =======================================================================================================================
