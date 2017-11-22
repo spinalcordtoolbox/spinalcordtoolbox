@@ -92,8 +92,8 @@ class WarpTemplate:
                                    self.folder_out + self.folder_template + get_file_label(self.folder_out + self.folder_template, 'T2'),
                                    self.folder_out + self.folder_template + get_file_label(self.folder_out + self.folder_template, 'gray matter'),
                                    self.folder_out + self.folder_template + get_file_label(self.folder_out + self.folder_template, 'white matter')],
-                                  l_colormap=['gray', 'gray', 'red-yellow', 'blue-lightblue'],
-                                  l_opacity=['1', '1', '0.5', '0.5'],
+                                  colormaps=['gray', 'gray', 'red-yellow', 'blue-lightblue'],
+                                  opacities=['1', '1', '0.5', '0.5'],
                                   verbose=param.verbose)
 
         if self.qc:

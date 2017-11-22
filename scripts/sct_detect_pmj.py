@@ -337,7 +337,7 @@ def main(args=None):
 
     # View results
     if fname_out is not None:
-        display_viewer_syntax([arguments["-i"], fname_out], l_colormap=['gray', 'red'])
+        display_viewer_syntax([arguments["-i"], fname_out], colormaps=['gray', 'red'])
 
 if __name__ == "__main__":
     start_stream_logger()
