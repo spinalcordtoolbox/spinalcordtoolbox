@@ -260,7 +260,7 @@ class ImageCropper(object):
             sct.run('rm -rf ' + path_tmp)
 
         # display viewer syntax
-        sct.display_viewer_syntax(l_file=[path_out + file_out + ext_out])
+        sct.display_viewer_syntax(files=[path_out + file_out + ext_out])
 
 
 def get_parser():

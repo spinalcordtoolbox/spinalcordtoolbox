@@ -357,7 +357,7 @@ def main(args=None):
         sct.printv(err, verbose, 'warning')
         sct.printv('WARNING: Cannot generate report.', verbose, 'warning')
 
-    sct.display_viewer_syntax([fname_in, path_output + file_seg + '_labeled'], l_colormap=['', 'random'], l_opacity=['1', '0.5'])
+    sct.display_viewer_syntax([fname_in, path_output + file_seg + '_labeled'], colormaps=['', 'random'], opacities=['1', '0.5'])
 
 
 # Detect vertebral levels
