@@ -174,8 +174,7 @@ def resample():
     nii_r = nipy.core.api.Image(data_r, coordmap_r)
     nipy.save_image(nii_r, fname_out)
 
-    # display viewer syntax
-    sct.display_viewer([fname_out], verbose=verbose)
+    sct.display_viewer_syntax([fname_out], verbose=verbose)
 
 
 def get_parser():
