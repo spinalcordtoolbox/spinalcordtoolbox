@@ -81,8 +81,6 @@ if [ -z "${SCT_LOADED_ONCE}" ]; then
   fi
 
   addtopath "${SCT_DIR}/bin" PATH
-  addtopath ${SCT_DIR}/scripts PYTHONPATH
-
 
   # display SCT version
   echo "--"
