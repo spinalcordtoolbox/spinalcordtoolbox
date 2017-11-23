@@ -274,7 +274,8 @@ def compute_properties_along_centerline(fname_seg_image, property_list, fname_di
     timer_properties.start()
     # Extracting patches perpendicular to the spinal cord and computing spinal cord shape
     for index in range(centerline.number_of_points):
-        value_out = -5.0
+        # value_out = -5.0
+        value_out = 0.0
         current_patch = centerline.extract_perpendicular_square(image, index, resolution=resolution, interpolation_mode=interpolation_mode, border='constant', cval=value_out)
 
         # check for pixels close to the spinal cord segmentation that are out of the image
@@ -283,8 +284,13 @@ def compute_properties_along_centerline(fname_seg_image, property_list, fname_di
         patch_zero[patch_zero == value_out] = 0.0
         patch_borders = dilation(patch_zero) - patch_zero
 
+        """
         if np.count_nonzero(patch_borders + current_patch == value_out + 1.0) != 0:
+            c = image.transfo_phys2pix([centerline.points[index]])[0]
+            print 'WARNING: no patch for slice', c[2]
+            timer_properties.add_iteration()
             continue
+        """
 
         sc_properties = properties2d(patch_zero, [resolution, resolution])
         if sc_properties is not None:
@@ -295,6 +301,9 @@ def compute_properties_along_centerline(fname_seg_image, property_list, fname_di
             properties['z_slice'].append(image.transfo_phys2pix([centerline.points[index]])[0][2])
             for property_name in property_list_local:
                 properties[property_name].append(sc_properties[property_name])
+        else:
+            c = image.transfo_phys2pix([centerline.points[index]])[0]
+            print 'WARNING: no properties for slice', c[2]
 
         timer_properties.add_iteration()
     timer_properties.stop()
