@@ -101,7 +101,7 @@ if [ -z "${SCT_LOADED_ONCE}" ]; then
 fi
 if [[ "${0}" == "${BASH_SOURCE}" ]] && [[ -n "${1}"  ]]; then
   echo "Running ${SCT_DIR}/scripts/${@}"
-   python   ${SCT_DIR}/scripts/${@}
+   python ${SCT_DIR}/scripts/${@}
 else
   echo Sourcing sct_laucher in your environment ${SCT_DIR}
 fi
