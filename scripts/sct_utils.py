@@ -15,13 +15,6 @@
 import os
 import sys
 
-if os.getenv("SCT_MOVE_CWD_TO_END_OFF_PATH"):
-    # Prevent looking at $PWD first in import since it is often slow
-    cwd = os.getcwd()
-    if cwd in sys.path:
-        sys.path.remove(cwd)
-        sys.path.append(cwd)
-
 import errno
 import time
 
