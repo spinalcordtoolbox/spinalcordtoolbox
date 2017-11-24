@@ -27,17 +27,13 @@ before_install:
   - echo $HOME
 
 install:
-# update tools
-#  - ./update_bin.sh
   - yes | ./install_sct
-  # run launcher in order to update PATH
   - source $HOME/build/neuropoly/spinalcordtoolbox/bin/sct_launcher
-  - echo $PATH
+  - pip install flake8 --download-cache ${HOME}/.cache/pip
+
+before_script:
+  - ./check_style.sh
 
 script:
-#  - sct_check_dependencies   # test dependencies
-  - sct_testing -d 1  # test functions & integrity
-#  - python create_package.py -s ${TRAVIS_OS_NAME}  # test package creation
-#  - cd ../spinalcordtoolbox_v*
-#  - yes | ./install_sct  # test installation of package
+  - sct_testing -d 1
   - echo "DONE"
