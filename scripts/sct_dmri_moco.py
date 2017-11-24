@@ -292,9 +292,10 @@ def main(args=None):
 
     # Generate output files
     path_out = sct.slash_at_the_end(path_out, 1)
+    fname_dmri_moco = os.path.join(path_out, file_data, param.suffix + ext_data)
     sct.create_folder(path_out)
     sct.printv('\nGenerate output files...', param.verbose)
-    sct.generate_output_file(path_tmp + dmri_name + param.suffix + ext, path_out + file_data + param.suffix + ext_data, param.verbose)
+    sct.generate_output_file(path_tmp + dmri_name + param.suffix + ext, fname_dmri_moco, param.verbose)
     sct.generate_output_file(path_tmp + 'b0_mean.nii', path_out + 'b0' + param.suffix + '_mean' + ext_data, param.verbose)
     sct.generate_output_file(path_tmp + 'dwi_mean.nii', path_out + 'dwi' + param.suffix + '_mean' + ext_data, param.verbose)
 
@@ -307,7 +308,7 @@ def main(args=None):
     elapsed_time = time.time() - start_time
     sct.printv('\nFinished! Elapsed time: ' + str(int(round(elapsed_time))) + 's', param.verbose)
 
-    sct.display_viewer_syntax([param.path_out + file_data + param.suffix, file_data], mode='ortho,ortho')
+    sct.display_viewer_syntax([fname_dmri_moco, file_data], mode='ortho,ortho')
 
 
 #=======================================================================================================================

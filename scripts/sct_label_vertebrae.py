@@ -320,8 +320,9 @@ def main(args=None):
 
     # Generate output files
     path_seg, file_seg, ext_seg = sct.extract_fname(fname_seg)
+    fname_seg_labeled = os.path.join(path_output, file_seg + '_labeled' + ext_seg)
     sct.printv('\nGenerate output files...', verbose)
-    sct.generate_output_file(path_tmp + 'segmentation_labeled.nii.gz', path_output + file_seg + '_labeled' + ext_seg)
+    sct.generate_output_file(path_tmp + 'segmentation_labeled.nii.gz', fname_seg_labeled)
     sct.generate_output_file(path_tmp + 'segmentation_labeled_disc.nii.gz', path_output + file_seg + '_labeled_discs' + ext_seg)
     # copy straightening files in case subsequent SCT functions need them
     sct.generate_output_file(path_tmp + 'warp_curve2straight.nii.gz', path_output + 'warp_curve2straight.nii.gz', verbose)
@@ -357,7 +358,7 @@ def main(args=None):
         sct.printv(err, verbose, 'warning')
         sct.printv('WARNING: Cannot generate report.', verbose, 'warning')
 
-    sct.display_viewer_syntax([fname_in, path_output + file_seg + '_labeled'], colormaps=['', 'random'], opacities=['1', '0.5'])
+    sct.display_viewer_syntax([fname_in, fname_seg_labeled], colormaps=['', 'random'], opacities=['1', '0.5'])
 
 
 # Detect vertebral levels
