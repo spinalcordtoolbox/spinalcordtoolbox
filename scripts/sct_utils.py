@@ -203,6 +203,22 @@ def run(cmd, verbose=1, error_exit='error', raise_exception=False, cwd=None):
         return status_output, output_final[0:-1]
 
 
+def copy(src, dst):
+    """Copy src to dst.
+    If src and dst are the same files, don't crash.
+    """
+    try:
+        shutil.copy(src, dst)
+    except Exception as e:
+        if sys.hexversion < 0x03000000:
+            if isinstance(e, shutil.Error) and "same file" in str(e):
+                return
+        else:
+            if isinstance(e, shutil.SameFileError):
+                return
+        raise # Must be another error
+
+
 # =======================================================================================================================
 # Get SCT version
 # =======================================================================================================================

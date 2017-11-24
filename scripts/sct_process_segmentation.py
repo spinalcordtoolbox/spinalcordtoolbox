@@ -236,8 +236,7 @@ def main(args):
 
     if name_process == 'centerline':
         fname_output = extract_centerline(fname_segmentation, remove_temp_files, verbose=param.verbose, algo_fitting=param.algo_fitting, use_phys_coord=use_phys_coord)
-        if os.path.abspath(fname_output) != os.path.join(output_folder, fname_output):
-            shutil.copy(fname_output, output_folder)
+        sct.copy(fname_output, output_folder)
         # to view results
         sct.printv('\nDone! To view results, type:', param.verbose)
         sct.printv('fslview ' + fname_segmentation + ' ' + os.path.join(output_folder, fname_output) + ' -l Red &\n', param.verbose, 'info')
