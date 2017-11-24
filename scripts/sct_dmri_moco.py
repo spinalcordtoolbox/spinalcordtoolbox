@@ -292,7 +292,7 @@ def main(args=None):
 
     # Generate output files
     path_out = sct.slash_at_the_end(path_out, 1)
-    fname_dmri_moco = os.path.join(path_out, file_data, param.suffix + ext_data)
+    fname_dmri_moco = os.path.join(path_out, file_data + param.suffix + ext_data)
     sct.create_folder(path_out)
     sct.printv('\nGenerate output files...', param.verbose)
     sct.generate_output_file(path_tmp + dmri_name + param.suffix + ext, fname_dmri_moco, param.verbose)
