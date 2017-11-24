@@ -215,9 +215,9 @@ def compute_properties_along_centerline(fname_seg_image, property_list, fname_di
     # TODO: make sure fname_segmentation and fname_disks are in the same space
     path_tmp = sct.tmp_create(basename="compute_properties_along_centerline", verbose=verbose)
 
-    sct.run('cp ' + fname_seg_image + ' ' + path_tmp)
+    sct.copy(fname_seg_image, path_tmp)
     if fname_disks_image is not None:
-        sct.run('cp ' + fname_disks_image + ' ' + path_tmp)
+        sct.copy(fname_disks_image, path_tmp)
 
     # go to tmp folder
     curdir = os.getcwd()

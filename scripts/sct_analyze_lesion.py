@@ -21,6 +21,7 @@ from msct_parser import Parser
 from msct_types import Centerline
 from sct_image import get_orientation, set_orientation
 from sct_straighten_spinalcord import smooth_centerline
+import sct_utils as sct
 from sct_utils import extract_fname, printv, tmp_create, start_stream_logger
 from skimage.measure import label
 
@@ -168,7 +169,7 @@ class AnalyzeLeion:
         printv('\n... measures saved in the files:', self.verbose, 'normal')
         for file_ in [self.fname_label, self.excel_name, self.pickle_name]:
             printv('\n  - ' + os.path.join(self.path_ofolder, file_), self.verbose, 'normal')
-            shutil.copy(os.path.join(self.tmp_dir, file_), os.path.join(self.path_ofolder, file_))
+            sct.copy(os.path.join(self.tmp_dir, file_), os.path.join(self.path_ofolder, file_))
 
     def pack_measures(self):
         writer = pd.ExcelWriter(self.excel_name, engine='xlwt')
@@ -468,24 +469,24 @@ class AnalyzeLeion:
     def ifolder2tmp(self):
         # copy input image
         if self.fname_mask is not None:
-            shutil.copy(self.fname_mask, self.tmp_dir)
+            sct.copy(self.fname_mask, self.tmp_dir)
             self.fname_mask = ''.join(extract_fname(self.fname_mask)[1:])
         else:
             printv('ERROR: No input image', self.verbose, 'error')
 
         # copy seg image
         if self.fname_sc is not None:
-            shutil.copy(self.fname_sc, self.tmp_dir)
+            sct.copy(self.fname_sc, self.tmp_dir)
             self.fname_sc = ''.join(extract_fname(self.fname_sc)[1:])
 
         # copy ref image
         if self.fname_ref is not None:
-            shutil.copy(self.fname_ref, self.tmp_dir)
+            sct.copy(self.fname_ref, self.tmp_dir)
             self.fname_ref = ''.join(extract_fname(self.fname_ref)[1:])
 
         # copy registered template
         if self.path_template is not None:
-            shutil.copy(self.path_levels, self.tmp_dir)
+            sct.copy(self.path_levels, self.tmp_dir)
             self.path_levels = ''.join(extract_fname(self.path_levels)[1:])
 
             self.atlas_roi_lst = []
@@ -493,7 +494,7 @@ class AnalyzeLeion:
                 if fname_atlas_roi.endswith('.nii.gz'):
                     tract_id = int(fname_atlas_roi.split('_')[-1].split('.nii.gz')[0])
                     if tract_id < 36:  # Not interested in CSF
-                        shutil.copy(os.path.join(self.path_atlas, fname_atlas_roi), self.tmp_dir)
+                        sct.copy(os.path.join(self.path_atlas, fname_atlas_roi), self.tmp_dir)
                         self.atlas_roi_lst.append(fname_atlas_roi)
 
         os.chdir(self.tmp_dir)  # go to tmp directory

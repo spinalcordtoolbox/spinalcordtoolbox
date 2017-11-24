@@ -179,11 +179,11 @@ class Transform:
             # convert to nifti into temp folder
             sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
             sct_convert.convert(fname_src, os.path.join(path_tmp, "data.nii"), squeeze_data=False)
-            shutil.copy(fname_dest, os.path.join(path_tmp, file_dest + ext_dest))
+            sct.copy(fname_dest, os.path.join(path_tmp, file_dest + ext_dest))
             fname_warp_list_tmp = []
             for fname_warp in fname_warp_list:
                 path_warp, file_warp, ext_warp = sct.extract_fname(fname_warp)
-                shutil.copy(fname_warp, os.path.join(path_tmp, file_warp + ext_warp))
+                sct.copy(fname_warp, os.path.join(path_tmp, file_warp + ext_warp))
                 fname_warp_list_tmp.append(file_warp + ext_warp)
             fname_warp_list_invert_tmp = fname_warp_list_tmp[::-1]
 

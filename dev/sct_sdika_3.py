@@ -188,7 +188,7 @@ def transform_nii_img(img_lst, path_out):
         path_cur = img_path
         path_cur_out = path_out + '_'.join(img_path.split('/')[5:7]) + '.nii.gz'
         if not os.path.isfile(path_cur_out):
-            shutil.copyfile(path_cur, path_cur_out)
+            sct.copy(path_cur, path_cur_out)
             sct.run('sct_image -i ' + path_cur_out + ' -type int16 -o ' + path_cur_out)
             sct.run('sct_image -i ' + path_cur_out + ' -setorient RPI -o ' + path_cur_out)
             # os.system('sct_image -i ' + path_cur_out + ' -type int16 -o ' + path_cur_out)
@@ -220,7 +220,7 @@ def transform_nii_seg(seg_lst, path_out, path_gold):
         path_cur = seg_path
         path_cur_out = path_out + '_'.join(seg_path.split('/')[5:7]) + '_seg.nii.gz'
         if not os.path.isfile(path_cur_out):
-            shutil.copyfile(path_cur, path_cur_out)
+            sct.copy(path_cur, path_cur_out)
             os.system('sct_image -i ' + path_cur_out + ' -setorient RPI -o ' + path_cur_out)
 
         path_cur_ctr = path_cur_out.split('.')[0] + '_centerline.nii.gz'
@@ -233,7 +233,7 @@ def transform_nii_seg(seg_lst, path_out, path_gold):
 
         path_cur_gold = path_gold + '_'.join(seg_path.split('/')[5:7]) + '_centerline_gold.nii.gz'
         if not os.path.isfile(path_cur_gold) and os.path.isfile(path_cur_ctr):
-            shutil.copyfile(path_cur_ctr, path_cur_gold)
+            sct.copy(path_cur_ctr, path_cur_gold)
 
         if os.path.isfile(path_cur_out):
             path_seg2convert.append(path_cur_out)

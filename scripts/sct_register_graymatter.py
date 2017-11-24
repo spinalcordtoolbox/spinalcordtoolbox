@@ -194,9 +194,9 @@ class MultiLabelRegistration:
 
         # Create tmp folder and copy files in it
         tmp_dir = sct.tmp_create()
-        shutil.copy(fname_manual_gmseg, os.path.join(tmp_dir, file_manual_gmseg + ext_manual_gmseg))
-        shutil.copy(fname_sc_seg, os.path.join(tmp_dir, file_sc_seg + ext_sc_seg))
-        shutil.copy(os.path.join(self.param.output_folder, self.fname_warp_template2gm), os.path.join(tmp_dir, self.fname_warp_template2gm))
+        sct.copy(fname_manual_gmseg, os.path.join(tmp_dir, file_manual_gmseg + ext_manual_gmseg))
+        sct.copy(fname_sc_seg, os.path.join(tmp_dir, file_sc_seg + ext_sc_seg))
+        sct.copy(os.path.join(self.param.output_folder, self.fname_warp_template2gm), os.path.join(tmp_dir, self.fname_warp_template2gm))
         curdir = os.getcwd()
         os.chdir(tmp_dir)
 
