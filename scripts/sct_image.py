@@ -271,12 +271,12 @@ def main(args=None):
                 im_out[i_dim].save()
         if '-split' in arguments:
             # use input file name and add _"DIM+NUMBER". Keep the same extension
-            fname_out = []
+            l_fname_out = []
             for i, im in enumerate(im_out):
-                fname_out.append(add_suffix(fname_in[0], '_' + dim_list[dim].upper() + str(i).zfill(4)))
-                im.setFileName(fname_out[i])
+                l_fname_out.append(add_suffix(fname_in[0], '_' + dim_list[dim].upper() + str(i).zfill(4)))
+                im.setFileName(l_fname_out[i])
                 im.save()
-        sct.display_viewer_syntax([str(fname_out)])
+        sct.display_viewer_syntax(l_fname_out)
 
     elif "-getorient" in arguments:
         sct.printv(orient)
