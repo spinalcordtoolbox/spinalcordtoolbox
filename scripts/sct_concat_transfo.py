@@ -87,13 +87,12 @@ def main():
     else:
         path_out, file_out, ext_out = sct.extract_fname(fname_warp_final)
 
-    # Check dimension of data (cf. issue #1419)
-    dimensionality = '3'
-    path, file, ext = sct.extract_fname(fname_warp_list[0])
-    if 'nii' in ext:
-        im_warp = Image(fname_warp_list[0])
-        if im_warp.data.shape[2] in (0, 1):
-            dimensionality = '2'
+    # Check dimension of destination data (cf. issue #1419, #1429)
+    im_dest = Image(fname_dest)
+    if im_dest.dim[2] == 1:
+        dimensionality = '2'
+    else:
+        dimensionality = '3'
 
     # Concatenate warping fields
     sct.printv('\nConcatenate warping fields...', verbose)
