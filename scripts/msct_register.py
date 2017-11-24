@@ -72,8 +72,8 @@ def register_slicewise(fname_src,
         register2d('src.nii', 'dest.nii', fname_mask=fname_mask, fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, paramreg=paramreg, ants_registration_params=ants_registration_params, verbose=verbose)
 
     sct.printv('\nMove warping fields...', verbose)
-    shutil.copy(warp_forward_out, curdir)
-    shutil.copy(warp_inverse_out, curdir)
+    sct.copy(warp_forward_out, curdir)
+    sct.copy(warp_inverse_out, curdir)
 
     # go back
     os.chdir(curdir)

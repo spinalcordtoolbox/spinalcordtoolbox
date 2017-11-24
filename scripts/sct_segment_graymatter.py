@@ -302,25 +302,25 @@ class SegmentGM:
     def copy_data_to_tmp(self):
         # copy input image
         if self.param_seg.fname_im is not None:
-            shutil.copy(self.param_seg.fname_im, self.tmp_dir)
+            sct.copy(self.param_seg.fname_im, self.tmp_dir)
             self.param_seg.fname_im = ''.join(extract_fname(self.param_seg.fname_im)[1:])
         else:
             printv('ERROR: No input image', self.param.verbose, 'error')
 
         # copy sc seg image
         if self.param_seg.fname_seg is not None:
-            shutil.copy(self.param_seg.fname_seg, self.tmp_dir)
+            sct.copy(self.param_seg.fname_seg, self.tmp_dir)
             self.param_seg.fname_seg = ''.join(extract_fname(self.param_seg.fname_seg)[1:])
         else:
             printv('ERROR: No SC segmentation image', self.param.verbose, 'error')
 
         # copy level file
         if self.param_seg.fname_level is not None:
-            shutil.copy(self.param_seg.fname_level, self.tmp_dir)
+            sct.copy(self.param_seg.fname_level, self.tmp_dir)
             self.param_seg.fname_level = ''.join(extract_fname(self.param_seg.fname_level)[1:])
 
         if self.param_seg.fname_manual_gmseg is not None:
-            shutil.copy(self.param_seg.fname_manual_gmseg, self.tmp_dir)
+            sct.copy(self.param_seg.fname_manual_gmseg, self.tmp_dir)
             self.param_seg.fname_manual_gmseg = ''.join(extract_fname(self.param_seg.fname_manual_gmseg)[1:])
 
     def get_im_from_list(self, data):
@@ -533,8 +533,8 @@ class SegmentGM:
     def validation(self):
         tmp_dir_val = sct.tmp_create(basename="segment_graymatter_validation")
         # copy data into tmp dir val
-        shutil.copy(self.param_seg.fname_manual_gmseg, tmp_dir_val)
-        shutil.copy(self.param_seg.fname_seg, tmp_dir_val)
+        sct.copy(self.param_seg.fname_manual_gmseg, tmp_dir_val)
+        sct.copy(self.param_seg.fname_seg, tmp_dir_val)
         curdir = os.getcwd()
         os.chdir(tmp_dir_val)
         fname_manual_gmseg = ''.join(extract_fname(self.param_seg.fname_manual_gmseg)[1:])
@@ -604,8 +604,8 @@ class SegmentGM:
 
         # get out of tmp dir to copy results to output folder
         os.chdir(curdir)
-        shutil.copy(os.path.join(self.tmp_dir, tmp_dir_val, fname_dc), self.param_seg.path_results)
-        shutil.copy(os.path.join(self.tmp_dir, tmp_dir_val, fname_hd), self.param_seg.path_results)
+        sct.copy(os.path.join(self.tmp_dir, tmp_dir_val, fname_dc), self.param_seg.path_results)
+        sct.copy(os.path.join(self.tmp_dir, tmp_dir_val, fname_hd), self.param_seg.path_results)
 
         if self.param.rm_tmp:
             shutil.rmtree(tmp_dir_val)
@@ -667,7 +667,7 @@ class SegmentGM:
                     file_ratio.write(str(l) + ', ' + str(csa_gm / csa_wm) + '\n')
 
         file_ratio.close()
-        shutil.copy(fname_ratio, os.path.join(self.param_seg.path_results, fname_ratio))
+        sct.copy(fname_ratio, os.path.join(self.param_seg.path_results, fname_ratio))
 
         os.chdir(curdir)
 

@@ -413,7 +413,7 @@ def main(segmentation_file=None, label_file=None, output_file_name=None, paramet
                 del data_concatenate, data_label_to_show, data_seg_to_show, data_centerline_fit
 
             # Retrieve result
-            shutil.copy(file_name, curdir)
+            sct.copy(file_name, curdir)
 
             # come back
             os.chdir(curdir)
@@ -723,7 +723,7 @@ def main(segmentation_file=None, label_file=None, output_file_name=None, paramet
                             f_output.write(line)
 
             # Retrieve result
-            shutil.copy(file_name, curdir)
+            sct.copy(file_name, curdir)
 
             # Come back
             os.chdir(curdir)

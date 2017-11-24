@@ -226,10 +226,10 @@ def run_main():
             temp_folder.chdir_undo()
 
             # copy result to output folder
-            shutil.copy(os.path.join(temp_folder.get_path(), fname_centerline_oriented), folder_output)
-            shutil.copy(os.path.join(temp_folder.get_path(), fname_centerline_oriented_txt), folder_output)
+            sct.copy(os.path.join(temp_folder.get_path(), fname_centerline_oriented), folder_output)
+            sct.copy(os.path.join(temp_folder.get_path(), fname_centerline_oriented_txt), folder_output)
             if output_roi:
-                shutil.copy(os.path.join(temp_folder.get_path(), fname_centerline_oriented_roi), folder_output)
+                sct.copy(os.path.join(temp_folder.get_path(), fname_centerline_oriented_roi), folder_output)
             centerline_filename = os.path.join(folder_output, fname_centerline_oriented)
 
 

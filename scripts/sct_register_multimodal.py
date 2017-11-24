@@ -437,7 +437,7 @@ def main(args=None):
     if fname_initwarp:
         sct.printv('\nSkip step=0 and replace with initial transformations: ', param.verbose)
         sct.printv('  ' + fname_initwarp, param.verbose)
-        # shutil.copy(fname_initwarp, 'warp_forward_0.nii.gz')
+        # sct.copy(fname_initwarp, 'warp_forward_0.nii.gz')
         warp_forward = [fname_initwarp]
         start_step = 1
         if fname_initwarpinv:

@@ -758,7 +758,7 @@ class SpinalCordStraightener(object):
 
         # create ref_straight.nii.gz file that can be used by other SCT functions that need a straight reference space
         if self.curved2straight:
-            shutil.copy(os.path.join(path_tmp, "tmp.anat_rigid_warp.nii.gz"), os.path.join(self.path_output, "straight_ref.nii.gz"))
+            sct.copy(os.path.join(path_tmp, "tmp.anat_rigid_warp.nii.gz"), os.path.join(self.path_output, "straight_ref.nii.gz"))
             # move straightened input file
             if fname_output == '':
                 fname_straight = sct.generate_output_file(os.path.join(path_tmp, "tmp.anat_rigid_warp.nii.gz"),

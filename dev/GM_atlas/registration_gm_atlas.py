@@ -53,7 +53,7 @@ def main():
      slice,
      fname13,
      ):
-        shutil.copy(os.path.join(path_info, file), file)
+        sct.copy(os.path.join(path_info, file), file)
 
     print '\nSave nifti images from png'
     save_nii_from_png(fname1)

@@ -105,9 +105,9 @@ def pre_processing(fname_target, fname_sc_seg, fname_level=None, fname_manual_gm
 
     tmp_dir = sct.tmp_create()
 
-    shutil.copy(fname_target, tmp_dir)
+    sct.copy(fname_target, tmp_dir)
     fname_target = ''.join(extract_fname(fname_target)[1:])
-    shutil.copy(fname_sc_seg, tmp_dir)
+    sct.copy(fname_sc_seg, tmp_dir)
     fname_sc_seg = ''.join(extract_fname(fname_sc_seg)[1:])
 
     curdir = os.getcwd()
@@ -180,7 +180,7 @@ def pre_processing(fname_target, fname_sc_seg, fname_level=None, fname_manual_gm
         printv('  Load vertebral levels...', verbose, 'normal')
         # copy level file to tmp dir
         os.chdir(curdir)
-        shutil.copy(fname_level, tmp_dir)
+        sct.copy(fname_level, tmp_dir)
         os.chdir(tmp_dir)
         # change fname level to only file name (path = tmp dir now)
         fname_level = ''.join(extract_fname(fname_level)[1:])
@@ -375,7 +375,7 @@ def load_manual_gmseg(list_slices_target, list_fname_manual_gmseg, tmp_dir, im_s
     curdir = os.getcwd()
 
     for fname_manual_gmseg in list_fname_manual_gmseg:
-        shutil.copy(fname_manual_gmseg, tmp_dir)
+        sct.copy(fname_manual_gmseg, tmp_dir)
         # change fname level to only file name (path = tmp dir now)
         path_gm, file_gm, ext_gm = extract_fname(fname_manual_gmseg)
         fname_manual_gmseg = file_gm + ext_gm
@@ -477,8 +477,8 @@ def register_data(im_src, im_dest, param_reg, path_copy_warp=None, rm_tmp=True):
         file_dest = extract_fname(fname_dest)[1]
         fname_src2dest = 'warp_' + file_src + '2' + file_dest + '.nii.gz'
         fname_dest2src = 'warp_' + file_dest + '2' + file_src + '.nii.gz'
-        shutil.copy(os.path.join(tmp_dir, fname_src2dest), path_copy_warp)
-        shutil.copy(os.path.join(tmp_dir, fname_dest2src), path_copy_warp)
+        sct.copy(os.path.join(tmp_dir, fname_src2dest), path_copy_warp)
+        sct.copy(os.path.join(tmp_dir, fname_dest2src), path_copy_warp)
 
     if rm_tmp:
         # remove tmp dir
@@ -491,7 +491,7 @@ def apply_transfo(im_src, im_dest, warp, interp='spline', rm_tmp=True):
     # create tmp dir and go in it
     tmp_dir = sct.tmp_create()
     # copy warping field to tmp dir
-    shutil.copy(warp, tmp_dir)
+    sct.copy(warp, tmp_dir)
     warp = ''.join(extract_fname(warp)[1:])
     # go to tmp dir
     curdir = os.getcwd()

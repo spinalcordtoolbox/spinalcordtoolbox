@@ -63,7 +63,7 @@ def main():
     path_data, file_data, ext_data = sct.extract_fname(fname)
 
     # copy files into tmp folder
-    shutil.copy(fname, path_tmp)
+    sct.copy(fname, path_tmp)
 
     # go to tmp folder
     os.chdir(path_tmp)

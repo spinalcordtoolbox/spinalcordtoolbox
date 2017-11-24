@@ -340,14 +340,14 @@ def compute_length(fname_segmentation, remove_temp_files, output_folder, overwri
 
     # copy files into tmp folder
     sct.printv('cp ' + fname_segmentation + ' ' + path_tmp)
-    shutil.copy(fname_segmentation, path_tmp)
+    sct.copy(fname_segmentation, path_tmp)
 
     if slices or vert_levels:
         # check if vertebral labeling file exists
         sct.check_file_exist(fname_vertebral_labeling)
         path_vert, file_vert, ext_vert = sct.extract_fname(fname_vertebral_labeling)
         sct.printv('cp ' + fname_vertebral_labeling + ' ' + path_tmp)
-        shutil.copy(fname_vertebral_labeling, path_tmp)
+        sct.copy(fname_vertebral_labeling, path_tmp)
         fname_vertebral_labeling = file_vert + ext_vert
 
     # go to tmp folder
