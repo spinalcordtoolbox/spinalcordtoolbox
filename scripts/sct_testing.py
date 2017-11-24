@@ -178,7 +178,9 @@ def main(args=None):
             else:
                 print_warning()
                 status = 99
-            print list_output
+            for output in list_output:
+                for line in output.splitlines():
+                    print("   %s" % line)
         else:
             print_ok()
             status = 0
@@ -232,7 +234,7 @@ def fill_functions():
         'sct_compute_mtr',
         'sct_compute_mscc',
         'sct_compute_snr',
-	    'sct_concat_transfo',
+        'sct_concat_transfo',
         'sct_convert',
         # 'sct_convert_binary_to_trilinear',  # not useful
         'sct_create_mask',
