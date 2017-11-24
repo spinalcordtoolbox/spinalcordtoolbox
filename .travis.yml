@@ -29,7 +29,7 @@ before_install:
 install:
   - yes | ./install_sct
   - source $HOME/build/neuropoly/spinalcordtoolbox/bin/sct_launcher
-  - pip install flake8 --download-cache ${HOME}/.cache/pip
+  - pip install flake8
 
 before_script:
   - ./check_style.sh
