@@ -502,10 +502,10 @@ if __name__ == "__main__":
 
         tmp_dir = sct.tmp_create()
         im1_name = "im1.nii.gz"
-        shutil.copy(input_fname, os.path.join(tmp_dir, im1_name))
+        sct.copy(input_fname, os.path.join(tmp_dir, im1_name))
         if input_second_fname != '':
             im2_name = 'im2.nii.gz'
-            shutil.copy(input_second_fname, os.path.join(tmp_dir, im2_name))
+            sct.copy(input_second_fname, os.path.join(tmp_dir, im2_name))
         else:
             im2_name = None
 
@@ -523,9 +523,9 @@ if __name__ == "__main__":
 
         # TODO change back the orientatin of the thinned image
         if param.thinning:
-            shutil.copy(computation.thinning1.thinned_image.file_name + computation.thinning1.thinned_image.ext, os.path.join(curdir, sct.extract_fname(input_fname)[1] + '_thinned' + sct.extract_fname(input_fname)[2]))
+            sct.copy(computation.thinning1.thinned_image.file_name + computation.thinning1.thinned_image.ext, os.path.join(curdir, sct.extract_fname(input_fname)[1] + '_thinned' + sct.extract_fname(input_fname)[2]))
             if im2_name is not None:
-                shutil.copy(computation.thinning2.thinned_image.file_name + computation.thinning2.thinned_image.ext, os.path.join(curdir, sct.extract_fname(input_second_fname)[1] + '_thinned' + sct.extract_fname(input_second_fname)[2]))
+                sct.copy(computation.thinning2.thinned_image.file_name + computation.thinning2.thinned_image.ext, os.path.join(curdir, sct.extract_fname(input_second_fname)[1] + '_thinned' + sct.extract_fname(input_second_fname)[2]))
 
         os.chdir(curdir)
 

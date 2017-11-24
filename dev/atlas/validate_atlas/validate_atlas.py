@@ -57,7 +57,7 @@ def main():
         create_folder(folder_cropped_atlas, 1)
         crop_atlas(folder_atlas, folder_cropped_atlas, zcrop_ind)
         # Copy the info_label.txt file in the cropped atlas' folder. This file needs to be there in order for the sct_extract_metric code to work
-        shutil.copy(os.path.join(folder_atlas, 'info_label.txt'), folder_cropped_atlas)
+        sct.copy(os.path.join(folder_atlas, 'info_label.txt'), folder_cropped_atlas)
 
     # create output folder
     create_folder(results_folder, 1)

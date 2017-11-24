@@ -197,12 +197,12 @@ def move_data():
     for subject_name in list_subjects:
         sct.create_folder(os.path.join(path_data_new, subject_name, 't1'))
 
-        shutil.copy(os.path.join(path_data_old, subject_name, 'T1', 'data_RPI.nii.gz'),
+        sct.copy(os.path.join(path_data_old, subject_name, 'T1', 'data_RPI.nii.gz'),
                     os.path.join(path_data_new, subject_name, 't1', 't1.nii.gz'))
 
         sct.create_folder(os.path.join(path_data_new, subject_name, 't2'))
 
-        shutil.copy(os.path.join(path_data_old, subject_name, 'T2', 'data_RPI.nii.gz'),
+        sct.copy(os.path.join(path_data_old, subject_name, 'T2', 'data_RPI.nii.gz'),
                     os.path.join(path_data_new, subject_name, 't2', 't2.nii.gz'))
 
         timer_move.add_iteration()

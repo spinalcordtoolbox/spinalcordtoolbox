@@ -139,7 +139,7 @@ def warp_label(path_label, folder_label, file_label, fname_src, fname_transfo, p
             # apply transfo
             sct.run('sct_apply_transfo -i ' + fname_label + ' -o ' + os.path.join(path_out, folder_label, template_label_file[i]) + ' -d ' + fname_src + ' -w ' + fname_transfo + ' -x ' + get_interp(template_label_file[i]), param.verbose)
         # Copy list.txt
-        shutil.copy(os.path.join(path_label, folder_label, param.file_info_label), os.path.join(path_out, folder_label))
+        sct.copy(os.path.join(path_label, folder_label, param.file_info_label), os.path.join(path_out, folder_label))
 
 
 # Get file label

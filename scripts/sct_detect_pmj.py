@@ -20,7 +20,7 @@ import commands
 
 from msct_image import Image
 from msct_parser import Parser
-from sct_utils import tmp_create, extract_fname, printv, run, start_stream_logger
+import sct_utils as sct
 from sct_image import get_orientation, set_orientation
 
 
@@ -92,12 +92,12 @@ class DetectPMJ:
 
         self.verbose = verbose
 
-        self.tmp_dir = tmp_create(verbose=self.verbose)  # path to tmp directory
+        self.tmp_dir = sct.tmp_create(verbose=self.verbose)  # path to tmp directory
 
         self.orientation_im = get_orientation(Image(self.fname_im))  # to re-orient the data at the end
 
-        self.slice2D_im = extract_fname(self.fname_im)[1] + '_midSag.nii'  # file used to do the detection, with only one slice
-        self.dection_map_pmj = extract_fname(self.fname_im)[1] + '_map_pmj'  # file resulting from the detection
+        self.slice2D_im = sct.extract_fname(self.fname_im)[1] + '_midSag.nii'  # file used to do the detection, with only one slice
+        self.dection_map_pmj = sct.extract_fname(self.fname_im)[1] + '_map_pmj'  # file resulting from the detection
 
         # path to the pmj detector
         self.pmj_model = os.path.join(commands.getstatusoutput('echo $SCT_DIR')[1],
@@ -106,7 +106,7 @@ class DetectPMJ:
 
         self.threshold = -0.75 if self.contrast == 't1' else 0.8  # detection map threshold, depends on the contrast
 
-        self.fname_out = extract_fname(self.fname_im)[1] + '_pmj.nii.gz'
+        self.fname_out = sct.extract_fname(self.fname_im)[1] + '_pmj.nii.gz'
 
         self.fname_qc = 'qc_pmj.png'
 
@@ -133,12 +133,12 @@ class DetectPMJ:
         os.chdir(self.curdir)  # go back to original directory
 
         if self.pa_coord != -1:  # If PMJ has been detected
-            printv('\nSave resulting file...', self.verbose, 'normal')
-            shutil.copy(os.path.abspath(os.path.join(self.tmp_dir, self.fname_out)),
+            sct.printv('\nSave resulting file...', self.verbose, 'normal')
+            sct.copy(os.path.abspath(os.path.join(self.tmp_dir, self.fname_out)),
                         os.path.abspath(os.path.join(self.path_out, self.fname_out)))
 
             if self.quality_control:
-                shutil.copy(os.path.abspath(os.path.join(self.tmp_dir, self.fname_qc)),
+                sct.copy(os.path.abspath(os.path.join(self.tmp_dir, self.fname_qc)),
                                 os.path.abspath(os.path.join(self.path_out, self.fname_qc)))
 
             return os.path.join(self.path_out, self.fname_out)
@@ -147,7 +147,7 @@ class DetectPMJ:
 
     def save_qc(self, slice_arr, coord_lst):
         """Output a QC PNG image with a green bounding box around the detected PMJ."""
-        printv('\nSave quality control image...', self.verbose, 'normal')
+        sct.printv('\nSave quality control image...', self.verbose, 'normal')
 
         import matplotlib.pyplot as plt
         import matplotlib.patches as patches
@@ -165,12 +165,12 @@ class DetectPMJ:
         plt.axis('off')
         fig.savefig(self.fname_qc, bbox_inches='tight')
 
-        printv('\nQC output image: ' + self.fname_qc, self.verbose, 'info')
+        sct.printv('\nQC output image: ' + self.fname_qc, self.verbose, 'info')
 
     def generate_mask_pmj(self):
         """Output the PMJ mask."""
         if self.pa_coord != -1:  # If PMJ has been detected
-            im = Image(''.join(extract_fname(self.fname_im)[1:]))  # image in PIR orientation
+            im = Image(''.join(sct.extract_fname(self.fname_im)[1:]))  # image in PIR orientation
             im_mask = im.copy()
             im_mask.data *= 0  # empty mask
 
@@ -184,9 +184,9 @@ class DetectPMJ:
             im_mask = set_orientation(im_mask, self.orientation_im, fname_out=self.fname_out)  # reorient data
 
             x_pmj, y_pmj, z_pmj = np.where(im_mask.data == 50)
-            printv('\tx_pmj = ' + str(x_pmj[0]), self.verbose, 'info')
-            printv('\ty_pmj = ' + str(y_pmj[0]), self.verbose, 'info')
-            printv('\tz_pmj = ' + str(z_pmj[0]), self.verbose, 'info')
+            sct.printv('\tx_pmj = ' + str(x_pmj[0]), self.verbose, 'info')
+            sct.printv('\ty_pmj = ' + str(y_pmj[0]), self.verbose, 'info')
+            sct.printv('\tz_pmj = ' + str(z_pmj[0]), self.verbose, 'info')
 
             im_mask.save()
 
@@ -199,22 +199,22 @@ class DetectPMJ:
             self.pa_coord = np.where(img_pred.data == img_pred_maxValue)[0][0]
             self.is_coord = np.where(img_pred.data == img_pred_maxValue)[1][0]
 
-            printv('\nPonto-Medullary Junction detected', self.verbose, 'normal')
+            sct.printv('\nPonto-Medullary Junction detected', self.verbose, 'normal')
 
         else:
             self.pa_coord, self.is_coord = -1, -1
 
-            printv('\nPonto-Medullary Junction not detected', self.verbose, 'normal')
+            sct.printv('\nPonto-Medullary Junction not detected', self.verbose, 'normal')
 
         del img_pred
 
     def detect(self):
         """Run the classifier on self.slice2D_im."""
-        printv('\nRun PMJ detector', self.verbose, 'normal')
+        sct.printv('\nRun PMJ detector', self.verbose, 'normal')
         os.environ["FSLOUTPUTTYPE"] = "NIFTI_PAIR"
         cmd_pmj = 'isct_spine_detect "%s" "%s" "%s"' % \
                     (self.pmj_model, self.slice2D_im.split('.nii')[0], self.dection_map_pmj)
-        run(cmd_pmj, verbose=0)
+        sct.run(cmd_pmj, verbose=0)
 
         img = nib.load(self.dection_map_pmj + '_svm.hdr')  # convert .img and .hdr files to .nii
         nib.save(img, self.dection_map_pmj + '.nii')
@@ -246,28 +246,28 @@ class DetectPMJ:
             self.rl_coord = int(img.dim[2] / 2)  # Right_left coordinate
             del img
 
-        run('sct_crop_image -i ' + self.fname_im + ' -start ' + str(self.rl_coord) + ' -end ' + str(self.rl_coord) + ' -dim 2 -o ' + self.slice2D_im)
+        sct.run('sct_crop_image -i ' + self.fname_im + ' -start ' + str(self.rl_coord) + ' -end ' + str(self.rl_coord) + ' -dim 2 -o ' + self.slice2D_im)
 
     def orient2pir(self):
         """Orient input data to PIR orientation."""
         if self.orientation_im != 'PIR':  # open image and re-orient it to PIR if needed
             im_tmp = Image(self.fname_im)
-            set_orientation(im_tmp, 'PIR', fname_out=''.join(extract_fname(self.fname_im)[1:]))
+            set_orientation(im_tmp, 'PIR', fname_out=''.join(sct.extract_fname(self.fname_im)[1:]))
 
             if self.fname_seg is not None:
-                set_orientation(Image(self.fname_seg), 'PIR', fname_out=''.join(extract_fname(self.fname_seg)[1:]))
+                set_orientation(Image(self.fname_seg), 'PIR', fname_out=''.join(sct.extract_fname(self.fname_seg)[1:]))
 
     def ifolder2tmp(self):
         """Copy data to tmp folder."""
         if self.fname_im is not None:  # copy input image
-            shutil.copy(self.fname_im, self.tmp_dir)
-            self.fname_im = ''.join(extract_fname(self.fname_im)[1:])
+            sct.copy(self.fname_im, self.tmp_dir)
+            self.fname_im = ''.join(sct.extract_fname(self.fname_im)[1:])
         else:
-            printv('ERROR: No input image', self.verbose, 'error')
+            sct.printv('ERROR: No input image', self.verbose, 'error')
 
         if self.fname_seg is not None:  # copy segmentation image
-            shutil.copy(self.fname_seg, self.tmp_dir)
-            self.fname_seg = ''.join(extract_fname(self.fname_seg)[1:])
+            sct.copy(self.fname_seg, self.tmp_dir)
+            self.fname_seg = ''.join(sct.extract_fname(self.fname_seg)[1:])
 
         self.curdir = os.getcwd()
         os.chdir(self.tmp_dir)  # go to tmp directory
@@ -290,7 +290,7 @@ def main(args=None):
         fname_seg = arguments['-s']
         if not os.path.isfile(fname_seg):
             fname_seg = None
-            printv('WARNING: -s input file: "' + arguments['-s'] + '" does not exist.\nDetecting PMJ without using segmentation information', 1, 'warning')
+            sct.printv('WARNING: -s input file: "' + arguments['-s'] + '" does not exist.\nDetecting PMJ without using segmentation information', 1, 'warning')
     else:
         fname_seg = None
 
@@ -298,7 +298,7 @@ def main(args=None):
     if '-ofolder' in arguments:
         path_results = arguments["-ofolder"]
         if not os.path.isdir(path_results) and os.path.exists(path_results):
-            printv("ERROR output directory %s is not a valid directory" % path_results, 1, 'error')
+            sct.printv("ERROR output directory %s is not a valid directory" % path_results, 1, 'error')
         if not os.path.exists(path_results):
             os.makedirs(path_results)
     else:
@@ -338,9 +338,9 @@ def main(args=None):
 
     # View results
     if fname_out is not None:
-        printv('\nDone! To view results, type:', verbose)
-        printv('fslview ' + arguments["-i"] + ' ' + fname_out + ' -l Red & \n', verbose, 'info')
+        sct.printv('\nDone! To view results, type:', verbose)
+        sct.printv('fslview ' + arguments["-i"] + ' ' + fname_out + ' -l Red & \n', verbose, 'info')
 
 if __name__ == "__main__":
-    start_stream_logger()
+    sct.start_stream_logger()
     main()

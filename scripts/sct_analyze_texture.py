@@ -146,21 +146,21 @@ class ExtractGLCM:
 
         printv('\nSave resulting files...', self.param.verbose, 'normal')
         for f in self.fname_metric_lst:  # Copy from tmp folder to ofolder
-            shutil.copy(os.path.join(self.tmp_dir, self.fname_metric_lst[f]),
+            sct.copy(os.path.join(self.tmp_dir, self.fname_metric_lst[f]),
                         os.path.join(self.param.path_results, self.fname_metric_lst[f]))
 
     def ifolder2tmp(self):
         self.curdir = os.getcwd()
         # copy input image
         if self.param.fname_im is not None:
-            shutil.copy(self.param.fname_im, self.tmp_dir)
+            sct.copy(self.param.fname_im, self.tmp_dir)
             self.param.fname_im = ''.join(extract_fname(self.param.fname_im)[1:])
         else:
             printv('ERROR: No input image', self.param.verbose, 'error')
 
         # copy masked image
         if self.param.fname_seg is not None:
-            shutil.copy(self.param.fname_seg, self.tmp_dir)
+            sct.copy(self.param.fname_seg, self.tmp_dir)
             self.param.fname_seg = ''.join(extract_fname(self.param.fname_seg)[1:])
         else:
             printv('ERROR: No mask image', self.param.verbose, 'error')

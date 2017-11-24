@@ -628,7 +628,7 @@ class TempFolder(object):
 
         :param filename: The filename to copy into the folder.
         """
-        shutil.copy(filename, self.path_tmp)
+        copy(filename, self.path_tmp)
 
     def cleanup(self):
         """Remove the created folder and its contents."""
