@@ -113,7 +113,25 @@ class BaseDialog(QtGui.QDialog):
         QtGui.QShortcut(QtGui.QKeySequence.Save, self, self.on_save_quit)
         QtGui.QShortcut(QtGui.QKeySequence.Quit, self, self.close)
 
+        QtGui.QShortcut(QtGui.QKeySequence.MoveToNextChar, self, self.increment_vertical_nav)
+        QtGui.QShortcut(QtGui.QKeySequence.MoveToPreviousChar, self, self.decrement_vertical_nav)
+
+        QtGui.QShortcut(QtGui.QKeySequence.MoveToNextLine, self, self.increment_horizontal_nav)
+        QtGui.QShortcut(QtGui.QKeySequence.MoveToPreviousLine, self, self.decrement_horizontal_nav)
+
         self.setWindowTitle(self.params.dialog_title)
+
+    def increment_vertical_nav(self):
+        pass
+
+    def decrement_vertical_nav(self):
+        pass
+
+    def increment_horizontal_nav(self):
+        pass
+
+    def decrement_horizontal_nav(self):
+        pass
 
     def _init_canvas(self, parent):
         """

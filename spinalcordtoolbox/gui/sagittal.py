@@ -43,10 +43,16 @@ class SagittalDialog(base.BaseDialog):
     def _init_canvas(self, parent):
         layout = QtGui.QHBoxLayout()
         parent.addLayout(layout)
+        vlayout = QtGui.QVBoxLayout()
 
+        layout.addLayout(vlayout)
         self.labels = widgets.VertebraeWidget(self, self.params.vertebraes)
         self.labels.label = self.params.start_vertebrae
-        layout.addWidget(self.labels)
+        vlayout.addWidget(self.labels)
+
+        self.axial = widgets.AxialCanvas(self, 2, 2, vertical_nav=True)
+        self.axial.refresh()
+        vlayout.addWidget(self.axial)
 
         self.sagittal = widgets.SagittalCanvas(self, plot_points=True, annotate=True)
         self.sagittal.point_selected_signal.connect(self.on_select_point)
@@ -61,6 +67,7 @@ class SagittalDialog(base.BaseDialog):
             label = self.labels.label
             self._controller.select_point(x, y, z, label)
             self.labels.refresh()
+            self.axial.refresh()
             self.sagittal.refresh()
 
             index = self.params.vertebraes.index(label)
@@ -74,6 +81,18 @@ class SagittalDialog(base.BaseDialog):
         self.sagittal.refresh()
         self.labels.refresh()
         self.labels.label = self._controller.label
+
+    def increment_vertical_nav(self):
+        x, y, z = self._controller.position
+        self._controller.position = (x, y, z + 1)
+        self.axial.refresh()
+        self.sagittal.refresh()
+
+    def decrement_vertical_nav(self):
+        x, y, z = self._controller.position
+        self._controller.position = (x, y, z - 1)
+        self.axial.refresh()
+        self.sagittal.refresh()
 
 
 def launch_sagittal_dialog(input_file, output_file, params):

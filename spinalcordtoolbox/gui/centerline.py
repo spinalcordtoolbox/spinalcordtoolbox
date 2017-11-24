@@ -23,39 +23,35 @@ class CenterlineController(base.BaseController):
     _mode = ''
     INTERVAL = 15
     MODES = ['AUTO', 'CUSTOM']
-    _slice = 0.0
 
     def __init__(self, image, params, init_values=None):
         super(CenterlineController, self).__init__(image, params, init_values)
 
     def reformat_image(self):
-        max_z = self.image.dim[2]
         super(CenterlineController, self).reformat_image()
+        max_x, _, max_z = self.image.dim[:3]
         self.params.num_points = self.params.num_points or 11
 
-        if self.params.starting_slice < 0:
+        # if the starting slice is of invalid value then use default value
+        if self.params.starting_slice > max_x or self.params.starting_slice < 0:
             self.params.starting_slice = self.default_position[0]
         # if the starting slice is a fraction, recalculate the starting slice as a ratio.
         elif 0 < self.params.starting_slice < 1:
             self.params.starting_slice = max_z // self.params.starting_slice
 
-        self._slice = self.params.starting_slice
-        self.INTERVAL = (max_z - self.params.starting_slice) // (self.params.num_points - 1) or 3
+        self.INTERVAL = (max_x - self.params.starting_slice) // (self.params.num_points - 1) or 3
         self.reset_position()
 
     def reset_position(self):
         super(CenterlineController, self).reset_position()
         if self.mode == 'AUTO':
-            self.position = (self._slice, self.position[1], self.position[2])
+            self.position = (0, self.position[1], self.position[2])
 
     def skip_slice(self):
         if self.mode == 'AUTO':
-            self._next_slice()
+            self.increment_slice()
 
     def select_point(self, x, y, z):
-        if self.mode == 'CUSTOM' and not self._slice:
-            raise InvalidActionWarning('Select a saggital slice before selecting a point.')
-        x = self._slice
         if not self.valid_point(x, y, z):
             raise ValueError('Invalid point selected {}'.format((x, y, z)))
 
@@ -69,18 +65,37 @@ class CenterlineController(base.BaseController):
                 raise TooManyPointsWarning()
             self.points.append((x, y, z, 1))
         self.position = (x, y, z)
-        self._next_slice()
-
-    def _next_slice(self):
         if self.mode == 'AUTO':
-            slice = self._slice + self.INTERVAL
-            if slice >= self.image.dim[0]:
-                slice = self.image.dim[0] - 1
-            if self.valid_point(slice, self.position[1], self.position[2]):
-                self._slice = slice
-                self.position = (self._slice, self.position[1], self.position[2])
-        else:
-            self._slice = 0
+            self.increment_slice()
+
+    def increment_slice(self):
+        interval = 1
+        if self.mode == 'AUTO':
+            interval = self.INTERVAL
+
+        x, y, z = self.position
+        new_x = x + interval
+        max_x = self.image.dim[0]
+
+        if new_x >= max_x:
+            new_x = max_x - 1
+
+        if self.valid_point(new_x, y, z):
+            self.position = (new_x, y, z)
+
+    def decrement_slice(self):
+        interval = 1
+        if self.mode == 'AUTO':
+            interval = self.INTERVAL
+
+        x, y, z = self.position
+        new_x = x - interval
+
+        if new_x < 0:
+            new_x = 0
+
+        if self.valid_point(new_x, y, z):
+            self.position = (new_x, y, z)
 
     def select_slice(self, x, y, z):
         if self.mode != 'CUSTOM':
@@ -92,7 +107,6 @@ class CenterlineController(base.BaseController):
         _, y, z = self.position
         logger.debug('Slice Selected {}'.format((x, y, z)))
         self.position = (x, y, z)
-        self._slice = x
 
     @property
     def mode(self):
@@ -104,7 +118,6 @@ class CenterlineController(base.BaseController):
             raise ValueError('Invalid mode %', value)
 
         if value != self._mode:
-            self._slice = self.params.starting_slice
             self._mode = value
             self.points = []
             self.reset_position()
@@ -117,17 +130,16 @@ class Centerline(base.BaseDialog):
 
     def _init_canvas(self, parent):
         layout = QtGui.QHBoxLayout()
-        self.sagittal_canvas = widgets.SagittalCanvas(self, plot_points=True, plot_position=True)
+        parent.addLayout(layout)
+        self.sagittal_canvas = widgets.SagittalCanvas(self, plot_points=True, horizontal_nav=True)
         layout.addWidget(self.sagittal_canvas)
 
         self.axial_canvas = widgets.AxialCanvas(self, crosshair=True)
         self.axial_canvas.plot_points()
         layout.addWidget(self.axial_canvas)
 
-        self.axial_canvas.point_selected_signal.connect(self.select_point)
+        self.axial_canvas.point_selected_signal.connect(self.on_select_point)
         self.sagittal_canvas.point_selected_signal.connect(self.on_select_slice)
-
-        parent.addLayout(layout)
 
     def _init_controls(self, parent):
         group = QtGui.QGroupBox()
@@ -187,11 +199,21 @@ class Centerline(base.BaseDialog):
             self._controller.select_slice(x, y, z)
             self.axial_canvas.refresh()
             self.sagittal_canvas.refresh()
-            self.update_status('Sagittal slice seleted: {}'.format(self._controller._slice))
+            self.update_status('Sagittal position at {:8.2f}'.format(self._controller.position[0]))
         except (TooManyPointsWarning, InvalidActionWarning) as warn:
             self.update_warning(warn.message)
 
-    def select_point(self, x, y, z):
+    def increment_horizontal_nav(self):
+        self._controller.increment_slice()
+        self.axial_canvas.refresh()
+        self.sagittal_canvas.refresh()
+
+    def decrement_horizontal_nav(self):
+        self._controller.decrement_slice()
+        self.axial_canvas.refresh()
+        self.sagittal_canvas.refresh()
+
+    def on_select_point(self, x, y, z):
         try:
             logger.debug('Point clicked {}'.format((x, y, z)))
             self._controller.select_point(x, y, z)
