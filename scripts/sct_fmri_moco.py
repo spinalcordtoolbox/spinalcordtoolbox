@@ -202,12 +202,13 @@ def main(args=None):
 
     # Generate output files
     path_out = sct.slash_at_the_end(path_out, 1)
+    fname_fmri_moco = os.path.join(path_out, file_data + param.suffix + ext_data)
     sct.create_folder(path_out)
     sct.printv('\nGenerate output files...', param.verbose)
     if os.path.isfile(path_tmp + 'fmri' + param.suffix + '.nii'):
         sct.printv(path_tmp + 'fmri' + param.suffix + '.nii')
         sct.printv(path_out + file_data + param.suffix + ext_data)
-    sct.generate_output_file(path_tmp + 'fmri' + param.suffix + '.nii', path_out + file_data + param.suffix + ext_data, param.verbose)
+    sct.generate_output_file(path_tmp + 'fmri' + param.suffix + '.nii', fname_fmri_moco, param.verbose)
     sct.generate_output_file(path_tmp + 'fmri' + param.suffix + '_mean.nii', path_out + file_data + param.suffix + '_mean' + ext_data, param.verbose)
 
     # Delete temporary files
@@ -219,7 +220,7 @@ def main(args=None):
     elapsed_time = time.time() - start_time
     sct.printv('\nFinished! Elapsed time: ' + str(int(round(elapsed_time))) + 's', param.verbose)
 
-    sct.display_viewer_syntax([param.path_out + file_data + param.suffix, file_data], mode='ortho,ortho')
+    sct.display_viewer_syntax([fname_fmri_moco, file_data], mode='ortho,ortho')
 
 
 #=======================================================================================================================
