@@ -45,6 +45,25 @@ class bcolors:
     ENDC = '\033[0m'
 
 
+def resolve_module(framework_name):
+    """This function will resolve the framework name
+    to the module name in case it is different.
+
+    :param framework_name: the name of the framework.
+    :return: the module name.
+    """
+    modules_map = {
+        'scikit-image': 'skimage',
+        'scikit-learn': 'sklearn',
+        'pyqt': 'PyQt4',
+        'Keras': 'keras'
+    }
+
+    try:
+        return modules_map[framework_name]
+    except KeyError:
+        return framework_name
+
 # MAIN
 # ==========================================================================================
 def main():
@@ -136,15 +155,7 @@ def main():
     # loop across python packages -- CONDA
     version_requirements = get_version_requirements()
     for i in version_requirements:
-        # need to adapt import name and module name in specific cases
-        if i == 'scikit-image':
-            module = 'skimage'
-        elif i == 'scikit-learn':
-            module = 'sklearn'
-        elif i == 'pyqt':
-            module = 'PyQt4'
-        else:
-            module = i
+        module = resolve_module(i)
         print_line('Check if ' + i + ' (' + version_requirements.get(i) + ') is installed')
         try:
             module = importlib.import_module(module)
@@ -170,7 +181,7 @@ def main():
     # loop across python packages -- PIP
     version_requirements_pip = get_version_requirements_pip()
     for i in version_requirements_pip:
-        module = i
+        module = resolve_module(i)
         print_line('Check if ' + i + ' (' + version_requirements_pip.get(i) + ') is installed')
         try:
             module = importlib.import_module(module)
