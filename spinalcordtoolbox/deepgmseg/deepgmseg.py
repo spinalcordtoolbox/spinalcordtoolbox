@@ -15,6 +15,11 @@ from . import model
 
 class DataResource(object):
     def __init__(self, dirname):
+        """Initialize the resource with the directory
+        name context.
+
+        :param dirname: the root directory name.
+        """
         path_script = os.path.dirname(__file__)
         data_dir = os.path.join(path_script,
                                 "..", "..", "data")
@@ -22,6 +27,11 @@ class DataResource(object):
         self.data_root = os.path.join(data_dir, dirname)
 
     def get_file_path(self, filename):
+        """Get the absolute file path based on the
+        data root directory.
+
+        :param filename: the filename.
+        """
         return os.path.join(self.data_root, filename)
 
 
@@ -105,6 +115,7 @@ def segment_volume(ninput_volume, model_name):
     """Segment a nifti volume.
 
     :param ninput_volume: the input volume.
+    :param model_name: the name of the model to use.
     :return: segmented slices.
     """
     gmseg_model_challenge = DataResource('deepgmseg_models')
@@ -159,6 +170,7 @@ def segment_file(input_filename, output_filename,
 
     :param input_filename: the input filename.
     :param output_filename: the output filename.
+    :param model_name: the name of model to use.
     :param verbosity: the verbosity level.
     """
     nii_original = nipy.load_image(input_filename)
