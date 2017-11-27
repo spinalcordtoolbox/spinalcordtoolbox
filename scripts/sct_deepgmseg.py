@@ -47,8 +47,10 @@ def run_main():
     output_filename = arguments["-o"]
     verbosity = arguments["-v"]
 
-    deepgmseg.segment_file(input_filename, output_filename,
-                           int(verbosity))
+    out_fname = deepgmseg.segment_file(input_filename, output_filename,
+                                       int(verbosity))
+
+    print 'Segmentation output file: {}'.format(out_fname)
 
 
 if __name__ == '__main__':

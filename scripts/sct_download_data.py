@@ -37,7 +37,9 @@ def get_parser():
         mandatory=True,
         example=[
             'sct_example_data', 'sct_testing_data', 'PAM50', 'MNI-Poly-AMU',
-            'gm_model', 'optic_models', 'pmj_models', 'binaries_debian', 'binaries_centos', 'binaries_osx', 'course_hawaii17'
+            'gm_model', 'optic_models', 'pmj_models', 'binaries_debian',
+            'binaries_centos', 'binaries_osx', 'course_hawaii17',
+            'deepgmseg_models',
         ])
     parser.add_option(
         name="-v",
@@ -76,7 +78,8 @@ def main(args=None):
         'binaries_debian': 'https://osf.io/2egh5/?action=download',
         'binaries_centos': 'https://osf.io/qngj2/?action=download',
         'binaries_osx': 'https://osf.io/hsa5r/?action=download',
-        'course_hawaii17': 'https://osf.io/6exht/?action=download'
+        'course_hawaii17': 'https://osf.io/6exht/?action=download',
+        'deepgmseg_models': 'https://osf.io/9uv4y/?action=download',
     }
 
     # Get parser info

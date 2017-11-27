@@ -12,6 +12,12 @@ from keras.optimizers import Adam
 CROP_WIDTH = 200
 CROP_HEIGHT = 200
 
+# Models
+# Tuple of (model, metadata)
+MODELS = {
+    'challenge': ('challenge_model.hdf5', 'challenge_model.json')
+}
+
 
 def dice_coef(y_true, y_pred):
     """Dice coefficient specification

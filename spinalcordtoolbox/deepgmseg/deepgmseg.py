@@ -1,6 +1,7 @@
 # coding: utf-8
 
 import json
+import os
 
 import nipy
 import nibabel as nib
@@ -10,6 +11,18 @@ import numpy as np
 
 from spinalcordtoolbox.resample import nipy_resample
 from . import model
+
+
+class DataResource(object):
+    def __init__(self, dirname):
+        path_script = os.path.dirname(__file__)
+        data_dir = os.path.join(path_script,
+                                "..", "..", "data")
+        data_dir = os.path.abspath(data_dir)
+        self.data_root = os.path.join(data_dir, dirname)
+
+    def get_file_path(self, filename):
+        return os.path.join(self.data_root, filename)
 
 
 class CroppedRegion(object):
@@ -94,8 +107,13 @@ def segment_volume(ninput_volume):
     :param ninput_volume: the input volume.
     :return: segmented slices.
     """
+    gmseg_model_challenge = DataResource('deepgmseg_models')
+    model_path, metadata_path = model.MODELS['challenge']
+
     deepgmseg_model = model.create_model()
-    deepgmseg_model.load_weights("../deepgmseg_model.hdf5")
+
+    model_abs_path = gmseg_model_challenge.get_file_path(model_path)
+    deepgmseg_model.load_weights(model_abs_path)
 
     volume_data = ninput_volume.get_data()
     axial_slices = []
@@ -111,11 +129,12 @@ def segment_volume(ninput_volume):
     axial_slices = np.asarray(axial_slices, dtype=np.float32)
     axial_slices = np.expand_dims(axial_slices, axis=3)
 
-    with open("../deepgmseg_model.json") as fp:
+    metadata_abs_path = gmseg_model_challenge.get_file_path(metadata_path)
+    with open(metadata_abs_path) as fp:
         stats = json.load(fp)
 
-    axial_slices -= stats["mean_train"]
-    axial_slices /= stats["std_train"]
+    axial_slices -= stats['mean_train']
+    axial_slices /= stats['std_train']
 
     preds = deepgmseg_model.predict(axial_slices, batch_size=8,
                                     verbose=True)
@@ -150,8 +169,8 @@ def segment_file(input_filename, output_filename, verbosity):
                                                  'mm', 'linear',
                                                  verbosity)
 
-    if (nii_resampled.shape[0] != 200) \
-       or (nii_resampled.shape[1] != 200):
+    if (nii_resampled.shape[0] < 200) \
+       or (nii_resampled.shape[1] < 200):
         raise RuntimeError("Image too small ({}, {})".format(
                            nii_resampled.shape[0],
                            nii_resampled.shape[1]))
@@ -176,3 +195,5 @@ def segment_file(input_filename, output_filename, verbosity):
                                                           verbosity)
 
     nipy.save_image(nii_resampled_original, output_filename)
+
+    return output_filename
