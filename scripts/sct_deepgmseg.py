@@ -30,6 +30,13 @@ def get_parser():
 
     parser.usage.addSection('\nMISC')
 
+    parser.add_option(name="-m",
+                      type_value='multiple_choice',
+                      description="Model to use (large or challenge)",
+                      mandatory=False,
+                      example=['large', 'challenge'],
+                      default_value='large')
+
     parser.add_option(name="-v",
                       type_value='multiple_choice',
                       description="Verbose: 0 = no verbosity, 1 = verbose",
@@ -46,9 +53,10 @@ def run_main():
     input_filename = arguments["-i"]
     output_filename = arguments["-o"]
     verbosity = arguments["-v"]
+    model_name = arguments["-m"]
 
     out_fname = deepgmseg.segment_file(input_filename, output_filename,
-                                       int(verbosity))
+                                       model_name, int(verbosity))
 
     print 'Segmentation output file: {}'.format(out_fname)
 

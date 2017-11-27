@@ -79,7 +79,7 @@ def main(args=None):
         'binaries_centos': 'https://osf.io/qngj2/?action=download',
         'binaries_osx': 'https://osf.io/hsa5r/?action=download',
         'course_hawaii17': 'https://osf.io/6exht/?action=download',
-        'deepgmseg_models': 'https://osf.io/9uv4y/?action=download',
+        'deepgmseg_models': 'https://osf.io/y8k2e/?action=download',
     }
 
     # Get parser info

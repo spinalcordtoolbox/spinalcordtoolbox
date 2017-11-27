@@ -101,16 +101,20 @@ def threshold_predictions(predictions, thr=0.999):
     return thresholded_preds
 
 
-def segment_volume(ninput_volume):
+def segment_volume(ninput_volume, model_name):
     """Segment a nifti volume.
 
     :param ninput_volume: the input volume.
     :return: segmented slices.
     """
     gmseg_model_challenge = DataResource('deepgmseg_models')
-    model_path, metadata_path = model.MODELS['challenge']
+    model_path, metadata_path = model.MODELS[model_name]
 
-    deepgmseg_model = model.create_model()
+    metadata_abs_path = gmseg_model_challenge.get_file_path(metadata_path)
+    with open(metadata_abs_path) as fp:
+        metadata = json.load(fp)
+
+    deepgmseg_model = model.create_model(metadata['filters'])
 
     model_abs_path = gmseg_model_challenge.get_file_path(model_path)
     deepgmseg_model.load_weights(model_abs_path)
@@ -129,12 +133,8 @@ def segment_volume(ninput_volume):
     axial_slices = np.asarray(axial_slices, dtype=np.float32)
     axial_slices = np.expand_dims(axial_slices, axis=3)
 
-    metadata_abs_path = gmseg_model_challenge.get_file_path(metadata_path)
-    with open(metadata_abs_path) as fp:
-        stats = json.load(fp)
-
-    axial_slices -= stats['mean_train']
-    axial_slices /= stats['std_train']
+    axial_slices -= metadata['mean_train']
+    axial_slices /= metadata['std_train']
 
     preds = deepgmseg_model.predict(axial_slices, batch_size=8,
                                     verbose=True)
@@ -153,7 +153,8 @@ def segment_volume(ninput_volume):
     return pred_slices
 
 
-def segment_file(input_filename, output_filename, verbosity):
+def segment_file(input_filename, output_filename,
+                 model_name, verbosity):
     """Segment a volume file.
 
     :param input_filename: the input filename.
@@ -176,7 +177,7 @@ def segment_file(input_filename, output_filename, verbosity):
                            nii_resampled.shape[1]))
 
     nii_resampled = nipy2nifti(nii_resampled)
-    pred_slices = segment_volume(nii_resampled)
+    pred_slices = segment_volume(nii_resampled, model_name)
 
     original_res = "{:.5f}x{:.5f}x{:.5f}".format(
         nii_original.header["pixdim"][1],
