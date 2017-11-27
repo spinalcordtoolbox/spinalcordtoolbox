@@ -466,7 +466,7 @@ else
   # Install PMJ models
   cmd="python ../scripts/sct_download_data.py -d pmj_models"; echo ">> "$cmd; $cmd
   # Install deepgmseg models
-  cmd="python ../scripts/sct_download_data.py -d deepgmseg_challenge_model"; echo ">> "$cmd; $cmd
+  cmd="python ../scripts/sct_download_data.py -d deepgmseg_models"; echo ">> "$cmd; $cmd
 fi
 
 # Make sure sct scripts are executable
