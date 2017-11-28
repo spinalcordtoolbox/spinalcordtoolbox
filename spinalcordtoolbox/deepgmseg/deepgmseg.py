@@ -207,6 +207,9 @@ def segment_file(input_filename, output_filename,
                                                           'mm', 'linear',
                                                           verbosity)
 
+    res_data = nii_resampled_original.get_data()
+    res_data = threshold_predictions(res_data, 0.5)
+
     nipy.save_image(nii_resampled_original, output_filename)
 
     return output_filename
