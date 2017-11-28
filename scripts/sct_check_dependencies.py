@@ -32,6 +32,8 @@ import os
 import commands
 import platform
 import importlib
+from cStringIO import StringIO
+
 import sct_utils as sct
 from msct_parser import Parser
 
@@ -47,22 +49,42 @@ class bcolors:
 
 def resolve_module(framework_name):
     """This function will resolve the framework name
-    to the module name in case it is different.
+    to the module name in cases where it is different.
 
     :param framework_name: the name of the framework.
     :return: the module name.
     """
+    # Framework name : (module name, suppress stderr)
     modules_map = {
-        'scikit-image': 'skimage',
-        'scikit-learn': 'sklearn',
-        'pyqt': 'PyQt4',
-        'Keras': 'keras'
+        'scikit-image': ('skimage', False),
+        'scikit-learn': ('sklearn', False),
+        'pyqt': ('PyQt4', False),
+        'Keras': ('keras', True),
     }
 
     try:
         return modules_map[framework_name]
     except KeyError:
-        return framework_name
+        return (framework_name, False)
+
+
+def module_import(module_name, suppress_stderr=False):
+    """Import a module using importlib.
+
+    :param module_name: the name of the module.
+    :param suppress_stderr: if the stderr should be suppressed.
+    :return: the imported module.
+    """
+    if suppress_stderr:
+        original_stderr = sys.stderr
+        sys.stderr = StringIO()
+        module = importlib.import_module(module_name)
+        sys.stderr = original_stderr
+    else:
+        module = importlib.import_module(module_name)
+
+    return module
+
 
 # MAIN
 # ==========================================================================================
@@ -155,10 +177,10 @@ def main():
     # loop across python packages -- CONDA
     version_requirements = get_version_requirements()
     for i in version_requirements:
-        module = resolve_module(i)
+        module_name, suppress_stderr = resolve_module(i)
         print_line('Check if ' + i + ' (' + version_requirements.get(i) + ') is installed')
         try:
-            module = importlib.import_module(module)
+            module = module_import(module_name, suppress_stderr)
             # get version
             try:
                 version = module.__version__
@@ -181,10 +203,10 @@ def main():
     # loop across python packages -- PIP
     version_requirements_pip = get_version_requirements_pip()
     for i in version_requirements_pip:
-        module = resolve_module(i)
+        module_name, suppress_stderr = resolve_module(i)
         print_line('Check if ' + i + ' (' + version_requirements_pip.get(i) + ') is installed')
         try:
-            module = importlib.import_module(module)
+            module = module_import(module_name, suppress_stderr)
             # get version
             version = module.__version__
             # check if version matches requirements
