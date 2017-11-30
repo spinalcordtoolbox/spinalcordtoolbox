@@ -183,7 +183,7 @@ def main(args=None):
         # append status function to global list of status
         list_status.append(status)
 
-    print 'status: ' + str(list_status)
+    print('status: ' + str(list_status))
 
     # display elapsed time
     elapsed_time = time.time() - start_time
@@ -200,7 +200,7 @@ def main(args=None):
     e = 0
     if sum(list_status) != 0:
         e = 1
-    # print e
+    # print(e)
 
     sys.exit(e)
 
@@ -430,7 +430,7 @@ def test_function(param_test):
         param_test.status, o = sct.run(cmd, 0, error_exit='warning')
         if param_test.status:
             raise Exception
-    except Exception, err:
+    except Exception as err:
         param_test.status = 1
         param_test.output += str(err)
         write_to_log_file(param_test.fname_log, param_test.output, 'w')
@@ -443,7 +443,7 @@ def test_function(param_test):
     param_test.output += '\n\n====================================================================================================\n' + 'INTEGRITY TESTING' + '\n====================================================================================================\n\n'  # copy command
     try:
         param_test = module_testing.test_integrity(param_test)
-    except Exception, err:
+    except Exception as err:
         param_test.status = 2
         param_test.output += str(err)
         write_to_log_file(param_test.fname_log, param_test.output, 'w')

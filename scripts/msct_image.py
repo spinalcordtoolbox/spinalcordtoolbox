@@ -479,7 +479,7 @@ class Image(object):
                 except ValueError:
                     X, Y, Z = (self.data > 0).nonzero()
                     list_coordinates = [Coordinate([X[i], Y[i], 0, self.data[X[i], Y[i], 0]]) for i in range(0, len(X))]
-        except Exception, e:
+        except Exception as e:
             sct.printv('ERROR: Exception ' + str(e) + ' caught while geting non Zeros coordinates', 1, 'error')
 
         if coordValue:
@@ -1074,7 +1074,7 @@ class Image(object):
             plt.savefig(fname_png, bbox_inches='tight')
             plt.close(fig)
 
-        except RuntimeError, e:
+        except RuntimeError as e:
             from sct_utils import printv
             printv('WARNING: your device does not seem to have display feature', self.verbose, type='warning')
             printv(str(e), self.verbose, type='warning')
@@ -1114,7 +1114,7 @@ class Image(object):
                 filename_gmseg_image_png = self.save_plane(plane=plane, suffix='_' + plane + '_plane_seg', index=index_list, seg=seg, thr=thr, cmap_col=cmap_col, format=format, path_output=path_output)
                 info_str += ' & ' + filename_gmseg_image_png
             printv(info_str, verbose, 'info')
-        except RuntimeError, e:
+        except RuntimeError as e:
             printv('WARNING: your device does not seem to have display feature', self.verbose, type='warning')
             printv(str(e), self.verbose, type='warning')
 

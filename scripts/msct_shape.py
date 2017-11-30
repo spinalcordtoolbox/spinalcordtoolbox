@@ -285,7 +285,7 @@ def compute_properties_along_centerline(fname_seg_image, property_list, fname_di
         """
         if np.count_nonzero(patch_borders + current_patch == value_out + 1.0) != 0:
             c = image.transfo_phys2pix([centerline.points[index]])[0]
-            print 'WARNING: no patch for slice', c[2]
+            print('WARNING: no patch for slice', c[2])
             timer_properties.add_iteration()
             continue
         """
@@ -301,7 +301,7 @@ def compute_properties_along_centerline(fname_seg_image, property_list, fname_di
                 properties[property_name].append(sc_properties[property_name])
         else:
             c = image.transfo_phys2pix([centerline.points[index]])[0]
-            print 'WARNING: no properties for slice', c[2]
+            print('WARNING: no properties for slice', c[2])
 
         timer_properties.add_iteration()
     timer_properties.stop()

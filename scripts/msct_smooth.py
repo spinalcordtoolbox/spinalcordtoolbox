@@ -554,14 +554,14 @@ def smoothing_window(x, window_len=11, window='hanning', verbose = 0, robust=0, 
         x = outliers_completion(mask, verbose=0)
 
     if x.ndim != 1:
-        raise ValueError, "smooth only accepts 1 dimension arrays."
+        raise ValueError("smooth only accepts 1 dimension arrays.")
     # if x.size < window_len:
     #     raise ValueError, "Input vector needs to be bigger than window size."
     if window_len < 3:
         sct.printv('Window size is too small. No smoothing was applied.', verbose=verbose, type='warning')
         return x
     if not window in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
-        raise ValueError, "Window can only be the following: 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'"
+        raise ValueError("Window can only be the following: 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'")
 
     # make sure there are enough points before removing those at the edge
     size_curve = x.size

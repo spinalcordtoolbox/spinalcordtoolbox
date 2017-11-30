@@ -678,7 +678,7 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
 
         # if an exception occurs with ants, take the last value for the transformation
         # TODO: DO WE NEED TO DO THAT??? (julien 2016-03-01)
-        except Exception, e:
+        except Exception as e:
             sct.printv('ERROR: Exception occurred.\n' + str(e), 1, 'error')
 
     # Merge warping field along z

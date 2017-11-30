@@ -693,7 +693,7 @@ def create_folder(folder):
         try:
             os.makedirs(folder)
             return 0
-        except OSError, e:
+        except OSError as e:
             if e.errno != errno.EEXIST:
                 return 2
     else:

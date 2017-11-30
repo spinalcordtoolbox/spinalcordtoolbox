@@ -572,7 +572,7 @@ def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1, f
                 printv('Get orientation...', verbose)
                 im_out = None
                 ori = get_orientation(im)
-            except Exception, e:
+            except Exception as e:
                 printv('ERROR: an error occurred: ' + str(e), verbose, 'error')
             return ori
         elif set:
