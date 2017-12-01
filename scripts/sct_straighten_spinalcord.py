@@ -12,19 +12,17 @@
 # License: see the LICENSE.TXT
 # ======================================================================================================================
 # check if needed Python libraries are already installed or not
-import os
-import shutil
-import time
-import commands
-import sys
-from msct_parser import Parser
+import sys, io, os, shutil, time, commands
+from math import sqrt
+
+import numpy as np
 from nibabel import Nifti1Image, save
 from scipy import ndimage
+
+from msct_parser import Parser
 from sct_apply_transfo import Transform
 import sct_utils as sct
 from msct_smooth import smoothing_window, evaluate_derivative_3D
-from math import sqrt
-import numpy as np
 
 
 def smooth_centerline(fname_centerline, algo_fitting='hanning', type_window='hanning', window_length=80, verbose=0, nurbs_pts_number=1000, all_slices=True, phys_coordinates=False, remove_outliers=False):
@@ -153,9 +151,10 @@ def smooth_centerline(fname_centerline, algo_fitting='hanning', type_window='han
         # TODO: remove outliers that are at the edges of the spinal cord
         # simple way to do it: go from one end and remove point if the distance from mean is higher than 2 * std
 
+        curdir = os.getcwd()
+
         x_centerline_fit, y_centerline_fit, z_centerline_fit, x_centerline_deriv, y_centerline_deriv,\
-            z_centerline_deriv, mse = b_spline_nurbs(x_centerline, y_centerline, z_centerline, nbControl=None,
-                                                point_number=nurbs_pts_number, verbose=verbose, all_slices=all_slices)
+            z_centerline_deriv, mse = b_spline_nurbs(x_centerline, y_centerline, z_centerline, nbControl=None, path_qc=curdir, point_number=nurbs_pts_number, verbose=verbose, all_slices=all_slices)
 
         # Checking accuracy of fitting. If NURBS fitting is not accurate enough, do not smooth segmentation
         if mse >= 2.0:
@@ -238,7 +237,7 @@ class SpinalCordStraightener(object):
         start_time = time.time()
 
         # get path of the toolbox
-        status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+        path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
         sct.printv(path_sct, verbose)
 
         # Display arguments
@@ -253,22 +252,22 @@ class SpinalCordStraightener(object):
         path_anat, file_anat, ext_anat = sct.extract_fname(fname_anat)
         path_centerline, file_centerline, ext_centerline = sct.extract_fname(fname_centerline)
 
-        # create temporary folder
-        path_tmp = sct.tmp_create(verbose=verbose)
+        path_tmp = sct.tmp_create(basename="straighten_spinalcord", verbose=verbose)
 
         # Copying input data to tmp folder
         sct.printv('\nCopy files to tmp folder...', verbose)
-        sct.run('sct_convert -i ' + fname_anat + ' -o ' + path_tmp + 'data.nii')
-        sct.run('sct_convert -i ' + fname_centerline + ' -o ' + path_tmp + 'centerline.nii.gz')
+        sct.run('sct_convert -i ' + fname_anat + ' -o ' + os.path.join(path_tmp, "data.nii"))
+        sct.run('sct_convert -i ' + fname_centerline + ' -o ' + os.path.join(path_tmp, "centerline.nii.gz"))
 
         if self.use_straight_reference:
-            sct.run('sct_convert -i ' + self.centerline_reference_filename + ' -o ' + path_tmp + 'centerline_ref.nii.gz')
+            sct.run('sct_convert -i ' + self.centerline_reference_filename + ' -o ' + os.path.join(path_tmp, "centerline_ref.nii.gz"))
         if self.disks_input_filename != '':
-            sct.run('sct_convert -i ' + self.disks_input_filename + ' -o ' + path_tmp + 'labels_input.nii.gz')
+            sct.run('sct_convert -i ' + self.disks_input_filename + ' -o ' + os.path.join(path_tmp, "labels_input.nii.gz"))
         if self.disks_ref_filename != '':
-            sct.run('sct_convert -i ' + self.disks_ref_filename + ' -o ' + path_tmp + 'labels_ref.nii.gz')
+            sct.run('sct_convert -i ' + self.disks_ref_filename + ' -o ' + os.path.join(path_tmp, "labels_ref.nii.gz"))
 
         # go to tmp folder
+        curdir = os.getcwd()
         os.chdir(path_tmp)
 
         try:
@@ -747,31 +746,31 @@ class SpinalCordStraightener(object):
             sct.printv('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), 1, 'warning')
             sct.printv(str(e), 1, 'warning')
 
-        os.chdir('..')
+        os.chdir(curdir)
 
         # Generate output file (in current folder)
         # TODO: do not uncompress the warping field, it is too time consuming!
         sct.printv("\nGenerate output file (in current folder)...", verbose)
         if self.curved2straight:
-            sct.generate_output_file(path_tmp + "/tmp.curve2straight.nii.gz", self.path_output + "warp_curve2straight.nii.gz", verbose)
+            sct.generate_output_file(os.path.join(path_tmp, "tmp.curve2straight.nii.gz"), os.path.join(self.path_output, "warp_curve2straight.nii.gz"), verbose)
         if self.straight2curved:
-            sct.generate_output_file(path_tmp + "/tmp.straight2curve.nii.gz", self.path_output + "warp_straight2curve.nii.gz", verbose)
+            sct.generate_output_file(os.path.join(path_tmp, "tmp.straight2curve.nii.gz"), os.path.join(self.path_output, "warp_straight2curve.nii.gz"), verbose)
 
         # create ref_straight.nii.gz file that can be used by other SCT functions that need a straight reference space
         if self.curved2straight:
-            shutil.copy(path_tmp + '/tmp.anat_rigid_warp.nii.gz', self.path_output + 'straight_ref.nii.gz')
+            sct.copy(os.path.join(path_tmp, "tmp.anat_rigid_warp.nii.gz"), os.path.join(self.path_output, "straight_ref.nii.gz"))
             # move straightened input file
             if fname_output == '':
-                fname_straight = sct.generate_output_file(path_tmp + "/tmp.anat_rigid_warp.nii.gz",
-                                                          self.path_output + file_anat + "_straight" + ext_anat, verbose)
+                fname_straight = sct.generate_output_file(os.path.join(path_tmp, "tmp.anat_rigid_warp.nii.gz"),
+                                                          os.path.join(self.path_output, file_anat + "_straight" + ext_anat), verbose)
             else:
-                fname_straight = sct.generate_output_file(path_tmp + '/tmp.anat_rigid_warp.nii.gz',
-                                                          self.path_output + fname_output, verbose)  # straightened anatomic
+                fname_straight = sct.generate_output_file(os.path.join(path_tmp, "tmp.anat_rigid_warp.nii.gz"),
+                                                          os.path.join(self.path_output, fname_output), verbose)  # straightened anatomic
 
         # Remove temporary files
         if remove_temp_files:
             sct.printv("\nRemove temporary files...", verbose)
-            sct.run("rm -rf " + path_tmp, verbose)
+            shutil.rmtree(path_tmp)
 
         sct.printv('\nDone!\n', verbose)
 

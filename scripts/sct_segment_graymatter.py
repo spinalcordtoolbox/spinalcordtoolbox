@@ -59,8 +59,7 @@ from msct_multiatlas_seg import Model, Param, ParamData, ParamModel
 from msct_parser import Parser
 from sct_image import set_orientation
 import sct_utils as sct
-from sct_utils import (add_suffix, extract_fname, printv, run,
-                       slash_at_the_end, tmp_create)
+from sct_utils import (add_suffix, extract_fname, printv, run, tmp_create)
 
 
 def get_parser():
@@ -241,6 +240,7 @@ class SegmentGM:
     def segment(self):
         self.copy_data_to_tmp()
         # go to tmp directory
+        curdir = os.getcwd()
         os.chdir(self.tmp_dir)
         # load model
         self.model.load_model()
@@ -270,10 +270,10 @@ class SegmentGM:
         printv('\nPost-processing...', self.param.verbose, 'normal')
         self.im_res_gmseg, self.im_res_wmseg = self.post_processing()
 
-        if (self.param_seg.path_results != './') and (not os.path.exists('../' + self.param_seg.path_results)):
+        if (self.param_seg.path_results != './') and (not os.path.exists(os.path.join(curdir, self.param_seg.path_results))):
             # create output folder
             printv('\nCreate output folder ...', self.param.verbose, 'normal')
-            os.chdir('..')
+            os.chdir(curdir)
             os.mkdir(self.param_seg.path_results)
             os.chdir(self.tmp_dir)
 
@@ -287,10 +287,10 @@ class SegmentGM:
             self.compute_ratio()
 
         # go back to original directory
-        os.chdir('..')
+        os.chdir(curdir)
         printv('\nSave resulting GM and WM segmentations...', self.param.verbose, 'normal')
-        self.fname_res_gmseg = self.param_seg.path_results + add_suffix(''.join(extract_fname(self.param_seg.fname_im)[1:]), '_gmseg')
-        self.fname_res_wmseg = self.param_seg.path_results + add_suffix(''.join(extract_fname(self.param_seg.fname_im)[1:]), '_wmseg')
+        self.fname_res_gmseg = os.path.join(self.param_seg.path_results, add_suffix(''.join(extract_fname(self.param_seg.fname_im)[1:]), '_gmseg'))
+        self.fname_res_wmseg = os.path.join(self.param_seg.path_results, add_suffix(''.join(extract_fname(self.param_seg.fname_im)[1:]), '_wmseg'))
 
         self.im_res_gmseg.setFileName(self.fname_res_gmseg)
         self.im_res_wmseg.setFileName(self.fname_res_wmseg)
@@ -302,25 +302,25 @@ class SegmentGM:
     def copy_data_to_tmp(self):
         # copy input image
         if self.param_seg.fname_im is not None:
-            shutil.copy(self.param_seg.fname_im, self.tmp_dir)
+            sct.copy(self.param_seg.fname_im, self.tmp_dir)
             self.param_seg.fname_im = ''.join(extract_fname(self.param_seg.fname_im)[1:])
         else:
             printv('ERROR: No input image', self.param.verbose, 'error')
 
         # copy sc seg image
         if self.param_seg.fname_seg is not None:
-            shutil.copy(self.param_seg.fname_seg, self.tmp_dir)
+            sct.copy(self.param_seg.fname_seg, self.tmp_dir)
             self.param_seg.fname_seg = ''.join(extract_fname(self.param_seg.fname_seg)[1:])
         else:
             printv('ERROR: No SC segmentation image', self.param.verbose, 'error')
 
         # copy level file
         if self.param_seg.fname_level is not None:
-            shutil.copy(self.param_seg.fname_level, self.tmp_dir)
+            sct.copy(self.param_seg.fname_level, self.tmp_dir)
             self.param_seg.fname_level = ''.join(extract_fname(self.param_seg.fname_level)[1:])
 
         if self.param_seg.fname_manual_gmseg is not None:
-            shutil.copy(self.param_seg.fname_manual_gmseg, self.tmp_dir)
+            sct.copy(self.param_seg.fname_manual_gmseg, self.tmp_dir)
             self.param_seg.fname_manual_gmseg = ''.join(extract_fname(self.param_seg.fname_manual_gmseg)[1:])
 
     def get_im_from_list(self, data):
@@ -338,7 +338,7 @@ class SegmentGM:
 
     def register_target(self):
         # create dir to store warping fields
-        path_warping_fields = 'warp_target/'
+        path_warping_fields = 'warp_target'
         if not os.path.exists(path_warping_fields):
             os.mkdir(path_warping_fields)
         # get 3D images from list of slices
@@ -349,8 +349,8 @@ class SegmentGM:
         # rename warping fields
         fname_src2dest_save = 'warp_target2dic.nii.gz'
         fname_dest2src_save = 'warp_dic2target.nii.gz'
-        shutil.move(path_warping_fields + fname_src2dest, path_warping_fields + fname_src2dest_save)
-        shutil.move(path_warping_fields + fname_dest2src, path_warping_fields + fname_dest2src_save)
+        shutil.move(os.path.join(path_warping_fields, fname_src2dest), os.path.join(path_warping_fields, fname_src2dest_save))
+        shutil.move(os.path.join(path_warping_fields, fname_dest2src), os.path.join(path_warping_fields, fname_dest2src_save))
         #
         for i, target_slice in enumerate(self.target_im):
             # set moved image for each slice
@@ -427,7 +427,7 @@ class SegmentGM:
         im_dest = self.get_im_from_list(np.array([target_slice.im for target_slice in self.target_im]))
         im_src_gm = self.get_im_from_list(np.array([target_slice.gm_seg_M for target_slice in self.target_im]))
         #
-        fname_dic_space2slice_space = slash_at_the_end(path_warp, slash=1) + 'warp_dic2target.nii.gz'
+        fname_dic_space2slice_space = os.path.join(path_warp, 'warp_dic2target.nii.gz')
         interpolation = 'linear'
         # warp GM
         im_src_gm_reg = apply_transfo(im_src_gm, im_dest, fname_dic_space2slice_space, interp=interpolation, rm_tmp=self.param.rm_tmp)
@@ -531,12 +531,11 @@ class SegmentGM:
         return im_res_gmseg, im_res_wmseg
 
     def validation(self):
-        tmp_dir_val = 'tmp_validation/'
-        if not os.path.exists(tmp_dir_val):
-            os.mkdir(tmp_dir_val)
+        tmp_dir_val = sct.tmp_create(basename="segment_graymatter_validation")
         # copy data into tmp dir val
-        shutil.copy(self.param_seg.fname_manual_gmseg, tmp_dir_val)
-        shutil.copy(self.param_seg.fname_seg, tmp_dir_val)
+        sct.copy(self.param_seg.fname_manual_gmseg, tmp_dir_val)
+        sct.copy(self.param_seg.fname_seg, tmp_dir_val)
+        curdir = os.getcwd()
         os.chdir(tmp_dir_val)
         fname_manual_gmseg = ''.join(extract_fname(self.param_seg.fname_manual_gmseg)[1:])
         fname_seg = ''.join(extract_fname(self.param_seg.fname_seg)[1:])
@@ -604,11 +603,9 @@ class SegmentGM:
         run('sct_compute_hausdorff_distance -i ' + fname_gmseg + ' -d ' + fname_manual_gmseg + ' -thinning 1 -o ' + fname_hd + ' -v ' + str(self.param.verbose))
 
         # get out of tmp dir to copy results to output folder
-        os.chdir('../..')
-        shutil.copy(self.tmp_dir + tmp_dir_val + '/' + fname_dc, self.param_seg.path_results)
-        shutil.copy(self.tmp_dir + tmp_dir_val + '/' + fname_hd, self.param_seg.path_results)
-
-        os.chdir(self.tmp_dir)
+        os.chdir(curdir)
+        sct.copy(os.path.join(self.tmp_dir, tmp_dir_val, fname_dc), self.param_seg.path_results)
+        sct.copy(os.path.join(self.tmp_dir, tmp_dir_val, fname_hd), self.param_seg.path_results)
 
         if self.param.rm_tmp:
             shutil.rmtree(tmp_dir_val)
@@ -616,8 +613,8 @@ class SegmentGM:
     def compute_ratio(self):
         type_ratio = self.param_seg.ratio
 
-        tmp_dir_ratio = 'tmp_ratio/'
-        os.mkdir(tmp_dir_ratio)
+        tmp_dir_ratio = tmp_create(basename="compute_ratio")
+        curdir = os.getcwd()
         os.chdir(tmp_dir_ratio)
 
         fname_gmseg = self.im_res_gmseg.absolutepath
@@ -635,8 +632,8 @@ class SegmentGM:
         sct_process_segmentation.main(['-i', fname_gmseg, '-p', 'csa', '-ofolder', 'gm_csa', '-no-angle', '1'])
         sct_process_segmentation.main(['-i', fname_wmseg, '-p', 'csa', '-ofolder', 'wm_csa', '-no-angle', '1'])
 
-        gm_csa = open('gm_csa/csa_per_slice.txt', 'r')
-        wm_csa = open('wm_csa/csa_per_slice.txt', 'r')
+        gm_csa = open(os.path.join('gm_csa', 'csa_per_slice.txt'), 'r')
+        wm_csa = open(os.path.join('wm_csa', 'csa_per_slice.txt'), 'r')
         gm_csa_lines = gm_csa.readlines()
         wm_csa_lines = wm_csa.readlines()
         gm_csa.close()
@@ -670,9 +667,9 @@ class SegmentGM:
                     file_ratio.write(str(l) + ', ' + str(csa_gm / csa_wm) + '\n')
 
         file_ratio.close()
-        shutil.copy(fname_ratio, '../../' + self.param_seg.path_results + '/' + fname_ratio)
+        sct.copy(fname_ratio, os.path.join(self.param_seg.path_results, fname_ratio))
 
-        os.chdir('..')
+        os.chdir(curdir)
 
 
 def main(args=None):
@@ -723,7 +720,7 @@ def main(args=None):
     if '-ref' in arguments:
         param_seg.fname_manual_gmseg = arguments['-ref']
     if '-ofolder' in arguments:
-        param_seg.path_results = arguments['-ofolder']
+        param_seg.path_results = os.path.abspath(arguments['-ofolder'])
     if '-qc' in arguments:
         param_seg.qc = bool(int(arguments['-qc']))
     if '-r' in arguments:
@@ -750,7 +747,7 @@ def main(args=None):
     if param_seg.qc:
         # output QC image
         printv('\nSave quality control images...', param.verbose, 'normal')
-        im = Image(seg_gm.tmp_dir + param_seg.fname_im)
+        im = Image(os.path.join(seg_gm.tmp_dir, param_seg.fname_im))
         im.save_quality_control(plane='axial', n_slices=5, seg=seg_gm.im_res_gmseg, thr=float(b.split(',')[0]),
                                 cmap_col='red-yellow', path_output=param_seg.path_results)
 

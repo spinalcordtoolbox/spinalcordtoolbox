@@ -14,11 +14,11 @@
 # TODO: display message at the end
 # TODO: interpolation methods
 
-import sys
-import os
-import time
+import sys, io, os, time, shutil
+
 from msct_parser import Parser
 import sct_utils as sct
+import sct_convert
 from sct_crop_image import ImageCropper
 
 
@@ -153,7 +153,7 @@ class Transform:
             path_out = ''  # output in user's current directory
             file_out = file_src + '_reg'
             ext_out = ext_src
-            fname_out = path_out + file_out + ext_out
+            fname_out = os.path.join(path_out, file_out + ext_out)
 
         # Get dimensions of data
         sct.printv('\nGet dimensions of data...', verbose)
@@ -174,25 +174,22 @@ class Transform:
 
         # if 4d, loop across the T dimension
         else:
-            # create temporary folder
-            sct.printv('\nCreate temporary folder...', verbose)
-            path_tmp = sct.slash_at_the_end('tmp.' + time.strftime("%y%m%d%H%M%S"), 1)
-            # sct.run('mkdir '+path_tmp, verbose)
-            sct.run('mkdir ' + path_tmp, verbose)
+            path_tmp = sct.tmp_create(basename="apply_transfo", verbose=verbose)
 
             # convert to nifti into temp folder
             sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
-            from sct_convert import convert
-            convert(fname_src, path_tmp + 'data.nii', squeeze_data=False)
-            sct.run('cp ' + fname_dest + ' ' + path_tmp + file_dest + ext_dest)
+            sct_convert.convert(fname_src, os.path.join(path_tmp, "data.nii"), squeeze_data=False)
+            sct.copy(fname_dest, os.path.join(path_tmp, file_dest + ext_dest))
             fname_warp_list_tmp = []
             for fname_warp in fname_warp_list:
                 path_warp, file_warp, ext_warp = sct.extract_fname(fname_warp)
-                sct.run('cp ' + fname_warp + ' ' + path_tmp + file_warp + ext_warp)
+                sct.copy(fname_warp, os.path.join(path_tmp, file_warp + ext_warp))
                 fname_warp_list_tmp.append(file_warp + ext_warp)
             fname_warp_list_invert_tmp = fname_warp_list_tmp[::-1]
 
+            curdir = os.getcwd()
             os.chdir(path_tmp)
+
             # split along T dimension
             sct.printv('\nSplit along T dimension...', verbose)
             from sct_image import split_data
@@ -221,8 +218,8 @@ class Transform:
             im_out.setFileName(name_out + ext_out)
             im_out.save(squeeze_data=False)
 
-            os.chdir('..')
-            sct.generate_output_file(path_tmp + name_out + ext_out, fname_out)
+            os.chdir(curdir)
+            sct.generate_output_file(os.path.join(path_tmp, name_out + ext_out), fname_out)
             # Delete temporary folder if specified
             if int(remove_temp_files):
                 sct.printv('\nRemove temporary files...', verbose)

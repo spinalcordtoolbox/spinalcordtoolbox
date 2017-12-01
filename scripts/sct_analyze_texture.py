@@ -20,8 +20,7 @@ from msct_image import Image
 from msct_parser import Parser
 from sct_image import set_orientation, get_orientation
 import sct_utils as sct
-from sct_utils import (add_suffix, extract_fname, printv, run,
-                       slash_at_the_end, Timer, tmp_create)
+from sct_utils import (add_suffix, extract_fname, printv, run, Timer, tmp_create)
 
 
 def get_parser():
@@ -139,28 +138,29 @@ class ExtractGLCM:
         # save results to ofolder
         self.tmp2ofolder()
 
-        return [self.param.path_results + self.fname_metric_lst[f] for f in self.fname_metric_lst]
+        return [os.path.join(self.param.path_results, self.fname_metric_lst[f]) for f in self.fname_metric_lst]
 
     def tmp2ofolder(self):
 
-        os.chdir('..')  # go back to original directory
+        os.chdir(self.curdir)  # go back to original directory
 
         printv('\nSave resulting files...', self.param.verbose, 'normal')
         for f in self.fname_metric_lst:  # Copy from tmp folder to ofolder
-            shutil.copy(self.tmp_dir + self.fname_metric_lst[f],
-                        self.param.path_results + self.fname_metric_lst[f])
+            sct.copy(os.path.join(self.tmp_dir, self.fname_metric_lst[f]),
+                        os.path.join(self.param.path_results, self.fname_metric_lst[f]))
 
     def ifolder2tmp(self):
+        self.curdir = os.getcwd()
         # copy input image
         if self.param.fname_im is not None:
-            shutil.copy(self.param.fname_im, self.tmp_dir)
+            sct.copy(self.param.fname_im, self.tmp_dir)
             self.param.fname_im = ''.join(extract_fname(self.param.fname_im)[1:])
         else:
             printv('ERROR: No input image', self.param.verbose, 'error')
 
         # copy masked image
         if self.param.fname_seg is not None:
-            shutil.copy(self.param.fname_seg, self.tmp_dir)
+            sct.copy(self.param.fname_seg, self.tmp_dir)
             self.param.fname_seg = ''.join(extract_fname(self.param.fname_seg)[1:])
         else:
             printv('ERROR: No mask image', self.param.verbose, 'error')
@@ -310,7 +310,8 @@ def main(args=None):
     param.fname_seg = arguments["-m"]
 
     if '-ofolder' in arguments:
-        param.path_results = slash_at_the_end(arguments["-ofolder"], slash=1)
+        param.path_results = arguments["-ofolder"]
+
     if not os.path.isdir(param.path_results) and os.path.exists(param.path_results):
         printv("ERROR output directory %s is not a valid directory" % param.path_results, 1, 'error')
     if not os.path.exists(param.path_results):

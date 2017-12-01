@@ -13,13 +13,11 @@
 
 # TODO: remove FSL dependency
 
-import os
-import getopt
-import sys
-import commands
+import sys, io, os, getopt, shutil
+
 import nibabel
 import numpy
-from shutil import move
+
 import sct_utils as sct
 from msct_nurbs import NURBS
 from sct_utils import fsloutput
@@ -51,7 +49,7 @@ def main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, 
     # Parameters for debug mode
     if param.debug == 1:
         sct.printv('\n*** WARNING: DEBUG MODE ON ***\n')
-        status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
+        path_sct_data = os.environ.get("SCT_TESTING_DATA_DIR", os.path.join(os.path.dirname(os.path.dirname(__file__))), "testing_data")
         fname_anat = path_sct_data + '/t2/t2.nii.gz'
         fname_centerline = path_sct_data + '/t2/t2_seg.nii.gz'
 
@@ -191,7 +189,7 @@ def main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, 
     # Reorient data as it was before
     sct.printv('\nReorient data back into native orientation...')
     fname_anat_fit_orient = set_orientation(im_concat_out.absolutepath, input_image_orientation, filename=True)
-    move(fname_anat_fit_orient, 'tmp.anat_orient_fit_reorient.nii')
+    shutil.move(fname_anat_fit_orient, 'tmp.anat_orient_fit_reorient.nii')
 
     # Generate output file (in current folder)
     sct.printv('\nGenerate output file (in current folder)...')

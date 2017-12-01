@@ -44,7 +44,7 @@ def main():
         path_sct = '/Users/slevy_local/spinalcordtoolbox' #'C:/cygwin64/home/Simon_2/spinalcordtoolbox'
         methods_to_display = 'bin,man0,man1,man2,man3'
     else:
-        status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+        path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
 
         # Check input parameters
         try:
@@ -63,7 +63,7 @@ def main():
                 methods_to_display = arg
 
     # Append path that contains scripts, to be able to load modules
-    sys.path.append(path_sct + '/scripts')
+    sys.path.append(os.path.join(path_sct, "scripts"))
     import sct_utils as sct
 
     sct.printv("Working directory: "+os.getcwd())
@@ -71,14 +71,14 @@ def main():
     # Folder including data "automatic vs manual"
     folder_auto_vs_manual = results_folder+'/manual_mask/sub'
 
-    sct.printv('\n\nData will be extracted from folder '+folder_auto_vs_manual+' .', 'warning')
+    sct.printv('\n\nData will be extracted from folder '+os.path.join(folder_auto_vs_manual, ') .', 'warning')
     sct.printv('\t\tCheck existence...')
     sct.check_folder_exist(folder_auto_vs_manual)
 
     # Extract methods to display
     methods_to_display = methods_to_display.strip().split(',')
 
-    fname_results = glob.glob(folder_auto_vs_manual + '/*.txt')
+    fname_results = glob.glob(os.path.join(folder_auto_vs_manual, "*.txt"))
 
     nb_results_file = len(fname_results)
 
@@ -303,7 +303,7 @@ def main():
     # plt.subplots_adjust(bottom=0.15, top=0.86, right=0.7, left=0.2)
 
 
-    plt.savefig(param_default.fname_folder_to_save_fig +'/automatic_method_vs_manual_methods.pdf', format='PDF')
+    plt.savefig(os.path.join(param_default.fname_folder_to_save_fig, 'automatic_method_vs_manual_methods.pdf'), format='PDF')
 
 
     plt.show(block=False)

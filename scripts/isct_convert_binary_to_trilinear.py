@@ -49,11 +49,11 @@ def main():
     start_time = time.time()
 
     # get path of the toolbox
-    status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+    path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
 
     # Parameters for debug mode
     if param.debug:
-        fname_data = path_sct + '/testing/data/errsm_23/t2/t2_manual_segmentation.nii.gz'
+        fname_data = os.path.join(path_sct, 'testing', 'data', 'errsm_23', 't2', 't2_manual_segmentation.nii.gz')
         remove_temp_files = 0
         param.mask_size = 10
     else:
@@ -93,16 +93,14 @@ def main():
     # Extract path, file and extension
     path_data, file_data, ext_data = sct.extract_fname(fname_data)
 
-    # create temporary folder
-    sct.printv('\nCreate temporary folder...')
-    path_tmp = 'tmp.' + time.strftime("%y%m%d%H%M%S")
-    sct.run('mkdir ' + path_tmp)
+    path_tmp = sct.tmp_create(basename="binary_to_trilinear", verbose=verbose)
 
     from sct_convert import convert
     sct.printv('\nCopying input data to tmp folder and convert to nii...', param.verbose)
-    convert(fname_data, path_tmp + '/data.nii')
+    convert(fname_data, os.path.join(path_tmp, "data.nii"))
 
     # go to tmp folder
+    curdir = os.getcwd()
     os.chdir(path_tmp)
 
     # Get dimensions of data
@@ -122,12 +120,12 @@ def main():
     sct.printv('\nDownsample data...', verbose)
     sct.run('sct_resample -i data_up_smooth.nii -x linear -vox ' + str(nx) + 'x' + str(ny) + 'x' + str(nz) + ' -o data_up_smooth_down.nii', verbose)
 
-    # come back to parent folder
-    os.chdir('..')
+    # come back
+    os.chdir(curdir)
 
     # Generate output files
     sct.printv('\nGenerate output files...')
-    fname_out = sct.generate_output_file(path_tmp + '/data_up_smooth_down.nii', '' + file_data + suffix + ext_data)
+    fname_out = sct.generate_output_file(os.path.join(path_tmp, "data_up_smooth_down.nii"), '' + file_data + suffix + ext_data)
 
     # Delete temporary files
     if remove_temp_files == 1:

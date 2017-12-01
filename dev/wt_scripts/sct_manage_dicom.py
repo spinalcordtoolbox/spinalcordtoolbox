@@ -88,7 +88,7 @@ def main():
     #convert anat
     output_anat = output_path+os.path.sep+'anat'
     os.mkdir(output_anat)
-    cmd = 'dcm2nii -o '+output_anat+' '+dicom_path+os.path.sep+anat[0]
+    cmd = 'dcm2nii -o '+output_anat+' ' + os.path.join(dicom_path, anat[0])
     print(">> "+cmd)
     os.system(cmd)
     #rename nifti
@@ -96,10 +96,10 @@ def main():
     
     #convert zoom
     for (i, folder) in enumerate(zoom):
-        output_zoom = output_path+os.path.sep+'zoom'+str(i+1)
+        output_zoom = os.path.join(output_path, 'zoom'+str(i+1))
         os.mkdir(output_zoom)
         #create nifti
-        cmd = 'dcm2nii -o '+output_zoom+' '+dicom_path+os.path.sep+zoom[i]
+        cmd = 'dcm2nii -o '+output_zoom+' ' + os.path.join(dicom_path, zoom[i])
         print(">> "+cmd)
         os.system(cmd)
         #rename nifti
