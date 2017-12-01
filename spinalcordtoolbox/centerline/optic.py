@@ -1,8 +1,7 @@
-import os
-import shutil
+import sys, io, os, shutil, datetime
+from string import Template
 
 import nibabel as nib
-
 import numpy as np
 
 import sct_utils as sct
@@ -10,8 +9,6 @@ import sct_image
 from sct_image import orientation
 from msct_image import Image
 
-from datetime import datetime
-from string import Template
 
 
 def centerline2roi(fname_image, folder_output='./', verbose=0):
@@ -29,7 +26,7 @@ def centerline2roi(fname_image, folder_output='./', verbose=0):
     path_data, file_data, ext_data = sct.extract_fname(fname_image)
     fname_output = file_data + '.roi'
 
-    date_now = datetime.now()
+    date_now = datetime.datetime.now()
     ROI_TEMPLATE = 'Begin Marker ROI\n' \
                    '  Build version="7.0_33"\n' \
                    '  Annotation=""\n' \
@@ -90,6 +87,7 @@ def detect_centerline(image_fname, contrast_type,
 
     temp_folder = sct.TempFolder()
     temp_folder.copy_from(image_fname)
+    curdir = os.getcwd()
     temp_folder.chdir()
 
     # convert image data type to int16, as required by opencv (backend in OptiC)
@@ -137,7 +135,7 @@ def detect_centerline(image_fname, contrast_type,
     # copy centerline to parent folder
     folder_output_from_temp = folder_output
     if not os.path.isabs(folder_output):
-        folder_output_from_temp = '../' + folder_output
+        folder_output_from_temp = os.path.join(curdir, folder_output)
 
     sct.printv('Copy output to ' + folder_output, verbose=0)
     shutil.copy(centerline_optic_filename, folder_output_from_temp)

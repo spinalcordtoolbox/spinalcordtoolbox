@@ -300,7 +300,7 @@ if os_target not in listOS:
 
 if not path_ants:
     print 'ANTs folder not specified. Cloning from SCT repository...'
-    path_ants = pwd + '/'
+    path_ants = pwd
     # from installer import download_file, InstallationResult
     file_download_result = download_file(url_to_ants_repository, ants_downloaded_file)
     if file_download_result.status == InstallationResult.SUCCESS:
@@ -316,10 +316,7 @@ if not path_ants:
         print 'ERROR: ANTs download failed. Please check your internet connexion or contact administrators.\n'
         usage()
 
-else:
-    path_ants = sct.slash_at_the_end(path_ants) + '/'
-
-if not os.path.isdir(path_ants + 'ANTs/'):
+if not os.path.isdir(os.path.join(path_ants, 'ANTs')):
     print 'ERROR: Path to ANTs must be a directory containing the folder ANTs/.'
     print 'Path specified: ' + path_ants + '\n'
     usage()
@@ -339,12 +336,12 @@ if not scripts:
     print 'ERROR: No scripts to compile. Please check input.\n'
     usage()
 
-if not os.path.isdir(path_ants + 'antsbin/'):
-    os.makedirs(path_ants + 'antsbin/')
-    os.chdir(path_ants + 'antsbin/')
+if not os.path.isdir(os.path.join(path_ants, 'antsbin')):
+    os.makedirs(os.path.join(path_ants, 'antsbin'))
+    os.chdir(os.path.join(path_ants, 'antsbin'))
     sct.run('cmake ../ANTs', verbose=2)
 else:
-    os.chdir(path_ants + 'antsbin/')
+    os.chdir(os.path.join(path_ants, 'antsbin'))
 
 sct.run('make -j 8', verbose=2)
 # status, path_sct = sct.run('echo $SCT_DIR')
@@ -353,7 +350,7 @@ sct.run('make -j 8', verbose=2)
 os.chdir(pwd)
 sct.run('mkdir ants_binaries')
 for script in scripts:
-    sct.run('cp ' + path_ants + 'antsbin/bin/' + script + ' ants_binaries/isct_' + script, verbose=2)
+    sct.run('cp ' + os.path.join(path_ants, 'antsbin', 'bin', script) + ' ' + os.path.join("ants_binaries", "isct_' + script"), verbose=2)
 
 # some cleaning
 sct.run('rm -rf ANTs/')

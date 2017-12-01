@@ -20,15 +20,16 @@ class param:
         self.smoothness = 1
         
 # check if needed Python libraries are already installed or not
-import sys
+import sys, os
 import getopt
-import sct_utils as sct
+
 from nibabel import load, Nifti1Image, save
 from numpy import linspace
-import os
+from scipy import interpolate
+
+import sct_utils as sct
 #from msct_smooth import b_spline_nurbs
 #non_parametric, Univariate_Spline, polynomial_fit, opt_f
-from scipy import interpolate
 
 def main():
     
@@ -73,6 +74,7 @@ def main():
     file = load(fname)
     data = file.get_data()
     hdr = file.get_header()
+    curdir = os.getcwd()
     
     X,Y,Z = (data>0).nonzero()
     Z_new = linspace(min(Z),max(Z),(max(Z)-min(Z)+1))
@@ -95,7 +97,7 @@ def main():
     print X, Y, Z
 
     # NURBS!
-    #X_fit, Y_fit, Z_fit, x_deriv, y_deriv, z_deriv = b_spline_nurbs(X, Y, Z, degree=3, point_number=3000)
+    #X_fit, Y_fit, Z_fit, x_deriv, y_deriv, z_deriv = b_spline_nurbs(X, Y, Z, degree=3, point_number=3000, path_qc=curdir)
 
     #f_opt_x, f_opt_y = opt_f(X,Y,Z)
     #print "f_opt = "+str(f_opt_x)+" "+str(f_opt_y)

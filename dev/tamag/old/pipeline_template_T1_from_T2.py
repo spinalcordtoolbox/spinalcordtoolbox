@@ -19,9 +19,9 @@
 import os, sys, commands
 
 # Get path of the toolbox
-status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
 # Append path that contains scripts, to be able to load modules
-sys.path.append(path_sct + '/scripts')
+sys.path.append(os.path.join(path_sct, "scripts"))
 sys.path.append(path_sct + '/dev/tamag')
 
 import sct_utils as sct
@@ -262,7 +262,7 @@ if apply_warp:
         list_dir_3 = os.listdir(PATH_OUTPUT + '/subjects/' + subject + '/T2')
         list_tmp_folder = [file for file in list_dir_3 if file.startswith('tmp')]
         last_tmp_folder_name = list_tmp_folder[-1]
-        sct.run('sct_apply_transfo -i data_RPI_registered_reg2_straight_2temp.nii.gz -o '+subject+'_T1_aligned.nii.gz -d '+PATH_OUTPUT +'/labels_vertebral/template_landmarks.nii.gz -w ../T2/'+last_tmp_folder_name+'/warp_subject2template.nii.gz -x spline')
+        sct.run('sct_apply_transfo -i data_RPI_registered_reg2_straight_2temp.nii.gz -o '+subject+'_T1_aligned.nii.gz -d '+PATH_OUTPUT +'/labels_vertebral/template_landmarks.nii.gz -w ../T2/'+last_tmp_os.path.join(folder_name, '/warp_subject2template.nii.gz) -x spline')
 
         #Normalize intensity of result
         print'\nNormalizing intensity of results...'

@@ -16,27 +16,26 @@
 # TODO: find automatically if -c =t1 or t2 (using dilated seg)
 # TODO: address the case when there is more than one max correlation
 
-import sys
-import os
-import shutil
+import sys, io, os, shutil, glob
+
 import numpy as np
+from scipy.ndimage.measurements import center_of_mass
+
 from sct_maths import mutual_information
 from msct_parser import Parser
 from msct_image import Image
 import sct_utils as sct
 from sct_warp_template import get_file_label
-from scipy.ndimage.measurements import center_of_mass
 
 # get path of SCT
-path_script = os.path.dirname(__file__)
-path_sct = os.path.dirname(path_script)
+path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
 
 
 # PARAMETERS
 class Param:
     # The constructor
     def __init__(self):
-        # self.path_template = path_sct+'/data/template/'
+        # self.path_template = os.path.join(path_sct, 'data', 'template')
         self.shift_AP_initc2 = 35
         self.size_AP_initc2 = 9  # 15
         self.shift_IS_initc2 = 15  # 15
@@ -93,7 +92,7 @@ sct_label_vertebrae -i t2.nii.gz -s t2_seg_manual.nii.gz  "$(< init_label_verteb
                       type_value="folder",
                       description="Path to template.",
                       mandatory=False,
-                      default_value=path_sct + '/data/PAM50/')
+                      default_value=os.path.join(path_sct, "data", "PAM50"))
     parser.add_option(name="-initz",
                       type_value=[[','], 'int'],
                       description='Initialize using slice number and disc value. Example: 68,3 (slice 68 corresponds to disc C3/C4). WARNING: Slice number should correspond to superior-inferior direction (e.g. Z in RPI orientation, but Y in LIP orientation).',
@@ -191,15 +190,15 @@ def main(args=None):
     fname_in = arguments["-i"]
     fname_seg = arguments['-s']
     contrast = arguments['-c']
-    path_template = sct.slash_at_the_end(arguments['-t'], 1)
+    path_template = arguments['-t']
     # if '-o' in arguments:
     #     file_out = arguments["-o"]
     # else:
     #     file_out = ''
     if '-ofolder' in arguments:
-        path_output = sct.slash_at_the_end(os.path.abspath(arguments['-ofolder']), slash=1)
+        path_output = arguments['-ofolder']
     else:
-        path_output = sct.slash_at_the_end(os.path.abspath(os.curdir), slash=1)
+        path_output = os.curdir
     if '-initz' in arguments:
         initz = arguments['-initz']
     if '-initcenter' in arguments:
@@ -224,16 +223,15 @@ def main(args=None):
     denoise = int(arguments['-denoise'])
     laplacian = int(arguments['-laplacian'])
 
-    # create temporary folder
-    sct.printv('\nCreate temporary folder...', verbose)
-    path_tmp = sct.tmp_create(verbose=verbose)
+    path_tmp = sct.tmp_create(basename="label_vertebrae", verbose=verbose)
 
     # Copying input data to tmp folder
     sct.printv('\nCopying input data to tmp folder...', verbose)
-    sct.run('sct_convert -i ' + fname_in + ' -o ' + path_tmp + 'data.nii')
-    sct.run('sct_convert -i ' + fname_seg + ' -o ' + path_tmp + 'segmentation.nii.gz')
+    sct.run('sct_convert -i ' + fname_in + ' -o ' + os.path.join(path_tmp, "data.nii"))
+    sct.run('sct_convert -i ' + fname_seg + ' -o ' + os.path.join(path_tmp, "segmentation.nii.gz"))
 
     # Go go temp folder
+    curdir = os.getcwd()
     os.chdir(path_tmp)
 
     # create label to identify disc
@@ -255,12 +253,12 @@ def main(args=None):
     # Straighten spinal cord
     sct.printv('\nStraighten spinal cord...', verbose)
     # check if warp_curve2straight and warp_straight2curve already exist (i.e. no need to do it another time)
-    if os.path.isfile('../warp_curve2straight.nii.gz') and os.path.isfile('../warp_straight2curve.nii.gz') and os.path.isfile('../straight_ref.nii.gz'):
+    if os.path.isfile(os.path.join(curdir, "warp_curve2straight.nii.gz")) and os.path.isfile(os.path.join(curdir, "warp_straight2curve.nii.gz")) and os.path.isfile(os.path.join(curdir, "straight_ref.nii.gz")):
         # if they exist, copy them into current folder
         sct.printv('WARNING: Straightening was already run previously. Copying warping fields...', verbose, 'warning')
-        shutil.copy('../warp_curve2straight.nii.gz', 'warp_curve2straight.nii.gz')
-        shutil.copy('../warp_straight2curve.nii.gz', 'warp_straight2curve.nii.gz')
-        shutil.copy('../straight_ref.nii.gz', 'straight_ref.nii.gz')
+        sct.copy(os.path.join(curdir, "warp_curve2straight.nii.gz"), 'warp_curve2straight.nii.gz')
+        sct.copy(os.path.join(curdir, "warp_straight2curve.nii.gz"), 'warp_straight2curve.nii.gz')
+        sct.copy(os.path.join(curdir, "straight_ref.nii.gz"), 'straight_ref.nii.gz')
         # apply straightening
         sct.run('sct_apply_transfo -i data.nii -w warp_curve2straight.nii.gz -d straight_ref.nii.gz -o data_straight.nii')
     else:
@@ -315,18 +313,18 @@ def main(args=None):
     sct.printv('\nLabel discs...', verbose)
     label_discs('segmentation_labeled.nii.gz', verbose=verbose)
 
-    # come back to parent folder
-    os.chdir('..')
+    # come back
+    os.chdir(curdir)
 
     # Generate output files
     path_seg, file_seg, ext_seg = sct.extract_fname(fname_seg)
     sct.printv('\nGenerate output files...', verbose)
-    sct.generate_output_file(path_tmp + 'segmentation_labeled.nii.gz', path_output + file_seg + '_labeled' + ext_seg)
-    sct.generate_output_file(path_tmp + 'segmentation_labeled_disc.nii.gz', path_output + file_seg + '_labeled_discs' + ext_seg)
+    sct.generate_output_file(os.path.join(path_tmp, "segmentation_labeled.nii.gz"), os.path.join(path_output, file_seg + '_labeled' + ext_seg))
+    sct.generate_output_file(os.path.join(path_tmp, "segmentation_labeled_disc.nii.gz"), os.path.join(path_output, file_seg + '_labeled_discs' + ext_seg))
     # copy straightening files in case subsequent SCT functions need them
-    sct.generate_output_file(path_tmp + 'warp_curve2straight.nii.gz', path_output + 'warp_curve2straight.nii.gz', verbose)
-    sct.generate_output_file(path_tmp + 'warp_straight2curve.nii.gz', path_output + 'warp_straight2curve.nii.gz', verbose)
-    sct.generate_output_file(path_tmp + 'straight_ref.nii.gz', path_output + 'straight_ref.nii.gz', verbose)
+    sct.generate_output_file(os.path.join(path_tmp, "warp_curve2straight.nii.gz"), os.path.join(path_output, "warp_curve2straight.nii.gz"), verbose)
+    sct.generate_output_file(os.path.join(path_tmp, "warp_straight2curve.nii.gz"), os.path.join(path_output, "warp_straight2curve.nii.gz"), verbose)
+    sct.generate_output_file(os.path.join(path_tmp, "straight_ref.nii.gz"), os.path.join(path_output, "straight_ref.nii.gz"), verbose)
 
     # Remove temporary files
     if remove_tmp_files == 1:
@@ -348,7 +346,7 @@ def main(args=None):
             def test(qslice):
                 return qslice.single()
 
-            labeled_seg_file = path_output + file_seg + '_labeled' + ext_seg
+            labeled_seg_file = os.path.join(path_output, file_seg + '_labeled' + ext_seg)
             test(qcslice.Sagittal(Image(fname_in), Image(labeled_seg_file)))
             sct.printv('Sucessfully generated the QC results in %s' % qc_param.qc_results)
             sct.printv('Use the following command to see the results in a browser:')
@@ -359,7 +357,7 @@ def main(args=None):
 
     # to view results
     sct.printv('\nDone! To view results, type:', verbose)
-    sct.printv('fslview ' + fname_in + ' ' + path_output + file_seg + '_labeled' + ' -l Random-Rainbow -t 0.5 &\n', verbose, 'info')
+    sct.printv('fslview ' + fname_in + ' ' + os.path.join(path_output, file_seg + '_labeled') + ' -l Random-Rainbow -t 0.5 &\n', verbose, 'info')
 
 
 # Detect vertebral levels
@@ -382,16 +380,16 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     #     # get path of SCT
     #     from os import path
     #     path_script = path.dirname(__file__)
-    #     path_sct = slash_at_the_end(path.dirname(path_script), 1)
+    #     path_sct = (path.dirname(path_script), 1)
     #     folder_template = 'data/template/'
     #     path_template = path_sct+folder_template
     sct.printv('Path template: ' + path_template, verbose)
 
     # adjust file names if MNI-Poly-AMU template is used
-    fname_level = get_file_label(path_template + 'template/', 'vertebral', output='filewithpath')
-    fname_template = get_file_label(path_template + 'template/', contrast.upper() + '-weighted', output='filewithpath')
+    fname_level = get_file_label(os.path.join(path_template, 'template'), 'vertebral', output='filewithpath')
+    fname_template = get_file_label(os.path.join(path_template, 'template'), contrast.upper() + '-weighted', output='filewithpath')
 
-    # if not len(glob(path_template+'MNI-Poly-AMU*.*')) == 0:
+    # if not len(glob.glob(os.path.join(path_template, 'MNI-Poly-AMU*.*'))) == 0:
     #     contrast = contrast.upper()
     #     file_level = '*_level.nii.gz'
     # else:
@@ -399,13 +397,13 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     #
     # # retrieve file_template based on contrast
     # try:
-    #     fname_template_list = glob(path_template + '*' + contrast + '.nii.gz')
+    #     fname_template_list = glob.glob(os.path.join(path_template, '*' + contrast + '.nii.gz'))
     #     fname_template = fname_template_list[0]
     # except IndexError:
     #     sct.printv('\nERROR: No template found. Please check the provided path.', 1, 'error')
     # retrieve disc level from template
     # try:
-    #     fname_level_list = glob(path_template+file_level)
+    #     fname_level_list = glob.glob(os.path.join(path_template, file_level))
     #     fname_level = fname_level_list[0]
     # except IndexError:
     #     sct.printv('\nERROR: File *_levels.nii.gz not found.', 1, 'error')
@@ -619,7 +617,7 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
 
     # save figure
     if verbose == 2:
-        plt.figure(50), plt.savefig(path_output + 'fig_anat_straight_with_labels.png')
+        plt.figure(50), plt.savefig(os.path.join(path_output, "fig_anat_straight_with_labels.png"))
         # plt.close()
 
 
@@ -825,7 +823,7 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
         plt.axhline(y=thr_corr, linewidth=1, color='r', linestyle='dashed')
         plt.grid()
         # save figure
-        plt.figure(11), plt.savefig(path_output + 'fig_pattern' + save_suffix + '.png'), plt.close()
+        plt.figure(11), plt.savefig(os.path.join(path_output, "fig_pattern" + save_suffix + '.png')), plt.close()
 
     # return z-origin (z) + z-displacement minus zshift (to account for non-centered disc)
     return z + zrange[ind_peak] - zshift

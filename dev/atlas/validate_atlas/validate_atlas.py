@@ -24,16 +24,11 @@
 
 
 # Import common Python libraries
-import os
-import sys
-import time
-import datetime
-import commands
-import shutil
+import os, sys, time, datetime, commands, shutil
 import numpy as np
-status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
 # append path that contains scripts, to be able to load modules
-sys.path.append(path_sct + '/scripts')
+sys.path.append(os.path.join(path_sct, "scripts"))
 import sct_utils as sct
 from generate_phantom import phantom_generation, get_tracts, save_3D_nparray_nifti
 
@@ -62,7 +57,7 @@ def main():
         create_folder(folder_cropped_atlas, 1)
         crop_atlas(folder_atlas, folder_cropped_atlas, zcrop_ind)
         # Copy the info_label.txt file in the cropped atlas' folder. This file needs to be there in order for the sct_extract_metric code to work
-        sct.run('cp '+folder_atlas+'info_label.txt '+folder_cropped_atlas)
+        sct.copy(os.path.join(folder_atlas, 'info_label.txt'), folder_cropped_atlas)
 
     # create output folder
     create_folder(results_folder, 1)
@@ -135,9 +130,9 @@ def validate_atlas(folder_cropped_atlas, nb_bootstraps, std_noise, range_tract, 
     stat_perc_error_all = np.zeros(shape=(nb_methods, nb_bootstraps, 4))  # statistics
     list_stat = ['MSE', 'median', 'min', 'max']
     x_true_i = np.zeros(shape=(nb_tracts))
-    fname_phantom = folder_tmp+file_phantom
-    fname_phantom_noise = folder_tmp+file_phantom_noise
-    fname_tract_sum = folder_tmp+file_tract_sum
+    fname_phantom = os.path.join(folder_tmp, file_phantom)
+    fname_phantom_noise = os.path.join(folder_tmp, file_phantom_noise)
+    fname_tract_sum = os.path.join(folder_tmp, file_tract_sum)
 
     # create output folder
     create_folder(results_folder, 0)
@@ -146,7 +141,7 @@ def validate_atlas(folder_cropped_atlas, nb_bootstraps, std_noise, range_tract, 
     tracts = get_tracts(folder_cropped_atlas)
 
     # get file name of the first atlas file
-    fname_atlas = folder_cropped_atlas+'WMtract__00.nii.gz'
+    fname_atlas = os.path.join(folder_cropped_atlas, 'WMtract__00.nii.gz')
 
     # Get ponderation of each tract for dorsal column average ponderation of each tract of the dorsal column
     if nb_tracts:
@@ -189,7 +184,7 @@ def validate_atlas(folder_cropped_atlas, nb_bootstraps, std_noise, range_tract, 
             x_true_i[1] = values_synthetic_data[int(list_tracts[1])]
             x_true_i[2] = dc_val_avg
 
-        fname_extract_metrics = folder_tmp + file_extract_metrics
+        fname_extract_metrics = os.path.join(folder_tmp, file_extract_metrics)
 
         if nb_tracts:
             if not test_map:
@@ -378,14 +373,14 @@ def read_results(fname_metrics):
 def crop_atlas(folder_atlas, folder_out, zind):
 
     # get atlas files
-    status, output = sct.run('ls '+folder_atlas+'*.nii.gz', 1)
+    status, output = sct.run('ls '+os.path.join(folder_atlas, '*.nii.gz'), 1)
     fname_list = output.split()
 
     # loop across atlas
     for i in xrange(0, len(fname_list)):
         path_list, file_list, ext_list = sct.extract_fname(fname_list[i])
         # crop file and then merge back
-        cmd = 'fslmerge -z '+folder_out+file_list
+        cmd = 'fslmerge -z '+os.path.join(folder_out, file_list)
         for iz in zind:
             sct.run('fslroi '+fname_list[i]+' tmpcrop.z'+str(zind.index(iz))+'_'+file_list+' 0 -1 0 -1 '+str(iz)+' 1')
             cmd = cmd+' tmpcrop.z'+str(zind.index(iz))+'_'+file_list

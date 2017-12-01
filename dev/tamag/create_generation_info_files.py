@@ -1,14 +1,12 @@
 #!/usr/bin/env python
 
 
-import commands, sys, os
+import sys, io, os
 
 # Get path of the toolbox
-status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
 # Append path that contains scripts, to be able to load modules
-sys.path.append(path_sct + '/scripts')
-sys.path.append(path_sct + '/dev/tamag')
-
+sys.path.append(os.path.join(path_sct, 'scripts'))
 
 import sct_utils as sct
 
@@ -46,7 +44,7 @@ path_result = ''
 os.chdir(path_i)
 
 f_name='all_crop_'+contrast+'.txt'
-f = open(path_i+'/'+f_name, 'w')
+f = io.open(path_i+'/'+f_name, 'w')
 f.write("""##Commands to generate label and txt files\n\npath_results =''\n\nif not os.path.isdir(path_results +'/' + 'T1'):\n\tos.makedirs(path_results +'/' + 'T1')\n""")
 f.write("""\nif not os.path.isdir(path_results +'/' + 'T2'):\n\tos.makedirs(path_results +'/' + 'T2')\n""")
 f.close()

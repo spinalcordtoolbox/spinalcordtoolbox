@@ -191,16 +191,15 @@ class ImageCropper(object):
         path_data, file_data, ext_data = sct.extract_fname(fname_data)
         path_out, file_out, ext_out = '', file_data + suffix_out, ext_data
 
-        # create temporary folder
-        path_tmp = 'tmp.' + time.strftime("%y%m%d%H%M%S") + '/'
-        sct.run('mkdir ' + path_tmp)
+        path_tmp = sct.tmp_create() + "/"
 
         # copy files into tmp folder
         from sct_convert import convert
         sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
-        convert(fname_data, path_tmp + 'data.nii')
+        convert(fname_data, os.path.join(path_tmp, "data.nii"))
 
         # go to tmp folder
+        curdir = os.getcwd()
         os.chdir(path_tmp)
 
         # change orientation
@@ -250,11 +249,11 @@ class ImageCropper(object):
         nii.setFileName('data_rpi_crop.nii')
         nii.save()
 
-        # come back to parent folder
-        os.chdir('..')
+        # come back
+        os.chdir(curdir)
 
         sct.printv('\nGenerate output files...', verbose)
-        sct.generate_output_file(path_tmp + 'data_rpi_crop.nii', path_out + file_out + ext_out)
+        sct.generate_output_file(os.path.join(path_tmp, "data_rpi_crop.nii"), os.path.join(path_out, file_out + ext_out))
 
         # Remove temporary files
         if remove_temp_files == 1:
@@ -263,7 +262,7 @@ class ImageCropper(object):
 
         # to view results
         sct.printv('\nDone! To view results, type:')
-        sct.printv('fslview ' + path_out + file_out + ext_out + ' &')
+        sct.printv('fslview ' + os.path.join(path_out, file_out + ext_out) + ' &')
         sct.printv()
 
 def get_parser():
