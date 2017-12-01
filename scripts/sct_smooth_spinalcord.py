@@ -15,19 +15,12 @@
 # TODO: maybe no need to convert RPI at the beginning because strainghten spinal cord already does it!
 
 
-import getopt
-import os
-import sys
-import time
+import sys, io, os, getopt, shutil, time
+
+import numpy as np
+
 import sct_utils as sct
 from sct_image import set_orientation
-from shutil import move
-# from numpy import append, insert, nonzero, transpose, array
-# from nibabel import load, Nifti1Image, save
-# from scipy import ndimage
-# from copy import copy
-import numpy as np
-import shutil
 from sct_convert import convert
 from msct_parser import Parser
 
@@ -126,17 +119,15 @@ def main(args=None):
     path_anat, file_anat, ext_anat = sct.extract_fname(fname_anat)
     path_centerline, file_centerline, ext_centerline = sct.extract_fname(fname_centerline)
 
-    # create temporary folder
-    sct.printv('\nCreate temporary folder...', verbose)
-    path_tmp = sct.slash_at_the_end('tmp.' + time.strftime("%y%m%d%H%M%S"), 1)
-    sct.run('mkdir ' + path_tmp, verbose)
+    path_tmp = sct.tmp_create(basename="smooth_spinalcord", verbose=verbose)
 
     # Copying input data to tmp folder
     sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
-    sct.run('cp ' + fname_anat + ' ' + path_tmp + 'anat' + ext_anat, verbose)
-    sct.run('cp ' + fname_centerline + ' ' + path_tmp + 'centerline' + ext_centerline, verbose)
+    sct.copy(fname_anat, os.path.join(path_tmp, "anat" + ext_anat))
+    sct.copy(fname_centerline, os.path.join(path_tmp, "centerline" + ext_centerline))
 
     # go to tmp folder
+    curdir = os.getcwd()
     os.chdir(path_tmp)
 
     # convert to nii format
@@ -146,22 +137,22 @@ def main(args=None):
     # Change orientation of the input image into RPI
     sct.printv('\nOrient input volume to RPI orientation...')
     fname_anat_rpi = set_orientation('anat.nii', 'RPI', filename=True)
-    move(fname_anat_rpi, 'anat_rpi.nii')
+    shutil.move(fname_anat_rpi, 'anat_rpi.nii')
     # Change orientation of the input image into RPI
     sct.printv('\nOrient centerline to RPI orientation...')
     fname_centerline_rpi = set_orientation('centerline.nii', 'RPI', filename=True)
-    move(fname_centerline_rpi, 'centerline_rpi.nii')
+    shutil.move(fname_centerline_rpi, 'centerline_rpi.nii')
 
     # Straighten the spinal cord
     # straighten segmentation
     sct.printv('\nStraighten the spinal cord using centerline/segmentation...', verbose)
     # check if warp_curve2straight and warp_straight2curve already exist (i.e. no need to do it another time)
-    if os.path.isfile('../warp_curve2straight.nii.gz') and os.path.isfile('../warp_straight2curve.nii.gz') and os.path.isfile('../straight_ref.nii.gz'):
+    if os.path.isfile(os.path.join(curdir, 'warp_curve2straight.nii.gz')) and os.path.isfile(os.path.join(curdir, 'warp_straight2curve.nii.gz')) and os.path.isfile(os.path.join(curdir, 'straight_ref.nii.gz')):
         # if they exist, copy them into current folder
         sct.printv('WARNING: Straightening was already run previously. Copying warping fields...', verbose, 'warning')
-        shutil.copy('../warp_curve2straight.nii.gz', 'warp_curve2straight.nii.gz')
-        shutil.copy('../warp_straight2curve.nii.gz', 'warp_straight2curve.nii.gz')
-        shutil.copy('../straight_ref.nii.gz', 'straight_ref.nii.gz')
+        sct.copy(os.path.join(curdir, 'warp_curve2straight.nii.gz'), 'warp_curve2straight.nii.gz')
+        sct.copy(os.path.join(curdir, 'warp_straight2curve.nii.gz'), 'warp_straight2curve.nii.gz')
+        sct.copy(os.path.join(curdir, 'straight_ref.nii.gz'), 'straight_ref.nii.gz')
         # apply straightening
         sct.run('sct_apply_transfo -i anat_rpi.nii -w warp_curve2straight.nii.gz -d straight_ref.nii.gz -o anat_rpi_straight.nii -x spline', verbose)
     else:
@@ -186,18 +177,18 @@ def main(args=None):
     nii_smooth.setFileName('anat_rpi_straight_smooth_curved_nonzero.nii')
     nii_smooth.save()
 
-    # come back to parent folder
-    os.chdir('..')
+    # come back
+    os.chdir(curdir)
 
     # Generate output file
     sct.printv('\nGenerate output file...')
-    sct.generate_output_file(path_tmp + '/anat_rpi_straight_smooth_curved_nonzero.nii',
+    sct.generate_output_file(os.path.join(path_tmp, "anat_rpi_straight_smooth_curved_nonzero.nii"),
                              file_anat + '_smooth' + ext_anat)
 
     # Remove temporary files
     if remove_temp_files == 1:
         sct.printv('\nRemove temporary files...')
-        sct.run('rm -rf ' + path_tmp)
+        shutil.rmtree(path_tmp)
 
     # Display elapsed time
     elapsed_time = time.time() - start_time

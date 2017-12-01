@@ -12,12 +12,12 @@
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
-import commands, sys, os
+import sys, io, os, shutil
 
 # Get path of the toolbox
-status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 # Append path that contains scripts, to be able to load modules
-sys.path.append(path_sct + '/scripts')
+sys.path.append(os.path.join(path_sct, "scripts"))
 
 # create symbolic link to /Volumes/data_shared
 # ln -s /Volumes/data_raid/data_shared /Volumes/data_shared 
@@ -178,7 +178,7 @@ os.chdir('../..')
 if not os.path.isdir(path_results + '/T2/errsm_02'):
     os.makedirs(path_results + '/T2/errsm_02')
 os.chdir(path_results + '/T2/errsm_02')
-sct.run('dcm2nii -o . -r N '+folder_data_errsm+'/errsm_02/28-SPINE_T2/*.dcm')
+sct.run('dcm2nii -o . -r N '+os.path.join(folder_data_errsm, 'errsm_02', '28-SPINE_T2', '*.dcm'))
 sct.run('mv *.nii.gz data.nii.gz')
 sct.run('sct_image -i data.nii.gz -setorient RPI')
 sct.run('sct_label_utils -i data_RPI.nii.gz -o labels_vertebral.nii.gz -t create -x 25,63,169,20:26,58,200,19:25,54,229,18:25,53,256,17:25,52,282,16:25,52,307,15:24,55,333,14:23,58,356,13:24,63,379,12:27,69,400,11:29,76,421,10:29,86,440,9:30,96,458,8:31,101,474,7:31,103,489,6:31,105,505,5:29,107,521,4:26,108,538,3:26,114,594,2:22,122,617,1')
@@ -426,7 +426,7 @@ os.chdir('../..')
 if not os.path.isdir(path_results + '/T2/errsm_22'):
     os.makedirs(path_results + '/T2/errsm_22')
 os.chdir(path_results + '/T2/errsm_22')
-sct.run('dcm2nii -o . -r N '+folder_data_errsm+'/errsm_22/25-SPINE_T2/*.dcm')
+sct.run('dcm2nii -o . -r N '+os.path.join(folder_data_errsm, 'errsm_22', '25-SPINE_T2', '*.dcm'))
 sct.run('mv *.nii.gz data.nii.gz')
 sct.run('sct_image -i data.nii.gz -setorient RPI')
 sct.run('sct_label_utils -i data_RPI.nii.gz -o labels_vertebral.nii.gz -t create -x 23,123,140,20:23,121,171,19:23,120,198,18:23,118,224,17:22,116,247,16:22,115,269,15:22,115,292,14:22,117,313,13:23,121,334,12:23,128,354,11:23,135,373,10:23,143,390,9:24,150,407,8:24,150,424,7:24,149,441,6:24,151,458,5:23,153,474,4:21,157,492,3:23,162,547,2:25,171,569,1')
@@ -1115,7 +1115,7 @@ os.chdir('../..')
 if not os.path.isdir(path_results + '/T1/errsm_02'):
     os.makedirs(path_results + '/T1/errsm_02')
 os.chdir(path_results + '/T1/errsm_02')
-sct.run('dcm2nii -o . -r N '+folder_data_errsm+'/errsm_02/22-SPINE_T1/*.dcm')
+sct.run('dcm2nii -o . -r N '+os.path.join(folder_data_errsm, 'errsm_02', '22-SPINE_T1', '*.dcm'))
 sct.run('mv *.nii.gz data.nii.gz')
 sct.run('sct_image -i data.nii.gz -setorient RPI')
 sct.run('sct_label_utils -i data_RPI.nii.gz -o labels_vertebral.nii.gz -t create -x 89,74,199,20:89,70,229,19:89,66,258,18:87,64,285,17:87,63,310,16:87,64,336,15:87,66,362,14:87,71,385,13:87,76,407,12:88,81,428,11:89,89,449,10:91,98,469,9:92,108,486,8:94,112,502,7:93,115,517,6:92,118,532,5:92,119,548,4:90,120,566,3:87,127,622,2:85,134,647,1')

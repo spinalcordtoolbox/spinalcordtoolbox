@@ -15,21 +15,22 @@
 
 import os, sys, commands
 
-# Get path of the toolbox
-status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
-# Append path that contains scripts, to be able to load modules
-sys.path.append(path_sct + '/scripts')
-
-import sct_utils as sct
-import nibabel
-from sct_orientation import get_orientation, set_orientation
 from scipy import ndimage
 from numpy import array, asarray, zeros, int8, mean, std, sqrt, convolve, hanning
 from copy import copy
-from msct_image import Image
 from numpy.linalg import inv
 import matplotlib.pyplot as plt
 from scipy.interpolate import splrep,splev
+import nibabel
+
+# Get path of the toolbox
+path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
+# Append path that contains scripts, to be able to load modules
+sys.path.append(os.path.join(path_sct, 'scripts'))
+
+import sct_utils as sct
+from sct_orientation import get_orientation, set_orientation
+from msct_image import Image
 
 os.chdir('/Users/tamag/data/data_template/subjects_test_T1/creating_warping_field')
 seg_input = nibabel.load('/Users/tamag/data/data_template/subjects_test_T1/creating_warping_field/centerline_T1_mask_cyl_7.nii.gz')

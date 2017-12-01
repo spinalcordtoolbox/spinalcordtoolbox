@@ -3,9 +3,9 @@
 import os, sys, commands
 
 # Get path of the toolbox
-status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
 # Append path that contains scripts, to be able to load modules
-sys.path.append(path_sct + '/scripts')
+sys.path.append(os.path.join(path_sct, 'scripts'))
 
 import numpy as np
 from PIL import Image
@@ -15,8 +15,8 @@ import matplotlib.pyplot as plt
 from copy import copy
 
 ext_o = '.nii.gz'
-path_info = '/Users/tamag/code/spinalcordtoolbox/dev/GM_atlas/raw_data'
-path_output = '/Users/tamag/code/spinalcordtoolbox/dev/GM_atlas/raw_data/test'
+path_info = os.path.join(path_sct, "GM_atlas", "raw_data")
+path_output = os.path.join(path_sct, "GM_atlas", "raw_data", "test")
 
 # input: greyscale_final.png
 # output: greyscale_final_resampled_registered_crop_resized.png
@@ -44,13 +44,16 @@ def main():
 
 
     # Copy file to path_output
-    print '\nCopy files to output folder'
-    sct.run('cp '+ path_info+'/'+ fname1 + ' '+fname1)
-    sct.run('cp '+ path_info+'/'+ fname2 + ' '+fname2)
-    sct.run('cp '+ path_info+'/'+ fname3 + ' '+fname3)
-    sct.run('cp '+ path_info+'/'+ fname4 + ' '+fname4)
-    sct.run('cp '+ path_info+'/'+ slice + ' '+slice)
-    sct.run('cp '+ path_info+'/'+ fname13 + ' '+fname13)
+    print('\nCopy files to output folder')
+    for file in (
+     fname1,
+     fname2,
+     fname3,
+     fname4,
+     slice,
+     fname13,
+     ):
+        sct.copy(os.path.join(path_info, file), file)
 
     print '\nSave nifti images from png'
     save_nii_from_png(fname1)
@@ -135,11 +138,11 @@ def main():
     print output
 
     # delete file imported at the beginning
-    sct.run('rm ' + fname1)
-    sct.run('rm ' + fname2)
-    sct.run('rm ' + fname3)
-    sct.run('rm ' + fname4)
-    sct.run('rm ' + slice)
+    os.remove(fname1)
+    os.remove(fname2)
+    os.remove(fname3)
+    os.remove(fname4)
+    os.remove(slice)
 
     #anti_trans: input: greyscale_final_resampled_registered_crop_resized.png    output: greyscale_reg_no_trans.png (old: greyscale_final_reg_no_trans.png)
     print '\nReplacing transition pixel between zones...'

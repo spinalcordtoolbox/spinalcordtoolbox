@@ -35,9 +35,9 @@ import getopt
 
 
 # Get path of the toolbox
-status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
 # Append path that contains scripts, to be able to load modules
-sys.path.append(path_sct + '/scripts')
+sys.path.append(os.path.join(path_sct, "scripts"))
 
 import numpy as np
 import sct_utils as sct
@@ -168,11 +168,11 @@ def main():
         hdr_warp.set_data_dtype('float32')
 
         # approximate displacement with nurbs
-        from msct_smooth import b_spline_nurbs
+        from msct_smooth import b_spline_nurbs__todo_path_qc_eq_curdir
         displacement_z = [item[1] for item in displacement_subject2template]
         displacement_x = [item[2] for item in displacement_subject2template]
         verbose = 1
-        displacement_z, displacement_y, displacement_y_deriv, displacement_z_deriv = b_spline_nurbs(displacement_x, displacement_z, None, nbControl=None, verbose=verbose, all_slices=True)
+        displacement_z, displacement_y, displacement_y_deriv, displacement_z_deriv = b_spline_nurbs__todo_path_qc_eq_curdir(displacement_x, displacement_z, None, nbControl=None, verbose=verbose, all_slices=True)
 
         arg_min_z, arg_max_z = np.argmin(displacement_y), np.argmax(displacement_y)
         min_z, max_z = int(displacement_y[arg_min_z]), int(displacement_y[arg_max_z])
@@ -192,7 +192,7 @@ def main():
         displacement_z = [item[1] for item in displacement_template2subject]
         displacement_x = [item[2] for item in displacement_template2subject]
         verbose = 1
-        displacement_z, displacement_y, displacement_y_deriv, displacement_z_deriv = b_spline_nurbs(displacement_x, displacement_z, None, nbControl=None, verbose=verbose, all_slices=True)
+        displacement_z, displacement_y, displacement_y_deriv, displacement_z_deriv = b_spline_nurbs__todo_path_qc_eq_curdir(displacement_x, displacement_z, None, nbControl=None, verbose=verbose, all_slices=True)
 
         arg_min_z, arg_max_z = np.argmin(displacement_y), np.argmax(displacement_y)
         min_z, max_z = int(displacement_y[arg_min_z]), int(displacement_y[arg_max_z])

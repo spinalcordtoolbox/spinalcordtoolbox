@@ -14,10 +14,8 @@
 # TODO: also enable to concatenate reversed transfo
 
 
-import sys
-import os
-import getopt
-from commands import getstatusoutput
+import sys, io, os, getopt, commands
+
 import sct_utils as sct
 from msct_parser import Parser
 from msct_image import Image
@@ -45,9 +43,9 @@ def main():
     # Parameters for debug mode
     if param.debug:
         sct.printv('\n*** WARNING: DEBUG MODE ON ***\n')
-        status, path_sct_data = getstatusoutput('echo $SCT_TESTING_DATA_DIR')
-        fname_warp_list = path_sct_data + '/t2/warp_template2anat.nii.gz,-' + path_sct_data + '/mt/warp_template2mt.nii.gz'
-        fname_dest = path_sct_data + '/mt/mtr.nii.gz'
+        path_sct_data = os.environ.get("SCT_TESTING_DATA_DIR", os.path.join(os.path.dirname(os.path.dirname(__file__))), "testing_data")
+        fname_warp_list = os.path.join(path_sct_data, 't2', 'warp_template2anat.nii.gz') + '-' + os.path.join(path_sct_data, 'mt', 'warp_template2mt.nii.gz')
+        fname_dest = os.path.join(path_sct_data, 'mt', 'mtr.nii.gz')
         verbose = 1
     else:
         # Check input parameters
@@ -100,7 +98,7 @@ def main():
     fname_warp_list_invert.reverse()
     cmd = 'isct_ComposeMultiTransform '+dimensionality+' warp_final' + ext_out + ' -R ' + fname_dest + ' ' + ' '.join(fname_warp_list_invert)
     sct.printv('>> ' + cmd, verbose)
-    status, output = getstatusoutput(cmd)  # here cannot use sct.run() because of wrong output status in isct_ComposeMultiTransform
+    status, output = commands.getstatusoutput(cmd)  # here cannot use sct.run() because of wrong output status in isct_ComposeMultiTransform
 
     # check if output was generated
     if not os.path.isfile('warp_final' + ext_out):
@@ -108,7 +106,7 @@ def main():
 
     # Generate output files
     sct.printv('\nGenerate output files...', verbose)
-    sct.generate_output_file('warp_final' + ext_out, path_out + file_out + ext_out)
+    sct.generate_output_file('warp_final' + ext_out, os.path.join(path_out, file_out + ext_out))
 
 
 # ==========================================================================================

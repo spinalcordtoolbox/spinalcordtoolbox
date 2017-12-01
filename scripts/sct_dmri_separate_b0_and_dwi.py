@@ -150,9 +150,7 @@ def main(args=None):
     #     path_out = ''
 
     # create temporary folder
-    sct.printv('\nCreate temporary folder...', verbose)
-    path_tmp = sct.slash_at_the_end('tmp.' + time.strftime("%y%m%d%H%M%S"), 1)
-    sct.run('mkdir ' + path_tmp, verbose)
+    path_tmp = sct.tmp_create(basename="dmri_separate", verbose=verbose)
 
     # copy files into tmp folder and convert to nifti
     sct.printv('\nCopy files into temporary folder...', verbose)
@@ -164,11 +162,12 @@ def main(args=None):
     dwi_mean_name = dwi_name + '_mean'
 
     from sct_convert import convert
-    if not convert(fname_data, path_tmp + dmri_name + ext):
+    if not convert(fname_data, os.path.join(path_tmp, dmri_name + ext)):
         sct.printv('ERROR in convert.', 1, 'error')
-    sct.run('cp ' + fname_bvecs + ' ' + path_tmp + 'bvecs', verbose)
+    sct.run('cp ' + fname_bvecs + ' ' + os.path.join(path_tmp, "bvecs"), verbose)
 
     # go to tmp folder
+    curdir = os.getcwd()
     os.chdir(path_tmp)
 
     # Get size of data
@@ -217,16 +216,16 @@ def main(args=None):
         #     sct.printv('ERROR in average_data_across_dimension', 1, 'error')
         # sct.run(fsloutput + 'fslmaths dwi -Tmean dwi_mean', verbose)
 
-    # come back to parent folder
-    os.chdir('..')
+    # come back
+    os.chdir(curdir)
 
     # Generate output files
     sct.printv('\nGenerate output files...', verbose)
-    sct.generate_output_file(path_tmp + b0_name + ext, path_out + b0_name + ext_data, verbose)
-    sct.generate_output_file(path_tmp + dwi_name + ext, path_out + dwi_name + ext_data, verbose)
+    sct.generate_output_file(os.path.join(path_tmp, b0_name + ext), os.path.join(path_out, b0_name + ext_data), verbose)
+    sct.generate_output_file(os.path.join(path_tmp, dwi_name + ext), os.path.join(path_out, dwi_name + ext_data), verbose)
     if average:
-        sct.generate_output_file(path_tmp + b0_mean_name + ext, path_out + b0_mean_name + ext_data, verbose)
-        sct.generate_output_file(path_tmp + dwi_mean_name + ext, path_out + dwi_mean_name + ext_data, verbose)
+        sct.generate_output_file(os.path.join(path_tmp, b0_mean_name + ext), os.path.join(path_out, b0_mean_name + ext_data), verbose)
+        sct.generate_output_file(os.path.join(path_tmp, dwi_mean_name + ext), os.path.join(path_out, dwi_mean_name + ext_data), verbose)
 
     # Remove temporary files
     if remove_tmp_files == 1:

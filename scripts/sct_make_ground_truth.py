@@ -13,26 +13,20 @@
 # TODO: for -ref subject, crop data, otherwise registration is too long
 # TODO: testing script for all cases
 
-import sys
-import os
-import shutil
-import commands
-import time
-from glob import glob
+import sys, io, os, shutil, time
+
+import numpy as np
+
 import sct_utils as sct
 from sct_utils import add_suffix
 from sct_image import set_orientation
 from sct_register_multimodal import Paramreg, ParamregMultiStep, register
 from msct_parser import Parser
 from msct_image import Image, find_zmin_zmax
-from shutil import move
 from sct_label_utils import ProcessLabels
-import numpy as np
-
 
 # get path of the toolbox
-path_script = os.path.dirname(__file__)
-path_sct = os.path.dirname(path_script)
+path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
 
 # DEFAULT PARAMETERS
 class Param:
@@ -43,8 +37,8 @@ class Param:
         self.fname_mask = ''  # this field is needed in the function register@sct_register_multimodal
         self.padding = 10  # this field is needed in the function register@sct_register_multimodal
         self.verbose = 1  # verbose
-        self.path_template = path_sct+'/data/PAM50'
-        self.path_qc = os.path.abspath(os.curdir)+'/qc/'
+        self.path_template = os.path.join(path_sct, 'data', 'PAM50')
+        self.path_qc = os.path.join(os.path.abspath(os.curdir), 'qc')
         self.zsubsample = '0.25'
         self.param_straighten = ''
 
@@ -157,7 +151,7 @@ def rewrite_arguments(arguments):
     else:
         path_output = ''
     first_label=arguments['-first']
-    path_template = sct.slash_at_the_end(arguments['-t'], 1)
+    path_template = arguments['-t']
     contrast_template = arguments['-c']
     ref = arguments['-ref']
     remove_temp_files = int(arguments['-r'])
@@ -222,7 +216,7 @@ def make_fname_of_templates(file_template,path_template,file_template_vertebral_
     fname_template_seg = path_template+'template/'+file_template_seg
     return(fname_template,fname_template_vertebral_labeling,fname_template_seg)
 
-def sct.printv(arguments(verbose,fname_data,fname_landmarks,fname_seg,path_template,remove_temp_files):)
+def print_arguments(verbose,fname_data,fname_landmarks,fname_seg,path_template,remove_temp_files):
     sct.printv('\nCheck parameters:', verbose)
     sct.printv('  Data:                 '+fname_data, verbose)
     sct.printv('  Landmarks:            '+fname_landmarks, verbose)
@@ -250,12 +244,12 @@ def set_temporary_files():
 
 def copy_files_to_temporary_files(verbose,fname_data,path_tmp,ftmp_seg,ftmp_data,fname_seg,fname_landmarks,ftmp_label,fname_template,ftmp_template,fname_template_seg,ftmp_template_seg):
     sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
-    sct.run('sct_convert -i '+fname_data+' -o '+path_tmp+ftmp_data)
-    sct.run('sct_convert -i '+fname_seg+' -o '+path_tmp+ftmp_seg)
-    sct.run('sct_convert -i '+fname_landmarks+' -o '+path_tmp+ftmp_label)
-    sct.run('sct_convert -i '+fname_template+' -o '+path_tmp+ftmp_template)
-    sct.run('sct_convert -i '+fname_template_seg+' -o '+path_tmp+ftmp_template_seg)
-    # sct.run('sct_convert -i '+fname_template_label+' -o '+path_tmp+ftmp_template_label)
+    sct.run('sct_convert -i '+fname_data+' -o ' + os.path.join(path_tmp, ftmp_data))
+    sct.run('sct_convert -i '+fname_seg+' -o '+ os.path.join(path_tmp, ftmp_seg))
+    sct.run('sct_convert -i '+fname_landmarks+' -o '+ os.path.join(path_tmp, ftmp_label))
+    sct.run('sct_convert -i '+fname_template+' -o '+ os.path.join(path_tmp, ftmp_template))
+    sct.run('sct_convert -i '+fname_template_seg+' -o '+ os.path.join(path_tmp, ftmp_template_seg))
+    # sct.run('sct_convert -i '+fname_template_label+' -o '+ os.path.join(path_tmp, ftmp_template_label))
 
 def set_viewer_parameters(viewer,nb_slices_to_mean):
     viewer.number_of_slices = 1
@@ -286,7 +280,7 @@ def make_labels_image_from_list_points(mask_points,reoriented_image_filename,ima
         # create the mask containing either the three-points or centerline mask for initialization
         sct.run("sct_label_utils -i " + reoriented_image_filename + " -create " + mask_points ,verbose=False)
         sct.run('sct_image -i ' + 'labels.nii.gz'+ ' -o ' + 'labels_ground_truth.nii.gz' + ' -setorient ' + image_input_orientation + ' -v 0',verbose=False)
-        sct.run('rm -rf ' + 'labels.nii.gz')
+        os.remove('labels.nii.gz')
 
 def use_viewer_to_define_labels(fname_data,first_label,nb_of_slices_to_mean):
     from sct_viewer import ClickViewerGroundTruth
@@ -337,9 +331,9 @@ def main():
     # retrieve template file names
 
     from sct_warp_template import get_file_label
-    file_template_vertebral_labeling = get_file_label(path_template+'template/', 'vertebral')
-    file_template = get_file_label(path_template+'template/', contrast_template.upper()+'-weighted')
-    file_template_seg = get_file_label(path_template+'template/', 'spinal cord')
+    file_template_vertebral_labeling = get_file_label(os.path.join(path_template, 'template'), 'vertebral')
+    file_template = get_file_label(os.path.join(path_template, 'template'), contrast_template.upper()+'-weighted')
+    file_template_seg = get_file_label(os.path.join(path_template, 'template'), 'spinal cord')
 
 
     """ Start timer"""
@@ -364,6 +358,7 @@ def main():
     (ftmp_data, ftmp_seg, ftmp_label, ftmp_template, ftmp_template_seg, ftmp_template_label)=set_temporary_files()
     copy_files_to_temporary_files(verbose, fname_data, path_tmp, ftmp_seg, ftmp_data, fname_seg, fname_landmarks,
                                   ftmp_label, fname_template, ftmp_template, fname_template_seg, ftmp_template_seg)
+    curdir = os.getcwd()
     os.chdir(path_tmp)
 
     ''' Generate labels from template vertebral labeling'''
@@ -422,12 +417,12 @@ def main():
         # straighten segmentation
         sct.printv('\nStraighten the spinal cord using centerline/segmentation...', verbose)
         # check if warp_curve2straight and warp_straight2curve already exist (i.e. no need to do it another time)
-        if os.path.isfile('../warp_curve2straight.nii.gz') and os.path.isfile('../warp_straight2curve.nii.gz') and os.path.isfile('../straight_ref.nii.gz'):
+        if os.path.isfile(os.path.join(curdir, "warp_curve2straight.nii.gz")) and os.path.isfile(os.path.join(curdir, "warp_straight2curve.nii.gz")) and os.path.isfile(os.path.join(curdir, "straight_ref.nii.gz")):
             # if they exist, copy them into current folder
             sct.printv('WARNING: Straightening was already run previously. Copying warping fields...', verbose, 'warning')
-            shutil.copy('../warp_curve2straight.nii.gz', 'warp_curve2straight.nii.gz')
-            shutil.copy('../warp_straight2curve.nii.gz', 'warp_straight2curve.nii.gz')
-            shutil.copy('../straight_ref.nii.gz', 'straight_ref.nii.gz')
+            sct.copy(os.path.join(curdir, "warp_curve2straight.nii.gz"), 'warp_curve2straight.nii.gz')
+            sct.copy(os.path.join(curdir, "warp_straight2curve.nii.gz"), 'warp_straight2curve.nii.gz')
+            sct.copy(os.path.join(curdir, "straight_ref.nii.gz"), 'straight_ref.nii.gz')
             # apply straightening
             sct.run('sct_apply_transfo -i '+ftmp_seg+' -w warp_curve2straight.nii.gz -d straight_ref.nii.gz -o '+add_suffix(ftmp_seg, '_straight'))
         else:
@@ -628,25 +623,25 @@ def main():
     sct.run('sct_apply_transfo -i template.nii -o template2anat.nii.gz -d data.nii -w warp_template2anat.nii.gz -crop 1', verbose)
     sct.run('sct_apply_transfo -i data.nii -o anat2template.nii.gz -d template.nii -w warp_anat2template.nii.gz -crop 1', verbose)
 
-    # come back to parent folder
-    os.chdir('..')
+    # come back
+    os.chdir(curdir)
 
     # Generate output files
     sct.printv('\nGenerate output files...', verbose)
-    sct.generate_output_file(path_tmp+'warp_template2anat.nii.gz', path_output+'warp_template2anat.nii.gz', verbose)
-    sct.generate_output_file(path_tmp+'warp_anat2template.nii.gz', path_output+'warp_anat2template.nii.gz', verbose)
-    sct.generate_output_file(path_tmp+'template2anat.nii.gz', path_output+'template2anat'+ext_data, verbose)
-    sct.generate_output_file(path_tmp+'anat2template.nii.gz', path_output+'anat2template'+ext_data, verbose)
+    sct.generate_output_file(os.path.join(path_tmp, 'warp_template2anat.nii.gz'), os.path.join(path_output, 'warp_template2anat.nii.gz'), verbose)
+    sct.generate_output_file(os.path.join(path_tmp, 'warp_anat2template.nii.gz'), os.path.join(path_output, 'warp_anat2template.nii.gz'), verbose)
+    sct.generate_output_file(os.path.join(path_tmp, 'template2anat.nii.gz'), os.path.join(path_output, 'template2anat'+ext_data), verbose)
+    sct.generate_output_file(os.path.join(path_tmp, 'anat2template.nii.gz'), os.path.join(path_output, 'anat2template'+ext_data), verbose)
     if ref == 'template':
         # copy straightening files in case subsequent SCT functions need them
-        sct.generate_output_file(path_tmp+'warp_curve2straight.nii.gz', path_output+'warp_curve2straight.nii.gz', verbose)
-        sct.generate_output_file(path_tmp+'warp_straight2curve.nii.gz', path_output+'warp_straight2curve.nii.gz', verbose)
-        sct.generate_output_file(path_tmp+'straight_ref.nii.gz', path_output+'straight_ref.nii.gz', verbose)
+        sct.generate_output_file(os.path.join(path_tmp, 'warp_curve2straight.nii.gz'), os.path.join(path_output, 'warp_curve2straight.nii.gz'), verbose)
+        sct.generate_output_file(os.path.join(path_tmp, 'warp_straight2curve.nii.gz'), os.path.join(path_output, 'warp_straight2curve.nii.gz'), verbose)
+        sct.generate_output_file(os.path.join(path_tmp, 'straight_ref.nii.gz'), os.path.join(path_output, 'straight_ref.nii.gz'), verbose)
 
     # Delete temporary files
     if remove_temp_files:
         sct.printv('\nDelete temporary files...', verbose)
-        sct.run('rm -rf '+path_tmp)
+        shutil.rmtree(path_tmp)
 
     # display elapsed time
     elapsed_time = time.time() - start_time
@@ -654,8 +649,8 @@ def main():
 
     # to view results
     sct.printv('\nTo view results, type:', verbose)
-    sct.printv('fslview '+fname_data+' '+path_output+'template2anat -b 0,4000 &', verbose, 'info')
-    sct.printv('fslview '+fname_template+' -b 0,5000 '+path_output+'anat2template &\n', verbose, 'info')
+    sct.printv('fslview '+fname_data+' ' + os.path.join(path_output, 'template2anat') + ' -b 0,4000 &', verbose, 'info')
+    sct.printv('fslview '+fname_template+' -b 0,5000 ' + os.path.join(path_output, 'anat2template') + ' &\n', verbose, 'info')
 
 
 # Resample labels

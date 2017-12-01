@@ -16,7 +16,7 @@ def init(param_test):
     Initialize class: param_test
     """
     # initialization
-    default_args = ['-d mt/mt1.nii.gz -w mt/warp_template2mt.nii.gz -a 0 -t template/ -qc 0']  # default parameters
+    default_args = ['-d mt/mt1.nii.gz -w mt/warp_template2mt.nii.gz -a 0 -t template -qc 0']  # default parameters
 
     # assign default params
     if not param_test.args:
