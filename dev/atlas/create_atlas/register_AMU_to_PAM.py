@@ -14,21 +14,23 @@
 #TODO: regularize transformations across z
 
 # Import common Python libraries
-import os
-import sys
+import sys, io, os
+
 import numpy as np
+
 # append path that contains scripts, to be able to load modules
 path_script = os.path.dirname(__file__)
-path_sct = os.path.abspath(path_script+'/../../../')
-sys.path.append(path_sct+'/scripts')
+# Get path of the toolbox
+path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
+sys.path.append(os.path.join(path_sct, 'scripts'))
 import sct_utils as sct
 from msct_image import Image
 
 
 # parameters
-fname_wm = '/Users/julien/Dropbox/Public/sct/PAM50/template/PAM50_wm.nii.gz'
-fname_gm = '/Users/julien/Dropbox/Public/sct/PAM50/template/PAM50_gm.nii.gz'
-fname_cord = '/Users/julien/data/sct_dev/PAM50/template/PAM50_cord.nii.gz'
+fname_wm = os.path.join(path_sct, "PAM50", "template", "PAM50_wm.nii.gz")
+fname_gm = os.path.join(path_sct, "PAM50", "template", "PAM50_gm.nii.gz")
+fname_cord = os.path.join(path_sct, "PAM50", "template", "PAM50_cord.nii.gz")
 
 # create temporary folder
 path_tmp = sct.tmp_create()

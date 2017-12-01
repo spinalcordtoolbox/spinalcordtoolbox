@@ -15,13 +15,12 @@
 #########################################################################################
 # TODO: the import of scipy.misc imsave was moved to the specific cases (orth and ellipse) in order to avoid issue #62. This has to be cleaned in the future.
 
-import sys
-import os
-import shutil
-from random import randint
-import time
+import sys, io, os, shutil, time, math, pickle
+
 import numpy as np
 import scipy
+import pandas as pd
+
 import sct_utils as sct
 from msct_nurbs import NURBS
 from sct_image import set_orientation
@@ -29,7 +28,6 @@ from sct_straighten_spinalcord import smooth_centerline
 from msct_image import Image
 from msct_parser import Parser
 import msct_shape
-import pandas as pd
 from msct_types import Centerline
 from spinalcordtoolbox.centerline import optic
 
@@ -196,9 +194,10 @@ def main(args):
     overwrite = 0
     fname_vertebral_labeling = ''
     if "-ofolder" in arguments:
-        output_folder = sct.slash_at_the_end(arguments["-ofolder"], slash=1)
+        output_folder = arguments["-ofolder"]
     else:
-        output_folder = os.getcwd() + '/'
+        output_folder = os.getcwd()
+
     if '-overwrite' in arguments:
         overwrite = arguments['-overwrite']
     if '-vert' in arguments:
@@ -237,11 +236,10 @@ def main(args):
 
     if name_process == 'centerline':
         fname_output = extract_centerline(fname_segmentation, remove_temp_files, verbose=param.verbose, algo_fitting=param.algo_fitting, use_phys_coord=use_phys_coord)
-        if os.path.abspath(fname_output) != output_folder + fname_output:
-            shutil.copy(fname_output, output_folder)
+        sct.copy(fname_output, output_folder)
         # to view results
         sct.printv('\nDone! To view results, type:', param.verbose)
-        sct.printv('fslview ' + fname_segmentation + ' ' + output_folder + fname_output + ' -l Red &\n', param.verbose, 'info')
+        sct.printv('fslview ' + fname_segmentation + ' ' + os.path.join(output_folder, fname_output) + ' -l Red &\n', param.verbose, 'info')
 
     if name_process == 'csa':
         compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_temp_files, step, smoothing_param, slices, vert_lev, fname_vertebral_labeling, algo_fitting=param.algo_fitting, type_window=param.type_window, window_length=param.window_length, angle_correction=angle_correction, use_phys_coord=use_phys_coord)
@@ -289,7 +287,7 @@ def compute_shape(fname_segmentation, remove_temp_files, output_folder, overwrit
                                                                                      verbose=verbose)
 
     path_data, file_data, ext_data = sct.extract_fname(fname_segmentation)
-    fname_output_csv = output_folder + file_data + '_shape.csv'
+    fname_output_csv = os.path.join(output_folder, file_data + '_shape.csv')
 
     # choose sorting mode: z-slice or vertebral levels, depending on input (fname_disks)
     rejected_values = []  # some values are not vertebral levels
@@ -338,24 +336,22 @@ def compute_length(fname_segmentation, remove_temp_files, output_folder, overwri
     fname_segmentation = os.path.abspath(fname_segmentation)
     path_data, file_data, ext_data = sct.extract_fname(fname_segmentation)
 
-    # create temporary folder
-    sct.printv('\nCreate temporary folder...', verbose)
-    path_tmp = sct.slash_at_the_end('tmp.' + time.strftime("%y%m%d%H%M%S") + '_' + str(randint(1, 1000000)), 1)
-    sct.run('mkdir ' + path_tmp, verbose)
+    path_tmp = sct.tmp_create(basename="process_segmentation", verbose=verbose)
 
     # copy files into tmp folder
     sct.printv('cp ' + fname_segmentation + ' ' + path_tmp)
-    shutil.copy(fname_segmentation, path_tmp)
+    sct.copy(fname_segmentation, path_tmp)
 
     if slices or vert_levels:
         # check if vertebral labeling file exists
         sct.check_file_exist(fname_vertebral_labeling)
         path_vert, file_vert, ext_vert = sct.extract_fname(fname_vertebral_labeling)
         sct.printv('cp ' + fname_vertebral_labeling + ' ' + path_tmp)
-        shutil.copy(fname_vertebral_labeling, path_tmp)
+        sct.copy(fname_vertebral_labeling, path_tmp)
         fname_vertebral_labeling = file_vert + ext_vert
 
     # go to tmp folder
+    curdir = os.getcwd()
     os.chdir(path_tmp)
 
     # Change orientation of the input centerline into RPI
@@ -420,7 +416,7 @@ def compute_length(fname_segmentation, remove_temp_files, output_folder, overwri
         sct.printv('\nLength of the segmentation = ' + str(round(length, 2)) + ' mm\n', verbose, 'info')
 
         # write result into output file
-        save_results(output_folder + 'length', overwrite, fname_segmentation, 'length',
+        save_results(os.path.join(output_folder, 'length'), overwrite, fname_segmentation, 'length',
                      '(in mm)', length, np.nan, slices, actual_vert=vert_levels_list,
                      warning_vert_levels=warning)
 
@@ -436,8 +432,11 @@ def compute_length(fname_segmentation, remove_temp_files, output_folder, overwri
 
         sct.printv('\nLength of the segmentation = ' + str(round(length, 2)) + ' mm\n', verbose, 'info')
         # write result into output file
-        save_results(output_folder + 'length', overwrite, fname_segmentation, 'length', '(in mm)', length, np.nan,
+        save_results(os.path.join(output_folder, 'length'), overwrite, fname_segmentation, 'length', '(in mm)', length, np.nan,
                      slices, actual_vert=[], warning_vert_levels='')
+
+    # come back
+    os.chdir(curdir)
 
     # Remove temporary files
     if remove_temp_files:
@@ -456,15 +455,14 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
     path_data, file_data, ext_data = sct.extract_fname(fname_segmentation)
 
     # create temporary folder
-    sct.printv('\nCreate temporary folder...', verbose)
-    path_tmp = sct.slash_at_the_end('tmp.' + time.strftime("%y%m%d%H%M%S") + '_' + str(randint(1, 1000000)), 1)
-    sct.run('mkdir ' + path_tmp, verbose)
+    path_tmp = sct.tmp_create(verbose=verbose)
 
     # Copying input data to tmp folder
     sct.printv('\nCopying data to tmp folder...', verbose)
-    sct.run('sct_convert -i ' + fname_segmentation + ' -o ' + path_tmp + 'segmentation.nii.gz', verbose)
+    sct.run('sct_convert -i ' + fname_segmentation + ' -o ' + os.path.join(path_tmp, "segmentation.nii.gz"), verbose)
 
     # go to tmp folder
+    curdir = os.getcwd()
     os.chdir(path_tmp)
 
     # Change orientation of the input centerline into RPI
@@ -591,19 +589,19 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
                                                 folder_output='./',
                                                 verbose=verbose)
 
-    # come back to parent folder
-    os.chdir('..')
+    # come back
+    os.chdir(curdir)
 
     # Generate output files
     sct.printv('\nGenerate output files...', verbose)
-    sct.generate_output_file(path_tmp + 'centerline.nii.gz', file_data + '_centerline.nii.gz')
-    sct.generate_output_file(path_tmp + 'centerline.txt', file_data + '_centerline.txt')
-    sct.generate_output_file(path_tmp + fname_roi_centerline, file_data + '_centerline.roi')
+    sct.generate_output_file(os.path.join(path_tmp, "centerline.nii.gz"), file_data + '_centerline.nii.gz')
+    sct.generate_output_file(os.path.join(path_tmp, "centerline.txt"), file_data + '_centerline.txt')
+    sct.generate_output_file(os.path.join(path_tmp, fname_roi_centerline), file_data + '_centerline.roi')
 
     # Remove temporary files
     if remove_temp_files:
         sct.printv('\nRemove temporary files...', verbose)
-        sct.run('rm -rf ' + path_tmp, verbose)
+        shutil.rmtree(path_tmp)
 
     return file_data + '_centerline.nii.gz'
 
@@ -612,23 +610,18 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
 # ==========================================================================================
 def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_temp_files, step, smoothing_param, slices, vert_levels, fname_vertebral_labeling='', algo_fitting='hanning', type_window='hanning', window_length=80, angle_correction=True, use_phys_coord=True):
 
-    from math import degrees
-    import pandas as pd
-    import pickle
-
     # Extract path, file and extension
     fname_segmentation = os.path.abspath(fname_segmentation)
     # path_data, file_data, ext_data = sct.extract_fname(fname_segmentation)
 
     # create temporary folder
-    sct.printv('\nCreate temporary folder...', verbose)
-    path_tmp = sct.slash_at_the_end('tmp.' + time.strftime("%y%m%d%H%M%S") + '_' + str(randint(1, 1000000)), 1)
-    sct.run('mkdir ' + path_tmp, verbose)
+    path_tmp = sct.tmp_create()
 
     # Copying input data to tmp folder
     sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
-    sct.run('sct_convert -i ' + fname_segmentation + ' -o ' + path_tmp + 'segmentation.nii.gz', verbose)
+    sct.run('sct_convert -i ' + fname_segmentation + ' -o ' + os.path.join(path_tmp, "segmentation.nii.gz"), verbose)
     # go to tmp folder
+    curdir = os.getcwd()
     os.chdir(path_tmp)
     # Change orientation of the input segmentation into RPI
     sct.printv('\nChange orientation to RPI...', verbose)
@@ -704,7 +697,7 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
 
         # compute CSA, by scaling with voxel size (in mm) and adjusting for oblique plane
         csa[iz - min_z_index] = number_voxels * px * py * np.cos(angle)
-        angles[iz - min_z_index] = degrees(angle)
+        angles[iz - min_z_index] = math.degrees(angle)
 
     sct.printv('\nSmooth CSA across slices...', verbose)
     if smoothing_param:
@@ -780,25 +773,25 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
     sct.run('sct_image -i csa_volume_RPI.nii.gz -setorient ' + orientation + ' -o csa_volume_in_initial_orientation.nii.gz')
     sct.run('sct_image -i angle_volume_RPI.nii.gz -setorient ' + orientation + ' -o angle_volume_in_initial_orientation.nii.gz')
 
-    # come back to parent folder
-    os.chdir('..')
+    # come back
+    os.chdir(curdir)
 
     # Generate output files
     sct.printv('\nGenerate output files...', verbose)
-    sct.generate_output_file(path_tmp + 'csa_volume_in_initial_orientation.nii.gz', output_folder + 'csa_image.nii.gz')  # extension already included in name_output
-    sct.generate_output_file(path_tmp + 'angle_volume_in_initial_orientation.nii.gz', output_folder + 'angle_image.nii.gz')  # extension already included in name_output
+    sct.generate_output_file(os.path.join(path_tmp, "csa_volume_in_initial_orientation.nii.gz"), os.path.join(output_folder, 'csa_image.nii.gz'))  # extension already included in name_output
+    sct.generate_output_file(os.path.join(path_tmp, "angle_volume_in_initial_orientation.nii.gz"), os.path.join(output_folder, 'angle_image.nii.gz'))  # extension already included in name_output
     sct.printv('\n')
 
     # Create output text file
     sct.printv('Display CSA per slice:', verbose)
-    file_results = open(output_folder + 'csa_per_slice.txt', 'w')
+    file_results = open(os.path.join(output_folder, 'csa_per_slice.txt'), 'w')
     file_results.write('# Slice (z),CSA (mm^2),Angle with respect to the I-S direction (degrees)\n')
     for i in range(min_z_index, max_z_index + 1):
         file_results.write(str(int(i)) + ',' + str(csa[i - min_z_index]) + ',' + str(angles[i - min_z_index]) + '\n')
         # Display results
         sct.printv('z = %d, CSA = %f mm^2, Angle = %f deg' % (i, csa[i - min_z_index], angles[i - min_z_index]), type='info')
     file_results.close()
-    sct.printv('Save results in: ' + output_folder + 'csa_per_slice.txt\n', verbose)
+    sct.printv('Save results in: ' + os.path.join(output_folder, 'csa_per_slice.txt\n'), verbose)
 
     # Create output pickle file
     # data frame format
@@ -809,10 +802,10 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
     # results_df = {'Slice (z)': range(min_z_index, max_z_index+1),
     #                            'CSA (mm^2)': csa,
     #                            'Angle with respect to the I-S direction (degrees)': angles}
-    output_file = open(output_folder + 'csa_per_slice.pickle', 'wb')
+    output_file = io.open(os.path.join(output_folder, 'csa_per_slice.pickle'), 'wb')
     pickle.dump(results_df, output_file)
     output_file.close()
-    sct.printv('Save results in: ' + output_folder + 'csa_per_slice.pickle\n', verbose)
+    sct.printv('Save results in: ' + os.path.join(output_folder, 'csa_per_slice.pickle\n'), verbose)
 
     # average csa across vertebral levels or slices if asked (flag -z or -l)
     if slices or vert_levels:
@@ -856,7 +849,7 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
             CSA_for_selected_slices = []
             angles_for_selected_slices = []
             # Read the file csa_per_slice.txt and get the CSA for the selected slices
-            with open(output_folder + 'csa_per_slice.txt') as openfile:
+            with io.open(os.path.join(output_folder, 'csa_per_slice.txt')) as openfile:
                 for line in openfile:
                     if line[0] != '#':
                         line_split = line.strip().split(',')
@@ -874,8 +867,8 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
         sct.printv('Mean angle: ' + str(mean_angle) + ' +/- ' + str(std_angle) + ' degrees', type='info')
 
         # write result into output file
-        save_results(output_folder + 'csa_mean', overwrite, fname_segmentation, 'CSA', 'nb_voxels x px x py x cos(theta) slice-by-slice (in mm^2)', mean_CSA, std_CSA, slices, actual_vert=vert_levels_list, warning_vert_levels=warning)
-        save_results(output_folder + 'angle_mean', overwrite, fname_segmentation, 'Angle with respect to the I-S direction', 'Unit z vector compared to the unit tangent vector to the centerline at each slice (in degrees)', mean_angle, std_angle, slices, actual_vert=vert_levels_list, warning_vert_levels=warning)
+        save_results(os.path.join(output_folder, 'csa_mean'), overwrite, fname_segmentation, 'CSA', 'nb_voxels x px x py x cos(theta) slice-by-slice (in mm^2)', mean_CSA, std_CSA, slices, actual_vert=vert_levels_list, warning_vert_levels=warning)
+        save_results(os.path.join(output_folder, 'angle_mean'), overwrite, fname_segmentation, 'Angle with respect to the I-S direction', 'Unit z vector compared to the unit tangent vector to the centerline at each slice (in degrees)', mean_angle, std_angle, slices, actual_vert=vert_levels_list, warning_vert_levels=warning)
 
         # compute volume between the selected slices
         if slices == '0':
@@ -887,7 +880,7 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
         sct.printv('Volume in between the selected slices: ' + str(volume) + ' mm^3', type='info')
 
         # write result into output file
-        save_results(output_folder + 'csa_volume', overwrite, fname_segmentation, 'volume', 'nb_voxels x px x py x pz (in mm^3)', volume, np.nan, slices, actual_vert=vert_levels_list, warning_vert_levels=warning)
+        save_results(os.path.join(output_folder, 'csa_volume'), overwrite, fname_segmentation, 'volume', 'nb_voxels x px x py x pz (in mm^3)', volume, np.nan, slices, actual_vert=vert_levels_list, warning_vert_levels=warning)
 
     elif (not (slices or vert_levels)) and (overwrite == 1):
         sct.printv('WARNING: Flag \"-overwrite\" is only available if you select (a) slice(s) or (a) vertebral level(s) (flag -z or -vert) ==> CSA estimation per slice will be output in .txt and .pickle files only.', type='warning')
@@ -895,14 +888,14 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
     # Remove temporary files
     if remove_temp_files:
         sct.printv('\nRemove temporary files...')
-        sct.run('rm -rf ' + path_tmp, error_exit='warning')
+        shutil.rmtree(path_tmp)
 
     # Sum up the output file names
-    sct.printv('\nOutput a nifti file of CSA values along the segmentation: ' + output_folder + 'csa_image.nii.gz', verbose, 'info')
-    sct.printv('Output result text file of CSA per slice: ' + output_folder + 'csa_per_slice.txt', verbose, 'info')
+    sct.printv('\nOutput a nifti file of CSA values along the segmentation: ' + os.path.join(output_folder, 'csa_image.nii.gz'), verbose, 'info')
+    sct.printv('Output result text file of CSA per slice: ' + os.path.join(output_folder, 'csa_per_slice.txt'), verbose, 'info')
     if slices or vert_levels:
-        sct.printv('Output result files of the mean CSA across the selected slices: \n\t\t' + output_folder + 'csa_mean.txt\n\t\t' + output_folder + 'csa_mean.xls\n\t\t' + output_folder + 'csa_mean.pickle', verbose, 'info')
-        sct.printv('Output result files of the volume in between the selected slices: \n\t\t' + output_folder + 'csa_volume.txt\n\t\t' + output_folder + 'csa_volume.xls\n\t\t' + output_folder + 'csa_volume.pickle', verbose, 'info')
+        sct.printv('Output result files of the mean CSA across the selected slices: \n\t\t' + os.path.join(output_folder, 'csa_mean.txt') + '\n\t\t' + os.path.join(output_folder, 'csa_mean.xls') + '\n\t\t' + os.path.join(output_folder, 'csa_mean.pickle'), verbose, 'info')
+        sct.printv('Output result files of the volume in between the selected slices: \n\t\t' + os.path.join(output_folder, 'csa_volume.txt') + '\n\t\t' + os.path.join(output_folder, 'csa_volume.xls') + '\n\t\t' + os.path.join(output_folder, 'csa_volume.pickle'), verbose, 'info')
 
 
 def label_vert(fname_seg, fname_label, verbose=1):

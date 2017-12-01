@@ -21,10 +21,6 @@ import sct_utils as sct
 from numpy import sum, mean
 # import time
 from sct_warp_template import get_file_label
-# append path that contains scripts, to be able to load modules
-# status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
-# sys.path.append(path_sct + '/scripts')
-
 
 
 def init(param_test):
@@ -53,8 +49,8 @@ def test_integrity(param_test):
 
     target_name = sct.extract_fname(param_test.file_input)[1]
 
-    dice_fname = param_test.path_output + 'dice_coefficient_' + target_name + '.txt'
-    hausdorff_fname = param_test.path_output + 'hausdorff_dist_' + target_name + '.txt'
+    dice_fname = os.path.join(param_test.path_output, 'dice_coefficient_' + target_name + '.txt')
+    hausdorff_fname = os.path.join(param_test.path_output, 'hausdorff_dist_' + target_name + '.txt')
 
     # Extracting dice results:
     dice = open(dice_fname, 'r')

@@ -26,8 +26,10 @@ from msct_gmseg_utils import (apply_transfo, average_gm_wm, normalize_slice,
                               pre_processing, register_data)
 from msct_image import Image
 from msct_parser import Parser
-from sct_utils import printv, slash_at_the_end
+from sct_utils import printv
 import sct_utils as sct
+
+path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
 
 def get_parser():
     # Initialize the parser
@@ -135,8 +137,7 @@ class ParamModel:
         self.ind_rm = None
         #
         path_script = os.path.dirname(__file__)
-        path_sct = os.path.dirname(path_script)
-        self.path_model_to_load = path_sct + '/data/gm_model'
+        self.path_model_to_load = os.path.join(path_sct, 'data', 'gm_model')
 
     def __repr__(self):
         info = 'Model Param:\n'
@@ -197,7 +198,7 @@ class Model:
         printv('\nComputing the model dictionary ...', self.param.verbose, 'normal')
         # create model folder
         if os.path.exists(self.param_model.new_model_dir) and os.listdir(self.param_model.new_model_dir) != []:
-            shutil.move(self.param_model.new_model_dir, slash_at_the_end(self.param_model.new_model_dir, slash=0) + '_old')
+            shutil.move(self.param_model.new_model_dir, self.param_model.new_model_dir + '_old')
         if not os.path.exists(self.param_model.new_model_dir):
             os.mkdir(self.param_model.new_model_dir)
         # write model info
@@ -232,7 +233,7 @@ class Model:
             - a/several manual segmentation(s) of GM containing 'gm' in its/their name(s)
             - a file containing vertebral level information as a nifti image or as a text file containing 'level' in its name
         '''
-        path_data = slash_at_the_end(self.param_model.path_data, slash=1)
+        path_data = self.param_model.path_data
 
         list_sub = [sub for sub in os.listdir(path_data) if os.path.isdir(os.path.join(path_data, sub))]
         if self.param_model.ind_rm is not None and self.param_model.ind_rm < len(list_sub):
@@ -247,8 +248,8 @@ class Model:
             fname_sc_seg = None
             list_fname_gmseg = []
             fname_level = None
-            for file_name in os.listdir(path_data + sub):
-                fname = path_data + sub + '/' + file_name
+            for file_name in os.listdir(os.path.join(path_data, sub)):
+                fname = os.path.join(path_data, sub, file_name)
                 if os.path.isfile(fname):
                     if 'gm' in file_name:
                         list_fname_gmseg.append(fname)
@@ -300,7 +301,7 @@ class Model:
             list_wmseg_reg = []
             for wm_seg in dic_slice.wm_seg:
                 im_wmseg = Image(param=wm_seg)
-                im_wmseg_reg = apply_transfo(im_src=im_wmseg, im_dest=im_mean, warp=warp_dir + '/' + fname_src2dest, interp='nn')
+                im_wmseg_reg = apply_transfo(im_src=im_wmseg, im_dest=im_mean, warp=os.path.join(warp_dir, fname_src2dest), interp='nn')
 
                 list_wmseg_reg.append(im_wmseg_reg.data.reshape(shape))
 
@@ -308,7 +309,7 @@ class Model:
             list_gmseg_reg = []
             for gm_seg in dic_slice.gm_seg:
                 im_gmseg = Image(param=gm_seg)
-                im_gmseg_reg = apply_transfo(im_src=im_gmseg, im_dest=im_mean, warp=warp_dir + '/' + fname_src2dest, interp='nn')
+                im_gmseg_reg = apply_transfo(im_src=im_gmseg, im_dest=im_mean, warp=os.path.join(warp_dir, fname_src2dest), interp='nn')
                 list_gmseg_reg.append(im_gmseg_reg.data.reshape(shape))
 
             # set slice attributes with data registered into the model space
@@ -405,6 +406,7 @@ class Model:
 
     # ------------------------------------------------------------------------------------------------------------------
     def save_model(self):
+        curdir = os.getcwd()
         os.chdir(self.param_model.new_model_dir)
         # to save:
         # - self.slices = dictionary
@@ -423,7 +425,7 @@ class Model:
         data = self.fitted_data
         pickle.dump(data, gzip.open('fitted_data.pklz', 'wb'), protocol=2)
 
-        os.chdir('..')
+        os.chdir(curdir)
 
     # ----------------------------------- END OF FUNCTIONS USED TO COMPUTE THE MODEL -----------------------------------
 
@@ -445,7 +447,6 @@ class Model:
                 correct_model = False
         if not correct_model:
             path_script = os.path.dirname(__file__)
-            path_sct = os.path.dirname(path_script)
             printv('ERROR: The GM segmentation model is not compatible with this version of the code.\n'
                    'To update the model, run the following lines:\n\n'
                    'cd ' + path_sct + '\n'

@@ -12,6 +12,9 @@
 #
 # Tested with Spinal Cord Toolbox (v3.0.8)
 
+# Abort on error
+set -e
+
 # Check if display is on or off
 if [[ $@ == *"-nodisplay"* ]]; then
   DISPLAYQC=false
@@ -27,8 +30,8 @@ else
   # download example data
   sct_download_data -d sct_example_data
   # go in folder
-  cd sct_example_data
 fi
+cd sct_example_data
 
 # Remove QC folder
 if [ -d ~/qc_batch_processing ]; then
@@ -66,7 +69,7 @@ sct_process_segmentation -i t2_seg.nii.gz -p csa -vert 2:3
 # Compute spinal cord shape information at each slice (e.g. AP/RL diameter, eccentricity, etc.)
 sct_process_segmentation -i t2_seg.nii.gz -p shape
 # Go back to root folder
-cd ..
+cd -
 
 
 # mt
@@ -119,7 +122,7 @@ sct_extract_metric -i mtr.nii.gz -method map -o mtr_in_wm.txt -l 51 -vert 2:5
 # Once we have register the WM atlas to the subject, we can compute the cross-sectional area (CSA) of the gray and white matter
 sct_process_segmentation -i label/template/PAM50_wm.nii.gz -p csa -vert 2:5 -ofolder csa_wm
 sct_process_segmentation -i label/template/PAM50_gm.nii.gz -p csa -vert 2:5 -ofolder csa_gm
-cd ..
+cd -
 
 
 # dmri
@@ -157,7 +160,7 @@ fi
 sct_dmri_compute_dti -i dmri_crop_moco.nii.gz -bval bvals.txt -bvec bvecs.txt
 # Compute FA within right and left lateral corticospinal tracts from slices 2 to 14 using weighted average method
 sct_extract_metric -i dti_FA.nii.gz -z 2:14 -method wa -l 4,5 -o fa_in_cst.txt
-cd ..
+cd -
 
 
 # Display results (to easily compare integrity across SCT versions)
