@@ -289,6 +289,7 @@ def main(args=None):
     os.chdir(curdir)
 
     # Generate output files
+    fname_dmri_moco = os.path.join(path_out, file_data + param.suffix + ext_data)
     sct.create_folder(path_out)
     sct.printv('\nGenerate output files...', param.verbose)
     sct.generate_output_file(os.path.join(path_tmp, dmri_name + param.suffix + ext), os.path.join(path_out, file_data + param.suffix + ext_data), param.verbose)
@@ -304,9 +305,7 @@ def main(args=None):
     elapsed_time = time.time() - start_time
     sct.printv('\nFinished! Elapsed time: ' + str(int(round(elapsed_time))) + 's', param.verbose)
 
-    # To view results
-    sct.printv('\nTo view results, type:', param.verbose)
-    sct.printv('fslview -m ortho,ortho ' + os.path.join(param.path_out, file_data + param.suffix) + ' ' + file_data + ' &\n', param.verbose, 'info')
+    sct.display_viewer_syntax([fname_dmri_moco, file_data], mode='ortho,ortho')
 
 
 #=======================================================================================================================
