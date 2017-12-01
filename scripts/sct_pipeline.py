@@ -42,7 +42,6 @@ usage:
 # TODO: create a dictionnary for param, such that results can display reduced param instead of full. Example: -param t1="blablabla",t2="blablabla"
 # TODO: read_database: hard coded fields to put somewhere else (e.g. config file)
 
-import commands
 import copy_reg
 # import json
 import os
@@ -64,18 +63,9 @@ import sct_utils as sct
 import msct_parser
 import sct_testing
 
-# get path of the toolbox
-# TODO: put it back below when working again (julien 2016-04-04)
-# <<<
-# OLD
-# status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
-# NEW
+path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
 path_script = os.path.dirname(__file__)
-path_sct = os.path.dirname(path_script)
-# >>>
-# append path that contains scripts, to be able to load modules
-sys.path.append(path_sct + '/scripts')
-sys.path.append(path_sct + '/testing')
+sys.path.append(os.path.join(path_sct, 'testing'))
 
 
 def _pickle_method(method):
@@ -121,8 +111,8 @@ def generate_data_list(folder_dataset, verbose=1):
 
     # each directory in folder_dataset should be a directory of a subject
     for subject_dir in os.listdir(folder_dataset):
-        if not subject_dir.startswith('.') and os.path.isdir(folder_dataset + subject_dir):
-            # data_subjects.append(folder_dataset + subject_dir + '/')
+        if not subject_dir.startswith('.') and os.path.isdir(os.path.join(folder_dataset, subject_dir)):
+            # data_subjects.append(os.path.join(folder_dataset, subject_dir))
             list_subj.append(subject_dir)
 
     if not list_subj:
@@ -153,7 +143,7 @@ def read_database(folder_dataset, specifications=None, fname_database='', verbos
     # if fname_database is empty, check if xls or xlsx file exist in the database directory.
     if fname_database == '':
         sct.log.info('  Looking for an XLS file describing the database...')
-        list_fname_database = glob.glob(folder_dataset+'*.xls*')
+        list_fname_database = glob.glob(os.path.join(folder_dataset, '*.xls*'))
         if list_fname_database == []:
             sct.log.warning('WARNING: No XLS file found. Returning empty list.', verbose, 'warning')
             return subj_selected
@@ -216,7 +206,7 @@ def read_database(folder_dataset, specifications=None, fname_database='', verbos
     database_subj_selected = ['_'.join([str(center), str(study), str(subj)]) for center, study, subj in zip(data_selected['Center'], data_selected['Study'], data_selected['Subject'])]
 
     # retrieve folders from folder_database
-    list_folder_dataset = [i for i in os.listdir(folder_dataset) if os.path.isdir(folder_dataset+i)]
+    list_folder_dataset = [i for i in os.listdir(folder_dataset) if os.path.isdir(os.path.join(folder_dataset, i))]
 
     # loop across folders
     for ifolder in list_folder_dataset:
@@ -250,7 +240,8 @@ def read_database(folder_dataset, specifications=None, fname_database='', verbos
 
 def function_launcher(args):
     # append local script to PYTHONPATH for import
-    sys.path.append('{}/testing'.format(os.getenv('SCT_DIR')))
+    path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
+    sys.path.append(os.path.join(path_sct, "testing"))
     # retrieve param class from sct_testing
     param_testing = sct_testing.Param()
     param_testing.function_to_test = args[0]
@@ -324,13 +315,13 @@ def run_function(function, folder_dataset, list_subj, list_args=[], nb_cpu=None,
     """
 
     # add full path to each subject
-    list_subj_path = [sct.slash_at_the_end(folder_dataset + subject, 1) for subject in list_subj]
+    list_subj_path = [os.path.join(folder_dataset, subject) for subject in list_subj]
 
     # All scripts that are using multithreading with ITK must not use it when using multiprocessing on several subjects
     os.environ["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"] = "1"
 
     # create list that finds all the combinations for function + subject path + arguments. Example of one list element:
-    # ('sct_propseg', '/Users/julien/data/sct_test_function/200_005_s2/', '-i t2/t2.nii.gz -c t2')
+    # ('sct_propseg', os.path.join(path_sct, 'data', 'sct_test_function', '200_005_s2''), '-i ' + os.path.join("t2", "t2.nii.gz") + ' -c t2')
     list_func_subj_args = list(itertools.product(*[[function], list_subj_path, list_args]))
         # data_and_params = itertools.izip(itertools.repeat(function), data_subjects, itertools.repeat(parameters))
 
@@ -445,7 +436,7 @@ if __name__ == "__main__":
     parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
     function_to_test = arguments["-f"]
-    path_data = sct.slash_at_the_end(os.path.expanduser(arguments["-d"]), slash=1)
+    path_data = arguments["-d"]
     if "-p" in arguments:
         # in case users used more than one '-p' flag, the output will be a list of all arguments (for each -p)
         if isinstance(arguments['-p'], list):

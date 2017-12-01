@@ -11,33 +11,29 @@
 # TODO: find a way to be able to have list of arguments and loop across list elements.
 
 
-import sys
-import time, random
-from copy import deepcopy
-import os
+import sys, io, os, time, random, copy, shlex, importlib, shutil
+
 from pandas import DataFrame
-import shlex
-import importlib
+
 from msct_parser import Parser
+import sct_utils as sct
+
 # get path of SCT
 path_script = os.path.dirname(__file__)
 path_sct = os.path.dirname(path_script)
-# append path that contains scripts, to be able to load modules
-sys.path.append(path_sct + '/scripts')
-sys.path.append(path_sct + '/testing')
-import sct_utils as sct
+sys.path.append(os.path.join(path_sct, 'testing'))
 
 
 # Parameters
 class Param:
     def __init__(self):
         self.download = 0
-        self.path_data = 'sct_testing_data/'  # path to the testing data
+        self.path_data = 'sct_testing_data'  # path to the testing data
         self.path_output = []  # list of output folders
         self.function_to_test = None
         self.remove_tmp_file = 0
         self.verbose = 1
-        self.path_tmp = ''
+        self.path_tmp = None
         self.args = []  # list of input arguments to the function
         self.args_with_path = ''  # input arguments to the function, with path
         # self.list_fname_gt = []  # list of fname for ground truth data
@@ -121,7 +117,7 @@ def main(args=None):
     start_time = time.time()
 
     # get absolute path and add slash at the end
-    param.path_data = sct.slash_at_the_end(os.path.abspath(param.path_data), 1)
+    param.path_data = os.path.abspath(param.path_data)
 
     # check existence of testing data folder
     if not os.path.isdir(param.path_data) or param.download:
@@ -132,8 +128,8 @@ def main(args=None):
 
     # create temp folder that will have all results and go in it
     param.path_tmp = sct.tmp_create(verbose=0)
+    curdir = os.getcwd()
     os.chdir(param.path_tmp)
-    param.full_path_tmp = os.getcwd() + '/'
 
     # get list of all scripts to test
     list_functions = fill_functions()
@@ -160,7 +156,7 @@ def main(args=None):
         list_status_function = []
         list_output = []
         for i in range(0, len(param.args)):
-            param_test = deepcopy(param)
+            param_test = copy.deepcopy(param)
             param_test.default_args = param.args
             param_test.args = param.args[i]
             # if list_fname_gt is not empty, assign it
@@ -178,7 +174,9 @@ def main(args=None):
             else:
                 print_warning()
                 status = 99
-            print list_output
+            for output in list_output:
+                for line in output.splitlines():
+                    print("   %s" % line)
         else:
             print_ok()
             status = 0
@@ -191,10 +189,13 @@ def main(args=None):
     elapsed_time = time.time() - start_time
     sct.printv('Finished! Elapsed time: ' + str(int(round(elapsed_time))) + 's\n')
 
+    # come back
+    os.chdir(curdir)
+
     # remove temp files
     if param.remove_tmp_file:
         sct.printv('\nRemove temporary files...', 0)
-        sct.run('rm -rf ' + param.path_tmp, 0)
+        shutil.rmtree(param.path_tmp)
 
     e = 0
     if sum(list_status) != 0:
@@ -232,7 +233,7 @@ def fill_functions():
         'sct_compute_mtr',
         'sct_compute_mscc',
         'sct_compute_snr',
-	    'sct_concat_transfo',
+        'sct_concat_transfo',
         'sct_convert',
         # 'sct_convert_binary_to_trilinear',  # not useful
         'sct_create_mask',
@@ -311,7 +312,7 @@ def print_fail():
 def write_to_log_file(fname_log, string, mode='w', prepend=False):
     """
     status, output = sct.run('echo $SCT_DIR', 0)
-    path_logs_dir = output + '/testing/logs'
+    path_logs_dir = os.path.join(output, "testing", "logs")
 
     if not os.path.isdir(path_logs_dir):
         os.makedirs(path_logs_dir)
@@ -355,22 +356,20 @@ def test_function(param_test):
     module_testing = importlib.import_module('test_' + param_test.function_to_test)
 
     # retrieve subject name
-    subject_folder = sct.slash_at_the_end(param_test.path_data, 0).split('/')
-    subject_folder = subject_folder[-1]
+    subject_folder = os.path.basename(param_test.path_data)
+
     # build path_output variable
-    path_testing = os.getcwd() + '/'
-    param_test.path_output = sct.slash_at_the_end(param_test.function_to_test + '_' + subject_folder + '_' + time.strftime("%y%m%d%H%M%S") + '_' + str(random.randint(1, 1000000)), slash=1)
-    sct.create_folder(param_test.path_output)
-    param_test.path_output = path_testing + param_test.path_output
+    path_testing = os.getcwd()
+    param_test.path_output = sct.tmp_create(basename=(param_test.function_to_test + '_' + subject_folder), verbose=0)
 
     # get parser information
     parser = module_function_to_test.get_parser()
     dict_args = parser.parse(shlex.split(param_test.args), check_file_exist=False)
     # TODO: if file in list does not exist, raise exception and assign status=200
     # add data path to each input argument
-    dict_args_with_path = parser.add_path_to_file(deepcopy(dict_args), param_test.path_data, input_file=True)
+    dict_args_with_path = parser.add_path_to_file(copy.deepcopy(dict_args), param_test.path_data, input_file=True)
     # add data path to each output argument
-    dict_args_with_path = parser.add_path_to_file(deepcopy(dict_args_with_path), param_test.path_output, input_file=False, output_file=True)
+    dict_args_with_path = parser.add_path_to_file(copy.deepcopy(dict_args_with_path), param_test.path_output, input_file=False, output_file=True)
     # save into class
     param_test.dict_args_with_path = dict_args_with_path
     param_test.args_with_path = parser.dictionary_to_string(dict_args_with_path)
@@ -381,7 +380,7 @@ def test_function(param_test):
 
     # open log file
     # Note: the statement below is not included in the if, because even if redirection does not occur, we want the file to be create otherwise write_to_log will fail
-    param_test.fname_log = param_test.path_output + param_test.function_to_test + '.log'
+    param_test.fname_log = os.path.join(param_test.path_output, param_test.function_to_test + '.log')
     stdout_log = file(param_test.fname_log, 'w')
     # redirect to log file
     if param_test.redirect_stdout:

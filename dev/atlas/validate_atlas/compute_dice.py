@@ -16,16 +16,13 @@
 # Author : Charles Naaman
 # Created : 31-07-2014
 
-import glob
-import os 
-import sys
-import commands
-import re
+import sys, io, os, re, commands, glob, math
+
 import numpy as np
-import math
-status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+
+path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
 # append path that contains scripts, to be able to load modules
-sys.path.append(path_sct + '/scripts')
+sys.path.append(os.path.join(path_sct, "scripts"))
 import sct_utils as sct
 
 
@@ -33,34 +30,35 @@ import sct_utils as sct
 # The enumeration order of the tracts must correspond with the manually created masks
 selected_tracts = (2,17)
 selected_tracts = list(selected_tracts)
+
 # Folder where the results of dice estimation are outputed
-DICE_estimation_folder= 'DICE_coefficient/'
-if os.path.isdir(DICE_estimation_folder) == 0:
-    status, output = sct.run('mkdir '+ DICE_estimation_folder )
+DICE_estimation_folder= 'DICE_coefficient'
+if not os.path.isdir(DICE_estimation_folder):
+    os.makedirs(DICE_estimation_folder)
+
 # File where results are printed
-results_file = DICE_estimation_folder + 'results.txt'
+results_file = os.path.join(DICE_estimation_folder, 'results.txt')
 
 # Folder where the atlas of the tracts are
 atlas_tracts_folder = 'cropped_atlas'
 
 # Tract of the dorsal column
 sct.run('./add_tracts_dc.py')
-dorsal_column_tract = DICE_estimation_folder + 'dorsal_column.nii.gz'
+dorsal_column_tract = os.path.join(DICE_estimation_folder, 'dorsal_column.nii.gz')
 
 # Name and path of the binarized created tracts 
-bin_tracts_folder = DICE_estimation_folder + 'bin_tracts/'
-if os.path.isdir(bin_tracts_folder) == 0:
-    status, output = sct.run('mkdir ' + bin_tracts_folder)
+bin_tracts_folder = os.path.join(DICE_estimation_folder, 'bin_tracts')
+
+# Remove all of the binarized tracts already in the folder
+if os.path.isdir(bin_tracts_folder):
+    shutil.rmtree(bin_tracts_folder)
+os.makedirs(bin_tracts_folder)
 
 bin_tracts_prefix = 'bin_tract_mask'
 
-# Remove all of the binarized tracts already in the folder
-if os.listdir(bin_tracts_folder):
-   sct.run('rm '+ bin_tracts_folder + bin_tracts_prefix + '*')
-
 # Folder where the manually made masks of tracts are located
 # In this folder, each subfolder has to contain manually created masks by different users. No other subfolders are allowed.
-manual_masks_folder = 'manual_masks/'
+manual_masks_folder = 'manual_masks'
 
 # Get the names of the folders created by user
 user_folders = os.walk(manual_masks_folder).next()[1]
@@ -70,7 +68,7 @@ number_users = len(user_folders)
 
 
 # Extract the name of the different tracts in the atlas
-fname_atlas_tract = glob.glob(atlas_tracts_folder + '/*.nii.gz')
+fname_atlas_tract = glob.glob(os.path.join(atlas_tracts_folder, '*.nii.gz'))
 fname_atlas_tract.append(dorsal_column_tract)
 
 # Create binarized tracts 
@@ -80,9 +78,9 @@ selected_tracts.append(len(fname_atlas_tract)-1)
 fname_bin_tract = [None]*(len(fname_atlas_tract)+1)
 for i in selected_tracts:
     if i < 10:
-        fname_bin_tract[i] = bin_tracts_folder + bin_tracts_prefix + '0' + str(i) + '.nii.gz' 
+        fname_bin_tract[i] = os.path.join(bin_tracts_folder, bin_tracts_prefix + '0' + str(i) + '.nii.gz')
     else:
-        fname_bin_tract[i] = bin_tracts_folder + bin_tracts_prefix + str(i) + '.nii.gz' 
+        fname_bin_tract[i] = os.path.join(bin_tracts_folder, bin_tracts_prefix + str(i) + '.nii.gz')
         
 # Initialize arrays in which DICE estimation results are saved
 DICE_atlas_user = np.zeros([number_users, len(selected_tracts)])
@@ -106,7 +104,7 @@ sct.run('echo "=================================================================
 
 for j in range(0, number_users):
     # Get the name and path of the masks created by the user
-    fname_mask[j] = glob.glob(manual_masks_folder + user_folders[j] + '/*')
+    fname_mask[j] = glob.glob(os.path.join(manual_masks_folder, user_folders[j] + '*'))
     for i in selected_tracts:
         # Adjust geometry of the binarized tracts and the masks created by user
         sct.run('fslcpgeom ' + fname_mask[j][selected_tracts.index(i)] + ' ' + fname_bin_tract[i])
@@ -161,7 +159,7 @@ print output
 #     for j in range(0, number_users):
 #         add_man_masks = 'fslmaths '
 #         add_bin_tracts = 'fslmaths '
-#         fname_mask[j] = glob.glob(manual_masks_folder + user_folders[j] + '/*')
+#         fname_mask[j] = glob.glob(os.path.join(manual_masks_folder, user_folders[j] + '*'))
 #         for i in selected_tracts:
 #             # Get the name and path of the masks created by the user
 #             add_man_masks = add_man_masks + fname_mask[j][selected_tracts.index(i)] + ' -add '
@@ -170,8 +168,8 @@ print output
 #         add_man_masks=add_man_masks[:-len(' -add ')]
 #         add_bin_tracts=add_bin_tracts[:-len(' -add ')]
 #
-#         fname_sum_man_masks[j] = manual_masks_folder + user_folders[j] + '/' + user_folders[j] + 'sum.nii.gz'
-#         fname_sum_bin_tract[j] = bin_tracts_folder + 'sum.nii.gz'
+#         fname_sum_man_masks[j] = os.path.join(manual_masks_folder, user_folders[j], user_folders[j] + 'sum.nii.gz')
+#         fname_sum_bin_tract[j] = os.path.join(bin_tracts_folder, 'sum.nii.gz')
 #
 #         add_man_masks = add_man_masks + ' ' + fname_sum_man_masks[j]
 #         add_bin_tracts = add_bin_tracts + ' ' + fname_sum_bin_tract[j]

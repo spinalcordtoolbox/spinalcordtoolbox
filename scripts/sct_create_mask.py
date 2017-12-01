@@ -106,11 +106,7 @@ def create_mask(param):
     if param.fname_out == '':
         param.fname_out = param.file_prefix + file_data + ext_data
 
-    # create temporary folder
-    sct.printv('\nCreate temporary folder...', param.verbose)
-    path_tmp = sct.tmp_create(param.verbose)
-    # )sct.slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S"), 1)
-    # sct.run('mkdir '+path_tmp, param.verbose)
+    path_tmp = sct.tmp_create(basename="create_mask", verbose=param.verbose)
 
     sct.printv('\nCheck orientation...', param.verbose)
     orientation_input = get_orientation(Image(param.fname_data))
@@ -118,13 +114,14 @@ def create_mask(param):
     reorient_coordinates = False
 
     # copy input data to tmp folder
-    convert(param.fname_data, path_tmp + 'data.nii')
+    convert(param.fname_data, os.path.join(path_tmp, "data.nii"))
     if method_type == 'centerline':
-        convert(method_val, path_tmp + 'centerline.nii.gz')
+        convert(method_val, os.path.join(path_tmp, "centerline.nii.gz"))
     if method_type == 'point':
-        convert(method_val, path_tmp + 'point.nii.gz')
+        convert(method_val, os.path.join(path_tmp, "point.nii.gz"))
 
     # go to tmp folder
+    curdir = os.getcwd()
     os.chdir(path_tmp)
 
     # reorient to RPI
@@ -139,7 +136,7 @@ def create_mask(param):
     # if method_type == 'centerline':
     #     orientation_centerline = get_orientation_3d(method_val, filename=True)
     #     if not orientation_centerline == 'RPI':
-    #         sct.run('sct_image -i ' + method_val + ' -o ' + path_tmp + 'centerline.nii.gz' + ' -setorient RPI -v 0', verbose=False)
+    #         sct.run('sct_image -i ' + method_val + ' -o ' + os.path.join(path_tmp, "centerline.nii.gz") + ' -setorient RPI -v 0', verbose=False)
     #     else:
     #         convert(method_val, path_tmp+'centerline.nii.gz')
 
@@ -251,12 +248,12 @@ def create_mask(param):
     im_mask = copy_header(im_dat, im_mask)
     im_mask.save()
 
-    # come back to parent folder
-    os.chdir('..')
+    # come back
+    os.chdir(curdir)
 
     # Generate output files
     sct.printv('\nGenerate output files...', param.verbose)
-    sct.generate_output_file(path_tmp + 'mask.nii.gz', param.fname_out)
+    sct.generate_output_file(os.path.join(path_tmp, "mask.nii.gz"), param.fname_out)
 
     # Remove temporary files
     if param.remove_tmp_files == 1:

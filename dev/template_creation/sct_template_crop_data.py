@@ -11,14 +11,11 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import sys
-import os
-import commands
-import getopt
-import glob
-import shutil
-status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
-sys.path.append(path_sct+'/scripts')
+import sys, io, os, getopt, glob, shutil
+
+path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+sys.path.append(os.path.join(path_sct, 'scripts'))
+
 import sct_utils as sct
 
 class Param:
@@ -66,10 +63,6 @@ def main():
     # check input folder
     sct.check_folder_exist(path_data)
 
-    # add slash
-    path_data = sct.slash_at_the_end(path_data, 1)
-    path_out = sct.slash_at_the_end(path_out, 1)
-
     # create output folder
     if os.path.exists(path_out):
         sct.printv('WARNING: Output folder exists. Deleting it.', 1, 'warning')
@@ -79,14 +72,14 @@ def main():
     os.makedirs(path_out)
 
     # list all files in folder
-    files = [f for f in glob.glob(path_data+'*.nii.gz')]
-    # for files in glob.glob(path_data+'*.nii.gz'):
+    files = [f for f in glob.glob(os.path.join(path_data, '*.nii.gz'))]
+    # for files in glob.glob(os.path.join(path_data, '*.nii.gz')):
     #     print files
 
     # crop files one by one (to inform user)
     for f in files:
         path_f, file_f, ext_f = sct.extract_fname(f)
-        sct.run('fslroi '+f+' '+path_out+file_f+' '+xmin+' '+xsize+' '+ymin+' '+ysize+' '+zmin+' '+zsize)
+        sct.run('fslroi '+f+' '+os.path.join(path_out, file_f)+' '+xmin+' '+xsize+' '+ymin+' '+ysize+' '+zmin+' '+zsize)
 
     # to view results
     print '\nDone!'

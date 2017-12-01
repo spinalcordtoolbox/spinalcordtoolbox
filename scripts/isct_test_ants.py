@@ -49,10 +49,10 @@ def main():
         elif opt in ('-r'):
             remove_temp_files = int(arg)
 
-    # create temporary folder
-    path_tmp = sct.tmp_create(verbose)
+    path_tmp = sct.tmp_create(basename="test_ants", verbose=verbose)
 
     # go to tmp folder
+    curdir = os.getcwd()
     os.chdir(path_tmp)
 
     # Initialise numpy volumes
@@ -111,8 +111,8 @@ def main():
     if dice > dice_acceptable:
         test_passed = 1
 
-    # come back to parent folder
-    os.chdir('..')
+    # come back
+    os.chdir(curdir)
 
     # Delete temporary files
     if remove_temp_files == 1:
