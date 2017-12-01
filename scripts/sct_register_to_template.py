@@ -279,6 +279,7 @@ def main(args=None):
     sct.run('sct_convert -i ' + fname_landmarks + ' -o ' + os.path.join(path_tmp, ftmp_label))
     sct.run('sct_convert -i ' + fname_template + ' -o ' + os.path.join(path_tmp, ftmp_template))
     sct.run('sct_convert -i ' + fname_template_seg + ' -o ' + os.path.join(path_tmp, ftmp_template_seg))
+    sct_convert.main(args=['-i', fname_template_vertebral_labeling, '-o', os.path.join(path_tmp, ftmp_template_label)])
     if label_type == 'disc':
         sct_convert.main(args=['-i', fname_template_disc_labeling, '-o', os.path.join(path_tmp, ftmp_template_label)])
     # sct.run('sct_convert -i '+fname_template_label+' -o '+os.path.join(path_tmp, ftmp_template_label))
@@ -290,7 +291,7 @@ def main(args=None):
     # Generate labels from template vertebral labeling
     if label_type == 'body':
         sct.printv('\nGenerate labels from template vertebral labeling', verbose)
-        sct_label_utils.main(args=['-i', fname_template_vertebral_labeling, '-vert-body', '0', '-o', ftmp_template_label])
+        sct_label_utils.main(args=['-i', ftmp_template_label, '-vert-body', '0', '-o', ftmp_template_label])
     # sct.run('sct_label_utils -i ' + fname_template_vertebral_labeling + ' -vert-body 0 -o ' + ftmp_template_label)
 
     # check if provided labels are available in the template
@@ -575,10 +576,12 @@ def main(args=None):
 
     # Generate output files
     sct.printv('\nGenerate output files...', verbose)
+    fname_template2anat = os.path.join(path_output, 'template2anat' + ext_data)
+    fname_anat2template = os.path.join(path_output, 'anat2template' + ext_data)
     sct.generate_output_file(os.path.join(path_tmp, "warp_template2anat.nii.gz"), os.path.join(path_output, "warp_template2anat.nii.gz"), verbose)
     sct.generate_output_file(os.path.join(path_tmp, "warp_anat2template.nii.gz"), os.path.join(path_output, "warp_anat2template.nii.gz"), verbose)
-    sct.generate_output_file(os.path.join(path_tmp, "template2anat.nii.gz"), os.path.join(path_output, "template2anat") + ext_data, verbose)
-    sct.generate_output_file(os.path.join(path_tmp, "anat2template.nii.gz"), os.path.join(path_output, "anat2template") + ext_data, verbose)
+    sct.generate_output_file(os.path.join(path_tmp, "template2anat.nii.gz"), fname_template2anat, verbose)
+    sct.generate_output_file(os.path.join(path_tmp, "anat2template.nii.gz"), fname_anat2template, verbose)
     if ref == 'template':
         # copy straightening files in case subsequent SCT functions need them
         sct.generate_output_file(os.path.join(path_tmp, "warp_curve2straight.nii.gz"), os.path.join(path_output, "warp_curve2straight.nii.gz"), verbose)
@@ -613,10 +616,8 @@ def main(args=None):
         sct.printv('Use the following command to see the results in a browser')
         sct.printv('sct_qc -folder %s' % qc_path, type='info')
 
-    # to view results
-    sct.printv('\nTo view results, type:', verbose)
-    sct.printv('fslview ' + fname_data + ' ' + path_output + 'template2anat -b 0,4000 &', verbose, 'info')
-    sct.printv('fslview ' + fname_template + ' -b 0,5000 ' + path_output + 'anat2template &\n', verbose, 'info')
+    sct.display_viewer_syntax([fname_data, fname_template2anat], verbose=verbose)
+    sct.display_viewer_syntax([fname_template, fname_anat2template], verbose=verbose)
 
 
 # Resample labels

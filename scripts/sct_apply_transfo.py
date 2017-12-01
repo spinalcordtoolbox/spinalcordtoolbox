@@ -237,9 +237,7 @@ class Transform:
             ImageCropper(input_file=fname_out, output_file=fname_out, ref=warping_field).crop()
             # sct.run('sct_crop_image -i '+fname_out+' -o '+fname_out+' -ref '+warping_field)
 
-        # display elapsed time
-        sct.printv('\nDone! To view results, type:', verbose)
-        sct.printv('fslview ' + fname_dest + ' ' + fname_out + ' &\n', verbose, 'info')
+        sct.display_viewer_syntax([fname_dest, fname_dest], verbose=verbose)
 
 
 # MAIN

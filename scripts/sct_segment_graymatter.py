@@ -736,12 +736,12 @@ def main(args=None):
 
     # save quality control and sct.printv(info)
     if param_seg.type_seg == 'bin':
-        wm_col = 'Red'
-        gm_col = 'Blue'
+        wm_col = 'red'
+        gm_col = 'blue'
         b = '0,1'
     else:
-        wm_col = 'Blue-Lightblue'
-        gm_col = 'Red-Yellow'
+        wm_col = 'blue-lightblue'
+        gm_col = 'red-yellow'
         b = '0.4,1'
 
     if param_seg.qc:
@@ -755,8 +755,8 @@ def main(args=None):
         # remove tmp_dir
         shutil.rmtree(seg_gm.tmp_dir)
 
-    printv('\nDone! To view results, type:', param.verbose)
-    printv('fslview ' + param_seg.fname_im_original + ' ' + seg_gm.fname_res_gmseg + ' -b ' + b + ' -l ' + gm_col + ' -t 0.7 ' + seg_gm.fname_res_wmseg + ' -b ' + b + ' -l ' + wm_col + ' -t 0.7  & \n', param.verbose, 'info')
+    sct.display_viewer_syntax([param_seg.fname_im_original, seg_gm.fname_res_gmseg, seg_gm.fname_res_wmseg], colormaps=['gray', gm_col, wm_col], opacities=['1', '0.7', '0.7'], verbose=param.verbose)
+
 
 if __name__ == "__main__":
     sct.start_stream_logger()
