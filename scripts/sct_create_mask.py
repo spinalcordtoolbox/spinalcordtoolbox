@@ -260,9 +260,7 @@ def create_mask(param):
         sct.printv('\nRemove temporary files...', param.verbose)
         sct.run('rm -rf ' + path_tmp, param.verbose, error_exit='warning')
 
-    # to view results
-    sct.printv('\nDone! To view results, type:', param.verbose)
-    sct.printv('fslview ' + param.fname_data + ' ' + param.fname_out + ' -l Red -t 0.5 &', param.verbose, 'info')
+    sct.display_viewer_syntax([param.fname_data, param.fname_out], colormaps=['gray', 'red'], opacities=['', '0.5'])
 
 
 # create_line

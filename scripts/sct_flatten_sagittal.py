@@ -193,16 +193,15 @@ def main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, 
 
     # Generate output file (in current folder)
     sct.printv('\nGenerate output file (in current folder)...')
-    sct.generate_output_file('tmp.anat_orient_fit_reorient.nii', file_anat + '_flatten' + ext_anat)
+    fname_out = os.path.join(file_anat, '_flatten' + ext_anat)
+    sct.generate_output_file('tmp.anat_orient_fit_reorient.nii', fname_out)
 
     # Delete temporary files
     if remove_temp_files == 1:
         sct.printv('\nDelete temporary files...')
         sct.run('rm -rf tmp.*')
 
-    # to view results
-    sct.printv('\nDone! To view results, type:')
-    sct.printv('fslview ' + file_anat + ext_anat + ' ' + file_anat + '_flatten' + ext_anat + ' &\n')
+    sct.display_viewer_syntax([fname_anat, fname_out])
 
 
 def b_spline_centerline(x_centerline, y_centerline, z_centerline):

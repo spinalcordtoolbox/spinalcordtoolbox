@@ -203,6 +203,96 @@ def run(cmd, verbose=1, error_exit='error', raise_exception=False, cwd=None):
         return status_output, output_final[0:-1]
 
 
+def check_exe(name):
+    """
+    Ensure that a program exists
+    :type name: string
+    :param name: name or path to program
+    :return: path of the program or None
+    """
+    def is_exe(fpath):
+        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
+
+    fpath, fname = os.path.split(name)
+    if fpath and is_exe(name):
+        return fpath
+    else:
+        for path in os.environ["PATH"].split(os.pathsep):
+            path = path.strip('"')
+            exe_file = os.path.join(path, name)
+            if is_exe(exe_file):
+                return exe_file
+
+    return None
+
+
+def display_viewer_syntax(files, colormaps=[], minmax=[], opacities=[], mode='', verbose=1):
+    """
+    Print the syntax to open a viewer and display images for QC. To use default values, enter empty string: ''
+    Parameters
+    ----------
+    files [list:string]: list of NIFTI file names
+    colormaps [list:string]: list of colormaps associated with each file. Available colour maps: blue, blue-lightblue, cool, copper, cortical, green, greyscale, hot, hsv, pink, random, red, red-yellow, render1, render1t, render2, render2t, render3, retino, subcortical, yellow. Default=greyscale.
+    minmax [list:string]: list of min,max brightness scale associated with each file. Separate with comma.
+    opacities [list:string]: list of opacity associated with each file. Between 0 and 1.
+
+    Returns
+    -------
+    None
+
+    Example
+    -------
+    sct.display_viewer_syntax([file1, file2, file3])
+    sct.display_viewer_syntax([file1, file2], colormaps=['gray', 'red'], minmax=['', '0,1'], opacities=['', '0.7'])
+    """
+    list_viewer = ['fslview', 'fslview_deprecated', 'fsleyes']  # list of known viewers. Can add more.
+    dict_fslview = {'gray': 'Greyscale', 'red-yellow': 'Red-Yellow', 'blue-lightblue': 'Blue-Lightblue', 'red': 'Red', 'random': 'Random-Rainbow'}
+    dict_fsleyes = {'gray': 'greyscale', 'red-yellow': 'red-yellow', 'blue-lightblue': 'blue-lightblue', 'red': 'red', 'random': 'random'}
+    selected_viewer = None
+
+    # find viewer
+    exe_viewers = [viewer for viewer in list_viewer if check_exe(viewer)]
+    if exe_viewers:
+        selected_viewer = exe_viewers[0]
+    else:
+        return
+
+    # loop across files and build syntax
+    cmd = selected_viewer
+    # add mode (only supported by fslview for the moment)
+    if mode and selected_viewer in ['fslview', 'fslview_deprecated']:
+        cmd += ' -m ' + mode
+    for i in range(len(files)):
+        # add viewer-specific options
+        if selected_viewer in ['fslview', 'fslview_deprecated']:
+            cmd += ' ' + files[i]
+            if colormaps:
+                if colormaps[i]:
+                    cmd += ' -l ' + dict_fslview[colormaps[i]]
+            if minmax:
+                if minmax[i]:
+                    cmd += ' -b ' + minmax[i]  # a,b
+            if opacities:
+                if opacities[i]:
+                    cmd += ' -t ' + opacities[i]
+        if selected_viewer in ['fsleyes']:
+            cmd += ' ' + files[i]
+            if colormaps:
+                if colormaps[i]:
+                    cmd += ' -cm ' + dict_fsleyes[colormaps[i]]
+            if minmax:
+                if minmax[i]:
+                    cmd += ' -dr ' + ' '.join(minmax[i].split(','))  # a b
+            if opacities:
+                if opacities[i]:
+                    cmd += ' -a ' + str(float(opacities[i]) * 100)  # in percentage
+    cmd += ' &'
+    # display
+    if verbose:
+        printv('\nDone! To view results, type:')
+        printv(cmd + '\n', verbose=1, type='info')
+
+
 def copy(src, dst):
     """Copy src to dst.
     If src and dst are the same files, don't crash.

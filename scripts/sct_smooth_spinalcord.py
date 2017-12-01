@@ -194,9 +194,7 @@ def main(args=None):
     elapsed_time = time.time() - start_time
     sct.printv('\nFinished! Elapsed time: ' + str(int(round(elapsed_time))) + 's\n')
 
-    # to view results
-    sct.printv('Done! To view results, type:', verbose)
-    sct.printv('fslview ' + file_anat + ' ' + file_anat + '_smooth &\n', verbose, 'info')
+    sct.display_viewer_syntax([file_anat, file_anat + '_smooth'], verbose=verbose)
 
 
 # START PROGRAM
