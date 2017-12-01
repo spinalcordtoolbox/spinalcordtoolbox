@@ -13,20 +13,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import errno
-import sys
-import time
-
-import os
-import commands
-import subprocess
-import re
-from sys import stdout
-import logging
-
-import glob
-import shutil
-
+import sys, io, os, time, errno, tempfile, commands, subprocess, re, logging, glob, shutil
 
 # TODO: under run(): add a flag "ignore error" for isct_ComposeMultiTransform
 # TODO: check if user has bash or t-schell for fsloutput definition
@@ -171,12 +158,22 @@ def run_old(cmd, verbose=1):
         return status, output
 
 
-def run(cmd, verbose=1, error_exit='error', raise_exception=False):
+def run(cmd, verbose=1, error_exit='error', raise_exception=False, cwd=None):
     # if verbose == 2:
     #     printv(sys._getframe().f_back.f_code.co_name, 1, 'process')
+
+    if cwd is None:
+        cwd = os.getcwd()
+
     if verbose:
-        printv(cmd, 1, 'code')
-    process = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        printv("%s # in %s" % (cmd, cwd), 1, 'code')
+
+    if sys.hexversion < 0x0300000000 and isinstance(cmd, unicode):
+        cmd = str(cmd)
+
+    shell = isinstance(cmd, str)
+
+    process = subprocess.Popen(cmd, shell=shell, cwd=cwd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     output_final = ''
     while True:
         # Watch out for deadlock!!!
@@ -206,6 +203,22 @@ def run(cmd, verbose=1, error_exit='error', raise_exception=False):
         return status_output, output_final[0:-1]
 
 
+def copy(src, dst):
+    """Copy src to dst.
+    If src and dst are the same files, don't crash.
+    """
+    try:
+        shutil.copy(src, dst)
+    except Exception as e:
+        if sys.hexversion < 0x03000000:
+            if isinstance(e, shutil.Error) and "same file" in str(e):
+                return
+        else:
+            if isinstance(e, shutil.SameFileError):
+                return
+        raise # Must be another error
+
+
 # =======================================================================================================================
 # Get SCT version
 # =======================================================================================================================
@@ -233,7 +246,7 @@ def get_sct_version():
     else:
         install_type = 'package'
     # fetch version
-    with open(path_sct + '/version.txt', 'r') as myfile:
+    with io.open(os.path.join(path_sct, 'version.txt'), 'r') as myfile:
         version_sct = myfile.read().replace('\n', '')
         # print '  version: ' + version_sct
 
@@ -440,15 +453,11 @@ class ForkStdoutToFile(object):
 # Extract path, file and extension
 def extract_fname(fname):
     # extract path
-    path_fname = os.path.dirname(fname) + '/'
-    # check if only single file was entered (without path)
-    if path_fname == '/':
-        path_fname = ''
+    path_fname = os.path.dirname(fname)
     # extract file and extension
-    file_fname = fname
-    file_fname = file_fname.replace(path_fname, '')
+    file_fname = os.path.basename(fname)
     file_fname, ext_fname = os.path.splitext(file_fname)
-    # check if .nii.gz file
+    # alter extension if .nii.gz file
     if ext_fname == '.gz':
         file_fname = file_fname[0:len(file_fname) - 4]
         ext_fname = ".nii.gz"
@@ -581,28 +590,22 @@ def find_file_within_folder(fname, directory, seek_type='file'):
     return all_path
 
 
-#=======================================================================================================================
-# create temporary folder and return path of tmp dir
-#=======================================================================================================================
-def tmp_create(verbose=1):
-    printv('\nCreate temporary folder...', verbose)
-    import time
-    import random
-    path_tmp = slash_at_the_end('tmp.' + time.strftime("%y%m%d%H%M%S") + '_' + str(random.randint(1, 1000000)), 1)
-    # create directory
-    try:
-        os.makedirs(path_tmp)
-    except OSError:
-        if not os.path.isdir(path_tmp):
-            raise
-    return path_tmp
+def tmp_create(basename=None, verbose=1):
+    """Create temporary folder and return its path
+    """
+    prefix = "sct-%s-" % time.strftime("%y%m%d%H%M%S")
+    if basename:
+        prefix += "%s-" % basename
+    tmpdir = tempfile.mkdtemp(prefix=prefix)
+    printv('\nCreate temporary folder (%s)...' % tmpdir, verbose)
+    return tmpdir
 
 
 class TempFolder(object):
     """This class will create a temporary folder."""
 
     def __init__(self, verbose=0):
-        self.path_tmp = tmp_create(verbose)
+        self.path_tmp = tmp_create(verbose=verbose)
         self.previous_path = None
 
     def chdir(self):
@@ -625,36 +628,11 @@ class TempFolder(object):
 
         :param filename: The filename to copy into the folder.
         """
-        shutil.copy(filename, self.path_tmp)
+        copy(filename, self.path_tmp)
 
     def cleanup(self):
         """Remove the created folder and its contents."""
         shutil.rmtree(self.path_tmp, ignore_errors=True)
-
-
-def delete_tmp_files_and_folders(path=''):
-    """
-    This function removes all files that starts with 'tmp.' in the path specified as input. If no path are provided,
-    the current path is selected. The function removes files and directories recursively and handles Exceptions and
-    errors by ignoring them.
-    Args:
-        path: directory in which temporary files and folders must be removed
-
-    Returns:
-
-    """
-    if not path:
-        path = os.getcwd()
-    pattern = os.path.join(path, 'tmp.*')
-
-    for item in glob.glob(pattern):
-        try:
-            if os.path.isdir(item):
-                shutil.rmtree(item, ignore_errors=True)
-            elif os.path.isfile(item):
-                os.remove(item)
-        except:  # in case an exception is raised (e.g., on Windows, if the file is in use)
-            continue
 
 
 #=======================================================================================================================
@@ -694,19 +672,19 @@ def generate_output_file(fname_in, fname_out, verbose=1):
     # if input and output fnames are the same, do nothing and exit function
     if fname_in == fname_out:
         printv('  WARNING: fname_in and fname_out are the same. Do nothing.', verbose, 'warning')
-        printv('  File created: ' + path_out + file_out + ext_out)
-        return path_out + file_out + ext_out
+        printv('  File created: ' + os.path.join(path_out, file_out + ext_out))
+        return os.path.join(path_out, file_out + ext_out)
     # if fname_out already exists in nii or nii.gz format
-    if os.path.isfile(path_out + file_out + ext_out):
-        printv('  WARNING: File ' + path_out + file_out + ext_out + ' already exists. Deleting it...', 1, 'warning')
-        os.remove(path_out + file_out + ext_out)
+    if os.path.isfile(os.path.join(path_out, file_out + ext_out)):
+        printv('  WARNING: File ' + os.path.join(path_out, file_out + ext_out) + ' already exists. Deleting it...', 1, 'warning')
+        os.remove(os.path.join(path_out, file_out + ext_out))
     if ext_in != ext_out:
         # Generate output file
         '''
         # TRY TO UNCOMMENT THIS LINES AND RUN IT IN AN OTHER STATION THAN EVANS (testing of sct_label_vertebrae and sct_smooth_spinalcord never stops with this lines on evans)
         if ext_in == '.nii.gz' and ext_out == '.nii':  # added to resolve issue #728
             run('gunzip -f ' + fname_in)
-            os.rename(path_in + file_in + '.nii', fname_out)
+            os.rename(os.path.join(path_in, file_in + '.nii'), fname_out)
         else:
         '''
         from sct_convert import convert
@@ -719,17 +697,17 @@ def generate_output_file(fname_in, fname_out, verbose=1):
     # shutil.move(fname_in, path_out+file_out+ext_in)
     # # convert to nii (only if necessary)
     # if ext_out == '.nii' and ext_in != '.nii':
-    #     convert(path_out+file_out+ext_in, path_out+file_out+ext_out)
-    #     os.remove(path_out+file_out+ext_in)  # remove nii.gz file
+    #     convert(os.path.join(path_out, file_out+ext_in), os.path.join(path_out, file_out+ext_out))
+    #     os.remove(os.path.join(path_out, file_out+ext_in))  # remove nii.gz file
     # # convert to nii.gz (only if necessary)
     # if ext_out == '.nii.gz' and ext_in != '.nii.gz':
-    #     convert(path_out+file_out+ext_in, path_out+file_out+ext_out)
-    #     os.remove(path_out+file_out+ext_in)  # remove nii file
+    #     convert(os.path.join(path_out, file_out+ext_in), os.path.join(path_out, file_out+ext_out))
+    #     os.remove(os.path.join(path_out, file_out+ext_in))  # remove nii file
     # display message
-    printv('  File created: ' + path_out + file_out + ext_out, verbose)
+    printv('  File created: ' + os.path.join(path_out, file_out + ext_out), verbose)
     # if verbose:
-    #     printv('  File created: '+path_out+file_out+ext_out)
-    return path_out + file_out + ext_out
+    #     printv('  File created: '+ os.path.join(path_out, file_out+ext_out))
+    return os.path.join(path_out, file_out + ext_out)
 
 
 #=======================================================================================================================
@@ -868,30 +846,17 @@ def sign(x):
 
 
 #=======================================================================================================================
-# slash_at_the_end: make sure there is (or not) a slash at the end of path name
-#=======================================================================================================================
-def slash_at_the_end(path, slash=0):
-    if slash == 0:
-        if path[-1:] == '/':
-            path = path[:-1]
-    if slash == 1:
-        if not path[-1:] == '/':
-            path = path + '/'
-    return path
-
-
-#=======================================================================================================================
 # delete_nifti: delete nifti file(s)
 #=======================================================================================================================
 def delete_nifti(fname_in):
     # extract input file extension
     path_in, file_in, ext_in = extract_fname(fname_in)
     # delete nifti if exist
-    if os.path.isfile(path_in + file_in + '.nii'):
-        os.system('rm ' + path_in + file_in + '.nii')
+    if os.path.isfile(os.path.join(path_in, file_in + '.nii')):
+        os.system('rm ' + os.path.join(path_in, file_in + '.nii'))
     # delete nifti if exist
-    if os.path.isfile(path_in + file_in + '.nii.gz'):
-        os.system('rm ' + path_in + file_in + '.nii.gz')
+    if os.path.isfile(os.path.join(path_in, file_in + '.nii.gz')):
+        os.system('rm ' + os.path.join(path_in, file_in + '.nii.gz'))
 
 
 #=======================================================================================================================

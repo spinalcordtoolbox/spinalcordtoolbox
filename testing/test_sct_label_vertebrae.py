@@ -10,6 +10,8 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+import shutil
+
 def init(param_test):
     """
     Initialize class: param_test
@@ -145,20 +147,20 @@ def test_integrity(param_test):
 #
 #     if status == 0:
 #         # copy input data (for easier debugging)
-#         sct.run('cp '+dict_param_with_path['-i']+' '+path_output, verbose=0)
+#         shutil.copy(dict_param_with_path['-i'], path_output)
 #         # extract center of vertebral labels
 #         path_seg, file_seg, ext_seg = sct.extract_fname(dict_param['-s'])
 #         try:
-#             sct.run('sct_label_utils -i '+path_output+file_seg+'_labeled.nii.gz -vert-body 0 -o '+path_output+contrast+'_seg_labeled_center.nii.gz', verbose=0)
-#             label_results = ProcessLabels(path_output + contrast + '_seg_labeled_center.nii.gz')
+#             sct.run('sct_label_utils -i '+os.path.join(path_output, file_seg+'_labeled.nii.gz) + ' -vert-body 0 -o '+ os.path.join(path_output, contrast + '_seg_labeled_center.nii.gz'), verbose=0)
+#             label_results = ProcessLabels(os.path.join(path_output, contrast + '_seg_labeled_center.nii.gz'))
 #             list_label_results = label_results.image_input.getNonZeroCoordinates(sorting='value')
 #             # get dimension
 #             # from msct_image import Image
-#             # img = Image(path_output+contrast+'_seg_labeled.nii.gz')
+#             # img = Image(os.path.join(path_output, contrast+'_seg_labeled.nii.gz'))
 #             nx, ny, nz, nt, px, py, pz, pt = label_results.image_input.dim
 #         except:
 #             status = 1
-#             output += '\nERROR: cannot open file: ' + path_output + contrast + '_seg_labeled.nii.gz'
+#             output += '\nERROR: cannot open file: ' + os.path.join(path_output, contrast + '_seg_labeled.nii.gz')
 #             write_to_log_file(fname_log, output, 'w')
 #             return status, output, DataFrame(data={'status': int(status), 'output': output}, index=[path_data])
 #

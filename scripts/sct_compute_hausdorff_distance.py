@@ -10,10 +10,10 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import sys
-import time
-import os
+import sys, io, os, time, shutil
+
 import numpy as np
+
 import sct_utils as sct
 from msct_image import Image, get_dimension
 from sct_image import set_orientation
@@ -44,7 +44,7 @@ class Thinning:
         self.dim_im = len(self.image.data.shape)
 
         if self.dim_im == 2:
-            self.thinned_image = Image(param=self.zhang_suen(self.image.data), absolutepath=self.image.path + self.image.file_name + '_thinned' + self.image.ext, hdr=self.image.hdr)
+            self.thinned_image = Image(param=self.zhang_suen(self.image.data), absolutepath=os.path.join(self.image.path, self.image.file_name + '_thinned' + self.image.ext), hdr=self.image.hdr)
 
         elif self.dim_im == 3:
             if not self.image.orientation == 'IRP':
@@ -54,7 +54,7 @@ class Thinning:
 
             thinned_data = np.asarray([self.zhang_suen(im_slice) for im_slice in self.image.data])
 
-            self.thinned_image = Image(param=thinned_data, absolutepath=self.image.path + self.image.file_name + '_thinned' + self.image.ext, hdr=self.image.hdr)
+            self.thinned_image = Image(param=thinned_data, absolutepath=os.path.join(self.image.path, self.image.file_name + '_thinned' + self.image.ext), hdr=self.image.hdr)
 
     # ------------------------------------------------------------------------------------------------------------------
     def get_neighbours(self, x, y, image):
@@ -500,17 +500,18 @@ if __name__ == "__main__":
         if "-v" in arguments:
             param.verbose = int(arguments["-v"])
 
-        tmp_dir = 'tmp_' + time.strftime("%y%m%d%H%M%S")
-        sct.run('mkdir ' + tmp_dir)
+        tmp_dir = sct.tmp_create()
         im1_name = "im1.nii.gz"
-        sct.run('cp ' + input_fname + ' ' + tmp_dir + '/' + im1_name)
+        sct.copy(input_fname, os.path.join(tmp_dir, im1_name))
         if input_second_fname != '':
             im2_name = 'im2.nii.gz'
-            sct.run('cp ' + input_second_fname + ' ' + tmp_dir + '/' + im2_name)
+            sct.copy(input_second_fname, os.path.join(tmp_dir, im2_name))
         else:
             im2_name = None
 
+        curdir = os.getcwd()
         os.chdir(tmp_dir)
+
         # now = time.time()
         input_im1 = Image(resample_image(im1_name, binary=True, thr=0.5, npx=resample_to, npy=resample_to))
         if im2_name is not None:
@@ -522,11 +523,11 @@ if __name__ == "__main__":
 
         # TODO change back the orientatin of the thinned image
         if param.thinning:
-            sct.run('cp ' + computation.thinning1.thinned_image.file_name + computation.thinning1.thinned_image.ext + ' ../' + sct.extract_fname(input_fname)[1] + '_thinned' + sct.extract_fname(input_fname)[2])
+            sct.copy(computation.thinning1.thinned_image.file_name + computation.thinning1.thinned_image.ext, os.path.join(curdir, sct.extract_fname(input_fname)[1] + '_thinned' + sct.extract_fname(input_fname)[2]))
             if im2_name is not None:
-                sct.run('cp ' + computation.thinning2.thinned_image.file_name + computation.thinning2.thinned_image.ext + ' ../' + sct.extract_fname(input_second_fname)[1] + '_thinned' + sct.extract_fname(input_second_fname)[2])
+                sct.copy(computation.thinning2.thinned_image.file_name + computation.thinning2.thinned_image.ext, os.path.join(curdir, sct.extract_fname(input_second_fname)[1] + '_thinned' + sct.extract_fname(input_second_fname)[2]))
 
-        os.chdir('..')
+        os.chdir(curdir)
 
         res_fic = open(output_fname, 'w')
         res_fic.write(computation.res)

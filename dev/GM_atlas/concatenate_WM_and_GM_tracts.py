@@ -3,9 +3,9 @@
 import os, sys, commands
 
 # Get path of the toolbox
-status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
 # Append path that contains scripts, to be able to load modules
-sys.path.append(path_sct + '/scripts')
+sys.path.append(os.path.join(path_sct, 'scripts'))
 
 
 import matplotlib.image as mpimg
@@ -17,7 +17,7 @@ from scipy.misc import imread, imsave
 from copy import copy
 
 
-path = '/Users/tamag/code/spinalcordtoolbox/dev/GM_atlas/raw_data/test'
+path = os.path.join(path_sct, "GM_atlas", "raw_data", "test")
 fname1 = 'greyscale_final_resampled_registered_crop_resized.png'
 fname2 = 'atlas_grays_cerv_sym_correc_r5.png'
 fname3 = 'greyscale_reg_no_trans.png'

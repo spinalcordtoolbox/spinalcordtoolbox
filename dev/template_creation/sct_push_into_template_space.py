@@ -25,7 +25,7 @@ from commands import getstatusoutput
 # Get path of the toolbox
 status, path_sct = getstatusoutput('echo $SCT_DIR')
 # Append path that contains scripts, to be able to load modules
-sys.path.append(path_sct + '/scripts')
+sys.path.append(os.path.join(path_sct, "scripts"))
 
 import sct_utils as sct
 import os

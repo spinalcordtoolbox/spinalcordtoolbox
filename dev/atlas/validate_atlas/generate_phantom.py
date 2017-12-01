@@ -47,7 +47,7 @@ def main():
     # Save the sum of the tracts to nifti image
     save_3D_nparray_nifti(tracts_sum, tracts_sum_img)
     # adjust geometry between saved images and tracts
-    fname_tract = glob.glob(folder_atlas + '/*' + '.nii.gz')
+    fname_tract = glob.glob(os.path.join(folder_atlas, "*.nii.gz"))
     sct.run('fslcpgeom ' + fname_tract[0] + ' ' + WM_phantom)
     sct.run('fslcpgeom ' + fname_tract[0] + ' ' + WM_phantom_noise)
     sct.run('fslcpgeom ' + fname_tract[0] + ' ' + tracts_sum_img)
@@ -66,7 +66,7 @@ def phantom_generation(tracts, std_noise_perc, range_tract_perc, true_value, fol
     :return: synthetic_vol, synthetic_voln, values_synthetic_data, tracts_sum
     """
 
-    fname_phantom = folder_out+'phantom_values.txt'
+    fname_phantom = os.path.join(folder_out, 'phantom_values.txt')
     #value_gm = 30
     #value_csf = 0
 

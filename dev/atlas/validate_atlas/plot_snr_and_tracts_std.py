@@ -42,7 +42,7 @@ def main():
         path_sct = '/Users/slevy_local/spinalcordtoolbox' #'C:/cygwin64/home/Simon_2/spinalcordtoolbox'
         methods_to_display = 'bin,wa,wath,ml,map'
     else:
-        status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+        path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
 
         # Check input parameters
         try:
@@ -61,7 +61,7 @@ def main():
                 methods_to_display = arg
 
     # Append path that contains scripts, to be able to load modules
-    sys.path.append(path_sct + '/scripts')
+    sys.path.append(os.path.join(path_sct, "scripts"))
     import sct_utils as sct
 
     sct.printv("Working directory: " + os.getcwd())
@@ -69,7 +69,7 @@ def main():
     results_folder_noise = results_folder + '/noise'
     results_folder_tracts = results_folder + '/tracts'
 
-    sct.printv('\n\nData will be extracted from folder ' + results_folder_noise + ' and ' + results_folder_tracts + '.', 'warning')
+    sct.printv('\n\nData will be extracted from folder ' + results_folder_noise + ' and ' + results_folder_tracts, 'warning')
     sct.printv('\t\tCheck existence...')
     sct.check_folder_exist(results_folder_noise)
     sct.check_folder_exist(results_folder_tracts)
@@ -79,8 +79,8 @@ def main():
     methods_to_display = methods_to_display.strip().split(',')
 
     # Extract file names of the results files
-    fname_results_noise = glob.glob(results_folder_noise + '/*.txt')
-    fname_results_tracts = glob.glob(results_folder_tracts + '/*.txt')
+    fname_results_noise = glob.glob(os.path.join(results_folder_noise, "*.txt"))
+    fname_results_tracts = glob.glob(os.path.join(results_folder_tracts, "*.txt"))
     fname_results = fname_results_noise + fname_results_tracts
     # Remove doublons (due to the two folders)
     # for i_fname in range(0, len(fname_results)):
@@ -507,7 +507,7 @@ def main():
     plt.subplots_adjust(left=0.1)
 
 
-    plt.savefig(param_default.fname_folder_to_save_fig+'/absolute_error_vs_noise_std_Tracts_std_fixed_to_10.pdf', format='PDF')
+    plt.savefig(os.path.join(param_default.fname_folder_to_save_fig, 'absolute_error_vs_noise_std_Tracts_std_fixed_to_10.pdf'), format='PDF')
 
 
     # Plot B -- v3: Box plots absolute error
@@ -556,7 +556,7 @@ def main():
     plt.grid(b=True, axis='y', which='both', alpha=0.5)
     plt.subplots_adjust(left=0.1)
 
-    plt.savefig(param_default.fname_folder_to_save_fig+'/absolute_error_vs_tracts_std_Noise_std_fixed_to_10.pdf', format='PDF')
+    plt.savefig(os.path.join(param_default.fname_folder_to_save_fig, 'absolute_error_vs_tracts_std_Noise_std_fixed_to_10.pdf'), format='PDF')
 
 
     plt.show(block=False)

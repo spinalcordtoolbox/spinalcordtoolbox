@@ -410,9 +410,7 @@ class SCAD(Algorithm):
 
         :return:
         """
-        import time
-        from sct_utils import slash_at_the_end
-        path_tmp = slash_at_the_end('scad_output_'+time.strftime("%y%m%d%H%M%S"), 1)
+        path_tmp = sct.tmp_create(basename="scad_output")
         sct.run('mkdir '+path_tmp, self.verbose)
         # getting input image header
         img = self.input_image.copy()
@@ -483,19 +481,8 @@ class SCAD(Algorithm):
         :return: None
         """
         if self.produce_output:
-            import time
-            from sct_utils import slash_at_the_end
-            folder = slash_at_the_end('scad_output_'+time.strftime("%y%m%d%H%M%S"), 1)
-            sct.run('mkdir '+folder, self.verbose)
-            self.debug_folder = os.path.abspath(folder)
-            conv.convert(str(self.input_image.absolutepath), str(self.debug_folder)+"/raw.nii.gz")
-
-    def create_temporary_path(self):
-        import time
-        from sct_utils import slash_at_the_end
-        path_tmp = slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S"), 1)
-        sct.run('mkdir '+path_tmp, self.verbose)
-        return path_tmp
+            self.debug_folder = sct.tmp_create(verbose=self.verbose)
+            conv.convert(self.input_image.absolutepath, os.path.join(self.debug_folder, "raw.nii.gz"))
 
     def execute(self):
         print 'Execution of the SCAD algorithm in '+str(os.getcwd())
@@ -510,11 +497,12 @@ class SCAD(Algorithm):
             import matplotlib.pyplot as plt # import for debug purposes
 
         # create tmp and copy input
-        path_tmp = self.create_temporary_path()
+        path_tmp = sct.tmp_create(basename="scad")
         conv.convert(self.input_image.absolutepath, path_tmp+raw_file_name)
 
         if self.vesselness_provided:
             sct.run('cp '+vesselness_file_name+' '+path_tmp+vesselness_file_name)
+        curdir = os.getcwd()
         os.chdir(path_tmp)
 
         # get input image information
@@ -591,9 +579,11 @@ class SCAD(Algorithm):
         img.file_name = "centerline"
         img.save()
 
+        # go back
+        os.chdir(curdir)
+
         # copy back centerline
-        os.chdir('../')
-        conv.convert(path_tmp+img.file_name+img.ext, self.output_filename)
+        conv.convert(os.path.join(path_tmp, img.file_name+img.ext), self.output_filename)
         if self.rm_tmp_file == 1:
             import shutil
             shutil.rmtree(path_tmp)

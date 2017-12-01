@@ -31,11 +31,8 @@
 # - two-step registration, using only segmentation-based registration
 
 
-import sys
-import time
+import sys, io, os, time, shutil
 
-import os
-import commands
 import sct_utils as sct
 from msct_parser import Parser
 
@@ -192,7 +189,7 @@ class Param:
         self.debug = 0
         self.outSuffix  = "_reg"
         self.padding = 5
-        self.path_qc = os.path.abspath(os.curdir) + '/qc/'
+        self.path_qc = os.path.join(os.path.abspath(os.curdir), "qc")
 
 # Parameters for registration
 
@@ -278,8 +275,9 @@ def main(args=None):
     generate_warpinv = 1
 
     start_time = time.time()
+
     # get path of the toolbox
-    status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+    path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
 
     # get default registration parameters
     # step1 = Paramreg(step='1', type='im', algo='syn', metric='MI', iter='5', shrink='1', smooth='0', gradStep='0.5')
@@ -394,21 +392,22 @@ def main(args=None):
     # copy files to temporary folder
     from sct_convert import convert
     sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
-    convert(fname_src, path_tmp + 'src.nii')
-    convert(fname_dest, path_tmp + 'dest.nii')
+    convert(fname_src, os.path.join(path_tmp, "src.nii"))
+    convert(fname_dest, os.path.join(path_tmp, "dest.nii"))
 
     if fname_src_seg:
-        convert(fname_src_seg, path_tmp + 'src_seg.nii')
-        convert(fname_dest_seg, path_tmp + 'dest_seg.nii')
+        convert(fname_src_seg, os.path.join(path_tmp, "src_seg.nii"))
+        convert(fname_dest_seg, os.path.join(path_tmp, "dest_seg.nii"))
 
     if fname_src_label:
-        convert(fname_src_label, path_tmp + 'src_label.nii')
-        convert(fname_dest_label, path_tmp + 'dest_label.nii')
+        convert(fname_src_label, os.path.join(path_tmp, "src_label.nii"))
+        convert(fname_dest_label, os.path.join(path_tmp, "dest_label.nii"))
 
     if fname_mask != '':
-        convert(fname_mask, path_tmp + 'mask.nii.gz')
+        convert(fname_mask, os.path.join(path_tmp, "mask.nii.gz"))
 
     # go to tmp folder
+    curdir = os.getcwd()
     os.chdir(path_tmp)
 
     # reorient destination to RPI
@@ -438,7 +437,7 @@ def main(args=None):
     if fname_initwarp:
         sct.printv('\nSkip step=0 and replace with initial transformations: ', param.verbose)
         sct.printv('  ' + fname_initwarp, param.verbose)
-        # sct.run('cp '+fname_initwarp+' warp_forward_0.nii.gz', verbose)
+        # sct.copy(fname_initwarp, 'warp_forward_0.nii.gz')
         warp_forward = [fname_initwarp]
         start_step = 1
         if fname_initwarpinv:
@@ -489,22 +488,22 @@ def main(args=None):
     sct.printv('\nApply transfo dest --> source...', verbose)
     sct.run('sct_apply_transfo -i dest.nii -o dest_reg.nii -d src.nii -w warp_dest2src.nii.gz -x ' + interp, verbose)
 
-    # come back to parent folder
-    os.chdir('..')
+    # come back
+    os.chdir(curdir)
 
     # Generate output files
     sct.printv('\nGenerate output files...', verbose)
     # generate: src_reg
-    fname_src2dest = sct.generate_output_file(path_tmp + 'src_reg.nii', path_out + file_out + ext_out, verbose)
+    fname_src2dest = sct.generate_output_file(os.path.join(path_tmp, "src_reg.nii"), os.path.join(path_out, file_out + ext_out), verbose)
     # generate: forward warping field
     if fname_output_warp == '':
         fname_output_warp = path_out + 'warp_' + file_src + '2' + file_dest + '.nii.gz'
-    sct.generate_output_file(path_tmp + 'warp_src2dest.nii.gz', fname_output_warp, verbose)
+    sct.generate_output_file(os.path.join(path_tmp, "warp_src2dest.nii.gz"), fname_output_warp, verbose)
     if generate_warpinv:
         # generate: dest_reg
-        fname_dest2src = sct.generate_output_file(path_tmp + 'dest_reg.nii', path_out + file_out_inv + ext_dest, verbose)
+        fname_dest2src = sct.generate_output_file(os.path.join(path_tmp, "dest_reg.nii"), os.path.join(path_out, file_out_inv + ext_dest), verbose)
         # generate: inverse warping field
-        sct.generate_output_file(path_tmp + 'warp_dest2src.nii.gz', path_out + 'warp_' + file_dest + '2' + file_src + '.nii.gz', verbose)
+        sct.generate_output_file(os.path.join(path_tmp, "warp_dest2src.nii.gz"), os.path.join(path_out, 'warp_' + file_dest + '2' + file_src + '.nii.gz'), verbose)
 
     # Delete temporary files
     if remove_temp_files:
@@ -776,7 +775,7 @@ if __name__ == "__main__":
 #    cmd = 'sct_image -i tmp.regWarp.nii -mcs  -o tmp.regWarp.nii'
 #    sct.printv(">> "+cmd))
 #    os.system(cmd)
-#    cmd = 'fslmerge -t '+path_out+'warp_comp.nii tmp.regWarp_x.nii tmp.regWarp_y.nii tmp.regWarp_z.nii'
+#    cmd = 'fslmerge -t '+os.path.join(path_out, 'warp_comp.nii') + ' tmp.regWarp_x.nii tmp.regWarp_y.nii tmp.regWarp_z.nii'
 #    sct.printv(">> "+cmd))
 #    os.system(cmd)
 #===========
