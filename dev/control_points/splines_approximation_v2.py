@@ -8,7 +8,7 @@ import os
 import numpy
 from math import sqrt
 from scipy import ndimage
-import commands
+
 import nibabel
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
@@ -61,7 +61,7 @@ def main(file_name, div, curve = 0):
 
 def getDim(file_name):
     cmd = 'fslsize '+file_name
-    status, output = commands.getstatusoutput(cmd)
+    status, output = sct.run(cmd)
     # split output according to \n field
     output_split = output.split()
     # extract dimensions as integer
@@ -73,13 +73,13 @@ def getDim(file_name):
 
 def getPxDimensions(file_name):
     cmd1 = 'fslval '+file_name+' pixdim1'
-    status, output = commands.getstatusoutput(cmd1)
+    status, output = sct.run(cmd1)
     p1 = float(output)
     cmd2 = 'fslval '+file_name+' pixdim2'
-    status, output = commands.getstatusoutput(cmd2)
+    status, output = sct.run(cmd2)
     p2 = float(output)
     cmd3 = 'fslval '+file_name+' pixdim3'
-    status, output = commands.getstatusoutput(cmd3)
+    status, output = sct.run(cmd3)
     p3 = float(output)
     return p1, p2, p3
 

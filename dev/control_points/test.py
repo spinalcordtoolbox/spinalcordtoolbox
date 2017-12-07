@@ -1,6 +1,6 @@
 import splines_approximation_v2 as spline
 import glob
-import commands
+
 import sct_utils
 
 def main():
@@ -13,7 +13,7 @@ def main():
     	path, file_name, ext_fname = sct_utils.extract_fname(file)
     	cmd1 = 'mkdir ../curves/'+file_name
     	print cmd1
-    	status, output = commands.getstatusoutput(cmd1)
+    	status, output = sct.run(cmd1)
     	print status, output
         for bc in b:
             spline.main(file, bc)        

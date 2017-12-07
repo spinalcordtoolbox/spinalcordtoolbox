@@ -16,7 +16,7 @@
 
 import sys
 import os
-import commands
+
 import time
 
 import numpy
@@ -155,7 +155,7 @@ def create_mask(param):
 
     if method_type == 'coord':
         # parse to get coordinate
-        coord = map(int, method_val.split('x'))
+        coord = [x for x in map(int, method_val.split('x'))]
 
     if method_type == 'point':
         # get file name

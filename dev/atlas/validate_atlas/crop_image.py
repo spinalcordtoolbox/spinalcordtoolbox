@@ -3,7 +3,7 @@
 # Crop images
 #This program extracts zslices from all of the images in a folder(folder_in) and outputs the cropped images in an output folder(folder_out)
 # It can be used to extract certain zslices from the atlas, or the template
-import commands
+
 import os
 import getopt
 import sys

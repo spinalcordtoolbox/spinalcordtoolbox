@@ -26,7 +26,7 @@ class Param:
         self.complete_test = 0
 
 
-import sys, io, os, commands, platform, importlib
+import sys, io, os, platform, importlib
 
 import sct_utils as sct
 from msct_parser import Parser
@@ -96,8 +96,8 @@ def main():
 
     # Check number of CPU cores
     from multiprocessing import cpu_count
-    status, output = sct.run('echo $ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS', 0)
-    print('CPU cores: Available: ' + str(cpu_count()) + ', Used by SCT: ' + output)
+    output = int(os.getenv('ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS', 0))
+    print('CPU cores: Available: {}, Used by SCT: {}'.format(cpu_count(), output))
 
     # check RAM
     sct.checkRAM(os_running, 0)
@@ -107,19 +107,20 @@ def main():
 
     # fetch SCT version
     install_type, sct_commit, sct_branch, version_sct = sct.get_sct_version()
-    print('Installation type: git')
+    print('Installation type: %s' % install_type)
     print('  version: ' + version_sct)
     print('  commit: ' + sct_commit)
     print('  branch: ' + sct_branch)
 
     # check if Python path is within SCT path
-    print_line('Check Python path')
+    print_line('Check Python executable')
     path_python = sys.executable
     if path_sct in path_python:
         print_ok()
+        print('  Using bundled python %s at %s' % (sys.version, path_python))
     else:
-        print_fail()
-        print('  Python path: ' + path_python)
+        print_warning()
+        print('  Using system python which is unsupported: ' + path_python)
 
     # check if data folder is empty
     print_line('Check if data are installed')
@@ -222,19 +223,7 @@ def main():
     # Check ANTs integrity
     print_line('Check ANTs compatibility with OS ')
     cmd = 'isct_test_ants'
-    # here, cannot use commands.getstatusoutput because status is wrong (because of launcher)
-    # status = os.system(cmd+" &> /dev/null")
-    # status, output = sct.run(cmd, 0)
-    # import subprocess
-    # process = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    # status = subprocess.call(cmd, shell=True)
-    # status = process.returncode
-    (status, output) = commands.getstatusoutput(cmd)
-    # from subprocess import call
-    # status, output = call(cmd)
-    # print(status)
-    # print(output)
-    # if status in [0, 256]:
+    status, output = sct.run(cmd, verbose=0, raise_exception=False)
     if status == 0:
         print_ok()
     else:
@@ -248,7 +237,7 @@ def main():
     # check if ANTs is compatible with OS
     # print_line('Check ANTs compatibility with OS ')
     # cmd = 'isct_antsRegistration'
-    # status, output = commands.getstatusoutput(cmd)
+    # status, output = sct.run(cmd)
     # if status in [0, 256]:
     #     print_ok()
     # else:
@@ -260,8 +249,8 @@ def main():
 
     # check PropSeg compatibility with OS
     print_line('Check PropSeg compatibility with OS ')
-    (status, output) = commands.getstatusoutput('isct_propseg')
-    if status in [0, 256]:
+    status, output = sct.run('isct_propseg', verbose=0, raise_exception=False)
+    if status in (1, 257):
         print_ok()
     else:
         print_fail()

@@ -523,7 +523,7 @@ class Image(object):
 
         # 3. Compute the center of mass of each group of voxels and write them into the output image
         averaged_coordinates = []
-        for value, list_coord in groups.iteritems():
+        for value, list_coord in groups.items():
             averaged_coordinates.append(sum(list_coord) / float(len(list_coord)))
 
         averaged_coordinates = sorted(averaged_coordinates, key=lambda obj: obj.value, reverse=False)
@@ -928,7 +928,7 @@ class Image(object):
         """
         nx, ny, nz, nt, px, py, pz, pt = im_ref.dim
         x, y, z = np.mgrid[0:nx, 0:ny, 0:nz]
-        indexes_ref = np.array(zip(x.ravel(), y.ravel(), z.ravel()))
+        indexes_ref = np.array(list(zip(x.ravel(), y.ravel(), z.ravel())))
         physical_coordinates_ref = im_ref.transfo_pix2phys(indexes_ref)
 
         # TODO: add optional transformation from reference space to image space to physical coordinates of ref grid.

@@ -672,7 +672,7 @@ def check_labels(fname_landmarks, label_type='body'):
             sct.printv('ERROR: Label should be integer.', 1, 'error')
     # check if there are duplicates in label values
     n_labels = len(labels)
-    list_values = [labels[i].value for i in xrange(0,n_labels)]
+    list_values = [labels[i].value for i in range(0,n_labels)]
     list_duplicates = [x for x in list_values if list_values.count(x) > 1]
     if not list_duplicates == []:
         sct.printv('ERROR: Found two labels with same value.', 1, 'error')

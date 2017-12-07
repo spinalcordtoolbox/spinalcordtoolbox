@@ -2,7 +2,7 @@
 
 # This script creates from scratch all the necessary data to be used for the creation of the template T2.
 
-import commands, sys, os
+import sys, os
 
 # Get path of the toolbox
 path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))

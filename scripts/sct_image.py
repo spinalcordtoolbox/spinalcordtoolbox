@@ -266,7 +266,7 @@ def main(args=None):
         if '-mcs' in arguments:
             # use input file name and add _X, _Y _Z. Keep the same extension
             fname_out = []
-            for i_dim in xrange(3):
+            for i_dim in range(3):
                 fname_out.append(add_suffix(fname_in[0], '_' + dim_list[i_dim].upper()))
                 im_out[i_dim].setFileName(fname_out[i_dim])
                 im_out[i_dim].save()

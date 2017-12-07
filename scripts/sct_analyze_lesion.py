@@ -423,7 +423,7 @@ class AnalyzeLeion:
             # compute Z axis of the image, in physical coordinate
             axis_Z = im_seg.get_directions()[2]
 
-            # for iz in xrange(min_z_index, max_z_index + 1):
+            # for iz in range(min_z_index, max_z_index + 1):
             for zz in range(im_seg.dim[2]):
                 if zz >= min_z_index and zz <= max_z_index:
                     # in the case of problematic segmentation (e.g., non continuous segmentation often at the extremities), display a warning but do not crash
