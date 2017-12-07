@@ -192,7 +192,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
 
     # construct 3D warping matrix
     for iz in z_nonzero:
-        sct.printv(str(iz) + '/' + str(nz) + '..',)
+        sct.log.info('{}/{}..'.format(iz, nz))
         # get indices of x and y coordinates
         row, col = np.indices((nx, ny))
         # build 2xn array of coordinates in pixel space

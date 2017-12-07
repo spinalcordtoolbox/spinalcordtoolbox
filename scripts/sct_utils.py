@@ -124,7 +124,7 @@ class bcolors(object):
         return [v for k, v in cls.__dict__.items() if not k.startswith("_") and k is not "colors"]
 
 
-def log_not_new_line(msg, *args, **kwargs):
+def no_new_line_log(msg, *args, **kwargs):
     """ Log info to stdout without adding new line
         Useful for progress bar.
         Monkey patching the sct stream handler
@@ -154,7 +154,7 @@ def log_not_new_line(msg, *args, **kwargs):
         try:
             msg = self.format(record)
             stream = self.stream
-            fs = "%s"
+            fs = "\r%s"
             if not _unicode: #if no unicode support...
                 stream.write(fs % msg)
             else:
@@ -507,8 +507,8 @@ class Timer:
         remaining_time = remaining_iterations * time_one_iteration
         hours, rem = divmod(remaining_time, 3600)
         minutes, seconds = divmod(rem, 60)
-        log_not_new_line('\rRemaining time: {:0>2}:{:0>2}:{:05.2f} ({}/{})                      '
-                 .format(int(hours), int(minutes), seconds, self.number_of_iteration_done,
+        no_new_line_log('Remaining time: {:0>2}:{:0>2}:{:05.2f} ({}/{})                      '
+                        .format(int(hours), int(minutes), seconds, self.number_of_iteration_done,
                          self.total_number_of_iteration))
 
 
@@ -522,8 +522,8 @@ class Timer:
             remaining_time = remaining_iterations * time_one_iteration
             hours, rem = divmod(remaining_time, 3600)
             minutes, seconds = divmod(rem, 60)
-            log_not_new_line('\rRemaining time: {:0>2}:{:0>2}:{:05.2f} ({}/{})                      '
-                     .format(int(hours), int(minutes), seconds, self.number_of_iteration_done,
+            no_new_line_log('Remaining time: {:0>2}:{:0>2}:{:05.2f} ({}/{})                      '
+                            .format(int(hours), int(minutes), seconds, self.number_of_iteration_done,
                              self.total_number_of_iteration))
 
 
@@ -542,7 +542,7 @@ class Timer:
         hours, rem = divmod(remaining_time, 3600)
         minutes, seconds = divmod(rem, 60)
         if self.is_started:
-            log_not_new_line('\rRemaining time: {:0>2}:{:0>2}:{:05.2f} ({}/{})                      '.format(int(hours), int(minutes), seconds, self.number_of_iteration_done, self.total_number_of_iteration))
+            no_new_line_log('Remaining time: {:0>2}:{:0>2}:{:05.2f} ({}/{})                      '.format(int(hours), int(minutes), seconds, self.number_of_iteration_done, self.total_number_of_iteration))
         else:
             log.info('\nTotal time: {:0>2}:{:0>2}:{:05.2f}                      '.format(int(hours), int(minutes), seconds))
 
@@ -550,7 +550,7 @@ class Timer:
         hours, rem = divmod(self.time_list[-1], 3600)
         minutes, seconds = divmod(rem, 60)
         if self.is_started:
-            log_not_new_line('\rRemaining time: {:0>2}:{:0>2}:{:05.2f}                      '.format(int(hours), int(minutes), seconds))
+            no_new_line_log('Remaining time: {:0>2}:{:0>2}:{:05.2f}                      '.format(int(hours), int(minutes), seconds))
         else:
             log.info('\nTotal time: {:0>2}:{:0>2}:{:05.2f}                      '.format(int(hours), int(minutes), seconds))
 
