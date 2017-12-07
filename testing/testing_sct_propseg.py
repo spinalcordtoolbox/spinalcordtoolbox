@@ -11,18 +11,13 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-#import sct_utils as sct
-import commands
-import shutil
-import getopt
-import sys
-import time
-import sct_utils as sct
-import os
+import sys, io, os, time, shutil, commands, getopt, math
+
 import nibabel
 import numpy as np
-import math
 from tabulate import tabulate
+
+import sct_utils as sct
 
 class param:
     def __init__(self):
@@ -55,7 +50,7 @@ def main():
         if opt == '-r':
             param.remove_tmp_file = int(arg)
 
-    print param.data
+    print(param.data)
 
     start_time = time.time()
 
@@ -65,7 +60,7 @@ def main():
         # remove data folder if exist
         if os.path.exists('PropSeg_data'):
             sct.printv('WARNING: PropSeg_data already exists. Removing it...', param.verbose, 'warning')
-            sct.run('rm -rf PropSeg_data')
+            shutil.rmtree('PropSeg_data')
         # clone git repos
         sct.run('git clone '+param.url_git)
         # update path_data field 
@@ -78,12 +73,12 @@ def main():
     results_t1 = []
     sum_old,sum_new = 0,0
     if 't1' in param.data:
-        for dirname in os.listdir(param.path_data+"t1/"):
+        for dirname in os.listdir(os.path.join(param.path_data, "t1")):
             if dirname not in ['._.DS_Store','.DS_Store']:
-                for filename in os.listdir(param.path_data+"t1/"+dirname):
+                for filename in os.listdir(os.path.join(param.path_data, "t1", dirname)):
                     if filename.startswith('t1') and not filename.endswith('_seg.nii.gz') and not filename.endswith('_detection.nii.gz') and not filename.endswith('.vtk'):
-                        print dirname, filename
-                        [d_old,d_new],[r_old,r_new] = segmentation(param.path_data+"t1/"+dirname+"/"+filename,param.path_data+"t1/"+dirname+"/",'t1')
+                        print(dirname, filename)
+                        [d_old,d_new],[r_old,r_new] = segmentation(os.path.join(param.path_data, "t1", dirname, filename), os.path.join(param.path_data, "t1", dirname) ,'t1')
                         if d_old == 0:
                             d_old = 'OK'
                             sum_old = sum_old+1
@@ -101,12 +96,12 @@ def main():
     results_t2 = []
     sum_old,sum_new = 0,0
     if 't2' in param.data:
-        for dirname in os.listdir(param.path_data+"t2/"):
+        for dirname in os.listdir(os.path.join(param.path_data, "t2")):
             if dirname not in ['._.DS_Store','.DS_Store']:
-                for filename in os.listdir(param.path_data+"t2/"+dirname):
+                for filename in os.listdir(os.path.join(param.path_data, "t2", dirname)):
                     if filename.startswith('t2_') and not filename.endswith('_seg.nii.gz') and not filename.endswith('_detection.nii.gz') and not filename.endswith('.vtk'):
-                        print dirname, filename
-                        [d_old,d_new],[r_old,r_new] = segmentation(param.path_data+"t2/"+dirname+"/"+filename,param.path_data+"t2/"+dirname+"/",'t2')
+                        print(dirname, filename)
+                        [d_old,d_new],[r_old,r_new] = segmentation(os.path.join(param.path_data, "t2", dirname, filename), os.path.join(param.path_data, "t2", dirname),'t2')
                         if d_old == 0:
                             d_old = 'OK'
                             sum_old = sum_old+1
@@ -123,12 +118,12 @@ def main():
     results_dmri = []
     sum_old,sum_new = 0,0
     if 'dmri' in param.data:
-        for dirname in os.listdir(param.path_data+"dmri/"):
+        for dirname in os.listdir(os.path.join(param.path_data, "dmri")):
             if dirname not in ['._.DS_Store','.DS_Store']:
-                for filename in os.listdir(param.path_data+"dmri/"+dirname):
+                for filename in os.listdir(os.path.join(param.path_data, "dmri", dirname)):
                     if filename.startswith('dmri') and not filename.endswith('_seg.nii.gz') and not filename.endswith('_detection.nii.gz') and not filename.endswith('.vtk'):
-                        print dirname, filename
-                        [d_old,d_new],[r_old,r_new] = segmentation(param.path_data+"dmri/"+dirname+"/"+filename,param.path_data+"dmri/"+dirname+"/",'t1')
+                        print(dirname, filename)
+                        [d_old,d_new],[r_old,r_new] = segmentation(os.path.join(param.path_data, "dmri", dirname, filename), os.path.join(param.path_data, "dmri", dirname),'t1')
                         if d_old == 0:
                             d_old = 'OK'
                             sum_old = sum_old+1
@@ -143,26 +138,26 @@ def main():
         results_dmri.append(['average',sum_old,sum_new,np.mean([line[3] for line in results_dmri]),np.mean([line[4] for line in results_dmri])])
 
     if 't1' in param.data:
-        print ''
-        print tabulate(results_t1, headers=["Subject-T1","Detect-old","Detect-new","DC-old", "DC-new"], floatfmt=".2f")
+        print('')
+        print(tabulate(results_t1, headers=["Subject-T1","Detect-old","Detect-new","DC-old", "DC-new"], floatfmt=".2f"))
 
     if 't2' in param.data:
-        print ''
-        print tabulate(results_t2, headers=["Subject-T2","Detect-old","Detect-new","DC-old", "DC-new"], floatfmt=".2f")
+        print('')
+        print(tabulate(results_t2, headers=["Subject-T2","Detect-old","Detect-new","DC-old", "DC-new"], floatfmt=".2f"))
 
     if 'dmri' in param.data:
-        print ''
-        print tabulate(results_dmri, headers=["Subject-dmri","Detect-old","Detect-new","DC-old", "DC-new"], floatfmt=".2f")
+        print('')
+        print(tabulate(results_dmri, headers=["Subject-dmri","Detect-old","Detect-new","DC-old", "DC-new"], floatfmt=".2f"))
 
 
     # display elapsed time
     elapsed_time = time.time() - start_time
-    print 'Finished! Elapsed time: '+str(int(round(elapsed_time)))+'s\n'
+    print('Finished! Elapsed time: '+str(int(round(elapsed_time)))+'s\n')
 
     # remove temp files
     if param.remove_tmp_file:
         sct.printv('\nRemove temporary files...', param.verbose)
-        sct.run('rm -rf '+param.path_tmp, param.verbose)
+        shutil.rmtree(param.path_tmp)
 
     e = 0
     for i in range(0,len(results_t2)):
@@ -174,22 +169,22 @@ def main():
 def segmentation(fname_input, output_dir, image_type):
     # parameters
     path_in, file_in, ext_in = sct.extract_fname(fname_input)
-    segmentation_filename_old = path_in + 'old/' + file_in + '_seg' + ext_in
-    manual_segmentation_filename_old = path_in + 'manual_' + file_in + ext_in
-    detection_filename_old = path_in + 'old/' + file_in + '_detection' + ext_in
-    segmentation_filename_new = path_in + 'new/' + file_in + '_seg' + ext_in
-    manual_segmentation_filename_new = path_in + 'manual_' + file_in + ext_in
-    detection_filename_new = path_in + 'new/' + file_in + '_detection' + ext_in
+    segmentation_filename_old = os.path.join(path_in, 'old', file_in + '_seg' + ext_in)
+    manual_segmentation_filename_old = os.path.join(path_in, 'manual_' + file_in + ext_in)
+    detection_filename_old = os.path.join(path_in, 'old', file_in + '_detection' + ext_in)
+    segmentation_filename_new = os.path.join(path_in, 'new', file_in + '_seg' + ext_in)
+    manual_segmentation_filename_new = os.path.join(path_in, 'manual_' + file_in + ext_in)
+    detection_filename_new = os.path.join(path_in, 'new', file_in + '_detection' + ext_in)
 
     # initialize results of segmentation and detection
     results_detection = [0,0]
     results_segmentation = [0.0,0.0]
 
     # perform PropSeg old version
-    sct.run('rm -rf '+output_dir+'old')
-    sct.create_folder(output_dir+'old')
+    shutil.rmtree(os.path.join(output_dir, 'old'))
+    sct.create_folder(os.path.join(output_dir, 'old'))
     cmd = 'sct_propseg_old -i ' + fname_input \
-        + ' -o ' + output_dir+'old' \
+        + ' -o ' + os.path.join(output_dir, 'old') \
         + ' -t ' + image_type \
         + ' -detect-nii'
     sct.printv(cmd)
@@ -209,16 +204,16 @@ def segmentation(fname_input, output_dir, image_type):
                 + ' -bzmax'
     sct.printv(cmd_validation)
     status_validation_old, output_validation_old = commands.getstatusoutput(cmd_validation)
-    print output_validation_old
+    print(output_validation_old)
     res = output_validation_old.split()[-1]
     if res != 'nan': results_segmentation[0] = float(res)
     else: results_segmentation[0] = 0.0
 
     # perform PropSeg new version
-    sct.run('rm -rf '+output_dir+'new')
-    sct.create_folder(output_dir+'new')
+    shutil.rmtree(os.path.join(output_dir, 'new'))
+    sct.create_folder(os.path.join(output_dir, 'new'))
     cmd = 'sct_propseg -i ' + fname_input \
-        + ' -o ' + output_dir+'new' \
+        + ' -o ' + os.path.join(output_dir, 'new') \
         + ' -t ' + image_type \
         + ' -detect-nii'
     sct.printv(cmd)
@@ -238,7 +233,7 @@ def segmentation(fname_input, output_dir, image_type):
                 + ' -bzmax'
     sct.printv(cmd_validation)
     status_validation_new, output_validation_new = commands.getstatusoutput(cmd_validation)
-    print output_validation_new
+    print(output_validation_new)
     res = output_validation_new.split()[-1]
     if res != 'nan': results_segmentation[1] = float(res)
     else: results_segmentation[1] = 0.0

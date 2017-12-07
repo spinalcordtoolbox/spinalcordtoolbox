@@ -14,17 +14,17 @@
 #########################################################################################
 
 #import sct_utils as sct
-import commands
+import os, commands
 
 
 def test(path_data):
 
     # parameters
-    folder_data = 't2/'
+    folder_data = 't2'
     file_data = ['t2.nii.gz']
 
     # define command
-    cmd = 'sct_denoising_onlm -i '+path_data+folder_data+file_data[0] \
+    cmd = 'sct_denoising_onlm -i ' + os.path.join(path_data, folder_data, file_data[0]) \
           + ' -v 2'
     # return
     #return sct.run(cmd, 0)

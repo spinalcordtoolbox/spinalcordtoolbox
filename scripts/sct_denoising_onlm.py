@@ -1,16 +1,17 @@
 #!/usr/bin/env python
 
-import sys, commands
+import sys, io, os
+from time import time
+
 import numpy as np
 from time import time
 import nibabel as nib
+
 from msct_parser import Parser
 import sct_utils as sct
 
 # Get path of the toolbox
-status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
-# Append path that contains scripts, to be able to load modules
-sys.path.append(path_sct + '/scripts')
+path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
 
 
 # DEFAULT PARAMETERS
@@ -67,8 +68,8 @@ def main(file_to_denoise, param, output_file_name) :
             den = nlmeans(data, sigma=sigma, mask=mask, rician=False, block_radius=block_radius)
 
     t = time()
-    sct.printv("total time", time() - t))
-    sct.printv("vol size", den.shape))
+    sct.printv("total time: %s" % (time() - t))
+    sct.printv("vol size", den.shape)
 
     axial_middle = data.shape[2] / 2
 

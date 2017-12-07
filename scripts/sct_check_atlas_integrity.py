@@ -79,7 +79,7 @@ def main():
     sct.printv('\nLoad atlas...', param.verbose)
     atlas = np.empty([nb_tracts_total], dtype=object)  # labels(nb_labels_total, x, y, z)
     for i_atlas in range(0, nb_tracts_total):
-        atlas[i_atlas] = nib.load(path_atlas + atlas_file[i_atlas]).get_data()
+        atlas[i_atlas] = nib.load(os.path.join(path_atlas, atlas_file[i_atlas])).get_data()
 
     # Check integrity
     sct.printv('\nCheck atlas integrity...', param.verbose)
@@ -126,8 +126,8 @@ def read_label_file(path_info_label):
     # check if all files listed are present in folder. If not, WARNING.
     sct.printv('\nCheck existence of all files listed in ' + param.file_info_label + ' ...')
     for fname in label_file:
-        if os.path.isfile(path_info_label + fname) or os.path.isfile(path_info_label + fname + '.nii') or \
-                os.path.isfile(path_info_label + fname + '.nii.gz'):
+        if os.path.isfile(os.path.join(path_info_label, fname)) or os.path.isfile(os.path.join(path_info_label, fname + '.nii')) or \
+                os.path.isfile(os.path.join(path_info_label, fname + '.nii.gz')):
             sct.printv('  OK: ' + path_info_label + fname)
         else:
             sct.printv('  WARNING: ' + path_info_label + fname + ' does not exist but is listed in '

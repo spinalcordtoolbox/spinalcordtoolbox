@@ -38,13 +38,14 @@ def check_and_correct_segmentation(fname_segmentation, fname_centerline, folder_
     """
     sct.printv('\nCheck consistency of segmentation...', verbose)
     # creating a temporary folder in which all temporary files will be placed and deleted afterwards
-    path_tmp = sct.tmp_create(verbose=verbose)
+    path_tmp = sct.tmp_create(basename="propseg", verbose=verbose)
     from sct_convert import convert
-    convert(fname_segmentation, path_tmp + 'tmp.segmentation.nii.gz', squeeze_data=False, verbose=0)
-    convert(fname_centerline, path_tmp + 'tmp.centerline.nii.gz', squeeze_data=False, verbose=0)
+    convert(fname_segmentation, os.path.join(path_tmp, "tmp.segmentation.nii.gz"), squeeze_data=False, verbose=0)
+    convert(fname_centerline, os.path.join(path_tmp, "tmp.centerline.nii.gz"), squeeze_data=False, verbose=0)
     fname_seg_absolute = os.path.abspath(fname_segmentation)
 
     # go to tmp folder
+    curdir = os.getcwd()
     os.chdir(path_tmp)
 
     # convert segmentation image to RPI
@@ -127,7 +128,7 @@ def check_and_correct_segmentation(fname_segmentation, fname_centerline, folder_
     sct_image.main('-i tmp.segmentation_RPI_c.nii.gz -setorient {} -o {}'.
                    format(image_input_orientation, fname_seg_absolute).split())
 
-    os.chdir('..')
+    os.chdir(curdir)
 
     # display information about how much of the segmentation has been corrected
 
@@ -337,7 +338,7 @@ if __name__ == "__main__":
     cmd = 'isct_propseg -i "%s" -t %s' % (fname_data, contrast_type_propseg)
 
     if "-ofolder" in arguments:
-        folder_output = sct.slash_at_the_end(arguments["-ofolder"], slash=1)
+        folder_output = arguments["-ofolder"]
     else:
         folder_output = './'
     cmd += ' -o "%s"' % folder_output
@@ -495,10 +496,10 @@ if __name__ == "__main__":
 
     # build output filename
     file_seg = file_data + "_seg" + ext_data
-    fname_seg = os.path.normpath(folder_output + file_seg)
+    fname_seg = os.path.normpath(os.path.join(folder_output, file_seg))
 
     # check consistency of segmentation
-    fname_centerline = folder_output + file_data + '_centerline' + ext_data
+    fname_centerline = os.path.join(folder_output, file_data + '_centerline' + ext_data)
     check_and_correct_segmentation(fname_seg, fname_centerline, folder_output=folder_output, threshold_distance=3.0, remove_temp_files=remove_temp_files, verbose=verbose)
 
     # copy header from input to segmentation to make sure qform is the same
@@ -533,5 +534,4 @@ if __name__ == "__main__":
         except:
             sct.log.warning('Issue when creating QC report.')
 
-    sct.printv('\nDone! To view results, type:', verbose)
-    sct.printv("fslview " + fname_input_data + " " + fname_seg + " -l Red -b 0,1 -t 0.7 &\n", verbose, 'info')
+    sct.display_viewer_syntax([fname_input_data, fname_seg], colormaps=['gray', 'red'], opacities=['', '0.7'])

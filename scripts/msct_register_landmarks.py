@@ -23,6 +23,8 @@
 # TODO: normalize SSE: currently, it depends on the number of landmarks
 
 # from msct_types import Point
+import sys, io, os
+
 from numpy import array, sin, cos, matrix, sum, mean, absolute
 from math import pow, sqrt
 from operator import itemgetter
@@ -369,14 +371,14 @@ def getRigidTransformFromLandmarks(points_dest, points_src, constraints='Tx_Ty_T
         ax.set_aspect('auto')
         plt.legend()
         # plt.show()
-        plt.savefig(path_qc + 'getRigidTransformFromLandmarks_plot.png')
+        plt.savefig(os.path.join(path_qc, 'getRigidTransformFromLandmarks_plot.png'))
 
         fig2 = plt.figure()
         plt.plot(sse_results)
         plt.grid()
         plt.title('#Iterations: ' + str(res.nit) + ', #FuncEval: ' + str(res.nfev) + ', Error: ' + str(res.fun))
         plt.show()
-        plt.savefig(path_qc + 'getRigidTransformFromLandmarks_iterations.png')
+        plt.savefig(os.path.join(path_qc, 'getRigidTransformFromLandmarks_iterations.png'))
 
     # transform numpy matrix to list structure because it is easier to handle
     points_src_reg = points_src_reg.tolist()

@@ -13,9 +13,11 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import sct_utils as sct
+import sys, io, os
+
 from pandas import DataFrame
-import sys
+
+import sct_utils as sct
 
 
 def init(param_test):
@@ -59,14 +61,14 @@ def test_integrity(param_test):
 
         # apply curved2straight, then straight2curve, then compared results
         path_input, file_input, ext_input = sct.extract_fname(param_test.file_input)
-        sct.run('sct_apply_transfo -i ' + param_test.path_data + param_test.fname_segmentation + ' -d ' + param_test.path_output + file_input + '_straight' + ext_input + ' -w ' + param_test.path_output + 'warp_curve2straight.nii.gz -o ' + param_test.path_output + 'tmp_seg_straight.nii.gz -x linear', 0)
-        sct.run('sct_apply_transfo -i ' + param_test.path_output + 'tmp_seg_straight.nii.gz -d ' + param_test.path_data + param_test.fname_segmentation + ' -w ' + param_test.path_output + 'warp_straight2curve.nii.gz -o ' + param_test.path_output + 'tmp_seg_straight_curved.nii.gz -x nn',0)
+        sct.run('sct_apply_transfo -i ' + os.path.join(param_test.path_data, param_test.fname_segmentation) + ' -d ' + os.path.join(param_test.path_output, file_input) + '_straight' + ext_input + ' -w ' + os.path.join(param_test.path_output, 'warp_curve2straight.nii.gz') + ' -o ' + os.path.join(param_test.path_output, 'tmp_seg_straight.nii.gz') + ' -x linear', 0)
+        sct.run('sct_apply_transfo -i ' + os.path.join(param_test.path_output, 'tmp_seg_straight.nii.gz') + ' -d ' + os.path.join(param_test.path_data, param_test.fname_segmentation) + ' -w ' + os.path.join(param_test.path_output, 'warp_straight2curve.nii.gz') + ' -o ' + os.path.join(param_test.path_output, 'tmp_seg_straight_curved.nii.gz') + ' -x nn',0)
 
         # threshold and binarize
-        sct.run('sct_maths -i ' + param_test.path_output + 'tmp_seg_straight_curved.nii.gz -bin 0.5 -o ' + param_test.path_output + 'tmp_seg_straight_curved.nii.gz', 0)
+        sct.run('sct_maths -i ' + os.path.join(param_test.path_output, 'tmp_seg_straight_curved.nii.gz') + ' -bin 0.5 -o ' + os.path.join(param_test.path_output, 'tmp_seg_straight_curved.nii.gz'), 0)
 
         # compute DICE
-        cmd = 'sct_dice_coefficient -i ' + param_test.path_output + 'tmp_seg_straight_curved.nii.gz -d ' + param_test.path_data + param_test.fname_segmentation
+        cmd = 'sct_dice_coefficient -i ' + os.path.join(param_test.path_output, 'tmp_seg_straight_curved.nii.gz') + ' -d ' + os.path.join(param_test.path_data, param_test.fname_segmentation)
         status2, output2 = sct.run(cmd, 0)
         # parse output and compare to acceptable threshold
         result_dice = float(output2.split('3D Dice coefficient = ')[1].split('\n')[0])
@@ -86,3 +88,4 @@ def test_integrity(param_test):
         param_test.output += str(e)
 
     return param_test
+
