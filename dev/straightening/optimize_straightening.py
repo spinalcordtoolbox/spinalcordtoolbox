@@ -123,12 +123,12 @@ if __name__ == "__main__":
                 input_straightening_params = input_straightening_params[:-1]
 
                 # copy of the folder
-                folder_name_complete = "data_" + folder_name + "_" + input_straightening_params
+                folder_name_complete = os.path.join("data_" + folder_name + "_" + input_straightening_params)
                 sct.run("pwd", verbose=0)
-                #sct.run("cp -R original_data/" + folder_name + " " + folder_name_complete)
+                #sct.run("cp -R " + os.path.join("original_data", folder_name) + " " + folder_name_complete)
                 if os.path.exists(folder_name_complete):
                     sct.run("rm -rf " + folder_name_complete, verbose=0)
-                sct.run("cp -R original_data/" + folder_name + " " + folder_name_complete, verbose=0)
+                sct.run("cp -R " + os.path.join("original_data", folder_name) + " " + folder_name_complete, verbose=0)
 
                 subjects[i][input_straightening_params] = []
                 contrasts[i][input_straightening_params] = []
@@ -289,7 +289,7 @@ if __name__ == "__main__":
         ax4.set_xticklabels(xlabels_sorted)
 
         sns.despine(left=True, bottom=True)
-        plt.savefig(folder_name+'.eps', bbox_inches='tight')
+        plt.savefig(folder_name + '.eps', bbox_inches='tight')
         plt.show()
 
         import pickle

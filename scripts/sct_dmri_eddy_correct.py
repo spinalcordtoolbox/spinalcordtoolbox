@@ -24,7 +24,7 @@ import numpy as np
 from msct_image import Image
 import sct_utils as sct
 # get path of the toolbox
-status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
 
 
 fsloutput = 'export FSLOUTPUTTYPE=NIFTI; '  # for faster processing, all outputs are in NIFTI
@@ -90,25 +90,10 @@ def main():
         usage()
 
     if param.output_path == '':
-        param.output_path = os.getcwd() + '/'
-
-    # create temporary folder
-    path_tmp = 'tmp.' + time.strftime("%y%m%d%H%M%S")
-    sct.run('mkdir ' + path_tmp, param.verbose)
-
-    # go to tmp folder
-    os.chdir(path_tmp)
+        param.output_path = os.getcwd()
 
     # run sct_eddy_correct
     eddy_correct(param)
-
-    # come back to parent folder
-    os.chdir('..')
-
-    # Delete temporary files
-    if param.delete_tmp_files == 1:
-        sct.printv('\nDelete temporary files...')
-        sct.run('rm -rf ' + path_tmp, param.verbose)
 
     # display elapsed time
     elapsed_time = time.time() - start_time
@@ -125,6 +110,12 @@ def eddy_correct(param):
     sct.printv('              Running: eddy_correct', param.verbose)
     sct.printv('===================================================\n', param.verbose)
 
+    path_tmp = sct.tmp_create()
+
+    # go to tmp folder
+    curdir = os.getcwd()
+    os.chdir(path_tmp)
+
     fname_data    = param.fname_data
     min_norm      = param.min_norm
     cost_function = param.cost_function_flirt
@@ -137,13 +128,13 @@ def eddy_correct(param):
     path_data, file_data, ext_data = sct.extract_fname(fname_data)
 
     if param.mat_eddy == '':
-        param.mat_eddy = 'mat_eddy/'
+        param.mat_eddy = 'mat_eddy'
     if not os.path.exists(param.mat_eddy):
         os.makedirs(param.mat_eddy)
     mat_eddy    = param.mat_eddy
 
     # Schedule file for FLIRT
-    schedule_file = path_sct + '/flirtsch/schedule_TxTy_2mmScale.sch'
+    schedule_file = os.path.join(path_sct , 'flirtsch', 'schedule_TxTy_2mmScale.sch')
     sct.printv(('\n.. Schedule file: ' + schedule_file), verbose)
 
     # Swap X-Y dimension (to have X as phase-encoding direction)
@@ -274,14 +265,14 @@ def eddy_correct(param):
             sct.printv('\nDivide affine transformation by two...', verbose)
             A = (M - np.identity(4)) / 2
             Mplus = np.identity(4) + A
-            omat_plus = mat_eddy + 'mat.T' + str(i_plus) + '_Z' + str(iZ) + '.txt'
+            omat_plus = os.path.join(mat_eddy, 'mat.T' + str(i_plus) + '_Z' + str(iZ) + '.txt')
             file =  open(omat_plus, 'w')
             np.savetxt(omat_plus, Mplus, fmt='%.6e', delimiter='  ', newline='\n', header='', footer='', comments='#')
             file.close()
             sct.printv(('.. Output matrix file (plus): ' + omat_plus), verbose)
 
             Mminus = np.identity(4) - A
-            omat_minus = mat_eddy + 'mat.T' + str(i_minus) + '_Z' + str(iZ) + '.txt'
+            omat_minus = os.path.join(mat_eddy, 'mat.T' + str(i_minus) + '_Z' + str(iZ) + '.txt')
             file =  open(omat_minus, 'w')
             np.savetxt(omat_minus, Mminus, fmt='%.6e', delimiter='  ', newline='\n', header='', footer='', comments='#')
             file.close()
@@ -304,7 +295,7 @@ def eddy_correct(param):
             for iZ in range(nb_loops):
                 fname = file_data + '_T' + str(i_file).zfill(4) + file_suffix[iZ]
                 fname_corr = fname + '_corr_' + '__div2'
-                omat = mat_eddy + 'mat.T' + str(i_file) + '_Z' + str(iZ) + '.txt'
+                omat = os.path.join(mat_eddy, 'mat.T' + str(i_file) + '_Z' + str(iZ) + '.txt')
                 cmd = fsloutput + 'flirt -in ' + fname + ' -ref ' + fname + ' -out ' + fname_corr + ' -init ' + omat + ' -applyxfm -paddingsize 3 -interp ' + param.interp
                 status, output = sct.run(cmd, verbose)
 
@@ -340,11 +331,11 @@ def eddy_correct(param):
     sct.printv('\nMerge back across T...', verbose)
     sct.printv('------------------------------------------------------------------------------------\n', verbose)
 
-    fname_data_corr = param.output_path + file_data + '_eddy'
+    fname_data_corr = os.path.join(param.output_path, file_data + '_eddy')
     cmd = fsloutput + 'fslmerge -t ' + fname_data_corr
-    path_tmp = os.getcwd()
+
     for iT in range(nt):
-        if os.path.isfile((path_tmp + '/' + file_data + '_T' + str(iT).zfill(4) + '_corr_' + '__div2.nii')):
+        if os.path.isfile((os.path.join(path_tmp, file_data) + '_T' + str(iT).zfill(4) + '_corr_' + '__div2.nii')):
             fname_data_corr_3d = file_data + '_T' + str(iT).zfill(4) + '_corr_' + '__div2'
         elif iT in index_b0:
             fname_data_corr_3d = file_data + '_T' + str(iT).zfill(4)
@@ -367,6 +358,13 @@ def eddy_correct(param):
     sct.printv('              Completed: eddy_correct', verbose)
     sct.printv('===================================================\n\n\n', verbose)
 
+    # come back
+    os.chdir(curdir)
+
+    # Delete temporary files
+    if param.delete_tmp_files == 1:
+        sct.printv('\nDelete temporary files...')
+        sct.run('rm -rf ' + path_tmp, param.verbose)
 
 #=======================================================================================================================
 # usage

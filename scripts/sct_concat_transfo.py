@@ -14,10 +14,8 @@
 # TODO: also enable to concatenate reversed transfo
 
 
-import sys
-import os
-import getopt
-from commands import getstatusoutput
+import sys, io, os, getopt, commands
+
 import sct_utils as sct
 from msct_parser import Parser
 from msct_image import Image
@@ -45,9 +43,9 @@ def main():
     # Parameters for debug mode
     if param.debug:
         sct.printv('\n*** WARNING: DEBUG MODE ON ***\n')
-        status, path_sct_data = getstatusoutput('echo $SCT_TESTING_DATA_DIR')
-        fname_warp_list = path_sct_data + '/t2/warp_template2anat.nii.gz,-' + path_sct_data + '/mt/warp_template2mt.nii.gz'
-        fname_dest = path_sct_data + '/mt/mtr.nii.gz'
+        path_sct_data = os.environ.get("SCT_TESTING_DATA_DIR", os.path.join(os.path.dirname(os.path.dirname(__file__))), "testing_data")
+        fname_warp_list = os.path.join(path_sct_data, 't2', 'warp_template2anat.nii.gz') + '-' + os.path.join(path_sct_data, 'mt', 'warp_template2mt.nii.gz')
+        fname_dest = os.path.join(path_sct_data, 'mt', 'mtr.nii.gz')
         verbose = 1
     else:
         # Check input parameters
@@ -87,13 +85,12 @@ def main():
     else:
         path_out, file_out, ext_out = sct.extract_fname(fname_warp_final)
 
-    # Check dimension of data (cf. issue #1419)
-    dimensionality = '3'
-    path, file, ext = sct.extract_fname(fname_warp_list[0])
-    if 'nii' in ext:
-        im_warp = Image(fname_warp_list[0])
-        if im_warp.data.shape[2] in (0, 1):
-            dimensionality = '2'
+    # Check dimension of destination data (cf. issue #1419, #1429)
+    im_dest = Image(fname_dest)
+    if im_dest.dim[2] == 1:
+        dimensionality = '2'
+    else:
+        dimensionality = '3'
 
     # Concatenate warping fields
     sct.printv('\nConcatenate warping fields...', verbose)
@@ -101,7 +98,7 @@ def main():
     fname_warp_list_invert.reverse()
     cmd = 'isct_ComposeMultiTransform '+dimensionality+' warp_final' + ext_out + ' -R ' + fname_dest + ' ' + ' '.join(fname_warp_list_invert)
     sct.printv('>> ' + cmd, verbose)
-    status, output = getstatusoutput(cmd)  # here cannot use sct.run() because of wrong output status in isct_ComposeMultiTransform
+    status, output = commands.getstatusoutput(cmd)  # here cannot use sct.run() because of wrong output status in isct_ComposeMultiTransform
 
     # check if output was generated
     if not os.path.isfile('warp_final' + ext_out):
@@ -109,7 +106,7 @@ def main():
 
     # Generate output files
     sct.printv('\nGenerate output files...', verbose)
-    sct.generate_output_file('warp_final' + ext_out, path_out + file_out + ext_out)
+    sct.generate_output_file('warp_final' + ext_out, os.path.join(path_out, file_out + ext_out))
 
 
 # ==========================================================================================

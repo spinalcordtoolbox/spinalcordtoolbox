@@ -14,11 +14,11 @@
 
 # TODO: update function to reflect the new get_dimension
 
+import sys, io, os, math
 
 import numpy as np
 import sct_utils as sct
 from scipy.ndimage import map_coordinates
-import math
 import sct_utils as sct
 
 
@@ -221,16 +221,15 @@ class Image(object):
             self.hdr = hdr
 
         self.verbose = verbose
-
         # load an image from file
-        if type(param) is str:
+        if isinstance(param, str) or (sys.hexversion < 0x03000000 and isinstance(param, unicode)):
             self.loadFromPath(param, verbose)
             self.compute_transform_matrix()
         # copy constructor
         elif isinstance(param, type(self)):
             self.copy(param)
         # create an empty image (full of zero) of dimension [dim]. dim must be [x,y,z] or (x,y,z). No header.
-        elif type(param) is list:
+        elif isinstance(param, list):
             self.data = np.zeros(param)
             self.dim = param
             self.hdr = hdr
@@ -425,7 +424,7 @@ class Image(object):
         if self.hdr:
             self.hdr.set_data_shape(self.data.shape)
         img = Nifti1Image(self.data, None, self.hdr)
-        fname_out = self.path + self.file_name + self.ext
+        fname_out = os.path.join(self.path, self.file_name + self.ext)
         if path.isfile(fname_out):
             printv('WARNING: File ' + fname_out + ' already exists. Deleting it.', verbose, 'warning')
             remove(fname_out)
@@ -1028,12 +1027,10 @@ class Image(object):
         import matplotlib.pyplot as plt
         import matplotlib.cm as cm
         from math import sqrt
-        from sct_utils import slash_at_the_end
         if type(index) is not list:
             index = [index]
 
         slice_list = [self.get_slice(plane=plane, index=i, seg=seg) for i in index]
-        path_output = slash_at_the_end(path_output, 1)
         if seg is not None:
             import matplotlib.colors as col
             color_white = col.colorConverter.to_rgba('white', alpha=0.0)
@@ -1073,7 +1070,7 @@ class Image(object):
             # if seg is not None:
             #     plt.imshow(slice_seg, cmap=cmap_seg, interpolation='nearest')
             # plt.axis('off')
-            fname_png = path_output + self.file_name + suffix + format
+            fname_png = os.path.join(path_output, self.file_name + suffix + format)
             plt.savefig(fname_png, bbox_inches='tight')
             plt.close(fig)
 

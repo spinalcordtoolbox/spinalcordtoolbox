@@ -161,9 +161,7 @@ def main():
     path_anat, file_anat, ext_anat = sct.extract_fname(fname_anat)
     path_template, file_template, ext_template = sct.extract_fname(fname_template)
 
-    # create temporary folder
-    path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S")
-    sct.run('mkdir '+path_tmp)
+    path_tmp = sct.tmp_create()
 
     # go to tmp folder
     os.chdir(path_tmp)

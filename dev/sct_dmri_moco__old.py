@@ -48,7 +48,7 @@ class param:
 def main():
 
     # get path of the toolbox
-    status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+    path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
     print path_sct
 
     # Initialization
@@ -107,11 +107,10 @@ def main():
     # Extract path, file and extension
     path_data, file_data, ext_data = sct.extract_fname(fname_data)
 
-    # create temporary folder
-    path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S")
-    sct.run('mkdir '+path_tmp)
+    path_tmp = sct.tmp_create(basename="dmri_moco__old", verbose=verbose)
 
     # go to tmp folder
+    curdir = os.getcwd()
     os.chdir(path_tmp)
 
     # Get size of data
@@ -330,8 +329,8 @@ def main():
     sct.generate_output_file('tmp.dwi_moco_mean.nii',path_data,'dwi_moco_mean',ext_data)
     sct.generate_output_file('tmp.b0_moco_mean.nii',path_data,'b0_moco_mean',ext_data)
 
-    # come back to parent folder
-    os.chdir('..')
+    # come back
+    os.chdir(curdir)
 
     # Delete temporary files
     if remove_temp_files == 1:

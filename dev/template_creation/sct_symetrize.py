@@ -16,14 +16,13 @@ class param:
     def __init__(self):
         self.verbose = 1
 # check if needed Python libraries are already installed or not
-import sys
-import getopt
-import sct_utils as sct
-import nibabel
-import os
-import time
+import sys, io, os, getopt, time, shutil
 from math import floor
-from numpy import insert
+
+import nibabel
+
+import sct_utils as sct
+
 def main():
     
     #Initialization
@@ -47,26 +46,24 @@ def main():
         usage()
 
     # check existence of input files
-    print'\nCheck if file exists ...'
+    print('\nCheck if file exists ...')
 
     sct.check_file_exist(fname)
 
 
     # Display arguments
-    print'\nCheck input arguments...'
-    print'  Input volume ...................... '+fname
-    print'  Verbose ........................... '+str(verbose)
+    print('\nCheck input arguments...')
+    print('  Input volume ...................... '+fname)
+    print('  Verbose ........................... '+str(verbose))
 
 
-    # create temporary folder
-    path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S")
-    sct.run('mkdir '+path_tmp)
+    path_tmp = sct.tmp_create(basename="symetrize", verbose=verbose)
 
     fname = os.path.abspath(fname)
     path_data, file_data, ext_data = sct.extract_fname(fname)
 
     # copy files into tmp folder
-    sct.run('cp '+fname+' '+path_tmp)
+    sct.copy(fname, path_tmp)
 
     # go to tmp folder
     os.chdir(path_tmp)
