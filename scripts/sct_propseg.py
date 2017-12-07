@@ -486,7 +486,7 @@ if __name__ == "__main__":
 
     # enabling centerline extraction by default
     cmd += ' -centerline-binary'
-    status, output = sct.run(cmd, verbose, error_exit='verbose')
+    status, output = sct.run(cmd, verbose, raise_exception=False)
 
     # check status is not 0
     if not status == 0:

@@ -176,15 +176,15 @@ class FullGmSegmentation:
         res_wm_seg_bin.ext = '.nii.gz'
         res_wm_seg_bin.save()
         try:
-            status_gm, output_gm = sct.run('sct_dice_coefficient ref_gm_seg.nii.gz res_gm_seg_bin.nii.gz  -2d-slices 2', error_exit='warning', raise_exception=True)
+            status_gm, output_gm = sct.run('sct_dice_coefficient ref_gm_seg.nii.gz res_gm_seg_bin.nii.gz  -2d-slices 2')
         except Exception:
             sct.run('c3d res_gm_seg_bin.nii.gz  ref_gm_seg.nii.gz -reslice-identity -o ref_in_res_space_gm.nii.gz ')
-            status_gm, output_gm = sct.run('sct_dice_coefficient ref_in_res_space_gm.nii.gz res_gm_seg_bin.nii.gz  -2d-slices 2', error_exit='warning')
+            status_gm, output_gm = sct.run('sct_dice_coefficient ref_in_res_space_gm.nii.gz res_gm_seg_bin.nii.gz  -2d-slices 2')
         try:
-            status_wm, output_wm = sct.run('sct_dice_coefficient ref_wm_seg.nii.gz res_wm_seg_bin.nii.gz  -2d-slices 2', error_exit='warning', raise_exception=True)
+            status_wm, output_wm = sct.run('sct_dice_coefficient ref_wm_seg.nii.gz res_wm_seg_bin.nii.gz  -2d-slices 2')
         except Exception:
             sct.run('c3d res_wm_seg_bin.nii.gz  ref_wm_seg.nii.gz -reslice-identity -o ref_in_res_space_wm.nii.gz ')
-            status_wm, output_wm = sct.run('sct_dice_coefficient ref_in_res_space_wm.nii.gz res_wm_seg_bin.nii.gz  -2d-slices 2', error_exit='warning')
+            status_wm, output_wm = sct.run('sct_dice_coefficient ref_in_res_space_wm.nii.gz res_wm_seg_bin.nii.gz  -2d-slices 2')
         dice_name = 'dice_' + self.param.res_type + '.txt'
         dice_fic = open('../' + dice_name, 'w')
         if self.param.res_type == 'prob':

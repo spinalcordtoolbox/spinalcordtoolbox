@@ -222,7 +222,7 @@ def run_old(cmd, verbose=1):
         return status, output
 
 
-def run(cmd, verbose=1, error_exit='error', raise_exception=False, cwd=None):
+def run(cmd, verbose=1, raise_exception=True, cwd=None):
     # if verbose == 2:
     #     printv(sys._getframe().f_back.f_code.co_name, 1, 'process')
 
@@ -248,23 +248,18 @@ def run(cmd, verbose=1, error_exit='error', raise_exception=False, cwd=None):
             if verbose == 2:
                 printv(output.strip())
             output_final += output.strip() + '\n'
-    status_output = process.returncode
+
+    status = process.returncode
+    output = output_final.rstrip()
+
     # process.stdin.close()
     # process.stdout.close()
     # process.terminate()
 
-    # need to remove the last \n character in the output -> return output_final[0:-1]
-    if status_output:
-        # from inspect import stack
-        printv(output_final[0:-1], 1, error_exit)
-        # in case error_exit is not error (immediate exit), the line below can be run
-        if raise_exception:
-            raise RunError(output_final[0:-1])
+    if status != 0 and raise_exception:
+        raise RunError(output_final[0:-1])
 
-        return status_output, output_final[0:-1]
-    else:
-        # no need to output process.returncode (because different from 0)
-        return status_output, output_final[0:-1]
+    return status, output
 
 
 def check_exe(name):
@@ -382,10 +377,10 @@ def get_sct_version():
 
     if os.path.isdir(os.path.join(path_sct, '.git')):
         install_type = 'git'
-        status, output = run(["git", "rev-parse", "HEAD"], cwd=path_sct)
+        status, output = run(["git", "rev-parse", "HEAD"], verbose=0, cwd=path_sct)
         if status == 0:
             sct_commit = output
-        status, output = run(["git", "rev-parse", "--abbrev-ref", "HEAD"], cwd=path_sct)
+        status, output = run(["git", "rev-parse", "--abbrev-ref", "HEAD"], verbose=0, cwd=path_sct)
         if status == 0:
             sct_branch = output
     else:

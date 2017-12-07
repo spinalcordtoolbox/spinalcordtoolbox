@@ -427,7 +427,7 @@ def test_function(param_test):
     param_test.output += '\n====================================================================================================\n' + cmd + '\n====================================================================================================\n\n'  # copy command
     time_start = time.time()
     try:
-        param_test.status, o = sct.run(cmd, 0, error_exit='warning')
+        param_test.status, o = sct.run(cmd, 0)
         if param_test.status:
             raise Exception
     except Exception as err:

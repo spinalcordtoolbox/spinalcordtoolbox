@@ -28,7 +28,7 @@ def init(param_test):
 
     # check if isct_propseg compatibility
     # TODO: MAKE SURE THIS CASE WORKS AFTER MAJOR REFACTORING
-    status_isct_propseg, output_isct_propseg = sct.run('isct_propseg')
+    status_isct_propseg, output_isct_propseg = sct.run('isct_propseg', verbose=0, raise_exception=False)
     isct_propseg_version = output_isct_propseg.split('\n')[0]
     if isct_propseg_version != 'sct_propseg - Version 1.1 (2015-03-24)':
         status = 99
