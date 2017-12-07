@@ -114,6 +114,7 @@ Step-by-step procedure (to do for each contrast):
 ~~~~
 #Preprocessing for subject XXX
 os.makedirs(path_results + '/T1/XXX')
+curdir = os.getcwd()
 os.chdir(path_results + '/T1/XXX')
 sct.run('dcm2nii -o . -r N /Volumes/data_shared/montreal_criugm/errsm_32/16-SPINE_T1/echo_2.09/*.dcm')
 sct.run('mv *.nii.gz data.nii.gz')
@@ -127,7 +128,7 @@ sct.run('sct_label_utils -i data_RPI_crop.nii.gz -o centerline_propseg_RPI.nii.g
 os.remove('data.nii.gz')
 os.remove('data_RPI.nii.gz')
 os.remove('data_RPI_crop.nii.gz')
-os.chdir('../..')
+os.chdir(curdir)
 ~~~~
 * LIST_OF_LABELS:
   * ``sct_label_utils -i labels_vertebral.nii.gz -t display-voxel``

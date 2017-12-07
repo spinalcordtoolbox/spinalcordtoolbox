@@ -48,16 +48,12 @@
 # TODO: subsample input data for faster processing (but might create problems of coordinate)-- alternatively, find appropriate schedule file without the 1mm at the end
 
 
-# check if needed Python libraries are already installed or not
-import os
-import commands
-import getopt
-import sys
-import time
-import sct_utils as sct
+import sys, io, os, time, getopt, glob
+
 # import nibabel
 from numpy import mgrid, zeros, exp, unravel_index, argmax, poly1d, polyval, linalg, max, polyfit, sqrt, abs, savetxt
-import glob
+
+import sct_utils as sct
 from sct_utils import fsloutput
 from sct_orientation import get_orientation, set_orientation
 from sct_convert import convert
@@ -66,6 +62,8 @@ from sct_split_data import split_data
 from sct_concat_data import concat_data
 from sct_copy_header import copy_header
 
+# get path of the toolbox
+path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
 
 ## Default parameters
 class Param:
@@ -93,16 +91,12 @@ def main():
     start_time = time.time()
     verbose = 1
 
-    # get path of the toolbox
-    status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
-    path_sct = sct.slash_at_the_end(path_sct, 1)
-
     # Parameters for debug mode
     if param.debug == 1:
         sct.printv('\n*** WARNING: DEBUG MODE ON ***\n\t\t\tCurrent working directory: '+os.getcwd(), 'warning')
-        status, path_sct_testing_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
-        fname_anat = path_sct_testing_data+'/t2/t2.nii.gz'
-        fname_point = path_sct_testing_data+'/t2/t2_centerline_init.nii.gz'
+        path_sct_data = os.environ.get("SCT_TESTING_DATA_DIR", os.path.join(os.path.dirname(os.path.dirname(__file__))), "testing_data")
+        fname_anat = os.path.join(path_sct_testing_data, "t2", "t2.nii.gz")
+        fname_point = os.path.join(path_sct_testing_data, "t2", "t2_centerline_init.nii.gz")
         slice_gap = 5
 
     else:
@@ -143,7 +137,7 @@ def main():
     # extract path of schedule file
     # TODO: include schedule file in sct
     # TODO: check existence of schedule file
-    file_schedule = path_sct + param.schedule_file
+    file_schedule = os.path.join(path_sct, param.schedule_file)
 
     # Get input image orientation
     input_image_orientation = get_orientation(fname_anat)
@@ -157,15 +151,14 @@ def main():
     print '  Gaussian kernel:      '+str(gaussian_kernel)
     print '  Degree of polynomial: '+str(param.deg_poly)
 
-    # create temporary folder
-    print('\nCreate temporary folder...')
-    path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S")
-    sct.create_folder(path_tmp)
+    path_tmp = sct.tmp_create(basename="get_centerline_automatic", verbose=verbose)
+
     print '\nCopy input data...'
-    sct.run('cp '+fname_anat+ ' '+path_tmp+'/tmp.anat'+ext_anat)
-    sct.run('cp '+fname_point+ ' '+path_tmp+'/tmp.point'+ext_point)
+    sct.run('cp '+fname_anat+ ' '+os.path.join(path_tmp, "tmp.anat"+ext_anat))
+    sct.run('cp '+fname_point+ ' '+os.path.join(path_tmp, "tmp.point"+ext_point))
 
     # go to temporary folder
+    curdir = os.getcwd()
     os.chdir(path_tmp)
 
     # convert to nii
@@ -476,14 +469,16 @@ def main():
 
     # Generate output file (in current folder)
     print '\nGenerate output file (in current folder)...'
-    os.chdir('..')  # come back to parent folder
+
+    os.chdir(curdir)  # come back
+
     #sct.generate_output_file('tmp.centerline_polycoeffs_x.txt','./','centerline_polycoeffs_x','.txt')
     #sct.generate_output_file('tmp.centerline_polycoeffs_y.txt','./','centerline_polycoeffs_y','.txt')
     #sct.generate_output_file('tmp.centerline_coordinates.txt','./','centerline_coordinates','.txt')
     #sct.generate_output_file('tmp.anat_orient.nii','./',file_anat+'_rpi',ext_anat)
     #sct.generate_output_file('tmp.anat_orient_fit.nii', file_anat+'_rpi_align'+ext_anat)
     #sct.generate_output_file('tmp.mask_orient_fit.nii', file_anat+'_mask'+ext_anat)
-    fname_output_centerline = sct.generate_output_file(path_tmp+'/tmp.point_orient_fit.nii', file_anat+'_centerline'+ext_anat)
+    fname_output_centerline = sct.generate_output_file(os.path.join(path_tmp, 'tmp.point_orient_fit.nii'), file_anat+'_centerline'+ext_anat)
 
     # Delete temporary files
     if remove_tmp_files == 1:

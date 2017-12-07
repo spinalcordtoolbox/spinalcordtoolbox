@@ -257,10 +257,7 @@ def transform_mat_to_warp(warp_mat_name, src, dest, dim=3):
 # ------------------------------------------------------  MAIN ------------------------------------------------------- #
 ########################################################################################################################
 def main():
-    # create temporary folder
-    sct.printv('\nCreate temporary folder...', verbose, 'normal')
-    path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S")+'/'
-    sct.run('mkdir '+path_tmp)
+    path_tmp = sct.tmp_create(basename="register_graymatter", verbose=verbose) + "/"
 
     target = 'target.nii.gz'
     target_seg = 'target_seg.nii.gz'

@@ -11,6 +11,8 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+import sys, io, os
+
 from msct_image import Image
 
 
@@ -45,7 +47,7 @@ def test_integrity(param_test):
     param_test.output += '\nTesting ' + param_test.args + '\n'
 
     # Open resulting image and check dimensions and spacing
-    image_result = Image(param_test.path_output + 'resampled.nii.gz')
+    image_result = Image(os.path.join(param_test.path_output, 'resampled.nii.gz'))
     dims = image_result.dim
 
     if not all(round(i, 4) == round(j, 4) for i, j in zip(dims, param_test.results_dims[index_args])):

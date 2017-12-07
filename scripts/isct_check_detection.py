@@ -38,9 +38,9 @@ def main():
 
     if param.debug:
         sct.printv( '\n*** WARNING: DEBUG MODE ON ***\n')
-        status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
+        path_sct_data = os.environ.get("SCT_TESTING_DATA_DIR", os.path.join(os.path.dirname(os.path.dirname(__file__))), "testing_data")
         fname_input = ''
-        fname_segmentation = path_sct_data + '/t2/t2_seg.nii.gz'
+        fname_segmentation = os.path.join(path_sct_data, 't2', 't2_seg.nii.gz')
     else:
     # Check input param
         try:
