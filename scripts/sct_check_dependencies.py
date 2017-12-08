@@ -117,10 +117,10 @@ def main():
     path_python = sys.executable
     if path_sct in path_python:
         print_ok()
-        print('  Using bundled python %s at %s' % (sys.version, path_python))
+        print('  Using bundled python {} at {}'.format(sys.version, path_python))
     else:
         print_warning()
-        print('  Using system python which is unsupported: ' + path_python)
+        print('  Using system python which is unsupported: {}'.format(path_python))
 
     # check if data folder is empty
     print_line('Check if data are installed')
