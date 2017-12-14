@@ -203,7 +203,7 @@ done
 # Catch SCT version
 if [ -e "version.txt" ]; then
   if [ ${SCT_MPI_MODE} ]; then
-  echo "$(cat version.txt) mpi" > version.txt
+  echo $(IFS=" " ; set -- $(cat version.txt) ; echo $1 mpi) > version.txt
   fi
   SCT_VERSION=`cat version.txt`
 else
@@ -406,6 +406,13 @@ else
             and verify your internet connection before reinstalling"
     exit $e_status
   fi
+
+  if [[ ${SCT_MPI_MODE} ]] ; then
+    echo "Installing MPI libraries for HCP installation"
+      conda install -c conda-forge --yes --file ${SCT_SOURCE}/install/requirements/requirementsMPI.txt
+  fi
+
+
   pip install  -r ${SCT_SOURCE}/install/requirements/requirementsPip.txt
   e_status=$?
   if [ ${e_status} != 0 ] ; then

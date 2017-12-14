@@ -165,12 +165,20 @@ def main():
     # loop across python packages -- PIP
     version_requirements_pip = get_version_requirements_pip()
     for i in version_requirements_pip:
-        module = i
+        if i == "futures":
+            module = "concurrent.futures"
+        else:
+            module = i
         print_line('Check if ' + i + ' (' + version_requirements_pip.get(i) + ') is installed')
         try:
             module = importlib.import_module(module)
             # get version
-            version = module.__version__
+            try:
+                version = module.__version__
+            except AttributeError:
+                # Futures package as no embedded version info
+                version = version_requirements_pip[i]
+
             # check if version matches requirements
             if check_package_version(version, version_requirements_pip, i):
                 print_ok()

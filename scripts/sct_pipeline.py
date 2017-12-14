@@ -52,9 +52,10 @@ import types
 import copy
 from time import time, strftime
 if "SCT_MPI_MODE" in os.environ:
-    from distribute2mpi import MpiPool as Pool
+    from mpi4py.futures import MPIPoolExecutor as PoolExecutor
 else:
-    from multiprocessing import Pool
+    # from multiprocessing import Pool
+    from concurrent.futures import ProcessPoolExecutor as PoolExecutor
 import itertools
 import pandas as pd
 import glob
@@ -317,7 +318,7 @@ def run_function(function, folder_dataset, list_subj, list_args=[], nb_cpu=None,
     # add full path to each subject
     list_subj_path = [os.path.join(folder_dataset, subject) for subject in list_subj]
 
-    # All scripts that are using multithreading with ITK must not use it when using multiprocessing on several subjects
+    # All scripts that are using multithreading with ITK must not use it when using multiprocessing
     os.environ["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"] = "1"
 
     # create list that finds all the combinations for function + subject path + arguments. Example of one list element:
@@ -327,27 +328,25 @@ def run_function(function, folder_dataset, list_subj, list_args=[], nb_cpu=None,
 
     # Computing Pool for parallel process, distribute2mpi.MpiPool in MPI environment, multiprocessing.Pool otherwise
     sct.log.debug("stating pool with {} thread(s)".format(nb_cpu))
-    pool = Pool(nb_cpu)
+    pool = PoolExecutor(nb_cpu)
     compute_time = None
     try:
         compute_time = time()
         sct.log.debug('paused but print')
-        async_results = pool.map_async(function_launcher, list_func_subj_args)
-        pool.close()
-        pool.join()  # waiting for all the jobs to be done
+        async_results = pool.map(function_launcher, list_func_subj_args)
         compute_time = time() - compute_time
-        all_results = async_results.get()
         # concatenate all_results into single Panda structure
-        results_dataframe = pd.concat([result for result in all_results])
+        #  async_results is an iterator that locks on __next__ call
+        results_dataframe = pd.concat([result for result in async_results])
     except KeyboardInterrupt:
         sct.log.warning("\nCaught KeyboardInterrupt, terminating workers")
-        pool.terminate()
-        pool.join()
+        pool.shutdown()
+        pool.Future.cancel()
     except Exception as e:
         sct.log.error('Error on line {}'.format(sys.exc_info()[-1].tb_lineno))
         sct.log.exception(e)
-        pool.terminate()
-        pool.join()
+        pool.shutdown()
+        pool.Future.cancel()
         raise
 
     return {'results': results_dataframe, "compute_time": compute_time}
