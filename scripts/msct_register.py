@@ -192,7 +192,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
 
     # construct 3D warping matrix
     for iz in z_nonzero:
-        sct.log.info('{}/{}..'.format(iz, nz))
+        sct.no_new_line_log('{}/{}..'.format(iz, nz))
         # get indices of x and y coordinates
         row, col = np.indices((nx, ny))
         # build 2xn array of coordinates in pixel space
@@ -269,7 +269,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
         warp_y[:, :, iz] = np.array([coord_forward_phy[i, 1] - coord_init_phy[i, 1] for i in xrange(nx * ny)]).reshape((nx, ny))
         warp_inv_x[:, :, iz] = np.array([coord_inverse_phy[i, 0] - coord_init_phy[i, 0] for i in xrange(nx * ny)]).reshape((nx, ny))
         warp_inv_y[:, :, iz] = np.array([coord_inverse_phy[i, 1] - coord_init_phy[i, 1] for i in xrange(nx * ny)]).reshape((nx, ny))
-
+    sct.log.info('\n Done')
     # Generate forward warping field (defined in destination space)
     generate_warping_field(fname_dest, warp_x, warp_y, fname_warp, verbose)
     generate_warping_field(fname_src, warp_inv_x, warp_inv_y, fname_warp_inv, verbose)
