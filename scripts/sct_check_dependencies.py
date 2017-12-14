@@ -54,6 +54,7 @@ def resolve_module(framework_name):
         'scikit-learn': ('sklearn', False),
         'pyqt': ('PyQt4', False),
         'Keras': ('keras', True),
+        'futures': "concurrent.futures"
     }
 
     try:
@@ -202,7 +203,12 @@ def main():
         try:
             module = module_import(module_name, suppress_stderr)
             # get version
-            version = module.__version__
+            try:
+                version = module.__version__
+            except AttributeError:
+                # Futures package as no embedded version info
+                version = version_requirements_pip[i]
+
             # check if version matches requirements
             if check_package_version(version, version_requirements_pip, i):
                 print_ok()
