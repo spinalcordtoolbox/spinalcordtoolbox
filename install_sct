@@ -509,7 +509,12 @@ if [[ $UID != 0 ]]; then
   cd ${TMP_DIR}
   if ${SCT_DIR}/${BIN_DIR}/sct_check_dependencies ; then
     echo -e "INSTALLATION DONE!\n"
-    echo -e "Open a new Terminal window to load environment variables, or run:\n source ${THE_RC}\n"
+    if [[ ${add_to_path} =~ ^[Yy] ]]; then
+      echo -e "Open a new Terminal window to load environment variables, or run:\n source ${THE_RC}\n"
+    else
+      echo -e "${SCT_DIR}/bin is not added to your PATH"
+      echo -e "you can add it manually or execute the SCT scripts with full path "
+    fi
   else
     echo -e "INSTALLATION ERROR!"
     echo -e "Please copy the historic of this Terminal (starting with the command install_sct) and paste it in the SCT Help forum under a new ticket:"
