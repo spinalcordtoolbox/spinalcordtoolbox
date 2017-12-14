@@ -12,8 +12,18 @@
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
-
-import sys, io, os, time, errno, tempfile, commands, subprocess, re, logging, glob, shutil
+import commands
+import errno
+import glob
+import io
+import logging
+import os
+import re
+import shutil
+import subprocess
+import sys
+import tempfile
+import time
 
 # TODO: under run(): add a flag "ignore error" for isct_ComposeMultiTransform
 # TODO: check if user has bash or t-schell for fsloutput definition
@@ -41,7 +51,6 @@ def start_stream_logger():
 
     :return: 
     """
-
     formatter = logging.Formatter(LOG_FORMAT)
     stream_handler.setFormatter(formatter)
 
