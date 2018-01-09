@@ -44,10 +44,7 @@ def main(param):
     # Extract path/file/extension
     path_output, file_output, ext_output = sct.extract_fname(param.fname_output)
 
-    # create temporary folder
-    print('\nCreate temporary folder...')
-    path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S")
-    sct.run('mkdir '+path_tmp)
+    path_tmp = sct.tmp_create()
 
     # copy files to temporary folder
     print('\nCopy files...')

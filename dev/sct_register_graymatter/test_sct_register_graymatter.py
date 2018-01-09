@@ -13,11 +13,13 @@
 
 import commands
 import sys
-# append path that contains scripts, to be able to load modules
-status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
-sys.path.append(path_sct + '/scripts')
-from msct_image import Image
+
 from numpy import any
+
+# append path that contains scripts, to be able to load modules
+path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
+sys.path.append(os.path.join(path_sct, 'scripts'))
+from msct_image import Image
 
 
 def test(data_path):
@@ -28,11 +30,11 @@ def test(data_path):
     file_data = ['mt0.nii.gz', 'mt0_seg.nii.gz', 't2.nii.gz', 't2_seg.nii.gz', 'warp_template2anat.nii.gz']
 
     # define command
-    cmd = 'sct_register_graymatter -i ' + data_path + folder_data[0] + file_data[0] \
-          + ' -iseg ' + data_path + folder_data[0] + file_data[1] \
-          + ' -anat ' + data_path + folder_data[1] + file_data[2] \
-          + ' -anat-seg ' + data_path + folder_data[1] + file_data[3] \
-          + ' -warp ' + data_path + folder_data[1] + file_data[4] \
+    cmd = 'sct_register_graymatter -i ' + os.path.join(data_path, folder_data[0], file_data[0]) \
+          + ' -iseg ' + os.path.join(data_path, folder_data[0], file_data[1]) \
+          + ' -anat ' + os.path.join(data_path, folder_data[1], file_data[2]) \
+          + ' -anat-seg ' + os.path.join(data_path, folder_data[1], file_data[3]) \
+          + ' -warp ' + os.path.join(data_path, folder_data[1], file_data[4]) \
           + ' -v 1 -r 0'
 
     output += '\n====================================================================================================\n'+cmd+'\n====================================================================================================\n\n'  # copy command
@@ -45,5 +47,6 @@ def test(data_path):
 
 if __name__ == "__main__":
     # call main function
-    status, output = test(path_sct+'/testing/sct_testing_data/data/')
+    status, output = test(os.path.join(path_sct, "testing", "sct_testing_data", "data"))
+
     print output

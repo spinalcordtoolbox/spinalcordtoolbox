@@ -16,15 +16,16 @@
 # TODO: add flag for setting threshold on PCA
 # TODO: clean code for generate_warping_field (unify with centermass_rot)
 
-import sys
+import sys, os, shutil
 from math import asin, cos, sin, acos
-from os import chdir
-import sct_utils as sct
 import numpy as np
+
 from scipy import ndimage
 from scipy.io import loadmat
-from msct_image import Image
 from nibabel import load, Nifti1Image, save
+
+from msct_image import Image
+import sct_utils as sct
 from sct_convert import convert
 from sct_register_multimodal import Paramreg
 
@@ -40,17 +41,18 @@ def register_slicewise(fname_src,
                         verbose=0):
 
     # create temporary folder
-    path_tmp = sct.tmp_create(verbose)
+    path_tmp = sct.tmp_create(basename="register", verbose=verbose)
 
     # copy data to temp folder
     sct.printv('\nCopy input data to temp folder...', verbose)
-    convert(fname_src, path_tmp + 'src.nii')
-    convert(fname_dest, path_tmp + 'dest.nii')
+    convert(fname_src, os.path.join(path_tmp, "src.nii"))
+    convert(fname_dest, os.path.join(path_tmp, "dest.nii"))
     if fname_mask != '':
-        convert(fname_mask, path_tmp + 'mask.nii.gz')
+        convert(fname_mask, os.path.join(path_tmp, "mask.nii.gz"))
 
     # go to temporary folder
-    chdir(path_tmp)
+    curdir = os.getcwd()
+    os.chdir(path_tmp)
 
     # Calculate displacement
     if paramreg.algo == 'centermass':
@@ -69,12 +71,12 @@ def register_slicewise(fname_src,
         # run slicewise registration
         register2d('src.nii', 'dest.nii', fname_mask=fname_mask, fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, paramreg=paramreg, ants_registration_params=ants_registration_params, verbose=verbose)
 
-    sct.printv('\nMove warping fields to parent folder...', verbose)
-    sct.run('mv ' + warp_forward_out + ' ../')
-    sct.run('mv ' + warp_inverse_out + ' ../')
+    sct.printv('\nMove warping fields...', verbose)
+    sct.copy(warp_forward_out, curdir)
+    sct.copy(warp_inverse_out, curdir)
 
-    # go back to parent folder
-    chdir('../')
+    # go back
+    os.chdir(curdir)
 
 
 def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii.gz', fname_warp_inv='warp_inverse.nii.gz', rot=1, poly=0, path_qc='./', verbose=0, pca_eigenratio_th=1.6):
@@ -176,7 +178,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
             plt.grid()
             plt.xlabel('z')
             plt.ylabel('Angle (deg)')
-            plt.savefig(path_qc + 'register2d_centermassrot_regularize_rotation.png')
+            plt.savefig(os.path.join(path_qc, 'register2d_centermassrot_regularize_rotation.png'))
             plt.close()
         # update variable
         angle_src_dest[z_nonzero] = angle_src_dest_regularized
@@ -259,7 +261,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
                     # sct.printv('WARNING: '+str(e), 1, 'warning')
 
                     # plt.axis('equal')
-            plt.savefig(path_qc + 'register2d_centermassrot_pca_z' + str(iz) + '.png')
+            plt.savefig(os.path.join(path_qc, 'register2d_centermassrot_pca_z' + str(iz) + '.png'))
             plt.close()
 
         # construct 3D warping matrix
@@ -509,7 +511,7 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
                 plt.ylim(mean_dest_y - 15, mean_dest_y + 15)
                 ax.grid(True, color='w')
                 # save figure
-                plt.savefig(path_qc + 'register2d_columnwise_image_z' + str(iz) + '.png')
+                plt.savefig(os.path.join(path_qc, 'register2d_columnwise_image_z' + str(iz) + '.png'))
                 plt.close()
 
             # ============================================================

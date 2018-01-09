@@ -18,14 +18,13 @@
 # TODO: do not output inverse warp for ants
 # TODO: ants: explore optin  --float  for faster computation
 
-import os
-import sys
-import commands
+import sys, os
 import numpy as np
 import sct_utils as sct
 from msct_image import Image
 from sct_image import split_data
 
+path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
 
 #=======================================================================================================================
 # moco Function
@@ -36,7 +35,7 @@ def moco(param):
     fsloutput = 'export FSLOUTPUTTYPE=NIFTI; '  # for faster processing, all outputs are in NIFTI
     file_data = param.file_data
     file_target = param.file_target
-    folder_mat = sct.slash_at_the_end(param.mat_moco, 1)  # output folder of mat file
+    folder_mat = param.mat_moco  # output folder of mat file
     todo = param.todo
     suffix = param.suffix
     #file_schedule = param.file_schedule
@@ -44,7 +43,6 @@ def moco(param):
     ext = '.nii'
 
     # get path of the toolbox
-    status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 
     # sct.printv(arguments)
     sct.printv('\nInput parameters:', param.verbose)
@@ -95,7 +93,7 @@ def moco(param):
         file_data_splitT_num.append(file_data_splitT + str(it).zfill(4))
         file_data_splitT_moco_num.append(file_data + suffix + '_T' + str(it).zfill(4))
         sct.printv(('\nVolume ' + str((it)) + '/' + str(nt - 1) + ':'), verbose)
-        file_mat[it] = folder_mat + 'mat.T' + str(it)
+        file_mat[it] = os.path.join(folder_mat, "mat.T") + str(it)
 
         # run 3D registration
         failed_transfo[it] = register(param, file_data_splitT_num[it], file_target, file_mat[it], file_data_splitT_moco_num[it])
@@ -209,11 +207,6 @@ def register(param, file_src, file_dest, file_mat, file_out):
 # spline
 #=======================================================================================================================
 def spline(folder_mat, nt, nz, verbose, index_b0 = [], graph=0):
-    # get path of the toolbox
-    status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
-    # append path that contains scripts, to be able to load modules
-    sys.path.append(path_sct + '/scripts')
-    import sct_utils as sct
 
     sct.printv('\n\n\n------------------------------------------------------------------------------', verbose)
     sct.printv('Spline Regularization along T: Smoothing Patient Motion...', verbose)
@@ -221,13 +214,13 @@ def spline(folder_mat, nt, nz, verbose, index_b0 = [], graph=0):
     file_mat = [[[] for i in range(nz)] for i in range(nt)]
     for it in range(nt):
         for iz in range(nz):
-            file_mat[it][iz] = folder_mat + 'mat.T' + str(it) + '_Z' + str(iz) + '.txt'
+            file_mat[it][iz] = os.path.join(folder_mat, "mat.T") + str(it) + '_Z' + str(iz) + '.txt'
 
     # Copying the existing Matrices to another folder
-    old_mat = folder_mat + 'old/'
+    old_mat = os.path.join(folder_mat, "old")
     if not os.path.exists(old_mat):
         os.makedirs(old_mat)
-    cmd = 'cp ' + folder_mat + '*.txt ' + old_mat
+    cmd = 'cp ' + os.path.join(folder_mat, '*.txt') + " " + old_mat
     status, output = sct.run(cmd, verbose)
 
     sct.printv('\nloading matrices...', verbose)

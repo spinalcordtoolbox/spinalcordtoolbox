@@ -132,9 +132,9 @@ def run_main():
 
     # Output folder
     if "-ofolder" in arguments:
-        folder_output = sct.slash_at_the_end(arguments["-ofolder"], slash=1)
+        folder_output = arguments["-ofolder"]
     else:
-        folder_output = './'
+        folder_output = '.'
 
     # Remove temporary files
     remove_temp_files = True
@@ -226,11 +226,11 @@ def run_main():
             temp_folder.chdir_undo()
 
             # copy result to output folder
-            shutil.copy(temp_folder.get_path() + fname_centerline_oriented, folder_output)
-            shutil.copy(temp_folder.get_path() + fname_centerline_oriented_txt, folder_output)
+            sct.copy(os.path.join(temp_folder.get_path(), fname_centerline_oriented), folder_output)
+            sct.copy(os.path.join(temp_folder.get_path(), fname_centerline_oriented_txt), folder_output)
             if output_roi:
-                shutil.copy(temp_folder.get_path() + fname_centerline_oriented_roi, folder_output)
-            centerline_filename = folder_output + fname_centerline_oriented
+                sct.copy(os.path.join(temp_folder.get_path(), fname_centerline_oriented_roi), folder_output)
+            centerline_filename = os.path.join(folder_output, fname_centerline_oriented)
 
 
 
@@ -260,8 +260,7 @@ def run_main():
                                                     output_roi=output_roi,
                                                     verbose=verbose)
 
-    sct.printv('\nDone! To view results, type:', verbose)
-    sct.printv("fslview " + fname_input_data + " " + centerline_filename + " -l Red -b 0,1 -t 0.7 &\n", verbose, 'info')
+    sct.display_viewer_syntax([fname_input_data, centerline_filename], colormaps=['gray', 'red'], opacities=['', '1'])
 
 if __name__ == '__main__':
     run_main()

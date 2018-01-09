@@ -7,9 +7,9 @@ import commands
 import os
 import getopt
 import sys
-status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
 # append path that contains scripts, to be able to load modules
-sys.path.append(path_sct + '/scripts')
+sys.path.append(os.path.join(path_sct, "scripts"))
 import sct_utils as sct
 
 def main():
@@ -44,7 +44,7 @@ def main():
     sct.run('mkdir '+folder_out)
 
     # get atlas files
-    status, output = sct.run('ls '+folder_in+'*.nii.gz', verbose)
+    status, output = sct.run('ls '+os.path.join(folder_in, '*.nii.gz') verbose)
     fname_list = output.split()
 
 
@@ -58,7 +58,7 @@ def crop_file(fname_data, folder_out, zind):
     path_list, file_list, ext_list = sct.extract_fname(fname_data)
    
    # crop file with fsl, and then merge back
-    cmd = 'fslmerge -z '+folder_out+file_list
+    cmd = 'fslmerge -z '+os.path.join(folder_out, file_list)
     for i in zind:
         sct.run('fslroi '+fname_data+' z'+str(zind.index(i))+'_'+file_list+' 0 -1 0 -1 '+str(i)+' 1')
         cmd = cmd+' z'+str(zind.index(i))+'_'+file_list

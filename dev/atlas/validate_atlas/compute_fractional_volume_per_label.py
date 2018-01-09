@@ -1,12 +1,15 @@
 __author__ = 'slevy_local'
 
 import sys
-path_sct = '/Users/slevy_local/spinalcordtoolbox' #'C:/cygwin64/home/Simon_2/spinalcordtoolbox'
-# Append path that contains scripts, to be able to load modules
-sys.path.append(path_sct + '/scripts')
-import sct_extract_metric
+
 import numpy
 import nibabel
+
+path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))))
+# append path that contains scripts, to be able to load modules
+sys.path.append(os.path.join(path_sct, "scripts"))
+
+import sct_extract_metric
 
 def compute_fract_vol_per_lab(atlas_folder, file_label):
 
@@ -21,7 +24,7 @@ def compute_fract_vol_per_lab(atlas_folder, file_label):
 
     # compute fractional volume for each label
     for i_label in range(0, nb_label):
-        fract_volume_per_lab[i_label] = numpy.sum(nibabel.load(atlas_folder + label_file[i_label]).get_data())
+        fract_volume_per_lab[i_label] = numpy.sum(nibabel.load(os.path.join(atlas_folder, label_file[i_label)]).get_data())
 
 
     print 'Labels\'name:'
