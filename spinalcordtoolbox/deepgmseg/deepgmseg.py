@@ -14,6 +14,9 @@ from . import model
 
 
 class DataResource(object):
+    """This class is responsible for resource file
+    management (such as loding models)."""
+
     def __init__(self, dirname):
         """Initialize the resource with the directory
         name context.
@@ -172,6 +175,7 @@ def segment_file(input_filename, output_filename,
     :param output_filename: the output filename.
     :param model_name: the name of model to use.
     :param verbosity: the verbosity level.
+    :return: the output filename.
     """
     nii_original = nipy.load_image(input_filename)
     pixdim = nii_original.header["pixdim"][3]

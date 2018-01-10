@@ -27,7 +27,6 @@ class Param:
 
 
 import sys, io, os, commands, platform, importlib
-from cStringIO import StringIO
 import sct_utils as sct
 from msct_parser import Parser
 
@@ -46,7 +45,7 @@ def resolve_module(framework_name):
     to the module name in cases where it is different.
 
     :param framework_name: the name of the framework.
-    :return: the module name.
+    :return: the tuple (module name, supress stderr).
     """
     # Framework name : (module name, suppress stderr)
     modules_map = {
@@ -71,7 +70,7 @@ def module_import(module_name, suppress_stderr=False):
     """
     if suppress_stderr:
         original_stderr = sys.stderr
-        sys.stderr = StringIO()
+        sys.stderr = io.TextIOWrapper(io.BytesIO(), sys.stderr.encoding)
         module = importlib.import_module(module_name)
         sys.stderr = original_stderr
     else:

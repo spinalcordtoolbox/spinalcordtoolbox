@@ -60,7 +60,7 @@ def run_main():
     out_fname = deepgmseg.segment_file(input_filename, output_filename,
                                        model_name, int(verbosity))
 
-    print 'Segmentation output file: {}'.format(out_fname)
+    print('Segmentation output file: {}'.format(out_fname))
 
 
 if __name__ == '__main__':
