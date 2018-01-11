@@ -30,7 +30,8 @@ from spinalcordtoolbox.centerline import optic
 import sct_utils as sct
 
 from keras.models import load_model
-from model import dice_coef, dice_coef_loss
+import spinalcordtoolbox.resample.nipy_resample
+from spinalcordtoolbox.segmentation.cnn_models import dice_coef, dice_coef_loss
 
 
 
@@ -201,84 +202,96 @@ def crop_image_around_centerline(im_in, ctr_in, im_out, crop_size, x_dim_half, y
     return x_lst, y_lst
 
 
-
-def deep_segmentation_spinalcord():
+def main():
     sct.start_stream_logger()
     parser = get_parser()
     args = sys.argv[1:]
     arguments = parser.parse(args)
 
-    CROP_SIZE = 64
-    intensity_norm_model = pickle.load(open('intensity_norm_model.pkl', "rb"))[contrast]
-    seg_model_fname = 'best_model/' + contrast + '_seg_sc.h5'
+    fname_image = arguments['-i']
+    contrast_type = arguments['-c']
+
+    deep_segmentation_spinalcord(fname_image, contrast_type)
+
+
+def deep_segmentation_spinalcord(fname_image, contrast_type, remove_temp_files=1, verbose=1):
+    # initalizing parameters
+    crop_size = 64
+
     custom_objects = {'dice_coef_loss': dice_coef_loss, 'dice_coef': dice_coef}
-    seg_model = load_model(seg_model_fname, custom_objects=custom_objects)
 
-
-
-
-
-    im_fname_orient = dirpath + '/img_orient.nii.gz'
-
-    im_2orient = Image(im_fname_raw_in_tmp)
-    ORIENT_RAW = im_2orient.orientation
-    del im_2orient
-
-    if ORIENT_RAW != 'RPI':
-        cmd = 'sct_image -i ' + im_fname_raw_in_tmp + ' -setorient RPI -o ' + im_fname_orient
-        os.system(cmd)
-    else:
-        shutil.copyfile(im_fname_raw_in_tmp, im_fname_orient)
-
-
-
-    im_fname_res = dirpath + '/img_res.nii.gz'
-    im_2res = Image(im_fname_orient)
-    RES_RAW = im_2res.dim[4:7]
-    del im_2res
-    if not all(round(x, 1) == 0.5 for x in RES_RAW[:2]):
-        res_str = 'x'.join(['0.5', '0.5', str(RES_RAW[2])])
-        cmd = 'sct_resample -i ' + im_fname_orient + ' -mm ' + res_str + ' -x linear -o ' + im_fname_res
-        os.system(cmd)
-    else:
-        shutil.copyfile(im_fname_orient, im_fname_res)
-
-
-    # OptiC models
+    # loading models required to perform the segmentation
     path_script = os.path.dirname(__file__)
     path_sct = os.path.dirname(path_script)
-    optic_models_path = os.path.join(path_sct, 'data/optic_models', '{}_model'.format(contrast_type))
+    optic_models_fname = os.path.join(path_sct, 'data/optic_models', '{}_model'.format(contrast_type))
 
-    # Execute OptiC binary
-    _, centerline_filename = optic.detect_centerline(image_fname=fname_data,
+    intensity_norm_model_fname = os.path.join(path_sct, 'data/deep_segmentation_models', 'intensity_norm_model.pkl')
+    intensity_norm_model = pickle.load(open(intensity_norm_model_fname, "rb"))[contrast_type]
+
+    segmentation_model_fname = os.path.join(path_sct, 'data/deep_segmentation_models', '{}_seg_sc.h5'.format(contrast_type))
+    seg_model = load_model(segmentation_model_fname, custom_objects=custom_objects)
+
+    # create temporary folder with intermediate results
+    file_fname = os.path.basename(fname_image)
+    tmp_folder = sct.TempFolder()
+    tmp_folder_path = tmp_folder.get_path()
+    fname_image_tmp = tmp_folder.copy_from(fname_image)
+    tmp_folder.chdir()
+
+    # orientation of the image, should be RPI
+    fname_orient = sct.add_suffix(file_fname, '_RPI')
+    im_2orient = Image(file_fname)
+    original_orientation = im_2orient.orientation
+    del im_2orient
+    if original_orientation != 'RPI':
+        sct.run('sct_image -i ' + file_fname + ' -setorient RPI -o ' + fname_orient)
+    else:
+        shutil.copyfile(fname_image_tmp, fname_orient)
+
+    # resampling RPi image
+    fname_res = sct.add_suffix(fname_orient, '_resampled')
+    im_2res = Image(fname_orient)
+    input_resolution = im_2res.dim[4:7]
+    new_resolution = 'x'.join(['0.5', '0.5', str(input_resolution[2])])
+    del im_2res
+    spinalcordtoolbox.resample.nipy_resample.resample_file(fname_orient, fname_res, new_resolution,
+                                                           'mm', 'linear', verbose)
+
+    # find the spinal cord centerline - execute OptiC binary
+    _, centerline_filename = optic.detect_centerline(image_fname=fname_res,
                                                      contrast_type=contrast_type,
-                                                     optic_models_path=optic_models_path,
-                                                     folder_output=folder_output,
+                                                     optic_models_path=optic_models_fname,
+                                                     folder_output=tmp_folder_path,
                                                      remove_temp_files=remove_temp_files,
-                                                     output_roi=output_roi,
+                                                     output_roi=False,
                                                      verbose=verbose)
 
-    im_fname_crop = dirpath + '/img_crop.nii.gz'
-    X_CROP_LST, Y_CROP_LST = crop(im_in=im_fname_res, ctr_in=ctr_fname_, im_out=im_fname_crop,
-                                  crop_size=CROP_SIZE, x_dim_half=CROP_SIZE // 2, y_dim_half=CROP_SIZE // 2)
+    # crop image around the spinal cord centerline
+    fname_crop = sct.add_suffix(fname_res, '_crop')
+    X_CROP_LST, Y_CROP_LST = crop_image_around_centerline(im_in=fname_res, ctr_in=ctr_fname_, im_out=fname_crop,
+                                                          crop_size=crop_size,
+                                                          x_dim_half=crop_size // 2, y_dim_half=crop_size // 2)
 
-    im_fname_norm = dirpath + '/img_norm.nii.gz'
-    image_normalized = apply_intensity_normalization_model(img_path=im_fname_crop, landmarks_pd=intensity_norm_model, fname_out=im_fname_norm)
+    # normalize the intensity of the images
+    fname_norm = sct.add_suffix(fname_crop, '_norm')
+    image_normalized = apply_intensity_normalization_model(img_path=fname_crop,
+                                                           landmarks_pd=intensity_norm_model,
+                                                           fname_out=fname_norm)
 
-    seg_fname_crop = dirpath + '/seg_crop.nii.gz'
+    # segment the spinal cord
+    fname_seg_crop = sct.add_suffix(fname_norm, '_seg')
     seg_crop = image_normalized.copy()
     seg_crop.data *= 0.0
     for zz in range(image_normalized.dim[2]):
         pred_seg = seg_model.predict(np.expand_dims(np.expand_dims(image_normalized.data[:, :, zz], -1), 0))[0, :, :, 0]
         pred_seg = (pred_seg > 0.5).astype(int)
         seg_crop.data[:, :, zz] = pred_seg
-    seg_crop.setFileName(seg_fname_crop)
+    seg_crop.setFileName(fname_seg_crop)
     seg_crop.save()
     del image_normalized
 
-    seg_fname_unCrop = dirpath + '/seg_unCrop.nii.gz'
-
-    im = Image(im_fname_res)
+    fname_seg_res_RPI = sct.add_suffix(file_fname, '_res_RPI_seg')
+    im = Image(fname_res)
     seg_unCrop = im.copy()
     seg_unCrop.data *= 0
     del im
@@ -286,17 +299,19 @@ def deep_segmentation_spinalcord():
     for zz in range(seg_unCrop.dim[2]):
         pred_seg = seg_crop.data[:, :, zz]
         x_start, y_start = int(X_CROP_LST[zz]), int(Y_CROP_LST[zz])
-        x_end = x_start + CROP_SIZE if x_start + CROP_SIZE < seg_unCrop.dim[0] else seg_unCrop.dim[0]
-        y_end = y_start + CROP_SIZE if y_start + CROP_SIZE < seg_unCrop.dim[1] else seg_unCrop.dim[1]
+        x_end = x_start + crop_size if x_start + crop_size < seg_unCrop.dim[0] else seg_unCrop.dim[0]
+        y_end = y_start + crop_size if y_start + crop_size < seg_unCrop.dim[1] else seg_unCrop.dim[1]
         seg_unCrop.data[x_start:x_end, y_start:y_end, zz] = pred_seg[0:x_end - x_start, 0:y_end - y_start]
 
-    seg_unCrop.setFileName(seg_fname_unCrop)
+    seg_unCrop.setFileName(fname_seg_res_RPI)
     seg_unCrop.save()
     del seg_unCrop
 
     # resample to initial resolution
+    fname_seg_RPI = sct.add_suffix(file_fname, '_RPI_seg')
 
     # reorient to initial orientation
+    fname_seg = sct.add_suffix(file_fname, '_seg')
 
-
+    tmp_folder.chdir_undo()
 
