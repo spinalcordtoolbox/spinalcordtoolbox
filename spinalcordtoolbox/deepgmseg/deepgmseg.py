@@ -1,4 +1,11 @@
 # coding: utf-8
+# This is the interface API for the deepgmseg model
+# that implements the model for the Spinal Cord Gray Matter Segmentation.
+#
+# Reference paper:
+#     Perone, C. S., Calabrese, E., & Cohen-Adad, J. (2017).
+#     Spinal cord gray matter segmentation using deep dilated convolutions.
+#     URL: https://arxiv.org/abs/1710.01269
 
 import json
 import os
