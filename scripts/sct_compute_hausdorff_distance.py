@@ -268,7 +268,7 @@ class ComputeDistances:
         nx1, ny1, nz1, nt1, px1, py1, pz1, pt1 = get_dimension(self.im1)
         nx2, ny2, nz2, nt2, px2, py2, pz2, pt2 = get_dimension(self.im2)
 
-        assert round(px1, 2) == round(px2, 2) and round(py1, 2) == round(py2, 2) and round(px1, 2) == round(py1, 2)
+        assert np.isclose(px1, px2) and np.isclose(py1, py2) and np.isclose(px1, py1)
         self.dim_pix = py1
 
         if self.param.thinning:
