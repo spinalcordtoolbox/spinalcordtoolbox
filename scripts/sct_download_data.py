@@ -72,7 +72,8 @@ def main(args=None):
         'MNI-Poly-AMU': 'https://osf.io/sh6h4/?action=download',
         'gm_model': 'https://osf.io/ugscu/?action=download',
         'optic_models': 'https://osf.io/g4fwn/?action=download',
-        'pmj_models': 'https://osf.io/4gufr/?action=download',
+        'pmj_models': ['_https://osf.io/4gufr/?action=download',
+                       'https://www.neuro.polymtl.ca/_media/downloads/sct/20171126_deepgmseg_models.zip'],
         'binaries_debian': 'https://osf.io/2egh5/?action=download',
         'binaries_centos': 'https://osf.io/qngj2/?action=download',
         'binaries_osx': 'https://osf.io/hsa5r/?action=download',
@@ -131,38 +132,39 @@ def unzip(compressed, dest_folder, verbose):
         sct.printv('ERROR: The file %s is of wrong format' % compressed, verbose, 'error')
 
 
-def download_data(url, verbose):
+def download_data(urls, verbose):
     """Download the binaries from a URL and return the destination filename
 
     Retry downloading if either server or connection errors occur on a SSL
     connection
     """
 
-    try:
-        retry = Retry(total=3, backoff_factor=0.5, status_forcelist=[500, 503, 504])
-        session = requests.Session()
-        session.mount('https://', HTTPAdapter(max_retries=retry))
-        response = session.get(url, stream=True)
+    for url in urls:
+        try:
+            retry = Retry(total=3, backoff_factor=0.5, status_forcelist=[500, 503, 504])
+            session = requests.Session()
+            session.mount('https://', HTTPAdapter(max_retries=retry))
+            response = session.get(url, stream=True)
 
-        _, content = cgi.parse_header(response.headers['Content-Disposition'])
-        tmp_path = os.path.join(tempfile.mkdtemp(), content['filename'])
-        sct.printv('\nDownloading %s...' % content['filename'], verbose)
+            _, content = cgi.parse_header(response.headers['Content-Disposition'])
+            tmp_path = os.path.join(tempfile.mkdtemp(), content['filename'])
+            sct.printv('\nDownloading ' + url + '...', verbose)
 
-        with open(tmp_path, 'wb') as tmp_file:
-            total = int(response.headers.get('content-length', 1))
-            tqdm_bar = tqdm(total=total, unit='B', unit_scale=True,
-                            desc="Status", ascii=True)
+            with open(tmp_path, 'wb') as tmp_file:
+                total = int(response.headers.get('content-length', 1))
+                tqdm_bar = tqdm(total=total, unit='B', unit_scale=True,
+                                desc="Status", ascii=True)
 
-            for chunk in response.iter_content(chunk_size=8192):
-                if chunk:
-                    tmp_file.write(chunk)
-                    if verbose > 0:
-                        dl_chunk = len(chunk)
-                        tqdm_bar.update(dl_chunk)
+                for chunk in response.iter_content(chunk_size=8192):
+                    if chunk:
+                        tmp_file.write(chunk)
+                        if verbose > 0:
+                            dl_chunk = len(chunk)
+                            tqdm_bar.update(dl_chunk)
 
-            tqdm_bar.close()
-    except requests.RequestException as err:
-        sct.printv(err.message, type='error')
+                tqdm_bar.close()
+        except requests.RequestException as err:
+            sct.printv(err.message, type='warning')
 
     sct.printv('\nDownload complete', verbose=verbose)
     return tmp_path
