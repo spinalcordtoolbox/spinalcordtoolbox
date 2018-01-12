@@ -12,22 +12,19 @@
 #########################################################################################
 
 import numpy as np
-import pandas as pd
-from msct_image import Image
-import tempfile
 import shutil
-import nibabel as nib
 from scipy.ndimage.measurements import center_of_mass
 import pickle
 from scipy.interpolate.interpolate import interp1d
 from skimage.exposure import rescale_intensity
-import matplotlib.pyplot as plt
 
 
 import os
 import sys
 from spinalcordtoolbox.centerline import optic
 import sct_utils as sct
+from msct_image import Image
+from msct_parser import Parser
 
 from keras.models import load_model
 import spinalcordtoolbox.resample.nipy_resample
@@ -56,15 +53,6 @@ def get_parser():
                       mandatory=False,
                       example="My_Output_Folder/",
                       default_value="")
-    parser.add_option(name="-gap",
-                      type_value="float",
-                      description="Gap in mm between manually selected points when using the Viewer method.",
-                      mandatory=False,
-                      default_value='10.0')
-    parser.add_option(name="-igt",
-                      type_value="image_nifti",
-                      description="File name of ground-truth centerline or segmentation (binary nifti).",
-                      mandatory=False)
     parser.add_option(name="-r",
                       type_value="multiple_choice",
                       description="remove temporary files.",
@@ -211,24 +199,37 @@ def main():
     fname_image = arguments['-i']
     contrast_type = arguments['-c']
 
-    deep_segmentation_spinalcord(fname_image, contrast_type)
+    if "-ofolder" in arguments:
+        output_folder = arguments["-ofolder"]
+    else:
+        output_folder = os.getcwd()
+
+    if '-r' in arguments:
+        remove_temp_files = arguments['-r']
+
+    if '-v' in arguments:
+        verbose = arguments['-v']
+
+    deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, remove_temp_files, verbose)
 
 
-def deep_segmentation_spinalcord(fname_image, contrast_type, remove_temp_files=1, verbose=1):
+def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, remove_temp_files=1, verbose=1):
     # initalizing parameters
-    crop_size = 64
+    crop_size = 64  # TODO: this parameter should actually be passed by the model, as it is one of its fixed parameter
 
+    # initializing objects
     custom_objects = {'dice_coef_loss': dice_coef_loss, 'dice_coef': dice_coef}
 
     # loading models required to perform the segmentation
+    # this step can be long, as some models (e.g., DL) are heavy
     path_script = os.path.dirname(__file__)
     path_sct = os.path.dirname(path_script)
     optic_models_fname = os.path.join(path_sct, 'data/optic_models', '{}_model'.format(contrast_type))
 
-    intensity_norm_model_fname = os.path.join(path_sct, 'data/deep_segmentation_models', 'intensity_norm_model.pkl')
+    intensity_norm_model_fname = os.path.join(path_sct, 'data/deepscseg_models', 'intensity_norm_model.pkl')
     intensity_norm_model = pickle.load(open(intensity_norm_model_fname, "rb"))[contrast_type]
 
-    segmentation_model_fname = os.path.join(path_sct, 'data/deep_segmentation_models', '{}_seg_sc.h5'.format(contrast_type))
+    segmentation_model_fname = os.path.join(path_sct, 'data/deepscseg_models', '{}_seg_sc.h5'.format(contrast_type))
     seg_model = load_model(segmentation_model_fname, custom_objects=custom_objects)
 
     # create temporary folder with intermediate results
@@ -242,18 +243,16 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, remove_temp_files=1
     fname_orient = sct.add_suffix(file_fname, '_RPI')
     im_2orient = Image(file_fname)
     original_orientation = im_2orient.orientation
-    del im_2orient
     if original_orientation != 'RPI':
         sct.run('sct_image -i ' + file_fname + ' -setorient RPI -o ' + fname_orient)
     else:
         shutil.copyfile(fname_image_tmp, fname_orient)
 
-    # resampling RPi image
+    # resampling RPI image
     fname_res = sct.add_suffix(fname_orient, '_resampled')
     im_2res = Image(fname_orient)
     input_resolution = im_2res.dim[4:7]
     new_resolution = 'x'.join(['0.5', '0.5', str(input_resolution[2])])
-    del im_2res
     spinalcordtoolbox.resample.nipy_resample.resample_file(fname_orient, fname_res, new_resolution,
                                                            'mm', 'linear', verbose)
 
@@ -268,7 +267,7 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, remove_temp_files=1
 
     # crop image around the spinal cord centerline
     fname_crop = sct.add_suffix(fname_res, '_crop')
-    X_CROP_LST, Y_CROP_LST = crop_image_around_centerline(im_in=fname_res, ctr_in=ctr_fname_, im_out=fname_crop,
+    X_CROP_LST, Y_CROP_LST = crop_image_around_centerline(im_in=fname_res, ctr_in=centerline_filename, im_out=fname_crop,
                                                           crop_size=crop_size,
                                                           x_dim_half=crop_size // 2, y_dim_half=crop_size // 2)
 
@@ -288,13 +287,11 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, remove_temp_files=1
         seg_crop.data[:, :, zz] = pred_seg
     seg_crop.setFileName(fname_seg_crop)
     seg_crop.save()
-    del image_normalized
 
     fname_seg_res_RPI = sct.add_suffix(file_fname, '_res_RPI_seg')
     im = Image(fname_res)
     seg_unCrop = im.copy()
     seg_unCrop.data *= 0
-    del im
 
     for zz in range(seg_unCrop.dim[2]):
         pred_seg = seg_crop.data[:, :, zz]
@@ -305,13 +302,32 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, remove_temp_files=1
 
     seg_unCrop.setFileName(fname_seg_res_RPI)
     seg_unCrop.save()
-    del seg_unCrop
 
     # resample to initial resolution
     fname_seg_RPI = sct.add_suffix(file_fname, '_RPI_seg')
+    initial_resolution = 'x'.join([str(input_resolution[0]), str(input_resolution[1]), str(input_resolution[2])])
+    spinalcordtoolbox.resample.nipy_resample.resample_file(fname_seg_res_RPI, fname_seg_RPI, initial_resolution,
+                                                           'mm', 'linear', verbose)
+
+    # binarize the resampled image to remove interpolation effects
+    sct.run('sct_maths -i ' + fname_seg_RPI + ' -bin 0.75 -o ' + fname_seg_RPI)
 
     # reorient to initial orientation
     fname_seg = sct.add_suffix(file_fname, '_seg')
+    if original_orientation != 'RPI':
+        sct.run('sct_image -i ' + fname_seg_RPI + ' -setorient ' + original_orientation + ' -o ' + fname_seg)
+    else:
+        shutil.copyfile(fname_seg_RPI, fname_seg)
 
     tmp_folder.chdir_undo()
 
+    # copy image from temporary folder into output folder
+    shutil.copyfile(tmp_folder_path + '/' + fname_seg, output_folder + '/' + fname_seg)
+
+    sct.display_viewer_syntax([fname_image, output_folder + '/' + fname_seg], colormaps=['gray', 'red'], opacities=['', '0.7'])
+
+    # TODO: add QC report
+
+
+if __name__ == "__main__":
+    main()
