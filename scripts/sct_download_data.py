@@ -75,8 +75,8 @@ def main(args=None):
                   'https://www.neuro.polymtl.ca/_media/downloads/sct/20170101_PAM50.zip'],
         'MNI-Poly-AMU': ['https://osf.io/sh6h4/?action=download',
                          'https://www.neuro.polymtl.ca/_media/downloads/sct/20170310_MNI-Poly-AMU.zip'],
-        'gm_model': ['https://osf.io/ugscu/?action=download',
-                     'https://www.neuro.polymtl.ca/_media/downloads/sct/20160922_gm_model.zip'],
+        'gm_model': ['_https://osf.io/ugscu/?action=download',
+                     '_https://www.neuro.polymtl.ca/_media/downloads/sct/20160922_gm_model.zip'],
         'optic_models': ['https://osf.io/g4fwn/?action=download',
                          'https://www.neuro.polymtl.ca/_media/downloads/sct/20170413_optic_models.zip'],
         'pmj_models': ['https://osf.io/4gufr/?action=download',
@@ -154,6 +154,7 @@ def download_data(urls, verbose):
     if not isinstance(urls, (list, tuple)):
         urls = [urls]
 
+    download_success = False
     for url in urls:
         try:
             # sct.printv('\nFile to download: %s' % content['filename'], verbose)
@@ -180,11 +181,16 @@ def download_data(urls, verbose):
                             tqdm_bar.update(dl_chunk)
 
                 tqdm_bar.close()
+                download_success = True
+
         except requests.RequestException as err:
             sct.printv(err.message, type='warning')
 
-    sct.printv('\nDownload complete', verbose=verbose)
-    return tmp_path
+    # if download was successful, the variable tmp_path should exist. If not, create exception
+    if download_success:
+        return tmp_path
+    else:
+        sct.printv('\nDownload error', type='error')
 
 
 if __name__ == "__main__":
