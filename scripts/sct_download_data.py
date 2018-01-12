@@ -137,10 +137,17 @@ def download_data(urls, verbose):
 
     Retry downloading if either server or connection errors occur on a SSL
     connection
+    urls: list of several urls (mirror servers) or single url (string)
     """
+
+    # if urls is not a list, make it one
+    if not isinstance(urls, (list, tuple)):
+        urls = [urls]
 
     for url in urls:
         try:
+            # sct.printv('\nFile to download: %s' % content['filename'], verbose)
+            sct.printv('\nTrying URL: %s' % url, verbose)
             retry = Retry(total=3, backoff_factor=0.5, status_forcelist=[500, 503, 504])
             session = requests.Session()
             session.mount('https://', HTTPAdapter(max_retries=retry))
@@ -148,7 +155,7 @@ def download_data(urls, verbose):
 
             _, content = cgi.parse_header(response.headers['Content-Disposition'])
             tmp_path = os.path.join(tempfile.mkdtemp(), content['filename'])
-            sct.printv('\nDownloading ' + url + '...', verbose)
+            sct.printv('Downloading %s...' % content['filename'], verbose)
 
             with open(tmp_path, 'wb') as tmp_file:
                 total = int(response.headers.get('content-length', 1))
