@@ -729,7 +729,7 @@ class TempFolder(object):
         """
         file_fname = os.path.basename(filename)
         copy(filename, self.path_tmp)
-        return self.path_tmp + file_fname
+        return self.path_tmp + '/' + file_fname
 
     def cleanup(self):
         """Remove the created folder and its contents."""
