@@ -395,7 +395,6 @@ def resample_image(fname, suffix='_resampled.nii.gz', binary=False, npx=0.3, npy
             im_split = Image(name_resample.split('.nii.gz')[0] + '_Z0000.nii.gz')
             im_split.setFileName(name_resample)
             im_split.save()
-            del im_split
 
         if binary:
             sct.run('sct_maths -i ' + name_resample + ' -bin ' + str(thr) + ' -o ' + name_resample)
