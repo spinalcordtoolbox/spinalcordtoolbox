@@ -65,18 +65,28 @@ def main(args=None):
         args = sys.argv[1:]
 
     # initialization
+    # note: mirror servers are listed in order of priority
     dict_url = {
-        'sct_example_data': 'https://osf.io/4nnk3/?action=download',
-        'sct_testing_data': 'https://osf.io/zrbs7/?action=download',
-        'PAM50': 'https://osf.io/gdwn6/?action=download',
-        'MNI-Poly-AMU': 'https://osf.io/sh6h4/?action=download',
-        'gm_model': 'https://osf.io/ugscu/?action=download',
-        'optic_models': 'https://osf.io/g4fwn/?action=download',
-        'pmj_models': ['_https://osf.io/4gufr/?action=download',
-                       'https://www.neuro.polymtl.ca/_media/downloads/sct/20171126_deepgmseg_models.zip'],
-        'binaries_debian': 'https://osf.io/2egh5/?action=download',
-        'binaries_centos': 'https://osf.io/qngj2/?action=download',
-        'binaries_osx': 'https://osf.io/hsa5r/?action=download',
+        'sct_example_data': ['https://osf.io/4nnk3/?action=download',
+                             'https://www.neuro.polymtl.ca/_media/downloads/sct/20170208_sct_example_data.zip'],
+        'sct_testing_data': ['https://osf.io/zrbs7/?action=download',
+                             'https://www.neuro.polymtl.ca/_media/downloads/sct/20170622_sct_testing_data.zip'],
+        'PAM50': ['https://osf.io/gdwn6/?action=download',
+                  'https://www.neuro.polymtl.ca/_media/downloads/sct/20170101_PAM50.zip'],
+        'MNI-Poly-AMU': ['https://osf.io/sh6h4/?action=download',
+                         'https://www.neuro.polymtl.ca/_media/downloads/sct/20170310_MNI-Poly-AMU.zip'],
+        'gm_model': ['https://osf.io/ugscu/?action=download',
+                     'https://www.neuro.polymtl.ca/_media/downloads/sct/20160922_gm_model.zip'],
+        'optic_models': ['https://osf.io/g4fwn/?action=download',
+                         'https://www.neuro.polymtl.ca/_media/downloads/sct/20170413_optic_models.zip'],
+        'pmj_models': ['https://osf.io/4gufr/?action=download',
+                       'https://www.neuro.polymtl.ca/_media/downloads/sct/20170922_pmj_models.zip'],
+        'binaries_debian': ['https://osf.io/2egh5/?action=download',
+                            'https://www.neuro.polymtl.ca/_media/downloads/sct/20170915_sct_binaries_linux.tar.gz'],
+        'binaries_centos': ['https://osf.io/qngj2/?action=download',
+                            'https://www.neuro.polymtl.ca/_media/downloads/sct/20170915_sct_binaries_linux_centos6.tar.gz'],
+        'binaries_osx': ['https://osf.io/hsa5r/?action=download',
+                         'https://www.neuro.polymtl.ca/_media/downloads/sct/20170915_sct_binaries_osx.tar.gz'],
         'course_hawaii17': 'https://osf.io/6exht/?action=download'
     }
 
