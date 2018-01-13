@@ -250,7 +250,7 @@ def main():
     # check PropSeg compatibility with OS
     print_line('Check PropSeg compatibility with OS ')
     status, output = sct.run('isct_propseg', verbose=0, raise_exception=False)
-    if status in (1, 257):
+    if status in (0, 1):
         print_ok()
     else:
         print_fail()
