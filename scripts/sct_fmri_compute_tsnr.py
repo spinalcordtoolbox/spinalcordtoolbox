@@ -57,9 +57,7 @@ class Tsnr:
         nii_tsnr.setFileName(fname_tsnr)
         nii_tsnr.save(type='float32')
 
-        # to view results
-        sct.printv('\nDone! To view results, type:', self.param.verbose, 'normal')
-        sct.printv('fslview ' + fname_tsnr + ' &\n', self.param.verbose, 'info')
+        sct.display_viewer_syntax([fname_tsnr])
 
 
 def get_parser():
@@ -86,12 +84,12 @@ if __name__ == '__main__':
     else:
         param_default = Param()
 
-        parser = get_parser()
-        arguments = parser.parse(sys.argv[1:])
-        input_fmri = arguments['-i']
+    parser = get_parser()
+    arguments = parser.parse(sys.argv[1:])
+    input_fmri = arguments['-i']
 
-        if '-v' in arguments:
-            param.verbose = int(arguments['-v'])
+    if '-v' in arguments:
+        param.verbose = int(arguments['-v'])
 
-        tsnr = Tsnr(param=param, fmri=input_fmri)
-        tsnr.compute()
+    tsnr = Tsnr(param=param, fmri=input_fmri)
+    tsnr.compute()

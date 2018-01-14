@@ -213,16 +213,14 @@ def compute_properties_along_centerline(fname_seg_image, property_list, fname_di
         property_list_local.append('orientation')
 
     # TODO: make sure fname_segmentation and fname_disks are in the same space
-    # create temporary folder and copying data
-    sct.printv('\nCreate temporary folder...', verbose)
-    path_tmp = sct.slash_at_the_end('tmp.' + time.strftime("%y%m%d%H%M%S") + '_' + str(randint(1, 1000000)), 1)
-    sct.run('mkdir ' + path_tmp, verbose)
+    path_tmp = sct.tmp_create(basename="compute_properties_along_centerline", verbose=verbose)
 
-    sct.run('cp ' + fname_seg_image + ' ' + path_tmp)
+    sct.copy(fname_seg_image, path_tmp)
     if fname_disks_image is not None:
-        sct.run('cp ' + fname_disks_image + ' ' + path_tmp)
+        sct.copy(fname_disks_image, path_tmp)
 
     # go to tmp folder
+    curdir = os.getcwd()
     os.chdir(path_tmp)
 
     fname_segmentation = os.path.abspath(fname_seg_image)
@@ -274,7 +272,8 @@ def compute_properties_along_centerline(fname_seg_image, property_list, fname_di
     timer_properties.start()
     # Extracting patches perpendicular to the spinal cord and computing spinal cord shape
     for index in range(centerline.number_of_points):
-        value_out = -5.0
+        # value_out = -5.0
+        value_out = 0.0
         current_patch = centerline.extract_perpendicular_square(image, index, resolution=resolution, interpolation_mode=interpolation_mode, border='constant', cval=value_out)
 
         # check for pixels close to the spinal cord segmentation that are out of the image
@@ -283,8 +282,13 @@ def compute_properties_along_centerline(fname_seg_image, property_list, fname_di
         patch_zero[patch_zero == value_out] = 0.0
         patch_borders = dilation(patch_zero) - patch_zero
 
+        """
         if np.count_nonzero(patch_borders + current_patch == value_out + 1.0) != 0:
+            c = image.transfo_phys2pix([centerline.points[index]])[0]
+            print 'WARNING: no patch for slice', c[2]
+            timer_properties.add_iteration()
             continue
+        """
 
         sc_properties = properties2d(patch_zero, [resolution, resolution])
         if sc_properties is not None:
@@ -295,6 +299,9 @@ def compute_properties_along_centerline(fname_seg_image, property_list, fname_di
             properties['z_slice'].append(image.transfo_phys2pix([centerline.points[index]])[0][2])
             for property_name in property_list_local:
                 properties[property_name].append(sc_properties[property_name])
+        else:
+            c = image.transfo_phys2pix([centerline.points[index]])[0]
+            print 'WARNING: no properties for slice', c[2]
 
         timer_properties.add_iteration()
     timer_properties.stop()
@@ -359,7 +366,7 @@ def compute_properties_along_centerline(fname_seg_image, property_list, fname_di
         plt.show()
 
     # Removing temporary folder
-    os.chdir('..')
+    os.chdir(curdir)
     shutil.rmtree(path_tmp, ignore_errors=True)
 
     return property_list, properties
@@ -393,11 +400,11 @@ def prepare_data():
     group_images = []
 
     for subject_folder in data_subjects:
-        if os.path.exists(subject_folder + 't2/'):
-            if os.path.exists(subject_folder + 't2/t2_seg_manual.nii.gz') and os.path.exists(subject_folder + 't2/t2_disks_manual.nii.gz'):
-                fname_seg_images.append(subject_folder + 't2/t2_seg_manual.nii.gz')
-                fname_disks_images.append(subject_folder + 't2/t2_disks_manual.nii.gz')
-                json_file = open(subject_folder + 'dataset_description.json')
+        if os.path.exists(os.path.join(subject_folder, 't2')):
+            if os.path.exists(os.path.join(subject_folder, 't2', 't2_seg_manual.nii.gz')) and os.path.exists(os.path.join(subject_folder, 't2', 't2_disks_manual.nii.gz')):
+                fname_seg_images.append(os.path.join(subject_folder, 't2', 't2_seg_manual.nii.gz'))
+                fname_disks_images.append(os.path.join(subject_folder, 't2', 't2_disks_manual.nii.gz'))
+                json_file = io.open(os.path.join(subject_folder, 'dataset_description.json'))
                 dic_info = json.load(json_file)
                 json_file.close()
                 # pass keys and items to lower case

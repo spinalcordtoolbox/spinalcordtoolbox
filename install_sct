@@ -211,12 +211,15 @@ else
   echo "The install_sct script must be execute from the source directory"
   exit 1
 fi
+
 # Get installation type (from git or from package)
-if [ -d ".git" ]; then
-  # folder .git exist, therefore it is a git installation
-  INSTALL_TYPE="git"
-else
-  INSTALL_TYPE="package"
+if [ "x${SCT_INSTALL_TYPE}" == "x" ]; then
+  if [ -d ".git" ]; then
+    # folder .git exist, therefore it is a git installation
+    SCT_INSTALL_TYPE="in-place"
+  else
+    SCT_INSTALL_TYPE="package"
+  fi
 fi
 
 # Fetch OS type
@@ -242,7 +245,7 @@ fi
 
 #echo -e "\nInstallation info:"
 echo -e "\nSCT version ......... "$SCT_VERSION
-echo -e "Installation type ... "$INSTALL_TYPE
+echo -e "Installation type ... "$SCT_INSTALL_TYPE
 echo -e "Operating system .... "$OS
 # Check if sudo
 if [[ $UID == 0 ]]; then
@@ -261,7 +264,7 @@ else
 fi
 
 # if installing from git folder, then becomes default installation folder
-if [[ ${INSTALL_TYPE} == "git" ]]; then
+if [[ "${SCT_INSTALL_TYPE}" == "in-place" ]]; then
   INSTALL_DIR=$SCT_SOURCE
 else
   INSTALL_DIR="${HOME}/sct_${SCT_VERSION}"
@@ -399,7 +402,7 @@ else
 
   # Install Python dependencies
   echo -e "\nInstalling Python dependencies..."
-  conda install --yes --file ${SCT_SOURCE}/install/requirements/requirementsConda.txt
+  conda install -c defaults --yes --file ${SCT_SOURCE}/install/requirements/requirementsConda.txt
   e_status=$?
   if [ ${e_status} != 0 ] ; then
     echo "conda install error with exit status $e_status. Check logs for more details

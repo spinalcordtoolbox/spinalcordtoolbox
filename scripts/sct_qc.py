@@ -34,7 +34,7 @@ def get_parser():
 def _copy_assets(dest_path):
     assets_path = os.path.join(reports.__path__[0], 'assets')
 
-    shutil.copy2(os.path.join(assets_path, 'index.html'), dest_path)
+    sct.copy(os.path.join(assets_path, 'index.html'), dest_path)
 
     for path in ['css', 'js', 'imgs', 'fonts']:
         src_path = os.path.join(assets_path, '_assets', path)
@@ -42,7 +42,7 @@ def _copy_assets(dest_path):
         if not os.path.exists(dest_full_path):
             os.makedirs(dest_full_path)
         for file in os.listdir(src_path):
-            shutil.copy2(os.path.join(src_path, file),
+            sct.copy(os.path.join(src_path, file),
                          dest_full_path)
 
 
