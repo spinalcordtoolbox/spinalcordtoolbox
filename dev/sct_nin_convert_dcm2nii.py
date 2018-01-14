@@ -17,9 +17,9 @@ import time
 
 
 # Get path of the toolbox
-status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
 # Append path that contains scripts, to be able to load modules
-sys.path.append(path_sct + '/scripts')
+sys.path.append(os.path.join(path_sct, "scripts"))
 import sct_utils as sct
 from msct_parser import Parser
 
@@ -39,9 +39,6 @@ def main():
     fsloutputdir = 'export FSLOUTPUTTYPE=NIFTI_GZ; '
     file_ordering = 'alternate'
     start_time = time.time()
-
-    # # get path of the toolbox
-    # status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 
     # Initialize the parser
     parser = Parser(__file__)
@@ -74,21 +71,16 @@ def main():
     arguments = parser.parse(sys.argv[1:])
 
     # get arguments
-    path_data = sct.slash_at_the_end(arguments['-i'], 1)
+    path_data = arguments['-i']
     if '-ord' in arguments:
         file_ordering = arguments['-ord']
     remove_temp_files = int(arguments['-r'])
     verbose = int(arguments['-v'])
 
-    # list all DICOM files
-    fname_data = os.listdir(path_data)
-
-    # create temporary folder
-    sct.printv('\nCreate temporary folder...', verbose)
-    path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S")
-    status, output = sct.run('mkdir '+path_tmp, verbose)
+    path_tmp = sct.tmp_create(basename="nin_convert_dcm2nii", verbose=verbose)
 
     # go to temporary folder
+    curdir = os.getcwd()
     os.chdir(path_tmp)
 
     # list DICOM files
@@ -102,7 +94,7 @@ def main():
     i = 0
     for i_file in file_data_list:
         # convert dicom to nifti and put in temporary folder
-        status, output = sct.run('dcm2nii -o tmp/ -v n '+path_data+i_file, verbose)
+        status, output = sct.run('dcm2nii -o tmp/ -v n '+os.path.join(path_data, i_file), verbose)
         # change file name
         file_nii.append('data_'+str(i).zfill(4)+'.nii.gz')
         sct.run('mv tmp/*.nii.gz '+file_nii[i])
@@ -118,13 +110,13 @@ def main():
         sct.run(fsloutputdir+'fslmerge -t data_spine '+' '.join([file_nii[i] for i in range(0, nb_files/2)]))
         sct.run(fsloutputdir+'fslmerge -t data_brain '+' '.join([file_nii[i] for i in range(nb_files/2+1, nb_files)]))
 
-    # come back to parent folder
-    os.chdir('..')
+    # come back
+    os.chdir(curdir)
 
     # Generate output files
     sct.printv('\nGenerate output files...', verbose)
-    fname_data_spine = sct.generate_output_file(path_tmp+'/data_spine.nii.gz', 'data_spine.nii.gz', verbose)
-    fname_data_brain = sct.generate_output_file(path_tmp+'/data_brain.nii.gz', 'data_brain.nii.gz', verbose)
+    fname_data_spine = sct.generate_output_file(os.path.join(path_tmp, 'data_spine.nii.gz'), 'data_spine.nii.gz', verbose)
+    fname_data_brain = sct.generate_output_file(os.path.join(path_tmp, 'data_brain.nii.gz'), 'data_brain.nii.gz', verbose)
 
     # Delete temporary files
     if remove_temp_files:

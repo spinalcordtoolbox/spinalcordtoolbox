@@ -34,26 +34,28 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import sys
-from msct_parser import Parser
-from msct_image import Image
+import sys, io, os
 from bisect import bisect
+from time import time
+from copy import copy
+
+import webbrowser
+
 from numpy import arange, max, pad, linspace, mean, median, std, percentile
 import numpy as np
-from msct_types import *
-
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 from matplotlib import cm
-import sct_utils as sct
-from time import time
-from copy import copy
 
 from matplotlib.widgets import Slider, Button, RadioButtons
 
-import webbrowser
 
+
+from msct_parser import Parser
+from msct_image import Image
+from msct_types import *
+import sct_utils as sct
 
 class SinglePlot:
     """
@@ -2045,8 +2047,9 @@ def prepare(list_images):
 
 
 
-def clean():
-    sct.run('rm -rf ' + 'tmp.*', verbose=False)
+def clean(fname_images):
+    for fn in fname_images:
+        os.remove(fn)
 
 #=======================================================================================================================
 # Start program
@@ -2078,4 +2081,4 @@ if __name__ == "__main__":
         # only one axial view
         viewer = ClickViewer(list_images, visualization_parameters)
         viewer.start()
-    clean()
+    clean(fname_images)

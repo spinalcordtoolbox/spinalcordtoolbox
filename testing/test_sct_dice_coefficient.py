@@ -10,8 +10,9 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+import sys, io, os
+
 import sct_utils as sct
-import commands
 from msct_image import Image, compute_dice
 
 
@@ -34,7 +35,7 @@ def test_integrity(param_test):
     """
     Test integrity of function
     """
-    path_data = param_test.path_data + param_test.contrast + '/' + param_test.file_input
+    path_data = os.path.join(param_test.path_data, param_test.contrast, param_test.file_input)
     integrity_value = 1.0
 
     # open output segmentation

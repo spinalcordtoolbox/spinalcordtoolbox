@@ -13,17 +13,17 @@
 
 
 #import sct_utils as sct
-import commands
+import os, commands
 
 def test(path_data):
 
     # parameters
-    folder_data = 't2/'
+    folder_data = 't2'
     file_data = 't2_seg.nii.gz'
 
     # define command
     cmd = 'sct_convert_binary_to_trilinear' \
-        ' -i '+path_data+folder_data+file_data+ \
+        ' -i ' + os.path.join(path_data, folder_data, file_data) + \
         ' -s 5'
 
     # return

@@ -12,8 +12,10 @@
 
 # TODO: offer the option not to compute Hausdorff and Dice at the end: too long for testing.
 
-import os
-import sys
+import sys, io, os, shutil
+
+path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
+
 from msct_parser import Parser
 from msct_image import Image
 from sct_convert import convert
@@ -29,7 +31,7 @@ class Param:
         self.param_reg = 'step=1,type=seg,algo=centermassrot,metric=MeanSquares:step=2,type=im,algo=syn,metric=MeanSquares,iter=10,smooth=0,shrink=2:step=3,type=im,algo=bsplinesyn,metric=MeanSquares,iter=5,smooth=0'
         # Previous default param (less efficient): 'step=1,algo=slicereg,metric=MeanSquares:step=2,algo=bsplinesyn,metric=MeanSquares,iter=5,smooth=1'
 
-        self.output_folder = './'
+        self.output_folder = '.'
         self.verbose = 1
         self.remove_tmp = 1
         self.qc = 1
@@ -43,21 +45,21 @@ class MultiLabelRegistration:
             self.param = param
         self.im_gm = Image(fname_gm)
         self.im_wm = Image(fname_wm)
-        self.path_template = sct.slash_at_the_end(path_template, 1)
+        self.path_template = path_template
 
         # get GM and WM files from template:
         fname_template_gm, fname_template_wm = None, None
-        for fname in os.listdir(self.path_template + 'template/'):
+        for fname in os.listdir(os.path.join(self.path_template, 'template')):
             if 'gm' in fname.lower():
-                fname_template_gm = self.path_template + 'template/'+fname
+                fname_template_gm = os.path.join(self.path_template, 'template', fname)
             elif 'wm' in fname.lower():
-                fname_template_wm = self.path_template + 'template/'+fname
+                fname_template_wm = os.path.join(self.path_template, 'template', fname)
         if fname_template_gm is not None and fname_template_wm is not None:
             self.im_template_gm = Image(fname_template_gm)
             self.im_template_wm = Image(fname_template_wm)
-            if fname_template_gm.split('/')[-1] == 'MNI-Poly-AMU_GM.nii.gz':
+            if os.path.basename(fname_template_gm) == 'MNI-Poly-AMU_GM.nii.gz':
                 self.template = 'MNI-Poly-AMU'
-            elif fname_template_gm.split('/')[-1] == 'PAM50_gm.nii.gz':
+            elif os.path.basename(fname_template_gm) == 'PAM50_gm.nii.gz':
                 self.template = 'PAM50'
             else:
                 self.template = 'custom'
@@ -104,12 +106,13 @@ class MultiLabelRegistration:
         path_gm, file_gm, ext_gm = sct.extract_fname(fname_gm)
         path_warp_template2target, file_warp_template2target, ext_warp_template2target = sct.extract_fname(self.fname_warp_template2target)
 
-        convert(fname_gm, tmp_dir + file_gm + ext_gm)
-        convert(fname_warp_template, tmp_dir + file_warp_template2target + ext_warp_template2target, squeeze_data=0)
+        convert(fname_gm, os.path.join(tmp_dir, file_gm + ext_gm))
+        convert(fname_warp_template, os.path.join(tmp_dir, file_warp_template2target + ext_warp_template2target), squeeze_data=0)
         if self.fname_warp_target2template is not None:
             path_warp_target2template, file_warp_target2template, ext_warp_target2template = sct.extract_fname(self.fname_warp_target2template)
-            convert(self.fname_warp_target2template, tmp_dir + file_warp_target2template + ext_warp_target2template, squeeze_data=0)
+            convert(self.fname_warp_target2template, os.path.join(tmp_dir, file_warp_target2template + ext_warp_target2template), squeeze_data=0)
 
+        curdir = os.getcwd()
         os.chdir(tmp_dir)
         # save images
         im_automatic_ml.save()
@@ -160,32 +163,30 @@ class MultiLabelRegistration:
 
         if self.fname_warp_target2template is not None:
             if self.fname_template_dest is None:
-                path_script = os.path.dirname(__file__)
-                path_sct = os.path.dirname(path_script)
                 if self.template == 'MNI-Poly-AMU':
-                    self.fname_template_dest = path_sct + '/data/MNI-Poly-AMU/template/MNI-Poly-AMU_T2.nii.gz'
+                    self.fname_template_dest = os.path.join(path_sct, 'data', 'MNI-Poly-AMU', 'template', 'MNI-Poly-AMU_T2.nii.gz')
                 elif self.template == 'PAM50':
-                    self.fname_template_dest = path_sct + '/data/PAM50/template/PAM50_t2.nii.gz'
+                    self.fname_template_dest = os.path.join(path_sct, 'data', 'PAM50', 'template', 'PAM50_t2.nii.gz')
 
             self.fname_warp_gm2template = sct.extract_fname(self.fname_warp_target2template)[1] + '_reg_gm' + sct.extract_fname(self.fname_warp_target2template)[2]
             sct.run('sct_concat_transfo -w ' + fname_warp_multilabel_auto2template + ',' + file_warp_target2template + ext_warp_target2template + ' -d ' + self.fname_template_dest + ' -o ' + self.fname_warp_gm2template)
 
-        os.chdir('..')
+        os.chdir(curdir)
 
-        # sct.generate_output_file(tmp_dir+fname_warp_multilabel_template2auto, self.param.output_folder+'warp_template_multilabel2automatic_seg_multilabel.nii.gz')
-        # sct.generate_output_file(tmp_dir+fname_warp_multilabel_auto2template, self.param.output_folder+'warp_automatic_seg_multilabel2template_multilabel.nii.gz')
+        # sct.generate_output_file(os.path.join(tmp_dir, fname_warp_multilabel_template2auto), os.path.join(self.param.output_folder, 'warp_template_multilabel2automatic_seg_multilabel.nii.gz'))
+        # sct.generate_output_file(os.path.join(tmp_dir, fname_warp_multilabel_auto2template), os.path.join(self.param.output_folder, 'warp_automatic_seg_multilabel2template_multilabel.nii.gz'))
 
-        sct.generate_output_file(tmp_dir + self.fname_warp_template2gm, self.param.output_folder + self.fname_warp_template2gm)
+        sct.generate_output_file(os.path.join(tmp_dir, self.fname_warp_template2gm), os.path.join(self.param.output_folder, self.fname_warp_template2gm))
         if self.fname_warp_target2template is not None:
-            sct.generate_output_file(tmp_dir + self.fname_warp_gm2template, self.param.output_folder + self.fname_warp_gm2template)
+            sct.generate_output_file(os.path.join(tmp_dir, self.fname_warp_gm2template), os.path.join(self.param.output_folder, self.fname_warp_gm2template))
 
         if self.param.qc:
-            fname_grid_warped = visualize_warp(tmp_dir + fname_warp_multilabel_template2auto, rm_tmp=self.param.remove_tmp)
+            fname_grid_warped = visualize_warp(os.path.join(tmp_dir, fname_warp_multilabel_template2auto), rm_tmp=self.param.remove_tmp)
             path_grid_warped, file_grid_warped, ext_grid_warped = sct.extract_fname(fname_grid_warped)
-            sct.generate_output_file(fname_grid_warped, self.param.output_folder + file_grid_warped + ext_grid_warped)
+            sct.generate_output_file(fname_grid_warped, os.path.join(self.param.output_folder, file_grid_warped + ext_grid_warped))
 
         if self.param.remove_tmp:
-            sct.run('rm -rf ' + tmp_dir, error_exit='warning')
+            shutil.rmtree(tmp_dir)
 
     def validation(self, fname_manual_gmseg, fname_sc_seg):
         path_manual_gmseg, file_manual_gmseg, ext_manual_gmseg = sct.extract_fname(fname_manual_gmseg)
@@ -193,18 +194,19 @@ class MultiLabelRegistration:
 
         # Create tmp folder and copy files in it
         tmp_dir = sct.tmp_create()
-        sct.run('cp ' + fname_manual_gmseg + ' ' + tmp_dir + file_manual_gmseg + ext_manual_gmseg)
-        sct.run('cp ' + fname_sc_seg + ' ' + tmp_dir + file_sc_seg + ext_sc_seg)
-        sct.run('cp ' + self.param.output_folder + self.fname_warp_template2gm + ' ' + tmp_dir + self.fname_warp_template2gm)
+        sct.copy(fname_manual_gmseg, os.path.join(tmp_dir, file_manual_gmseg + ext_manual_gmseg))
+        sct.copy(fname_sc_seg, os.path.join(tmp_dir, file_sc_seg + ext_sc_seg))
+        sct.copy(os.path.join(self.param.output_folder, self.fname_warp_template2gm), os.path.join(tmp_dir, self.fname_warp_template2gm))
+        curdir = os.getcwd()
         os.chdir(tmp_dir)
 
         sct.run('sct_warp_template -d ' + fname_manual_gmseg + ' -w ' + self.fname_warp_template2gm + ' -qc 0 -a 0')
-        if 'MNI-Poly-AMU_GM.nii.gz' in os.listdir('label/template/'):
-            im_new_template_gm = Image('label/template/MNI-Poly-AMU_GM.nii.gz')
-            im_new_template_wm = Image('label/template/MNI-Poly-AMU_WM.nii.gz')
+        if 'MNI-Poly-AMU_GM.nii.gz' in os.listdir(os.path.join('label', 'template')):
+            im_new_template_gm = Image(os.path.join('label', 'template', 'MNI-Poly-AMU_GM.nii.gz'))
+            im_new_template_wm = Image(os.path.join('label', 'template', 'MNI-Poly-AMU_WM.nii.gz'))
         else:
-            im_new_template_gm = Image('label/template/PAM50_gm.nii.gz')
-            im_new_template_wm = Image('label/template/PAM50_wm.nii.gz')
+            im_new_template_gm = Image(os.path.join('label', 'template', 'PAM50_gm.nii.gz'))
+            im_new_template_wm = Image(os.path.join('label', 'template', 'PAM50_wm.nii.gz'))
 
         im_new_template_gm = thr_im(im_new_template_gm, self.param.thr, self.param.thr)
         im_new_template_wm = thr_im(im_new_template_wm, self.param.thr, self.param.thr)
@@ -338,13 +340,13 @@ class MultiLabelRegistration:
             else:
                 dice_fic.write(str(i) + ', NO MANUAL SEGMENTATION\n')
         dice_fic.close()
-        os.chdir('..')
+        os.chdir(curdir)
 
-        sct.generate_output_file(tmp_dir + hd_name, self.param.output_folder + hd_name)
-        sct.generate_output_file(tmp_dir + dice_name, self.param.output_folder + dice_name)
+        sct.generate_output_file(os.path.join(tmp_dir, hd_name), os.path.join(self.param.output_folder, hd_name))
+        sct.generate_output_file(os.path.join(tmp_dir, dice_name), os.path.join(self.param.output_folder, dice_name))
 
         if self.param.remove_tmp:
-            sct.run('rm -rf ' + tmp_dir, error_exit='warning')
+            shutil.rmtree(tmp_dir)
 
 
 def thr_im(im, low_thr, high_thr):
@@ -400,6 +402,7 @@ def visualize_warp(fname_warp, fname_grid=None, step=3, rm_tmp=True):
         from numpy import zeros
         tmp_dir = sct.tmp_create()
         im_warp = Image(fname_warp)
+        curdir = os.getcwd()
         os.chdir(tmp_dir)
 
         assert len(im_warp.data.shape) == 5, 'ERROR: Warping field does bot have 5 dimensions...'
@@ -425,13 +428,13 @@ def visualize_warp(fname_warp, fname_grid=None, step=3, rm_tmp=True):
         im_grid.save()
         fname_grid_resample = sct.add_suffix(fname_grid, '_resample')
         sct.run('sct_resample -i ' + fname_grid + ' -f 3x3x1 -x nn -o ' + fname_grid_resample)
-        fname_grid = tmp_dir + fname_grid_resample
-        os.chdir('..')
+        fname_grid = os.path.join(tmp_dir, fname_grid_resample)
+        os.chdir(curdir)
     path_warp, file_warp, ext_warp = sct.extract_fname(fname_warp)
-    grid_warped = path_warp + 'grid_warped_gm' + ext_warp
+    grid_warped = os.path.join(path_warp, 'grid_warped_gm' + ext_warp)
     sct.run('sct_apply_transfo -i ' + fname_grid + ' -d ' + fname_grid + ' -w ' + fname_warp + ' -o ' + grid_warped)
     if rm_tmp:
-        sct.run('rm -rf ' + tmp_dir, error_exit='warning')
+        shutil.rmtree(tmp_dir)
     return grid_warped
 
 
@@ -556,7 +559,7 @@ if __name__ == "__main__":
     if '-template-original' in arguments:
         fname_template_dest = arguments['-template-original']
     if '-ofolder' in arguments:
-        ml_param.output_folder = sct.slash_at_the_end(arguments['-ofolder'], 1)
+        ml_param.output_folder = arguments['-ofolder']
     if '-qc' in arguments:
         ml_param.qc = int(arguments['-qc'])
     if '-r' in arguments:

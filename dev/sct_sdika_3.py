@@ -16,19 +16,18 @@
 
 # ****************************      IMPORT      *****************************************  
 # Utils Imports
-import pickle
-import os
-import nibabel as nib #### A changer en utilisant Image
-import shutil
-import numpy as np
+import sys, io, os, pickle, shutil
 from math import sqrt
 from collections import Counter
 import random
 import json
 import argparse
+import itertools
+
+import nibabel as nib #### A changer en utilisant Image
+import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
-import itertools
 import pandas as pd
 from scipy.stats import ttest_rel
 # SCT Imports
@@ -189,7 +188,7 @@ def transform_nii_img(img_lst, path_out):
         path_cur = img_path
         path_cur_out = path_out + '_'.join(img_path.split('/')[5:7]) + '.nii.gz'
         if not os.path.isfile(path_cur_out):
-            shutil.copyfile(path_cur, path_cur_out)
+            sct.copy(path_cur, path_cur_out)
             sct.run('sct_image -i ' + path_cur_out + ' -type int16 -o ' + path_cur_out)
             sct.run('sct_image -i ' + path_cur_out + ' -setorient RPI -o ' + path_cur_out)
             # os.system('sct_image -i ' + path_cur_out + ' -type int16 -o ' + path_cur_out)
@@ -221,7 +220,7 @@ def transform_nii_seg(seg_lst, path_out, path_gold):
         path_cur = seg_path
         path_cur_out = path_out + '_'.join(seg_path.split('/')[5:7]) + '_seg.nii.gz'
         if not os.path.isfile(path_cur_out):
-            shutil.copyfile(path_cur, path_cur_out)
+            sct.copy(path_cur, path_cur_out)
             os.system('sct_image -i ' + path_cur_out + ' -setorient RPI -o ' + path_cur_out)
 
         path_cur_ctr = path_cur_out.split('.')[0] + '_centerline.nii.gz'
@@ -234,7 +233,7 @@ def transform_nii_seg(seg_lst, path_out, path_gold):
 
         path_cur_gold = path_gold + '_'.join(seg_path.split('/')[5:7]) + '_centerline_gold.nii.gz'
         if not os.path.isfile(path_cur_gold) and os.path.isfile(path_cur_ctr):
-            shutil.copyfile(path_cur_ctr, path_cur_gold)
+            sct.copy(path_cur_ctr, path_cur_gold)
 
         if os.path.isfile(path_cur_out):
             path_seg2convert.append(path_cur_out)
@@ -598,28 +597,28 @@ def compute_dataset_stats(path_local, cc, nb_img):
 
     """
     path_local_nii = path_local + 'output_nii_' + cc + '_'+ str(nb_img) + '/'
-    path_local_res_pkl = path_local + 'output_pkl_' + cc +'/'
+    path_local_res_pkl = os.path.join(path_local, 'output_pkl_' + cc)
     create_folders_local([path_local_res_pkl])
-    path_local_res_pkl = path_local_res_pkl + str(nb_img) + '/'
+    path_local_res_pkl = os.path.join(path_local_res_pkl, str(nb_img))
     create_folders_local([path_local_res_pkl])
-    path_local_gold = path_local + 'gold_' + cc + '/'
-    path_local_seg = path_local + 'input_nii_' + cc + '/'
+    path_local_gold = os.path.join(path_local, 'gold_' + cc)
+    path_local_seg = os.path.join(path_local, 'input_nii_' + cc)
 
     for f in os.listdir(path_local_nii):
         if not f.startswith('.'):
-            path_res_cur = path_local_nii + f + '/'
+            path_res_cur = os.path.join(path_local_nii, f)
             print path_res_cur
-            folder_subpkl_out = path_local_res_pkl + f + '/'
+            folder_subpkl_out = os.path.join(path_local_res_pkl, f)
 
             for ff in os.listdir(path_res_cur):
                 if ff.endswith('_centerline_pred.nii.gz'):
                     subj_name_cur = ff.split('_centerline_pred.nii.gz')[0]
-                    fname_subpkl_out = folder_subpkl_out + 'res_' + subj_name_cur + '.pkl'
+                    fname_subpkl_out = os.path.join(folder_subpkl_out, "res_") + subj_name_cur + '.pkl'
 
                     if not os.path.isfile(fname_subpkl_out):
-                        path_cur_pred = path_res_cur + ff
-                        path_cur_gold = path_local_gold + subj_name_cur + '_centerline_gold.nii.gz'
-                        path_cur_gold_seg = path_local_seg + subj_name_cur + '_seg.nii.gz'
+                        path_cur_pred = os.path.join(path_res_cur, ff)
+                        path_cur_gold = os.path.join(path_local_gold, subj_name_cur + '_centerline_gold.nii.gz')
+                        path_cur_gold_seg = os.path.join(path_local_seg, subj_name_cur + '_seg.nii.gz')
 
                         _compute_stats_file(path_cur_pred, path_cur_gold, path_cur_gold_seg, folder_subpkl_out, fname_subpkl_out)
 
@@ -631,27 +630,26 @@ def compute_dataset_stats(path_local, cc, nb_img):
 
 def panda_trainer(path_local, cc):
 
-    path_folder_pkl = path_local + 'output_pkl_' + cc + '/'
+    path_folder_pkl = path_local + 'output_pkl_' + cc
 
     for fold in os.listdir(path_folder_pkl):
-      path_nb_cur = path_folder_pkl + fold + '/'
+      path_nb_cur = path_os.path.join(folder_pkl, fold)
       
       if os.path.isdir(path_nb_cur):
-        fname_out_cur = path_folder_pkl + fold + '.pkl'
+        fname_out_cur = path_os.path.join(folder_pkl, fold + '.pkl')
 
         if not os.path.isfile(fname_out_cur):
           metric_fold_dct = {'train_id': [], 'maxmove': [], 'mse': [], 'zcoverage': []}
           
           for tr_subj in os.listdir(path_nb_cur):
             metric_fold_dct['train_id'].append(tr_subj)
-            path_cur = path_nb_cur + tr_subj + '/'
+            path_cur = os.path.join(path_nb_cur, tr_subj)
             
             metric_cur_dct = {'maxmove': [], 'mse': [], 'zcoverage': []}
             for file in os.listdir(path_cur):
               if file.endswith('.pkl'):
-                with open(path_cur+file) as outfile:    
+                with io.open(os.path.join(path_cur, file)) as outfile:    
                   metrics = pickle.load(outfile)
-                  outfile.close()
                 
                 for mm in metrics:
                   if mm in metric_cur_dct:
@@ -664,7 +662,7 @@ def panda_trainer(path_local, cc):
           metric_fold_pd = pd.DataFrame.from_dict(metric_fold_dct)
           metric_fold_pd.to_pickle(fname_out_cur)
         else:
-          with open(fname_out_cur) as outfile:    
+          with io.open(fname_out_cur) as outfile:    
             metric_fold_pd = pickle.load(outfile)
             outfile.close()
 
@@ -701,9 +699,8 @@ def partition_resol(path_local, cc):
 
         pickle.dump(resol_dct, open(fname_pkl_out, "wb"))
     else:
-        with open(fname_pkl_out) as outfile:    
+        with io.open(fname_pkl_out) as outfile:    
             resol_dct = pickle.load(outfile)
-            outfile.close()
 
     return resol_dct
 
@@ -727,7 +724,7 @@ def compute_best_trainer(path_local, cc, nb_img, mm_lst, img_dct):
                     if '.pkl' in pkl_file:
                         pkl_id = pkl_file.split('_'+cc)[0].split('res_')[1]
                         if pkl_id in img_lst:
-                            res_cur = pickle.load(open(path_folder_cur+pkl_file, 'r'))
+                            res_cur = pickle.load(io.open(path_os.path.join(folder_cur, pkl_file,) 'r'))
                             res_mse_cur_lst.append(res_cur['mse'])
                             res_move_cur_lst.append(res_cur['maxmove'])
                             res_zcoverage_cur_lst.append(res_cur['zcoverage'])
@@ -895,21 +892,21 @@ def inter_group(path_local, cc, nb_img, mm, criteria_dct):
 
 def find_best_worst(path_local, cc, nb_img, mm):
 
-  path_best_worst = path_local + 'save_best_worst/'
+  path_best_worst = os.path.join(path_local, 'save_best_worst')
+
   create_folders_local([path_best_worst])
   fname_best = '_best_' + cc + '_' + str(nb_img) + '_' + mm + '.pkl'
   fname_worst = '_worst_' + cc + '_' + str(nb_img) + '_' + mm + '.pkl'
 
-  with open(path_local + 'test_valid_' + cc + '.pkl') as outfile:    
+  with io.open(os.path.join(path_local, 'test_valid_' + cc + '.pkl')) as outfile:
       data_pd = pickle.load(outfile)
-      outfile.close()
 
   valid_subj_pd = data_pd[data_pd.valid_test == 'valid']
   valid_subj_lst = valid_subj_pd['subj_name'].values.tolist()
   test_subj_lst = data_pd[data_pd.valid_test == 'test']['subj_name'].values.tolist()
   tot_subj_lst = test_subj_lst+valid_subj_lst
 
-  path_output_pkl = path_local + 'output_pkl_' + cc + '_' + str(nb_img) + '/'
+  path_output_pkl = os.path.join(path_local, 'output_pkl_' + cc + '_' + str(nb_img))
   pkl_train_dct = {'subj_train': [], 'maxmove': [], 'mse': [], 'zcoverage': []}
   for folder_pkl in os.listdir(path_output_pkl):
     if os.path.isdir(path_output_pkl+folder_pkl):
@@ -918,8 +915,8 @@ def find_best_worst(path_local, cc, nb_img, mm):
       if len(list(set(train_cur_lst).intersection(test_subj_lst)))==0:
         pkl_train_dct['subj_train'].append(folder_pkl)
         for r in os.listdir(path_output_pkl+folder_pkl):
-          print path_output_pkl+folder_pkl+'/'+r
-          with open(path_output_pkl+folder_pkl+'/'+r) as outfile:    
+          print(os.path.join(path_output_pkl, folder_pkl, r))
+          with io.open(os.path.join(path_output_pkl, folder_pkl, r)) as outfile:
             mm_dct = pickle.load(outfile)
             outfile.close()
           for mm_cur in ['maxmove', 'mse', 'zcoverage']:
@@ -947,9 +944,9 @@ def find_best_worst(path_local, cc, nb_img, mm):
 
     #         for subj_test_test in testing_dataset_smple_lst:
     #             # if not subj_test_test in subj_test.split('__'):
-    #             pkl_file = path_folder_cur + 'res_' + subj_test_test + '.pkl'
+    #             pkl_file = path_os.path.join(folder_cur, "res_" + subj_test_test + '.pkl')
     #             if os.path.isfile(pkl_file):
-    #                 res_cur = pickle.load(open(pkl_file, 'r'))
+    #                 res_cur = pickle.load(io.open(pkl_file, 'r'))
     #                 if not subj_test in subj_test_dct:
     #                     subj_test_dct[subj_test] = []
     #                 subj_test_dct[subj_test].append(res_cur[mm])
@@ -959,23 +956,23 @@ def plot_best_trainer_results(path_local, cc, nb_img, mm, best_or_worst):
 
     lambda_rdn = 0.14
 
-    path_plot = path_local + 'plot_' + best_or_worst + '_train_' + cc + '_' + str(nb_img) + '_' + mm + '/'
+    path_plot = os.path.join(path_local, 'plot_' + best_or_worst + '_train_' + cc + '_' + str(nb_img) + '_' + mm)
     create_folders_local([path_plot])
 
 
 
 
-    # path_pkl = path_local + 'output_pkl_' + cc + '_' + str(nb_img) + '/'
+    # path_pkl = os.path.join(path_local, 'output_pkl_' + cc + '_' + str(nb_img))
     # # dataset_names_lst = [f for f in os.listdir(path_pkl) if os.path.exists(path_pkl + f + '/')]
     
-    # path_train = path_local + 'input_train_' + cc + '_' + str(nb_img) + '/'
+    # path_train = os.path.join(path_local, 'input_train_' + cc + '_' + str(nb_img))
     # dataset_names_lst = []
     # for f in os.listdir(path_train):
-    #     path_cur = path_train + f + '/'
+    #     path_cur = os.path.join(path_train, f)
     #     if os.path.isdir(path_cur):
     #         for ff in os.listdir(path_cur):
     #             if not '_ctr' in ff and ff.endswith('.txt'):
-    #                 text = open(path_cur + ff, 'r').read()
+    #                 text = open(os.path.join(path_cur, ff), 'r').read()
     #                 for tt in text.split('\n'):
     #                     name = tt.split('/')[-1]
     #                     if len(name):
@@ -998,9 +995,9 @@ def plot_best_trainer_results(path_local, cc, nb_img, mm, best_or_worst):
 
     #         for subj_test_test in testing_dataset_smple_lst:
     #             # if not subj_test_test in subj_test.split('__'):
-    #             pkl_file = path_folder_cur + 'res_' + subj_test_test + '.pkl'
+    #             pkl_file = path_os.path.join(folder_cur, "res_") + subj_test_test + '.pkl'
     #             if os.path.isfile(pkl_file):
-    #                 res_cur = pickle.load(open(pkl_file, 'r'))
+    #                 res_cur = pickle.load(io.open(pkl_file, 'r'))
     #                 if not subj_test in subj_test_dct:
     #                     subj_test_dct[subj_test] = []
     #                 subj_test_dct[subj_test].append(res_cur[mm])
@@ -1020,13 +1017,13 @@ def plot_best_trainer_results(path_local, cc, nb_img, mm, best_or_worst):
     #   else:
     #       best_name = best_lst[[item[1] for item in best_lst].index(max([item[1] for item in best_lst]))]
     
-    # path_folder_best = path_pkl + best_name[0] + '/'
+    # path_folder_best = os.path.join(path_pkl, best_name[0])
 
     # res_dct = {}
 
     # res_dct['validation'] = []
     # for subj_val in dataset_names_lst:
-    #     pkl_file = path_folder_best + 'res_' + subj_val + '.pkl'
+    #     pkl_file = path_os.path.join(folder_best, "res_") + subj_val + '.pkl'
     #     if os.path.isfile(pkl_file):
     #         res_cur = pickle.load(open(pkl_file, 'r'))
     #         res_dct['validation'].append(res_cur[mm])
@@ -1034,7 +1031,7 @@ def plot_best_trainer_results(path_local, cc, nb_img, mm, best_or_worst):
     # for pkl_file in os.listdir(path_folder_best):
     #     if '.pkl' in pkl_file:
     #         pkl_id = pkl_file.split('_'+cc)[0].split('res_')[1]
-    #         res_cur = pickle.load(open(path_folder_best+pkl_file, 'r'))
+    #         res_cur = pickle.load(io.open(path_os.path.join(folder_best, pkl_file) 'r'))
     #         if not 'all' in res_dct:
     #             res_dct['all'] = []
     #         res_dct['all'].append(res_cur[mm])
@@ -1056,7 +1053,7 @@ def plot_best_trainer_results(path_local, cc, nb_img, mm, best_or_worst):
     #                     res_dct[resol] = []
     #                 res_dct[resol].append(res_cur[mm])
 
-    # pickle.dump(res_dct, open(path_plot + best_name[0] + '.pkl', "wb"))
+    # pickle.dump(res_dct, io.open(path_plot + best_name[0] + '.pkl', "wb"))
 
     # sns.set(style="whitegrid", palette="pastel", color_codes=True)
     # group_labels = [['validation', 'all'], ['ax', 'iso'], ['HC', 'Patient']]
@@ -1126,24 +1123,26 @@ def plot_best_trainer_results(path_local, cc, nb_img, mm, best_or_worst):
 def plot_comparison_classifier(path_local, cc, nb_img, llambda, mm):
 
 
-    path_best_sdika = path_local + 'plot_best_train_' + cc + '_' + str(nb_img) + '_' + mm + '/'
+    path_best_sdika = os.path.join(path_local, 'plot_best_train_' + cc + '_' + str(nb_img) + '_' + mm)
     best_sdika = [p 
                   for p in os.listdir(path_best_sdika)
                       if p.endswith('.pkl')][0].split('.pkl')[0]
-    path_pkl_sdika = path_local + 'output_pkl_' + cc + '_' + str(nb_img) + '/' + best_sdika + '/res_'
-    path_pkl_cnn = path_local + 'cnn_pkl_' + cc + '_' + str(llambda) + '/res_' + cc + '_' + str(llambda) + '_'
-    path_pkl_propseg = path_local + 'propseg_pkl_' + cc + '/res_' + cc + '_'
+    path_pkl_sdika = os.path.join(path_local, 'output_pkl_' + cc + '_' + str(nb_img), best_sdika, 'res_')
+
+    path_pkl_cnn = os.path.join(path_local, 'cnn_pkl_' + cc + '_' + str(llambda), 'res_' + cc + '_' + str(llambda) + '_')
+
+    path_pkl_propseg = os.path.join(path_local, 'propseg_pkl_' + cc, 'res_' + cc + '_')
+
     classifier_name_lst = ['PropSeg', 'CNN+zRegularization', 'SVM+HOG+zRegularization']
 
-    path_output = path_local + 'plot_comparison/'
+    path_output = os.path.join(path_local, 'plot_comparison')
     create_folders_local([path_output])
-    fname_out = path_output + 'plot_comparison_' + mm + '_' + cc + '_' + str(nb_img) + '_' + str(llambda)
+    fname_out = os.path.join(path_output, "plot_comparison_" + mm + '_' + cc + '_' + str(nb_img) + '_' + str(llambda))
     fname_out_pkl = fname_out + '.pkl'
     fname_out_png = fname_out + '.png'
  
-    with open(path_local + 'cnn_dataset_lst_' + cc + '.pkl') as outfile:    
+    with io.open(os.path.join(path_local, 'cnn_dataset_lst_' + cc + '.pkl')) as outfile:    
         testing_lst = pickle.load(outfile)
-        outfile.close()
 
     testing_lst = [t.split('.img')[0] for t in testing_lst]
 
@@ -1162,7 +1161,7 @@ def plot_comparison_classifier(path_local, cc, nb_img, llambda, mm):
 
               res_dct[classifier_name].append(mm_cur[mm])
 
-    pickle.dump(res_dct, open(fname_out_pkl, "wb"))
+    pickle.dump(res_dct, io.open(fname_out_pkl, "wb"))
 
     sns.set(style="whitegrid", palette="pastel", color_codes=True)
     fig, axes = plt.subplots(1, 3, sharey='col', figsize=(24, 8))
@@ -1231,8 +1230,8 @@ def plot_comparison_nb_train(path_local, cc):
     path_best_train_lst = [pp for pp in os.listdir(path_local) if pp.startswith('plot_best_train_' + cc + '_')]
     mm_lst = list(np.unique([pp.split('_')[-1] for pp in path_best_train_lst]))
     nb_train_lst = [pp.split('_')[-2] for pp in path_best_train_lst]
-    path_best_train_lst = [path_local + pp + '/' + f for pp in path_best_train_lst for f in os.listdir(path_local + pp) if f.endswith('.pkl')]
-    create_folders_local([path_local+'plot_nb_train_img_comparison/'])
+    path_best_train_lst = [os.path.join(path_local, pp , f) for pp in path_best_train_lst for f in os.listdir(os.path.join(path_local, pp)) if f.endswith('.pkl')]
+    create_folders_local([os.path.join(path_local, 'plot_nb_train_img_comparison')])
 
     path_best_train_dct = {}
     for pp in path_best_train_lst:
@@ -1244,23 +1243,21 @@ def plot_comparison_nb_train(path_local, cc):
                     if nn in pp.split('/')[-2]:
                         path_best_train_dct[mm][nn] = pp
 
-    with open(path_local + 'patho_dct_' + cc + '.pkl') as outfile:    
+    with io.open(os.path.join(path_local, 'patho_dct_' + cc + '.pkl')) as outfile:
         patho_dct = pickle.load(outfile)
-        outfile.close()
 
     patho_lst = [patho_dct[p] for p in patho_dct if p!='HC']
     patho_lst = [p for pp in patho_lst for p in pp]
 
-    with open(path_local + 'resol_dct_' + cc + '.pkl') as outfile:    
+    with io.open(os.path.join(path_local, 'resol_dct_' + cc + '.pkl')) as outfile:    
         resol_dct = pickle.load(outfile)
-        outfile.close()
 
     resol_lst = [resol_dct[r] for r in resol_dct if r!='iso']
     resol_lst = [r for rr in resol_lst for r in rr]
 
     res_best_train_dct = {}
     for mm in mm_lst:
-        fname_test_lst = [pickle.load(open(path_best_train_dct[mm][f]))['fname_test'] for f in path_best_train_dct[mm]]
+        fname_test_lst = [pickle.load(io.open(path_best_train_dct[mm][f]))['fname_test'] for f in path_best_train_dct[mm]]
         fname_test_lst = list(set(fname_test_lst[0]).intersection(*fname_test_lst[1:]))
 
         dct_tmp = {'patho': [], 'resol':[]}
@@ -1276,9 +1273,8 @@ def plot_comparison_nb_train(path_local, cc):
             dct_tmp['resol'].append('Iso')
 
         for f in path_best_train_dct[mm]:
-            with open(path_best_train_dct[mm][f]) as outfile:    
+            with io.open(path_best_train_dct[mm][f]) as outfile:    
                 res = pickle.load(outfile)
-                outfile.close()
 
             dct_tmp[f] = []
             for test_smple in fname_test_lst:
@@ -1419,27 +1415,24 @@ def plot_comparison_nb_train(path_local, cc):
 
 def plot_trainers_best_worst(path_local, cc, nb_img, mm):
 
-  path_pkl_all_metric = path_local + 'plot_' + cc + '_' + str(nb_img) + '_' + 'all/'
-  path_pkl_all_metric = [path_pkl_all_metric + p for p in os.listdir(path_pkl_all_metric) if p.endswith('.pkl')][0]
-  with open(path_pkl_all_metric) as outfile:    
+  path_pkl_all_metric = os.path.join(path_local, 'plot_' + cc + '_' + str(nb_img) + '_' + 'all')
+  path_pkl_all_metric = [os.path.join(path_pkl_all_metric, p) for p in os.listdir(path_pkl_all_metric) if p.endswith('.pkl')][0]
+  with io.open(path_pkl_all_metric) as outfile:
     metrics = pickle.load(outfile)
-    outfile.close()
 
   all_data = {'all': metrics['avg_' + mm], 'patient' : metrics['avg_' + mm], 'HC': metrics['avg_' + mm]}
 
-  path_pkl_best_metric = path_local + 'plot_best_train_' + cc + '_' + str(nb_img) + '_' + mm + '/'
-  path_pkl_best_metric = [path_pkl_best_metric + p for p in os.listdir(path_pkl_best_metric) if p.endswith('.pkl')][0]
-  with open(path_pkl_best_metric) as outfile:    
+  path_pkl_best_metric = os.path.join(path_local, 'plot_best_train_' + cc + '_' + str(nb_img) + '_' + mm)
+  path_pkl_best_metric = [os.path.join(path_pkl_best_metric, p) for p in os.listdir(path_pkl_best_metric) if p.endswith('.pkl')][0]
+  with io.open(path_pkl_best_metric) as outfile:    
     metrics = pickle.load(outfile)
-    outfile.close()
 
   best_data = {'all': metrics['all'], 'patient' : metrics['Patient'], 'HC': metrics['HC']}
 
-  path_pkl_worst_metric = path_local + 'plot_worst_train_' + cc + '_' + str(nb_img) + '_' + mm + '/'
-  path_pkl_worst_metric = [path_pkl_worst_metric + p for p in os.listdir(path_pkl_worst_metric) if p.endswith('.pkl')][0]
-  with open(path_pkl_worst_metric) as outfile:    
+  path_pkl_worst_metric = os.path.join(path_local, 'plot_worst_train_' + cc + '_' + str(nb_img) + '_' + mm)
+  path_pkl_worst_metric = [os.path.join(path_pkl_worst_metric, p) for p in os.listdir(path_pkl_worst_metric) if p.endswith('.pkl')][0]
+  with io.open(path_pkl_worst_metric) as outfile:    
     metrics = pickle.load(outfile)
-    outfile.close()
 
   worst_data = {'all': metrics['all'], 'patient' : metrics['Patient'], 'HC': metrics['HC']}
 
@@ -1494,9 +1487,9 @@ def plot_trainers_best_worst(path_local, cc, nb_img, mm):
 
   # plt.show()
   fig.tight_layout()
-  path_save_fig = path_local+'plot_best_worst/'
+  path_save_fig = os.path.join(path_local, 'plot_best_worst')
   create_folders_local([path_save_fig])
-  fig.savefig(path_save_fig+'plot_' + cc + '_' + str(nb_img) + '_' + mm + '.png')
+  fig.savefig(os.path.join(path_save_fig, 'plot_' + cc + '_' + str(nb_img) + '_' + mm + '.png'))
   plt.close()
 
 

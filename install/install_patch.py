@@ -33,10 +33,7 @@
 # TODO: make a script that creates patch files.
 
 
-import sys
-import commands
-import os
-import getopt
+import sys, io, os, getopt
 import signal
 
 # small function for input with timeout
@@ -54,8 +51,8 @@ def input_timeout(text):
         return
 
 # get path of the toolbox to be able to import sct_utils
-status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
-sys.path.append(path_sct+'/scripts')
+path_sct = os.path.dirname(os.path.dirname(__file__))
+sys.path.append(os.path.join(path_sct, 'scripts'))
 import sct_utils as sct
 from sct_utils import UnsupportedOs, Os, Version, MsgUser
 
@@ -88,14 +85,14 @@ def main():
 
     # fetch version of the toolbox
     print 'Fetch version of the toolbox... '
-    with open(path_sct+"/version.txt", "r") as myfile:
-        version_sct = Version(myfile.read().replace('\n', ''))
+    with open(os.path.join(path_sct, "version.txt"), "r") as myfile:
+        version_sct = Version(myfile.read().rstrip())
     print "  toolbox version: "+str(version_sct)
 
     # fetch version of the patch
     print 'Fetch version of the patch... '
     with open("version.txt", "r") as myfile:
-        version_patch = Version(myfile.read().replace('\n', ''))
+        version_patch = Version(myfile.read().rstrip())
     print "  patch version: "+str(version_patch)
 
     # if patch is not compatible with this release, send message and quit.
@@ -126,19 +123,19 @@ def main():
         # check if .DS_Store (could happen during package creation)
         if not file_name == ".DS_Store":
             # check if file is a bin/ file. If not, copy the old way. If so, copy bin in the right folder
-            file_src = path_name+file_name+ext_name
+            file_src = os.path.join(path_name, file_name+ext_name)
             if "bin/" not in path_name:
-                file_dest = path_sct+path_name[1:]+file_name+ext_name
+                file_dest = os.path.join(path_sct, path_name[1:], file_name+ext_name)
                 # if destination folder does no exist, create it
-                if not os.path.exists(path_sct+path_name[1:]):
-                    sct.run(issudo+'mkdir '+path_sct+path_name[1:])
+                if not os.path.exists(os.path.join(path_sct, path_name[1:])):
+                    sct.run(issudo+'mkdir '+ os.path.join(path_sct, path_name[1:]))
                 # copy file
                 sct.run(issudo+'cp '+file_src+' '+file_dest)
             else:
                 if this_computer.os in path_name:
                     # path_name ends with .../bin/osx/ or .../bin/linux/ so we can get the parent directory
                     path_name_new = os.path.dirname(path_name[0:-1])
-                    file_dest = path_sct+path_name_new[1:]+"/"+file_name+ext_name
+                    file_dest = os.path.join(path_sct, path_name_new[1:], file_name+ext_name)
                     # copy file
                     sct.run(issudo+'cp '+file_src+' '+file_dest)
 

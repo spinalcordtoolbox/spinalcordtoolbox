@@ -5,9 +5,9 @@ import commands, sys, os
 
 
 # Get path of the toolbox
-status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
 # Append path that contains scripts, to be able to load modules
-sys.path.append(path_sct + '/scripts')
+sys.path.append(os.path.join(path_sct, 'scripts'))
 
 import nibabel
 #from Pil import Image
@@ -30,6 +30,7 @@ for i in range(0, L):
 
 for i in range(3, L, 4):
     files = os.listdir(dirpath[i])
+    curdir = os.getcwd()
     os.chdir(dirpath[i])
     for file in files:
         if file == 'data_RPI_straight.nii.gz' or file == 'data_RPI_straight_normalized.nii.gz':
@@ -42,8 +43,8 @@ for i in range(3, L, 4):
 
             #Save data into image jpg (scipy)
             imsave('sagital_slice_' + name + '.png', data_sagitale)
-    #Get back to parent folder
-    os.chdir('../../..')
+    #Get back
+    os.chdir(curdir)
 
 
 
