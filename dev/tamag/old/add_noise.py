@@ -1,19 +1,16 @@
 #!/usr/bin/env python
 
-import sys, commands
-import numpy as np
-import nibabel as nib
-import os
-import matplotlib as plt
-
-import random
-import math
+import sys, io, os, random, math
 from time import time
 
+import numpy as np
+import nibabel as nib
+import matplotlib as plt
+
 # Get path of the toolbox
-status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
 # Append path that contains scripts, to be able to load modules
-sys.path.append(path_sct + '/scripts')
+sys.path.append(os.path.join(path_sct, 'scripts'))
 
 import sct_utils as sct
 

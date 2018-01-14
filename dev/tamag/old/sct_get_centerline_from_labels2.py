@@ -1,21 +1,18 @@
 #!/usr/bin/env python
 
 
-import numpy as np
-import commands, sys
+import commands, sys, io, shutil, os, time
 
+import numpy as np
 
 # Get path of the toolbox
-status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
 # Append path that contains scripts, to be able to load modules
-sys.path.append(path_sct + '/scripts')
+sys.path.append(os.path.join(path_sct, "scripts"))
 sys.path.append('/home/tamag/code')
 
 from msct_image import Image
 from msct_parser import Parser
-import nibabel
-import os
-import time
 import sct_utils as sct
 from sct_orientation import get_orientation, set_orientation
 from sct_process_segmentation import b_spline_centerline
@@ -34,14 +31,13 @@ def main(segmentation_file=None, label_file=None, output_file_name=None, paramet
             segmentation_file = os.path.abspath(segmentation_file)
             path_data, file_data, ext_data = sct.extract_fname(segmentation_file)
 
-            # create temporary folder
-            path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S")
-            sct.run('mkdir '+path_tmp)
+            path_tmp = sct.tmp_create(basename="centerline_from_labels", verbose=verbose)
 
             # copy files into tmp folder
             sct.run('cp '+segmentation_file+' '+path_tmp)
 
             # go to tmp folder
+            curdir = os.getcwd()
             os.chdir(path_tmp)
 
             # Change orientation of the input segmentation into RPI
@@ -101,8 +97,8 @@ def main(segmentation_file=None, label_file=None, output_file_name=None, paramet
 
             del data
 
-            # come back to parent folder
-            os.chdir('..')
+            # come back
+            os.chdir(curdir)
 
             # Change orientation of the output centerline into input orientation
             print '\nOrient centerline image to input orientation: ' + orientation
@@ -182,8 +178,7 @@ def main(segmentation_file=None, label_file=None, output_file_name=None, paramet
         if "-l" and "-i" in arguments:
 
             ## Creation of a temporary file that will contain each centerline file of the process
-            path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S")
-            sct.run('mkdir '+path_tmp)
+            path_tmp = sct.tmp_create(verbose=verbose)
 
             ##From label file create centerline image
             print '\nPROCESS PART 1: From label file create centerline image.'
@@ -265,6 +260,7 @@ def main(segmentation_file=None, label_file=None, output_file_name=None, paramet
             sct.run('cp '+segmentation_file+' '+path_tmp)
 
             # go to tmp folder
+            curdir = os.getcwd()
             os.chdir(path_tmp)
 
             # Change orientation of the input segmentation into RPI
@@ -322,9 +318,6 @@ def main(segmentation_file=None, label_file=None, output_file_name=None, paramet
             #sct.run('cp '+file_name_seg+' ../')
 
             del data_seg
-
-            # come back to parent folder
-#            os.chdir('..')
 
             # Change orientation of the output centerline into input orientation
             print '\nOrient centerline image to input orientation: ' + orientation
@@ -419,13 +412,11 @@ def main(segmentation_file=None, label_file=None, output_file_name=None, paramet
 
                 del data_concatenate, data_label_to_show, data_seg_to_show, data_centerline_fit
 
-            sct.run('cp '+file_name+' ../')
+            # Retrieve result
+            sct.copy(file_name, curdir)
 
-            # Copy result into parent folder
-            sct.run('cp '+file_name+' ../')
-
-            # Come back to parent folder
-            os.chdir('..')
+            # come back
+            os.chdir(curdir)
 
             # Remove temporary centerline files
             if remove_temp_files:
@@ -444,14 +435,13 @@ def main(segmentation_file=None, label_file=None, output_file_name=None, paramet
             path_data, file_data, ext_data = sct.extract_fname(segmentation_file)
 
 
-            # create temporary folder
-            path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S")
-            sct.run('mkdir '+path_tmp)
+            path_tmp = sct.tmp_create()
 
             # copy files into tmp folder
             sct.run('cp '+segmentation_file+' '+path_tmp)
 
             # go to tmp folder
+            curdir = os.getcwd()
             os.chdir(path_tmp)
 
             # Change orientation of the input segmentation into RPI
@@ -501,13 +491,13 @@ def main(segmentation_file=None, label_file=None, output_file_name=None, paramet
                 file_results.write(str(int(i)) + ' ' + str(x_centerline_fit[i-min_z_index]) + ' ' + str(y_centerline_fit[i-min_z_index]) + '\n')
             file_results.close()
 
-            # Copy result into parent folder
+            # Retrieve result
             sct.run('cp '+file_name+' ../')
 
             del data
 
-            # come back to parent folder
-            os.chdir('..')
+            # come back
+            os.chdir(curdir)
 
 
            # Remove temporary files
@@ -581,8 +571,7 @@ def main(segmentation_file=None, label_file=None, output_file_name=None, paramet
         if "-l" and "-i" in arguments:
 
             ## Creation of a temporary file that will contain each centerline file of the process
-            path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S")
-            sct.run('mkdir '+path_tmp)
+            path_tmp = sct.tmp_create()
 
             ##From label file create centerline text file
             print '\nPROCESS PART 1: From label file create centerline text file.'
@@ -637,7 +626,7 @@ def main(segmentation_file=None, label_file=None, output_file_name=None, paramet
             # Create output text file
             sct.printv('\nWrite text file...', verbose)
             file_name_label = file_data_label+'_centerline'+'.txt'
-            file_results = open(path_tmp + '/' + file_name_label, 'w')
+            file_results = io.open(os.path.join(path_tmp, file_name_label), 'w')
             min_z_index, max_z_index = min(Z), max(Z)
             for i in range(min_z_index, max_z_index+1):
                 file_results.write(str(int(i)) + ' ' + str(X_fit[i-min_z_index]) + ' ' + str(Y_fit[i-min_z_index]) + '\n')
@@ -659,6 +648,7 @@ def main(segmentation_file=None, label_file=None, output_file_name=None, paramet
             sct.run('cp '+segmentation_file+' '+path_tmp)
 
             # go to tmp folder
+            curdir = os.getcwd()
             os.chdir(path_tmp)
 
             # Change orientation of the input segmentation into RPI
@@ -732,11 +722,11 @@ def main(segmentation_file=None, label_file=None, output_file_name=None, paramet
                         for line in data_line :
                             f_output.write(line)
 
-            # Copy result into parent folder
-            sct.run('cp '+file_name+' ../')
+            # Retrieve result
+            sct.copy(file_name, curdir)
 
-            # Come back to parent folder
-            os.chdir('..')
+            # Come back
+            os.chdir(curdir)
 
             # Remove temporary centerline files
             if remove_temp_files:

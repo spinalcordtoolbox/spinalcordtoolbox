@@ -10,9 +10,11 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-from scipy.ndimage.measurements import center_of_mass
-from math import sqrt
+import sys, io, os, math
+
 import numpy as np
+from scipy.ndimage.measurements import center_of_mass
+
 import sct_utils as sct
 from msct_image import Image
 from pandas import DataFrame
@@ -35,7 +37,7 @@ def compute_mse(im_true, im_pred):
 
             count_slice += 1
 
-    return sqrt(sum(mse_dist) / float(count_slice))
+    return math.sqrt(sum(mse_dist) / float(count_slice))
 
 
 def init(param_test):
@@ -61,7 +63,7 @@ def test_integrity(param_test):
     mse_detection = float('nan')
 
     # extract name of output centerline: data_centerline_optic.nii.gz
-    file_ctr = param_test.path_output + sct.add_suffix(param_test.file_input, '_centerline_optic')
+    file_ctr = os.path.join(param_test.path_output, sct.add_suffix(param_test.file_input, '_centerline_optic'))
 
     # open output segmentation
     im_ctr = Image(file_ctr)

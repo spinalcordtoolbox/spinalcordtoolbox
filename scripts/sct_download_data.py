@@ -84,7 +84,7 @@ def main(args=None):
     arguments = parser.parse(args)
     data_name = arguments['-d']
     verbose = int(arguments['-v'])
-    dest_folder = sct.slash_at_the_end(arguments.get('-o', os.path.abspath(os.curdir)), 1)
+    dest_folder = arguments.get('-o', os.path.abspath(os.curdir))
 
     # Download data
     url = dict_url[data_name]

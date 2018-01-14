@@ -115,10 +115,7 @@ def main():
     print '.. Full width at half maximum:  ' + str(fwhm)
     print '.. Width of the square window: ' + str(width)
 
-    # create temporary folder
-    sct.printv('\nCreate temporary folder...', verbose)
-    path_tmp = sct.slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S"), 1)
-    sct.run('mkdir '+path_tmp, verbose)
+    path_tmp = sct.tmp_create(basename="smooth_spinal_cord")
 
     # Copying input data to tmp folder and convert to nii
     sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)

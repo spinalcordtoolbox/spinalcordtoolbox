@@ -8,9 +8,9 @@ from dipy.denoise.nlmeans import nlmeans
 import os
 
 # Get path of the toolbox
-status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
 # Append path that contains scripts, to be able to load modules
-sys.path.append(path_sct + '/scripts')
+sys.path.append(os.path.join(path_sct, "scripts"))
 
 from msct_parser import Parser
 import sct_utils as sct

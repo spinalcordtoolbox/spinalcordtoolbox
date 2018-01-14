@@ -249,8 +249,6 @@ class Option:
             sct.printv("ERROR: Permission denied for folder creation...", type="error")
         elif result_creation == 1:
             sct.printv("Folder " + param + " has been created.", 0, type='warning')
-        # add slash at the end
-        param = sct.slash_at_the_end(param, 1)
         return param
 
 
@@ -397,7 +395,6 @@ class Parser:
         """
         This function add a path in front of each value in a dictionary (provided by the parser) for option that are files or folders.
         This function can affect option files that represent input and/or output with "input_file" and output_file" parameters.
-        The parameter path_to_add must contain the character "/" at its end.
         Output is the same dictionary as provided but modified with added path.
         :param dictionary:
         :param path_to_add:
@@ -417,8 +414,8 @@ class Parser:
                             # check if value is a string
                             if isinstance(value, str):
                                 # If value is a file, path must be updated
-                                if os.path.isfile(path_to_add + value):
-                                    option[i] = path_to_add + value
+                                if os.path.isfile(os.path.join(path_to_add, value)):
+                                    option[i] = os.path.join(path_to_add, value)
                     # if not a list:
                     else:
                         # If it contains files, it must be updated.
@@ -430,7 +427,7 @@ class Parser:
                                 if str(option) in self.options[key].list_no_image:
                                     dictionary[key] = option
                             else:
-                                dictionary[key] = str(path_to_add) + str(option)
+                                dictionary[key] = os.path.join(path_to_add, option)
             else:
                 sct.printv("ERROR: the option you provided is not contained in this parser. Please check the dictionary", verbose=1, type='error')
 
@@ -486,7 +483,7 @@ class Usage:
     # def get_sct_version(self):
     #     from commands import getstatusoutput
     #     status, path_sct = getstatusoutput('echo $SCT_DIR')
-    #     fname = str(path_sct)+'/version.txt'
+    #     fname = os.path.join(path_sct, 'version.txt')
     #     content = ""
     #     with open(fname, mode = 'r') as f:
     #         content = f.readlines()

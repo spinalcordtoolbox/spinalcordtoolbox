@@ -5,9 +5,9 @@ import commands, sys, os
 
 
 # Get path of the toolbox
-status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
 # Append path that contains scripts, to be able to load modules
-sys.path.append(path_sct + '/scripts')
+sys.path.append(os.path.join(path_sct, "scripts"))
 sys.path.append(path_sct + '/dev/tamag')
 
 import sct_utils as sct
@@ -48,10 +48,7 @@ for i in range(1, len(list_dir)):
             print '\nExtract segmentation from: '+ list_dir[i]+ '/' + list_dir_2[j] + ' ...'
             os.chdir(list_dir[i]+ '/' + list_dir_2[j])
 
-            # Create temporary folder in folder with data
-            path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S")
-
-            sct.run('mkdir '+path_tmp)
+            path_tmp = sct.tmp_create(basename="pipeline_preprocessing")
 
             # copy files into tmp folder
             sct.printv('\nCopy files into tmp folder...')

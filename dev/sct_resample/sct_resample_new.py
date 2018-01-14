@@ -18,9 +18,8 @@
 import sys
 import os
 import getopt
-import commands
-import sct_utils as sct
 import time
+import sct_utils as sct
 from sct_convert import convert
 from msct_image import Image
 from msct_parser import Parser
@@ -135,7 +134,7 @@ if __name__ == "__main__":
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
         # get path of the testing data
-        status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
+        path_sct_data = os.environ.get("SCT_TESTING_DATA_DIR", os.path.join(os.path.dirname(os.path.dirname(__file__))), "testing_data")
         param.fname_data = path_sct_data+'/fmri/fmri.nii.gz'
         param.factor = '2' #'0.5x0.5x1'
         param.remove_tmp_files = 0

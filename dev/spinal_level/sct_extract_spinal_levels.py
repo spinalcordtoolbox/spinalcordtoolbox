@@ -13,13 +13,11 @@
 #########################################################################################
 
 
-# check if needed Python libraries are already installed or not
-import os
+import sys, io, os, shutil, time
+
 import matplotlib
 import nibabel
 import numpy as np
-import shutil
-import time
 
 #=======================================================================================================================
 # main
@@ -36,8 +34,7 @@ def main():
     import matplotlib.pyplot as plt
 
     # get path of the toolbox
-    path_script = os.path.dirname(__file__)
-    path_sct = os.path.dirname(os.path.dirname(path_script))  # needs to go two levels up to get SCT path
+    path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
     # Create output folder (and delete previous folder if exist)
     try:
@@ -47,8 +44,8 @@ def main():
     os.mkdir(folder_out)
 
     # Load files
-    fname_template_vertebral_level = path_sct+'/data/PAM50/template/PAM50_levels.nii.gz'
-    fname_template_vertebral_cord = path_sct+'/data/PAM50/template/PAM50_cord.nii.gz'
+    fname_template_vertebral_level = os.path.join(path_sct, 'data', 'PAM50', 'template', 'PAM50_levels.nii.gz')
+    fname_template_vertebral_cord = os.path.join(path_sct, 'data', 'PAM50', 'template', 'PAM50_cord.nii.gz')
     
     vertebral_level_file = nibabel.load(fname_template_vertebral_level)
     vertebral_cord_file = nibabel.load(fname_template_vertebral_cord)
@@ -233,11 +230,11 @@ def main():
         print '\nWrite NIFTI volumes...'
         img = nibabel.Nifti1Image(template_spinal_image, None, hdr_vertebral_cord)
         file_name[i] = 'spinal_level_'+str(i+1).zfill(2)+'.nii.gz'
-        nibabel.save(img, folder_out + file_name[i])
+        nibabel.save(img, os.path.join(folder_out, file_name[i]))
         print '  File created:' + file_name[i]
 
     # create info_label.txt file
-    fid_infolabel = open(folder_out + file_infolabel, 'w')
+    fid_infolabel = io.open(os.path.join(folder_out, file_infolabel,) 'w')
     # Write date and time
     fid_infolabel.write('# Spinal levels labels - generated on ' + time.strftime('%Y-%m-%d') + '\n')
     fid_infolabel.write('# Keyword=IndivLabels (Please DO NOT change this line)\n')

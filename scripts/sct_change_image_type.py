@@ -43,13 +43,13 @@ def main():
     fname_out = ''
     type_output = 'int32'
     # get path of the toolbox
-    status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+    path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
 
     # Parameters for debug mode
     if param.debug:
         sct.log.debug('\n*** WARNING: DEBUG MODE ON ***\n')
-        status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
-        fname_label = path_sct_data + '/mt/mt1.nii.gz'
+        path_sct_data = os.environ.get("SCT_TESTING_DATA_DIR", os.path.join(os.path.dirname(os.path.dirname(__file__))), "testing_data")
+        fname_label = os.path.join(path_sct_data, 'mt', 'mt1.nii.gz')
         param.labels = '5,5,2,1:5,7,2,3'
         type_process = 'create'
         cross_radius = 5

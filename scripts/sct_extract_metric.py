@@ -16,13 +16,11 @@
 # TODO (not urgent): vertebral levels selection should only consider voxels of the selected levels in slices where two different vertebral levels coexist (and not the whole slice)
 
 # Import common Python libraries
-import os
-import sys
-import commands
-from glob import glob
-import time
+import sys, io, os, glob, time
+
 import nibabel as nib
 import numpy as np
+
 import sct_utils as sct
 from sct_image import get_orientation_3d, set_orientation
 from msct_image import Image
@@ -39,7 +37,7 @@ ALMOST_ZERO = 0.000001
 class Param:
     def __init__(self):
         self.method = 'wath'
-        self.path_label = path_sct + '/data/PAM50/atlas/'
+        self.path_label = os.path.join(path_sct, "data", "PAM50", "atlas")
         self.verbose = 1
         self.vertebral_levels = ''
         self.slices_of_interest = ''  # 2-element list corresponding to zmin:zmax. example: '5:8'. For all slices, leave empty.
@@ -68,8 +66,8 @@ def get_parser():
                       type_value='folder',
                       description='Folder containing WM tract labels, or single label file.',
                       mandatory=False,
-                      default_value='./label/atlas',
-                      example=path_sct + '/data/atlas')
+                      default_value=os.path.join("label", "atlas"),
+                      example=os.path.join(path_sct, 'data', 'atlas'))
     parser.add_option(name='-l',
                       type_value='str',
                       description='Label IDs to extract the metric from. Default = all labels. Separate labels with ",". To select a group of consecutive labels use ":". Example: 1:3 is equivalent to 1,2,3. Maximum Likelihood (or MAP) is computed using all tracts, but only values of the selected tracts are reported.',
@@ -162,7 +160,7 @@ max: for each z-slice of the input data, extract the max value for each slice of
                       mandatory=False)
 
     # read the .txt files referencing the labels
-    file_label = param_default.path_label + param_default.file_info_label
+    file_label = os.path.join(param_default.path_label, param_default.file_info_label)
     sct.check_file_exist(file_label, 0)
     default_info_label = open(file_label, 'r')
     label_references = default_info_label.read()
@@ -170,7 +168,7 @@ max: for each z-slice of the input data, extract the max value for each slice of
 
     str_section = """\n
 To list white matter atlas labels:
-""" + os.path.basename(__file__) + """ -f """ + path_sct + """/data/atlas
+""" + os.path.basename(__file__) + """ -f """ + os.path.join(path_sct, "data", "atlas") + """
 
 To compute FA within labels 0, 2 and 3 within vertebral levels C2 to C7 using binary method:
 """ + os.path.basename(__file__) + """ -i dti_FA.nii.gz -f label/atlas -l 0,2,3 -v 2:7 -m bin"""
@@ -212,13 +210,12 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
         single_label = 1
     elif os.path.isdir(path_label):
         single_label = 0
-        path_label = sct.slash_at_the_end(path_label, 1)
     else:
         sct.printv('\nERROR: ' + path_label + ' does not exist.', 1, 'error')
 
     # adjust file names and parameters for old MNI-Poly-AMU template
     if not single_label:
-        if not len(glob(path_label + 'WMtract*.*')) == 0:
+        if not len(glob.glob(os.path.join(path_label, 'WMtract*.*'))) == 0:
             # MNI-Poly-AMU
             suffix_vertebral_labeling = '*_level.nii.gz'
         else:
@@ -230,7 +227,7 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
         if slices_of_interest:  # impossible to select BOTH specific slices and specific vertebral levels
             sct.printv(parser.usage.generate(error='ERROR: You cannot select BOTH vertebral levels AND slice numbers.'))
         else:
-            fname_vertebral_labeling_list = sct.find_file_within_folder(suffix_vertebral_labeling, path_label + '..')
+            fname_vertebral_labeling_list = sct.find_file_within_folder(suffix_vertebral_labeling, os.path.dirname(path_label))
             if len(fname_vertebral_labeling_list) > 1:
                 sct.printv(parser.usage.generate(error='ERROR: More than one file named "' + suffix_vertebral_labeling + '" were found in ' + path_label + '. Exit program.'))
             elif len(fname_vertebral_labeling_list) == 0:
@@ -291,7 +288,8 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
         sct.printv('\nChange labels orientation into RPI and load them...', verbose)
         labels = np.empty([nb_labels], dtype=object)
         for i_label in range(nb_labels):
-            im_label = Image(path_label + indiv_labels_files[i_label])
+            print("cJ %s" % os.path.join(path_label, indiv_labels_files[i_label]))
+            im_label = Image(os.path.join(path_label, indiv_labels_files[i_label]))
             im_label.change_orientation(orientation='RPI')
             labels[i_label] = im_label.data
         # if the "normalization" option is wanted,
@@ -314,7 +312,8 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
         sct.printv('\nLoad labels...', verbose)
         labels = np.empty([nb_labels], dtype=object)
         for i_label in range(0, nb_labels):
-            labels[i_label] = Image(path_label + indiv_labels_files[i_label]).data
+            print("cJ %s" % os.path.join(path_label, indiv_labels_files[i_label]))
+            labels[i_label] = Image(os.path.join(path_label, indiv_labels_files[i_label])).data
         # if the "normalization" option is wanted,
         if fname_normalizing_label:
             normalizing_label = np.empty([1], dtype=object)  # choose this kind of structure so as to keep easily the compatibility with the rest of the code (dimensions: (1, x, y, z))
@@ -489,17 +488,17 @@ def read_label_file(path_info_label, file_info_label):
     indiv_labels_ids, indiv_labels_names, indiv_labels_files, combined_labels_ids, combined_labels_names, combined_labels_id_groups, clusters_apriori = [], [], [], [], [], [], []
 
     # file name of info_label.txt
-    fname_label = path_info_label + file_info_label
+    fname_label = os.path.join(path_info_label, file_info_label)
 
     # Read file
     try:
-        f = open(fname_label)
+        f = io.open(fname_label, "rb")
     except IOError:
         sct.printv('\nWARNING: Cannot open ' + fname_label, 1, 'warning')
         # raise
     else:
         # Extract all lines in file.txt
-        lines = [line for line in f.readlines() if line.strip()]
+        lines = [line.decode("utf-8") for line in f.readlines() if line.rstrip()]
         lines[-1] += ' '  # To fix an error that could occur at the last line (deletion of the last character of the .txt file)
 
         # Check if the White matter atlas was provided by the user
@@ -534,7 +533,7 @@ def read_label_file(path_info_label, file_info_label):
 
         # check if all files listed are present in folder. If not, ERROR.
         for file in indiv_labels_files:
-            sct.check_file_exist(path_info_label + file)
+            sct.check_file_exist(os.path.join(path_info_label, file))
 
         # Close file.txt
         f.close()

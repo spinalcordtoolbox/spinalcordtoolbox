@@ -11,18 +11,17 @@
 #
 # About the license: see the file LICENSE.TXT
 ########################################################################################################################
+import sys, io, os, math, time, random, shutil
+
+import numpy as np
+
 from msct_image import Image
 from sct_image import set_orientation
-from sct_utils import extract_fname, printv, add_suffix, tmp_create
+from sct_utils import extract_fname, printv, add_suffix
+import sct_utils as sct
 from sct_crop_image import ImageCropper
 import sct_create_mask
 import sct_register_multimodal, sct_apply_transfo
-import numpy as np
-import os
-import math
-import time
-import random
-import shutil
 
 ########################################################################################################################
 #                                   CLASS SLICE
@@ -104,14 +103,14 @@ class Slice:
 def pre_processing(fname_target, fname_sc_seg, fname_level=None, fname_manual_gmseg=None, new_res=0.3, square_size_size_mm=22.5, denoising=True, verbose=1, rm_tmp=True, for_model=False):
     printv('\nPre-process data...', verbose, 'normal')
 
-    tmp_dir = 'tmp_preprocessing_' + time.strftime("%y%m%d%H%M%S") + '_' + str(random.randint(1, 1000000)) + '/'
-    if not os.path.exists(tmp_dir):
-        os.mkdir(tmp_dir)
+    tmp_dir = sct.tmp_create()
 
-    shutil.copy(fname_target, tmp_dir)
+    sct.copy(fname_target, tmp_dir)
     fname_target = ''.join(extract_fname(fname_target)[1:])
-    shutil.copy(fname_sc_seg, tmp_dir)
+    sct.copy(fname_sc_seg, tmp_dir)
     fname_sc_seg = ''.join(extract_fname(fname_sc_seg)[1:])
+
+    curdir = os.getcwd()
     os.chdir(tmp_dir)
 
     original_info = {'orientation': None, 'im_sc_seg_rpi': None, 'interpolated_images': []}
@@ -180,20 +179,21 @@ def pre_processing(fname_target, fname_sc_seg, fname_level=None, fname_manual_gm
     if fname_level is not None:
         printv('  Load vertebral levels...', verbose, 'normal')
         # copy level file to tmp dir
-        os.chdir('..')
-        shutil.copy(fname_level, tmp_dir)
+        os.chdir(curdir)
+        sct.copy(fname_level, tmp_dir)
         os.chdir(tmp_dir)
         # change fname level to only file name (path = tmp dir now)
         fname_level = ''.join(extract_fname(fname_level)[1:])
         # load levels
         list_slices_target = load_level(list_slices_target, fname_level)
 
+    os.chdir(curdir)
+
     # load manual gmseg if there is one (model data)
     if fname_manual_gmseg is not None:
         printv('\n\tLoad manual GM segmentation(s) ...', verbose, 'normal')
         list_slices_target = load_manual_gmseg(list_slices_target, fname_manual_gmseg, tmp_dir, im_sc_seg_rpi, new_res, square_size_size_mm, for_model=for_model, fname_mask=fname_mask)
 
-    os.chdir('..')
     if rm_tmp:
         # remove tmp folder
         shutil.rmtree(tmp_dir)
@@ -372,9 +372,10 @@ def load_manual_gmseg(list_slices_target, list_fname_manual_gmseg, tmp_dir, im_s
         # consider fname_manual_gmseg as a list of file names to allow multiple manual GM segmentation
         list_fname_manual_gmseg = [list_fname_manual_gmseg]
 
+    curdir = os.getcwd()
+
     for fname_manual_gmseg in list_fname_manual_gmseg:
-        os.chdir('..')
-        shutil.copy(fname_manual_gmseg, tmp_dir)
+        sct.copy(fname_manual_gmseg, tmp_dir)
         # change fname level to only file name (path = tmp dir now)
         path_gm, file_gm, ext_gm = extract_fname(fname_manual_gmseg)
         fname_manual_gmseg = file_gm + ext_gm
@@ -411,6 +412,8 @@ def load_manual_gmseg(list_slices_target, list_fname_manual_gmseg, tmp_dir, im_s
                 wm_slice = (slice_im.im > 0) - im_gm.data
                 slice_im.wm_seg.append(wm_slice)
 
+        os.chdir(curdir)
+
     return list_slices_target
 
 ########################################### End of pre-processing function #############################################
@@ -438,7 +441,8 @@ def register_data(im_src, im_dest, param_reg, path_copy_warp=None, rm_tmp=True):
     im_src_seg = binarize(im_src, thr_min=1, thr_max=1)
     im_dest_seg = binarize(im_dest)
     # create tmp dir and go in it
-    tmp_dir = tmp_create()
+    tmp_dir = sct.tmp_create()
+    curdir = os.getcwd()
     os.chdir(tmp_dir)
     # save image and seg
     fname_src = 'src.nii.gz'
@@ -464,7 +468,8 @@ def register_data(im_src, im_dest, param_reg, path_copy_warp=None, rm_tmp=True):
     fname_src_reg = add_suffix(fname_src, '_reg')
     im_src_reg = Image(fname_src_reg)
     # get out of tmp dir
-    os.chdir('..')
+    os.chdir(curdir)
+
     # copy warping fields
     if path_copy_warp is not None and os.path.isdir(os.path.abspath(path_copy_warp)):
         path_copy_warp = os.path.abspath(path_copy_warp)
@@ -472,8 +477,9 @@ def register_data(im_src, im_dest, param_reg, path_copy_warp=None, rm_tmp=True):
         file_dest = extract_fname(fname_dest)[1]
         fname_src2dest = 'warp_' + file_src + '2' + file_dest + '.nii.gz'
         fname_dest2src = 'warp_' + file_dest + '2' + file_src + '.nii.gz'
-        shutil.copy(tmp_dir + '/' + fname_src2dest, path_copy_warp + '/')
-        shutil.copy(tmp_dir + '/' + fname_dest2src, path_copy_warp + '/')
+        sct.copy(os.path.join(tmp_dir, fname_src2dest), path_copy_warp)
+        sct.copy(os.path.join(tmp_dir, fname_dest2src), path_copy_warp)
+
     if rm_tmp:
         # remove tmp dir
         shutil.rmtree(tmp_dir)
@@ -483,11 +489,12 @@ def register_data(im_src, im_dest, param_reg, path_copy_warp=None, rm_tmp=True):
 
 def apply_transfo(im_src, im_dest, warp, interp='spline', rm_tmp=True):
     # create tmp dir and go in it
-    tmp_dir = tmp_create()
+    tmp_dir = sct.tmp_create()
     # copy warping field to tmp dir
-    shutil.copy(warp, tmp_dir)
+    sct.copy(warp, tmp_dir)
     warp = ''.join(extract_fname(warp)[1:])
     # go to tmp dir
+    curdir = os.getcwd()
     os.chdir(tmp_dir)
     # save image and seg
     fname_src = 'src.nii.gz'
@@ -505,7 +512,7 @@ def apply_transfo(im_src, im_dest, warp, interp='spline', rm_tmp=True):
 
     im_src_reg = Image(fname_src_reg)
     # get out of tmp dir
-    os.chdir('..')
+    os.chdir(curdir)
     if rm_tmp:
         # remove tmp dir
         shutil.rmtree(tmp_dir)

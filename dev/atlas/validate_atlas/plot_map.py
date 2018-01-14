@@ -48,7 +48,7 @@ def main():
         path_sct = '/Users/slevy_local/spinalcordtoolbox' #'C:/cygwin64/home/Simon_2/spinalcordtoolbox'
         methods_to_display = 'map'
     else:
-        status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+        path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
 
         # Check input parameters
         try:
@@ -67,7 +67,7 @@ def main():
                 methods_to_display = arg
 
     # Append path that contains scripts, to be able to load modules
-    sys.path.append(path_sct + '/scripts')
+    sys.path.append(os.path.join(path_sct, "scripts"))
     import sct_utils as sct
 
     sct.printv("Working directory: "+os.getcwd())
@@ -335,7 +335,7 @@ def main():
     plt.gca().yaxis.set_minor_locator(plt.MultipleLocator(0.25))
     plt.grid(b=True, axis='y', which='both')
 
-    plt.savefig(param_default.fname_folder_to_save_fig+'/absolute_error_as_a_function_of_MAP_parameters.pdf', format='PDF')
+    plt.savefig(os.path.join(param_default.fname_folder_to_save_fig, 'absolute_error_as_a_function_of_MAP_parameters.pdf'), format='PDF')
 
 
     plt.show(block=False)

@@ -6,9 +6,9 @@ import commands
 import sys
 from shutil import move
 # Get path of the toolbox
-status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
 # Append path that contains scripts, to be able to load modules
-sys.path.append(path_sct + '/scripts')
+sys.path.append(os.path.join(path_sct, "scripts"))
 from msct_image import Image
 import sct_utils as sct
 
@@ -28,4 +28,4 @@ for file_template in ['MNI-Poly-AMU_T1.nii.gz', 'MNI-Poly-AMU_T2.nii.gz', 'MNI-P
     im.setFileName(file_new)
     im.save()
     # move to folder
-    move(file_new, folder_PAM50+file_new)
+    move(file_new, os.path.join(folder_PAM50, file_new))
