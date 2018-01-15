@@ -154,43 +154,36 @@ def download_data(urls, verbose):
     if not isinstance(urls, (list, tuple)):
         urls = [urls]
 
-    download_success = False
     # loop through URLs
     for url in urls:
-        if not download_success:
-            try:
-                # sct.printv('\nFile to download: %s' % content['filename'], verbose)
-                sct.printv('\nTrying URL: %s' % url, verbose)
-                retry = Retry(total=3, backoff_factor=0.5, status_forcelist=[500, 503, 504])
-                session = requests.Session()
-                session.mount('https://', HTTPAdapter(max_retries=retry))
-                response = session.get(url, stream=True)
+        try:
+            sct.printv('\nTrying URL: %s' % url, verbose)
+            retry = Retry(total=3, backoff_factor=0.5, status_forcelist=[500, 503, 504])
+            session = requests.Session()
+            session.mount('https://', HTTPAdapter(max_retries=retry))
+            response = session.get(url, stream=True)
 
-                _, content = cgi.parse_header(response.headers['Content-Disposition'])
-                tmp_path = os.path.join(tempfile.mkdtemp(), content['filename'])
-                sct.printv('Downloading %s...' % content['filename'], verbose)
+            _, content = cgi.parse_header(response.headers['Content-Disposition'])
+            tmp_path = os.path.join(tempfile.mkdtemp(), content['filename'])
+            sct.printv('Downloading %s...' % content['filename'], verbose)
 
-                with open(tmp_path, 'wb') as tmp_file:
-                    total = int(response.headers.get('content-length', 1))
-                    tqdm_bar = tqdm(total=total, unit='B', unit_scale=True,
-                                    desc="Status", ascii=True)
+            with open(tmp_path, 'wb') as tmp_file:
+                total = int(response.headers.get('content-length', 1))
+                tqdm_bar = tqdm(total=total, unit='B', unit_scale=True,
+                                desc="Status", ascii=True)
 
-                    for chunk in response.iter_content(chunk_size=8192):
-                        if chunk:
-                            tmp_file.write(chunk)
-                            if verbose > 0:
-                                dl_chunk = len(chunk)
-                                tqdm_bar.update(dl_chunk)
+                for chunk in response.iter_content(chunk_size=8192):
+                    if chunk:
+                        tmp_file.write(chunk)
+                        if verbose > 0:
+                            dl_chunk = len(chunk)
+                            tqdm_bar.update(dl_chunk)
 
-                    tqdm_bar.close()
-                    download_success = True
+                tqdm_bar.close()
+            return tmp_path
 
-            except requests.RequestException as err:
-                sct.printv(err.message, type='warning')
-
-    # if download was successful, the variable tmp_path should exist. If not, create exception
-    if download_success:
-        return tmp_path
+        except requests.RequestException as err:
+            sct.printv(err.message, type='warning')
     else:
         sct.printv('\nDownload error', type='error')
 
