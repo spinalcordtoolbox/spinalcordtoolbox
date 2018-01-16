@@ -49,6 +49,7 @@ class SagittalDialog(base.BaseDialog):
         layout.addWidget(self.labels)
 
         self.sagittal = widgets.SagittalCanvas(self, plot_points=True, annotate=True)
+        self.sagittal.title(self.params.subtitle)
         self.sagittal.point_selected_signal.connect(self.on_select_point)
         layout.addWidget(self.sagittal)
 
