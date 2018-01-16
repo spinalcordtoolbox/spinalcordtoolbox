@@ -31,8 +31,10 @@ class DataResource(object):
         :param dirname: the root directory name.
         """
         path_script = os.path.dirname(__file__)
+        directory_level = [".."] * 6 + ["data"]
         data_dir = os.path.join(path_script,
-                                "..", "..", "data")
+                                *directory_level)
+
         data_dir = os.path.abspath(data_dir)
         self.data_root = os.path.join(data_dir, dirname)
 
