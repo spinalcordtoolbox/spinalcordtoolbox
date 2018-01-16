@@ -45,7 +45,8 @@ class AnatomicalParams(object):
         self.start_vertebrae = 50
         self.end_vertebrae = -1
         self.num_points = 0
-        self._title = ''
+        self._title = ''  # figure title
+        self.subtitle = ''  # subplot title (will be displayed above the image)
         self._vertebraes = []
         self.input_file_name = ""
         self.starting_slice = 0
