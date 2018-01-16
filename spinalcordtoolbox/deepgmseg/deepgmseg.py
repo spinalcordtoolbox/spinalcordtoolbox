@@ -7,6 +7,7 @@
 #     Spinal cord gray matter segmentation using deep dilated convolutions.
 #     URL: https://arxiv.org/abs/1710.01269
 
+import warnings
 import json
 import os
 
@@ -18,6 +19,8 @@ import numpy as np
 
 from spinalcordtoolbox.resample import nipy_resample
 from . import model
+
+warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
 class DataResource(object):
