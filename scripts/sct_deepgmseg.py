@@ -17,16 +17,12 @@ from spinalcordtoolbox.deepgmseg import deepgmseg
 
 def get_parser():
     parser = Parser(__file__)
-    parser.usage.set_description('Spinal Cord Gray Matter (GM) Segmentation. '
-                                 'This method uses the technique described in '
-                                 'the paper \'Spinal cord gray matter '
-                                 'segmentation using deep dilated '
-                                 'convolutions\', where Deep Learning '
-                                 'techniques are employed to segment the GM.')
+    parser.usage.set_description('Spinal Cord Gray Matter (GM) Segmentation using deep dilated convolutions.'
+                                 'Reference: CS Perone, E Calabrese, J Cohen-Adad. Spinal cord gray matter segmentation using deep dilated convolutions (2017). arxiv.org/abs/1710.01269')
 
     parser.add_option(name="-i",
                       type_value="file",
-                      description="Image filename to segment (3D volume).",
+                      description="Image filename to segment (3D volume). Contrast must be similar to T2*-weighted, i.e., WM dark, GM bright and CSF bright.",
                       mandatory=True,
                       example='t2s.nii.gz')
 
@@ -43,7 +39,7 @@ def get_parser():
                       type_value='multiple_choice',
                       description="Model to use (large or challenge)."
                                   "The model 'large' will be slower but "
-                                  "will yield better results.",
+                                  "will yield better results. The model 'challenge' was built using data from the following challenge: goo.gl/h4AVar",
                       mandatory=False,
                       example=['large', 'challenge'],
                       default_value='large')
