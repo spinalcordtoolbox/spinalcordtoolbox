@@ -17,7 +17,7 @@ from spinalcordtoolbox.deepgmseg import deepgmseg
 
 def get_parser():
     parser = Parser(__file__)
-    parser.usage.set_description('Spinal Cord Gray Matter (GM) Segmentation using deep dilated convolutions.'
+    parser.usage.set_description('Spinal Cord Gray Matter (GM) Segmentation using deep dilated convolutions. '
                                  'Reference: CS Perone, E Calabrese, J Cohen-Adad. Spinal cord gray matter segmentation using deep dilated convolutions (2017). arxiv.org/abs/1710.01269')
 
     parser.add_option(name="-i",
@@ -39,7 +39,7 @@ def get_parser():
                       type_value='multiple_choice',
                       description="Model to use (large or challenge)."
                                   "The model 'large' will be slower but "
-                                  "will yield better results. The model 'challenge' was built using data from the following challenge: goo.gl/h4AVar",
+                                  "will yield better results. The model 'challenge' was built using data from the following challenge: goo.gl/h4AVar.",
                       mandatory=False,
                       example=['large', 'challenge'],
                       default_value='large')
@@ -59,13 +59,13 @@ def run_main():
     arguments = parser.parse(sys.argv[1:])
     input_filename = arguments["-i"]
     output_filename = arguments["-o"]
-    verbosity = arguments["-v"]
+    verbose = arguments["-v"]
     model_name = arguments["-m"]
 
     out_fname = deepgmseg.segment_file(input_filename, output_filename,
-                                       model_name, int(verbosity))
+                                       model_name, int(verbose))
 
-    print('Segmentation output file: {}'.format(out_fname))
+    sct.display_viewer_syntax([input_filename, format(out_fname)], colormaps=['gray', 'red'], opacities=['1', '0.7'], verbose=verbose)
 
 
 if __name__ == '__main__':
