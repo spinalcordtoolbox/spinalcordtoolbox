@@ -70,7 +70,7 @@ def module_import(module_name, suppress_stderr=False):
     """
     if suppress_stderr:
         original_stderr = sys.stderr
-        sys.stderr = io.TextIOWrapper(io.BytesIO(), sys.stderr.encoding)
+        sys.stderr = io.BytesIO()
         module = importlib.import_module(module_name)
         sys.stderr = original_stderr
     else:
@@ -369,7 +369,7 @@ def get_version_requirements():
 
 def get_version_requirements_pip():
     path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
-    file = open(os.path.join(path_sct, "install", "requirements", "requirementsPip.txt"))
+    file = open(os.path.join(path_sct, "install", "requirements", "requirementsSetup.txt"))
     dict = {}
     while True:
         line = file.readline()
