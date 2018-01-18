@@ -403,7 +403,7 @@ class Parser:
         :param do_not_add_path: list of keys for which path should NOT be added.
         :return:
         """
-        for key, option in dictionary.iteritems():
+        for key, option in dictionary.items():
             # Check if option is present in this parser
             if key in self.options:
                 # if key is listed in the do_not_add_path variable, do nothing
@@ -438,7 +438,7 @@ class Parser:
         This function transform a dictionary (key="-i", value="t2.nii.gz") into a string "-i t2.nii.gz".
         """
         result = ""
-        for key, option in dictionary.iteritems():
+        for key, option in dictionary.items():
             if isinstance(option, list):
                 result = result + ' ' + key + ' ' + self.options[key].type_value[0][0].join([str(op) for op in option])
             else:
@@ -479,16 +479,6 @@ class Usage:
 
     def addSection(self, section):
         self.section[len(self.arguments) + 1] = section
-
-    # def get_sct_version(self):
-    #     from commands import getstatusoutput
-    #     status, path_sct = getstatusoutput('echo $SCT_DIR')
-    #     fname = os.path.join(path_sct, 'version.txt')
-    #     content = ""
-    #     with open(fname, mode = 'r') as f:
-    #         content = f.readlines()
-    #     f.close()
-    #     return content[0]
 
     def set_usage(self):
         from os.path import basename

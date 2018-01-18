@@ -11,7 +11,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import commands
+
 
 
 def test(data_path):
@@ -23,7 +23,7 @@ def test(data_path):
     cmd = 'sct_check_atlas_integrity -i ' + data_path + folder_data[0]
 
     #return
-    return commands.getstatusoutput(cmd)
+    return sct.run(cmd)
 
 
 if __name__ == "__main__":

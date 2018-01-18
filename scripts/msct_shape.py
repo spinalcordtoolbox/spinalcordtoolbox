@@ -96,7 +96,7 @@ def properties2d(image, resolution=None, verbose=1):
 
         resolution_grid = 0.25
         x_grid, y_grid = np.mgrid[-size_grid:size_grid:resolution_grid, -size_grid:size_grid:resolution_grid]
-        coordinates_grid = np.array(zip(x_grid.ravel(), y_grid.ravel()))
+        coordinates_grid = np.array(list(zip(x_grid.ravel(), y_grid.ravel())))
         coordinates_grid_image = np.array([[x0 + math.cos(orientation) * coordinates_grid[i, 0], y0 - math.sin(orientation) * coordinates_grid[i, 1]] for i in range(coordinates_grid.shape[0])])
 
         from scipy.ndimage import map_coordinates
@@ -285,7 +285,7 @@ def compute_properties_along_centerline(fname_seg_image, property_list, fname_di
         """
         if np.count_nonzero(patch_borders + current_patch == value_out + 1.0) != 0:
             c = image.transfo_phys2pix([centerline.points[index]])[0]
-            print 'WARNING: no patch for slice', c[2]
+            print('WARNING: no patch for slice', c[2])
             timer_properties.add_iteration()
             continue
         """
@@ -301,7 +301,7 @@ def compute_properties_along_centerline(fname_seg_image, property_list, fname_di
                 properties[property_name].append(sc_properties[property_name])
         else:
             c = image.transfo_phys2pix([centerline.points[index]])[0]
-            print 'WARNING: no properties for slice', c[2]
+            print('WARNING: no properties for slice', c[2])
 
         timer_properties.add_iteration()
     timer_properties.stop()
@@ -408,7 +408,7 @@ def prepare_data():
                 dic_info = json.load(json_file)
                 json_file.close()
                 # pass keys and items to lower case
-                dic_info = dict((k.lower(), v.lower()) for k, v in dic_info.iteritems())
+                dic_info = dict((k.lower(), v.lower()) for k, v in dic_info.items())
                 if dic_info['pathology'] == 'HC':
                     group_images.append('b')
                 else:

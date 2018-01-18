@@ -15,7 +15,7 @@
 
 import os, sys
 import getopt
-import commands
+
 import sys
 import sct_utils as sct
 import nibabel

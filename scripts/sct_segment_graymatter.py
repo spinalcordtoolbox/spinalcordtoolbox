@@ -563,8 +563,8 @@ class SegmentGM:
 
         # compute DC:
         try:
-            status_gm, output_gm = run('sct_dice_coefficient -i ' + fname_manual_gmseg + ' -d ' + fname_gmseg + ' -2d-slices 2', error_exit='warning', raise_exception=True)
-            status_wm, output_wm = run('sct_dice_coefficient -i ' + fname_manual_wmseg + ' -d ' + fname_wmseg + ' -2d-slices 2', error_exit='warning', raise_exception=True)
+            status_gm, output_gm = run('sct_dice_coefficient -i ' + fname_manual_gmseg + ' -d ' + fname_gmseg + ' -2d-slices 2')
+            status_wm, output_wm = run('sct_dice_coefficient -i ' + fname_manual_wmseg + ' -d ' + fname_wmseg + ' -2d-slices 2')
         except Exception:
             # put ref and res in the same space if needed
             fname_manual_gmseg_corrected = add_suffix(fname_manual_gmseg, '_reg')
@@ -583,8 +583,8 @@ class SegmentGM:
                                  '-bin', '0.1',
                                  '-o', fname_manual_wmseg_corrected])
             # recompute DC
-            status_gm, output_gm = run('sct_dice_coefficient -i ' + fname_manual_gmseg_corrected + ' -d ' + fname_gmseg + ' -2d-slices 2', error_exit='warning', raise_exception=True)
-            status_wm, output_wm = run('sct_dice_coefficient -i ' + fname_manual_wmseg_corrected + ' -d ' + fname_wmseg + ' -2d-slices 2', error_exit='warning', raise_exception=True)
+            status_gm, output_gm = run('sct_dice_coefficient -i ' + fname_manual_gmseg_corrected + ' -d ' + fname_gmseg + ' -2d-slices 2')
+            status_wm, output_wm = run('sct_dice_coefficient -i ' + fname_manual_wmseg_corrected + ' -d ' + fname_wmseg + ' -2d-slices 2')
         # save results to a text file
         fname_dc = 'dice_coefficient_' + extract_fname(self.param_seg.fname_im)[1] + '.txt'
         file_dc = open(fname_dc, 'w')

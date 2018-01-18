@@ -13,7 +13,7 @@
 
 import os
 import sys
-import commands
+
 
 # TODO: under run(): add a flag "ignore error" for isct_ComposeMultiTransform
 # TODO: check if user has bash or t-schell for fsloutput definition
@@ -37,7 +37,7 @@ class bcolors:
 def run(cmd, verbose=1):
     if verbose:
         print(bcolors.blue+cmd+bcolors.normal)
-    status, output = commands.getstatusoutput(cmd)
+    status, output = sct.run(cmd)
     if status != 0:
         printv('\nERROR! \n'+output+'\nExit program.\n', 1, 'error')
         sys.exit(2)
@@ -90,7 +90,7 @@ def check_file_exist(fname, verbose=1):
 def get_dimension(fname):
     # apply fslsize on data
     cmd = 'fslsize '+fname
-    status, output = commands.getstatusoutput(cmd)
+    status, output = sct.run(cmd)
     # split output according to \n field
     output_split = output.split()
     # extract dimensions as integer
@@ -111,7 +111,7 @@ def get_dimension(fname):
 #=======================================================================================================================
 # Get orientation of a nifti file
 def get_orientation(fname):
-    status, output = commands.getstatusoutput('sct_orientation -get -i '+fname)
+    status, output = sct.run('sct_orientation -get -i '+fname)
     orientation = output.replace('Input image orientation : ','')
     return orientation
 
@@ -180,7 +180,7 @@ def sign(x):
 #=======================================================================================================================
 # check if dependant software is installed
 def check_if_installed(cmd, name_software):
-    status, output = commands.getstatusoutput(cmd)
+    status, output = sct.run(cmd)
     if status != 0:
         print('\nERROR: '+name_software+' is not installed.\nExit program.\n')
         sys.exit(2)

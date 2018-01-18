@@ -6,7 +6,7 @@
 # TODO: get GM
 # TODO: add tract corresponding to the undefined values in WM atlas
 
-import sys, io, os, glob, commands
+import sys, io, os, glob
 
 import numpy as np
 import nibabel as nib
