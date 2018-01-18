@@ -350,6 +350,7 @@ def test_function(param_test):
     -------
     path_output [str]: path where to output testing data
     """
+    sct.log.debug("Starting test function")
 
     # load modules of function to test
     module_function_to_test = importlib.import_module(param_test.function_to_test)
@@ -377,19 +378,18 @@ def test_function(param_test):
     # check if parser has key '-ofolder' that has not been added already. If so, then assign output folder
     if parser.options.has_key('-ofolder') and '-ofolder' not in dict_args_with_path:
         param_test.args_with_path += ' -ofolder ' + param_test.path_output
-
     # open log file
     # Note: the statement below is not included in the if, because even if redirection does not occur, we want the file to be create otherwise write_to_log will fail
     param_test.fname_log = os.path.join(param_test.path_output, param_test.function_to_test + '.log')
-    stdout_log = file(param_test.fname_log, 'w')
     # redirect to log file
     if param_test.redirect_stdout:
-        param_test.stdout_orig = sys.stdout
-        sys.stdout = stdout_log
+        # file_handler = sct.add_file_handler_to_logger(param_test.fname_log)
+        file_handler = sct.add_file_handler_to_logger("/tmp/truite.log")
+    sct.log.debug("logging to file")
 
     # initialize panda dataframe
+    sct.log.debug("Init dataframe")
     param_test.results = DataFrame(index=[subject_folder], data={'status': 0, 'output': '', 'path_data': param_test.path_data})
-
     # retrieve input file (will be used later for integrity testing)
     if '-i' in dict_args:
         # check if list in case of multiple input files
@@ -427,7 +427,7 @@ def test_function(param_test):
     param_test.output += '\n====================================================================================================\n' + cmd + '\n====================================================================================================\n\n'  # copy command
     time_start = time.time()
     try:
-        param_test.status, o = sct.run(cmd, 0, error_exit='warning')
+        param_test.status, o = sct.run(cmd, verbose=1, error_exit='warning')
         if param_test.status:
             raise Exception
     except Exception, err:
@@ -451,10 +451,9 @@ def test_function(param_test):
 
     # manage stdout
     if param_test.redirect_stdout:
-        sys.stdout.close()
-        sys.stdout = param_test.stdout_orig
-        # write log file
+        sct.remove_handler(file_handler)
         write_to_log_file(param_test.fname_log, param_test.output, mode='r+', prepend=True)
+
 
     # go back to parent directory
     os.chdir(path_testing)
