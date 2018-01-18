@@ -16,7 +16,7 @@
 # ~/subject/t2/labels_vertebral.nii.gz --> a series of labels to identify vertebral level. These are placed on the left side of the vertebral body, at the edge of the cartilage separating two vertebra. The value of the label corresponds to the level. There are 19 labels from PMJ to the frontier T12/L1 I.e., Brainstem (PMJ)=1, C2/C3=2, C3/C4=3, C4/C5=4, C5/C6=5, T1/T2=6, T2/T3=7, T3/T4=8 ... T11/T12=18, T12/L1=19.
 # cf snapshot in $SCT_DIR/dev/template_preprocessing/snap1, 2, etc.
 
-import os, sys, commands
+import os, sys
 
 # Get path of the toolbox
 path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))

@@ -75,7 +75,7 @@ def polynomial_deriv(x, poly):
 def norm(x, y, z, p1, p2, p3):
     from math import sqrt
     s = 0
-    for i in xrange(len(x) - 1):
+    for i in range(len(x) - 1):
         s += sqrt((p1 * (x[i + 1] - x[i]))**2 + (p2 * (y[i + 1] - y[i]))**2 + (p3 * (z[i + 1] - z[i])**2))
     sct.printv("centerline size: ", s)
     return s
@@ -404,25 +404,24 @@ def b_spline_nurbs_itk(fname_centerline, numberOfLevels=10):
 # get size
 #=======================================================================================================================
 def getSize(x, y, z, file_name=None):
-    from commands import getstatusoutput
     from math import sqrt
     # get pixdim
     if file_name is not None:
         cmd1 = 'fslval ' + file_name + ' pixdim1'
-        status, output = getstatusoutput(cmd1)
+        status, output = sct.run(cmd1)
         p1 = float(output)
         cmd2 = 'fslval ' + file_name + ' pixdim2'
-        status, output = getstatusoutput(cmd2)
+        status, output = sct.run(cmd2)
         p2 = float(output)
         cmd3 = 'fslval ' + file_name + ' pixdim3'
-        status, output = getstatusoutput(cmd3)
+        status, output = sct.run(cmd3)
         p3 = float(output)
     else:
         p1, p2, p3 = 1.0, 1.0, 1.0
 
     # Centerline size
     s = 0
-    for i in xrange(len(x) - 1):
+    for i in range(len(x) - 1):
         s += sqrt((p1 * (x[i + 1] - x[i]))**2 + (p2 * (y[i + 1] - y[i]))**2 + (p3 * (z[i + 1] - z[i])**2))
     # sct.printv("centerline size: ", s)
     return s
@@ -432,15 +431,14 @@ def getSize(x, y, z, file_name=None):
 # functions to get centerline size
 #=======================================================================================================================
 def getPxDimensions(file_name):
-    from commands import getstatusoutput
     cmd1 = 'fslval ' + file_name + ' pixdim1'
-    status, output = getstatusoutput(cmd1)
+    status, output = sct.run(cmd1)
     p1 = float(output)
     cmd2 = 'fslval ' + file_name + ' pixdim2'
-    status, output = getstatusoutput(cmd2)
+    status, output = sct.run(cmd2)
     p2 = float(output)
     cmd3 = 'fslval ' + file_name + ' pixdim3'
-    status, output = getstatusoutput(cmd3)
+    status, output = sct.run(cmd3)
     p3 = float(output)
     return p1, p2, p3
 
@@ -554,14 +552,14 @@ def smoothing_window(x, window_len=11, window='hanning', verbose = 0, robust=0, 
         x = outliers_completion(mask, verbose=0)
 
     if x.ndim != 1:
-        raise ValueError, "smooth only accepts 1 dimension arrays."
+        raise ValueError("smooth only accepts 1 dimension arrays.")
     # if x.size < window_len:
     #     raise ValueError, "Input vector needs to be bigger than window size."
     if window_len < 3:
         sct.printv('Window size is too small. No smoothing was applied.', verbose=verbose, type='warning')
         return x
     if not window in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
-        raise ValueError, "Window can only be the following: 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'"
+        raise ValueError("Window can only be the following: 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'")
 
     # make sure there are enough points before removing those at the edge
     size_curve = x.size
@@ -656,7 +654,7 @@ def outliers_detection(data, type='median', factor=2, return_filtered_signal='no
     from copy import copy
 
     # if nan are detected in data, replace by extreme values so that they are detected by outliers detection algo
-    for i in xrange(len(data)):
+    for i in range(len(data)):
         if isnan(data[i]):
             data[i] = 9999999
 

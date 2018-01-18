@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import sys, commands
+import sys
 import numpy as np
 from time import time
 import nibabel as nib
