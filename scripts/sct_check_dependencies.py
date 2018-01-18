@@ -26,7 +26,7 @@ class Param:
         self.complete_test = 0
 
 
-import sys, io, os, commands, platform, importlib
+import sys, io, os, platform, importlib
 
 import sct_utils as sct
 from msct_parser import Parser
@@ -74,9 +74,9 @@ def main():
 
     # complete test
     if complete_test:
-        print sct.run('date', verbose)
-        print sct.run('whoami', verbose)
-        print sct.run('pwd', verbose)
+        print(sct.run('date', verbose))
+        print(sct.run('whoami', verbose))
+        print(sct.run('pwd', verbose))
         bash_profile = os.path.expanduser("~/.bash_profile")
         if os.path.isfile(bash_profile):
             with io.open(bash_profile, "r") as f:
@@ -92,34 +92,35 @@ def main():
         os_running = 'osx'
     elif (platform_running.find('linux') != -1):
         os_running = 'linux'
-    print 'OS: ' + os_running + ' (' + platform.platform() + ')'
+    print('OS: ' + os_running + ' (' + platform.platform() + ')')
 
     # Check number of CPU cores
     from multiprocessing import cpu_count
-    status, output = sct.run('echo $ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS', 0)
-    print 'CPU cores: Available: ' + str(cpu_count()) + ', Used by SCT: ' + output
+    output = int(os.getenv('ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS', 0))
+    print('CPU cores: Available: {}, Used by SCT: {}'.format(cpu_count(), output))
 
     # check RAM
     sct.checkRAM(os_running, 0)
 
     path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
-    print ('SCT path: {0}'.format(path_sct))
+    print('SCT path: {0}'.format(path_sct))
 
     # fetch SCT version
     install_type, sct_commit, sct_branch, version_sct = sct.get_sct_version()
-    print 'Installation type: git'
-    print '  version: ' + version_sct
-    print '  commit: ' + sct_commit
-    print '  branch: ' + sct_branch
+    print('Installation type: %s' % install_type)
+    print('  version: ' + version_sct)
+    print('  commit: ' + sct_commit)
+    print('  branch: ' + sct_branch)
 
     # check if Python path is within SCT path
-    print_line('Check Python path')
+    print_line('Check Python executable')
     path_python = sys.executable
     if path_sct in path_python:
         print_ok()
+        print('  Using bundled python {} at {}'.format(sys.version, path_python))
     else:
-        print_fail()
-        print '  Python path: ' + path_python
+        print_warning()
+        print('  Using system python which is unsupported: {}'.format(path_python))
 
     # check if data folder is empty
     print_line('Check if data are installed')
@@ -157,7 +158,7 @@ def main():
                 print_ok()
             else:
                 print_warning()
-                print '  Detected version: ' + version + '. Required version: ' + version_requirements[i]
+                print('  Detected version: ' + version + '. Required version: ' + version_requirements[i])
         except ImportError:
             print_fail()
             install_software = 1
@@ -176,7 +177,7 @@ def main():
                 print_ok()
             else:
                 print_warning()
-                print '  Detected version: ' + version + '. Required version: ' + version_requirements_pip[i]
+                print('  Detected version: ' + version + '. Required version: ' + version_requirements_pip[i])
         except ImportError:
             print_fail()
             install_software = 1
@@ -214,7 +215,7 @@ def main():
     #         print_ok()
     #     else:
     #         print_warning()
-    #         print '  Detected version: '+version+'. Required version: '+dipy_version
+    #         print('  Detected version: '+version+'. Required version: '+dipy_version)
     # except ImportError:
     #     print_fail()
     #     install_software = 1
@@ -222,53 +223,41 @@ def main():
     # Check ANTs integrity
     print_line('Check ANTs compatibility with OS ')
     cmd = 'isct_test_ants'
-    # here, cannot use commands.getstatusoutput because status is wrong (because of launcher)
-    # status = os.system(cmd+" &> /dev/null")
-    # status, output = sct.run(cmd, 0)
-    # import subprocess
-    # process = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    # status = subprocess.call(cmd, shell=True)
-    # status = process.returncode
-    (status, output) = commands.getstatusoutput(cmd)
-    # from subprocess import call
-    # status, output = call(cmd)
-    # print status
-    # print output
-    # if status in [0, 256]:
+    status, output = sct.run(cmd, verbose=0, raise_exception=False)
     if status == 0:
         print_ok()
     else:
         print_fail()
-        print output
+        print(output)
         e = 1
     if complete_test:
-        print '>> ' + cmd
-        print (status, output), '\n'
+        print('>> ' + cmd)
+        print((status, output), '\n')
 
     # check if ANTs is compatible with OS
     # print_line('Check ANTs compatibility with OS ')
     # cmd = 'isct_antsRegistration'
-    # status, output = commands.getstatusoutput(cmd)
+    # status, output = sct.run(cmd)
     # if status in [0, 256]:
     #     print_ok()
     # else:
     #     print_fail()
     #     e = 1
     # if complete_test:
-    #     print '>> '+cmd
-    #     print (status, output), '\n'
+    #     print('>> '+cmd)
+    #     print((status, output), '\n')
 
     # check PropSeg compatibility with OS
     print_line('Check PropSeg compatibility with OS ')
-    (status, output) = commands.getstatusoutput('isct_propseg')
-    if status in [0, 256]:
+    status, output = sct.run('isct_propseg', verbose=0, raise_exception=False)
+    if status in (0, 1):
         print_ok()
     else:
         print_fail()
-        print output
+        print(output)
         e = 1
     if complete_test:
-        print (status, output), '\n'
+        print((status, output), '\n')
 
     # check if figure can be opened (in case running SCT via ssh connection)
     print_line('Check if figure can be opened')
@@ -282,9 +271,9 @@ def main():
             print_ok()
     except:
         print_fail()
-        print sys.exc_info()
+        print(sys.exc_info())
 
-    print ''
+    print('')
     sys.exit(e + install_software)
 
 
@@ -306,15 +295,15 @@ def make_dot_lines(string):
 
 
 def print_ok():
-    print "[" + bcolors.OKGREEN + "OK" + bcolors.ENDC + "]"
+    print("[" + bcolors.OKGREEN + "OK" + bcolors.ENDC + "]")
 
 
 def print_warning():
-    print "[" + bcolors.WARNING + "WARNING" + bcolors.ENDC + "]"
+    print("[" + bcolors.WARNING + "WARNING" + bcolors.ENDC + "]")
 
 
 def print_fail():
-    print "[" + bcolors.FAIL + "FAIL" + bcolors.ENDC + "]"
+    print("[" + bcolors.FAIL + "FAIL" + bcolors.ENDC + "]")
 
 
 def add_bash_profile(string):

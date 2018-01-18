@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 
-import commands, sys
+import sys
 
 
 # Get path of the toolbox

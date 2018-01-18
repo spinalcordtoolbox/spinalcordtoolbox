@@ -16,7 +16,7 @@
 # Author : Charles Naaman
 # Created : 31-07-2014
 
-import sys, io, os, re, commands, glob, math
+import sys, io, os, re, glob, math
 
 import numpy as np
 

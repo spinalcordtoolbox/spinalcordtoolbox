@@ -20,7 +20,7 @@ class param:
 # check if needed Python libraries are already installed or not
 import sys
 import getopt
-from commands import getstatusoutput
+
 
 # Get path of the toolbox
 status, path_sct = getstatusoutput('echo $SCT_DIR')

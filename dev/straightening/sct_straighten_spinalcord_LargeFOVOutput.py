@@ -14,7 +14,7 @@
 # check if needed Python libraries are already installed or not
 import os
 import time
-import commands
+
 import sys
 from msct_parser import Parser
 from sct_label_utils import ProcessLabels

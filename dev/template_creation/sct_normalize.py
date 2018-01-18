@@ -24,7 +24,7 @@ class param:
 
 # check if needed Python libraries are already installed or not
 import sys
-import commands
+
 import os
 import getopt
 
