@@ -7,7 +7,7 @@ import nibabel
 import splines_approximation_v2 as spline_app
 from scipy import ndimage
 import numpy
-import commands
+
 import linear_fitting as lf
 import sct_utils
 
@@ -109,7 +109,7 @@ def saveFile(file_name, img, div):
 
 	#cmd = 'sct_straighten_spinalcord -i '+path_centerline+' -c '+fname
 	#print cmd
-	#commands.getstatusoutput(cmd)
+	#sct.run(cmd)
 	#cmd = 'sct_propseg'
 
 

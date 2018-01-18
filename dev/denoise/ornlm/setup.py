@@ -7,7 +7,7 @@ import os
 if os.path.exists('MANIFEST'): os.remove('MANIFEST')
 
 if not 'force_setuptools' in globals():
-    # For some commands, always use setuptools
+    # For some always use setuptools
     if len(set(('develop', 'bdist_egg', 'bdist_rpm', 'bdist', 'bdist_dumb',
                 'bdist_mpkg', 'bdist_wheel', 'install_egg_info', 'egg_info',
                 'easy_install')).intersection(sys.argv)) > 0:

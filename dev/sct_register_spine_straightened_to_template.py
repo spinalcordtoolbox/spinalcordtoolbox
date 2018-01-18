@@ -1,6 +1,6 @@
 #Tests for registrations - Template, anat_straightened
 
-from commands import getstatusoutput
+
 from nibabel import load, Nifti1Image, save
 
 # Inputs

@@ -16,7 +16,7 @@
 
 import sys
 import os
-import commands
+
 import getopt
 import time
 import sct_utils as sct
