@@ -31,7 +31,7 @@
 
 import sys
 import os
-import commands
+
 import time
 import math
 import numpy as np
@@ -212,7 +212,7 @@ def main(args=None):
     os.environ["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"] = "1"
 
     # get path of the toolbox
-    # status, param.path_sct = commands.getstatusoutput('echo $SCT_DIR')
+    # status, param.path_sct = sct.run('echo $SCT_DIR')
 
     # check user arguments
     if not args:

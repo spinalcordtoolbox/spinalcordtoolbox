@@ -11,7 +11,7 @@
 #########################################################################################
 
 import sys
-import commands
+
 
 import sct_utils as sct
 from msct_parser import Parser

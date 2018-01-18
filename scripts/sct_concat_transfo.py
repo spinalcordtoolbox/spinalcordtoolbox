@@ -14,7 +14,7 @@
 # TODO: also enable to concatenate reversed transfo
 
 
-import sys, io, os, getopt, commands
+import sys, io, os, getopt
 
 import sct_utils as sct
 from msct_parser import Parser
@@ -98,7 +98,7 @@ def main():
     fname_warp_list_invert.reverse()
     cmd = 'isct_ComposeMultiTransform '+dimensionality+' warp_final' + ext_out + ' -R ' + fname_dest + ' ' + ' '.join(fname_warp_list_invert)
     sct.printv('>> ' + cmd, verbose)
-    status, output = commands.getstatusoutput(cmd)  # here cannot use sct.run() because of wrong output status in isct_ComposeMultiTransform
+    status, output = sct.run(cmd)  # here cannot use sct.run() because of wrong output status in isct_ComposeMultiTransform
 
     # check if output was generated
     if not os.path.isfile('warp_final' + ext_out):

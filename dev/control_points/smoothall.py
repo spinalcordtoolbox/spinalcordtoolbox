@@ -1,4 +1,4 @@
-import commands
+
 import glob
 import sct_utils
 
@@ -10,7 +10,7 @@ def main():
         path, file_name, ext_fname = sct_utils.extract_fname(file)
         cmd = 'fslmaths '+file+' -s 1 ./t250/smooth'+file_name
         print cmd
-        status, output = commands.getstatusoutput(cmd)
+        status, output = sct.run(cmd)
         #print status, output
     
     
