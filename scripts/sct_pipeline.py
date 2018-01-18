@@ -248,7 +248,7 @@ def function_launcher(args):
     param_testing.function_to_test = args[0]
     param_testing.path_data = args[1]
     param_testing.args = args[2]
-    param_testing.redirect_stdout = 1  # create individual logs for each subject.
+    param_testing.redirect_to_file = True  # create individual logs for each subject.
     # load modules of function to test
     module_testing = importlib.import_module('test_' + param_testing.function_to_test)
     # initialize parameters specific to the test
@@ -333,7 +333,8 @@ def run_function(function, folder_dataset, list_subj, list_args=[], nb_cpu=None,
     try:
         compute_time = time()
         sct.log.debug('paused but print')
-        async_results = pool.map(function_launcher, list_func_subj_args)
+        # async_results = pool.map(function_launcher, list_func_subj_args)
+        async_results = [function_launcher(i) for i in list_func_subj_args]
         compute_time = time() - compute_time
         # concatenate all_results into single Panda structure
         #  async_results is an iterator that locks on __next__ call
