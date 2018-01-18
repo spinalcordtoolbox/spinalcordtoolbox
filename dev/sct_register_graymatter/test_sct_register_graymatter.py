@@ -11,7 +11,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import commands
+
 import sys
 
 from numpy import any
@@ -39,7 +39,7 @@ def test(data_path):
 
     output += '\n====================================================================================================\n'+cmd+'\n====================================================================================================\n\n'  # copy command
     # run command
-    s, o = commands.getstatusoutput(cmd)
+    s, o = sct.run(cmd)
     status += s
     output += o
 

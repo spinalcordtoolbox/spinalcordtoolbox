@@ -43,7 +43,7 @@ import numpy as np
 import sct_utils as sct
 import os
 import time
-from commands import getstatusoutput
+
 def main():
     
     

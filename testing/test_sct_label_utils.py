@@ -13,7 +13,9 @@
 
 # TODO: add test to other processes.
 
-import commands
+import os
+import sct_utils as sct
+
 from pandas import DataFrame
 
 
@@ -22,11 +24,11 @@ def init(param_test):
     Initialize class: param_test
     """
     # initialization
-    folder_data = ['t2/']
+    folder_data = ['t2']
     file_data = ['t2_seg.nii.gz', 't2_seg_labeled.nii.gz']
 
-    default_args = ['-i ' + folder_data[0] + file_data[0] + ' -create 1,1,1,1:2,2,2,2',
-                    '-i ' + folder_data[0] + file_data[0] + ' -cubic-to-point -o test_centerofmass.nii.gz']
+    default_args = ['-i ' + os.path.join(folder_data[0], file_data[0]) + ' -create 1,1,1,1:2,2,2,2',
+                    '-i ' + os.path.join(folder_data[0], file_data[0]) + ' -cubic-to-point -o test_centerofmass.nii.gz']
     param_test.centers_of_mass = '31,28,25,1'
 
     # assign default params
@@ -46,7 +48,7 @@ def test_integrity(param_test):
 
     if index_args == 1:
         # compute center of mass of labeled segmentation
-        status_mass, output_mass = commands.getstatusoutput('sct_label_utils -i ' + 'test_centerofmass.nii.gz -display')
+        status_mass, output_mass = sct.run('sct_label_utils -i ' + 'test_centerofmass.nii.gz -display')
         centers_of_mass_image = output_mass.split('\n')[-1]
 
         if centers_of_mass_image != param_test.centers_of_mass:

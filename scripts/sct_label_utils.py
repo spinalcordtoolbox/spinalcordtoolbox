@@ -359,7 +359,7 @@ class ProcessLabels(object):
                 groups[coord.value] = [coord]
 
         # 3. Compute the center of mass of each group of voxels and write them into the output image
-        for value, list_coord in groups.iteritems():
+        for value, list_coord in groups.items():
             center_of_mass = sum(list_coord) / float(len(list_coord))
             sct.printv("Value = " + str(center_of_mass.value) + " : (" + str(center_of_mass.x) + ", " + str(center_of_mass.y) + ", " + str(center_of_mass.z) + ") --> ( " + str(round(center_of_mass.x)) + ", " + str(round(center_of_mass.y)) + ", " + str(round(center_of_mass.z)) + ")", verbose=self.verbose)
             output_image.data[int(round(center_of_mass.x)), int(round(center_of_mass.y)), int(round(center_of_mass.z))] = center_of_mass.value

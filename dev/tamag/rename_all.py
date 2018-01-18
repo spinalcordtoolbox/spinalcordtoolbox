@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 
-import commands, sys, os
+import sys, os
 from glob import glob
 import nibabel
 
