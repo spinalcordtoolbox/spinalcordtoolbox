@@ -755,7 +755,7 @@ def main(args=None):
         # remove tmp_dir
         shutil.rmtree(seg_gm.tmp_dir)
 
-    sct.display_viewer_syntax([param_seg.fname_im_original, seg_gm.fname_res_gmseg, seg_gm.fname_res_wmseg], colormaps=['gray', gm_col, wm_col], opacities=['1', '0.7', '0.7'], verbose=param.verbose)
+    sct.display_viewer_syntax([param_seg.fname_im_original, seg_gm.fname_res_gmseg, seg_gm.fname_res_wmseg], colormaps=['gray', gm_col, wm_col], minmax=['', b, b], opacities=['1', '0.7', '0.7'], verbose=param.verbose)
 
 
 if __name__ == "__main__":
