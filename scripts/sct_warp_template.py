@@ -132,7 +132,7 @@ def warp_label(path_label, folder_label, file_label, fname_src, fname_transfo, p
         if not os.path.exists(os.path.join(path_out, folder_label)):
             os.makedirs(os.path.join(path_out, folder_label))
         # Warp label
-        for i in xrange(0, len(template_label_file)):
+        for i in range(0, len(template_label_file)):
             fname_label = os.path.join(path_label, folder_label, template_label_file[i])
             # check if file exists
             # sct.check_file_exist(fname_label)

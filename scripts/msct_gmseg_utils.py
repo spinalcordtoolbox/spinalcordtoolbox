@@ -294,7 +294,7 @@ def load_level(list_slices_target, fname_level):
                 med = np.median(slice_level[slice_level > 0])
                 # change med in int if it is an int
                 med = int(med) if int(med) == med else med
-            except Exception, e:
+            except Exception as e:
                 printv('WARNING: ' + str(e) + '\nNo level label found. Level will be set to 0 for this slice', verbose, 'warning')
                 l = 0
                 med = 0
@@ -323,7 +323,7 @@ def load_level(list_slices_target, fname_level):
 
             try:
                 level = float(level)
-            except Exception, e:
+            except Exception as e:
                 # adapt if level value is not unique
                 if len(level) > 2:
                     l1 = l2 = 0

@@ -16,7 +16,7 @@
 
 import sys
 import os
-import commands
+
 import time
 
 import numpy
@@ -155,7 +155,7 @@ def create_mask(param):
 
     if method_type == 'coord':
         # parse to get coordinate
-        coord = map(int, method_val.split('x'))
+        coord = [x for x in map(int, method_val.split('x'))]
 
     if method_type == 'point':
         # get file name
@@ -258,7 +258,7 @@ def create_mask(param):
     # Remove temporary files
     if param.remove_tmp_files == 1:
         sct.printv('\nRemove temporary files...', param.verbose)
-        sct.run('rm -rf ' + path_tmp, param.verbose, error_exit='warning')
+        sct.run('rm -rf ' + path_tmp, param.verbose)
 
     sct.display_viewer_syntax([param.fname_data, param.fname_out], colormaps=['gray', 'red'], opacities=['', '0.5'])
 

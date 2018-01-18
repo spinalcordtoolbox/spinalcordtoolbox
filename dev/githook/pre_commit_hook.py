@@ -2,12 +2,15 @@
 # --------------------------------------------------------------
 # Script used to write commit time for each file
 # --------------------------------------------------------------
-from commands import getstatusoutput
 
+import os, sys
+
+path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+sys.path.append(os.path.join(path_sct, scripts))
+import sct_utils as sct
 
 def find_change_dates(current_dir):
-    status, path_sct = getstatusoutput('echo $SCT_DIR')
-    path = str(current_dir)+'/scripts'
+    path = os.path.join(current_dir, 'scripts')
     from os import listdir
     from os.path import isfile, join
     onlyfiles = [ f for f in listdir(path) if isfile(join(path,f)) ]
@@ -15,7 +18,7 @@ def find_change_dates(current_dir):
     for file in onlyfiles:
         if file.startswith("sct") and ".pyc" not in file:
             change_found = False
-            tatus, output = getstatusoutput("git --git-dir ../.git --work-tree .. log "+path+"/"+file)
+            tatus, output = sct.run("git --git-dir ../.git --work-tree .. log "+path+"/"+file)
             output_list = output.split("\n")
             for line in output_list:
                 if "Date:" in line and change_found is False:
@@ -29,7 +32,7 @@ def find_change_dates(current_dir):
 # This change is a test
 def find_staged_files():
 
-    status, output = getstatusoutput("git diff --cached")
+    status, output = sct.run("git diff --cached")
 
     output_list = output.split("\n")
 
@@ -53,7 +56,6 @@ def find_staged_files():
 
 
 def save_changed_files(staged_files, sct_dir):
-    status, path_sct = getstatusoutput('echo $SCT_DIR')
     modif_fname = str(sct_dir)+'/scripts/modif.txt'
     f = open(modif_fname, "w+")
     for script_name, date in staged_files.iteritems():
@@ -61,11 +63,11 @@ def save_changed_files(staged_files, sct_dir):
         date_without_time_zone = date_split
         f.write(script_name + " = " + date_without_time_zone+"\n")
     f.close()
-    # status, path_sct = getstatusoutput('cp '+modif_fname+" "+path_sct+"/dev/modif_backup.txt")
+    # status, path_sct = sct.run('cp '+modif_fname+" "+path_sct+"/dev/modif_backup.txt")
 
     # add
     os.chdir("scripts")
-    status, output = getstatusoutput("git add modif.txt")
+    status, output = sct.run("git add modif.txt")
     os.chdir("..")
 
 
@@ -78,7 +80,6 @@ if __name__ == "__main__":
     # call main function
     import os
     current_dir = os.getcwd()
-    status, path_sct = getstatusoutput('echo $SCT_DIR')
     path = str(current_dir)+'/scripts'
     os.chdir(path)
     try:

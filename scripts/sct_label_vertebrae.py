@@ -209,11 +209,11 @@ def main(args=None):
         file = open(arguments['-initfile'], 'r')
         initfile = ' ' + file.read().replace('\n', '')
         arg_initfile = initfile.split(' ')
-        for i in xrange(len(arg_initfile)):
-            if arg_initfile[i] == '-initz':
-                initz = [int(x) for x in arg_initfile[i + 1].split(',')]
-            if arg_initfile[i] == '-initcenter':
-                initcenter = int(arg_initfile[i + 1])
+        for idx_arg, arg in enumerate(arg_initfile):
+            if arg == '-initz':
+                initz = [int(x) for x in arg_initfile[idx_arg + 1].split(',')]
+            if arg == '-initcenter':
+                initcenter = int(arg_initfile[idx_arg + 1])
     if '-initc2' in arguments:
         initc2 = 'manual'
     if '-param' in arguments:
@@ -437,7 +437,7 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     # NB: value 2 means disc C2/C3 (and so on and so forth).
     min_level = centerline_level[centerline_level.nonzero()].min()
     max_level = centerline_level[centerline_level.nonzero()].max()
-    list_disc_value_template = range(min_level, max_level)
+    list_disc_value_template = list(range(min_level, max_level))
     # add disc above top one
     list_disc_value_template.insert(int(0), min_level - 1)
     sct.printv('\nDisc values from template: ' + str(list_disc_value_template), verbose)
