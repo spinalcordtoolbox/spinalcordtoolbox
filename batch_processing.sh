@@ -83,10 +83,10 @@ sct_warp_template -d mt1_crop.nii.gz -w warp_template2mt.nii.gz
 # Segment gray matter
 sct_segment_graymatter -i mt0_crop_reg.nii.gz -s mt1_crop_seg.nii.gz
 # Register WM/GM template to WM/GM seg
-sct_register_graymatter -gm mt0_crop_reg_gmseg.nii.gz -wm mt0_crop_reg_wmseg.nii.gz -w warp_PAM50_t22mt1_crop.nii.gz -winv warp_mt1_crop2PAM50_t2.nii.gz
+sct_register_graymatter -gm mt0_crop_reg_gmseg.nii.gz -wm mt0_crop_reg_wmseg.nii.gz -w warp_template2mt.nii.gz -winv warp_mt2template.nii.gz
 # rename warping fields for clarity
-mv warp_PAM50_t22mt1_crop_reg_gm.nii.gz warp_template2mt.nii.gz
-mv warp_mt1_crop2PAM50_t2_reg_gm.nii.gz warp_mt2template.nii.gz
+mv warp_template2mt_reg_gm.nii.gz warp_template2mt.nii.gz
+mv warp_mt2template_reg_gm.nii.gz warp_mt2template.nii.gz
 # warp template (this time corrected for internal structure)
 sct_warp_template -d mt1_crop.nii.gz -w warp_template2mt.nii.gz
 # >>>
@@ -121,9 +121,10 @@ sct_propseg -i dwi_moco_mean.nii.gz -c dwi -init-centerline t2_seg_reg.nii.gz -q
 # Register template to dwi
 # Tips: We use the template registered to the MT data in order to account for gray matter segmentation
 # Tips: again, here, we prefer no stick to rigid registration on segmentation following by slicereg to realign center of mass. If there are susceptibility distortions in your EPI, then you might consider adding a third step with bsplinesyn or syn transformation for local adjustment.
-sct_register_multimodal -i $SCT_DIR/data/PAM50/template/PAM50_t1.nii.gz -d dwi_moco_mean.nii.gz -iseg $SCT_DIR/data/PAM50/template/PAM50_cord.nii.gz -dseg dwi_moco_mean_seg.nii.gz -param step=1,type=seg,algo=slicereg,smooth=5:step=2,type=seg,algo=bsplinesyn,metric=MeanSquares,smooth=1,iter=3 -initwarp ../mt/warp_template2mt.nii.gz
+sct_register_multimodal -i $SCT_DIR/data/PAM50/template/PAM50_t1.nii.gz -d dwi_moco_mean.nii.gz -iseg $SCT_DIR/data/PAM50/template/PAM50_cord.nii.gz -dseg dwi_moco_mean_seg.nii.gz -param step=1,type=seg,algo=slicereg,smooth=5:step=2,type=seg,algo=bsplinesyn,metric=MeanSquares,smooth=1,iter=3 -initwarp ../mt/warp_template2mt.nii.gz -initwarpinv ../mt/warp_mt2template.nii.gz
 # rename warping field for clarity
 mv warp_PAM50_t12dwi_moco_mean.nii.gz warp_template2dmri.nii.gz
+mv warp_dwi_moco_mean2PAM50_t1.nii.gz warp_dmri2template.nii.gz
 # Warp template and white matter atlas
 sct_warp_template -d dwi_moco_mean.nii.gz -w warp_template2dmri.nii.gz
 # Compute DTI metrics
@@ -131,6 +132,8 @@ sct_warp_template -d dwi_moco_mean.nii.gz -w warp_template2dmri.nii.gz
 sct_dmri_compute_dti -i dmri_crop_moco.nii.gz -bval bvals.txt -bvec bvecs.txt
 # Compute FA within right and left lateral corticospinal tracts from slices 2 to 14 using weighted average method
 sct_extract_metric -i dti_FA.nii.gz -z 2:14 -method wa -l 4,5 -o fa_in_cst.txt
+# Bring metric to template space (e.g. for group mapping)
+sct_apply_transfo -i dti_FA.nii.gz -d $SCT_DIR/data/PAM50/template/PAM50_t2.nii.gz -w warp_dmri2template.nii.gz
 # Go back to root folder
 cd -
 
