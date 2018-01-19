@@ -529,12 +529,12 @@ class ProcessLabels(object):
         coordinates_input = self.image_input.getNonZeroCoordinates(sorting='z')
         self.useful_notation = ''
         for coord in coordinates_input:
-            sct.printv('Position=(' + str(coord.x) + ',' + str(coord.y) + ',' + str(coord.z) + ') -- Value= ' + str(coord.value))
+            sct.printv('Position=(' + str(coord.x) + ',' + str(coord.y) + ',' + str(coord.z) + ') -- Value= ' + str(coord.value), verbose=self.verbose)
             if self.useful_notation:
                 self.useful_notation = self.useful_notation + ':'
             self.useful_notation = self.useful_notation + str(coord.x) + ',' + str(coord.y) + ',' + str(coord.z) + ',' + str(coord.value)
-        sct.printv('All labels (useful syntax):')
-        sct.printv(self.useful_notation)
+        sct.printv('All labels (useful syntax):', verbose=self.verbose)
+        sct.printv(self.useful_notation, verbose=self.verbose)
         return self.useful_notation
 
     def diff(self):

@@ -49,7 +49,7 @@ def test_integrity(param_test):
 
     if index_args == 1:
         # compute center of mass of labeled segmentation
-        centers_of_mass_image = sct_label_utils.main(['-i', 'test_centerofmass.nii.gz', '-display'])
+        centers_of_mass_image = sct_label_utils.main(['-i', 'test_centerofmass.nii.gz', '-display', '-v', '0'])
         # compare with ground truch value
         if centers_of_mass_image != param_test.centers_of_mass:
             param_test.output += 'WARNING: Center of mass different from gold-standard. \n--> Results:   ' + centers_of_mass_image + '\n--> Should be: ' + param_test.centers_of_mass + '\n'
