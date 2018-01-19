@@ -13,12 +13,11 @@
 # ######################################################################################################################
 
 import sys
-
-import sct_maths
 import sct_utils as sct
 from msct_parser import Parser
 from msct_image import Image
 import numpy as np
+
 
 class Param:
     def __init__(self):
@@ -60,6 +59,8 @@ class Tsnr:
         sct.display_viewer_syntax([fname_tsnr])
 
 
+# PARSER
+# ==========================================================================================
 def get_parser():
     parser = Parser(__file__)
     parser.usage.set_description('Compute temporal SNR (tSNR) in fMRI time series.')
