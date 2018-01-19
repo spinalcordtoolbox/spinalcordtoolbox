@@ -288,7 +288,6 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
         sct.printv('\nChange labels orientation into RPI and load them...', verbose)
         labels = np.empty([nb_labels], dtype=object)
         for i_label in range(nb_labels):
-            print("cJ %s" % os.path.join(path_label, indiv_labels_files[i_label]))
             im_label = Image(os.path.join(path_label, indiv_labels_files[i_label]))
             im_label.change_orientation(orientation='RPI')
             labels[i_label] = im_label.data
@@ -312,7 +311,6 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
         sct.printv('\nLoad labels...', verbose)
         labels = np.empty([nb_labels], dtype=object)
         for i_label in range(0, nb_labels):
-            print("cJ %s" % os.path.join(path_label, indiv_labels_files[i_label]))
             labels[i_label] = Image(os.path.join(path_label, indiv_labels_files[i_label])).data
         # if the "normalization" option is wanted,
         if fname_normalizing_label:
