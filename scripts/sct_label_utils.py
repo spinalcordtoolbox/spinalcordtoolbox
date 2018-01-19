@@ -535,7 +535,7 @@ class ProcessLabels(object):
             self.useful_notation = self.useful_notation + str(coord.x) + ',' + str(coord.y) + ',' + str(coord.z) + ',' + str(coord.value)
         sct.printv('All labels (useful syntax):', verbose=self.verbose)
         sct.printv(self.useful_notation, verbose=self.verbose)
-        return self.useful_notation
+        return coordinates_input
 
     def diff(self):
         """
