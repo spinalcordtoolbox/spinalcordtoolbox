@@ -527,15 +527,15 @@ class ProcessLabels(object):
         The image is suppose to be RPI to display voxels. But works also for other orientations
         """
         coordinates_input = self.image_input.getNonZeroCoordinates(sorting='z')
-        useful_notation = ''
+        self.useful_notation = ''
         for coord in coordinates_input:
             sct.printv('Position=(' + str(coord.x) + ',' + str(coord.y) + ',' + str(coord.z) + ') -- Value= ' + str(coord.value))
-            if useful_notation:
-                useful_notation = useful_notation + ':'
-            useful_notation = useful_notation + str(coord.x) + ',' + str(coord.y) + ',' + str(coord.z) + ',' + str(coord.value)
+            if self.useful_notation:
+                self.useful_notation = self.useful_notation + ':'
+            self.useful_notation = self.useful_notation + str(coord.x) + ',' + str(coord.y) + ',' + str(coord.z) + ',' + str(coord.value)
         sct.printv('All labels (useful syntax):')
-        sct.printv(useful_notation)
-        return coordinates_input
+        sct.printv(self.useful_notation)
+        return self.useful_notation
 
     def diff(self):
         """
@@ -812,6 +812,10 @@ def main(args=None):
                               cross_radius=input_cross_radius, dilate=input_dilate, coordinates=input_coordinates,
                               verbose=input_verbose, vertebral_levels=vertebral_levels, value=value)
     processor.process(process_type)
+
+    # return based on process type
+    if process_type == 'display-voxel':
+        return processor.useful_notation
 
 
 if __name__ == "__main__":
