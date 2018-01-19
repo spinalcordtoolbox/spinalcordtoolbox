@@ -72,18 +72,30 @@ def get_parser():
                       type_value='multiple_choice',
                       description='verbose',
                       mandatory=False,
+                      default_value='1',
                       example=['0', '1'])
     return parser
 
 
-if __name__ == '__main__':
-    param = Param()
+# MAIN
+# ==========================================================================================
+def main(args=None):
+
     parser = get_parser()
+    param = Param()
+
     arguments = parser.parse(sys.argv[1:])
-    input_fmri = arguments['-i']
+    fname_src = arguments['-i']
+    verbose = int(arguments['-v'])
 
-    if '-v' in arguments:
-        param.verbose = int(arguments['-v'])
-
-    tsnr = Tsnr(param=param, fmri=input_fmri)
+    # call main function
+    tsnr = Tsnr(param=param, fmri=fname_src)
     tsnr.compute()
+
+
+# START PROGRAM
+# ==========================================================================================
+if __name__ == "__main__":
+    sct.start_stream_logger()
+    param = Param()
+    main()
