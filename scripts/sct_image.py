@@ -255,6 +255,10 @@ def main(args=None):
         im_out = None
         printv(parser.usage.generate(error='ERROR: you need to specify an operation to do on the input image'))
 
+    # in case fname_out is not defined, use first element of input file name list
+    if fname_out == None:
+        fname_out = fname_in[0]
+
     # Write output
     if im_out is not None:
         printv('Generate output files...', verbose)
