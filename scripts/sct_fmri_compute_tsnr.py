@@ -78,12 +78,6 @@ def get_parser():
 
 if __name__ == '__main__':
     param = Param()
-
-    if param.debug:
-        sct.printv('\n*** WARNING: DEBUG MODE ON ***\n')
-    else:
-        param_default = Param()
-
     parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
     input_fmri = arguments['-i']
