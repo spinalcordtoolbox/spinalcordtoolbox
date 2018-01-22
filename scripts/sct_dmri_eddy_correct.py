@@ -17,7 +17,7 @@
 # check if needed Python libraries are already installed or not
 import sys
 import os
-import commands
+
 import getopt
 import time
 import numpy as np

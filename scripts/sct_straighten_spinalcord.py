@@ -12,7 +12,7 @@
 # License: see the LICENSE.TXT
 # ======================================================================================================================
 # check if needed Python libraries are already installed or not
-import sys, io, os, shutil, time, commands
+import sys, io, os, shutil, time
 from math import sqrt
 
 import numpy as np
@@ -87,13 +87,13 @@ def smooth_centerline(fname_centerline, algo_fitting='hanning', type_window='han
         indices_to_remove = []
 
         # ascending verification
-        for iz in range(0, nz_nonz / 2, 1):
+        for iz in range(0, nz_nonz // 2, 1):
             distance = sqrt((x_centerline[iz] - x_centerline[iz + 1]) ** 2 + (y_centerline[iz] - y_centerline[iz + 1]) ** 2)
             if num_features[iz] > 1 or abs(distance - mean_distances) > 3 * std_distances:
                 indices_to_remove.append(iz)
 
         # descending verification
-        for iz in range(nz_nonz - 1, nz_nonz / 2, -1):
+        for iz in range(nz_nonz - 1, nz_nonz // 2, -1):
             distance = sqrt((x_centerline[iz] - x_centerline[iz - 1]) ** 2 + (y_centerline[iz] - y_centerline[iz - 1]) ** 2)
             if num_features[iz] > 1 or abs(distance - mean_distances) > 3 * std_distances:
                 indices_to_remove.append(iz)
@@ -104,7 +104,7 @@ def smooth_centerline(fname_centerline, algo_fitting='hanning', type_window='han
 
     if phys_coordinates:
         sct.printv('.. Computing physical coordinates of centerline/segmentation...', verbose)
-        coord_centerline = np.array(zip(x_centerline, y_centerline, z_centerline))
+        coord_centerline = np.array(list(zip(x_centerline, y_centerline, z_centerline)))
         phys_coord_centerline = np.asarray(file_image.transfo_pix2phys(coord_centerline))
         x_centerline = phys_coord_centerline[:, 0]
         y_centerline = phys_coord_centerline[:, 1]
@@ -531,7 +531,7 @@ class SpinalCordStraightener(object):
                 dx_straight = [0.0] * number_of_points
                 dy_straight = [0.0] * number_of_points
                 dz_straight = [1.0] * number_of_points
-                coord_straight = np.array(zip(ix_straight, iy_straight, iz_straight))
+                coord_straight = np.array(list(zip(ix_straight, iy_straight, iz_straight)))
                 coord_phys_straight = np.asarray(image_centerline_straight.transfo_pix2phys(coord_straight))
 
                 centerline_straight = Centerline(coord_phys_straight[:, 0], coord_phys_straight[:, 1], coord_phys_straight[:, 2],
@@ -573,12 +573,12 @@ class SpinalCordStraightener(object):
                         lookup_curved2straight[index] = idx_closest
                     else:
                         lookup_curved2straight[index] = 0
-            for p in range(0, len(lookup_curved2straight)/2):
+            for p in range(0, len(lookup_curved2straight)//2):
                 if lookup_curved2straight[p] == lookup_curved2straight[p + 1]:
                     lookup_curved2straight[p] = 0
                 else:
                     break
-            for p in range(len(lookup_curved2straight)-1, len(lookup_curved2straight)/2, -1):
+            for p in range(len(lookup_curved2straight)-1, len(lookup_curved2straight)//2, -1):
                 if lookup_curved2straight[p] == lookup_curved2straight[p - 1]:
                     lookup_curved2straight[p] = 0
                 else:
@@ -596,12 +596,12 @@ class SpinalCordStraightener(object):
                     idx_closest = centerline.get_closest_to_absolute_position(disk_label, relative_position, backup_index=index, backup_centerline=centerline_straight, mode=alignment_mode)
                     if idx_closest is not None:
                         lookup_straight2curved[index] = idx_closest
-            for p in range(0, len(lookup_straight2curved)/2):
+            for p in range(0, len(lookup_straight2curved)//2):
                 if lookup_straight2curved[p] == lookup_straight2curved[p + 1]:
                     lookup_straight2curved[p] = 0
                 else:
                     break
-            for p in range(len(lookup_straight2curved)-1, len(lookup_straight2curved)/2, -1):
+            for p in range(len(lookup_straight2curved)-1, len(lookup_straight2curved)//2, -1):
                 if lookup_straight2curved[p] == lookup_straight2curved[p - 1]:
                     lookup_straight2curved[p] = 0
                 else:
@@ -624,7 +624,7 @@ class SpinalCordStraightener(object):
                 for u in range(nz_s):
                     timer_straightening.add_iteration()
                     x_s, y_s, z_s = np.mgrid[0:nx_s, 0:ny_s, u:u + 1]
-                    indexes_straight = np.array(zip(x_s.ravel(), y_s.ravel(), z_s.ravel()))
+                    indexes_straight = np.array(list(zip(x_s.ravel(), y_s.ravel(), z_s.ravel())))
                     physical_coordinates_straight = image_centerline_straight.transfo_pix2phys(indexes_straight)
                     nearest_indexes_straight = centerline_straight.find_nearest_indexes(physical_coordinates_straight)
                     distances_straight = centerline_straight.get_distances_from_planes(physical_coordinates_straight, nearest_indexes_straight)
@@ -649,7 +649,7 @@ class SpinalCordStraightener(object):
                 for u in range(nz):
                     timer_straightening.add_iteration()
                     x, y, z = np.mgrid[0:nx, 0:ny, u:u + 1]
-                    indexes = np.array(zip(x.ravel(), y.ravel(), z.ravel()))
+                    indexes = np.array(list(zip(x.ravel(), y.ravel(), z.ravel())))
                     physical_coordinates = image_centerline_pad.transfo_pix2phys(indexes)
                     nearest_indexes_curved = centerline.find_nearest_indexes(physical_coordinates)
                     distances_curved = centerline.get_distances_from_planes(physical_coordinates, nearest_indexes_curved)

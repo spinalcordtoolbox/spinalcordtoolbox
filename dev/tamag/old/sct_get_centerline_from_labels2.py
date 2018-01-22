@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 
-import commands, sys, io, shutil, os, time
+import sys, io, shutil, os, time
 
 import numpy as np
 

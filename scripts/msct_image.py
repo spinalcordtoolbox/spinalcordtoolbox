@@ -479,7 +479,7 @@ class Image(object):
                 except ValueError:
                     X, Y, Z = (self.data > 0).nonzero()
                     list_coordinates = [Coordinate([X[i], Y[i], 0, self.data[X[i], Y[i], 0]]) for i in range(0, len(X))]
-        except Exception, e:
+        except Exception as e:
             sct.printv('ERROR: Exception ' + str(e) + ' caught while geting non Zeros coordinates', 1, 'error')
 
         if coordValue:
@@ -523,7 +523,7 @@ class Image(object):
 
         # 3. Compute the center of mass of each group of voxels and write them into the output image
         averaged_coordinates = []
-        for value, list_coord in groups.iteritems():
+        for value, list_coord in groups.items():
             averaged_coordinates.append(sum(list_coord) / float(len(list_coord)))
 
         averaged_coordinates = sorted(averaged_coordinates, key=lambda obj: obj.value, reverse=False)
@@ -928,7 +928,7 @@ class Image(object):
         """
         nx, ny, nz, nt, px, py, pz, pt = im_ref.dim
         x, y, z = np.mgrid[0:nx, 0:ny, 0:nz]
-        indexes_ref = np.array(zip(x.ravel(), y.ravel(), z.ravel()))
+        indexes_ref = np.array(list(zip(x.ravel(), y.ravel(), z.ravel())))
         physical_coordinates_ref = im_ref.transfo_pix2phys(indexes_ref)
 
         # TODO: add optional transformation from reference space to image space to physical coordinates of ref grid.
@@ -1074,7 +1074,7 @@ class Image(object):
             plt.savefig(fname_png, bbox_inches='tight')
             plt.close(fig)
 
-        except RuntimeError, e:
+        except RuntimeError as e:
             from sct_utils import printv
             printv('WARNING: your device does not seem to have display feature', self.verbose, type='warning')
             printv(str(e), self.verbose, type='warning')
@@ -1114,7 +1114,7 @@ class Image(object):
                 filename_gmseg_image_png = self.save_plane(plane=plane, suffix='_' + plane + '_plane_seg', index=index_list, seg=seg, thr=thr, cmap_col=cmap_col, format=format, path_output=path_output)
                 info_str += ' & ' + filename_gmseg_image_png
             printv(info_str, verbose, 'info')
-        except RuntimeError, e:
+        except RuntimeError as e:
             printv('WARNING: your device does not seem to have display feature', self.verbose, type='warning')
             printv(str(e), self.verbose, type='warning')
 

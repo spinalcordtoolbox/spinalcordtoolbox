@@ -2,7 +2,7 @@
 
 
 import numpy as np
-import commands, sys
+import sys
 
 
 # Get path of the toolbox

@@ -136,7 +136,7 @@ def print_transformation_differences(tx1, tx2):
 # Working with images
 
 # register with ANTS2d
-from commands import getstatusoutput
+
 # run affine/rigid
 getstatusoutput('isct_antsRegistration -d 2 -t Rigid[0.5] -m MeanSquares[phantom_dest.nii.gz,phantom_src.nii.gz,1,4] -c 50 -f 1 -s 5mm -o [warp2d,phantom_src_reg.nii.gz] -n NearestNeighbor -v')
 # run syn with no iteration (just to get a warping field)
