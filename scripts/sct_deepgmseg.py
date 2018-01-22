@@ -65,7 +65,10 @@ def run_main():
     out_fname = deepgmseg.segment_file(input_filename, output_filename,
                                        model_name, int(verbose))
 
-    sct.display_viewer_syntax([input_filename, format(out_fname)], colormaps=['gray', 'red'], opacities=['1', '0.7'], verbose=verbose)
+    sct.display_viewer_syntax([input_filename, format(out_fname)],
+                              colormaps=['gray', 'red'],
+                              opacities=['1', '0.7'],
+                              verbose=verbose)
 
 
 if __name__ == '__main__':
