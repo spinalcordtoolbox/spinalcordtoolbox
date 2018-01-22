@@ -92,6 +92,7 @@ class WarpTemplate:
                                    os.path.join(self.folder_out, self.folder_template, get_file_label(os.path.join(self.folder_out, self.folder_template), 'white matter'))],
                                   colormaps=['gray', 'gray', 'red-yellow', 'blue-lightblue'],
                                   opacities=['1', '1', '0.5', '0.5'],
+                                  minmax=['', '0,4000', '0.4,1', '0.4,1'],
                                   verbose=param.verbose)
 
         if self.qc:
