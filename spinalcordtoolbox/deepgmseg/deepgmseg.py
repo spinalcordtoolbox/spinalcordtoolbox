@@ -15,12 +15,23 @@ import nipy
 import nibabel as nib
 from nipy.io.nifti_ref import nipy2nifti, nifti2nipy
 import numpy as np
-
+from keras import backend as K
 
 from spinalcordtoolbox.resample import nipy_resample
 from . import model
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
+
+
+def check_backend():
+    """This function will check for the current backend and
+    then it will warn the user if the backend is theano."""
+    if K.backend() != 'tensorflow':
+        print("\nWARNING: you're using a Keras backend different than\n"
+              "Tensorflow, which is not recommended. Please verify\n"
+              "your configuration file according to: https://keras.io/backend/\n"
+              "to make sure you're using Tensorflow Keras backend.\n")
+    return K.backend()
 
 
 class DataResource(object):

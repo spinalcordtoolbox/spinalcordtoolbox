@@ -55,6 +55,7 @@ def get_parser():
 
 
 def run_main():
+    deepgmseg.check_backend()
     parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
     input_filename = arguments["-i"]
