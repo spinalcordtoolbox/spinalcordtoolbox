@@ -15,6 +15,7 @@
 
 import os
 import sct_utils as sct
+import sct_label_utils
 
 from pandas import DataFrame
 
@@ -48,9 +49,8 @@ def test_integrity(param_test):
 
     if index_args == 1:
         # compute center of mass of labeled segmentation
-        status_mass, output_mass = sct.run('sct_label_utils -i ' + 'test_centerofmass.nii.gz -display')
-        centers_of_mass_image = output_mass.split('\n')[-1]
-
+        centers_of_mass_image = sct_label_utils.main(['-i', 'test_centerofmass.nii.gz', '-display', '-v', '0'])
+        # compare with ground truch value
         if centers_of_mass_image != param_test.centers_of_mass:
             param_test.output += 'WARNING: Center of mass different from gold-standard. \n--> Results:   ' + centers_of_mass_image + '\n--> Should be: ' + param_test.centers_of_mass + '\n'
             param_test.status = 99
