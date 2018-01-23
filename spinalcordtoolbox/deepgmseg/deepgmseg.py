@@ -20,7 +20,10 @@ from keras import backend as K
 from spinalcordtoolbox.resample import nipy_resample
 from . import model
 
+
+# Suppress warnings and TensorFlow logging
 warnings.simplefilter(action='ignore', category=FutureWarning)
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 
 def check_backend():
