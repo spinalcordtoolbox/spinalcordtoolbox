@@ -29,9 +29,8 @@ def get_parser():
     parser.add_option(name="-o",
                       type_value="file_output",
                       description="Output segmentation file name.",
-                      mandatory=True,
-                      example='sc_gm_seg.nii.gz',
-                      default_value='sc_gm_seg.nii.gz')
+                      mandatory=False,
+                      example='sc_gm_seg.nii.gz')
 
     parser.usage.addSection('\nMISC')
 
@@ -59,7 +58,12 @@ def run_main():
     parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
     input_filename = arguments["-i"]
-    output_filename = arguments["-o"]
+
+    try:
+        output_filename = arguments["-o"]
+    except KeyError:
+        output_filename = sct.add_suffix(input_filename, '_gmseg')
+
     verbose = arguments["-v"]
     model_name = arguments["-m"]
 
