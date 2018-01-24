@@ -13,8 +13,9 @@
 
 import numpy as np
 import shutil
-from scipy.ndimage.measurements import center_of_mass
-import pickle
+from scipy.ndimage.measurements import center_of_mass, label
+from scipy.ndimage.morphology import binary_fill_holes
+# import pickle
 from scipy.interpolate.interpolate import interp1d
 from skimage.exposure import rescale_intensity
 
@@ -80,7 +81,6 @@ def get_parser():
 
 
 def apply_intensity_normalization(img_path, fname_out):
-
     img = Image(img_path)
     img_normalized = img.copy()
     p2, p98 = np.percentile(img.data, (2, 98))
@@ -92,7 +92,6 @@ def apply_intensity_normalization(img_path, fname_out):
 
 
 def _find_crop_start_end(coord_ctr, crop_size, im_dim):
-
     half_size = crop_size // 2
     coord_start, coord_end = int(coord_ctr) - half_size + 1, int(coord_ctr) + half_size + 1
 
@@ -140,6 +139,82 @@ def crop_image_around_centerline(im_in, ctr_in, im_out, crop_size, x_dim_half, y
     del im_new
 
     return x_lst, y_lst
+
+
+def _remove_extrem_holes(z_lst, end_z, start_z=0):
+    if start_z in z_lst:
+        while start_z in z_lst:
+            z_lst = z_lst[1:]
+            start_z += 1
+        if len(z_lst):
+            z_lst.pop(0)
+
+    if end_z in z_lst:
+        while end_z in z_lst:
+            z_lst = z_lst[:-1]
+            end_z -= 1
+
+    return z_lst
+
+
+def _list2range(lst):
+    tmplst = lst[:]
+    tmplst.sort()
+    start = tmplst[0]
+
+    currentrange = [start, start + 1]
+
+    for item in tmplst[1:]:
+        if currentrange[1] == item:  # contiguous
+            currentrange[1] += 1
+        else:  # new range start
+            yield list(currentrange)
+            currentrange = [item, item + 1]
+
+    yield list(currentrange)  # last range
+
+
+def _fill_z_holes(zz_lst, data, z_spaccing):
+    data_interpol = np.copy(data)
+    for z_hole_start, z_hole_end in list(_list2range(zz_lst)):
+        z_ref_start, z_ref_end = z_hole_start - 1, z_hole_end
+        slice_ref_start, slice_ref_end = data[:, :, z_ref_start], data[:, :, z_ref_end]
+
+        hole_cur_lst = range(z_hole_start, z_hole_end)
+        lenght_hole = len(hole_cur_lst) + 1
+        phys_lenght_hole = lenght_hole * z_spaccing
+    #     thr_bin = 1. / lenght_hole
+
+        denom_interpolation = (lenght_hole + 1)
+
+        if phys_lenght_hole < 30:
+            for idx_z, z_hole_cur in enumerate(hole_cur_lst):
+                num_interpolation = (lenght_hole - idx_z - 1) * slice_ref_start  # Contribution bottom ref slice
+                num_interpolation += (idx_z + 1) * slice_ref_end  # Contribution top ref slice
+
+                slice_interpolation = num_interpolation * 1. / denom_interpolation
+        #         slice_interpolation = (slice_interpolation > thr_bin).astype(np.int)
+                slice_interpolation = (slice_interpolation > 0).astype(np.int)
+
+                data_interpol[:, :, z_hole_cur] = slice_interpolation
+
+    return data_interpol
+
+
+def fill_z_holes(fname_in, fname_out):
+    im_in = Image(fname_in)
+    im_out = im_in.copy()
+    data_in = im_in.data.astype(np.int)
+
+    zz_zeros = [zz for zz in range(im_in.dim[2]) if 1 not in list(np.unique(data_in[:, :, zz]))]
+    zz_holes = _remove_extrem_holes(zz_zeros, im_in.dim[2] - 1, 0)
+
+    # filling z_holes, i.e. interpolate for z_slice not segmented
+    im_out.data = _fill_z_holes(zz_holes, data_in, im_in.dim[6]) if len(zz_holes) else data_in
+
+    im_out.setFileName(fname_out)
+    im_out.save()
+    del im_in, im_out
 
 
 def main():
@@ -199,6 +274,7 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, qc_p
     tmp_folder_path = tmp_folder.get_path()
     fname_image_tmp = tmp_folder.copy_from(fname_image)
     tmp_folder.chdir()
+    print tmp_folder_path
 
     # orientation of the image, should be RPI
     sct.log.info("Reorient the image to RPI, if necessary...")
@@ -242,18 +318,26 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, qc_p
     # normalize the intensity of the images
     sct.log.info("Normalizing the intensity...")
     fname_norm = sct.add_suffix(fname_crop, '_norm')
-    image_normalized = apply_intensity_normalization(img_path=fname_crop,
-                                                       fname_out=fname_norm)
+    image_normalized = apply_intensity_normalization(img_path=fname_crop, fname_out=fname_norm)
 
     # segment the spinal cord
     sct.log.info("Segmenting the spinal cord using deep learning on 2D images...")
     fname_seg_crop = sct.add_suffix(fname_norm, '_seg')
     seg_crop = image_normalized.copy()
     seg_crop.data *= 0.0
-    for zz in range(image_normalized.dim[2]):
+    for zz in list(reversed(range(image_normalized.dim[2]))):
         pred_seg = seg_model.predict(np.expand_dims(np.expand_dims(image_normalized.data[:, :, zz], -1), 0))[0, :, :, 0]
-        pred_seg = (pred_seg > 0.5).astype(int)
-        seg_crop.data[:, :, zz] = pred_seg
+        pred_seg_th = (pred_seg > 0.0001).astype(int)
+
+        if contrast_type in ['t2', 't1']:
+            labeled_obj, num_obj = label(pred_seg_th)
+            if num_obj > 1:
+                sct.log.info("Remove small objects for z_slice#" + str(zz))
+                pred_seg_th = (labeled_obj == (np.bincount(labeled_obj.flat)[1:].argmax() + 1))
+
+            pred_seg_th = binary_fill_holes(pred_seg_th, structure=np.ones((3, 3))).astype(np.int)
+
+        seg_crop.data[:, :, zz] = pred_seg_th
     seg_crop.setFileName(fname_seg_crop)
     seg_crop.save()
 
@@ -283,6 +367,11 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, qc_p
     # binarize the resampled image to remove interpolation effects
     sct.log.info("Binarizing the segmentation to avoid interpolation effects...")
     sct.run('sct_maths -i ' + fname_seg_RPI + ' -bin 0.75 -o ' + fname_seg_RPI, verbose=0)
+
+    # post processing step to z_regularized
+    # @BEN: holes = petit objet aussi? + hardcoded in _fill
+    fname_seg_RPI_zReg = sct.add_suffix(file_fname, '_RPI_seg_zRegularized')
+    fill_z_holes(fname_in=fname_seg_RPI, fname_out=fname_seg_RPI_zReg)
 
     # reorient to initial orientation
     sct.log.info("Reorienting the segmentation to the original image orientation...")
