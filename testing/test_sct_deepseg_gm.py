@@ -1,26 +1,18 @@
 #!/usr/bin/env python
 #########################################################################################
 #
-# Test function sct_segment_graymatter
+# Test function sct_deepseg_gm
 #
 # ---------------------------------------------------------------------------------------
-# Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Sara Dupont
-# modified: 2015/08/31
+# Copyright (c) 2018 Polytechnique Montreal <www.neuro.polymtl.ca>
+# Author: Julien Cohen-Adad
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-# import commands
-# import sys
 import os
-from pandas import DataFrame
-import sct_segment_graymatter
-# from msct_image import Image
 import sct_utils as sct
-from numpy import sum, mean
-# import time
-from sct_warp_template import get_file_label
+from msct_image import Image, compute_dice
 
 
 def init(param_test):
@@ -28,10 +20,8 @@ def init(param_test):
     Initialize class: param_test
     """
     # initialization
-    default_args = ['-i t2s/t2s.nii.gz -s t2s/t2s_seg.nii.gz -vertfile t2s/MNI-Poly-AMU_level_crop.nii.gz -ref t2s/t2s_gmseg_manual.nii.gz -qc 0 -ratio level']
-
-    param_test.hd_threshold = 3  # in mm
-    param_test.wm_dice_threshold = 0.8
+    default_args = ['-i t2s/t2s.nii.gz']
+    param_test.dice_threshold = 0.9
 
     # assign default params
     if not param_test.args:
@@ -43,9 +33,34 @@ def test_integrity(param_test):
     """
     Test integrity of function
     """
+    dice_segmentation = float('nan')
+    # extract name of output segmentation: data_seg.nii.gz
+    file_seg = os.path.join(param_test.path_output, sct.add_suffix(param_test.file_input, '_seg'))
+    # open output segmentation
+    im_seg = Image(file_seg)
+    # open ground truth
+    im_seg_manual = Image(param_test.fname_gt)
+    # compute dice coefficient between generated image and image from database
+    dice_segmentation = compute_dice(im_seg, im_seg_manual, mode='3d', zboundaries=False)
+    # display
+    param_test.output += 'Computed dice: '+str(dice_segmentation)
+    param_test.output += '\nDice threshold (if computed Dice smaller: fail): '+str(param_test.dice_threshold)
+
+    if dice_segmentation < param_test.dice_threshold:
+        param_test.status = 99
+        param_test.output += '\n--> FAILED'
+    else:
+        param_test.output += '\n--> PASSED'
+
+    # update Panda structure
+    param_test.results['dice_segmentation'] = dice_segmentation
+
+    return param_test
+
+
 
     # initialization of results: must be NaN if test fails
-    result_dice_gm, result_dice_wm, result_hausdorff, result_median_dist = float('nan'), float('nan'), float('nan'), float('nan')
+    result_dice_gm, result_hausdorff, result_median_dist = float('nan'), float('nan'), float('nan')
 
     target_name = sct.extract_fname(param_test.file_input)[1]
 
@@ -57,7 +72,6 @@ def test_integrity(param_test):
     dice_lines = dice.readlines()
     dice.close()
     gm_start = dice_lines.index('Dice coefficient on the Gray Matter segmentation:\n')
-    wm_start = dice_lines.index('Dice coefficient on the White Matter segmentation:\n')
 
     # extracting dice on GM
     gm_dice_lines = dice_lines[gm_start:wm_start - 1]
