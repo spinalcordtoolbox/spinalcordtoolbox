@@ -15,8 +15,6 @@ import numpy as np
 import shutil
 from scipy.ndimage.measurements import center_of_mass, label
 from scipy.ndimage.morphology import binary_fill_holes
-# import pickle
-from scipy.interpolate.interpolate import interp1d
 from skimage.exposure import rescale_intensity
 
 import os
@@ -27,9 +25,9 @@ from msct_image import Image
 from msct_parser import Parser
 from sct_image import set_orientation
 
-from keras.models import load_model
-from keras import backend as K
 import spinalcordtoolbox.resample.nipy_resample
+from spinalcordtoolbox.segmentation.cnn_models import nn_architecture
+
 
 def get_parser():
     # Initialize the parser
@@ -216,17 +214,6 @@ def fill_z_holes(fname_in, fname_out):
     del im_in, im_out
 
 
-def dice_coef(y_true, y_pred, smooth=0.1):
-    y_true_f = K.flatten(y_true)
-    y_pred_f = K.flatten(y_pred)
-    intersection = K.sum(y_true_f * y_pred_f)
-    return (2. * intersection + smooth) / (K.sum(y_true_f) + K.sum(y_pred_f) + smooth)
-
-
-def dice_coef_loss(y_true, y_pred):
-    return -dice_coef(y_true, y_pred)
-
-
 def main():
     sct.start_stream_logger()
     parser = get_parser()
@@ -261,9 +248,6 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, qc_p
     # initalizing parameters
     crop_size = 64  # TODO: this parameter should actually be passed by the model, as it is one of its fixed parameter
 
-    # initializing objects
-    custom_objects = {'dice_coef_loss': dice_coef_loss, 'dice_coef': dice_coef}
-
     # loading models required to perform the segmentation
     # this step can be long, as some models (e.g., DL) are heavy
     sct.log.info("Loading models...")
@@ -275,7 +259,8 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, qc_p
     # intensity_norm_model = pickle.load(open(intensity_norm_model_fname, "rb"))[contrast_type]
 
     segmentation_model_fname = os.path.join(path_sct, 'data/deepscseg_models', '{}_seg_sc.h5'.format(contrast_type))
-    seg_model = load_model(segmentation_model_fname, custom_objects=custom_objects)
+    seg_model = nn_architecture(height=crop_size, width=crop_size, depth=2 if contrast_type != 't2' else 3)
+    seg_model.load_weights(segmentation_model_fname)
 
     # create temporary folder with intermediate results
     sct.log.info("Creating temporary folder...")
