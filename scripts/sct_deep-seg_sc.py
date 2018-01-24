@@ -28,9 +28,8 @@ from msct_parser import Parser
 from sct_image import set_orientation
 
 from keras.models import load_model
+from keras import backend as K
 import spinalcordtoolbox.resample.nipy_resample
-from spinalcordtoolbox.segmentation.cnn_models import dice_coef, dice_coef_loss
-
 
 def get_parser():
     # Initialize the parser
@@ -215,6 +214,17 @@ def fill_z_holes(fname_in, fname_out):
     im_out.setFileName(fname_out)
     im_out.save()
     del im_in, im_out
+
+
+def dice_coef(y_true, y_pred, smooth=0.1):
+    y_true_f = K.flatten(y_true)
+    y_pred_f = K.flatten(y_pred)
+    intersection = K.sum(y_true_f * y_pred_f)
+    return (2. * intersection + smooth) / (K.sum(y_true_f) + K.sum(y_pred_f) + smooth)
+
+
+def dice_coef_loss(y_true, y_pred):
+    return -dice_coef(y_true, y_pred)
 
 
 def main():
