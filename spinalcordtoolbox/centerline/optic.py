@@ -92,7 +92,7 @@ def detect_centerline(image_fname, contrast_type,
 
     # convert image data type to int16, as required by opencv (backend in OptiC)
     image_int_filename = sct.add_suffix(file_data + ext_data, "_int16")
-    sct_image.main(args=['-i', image_fname, '-type', 'int16', '-o', image_int_filename])
+    sct_image.main(args=['-i', image_fname, '-type', 'int16', '-o', image_int_filename, '-v', '0'])
 
     # reorient the input image to RPI + convert to .nii
     reoriented_image_filename = sct.add_suffix(image_int_filename, "_RPI")
