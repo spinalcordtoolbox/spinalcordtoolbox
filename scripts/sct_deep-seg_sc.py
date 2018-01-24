@@ -180,17 +180,17 @@ def _fill_z_holes(zz_lst, data, z_spaccing):
         hole_cur_lst = range(z_hole_start, z_hole_end)
         lenght_hole = len(hole_cur_lst) + 1
         phys_lenght_hole = lenght_hole * z_spaccing
-    #     thr_bin = 1. / lenght_hole
 
         denom_interpolation = (lenght_hole + 1)
 
-        if phys_lenght_hole < 30:
+        if phys_lenght_hole < 50:
+            sct.log.warning('Filling an hole in the segmentation around z_slice #:' + str(z_ref_start))
+
             for idx_z, z_hole_cur in enumerate(hole_cur_lst):
-                num_interpolation = (lenght_hole - idx_z - 1) * slice_ref_start  # Contribution bottom ref slice
-                num_interpolation += (idx_z + 1) * slice_ref_end  # Contribution top ref slice
+                num_interpolation = (lenght_hole - idx_z - 1) * slice_ref_start  # Contribution of the bottom ref slice
+                num_interpolation += (idx_z + 1) * slice_ref_end  # Contribution of the top ref slice
 
                 slice_interpolation = num_interpolation * 1. / denom_interpolation
-        #         slice_interpolation = (slice_interpolation > thr_bin).astype(np.int)
                 slice_interpolation = (slice_interpolation > 0).astype(np.int)
 
                 data_interpol[:, :, z_hole_cur] = slice_interpolation
@@ -198,20 +198,19 @@ def _fill_z_holes(zz_lst, data, z_spaccing):
     return data_interpol
 
 
-def fill_z_holes(fname_in, fname_out):
+def fill_z_holes(fname_in):
     im_in = Image(fname_in)
-    im_out = im_in.copy()
     data_in = im_in.data.astype(np.int)
 
     zz_zeros = [zz for zz in range(im_in.dim[2]) if 1 not in list(np.unique(data_in[:, :, zz]))]
     zz_holes = _remove_extrem_holes(zz_zeros, im_in.dim[2] - 1, 0)
 
     # filling z_holes, i.e. interpolate for z_slice not segmented
-    im_out.data = _fill_z_holes(zz_holes, data_in, im_in.dim[6]) if len(zz_holes) else data_in
+    im_in.data = _fill_z_holes(zz_holes, data_in, im_in.dim[6]) if len(zz_holes) else data_in
 
-    im_out.setFileName(fname_out)
-    im_out.save()
-    del im_in, im_out
+    im_in.setFileName(fname_in)
+    im_in.save()
+    del im_in
 
 
 def main():
@@ -327,7 +326,6 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, qc_p
         if contrast_type in ['t2', 't1']:
             labeled_obj, num_obj = label(pred_seg_th)
             if num_obj > 1:
-                sct.log.info("Remove small objects for z_slice#" + str(zz))
                 pred_seg_th = (labeled_obj == (np.bincount(labeled_obj.flat)[1:].argmax() + 1))
 
             pred_seg_th = binary_fill_holes(pred_seg_th, structure=np.ones((3, 3))).astype(np.int)
@@ -364,9 +362,7 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, qc_p
     sct.run('sct_maths -i ' + fname_seg_RPI + ' -bin 0.75 -o ' + fname_seg_RPI, verbose=0)
 
     # post processing step to z_regularized
-    # @BEN: holes = petit objet aussi? + hardcoded in _fill
-    fname_seg_RPI_zReg = sct.add_suffix(file_fname, '_RPI_seg_zRegularized')
-    fill_z_holes(fname_in=fname_seg_RPI, fname_out=fname_seg_RPI_zReg)
+    fill_z_holes(fname_in=fname_seg_RPI)
 
     # reorient to initial orientation
     sct.log.info("Reorienting the segmentation to the original image orientation...")
