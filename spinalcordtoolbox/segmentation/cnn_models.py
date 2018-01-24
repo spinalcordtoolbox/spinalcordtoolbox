@@ -63,7 +63,7 @@ def upsampling_block(input_tensor, skip_tensor, filters, padding='valid', batchn
     return x
 
 
-def nn_architecture(height, width, channels=1, classes=1, features=64, depth=2, temperature=1.0, padding='same', batchnorm=False, dropout=0.0):
+def nn_architecture(height, width, channels=1, classes=1, features=32, depth=2, temperature=1.0, padding='same', batchnorm=False, dropout=0.0):
     x = Input(shape=(height, width, channels))
     inputs = x
 
