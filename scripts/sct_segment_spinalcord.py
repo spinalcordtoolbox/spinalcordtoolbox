@@ -6,7 +6,7 @@
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Authors: Benjamin De Leener & Charley Gros
-# Modified: 2017-12-14
+# Modified: 2018-01-22
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
@@ -18,7 +18,6 @@ import pickle
 from scipy.interpolate.interpolate import interp1d
 from skimage.exposure import rescale_intensity
 
-
 import os
 import sys
 from spinalcordtoolbox.centerline import optic
@@ -29,7 +28,6 @@ from msct_parser import Parser
 from keras.models import load_model
 import spinalcordtoolbox.resample.nipy_resample
 from spinalcordtoolbox.segmentation.cnn_models import dice_coef, dice_coef_loss
-
 
 
 def get_parser():
@@ -68,81 +66,31 @@ def get_parser():
     return parser
 
 
-def apply_intensity_normalization_model(img_path, landmarks_pd, fname_out, max_interp='exp'):
-    # Description: apply the learned intensity landmarks to the input image
+def apply_intensity_normalization(img_path, fname_out):
 
     img = Image(img_path)
-
-    img_data = np.asarray(img.data)
-
-    percent_decile_lst = [1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 99]
-    vals = list(img_data)
-    landmarks_lst_cur = np.percentile(vals, q=percent_decile_lst)
-
-    # treat single intensity accumulation error
-    if not len(np.unique(landmarks_lst_cur)) == len(landmarks_lst_cur):
-        output = rescale_intensity(img_data, out_range=(0, 255))
-
-    else:
-        # create linear mapping models for the percentile segments to the learned standard intensity space
-        linear_mapping = interp1d(landmarks_lst_cur, landmarks_pd.values, bounds_error = False)
-
-        # transform the input image intensity values
-        output = linear_mapping(img_data)
-
-        # treat image intensity values outside of the cut-off percentiles range separately
-        below_mapping = exp_model(landmarks_lst_cur[:2], landmarks_pd.values[:2], landmarks_pd.values[0])
-        output[img_data < landmarks_lst_cur[0]] = below_mapping(img_data[img_data < landmarks_lst_cur[0]])
-
-        if max_interp == 'exp':
-            above_mapping = exp_model(landmarks_lst_cur[-3:-1], landmarks_pd.values[-3:-1], landmarks_pd.values[-1])
-        elif max_interp == 'linear':
-            above_mapping = linear_model(landmarks_lst_cur[-2:], landmarks_pd.values[-2:])
-        elif max_interp == 'flat':
-            above_mapping = lambda x: landmarks_pd.values[-1]
-        else:
-            print 'No model was chosen, will use flat'
-            above_mapping = lambda x: landmarks_pd.values[-1]
-        output[img_data > landmarks_lst_cur[-1]] = above_mapping(img_data[img_data > landmarks_lst_cur[-1]])
-
-    #print np.min(output), np.max(output)
-
-    # save resulting image
     img_normalized = img.copy()
-    img_normalized.data = output
+    p2, p98 = np.percentile(img.data, (2, 98))
+    img_normalized.data = rescale_intensity(img.data, in_range=(p2, p98), out_range=(0, 255))
     img_normalized.setFileName(fname_out)
     img_normalized.save()
 
     return img_normalized
 
 
-def linear_model((x1, x2), (y1, y2)):
-    m = (y2 - y1) / (x2 - x1)
-    b = y1 - (m * x1)
-    return lambda x: m * x + b
+def _find_crop_start_end(coord_ctr, crop_size, im_dim):
 
+    half_size = crop_size // 2
+    coord_start, coord_end = int(coord_ctr) - half_size + 1, int(coord_ctr) + half_size + 1
 
-def exp_model((x1, x2), (y1, y2), s2):
-    m = (y2 - y1) / (x2 - x1)
-    b = y1 - (m * x1)
-    mu90 = x2
+    if coord_end > im_dim:
+        coord_end = im_dim
+        coord_start = im_dim - crop_size if im_dim >= crop_size else 0
+    if coord_start < 0:
+        coord_start = 0
+        coord_end = crop_size if im_dim >= crop_size else im_dim
 
-    # y2 = alpha + beta * exp(gamma * x)
-    alpha = s2
-
-    omega = m * mu90 - s2 + b
-    beta = omega * np.exp(-m * mu90 * 1.0 / omega)
-
-    gamma = m * 1.0 / omega
-
-    return lambda x: alpha + beta * np.exp(gamma * x)
-
-
-class SingleIntensityAccumulationError(Exception):
-    """
-    Thrown when an image shows an unusual single-intensity peaks which would obstruct
-    both, training and transformation.
-    """
+    return coord_start, coord_end
 
 
 def crop_image_around_centerline(im_in, ctr_in, im_out, crop_size, x_dim_half, y_dim_half):
@@ -157,17 +105,8 @@ def crop_image_around_centerline(im_in, ctr_in, im_out, crop_size, x_dim_half, y
     for zz in range(im_in.dim[2]):
         x_ctr, y_ctr = center_of_mass(im_ctr.data[:, :, zz])
 
-        x_start, x_end = int(x_ctr) - x_dim_half + 1, int(x_ctr) + x_dim_half + 1
-        y_start, y_end = int(y_ctr) - y_dim_half + 1, int(y_ctr) + y_dim_half + 1
-
-        if y_start < 0:
-            y_start, y_end = 0, crop_size
-        if y_end > im_in.dim[1]:
-            y_start, y_end = im_in.dim[1] - crop_size, im_in.dim[1]
-        if x_start < 0:
-            x_start, x_end = 0, crop_size
-        if x_end > im_in.dim[0]:
-            x_start, x_end = im_in.dim[0] - crop_size, im_in.dim[0]
+        x_start, x_end = _find_crop_start_end(x_ctr, crop_size, im_in.dim[0])
+        y_start, y_end = _find_crop_start_end(y_ctr, crop_size, im_in.dim[1])
 
         crop_im = np.zeros((crop_size, crop_size))
         x_shape, y_shape = im_in.data[x_start:x_end, y_start:y_end, zz].shape
@@ -226,8 +165,8 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, remo
     path_sct = os.path.dirname(path_script)
     optic_models_fname = os.path.join(path_sct, 'data/optic_models', '{}_model'.format(contrast_type))
 
-    intensity_norm_model_fname = os.path.join(path_sct, 'data/deepscseg_models', 'intensity_norm_model.pkl')
-    intensity_norm_model = pickle.load(open(intensity_norm_model_fname, "rb"))[contrast_type]
+    # intensity_norm_model_fname = os.path.join(path_sct, 'data/deepscseg_models', 'intensity_norm_model.pkl')
+    # intensity_norm_model = pickle.load(open(intensity_norm_model_fname, "rb"))[contrast_type]
 
     segmentation_model_fname = os.path.join(path_sct, 'data/deepscseg_models', '{}_seg_sc.h5'.format(contrast_type))
     seg_model = load_model(segmentation_model_fname, custom_objects=custom_objects)
@@ -273,9 +212,8 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, remo
 
     # normalize the intensity of the images
     fname_norm = sct.add_suffix(fname_crop, '_norm')
-    image_normalized = apply_intensity_normalization_model(img_path=fname_crop,
-                                                           landmarks_pd=intensity_norm_model,
-                                                           fname_out=fname_norm)
+    image_normalized = apply_intensity_normalization(img_path=fname_crop,
+                                                       fname_out=fname_norm)
 
     # segment the spinal cord
     fname_seg_crop = sct.add_suffix(fname_norm, '_seg')
