@@ -32,7 +32,7 @@ from spinalcordtoolbox.segmentation.cnn_models import nn_architecture
 def get_parser():
     # Initialize the parser
     parser = Parser(__file__)
-    parser.usage.set_description("""This function allows the extraction of the spinal cord centerline. Two methods are available: OptiC (automatic) and Viewer (manual).""")
+    parser.usage.set_description("""Spinal Cord Segmentation using deep convolutional networks.""")
 
     parser.add_option(name="-i",
                       type_value="image_nifti",
