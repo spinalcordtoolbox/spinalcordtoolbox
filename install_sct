@@ -202,10 +202,10 @@ done
 
 # Catch SCT version
 if [ -e "version.txt" ]; then
-  if [ ${SCT_MPI_MODE} ]; then
-  echo $(IFS=" " ; set -- $(cat version.txt) ; echo $1 mpi) > version.txt
-  fi
   SCT_VERSION=`cat version.txt`
+  if [ ${SCT_MPI_MODE} ]; then
+    SCT_VERSION=${SCT_VERSION}_mpi
+  fi
 else
   echo "ERROR: version.txt not found."
   echo "The install_sct script must be execute from the source directory"
