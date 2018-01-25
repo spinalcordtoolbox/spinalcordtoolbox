@@ -238,8 +238,9 @@ def fill_functions():
         # 'sct_convert_binary_to_trilinear',  # not useful
         'sct_create_mask',
         'sct_crop_image',
-        'sct_dice_coefficient',
+        'sct_deepseg_sc',
         'sct_detect_pmj',
+        'sct_dice_coefficient',
         'sct_dmri_compute_dti',
         'sct_dmri_concat_bvals',
         'sct_dmri_concat_bvecs',
@@ -268,7 +269,6 @@ def fill_functions():
         'sct_register_to_template',
         'sct_resample',
         'sct_segment_graymatter',
-        'sct_segment_spinalcord',
         'sct_smooth_spinalcord',
         'sct_straighten_spinalcord',
         'sct_warp_template',

@@ -24,7 +24,7 @@ def init(param_test):
     # initialization
     default_args = ['-i t2/t2.nii.gz -c t2 -igt t2/t2_seg_manual.nii.gz']  # default parameters
 
-    param_test.dice_threshold = 0.9
+    param_test.dice_threshold = 0.8
 
     # assign default params
     if not param_test.args:
