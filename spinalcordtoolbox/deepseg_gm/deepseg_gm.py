@@ -10,12 +10,19 @@
 import warnings
 import json
 import os
+import sys
+import io
 
 import nipy
 import nibabel as nib
 from nipy.io.nifti_ref import nipy2nifti, nifti2nipy
 import numpy as np
+
+# Avoid Keras logging
+original_stderr = sys.stderr
+sys.stderr = io.BytesIO()
 from keras import backend as K
+sys.stderr = original_stderr
 
 from spinalcordtoolbox.resample import nipy_resample
 from . import model
