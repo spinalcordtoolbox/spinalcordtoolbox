@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 #########################################################################################
 #
-# Test function sct_segment_spinalcord
+# Test function sct_deepseg_sc
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2018 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Benjamin De Leener
+# Author: Benjamin De Leener & Charley Gros
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
