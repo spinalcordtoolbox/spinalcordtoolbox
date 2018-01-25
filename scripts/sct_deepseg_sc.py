@@ -183,7 +183,7 @@ def _fill_z_holes(zz_lst, data, z_spaccing):
 
         denom_interpolation = (lenght_hole + 1)
 
-        if phys_lenght_hole < 50:
+        if phys_lenght_hole < 30:
             sct.log.warning('Filling an hole in the segmentation around z_slice #:' + str(z_ref_start))
 
             for idx_z, z_hole_cur in enumerate(hole_cur_lst):
@@ -254,10 +254,7 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, qc_p
     path_sct = os.path.dirname(path_script)
     optic_models_fname = os.path.join(path_sct, 'data/optic_models', '{}_model'.format(contrast_type))
 
-    # intensity_norm_model_fname = os.path.join(path_sct, 'data/deepscseg_models', 'intensity_norm_model.pkl')
-    # intensity_norm_model = pickle.load(open(intensity_norm_model_fname, "rb"))[contrast_type]
-
-    segmentation_model_fname = os.path.join(path_sct, 'data/deepscseg_models', '{}_seg_sc.h5'.format(contrast_type))
+    segmentation_model_fname = os.path.join(path_sct, 'data/deepseg_sc_models', '{}_seg_sc.h5'.format(contrast_type))
     seg_model = nn_architecture(height=crop_size, width=crop_size, depth=2 if contrast_type != 't2' else 3)
     seg_model.load_weights(segmentation_model_fname)
 
