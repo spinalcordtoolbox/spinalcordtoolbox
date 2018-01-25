@@ -26,7 +26,7 @@ from msct_parser import Parser
 from sct_image import set_orientation
 
 import spinalcordtoolbox.resample.nipy_resample
-from spinalcordtoolbox.segmentation.cnn_models import nn_architecture
+from spinalcordtoolbox.deepseg_sc.cnn_models import nn_architecture
 
 
 def get_parser():
