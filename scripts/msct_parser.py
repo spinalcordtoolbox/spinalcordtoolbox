@@ -222,8 +222,7 @@ class Option:
         elif param.lower() in self.list_no_image:
             no_image = True
         else:
-            sct.printv("ERROR: File is not a NIFTI image file. Exiting", type='error')
-
+            raise ValueError("File is not a NIFTI image file. Exiting")
         if nii:
             return param_tmp + '.nii'
         elif niigz:
@@ -231,7 +230,8 @@ class Option:
         elif no_image:
             return param
         else:
-            sct.printv("ERROR: File " + param + " does not exist. Exiting", type='error')
+            sct.log.debug('executed in {}'.format(os.getcwd()))
+            raise ValueError("File " + param + " does not exist. Exiting")
 
     def checkFolder(self, param):
         # check if the folder exist. If not, create it.
@@ -246,9 +246,9 @@ class Option:
         else:
             result_creation = 0  # no need for checking
         if result_creation == 2:
-            sct.printv("ERROR: Permission denied for folder creation...", type="error")
+            raise OSError("Permission denied for folder creation {}".format(param))
         elif result_creation == 1:
-            sct.printv("Folder " + param + " has been created.", 0, type='warning')
+            sct.log.warning("Folder " + param + " has been created.", 0)
         return param
 
 
@@ -560,10 +560,9 @@ class Usage:
         usage = self.header + self.description + self.usage + self.arguments_string
 
         if error:
-            sct.printv(error + '\nAborted...', type='warning')
-            sct.printv(usage, type='normal')
+            sct.log.error(error + '\nAborted...')
+            sct.log.info(usage)
             raise SyntaxError(error)
-            exit(1)
         else:
             return usage
 

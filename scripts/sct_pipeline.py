@@ -254,7 +254,7 @@ def function_launcher(args):
     # initialize parameters specific to the test
     param_testing = module_testing.init(param_testing)
     try:
-        param_testing = sct_testing.test_function(param_testing)
+        param_testing = sct_testing.test_function(param_testing, integrity=False)
     except:
         import traceback
         sct.log.error('%s: %s' % ('test_' + args[0], traceback.format_exc()))
