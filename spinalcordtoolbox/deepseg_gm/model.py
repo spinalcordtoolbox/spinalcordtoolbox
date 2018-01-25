@@ -1,5 +1,5 @@
 # coding: utf-8
-# This is the deepgmseg model definition for the
+# This is the deepseg_gm model definition for the
 # Spinal Cord Gray Matter Segmentation.
 #
 # Reference paper:

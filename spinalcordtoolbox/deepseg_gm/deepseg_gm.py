@@ -1,5 +1,5 @@
 # coding: utf-8
-# This is the interface API for the deepgmseg model
+# This is the interface API for the deepseg_gm model
 # that implements the model for the Spinal Cord Gray Matter Segmentation.
 #
 # Reference paper:

@@ -1,5 +1,5 @@
 # coding: utf-8
-# This command-line tool is the interface for the deepgmseg API
+# This command-line tool is the interface for the deepseg_gm API
 # that implements the model for the Spinal Cord Gray Matter Segmentation.
 #
 # Reference paper:
@@ -12,7 +12,7 @@ import sys
 import sct_utils as sct
 from msct_parser import Parser
 
-from spinalcordtoolbox.deepgmseg import deepgmseg
+from spinalcordtoolbox.deepseg_gm import deepseg_gm
 
 
 def get_parser():
@@ -54,7 +54,7 @@ def get_parser():
 
 
 def run_main():
-    deepgmseg.check_backend()
+    deepseg_gm.check_backend()
     parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
     input_filename = arguments["-i"]
@@ -67,8 +67,8 @@ def run_main():
     verbose = arguments["-v"]
     model_name = arguments["-m"]
 
-    out_fname = deepgmseg.segment_file(input_filename, output_filename,
-                                       model_name, int(verbose))
+    out_fname = deepseg_gm.segment_file(input_filename, output_filename,
+                                        model_name, int(verbose))
 
     sct.display_viewer_syntax([input_filename, format(out_fname)],
                               colormaps=['gray', 'red'],
