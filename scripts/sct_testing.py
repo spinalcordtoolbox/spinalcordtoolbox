@@ -386,8 +386,7 @@ def test_function(param_test):
     stdout_log = io.open(param_test.fname_log, 'w')
     # redirect to log file
     if param_test.redirect_stdout:
-        # file_handler = sct.add_file_handler_to_logger(param_test.fname_log)
-        file_handler = sct.add_file_handler_to_logger("/tmp/truite.log")
+        file_handler = sct.add_file_handler_to_logger(param_test.fname_log)
     sct.log.debug("logging to file")
 
     # initialize panda dataframe
