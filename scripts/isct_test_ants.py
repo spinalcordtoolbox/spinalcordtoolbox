@@ -94,7 +94,7 @@ def main():
     # printv('\nConcatenate rigid and non-linear transformations...', verbose)
     # cmd = 'isct_ComposeMultiTransform 3 warp_curve2straight.nii.gz -R data_dest.nii.gz warp_curve2straight_intermediate.nii.gz curve2straight_rigid.txt'
     # printv('>> '+cmd, verbose)
-    # commands.getstatusoutput(cmd)
+    # sct.run(cmd)
     #
     # # Apply deformation to input image
     # printv('\nApply transformation to input image...', verbose)

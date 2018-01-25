@@ -28,7 +28,7 @@ def test(path_data):
 
     # return
     #return sct.run(cmd, 0)
-    return commands.getstatusoutput(cmd)
+    return sct.run(cmd)
 
 # call to function
 if __name__ == "__main__":
