@@ -20,7 +20,7 @@ def init(param_test):
     Initialize class: param_test
     """
     # initialization
-    default_args = ['-i t2s/t2s.nii.gz']
+    default_args = ['-i t2s/t2s_uncropped.nii.gz -o t2s/t2s_uncropped_gmseg.nii.gz']
     param_test.dice_threshold = 0.9
 
     # assign default params
@@ -35,7 +35,7 @@ def test_integrity(param_test):
     """
     dice_segmentation = float('nan')
     # extract name of output segmentation: data_seg.nii.gz
-    file_seg = os.path.join(param_test.path_output, sct.add_suffix(param_test.file_input, '_seg'))
+    file_seg = os.path.join(param_test.path_output, sct.add_suffix(param_test.file_input, '_gmseg'))
     # open output segmentation
     im_seg = Image(file_seg)
     # open ground truth
