@@ -339,7 +339,7 @@ def write_to_log_file(fname_log, string, mode='w', prepend=False):
 
 # init_testing
 # ==========================================================================================
-def test_function(param_test):
+def test_function(param_test, integrity=True):
     """
 
     Parameters
@@ -441,14 +441,15 @@ def test_function(param_test):
     param_test.duration = time.time() - time_start
 
     # test integrity
-    param_test.output += '\n\n====================================================================================================\n' + 'INTEGRITY TESTING' + '\n====================================================================================================\n\n'  # copy command
-    try:
-        param_test = module_testing.test_integrity(param_test)
-    except Exception as err:
-        param_test.status = 2
-        param_test.output += str(err)
-        write_to_log_file(param_test.fname_log, param_test.output, 'w')
-        return update_param(param_test)
+    if integrity:
+        param_test.output += '\n\n====================================================================================================\n' + 'INTEGRITY TESTING' + '\n====================================================================================================\n\n'  # copy command
+        try:
+            param_test = module_testing.test_integrity(param_test)
+        except Exception as err:
+            param_test.status = 2
+            param_test.output += str(err)
+            write_to_log_file(param_test.fname_log, param_test.output, 'w')
+            return update_param(param_test)
 
     # manage stdout
     if param_test.redirect_stdout:
