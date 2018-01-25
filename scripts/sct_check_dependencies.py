@@ -191,16 +191,21 @@ def main():
             install_software = 1
 
     # CHECK DEPENDENT MODULES (installed by nibabel/dipy):
-    print_line('Check if numpy is installed')
+    sys.stdout.write('Check if numpy is installed')
+    sys.stdout.flush()
     try:
-        importlib.import_module('numpy')
+        np = importlib.import_module('numpy')
+        sys.stdout.write(' ({})'.format(np.__version__).ljust(25, '.'))
         print_ok()
     except ImportError:
+        sys.stdout.write(' (........................')
         print_fail()
         install_software = 1
-    print_line('Check if scipy is installed')
+    sys.stdout.write('Check if scipy is installed')
+    sys.stdout.flush()
     try:
-        importlib.import_module('scipy')
+        sp = importlib.import_module('scipy')
+        sys.stdout.write(' ({})'.format(sp.__version__).ljust(25, '.'))
         print_ok()
     except ImportError:
         print_fail()
@@ -288,18 +293,8 @@ def main():
 # print without carriage return
 # ==========================================================================================
 def print_line(string):
-    sys.stdout.write(string + make_dot_lines(string))
+    sys.stdout.write(string.ljust(52, '.'))
     sys.stdout.flush()
-
-
-# fill line with dots
-# ==========================================================================================
-def make_dot_lines(string):
-    if len(string) < 52:
-        dot_lines = '.' * (52 - len(string))
-        return dot_lines
-    else:
-        return ''
 
 
 def print_ok():
