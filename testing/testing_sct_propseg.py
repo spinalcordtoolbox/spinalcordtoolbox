@@ -11,7 +11,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import sys, io, os, time, shutil, commands, getopt, math
+import sys, io, os, time, shutil, getopt, math
 
 import nibabel
 import numpy as np
@@ -188,13 +188,13 @@ def segmentation(fname_input, output_dir, image_type):
         + ' -t ' + image_type \
         + ' -detect-nii'
     sct.printv(cmd)
-    status_propseg_old, output_propseg_old = commands.getstatusoutput(cmd)
+    status_propseg_old, output_propseg_old = sct.run(cmd)
     sct.printv(output_propseg_old)
 
     # check if spinal cord is correctly detected with old version of PropSeg
     cmd = "isct_check_detection.py -i "+detection_filename_old+" -t "+manual_segmentation_filename_old
     sct.printv(cmd)
-    status_detection_old, output_detection_old = commands.getstatusoutput(cmd)
+    status_detection_old, output_detection_old = sct.run(cmd)
     sct.printv(output_detection_old)
     results_detection[0] = status_detection_old
 
@@ -203,7 +203,7 @@ def segmentation(fname_input, output_dir, image_type):
                 + ' '+manual_segmentation_filename_old \
                 + ' -bzmax'
     sct.printv(cmd_validation)
-    status_validation_old, output_validation_old = commands.getstatusoutput(cmd_validation)
+    status_validation_old, output_validation_old = sct.run(cmd_validation)
     print(output_validation_old)
     res = output_validation_old.split()[-1]
     if res != 'nan': results_segmentation[0] = float(res)
@@ -217,13 +217,13 @@ def segmentation(fname_input, output_dir, image_type):
         + ' -t ' + image_type \
         + ' -detect-nii'
     sct.printv(cmd)
-    status_propseg_new, output_propseg_new = commands.getstatusoutput(cmd)
+    status_propseg_new, output_propseg_new = sct.run(cmd)
     sct.printv(output_propseg_new)
 
     # check if spinal cord is correctly detected with new version of PropSeg
     cmd = "isct_check_detection.py -i "+detection_filename_new+" -t "+manual_segmentation_filename_new
     sct.printv(cmd)
-    status_detection_new, output_detection_new = commands.getstatusoutput(cmd)
+    status_detection_new, output_detection_new = sct.run(cmd)
     sct.printv(output_detection_new)
     results_detection[1] = status_detection_new
 
@@ -232,7 +232,7 @@ def segmentation(fname_input, output_dir, image_type):
                 + ' '+manual_segmentation_filename_new \
                 + ' -bzmax'
     sct.printv(cmd_validation)
-    status_validation_new, output_validation_new = commands.getstatusoutput(cmd_validation)
+    status_validation_new, output_validation_new = sct.run(cmd_validation)
     print(output_validation_new)
     res = output_validation_new.split()[-1]
     if res != 'nan': results_segmentation[1] = float(res)

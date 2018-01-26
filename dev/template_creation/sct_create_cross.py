@@ -18,7 +18,7 @@ class param:
         self.gapxy = 15.0  # millimeters or voxel
         self.cross = 'mm'
 # check if needed Python libraries are already installed or not
-import sys, commands
+import sys
 import getopt
 
 # Get path of the toolbox

@@ -16,7 +16,7 @@
 # ~/subject/t2/labels_vertebral.nii.gz --> a series of labels to identify vertebral level. These are placed in the middle of the cord and vertebral body. The value of the label corresponds to the level. I.e., Brainstem (PMJ)=1, C1=2, C2=3, etc.
 # cf snapshot in $SCT_DIR/dev/template_preprocessing/snap1, 2, etc.
 
-import os, sys, commands
+import os, sys
 
 # Get path of the toolbox
 path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))

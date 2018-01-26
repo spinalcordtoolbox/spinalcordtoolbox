@@ -2,7 +2,7 @@
 # change type of template data
 
 import os
-import commands
+
 import sys
 from shutil import move
 # Get path of the toolbox

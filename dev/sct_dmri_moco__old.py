@@ -24,7 +24,7 @@
 
 import sys
 import os
-import commands
+
 import getopt
 import nibabel
 import time
@@ -270,13 +270,13 @@ def main():
     #print '\nSplit original data along T dimension...'
     #cmd = fsloutput+'fslsplit '+fname_data+' tmp.data_raw_splitT'
     #print('>> '+cmd)
-    #status, output = commands.getstatusoutput(cmd)
+    #status, output = sct.run(cmd)
 
     #print '\nApply transformations to original data...'
     #for it in xrange(0,nt):
     #    cmd = fsloutput+'flirt -in tmp.data_raw_splitT'+str(it).zfill(4)+' -ref tmp.data_raw_splitT'+index_b0[0].zfill(4)+' -applyxfm -init tmp.mat_final_'+str(it).zfill(4)+' -out tmp.data_raw_splitT'+str(it).zfill(4)+'_moco'
     #    print('>> '+cmd)
-    #    status, output = commands.getstatusoutput(cmd)
+    #    status, output = sct.run(cmd)
     #
     ## Merge corrected data
     #print '\nMerge corrected data...'
@@ -284,7 +284,7 @@ def main():
     #for it in xrange(0,it):
     #    cmd += ' tmp.data_raw_splitT'+str(it).zfill(4)+'_moco'
     #print('>> '+cmd)
-    #status, output = commands.getstatusoutput(cmd)
+    #status, output = sct.run(cmd)
 
     print '\nApply transformations...'
     for it in xrange(0,nt):

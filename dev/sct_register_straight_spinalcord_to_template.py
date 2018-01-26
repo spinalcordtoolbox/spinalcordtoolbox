@@ -63,7 +63,7 @@ class param:
 # check if needed Python libraries are already installed or not
 import os
 import getopt
-import commands
+
 import sys
 import time
 import sct_utils as sct
@@ -203,14 +203,14 @@ def main():
     # NB: cannot use sct.run() because output of ComposeMultiTransform is not 0, even if there is no error (bug in ANTS-- already reported on 2013-12-30)
     cmd = 'ComposeMultiTransform 3 tmp.warp_straight2template.nii.gz -R '+fname_template+' tmp.straight2template0Warp.nii.gz tmp.straight2templateAffine.txt'
     print('>> '+cmd)
-    commands.getstatusoutput(cmd)
+    sct.run(cmd)
 
     # Concatenate affine and non-linear transformations...
     print '\nConcatenate affine and non-linear transformations: template --> straight...'
     # NB: cannot use sct.run() because output of ComposeMultiTransform is not 0, even if there is no error (bug in ANTS-- already reported on 2013-12-30)
     cmd = 'ComposeMultiTransform 3 tmp.warp_template2straight.nii.gz -R '+fname_anat+' -i tmp.straight2templateAffine.txt tmp.straight2template0InverseWarp.nii.gz'
     print('>> '+cmd)
-    commands.getstatusoutput(cmd)
+    sct.run(cmd)
 
     # Apply transformation: template --> straight
     print '\nApply transformation: template --> straight...'
@@ -281,14 +281,14 @@ def main():
 #     # NB: cannot use sct.run() because output of ComposeMultiTransform is not 0, even if there is no error (bug in ANTS-- already reported on 2013-12-30)
 #     cmd = 'ComposeMultiTransform 3 tmp.warp_straight2template.nii.gz -R '+fname_template+' tmp.straight2template0Warp.nii.gz tmp.regSeg0Warp.nii.gz tmp.straight2templateAffine.txt'
 #     print('>> '+cmd)
-#     commands.getstatusoutput(cmd)
+#     sct.run(cmd)
 #
 #     # Concatenate affine and non-linear transformations...
 #     print '\nConcatenate affine and non-linear transformations: template --> straight...'
 #     # NB: cannot use sct.run() because output of ComposeMultiTransform is not 0, even if there is no error (bug in ANTS-- already reported on 2013-12-30)
 #     cmd = 'ComposeMultiTransform 3 tmp.warp_template2straight.nii.gz -R '+fname_anat+' -i tmp.straight2templateAffine.txt tmp.straight2template0InverseWarp.nii.gz'
 #     print('>> '+cmd)
-#     commands.getstatusoutput(cmd)
+#     sct.run(cmd)
 #
 #     # Apply transformation: template --> straight
 #     print '\nApply transformation: template --> straight...'

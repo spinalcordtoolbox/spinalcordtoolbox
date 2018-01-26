@@ -24,7 +24,7 @@
 
 
 # Import common Python libraries
-import os, sys, time, datetime, commands, shutil
+import os, sys, time, datetime, shutil
 import numpy as np
 path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
 # append path that contains scripts, to be able to load modules

@@ -192,7 +192,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
 
     # construct 3D warping matrix
     for iz in z_nonzero:
-        sct.printv(str(iz) + '/' + str(nz) + '..',)
+        sct.no_new_line_log('{}/{}..'.format(iz, nz))
         # get indices of x and y coordinates
         row, col = np.indices((nx, ny))
         # build 2xn array of coordinates in pixel space
@@ -265,10 +265,12 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
             plt.close()
 
         # construct 3D warping matrix
-        warp_x[:, :, iz] = np.array([coord_forward_phy[i, 0] - coord_init_phy[i, 0] for i in xrange(nx * ny)]).reshape((nx, ny))
-        warp_y[:, :, iz] = np.array([coord_forward_phy[i, 1] - coord_init_phy[i, 1] for i in xrange(nx * ny)]).reshape((nx, ny))
-        warp_inv_x[:, :, iz] = np.array([coord_inverse_phy[i, 0] - coord_init_phy[i, 0] for i in xrange(nx * ny)]).reshape((nx, ny))
-        warp_inv_y[:, :, iz] = np.array([coord_inverse_phy[i, 1] - coord_init_phy[i, 1] for i in xrange(nx * ny)]).reshape((nx, ny))
+        warp_x[:, :, iz] = np.array([coord_forward_phy[i, 0] - coord_init_phy[i, 0] for i in range(nx * ny)]).reshape((nx, ny))
+        warp_y[:, :, iz] = np.array([coord_forward_phy[i, 1] - coord_init_phy[i, 1] for i in range(nx * ny)]).reshape((nx, ny))
+        warp_inv_x[:, :, iz] = np.array([coord_inverse_phy[i, 0] - coord_init_phy[i, 0] for i in range(nx * ny)]).reshape((nx, ny))
+        warp_inv_y[:, :, iz] = np.array([coord_inverse_phy[i, 1] - coord_init_phy[i, 1] for i in range(nx * ny)]).reshape((nx, ny))
+
+    sct.log.info('\n Done')
 
     # Generate forward warping field (defined in destination space)
     generate_warping_field(fname_dest, warp_x, warp_y, fname_warp, verbose)
@@ -385,7 +387,7 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
             # <<<
             src1d_min, src1d_max = min(np.where(src1d != 0)[0]), max(np.where(src1d != 0)[0])
             dest1d_min, dest1d_max = min(np.where(dest1d != 0)[0]), max(np.where(dest1d != 0)[0])
-            # for i in xrange(len(src1d)):
+            # for i in range(len(src1d)):
             #     if src1d[i] > 0.5:
             #         found index above 0.5, exit loop
                     # break
@@ -417,7 +419,7 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
             coord_init_pix_scaleYinv = np.copy(coord_init_pix)  # need to use np.copy to avoid copying pointer
             # coord_src2d_scaleXY = np.copy(coord_src2d_scaleX)  # need to use np.copy to avoid copying pointer
             # loop across columns (X dimension)
-            for ix in xrange(nx):
+            for ix in range(nx):
                 # retrieve 1D signal along Y
                 src1d = src2d_scaleX[ix, :]
                 dest1d = dest2d[ix, :]
@@ -524,11 +526,11 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
             coord_init_phy_scaleXinv = np.array(im_src.transfo_pix2phys(coord_init_pix_scaleXinv))
             coord_init_phy_scaleYinv = np.array(im_src.transfo_pix2phys(coord_init_pix_scaleYinv))
             # compute displacement per pixel in destination space (for forward warping field)
-            warp_x[:, :, iz] = np.array([coord_init_phy_scaleXinv[i, 0] - coord_init_phy[i, 0] for i in xrange(nx * ny)]).reshape((nx, ny))
-            warp_y[:, :, iz] = np.array([coord_init_phy_scaleYinv[i, 1] - coord_init_phy[i, 1] for i in xrange(nx * ny)]).reshape((nx, ny))
+            warp_x[:, :, iz] = np.array([coord_init_phy_scaleXinv[i, 0] - coord_init_phy[i, 0] for i in range(nx * ny)]).reshape((nx, ny))
+            warp_y[:, :, iz] = np.array([coord_init_phy_scaleYinv[i, 1] - coord_init_phy[i, 1] for i in range(nx * ny)]).reshape((nx, ny))
             # compute displacement per pixel in source space (for inverse warping field)
-            warp_inv_x[:, :, iz] = np.array([coord_init_phy_scaleX[i, 0] - coord_init_phy[i, 0] for i in xrange(nx * ny)]).reshape((nx, ny))
-            warp_inv_y[:, :, iz] = np.array([coord_init_phy_scaleY[i, 1] - coord_init_phy[i, 1] for i in xrange(nx * ny)]).reshape((nx, ny))
+            warp_inv_x[:, :, iz] = np.array([coord_init_phy_scaleX[i, 0] - coord_init_phy[i, 0] for i in range(nx * ny)]).reshape((nx, ny))
+            warp_inv_y[:, :, iz] = np.array([coord_init_phy_scaleY[i, 1] - coord_init_phy[i, 1] for i in range(nx * ny)]).reshape((nx, ny))
 
     # Generate forward warping field (defined in destination space)
     generate_warping_field(fname_dest, warp_x, warp_y, fname_warp, verbose)
@@ -678,7 +680,7 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
 
         # if an exception occurs with ants, take the last value for the transformation
         # TODO: DO WE NEED TO DO THAT??? (julien 2016-03-01)
-        except Exception, e:
+        except Exception as e:
             sct.printv('ERROR: Exception occurred.\n' + str(e), 1, 'error')
 
     # Merge warping field along z
@@ -875,7 +877,7 @@ def find_index_halfmax(data1d):
     # normalize data between 0 and 1
     data1d = data1d / float(np.max(data1d))
     # loop across elements and stops when found 0.5
-    for i in xrange(len(data1d)):
+    for i in range(len(data1d)):
         if data1d[i] > 0.5:
             break
     # compute center of mass to get coordinate at 0.5

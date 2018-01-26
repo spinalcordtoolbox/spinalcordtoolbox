@@ -18,7 +18,7 @@ import sct_utils as sct
 from msct_image import Image, get_dimension
 from sct_image import set_orientation
 from msct_parser import Parser
-from sct_image import get_orientation_3d
+from sct_image import get_orientation
 
 # TODO: display results ==> not only max : with a violin plot of h1 and h2 distribution ? see dev/straightening --> seaborn.violinplot
 # TODO: add the option Hyberbolic Hausdorff's distance : see  choi and seidel paper
@@ -267,7 +267,8 @@ class ComputeDistances:
     def compute_dist_2im_2d(self):
         nx1, ny1, nz1, nt1, px1, py1, pz1, pt1 = get_dimension(self.im1)
         nx2, ny2, nz2, nt2, px2, py2, pz2, pt2 = get_dimension(self.im2)
-        assert px1 == px2 and py1 == py2 and px1 == py1
+
+        assert np.isclose(px1, px2) and np.isclose(py1, py2) and np.isclose(px1, py1)
         self.dim_pix = py1
 
         if self.param.thinning:
@@ -372,7 +373,7 @@ def resample_image(fname, suffix='_resampled.nii.gz', binary=False, npx=0.3, npy
     :return: file name after resampling (or original fname if it was already in the correct resolution)
     """
     im_in = Image(fname)
-    orientation = get_orientation_3d(im_in)
+    orientation = get_orientation(im_in)
     if orientation != 'RPI':
         im_in = set_orientation(im_in, 'RPI')
         im_in.save()
@@ -384,10 +385,18 @@ def resample_image(fname, suffix='_resampled.nii.gz', binary=False, npx=0.3, npy
         if binary:
             interpolation = 'nn'
 
+        if nz == 1:  # when data is 2d: we convert it to a 3d image in order to avoid nipy problem of conversion nifti-->nipy with 2d data
+            sct.run('sct_image -i ' + ','.join([fname, fname]) + ' -concat z -o ' + fname)
+
         sct.run('sct_resample -i ' + fname + ' -mm ' + str(npx) + 'x' + str(npy) + 'x' + str(pz) + ' -o ' + name_resample + ' -x ' + interpolation)
 
+        if nz == 1:  # when input data was 2d: re-convert data 3d-->2d
+            sct.run('sct_image -i ' + name_resample + ' -split z')
+            im_split = Image(name_resample.split('.nii.gz')[0] + '_Z0000.nii.gz')
+            im_split.setFileName(name_resample)
+            im_split.save()
+
         if binary:
-            # sct.run('sct_maths -i ' + name_resample + ' -thr ' + str(thr) + ' -o ' + name_resample)
             sct.run('sct_maths -i ' + name_resample + ' -bin ' + str(thr) + ' -o ' + name_resample)
 
         if orientation != 'RPI':

@@ -11,7 +11,7 @@ __author__ = 'Simon_2'
 import os
 import glob
 import getopt
-import commands
+
 import sys
 import numpy
 import matplotlib
