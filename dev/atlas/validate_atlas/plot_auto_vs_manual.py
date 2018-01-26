@@ -11,7 +11,6 @@ __author__ = 'Simon_2'
 import os
 import glob
 import getopt
-import commands
 import sys
 import numpy
 import re
@@ -19,7 +18,10 @@ import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.legend_handler import *
 # import subprocess
-# path_sct = subprocess.check_output("echo %SCT_DIR%", shell=True)
+
+path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))))
+sys.path.append(os.path.join(path_sct, "scripts"))
+import sct_utils as sct
 
 class Param:
     def __init__(self):
@@ -41,10 +43,8 @@ def main():
     if param_default.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
         results_folder = "/Users/slevy_local/spinalcordtoolbox/dev/atlas/validate_atlas/results_20150210_200iter"#"C:/cygwin64/home/Simon_2/data_auto_vs_manual"
-        path_sct = '/Users/slevy_local/spinalcordtoolbox' #'C:/cygwin64/home/Simon_2/spinalcordtoolbox'
         methods_to_display = 'bin,man0,man1,man2,man3'
     else:
-        path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
 
         # Check input parameters
         try:
@@ -63,8 +63,6 @@ def main():
                 methods_to_display = arg
 
     # Append path that contains scripts, to be able to load modules
-    sys.path.append(os.path.join(path_sct, "scripts"))
-    import sct_utils as sct
 
     sct.printv("Working directory: "+os.getcwd())
 

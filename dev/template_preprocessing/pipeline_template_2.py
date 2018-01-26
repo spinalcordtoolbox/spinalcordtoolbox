@@ -39,7 +39,7 @@
 # License: see the LICENSE.TXT
 #=======================================================================================================================
 
-import os, sys, commands
+import os, sys
 
 # Get path of the toolbox
 path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))

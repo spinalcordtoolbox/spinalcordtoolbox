@@ -211,12 +211,15 @@ else
   echo "The install_sct script must be execute from the source directory"
   exit 1
 fi
+
 # Get installation type (from git or from package)
-if [ -d ".git" ]; then
-  # folder .git exist, therefore it is a git installation
-  INSTALL_TYPE="git"
-else
-  INSTALL_TYPE="package"
+if [ "x${SCT_INSTALL_TYPE}" == "x" ]; then
+  if [ -d ".git" ]; then
+    # folder .git exist, therefore it is a git installation
+    SCT_INSTALL_TYPE="in-place"
+  else
+    SCT_INSTALL_TYPE="package"
+  fi
 fi
 
 # Fetch OS type
@@ -242,7 +245,7 @@ fi
 
 #echo -e "\nInstallation info:"
 echo -e "\nSCT version ......... "$SCT_VERSION
-echo -e "Installation type ... "$INSTALL_TYPE
+echo -e "Installation type ... "$SCT_INSTALL_TYPE
 echo -e "Operating system .... "$OS
 # Check if sudo
 if [[ $UID == 0 ]]; then
@@ -261,7 +264,7 @@ else
 fi
 
 # if installing from git folder, then becomes default installation folder
-if [[ ${INSTALL_TYPE} == "git" ]]; then
+if [[ "${SCT_INSTALL_TYPE}" == "in-place" ]]; then
   INSTALL_DIR=$SCT_SOURCE
 else
   INSTALL_DIR="${HOME}/sct_${SCT_VERSION}"
@@ -467,6 +470,8 @@ else
   cmd="python ../scripts/sct_download_data.py -d pmj_models"; echo ">> "$cmd; $cmd
   # Install deep learning-based spinal cord segmentation models
   cmd="python ../scripts/sct_download_data.py -d deepseg_sc_models"; echo ">> "$cmd; $cmd
+  # Install deepgmseg models
+  cmd="python ../scripts/sct_download_data.py -d deepseg_gm_models"; echo ">> "$cmd; $cmd
 fi
 
 # Make sure sct scripts are executable

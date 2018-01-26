@@ -675,7 +675,7 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
     csa = np.zeros(max_z_index - min_z_index + 1)
     angles = np.zeros(max_z_index - min_z_index + 1)
 
-    for iz in xrange(min_z_index, max_z_index + 1):
+    for iz in range(min_z_index, max_z_index + 1):
         if angle_correction:
             # in the case of problematic segmentation (e.g., non continuous segmentation often at the extremities), display a warning but do not crash
             try:

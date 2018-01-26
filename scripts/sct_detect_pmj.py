@@ -16,7 +16,7 @@ import sys
 import numpy as np
 from scipy.ndimage.measurements import center_of_mass
 import nibabel as nib
-import commands
+
 
 from msct_image import Image
 from msct_parser import Parser
@@ -100,7 +100,7 @@ class DetectPMJ:
         self.dection_map_pmj = sct.extract_fname(self.fname_im)[1] + '_map_pmj'  # file resulting from the detection
 
         # path to the pmj detector
-        self.pmj_model = os.path.join(commands.getstatusoutput('echo $SCT_DIR')[1],
+        self.pmj_model = os.path.join(sct.run('echo $SCT_DIR')[1],
                                             'data/pmj_models',
                                             '{}_model'.format(self.contrast))
 

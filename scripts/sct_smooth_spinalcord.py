@@ -233,7 +233,7 @@ if __name__ == "__main__":
 # y_centerline = [0 for iz in range(0, nz_nonz, 1)]
 # #sct.printv("z_centerline", z_centerline,nz_nonz,len(x_centerline)))
 # sct.printv('\nGet center of mass of the centerline ...')
-# for iz in xrange(len(z_centerline)):
+# for iz in range(len(z_centerline)):
 #     x_centerline[iz], y_centerline[iz] = ndimage.measurements.center_of_mass(array(data_c[:,:,z_centerline[iz]]))
 #     data_temp[x_centerline[iz], y_centerline[iz], z_centerline[iz]] = 1
 #

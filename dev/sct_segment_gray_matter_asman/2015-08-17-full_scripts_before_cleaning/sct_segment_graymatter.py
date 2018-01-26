@@ -244,19 +244,19 @@ class FullGmSegmentation:
 
         # Dice
         try:
-            status_gm, output_gm = sct.run('sct_dice_coefficient ' + im_ref_gm_seg.file_name + ext + ' ' + res_gm_seg_bin.file_name + ext + '  -2d-slices 2', error_exit='warning', raise_exception=True)
+            status_gm, output_gm = sct.run('sct_dice_coefficient ' + im_ref_gm_seg.file_name + ext + ' ' + res_gm_seg_bin.file_name + ext + '  -2d-slices 2')
         except Exception:
             sct.run('c3d ' + res_gm_seg_bin.file_name + ext + ' ' + im_ref_gm_seg.file_name + ext + ' -reslice-identity -o ' + im_ref_gm_seg.file_name + '_in_res_space' + ext)
             sct.run('fslmaths ' + im_ref_gm_seg.file_name + '_in_res_space' + ext + ' -thr 0.1 ' + im_ref_gm_seg.file_name + '_in_res_space' + ext )
             sct.run('fslmaths ' + im_ref_gm_seg.file_name + '_in_res_space' + ext + ' -bin ' + im_ref_gm_seg.file_name + '_in_res_space' + ext )
-            status_gm, output_gm = sct.run('sct_dice_coefficient ' + im_ref_gm_seg.file_name + '_in_res_space' + ext + ' ' + res_gm_seg_bin.file_name + ext + '  -2d-slices 2', error_exit='warning')
+            status_gm, output_gm = sct.run('sct_dice_coefficient ' + im_ref_gm_seg.file_name + '_in_res_space' + ext + ' ' + res_gm_seg_bin.file_name + ext + '  -2d-slices 2')
         try:
-            status_wm, output_wm = sct.run('sct_dice_coefficient ' + im_ref_wm_seg.file_name + ext + ' ' + res_wm_seg_bin.file_name + ext + '  -2d-slices 2', error_exit='warning', raise_exception=True)
+            status_wm, output_wm = sct.run('sct_dice_coefficient ' + im_ref_wm_seg.file_name + ext + ' ' + res_wm_seg_bin.file_name + ext + '  -2d-slices 2')
         except Exception:
             sct.run('c3d ' + res_wm_seg_bin.file_name + ext + ' ' + im_ref_wm_seg.file_name + ext + ' -reslice-identity -o ' + im_ref_wm_seg.file_name + '_in_res_space' + ext)
             sct.run('fslmaths ' + im_ref_wm_seg.file_name + '_in_res_space' + ext + ' -thr 0.1 ' + im_ref_wm_seg.file_name + '_in_res_space' + ext)
             sct.run('fslmaths ' + im_ref_wm_seg.file_name + '_in_res_space' + ext + ' -bin ' + im_ref_wm_seg.file_name + '_in_res_space' + ext)
-            status_wm, output_wm = sct.run('sct_dice_coefficient ' + im_ref_wm_seg.file_name + '_in_res_space' + ext + ' ' + res_wm_seg_bin.file_name + ext + '  -2d-slices 2', error_exit='warning')
+            status_wm, output_wm = sct.run('sct_dice_coefficient ' + im_ref_wm_seg.file_name + '_in_res_space' + ext + ' ' + res_wm_seg_bin.file_name + ext + '  -2d-slices 2')
 
         dice_name = 'dice_' + sct.extract_fname(self.target_fname)[1] + '_' + self.param.res_type + '.txt'
         dice_fic = open('../../' + dice_name, 'w')

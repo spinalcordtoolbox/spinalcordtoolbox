@@ -207,8 +207,8 @@ class Centerline:
             # Load centerline data from points and derivatives in parameters
             if points_x is None or points_y is None or points_z is None or deriv_x is None or deriv_y is None or deriv_z is None:
                 raise ValueError('Data must be provided to centerline to be initialized')
-            self.points = array(zip(points_x, points_y, points_z))
-            self.derivatives = array(zip(deriv_x, deriv_y, deriv_z))
+            self.points = np.array(list(zip(points_x, points_y, points_z)))
+            self.derivatives = array(list(zip(deriv_x, deriv_y, deriv_z)))
 
         self.number_of_points = len(self.points)
 
@@ -619,7 +619,7 @@ class Centerline:
 
     def extract_perpendicular_square(self, image, index, size=20, resolution=0.5, interpolation_mode=0, border='constant', cval=0.0):
         x_grid, y_grid, z_grid = np.mgrid[-size:size:resolution, -size:size:resolution, 0:1]
-        coordinates_grid = np.array(zip(x_grid.ravel(), y_grid.ravel(), z_grid.ravel()))
+        coordinates_grid = np.array(list(zip(x_grid.ravel(), y_grid.ravel(), z_grid.ravel())))
         coordinates_phys = self.get_inverse_plans_coordinates(coordinates_grid, np.array([index] * len(coordinates_grid)))
         coordinates_im = np.array(image.transfo_phys2continuouspix(coordinates_phys))
         square = image.get_values(coordinates_im.transpose(), interpolation_mode=interpolation_mode, border=border, cval=cval)
