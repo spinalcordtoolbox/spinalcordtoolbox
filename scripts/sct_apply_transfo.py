@@ -223,7 +223,7 @@ class Transform:
             # Delete temporary folder if specified
             if int(remove_temp_files):
                 sct.printv('\nRemove temporary files...', verbose)
-                sct.run('rm -rf ' + path_tmp, verbose, error_exit='warning')
+                sct.run('rm -rf ' + path_tmp, verbose)
 
         # 2. crop the resulting image using dimensions from the warping field
         warping_field = fname_warp_list_invert[-1]
@@ -237,7 +237,7 @@ class Transform:
             ImageCropper(input_file=fname_out, output_file=fname_out, ref=warping_field).crop()
             # sct.run('sct_crop_image -i '+fname_out+' -o '+fname_out+' -ref '+warping_field)
 
-        sct.display_viewer_syntax([fname_dest, fname_dest], verbose=verbose)
+        sct.display_viewer_syntax([fname_dest, fname_out], verbose=verbose)
 
 
 # MAIN

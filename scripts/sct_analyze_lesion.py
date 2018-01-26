@@ -230,8 +230,8 @@ class AnalyzeLeion:
         printv('  Volume : ' + str(round(vol_tot_cur, 2)) + ' mm^3', self.verbose, type='info')
 
     def _measure_length(self, im_data, p_lst, idx):
-        print len(self.angles)
-        print np.unique(np.where(im_data)[2])
+        print(len(self.angles))
+        print(np.unique(np.where(im_data)[2]))
         length_cur = np.sum([np.cos(self.angles[zz]) * p_lst[2] for zz in np.unique(np.where(im_data)[2])])
         self.measure_pd.loc[idx, 'length [mm]'] = length_cur
         printv('  (S-I) length : ' + str(round(length_cur, 2)) + ' mm', self.verbose, type='info')
@@ -423,7 +423,7 @@ class AnalyzeLeion:
             # compute Z axis of the image, in physical coordinate
             axis_Z = im_seg.get_directions()[2]
 
-            # for iz in xrange(min_z_index, max_z_index + 1):
+            # for iz in range(min_z_index, max_z_index + 1):
             for zz in range(im_seg.dim[2]):
                 if zz >= min_z_index and zz <= max_z_index:
                     # in the case of problematic segmentation (e.g., non continuous segmentation often at the extremities), display a warning but do not crash

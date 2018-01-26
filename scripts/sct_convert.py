@@ -102,7 +102,6 @@ if __name__ == "__main__":
 
 # import os
 # import sys
-# import commands
 # import getopt
 # import sct_utils as sct
 # import nibabel as nib
@@ -151,7 +150,7 @@ if __name__ == "__main__":
 #         usage()
 #
 #     cmd = 'which mnc2nii'
-#     status, output = commands.getstatusoutput(cmd)
+#     status, output = sct.run(cmd)
 #     if not output:
 #         sct.printv('ERROR: minc-toolkit not installed...',1,'error')
 #     if output != '/opt/minc/bin/mnc2nii':

@@ -13,7 +13,7 @@
 #   (write warping field)
 
 
-import os, sys, commands
+import os, sys
 
 from scipy import ndimage
 from numpy import array, asarray, zeros, int8, mean, std, sqrt, convolve, hanning

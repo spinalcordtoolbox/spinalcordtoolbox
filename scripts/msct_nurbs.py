@@ -205,9 +205,9 @@ class NURBS():
 
                 if verbose >= 1:
                     if self.nbControle != nbControle_that_last_worked:
-                        sct.printv('The fitting of the curve was done using ', nbControle_that_last_worked, ' control points: the number that gave the best results. \nError on approximation = ' + str(round(self.error_curve_that_last_worked, 2)) + ' mm')
+                        sct.printv("The fitting of the curve was done using {} control points: the number that gave the best results. \nError on approximation = {} mm".format(nbControle_that_last_worked, round(self.error_curve_that_last_worked, 2)))
                     else:
-                        sct.printv('Number of control points of the optimal NURBS = ' + str(self.nbControle))
+                        sct.printv('Number of control points of the optimal NURBS = {}'.format(self.nbControle))
             else:
                 if verbose >= 1:
                     sct.printv('In NURBS we get nurbs_ctl_points = ', nbControl)
@@ -299,14 +299,14 @@ class NURBS():
         n = len(P) - 1
         c = []
         sumC = 0
-        for i in xrange(n):
+        for i in range(n):
             dist = math.sqrt((P[i + 1][0] - P[i][0])**2 + (P[i + 1][1] - P[i][1])**2 + (P[i + 1][2] - P[i][2])**2)
             c.append(dist)
             sumC += dist
 
         x = [0] * k
         sumCI = 0
-        for i in xrange(n - k + 1):
+        for i in range(n - k + 1):
             sumCI += c[i + 1]
             x.append((n - k + 2) / sumC * ((i + 1) * c[i + 1] / (n - k + 2) + sumCI))
 
@@ -318,14 +318,14 @@ class NURBS():
         n = len(P) - 1
         c = []
         sumC = 0
-        for i in xrange(n):
+        for i in range(n):
             dist = math.sqrt((P[i + 1][0] - P[i][0])**2 + (P[i + 1][1] - P[i][1])**2)
             c.append(dist)
             sumC += dist
 
         x = [0] * k
         sumCI = 0
-        for i in xrange(n - k + 1):
+        for i in range(n - k + 1):
             sumCI += c[i + 1]
             x.append((n - k + 2) / sumC * ((i + 1) * c[i + 1] / (n - k + 2) + sumCI))
 
@@ -341,30 +341,30 @@ class NURBS():
         x = self.calculX3D(P, k)
 
         # Calcul des coefficients N(i,k)
-        Nik_temp = [[-1 for j in xrange(k)] for i in xrange(n)]
-        for i in xrange(n):
+        Nik_temp = [[-1 for j in range(k)] for i in range(n)]
+        for i in range(n):
             Nik_temp[i][-1] = self.N(i, k, x)
         Nik = []
-        for i in xrange(n):
+        for i in range(n):
             Nik.append(Nik_temp[i][-1])
 
         # Calcul des Nik,p'
-        Nik_temp_deriv = [[-1] for i in xrange(n)]
-        for i in xrange(n):
+        Nik_temp_deriv = [[-1] for i in range(n)]
+        for i in range(n):
             Nik_temp_deriv[i][-1] = self.Np(i, k, x)
         Nikp = []
-        for i in xrange(n):
+        for i in range(n):
             Nikp.append(Nik_temp_deriv[i][-1])
 
         # Calcul de la courbe
         param = np.linspace(x[0], x[-1], prec)
         P_x, P_y, P_z = [], [], []  # coord fitees
         P_x_d, P_y_d, P_z_d = [], [], []  # derivees
-        for i in xrange(len(param)):
+        for i in range(len(param)):
             sum_num_x, sum_num_y, sum_num_z, sum_den = 0, 0, 0, 0
             sum_num_x_der, sum_num_y_der, sum_num_z_der, sum_den_der = 0, 0, 0, 0
 
-            for l in xrange(n - k + 1):  # utilisation que des points non nuls
+            for l in range(n - k + 1):  # utilisation que des points non nuls
                 if x[l + k - 1] <= param[i] < x[l + k]:
                     debut = l
             fin = debut + k - 1
@@ -445,30 +445,30 @@ class NURBS():
         x = self.calculX2D(P, k)
 
         # Calcul des coefficients N(i,k)
-        Nik_temp = [[-1 for j in xrange(k)] for i in xrange(n)]
-        for i in xrange(n):
+        Nik_temp = [[-1 for j in range(k)] for i in range(n)]
+        for i in range(n):
             Nik_temp[i][-1] = self.N(i, k, x)
         Nik = []
-        for i in xrange(n):
+        for i in range(n):
             Nik.append(Nik_temp[i][-1])
 
         # Calcul des Nik,p'
-        Nik_temp_deriv = [[-1] for i in xrange(n)]
-        for i in xrange(n):
+        Nik_temp_deriv = [[-1] for i in range(n)]
+        for i in range(n):
             Nik_temp_deriv[i][-1] = self.Np(i, k, x)
         Nikp = []
-        for i in xrange(n):
+        for i in range(n):
             Nikp.append(Nik_temp_deriv[i][-1])
 
         # Calcul de la courbe
         param = np.linspace(x[0], x[-1], prec)
         P_x, P_y = [], []  # coord fitees
         P_x_d, P_y_d = [], []  # derivees
-        for i in xrange(len(param)):
+        for i in range(len(param)):
             sum_num_x, sum_num_y, sum_den = 0, 0, 0
             sum_num_x_der, sum_num_y_der, sum_den_der = 0, 0, 0
 
-            for l in xrange(n - k + 1):  # utilisation que des points non nuls
+            for l in range(n - k + 1):  # utilisation que des points non nuls
                 if x[l + k - 1] <= param[i] < x[l + k]:
                     debut = l
             fin = debut + k - 1
@@ -552,10 +552,10 @@ class NURBS():
 
         # Calcul des chords
         di = 0.0
-        for k in xrange(m - 1):
+        for k in range(m - 1):
             di += math.sqrt((P_x[k + 1] - P_x[k])**2 + (P_y[k + 1] - P_y[k])**2 + (P_z[k + 1] - P_z[k])**2)
         ubar = [0]
-        for k in xrange(m - 1):
+        for k in range(m - 1):
             # ubar.append((k+1)/float(m))  # uniform method
             # ubar.append(ubar[-1]+abs((P_x[k+1]-P_x[k])**2 + (P_y[k+1]-P_y[k])**2 + (P_z[k+1]-P_z[k])**2)/di)  # chord length method
             ubar.append(ubar[-1] + math.sqrt((P_x[k + 1] - P_x[k])**2 + (P_y[k + 1] - P_y[k])**2 + (P_z[k + 1] - P_z[k])**2) / di)  # centripetal method
@@ -563,7 +563,7 @@ class NURBS():
         # the knot vector should reflect the distribution of ubar
         d = (m + 1) / (n - p + 1)
         u_nonuniform = [0.0] * p
-        for j in xrange(n - p):
+        for j in range(n - p):
             i = int((j + 1) * d)
             alpha = (j + 1) * d - i
             u_nonuniform.append((1 - alpha) * ubar[i - 1] + alpha * ubar[i])
@@ -571,7 +571,7 @@ class NURBS():
 
         # the knot vector can also is uniformly distributed
         u_uniform = [0.0] * p
-        for j in xrange(n - p):
+        for j in range(n - p):
             u_uniform.append((float(j) + 1) / float(n - p))
         u_uniform.extend([1.0] * p)
 
@@ -592,20 +592,20 @@ class NURBS():
             u += gamma * (u_nonuniform - u_uniform)
             n_iter += 1
 
-        Nik_temp = [[-1 for j in xrange(p)] for i in xrange(n)]  # noqa
-        for i in xrange(n):
+        Nik_temp = [[-1 for j in range(p)] for i in range(n)]  # noqa
+        for i in range(n):
             Nik_temp[i][-1] = self.N(i, p, u)
         Nik = []
-        for i in xrange(n):
+        for i in range(n):
             Nik.append(Nik_temp[i][-1])
 
         R = []
-        for k in xrange(m - 1):
+        for k in range(m - 1):
             Rtemp = []
             den = 0
             for Ni in Nik:
                 den += self.evaluateN(Ni, ubar[k], u)
-            for i in xrange(n - 1):
+            for i in range(n - 1):
                 Rtemp.append(self.evaluateN(Nik[i], ubar[k], u) / den)
             R.append(Rtemp)
         R = np.matrix(R)
@@ -615,31 +615,31 @@ class NURBS():
 
         # calcul des denominateurs par ubar
         denU = []
-        for k in xrange(m - 1):
+        for k in range(m - 1):
             temp = 0
             for Ni in Nik:
                 temp += self.evaluateN(Ni, ubar[k], u)
             denU.append(temp)
         Tx = []
-        for i in xrange(n - 1):
+        for i in range(n - 1):
             somme = 0
-            for k in xrange(m - 1):
+            for k in range(m - 1):
                 somme += w[k] * self.evaluateN(Nik[i], ubar[k], u) * self.Tk(k, P_x, Nik, ubar[k], u) / denU[k]
             Tx.append(somme)
         Tx = np.matrix(Tx)
 
         Ty = []
-        for i in xrange(n - 1):
+        for i in range(n - 1):
             somme = 0
-            for k in xrange(m - 1):
+            for k in range(m - 1):
                 somme += w[k] * self.evaluateN(Nik[i], ubar[k], u) * self.Tk(k, P_y, Nik, ubar[k], u) / denU[k]
             Ty.append(somme)
         Ty = np.matrix(Ty)
 
         Tz = []
-        for i in xrange(n - 1):
+        for i in range(n - 1):
             somme = 0
-            for k in xrange(m - 1):
+            for k in range(m - 1):
                 somme += w[k] * self.evaluateN(Nik[i], ubar[k], u) * self.Tk(k, P_z, Nik, ubar[k], u) / denU[k]
             Tz.append(somme)
         Tz = np.matrix(Tz)
@@ -673,10 +673,10 @@ class NURBS():
 
         # Calcul des chords
         di = 0.0
-        for k in xrange(m - 1):
+        for k in range(m - 1):
             di += math.sqrt((P_x[k + 1] - P_x[k])**2 + (P_y[k + 1] - P_y[k])**2)
         ubar = [0]
-        for k in xrange(m - 1):
+        for k in range(m - 1):
             # ubar.append((k+1)/float(m))  # uniform method
             # ubar.append(ubar[-1]+abs((P_x[k+1]-P_x[k])**2 + (P_y[k+1]-P_y[k])**2 + (P_z[k+1]-P_z[k])**2)/di)  # chord length method
             ubar.append(ubar[-1] + math.sqrt((P_x[k + 1] - P_x[k])**2 + (P_y[k + 1] - P_y[k])**2) / di)  # centripetal method
@@ -684,7 +684,7 @@ class NURBS():
         # the knot vector should reflect the distribution of ubar
         d = (m + 1) / (n - p + 1)
         u_nonuniform = [0.0] * p
-        for j in xrange(n - p):
+        for j in range(n - p):
             i = int((j + 1) * d)
             alpha = (j + 1) * d - i
             u_nonuniform.append((1 - alpha) * ubar[i - 1] + alpha * ubar[i])
@@ -692,7 +692,7 @@ class NURBS():
 
         # the knot vector can also is uniformly distributed
         u_uniform = [0.0] * p
-        for j in xrange(n - p):
+        for j in range(n - p):
             u_uniform.append((float(j) + 1) / float(n - p))
         u_uniform.extend([1.0] * p)
 
@@ -713,20 +713,20 @@ class NURBS():
             u += gamma * (u_nonuniform - u_uniform)
             n_iter += 1
 
-        Nik_temp = [[-1 for j in xrange(p)] for i in xrange(n)]  # noqa
-        for i in xrange(n):
+        Nik_temp = [[-1 for j in range(p)] for i in range(n)]  # noqa
+        for i in range(n):
             Nik_temp[i][-1] = self.N(i, p, u)
         Nik = []
-        for i in xrange(n):
+        for i in range(n):
             Nik.append(Nik_temp[i][-1])
 
         R = []
-        for k in xrange(m - 1):
+        for k in range(m - 1):
             Rtemp = []
             den = 0
             for Ni in Nik:
                 den += self.evaluateN(Ni, ubar[k], u)
-            for i in xrange(n - 1):
+            for i in range(n - 1):
                 Rtemp.append(self.evaluateN(Nik[i], ubar[k], u) / den)
             R.append(Rtemp)
         R = np.matrix(R)
@@ -736,23 +736,23 @@ class NURBS():
 
         # calcul des denominateurs par ubar
         denU = []
-        for k in xrange(m - 1):
+        for k in range(m - 1):
             temp = 0
             for Ni in Nik:
                 temp += self.evaluateN(Ni, ubar[k], u)
             denU.append(temp)
         Tx = []
-        for i in xrange(n - 1):
+        for i in range(n - 1):
             somme = 0
-            for k in xrange(m - 1):
+            for k in range(m - 1):
                 somme += w[k] * self.evaluateN(Nik[i], ubar[k], u) * self.Tk(k, P_x, Nik, ubar[k], u) / denU[k]
             Tx.append(somme)
         Tx = np.matrix(Tx)
 
         Ty = []
-        for i in xrange(n - 1):
+        for i in range(n - 1):
             somme = 0
-            for k in xrange(m - 1):
+            for k in range(m - 1):
                 somme += w[k] * self.evaluateN(Nik[i], ubar[k], u) * self.Tk(k, P_y, Nik, ubar[k], u) / denU[k]
             Ty.append(somme)
         Ty = np.matrix(Ty)
@@ -790,32 +790,32 @@ class NURBS():
 
         # Calcul du vecteur de noeuds
         di = 0
-        for k in xrange(n - 1):
+        for k in range(n - 1):
             di += math.sqrt((newPx[k + 1] - newPx[k])**2 + (newPy[k + 1] - newPy[k])**2 + (newPz[k + 1] - newPz[k])**2)
         u = [0] * p
         ubar = [0]
-        for k in xrange(n - 1):
+        for k in range(n - 1):
             ubar.append(ubar[-1] + math.sqrt((newPx[k + 1] - newPx[k])**2 + (newPy[k + 1] - newPy[k])**2 + (newPz[k + 1] - newPz[k])**2) / di)
-        for j in xrange(n - p):
+        for j in range(n - p):
             sumU = 0
-            for i in xrange(p):
+            for i in range(p):
                 sumU = sumU + ubar[j + i]
             u.append(sumU / p)
         u.extend([1] * p)
 
         # Construction des fonctions basiques
-        Nik_temp = [[-1 for j in xrange(p)] for i in xrange(n)]
-        for i in xrange(n):
+        Nik_temp = [[-1 for j in range(p)] for i in range(n)]
+        for i in range(n):
             Nik_temp[i][-1] = self.N(i, p, u)
         Nik = []
-        for i in xrange(n):
+        for i in range(n):
             Nik.append(Nik_temp[i][-1])
 
         # Construction des matrices
         M = []
-        for i in xrange(n):
+        for i in range(n):
             ligneM = []
-            for j in xrange(n):
+            for j in range(n):
                 ligneM.append(self.evaluateN(Nik[j], ubar[i], u))
             M.append(ligneM)
         M = np.matrix(M)
@@ -836,11 +836,11 @@ class NURBS():
         n = len(P)  # Nombre de points de controle - 1
         P_x, P_y, P_z = [], [], []  # coord fitees
         P_x_d, P_y_d, P_z_d = [], [], []  # derivees
-        for i in xrange(len(param)):
+        for i in range(len(param)):
             sum_num_x, sum_num_y, sum_num_z, sum_den = 0, 0, 0, 0
             sum_num_x_der, sum_num_y_der, sum_num_z_der, sum_den_der = 0, 0, 0, 0
 
-            for l in xrange(n - k + 1):  # utilisation que des points non nuls
+            for l in range(n - k + 1):  # utilisation que des points non nuls
                 if x[l + k - 1] <= param[i] < x[l + k]:
                     debut = l
             fin = debut + k - 1
@@ -891,19 +891,19 @@ class NURBS():
         x = self.calculX3D(P, k)
 
         # Calcul des coefficients N(i,k)
-        Nik_temp = [[-1 for j in xrange(k)] for i in xrange(n)]
-        for i in xrange(n):
+        Nik_temp = [[-1 for j in range(k)] for i in range(n)]
+        for i in range(n):
             Nik_temp[i][-1] = self.N(i, k, x)
         Nik = []
-        for i in xrange(n):
+        for i in range(n):
             Nik.append(Nik_temp[i][-1])
 
         # Calcul des Nik,p'
-        Nik_temp_deriv = [[-1] for i in xrange(n)]
-        for i in xrange(n):
+        Nik_temp_deriv = [[-1] for i in range(n)]
+        for i in range(n):
             Nik_temp_deriv[i][-1] = self.Np(i, k, x)
         Nikp = []
-        for i in xrange(n):
+        for i in range(n):
             Nikp.append(Nik_temp_deriv[i][-1])
 
         # Calcul de la courbe

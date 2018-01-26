@@ -12,7 +12,7 @@
 #########################################################################################
 
 import sct_utils as sct
-import commands
+
 
 
 def init(param_test):
