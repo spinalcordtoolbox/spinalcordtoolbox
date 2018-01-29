@@ -64,7 +64,7 @@ def resample_image(input_image, new_size, new_size_type,
     sct.printv('  new shape: ' + str(n_r), verbose)
 
     affine = input_image.coordmap.affine
-    sct.printv('  affine matrix: \n' + str(affine))
+    sct.printv('  affine matrix: \n' + str(affine), verbose)
 
     # create ref image
     arr_r = np.zeros(n_r)
@@ -126,7 +126,6 @@ def resample_image(input_image, new_size, new_size_type,
                                 dtype='double', interp_order=interp_order,
                                 mode='nearest')
             data_r[:, :, :, it] = data3d_r.get_data()
-
 
     nii_r = nipy.core.api.Image(data_r, coordmap_r)
 

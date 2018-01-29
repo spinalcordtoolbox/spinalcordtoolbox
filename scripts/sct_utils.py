@@ -765,7 +765,9 @@ class TempFolder(object):
 
         :param filename: The filename to copy into the folder.
         """
+        file_fname = os.path.basename(filename)
         copy(filename, self.path_tmp)
+        return self.path_tmp + '/' + file_fname
 
     def cleanup(self):
         """Remove the created folder and its contents."""

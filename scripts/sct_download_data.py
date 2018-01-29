@@ -39,7 +39,7 @@ def get_parser():
             'sct_example_data', 'sct_testing_data', 'PAM50', 'MNI-Poly-AMU',
             'gm_model', 'optic_models', 'pmj_models', 'binaries_debian',
             'binaries_centos', 'binaries_osx', 'course_hawaii17',
-            'deepseg_gm_models',
+            'deepseg_gm_models', 'deepseg_sc_models'
         ])
     parser.add_option(
         name="-v",
@@ -92,6 +92,8 @@ def main(args=None):
         'course_hawaii17': 'https://osf.io/6exht/?action=download',
         'deepseg_gm_models': ['https://osf.io/y8k2e/?action=download',
                               'https://www.neuro.polymtl.ca/_media/downloads/sct/20171126_deepgmseg_models.zip'],
+        'deepseg_sc_models': ['https://osf.io/86phg/?action=download',
+                              'https://www.neuro.polymtl.ca/_media/downloads/sct/20180125_deepseg_sc_models.zip']
     }
 
     # Get parser info
