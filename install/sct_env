@@ -35,7 +35,7 @@ function guess_shell {
 function curdir {
   local shell=$(guess_shell)
   if [ "$shell" = "zsh" ]; then
-    echo "$(dirname "${(%):-%N}")"
+    echo "$(dirname "${(%):-%x}")"
   elif [ "$shell" = "bash" ]; then
     echo "$(dirname "${BASH_SOURCE[0]}")"
   else
