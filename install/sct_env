@@ -45,10 +45,15 @@ function curdir {
   return 0
 }
 
-SCT_DIR="$(realpath "$(dirname "$(curdir)")")"
+function abspath {
+  cd "$1" 2>/dev/null && pwd
+}
+
+SCT_DIR="$(abspath "$(dirname "$(curdir)")")"
 
 # Python scripts (for imports)
 path_prepend ${SCT_DIR}/scripts PYTHONPATH
 
 export SCT_DIR
 export PYTHONPATH
+
