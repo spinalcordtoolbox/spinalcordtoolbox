@@ -8,23 +8,47 @@
 # License: see the file LICENSE.TXT
 #########################################################################################
 
-function addtopath {
+function path_prepend {
   # will not add the path again if it is already there
   # usage: addtopath "/a/directory/to/be/added" PATH_VARIABLE
-  if [[ ":${!2}:" != *":$1:"* ]]; then
-    bidon1="${1}:${!2}"
-    eval "${2}=$bidon1"
+  eval "local path_variable=$(eval echo '$'$2)"
+  local sub=":$1:"
+  if [ "${path_variable/$sub/}" = "${path_variable}" ]; then
+    if [ -z $path_variable ]; then
+      eval "$2=$1"
+    else
+      eval "$2=$1:$path_variable"
+    fi
   fi
 }
 
-SCT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+function guess_shell {
+  if [ -n "$ZSH_VERSION" ]; then
+    echo zsh
+  elif [ -n "$BASH_VERSION" ]; then
+    echo bash
+  else
+    echo "guess_shell() error: unknown shell"
+  fi
+}
+
+function curdir {
+  local shell=$(guess_shell)
+  if [ "$shell" = "zsh" ]; then
+    echo "$(dirname "${(%):-%N}")"
+  elif [ "$shell" = "bash" ]; then
+    echo "$(dirname "${BASH_SOURCE[0]}")"
+  else
+    echo "curdir(): unknown shell" >&2
+    return 1
+  fi
+  return 0
+}
+
+SCT_DIR="$(realpath "$(dirname "$(curdir)")")"
+
 # Python scripts (for imports)
-SCT_DIR=${SCT_DIR%/bin}
-addtopath ${SCT_DIR}/scripts PYTHONPATH
-if echo $(ps -o comm= $$) | grep csh ; then
-    setenv SCT_DIR
-    setenv PYTHONPATH
-else
-    export SCT_DIR
-    export PYTHONPATH
-fi
+path_prepend ${SCT_DIR}/scripts PYTHONPATH
+
+export SCT_DIR
+export PYTHONPATH
