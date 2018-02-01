@@ -222,8 +222,7 @@ class Option:
         elif param.lower() in self.list_no_image:
             no_image = True
         else:
-            sct.printv("ERROR: File is not a NIFTI image file. Exiting", type='error')
-
+            raise ValueError("File is not a NIFTI image file. Exiting")
         if nii:
             return param_tmp + '.nii'
         elif niigz:
@@ -231,7 +230,8 @@ class Option:
         elif no_image:
             return param
         else:
-            sct.printv("ERROR: File " + param + " does not exist. Exiting", type='error')
+            sct.log.debug('executed in {}'.format(os.getcwd()))
+            raise ValueError("File " + param + " does not exist. Exiting")
 
     def checkFolder(self, param):
         # check if the folder exist. If not, create it.
@@ -246,9 +246,9 @@ class Option:
         else:
             result_creation = 0  # no need for checking
         if result_creation == 2:
-            sct.printv("ERROR: Permission denied for folder creation...", type="error")
+            raise OSError("Permission denied for folder creation {}".format(param))
         elif result_creation == 1:
-            sct.printv("Folder " + param + " has been created.", 0, type='warning')
+            sct.log.warning("Folder " + param + " has been created.", 0)
         return param
 
 
@@ -336,17 +336,17 @@ class Parser:
 
             if arg in self.options:
                 if self.options[arg].deprecated_rm:
-                    sct.printv("ERROR : " + arg + " is a deprecated argument and is no longer supported by the current version.", 1, 'error')
+                    raise SyntaxError("{} is a deprecated argument and is no longer supported by the current version.".format(arg))
                 # for each argument, check if is in the option list.
                 # if so, check the integrity of the argument
                 if self.options[arg].deprecated:
-                    sct.printv("WARNING : " + arg + " is a deprecated argument and will no longer be updated in future versions.", 1, 'warning')
+                    sct.log.warning(" {} is a deprecated argument and will no longer be updated in future versions.".format(arg))
                 if self.options[arg].deprecated_by is not None:
                     try:
-                        sct.printv("WARNING : " + arg + " is a deprecated argument and will no longer be updated in future versions. Changing argument to " + self.options[arg].deprecated_by + ".", 1, 'warning')
+                        sct.log.warning(arg + " is a deprecated argument and will no longer be updated in future versions. Changing argument to " + self.options[arg].deprecated_by + ".")
                         arg = self.options[arg].deprecated_by
                     except KeyError as e:
-                        sct.printv("ERROR : Current argument non existent : " + e.message, 1, 'error')
+                        raise SyntaxError("Argument {} non existent".format(arg))
                 if self.options[arg].type_value:
                     if len(arguments) > index + 1:  # Check if option is not the last item
                         param = arguments[index + 1]
@@ -429,7 +429,7 @@ class Parser:
                             else:
                                 dictionary[key] = os.path.join(path_to_add, option)
             else:
-                sct.printv("ERROR: the option you provided is not contained in this parser. Please check the dictionary", verbose=1, type='error')
+                raise SyntaxError("The option {} you provided is not contained in this parser. Please check the dictionary".format(key))
 
         return dictionary
 
@@ -560,10 +560,9 @@ class Usage:
         usage = self.header + self.description + self.usage + self.arguments_string
 
         if error:
-            sct.printv(error + '\nAborted...', type='warning')
-            sct.printv(usage, type='normal')
+            sct.log.error(error + '\nAborted...')
+            sct.log.info(usage)
             raise SyntaxError(error)
-            exit(1)
         else:
             return usage
 
@@ -571,9 +570,7 @@ class Usage:
         if error:
             self.generate(error)
         else:
-            sct.printv(self.generate())
-            from sys import exit
-            exit(0)
+            raise SyntaxError(self.generate())
 
     def print_list_with_brackets(self, l):
         type_value = '{'
