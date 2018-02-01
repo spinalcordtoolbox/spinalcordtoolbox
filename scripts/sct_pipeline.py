@@ -53,9 +53,11 @@ import copy
 from time import time, strftime
 if "SCT_MPI_MODE" in os.environ:
     from mpi4py.futures import MPIPoolExecutor as PoolExecutor
+    __MPI__ = True
 else:
     # from multiprocessing import Pool
     from concurrent.futures import ProcessPoolExecutor as PoolExecutor
+    __MPI__ = False
 import itertools
 import pandas as pd
 import glob
@@ -333,8 +335,8 @@ def run_function(function, folder_dataset, list_subj, list_args=[], nb_cpu=None,
     try:
         compute_time = time()
         sct.log.debug('paused but print')
-        # async_results = pool.map(function_launcher, list_func_subj_args)
-        async_results = [function_launcher(i) for i in list_func_subj_args]
+        async_results = pool.map(function_launcher, list_func_subj_args)
+        # async_results = [function_launcher(i) for i in list_func_subj_args]
         compute_time = time() - compute_time
         # concatenate all_results into single Panda structure
         #  async_results is an iterator that locks on __next__ call
@@ -507,6 +509,11 @@ if __name__ == "__main__":
     sct.log.info('CPU Thread on local machine: {} '.format(cpu_count()))
 
     sct.log.info('    Requested threads:       {} '.format(nb_cpu))
+
+    if __MPI__:
+        sct.log.info("Running in MPI mode with mpi4py.futures's MPIPoolExecutor")
+    else:
+        sct.log.info("Running with python concurrent.futures's ProcessPoolExecutor")
 
     # check RAM
     sct.checkRAM(os_running, 0)
