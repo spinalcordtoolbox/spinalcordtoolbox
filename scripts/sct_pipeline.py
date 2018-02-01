@@ -45,6 +45,7 @@ usage:
 import copy_reg
 import os
 import platform
+import re
 import signal
 import sys
 import types
@@ -342,7 +343,22 @@ def run_function(function, folder_dataset, list_subj, list_args=[], nb_cpu=None,
         # concatenate all_results into single Panda structure
         #  async_results is an iterator that locks on __next__ call until a new results comes
         sct.log.info('Waiting for results, be patient')
-        results_dataframe = pd.concat([result for result in async_results])
+        count = 0
+        all_results = []
+        for result in async_results:
+            count += 1
+            # Hack with how the dataframe is created in sct_testing, should try to find a more generic solution
+            try:
+                directory = re.search('^(\w+) +', result.__repr__().split('\n')[1]).groups()[0]
+            except (AttributeError, IndexError):
+                directory = ''
+                sct.log.debug('could not find dataframe name')
+
+            sct.log.info('{}/{}: {} done'.format(count, len(list_func_subj_args), directory))
+            all_results.append(result)
+
+        results_dataframe = pd.concat(all_results)
+
     except KeyboardInterrupt:
         sct.log.warning("\nCaught KeyboardInterrupt, terminating workers")
         pool.shutdown()
