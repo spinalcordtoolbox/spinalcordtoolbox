@@ -43,7 +43,6 @@ usage:
 # TODO: read_database: hard coded fields to put somewhere else (e.g. config file)
 
 import copy_reg
-# import json
 import os
 import platform
 import signal
@@ -51,24 +50,28 @@ import sys
 import types
 import copy
 from time import time, strftime
-if "SCT_MPI_MODE" in os.environ:
-    from mpi4py.futures import MPIPoolExecutor as PoolExecutor
-    __MPI__ = True
-else:
-    # from multiprocessing import Pool
-    from concurrent.futures import ProcessPoolExecutor as PoolExecutor
-    __MPI__ = False
-import itertools
-import pandas as pd
-import glob
-import importlib
-import sct_utils as sct
-import msct_parser
-import sct_testing
 
 path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
 path_script = os.path.dirname(__file__)
 sys.path.append(os.path.join(path_sct, 'testing'))
+
+if "SCT_MPI_MODE" in os.environ:
+    from mpi4py.futures import MPIPoolExecutor as PoolExecutor
+    __MPI__ = True
+    sys.path.insert(0, path_script)
+else:
+    from concurrent.futures import ProcessPoolExecutor as PoolExecutor
+    __MPI__ = False
+
+import itertools
+import pandas as pd
+import glob
+import importlib
+
+import sct_utils as sct
+import msct_parser
+import sct_testing
+
 
 
 def _pickle_method(method):
@@ -339,7 +342,7 @@ def run_function(function, folder_dataset, list_subj, list_args=[], nb_cpu=None,
         # async_results = [function_launcher(i) for i in list_func_subj_args]
         compute_time = time() - compute_time
         # concatenate all_results into single Panda structure
-        #  async_results is an iterator that locks on __next__ call
+        #  async_results is an iterator that locks on __next__ call until a new results comes
         results_dataframe = pd.concat([result for result in async_results])
     except KeyboardInterrupt:
         sct.log.warning("\nCaught KeyboardInterrupt, terminating workers")
