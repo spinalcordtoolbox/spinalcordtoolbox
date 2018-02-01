@@ -337,12 +337,11 @@ def run_function(function, folder_dataset, list_subj, list_args=[], nb_cpu=None,
     compute_time = None
     try:
         compute_time = time()
-        sct.log.debug('paused but print')
         async_results = pool.map(function_launcher, list_func_subj_args)
-        # async_results = [function_launcher(i) for i in list_func_subj_args]
         compute_time = time() - compute_time
         # concatenate all_results into single Panda structure
         #  async_results is an iterator that locks on __next__ call until a new results comes
+        sct.log.info('Waiting for results, be patient')
         results_dataframe = pd.concat([result for result in async_results])
     except KeyboardInterrupt:
         sct.log.warning("\nCaught KeyboardInterrupt, terminating workers")
