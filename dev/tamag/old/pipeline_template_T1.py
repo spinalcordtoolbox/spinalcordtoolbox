@@ -16,7 +16,7 @@
 # ~/subject/T1/labels_vertebral.nii.gz --> a series of labels to identify vertebral level(to be done on the original RPI image i.e. non crop image). These are placed on the left side of the vertebral body, at the edge of the cartilage separating two vertebra. The value of the label corresponds to the level. There are 20 labels: [name of point at top] + PMJ + 18 labels of vertebral level going until the frontier T12/L1 I.e., Brainstem [name first label]=1, (PMJ)=2, C2/C3=3, C3/C4=4, C4/C5=5, C5/C6=6, T1/T2=7, T2/T3=8, T3/T4=9 ... T11/T12=19, T12/L1=20.
 # cf snapshot in $SCT_DIR/dev/template_preprocessing/snap1, 2, etc.
 
-import os, sys, commands
+import os, sys
 
 # Get path of the toolbox
 path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))

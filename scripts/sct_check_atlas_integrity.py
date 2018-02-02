@@ -19,7 +19,7 @@
 
 import os
 import sys
-import commands
+
 import getopt
 import sct_utils as sct
 from msct_parser import Parser

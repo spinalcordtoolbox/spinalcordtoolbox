@@ -253,21 +253,25 @@ def main(args=None):
         im_out = None
         printv(parser.usage.generate(error='ERROR: you need to specify an operation to do on the input image'))
 
+    # in case fname_out is not defined, use first element of input file name list
+    if fname_out == None:
+        fname_out = fname_in[0]
+
     # Write output
     if im_out is not None:
         printv('Generate output files...', verbose)
         # if only one output
         if len(im_out) == 1:
             im_out[0].setFileName(fname_out) if fname_out is not None else None
-            im_out[0].save(squeeze_data=False, type=output_type)
-            sct.display_viewer_syntax([fname_out])
+            im_out[0].save(squeeze_data=False, type=output_type, verbose=verbose)
+            sct.display_viewer_syntax([fname_out], verbose=verbose)
         if '-mcs' in arguments:
             # use input file name and add _X, _Y _Z. Keep the same extension
             fname_out = []
-            for i_dim in xrange(3):
+            for i_dim in range(3):
                 fname_out.append(add_suffix(fname_in[0], '_' + dim_list[i_dim].upper()))
                 im_out[i_dim].setFileName(fname_out[i_dim])
-                im_out[i_dim].save()
+                im_out[i_dim].save(verbose=verbose)
             sct.display_viewer_syntax([fname_out])
         if '-split' in arguments:
             # use input file name and add _"DIM+NUMBER". Keep the same extension
@@ -275,7 +279,7 @@ def main(args=None):
             for i, im in enumerate(im_out):
                 l_fname_out.append(add_suffix(fname_in[0], '_' + dim_list[dim].upper() + str(i).zfill(4)))
                 im.setFileName(l_fname_out[i])
-                im.save()
+                im.save(verbose=verbose)
             sct.display_viewer_syntax(l_fname_out)
 
     elif "-getorient" in arguments:
@@ -570,7 +574,7 @@ def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1, f
                 printv('Get orientation...', verbose)
                 im_out = None
                 ori = get_orientation(im)
-            except Exception, e:
+            except Exception as e:
                 printv('ERROR: an error occurred: ' + str(e), verbose, 'error')
             return ori
         elif set:
@@ -608,7 +612,7 @@ def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1, f
             im_out = None
             ori = get_orientation(im_split_list[0])
             os.chdir(curdir)
-            sct.run('rm -rf ' + tmp_folder, error_exit='warning')
+            sct.run('rm -rf ' + tmp_folder)
             return ori
         elif set:
             # set orientation
@@ -630,7 +634,7 @@ def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1, f
 
         # Go back to previous directory:
         os.chdir(curdir)
-        sct.run('rm -rf ' + tmp_folder, error_exit='warning')
+        sct.run('rm -rf ' + tmp_folder)
 
     if fname_out:
         im_out.setFileName(fname_out)
@@ -750,7 +754,7 @@ def visualize_warp(fname_warp, fname_grid=None, step=3, rm_tmp=True):
     grid_warped = path_warp + extract_fname(fname_grid)[1] + '_' + file_warp + ext_warp
     sct.run('sct_apply_transfo -i ' + fname_grid + ' -d ' + fname_grid + ' -w ' + fname_warp + ' -o ' + grid_warped)
     if rm_tmp:
-        sct.run('rm -rf ' + tmp_dir, error_exit='warning')
+        sct.run('rm -rf ' + tmp_dir)
 
 
 if __name__ == "__main__":

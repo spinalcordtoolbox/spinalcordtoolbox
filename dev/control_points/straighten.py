@@ -38,7 +38,7 @@ class param:
 import os
 import getopt
 import time
-import commands
+
 import sys
 import sct_utils as sct
 from sct_utils import fsloutput
@@ -484,7 +484,7 @@ def main():
     # TODO: use sct.run() when output from the following command will be different from 0 (currently there seem to be a bug)
     cmd = 'isct_ComposeMultiTransform 3 tmp.curve2straight.nii.gz -R tmp.landmarks_straight.nii.gz tmp.warp_curve2straight.nii.gz tmp.curve2straight_rigid.txt'
     print('>> '+cmd)
-    commands.getstatusoutput(cmd)
+    sct.run(cmd)
     
     # Estimate b-spline transformation straight --> curve
     # TODO: invert warping field instead of estimating a new one
@@ -497,7 +497,7 @@ def main():
     # TODO: use sct.run() when output from the following command will be different from 0 (currently there seem to be a bug)
     cmd = 'isct_ComposeMultiTransform 3 tmp.straight2curve.nii.gz -R tmp.landmarks_straight.nii.gz -i tmp.curve2straight_rigid.txt tmp.warp_straight2curve.nii.gz'
     print('>> '+cmd)
-    commands.getstatusoutput(cmd)
+    sct.run(cmd)
     
     #print '\nPad input image...'
     #sct.run('isct_c3d '+fname_anat+' -pad '+str(padz)+'x'+str(padz)+'x'+str(padz)+'vox '+str(padz)+'x'+str(padz)+'x'+str(padz)+'vox 0 -o tmp.anat_pad.nii')

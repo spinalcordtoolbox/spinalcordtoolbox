@@ -7,7 +7,7 @@
 
 # check if needed Python libraries are already installed or not
 import os
-import commands
+
 import sys
 import sct_utils as sct
 import nibabel as nib
