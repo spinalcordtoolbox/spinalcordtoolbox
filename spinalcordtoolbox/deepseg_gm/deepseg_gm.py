@@ -154,7 +154,7 @@ def segment_volume(ninput_volume, model_name):
     :param model_name: the name of the model to use.
     :return: segmented slices.
     """
-    gmseg_model_challenge = DataResource('deepgmseg_models')
+    gmseg_model_challenge = DataResource('deepseg_gm_models')
     model_path, metadata_path = model.MODELS[model_name]
 
     metadata_abs_path = gmseg_model_challenge.get_file_path(metadata_path)
