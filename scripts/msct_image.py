@@ -827,7 +827,7 @@ class Image(object):
 
         coord_origin = np.array([[m_p2f[0, 3]], [m_p2f[1, 3]], [m_p2f[2, 3]]])
 
-        if coordi != None:
+        if coordi is not None:
             coordi_phys = np.transpose(np.asarray(coordi))
             coordi_pix = np.transpose(np.dot(m_f2p_transfo, (coordi_phys - coord_origin)))
             coordi_pix_tmp = coordi_pix.tolist()
