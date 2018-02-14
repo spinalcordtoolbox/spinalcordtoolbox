@@ -2,7 +2,7 @@
 #
 # Installer for requirements
 #
-import platform
+
 from commands import getstatusoutput
 
 print '\n--------------------------'
@@ -24,12 +24,3 @@ if status:
     print 'ERROR: Installation with pip failed.\n'+output
 else:
     print output
-
-# Installation of platform-specific dependencies
-print '\nInstallation of platform-specific dependencies...'
-if "debian" in platform.dist():
-    status, output = getstatusoutput('conda install --yes tensorflow==1.3.0')
-    if status:
-        print 'ERROR: Installation of platform-specific dependencies failed.\n'+output
-    else:
-        print output
