@@ -416,6 +416,12 @@ else
             and verify your internet connection before reinstalling"
     exit $e_status
   fi
+
+  # Install tensorflow for Debian
+  if python -c "import platform; print platform.dist()" | grep -qi 'debian'; then
+    conda install -c defaults --yes tensorflow==1.3.0
+  fi
+
   # reinstall numpy at the end to prevent some bugs
   n_version=$(conda list  numpy | grep numpy |awk '{print $2}')
   conda install -fy numpy=$n_version
