@@ -96,6 +96,7 @@ procedures.
 - [Grabher et al. Neurodegeneration in the Spinal Ventral Horn Prior to Motor Impairment in Cervical Spondylotic Myelopathy. Journal of Neurotrauma 2017](http://online.liebertpub.com/doi/abs/10.1089/neu.2017.4980)
 - [Duval et al. Scan–rescan of axcaliber, macromolecular tissue volume, and g-ratio in the spinal cord. MRM 2017](http://onlinelibrary.wiley.com/doi/10.1002/mrm.26945/full)
 - [Smith et al. Lateral corticospinal tract damage correlates with motor output in incomplete spinal cord injury. Archives of Physical Medicine and Rehabilitation 2017](http://www.sciencedirect.com/science/article/pii/S0003999317312844)
+- [Kafali et al. Phase-correcting non-local means filtering for diffusion-weighted imaging of the spinal cord. MRM 2018](http://onlinelibrary.wiley.com/doi/10.1002/mrm.27105/full)
 
 
 ## Citing spinalcordtoolbox
