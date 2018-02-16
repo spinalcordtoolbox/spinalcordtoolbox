@@ -13,20 +13,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import errno
-import sys
-import time
-
-import os
-import commands
-import subprocess
-import re
-from sys import stdout
-import logging
-
-import glob
-import shutil
-
+import sys, io, os, time, errno, tempfile, subprocess, re, logging, glob, shutil
 
 # TODO: under run(): add a flag "ignore error" for isct_ComposeMultiTransform
 # TODO: check if user has bash or t-schell for fsloutput definition
@@ -58,14 +45,17 @@ def start_stream_logger():
     formatter = logging.Formatter(LOG_FORMAT)
     stream_handler.setFormatter(formatter)
 
-    if LOG_LEVEL in logging._levelNames:
-        stream_handler.setLevel(LOG_LEVEL)
-        log.addHandler(stream_handler)
-    elif LOG_LEVEL == 'DISABLE':
-        stream_handler.setLevel(sys.maxint)
+    if LOG_LEVEL == "DISABLE":
+        level = sys.maxint
+    elif LOG_LEVEL is None:
+        level = logging.INFO
     else:
-        stream_handler.setLevel(logging.INFO)
-        log.addHandler(stream_handler)
+        level = getattr(logging, LOG_LEVEL, None)
+        if level is None:
+            logging.warn("SCT_LOG_LEVEL set to invalid value -> using default")
+            level = logging.INFO
+    stream_handler.setLevel(level)
+    log.addHandler(stream_handler)
 
 
 def pause_stream_logger():
@@ -137,6 +127,67 @@ class bcolors(object):
         return [v for k, v in cls.__dict__.items() if not k.startswith("_") and k is not "colors"]
 
 
+def no_new_line_log(msg, *args, **kwargs):
+    """ Log info to stdout without adding new line
+        Useful for progress bar.
+        Monkey patching the sct stream handler
+
+    see logging.info() method for parameters
+
+    """
+
+
+    def my_emit(self, record):
+        """
+        Emit a record.
+        Monkey patcher for progress bar in the sct
+        Do a carriage return \r before the string
+        instead of a new line \n at the end
+
+        """
+        try:
+            unicode
+            _unicode = True
+        except NameError:
+            _unicode = False
+
+        try:
+            msg = self.format(record)
+            stream = self.stream
+            fs = "\r%s"
+            if not _unicode: #if no unicode support...
+                stream.write(fs % msg)
+            else:
+                try:
+                    if (isinstance(msg, unicode) and
+                        getattr(stream, 'encoding', None)):
+                        ufs = u'%s\n'
+                        try:
+                            stream.write(ufs % msg)
+                        except UnicodeEncodeError:
+                            stream.write((ufs % msg).encode(stream.encoding))
+                    else:
+                        stream.write(fs % msg)
+                except UnicodeError:
+                    stream.write(fs % msg.encode("UTF-8"))
+            self.flush()
+        except (KeyboardInterrupt, SystemExit):
+            raise
+        except:
+            self.handleError(record)
+
+    orig_emit = stream_handler.__class__.emit
+    stream_handler.__class__.emit = my_emit
+
+    log.info(msg, *args, **kwargs)
+    if log.handlers:
+        [h.flush() for h in log.handlers]
+
+    stream_handler.__class__.emit = orig_emit
+
+
+
+
 #=======================================================================================================================
 # add suffix
 #=======================================================================================================================
@@ -164,81 +215,180 @@ def add_suffix(fname, suffix):
 def run_old(cmd, verbose=1):
     if verbose:
         printv(bcolors.blue + cmd + bcolors.normal)
-    status, output = commands.getstatusoutput(cmd)
+    status, output = run(cmd)
     if status != 0:
         printv('\nERROR! \n' + output + '\nExit program.\n', 1, 'error')
     else:
         return status, output
 
 
-def run(cmd, verbose=1, error_exit='error', raise_exception=False):
+def run(cmd, verbose=1, raise_exception=True, cwd=None):
     # if verbose == 2:
     #     printv(sys._getframe().f_back.f_code.co_name, 1, 'process')
+
+    if cwd is None:
+        cwd = os.getcwd()
+
     if verbose:
-        printv(cmd, 1, 'code')
-    process = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        printv("%s # in %s" % (cmd, cwd), 1, 'code')
+
+    if sys.hexversion < 0x03000000 and isinstance(cmd, unicode):
+        cmd = str(cmd)
+
+    shell = isinstance(cmd, str)
+
+    process = subprocess.Popen(cmd, shell=shell, cwd=cwd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     output_final = ''
     while True:
         # Watch out for deadlock!!!
-        output = process.stdout.readline()
+        output = process.stdout.readline().decode("utf-8")
         if output == '' and process.poll() is not None:
             break
         if output:
             if verbose == 2:
                 printv(output.strip())
             output_final += output.strip() + '\n'
-    status_output = process.returncode
+
+    status = process.returncode
+    output = output_final.rstrip()
+
     # process.stdin.close()
     # process.stdout.close()
     # process.terminate()
 
-    # need to remove the last \n character in the output -> return output_final[0:-1]
-    if status_output:
-        # from inspect import stack
-        printv(output_final[0:-1], 1, error_exit)
-        # in case error_exit is not error (immediate exit), the line below can be run
-        if raise_exception:
-            raise RunError(output_final[0:-1])
+    if status != 0 and raise_exception:
+        raise RunError(output_final[0:-1])
 
-        return status_output, output_final[0:-1]
+    return status, output
+
+
+def check_exe(name):
+    """
+    Ensure that a program exists
+    :type name: string
+    :param name: name or path to program
+    :return: path of the program or None
+    """
+    def is_exe(fpath):
+        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
+
+    fpath, fname = os.path.split(name)
+    if fpath and is_exe(name):
+        return fpath
     else:
-        # no need to output process.returncode (because different from 0)
-        return status_output, output_final[0:-1]
+        for path in os.environ["PATH"].split(os.pathsep):
+            path = path.strip('"')
+            exe_file = os.path.join(path, name)
+            if is_exe(exe_file):
+                return exe_file
+
+    return None
 
 
-# =======================================================================================================================
-# Get SCT version
-# =======================================================================================================================
+def display_viewer_syntax(files, colormaps=[], minmax=[], opacities=[], mode='', verbose=1):
+    """
+    Print the syntax to open a viewer and display images for QC. To use default values, enter empty string: ''
+    Parameters
+    ----------
+    files [list:string]: list of NIFTI file names
+    colormaps [list:string]: list of colormaps associated with each file. Available colour maps: blue, blue-lightblue, cool, copper, cortical, green, greyscale, hot, hsv, pink, random, red, red-yellow, render1, render1t, render2, render2t, render3, retino, subcortical, yellow. Default=greyscale.
+    minmax [list:string]: list of min,max brightness scale associated with each file. Separate with comma.
+    opacities [list:string]: list of opacity associated with each file. Between 0 and 1.
+
+    Returns
+    -------
+    None
+
+    Example
+    -------
+    sct.display_viewer_syntax([file1, file2, file3])
+    sct.display_viewer_syntax([file1, file2], colormaps=['gray', 'red'], minmax=['', '0,1'], opacities=['', '0.7'])
+    """
+    list_viewer = ['fslview', 'fslview_deprecated', 'fsleyes']  # list of known viewers. Can add more.
+    dict_fslview = {'gray': 'Greyscale', 'red-yellow': 'Red-Yellow', 'blue-lightblue': 'Blue-Lightblue', 'red': 'Red', 'random': 'Random-Rainbow'}
+    dict_fsleyes = {'gray': 'greyscale', 'red-yellow': 'red-yellow', 'blue-lightblue': 'blue-lightblue', 'red': 'red', 'random': 'random'}
+    selected_viewer = None
+
+    # find viewer
+    exe_viewers = [viewer for viewer in list_viewer if check_exe(viewer)]
+    if exe_viewers:
+        selected_viewer = exe_viewers[0]
+    else:
+        return
+
+    # loop across files and build syntax
+    cmd = selected_viewer
+    # add mode (only supported by fslview for the moment)
+    if mode and selected_viewer in ['fslview', 'fslview_deprecated']:
+        cmd += ' -m ' + mode
+    for i in range(len(files)):
+        # add viewer-specific options
+        if selected_viewer in ['fslview', 'fslview_deprecated']:
+            cmd += ' ' + files[i]
+            if colormaps:
+                if colormaps[i]:
+                    cmd += ' -l ' + dict_fslview[colormaps[i]]
+            if minmax:
+                if minmax[i]:
+                    cmd += ' -b ' + minmax[i]  # a,b
+            if opacities:
+                if opacities[i]:
+                    cmd += ' -t ' + opacities[i]
+        if selected_viewer in ['fsleyes']:
+            cmd += ' ' + files[i]
+            if colormaps:
+                if colormaps[i]:
+                    cmd += ' -cm ' + dict_fsleyes[colormaps[i]]
+            if minmax:
+                if minmax[i]:
+                    cmd += ' -dr ' + ' '.join(minmax[i].split(','))  # a b
+            if opacities:
+                if opacities[i]:
+                    cmd += ' -a ' + str(float(opacities[i]) * 100)  # in percentage
+    cmd += ' &'
+    # display
+    if verbose:
+        printv('\nDone! To view results, type:')
+        printv(cmd + '\n', verbose=1, type='info')
+
+
+def copy(src, dst):
+    """Copy src to dst.
+    If src and dst are the same files, don't crash.
+    """
+    try:
+        shutil.copy(src, dst)
+    except Exception as e:
+        if sys.hexversion < 0x03000000:
+            if isinstance(e, shutil.Error) and "same file" in str(e):
+                return
+        else:
+            if isinstance(e, shutil.SameFileError):
+                return
+        raise # Must be another error
+
+
 def get_sct_version():
-
-    sct_commit = ''
-    sct_branch = ''
+    sct_commit = 'unknown'
+    sct_branch = 'unknown'
 
     # get path of SCT
-    path_script = os.path.dirname(__file__)
-    path_sct = os.path.dirname(path_script)
+    path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
 
-    # fetch true commit number and branch
-    path_curr = os.path.abspath(os.curdir)
-    os.chdir(path_sct)
-    # first, make sure there is a .git folder
-    if os.path.isdir('.git'):
+    if os.path.isdir(os.path.join(path_sct, '.git')):
         install_type = 'git'
-        sct_commit = commands.getoutput('git rev-parse HEAD')
-        sct_branch = commands.getoutput('git branch | grep \*').strip('* ')
-        if not (sct_commit.isalnum()):
-            sct_commit = 'unknown'
-            sct_branch = 'unknown'
-        # print '  branch: ' + sct_branch
+        status, output = run(["git", "rev-parse", "HEAD"], verbose=0, cwd=path_sct)
+        if status == 0:
+            sct_commit = output
+        status, output = run(["git", "rev-parse", "--abbrev-ref", "HEAD"], verbose=0, cwd=path_sct)
+        if status == 0:
+            sct_branch = output
     else:
         install_type = 'package'
-    # fetch version
-    with open(path_sct + '/version.txt', 'r') as myfile:
-        version_sct = myfile.read().replace('\n', '')
-        # print '  version: ' + version_sct
 
-    # go back to previous dir
-    os.chdir(path_curr)
+    with io.open(os.path.join(path_sct, 'version.txt'), 'r') as myfile:
+        version_sct = myfile.read().replace('\n', '')
+
     return install_type, sct_commit, sct_branch, version_sct
 
 #
@@ -340,9 +490,11 @@ class Timer:
         remaining_time = remaining_iterations * time_one_iteration
         hours, rem = divmod(remaining_time, 3600)
         minutes, seconds = divmod(rem, 60)
-        log.info('\rRemaining time: {:0>2}:{:0>2}:{:05.2f} ({}/{})                      '.format(int(hours), int(minutes), seconds, self.number_of_iteration_done, self.total_number_of_iteration))
-        if log.handlers:
-            [h.flush() for h in log.handlers]
+        no_new_line_log('Remaining time: {:0>2}:{:0>2}:{:05.2f} ({}/{})                      '
+                        .format(int(hours), int(minutes), seconds, self.number_of_iteration_done,
+                         self.total_number_of_iteration))
+
+
 
     def iterations_done(self, total_num_iterations_done):
         if total_num_iterations_done != 0:
@@ -353,15 +505,17 @@ class Timer:
             remaining_time = remaining_iterations * time_one_iteration
             hours, rem = divmod(remaining_time, 3600)
             minutes, seconds = divmod(rem, 60)
-            log.info('\rRemaining time: {:0>2}:{:0>2}:{:05.2f} ({}/{})                      '.format(int(hours), int(minutes), seconds, self.number_of_iteration_done, self.total_number_of_iteration))
-            if log.handlers:
-                [h.flush() for h in log.handlers]
+            no_new_line_log('Remaining time: {:0>2}:{:0>2}:{:05.2f} ({}/{})                      '
+                            .format(int(hours), int(minutes), seconds, self.number_of_iteration_done,
+                             self.total_number_of_iteration))
+
 
     def stop(self):
         self.time_list.append(time.time() - self.start_timer)
         hours, rem = divmod(self.time_list[-1], 3600)
         minutes, seconds = divmod(rem, 60)
-        printv('Total time: {:0>2}:{:0>2}:{:05.2f}                      '.format(int(hours), int(minutes), seconds))
+        log.info('\nTotal time: {:0>2}:{:0>2}:{:05.2f}                      '
+               .format(int(hours), int(minutes), seconds))
         self.is_started = False
 
     def printRemainingTime(self):
@@ -371,21 +525,17 @@ class Timer:
         hours, rem = divmod(remaining_time, 3600)
         minutes, seconds = divmod(rem, 60)
         if self.is_started:
-            log.info('\rRemaining time: {:0>2}:{:0>2}:{:05.2f} ({}/{})                      '.format(int(hours), int(minutes), seconds, self.number_of_iteration_done, self.total_number_of_iteration))
-            if log.handlers:
-                [h.flush() for h in log.handlers]
+            no_new_line_log('Remaining time: {:0>2}:{:0>2}:{:05.2f} ({}/{})                      '.format(int(hours), int(minutes), seconds, self.number_of_iteration_done, self.total_number_of_iteration))
         else:
-            printv('Total time: {:0>2}:{:0>2}:{:05.2f}                      '.format(int(hours), int(minutes), seconds))
+            log.info('\nTotal time: {:0>2}:{:0>2}:{:05.2f}                      '.format(int(hours), int(minutes), seconds))
 
     def printTotalTime(self):
         hours, rem = divmod(self.time_list[-1], 3600)
         minutes, seconds = divmod(rem, 60)
         if self.is_started:
-            log.info('\rRemaining time: {:0>2}:{:0>2}:{:05.2f}                      '.format(int(hours), int(minutes), seconds))
-            if log.handlers:
-                [h.flush() for h in log.handlers]
+            no_new_line_log('Remaining time: {:0>2}:{:0>2}:{:05.2f}                      '.format(int(hours), int(minutes), seconds))
         else:
-            printv('Total time: {:0>2}:{:0>2}:{:05.2f}                      '.format(int(hours), int(minutes), seconds))
+            log.info('\nTotal time: {:0>2}:{:0>2}:{:05.2f}                      '.format(int(hours), int(minutes), seconds))
 
 class ForkStdoutToFile(object):
     """Use to redirect stdout to file
@@ -440,15 +590,11 @@ class ForkStdoutToFile(object):
 # Extract path, file and extension
 def extract_fname(fname):
     # extract path
-    path_fname = os.path.dirname(fname) + '/'
-    # check if only single file was entered (without path)
-    if path_fname == '/':
-        path_fname = ''
+    path_fname = os.path.dirname(fname)
     # extract file and extension
-    file_fname = fname
-    file_fname = file_fname.replace(path_fname, '')
+    file_fname = os.path.basename(fname)
     file_fname, ext_fname = os.path.splitext(file_fname)
-    # check if .nii.gz file
+    # alter extension if .nii.gz file
     if ext_fname == '.gz':
         file_fname = file_fname[0:len(file_fname) - 4]
         ext_fname = ".nii.gz"
@@ -524,7 +670,7 @@ def create_folder(folder):
         try:
             os.makedirs(folder)
             return 0
-        except OSError, e:
+        except OSError as e:
             if e.errno != errno.EEXIST:
                 return 2
     else:
@@ -581,28 +727,22 @@ def find_file_within_folder(fname, directory, seek_type='file'):
     return all_path
 
 
-#=======================================================================================================================
-# create temporary folder and return path of tmp dir
-#=======================================================================================================================
-def tmp_create(verbose=1):
-    printv('\nCreate temporary folder...', verbose)
-    import time
-    import random
-    path_tmp = slash_at_the_end('tmp.' + time.strftime("%y%m%d%H%M%S") + '_' + str(random.randint(1, 1000000)), 1)
-    # create directory
-    try:
-        os.makedirs(path_tmp)
-    except OSError:
-        if not os.path.isdir(path_tmp):
-            raise
-    return path_tmp
+def tmp_create(basename=None, verbose=1):
+    """Create temporary folder and return its path
+    """
+    prefix = "sct-%s-" % time.strftime("%y%m%d%H%M%S")
+    if basename:
+        prefix += "%s-" % basename
+    tmpdir = tempfile.mkdtemp(prefix=prefix)
+    printv('\nCreate temporary folder (%s)...' % tmpdir, verbose)
+    return tmpdir
 
 
 class TempFolder(object):
     """This class will create a temporary folder."""
 
     def __init__(self, verbose=0):
-        self.path_tmp = tmp_create(verbose)
+        self.path_tmp = tmp_create(verbose=verbose)
         self.previous_path = None
 
     def chdir(self):
@@ -625,36 +765,13 @@ class TempFolder(object):
 
         :param filename: The filename to copy into the folder.
         """
-        shutil.copy(filename, self.path_tmp)
+        file_fname = os.path.basename(filename)
+        copy(filename, self.path_tmp)
+        return self.path_tmp + '/' + file_fname
 
     def cleanup(self):
         """Remove the created folder and its contents."""
         shutil.rmtree(self.path_tmp, ignore_errors=True)
-
-
-def delete_tmp_files_and_folders(path=''):
-    """
-    This function removes all files that starts with 'tmp.' in the path specified as input. If no path are provided,
-    the current path is selected. The function removes files and directories recursively and handles Exceptions and
-    errors by ignoring them.
-    Args:
-        path: directory in which temporary files and folders must be removed
-
-    Returns:
-
-    """
-    if not path:
-        path = os.getcwd()
-    pattern = os.path.join(path, 'tmp.*')
-
-    for item in glob.glob(pattern):
-        try:
-            if os.path.isdir(item):
-                shutil.rmtree(item, ignore_errors=True)
-            elif os.path.isfile(item):
-                os.remove(item)
-        except:  # in case an exception is raised (e.g., on Windows, if the file is in use)
-            continue
 
 
 #=======================================================================================================================
@@ -694,19 +811,19 @@ def generate_output_file(fname_in, fname_out, verbose=1):
     # if input and output fnames are the same, do nothing and exit function
     if fname_in == fname_out:
         printv('  WARNING: fname_in and fname_out are the same. Do nothing.', verbose, 'warning')
-        printv('  File created: ' + path_out + file_out + ext_out)
-        return path_out + file_out + ext_out
+        printv('  File created: ' + os.path.join(path_out, file_out + ext_out))
+        return os.path.join(path_out, file_out + ext_out)
     # if fname_out already exists in nii or nii.gz format
-    if os.path.isfile(path_out + file_out + ext_out):
-        printv('  WARNING: File ' + path_out + file_out + ext_out + ' already exists. Deleting it...', 1, 'warning')
-        os.remove(path_out + file_out + ext_out)
+    if os.path.isfile(os.path.join(path_out, file_out + ext_out)):
+        printv('  WARNING: File ' + os.path.join(path_out, file_out + ext_out) + ' already exists. Deleting it...', 1, 'warning')
+        os.remove(os.path.join(path_out, file_out + ext_out))
     if ext_in != ext_out:
         # Generate output file
         '''
         # TRY TO UNCOMMENT THIS LINES AND RUN IT IN AN OTHER STATION THAN EVANS (testing of sct_label_vertebrae and sct_smooth_spinalcord never stops with this lines on evans)
         if ext_in == '.nii.gz' and ext_out == '.nii':  # added to resolve issue #728
             run('gunzip -f ' + fname_in)
-            os.rename(path_in + file_in + '.nii', fname_out)
+            os.rename(os.path.join(path_in, file_in + '.nii'), fname_out)
         else:
         '''
         from sct_convert import convert
@@ -719,17 +836,17 @@ def generate_output_file(fname_in, fname_out, verbose=1):
     # shutil.move(fname_in, path_out+file_out+ext_in)
     # # convert to nii (only if necessary)
     # if ext_out == '.nii' and ext_in != '.nii':
-    #     convert(path_out+file_out+ext_in, path_out+file_out+ext_out)
-    #     os.remove(path_out+file_out+ext_in)  # remove nii.gz file
+    #     convert(os.path.join(path_out, file_out+ext_in), os.path.join(path_out, file_out+ext_out))
+    #     os.remove(os.path.join(path_out, file_out+ext_in))  # remove nii.gz file
     # # convert to nii.gz (only if necessary)
     # if ext_out == '.nii.gz' and ext_in != '.nii.gz':
-    #     convert(path_out+file_out+ext_in, path_out+file_out+ext_out)
-    #     os.remove(path_out+file_out+ext_in)  # remove nii file
+    #     convert(os.path.join(path_out, file_out+ext_in), os.path.join(path_out, file_out+ext_out))
+    #     os.remove(os.path.join(path_out, file_out+ext_in))  # remove nii file
     # display message
-    printv('  File created: ' + path_out + file_out + ext_out, verbose)
+    printv('  File created: ' + os.path.join(path_out, file_out + ext_out), verbose)
     # if verbose:
-    #     printv('  File created: '+path_out+file_out+ext_out)
-    return path_out + file_out + ext_out
+    #     printv('  File created: '+ os.path.join(path_out, file_out+ext_out))
+    return os.path.join(path_out, file_out + ext_out)
 
 
 #=======================================================================================================================
@@ -737,7 +854,7 @@ def generate_output_file(fname_in, fname_out, verbose=1):
 #=======================================================================================================================
 # check if dependant software is installed
 def check_if_installed(cmd, name_software):
-    status, output = commands.getstatusoutput(cmd)
+    status, output = run(cmd)
     if status != 0:
         printv('\nERROR: ' + name_software + ' is not installed.\nExit program.\n')
         sys.exit(2)
@@ -868,30 +985,17 @@ def sign(x):
 
 
 #=======================================================================================================================
-# slash_at_the_end: make sure there is (or not) a slash at the end of path name
-#=======================================================================================================================
-def slash_at_the_end(path, slash=0):
-    if slash == 0:
-        if path[-1:] == '/':
-            path = path[:-1]
-    if slash == 1:
-        if not path[-1:] == '/':
-            path = path + '/'
-    return path
-
-
-#=======================================================================================================================
 # delete_nifti: delete nifti file(s)
 #=======================================================================================================================
 def delete_nifti(fname_in):
     # extract input file extension
     path_in, file_in, ext_in = extract_fname(fname_in)
     # delete nifti if exist
-    if os.path.isfile(path_in + file_in + '.nii'):
-        os.system('rm ' + path_in + file_in + '.nii')
+    if os.path.isfile(os.path.join(path_in, file_in + '.nii')):
+        os.system('rm ' + os.path.join(path_in, file_in + '.nii'))
     # delete nifti if exist
-    if os.path.isfile(path_in + file_in + '.nii.gz'):
-        os.system('rm ' + path_in + file_in + '.nii.gz')
+    if os.path.isfile(os.path.join(path_in, file_in + '.nii.gz')):
+        os.system('rm ' + os.path.join(path_in, file_in + '.nii.gz'))
 
 
 #=======================================================================================================================
@@ -1247,3 +1351,10 @@ class RunError(Error):
     sct runtime error
     """
     pass
+
+if __name__ == "__main__":
+    info = get_sct_version()
+    print(info)
+
+
+

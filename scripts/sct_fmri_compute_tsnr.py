@@ -13,12 +13,11 @@
 # ######################################################################################################################
 
 import sys
-
-import sct_maths
 import sct_utils as sct
 from msct_parser import Parser
 from msct_image import Image
 import numpy as np
+
 
 class Param:
     def __init__(self):
@@ -57,11 +56,11 @@ class Tsnr:
         nii_tsnr.setFileName(fname_tsnr)
         nii_tsnr.save(type='float32')
 
-        # to view results
-        sct.printv('\nDone! To view results, type:', self.param.verbose, 'normal')
-        sct.printv('fslview ' + fname_tsnr + ' &\n', self.param.verbose, 'info')
+        sct.display_viewer_syntax([fname_tsnr])
 
 
+# PARSER
+# ==========================================================================================
 def get_parser():
     parser = Parser(__file__)
     parser.usage.set_description('Compute temporal SNR (tSNR) in fMRI time series.')
@@ -74,24 +73,30 @@ def get_parser():
                       type_value='multiple_choice',
                       description='verbose',
                       mandatory=False,
+                      default_value='1',
                       example=['0', '1'])
     return parser
 
 
-if __name__ == '__main__':
+# MAIN
+# ==========================================================================================
+def main(args=None):
+
+    parser = get_parser()
     param = Param()
 
-    if param.debug:
-        sct.printv('\n*** WARNING: DEBUG MODE ON ***\n')
-    else:
-        param_default = Param()
+    arguments = parser.parse(sys.argv[1:])
+    fname_src = arguments['-i']
+    verbose = int(arguments['-v'])
 
-        parser = get_parser()
-        arguments = parser.parse(sys.argv[1:])
-        input_fmri = arguments['-i']
+    # call main function
+    tsnr = Tsnr(param=param, fmri=fname_src)
+    tsnr.compute()
 
-        if '-v' in arguments:
-            param.verbose = int(arguments['-v'])
 
-        tsnr = Tsnr(param=param, fmri=input_fmri)
-        tsnr.compute()
+# START PROGRAM
+# ==========================================================================================
+if __name__ == "__main__":
+    sct.start_stream_logger()
+    param = Param()
+    main()

@@ -13,10 +13,8 @@
 # TODO: for -ref subject, crop data, otherwise registration is too long
 # TODO: testing script for all cases
 
-import sys
-import os
-import shutil
-import time
+import sys, io, os, shutil, time
+
 import sct_utils as sct
 import sct_label_utils
 import sct_convert
@@ -41,8 +39,8 @@ class Param:
         self.fname_mask = ''  # this field is needed in the function register@sct_register_multimodal
         self.padding = 10  # this field is needed in the function register@sct_register_multimodal
         self.verbose = 1  # verbose
-        self.path_template = path_sct + '/data/PAM50'
-        self.path_qc = os.path.abspath(os.curdir) + '/qc/'
+        self.path_template = os.path.join(path_sct, 'data', 'PAM50')
+        self.path_qc = os.path.abspath("qc")
         self.zsubsample = '0.25'
         self.param_straighten = ''
 
@@ -50,7 +48,7 @@ class Param:
 # get default parameters
 # Note: step0 is used as pre-registration
 step0 = Paramreg(step='0', type='label', dof='Tx_Ty_Tz_Sz')  # if ref=template, we only need translations and z-scaling because the cord is already straight
-step1 = Paramreg(step='1', type='seg', algo='centermassrot', smooth='2')
+step1 = Paramreg(step='1', type='seg', algo='centermass', smooth='2')
 # step2 = Paramreg(step='2', type='seg', algo='columnwise', smooth='0', smoothWarpXY='2')
 step2 = Paramreg(step='2', type='seg', algo='bsplinesyn', metric='MeanSquares', iter='3', smooth='1')
 # step3 = Paramreg(step='3', type='im', algo='syn', metric='CC', iter='1')
@@ -186,7 +184,7 @@ def main(args=None):
         path_output = arguments['-ofolder']
     else:
         path_output = ''
-    path_template = sct.slash_at_the_end(arguments['-t'], 1)
+    path_template = arguments['-t']
     contrast_template = arguments['-c']
     ref = arguments['-ref']
     remove_temp_files = int(arguments['-r'])
@@ -220,18 +218,18 @@ def main(args=None):
 
     # retrieve template file names
     from sct_warp_template import get_file_label
-    file_template_vertebral_labeling = get_file_label(path_template + 'template/', 'vertebral')
-    file_template = get_file_label(path_template + 'template/', contrast_template.upper() + '-weighted')
-    file_template_seg = get_file_label(path_template + 'template/', 'spinal cord')
+    file_template_vertebral_labeling = get_file_label(os.path.join(path_template, 'template'), 'vertebral')
+    file_template = get_file_label(os.path.join(path_template, 'template'), contrast_template.upper() + '-weighted')
+    file_template_seg = get_file_label(os.path.join(path_template, 'template'), 'spinal cord')
 
     # start timer
     start_time = time.time()
 
     # get fname of the template + template objects
-    fname_template = path_template + 'template/' + file_template
-    fname_template_vertebral_labeling = path_template + 'template/' + file_template_vertebral_labeling
-    fname_template_seg = path_template + 'template/' + file_template_seg
-    fname_template_disc_labeling = path_template + 'template/' + 'PAM50_label_disc.nii.gz'
+    fname_template = os.path.join(path_template, 'template', file_template)
+    fname_template_vertebral_labeling = os.path.join(path_template, 'template', file_template_vertebral_labeling)
+    fname_template_seg = os.path.join(path_template, 'template', file_template_seg)
+    fname_template_disc_labeling = os.path.join(path_template, 'template', 'PAM50_label_disc.nii.gz')
 
     # check file existence
     # TODO: no need to do that!
@@ -263,8 +261,7 @@ def main(args=None):
     # check input labels
     labels = check_labels(fname_landmarks, label_type=label_type)
 
-    # create temporary folder
-    path_tmp = sct.tmp_create(verbose=verbose)
+    path_tmp = sct.tmp_create(basename="register_to_template", verbose=verbose)
 
     # set temporary file names
     ftmp_data = 'data.nii'
@@ -277,22 +274,24 @@ def main(args=None):
 
     # copy files to temporary folder
     sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
-    sct.run('sct_convert -i ' + fname_data + ' -o ' + path_tmp + ftmp_data)
-    sct.run('sct_convert -i ' + fname_seg + ' -o ' + path_tmp + ftmp_seg)
-    sct.run('sct_convert -i ' + fname_landmarks + ' -o ' + path_tmp + ftmp_label)
-    sct.run('sct_convert -i ' + fname_template + ' -o ' + path_tmp + ftmp_template)
-    sct.run('sct_convert -i ' + fname_template_seg + ' -o ' + path_tmp + ftmp_template_seg)
+    sct.run('sct_convert -i ' + fname_data + ' -o ' + os.path.join(path_tmp, ftmp_data))
+    sct.run('sct_convert -i ' + fname_seg + ' -o ' + os.path.join(path_tmp, ftmp_seg))
+    sct.run('sct_convert -i ' + fname_landmarks + ' -o ' + os.path.join(path_tmp, ftmp_label))
+    sct.run('sct_convert -i ' + fname_template + ' -o ' + os.path.join(path_tmp, ftmp_template))
+    sct.run('sct_convert -i ' + fname_template_seg + ' -o ' + os.path.join(path_tmp, ftmp_template_seg))
+    sct_convert.main(args=['-i', fname_template_vertebral_labeling, '-o', os.path.join(path_tmp, ftmp_template_label)])
     if label_type == 'disc':
-        sct_convert.main(args=['-i', fname_template_disc_labeling, '-o', path_tmp + ftmp_template_label])
-    # sct.run('sct_convert -i '+fname_template_label+' -o '+path_tmp+ftmp_template_label)
+        sct_convert.main(args=['-i', fname_template_disc_labeling, '-o', os.path.join(path_tmp, ftmp_template_label)])
+    # sct.run('sct_convert -i '+fname_template_label+' -o '+os.path.join(path_tmp, ftmp_template_label))
 
     # go to tmp folder
+    curdir = os.getcwd()
     os.chdir(path_tmp)
 
     # Generate labels from template vertebral labeling
     if label_type == 'body':
         sct.printv('\nGenerate labels from template vertebral labeling', verbose)
-        sct_label_utils.main(args=['-i', fname_template_vertebral_labeling, '-vert-body', '0', '-o', ftmp_template_label])
+        sct_label_utils.main(args=['-i', ftmp_template_label, '-vert-body', '0', '-o', ftmp_template_label])
     # sct.run('sct_label_utils -i ' + fname_template_vertebral_labeling + ' -vert-body 0 -o ' + ftmp_template_label)
 
     # check if provided labels are available in the template
@@ -352,13 +351,17 @@ def main(args=None):
 
         # straighten segmentation
         sct.printv('\nStraighten the spinal cord using centerline/segmentation...', verbose)
+
         # check if warp_curve2straight and warp_straight2curve already exist (i.e. no need to do it another time)
-        if os.path.isfile('../warp_curve2straight.nii.gz') and os.path.isfile('../warp_straight2curve.nii.gz') and os.path.isfile('../straight_ref.nii.gz'):
+        fn_warp_curve2straight = os.path.join(curdir, "warp_curve2straight.nii.gz")
+        fn_warp_straight2curve = os.path.join(curdir, "warp_straight2curve.nii.gz")
+        fn_straight_ref = os.path.join(curdir, "straight_ref.nii.gz")
+        if os.path.isfile(fn_warp_curve2straight) and os.path.isfile(fn_warp_straight2curve) and os.path.isfile(fn_straight_ref):
             # if they exist, copy them into current folder
             sct.printv('WARNING: Straightening was already run previously. Copying warping fields...', verbose, 'warning')
-            shutil.copy('../warp_curve2straight.nii.gz', 'warp_curve2straight.nii.gz')
-            shutil.copy('../warp_straight2curve.nii.gz', 'warp_straight2curve.nii.gz')
-            shutil.copy('../straight_ref.nii.gz', 'straight_ref.nii.gz')
+            sct.copy(fn_warp_curve2straight, 'warp_curve2straight.nii.gz')
+            sct.copy(fn_warp_straight2curve, 'warp_straight2curve.nii.gz')
+            sct.copy(fn_straight_ref, 'straight_ref.nii.gz')
             # apply straightening
             sct.run('sct_apply_transfo -i ' + ftmp_seg + ' -w warp_curve2straight.nii.gz -d straight_ref.nii.gz -o ' + add_suffix(ftmp_seg, '_straight'))
         else:
@@ -568,25 +571,27 @@ def main(args=None):
     sct.run('sct_apply_transfo -i template.nii -o template2anat.nii.gz -d data.nii -w warp_template2anat.nii.gz -crop 1', verbose)
     sct.run('sct_apply_transfo -i data.nii -o anat2template.nii.gz -d template.nii -w warp_anat2template.nii.gz -crop 1', verbose)
 
-    # come back to parent folder
-    os.chdir('..')
+    # come back
+    os.chdir(curdir)
 
     # Generate output files
     sct.printv('\nGenerate output files...', verbose)
-    sct.generate_output_file(path_tmp + 'warp_template2anat.nii.gz', path_output + 'warp_template2anat.nii.gz', verbose)
-    sct.generate_output_file(path_tmp + 'warp_anat2template.nii.gz', path_output + 'warp_anat2template.nii.gz', verbose)
-    sct.generate_output_file(path_tmp + 'template2anat.nii.gz', path_output + 'template2anat' + ext_data, verbose)
-    sct.generate_output_file(path_tmp + 'anat2template.nii.gz', path_output + 'anat2template' + ext_data, verbose)
+    fname_template2anat = os.path.join(path_output, 'template2anat' + ext_data)
+    fname_anat2template = os.path.join(path_output, 'anat2template' + ext_data)
+    sct.generate_output_file(os.path.join(path_tmp, "warp_template2anat.nii.gz"), os.path.join(path_output, "warp_template2anat.nii.gz"), verbose)
+    sct.generate_output_file(os.path.join(path_tmp, "warp_anat2template.nii.gz"), os.path.join(path_output, "warp_anat2template.nii.gz"), verbose)
+    sct.generate_output_file(os.path.join(path_tmp, "template2anat.nii.gz"), fname_template2anat, verbose)
+    sct.generate_output_file(os.path.join(path_tmp, "anat2template.nii.gz"), fname_anat2template, verbose)
     if ref == 'template':
         # copy straightening files in case subsequent SCT functions need them
-        sct.generate_output_file(path_tmp + 'warp_curve2straight.nii.gz', path_output + 'warp_curve2straight.nii.gz', verbose)
-        sct.generate_output_file(path_tmp + 'warp_straight2curve.nii.gz', path_output + 'warp_straight2curve.nii.gz', verbose)
-        sct.generate_output_file(path_tmp + 'straight_ref.nii.gz', path_output + 'straight_ref.nii.gz', verbose)
+        sct.generate_output_file(os.path.join(path_tmp, "warp_curve2straight.nii.gz"), os.path.join(path_output, "warp_curve2straight.nii.gz"), verbose)
+        sct.generate_output_file(os.path.join(path_tmp, "warp_straight2curve.nii.gz"), os.path.join(path_output, "warp_straight2curve.nii.gz"), verbose)
+        sct.generate_output_file(os.path.join(path_tmp, "straight_ref.nii.gz"), os.path.join(path_output, "straight_ref.nii.gz"), verbose)
 
     # Delete temporary files
     if remove_temp_files:
         sct.printv('\nDelete temporary files...', verbose)
-        sct.run('rm -rf ' + path_tmp)
+        shutil.rmtree(path_tmp)
 
     # display elapsed time
     elapsed_time = time.time() - start_time
@@ -605,16 +610,14 @@ def main(args=None):
         def test(qslice):
             return qslice.single()
 
-        fname_template2anat = path_output + 'template2anat' + ext_data
+        fname_template2anat = os.path.join(path_output, "template2anat" + ext_data)
         test(qcslice.SagittalTemplate2Anat(Image(fname_data), Image(fname_template2anat), Image(fname_seg)))
         sct.printv('Sucessfully generate the QC results in %s' % qc_param.qc_results)
         sct.printv('Use the following command to see the results in a browser')
         sct.printv('sct_qc -folder %s' % qc_path, type='info')
 
-    # to view results
-    sct.printv('\nTo view results, type:', verbose)
-    sct.printv('fslview ' + fname_data + ' ' + path_output + 'template2anat -b 0,4000 &', verbose, 'info')
-    sct.printv('fslview ' + fname_template + ' -b 0,5000 ' + path_output + 'anat2template &\n', verbose, 'info')
+    sct.display_viewer_syntax([fname_data, fname_template2anat], verbose=verbose)
+    sct.display_viewer_syntax([fname_template, fname_anat2template], verbose=verbose)
 
 
 # Resample labels
@@ -669,7 +672,7 @@ def check_labels(fname_landmarks, label_type='body'):
             sct.printv('ERROR: Label should be integer.', 1, 'error')
     # check if there are duplicates in label values
     n_labels = len(labels)
-    list_values = [labels[i].value for i in xrange(0,n_labels)]
+    list_values = [labels[i].value for i in range(0,n_labels)]
     list_duplicates = [x for x in list_values if list_values.count(x) > 1]
     if not list_duplicates == []:
         sct.printv('ERROR: Found two labels with same value.', 1, 'error')

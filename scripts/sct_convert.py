@@ -102,7 +102,6 @@ if __name__ == "__main__":
 
 # import os
 # import sys
-# import commands
 # import getopt
 # import sct_utils as sct
 # import nibabel as nib
@@ -151,7 +150,7 @@ if __name__ == "__main__":
 #         usage()
 #
 #     cmd = 'which mnc2nii'
-#     status, output = commands.getstatusoutput(cmd)
+#     status, output = sct.run(cmd)
 #     if not output:
 #         sct.printv('ERROR: minc-toolkit not installed...',1,'error')
 #     if output != '/opt/minc/bin/mnc2nii':
@@ -166,7 +165,7 @@ if __name__ == "__main__":
 #     path_in, file_in, ext_in = sct.extract_fname(fname_data)
 #     if fname_out == '':
 #         path_out, file_out, ext_out = '', file_in, '.nii'
-#         fname_out = path_out+file_out+ext_out
+#         fname_out = os.path.join(path_out, file_out+ext_out)
 #     else:
 #         fname_out = os.path.abspath(fname_out)
 #         path_in, file_in, ext_in = sct.extract_fname(fname_data)
@@ -188,7 +187,7 @@ if __name__ == "__main__":
 #         mnc2volviewer(fname_data,fname_out)
 #
 #     # remove temp files
-#     sct.run('rm -rf '+path_in+'tmp.*', param.verbose)
+#     sct.run('rm -rf '+ os.path.join(path_in, 'tmp.*'), param.verbose)
 #
 #
 # # Convert file from nifti to minc
@@ -202,7 +201,7 @@ if __name__ == "__main__":
 # def niigz2mnc(fname_data,fname_out):
 #     sct.printv("Converting from nifti to minc")
 #     path_in, file_in, ext_in = sct.extract_fname(fname_data)
-#     fname_data_tmp=path_in+"tmp."+file_in+".nii"
+#     fname_data_tmp=os.path.join(path_in, "tmp."+file_in+".nii")
 #     sct.run("gunzip -c "+fname_data+" >"+fname_data_tmp)
 #     sct.run("nii2mnc "+fname_data_tmp+" "+fname_out)
 #
@@ -217,7 +216,7 @@ if __name__ == "__main__":
 # def mnc2niigz(fname_data,fname_out):
 #     sct.printv("Converting from minc to nifti")
 #     path_out, file_out, ext_out = sct.extract_fname(fname_out)
-#     fname_data_tmp=path_out+file_out+".nii"
+#     fname_data_tmp= os.path.join(path_out, file_out+".nii")
 #     sct.run("mnc2nii "+fname_data+" "+fname_data_tmp)
 #     sct.run("gzip "+fname_data_tmp)
 #
@@ -227,9 +226,9 @@ if __name__ == "__main__":
 #     sct.printv("Converting from nifti to volume viewer")
 #     path_in, file_in, ext_in = sct.extract_fname(fname_data)
 #     path_out, file_out, ext_out = sct.extract_fname(fname_out)
-#     fname_data_nii = path_out+"tmp."+file_out+'.mnc'
+#     fname_data_nii = os.path.join(path_out, "tmp."+file_out+'.mnc')
 #     nii2mnc(fname_data,fname_data_nii)
-#     mnc2volviewer(fname_data_nii,path_out+file_out)
+#     mnc2volviewer(fname_data_nii,os.path.join(path_out, file_out))
 #
 # # Convert file from nifti to volumeviewer
 # # ==========================================================================================
@@ -237,9 +236,9 @@ if __name__ == "__main__":
 #     sct.printv("Converting from nifti to volume viewer")
 #     path_in, file_in, ext_in = sct.extract_fname(fname_data)
 #     path_out, file_out, ext_out = sct.extract_fname(fname_out)
-#     fname_data_mnc = path_out+"tmp."+file_out+'.mnc'
+#     fname_data_mnc = os.path.join(path_out, "tmp."+file_out+'.mnc')
 #     niigz2mnc(fname_data,fname_data_mnc)
-#     mnc2volviewer(fname_data_mnc,path_out+file_out)
+#     mnc2volviewer(fname_data_mnc, os.path.join(path_out, file_out))
 #
 # # Convert file from minc to volumeviewer
 # # ==========================================================================================

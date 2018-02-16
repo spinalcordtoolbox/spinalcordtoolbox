@@ -49,10 +49,10 @@ def main():
         elif opt in ('-r'):
             remove_temp_files = int(arg)
 
-    # create temporary folder
-    path_tmp = sct.tmp_create(verbose)
+    path_tmp = sct.tmp_create(basename="test_ants", verbose=verbose)
 
     # go to tmp folder
+    curdir = os.getcwd()
     os.chdir(path_tmp)
 
     # Initialise numpy volumes
@@ -94,7 +94,7 @@ def main():
     # printv('\nConcatenate rigid and non-linear transformations...', verbose)
     # cmd = 'isct_ComposeMultiTransform 3 warp_curve2straight.nii.gz -R data_dest.nii.gz warp_curve2straight_intermediate.nii.gz curve2straight_rigid.txt'
     # printv('>> '+cmd, verbose)
-    # commands.getstatusoutput(cmd)
+    # sct.run(cmd)
     #
     # # Apply deformation to input image
     # printv('\nApply transformation to input image...', verbose)
@@ -111,8 +111,8 @@ def main():
     if dice > dice_acceptable:
         test_passed = 1
 
-    # come back to parent folder
-    os.chdir('..')
+    # come back
+    os.chdir(curdir)
 
     # Delete temporary files
     if remove_temp_files == 1:

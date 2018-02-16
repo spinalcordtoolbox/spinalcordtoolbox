@@ -371,11 +371,9 @@ def main(args = None):
 
     # display message
     if data_out is not None:
-        printv('\nDone! To view results, type:', verbose)
-        printv('fslview ' + fname_out + ' &\n', verbose, 'info')
+        sct.display_viewer_syntax([fname_out])
     else:
         printv('\nDone! File created: ' + fname_out, verbose, 'info')
-
 
 def otsu(data, nbins):
     from skimage.filters import threshold_otsu

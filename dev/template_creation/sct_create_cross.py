@@ -18,13 +18,13 @@ class param:
         self.gapxy = 15.0  # millimeters or voxel
         self.cross = 'mm'
 # check if needed Python libraries are already installed or not
-import sys, commands
+import sys
 import getopt
 
 # Get path of the toolbox
-status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
 # Append path that contains scripts, to be able to load modules
-sys.path.append(path_sct + '/scripts')
+sys.path.append(os.path.join(path_sct, "scripts"))
 
 
 import sct_utils as sct
