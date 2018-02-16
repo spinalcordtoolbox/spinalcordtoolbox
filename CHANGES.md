@@ -1,5 +1,37 @@
 # CHANGES TO RELEASE
 
+## 3.1.1 (2018-02-16)
+[View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.1.0...3.1.1)
+
+**BUG**
+
+ - Fix TensorFlow installation on Debian [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1601)
+ - BUG: Fixed a small bug on None condition [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1594)
+ - Fixed missing output [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1581)
+ - Bug fix and various improvements [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1571)
+ - Now working for 2d data [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1565)
+ - Fix Timer with progress  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1554)
+ - BUG: concat_transfo: fixed wrong catch of dimension [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1534)
+ - reinstall only current numpy version [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1520)
+ - Enable the calculation of spinal cord shape at the edge of the image [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1517)
+ - Disabling rotation in register to template [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1516)
+
+**ENHANCEMENT**
+
+ - Adding minimal Dockerfile for SCT. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1600)
+ - Bug fix and various improvements [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1571)
+ - Find mirror servers in case OSF is not accessible [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1567)
+ - Now supports fsleyes when displaying viewer syntax at the end of a process [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1533)
+
+**FEATURE**
+
+ - sct_deepseg_sc implementation [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1586)
+ - sct_deepseg_gm implementation [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1564)
+
+**TESTING**
+
+ - Fixed minor verbose issues during testing [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1582)
+
 ## v3.1.0 (2017-10-27)
 [View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.0.8...v3.1)
 
@@ -33,7 +65,7 @@
 
  - Major refactoring of testing framework [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1453)
 
- ## v3.0.8 (2017-09-13)
+## v3.0.8 (2017-09-13)
 [View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.0.7...v3.0.8)
 
 **BUG**
@@ -52,7 +84,7 @@
 
  - Function to analyze lesions #1351 [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1439)
 
- ## v3.0.7 (2017-08-02)
+## v3.0.7 (2017-08-02)
 [View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.0.6...v3.0.7)
 
 **BUG**
