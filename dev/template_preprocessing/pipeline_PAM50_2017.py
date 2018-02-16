@@ -1,16 +1,16 @@
 #!/usr/bin/env python
 
-import shutil
-import os
-import sct_utils as sct
+import sys, io, os, glob, shutil
 import numpy as np
+
 #import SimpleITK as sitk
 import matplotlib.pyplot as plt
 
 import matplotlib.cm as cmx
 import matplotlib.colors as colors
-
 import numpy
+
+import sct_utils as sct
 from msct_types import Centerline
 from sct_straighten_spinalcord import smooth_centerline
 from msct_image import Image
@@ -195,15 +195,15 @@ def move_data():
     timer_move = sct.Timer(len(list_subjects))
     timer_move.start()
     for subject_name in list_subjects:
-        sct.create_folder(path_data_new + subject_name + '/t1/')
+        sct.create_folder(os.path.join(path_data_new, subject_name, 't1'))
 
-        shutil.copy(path_data_old + subject_name + '/T1/data_RPI.nii.gz',
-                    path_data_new + subject_name + '/t1/t1.nii.gz')
+        sct.copy(os.path.join(path_data_old, subject_name, 'T1', 'data_RPI.nii.gz'),
+                    os.path.join(path_data_new, subject_name, 't1', 't1.nii.gz'))
 
-        sct.create_folder(path_data_new + subject_name + '/t2/')
+        sct.create_folder(os.path.join(path_data_new, subject_name, 't2'))
 
-        shutil.copy(path_data_old + subject_name + '/T2/data_RPI.nii.gz',
-                    path_data_new + subject_name + '/t2/t2.nii.gz')
+        sct.copy(os.path.join(path_data_old, subject_name, 'T2', 'data_RPI.nii.gz'),
+                    os.path.join(path_data_new, subject_name, 't2', 't2.nii.gz'))
 
         timer_move.add_iteration()
     timer_move.stop()
@@ -226,16 +226,16 @@ def multisegment_spinalcord(contrast):
     threshold = 0.95
 
     for subject_name in list_subjects:
-        folder_output = path_data_new + subject_name + '/' + contrast + '/'
-        list_files = [folder_output + contrast + '_seg_' + str(i+1) + '.nii.gz' for i in range(len(initialisation_range))]
+        folder_output = os.path.join(path_data_new, subject_name, contrast)
+        list_files = [os.path.join(folder_output, contrast + '_seg_' + str(i+1) + '.nii.gz') for i in range(len(initialisation_range))]
 
-        temp_fname = folder_output + contrast + '_seg_temp.nii.gz'
+        temp_fname = os.path.join(folder_output, contrast + '_seg_temp.nii.gz')
         for i, init in enumerate(initialisation_range):
-            cmd_propseg = 'sct_propseg -i ' + path_data_new + subject_name + '/' + contrast + '/' + contrast + '.nii.gz -c ' + contrast + ' -init ' + str(init) + ' -ofolder ' + folder_output + ' -min-contrast 5'
+            cmd_propseg = 'sct_propseg -i ' + os.path.join(path_data_new, subject_name, contrast, contrast + '.nii.gz') + ' -c ' + contrast + ' -init ' + str(init) + ' -ofolder ' + folder_output + ' -min-contrast 5'
             if i != 0:
-                cmd_propseg += ' -init-centerline ' + folder_output + contrast + '_centerline_optic.nii.gz'
+                cmd_propseg += ' -init-centerline ' + os.path.join(folder_output, contrast + '_centerline_optic.nii.gz')
             sct.run(cmd_propseg, verbose=1)
-            os.rename(folder_output + contrast + '_seg.nii.gz', list_files[i])
+            os.rename(os.path.join(folder_output, contrast + '_seg.nii.gz'), list_files[i])
 
             """
             if i != 0:
@@ -245,14 +245,14 @@ def multisegment_spinalcord(contrast):
             """
             timer_segmentation.add_iteration()
 
-        #sct.run('sct_maths -i ' + temp_fname + ' -thr ' + str(threshold) + ' -o ' + folder_output + contrast + '_seg.nii.gz', verbose=0)
+        #sct.run('sct_maths -i ' + temp_fname + ' -thr ' + str(threshold) + ' -o ' + os.path.join(folder_output, contrast + '_seg.nii.gz'), verbose=0)
 
 
         segmentations = [sitk.ReadImage(file_name, sitk.sitkUInt8) for file_name in list_files]
         reference_segmentation_STAPLE_probabilities = sitk.STAPLE(segmentations, foregroundValue)
-        sitk.WriteImage(reference_segmentation_STAPLE_probabilities, folder_output + contrast + '_seg_prob.nii.gz')
+        sitk.WriteImage(reference_segmentation_STAPLE_probabilities, os.path.join(folder_output, contrast + '_seg_prob.nii.gz'))
         reference_segmentation_STAPLE = reference_segmentation_STAPLE_probabilities > threshold
-        sitk.WriteImage(reference_segmentation_STAPLE, folder_output + contrast + '_seg.nii.gz')
+        sitk.WriteImage(reference_segmentation_STAPLE, os.path.join(folder_output, contrast + '_seg.nii.gz'))
     timer_segmentation.stop()
 
 
@@ -260,8 +260,8 @@ def segment_spinalcord(contrast):
     timer_segmentation = sct.Timer(len(list_subjects))
     timer_segmentation.start()
     for subject_name in list_subjects:
-        sct.run('sct_propseg -i ' + path_data_new + subject_name + '/' + contrast + '/' + contrast + '.nii.gz -c t1 '
-                '-ofolder ' + path_data_new + subject_name + '/' + contrast + '/', verbose=0)
+        sct.run('sct_propseg -i ' + os.path.join(path_data_new, subject_name, contrast, contrast + '.nii.gz') + ' -c t1 '
+                '-ofolder ' + os.path.join(path_data_new, subject_name, contrast), verbose=0)
 
         timer_segmentation.add_iteration()
     timer_segmentation.stop()
@@ -271,8 +271,8 @@ def generate_centerline(contrast):
     timer_centerline = sct.Timer(len(list_subjects))
     timer_centerline.start()
     for subject_name in list_subjects:
-        sct.run('sct_process_segmentation -i ' + path_data_new + subject_name + '/' + contrast + '/' + contrast + '_seg_manual.nii.gz -p centerline '
-                                         '-ofolder ' + path_data_new + subject_name + '/' + contrast + '/', verbose=1)
+        sct.run('sct_process_segmentation -i ' + os.path.join(path_data_new, subject_name, contrast, contrast + '_seg_manual.nii.gz') + ' -p centerline '
+                                         '-ofolder ' + os.path.join(path_data_new, subject_name, contrast), verbose=1)
 
         timer_centerline.add_iteration()
     timer_centerline.stop()
@@ -312,10 +312,10 @@ def remove_file(filename):
 
 def clean_segmentation(contrast):
     for subject_name in list_subjects:
-        folder = path_data_new + subject_name + '/' + contrast + '/'
+        folder = os.path.join(path_data_new, subject_name, contrast)
         remove_file(folder + contrast + '_seg.nii.gz')
         import os, glob
-        for filename in glob.glob(folder + contrast + '_seg_*'):
+        for filename in glob.glob(os.path.join(folder, contrast + '_seg_*')):
             os.remove(filename)
         remove_file(folder + contrast + '_centerline.nii.gz')
         remove_file(folder + contrast + '_centerline_optic.nii.gz')
@@ -333,7 +333,7 @@ def average_centerline(contrast):
     timer_centerline = sct.Timer(len(list_subjects))
     timer_centerline.start()
     for subject_name in list_subjects:
-        folder_output = path_data_new + subject_name + '/' + contrast + '/'
+        folder_output = os.path.join(path_data_new, subject_name, contrast)
 
         # go to output folder
         print '\nGo to output folder ' + folder_output
@@ -748,7 +748,7 @@ def compare_csa(contrast, fname_segmentation, fname_disks, fname_centerline_imag
     results_csa = {}
 
     for subject_name in list_subjects:
-        folder_output = path_data_new + subject_name + '/' + contrast + '/'
+        folder_output = os.path.join(path_data_new, subject_name, contrast)
         # go to output folder
         print '\nComparing CSA ' + folder_output
         os.chdir(folder_output)
@@ -776,7 +776,7 @@ def compute_spinalcord_length(contrast, fname_segmentation):
     results = {}
 
     for subject_name in list_subjects:
-        folder_output = path_data_new + subject_name + '/' + contrast + '/'
+        folder_output = os.path.join(path_data_new, subject_name, contrast)
         # go to output folder
         print '\nComputing length ' + folder_output
         os.chdir(folder_output)
@@ -808,7 +808,7 @@ def straighten_all_subjects(contrast):
     timer_straightening = sct.Timer(len(list_subjects))
     timer_straightening.start()
     for subject_name in list_subjects:
-        folder_output = path_data_new + subject_name + '/' + contrast + '/'
+        folder_output = os.path.join(path_data_new, subject_name, contrast)
 
         # go to output folder
         print '\nStraightening ' + folder_output
@@ -839,10 +839,10 @@ def normalize_intensity(contrast, fname_disks, fname_centerline_image):
     average_intensity = 0.0
 
     for subject_name in list_subjects:
-        #folder_output = path_data_new + subject_name + '/' + contrast + '/'
+        #folder_output = os.path.join(path_data_new, subject_name, contrast)
         #fname_image = contrast + '.nii.gz'
 
-        folder_output = PATH_OUTPUT + 'final/'
+        folder_output = PATH_OUTPUT + 'final'
         fname_image = subject_name + '_' + contrast + '.nii.gz'
 
         print '\nExtracting intensity ' + folder_output
@@ -907,7 +907,7 @@ def normalize_intensity(contrast, fname_disks, fname_centerline_image):
     timer_normalize = sct.Timer(len(list_subjects))
     timer_normalize.start()
     for subject_name in list_subjects:
-        #folder_output = path_data_new + subject_name + '/' + contrast + '/'
+        #folder_output = os.path.join(path_data_new, subject_name, contrast)
         #fname_image = contrast + '.nii.gz'
 
         folder_output = PATH_OUTPUT + 'final/'
@@ -1020,7 +1020,7 @@ def normalize_intensity_template():
 
 def warp_segmentation(contrast):
     for subject_name in list_subjects:
-        folder_output = path_data_new + subject_name + '/' + contrast + '/'
+        folder_output = os.path.join(path_data_new, subject_name, contrast)
         image_destination = PATH_OUTPUT + 'final/' + subject_name + '_' + contrast + '.nii.gz'
         folder_output_mnc = PATH_OUTPUT + 'mnc/'
         fname_image = 't1_seg_manual.nii.gz'
@@ -1030,7 +1030,7 @@ def warp_segmentation(contrast):
 
         sct.run('sct_apply_transfo -i ' + fname_image + ' -w warp_curve2straight.nii.gz -d ' + image_destination + ' -x nn -o ' + subject_name + '_' + contrast + '_seg_straight.nii.gz')
 
-        sct.run('nii2mnc ' + subject_name + '_' + contrast + '_seg_straight.nii.gz' + ' ' + folder_output_mnc + subject_name + '_' + contrast + '_seg.mnc')
+        sct.run('nii2mnc ' + subject_name + '_' + contrast + '_seg_straight.nii.gz' + ' ' + os.path.join(folder_output_mnc, subject_name + '_' + contrast + '_seg.mnc'))
 
 
 def create_mask_template():
@@ -1042,7 +1042,7 @@ def create_mask_template():
     template.save()
 
     folder_output = PATH_OUTPUT + 'mnc/'
-    sct.run('nii2mnc ' + PATH_OUTPUT + 'final/template_mask.nii.gz ' + ' ' + folder_output + 'template_mask.mnc')
+    sct.run('nii2mnc ' + PATH_OUTPUT + 'final/template_mask.nii.gz ' + ' ' + os.path.join(folder_output, "template_mask.mnc"))
 
 
 def convert_nii2mnc(contrast):
@@ -1051,7 +1051,7 @@ def convert_nii2mnc(contrast):
         fname_image = subject_name + '_' + contrast + '_norm.nii.gz'
         fname_im_output = subject_name + '_' + contrast + '.mnc'
 
-        sct.run('nii2mnc ' + PATH_OUTPUT + 'final/' + fname_image + ' ' + folder_output + fname_im_output)
+        sct.run('nii2mnc ' + PATH_OUTPUT + 'final/' + fname_image + ' ' + os.path.join(folder_output, fname_im_output))
 
 
 def compute_vertebral_levels(contrast):
@@ -1064,10 +1064,7 @@ def compute_vertebral_levels(contrast):
     centerlines = {}
 
     for subject_name in list_subjects:
-        #folder_output = path_data_new + subject_name + '/' + contrast + '/'
-        #fname_image = contrast + '.nii.gz'
-
-        folder_output = path_data_new + subject_name + '/' + contrast + '/'
+        folder_output = os.path.join(path_data_new, subject_name, contrast)
         fname_image = contrast + '.nii.gz'
 
         print '\nExtracting lengths ' + folder_output
@@ -1231,10 +1228,10 @@ def display_csa_length():
         plt.xticks(y_l, labels, rotation='horizontal')
     plt.show()
 
-    path_template = path_data_new + 'output/PAM50/'
-    levels_template, csa_template = compute_csa(path_template + 'PAM50_seg.nii.gz',
-                                                path_template + 'PAM50_disks.nii.gz',
-                                                path_template + 'PAM50_centerline.nii.gz')
+    path_template = os.path.join(path_data_new, 'output', 'PAM50')
+    levels_template, csa_template = compute_csa(os.path.join(path_template, 'PAM50_seg.nii.gz'),
+                                                os.path.join(path_template, 'PAM50_disks.nii.gz'),
+                                                os.path.join(path_template, 'PAM50_centerline.nii.gz'))
 
     enlargements = {'FR': [4.65782333434, 17.8022309316],
 'JW': [ 5.64666867651, 19.3457943925],
@@ -1492,12 +1489,11 @@ def convert_segmentations():
     path_out = '/Users/benjamindeleener/data/PAM50_2017/output/PAM50/seg/'
     fname_template = '/Users/benjamindeleener/data/PAM50_2017/output/PAM50/PAM50_t1.nii'
     for subject_name in list_subjects:
-        #sct.run('mnc2nii ' + path_data + subject_name + '_t1_seg_d.mnc ' + path_data + subject_name + '_t1_seg_d.nii ')
-        sct.run('mnc2nii ' + path_data + subject_name + '_t1_seg_d.mnc ' + path_data + subject_name + '_t1_seg_d.nii ')
+        sct.run('mnc2nii ' + os.path.join(path_data, subject_name + '_t1_seg_d.mnc') + ' ' + os.path.join(path_data, subject_name + '_t1_seg_d.nii'))
 
     for subject_name in list_subjects:
-        sct.run('sct_crop_image -i ' + path_data + subject_name + '_t1_seg_d.nii -o ' + path_out + subject_name + '_t1_seg_t.nii.gz -b 0 -start 0 -end 1047 -dim 2')
-        #sct.run('fslview -m single,single ' + fname_template + ' ' + path_data + subject_name + '_t1_seg_d.nii -l Red -b 0,0.00001')
+        sct.run('sct_crop_image -i ' + os.path.join(path_data, subject_name + '_t1_seg_d.nii') + ' -o ' + os.path.join(path_out, subject_name + '_t1_seg_t.nii.gz') + ' -b 0 -start 0 -end 1047 -dim 2')
+        #sct.run('fslview -m single,single ' + fname_template + ' ' + os.path.join(path_data, subject_name + '_t1_seg_d.nii') + ' -l Red -b 0,0.00001')
 
 
 def warp_centerline():
@@ -1506,11 +1502,11 @@ def warp_centerline():
     contrast = 't1'
     image_destination = '/Users/benjamindeleener/data/PAM50_2017/output/PAM50/PAM50_t1.nii'
     for subject_name in list_subjects:
-        path_subject = path_data + subject_name + '/' + contrast + '/'
-        fname_centerline = path_subject + contrast + '_centerline_manual.nii.gz'
-        sct.run('sct_apply_transfo -i ' + fname_centerline + ' -w ' + path_subject + 'warp_curve2straight.nii.gz -d ' + image_destination + ' -x nn -o ' + path_out + subject_name + '_' + contrast + '_centerline_straight.nii.gz')
-        sct.run('sct_crop_image -i ' + path_out + subject_name + '_' + contrast + '_centerline_straight.nii.gz -o ' + path_out + subject_name + '_' + contrast + '_seg_t.nii.gz -b 0 -start 200 -end 1047 -dim 2')
-        sct.run('rm -f ' + path_out + subject_name + '_' + contrast + '_centerline_straight.nii.gz')
+        path_subject = os.path.join(path_data, subject_name, contrast)
+        fname_centerline = os.path.join(path_subject, contrast + '_centerline_manual.nii.gz')
+        sct.run('sct_apply_transfo -i ' + fname_centerline + ' -w ' + os.path.join(path_subject, 'warp_curve2straight.nii.gz') + ' -d ' + image_destination + ' -x nn -o ' + os.path.join(path_out, subject_name + '_' + contrast + '_centerline_straight.nii.gz'))
+        sct.run('sct_crop_image -i ' + os.path.join(path_out, subject_name + '_' + contrast + '_centerline_straight.nii.gz') + ' -o ' + os.path.join(path_out, subject_name + '_' + contrast + '_seg_t.nii.gz') + ' -b 0 -start 200 -end 1047 -dim 2')
+        os.remove(os.path.join(path_out, subject_name + '_' + contrast + '_centerline_straight.nii.gz'))
 
 
 #clean_segmentation('t1')

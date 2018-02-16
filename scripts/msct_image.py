@@ -14,11 +14,11 @@
 
 # TODO: update function to reflect the new get_dimension
 
+import sys, io, os, math
 
 import numpy as np
 import sct_utils as sct
 from scipy.ndimage import map_coordinates
-import math
 import sct_utils as sct
 
 
@@ -221,16 +221,15 @@ class Image(object):
             self.hdr = hdr
 
         self.verbose = verbose
-
         # load an image from file
-        if type(param) is str:
+        if isinstance(param, str) or (sys.hexversion < 0x03000000 and isinstance(param, unicode)):
             self.loadFromPath(param, verbose)
             self.compute_transform_matrix()
         # copy constructor
         elif isinstance(param, type(self)):
             self.copy(param)
         # create an empty image (full of zero) of dimension [dim]. dim must be [x,y,z] or (x,y,z). No header.
-        elif type(param) is list:
+        elif isinstance(param, list):
             self.data = np.zeros(param)
             self.dim = param
             self.hdr = hdr
@@ -425,7 +424,7 @@ class Image(object):
         if self.hdr:
             self.hdr.set_data_shape(self.data.shape)
         img = Nifti1Image(self.data, None, self.hdr)
-        fname_out = self.path + self.file_name + self.ext
+        fname_out = os.path.join(self.path, self.file_name + self.ext)
         if path.isfile(fname_out):
             printv('WARNING: File ' + fname_out + ' already exists. Deleting it.', verbose, 'warning')
             remove(fname_out)
@@ -480,7 +479,7 @@ class Image(object):
                 except ValueError:
                     X, Y, Z = (self.data > 0).nonzero()
                     list_coordinates = [Coordinate([X[i], Y[i], 0, self.data[X[i], Y[i], 0]]) for i in range(0, len(X))]
-        except Exception, e:
+        except Exception as e:
             sct.printv('ERROR: Exception ' + str(e) + ' caught while geting non Zeros coordinates', 1, 'error')
 
         if coordValue:
@@ -524,7 +523,7 @@ class Image(object):
 
         # 3. Compute the center of mass of each group of voxels and write them into the output image
         averaged_coordinates = []
-        for value, list_coord in groups.iteritems():
+        for value, list_coord in groups.items():
             averaged_coordinates.append(sum(list_coord) / float(len(list_coord)))
 
         averaged_coordinates = sorted(averaged_coordinates, key=lambda obj: obj.value, reverse=False)
@@ -828,7 +827,7 @@ class Image(object):
 
         coord_origin = np.array([[m_p2f[0, 3]], [m_p2f[1, 3]], [m_p2f[2, 3]]])
 
-        if coordi != None:
+        if coordi is not None:
             coordi_phys = np.transpose(np.asarray(coordi))
             coordi_pix = np.transpose(np.dot(m_f2p_transfo, (coordi_phys - coord_origin)))
             coordi_pix_tmp = coordi_pix.tolist()
@@ -929,7 +928,7 @@ class Image(object):
         """
         nx, ny, nz, nt, px, py, pz, pt = im_ref.dim
         x, y, z = np.mgrid[0:nx, 0:ny, 0:nz]
-        indexes_ref = np.array(zip(x.ravel(), y.ravel(), z.ravel()))
+        indexes_ref = np.array(list(zip(x.ravel(), y.ravel(), z.ravel())))
         physical_coordinates_ref = im_ref.transfo_pix2phys(indexes_ref)
 
         # TODO: add optional transformation from reference space to image space to physical coordinates of ref grid.
@@ -1028,12 +1027,10 @@ class Image(object):
         import matplotlib.pyplot as plt
         import matplotlib.cm as cm
         from math import sqrt
-        from sct_utils import slash_at_the_end
         if type(index) is not list:
             index = [index]
 
         slice_list = [self.get_slice(plane=plane, index=i, seg=seg) for i in index]
-        path_output = slash_at_the_end(path_output, 1)
         if seg is not None:
             import matplotlib.colors as col
             color_white = col.colorConverter.to_rgba('white', alpha=0.0)
@@ -1073,11 +1070,11 @@ class Image(object):
             # if seg is not None:
             #     plt.imshow(slice_seg, cmap=cmap_seg, interpolation='nearest')
             # plt.axis('off')
-            fname_png = path_output + self.file_name + suffix + format
+            fname_png = os.path.join(path_output, self.file_name + suffix + format)
             plt.savefig(fname_png, bbox_inches='tight')
             plt.close(fig)
 
-        except RuntimeError, e:
+        except RuntimeError as e:
             from sct_utils import printv
             printv('WARNING: your device does not seem to have display feature', self.verbose, type='warning')
             printv(str(e), self.verbose, type='warning')
@@ -1117,7 +1114,7 @@ class Image(object):
                 filename_gmseg_image_png = self.save_plane(plane=plane, suffix='_' + plane + '_plane_seg', index=index_list, seg=seg, thr=thr, cmap_col=cmap_col, format=format, path_output=path_output)
                 info_str += ' & ' + filename_gmseg_image_png
             printv(info_str, verbose, 'info')
-        except RuntimeError, e:
+        except RuntimeError as e:
             printv('WARNING: your device does not seem to have display feature', self.verbose, type='warning')
             printv(str(e), self.verbose, type='warning')
 

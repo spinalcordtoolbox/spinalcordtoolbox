@@ -205,8 +205,8 @@ def main(args=None):
     except Exception as e:
         sct.printv(str(e), 1, 'error')
 
-    sct.printv('Done ! to view your results, type: ', param.verbose, 'normal')
-    sct.printv('fslview ' + fname_dest + ' ' + os.path.abspath(param.fname_out) + ' &\n', param.verbose, 'info')
+    sct.display_viewer_syntax([fname_dest, os.path.abspath(param.fname_out)])
+
 
 if __name__ == "__main__":
     sct.start_stream_logger()

@@ -16,15 +16,16 @@
 # TODO: add flag for setting threshold on PCA
 # TODO: clean code for generate_warping_field (unify with centermass_rot)
 
-import sys
+import sys, os, shutil
 from math import asin, cos, sin, acos
-from os import chdir
-import sct_utils as sct
 import numpy as np
+
 from scipy import ndimage
 from scipy.io import loadmat
-from msct_image import Image
 from nibabel import load, Nifti1Image, save
+
+from msct_image import Image
+import sct_utils as sct
 from sct_convert import convert
 from sct_register_multimodal import Paramreg
 
@@ -40,17 +41,18 @@ def register_slicewise(fname_src,
                         verbose=0):
 
     # create temporary folder
-    path_tmp = sct.tmp_create(verbose)
+    path_tmp = sct.tmp_create(basename="register", verbose=verbose)
 
     # copy data to temp folder
     sct.printv('\nCopy input data to temp folder...', verbose)
-    convert(fname_src, path_tmp + 'src.nii')
-    convert(fname_dest, path_tmp + 'dest.nii')
+    convert(fname_src, os.path.join(path_tmp, "src.nii"))
+    convert(fname_dest, os.path.join(path_tmp, "dest.nii"))
     if fname_mask != '':
-        convert(fname_mask, path_tmp + 'mask.nii.gz')
+        convert(fname_mask, os.path.join(path_tmp, "mask.nii.gz"))
 
     # go to temporary folder
-    chdir(path_tmp)
+    curdir = os.getcwd()
+    os.chdir(path_tmp)
 
     # Calculate displacement
     if paramreg.algo == 'centermass':
@@ -69,12 +71,12 @@ def register_slicewise(fname_src,
         # run slicewise registration
         register2d('src.nii', 'dest.nii', fname_mask=fname_mask, fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, paramreg=paramreg, ants_registration_params=ants_registration_params, verbose=verbose)
 
-    sct.printv('\nMove warping fields to parent folder...', verbose)
-    sct.run('mv ' + warp_forward_out + ' ../')
-    sct.run('mv ' + warp_inverse_out + ' ../')
+    sct.printv('\nMove warping fields...', verbose)
+    sct.copy(warp_forward_out, curdir)
+    sct.copy(warp_inverse_out, curdir)
 
-    # go back to parent folder
-    chdir('../')
+    # go back
+    os.chdir(curdir)
 
 
 def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii.gz', fname_warp_inv='warp_inverse.nii.gz', rot=1, poly=0, path_qc='./', verbose=0, pca_eigenratio_th=1.6):
@@ -176,7 +178,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
             plt.grid()
             plt.xlabel('z')
             plt.ylabel('Angle (deg)')
-            plt.savefig(path_qc + 'register2d_centermassrot_regularize_rotation.png')
+            plt.savefig(os.path.join(path_qc, 'register2d_centermassrot_regularize_rotation.png'))
             plt.close()
         # update variable
         angle_src_dest[z_nonzero] = angle_src_dest_regularized
@@ -190,7 +192,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
 
     # construct 3D warping matrix
     for iz in z_nonzero:
-        sct.printv(str(iz) + '/' + str(nz) + '..',)
+        sct.no_new_line_log('{}/{}..'.format(iz, nz))
         # get indices of x and y coordinates
         row, col = np.indices((nx, ny))
         # build 2xn array of coordinates in pixel space
@@ -259,14 +261,16 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
                     # sct.printv('WARNING: '+str(e), 1, 'warning')
 
                     # plt.axis('equal')
-            plt.savefig(path_qc + 'register2d_centermassrot_pca_z' + str(iz) + '.png')
+            plt.savefig(os.path.join(path_qc, 'register2d_centermassrot_pca_z' + str(iz) + '.png'))
             plt.close()
 
         # construct 3D warping matrix
-        warp_x[:, :, iz] = np.array([coord_forward_phy[i, 0] - coord_init_phy[i, 0] for i in xrange(nx * ny)]).reshape((nx, ny))
-        warp_y[:, :, iz] = np.array([coord_forward_phy[i, 1] - coord_init_phy[i, 1] for i in xrange(nx * ny)]).reshape((nx, ny))
-        warp_inv_x[:, :, iz] = np.array([coord_inverse_phy[i, 0] - coord_init_phy[i, 0] for i in xrange(nx * ny)]).reshape((nx, ny))
-        warp_inv_y[:, :, iz] = np.array([coord_inverse_phy[i, 1] - coord_init_phy[i, 1] for i in xrange(nx * ny)]).reshape((nx, ny))
+        warp_x[:, :, iz] = np.array([coord_forward_phy[i, 0] - coord_init_phy[i, 0] for i in range(nx * ny)]).reshape((nx, ny))
+        warp_y[:, :, iz] = np.array([coord_forward_phy[i, 1] - coord_init_phy[i, 1] for i in range(nx * ny)]).reshape((nx, ny))
+        warp_inv_x[:, :, iz] = np.array([coord_inverse_phy[i, 0] - coord_init_phy[i, 0] for i in range(nx * ny)]).reshape((nx, ny))
+        warp_inv_y[:, :, iz] = np.array([coord_inverse_phy[i, 1] - coord_init_phy[i, 1] for i in range(nx * ny)]).reshape((nx, ny))
+
+    sct.log.info('\n Done')
 
     # Generate forward warping field (defined in destination space)
     generate_warping_field(fname_dest, warp_x, warp_y, fname_warp, verbose)
@@ -383,7 +387,7 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
             # <<<
             src1d_min, src1d_max = min(np.where(src1d != 0)[0]), max(np.where(src1d != 0)[0])
             dest1d_min, dest1d_max = min(np.where(dest1d != 0)[0]), max(np.where(dest1d != 0)[0])
-            # for i in xrange(len(src1d)):
+            # for i in range(len(src1d)):
             #     if src1d[i] > 0.5:
             #         found index above 0.5, exit loop
                     # break
@@ -415,7 +419,7 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
             coord_init_pix_scaleYinv = np.copy(coord_init_pix)  # need to use np.copy to avoid copying pointer
             # coord_src2d_scaleXY = np.copy(coord_src2d_scaleX)  # need to use np.copy to avoid copying pointer
             # loop across columns (X dimension)
-            for ix in xrange(nx):
+            for ix in range(nx):
                 # retrieve 1D signal along Y
                 src1d = src2d_scaleX[ix, :]
                 dest1d = dest2d[ix, :]
@@ -509,7 +513,7 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
                 plt.ylim(mean_dest_y - 15, mean_dest_y + 15)
                 ax.grid(True, color='w')
                 # save figure
-                plt.savefig(path_qc + 'register2d_columnwise_image_z' + str(iz) + '.png')
+                plt.savefig(os.path.join(path_qc, 'register2d_columnwise_image_z' + str(iz) + '.png'))
                 plt.close()
 
             # ============================================================
@@ -522,11 +526,11 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
             coord_init_phy_scaleXinv = np.array(im_src.transfo_pix2phys(coord_init_pix_scaleXinv))
             coord_init_phy_scaleYinv = np.array(im_src.transfo_pix2phys(coord_init_pix_scaleYinv))
             # compute displacement per pixel in destination space (for forward warping field)
-            warp_x[:, :, iz] = np.array([coord_init_phy_scaleXinv[i, 0] - coord_init_phy[i, 0] for i in xrange(nx * ny)]).reshape((nx, ny))
-            warp_y[:, :, iz] = np.array([coord_init_phy_scaleYinv[i, 1] - coord_init_phy[i, 1] for i in xrange(nx * ny)]).reshape((nx, ny))
+            warp_x[:, :, iz] = np.array([coord_init_phy_scaleXinv[i, 0] - coord_init_phy[i, 0] for i in range(nx * ny)]).reshape((nx, ny))
+            warp_y[:, :, iz] = np.array([coord_init_phy_scaleYinv[i, 1] - coord_init_phy[i, 1] for i in range(nx * ny)]).reshape((nx, ny))
             # compute displacement per pixel in source space (for inverse warping field)
-            warp_inv_x[:, :, iz] = np.array([coord_init_phy_scaleX[i, 0] - coord_init_phy[i, 0] for i in xrange(nx * ny)]).reshape((nx, ny))
-            warp_inv_y[:, :, iz] = np.array([coord_init_phy_scaleY[i, 1] - coord_init_phy[i, 1] for i in xrange(nx * ny)]).reshape((nx, ny))
+            warp_inv_x[:, :, iz] = np.array([coord_init_phy_scaleX[i, 0] - coord_init_phy[i, 0] for i in range(nx * ny)]).reshape((nx, ny))
+            warp_inv_y[:, :, iz] = np.array([coord_init_phy_scaleY[i, 1] - coord_init_phy[i, 1] for i in range(nx * ny)]).reshape((nx, ny))
 
     # Generate forward warping field (defined in destination space)
     generate_warping_field(fname_dest, warp_x, warp_y, fname_warp, verbose)
@@ -676,7 +680,7 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
 
         # if an exception occurs with ants, take the last value for the transformation
         # TODO: DO WE NEED TO DO THAT??? (julien 2016-03-01)
-        except Exception, e:
+        except Exception as e:
             sct.printv('ERROR: Exception occurred.\n' + str(e), 1, 'error')
 
     # Merge warping field along z
@@ -873,7 +877,7 @@ def find_index_halfmax(data1d):
     # normalize data between 0 and 1
     data1d = data1d / float(np.max(data1d))
     # loop across elements and stops when found 0.5
-    for i in xrange(len(data1d)):
+    for i in range(len(data1d)):
         if data1d[i] > 0.5:
             break
     # compute center of mass to get coordinate at 0.5

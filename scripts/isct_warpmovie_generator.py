@@ -13,10 +13,10 @@
 #########################################################################################
 
 from msct_image import Image
-from sct_utils import run, printv, extract_fname
 from scipy.misc import toimage
 
 import sct_utils as sct
+from sct_utils import run, printv, extract_fname
 
 
 class WarpingField(Image):
@@ -84,12 +84,13 @@ if __name__ == "__main__":
 
     filenames_output = []
 
-    # path_tmp = tmp_create()
+    # path_tmp = sct.tmp_create()
     # tmp_copy_nifti(input_file, path_tmp, 'raw.nii')
-    # run('cp '+warping_fields_filename[0]+' '+path_tmp)
-    # chdir(path_tmp)
-    run('mkdir images')
-    run('mkdir niftis')
+    # sct.run('cp '+warping_fields_filename[0]+' '+path_tmp)
+    # curdir = os.getcwd()
+    # os.chdir(path_tmp)
+    sct.run('mkdir images')
+    sct.run('mkdir niftis')
     while True:
         try:
             warping_fields[0].num_of_frames = number_of_frames
@@ -97,7 +98,7 @@ if __name__ == "__main__":
             image_output_iter.save()
             filename_warp = image_output_iter.path + image_output_iter.file_name + image_output_iter.ext
             filename_output = "niftis/tmp.warped_image_" + str(iteration - 1) + image_output_iter.ext
-            run("sct_apply_transfo -i " + input_file + " -d " + reference_image + " -w " + filename_warp +
+            sct.run("sct_apply_transfo -i " + input_file + " -d " + reference_image + " -w " + filename_warp +
                 " -o " + filename_output)
             result = Image(filename_output)
             result.change_orientation()

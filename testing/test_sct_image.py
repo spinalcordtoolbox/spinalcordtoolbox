@@ -11,8 +11,9 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+import sys, io, os
+
 import sct_utils as sct
-import commands
 from msct_image import Image
 import numpy as np
 
@@ -30,13 +31,13 @@ def init(param_test):
 
     # test concatenation of data
     path_fname, file_fname, ext_fname = sct.extract_fname(param_test.file_data[2])
-    param_test.dmri_t_slices = [param_test.folder_data[2] + file_fname + '_T' + str(i).zfill(4) + ext_fname for i in range(7)]
+    param_test.dmri_t_slices = [os.path.join(param_test.folder_data[2], file_fname + '_T' + str(i).zfill(4) + ext_fname) for i in range(7)]
     input_concat = ','.join(param_test.dmri_t_slices)
 
-    default_args = ['-i ' + param_test.folder_data[0] + param_test.file_data[0] + ' -o test.nii.gz' + ' -pad 0,0,'+str(param_test.pad),
-                    '-i ' + param_test.folder_data[1] + param_test.file_data[1] + ' -getorient',  # 3D
-                    '-i ' + param_test.folder_data[2] + param_test.file_data[2] + ' -getorient',  # 4D
-                    '-i ' + param_test.folder_data[2] + param_test.file_data[2] + ' -split t',
+    default_args = ['-i ' + os.path.join(param_test.folder_data[0], param_test.file_data[0]) + ' -o test.nii.gz' + ' -pad 0,0,'+str(param_test.pad),
+                    '-i ' + os.path.join(param_test.folder_data[1], param_test.file_data[1]) + ' -getorient',  # 3D
+                    '-i ' + os.path.join(param_test.folder_data[2], param_test.file_data[2]) + ' -getorient',  # 4D
+                    '-i ' + os.path.join(param_test.folder_data[2], param_test.file_data[2]) + ' -split t',
                     '-i ' + input_concat + ' -concat t -o dmri_concat.nii.gz']
 
     # assign default params
@@ -55,8 +56,8 @@ def test_integrity(param_test):
 
     # checking the integrity of padding an image
     if index_args == 0:
-        nx, ny, nz, nt, px, py, pz, pt = Image(param_test.path_data + param_test.folder_data[0] + param_test.file_data[0]).dim
-        nx2, ny2, nz2, nt2, px2, py2, pz2, pt2 = Image(param_test.path_output + 'test.nii.gz').dim
+        nx, ny, nz, nt, px, py, pz, pt = Image(os.path.join(param_test.path_data, param_test.folder_data[0], param_test.file_data[0])).dim
+        nx2, ny2, nz2, nt2, px2, py2, pz2, pt2 = Image(os.path.join(param_test.path_output, 'test.nii.gz')).dim
 
         if nz2 != nz + 2 * param_test.pad:
             param_test.status = 99
@@ -67,9 +68,9 @@ def test_integrity(param_test):
     elif index_args == 3:
         threshold = 1e-3
         try:
-            path_fname, file_fname, ext_fname = sct.extract_fname(param_test.path_data + param_test.folder_data[2] + param_test.file_data[2])
-            ref = Image(param_test.path_data + param_test.dmri_t_slices[0])
-            new = Image(param_test.path_data + param_test.folder_data[2] + file_fname + '_T0000' + ext_fname)
+            path_fname, file_fname, ext_fname = sct.extract_fname(os.path.join(param_test.path_data, param_test.folder_data[2], param_test.file_data[2]))
+            ref = Image(os.path.join(param_test.path_data, param_test.dmri_t_slices[0]))
+            new = Image(os.path.join(param_test.path_data, param_test.folder_data[2], file_fname + '_T0000' + ext_fname))
             diff = ref.data - new.data
             if np.sum(diff) > threshold:
                 param_test.status = 99
@@ -81,8 +82,8 @@ def test_integrity(param_test):
     elif index_args == 4:
         try:
             threshold = 1e-3
-            ref = Image(param_test.path_data + param_test.folder_data[2] + param_test.file_data[2])
-            new = Image(param_test.path_output + 'dmri_concat.nii.gz')
+            ref = Image(os.path.join(param_test.path_data, param_test.folder_data[2], param_test.file_data[2]))
+            new = Image(os.path.join(param_test.path_output, 'dmri_concat.nii.gz'))
             diff = ref.data - new.data
             if np.sum(diff) > threshold:
                 param_test.status = 99
