@@ -56,6 +56,7 @@ path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
 path_script = os.path.dirname(__file__)
 sys.path.append(os.path.join(path_sct, 'testing'))
 
+import concurrent.futures
 if "SCT_MPI_MODE" in os.environ:
     from mpi4py.futures import MPIPoolExecutor as PoolExecutor
     __MPI__ = True
@@ -332,31 +333,35 @@ def run_function(function, folder_dataset, list_subj, list_args=[], nb_cpu=None,
     list_func_subj_args = list(itertools.product(*[[function], list_subj_path, list_args]))
         # data_and_params = itertools.izip(itertools.repeat(function), data_subjects, itertools.repeat(parameters))
 
-    # Computing Pool for parallel process, distribute2mpi.MpiPool in MPI environment, multiprocessing.Pool otherwise
     sct.log.debug("stating pool with {} thread(s)".format(nb_cpu))
     pool = PoolExecutor(nb_cpu)
     compute_time = None
     try:
         compute_time = time()
-        async_results = pool.map(function_launcher, list_func_subj_args)
-        compute_time = time() - compute_time
-        # concatenate all_results into single Panda structure
-        #  async_results is an iterator that locks on __next__ call until a new results comes
-        sct.log.info('Waiting for results, be patient')
+        # async_results = pool.map(function_launcher, list_func_subj_args)
         count = 0
+
+        # future = pool.submit(function_launcher)
         all_results = []
-        for result in async_results:
+
+        sct.log.info('Waiting for results, be patient')
+        future_dirs = {pool.submit(function_launcher, subject_arg): subject_arg
+                         for subject_arg in list_func_subj_args}
+
+        for future in concurrent.futures.as_completed(future_dirs):
             count += 1
-            # Hack with how the dataframe is created in sct_testing, should try to find a more generic solution
+            subject = os.path.basename(future_dirs[future][1])
+            arguments = future_dirs[future][2]
             try:
-                directory = re.search('^(\w+) +', result.__repr__().split('\n')[1]).groups()[0]
-            except (AttributeError, IndexError):
-                directory = ''
-                sct.log.debug('could not find dataframe name')
+                result = future.result()
+            except Exception as exc:
+                sct.log.error('{} {} generated an exception: {}'.format(subject, arguments, exc))
 
-            sct.log.info('{}/{}: {} done'.format(count, len(list_func_subj_args), directory))
+            sct.log.info('{}/{}: {} done'.format(count, len(list_func_subj_args), subject))
             all_results.append(result)
+        compute_time = time() - compute_time
 
+        # concatenate all_results into single Panda structure
         results_dataframe = pd.concat(all_results)
 
     except KeyboardInterrupt:
