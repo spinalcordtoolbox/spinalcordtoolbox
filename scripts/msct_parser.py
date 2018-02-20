@@ -570,7 +570,8 @@ class Usage:
         if error:
             self.generate(error)
         else:
-            raise SyntaxError(self.generate())
+            sct.log.error(self.generate())
+            exit(0)
 
     def print_list_with_brackets(self, l):
         type_value = '{'
