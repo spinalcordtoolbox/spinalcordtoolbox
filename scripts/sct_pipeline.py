@@ -367,12 +367,14 @@ def run_function(function, folder_dataset, list_subj, list_args=[], nb_cpu=None,
     except KeyboardInterrupt:
         sct.log.warning("\nCaught KeyboardInterrupt, terminating workers")
         pool.shutdown()
-        pool.Future.cancel()
+        for job in future_dirs:
+            job.cancel()
     except Exception as e:
         sct.log.error('Error on line {}'.format(sys.exc_info()[-1].tb_lineno))
         sct.log.exception(e)
         pool.shutdown()
-        pool.Future.cancel()
+        for job in future_dirs:
+            job.cancel()
         raise
 
     return {'results': results_dataframe, "compute_time": compute_time}
