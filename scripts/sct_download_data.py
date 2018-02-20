@@ -37,7 +37,9 @@ def get_parser():
         mandatory=True,
         example=[
             'sct_example_data', 'sct_testing_data', 'PAM50', 'MNI-Poly-AMU',
-            'gm_model', 'optic_models', 'pmj_models', 'binaries_debian', 'binaries_centos', 'binaries_osx', 'course_hawaii17'
+            'gm_model', 'optic_models', 'pmj_models', 'binaries_debian',
+            'binaries_centos', 'binaries_osx', 'course_hawaii17',
+            'deepseg_gm_models', 'deepseg_sc_models'
         ])
     parser.add_option(
         name="-v",
@@ -69,8 +71,8 @@ def main(args=None):
     dict_url = {
         'sct_example_data': ['https://osf.io/4nnk3/?action=download',
                              'https://www.neuro.polymtl.ca/_media/downloads/sct/20170208_sct_example_data.zip'],
-        'sct_testing_data': ['https://osf.io/zrbs7/?action=download',
-                             'https://www.neuro.polymtl.ca/_media/downloads/sct/20170622_sct_testing_data.zip'],
+        'sct_testing_data': ['https://osf.io/z8gaj/?action=download',
+                             'https://www.neuro.polymtl.ca/_media/downloads/sct/20180125_sct_testing_data.zip'],
         'PAM50': ['https://osf.io/gdwn6/?action=download',
                   'https://www.neuro.polymtl.ca/_media/downloads/sct/20170101_PAM50.zip'],
         'MNI-Poly-AMU': ['https://osf.io/sh6h4/?action=download',
@@ -87,7 +89,11 @@ def main(args=None):
                             'https://www.neuro.polymtl.ca/_media/downloads/sct/20170915_sct_binaries_linux_centos6.tar.gz'],
         'binaries_osx': ['https://osf.io/hsa5r/?action=download',
                          'https://www.neuro.polymtl.ca/_media/downloads/sct/20170915_sct_binaries_osx.tar.gz'],
-        'course_hawaii17': 'https://osf.io/6exht/?action=download'
+        'course_hawaii17': 'https://osf.io/6exht/?action=download',
+        'deepseg_gm_models': ['https://osf.io/b9y4x/?action=download',
+                              'https://www.neuro.polymtl.ca/_media/downloads/sct/20180205_deepseg_gm_models.zip'],
+        'deepseg_sc_models': ['https://osf.io/mg8wr/?action=download',
+                              'https://www.neuro.polymtl.ca/_media/downloads/sct/20180211_deepseg_sc_models.zip']
     }
 
     # Get parser info

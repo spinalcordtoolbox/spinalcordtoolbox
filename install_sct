@@ -423,6 +423,12 @@ else
             and verify your internet connection before reinstalling"
     exit $e_status
   fi
+
+  # Install tensorflow for Debian
+  if python -c "import platform; print platform.dist()" | grep -qi 'debian'; then
+    conda install -c defaults --yes tensorflow==1.3.0
+  fi
+
   # reinstall numpy at the end to prevent some bugs
   n_version=$(conda list  numpy | grep numpy |awk '{print $2}')
   conda install -fy numpy=$n_version
@@ -475,6 +481,10 @@ else
   cmd="python ../scripts/sct_download_data.py -d optic_models"; echo ">> "$cmd; $cmd
   # Install PMJ models
   cmd="python ../scripts/sct_download_data.py -d pmj_models"; echo ">> "$cmd; $cmd
+  # Install deep learning-based spinal cord segmentation models
+  cmd="python ../scripts/sct_download_data.py -d deepseg_sc_models"; echo ">> "$cmd; $cmd
+  # Install deepgmseg models
+  cmd="python ../scripts/sct_download_data.py -d deepseg_gm_models"; echo ">> "$cmd; $cmd
 fi
 
 # Make sure sct scripts are executable

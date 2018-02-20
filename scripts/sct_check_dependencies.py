@@ -26,8 +26,8 @@ class Param:
         self.complete_test = 0
 
 
-import sys, io, os, platform, importlib
 
+import sys, io, os, commands, platform, importlib
 import sct_utils as sct
 from msct_parser import Parser
 
@@ -39,6 +39,46 @@ class bcolors:
     WARNING = '\033[93m'
     FAIL = '\033[91m'
     ENDC = '\033[0m'
+
+
+def resolve_module(framework_name):
+    """This function will resolve the framework name
+    to the module name in cases where it is different.
+
+    :param framework_name: the name of the framework.
+    :return: the tuple (module name, supress stderr).
+    """
+    # Framework name : (module name, suppress stderr)
+    modules_map = {
+        'futures': ('concurrent.futures', False),
+        'scikit-image': ('skimage', False),
+        'scikit-learn': ('sklearn', False),
+        'pyqt': ('PyQt4', False),
+        'Keras': ('keras', True),
+    }
+
+    try:
+        return modules_map[framework_name]
+    except KeyError:
+        return (framework_name, False)
+
+
+def module_import(module_name, suppress_stderr=False):
+    """Import a module using importlib.
+
+    :param module_name: the name of the module.
+    :param suppress_stderr: if the stderr should be suppressed.
+    :return: the imported module.
+    """
+    if suppress_stderr:
+        original_stderr = sys.stderr
+        sys.stderr = io.BytesIO()
+        module = importlib.import_module(module_name)
+        sys.stderr = original_stderr
+    else:
+        module = importlib.import_module(module_name)
+
+    return module
 
 
 # MAIN
@@ -132,18 +172,10 @@ def main():
     # loop across python packages -- CONDA
     version_requirements = get_version_requirements()
     for i in version_requirements:
-        # need to adapt import name and module name in specific cases
-        if i == 'scikit-image':
-            module = 'skimage'
-        elif i == 'scikit-learn':
-            module = 'sklearn'
-        elif i == 'pyqt':
-            module = 'PyQt4'
-        else:
-            module = i
+        module_name, suppress_stderr = resolve_module(i)
         print_line('Check if ' + i + ' (' + version_requirements.get(i) + ') is installed')
         try:
-            module = importlib.import_module(module)
+            module = module_import(module_name, suppress_stderr)
             # get version
             try:
                 version = module.__version__
@@ -166,13 +198,12 @@ def main():
     # loop across python packages -- PIP
     version_requirements_pip = get_version_requirements_pip()
     for i in version_requirements_pip:
-        if i == "futures":
-            module = "concurrent.futures"
-        else:
-            module = i
+
+        module_name, suppress_stderr = resolve_module(i)
+
         print_line('Check if ' + i + ' (' + version_requirements_pip.get(i) + ') is installed')
         try:
-            module = importlib.import_module(module)
+            module = module_import(module_name, suppress_stderr)
             # get version
             try:
                 version = module.__version__
@@ -331,7 +362,7 @@ def get_version_requirements():
 
 def get_version_requirements_pip():
     path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
-    file = open(os.path.join(path_sct, "install", "requirements", "requirementsPip.txt"))
+    file = open(os.path.join(path_sct, "install", "requirements", "requirementsSetup.txt"))
     dict = {}
     while True:
         line = file.readline()

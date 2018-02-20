@@ -265,15 +265,15 @@ def main(args=None):
         # if only one output
         if len(im_out) == 1:
             im_out[0].setFileName(fname_out) if fname_out is not None else None
-            im_out[0].save(squeeze_data=False, type=output_type)
-            sct.display_viewer_syntax([fname_out])
+            im_out[0].save(squeeze_data=False, type=output_type, verbose=verbose)
+            sct.display_viewer_syntax([fname_out], verbose=verbose)
         if '-mcs' in arguments:
             # use input file name and add _X, _Y _Z. Keep the same extension
             fname_out = []
             for i_dim in range(3):
                 fname_out.append(add_suffix(fname_in[0], '_' + dim_list[i_dim].upper()))
                 im_out[i_dim].setFileName(fname_out[i_dim])
-                im_out[i_dim].save()
+                im_out[i_dim].save(verbose=verbose)
             sct.display_viewer_syntax([fname_out])
         if '-split' in arguments:
             # use input file name and add _"DIM+NUMBER". Keep the same extension
@@ -281,7 +281,7 @@ def main(args=None):
             for i, im in enumerate(im_out):
                 l_fname_out.append(add_suffix(fname_in[0], '_' + dim_list[dim].upper() + str(i).zfill(4)))
                 im.setFileName(l_fname_out[i])
-                im.save()
+                im.save(verbose=verbose)
             sct.display_viewer_syntax(l_fname_out)
 
     elif "-getorient" in arguments:
