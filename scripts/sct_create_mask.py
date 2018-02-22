@@ -258,7 +258,7 @@ def create_mask(param):
     # Remove temporary files
     if param.remove_tmp_files == 1:
         sct.printv('\nRemove temporary files...', param.verbose)
-        sct.run('rm -rf ' + path_tmp, param.verbose)
+        sct.rmtree(path_tmp)
 
     sct.display_viewer_syntax([param.fname_data, param.fname_out], colormaps=['gray', 'red'], opacities=['', '0.5'])
 
@@ -268,7 +268,7 @@ def create_mask(param):
 def create_line(param, fname, coord, nz):
 
     # duplicate volume (assumes input file is nifti)
-    sct.run('cp ' + fname + ' line.nii', param.verbose)
+    sct.copy(fname, 'line.nii', verbose=param.verbose)
 
     # set all voxels to zero
     sct.run('sct_maths -i line.nii -mul 0 -o line.nii', param.verbose)

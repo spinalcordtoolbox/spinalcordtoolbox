@@ -280,7 +280,7 @@ def make_labels_image_from_list_points(mask_points,reoriented_image_filename,ima
         # create the mask containing either the three-points or centerline mask for initialization
         sct.run("sct_label_utils -i " + reoriented_image_filename + " -create " + mask_points ,verbose=False)
         sct.run('sct_image -i ' + 'labels.nii.gz'+ ' -o ' + 'labels_ground_truth.nii.gz' + ' -setorient ' + image_input_orientation + ' -v 0',verbose=False)
-        os.remove('labels.nii.gz')
+        sct.rm('labels.nii.gz')
 
 def use_viewer_to_define_labels(fname_data,first_label,nb_of_slices_to_mean):
     from sct_viewer import ClickViewerGroundTruth
@@ -641,7 +641,7 @@ def main():
     # Delete temporary files
     if remove_temp_files:
         sct.printv('\nDelete temporary files...', verbose)
-        shutil.rmtree(path_tmp)
+        sct.rmtree(path_tmp)
 
     # display elapsed time
     elapsed_time = time.time() - start_time

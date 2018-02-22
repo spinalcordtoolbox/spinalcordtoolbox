@@ -186,7 +186,7 @@ class MultiLabelRegistration:
             sct.generate_output_file(fname_grid_warped, os.path.join(self.param.output_folder, file_grid_warped + ext_grid_warped))
 
         if self.param.remove_tmp:
-            shutil.rmtree(tmp_dir)
+            sct.rmtree(tmp_dir)
 
     def validation(self, fname_manual_gmseg, fname_sc_seg):
         path_manual_gmseg, file_manual_gmseg, ext_manual_gmseg = sct.extract_fname(fname_manual_gmseg)
@@ -346,7 +346,7 @@ class MultiLabelRegistration:
         sct.generate_output_file(os.path.join(tmp_dir, dice_name), os.path.join(self.param.output_folder, dice_name))
 
         if self.param.remove_tmp:
-            shutil.rmtree(tmp_dir)
+            sct.rmtree(tmp_dir)
 
 
 def thr_im(im, low_thr, high_thr):
@@ -434,7 +434,7 @@ def visualize_warp(fname_warp, fname_grid=None, step=3, rm_tmp=True):
     grid_warped = os.path.join(path_warp, 'grid_warped_gm' + ext_warp)
     sct.run('sct_apply_transfo -i ' + fname_grid + ' -d ' + fname_grid + ' -w ' + fname_warp + ' -o ' + grid_warped)
     if rm_tmp:
-        shutil.rmtree(tmp_dir)
+        sct.rmtree(tmp_dir)
     return grid_warped
 
 

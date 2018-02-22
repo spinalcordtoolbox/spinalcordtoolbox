@@ -591,7 +591,7 @@ def main(args=None):
     # Delete temporary files
     if remove_temp_files:
         sct.printv('\nDelete temporary files...', verbose)
-        shutil.rmtree(path_tmp)
+        sct.rmtree(path_tmp, verbose=verbose)
 
     # display elapsed time
     elapsed_time = time.time() - start_time

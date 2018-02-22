@@ -364,7 +364,7 @@ def eddy_correct(param):
     # Delete temporary files
     if param.delete_tmp_files == 1:
         sct.printv('\nDelete temporary files...')
-        sct.run('rm -rf ' + path_tmp, param.verbose)
+        sct.rmtree(path_tmp)
 
 #=======================================================================================================================
 # usage

@@ -18,7 +18,7 @@
 # TODO: do not output inverse warp for ants
 # TODO: ants: explore optin  --float  for faster computation
 
-import sys, os
+import sys, os, glob
 import numpy as np
 import sct_utils as sct
 from msct_image import Image
@@ -68,7 +68,7 @@ def moco(param):
 
     # copy file_target to a temporary file
     sct.printv('\nCopy file_target to a temporary file...', verbose)
-    sct.run('cp ' + file_target + ext + ' target.nii')
+    sct.copy(file_target + ext, 'target.nii')
     file_target = 'target'
 
     # Split data along T dimension
@@ -115,7 +115,7 @@ def moco(param):
             index_good = abs_dist.index(min(abs_dist))
             sct.printv('  transfo #' + str(fT[it]) + ' --> use transfo #' + str(gT[index_good]), verbose)
             # copy transformation
-            sct.run('cp ' + file_mat[gT[index_good]] + 'Warp.nii.gz' + ' ' + file_mat[fT[it]] + 'Warp.nii.gz')
+            sct.copy(file_mat[gT[index_good]] + 'Warp.nii.gz', file_mat[fT[it]] + 'Warp.nii.gz')
             # apply transformation
             sct.run('sct_apply_transfo -i ' + file_data_splitT_num[fT[it]] + '.nii -d ' + file_target + '.nii -w ' + file_mat[fT[it]] + 'Warp.nii.gz' + ' -o ' + file_data_splitT_moco_num[fT[it]] + '.nii' + ' -x ' + param.interp, verbose)
         else:
@@ -139,9 +139,7 @@ def moco(param):
 
     # delete file target.nii (to avoid conflict if this function is run another time)
     sct.printv('\nRemove temporary file...', verbose)
-    # os.remove('target.nii')
-    sct.run('rm target.nii')
-
+    sct.rm('target.nii', verbose=verbose)
 
 #=======================================================================================================================
 # register:  registration of two volumes (or two images)
@@ -220,8 +218,9 @@ def spline(folder_mat, nt, nz, verbose, index_b0 = [], graph=0):
     old_mat = os.path.join(folder_mat, "old")
     if not os.path.exists(old_mat):
         os.makedirs(old_mat)
-    cmd = 'cp ' + os.path.join(folder_mat, '*.txt') + " " + old_mat
-    status, output = sct.run(cmd, verbose)
+    # TODO
+    for mat in glob.glob(os.path.join(folder_mat, '*.txt')):
+        sct.copy(mat, old_mat)
 
     sct.printv('\nloading matrices...', verbose)
     X = [[[] for i in range(nt)] for i in range(nz)]

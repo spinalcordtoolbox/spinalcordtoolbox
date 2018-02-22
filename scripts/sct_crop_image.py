@@ -256,7 +256,7 @@ class ImageCropper(object):
         # Remove temporary files
         if remove_temp_files == 1:
             sct.printv('\nRemove temporary files...')
-            sct.run('rm -rf ' + path_tmp)
+            sct.rmtree(path_tmp)
 
         sct.display_viewer_syntax(files=[os.path.join(path_out, file_out + ext_out)])
 

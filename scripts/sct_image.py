@@ -614,7 +614,7 @@ def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1, f
             im_out = None
             ori = get_orientation(im_split_list[0])
             os.chdir(curdir)
-            sct.run('rm -rf ' + tmp_folder)
+            sct.rmtree(tmp_folder)
             return ori
         elif set:
             # set orientation
@@ -636,12 +636,12 @@ def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1, f
 
         # Go back to previous directory:
         os.chdir(curdir)
-        sct.run('rm -rf ' + tmp_folder)
+        sct.rmtree(tmp_folder)
 
     if fname_out:
         im_out.setFileName(fname_out)
         if fname_out != im.file_name + '_' + ori + im.ext:
-            sct.run('rm -f ' + im.file_name + '_' + ori + im.ext)
+            sct.rm(im.file_name + '_' + ori + im.ext)
     else:
         im_out.setFileName(im.file_name + '_' + ori + im.ext)
     return im_out
@@ -756,7 +756,7 @@ def visualize_warp(fname_warp, fname_grid=None, step=3, rm_tmp=True):
     grid_warped = path_warp + extract_fname(fname_grid)[1] + '_' + file_warp + ext_warp
     sct.run('sct_apply_transfo -i ' + fname_grid + ' -d ' + fname_grid + ' -w ' + fname_warp + ' -o ' + grid_warped)
     if rm_tmp:
-        sct.run('rm -rf ' + tmp_dir)
+        sct.rmtree(tmp_dir)
 
 
 if __name__ == "__main__":
