@@ -278,7 +278,7 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, qc_p
         im_orient.save()
     else:
         im_orient = im_2orient
-        shutil.copyfile(fname_image_tmp, fname_orient)
+        sct.copy(fname_image_tmp, fname_orient)
 
     # resampling RPI image
     sct.log.info("Resample the image to 0.5 mm isotropic resolution...")
@@ -369,12 +369,12 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, qc_p
         im_orient.setFileName(fname_seg)
         im_orient.save()
     else:
-        shutil.copyfile(fname_seg_RPI, fname_seg)
+        sct.copy(fname_seg_RPI, fname_seg)
 
     tmp_folder.chdir_undo()
 
     # copy image from temporary folder into output folder
-    shutil.copyfile(tmp_folder_path + '/' + fname_seg, output_folder + '/' + fname_seg)
+    sct.copy(os.path.join(tmp_folder_path, fname_seg), output_folder)
 
     # remove temporary files
     if remove_temp_files:

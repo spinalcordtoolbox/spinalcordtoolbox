@@ -770,7 +770,7 @@ class SpinalCordStraightener(object):
         # Remove temporary files
         if remove_temp_files:
             sct.printv("\nRemove temporary files...", verbose)
-            shutil.rmtree(path_tmp)
+            sct.rmtree(path_tmp)
 
         sct.printv('\nDone!\n', verbose)
 

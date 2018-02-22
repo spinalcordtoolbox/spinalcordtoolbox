@@ -117,7 +117,7 @@ def main():
     # Delete temporary files
     if remove_temp_files == 1:
         printv('\nDelete temporary files...', verbose)
-        sct.run('rm -rf ' + path_tmp, verbose)
+        sct.rmtree(path_tmp)
 
     # output result for parent function
     if test_passed:

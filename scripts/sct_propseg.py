@@ -135,7 +135,7 @@ def check_and_correct_segmentation(fname_segmentation, fname_centerline, folder_
     # remove temporary files
     if remove_temp_files:
         sct.printv("\nRemove temporary files...", verbose)
-        shutil.rmtree(path_tmp, ignore_errors=True)
+        sct.rmtree(path_tmp)
 
 
 def get_parser():
