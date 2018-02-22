@@ -29,11 +29,8 @@
 # TDOD: if -f, we only need two plots. Plot 1: X params with fitted spline, plot 2: Y param with fitted splines. Each plot will have all Z slices (with legend Z=0, Z=1, ...) and labels: y; translation (mm), xlabel: volume #. Plus add grid.
 # TODO (no priority): for sinc interp, use ANTs instead of flirt
 
-import sys
-import os
+import sys, os, time, math
 
-import time
-import math
 import numpy as np
 import sct_utils as sct
 import msct_moco as moco
@@ -269,9 +266,9 @@ def main(args=None):
     # Copying input data to tmp folder
     sct.printv('\nCopying input data to tmp folder and convert to nii...', param.verbose)
     convert(param.fname_data, os.path.join(path_tmp, dmri_name + ext))
-    sct.run('cp ' + param.fname_bvecs + ' ' + os.path.join(path_tmp, bvecs_fname), param.verbose)
+    sct.copy(param.fname_bvecs, os.path.join(path_tmp, bvecs_fname), verbose=param.verbose)
     if param.fname_mask != '':
-        sct.run('cp ' + param.fname_mask + ' ' + os.path.join(path_tmp, mask_name + ext_mask), param.verbose)
+        sct.copy(param.fname_mask, os.path.join(path_tmp, mask_name + ext_mask), verbose=param.verbose)
 
     # go to tmp folder
     curdir = os.getcwd()
@@ -299,7 +296,7 @@ def main(args=None):
     # Delete temporary files
     if param.remove_tmp_files == 1:
         sct.printv('\nDelete temporary files...', param.verbose)
-        sct.run('rm -rf ' + path_tmp, param.verbose)
+        sct.rmtree(path_tmp, verbose=param.verbose)
 
     # display elapsed time
     elapsed_time = time.time() - start_time

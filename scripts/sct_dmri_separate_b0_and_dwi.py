@@ -164,7 +164,7 @@ def main(args=None):
     from sct_convert import convert
     if not convert(fname_data, os.path.join(path_tmp, dmri_name + ext)):
         sct.printv('ERROR in convert.', 1, 'error')
-    sct.run('cp ' + fname_bvecs + ' ' + os.path.join(path_tmp, "bvecs"), verbose)
+    sct.copy(fname_bvecs, os.path.join(path_tmp, "bvecs"), verbose=verbose)
 
     # go to tmp folder
     curdir = os.getcwd()
@@ -230,7 +230,7 @@ def main(args=None):
     # Remove temporary files
     if remove_tmp_files == 1:
         sct.printv('\nRemove temporary files...', verbose)
-        sct.run('rm -rf ' + path_tmp, verbose)
+        sct.rmtree(path_tmp, verbose=verbose)
 
     # display elapsed time
     elapsed_time = time.time() - start_time

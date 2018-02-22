@@ -195,7 +195,7 @@ def main(args=None):
     # remove temp files
     if param.remove_tmp_file:
         sct.printv('\nRemove temporary files...', 0)
-        shutil.rmtree(param.path_tmp)
+        sct.rmtree(param.path_tmp)
 
     e = 0
     if sum(list_status) != 0:

@@ -439,7 +439,7 @@ def compute_length(fname_segmentation, remove_temp_files, output_folder, overwri
     # Remove temporary files
     if remove_temp_files:
         sct.printv('\nRemove temporary files...', verbose)
-        shutil.rmtree(path_tmp, ignore_errors=True)
+        sct.rmtree(path_tmp)
 
     return length
 
@@ -599,7 +599,7 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
     # Remove temporary files
     if remove_temp_files:
         sct.printv('\nRemove temporary files...', verbose)
-        shutil.rmtree(path_tmp)
+        sct.rmtree(path_tmp)
 
     return file_data + '_centerline.nii.gz'
 
@@ -886,7 +886,7 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
     # Remove temporary files
     if remove_temp_files:
         sct.printv('\nRemove temporary files...')
-        shutil.rmtree(path_tmp)
+        sct.rmtree(path_tmp)
 
     # Sum up the output file names
     sct.printv('\nOutput a nifti file of CSA values along the segmentation: ' + os.path.join(output_folder, 'csa_image.nii.gz'), verbose, 'info')

@@ -119,7 +119,7 @@ def main():
             vert_labeling_data = vert_label_im_rpi.data
         # Remove the temporary folder used to change the NIFTI files orientation into RPI
         sct.printv('\nRemove the temporary folder...', verbose)
-        shutil.rmtree(path_tmp, True)
+        sct.rmtree(path_tmp, True)
     else:
         # Load data
         sct.printv('\nLoad data...', verbose)

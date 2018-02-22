@@ -334,7 +334,7 @@ def main(args=None):
 
     # Remove tmp_dir
     if rm_tmp:
-        shutil.rmtree(tmp_dir)
+        sct.rmtree(tmp_dir)
 
     # View results
     if fname_out is not None:

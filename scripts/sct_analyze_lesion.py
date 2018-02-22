@@ -573,7 +573,7 @@ def main(args=None):
 
     # remove tmp_dir
     if rm_tmp:
-        shutil.rmtree(lesion_obj.tmp_dir)
+        sct.rmtree(lesion_obj.tmp_dir)
 
     printv('\nDone! To view the labeled lesion file (one value per lesion), type:', verbose)
     if fname_ref is not None:

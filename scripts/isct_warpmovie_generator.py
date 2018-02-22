@@ -89,8 +89,8 @@ if __name__ == "__main__":
     # sct.run('cp '+warping_fields_filename[0]+' '+path_tmp)
     # curdir = os.getcwd()
     # os.chdir(path_tmp)
-    sct.run('mkdir images')
-    sct.run('mkdir niftis')
+    sct.mkdir("images")
+    sct.mkdir("niftis")
     while True:
         try:
             warping_fields[0].num_of_frames = number_of_frames

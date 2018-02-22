@@ -148,6 +148,6 @@ if __name__ == "__main__":
 
     # remove tmp_dir
     if rm_tmp:
-        shutil.rmtree(tmp_dir)    
+        sct.rmtree(tmp_dir)
 
     sct.printv(output, verbose)
