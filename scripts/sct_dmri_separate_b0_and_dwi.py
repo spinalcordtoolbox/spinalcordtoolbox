@@ -188,30 +188,32 @@ def main(args=None):
 
     # Merge b=0 images
     sct.printv('\nMerge b=0...', verbose)
-    cmd = 'sct_image -concat t -o ' + b0_name + ext + ' -i '
+    cmd = ['sct_image', '-concat', 't', '-o', b0_name + ext, '-i']
+    l = ""
     for it in range(nb_b0):
-        cmd = cmd + dmri_name + '_T' + str(index_b0[it]).zfill(4) + ext + ','
-    cmd = cmd[:-1]  # remove ',' at the end of the string
+        l += dmri_name + '_T' + str(index_b0[it]).zfill(4) + ext + ','
+    cmd += [l[:-1]]  # remove ',' at the end of the string
     # WARNING: calling concat_data in python instead of in command line causes a non understood issue
     status, output = sct.run(cmd, param.verbose)
 
     # Average b=0 images
     if average:
         sct.printv('\nAverage b=0...', verbose)
-        sct.run('sct_maths -i ' + b0_name + ext + ' -o ' + b0_mean_name + ext + ' -mean t', verbose)
+        sct.run(['sct_maths', '-i', b0_name + ext, '-o', b0_mean_name + ext, '-mean', 't'], verbose)
 
     # Merge DWI
-    cmd = 'sct_image -concat t -o ' + dwi_name + ext + ' -i '
+    cmd = ['sct_image', '-concat', 't', '-o', dwi_name + ext, '-i']
+    l = ""
     for it in range(nb_dwi):
-        cmd = cmd + dmri_name + '_T' + str(index_dwi[it]).zfill(4) + ext + ','
-    cmd = cmd[:-1]  # remove ',' at the end of the string
+        l += dmri_name + '_T' + str(index_dwi[it]).zfill(4) + ext + ','
+    cmd += [l[:-1]]  # remove ',' at the end of the string
     # WARNING: calling concat_data in python instead of in command line causes a non understood issue
     status, output = sct.run(cmd, param.verbose)
 
     # Average DWI images
     if average:
         sct.printv('\nAverage DWI...', verbose)
-        sct.run('sct_maths -i ' + dwi_name + ext + ' -o ' + dwi_mean_name + ext + ' -mean t', verbose)
+        sct.run(['sct_maths', '-i', dwi_name + ext, '-o', dwi_mean_name + ext, '-mean', 't'], verbose)
         # if not average_data_across_dimension('dwi.nii', 'dwi_mean.nii', 3):
         #     sct.printv('ERROR in average_data_across_dimension', 1, 'error')
         # sct.run(fsloutput + 'fslmaths dwi -Tmean dwi_mean', verbose)

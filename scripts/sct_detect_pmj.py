@@ -211,8 +211,8 @@ class DetectPMJ:
         """Run the classifier on self.slice2D_im."""
         sct.printv('\nRun PMJ detector', self.verbose, 'normal')
         os.environ["FSLOUTPUTTYPE"] = "NIFTI_PAIR"
-        cmd_pmj = 'isct_spine_detect "%s" "%s" "%s"' % \
-                    (self.pmj_model, self.slice2D_im.split('.nii')[0], self.dection_map_pmj)
+        cmd_pmj = ['isct_spine_detect', self.pmj_model, self.slice2D_im.split('.nii')[0], self.dection_map_pmj]
+        print(cmd_pmj)
         sct.run(cmd_pmj, verbose=0)
 
         img = nib.load(self.dection_map_pmj + '_svm.hdr')  # convert .img and .hdr files to .nii
@@ -245,7 +245,7 @@ class DetectPMJ:
             self.rl_coord = int(img.dim[2] / 2)  # Right_left coordinate
             del img
 
-        sct.run('sct_crop_image -i ' + self.fname_im + ' -start ' + str(self.rl_coord) + ' -end ' + str(self.rl_coord) + ' -dim 2 -o ' + self.slice2D_im)
+        sct.run(['sct_crop_image', '-i', self.fname_im, '-start', str(self.rl_coord), '-end', str(self.rl_coord), '-dim', '2', '-o', self.slice2D_im])
 
     def orient2pir(self):
         """Orient input data to PIR orientation."""

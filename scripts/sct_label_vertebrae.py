@@ -227,8 +227,8 @@ def main(args=None):
 
     # Copying input data to tmp folder
     sct.printv('\nCopying input data to tmp folder...', verbose)
-    sct.run('sct_convert -i ' + fname_in + ' -o ' + os.path.join(path_tmp, "data.nii"))
-    sct.run('sct_convert -i ' + fname_seg + ' -o ' + os.path.join(path_tmp, "segmentation.nii.gz"))
+    sct.run(['sct_convert', '-i', fname_in, '-o', os.path.join(path_tmp, "data.nii")])
+    sct.run(['sct_convert', '-i', fname_seg, '-o', os.path.join(path_tmp, "segmentation.nii.gz")])
 
     # Go go temp folder
     curdir = os.getcwd()
@@ -260,29 +260,29 @@ def main(args=None):
         sct.copy(os.path.join(curdir, "warp_straight2curve.nii.gz"), 'warp_straight2curve.nii.gz')
         sct.copy(os.path.join(curdir, "straight_ref.nii.gz"), 'straight_ref.nii.gz')
         # apply straightening
-        sct.run('sct_apply_transfo -i data.nii -w warp_curve2straight.nii.gz -d straight_ref.nii.gz -o data_straight.nii')
+        sct.run(['sct_apply_transfo', '-i', 'data.nii', '-w', 'warp_curve2straight.nii.gz', '-d', 'straight_ref.nii.gz', '-o', 'data_straight.nii'])
     else:
-        sct.run('sct_straighten_spinalcord -i data.nii -s segmentation.nii.gz -r 0 -qc 0')
+        sct.run(['sct_straighten_spinalcord', '-i', 'data.nii', '-s', 'segmentation.nii.gz', '-r', '0', '-qc', '0'])
 
     # resample to 0.5mm isotropic to match template resolution
     sct.printv('\nResample to 0.5mm isotropic...', verbose)
-    sct.run('sct_resample -i data_straight.nii -mm 0.5x0.5x0.5 -x linear -o data_straightr.nii', verbose)
+    sct.run(['sct_resample', '-i', 'data_straight.nii', '-mm', '0.5x0.5x0.5', '-x', 'linear', '-o', 'data_straightr.nii'], verbose=verbose)
     # sct.run('sct_resample -i segmentation.nii.gz -mm 0.5x0.5x0.5 -x linear -o segmentationr.nii.gz', verbose)
     # sct.run('sct_resample -i labelz.nii.gz -mm 0.5x0.5x0.5 -x linear -o labelzr.nii', verbose)
 
     # Apply straightening to segmentation
     # N.B. Output is RPI
     sct.printv('\nApply straightening to segmentation...', verbose)
-    sct.run('sct_apply_transfo -i segmentation.nii.gz -d data_straightr.nii -w warp_curve2straight.nii.gz -o segmentation_straight.nii.gz -x linear', verbose)
+    sct.run(['sct_apply_transfo', '-i', 'segmentation.nii.gz', '-d', 'data_straightr.nii', '-w', 'warp_curve2straight.nii.gz', '-o', 'segmentation_straight.nii.gz', '-x', 'linear'], verbose)
     # Threshold segmentation at 0.5
-    sct.run('sct_maths -i segmentation_straight.nii.gz -thr 0.5 -o segmentation_straight.nii.gz', verbose)
+    sct.run(['sct_maths', '-i', 'segmentation_straight.nii.gz', '-thr', '0.5', '-o', 'segmentation_straight.nii.gz'], verbose)
 
     if initauto:
         init_disc = []
     else:
         # Apply straightening to z-label
         sct.printv('\nDilate z-label and apply straightening...', verbose)
-        sct.run('sct_apply_transfo -i labelz.nii.gz -d data_straightr.nii -w warp_curve2straight.nii.gz -o labelz_straight.nii.gz -x nn', verbose)
+        sct.run(['sct_apply_transfo', '-i', 'labelz.nii.gz', '-d', 'data_straightr.nii', '-w', 'warp_curve2straight.nii.gz', '-o', 'labelz_straight.nii.gz', '-x', 'nn'], verbose)
         # get z value and disk value to initialize labeling
         sct.printv('\nGet z and disc values from straight label...', verbose)
         init_disc = get_z_and_disc_values_from_label('labelz_straight.nii.gz')
@@ -291,19 +291,19 @@ def main(args=None):
     # denoise data
     if denoise:
         sct.printv('\nDenoise data...', verbose)
-        sct.run('sct_maths -i data_straightr.nii -denoise h=0.05 -o data_straightr.nii', verbose)
+        sct.run(['sct_maths', '-i', 'data_straightr.nii', '-denoise', 'h=0.05', '-o', 'data_straightr.nii'], verbose)
 
     # apply laplacian filtering
     if laplacian:
         sct.printv('\nApply Laplacian filter...', verbose)
-        sct.run('sct_maths -i data_straightr.nii -laplacian 1 -o data_straightr.nii', verbose)
+        sct.run(['sct_maths', '-i', 'data_straightr.nii', '-laplacian', '1', '-o', 'data_straightr.nii'], verbose)
 
     # detect vertebral levels on straight spinal cord
     vertebral_detection('data_straightr.nii', 'segmentation_straight.nii.gz', contrast, param, init_disc=init_disc, verbose=verbose, path_template=path_template, initc2=initc2, path_output=path_output)
 
     # un-straighten labeled spinal cord
     sct.printv('\nUn-straighten labeling...', verbose)
-    sct.run('sct_apply_transfo -i segmentation_straight_labeled.nii.gz -d segmentation.nii.gz -w warp_straight2curve.nii.gz -o segmentation_labeled.nii.gz -x nn', verbose)
+    sct.run(['sct_apply_transfo', '-i', 'segmentation_straight_labeled.nii.gz', '-d', 'segmentation.nii.gz', '-w', 'warp_straight2curve.nii.gz', '-o', 'segmentation_labeled.nii.gz', '-x', 'nn'], verbose)
 
     # Clean labeled segmentation
     sct.printv('\nClean labeled segmentation (correct interpolation errors)...', verbose)
@@ -681,11 +681,11 @@ def clean_labeled_segmentation(fname_labeled_seg, fname_seg, fname_labeled_seg_n
     :return: none
     """
     # remove voxels in segmentation_labeled that are not in segmentation
-    sct.run('sct_maths -i ' + fname_labeled_seg + ' -mul ' + fname_seg + ' -o segmentation_labeled_mul.nii.gz')
+    sct.run(['sct_maths', '-i', fname_labeled_seg, '-mul', fname_seg, '-o', 'segmentation_labeled_mul.nii.gz'])
     # add voxels in segmentation that are not in segmentation_labeled
-    sct.run('sct_maths -i ' + fname_labeled_seg + ' -dilate 2 -o segmentation_labeled_dilate.nii.gz')  # dilate labeled segmentation
+    sct.run(['sct_maths', '-i', fname_labeled_seg, '-dilate', '2', '-o', 'segmentation_labeled_dilate.nii.gz'])  # dilate labeled segmentation
     data_label_dilate = Image('segmentation_labeled_dilate.nii.gz').data
-    sct.run('sct_maths -i segmentation_labeled_mul.nii.gz -bin 0 -o segmentation_labeled_mul_bin.nii.gz')
+    sct.run(['sct_maths', '-i', 'segmentation_labeled_mul.nii.gz', '-bin', '0', '-o', 'segmentation_labeled_mul_bin.nii.gz'])
     data_label_bin = Image('segmentation_labeled_mul_bin.nii.gz').data
     data_seg = Image(fname_seg).data
     data_diff = data_seg - data_label_bin

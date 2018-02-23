@@ -355,7 +355,7 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, qc_p
 
     # binarize the resampled image to remove interpolation effects
     sct.log.info("Binarizing the segmentation to avoid interpolation effects...")
-    sct.run('sct_maths -i ' + fname_seg_RPI + ' -bin 0.75 -o ' + fname_seg_RPI, verbose=0)
+    sct.run(['sct_maths', '-i', fname_seg_RPI, '-bin', '0.75', '-o', fname_seg_RPI], verbose=0)
 
     # post processing step to z_regularized
     fill_z_holes(fname_in=fname_seg_RPI)

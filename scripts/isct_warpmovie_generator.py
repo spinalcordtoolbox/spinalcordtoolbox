@@ -98,8 +98,11 @@ if __name__ == "__main__":
             image_output_iter.save()
             filename_warp = image_output_iter.path + image_output_iter.file_name + image_output_iter.ext
             filename_output = "niftis/tmp.warped_image_" + str(iteration - 1) + image_output_iter.ext
-            sct.run("sct_apply_transfo -i " + input_file + " -d " + reference_image + " -w " + filename_warp +
-                " -o " + filename_output)
+            sct.run(["sct_apply_transfo",
+             "-i", input_file,
+             "-d", reference_image,
+             "-w", filename_warp,
+             "-o", filename_output])
             result = Image(filename_output)
             result.change_orientation()
 
