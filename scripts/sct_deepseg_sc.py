@@ -252,9 +252,9 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, qc_p
     sct.log.info("Loading models...")
     path_script = os.path.dirname(__file__)
     path_sct = os.path.dirname(path_script)
-    optic_models_fname = os.path.join(path_sct, 'data/optic_models', '{}_model'.format(contrast_type))
+    optic_models_fname = os.path.join(path_sct, 'data', 'optic_models', '{}_model'.format(contrast_type))
 
-    segmentation_model_fname = os.path.join(path_sct, 'data/deepseg_sc_models', '{}_seg_sc.h5'.format(contrast_type))
+    segmentation_model_fname = os.path.join(path_sct, 'data', 'deepseg_sc_models', '{}_seg_sc.h5'.format(contrast_type))
     seg_model = nn_architecture(height=crop_size, width=crop_size, depth=2 if contrast_type != 't2' else 3)
     seg_model.load_weights(segmentation_model_fname)
 
