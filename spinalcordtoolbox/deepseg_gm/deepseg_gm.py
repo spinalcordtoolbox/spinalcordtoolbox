@@ -62,13 +62,8 @@ class DataResource(object):
 
         :param dirname: the root directory name.
         """
-        path_script = os.path.dirname(__file__)
-        directory_level = [".."] * 6 + ["data"]
-        data_dir = os.path.join(path_script,
-                                *directory_level)
-
-        data_dir = os.path.abspath(data_dir)
-        self.data_root = os.path.join(data_dir, dirname)
+        path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+        self.data_root = os.path.abspath(os.path.join(path_sct, "data", dirname))
 
     def get_file_path(self, filename):
         """Get the absolute file path based on the
