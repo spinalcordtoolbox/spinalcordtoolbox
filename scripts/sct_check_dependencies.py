@@ -71,9 +71,18 @@ def module_import(module_name, suppress_stderr=False):
     """
     if suppress_stderr:
         original_stderr = sys.stderr
-        sys.stderr = io.BytesIO()
-        module = importlib.import_module(module_name)
-        sys.stderr = original_stderr
+        if sys.hexversion < 0x03000000:
+            sys.stderr = io.BytesIO()
+        else:
+            sys.stderr = io.TextIOWrapper(io.BytesIO(), sys.stderr.encoding)
+        try:
+            module = importlib.import_module(module_name)
+        except Exception as e:
+            sys.stderr = original_stderr
+            raise
+        else:
+            sys.stderr = original_stderr
+
     else:
         module = importlib.import_module(module_name)
 
