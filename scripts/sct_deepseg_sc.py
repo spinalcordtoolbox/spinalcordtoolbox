@@ -265,7 +265,6 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, qc_p
     tmp_folder_path = tmp_folder.get_path()
     fname_image_tmp = tmp_folder.copy_from(fname_image)
     tmp_folder.chdir()
-    print tmp_folder_path
 
     # orientation of the image, should be RPI
     sct.log.info("Reorient the image to RPI, if necessary...")
