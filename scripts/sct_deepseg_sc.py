@@ -399,7 +399,7 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, qc_p
         except:
             sct.log.warning('Issue when creating QC report.')
 
-    sct.display_viewer_syntax([fname_image, output_folder + '/' + fname_seg], colormaps=['gray', 'red'], opacities=['', '0.7'])
+    sct.display_viewer_syntax([fname_image, os.path.join(output_folder, fname_seg)], colormaps=['gray', 'red'], opacities=['', '0.7'])
 
 
 if __name__ == "__main__":
