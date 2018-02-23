@@ -25,6 +25,11 @@ matrix:
 before_install:
   - echo "HOME="
   - echo $HOME
+  - sudo apt-get update -qq; sudo apt-get install -qq libopenmpi-dev; echo
+
+env:
+ - SCT_MINICONDA=2
+ - SCT_MINICONDA=3
 
 install:
 # update tools
@@ -35,8 +40,10 @@ install:
   - echo $PATH
 
 script:
-#  - sct_check_dependencies   # test dependencies
-  - sct_testing -d 1  # test functions & integrity
+# test dependencies
+#  - sct_check_dependencies
+# test functions & integrity
+  - if [ "$SCT_MINICONDA" == "3" ]; then sct_testing -d 1 || echo "Failure was ignored (unsupported environment)"; else sct_testing -d 1; fi
 #  - python create_package.py -s ${TRAVIS_OS_NAME}  # test package creation
 #  - cd ../spinalcordtoolbox_v*
 #  - yes | ./install_sct  # test installation of package
