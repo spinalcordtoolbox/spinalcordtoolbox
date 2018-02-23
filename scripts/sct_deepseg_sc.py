@@ -12,14 +12,13 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+import os, sys
+
 import numpy as np
-import shutil
 from scipy.ndimage.measurements import center_of_mass, label
 from scipy.ndimage.morphology import binary_fill_holes
 from skimage.exposure import rescale_intensity
 
-import os
-import sys
 from spinalcordtoolbox.centerline import optic
 import sct_utils as sct
 from msct_image import Image
