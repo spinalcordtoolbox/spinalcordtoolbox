@@ -20,7 +20,6 @@ import numpy
 
 import sct_utils as sct
 from msct_nurbs import NURBS
-from sct_utils import fsloutput
 from sct_image import get_orientation_3d, set_orientation
 from msct_image import Image
 from sct_image import split_data, concat_data
@@ -183,6 +182,9 @@ def main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, 
          '-out', file_anat_split_fit[iz],
          '-interp', interp,
         ]
+        env = dict()
+        env.update(os.environ)
+        env["FSLOUTPUTTYPE", "NIFTI"]
         sct.run(cmd=cmd, env=env)
 
     # Merge into 4D volume
