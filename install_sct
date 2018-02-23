@@ -222,6 +222,11 @@ if [ "x${SCT_INSTALL_TYPE}" == "x" ]; then
   fi
 fi
 
+if [ "x${SCT_MINICONDA}" == "x" ]; then
+  SCT_MINICONDA=2
+fi
+
+
 # Fetch OS type
 if uname -a | grep -i  darwin > /dev/null 2>&1; then
   # OSX
@@ -379,12 +384,27 @@ else
   cmd="rm -rf ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
   cmd="mkdir ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
   # downloading
-  if [ $OS == "linux" ]; then
-    download ${TMP_DIR}/miniconda.sh https://repo.continuum.io/miniconda/Miniconda2-4.1.11-Linux-x86_64.sh
-  elif [ $OS == "linux_centos6" ]; then
-    download ${TMP_DIR}/miniconda.sh https://repo.continuum.io/miniconda/Miniconda2-4.1.11-Linux-x86_64.sh
-  elif [ $OS == "osx" ]; then
-    download ${TMP_DIR}/miniconda.sh https://repo.continuum.io/miniconda/Miniconda2-4.1.11-MacOSX-x86_64.sh
+
+  if [ $SCT_MINICONDA == "2" ]; then
+    case $OS in
+      linux*)
+      download ${TMP_DIR}/miniconda.sh https://repo.continuum.io/miniconda/Miniconda2-4.1.11-Linux-x86_64.sh
+      ;;
+      osx)
+      download ${TMP_DIR}/miniconda.sh https://repo.continuum.io/miniconda/Miniconda2-4.1.11-MacOSX-x86_64.sh
+      ;;
+    esac
+  elif [ $SCT_MINICONDA == "3" ]; then
+    case $OS in
+      linux*)
+      download ${TMP_DIR}/miniconda.sh https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
+      ;;
+      osx)
+      download ${TMP_DIR}/miniconda.sh https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
+      ;;
+    esac
+  else
+      download ${TMP_DIR}/miniconda.sh "$SCT_MINICONDA"
   fi
 
   # run conda installer
