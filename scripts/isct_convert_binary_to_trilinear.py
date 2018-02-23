@@ -110,15 +110,28 @@ def main():
 
     # upsample data
     sct.printv('\nUpsample data...', verbose)
-    sct.run('sct_resample -i data.nii -x linear -vox ' + str(nx * interp_factor) + 'x' + str(ny * interp_factor) + 'x' + str(nz * interp_factor) + ' -o data_up.nii', verbose)
+    sct.run(["sct_resample",
+     "-i", "data.nii",
+     "-x", "linear",
+     "-vox", str(nx * interp_factor) + 'x' + str(ny * interp_factor) + 'x' + str(nz * interp_factor),
+     "-o", "data_up.nii"], verbose)
 
     # Smooth along centerline
     sct.printv('\nSmooth along centerline...', verbose)
-    sct.run('sct_smooth_spinalcord -i data_up.nii -s data_up.nii' + ' -smooth ' + str(smoothing_sigma) + ' -r ' + str(remove_temp_files) + ' -v ' + str(verbose), verbose)
+    sct.run(["sct_smooth_spinalcord",
+     "-i", "data_up.nii",
+     "-s", "data_up.nii",
+     "-smooth", str(smoothing_sigma),
+     "-r", str(remove_temp_files),
+     "-v", str(verbose)], verbose)
 
     # downsample data
     sct.printv('\nDownsample data...', verbose)
-    sct.run('sct_resample -i data_up_smooth.nii -x linear -vox ' + str(nx) + 'x' + str(ny) + 'x' + str(nz) + ' -o data_up_smooth_down.nii', verbose)
+    sct.run(["sct_resample",
+     "-i", "data_up_smooth.nii",
+     "-x", "linear",
+     "-vox", str(nx) + 'x' + str(ny) + 'x' + str(nz),
+     "-o", "data_up_smooth_down.nii"], verbose)
 
     # come back
     os.chdir(curdir)

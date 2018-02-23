@@ -74,7 +74,7 @@ class ImageCropper(object):
         """
 
         # create command line
-        self.cmd = "isct_crop_image" + " -i " + self.input_filename + " -o " + self.output_filename
+        self.cmd = ["isct_crop_image", "-i", self.input_filename, "-o", self.output_filename]
         # Handling optional arguments
 
         # if mask is specified, find -start and -end arguments
@@ -85,21 +85,21 @@ class ImageCropper(object):
             self.start, self.end, self.dim = find_mask_boundaries(self.mask)
 
         if self.start is not None:
-            self.cmd += " -start " + ','.join(map(str, self.start))
+            self.cmd += ["-start", ','.join(map(str, self.start))]
         if self.end is not None:
-            self.cmd += " -end " + ','.join(map(str, self.end))
+            self.cmd += ["-end", ','.join(map(str, self.end))]
         if self.dim is not None:
-            self.cmd += " -dim " + ','.join(map(str, self.dim))
+            self.cmd += ["-dim", ','.join(map(str, self.dim))]
         if self.shift is not None:
-            self.cmd += " -shift " + ','.join(map(str, self.shift))
+            self.cmd += ["-shift", ','.join(map(str, self.shift))]
         if self.background is not None:
-            self.cmd += " -b " + str(self.background)
+            self.cmd += ["-b", str(self.background)]
         if self.bmax is True:
-            self.cmd += " -bmax"
+            self.cmd += ["-bmax"]
         if self.ref is not None:
-            self.cmd += " -ref " + self.ref
+            self.cmd += ["-ref", self.ref]
         if self.mesh is not None:
-            self.cmd += " -mesh " + self.mesh
+            self.cmd += ["-mesh", self.mesh]
 
         verb = 0
         if self.verbose == 1:
@@ -200,7 +200,7 @@ class ImageCropper(object):
 
         # change orientation
         sct.printv('\nChange orientation to RPI...', verbose)
-        sct.run('sct_image -i data.nii -setorient RPI -o data_rpi.nii')
+        sct.run(['sct_image', '-i', 'data.nii', '-setorient', 'RPI', '-o', 'data_rpi.nii'])
 
         # get image of medial slab
         sct.printv('\nGet image of medial slab...', verbose)

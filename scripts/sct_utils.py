@@ -1083,7 +1083,7 @@ def get_interpolation(program, interp):
         printv('WARNING (' + os.path.basename(__file__) + '): interp_program not assigned. Using linear for ants_affine.', 1, 'warning')
         interp_program = ' -n Linear'
     # return
-    return interp_program
+    return interp_program.strip().split()
 
 
 #=======================================================================================================================
