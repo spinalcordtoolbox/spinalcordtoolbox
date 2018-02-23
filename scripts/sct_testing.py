@@ -163,9 +163,14 @@ def main(args=None):
             # if param_test.list_fname_gt:
             #     param_test.fname_gt = param_test.list_fname_gt[i]
             # test function
-            param_test = test_function(param_test)
-            list_status_function.append(param_test.status)
-            list_output.append(param_test.output)
+            try:
+                param_test = test_function(param_test)
+            except Exception as e:
+                list_status_function.append(1)
+                list_output.append("TODO exception: %s" % e)
+            else:
+                list_status_function.append(param_test.status)
+                list_output.append(param_test.output)
         # manage status
         if any(list_status_function):
             if 1 in list_status_function:
