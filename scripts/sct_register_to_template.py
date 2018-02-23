@@ -292,7 +292,6 @@ def main(args=None):
     if label_type == 'body':
         sct.printv('\nGenerate labels from template vertebral labeling', verbose)
         sct_label_utils.main(args=['-i', ftmp_template_label, '-vert-body', '0', '-o', ftmp_template_label])
-    # sct.run('sct_label_utils -i ' + fname_template_vertebral_labeling + ' -vert-body 0 -o ' + ftmp_template_label)
 
     # check if provided labels are available in the template
     sct.printv('\nCheck if provided labels are available in the template', verbose)
