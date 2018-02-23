@@ -100,9 +100,8 @@ class DetectPMJ:
         self.dection_map_pmj = sct.extract_fname(self.fname_im)[1] + '_map_pmj'  # file resulting from the detection
 
         # path to the pmj detector
-        self.pmj_model = os.path.join(sct.run('echo $SCT_DIR')[1],
-                                            'data/pmj_models',
-                                            '{}_model'.format(self.contrast))
+        path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
+        self.pmj_model = os.path.join(path_sct, 'data', 'pmj_models', '{}_model'.format(self.contrast))
 
         self.threshold = -0.75 if self.contrast == 't1' else 0.8  # detection map threshold, depends on the contrast
 
