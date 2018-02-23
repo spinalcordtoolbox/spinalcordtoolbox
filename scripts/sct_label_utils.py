@@ -475,9 +475,9 @@ class ProcessLabels(object):
             result_coord_ref = [coord for coord in coord_ref if coord in coord_intersection]
         else:
             result_coord_ref = coord_ref
-            result_coord_input = [coord for coord in coord_input if filter(lambda x: x.value == coord.value, coord_ref)]
+            result_coord_input = [coord for coord in coord_input if list(filter(lambda x: x.value == coord.value, coord_ref))]
             if symmetry:
-                result_coord_ref = [coord for coord in coord_ref if filter(lambda x: x.value == coord.value, result_coord_input)]
+                result_coord_ref = [coord for coord in coord_ref if list(filter(lambda x: x.value == coord.value, result_coord_input))]
 
         return result_coord_input, result_coord_ref
 
