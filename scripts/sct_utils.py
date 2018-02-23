@@ -15,8 +15,14 @@
 
 import sys, io, os, time, errno, tempfile, subprocess, re, logging, glob, shutil
 
-# TODO: under run(): add a flag "ignore error" for isct_ComposeMultiTransform
-# TODO: check if user has bash or t-schell for fsloutput definition
+if sys.hexversion < 0x03030000:
+    import pipes
+    def list2cmdline(lst):
+        return " ".join(pipes.quote(x) for x in lst)
+else:
+    import shlex
+    def list2cmdline(lst):
+        return " ".join(shlex.quote(x) for x in lst)
 
 """
 Basic logging setup for the sct
@@ -222,22 +228,30 @@ def run_old(cmd, verbose=1):
         return status, output
 
 
-def run(cmd, verbose=1, raise_exception=True, cwd=None):
+def run(cmd, verbose=1, raise_exception=True, cwd=None, env=None):
     # if verbose == 2:
     #     printv(sys._getframe().f_back.f_code.co_name, 1, 'process')
 
     if cwd is None:
         cwd = os.getcwd()
 
-    if verbose:
-        printv("%s # in %s" % (cmd, cwd), 1, 'code')
+    if env is None:
+        env = os.environ
 
     if sys.hexversion < 0x03000000 and isinstance(cmd, unicode):
         cmd = str(cmd)
 
+    if isinstance(cmd, str):
+        cmdline = cmd
+    else:
+        cmdline = list2cmdline(cmd)
+
+    if verbose:
+        printv("%s # in %s" % (cmdline, cwd), 1, 'code')
+
     shell = isinstance(cmd, str)
 
-    process = subprocess.Popen(cmd, shell=shell, cwd=cwd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    process = subprocess.Popen(cmd, shell=shell, cwd=cwd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env)
     output_final = ''
     while True:
         # Watch out for deadlock!!!
@@ -257,7 +271,7 @@ def run(cmd, verbose=1, raise_exception=True, cwd=None):
     # process.terminate()
 
     if status != 0 and raise_exception:
-        raise RunError(output_final[0:-1])
+        raise RunError(output)
 
     return status, output
 
@@ -399,6 +413,8 @@ def copy(src, dst, verbose=1):
             if isinstance(e, shutil.SameFileError):
                 return
         raise # Must be another error
+
+
 
 def rmtree(folder, verbose=1):
     """Recursively remove folder, almost like shutil.rmtree
