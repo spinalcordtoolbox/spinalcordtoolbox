@@ -173,7 +173,7 @@ def segment_volume(ninput_volume, model_name):
     axial_slices = []
     crops = []
 
-    for slice_num in xrange(volume_data.shape[2]):
+    for slice_num in range(volume_data.shape[2]):
         data = volume_data[..., slice_num]
         data, cropreg = crop_center(data, model.CROP_HEIGHT,
                                     model.CROP_WIDTH)
@@ -192,7 +192,7 @@ def segment_volume(ninput_volume, model_name):
     pred_slices = []
 
     # Un-cropping
-    for slice_num in xrange(preds.shape[0]):
+    for slice_num in range(preds.shape[0]):
         pred_slice = preds[slice_num][..., 0]
         pred_slice = crops[slice_num].pad(pred_slice)
         pred_slices.append(pred_slice)
