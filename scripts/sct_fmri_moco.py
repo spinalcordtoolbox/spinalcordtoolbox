@@ -285,7 +285,7 @@ def fmri_moco(param):
         # Average Images
         sct.printv('Average volumes...', param.verbose)
         file_data_mean = file_data + '_mean_' + str(iGroup)
-        sct.run('sct_maths -i ' + file_data_merge_i + '.nii -o ' + file_data_mean + '.nii -mean t')
+        sct.run(['sct_maths', '-i', file_data_merge_i + '.nii', '-o', file_data_mean + '.nii', '-mean', 't'], verbose=param.verbose)
         # if not average_data_across_dimension(file_data_merge_i+'.nii', file_data_mean+'.nii', 3):
         #     sct.printv('ERROR in average_data_across_dimension', 1, 'error')
         # cmd = fsloutput + 'fslmaths ' + file_data_merge_i + ' -Tmean ' + file_data_mean
@@ -320,7 +320,7 @@ def fmri_moco(param):
     sct.printv('\nCopy transformations...', param.verbose)
     for iGroup in range(nb_groups):
         for data in range(len(group_indexes[iGroup])):
-            sct.run('cp ' + 'mat_groups/' + 'mat.T' + str(iGroup) + ext_mat + ' ' + mat_final + 'mat.T' + str(group_indexes[iGroup][data]) + ext_mat, param.verbose)
+            sct.copy(os.path.join('mat_groups', 'mat.T' + str(iGroup) + ext_mat), mat_final + 'mat.T' + str(group_indexes[iGroup][data]) + ext_mat, verbose=param.verbose)
 
     # Apply moco on all fmri data
     sct.printv('\n-------------------------------------------------------------------------------', param.verbose)
@@ -342,7 +342,7 @@ def fmri_moco(param):
 
     # Average volumes
     sct.printv('\nAveraging data...', param.verbose)
-    sct.run('sct_maths -i fmri_moco.nii -o fmri_moco_mean.nii -mean t')
+    sct.run(['sct_maths', '-i', 'fmri_moco.nii', '-o', 'fmri_moco_mean.nii', '-mean', 't'], verbose=param.verbose)
 
 
 #=======================================================================================================================

@@ -14,7 +14,7 @@
 # TODO: display message at the end
 # TODO: interpolation methods
 
-import sys, io, os, time, shutil
+import sys, io, os, time, functools
 
 from msct_parser import Parser
 import sct_utils as sct
@@ -124,16 +124,17 @@ class Transform:
         for i in range(len(fname_warp_list)):
             # Check if inverse matrix is specified with '-' at the beginning of file name
             if fname_warp_list[i].find('-') == 0:
-                use_inverse.append('-i ')
+                use_inverse.append('-i')
                 fname_warp_list[i] = fname_warp_list[i][1:]  # remove '-'
+                fname_warp_list_invert += [[use_inverse[i], fname_warp_list[i]]]
             else:
                 use_inverse.append('')
+                fname_warp_list_invert += [[fname_warp_list[i]]]
             sct.printv('  Transfo #' + str(i) + ': ' + use_inverse[i] + fname_warp_list[i], verbose)
-            fname_warp_list_invert.append(use_inverse[i] + fname_warp_list[i])
 
         # need to check if last warping field is an affine transfo
         isLastAffine = False
-        path_fname, file_fname, ext_fname = sct.extract_fname(fname_warp_list_invert[-1])
+        path_fname, file_fname, ext_fname = sct.extract_fname(fname_warp_list_invert[-1][-1])
         if ext_fname in ['.txt', '.mat']:
             isLastAffine = True
 
@@ -143,6 +144,7 @@ class Transform:
 
         # N.B. Here we take the inverse of the warp list, because sct_WarpImageMultiTransform concatenates in the reverse order
         fname_warp_list_invert.reverse()
+        fname_warp_list_invert = functools.reduce(lambda x,y: x+y, fname_warp_list_invert)
 
         # Extract path, file and extension
         path_src, file_src, ext_src = sct.extract_fname(fname_src)
@@ -170,7 +172,14 @@ class Transform:
                 dim = '2'
             else:
                 dim = '3'
-            sct.run('isct_antsApplyTransforms -d '+dim+' -i ' + fname_src + ' -o ' + fname_out + ' -t ' + ' '.join(fname_warp_list_invert) + ' -r ' + fname_dest + interp, verbose)
+            sct.run(['isct_antsApplyTransforms',
+              '-d', dim,
+              '-i', fname_src,
+              '-o', fname_out,
+              '-t',
+             ] + fname_warp_list_invert + [
+             '-r', fname_dest,
+             ] + interp, verbose=verbose)
 
         # if 4d, loop across the T dimension
         else:
@@ -204,7 +213,15 @@ class Transform:
             for it in range(nt):
                 file_data_split = 'data_T' + str(it).zfill(4) + '.nii'
                 file_data_split_reg = 'data_reg_T' + str(it).zfill(4) + '.nii'
-                status, output = sct.run('isct_antsApplyTransforms -d 3 -i ' + file_data_split + ' -o ' + file_data_split_reg + ' -t ' + ' '.join(fname_warp_list_invert_tmp) + ' -r ' + file_dest + ext_dest + interp, verbose)
+
+                status, output = sct.run(['isct_antsApplyTransforms',
+                  '-d', '3',
+                  '-i', file_data_split,
+                  '-o', file_data_split_reg,
+                  '-t',
+                 ] + fname_warp_list_invert_tmp + [
+                  '-r', file_dest + ext_dest,
+                 ] + interp, verbose)
 
             # Merge files back
             sct.printv('\nMerge file back...', verbose)
@@ -223,7 +240,7 @@ class Transform:
             # Delete temporary folder if specified
             if int(remove_temp_files):
                 sct.printv('\nRemove temporary files...', verbose)
-                sct.rmtree(path_tmp)
+                sct.rmtree(path_tmp, verbose=verbose)
 
         # 2. crop the resulting image using dimensions from the warping field
         warping_field = fname_warp_list_invert[-1]

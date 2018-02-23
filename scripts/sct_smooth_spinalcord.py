@@ -154,17 +154,17 @@ def main(args=None):
         sct.copy(os.path.join(curdir, 'warp_straight2curve.nii.gz'), 'warp_straight2curve.nii.gz')
         sct.copy(os.path.join(curdir, 'straight_ref.nii.gz'), 'straight_ref.nii.gz')
         # apply straightening
-        sct.run('sct_apply_transfo -i anat_rpi.nii -w warp_curve2straight.nii.gz -d straight_ref.nii.gz -o anat_rpi_straight.nii -x spline', verbose)
+        sct.run(['sct_apply_transfo', '-i', 'anat_rpi.nii', '-w', 'warp_curve2straight.nii.gz', '-d', 'straight_ref.nii.gz', '-o', 'anat_rpi_straight.nii', '-x', 'spline'], verbose)
     else:
-        sct.run('sct_straighten_spinalcord -i anat_rpi.nii -s centerline_rpi.nii -qc 0 -x spline', verbose)
+        sct.run(['sct_straighten_spinalcord', '-i', 'anat_rpi.nii', '-s', 'centerline_rpi.nii', '-qc', '0', '-x', 'spline'], verbose)
 
     # Smooth the straightened image along z
     sct.printv('\nSmooth the straightened image along z...')
-    sct.run('sct_maths -i anat_rpi_straight.nii -smooth 0,0,' + str(sigma) + ' -o anat_rpi_straight_smooth.nii', verbose)
+    sct.run(['sct_maths', '-i', 'anat_rpi_straight.nii', '-smooth', '0,0,' + str(sigma), '-o', 'anat_rpi_straight_smooth.nii'], verbose)
 
     # Apply the reversed warping field to get back the curved spinal cord
     sct.printv('\nApply the reversed warping field to get back the curved spinal cord...')
-    sct.run('sct_apply_transfo -i anat_rpi_straight_smooth.nii -o anat_rpi_straight_smooth_curved.nii -d anat.nii -w warp_straight2curve.nii.gz -x spline', verbose)
+    sct.run(['sct_apply_transfo', '-i', 'anat_rpi_straight_smooth.nii', '-o', 'anat_rpi_straight_smooth_curved.nii', '-d', 'anat.nii', '-w', 'warp_straight2curve.nii.gz', '-x', 'spline'], verbose)
 
     # replace zeroed voxels by original image (issue #937)
     sct.printv('\nReplace zeroed voxels by original image...', verbose)

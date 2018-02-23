@@ -32,7 +32,7 @@ def viewer_centerline(image_fname, interslice_gap, verbose):
     if mask_points:
         # create the mask containing either the three-points or centerline mask for initialization
         mask_filename = sct.add_suffix(image_fname, "_mask_viewer")
-        sct.run("sct_label_utils -i " + image_fname + " -create " + mask_points + " -o " + mask_filename, verbose=False)
+        sct.run(["sct_label_utils", "-i", image_fname, "-create", mask_points, "-o", mask_filename], verbose=False)
 
         fname_output = mask_filename
 
@@ -163,7 +163,7 @@ def run_main():
         image_input = Image(fname_data)
         image_input_orientation = orientation(image_input, get=True, verbose=False)
         reoriented_image_filename = sct.add_suffix(file_data + ext_data, "_SAL")
-        cmd_image = 'sct_image -i "%s" -o "%s" -setorient SAL -v 0' % (fname_data, reoriented_image_filename)
+        cmd_image = ['sct_image', '-i', fname_data, '-o', reoriented_image_filename, '-setorient', 'SAL', '-v', '0']
         sct.run(cmd_image, verbose=False)
 
         # extract points manually using the viewer
@@ -171,7 +171,7 @@ def run_main():
 
         if fname_points is not None:
             image_points_RPI = sct.add_suffix(fname_points, "_RPI")
-            cmd_image = 'sct_image -i "%s" -o "%s" -setorient RPI -v 0' % (fname_points, image_points_RPI)
+            cmd_image = ['sct_image', '-i', fname_points, '-o', image_points_RPI, '-setorient', 'RPI', '-v', '0']
             sct.run(cmd_image, verbose=False)
 
             image_input_reoriented = Image(image_points_RPI)
@@ -209,7 +209,7 @@ def run_main():
             image_input_reoriented.save()
 
             sct.printv('\nSet to original orientation...', verbose)
-            sct.run('sct_image -i ' + fname_centerline_oriented + ' -setorient ' + image_input_orientation + ' -o ' + fname_centerline_oriented)
+            sct.run(['sct_image', '-i', fname_centerline_oriented, '-setorient', image_input_orientation, '-o', fname_centerline_oriented], verbose=verbose)
 
             # create a txt file with the centerline
             fname_centerline_oriented_txt = file_data + '_centerline.txt'
@@ -249,7 +249,7 @@ def run_main():
         # OptiC models
         path_script = os.path.dirname(__file__)
         path_sct = os.path.dirname(path_script)
-        optic_models_path = os.path.join(path_sct, 'data/optic_models', '{}_model'.format(contrast_type))
+        optic_models_path = os.path.join(path_sct, 'data', 'optic_models', '{}_model'.format(contrast_type))
 
         # Execute OptiC binary
         _, centerline_filename = optic.detect_centerline(image_fname=fname_data,

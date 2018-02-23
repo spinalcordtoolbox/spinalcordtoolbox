@@ -354,7 +354,7 @@ def dmri_moco(param):
     # Average b=0 images
     sct.printv('\nAverage b=0...', param.verbose)
     file_b0_mean = file_b0 + '_mean'
-    sct.run('sct_maths -i ' + file_b0 + ext_data + ' -o ' + file_b0_mean + ext_data + ' -mean t', param.verbose)
+    sct.run(['sct_maths', '-i', file_b0 + ext_data, '-o', file_b0_mean + ext_data, '-mean', 't'], param.verbose)
 
     # Number of DWI groups
     nb_groups = int(math.floor(nb_dwi / param.group_size))
@@ -393,7 +393,7 @@ def dmri_moco(param):
         # Average DW Images
         sct.printv('Average DW images...', param.verbose)
         file_dwi_mean.append(file_dwi + '_mean_' + str(iGroup))
-        sct.run('sct_maths -i ' + file_dwi_merge_i + ext_data + ' -o ' + file_dwi_mean[iGroup] + ext_data + ' -mean t', param.verbose)
+        sct.run(["sct_maths", "-i", file_dwi_merge_i + ext_data, "-o", file_dwi_mean[iGroup] + ext_data, "-mean", "t"], param.verbose)
 
     # Merge DWI groups means
     sct.printv('\nMerging DW files...', param.verbose)
@@ -408,7 +408,7 @@ def dmri_moco(param):
     # Average DW Images
     # TODO: USEFULL ???
     sct.printv('\nAveraging all DW images...', param.verbose)
-    sct.run('sct_maths -i ' + file_dwi_group + ext_data + ' -o ' + file_dwi_group + '_mean' + ext_data + ' -mean t', param.verbose)
+    sct.run(["sct_maths", "-i", file_dwi_group + ext_data, "-o", file_dwi_group + '_mean' + ext_data, "-mean", "t"], param.verbose)
 
     # segment dwi images using otsu algorithm
     if param.otsu:
@@ -464,13 +464,13 @@ def dmri_moco(param):
     sct.printv('\nCopy b=0 registration matrices...', param.verbose)
 
     for it in range(nb_b0):
-        sct.run('cp ' + 'mat_b0groups/' + 'mat.T' + str(it) + ext_mat + ' ' + mat_final + 'mat.T' + str(index_b0[it]) + ext_mat, param.verbose)
+        sct.copy('mat_b0groups/' + 'mat.T' + str(it) + ext_mat, mat_final + 'mat.T' + str(index_b0[it]) + ext_mat)
 
     # Copy DWI registration matrices
     sct.printv('\nCopy DWI registration matrices...', param.verbose)
     for iGroup in range(nb_groups):
         for dwi in range(len(group_indexes[iGroup])):
-            sct.run('cp ' + 'mat_dwigroups/' + 'mat.T' + str(iGroup) + ext_mat + ' ' + mat_final + 'mat.T' + str(group_indexes[iGroup][dwi]) + ext_mat, param.verbose)
+            sct.copy('mat_dwigroups/' + 'mat.T' + str(iGroup) + ext_mat, mat_final + 'mat.T' + str(group_indexes[iGroup][dwi]) + ext_mat)
 
     # Spline Regularization along T
     if param.spline_fitting:
@@ -501,9 +501,9 @@ def dmri_moco(param):
     im_dmri_moco.save()
 
     # generate b0_moco_mean and dwi_moco_mean
-    cmd = 'sct_dmri_separate_b0_and_dwi -i ' + file_data + param.suffix + ext_data + ' -bvec bvecs.txt -a 1'
+    cmd = ['sct_dmri_separate_b0_and_dwi', '-i', file_data + param.suffix + ext_data, '-bvec', 'bvecs.txt', '-a', '1']
     if not param.fname_bvals == '':
-        cmd = cmd + ' -m ' + param.fname_bvals
+        cmd += ['-m', param.fname_bvals]
     sct.run(cmd, param.verbose)
 
 
