@@ -11,15 +11,13 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import sys
-import math
-import time
+import sys, io, os, math, time
 
-from msct_parser import Parser
-import os
 import scipy
 import nibabel
+
 import sct_utils as sct
+from msct_parser import Parser
 from msct_image import Image
 
 
