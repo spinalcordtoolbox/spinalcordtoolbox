@@ -10,3 +10,4 @@ pandas
 rlrd
 xlwt
 sklearn
+pandas
