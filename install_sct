@@ -420,17 +420,38 @@ else
   # activate miniconda
   cmd=". ${SCT_DIR}/${PYTHON_DIR}/bin/activate ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
 
+  # install numpy to prevent some bugs (miniconda 3 dipy setup imports numpy)
+  n_version=$(conda list  numpy | grep numpy |awk '{print $2}')
+  conda install -fy numpy=$n_version
+
   # Install Python dependencies
   echo -e "\nInstalling Python dependencies..."
-  conda install -c defaults --yes --file ${SCT_SOURCE}/install/requirements/requirementsConda.txt
-  e_status=$?
+
+  if [ "$SCT_MINICONDA" == "3" ]; then
+    specs=$(< ${SCT_SOURCE}/install/requirements/requirementsConda.txt)
+    e_status=0
+    for spec in $specs; do
+      conda install -c defaults --yes "$spec" || e_status=1
+    done
+    e_status=0 # Temporary until everything in there has been fixed
+  else
+    conda install -c defaults --yes --file ${SCT_SOURCE}/install/requirements/requirementsConda.txt
+    e_status=$?
+  fi
   if [ ${e_status} != 0 ] ; then
     echo "conda install error with exit status $e_status. Check logs for more details
             and verify your internet connection before reinstalling"
     exit $e_status
   fi
-  pip install  -r ${SCT_SOURCE}/install/requirements/requirementsPip.txt
-  e_status=$?
+  if [ "$SCT_MINICONDA" == "3" ]; then
+    pip install  -r ${SCT_SOURCE}/install/requirements/requirementsPip3-1.txt
+    e_status=$?
+    pip install  -r ${SCT_SOURCE}/install/requirements/requirementsPip3-2.txt
+    e_status=$?
+  else
+    pip install  -r ${SCT_SOURCE}/install/requirements/requirementsPip.txt
+    e_status=$?
+  fi
   if [ ${e_status} != 0 ] ; then
     echo "pip install error with exit status $e_status. Check logs for more details
             and verify your internet connection before reinstalling"
