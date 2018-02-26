@@ -429,7 +429,7 @@ else
     conda install -c defaults --yes tensorflow==1.3.0
   fi
 
-  # reinstall numpy at the end to prevent some bugs
+  # reinstall numpy at the end to prevent some the mkl bug
   n_version=$(conda list  numpy | grep numpy |awk '{print $2}')
   conda install -fy numpy=$n_version
 
