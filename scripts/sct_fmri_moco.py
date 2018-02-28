@@ -42,7 +42,7 @@ class Param:
         self.todo = ''
         self.group_size = 3  # number of images averaged for 'dwi' method.
         self.spline_fitting = 0
-        self.remove_tmp_files = 1
+        self.remove_temp_files = 1
         self.verbose = 1
         self.plot_graph = 0
         self.suffix = '_moco'
@@ -167,7 +167,7 @@ def main(args=None):
     if '-ofolder' in arguments:
         path_out = arguments['-ofolder']
     if '-r' in arguments:
-        param.remove_tmp_files = int(arguments['-r'])
+        param.remove_temp_files = int(arguments['-r'])
     if '-v' in arguments:
         param.verbose = int(arguments['-v'])
 
@@ -209,7 +209,7 @@ def main(args=None):
     sct.generate_output_file(os.path.join(path_tmp, "fmri" + param.suffix + '_mean.nii'), os.path.join(path_out, file_data + param.suffix + '_mean' + ext_data), param.verbose)
 
     # Delete temporary files
-    if param.remove_tmp_files == 1:
+    if param.remove_temp_files == 1:
         sct.printv('\nDelete temporary files...', param.verbose)
         sct.rmtree(path_tmp, verbose=param.verbose)
 
