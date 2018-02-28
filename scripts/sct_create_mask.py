@@ -45,7 +45,7 @@ class Param:
         self.even = 0
         self.file_prefix = 'mask_'  # output prefix
         self.verbose = 1
-        self.remove_tmp_files = 1
+        self.remove_temp_files = 1
         self.offset = '0,0'
 # param = Param()
 # param_default = Param()
@@ -76,7 +76,7 @@ def main(args=None):
     if '-o' in arguments:
         param.fname_out = arguments['-o']
     if '-r' in arguments:
-        param.remove_tmp_files = int(arguments['-r'])
+        param.remove_temp_files = int(arguments['-r'])
     if '-v' in arguments:
         param.verbose = int(arguments['-v'])
 
@@ -257,7 +257,7 @@ def create_mask(param):
     sct.generate_output_file(os.path.join(path_tmp, "mask.nii.gz"), param.fname_out)
 
     # Remove temporary files
-    if param.remove_tmp_files == 1:
+    if param.remove_temp_files == 1:
         sct.printv('\nRemove temporary files...', param.verbose)
         sct.rmtree(path_tmp)
 

@@ -219,7 +219,7 @@ def main(args=None):
     if '-param' in arguments:
         param.update(arguments['-param'][0])
     verbose = int(arguments['-v'])
-    remove_tmp_files = int(arguments['-r'])
+    remove_temp_files = int(arguments['-r'])
     denoise = int(arguments['-denoise'])
     laplacian = int(arguments['-laplacian'])
 
@@ -328,7 +328,7 @@ def main(args=None):
     sct.generate_output_file(os.path.join(path_tmp, "straight_ref.nii.gz"), os.path.join(path_output, "straight_ref.nii.gz"), verbose)
 
     # Remove temporary files
-    if remove_tmp_files == 1:
+    if remove_temp_files == 1:
         sct.printv('\nRemove temporary files...', verbose)
         sct.rmtree(path_tmp)
 

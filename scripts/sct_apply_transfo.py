@@ -25,7 +25,7 @@ from sct_crop_image import ImageCropper
 class Param:
     def __init__(self):
         self.verbose = '1'
-        self.remove_tmp_files = '1'
+        self.remove_temp_files = '1'
 
 
 # PARSER
