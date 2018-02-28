@@ -680,6 +680,7 @@ def register(src, dest, paramreg, param, i_step_str):
                                warp_inverse_out=warp_inverse_out,
                                ants_registration_params=ants_registration_params,
                                path_qc=param.path_qc,
+                               remove_temp_files=param.remove_temp_files,
                                verbose=param.verbose)
 
     # slice-wise transfo
@@ -711,6 +712,7 @@ def register(src, dest, paramreg, param, i_step_str):
                            warp_inverse_out=warp_inverse_out,
                            ants_registration_params=ants_registration_params,
                            path_qc=param.path_qc,
+                           remove_temp_files=param.remove_temp_files,
                            verbose=param.verbose)
 
     else:
