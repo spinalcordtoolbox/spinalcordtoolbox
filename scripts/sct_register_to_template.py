@@ -357,7 +357,7 @@ def main(args=None):
         fn_straight_ref = os.path.join(curdir, "straight_ref.nii.gz")
         if os.path.isfile(fn_warp_curve2straight) and os.path.isfile(fn_warp_straight2curve) and os.path.isfile(fn_straight_ref):
             # if they exist, copy them into current folder
-            sct.printv('WARNING: Straightening was already run previously. Copying warping fields...', verbose, 'warning')
+            sct.printv('WARNING: It looks like straightening was already performed previously. Copying warping fields...', verbose, 'warning')
             sct.copy(fn_warp_curve2straight, 'warp_curve2straight.nii.gz')
             sct.copy(fn_warp_straight2curve, 'warp_straight2curve.nii.gz')
             sct.copy(fn_straight_ref, 'straight_ref.nii.gz')
