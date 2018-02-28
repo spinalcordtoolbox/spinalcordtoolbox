@@ -255,7 +255,7 @@ def main(args=None):
     # check if warp_curve2straight and warp_straight2curve already exist (i.e. no need to do it another time)
     if os.path.isfile(os.path.join(curdir, "warp_curve2straight.nii.gz")) and os.path.isfile(os.path.join(curdir, "warp_straight2curve.nii.gz")) and os.path.isfile(os.path.join(curdir, "straight_ref.nii.gz")):
         # if they exist, copy them into current folder
-        sct.printv('WARNING: Straightening was already run previously. Copying warping fields...', verbose, 'warning')
+        sct.printv('WARNING: It looks like straightening was already performed previously. Copying warping fields...', verbose, 'warning')
         sct.copy(os.path.join(curdir, "warp_curve2straight.nii.gz"), 'warp_curve2straight.nii.gz')
         sct.copy(os.path.join(curdir, "warp_straight2curve.nii.gz"), 'warp_straight2curve.nii.gz')
         sct.copy(os.path.join(curdir, "straight_ref.nii.gz"), 'straight_ref.nii.gz')
