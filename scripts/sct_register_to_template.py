@@ -371,7 +371,7 @@ def main(args=None):
                     '-s', ftmp_seg,
                     '-o', add_suffix(ftmp_seg, '_straight'),
                     '-qc', '0',
-                    '-r', '0',
+                    '-r', str(remove_temp_files),
                     '-v', str(verbose),
                     '-param', 'template_orientation=1'])
         # N.B. DO NOT UPDATE VARIABLE ftmp_seg BECAUSE TEMPORARY USED LATER
