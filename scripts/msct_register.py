@@ -680,7 +680,7 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
                  '-d', '2',
                  '-t', 'SyN[1,1,1]',
                  '-c', '0',
-                 '-m', 'MI[dest_Z' + num + '.nii, src_Z' + num + '.nii,1,32]',
+                 '-m', 'MI[dest_Z' + num + '.nii,src_Z' + num + '.nii,1,32]',
                  '-o', 'warp2d_null',
                  '-f', '1',
                  '-s', '0',
