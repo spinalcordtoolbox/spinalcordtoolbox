@@ -38,6 +38,7 @@ def register_slicewise(fname_src,
                         paramreg=None,
                         ants_registration_params=None,
                         path_qc='./',
+                        remove_temp_files=1,
                         verbose=0):
 
     # create temporary folder
@@ -77,6 +78,9 @@ def register_slicewise(fname_src,
 
     # go back
     os.chdir(curdir)
+
+    if remove_temp_files:
+        sct.rmtree(path_tmp, verbose=verbose)
 
 
 def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii.gz', fname_warp_inv='warp_inverse.nii.gz', rot=1, poly=0, path_qc='./', verbose=0, pca_eigenratio_th=1.6):
