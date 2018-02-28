@@ -25,10 +25,10 @@ fi
 
 # Check if fslview is executable
 if command -v fslview >/dev/null; then
-   DISPLAYQC=true
+  DISPLAYQC=true
 else        
-   DISPLAYQC=false
-   echo "Display mode turned off."
+  DISPLAYQC=false
+  echo "Display mode turned off."
 fi
 
 # Check if users wants to use his own data
