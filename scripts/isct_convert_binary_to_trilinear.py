@@ -143,7 +143,7 @@ def main():
     # Delete temporary files
     if remove_temp_files == 1:
         sct.printv('\nRemove temporary files...')
-        sct.run('rm -rf ' + path_tmp)
+        sct.rmtree(path_tmp)
 
     # display elapsed time
     elapsed_time = time.time() - start_time
