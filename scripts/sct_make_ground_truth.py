@@ -424,7 +424,7 @@ def main():
             # apply straightening
             sct.run(['sct_apply_transfo', '-i', ftmp_seg, '-w', 'warp_curve2straight.nii.gz', '-d', 'straight_ref.nii.gz', '-o', add_suffix(ftmp_seg, '_straight')])
         else:
-            sct.run(['sct_straighten_spinalcord', '-i', ftmp_seg, '-s', ftmp_seg, '-o', add_suffix(ftmp_seg, '_straight'), '-qc', '0', '-r', '0', '-v', str(verbose)], verbose)
+            sct.run(['sct_straighten_spinalcord', '-i', ftmp_seg, '-s', ftmp_seg, '-o', add_suffix(ftmp_seg, '_straight'), '-qc', '0', '-r', str(remove_temp_files), '-v', str(verbose)], verbose)
         # N.B. DO NOT UPDATE VARIABLE ftmp_seg BECAUSE TEMPORARY USED LATER
         # re-define warping field using non-cropped space (to avoid issue #367)
         sct.run(['sct_concat_transfo', '-w', 'warp_straight2curve.nii.gz', '-d', ftmp_data, '-o', 'warp_straight2curve.nii.gz'])
