@@ -68,6 +68,12 @@ def get_parser():
                       mandatory=False,
                       example='2:6',
                       default_value='None')
+    parser.add_option(name="-r",
+                      type_value="multiple_choice",
+                      description='Remove temporary files.',
+                      mandatory=False,
+                      default_value='1',
+                      example=['0', '1'])
     parser.add_option(name="-v",
                       type_value="multiple_choice",
                       description="""Verbose. 0: nothing. 1: basic.""",
@@ -94,6 +100,7 @@ def main():
     slices_of_interest = arguments["-z"]
     index_vol = arguments['-vol']
     method = arguments["-method"]
+    remove_temp_files = int(arguments['-r'])
     verbose = int(arguments['-v'])
 
     # Check if data are in RPI
@@ -118,8 +125,9 @@ def main():
             vert_label_im_rpi = orientation(Image(vert_label_fname), ori='RPI', set=True, fname_out=os.path.join(path_tmp, "vert_labeling_RPI.nii"))
             vert_labeling_data = vert_label_im_rpi.data
         # Remove the temporary folder used to change the NIFTI files orientation into RPI
-        sct.printv('\nRemove the temporary folder...', verbose)
-        sct.rmtree(path_tmp, True)
+        if remove_temp_files:
+            sct.printv('\nRemove the temporary folder...', verbose)
+            sct.rmtree(path_tmp, True)
     else:
         # Load data
         sct.printv('\nLoad data...', verbose)
