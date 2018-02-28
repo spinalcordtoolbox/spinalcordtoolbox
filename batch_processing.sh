@@ -23,6 +23,14 @@ else
   DISPLAYQC=true
 fi
 
+# Check if fslview is executable
+if command -v fslview >/dev/null; then
+        DISPLAYQC=true
+    else        
+        DISPLAYQC=false
+        echo "Display mode turned off."
+    fi
+
 # Check if users wants to use his own data
 if [[ $@ == *"-nodownload"* ]]; then
   echo "Use local folder."
