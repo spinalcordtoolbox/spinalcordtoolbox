@@ -29,7 +29,7 @@ class Param:
     def __init__(self):
         self.debug = 0
         self.average = 0
-        self.remove_tmp_files = 1
+        self.remove_temp_files = 1
         self.verbose = 1
         self.bval_min = 100  # in case user does not have min bvalues at 0, set threshold.
 
@@ -95,7 +95,7 @@ def get_parser():
                       description='remove temporary files.',
                       mandatory=False,
                       example=['0', '1'],
-                      default_value=str(param_default.remove_tmp_files))
+                      default_value=str(param_default.remove_temp_files))
 
     return parser
 
@@ -116,7 +116,7 @@ def main(args=None):
     fname_bvecs = arguments['-bvec']
     average = arguments['-a']
     verbose = int(arguments['-v'])
-    remove_tmp_files = int(arguments['-r'])
+    remove_temp_files = int(arguments['-r'])
     path_out = arguments['-ofolder']
 
     if '-bval' in arguments:
@@ -230,7 +230,7 @@ def main(args=None):
         sct.generate_output_file(os.path.join(path_tmp, dwi_mean_name + ext), os.path.join(path_out, dwi_mean_name + ext_data), verbose)
 
     # Remove temporary files
-    if remove_tmp_files == 1:
+    if remove_temp_files == 1:
         sct.printv('\nRemove temporary files...', verbose)
         sct.rmtree(path_tmp, verbose=verbose)
 
