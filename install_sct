@@ -452,8 +452,11 @@ else
     exit $e_status
   fi
 
-  # Workaround for #1549
-  pip install https://github.com/pypa/pip/archive/master.zip
+  # Workaround for #1549 (install pip 10 pre-release if not already here)
+  if python -c 'import pip; int(pip.__version__.split(".")[0]) >= 10' | grep -q False; then
+    echo "Retrieving a recent pip to make installation faster"
+    pip install https://github.com/pypa/pip/archive/72f219c410b0ce25f7da44be6172c1e3766bbe6b.zip
+  fi
 
   if [ "$SCT_MINICONDA" == "3" ]; then
     pip install  -r ${SCT_SOURCE}/install/requirements/requirementsPip3-1.txt
