@@ -428,12 +428,13 @@ else
   # activate miniconda
   cmd=". ${SCT_DIR}/${PYTHON_DIR}/bin/activate ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
 
-  # install numpy to prevent some bugs (miniconda 3 dipy setup imports numpy)
-  n_version=$(conda list  numpy | grep numpy |awk '{print $2}')
-  conda install -fy numpy=$n_version
-
   # Install Python dependencies
   echo -e "\nInstalling Python dependencies..."
+
+  if [ "$SCT_MINICONDA" == "3" ]; then
+    echo "Working around dipy setup.py issue on py3k by installing numpy"
+    conda install -fy numpy
+  fi
 
   if [ "$SCT_MINICONDA" == "3" ]; then
     specs=$(< ${SCT_SOURCE}/install/requirements/requirementsConda.txt)
