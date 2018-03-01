@@ -92,7 +92,7 @@ def run_main():
         path_sct_data = os.environ.get("SCT_TESTING_DATA_DIR", os.path.join(os.path.dirname(os.path.dirname(__file__))), "testing_data")
         param.fname_data = os.path.join(path_sct_data, "fmri", "fmri.nii.gz")
         param.new_size = '2'  # '0.5x0.5x1'
-        param.remove_tmp_files = 0
+        param.remove_temp_files = 0
         param.verbose = 1
     else:
         parser = get_parser()
