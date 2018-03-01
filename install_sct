@@ -200,6 +200,12 @@ while getopts ":dmhbpz" opt; do
   esac
 done
 
+
+if [ "x${SCT_VERBOSE_INSTALL}" == "x1" ]; then
+  set -x
+fi
+
+
 # Catch SCT version
 if [ -e "version.txt" ]; then
   if [ ${SCT_MPI_MODE} ]; then
