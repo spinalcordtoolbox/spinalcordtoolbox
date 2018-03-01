@@ -411,11 +411,11 @@ def main(args=None):
     os.chdir(path_tmp)
 
     # reorient destination to RPI
-    sct.run('sct_image -i dest.nii -setorient RPI -o dest_RPI.nii')
+    sct.run(['sct_image', '-i', 'dest.nii', '-setorient', 'RPI', '-o', 'dest_RPI.nii'])
     if fname_dest_seg:
-        sct.run('sct_image -i dest_seg.nii -setorient RPI -o dest_seg_RPI.nii')
+        sct.run(['sct_image', '-i', 'dest_seg.nii', '-setorient', 'RPI', '-o', 'dest_seg_RPI.nii'])
     if fname_dest_label:
-        sct.run('sct_image -i dest_label.nii -setorient RPI -o dest_label_RPI.nii')
+        sct.run(['sct_image', '-i', 'dest_label.nii', '-setorient', 'RPI', '-o', 'dest_label_RPI.nii'])
 
     if identity:
         # overwrite paramreg and only do one identity transformation
@@ -470,7 +470,7 @@ def main(args=None):
         # if step>0, apply warp_forward_concat to the src image to be used
         if i_step > 0:
             sct.printv('\nApply transformation from previous step', param.verbose)
-            sct.run('sct_apply_transfo -i ' + src + ' -d ' + dest + ' -w ' + ','.join(warp_forward) + ' -o ' + sct.add_suffix(src, '_reg') + ' -x ' + interp_step, verbose)
+            sct.run(['sct_apply_transfo', '-i', src, '-d', dest, '-w', ','.join(warp_forward), '-o', sct.add_suffix(src, '_reg'), '-x', interp_step], verbose)
             src = sct.add_suffix(src, '_reg')
         # register src --> dest
         warp_forward_out, warp_inverse_out = register(src, dest, paramreg, param, str(i_step))
@@ -479,14 +479,14 @@ def main(args=None):
 
     # Concatenate transformations
     sct.printv('\nConcatenate transformations...', verbose)
-    sct.run('sct_concat_transfo -w ' + ','.join(warp_forward) + ' -d dest.nii -o warp_src2dest.nii.gz', verbose)
-    sct.run('sct_concat_transfo -w ' + ','.join(warp_inverse) + ' -d src.nii -o warp_dest2src.nii.gz', verbose)
+    sct.run(['sct_concat_transfo', '-w', ','.join(warp_forward), '-d', 'dest.nii', '-o', 'warp_src2dest.nii.gz'], verbose)
+    sct.run(['sct_concat_transfo', '-w', ','.join(warp_inverse), '-d', 'src.nii', '-o', 'warp_dest2src.nii.gz'], verbose)
 
     # Apply warping field to src data
     sct.printv('\nApply transfo source --> dest...', verbose)
-    sct.run('sct_apply_transfo -i src.nii -o src_reg.nii -d dest.nii -w warp_src2dest.nii.gz -x ' + interp, verbose)
+    sct.run(['sct_apply_transfo', '-i', 'src.nii', '-o', 'src_reg.nii', '-d', 'dest.nii', '-w', 'warp_src2dest.nii.gz', '-x', interp], verbose)
     sct.printv('\nApply transfo dest --> source...', verbose)
-    sct.run('sct_apply_transfo -i dest.nii -o dest_reg.nii -d src.nii -w warp_dest2src.nii.gz -x ' + interp, verbose)
+    sct.run(['sct_apply_transfo', '-i', 'dest.nii', '-o', 'dest_reg.nii', '-d', 'src.nii', '-w', 'warp_dest2src.nii.gz', '-x', interp], verbose)
 
     # come back
     os.chdir(curdir)
@@ -508,7 +508,7 @@ def main(args=None):
     # Delete temporary files
     if remove_temp_files:
         sct.printv('\nRemove temporary files...', verbose)
-        sct.run('rm -rf ' + path_tmp, verbose)
+        sct.rmtree(path_tmp, verbose=verbose)
 
     # display elapsed time
     elapsed_time = time.time() - start_time
@@ -554,10 +554,10 @@ def register(src, dest, paramreg, param, i_step_str):
     # set masking
     if param.fname_mask:
         fname_mask = 'mask.nii.gz'
-        masking = '-x mask.nii.gz'
+        masking = ['-x', 'mask.nii.gz']
     else:
         fname_mask = ''
-        masking = ''
+        masking = []
 
     if paramreg.steps[i_step_str].algo == 'slicereg':
         # check if user used type=label
@@ -590,24 +590,25 @@ def register(src, dest, paramreg, param, i_step_str):
             zmax_total = min([zmax_src, zmax_dest])
             # crop data
             src_crop = sct.add_suffix(src, '_crop')
-            sct.run('sct_crop_image -i ' + src + ' -o ' + src_crop + ' -dim 2 -start ' + str(zmin_total) + ' -end ' + str(zmax_total), param.verbose)
+            sct.run(['sct_crop_image', '-i', src, '-o', src_crop, '-dim', '2', '-start', str(zmin_total), '-end', str(zmax_total)], param.verbose)
             dest_crop = sct.add_suffix(dest, '_crop')
-            sct.run('sct_crop_image -i ' + dest + ' -o ' + dest_crop + ' -dim 2 -start ' + str(zmin_total) + ' -end ' + str(zmax_total), param.verbose)
+            sct.run(['sct_crop_image', '-i', dest, '-o', dest_crop, '-dim', '2', '-start', str(zmin_total), '-end', str(zmax_total)], param.verbose)
             # update variables
             src = src_crop
             dest = dest_crop
             scr_regStep = sct.add_suffix(src, '_regStep' + i_step_str)
             # estimate transfo
-            cmd = ('isct_antsSliceRegularizedRegistration '
-                   '-t Translation[' + paramreg.steps[i_step_str].gradStep + '] '
-                   '-m ' + paramreg.steps[i_step_str].metric + '[' + dest + ',' + src + ',1,' + metricSize + ',Regular,0.2] '
-                   '-p ' + paramreg.steps[i_step_str].poly + ' '
-                   '-i ' + paramreg.steps[i_step_str].iter + ' '
-                   '-f ' + paramreg.steps[i_step_str].shrink + ' '
-                   '-s ' + paramreg.steps[i_step_str].smooth + ' '
-                   '-v 1 '  # verbose (verbose=2 does not exist, so we force it to 1)
-                   '-o [step' + i_step_str + ',' + scr_regStep + '] '  # here the warp name is stage10 because antsSliceReg add "Warp"
-                   + masking)
+            # TODO fixup isct_ants* parsers
+            cmd = ['isct_antsSliceRegularizedRegistration',
+             '-t', 'Translation[' + paramreg.steps[i_step_str].gradStep + ']',
+             '-m', paramreg.steps[i_step_str].metric + '[' + dest + ',' + src + ',1,' + metricSize + ',Regular,0.2]',
+             '-p', paramreg.steps[i_step_str].poly,
+             '-i', paramreg.steps[i_step_str].iter,
+             '-f', paramreg.steps[i_step_str].shrink,
+             '-s', paramreg.steps[i_step_str].smooth,
+             '-v', '1',  # verbose (verbose=2 does not exist, so we force it to 1)
+             '-o', '[step' + i_step_str + ',' + scr_regStep + ']',  # here the warp name is stage10 because  antsSliceReg add "Warp"
+            ] + masking
             warp_forward_out = 'step' + i_step_str + 'Warp.nii.gz'
             warp_inverse_out = 'step' + i_step_str + 'InverseWarp.nii.gz'
             # run command
@@ -621,35 +622,35 @@ def register(src, dest, paramreg, param, i_step_str):
             # N.B. no need to pad if iter = 0
             if not paramreg.steps[i_step_str].iter == '0':
                 dest_pad = sct.add_suffix(dest, '_pad')
-                sct.run('sct_image -i ' + dest + ' -o ' + dest_pad + ' -pad 0,0,' + str(param.padding))
+                sct.run(['sct_image', '-i', dest, '-o', dest_pad, '-pad', '0,0,' + str(param.padding)])
                 dest = dest_pad
             # apply Laplacian filter
             if not paramreg.steps[i_step_str].laplacian == '0':
                 sct.printv('\nApply Laplacian filter', param.verbose)
-                sct.run('sct_maths -i ' + src + ' -laplacian ' + paramreg.steps[i_step_str].laplacian + ',' + paramreg.steps[i_step_str].laplacian + ',0 -o ' + sct.add_suffix(src, '_laplacian'))
-                sct.run('sct_maths -i ' + dest + ' -laplacian ' + paramreg.steps[i_step_str].laplacian + ',' + paramreg.steps[i_step_str].laplacian + ',0 -o ' + sct.add_suffix(dest, '_laplacian'))
+                sct.run(['sct_maths', '-i', src, '-laplacian', paramreg.steps[i_step_str].laplacian + ',' + paramreg.steps[i_step_str].laplacian + ',0', '-o', sct.add_suffix(src, '_laplacian')])
+                sct.run(['sct_maths', '-i', dest, '-laplacian', paramreg.steps[i_step_str].laplacian + ',' + paramreg.steps[i_step_str].laplacian + ',0', '-o', sct.add_suffix(dest, '_laplacian')])
                 src = sct.add_suffix(src, '_laplacian')
                 dest = sct.add_suffix(dest, '_laplacian')
             # Estimate transformation
             sct.printv('\nEstimate transformation', param.verbose)
             scr_regStep = sct.add_suffix(src, '_regStep' + i_step_str)
-            cmd = ('isct_antsRegistration '
-                   '--dimensionality 3 '
-                   '--transform ' + paramreg.steps[i_step_str].algo + '[' + paramreg.steps[i_step_str].gradStep +
-                   ants_registration_params[paramreg.steps[i_step_str].algo.lower()] + '] '
-                   '--metric ' + paramreg.steps[i_step_str].metric + '[' + dest + ',' + src + ',1,' + metricSize + '] '
-                   '--convergence ' + paramreg.steps[i_step_str].iter + ' '
-                   '--shrink-factors ' + paramreg.steps[i_step_str].shrink + ' '
-                   '--smoothing-sigmas ' + paramreg.steps[i_step_str].smooth + 'mm '
-                   '--restrict-deformation ' + paramreg.steps[i_step_str].deformation + ' '
-                   '--output [step' + i_step_str + ',' + scr_regStep + '] '
-                   '--interpolation BSpline[3] '
-                   '--verbose 1 '
-                   + masking)
+            # TODO fixup isct_ants* parsers
+            cmd = ['isct_antsRegistration',
+             '--dimensionality', '3',
+             '--transform', paramreg.steps[i_step_str].algo + '[' + paramreg.steps[i_step_str].gradStep + ants_registration_params[paramreg.steps[i_step_str].algo.lower()] + ']',
+             '--metric', paramreg.steps[i_step_str].metric + '[' + dest + ',' + src + ',1,' + metricSize + ']',
+             '--convergence', paramreg.steps[i_step_str].iter,
+             '--shrink-factors', paramreg.steps[i_step_str].shrink,
+             '--smoothing-sigmas', paramreg.steps[i_step_str].smooth + 'mm',
+             '--restrict-deformation', paramreg.steps[i_step_str].deformation,
+             '--output', '[step' + i_step_str + ',' + scr_regStep + ']',
+             '--interpolation', 'BSpline[3]',
+             '--verbose', '1',
+            ] + masking
             # add init translation
             if not paramreg.steps[i_step_str].init == '':
                 init_dict = {'geometric': '0', 'centermass': '1', 'origin': '2'}
-                cmd += ' -r [' + dest + ',' + src + ',' + init_dict[paramreg.steps[i_step_str].init] + ']'
+                cmd += ['-r', '[' + dest + ',' + src + ',' + init_dict[paramreg.steps[i_step_str].init] + ']']
             # run command
             status, output = sct.run(cmd, param.verbose)
             # get appropriate file name for transformation
@@ -679,6 +680,7 @@ def register(src, dest, paramreg, param, i_step_str):
                                warp_inverse_out=warp_inverse_out,
                                ants_registration_params=ants_registration_params,
                                path_qc=param.path_qc,
+                               remove_temp_files=param.remove_temp_files,
                                verbose=param.verbose)
 
     # slice-wise transfo
@@ -695,8 +697,8 @@ def register(src, dest, paramreg, param, i_step_str):
         # smooth data
         if not paramreg.steps[i_step_str].smooth == '0':
             sct.printv('\nSmooth data', param.verbose)
-            sct.run('sct_maths -i ' + src + ' -smooth ' + paramreg.steps[i_step_str].smooth + ',' + paramreg.steps[i_step_str].smooth + ',0 -o ' + sct.add_suffix(src, '_smooth'))
-            sct.run('sct_maths -i ' + dest + ' -smooth ' + paramreg.steps[i_step_str].smooth + ',' + paramreg.steps[i_step_str].smooth + ',0 -o ' + sct.add_suffix(dest, '_smooth'))
+            sct.run(['sct_maths', '-i', src, '-smooth', paramreg.steps[i_step_str].smooth + ',' + paramreg.steps[i_step_str].smooth + ',0', '-o', sct.add_suffix(src, '_smooth')])
+            sct.run(['sct_maths', '-i', dest, '-smooth', paramreg.steps[i_step_str].smooth + ',' + paramreg.steps[i_step_str].smooth + ',0', '-o', sct.add_suffix(dest, '_smooth')])
             src = sct.add_suffix(src, '_smooth')
             dest = sct.add_suffix(dest, '_smooth')
         from msct_register import register_slicewise
@@ -710,6 +712,7 @@ def register(src, dest, paramreg, param, i_step_str):
                            warp_inverse_out=warp_inverse_out,
                            ants_registration_params=ants_registration_params,
                            path_qc=param.path_qc,
+                           remove_temp_files=param.remove_temp_files,
                            verbose=param.verbose)
 
     else:

@@ -319,7 +319,7 @@ class Model:
 
             # remove warping fields directory
             if self.param.rm_tmp:
-                shutil.rmtree(warp_dir)
+                sct.rmtree(warp_dir)
 
     # ------------------------------------------------------------------------------------------------------------------
     def normalize_model_data(self):

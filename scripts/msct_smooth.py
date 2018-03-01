@@ -21,7 +21,7 @@ import sct_utils as sct
 # Over pad the input file, smooth and return the centerline
 #=======================================================================================================================
 def smooth(fname, padding):
-    sct.run('sct_image -i ' + fname + ' -o tmp.centerline_pad.nii.gz -pad ' + str(padding) + ',' + str(padding) + ',' + str(padding))
+    sct.run(['sct_image', '-i', fname, '-o', 'tmp.centerline_pad.nii.gz', '-pad', str(padding) + ',' + str(padding) + ',' + str(padding)])
 
 
 #=======================================================================================================================
@@ -377,7 +377,7 @@ def b_spline_nurbs_itk(fname_centerline, numberOfLevels=10):
 
     sct.printv('\nFitting centerline using B-spline approximation (using ITK)...')
     import sct_utils as sct
-    status, output = sct.run("isct_bsplineapproximator -i " + fname_centerline + " -o tmp.centerline.txt -l " + str(numberOfLevels))
+    status, output = sct.run(["isct_bsplineapproximator", "-i", fname_centerline, "-o", "tmp.centerline.txt", "-l", str(numberOfLevels)])
     if (status != 0):
         sct.printv("WARNING: \n" + output)
 
@@ -407,13 +407,13 @@ def getSize(x, y, z, file_name=None):
     from math import sqrt
     # get pixdim
     if file_name is not None:
-        cmd1 = 'fslval ' + file_name + ' pixdim1'
+        cmd1 = ['fslval', file_name, 'pixdim1']
         status, output = sct.run(cmd1)
         p1 = float(output)
-        cmd2 = 'fslval ' + file_name + ' pixdim2'
+        cmd2 = ['fslval', file_name, 'pixdim2']
         status, output = sct.run(cmd2)
         p2 = float(output)
-        cmd3 = 'fslval ' + file_name + ' pixdim3'
+        cmd3 = ['fslval', file_name, 'pixdim3']
         status, output = sct.run(cmd3)
         p3 = float(output)
     else:
@@ -431,13 +431,13 @@ def getSize(x, y, z, file_name=None):
 # functions to get centerline size
 #=======================================================================================================================
 def getPxDimensions(file_name):
-    cmd1 = 'fslval ' + file_name + ' pixdim1'
+    cmd1 = ['fslval', file_name, 'pixdim1']
     status, output = sct.run(cmd1)
     p1 = float(output)
-    cmd2 = 'fslval ' + file_name + ' pixdim2'
+    cmd2 = ['fslval', file_name, 'pixdim2']
     status, output = sct.run(cmd2)
     p2 = float(output)
-    cmd3 = 'fslval ' + file_name + ' pixdim3'
+    cmd3 = ['fslval', file_name, 'pixdim3']
     status, output = sct.run(cmd3)
     p3 = float(output)
     return p1, p2, p3
