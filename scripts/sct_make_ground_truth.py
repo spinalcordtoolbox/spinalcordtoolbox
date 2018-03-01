@@ -402,7 +402,7 @@ def main():
         ftmp_data = add_suffix(ftmp_data, '_rpi')
         sct.run(['sct_image', '-i', ftmp_seg, '-setorient', 'RPI', '-o', add_suffix(ftmp_seg, '_rpi')])
         ftmp_seg = add_suffix(ftmp_seg, '_rpi')
-        sct.run(['sct_image', '-i', ftmp_label, '-setorient', 'RPI', '-o' add_suffix(ftmp_label, '_rpi')])
+        sct.run(['sct_image', '-i', ftmp_label, '-setorient', 'RPI', '-o', add_suffix(ftmp_label, '_rpi')])
         ftmp_label = add_suffix(ftmp_label, '_rpi')
 
         # get landmarks in native space
