@@ -493,8 +493,8 @@ def checkRAM(os, verbose=1):
         ram_total = float(ram_split[3])
 
         # Get process info
-        ps = subprocess.Popen(['ps', '-caxm', '-orss,comm'], stdout=subprocess.PIPE).communicate()[0]
-        vm = subprocess.Popen(['vm_stat'], stdout=subprocess.PIPE).communicate()[0]
+        ps = subprocess.Popen(['ps', '-caxm', '-orss,comm'], stdout=subprocess.PIPE).communicate()[0].decode()
+        vm = subprocess.Popen(['vm_stat'], stdout=subprocess.PIPE).communicate()[0].decode()
 
         # Iterate processes
         processLines = ps.split('\n')
