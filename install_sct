@@ -335,10 +335,12 @@ else
 fi
 SCT_DIR=${INSTALL_DIR}
 
-# Clean old install setup in bin/
-echo -e "\nRemoving sct and isct softlink from ${SCT_DIR}/${BIN_DIR}"
-find ${SCT_DIR}/${BIN_DIR} -type l -name "sct_*" -exec rm {} \;
-find ${SCT_DIR}/${BIN_DIR} -type l -name "isct_*" -exec rm {} \;
+# Clean old install setup in bin/ if existing
+if [ -x ${SCT_DIR}/${BIN_DIR} ]; then
+  echo -e "\nRemoving sct and isct softlink from ${SCT_DIR}/${BIN_DIR}"
+  find ${SCT_DIR}/${BIN_DIR} -type l -name "sct_*" -exec rm {} \;
+  find ${SCT_DIR}/${BIN_DIR} -type l -name "isct_*" -exec rm {} \;
+fi
 
 # Copy files to destination directory
 if [ "${SCT_DIR}" != "${SCT_SOURCE}" ]; then
