@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# This program is a warper for the isct_dice_coefficient binary
+# This program is a wrapper for the isct_dice_coefficient binary
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
@@ -103,10 +103,10 @@ if __name__ == "__main__":
 
     if '-bin' in arguments:
         fname_input1_bin = sct.add_suffix(fname_input1, '_bin')
-        sct.run('sct_maths -i ' + fname_input1 + ' -bin 0 -o ' + fname_input1_bin)
+        sct.run(['sct_maths', '-i', fname_input1, '-bin', '0', '-o', fname_input1_bin])
         fname_input1 = fname_input1_bin
         fname_input2_bin = sct.add_suffix(fname_input2, '_bin')
-        sct.run('sct_maths -i ' + fname_input2 + ' -bin 0 -o ' + fname_input2_bin)
+        sct.run(['sct_maths', '-i', fname_input2, '-bin', '0', '-o', fname_input2_bin])
         fname_input2 = fname_input2_bin
 
     # copy header of im_1 to im_2
@@ -114,20 +114,20 @@ if __name__ == "__main__":
     im_2_cor = copy_header(im_1, im_2)
     im_2_cor.save()
 
-    cmd = 'isct_dice_coefficient ' + fname_input1 + ' ' + fname_input2
+    cmd = ['isct_dice_coefficient', fname_input1, fname_input2]
 
     if '-2d-slices' in arguments:
-        cmd += ' -2d-slices ' + arguments['-2d-slices']
+        cmd += ['-2d-slices', arguments['-2d-slices']]
     if '-b' in arguments:
-        bounding_box = ' '.join(arguments['-b'])
-        cmd += ' -b ' + bounding_box
+        bounding_box = arguments['-b']
+        cmd += ['-b'] + bounding_box
     if '-bmax' in arguments and arguments['-bmax'] == '1':
-        cmd += ' -bmax'
+        cmd += ['-bmax']
     if '-bzmax' in arguments and arguments['-bzmax'] == '1':
-        cmd += ' -bzmax'
+        cmd += ['-bzmax']
     if '-o' in arguments:
         path_output, fname_output, ext = sct.extract_fname(arguments['-o'])
-        cmd += ' -o ' + fname_output + ext
+        cmd += ['-o', fname_output + ext]
 
     if '-r' in arguments:
         rm_tmp = bool(int(arguments['-r']))
@@ -148,6 +148,6 @@ if __name__ == "__main__":
 
     # remove tmp_dir
     if rm_tmp:
-        shutil.rmtree(tmp_dir)    
+        sct.rmtree(tmp_dir)
 
     sct.printv(output, verbose)

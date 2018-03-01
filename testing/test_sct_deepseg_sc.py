@@ -10,7 +10,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import sys, io, os, commands
+import sys, io, os
 
 import sct_utils as sct
 from msct_image import Image, compute_dice
