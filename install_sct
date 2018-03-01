@@ -449,6 +449,10 @@ else
             and verify your internet connection before reinstalling"
     exit $e_status
   fi
+
+  # Workaround for #1549
+  pip install https://github.com/pypa/pip/archive/master.zip
+
   if [ "$SCT_MINICONDA" == "3" ]; then
     pip install  -r ${SCT_SOURCE}/install/requirements/requirementsPip3-1.txt
     e_status=$?
