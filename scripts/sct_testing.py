@@ -383,7 +383,6 @@ def test_function(param_test, integrity=True):
     # open log file
     # Note: the statement below is not included in the if, because even if redirection does not occur, we want the file to be create otherwise write_to_log will fail
     param_test.fname_log = os.path.join(param_test.path_output, param_test.function_to_test + '.log')
-    stdout_log = io.open(param_test.fname_log, 'w')
     # redirect to log file
     if param_test.redirect_stdout:
         file_handler = sct.add_file_handler_to_logger(param_test.fname_log)

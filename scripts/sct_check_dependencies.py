@@ -50,6 +50,7 @@ def resolve_module(framework_name):
     """
     # Framework name : (module name, suppress stderr)
     modules_map = {
+        'futures': ('concurrent.futures', False),
         'scikit-image': ('skimage', False),
         'scikit-learn': ('sklearn', False),
         'pyqt': ('PyQt4', False),
@@ -198,7 +199,9 @@ def main():
     # loop across python packages -- PIP
     version_requirements_pip = get_version_requirements_pip()
     for i in version_requirements_pip:
+
         module_name, suppress_stderr = resolve_module(i)
+
         print_line('Check if ' + i + ' (' + version_requirements_pip.get(i) + ') is installed')
         try:
             module = module_import(module_name, suppress_stderr)
