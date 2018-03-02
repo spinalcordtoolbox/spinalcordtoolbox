@@ -13,9 +13,11 @@
 #########################################################################################
 
 import os
+import inspect
+import subprocess
+
 import wx
 import wx.lib.agw.aui as aui
-import subprocess
 
 
 class TabPanelGMSeg(wx.Panel):
@@ -34,8 +36,11 @@ class TabPanelGMSeg(wx.Panel):
         sizer_h = wx.BoxSizer(wx.HORIZONTAL)
 
         sizer.Add(button_gm, 0, wx.ALL, 5)
-        
-        png = wx.Image('neuropoly.png',
+
+
+        current_file = inspect.getfile(inspect.currentframe())
+        dir_path = os.path.dirname(os.path.realpath(current_file))
+        png = wx.Image(os.path.join(dir_path, 'neuropoly.png'),
                        wx.BITMAP_TYPE_ANY).ConvertToBitmap()
         self.img_logo = wx.StaticBitmap(self, -1, png, (10, 5),
                                         (png.GetWidth(), png.GetHeight()))
@@ -43,7 +48,6 @@ class TabPanelGMSeg(wx.Panel):
         sizer_h.Add(sizer)
 
         self.SetSizerAndFit(sizer_h)
-
 
     def onButtonGM(self, event):
         selected_overlay = displayCtx.getSelectedOverlay()
@@ -85,7 +89,9 @@ class TabPanelSCSeg(wx.Panel):
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer_h = wx.BoxSizer(wx.HORIZONTAL)
 
-        png = wx.Image('neuropoly.png',
+        current_file = inspect.getfile(inspect.currentframe())
+        dir_path = os.path.dirname(os.path.realpath(current_file))
+        png = wx.Image(os.path.join(dir_path, 'neuropoly.png'),
                        wx.BITMAP_TYPE_ANY).ConvertToBitmap()
         self.img_logo = wx.StaticBitmap(self, -1, png, (10, 5),
                                         (png.GetWidth(), png.GetHeight()))
@@ -96,7 +102,6 @@ class TabPanelSCSeg(wx.Panel):
         sizer_h.Add(sizer)
 
         self.SetSizerAndFit(sizer_h)
-
 
     def onButtonSC(self, event):
         selected_overlay = displayCtx.getSelectedOverlay()
