@@ -338,10 +338,7 @@ def run_function(function, folder_dataset, list_subj, list_args=[], nb_cpu=None,
     compute_time = None
     try:
         compute_time = time()
-        # async_results = pool.map(function_launcher, list_func_subj_args)
         count = 0
-
-        # future = pool.submit(function_launcher)
         all_results = []
 
         sct.log.info('Waiting for results, be patient')
