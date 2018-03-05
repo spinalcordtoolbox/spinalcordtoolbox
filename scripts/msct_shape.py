@@ -367,7 +367,8 @@ def compute_properties_along_centerline(fname_seg_image, property_list, fname_di
 
     # Removing temporary folder
     os.chdir(curdir)
-    shutil.rmtree(path_tmp, ignore_errors=True)
+    if remove_temp_files:
+        sct.rmtree(path_tmp)
 
     return property_list, properties
 

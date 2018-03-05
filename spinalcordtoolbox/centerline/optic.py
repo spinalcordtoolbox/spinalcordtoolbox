@@ -58,7 +58,7 @@ def centerline2roi(fname_image, folder_output='./', verbose=0):
     f.close()
 
     if os.path.abspath(folder_output) != os.getcwd():
-        shutil.copy(fname_output, folder_output)
+        sct.copy(fname_output, folder_output)
 
     return fname_output
 
@@ -138,7 +138,7 @@ def detect_centerline(image_fname, contrast_type,
         folder_output_from_temp = os.path.join(curdir, folder_output)
 
     sct.printv('Copy output to ' + folder_output, verbose=0)
-    shutil.copy(centerline_optic_filename, folder_output_from_temp)
+    sct.copy(centerline_optic_filename, folder_output_from_temp)
 
     if output_roi:
         fname_roi_centerline = centerline2roi(fname_image=centerline_optic_RPI_filename,
@@ -147,7 +147,7 @@ def detect_centerline(image_fname, contrast_type,
 
         # Note: the .roi file is defined in RPI orientation. To be used, it must be applied on the original image with
         # a RPI orientation. For this reason, this script also outputs the input image in RPI orientation
-        shutil.copy(reoriented_image_filename_nii, folder_output_from_temp)
+        sct.copy(reoriented_image_filename_nii, folder_output_from_temp)
 
     # return to initial folder
     temp_folder.chdir_undo()

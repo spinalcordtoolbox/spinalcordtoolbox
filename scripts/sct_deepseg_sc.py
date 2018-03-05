@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8
 #########################################################################################
 #
 # Function to segment the spinal cord using deep convolutional networks
@@ -11,14 +12,13 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+import os, sys
+
 import numpy as np
-import shutil
 from scipy.ndimage.measurements import center_of_mass, label
 from scipy.ndimage.morphology import binary_fill_holes
 from skimage.exposure import rescale_intensity
 
-import os
-import sys
 from spinalcordtoolbox.centerline import optic
 import sct_utils as sct
 from msct_image import Image
@@ -252,9 +252,9 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, qc_p
     sct.log.info("Loading models...")
     path_script = os.path.dirname(__file__)
     path_sct = os.path.dirname(path_script)
-    optic_models_fname = os.path.join(path_sct, 'data/optic_models', '{}_model'.format(contrast_type))
+    optic_models_fname = os.path.join(path_sct, 'data', 'optic_models', '{}_model'.format(contrast_type))
 
-    segmentation_model_fname = os.path.join(path_sct, 'data/deepseg_sc_models', '{}_seg_sc.h5'.format(contrast_type))
+    segmentation_model_fname = os.path.join(path_sct, 'data', 'deepseg_sc_models', '{}_seg_sc.h5'.format(contrast_type))
     seg_model = nn_architecture(height=crop_size, width=crop_size, depth=2 if contrast_type != 't2' else 3)
     seg_model.load_weights(segmentation_model_fname)
 
@@ -265,7 +265,6 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, qc_p
     tmp_folder_path = tmp_folder.get_path()
     fname_image_tmp = tmp_folder.copy_from(fname_image)
     tmp_folder.chdir()
-    print tmp_folder_path
 
     # orientation of the image, should be RPI
     sct.log.info("Reorient the image to RPI, if necessary...")
@@ -278,7 +277,7 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, qc_p
         im_orient.save()
     else:
         im_orient = im_2orient
-        shutil.copyfile(fname_image_tmp, fname_orient)
+        sct.copy(fname_image_tmp, fname_orient)
 
     # resampling RPI image
     sct.log.info("Resample the image to 0.5 mm isotropic resolution...")
@@ -356,7 +355,7 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, qc_p
 
     # binarize the resampled image to remove interpolation effects
     sct.log.info("Binarizing the segmentation to avoid interpolation effects...")
-    sct.run('sct_maths -i ' + fname_seg_RPI + ' -bin 0.75 -o ' + fname_seg_RPI, verbose=0)
+    sct.run(['sct_maths', '-i', fname_seg_RPI, '-bin', '0.75', '-o', fname_seg_RPI], verbose=0)
 
     # post processing step to z_regularized
     fill_z_holes(fname_in=fname_seg_RPI)
@@ -369,12 +368,12 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, qc_p
         im_orient.setFileName(fname_seg)
         im_orient.save()
     else:
-        shutil.copyfile(fname_seg_RPI, fname_seg)
+        sct.copy(fname_seg_RPI, fname_seg)
 
     tmp_folder.chdir_undo()
 
     # copy image from temporary folder into output folder
-    shutil.copyfile(tmp_folder_path + '/' + fname_seg, output_folder + '/' + fname_seg)
+    sct.copy(os.path.join(tmp_folder_path, fname_seg), output_folder)
 
     # remove temporary files
     if remove_temp_files:
@@ -400,7 +399,7 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, qc_p
         except:
             sct.log.warning('Issue when creating QC report.')
 
-    sct.display_viewer_syntax([fname_image, output_folder + '/' + fname_seg], colormaps=['gray', 'red'], opacities=['', '0.7'])
+    sct.display_viewer_syntax([fname_image, os.path.join(output_folder, fname_seg)], colormaps=['gray', 'red'], opacities=['', '0.7'])
 
 
 if __name__ == "__main__":

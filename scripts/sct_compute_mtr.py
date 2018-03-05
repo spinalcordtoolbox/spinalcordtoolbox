@@ -27,7 +27,7 @@ class Param:
         # self.register = 1
         self.verbose = 1
         self.file_out = 'mtr'
-        self.remove_tmp_files = 1
+        self.remove_temp_files = 1
 
 
 # main
@@ -39,7 +39,7 @@ def main(args=None):
     fname_mt1 = ''
     file_out = param.file_out
     # register = param.register
-    # remove_tmp_files = param.remove_tmp_files
+    # remove_temp_files = param.remove_temp_files
     # verbose = param.verbose
 
     # check user arguments
@@ -52,7 +52,7 @@ def main(args=None):
 
     fname_mt0 = arguments['-mt0']
     fname_mt1 = arguments['-mt1']
-    remove_tmp_files = int(arguments['-r'])
+    remove_temp_files = int(arguments['-r'])
     verbose = int(arguments['-v'])
 
     # Extract path/file/extension
@@ -94,9 +94,9 @@ def main(args=None):
     sct.generate_output_file(os.path.join(path_tmp, "mtr.nii"), os.path.join(path_out, file_out + ext_out))
 
     # Remove temporary files
-    if remove_tmp_files == 1:
+    if remove_temp_files == 1:
         sct.printv('\nRemove temporary files...')
-        sct.run('rm -rf ' + path_tmp)
+        sct.rmtree(path_tmp)
 
     sct.display_viewer_syntax([fname_mt0, fname_mt1, file_out])
 

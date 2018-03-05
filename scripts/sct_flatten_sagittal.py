@@ -20,7 +20,6 @@ import numpy
 
 import sct_utils as sct
 from msct_nurbs import NURBS
-from sct_utils import fsloutput
 from sct_image import get_orientation_3d, set_orientation
 from msct_image import Image
 from sct_image import split_data, concat_data
@@ -175,7 +174,18 @@ def main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, 
     file_anat_split_fit = ['tmp.anat_orient_fit_Z' + str(z).zfill(4) for z in range(0, nz, 1)]
     for iz in range(0, nz, 1):
         # forward cumulative transformation to data
-        sct.run(fsloutput + 'flirt -in ' + file_anat_split[iz] + ' -ref ' + file_anat_split[iz] + ' -applyxfm -init ' + file_mat_inv_cumul_fit[iz] + ' -out ' + file_anat_split_fit[iz] + ' -interp ' + interp)
+        cmd = ['flirt',
+         '-in', file_anat_split[iz],
+         '-ref', file_anat_split[iz],
+         '-applyxfm',
+         '-init', file_mat_inv_cumul_fit[iz],
+         '-out', file_anat_split_fit[iz],
+         '-interp', interp,
+        ]
+        env = dict()
+        env.update(os.environ)
+        env["FSLOUTPUTTYPE", "NIFTI"]
+        sct.run(cmd=cmd, env=env)
 
     # Merge into 4D volume
     sct.printv('\nMerge into 4D volume...')
