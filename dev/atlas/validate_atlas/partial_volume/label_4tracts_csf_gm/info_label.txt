@@ -1,8 +1,0 @@
-# PVE masks
-# ID, name, file
-0, CSF, mask_csf.nii.gz
-1, Gray Matter, mask_gm.nii.gz
-2, WM00, WMtract__00.nii.gz
-3, WM01, WMtract__01.nii.gz
-4, WM02, WMtract__02.nii.gz
-5, WM03, WMtract__03.nii.gz
