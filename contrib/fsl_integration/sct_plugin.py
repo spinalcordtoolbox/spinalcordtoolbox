@@ -37,10 +37,9 @@ class TabPanelGMSeg(wx.Panel):
 
         sizer.Add(button_gm, 0, wx.ALL, 5)
 
-
-        current_file = inspect.getfile(inspect.currentframe())
-        dir_path = os.path.dirname(os.path.realpath(current_file))
-        png = wx.Image(os.path.join(dir_path, 'neuropoly.png'),
+        logo_file = os.path.join(os.environ['SCT_DIR'],
+                                 'documentation/imgs/logo_sct.png')
+        png = wx.Image(logo_file,
                        wx.BITMAP_TYPE_ANY).ConvertToBitmap()
         self.img_logo = wx.StaticBitmap(self, -1, png, (10, 5),
                                         (png.GetWidth(), png.GetHeight()))
@@ -89,9 +88,9 @@ class TabPanelSCSeg(wx.Panel):
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer_h = wx.BoxSizer(wx.HORIZONTAL)
 
-        current_file = inspect.getfile(inspect.currentframe())
-        dir_path = os.path.dirname(os.path.realpath(current_file))
-        png = wx.Image(os.path.join(dir_path, 'neuropoly.png'),
+        logo_file = os.path.join(os.environ['SCT_DIR'],
+                                 'documentation/imgs/logo_sct.png')
+        png = wx.Image(logo_file,
                        wx.BITMAP_TYPE_ANY).ConvertToBitmap()
         self.img_logo = wx.StaticBitmap(self, -1, png, (10, 5),
                                         (png.GetWidth(), png.GetHeight()))
@@ -146,8 +145,8 @@ def run_main():
     panel_gm = TabPanelGMSeg(notebook)
     panel_sc = TabPanelSCSeg(notebook)
 
-    notebook.AddPage(panel_gm, "SCT / Gray Matter Segmentation", True)
-    notebook.AddPage(panel_sc, "SCT / Spinal Cord Segmentation", False)
+    notebook.AddPage(panel_gm, "sct_deepseg_gm", True)
+    notebook.AddPage(panel_sc, "sct_deepseg_sc", False)
 
     aui_manager.AddPane(notebook, 
                         aui.AuiPaneInfo().Name("notebook_content").
