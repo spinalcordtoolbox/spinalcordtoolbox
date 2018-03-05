@@ -1,4 +1,0 @@
-# White matter atlas
-# ID, name, file
-0, mask_wm, mask_wm.nii.gz
-0, mask_inv, mask_inv.nii.gz
