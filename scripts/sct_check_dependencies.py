@@ -223,20 +223,28 @@ def main():
             install_software = 1
 
     # CHECK DEPENDENT MODULES (installed by nibabel/dipy):
-    print_line('Check if numpy is installed')
+
+    # CHECK IF NUMPY IS INSTALLED
     try:
-        importlib.import_module('numpy')
+        numpy = importlib.import_module('numpy')
+        print_line('Check if numpy (' + numpy.version.version + ') is installed')
         print_ok()
     except ImportError:
+        print_line('Check if numpy is installed')
         print_fail()
         install_software = 1
-    print_line('Check if scipy is installed')
+
+    # CHECK IF SCIPY IS INSTALLED
     try:
-        importlib.import_module('scipy')
+        scipy = importlib.import_module('scipy')
+        print_line('Check if scipy (' + scipy.version.version + ') is installed')
         print_ok()
     except ImportError:
+        print_line('Check if scipy is installed')
         print_fail()
         install_software = 1
+
+
     print_line('Check if spinalcordtoolbox is installed')
     try:
         importlib.import_module('spinalcordtoolbox')
