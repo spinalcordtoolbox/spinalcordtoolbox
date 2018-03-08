@@ -13,69 +13,175 @@
 #########################################################################################
 
 import os
-import inspect
 import subprocess
+from threading import Thread
 
 import wx
 import wx.lib.agw.aui as aui
+import wx.html as html
 
 
-class TabPanelGMSeg(wx.Panel):
+aui_manager = frame.getAuiManager()
+
+
+def sct_call(command):
+    env = os.environ.copy()
+    del env["PYTHONHOME"]
+    del env["PYTHONPATH"]
+    p = subprocess.Popen([command], stdout=subprocess.PIPE,
+                         shell=True, env=env)
+    stdout, stderr = p.communicate()
+    return stdout, stderr
+
+
+class SCTCallThread(Thread):
+    def __init__(self, command):
+        Thread.__init__(self)
+        self.command = command
+
+    @staticmethod
+    def sct_call(command):
+        env = os.environ.copy()
+        del env["PYTHONHOME"]
+        del env["PYTHONPATH"]
+        p = subprocess.Popen([command], stdout=subprocess.PIPE,
+                             shell=True, env=env)
+        stdout, stderr = p.communicate()
+        return stdout, stderr
+
+    def run(self):
+        self.sct_call(self.command)
+        #time.sleep(5)
+
+
+class ProgressDialog(wx.Dialog):
     def __init__(self, parent):
-        wx.Panel.__init__(self, parent=parent, id=wx.ID_ANY)
+        wx.Dialog.__init__(self, parent, title="SCT / Processing")
+        self.SetSize((350, 80))
 
-        self.SetInitialSize((100, 100))
-        self.SetSize((100, 100))
+        save_ico = wx.ArtProvider.GetBitmap(wx.ART_INFORMATION,
+                                            wx.ART_TOOLBAR,
+                                            (16, 16))
+        img_logo = wx.StaticBitmap(self, -1, save_ico, wx.DefaultPosition,
+                                   (save_ico.GetWidth(), save_ico.GetHeight()))
 
-        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.lbldesc = wx.StaticText(self, id=wx.ID_ANY,
+                                     label="Please wait while the algorithm is running...")
+        sizer.Add(img_logo, 0, wx.ALL, 15)
+        sizer.Add(self.lbldesc, 0, wx.ALL, 15)
+
+        self.SetSizer(sizer)
+
+        self.Centre()
+        self.CenterOnParent()
+
+
+class SCTPanel(wx.Panel):
+    SCT_DIR_ENV = 'SCT_DIR'
+    SCT_LOGO_REL_PATH = 'documentation/imgs/logo_sct.png'
+
+    def __init__(self, parent, id_):
+        super(SCTPanel, self).__init__(parent=parent,
+                                       id=id_)
+        self.img_logo = self.get_logo()
+        self.html_desc = self.get_description()
+
+        self.sizer_logo_text = wx.BoxSizer(wx.HORIZONTAL)
+        self.sizer_logo_text.Add(self.img_logo, 0, wx.ALL, 5)
+        self.sizer_logo_text.Add(self.html_desc, 0, wx.ALL, 5)
+
+        self.sizer_h = wx.BoxSizer(wx.HORIZONTAL)
+        self.sizer_h.Add(self.sizer_logo_text)
+
+    def get_logo(self):
+        logo_file = os.path.join(os.environ[self.SCT_DIR_ENV],
+                                 self.SCT_LOGO_REL_PATH)
+        png = wx.Image(logo_file,
+                       wx.BITMAP_TYPE_ANY).ConvertToBitmap()
+        png.SetSize((png.GetWidth() // 6, png.GetHeight() // 6))
+        img_logo = wx.StaticBitmap(self, -1, png, wx.DefaultPosition,
+                                   (png.GetWidth(), png.GetHeight()))
+        return img_logo
+
+    def get_description(self):
+        txt_style = wx.VSCROLL | \
+            wx.HSCROLL | wx.TE_READONLY | \
+            wx.BORDER_SIMPLE
+        htmlw = html.HtmlWindow(self, wx.ID_ANY,
+                                size=(280, 180),
+                                style=txt_style)
+        htmlw.SetPage(self.description)
+        return htmlw
+
+    def call_sct_command(self, command):
+        disable_window = wx.WindowDisabler()
+        binfo = ProgressDialog(frame)
+        binfo.Show()
+
+        thr = SCTCallThread(command)
+        thr.start()
+
+        # No access to app.pending() from here
+        while True:
+            thr.join(0.1)
+            wx.Yield()
+            if not thr.isAlive():
+                break
+        thr.join()
+
+        binfo.Destroy()
+
+
+class TabPanelGMSeg(SCTPanel):
+
+    description = """This segmentation tool is based on Deep Learning and
+    dilated convolutions. For more information, please refer to the
+    article below.<br><br>
+    <b>Citation</b>:<br>
+    CS Perone, E Calabrese, J Cohen-Adad.
+    <i>Spinal cord gray matter segmentation using deep dilated convolutions
+    (2017)</i>. ArXiv: arxiv.org/abs/1710.01269
+    """
+
+    def __init__(self, parent):
+        super(TabPanelGMSeg, self).__init__(parent=parent,
+                                            id_=wx.ID_ANY)
         button_gm = wx.Button(self, id=wx.ID_ANY,
                               label="Gray Matter Segmentation")
         button_gm.Bind(wx.EVT_BUTTON, self.onButtonGM)
-
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer_h = wx.BoxSizer(wx.HORIZONTAL)
-
         sizer.Add(button_gm, 0, wx.ALL, 5)
-
-        logo_file = os.path.join(os.environ['SCT_DIR'],
-                                 'documentation/imgs/logo_sct.png')
-        png = wx.Image(logo_file,
-                       wx.BITMAP_TYPE_ANY).ConvertToBitmap()
-        self.img_logo = wx.StaticBitmap(self, -1, png, (10, 5),
-                                        (png.GetWidth(), png.GetHeight()))
-        sizer_h.Add(self.img_logo, 0, wx.ALL, 5)
-        sizer_h.Add(sizer)
-
-        self.SetSizerAndFit(sizer_h)
+        self.sizer_h.Add(sizer)
+        self.SetSizerAndFit(self.sizer_h)
 
     def onButtonGM(self, event):
         selected_overlay = displayCtx.getSelectedOverlay()
         filename_path = selected_overlay.dataSource
-        cmd_line = ["sct_deepseg_gm -i {} -o seg.nii.gz".format(filename_path)]
-        env = os.environ.copy()
-        del env["PYTHONHOME"]
-        del env["PYTHONPATH"]
-        p = subprocess.Popen(cmd_line, stdout=subprocess.PIPE,
-                             shell=True, env=env)
-        out, err = p.communicate()
+        cmd_line = "sct_deepseg_gm -i {} -o seg.nii.gz".format(filename_path)
+
+        self.call_sct_command(cmd_line)
 
         outfilename = os.path.join(os.getcwd(), 'seg.nii.gz')
         image = Image(outfilename)
         overlayList.append(image)
 
-        display = displayCtx.getDisplay(image)
         opts = displayCtx.getOpts(image)
         opts.cmap = 'red'
 
 
-class TabPanelSCSeg(wx.Panel):
+class TabPanelSCSeg(SCTPanel):
+
+    description = """This segmentation tool is based on Deep Learning and
+    a 3D U-Net. For more information, please refer to the
+    article below.<br><br>
+    <b>Citation</b>:<br>
+    (TODO: add Charley paper)
+    """
+
     def __init__(self, parent):
-        wx.Panel.__init__(self, parent=parent, id=wx.ID_ANY)
-
-        self.SetInitialSize((100, 100))
-        self.SetSize((100, 100))
-
-        sizer = wx.BoxSizer(wx.VERTICAL)
+        super(TabPanelSCSeg, self).__init__(parent=parent,
+                                            id_=wx.ID_ANY)
         button_gm = wx.Button(self, id=wx.ID_ANY, label="Spinal Cord Segmentation")
         button_gm.Bind(wx.EVT_BUTTON, self.onButtonSC)
 
@@ -86,21 +192,10 @@ class TabPanelSCSeg(wx.Panel):
                                          style=wx.RA_SPECIFY_ROWS)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer_h = wx.BoxSizer(wx.HORIZONTAL)
-
-        logo_file = os.path.join(os.environ['SCT_DIR'],
-                                 'documentation/imgs/logo_sct.png')
-        png = wx.Image(logo_file,
-                       wx.BITMAP_TYPE_ANY).ConvertToBitmap()
-        self.img_logo = wx.StaticBitmap(self, -1, png, (10, 5),
-                                        (png.GetWidth(), png.GetHeight()))
-
-        sizer_h.Add(self.img_logo, 0, wx.ALL, 5)
         sizer.Add(self.rbox_contrast, 0, wx.ALL, 5)
         sizer.Add(button_gm, 0, wx.ALL, 5)
-        sizer_h.Add(sizer)
-
-        self.SetSizerAndFit(sizer_h)
+        self.sizer_h.Add(sizer)
+        self.SetSizerAndFit(self.sizer_h)
 
     def onButtonSC(self, event):
         selected_overlay = displayCtx.getSelectedOverlay()
@@ -111,24 +206,18 @@ class TabPanelSCSeg(wx.Panel):
         fname, fext = base_name.split(os.extsep, 1)
         out_name = "{}_seg.{}".format(fname, fext)
 
-        cmd_line = ["sct_deepseg_sc -i {} -c {}".format(filename_path, contrast)]
-        env = os.environ.copy()
-        del env["PYTHONHOME"]
-        del env["PYTHONPATH"]
-        p = subprocess.Popen(cmd_line, stdout=subprocess.PIPE, shell=True, env=env)
-        out, err = p.communicate()
+        cmd_line = "sct_deepseg_sc -i {} -c {}".format(filename_path, contrast)
+        self.call_sct_command(cmd_line)
 
         outfilename = os.path.join(os.getcwd(), out_name)
         image = Image(outfilename)
         overlayList.append(image)
 
-        display = displayCtx.getDisplay(image)
         opts = displayCtx.getOpts(image)
         opts.cmap = 'red'
 
 
 def run_main():
-    aui_manager = frame.getAuiManager()
     window = aui_manager.GetManagedWindow()
 
     if 'SCT_DIR' not in os.environ:
@@ -155,4 +244,3 @@ def run_main():
 
 
 run_main()
-
