@@ -630,7 +630,17 @@ def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1, f
                 fname_changed_ori_list = [im_ch_ori.absolutepath for im_ch_ori in im_changed_ori_list]
                 im_out = multicomponent_merge(fname_changed_ori_list)
         elif set_data:
-            printv('Set orientation of the data only is not compatible with 4D data...', verbose, 'error')
+            # set orientation
+            printv('Change orientation of data...', verbose)
+            im_changed_ori_list = []
+            for im_s in im_split_list:
+                im_set = set_orientation(im_s, ori, True)
+                im_changed_ori_list.append(im_set)
+            printv('Merge file back...', verbose)
+            if dim == 4:
+                im_out = concat_data(im_changed_ori_list, 3)
+            elif dim == 5:
+                printv('Set data orientation on 5D data is not supported. Sorry.', verbose, 'error')
         else:
             im_out = None
 
