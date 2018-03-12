@@ -18,7 +18,7 @@
 # TODO: do not output inverse warp for ants
 # TODO: ants: explore optin  --float  for faster computation
 
-import sys, os
+import sys, os, glob
 import numpy as np
 import sct_utils as sct
 from msct_image import Image
@@ -68,7 +68,7 @@ def moco(param):
 
     # copy file_target to a temporary file
     sct.printv('\nCopy file_target to a temporary file...', verbose)
-    sct.run('cp ' + file_target + ext + ' target.nii')
+    sct.copy(file_target + ext, 'target.nii')
     file_target = 'target'
 
     # Split data along T dimension
@@ -101,9 +101,9 @@ def moco(param):
         # average registered volume with target image
         # N.B. use weighted averaging: (target * nb_it + moco) / (nb_it + 1)
         if param.iterative_averaging and indice_index < 10 and failed_transfo[it] == 0 and not param.todo == 'apply':
-            sct.run('sct_maths -i ' + file_target + ext + ' -mul ' + str(indice_index + 1) + ' -o ' + file_target + ext)
-            sct.run('sct_maths -i ' + file_target + ext + ' -add ' + file_data_splitT_moco_num[it] + ext + ' -o ' + file_target + ext)
-            sct.run('sct_maths -i ' + file_target + ext + ' -div ' + str(indice_index + 2) + ' -o ' + file_target + ext)
+            sct.run(["sct_maths", "-i", file_target + ext, "-mul", str(indice_index + 1), "-o", file_target + ext])
+            sct.run(["sct_maths", "-i", file_target + ext, "-add", file_data_splitT_moco_num[it] + ext, "-o", file_target + ext])
+            sct.run(["sct_maths", "-i", file_target + ext, "-div", str(indice_index + 2), "-o", file_target + ext])
 
     # Replace failed transformation with the closest good one
     sct.printv(('\nReplace failed transformations...'), verbose)
@@ -115,9 +115,14 @@ def moco(param):
             index_good = abs_dist.index(min(abs_dist))
             sct.printv('  transfo #' + str(fT[it]) + ' --> use transfo #' + str(gT[index_good]), verbose)
             # copy transformation
-            sct.run('cp ' + file_mat[gT[index_good]] + 'Warp.nii.gz' + ' ' + file_mat[fT[it]] + 'Warp.nii.gz')
+            sct.copy(file_mat[gT[index_good]] + 'Warp.nii.gz', file_mat[fT[it]] + 'Warp.nii.gz')
             # apply transformation
-            sct.run('sct_apply_transfo -i ' + file_data_splitT_num[fT[it]] + '.nii -d ' + file_target + '.nii -w ' + file_mat[fT[it]] + 'Warp.nii.gz' + ' -o ' + file_data_splitT_moco_num[fT[it]] + '.nii' + ' -x ' + param.interp, verbose)
+            sct.run(["sct_apply_transfo",
+             "-i", file_data_splitT_num[fT[it]] + ".nii",
+             "-d", file_target + ".nii",
+             "-w", file_mat[fT[it]] + 'Warp.nii.gz',
+             "-o", file_data_splitT_moco_num[fT[it]] + '.nii',
+             "-x", param.interp], verbose)
         else:
             # exit program if no transformation exists.
             sct.printv('\nERROR in ' + os.path.basename(__file__) + ': No good transformation exist. Exit program.\n', verbose, 'error')
@@ -139,9 +144,7 @@ def moco(param):
 
     # delete file target.nii (to avoid conflict if this function is run another time)
     sct.printv('\nRemove temporary file...', verbose)
-    # os.remove('target.nii')
-    sct.run('rm target.nii')
-
+    sct.rm('target.nii', verbose=verbose)
 
 #=======================================================================================================================
 # register:  registration of two volumes (or two images)
@@ -159,19 +162,26 @@ def register(param, file_src, file_dest, file_mat, file_out):
 
     # register file_src to file_dest
     if param.todo == 'estimate' or param.todo == 'estimate_and_apply':
-        cmd = 'isct_antsSliceRegularizedRegistration' \
-              ' -p ' + param.poly + \
-              ' --transform Translation[' + param.gradStep + ']' \
-              ' --metric ' + param.metric + '[' + file_dest + '.nii, ' + file_src + '.nii, 1, ' + metric_radius + ', Regular, ' + param.sampling + ']' \
-              ' --iterations 5' \
-              ' --shrinkFactors 1' \
-              ' --smoothingSigmas ' + param.smooth + \
-              ' --output [' + file_mat + ',' + file_out + '.nii]' \
-              + sct.get_interpolation('isct_antsSliceRegularizedRegistration', param.interp)
+        # TODO fixup isct_ants* parsers
+        cmd = ['isct_antsSliceRegularizedRegistration',
+         "-p", param.poly,
+         "--transform", "Translation[%s]" % param.gradStep,
+         "--metric", param.metric + '[' + file_dest + '.nii,' + file_src + '.nii, 1, ' + metric_radius + ',Regular,' + param.sampling + ']',
+         "--iterations", "5",
+         "--shrinkFactors", "1",
+         "--smoothingSigmas", param.smooth,
+         "--output", '[' + file_mat + ',' + file_out + '.nii]',
+        ] + sct.get_interpolation('isct_antsSliceRegularizedRegistration', param.interp)
         if not param.fname_mask == '':
-            cmd += ' -x ' + param.fname_mask
+            cmd += ['-x', param.fname_mask]
     if param.todo == 'apply':
-        cmd = 'sct_apply_transfo -i ' + file_src + '.nii -d ' + file_dest + '.nii -w ' + file_mat + 'Warp.nii.gz' + ' -o ' + file_out + '.nii' + ' -x ' + param.interp
+        cmd = ['sct_apply_transfo',
+         '-i', file_src + '.nii',
+         '-d', file_dest + '.nii',
+         '-w', file_mat + 'Warp.nii.gz',
+         '-o', file_out + '.nii',
+         '-x', param.interp,
+        ]
     status, output = sct.run(cmd, param.verbose)
 
     # check if output file exists
@@ -220,8 +230,9 @@ def spline(folder_mat, nt, nz, verbose, index_b0 = [], graph=0):
     old_mat = os.path.join(folder_mat, "old")
     if not os.path.exists(old_mat):
         os.makedirs(old_mat)
-    cmd = 'cp ' + os.path.join(folder_mat, '*.txt') + " " + old_mat
-    status, output = sct.run(cmd, verbose)
+    # TODO
+    for mat in glob.glob(os.path.join(folder_mat, '*.txt')):
+        sct.copy(mat, old_mat)
 
     sct.printv('\nloading matrices...', verbose)
     X = [[[] for i in range(nt)] for i in range(nz)]

@@ -200,6 +200,12 @@ while getopts ":dmhbpz" opt; do
   esac
 done
 
+
+if [ "x${SCT_VERBOSE_INSTALL}" == "x1" ]; then
+  set -x
+fi
+
+
 # Catch SCT version
 if [ -e "version.txt" ]; then
   SCT_VERSION=`cat version.txt`
@@ -221,6 +227,11 @@ if [ "x${SCT_INSTALL_TYPE}" == "x" ]; then
     SCT_INSTALL_TYPE="package"
   fi
 fi
+
+if [ "x${SCT_MINICONDA}" == "x" ]; then
+  SCT_MINICONDA=2
+fi
+
 
 # Fetch OS type
 if uname -a | grep -i  darwin > /dev/null 2>&1; then
@@ -324,10 +335,12 @@ else
 fi
 SCT_DIR=${INSTALL_DIR}
 
-# Clean old install setup in bin/
-echo -e "\nRemoving sct and isct softlink from ${SCT_DIR}/${BIN_DIR}"
-find ${SCT_DIR}/${BIN_DIR} -type l -name "sct_*" -exec rm {} \;
-find ${SCT_DIR}/${BIN_DIR} -type l -name "isct_*" -exec rm {} \;
+# Clean old install setup in bin/ if existing
+if [ -x ${SCT_DIR}/${BIN_DIR} ]; then
+  echo -e "\nRemoving sct and isct softlink from ${SCT_DIR}/${BIN_DIR}"
+  find ${SCT_DIR}/${BIN_DIR} -type l -name "sct_*" -exec rm {} \;
+  find ${SCT_DIR}/${BIN_DIR} -type l -name "isct_*" -exec rm {} \;
+fi
 
 # Copy files to destination directory
 if [ "${SCT_DIR}" != "${SCT_SOURCE}" ]; then
@@ -379,12 +392,27 @@ else
   cmd="rm -rf ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
   cmd="mkdir ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
   # downloading
-  if [ $OS == "linux" ]; then
-    download ${TMP_DIR}/miniconda.sh https://repo.continuum.io/miniconda/Miniconda2-4.1.11-Linux-x86_64.sh
-  elif [ $OS == "linux_centos6" ]; then
-    download ${TMP_DIR}/miniconda.sh https://repo.continuum.io/miniconda/Miniconda2-4.1.11-Linux-x86_64.sh
-  elif [ $OS == "osx" ]; then
-    download ${TMP_DIR}/miniconda.sh https://repo.continuum.io/miniconda/Miniconda2-4.1.11-MacOSX-x86_64.sh
+
+  if [ $SCT_MINICONDA == "2" ]; then
+    case $OS in
+      linux*)
+      download ${TMP_DIR}/miniconda.sh https://repo.continuum.io/miniconda/Miniconda2-4.1.11-Linux-x86_64.sh
+      ;;
+      osx)
+      download ${TMP_DIR}/miniconda.sh https://repo.continuum.io/miniconda/Miniconda2-4.1.11-MacOSX-x86_64.sh
+      ;;
+    esac
+  elif [ $SCT_MINICONDA == "3" ]; then
+    case $OS in
+      linux*)
+      download ${TMP_DIR}/miniconda.sh https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
+      ;;
+      osx)
+      download ${TMP_DIR}/miniconda.sh https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
+      ;;
+    esac
+  else
+      download ${TMP_DIR}/miniconda.sh "$SCT_MINICONDA"
   fi
 
   # run conda installer
@@ -402,8 +430,23 @@ else
 
   # Install Python dependencies
   echo -e "\nInstalling Python dependencies..."
-  conda install -c defaults --yes --file ${SCT_SOURCE}/install/requirements/requirementsConda.txt
-  e_status=$?
+
+  if [ "$SCT_MINICONDA" == "3" ]; then
+    echo "Working around dipy setup.py issue on py3k by installing numpy"
+    conda install -fy numpy
+  fi
+
+  if [ "$SCT_MINICONDA" == "3" ]; then
+    specs=$(< ${SCT_SOURCE}/install/requirements/requirementsConda.txt)
+    e_status=0
+    for spec in $specs; do
+      conda install -c defaults --yes "$spec" || e_status=1
+    done
+    e_status=0 # Temporary until everything in there has been fixed
+  else
+    conda install -c defaults --yes --file ${SCT_SOURCE}/install/requirements/requirementsConda.txt
+    e_status=$?
+  fi
   if [ ${e_status} != 0 ] ; then
     echo "conda install error with exit status $e_status. Check logs for more details
             and verify your internet connection before reinstalling"
@@ -416,8 +459,21 @@ else
   fi
 
 
-  pip install  -r ${SCT_SOURCE}/install/requirements/requirementsPip.txt
-  e_status=$?
+  # Workaround for #1549 (install pip 10 pre-release if not already here)
+  if python -c 'import pip; int(pip.__version__.split(".")[0]) >= 10' | grep -q False; then
+    echo "Retrieving a recent pip to make installation faster"
+    pip install https://github.com/pypa/pip/archive/72f219c410b0ce25f7da44be6172c1e3766bbe6b.zip
+  fi
+
+  if [ "$SCT_MINICONDA" == "3" ]; then
+    pip install  -r ${SCT_SOURCE}/install/requirements/requirementsPip3-1.txt
+    e_status=$?
+    pip install  -r ${SCT_SOURCE}/install/requirements/requirementsPip3-2.txt
+    e_status=$?
+  else
+    pip install  -r ${SCT_SOURCE}/install/requirements/requirementsPip.txt
+    e_status=$?
+  fi
   if [ ${e_status} != 0 ] ; then
     echo "pip install error with exit status $e_status. Check logs for more details
             and verify your internet connection before reinstalling"

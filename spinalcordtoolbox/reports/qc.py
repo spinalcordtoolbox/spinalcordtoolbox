@@ -115,7 +115,7 @@ class QcImage(object):
                 if index in self._labels_regions.values():
                     color = self._labels_color[index]
                     x, y = ndimage.measurements.center_of_mass(np.where(data == val, data, 0))
-                    label = self._labels_regions.keys()[list(self._labels_regions.values()).index(index)]
+                    label = list(self._labels_regions.keys())[list(self._labels_regions.values()).index(index)]
                     ax.text(y, x, label, color='black', weight='heavy', clip_on=True)
                     ax.text(y, x, label, color=color, clip_on=True)
 

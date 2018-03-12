@@ -100,9 +100,8 @@ class DetectPMJ:
         self.dection_map_pmj = sct.extract_fname(self.fname_im)[1] + '_map_pmj'  # file resulting from the detection
 
         # path to the pmj detector
-        self.pmj_model = os.path.join(sct.run('echo $SCT_DIR')[1],
-                                            'data/pmj_models',
-                                            '{}_model'.format(self.contrast))
+        path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
+        self.pmj_model = os.path.join(path_sct, 'data', 'pmj_models', '{}_model'.format(self.contrast))
 
         self.threshold = -0.75 if self.contrast == 't1' else 0.8  # detection map threshold, depends on the contrast
 
@@ -212,8 +211,8 @@ class DetectPMJ:
         """Run the classifier on self.slice2D_im."""
         sct.printv('\nRun PMJ detector', self.verbose, 'normal')
         os.environ["FSLOUTPUTTYPE"] = "NIFTI_PAIR"
-        cmd_pmj = 'isct_spine_detect "%s" "%s" "%s"' % \
-                    (self.pmj_model, self.slice2D_im.split('.nii')[0], self.dection_map_pmj)
+        cmd_pmj = ['isct_spine_detect', self.pmj_model, self.slice2D_im.split('.nii')[0], self.dection_map_pmj]
+        print(cmd_pmj)
         sct.run(cmd_pmj, verbose=0)
 
         img = nib.load(self.dection_map_pmj + '_svm.hdr')  # convert .img and .hdr files to .nii
@@ -246,7 +245,7 @@ class DetectPMJ:
             self.rl_coord = int(img.dim[2] / 2)  # Right_left coordinate
             del img
 
-        sct.run('sct_crop_image -i ' + self.fname_im + ' -start ' + str(self.rl_coord) + ' -end ' + str(self.rl_coord) + ' -dim 2 -o ' + self.slice2D_im)
+        sct.run(['sct_crop_image', '-i', self.fname_im, '-start', str(self.rl_coord), '-end', str(self.rl_coord), '-dim', '2', '-o', self.slice2D_im])
 
     def orient2pir(self):
         """Orient input data to PIR orientation."""
@@ -334,7 +333,7 @@ def main(args=None):
 
     # Remove tmp_dir
     if rm_tmp:
-        shutil.rmtree(tmp_dir)
+        sct.rmtree(tmp_dir)
 
     # View results
     if fname_out is not None:

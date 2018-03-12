@@ -18,13 +18,36 @@ cache:
 matrix:
   include:
     - os: linux
-      python: 2.7  # these are just to make travis's UI a bit prettier
+      python: 2.7 # Just to make travis's UI a bit prettier
+      env: SCT_MINICONDA=2 SCT_VERBOSE_INSTALL=1
+    - os: linux
+      python: 2.7
+      env: SCT_MINICONDA=2
+    - os: linux
+      python: 2.7
+      env: SCT_MINICONDA=3
     - os: osx
       language: generic
+      env: SCT_MINICONDA=2
+    - os: osx
+      language: generic
+      env: SCT_MINICONDA=2 SCT_VERBOSE_INSTALL=1
+    - os: osx
+      language: generic
+      env: SCT_MINICONDA=3
+  allow_failures:
+    - os: linux
+      python: 2.7
+      env: SCT_MINICONDA=3
+    - os: osx
+      language: generic
+      env: SCT_MINICONDA=3
 
 before_install:
   - echo "HOME="
   - echo $HOME
+  - sudo apt-get update -qq; sudo apt-get install -qq libopenmpi-dev; echo
+
 
 install:
 # update tools
@@ -35,8 +58,10 @@ install:
   - echo $PATH
 
 script:
-#  - sct_check_dependencies   # test dependencies
-  - sct_testing -d 1  # test functions & integrity
+# test dependencies
+#  - sct_check_dependencies
+# test functions & integrity
+  - sct_testing -d 1
 #  - python create_package.py -s ${TRAVIS_OS_NAME}  # test package creation
 #  - cd ../spinalcordtoolbox_v*
 #  - yes | ./install_sct  # test installation of package

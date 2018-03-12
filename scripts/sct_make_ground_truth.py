@@ -244,12 +244,12 @@ def set_temporary_files():
 
 def copy_files_to_temporary_files(verbose,fname_data,path_tmp,ftmp_seg,ftmp_data,fname_seg,fname_landmarks,ftmp_label,fname_template,ftmp_template,fname_template_seg,ftmp_template_seg):
     sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
-    sct.run('sct_convert -i '+fname_data+' -o ' + os.path.join(path_tmp, ftmp_data))
-    sct.run('sct_convert -i '+fname_seg+' -o '+ os.path.join(path_tmp, ftmp_seg))
-    sct.run('sct_convert -i '+fname_landmarks+' -o '+ os.path.join(path_tmp, ftmp_label))
-    sct.run('sct_convert -i '+fname_template+' -o '+ os.path.join(path_tmp, ftmp_template))
-    sct.run('sct_convert -i '+fname_template_seg+' -o '+ os.path.join(path_tmp, ftmp_template_seg))
-    # sct.run('sct_convert -i '+fname_template_label+' -o '+ os.path.join(path_tmp, ftmp_template_label))
+    sct.run(['sct_convert', '-i', fname_data, '-o', os.path.join(path_tmp, ftmp_data)])
+    sct.run(['sct_convert', '-i', fname_seg, '-o', os.path.join(path_tmp, ftmp_seg)])
+    sct.run(['sct_convert', '-i', fname_landmarks, '-o', os.path.join(path_tmp, ftmp_label)])
+    sct.run(['sct_convert', '-i', fname_template, '-o', os.path.join(path_tmp, ftmp_template)])
+    sct.run(['sct_convert', '-i', fname_template_seg, '-o', os.path.join(path_tmp, ftmp_template_seg)])
+    # sct.run(['sct_convert', '-i', fname_template_label, '-o', os.path.join(path_tmp, ftmp_template_label)])
 
 def set_viewer_parameters(viewer,nb_slices_to_mean):
     viewer.number_of_slices = 1
@@ -278,9 +278,9 @@ def make_labels_image_from_list_points(mask_points,reoriented_image_filename,ima
     if check_mask_point_not_empty(mask_points):
         import sct_image
         # create the mask containing either the three-points or centerline mask for initialization
-        sct.run("sct_label_utils -i " + reoriented_image_filename + " -create " + mask_points ,verbose=False)
-        sct.run('sct_image -i ' + 'labels.nii.gz'+ ' -o ' + 'labels_ground_truth.nii.gz' + ' -setorient ' + image_input_orientation + ' -v 0',verbose=False)
-        os.remove('labels.nii.gz')
+        sct.run(["sct_label_utils", "-i", reoriented_image_filename, "-create", mask_points], verbose=False)
+        sct.run(['sct_image', '-i', 'labels.nii.gz', '-o', 'labels_ground_truth.nii.gz', ' -setorient', image_input_orientation, '-v', '0'],verbose=False)
+        sct.rm('labels.nii.gz')
 
 def use_viewer_to_define_labels(fname_data,first_label,nb_of_slices_to_mean):
     from sct_viewer import ClickViewerGroundTruth
@@ -292,10 +292,8 @@ def use_viewer_to_define_labels(fname_data,first_label,nb_of_slices_to_mean):
     image_input_orientation = sct_image.orientation(image_input, get=True, verbose=False)
     reoriented_image_filename = 'reoriented_image_source.nii.gz'
     path_tmp_viewer = sct.tmp_create(verbose=False)
-    cmd_image = 'sct_image -i "%s" -o "%s" -setorient SAL -v 0' % (
-    fname_data, reoriented_image_filename)
+    cmd_image = ['sct_image', '-i', fname_data, '-o', reoriented_image_filename, '-setorient', 'SAL', '-v', '0']
     sct.run(cmd_image, verbose=False)
-
 
     im_input_SAL=prepare_input_image_for_viewer(fname_data)
     viewer = ClickViewerGroundTruth(im_input_SAL, first_label,orientation_subplot=['sag', 'ax'])
@@ -363,7 +361,7 @@ def main():
 
     ''' Generate labels from template vertebral labeling'''
     sct.printv('\nGenerate labels from template vertebral labeling', verbose)
-    sct.run('sct_label_utils -i '+fname_template_vertebral_labeling+' -vert-body 0 -o '+ftmp_template_label)
+    sct.run(['sct_label_utils', '-i', fname_template_vertebral_labeling, '-vert-body', '0', '-o', ftmp_template_label])
 
     ''' Check if provided labels are available in the template'''
     sct.printv('\nCheck if provided labels are available in the template', verbose)
@@ -376,7 +374,7 @@ def main():
 
     ''' Binarize segmentation (in case it has values below 0 caused by manual editing)'''
     sct.printv('\nBinarize segmentation', verbose)
-    sct.run('sct_maths -i seg.nii.gz -bin 0.5 -o seg.nii.gz')
+    sct.run(['sct_maths', '-i', 'seg.nii.gz', '-bin', '0.5', '-o', 'seg.nii.gz'])
 
     # smooth segmentation (jcohenadad, issue #613)
     # sct.printv('\nSmooth segmentation...', verbose)
@@ -390,9 +388,9 @@ def main():
 
         # resample data to 1mm isotropic
         sct.printv('\nResample data to 1mm isotropic...', verbose)
-        sct.run('sct_resample -i '+ftmp_data+' -mm 1.0x1.0x1.0 -x linear -o '+add_suffix(ftmp_data, '_1mm'))
+        sct.run(['sct_resample', '-i', ftmp_data, '-mm', '1.0x1.0x1.0', '-x', 'linear', '-o', add_suffix(ftmp_data, '_1mm')])
         ftmp_data = add_suffix(ftmp_data, '_1mm')
-        sct.run('sct_resample -i '+ftmp_seg+' -mm 1.0x1.0x1.0 -x linear -o '+add_suffix(ftmp_seg, '_1mm'))
+        sct.run(['sct_resample', '-i', ftmp_seg, '-mm', '1.0x1.0x1.0', '-x', 'linear', '-o', add_suffix(ftmp_seg, '_1mm')])
         ftmp_seg = add_suffix(ftmp_seg, '_1mm')
         # N.B. resampling of labels is more complicated, because they are single-point labels, therefore resampling with neighrest neighbour can make them disappear. Therefore a more clever approach is required.
         resample_labels(ftmp_label, ftmp_data, add_suffix(ftmp_label, '_1mm'))
@@ -400,17 +398,17 @@ def main():
 
         # Change orientation of input images to RPI
         sct.printv('\nChange orientation of input images to RPI...', verbose)
-        sct.run('sct_image -i '+ftmp_data+' -setorient RPI -o '+add_suffix(ftmp_data, '_rpi'))
+        sct.run(['sct_image', '-i', ftmp_data, '-setorient', 'RPI', '-o', add_suffix(ftmp_data, '_rpi')])
         ftmp_data = add_suffix(ftmp_data, '_rpi')
-        sct.run('sct_image -i '+ftmp_seg+' -setorient RPI -o '+add_suffix(ftmp_seg, '_rpi'))
+        sct.run(['sct_image', '-i', ftmp_seg, '-setorient', 'RPI', '-o', add_suffix(ftmp_seg, '_rpi')])
         ftmp_seg = add_suffix(ftmp_seg, '_rpi')
-        sct.run('sct_image -i '+ftmp_label+' -setorient RPI -o '+add_suffix(ftmp_label, '_rpi'))
+        sct.run(['sct_image', '-i', ftmp_label, '-setorient', 'RPI', '-o', add_suffix(ftmp_label, '_rpi')])
         ftmp_label = add_suffix(ftmp_label, '_rpi')
 
         # get landmarks in native space
         # crop segmentation
         # output: segmentation_rpi_crop.nii.gz
-        status_crop, output_crop = sct.run('sct_crop_image -i '+ftmp_seg+' -o '+add_suffix(ftmp_seg, '_crop')+' -dim 2 -bzmax', verbose)
+        status_crop, output_crop = sct.run(['sct_crop_image', '-i', ftmp_seg, '-o', add_suffix(ftmp_seg, '_crop'), '-dim', '2', '-bzmax'], verbose)
         ftmp_seg = add_suffix(ftmp_seg, '_crop')
         cropping_slices = output_crop.split('Dimension 2: ')[1].split('\n')[0].split(' ')
 
@@ -419,32 +417,32 @@ def main():
         # check if warp_curve2straight and warp_straight2curve already exist (i.e. no need to do it another time)
         if os.path.isfile(os.path.join(curdir, "warp_curve2straight.nii.gz")) and os.path.isfile(os.path.join(curdir, "warp_straight2curve.nii.gz")) and os.path.isfile(os.path.join(curdir, "straight_ref.nii.gz")):
             # if they exist, copy them into current folder
-            sct.printv('WARNING: Straightening was already run previously. Copying warping fields...', verbose, 'warning')
+            sct.printv('WARNING: It looks like straightening was already performed previously. Copying warping fields...', verbose, 'warning')
             sct.copy(os.path.join(curdir, "warp_curve2straight.nii.gz"), 'warp_curve2straight.nii.gz')
             sct.copy(os.path.join(curdir, "warp_straight2curve.nii.gz"), 'warp_straight2curve.nii.gz')
             sct.copy(os.path.join(curdir, "straight_ref.nii.gz"), 'straight_ref.nii.gz')
             # apply straightening
-            sct.run('sct_apply_transfo -i '+ftmp_seg+' -w warp_curve2straight.nii.gz -d straight_ref.nii.gz -o '+add_suffix(ftmp_seg, '_straight'))
+            sct.run(['sct_apply_transfo', '-i', ftmp_seg, '-w', 'warp_curve2straight.nii.gz', '-d', 'straight_ref.nii.gz', '-o', add_suffix(ftmp_seg, '_straight')])
         else:
-            sct.run('sct_straighten_spinalcord -i '+ftmp_seg+' -s '+ftmp_seg+' -o '+add_suffix(ftmp_seg, '_straight')+' -qc 0 -r 0 -v '+str(verbose), verbose)
+            sct.run(['sct_straighten_spinalcord', '-i', ftmp_seg, '-s', ftmp_seg, '-o', add_suffix(ftmp_seg, '_straight'), '-qc', '0', '-r', str(remove_temp_files), '-v', str(verbose)], verbose)
         # N.B. DO NOT UPDATE VARIABLE ftmp_seg BECAUSE TEMPORARY USED LATER
         # re-define warping field using non-cropped space (to avoid issue #367)
-        sct.run('sct_concat_transfo -w warp_straight2curve.nii.gz -d '+ftmp_data+' -o warp_straight2curve.nii.gz')
+        sct.run(['sct_concat_transfo', '-w', 'warp_straight2curve.nii.gz', '-d', ftmp_data, '-o', 'warp_straight2curve.nii.gz'])
 
         # Label preparation:
         # --------------------------------------------------------------------------------
         # Remove unused label on template. Keep only label present in the input label image
         sct.printv('\nRemove unused label on template. Keep only label present in the input label image...', verbose)
-        sct.run('sct_label_utils -i '+ftmp_template_label+' -o '+ftmp_template_label+' -remove '+ftmp_label)
+        sct.run(['sct_label_utils', '-i', ftmp_template_label, '-o', ftmp_template_label, '-remove', ftmp_label])
 
         # Dilating the input label so they can be straighten without losing them
         sct.printv('\nDilating input labels using 3vox ball radius')
-        sct.run('sct_maths -i '+ftmp_label+' -o '+add_suffix(ftmp_label, '_dilate')+' -dilate 3')
+        sct.run(['sct_maths', '-i', ftmp_label, '-o', add_suffix(ftmp_label, '_dilate'), '-dilate', '3'])
         ftmp_label = add_suffix(ftmp_label, '_dilate')
 
         # Apply straightening to labels
         sct.printv('\nApply straightening to labels...', verbose)
-        sct.run('sct_apply_transfo -i '+ftmp_label+' -o '+add_suffix(ftmp_label, '_straight')+' -d '+add_suffix(ftmp_seg, '_straight')+' -w warp_curve2straight.nii.gz -x nn')
+        sct.run(['sct_apply_transfo', '-i', ftmp_label, '-o', add_suffix(ftmp_label, '_straight'), '-d', add_suffix(ftmp_seg, '_straight'), '-w', 'warp_curve2straight.nii.gz', '-x', 'nn'])
         ftmp_label = add_suffix(ftmp_label, '_straight')
 
         # Compute rigid transformation straight landmarks --> template landmarks
@@ -457,13 +455,13 @@ def main():
 
         # Concatenate transformations: curve --> straight --> affine
         sct.printv('\nConcatenate transformations: curve --> straight --> affine...', verbose)
-        sct.run('sct_concat_transfo -w warp_curve2straight.nii.gz,straight2templateAffine.txt -d template.nii -o warp_curve2straightAffine.nii.gz')
+        sct.run(['sct_concat_transfo', '-w', 'warp_curve2straight.nii.gz,straight2templateAffine.txt', '-d', 'template.nii', '-o', 'warp_curve2straightAffine.nii.gz'])
 
         # Apply transformation
         sct.printv('\nApply transformation...', verbose)
-        sct.run('sct_apply_transfo -i '+ftmp_data+' -o '+add_suffix(ftmp_data, '_straightAffine')+' -d '+ftmp_template+' -w warp_curve2straightAffine.nii.gz')
+        sct.run(['sct_apply_transfo', '-i', ftmp_data, '-o', add_suffix(ftmp_data, '_straightAffine'), '-d', ftmp_template, '-w', 'warp_curve2straightAffine.nii.gz'])
         ftmp_data = add_suffix(ftmp_data, '_straightAffine')
-        sct.run('sct_apply_transfo -i '+ftmp_seg+' -o '+add_suffix(ftmp_seg, '_straightAffine')+' -d '+ftmp_template+' -w warp_curve2straightAffine.nii.gz -x linear')
+        sct.run(['sct_apply_transfo', '-i', ftmp_seg, '-o', add_suffix(ftmp_seg, '_straightAffine'), '-d', ftmp_template, '-w', 'warp_curve2straightAffine.nii.gz', '-x', 'linear'])
         ftmp_seg = add_suffix(ftmp_seg, '_straightAffine')
 
         """
@@ -479,7 +477,7 @@ def main():
 
         # binarize
         sct.printv('\nBinarize segmentation...', verbose)
-        sct.run('sct_maths -i '+ftmp_seg+' -bin 0.5 -o '+add_suffix(ftmp_seg, '_bin'))
+        sct.run(['sct_maths', '-i', ftmp_seg, '-bin', '0.5', '-o', add_suffix(ftmp_seg, '_bin')])
         ftmp_seg = add_suffix(ftmp_seg, '_bin')
 
         # find min-max of anat2template (for subsequent cropping)
@@ -487,24 +485,24 @@ def main():
 
         # crop template in z-direction (for faster processing)
         sct.printv('\nCrop data in template space (for faster processing)...', verbose)
-        sct.run('sct_crop_image -i '+ftmp_template+' -o '+add_suffix(ftmp_template, '_crop')+' -dim 2 -start '+str(zmin_template)+' -end '+str(zmax_template))
+        sct.run(['sct_crop_image', '-i', ftmp_template, '-o', add_suffix(ftmp_template, '_crop'), '-dim', '2', '-start', str(zmin_template), '-end', str(zmax_template)])
         ftmp_template = add_suffix(ftmp_template, '_crop')
-        sct.run('sct_crop_image -i '+ftmp_template_seg+' -o '+add_suffix(ftmp_template_seg, '_crop')+' -dim 2 -start '+str(zmin_template)+' -end '+str(zmax_template))
+        sct.run(['sct_crop_image', '-i', ftmp_template_seg, '-o', add_suffix(ftmp_template_seg, '_crop'), '-dim', '2', '-start', str(zmin_template), '-end', str(zmax_template)])
         ftmp_template_seg = add_suffix(ftmp_template_seg, '_crop')
-        sct.run('sct_crop_image -i '+ftmp_data+' -o '+add_suffix(ftmp_data, '_crop')+' -dim 2 -start '+str(zmin_template)+' -end '+str(zmax_template))
+        sct.run(['sct_crop_image', '-i', ftmp_data, '-o', add_suffix(ftmp_data, '_crop'), '-dim', '2', '-start', str(zmin_template), '-end', str(zmax_template)])
         ftmp_data = add_suffix(ftmp_data, '_crop')
-        sct.run('sct_crop_image -i '+ftmp_seg+' -o '+add_suffix(ftmp_seg, '_crop')+' -dim 2 -start '+str(zmin_template)+' -end '+str(zmax_template))
+        sct.run(['sct_crop_image', '-i', ftmp_seg, '-o', add_suffix(ftmp_seg, '_crop'), '-dim', '2', '-start', str(zmin_template), '-end', str(zmax_template)])
         ftmp_seg = add_suffix(ftmp_seg, '_crop')
 
         # sub-sample in z-direction
         sct.printv('\nSub-sample in z-direction (for faster processing)...', verbose)
-        sct.run('sct_resample -i '+ftmp_template+' -o '+add_suffix(ftmp_template, '_sub')+' -f 1x1x'+zsubsample, verbose)
+        sct.run(['sct_resample', '-i', ftmp_template, '-o', add_suffix(ftmp_template, '_sub'), '-f', '1x1x'+zsubsample], verbose)
         ftmp_template = add_suffix(ftmp_template, '_sub')
-        sct.run('sct_resample -i '+ftmp_template_seg+' -o '+add_suffix(ftmp_template_seg, '_sub')+' -f 1x1x'+zsubsample, verbose)
+        sct.run(['sct_resample', '-i', ftmp_template_seg, '-o', add_suffix(ftmp_template_seg, '_sub'), '-f', '1x1x'+zsubsample], verbose)
         ftmp_template_seg = add_suffix(ftmp_template_seg, '_sub')
-        sct.run('sct_resample -i '+ftmp_data+' -o '+add_suffix(ftmp_data, '_sub')+' -f 1x1x'+zsubsample, verbose)
+        sct.run(['sct_resample', '-i', ftmp_data, '-o', add_suffix(ftmp_data, '_sub'), '-f', '1x1x'+zsubsample], verbose)
         ftmp_data = add_suffix(ftmp_data, '_sub')
-        sct.run('sct_resample -i '+ftmp_seg+' -o '+add_suffix(ftmp_seg, '_sub')+' -f 1x1x'+zsubsample, verbose)
+        sct.run(['sct_resample', '-i', ftmp_seg, '-o', add_suffix(ftmp_seg, '_sub'); '-f', '1x1x'+zsubsample], verbose)
         ftmp_seg = add_suffix(ftmp_seg, '_sub')
 
         # Registration straight spinal cord to template
@@ -530,7 +528,7 @@ def main():
             if i_step > 1:
                 # sct.run('sct_apply_transfo -i '+src+' -d '+dest+' -w '+','.join(warp_forward)+' -o '+sct.add_suffix(src, '_reg')+' -x '+interp_step, verbose)
                 # apply transformation from previous step, to use as new src for registration
-                sct.run('sct_apply_transfo -i '+src+' -d '+dest+' -w '+','.join(warp_forward)+' -o '+add_suffix(src, '_regStep'+str(i_step-1))+' -x '+interp_step, verbose)
+                sct.run(['sct_apply_transfo', '-i', src, '-d', dest, '-w', ','.join(warp_forward), '-o', add_suffix(src, '_regStep'+str(i_step-1)), '-x', interp_step], verbose)
                 src = add_suffix(src, '_regStep'+str(i_step-1))
             # register src --> dest
             # TODO: display param for debugging
@@ -540,27 +538,27 @@ def main():
 
         # Concatenate transformations:
         sct.printv('\nConcatenate transformations: anat --> template...', verbose)
-        sct.run('sct_concat_transfo -w warp_curve2straightAffine.nii.gz,'+','.join(warp_forward)+' -d template.nii -o warp_anat2template.nii.gz', verbose)
+        sct.run(['sct_concat_transfo', '-w', 'warp_curve2straightAffine.nii.gz,'+','.join(warp_forward), '-d', 'template.nii', '-o', 'warp_anat2template.nii.gz'], verbose)
         # sct.run('sct_concat_transfo -w warp_curve2straight.nii.gz,straight2templateAffine.txt,'+','.join(warp_forward)+' -d template.nii -o warp_anat2template.nii.gz', verbose)
         sct.printv('\nConcatenate transformations: template --> anat...', verbose)
         warp_inverse.reverse()
-        sct.run('sct_concat_transfo -w '+','.join(warp_inverse)+',-straight2templateAffine.txt,warp_straight2curve.nii.gz -d data.nii -o warp_template2anat.nii.gz', verbose)
+        sct.run(['sct_concat_transfo', '-w', ','.join(warp_inverse) + ',-straight2templateAffine.txt,warp_straight2curve.nii.gz', '-d', 'data.nii', '-o', 'warp_template2anat.nii.gz'], verbose)
 
     # register template->subject
     elif ref == 'subject':
 
         # Change orientation of input images to RPI
         sct.printv('\nChange orientation of input images to RPI...', verbose)
-        sct.run('sct_image -i ' + ftmp_data + ' -setorient RPI -o ' + add_suffix(ftmp_data, '_rpi'))
+        sct.run(['sct_image', '-i', ftmp_data, '-setorient', 'RPI', '-o', add_suffix(ftmp_data, '_rpi')])
         ftmp_data = add_suffix(ftmp_data, '_rpi')
-        sct.run('sct_image -i ' + ftmp_seg + ' -setorient RPI -o ' + add_suffix(ftmp_seg, '_rpi'))
+        sct.run(['sct_image', '-i', ftmp_seg, '-setorient', 'RPI', '-o', add_suffix(ftmp_seg, '_rpi')])
         ftmp_seg = add_suffix(ftmp_seg, '_rpi')
-        sct.run('sct_image -i ' + ftmp_label + ' -setorient RPI -o ' + add_suffix(ftmp_label, '_rpi'))
+        sct.run(['sct_image', '-i', ftmp_label, '-setorient', 'RPI', '-o', add_suffix(ftmp_label, '_rpi')])
         ftmp_label = add_suffix(ftmp_label, '_rpi')
 
         # Remove unused label on template. Keep only label present in the input label image
         sct.printv('\nRemove unused label on template. Keep only label present in the input label image...', verbose)
-        sct.run('sct_label_utils -i '+ftmp_template_label+' -o '+ftmp_template_label+' -remove '+ftmp_label)
+        sct.run(['sct_label_utils', '-i', ftmp_template_label, '-o', ftmp_template_label, '-remove', ftmp_label)
 
         # Add one label because at least 3 orthogonal labels are required to estimate an affine transformation. This new label is added at the level of the upper most label (lowest value), at 1cm to the right.
         for i_file in [ftmp_label, ftmp_template_label]:
@@ -605,7 +603,7 @@ def main():
             else:
                 sct.printv('ERROR: Wrong image type.', 1, 'error')
             # apply transformation from previous step, to use as new src for registration
-            sct.run('sct_apply_transfo -i '+src+' -d '+dest+' -w '+','.join(warp_forward)+' -o '+add_suffix(src, '_regStep'+str(i_step-1))+' -x '+interp_step, verbose)
+            sct.run(['sct_apply_transfo', '-i', src, '-d', dest, '-w', ','.join(warp_forward), '-o', add_suffix(src, '_regStep'+str(i_step-1)), '-x', interp_step], verbose)
             src = add_suffix(src, '_regStep'+str(i_step-1))
             # register src --> dest
             # TODO: display param for debugging
@@ -615,13 +613,13 @@ def main():
 
         # Concatenate transformations:
         sct.printv('\nConcatenate transformations: template --> subject...', verbose)
-        sct.run('sct_concat_transfo -w '+','.join(warp_forward)+' -d data.nii -o warp_template2anat.nii.gz', verbose)
+        sct.run(['sct_concat_transfo', '-w', ','.join(warp_forward), '-d', 'data.nii', '-o', 'warp_template2anat.nii.gz'], verbose)
         sct.printv('\nConcatenate transformations: subject --> template...', verbose)
-        sct.run('sct_concat_transfo -w '+','.join(warp_inverse)+' -d template.nii -o warp_anat2template.nii.gz', verbose)
+        sct.run(['sct_concat_transfo', '-w', ','.join(warp_inverse), '-d', 'template.nii', '-o', 'warp_anat2template.nii.gz'], verbose)
 
     # Apply warping fields to anat and template
-    sct.run('sct_apply_transfo -i template.nii -o template2anat.nii.gz -d data.nii -w warp_template2anat.nii.gz -crop 1', verbose)
-    sct.run('sct_apply_transfo -i data.nii -o anat2template.nii.gz -d template.nii -w warp_anat2template.nii.gz -crop 1', verbose)
+    sct.run(['sct_apply_transfo', '-i', 'template.nii', '-o', 'template2anat.nii.gz', '-d', 'data.nii', '-w', 'warp_template2anat.nii.gz', '-crop', '1'], verbose)
+    sct.run(['sct_apply_transfo', '-i', 'data.nii', '-o', 'anat2template.nii.gz', '-d', 'template.nii', '-w', 'warp_anat2template.nii.gz', '-crop', '1'], verbose)
 
     # come back
     os.chdir(curdir)
@@ -641,7 +639,7 @@ def main():
     # Delete temporary files
     if remove_temp_files:
         sct.printv('\nDelete temporary files...', verbose)
-        shutil.rmtree(path_tmp)
+        sct.rmtree(path_tmp)
 
     # display elapsed time
     elapsed_time = time.time() - start_time
@@ -677,7 +675,7 @@ def resample_labels(fname_labels, fname_dest, fname_output):
         label_new_list.append(','.join(label_sub_new))
     label_new_list = ':'.join(label_new_list)
     # create new labels
-    sct.run('sct_label_utils -i '+fname_dest+' -create '+label_new_list+' -v 1 -o '+fname_output)
+    sct.run(['sct_label_utils', '-i', fname_dest, '-create', label_new_list, '-v', '1', '-o', fname_output])
 
 def check_labels(fname_landmarks):
     """

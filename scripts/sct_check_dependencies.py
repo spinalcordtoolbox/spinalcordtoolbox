@@ -27,7 +27,7 @@ class Param:
 
 
 
-import sys, io, os, commands, platform, importlib
+import sys, io, os, platform, importlib
 import sct_utils as sct
 from msct_parser import Parser
 
@@ -73,9 +73,18 @@ def module_import(module_name, suppress_stderr=False):
     """
     if suppress_stderr:
         original_stderr = sys.stderr
-        sys.stderr = io.BytesIO()
-        module = importlib.import_module(module_name)
-        sys.stderr = original_stderr
+        if sys.hexversion < 0x03000000:
+            sys.stderr = io.BytesIO()
+        else:
+            sys.stderr = io.TextIOWrapper(io.BytesIO(), sys.stderr.encoding)
+        try:
+            module = importlib.import_module(module_name)
+        except Exception as e:
+            sys.stderr = original_stderr
+            raise
+        else:
+            sys.stderr = original_stderr
+
     else:
         module = importlib.import_module(module_name)
 
@@ -374,19 +383,6 @@ def get_version_requirements_pip():
         dict[arg[0]] = arg[1].rstrip("\n")
     file.close()
     return dict
-
-
-def get_package_version(package_name):
-    cmd = "conda list " + package_name
-    output = commands.getoutput(cmd)
-    while True:
-        line = output.split("\n")
-        for i in line:
-            if i.find(package_name) != -1:
-                vers = i.split(' ')
-                vers[:] = (value for value in vers if value != "")
-                return vers[1]
-        raise Exception("Could not find package: " + package_name)
 
 
 def check_package_version(installed, required, package_name):

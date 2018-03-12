@@ -614,7 +614,7 @@ def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1, f
             im_out = None
             ori = get_orientation(im_split_list[0])
             os.chdir(curdir)
-            sct.run('rm -rf ' + tmp_folder)
+            sct.rmtree(tmp_folder)
             return ori
         elif set:
             # set orientation
@@ -630,18 +630,28 @@ def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1, f
                 fname_changed_ori_list = [im_ch_ori.absolutepath for im_ch_ori in im_changed_ori_list]
                 im_out = multicomponent_merge(fname_changed_ori_list)
         elif set_data:
-            printv('Set orientation of the data only is not compatible with 4D data...', verbose, 'error')
+            # set orientation
+            printv('Change orientation of data...', verbose)
+            im_changed_ori_list = []
+            for im_s in im_split_list:
+                im_set = set_orientation(im_s, ori, True)
+                im_changed_ori_list.append(im_set)
+            printv('Merge file back...', verbose)
+            if dim == 4:
+                im_out = concat_data(im_changed_ori_list, 3)
+            elif dim == 5:
+                printv('Set data orientation on 5D data is not supported. Sorry.', verbose, 'error')
         else:
             im_out = None
 
         # Go back to previous directory:
         os.chdir(curdir)
-        sct.run('rm -rf ' + tmp_folder)
+        sct.rmtree(tmp_folder)
 
     if fname_out:
         im_out.setFileName(fname_out)
         if fname_out != im.file_name + '_' + ori + im.ext:
-            sct.run('rm -f ' + im.file_name + '_' + ori + im.ext)
+            sct.rm(im.file_name + '_' + ori + im.ext)
     else:
         im_out.setFileName(im.file_name + '_' + ori + im.ext)
     return im_out
@@ -673,9 +683,9 @@ def get_orientation_3d(im, filename=False):
     string_out = 'Input image orientation : '
     # get orientation
     if filename:
-        status, output = sct.run('isct_orientation3d -i ' + im + ' -get ', 0)
+        status, output = sct.run(['isct_orientation3d', '-i', im, '-get'], 0)
     else:
-        status, output = sct.run('isct_orientation3d -i ' + im.absolutepath + ' -get ', 0)
+        status, output = sct.run(['isct_orientation3d', '-i', im.absolutepath, '-get'], 0)
     # check status
     if status != 0:
         printv('ERROR in get_orientation.', 1, 'error')
@@ -704,13 +714,13 @@ def set_orientation(im, orientation, data_inversion=False, filename=False, fname
 
     if not data_inversion:
         if filename:
-            sct.run('isct_orientation3d -i ' + im + ' -orientation ' + orientation + ' -o ' + fname_out, 0)
+            sct.run(['isct_orientation3d', '-i', im, '-orientation', orientation, '-o', fname_out], verbose=0)
             im_out = fname_out
         else:
             fname_in = im.absolutepath
             if not os.path.exists(fname_in):
                 im.save()
-            sct.run('isct_orientation3d -i ' + im.absolutepath + ' -orientation ' + orientation + ' -o ' + fname_out, 0)
+            sct.run(['isct_orientation3d', '-i', im.absolutepath, '-orientation', orientation, '-o', fname_out], verbose=0)
             im_out = Image(fname_out)
     else:
         im_out = im.copy()
@@ -724,7 +734,7 @@ def visualize_warp(fname_warp, fname_grid=None, step=3, rm_tmp=True):
         from numpy import zeros
         tmp_dir = tmp_create()
         im_warp = Image(fname_warp)
-        status, out = sct.run('fslhd ' + fname_warp)
+        status, out = sct.run(['fslhd', fname_warp])
         curdir = os.getcwd()
         os.chdir(tmp_dir)
         dim1 = 'dim1           '
@@ -749,14 +759,14 @@ def visualize_warp(fname_warp, fname_grid=None, step=3, rm_tmp=True):
         im_grid.setFileName(fname_grid)
         im_grid.save()
         fname_grid_resample = add_suffix(fname_grid, '_resample')
-        sct.run('sct_resample -i ' + fname_grid + ' -f 3x3x1 -x nn -o ' + fname_grid_resample)
+        sct.run(['sct_resample', '-i', fname_grid, '-f', '3x3x1', '-x', 'nn', '-o', fname_grid_resample])
         fname_grid = tmp_dir + fname_grid_resample
         os.chdir(curdir)
     path_warp, file_warp, ext_warp = extract_fname(fname_warp)
     grid_warped = path_warp + extract_fname(fname_grid)[1] + '_' + file_warp + ext_warp
-    sct.run('sct_apply_transfo -i ' + fname_grid + ' -d ' + fname_grid + ' -w ' + fname_warp + ' -o ' + grid_warped)
+    sct.run(['sct_apply_transfo', '-i', fname_grid, '-d', fname_grid, '-w', fname_warp, '-o', grid_warped])
     if rm_tmp:
-        sct.run('rm -rf ' + tmp_dir)
+        sct.rmtree(tmp_dir)
 
 
 if __name__ == "__main__":
