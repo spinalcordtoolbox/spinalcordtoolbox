@@ -82,7 +82,7 @@ class SCTPanel(wx.Panel):
     <b>Citation</b>:<br>
     De Leener B, Levy S, Dupont SM, Fonov VS, Stikov N, Louis Collins D, Callot V,
     Cohen-Adad J. SCT: Spinal Cord Toolbox, an open-source software for processing
-    spinal cord MRI data. Neuroimage. 2017.
+    spinal cord MRI data. Neuroimage. 2017 Jan 15;145(Pt A):24-43.
     """
 
     SCT_DIR_ENV = 'SCT_DIR'
@@ -101,7 +101,7 @@ class SCTPanel(wx.Panel):
             wx.HSCROLL | wx.TE_READONLY | \
             wx.BORDER_SIMPLE
         html_sct_citation = html.HtmlWindow(self, wx.ID_ANY,
-                                            size=(280, 105),
+                                            size=(280, 115),
                                             style=txt_sct_citation)
         html_sct_citation.SetPage(self.DESCRIPTION_SCT)
         self.sizer_logo_sct.Add(html_sct_citation, 0, wx.ALL, 5)
@@ -128,7 +128,7 @@ class SCTPanel(wx.Panel):
             wx.HSCROLL | wx.TE_READONLY | \
             wx.BORDER_SIMPLE
         htmlw = html.HtmlWindow(self, wx.ID_ANY,
-                                size=(280, 198),
+                                size=(280, 208),
                                 style=txt_style)
         htmlw.SetPage(self.DESCRIPTION)
         return htmlw
