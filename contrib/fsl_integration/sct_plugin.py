@@ -51,7 +51,6 @@ class SCTCallThread(Thread):
 
     def run(self):
         self.sct_call(self.command)
-        #time.sleep(5)
 
 
 class ProgressDialog(wx.Dialog):
@@ -62,13 +61,13 @@ class ProgressDialog(wx.Dialog):
         save_ico = wx.ArtProvider.GetBitmap(wx.ART_INFORMATION,
                                             wx.ART_TOOLBAR,
                                             (16, 16))
-        img_logo = wx.StaticBitmap(self, -1, save_ico, wx.DefaultPosition,
+        img_info = wx.StaticBitmap(self, -1, save_ico, wx.DefaultPosition,
                                    (save_ico.GetWidth(), save_ico.GetHeight()))
 
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.lbldesc = wx.StaticText(self, id=wx.ID_ANY,
                                      label="Please wait while the algorithm is running...")
-        sizer.Add(img_logo, 0, wx.ALL, 15)
+        sizer.Add(img_info, 0, wx.ALL, 15)
         sizer.Add(self.lbldesc, 0, wx.ALL, 15)
 
         self.SetSizer(sizer)
@@ -78,6 +77,14 @@ class ProgressDialog(wx.Dialog):
 
 
 class SCTPanel(wx.Panel):
+
+    DESCRIPTION_SCT = """
+    <b>Citation</b>:<br>
+    De Leener B, Levy S, Dupont SM, Fonov VS, Stikov N, Louis Collins D, Callot V,
+    Cohen-Adad J. SCT: Spinal Cord Toolbox, an open-source software for processing
+    spinal cord MRI data. Neuroimage. 2017.
+    """
+
     SCT_DIR_ENV = 'SCT_DIR'
     SCT_LOGO_REL_PATH = 'documentation/imgs/logo_sct.png'
 
@@ -87,8 +94,20 @@ class SCTPanel(wx.Panel):
         self.img_logo = self.get_logo()
         self.html_desc = self.get_description()
 
+        self.sizer_logo_sct = wx.BoxSizer(wx.VERTICAL)
+        self.sizer_logo_sct.Add(self.img_logo, 0, wx.ALL, 5)
+
+        txt_sct_citation = wx.VSCROLL | \
+            wx.HSCROLL | wx.TE_READONLY | \
+            wx.BORDER_SIMPLE
+        html_sct_citation = html.HtmlWindow(self, wx.ID_ANY,
+                                            size=(280, 105),
+                                            style=txt_sct_citation)
+        html_sct_citation.SetPage(self.DESCRIPTION_SCT)
+        self.sizer_logo_sct.Add(html_sct_citation, 0, wx.ALL, 5)
+
         self.sizer_logo_text = wx.BoxSizer(wx.HORIZONTAL)
-        self.sizer_logo_text.Add(self.img_logo, 0, wx.ALL, 5)
+        self.sizer_logo_text.Add(self.sizer_logo_sct, 0, wx.ALL, 5)
         self.sizer_logo_text.Add(self.html_desc, 0, wx.ALL, 5)
 
         self.sizer_h = wx.BoxSizer(wx.HORIZONTAL)
@@ -109,9 +128,9 @@ class SCTPanel(wx.Panel):
             wx.HSCROLL | wx.TE_READONLY | \
             wx.BORDER_SIMPLE
         htmlw = html.HtmlWindow(self, wx.ID_ANY,
-                                size=(280, 180),
+                                size=(280, 198),
                                 style=txt_style)
-        htmlw.SetPage(self.description)
+        htmlw.SetPage(self.DESCRIPTION)
         return htmlw
 
     def call_sct_command(self, command):
@@ -135,7 +154,7 @@ class SCTPanel(wx.Panel):
 
 class TabPanelGMSeg(SCTPanel):
 
-    description = """This segmentation tool is based on Deep Learning and
+    DESCRIPTION = """This segmentation tool is based on Deep Learning and
     dilated convolutions. For more information, please refer to the
     article below.<br><br>
     <b>Citation</b>:<br>
@@ -172,7 +191,7 @@ class TabPanelGMSeg(SCTPanel):
 
 class TabPanelSCSeg(SCTPanel):
 
-    description = """This segmentation tool is based on Deep Learning and
+    DESCRIPTION = """This segmentation tool is based on Deep Learning and
     a 3D U-Net. For more information, please refer to the
     article below.<br><br>
     <b>Citation</b>:<br>
@@ -241,6 +260,6 @@ def run_main():
                         aui.AuiPaneInfo().Name("notebook_content").
                         CenterPane().PaneBorder(False)) 
     aui_manager.Update()
-
+    
 
 run_main()
