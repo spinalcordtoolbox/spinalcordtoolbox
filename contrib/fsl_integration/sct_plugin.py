@@ -176,7 +176,7 @@ class TabPanelGMSeg(SCTPanel):
         overlayList.append(image)
 
         opts = displayCtx.getOpts(image)
-        opts.cmap = 'red'
+        opts.cmap = 'yellow'
 
 
 class TabPanelSCSeg(SCTPanel):
