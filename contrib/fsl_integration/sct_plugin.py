@@ -37,6 +37,8 @@ class SCTCallThread(Thread):
         p = subprocess.Popen([command], stdout=subprocess.PIPE,
                              shell=True, env=env)
         stdout, stderr = p.communicate()
+        print(stdout)
+        print(stderr)
         return stdout, stderr
 
     def run(self):
