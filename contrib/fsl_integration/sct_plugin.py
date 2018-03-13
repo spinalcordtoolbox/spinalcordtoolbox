@@ -142,43 +142,6 @@ class SCTPanel(wx.Panel):
         binfo.Destroy()
 
 
-class TabPanelGMSeg(SCTPanel):
-
-    DESCRIPTION = """This segmentation tool is based on Deep Learning and
-    dilated convolutions. For more information, please refer to the
-    article below.<br><br>
-    <b>Specific citation</b>:<br>
-    CS Perone, E Calabrese, J Cohen-Adad.
-    <i>Spinal cord gray matter segmentation using deep dilated convolutions
-    (2017)</i>. ArXiv: arxiv.org/abs/1710.01269
-    """
-
-    def __init__(self, parent):
-        super(TabPanelGMSeg, self).__init__(parent=parent,
-                                            id_=wx.ID_ANY)
-        button_gm = wx.Button(self, id=wx.ID_ANY,
-                              label="Gray Matter Segmentation")
-        button_gm.Bind(wx.EVT_BUTTON, self.onButtonGM)
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(button_gm, 0, wx.ALL, 5)
-        self.sizer_h.Add(sizer)
-        self.SetSizerAndFit(self.sizer_h)
-
-    def onButtonGM(self, event):
-        selected_overlay = displayCtx.getSelectedOverlay()
-        filename_path = selected_overlay.dataSource
-        cmd_line = "sct_deepseg_gm -i {} -o seg.nii.gz".format(filename_path)
-
-        self.call_sct_command(cmd_line)
-
-        outfilename = os.path.join(os.getcwd(), 'seg.nii.gz')
-        image = Image(outfilename)
-        overlayList.append(image)
-
-        opts = displayCtx.getOpts(image)
-        opts.cmap = 'yellow'
-
-
 class TabPanelSCSeg(SCTPanel):
 
     DESCRIPTION = """This segmentation tool is based on Deep Learning and
@@ -224,6 +187,43 @@ class TabPanelSCSeg(SCTPanel):
 
         opts = displayCtx.getOpts(image)
         opts.cmap = 'red'
+
+
+class TabPanelGMSeg(SCTPanel):
+
+    DESCRIPTION = """This segmentation tool is based on Deep Learning and
+    dilated convolutions. For more information, please refer to the
+    article below.<br><br>
+    <b>Specific citation</b>:<br>
+    CS Perone, E Calabrese, J Cohen-Adad.
+    <i>Spinal cord gray matter segmentation using deep dilated convolutions
+    (2017)</i>. ArXiv: arxiv.org/abs/1710.01269
+    """
+
+    def __init__(self, parent):
+        super(TabPanelGMSeg, self).__init__(parent=parent,
+                                            id_=wx.ID_ANY)
+        button_gm = wx.Button(self, id=wx.ID_ANY,
+                              label="Gray Matter Segmentation")
+        button_gm.Bind(wx.EVT_BUTTON, self.onButtonGM)
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(button_gm, 0, wx.ALL, 5)
+        self.sizer_h.Add(sizer)
+        self.SetSizerAndFit(self.sizer_h)
+
+    def onButtonGM(self, event):
+        selected_overlay = displayCtx.getSelectedOverlay()
+        filename_path = selected_overlay.dataSource
+        cmd_line = "sct_deepseg_gm -i {} -o seg.nii.gz".format(filename_path)
+
+        self.call_sct_command(cmd_line)
+
+        outfilename = os.path.join(os.getcwd(), 'seg.nii.gz')
+        image = Image(outfilename)
+        overlayList.append(image)
+
+        opts = displayCtx.getOpts(image)
+        opts.cmap = 'yellow'
 
 
 def run_main():
