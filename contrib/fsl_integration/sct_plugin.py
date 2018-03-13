@@ -241,9 +241,11 @@ def run_main():
 
     if 'SCT_DIR' not in os.environ:
         dlg = wx.MessageDialog(window, 'Spinal Cord Toolbox (SCT) was not '
-                               'found in your system. Please check the '
-                               'installation procedure at https://github'
-                               '.com/neuropoly/spinalcordtoolbox',
+                               'found in your system. Make sure you open fsleyes '
+                               'from the Terminal (not by clicking on the App). '
+                               'If you are indeed running from the Terminal, please '
+                               'check the installation procedure at: '
+                               'https://github.com/neuropoly/spinalcordtoolbox',
                                'SCT not found!', wx.OK | wx.ICON_INFORMATION)
         dlg.ShowModal()
         dlg.Destroy()
