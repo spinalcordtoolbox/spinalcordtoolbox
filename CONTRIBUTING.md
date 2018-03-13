@@ -1,9 +1,9 @@
-* [Introduction](https://github.com/neuropoly/spinalcordtoolbox/wiki/Contribution-Guidelines#introduction)
-* [Fixing a bug](https://github.com/neuropoly/spinalcordtoolbox/wiki/Contribution-Guidelines#fixing-a-bug)
-* [Adding a new feature](https://github.com/neuropoly/spinalcordtoolbox/wiki/Contribution-Guidelines#adding-a-new-feature)
-* [Commit changes to your branch](https://github.com/neuropoly/spinalcordtoolbox/wiki/Contribution-Guidelines#commit-changes-to-your-branch)
-* [Submit a pull request](https://github.com/neuropoly/spinalcordtoolbox/wiki/Contribution-Guidelines#submit-a-pull-request)
-* [Code Review](https://github.com/neuropoly/spinalcordtoolbox/wiki/Contribution-Guidelines#code-review)
+* [Introduction](#introduction)
+* [Fixing a bug](#fixing-a-bug)
+* [Adding a new feature](#adding-a-new-feature)
+* [Commit changes to your branch](#commit-changes-to-your-branch)
+* [Submit a pull request](#submit-a-pull-request)
+* [Code Review](#code-review)
 
 # Introduction
 
