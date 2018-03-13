@@ -79,10 +79,10 @@ class ProgressDialog(wx.Dialog):
 class SCTPanel(wx.Panel):
 
     DESCRIPTION_SCT = """
-    <b>General Citation (please cite if you use SCT)</b>:<br>
+    <b>General citation (please always cite)</b>:<br>
     De Leener B, Levy S, Dupont SM, Fonov VS, Stikov N, Louis Collins D, Callot V,
-    Cohen-Adad J. SCT: Spinal Cord Toolbox, an open-source software for processing
-    spinal cord MRI data. Neuroimage. 2017 Jan 15;145(Pt A):24-43.
+    Cohen-Adad J. <i>SCT: Spinal Cord Toolbox, an open-source software for processing
+    spinal cord MRI data</i>. Neuroimage. 2017 Jan 15;145(Pt A):24-43.
     """
 
     SCT_DIR_ENV = 'SCT_DIR'
@@ -157,7 +157,7 @@ class TabPanelGMSeg(SCTPanel):
     DESCRIPTION = """This segmentation tool is based on Deep Learning and
     dilated convolutions. For more information, please refer to the
     article below.<br><br>
-    <b>Citation</b>:<br>
+    <b>Specific citation</b>:<br>
     CS Perone, E Calabrese, J Cohen-Adad.
     <i>Spinal cord gray matter segmentation using deep dilated convolutions
     (2017)</i>. ArXiv: arxiv.org/abs/1710.01269
@@ -194,7 +194,7 @@ class TabPanelSCSeg(SCTPanel):
     DESCRIPTION = """This segmentation tool is based on Deep Learning and
     a 3D U-Net. For more information, please refer to the
     article below.<br><br>
-    <b>Citation</b>:<br>
+    <b>Specific citation</b>:<br>
     (TODO: add Charley paper)
     """
 
