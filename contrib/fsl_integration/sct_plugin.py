@@ -244,7 +244,7 @@ def run_main():
                                'found in your system. Please check the '
                                'installation procedure at https://github'
                                '.com/neuropoly/spinalcordtoolbox',
-                               'SCT not found !', wx.OK | wx.ICON_INFORMATION)
+                               'SCT not found!', wx.OK | wx.ICON_INFORMATION)
         dlg.ShowModal()
         dlg.Destroy()
         return
