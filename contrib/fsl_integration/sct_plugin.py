@@ -24,16 +24,6 @@ import wx.html as html
 aui_manager = frame.getAuiManager()
 
 
-def sct_call(command):
-    env = os.environ.copy()
-    del env["PYTHONHOME"]
-    del env["PYTHONPATH"]
-    p = subprocess.Popen([command], stdout=subprocess.PIPE,
-                         shell=True, env=env)
-    stdout, stderr = p.communicate()
-    return stdout, stderr
-
-
 class SCTCallThread(Thread):
     def __init__(self, command):
         Thread.__init__(self)
