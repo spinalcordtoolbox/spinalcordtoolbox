@@ -79,7 +79,7 @@ class ProgressDialog(wx.Dialog):
 class SCTPanel(wx.Panel):
 
     DESCRIPTION_SCT = """
-    <b>Citation</b>:<br>
+    <b>General Citation (please cite if you use SCT)</b>:<br>
     De Leener B, Levy S, Dupont SM, Fonov VS, Stikov N, Louis Collins D, Callot V,
     Cohen-Adad J. SCT: Spinal Cord Toolbox, an open-source software for processing
     spinal cord MRI data. Neuroimage. 2017 Jan 15;145(Pt A):24-43.
