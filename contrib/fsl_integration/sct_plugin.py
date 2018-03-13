@@ -242,11 +242,11 @@ def run_main():
         return
 
     notebook = aui.AuiNotebook(window)
-    panel_gm = TabPanelGMSeg(notebook)
     panel_sc = TabPanelSCSeg(notebook)
+    panel_gm = TabPanelGMSeg(notebook)
 
-    notebook.AddPage(panel_gm, "sct_deepseg_gm", True)
-    notebook.AddPage(panel_sc, "sct_deepseg_sc", False)
+    notebook.AddPage(panel_sc, "sct_deepseg_sc", True)
+    notebook.AddPage(panel_gm, "sct_deepseg_gm", False)
 
     aui_manager.AddPane(notebook, 
                         aui.AuiPaneInfo().Name("notebook_content").
