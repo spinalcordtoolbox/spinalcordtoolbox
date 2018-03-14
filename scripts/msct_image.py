@@ -1202,7 +1202,11 @@ def compute_dice(image1, image2, mode='3d', label=1, zboundaries=False):
 
 def find_zmin_zmax(fname):
     # crop image
-    status, output = sct.run('sct_crop_image -i ' + fname + ' -dim 2 -bmax -o tmp.nii')
+    status, output = sct.run(["sct_crop_image",
+     "-i", fname,
+     "-dim", "2",
+     "-bmax",
+     "-o", "tmp.nii"])
     # parse output
     zmin, zmax = output[output.find('Dimension 2: ') + 13:].split('\n')[0].split(' ')
     return int(zmin), int(zmax)

@@ -90,10 +90,10 @@ def main(args=None):
         'binaries_osx': ['https://osf.io/hsa5r/?action=download',
                          'https://www.neuro.polymtl.ca/_media/downloads/sct/20170915_sct_binaries_osx.tar.gz'],
         'course_hawaii17': 'https://osf.io/6exht/?action=download',
-        'deepseg_gm_models': ['https://osf.io/y8k2e/?action=download',
-                              'https://www.neuro.polymtl.ca/_media/downloads/sct/20171126_deepgmseg_models.zip'],
-        'deepseg_sc_models': ['https://osf.io/86phg/?action=download',
-                              'https://www.neuro.polymtl.ca/_media/downloads/sct/20180125_deepseg_sc_models.zip']
+        'deepseg_gm_models': ['https://osf.io/b9y4x/?action=download',
+                              'https://www.neuro.polymtl.ca/_media/downloads/sct/20180205_deepseg_gm_models.zip'],
+        'deepseg_sc_models': ['https://osf.io/mg8wr/?action=download',
+                              'https://www.neuro.polymtl.ca/_media/downloads/sct/20180211_deepseg_sc_models.zip']
     }
 
     # Get parser info
@@ -114,7 +114,7 @@ def main(args=None):
     sct.printv('\nCheck if folder already exists...', verbose)
     if os.path.isdir(data_name):
         sct.printv('WARNING: Folder ' + data_name + ' already exists. Removing it...', 1, 'warning')
-        shutil.rmtree(data_name, ignore_errors=True)
+        sct.rmtree(data_name)
 
     # unzip
     unzip(tmp_file, dest_folder, verbose)

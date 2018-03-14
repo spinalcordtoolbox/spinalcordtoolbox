@@ -338,7 +338,7 @@ def main(args=None):
 
     # remove tmp_dir
     if param.rm_tmp:
-        shutil.rmtree(glcm.tmp_dir)
+        sct.rmtree(glcm.tmp_dir)
 
     printv('\nDone! To view results, type:', param.verbose)
     printv('fslview ' + arguments["-i"] + ' ' + ' -l Red-Yellow -t 0.7 '.join(fname_out_lst) + ' -l Red-Yellow -t 0.7 & \n', param.verbose, 'info')
