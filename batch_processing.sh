@@ -29,6 +29,8 @@ fi
 # display starting time:
 echo "Started at: $(date +%x_%r)"
 
+set -x
+
 # t2
 # ===========================================================================================
 cd t2
@@ -137,6 +139,7 @@ sct_apply_transfo -i dti_FA.nii.gz -d $SCT_DIR/data/PAM50/template/PAM50_t2.nii.
 # Go back to root folder
 cd -
 
+set +x
 
 # Display results (to easily compare integrity across SCT versions)
 # ===========================================================================================

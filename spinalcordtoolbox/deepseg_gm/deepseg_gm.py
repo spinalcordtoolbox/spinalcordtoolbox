@@ -20,9 +20,17 @@ import numpy as np
 
 # Avoid Keras logging
 original_stderr = sys.stderr
-sys.stderr = io.BytesIO()
-from keras import backend as K
-sys.stderr = original_stderr
+if sys.hexversion < 0x03000000:
+	sys.stderr = io.BytesIO()
+else:
+	sys.stderr = io.TextIOWrapper(io.BytesIO(), sys.stderr.encoding)
+try:
+	from keras import backend as K
+except Exception as e:
+	sys.stderr = original_stderr
+	raise
+else:
+	sys.stderr = original_stderr
 
 from spinalcordtoolbox.resample import nipy_resample
 from . import model
@@ -54,13 +62,8 @@ class DataResource(object):
 
         :param dirname: the root directory name.
         """
-        path_script = os.path.dirname(__file__)
-        directory_level = [".."] * 6 + ["data"]
-        data_dir = os.path.join(path_script,
-                                *directory_level)
-
-        data_dir = os.path.abspath(data_dir)
-        self.data_root = os.path.join(data_dir, dirname)
+        path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+        self.data_root = os.path.abspath(os.path.join(path_sct, "data", dirname))
 
     def get_file_path(self, filename):
         """Get the absolute file path based on the
@@ -170,7 +173,7 @@ def segment_volume(ninput_volume, model_name):
     axial_slices = []
     crops = []
 
-    for slice_num in xrange(volume_data.shape[2]):
+    for slice_num in range(volume_data.shape[2]):
         data = volume_data[..., slice_num]
         data, cropreg = crop_center(data, model.CROP_HEIGHT,
                                     model.CROP_WIDTH)
@@ -189,7 +192,7 @@ def segment_volume(ninput_volume, model_name):
     pred_slices = []
 
     # Un-cropping
-    for slice_num in xrange(preds.shape[0]):
+    for slice_num in range(preds.shape[0]):
         pred_slice = preds[slice_num][..., 0]
         pred_slice = crops[slice_num].pad(pred_slice)
         pred_slices.append(pred_slice)

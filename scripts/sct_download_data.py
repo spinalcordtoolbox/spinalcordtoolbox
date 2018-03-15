@@ -114,7 +114,7 @@ def main(args=None):
     sct.printv('\nCheck if folder already exists...', verbose)
     if os.path.isdir(data_name):
         sct.printv('WARNING: Folder ' + data_name + ' already exists. Removing it...', 1, 'warning')
-        shutil.rmtree(data_name, ignore_errors=True)
+        sct.rmtree(data_name)
 
     # unzip
     unzip(tmp_file, dest_folder, verbose)

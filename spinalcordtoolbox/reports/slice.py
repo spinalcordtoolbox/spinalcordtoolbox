@@ -162,12 +162,21 @@ image_seg : msct_image.Image
         return matrix
 
     @staticmethod
-    def nan_fill(array):
-        """TODO """
-        array[np.isnan(array)] = np.interp(np.isnan(array).ravel().nonzero()[0],
-                                           (-np.isnan(array)).ravel().nonzero()[0],
-                                           array[-np.isnan(array)])
-        return array
+    def nan_fill(A):
+        """Interpolate NaN values with neighboring values in array (in-place)
+        If only NaNs, return an array of zeros.
+        """
+        nans = np.isnan(A)
+        if ~np.any(nans):
+            return A
+        elif np.all(nans):
+            A[:] = np.zeros_like(A)
+            return A
+        xp = (~nans).ravel().nonzero()[0]
+        fp = A[~nans]
+        x  = nans.ravel().nonzero()[0]
+        A[nans] = np.interp(x, xp, fp)
+        return A
 
     @abc.abstractmethod
     def get_name(self):
@@ -220,13 +229,14 @@ image_seg : msct_image.Image
         centers_x = np.zeros(axial_dim)
         centers_y = np.zeros(axial_dim)
         for i in range(axial_dim):
-            centers_x[i], centers_y[i] = ndimage.measurements.center_of_mass(self.axial_slice(image.data, i))
+            aslice = self.axial_slice(image.data, i)
+            centers_x[i], centers_y[i] = ndimage.measurements.center_of_mass(aslice)
         try:
             Slice.nan_fill(centers_x)
             Slice.nan_fill(centers_y)
         except ValueError as err:
             logger.error("Axial center of the spinal cord is not found", err)
-            raise err
+            raise
         return centers_x, centers_y
 
     def mosaic(self, nb_column=0, size=15):

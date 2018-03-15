@@ -141,7 +141,7 @@ def eddy_correct(param):
     if param.swapXY == 1:
         sct.printv('\nSwap X-Y dimension (to have X as phase-encoding direction)', verbose)
         fname_data_new = 'tmp.data_swap'
-        cmd = fsloutput + 'fslswapdim ' + fname_data + ' -y -x -z ' + fname_data_new
+        cmd = [fsloutput, 'fslswapdim', fname_data, '-y', '-x', '-z', fname_data_new]
         status, output = sct.run(cmd, verbose)
         sct.printv(('\n.. updated data file name: ' + fname_data_new), verbose)
     else:
@@ -160,7 +160,7 @@ def eddy_correct(param):
     for im in im_split_list:
         im.save()
 
-    # cmd = fsloutput + 'fslsplit ' + fname_data_new + ' ' + file_data + '_T'
+    # cmd = [fsloutput, 'fslsplit', fname_data_new, file_data + '_T']
     # status, output = sct.run(cmd,verbose)
 
     # Slice-wise or Volume based method
@@ -251,7 +251,7 @@ def eddy_correct(param):
             sct.printv('\nFind transformation for each pair of opposite gradient directions...', verbose)
             fname_plus_corr = file_data + '_T' + str(i_plus).zfill(4) + file_suffix[iZ] + '_corr_'
             omat = 'mat_' + file_data + '_T' + str(i_plus).zfill(4) + file_suffix[iZ] + '.txt'
-            cmd = fsloutput + 'flirt -in ' + fname_plus + ' -ref ' + fname_minus + ' -paddingsize 3 -schedule ' + schedule_file + ' -verbose 2 -omat ' + omat + ' -cost ' + cost_function + ' -forcescaling'
+            cmd = [fsloutput, 'flirt', '-in', fname_plus, '-ref', fname_minus, '-paddingsize', '3', '-schedule', schedule_file, '-verbose', '2', '-omat', omat, '-cost', cost_function, '-forcescaling']
             status, output = sct.run(cmd, verbose)
 
             file =  open(omat)
@@ -296,7 +296,7 @@ def eddy_correct(param):
                 fname = file_data + '_T' + str(i_file).zfill(4) + file_suffix[iZ]
                 fname_corr = fname + '_corr_' + '__div2'
                 omat = os.path.join(mat_eddy, 'mat.T' + str(i_file) + '_Z' + str(iZ) + '.txt')
-                cmd = fsloutput + 'flirt -in ' + fname + ' -ref ' + fname + ' -out ' + fname_corr + ' -init ' + omat + ' -applyxfm -paddingsize 3 -interp ' + param.interp
+                cmd = [fsloutput, 'flirt', '-in', fname, '-ref', fname, '-out', fname_corr, '-init', omat, '-applyxfm', '-paddingsize', '3', '-interp', param.interp]
                 status, output = sct.run(cmd, verbose)
 
     # =========================================================================
@@ -309,20 +309,20 @@ def eddy_correct(param):
     for iN in range(nb_oppositeGradients):
         i_plus = opposite_gradients_iT[iN]
         fname_plus_corr = file_data + '_T' + str(i_plus).zfill(4) + '_corr_' + '__div2'
-        cmd = fsloutput + 'fslmerge -z ' + fname_plus_corr
+        cmd = [fsloutput, 'fslmerge', '-z', fname_plus_corr]
 
         for iZ in range(nz):
             fname_plus_Z_corr = file_data + '_T' + str(i_plus).zfill(4) + file_suffix[iZ] + '_corr_' + '__div2'
-            cmd = cmd + ' ' + fname_plus_Z_corr
+            cmd = cmd + [fname_plus_Z_corr]
         status, output = sct.run(cmd, verbose)
 
         i_minus = opposite_gradients_jT[iN]
         fname_minus_corr = file_data + '_T' + str(i_minus).zfill(4) + '_corr_' + '__div2'
-        cmd = fsloutput + 'fslmerge -z ' + fname_minus_corr
+        cmd = [fsloutput, 'fslmerge', '-z', fname_minus_corr]
 
         for iZ in range(nz):
             fname_minus_Z_corr = file_data + '_T' + str(i_minus).zfill(4) + file_suffix[iZ] + '_corr_' + '__div2'
-            cmd = cmd + ' ' + fname_minus_Z_corr
+            cmd = cmd + [fname_minus_Z_corr]
         status, output = sct.run(cmd, verbose)
 
     # =========================================================================
@@ -332,7 +332,7 @@ def eddy_correct(param):
     sct.printv('------------------------------------------------------------------------------------\n', verbose)
 
     fname_data_corr = os.path.join(param.output_path, file_data + '_eddy')
-    cmd = fsloutput + 'fslmerge -t ' + fname_data_corr
+    cmd = [fsloutput, 'fslmerge', '-t', fname_data_corr]
 
     for iT in range(nt):
         if os.path.isfile((os.path.join(path_tmp, file_data) + '_T' + str(iT).zfill(4) + '_corr_' + '__div2.nii')):
@@ -340,14 +340,14 @@ def eddy_correct(param):
         elif iT in index_b0:
             fname_data_corr_3d = file_data + '_T' + str(iT).zfill(4)
 
-        cmd = cmd + ' ' + fname_data_corr_3d
+        cmd = cmd + [fname_data_corr_3d]
     status, output = sct.run(cmd, verbose)
 
     # Swap back X-Y dimensions
     if param.swapXY == 1:
         fname_data_final = fname_data
         sct.printv('\nSwap back X-Y dimensions', verbose)
-        cmd = fsloutput + 'fslswapdim ' + fname_data_corr + ' -y -x -z ' + fname_data_final
+        cmd = [fsloutput, 'fslswapdim', fname_data_corr, '-y', '-x', '-z', fname_data_final]
         status, output = sct.run(cmd, verbose)
     else:
         fname_data_final = fname_data_corr
@@ -364,7 +364,7 @@ def eddy_correct(param):
     # Delete temporary files
     if param.delete_tmp_files == 1:
         sct.printv('\nDelete temporary files...')
-        sct.run('rm -rf ' + path_tmp, param.verbose)
+        sct.rmtree(path_tmp)
 
 #=======================================================================================================================
 # usage
