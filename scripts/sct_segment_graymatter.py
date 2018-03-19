@@ -174,11 +174,13 @@ def get_parser():
 
     parser.usage.addSection('\nMISC')
     parser.add_option(name='-qc',
-                      type_value='multiple_choice',
-                      description='Output images for quality control.',
-                      mandatory=False,
-                      example=['0', '1'],
-                      default_value=str(int(ParamSeg().qc)))
+                      type_value='folder_creation',
+                      description='The path where the quality control generated content will be saved',
+                      default_value=os.path.expanduser('~/qc_data'))
+    parser.add_option(name='-noqc',
+                      type_value=None,
+                      description='Prevent the generation of the QC report',
+                      mandatory=False)
     parser.add_option(name="-r",
                       type_value="multiple_choice",
                       description='Remove temporary files.',
@@ -214,7 +216,7 @@ class ParamSeg:
         self.thr_bin = 0.5
         self.ratio = '0'  # '0', 'slice' or 'level'
 
-        self.qc = True
+        self.qc = False
 
 
 class SegmentGM:
@@ -722,7 +724,9 @@ def main(args=None):
     if '-ofolder' in arguments:
         param_seg.path_results = os.path.abspath(arguments['-ofolder'])
     if '-qc' in arguments:
-        param_seg.qc = bool(int(arguments['-qc']))
+        param_seg.qc = os.path.abspath(arguments['-qc'])
+    if '-noqc' in arguments:
+        param_seg.qc = False
     if '-r' in arguments:
         param.rm_tmp = bool(int(arguments['-r']))
     if '-v' in arguments:
@@ -745,11 +749,44 @@ def main(args=None):
         b = '0.4,1'
 
     if param_seg.qc:
+        qc_path = param_seg.qc
         # output QC image
         printv('\nSave quality control images...', param.verbose, 'normal')
-        im = Image(os.path.join(seg_gm.tmp_dir, param_seg.fname_im))
-        im.save_quality_control(plane='axial', n_slices=5, seg=seg_gm.im_res_gmseg, thr=float(b.split(',')[0]),
-                                cmap_col='red-yellow', path_output=param_seg.path_results)
+
+        import spinalcordtoolbox.reports.qc as qc
+        import spinalcordtoolbox.reports.slice as qcslice
+
+        qc_param = qc.Params(param_seg.fname_im, 'sct_segment_graymatter', args, 'Axial', qc_path)
+        report = qc.QcReport(qc_param, '')
+
+        @qc.QcImage(report, 'none', [qc.QcImage.listed_seg])
+        def test(qslice):
+            return qslice.mosaic()
+
+        im_org = Image(param_seg.fname_im_original)
+        im_gm = Image(seg_gm.fname_res_gmseg)
+        im_wm = Image(seg_gm.fname_res_wmseg)
+
+        # create simple compound segmentation image for QC purposes
+
+        if param_seg.type_seg == 'bin':
+            im_wm.data[im_wm.data == 1] = 1
+            im_gm.data[im_gm.data == 1] = 2
+        else:
+            # binarize anyway
+            im_wm.data[im_wm.data >= param_seg.thr_bin] = 1
+            im_wm.data[im_wm.data < param_seg.thr_bin] = 0
+            im_gm.data[im_gm.data >= param_seg.thr_bin] = 2
+            im_gm.data[im_gm.data < param_seg.thr_bin] = 0
+
+        im_seg = im_gm
+        im_seg.data += im_wm.data
+
+        test(qcslice.Axial(im_org, im_seg))
+        sct.printv('Sucessfully generate the QC results in %s' % qc_param.qc_results)
+        sct.printv('Use the following command to see the results in a browser')
+        sct.printv('sct_qc -folder %s' % qc_path, type='info')
+
 
     if param.rm_tmp:
         # remove tmp_dir
