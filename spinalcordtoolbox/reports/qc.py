@@ -7,6 +7,10 @@ import warnings
 warnings.filterwarnings("ignore")
 
 import datetime
+
+import skimage
+import skimage.exposure
+
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.colorbar as colorbar
@@ -52,7 +56,7 @@ class QcImage(object):
                      "#a22abd", "#d58240", "#ac2aff"]
     _seg_colormap = plt.cm.autumn
 
-    def __init__(self, qc_report, interpolation, action_list):
+    def __init__(self, qc_report, interpolation, action_list, stretch_contrast=True):
         """
 
         Parameters
@@ -63,10 +67,12 @@ class QcImage(object):
             Type of interpolation used in matplotlib
         action_list : list of functions
             List of functions that generates a specific type of images
+        stretch_contrast : adjust image so as to improve contrast
         """
         self.qc_report = qc_report
         self.interpolation = interpolation
         self.action_list = action_list
+        self._stretch_contrast = stretch_contrast
 
     """
     action_list contain the list of images that has to be generated.
@@ -155,6 +161,14 @@ class QcImage(object):
 
             img, mask = func(sct_slice, *args)
 
+            if self._stretch_contrast:
+                def equalized(a):
+                    _min, _max = a.min(), a.max()
+                    b = (np.float32(a) - _min) / (_max - _min)
+                    c = skimage.exposure.equalize_adapthist(b, kernel_size=(8,8))
+                    return np.array(c * (_max - _min) + _min, dtype=a.dtype)
+                img = equalized(img)
+
             plt.figure(1)
             fig = plt.imshow(img, cmap=plt.cm.gray, interpolation=self.interpolation, aspect=float(aspect_img))
             fig.axes.get_xaxis().set_visible(False)
@@ -165,6 +179,8 @@ class QcImage(object):
                 logger.debug('Action List %s', action.__name__)
                 plt.clf()
                 plt.figure(1)
+                if self._stretch_contrast and action.__name__ in ("no_seg_seg",):
+                    mask = equalized(mask)
                 action(self, mask)
                 self._save(self.qc_report.qc_params.abs_overlay_img_path())
             plt.close()
