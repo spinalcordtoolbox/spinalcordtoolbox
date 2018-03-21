@@ -384,7 +384,7 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, qc_p
         import spinalcordtoolbox.reports.qc as qc
         import spinalcordtoolbox.reports.slice as qcslice
 
-        param = qc.Params(fname_image, 'sct_propseg', args, 'Axial', qc_path)
+        param = qc.Params(fname_image, 'sct_deepseg_sc', args, 'Axial', qc_path)
         report = qc.QcReport(param, '')
 
         @qc.QcImage(report, 'none', [qc.QcImage.listed_seg, ])
