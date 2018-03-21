@@ -42,7 +42,7 @@ def get_parser():
     parser.add_option(name="-c",
                       type_value="multiple_choice",
                       description="type of image contrast.",
-                      mandatory=False,
+                      mandatory=True,
                       example=['t1', 't2', 't2s', 'dwi'])
     parser.add_option(name="-ofolder",
                       type_value="folder_creation",
