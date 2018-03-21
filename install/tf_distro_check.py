@@ -29,10 +29,10 @@ def run_main():
             if spec_value == sys_value:
                 match += 1
         if match == len(spec):
-            print '1'
+            print('1')
             return
 
-    print '0'
+    print('0')
 
 
 if __name__ == '__main__':
