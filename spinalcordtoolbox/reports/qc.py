@@ -1,12 +1,11 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import json
-import logging
-import os
 
-import warnings
+import sys, os, json, logging, warnings, datetime
+
 warnings.filterwarnings("ignore")
 
-import datetime
+import numpy as np
 
 import skimage
 import skimage.exposure
@@ -16,9 +15,9 @@ matplotlib.use('Agg')
 import matplotlib.colorbar as colorbar
 import matplotlib.colors as color
 import matplotlib.pyplot as plt
-import numpy as np
 from scipy import ndimage
 
+import sct_utils as sct
 
 logger = logging.getLogger("sct.{}".format(__file__))
 
@@ -180,6 +179,7 @@ class QcImage(object):
                 plt.clf()
                 plt.figure(1)
                 if self._stretch_contrast and action.__name__ in ("no_seg_seg",):
+                    print("Mask type %s" % mask.dtype)
                     mask = equalized(mask)
                 action(self, mask)
                 self._save(self.qc_report.qc_params.abs_overlay_img_path())
@@ -236,8 +236,14 @@ class Params(object):
         abs_input_path = os.path.dirname(os.path.abspath(input_file))
         abs_input_path, contrast = os.path.split(abs_input_path)
         _, subject = os.path.split(abs_input_path)
+        command = command or os.path.splitext(os.path.basename(sys.argv[0]))[0]
+        if args is None:
+            args = sys.argv[1:]
+        if isinstance(args, list):
+            args = sct.list2cmdline(args)
 
         self.subject = subject
+        self.cwd = os.getcwd()
         self.contrast = contrast
         self.command = command
         self.args = args
@@ -312,8 +318,10 @@ class QcReport(object):
         # get path of the toolbox
 
         output = {
+            'python': sys.executable,
+            'cwd': self.qc_params.cwd,
+            'cmdline': "{} {}".format(self.qc_params.command, self.qc_params.args),
             'command': self.qc_params.command,
-            'args': ' '.join(self.qc_params.args),
             'subject': self.qc_params.subject,
             'contrast': self.qc_params.contrast,
             'orientation': self.qc_params.orientation,
