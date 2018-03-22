@@ -474,8 +474,12 @@ else
     exit $e_status
   fi
 
-  # Install tensorflow for Debian
-  if python -c "import platform; print platform.dist()" | grep -qi 'debian'; then
+  # This varible will be 1 if the Tensorflow should be installed
+  # using Conda and 0 otherwise.
+  TF_DISTRO_CHECK=$(python ${SCT_SOURCE}/install/tf_distro_check.py)
+
+  # Install tensorflow with Conda for some distributions
+  if [ $TF_DISTRO_CHECK = "1" ]; then
     conda install -c defaults --yes tensorflow==1.3.0
   fi
 
