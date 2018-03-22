@@ -135,7 +135,7 @@ def check_and_correct_segmentation(fname_segmentation, fname_centerline, folder_
     # remove temporary files
     if remove_temp_files:
         sct.printv("\nRemove temporary files...", verbose)
-        shutil.rmtree(path_tmp, ignore_errors=True)
+        sct.rmtree(path_tmp)
 
 
 def get_parser():
@@ -335,22 +335,22 @@ if __name__ == "__main__":
     contrast_type_propseg = contrast_type_conversion[contrast_type]
 
     # Building the command
-    cmd = 'isct_propseg -i "%s" -t %s' % (fname_data, contrast_type_propseg)
+    cmd = ['isct_propseg', '-i', fname_data, '-t', contrast_type_propseg]
 
     if "-ofolder" in arguments:
         folder_output = arguments["-ofolder"]
     else:
         folder_output = './'
-    cmd += ' -o "%s"' % folder_output
+    cmd += ['-o', folder_output]
     if not os.path.isdir(folder_output) and os.path.exists(folder_output):
         sct.log.error("output directory %s is not a valid directory" % folder_output)
     if not os.path.exists(folder_output):
         os.makedirs(folder_output)
 
     if "-down" in arguments:
-        cmd += " -down " + str(arguments["-down"])
+        cmd += ["-down", str(arguments["-down"])]
     if "-up" in arguments:
-        cmd += " -up " + str(arguments["-up"])
+        cmd += ["-up", str(arguments["-up"])]
 
     remove_temp_files = 1
     if "-r" in arguments:
@@ -359,27 +359,27 @@ if __name__ == "__main__":
     if "-v" in arguments:
         if arguments["-v"] is "1":
             verbose = 2
-            cmd += " -verbose"
+            cmd += ["-verbose"]
 
     # Output options
     if "-mesh" in arguments:
-        cmd += " -mesh"
+        cmd += ["-mesh"]
     if "-centerline-binary" in arguments:
-        cmd += " -centerline-binary"
+        cmd += ["-centerline-binary"]
     if "-CSF" in arguments:
-        cmd += " -CSF"
+        cmd += ["-CSF"]
     if "-centerline-coord" in arguments:
-        cmd += " -centerline-coord"
+        cmd += ["-centerline-coord"]
     if "-cross" in arguments:
-        cmd += " -cross"
+        cmd += ["-cross"]
     if "-init-tube" in arguments:
-        cmd += " -init-tube"
+        cmd += ["-init-tube"]
     if "-low-resolution-mesh" in arguments:
-        cmd += " -low-resolution-mesh"
+        cmd += ["-low-resolution-mesh"]
     if "-detect-nii" in arguments:
-        cmd += " -detect-nii"
+        cmd += ["-detect-nii"]
     if "-detect-png" in arguments:
-        cmd += " -detect-png"
+        cmd += ["-detect-png"]
 
     # Helping options
     use_viewer = None
@@ -391,7 +391,7 @@ if __name__ == "__main__":
         elif str(arguments["-init-centerline"]) == "hough":
             use_optic = False
         else:
-            cmd += " -init-centerline " + str(arguments["-init-centerline"])
+            cmd += ["-init-centerline", str(arguments["-init-centerline"])]
             use_optic = False
     if "-init" in arguments:
         init_option = float(arguments["-init"])
@@ -399,32 +399,32 @@ if __name__ == "__main__":
         if str(arguments["-init-mask"]) == "viewer":
             use_viewer = "mask"
         else:
-            cmd += " -init-mask " + str(arguments["-init-mask"])
+            cmd += ["-init-mask", str(arguments["-init-mask"])]
             use_optic = False
     if "-mask-correction" in arguments:
-        cmd += " -mask-correction " + str(arguments["-mask-correction"])
+        cmd += ["-mask-correction", str(arguments["-mask-correction"])]
     if "-radius" in arguments:
-        cmd += " -radius " + str(arguments["-radius"])
+        cmd += ["-radius", str(arguments["-radius"])]
     if "-detect-n" in arguments:
-        cmd += " -detect-n " + str(arguments["-detect-n"])
+        cmd += ["-detect-n", str(arguments["-detect-n"])]
     if "-detect-gap" in arguments:
-        cmd += " -detect-gap " + str(arguments["-detect-gap"])
+        cmd += ["-detect-gap", str(arguments["-detect-gap"])]
     if "-init-validation" in arguments:
-        cmd += " -init-validation"
+        cmd += ["-init-validation"]
     if "-nbiter" in arguments:
-        cmd += " -nbiter " + str(arguments["-nbiter"])
+        cmd += ["-nbiter", str(arguments["-nbiter"])]
     if "-max-area" in arguments:
-        cmd += " -max-area " + str(arguments["-max-area"])
+        cmd += ["-max-area", str(arguments["-max-area"])]
     if "-max-deformation" in arguments:
-        cmd += " -max-deformation " + str(arguments["-max-deformation"])
+        cmd += ["-max-deformation", str(arguments["-max-deformation"])]
     if "-min-contrast" in arguments:
-        cmd += " -min-contrast " + str(arguments["-min-contrast"])
+        cmd += ["-min-contrast", str(arguments["-min-contrast"])]
     if "-d" in arguments:
-        cmd += " -d " + str(arguments["-d"])
+        cmd += ["-d", str(arguments["-d"])]
     if "-distance-search" in arguments:
-        cmd += " -dsearch " + str(arguments["-distance-search"])
+        cmd += ["-dsearch", str(arguments["-distance-search"])]
     if "-alpha" in arguments:
-        cmd += " -alpha " + str(arguments["-alpha"])
+        cmd += ["-alpha", str(arguments["-alpha"])]
 
     # check if input image is in 3D. Otherwise itk image reader will cut the 4D image in 3D volumes and only take the first one.
     from msct_image import Image
@@ -463,9 +463,9 @@ if __name__ == "__main__":
         controller.as_niftii(tmp_output_file.absolutepath)
         # add mask filename to parameters string
         if use_viewer == "centerline":
-            cmd += " -init-centerline " + tmp_output_file.absolutepath
+            cmd += ["-init-centerline", tmp_output_file.absolutepath]
         elif use_viewer == "mask":
-            cmd += " -init-mask " + tmp_output_file.absolutepath
+            cmd += ["-init-mask", tmp_output_file.absolutepath]
 
     # If using OptiC, enabled by default
     elif use_optic:
@@ -480,13 +480,13 @@ if __name__ == "__main__":
                                                                     folder_output, remove_temp_files,
                                                                     init_option, verbose=verbose)
         if init_option is not None:
-            cmd += " -init " + str(init_option_optic)
+            cmd += ["-init", str(init_option_optic)]
 
-        cmd += " -init-centerline {}".format(optic_filename)
+        cmd += ["-init-centerline", optic_filename]
 
     # enabling centerline extraction by default
-    cmd += ' -centerline-binary'
-    status, output = sct.run(cmd, verbose, error_exit='verbose')
+    cmd += ['-centerline-binary']
+    status, output = sct.run(cmd, verbose, raise_exception=False)
 
     # check status is not 0
     if not status == 0:

@@ -38,6 +38,7 @@ def register_slicewise(fname_src,
                         paramreg=None,
                         ants_registration_params=None,
                         path_qc='./',
+                        remove_temp_files=1,
                         verbose=0):
 
     # create temporary folder
@@ -77,6 +78,9 @@ def register_slicewise(fname_src,
 
     # go back
     os.chdir(curdir)
+
+    if remove_temp_files:
+        sct.rmtree(path_tmp, verbose=verbose)
 
 
 def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii.gz', fname_warp_inv='warp_inverse.nii.gz', rot=1, poly=0, path_qc='./', verbose=0, pca_eigenratio_th=1.6):
@@ -192,7 +196,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
 
     # construct 3D warping matrix
     for iz in z_nonzero:
-        sct.printv(str(iz) + '/' + str(nz) + '..',)
+        sct.no_new_line_log('{}/{}..'.format(iz, nz))
         # get indices of x and y coordinates
         row, col = np.indices((nx, ny))
         # build 2xn array of coordinates in pixel space
@@ -265,10 +269,12 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
             plt.close()
 
         # construct 3D warping matrix
-        warp_x[:, :, iz] = np.array([coord_forward_phy[i, 0] - coord_init_phy[i, 0] for i in xrange(nx * ny)]).reshape((nx, ny))
-        warp_y[:, :, iz] = np.array([coord_forward_phy[i, 1] - coord_init_phy[i, 1] for i in xrange(nx * ny)]).reshape((nx, ny))
-        warp_inv_x[:, :, iz] = np.array([coord_inverse_phy[i, 0] - coord_init_phy[i, 0] for i in xrange(nx * ny)]).reshape((nx, ny))
-        warp_inv_y[:, :, iz] = np.array([coord_inverse_phy[i, 1] - coord_init_phy[i, 1] for i in xrange(nx * ny)]).reshape((nx, ny))
+        warp_x[:, :, iz] = np.array([coord_forward_phy[i, 0] - coord_init_phy[i, 0] for i in range(nx * ny)]).reshape((nx, ny))
+        warp_y[:, :, iz] = np.array([coord_forward_phy[i, 1] - coord_init_phy[i, 1] for i in range(nx * ny)]).reshape((nx, ny))
+        warp_inv_x[:, :, iz] = np.array([coord_inverse_phy[i, 0] - coord_init_phy[i, 0] for i in range(nx * ny)]).reshape((nx, ny))
+        warp_inv_y[:, :, iz] = np.array([coord_inverse_phy[i, 1] - coord_init_phy[i, 1] for i in range(nx * ny)]).reshape((nx, ny))
+
+    sct.log.info('\n Done')
 
     # Generate forward warping field (defined in destination space)
     generate_warping_field(fname_dest, warp_x, warp_y, fname_warp, verbose)
@@ -385,7 +391,7 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
             # <<<
             src1d_min, src1d_max = min(np.where(src1d != 0)[0]), max(np.where(src1d != 0)[0])
             dest1d_min, dest1d_max = min(np.where(dest1d != 0)[0]), max(np.where(dest1d != 0)[0])
-            # for i in xrange(len(src1d)):
+            # for i in range(len(src1d)):
             #     if src1d[i] > 0.5:
             #         found index above 0.5, exit loop
                     # break
@@ -417,7 +423,7 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
             coord_init_pix_scaleYinv = np.copy(coord_init_pix)  # need to use np.copy to avoid copying pointer
             # coord_src2d_scaleXY = np.copy(coord_src2d_scaleX)  # need to use np.copy to avoid copying pointer
             # loop across columns (X dimension)
-            for ix in xrange(nx):
+            for ix in range(nx):
                 # retrieve 1D signal along Y
                 src1d = src2d_scaleX[ix, :]
                 dest1d = dest2d[ix, :]
@@ -524,11 +530,11 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
             coord_init_phy_scaleXinv = np.array(im_src.transfo_pix2phys(coord_init_pix_scaleXinv))
             coord_init_phy_scaleYinv = np.array(im_src.transfo_pix2phys(coord_init_pix_scaleYinv))
             # compute displacement per pixel in destination space (for forward warping field)
-            warp_x[:, :, iz] = np.array([coord_init_phy_scaleXinv[i, 0] - coord_init_phy[i, 0] for i in xrange(nx * ny)]).reshape((nx, ny))
-            warp_y[:, :, iz] = np.array([coord_init_phy_scaleYinv[i, 1] - coord_init_phy[i, 1] for i in xrange(nx * ny)]).reshape((nx, ny))
+            warp_x[:, :, iz] = np.array([coord_init_phy_scaleXinv[i, 0] - coord_init_phy[i, 0] for i in range(nx * ny)]).reshape((nx, ny))
+            warp_y[:, :, iz] = np.array([coord_init_phy_scaleYinv[i, 1] - coord_init_phy[i, 1] for i in range(nx * ny)]).reshape((nx, ny))
             # compute displacement per pixel in source space (for inverse warping field)
-            warp_inv_x[:, :, iz] = np.array([coord_init_phy_scaleX[i, 0] - coord_init_phy[i, 0] for i in xrange(nx * ny)]).reshape((nx, ny))
-            warp_inv_y[:, :, iz] = np.array([coord_init_phy_scaleY[i, 1] - coord_init_phy[i, 1] for i in xrange(nx * ny)]).reshape((nx, ny))
+            warp_inv_x[:, :, iz] = np.array([coord_init_phy_scaleX[i, 0] - coord_init_phy[i, 0] for i in range(nx * ny)]).reshape((nx, ny))
+            warp_inv_y[:, :, iz] = np.array([coord_init_phy_scaleY[i, 1] - coord_init_phy[i, 1] for i in range(nx * ny)]).reshape((nx, ny))
 
     # Generate forward warping field (defined in destination space)
     generate_warping_field(fname_dest, warp_x, warp_y, fname_warp, verbose)
@@ -627,26 +633,26 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
         prefix_warp2d = 'warp2d_' + num
         # if mask is used, prepare command for ANTs
         if fname_mask != '':
-            masking = '-x mask_Z' + num + '.nii.gz'
+            masking = ['-x', 'mask_Z' + num + '.nii.gz']
         else:
-            masking = ''
+            masking = []
         # main command for registration
-        cmd = ('isct_antsRegistration '
-               '--dimensionality 2 '
-               '--transform ' + paramreg.algo + '[' + str(paramreg.gradStep) +
-               ants_registration_params[paramreg.algo.lower()] + '] '
-               '--metric ' + paramreg.metric + '[dest_Z' + num + '.nii' + ',src_Z' + num + '.nii' + ',1,' + metricSize + '] '  #[fixedImage,movingImage,metricWeight +nb_of_bins (MI) or radius (other)
-               '--convergence ' + str(paramreg.iter) + ' '
-               '--shrink-factors ' + str(paramreg.shrink) + ' '
-               '--smoothing-sigmas ' + str(paramreg.smooth) + 'mm '
-               '--output [' + prefix_warp2d + ',src_Z' + num + '_reg.nii] '    #--> file.mat (contains Tx,Ty, theta)
-               '--interpolation BSpline[3] '
-               '--verbose 1 '
-               + masking)
+        # TODO fixup isct_ants* parsers
+        cmd = ['isct_antsRegistration',
+         '--dimensionality', '2',
+         '--transform', paramreg.algo + '[' + str(paramreg.gradStep) + ants_registration_params[paramreg.algo.lower()] + ']',
+         '--metric', paramreg.metric + '[dest_Z' + num + '.nii' + ',src_Z' + num + '.nii' + ',1,' + metricSize + ']',  #[fixedImage,movingImage,metricWeight +nb_of_bins (MI) or radius (other)
+         '--convergence', str(paramreg.iter),
+         '--shrink-factors', str(paramreg.shrink),
+         '--smoothing-sigmas', str(paramreg.smooth) + 'mm',
+         '--output', '[' + prefix_warp2d + ',src_Z' + num + '_reg.nii]',    #--> file.mat (contains Tx,Ty, theta)
+         '--interpolation', 'BSpline[3]',
+         '--verbose', '1',
+        ] + masking
         # add init translation
         if not paramreg.init == '':
             init_dict = {'geometric': '0', 'centermass': '1', 'origin': '2'}
-            cmd += ' -r [dest_Z' + num + '.nii' + ',src_Z' + num + '.nii,' + init_dict[paramreg.init] + ']'
+            cmd += ['-r', '[dest_Z' + num + '.nii' + ',src_Z' + num + '.nii,' + init_dict[paramreg.init] + ']']
 
         try:
             # run registration
@@ -669,16 +675,25 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
 
             if paramreg.algo in ['Rigid', 'Affine']:
                 # Generating null 2d warping field (for subsequent concatenation with affine transformation)
-                sct.run('isct_antsRegistration -d 2 -t SyN[1, 1, 1] -c 0 -m MI[dest_Z' + num + '.nii, src_Z' + num + '.nii, 1, 32] -o warp2d_null -f 1 -s 0')
+                # TODO fixup isct_ants* parsers
+                sct.run(['isct_antsRegistration',
+                 '-d', '2',
+                 '-t', 'SyN[1,1,1]',
+                 '-c', '0',
+                 '-m', 'MI[dest_Z' + num + '.nii,src_Z' + num + '.nii,1,32]',
+                 '-o', 'warp2d_null',
+                 '-f', '1',
+                 '-s', '0',
+                ])
                 # --> outputs: warp2d_null0Warp.nii.gz, warp2d_null0InverseWarp.nii.gz
                 file_mat = prefix_warp2d + '0GenericAffine.mat'
                 # Concatenating mat transfo and null 2d warping field to obtain 2d warping field of affine transformation
-                sct.run('isct_ComposeMultiTransform 2 ' + file_warp2d + ' -R dest_Z' + num + '.nii warp2d_null0Warp.nii.gz ' + file_mat)
-                sct.run('isct_ComposeMultiTransform 2 ' + file_warp2d_inv + ' -R src_Z' + num + '.nii warp2d_null0InverseWarp.nii.gz -i ' + file_mat)
+                sct.run(['isct_ComposeMultiTransform', '2', file_warp2d, '-R', 'dest_Z' + num + '.nii', 'warp2d_null0Warp.nii.gz', file_mat])
+                sct.run(['isct_ComposeMultiTransform', '2', file_warp2d_inv, '-R', 'src_Z' + num + '.nii', 'warp2d_null0InverseWarp.nii.gz', '-i', file_mat])
 
         # if an exception occurs with ants, take the last value for the transformation
         # TODO: DO WE NEED TO DO THAT??? (julien 2016-03-01)
-        except Exception, e:
+        except Exception as e:
             sct.printv('ERROR: Exception occurred.\n' + str(e), 1, 'error')
 
     # Merge warping field along z
@@ -875,7 +890,7 @@ def find_index_halfmax(data1d):
     # normalize data between 0 and 1
     data1d = data1d / float(np.max(data1d))
     # loop across elements and stops when found 0.5
-    for i in xrange(len(data1d)):
+    for i in range(len(data1d)):
         if data1d[i] > 0.5:
             break
     # compute center of mass to get coordinate at 0.5

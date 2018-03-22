@@ -54,6 +54,8 @@ procedures.
 - [De Leener et al. Robust, accurate and fast automatic segmentation of the spinal cord. Neuroimage 2014;98:528-536.](https://www.ncbi.nlm.nih.gov/pubmed/24780696)
 - [Ullmann et al. Automatic labeling of vertebral levels using a robust template-based approach. Int J Biomed Imaging 2014;Article ID 719520.](http://downloads.hindawi.com/journals/ijbi/2014/719520.pdf)
 - [De Leener et al. Automatic segmentation of the spinal cord and spinal canal coupled with vertebral labeling. IEEE Transactions on Medical Imaging 2015;34(8):1705-1718](https://www.ncbi.nlm.nih.gov/pubmed/26011879)
+- [Perone, C. S., Calabrese, E., & Cohen-Adad, J. (2017). Spinal cord gray matter segmentation using deep dilated convolutions.](https://arxiv.org/abs/1710.01269)
+
 
 #### Registration
 - [De Leener B, Mangeat G, Dupont S, Martin AR, Callot V, Stikov N, Fehlings MG, Cohen-Adad J. Topologically-preserving straightening of spinal cord MRI. J Magn Reson Imaging. 2017 Oct;46(4):1209-1219](https://www.ncbi.nlm.nih.gov/pubmed/28130805)
@@ -96,6 +98,7 @@ procedures.
 - [Grabher et al. Neurodegeneration in the Spinal Ventral Horn Prior to Motor Impairment in Cervical Spondylotic Myelopathy. Journal of Neurotrauma 2017](http://online.liebertpub.com/doi/abs/10.1089/neu.2017.4980)
 - [Duval et al. Scan–rescan of axcaliber, macromolecular tissue volume, and g-ratio in the spinal cord. MRM 2017](http://onlinelibrary.wiley.com/doi/10.1002/mrm.26945/full)
 - [Smith et al. Lateral corticospinal tract damage correlates with motor output in incomplete spinal cord injury. Archives of Physical Medicine and Rehabilitation 2017](http://www.sciencedirect.com/science/article/pii/S0003999317312844)
+- [Kafali et al. Phase-correcting non-local means filtering for diffusion-weighted imaging of the spinal cord. MRM 2018](http://onlinelibrary.wiley.com/doi/10.1002/mrm.27105/full)
 
 
 ## Citing spinalcordtoolbox

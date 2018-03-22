@@ -147,7 +147,7 @@ def test_integrity(param_test):
 #
 #     if status == 0:
 #         # copy input data (for easier debugging)
-#         shutil.copy(dict_param_with_path['-i'], path_output)
+#         sct.copy(dict_param_with_path['-i'], path_output)
 #         # extract center of vertebral labels
 #         path_seg, file_seg, ext_seg = sct.extract_fname(dict_param['-s'])
 #         try:

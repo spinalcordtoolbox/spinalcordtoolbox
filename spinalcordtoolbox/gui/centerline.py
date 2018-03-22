@@ -52,6 +52,9 @@ class CenterlineController(base.BaseController):
             self.increment_slice()
 
     def select_point(self, x, y, z):
+        if self.mode == 'CUSTOM' and not self._slice:
+            raise InvalidActionWarning('Select a sagittal slice before selecting a point.')
+        x = self._slice
         if not self.valid_point(x, y, z):
             raise ValueError('Invalid point selected {}'.format((x, y, z)))
 

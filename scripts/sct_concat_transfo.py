@@ -14,7 +14,7 @@
 # TODO: also enable to concatenate reversed transfo
 
 
-import sys, io, os, getopt, commands
+import sys, io, os, getopt, functools
 
 import sct_utils as sct
 from msct_parser import Parser
@@ -66,12 +66,13 @@ def main():
     for i in range(len(fname_warp_list)):
         # Check if inverse matrix is specified with '-' at the beginning of file name
         if fname_warp_list[i].find('-') == 0:
-            use_inverse.append('-i ')
+            use_inverse.append('-i')
             fname_warp_list[i] = fname_warp_list[i][1:]  # remove '-'
+            fname_warp_list_invert += [[use_inverse[i], fname_warp_list[i]]]
         else:
             use_inverse.append('')
+            fname_warp_list_invert += [[fname_warp_list[i]]]
         sct.printv('  Transfo #' + str(i) + ': ' + use_inverse[i] + fname_warp_list[i], verbose)
-        fname_warp_list_invert.append(use_inverse[i] + fname_warp_list[i])
 
     # Check file existence
     sct.printv('\nCheck file existence...', verbose)
@@ -96,9 +97,10 @@ def main():
     sct.printv('\nConcatenate warping fields...', verbose)
     # N.B. Here we take the inverse of the warp list
     fname_warp_list_invert.reverse()
-    cmd = 'isct_ComposeMultiTransform '+dimensionality+' warp_final' + ext_out + ' -R ' + fname_dest + ' ' + ' '.join(fname_warp_list_invert)
-    sct.printv('>> ' + cmd, verbose)
-    status, output = commands.getstatusoutput(cmd)  # here cannot use sct.run() because of wrong output status in isct_ComposeMultiTransform
+    fname_warp_list_invert = functools.reduce(lambda x,y: x+y, fname_warp_list_invert)
+
+    cmd = ['isct_ComposeMultiTransform', dimensionality, 'warp_final' + ext_out, '-R', fname_dest] + fname_warp_list_invert
+    status, output = sct.run(cmd, verbose=verbose)
 
     # check if output was generated
     if not os.path.isfile('warp_final' + ext_out):

@@ -180,8 +180,8 @@ class ExtractGLCM:
 
             # Average across angles and save it as wrk_folder/fnameIn_feature_distance_mean.extension
             fname_out = im_m + str(self.param_glcm.distance) + '_mean' + extension
-            run('sct_image -i ' + ','.join(im2mean_lst) + ' -concat t -o ' + fname_out, error_exit='warning', raise_exception=True)
-            run('sct_maths -i ' + fname_out + ' -mean t -o ' + fname_out, error_exit='warning', raise_exception=True)
+            run('sct_image -i ' + ','.join(im2mean_lst) + ' -concat t -o ' + fname_out)
+            run('sct_maths -i ' + fname_out + ' -mean t -o ' + fname_out)
             self.fname_metric_lst[im_m + str(self.param_glcm.distance) + '_mean'] = fname_out
 
     def extract_slices(self):
@@ -338,7 +338,7 @@ def main(args=None):
 
     # remove tmp_dir
     if param.rm_tmp:
-        shutil.rmtree(glcm.tmp_dir)
+        sct.rmtree(glcm.tmp_dir)
 
     printv('\nDone! To view results, type:', param.verbose)
     printv('fslview ' + arguments["-i"] + ' ' + ' -l Red-Yellow -t 0.7 '.join(fname_out_lst) + ' -l Red-Yellow -t 0.7 & \n', param.verbose, 'info')

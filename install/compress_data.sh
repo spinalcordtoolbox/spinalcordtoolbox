@@ -1,9 +1,10 @@
 #!/bin/bash
-# uncompress data
-tar -zxvf MNI-Poly-AMU.tar.gz
-# compress data
-tar -czf MNI-Poly-AMU.tar.gz data
 
-# example data:
-# 1: put files in folder sct_example_data
-# 2: go outside of folder and type: zip -r DATE_sct_example_data.zip sct_example_data
+# ZIP DATA
+# 1: remove OSX ugly files
+find . -name '._*' -type f -delete
+find . -name '.DS_Store' -type f -delete
+# 2: put files in folder sct_example_data
+# 3: go outside of folder and type: zip -r DATE_sct_example_data.zip sct_example_data
+# 4: upload on OSF and neuropoly wiki
+# 5: update links on sct_download_data

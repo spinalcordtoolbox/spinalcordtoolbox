@@ -479,7 +479,7 @@ class Image(object):
                 except ValueError:
                     X, Y, Z = (self.data > 0).nonzero()
                     list_coordinates = [Coordinate([X[i], Y[i], 0, self.data[X[i], Y[i], 0]]) for i in range(0, len(X))]
-        except Exception, e:
+        except Exception as e:
             sct.printv('ERROR: Exception ' + str(e) + ' caught while geting non Zeros coordinates', 1, 'error')
 
         if coordValue:
@@ -523,7 +523,7 @@ class Image(object):
 
         # 3. Compute the center of mass of each group of voxels and write them into the output image
         averaged_coordinates = []
-        for value, list_coord in groups.iteritems():
+        for value, list_coord in groups.items():
             averaged_coordinates.append(sum(list_coord) / float(len(list_coord)))
 
         averaged_coordinates = sorted(averaged_coordinates, key=lambda obj: obj.value, reverse=False)
@@ -827,7 +827,7 @@ class Image(object):
 
         coord_origin = np.array([[m_p2f[0, 3]], [m_p2f[1, 3]], [m_p2f[2, 3]]])
 
-        if coordi != None:
+        if coordi is not None:
             coordi_phys = np.transpose(np.asarray(coordi))
             coordi_pix = np.transpose(np.dot(m_f2p_transfo, (coordi_phys - coord_origin)))
             coordi_pix_tmp = coordi_pix.tolist()
@@ -928,7 +928,7 @@ class Image(object):
         """
         nx, ny, nz, nt, px, py, pz, pt = im_ref.dim
         x, y, z = np.mgrid[0:nx, 0:ny, 0:nz]
-        indexes_ref = np.array(zip(x.ravel(), y.ravel(), z.ravel()))
+        indexes_ref = np.array(list(zip(x.ravel(), y.ravel(), z.ravel())))
         physical_coordinates_ref = im_ref.transfo_pix2phys(indexes_ref)
 
         # TODO: add optional transformation from reference space to image space to physical coordinates of ref grid.
@@ -1074,7 +1074,7 @@ class Image(object):
             plt.savefig(fname_png, bbox_inches='tight')
             plt.close(fig)
 
-        except RuntimeError, e:
+        except RuntimeError as e:
             from sct_utils import printv
             printv('WARNING: your device does not seem to have display feature', self.verbose, type='warning')
             printv(str(e), self.verbose, type='warning')
@@ -1114,7 +1114,7 @@ class Image(object):
                 filename_gmseg_image_png = self.save_plane(plane=plane, suffix='_' + plane + '_plane_seg', index=index_list, seg=seg, thr=thr, cmap_col=cmap_col, format=format, path_output=path_output)
                 info_str += ' & ' + filename_gmseg_image_png
             printv(info_str, verbose, 'info')
-        except RuntimeError, e:
+        except RuntimeError as e:
             printv('WARNING: your device does not seem to have display feature', self.verbose, type='warning')
             printv(str(e), self.verbose, type='warning')
 
@@ -1196,7 +1196,11 @@ def compute_dice(image1, image2, mode='3d', label=1, zboundaries=False):
 def find_zmin_zmax(fname):
     import sct_utils as sct
     # crop image
-    status, output = sct.run('sct_crop_image -i ' + fname + ' -dim 2 -bmax -o tmp.nii')
+    status, output = sct.run(["sct_crop_image",
+     "-i", fname,
+     "-dim", "2",
+     "-bmax",
+     "-o", "tmp.nii"])
     # parse output
     zmin, zmax = output[output.find('Dimension 2: ') + 13:].split('\n')[0].split(' ')
     return int(zmin), int(zmax)

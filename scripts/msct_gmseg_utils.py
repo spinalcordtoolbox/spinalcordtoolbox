@@ -196,7 +196,7 @@ def pre_processing(fname_target, fname_sc_seg, fname_level=None, fname_manual_gm
 
     if rm_tmp:
         # remove tmp folder
-        shutil.rmtree(tmp_dir)
+        sct.rmtree(tmp_dir)
     return list_slices_target, original_info
 
 
@@ -294,7 +294,7 @@ def load_level(list_slices_target, fname_level):
                 med = np.median(slice_level[slice_level > 0])
                 # change med in int if it is an int
                 med = int(med) if int(med) == med else med
-            except Exception, e:
+            except Exception as e:
                 printv('WARNING: ' + str(e) + '\nNo level label found. Level will be set to 0 for this slice', verbose, 'warning')
                 l = 0
                 med = 0
@@ -323,7 +323,7 @@ def load_level(list_slices_target, fname_level):
 
             try:
                 level = float(level)
-            except Exception, e:
+            except Exception as e:
                 # adapt if level value is not unique
                 if len(level) > 2:
                     l1 = l2 = 0
@@ -482,7 +482,7 @@ def register_data(im_src, im_dest, param_reg, path_copy_warp=None, rm_tmp=True):
 
     if rm_tmp:
         # remove tmp dir
-        shutil.rmtree(tmp_dir)
+        sct.rmtree(tmp_dir)
     # return res image
     return im_src_reg, fname_src2dest, fname_dest2src
 
@@ -515,7 +515,7 @@ def apply_transfo(im_src, im_dest, warp, interp='spline', rm_tmp=True):
     os.chdir(curdir)
     if rm_tmp:
         # remove tmp dir
-        shutil.rmtree(tmp_dir)
+        sct.rmtree(tmp_dir)
     # return res image
     return im_src_reg
 

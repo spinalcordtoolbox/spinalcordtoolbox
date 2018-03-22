@@ -439,7 +439,7 @@ def compute_length(fname_segmentation, remove_temp_files, output_folder, overwri
     # Remove temporary files
     if remove_temp_files:
         sct.printv('\nRemove temporary files...', verbose)
-        shutil.rmtree(path_tmp, ignore_errors=True)
+        sct.rmtree(path_tmp)
 
     return length
 
@@ -457,7 +457,7 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
 
     # Copying input data to tmp folder
     sct.printv('\nCopying data to tmp folder...', verbose)
-    sct.run('sct_convert -i ' + fname_segmentation + ' -o ' + os.path.join(path_tmp, "segmentation.nii.gz"), verbose)
+    sct.run(['sct_convert', '-i', fname_segmentation, '-o', os.path.join(path_tmp, "segmentation.nii.gz")], verbose)
 
     # go to tmp folder
     curdir = os.getcwd()
@@ -471,7 +471,7 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
     # set_orientation(im_seg, 'RPI')
     # im_seg.setFileName(fname_segmentation_orient)
     # im_seg.save()
-    sct.run('sct_image -i segmentation.nii.gz -setorient RPI -o segmentation_RPI.nii.gz', verbose)
+    sct.run(['sct_image', '-i', 'segmentation.nii.gz', '-setorient', 'RPI', '-o', 'segmentation_RPI.nii.gz'], verbose)
 
     # Open segmentation volume
     sct.printv('\nOpen segmentation volume...', verbose)
@@ -572,7 +572,7 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
     # get orientation of the input data
     im_seg_original = Image('segmentation.nii.gz')
     orientation = im_seg_original.orientation
-    sct.run('sct_image -i centerline_RPI.nii.gz -setorient ' + orientation + ' -o centerline.nii.gz')
+    sct.run(['sct_image', '-i', 'centerline_RPI.nii.gz', '-setorient', orientation, '-o', 'centerline.nii.gz'])
 
     # create a txt file with the centerline
     name_output_txt = 'centerline.txt'
@@ -599,7 +599,7 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
     # Remove temporary files
     if remove_temp_files:
         sct.printv('\nRemove temporary files...', verbose)
-        shutil.rmtree(path_tmp)
+        sct.rmtree(path_tmp)
 
     return file_data + '_centerline.nii.gz'
 
@@ -617,13 +617,13 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
 
     # Copying input data to tmp folder
     sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
-    sct.run('sct_convert -i ' + fname_segmentation + ' -o ' + os.path.join(path_tmp, "segmentation.nii.gz"), verbose)
+    sct.run(['sct_convert', '-i', fname_segmentation, '-o', os.path.join(path_tmp, "segmentation.nii.gz")], verbose)
     # go to tmp folder
     curdir = os.getcwd()
     os.chdir(path_tmp)
     # Change orientation of the input segmentation into RPI
     sct.printv('\nChange orientation to RPI...', verbose)
-    sct.run('sct_image -i segmentation.nii.gz -setorient RPI -o segmentation_RPI.nii.gz', verbose)
+    sct.run(['sct_image', '-i', 'segmentation.nii.gz', '-setorient', 'RPI', '-o', 'segmentation_RPI.nii.gz'], verbose)
 
     # Open segmentation volume
     sct.printv('\nOpen segmentation volume...', verbose)
@@ -675,7 +675,7 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
     csa = np.zeros(max_z_index - min_z_index + 1)
     angles = np.zeros(max_z_index - min_z_index + 1)
 
-    for iz in xrange(min_z_index, max_z_index + 1):
+    for iz in range(min_z_index, max_z_index + 1):
         if angle_correction:
             # in the case of problematic segmentation (e.g., non continuous segmentation often at the extremities), display a warning but do not crash
             try:
@@ -768,8 +768,8 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
     # get orientation of the input data
     im_seg_original = Image('segmentation.nii.gz')
     orientation = im_seg_original.orientation
-    sct.run('sct_image -i csa_volume_RPI.nii.gz -setorient ' + orientation + ' -o csa_volume_in_initial_orientation.nii.gz')
-    sct.run('sct_image -i angle_volume_RPI.nii.gz -setorient ' + orientation + ' -o angle_volume_in_initial_orientation.nii.gz')
+    sct.run(['sct_image', '-i', 'csa_volume_RPI.nii.gz', '-setorient', orientation, '-o', 'csa_volume_in_initial_orientation.nii.gz'])
+    sct.run(['sct_image', '-i', 'angle_volume_RPI.nii.gz', '-setorient', orientation, '-o', 'angle_volume_in_initial_orientation.nii.gz'])
 
     # come back
     os.chdir(curdir)
@@ -886,7 +886,7 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
     # Remove temporary files
     if remove_temp_files:
         sct.printv('\nRemove temporary files...')
-        shutil.rmtree(path_tmp)
+        sct.rmtree(path_tmp)
 
     # Sum up the output file names
     sct.printv('\nOutput a nifti file of CSA values along the segmentation: ' + os.path.join(output_folder, 'csa_image.nii.gz'), verbose, 'info')

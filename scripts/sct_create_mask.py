@@ -16,7 +16,7 @@
 
 import sys
 import os
-import commands
+
 import time
 
 import numpy
@@ -45,7 +45,7 @@ class Param:
         self.even = 0
         self.file_prefix = 'mask_'  # output prefix
         self.verbose = 1
-        self.remove_tmp_files = 1
+        self.remove_temp_files = 1
         self.offset = '0,0'
 # param = Param()
 # param_default = Param()
@@ -76,7 +76,7 @@ def main(args=None):
     if '-o' in arguments:
         param.fname_out = arguments['-o']
     if '-r' in arguments:
-        param.remove_tmp_files = int(arguments['-r'])
+        param.remove_temp_files = int(arguments['-r'])
     if '-v' in arguments:
         param.verbose = int(arguments['-v'])
 
@@ -127,11 +127,11 @@ def create_mask(param):
     # reorient to RPI
     sct.printv('\nReorient to RPI...', param.verbose)
     # if not orientation_input == 'RPI':
-    sct.run('sct_image -i data.nii -o data_RPI.nii -setorient RPI -v 0', verbose=False)
+    sct.run(['sct_image', '-i', 'data.nii', '-o', 'data_RPI.nii', '-setorient', 'RPI', '-v', '0'], verbose=False)
     if method_type == 'centerline':
-        sct.run('sct_image -i centerline.nii.gz -o centerline_RPI.nii.gz -setorient RPI -v 0', verbose=False)
+        sct.run(['sct_image', '-i', 'centerline.nii.gz', '-o', 'centerline_RPI.nii.gz', '-setorient', 'RPI', '-v', '0'], verbose=False)
     if method_type == 'point':
-        sct.run('sct_image -i point.nii.gz -o point_RPI.nii.gz -setorient RPI -v 0', verbose=False)
+        sct.run(['sct_image', '-i', 'point.nii.gz', '-o', 'point_RPI.nii.gz', '-setorient', 'RPI', '-v', '0'], verbose=False)
     #
     # if method_type == 'centerline':
     #     orientation_centerline = get_orientation_3d(method_val, filename=True)
@@ -155,7 +155,7 @@ def create_mask(param):
 
     if method_type == 'coord':
         # parse to get coordinate
-        coord = map(int, method_val.split('x'))
+        coord = [x for x in map(int, method_val.split('x'))]
 
     if method_type == 'point':
         # get file name
@@ -163,8 +163,9 @@ def create_mask(param):
         # extract coordinate of point
         sct.printv('\nExtract coordinate of point...', param.verbose)
         # TODO: change this way to remove dependence to sct.run. ProcessLabels.display_voxel returns list of coordinates
-        status, output = sct.run('sct_label_utils -i point_RPI.nii.gz -display', param.verbose)
+        status, output = sct.run(['sct_label_utils', '-i', 'point_RPI.nii.gz', '-display'], verbose=param.verbose)
         # parse to get coordinate
+        # TODO fixup... this is quite magic
         coord = output[output.find('Position=') + 10:-17].split(',')
 
     if method_type == 'center':
@@ -240,7 +241,7 @@ def create_mask(param):
 
     # reorient if necessary
     # if not orientation_input == 'RPI':
-    sct.run('sct_image -i mask_RPI.nii.gz -o mask.nii.gz -setorient ' + orientation_input, param.verbose)
+    sct.run(['sct_image', '-i', 'mask_RPI.nii.gz', '-o', 'mask.nii.gz', '-setorient', orientation_input], param.verbose)
 
     # copy header input --> mask
     im_dat = Image('data.nii')
@@ -256,9 +257,9 @@ def create_mask(param):
     sct.generate_output_file(os.path.join(path_tmp, "mask.nii.gz"), param.fname_out)
 
     # Remove temporary files
-    if param.remove_tmp_files == 1:
+    if param.remove_temp_files == 1:
         sct.printv('\nRemove temporary files...', param.verbose)
-        sct.run('rm -rf ' + path_tmp, param.verbose, error_exit='warning')
+        sct.rmtree(path_tmp)
 
     sct.display_viewer_syntax([param.fname_data, param.fname_out], colormaps=['gray', 'red'], opacities=['', '0.5'])
 
@@ -268,17 +269,17 @@ def create_mask(param):
 def create_line(param, fname, coord, nz):
 
     # duplicate volume (assumes input file is nifti)
-    sct.run('cp ' + fname + ' line.nii', param.verbose)
+    sct.copy(fname, 'line.nii', verbose=param.verbose)
 
     # set all voxels to zero
-    sct.run('sct_maths -i line.nii -mul 0 -o line.nii', param.verbose)
+    sct.run(['sct_maths', '-i', 'line.nii', '-mul', '0', '-o', 'line.nii'], param.verbose)
 
-    cmd = 'sct_label_utils -i line.nii -o line.nii -create-add '
+    cmd = ['sct_label_utils', '-i', 'line.nii', '-o', 'line.nii', '-create-add']
     for iz in range(nz):
         if iz == nz - 1:
-            cmd += str(int(coord[0])) + ',' + str(int(coord[1])) + ',' + str(iz) + ',1'
+            cmd += [str(int(coord[0])) + ',' + str(int(coord[1])) + ',' + str(iz) + ',1']
         else:
-            cmd += str(int(coord[0])) + ',' + str(int(coord[1])) + ',' + str(iz) + ',1:'
+            cmd += [str(int(coord[0])) + ',' + str(int(coord[1])) + ',' + str(iz) + ',1:']
 
     sct.run(cmd, param.verbose)
 

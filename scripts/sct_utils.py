@@ -12,21 +12,17 @@
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
-import commands
-import errno
-import glob
-import io
-import logging
-import os
-import re
-import shutil
-import subprocess
-import sys
-import tempfile
-import time
 
-# TODO: under run(): add a flag "ignore error" for isct_ComposeMultiTransform
-# TODO: check if user has bash or t-schell for fsloutput definition
+import sys, io, os, time, errno, tempfile, subprocess, re, logging, glob, shutil
+
+if sys.hexversion < 0x03030000:
+    import pipes
+    def list2cmdline(lst):
+        return " ".join(pipes.quote(x) for x in lst)
+else:
+    import shlex
+    def list2cmdline(lst):
+        return " ".join(shlex.quote(x) for x in lst)
 
 """
 Basic logging setup for the sct
@@ -51,17 +47,21 @@ def start_stream_logger():
 
     :return: 
     """
+
     formatter = logging.Formatter(LOG_FORMAT)
     stream_handler.setFormatter(formatter)
 
-    if LOG_LEVEL in logging._levelNames:
-        stream_handler.setLevel(LOG_LEVEL)
-        log.addHandler(stream_handler)
-    elif LOG_LEVEL == 'DISABLE':
-        stream_handler.setLevel(sys.maxint)
+    if LOG_LEVEL == "DISABLE":
+        level = sys.maxint
+    elif LOG_LEVEL is None:
+        level = logging.INFO
     else:
-        stream_handler.setLevel(logging.INFO)
-        log.addHandler(stream_handler)
+        level = getattr(logging, LOG_LEVEL, None)
+        if level is None:
+            logging.warn("SCT_LOG_LEVEL set to invalid value -> using default")
+            level = logging.INFO
+    stream_handler.setLevel(level)
+    log.addHandler(stream_handler)
 
 
 def pause_stream_logger():
@@ -133,6 +133,67 @@ class bcolors(object):
         return [v for k, v in cls.__dict__.items() if not k.startswith("_") and k is not "colors"]
 
 
+def no_new_line_log(msg, *args, **kwargs):
+    """ Log info to stdout without adding new line
+        Useful for progress bar.
+        Monkey patching the sct stream handler
+
+    see logging.info() method for parameters
+
+    """
+
+
+    def my_emit(self, record):
+        """
+        Emit a record.
+        Monkey patcher for progress bar in the sct
+        Do a carriage return \r before the string
+        instead of a new line \n at the end
+
+        """
+        try:
+            unicode
+            _unicode = True
+        except NameError:
+            _unicode = False
+
+        try:
+            msg = self.format(record)
+            stream = self.stream
+            fs = "\r%s"
+            if not _unicode: #if no unicode support...
+                stream.write(fs % msg)
+            else:
+                try:
+                    if (isinstance(msg, unicode) and
+                        getattr(stream, 'encoding', None)):
+                        ufs = u'%s\n'
+                        try:
+                            stream.write(ufs % msg)
+                        except UnicodeEncodeError:
+                            stream.write((ufs % msg).encode(stream.encoding))
+                    else:
+                        stream.write(fs % msg)
+                except UnicodeError:
+                    stream.write(fs % msg.encode("UTF-8"))
+            self.flush()
+        except (KeyboardInterrupt, SystemExit):
+            raise
+        except:
+            self.handleError(record)
+
+    orig_emit = stream_handler.__class__.emit
+    stream_handler.__class__.emit = my_emit
+
+    log.info(msg, *args, **kwargs)
+    if log.handlers:
+        [h.flush() for h in log.handlers]
+
+    stream_handler.__class__.emit = orig_emit
+
+
+
+
 #=======================================================================================================================
 # add suffix
 #=======================================================================================================================
@@ -160,56 +221,59 @@ def add_suffix(fname, suffix):
 def run_old(cmd, verbose=1):
     if verbose:
         printv(bcolors.blue + cmd + bcolors.normal)
-    status, output = commands.getstatusoutput(cmd)
+    status, output = run(cmd)
     if status != 0:
         printv('\nERROR! \n' + output + '\nExit program.\n', 1, 'error')
     else:
         return status, output
 
 
-def run(cmd, verbose=1, error_exit='error', raise_exception=False, cwd=None):
+def run(cmd, verbose=1, raise_exception=True, cwd=None, env=None):
     # if verbose == 2:
     #     printv(sys._getframe().f_back.f_code.co_name, 1, 'process')
 
     if cwd is None:
         cwd = os.getcwd()
 
-    if verbose:
-        printv("%s # in %s" % (cmd, cwd), 1, 'code')
+    if env is None:
+        env = os.environ
 
-    if sys.hexversion < 0x0300000000 and isinstance(cmd, unicode):
+    if sys.hexversion < 0x03000000 and isinstance(cmd, unicode):
         cmd = str(cmd)
+
+    if isinstance(cmd, str):
+        cmdline = cmd
+    else:
+        cmdline = list2cmdline(cmd)
+
+    if verbose:
+        printv("%s # in %s" % (cmdline, cwd), 1, 'code')
 
     shell = isinstance(cmd, str)
 
-    process = subprocess.Popen(cmd, shell=shell, cwd=cwd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    process = subprocess.Popen(cmd, shell=shell, cwd=cwd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env)
     output_final = ''
     while True:
         # Watch out for deadlock!!!
-        output = process.stdout.readline()
+        output = process.stdout.readline().decode("utf-8")
         if output == '' and process.poll() is not None:
             break
         if output:
             if verbose == 2:
                 printv(output.strip())
             output_final += output.strip() + '\n'
-    status_output = process.returncode
+
+    status = process.returncode
+    output = output_final.rstrip()
+
     # process.stdin.close()
     # process.stdout.close()
     # process.terminate()
 
-    # need to remove the last \n character in the output -> return output_final[0:-1]
-    if status_output:
-        # from inspect import stack
-        printv(output_final[0:-1], 1, error_exit)
-        # in case error_exit is not error (immediate exit), the line below can be run
-        if raise_exception:
-            raise RunError(output_final[0:-1])
+    if status != 0 and raise_exception:
+        raise RunError(output)
 
-        return status_output, output_final[0:-1]
-    else:
-        # no need to output process.returncode (because different from 0)
-        return status_output, output_final[0:-1]
+    return status, output
 
 
 def check_exe(name):
@@ -254,7 +318,7 @@ def display_viewer_syntax(files, colormaps=[], minmax=[], opacities=[], mode='',
     sct.display_viewer_syntax([file1, file2, file3])
     sct.display_viewer_syntax([file1, file2], colormaps=['gray', 'red'], minmax=['', '0,1'], opacities=['', '0.7'])
     """
-    list_viewer = ['fslview', 'fslview_deprecated', 'fsleyes']  # list of known viewers. Can add more.
+    list_viewer = ['fsleyes', 'fslview_deprecated', 'fslview']  # list of known viewers. Can add more.
     dict_fslview = {'gray': 'Greyscale', 'red-yellow': 'Red-Yellow', 'blue-lightblue': 'Blue-Lightblue', 'red': 'Red', 'random': 'Random-Rainbow'}
     dict_fsleyes = {'gray': 'greyscale', 'red-yellow': 'red-yellow', 'blue-lightblue': 'blue-lightblue', 'red': 'red', 'random': 'random'}
     selected_viewer = None
@@ -302,11 +366,44 @@ def display_viewer_syntax(files, colormaps=[], minmax=[], opacities=[], mode='',
         printv(cmd + '\n', verbose=1, type='info')
 
 
-def copy(src, dst):
-    """Copy src to dst.
-    If src and dst are the same files, don't crash.
+def mkdir(path, verbose=1):
+    """Create a folder, like os.mkdir
     """
     try:
+        printv("mkdir %s" % (path), verbose=verbose)
+        os.mkdir(path)
+    except Exception as e:
+        raise
+
+def rm(path, verbose=1):
+    """Remove a file, almost like os.remove
+    """
+    try:
+        printv("rm %s" % (path), verbose=verbose)
+        os.remove(path)
+    except Exception as e:
+        raise
+
+def mv(src, dst, verbose=1):
+    """Move a file from src to dst, almost like os.rename
+    """
+    try:
+        printv("mv %s %s" % (src, dst), verbose=verbose)
+        os.rename(src, dst)
+    except Exception as e:
+        raise
+
+def copy(src, dst, verbose=1):
+    """Copy src to dst, almost like shutil.copy
+    If src and dst are the same files, don't crash.
+    """
+    if not os.path.isfile(src):
+        folder = os.path.dirname(src)
+        contents = os.listdir(folder)
+        raise Exception("Couldn't find %s in %s (contents: %s)" \
+         % (os.path.basename(src), folder, contents))
+    try:
+        printv("cp %s %s" % (src, dst), verbose=verbose)
         shutil.copy(src, dst)
     except Exception as e:
         if sys.hexversion < 0x03000000:
@@ -318,39 +415,38 @@ def copy(src, dst):
         raise # Must be another error
 
 
-# =======================================================================================================================
-# Get SCT version
-# =======================================================================================================================
-def get_sct_version():
 
-    sct_commit = ''
-    sct_branch = ''
+def rmtree(folder, verbose=1):
+    """Recursively remove folder, almost like shutil.rmtree
+    """
+    try:
+        printv("rm -rf %s" % (folder), verbose=verbose)
+        shutil.rmtree(folder, ignore_errors=True)
+    except Exception as e:
+        raise # Must be another error
+
+
+def get_sct_version():
+    sct_commit = 'unknown'
+    sct_branch = 'unknown'
 
     # get path of SCT
-    path_script = os.path.dirname(__file__)
-    path_sct = os.path.dirname(path_script)
+    path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
 
-    # fetch true commit number and branch
-    path_curr = os.path.abspath(os.curdir)
-    os.chdir(path_sct)
-    # first, make sure there is a .git folder
-    if os.path.isdir('.git'):
+    if os.path.isdir(os.path.join(path_sct, '.git')):
         install_type = 'git'
-        sct_commit = commands.getoutput('git rev-parse HEAD')
-        sct_branch = commands.getoutput('git branch | grep \*').strip('* ')
-        if not (sct_commit.isalnum()):
-            sct_commit = 'unknown'
-            sct_branch = 'unknown'
-        # print '  branch: ' + sct_branch
+        status, output = run(["git", "rev-parse", "HEAD"], verbose=0, cwd=path_sct)
+        if status == 0:
+            sct_commit = output
+        status, output = run(["git", "rev-parse", "--abbrev-ref", "HEAD"], verbose=0, cwd=path_sct)
+        if status == 0:
+            sct_branch = output
     else:
         install_type = 'package'
-    # fetch version
+
     with io.open(os.path.join(path_sct, 'version.txt'), 'r') as myfile:
         version_sct = myfile.read().replace('\n', '')
-        # print '  version: ' + version_sct
 
-    # go back to previous dir
-    os.chdir(path_curr)
     return install_type, sct_commit, sct_branch, version_sct
 
 #
@@ -397,8 +493,8 @@ def checkRAM(os, verbose=1):
         ram_total = float(ram_split[3])
 
         # Get process info
-        ps = subprocess.Popen(['ps', '-caxm', '-orss,comm'], stdout=subprocess.PIPE).communicate()[0]
-        vm = subprocess.Popen(['vm_stat'], stdout=subprocess.PIPE).communicate()[0]
+        ps = subprocess.Popen(['ps', '-caxm', '-orss,comm'], stdout=subprocess.PIPE).communicate()[0].decode()
+        vm = subprocess.Popen(['vm_stat'], stdout=subprocess.PIPE).communicate()[0].decode()
 
         # Iterate processes
         processLines = ps.split('\n')
@@ -452,9 +548,11 @@ class Timer:
         remaining_time = remaining_iterations * time_one_iteration
         hours, rem = divmod(remaining_time, 3600)
         minutes, seconds = divmod(rem, 60)
-        log.info('\rRemaining time: {:0>2}:{:0>2}:{:05.2f} ({}/{})                      '.format(int(hours), int(minutes), seconds, self.number_of_iteration_done, self.total_number_of_iteration))
-        if log.handlers:
-            [h.flush() for h in log.handlers]
+        no_new_line_log('Remaining time: {:0>2}:{:0>2}:{:05.2f} ({}/{})                      '
+                        .format(int(hours), int(minutes), seconds, self.number_of_iteration_done,
+                         self.total_number_of_iteration))
+
+
 
     def iterations_done(self, total_num_iterations_done):
         if total_num_iterations_done != 0:
@@ -465,15 +563,17 @@ class Timer:
             remaining_time = remaining_iterations * time_one_iteration
             hours, rem = divmod(remaining_time, 3600)
             minutes, seconds = divmod(rem, 60)
-            log.info('\rRemaining time: {:0>2}:{:0>2}:{:05.2f} ({}/{})                      '.format(int(hours), int(minutes), seconds, self.number_of_iteration_done, self.total_number_of_iteration))
-            if log.handlers:
-                [h.flush() for h in log.handlers]
+            no_new_line_log('Remaining time: {:0>2}:{:0>2}:{:05.2f} ({}/{})                      '
+                            .format(int(hours), int(minutes), seconds, self.number_of_iteration_done,
+                             self.total_number_of_iteration))
+
 
     def stop(self):
         self.time_list.append(time.time() - self.start_timer)
         hours, rem = divmod(self.time_list[-1], 3600)
         minutes, seconds = divmod(rem, 60)
-        printv('Total time: {:0>2}:{:0>2}:{:05.2f}                      '.format(int(hours), int(minutes), seconds))
+        log.info('\nTotal time: {:0>2}:{:0>2}:{:05.2f}                      '
+               .format(int(hours), int(minutes), seconds))
         self.is_started = False
 
     def printRemainingTime(self):
@@ -483,21 +583,17 @@ class Timer:
         hours, rem = divmod(remaining_time, 3600)
         minutes, seconds = divmod(rem, 60)
         if self.is_started:
-            log.info('\rRemaining time: {:0>2}:{:0>2}:{:05.2f} ({}/{})                      '.format(int(hours), int(minutes), seconds, self.number_of_iteration_done, self.total_number_of_iteration))
-            if log.handlers:
-                [h.flush() for h in log.handlers]
+            no_new_line_log('Remaining time: {:0>2}:{:0>2}:{:05.2f} ({}/{})                      '.format(int(hours), int(minutes), seconds, self.number_of_iteration_done, self.total_number_of_iteration))
         else:
-            printv('Total time: {:0>2}:{:0>2}:{:05.2f}                      '.format(int(hours), int(minutes), seconds))
+            log.info('\nTotal time: {:0>2}:{:0>2}:{:05.2f}                      '.format(int(hours), int(minutes), seconds))
 
     def printTotalTime(self):
         hours, rem = divmod(self.time_list[-1], 3600)
         minutes, seconds = divmod(rem, 60)
         if self.is_started:
-            log.info('\rRemaining time: {:0>2}:{:0>2}:{:05.2f}                      '.format(int(hours), int(minutes), seconds))
-            if log.handlers:
-                [h.flush() for h in log.handlers]
+            no_new_line_log('Remaining time: {:0>2}:{:0>2}:{:05.2f}                      '.format(int(hours), int(minutes), seconds))
         else:
-            printv('Total time: {:0>2}:{:0>2}:{:05.2f}                      '.format(int(hours), int(minutes), seconds))
+            log.info('\nTotal time: {:0>2}:{:0>2}:{:05.2f}                      '.format(int(hours), int(minutes), seconds))
 
 class ForkStdoutToFile(object):
     """Use to redirect stdout to file
@@ -632,7 +728,7 @@ def create_folder(folder):
         try:
             os.makedirs(folder)
             return 0
-        except OSError, e:
+        except OSError as e:
             if e.errno != errno.EEXIST:
                 return 2
     else:
@@ -727,11 +823,13 @@ class TempFolder(object):
 
         :param filename: The filename to copy into the folder.
         """
+        file_fname = os.path.basename(filename)
         copy(filename, self.path_tmp)
+        return self.path_tmp + '/' + file_fname
 
     def cleanup(self):
         """Remove the created folder and its contents."""
-        shutil.rmtree(self.path_tmp, ignore_errors=True)
+        rmtree(self.path_tmp)
 
 
 #=======================================================================================================================
@@ -814,7 +912,7 @@ def generate_output_file(fname_in, fname_out, verbose=1):
 #=======================================================================================================================
 # check if dependant software is installed
 def check_if_installed(cmd, name_software):
-    status, output = commands.getstatusoutput(cmd)
+    status, output = run(cmd)
     if status != 0:
         printv('\nERROR: ' + name_software + ' is not installed.\nExit program.\n')
         sys.exit(2)
@@ -985,7 +1083,7 @@ def get_interpolation(program, interp):
         printv('WARNING (' + os.path.basename(__file__) + '): interp_program not assigned. Using linear for ants_affine.', 1, 'warning')
         interp_program = ' -n Linear'
     # return
-    return interp_program
+    return interp_program.strip().split()
 
 
 #=======================================================================================================================
@@ -1311,3 +1409,10 @@ class RunError(Error):
     sct runtime error
     """
     pass
+
+if __name__ == "__main__":
+    info = get_sct_version()
+    print(info)
+
+
+

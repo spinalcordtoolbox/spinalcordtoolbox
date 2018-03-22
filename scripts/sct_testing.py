@@ -163,9 +163,14 @@ def main(args=None):
             # if param_test.list_fname_gt:
             #     param_test.fname_gt = param_test.list_fname_gt[i]
             # test function
-            param_test = test_function(param_test)
-            list_status_function.append(param_test.status)
-            list_output.append(param_test.output)
+            try:
+                param_test = test_function(param_test)
+            except Exception as e:
+                list_status_function.append(1)
+                list_output.append("TODO exception: %s" % e)
+            else:
+                list_status_function.append(param_test.status)
+                list_output.append(param_test.output)
         # manage status
         if any(list_status_function):
             if 1 in list_status_function:
@@ -183,7 +188,7 @@ def main(args=None):
         # append status function to global list of status
         list_status.append(status)
 
-    print 'status: ' + str(list_status)
+    print('status: ' + str(list_status))
 
     # display elapsed time
     elapsed_time = time.time() - start_time
@@ -195,12 +200,12 @@ def main(args=None):
     # remove temp files
     if param.remove_tmp_file:
         sct.printv('\nRemove temporary files...', 0)
-        shutil.rmtree(param.path_tmp)
+        sct.rmtree(param.path_tmp)
 
     e = 0
     if sum(list_status) != 0:
         e = 1
-    # print e
+    # print(e)
 
     sys.exit(e)
 
@@ -239,6 +244,8 @@ def fill_functions():
         'sct_create_mask',
         'sct_crop_image',
         'sct_dice_coefficient',
+        'sct_deepseg_gm',
+        'sct_deepseg_sc',
         'sct_detect_pmj',
         'sct_dmri_compute_dti',
         'sct_dmri_concat_bvals',
@@ -375,13 +382,13 @@ def test_function(param_test):
     param_test.args_with_path = parser.dictionary_to_string(dict_args_with_path)
 
     # check if parser has key '-ofolder' that has not been added already. If so, then assign output folder
-    if parser.options.has_key('-ofolder') and '-ofolder' not in dict_args_with_path:
+    if "-ofolder" in parser.options and '-ofolder' not in dict_args_with_path:
         param_test.args_with_path += ' -ofolder ' + param_test.path_output
 
     # open log file
     # Note: the statement below is not included in the if, because even if redirection does not occur, we want the file to be create otherwise write_to_log will fail
     param_test.fname_log = os.path.join(param_test.path_output, param_test.function_to_test + '.log')
-    stdout_log = file(param_test.fname_log, 'w')
+    stdout_log = io.open(param_test.fname_log, 'w')
     # redirect to log file
     if param_test.redirect_stdout:
         param_test.stdout_orig = sys.stdout
@@ -427,10 +434,10 @@ def test_function(param_test):
     param_test.output += '\n====================================================================================================\n' + cmd + '\n====================================================================================================\n\n'  # copy command
     time_start = time.time()
     try:
-        param_test.status, o = sct.run(cmd, 0, error_exit='warning')
+        param_test.status, o = sct.run(cmd, 0)
         if param_test.status:
             raise Exception
-    except Exception, err:
+    except Exception as err:
         param_test.status = 1
         param_test.output += str(err)
         write_to_log_file(param_test.fname_log, param_test.output, 'w')
@@ -443,7 +450,7 @@ def test_function(param_test):
     param_test.output += '\n\n====================================================================================================\n' + 'INTEGRITY TESTING' + '\n====================================================================================================\n\n'  # copy command
     try:
         param_test = module_testing.test_integrity(param_test)
-    except Exception, err:
+    except Exception as err:
         param_test.status = 2
         param_test.output += str(err)
         write_to_log_file(param_test.fname_log, param_test.output, 'w')
