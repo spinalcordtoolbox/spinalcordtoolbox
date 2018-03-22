@@ -54,6 +54,7 @@ def resolve_module(framework_name):
         'scikit-learn': ('sklearn', False),
         'pyqt': ('PyQt4', False),
         'Keras': ('keras', True),
+        'opencv': ('cv2', False),
     }
 
     try:
