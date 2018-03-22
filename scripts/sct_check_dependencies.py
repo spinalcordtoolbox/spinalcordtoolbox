@@ -25,12 +25,10 @@ class Param:
         self.create_log_file = 0
         self.complete_test = 0
 
-
+import argparse
 
 import sys, io, os, platform, importlib
 import sct_utils as sct
-from msct_parser import Parser
-
 
 class bcolors:
     HEADER = '\033[95m'
@@ -108,10 +106,10 @@ def main():
 
     # Check input parameters
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
-    if '-c' in arguments:
+    arguments = parser.parse_args()
+    if arguments.complete:
         complete_test = 1
-    if '-log' in arguments:
+    if arguments.generate_log:
         create_log_file = 1
 
     # use variable "verbose" when calling sct.run for more clarity
@@ -392,20 +390,22 @@ def check_package_version(installed, required, package_name):
 # ==========================================================================================
 def get_parser():
     # Initialize the parser
-    parser = Parser(__file__)
-    parser.usage.set_description('Check the installation and environment variables of the'
-                                 ' toolbox and its dependencies.')
-    parser.add_option(name="-c",
-                      description="Complete test.",
-                      mandatory=False)
-    parser.add_option(name="-log",
-                      description="Generate log file.",
-                      mandatory=False)
-    parser.add_option(name="-l",
-                      type_value=None,
-                      description="Generate log file.",
-                      deprecated_by="-log",
-                      mandatory=False)
+
+    parser = argparse.ArgumentParser(
+     description='Check the installation and environment variables of the'
+                                 ' toolbox and its dependencies.',
+    )
+
+    parser.add_argument("--complete", "-c",
+     help="Complete test.",
+     action="store_true",
+    )
+
+    parser.add_argument("--generate-log", "-log", "-l",
+     help="Generate log file.",
+     action="store_true",
+    )
+
     return parser
 
 
