@@ -53,6 +53,7 @@ def resolve_module(framework_name):
         'pyqt': ('PyQt4', False),
         'Keras': ('keras', True),
         'opencv': ('cv2', False),
+        'mkl-service': (None, False),
     }
 
     try:
@@ -180,6 +181,8 @@ def main():
     version_requirements = get_version_requirements()
     for i in version_requirements:
         module_name, suppress_stderr = resolve_module(i)
+        if module_name is None:
+            continue
         print_line('Check if %s (%s) is installed' % (i, version_requirements.get(i)))
         try:
             module = module_import(module_name, suppress_stderr)
