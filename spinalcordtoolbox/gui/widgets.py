@@ -139,7 +139,6 @@ class AnatomicalCanvas(FigureCanvas):
         self._axes.axis('off')
         self.view = self._axes.imshow(
             data,
-            aspect=aspect,
             cmap=self._params.cmap,
             interpolation=self._params.interp,
             vmin=self._params.vmin,
@@ -152,7 +151,7 @@ class AnatomicalCanvas(FigureCanvas):
         self.points = self._axes.plot([], [], '.r', markersize=7)[0]
 
     def title(self, message):
-        self._fig.suptitle(message)
+        self._fig.suptitle(message, fontsize=10)
 
     def annotate(self, x, y, label):
         self.annotations.append(self._axes.annotate(label, xy=(x, y), xytext=(-3, 3),
@@ -160,9 +159,10 @@ class AnatomicalCanvas(FigureCanvas):
                                                     va='bottom', color='r'))
 
     def clear(self):
-        for i in self.annotations:
-            i.remove()
-        self.annotations = []
+        if hasattr(self, 'annotations'):
+            for i in self.annotations:
+                i.remove()
+            self.annotations = []
         self.points.set_xdata([])
         self.points.set_ydata([])
 
@@ -330,16 +330,16 @@ class AxialCanvas(AnatomicalCanvas):
             self.point_selected_signal.emit(self._x, event.ydata, event.xdata)
 
     def plot_points(self):
-        logger.debug('Plotting points {}'.format(self._parent._controller.points))
-        if self._parent._controller.points:
-            points = [x for x in self._parent._controller.points]
+        if self._plot_points:
+            controller = self._parent._controller
+            logger.debug('Plotting points {}'.format(controller.points))
+            points = [x for x in controller.points if x[0] == controller.position[0]]
             try:
                 xs, ys, zs, _ = zip(*points)
-                self.points.set_xdata(ys)
-                self.points.set_ydata(zs)
+                self.clear()
+                self.plot_data(zs, ys, [])
             except ValueError:
-                self.points.set_xdata([])
-                self.points.set_ydata([])
+                self.clear()
             self.view.figure.canvas.draw()
 
     def plot_position(self):

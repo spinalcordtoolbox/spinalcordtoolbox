@@ -40,19 +40,14 @@ class SagittalController(base.BaseController):
 
 
 class SagittalDialog(base.BaseDialog):
+
     def _init_canvas(self, parent):
         layout = QtGui.QHBoxLayout()
         parent.addLayout(layout)
-        vlayout = QtGui.QVBoxLayout()
 
-        layout.addLayout(vlayout)
         self.labels = widgets.VertebraeWidget(self, self.params.vertebraes)
         self.labels.label = self.params.start_vertebrae
-        vlayout.addWidget(self.labels)
-
-        self.axial = widgets.AxialCanvas(self, 2, 2, vertical_nav=True)
-        self.axial.refresh()
-        vlayout.addWidget(self.axial)
+        layout.addWidget(self.labels)
 
         self.sagittal = widgets.SagittalCanvas(self, plot_points=True, annotate=True)
         self.sagittal.title(self.params.subtitle)
@@ -68,7 +63,6 @@ class SagittalDialog(base.BaseDialog):
             label = self.labels.label
             self._controller.select_point(x, y, z, label)
             self.labels.refresh()
-            self.axial.refresh()
             self.sagittal.refresh()
 
             index = self.params.vertebraes.index(label)
@@ -86,13 +80,11 @@ class SagittalDialog(base.BaseDialog):
     def increment_vertical_nav(self):
         x, y, z = self._controller.position
         self._controller.position = (x, y, z + 1)
-        self.axial.refresh()
         self.sagittal.refresh()
 
     def decrement_vertical_nav(self):
         x, y, z = self._controller.position
         self._controller.position = (x, y, z - 1)
-        self.axial.refresh()
         self.sagittal.refresh()
 
 
@@ -100,6 +92,7 @@ def launch_sagittal_dialog(input_file, output_file, params):
     if not params.vertebraes:
         params.vertebraes = [3, 5]
     params.input_file_name = input_file.absolutepath
+    params.subtitle = u'Use Left and Right arrows to navigate the vertical plane'
     controller = SagittalController(input_file, params, output_file)
     controller.reformat_image()
 

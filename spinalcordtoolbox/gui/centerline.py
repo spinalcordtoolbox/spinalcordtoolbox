@@ -52,9 +52,6 @@ class CenterlineController(base.BaseController):
             self.increment_slice()
 
     def select_point(self, x, y, z):
-        if self.mode == 'CUSTOM' and not self._slice:
-            raise InvalidActionWarning('Select a sagittal slice before selecting a point.')
-        x = self._slice
         if not self.valid_point(x, y, z):
             raise ValueError('Invalid point selected {}'.format((x, y, z)))
 
@@ -135,9 +132,10 @@ class Centerline(base.BaseDialog):
         layout = QtGui.QHBoxLayout()
         parent.addLayout(layout)
         self.sagittal_canvas = widgets.SagittalCanvas(self, plot_points=True, horizontal_nav=True)
+        self.sagittal_canvas.title(self.params.subtitle)
         layout.addWidget(self.sagittal_canvas)
 
-        self.axial_canvas = widgets.AxialCanvas(self, crosshair=True)
+        self.axial_canvas = widgets.AxialCanvas(self, plot_points=True, crosshair=True)
         self.axial_canvas.plot_points()
         layout.addWidget(self.axial_canvas)
 
@@ -153,7 +151,7 @@ class Centerline(base.BaseDialog):
         custom_mode.setToolTip('Manually select the axis slice on sagittal plane')
         custom_mode.toggled.connect(self.on_toggle_mode)
         custom_mode.mode = 'CUSTOM'
-        custom_mode.sagittal_title = 'Select an axial slice'
+        custom_mode.sagittal_title = 'Select an axial slice.\n%s' % self.params.subtitle
         custom_mode.axial_title = 'Select the center of the spinal cord'
         layout.addWidget(custom_mode)
 
@@ -161,7 +159,7 @@ class Centerline(base.BaseDialog):
         auto_mode.setToolTip('Automatically move down the axis slice on the sagittal plane')
         auto_mode.toggled.connect(self.on_toggle_mode)
         auto_mode.mode = 'AUTO'
-        auto_mode.sagittal_title = 'The axial slice is automatically selected'
+        auto_mode.sagittal_title = 'The axial slice is automatically selected\n%s' % self.params.subtitle
         auto_mode.axial_title = 'Click in the center of the spinal cord'
         layout.addWidget(auto_mode)
 
@@ -234,6 +232,7 @@ class Centerline(base.BaseDialog):
 
 def launch_centerline_dialog(input_file, output_file, params):
     params.input_file_name = input_file.absolutepath
+    params.subtitle = u'Use the Up and Down arrow to navigate the axial plane'
     controller = CenterlineController(input_file, params, output_file)
     controller.reformat_image()
 
