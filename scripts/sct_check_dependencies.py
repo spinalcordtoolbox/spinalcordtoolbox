@@ -180,7 +180,7 @@ def main():
     version_requirements = get_version_requirements()
     for i in version_requirements:
         module_name, suppress_stderr = resolve_module(i)
-        print_line('Check if ' + i + ' (' + version_requirements.get(i) + ') is installed')
+        print_line('Check if %s (%s) is installed' % (i, version_requirements.get(i)))
         try:
             module = module_import(module_name, suppress_stderr)
             # get version
@@ -356,11 +356,14 @@ def get_version_requirements():
     file = open(os.path.join(path_sct, "install", "requirements", "requirementsConda.txt"))
     dict = {}
     while True:
-        line = file.readline()
+        line = file.readline().rstrip()
         if line == "":
             break  # OH GOD HELP
         arg = line.split("==")
-        dict[arg[0]] = arg[1].rstrip("\n")
+        if len(arg) == 1:
+            dict[arg[0]] = None
+        else:
+            dict[arg[0]] = arg[1]
     file.close()
     return dict
 
@@ -382,6 +385,8 @@ def get_version_requirements_pip():
 
 def check_package_version(installed, required, package_name):
     if package_name in required:
+        if required[package_name] is None:
+            return True
         if required[package_name] == installed:
             return True
         return False
