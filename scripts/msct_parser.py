@@ -560,18 +560,16 @@ class Usage:
         usage = self.header + self.description + self.usage + self.arguments_string
 
         if error:
-            sct.log.error(error + '\nAborted...')
             sct.log.info(usage)
-            raise SyntaxError(error)
+            sct.log.error(error + '\nAborted...')
         else:
-            return usage
+            sct.log.info(usage)
 
     def error(self, error=None):
+        self.generate(error)
         if error:
-            self.generate(error)
-        else:
-            sct.log.error(self.generate())
-            exit(0)
+            exit(255)
+        exit(0)
 
     def print_list_with_brackets(self, l):
         type_value = '{'
