@@ -142,13 +142,7 @@ def get_parser():
     # Initialize the parser
     parser = Parser(__file__)
     parser.usage.set_description('''This program segments automatically the spinal cord on T1- and T2-weighted images, for any field of view. You must provide the type of contrast, the image as well as the output folder path.
-Initialization is provided by a spinal cord detection module based on the elliptical Hough transform on multiple axial slices. The result of the detection is available as a PNG image using option -detection-display.
-Parameters of the spinal cord detection are :
- - the position (in inferior-superior direction) of the initialization
- - the number of axial slices
- - the gap (in pixel) between two axial slices
- - the approximate radius of the spinal cord
-
+The segmentation follows the spinal cord centerline, which is provided by an automatic tool: Optic. The initialization of the segmentation is made on the median slice of the centerline, and can be ajusted using the -init parameter. The initial radius of the tubular mesh that will be propagated should be adapted to size of the spinal cord on the initial propagation slice.
 Primary output is the binary mask of the spinal cord segmentation. This method must provide VTK triangular mesh of the segmentation (option -mesh). Spinal cord centerline is available as a binary image (-centerline-binary) or a text file with coordinates in world referential (-centerline-coord).
 Cross-sectional areas along the spinal cord can be available (-cross).
 Several tips on segmentation correction can be found on the "Correction Tips" page of the documentation while advices on parameters adjustments can be found on the "Parameters" page.
@@ -231,14 +225,7 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       type_value=None,
                       description="output: low-resolution mesh",
                       mandatory=False)
-    parser.add_option(name="-detect-nii",
-                      type_value=None,
-                      description="output: spinal cord detection as a nifti image",
-                      mandatory=False)
-    parser.add_option(name="-detect-png",
-                      type_value=None,
-                      description="output: spinal cord detection as a PNG image",
-                      mandatory=False)
+
 
     parser.usage.addSection("\nOptions helping the segmentation")
     parser.add_option(name="-init-centerline",
@@ -266,33 +253,21 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       type_value="float",
                       description="approximate radius (in mm) of the spinal cord, default is 4",
                       mandatory=False)
-    parser.add_option(name="-detect-n",
-                      type_value="int",
-                      description="number of axial slices computed in the detection process, default is 4",
-                      mandatory=False)
-    parser.add_option(name="-detect-gap",
-                      type_value="int",
-                      description="gap along Z direction (in mm) for the detection process, default is 4",
-                      mandatory=False)
-    parser.add_option(name="-init-validation",
-                      type_value=None,
-                      description="enable validation on spinal cord detection based on discriminant analysis",
-                      mandatory=False)
     parser.add_option(name="-nbiter",
                       type_value="int",
-                      description="stop condition: number of iteration for the propagation for both direction, default is 200",
+                      description="stop condition (affects only the Z propogation): number of iteration for the propagation for both direction, default is 200",
                       mandatory=False)
     parser.add_option(name="-max-area",
                       type_value="float",
-                      description="[mm^2], stop condition: maximum cross-sectional area, default is 120",
+                      description="[mm^2], stop condition (affects only the Z propogation): maximum cross-sectional area, default is 120",
                       mandatory=False)
     parser.add_option(name="-max-deformation",
                       type_value="float",
-                      description="[mm], stop condition: maximum deformation per iteration, default is 2.5",
+                      description="[mm], stop condition (affects only the Z propogation): maximum deformation per iteration, default is 2.5",
                       mandatory=False)
     parser.add_option(name="-min-contrast",
                       type_value="float",
-                      description="[intensity value], stop condition: minimum local SC/CSF contrast, default is 50",
+                      description="[intensity value], stop condition (affects only the Z propogation): minimum local SC/CSF contrast, default is 50",
                       mandatory=False)
     parser.add_option(name="-d",
                       type_value="float",
@@ -318,6 +293,34 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       type_value='image_nifti',
                       description='File name of ground-truth segmentation.',
                       mandatory=False)
+
+    ### DEPRECATED OPTIONS
+    parser.add_option(name="-detect-nii",
+                      type_value=None,
+                      description="output: spinal cord detection as a nifti image",
+                      mandatory=False,
+                      deprecated=True)
+    parser.add_option(name="-detect-png",
+                      type_value=None,
+                      description="output: spinal cord detection as a PNG image",
+                      mandatory=False,
+                      deprecated=True)
+    parser.add_option(name="-detect-n",
+                      type_value="int",
+                      description="number of axial slices computed in the detection process, default is 4",
+                      mandatory=False,
+                      deprecated=True)
+    parser.add_option(name="-detect-gap",
+                      type_value="int",
+                      description="gap along Z direction (in mm) for the detection process, default is 4",
+                      mandatory=False,
+                      deprecated=True)
+    parser.add_option(name="-init-validation",
+                      type_value=None,
+                      description="enable validation on spinal cord detection based on discriminant analysis",
+                      mandatory=False,
+                      deprecated=True)
+
     return parser
 
 
