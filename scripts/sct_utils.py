@@ -318,7 +318,7 @@ def display_viewer_syntax(files, colormaps=[], minmax=[], opacities=[], mode='',
     sct.display_viewer_syntax([file1, file2, file3])
     sct.display_viewer_syntax([file1, file2], colormaps=['gray', 'red'], minmax=['', '0,1'], opacities=['', '0.7'])
     """
-    list_viewer = ['fslview', 'fslview_deprecated', 'fsleyes']  # list of known viewers. Can add more.
+    list_viewer = ['fsleyes', 'fslview_deprecated', 'fslview']  # list of known viewers. Can add more.
     dict_fslview = {'gray': 'Greyscale', 'red-yellow': 'Red-Yellow', 'blue-lightblue': 'Blue-Lightblue', 'red': 'Red', 'random': 'Random-Rainbow'}
     dict_fsleyes = {'gray': 'greyscale', 'red-yellow': 'red-yellow', 'blue-lightblue': 'blue-lightblue', 'red': 'red', 'random': 'random'}
     selected_viewer = None
