@@ -379,12 +379,12 @@ class SpinalCordStraightener(object):
                               (z_centerline[superior_bound] - middle_slice) * factor_curved_straight + middle_slice]
 
             if verbose == 2:
-                sct.printv("Length of spinal cord = ", str(length_centerline))
-                sct.printv("Size of spinal cord in z direction = ", str(size_z_centerline))
-                sct.printv("Ratio length/size = ", str(factor_curved_straight))
+                sct.printv("Length of spinal cord = " + str(length_centerline))
+                sct.printv("Size of spinal cord in z direction = " + str(size_z_centerline))
+                sct.printv("Ratio length/size = " + str(factor_curved_straight))
                 sct.printv("Safe zone boundaries: ")
-                sct.printv("Curved space = ", bound_curved)
-                sct.printv("Straight space = ", bound_straight)
+                sct.printv("Curved space = " + str(bound_curved))
+                sct.printv("Straight space = " + str(bound_straight))
 
             # 4. compute and generate straight space
             # points along curved centerline are already regularly spaced.
@@ -481,12 +481,17 @@ class SpinalCordStraightener(object):
                 straight_size_y = int(xy_space / py)
                 warp_space_x = [int(np.round(nx / 2)) - straight_size_x, int(np.round(nx / 2)) + straight_size_x]
                 warp_space_y = [int(np.round(ny / 2)) - straight_size_y, int(np.round(ny / 2)) + straight_size_y]
+                
                 if warp_space_x[0] < 0:
                     warp_space_x[1] += warp_space_x[0] - 2
                     warp_space_x[0] = 0
+                if warp_space_x[1] >= nx:
+                    warp_space_x[1] = nx - 1
                 if warp_space_y[0] < 0:
                     warp_space_y[1] += warp_space_y[0] - 2
                     warp_space_y[0] = 0
+                if warp_space_y[1] >= ny:
+                    warp_space_y[1] = ny - 1
 
                 sct.run(['sct_crop_image',
                  '-i', 'tmp.centerline_pad.nii.gz',
