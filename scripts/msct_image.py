@@ -14,9 +14,11 @@
 
 import sys, io, os, math
 
+from nibabel import load, spatialimages
 import numpy as np
 from scipy.ndimage import map_coordinates
 
+from msct_types import Coordinate
 import sct_utils as sct
 
 
@@ -274,8 +276,6 @@ class Image(object):
         }
 
         orientation_matrix = orientations.io_orientation(self.hdr.get_best_affine())
-        ori = orientation_dic[tuple(orientation_matrix[0])] + orientation_dic[tuple(orientation_matrix[1])] + orientation_dic[tuple(orientation_matrix[2])]
-
         ori = "".join([orientation_dic[tuple(i)] for i in orientation_matrix])
         return ori
 
@@ -285,7 +285,6 @@ class Image(object):
         :param path: path of the file from which the image will be loaded
         :return:
         """
-        from nibabel import load, spatialimages
 
         try:
             self.im_file = load(path)
@@ -463,7 +462,6 @@ class Image(object):
         Coordinate list can also be sorted by x, y, z, or the value with the parameter sorting='x', sorting='y', sorting='z' or sorting='value'
         If reverse_coord is True, coordinate are sorted from larger to smaller.
         """
-        from msct_types import Coordinate
         n_dim = 1
         if self.dim[3] == 1:
             n_dim = 3
@@ -661,6 +659,11 @@ class Image(object):
         return perm, inversion
 
     def get_orientation_3d(self):
+        """Returns the orientation of an image.
+
+        Uses the binary implementation of `get_orientation`. Recommend using
+        `get_orientation` instead and deprecate this function.
+        """
         status, output = sct.run("isct_orientation3d -i %s -get" % self.absolutepath, 0)
 
         if status != 0:
