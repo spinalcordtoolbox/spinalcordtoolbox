@@ -3,6 +3,8 @@
 from __future__ import absolute_import
 from __future__ import division
 
+from collections import namedtuple
+
 import logging
 import sys
 
@@ -14,6 +16,9 @@ mpl.use('Qt4Agg')
 from PyQt4 import QtCore, QtGui
 
 logger = logging.getLogger(__name__)
+
+
+Position = namedtuple('Position', ('x', 'y', 'z'))
 
 
 class AnatomicalParams(object):
@@ -110,28 +115,51 @@ class BaseDialog(QtGui.QDialog):
         self._init_controls(layout)
         self._init_footer(layout)
 
-        QtGui.QShortcut(QtGui.QKeySequence.Undo, self, self.on_undo)
-        QtGui.QShortcut(QtGui.QKeySequence.Save, self, self.on_save_quit)
-        QtGui.QShortcut(QtGui.QKeySequence.Quit, self, self.close)
+        events = (
+            (QtGui.QKeySequence.Undo, self.on_undo),
+            (QtGui.QKeySequence.Save, self.on_save_quit),
+            (QtGui.QKeySequence.Quit, self.close),
+            (QtGui.QKeySequence.MoveToNextChar, self.increment_vertical_nav),
+            (QtGui.QKeySequence.MoveToPreviousChar, self.decrement_vertical_nav),
+            (QtGui.QKeySequence.MoveToNextLine, self.increment_horizontal_nav),
+            (QtGui.QKeySequence.MoveToPreviousLine, self.decrement_horizontal_nav)
+        )
 
-        QtGui.QShortcut(QtGui.QKeySequence.MoveToNextChar, self, self.increment_vertical_nav)
-        QtGui.QShortcut(QtGui.QKeySequence.MoveToPreviousChar, self, self.decrement_vertical_nav)
-
-        QtGui.QShortcut(QtGui.QKeySequence.MoveToNextLine, self, self.increment_horizontal_nav)
-        QtGui.QShortcut(QtGui.QKeySequence.MoveToPreviousLine, self, self.decrement_horizontal_nav)
+        for event, action in events:
+            QtGui.QShortcut(event, self, action)
 
         self.setWindowTitle(self.params.dialog_title)
 
     def increment_vertical_nav(self):
+        """Action to increment the anatonical viewing position.
+
+        The common case is when the right arrow key is pressed. Ignore implementing
+        this function if no navigation functionality is required
+        """
         pass
 
     def decrement_vertical_nav(self):
+        """Action to decrement the anatonical viewing position.
+
+        The common case is when the left arrow key is pressed. Ignore implementing
+        this function if no navigation functionality is required
+        """
         pass
 
     def increment_horizontal_nav(self):
+        """Action to increment the anatonical viewing position.
+
+        The common case is when the down arrow key is pressed. Ignore implementing
+        this function if no navigation functionality is required
+        """
         pass
 
     def decrement_horizontal_nav(self):
+        """Action to decrement the anatonical viewing position.
+
+        The common case is when the up arrow key is pressed. Ignore implementing
+        this function if no navigation functionality is required
+        """
         pass
 
     def _init_canvas(self, parent):
@@ -243,7 +271,7 @@ class BaseController(object):
     _overlay_image = None
     _dialog = None
     default_position = ()
-    position = None
+    position = ()
     saved = False
 
     def __init__(self, image, params, init_values=None):
@@ -270,7 +298,7 @@ class BaseController(object):
         x, y, z, t, dx, dy, dz, dt = self.image.dim
         self.params.aspect = dx / dy
         self.params.offset = x * dx
-        self.default_position = (x // 2, y // 2, z // 2)
+        self.default_position = Position(x // 2, y // 2, z // 2)
 
         clip = np.percentile(self.image.data, (self.params.min,
                                                self.params.max))
@@ -303,9 +331,8 @@ class BaseController(object):
         """Remove the last point selected and refresh the UI"""
         if self.points:
             x, y, z, label = self.points[-1]
-            self.position = (x, y, z)
+            self.position = Position(x, y, z)
             self.points = self.points[:-1]
-            self._slice = self.position[0]
             self.label = label
             logger.debug('Point removed {}'.format(self.position))
         else:

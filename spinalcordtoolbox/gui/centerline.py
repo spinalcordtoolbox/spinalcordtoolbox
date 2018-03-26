@@ -29,7 +29,7 @@ class CenterlineController(base.BaseController):
 
     def reformat_image(self):
         super(CenterlineController, self).reformat_image()
-        max_x, _, max_z = self.image.dim[:3]
+        max_x, max_z = self.image.dim[:3:2]
         self.params.num_points = self.params.num_points or 11
 
         # if the starting slice is of invalid value then use default value
@@ -151,7 +151,7 @@ class Centerline(base.BaseDialog):
         custom_mode.setToolTip('Manually select the axis slice on sagittal plane')
         custom_mode.toggled.connect(self.on_toggle_mode)
         custom_mode.mode = 'CUSTOM'
-        custom_mode.sagittal_title = 'Select an axial slice.\n%s' % self.params.subtitle
+        custom_mode.sagittal_title = 'Select an axial slice.\n{}'.format(self.params.subtitle)
         custom_mode.axial_title = 'Select the center of the spinal cord'
         layout.addWidget(custom_mode)
 
@@ -159,7 +159,7 @@ class Centerline(base.BaseDialog):
         auto_mode.setToolTip('Automatically move down the axis slice on the sagittal plane')
         auto_mode.toggled.connect(self.on_toggle_mode)
         auto_mode.mode = 'AUTO'
-        auto_mode.sagittal_title = 'The axial slice is automatically selected\n%s' % self.params.subtitle
+        auto_mode.sagittal_title = 'The axial slice is automatically selected\n{}'.format(self.params.subtitle)
         auto_mode.axial_title = 'Click in the center of the spinal cord'
         layout.addWidget(auto_mode)
 

@@ -106,6 +106,7 @@ class AnatomicalCanvas(FigureCanvas):
     _horizontal_nav = None
     _vertical_nav = None
     _navigation_state = False
+    annotations = []
 
     def __init__(self, parent, width=8, height=8, dpi=100, crosshair=False, plot_points=False,
                  annotate=False, vertical_nav=False, horizontal_nav=False):
@@ -159,10 +160,9 @@ class AnatomicalCanvas(FigureCanvas):
                                                     va='bottom', color='r'))
 
     def clear(self):
-        if hasattr(self, 'annotations'):
-            for i in self.annotations:
-                i.remove()
-            self.annotations = []
+        for i in self.annotations:
+            i.remove()
+        self.annotations = []
         self.points.set_xdata([])
         self.points.set_ydata([])
 
@@ -265,12 +265,12 @@ class SagittalCanvas(AnatomicalCanvas):
         if self._plot_points:
             logger.debug('Plotting points {}'.format(self._parent._controller.points))
             points = self._parent._controller.points
+            self.clear()
             try:
                 xs, ys, zs, labels = zip(*points)
-                self.clear()
                 self.plot_data(ys, xs, labels)
             except ValueError:
-                self.clear()
+                pass
 
     def plot_position(self):
         position = self._parent._controller.position
@@ -300,12 +300,12 @@ class CorrinalCanvas(AnatomicalCanvas):
         logger.debug('Plotting points {}'.format(self._parent._controller.points))
         if self._parent._controller.points:
             points = [x for x in self._parent._controller.points]
+            self.clear()
             try:
                 xs, ys, zs, _ = zip(*points)
-                self.clear()
-                self.plot_data(xs, zs)
+                self.plot_data(xs, zs, [])
             except ValueError:
-                self.clear()
+                pass
             self.view.figure.canvas.draw()
 
 
@@ -334,13 +334,12 @@ class AxialCanvas(AnatomicalCanvas):
             controller = self._parent._controller
             logger.debug('Plotting points {}'.format(controller.points))
             points = [x for x in controller.points if x[0] == controller.position[0]]
+            self.clear()
             try:
                 xs, ys, zs, _ = zip(*points)
-                self.clear()
                 self.plot_data(zs, ys, [])
             except ValueError:
-                self.clear()
-            self.view.figure.canvas.draw()
+                pass
 
     def plot_position(self):
         position = self._parent._controller.position
