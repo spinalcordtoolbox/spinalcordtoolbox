@@ -261,7 +261,7 @@ def main(args=None):
     if im_out is not None:
         printv('Generate output files...', verbose)
         # if only one output
-        if len(im_out) == 1:
+        if len(im_out) == 1 and not '-split' in arguments:
             im_out[0].setFileName(fname_out) if fname_out is not None else None
             im_out[0].save(squeeze_data=False, type=output_type, verbose=verbose)
             sct.display_viewer_syntax([fname_out], verbose=verbose)
