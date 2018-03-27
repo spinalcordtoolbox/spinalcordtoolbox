@@ -236,10 +236,10 @@ class Centerline(base.BaseDialog):
         self.sagittal_canvas.refresh()
 
 
-def launch_centerline_dialog(input_file, output_file, params):
-    params.input_file_name = input_file.absolutepath
+def launch_centerline_dialog(im_input, im_output, params):
+    params.input_file_name = im_input.absolutepath
     params.subtitle = u'Use the Up/Down arrows to navigate the superior-inferior direction'
-    controller = CenterlineController(input_file, params, output_file)
+    controller = CenterlineController(im_input, params, im_output)
     controller.reformat_image()
 
     app = QtGui.QApplication([])
