@@ -145,6 +145,7 @@ class AnatomicalCanvas(FigureCanvas):
             vmin=self._params.vmin,
             vmax=self._params.vmax,
             alpha=self._params.alpha)
+        self._axes.set_aspect(aspect)
 
         if self._crosshair:
             self.cursor = Cursor(self._axes, useblit=True, color='r', linewidth=1)
