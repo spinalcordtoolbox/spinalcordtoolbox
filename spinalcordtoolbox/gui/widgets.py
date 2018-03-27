@@ -2,7 +2,7 @@
 #
 # About the license: see the file LICENSE.TXT
 
-""" Qt widgets for manually segementing spinalcord images """
+""" Qt widgets for manually segmenting spinal cord images """
 
 import logging
 

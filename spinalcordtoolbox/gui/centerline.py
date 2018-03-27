@@ -232,7 +232,7 @@ class Centerline(base.BaseDialog):
 
 def launch_centerline_dialog(input_file, output_file, params):
     params.input_file_name = input_file.absolutepath
-    params.subtitle = u'Use the Up and Down arrow to navigate the axial plane'
+    params.subtitle = u'Use the Up/Down arrows to navigate the superior-inferior direction'
     controller = CenterlineController(input_file, params, output_file)
     controller.reformat_image()
 

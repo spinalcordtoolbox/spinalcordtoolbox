@@ -92,7 +92,7 @@ def launch_sagittal_dialog(input_file, output_file, params):
     if not params.vertebraes:
         params.vertebraes = [3, 5]
     params.input_file_name = input_file.absolutepath
-    params.subtitle = u'Use Left and Right arrows to navigate the vertical plane'
+    params.subtitle = u'Use Left/Right arrows to navigate the right-left direction'
     controller = SagittalController(input_file, params, output_file)
     controller.reformat_image()
 
