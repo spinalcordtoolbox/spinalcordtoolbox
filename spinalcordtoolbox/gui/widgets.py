@@ -2,7 +2,7 @@
 #
 # About the license: see the file LICENSE.TXT
 
-""" Qt widgets for manually segementing spinalcord images """
+""" Qt widgets for manually segmenting spinal cord images """
 
 import logging
 
@@ -103,15 +103,21 @@ class AnatomicalCanvas(FigureCanvas):
 
     """
     point_selected_signal = QtCore.Signal(float, float, float)
+    _horizontal_nav = None
+    _vertical_nav = None
+    _navigation_state = False
+    annotations = []
 
-    def __init__(self, parent, width=8, height=8, dpi=100, crosshair=False, plot_points=False, annotate=False, plot_position=False):
+    def __init__(self, parent, width=8, height=8, dpi=100, crosshair=False, plot_points=False,
+                 annotate=False, vertical_nav=False, horizontal_nav=False):
         self._parent = parent
         self._image = parent.image
         self._params = parent.params
         self._crosshair = crosshair
         self._plot_points = plot_points
         self._annotate_points = annotate
-        self._plot_position = plot_position
+        self._vertical_nav = vertical_nav
+        self._horizontal_nav = horizontal_nav
         self.position = None
 
         self._x, self._y, self._z = [int(i) for i in self._parent._controller.position]
@@ -124,26 +130,30 @@ class AnatomicalCanvas(FigureCanvas):
         FigureCanvas.updateGeometry(self)
 
     def _init_ui(self, data, aspect):
-        self._fig.canvas.mpl_connect('button_release_event', self.on_update)
+        self._fig.canvas.mpl_connect('button_release_event', self.on_select_point)
         self._fig.canvas.mpl_connect('scroll_event', self.on_zoom)
+        self._fig.canvas.mpl_connect('button_release_event', self.on_release)
+        self._fig.canvas.mpl_connect('button_press_event', self.on_press)
+        self._fig.canvas.mpl_connect('motion_notify_event', self.on_move)
 
         self._axes = self._fig.add_axes([0, 0, 1, 1], frameon=True)
         self._axes.axis('off')
         self.view = self._axes.imshow(
             data,
-            aspect=aspect,
             cmap=self._params.cmap,
             interpolation=self._params.interp,
             vmin=self._params.vmin,
             vmax=self._params.vmax,
             alpha=self._params.alpha)
+        self._axes.set_aspect(aspect)
 
         if self._crosshair:
             self.cursor = Cursor(self._axes, useblit=True, color='r', linewidth=1)
+
         self.points = self._axes.plot([], [], '.r', markersize=7)[0]
 
     def title(self, message):
-        self._fig.suptitle(message)
+        self._fig.suptitle(message, fontsize=10)
 
     def annotate(self, x, y, label):
         self.annotations.append(self._axes.annotate(label, xy=(x, y), xytext=(-3, 3),
@@ -189,6 +199,34 @@ class AnatomicalCanvas(FigureCanvas):
         self._axes.set_ylim(y - top, y + bottom)
         self.view.figure.canvas.draw()
 
+    def on_select_point(self, event):
+        pass
+
+    def on_press(self, event):
+        self._navigation_state = True
+
+    def on_release(self, event):
+        self._navigation_state = False
+
+    def on_move(self, event):
+        pass
+
+    def horizontal_position(self, position):
+        if self._horizontal_nav:
+            try:
+                self._horizontal_nav.remove()
+            except AttributeError:
+                pass
+            self._horizontal_nav = self._axes.axhline(position, color='r')
+
+    def vertical_position(self, position):
+        if self._vertical_nav:
+            try:
+                self._vertical_nav.remove()
+            except AttributeError:
+                pass
+            self._vertical_nav = self._axes.axvline(position, color='r')
+
     def __repr__(self):
         return '{}: {}, {}, {}'.format(self.__class__, self._x, self._y, self._z)
 
@@ -213,33 +251,37 @@ class SagittalCanvas(AnatomicalCanvas):
         self.plot_points()
         self.view.figure.canvas.draw()
 
-    def on_update(self, event):
+    def on_select_point(self, event):
         if event.xdata > -1 and event.ydata > -1 and event.button == 1:
             self.point_selected_signal.emit(event.ydata, event.xdata, self._z)
+
+    def on_move(self, event):
+        if self._navigation_state:
+            self.vertical_position(event.xdata)
+            self.horizontal_position(event.ydata)
+            self.view.figure.canvas.draw()
 
     def plot_points(self):
         """Plot the controller's list of points (x, y) and annotate the point with the label"""
         if self._plot_points:
             logger.debug('Plotting points {}'.format(self._parent._controller.points))
             points = self._parent._controller.points
+            self.clear()
             try:
                 xs, ys, zs, labels = zip(*points)
-                self.clear()
                 self.plot_data(ys, xs, labels)
             except ValueError:
-                self.clear()
+                pass
 
     def plot_position(self):
-        if self._plot_position:
-            position = self._parent._controller.position
-            if self.position:
-                self.position.remove()
-            self.position = self._axes.axhline(position[0], color='r')
+        position = self._parent._controller.position
+        self.horizontal_position(position[0])
+        self.vertical_position(position[1])
 
 
-class CorrinalCanvas(AnatomicalCanvas):
-    def __init__(self, parent, width=4, height=8, dpi=100, crosshair=False):
-        super(CorrinalCanvas, self).__init__(parent, width, height, dpi, crosshair)
+class CoronalCanvas(AnatomicalCanvas):
+    def __init__(self, *args, **kwargs):
+        super(CoronalCanvas, self).__init__(*args, **kwargs)
         x, y, z, _, dx, dy, dz, _ = self._image.dim
         self._init_ui(self._image.data[:, self._y, :], dx / dz)
         self.x_max = x
@@ -251,7 +293,7 @@ class CorrinalCanvas(AnatomicalCanvas):
         self.view.set_array(data)
         self.view.figure.canvas.draw()
 
-    def on_update(self, event):
+    def on_select_point(self, event):
         if event.xdata > -1 and event.ydata > -1 and event.button == 1:
             self.point_selected_signal.emit(event.xdata, self._y, event.ydata)
 
@@ -259,18 +301,18 @@ class CorrinalCanvas(AnatomicalCanvas):
         logger.debug('Plotting points {}'.format(self._parent._controller.points))
         if self._parent._controller.points:
             points = [x for x in self._parent._controller.points]
+            self.clear()
             try:
                 xs, ys, zs, _ = zip(*points)
-                self.clear()
-                self.plot_data(xs, zs)
+                self.plot_data(xs, zs, [])
             except ValueError:
-                self.clear()
+                pass
             self.view.figure.canvas.draw()
 
 
 class AxialCanvas(AnatomicalCanvas):
-    def __init__(self, parent, width=4, height=8, dpi=100, crosshair=False):
-        super(AxialCanvas, self).__init__(parent, width, height, dpi, crosshair)
+    def __init__(self, *args, **kwargs):
+        super(AxialCanvas, self).__init__(*args, **kwargs)
         x, y, z, _, dx, dy, dz, _ = self._image.dim
         self._init_ui(self._image.data[self._x, :, :], dy / dz)
         self.x_max = z
@@ -280,23 +322,35 @@ class AxialCanvas(AnatomicalCanvas):
         self._x, self._y, self._z = [int(i) for i in self._parent._controller.position]
         data = self._image.data[self._x, :, :]
         self.view.set_array(data)
+        self.plot_position()
+        self.plot_points()
         self.view.figure.canvas.draw()
 
-    def on_update(self, event):
+    def on_select_point(self, event):
         if event.xdata > 0 and event.ydata > 0 and event.button == 1:
             self.point_selected_signal.emit(self._x, event.ydata, event.xdata)
 
     def plot_points(self):
-        logger.debug('Plotting points {}'.format(self._parent._controller.points))
-        if self._parent._controller.points:
-            points = [x for x in self._parent._controller.points]
+        if self._plot_points:
+            controller = self._parent._controller
+            logger.debug('Plotting points {}'.format(controller.points))
+            points = [x for x in controller.points if x[0] == controller.position[0]]
+            self.clear()
             try:
                 xs, ys, zs, _ = zip(*points)
-                self.points.set_xdata(ys)
-                self.points.set_ydata(zs)
+                self.plot_data(zs, ys, [])
             except ValueError:
-                self.points.set_xdata([])
-                self.points.set_ydata([])
+                pass
+
+    def plot_position(self):
+        position = self._parent._controller.position
+        self.horizontal_position(position[1])
+        self.vertical_position(position[2])
+
+    def on_move(self, event):
+        if self._navigation_state:
+            self.horizontal_position(event.ydata)
+            self.vertical_position(event.xdata)
             self.view.figure.canvas.draw()
 
 
