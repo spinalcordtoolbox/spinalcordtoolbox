@@ -451,6 +451,8 @@ if __name__ == "__main__":
         if use_viewer == 'centerline':
             # starting axial slice at the top of the FOV 
             params.starting_slice = 0
+            # setting maximum number of points to a reasonable value
+            params.num_points = 20
         image = Image(fname_data)
         tmp_output_file = Image(image)
         tmp_output_file.data *= 0
