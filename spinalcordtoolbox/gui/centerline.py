@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 class CenterlineController(base.BaseController):
     _mode = ''
-    INTERVAL = 15
+#    INTERVAL = 15
     MODES = ['AUTO', 'CUSTOM']
 
     def __init__(self, image, params, init_values=None):
@@ -39,13 +39,15 @@ class CenterlineController(base.BaseController):
         elif 0 < self.params.starting_slice < 1:
             self.params.starting_slice = max_z // self.params.starting_slice
 
-        self.INTERVAL = (max_x - self.params.starting_slice) // (self.params.num_points - 1) or 3
+        print(max_x)
+        print(max_z)
+        print(self.params.interval)
+#        self.INTERVAL = (max_x - self.params.starting_slice) // (self.params.num_points - 1) or 3
         self.reset_position()
 
     def reset_position(self):
         super(CenterlineController, self).reset_position()
         self.position = (self.params.starting_slice , self.position[1], self.position[2])
-
 
     def skip_slice(self):
         if self.mode == 'AUTO':
@@ -71,7 +73,7 @@ class CenterlineController(base.BaseController):
     def increment_slice(self):
         interval = 1
         if self.mode == 'AUTO':
-            interval = self.INTERVAL
+            interval = self.params.interval
 
         x, y, z = self.position
         new_x = x + interval
@@ -86,7 +88,7 @@ class CenterlineController(base.BaseController):
     def decrement_slice(self):
         interval = 1
         if self.mode == 'AUTO':
-            interval = self.INTERVAL
+            interval = self.params.interval
 
         x, y, z = self.position
         new_x = x - interval

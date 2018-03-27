@@ -448,11 +448,13 @@ if __name__ == "__main__":
             params.num_points = 3
             # starting axial slice in the middle of the FOV
             params.starting_slice = round(nz / 2)
+            params.inverval = 15
         if use_viewer == 'centerline':
             # starting axial slice at the top of the FOV 
             params.starting_slice = 0
             # setting maximum number of points to a reasonable value
             params.num_points = 20
+            params.interval = 30
         image = Image(fname_data)
         tmp_output_file = Image(image)
         tmp_output_file.data *= 0

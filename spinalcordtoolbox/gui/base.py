@@ -29,7 +29,8 @@ class AnatomicalParams(object):
                  vmin=5.,
                  vmax=95.,
                  vmode='percentile',
-                 alpha=1.0):
+                 alpha=1.0,
+                 interval=15):
         """
 
         Parameters
@@ -40,6 +41,7 @@ class AnatomicalParams(object):
         vmax : int
         vmode : str
         alpha : float
+        interval : int
         """
         self.cmap = cmap
         self.interp = interp
@@ -55,6 +57,8 @@ class AnatomicalParams(object):
         self._vertebraes = []
         self.input_file_name = ""
         self.starting_slice = 0
+        self.interval = interval  # number of slices to skip when selecting multiple labels in AUTO mode (see sct_propseg)
+
 
     @property
     def dialog_title(self):
