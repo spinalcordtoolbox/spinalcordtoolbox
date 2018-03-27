@@ -443,16 +443,16 @@ if __name__ == "__main__":
         from spinalcordtoolbox.gui.base import AnatomicalParams
         from spinalcordtoolbox.gui.centerline import launch_centerline_dialog
 
-        starting_slice = arguments.get('-init', 0)
-
         params = AnatomicalParams()
-        params.starting_slice = starting_slice
         if use_viewer == 'mask':
             params.num_points = 3
-            # starting slice in the middle of the FOV
-            params.starting_slice = round(nz / 2)
-        if use_viewer == 'centerline' and not starting_slice:
-            params.starting_slice = 0
+            params.interval_in_mm = 15  # superior-inferior interval between two consecutive labels
+            params.starting_slice = 'midfovminusinterval'
+        if use_viewer == 'centerline':
+            # setting maximum number of points to a reasonable value
+            params.num_points = 20
+            params.interval_in_mm = 30
+            params.starting_slice = 'top'
         image = Image(fname_data)
         tmp_output_file = Image(image)
         tmp_output_file.data *= 0
