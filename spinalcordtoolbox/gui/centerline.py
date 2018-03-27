@@ -38,11 +38,6 @@ class CenterlineController(base.BaseController):
         # if the starting slice is a fraction, recalculate the starting slice as a ratio.
         elif 0 < self.params.starting_slice < 1:
             self.params.starting_slice = max_z // self.params.starting_slice
-
-        print(max_x)
-        print(max_z)
-        print(self.params.interval)
-#        self.INTERVAL = (max_x - self.params.starting_slice) // (self.params.num_points - 1) or 3
         self.reset_position()
 
     def reset_position(self):
