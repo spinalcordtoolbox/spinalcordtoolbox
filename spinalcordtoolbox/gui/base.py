@@ -29,8 +29,7 @@ class AnatomicalParams(object):
                  vmin=5.,
                  vmax=95.,
                  vmode='percentile',
-                 alpha=1.0,
-                 interval=15):
+                 alpha=1.0):
         """
 
         Parameters
@@ -41,7 +40,6 @@ class AnatomicalParams(object):
         vmax : int
         vmode : str
         alpha : float
-        interval : int
         """
         self.cmap = cmap
         self.interp = interp
@@ -56,8 +54,11 @@ class AnatomicalParams(object):
         self.subtitle = ''  # subplot title (will be displayed above the image)
         self._vertebraes = []
         self.input_file_name = ""
-        self.starting_slice = 0
-        self.interval = interval  # number of slices to skip when selecting multiple labels in AUTO mode (see sct_propseg)
+        self.starting_slice = 'top'  # used in centerline.py canvas and corresponds to the location of
+        # the first axial slice for labeling. Possible values are: 'top': top slice; 'midfovminusinterval': mid-FOV
+        # minus the interval.
+        self.interval_in_mm = 15  # superior-inferior distance between two consecutive labels in AUTO mode
+        # (see sct_propseg).
 
 
     @property

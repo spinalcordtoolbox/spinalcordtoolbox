@@ -3,13 +3,13 @@
 #
 # About the license: see the file LICENSE.TXT
 
-""" Qt dialog for manually segmenting a spinalcord image """
+""" Qt dialog for manual labeling of an image """
 
 from __future__ import absolute_import
 from __future__ import division
 
+import sct_utils as sct
 import logging
-
 from PyQt4 import QtCore, QtGui
 
 from spinalcordtoolbox.gui import base
@@ -26,23 +26,33 @@ class CenterlineController(base.BaseController):
 
     def __init__(self, image, params, init_values=None):
         super(CenterlineController, self).__init__(image, params, init_values)
+        # define self.params.interval based on pixel size in superior-inferior direction
+        self.params.interval = round(self.params.interval_in_mm // self.image.dim[4])
 
     def reformat_image(self):
         super(CenterlineController, self).reformat_image()
         max_x, max_z = self.image.dim[:3:2]
         self.params.num_points = self.params.num_points or 11
 
-        # if the starting slice is of invalid value then use default value
-        if self.params.starting_slice > max_x or self.params.starting_slice < 0:
-            self.params.starting_slice = self.default_position[0]
-        # if the starting slice is a fraction, recalculate the starting slice as a ratio.
-        elif 0 < self.params.starting_slice < 1:
-            self.params.starting_slice = max_z // self.params.starting_slice
+        # # if the starting slice is of invalid value then use default value
+        # if self.params.starting_slice > max_x or self.params.starting_slice < 0:
+        #     self.params.starting_slice = self.default_position[0]
+        #     sct.log.warning('Starting slice value is out of range')
+        # # if the starting slice is a fraction, recalculate the starting slice as a ratio.
+        # elif 0 < self.params.starting_slice < 1:
+        #     self.params.starting_slice = max_z // self.params.starting_slice
+
         self.reset_position()
+
 
     def reset_position(self):
         super(CenterlineController, self).reset_position()
-        self.position = (self.params.starting_slice , self.position[1], self.position[2])
+        # set first slice location (see definitions in base.py)
+        if self.params.starting_slice == 'fov':
+            x_start = 0
+        elif self.params.starting_slice == 'midfovminusinterval':
+            x_start = round(self.image.dim[0] / 2 - self.params.interval)
+        self.position = (self.params.starting_slice, self.position[1], self.position[2])
 
     def skip_slice(self):
         if self.mode == 'AUTO':

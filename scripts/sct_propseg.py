@@ -446,15 +446,13 @@ if __name__ == "__main__":
         params = AnatomicalParams()
         if use_viewer == 'mask':
             params.num_points = 3
-            # starting axial slice in the middle of the FOV
-            params.starting_slice = round(nz / 2)
-            params.inverval = 15
+            params.interval_in_mm = 15  # superior-inferior interval between two consecutive labels
+            params.starting_slice = 'midfovminusinterval'
         if use_viewer == 'centerline':
-            # starting axial slice at the top of the FOV 
-            params.starting_slice = 0
             # setting maximum number of points to a reasonable value
             params.num_points = 20
-            params.interval = 30
+            params.interval_in_mm = 30
+            params.starting_slice = 'top'
         image = Image(fname_data)
         tmp_output_file = Image(image)
         tmp_output_file.data *= 0
