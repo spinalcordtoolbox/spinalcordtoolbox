@@ -58,7 +58,6 @@ class AnatomicalParams(object):
         # the first axial slice for labeling. Possible values are: 'top': top slice; 'midfovminusinterval': mid-FOV
         # minus the interval.
         self.interval_in_mm = 15  # superior-inferior distance between two consecutive labels in AUTO mode
-        # (see sct_propseg).
 
 
     @property

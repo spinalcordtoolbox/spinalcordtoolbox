@@ -22,16 +22,26 @@ logger = logging.getLogger(__name__)
 
 class CenterlineController(base.BaseController):
     _mode = ''
-#    INTERVAL = 15
+    START_SLICE = 0
+    INTERVAL = 15
     MODES = ['AUTO', 'CUSTOM']
 
     def __init__(self, image, params, init_values=None):
         super(CenterlineController, self).__init__(image, params, init_values)
 
     def reformat_image(self):
+        # reorient data to SAL
         super(CenterlineController, self).reformat_image()
         max_x, max_z = self.image.dim[:3:2]
         self.params.num_points = self.params.num_points or 11
+        # update interval (in pixel) between two consecutive points based on pixel size
+        self.INTERVAL = round(self.params.interval_in_mm // self.image.dim[4])
+
+        # set first slice location (see definitions in base.py)
+        if self.params.starting_slice == 'fov':
+            self.START_SLICE = 0
+        elif self.params.starting_slice == 'midfovminusinterval':
+            self.START_SLICE = round(self.image.dim[0] / 2 - self.INTERVAL)
 
         # # if the starting slice is of invalid value then use default value
         # if self.params.starting_slice > max_x or self.params.starting_slice < 0:
@@ -46,12 +56,7 @@ class CenterlineController(base.BaseController):
 
     def reset_position(self):
         super(CenterlineController, self).reset_position()
-        # set first slice location (see definitions in base.py)
-        if self.params.starting_slice == 'fov':
-            x_start = 0
-        elif self.params.starting_slice == 'midfovminusinterval':
-            x_start = round(self.image.dim[0] / 2 - self.params.interval)
-        self.position = (self.params.starting_slice, self.position[1], self.position[2])
+        self.position = (self.START_SLICE, self.position[1], self.position[2])
 
     def skip_slice(self):
         if self.mode == 'AUTO':
@@ -77,7 +82,7 @@ class CenterlineController(base.BaseController):
     def increment_slice(self):
         interval = 1
         if self.mode == 'AUTO':
-            interval = self.params.interval
+            interval = self.INTERVAL
 
         x, y, z = self.position
         new_x = x + interval
@@ -92,7 +97,7 @@ class CenterlineController(base.BaseController):
     def decrement_slice(self):
         interval = 1
         if self.mode == 'AUTO':
-            interval = self.params.interval
+            interval = self.INTERVAL
 
         x, y, z = self.position
         new_x = x - interval
