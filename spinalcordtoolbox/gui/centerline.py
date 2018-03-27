@@ -43,13 +43,13 @@ class CenterlineController(base.BaseController):
         elif self.params.starting_slice == 'midfovminusinterval':
             self.START_SLICE = round(self.image.dim[0] / 2 - self.INTERVAL)
 
-        # # if the starting slice is of invalid value then use default value
-        # if self.params.starting_slice > max_x or self.params.starting_slice < 0:
-        #     self.params.starting_slice = self.default_position[0]
-        #     sct.log.warning('Starting slice value is out of range')
-        # # if the starting slice is a fraction, recalculate the starting slice as a ratio.
-        # elif 0 < self.params.starting_slice < 1:
-        #     self.params.starting_slice = max_z // self.params.starting_slice
+        # if the starting slice is of invalid value then use default value
+        if self.START_SLICE > max_x or self.START_SLICE < 0:
+            self.START_SLICE = self.default_position[0]
+            sct.log.warning('Starting slice value is out of range')
+        # if the starting slice is a fraction, recalculate the starting slice as a ratio.
+        elif 0 < self.START_SLICE < 1:
+            self.START_SLICE = max_z // self.START_SLICE
 
         self.reset_position()
 
