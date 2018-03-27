@@ -443,15 +443,13 @@ if __name__ == "__main__":
         from spinalcordtoolbox.gui.base import AnatomicalParams
         from spinalcordtoolbox.gui.centerline import launch_centerline_dialog
 
-#        starting_slice = arguments.get('-init', 0)
-
         params = AnatomicalParams()
-#        params.starting_slice = starting_slice
         if use_viewer == 'mask':
             params.num_points = 3
-            # starting slice in the middle of the FOV
+            # starting axial slice in the middle of the FOV
             params.starting_slice = round(nz / 2)
-        if use_viewer == 'centerline' and not starting_slice:
+        if use_viewer == 'centerline':
+            # starting axial slice at the top of the FOV 
             params.starting_slice = 0
         image = Image(fname_data)
         tmp_output_file = Image(image)
