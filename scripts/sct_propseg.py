@@ -443,10 +443,10 @@ if __name__ == "__main__":
         from spinalcordtoolbox.gui.base import AnatomicalParams
         from spinalcordtoolbox.gui.centerline import launch_centerline_dialog
 
-        starting_slice = arguments.get('-init', 0)
+#        starting_slice = arguments.get('-init', 0)
 
         params = AnatomicalParams()
-        params.starting_slice = starting_slice
+#        params.starting_slice = starting_slice
         if use_viewer == 'mask':
             params.num_points = 3
             # starting slice in the middle of the FOV
