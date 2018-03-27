@@ -16,6 +16,7 @@ from spinalcordtoolbox.gui import base
 from spinalcordtoolbox.gui import widgets
 from spinalcordtoolbox.gui.base import TooManyPointsWarning, InvalidActionWarning
 
+# TODO: remove this useless logger (because no handler is found) by sct.log
 logger = logging.getLogger(__name__)
 
 
@@ -26,8 +27,6 @@ class CenterlineController(base.BaseController):
 
     def __init__(self, image, params, init_values=None):
         super(CenterlineController, self).__init__(image, params, init_values)
-        # define self.params.interval based on pixel size in superior-inferior direction
-        self.params.interval = round(self.params.interval_in_mm // self.image.dim[4])
 
     def reformat_image(self):
         super(CenterlineController, self).reformat_image()
