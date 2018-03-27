@@ -278,9 +278,9 @@ class SagittalCanvas(AnatomicalCanvas):
         self.vertical_position(position[1])
 
 
-class CorrinalCanvas(AnatomicalCanvas):
+class CoronalCanvas(AnatomicalCanvas):
     def __init__(self, *args, **kwargs):
-        super(CorrinalCanvas, self).__init__(*args, **kwargs)
+        super(CoronalCanvas, self).__init__(*args, **kwargs)
         x, y, z, _, dx, dy, dz, _ = self._image.dim
         self._init_ui(self._image.data[:, self._y, :], dx / dz)
         self.x_max = x
