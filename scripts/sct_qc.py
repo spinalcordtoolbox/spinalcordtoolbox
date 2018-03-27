@@ -27,6 +27,11 @@ def get_parser():
                       type_value='folder',
                       mandatory=True,
                       description='The root folder of the generated QC data')
+    parser.add_option(name='-port',
+                      type_value='int',
+                      mandatory=False,
+                      default_value=8888,
+                      description='Port for the QC server')
 
     return parser
 
@@ -51,6 +56,7 @@ if __name__ == "__main__":
     parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
     qc_path = arguments['-folder']
+    qc_port = int(arguments['-port'])
 
     json_file = os.path.join(qc_path, 'qc_results.json')
 
@@ -63,9 +69,9 @@ if __name__ == "__main__":
     _copy_assets(qc_path)
 
     os.chdir(qc_path)
-    httpd = HTTPServer(('', 8888), SimpleHTTPRequestHandler)
+    httpd = HTTPServer(('', qc_port), SimpleHTTPRequestHandler)
     sct.printv('QC viewer started on:')
-    sct.printv('http://127.0.0.1:8888', type='info')
+    sct.printv('http://127.0.0.1:{}'.format(qc_port), type='info')
     sct.printv('Copy and paste the address into your web browser')
     sct.printv('Press "Ctrl" + "C" to stop sct_qc')
     try:

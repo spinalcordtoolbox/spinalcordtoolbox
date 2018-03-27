@@ -152,6 +152,8 @@ usage()
 }
 
 
+set -e # abort on failure
+
 # SCRIPT STARTS HERE
 # ========================================================================
 echo -e "\nWelcome to the SCT installer!"
@@ -321,7 +323,7 @@ while  true ; do
 done
 
 # Create directory
-mkdir ${INSTALL_DIR}
+mkdir -p ${INSTALL_DIR}
 # check if directory was created
 if [ -d "${INSTALL_DIR}" ]; then
   # check write permission
