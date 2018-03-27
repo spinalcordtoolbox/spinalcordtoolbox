@@ -44,8 +44,8 @@ class CenterlineController(base.BaseController):
 
     def reset_position(self):
         super(CenterlineController, self).reset_position()
-        if self.mode == 'AUTO':
-            self.position = (0, self.position[1], self.position[2])
+        self.position = (self.params.starting_slice , self.position[1], self.position[2])
+
 
     def skip_slice(self):
         if self.mode == 'AUTO':
