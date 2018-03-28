@@ -10,6 +10,7 @@ from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
 from matplotlib.widgets import Cursor
+from skimage import exposure
 
 from PyQt4 import QtCore, QtGui
 
@@ -139,13 +140,9 @@ class AnatomicalCanvas(FigureCanvas):
         self._axes = self._fig.add_axes([0, 0, 1, 1], frameon=True)
         self._axes.axis('off')
         self.view = self._axes.imshow(
-            data,
+            self.adjust_image(data),
             cmap=self._params.cmap,
-            interpolation=self._params.interp,
-            vmin=self._params.vmin,
-            vmax=self._params.vmax,
-            alpha=self._params.alpha)
-        self._axes.set_aspect(aspect)
+            interpolation=self._params.interp)
 
         if self._crosshair:
             self.cursor = Cursor(self._axes, useblit=True, color='r', linewidth=1)
@@ -174,6 +171,11 @@ class AnatomicalCanvas(FigureCanvas):
         if self._annotate_points:
             for x, y, label in zip(xdata, ydata, labels):
                 self.annotate(x, y, label)
+
+    def adjust_image(self, data):
+        if self._parent._controller.is_contrast_adjustment:
+            return exposure.equalize_adapthist(data)
+        return data
 
     def on_zoom(self, event):
         if event.button == 'up':
@@ -245,7 +247,7 @@ class SagittalCanvas(AnatomicalCanvas):
 
     def refresh(self):
         self._x, self._y, self._z = [int(i) for i in self._parent._controller.position]
-        data = self._image.data[:, :, self._z]
+        data = self.adjust_image(self._image.data[:, :, self._z])
         self.view.set_array(data)
         self.plot_position()
         self.plot_points()
@@ -289,7 +291,7 @@ class CoronalCanvas(AnatomicalCanvas):
 
     def refresh(self):
         self._x, self._y, self._z = [int(i) for i in self._parent._controller.position]
-        data = self._image.data[:, self._y, :]
+        data = self.adjust_image(self._image.data[:, self._y, :])
         self.view.set_array(data)
         self.view.figure.canvas.draw()
 
@@ -320,7 +322,7 @@ class AxialCanvas(AnatomicalCanvas):
 
     def refresh(self):
         self._x, self._y, self._z = [int(i) for i in self._parent._controller.position]
-        data = self._image.data[self._x, :, :]
+        data = self.adjust_image(self._image.data[self._x, :, :])
         self.view.set_array(data)
         self.plot_position()
         self.plot_points()

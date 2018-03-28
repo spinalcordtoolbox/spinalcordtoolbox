@@ -277,6 +277,7 @@ class BaseController(object):
     default_position = ()
     position = ()
     saved = False
+    is_contrast_adjustment = True
 
     def __init__(self, image, params, init_values=None):
         self.image = image
