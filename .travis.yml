@@ -65,5 +65,5 @@ script:
 #  - python create_package.py -s ${TRAVIS_OS_NAME}  # test package creation
 #  - cd ../spinalcordtoolbox_v*
 #  - yes | ./install_sct  # test installation of package
-  - source $HOME/build/neuropoly/spinalcordtoolbox/python/bin/activate && pytest -v --cov=spinalcordtoolbox.deepseg_gm unit_testing
+  - ./unit_testing.sh
   - echo "DONE"
