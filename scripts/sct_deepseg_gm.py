@@ -82,17 +82,16 @@ def run_main():
 
 
     if '-qc' in arguments:
-        qc = os.path.abspath(arguments['-qc'])
+        qc_path = os.path.abspath(arguments['-qc'])
     if '-noqc' in arguments:
-        qc = False
-    if qc:
-        qc_path = qc
+        qc_path = None
+    if qc_path is not None:
         sct.printv('\nSave quality control images (in %s)...' % qc_path, verbose, 'normal')
 
         import spinalcordtoolbox.reports.qc as qc
         import spinalcordtoolbox.reports.slice as qcslice
 
-        qc_param = qc.Params(input_filename, None, None, 'Axial', qc_path)
+        qc_param = qc.Params(input_filename, "sct_deepseg_gm", sys.argv[1:], 'Axial', qc_path)
         report = qc.QcReport(qc_param, '')
 
         @qc.QcImage(report, 'none', [qc.QcImage.listed_seg], stretch_contrast=False)
@@ -104,7 +103,7 @@ def run_main():
         im_seg = Image(out_fname)
 
         test(qcslice.Axial(im_org, im_seg))
-        sct.printv('Sucessfully generate the QC results in %s' % qc_param.qc_results)
+        sct.printv('Sucessfully generated the QC results in %s' % qc_param.qc_results)
         sct.printv('Use the following command to see the results in a browser')
         sct.printv('sct_qc -folder %s' % qc_path, type='info')
 

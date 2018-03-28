@@ -236,9 +236,6 @@ class Params(object):
         abs_input_path = os.path.dirname(os.path.abspath(input_file))
         abs_input_path, contrast = os.path.split(abs_input_path)
         _, subject = os.path.split(abs_input_path)
-        command = command or os.path.splitext(os.path.basename(sys.argv[0]))[0]
-        if args is None:
-            args = sys.argv[1:]
         if isinstance(args, list):
             args = sct.list2cmdline(args)
 
