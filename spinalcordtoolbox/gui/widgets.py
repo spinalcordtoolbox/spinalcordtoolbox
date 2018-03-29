@@ -11,7 +11,7 @@ from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as Navigatio
 from matplotlib.figure import Figure
 from matplotlib.widgets import Cursor
 import skimage.exposure
-
+import numpy as np
 from PyQt4 import QtCore, QtGui
 
 from spinalcordtoolbox.gui.base import MissingLabelWarning
@@ -175,7 +175,10 @@ class AnatomicalCanvas(FigureCanvas):
 
     def adjust_image(self, data):
         if self._parent._controller.is_contrast_adjustment:
-            return skimage.exposure.equalize_adapthist(data)
+            # rescale to range of UINT16 because equalize_adapthist is converting to this type anyway.
+            # for more info see: https://github.com/neuropoly/spinalcordtoolbox/pull/1661#issuecomment-377101783
+            data_scaled = skimage.exposure.rescale_intensity(np.uint16(data), out_range='uint16')
+            return skimage.exposure.equalize_adapthist(data_scaled)
         return data
 
     def on_zoom(self, event):
