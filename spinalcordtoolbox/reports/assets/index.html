@@ -44,35 +44,35 @@
   </nav>
 
 
-  <div class="container">
-      <table id="table" class="table table-condensed"
-             data-toggle="table"
-             data-search="true"
-             data-cache="false"
-             data-url="qc_results.json?no-cache=123">
-	        <thead>
-		          <tr>
-			            <th data-field="subject" data-sortable="true">Subject</th>
-			            <th data-field="moddate" data-sortable="true">Date</th>
-			            <th data-field="contrast" data-sortable="true">Contrast</th>
-			            <th data-field="command" data-sortable="true">Command</th>
-		          </tr>
-	        </thead>
-      </table>
-
-      <a id="prev-img" href="#" class="previous">&laquo; Previous</a>
-      <a id="next-img" href="#" class="next">Next &raquo;</a>
-      <div class="result-body" id="mosaic-container">
-          <img id="sprite-img"/>
-          <img id="overlay-img"/>
+  <div class="container-fluid">
+      <div class="row">
+          <div class="col-md-6">
+              <table id="table" class="table table-condensed"
+                  data-toggle="table"
+                  data-search="true"
+                  data-cache="false"
+                  data-url="qc_results.json?no-cache=123">
+	                <thead>
+		                  <tr>
+			                    <th data-field="subject" data-sortable="true">Subject</th>
+			                    <th data-field="moddate" data-sortable="true">Date</th>
+			                    <th data-field="contrast" data-sortable="true">Contrast</th>
+			                    <th data-field="command" data-sortable="true">Command</th>
+		                  </tr>
+	                </thead>
+              </table>
+          </div>
+          <div class="col-md-6">
+              <a id="prev-img" href="#" class="previous">&laquo; Previous</a>
+              <a id="next-img" href="#" class="next">Next &raquo;</a>
+              <div class="result-body" id="mosaic-container">
+                  <img id="sprite-img"/>
+                  <img id="overlay-img"/>
+              </div>
+          </div>
       </div>
   </div>
 
-  <footer>
-    <div class="footer">
-      <p id="copyright"></p>
-    </div>
-  </footer>
 </body>
 
 <!-- Latest compiled and minified JavaScript -->
