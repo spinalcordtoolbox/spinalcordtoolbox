@@ -11,6 +11,7 @@ from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as Navigatio
 from matplotlib.figure import Figure
 from matplotlib.widgets import Cursor
 from skimage import exposure
+from numpy import percentile
 
 from PyQt4 import QtCore, QtGui
 
@@ -143,6 +144,7 @@ class AnatomicalCanvas(FigureCanvas):
             self.adjust_image(data),
             cmap=self._params.cmap,
             interpolation=self._params.interp)
+        self._axes.set_aspect(aspect)
 
         if self._crosshair:
             self.cursor = Cursor(self._axes, useblit=True, color='r', linewidth=1)
