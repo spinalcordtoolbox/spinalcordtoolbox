@@ -10,8 +10,7 @@ from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
 from matplotlib.widgets import Cursor
-from skimage import exposure
-from numpy import percentile
+import skimage.exposure
 
 from PyQt4 import QtCore, QtGui
 
@@ -176,7 +175,7 @@ class AnatomicalCanvas(FigureCanvas):
 
     def adjust_image(self, data):
         if self._parent._controller.is_contrast_adjustment:
-            return exposure.equalize_adapthist(data)
+            return skimage.exposure.equalize_adapthist(data)
         return data
 
     def on_zoom(self, event):
