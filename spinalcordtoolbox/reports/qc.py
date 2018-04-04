@@ -162,9 +162,27 @@ class QcImage(object):
 
             if self._stretch_contrast:
                 def equalized(a):
+                    """
+                    Perform histogram equalization using CLAHE
+
+                    Notes:
+
+                    - Image value range is preserved
+                    - Workaround for adapthist artifact by padding (#1664)
+                    """
                     _min, _max = a.min(), a.max()
                     b = (np.float32(a) - _min) / (_max - _min)
+
+                    h, w = b.shape
+                    h1 = (h + (8-1))//8*8
+                    w1 = (w + (8-1))//8*8
+                    if h != h1 or w != w1:
+                        b1 = np.zeros((h1, w1), dtype=b.dtype)
+                        b1[:h,:w] = b
+                        b = b1
                     c = skimage.exposure.equalize_adapthist(b, kernel_size=(8,8))
+                    if h != h1 or w != w1:
+                        c = c[:h,:w]
                     return np.array(c * (_max - _min) + _min, dtype=a.dtype)
                 img = equalized(img)
 
