@@ -170,8 +170,8 @@ class QcImage(object):
                     - Image value range is preserved
                     - Workaround for adapthist artifact by padding (#1664)
                     """
-                    _min, _max = a.min(), a.max()
-                    b = (np.float32(a) - _min) / (_max - _min)
+                    min_, max_ = a.min(), a.max()
+                    b = (np.float32(a) - min_) / (max_ - min_)
 
                     h, w = b.shape
                     h1 = (h + (8-1))//8*8
@@ -183,7 +183,7 @@ class QcImage(object):
                     c = skimage.exposure.equalize_adapthist(b, kernel_size=(8,8))
                     if h != h1 or w != w1:
                         c = c[:h,:w]
-                    return np.array(c * (_max - _min) + _min, dtype=a.dtype)
+                    return np.array(c * (max_ - min_) + min_, dtype=a.dtype)
                 img = equalized(img)
 
             plt.figure(1)
