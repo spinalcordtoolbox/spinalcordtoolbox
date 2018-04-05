@@ -102,7 +102,12 @@ def binarize_ndarray(src, dst=None, threshold=None):
 
     :param src: input ndarray
     :param dst: optional output ndarray, created as byte array if not provided
-    :param threshold: threshold for binarization, "otsu" to use Otsu's threshold
+    :param threshold: threshold for binarization:
+
+                      - absolute value
+                      - "otsu" to use Otsu's threshold
+                      - (x, "%") to use a percentile
+
     :return: dst (for use if parameter dst is None)
     """
 
@@ -111,6 +116,10 @@ def binarize_ndarray(src, dst=None, threshold=None):
 
     if threshold == "otsu":
         threshold = skimage.filters.threshold_otsu(src)
+    elif isinstance(threshold, tuple) \
+     and len(threshold) == 2 \
+     and threshold[1] == "%":
+        threshold = np.percentile(src, threshold[0])
     else:
         try:
             threshold += 0
@@ -126,6 +135,12 @@ def binarize_ndarray(src, dst=None, threshold=None):
 def binarize(src, dst=None, threshold=None):
     """
     Binarize an Image
+
+    :param src: input filename, or Image, or ndarray
+    :param dst: optional output filename, or Image, or ndarray
+    :param threshold: threshold for binarization, see `binarize_ndarray()`
+    :return: dst (for use if parameter dst is None);
+             created of same type as `src` if not provided as a parameter
     """
 
     return apply_on_path_or_image_or_ndarray(
