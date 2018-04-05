@@ -55,7 +55,7 @@ def apply_on_path_or_image_or_ndarray(func, src, dst=None, dst_creator=None,
     if isinstance(dst, str):
         dst_path = dst
         dst_image = src_image.copy()
-        dst_image.setFilename(dst_path)
+        dst_image.setFileName(dst_path)
         dst = dst_image.data
     elif isinstance(dst, msct_image.Image):
         dst_path = None
@@ -75,7 +75,12 @@ def apply_on_path_or_image_or_ndarray(func, src, dst=None, dst_creator=None,
             dst_image.setFileName("")
             dst_path = None
         else:
-            dst = dst_creator(src)
+            dst_path = None
+            dst_image = None
+            if dst_creator is not None:
+                dst = dst_creator(src)
+            else:
+                dst = np.zeros_like(src)
     else:
         raise NotImplementedError("unknown type {} for dst".format(type(src)))
 
@@ -134,10 +139,9 @@ def binarize(src, dst=None, threshold=None):
 
 
 if __name__ == "__main__":
-    dst = binarize("t2.nii.gz", threshold="otsu")
-    print(dst)
 
-    src = msct_image.Image("t2.nii.gz")
-    dst = msct_image.Image("t2_bin.nii.gz")
-    dst = binarize(src, dst, threshold="otsu")
-    print(dst)
+    for src in ("t2.nii.gz", msct_image.Image("t2.nii.gz")):
+        for dst in ("t2_bin.nii.gz", msct_image.Image("t2_bin.nii.gz"), None):
+            dst_ = binarize(src, dst, threshold="otsu")
+            if dst is None:
+                assert isinstance(dst_, type(src))
