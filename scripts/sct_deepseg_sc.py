@@ -387,7 +387,7 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, qc_p
         param = qc.Params(fname_image, 'sct_deepseg_sc', args, 'Axial', qc_path)
         report = qc.QcReport(param, '')
 
-        @qc.QcImage(report, 'none', [qc.QcImage.listed_seg, ])
+        @qc.QcImage(report, 'none', [qc.QcImage.listed_seg], stretch_contrast=True)
         def test(qslice):
             return qslice.mosaic()
 
