@@ -181,11 +181,7 @@ def get_parser():
     parser.add_option(name='-qc',
                       type_value='folder_creation',
                       description='The path where the quality control generated content will be saved',
-                      default_value=os.path.expanduser('~/qc_data'))
-    parser.add_option(name='-noqc',
-                      type_value=None,
-                      description='Prevent the generation of the QC report',
-                      mandatory=False)
+                      default_value=None)
     parser.add_option(name="-r",
                       type_value="multiple_choice",
                       description='Remove temporary files.',
@@ -730,8 +726,6 @@ def main(args=None):
         param_seg.path_results = os.path.abspath(arguments['-ofolder'])
     if '-qc' in arguments:
         param_seg.qc = os.path.abspath(arguments['-qc'])
-    if '-noqc' in arguments:
-        param_seg.qc = False
     if '-r' in arguments:
         param.rm_tmp = bool(int(arguments['-r']))
     if '-v' in arguments:
