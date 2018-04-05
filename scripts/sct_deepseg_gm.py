@@ -94,7 +94,7 @@ def run_main():
         qc_param = qc.Params(input_filename, "sct_deepseg_gm", sys.argv[1:], 'Axial', qc_path)
         report = qc.QcReport(qc_param, '')
 
-        @qc.QcImage(report, 'none', [qc.QcImage.listed_seg], stretch_contrast=False)
+        @qc.QcImage(report, 'none', [qc.QcImage.listed_seg], stretch_contrast=True)
         def test(qslice):
             return qslice.mosaic()
 
