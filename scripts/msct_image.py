@@ -664,7 +664,7 @@ class Image(object):
         Uses the binary implementation of `get_orientation`. Recommend using
         `get_orientation` instead and deprecate this function.
         """
-        status, output = sct.run("isct_orientation3d -i %s -get" % self.absolutepath, 0)
+        status, output = sct.run(["isct_orientation3d", "-i", self.absolutepath, "-get"], 0)
 
         if status != 0:
             sct.printv('ERROR in get_orientation.', 1, 'error')
