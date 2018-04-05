@@ -48,6 +48,7 @@ $(document).ready(function(){
         obj.prev().click();
       }
     }
+    event.preventDefault();
   });
 });
 
@@ -56,7 +57,6 @@ function responseHandler(res) {
   for(var i = 0; i < res.length; i++) {
     n = new Date(res[i].moddate);
     res[i].moddate = n.toLocaleString();
-    res[i].folder = /.*-i (\S+).*/g.exec(res[i].args)[1];
   }
   return res;
 }
