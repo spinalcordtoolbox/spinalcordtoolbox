@@ -1,20 +1,23 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import json
-import logging
-import os
 
-import warnings
+import sys, os, json, logging, warnings, datetime
+
 warnings.filterwarnings("ignore")
 
-import datetime
+import numpy as np
+
+import skimage
+import skimage.exposure
+
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.colorbar as colorbar
 import matplotlib.colors as color
 import matplotlib.pyplot as plt
-import numpy as np
 from scipy import ndimage
 
+import sct_utils as sct
 
 logger = logging.getLogger("sct.{}".format(__file__))
 
@@ -52,7 +55,7 @@ class QcImage(object):
                      "#a22abd", "#d58240", "#ac2aff"]
     _seg_colormap = plt.cm.autumn
 
-    def __init__(self, qc_report, interpolation, action_list):
+    def __init__(self, qc_report, interpolation, action_list, stretch_contrast=True):
         """
 
         Parameters
@@ -63,10 +66,12 @@ class QcImage(object):
             Type of interpolation used in matplotlib
         action_list : list of functions
             List of functions that generates a specific type of images
+        stretch_contrast : adjust image so as to improve contrast
         """
         self.qc_report = qc_report
         self.interpolation = interpolation
         self.action_list = action_list
+        self._stretch_contrast = stretch_contrast
 
     """
     action_list contain the list of images that has to be generated.
@@ -155,6 +160,32 @@ class QcImage(object):
 
             img, mask = func(sct_slice, *args)
 
+            if self._stretch_contrast:
+                def equalized(a):
+                    """
+                    Perform histogram equalization using CLAHE
+
+                    Notes:
+
+                    - Image value range is preserved
+                    - Workaround for adapthist artifact by padding (#1664)
+                    """
+                    min_, max_ = a.min(), a.max()
+                    b = (np.float32(a) - min_) / (max_ - min_)
+
+                    h, w = b.shape
+                    h1 = (h + (8-1))//8*8
+                    w1 = (w + (8-1))//8*8
+                    if h != h1 or w != w1:
+                        b1 = np.zeros((h1, w1), dtype=b.dtype)
+                        b1[:h,:w] = b
+                        b = b1
+                    c = skimage.exposure.equalize_adapthist(b, kernel_size=(8,8))
+                    if h != h1 or w != w1:
+                        c = c[:h,:w]
+                    return np.array(c * (max_ - min_) + min_, dtype=a.dtype)
+                img = equalized(img)
+
             plt.figure(1)
             fig = plt.imshow(img, cmap=plt.cm.gray, interpolation=self.interpolation, aspect=float(aspect_img))
             fig.axes.get_xaxis().set_visible(False)
@@ -165,6 +196,9 @@ class QcImage(object):
                 logger.debug('Action List %s', action.__name__)
                 plt.clf()
                 plt.figure(1)
+                if self._stretch_contrast and action.__name__ in ("no_seg_seg",):
+                    print("Mask type %s" % mask.dtype)
+                    mask = equalized(mask)
                 action(self, mask)
                 self._save(self.qc_report.qc_params.abs_overlay_img_path())
             plt.close()
@@ -220,8 +254,11 @@ class Params(object):
         abs_input_path = os.path.dirname(os.path.abspath(input_file))
         abs_input_path, contrast = os.path.split(abs_input_path)
         _, subject = os.path.split(abs_input_path)
+        if isinstance(args, list):
+            args = sct.list2cmdline(args)
 
         self.subject = subject
+        self.cwd = os.getcwd()
         self.contrast = contrast
         self.command = command
         self.args = args
@@ -296,8 +333,10 @@ class QcReport(object):
         # get path of the toolbox
 
         output = {
+            'python': sys.executable,
+            'cwd': self.qc_params.cwd,
+            'cmdline': "{} {}".format(self.qc_params.command, self.qc_params.args),
             'command': self.qc_params.command,
-            'args': ' '.join(self.qc_params.args),
             'subject': self.qc_params.subject,
             'contrast': self.qc_params.contrast,
             'orientation': self.qc_params.orientation,

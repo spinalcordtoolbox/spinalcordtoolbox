@@ -8,7 +8,7 @@
 #     Spinal cord gray matter segmentation using deep dilated convolutions.
 #     URL: https://arxiv.org/abs/1710.01269
 
-import sys
+import sys, os
 
 import sct_utils as sct
 from msct_parser import Parser
@@ -34,6 +34,15 @@ def get_parser():
                       example='sc_gm_seg.nii.gz')
 
     parser.usage.addSection('\nMISC')
+
+    parser.add_option(name='-qc',
+                      type_value='folder_creation',
+                      description='The path where the quality control generated content will be saved',
+                      default_value=os.path.expanduser('~/qc_data'))
+    parser.add_option(name='-noqc',
+                      type_value=None,
+                      description='Prevent the generation of the QC report',
+                      mandatory=False)
 
     parser.add_option(name="-m",
                       type_value='multiple_choice',
@@ -70,6 +79,34 @@ def run_main():
 
     out_fname = deepseg_gm.segment_file(input_filename, output_filename,
                                         model_name, int(verbose))
+
+
+    if '-qc' in arguments:
+        qc_path = os.path.abspath(arguments['-qc'])
+    if '-noqc' in arguments:
+        qc_path = None
+    if qc_path is not None:
+        sct.printv('\nSave quality control images (in %s)...' % qc_path, verbose, 'normal')
+
+        import spinalcordtoolbox.reports.qc as qc
+        import spinalcordtoolbox.reports.slice as qcslice
+
+        qc_param = qc.Params(input_filename, "sct_deepseg_gm", sys.argv[1:], 'Axial', qc_path)
+        report = qc.QcReport(qc_param, '')
+
+        @qc.QcImage(report, 'none', [qc.QcImage.listed_seg], stretch_contrast=True)
+        def test(qslice):
+            return qslice.mosaic()
+
+        from msct_image import Image
+        im_org = Image(input_filename)
+        im_seg = Image(out_fname)
+
+        test(qcslice.Axial(im_org, im_seg))
+        sct.printv('Sucessfully generated the QC results in %s' % qc_param.qc_results)
+        sct.printv('Use the following command to see the results in a browser')
+        sct.printv('sct_qc -folder %s' % qc_path, type='info')
+
 
     sct.display_viewer_syntax([input_filename, format(out_fname)],
                               colormaps=['gray', 'red'],
