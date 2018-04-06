@@ -48,6 +48,7 @@ class Param:
         self.shift_AP_visu = 15  # 0#15  # shift AP for displaying disc values
         self.smooth_factor = [3, 1, 1]  # [3, 1, 1]
         self.gaussian_std = 1.0  # STD of the Gaussian function, centered at the most rostral point of the image, and used to weight C2-C3 disk location finding towards the rostral portion of the FOV. Values to set between 0.1 (strong weighting) and 999 (no weighting).
+        self.qc_path = None
 
     # update constructor with user's parameters
     def update(self, param_user):
@@ -162,7 +163,7 @@ sct_label_vertebrae -i t2.nii.gz -s t2_seg_manual.nii.gz  "$(< init_label_verteb
     parser.add_option(name='-qc',
                       type_value='folder_creation',
                       description='The path where the quality control generated content will be saved',
-                      default_value=None)
+                      default_value=param_default.qc_path)
     return parser
 
 
@@ -195,6 +196,8 @@ def main(args=None):
         path_output = arguments['-ofolder']
     else:
         path_output = os.curdir
+    param.qc_path = arguments.get("-qc", None)
+
     if '-initz' in arguments:
         initz = arguments['-initz']
     if '-initcenter' in arguments:
@@ -258,7 +261,10 @@ def main(args=None):
         # apply straightening
         sct.run(['sct_apply_transfo', '-i', 'data.nii', '-w', 'warp_curve2straight.nii.gz', '-d', 'straight_ref.nii.gz', '-o', 'data_straight.nii'])
     else:
-        sct.run(['sct_straighten_spinalcord', '-i', 'data.nii', '-s', 'segmentation.nii.gz', '-r', str(remove_temp_files), '-qc', '0'])
+        cmd = ['sct_straighten_spinalcord', '-i', 'data.nii', '-s', 'segmentation.nii.gz', '-r', str(remove_temp_files)]
+        if param.qc_path is not None:
+            cmd += ['-qc', param.qc_path]
+        sct.run(cmd)
 
     # resample to 0.5mm isotropic to match template resolution
     sct.printv('\nResample to 0.5mm isotropic...', verbose)
@@ -329,30 +335,31 @@ def main(args=None):
         sct.rmtree(path_tmp)
 
     # Generate QC report
-    try:
-        if '-qc' in arguments:
-            qc_path = os.path.abspath(arguments['-qc'])
-
-            import spinalcordtoolbox.reports.qc as qc
-            import spinalcordtoolbox.reports.slice as qcslice
-
-            qc_param = qc.Params(fname_in, 'sct_label_vertebrae', args, 'Sagittal', qc_path)
-            report = qc.QcReport(qc_param, '')
-
-            @qc.QcImage(report, 'none', [qc.QcImage.label_vertebrae, ])
-            def test(qslice):
-                return qslice.single()
-
-            labeled_seg_file = os.path.join(path_output, file_seg + '_labeled' + ext_seg)
-            test(qcslice.Sagittal(Image(fname_in), Image(labeled_seg_file)))
-            sct.printv('Sucessfully generated the QC results in %s' % qc_param.qc_results)
-            sct.printv('Use the following command to see the results in a browser:')
-            sct.printv('open file "{}/index.html"'.format(qc_path), type='info')
-    except Exception as err:
-        sct.printv(err, verbose, 'warning')
-        sct.printv('WARNING: Cannot generate report.', verbose, 'warning')
+    if param.qc_path is not None:
+        qc_path = os.path.abspath(param.qc_path)
+        labeled_seg_file = os.path.join(path_output, file_seg + '_labeled' + ext_seg)
+        quick_check(fname_in, labeled_seg_file, args, qc_path)
 
     sct.display_viewer_syntax([fname_in, fname_seg_labeled], colormaps=['', 'random'], opacities=['1', '0.5'])
+
+
+def quick_check(fn_in, fn_labeled, args, qc_path):
+    """
+    Generate a quick visualization of vertex labeling
+    """
+    import spinalcordtoolbox.reports.qc as qc
+    import spinalcordtoolbox.reports.slice as qcslice
+
+    qc.add_entry(
+     src=fn_in,
+     process='sct_label_vertebrae',
+     args=args,
+     qc_path=qc_path,
+     plane='Sagittal',
+     qcslice=qcslice.Sagittal([Image(fn_in), Image(fn_labeled)]),
+     qcslice_operations=[qc.QcImage.label_vertebrae],
+     qcslice_layout=lambda x: x.single(),
+    )
 
 
 # Detect vertebral levels

@@ -12,8 +12,9 @@
 #########################################################################################
 
 
-import sys, io, os, time, shutil
+import sys, io, os, time
 
+from msct_image import Image
 from msct_parser import Parser
 import sct_utils as sct
 from sct_extract_metric import read_label_file
@@ -39,13 +40,11 @@ class Param:
         self.warp_spinal_levels = 0
         self.list_labels_nn = ['_level.nii.gz', '_levels.nii.gz', '_csf.nii.gz', '_CSF.nii.gz', '_cord.nii.gz']  # list of files for which nn interpolation should be used. Default = linear.
         self.verbose = 1  # verbose
-        self.qc = 1
+        self.qc_path = None
 
 
-# MAIN
-# ==========================================================================================
 class WarpTemplate:
-    def __init__(self, fname_src, fname_transfo, warp_atlas, warp_spinal_levels, folder_out, path_template, verbose, qc):
+    def __init__(self, fname_src, fname_transfo, warp_atlas, warp_spinal_levels, folder_out, path_template, verbose, qc_path):
 
         # Initialization
         self.fname_src = fname_src
@@ -58,7 +57,6 @@ class WarpTemplate:
         self.folder_atlas = param.folder_atlas
         self.folder_spinal_levels = param.folder_spinal_levels
         self.verbose = verbose
-        self.qc = qc
 
         # sct.printv(arguments)
         sct.printv('\nCheck parameters:')
@@ -86,25 +84,9 @@ class WarpTemplate:
             sct.printv('\nWARP SPINAL LEVELS:', self.verbose)
             warp_label(self.path_template, self.folder_spinal_levels, param.file_info_label, self.fname_src, self.fname_transfo, self.folder_out)
 
-        sct.display_viewer_syntax([self.fname_src,
-                                   os.path.join(self.folder_out, self.folder_template, get_file_label(os.path.join(self.folder_out, self.folder_template), 'T2')),
-                                   os.path.join(self.folder_out, self.folder_template, get_file_label(os.path.join(self.folder_out, self.folder_template), 'gray matter')),
-                                   os.path.join(self.folder_out, self.folder_template, get_file_label(os.path.join(self.folder_out, self.folder_template), 'white matter'))],
-                                  colormaps=['gray', 'gray', 'red-yellow', 'blue-lightblue'],
-                                  opacities=['1', '1', '0.5', '0.5'],
-                                  minmax=['', '0,4000', '0.4,1', '0.4,1'],
-                                  verbose=param.verbose)
-
-        if self.qc:
-            from msct_image import Image
-            # output QC image
-            im = Image(self.fname_src)
-            im_wm = Image(os.path.join(self.folder_out, self.folder_template, get_file_label(os.path.join(self.folder_out, self.folder_template), 'white matter')))
-            im.save_quality_control(plane='axial', n_slices=4, seg=im_wm, thr=0.5, cmap_col='blue-cyan', path_output=self.folder_out)
 
 
-# Warp labels
-# ==========================================================================================
+
 def warp_label(path_label, folder_label, file_label, fname_src, fname_transfo, path_out):
     """
     Warp label files according to info_label.txt file
@@ -244,11 +226,9 @@ def get_parser():
                       mandatory=False,
                       default_value=str(param_default.path_template))
     parser.add_option(name='-qc',
-                      type_value='multiple_choice',
-                      description='Output images for quality control.',
-                      mandatory=False,
-                      example=['0', '1'],
-                      default_value='1')
+                      type_value='folder_creation',
+                      description='The path where the quality control generated content will be saved',
+                      default_value=param_default.qc_path)
     parser.add_option(name="-v",
                       type_value="multiple_choice",
                       description="""Verbose.""",
@@ -258,8 +238,26 @@ def get_parser():
     return parser
 
 
-# MAIN
-# ==========================================================================================
+def quick_check(fn_in, fn_wm, args, qc_path):
+    """
+    Generate a QC entry allowing to quickly review the warped template.
+    """
+
+    import spinalcordtoolbox.reports.qc as qc
+    import spinalcordtoolbox.reports.slice as qcslice
+
+    qc.add_entry(
+     src=fn_in,
+     process="sct_warp_template",
+     args=args,
+     qc_path=qc_path,
+     plane='Axial',
+     qcslice=qcslice.Axial([Image(fn_in), Image(fn_wm)]),
+     qcslice_operations=[qc.QcImage.template],
+     qcslice_layout=lambda x: x.mosaic(),
+    )
+
+
 def main(args=None):
 
     parser = get_parser()
@@ -274,14 +272,25 @@ def main(args=None):
     folder_out = arguments['-ofolder']
     path_template = arguments['-t']
     verbose = int(arguments['-v'])
-    qc = int(arguments['-qc'])
+    qc_path = arguments.get("-qc", None)
 
     # call main function
-    WarpTemplate(fname_src, fname_transfo, warp_atlas, warp_spinal_levels, folder_out, path_template, verbose, qc)
+    w = WarpTemplate(fname_src, fname_transfo, warp_atlas, warp_spinal_levels, folder_out, path_template, verbose, qc_path)
+
+    if qc_path is not None:
+        fname_wm = os.path.join(w.folder_out, w.folder_template, get_file_label(os.path.join(w.folder_out, w.folder_template), 'white matter'))
+        quick_check(fname_src, fname_wm, sys.argv[1:], os.path.abspath(qc_path))
+
+    sct.display_viewer_syntax([fname_src,
+                                   os.path.join(w.folder_out, w.folder_template, get_file_label(os.path.join(w.folder_out, w.folder_template), 'T2')),
+                                   os.path.join(w.folder_out, w.folder_template, get_file_label(os.path.join(w.folder_out, w.folder_template), 'gray matter')),
+                                   os.path.join(w.folder_out, w.folder_template, get_file_label(os.path.join(w.folder_out, w.folder_template), 'white matter'))],
+                                  colormaps=['gray', 'gray', 'red-yellow', 'blue-lightblue'],
+                                  opacities=['1', '1', '0.5', '0.5'],
+                                  minmax=['', '0,4000', '0.4,1', '0.4,1'],
+                                  verbose=verbose)
 
 
-# START PROGRAM
-# ==========================================================================================
 if __name__ == "__main__":
     sct.start_stream_logger()
     param = Param()

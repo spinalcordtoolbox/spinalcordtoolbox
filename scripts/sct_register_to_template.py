@@ -40,7 +40,7 @@ class Param:
         self.padding = 10  # this field is needed in the function register@sct_register_multimodal
         self.verbose = 1  # verbose
         self.path_template = os.path.join(path_sct, 'data', 'PAM50')
-        self.path_qc = None
+        self.qc_path = None
         self.zsubsample = '0.25'
         self.param_straighten = ''
 
@@ -131,7 +131,7 @@ def get_parser():
     parser.add_option(name='-qc',
                       type_value='folder_creation',
                       description='The path where the quality control generated content will be saved',
-                      default_value=param.path_qc)
+                      default_value=param.qc_path)
     parser.add_option(name="-igt",
                       type_value="image_nifti",
                       description="File name of ground-truth template cord segmentation (binary nifti).",
@@ -180,8 +180,8 @@ def main(args=None):
         path_output = arguments['-ofolder']
     else:
         path_output = ''
-    if '-qc' in arguments:
-        param.path_qc = arguments['-qc']
+
+    param.qc_path = arguments.get("-qc", None)
 
     path_template = arguments['-t']
     contrast_template = arguments['-c']
@@ -245,10 +245,6 @@ def main(args=None):
     sct.printv('  Segmentation:         ' + fname_seg, verbose)
     sct.printv('  Path template:        ' + path_template, verbose)
     sct.printv('  Remove temp files:    ' + str(remove_temp_files), verbose)
-
-    if param.path_qc is not None:
-        # create QC folder
-        sct.create_folder(param.path_qc)
 
     # check if data, segmentation and landmarks are in the same space
     # JULIEN 2017-04-25: removed because of issue #1168
@@ -533,7 +529,7 @@ def main(args=None):
         warp_forward = ['template2subjectAffine.txt']
         warp_inverse = ['-template2subjectAffine.txt']
         try:
-            register_landmarks(ftmp_template_label, ftmp_label, paramreg.steps['0'].dof, fname_affine=warp_forward[0], verbose=verbose, path_qc=param.path_qc)
+            register_landmarks(ftmp_template_label, ftmp_label, paramreg.steps['0'].dof, fname_affine=warp_forward[0], verbose=verbose, qc_path=param.qc_path)
         except Exception:
             sct.printv('ERROR: input labels do not seem to be at the right place. Please check the position of the labels. See documentation for more details: https://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/', verbose=verbose, type='error')
 
@@ -596,30 +592,31 @@ def main(args=None):
     elapsed_time = time.time() - start_time
     sct.printv('\nFinished! Elapsed time: ' + str(int(round(elapsed_time))) + 's', verbose)
 
-    if param.path_qc is not None:
-        qc_path = os.path.abspath(param.path_qc)
-
-        import spinalcordtoolbox.reports.qc as qc
-        import spinalcordtoolbox.reports.slice as qcslice
-
-        qc_param = qc.Params(fname_data, 'sct_register_to_template', args, 'Axial', qc_path)
-        report = qc.QcReport(qc_param, '')
-
-        @qc.QcImage(report, 'none', [qc.QcImage.no_seg_seg])
-        def test(qslice):
-            return qslice.mosaic()
-
-        fname_template2anat = os.path.join(path_output, "template2anat" + ext_data)
-        try:
-            test(qcslice.AxialTemplate2Anat(Image(fname_data), Image(fname_template2anat), Image(fname_seg)))
-            sct.printv('Sucessfully generate the QC results in %s' % qc_param.qc_results)
-            sct.printv('Use the following command to see the results in a browser')
-            sct.printv('open file "{}/index.html"'.format(qc_path), type='info')
-        except:
-            sct.log.warning('Issue when creating QC report.')
+    if param.qc_path is not None:
+        quick_check(fname_data, fname_template2anat, fname_seg, args, os.path.abspath(param.qc_path))
 
     sct.display_viewer_syntax([fname_data, fname_template2anat], verbose=verbose)
     sct.display_viewer_syntax([fname_template, fname_anat2template], verbose=verbose)
+
+
+def quick_check(fname_data, fname_template2anat, fname_seg, args, qc_path):
+    """
+    Generate a QC entry allowing to quickly review the straightening process.
+    """
+
+    import spinalcordtoolbox.reports.qc as qc
+    import spinalcordtoolbox.reports.slice as qcslice
+
+    qc.add_entry(
+     src=fname_data,
+     process="sct_register_to_template",
+     args=args,
+     qc_path=qc_path,
+     plane="Axial",
+     qcslice=qcslice.Axial([Image(fname_data), Image(fname_template2anat), Image(fname_seg)]),
+     qcslice_operations=[qc.QcImage.no_seg_seg],
+     qcslice_layout=lambda x: x.mosaic()[:2],
+    )
 
 
 # Resample labels

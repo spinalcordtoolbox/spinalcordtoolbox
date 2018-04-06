@@ -229,16 +229,38 @@ def main():
     if '-v' in arguments:
         verbose = arguments['-v']
 
-    if '-qc' in arguments:
-        qc_path = os.path.abspath(arguments['-qc'])
-    else:
-        qc_path = None
+    qc_path = arguments.get("-qc", None)
 
-    deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, qc_path=qc_path,
-                                 remove_temp_files=remove_temp_files, verbose=verbose, args=args)
+    fname_seg = deep_segmentation_spinalcord(fname_image, contrast_type, output_folder,
+     remove_temp_files=remove_temp_files, verbose=verbose)
+
+    if qc_path is not None:
+        quick_check(fname_image, fname_seg, args, os.path.abspath(qc_path))
+
+    sct.display_viewer_syntax([fname_image, os.path.join(output_folder, fname_seg)], colormaps=['gray', 'red'], opacities=['', '0.7'])
 
 
-def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, qc_path=None, remove_temp_files=1, verbose=1, args=None):
+def quick_check(fn_in, fn_seg, args, qc_path):
+    """
+    Generate a QC entry allowing to quickly review the segmentation process.
+    """
+
+    import spinalcordtoolbox.reports.qc as qc
+    import spinalcordtoolbox.reports.slice as qcslice
+
+    qc.add_entry(
+     src=fn_in,
+     process="sct_deepseg_sc",
+     args=args,
+     qc_path=qc_path,
+     plane='Axial',
+     qcslice=qcslice.Axial([Image(fn_in), Image(fn_seg)]),
+     qcslice_operations=[qc.QcImage.listed_seg],
+     qcslice_layout=lambda x: x.mosaic(),
+    )
+
+
+def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, remove_temp_files=1, verbose=1):
     # initalizing parameters
     crop_size = 64  # TODO: this parameter should actually be passed by the model, as it is one of its fixed parameter
 
@@ -375,26 +397,7 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, qc_p
         sct.log.info("Remove temporary files...")
         tmp_folder.cleanup()
 
-    if qc_path is not None:
-        import spinalcordtoolbox.reports.qc as qc
-        import spinalcordtoolbox.reports.slice as qcslice
-
-        param = qc.Params(fname_image, 'sct_deepseg_sc', args, 'Axial', qc_path)
-        report = qc.QcReport(param, '')
-
-        @qc.QcImage(report, 'none', [qc.QcImage.listed_seg], stretch_contrast=True)
-        def test(qslice):
-            return qslice.mosaic()
-
-        try:
-            test(qcslice.Axial(Image(fname_image), Image(fname_seg)))
-            sct.log.info('Sucessfully generated the QC results in %s' % param.qc_results)
-            sct.log.info('Use the following command to see the results in a browser:')
-            sct.printv('open file "{}/index.html"'.format(qc_path), type='info')
-        except:
-            sct.log.warning('Issue when creating QC report.')
-
-    sct.display_viewer_syntax([fname_image, os.path.join(output_folder, fname_seg)], colormaps=['gray', 'red'], opacities=['', '0.7'])
+    return os.path.join(output_folder, fname_seg)
 
 
 if __name__ == "__main__":
