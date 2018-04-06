@@ -189,7 +189,7 @@ class Param:
         self.debug = 0
         self.outSuffix  = "_reg"
         self.padding = 5
-        self.path_qc = os.path.join(os.path.abspath(os.curdir), "qc")
+        self.qc_path = os.path.join(os.path.abspath(os.curdir), "qc")
 
 # Parameters for registration
 
@@ -384,7 +384,7 @@ def main(args=None):
         file_out_inv = file_out + '_inv'
 
     # create QC folder
-    sct.create_folder(param.path_qc)
+    sct.create_folder(param.qc_path)
 
     # create temporary folder
     path_tmp = sct.tmp_create()
@@ -679,7 +679,7 @@ def register(src, dest, paramreg, param, i_step_str):
                                warp_forward_out=warp_forward_out,
                                warp_inverse_out=warp_inverse_out,
                                ants_registration_params=ants_registration_params,
-                               path_qc=param.path_qc,
+                               qc_path=param.qc_path,
                                remove_temp_files=param.remove_temp_files,
                                verbose=param.verbose)
 
@@ -711,7 +711,7 @@ def register(src, dest, paramreg, param, i_step_str):
                            warp_forward_out=warp_forward_out,
                            warp_inverse_out=warp_inverse_out,
                            ants_registration_params=ants_registration_params,
-                           path_qc=param.path_qc,
+                           qc_path=param.qc_path,
                            remove_temp_files=param.remove_temp_files,
                            verbose=param.verbose)
 
@@ -730,7 +730,7 @@ def register(src, dest, paramreg, param, i_step_str):
                            paramreg.steps[i_step_str].dof,
                            fname_affine=warp_forward_out,
                            verbose=param.verbose,
-                           path_qc=param.path_qc)
+                           qc_path=param.qc_path)
 
     if not os.path.isfile(warp_forward_out):
         # no forward warping field for rigid and affine
