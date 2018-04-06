@@ -11,3 +11,4 @@ requests==2.12.4
 cryptography==1.6
 mpi4py==2.0.0
 psutil==5.2.2
+mkl-service

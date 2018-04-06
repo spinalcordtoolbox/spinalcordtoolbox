@@ -8,11 +8,14 @@
 """Simple local http server to serve QC reports
 """
 
-import os
+import sys, os
 import shutil
-import sys
-from BaseHTTPServer import HTTPServer
-from SimpleHTTPServer import SimpleHTTPRequestHandler
+
+if sys.hexversion > 0x03000000:
+    from http.server import HTTPServer, SimpleHTTPRequestHandler
+else:
+    from BaseHTTPServer import HTTPServer
+    from SimpleHTTPServer import SimpleHTTPRequestHandler
 
 from msct_parser import Parser
 import sct_utils as sct

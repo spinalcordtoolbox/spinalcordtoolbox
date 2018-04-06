@@ -334,7 +334,7 @@ class AxialTemplate(Axial):
         return min(self.axial_dim(image), self.axial_dim(self.image_seg))
 
     def get_size(self, image):
-        return min(image.data.shape + self.image_seg.data.shape) / 2
+        return min(image.data.shape + self.image_seg.data.shape) // 2
 
     def get_center(self):
         size = self.get_size(self.image)
@@ -346,8 +346,8 @@ class AxialTemplate(Axial):
 
     def single(self):
         dim = self.get_dim(self.image)
-        matrix0 = self.get_slice(self.image.data, dim / 2)
-        matrix1 = self.get_slice(self.image_seg.data, dim / 2)
+        matrix0 = self.get_slice(self.image.data, dim // 2)
+        matrix1 = self.get_slice(self.image_seg.data, dim // 2)
 
         return matrix0, matrix1
 
