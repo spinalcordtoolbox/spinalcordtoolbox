@@ -18,10 +18,10 @@
   margin-right: auto;
 }
 
-#sprite-img {
+#sprite-img, #overlay-img {
     position: absolute;
     top: 0px;
-    height: auto;
+    left: 0px;
 }
 
 @keyframes phase-in-out {
@@ -30,22 +30,29 @@
 }
 
 #overlay-img {
-    position: absolute;
-    top: 0;
-    height: auto;
     animation: phase-in-out .5s infinite alternate ease-in-out;
 }
 
-.Sagittal{
-    width: 33%;
-    left: 33%;
-}
-
-.Axial {
-    width: 100%;
-    left: 0px;
+.Sagittal, .Axial{
+    max-width: 100%;
+    max-height: 80vh;
+    overflow-y: hidden;
 }
 
 a.next {
     float: right;
+}
+
+.fixed-table-container {
+    height: 80vh;
+}
+
+.navbar-brand > img {
+    height: 25px;
+    padding-right: 10px;
+    display: inline;
+}
+
+table {
+    font-size: 10px;
 }
