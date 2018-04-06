@@ -8,7 +8,7 @@
 """Simple local http server to serve QC reports
 """
 
-import sys, os
+import io, sys, os
 import shutil
 
 if sys.hexversion > 0x03000000:
@@ -16,6 +16,7 @@ if sys.hexversion > 0x03000000:
 else:
     from BaseHTTPServer import HTTPServer
     from SimpleHTTPServer import SimpleHTTPRequestHandler
+from string import Template
 
 from msct_parser import Parser
 import sct_utils as sct
@@ -54,22 +55,31 @@ def _copy_assets(dest_path):
                          dest_full_path)
 
 
+def _copy_data_in_html(html_file, json_file):
+    with io.open(json_file, 'r', encoding='utf-8') as json_fh:
+        tmp = Template(io.open(html_file, 'r', encoding='utf-8').read())
+        output = tmp.substitute(sct_json_data=json_fh.read())
+        io.open(html_file, 'w', encoding='utf-8').write(output)
+
+
 if __name__ == "__main__":
     sct.start_stream_logger()
     parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
     qc_path = arguments['-folder']
+    qc_path = os.path.realpath(qc_path)
     qc_port = int(arguments['-port'])
 
     json_file = os.path.join(qc_path, 'qc_results.json')
+    html_file = os.path.join(qc_path, 'index.html')
 
     if not os.path.isfile(json_file):
         sct.printv('Can not start the quality control viewer.'
                ' This is not a proper QC folder', type='error')
         sys.exit(-1)
 
-    qc_path = os.path.realpath(qc_path)
     _copy_assets(qc_path)
+    _copy_data_in_html(html_file, json_file)
 
     os.chdir(qc_path)
     httpd = HTTPServer(('', qc_port), SimpleHTTPRequestHandler)

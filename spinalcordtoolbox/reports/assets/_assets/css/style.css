@@ -45,14 +45,11 @@ a.next {
 
 .fixed-table-container {
     height: 80vh;
+    font-size: 10px;
 }
 
 .navbar-brand > img {
     height: 25px;
     padding-right: 10px;
     display: inline;
-}
-
-table {
-    font-size: 10px;
 }
