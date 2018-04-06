@@ -39,7 +39,7 @@ ini_param_trans_y = -150.0  # pix
 initial_step = 2
 
 
-def register_landmarks(fname_src, fname_dest, dof, fname_affine='affine.txt', verbose=1, path_qc='./'):
+def register_landmarks(fname_src, fname_dest, dof, fname_affine='affine.txt', verbose=1, qc_path='./'):
     """
     Register two NIFTI volumes containing landmarks
     :param fname_src: fname of source landmarks
@@ -82,8 +82,8 @@ def register_landmarks(fname_src, fname_dest, dof, fname_affine='affine.txt', ve
 
     # estimate transformation
     # N.B. points_src and points_dest are inverted below, because ITK uses inverted transformation matrices, i.e., src->dest is defined in dest instead of src.
-    # (rotation_matrix, translation_array, points_moving_reg, points_moving_barycenter) = getRigidTransformFromLandmarks(points_dest, points_src, constraints=dof, verbose=verbose, path_qc=path_qc)
-    (rotation_matrix, translation_array, points_moving_reg, points_moving_barycenter) = getRigidTransformFromLandmarks(points_src, points_dest, constraints=dof, verbose=verbose, path_qc=path_qc)
+    # (rotation_matrix, translation_array, points_moving_reg, points_moving_barycenter) = getRigidTransformFromLandmarks(points_dest, points_src, constraints=dof, verbose=verbose, qc_path=qc_path)
+    (rotation_matrix, translation_array, points_moving_reg, points_moving_barycenter) = getRigidTransformFromLandmarks(points_src, points_dest, constraints=dof, verbose=verbose, qc_path=qc_path)
     # writing rigid transformation file
     # N.B. x and y dimensions have a negative sign to ensure compatibility between Python and ITK transfo
     text_file = open(fname_affine, 'w')
@@ -287,7 +287,7 @@ def getRigidTransformFromImages(img_dest, img_src, constraints='none', metric = 
     return rotation_matrix, translation_array
 
 
-def getRigidTransformFromLandmarks(points_dest, points_src, constraints='Tx_Ty_Tz_Rx_Ry_Rz', verbose=0, path_qc='./'):
+def getRigidTransformFromLandmarks(points_dest, points_src, constraints='Tx_Ty_Tz_Rx_Ry_Rz', verbose=0, qc_path='./'):
     """
     Compute affine transformation to register landmarks
     :param points_src:
@@ -342,7 +342,9 @@ def getRigidTransformFromLandmarks(points_dest, points_src, constraints='Tx_Ty_T
     sct.printv('Center:\n' + str(points_src_barycenter))
     sct.printv('Translation:\n' + str(translation_array))
 
-    if verbose == 2:
+    if qc_path is not None:
+        sct.create_folder(qc_path)
+
         import matplotlib
         # use Agg to prevent display
         matplotlib.use('Agg')
@@ -371,14 +373,14 @@ def getRigidTransformFromLandmarks(points_dest, points_src, constraints='Tx_Ty_T
         ax.set_aspect('auto')
         plt.legend()
         # plt.show()
-        plt.savefig(os.path.join(path_qc, 'getRigidTransformFromLandmarks_plot.png'))
+        plt.savefig(os.path.join(qc_path, 'getRigidTransformFromLandmarks_plot.png'))
 
         fig2 = plt.figure()
         plt.plot(sse_results)
         plt.grid()
         plt.title('#Iterations: ' + str(res.nit) + ', #FuncEval: ' + str(res.nfev) + ', Error: ' + str(res.fun))
         plt.show()
-        plt.savefig(os.path.join(path_qc, 'getRigidTransformFromLandmarks_iterations.png'))
+        plt.savefig(os.path.join(qc_path, 'getRigidTransformFromLandmarks_iterations.png'))
 
     # transform numpy matrix to list structure because it is easier to handle
     points_src_reg = points_src_reg.tolist()

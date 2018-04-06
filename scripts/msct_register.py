@@ -37,7 +37,7 @@ def register_slicewise(fname_src,
                         warp_inverse_out='step0InverseWarp.nii.gz',
                         paramreg=None,
                         ants_registration_params=None,
-                        path_qc='./',
+                        qc_path='./',
                         remove_temp_files=1,
                         verbose=0):
 
@@ -58,13 +58,13 @@ def register_slicewise(fname_src,
     # Calculate displacement
     if paramreg.algo == 'centermass':
         # translation of center of mass between source and destination in voxel space
-        register2d_centermassrot('src.nii', 'dest.nii', fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, rot=0, poly=int(paramreg.poly), path_qc=path_qc, verbose=verbose)
+        register2d_centermassrot('src.nii', 'dest.nii', fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, rot=0, poly=int(paramreg.poly), qc_path=qc_path, verbose=verbose)
     elif paramreg.algo == 'centermassrot':
         # translation of center of mass and rotation based on source and destination first eigenvectors from PCA.
-        register2d_centermassrot('src.nii', 'dest.nii', fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, rot=1, poly=int(paramreg.poly), path_qc=path_qc, verbose=verbose, pca_eigenratio_th=float(paramreg.pca_eigenratio_th))
+        register2d_centermassrot('src.nii', 'dest.nii', fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, rot=1, poly=int(paramreg.poly), qc_path=qc_path, verbose=verbose, pca_eigenratio_th=float(paramreg.pca_eigenratio_th))
     elif paramreg.algo == 'columnwise':
         # scaling R-L, then column-wise center of mass alignment and scaling
-        register2d_columnwise('src.nii', 'dest.nii', fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, verbose=verbose, path_qc=path_qc, smoothWarpXY=int(paramreg.smoothWarpXY))
+        register2d_columnwise('src.nii', 'dest.nii', fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, verbose=verbose, qc_path=qc_path, smoothWarpXY=int(paramreg.smoothWarpXY))
     else:
         # convert SCT flags into ANTs-compatible flags
         algo_dic = {'translation': 'Translation', 'rigid': 'Rigid', 'affine': 'Affine', 'syn': 'SyN', 'bsplinesyn': 'BSplineSyN', 'centermass': 'centermass'}
@@ -83,7 +83,7 @@ def register_slicewise(fname_src,
         sct.rmtree(path_tmp, verbose=verbose)
 
 
-def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii.gz', fname_warp_inv='warp_inverse.nii.gz', rot=1, poly=0, path_qc='./', verbose=0, pca_eigenratio_th=1.6):
+def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii.gz', fname_warp_inv='warp_inverse.nii.gz', rot=1, poly=0, qc_path='./', verbose=0, pca_eigenratio_th=1.6):
     """
     Rotate the source image to match the orientation of the destination image, using the first and second eigenvector
     of the PCA. This function should be used on segmentations (not images).
@@ -182,7 +182,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
             plt.grid()
             plt.xlabel('z')
             plt.ylabel('Angle (deg)')
-            plt.savefig(os.path.join(path_qc, 'register2d_centermassrot_regularize_rotation.png'))
+            plt.savefig(os.path.join(qc_path, 'register2d_centermassrot_regularize_rotation.png'))
             plt.close()
         # update variable
         angle_src_dest[z_nonzero] = angle_src_dest_regularized
@@ -265,7 +265,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
                     # sct.printv('WARNING: '+str(e), 1, 'warning')
 
                     # plt.axis('equal')
-            plt.savefig(os.path.join(path_qc, 'register2d_centermassrot_pca_z' + str(iz) + '.png'))
+            plt.savefig(os.path.join(qc_path, 'register2d_centermassrot_pca_z' + str(iz) + '.png'))
             plt.close()
 
         # construct 3D warping matrix
@@ -281,7 +281,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
     generate_warping_field(fname_src, warp_inv_x, warp_inv_y, fname_warp_inv, verbose)
 
 
-def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz', fname_warp_inv='warp_inverse.nii.gz', verbose=0, path_qc='./', smoothWarpXY=1):
+def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz', fname_warp_inv='warp_inverse.nii.gz', verbose=0, qc_path='./', smoothWarpXY=1):
     """
     Column-wise non-linear registration of segmentations. Based on an idea from Allan Martin.
     - Assumes src/dest are segmentations (not necessarily binary), and already registered by center of mass
@@ -517,7 +517,7 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
                 plt.ylim(mean_dest_y - 15, mean_dest_y + 15)
                 ax.grid(True, color='w')
                 # save figure
-                plt.savefig(os.path.join(path_qc, 'register2d_columnwise_image_z' + str(iz) + '.png'))
+                plt.savefig(os.path.join(qc_path, 'register2d_columnwise_image_z' + str(iz) + '.png'))
                 plt.close()
 
             # ============================================================
