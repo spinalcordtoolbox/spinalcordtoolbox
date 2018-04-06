@@ -320,6 +320,26 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
     return parser
 
 
+def quick_check(fn_in, fn_seg, args, qc_path):
+    """
+    Generate a QC entry allowing to quickly review the segmentation process.
+    """
+
+    import spinalcordtoolbox.reports.qc as qc
+    import spinalcordtoolbox.reports.slice as qcslice
+
+    qc.add_entry(
+     src=fn_in,
+     process="sct_propseg",
+     args=args,
+     qc_path=qc_path,
+     plane='Axial',
+     qcslice=qcslice.Axial([Image(fn_in), Image(fn_seg)]),
+     qcslice_operations=[qc.QcImage.listed_seg],
+     qcslice_layout=lambda x: x.mosaic(),
+    )
+
+
 if __name__ == "__main__":
     sct.start_stream_logger()
     parser = get_parser()
@@ -354,6 +374,9 @@ if __name__ == "__main__":
     remove_temp_files = 1
     if "-r" in arguments:
         remove_temp_files = int(arguments["-r"])
+
+    qc_path = arguments.get("-qc", None)
+
     verbose = 0
     if "-v" in arguments:
         if arguments["-v"] is "1":
@@ -512,25 +535,7 @@ if __name__ == "__main__":
         sct.log.info("Remove temporary files...")
         os.remove(tmp_output_file.absolutepath)
 
-    if '-qc' in arguments:
-        qc_path = os.path.abspath(arguments['-qc'])
-
-        import spinalcordtoolbox.reports.qc as qc
-        import spinalcordtoolbox.reports.slice as qcslice
-
-        param = qc.Params(fname_input_data, 'sct_propseg', args, 'Axial', qc_path)
-        report = qc.QcReport(param, '')
-
-        @qc.QcImage(report, 'none', [qc.QcImage.listed_seg, ])
-        def test(qslice):
-            return qslice.mosaic()
-
-        try:
-            test(qcslice.Axial(Image(fname_input_data), Image(fname_seg)))
-            sct.printv('Sucessfully generated the QC results in %s' % param.qc_results)
-            sct.printv('Use the following command to see the results in a browser:')
-            sct.printv('open file "{}/index.html"'.format(qc_path), type='info')
-        except:
-            sct.log.warning('Issue when creating QC report.')
+    if qc_path is not None:
+        quick_check(fname_input_data, fname_seg, args, os.path.abspath(qc_path))
 
     sct.display_viewer_syntax([fname_input_data, fname_seg], colormaps=['gray', 'red'], opacities=['', '0.7'])

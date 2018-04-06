@@ -13,35 +13,39 @@ logger = logging.getLogger("sct.{}".format(__file__))
 
 
 class Slice(object):
-    """Abstract class represents the slice object that will be transformed in 2D image file.
+    """Abstract class representing slicing applied to >=1 volumes for the purpose
+    of generating ROI slices.
 
-Functions with the suffix `_slice` gets a slice cut in the desired axis at the
-"i" position of the data of the 3D image. While the functions with the suffix
-`_dim` gets the size of the desired dimension of the 3D image.
+    The many volumes that are worked on are usually an original MRI volume, then
+    other ones which can be processed or segmentations of the first volumes; the ROIs
+    are computed on the last volume by default.
 
-Attributes
-----------
-image : msct_image.Image
-    The Image object of the original image
-image_seg : msct_image.Image
-    The Image object of the outputed segmneted image
+    For convenience, the volumes are all brought in the SAL reference frame.
+
+    Functions with the suffix `_slice` gets a slice cut in the desired axis at the
+    "i" position of the data of the 3D image. While the functions with the suffix
+    `_dim` gets the size of the desired dimension of the 3D image.
+
+    Attributes
+    ----------
+    _images : msct_image.Image
+    The Image objects of the images to consider
     """
 
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, image_name, seg_image_name):
+    def __init__(self, images):
         """
         Parameters
         ----------
-        image_name : msct_image.Image
-            Input 3D MRI to be separated into slices.
-        seg_image_name : msct_image.Image
-            Output name for the 3D MRI to be produced.
+        images : msct_image.Image
+            3D MRI to be separated into slices.
         """
-        self.image = image_name
-        self.image_seg = seg_image_name
-        self.image.change_orientation('SAL')
-        self.image_seg.change_orientation('SAL')
+        self._images = list()
+        for image in images:
+            img = image.copy()
+            img.change_orientation("SAL")
+            self._images.append(img)
 
     @staticmethod
     def axial_slice(data, i):
@@ -239,6 +243,7 @@ image_seg : msct_image.Image
             raise
         return centers_x, centers_y
 
+
     def mosaic(self, nb_column=0, size=15):
         """Obtain matrices of the mosaics
 
@@ -253,33 +258,35 @@ image_seg : msct_image.Image
         Returns
         -------
         tuple of numpy.ndarray
-            matrix of the input 3D RMI containing the mosaics of slices' "pixels"
-            and matrix of the transformed 3D RMI to output containing the mosaics
-            of slices' "pixels"
+            containing the mosaics of each slice pixels
         """
-        dim = self.get_dim(self.image)
+        image = self._images[0]
+
+        dim = self.get_dim(image)
         if nb_column == 0:
             nb_column = 600 // (size * 2)
 
         nb_row = math.ceil(dim // nb_column) + 1
 
-        length, width = self.get_slice(self.image.data, 1).shape
+        length, width = self.get_slice(image.data, 1).shape
 
         matrix_sz = (int(size * 2 * nb_row), int(size * 2 * nb_column))
-        matrix0 = np.ones(matrix_sz)
-        matrix1 = np.zeros(matrix_sz)
+
         centers_x, centers_y = self.get_center()
 
-        for i in range(dim):
-            x = int(centers_x[i])
-            y = int(centers_y[i])
+        matrices = list()
+        for image in self._images:
+            matrix = np.zeros(matrix_sz)
+            for i in range(dim):
+                x = int(centers_x[i])
+                y = int(centers_y[i])
 
-            matrix0 = self.add_slice(matrix0, i, nb_column, size,
-                                     self.crop(self.get_slice(self.image.data, i), x, y, size, size))
-            matrix1 = self.add_slice(matrix1, i, nb_column, size,
-                                     self.crop(self.get_slice(self.image_seg.data, i), x, y, size, size))
+                self.add_slice(matrix, i, nb_column, size,
+                 self.crop(self.get_slice(image.data, i), x, y, size, size))
 
-        return matrix0, matrix1
+            matrices.append(matrix)
+
+        return matrices
 
     def single(self):
         """Obtain the matrices of the single slices
@@ -290,20 +297,23 @@ image_seg : msct_image.Image
             matrix of the input 3D RMI containing the slices and matrix of the
             transformed 3D RMI to output containing the slices
         """
-        assert self.image.data.shape == self.image_seg.data.shape
+        assert len(set([x.data.shape for x in self._images])) == 1, "Volumes don't have the same size"
 
-        dim = self.get_dim(self.image)
-        matrix0 = self.get_slice(self.image.data, dim / 2)
-        matrix1 = self.get_slice(self.image_seg.data, dim / 2)
-        index = self.get_center_spit()
-        for j in range(len(index)):
-            matrix0[j] = self.get_slice(self.image.data, int(round(index[j])))[j]
-            matrix1[j] = self.get_slice(self.image_seg.data, int(round(index[j])))[j]
+        image = self._images[0]
+        dim = self.get_dim(image)
 
-        return matrix0, matrix1
+        matrices = list()
+        for image in self._images:
+            matrix = self.get_slice(image.data, dim / 2)
+            index = self.get_center_spit()
+            for j in range(len(index)):
+                matrix[j] = self.get_slice(image.data, int(round(index[j])))[j]
+            matrices.append(matrix)
+
+        return matrices
 
     def aspect(self):
-        return self.get_aspect(self.image), self.get_aspect(self.image_seg)
+        return [ self.get_aspect(x) for x in self._images ]
 
 
 class Axial(Slice):
@@ -320,47 +330,15 @@ class Axial(Slice):
     def get_dim(self, image):
         return self.axial_dim(image)
 
-    def get_center_spit(self):
-        size = self.axial_dim(self.image_seg)
+    def get_center_spit(self, img_idx=-1):
+        image = self._images[img_idx]
+        size = self.axial_dim(image)
         return np.ones(size) * size / 2
 
-    def get_center(self):
-        return self._axial_center(self.image_seg)
+    def get_center(self, img_idx=-1):
+        image = self._images[img_idx]
+        return self._axial_center(image)
 
-
-class AxialTemplate(Axial):
-    """The axial template representation of a slice"""
-    def get_dim(self, image):
-        return min(self.axial_dim(image), self.axial_dim(self.image_seg))
-
-    def get_size(self, image):
-        return min(image.data.shape + self.image_seg.data.shape) // 2
-
-    def get_center(self):
-        size = self.get_size(self.image)
-        dim = self.get_dim(self.image)
-        return np.ones(dim) * size, np.ones(dim) * size
-
-    def mosaic(self, nb_column=10, size=15):
-        return super(AxialTemplate, self).mosaic(size=self.get_size(self.image), nb_column=nb_column)
-
-    def single(self):
-        dim = self.get_dim(self.image)
-        matrix0 = self.get_slice(self.image.data, dim // 2)
-        matrix1 = self.get_slice(self.image_seg.data, dim // 2)
-
-        return matrix0, matrix1
-
-
-class AxialTemplate2Anat(AxialTemplate):
-    """The axial template to anat representation of a slice"""
-    def __init__(self, image_name, template2anat_image_name, seg_image_name):
-        super(AxialTemplate2Anat, self).__init__(image_name, template2anat_image_name)
-        self.image_seg2 = seg_image_name  # transformed input the one segmented
-        self.image_seg2.change_orientation('SAL')  # reorient to SAL
-
-    def get_center(self):
-        return self._axial_center(self.image_seg2)
 
 
 class Sagittal(Slice):
@@ -378,52 +356,17 @@ class Sagittal(Slice):
     def get_dim(self, image):
         return self.sagittal_dim(image)
 
-    def get_center_spit(self):
-        x, y = self._axial_center(self.image_seg)
+    def get_center_spit(self, img_idx=-1):
+        image = self._images[img_idx]
+        x, y = self._axial_center(image)
         return y
 
-    def get_center(self):
-        dim = self.get_dim(self.image_seg)
-        size_y = self.axial_dim(self.image_seg)
-        size_x = self.coronal_dim(self.image_seg)
+    def get_center(self, img_idx=-1):
+        image = self._images[img_idx]
+        dim = self.get_dim(image)
+        size_y = self.axial_dim(image)
+        size_x = self.coronal_dim(image)
         return np.ones(dim) * size_x / 2, np.ones(dim) * size_y / 2
-
-
-class SagittalTemplate(Sagittal):
-    """The sagittal template representation of a slice"""
-
-    def get_dim(self, image):
-        return min([self.sagittal_dim(image), self.sagittal_dim(self.image_seg)])
-
-    def get_size(self, image):
-        return min(image.data.shape + self.image_seg.data.shape) / 2
-
-    def get_center(self):
-        size = self.get_size(self.image)
-        dim = self.get_dim(self.image)
-        return np.ones(dim) * size, np.ones(dim) * size
-
-    def mosaic(self, nb_column=10, size=15):
-        return super(SagittalTemplate, self).mosaic(size=self.get_size(self.image), nb_column=nb_column)
-
-    def single(self):
-        dim = self.get_dim(self.image)
-        matrix0 = self.get_slice(self.image.data, dim / 2)
-        matrix1 = self.get_slice(self.image_seg.data, dim / 2)
-
-        return matrix0, matrix1
-
-
-class SagittalTemplate2Anat(Sagittal):
-    """The sagittal template to Anat representation of a slice"""
-
-    def __init__(self, image_name, template2anat_name, seg_image_name):
-        super(SagittalTemplate2Anat, self).__init__(image_name, template2anat_name)
-        self.image_seg2 = seg_image_name  # transformed input the one segmented
-        self.image_seg2.change_orientation('SAL')  # reorient to SAL
-
-    def get_center(self):
-        return self._axial_center(self.image_seg2)
 
 
 class Coronal(Slice):
@@ -440,12 +383,14 @@ class Coronal(Slice):
     def get_dim(self, image):
         return self.coronal_dim(image)
 
-    def get_center_spit(self):
-        x, y = self._axial_center(self.image_seg)
+    def get_center_spit(self, img_idx=-1):
+        image = self._images[img_idx]
+        x, y = self._axial_center(image)
         return x
 
-    def get_center(self):
-        dim = self.get_dim(self.image_seg)
-        size_y = self.axial_dim(self.image_seg)
-        size_x = self.sagittal_dim(self.image_seg)
+    def get_center(self, img_idx=-1):
+        image = self._images[img_idx]
+        dim = self.get_dim(image)
+        size_y = self.axial_dim(image)
+        size_x = self.sagittal_dim(image)
         return np.ones(dim) * size_x / 2, np.ones(dim) * size_y / 2

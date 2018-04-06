@@ -156,7 +156,7 @@ def main(args=None):
         # apply straightening
         sct.run(['sct_apply_transfo', '-i', 'anat_rpi.nii', '-w', 'warp_curve2straight.nii.gz', '-d', 'straight_ref.nii.gz', '-o', 'anat_rpi_straight.nii', '-x', 'spline'], verbose)
     else:
-        sct.run(['sct_straighten_spinalcord', '-i', 'anat_rpi.nii', '-s', 'centerline_rpi.nii', '-qc', '0', '-x', 'spline'], verbose)
+        sct.run(['sct_straighten_spinalcord', '-i', 'anat_rpi.nii', '-s', 'centerline_rpi.nii', '-x', 'spline'], verbose)
 
     # Smooth the straightened image along z
     sct.printv('\nSmooth the straightened image along z...')
