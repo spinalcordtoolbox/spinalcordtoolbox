@@ -3,8 +3,14 @@
 
 
 - [Introduction](#introduction)
+- [Installation](https://sourceforge.net/p/spinalcordtoolbox/wiki/installation/)
+- [List of tools](http://sourceforge.net/p/spinalcordtoolbox/wiki/tools/)
+- [Getting started](https://github.com/neuropoly/spinalcordtoolbox/blob/master/batch_processing.sh)
 - [Video tutorials](#video-tutorials)
+- [List of changes](https://github.com/neuropoly/spinalcordtoolbox/blob/master/CHANGES.md)
 - [References](#references)
+- [How to cite SCT](#citing-spinalcordtoolbox)
+- [License](#licence)
 
 
 ## Introduction
@@ -38,16 +44,10 @@ neuroimaging community by establishing standard templates and analysis
 procedures.
 
 
-- [Installation](https://sourceforge.net/p/spinalcordtoolbox/wiki/installation/)
-- [List of tools](http://sourceforge.net/p/spinalcordtoolbox/wiki/tools/)
-- [Getting started](https://github.com/neuropoly/spinalcordtoolbox/blob/master/batch_processing.sh)
-- [List of changes](https://github.com/neuropoly/spinalcordtoolbox/blob/master/CHANGES.md)
-
 ## Video tutorials
 
-[![Manual vertebral labeling](http://img.youtube.com/vi/Q3DhKOCEl5s/0.jpg)](http://www.youtube.com/watch?v=Q3DhKOCEl5s)
+#### Manual vertebral labeling
 
-ANOTHER ONE:
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=Q3DhKOCEl5s
 " target="_blank"><img src="http://img.youtube.com/vi/Q3DhKOCEl5s/0.jpg" 
 alt="Manual vertebral labeling" width="240" height="180" border="10" /></a>
