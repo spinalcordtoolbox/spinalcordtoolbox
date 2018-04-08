@@ -4,6 +4,12 @@
 
 ![Spinal Cord Toolbox overview](abstract.png "Spinal Cord Toolbox overview")
 
+- #Introduction
+- #Video tutorials
+- #References
+
+
+## Introduction
 For the past 25 years, the field of neuroimaging has witnessed the
 development of several software packages for processing multi-parametric
 magnetic resonance imaging (mpMRI) to study the brain. These software packages
@@ -36,6 +42,8 @@ procedures.
 - [List of tools](http://sourceforge.net/p/spinalcordtoolbox/wiki/tools/)
 - [Getting started](https://github.com/neuropoly/spinalcordtoolbox/blob/master/batch_processing.sh)
 - [List of changes](https://github.com/neuropoly/spinalcordtoolbox/blob/master/CHANGES.md)
+
+## Video tutorials
 
 ## References
 
