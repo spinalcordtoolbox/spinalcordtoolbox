@@ -2,9 +2,9 @@
 # Spinal Cord Toolbox [![Build Status](https://travis-ci.org/neuropoly/spinalcordtoolbox.svg?branch=master)](https://travis-ci.org/neuropoly/spinalcordtoolbox) [![Project Stats](https://www.openhub.net/p/spinalcordtoolbox/widgets/project_thin_badge.gif)](https://www.openhub.net/p/spinalcordtoolbox) [![User mailing list](http://img.shields.io/badge/mailing%20list-users-green.svg?style=flat)](https://groups.google.com/forum/#!forum/neuropoly) [![Developer mailing list](http://img.shields.io/badge/mailing%20list-development-green.svg?style=flat)](https://groups.google.com/forum/#!forum/sct_developers)
 
 
-- #introduction
-- #video-tutorials
-- #references
+- [Introduction](#introduction)
+- [Video tutorials](#video-tutorials)
+- [References](#references)
 
 
 ## Introduction
@@ -44,6 +44,14 @@ procedures.
 - [List of changes](https://github.com/neuropoly/spinalcordtoolbox/blob/master/CHANGES.md)
 
 ## Video tutorials
+
+[![Manual vertebral labeling](http://img.youtube.com/vi/Q3DhKOCEl5s/0.jpg)](http://www.youtube.com/watch?v=Q3DhKOCEl5s)
+
+ANOTHER ONE:
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=Q3DhKOCEl5s
+" target="_blank"><img src="http://img.youtube.com/vi/Q3DhKOCEl5s/0.jpg" 
+alt="Manual vertebral labeling" width="240" height="180" border="10" /></a>
+
 
 ## References
 
