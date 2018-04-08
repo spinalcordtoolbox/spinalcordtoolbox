@@ -2,14 +2,14 @@
 # Spinal Cord Toolbox [![Build Status](https://travis-ci.org/neuropoly/spinalcordtoolbox.svg?branch=master)](https://travis-ci.org/neuropoly/spinalcordtoolbox) [![Project Stats](https://www.openhub.net/p/spinalcordtoolbox/widgets/project_thin_badge.gif)](https://www.openhub.net/p/spinalcordtoolbox) [![User mailing list](http://img.shields.io/badge/mailing%20list-users-green.svg?style=flat)](https://groups.google.com/forum/#!forum/neuropoly) [![Developer mailing list](http://img.shields.io/badge/mailing%20list-development-green.svg?style=flat)](https://groups.google.com/forum/#!forum/sct_developers)
 
 
-![Spinal Cord Toolbox overview](abstract.png "Spinal Cord Toolbox overview")
-
-- #Introduction
-- #Video tutorials
-- #References
+- #introduction
+- #video-tutorials
+- #references
 
 
 ## Introduction
+![Spinal Cord Toolbox overview](abstract.png "Spinal Cord Toolbox overview")
+
 For the past 25 years, the field of neuroimaging has witnessed the
 development of several software packages for processing multi-parametric
 magnetic resonance imaging (mpMRI) to study the brain. These software packages
