@@ -209,6 +209,7 @@ class SpinalCordStraightener(object):
         self.curved2straight = True
         self.straight2curved = True
 
+        self.speed_factor = 1.0
         self.resample_factor = 0.0
         self.accuracy_results = 0
 
@@ -284,11 +285,18 @@ class SpinalCordStraightener(object):
             sct.printv('.. matrix size: ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz), verbose)
             sct.printv('.. voxel size:  ' + str(px) + 'mm x ' + str(py) + 'mm x ' + str(pz) + 'mm', verbose)
 
-            if self.resample_factor != 0.0:
+            if self.speed_factor != 1.0:
+                intermediate_resampling = True
+                px_r, py_r, pz_r = px * self.speed_factor, py * self.speed_factor, pz * self.speed_factor
+            elif self.resample_factor != 0.0:  # resample_factor is deprecated but still present to ensure retrocompatibility
+                intermediate_resampling = True
+                px_r, py_r, pz_r = self.resample_factor, self.resample_factor, self.resample_factor
+            else:
+                intermediate_resampling = False
+
+            if intermediate_resampling:
                 sct.mv('centerline_rpi.nii.gz', 'centerline_rpi_native.nii.gz')
                 pz_native = pz
-
-                px_r, py_r, pz_r = px * self.resample_factor, py * self.resample_factor, pz * self.resample_factor
 
                 sct.run(['sct_resample', '-i', 'centerline_rpi_native.nii.gz', '-mm', str(px_r) + 'x' + str(py_r) + 'x' + str(pz_r), '-o', 'centerline_rpi.nii.gz'])
                 image_centerline = Image('centerline_rpi.nii.gz')
@@ -438,13 +446,12 @@ class SpinalCordStraightener(object):
                 start_point = (z_centerline[0] - middle_slice) * factor_curved_straight + middle_slice
                 end_point = (z_centerline[-1] - middle_slice) * factor_curved_straight + middle_slice
 
-                self.xy_size = 35  # in mm
                 offset_z = 0
 
                 # if the destination image is resampled, we still create the straight reference space with the native resolution
-                if self.resample_factor != 0.0:
+                if intermediate_resampling:
                     padding_z = int(ceil(1.5 * ((length_centerline - size_z_centerline) / 2.0) / pz_native))
-                    sct.run(['sct_image', '-i', 'centerline_rpi_native.nii.gz', '-o', 'tmp.centerline_pad_native.nii.gz' '-pad', '0,0,' + str(padding_z)])
+                    sct.run(['sct_image', '-i', 'centerline_rpi_native.nii.gz', '-o', 'tmp.centerline_pad_native.nii.gz', '-pad', '0,0,' + str(padding_z)])
                     image_centerline_pad = Image('centerline_rpi_native.nii.gz')
                     nx, ny, nz, nt, px, py, pz, pt = image_centerline_pad.dim
                     start_point_coord_native = image_centerline_pad.transfo_phys2pix([[0, 0, start_point]])[0]
@@ -459,8 +466,8 @@ class SpinalCordStraightener(object):
                     if warp_space_y[0] < 0:
                         warp_space_y[1] += warp_space_y[0] - 2
                         warp_space_y[0] = 0
-                    if self.resample_factor != 0.0:
-                        sct.run(['sct_crop_image', '-i', 'tmp.centerline_pad_native.nii.gz', '-o', 'tmp.centerline_pad_crop_native.nii.gz',
+
+                    sct.run(['sct_crop_image', '-i', 'tmp.centerline_pad_native.nii.gz', '-o', 'tmp.centerline_pad_crop_native.nii.gz',
                          '-dim', '0,1,2',
                          '-start', str(warp_space_x[0]) + ',' + str(warp_space_y[0]) + ',0',
                          '-end', str(warp_space_x[1]) + ',' + str(warp_space_y[1]) + ',' + str(end_point_coord_native[2] - start_point_coord_native[2]),
@@ -933,6 +940,37 @@ def get_parser():
                       example=['0', '1'],
                       default_value='0')
 
+
+    ##### DEPRECATED
+    parser.add_option(name="-resample",
+                      type_value='float',
+                      description='Acceleration factor for the calculation of the straightening warping field.\n'
+                                  'This speed factor enables an intermediate resampling to a lower resolution, which decreases the computational time while decreasing straightening accuracy.\n'
+                                  'To keep native resolution, set this option to 0.\n',
+                      mandatory=False,
+                      default_value=0,
+                      deprecated=True)
+    parser.add_option(name="-ref",
+                      type_value="image_nifti",
+                      description='Isotropic resolution of the straightening output, in millimeters.\n'
+                                  'Resampling to lower resolution decreases computational time while decreasing straightening accuracy.\n'
+                                  'To keep native resolution, set this option to 0.\n',
+                      mandatory=False,
+                      example="centerline.nii.gz",
+                      deprecated_by='-dest')
+    parser.add_option(name="-disks-input",
+                      type_value="image_nifti",
+                      description="",
+                      mandatory=False,
+                      example="disks.nii.gz",
+                      deprecated_by='-ldisc_input')
+    parser.add_option(name="-disks-ref",
+                      type_value="image_nifti",
+                      description="",
+                      mandatory=False,
+                      example="disks_ref.nii.gz",
+                      deprecated_by='-ldisc_dest')
+
     return parser
 
 
@@ -992,7 +1030,9 @@ def main(args=None):
         sc_straight.curved2straight = False
 
     if '-speed_factor' in arguments:
-        sc_straight.resample_factor = arguments['-speed_factor']
+        sc_straight.speed_factor = arguments['-speed_factor']
+    if '-resample' in arguments:
+        sc_straight.resample_factor = arguments['-resample']
 
     if '-xy_size' in arguments:
         sc_straight.xy_size = arguments['-xy_size']
