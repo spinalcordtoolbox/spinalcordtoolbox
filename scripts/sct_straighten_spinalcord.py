@@ -286,7 +286,10 @@ class SpinalCordStraightener(object):
             if self.resample_factor != 0.0:
                 sct.mv('centerline_rpi.nii.gz', 'centerline_rpi_native.nii.gz')
                 pz_native = pz
-                sct.run(['sct_resample', '-i', 'centerline_rpi_native.nii.gz', '-mm', str(self.resample_factor) + 'x' + str(self.resample_factor) + 'x' + str(self.resample_factor), '-o', 'centerline_rpi.nii.gz'])
+
+                px_r, py_r, pz_r = px * self.resample_factor, py * self.resample_factor, pz * self.resample_factor
+
+                sct.run(['sct_resample', '-i', 'centerline_rpi_native.nii.gz', '-mm', str(px_r) + 'x' + str(py_r) + 'x' + str(pz_r), '-o', 'centerline_rpi.nii.gz'])
                 image_centerline = Image('centerline_rpi.nii.gz')
                 nx, ny, nz, nt, px, py, pz, pt = image_centerline.dim
 
@@ -861,10 +864,10 @@ def get_parser():
                       type_value=None,
                       description="Disable curved to straight transformation computation.",
                       mandatory=False)
-    parser.add_option(name="-resample",
+    parser.add_option(name="-speed_factor",
                       type_value='float',
-                      description='Isotropic resolution of the straightening output, in millimeters.\n'
-                                  'Resampling to lower resolution decreases computational time while decreasing straightening accuracy.\n'
+                      description='Acceleration factor for the calculation of the straightening warping field.\n'
+                                  'This speed factor enables an intermediate resampling to a lower resolution, which decreases the computational time while decreasing straightening accuracy.\n'
                                   'To keep native resolution, set this option to 0.\n',
                       mandatory=False,
                       default_value=0)
@@ -982,8 +985,8 @@ def main(args=None):
     if '-disable-curved2straight' in arguments:
         sc_straight.curved2straight = False
 
-    if '-resample' in arguments:
-        sc_straight.resample_factor = arguments['-resample']
+    if '-speed_factor' in arguments:
+        sc_straight.resample_factor = arguments['-speed_factor']
 
     if "-param" in arguments:
         params_user = arguments['-param']
