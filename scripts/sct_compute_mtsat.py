@@ -16,8 +16,7 @@
 #########################################################################################
 
 
-import sys, argparse
-import sct_utils as sct
+import argparse
 
 
 def get_parser():
@@ -37,21 +36,27 @@ def get_parser():
                         required=True)
     parser.add_argument("-trmt",
                         help="TR [in ms] for mt image.",
+                        type=float,
                         required=True)
     parser.add_argument("-trpd",
                         help="TR [in ms] for pd image.",
+                        type=float,
                         required=True)
-    parser.add_argument("-trmt",
+    parser.add_argument("-trt1",
                         help="TR [in ms] for t1 image.",
+                        type=float,
                         required=True)
     parser.add_argument("-famt",
                         help="Flip angle [in deg] for mt image.",
+                        type=float,
                         required=True)
     parser.add_argument("-fapd",
                         help="Flip angle [in deg] for pd image.",
+                        type=float,
                         required=True)
     parser.add_argument("-fat1",
                         help="Flip angle [in deg] for t1 image.",
+                        type=float,
                         required=True)
     parser.add_argument("-b1map",
                         help="B1 map",
@@ -67,12 +72,17 @@ def get_parser():
                         choices=('0', '1'),
                         type=int,
                         default=1)
+    return parser
 
 
 def run_main(args):
+    import sct_utils as sct
+    from spinalcordtoolbox.mtsat import mtsat
 
-    mtsat.compute_mtsat_from_file(args.mt, args.pd, args.t1, args.tr_mt, args.tr_pd, args.tr_t1,
-                                  args.fa_mt, args.fa_pd, args.fa_t1, fname_b1map=args.b1map,
+    sct.start_stream_logger()
+
+    mtsat.compute_mtsat_from_file(args.mt, args.pd, args.t1, args.trmt, args.trpd, args.trt1,
+                                  args.famt, args.fapd, args.fat1, fname_b1map=args.b1map,
                                   fname_mtsat=args.omtsat, fname_t1map=args.ot1map, verbose=1)
 
     # sct.display_viewer_syntax([input_filename, format(out_fname)],
@@ -82,7 +92,6 @@ def run_main(args):
 
 
 if __name__ == '__main__':
-    sct.start_stream_logger()
     parser = get_parser()
     arguments = parser.parse_args()
     run_main(arguments)
