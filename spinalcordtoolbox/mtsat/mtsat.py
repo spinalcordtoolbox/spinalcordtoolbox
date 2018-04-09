@@ -40,24 +40,29 @@ def compute_mtsat(nii_mt, nii_pd, nii_t1,
                       # T1map needs to be in s unit.
     b1correctionfactor = 0.4  # empirically defined in https://www.frontiersin.org/articles/10.3389/fnins.2013.00095/full#h3
 
-    # Load TRs in seconds
-    # TR_MT = 0.001*tr_mt
-    # TR_PD = 0.001*tr_pd
-    # TR_T1 = 0.001*tr_t1
+    # convert all TRs in s
+    tr_mt *= 0.001
+    tr_pd *= 0.001
+    tr_t1 *= 0.001
 
     # Convert flip angles into radians
     fa_mt_rad = math.radians(fa_mt)
     fa_pd_rad = math.radians(fa_pd)
     fa_t1_rad = math.radians(fa_t1)
 
+    # ignore warnings from division by zeros and overflow (will deal with that later)
+    np.seterr(divide='ignore', invalid='ignore', over='ignore')
+
     # check if a T1 map was given in input; if not, compute R1
     if nii_t1map is None:
         # compute R1
         sct.printv('Compute T1 map...', verbose)
-        r1map = 0.5 * np.divide((fa_t1_rad / tr_t1) * nii_t1.data - (fa_pd_rad / tr_pd) * nii_pd.data,
-                                  nii_pd.data / fa_pd_rad - nii_t1.data / fa_t1_rad)
-        # Convert R1 to s^-1
-        r1map = r1map * 1000
+        r1map = 0.5 * np.true_divide((fa_t1_rad / tr_t1) * nii_t1.data - (fa_pd_rad / tr_pd) * nii_pd.data,
+                                     nii_pd.data / fa_pd_rad - nii_t1.data / fa_t1_rad)
+        # remove nans and clip unrelistic values
+        r1map = np.nan_to_num(r1map)
+        ind_unrealistic = np.where(r1map < 0.01)  # R1=0.01 s^-1 corresponds to T1=100s which is reasonable to clip
+        r1map[ind_unrealistic] = np.inf  # set to infinity so that these values will be 0 on the T1map
         # compute T1
         nii_t1map = nii_mt.copy()
         nii_t1map.data = 1. / r1map
@@ -66,18 +71,22 @@ def compute_mtsat(nii_mt, nii_pd, nii_t1,
         r1map = 1. / nii_t1map.data
 
     # Compute A
-    sct.printv('Compute A...', verbose, 'info')
-    a = (tr_pd * fa_t1_rad / fa_pd_rad - tr_t1 * fa_pd_rad / fa_t1_rad) * np.divide(np.multiply(nii_pd.data, nii_t1.data), tr_pd * fa_t1_rad * nii_t1.data - tr_t1 * fa_pd_rad * nii_pd.data)
+    sct.printv('Compute A...', verbose)
+    a = (tr_pd * fa_t1_rad / fa_pd_rad - tr_t1 * fa_pd_rad / fa_t1_rad) * np.true_divide(np.multiply(nii_pd.data, nii_t1.data), tr_pd * fa_t1_rad * nii_t1.data - tr_t1 * fa_pd_rad * nii_pd.data)
 
     # Compute MTsat
-    sct.printv('Compute MTsat...', verbose, 'info')
+    sct.printv('Compute MTsat...', verbose)
     nii_mtsat = nii_mt.copy()
-    nii_mtsat.data = tr_mt * np.multiply((fa_mt_rad * np.divide(a, nii_mt.data) - 1), r1map) - (fa_mt_rad ** 2) / 2.
+    nii_mtsat.data = tr_mt * np.multiply((fa_mt_rad * np.true_divide(a, nii_mt.data) - 1), r1map) - (fa_mt_rad ** 2) / 2.
+    # remove nans and clip unrelistic values
+    nii_mtsat.data = np.nan_to_num(nii_mtsat.data)
+    ind_unrealistic = np.where(np.abs(nii_mtsat.data) > 50)
+    nii_mtsat.data[ind_unrealistic] = 0
 
     # Apply B1 correction to result
     # Weiskopf, N., Suckling, J., Williams, G., Correia, M.M., Inkster, B., Tait, R., Ooi, C., Bullmore, E.T., Lutti, A., 2013. Quantitative multi-parameter mapping of R1, PD(*), MT, and R2(*) at 3T: a multi-center validation. Front. Neurosci. 7, 95.
     if not nii_b1map is None:
-        nii_mtsat.data = np.divide(nii_mtsat.data * (1 - b1correctionfactor), (1 - b1correctionfactor * nii_b1map.data))
+        nii_mtsat.data = np.true_divide(nii_mtsat.data * (1 - b1correctionfactor), (1 - b1correctionfactor * nii_b1map.data))
 
     return nii_mtsat, nii_t1map
 
