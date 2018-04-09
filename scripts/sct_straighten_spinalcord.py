@@ -837,21 +837,21 @@ def get_parser():
                       description="centerline or segmentation.",
                       mandatory=False,
                       deprecated_by='-s')
-    parser.add_option(name="-ref",
+    parser.add_option(name="-dest",
                       type_value="image_nifti",
-                      description="reference centerline (or segmentation) on which to register the input image, using the same philosophy as straightening procedure..",
+                      description="The spinal cord centerline of a destination image to which the input image will be registered. By default, a length-wise algorithm will match the two centerline prior to registration. For other schemes, see parameters -ldisc_input.",
                       mandatory=False,
                       example="centerline.nii.gz")
-    parser.add_option(name="-disks-input",
+    parser.add_option(name="-ldisc_input",
                       type_value="image_nifti",
-                      description="",
+                      description="Labels centered at the level of the intervertebral discs, for the input file (-i). Ideally, all levels should be provided. E.g.: Value=3 corresponds to C2-C3 disc. This option must be used with the -ldisc_dest parameter.",
                       mandatory=False,
-                      example="disks.nii.gz")
-    parser.add_option(name="-disks-ref",
+                      example="ldisc_input.nii.gz")
+    parser.add_option(name="-ldisc_dest",
                       type_value="image_nifti",
-                      description="",
+                      description="Labels centered at the level of the intervertebral discs, for the destination file (-dest). This option must be used with the -ldisc_input parameter.",
                       mandatory=False,
-                      example="disks_ref.nii.gz")
+                      example="ldisc_dest.nii.gz")
     parser.add_option(name="-p",
                       type_value=None,
                       description="amount of padding for generating labels.",
@@ -955,17 +955,17 @@ def main(args=None):
         sc_straight.use_straight_reference = True
         sc_straight.centerline_reference_filename = str(arguments["-ref"])
 
-    if "-disks-input" in arguments:
+    if "-ldisc_input" in arguments:
         if not sc_straight.use_straight_reference:
-            sct.printv('Warning: disks position are not yet taken into account if reference is not provided.')
+            sct.printv('Warning: discs position are not taken into account if reference is not provided.')
         else:
-            sc_straight.disks_input_filename = str(arguments["-disks-input"])
+            sc_straight.disks_input_filename = str(arguments["-ldisc_input"])
             sc_straight.precision = 4.0
-    if "-disks-ref" in arguments:
+    if "-ldisc_dest" in arguments:
         if not sc_straight.use_straight_reference:
-            sct.printv('Warning: disks position are not yet taken into account if reference is not provided.')
+            sct.printv('Warning: discs position are not taken into account if reference is not provided.')
         else:
-            sc_straight.disks_ref_filename = str(arguments["-disks-ref"])
+            sc_straight.disks_ref_filename = str(arguments["-ldisc_dest"])
             sc_straight.precision = 4.0
 
     # Handling optional arguments
