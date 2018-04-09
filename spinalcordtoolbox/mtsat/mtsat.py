@@ -5,6 +5,7 @@
 # Copyright (c) 2018 Polytechnique Montreal <www.neuro.polymtl.ca>
 # About the license: see the file LICENSE.TXT
 
+import os
 import sct_utils as sct
 from msct_image import Image
 import numpy as np
@@ -78,8 +79,7 @@ def compute_mtsat(nii_mt, nii_pd, nii_t1,
     if not nii_b1map is None:
         nii_mtsat.data = np.divide(nii_mtsat.data * (1 - b1correctionfactor), (1 - b1correctionfactor * nii_b1map.data))
 
-    return nii_t1map, nii_mtsat
-
+    return nii_mtsat, nii_t1map
 
 
 def compute_mtsat_from_file(fname_mt, fname_pd, fname_t1, tr_mt, tr_pd, tr_t1, fa_mt, fa_pd, fa_t1, fname_b1map=None,
@@ -117,25 +117,19 @@ def compute_mtsat_from_file(fname_mt, fname_pd, fname_t1, tr_mt, tr_pd, tr_t1, f
         nii_b1map = Image(fname_b1map)
 
     # compute MTsat
-    nii_t1map, nii_mtsat = compute_mtsat(nii_mt, nii_pd, nii_t1, tr_mt, tr_pd, tr_t1, fa_mt, fa_pd, fa_t1,
+    nii_mtsat, nii_t1map = compute_mtsat(nii_mt, nii_pd, nii_t1, tr_mt, tr_pd, tr_t1, fa_mt, fa_pd, fa_t1,
                                          nii_b1map=None, verbose=verbose)
 
     # Output MTsat and T1 maps
     # by default, output in the same directory as the input images
-    # if fname_mtsat is None:
-
-    # MTsat.setFileName(outputs_fname[0])
-    # MTsat.save()
-
-    # save MTR file
-    # nii_mtr = nii_mt1
-    # nii_mtr.data = data_mtr
-    # nii_mtr.setFileName('mtr.nii')
-    # nii_mtr.save()
-    # sct.run(fsloutput+'fslmaths -dt double mt0.nii -sub mt1.nii -mul 100 -div mt0.nii -thr 0 -uthr 100 mtr.nii', verbose)
-
-    # Generate output files
-    # sct.printv('\nGenerate output files...', verbose)
-    # sct.generate_output_file(os.path.join(path_tmp, "mtr.nii"), os.path.join(path_out, file_out + ext_out))
+    sct.printv('Generate output files...', verbose)
+    if fname_mtsat is None:
+        fname_mtsat = os.path.join(nii_mt.path, "mtsat.nii.gz")
+    nii_mtsat.setFileName(fname_mtsat)
+    nii_mtsat.save()
+    if fname_t1map is None:
+        fname_t1map = os.path.join(nii_mt.path, "t1map.nii.gz")
+    nii_t1map.setFileName(fname_t1map)
+    nii_t1map.save()
 
     return fname_mtsat, fname_t1map
