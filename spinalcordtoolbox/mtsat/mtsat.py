@@ -44,10 +44,6 @@ def compute_mtsat(nii_mt, nii_pd, nii_t1,
     # TR_PD = 0.001*tr_pd
     # TR_T1 = 0.001*tr_t1
 
-    # initialization
-    nii_t1map = nii_mt.copy()
-    nii_mtsat = nii_mt.copy()
-
     # Convert flip angles into radians
     fa_mt_rad = math.radians(fa_mt)
     fa_pd_rad = math.radians(fa_pd)
@@ -62,6 +58,7 @@ def compute_mtsat(nii_mt, nii_pd, nii_t1,
         # Convert R1 to s^-1
         r1map = r1map * 1000
         # compute T1
+        nii_t1map = nii_mt.copy()
         nii_t1map.data = 1. / r1map
     else:
         sct.printv('Use input T1 map.', verbose)
@@ -73,7 +70,7 @@ def compute_mtsat(nii_mt, nii_pd, nii_t1,
 
     # Compute MTsat
     sct.printv('Compute MTsat...', verbose, 'info')
-    nii_mtsat = nii_pd.copy()
+    nii_mtsat = nii_mt.copy()
     nii_mtsat.data = tr_mt * np.multiply((fa_mt_rad * np.divide(a, nii_mt.data) - 1), r1map) - (fa_mt_rad ** 2) / 2.
 
     # Apply B1 correction to result
@@ -112,6 +109,7 @@ def compute_mtsat_from_file(fname_mt, fname_pd, fname_t1, tr_mt, tr_pd, tr_t1, f
     """
 
     # load data
+    sct.printv('Load data...', verbose)
     nii_mt = Image(fname_mt)
     nii_pd = Image(fname_pd)
     nii_t1 = Image(fname_t1)
