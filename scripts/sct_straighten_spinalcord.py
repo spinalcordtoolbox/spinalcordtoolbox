@@ -216,6 +216,7 @@ class SpinalCordStraightener(object):
         self.elapsed_time_accuracy = 0.0
 
         self.template_orientation = 0
+        self.xy_size = 35  # in mm
 
     def straighten(self):
         # Initialization
@@ -437,7 +438,7 @@ class SpinalCordStraightener(object):
                 start_point = (z_centerline[0] - middle_slice) * factor_curved_straight + middle_slice
                 end_point = (z_centerline[-1] - middle_slice) * factor_curved_straight + middle_slice
 
-                xy_space = 35  # in mm
+                self.xy_size = 35  # in mm
                 offset_z = 0
 
                 # if the destination image is resampled, we still create the straight reference space with the native resolution
@@ -448,8 +449,8 @@ class SpinalCordStraightener(object):
                     nx, ny, nz, nt, px, py, pz, pt = image_centerline_pad.dim
                     start_point_coord_native = image_centerline_pad.transfo_phys2pix([[0, 0, start_point]])[0]
                     end_point_coord_native = image_centerline_pad.transfo_phys2pix([[0, 0, end_point]])[0]
-                    straight_size_x = int(xy_space / px)
-                    straight_size_y = int(xy_space / py)
+                    straight_size_x = int(self.xy_size / px)
+                    straight_size_y = int(self.xy_size / py)
                     warp_space_x = [int(np.round(nx / 2)) - straight_size_x, int(np.round(nx / 2)) + straight_size_x]
                     warp_space_y = [int(np.round(ny / 2)) - straight_size_y, int(np.round(ny / 2)) + straight_size_y]
                     if warp_space_x[0] < 0:
@@ -466,7 +467,7 @@ class SpinalCordStraightener(object):
                         ])
 
                     fname_ref = 'tmp.centerline_pad_crop_native.nii.gz'
-                    xy_space = 40
+                    self.xy_size = 40
                     offset_z = 4
                 else:
                     fname_ref = 'tmp.centerline_pad_crop.nii.gz'
@@ -480,8 +481,8 @@ class SpinalCordStraightener(object):
                 start_point_coord = image_centerline_pad.transfo_phys2pix([[0, 0, start_point]])[0]
                 end_point_coord = image_centerline_pad.transfo_phys2pix([[0, 0, end_point]])[0]
 
-                straight_size_x = int(xy_space / px)
-                straight_size_y = int(xy_space / py)
+                straight_size_x = int(self.xy_size / px)
+                straight_size_y = int(self.xy_size / py)
                 warp_space_x = [int(np.round(nx / 2)) - straight_size_x, int(np.round(nx / 2)) + straight_size_x]
                 warp_space_y = [int(np.round(ny / 2)) - straight_size_y, int(np.round(ny / 2)) + straight_size_y]
                 
@@ -871,6 +872,11 @@ def get_parser():
                                   'To keep native resolution, set this option to 0.\n',
                       mandatory=False,
                       default_value=0)
+    parser.add_option(name="-xy_size",
+                      type_value='float',
+                      description='Change the size of the XY FOV, in mm. The resolution is the same as the source image (-i).\n',
+                      mandatory=False,
+                      default_value=35.0)
     parser.add_option(name="-o",
                       type_value="file_output",
                       description="straightened file",
@@ -987,6 +993,9 @@ def main(args=None):
 
     if '-speed_factor' in arguments:
         sc_straight.resample_factor = arguments['-speed_factor']
+
+    if '-xy_size' in arguments:
+        sc_straight.xy_size = arguments['-xy_size']
 
     if "-param" in arguments:
         params_user = arguments['-param']
