@@ -261,6 +261,10 @@ def main(args=None):
     # check input labels
     labels = check_labels(fname_landmarks, label_type=label_type)
 
+    vertebral_alignement = False
+    if len(labels) > 2 and label_type == 'disc':
+        vertebral_alignement = True
+
     path_tmp = sct.tmp_create(basename="register_to_template", verbose=verbose)
 
     # set temporary file names
@@ -364,7 +368,23 @@ def main(args=None):
             # apply straightening
             sct.run(['sct_apply_transfo', '-i', ftmp_seg, '-w', 'warp_curve2straight.nii.gz', '-d', 'straight_ref.nii.gz', '-o', add_suffix(ftmp_seg, '_straight')])
         else:
-            import sct_straighten_spinalcord
+            from sct_straighten_spinalcord import SpinalCordStraightener
+            sc_straight = SpinalCordStraightener(ftmp_seg, ftmp_seg)
+            sc_straight.output_filename = add_suffix(ftmp_seg, '_straight')
+            sc_straight.path_output = './'
+            sc_straight.qc = '0'
+            sc_straight.remove_temp_files = remove_temp_files
+            sc_straight.verbose = verbose
+
+            if vertebral_alignement:
+                sc_straight.centerline_reference_filename = ftmp_template_seg
+                sc_straight.use_straight_reference = True
+                sc_straight.disks_input_filename = ftmp_label
+                sc_straight.disks_ref_filename = ftmp_template_label
+
+            sc_straight.straighten()
+
+            """
             if __name__ == '__main__':
                 sct_straighten_spinalcord.main(args=[
                     '-i', ftmp_seg,
@@ -374,37 +394,41 @@ def main(args=None):
                     '-r', str(remove_temp_files),
                     '-v', str(verbose),
                     '-param', 'template_orientation=1'])
+            """
         # N.B. DO NOT UPDATE VARIABLE ftmp_seg BECAUSE TEMPORARY USED LATER
         # re-define warping field using non-cropped space (to avoid issue #367)
         sct.run(['sct_concat_transfo', '-w', 'warp_straight2curve.nii.gz', '-d', ftmp_data, '-o', 'warp_straight2curve.nii.gz'])
 
-        # Label preparation:
-        # --------------------------------------------------------------------------------
-        # Remove unused label on template. Keep only label present in the input label image
-        sct.printv('\nRemove unused label on template. Keep only label present in the input label image...', verbose)
-        sct.run(['sct_label_utils', '-i', ftmp_template_label, '-o', ftmp_template_label, '-remove', ftmp_label])
+        if vertebral_alignement:
+            sct.copy('warp_curve2straight.nii.gz', 'warp_curve2straightAffine.nii.gz')
+        else:
+            # Label preparation:
+            # --------------------------------------------------------------------------------
+            # Remove unused label on template. Keep only label present in the input label image
+            sct.printv('\nRemove unused label on template. Keep only label present in the input label image...', verbose)
+            sct.run(['sct_label_utils', '-i', ftmp_template_label, '-o', ftmp_template_label, '-remove', ftmp_label])
 
-        # Dilating the input label so they can be straighten without losing them
-        sct.printv('\nDilating input labels using 3vox ball radius')
-        sct.run(['sct_maths', '-i', ftmp_label, '-o', add_suffix(ftmp_label, '_dilate'), '-dilate', '3'])
-        ftmp_label = add_suffix(ftmp_label, '_dilate')
+            # Dilating the input label so they can be straighten without losing them
+            sct.printv('\nDilating input labels using 3vox ball radius')
+            sct.run(['sct_maths', '-i', ftmp_label, '-o', add_suffix(ftmp_label, '_dilate'), '-dilate', '3'])
+            ftmp_label = add_suffix(ftmp_label, '_dilate')
 
-        # Apply straightening to labels
-        sct.printv('\nApply straightening to labels...', verbose)
-        sct.run(['sct_apply_transfo', '-i', ftmp_label, '-o', add_suffix(ftmp_label, '_straight'), '-d', add_suffix(ftmp_seg, '_straight'), '-w', 'warp_curve2straight.nii.gz', '-x', 'nn'])
-        ftmp_label = add_suffix(ftmp_label, '_straight')
+            # Apply straightening to labels
+            sct.printv('\nApply straightening to labels...', verbose)
+            sct.run(['sct_apply_transfo', '-i', ftmp_label, '-o', add_suffix(ftmp_label, '_straight'), '-d', add_suffix(ftmp_seg, '_straight'), '-w', 'warp_curve2straight.nii.gz', '-x', 'nn'])
+            ftmp_label = add_suffix(ftmp_label, '_straight')
 
-        # Compute rigid transformation straight landmarks --> template landmarks
-        sct.printv('\nEstimate transformation for step #0...', verbose)
-        from msct_register_landmarks import register_landmarks
-        try:
-            register_landmarks(ftmp_label, ftmp_template_label, paramreg.steps['0'].dof, fname_affine='straight2templateAffine.txt', verbose=verbose)
-        except Exception:
-            sct.printv('ERROR: input labels do not seem to be at the right place. Please check the position of the labels. See documentation for more details: https://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/', verbose=verbose, type='error')
+            # Compute rigid transformation straight landmarks --> template landmarks
+            sct.printv('\nEstimate transformation for step #0...', verbose)
+            from msct_register_landmarks import register_landmarks
+            try:
+                register_landmarks(ftmp_label, ftmp_template_label, paramreg.steps['0'].dof, fname_affine='straight2templateAffine.txt', verbose=verbose)
+            except Exception:
+                sct.printv('ERROR: input labels do not seem to be at the right place. Please check the position of the labels. See documentation for more details: https://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/', verbose=verbose, type='error')
 
-        # Concatenate transformations: curve --> straight --> affine
-        sct.printv('\nConcatenate transformations: curve --> straight --> affine...', verbose)
-        sct.run(['sct_concat_transfo', '-w', 'warp_curve2straight.nii.gz,straight2templateAffine.txt', '-d', 'template.nii', '-o', 'warp_curve2straightAffine.nii.gz'])
+            # Concatenate transformations: curve --> straight --> affine
+            sct.printv('\nConcatenate transformations: curve --> straight --> affine...', verbose)
+            sct.run(['sct_concat_transfo', '-w', 'warp_curve2straight.nii.gz,straight2templateAffine.txt', '-d', 'template.nii', '-o', 'warp_curve2straightAffine.nii.gz'])
 
         # Apply transformation
         sct.printv('\nApply transformation...', verbose)
@@ -491,7 +515,11 @@ def main(args=None):
         # sct.run('sct_concat_transfo -w warp_curve2straight.nii.gz,straight2templateAffine.txt,'+','.join(warp_forward)+' -d template.nii -o warp_anat2template.nii.gz', verbose)
         sct.printv('\nConcatenate transformations: template --> anat...', verbose)
         warp_inverse.reverse()
-        sct.run(['sct_concat_transfo', '-w', ','.join(warp_inverse) + ',-straight2templateAffine.txt,warp_straight2curve.nii.gz', '-d', 'data.nii', '-o', 'warp_template2anat.nii.gz'], verbose)
+
+        if vertebral_alignement:
+            sct.run(['sct_concat_transfo', '-w', ','.join(warp_inverse) + ',warp_straight2curve.nii.gz', '-d', 'data.nii', '-o', 'warp_template2anat.nii.gz'], verbose)
+        else:
+            sct.run(['sct_concat_transfo', '-w', ','.join(warp_inverse) + ',-straight2templateAffine.txt,warp_straight2curve.nii.gz', '-d', 'data.nii', '-o', 'warp_template2anat.nii.gz'], verbose)
 
     # register template->subject
     elif ref == 'subject':
