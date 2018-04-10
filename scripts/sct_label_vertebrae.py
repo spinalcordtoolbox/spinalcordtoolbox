@@ -350,6 +350,39 @@ def quick_check(fn_in, fn_labeled, args, qc_path):
     import spinalcordtoolbox.reports.qc as qc
     import spinalcordtoolbox.reports.slice as qcslice
 
+    def label_vertebrae(self, mask):
+        """
+        Draw vertebrae areas, then add text showing the vertebrae names.
+        """
+
+        import matplotlib.pyplot as plt
+        import scipy.ndimage
+
+        self.listed_seg(mask)
+
+        ax = plt.gca()
+        a = [0.0]
+        data = mask
+        for index, val in np.ndenumerate(data):
+            if val not in a:
+                a.append(val)
+                index = int(val)
+                if index in self._labels_regions.values():
+                    color = self._labels_color[index]
+                    y, x = scipy.ndimage.measurements.center_of_mass(np.where(data == val, data, 0))
+
+                    # Draw text with a shadow
+
+                    x += 10
+
+                    label = list(self._labels_regions.keys())[list(self._labels_regions.values()).index(index)]
+                    ax.text(x, y, label, color='black', clip_on=True)
+
+                    x -= 0.5
+                    y -= 0.5
+
+                    ax.text(x, y, label, color=color, clip_on=True)
+
     qc.add_entry(
      src=fn_in,
      process='sct_label_vertebrae',
@@ -357,7 +390,7 @@ def quick_check(fn_in, fn_labeled, args, qc_path):
      qc_path=qc_path,
      plane='Sagittal',
      qcslice=qcslice.Sagittal([Image(fn_in), Image(fn_labeled)]),
-     qcslice_operations=[qc.QcImage.label_vertebrae],
+     qcslice_operations=[label_vertebrae],
      qcslice_layout=lambda x: x.single(),
     )
 
