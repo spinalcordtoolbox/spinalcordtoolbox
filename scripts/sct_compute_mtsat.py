@@ -85,10 +85,10 @@ def run_main(args):
         args.mt, args.pd, args.t1, args.trmt, args.trpd, args.trt1, args.famt, args.fapd, args.fat1,
         fname_b1map=args.b1map, fname_mtsat=args.omtsat, fname_t1map=args.ot1map, verbose=1)
 
-    # sct.display_viewer_syntax([input_filename, format(out_fname)],
-    #                           colormaps=['gray', 'red'],
-    #                           opacities=['1', '0.7'],
-    #                           verbose=verbose)
+    sct.display_viewer_syntax([fname_mtsat, fname_t1map],
+                              colormaps=['hsv', 'hsv'],
+                              opacities=['1', '1'],
+                              verbose=args.v)
 
 
 if __name__ == '__main__':
