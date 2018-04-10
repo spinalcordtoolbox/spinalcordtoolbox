@@ -78,7 +78,7 @@ def compute_mtsat(nii_mt, nii_pd, nii_t1,
     # Compute MTsat
     sct.printv('Compute MTsat...', verbose)
     nii_mtsat = nii_mt.copy()
-    nii_mtsat.data = tr_mt * np.multiply((fa_mt_rad * np.true_divide(a, nii_mt.data) - 1), r1map) - (fa_mt_rad ** 2) / 2.
+    nii_mtsat.data = tr_mt * np.multiply((fa_mt_rad * np.true_divide(a, nii_mt.data) - 1), r1map, dtype=float) - (fa_mt_rad ** 2) / 2.
     # sct.printv('nii_mtsat.data[95,89,14]' + str(nii_mtsat.data[95,89,14]), type='info')
     # remove nans and clip unrelistic values
     nii_mtsat.data = np.nan_to_num(nii_mtsat.data)
