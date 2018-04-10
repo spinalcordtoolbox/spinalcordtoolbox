@@ -85,7 +85,7 @@ def get_parser():
                       example="anat_labels.nii.gz")
     parser.add_option(name="-ldisc",
                       type_value="file",
-                      description="Labels centered at disks instead of mid-vertebral bodies. Several labels are possible (minimum 1). E.g.: Value=3 corresponds to C2-C3 disc. If only one label is used, no Z-scaling is performed. If more than 2 labels are used, then non-linear Z-scaling is performed (NOT IMPLEMENTED YET-- ADD LINK TO PAPER BEN).",
+                      description="Labels centered at discs instead of mid-vertebral bodies. Several labels are possible (minimum 1). E.g.: Value=3 corresponds to C2-C3 disc. If only one label is used, no Z-scaling is performed. If more than 2 labels are used, then non-linear Z-scaling is performed (NOT IMPLEMENTED YET-- ADD LINK TO PAPER BEN).",
                       mandatory=False,
                       default_value='',
                       example="anat_labels.nii.gz")
@@ -379,8 +379,8 @@ def main(args=None):
             if vertebral_alignment:
                 sc_straight.centerline_reference_filename = ftmp_template_seg
                 sc_straight.use_straight_reference = True
-                sc_straight.disks_input_filename = ftmp_label
-                sc_straight.disks_ref_filename = ftmp_template_label
+                sc_straight.discs_input_filename = ftmp_label
+                sc_straight.discs_ref_filename = ftmp_template_label
 
             sc_straight.straighten()
 
