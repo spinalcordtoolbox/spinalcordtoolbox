@@ -38,11 +38,7 @@ def get_parser():
     parser.add_option(name='-qc',
                       type_value='folder_creation',
                       description='The path where the quality control generated content will be saved',
-                      default_value=os.path.expanduser('~/qc_data'))
-    parser.add_option(name='-noqc',
-                      type_value=None,
-                      description='Prevent the generation of the QC report',
-                      mandatory=False)
+                      default_value=None)
 
     parser.add_option(name="-m",
                       type_value='multiple_choice',
@@ -76,16 +72,11 @@ def run_main():
 
     verbose = arguments["-v"]
     model_name = arguments["-m"]
-
     out_fname = deepseg_gm.segment_file(input_filename, output_filename,
                                         model_name, int(verbose))
 
-
     if '-qc' in arguments:
         qc_path = os.path.abspath(arguments['-qc'])
-    if '-noqc' in arguments:
-        qc_path = None
-    if qc_path is not None:
         sct.printv('\nSave quality control images (in %s)...' % qc_path, verbose, 'normal')
 
         import spinalcordtoolbox.reports.qc as qc
@@ -102,11 +93,13 @@ def run_main():
         im_org = Image(input_filename)
         im_seg = Image(out_fname)
 
-        test(qcslice.Axial(im_org, im_seg))
-        sct.printv('Sucessfully generated the QC results in %s' % qc_param.qc_results)
-        sct.printv('Use the following command to see the results in a browser')
-        sct.printv('sct_qc -folder %s' % qc_path, type='info')
-
+        try:
+            test(qcslice.Axial(im_org, im_seg))
+            sct.printv('Sucessfully generated the QC results in %s' % qc_param.qc_results)
+            sct.printv('Use the following command to see the results in a browser')
+            sct.printv('open file "{}/index.html"'.format(qc_path), type='info')
+        except:
+            sct.log.warning('Issue when creating QC report.')
 
     sct.display_viewer_syntax([input_filename, format(out_fname)],
                               colormaps=['gray', 'red'],

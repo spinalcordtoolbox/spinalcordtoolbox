@@ -18,8 +18,6 @@ $(document).ready(function(){
     $("#sprite-img").attr("src", item.background_img).removeClass().addClass(item.orientation);
     $("#overlay-img").attr("src", item.overlay_img).removeClass().addClass(item.orientation);
     $(this).addClass('active').siblings().removeClass('active');
-    $('#table').scrollTop($(this).offset().top);
-    console.log(list[index]);
   });
 
   $('#prev-img').click( function(event) {
@@ -48,7 +46,11 @@ $(document).ready(function(){
         obj.prev().click();
       }
     }
-    event.preventDefault();
+    evt.preventDefault();
+  });
+
+  $("#table").bootstrapTable({
+    data: sct_data
   });
 });
 

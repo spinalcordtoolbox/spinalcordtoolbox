@@ -284,11 +284,7 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
     parser.add_option(name='-qc',
                       type_value='folder_creation',
                       description='The path where the quality control generated content will be saved',
-                      default_value=os.path.expanduser('~/qc_data'))
-    parser.add_option(name='-noqc',
-                      type_value=None,
-                      description='Prevent the generation of the QC report',
-                      mandatory=False)
+                      default_value=None)
     parser.add_option(name='-igt',
                       type_value='image_nifti',
                       description='File name of ground-truth segmentation.',
@@ -516,8 +512,8 @@ if __name__ == "__main__":
         sct.log.info("Remove temporary files...")
         os.remove(tmp_output_file.absolutepath)
 
-    if '-qc' in arguments and not arguments.get('-noqc', False):
-        qc_path = arguments['-qc']
+    if '-qc' in arguments:
+        qc_path = os.path.abspath(arguments['-qc'])
 
         import spinalcordtoolbox.reports.qc as qc
         import spinalcordtoolbox.reports.slice as qcslice
@@ -531,9 +527,9 @@ if __name__ == "__main__":
 
         try:
             test(qcslice.Axial(Image(fname_input_data), Image(fname_seg)))
-            sct.log.info('Sucessfully generated the QC results in %s' % param.qc_results)
-            sct.log.info('Use the following command to see the results in a browser:')
-            sct.log.info('sct_qc -folder %s' % qc_path)
+            sct.printv('Sucessfully generated the QC results in %s' % param.qc_results)
+            sct.printv('Use the following command to see the results in a browser:')
+            sct.printv('open file "{}/index.html"'.format(qc_path), type='info')
         except:
             sct.log.warning('Issue when creating QC report.')
 
