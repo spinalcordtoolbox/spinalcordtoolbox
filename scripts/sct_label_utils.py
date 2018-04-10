@@ -533,7 +533,7 @@ class ProcessLabels(object):
             sct.printv('Position=(' + str(coord.x) + ',' + str(coord.y) + ',' + str(coord.z) + ') -- Value= ' + str(coord.value), verbose=self.verbose)
             if self.useful_notation:
                 self.useful_notation = self.useful_notation + ':'
-            self.useful_notation = self.useful_notation + str(coord.x) + ',' + str(coord.y) + ',' + str(coord.z) + ',' + str(coord.value)
+            self.useful_notation += str(coord)
         sct.printv('All labels (useful syntax):', verbose=self.verbose)
         sct.printv(self.useful_notation, verbose=self.verbose)
         return coordinates_input
