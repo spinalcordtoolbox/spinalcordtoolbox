@@ -51,7 +51,6 @@ def compute_mtsat(nii_mt, nii_pd, nii_t1,
     fa_t1_rad = math.radians(fa_t1)
 
     # ignore warnings from division by zeros (will deal with that later)
-    # note: do not use over='ignore' because it results in wrong T1 maps
     seterr_old = np.seterr(over='ignore', divide='ignore', invalid='ignore')
 
     # check if a T1 map was given in input; if not, compute R1
