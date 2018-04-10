@@ -787,11 +787,13 @@ def main(args=None):
         im_seg = im_gm
         im_seg.data += im_wm.data
 
-        test(qcslice.Axial(im_org, im_seg))
-        sct.printv('Sucessfully generate the QC results in %s' % qc_param.qc_results)
-        sct.printv('Use the following command to see the results in a browser')
-        sct.printv('sct_qc -folder %s' % qc_path, type='info')
-
+        try:
+            test(qcslice.Axial(im_org, im_seg))
+            sct.printv('Sucessfully generate the QC results in %s' % qc_param.qc_results)
+            sct.printv('Use the following command to see the results in a browser')
+            sct.printv('open file "{}/index.html"'.format(qc_path), type='info')
+        except:
+            sct.log.warning('Issue when creating QC report.')
 
     if param.rm_tmp:
         # remove tmp_dir
