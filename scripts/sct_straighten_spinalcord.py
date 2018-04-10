@@ -845,17 +845,19 @@ def get_parser():
                       deprecated_by='-s')
     parser.add_option(name="-dest",
                       type_value="image_nifti",
-                      description="The spinal cord centerline of a destination image to which the input image will be registered. By default, a length-wise algorithm will match the two centerline prior to registration. For other schemes, see parameters -ldisc_input.",
+                      description="The spinal cord centerline of a destination image to which the input image will be registered. If provided, a length-wise algorithm will match the two centerlines prior to registration by default. When using -ldisc_input and -ldisc_dest with this parameter, a non-linear matching of the centerlines, according to the position of the intervertebral discs, is calculated and used for registering the two images.",
                       mandatory=False,
                       example="centerline.nii.gz")
     parser.add_option(name="-ldisc_input",
                       type_value="image_nifti",
-                      description="Labels centered at the level of the intervertebral discs, for the input file (-i). Ideally, all levels should be provided. E.g.: Value=3 corresponds to C2-C3 disc. This option must be used with the -ldisc_dest parameter.",
+                      description="Labels located at the posterior edge of the intervertebral discs, for the input image (-i). Ideally, all disc labels should be provided, including the position of the pontomedullary groove and junction if available. For more details about label creation and their values, please refer to http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/.\n"
+                                  "This option must be used with the -ldisc_dest parameter.",
                       mandatory=False,
                       example="ldisc_input.nii.gz")
     parser.add_option(name="-ldisc_dest",
                       type_value="image_nifti",
-                      description="Labels centered at the level of the intervertebral discs, for the destination file (-dest). This option must be used with the -ldisc_input parameter.",
+                      description="Labels located at the posterior edge of the intervertebral discs, for the destination file (-dest). The same comments as -ldisc_input apply.\n"
+                                  "This option must be used with the -ldisc_input parameter.",
                       mandatory=False,
                       example="ldisc_dest.nii.gz")
     parser.add_option(name="-p",
