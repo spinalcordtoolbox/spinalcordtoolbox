@@ -55,7 +55,7 @@ def resolve_module(framework_name):
         'scikit-learn': ('sklearn', False),
         'pyqt': ('PyQt4', False),
         'Keras': ('keras', True),
-        'futures': "concurrent.futures"
+        'futures': ("concurrent.futures", False)
     }
 
     try:
