@@ -9,7 +9,7 @@ import os
 import sct_utils as sct
 from msct_image import Image
 import numpy as np
-import math
+
 
 def compute_mtsat(nii_mt, nii_pd, nii_t1,
                   tr_mt, tr_pd, tr_t1,
@@ -41,9 +41,9 @@ def compute_mtsat(nii_mt, nii_pd, nii_t1,
     tr_t1 *= 0.001
 
     # Convert flip angles into radians
-    fa_mt_rad = math.radians(fa_mt)
-    fa_pd_rad = math.radians(fa_pd)
-    fa_t1_rad = math.radians(fa_t1)
+    fa_mt_rad = np.radians(fa_mt)
+    fa_pd_rad = np.radians(fa_pd)
+    fa_t1_rad = np.radians(fa_t1)
 
     # ignore warnings from division by zeros (will deal with that later)
     seterr_old = np.seterr(over='ignore', divide='ignore', invalid='ignore')
