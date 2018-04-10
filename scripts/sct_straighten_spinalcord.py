@@ -474,7 +474,6 @@ class SpinalCordStraightener(object):
                         ])
 
                     fname_ref = 'tmp.centerline_pad_crop_native.nii.gz'
-                    self.xy_size = 40
                     offset_z = 4
                 else:
                     fname_ref = 'tmp.centerline_pad_crop.nii.gz'
