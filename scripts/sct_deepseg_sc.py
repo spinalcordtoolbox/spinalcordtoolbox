@@ -390,7 +390,7 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, qc_p
             test(qcslice.Axial(Image(fname_image), Image(fname_seg)))
             sct.log.info('Sucessfully generated the QC results in %s' % param.qc_results)
             sct.log.info('Use the following command to see the results in a browser:')
-            sct.log.info('sct_qc -folder %s' % qc_path)
+            sct.printv('open file "{}/index.html"'.format(qc_path), type='info')
         except:
             sct.log.warning('Issue when creating QC report.')
 

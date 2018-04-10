@@ -610,10 +610,13 @@ def main(args=None):
             return qslice.mosaic()
 
         fname_template2anat = os.path.join(path_output, "template2anat" + ext_data)
-        test(qcslice.AxialTemplate2Anat(Image(fname_data), Image(fname_template2anat), Image(fname_seg)))
-        sct.printv('Sucessfully generate the QC results in %s' % qc_param.qc_results)
-        sct.printv('Use the following command to see the results in a browser')
-        sct.printv('sct_qc -folder %s' % qc_path, type='info')
+        try:
+            test(qcslice.AxialTemplate2Anat(Image(fname_data), Image(fname_template2anat), Image(fname_seg)))
+            sct.printv('Sucessfully generate the QC results in %s' % qc_param.qc_results)
+            sct.printv('Use the following command to see the results in a browser')
+            sct.printv('open file "{}/index.html"'.format(qc_path), type='info')
+        except:
+            sct.log.warning('Issue when creating QC report.')
 
     sct.display_viewer_syntax([fname_data, fname_template2anat], verbose=verbose)
     sct.display_viewer_syntax([fname_template, fname_anat2template], verbose=verbose)
