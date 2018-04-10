@@ -58,11 +58,8 @@
                   </span>
               </a>
               <table id="table" class="table table-condensed"
-                  data-toggle="table"
                   data-search="true"
-                  data-cache="false"
-                  data-response-handler="responseHandler"
-                  data-url="qc_results.json?no-cache=123">
+                  data-response-handler="responseHandler">
 	                <thead>
 		                  <tr>
 			                    <th data-field="moddate" data-sortable="true">Date</th>
@@ -89,5 +86,5 @@
 <script src="_assets/js/bootstrap.min.js"></script>
 <script src="_assets/js/bootstrap-table.min.js"></script>
 <script src="_assets/js/main.js"></script>
-
+<script>var sct_data = $sct_json_data;</script>
 </html>
