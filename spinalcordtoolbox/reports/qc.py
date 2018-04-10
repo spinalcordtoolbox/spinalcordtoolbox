@@ -17,7 +17,6 @@ matplotlib.use('Agg')
 import matplotlib.colorbar as colorbar
 import matplotlib.colors as color
 import matplotlib.pyplot as plt
-from scipy import ndimage
 
 import sct_utils as sct
 
@@ -129,22 +128,6 @@ class QcImage(object):
                          aspect=self.aspect_mask)
         fig.axes.get_xaxis().set_visible(False)
         fig.axes.get_yaxis().set_visible(False)
-
-    def label_vertebrae(self, mask):
-        self.listed_seg(mask)
-        ax = plt.gca()
-        a = [0.0]
-        data = mask
-        for index, val in np.ndenumerate(data):
-            if val not in a:
-                a.append(val)
-                index = int(val)
-                if index in self._labels_regions.values():
-                    color = self._labels_color[index]
-                    x, y = ndimage.measurements.center_of_mass(np.where(data == val, data, 0))
-                    label = list(self._labels_regions.keys())[list(self._labels_regions.values()).index(index)]
-                    ax.text(y, x, label, color='black', weight='heavy', clip_on=True)
-                    ax.text(y, x, label, color=color, clip_on=True)
 
     def colorbar(self):
         fig = plt.figure(figsize=(9, 1.5))
