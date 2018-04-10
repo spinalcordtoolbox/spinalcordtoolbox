@@ -20,10 +20,14 @@ else
 fi
 cd sct_example_data
 
+if [ -z "$SCT_BP_QC_FOLDER" ]; then
+	SCT_BP_QC_FOLDER=~/qc_batch_processing
+fi
+
 # Remove QC folder
-if [ -d ~/qc_batch_processing ]; then
-  echo "Removing ~/qc_batch_processing folder folder."
-  rm -rf ~/qc_batch_processing
+if [ -z "$SCT_BP_NO_REMOVE_QC" -a -d "$SCT_BP_QC_FOLDER" ]; then
+  echo "Removing $SCT_BP_QC_FOLDER folder."
+  rm -rf "$SCT_BP_QC_FOLDER"
 fi
 
 # display starting time:
@@ -35,14 +39,14 @@ set -x
 # ===========================================================================================
 cd t2
 # Spinal cord segmentation
-sct_propseg -i t2.nii.gz -c t2 -qc ~/qc_batch_processing
+sct_propseg -i t2.nii.gz -c t2 -qc "$SCT_BP_QC_FOLDER"
 # Vertebral labeling
 # tips: for manual initialization of labeling by clicking at disc C2-C3, use flag -initc2
-sct_label_vertebrae -i t2.nii.gz -s t2_seg.nii.gz -c t2 -v 2 -qc ~/qc_batch_processing
+sct_label_vertebrae -i t2.nii.gz -s t2_seg.nii.gz -c t2 -v 2 -qc "$SCT_BP_QC_FOLDER"
 # Create labels at C2 and C5 vertebral levels
 sct_label_utils -i t2_seg_labeled.nii.gz -vert-body 2,5
 # Register to template
-sct_register_to_template -i t2.nii.gz -s t2_seg.nii.gz -l labels.nii.gz -c t2 -qc ~/qc_batch_processing
+sct_register_to_template -i t2.nii.gz -s t2_seg.nii.gz -l labels.nii.gz -c t2 -qc "$SCT_BP_QC_FOLDER"
 # Warp template without the white matter atlas (we don't need it at this point)
 sct_warp_template -d t2.nii.gz -w warp_template2anat.nii.gz -a 0
 # Compute average cross-sectional area and volume between C2 and C3 levels
@@ -64,7 +68,7 @@ sct_create_mask -i mt1.nii.gz -p centerline,t2_seg_reg.nii.gz -size 45mm
 sct_crop_image -i mt1.nii.gz -m mask_mt1.nii.gz -o mt1_crop.nii.gz
 sct_crop_image -i mt0.nii.gz -m mask_mt1.nii.gz -o mt0_crop.nii.gz
 # segment mt1
-sct_propseg -i mt1_crop.nii.gz -c t2 -init-centerline t2_seg_reg.nii.gz -qc ~/qc_batch_processing
+sct_propseg -i mt1_crop.nii.gz -c t2 -init-centerline t2_seg_reg.nii.gz -qc "$SCT_BP_QC_FOLDER"
 # Create close mask around spinal cord (for more accurate registration results)
 sct_create_mask -i mt1_crop.nii.gz -p centerline,mt1_crop_seg.nii.gz -size 35mm -f cylinder
 # Register mt0 on mt1
@@ -83,7 +87,7 @@ sct_warp_template -d mt1_crop.nii.gz -w warp_template2mt.nii.gz
 # OPTIONAL: SEGMENT GRAY MATTER AND USE IT TO IMPROVE TEMPLATE REGISTRATION
 # <<<
 # Segment gray matter
-sct_segment_graymatter -i mt0_crop_reg.nii.gz -s mt1_crop_seg.nii.gz
+sct_segment_graymatter -i mt0_crop_reg.nii.gz -s mt1_crop_seg.nii.gz -qc "$SCT_BP_QC_FOLDER"
 # Register WM/GM template to WM/GM seg
 sct_register_graymatter -gm mt0_crop_reg_gmseg.nii.gz -wm mt0_crop_reg_wmseg.nii.gz -w warp_template2mt.nii.gz -winv warp_mt2template.nii.gz
 # rename warping fields for clarity
@@ -119,7 +123,7 @@ sct_crop_image -i dmri.nii.gz -m mask_dmri_mean.nii.gz -o dmri_crop.nii.gz
 # motion correction
 sct_dmri_moco -i dmri_crop.nii.gz -bvec bvecs.txt
 # segmentation with propseg
-sct_propseg -i dwi_moco_mean.nii.gz -c dwi -init-centerline t2_seg_reg.nii.gz -qc ~/qc_batch_processing
+sct_propseg -i dwi_moco_mean.nii.gz -c dwi -init-centerline t2_seg_reg.nii.gz -qc "$SCT_BP_QC_FOLDER"
 # Register template to dwi
 # Tips: We use the template registered to the MT data in order to account for gray matter segmentation
 # Tips: again, here, we prefer no stick to rigid registration on segmentation following by slicereg to realign center of mass. If there are susceptibility distortions in your EPI, then you might consider adding a third step with bsplinesyn or syn transformation for local adjustment.
@@ -152,6 +156,3 @@ echo "mt/CSA_WM:  " `grep -v '^#' mt/csa_wm/csa_mean.txt | grep -v '^$'`
 echo "dmri/FA: " `grep -v '^#' dmri/fa_in_cst.txt | grep -v 'right'`
 echo "dmri/FA: " `grep -v '^#' dmri/fa_in_cst.txt | grep -v 'left'`
 echo
-
-# Generate QC report
-sct_qc -folder ~/qc_batch_processing

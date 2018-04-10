@@ -19,29 +19,29 @@ matrix:
   include:
     - os: linux
       python: 2.7 # Just to make travis's UI a bit prettier
-      env: SCT_MINICONDA=2 SCT_VERBOSE_INSTALL=1
+      env: SCT_MINICONDA=2 SCT_VERBOSE_INSTALL=1 MPLBACKEND=Agg
     - os: linux
       python: 2.7
-      env: SCT_MINICONDA=2
+      env: SCT_MINICONDA=2 MPLBACKEND=Agg
     - os: linux
       python: 2.7
-      env: SCT_MINICONDA=3
+      env: SCT_MINICONDA=3 MPLBACKEND=Agg
     - os: osx
       language: generic
-      env: SCT_MINICONDA=2
+      env: SCT_MINICONDA=2 MPLBACKEND=Agg
     - os: osx
       language: generic
-      env: SCT_MINICONDA=2 SCT_VERBOSE_INSTALL=1
+      env: SCT_MINICONDA=2 SCT_VERBOSE_INSTALL=1 MPLBACKEND=Agg
     - os: osx
       language: generic
-      env: SCT_MINICONDA=3
+      env: SCT_MINICONDA=3 MPLBACKEND=Agg
   allow_failures:
     - os: linux
       python: 2.7
-      env: SCT_MINICONDA=3
+      env: SCT_MINICONDA=3 MPLBACKEND=Agg
     - os: osx
       language: generic
-      env: SCT_MINICONDA=3
+      env: SCT_MINICONDA=3 MPLBACKEND=Agg
 
 before_install:
   - echo "HOME="
@@ -65,4 +65,5 @@ script:
 #  - python create_package.py -s ${TRAVIS_OS_NAME}  # test package creation
 #  - cd ../spinalcordtoolbox_v*
 #  - yes | ./install_sct  # test installation of package
+  - ./unit_testing.sh
   - echo "DONE"

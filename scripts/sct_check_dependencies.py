@@ -25,12 +25,10 @@ class Param:
         self.create_log_file = 0
         self.complete_test = 0
 
-
+import argparse
 
 import sys, io, os, platform, importlib
 import sct_utils as sct
-from msct_parser import Parser
-
 
 class bcolors:
     HEADER = '\033[95m'
@@ -56,6 +54,8 @@ def resolve_module(framework_name):
         'pyqt': ('PyQt4', False),
         'Keras': ('keras', True),
         'futures': ("concurrent.futures", False)
+        'opencv': ('cv2', False),
+        'mkl-service': (None, False),
     }
 
     try:
@@ -109,10 +109,10 @@ def main():
 
     # Check input parameters
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
-    if '-c' in arguments:
+    arguments = parser.parse_args()
+    if arguments.complete:
         complete_test = 1
-    if '-log' in arguments:
+    if arguments.generate_log:
         create_log_file = 1
 
     # use variable "verbose" when calling sct.run for more clarity
@@ -183,7 +183,9 @@ def main():
     version_requirements = get_version_requirements()
     for i in version_requirements:
         module_name, suppress_stderr = resolve_module(i)
-        print_line('Check if ' + i + ' (' + version_requirements.get(i) + ') is installed')
+        if module_name is None:
+            continue
+        print_line('Check if %s (%s) is installed' % (i, version_requirements.get(i)))
         try:
             module = module_import(module_name, suppress_stderr)
             # get version
@@ -361,11 +363,14 @@ def get_version_requirements():
     file = open(os.path.join(path_sct, "install", "requirements", "requirementsConda.txt"))
     dict = {}
     while True:
-        line = file.readline()
+        line = file.readline().rstrip()
         if line == "":
             break  # OH GOD HELP
         arg = line.split("==")
-        dict[arg[0]] = arg[1].rstrip("\n")
+        if len(arg) == 1:
+            dict[arg[0]] = None
+        else:
+            dict[arg[0]] = arg[1]
     file.close()
     return dict
 
@@ -387,6 +392,8 @@ def get_version_requirements_pip():
 
 def check_package_version(installed, required, package_name):
     if package_name in required:
+        if required[package_name] is None:
+            return True
         if required[package_name] == installed:
             return True
         return False
@@ -395,20 +402,22 @@ def check_package_version(installed, required, package_name):
 # ==========================================================================================
 def get_parser():
     # Initialize the parser
-    parser = Parser(__file__)
-    parser.usage.set_description('Check the installation and environment variables of the'
-                                 ' toolbox and its dependencies.')
-    parser.add_option(name="-c",
-                      description="Complete test.",
-                      mandatory=False)
-    parser.add_option(name="-log",
-                      description="Generate log file.",
-                      mandatory=False)
-    parser.add_option(name="-l",
-                      type_value=None,
-                      description="Generate log file.",
-                      deprecated_by="-log",
-                      mandatory=False)
+
+    parser = argparse.ArgumentParser(
+     description='Check the installation and environment variables of the'
+                                 ' toolbox and its dependencies.',
+    )
+
+    parser.add_argument("--complete", "-c",
+     help="Complete test.",
+     action="store_true",
+    )
+
+    parser.add_argument("--generate-log", "-log", "-l",
+     help="Generate log file.",
+     action="store_true",
+    )
+
     return parser
 
 

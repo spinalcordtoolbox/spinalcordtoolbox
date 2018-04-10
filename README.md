@@ -99,6 +99,8 @@ procedures.
 - [Duval et al. Scan–rescan of axcaliber, macromolecular tissue volume, and g-ratio in the spinal cord. MRM 2017](http://onlinelibrary.wiley.com/doi/10.1002/mrm.26945/full)
 - [Smith et al. Lateral corticospinal tract damage correlates with motor output in incomplete spinal cord injury. Archives of Physical Medicine and Rehabilitation 2017](http://www.sciencedirect.com/science/article/pii/S0003999317312844)
 - [Kafali et al. Phase-correcting non-local means filtering for diffusion-weighted imaging of the spinal cord. MRM 2018](http://onlinelibrary.wiley.com/doi/10.1002/mrm.27105/full)
+- [Hori et al. Application of Quantitative Microstructural MR Imaging with Atlas-based Analysis for the Spinal Cord in Cervical Spondylotic Myelopathy. Sci Rep. 2018 Mar 26;8(1):5213](https://www.nature.com/articles/s41598-018-23527-8)
+- [Huber et al. Dorsal and ventral horn atrophy is associated with clinical outcome after spinal cord injury. Neurology. 2018 Mar 28](https://www.ncbi.nlm.nih.gov/pubmed/29592888)
 
 
 ## Citing spinalcordtoolbox
