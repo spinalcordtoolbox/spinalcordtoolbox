@@ -61,12 +61,24 @@ paramreg = ParamregMultiStep([step0, step1, step2])
 def get_parser():
     param = Param()
     parser = Parser(__file__)
-    parser.usage.set_description('Register anatomical image to the template.\n\n'
-      'To register a subject to the template, try the default command:\n'
-      'sct_register_to_template -i data.nii.gz -s data_seg.nii.gz -l data_labels.nii.gz\n'
-      'If this default command does not produce satisfactory results, please see: https://sourceforge.net/p/spinalcordtoolbox/wiki/registration_tricks/\n\n'
-      'To register the template to a subject, you need to use "-ref subject". Example below:\n'
-      'sct_register_to_template -i data.nii.gz -s data_seg.nii.gz -l data_labels.nii.gz -ref subject -param step=1,type=seg,algo=centermassrot,smooth=0:step=2,type=seg,algo=columnwise,smooth=0,smoothWarpXY=2'
+    parser.usage.set_description('Register an anatomical image to the spinal cord MRI template (default: PAM50).\n\n'
+                                 'The registration process includes three main registration steps:\n'
+                                   '1. straightening of the image using the spinal cord segmentation (see sct_straighten_spinalcord for details);\n'
+                                   '2. vertebral alignment between the image and the template, using labels along the spine;\n'
+                                   '3. iterative slice-wise non-linear registration (see sct_register_multimodal for details)\n\n'
+                                 'To register a subject to the template, try the default command:\n'
+                                   'sct_register_to_template -i data.nii.gz -s data_seg.nii.gz -l data_labels.nii.gz\n\n'
+                                 'If this default command does not produce satisfactory results, please refer to:\n'
+                                   'https://sourceforge.net/p/spinalcordtoolbox/wiki/registration_tricks/\n\n'
+                                 'The default registration method bring the subject image to the template, which can be problematic with highly non-isotropic images. Although the default method is recommended, you may need to register the template to a subject directly. To do so, use the parameter "-ref subject". Example below:\n'
+                                   'sct_register_to_template -i data.nii.gz -s data_seg.nii.gz -l data_labels.nii.gz -ref subject -param step=1,type=seg,algo=centermassrot,smooth=0:step=2,type=seg,algo=columnwise,smooth=0,smoothWarpXY=2\n\n'
+                                 'Vertebral alignment is a critical step of the registration process, and several options are available. You can provide two types of labels:\n'
+                                   '- Vertebrae mid-body labels, created at the center of the spinal cord using the parameter "-l";\n'
+                                   '- Anterior edge of the intervertebral discs, using the parameter "-ldisc".\n\n'
+                                 'If one label is provided, a translation transformation will be applied to preregister the images.\n\n'
+                                 'If two labels are provided, a linear transformation (translation + rotation + rostra-caudal scaling) will be applied to preregister the images and align the vertebrae.\n\n'
+                                 'If more than two labels (only with the parameter "-disc") are used, a rostra-caudally constrained non-linear registration will be applied to align the vertebral levels of the images, as described in sct_straighten_spinalcord. This feature does not work with the parameter "-ref subject".\n\n'
+                                 'More information about label creation can be found here: http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/'
       )
     parser.add_option(name="-i",
                       type_value="file",
@@ -80,13 +92,13 @@ def get_parser():
                       example="anat_seg.nii.gz")
     parser.add_option(name="-l",
                       type_value="file",
-                      description="Labels. See: http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/",
+                      description="Labels located at the center of the spinal cord, on the mid-vertebral slice. For more information about label creation, please refer to http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/",
                       mandatory=False,
                       default_value='',
                       example="anat_labels.nii.gz")
     parser.add_option(name="-ldisc",
                       type_value="file",
-                      description="Labels centered at discs instead of mid-vertebral bodies. Several labels are possible (minimum 1). E.g.: Value=3 corresponds to C2-C3 disc. If only one label is used, no Z-scaling is performed. If more than 2 labels are used, then non-linear Z-scaling is performed (NOT IMPLEMENTED YET-- ADD LINK TO PAPER BEN).",
+                      description="Labels located at the posterior edge of the intervertebral discs. For more information about label creation, please refer to http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/.",
                       mandatory=False,
                       default_value='',
                       example="anat_labels.nii.gz")
