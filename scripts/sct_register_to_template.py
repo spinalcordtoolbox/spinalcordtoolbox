@@ -384,17 +384,6 @@ def main(args=None):
 
             sc_straight.straighten()
 
-            """
-            if __name__ == '__main__':
-                sct_straighten_spinalcord.main(args=[
-                    '-i', ftmp_seg,
-                    '-s', ftmp_seg,
-                    '-o', add_suffix(ftmp_seg, '_straight'),
-                    '-qc', '0',
-                    '-r', str(remove_temp_files),
-                    '-v', str(verbose),
-                    '-param', 'template_orientation=1'])
-            """
         # N.B. DO NOT UPDATE VARIABLE ftmp_seg BECAUSE TEMPORARY USED LATER
         # re-define warping field using non-cropped space (to avoid issue #367)
         sct.run(['sct_concat_transfo', '-w', 'warp_straight2curve.nii.gz', '-d', ftmp_data, '-o', 'warp_straight2curve.nii.gz'])
