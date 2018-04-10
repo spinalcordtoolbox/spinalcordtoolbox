@@ -73,12 +73,13 @@ def compute_mtsat(nii_mt, nii_pd, nii_t1,
 
     # Compute A
     sct.printv('Compute A...', verbose)
-    a = (tr_pd * fa_t1_rad / fa_pd_rad - tr_t1 * fa_pd_rad / fa_t1_rad) * np.true_divide(np.multiply(nii_pd.data, nii_t1.data), tr_pd * fa_t1_rad * nii_t1.data - tr_t1 * fa_pd_rad * nii_pd.data)
+    a = (tr_pd * fa_t1_rad / fa_pd_rad - tr_t1 * fa_pd_rad / fa_t1_rad) * np.true_divide(np.multiply(nii_pd.data, nii_t1.data, dtype=float), tr_pd * fa_t1_rad * nii_t1.data - tr_t1 * fa_pd_rad * nii_pd.data)
 
     # Compute MTsat
     sct.printv('Compute MTsat...', verbose)
     nii_mtsat = nii_mt.copy()
     nii_mtsat.data = tr_mt * np.multiply((fa_mt_rad * np.true_divide(a, nii_mt.data) - 1), r1map) - (fa_mt_rad ** 2) / 2.
+    # sct.printv('nii_mtsat.data[95,89,14]' + str(nii_mtsat.data[95,89,14]), type='info')
     # remove nans and clip unrelistic values
     nii_mtsat.data = np.nan_to_num(nii_mtsat.data)
     ind_unrealistic = np.where(np.abs(nii_mtsat.data) > 1)  # we expect MTsat to be on the order of 0.01
