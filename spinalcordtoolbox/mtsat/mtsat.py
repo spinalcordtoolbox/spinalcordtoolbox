@@ -17,23 +17,18 @@ def compute_mtsat(nii_mt, nii_pd, nii_t1,
                   nii_b1map=None, verbose=1):
     """
     Compute MTsat and T1 map based on FLASH scans
-    Parameters
-    ----------
-    nii_mt: msct_image object
-    nii_pd: msct_image object
-    nii_t1: msct_image object
-    tr_mt: TR in ms
-    tr_pd: TR in ms
-    tr_t1: TR in ms
-    fa_mt: flip angle in deg
-    fa_pd: flip angle in deg
-    fa_t1: flip angle in deg
-    nii_b1map: msct_image object of B1+ field map, used to correct the flip angle
-    verbose: 0, 1
-    Returns
-    -------
-    nii_mtsat: msct_image object
-    nii_t1map: msct_image object
+    :param nii_mt:
+    :param nii_pd:
+    :param nii_t1:
+    :param tr_mt:
+    :param tr_pd:
+    :param tr_t1:
+    :param fa_mt:
+    :param fa_pd:
+    :param fa_t1:
+    :param nii_b1map:
+    :param verbose:
+    :return:
     """
     # params
     nii_t1map = None  # it would be possible in the future to input T1 map from elsewhere (e.g. MP2RAGE). Note: this
@@ -101,28 +96,22 @@ def compute_mtsat_from_file(fname_mt, fname_pd, fname_t1, tr_mt, tr_pd, tr_t1, f
                             fname_mtsat=None, fname_t1map=None, verbose=1):
     """
     Compute MTsat and T1map.
-    Parameters
-    ----------
-    fname_mt
-    fname_pd
-    fname_t1
-    tr_mt
-    tr_pd
-    tr_t1
-    fa_mt
-    fa_pd
-    fa_t1
-    fname_b1map
-    fname_mtsat
-    fname_t1map
-    verbose
-
-    Returns
-    -------
-    fname_mtsat: file name for MTsat map
-    fname_t1map: file name for T1 map
+    :param fname_mt:
+    :param fname_pd:
+    :param fname_t1:
+    :param tr_mt:
+    :param tr_pd:
+    :param tr_t1:
+    :param fa_mt:
+    :param fa_pd:
+    :param fa_t1:
+    :param fname_b1map:
+    :param fname_mtsat:
+    :param fname_t1map:
+    :param verbose:
+    :return: fname_mtsat: file name for MTsat map
+    :return: fname_t1map: file name for T1 map
     """
-
     # load data
     sct.printv('Load data...', verbose)
     nii_mt = Image(fname_mt)
