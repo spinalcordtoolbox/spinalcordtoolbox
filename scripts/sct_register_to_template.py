@@ -261,9 +261,9 @@ def main(args=None):
     # check input labels
     labels = check_labels(fname_landmarks, label_type=label_type)
 
-    vertebral_alignement = False
+    vertebral_alignment = False
     if len(labels) > 2 and label_type == 'disc':
-        vertebral_alignement = True
+        vertebral_alignment = True
 
     path_tmp = sct.tmp_create(basename="register_to_template", verbose=verbose)
 
@@ -376,7 +376,7 @@ def main(args=None):
             sc_straight.remove_temp_files = remove_temp_files
             sc_straight.verbose = verbose
 
-            if vertebral_alignement:
+            if vertebral_alignment:
                 sc_straight.centerline_reference_filename = ftmp_template_seg
                 sc_straight.use_straight_reference = True
                 sc_straight.disks_input_filename = ftmp_label
@@ -399,7 +399,7 @@ def main(args=None):
         # re-define warping field using non-cropped space (to avoid issue #367)
         sct.run(['sct_concat_transfo', '-w', 'warp_straight2curve.nii.gz', '-d', ftmp_data, '-o', 'warp_straight2curve.nii.gz'])
 
-        if vertebral_alignement:
+        if vertebral_alignment:
             sct.copy('warp_curve2straight.nii.gz', 'warp_curve2straightAffine.nii.gz')
         else:
             # Label preparation:
@@ -516,7 +516,7 @@ def main(args=None):
         sct.printv('\nConcatenate transformations: template --> anat...', verbose)
         warp_inverse.reverse()
 
-        if vertebral_alignement:
+        if vertebral_alignment:
             sct.run(['sct_concat_transfo', '-w', ','.join(warp_inverse) + ',warp_straight2curve.nii.gz', '-d', 'data.nii', '-o', 'warp_template2anat.nii.gz'], verbose)
         else:
             sct.run(['sct_concat_transfo', '-w', ','.join(warp_inverse) + ',-straight2templateAffine.txt,warp_straight2curve.nii.gz', '-d', 'data.nii', '-o', 'warp_template2anat.nii.gz'], verbose)
