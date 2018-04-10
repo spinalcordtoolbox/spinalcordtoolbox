@@ -86,7 +86,8 @@ def run_main(args):
         fname_b1map=args.b1map, fname_mtsat=args.omtsat, fname_t1map=args.ot1map, verbose=1)
 
     sct.display_viewer_syntax([fname_mtsat, fname_t1map],
-                              colormaps=['hsv', 'hsv'],
+                              colormaps=['gray', 'gray'],
+                              minmax=['-10,10', '0, 3'],
                               opacities=['1', '1'],
                               verbose=args.v)
 
