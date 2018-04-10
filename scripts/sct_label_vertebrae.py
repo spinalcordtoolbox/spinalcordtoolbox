@@ -351,7 +351,7 @@ def main(args=None):
             test(qcslice.Sagittal(Image(fname_in), Image(labeled_seg_file)))
             sct.printv('Sucessfully generated the QC results in %s' % qc_param.qc_results)
             sct.printv('Use the following command to see the results in a browser:')
-            sct.printv('sct_qc -folder %s' % qc_path, type='info')
+            sct.printv('open file "{}/index.html"'.format(qc_path), type='info')
     except Exception as err:
         sct.printv(err, verbose, 'warning')
         sct.printv('WARNING: Cannot generate report.', verbose, 'warning')

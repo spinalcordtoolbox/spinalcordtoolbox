@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import sys, os, json, logging, warnings, datetime
+import sys, os, json, logging, warnings, datetime, io
+from string import Template
 
 warnings.filterwarnings("ignore")
 
@@ -76,7 +77,7 @@ class QcImage(object):
     """
     action_list contain the list of images that has to be generated.
     It can be seen as "figures" of matplotlib to be shown
-    Ex: if 'colorbar' is in the list, the msct_qc process will generate a color bar in the "img" folder
+    Ex: if 'colorbar' is in the list, the process will generate a color bar in the "img" folder
     """
 
     def listed_seg(self, mask):
@@ -351,3 +352,24 @@ class QcReport(object):
             results = json.load(open(self.qc_params.qc_results, 'r'))
         results.append(output)
         json.dump(results, open(self.qc_params.qc_results, "w"), indent=2)
+        self._update_html_assets(results)
+
+    def _update_html_assets(self, json_data):
+        """Update the html file and assets"""
+        assets_path = os.path.join(os.path.dirname(__file__), 'assets')
+        dest_path = self.qc_params.root_folder
+
+        with io.open(os.path.join(assets_path, 'index.html')) as template_index:
+            template = Template(template_index.read())
+            output = template.substitute(sct_json_data=json.dumps(json_data))
+            io.open(os.path.join(dest_path, 'index.html'), 'w').write(output)
+
+        for path in ['css', 'js', 'imgs', 'fonts']:
+            src_path = os.path.join(assets_path, '_assets', path)
+            dest_full_path = os.path.join(dest_path, '_assets', path)
+            if not os.path.exists(dest_full_path):
+                os.makedirs(dest_full_path)
+            for file_ in os.listdir(src_path):
+                if not os.path.isfile(os.path.join(dest_full_path, file_)):
+                    sct.copy(os.path.join(src_path, file_),
+                             dest_full_path)

@@ -531,9 +531,9 @@ if __name__ == "__main__":
 
         try:
             test(qcslice.Axial(Image(fname_input_data), Image(fname_seg)))
-            sct.log.info('Sucessfully generated the QC results in %s' % param.qc_results)
-            sct.log.info('Use the following command to see the results in a browser:')
-            sct.log.info('sct_qc -folder %s' % qc_path)
+            sct.printv('Sucessfully generated the QC results in %s' % param.qc_results)
+            sct.printv('Use the following command to see the results in a browser:')
+            sct.printv('open file "{}/index.html"'.format(qc_path), type='info')
         except:
             sct.log.warning('Issue when creating QC report.')
 
