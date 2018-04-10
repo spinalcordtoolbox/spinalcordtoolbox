@@ -370,7 +370,7 @@ def mkdir(path, verbose=1):
     """Create a folder, like os.mkdir
     """
     try:
-        printv("mkdir %s" % (path), verbose=verbose)
+        printv("mkdir %s" % (path), verbose=verbose, type="code")
         os.mkdir(path)
     except Exception as e:
         raise
@@ -379,7 +379,7 @@ def rm(path, verbose=1):
     """Remove a file, almost like os.remove
     """
     try:
-        printv("rm %s" % (path), verbose=verbose)
+        printv("rm %s" % (path), verbose=verbose, type="code")
         os.remove(path)
     except Exception as e:
         raise
@@ -388,7 +388,7 @@ def mv(src, dst, verbose=1):
     """Move a file from src to dst, almost like os.rename
     """
     try:
-        printv("mv %s %s" % (src, dst), verbose=verbose)
+        printv("mv %s %s" % (src, dst), verbose=verbose, type="code")
         os.rename(src, dst)
     except Exception as e:
         raise
@@ -403,7 +403,7 @@ def copy(src, dst, verbose=1):
         raise Exception("Couldn't find %s in %s (contents: %s)" \
          % (os.path.basename(src), folder, contents))
     try:
-        printv("cp %s %s" % (src, dst), verbose=verbose)
+        printv("cp %s %s" % (src, dst), verbose=verbose, type="code")
         shutil.copy(src, dst)
     except Exception as e:
         if sys.hexversion < 0x03000000:
@@ -420,7 +420,7 @@ def rmtree(folder, verbose=1):
     """Recursively remove folder, almost like shutil.rmtree
     """
     try:
-        printv("rm -rf %s" % (folder), verbose=verbose)
+        printv("rm -rf %s" % (folder), verbose=verbose, type="code")
         shutil.rmtree(folder, ignore_errors=True)
     except Exception as e:
         raise # Must be another error

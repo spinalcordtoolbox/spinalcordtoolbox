@@ -11,13 +11,14 @@ $(document).ready(function(){
     ele.style.marginLeft = "10px";
   }
 
-  $("table").on("click", "tr", function() {
+  $("#table").on("click", "tr", function() {
     var index = $(this).index();
-    var list = $("table").bootstrapTable('getData');
+    var list = $("#table").bootstrapTable('getData');
     var item = list[index];
     $("#sprite-img").attr("src", item.background_img).removeClass().addClass(item.orientation);
     $("#overlay-img").attr("src", item.overlay_img).removeClass().addClass(item.orientation);
     $(this).addClass('active').siblings().removeClass('active');
+    $('#table').scrollTop($(this).offset().top);
     console.log(list[index]);
   });
 
@@ -32,11 +33,30 @@ $(document).ready(function(){
   });
 
   $('html').keydown( function(evt) {
-    if (evt.which == 39) {
-      $('table tr.active').next().click();
+    var obj = $('#table tr.active');
+    if (evt.which == 40) {
+      if (obj.length == 0) {
+        $('#table tr:first-child').click();
+      } else {
+        obj.next().click();
+      }
     }
-    if (evt.which == 37) {
-      $('table tr.active').prev().click();
+    if (evt.which == 38) {
+      if (obj.length == 0) {
+        $('#table tr:last-child').click();
+      } else {
+        obj.prev().click();
+      }
     }
+    event.preventDefault();
   });
 });
+
+function responseHandler(res) {
+  var n;
+  for(var i = 0; i < res.length; i++) {
+    n = new Date(res[i].moddate);
+    res[i].moddate = n.toLocaleString();
+  }
+  return res;
+}

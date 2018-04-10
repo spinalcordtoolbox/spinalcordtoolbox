@@ -42,7 +42,7 @@ def get_parser():
     parser.add_option(name="-c",
                       type_value="multiple_choice",
                       description="type of image contrast.",
-                      mandatory=False,
+                      mandatory=True,
                       example=['t1', 't2', 't2s', 'dwi'])
     parser.add_option(name="-ofolder",
                       type_value="folder_creation",
@@ -384,10 +384,10 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, qc_p
         import spinalcordtoolbox.reports.qc as qc
         import spinalcordtoolbox.reports.slice as qcslice
 
-        param = qc.Params(fname_image, 'sct_propseg', args, 'Axial', qc_path)
+        param = qc.Params(fname_image, 'sct_deepseg_sc', args, 'Axial', qc_path)
         report = qc.QcReport(param, '')
 
-        @qc.QcImage(report, 'none', [qc.QcImage.listed_seg, ])
+        @qc.QcImage(report, 'none', [qc.QcImage.listed_seg], stretch_contrast=True)
         def test(qslice):
             return qslice.mosaic()
 
