@@ -52,7 +52,7 @@ def compute_mtsat(nii_mt, nii_pd, nii_t1,
 
     # ignore warnings from division by zeros (will deal with that later)
     # note: do not use over='ignore' because it results in wrong T1 maps
-    np.seterr(divide='ignore', invalid='ignore')
+    seterr_old = np.seterr(over='ignore', divide='ignore', invalid='ignore')
 
     # check if a T1 map was given in input; if not, compute R1
     if nii_t1map is None:
@@ -78,7 +78,6 @@ def compute_mtsat(nii_mt, nii_pd, nii_t1,
     # Compute MTsat
     sct.printv('Compute MTsat...', verbose)
     nii_mtsat = nii_mt.copy()
-    np.seterr(over='ignore')  # ignore overflow due to multiplication
     nii_mtsat.data = tr_mt * np.multiply((fa_mt_rad * np.true_divide(a, nii_mt.data) - 1), r1map) - (fa_mt_rad ** 2) / 2.
     # remove nans and clip unrelistic values
     nii_mtsat.data = np.nan_to_num(nii_mtsat.data)
@@ -91,6 +90,9 @@ def compute_mtsat(nii_mt, nii_pd, nii_t1,
     # Weiskopf, N., Suckling, J., Williams, G., Correia, M.M., Inkster, B., Tait, R., Ooi, C., Bullmore, E.T., Lutti, A., 2013. Quantitative multi-parameter mapping of R1, PD(*), MT, and R2(*) at 3T: a multi-center validation. Front. Neurosci. 7, 95.
     if not nii_b1map is None:
         nii_mtsat.data = np.true_divide(nii_mtsat.data * (1 - b1correctionfactor), (1 - b1correctionfactor * nii_b1map.data))
+
+    # set back old seterr settings
+    np.seterr(**seterr_old)
 
     return nii_mtsat, nii_t1map
 
