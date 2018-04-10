@@ -200,8 +200,8 @@ class SpinalCordStraightener(object):
         self.path_output = ""
         self.use_straight_reference = False
         self.centerline_reference_filename = ""
-        self.disks_input_filename = ""
-        self.disks_ref_filename = ""
+        self.discs_input_filename = ""
+        self.discs_ref_filename = ""
 
         self.mse_straightening = 0.0
         self.max_distance_straightening = 0.0
@@ -263,10 +263,10 @@ class SpinalCordStraightener(object):
 
         if self.use_straight_reference:
             sct.run(["sct_convert", "-i", self.centerline_reference_filename, "-o", os.path.join(path_tmp, "centerline_ref.nii.gz")])
-        if self.disks_input_filename != '':
-            sct.run(["sct_convert", "-i", self.disks_input_filename, "-o", os.path.join(path_tmp, "labels_input.nii.gz")])
-        if self.disks_ref_filename != '':
-            sct.run(["sct_convert", "-i", self.disks_ref_filename, "-o", os.path.join(path_tmp, "labels_ref.nii.gz")])
+        if self.discs_input_filename != '':
+            sct.run(["sct_convert", "-i", self.discs_input_filename, "-o", os.path.join(path_tmp, "labels_input.nii.gz")])
+        if self.discs_ref_filename != '':
+            sct.run(["sct_convert", "-i", self.discs_ref_filename, "-o", os.path.join(path_tmp, "labels_ref.nii.gz")])
 
         # go to tmp folder
         curdir = os.getcwd()
@@ -419,26 +419,26 @@ class SpinalCordStraightener(object):
                 hdr_warp_s = image_centerline_straight.hdr.copy()
                 hdr_warp_s.set_data_dtype('float32')
 
-                if self.disks_input_filename != "" and self.disks_ref_filename != "":
-                    disks_input_image = Image('labels_input.nii.gz')
-                    coord = disks_input_image.getNonZeroCoordinates(sorting='z', reverse_coord=True)
+                if self.discs_input_filename != "" and self.discs_ref_filename != "":
+                    discs_input_image = Image('labels_input.nii.gz')
+                    coord = discs_input_image.getNonZeroCoordinates(sorting='z', reverse_coord=True)
                     coord_physical = []
                     for c in coord:
-                        c_p = disks_input_image.transfo_pix2phys([[c.x, c.y, c.z]])[0]
+                        c_p = discs_input_image.transfo_pix2phys([[c.x, c.y, c.z]])[0]
                         c_p.append(c.value)
                         coord_physical.append(c_p)
                     centerline.compute_vertebral_distribution(coord_physical)
-                    centerline.save_centerline(image=disks_input_image, fname_output='disks_input_image.nii.gz')
+                    centerline.save_centerline(image=discs_input_image, fname_output='discs_input_image.nii.gz')
 
-                    disks_ref_image = Image('labels_ref.nii.gz')
-                    coord = disks_ref_image.getNonZeroCoordinates(sorting='z', reverse_coord=True)
+                    discs_ref_image = Image('labels_ref.nii.gz')
+                    coord = discs_ref_image.getNonZeroCoordinates(sorting='z', reverse_coord=True)
                     coord_physical = []
                     for c in coord:
-                        c_p = disks_ref_image.transfo_pix2phys([[c.x, c.y, c.z]])[0]
+                        c_p = discs_ref_image.transfo_pix2phys([[c.x, c.y, c.z]])[0]
                         c_p.append(c.value)
                         coord_physical.append(c_p)
                     centerline_straight.compute_vertebral_distribution(coord_physical)
-                    centerline_straight.save_centerline(image=disks_ref_image, fname_output='disks_ref_image.nii.gz')
+                    centerline_straight.save_centerline(image=discs_ref_image, fname_output='discs_ref_image.nii.gz')
 
             else:
                 sct.printv('\nPad input volume to account for spinal cord length...', verbose)
@@ -586,15 +586,15 @@ class SpinalCordStraightener(object):
             alignment_mode = 'levels'
 
             lookup_curved2straight = range(centerline.number_of_points)
-            if self.disks_input_filename != "":
+            if self.discs_input_filename != "":
                 # create look-up table curved to straight
                 for index in range(centerline.number_of_points):
-                    disk_label = centerline.l_points[index]
+                    disc_label = centerline.l_points[index]
                     if alignment_mode == 'length':
                         relative_position = centerline.dist_points[index]
                     else:
                         relative_position = centerline.dist_points_rel[index]
-                    idx_closest = centerline_straight.get_closest_to_absolute_position(disk_label, relative_position, backup_index=index, backup_centerline=centerline_straight, mode=alignment_mode)
+                    idx_closest = centerline_straight.get_closest_to_absolute_position(disc_label, relative_position, backup_index=index, backup_centerline=centerline_straight, mode=alignment_mode)
                     if idx_closest is not None:
                         lookup_curved2straight[index] = idx_closest
                     else:
@@ -612,14 +612,14 @@ class SpinalCordStraightener(object):
             lookup_curved2straight = np.array(lookup_curved2straight)
 
             lookup_straight2curved = range(centerline_straight.number_of_points)
-            if self.disks_input_filename != "":
+            if self.discs_input_filename != "":
                 for index in range(centerline_straight.number_of_points):
-                    disk_label = centerline_straight.l_points[index]
+                    disc_label = centerline_straight.l_points[index]
                     if alignment_mode == 'length':
                         relative_position = centerline_straight.dist_points[index]
                     else:
                         relative_position = centerline_straight.dist_points_rel[index]
-                    idx_closest = centerline.get_closest_to_absolute_position(disk_label, relative_position, backup_index=index, backup_centerline=centerline_straight, mode=alignment_mode)
+                    idx_closest = centerline.get_closest_to_absolute_position(disc_label, relative_position, backup_index=index, backup_centerline=centerline_straight, mode=alignment_mode)
                     if idx_closest is not None:
                         lookup_straight2curved[index] = idx_closest
             for p in range(0, len(lookup_straight2curved)//2):
@@ -997,13 +997,13 @@ def main(args=None):
         if not sc_straight.use_straight_reference:
             sct.printv('Warning: discs position are not taken into account if reference is not provided.')
         else:
-            sc_straight.disks_input_filename = str(arguments["-ldisc_input"])
+            sc_straight.discs_input_filename = str(arguments["-ldisc_input"])
             sc_straight.precision = 4.0
     if "-ldisc_dest" in arguments:
         if not sc_straight.use_straight_reference:
             sct.printv('Warning: discs position are not taken into account if reference is not provided.')
         else:
-            sc_straight.disks_ref_filename = str(arguments["-ldisc_dest"])
+            sc_straight.discs_ref_filename = str(arguments["-ldisc_dest"])
             sc_straight.precision = 4.0
 
     # Handling optional arguments
