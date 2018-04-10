@@ -643,6 +643,7 @@ def resample_labels(fname_labels, fname_dest, fname_output):
     """
     This function re-create labels into a space that has been resampled. It works by re-defining the location of each
     label using the old and new voxel size.
+    IMPORTANT: this function assumes that the origin and FOV of the two images are the SAME.
     """
     # get dimensions of input and destination files
     nx, ny, nz, nt, px, py, pz, pt = Image(fname_labels).dim
