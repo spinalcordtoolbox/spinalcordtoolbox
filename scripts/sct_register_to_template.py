@@ -12,6 +12,7 @@
 
 # TODO: for -ref subject, crop data, otherwise registration is too long
 # TODO: testing script for all cases
+# TODO: enable vertebral alignment with -ref subject
 
 import sys, io, os, shutil, time
 
