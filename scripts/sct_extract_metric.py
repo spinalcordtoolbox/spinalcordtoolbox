@@ -21,7 +21,7 @@ import sys, io, os, glob, time
 import nibabel as nib
 import numpy as np
 
-from spinalcordtoolbox.metadata import read_label_file
+from spinalcordtoolbox.metadata import read_label_file, parse_id_group
 
 import sct_utils as sct
 from sct_image import get_orientation_3d, set_orientation
@@ -261,7 +261,7 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
     if not single_label:
         indiv_labels_ids, indiv_labels_names, indiv_labels_files, combined_labels_ids, combined_labels_names, combined_labels_id_groups, ml_clusters = read_label_file(path_label, param_default.file_info_label)
         # check syntax of labels asked by user
-        labels_id_user = check_labels(indiv_labels_ids + combined_labels_ids, parse_label_ID_groups([labels_user])[0])
+        labels_id_user = check_labels(indiv_labels_ids + combined_labels_ids, parse_id_group(labels_user))
     else:
         indiv_labels_ids = [0]
         labels_id_user = [0]
@@ -359,8 +359,8 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
         slices_list = np.arange(nz).tolist()
 
     # parse clusters used for a priori (map method)
-    clusters_all_labels = parse_label_ID_groups(ml_clusters)
-    combined_labels_groups_all_IDs = parse_label_ID_groups(combined_labels_id_groups)
+    clusters_all_labels = ml_clusters
+    combined_labels_groups_all_IDs = combined_labels_id_groups
 
     # If specified, remove the label to fix its value
     if label_to_fix:
@@ -1127,30 +1127,6 @@ def fix_label_value(label_to_fix, data, labels, indiv_labels_ids, indiv_labels_n
     combined_labels_id_groups = remove_label_from_group(combined_labels_id_groups, label_to_fix_ID)
 
     return data, labels, indiv_labels_ids, indiv_labels_names, ml_clusters, combined_labels_id_groups, labels_id_user, label_to_fix_name, label_to_fix_fract_vol
-
-
-def parse_label_ID_groups(list_ID):
-    """From a list of unparsed labels string, returns a list of list enumarating the label IDs combinations as integers.
-    Example: ['0:5','8,10','12'] ==> [[0,1,2,3,4,5],[8,10],[12]]"""
-
-    list_all_label_IDs = []
-    for i_group in range(len(list_ID)):
-        if ':' in list_ID[i_group]:
-            group_split = list_ID[i_group].split(':')
-            group = sorted(range(int(group_split[0]), int(group_split[1]) + 1))
-        elif ',' in list_ID[i_group]:
-            group = [int(x) for x in list_ID[i_group].split(',')]
-        elif not list_ID[i_group]:
-            group = []
-        else:
-            group = [int(list_ID[i_group])]
-
-        # Remove redundant values
-        group_new = [i_label for n, i_label in enumerate(group) if i_label not in group[:n]]
-
-        list_all_label_IDs.append(group_new)
-
-    return list_all_label_IDs
 
 
 def remove_label_from_group(list_label_groups, label_ID):
