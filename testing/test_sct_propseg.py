@@ -21,7 +21,7 @@ def init(param_test):
     Initialize class: param_test
     """
     # initialization
-    default_args = ['-i t2/t2.nii.gz -c t2 -igt t2/t2_seg_manual.nii.gz']  # default parameters
+    default_args = ['-i t2/t2.nii.gz -c t2 -igt t2/t2_seg_manual.nii.gz -qc testing-qc']  # default parameters
     # param_test.list_fname_gt = [os.path.join(param_test.path_data, 't2', 't2_seg_manual.nii.gz')]  # file name suffix for ground truth (used for integrity testing)
     param_test.dice_threshold = 0.9
 
