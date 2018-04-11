@@ -13,7 +13,7 @@
 # TODO: for -ref subject, crop data, otherwise registration is too long
 # TODO: testing script for all cases
 
-import sys, io, os, shutil, time
+import sys, io, os, time
 
 import numpy as np
 
@@ -424,7 +424,7 @@ def main():
             sct.run(['sct_apply_transfo', '-i', ftmp_seg, '-w', 'warp_curve2straight.nii.gz', '-d', 'straight_ref.nii.gz', '-o', add_suffix(ftmp_seg, '_straight')])
         else:
             cmd = ['sct_straighten_spinalcord', '-i', ftmp_seg, '-s', ftmp_seg, '-o', add_suffix(ftmp_seg, '_straight'), '-r', str(remove_temp_files), '-v', str(verbose)]
-            if param.path_qc is not None:
+            if param.path_qc is not None and os.environ.get("SCT_RECURSIVE_QC", None) == "1":
                 cmd += ["-qc", param.path_qc]
             sct.run(cmd, verbose)
         # N.B. DO NOT UPDATE VARIABLE ftmp_seg BECAUSE TEMPORARY USED LATER
