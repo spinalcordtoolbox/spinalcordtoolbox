@@ -382,7 +382,7 @@ class QcReport(object):
                              dest_full_path)
 
 
-def add_entry(src, process, args, qc_path, plane, background=None, foreground=None,
+def add_entry(src, process, args, path_qc, plane, background=None, foreground=None,
  qcslice=None,
  qcslice_operations=[],
  qcslice_layout=None,
@@ -390,7 +390,7 @@ def add_entry(src, process, args, qc_path, plane, background=None, foreground=No
     """
     """
 
-    qc_param = Params(src, process, args, plane, qc_path)
+    qc_param = Params(src, process, args, plane, path_qc)
     report = QcReport(qc_param, '')
 
     if qcslice is not None:
@@ -416,4 +416,4 @@ def add_entry(src, process, args, qc_path, plane, background=None, foreground=No
 
     sct.printv('Sucessfully generated the QC results in %s' % qc_param.qc_results)
     sct.printv('Use the following command to see the results in a browser:')
-    sct.printv('open file "{}/index.html"'.format(qc_path), type='info')
+    sct.printv('open file "{}/index.html"'.format(path_qc), type='info')

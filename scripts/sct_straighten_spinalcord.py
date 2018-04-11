@@ -154,7 +154,7 @@ def smooth_centerline(fname_centerline, algo_fitting='hanning', type_window='han
         curdir = os.getcwd()
 
         x_centerline_fit, y_centerline_fit, z_centerline_fit, x_centerline_deriv, y_centerline_deriv,\
-            z_centerline_deriv, mse = b_spline_nurbs(x_centerline, y_centerline, z_centerline, nbControl=None, qc_path=curdir, point_number=nurbs_pts_number, verbose=verbose, all_slices=all_slices)
+            z_centerline_deriv, mse = b_spline_nurbs(x_centerline, y_centerline, z_centerline, nbControl=None, path_qc=curdir, point_number=nurbs_pts_number, verbose=verbose, all_slices=all_slices)
 
         # Checking accuracy of fitting. If NURBS fitting is not accurate enough, do not smooth segmentation
         if mse >= 2.0:
@@ -174,7 +174,7 @@ def smooth_centerline(fname_centerline, algo_fitting='hanning', type_window='han
             x_centerline_deriv, y_centerline_deriv, z_centerline_deriv
 
 
-def quick_check(fn_input, fn_centerline, fn_output, args, qc_path):
+def quick_check(fn_input, fn_centerline, fn_output, args, path_qc):
     """
     Generate a QC entry allowing to quickly review the straightening process.
     """
@@ -190,7 +190,7 @@ def quick_check(fn_input, fn_centerline, fn_output, args, qc_path):
      src=fn_input,
      process="sct_straighten_spinalcord",
      args=args,
-     qc_path=qc_path,
+     path_qc=path_qc,
      plane="Sagittal",
      foreground=foreground,
     )
@@ -239,7 +239,7 @@ class SpinalCordStraightener(object):
 
         self.template_orientation = 0
 
-        self.qc_path = None
+        self.path_qc = None
 
     def straighten(self):
         # Initialization
@@ -992,7 +992,7 @@ def main(args=None):
     # if "-cpu-nb" in arguments:
     #     sc_straight.cpu_number = int(arguments["-cpu-nb"])
 
-    qc_path = arguments.get("-qc", None)
+    path_qc = arguments.get("-qc", None)
 
     if '-disable-straight2curved' in arguments:
         sc_straight.straight2curved = False
@@ -1025,9 +1025,9 @@ def main(args=None):
 
     if sc_straight.curved2straight:
 
-        if qc_path is not None:
+        if path_qc is not None:
            quick_check(input_filename, centerline_file,
-            fname_straight, args, os.path.abspath(qc_path))
+            fname_straight, args, os.path.abspath(path_qc))
 
         sct.display_viewer_syntax([fname_straight], verbose=verbose)
 

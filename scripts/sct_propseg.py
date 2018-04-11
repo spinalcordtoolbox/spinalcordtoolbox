@@ -320,7 +320,7 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
     return parser
 
 
-def quick_check(fn_in, fn_seg, args, qc_path):
+def quick_check(fn_in, fn_seg, args, path_qc):
     """
     Generate a QC entry allowing to quickly review the segmentation process.
     """
@@ -332,7 +332,7 @@ def quick_check(fn_in, fn_seg, args, qc_path):
      src=fn_in,
      process="sct_propseg",
      args=args,
-     qc_path=qc_path,
+     path_qc=path_qc,
      plane='Axial',
      qcslice=qcslice.Axial([Image(fn_in), Image(fn_seg)]),
      qcslice_operations=[qc.QcImage.listed_seg],
@@ -375,7 +375,7 @@ if __name__ == "__main__":
     if "-r" in arguments:
         remove_temp_files = int(arguments["-r"])
 
-    qc_path = arguments.get("-qc", None)
+    path_qc = arguments.get("-qc", None)
 
     verbose = 0
     if "-v" in arguments:
@@ -535,7 +535,7 @@ if __name__ == "__main__":
         sct.log.info("Remove temporary files...")
         os.remove(tmp_output_file.absolutepath)
 
-    if qc_path is not None:
-        quick_check(fname_input_data, fname_seg, args, os.path.abspath(qc_path))
+    if path_qc is not None:
+        quick_check(fname_input_data, fname_seg, args, os.path.abspath(path_qc))
 
     sct.display_viewer_syntax([fname_input_data, fname_seg], colormaps=['gray', 'red'], opacities=['', '0.7'])
