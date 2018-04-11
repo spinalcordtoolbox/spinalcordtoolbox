@@ -174,7 +174,7 @@ def smooth_centerline(fname_centerline, algo_fitting='hanning', type_window='han
             x_centerline_deriv, y_centerline_deriv, z_centerline_deriv
 
 
-def quick_check(fn_input, fn_centerline, fn_output, args, path_qc):
+def generate_qc(fn_input, fn_centerline, fn_output, args, path_qc):
     """
     Generate a QC entry allowing to quickly review the straightening process.
     """
@@ -1026,7 +1026,7 @@ def main(args=None):
     if sc_straight.curved2straight:
 
         if path_qc is not None:
-           quick_check(input_filename, centerline_file,
+           generate_qc(input_filename, centerline_file,
             fname_straight, args, os.path.abspath(path_qc))
 
         sct.display_viewer_syntax([fname_straight], verbose=verbose)
