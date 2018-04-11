@@ -34,7 +34,7 @@ class Param:
         self.output_folder = '.'
         self.verbose = 1
         self.remove_tmp = 1
-        self.qc_path = None
+        self.path_qc = None
 
 
 class MultiLabelRegistration:
@@ -188,7 +188,7 @@ class MultiLabelRegistration:
         if self.fname_warp_target2template is not None:
             sct.generate_output_file(os.path.join(tmp_dir, self.fname_warp_gm2template), os.path.join(self.param.output_folder, self.fname_warp_gm2template))
 
-        if self.param.qc_path is not None:
+        if self.param.path_qc is not None:
             # TODO move to qc
             fname_grid_warped = visualize_warp(os.path.join(tmp_dir, fname_warp_multilabel_template2auto), rm_tmp=self.param.remove_tmp)
             path_grid_warped, file_grid_warped, ext_grid_warped = sct.extract_fname(fname_grid_warped)
@@ -210,8 +210,8 @@ class MultiLabelRegistration:
         os.chdir(tmp_dir)
 
         cmd = ['sct_warp_template', '-d', fname_manual_gmseg, '-w', self.fname_warp_template2gm, '-a', '0']
-        if self.param.qc_path is not None:
-            cmd += ["-qc", self.param.qc_path]
+        if self.param.path_qc is not None:
+            cmd += ["-qc", self.param.path_qc]
 
         sct.run(cmd)
         if 'MNI-Poly-AMU_GM.nii.gz' in os.listdir(os.path.join('label', 'template')):
@@ -577,7 +577,7 @@ if __name__ == "__main__":
     if '-ofolder' in arguments:
         ml_param.output_folder = arguments['-ofolder']
 
-    ml_param.qc_path = arguments.get("-qc", None)
+    ml_param.path_qc = arguments.get("-qc", None)
 
     if '-r' in arguments:
         ml_param.remove_tmp = int(arguments['-r'])

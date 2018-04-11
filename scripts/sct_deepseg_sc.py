@@ -229,18 +229,18 @@ def main():
     if '-v' in arguments:
         verbose = arguments['-v']
 
-    qc_path = arguments.get("-qc", None)
+    path_qc = arguments.get("-qc", None)
 
     fname_seg = deep_segmentation_spinalcord(fname_image, contrast_type, output_folder,
      remove_temp_files=remove_temp_files, verbose=verbose)
 
-    if qc_path is not None:
-        quick_check(fname_image, fname_seg, args, os.path.abspath(qc_path))
+    if path_qc is not None:
+        quick_check(fname_image, fname_seg, args, os.path.abspath(path_qc))
 
     sct.display_viewer_syntax([fname_image, os.path.join(output_folder, fname_seg)], colormaps=['gray', 'red'], opacities=['', '0.7'])
 
 
-def quick_check(fn_in, fn_seg, args, qc_path):
+def quick_check(fn_in, fn_seg, args, path_qc):
     """
     Generate a QC entry allowing to quickly review the segmentation process.
     """
@@ -252,7 +252,7 @@ def quick_check(fn_in, fn_seg, args, qc_path):
      src=fn_in,
      process="sct_deepseg_sc",
      args=args,
-     qc_path=qc_path,
+     path_qc=path_qc,
      plane='Axial',
      qcslice=qcslice.Axial([Image(fn_in), Image(fn_seg)]),
      qcslice_operations=[qc.QcImage.listed_seg],

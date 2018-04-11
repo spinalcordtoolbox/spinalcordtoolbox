@@ -40,11 +40,11 @@ class Param:
         self.warp_spinal_levels = 0
         self.list_labels_nn = ['_level.nii.gz', '_levels.nii.gz', '_csf.nii.gz', '_CSF.nii.gz', '_cord.nii.gz']  # list of files for which nn interpolation should be used. Default = linear.
         self.verbose = 1  # verbose
-        self.qc_path = None
+        self.path_qc = None
 
 
 class WarpTemplate:
-    def __init__(self, fname_src, fname_transfo, warp_atlas, warp_spinal_levels, folder_out, path_template, verbose, qc_path):
+    def __init__(self, fname_src, fname_transfo, warp_atlas, warp_spinal_levels, folder_out, path_template, verbose, path_qc):
 
         # Initialization
         self.fname_src = fname_src
@@ -228,7 +228,7 @@ def get_parser():
     parser.add_option(name='-qc',
                       type_value='folder_creation',
                       description='The path where the quality control generated content will be saved',
-                      default_value=param_default.qc_path)
+                      default_value=param_default.path_qc)
     parser.add_option(name="-v",
                       type_value="multiple_choice",
                       description="""Verbose.""",
@@ -238,7 +238,7 @@ def get_parser():
     return parser
 
 
-def quick_check(fn_in, fn_wm, args, qc_path):
+def quick_check(fn_in, fn_wm, args, path_qc):
     """
     Generate a QC entry allowing to quickly review the warped template.
     """
@@ -250,7 +250,7 @@ def quick_check(fn_in, fn_wm, args, qc_path):
      src=fn_in,
      process="sct_warp_template",
      args=args,
-     qc_path=qc_path,
+     path_qc=path_qc,
      plane='Axial',
      qcslice=qcslice.Axial([Image(fn_in), Image(fn_wm)]),
      qcslice_operations=[qc.QcImage.template],
@@ -272,14 +272,14 @@ def main(args=None):
     folder_out = arguments['-ofolder']
     path_template = arguments['-t']
     verbose = int(arguments['-v'])
-    qc_path = arguments.get("-qc", None)
+    path_qc = arguments.get("-qc", None)
 
     # call main function
-    w = WarpTemplate(fname_src, fname_transfo, warp_atlas, warp_spinal_levels, folder_out, path_template, verbose, qc_path)
+    w = WarpTemplate(fname_src, fname_transfo, warp_atlas, warp_spinal_levels, folder_out, path_template, verbose, path_qc)
 
-    if qc_path is not None:
+    if path_qc is not None:
         fname_wm = os.path.join(w.folder_out, w.folder_template, get_file_label(os.path.join(w.folder_out, w.folder_template), 'white matter'))
-        quick_check(fname_src, fname_wm, sys.argv[1:], os.path.abspath(qc_path))
+        quick_check(fname_src, fname_wm, sys.argv[1:], os.path.abspath(path_qc))
 
     sct.display_viewer_syntax([fname_src,
                                    os.path.join(w.folder_out, w.folder_template, get_file_label(os.path.join(w.folder_out, w.folder_template), 'T2')),

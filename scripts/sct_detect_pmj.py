@@ -270,7 +270,7 @@ def main(args=None):
     else:
         path_results = '.'
 
-    qc_path = arguments.get("-qc", None)
+    path_qc = arguments.get("-qc", None)
 
     # Remove temp folder
     rm_tmp = bool(int(arguments.get("-r", 1)))
@@ -294,13 +294,13 @@ def main(args=None):
 
     # View results
     if fname_out is not None:
-        if qc_path is not None:
-            quick_check(fname_in, fname_out, args, os.path.abspath(qc_path))
+        if path_qc is not None:
+            quick_check(fname_in, fname_out, args, os.path.abspath(path_qc))
 
         sct.display_viewer_syntax([fname_in, fname_out], colormaps=['gray', 'red'])
 
 
-def quick_check(fname_in, fname_out, args, qc_path):
+def quick_check(fname_in, fname_out, args, path_qc):
     """
     Generate a QC entry allowing to quickly review the PMJ position
     """
@@ -336,7 +336,7 @@ def quick_check(fname_in, fname_out, args, qc_path):
      src=fname_in,
      process="sct_detect_pmj",
      args=args,
-     qc_path=qc_path,
+     path_qc=path_qc,
      plane="Sagittal",
      qcslice=qcslice.Sagittal([Image(fname_in), Image(fname_out)]),
      qcslice_operations=[highlight_pmj],

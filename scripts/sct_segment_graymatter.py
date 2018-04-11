@@ -759,7 +759,7 @@ def main(args=None):
 
     sct.display_viewer_syntax([param_seg.fname_im_original, seg_gm.fname_res_gmseg, seg_gm.fname_res_wmseg], colormaps=['gray', gm_col, wm_col], minmax=['', b, b], opacities=['1', '0.7', '0.7'], verbose=param.verbose)
 
-def quick_check(fname_in, fname_gm, fname_wm, param_seg, args, qc_path):
+def quick_check(fname_in, fname_gm, fname_wm, param_seg, args, path_qc):
     """
     Generate a QC entry allowing to quickly review the segmentation process.
     """
@@ -792,7 +792,7 @@ def quick_check(fname_in, fname_gm, fname_wm, param_seg, args, qc_path):
      src=fname_in,
      process="sct_segment_graymatter",
      args=args,
-     qc_path=qc_path,
+     path_qc=path_qc,
      plane='Axial',
      qcslice=s,
      qcslice_operations=[qc.QcImage.listed_seg],
