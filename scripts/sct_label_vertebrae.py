@@ -262,7 +262,7 @@ def main(args=None):
         sct.run(['sct_apply_transfo', '-i', 'data.nii', '-w', 'warp_curve2straight.nii.gz', '-d', 'straight_ref.nii.gz', '-o', 'data_straight.nii'])
     else:
         cmd = ['sct_straighten_spinalcord', '-i', 'data.nii', '-s', 'segmentation.nii.gz', '-r', str(remove_temp_files)]
-        if param.path_qc is not None:
+        if param.path_qc is not None and os.environ.get("SCT_RECURSIVE_QC", None) == "1":
             cmd += ['-qc', param.path_qc]
         sct.run(cmd)
 
@@ -672,7 +672,6 @@ def create_label_z(fname_seg, z, value):
     orientation_origin = nii.change_orientation('RPI')  # change orientation to RPI
     nx, ny, nz, nt, px, py, pz, pt = nii.dim  # Get dimensions
     # find x and y coordinates of the centerline at z using center of mass
-    from scipy.ndimage.measurements import center_of_mass
     x, y = center_of_mass(nii.data[:, :, z])
     x, y = int(round(x)), int(round(y))
     nii.data[:, :, :] = 0
@@ -696,7 +695,6 @@ def get_z_and_disc_values_from_label(fname_label):
     """
     nii = Image(fname_label)
     # get center of mass of label
-    from scipy.ndimage.measurements import center_of_mass
     x_label, y_label, z_label = center_of_mass(nii.data)
     x_label, y_label, z_label = int(round(x_label)), int(round(y_label)), int(round(z_label))
     # get label value

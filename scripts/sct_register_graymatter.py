@@ -210,7 +210,7 @@ class MultiLabelRegistration:
         os.chdir(tmp_dir)
 
         cmd = ['sct_warp_template', '-d', fname_manual_gmseg, '-w', self.fname_warp_template2gm, '-a', '0']
-        if self.param.path_qc is not None:
+        if self.param.path_qc is not None and os.environ.get("SCT_RECURSIVE_QC", None) == "1":
             cmd += ["-qc", self.param.path_qc]
 
         sct.run(cmd)
