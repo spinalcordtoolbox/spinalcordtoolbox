@@ -14,10 +14,11 @@
 
 import sys, io, os, time
 
+from spinalcordtoolbox.metadata import get_file_label, read_label_file
 from msct_image import Image
+
 from msct_parser import Parser
 import sct_utils as sct
-from sct_extract_metric import read_label_file
 
 # get path of the script and the toolbox
 path_script = os.path.dirname(__file__)
@@ -85,8 +86,6 @@ class WarpTemplate:
             warp_label(self.path_template, self.folder_spinal_levels, param.file_info_label, self.fname_src, self.fname_transfo, self.folder_out)
 
 
-
-
 def warp_label(path_label, folder_label, file_label, fname_src, fname_transfo, path_out):
     """
     Warp label files according to info_label.txt file
@@ -123,48 +122,6 @@ def warp_label(path_label, folder_label, file_label, fname_src, fname_transfo, p
             sct.run('sct_apply_transfo -i ' + fname_label + ' -o ' + os.path.join(path_out, folder_label, template_label_file[i]) + ' -d ' + fname_src + ' -w ' + fname_transfo + ' -x ' + get_interp(template_label_file[i]), param.verbose)
         # Copy list.txt
         sct.copy(os.path.join(path_label, folder_label, param.file_info_label), os.path.join(path_out, folder_label))
-
-
-# Get file label
-# ==========================================================================================
-def get_file_label(path_label='', label='', output='file'):
-    """
-    Get label file name given based on info_label.txt file.
-    Label needs to be a substring of the "name" field. E.g.: T1-weighted, spinal cord, white matter, etc.
-    :param path_label:
-    :param label:
-    :param output: {file, filewithpath}
-    :return:
-    """
-    # init
-    file_info_label = 'info_label.txt'
-    file_label = ''
-    # Open file
-    fname_label = os.path.join(path_label, file_info_label)
-    try:
-        f = io.open(fname_label)
-    except IOError:
-        sct.printv('\nWARNING: Cannot open ' + fname_label, 1, 'warning')
-        # raise
-    else:
-        # Extract lines from file
-        lines = [line for line in f.readlines() if line.strip()]
-        # find line corresponding to label
-        for line in lines:
-            # ignore comment
-            if not line[0] == '#':
-                # check "name" field
-                if label in line.split(',')[1].strip():
-                    file_label = line.split(',')[2].strip()
-                    # sct.printv('Found Label ' + label + ' in file: ' + file_label)
-                    break
-        if file_label == '':
-            sct.printv('\nWARNING: Label ' + label + ' not found.', 1, 'warning')
-        # output
-        if output == 'file':
-            return file_label
-        elif output == 'filewithpath':
-            return os.path.join(path_label, file_label)
 
 
 # Get interpolation method
@@ -275,14 +232,14 @@ def main(args=None):
     path_qc = arguments.get("-qc", None)
 
     # call main function
-    w = WarpTemplate(fname_src, fname_transfo, warp_atlas, warp_spinal_levels, folder_out, path_template, verbose)
+    WarpTemplate(fname_src, fname_transfo, warp_atlas, warp_spinal_levels, folder_out, path_template, verbose)
 
     if path_qc is not None:
         fname_wm = os.path.join(w.folder_out, w.folder_template, get_file_label(os.path.join(w.folder_out, w.folder_template), 'white matter'))
         generate_qc(fname_src, fname_wm, sys.argv[1:], os.path.abspath(path_qc))
 
     sct.display_viewer_syntax([fname_src,
-                                   os.path.join(w.folder_out, w.folder_template, get_file_label(os.path.join(w.folder_out, w.folder_template), 'T2')),
+                                   os.path.join(w.folder_out, w.folder_template, get_file_label(os.path.join(w.folder_out, w.folder_template), 'T2-weighted template')),
                                    os.path.join(w.folder_out, w.folder_template, get_file_label(os.path.join(w.folder_out, w.folder_template), 'gray matter')),
                                    os.path.join(w.folder_out, w.folder_template, get_file_label(os.path.join(w.folder_out, w.folder_template), 'white matter'))],
                                   colormaps=['gray', 'gray', 'red-yellow', 'blue-lightblue'],
