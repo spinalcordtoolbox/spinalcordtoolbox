@@ -235,12 +235,12 @@ def main():
      remove_temp_files=remove_temp_files, verbose=verbose)
 
     if path_qc is not None:
-        quick_check(fname_image, fname_seg, args, os.path.abspath(path_qc))
+        generate_qc(fname_image, fname_seg, args, os.path.abspath(path_qc))
 
     sct.display_viewer_syntax([fname_image, os.path.join(output_folder, fname_seg)], colormaps=['gray', 'red'], opacities=['', '0.7'])
 
 
-def quick_check(fn_in, fn_seg, args, path_qc):
+def generate_qc(fn_in, fn_seg, args, path_qc):
     """
     Generate a QC entry allowing to quickly review the segmentation process.
     """

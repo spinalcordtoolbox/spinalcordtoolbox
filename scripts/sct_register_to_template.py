@@ -593,13 +593,13 @@ def main(args=None):
     sct.printv('\nFinished! Elapsed time: ' + str(int(round(elapsed_time))) + 's', verbose)
 
     if param.path_qc is not None:
-        quick_check(fname_data, fname_template2anat, fname_seg, args, os.path.abspath(param.path_qc))
+        generate_qc(fname_data, fname_template2anat, fname_seg, args, os.path.abspath(param.path_qc))
 
     sct.display_viewer_syntax([fname_data, fname_template2anat], verbose=verbose)
     sct.display_viewer_syntax([fname_template, fname_anat2template], verbose=verbose)
 
 
-def quick_check(fname_data, fname_template2anat, fname_seg, args, path_qc):
+def generate_qc(fname_data, fname_template2anat, fname_seg, args, path_qc):
     """
     Generate a QC entry allowing to quickly review the straightening process.
     """
