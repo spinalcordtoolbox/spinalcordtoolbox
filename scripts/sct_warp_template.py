@@ -238,7 +238,7 @@ def get_parser():
     return parser
 
 
-def quick_check(fn_in, fn_wm, args, path_qc):
+def generate_qc(fn_in, fn_wm, args, path_qc):
     """
     Generate a QC entry allowing to quickly review the warped template.
     """
@@ -279,7 +279,7 @@ def main(args=None):
 
     if path_qc is not None:
         fname_wm = os.path.join(w.folder_out, w.folder_template, get_file_label(os.path.join(w.folder_out, w.folder_template), 'white matter'))
-        quick_check(fname_src, fname_wm, sys.argv[1:], os.path.abspath(path_qc))
+        generate_qc(fname_src, fname_wm, sys.argv[1:], os.path.abspath(path_qc))
 
     sct.display_viewer_syntax([fname_src,
                                    os.path.join(w.folder_out, w.folder_template, get_file_label(os.path.join(w.folder_out, w.folder_template), 'T2')),

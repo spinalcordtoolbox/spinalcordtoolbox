@@ -295,12 +295,12 @@ def main(args=None):
     # View results
     if fname_out is not None:
         if path_qc is not None:
-            quick_check(fname_in, fname_out, args, os.path.abspath(path_qc))
+            generate_qc(fname_in, fname_out, args, os.path.abspath(path_qc))
 
         sct.display_viewer_syntax([fname_in, fname_out], colormaps=['gray', 'red'])
 
 
-def quick_check(fname_in, fname_out, args, path_qc):
+def generate_qc(fname_in, fname_out, args, path_qc):
     """
     Generate a QC entry allowing to quickly review the PMJ position
     """
