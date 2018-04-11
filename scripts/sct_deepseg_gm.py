@@ -59,7 +59,7 @@ def get_parser():
     return parser
 
 
-def quick_check(fn_in, fn_seg, args, path_qc):
+def generate_qc(fn_in, fn_seg, args, path_qc):
     """
     Generate a QC entry allowing to quickly review the segmentation process.
     """
@@ -99,7 +99,7 @@ def run_main():
 
     path_qc = arguments.get("-qc", None)
     if path_qc is not None:
-        quick_check(input_filename, out_fname, sys.argv[1:], os.path.abspath(path_qc))
+        generate_qc(input_filename, out_fname, sys.argv[1:], os.path.abspath(path_qc))
 
 
     sct.display_viewer_syntax([input_filename, format(out_fname)],
