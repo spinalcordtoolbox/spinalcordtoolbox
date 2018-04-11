@@ -38,7 +38,7 @@ class Param:
         self.padding = 10  # this field is needed in the function register@sct_register_multimodal
         self.verbose = 1  # verbose
         self.path_template = os.path.join(path_sct, 'data', 'PAM50')
-        self.qc_path = None
+        self.path_qc = None
         self.zsubsample = '0.25'
         self.param_straighten = ''
 
@@ -180,7 +180,7 @@ def write_paramaters(arguments,param,ref,verbose):
     if '-param-straighten' in arguments:
         param.param_straighten = arguments['-param-straighten']
 
-    param.qc_path = arguments.get("-qc", None)
+    param.path_qc = arguments.get("-qc", None)
 
     """
     if '-cpu-nb' in arguments:
@@ -424,8 +424,8 @@ def main():
             sct.run(['sct_apply_transfo', '-i', ftmp_seg, '-w', 'warp_curve2straight.nii.gz', '-d', 'straight_ref.nii.gz', '-o', add_suffix(ftmp_seg, '_straight')])
         else:
             cmd = ['sct_straighten_spinalcord', '-i', ftmp_seg, '-s', ftmp_seg, '-o', add_suffix(ftmp_seg, '_straight'), '-r', str(remove_temp_files), '-v', str(verbose)]
-            if param.qc_path is not None:
-                cmd += ["-qc", param.qc_path]
+            if param.path_qc is not None:
+                cmd += ["-qc", param.path_qc]
             sct.run(cmd, verbose)
         # N.B. DO NOT UPDATE VARIABLE ftmp_seg BECAUSE TEMPORARY USED LATER
         # re-define warping field using non-cropped space (to avoid issue #367)
@@ -586,7 +586,7 @@ def main():
         warp_forward = ['template2subjectAffine.txt']
         warp_inverse = ['-template2subjectAffine.txt']
         try:
-            register_landmarks(ftmp_template_label, ftmp_label, paramreg.steps['0'].dof, fname_affine=warp_forward[0], verbose=verbose, qc_path=param.qc_path)
+            register_landmarks(ftmp_template_label, ftmp_label, paramreg.steps['0'].dof, fname_affine=warp_forward[0], verbose=verbose, path_qc=param.path_qc)
         except Exception:
             sct.printv('ERROR: input labels do not seem to be at the right place. Please check the position of the labels. See documentation for more details: https://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/', verbose=verbose, type='error')
 

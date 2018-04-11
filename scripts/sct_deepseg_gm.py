@@ -59,7 +59,7 @@ def get_parser():
     return parser
 
 
-def quick_check(fn_in, fn_seg, args, qc_path):
+def quick_check(fn_in, fn_seg, args, path_qc):
     """
     Generate a QC entry allowing to quickly review the segmentation process.
     """
@@ -72,7 +72,7 @@ def quick_check(fn_in, fn_seg, args, qc_path):
      src=fn_in,
      process="sct_deepseg_gm",
      args=args,
-     qc_path=qc_path,
+     path_qc=path_qc,
      plane='Axial',
      qcslice=qcslice.Axial([Image(fn_in), Image(fn_seg)]),
      qcslice_operations=[qc.QcImage.listed_seg],
@@ -97,9 +97,9 @@ def run_main():
     out_fname = deepseg_gm.segment_file(input_filename, output_filename,
                                         model_name, int(verbose))
 
-    qc_path = arguments.get("-qc", None)
-    if qc_path is not None:
-        quick_check(input_filename, out_fname, sys.argv[1:], os.path.abspath(qc_path))
+    path_qc = arguments.get("-qc", None)
+    if path_qc is not None:
+        quick_check(input_filename, out_fname, sys.argv[1:], os.path.abspath(path_qc))
 
 
     sct.display_viewer_syntax([input_filename, format(out_fname)],
