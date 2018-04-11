@@ -345,7 +345,7 @@ def main(args=None):
 
 def generate_qc(fn_in, fn_labeled, args, path_qc):
     """
-    Generate a quick visualization of vertex labeling
+    Generate a quick visualization of vertebral labeling
     """
     import spinalcordtoolbox.reports.qc as qc
     import spinalcordtoolbox.reports.slice as qcslice
