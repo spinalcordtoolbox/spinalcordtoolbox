@@ -255,14 +255,14 @@ def function_launcher(args):
     param_testing.function_to_test = args[0]
     param_testing.path_data = args[1]
     param_testing.args = args[2]
-    test_integrity = args[3]
+    param_testing.test_integrity = args[3]
     param_testing.redirect_to_file = True  # create individual logs for each subject.
     # load modules of function to test
     module_testing = importlib.import_module('test_' + param_testing.function_to_test)
     # initialize parameters specific to the test
     param_testing = module_testing.init(param_testing)
     try:
-        param_testing = sct_testing.test_function(param_testing, integrity=test_integrity)
+        param_testing = sct_testing.test_function(param_testing)
     except:
         import traceback
         sct.log.error('%s: %s' % ('test_' + args[0], traceback.format_exc()))
@@ -429,7 +429,7 @@ def get_parser():
                       description="Run (=1) or not (=0) integrity testing which is defined in test_integrity() function of the test_ script. See example here: https://github.com/neuropoly/spinalcordtoolbox/blob/master/testing/test_sct_propseg.py",
                       mandatory=False,
                       example=['0', '1'],
-                      default_value='0')
+                      default_value='0')  # TODO: this should have values True/False as defined in sct_testing, not 0/1
 
     parser.add_option(name="-log",
                       type_value='multiple_choice',

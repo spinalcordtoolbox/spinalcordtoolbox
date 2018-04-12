@@ -159,6 +159,7 @@ def main(args=None):
             param_test = copy.deepcopy(param)
             param_test.default_args = param.args
             param_test.args = param.args[i]
+            param_test.test_integrity = True
             # if list_fname_gt is not empty, assign it
             # if param_test.list_fname_gt:
             #     param_test.fname_gt = param_test.list_fname_gt[i]
@@ -346,7 +347,7 @@ def write_to_log_file(fname_log, string, mode='w', prepend=False):
 
 # init_testing
 # ==========================================================================================
-def test_function(param_test, integrity=True):
+def test_function(param_test):
     """
 
     Parameters
@@ -446,7 +447,7 @@ def test_function(param_test, integrity=True):
     param_test.duration = time.time() - time_start
 
     # test integrity
-    if integrity:
+    if param_test.test_integrity:
         param_test.output += '\n\n====================================================================================================\n' + 'INTEGRITY TESTING' + '\n====================================================================================================\n\n'  # copy command
         try:
             param_test = module_testing.test_integrity(param_test)
