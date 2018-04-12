@@ -861,11 +861,6 @@ def get_parser():
                                   "This option must be used with the -ldisc_input parameter.",
                       mandatory=False,
                       example="ldisc_dest.nii.gz")
-    parser.add_option(name="-p",
-                      type_value=None,
-                      description="amount of padding for generating labels.",
-                      mandatory=False,
-                      deprecated_by='-pad')
     parser.add_option(name="-disable-straight2curved",
                       type_value=None,
                       description="Disable straight to curved transformation computation, in case you do not need the output warping field straight-->curve (faster).",
