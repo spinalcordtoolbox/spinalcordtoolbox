@@ -255,13 +255,14 @@ def function_launcher(args):
     param_testing.function_to_test = args[0]
     param_testing.path_data = args[1]
     param_testing.args = args[2]
+    test_integrity = args[3]
     param_testing.redirect_to_file = True  # create individual logs for each subject.
     # load modules of function to test
     module_testing = importlib.import_module('test_' + param_testing.function_to_test)
     # initialize parameters specific to the test
     param_testing = module_testing.init(param_testing)
     try:
-        param_testing = sct_testing.test_function(param_testing, integrity=False)
+        param_testing = sct_testing.test_function(param_testing, integrity=test_integrity)
     except:
         import traceback
         sct.log.error('%s: %s' % ('test_' + args[0], traceback.format_exc()))
@@ -315,7 +316,7 @@ def get_list_subj(folder_dataset, data_specifications=None, fname_database=''):
     return list_subj
 
 
-def run_function(function, folder_dataset, list_subj, list_args=[], nb_cpu=None, verbose=1):
+def run_function(function, folder_dataset, list_subj, list_args=[], nb_cpu=None, verbose=1, test_integrity=0):
     """
     Run a test function on the dataset using multiprocessing and save the results
     :return: results
@@ -329,8 +330,8 @@ def run_function(function, folder_dataset, list_subj, list_args=[], nb_cpu=None,
     os.environ["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"] = "1"
 
     # create list that finds all the combinations for function + subject path + arguments. Example of one list element:
-    # ('sct_propseg', os.path.join(path_sct, 'data', 'sct_test_function', '200_005_s2''), '-i ' + os.path.join("t2", "t2.nii.gz") + ' -c t2')
-    list_func_subj_args = list(itertools.product(*[[function], list_subj_path, list_args]))
+    # ('sct_propseg', os.path.join(path_sct, 'data', 'sct_test_function', '200_005_s2''), '-i ' + os.path.join("t2", "t2.nii.gz") + ' -c t2', 1)
+    list_func_subj_args = list(itertools.product(*[[function], list_subj_path, list_args, [test_integrity]]))
         # data_and_params = itertools.izip(itertools.repeat(function), data_subjects, itertools.repeat(parameters))
 
     sct.log.debug("stating pool with {} thread(s)".format(nb_cpu))
@@ -423,6 +424,13 @@ def get_parser():
                       mandatory=False,
                       example='42')
 
+    parser.add_option(name="-test-integrity",
+                      type_value="multiple_choice",
+                      description="Run (=1) or not (=0) integrity testing which is defined in test_integrity() function of the test_ script. See example here: https://github.com/neuropoly/spinalcordtoolbox/blob/master/testing/test_sct_propseg.py",
+                      mandatory=False,
+                      example=['0', '1'],
+                      default_value='0')
+
     parser.add_option(name="-log",
                       type_value='multiple_choice',
                       description="Redirects Terminal verbose to log file.",
@@ -479,6 +487,7 @@ if __name__ == "__main__":
         nb_cpu = arguments["-cpu-nb"]
     else:
         nb_cpu = cpu_count()  # uses maximum number of available CPUs
+    test_integrity = int(arguments['-test-integrity'])
     create_log = int(arguments['-log'])
     if '-email' in arguments:
         create_log = True
@@ -543,6 +552,7 @@ if __name__ == "__main__":
     for args in list_args:
         sct.log.info('  ' + function_to_test + ' ' + args)
     sct.log.info('Dataset: ' + path_data)
+    sct.log.info('Test integrity: ' + str(test_integrity))
 
     # test function
     try:
@@ -554,7 +564,7 @@ if __name__ == "__main__":
             sct.remove_handler(file_handler)
         # run function
         sct.log.debug("enter test fct")
-        tests_ret = run_function(function_to_test, path_data, list_subj, list_args=list_args, nb_cpu=nb_cpu, verbose=1)
+        tests_ret = run_function(function_to_test, path_data, list_subj, list_args=list_args, nb_cpu=nb_cpu, verbose=1, test_integrity=test_integrity)
         sct.log.debug("exit test fct")
         results = tests_ret['results']
         compute_time = tests_ret['compute_time']
