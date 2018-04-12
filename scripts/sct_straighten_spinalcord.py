@@ -947,7 +947,7 @@ def get_parser():
                                   'To keep native resolution, set this option to 0.\n',
                       mandatory=False,
                       default_value=0,
-                      deprecated_by='-speed_factor')
+                      deprecated=True)
     parser.add_option(name="-ref",
                       type_value="image_nifti",
                       description='Isotropic resolution of the straightening output, in millimeters.\n'
