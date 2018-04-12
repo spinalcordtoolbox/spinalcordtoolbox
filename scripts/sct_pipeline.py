@@ -64,7 +64,7 @@ if "SCT_MPI_MODE" in os.environ:
 else:
     from concurrent.futures import ProcessPoolExecutor as PoolExecutor
     __MPI__ = False
-
+from multiprocessing import cpu_count
 import itertools
 import pandas as pd
 import glob
@@ -421,7 +421,6 @@ def get_parser():
                       description="Number of CPU used for testing. 0: no multiprocessing. If not provided, "
                                   "it uses all the available cores.",
                       mandatory=False,
-                      default_value=1,
                       example='42')
 
     parser.add_option(name="-log",
@@ -476,9 +475,10 @@ if __name__ == "__main__":
         fname_database = arguments["-subj-file"]
     else:
         fname_database = ''  # if empty, it will look for xls file automatically in database folder
-    nb_cpu = None
     if "-cpu-nb" in arguments:
         nb_cpu = arguments["-cpu-nb"]
+    else:
+        nb_cpu = cpu_count()  # uses maximum number of available CPUs
     create_log = int(arguments['-log'])
     if '-email' in arguments:
         create_log = True
@@ -526,8 +526,6 @@ if __name__ == "__main__":
     sct.log.info('Hostname: {}'.format(platform.node()))
 
     # Check number of CPU cores
-    from multiprocessing import cpu_count
-    # status, output = sct.run('echo $ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS', 0)
     sct.log.info('CPU Thread on local machine: {} '.format(cpu_count()))
 
     sct.log.info('    Requested threads:       {} '.format(nb_cpu))
