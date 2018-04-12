@@ -217,8 +217,8 @@ def main(args=None):
 
     # retrieve template file names
     from sct_warp_template import get_file_label
-    file_template_vertebral_labeling = get_file_label(os.path.join(path_template, 'template'), 'vertebral')
-    file_template = get_file_label(os.path.join(path_template, 'template'), contrast_template.upper() + '-weighted')
+    file_template_vertebral_labeling = get_file_label(os.path.join(path_template, 'template'), 'vertebral labeling')
+    file_template = get_file_label(os.path.join(path_template, 'template'), contrast_template.upper() + '-weighted template')
     file_template_seg = get_file_label(os.path.join(path_template, 'template'), 'spinal cord')
 
     # start timer

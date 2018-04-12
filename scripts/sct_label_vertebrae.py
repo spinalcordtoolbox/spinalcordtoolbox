@@ -421,8 +421,8 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     sct.printv('Path template: ' + path_template, verbose)
 
     # adjust file names if MNI-Poly-AMU template is used
-    fname_level = get_file_label(os.path.join(path_template, 'template'), 'vertebral', output='filewithpath')
-    fname_template = get_file_label(os.path.join(path_template, 'template'), contrast.upper() + '-weighted', output='filewithpath')
+    fname_level = get_file_label(os.path.join(path_template, 'template'), 'vertebral labeling', output='filewithpath')
+    fname_template = get_file_label(os.path.join(path_template, 'template'), contrast.upper() + '-weighted template', output='filewithpath')
 
     # if not len(glob.glob(os.path.join(path_template, 'MNI-Poly-AMU*.*'))) == 0:
     #     contrast = contrast.upper()
