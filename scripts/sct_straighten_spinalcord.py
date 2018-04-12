@@ -827,7 +827,8 @@ def get_parser():
     parser.usage.set_description("This program takes as input an anatomic image and the centerline or segmentation of "
                                  "its spinal cord (that you can get using sct_get_centerline.py or "
                                  "sct_segmentation_propagation) and returns the anatomic image where the spinal cord "
-                                 "was straightened.")
+                                 "was straightened."
+                                 " Reference: De Leener B, Mangeat G, Dupont S, Martin AR, Callot V, Stikov N, Fehlings MG, Cohen-Adad J. Topologically-preserving straightening of spinal cord MRI. J Magn Reson Imaging. 2017 Oct;46(4):1209-1219")
     parser.add_option(name="-i",
                       type_value="image_nifti",
                       description="input image.",
