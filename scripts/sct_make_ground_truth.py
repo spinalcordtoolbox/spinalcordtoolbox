@@ -13,7 +13,7 @@
 # TODO: for -ref subject, crop data, otherwise registration is too long
 # TODO: testing script for all cases
 
-import sys, io, os, shutil, time
+import sys, io, os, time
 
 import numpy as np
 
@@ -38,7 +38,7 @@ class Param:
         self.padding = 10  # this field is needed in the function register@sct_register_multimodal
         self.verbose = 1  # verbose
         self.path_template = os.path.join(path_sct, 'data', 'PAM50')
-        self.path_qc = os.path.join(os.path.abspath(os.curdir), 'qc')
+        self.path_qc = None
         self.zsubsample = '0.25'
         self.param_straighten = ''
 
@@ -179,6 +179,8 @@ def write_paramaters(arguments,param,ref,verbose):
     param.verbose = verbose
     if '-param-straighten' in arguments:
         param.param_straighten = arguments['-param-straighten']
+
+    param.path_qc = arguments.get("-qc", None)
 
     """
     if '-cpu-nb' in arguments:
@@ -342,9 +344,6 @@ def main():
     check_do_files_exist(fname_template,fname_template_vertebral_labeling,fname_template_seg,verbose)
     sct.printv(arguments(verbose, fname_data, fname_landmarks, fname_seg, path_template, remove_temp_files))
 
-    """ Create QC folder """
-    sct.create_folder(param.path_qc)
-
     """ Check if data, segmentation and landmarks are in the same space"""
     (ext_data, path_data, file_data)=check_data_segmentation_landmarks_same_space(fname_data, fname_seg, fname_landmarks,verbose)
 
@@ -424,7 +423,10 @@ def main():
             # apply straightening
             sct.run(['sct_apply_transfo', '-i', ftmp_seg, '-w', 'warp_curve2straight.nii.gz', '-d', 'straight_ref.nii.gz', '-o', add_suffix(ftmp_seg, '_straight')])
         else:
-            sct.run(['sct_straighten_spinalcord', '-i', ftmp_seg, '-s', ftmp_seg, '-o', add_suffix(ftmp_seg, '_straight'), '-qc', '0', '-r', str(remove_temp_files), '-v', str(verbose)], verbose)
+            cmd = ['sct_straighten_spinalcord', '-i', ftmp_seg, '-s', ftmp_seg, '-o', add_suffix(ftmp_seg, '_straight'), '-r', str(remove_temp_files), '-v', str(verbose)]
+            if param.path_qc is not None and os.environ.get("SCT_RECURSIVE_QC", None) == "1":
+                cmd += ["-qc", param.path_qc]
+            sct.run(cmd, verbose)
         # N.B. DO NOT UPDATE VARIABLE ftmp_seg BECAUSE TEMPORARY USED LATER
         # re-define warping field using non-cropped space (to avoid issue #367)
         sct.run(['sct_concat_transfo', '-w', 'warp_straight2curve.nii.gz', '-d', ftmp_data, '-o', 'warp_straight2curve.nii.gz'])
