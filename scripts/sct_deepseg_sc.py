@@ -65,11 +65,7 @@ def get_parser():
     parser.add_option(name='-qc',
                       type_value='folder_creation',
                       description='The path where the quality control generated content will be saved',
-                      default_value=os.path.expanduser('~/qc_data'))
-    parser.add_option(name='-noqc',
-                      type_value=None,
-                      description='Prevent the generation of the QC report',
-                      mandatory=False)
+                      default_value=None)
     parser.add_option(name='-igt',
                       type_value='image_nifti',
                       description='File name of ground-truth segmentation.',
@@ -234,9 +230,8 @@ def main():
         verbose = arguments['-v']
 
     if '-qc' in arguments:
-        qc_path = arguments['-qc']
-
-    if '-noqc' in arguments:
+        qc_path = os.path.abspath(arguments['-qc'])
+    else:
         qc_path = None
 
     deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, qc_path=qc_path,
