@@ -45,7 +45,7 @@ def test_integrity(param_test):
     Test integrity of function
     """
 
-    sct.log.debug('test integrty {}'.format(param_test.__dict__))
+    sct.log.debug('test integrity {}'.format(param_test.__dict__))
     # find the test that is performed and check the integrity of the output
     index_args = param_test.default_args.index(param_test.args)
 
