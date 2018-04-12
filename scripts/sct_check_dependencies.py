@@ -53,7 +53,7 @@ def resolve_module(framework_name):
         'scikit-learn': ('sklearn', False),
         'pyqt': ('PyQt4', False),
         'Keras': ('keras', True),
-        'futures': ("concurrent.futures", False)
+        'futures': ("concurrent.futures", False),
         'opencv': ('cv2', False),
         'mkl-service': (None, False),
     }
