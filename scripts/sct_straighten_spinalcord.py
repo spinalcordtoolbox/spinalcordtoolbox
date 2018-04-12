@@ -992,9 +992,9 @@ def main(args=None):
 
     sc_straight = SpinalCordStraightener(input_filename, centerline_file)
 
-    if "-ref" in arguments:
+    if "-dest" in arguments:
         sc_straight.use_straight_reference = True
-        sc_straight.centerline_reference_filename = str(arguments["-ref"])
+        sc_straight.centerline_reference_filename = str(arguments["-dest"])
 
     if "-ldisc_input" in arguments:
         if not sc_straight.use_straight_reference:
