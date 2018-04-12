@@ -884,7 +884,7 @@ def get_parser():
                       default_value=0)
     parser.add_option(name="-xy_size",
                       type_value='float',
-                      description='Change the size of the XY FOV, in mm. The resolution is the same as the source image (-i).\n',
+                      description='Change the size of the XY FOV, in mm. The resolution of the destination image is the same as that of the source image (-i).\n',
                       mandatory=False,
                       default_value=35.0)
     parser.add_option(name="-o",
@@ -952,7 +952,7 @@ def get_parser():
                                   'To keep native resolution, set this option to 0.\n',
                       mandatory=False,
                       default_value=0,
-                      deprecated=True)
+                      deprecated_by='-speed_factor')
     parser.add_option(name="-ref",
                       type_value="image_nifti",
                       description='Isotropic resolution of the straightening output, in millimeters.\n'
