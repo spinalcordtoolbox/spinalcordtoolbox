@@ -876,8 +876,8 @@ def get_parser():
                       mandatory=False)
     parser.add_option(name="-speed_factor",
                       type_value='float',
-                      description='Acceleration factor for the calculation of the straightening warping field.\n'
-                                  'This speed factor enables an intermediate resampling to a lower resolution, which decreases the computational time while decreasing straightening accuracy.\n'
+                      description='Acceleration factor for the calculation of the straightening warping field.'
+                                  ' This speed factor enables an intermediate resampling to a lower resolution, which decreases the computational time at the cost of lower accuracy.\n'
                                   'A speed factor of 2 means that a downsampling of the input image by a factor 2 will be applied to calculate the straightening warping field. For example, a 1x1x1 mm^3 image will be downsampled to 2x2x2 mm3, providing a speed factor of approximately 8.\n'
                                   'Note that accelerating the straightening process reduces the precision of the algorithm, and induces undesirable edges effects. To keep the native resolution, set this option to 0.\n',
                       mandatory=False,
