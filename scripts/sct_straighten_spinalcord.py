@@ -19,6 +19,7 @@ import numpy as np
 from nibabel import Nifti1Image, save
 from scipy import ndimage
 
+from msct_image import Image
 from msct_parser import Parser
 from sct_apply_transfo import Transform
 import sct_utils as sct
@@ -38,7 +39,6 @@ def smooth_centerline(fname_centerline, algo_fitting='hanning', type_window='han
     sct.printv('\nSmooth centerline/segmentation...', verbose)
 
     # get dimensions (again!)
-    from msct_image import Image
     file_image = None
     if isinstance(fname_centerline, str):
         file_image = Image(fname_centerline)
@@ -174,6 +174,28 @@ def smooth_centerline(fname_centerline, algo_fitting='hanning', type_window='han
             x_centerline_deriv, y_centerline_deriv, z_centerline_deriv
 
 
+def generate_qc(fn_input, fn_centerline, fn_output, args, path_qc):
+    """
+    Generate a QC entry allowing to quickly review the straightening process.
+    """
+
+    import spinalcordtoolbox.reports.qc as qc
+    import spinalcordtoolbox.reports.slice as qcslice
+
+    # Just display the straightened spinal cord
+    img_out = Image(fn_output)
+    foreground = qcslice.Sagittal([img_out]).single()[0]
+
+    qc.add_entry(
+     src=fn_input,
+     process="sct_straighten_spinalcord",
+     args=args,
+     path_qc=path_qc,
+     plane="Sagittal",
+     foreground=foreground,
+    )
+
+
 class SpinalCordStraightener(object):
 
     def __init__(self, input_filename, centerline_filename, debug=0, deg_poly=10, gapxy=30, gapz=15,
@@ -219,6 +241,8 @@ class SpinalCordStraightener(object):
         self.template_orientation = 0
         self.xy_size = 35  # in mm
 
+        self.path_qc = None
+
     def straighten(self):
         # Initialization
         fname_anat = self.input_filename
@@ -233,7 +257,6 @@ class SpinalCordStraightener(object):
         algo_fitting = self.algo_fitting
         window_length = self.window_length
         type_window = self.type_window
-        qc = self.qc
 
         # start timer
         start_time = time.time()
@@ -279,7 +302,6 @@ class SpinalCordStraightener(object):
 
             # Get dimension
             sct.printv('\nGet dimensions...', verbose)
-            from msct_image import Image
             image_centerline = Image('centerline_rpi.nii.gz')
             nx, ny, nz, nt, px, py, pz, pt = image_centerline.dim
             sct.printv('.. matrix size: ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz), verbose)
@@ -735,7 +757,6 @@ class SpinalCordStraightener(object):
                 Transform(input_filename='centerline.nii.gz', fname_dest=fname_ref,
                           output_filename="tmp.centerline_straight.nii.gz", interp="nn",
                           warp="tmp.curve2straight.nii.gz", verbose=verbose).apply()
-                from msct_image import Image
                 file_centerline_straight = Image('tmp.centerline_straight.nii.gz', verbose=verbose)
                 coordinates_centerline = file_centerline_straight.getNonZeroCoordinates(sorting='z')
                 mean_coord = []
@@ -810,13 +831,9 @@ class SpinalCordStraightener(object):
         if self.accuracy_results:
             sct.printv('    including ' + str(int(np.round(self.elapsed_time_accuracy))) + ' s spent computing '
                                                                                       'accuracy results', verbose)
-        if self.curved2straight:
-            sct.display_viewer_syntax([fname_straight], verbose=verbose)
 
-        # output QC image
-        if qc and self.curved2straight:
-            from msct_image import Image
-            Image(fname_straight).save_quality_control(plane='sagittal', n_slices=1, path_output=self.path_output)
+        return fname_straight
+
 
 
 def get_parser():
@@ -932,11 +949,9 @@ def get_parser():
                       deprecated_by='-param')
 
     parser.add_option(name='-qc',
-                      type_value='multiple_choice',
-                      description='Output images for quality control.',
-                      mandatory=False,
-                      example=['0', '1'],
-                      default_value='0')
+                      type_value='folder_creation',
+                      description='The path where the quality control generated content will be saved',
+                      default_value=None)
 
 
     ##### DEPRECATED
@@ -1015,12 +1030,14 @@ def main(args=None):
         sc_straight.path_output = arguments['-ofolder']
     else:
         sc_straight.path_output = './'
-    if "-v" in arguments:
-        sc_straight.verbose = int(arguments["-v"])
+
+    verbose = int(arguments.get("-v", 0))
+    sc_straight.verbose = verbose
+
     # if "-cpu-nb" in arguments:
     #     sc_straight.cpu_number = int(arguments["-cpu-nb"])
-    if '-qc' in arguments:
-        sc_straight.qc = int(arguments['-qc'])
+
+    path_qc = arguments.get("-qc", None)
 
     if '-disable-straight2curved' in arguments:
         sc_straight.straight2curved = False
@@ -1054,7 +1071,15 @@ def main(args=None):
             if param_split[0] == 'template_orientation':
                 sc_straight.template_orientation = int(param_split[1])
 
-    sc_straight.straighten()
+    fname_straight = sc_straight.straighten()
+
+    if sc_straight.curved2straight:
+
+        if path_qc is not None:
+           generate_qc(input_filename, centerline_file,
+            fname_straight, args, os.path.abspath(path_qc))
+
+        sct.display_viewer_syntax([fname_straight], verbose=verbose)
 
 
 # START PROGRAM
