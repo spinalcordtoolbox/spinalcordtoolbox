@@ -851,13 +851,13 @@ def get_parser():
                       example="centerline.nii.gz")
     parser.add_option(name="-ldisc_input",
                       type_value="image_nifti",
-                      description="Labels located at the posterior edge of the intervertebral discs, for the input image (-i). Ideally, all disc labels should be provided, including the position of the pontomedullary groove and junction if available. For more details about label creation and their values, please refer to http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/.\n"
+                      description="Labels located at the posterior edge of the intervertebral discs, for the input image (-i). Ideally, all disc labels should be provided, including the position of the pontomedullary groove and junction if available. For more details about label creation and their values, please see to http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/.\n"
                                   "This option must be used with the -ldisc_dest parameter.",
                       mandatory=False,
                       example="ldisc_input.nii.gz")
     parser.add_option(name="-ldisc_dest",
                       type_value="image_nifti",
-                      description="Labels located at the posterior edge of the intervertebral discs, for the destination file (-dest). The same comments as -ldisc_input apply.\n"
+                      description="Labels located at the posterior edge of the intervertebral discs, for the destination file (-dest). The same comments as in -ldisc_input apply.\n"
                                   "This option must be used with the -ldisc_input parameter.",
                       mandatory=False,
                       example="ldisc_dest.nii.gz")
@@ -868,11 +868,11 @@ def get_parser():
                       deprecated_by='-pad')
     parser.add_option(name="-disable-straight2curved",
                       type_value=None,
-                      description="Disable straight to curved transformation computation.",
+                      description="Disable straight to curved transformation computation, in case you do not need the output warping field straight-->curve (faster).",
                       mandatory=False)
     parser.add_option(name="-disable-curved2straight",
                       type_value=None,
-                      description="Disable curved to straight transformation computation.",
+                      description="Disable curved to straight transformation computation, in case you do not need the output warping field curve-->straight (faster).",
                       mandatory=False)
     parser.add_option(name="-speed_factor",
                       type_value='float',
