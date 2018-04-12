@@ -39,7 +39,7 @@ ini_param_trans_y = -150.0  # pix
 initial_step = 2
 
 
-def register_landmarks(fname_src, fname_dest, dof, fname_affine='affine.txt', verbose=1, path_qc='./'):
+def register_landmarks(fname_src, fname_dest, dof, fname_affine='affine.txt', verbose=1, path_qc=None):
     """
     Register two NIFTI volumes containing landmarks
     :param fname_src: fname of source landmarks
@@ -287,7 +287,7 @@ def getRigidTransformFromImages(img_dest, img_src, constraints='none', metric = 
     return rotation_matrix, translation_array
 
 
-def getRigidTransformFromLandmarks(points_dest, points_src, constraints='Tx_Ty_Tz_Rx_Ry_Rz', verbose=0, path_qc='./'):
+def getRigidTransformFromLandmarks(points_dest, points_src, constraints='Tx_Ty_Tz_Rx_Ry_Rz', verbose=0, path_qc=None):
     """
     Compute affine transformation to register landmarks
     :param points_src:
