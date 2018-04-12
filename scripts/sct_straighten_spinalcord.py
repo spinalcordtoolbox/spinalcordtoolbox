@@ -831,12 +831,12 @@ def get_parser():
                                  " Reference: De Leener B, Mangeat G, Dupont S, Martin AR, Callot V, Stikov N, Fehlings MG, Cohen-Adad J. Topologically-preserving straightening of spinal cord MRI. J Magn Reson Imaging. 2017 Oct;46(4):1209-1219")
     parser.add_option(name="-i",
                       type_value="image_nifti",
-                      description="input image.",
+                      description="Source image with curved spinal cord.",
                       mandatory=True,
                       example="t2.nii.gz")
     parser.add_option(name="-s",
                       type_value="image_nifti",
-                      description="centerline or segmentation.",
+                      description="Spinal cord centerline (or segmentation) of the source image.",
                       mandatory=True,
                       example="centerline.nii.gz")
     parser.add_option(name="-c",
@@ -846,7 +846,7 @@ def get_parser():
                       deprecated_by='-s')
     parser.add_option(name="-dest",
                       type_value="image_nifti",
-                      description="The spinal cord centerline of a destination image to which the input image will be registered. If provided, a length-wise algorithm will match the two centerlines prior to registration by default. When using -ldisc_input and -ldisc_dest with this parameter, a non-linear matching of the centerlines, according to the position of the intervertebral discs, is calculated and used for registering the two images.",
+                      description="Spinal cord centerline (or segmentation) of the straight destination image. An algorithm will match the input and dest length-wise algorithm will match the two centerlines prior to registration by default. When using -ldisc_input and -ldisc_dest with this parameter, a non-linear matching of the centerlines, according to the position of the intervertebral discs, is calculated and used for registering the two images.",
                       mandatory=False,
                       example="centerline.nii.gz")
     parser.add_option(name="-ldisc_input",
