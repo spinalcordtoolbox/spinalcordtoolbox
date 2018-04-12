@@ -587,17 +587,18 @@ if [[ $UID != 0 ]]; then
      echo You can always add it later or call SCT functions with full path ${SCT_DIR}/${BIN_DIR}/sct_function
   fi
   # run sct_check_dependencies
-  echo -e "\nRun sct_check_dependencies..."
+  echo -e "\nValidate installation..."
   # We run the sct_check_dependencies in the TMP_DIR so the tmp.XXX output
   # it creates is cleaned properly
   cd ${TMP_DIR}
-  if ${SCT_DIR}/${BIN_DIR}/sct_check_dependencies ; then
-    echo -e "INSTALLATION DONE!\n"
+  if ${SCT_DIR}/${BIN_DIR}/sct_check_dependencies; then
+    echo -e "Installation validation OK!\n"
     echo -e "Open a new Terminal window to load environment variables, or run:\n source ${THE_RC}\n"
   else
-    echo -e "INSTALLATION ERROR!"
+    echo -e "Installation validation NG!"
     echo -e "Please copy the historic of this Terminal (starting with the command install_sct) and paste it in the SCT Help forum under a new ticket:"
     echo -e "https://sourceforge.net/p/spinalcordtoolbox/discussion/help/\n"
+    exit 1
   fi
 else
   # if sudo=1
