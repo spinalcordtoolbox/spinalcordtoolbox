@@ -178,7 +178,14 @@ class AnatomicalCanvas(FigureCanvas):
             # rescale to range of UINT16 because equalize_adapthist is converting to this type anyway.
             # for more info see: https://github.com/neuropoly/spinalcordtoolbox/pull/1661#issuecomment-377101783
             data_scaled = skimage.exposure.rescale_intensity(np.uint16(data), out_range='uint16')
-            return skimage.exposure.equalize_adapthist(data_scaled)
+            height, width = data_scaled.shape
+            pad_height = (height + 7) // 8 * 8
+            pad_width = (width + 7) // 8 * 8
+            if pad_width != width or pad_height != height:
+                buff_data = np.zeros((pad_height, pad_width), dtype='uint16')
+                buff_data[:height, :width] = data_scaled
+                data_scaled = buff_data
+            return skimage.exposure.equalize_adapthist(data_scaled, kernel_size=(8,8))
         return data
 
     def on_zoom(self, event):
