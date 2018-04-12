@@ -234,6 +234,9 @@ def main(args=None):
     # call main function
     WarpTemplate(fname_src, fname_transfo, warp_atlas, warp_spinal_levels, folder_out, path_template, verbose)
 
+    if 1: # TODO cJ temporary
+        return
+
     if path_qc is not None:
         fname_wm = os.path.join(w.folder_out, w.folder_template, get_file_label(os.path.join(w.folder_out, w.folder_template), 'white matter'))
         generate_qc(fname_src, fname_wm, sys.argv[1:], os.path.abspath(path_qc))
