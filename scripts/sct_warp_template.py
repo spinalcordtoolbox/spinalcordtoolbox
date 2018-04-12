@@ -103,12 +103,7 @@ def warp_label(path_label, folder_label, file_label, fname_src, fname_transfo, p
         template_label_ids, template_label_names, template_label_file, combined_labels_ids, combined_labels_names, combined_labels_id_groups, clusters_apriori = read_label_file(os.path.join(path_label, folder_label), file_label)
     except Exception as error:
         sct.printv('\nWARNING: Cannot warp label ' + folder_label + ': ' + str(error), 1, 'warning')
-        # raise
-    # try:
-    #     template_label_ids, template_label_names, template_label_file, combined_labels_ids, combined_labels_names, combined_labels_id_groups = read_label_file(os.path.join(path_label, folder_label), file_label)
-    # except Exception:
-    #     import traceback
-    #     sct.printv('\nERROR: ' + traceback.format_exc(), 1, 'error')
+        raise
     else:
         # create output folder
         if not os.path.exists(os.path.join(path_out, folder_label)):
