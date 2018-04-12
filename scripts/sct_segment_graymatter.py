@@ -181,11 +181,7 @@ def get_parser():
     parser.add_option(name='-qc',
                       type_value='folder_creation',
                       description='The path where the quality control generated content will be saved',
-                      default_value=os.path.expanduser('~/qc_data'))
-    parser.add_option(name='-noqc',
-                      type_value=None,
-                      description='Prevent the generation of the QC report',
-                      mandatory=False)
+                      default_value=None)
     parser.add_option(name="-r",
                       type_value="multiple_choice",
                       description='Remove temporary files.',
@@ -730,8 +726,6 @@ def main(args=None):
         param_seg.path_results = os.path.abspath(arguments['-ofolder'])
     if '-qc' in arguments:
         param_seg.qc = os.path.abspath(arguments['-qc'])
-    if '-noqc' in arguments:
-        param_seg.qc = False
     if '-r' in arguments:
         param.rm_tmp = bool(int(arguments['-r']))
     if '-v' in arguments:
@@ -787,11 +781,13 @@ def main(args=None):
         im_seg = im_gm
         im_seg.data += im_wm.data
 
-        test(qcslice.Axial(im_org, im_seg))
-        sct.printv('Sucessfully generate the QC results in %s' % qc_param.qc_results)
-        sct.printv('Use the following command to see the results in a browser')
-        sct.printv('sct_qc -folder %s' % qc_path, type='info')
-
+        try:
+            test(qcslice.Axial(im_org, im_seg))
+            sct.printv('Sucessfully generate the QC results in %s' % qc_param.qc_results)
+            sct.printv('Use the following command to see the results in a browser')
+            sct.printv('open file "{}/index.html"'.format(qc_path), type='info')
+        except:
+            sct.log.warning('Issue when creating QC report.')
 
     if param.rm_tmp:
         # remove tmp_dir

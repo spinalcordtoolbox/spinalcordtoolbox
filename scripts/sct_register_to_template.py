@@ -40,7 +40,7 @@ class Param:
         self.padding = 10  # this field is needed in the function register@sct_register_multimodal
         self.verbose = 1  # verbose
         self.path_template = os.path.join(path_sct, 'data', 'PAM50')
-        self.path_qc = os.path.abspath("qc")
+        self.path_qc = None
         self.zsubsample = '0.25'
         self.param_straighten = ''
 
@@ -131,11 +131,7 @@ def get_parser():
     parser.add_option(name='-qc',
                       type_value='folder_creation',
                       description='The path where the quality control generated content will be saved',
-                      default_value=os.path.expanduser('~/qc_data'))
-    parser.add_option(name='-noqc',
-                      type_value=None,
-                      description='Prevent the generation of the QC report',
-                      mandatory=False)
+                      default_value=param.path_qc)
     parser.add_option(name="-igt",
                       type_value="image_nifti",
                       description="File name of ground-truth template cord segmentation (binary nifti).",
@@ -184,6 +180,9 @@ def main(args=None):
         path_output = arguments['-ofolder']
     else:
         path_output = ''
+    if '-qc' in arguments:
+        param.path_qc = arguments['-qc']
+
     path_template = arguments['-t']
     contrast_template = arguments['-c']
     ref = arguments['-ref']
@@ -247,8 +246,9 @@ def main(args=None):
     sct.printv('  Path template:        ' + path_template, verbose)
     sct.printv('  Remove temp files:    ' + str(remove_temp_files), verbose)
 
-    # create QC folder
-    sct.create_folder(param.path_qc)
+    if param.path_qc is not None:
+        # create QC folder
+        sct.create_folder(param.path_qc)
 
     # check if data, segmentation and landmarks are in the same space
     # JULIEN 2017-04-25: removed because of issue #1168
@@ -596,8 +596,8 @@ def main(args=None):
     elapsed_time = time.time() - start_time
     sct.printv('\nFinished! Elapsed time: ' + str(int(round(elapsed_time))) + 's', verbose)
 
-    if '-qc' in arguments and not arguments.get('-noqc', False):
-        qc_path = arguments['-qc']
+    if param.path_qc is not None:
+        qc_path = os.path.abspath(param.path_qc)
 
         import spinalcordtoolbox.reports.qc as qc
         import spinalcordtoolbox.reports.slice as qcslice
@@ -610,10 +610,13 @@ def main(args=None):
             return qslice.mosaic()
 
         fname_template2anat = os.path.join(path_output, "template2anat" + ext_data)
-        test(qcslice.AxialTemplate2Anat(Image(fname_data), Image(fname_template2anat), Image(fname_seg)))
-        sct.printv('Sucessfully generate the QC results in %s' % qc_param.qc_results)
-        sct.printv('Use the following command to see the results in a browser')
-        sct.printv('sct_qc -folder %s' % qc_path, type='info')
+        try:
+            test(qcslice.AxialTemplate2Anat(Image(fname_data), Image(fname_template2anat), Image(fname_seg)))
+            sct.printv('Sucessfully generate the QC results in %s' % qc_param.qc_results)
+            sct.printv('Use the following command to see the results in a browser')
+            sct.printv('open file "{}/index.html"'.format(qc_path), type='info')
+        except:
+            sct.log.warning('Issue when creating QC report.')
 
     sct.display_viewer_syntax([fname_data, fname_template2anat], verbose=verbose)
     sct.display_viewer_syntax([fname_template, fname_anat2template], verbose=verbose)
