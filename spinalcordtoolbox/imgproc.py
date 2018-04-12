@@ -152,11 +152,3 @@ def binarize(src, dst=None, threshold=None):
      threshold=threshold,
     )
 
-
-if __name__ == "__main__":
-
-    for src in ("t2.nii.gz", msct_image.Image("t2.nii.gz")):
-        for dst in ("t2_bin.nii.gz", msct_image.Image("t2_bin.nii.gz"), None):
-            dst_ = binarize(src, dst, threshold="otsu")
-            if dst is None:
-                assert isinstance(dst_, type(src))
