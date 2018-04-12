@@ -152,8 +152,6 @@ usage()
 }
 
 
-set -e # abort on failure
-
 # SCRIPT STARTS HERE
 # ========================================================================
 echo -e "\nWelcome to the SCT installer!"
@@ -284,7 +282,7 @@ else
 fi
 
 # Set install dir
-while  true ; do
+while true; do
   echo -e "\nSCT will be installed here: [${INSTALL_DIR}]"
   while  [[ ! ${change_default_path} =~ ^([Yy](es)?|[Nn]o?)$ ]] ; do
     echo -n "Do you agree? yes/no: "
@@ -392,7 +390,7 @@ else
   # Install Python conda
   echo -e "\nInstalling conda..."
   cmd="rm -rf ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
-  cmd="mkdir ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
+  cmd="mkdir -p ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
   # downloading
 
   if [ $SCT_MINICONDA == "2" ]; then
@@ -470,7 +468,7 @@ else
     pip install  -r ${SCT_SOURCE}/install/requirements/requirementsPip.txt
     e_status=$?
   fi
-  if [ ${e_status} != 0 ] ; then
+  if [ ${e_status} != 0 ]; then
     echo "pip install error with exit status $e_status. Check logs for more details
             and verify your internet connection before reinstalling"
     exit $e_status
@@ -483,34 +481,60 @@ else
   # Install tensorflow with Conda for some distributions
   if [ $TF_DISTRO_CHECK = "1" ]; then
     conda install -c defaults --yes tensorflow==1.3.0
+    e_status=$?
+    if [ ${e_status} != 0 ]; then
+      echo "Failed to conda install tensorflow."
+      exit ${e_status}
+    fi
   fi
 
   # reinstall numpy at the end to prevent some bugs
-  n_version=$(conda list  numpy | grep numpy |awk '{print $2}')
+  n_version=$(conda list numpy | grep numpy |awk '{print $2}')
   conda install -fy numpy=$n_version
+  e_status=$?
+  if [ ${e_status} != 0 ]; then
+    echo "Failed to conda install numpy"
+    exit ${e_status}
+  fi
 
 fi
 
 ## Install the spinalcordtoolbox into conda
 if [ ${SCT_DEV_MODE} ]; then
-    pip install -e ${SCT_SOURCE}
+  pip install -e ${SCT_SOURCE}
+  e_status=$?
 else
-    pip install ${SCT_SOURCE}
+  pip install ${SCT_SOURCE}
+  e_status=$?
+fi
+if [ ${e_status} != 0 ]; then
+  echo "Failed to pip install sct, which is quite unexpected."
+  exit ${e_status}
 fi
 
 ## Install binaries
 if [ ${NO_SCT_BIN_INSTALL} ]; then
-    echo "SCT binaries will not be (re)-install"
+    echo "SCT binaries will not be (re)-installed"
 else
-    echo -e "\nInstalling binaries..."
-    cmd=". ${SCT_DIR}/${PYTHON_DIR}/bin/activate ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
-    if [ $OS == "linux" ]; then
-        cmd="python ../scripts/sct_download_data.py -d binaries_debian -o ${SCT_DIR}/${BIN_DIR}"; echo ">> "$cmd; $cmd
-    elif [ $OS == "linux_centos6" ]; then
-        cmd="python ../scripts/sct_download_data.py -d binaries_centos -o ${SCT_DIR}/${BIN_DIR}"; echo ">> "$cmd; $cmd
-    elif [ $OS == "osx" ]; then
-        cmd="python ../scripts/sct_download_data.py -d binaries_osx -o ${SCT_DIR}/${BIN_DIR}"; echo ">> "$cmd; $cmd
-    fi
+  echo -e "\nInstalling binaries..."
+  cmd=". ${SCT_DIR}/${PYTHON_DIR}/bin/activate ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
+  if [ $OS == "linux" ]; then
+    cmd="python ../scripts/sct_download_data.py -d binaries_debian -o ${SCT_DIR}/${BIN_DIR}"; echo ">> "$cmd; $cmd
+    e_status=$?
+  elif [ $OS == "linux_centos6" ]; then
+    cmd="python ../scripts/sct_download_data.py -d binaries_centos -o ${SCT_DIR}/${BIN_DIR}"; echo ">> "$cmd; $cmd
+    e_status=$?
+  elif [ $OS == "osx" ]; then
+    cmd="python ../scripts/sct_download_data.py -d binaries_osx -o ${SCT_DIR}/${BIN_DIR}"; echo ">> "$cmd; $cmd
+    e_status=$?
+  else
+    echo "Unsupported OS $OS: can't install binaries."
+    exit 1
+  fi
+  if [ ${e_status} != 0 ]; then
+    echo "Failed to download SCT binaries."
+    exit ${e_status}
+  fi
 fi
 
 
@@ -529,22 +553,19 @@ else
   cmd="rm -rf ${SCT_DIR}/${DATA_DIR}"; echo ">> "$cmd; $cmd
   cmd="mkdir -p ${SCT_DIR}/${DATA_DIR}"; echo ">> "$cmd; $cmd
   cmd="cd ${SCT_DIR}/${DATA_DIR}"; echo ">> "$cmd; $cmd
-  # Install PAM50
-  cmd="python ../scripts/sct_download_data.py -d PAM50"; echo ">> "$cmd; $cmd
-  # Install GM model
-  cmd="python ../scripts/sct_download_data.py -d gm_model"; echo ">> "$cmd; $cmd
-  # Install OptiC models
-  cmd="python ../scripts/sct_download_data.py -d optic_models"; echo ">> "$cmd; $cmd
-  # Install PMJ models
-  cmd="python ../scripts/sct_download_data.py -d pmj_models"; echo ">> "$cmd; $cmd
-  # Install deep learning-based spinal cord segmentation models
-  cmd="python ../scripts/sct_download_data.py -d deepseg_sc_models"; echo ">> "$cmd; $cmd
-  # Install deepgmseg models
-  cmd="python ../scripts/sct_download_data.py -d deepseg_gm_models"; echo ">> "$cmd; $cmd
+  for data in PAM50 gm_model optic_models pmj_models deepseg_sc_models deepseg_gm_models; do
+    cmd="python ../scripts/sct_download_data.py -d ${data}"; echo ">> "$cmd; $cmd
+    e_status=$?
+    if [ ${e_status} != 0 ]; then
+      echo "Failed to download SCT binaries."
+      exit ${e_status}
+    fi
+  done
 fi
 
 # Make sure sct scripts are executable
 find ${SCT_DIR}/${BIN_DIR}/ -maxdepth 1 -type f -exec chmod 755 {} \;
+
 # make sure there is no buffer/cache issue for the ${BIN_DIR} directory
 ls -l ${SCT_DIR}/${BIN_DIR}/ > /dev/null 2>&1;
 
