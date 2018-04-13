@@ -1041,7 +1041,6 @@ class Image(object):
             index = [index]
 
         slice_list = [self.get_slice(plane=plane, index=i, seg=seg) for i in index]
-        path_output = sct.slash_at_the_end(path_output, 1)
         if seg is not None:
             import matplotlib.colors as col
             color_white = col.colorConverter.to_rgba('white', alpha=0.0)
