@@ -25,7 +25,7 @@ def init(param_test):
     Initialize class: param_test
     """
     # initialization
-    default_args = ['-i t2/t2.nii.gz -s t2/t2_seg.nii.gz -param accuracy_results=1']
+    default_args = ['-i t2/t2.nii.gz -s t2/t2_seg.nii.gz -param accuracy_results=1 -qc testing-qc']
 
     param_test.fname_segmentation = 't2/t2_seg.nii.gz'
     param_test.th_result_dist_max = 2.0
