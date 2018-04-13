@@ -724,8 +724,9 @@ def main(args=None):
         param_seg.fname_manual_gmseg = arguments['-ref']
     if '-ofolder' in arguments:
         param_seg.path_results = os.path.abspath(arguments['-ofolder'])
-    if '-qc' in arguments:
-        param_seg.qc = os.path.abspath(arguments['-qc'])
+
+    param_seg.qc = arguments.get("-qc", None)
+
     if '-r' in arguments:
         param.rm_tmp = bool(int(arguments['-r']))
     if '-v' in arguments:
@@ -747,53 +748,56 @@ def main(args=None):
         gm_col = 'red-yellow'
         b = '0.4,1'
 
-    if param_seg.qc:
-        qc_path = param_seg.qc
-        # output QC image
-        printv('\nSave quality control images...', param.verbose, 'normal')
+    if param_seg.qc is not None:
+        generate_qc(param_seg.fname_im_original, seg_gm.fname_res_gmseg,
+         seg_gm.fname_res_wmseg, param_seg, args, os.path.abspath(param_seg.qc))
 
-        import spinalcordtoolbox.reports.qc as qc
-        import spinalcordtoolbox.reports.slice as qcslice
-
-        qc_param = qc.Params(param_seg.fname_im, 'sct_segment_graymatter', args, 'Axial', qc_path)
-        report = qc.QcReport(qc_param, '')
-
-        @qc.QcImage(report, 'none', [qc.QcImage.listed_seg])
-        def test(qslice):
-            return qslice.mosaic()
-
-        im_org = Image(param_seg.fname_im_original)
-        im_gm = Image(seg_gm.fname_res_gmseg)
-        im_wm = Image(seg_gm.fname_res_wmseg)
-
-        # create simple compound segmentation image for QC purposes
-
-        if param_seg.type_seg == 'bin':
-            im_wm.data[im_wm.data == 1] = 1
-            im_gm.data[im_gm.data == 1] = 2
-        else:
-            # binarize anyway
-            im_wm.data[im_wm.data >= param_seg.thr_bin] = 1
-            im_wm.data[im_wm.data < param_seg.thr_bin] = 0
-            im_gm.data[im_gm.data >= param_seg.thr_bin] = 2
-            im_gm.data[im_gm.data < param_seg.thr_bin] = 0
-
-        im_seg = im_gm
-        im_seg.data += im_wm.data
-
-        try:
-            test(qcslice.Axial(im_org, im_seg))
-            sct.printv('Sucessfully generate the QC results in %s' % qc_param.qc_results)
-            sct.printv('Use the following command to see the results in a browser')
-            sct.printv('open file "{}/index.html"'.format(qc_path), type='info')
-        except:
-            sct.log.warning('Issue when creating QC report.')
 
     if param.rm_tmp:
         # remove tmp_dir
         sct.rmtree(seg_gm.tmp_dir)
 
     sct.display_viewer_syntax([param_seg.fname_im_original, seg_gm.fname_res_gmseg, seg_gm.fname_res_wmseg], colormaps=['gray', gm_col, wm_col], minmax=['', b, b], opacities=['1', '0.7', '0.7'], verbose=param.verbose)
+
+def generate_qc(fname_in, fname_gm, fname_wm, param_seg, args, path_qc):
+    """
+    Generate a QC entry allowing to quickly review the segmentation process.
+    """
+
+    import spinalcordtoolbox.reports.qc as qc
+    import spinalcordtoolbox.reports.slice as qcslice
+
+    im_org = Image(fname_in)
+    im_gm = Image(fname_gm)
+    im_wm = Image(fname_wm)
+
+    # create simple compound segmentation image for QC purposes
+
+    if param_seg.type_seg == 'bin':
+        im_wm.data[im_wm.data == 1] = 1
+        im_gm.data[im_gm.data == 1] = 2
+    else:
+        # binarize anyway
+        im_wm.data[im_wm.data >= param_seg.thr_bin] = 1
+        im_wm.data[im_wm.data < param_seg.thr_bin] = 0
+        im_gm.data[im_gm.data >= param_seg.thr_bin] = 2
+        im_gm.data[im_gm.data < param_seg.thr_bin] = 0
+
+    im_seg = im_gm
+    im_seg.data += im_wm.data
+
+    s = qcslice.Axial([im_org, im_seg])
+
+    qc.add_entry(
+     src=fname_in,
+     process="sct_segment_graymatter",
+     args=args,
+     path_qc=path_qc,
+     plane='Axial',
+     qcslice=s,
+     qcslice_operations=[qc.QcImage.listed_seg],
+     qcslice_layout=lambda x: x.mosaic(),
+    )
 
 
 if __name__ == "__main__":

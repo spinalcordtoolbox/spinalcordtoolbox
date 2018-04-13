@@ -34,7 +34,7 @@ class Param:
         self.output_folder = '.'
         self.verbose = 1
         self.remove_tmp = 1
-        self.qc = 1
+        self.path_qc = None
 
 
 class MultiLabelRegistration:
@@ -188,7 +188,8 @@ class MultiLabelRegistration:
         if self.fname_warp_target2template is not None:
             sct.generate_output_file(os.path.join(tmp_dir, self.fname_warp_gm2template), os.path.join(self.param.output_folder, self.fname_warp_gm2template))
 
-        if self.param.qc:
+        if self.param.path_qc is not None:
+            # TODO move to qc
             fname_grid_warped = visualize_warp(os.path.join(tmp_dir, fname_warp_multilabel_template2auto), rm_tmp=self.param.remove_tmp)
             path_grid_warped, file_grid_warped, ext_grid_warped = sct.extract_fname(fname_grid_warped)
             sct.generate_output_file(fname_grid_warped, os.path.join(self.param.output_folder, file_grid_warped + ext_grid_warped))
@@ -208,7 +209,11 @@ class MultiLabelRegistration:
         curdir = os.getcwd()
         os.chdir(tmp_dir)
 
-        sct.run(['sct_warp_template', '-d', fname_manual_gmseg, '-w', self.fname_warp_template2gm, '-qc', '0', '-a', '0'])
+        cmd = ['sct_warp_template', '-d', fname_manual_gmseg, '-w', self.fname_warp_template2gm, '-a', '0']
+        if self.param.path_qc is not None and os.environ.get("SCT_RECURSIVE_QC", None) == "1":
+            cmd += ["-qc", self.param.path_qc]
+
+        sct.run(cmd)
         if 'MNI-Poly-AMU_GM.nii.gz' in os.listdir(os.path.join('label', 'template')):
             im_new_template_gm = Image(os.path.join('label', 'template', 'MNI-Poly-AMU_GM.nii.gz'))
             im_new_template_wm = Image(os.path.join('label', 'template', 'MNI-Poly-AMU_WM.nii.gz'))
@@ -571,8 +576,9 @@ if __name__ == "__main__":
         fname_template_dest = arguments['-template-original']
     if '-ofolder' in arguments:
         ml_param.output_folder = arguments['-ofolder']
-    if '-qc' in arguments:
-        ml_param.qc = int(arguments['-qc'])
+
+    ml_param.path_qc = arguments.get("-qc", None)
+
     if '-r' in arguments:
         ml_param.remove_tmp = int(arguments['-r'])
     if '-v' in arguments:
