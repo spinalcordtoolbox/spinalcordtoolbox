@@ -48,6 +48,7 @@ class Param:
         self.shift_AP_visu = 15  # 0#15  # shift AP for displaying disc values
         self.smooth_factor = [3, 1, 1]  # [3, 1, 1]
         self.gaussian_std = 1.0  # STD of the Gaussian function, centered at the most rostral point of the image, and used to weight C2-C3 disk location finding towards the rostral portion of the FOV. Values to set between 0.1 (strong weighting) and 999 (no weighting).
+        self.path_qc = None
 
     # update constructor with user's parameters
     def update(self, param_user):
@@ -162,7 +163,7 @@ sct_label_vertebrae -i t2.nii.gz -s t2_seg_manual.nii.gz  "$(< init_label_verteb
     parser.add_option(name='-qc',
                       type_value='folder_creation',
                       description='The path where the quality control generated content will be saved',
-                      default_value=None)
+                      default_value=param_default.path_qc)
     return parser
 
 
@@ -195,6 +196,8 @@ def main(args=None):
         path_output = arguments['-ofolder']
     else:
         path_output = os.curdir
+    param.path_qc = arguments.get("-qc", None)
+
     if '-initz' in arguments:
         initz = arguments['-initz']
     if '-initcenter' in arguments:
@@ -258,7 +261,10 @@ def main(args=None):
         # apply straightening
         sct.run(['sct_apply_transfo', '-i', 'data.nii', '-w', 'warp_curve2straight.nii.gz', '-d', 'straight_ref.nii.gz', '-o', 'data_straight.nii'])
     else:
-        sct.run(['sct_straighten_spinalcord', '-i', 'data.nii', '-s', 'segmentation.nii.gz', '-r', str(remove_temp_files), '-qc', '0'])
+        cmd = ['sct_straighten_spinalcord', '-i', 'data.nii', '-s', 'segmentation.nii.gz', '-r', str(remove_temp_files)]
+        if param.path_qc is not None and os.environ.get("SCT_RECURSIVE_QC", None) == "1":
+            cmd += ['-qc', param.path_qc]
+        sct.run(cmd)
 
     # resample to 0.5mm isotropic to match template resolution
     sct.printv('\nResample to 0.5mm isotropic...', verbose)
@@ -329,30 +335,64 @@ def main(args=None):
         sct.rmtree(path_tmp)
 
     # Generate QC report
-    try:
-        if '-qc' in arguments:
-            qc_path = os.path.abspath(arguments['-qc'])
-
-            import spinalcordtoolbox.reports.qc as qc
-            import spinalcordtoolbox.reports.slice as qcslice
-
-            qc_param = qc.Params(fname_in, 'sct_label_vertebrae', args, 'Sagittal', qc_path)
-            report = qc.QcReport(qc_param, '')
-
-            @qc.QcImage(report, 'none', [qc.QcImage.label_vertebrae, ])
-            def test(qslice):
-                return qslice.single()
-
-            labeled_seg_file = os.path.join(path_output, file_seg + '_labeled' + ext_seg)
-            test(qcslice.Sagittal(Image(fname_in), Image(labeled_seg_file)))
-            sct.printv('Sucessfully generated the QC results in %s' % qc_param.qc_results)
-            sct.printv('Use the following command to see the results in a browser:')
-            sct.printv('open file "{}/index.html"'.format(qc_path), type='info')
-    except Exception as err:
-        sct.printv(err, verbose, 'warning')
-        sct.printv('WARNING: Cannot generate report.', verbose, 'warning')
+    if param.path_qc is not None:
+        path_qc = os.path.abspath(param.path_qc)
+        labeled_seg_file = os.path.join(path_output, file_seg + '_labeled' + ext_seg)
+        generate_qc(fname_in, labeled_seg_file, args, path_qc)
 
     sct.display_viewer_syntax([fname_in, fname_seg_labeled], colormaps=['', 'random'], opacities=['1', '0.5'])
+
+
+def generate_qc(fn_in, fn_labeled, args, path_qc):
+    """
+    Generate a quick visualization of vertebral labeling
+    """
+    import spinalcordtoolbox.reports.qc as qc
+    import spinalcordtoolbox.reports.slice as qcslice
+
+    def label_vertebrae(self, mask):
+        """
+        Draw vertebrae areas, then add text showing the vertebrae names.
+        """
+
+        import matplotlib.pyplot as plt
+        import scipy.ndimage
+
+        self.listed_seg(mask)
+
+        ax = plt.gca()
+        a = [0.0]
+        data = mask
+        for index, val in np.ndenumerate(data):
+            if val not in a:
+                a.append(val)
+                index = int(val)
+                if index in self._labels_regions.values():
+                    color = self._labels_color[index]
+                    y, x = scipy.ndimage.measurements.center_of_mass(np.where(data == val, data, 0))
+
+                    # Draw text with a shadow
+
+                    x += 10
+
+                    label = list(self._labels_regions.keys())[list(self._labels_regions.values()).index(index)]
+                    ax.text(x, y, label, color='black', clip_on=True)
+
+                    x -= 0.5
+                    y -= 0.5
+
+                    ax.text(x, y, label, color=color, clip_on=True)
+
+    qc.add_entry(
+     src=fn_in,
+     process='sct_label_vertebrae',
+     args=args,
+     path_qc=path_qc,
+     plane='Sagittal',
+     qcslice=qcslice.Sagittal([Image(fn_in), Image(fn_labeled)]),
+     qcslice_operations=[label_vertebrae],
+     qcslice_layout=lambda x: x.single(),
+    )
 
 
 # Detect vertebral levels
@@ -632,7 +672,6 @@ def create_label_z(fname_seg, z, value):
     orientation_origin = nii.change_orientation('RPI')  # change orientation to RPI
     nx, ny, nz, nt, px, py, pz, pt = nii.dim  # Get dimensions
     # find x and y coordinates of the centerline at z using center of mass
-    from scipy.ndimage.measurements import center_of_mass
     x, y = center_of_mass(nii.data[:, :, z])
     x, y = int(round(x)), int(round(y))
     nii.data[:, :, :] = 0
@@ -656,7 +695,6 @@ def get_z_and_disc_values_from_label(fname_label):
     """
     nii = Image(fname_label)
     # get center of mass of label
-    from scipy.ndimage.measurements import center_of_mass
     x_label, y_label, z_label = center_of_mass(nii.data)
     x_label, y_label, z_label = int(round(x_label)), int(round(y_label)), int(round(z_label))
     # get label value
