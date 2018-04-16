@@ -61,6 +61,22 @@ Procedure:
       ./install_sct
 
 
+Docker
+******
+
+`Docker <https://www.docker.com/what-container>`_ is a portable
+(Linux, OSX, Windows) container platform.
+
+In the context of SCT, it can be used:
+
+- To run SCT on Windows, until SCT can run natively there
+- For development testing of SCT, faster than running a full-fledged
+  virtual machine
+- <your reason here>
+
+See https://github.com/neuropoly/sct_docker for more information.
+
+
 Hard-core Installation-less SCT usage
 *************************************
 
