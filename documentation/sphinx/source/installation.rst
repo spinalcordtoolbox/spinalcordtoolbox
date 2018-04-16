@@ -3,6 +3,10 @@
 Installation
 ############
 
+.. contents::
+   :local:
+..
+
 
 Prerequisites
 *************
