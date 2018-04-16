@@ -32,4 +32,4 @@ See the latest course materials `here <https://osf.io/fvnjq/>`_.
 Further Information
 *******************
 
-The next step is to head to `Command-Line Tools`_ and `Python API`_.
+The next step is to head to :ref:`command-line-tools` and :ref:`python-api`.

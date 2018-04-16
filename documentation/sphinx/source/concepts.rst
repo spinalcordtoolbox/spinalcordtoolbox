@@ -47,7 +47,7 @@ Segmentation of GM/WM
 *********************
 
 
-
+.. _qc:
 
 Quality Control
 ***************

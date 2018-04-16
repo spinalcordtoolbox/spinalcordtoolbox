@@ -1,9 +1,9 @@
+
+.. _command-line-tools:
+
 Command-Line Tools
 ##################
 
-
-.. contents::
-..
 
 Summary of Tools
 ****************

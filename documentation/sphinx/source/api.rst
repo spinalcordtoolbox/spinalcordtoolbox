@@ -1,3 +1,5 @@
+.. _python-api:
+
 Python API
 ##########
 
@@ -9,8 +11,7 @@ Quality Control API
 *******************
 
 The modules spinalcordtoolbox.reports.qc_ and
-spinalcordtoolbox.reports.slice_ are used to generate `Quality
-Control`_ reports.
+spinalcordtoolbox.reports.slice_ are used to generate :ref:`qc` reports.
 
 
 spinalcordtoolbox.reports.qc
