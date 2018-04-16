@@ -7,17 +7,20 @@
  * \author Benjamin De Leener - NeuroPoly (http://www.neuropoly.info)
  */
 
-#include "Image3D.h"
-#include <itkPoint.h>
 #include <vector>
+#include <string>
+
+#include <itkPoint.h>
+#include <itkImageAlgorithm.h>
+#include <itkImageFileReader.h>
+#include <itkSingleValuedCostFunction.h>
+
+#include "Image3D.h"
 #include "SpinalCord.h"
 #include "Vertex.h"
 #include "util/Matrix3x3.h"
 #include "SCRegion.h"
-#include <itkImageAlgorithm.h>
-#include <itkImageFileReader.h>
-#include <itkSingleValuedCostFunction.h>
-using namespace std;
+
 
 typedef itk::CovariantVector<double,3> PixelType;
 typedef itk::Image< PixelType, 3 > ImageVectorType;
@@ -31,7 +34,7 @@ typedef itk::Point< double, 3 > PointType;
 class FoncteurGlobalAdaptation: public itk::SingleValuedCostFunction
 {
 public:
-	FoncteurGlobalAdaptation(Image3D* image, vector<Vertex*>* tri, unsigned int numberOfParameters=6) : image_(image), listeTriangles_(tri), iterateur(0), numberOfParameters_(numberOfParameters)
+	FoncteurGlobalAdaptation(Image3D* image, std::vector<Vertex*>* tri, unsigned int numberOfParameters=6) : image_(image), listeTriangles_(tri), iterateur(0), numberOfParameters_(numberOfParameters)
 	{
 		sizePoints = listeTriangles_->size();
 		points = new CVector3[sizePoints];
@@ -107,7 +110,7 @@ public:
 
 private:
 	Image3D* image_;
-	vector<Vertex*>* listeTriangles_;
+	std::vector<Vertex*>* listeTriangles_;
 
 	unsigned int sizePoints;
 	CVector3 *points, *normales;
@@ -136,8 +139,8 @@ private:
 class GlobalAdaptation
 {
 public:
-	GlobalAdaptation(Image3D* image, Mesh* v, string mode="rotation+translation");
-	GlobalAdaptation(Image3D* image, Mesh* v, CVector3 pointRotation, string mode="rotation+translation");
+	GlobalAdaptation(Image3D* image, Mesh* v, std::string mode="rotation+translation");
+	GlobalAdaptation(Image3D* image, Mesh* v, CVector3 pointRotation, std::string mode="rotation+translation");
 	~GlobalAdaptation() {};
 
 	double getInitialValue();
@@ -154,7 +157,7 @@ private:
 	Mesh* mesh_;
 
 	CVector3 pointRotation_, normal_mesh_;
-	string mode_;
+	std::string mode_;
 
 	bool badOrientation_;
     
