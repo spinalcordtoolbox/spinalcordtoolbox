@@ -369,11 +369,6 @@ Notes:
   .. TODO
 
 
-sct_qc
-=========
-
-.. program-output:: ../../../bin/sct_qc -h
-
 
 sct_register_graymatter
 ==========================
