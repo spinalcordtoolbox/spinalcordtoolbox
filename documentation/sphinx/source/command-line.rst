@@ -4,6 +4,11 @@
 Command-Line Tools
 ##################
 
+.. contents::
+   :local:
+   :depth: 1
+..
+
 
 Summary of Tools
 ****************
@@ -567,6 +572,7 @@ msct_types
 =============
 
 .. program-output:: ../../../bin/msct_types -h
+
 
 
 
