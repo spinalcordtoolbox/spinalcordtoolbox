@@ -5,6 +5,66 @@ Command-Line Tools
 .. contents::
 ..
 
+Summary of Tools
+****************
+
+Segmentation:
+
+- sct_create_mask_ - Create mask along z direction.
+- sct_label_vertebrae_ - Label vertebral levels
+- sct_propseg_ - Segment spinal cord using propagation of deformation model (PropSeg)
+- sct_process_segmentation_ - Perform various types of processing from the spinal cord segmentation.
+- sct_segment_graymatter_ - Segment the white and gray matter on the cervical spinal cord (available in v2.1 and higher).
+
+Registration:
+
+- sct_apply_transfo_ - Apply transformations.
+- sct_concat_transfo_ - Concatenate transformations.
+- sct_get_centerline_ - Reconstruct spinal cord centerline.
+- sct_register_multimodal_ - Register two images together (non-linear, constrained in axial plane)
+- sct_register_to_template_ - Register the template to an anatomical image (t1, t2).
+- sct_smooth_spinalcord_ - Smooth the spinal cord along its centerline.
+- sct_straighten_spinalcord_ - Straighten spinal cord from centerline
+- sct_warp_template_ - Warp all the spinal cord tracts of the atlas according to the warping field given as input.
+
+Metric processing:
+
+- sct_average_data_within_mask_ - Average data within a mask.
+- sct_extract_metric_ - Estimate metric value within tracts, taking into account partial volume effect.
+
+Diffusion MRI:
+
+- sct_dmri_concat_bvals_ - Concatenate bval files in time.
+- sct_dmri_concat_bvecs_ - Concatenate bvec files in time.
+- sct_dmri_moco_ - Slice-wise motion correction of DWI data.
+- sct_dmri_separate_b0_and_dwi_ - Separate b=0 and DW images from diffusion dataset.
+- sct_dmri_transpose_bvecs_ - Transpose bvecs file.
+
+Magnetization transfer:
+
+- sct_compute_mtr_ - Register image without (MTC0) and with magnetization transfer contrast (MTC1) and compute MTR
+
+Functional MRI:
+
+- sct_fmri_compute_tsnr_ - Compute the temporal signal-to-noise ratio from fMRI nifti files.
+- sct_fmri_moco_ - Correct fMRI data for motion.
+
+Miscellaneous:
+
+- sct_check_dependencies_ - Check installation and compatibility of SCT.
+- sct_testing_ - Runs complete testing to make sure SCT is working properly.
+- sct_compute_ernst_angle_ - Compute Ernst angle.
+- sct_dice_coefficient_ - Compute 2D or 3D DICE coefficient between two binary images.
+- sct_flatten_sagittal_ - Flatten the spinal cord in the sagittal plane (to make nice pictures).
+- sct_flip_data_ - Flip data in a specified dimension (x,y,z or t). N.B. This script will NOT modify the header but the way the data are stored (so be careful!!)
+- sct_label_utils_ - Utility function for label images.
+- sct_image_ - Performs various operations on images (split, pad, etc.).
+- sct_maths_ - Performs mathematical operations on images (threshold, smooth, etc.).
+- sct_pipeline_ - Runs one sct tool on many subjects in one command.
+
+
+
+
 Main Tools
 **********
 
