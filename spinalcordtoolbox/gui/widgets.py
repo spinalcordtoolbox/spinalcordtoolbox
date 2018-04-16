@@ -5,6 +5,7 @@
 """ Qt widgets for manually segmenting spinal cord images """
 
 import logging
+from time import time
 
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
@@ -14,6 +15,7 @@ from matplotlib.widgets import Cursor
 from PyQt4 import QtCore, QtGui
 
 from spinalcordtoolbox.gui.base import MissingLabelWarning
+
 
 logger = logging.getLogger(__name__)
 
@@ -107,6 +109,9 @@ class AnatomicalCanvas(FigureCanvas):
     _vertical_nav = None
     _navigation_state = False
     annotations = []
+    last_update = 0
+    update_freq = 0.0667  # 10 Hz
+    previous_point = (0, 0)
 
     def __init__(self, parent, width=8, height=8, dpi=100, crosshair=False, plot_points=False,
                  annotate=False, vertical_nav=False, horizontal_nav=False):
@@ -132,9 +137,8 @@ class AnatomicalCanvas(FigureCanvas):
     def _init_ui(self, data, aspect):
         self._fig.canvas.mpl_connect('button_release_event', self.on_select_point)
         self._fig.canvas.mpl_connect('scroll_event', self.on_zoom)
-        self._fig.canvas.mpl_connect('button_release_event', self.on_release)
-        self._fig.canvas.mpl_connect('button_press_event', self.on_press)
-        self._fig.canvas.mpl_connect('motion_notify_event', self.on_move)
+        self._fig.canvas.mpl_connect('button_release_event', self.on_change_intensity)
+        self._fig.canvas.mpl_connect('motion_notify_event', self.on_change_intensity)
 
         self._axes = self._fig.add_axes([0, 0, 1, 1], frameon=True)
         self._axes.axis('off')
@@ -142,8 +146,8 @@ class AnatomicalCanvas(FigureCanvas):
             data,
             cmap=self._params.cmap,
             interpolation=self._params.interp,
-            vmin=self._params.vmin,
-            vmax=self._params.vmax,
+            vmin=self._parent._controller.min_intensity,
+            vmax=self._parent._controller.max_intensity,
             alpha=self._params.alpha)
         self._axes.set_aspect(aspect)
 
@@ -166,6 +170,13 @@ class AnatomicalCanvas(FigureCanvas):
         self.annotations = []
         self.points.set_xdata([])
         self.points.set_ydata([])
+
+    def refresh(self):
+        self.view.set_clim(self._parent._controller.min_intensity,
+                           self._parent._controller.max_intensity)
+        self.plot_position()
+        self.plot_points()
+        self.view.figure.canvas.draw()
 
     def plot_data(self, xdata, ydata, labels):
         self.points.set_xdata(xdata)
@@ -202,14 +213,24 @@ class AnatomicalCanvas(FigureCanvas):
     def on_select_point(self, event):
         pass
 
-    def on_press(self, event):
-        self._navigation_state = True
+    def on_change_intensity(self, event):
+        if event.button == 3:
+            curr_time = time()
 
-    def on_release(self, event):
-        self._navigation_state = False
+            if curr_time - self.last_update <= self.update_freq:
+                return
 
-    def on_move(self, event):
-        pass
+            if (abs(event.xdata - self.previous_point[0]) < 1 and
+                abs(event.ydata - self.previous_point) < 1):
+                self.previous_point = (event.xdata, event.ydata)
+                return
+
+            ctrl = self._parent._controller
+            xlim, ylim = self._axes.get_xlim(), self._axes.get_ylim()
+            mean_factor = (event.xdata - xlim[0]) / float(xlim[1] - xlim[0])
+            std_factor = (event.ydata - ylim[1]) / float(ylim[0] - ylim[1])
+            self._parent._controller.calculate_intensity(mean_factor, std_factor)
+            self.refresh()
 
     def horizontal_position(self, position):
         if self._horizontal_nav:
@@ -247,19 +268,11 @@ class SagittalCanvas(AnatomicalCanvas):
         self._x, self._y, self._z = [int(i) for i in self._parent._controller.position]
         data = self._image.data[:, :, self._z]
         self.view.set_array(data)
-        self.plot_position()
-        self.plot_points()
-        self.view.figure.canvas.draw()
+        super(SagittalCanvas, self).refresh()
 
     def on_select_point(self, event):
         if event.xdata > -1 and event.ydata > -1 and event.button == 1:
             self.point_selected_signal.emit(event.ydata, event.xdata, self._z)
-
-    def on_move(self, event):
-        if self._navigation_state:
-            self.vertical_position(event.xdata)
-            self.horizontal_position(event.ydata)
-            self.view.figure.canvas.draw()
 
     def plot_points(self):
         """Plot the controller's list of points (x, y) and annotate the point with the label"""
@@ -291,7 +304,7 @@ class CoronalCanvas(AnatomicalCanvas):
         self._x, self._y, self._z = [int(i) for i in self._parent._controller.position]
         data = self._image.data[:, self._y, :]
         self.view.set_array(data)
-        self.view.figure.canvas.draw()
+        super(CoronalCanvas, self).refresh()
 
     def on_select_point(self, event):
         if event.xdata > -1 and event.ydata > -1 and event.button == 1:
@@ -322,9 +335,7 @@ class AxialCanvas(AnatomicalCanvas):
         self._x, self._y, self._z = [int(i) for i in self._parent._controller.position]
         data = self._image.data[self._x, :, :]
         self.view.set_array(data)
-        self.plot_position()
-        self.plot_points()
-        self.view.figure.canvas.draw()
+        super(AxialCanvas, self).refresh()
 
     def on_select_point(self, event):
         if event.xdata > 0 and event.ydata > 0 and event.button == 1:
@@ -346,12 +357,6 @@ class AxialCanvas(AnatomicalCanvas):
         position = self._parent._controller.position
         self.horizontal_position(position[1])
         self.vertical_position(position[2])
-
-    def on_move(self, event):
-        if self._navigation_state:
-            self.horizontal_position(event.ydata)
-            self.vertical_position(event.xdata)
-            self.view.figure.canvas.draw()
 
 
 class AnatomicalToolbar(NavigationToolbar):

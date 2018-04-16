@@ -27,7 +27,8 @@ class AnatomicalParams(object):
                  cmap='gray',
                  interp='nearest',
                  vmin=5.,
-                 vmax=95.,
+                 vmax=99.,
+                 vmean=98.,
                  vmode='percentile',
                  alpha=1.0):
         """
@@ -36,15 +37,17 @@ class AnatomicalParams(object):
         ----------
         cmap : str
         interp : str
-        vmin : int
-        vmax : int
+        vmin : float
+        vmax : float
+        vmean : float
         vmode : str
         alpha : float
         """
         self.cmap = cmap
         self.interp = interp
-        self.min = vmin
-        self.max = vmax
+        self.vmin = vmin
+        self.vmax = vmax
+        self.vmean = vmean
         self.vmode = vmode
         self.alpha = alpha
         self.start_vertebrae = 50
@@ -58,7 +61,6 @@ class AnatomicalParams(object):
         # the first axial slice for labeling. Possible values are: 'top': top slice; 'midfovminusinterval': mid-FOV
         # minus the interval.
         self.interval_in_mm = 15  # superior-inferior distance between two consecutive labels in AUTO mode
-
 
     @property
     def dialog_title(self):
@@ -283,6 +285,30 @@ class BaseController(object):
         self.params = params
         self.points = []
         self._overlay_image = init_values
+        self.setup_intensity()
+
+    def setup_intensity(self):
+        if self.params.vmode == 'percentile':
+            vol = self.image.flatten()
+            vol = vol[vol > 0]
+            first_per = np.percentile(vol, self.params.vmin)
+            last_per = np.percentile(vol, self.params.vmax)
+            self.mean_intensity = np.percentile(vol, self.params.vmean)
+            self.std_intensity = last_per - first_per
+        elif self.params.vmode == 'mean-std':
+            self.mean_intensity = (self.params.vmax + self.params.vmin) / 2.0
+            self.std_intensity = (self.params.vmax - self.params.vmin) / 2.0
+
+        self.min_intensity = self.mean_intensity - self.std_intensity
+        self.max_intensity = self.mean_intensity + self.std_intensity
+
+    def calculate_intensity(self, mean_factor, std_factor):
+        mean_intensity = self.mean_intensity - (mean_factor - 0.5) * self.mean_intensity * 3.0
+        std_intensity = self.std_intensity - (std_factor - 0.5) * self.std_intensity * 2.0
+
+        self.min_intensity = mean_intensity - std_intensity
+        self.max_intensity = mean_intensity + std_intensity
+
 
     def reformat_image(self):
         """Set the camera position and increase contrast.
@@ -304,9 +330,6 @@ class BaseController(object):
         self.params.offset = x * dx
         self.default_position = Position(x // 2, y // 2, z // 2)
 
-        clip = np.percentile(self.image.data, (self.params.min,
-                                               self.params.max))
-        self.params.vmin, self.params.vmax = clip
         self.reset_position()
 
     def reset_position(self):
