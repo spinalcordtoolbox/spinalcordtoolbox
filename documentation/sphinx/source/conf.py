@@ -104,6 +104,7 @@ html_theme_options = {
     'logo': 'logo.png',
     'github_user': 'neuropoly',
     'github_repo': 'spinalcordtoolbox',
+    'page_width': None,
 }
 
 
