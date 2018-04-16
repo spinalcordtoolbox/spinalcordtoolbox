@@ -58,11 +58,14 @@ def main():
         opts, args = getopt.getopt(sys.argv[1:], 'hi:c:b:g:m:o:p:r:s:v:')
     except getopt.GetoptError:
         usage()
+        raise SystemExit(2)
     if not opts:
         usage()
+        raise SystemExit(2)
     for opt, arg in opts:
         if opt == '-h':
             usage()
+            raise SystemExit(0)
         elif opt in ('-i'):
             param.fname_data = arg
         elif opt in ('-b'):
@@ -397,9 +400,6 @@ def usage():
         '\n'
         'EXAMPLE:\n'
         '  ' + os.path.basename(__file__) + ' -i KS_HCP34.nii -b KS_HCP_bvec.txt \n')
-
-    # Exit Program
-    sys.exit(2)
 
 
 #=======================================================================================================================
