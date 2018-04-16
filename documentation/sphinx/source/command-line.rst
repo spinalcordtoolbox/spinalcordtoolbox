@@ -165,11 +165,15 @@ sct_crop_image
 .. program-output:: ../../../bin/sct_crop_image -h
 
 
+.. _sct_deepseg_gm:
+
 sct_deepseg_gm
 =================
 
 .. program-output:: ../../../bin/sct_deepseg_gm -h
 
+
+.. _sct_deepseg_sc:
 
 sct_deepseg_sc
 =================
@@ -350,6 +354,8 @@ sct_process_segmentation
 
 .. program-output:: ../../../bin/sct_process_segmentation -h
 
+
+.. _sct_propseg:
 
 sct_propseg
 ==============
