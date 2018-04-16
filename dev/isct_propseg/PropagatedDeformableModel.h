@@ -8,11 +8,13 @@
  */
 
 #include <vector>
+#include <string>
+
 #include "Image3D.h"
 #include "util/Vector3.h"
 #include "SpinalCord.h"
 #include "BSplineApproximation.h"
-using namespace std;
+
 
 /*!
  * \class PropagatedDeformableModel
@@ -37,13 +39,13 @@ public:
 	void rafinementGlobal();
 	
 
-	vector<CVector3> getCenterline() { return centerline; };
+	std::vector<CVector3> getCenterline() { return centerline; };
 	SpinalCord* getInitialMesh() { return initialTube1; };
 	SpinalCord* getInverseInitialMesh() { return initialTube2; };
 	SpinalCord* getOutput() { return meshOutput; };
 	SpinalCord* getOutputFinal() { return meshOutputFinal; };
 
-	void readCenterline(string filename);
+	void readCenterline(std::string filename);
 	void setImage3D(Image3D* image) { image3D_ = image; };
 
 	void changedParameters() { this->changedParameters_ = true; };
@@ -65,7 +67,7 @@ public:
     void setVerbose(bool verbose) { verbose_ = verbose; };
     bool getVerbose() { return verbose_; };
 
-    void addCorrectionPoints(vector<CVector3> points_mask_correction) { points_mask_correction_ = points_mask_correction; };
+    void addCorrectionPoints(std::vector<CVector3> points_mask_correction) { points_mask_correction_ = points_mask_correction; };
 
 private:
 	SpinalCord* mergeBidirectionalSpinalCord(SpinalCord* spinalCord1, SpinalCord* spinalCord2);
@@ -74,7 +76,7 @@ private:
 	void computeNewBand(SpinalCord* mesh, CVector3 initialPoint, CVector3 nextPoint, int resolution);
 	void blockBothExtremesOfMesh(SpinalCord* m, int resolutionRadiale);
 
-	vector<CVector3> centerline, initial_centerline;
+	std::vector<CVector3> centerline, initial_centerline;
 	CVector3 initialPoint_, initialNormal1_, initialNormal2_;
     double stretchingFactor_;
 	bool hasInitialPointAndNormals_, propCenterline_;
@@ -85,7 +87,7 @@ private:
 	double rayon_, deplacementAxial_, propagationLength_;
 	int numberOfDeformIteration_, numberOfPropagationIteration_;
 
-	vector< vector<CVector3> > lastDisks;
+	std::vector< std::vector<CVector3> > lastDisks;
 	CVector3 lastNormal;
 
 	Image3D* image3D_;
@@ -96,7 +98,7 @@ private:
 	// Deformable models adaptator parameters
 	bool changedParameters_;
 	double line_search, alpha, beta, meanContrast, area[3], meanArea;
-    vector< pair<CVector3,double> > contrast;
+    std::vector< std::pair<CVector3,double> > contrast;
     
     double maxDeformation, maxArea, minContrast;
 
@@ -108,7 +110,7 @@ private:
     
     bool verbose_;
 
-    vector<CVector3> points_mask_correction_;
+    std::vector<CVector3> points_mask_correction_;
 };
 
 #endif
