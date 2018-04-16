@@ -293,7 +293,7 @@ class Parser:
         # check if help is asked by the user
         if "-h" in arguments:
             sct.printv(self.usage.generate())
-            exit(1)
+            exit(0)
 
         if "-sf" in arguments:
             doc_sourceforge = DocSourceForge(self, self.file_name)
