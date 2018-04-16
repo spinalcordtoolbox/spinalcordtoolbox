@@ -8,9 +8,9 @@
  */
 
 #include <vector>
+
 #include "Vertex.h"
-#include <iostream>
-using namespace std;
+
 
 /*!
  * \struct FoncteurPlan
@@ -19,13 +19,13 @@ using namespace std;
  * This structure allow to compute the equation of the plan which minimizing the distance (RMS) between a set of points and the plan.
  */
 struct FoncteurPlan {
-	vector<CVector3>* points_;
+	std::vector<CVector3>* points_;
 
 	//! Constructor of functor
     /*!
 	  \param points Set of points used to compute plan equation
     */
-	FoncteurPlan(vector<CVector3>* points)
+	FoncteurPlan(std::vector<CVector3>* points)
 	{
 		points_ = points;
 	}
@@ -35,7 +35,7 @@ struct FoncteurPlan {
       \param p Parameters of the plan equation (p[0]=a, p[1]=b, p[2]=c, p[3]=d)
 	  \return The root mean square (RMS) distance between the plan and the set of points
     */
-	double& operator()(vector<double> p)
+	double& operator()(std::vector<double> p)
 	{
 		double result = 0.0;
 		CVector3 pos;
