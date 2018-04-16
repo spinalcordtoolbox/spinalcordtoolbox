@@ -7,6 +7,31 @@ Python API
 ..
 
 
+Segmentation API
+****************
+
+Spinal Cord Segmentation API
+============================
+
+deepseg_sc API
+++++++++++++++
+
+.. automodule:: spinalcordtoolbox.deepseg_sc.cnn_models
+   :members:
+
+
+GM/WM Segmentation API
+======================
+
+deepseg_gm API
+++++++++++++++
+
+.. automodule:: spinalcordtoolbox.deepseg_gm.deepseg_gm
+   :members:
+
+.. automodule:: spinalcordtoolbox.deepseg_gm.model
+   :members:
+
 
 Centerline API
 **************
