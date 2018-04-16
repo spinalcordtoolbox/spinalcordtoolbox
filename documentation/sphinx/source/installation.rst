@@ -2,6 +2,24 @@ Installation
 ############
 
 
+Prerequisites
+*************
+
+SCT runs on Linux and OSX;
+`native Windows support is not there
+<https://github.com/neuropoly/spinalcordtoolbox/issues/1682>`_ but
+Docker_ might be used to run a Linux container on Windows.
+
+For Linux, the prerequisites should be already available on mainstream
+distributions.
+SCT has been tested on Debian >= 7, Fedora >= 23, Ubuntu >= 14.04,
+Gentoo et al.
+
+For OSX, there are no prerequisites.
+
+.. TODO minimum system version?
+
+
 Recommended Procedure
 *********************
 
