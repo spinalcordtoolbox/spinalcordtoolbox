@@ -2,6 +2,13 @@ SCT Concepts
 ############
 
 
+This section documents some SCT concepts and other useful things to know
+when using it.
+
+.. contents::
+   :local:
+..
+
 Template / Atlas
 ****************
 
@@ -43,8 +50,39 @@ Tips & Tricks
   .. TODO
 
 
+Segmentation of the Spinal Cord
+*******************************
+
+SCT provides several tools to perform SC segmentation:
+
+- :ref:`sct_propseg`
+- :ref:`sct_deepseg_sc`
+
+The latter one, using a deep learning model, is giving the best results on most
+cases, but is not configurable.
+
+The former one is the fallback tool. It has lots of options that can
+be useful when segmenting tricky volumes.
+You may use it if :ref:`sct_deepseg_sc` is performing worse results
+than :ref:`sct_propseg` with default parameters.
+
+.. TODO additional information, performance info, paper
+
 Segmentation of GM/WM
 *********************
+
+SCT provides several tools to perform GM/WM segmentation:
+
+- :ref:`sct_segment_graymatter`
+- :ref:`sct_deepseg_gm`
+
+The latter one, using a deep learning model, is giving the best results on most
+cases.
+
+The former one is the fallback tool.
+
+.. TODO additional information, performance info, paper
+
 
 
 .. _qc:
