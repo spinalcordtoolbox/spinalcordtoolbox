@@ -2,7 +2,6 @@ Getting Started
 ###############
 
 
-To see all the commands available from SCT, start a new Terminal and type `sct` then press "tab".
 
 
 SCT includes a `batch_processing <https://github.com/neuropoly/spinalcordtoolbox/blob/master/batch_processing.sh>`_

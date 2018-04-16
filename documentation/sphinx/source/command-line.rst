@@ -8,6 +8,11 @@ Command-Line Tools
 Summary of Tools
 ****************
 
+The command-line tools are named `sct_*`; to see all the commands
+available from SCT, start a new Terminal and type `sct` then press
+"tab".
+
+
 Segmentation:
 
 - sct_create_mask_ - Create mask along z direction.
@@ -350,6 +355,12 @@ sct_propseg
 ==============
 
 .. program-output:: ../../../bin/sct_propseg -h
+
+Notes:
+
+- https://sourceforge.net/p/spinalcordtoolbox/wiki/correction_PropSeg/
+
+  .. TODO
 
 
 sct_qc
