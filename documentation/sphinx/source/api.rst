@@ -7,6 +7,27 @@ Python API
 ..
 
 
+
+Centerline API
+**************
+
+spinalcordtoolbox.centerline
+============================
+
+.. automodule:: spinalcordtoolbox.centerline.optic
+   :members:
+
+
+Image Processing API
+********************
+
+spinalcordtoolbox.resample
+==========================
+
+.. automodule:: spinalcordtoolbox.resample.nipy_resample
+   :members:
+
+
 Quality Control API
 *******************
 

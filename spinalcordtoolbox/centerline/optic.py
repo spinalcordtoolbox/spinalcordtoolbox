@@ -15,13 +15,10 @@ def centerline2roi(fname_image, folder_output='./', verbose=0):
     """
     Tis method converts a binary centerline image to a .roi centerline file
 
-    Args:
-        fname_image: filename of the binary centerline image, in RPI orientation
-        folder_output: path to output folder where to copy .roi centerline
-        verbose: adjusts the verbosity of the logging.
-
-    Returns: filename of the .roi centerline that has been created
-
+    :param fname_image: filename of the binary centerline image, in RPI orientation
+    :param folder_output: path to output folder where to copy .roi centerline
+    :param verbose: adjusts the verbosity of the logging.
+    :returns: filename of the .roi centerline that has been created
     """
     path_data, file_data, ext_data = sct.extract_fname(fname_image)
     fname_output = file_data + '.roi'
