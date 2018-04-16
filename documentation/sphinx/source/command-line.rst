@@ -399,6 +399,8 @@ sct_resample
 .. program-output:: ../../../bin/sct_resample -h
 
 
+.. _sct_segment_graymatter:
+
 sct_segment_graymatter
 =========================
 
