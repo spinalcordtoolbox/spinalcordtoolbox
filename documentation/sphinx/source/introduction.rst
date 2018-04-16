@@ -1,7 +1,9 @@
 Introduction
 ############
 
-SCT tools process MRI data (NIFTI files) and can do tasks such as:
+
+SCT tools process MRI data (`NIfTI <https://nifti.nimh.nih.gov/>`_
+files) and can do tasks such as:
 
 - Automatic identification (segmentation) of the spinal cord
 - Automatic vertebral labeling
@@ -18,7 +20,4 @@ It also has low-level tools:
 - NIFTI volume manipulation tools for common operations
 
 
-
-`Installation`_
-
-See `Command-Line Tools`_ and `Python API`_.
+You may now proceed to :ref:`installation` and :ref:`getting-started`.
