@@ -12,6 +12,8 @@ Welcome to Spinal Cord Toolbox's documentation!
 
    introduction.rst
    installation.rst
+   getting-started.rst
+   support.rst
    command-line.rst
    api.rst
 
