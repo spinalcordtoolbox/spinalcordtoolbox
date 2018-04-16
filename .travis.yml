@@ -47,6 +47,7 @@ before_install:
   - echo "HOME="
   - echo $HOME
   - sudo apt-get update -qq; sudo apt-get install -qq libopenmpi-dev; echo
+  - sudo sudo apt-get install -qq python-sphinx; echo
 
 
 install:
@@ -67,4 +68,5 @@ script:
 #  - cd ../spinalcordtoolbox_v*
 #  - yes | ./install_sct  # test installation of package
   - ./unit_testing.sh
-  - echo "DONE"
+  - bash -c "cd documentation/sphinx; make html; echo"
+  - echo "This is the end, thanks for reading up to here."
