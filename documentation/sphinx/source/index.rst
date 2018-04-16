@@ -17,6 +17,8 @@ Welcome to Spinal Cord Toolbox's documentation!
    support.rst
    command-line.rst
    api.rst
+   development.rst
+
 
 
 
