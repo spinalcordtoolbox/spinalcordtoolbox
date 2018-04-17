@@ -67,5 +67,5 @@ script:
 #  - cd ../spinalcordtoolbox_v*
 #  - yes | ./install_sct  # test installation of package
   - ./unit_testing.sh
-  - bash -c "pip install sphinx; cd $HOME/build/neuropoly/spinalcordtoolbox/documentation/sphinx; make html; echo"
+  - bash -c "pip install sphinx sphinxcontrib.programoutput; cd $HOME/build/neuropoly/spinalcordtoolbox/documentation/sphinx; make html; echo"
   - echo "This is the end, thanks for reading up to here."
