@@ -13,11 +13,11 @@
 #ifndef SpinalCordDetectionValidation_SCRegion_h
 #define SpinalCordDetectionValidation_SCRegion_h
 
-#include "SCTemplate.h"
-#include "referential.h"
 #include <exception>
 #include <string>
-#include <math.h>
+#include <vector>
+#include <cmath>
+
 #include <itkImage.h>
 #include <itkImageAlgorithm.h>
 #include <itkLinearInterpolateImageFunction.h>
@@ -32,7 +32,9 @@
 #include <itkNiftiImageIO.h>
 #include <itkContinuousIndex.h>
 #include <itkMedianImageFilter.h>
-using namespace std;
+
+#include "SCTemplate.h"
+#include "referential.h"
 
 typedef itk::Image< double, 3 >	ImageType;
 typedef itk::Point< double, 3 > PointType;
@@ -69,10 +71,10 @@ public:
     
     void readImage(ImageType::Pointer image)
     {
-        if (origin_[0] == 0.0 && origin_[1] == 0.0 && origin_[2] == 0.0) throw string("Error: reading image requires a defined origin");
-        else if (normal_[0] == 0.0 && normal_[1] == 0.0 && normal_[2] == 0.0) throw string("Error: reading image requires a defined origin");
-        else if (size_[0] == 0.0 && size_[1] == 0.0 && size_[2] == 0.0) throw string("Error: reading image requires a defined size");
-        else if (spacing_[0] == 0.0 && spacing_[1] == 0.0 && spacing_[2] == 0.0) throw string("Error: reading image requires a defined spacing");
+        if (origin_[0] == 0.0 && origin_[1] == 0.0 && origin_[2] == 0.0) throw std::string("Error: reading image requires a defined origin");
+        else if (normal_[0] == 0.0 && normal_[1] == 0.0 && normal_[2] == 0.0) throw std::string("Error: reading image requires a defined origin");
+        else if (size_[0] == 0.0 && size_[1] == 0.0 && size_[2] == 0.0) throw std::string("Error: reading image requires a defined size");
+        else if (spacing_[0] == 0.0 && spacing_[1] == 0.0 && spacing_[2] == 0.0) throw std::string("Error: reading image requires a defined spacing");
         else
         {
             if (content_ != 0) {
@@ -124,7 +126,7 @@ public:
                         //pt[1] = origin_[1]+normal_[1]*spacing_[1]*(y-(size_[1]-1)/2);
                         //pt[2] = origin_[2]+normal_[2]*spacing_[2]*(z-(size_[2]-1)/2);
                         bool result = image->TransformPhysicalPointToContinuousIndex(pt,ind);
-                        if (!result) throw string("Error: region of interest exceeds image dimension");
+                        if (!result) throw std::string("Error: region of interest exceeds image dimension");
                         content_[x][y][z] = imageInterpolator->EvaluateAtContinuousIndex(ind);
                     }
                 }
@@ -136,7 +138,7 @@ public:
         spacing_[0] = spacing[0]; spacing_[1] = spacing[1]; spacing_[2] = spacing[2];
         readImage(image);
     };
-    void writeImage(string filename)
+    void writeImage(std::string filename)
     {
         typedef itk::ImageFileWriter< ImageType > WriterType;
         WriterType::Pointer writer = WriterType::New();
@@ -308,7 +310,7 @@ public:
         correlationFilter->UseAllPixelsOn();
         try {
             correlationFilter->Initialize();
-        } catch (string const& e) {
+        } catch (std::string const& e) {
             cerr << e << endl;
             throw e;
         }
@@ -335,16 +337,16 @@ public:
         mean_distance = 0.0;
         std_distance = 0.0;
         double rayon_ = 6.0;
-        vector<double> distance(nbPoint);
+        std::vector<double> distance(nbPoint);
         // Calcul du profil de la moelle et du LCR perpendiculairement au tube
         itk::Point<double,3> pointS;
         ContinuousIndexType indexS;
-        vector<float> contrast(nbPoint);
+        std::vector<float> contrast(nbPoint);
         float angle;
         CMatrix3x3 trZ;
         for (int k=0; k<nbPoint; k++)
         {
-            vector<float> profilIntensite;
+            std::vector<float> profilIntensite;
             angle = 2*M_PI*k/(double)nbPoint;
             trZ[0] = cos(angle), trZ[1] = sin(angle), trZ[3] = -sin(angle), trZ[4] = cos(angle);
             for (double l=0.0; l<=2.5*rayon_; l+=1) {

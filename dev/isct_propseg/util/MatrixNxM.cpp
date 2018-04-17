@@ -2,8 +2,9 @@
 #include <alglib/blas.h>
 #include <alglib/svd.h>
 #include <vector>
-using namespace std;
 
+using namespace std;
+using namespace ap;
 
 /****************************************************************************
  * Fonction:	Matrice::Matrice
