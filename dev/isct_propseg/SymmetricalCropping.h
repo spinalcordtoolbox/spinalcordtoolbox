@@ -9,7 +9,7 @@
 
 #include <itkImage.h>
 #include <vector>
-using namespace std;
+
 
 /*!
  * \class SymmetricalCropping
