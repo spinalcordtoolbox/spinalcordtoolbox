@@ -463,115 +463,115 @@ Internal Commands
 isct_check_detection
 =======================
 
-.. program-output:: ../../../bin/isct_check_detection -h
+.. program-output:: ../../../scripts/isct_check_detection.py -h
 
 
-isct_convert_binary_to_trilinear
+isct_convert_scriptsary_to_trilinear
 ===================================
 
-.. program-output:: ../../../bin/isct_convert_binary_to_trilinear -h
+.. program-output:: ../../../scripts/isct_convert_scriptsary_to_trilinear.py -h
 
 
 isct_get_fractional_volume
 =============================
 
-.. program-output:: ../../../bin/isct_get_fractional_volume -h
+.. program-output:: ../../../scripts/isct_get_fractional_volume.py -h
 
 
 isct_minc2volume-viewer
 ==========================
 
-.. program-output:: ../../../bin/isct_minc2volume-viewer -h
+.. program-output:: ../../../scripts/isct_minc2volume-viewer.py -h
 
 
 isct_test_ants
 =================
 
-.. program-output:: ../../../bin/isct_test_ants -h
+.. program-output:: ../../../scripts/isct_test_ants.py -h
 
 
 isct_warpmovie_generator
 ===========================
 
-.. program-output:: ../../../bin/isct_warpmovie_generator -h
+.. program-output:: ../../../scripts/isct_warpmovie_generator.py -h
 
 
 msct_base_classes
 ====================
 
-.. program-output:: ../../../bin/msct_base_classes -h
+.. program-output:: ../../../scripts/msct_base_classes.py -h
 
 
 msct_gmseg_utils
 ===================
 
-.. program-output:: ../../../bin/msct_gmseg_utils -h
+.. program-output:: ../../../scripts/msct_gmseg_utils.py -h
 
 
 msct_image
 =============
 
-.. program-output:: ../../../bin/msct_image -h
+.. program-output:: ../../../scripts/msct_image.py -h
 
 
 msct_moco
 ============
 
-.. program-output:: ../../../bin/msct_moco -h
+.. program-output:: ../../../scripts/msct_moco.py -h
 
 
 msct_multiatlas_seg
 ======================
 
-.. program-output:: ../../../bin/msct_multiatlas_seg -h
+.. program-output:: ../../../scripts/msct_multiatlas_seg.py -h
 
 
 msct_nurbs
 =============
 
-.. program-output:: ../../../bin/msct_nurbs -h
+.. program-output:: ../../../scripts/msct_nurbs.py -h
 
 
 msct_parser
 ==============
 
-.. program-output:: ../../../bin/msct_parser -h
+.. program-output:: ../../../scripts/msct_parser.py -h
 
 
 msct_pca
 ===========
 
-.. program-output:: ../../../bin/msct_pca -h
+.. program-output:: ../../../scripts/msct_pca.py -h
 
 
 msct_register
 ================
 
-.. program-output:: ../../../bin/msct_register -h
+.. program-output:: ../../../scripts/msct_register.py -h
 
 
 msct_register_landmarks
 ==========================
 
-.. program-output:: ../../../bin/msct_register_landmarks -h
+.. program-output:: ../../../scripts/msct_register_landmarks.py -h
 
 
 msct_shape
 =============
 
-.. program-output:: ../../../bin/msct_shape -h
+.. program-output:: ../../../scripts/msct_shape.py -h
 
 
 msct_smooth
 ==============
 
-.. program-output:: ../../../bin/msct_smooth -h
+.. program-output:: ../../../scripts/msct_smooth.py -h
 
 
 msct_types
 =============
 
-.. program-output:: ../../../bin/msct_types -h
+.. program-output:: ../../../scripts/msct_types.py -h
 
 
 
