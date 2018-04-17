@@ -35,11 +35,19 @@ def test_load_save_load(info_labels):
         assert il2._combined_labels == il._combined_labels
         assert il2._clusters_apriori == il._clusters_apriori
 
-def test_atlas(info_labels):
+def test_read_label_file_atlas(info_labels):
     for info_label in info_labels:
-        spinalcordtoolbox.metadata.read_label_file_atlas(os.path.dirname(info_label), os.path.basename(info_label))
+        i, n, f = spinalcordtoolbox.metadata.read_label_file_atlas(os.path.dirname(info_label), os.path.basename(info_label))
+        assert isinstance(sum(i), int)
 
-def test_file(info_labels):
+def test_read_label_file(info_labels):
     for info_label in info_labels:
-        spinalcordtoolbox.metadata.read_label_file(os.path.dirname(info_label), os.path.basename(info_label))
+        _ii, _in, _if, _ci, _cn, _cg, _cl = spinalcordtoolbox.metadata.read_label_file(os.path.dirname(info_label), os.path.basename(info_label))
+        assert isinstance(sum(_ii), int)
+
+def test_get_file_label(info_labels):
+    for info_label in info_labels:
+        _in = spinalcordtoolbox.metadata.get_indiv_label_names(os.path.dirname(info_label))
+        spinalcordtoolbox.metadata.get_file_label(os.path.dirname(info_label), _in[0], output="file")
+        spinalcordtoolbox.metadata.get_file_label(os.path.dirname(info_label), _in[0], output="filewithpath")
 
