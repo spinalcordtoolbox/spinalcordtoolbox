@@ -61,7 +61,7 @@ script:
 # test dependencies
 #  - sct_check_dependencies
 # test functions & integrity
-  - bash -c "sudo apt-get install -qq libalglib-dev libvtk7-dev libinsighttoolkit4-dev; cd $HOME/build/neuropoly/spinalcordtoolbox/dev/isct_propseg; mkdir -p build; cd build; cmake ..; make; echo"
+  - bash -c "sudo apt-get install -qq libalglib-dev libinsighttoolkit4-dev; apt-cache show libvtk6-dev && sudo apt-get install -qq libvtk6-dev; apt-cache show libvtk7-dev && sudo apt-get install -qq libvtk7-dev; cd $HOME/build/neuropoly/spinalcordtoolbox/dev/isct_propseg; mkdir -p build; cd build; cmake ..; make; echo"
   - sct_testing -d 1
 #  - python create_package.py -s ${TRAVIS_OS_NAME}  # test package creation
 #  - cd ../spinalcordtoolbox_v*
