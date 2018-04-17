@@ -241,3 +241,17 @@ def get_file_label(path_label='', label='', output='file'):
 
     raise RuntimeError("Label {} not found in {}".format(label, fname_label))
 
+def get_indiv_label_names(directory):
+    """
+    Get all individual label names in a folder
+    :param directory: folder containing info_label.txt and the files
+    :return: the labels (strings)
+    """
+
+    file_info_label = 'info_label.txt'
+    il = InfoLabel()
+    fname_label = os.path.join(directory, file_info_label)
+    il.load(fname_label)
+
+    return tuple([_name for (_id, _name, _file) in il._indiv_labels])
+

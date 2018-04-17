@@ -14,7 +14,8 @@
 
 import sys, io, os, time
 
-from spinalcordtoolbox.metadata import get_file_label, read_label_file
+import spinalcordtoolbox.metadata
+
 from msct_image import Image
 
 from msct_parser import Parser
@@ -100,7 +101,7 @@ def warp_label(path_label, folder_label, file_label, fname_src, fname_transfo, p
     # read label file and check if file exists
     sct.printv('\nRead label file...', param.verbose)
     try:
-        template_label_ids, template_label_names, template_label_file, combined_labels_ids, combined_labels_names, combined_labels_id_groups, clusters_apriori = read_label_file(os.path.join(path_label, folder_label), file_label)
+        template_label_ids, template_label_names, template_label_file, combined_labels_ids, combined_labels_names, combined_labels_id_groups, clusters_apriori = spinalcordtoolbox.metadata.read_label_file(os.path.join(path_label, folder_label), file_label)
     except Exception as error:
         sct.printv('\nWARNING: Cannot warp label ' + folder_label + ': ' + str(error), 1, 'warning')
         raise
@@ -227,23 +228,30 @@ def main(args=None):
     path_qc = arguments.get("-qc", None)
 
     # call main function
-    WarpTemplate(fname_src, fname_transfo, warp_atlas, warp_spinal_levels, folder_out, path_template, verbose)
+    w = WarpTemplate(fname_src, fname_transfo, warp_atlas, warp_spinal_levels, folder_out, path_template, verbose)
 
-    if 1: # TODO cJ temporary
-        return
+    path_template = os.path.join(w.folder_out, w.folder_template)
+    if set(spinalcordtoolbox.metadata.get_indiv_label_names(path_template)).issuperset(["white matter", "T2-weighted template", "gray matter"]):
 
-    if path_qc is not None:
-        fname_wm = os.path.join(w.folder_out, w.folder_template, get_file_label(os.path.join(w.folder_out, w.folder_template), 'white matter'))
-        generate_qc(fname_src, fname_wm, sys.argv[1:], os.path.abspath(path_qc))
+        if path_qc is not None:
+            fname_wm = os.path.join(w.folder_out, w.folder_template, spinalcordtoolbox.metadata.get_file_label(path_template, 'white matter'))
+            generate_qc(fname_src, fname_wm, sys.argv[1:], os.path.abspath(path_qc))
 
-    sct.display_viewer_syntax([fname_src,
-                                   os.path.join(w.folder_out, w.folder_template, get_file_label(os.path.join(w.folder_out, w.folder_template), 'T2-weighted template')),
-                                   os.path.join(w.folder_out, w.folder_template, get_file_label(os.path.join(w.folder_out, w.folder_template), 'gray matter')),
-                                   os.path.join(w.folder_out, w.folder_template, get_file_label(os.path.join(w.folder_out, w.folder_template), 'white matter'))],
-                                  colormaps=['gray', 'gray', 'red-yellow', 'blue-lightblue'],
-                                  opacities=['1', '1', '0.5', '0.5'],
-                                  minmax=['', '0,4000', '0.4,1', '0.4,1'],
-                                  verbose=verbose)
+        sct.display_viewer_syntax(
+         [
+          fname_src,
+          spinalcordtoolbox.metadata.get_file_label(path_template, 'T2-weighted template', output="filewithpath"),
+          spinalcordtoolbox.metadata.get_file_label(path_template, 'gray matter', output="filewithpath"),
+          spinalcordtoolbox.metadata.get_file_label(path_template, 'white matter', output="filewithpath")
+         ],
+         colormaps=['gray', 'gray', 'red-yellow', 'blue-lightblue'],
+         opacities=['1', '1', '0.5', '0.5'],
+         minmax=['', '0,4000', '0.4,1', '0.4,1'],
+         verbose=verbose,
+        )
+    else:
+        if path_qc is not None:
+            sct.printv("QC not generated since expected labels are missing from template", type="warning" )
 
 
 if __name__ == "__main__":
