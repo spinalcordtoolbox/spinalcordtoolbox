@@ -53,7 +53,6 @@ class CenterlineController(base.BaseController):
 
         self.reset_position()
 
-
     def reset_position(self):
         super(CenterlineController, self).reset_position()
         self.position = (self.START_SLICE, self.position[1], self.position[2])

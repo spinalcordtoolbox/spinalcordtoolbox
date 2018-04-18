@@ -309,7 +309,6 @@ class BaseController(object):
         self.min_intensity = mean_intensity - std_intensity
         self.max_intensity = mean_intensity + std_intensity
 
-
     def reformat_image(self):
         """Set the camera position and increase contrast.
 

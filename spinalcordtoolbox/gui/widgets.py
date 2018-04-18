@@ -226,12 +226,10 @@ class AnatomicalCanvas(FigureCanvas):
             if curr_time - self.last_update <= self.update_freq:
                 return
 
-            if (abs(event.xdata - self.previous_point[0]) < 1 and
-                abs(event.ydata - self.previous_point) < 1):
+            if (abs(event.xdata - self.previous_point[0]) < 1 and abs(event.ydata - self.previous_point) < 1):
                 self.previous_point = (event.xdata, event.ydata)
                 return
 
-            ctrl = self._parent._controller
             xlim, ylim = self._axes.get_xlim(), self._axes.get_ylim()
             mean_factor = (event.xdata - xlim[0]) / float(xlim[1] - xlim[0])
             std_factor = (event.ydata - ylim[1]) / float(ylim[0] - ylim[1])
