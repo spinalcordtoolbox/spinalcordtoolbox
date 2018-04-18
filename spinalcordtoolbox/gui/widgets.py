@@ -110,7 +110,7 @@ class AnatomicalCanvas(FigureCanvas):
     _navigation_state = False
     annotations = []
     last_update = 0
-    update_freq = 0.0667  # 10 Hz
+    update_freq = 0.0667
     previous_point = (0, 0)
 
     def __init__(self, parent, width=8, height=8, dpi=100, crosshair=False, plot_points=False,
