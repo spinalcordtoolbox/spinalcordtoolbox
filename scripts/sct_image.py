@@ -1,14 +1,14 @@
 #!/usr/bin/env python
-#########################################################################################
+##############################################################################
 #
 # Perform operations on images
 #
-# ---------------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 # Copyright (c) 2015 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Authors: Julien Cohen-Adad, Sara Dupont
 #
 # About the license: see the file LICENSE.TXT
-#########################################################################################
+##############################################################################
 
 import os
 import sys
@@ -19,12 +19,10 @@ from numpy import newaxis, shape
 from sct_utils import add_suffix, extract_fname, printv, run, tmp_create
 import sct_utils as sct
 
+
 class Param:
     def __init__(self):
         self.verbose = '1'
-
-# PARSER
-# ==========================================================================================
 
 
 def get_parser():
@@ -446,7 +444,7 @@ def remove_vol(im_in, index_vol_user, todo):
     nt = data.shape[3]
     # define index list of volumes to keep/remove
     if todo == 'remove':
-        index_vol = [i for i in range(0, nt) if not i in index_vol_user]
+        index_vol = [i for i in range(0, nt) if i not in index_vol_user]
     elif todo == 'keep':
         index_vol = index_vol_user
     else:

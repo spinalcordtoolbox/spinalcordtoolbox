@@ -9,6 +9,7 @@ warnings.filterwarnings("ignore")
 import numpy as np
 
 import skimage
+import skimage.io
 import skimage.exposure
 
 import matplotlib
@@ -16,7 +17,6 @@ matplotlib.use('Agg')
 import matplotlib.colorbar as colorbar
 import matplotlib.colors as color
 import matplotlib.pyplot as plt
-from scipy import ndimage
 
 import sct_utils as sct
 
@@ -91,6 +91,26 @@ class QcImage(object):
         fig.axes.get_xaxis().set_visible(False)
         fig.axes.get_yaxis().set_visible(False)
 
+    def template(self, mask):
+        """
+        Show template statistical atlas
+        """
+        values = mask
+        values[values<0.5] = 0
+        color_white = color.colorConverter.to_rgba('white', alpha=0.0)
+        color_blue = color.colorConverter.to_rgba('blue', alpha=0.7)
+        color_cyan = color.colorConverter.to_rgba('cyan', alpha=0.8)
+        cmap = color.LinearSegmentedColormap.from_list('cmap_atlas',
+         [color_white, color_blue, color_cyan], N=256)
+
+        fig = plt.imshow(values,
+                         cmap=cmap,
+                         interpolation=self.interpolation,
+                         aspect=self.aspect_mask)
+
+        fig.axes.get_xaxis().set_visible(False)
+        fig.axes.get_yaxis().set_visible(False)
+
     def no_seg_seg(self, mask):
         values = np.ma.masked_equal(np.rint(mask), 0)
         fig = plt.imshow(values,
@@ -108,22 +128,6 @@ class QcImage(object):
                          aspect=self.aspect_mask)
         fig.axes.get_xaxis().set_visible(False)
         fig.axes.get_yaxis().set_visible(False)
-
-    def label_vertebrae(self, mask):
-        self.listed_seg(mask)
-        ax = plt.gca()
-        a = [0.0]
-        data = mask
-        for index, val in np.ndenumerate(data):
-            if val not in a:
-                a.append(val)
-                index = int(val)
-                if index in self._labels_regions.values():
-                    color = self._labels_color[index]
-                    x, y = ndimage.measurements.center_of_mass(np.where(data == val, data, 0))
-                    label = list(self._labels_regions.keys())[list(self._labels_regions.values()).index(index)]
-                    ax.text(y, x, label, color='black', weight='heavy', clip_on=True)
-                    ax.text(y, x, label, color=color, clip_on=True)
 
     def colorbar(self):
         fig = plt.figure(figsize=(9, 1.5))
@@ -155,7 +159,10 @@ class QcImage(object):
 
             """
             self.qc_report.slice_name = sct_slice.get_name()
-            aspect_img, self.aspect_mask = sct_slice.aspect()
+
+            # consider only the first 2 slices
+            aspect_img, self.aspect_mask = sct_slice.aspect()[:2]
+
             self.qc_report.make_content_path()
             logger.info('QC: %s with %s slice', func.__name__, sct_slice.get_name())
 
@@ -373,3 +380,40 @@ class QcReport(object):
                 if not os.path.isfile(os.path.join(dest_full_path, file_)):
                     sct.copy(os.path.join(src_path, file_),
                              dest_full_path)
+
+
+def add_entry(src, process, args, path_qc, plane, background=None, foreground=None,
+ qcslice=None,
+ qcslice_operations=[],
+ qcslice_layout=None,
+):
+    """
+    """
+
+    qc_param = Params(src, process, args, plane, path_qc)
+    report = QcReport(qc_param, '')
+
+    if qcslice is not None:
+        @QcImage(report, 'none', qcslice_operations)
+        def layout(qslice):
+            return qcslice_layout(qslice)
+
+        layout(qcslice)
+    else:
+        report.make_content_path()
+
+        def normalized(img):
+            return np.uint8(skimage.exposure.rescale_intensity(img, out_range=np.uint8))
+
+        skimage.io.imsave(qc_param.abs_overlay_img_path(), normalized(foreground))
+
+        if background is None:
+            qc_param.bkg_img_path = qc_param.overlay_img_path
+        else:
+            skimage.io.imsave(qc_param.abs_bkg_img_path(), normalized(background))
+
+        report.update_description_file(foreground.shape[:2])
+
+    sct.printv('Sucessfully generated the QC results in %s' % qc_param.qc_results)
+    sct.printv('Use the following command to see the results in a browser:')
+    sct.printv('open file "{}/index.html"'.format(path_qc), type='info')
