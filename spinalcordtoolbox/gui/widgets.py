@@ -187,6 +187,9 @@ class AnatomicalCanvas(FigureCanvas):
                 self.annotate(x, y, label)
 
     def on_zoom(self, event):
+        if event.xdata is None or event.ydata is None:
+            return
+
         if event.button == 'up':
             scale_factor = 1.3
         else:
@@ -214,6 +217,9 @@ class AnatomicalCanvas(FigureCanvas):
         pass
 
     def on_change_intensity(self, event):
+        if event.xdata is None or event.ydata is None:
+            return
+
         if event.button == 3:
             curr_time = time()
 
@@ -271,7 +277,7 @@ class SagittalCanvas(AnatomicalCanvas):
         super(SagittalCanvas, self).refresh()
 
     def on_select_point(self, event):
-        if event.xdata > -1 and event.ydata > -1 and event.button == 1:
+        if event.xdata is not None and event.ydata is not None and event.button == 1:
             self.point_selected_signal.emit(event.ydata, event.xdata, self._z)
 
     def plot_points(self):
@@ -307,7 +313,7 @@ class CoronalCanvas(AnatomicalCanvas):
         super(CoronalCanvas, self).refresh()
 
     def on_select_point(self, event):
-        if event.xdata > -1 and event.ydata > -1 and event.button == 1:
+        if event.xdata is not None and event.ydata is not None and event.button == 1:
             self.point_selected_signal.emit(event.xdata, self._y, event.ydata)
 
     def plot_points(self):
@@ -338,7 +344,7 @@ class AxialCanvas(AnatomicalCanvas):
         super(AxialCanvas, self).refresh()
 
     def on_select_point(self, event):
-        if event.xdata > 0 and event.ydata > 0 and event.button == 1:
+        if event.xdata is not None and event.ydata is not None and event.button == 1:
             self.point_selected_signal.emit(self._x, event.ydata, event.xdata)
 
     def plot_points(self):
