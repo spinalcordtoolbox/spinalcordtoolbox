@@ -179,7 +179,9 @@ def main(args=None):
     initz = ''
     initcenter = ''
     initc2 = 'auto'
-    fname_label = 'labelz.nii.gz'
+    fname_initlabel = ''
+    fname_labelz = 'labelz.nii.gz'
+    initauto = False
     param = Param()
 
     # check user arguments
@@ -218,6 +220,9 @@ def main(args=None):
                 initz = [int(x) for x in arg_initfile[idx_arg + 1].split(',')]
             if arg == '-initcenter':
                 initcenter = int(arg_initfile[idx_arg + 1])
+    if '-initlabel' in arguments:
+        # get absolute path of label
+        fname_initlabel = os.path.abspath(arguments['-initlabel'])
     if '-initc2' in arguments:
         initc2 = 'manual'
     if '-param' in arguments:
@@ -240,16 +245,19 @@ def main(args=None):
 
     # create label to identify disc
     sct.printv('\nCreate label to identify disc...', verbose)
-    initauto = False
     if initz:
-        create_label_z('segmentation.nii.gz', initz[0], initz[1], fname_label=fname_label)  # create label located at z_center
+        create_label_z('segmentation.nii.gz', initz[0], initz[1], fname_label=fname_labelz)  # create label located at z_center
     elif initcenter:
         # find z centered in FOV
         nii = Image('segmentation.nii.gz')
         nii.change_orientation('RPI')  # reorient to RPI
         nx, ny, nz, nt, px, py, pz, pt = nii.dim  # Get dimensions
         z_center = int(round(nz / 2))  # get z_center
-        create_label_z('segmentation.nii.gz', z_center, initcenter, fname_label=fname_label)  # create label located at z_center
+        create_label_z('segmentation.nii.gz', z_center, initcenter, fname_label=fname_labelz)  # create label located at z_center
+    elif fname_initlabel:
+        # dilate label so that it is not lost when applying warping
+        import sct_maths
+        sct_maths.main(['-i', fname_initlabel, '-dilate', '3', '-o', fname_labelz])
     else:
         initauto = True
         # printv('\nERROR: You need to initialize the disc detection algorithm using one of these two options: -initz, -initcenter\n', 1, 'error')
@@ -288,7 +296,7 @@ def main(args=None):
         init_disc = []
     else:
         # Apply straightening to z-label
-        sct.printv('\nDilate z-label and apply straightening...', verbose)
+        sct.printv('\nAnd apply straightening to label...', verbose)
         sct.run(['sct_apply_transfo', '-i', 'labelz.nii.gz', '-d', 'data_straightr.nii', '-w', 'warp_curve2straight.nii.gz', '-o', 'labelz_straight.nii.gz', '-x', 'nn'], verbose)
         # get z value and disk value to initialize labeling
         sct.printv('\nGet z and disc values from straight label...', verbose)
@@ -665,13 +673,13 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
 
 # Create label
 # ==========================================================================================
-def create_label_z(fname_seg, z, value, fname_label='labelz.nii.gz'):
+def create_label_z(fname_seg, z, value, fname_labelz='labelz.nii.gz'):
     """
     Create a label at coordinates x_center, y_center, z
     :param fname_seg: segmentation
     :param z: int
-    :param fname_label: string file name of output label
-    :return: fname_label
+    :param fname_labelz: string file name of output label
+    :return: fname_labelz
     """
     nii = Image(fname_seg)
     orientation_origin = nii.change_orientation('RPI')  # change orientation to RPI
@@ -684,18 +692,18 @@ def create_label_z(fname_seg, z, value, fname_label='labelz.nii.gz'):
     # dilate label to prevent it from disappearing due to nearestneighbor interpolation
     from sct_maths import dilate
     nii.data = dilate(nii.data, [3])
-    nii.setFileName(fname_label)
+    nii.setFileName(fname_labelz)
     nii.change_orientation(orientation_origin)  # put back in original orientation
     nii.save()
-    return fname_label
+    return fname_labelz
 
 
 # Get z and label value
 # ==========================================================================================
 def get_z_and_disc_values_from_label(fname_label):
     """
-    Find z-value and label-value based on labeled image
-    :param fname_label: image that contains label
+    Find z-value and label-value based on labeled image in RPI orientation
+    :param fname_label: image in RPI orientation that contains label
     :return: [z_label, value_label] int list
     """
     nii = Image(fname_label)
