@@ -260,7 +260,6 @@ def main(args=None):
         sct_maths.main(['-i', fname_initlabel, '-dilate', '3', '-o', fname_labelz])
     else:
         initauto = True
-        # printv('\nERROR: You need to initialize the disc detection algorithm using one of these two options: -initz, -initcenter\n', 1, 'error')
 
     # Straighten spinal cord
     sct.printv('\nStraighten spinal cord...', verbose)
@@ -282,8 +281,6 @@ def main(args=None):
     # resample to 0.5mm isotropic to match template resolution
     sct.printv('\nResample to 0.5mm isotropic...', verbose)
     sct.run(['sct_resample', '-i', 'data_straight.nii', '-mm', '0.5x0.5x0.5', '-x', 'linear', '-o', 'data_straightr.nii'], verbose=verbose)
-    # sct.run('sct_resample -i segmentation.nii.gz -mm 0.5x0.5x0.5 -x linear -o segmentationr.nii.gz', verbose)
-    # sct.run('sct_resample -i labelz.nii.gz -mm 0.5x0.5x0.5 -x linear -o labelzr.nii', verbose)
 
     # Apply straightening to segmentation
     # N.B. Output is RPI
@@ -424,37 +421,11 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     :return:
     """
     sct.printv('\nLook for template...', verbose)
-    # if path_template == '':
-    #     # get path of SCT
-    #     from os import path
-    #     path_script = path.dirname(__file__)
-    #     path_sct = (path.dirname(path_script), 1)
-    #     folder_template = 'data/template/'
-    #     path_template = path_sct+folder_template
     sct.printv('Path template: ' + path_template, verbose)
 
     # adjust file names if MNI-Poly-AMU template is used
     fname_level = get_file_label(os.path.join(path_template, 'template'), 'vertebral', output='filewithpath')
     fname_template = get_file_label(os.path.join(path_template, 'template'), contrast.upper() + '-weighted', output='filewithpath')
-
-    # if not len(glob.glob(os.path.join(path_template, 'MNI-Poly-AMU*.*'))) == 0:
-    #     contrast = contrast.upper()
-    #     file_level = '*_level.nii.gz'
-    # else:
-    #     file_level = '*_levels.nii.gz'
-    #
-    # # retrieve file_template based on contrast
-    # try:
-    #     fname_template_list = glob.glob(os.path.join(path_template, '*' + contrast + '.nii.gz'))
-    #     fname_template = fname_template_list[0]
-    # except IndexError:
-    #     sct.printv('\nERROR: No template found. Please check the provided path.', 1, 'error')
-    # retrieve disc level from template
-    # try:
-    #     fname_level_list = glob.glob(os.path.join(path_template, file_level))
-    #     fname_level = fname_level_list[0]
-    # except IndexError:
-    #     sct.printv('\nERROR: File *_levels.nii.gz not found.', 1, 'error')
 
     # Open template and vertebral levels
     sct.printv('\nOpen template and vertebral levels...', verbose)
