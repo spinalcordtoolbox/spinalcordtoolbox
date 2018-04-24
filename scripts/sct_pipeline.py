@@ -575,6 +575,7 @@ if __name__ == "__main__":
         # build results
         pd.set_option('display.max_rows', 500)
         pd.set_option('display.max_columns', 500)
+        pd.set_option('display.max_colwidth', -1)  # to avoid truncation of long string
         pd.set_option('display.width', 1000)
         # drop entries for visibility
         results_subset = results.drop('path_data', 1).drop('output', 1)
