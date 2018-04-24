@@ -111,6 +111,10 @@ sct_label_vertebrae -i t2.nii.gz -s t2_seg_manual.nii.gz  "$(< init_label_verteb
                       type_value='file',
                       description='Initialize labeling by providing a text file which includes either -initz or -initcenter flag.',
                       mandatory=False)
+    parser.add_option(name="-initlabel",
+                      type_value='file',
+                      description='Initialize vertebral labeling by providing a nifti file that has a single disc label. An example of such file is a single voxel with value "3", which would be located at the posterior tip of C2-C3 disc. Such label file can be created using: sct_label_utils -i IMAGE_REF -create-viewer 3',
+                      mandatory=False)
     parser.add_option(name="-ofolder",
                       type_value="folder_creation",
                       description="Output folder.",
@@ -175,6 +179,7 @@ def main(args=None):
     initz = ''
     initcenter = ''
     initc2 = 'auto'
+    fname_label = 'labelz.nii.gz'
     param = Param()
 
     # check user arguments
@@ -237,14 +242,14 @@ def main(args=None):
     sct.printv('\nCreate label to identify disc...', verbose)
     initauto = False
     if initz:
-        create_label_z('segmentation.nii.gz', initz[0], initz[1])  # create label located at z_center
+        create_label_z('segmentation.nii.gz', initz[0], initz[1], fname_label=fname_label)  # create label located at z_center
     elif initcenter:
         # find z centered in FOV
         nii = Image('segmentation.nii.gz')
         nii.change_orientation('RPI')  # reorient to RPI
         nx, ny, nz, nt, px, py, pz, pt = nii.dim  # Get dimensions
         z_center = int(round(nz / 2))  # get z_center
-        create_label_z('segmentation.nii.gz', z_center, initcenter)  # create label located at z_center
+        create_label_z('segmentation.nii.gz', z_center, initcenter, fname_label=fname_label)  # create label located at z_center
     else:
         initauto = True
         # printv('\nERROR: You need to initialize the disc detection algorithm using one of these two options: -initz, -initcenter\n', 1, 'error')
@@ -660,14 +665,14 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
 
 # Create label
 # ==========================================================================================
-def create_label_z(fname_seg, z, value):
+def create_label_z(fname_seg, z, value, fname_label='labelz.nii.gz'):
     """
     Create a label at coordinates x_center, y_center, z
     :param fname_seg: segmentation
     :param z: int
+    :param fname_label: string file name of output label
     :return: fname_label
     """
-    fname_label = 'labelz.nii.gz'
     nii = Image(fname_seg)
     orientation_origin = nii.change_orientation('RPI')  # change orientation to RPI
     nx, ny, nz, nt, px, py, pz, pt = nii.dim  # Get dimensions
