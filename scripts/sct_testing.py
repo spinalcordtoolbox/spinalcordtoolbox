@@ -396,7 +396,11 @@ def test_function(param_test):
 
     # initialize panda dataframe
     sct.log.debug("Init dataframe")
-    param_test.results = DataFrame(index=[subject_folder], data={'status': 0, 'output': '', 'path_data': param_test.path_data})
+    param_test.results = DataFrame(index=[subject_folder],
+                                   data={'status': 0,
+                                         'output': '',
+                                         'path_data': param_test.path_data,
+                                         'path_output': param_test.path_output})
     # retrieve input file (will be used later for integrity testing)
     if '-i' in dict_args:
         # check if list in case of multiple input files
