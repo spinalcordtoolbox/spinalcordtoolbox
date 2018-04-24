@@ -46,7 +46,6 @@ usage:
 import copy_reg
 import os
 import platform
-import re
 import signal
 import sys
 import types
