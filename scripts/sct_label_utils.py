@@ -527,7 +527,7 @@ class ProcessLabels(object):
         Display all the labels that are contained in the input image.
         The image is suppose to be RPI to display voxels. But works also for other orientations
         """
-        coordinates_input = self.image_input.getNonZeroCoordinates(sorting='z')
+        coordinates_input = self.image_input.getNonZeroCoordinates(sorting='value')
         self.useful_notation = ''
         for coord in coordinates_input:
             sct.printv('Position=(' + str(coord.x) + ',' + str(coord.y) + ',' + str(coord.z) + ') -- Value= ' + str(coord.value), verbose=self.verbose)
