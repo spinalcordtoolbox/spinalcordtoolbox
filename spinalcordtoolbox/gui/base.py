@@ -135,6 +135,7 @@ class BaseDialog(QtGui.QDialog):
             QtGui.QShortcut(event, self, action)
 
         self.setWindowTitle(self.params.dialog_title)
+        self.update_status('Use right click with left/right for brightness and up/down for contrast')
 
     def increment_vertical_nav(self):
         """Action to increment the anatonical viewing position.
