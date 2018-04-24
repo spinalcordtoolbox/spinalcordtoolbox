@@ -39,6 +39,7 @@ usage:
     sct_pipeline  -f sct_a_tool -d /path/to/data/  -p  \" sct_a_tool option \" -cpu-nb 8
 """
 
+# TODO: indicate the temporary folder where the data are processed for debugging purpose.
 # TODO: create a dictionnary for param, such that results can display reduced param instead of full. Example: -param t1="blablabla",t2="blablabla"
 # TODO: read_database: hard coded fields to put somewhere else (e.g. config file)
 
