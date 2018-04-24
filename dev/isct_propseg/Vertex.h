@@ -7,10 +7,12 @@
  * \author Benjamin De Leener - NeuroPoly (http://www.neuropoly.info)
  */
 
+#include <ostream>
+#include <string>
+
 #include "util/Vector3.h"
 #include "util/Matrix4x4.h"
-#include <string>
-using namespace std;
+
 
 /*!
  * \class Vertex
@@ -24,21 +26,21 @@ class Vertex
 public:
 	Vertex();
 	Vertex(double x, double y, double z);
-	Vertex(double x, double y, double z, string labels);
-	Vertex(string labels);
+	Vertex(double x, double y, double z, std::string labels);
+	Vertex(std::string labels);
 	Vertex(CVector3 point);
 	Vertex(CVector3 point, bool deform);
 	Vertex(CVector3 point, CVector3 normal);
 	Vertex(CVector3 point, CVector3 normal, int label);
 	Vertex(const Vertex &v);
-	Vertex(const Vertex &v, string labels);
+	Vertex(const Vertex &v, std::string labels);
 	~Vertex(void);
 	CVector3 getPosition();
 	void setPosition(CVector3 pos);
 	void setLabel(int label);
-	void setLabelS(string labels);
+	void setLabelS(std::string labels);
 	int getLabel();
-	string getLabelString();
+	std::string getLabelString();
 	void setNormal(double x, double y, double z);
 	CVector3 getNormal();
 	double distance(double x, double y, double z);
@@ -47,14 +49,14 @@ public:
 
 	Vertex& operator=(const Vertex &v);
 	bool operator==(const Vertex &v);
-	friend ostream& operator<<( ostream &flux, const Vertex &v );
+	friend std::ostream& operator<<( std::ostream &flux, const Vertex &v );
 
 	void setDeform(bool deform) { deform_ = deform; };
 	bool hasToBeDeform() { return deform_; };
 private:
 	CVector3 point_;
 	int label_;
-	string label_s_;
+	std::string label_s_;
 	CVector3 normal_;
 
 	bool deform_;

@@ -9,15 +9,14 @@
 #ifndef __sct_segmentation_propagation__BSplineApproximation__
 #define __sct_segmentation_propagation__BSplineApproximation__
 
-#include <iostream>
 #include <vector>
-#include "util/Vector3.h"
 
 #include <itkPointSet.h>
 #include <itkBSplineScatteredDataPointSetToImageFilter.h>
 #include <itkBSplineControlPointImageFunction.h>
 
-using namespace std;
+#include "util/Vector3.h"
+
 
 const unsigned int ParametricDimension = 1;
 const unsigned int DataDimension = 3;
@@ -34,7 +33,7 @@ public:
     BSplineApproximation() {};
     ~BSplineApproximation() {};
     
-    BSplineApproximation(vector<CVector3>* centerline)
+    BSplineApproximation(std::vector<CVector3>* centerline)
     {
         double range = centerline->size();
         
@@ -87,11 +86,11 @@ public:
         return CVector3(Vd[0][0],Vd[1][0],Vd[2][0]);
     };
     
-    vector<CVector3> EvaluateBSplinePoints(unsigned int numberOfPoints)
+    std::vector<CVector3> EvaluateBSplinePoints(unsigned int numberOfPoints)
     {
-        vector<double> points(numberOfPoints,0.0); // 0.0 is the starting number, numberOfPoints is the range size
-        transform(points.begin(),points.end(),++points.begin(),bind2nd(plus<double>(),1.0/(numberOfPoints-1))); // 1.0/(numberOfPoints-1) is the increment
-        vector<CVector3> centerline;
+        std::vector<double> points(numberOfPoints,0.0); // 0.0 is the starting number, numberOfPoints is the range size
+        transform(points.begin(),points.end(),++points.begin(),bind2nd(std::plus<double>(),1.0/(numberOfPoints-1))); // 1.0/(numberOfPoints-1) is the increment
+        std::vector<CVector3> centerline;
         for (unsigned int i=0; i<points.size(); i++)
             centerline.push_back(EvaluateBSpline(points[i]));
         return centerline;
