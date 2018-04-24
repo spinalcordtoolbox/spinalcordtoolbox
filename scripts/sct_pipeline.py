@@ -579,6 +579,8 @@ if __name__ == "__main__":
         # drop entries for visibility
         results_subset = results.drop('path_data', 1).drop('output', 1)
         results_display = results_subset
+        # reorder for better display: status, path_output
+        results_display = results_display[['status', 'path_output']]
         # save panda structure
         if create_log:
             results_subset.to_pickle(file_log + '.pickle')
