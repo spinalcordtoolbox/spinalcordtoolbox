@@ -39,7 +39,6 @@ usage:
     sct_pipeline  -f sct_a_tool -d /path/to/data/  -p  \" sct_a_tool option \" -cpu-nb 8
 """
 
-# TODO: do not output pickle by default
 # TODO: indicate the temporary folder where the data are processed for debugging purpose.
 # TODO: create a dictionnary for param, such that results can display reduced param instead of full. Example: -param t1="blablabla",t2="blablabla"
 # TODO: read_database: hard coded fields to put somewhere else (e.g. config file)
@@ -432,12 +431,21 @@ def get_parser():
                       example=['0', '1'],
                       default_value='0')  # TODO: this should have values True/False as defined in sct_testing, not 0/1
 
+    parser.usage.addSection("\nOUTPUT")
+
     parser.add_option(name="-log",
                       type_value='multiple_choice',
                       description="Redirects Terminal verbose to log file.",
                       mandatory=False,
                       example=['0', '1'],
                       default_value='1')
+
+    parser.add_option(name="-pickle",
+                      type_value='multiple_choice',
+                      description="Output Pickle file.",
+                      mandatory=False,
+                      example=['0', '1'],
+                      default_value='0')
 
     parser.add_option(name='-email',
                       type_value=[[','], 'str'],
@@ -490,6 +498,7 @@ if __name__ == "__main__":
         nb_cpu = cpu_count()  # uses maximum number of available CPUs
     test_integrity = int(arguments['-test-integrity'])
     create_log = int(arguments['-log'])
+    output_pickle = int(arguments['-pickle'])
     if '-email' in arguments:
         create_log = True
         send_email = True
@@ -583,7 +592,7 @@ if __name__ == "__main__":
         # reorder for better display: status, path_output
         results_display = results_display[['status', 'path_output']]
         # save panda structure
-        if create_log:
+        if output_pickle:
             results_subset.to_pickle(file_log + '.pickle')
         # compute mean
         results_mean = results_subset.query('status != 200 & status != 201').mean(numeric_only=True)
