@@ -382,9 +382,9 @@ def get_parser():
     parser = msct_parser.Parser(__file__)
 
     # Mandatory arguments
-    parser.usage.set_description("Run a specific SCT function in a list of subjects countained within a given folder. Multiple parameters can be selected.\n"
-                                 "Exemple of command:\n"
-                                 "sct_pipeline -f sct_propseg -d /Users/julien/data/sct_test_function -p \\\"-i t2/t2.nii.gz -c t2\",\"-i t1/t1.nii.gz -c t1\\\"")
+    parser.usage.set_description("Run a specific SCT function in a list of subjects contained within a given folder. "
+                                 "Multiple parameters can be selected by repeating the flag -p as shown in the example below:\n"
+                                 "sct_pipeline -f sct_propseg -d PATH_TO_DATA -p \\\"-i t1/t1.nii.gz -c t1\\\" -p \\\"-i t2/t2.nii.gz -c t2\\\"")
     parser.add_option(name="-f",
                       type_value="str",
                       description="Function to test.",
@@ -399,8 +399,10 @@ def get_parser():
 
     parser.add_option(name="-p",
                       type_value="str",
-                      description="Arguments to pass to the function that is tested. Please put double-quotes if there are spaces in the list of parameters.\n"
-                                  "Image paths must be contains in the arguments list.",
+                      description="Arguments to pass to the function that is tested. Put double-quotes if there are "
+                                  "spaces in the list of parameters. Path to images are relative to the subject's folder. "
+                                  "Use multiple '-p' flags if you would like to test different parameters on the same"
+                                  "subjects.",
                       mandatory=False)
 
     parser.add_option(name="-subj",
