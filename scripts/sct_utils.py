@@ -114,7 +114,7 @@ def remove_handler(handler):
     :param handler: 
     :return: 
     """
-    log.debug("Removing log handler {} ".format(handler))
+    log.debug("Pause log to {} ".format(handler.baseFilename))
     log.removeHandler(handler)
 
 # define class color
