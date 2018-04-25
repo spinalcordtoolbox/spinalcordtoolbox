@@ -208,10 +208,10 @@ fi
 
 # Catch SCT version
 if [ -e "version.txt" ]; then
-  if [ ${SCT_MPI_MODE} ]; then
-  echo "$(cat version.txt) mpi" > version.txt
-  fi
   SCT_VERSION=`cat version.txt`
+  if [ ${SCT_MPI_MODE} ]; then
+    SCT_VERSION=${SCT_VERSION}_mpi
+  fi
 else
   echo "ERROR: version.txt not found."
   echo "The install_sct script must be execute from the source directory"
@@ -451,6 +451,11 @@ else
     echo "conda install error with exit status $e_status. Check logs for more details
             and verify your internet connection before reinstalling"
     exit $e_status
+  fi
+
+  if [[ ${SCT_MPI_MODE} ]] ; then
+    echo "Installing MPI libraries for HCP installation"
+      conda install -c conda-forge --yes --file ${SCT_SOURCE}/install/requirements/requirementsMPI.txt
   fi
 
   # Workaround for #1549 (install pip 10 pre-release if not already here)
