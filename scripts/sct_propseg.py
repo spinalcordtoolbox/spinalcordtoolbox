@@ -341,11 +341,10 @@ def generate_qc(fn_in, fn_seg, args, path_qc):
 
 
 if __name__ == "__main__":
-    sct.start_stream_logger()
+    sct.init_sct()
     parser = get_parser()
     args = sys.argv[1:]
     arguments = parser.parse(args)
-
     fname_input_data = arguments["-i"]
     fname_data = os.path.abspath(fname_input_data)
     contrast_type = arguments["-c"]

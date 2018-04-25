@@ -210,7 +210,7 @@ def fill_z_holes(fname_in):
 
 
 def main():
-    sct.start_stream_logger()
+    sct.init_sct()
     parser = get_parser()
     args = sys.argv[1:]
     arguments = parser.parse(args)

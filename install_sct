@@ -36,6 +36,7 @@ SCRIPT_DIR="scripts"
 DATA_DIR="data"
 PYTHON_DIR="python"
 BIN_DIR="bin"
+STATS_DSN="https://www.neuro.polymtl.ca/_media/downloads/stats_dsn.txt"
 
 # Force a clean exit
 finish ()
@@ -49,6 +50,8 @@ finish ()
     else
         echo "Installation failed"
     fi
+    # clean tmp_dir
+    rm -r ${TMP_DIR}
     exit ${value}
 }
 trap finish EXIT
@@ -265,6 +268,31 @@ else
   echo -e "sudo mode ........... 0"
 fi
 
+# If you do not want the crash reports question to be ask,
+# set ASK_REPORT_QUESTION at installation time like this:
+# >>> ASK_REPORT_QUESTION=false ./install_sct
+REPORT_STATS=no
+if [[ ! ${ASK_REPORT_QUESTION} =~ ^([[Ff]alse?|[Nn]o?)$  ]]; then
+  # Send crash statistic and error logs to developers, that is the
+  # Questions
+  echo
+  cat <<EOF
+The SCT team is constantly improving the toolbox and uses request and
+feedback to improve its user experience and fix bugs. We are using a
+report system to receive anonymous crash reports and errors from our
+users. If you agree to participate and help improve the SCT
+EOF
+  read -p 'please type yes [no]:' -r REPORT_STATS
+fi
+
+if [[ ${REPORT_STATS} =~ yes ]]; then
+  REPORT_STATS=yes
+  echo Crash report will be sent to the dev team. Thank you!
+else
+  unset REPORT_STATS
+  echo Not sharing crash report
+fi
+
 # Define sh files
 if echo $(ps -o comm= $PPID) | grep csh ;then
   THE_CSHRC=${HOME}/.cshrc
@@ -369,6 +397,13 @@ if [ ! -f "version.txt" ]; then
 fi
 
 ## Create launchers for Python scripts
+
+export SCT_ADD_ENV_VARS
+# add env vars to set in sct_laucher here SCT_ADD_ENV_VARS can have many lines
+if [ ${REPORT_STATS} ]; then
+  download "${TMP_DIR}/stats_dsn.txt" "$STATS_DSN"
+  SCT_ADD_ENV_VARS="export SENTRY_DSN=$(cat ${TMP_DIR}/stats_dsn.txt)"
+fi
 echo -e "\nCreate launchers for Python scripts"
 cmd="mkdir -p ${SCT_DIR}/${BIN_DIR}"; echo ">> "$cmd; $cmd
 # update_bin has to be executed from the install directory
