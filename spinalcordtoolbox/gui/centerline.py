@@ -242,7 +242,8 @@ class Centerline(base.BaseDialog):
 
 def launch_centerline_dialog(im_input, im_output, params):
     params.input_file_name = im_input.absolutepath
-    params.subtitle = u'Use the Up/Down arrows to navigate the superior-inferior direction'
+    params.subtitle = u'Use the Up/Down arrows to navigate the superior-inferior direction' \
+                      '\nUse right click with left/right for brightness and up/down for contrast'
     controller = CenterlineController(im_input, params, im_output)
     controller.reformat_image()
 
