@@ -26,7 +26,7 @@ class AnatomicalParams(object):
     def __init__(self,
                  cmap='gray',
                  interp='nearest',
-                 vmin=5.,
+                 vmin=0.,
                  vmax=99.,
                  vmean=98.,
                  vmode='percentile',
