@@ -146,8 +146,8 @@ class AnatomicalCanvas(FigureCanvas):
             data,
             cmap=self._params.cmap,
             interpolation=self._params.interp,
-            vmin=self._parent._controller.min_intensity,
-            vmax=self._parent._controller.max_intensity,
+            vmin=self._params.vmin,
+            vmax=self._params.vmax,
             alpha=self._params.alpha)
         self._axes.set_aspect(aspect)
 

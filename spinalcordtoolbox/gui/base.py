@@ -330,6 +330,8 @@ class BaseController(object):
         self.params.offset = x * dx
         self.default_position = Position(x // 2, y // 2, z // 2)
 
+        self.params.vmin, self.params.vmax = np.percentile(self.image.data,
+                                                           (self.params.vmin, self.params.vmax))
         self.reset_position()
 
     def reset_position(self):
