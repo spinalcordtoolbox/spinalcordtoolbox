@@ -54,6 +54,7 @@ def resolve_module(framework_name):
         'Keras': ('keras', True),
         'opencv': ('cv2', False),
         'mkl-service': (None, False),
+        'pytest-cov': ('pytest_cov', False),
     }
 
     try:
