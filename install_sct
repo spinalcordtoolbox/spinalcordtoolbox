@@ -527,15 +527,6 @@ else
     fi
   fi
 
-  # reinstall numpy at the end to prevent some bugs
-  n_version=$(conda list numpy | grep numpy |awk '{print $2}')
-  conda install -fy numpy=$n_version
-  e_status=$?
-  if [ ${e_status} != 0 ]; then
-    echo "Failed to conda install numpy"
-    exit ${e_status}
-  fi
-
 fi
 
 ## Install the spinalcordtoolbox into conda
