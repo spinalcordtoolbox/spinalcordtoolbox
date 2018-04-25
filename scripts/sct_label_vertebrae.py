@@ -246,14 +246,14 @@ def main(args=None):
     # create label to identify disc
     sct.printv('\nCreate label to identify disc...', verbose)
     if initz:
-        create_label_z('segmentation.nii.gz', initz[0], initz[1], fname_label=fname_labelz)  # create label located at z_center
+        create_label_z('segmentation.nii.gz', initz[0], initz[1], fname_labelz=fname_labelz)  # create label located at z_center
     elif initcenter:
         # find z centered in FOV
         nii = Image('segmentation.nii.gz')
         nii.change_orientation('RPI')  # reorient to RPI
         nx, ny, nz, nt, px, py, pz, pt = nii.dim  # Get dimensions
         z_center = int(round(nz / 2))  # get z_center
-        create_label_z('segmentation.nii.gz', z_center, initcenter, fname_label=fname_labelz)  # create label located at z_center
+        create_label_z('segmentation.nii.gz', z_center, initcenter, fname_labelz=fname_labelz)  # create label located at z_center
     elif fname_initlabel:
         import sct_label_utils
         # subtract "1" to label value because due to legacy, in this code the disc C2-C3 has value "2", whereas in the
