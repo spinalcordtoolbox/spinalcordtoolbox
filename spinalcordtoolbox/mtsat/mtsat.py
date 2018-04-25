@@ -122,7 +122,7 @@ def compute_mtsat_from_file(fname_mt, fname_pd, fname_t1, tr_mt, tr_pd, tr_t1, f
 
     # compute MTsat
     nii_mtsat, nii_t1map = compute_mtsat(nii_mt, nii_pd, nii_t1, tr_mt, tr_pd, tr_t1, fa_mt, fa_pd, fa_t1,
-                                         nii_b1map=None, verbose=verbose)
+                                         nii_b1map=nii_b1map, verbose=verbose)
 
     # Output MTsat and T1 maps
     # by default, output in the same directory as the input images
