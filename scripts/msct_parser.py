@@ -248,7 +248,7 @@ class Option:
         if result_creation == 2:
             raise OSError("Permission denied for folder creation {}".format(param))
         elif result_creation == 1:
-            sct.log.info("Folder " + param + " has been created.", 0)
+            sct.log.info("Folder " + param + " has been created.")
         return param
 
 

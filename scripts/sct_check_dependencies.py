@@ -56,6 +56,7 @@ def resolve_module(framework_name):
         'futures': ("concurrent.futures", False),
         'opencv': ('cv2', False),
         'mkl-service': (None, False),
+        'pytest-cov': ('pytest_cov', False),
     }
 
     try:
