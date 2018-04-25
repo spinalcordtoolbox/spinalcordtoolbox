@@ -841,11 +841,11 @@ def get_parser():
     parser = Parser(__file__)
 
     # Mandatory arguments
-    parser.usage.set_description("This program takes as input an anatomic image and the centerline or segmentation of "
-                                 "its spinal cord (that you can get using sct_get_centerline.py or "
-                                 "sct_segmentation_propagation) and returns the anatomic image where the spinal cord "
-                                 "was straightened."
-                                 " Reference: De Leener B, Mangeat G, Dupont S, Martin AR, Callot V, Stikov N, Fehlings MG, Cohen-Adad J. Topologically-preserving straightening of spinal cord MRI. J Magn Reson Imaging. 2017 Oct;46(4):1209-1219")
+    parser.usage.set_description("This program takes as input an anatomic image and the spinal cord centerline (or "
+                                 "segmentation), and returns the an image of a straightened spinal cord. Reference: "
+                                 "De Leener B, Mangeat G, Dupont S, Martin AR, Callot V, Stikov N, Fehlings MG, "
+                                 "Cohen-Adad J. Topologically-preserving straightening of spinal cord MRI. J Magn "
+                                 "Reson Imaging. 2017 Oct;46(4):1209-1219")
     parser.add_option(name="-i",
                       type_value="image_nifti",
                       description="Input image with curved spinal cord.",
@@ -853,7 +853,9 @@ def get_parser():
                       example="t2.nii.gz")
     parser.add_option(name="-s",
                       type_value="image_nifti",
-                      description="Spinal cord centerline (or segmentation) of the input image.",
+                      description="Spinal cord centerline (or segmentation) of the input image. To obtain the centerline"
+                                  "you can use sct_get_centerline. To obtain the segmentation you can use sct_propseg"
+                                  "or sct_deepseg_sc.",
                       mandatory=True,
                       example="centerline.nii.gz")
     parser.add_option(name="-c",
@@ -863,40 +865,59 @@ def get_parser():
                       deprecated_by='-s')
     parser.add_option(name="-dest",
                       type_value="image_nifti",
-                      description="Spinal cord centerline (or segmentation) of a straight destination image. An algorithm will scale the length of the input centerline to match that of the destination centerline. If using -ldisc_input and -ldisc_dest with this parameter, instead of linear scaling, the source centerline will be non-linearly matched so that the inter-vertebral discs of the input image will match that of the destination image.",
+                      description="Spinal cord centerline (or segmentation) of a destination image (which could be "
+                                  "straight or curved). An "
+                                  "algorithm scales the length of the input centerline to match that of the "
+                                  "destination centerline. If using -ldisc_input and -ldisc_dest with this parameter, "
+                                  "instead of linear scaling, the source centerline will be non-linearly matched so "
+                                  "that the inter-vertebral discs of the input image will match that of the "
+                                  "destination image. This feature is particularly useful for registering to a "
+                                  "template while accounting for disc alignment.",
                       mandatory=False,
                       example="centerline.nii.gz")
     parser.add_option(name="-ldisc_input",
                       type_value="image_nifti",
-                      description="Labels located at the posterior edge of the intervertebral discs, for the input image (-i). Ideally, all disc labels should be provided, including the position of the pontomedullary groove and junction if available. For more details about label creation and their values, please see to http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/.\n"
+                      description="Labels located at the posterior edge of the intervertebral discs, for the input "
+                                  "image (-i). Ideally, all disc labels should be provided, including the position of "
+                                  "the pontomedullary groove and junction if available. More details about label "
+                                  "creation at http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/.\n"  # TODO (Julien) update this link
                                   "This option must be used with the -ldisc_dest parameter.",
                       mandatory=False,
                       example="ldisc_input.nii.gz")
     parser.add_option(name="-ldisc_dest",
                       type_value="image_nifti",
-                      description="Labels located at the posterior edge of the intervertebral discs, for the destination file (-dest). The same comments as in -ldisc_input apply.\n"
+                      description="Labels located at the posterior edge of the intervertebral discs, for the "
+                                  "destination file (-dest). The same comments as in -ldisc_input apply.\n"
                                   "This option must be used with the -ldisc_input parameter.",
                       mandatory=False,
                       example="ldisc_dest.nii.gz")
     parser.add_option(name="-disable-straight2curved",
                       type_value=None,
-                      description="Disable straight to curved transformation computation, in case you do not need the output warping field straight-->curve (faster).",
+                      description="Disable straight to curved transformation computation, in case you do not need the "
+                                  "output warping field straight-->curve (faster).",
                       mandatory=False)
     parser.add_option(name="-disable-curved2straight",
                       type_value=None,
-                      description="Disable curved to straight transformation computation, in case you do not need the output warping field curve-->straight (faster).",
+                      description="Disable curved to straight transformation computation, in case you do not need the "
+                                  "output warping field curve-->straight (faster).",
                       mandatory=False)
     parser.add_option(name="-speed_factor",
                       type_value='float',
                       description='Acceleration factor for the calculation of the straightening warping field.'
-                                  ' This speed factor enables an intermediate resampling to a lower resolution, which decreases the computational time at the cost of lower accuracy.'
-                                  ' A speed factor of 2 means that the input image will be downsampled by a factor 2 before calculating the straightening warping field. For example, a 1x1x1 mm^3 image will be downsampled to 2x2x2 mm3, providing a speed factor of approximately 8.'
-                                  ' Note that accelerating the straightening process reduces the precision of the algorithm, and induces undesirable edges effects. To keep the native resolution, set this option to 0 (default).',
+                                  ' This speed factor enables an intermediate resampling to a lower resolution, which '
+                                  'decreases the computational time at the cost of lower accuracy.'
+                                  ' A speed factor of 2 means that the input image will be downsampled by a factor 2 '
+                                  'before calculating the straightening warping field. For example, a 1x1x1 mm^3 image '
+                                  'will be downsampled to 2x2x2 mm3, providing a speed factor of approximately 8.'
+                                  ' Note that accelerating the straightening process reduces the precision of the '
+                                  'algorithm, and induces undesirable edges effects. To keep the native resolution, '
+                                  'set this option to 0 (default).',
                       mandatory=False,
                       default_value=0)
     parser.add_option(name="-xy_size",
                       type_value='float',
-                      description='Change the size of the XY FOV, in mm. The resolution of the destination image is the same as that of the source image (-i).\n',
+                      description='Change the size of the XY FOV, in mm. The resolution of the destination image is '
+                                  'the same as that of the source image (-i).\n',
                       mandatory=False,
                       default_value=35.0)
     parser.add_option(name="-o",
@@ -962,7 +983,7 @@ def get_parser():
                                   'To keep native resolution, set this option to 0.\n',
                       mandatory=False,
                       default_value=0,
-                      deprecated=True)
+                      deprecated=True)  # TODO: the fact that it is still displayed on the usage is confusing. I suggest to remove.
     parser.add_option(name="-ref",
                       type_value="image_nifti",
                       description='Isotropic resolution of the straightening output, in millimeters.\n'
