@@ -43,7 +43,6 @@ usage:
 # TODO: read_database: hard coded fields to put somewhere else (e.g. config file)
 
 import copy_reg
-# import json
 import os
 import platform
 import signal
@@ -51,21 +50,29 @@ import sys
 import types
 import copy
 from time import time, strftime
-if "SCT_MPI_MODE" in os.environ:
-    from distribute2mpi import MpiPool as Pool
-else:
-    from multiprocessing import Pool
-import itertools
-import pandas as pd
-import glob
-import importlib
-import sct_utils as sct
-import msct_parser
-import sct_testing
 
 path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
 path_script = os.path.dirname(__file__)
 sys.path.append(os.path.join(path_sct, 'testing'))
+
+import concurrent.futures
+if "SCT_MPI_MODE" in os.environ:
+    from mpi4py.futures import MPIPoolExecutor as PoolExecutor
+    __MPI__ = True
+    sys.path.insert(0, path_script)
+else:
+    from concurrent.futures import ProcessPoolExecutor as PoolExecutor
+    __MPI__ = False
+from multiprocessing import cpu_count
+import itertools
+import pandas as pd
+import glob
+import importlib
+
+import sct_utils as sct
+import msct_parser
+import sct_testing
+
 
 
 def _pickle_method(method):
@@ -247,7 +254,8 @@ def function_launcher(args):
     param_testing.function_to_test = args[0]
     param_testing.path_data = args[1]
     param_testing.args = args[2]
-    param_testing.redirect_stdout = 1  # create individual logs for each subject.
+    param_testing.test_integrity = args[3]
+    param_testing.redirect_to_file = True  # create individual logs for each subject.
     # load modules of function to test
     module_testing = importlib.import_module('test_' + param_testing.function_to_test)
     # initialize parameters specific to the test
@@ -307,7 +315,7 @@ def get_list_subj(folder_dataset, data_specifications=None, fname_database=''):
     return list_subj
 
 
-def run_function(function, folder_dataset, list_subj, list_args=[], nb_cpu=None, verbose=1):
+def run_function(function, folder_dataset, list_subj, list_args=[], nb_cpu=None, verbose=1, test_integrity=0):
     """
     Run a test function on the dataset using multiprocessing and save the results
     :return: results
@@ -317,38 +325,54 @@ def run_function(function, folder_dataset, list_subj, list_args=[], nb_cpu=None,
     # add full path to each subject
     list_subj_path = [os.path.join(folder_dataset, subject) for subject in list_subj]
 
-    # All scripts that are using multithreading with ITK must not use it when using multiprocessing on several subjects
+    # All scripts that are using multithreading with ITK must not use it when using multiprocessing
     os.environ["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"] = "1"
 
     # create list that finds all the combinations for function + subject path + arguments. Example of one list element:
-    # ('sct_propseg', os.path.join(path_sct, 'data', 'sct_test_function', '200_005_s2''), '-i ' + os.path.join("t2", "t2.nii.gz") + ' -c t2')
-    list_func_subj_args = list(itertools.product(*[[function], list_subj_path, list_args]))
+    # ('sct_propseg', os.path.join(path_sct, 'data', 'sct_test_function', '200_005_s2''), '-i ' + os.path.join("t2", "t2.nii.gz") + ' -c t2', 1)
+    list_func_subj_args = list(itertools.product(*[[function], list_subj_path, list_args, [test_integrity]]))
         # data_and_params = itertools.izip(itertools.repeat(function), data_subjects, itertools.repeat(parameters))
 
-    # Computing Pool for parallel process, distribute2mpi.MpiPool in MPI environment, multiprocessing.Pool otherwise
     sct.log.debug("stating pool with {} thread(s)".format(nb_cpu))
-    pool = Pool(nb_cpu)
+    pool = PoolExecutor(nb_cpu)
     compute_time = None
     try:
         compute_time = time()
-        sct.log.debug('paused but print')
-        async_results = pool.map_async(function_launcher, list_func_subj_args)
-        pool.close()
-        pool.join()  # waiting for all the jobs to be done
+        count = 0
+        all_results = []
+
+        sct.log.info('Waiting for results, be patient')
+        future_dirs = {pool.submit(function_launcher, subject_arg): subject_arg
+                         for subject_arg in list_func_subj_args}
+
+        for future in concurrent.futures.as_completed(future_dirs):
+            count += 1
+            subject = os.path.basename(future_dirs[future][1])
+            arguments = future_dirs[future][2]
+            try:
+                result = future.result()
+            except Exception as exc:
+                sct.log.error('{} {} generated an exception: {}'.format(subject, arguments, exc))
+
+            sct.log.info('{}/{}: {} done'.format(count, len(list_func_subj_args), subject))
+            all_results.append(result)
         compute_time = time() - compute_time
-        all_results = async_results.get()
+
         # concatenate all_results into single Panda structure
-        results_dataframe = pd.concat([result for result in all_results])
+        results_dataframe = pd.concat(all_results)
+
     except KeyboardInterrupt:
         sct.log.warning("\nCaught KeyboardInterrupt, terminating workers")
-        pool.terminate()
-        pool.join()
+        for job in future_dirs:
+            job.cancel()
     except Exception as e:
         sct.log.error('Error on line {}'.format(sys.exc_info()[-1].tb_lineno))
         sct.log.exception(e)
-        pool.terminate()
-        pool.join()
+        for job in future_dirs:
+            job.cancel()
         raise
+    finally:
+        pool.shutdown()
 
     return {'results': results_dataframe, "compute_time": compute_time}
 
@@ -358,9 +382,9 @@ def get_parser():
     parser = msct_parser.Parser(__file__)
 
     # Mandatory arguments
-    parser.usage.set_description("Run a specific SCT function in a list of subjects countained within a given folder. Multiple parameters can be selected.\n"
-                                 "Exemple of command:\n"
-                                 "sct_pipeline -f sct_propseg -d /Users/julien/data/sct_test_function -p \\\"-i t2/t2.nii.gz -c t2\",\"-i t1/t1.nii.gz -c t1\\\"")
+    parser.usage.set_description("Run a specific SCT function in a list of subjects contained within a given folder. "
+                                 "Multiple parameters can be selected by repeating the flag -p as shown in the example below:\n"
+                                 "sct_pipeline -f sct_propseg -d PATH_TO_DATA -p \\\"-i t1/t1.nii.gz -c t1\\\" -p \\\"-i t2/t2.nii.gz -c t2\\\"")
     parser.add_option(name="-f",
                       type_value="str",
                       description="Function to test.",
@@ -375,8 +399,10 @@ def get_parser():
 
     parser.add_option(name="-p",
                       type_value="str",
-                      description="Arguments to pass to the function that is tested. Please put double-quotes if there are spaces in the list of parameters.\n"
-                                  "Image paths must be contains in the arguments list.",
+                      description="Arguments to pass to the function that is tested. Put double-quotes if there are "
+                                  "spaces in the list of parameters. Path to images are relative to the subject's folder. "
+                                  "Use multiple '-p' flags if you would like to test different parameters on the same"
+                                  "subjects.",
                       mandatory=False)
 
     parser.add_option(name="-subj",
@@ -397,8 +423,16 @@ def get_parser():
                       description="Number of CPU used for testing. 0: no multiprocessing. If not provided, "
                                   "it uses all the available cores.",
                       mandatory=False,
-                      default_value=1,
                       example='42')
+
+    parser.add_option(name="-test-integrity",
+                      type_value="multiple_choice",
+                      description="Run (=1) or not (=0) integrity testing which is defined in test_integrity() function of the test_ script. See example here: https://github.com/neuropoly/spinalcordtoolbox/blob/master/testing/test_sct_propseg.py",
+                      mandatory=False,
+                      example=['0', '1'],
+                      default_value='0')  # TODO: this should have values True/False as defined in sct_testing, not 0/1
+
+    parser.usage.addSection("\nOUTPUT")
 
     parser.add_option(name="-log",
                       type_value='multiple_choice',
@@ -406,6 +440,13 @@ def get_parser():
                       mandatory=False,
                       example=['0', '1'],
                       default_value='1')
+
+    parser.add_option(name="-pickle",
+                      type_value='multiple_choice',
+                      description="Output Pickle file.",
+                      mandatory=False,
+                      example=['0', '1'],
+                      default_value='0')
 
     parser.add_option(name='-email',
                       type_value=[[','], 'str'],
@@ -452,10 +493,13 @@ if __name__ == "__main__":
         fname_database = arguments["-subj-file"]
     else:
         fname_database = ''  # if empty, it will look for xls file automatically in database folder
-    nb_cpu = None
     if "-cpu-nb" in arguments:
         nb_cpu = arguments["-cpu-nb"]
+    else:
+        nb_cpu = cpu_count()  # uses maximum number of available CPUs
+    test_integrity = int(arguments['-test-integrity'])
     create_log = int(arguments['-log'])
+    output_pickle = int(arguments['-pickle'])
     if '-email' in arguments:
         create_log = True
         send_email = True
@@ -502,11 +546,14 @@ if __name__ == "__main__":
     sct.log.info('Hostname: {}'.format(platform.node()))
 
     # Check number of CPU cores
-    from multiprocessing import cpu_count
-    # status, output = sct.run('echo $ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS', 0)
     sct.log.info('CPU Thread on local machine: {} '.format(cpu_count()))
 
     sct.log.info('    Requested threads:       {} '.format(nb_cpu))
+
+    if __MPI__:
+        sct.log.info("Running in MPI mode with mpi4py.futures's MPIPoolExecutor")
+    else:
+        sct.log.info("Running with python concurrent.futures's ProcessPoolExecutor")
 
     # check RAM
     sct.checkRAM(os_running, 0)
@@ -516,6 +563,7 @@ if __name__ == "__main__":
     for args in list_args:
         sct.log.info('  ' + function_to_test + ' ' + args)
     sct.log.info('Dataset: ' + path_data)
+    sct.log.info('Test integrity: ' + str(test_integrity))
 
     # test function
     try:
@@ -527,7 +575,7 @@ if __name__ == "__main__":
             sct.remove_handler(file_handler)
         # run function
         sct.log.debug("enter test fct")
-        tests_ret = run_function(function_to_test, path_data, list_subj, list_args=list_args, nb_cpu=nb_cpu, verbose=1)
+        tests_ret = run_function(function_to_test, path_data, list_subj, list_args=list_args, nb_cpu=nb_cpu, verbose=1, test_integrity=test_integrity)
         sct.log.debug("exit test fct")
         results = tests_ret['results']
         compute_time = tests_ret['compute_time']
@@ -537,12 +585,15 @@ if __name__ == "__main__":
         # build results
         pd.set_option('display.max_rows', 500)
         pd.set_option('display.max_columns', 500)
+        pd.set_option('display.max_colwidth', -1)  # to avoid truncation of long string
         pd.set_option('display.width', 1000)
         # drop entries for visibility
         results_subset = results.drop('path_data', 1).drop('output', 1)
         results_display = results_subset
+        # reorder for better display: status, path_output
+        results_display = results_display[['status', 'path_output']]
         # save panda structure
-        if create_log:
+        if output_pickle:
             results_subset.to_pickle(file_log + '.pickle')
         # compute mean
         results_mean = results_subset.query('status != 200 & status != 201').mean(numeric_only=True)
