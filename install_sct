@@ -208,10 +208,10 @@ fi
 
 # Catch SCT version
 if [ -e "version.txt" ]; then
-  if [ ${SCT_MPI_MODE} ]; then
-  echo "$(cat version.txt) mpi" > version.txt
-  fi
   SCT_VERSION=`cat version.txt`
+  if [ ${SCT_MPI_MODE} ]; then
+    SCT_VERSION=${SCT_VERSION}_mpi
+  fi
 else
   echo "ERROR: version.txt not found."
   echo "The install_sct script must be execute from the source directory"
@@ -453,6 +453,11 @@ else
     exit $e_status
   fi
 
+  if [[ ${SCT_MPI_MODE} ]] ; then
+    echo "Installing MPI libraries for HCP installation"
+      conda install -c conda-forge --yes --file ${SCT_SOURCE}/install/requirements/requirementsMPI.txt
+  fi
+
   # Workaround for #1549 (install pip 10 pre-release if not already here)
   if python -c 'import pip; int(pip.__version__.split(".")[0]) >= 10' | grep -q False; then
     echo "Retrieving a recent pip to make installation faster"
@@ -587,17 +592,18 @@ if [[ $UID != 0 ]]; then
      echo You can always add it later or call SCT functions with full path ${SCT_DIR}/${BIN_DIR}/sct_function
   fi
   # run sct_check_dependencies
-  echo -e "\nRun sct_check_dependencies..."
+  echo -e "\nValidate installation..."
   # We run the sct_check_dependencies in the TMP_DIR so the tmp.XXX output
   # it creates is cleaned properly
   cd ${TMP_DIR}
-  if ${SCT_DIR}/${BIN_DIR}/sct_check_dependencies ; then
-    echo -e "INSTALLATION DONE!\n"
+  if ${SCT_DIR}/${BIN_DIR}/sct_check_dependencies; then
+    echo -e "Installation validation OK!\n"
     echo -e "Open a new Terminal window to load environment variables, or run:\n source ${THE_RC}\n"
   else
-    echo -e "INSTALLATION ERROR!"
+    echo -e "Installation validation NG!"
     echo -e "Please copy the historic of this Terminal (starting with the command install_sct) and paste it in the SCT Help forum under a new ticket:"
     echo -e "https://sourceforge.net/p/spinalcordtoolbox/discussion/help/\n"
+    exit 1
   fi
 else
   # if sudo=1
