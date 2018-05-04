@@ -504,7 +504,7 @@ def main():
         ftmp_template_seg = add_suffix(ftmp_template_seg, '_sub')
         sct.run(['sct_resample', '-i', ftmp_data, '-o', add_suffix(ftmp_data, '_sub'), '-f', '1x1x'+zsubsample], verbose)
         ftmp_data = add_suffix(ftmp_data, '_sub')
-        sct.run(['sct_resample', '-i', ftmp_seg, '-o', add_suffix(ftmp_seg, '_sub'); '-f', '1x1x'+zsubsample], verbose)
+        sct.run(['sct_resample', '-i', ftmp_seg, '-o', add_suffix(ftmp_seg, '_sub'), '-f', '1x1x'+zsubsample], verbose)
         ftmp_seg = add_suffix(ftmp_seg, '_sub')
 
         # Registration straight spinal cord to template
