@@ -29,7 +29,7 @@ class AnatomicalParams(object):
                  vmin=5.,
                  vmax=95.,
                  vmean=98.,
-                 vmode='mean-std',
+                 vmode='percentile',
                  alpha=1.0):
         """
 
@@ -290,18 +290,21 @@ class BaseController(object):
 
     def setup_intensity(self):
         if self.params.vmode == 'percentile':
-            vol = self.image.flatten()
-            vol = vol[vol > 0]
-            first_per = np.percentile(vol, self.params.vmin)
-            last_per = np.percentile(vol, self.params.vmax)
-            self.mean_intensity = np.percentile(vol, self.params.vmean)
-            self.std_intensity = last_per - first_per
+            self.params.vmin, self.params.vmax = np.percentile(self.image.data, (self.params.vmin, self.params.vmax))
+            # vol = self.image.flatten()
+            # vol = vol[vol > 0]
+            # first_per = np.percentile(vol, self.params.vmin)
+            # last_per = np.percentile(vol, self.params.vmax)
+            # self.mean_intensity = np.percentile(vol, self.params.vmean)
+            # self.std_intensity = last_per - first_per
         elif self.params.vmode == 'mean-std':
             self.mean_intensity = (self.params.vmax + self.params.vmin) / 2.0
             self.std_intensity = (self.params.vmax - self.params.vmin) / 2.0
 
-        self.min_intensity = self.mean_intensity - self.std_intensity
-        self.max_intensity = self.mean_intensity + self.std_intensity
+
+        print "base:HOLA1"
+        print self.params.vmin
+        print self.params.vmax
 
     def calculate_intensity(self, mean_factor, std_factor):
         """
@@ -314,6 +317,9 @@ class BaseController(object):
 
         self.min_intensity = mean_intensity - std_intensity
         self.max_intensity = mean_intensity + std_intensity
+
+#        self.min_intensity = 0#self.mean_intensity - self.std_intensity
+#        self.max_intensity = 100# self.mean_intensity + self.std_intensity
 
     def reformat_image(self):
         """Set the camera position and increase contrast.
@@ -335,10 +341,13 @@ class BaseController(object):
         self.params.offset = x * dx
         self.default_position = Position(x // 2, y // 2, z // 2)
 
-        # TODO: strange that we have to redefine intensity adjustment. Also, it does not use vmode, which is probably a
-        # mistake
-        self.params.vmin, self.params.vmax = np.percentile(self.image.data,
-                                                           (self.params.vmin, self.params.vmax))
+        self.setup_intensity()
+
+#        self.params.vmin, self.params.vmax = np.percentile(self.image.data,
+#                                                           (self.params.vmin, self.params.vmax))
+        print "base:HOLA3"
+        print self.params.vmin
+        print self.params.vmax
         self.reset_position()
 
     def reset_position(self):
