@@ -99,7 +99,7 @@ def _find_crop_start_end(coord_ctr, crop_size, im_dim):
 
 
 def crop_image_around_centerline(im_in, ctr_in, im_out, crop_size, x_dim_half, y_dim_half):
-    im_in, im_ctr = Image(im_in), Image(ctr_in)
+    im_in, data_ctr = Image(im_in), Image(ctr_in).data
 
     im_new = im_in.copy()
     im_new.dim = tuple([crop_size, crop_size, im_in.dim[2]] + list(im_in.dim[3:]))
@@ -108,7 +108,7 @@ def crop_image_around_centerline(im_in, ctr_in, im_out, crop_size, x_dim_half, y
 
     x_lst, y_lst = [], []
     for zz in range(im_in.dim[2]):
-        x_ctr, y_ctr = center_of_mass(im_ctr.data[:, :, zz])
+        x_ctr, y_ctr = center_of_mass(np.array(data_ctr[:, :, zz]))
 
         x_start, x_end = _find_crop_start_end(x_ctr, crop_size, im_in.dim[0])
         y_start, y_end = _find_crop_start_end(y_ctr, crop_size, im_in.dim[1])
@@ -128,7 +128,7 @@ def crop_image_around_centerline(im_in, ctr_in, im_out, crop_size, x_dim_half, y
 
     im_new.save()
 
-    del im_in, im_ctr
+    del im_in
     del im_new
 
     return x_lst, y_lst

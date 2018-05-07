@@ -559,8 +559,17 @@ def multicomponent_merge(fname_list):
     return im_out
 
 
-def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1, fname_out=''):
+def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1, fname_out=None):
+    """
+    :param fname_out: when set is True, where to save the output file
+                      (default: in cwd, named basename_orientation.ext)
+    :returns: when get, the orientation; when set, the changed image data (not saved)
+    """
     verbose = 0 if get else verbose
+
+    if fname_out is None:
+        fname_out = "{}_{}{}".format(im.file_name, ori, im.ext)
+
     printv('Get dimensions of data...', verbose)
     nx, ny, nz, nt, px, py, pz, pt = get_dimension(im)
 
@@ -580,9 +589,19 @@ def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1, f
         elif set:
             # set orientation
             printv('Change orientation...', verbose)
+            tmp_folder = tmp_create(verbose)
+            curdir = os.getcwd()
+            os.chdir(tmp_folder)
             im_out = set_orientation(im, ori)
+            os.chdir(curdir)
+            sct.rmtree(tmp_folder)
         elif set_data:
+            tmp_folder = tmp_create(verbose)
+            curdir = os.getcwd()
+            os.chdir(tmp_folder)
             im_out = set_orientation(im, ori, True)
+            os.chdir(curdir)
+            sct.rmtree(tmp_folder)
         else:
             im_out = None
 
@@ -646,12 +665,9 @@ def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1, f
         os.chdir(curdir)
         sct.rmtree(tmp_folder)
 
-    if fname_out:
+    if im_out is not None:
         im_out.setFileName(fname_out)
-        if fname_out != im.file_name + '_' + ori + im.ext:
-            sct.rm(im.file_name + '_' + ori + im.ext)
-    else:
-        im_out.setFileName(im.file_name + '_' + ori + im.ext)
+
     return im_out
 
 
