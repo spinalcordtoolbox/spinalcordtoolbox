@@ -2,7 +2,7 @@
 #
 # About the license: see the file LICENSE.TXT
 
-""" Qt widgets for manually segmenting spinal cord images """
+""" Qt widgets for manual labeling of images """
 
 import logging
 from time import time
@@ -17,6 +17,7 @@ from PyQt4 import QtCore, QtGui
 from spinalcordtoolbox.gui.base import MissingLabelWarning
 
 
+logging.basicConfig(level=logging.DEBUG)  # default mode: WARNING. debug mode: DEBUG
 logger = logging.getLogger(__name__)
 
 
@@ -150,6 +151,9 @@ class AnatomicalCanvas(FigureCanvas):
             vmax=self._params.vmax,
             alpha=self._params.alpha)
         self._axes.set_aspect(aspect)
+        print "widgets:HOLA2"
+        print self._params.vmin
+        print self._params.vmax
 
         if self._crosshair:
             self.cursor = Cursor(self._axes, useblit=True, color='r', linewidth=1)
@@ -172,8 +176,10 @@ class AnatomicalCanvas(FigureCanvas):
         self.points.set_ydata([])
 
     def refresh(self):
-        self.view.set_clim(self._parent._controller.min_intensity,
-                           self._parent._controller.max_intensity)
+        self.view.set_clim(vmin=self.vmin_updated, vmax=self.vmax_updated)
+        # self.view.set_clim(self._parent._controller.vmin_updated,
+        #                    self._parent._controller.vmax_updated)
+        logger.debug("vmin_updated="+str(self.vmin_updated)+", vmax_updated="+str(self.vmax_updated))
         self.plot_position()
         self.plot_points()
         self.view.figure.canvas.draw()
@@ -220,20 +226,33 @@ class AnatomicalCanvas(FigureCanvas):
         if event.xdata is None or event.ydata is None:
             return
 
-        if event.button == 3:
+        if event.button == 3:  # right click
             curr_time = time()
 
             if curr_time - self.last_update <= self.update_freq:
+                # TODO: never enters that loop because last_update set to 0 and it is never updated
                 return
 
             if (abs(event.xdata - self.previous_point[0]) < 1 and abs(event.ydata - self.previous_point) < 1):
+                # TODO: never enters that loop because previous_point set to 0,0 and it is never updated
                 self.previous_point = (event.xdata, event.ydata)
                 return
 
+            logger.debug("X=" + str(event.xdata) + ", Y=" + str(event.ydata))
             xlim, ylim = self._axes.get_xlim(), self._axes.get_ylim()
             mean_factor = (event.xdata - xlim[0]) / float(xlim[1] - xlim[0])
             std_factor = (event.ydata - ylim[1]) / float(ylim[0] - ylim[1])
-            self._parent._controller.calculate_intensity(mean_factor, std_factor)
+
+            # adjust brightness and contrast
+            # mean_intensity = self.mean_intensity - (mean_factor - 0.5) * self.mean_intensity * 3.0
+            # std_intensity = self.std_intensity - (std_factor - 0.5) * self.std_intensity * 2.0
+
+            # self.min_intensity = mean_intensity - std_intensity
+            # self.max_intensity = mean_intensity + std_intensity
+
+            # self._parent._controller.calculate_intensity(mean_factor, std_factor)
+            self.vmin_updated = self._params.vmin
+            self.vmax_updated = self._params.vmax
             self.refresh()
 
     def horizontal_position(self, position):
