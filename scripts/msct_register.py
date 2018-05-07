@@ -38,7 +38,7 @@ def register_slicewise(fname_src,
                         paramreg=None,
                         ants_registration_params=None,
                         path_qc='./',
-                        remove_temp_files=1,
+                        remove_temp_files=0,
                         verbose=0):
 
     # create temporary folder
