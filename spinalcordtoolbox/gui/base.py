@@ -39,7 +39,6 @@ class AnatomicalParams(object):
                  interp='nearest',
                  perc_min=5.,
                  perc_max=95.,
-                 vmean=98.,
                  vmode='percentile',
                  alpha=1.0):
         """
@@ -50,7 +49,6 @@ class AnatomicalParams(object):
         interp : str
         perc_min : float: low percentile threshold for intensity adjustment
         perc_max : float: high percentile threshold for intensity adjustment
-        vmean : float:
         vmode : str: "percentile": intensity adjustment based on vmin/vmax percentile,
                      "mean-std": intensity adjustment based on
                      "clahe: CLAHE (not implemented yet)
@@ -60,7 +58,6 @@ class AnatomicalParams(object):
         self.interp = interp
         self.perc_min = perc_min
         self.perc_max = perc_max
-        self.vmean = vmean
         self.vmode = vmode
         self.alpha = alpha
         self.start_vertebrae = 50
