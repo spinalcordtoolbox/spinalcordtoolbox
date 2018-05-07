@@ -26,10 +26,10 @@ class AnatomicalParams(object):
     def __init__(self,
                  cmap='gray',
                  interp='nearest',
-                 vmin=5.,  # low percentile threshold for intensity adjustment
-                 vmax=95.,  # high percentile threshold for intensity adjustment
+                 vmin=5.,
+                 vmax=95.,
                  vmean=98.,
-                 vmode='percentile',
+                 vmode='mean-std',
                  alpha=1.0):
         """
 
@@ -37,10 +37,11 @@ class AnatomicalParams(object):
         ----------
         cmap : str
         interp : str
-        vmin : float
-        vmax : float
-        vmean : float
-        vmode : str
+        vmin : float: low percentile threshold for intensity adjustment
+        vmax : float: high percentile threshold for intensity adjustment
+        vmean : float:
+        vmode : str: "percentile": intensity adjustment based on vmin/vmax percentile,
+                     "mean-std": intensity adjustment based on
         alpha : float
         """
         self.cmap = cmap
@@ -303,6 +304,11 @@ class BaseController(object):
         self.max_intensity = self.mean_intensity + self.std_intensity
 
     def calculate_intensity(self, mean_factor, std_factor):
+        """
+        Adjust intensity based on mouse control. Called by widgets:on_change_intensity
+        :param mean_factor:
+        :param std_factor:
+        """
         mean_intensity = self.mean_intensity - (mean_factor - 0.5) * self.mean_intensity * 3.0
         std_intensity = self.std_intensity - (std_factor - 0.5) * self.std_intensity * 2.0
 
@@ -329,6 +335,8 @@ class BaseController(object):
         self.params.offset = x * dx
         self.default_position = Position(x // 2, y // 2, z // 2)
 
+        # TODO: strange that we have to redefine intensity adjustment. Also, it does not use vmode, which is probably a
+        # mistake
         self.params.vmin, self.params.vmax = np.percentile(self.image.data,
                                                            (self.params.vmin, self.params.vmax))
         self.reset_position()
