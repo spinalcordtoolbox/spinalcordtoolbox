@@ -240,19 +240,24 @@ class AnatomicalCanvas(FigureCanvas):
 
             logger.debug("X=" + str(event.xdata) + ", Y=" + str(event.ydata))
             xlim, ylim = self._axes.get_xlim(), self._axes.get_ylim()
-            mean_factor = (event.xdata - xlim[0]) / float(xlim[1] - xlim[0])
-            std_factor = (event.ydata - ylim[1]) / float(ylim[0] - ylim[1])
+            x_factor = (event.xdata - xlim[0]) / float(xlim[1] - xlim[0])  # between 0 and 1. No change: 0.5
+            y_factor = (event.ydata - ylim[1]) / float(ylim[0] - ylim[1])
 
-            # adjust brightness and contrast
-            # mean_intensity = self.mean_intensity - (mean_factor - 0.5) * self.mean_intensity * 3.0
-            # std_intensity = self.std_intensity - (std_factor - 0.5) * self.std_intensity * 2.0
+            # get dynamic of the image
+            vminvmax = self._params.vmax - self._params.vmin  # todo: get variable based on image quantization
 
-            # self.min_intensity = mean_intensity - std_intensity
-            # self.max_intensity = mean_intensity + std_intensity
+            # adjust brightness by adding offset to image intensity
+            # the "-" sign is there so that when moving the cursor to the right, brightness increases (more intuitive)
+            # the 2.0 factor maximizes change.
+            self.vmin_updated = self._params.vmin - (x_factor - 0.5) * vminvmax * 2.0
+            self.vmax_updated = self._params.vmax - (x_factor - 0.5) * vminvmax * 2.0
 
-            # self._parent._controller.calculate_intensity(mean_factor, std_factor)
-            self.vmin_updated = self._params.vmin
-            self.vmax_updated = self._params.vmax
+            # adjust contrast by multiplying image dynamic by scaling factor
+            # the factor 2.0 maximizes contrast change. For y_factor = 0.5, the scaling will be 1, which means no change
+            # in contrast
+            self.vmin_updated = self.vmin_updated * (y_factor * 2.0)
+            self.vmax_updated = self.vmax_updated * (y_factor * 2.0)
+
             self.refresh()
 
     def horizontal_position(self, position):
