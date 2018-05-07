@@ -134,6 +134,8 @@ class AnatomicalCanvas(FigureCanvas):
                                    QtGui.QSizePolicy.Expanding,
                                    QtGui.QSizePolicy.Expanding)
         FigureCanvas.updateGeometry(self)
+        self.vmin_updated = self._params.vmin
+        self.vmax_updated = self._params.vmax
 
     def _init_ui(self, data, aspect):
         self._fig.canvas.mpl_connect('button_release_event', self.on_select_point)

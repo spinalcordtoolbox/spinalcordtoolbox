@@ -307,6 +307,7 @@ class BaseController(object):
             self.std_intensity = (self.params.vmax - self.params.vmin) / 2.0
         elif self.params.vmode == 'clahe':
             # TODO: implement
+            logger.warning("CLAHE is not implemented yet.")
 
     def reformat_image(self):
         """Set the camera position and increase contrast.
