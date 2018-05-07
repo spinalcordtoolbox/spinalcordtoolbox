@@ -53,6 +53,7 @@ class AnatomicalParams(object):
         vmean : float:
         vmode : str: "percentile": intensity adjustment based on vmin/vmax percentile,
                      "mean-std": intensity adjustment based on
+                     "clahe: CLAHE (not implemented yet)
         alpha : float
         """
         self.cmap = cmap
@@ -304,8 +305,11 @@ class BaseController(object):
             self.params.vmin, self.params.vmax = np.percentile(self.image.data,
                                                                (self.params.perc_min, self.params.perc_max))
         elif self.params.vmode == 'mean-std':
+            # TODO: update this
             self.mean_intensity = (self.params.vmax + self.params.vmin) / 2.0
             self.std_intensity = (self.params.vmax - self.params.vmin) / 2.0
+        elif self.params.vmode == 'clahe':
+            # TODO: implement
 
     def reformat_image(self):
         """Set the camera position and increase contrast.
