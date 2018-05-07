@@ -1,4 +1,15 @@
-"""Base classes for creating GUI objects to create manually selected points."""
+"""Base classes for creating GUI objects to create manually selected points.
+The definition of X,Y axis is the following:
+
+  xmin,ymin o---------o xmax,ymin
+            |         |
+            |         |
+            |         |
+            |         |
+  xmin,ymax o---------o xmax,ymax
+
+
+"""
 
 from __future__ import absolute_import
 from __future__ import division
@@ -26,8 +37,8 @@ class AnatomicalParams(object):
     def __init__(self,
                  cmap='gray',
                  interp='nearest',
-                 vmin=5.,
-                 vmax=95.,
+                 perc_min=5.,
+                 perc_max=95.,
                  vmean=98.,
                  vmode='percentile',
                  alpha=1.0):
@@ -37,8 +48,8 @@ class AnatomicalParams(object):
         ----------
         cmap : str
         interp : str
-        vmin : float: low percentile threshold for intensity adjustment
-        vmax : float: high percentile threshold for intensity adjustment
+        perc_min : float: low percentile threshold for intensity adjustment
+        perc_max : float: high percentile threshold for intensity adjustment
         vmean : float:
         vmode : str: "percentile": intensity adjustment based on vmin/vmax percentile,
                      "mean-std": intensity adjustment based on
@@ -46,8 +57,8 @@ class AnatomicalParams(object):
         """
         self.cmap = cmap
         self.interp = interp
-        self.vmin = vmin
-        self.vmax = vmax
+        self.perc_min = perc_min
+        self.perc_max = perc_max
         self.vmean = vmean
         self.vmode = vmode
         self.alpha = alpha
@@ -290,7 +301,7 @@ class BaseController(object):
 
     def setup_intensity(self):
         if self.params.vmode == 'percentile':
-            self.params.vmin, self.params.vmax = np.percentile(self.image.data, (self.params.vmin, self.params.vmax))
+            self.params.vmin, self.params.vmax = np.percentile(self.image.data, (self.params.perc_min, self.params.perc_max))
             # vol = self.image.flatten()
             # vol = vol[vol > 0]
             # first_per = np.percentile(vol, self.params.vmin)
@@ -312,11 +323,11 @@ class BaseController(object):
         :param mean_factor:
         :param std_factor:
         """
-        mean_intensity = self.mean_intensity - (mean_factor - 0.5) * self.mean_intensity * 3.0
-        std_intensity = self.std_intensity - (std_factor - 0.5) * self.std_intensity * 2.0
-
-        self.min_intensity = mean_intensity - std_intensity
-        self.max_intensity = mean_intensity + std_intensity
+        # mean_intensity = self.mean_intensity - (mean_factor - 0.5) * self.mean_intensity * 3.0
+        # std_intensity = self.std_intensity - (std_factor - 0.5) * self.std_intensity * 2.0
+        #
+        # self.min_intensity = mean_intensity - std_intensity
+        # self.max_intensity = mean_intensity + std_intensity
 
 #        self.min_intensity = 0#self.mean_intensity - self.std_intensity
 #        self.max_intensity = 100# self.mean_intensity + self.std_intensity
