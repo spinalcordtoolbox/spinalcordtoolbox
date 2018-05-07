@@ -141,7 +141,7 @@ def get_parser():
                       type_value="multiple_choice",
                       description="""Remove temporary files.""",
                       mandatory=False,
-                      default_value='1',
+                      default_value='0',
                       example=['0', '1'])
     parser.add_option(name="-v",
                       type_value="multiple_choice",

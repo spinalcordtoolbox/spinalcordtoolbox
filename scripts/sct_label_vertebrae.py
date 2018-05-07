@@ -111,6 +111,10 @@ sct_label_vertebrae -i t2.nii.gz -s t2_seg_manual.nii.gz  "$(< init_label_verteb
                       type_value='file',
                       description='Initialize labeling by providing a text file which includes either -initz or -initcenter flag.',
                       mandatory=False)
+    parser.add_option(name="-initlabel",
+                      type_value='file',
+                      description='Initialize vertebral labeling by providing a nifti file that has a single disc label. An example of such file is a single voxel with value "3", which would be located at the posterior tip of C2-C3 disc. Such label file can be created using: sct_label_utils -i IMAGE_REF -create-viewer 3',
+                      mandatory=False)
     parser.add_option(name="-ofolder",
                       type_value="folder_creation",
                       description="Output folder.",
@@ -175,6 +179,9 @@ def main(args=None):
     initz = ''
     initcenter = ''
     initc2 = 'auto'
+    fname_initlabel = ''
+    fname_labelz = 'labelz.nii.gz'
+    initauto = False
     param = Param()
 
     # check user arguments
@@ -213,6 +220,9 @@ def main(args=None):
                 initz = [int(x) for x in arg_initfile[idx_arg + 1].split(',')]
             if arg == '-initcenter':
                 initcenter = int(arg_initfile[idx_arg + 1])
+    if '-initlabel' in arguments:
+        # get absolute path of label
+        fname_initlabel = os.path.abspath(arguments['-initlabel'])
     if '-initc2' in arguments:
         initc2 = 'manual'
     if '-param' in arguments:
@@ -235,19 +245,26 @@ def main(args=None):
 
     # create label to identify disc
     sct.printv('\nCreate label to identify disc...', verbose)
-    initauto = False
     if initz:
-        create_label_z('segmentation.nii.gz', initz[0], initz[1])  # create label located at z_center
+        create_label_z('segmentation.nii.gz', initz[0], initz[1], fname_labelz=fname_labelz)  # create label located at z_center
     elif initcenter:
         # find z centered in FOV
         nii = Image('segmentation.nii.gz')
         nii.change_orientation('RPI')  # reorient to RPI
         nx, ny, nz, nt, px, py, pz, pt = nii.dim  # Get dimensions
         z_center = int(round(nz / 2))  # get z_center
-        create_label_z('segmentation.nii.gz', z_center, initcenter)  # create label located at z_center
+        create_label_z('segmentation.nii.gz', z_center, initcenter, fname_labelz=fname_labelz)  # create label located at z_center
+    elif fname_initlabel:
+        import sct_label_utils
+        # subtract "1" to label value because due to legacy, in this code the disc C2-C3 has value "2", whereas in the
+        # recent version of SCT it is defined as "3". Therefore, when asking the user to define a label, we point to the
+        # new definition of labels (i.e., C2-C3 = 3).
+        sct_label_utils.main(['-i', fname_initlabel, '-add', '-1', '-o', fname_labelz])
+        # dilate label so that it is not lost when applying warping
+        import sct_maths
+        sct_maths.main(['-i', fname_labelz, '-dilate', '3', '-o', fname_labelz])
     else:
         initauto = True
-        # printv('\nERROR: You need to initialize the disc detection algorithm using one of these two options: -initz, -initcenter\n', 1, 'error')
 
     # Straighten spinal cord
     sct.printv('\nStraighten spinal cord...', verbose)
@@ -269,8 +286,6 @@ def main(args=None):
     # resample to 0.5mm isotropic to match template resolution
     sct.printv('\nResample to 0.5mm isotropic...', verbose)
     sct.run(['sct_resample', '-i', 'data_straight.nii', '-mm', '0.5x0.5x0.5', '-x', 'linear', '-o', 'data_straightr.nii'], verbose=verbose)
-    # sct.run('sct_resample -i segmentation.nii.gz -mm 0.5x0.5x0.5 -x linear -o segmentationr.nii.gz', verbose)
-    # sct.run('sct_resample -i labelz.nii.gz -mm 0.5x0.5x0.5 -x linear -o labelzr.nii', verbose)
 
     # Apply straightening to segmentation
     # N.B. Output is RPI
@@ -283,7 +298,7 @@ def main(args=None):
         init_disc = []
     else:
         # Apply straightening to z-label
-        sct.printv('\nDilate z-label and apply straightening...', verbose)
+        sct.printv('\nAnd apply straightening to label...', verbose)
         sct.run(['sct_apply_transfo', '-i', 'labelz.nii.gz', '-d', 'data_straightr.nii', '-w', 'warp_curve2straight.nii.gz', '-o', 'labelz_straight.nii.gz', '-x', 'nn'], verbose)
         # get z value and disk value to initialize labeling
         sct.printv('\nGet z and disc values from straight label...', verbose)
@@ -411,37 +426,11 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     :return:
     """
     sct.printv('\nLook for template...', verbose)
-    # if path_template == '':
-    #     # get path of SCT
-    #     from os import path
-    #     path_script = path.dirname(__file__)
-    #     path_sct = (path.dirname(path_script), 1)
-    #     folder_template = 'data/template/'
-    #     path_template = path_sct+folder_template
     sct.printv('Path template: ' + path_template, verbose)
 
     # adjust file names if MNI-Poly-AMU template is used
     fname_level = get_file_label(os.path.join(path_template, 'template'), 'vertebral labeling', output='filewithpath')
     fname_template = get_file_label(os.path.join(path_template, 'template'), contrast.upper() + '-weighted template', output='filewithpath')
-
-    # if not len(glob.glob(os.path.join(path_template, 'MNI-Poly-AMU*.*'))) == 0:
-    #     contrast = contrast.upper()
-    #     file_level = '*_level.nii.gz'
-    # else:
-    #     file_level = '*_levels.nii.gz'
-    #
-    # # retrieve file_template based on contrast
-    # try:
-    #     fname_template_list = glob.glob(os.path.join(path_template, '*' + contrast + '.nii.gz'))
-    #     fname_template = fname_template_list[0]
-    # except IndexError:
-    #     sct.printv('\nERROR: No template found. Please check the provided path.', 1, 'error')
-    # retrieve disc level from template
-    # try:
-    #     fname_level_list = glob.glob(os.path.join(path_template, file_level))
-    #     fname_level = fname_level_list[0]
-    # except IndexError:
-    #     sct.printv('\nERROR: File *_levels.nii.gz not found.', 1, 'error')
 
     # Open template and vertebral levels
     sct.printv('\nOpen template and vertebral levels...', verbose)
@@ -660,14 +649,14 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
 
 # Create label
 # ==========================================================================================
-def create_label_z(fname_seg, z, value):
+def create_label_z(fname_seg, z, value, fname_labelz='labelz.nii.gz'):
     """
     Create a label at coordinates x_center, y_center, z
     :param fname_seg: segmentation
     :param z: int
-    :return: fname_label
+    :param fname_labelz: string file name of output label
+    :return: fname_labelz
     """
-    fname_label = 'labelz.nii.gz'
     nii = Image(fname_seg)
     orientation_origin = nii.change_orientation('RPI')  # change orientation to RPI
     nx, ny, nz, nt, px, py, pz, pt = nii.dim  # Get dimensions
@@ -679,18 +668,18 @@ def create_label_z(fname_seg, z, value):
     # dilate label to prevent it from disappearing due to nearestneighbor interpolation
     from sct_maths import dilate
     nii.data = dilate(nii.data, [3])
-    nii.setFileName(fname_label)
+    nii.setFileName(fname_labelz)
     nii.change_orientation(orientation_origin)  # put back in original orientation
     nii.save()
-    return fname_label
+    return fname_labelz
 
 
 # Get z and label value
 # ==========================================================================================
 def get_z_and_disc_values_from_label(fname_label):
     """
-    Find z-value and label-value based on labeled image
-    :param fname_label: image that contains label
+    Find z-value and label-value based on labeled image in RPI orientation
+    :param fname_label: image in RPI orientation that contains label
     :return: [z_label, value_label] int list
     """
     nii = Image(fname_label)
