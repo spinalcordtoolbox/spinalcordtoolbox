@@ -328,6 +328,7 @@ class BaseController(object):
         self.default_position = Position(x // 2, y // 2, z // 2)
 
         self.setup_intensity()
+        self.reset_position()
 
     def reset_position(self):
         """Set the canvas position to the center of the image"""
