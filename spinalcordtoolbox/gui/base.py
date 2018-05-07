@@ -26,8 +26,8 @@ class AnatomicalParams(object):
     def __init__(self,
                  cmap='gray',
                  interp='nearest',
-                 vmin=0.,
-                 vmax=99.,
+                 vmin=5.,  # low percentile threshold for intensity adjustment
+                 vmax=95.,  # high percentile threshold for intensity adjustment
                  vmean=98.,
                  vmode='percentile',
                  alpha=1.0):
