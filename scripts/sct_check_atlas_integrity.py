@@ -20,6 +20,8 @@
 import os
 import sys
 
+from spinalcordtoolbox.metadata import read_label_file_atlas
+
 import getopt
 import sct_utils as sct
 from msct_parser import Parser
@@ -72,7 +74,7 @@ def main():
             param.verbose = int(arguments['-v'])
 
     # Extract atlas info
-    atlas_id, atlas_name, atlas_file = read_label_file(path_atlas)
+    atlas_id, atlas_name, atlas_file = read_label_file_atlas(path_atlas)
     nb_tracts_total = len(atlas_id)
 
     # Load atlas
@@ -84,59 +86,6 @@ def main():
     # Check integrity
     sct.printv('\nCheck atlas integrity...', param.verbose)
     check_integrity(atlas, atlas_id, atlas_name)
-
-
-#=======================================================================================================================
-# Read label.txt file which is located inside label folder
-#=======================================================================================================================
-def read_label_file(path_info_label):
-
-    # file name of info_label.txt
-    fname_label = path_info_label + param.file_info_label
-
-    # Check info_label.txt existence
-    sct.check_file_exist(fname_label)
-
-    # Read file
-    f = open(fname_label)
-
-    # Extract all lines in file.txt
-    lines = [lines for lines in f.readlines() if lines.strip()]
-
-    # separate header from (every line starting with "#")
-    lines = [lines[i] for i in range(0, len(lines)) if lines[i][0] != '#']
-
-    # read each line
-    label_id = []
-    label_name = []
-    label_file = []
-    for i in range(0, len(lines) - 1):
-        line = lines[i].split(',')
-        label_id.append(int(line[0]))
-        label_name.append(line[1])
-        label_file.append(line[2][:-1].strip())
-    # An error could occur at the last line (deletion of the last character of the .txt file), the 5 following code
-    # lines enable to avoid this error:
-    line = lines[-1].split(',')
-    label_id.append(int(line[0]))
-    label_name.append(line[1])
-    line[2] = line[2] + ' '
-    label_file.append(line[2].strip())
-
-    # check if all files listed are present in folder. If not, WARNING.
-    sct.printv('\nCheck existence of all files listed in ' + param.file_info_label + ' ...')
-    for fname in label_file:
-        if os.path.isfile(os.path.join(path_info_label, fname)) or os.path.isfile(os.path.join(path_info_label, fname + '.nii')) or \
-                os.path.isfile(os.path.join(path_info_label, fname + '.nii.gz')):
-            sct.printv('  OK: ' + path_info_label + fname)
-        else:
-            sct.printv('  WARNING: ' + path_info_label + fname + ' does not exist but is listed in '
-                       + param.file_info_label + '.\n')
-
-    # Close file.txt
-    f.close()
-
-    return [label_id, label_name, label_file]
 
 
 #=======================================================================================================================

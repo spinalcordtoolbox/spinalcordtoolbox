@@ -25,7 +25,7 @@ from sct_maths import mutual_information
 from msct_parser import Parser
 from msct_image import Image
 import sct_utils as sct
-from sct_warp_template import get_file_label
+from spinalcordtoolbox.metadata import get_file_label
 
 # get path of SCT
 path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
@@ -429,8 +429,8 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     sct.printv('Path template: ' + path_template, verbose)
 
     # adjust file names if MNI-Poly-AMU template is used
-    fname_level = get_file_label(os.path.join(path_template, 'template'), 'vertebral', output='filewithpath')
-    fname_template = get_file_label(os.path.join(path_template, 'template'), contrast.upper() + '-weighted', output='filewithpath')
+    fname_level = get_file_label(os.path.join(path_template, 'template'), 'vertebral labeling', output='filewithpath')
+    fname_template = get_file_label(os.path.join(path_template, 'template'), contrast.upper() + '-weighted template', output='filewithpath')
 
     # Open template and vertebral levels
     sct.printv('\nOpen template and vertebral levels...', verbose)
