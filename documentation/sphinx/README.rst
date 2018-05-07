@@ -13,7 +13,7 @@ Generation
 
 This section considers the following placeholders:
 
-- `${SCT_SOURCE_DIR}`: path to where your SCT extracted archive or git clone
+- `${SCT_SOURCE_DIR}`: path to where your SCT extracted archive or git clone (e.g. "./" if you are already located in the git repository)
   resides
 
 - `${SCT_DIR}`: installation path of SCT (eg. `/home/me/sct_3.1.1`)
