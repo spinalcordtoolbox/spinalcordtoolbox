@@ -58,5 +58,5 @@ __version__ = '-'.join(_git_info(commit_env='SCT_COMMIT', branch_env='SCT_BRANCH
 
 
 # statistic report level
-__report_log_level__ = logging.ERROR
+__report_log_level__ = logging.ERROR  # DEBUG, INFO, WARNING, ERROR
 __report_exception_level__ = Exception
