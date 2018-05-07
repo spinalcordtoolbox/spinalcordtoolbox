@@ -277,20 +277,19 @@ if [[ ! ${ASK_REPORT_QUESTION} =~ ^([[Ff]alse?|[Nn]o?)$  ]]; then
   # Questions
   echo
   cat <<EOF
-The SCT team is constantly improving the toolbox and uses request and
-feedback to improve its user experience and fix bugs. We are using a
-report system to receive anonymous crash reports and errors from our
-users. If you agree to participate and help improve the SCT
+To improve user experience and fix bugs, the SCT development team is using a
+report system to automatically receive crash reports and errors from users.
+These reports are anonymous.
 EOF
-  read -p 'please type yes [no]:' -r REPORT_STATS
+  read -p 'Do you agree to help us improve SCT? yes/no: ' -r REPORT_STATS
 fi
 
-if [[ ${REPORT_STATS} =~ yes ]]; then
+if [[ ${REPORT_STATS} =~ [Yy](es)? ]]; then
   REPORT_STATS=yes
-  echo Crash report will be sent to the dev team. Thank you!
+  echo "--> Crash reports will be sent to the SCT development team. Thank you!"
 else
   unset REPORT_STATS
-  echo Not sharing crash report
+  echo "--> Crash reports will not be sent."
 fi
 
 # Define sh files
