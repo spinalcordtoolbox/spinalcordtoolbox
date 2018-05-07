@@ -151,9 +151,6 @@ class AnatomicalCanvas(FigureCanvas):
             vmax=self._params.vmax,
             alpha=self._params.alpha)
         self._axes.set_aspect(aspect)
-        print "widgets:HOLA2"
-        print self._params.vmin
-        print self._params.vmax
 
         if self._crosshair:
             self.cursor = Cursor(self._axes, useblit=True, color='r', linewidth=1)
