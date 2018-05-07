@@ -14,13 +14,16 @@
 # import commands
 # import sys
 import os
+
+import numpy as np
 from pandas import DataFrame
+
 import sct_segment_graymatter
 # from msct_image import Image
 import sct_utils as sct
-from numpy import sum, mean
 # import time
-from sct_warp_template import get_file_label
+
+from spinalcordtoolbox.metadata import get_file_label
 
 
 def init(param_test):
@@ -78,7 +81,7 @@ def test_integrity(param_test):
                 gm_dice.append(float(dc))
             except ValueError:
                 gm_dice.append(float(dc[:-4]))
-    result_dice_gm = mean(gm_dice)
+    result_dice_gm = np.mean(gm_dice)
 
     # extracting dice on WM
     wm_dice_lines = dice_lines[wm_start:]
@@ -94,7 +97,7 @@ def test_integrity(param_test):
                 wm_dice.append(float(dc))
             except ValueError:
                 wm_dice.append(float(dc[:-4]))
-    result_dice_wm = mean(wm_dice)
+    result_dice_wm = np.mean(wm_dice)
 
     # Extracting hausdorff distance results
     hd = open(hausdorff_fname, 'r')
@@ -115,8 +118,8 @@ def test_integrity(param_test):
             hausdorff.append(hd)
             max_med.append(max(med1, med2))
 
-    result_hausdorff = mean(hausdorff)
-    result_median_dist = mean(max_med)
+    result_hausdorff = np.mean(hausdorff)
+    result_median_dist = np.mean(max_med)
 
     # Integrity check
     if result_hausdorff > param_test.hd_threshold or result_dice_wm < param_test.wm_dice_threshold:
