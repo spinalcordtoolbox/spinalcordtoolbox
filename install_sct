@@ -281,7 +281,7 @@ To improve user experience and fix bugs, the SCT development team is using a
 report system to automatically receive crash reports and errors from users.
 These reports are anonymous.
 EOF
-  read -p 'Do you agree to help us improve SCT? yes/no: ' -r REPORT_STATS
+  read -p 'Do you agree to help us improve SCT? [y]es/[n]o: ' -r REPORT_STATS
 fi
 
 if [[ ${REPORT_STATS} =~ [Yy](es)? ]]; then
@@ -312,7 +312,7 @@ fi
 while true; do
   echo -e "\nSCT will be installed here: [${INSTALL_DIR}]"
   while  [[ ! ${change_default_path} =~ ^([Yy](es)?|[Nn]o?)$ ]] ; do
-    echo -n "Do you agree? yes/no: "
+    echo -n "Do you agree? [y]es/[n]o: "
     read change_default_path
   done
   if [[ ${change_default_path} =~ ^[Yy] ]]; then
@@ -615,7 +615,7 @@ ls -l ${SCT_DIR}/${BIN_DIR}/ > /dev/null 2>&1;
 if [[ $UID != 0 ]]; then
   # update PATH environment
   while  [[ ! ${add_to_path} =~ ^([Yy](es)?|[Nn]o?)$ ]] ; do
-    echo -e -n "\nDo you want to add the sct_* scripts to your PATH environment? yes/no: "
+    echo -e -n "\nDo you want to add the sct_* scripts to your PATH environment? [y]es/[n]o: "
     read add_to_path
   done
   echo ""
