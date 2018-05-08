@@ -1,4 +1,15 @@
-"""Base classes for creating GUI objects to create manually selected points."""
+"""Base classes for creating GUI objects to create manually selected points.
+The definition of X,Y axis is the following:
+
+  xmin,ymin o---------o xmax,ymin
+            |         |
+            |         |
+            |         |
+            |         |
+  xmin,ymax o---------o xmax,ymax
+
+
+"""
 
 from __future__ import absolute_import
 from __future__ import division
@@ -26,8 +37,8 @@ class AnatomicalParams(object):
     def __init__(self,
                  cmap='gray',
                  interp='nearest',
-                 vmin=5.,
-                 vmax=95.,
+                 perc_min=5.,
+                 perc_max=95.,
                  vmode='percentile',
                  alpha=1.0):
         """
@@ -36,15 +47,17 @@ class AnatomicalParams(object):
         ----------
         cmap : str
         interp : str
-        vmin : int
-        vmax : int
-        vmode : str
+        perc_min : float: low percentile threshold for intensity adjustment
+        perc_max : float: high percentile threshold for intensity adjustment
+        vmode : str: "percentile": intensity adjustment based on vmin/vmax percentile,
+                     "mean-std": intensity adjustment based on
+                     "clahe: CLAHE (not implemented yet)
         alpha : float
         """
         self.cmap = cmap
         self.interp = interp
-        self.min = vmin
-        self.max = vmax
+        self.perc_min = perc_min
+        self.perc_max = perc_max
         self.vmode = vmode
         self.alpha = alpha
         self.start_vertebrae = 50
@@ -58,7 +71,6 @@ class AnatomicalParams(object):
         # the first axial slice for labeling. Possible values are: 'top': top slice; 'midfovminusinterval': mid-FOV
         # minus the interval.
         self.interval_in_mm = 15  # superior-inferior distance between two consecutive labels in AUTO mode
-
 
     @property
     def dialog_title(self):
@@ -283,6 +295,19 @@ class BaseController(object):
         self.params = params
         self.points = []
         self._overlay_image = init_values
+        self.setup_intensity()
+
+    def setup_intensity(self):
+        if self.params.vmode == 'percentile':
+            self.params.vmin, self.params.vmax = np.percentile(self.image.data,
+                                                               (self.params.perc_min, self.params.perc_max))
+        elif self.params.vmode == 'mean-std':
+            # TODO: update this
+            self.mean_intensity = (self.params.vmax + self.params.vmin) / 2.0
+            self.std_intensity = (self.params.vmax - self.params.vmin) / 2.0
+        elif self.params.vmode == 'clahe':
+            # TODO: implement
+            logger.warning("CLAHE is not implemented yet.")
 
     def reformat_image(self):
         """Set the camera position and increase contrast.
@@ -304,9 +329,7 @@ class BaseController(object):
         self.params.offset = x * dx
         self.default_position = Position(x // 2, y // 2, z // 2)
 
-        clip = np.percentile(self.image.data, (self.params.min,
-                                               self.params.max))
-        self.params.vmin, self.params.vmax = clip
+        self.setup_intensity()
         self.reset_position()
 
     def reset_position(self):
