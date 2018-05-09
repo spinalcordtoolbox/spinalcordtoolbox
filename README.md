@@ -54,7 +54,7 @@ procedures.
 
 ### Install from package (release)
 
-The simplest way to install SCT is to do it via a stable release. First, download the [latest release](https://github.com/neuropoly/spinalcordtoolbox/releases/latest). Major changes to each release are listed [[here](CHANGES.md)]..
+The simplest way to install SCT is to do it via a stable release. First, download the [latest release](https://github.com/neuropoly/spinalcordtoolbox/releases/latest). Major changes to each release are listed [here](CHANGES.md).
 
 N.B. We currently cover OS X (10.8+) and Debian/Ubuntu/Fedora/RedHat/CentOS platforms. If you have another OS, please use a [virtual machine](https://github.com/neuropoly/spinalcordtoolbox/tree/jca_readme#using-virtual-machine).
 
