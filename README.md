@@ -1,6 +1,6 @@
 <img src="https://github.com/neuropoly/spinalcordtoolbox/blob/master/documentation/imgs/logo_sct.png" width="300">
 
-![GitHub release](https://img.shields.io/github/release/qubyte/rubidium.svg)
+[![GitHub release](https://img.shields.io/github/release/qubyte/rubidium.svg)](https://github.com/neuropoly/spinalcordtoolbox/releases)
 [![Build Status](https://travis-ci.org/neuropoly/spinalcordtoolbox.svg?branch=master)](https://travis-ci.org/neuropoly/spinalcordtoolbox)
 [![Project Stats](https://www.openhub.net/p/spinalcordtoolbox/widgets/project_thin_badge.gif)](https://www.openhub.net/p/spinalcordtoolbox)
 [![User mailing list](http://img.shields.io/badge/mailing%20list-users-green.svg?style=flat)](https://sourceforge.net/p/spinalcordtoolbox/discussion/help/)
