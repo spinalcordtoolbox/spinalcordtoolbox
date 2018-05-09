@@ -10,7 +10,7 @@
 SCT is a comprehensive, free and open-source software dedicated to the processing and analysis of spinal cord MRI data.
 
 - [Introduction](#introduction)
-- [Installation](https://sourceforge.net/p/spinalcordtoolbox/wiki/installation/)
+- [Installation](#installation)
 - [List of tools](http://sourceforge.net/p/spinalcordtoolbox/wiki/tools/)
 - [Getting started](https://github.com/neuropoly/spinalcordtoolbox/blob/master/batch_processing.sh)
 - [Video tutorials](#video-tutorials)
@@ -51,6 +51,50 @@ pathways. We anticipate that **SCT** will bring together the spinal cord
 neuroimaging community by establishing standard templates and analysis
 procedures.
 
+## Installation
+
+### Install from package (release)
+
+Download the latest release.
+
+N.B. We currently cover OS X (10.8+) and Debian/Ubuntu/Fedora/RedHat/CentOS platforms. If you have another OS, you can use the vitual machine that already has SCT installed.
+
+If you have 10.7 or less, the only incompatibility is with ANTs, which you can compile on your station and then copy the binaries under SCT installation. Please contact SCT developers on how to do that.
+
+Once you have downloaded SCT, unpack it (note: Safari automatically unzip it). Then, open a new Terminal, go into the created folder and launch the installer:
+
+./install_sct
+
+### Install from Github (development)
+
+Download source code from Github (N.B. you need to have git installed):
+
+  git clone --depth=1 --branch=master https://github.com/neuropoly/spinalcordtoolbox.git sct
+
+Install SCT:
+
+  cd sct
+  ./install_sct
+
+Note: To prevent selective download of data, python or binaries, the following flags can be used:
+
+  -d   Prevent the (re)-installation of the "data/" directory 
+  -m   Prevent the (re)-installation of the "python/" directory 
+  -b   Prevent the (re)-installation of the SCT binaries files
+
+### Using virtual machine
+
+For more flexibility, you can also run the toolbox under a VM we provide. Useful information below:
+
+Download the [latest SCT VM](https://osf.io/y3phg/).
+Compatible with [VirtualBox 5.1.22](https://www.virtualbox.org/wiki/Downloads).
+General information on how to install the VM create a shared folder are available [here](http://neuro.debian.net/vm.html).
+The password of the VM is "neurodebian".
+Configure the VM
+Increase the RAM: Settings > System > Motherboard
+Slide until you have 1-2GB left for your OS.
+Increase number of processors: Settings > System > Processor
+Slide until you have 1-2 CPU left for your OS.
 
 ## Video tutorials
 
