@@ -150,6 +150,11 @@ When citing SCT please use this BibTeX entry:
     keywords = "Open-source ",
     }
 
+## Contributors
+
+This project exists thanks to all the people who contribute. [[Contribute](CONTRIBUTING.md)].
+<a href="https://github.com/neuropoly/spinalcordtoolbox/graphs/contributors"><img src="https://opencollective.com/shields/contributors.svg?width=890" /></a>
+
 ## License
 
 The MIT License (MIT)
