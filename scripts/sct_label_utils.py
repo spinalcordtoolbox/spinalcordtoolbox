@@ -747,8 +747,7 @@ def get_parser():
     parser.add_option(name="-msg",
                       type_value="str",
                       description='Display a message to explain the labeling task. Use with -create-viewer.',
-                      mandatory=False,
-                      default_value="",)
+                      mandatory=False)
     parser.add_option(name="-o",
                       type_value=[[','], "file_output"],
                       description="Output image(s).",
@@ -829,6 +828,8 @@ def main(args=None):
         sct.printv('ERROR: No process was chosen.', 1, 'error')
     if '-msg' in arguments:
         msg = arguments['-msg']+"\n"
+    else:
+        msg = ""
     if '-o' in arguments:
         input_fname_output = arguments['-o']
     input_verbose = int(arguments['-v'])
