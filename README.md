@@ -152,8 +152,7 @@ When citing SCT please use this BibTeX entry:
 
 ## Contributors
 
-This project exists thanks to all the people who contribute. [[Contribute](CONTRIBUTING.md)].
-<a href="https://github.com/neuropoly/spinalcordtoolbox/graphs/contributors"><img src="https://opencollective.com/shields/contributors.svg?width=890" /></a>
+This project exists thanks to [all the people who contribute](https://github.com/neuropoly/spinalcordtoolbox/graphs/contributors)
 
 ## License
 
