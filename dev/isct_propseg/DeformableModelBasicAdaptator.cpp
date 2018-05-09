@@ -16,6 +16,7 @@
 #include <vtkPoints.h>
 #include <vtkCellArray.h>
 
+using namespace std;
 
 typedef itk::DefaultDynamicMeshTraits<double,3,3,double,double,double> MeshTraits;
 typedef itk::Mesh<double,3,MeshTraits>	MeshType;

@@ -38,7 +38,7 @@ def register_slicewise(fname_src,
                         paramreg=None,
                         ants_registration_params=None,
                         path_qc='./',
-                        remove_temp_files=1,
+                        remove_temp_files=0,
                         verbose=0):
 
     # create temporary folder
@@ -196,7 +196,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
 
     # construct 3D warping matrix
     for iz in z_nonzero:
-        sct.no_new_line_log('{}/{}..'.format(iz, nz))
+        sct.no_new_line_log('{}/{}..'.format(iz + 1, nz))
         # get indices of x and y coordinates
         row, col = np.indices((nx, ny))
         # build 2xn array of coordinates in pixel space

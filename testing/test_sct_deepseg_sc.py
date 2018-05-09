@@ -22,7 +22,7 @@ def init(param_test):
     Initialize class: param_test
     """
     # initialization
-    default_args = ['-i t2/t2.nii.gz -c t2 -igt t2/t2_seg_manual.nii.gz']  # default parameters
+    default_args = ['-i t2/t2.nii.gz -c t2 -igt t2/t2_seg_manual.nii.gz -qc testing-qc']  # default parameters
 
     param_test.dice_threshold = 0.8
 

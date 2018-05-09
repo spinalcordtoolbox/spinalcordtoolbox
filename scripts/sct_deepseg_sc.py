@@ -65,11 +65,7 @@ def get_parser():
     parser.add_option(name='-qc',
                       type_value='folder_creation',
                       description='The path where the quality control generated content will be saved',
-                      default_value=os.path.expanduser('~/qc_data'))
-    parser.add_option(name='-noqc',
-                      type_value=None,
-                      description='Prevent the generation of the QC report',
-                      mandatory=False)
+                      default_value=None)
     parser.add_option(name='-igt',
                       type_value='image_nifti',
                       description='File name of ground-truth segmentation.',
@@ -103,7 +99,7 @@ def _find_crop_start_end(coord_ctr, crop_size, im_dim):
 
 
 def crop_image_around_centerline(im_in, ctr_in, im_out, crop_size, x_dim_half, y_dim_half):
-    im_in, im_ctr = Image(im_in), Image(ctr_in)
+    im_in, data_ctr = Image(im_in), Image(ctr_in).data
 
     im_new = im_in.copy()
     im_new.dim = tuple([crop_size, crop_size, im_in.dim[2]] + list(im_in.dim[3:]))
@@ -112,7 +108,7 @@ def crop_image_around_centerline(im_in, ctr_in, im_out, crop_size, x_dim_half, y
 
     x_lst, y_lst = [], []
     for zz in range(im_in.dim[2]):
-        x_ctr, y_ctr = center_of_mass(im_ctr.data[:, :, zz])
+        x_ctr, y_ctr = center_of_mass(np.array(data_ctr[:, :, zz]))
 
         x_start, x_end = _find_crop_start_end(x_ctr, crop_size, im_in.dim[0])
         y_start, y_end = _find_crop_start_end(y_ctr, crop_size, im_in.dim[1])
@@ -132,7 +128,7 @@ def crop_image_around_centerline(im_in, ctr_in, im_out, crop_size, x_dim_half, y
 
     im_new.save()
 
-    del im_in, im_ctr
+    del im_in
     del im_new
 
     return x_lst, y_lst
@@ -233,17 +229,38 @@ def main():
     if '-v' in arguments:
         verbose = arguments['-v']
 
-    if '-qc' in arguments:
-        qc_path = arguments['-qc']
+    path_qc = arguments.get("-qc", None)
 
-    if '-noqc' in arguments:
-        qc_path = None
+    fname_seg = deep_segmentation_spinalcord(fname_image, contrast_type, output_folder,
+     remove_temp_files=remove_temp_files, verbose=verbose)
 
-    deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, qc_path=qc_path,
-                                 remove_temp_files=remove_temp_files, verbose=verbose, args=args)
+    if path_qc is not None:
+        generate_qc(fname_image, fname_seg, args, os.path.abspath(path_qc))
+
+    sct.display_viewer_syntax([fname_image, os.path.join(output_folder, fname_seg)], colormaps=['gray', 'red'], opacities=['', '0.7'])
 
 
-def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, qc_path=None, remove_temp_files=1, verbose=1, args=None):
+def generate_qc(fn_in, fn_seg, args, path_qc):
+    """
+    Generate a QC entry allowing to quickly review the segmentation process.
+    """
+
+    import spinalcordtoolbox.reports.qc as qc
+    import spinalcordtoolbox.reports.slice as qcslice
+
+    qc.add_entry(
+     src=fn_in,
+     process="sct_deepseg_sc",
+     args=args,
+     path_qc=path_qc,
+     plane='Axial',
+     qcslice=qcslice.Axial([Image(fn_in), Image(fn_seg)]),
+     qcslice_operations=[qc.QcImage.listed_seg],
+     qcslice_layout=lambda x: x.mosaic(),
+    )
+
+
+def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, remove_temp_files=1, verbose=1):
     # initalizing parameters
     crop_size = 64  # TODO: this parameter should actually be passed by the model, as it is one of its fixed parameter
 
@@ -380,26 +397,7 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, qc_p
         sct.log.info("Remove temporary files...")
         tmp_folder.cleanup()
 
-    if qc_path is not None:
-        import spinalcordtoolbox.reports.qc as qc
-        import spinalcordtoolbox.reports.slice as qcslice
-
-        param = qc.Params(fname_image, 'sct_deepseg_sc', args, 'Axial', qc_path)
-        report = qc.QcReport(param, '')
-
-        @qc.QcImage(report, 'none', [qc.QcImage.listed_seg], stretch_contrast=True)
-        def test(qslice):
-            return qslice.mosaic()
-
-        try:
-            test(qcslice.Axial(Image(fname_image), Image(fname_seg)))
-            sct.log.info('Sucessfully generated the QC results in %s' % param.qc_results)
-            sct.log.info('Use the following command to see the results in a browser:')
-            sct.log.info('sct_qc -folder %s' % qc_path)
-        except:
-            sct.log.warning('Issue when creating QC report.')
-
-    sct.display_viewer_syntax([fname_image, os.path.join(output_folder, fname_seg)], colormaps=['gray', 'red'], opacities=['', '0.7'])
+    return os.path.join(output_folder, fname_seg)
 
 
 if __name__ == "__main__":

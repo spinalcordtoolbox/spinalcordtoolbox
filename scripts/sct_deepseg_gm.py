@@ -38,11 +38,7 @@ def get_parser():
     parser.add_option(name='-qc',
                       type_value='folder_creation',
                       description='The path where the quality control generated content will be saved',
-                      default_value=os.path.expanduser('~/qc_data'))
-    parser.add_option(name='-noqc',
-                      type_value=None,
-                      description='Prevent the generation of the QC report',
-                      mandatory=False)
+                      default_value=None)
 
     parser.add_option(name="-m",
                       type_value='multiple_choice',
@@ -63,6 +59,27 @@ def get_parser():
     return parser
 
 
+def generate_qc(fn_in, fn_seg, args, path_qc):
+    """
+    Generate a QC entry allowing to quickly review the segmentation process.
+    """
+
+    import spinalcordtoolbox.reports.qc as qc
+    import spinalcordtoolbox.reports.slice as qcslice
+    from msct_image import Image
+
+    qc.add_entry(
+     src=fn_in,
+     process="sct_deepseg_gm",
+     args=args,
+     path_qc=path_qc,
+     plane='Axial',
+     qcslice=qcslice.Axial([Image(fn_in), Image(fn_seg)]),
+     qcslice_operations=[qc.QcImage.listed_seg],
+     qcslice_layout=lambda x: x.mosaic(),
+    )
+
+
 def run_main():
     deepseg_gm.check_backend()
     parser = get_parser()
@@ -80,32 +97,9 @@ def run_main():
     out_fname = deepseg_gm.segment_file(input_filename, output_filename,
                                         model_name, int(verbose))
 
-
-    if '-qc' in arguments:
-        qc_path = os.path.abspath(arguments['-qc'])
-    if '-noqc' in arguments:
-        qc_path = None
-    if qc_path is not None:
-        sct.printv('\nSave quality control images (in %s)...' % qc_path, verbose, 'normal')
-
-        import spinalcordtoolbox.reports.qc as qc
-        import spinalcordtoolbox.reports.slice as qcslice
-
-        qc_param = qc.Params(input_filename, "sct_deepseg_gm", sys.argv[1:], 'Axial', qc_path)
-        report = qc.QcReport(qc_param, '')
-
-        @qc.QcImage(report, 'none', [qc.QcImage.listed_seg], stretch_contrast=True)
-        def test(qslice):
-            return qslice.mosaic()
-
-        from msct_image import Image
-        im_org = Image(input_filename)
-        im_seg = Image(out_fname)
-
-        test(qcslice.Axial(im_org, im_seg))
-        sct.printv('Sucessfully generated the QC results in %s' % qc_param.qc_results)
-        sct.printv('Use the following command to see the results in a browser')
-        sct.printv('sct_qc -folder %s' % qc_path, type='info')
+    path_qc = arguments.get("-qc", None)
+    if path_qc is not None:
+        generate_qc(input_filename, out_fname, sys.argv[1:], os.path.abspath(path_qc))
 
 
     sct.display_viewer_syntax([input_filename, format(out_fname)],

@@ -1,14 +1,14 @@
 #!/usr/bin/env python
-#########################################################################################
+##############################################################################
 #
 # Perform operations on images
 #
-# ---------------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 # Copyright (c) 2015 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Authors: Julien Cohen-Adad, Sara Dupont
 #
 # About the license: see the file LICENSE.TXT
-#########################################################################################
+##############################################################################
 
 import os
 import sys
@@ -19,12 +19,10 @@ from numpy import newaxis, shape
 from sct_utils import add_suffix, extract_fname, printv, run, tmp_create
 import sct_utils as sct
 
+
 class Param:
     def __init__(self):
         self.verbose = '1'
-
-# PARSER
-# ==========================================================================================
 
 
 def get_parser():
@@ -446,7 +444,7 @@ def remove_vol(im_in, index_vol_user, todo):
     nt = data.shape[3]
     # define index list of volumes to keep/remove
     if todo == 'remove':
-        index_vol = [i for i in range(0, nt) if not i in index_vol_user]
+        index_vol = [i for i in range(0, nt) if i not in index_vol_user]
     elif todo == 'keep':
         index_vol = index_vol_user
     else:
@@ -561,8 +559,17 @@ def multicomponent_merge(fname_list):
     return im_out
 
 
-def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1, fname_out=''):
+def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1, fname_out=None):
+    """
+    :param fname_out: when set is True, where to save the output file
+                      (default: in cwd, named basename_orientation.ext)
+    :returns: when get, the orientation; when set, the changed image data (not saved)
+    """
     verbose = 0 if get else verbose
+
+    if fname_out is None:
+        fname_out = "{}_{}{}".format(im.file_name, ori, im.ext)
+
     printv('Get dimensions of data...', verbose)
     nx, ny, nz, nt, px, py, pz, pt = get_dimension(im)
 
@@ -582,9 +589,19 @@ def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1, f
         elif set:
             # set orientation
             printv('Change orientation...', verbose)
+            tmp_folder = tmp_create(verbose)
+            curdir = os.getcwd()
+            os.chdir(tmp_folder)
             im_out = set_orientation(im, ori)
+            os.chdir(curdir)
+            sct.rmtree(tmp_folder)
         elif set_data:
+            tmp_folder = tmp_create(verbose)
+            curdir = os.getcwd()
+            os.chdir(tmp_folder)
             im_out = set_orientation(im, ori, True)
+            os.chdir(curdir)
+            sct.rmtree(tmp_folder)
         else:
             im_out = None
 
@@ -648,12 +665,9 @@ def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1, f
         os.chdir(curdir)
         sct.rmtree(tmp_folder)
 
-    if fname_out:
+    if im_out is not None:
         im_out.setFileName(fname_out)
-        if fname_out != im.file_name + '_' + ori + im.ext:
-            sct.rm(im.file_name + '_' + ori + im.ext)
-    else:
-        im_out.setFileName(im.file_name + '_' + ori + im.ext)
+
     return im_out
 
 
