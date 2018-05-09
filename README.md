@@ -12,7 +12,7 @@ SCT is a comprehensive, free and open-source software dedicated to the processin
 - [Introduction](#introduction)
 - [List of tools](http://sourceforge.net/p/spinalcordtoolbox/wiki/tools/)
 - [Installation](#installation)
-- [Getting started](https://github.com/neuropoly/spinalcordtoolbox/blob/master/batch_processing.sh)
+- [Getting started](#getting-started)
 - [Video tutorials](#video-tutorials)
 - [References](#references)
 - [How to cite SCT](#citing-spinalcordtoolbox)
@@ -101,6 +101,14 @@ General information on how to install the VM create a shared folder are availabl
 * Configure the VM:
   * Increase the RAM: Settings > System > Motherboard. Slide until you have 1-2GB left for your OS.
   * Increase number of processors: Settings > System > Processor. Slide until you have 1-2 CPU left for your OS.
+
+## Getting started
+
+The best way to learn about the main functionalities of SCT is to run a typical processing pipeline, in the form of a batch script. We provide an example dataset (includes T1w, T2w, T2\*w, DTI and fMRI) with a collection of commands to process those files and output quantitative parameters.
+
+- Open a Terminal
+- Run: `$SCT_DIR/batch_processing.sh`
+- While the processing is being done, we encourage you to look at the [batch script](batch_processing.sh) and try to understand the mean of each command line. If you have any question, please do not hesitate to post on the [forum](https://sourceforge.net/p/spinalcordtoolbox/discussion/help/).
 
 ## Video tutorials
 
