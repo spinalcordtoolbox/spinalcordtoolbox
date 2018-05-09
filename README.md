@@ -7,6 +7,8 @@
 [![User mailing list](http://img.shields.io/badge/mailing%20list-users-green.svg?style=flat)](https://sourceforge.net/p/spinalcordtoolbox/discussion/help/)
 [![Developer mailing list](http://img.shields.io/badge/mailing%20list-development-green.svg?style=flat)](https://groups.google.com/forum/#!forum/sct_developers)
 
+SCT is a comprehensive, free and open-source software dedicated to the processing and analysis of spinal cord MRI data.
+
 - [Introduction](#introduction)
 - [Installation](https://sourceforge.net/p/spinalcordtoolbox/wiki/installation/)
 - [List of tools](http://sourceforge.net/p/spinalcordtoolbox/wiki/tools/)
@@ -19,7 +21,7 @@
 
 
 ## Introduction
-![Spinal Cord Toolbox overview](abstract.png "Spinal Cord Toolbox overview")
+![SCT overview](abstract.png "Spinal Cord Toolbox overview")
 
 For the past 25 years, the field of neuroimaging has witnessed the
 development of several software packages for processing multi-parametric
@@ -34,9 +36,9 @@ provide an integrative framework that is compatible with most usages and that is
 capable of reaching the community at large. This hinders cross-validation and
 the possibility to perform multi-center studies.
 
-Spinal Cord Toolbox (SCT) is a comprehensive, free and open-source software dedicated to the
-processing and analysis of spinal cord **MRI** data. **SCT** builds on
-previously-validated methods and includes state-of-the-art **MRI** templates and
+**Spinal Cord Toolbox (SCT)** is a comprehensive, free and open-source software dedicated to the
+processing and analysis of spinal cord MRI data. **SCT** builds on
+previously-validated methods and includes state-of-the-art MRI templates and
 atlases of the spinal cord, algorithms to segment and register new data to the
 templates, and motion correction methods for diffusion and functional time
 series. **SCT** is tailored towards standardization and automation of the
