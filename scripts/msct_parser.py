@@ -27,6 +27,7 @@
 # parser.add_option("-test","int")
 # parser.add_option("-dim", ['x', 'y', 'z', 't'], 'dimension: x|y|z|t')
 # parser.add_option("-test2") # this is a option without argument
+# parser.usage.addSection("NAME OF SECTION")  # this adds a custom section to the list of flags
 #
 # Here we define a multiple choice option named "-a"
 # To define the list of available choices, we define it in the example section
