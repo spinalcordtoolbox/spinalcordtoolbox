@@ -18,7 +18,7 @@ SCT is a comprehensive, free and open-source software dedicated to the processin
 - [References](#references)
 - [How to cite SCT](#citing-spinalcordtoolbox)
 - [Contributors](#contributors)
-- [License](#licence)
+- [License](#license)
 
 
 ## Introduction
