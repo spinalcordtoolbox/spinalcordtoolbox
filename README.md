@@ -55,32 +55,40 @@ procedures.
 
 ### Install from package (release)
 
-Download the latest release.
+Download the [latest release](https://github.com/neuropoly/spinalcordtoolbox/releases/latest).
 
-N.B. We currently cover OS X (10.8+) and Debian/Ubuntu/Fedora/RedHat/CentOS platforms. If you have another OS, you can use the vitual machine that already has SCT installed.
+N.B. We currently cover OS X (10.8+) and Debian/Ubuntu/Fedora/RedHat/CentOS platforms. If you have another OS, please use a [virtual machine](https://github.com/neuropoly/spinalcordtoolbox/tree/jca_readme#using-virtual-machine).
 
-If you have 10.7 or less, the only incompatibility is with ANTs, which you can compile on your station and then copy the binaries under SCT installation. Please contact SCT developers on how to do that.
+If you have 10.7 or less, the only incompatibility is with ANTs, which you can compile on your station and then copy the binaries under SCT installation as explained [here](https://github.com/neuropoly/spinalcordtoolbox/wiki/binaries).
 
 Once you have downloaded SCT, unpack it (note: Safari automatically unzip it). Then, open a new Terminal, go into the created folder and launch the installer:
 
+~~~
 ./install_sct
+~~~
 
 ### Install from Github (development)
 
 Download source code from Github (N.B. you need to have git installed):
 
-  git clone --depth=1 --branch=master https://github.com/neuropoly/spinalcordtoolbox.git sct
+~~~
+git clone --depth=1 --branch=master https://github.com/neuropoly/spinalcordtoolbox.git sct
+~~~
 
 Install SCT:
 
-  cd sct
-  ./install_sct
+~~~
+cd sct
+./install_sct
+~~~
 
 Note: To prevent selective download of data, python or binaries, the following flags can be used:
 
-  -d   Prevent the (re)-installation of the "data/" directory 
-  -m   Prevent the (re)-installation of the "python/" directory 
-  -b   Prevent the (re)-installation of the SCT binaries files
+~~~
+-d   Prevent the (re)-installation of the "data/" directory 
+-m   Prevent the (re)-installation of the "python/" directory 
+-b   Prevent the (re)-installation of the SCT binaries files
+~~~
 
 ### Using virtual machine
 
@@ -89,12 +97,11 @@ For more flexibility, you can also run the toolbox under a VM we provide. Useful
 Download the [latest SCT VM](https://osf.io/y3phg/).
 Compatible with [VirtualBox 5.1.22](https://www.virtualbox.org/wiki/Downloads).
 General information on how to install the VM create a shared folder are available [here](http://neuro.debian.net/vm.html).
-The password of the VM is "neurodebian".
-Configure the VM
-Increase the RAM: Settings > System > Motherboard
-Slide until you have 1-2GB left for your OS.
-Increase number of processors: Settings > System > Processor
-Slide until you have 1-2 CPU left for your OS.
+
+* The password of the VM is "neurodebian".
+* Configure the VM:
+  * Increase the RAM: Settings > System > Motherboard. Slide until you have 1-2GB left for your OS.
+  * Increase number of processors: Settings > System > Processor. Slide until you have 1-2 CPU left for your OS.
 
 ## Video tutorials
 
