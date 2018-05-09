@@ -10,8 +10,8 @@
 SCT is a comprehensive, free and open-source software dedicated to the processing and analysis of spinal cord MRI data.
 
 - [Introduction](#introduction)
-- [Installation](#installation)
 - [List of tools](http://sourceforge.net/p/spinalcordtoolbox/wiki/tools/)
+- [Installation](#installation)
 - [Getting started](https://github.com/neuropoly/spinalcordtoolbox/blob/master/batch_processing.sh)
 - [Video tutorials](#video-tutorials)
 - [List of changes](https://github.com/neuropoly/spinalcordtoolbox/blob/master/CHANGES.md)
