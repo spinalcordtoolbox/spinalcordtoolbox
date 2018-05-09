@@ -13,6 +13,7 @@ SCT is a comprehensive, free and open-source software dedicated to the processin
 - [List of tools](http://sourceforge.net/p/spinalcordtoolbox/wiki/tools/)
 - [Installation](#installation)
 - [Getting started](#getting-started)
+- [Courses](#courses)
 - [Video tutorials](#video-tutorials)
 - [References](#references)
 - [How to cite SCT](#citing-spinalcordtoolbox)
@@ -109,6 +110,17 @@ The best way to learn about the main functionalities of SCT is to run a typical 
 - Open a Terminal
 - Run: `$SCT_DIR/batch_processing.sh`
 - While the processing is being done, we encourage you to look at the [batch script](batch_processing.sh) and try to understand the mean of each command line. If you have any question, please do not hesitate to post on the [forum](https://sourceforge.net/p/spinalcordtoolbox/discussion/help/).
+
+## Courses
+
+We organize **free** SCT courses, each year after the ISMRM conference. If you'd like to be added to the mailing list, please send an email to `spinalcordtoolbox@gmail.com`. The past courses are available hereafter:
+
+* [SCT course, Honolulu, 2017-04-28](https://osf.io/fvnjq/)
+* [SCT course, Geneva, 2016-06-28](https://sourceforge.net/p/spinalcordtoolbox/wiki/Home/attachment/SCT_Course_20160628.pdf)
+* [SCT course, Singapore, 2016-05-13](https://drive.google.com/file/d/0Bx3A13n3Q_EAa3NQYjBOWjhjZm8/view?usp=sharing)
+* [SCT course, Montreal, 2016-04-19](https://drive.google.com/file/d/0Bx3A13n3Q_EAenltM2ZvZUNEdjQ/view?usp=sharing)
+* [SCT Hands-on Workshop, Toronto, 2015-06-15](https://www.dropbox.com/s/f9887yrbkcfujn9/sct_handsOn_20150605.pdf?dl=0)
+* [Spine Hack, Milan, 2014-05-16](https://dl.dropboxusercontent.com/u/20592661/sct/20140516_spinehack_milan.pdf).
 
 ## Video tutorials
 
