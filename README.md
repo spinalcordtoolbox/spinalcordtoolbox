@@ -17,6 +17,7 @@ SCT is a comprehensive, free and open-source software dedicated to the processin
 - [List of changes](https://github.com/neuropoly/spinalcordtoolbox/blob/master/CHANGES.md)
 - [References](#references)
 - [How to cite SCT](#citing-spinalcordtoolbox)
+- [Contributors](#contributors)
 - [License](#licence)
 
 
