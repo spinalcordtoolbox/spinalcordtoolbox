@@ -118,6 +118,12 @@ The best way to learn about the main functionalities of SCT is to run a typical 
 " target="_blank"><img src="http://img.youtube.com/vi/Q3DhKOCEl5s/0.jpg" 
 alt="Manual vertebral labeling" width="240" height="180" border="10" /></a>
 
+#### Fsleyes integration
+
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=XC0vu0brEB0
+" target="_blank"><img src="http://img.youtube.com/vi/XC0vu0brEB0/0.jpg" 
+alt="Fsleyes integration" width="240" height="180" border="10" /></a>
+
 
 ## References
 
