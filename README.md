@@ -163,11 +163,9 @@ alt="Fsleyes integration" width="240" height="180" border="10" /></a>
 
 #### Applications
 - [Kong et al. Intrinsically organized resting state networks in the human spinal cord. PNAS 2014](http://www.pnas.org/content/111/50/18067.abstract)
-
 - [Duval et al. In vivo mapping of human spinal cord microstructure at 300mT/m. Neuroimage 2015](https://www.ncbi.nlm.nih.gov/pubmed/26095093)
 - [Yiannakas et al. Fully automated segmentation of the cervical cord from T1-weighted MRI using PropSeg: Application to multiple sclerosis. NeuroImage: Clinical 2015](https://www.ncbi.nlm.nih.gov/pubmed/26793433)
 - [Taso et al. Anteroposterior compression of the spinal cord leading to cervical myelopathy: a finite element analysis. Comput Methods Biomech Biomed Engin 2015](http://www.tandfonline.com/doi/full/10.1080/10255842.2015.1069625)
-
 - [Eippert F. et al. Investigating resting-state functional connectivity in the cervical spinal cord at 3T. Neuroimage 2016](https://www.ncbi.nlm.nih.gov/pubmed/28027960)
 - [Weber K.A. et al. Functional Magnetic Resonance Imaging of the Cervical Spinal Cord During Thermal Stimulation Across Consecutive Runs. Neuroimage 2016](http://www.ncbi.nlm.nih.gov/pubmed/27616641)
 - [Weber et al. Lateralization of cervical spinal cord activity during an isometric upper extremity motor task with functional magnetic resonance imaging. Neuroimage 2016](https://www.ncbi.nlm.nih.gov/pubmed/26488256)
@@ -185,7 +183,6 @@ alt="Fsleyes integration" width="240" height="180" border="10" /></a>
 - [Cohen-Adad et al. Functional Magnetic Resonance Imaging of the Spinal Cord: Current Status and Future Developments. Semin Ultrasound CT MR 2016](http://www.sciencedirect.com/science/article/pii/S088721711630049X)
 - [Ventura et al. Cervical spinal cord atrophy in NMOSD without a history of myelitis or MRI-visible lesions. Neurol Neuroimmunol Neuroinflamm 2016](https://www.ncbi.nlm.nih.gov/pubmed/27144215)
 - [Combes et al. Cervical cord myelin water imaging shows degenerative changes over one year in multiple sclerosis but not neuromyelitis optica spectrum disorder. Neuroimage: Clinical. 2016](http://www.sciencedirect.com/science/article/pii/S221315821730150X)
-
 - [Battiston et al. Fast and reproducible in vivo T1 mapping of the human cervical spinal cord. Magn Reson Med 2017](http://onlinelibrary.wiley.com/doi/10.1002/mrm.26852/full)
 - [Panara et al. Spinal cord microstructure integrating phase-sensitive inversion recovery and diffusional kurtosis imaging. Neuroradiology 2017](https://link.springer.com/article/10.1007%2Fs00234-017-1864-5)
 - [Martin et al. Clinically Feasible Microstructural MRI to Quantify Cervical Spinal Cord Tissue Injury Using DTI, MT, and T2*-Weighted Imaging: Assessment of Normative Data and Reliability. AJNR 2017](https://www.ncbi.nlm.nih.gov/pubmed/28428213)
@@ -197,7 +194,6 @@ alt="Fsleyes integration" width="240" height="180" border="10" /></a>
 - [Grabher et al. Neurodegeneration in the Spinal Ventral Horn Prior to Motor Impairment in Cervical Spondylotic Myelopathy. Journal of Neurotrauma 2017](http://online.liebertpub.com/doi/abs/10.1089/neu.2017.4980)
 - [Duval et al. Scan–rescan of axcaliber, macromolecular tissue volume, and g-ratio in the spinal cord. Magn Reson Med 2017](http://onlinelibrary.wiley.com/doi/10.1002/mrm.26945/full)
 - [Smith et al. Lateral corticospinal tract damage correlates with motor output in incomplete spinal cord injury. Archives of Physical Medicine and Rehabilitation 2017](http://www.sciencedirect.com/science/article/pii/S0003999317312844)
-
 - [Kafali et al. Phase-correcting non-local means filtering for diffusion-weighted imaging of the spinal cord. Magn Reson Med 2018](http://onlinelibrary.wiley.com/doi/10.1002/mrm.27105/full)
 - [Hori et al. Application of Quantitative Microstructural MR Imaging with Atlas-based Analysis for the Spinal Cord in Cervical Spondylotic Myelopathy. Sci Rep 2018](https://www.nature.com/articles/s41598-018-23527-8)
 - [Huber et al. Dorsal and ventral horn atrophy is associated with clinical outcome after spinal cord injury. Neurology 2018](https://www.ncbi.nlm.nih.gov/pubmed/29592888)
