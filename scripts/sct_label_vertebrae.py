@@ -495,7 +495,7 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
         params = AnatomicalParams()
         params.num_points = 1
         params.vertebraes = [3, ]
-        params.subtitle = 'Click at the posterior tip of C2-C3 disc'
+        params.subtitle = 'Click at the posterior tip of C2-C3 disc\n'
         input_file = Image(fname)
         output_file = input_file.copy()
         output_file.data *= 0
@@ -936,6 +936,6 @@ def label_discs(fname_seg_labeled, verbose=1):
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
-    sct.start_stream_logger()
+    sct.init_sct()
     # call main function
     main()

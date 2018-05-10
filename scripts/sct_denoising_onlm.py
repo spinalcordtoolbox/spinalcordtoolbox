@@ -110,7 +110,7 @@ def main(file_to_denoise, param, output_file_name) :
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
-    sct.start_stream_logger()
+    sct.init_sct()
     # initialize parameters
 
     # Initialize the parser
