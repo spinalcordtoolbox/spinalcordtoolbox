@@ -784,7 +784,7 @@ def visualize_warp(fname_warp, fname_grid=None, step=3, rm_tmp=True):
 
 
 if __name__ == "__main__":
-    sct.start_stream_logger()
+    sct.init_sct()
     # # initialize parameters
     param = Param()
     # call main function
