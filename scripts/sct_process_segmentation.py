@@ -1239,7 +1239,7 @@ def edge_detection(f):
 
 
 if __name__ == "__main__":
-    sct.start_stream_logger()
+    sct.init_sct()
     # initialize parameters
     param = Param()
     param_default = Param()
