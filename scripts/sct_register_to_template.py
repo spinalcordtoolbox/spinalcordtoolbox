@@ -354,12 +354,24 @@ def main(args=None):
         sct.run(['sct_image', '-i', ftmp_label, '-setorient', 'RPI', '-o', add_suffix(ftmp_label, '_rpi')])
         ftmp_label = add_suffix(ftmp_label, '_rpi')
 
-        # get landmarks in native space
-        # crop segmentation
+        if vertebral_alignment:
+            # cropping the segmentation based on the label coverage to ensure good registration with vertebral alignment
+            # See https://github.com/neuropoly/spinalcordtoolbox/pull/1669 for details
+            image_labels = Image(ftmp_label)
+            coordinates_labels = image_labels.getNonZeroCoordinates(sorting='z')
+            nx, ny, nz, nt, px, py, pz, pt = image_labels.dim
+            offset_crop = 10.0 * pz  # cropping the image 10 mm above and below the highest and lowest label
+            cropping_slices = [coordinates_labels[0].z - offset_crop, coordinates_labels[-1].z + offset_crop]
+            status_crop, output_crop = sct.run(['sct_crop_image', '-i', ftmp_seg, '-o', add_suffix(ftmp_seg, '_crop'), '-dim', '2', '-start', str(cropping_slices[0]), '-end', str(cropping_slices[1])], verbose)
+        else:
+            # if we do not align the vertebral levels, we crop the segmentation from top to bottom
+            status_crop, output_crop = sct.run(['sct_crop_image', '-i', ftmp_seg, '-o', add_suffix(ftmp_seg, '_crop'), '-dim', '2', '-bzmax'], verbose)
+            ftmp_seg = add_suffix(ftmp_seg, '_crop')
+            cropping_slices = output_crop.split('Dimension 2: ')[1].split('\n')[0].split(' ')
+
         # output: segmentation_rpi_crop.nii.gz
-        status_crop, output_crop = sct.run(['sct_crop_image', '-i', ftmp_seg, '-o', add_suffix(ftmp_seg, '_crop'), '-dim', '2', '-bzmax'], verbose)
         ftmp_seg = add_suffix(ftmp_seg, '_crop')
-        cropping_slices = output_crop.split('Dimension 2: ')[1].split('\n')[0].split(' ')
+
 
         # straighten segmentation
         sct.printv('\nStraighten the spinal cord using centerline/segmentation...', verbose)
