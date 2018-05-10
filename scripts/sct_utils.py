@@ -13,7 +13,22 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import sys, io, os, time, errno, tempfile, subprocess, re, logging, glob, shutil
+import errno
+import logging
+import logging.config
+import os
+import re
+import shutil
+import subprocess
+import sys
+import tempfile
+import time
+
+import sct_config
+
+if os.getenv('SENTRY_DSN', None):
+    # do no import if Sentry is not set (i.e., if variable SENTRY_DSN is not defined)
+    import raven
 
 if sys.hexversion < 0x03030000:
     import pipes
@@ -42,8 +57,17 @@ if not LOG_FORMAT:
     LOG_FORMAT = None
 
 
+def init_sct():
+    """ Initialize the sct for typical terminal usage
+
+    :return:
+    """
+    start_stream_logger()
+    init_error_client()
+
+
 def start_stream_logger():
-    """ Log to terminal, by default the formating is like a print() call
+    """ Log to terminal, by default the formatting is like a print() call
 
     :return: 
     """
@@ -62,6 +86,56 @@ def start_stream_logger():
             level = logging.INFO
     stream_handler.setLevel(level)
     log.addHandler(stream_handler)
+
+
+def init_error_client():
+    """ Send traceback to neuropoly servers
+
+    :return:
+    """
+    if os.getenv('SENTRY_DSN'):
+        log.info('Configuring sentry report')
+        try:
+            client = raven.Client(release=sct_config.__version__,
+                                  processors=('raven.processors.RemoveStackLocalsProcessor',
+                                              'raven.processors.SanitizePasswordsProcessor'))
+            server_log_handler(client)
+            traceback_to_server(client)
+            log.info('sentry is set!')
+        except raven.exceptions.InvalidDsn:
+            # This could happen if sct staff change the dsn
+            log.debug('sentry dsn not valid anymore, not reporting errors')
+
+
+def traceback_to_server(client):
+    """
+        Send all traceback children of Exception to sentry
+    """
+
+    def excepthook(exctype, value, traceback):
+        if issubclass(exctype, sct_config.__report_exception_level__):
+            client.captureException(exc_info=(exctype, value, traceback))
+        sys.__excepthook__(exctype, value, traceback)
+
+    sys.excepthook = excepthook
+
+
+def server_log_handler(client):
+    """ Adds sentry log handler to the logger
+
+    :return: the sentry handler
+    """
+    from raven.handlers.logging import SentryHandler
+
+    sh = SentryHandler(client=client, level=sct_config.__report_log_level__)
+    fmt = ("[%(asctime)s][%(levelname)s] %(filename)s: %(lineno)d | "
+            "%(message)s")
+    formatter = logging.Formatter(fmt=fmt, datefmt="%H:%M:%S")
+    formatter.converter = time.gmtime
+    sh.setFormatter(formatter)
+
+    log.addHandler(sh)
+    return sh
 
 
 def pause_stream_logger():
@@ -414,8 +488,6 @@ def copy(src, dst, verbose=1):
                 return
         raise # Must be another error
 
-
-
 def rmtree(folder, verbose=1):
     """Recursively remove folder, almost like shutil.rmtree
     """
@@ -424,52 +496,6 @@ def rmtree(folder, verbose=1):
         shutil.rmtree(folder, ignore_errors=True)
     except Exception as e:
         raise # Must be another error
-
-
-def get_sct_version():
-    sct_commit = 'unknown'
-    sct_branch = 'unknown'
-
-    # get path of SCT
-    path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
-
-    if os.path.isdir(os.path.join(path_sct, '.git')):
-        install_type = 'git'
-        status, output = run(["git", "rev-parse", "HEAD"], verbose=0, cwd=path_sct)
-        if status == 0:
-            sct_commit = output
-        status, output = run(["git", "rev-parse", "--abbrev-ref", "HEAD"], verbose=0, cwd=path_sct)
-        if status == 0:
-            sct_branch = output
-    else:
-        install_type = 'package'
-
-    with io.open(os.path.join(path_sct, 'version.txt'), 'r') as myfile:
-        version_sct = myfile.read().replace('\n', '')
-
-    return install_type, sct_commit, sct_branch, version_sct
-
-#
-#
-#     # check if there is a .git repos
-#     if [-e ${SCT_DIR} /.git]; then
-#     # retrieve commit
-#     SCT_COMMIT = `git - -git - dir =${SCT_DIR} /.git
-#     rev - parse
-#     HEAD
-#     `
-#     # retrieve branch
-#     SCT_BRANCH = `git - -git - dir =${SCT_DIR} /.git
-#     branch | grep \ * | awk
-#     '{print $2}'
-#     `
-#     echo
-#     "Spinal Cord Toolbox ($SCT_BRANCH/$SCT_COMMIT)"
-#
-# else
-# echo
-# "Spinal Cord Toolbox (version: $SCT_VERSION)"
-# fi
 
 
 #=======================================================================================================================
@@ -1409,10 +1435,4 @@ class RunError(Error):
     sct runtime error
     """
     pass
-
-if __name__ == "__main__":
-    info = get_sct_version()
-    print(info)
-
-
 
