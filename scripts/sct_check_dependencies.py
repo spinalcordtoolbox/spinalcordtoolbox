@@ -28,6 +28,8 @@ class Param:
 import argparse
 
 import sys, io, os, platform, importlib
+
+import sct_config
 import sct_utils as sct
 
 class bcolors:
@@ -157,7 +159,7 @@ def main():
     print('SCT path: {0}'.format(path_sct))
 
     # fetch SCT version
-    install_type, sct_commit, sct_branch, version_sct = sct.get_sct_version()
+    install_type, sct_commit, sct_branch, version_sct = sct_config._git_info()
     print('Installation type: %s' % install_type)
     print('  version: ' + version_sct)
     print('  commit: ' + sct_commit)
@@ -217,12 +219,14 @@ def main():
         print_line('Check if ' + i + ' (' + version_requirements_pip.get(i) + ') is installed')
         try:
             module = module_import(module_name, suppress_stderr)
-            # get version
-            try:
-                version = module.__version__
-            except AttributeError:
-                # Futures package as no embedded version info
-                version = version_requirements_pip[i]
+            if module_name in ("raven",):
+                version = module.VERSION
+            else:
+                try:
+                    version = module.__version__
+                except AttributeError:
+                    # Futures package as no embedded version info
+                    version = version_requirements_pip[i]
 
             # check if version matches requirements
             if check_package_version(version, version_requirements_pip, i):
@@ -425,7 +429,7 @@ def get_parser():
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
-    sct.start_stream_logger()
+    sct.init_sct()
     # initialize parameters
     param = Param()
     # call main function

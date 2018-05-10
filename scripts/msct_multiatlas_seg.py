@@ -550,5 +550,5 @@ def main(args=None):
 
 
 if __name__ == "__main__":
-    sct.start_stream_logger()
+    sct.init_sct()
     main()

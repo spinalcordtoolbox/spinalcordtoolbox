@@ -2,9 +2,10 @@
 #
 # About the license: see the file LICENSE.TXT
 
-""" Qt widgets for manually segmenting spinal cord images """
+""" Qt widgets for manual labeling of images """
 
 import logging
+from time import time
 
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
@@ -15,6 +16,8 @@ from PyQt4 import QtCore, QtGui
 
 from spinalcordtoolbox.gui.base import MissingLabelWarning
 
+
+# logging.basicConfig(level=logging.WARNING)  # default mode: WARNING. debug mode: DEBUG
 logger = logging.getLogger(__name__)
 
 
@@ -107,6 +110,9 @@ class AnatomicalCanvas(FigureCanvas):
     _vertical_nav = None
     _navigation_state = False
     annotations = []
+    last_update = 0
+    update_freq = 0.0667
+    previous_point = (0, 0)
 
     def __init__(self, parent, width=8, height=8, dpi=100, crosshair=False, plot_points=False,
                  annotate=False, vertical_nav=False, horizontal_nav=False):
@@ -128,13 +134,14 @@ class AnatomicalCanvas(FigureCanvas):
                                    QtGui.QSizePolicy.Expanding,
                                    QtGui.QSizePolicy.Expanding)
         FigureCanvas.updateGeometry(self)
+        self.vmin_updated = self._params.vmin
+        self.vmax_updated = self._params.vmax
 
     def _init_ui(self, data, aspect):
         self._fig.canvas.mpl_connect('button_release_event', self.on_select_point)
         self._fig.canvas.mpl_connect('scroll_event', self.on_zoom)
-        self._fig.canvas.mpl_connect('button_release_event', self.on_release)
-        self._fig.canvas.mpl_connect('button_press_event', self.on_press)
-        self._fig.canvas.mpl_connect('motion_notify_event', self.on_move)
+        self._fig.canvas.mpl_connect('button_release_event', self.on_change_intensity)
+        self._fig.canvas.mpl_connect('motion_notify_event', self.on_change_intensity)
 
         self._axes = self._fig.add_axes([0, 0, 1, 1], frameon=True)
         self._axes.axis('off')
@@ -167,6 +174,15 @@ class AnatomicalCanvas(FigureCanvas):
         self.points.set_xdata([])
         self.points.set_ydata([])
 
+    def refresh(self):
+        self.view.set_clim(vmin=self.vmin_updated, vmax=self.vmax_updated)
+        # self.view.set_clim(self._parent._controller.vmin_updated,
+        #                    self._parent._controller.vmax_updated)
+        logger.debug("vmin_updated="+str(self.vmin_updated)+", vmax_updated="+str(self.vmax_updated))
+        self.plot_position()
+        self.plot_points()
+        self.view.figure.canvas.draw()
+
     def plot_data(self, xdata, ydata, labels):
         self.points.set_xdata(xdata)
         self.points.set_ydata(ydata)
@@ -176,6 +192,9 @@ class AnatomicalCanvas(FigureCanvas):
                 self.annotate(x, y, label)
 
     def on_zoom(self, event):
+        if event.xdata is None or event.ydata is None:
+            return
+
         if event.button == 'up':
             scale_factor = 1.3
         else:
@@ -202,14 +221,43 @@ class AnatomicalCanvas(FigureCanvas):
     def on_select_point(self, event):
         pass
 
-    def on_press(self, event):
-        self._navigation_state = True
+    def on_change_intensity(self, event):
+        if event.xdata is None or event.ydata is None:
+            return
 
-    def on_release(self, event):
-        self._navigation_state = False
+        if event.button == 3:  # right click
+            curr_time = time()
 
-    def on_move(self, event):
-        pass
+            if curr_time - self.last_update <= self.update_freq:
+                # TODO: never enters that loop because last_update set to 0 and it is never updated
+                return
+
+            if (abs(event.xdata - self.previous_point[0]) < 1 and abs(event.ydata - self.previous_point) < 1):
+                # TODO: never enters that loop because previous_point set to 0,0 and it is never updated
+                self.previous_point = (event.xdata, event.ydata)
+                return
+
+            logger.debug("X=" + str(event.xdata) + ", Y=" + str(event.ydata))
+            xlim, ylim = self._axes.get_xlim(), self._axes.get_ylim()
+            x_factor = (event.xdata - xlim[0]) / float(xlim[1] - xlim[0])  # between 0 and 1. No change: 0.5
+            y_factor = (event.ydata - ylim[1]) / float(ylim[0] - ylim[1])
+
+            # get dynamic of the image
+            vminvmax = self._params.vmax - self._params.vmin  # todo: get variable based on image quantization
+
+            # adjust brightness by adding offset to image intensity
+            # the "-" sign is there so that when moving the cursor to the right, brightness increases (more intuitive)
+            # the 2.0 factor maximizes change.
+            self.vmin_updated = self._params.vmin - (x_factor - 0.5) * vminvmax * 2.0
+            self.vmax_updated = self._params.vmax - (x_factor - 0.5) * vminvmax * 2.0
+
+            # adjust contrast by multiplying image dynamic by scaling factor
+            # the factor 2.0 maximizes contrast change. For y_factor = 0.5, the scaling will be 1, which means no change
+            # in contrast
+            self.vmin_updated = self.vmin_updated * (y_factor * 2.0)
+            self.vmax_updated = self.vmax_updated * (y_factor * 2.0)
+
+            self.refresh()
 
     def horizontal_position(self, position):
         if self._horizontal_nav:
@@ -247,19 +295,11 @@ class SagittalCanvas(AnatomicalCanvas):
         self._x, self._y, self._z = [int(i) for i in self._parent._controller.position]
         data = self._image.data[:, :, self._z]
         self.view.set_array(data)
-        self.plot_position()
-        self.plot_points()
-        self.view.figure.canvas.draw()
+        super(SagittalCanvas, self).refresh()
 
     def on_select_point(self, event):
-        if event.xdata > -1 and event.ydata > -1 and event.button == 1:
+        if event.xdata is not None and event.ydata is not None and event.button == 1:
             self.point_selected_signal.emit(event.ydata, event.xdata, self._z)
-
-    def on_move(self, event):
-        if self._navigation_state:
-            self.vertical_position(event.xdata)
-            self.horizontal_position(event.ydata)
-            self.view.figure.canvas.draw()
 
     def plot_points(self):
         """Plot the controller's list of points (x, y) and annotate the point with the label"""
@@ -291,10 +331,10 @@ class CoronalCanvas(AnatomicalCanvas):
         self._x, self._y, self._z = [int(i) for i in self._parent._controller.position]
         data = self._image.data[:, self._y, :]
         self.view.set_array(data)
-        self.view.figure.canvas.draw()
+        super(CoronalCanvas, self).refresh()
 
     def on_select_point(self, event):
-        if event.xdata > -1 and event.ydata > -1 and event.button == 1:
+        if event.xdata is not None and event.ydata is not None and event.button == 1:
             self.point_selected_signal.emit(event.xdata, self._y, event.ydata)
 
     def plot_points(self):
@@ -322,12 +362,10 @@ class AxialCanvas(AnatomicalCanvas):
         self._x, self._y, self._z = [int(i) for i in self._parent._controller.position]
         data = self._image.data[self._x, :, :]
         self.view.set_array(data)
-        self.plot_position()
-        self.plot_points()
-        self.view.figure.canvas.draw()
+        super(AxialCanvas, self).refresh()
 
     def on_select_point(self, event):
-        if event.xdata > 0 and event.ydata > 0 and event.button == 1:
+        if event.xdata is not None and event.ydata is not None and event.button == 1:
             self.point_selected_signal.emit(self._x, event.ydata, event.xdata)
 
     def plot_points(self):
@@ -346,12 +384,6 @@ class AxialCanvas(AnatomicalCanvas):
         position = self._parent._controller.position
         self.horizontal_position(position[1])
         self.vertical_position(position[2])
-
-    def on_move(self, event):
-        if self._navigation_state:
-            self.horizontal_position(event.ydata)
-            self.vertical_position(event.xdata)
-            self.view.figure.canvas.draw()
 
 
 class AnatomicalToolbar(NavigationToolbar):

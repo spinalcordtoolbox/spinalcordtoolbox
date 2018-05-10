@@ -764,7 +764,7 @@ def register(src, dest, paramreg, param, i_step_str):
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
-    sct.start_stream_logger()
+    sct.init_sct()
     # call main function
     main()
 
