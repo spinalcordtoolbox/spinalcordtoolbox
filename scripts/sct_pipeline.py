@@ -72,6 +72,7 @@ import importlib
 import sct_utils as sct
 import msct_parser
 import sct_testing
+import sct_config
 
 
 
@@ -471,7 +472,7 @@ def get_parser():
 # Start program
 # ====================================================================================================
 if __name__ == "__main__":
-    sct.start_stream_logger()
+    sct.init_sct()
 
     addr_from = 'spinalcordtoolbox@gmail.com'
     parser = get_parser()
@@ -531,8 +532,7 @@ if __name__ == "__main__":
     sct.log.info('Testing started on: ' + strftime("%Y-%m-%d %H:%M:%S"))
 
     # fetch SCT version
-    install_type, sct_commit, sct_branch, version_sct = sct.get_sct_version()
-    sct.log.info('SCT version/commit/branch: ' + version_sct + '/' + sct_commit + '/' + sct_branch)
+    sct.log.info('SCT version: {}'.format(sct_config.__version__))
 
     # check OS
     platform_running = sys.platform

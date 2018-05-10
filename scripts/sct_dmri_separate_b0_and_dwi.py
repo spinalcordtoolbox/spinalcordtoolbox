@@ -319,5 +319,5 @@ def identify_b0(fname_bvecs, fname_bvals, bval_min, verbose):
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
-    sct.start_stream_logger()
+    sct.init_sct()
     main()
