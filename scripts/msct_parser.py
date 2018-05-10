@@ -464,16 +464,6 @@ class Usage:
         self.arguments_string = ''
         self.section = dict()
 
-#     def set_header(self):
-#         from time import gmtime
-#         from os.path import basename, getmtime
-#         creation = gmtime(getmtime(self.file))
-#         self.header = """
-# """+basename(self.file)+"""
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
-# Version: """ + str(self.get_sct_version())
-
     def set_description(self, description):
         self.description = '\nDESCRIPTION\n' + self.align(description, length=100, pad=0)
 
