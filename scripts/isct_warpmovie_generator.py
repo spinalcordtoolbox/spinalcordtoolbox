@@ -40,7 +40,7 @@ class WarpingField(Image):
             raise StopIteration()
 
 if __name__ == "__main__":
-    sct.start_stream_logger()
+    sct.init_sct()
     from msct_parser import Parser
     import sys
 

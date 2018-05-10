@@ -29,7 +29,7 @@ EOF
 
 echo "$boiler_plate"
 
-cp sct_launcher ../bin/.
+sed "s|{DYNAMIC_INSTALL_TEMPLATE}|${SCT_ADD_ENV_VARS}|" sct_launcher > ../bin/sct_launcher
 cp sct_env ../bin/.
 
 grep -l "__main__" ../scripts/*.py | while read -r filename ; do
