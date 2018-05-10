@@ -61,7 +61,7 @@ N.B. We currently cover OS X (10.8+) and Debian/Ubuntu/Fedora/RedHat/CentOS plat
 
 If you have 10.7 or less, the only incompatibility is with ANTs, which you can compile on your station and then copy the binaries under SCT installation as explained [here](https://github.com/neuropoly/spinalcordtoolbox/wiki/binaries).
 
-Once you have downloaded SCT, unpack it (note: Safari automatically unzip it). Then, open a new Terminal, go into the created folder and launch the installer:
+Once you have downloaded SCT, unpack it (note: Safari will automatically unzip it). Then, open a new Terminal, go into the created folder and launch the installer:
 
 ~~~
 ./install_sct
@@ -75,19 +75,11 @@ Download source code from Github (N.B. you need to have git installed):
 git clone --depth=1 --branch=master https://github.com/neuropoly/spinalcordtoolbox.git sct
 ~~~
 
-Install SCT:
+Then install SCT:
 
 ~~~
 cd sct
 ./install_sct
-~~~
-
-Note: To prevent selective download of data, python or binaries, the following flags can be used:
-
-~~~
--d   Prevent the (re)-installation of the "data/" directory 
--m   Prevent the (re)-installation of the "python/" directory 
--b   Prevent the (re)-installation of the SCT binaries files
 ~~~
 
 ### Using virtual machine
@@ -113,7 +105,7 @@ The best way to learn about the main functionalities of SCT is to run a typical 
 
 ## Courses
 
-We organize **free** SCT courses, each year after the ISMRM conference. If you'd like to be added to the mailing list, please send an email to `spinalcordtoolbox@gmail.com`. The past courses are available hereafter:
+We organize **free** SCT courses, each year after the ISMRM conference. If you'd like to be added to the mailing list, please send an email to `spinalcordtoolbox@gmail.com`. The past courses handouts are available hereafter:
 
 * [SCT course, Honolulu, 2017-04-28](https://osf.io/fvnjq/)
 * [SCT course, Geneva, 2016-06-28](https://sourceforge.net/p/spinalcordtoolbox/wiki/Home/attachment/SCT_Course_20160628.pdf)
