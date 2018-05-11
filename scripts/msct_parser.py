@@ -139,8 +139,10 @@ class Option:
             return self.checkFile(param)
 
         elif type_option == "file_output":  # check if permission are required
+            if not os.path.isdir(os.path.dirname(os.path.abspath(param))):
+                self.parser.usage.error("Error: parent folder doesn't exist for %s file %s" % (self.name, param))
             if not sct.check_write_permission(param):
-                self.parser.usage.error("Error of writing permissions on file: " + param)
+                self.parser.usage.error("Error: no write permission for %s file %s" % (self.name, param))
             return param
 
         elif type_option == "folder":
