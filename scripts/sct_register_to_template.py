@@ -93,13 +93,19 @@ def get_parser():
                       example="anat_seg.nii.gz")
     parser.add_option(name="-l",
                       type_value="file",
-                      description="Labels located at the center of the spinal cord, on the mid-vertebral slice. For more information about label creation, please refer to http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/",
+                      description="Labels located at the center of the spinal cord, on the mid-vertebral slice. For "
+                                  "more information about label creation, please refer to "
+                                  "http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/",
                       mandatory=False,
                       default_value='',
                       example="anat_labels.nii.gz")
     parser.add_option(name="-ldisc",
                       type_value="file",
-                      description="Labels located at the posterior edge of the intervertebral discs. For more information about label creation, please refer to http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/.",
+                      description="Labels located at the posterior edge of the intervertebral discs. If you are using "
+                                  "more than 2 labels, all disc covering the region of interest should be provided. "
+                                  "E.g., if you are interested in levels C2 to C7, then you should provide disc labels "
+                                  "2,3,4,5,6,7). For more information about label creation, please refer to "
+                                  "http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/.",  # TODO: update URL
                       mandatory=False,
                       default_value='',
                       example="anat_labels.nii.gz")
