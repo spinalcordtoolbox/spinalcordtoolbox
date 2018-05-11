@@ -194,7 +194,7 @@ class QcImage(object):
                     return np.array(c * (max_ - min_) + min_, dtype=a.dtype)
                 img = equalized(img)
 
-            plt.figure(1)
+            plt.figure()
             fig = plt.imshow(img, cmap=plt.cm.gray, interpolation=self.interpolation, aspect=float(aspect_img))
             fig.axes.get_xaxis().set_visible(False)
             fig.axes.get_yaxis().set_visible(False)
@@ -203,7 +203,7 @@ class QcImage(object):
             for action in self.action_list:
                 logger.debug('Action List %s', action.__name__)
                 plt.clf()
-                plt.figure(1)
+                plt.figure()
                 if self._stretch_contrast and action.__name__ in ("no_seg_seg",):
                     print("Mask type %s" % mask.dtype)
                     mask = equalized(mask)
