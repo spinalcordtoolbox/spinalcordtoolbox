@@ -385,9 +385,20 @@ def main(args=None):
         fn_warp_curve2straight = os.path.join(curdir, "warp_curve2straight.nii.gz")
         fn_warp_straight2curve = os.path.join(curdir, "warp_straight2curve.nii.gz")
         fn_straight_ref = os.path.join(curdir, "straight_ref.nii.gz")
-        if os.path.isfile(fn_warp_curve2straight) and os.path.isfile(fn_warp_straight2curve) and os.path.isfile(fn_straight_ref):
-            # if they exist, copy them into current folder
-            sct.printv('WARNING: It looks like straightening was already performed previously. Copying warping fields...', verbose, 'warning')
+
+        cache_input_files=[ftmp_seg]
+        if vertebral_alignment:
+            cache_input_files += [
+             ftmp_template_seg,
+             ftmp_label,
+             ftmp_template_label,
+            ]
+        cache_sig = sct.cache_signature(
+         input_files=cache_input_files,
+        )
+        cachefile = os.path.join(curdir, "straightening.cache")
+        if sct.cache_valid(cachefile, cache_sig) and os.path.isfile(fn_warp_curve2straight) and os.path.isfile(fn_warp_straight2curve) and os.path.isfile(fn_straight_ref):
+            sct.printv('Reusing existing warping field which seems to be valid', verbose, 'warning')
             sct.copy(fn_warp_curve2straight, 'warp_curve2straight.nii.gz')
             sct.copy(fn_warp_straight2curve, 'warp_straight2curve.nii.gz')
             sct.copy(fn_straight_ref, 'straight_ref.nii.gz')
@@ -409,6 +420,7 @@ def main(args=None):
                 sc_straight.discs_ref_filename = ftmp_template_label
 
             sc_straight.straighten()
+            sct.cache_save(cachefile, cache_sig)
 
         # N.B. DO NOT UPDATE VARIABLE ftmp_seg BECAUSE TEMPORARY USED LATER
         # re-define warping field using non-cropped space (to avoid issue #367)
