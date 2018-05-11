@@ -72,9 +72,6 @@ import importlib
 import sct_utils as sct
 import msct_parser
 import sct_testing
-import sct_config
-
-
 
 def _pickle_method(method):
     """
@@ -532,7 +529,7 @@ if __name__ == "__main__":
     sct.log.info('Testing started on: ' + strftime("%Y-%m-%d %H:%M:%S"))
 
     # fetch SCT version
-    sct.log.info('SCT version: {}'.format(sct_config.__version__))
+    sct.log.info('SCT version: {}'.format(sct.__version__))
 
     # check OS
     platform_running = sys.platform
