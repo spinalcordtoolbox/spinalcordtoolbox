@@ -878,9 +878,10 @@ def get_parser():
     parser.add_option(name="-ldisc_input",
                       type_value="image_nifti",
                       description="Labels located at the posterior edge of the intervertebral discs, for the input "
-                                  "image (-i). Ideally, all disc labels should be provided, including the position of "
-                                  "the pontomedullary groove and junction if available. More details about label "
-                                  "creation at http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/.\n"  # TODO (Julien) update this link
+                                  "image (-i). All disc covering the region of interest should be provided. E.g., if "
+                                  "you are interested in levels C2 to C7, then you should provide disc labels 2,3,4,5,"
+                                  "6,7). More details about label creation at "
+                                  "http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/.\n"  # TODO (Julien) update this link
                                   "This option must be used with the -ldisc_dest parameter.",
                       mandatory=False,
                       example="ldisc_input.nii.gz")
