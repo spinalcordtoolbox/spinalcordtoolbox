@@ -198,7 +198,8 @@ class Option:
         # check if the file exist
         sct.printv("Check file existence...", 0)
         if self.parser.check_file_exist:
-            sct.check_file_exist(param, 0)
+            if not os.path.isfile(param):
+                self.parser.usage.error("ERROR: Option " + self.name + " file doesn't exist: " + param)
         return param
 
     def checkIfNifti(self, param):
@@ -239,7 +240,8 @@ class Option:
     def checkFolder(self, param):
         # check if the folder exist. If not, create it.
         if self.parser.check_file_exist:
-            sct.check_folder_exist(param, 0)
+            if not os.path.isdir(param):
+                self.parser.usage.error("ERROR: Option " + self.name + " folder doesn't exist: " + param)
         return param
 
     def checkFolderCreation(self, param):
