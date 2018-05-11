@@ -52,7 +52,7 @@ before_install:
 install:
 # update tools
 #  - ./update_bin.sh
-  - yes | ./install_sct
+  - yes | ASK_REPORT_QUESTION=false ./install_sct
   # run launcher in order to update PATH
   - source $HOME/build/neuropoly/spinalcordtoolbox/bin/sct_launcher
   - echo $PATH
