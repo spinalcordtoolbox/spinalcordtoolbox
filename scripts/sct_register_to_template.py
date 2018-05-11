@@ -372,7 +372,6 @@ def main(args=None):
         else:
             # if we do not align the vertebral levels, we crop the segmentation from top to bottom
             status_crop, output_crop = sct.run(['sct_crop_image', '-i', ftmp_seg, '-o', add_suffix(ftmp_seg, '_crop'), '-dim', '2', '-bzmax'], verbose)
-            ftmp_seg = add_suffix(ftmp_seg, '_crop')
             cropping_slices = output_crop.split('Dimension 2: ')[1].split('\n')[0].split(' ')
 
         # output: segmentation_rpi_crop.nii.gz
