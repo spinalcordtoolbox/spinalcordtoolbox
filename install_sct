@@ -513,29 +513,13 @@ else
     exit $e_status
   fi
 
-  # This varible will be 1 if the Tensorflow should be installed
-  # using Conda and 0 otherwise.
-  TF_DISTRO_CHECK=$(python ${SCT_SOURCE}/install/tf_distro_check.py)
-
-  # Install tensorflow with Conda for some distributions
-  if [ $TF_DISTRO_CHECK = "1" ]; then
-    conda install -c defaults --yes tensorflow==1.3.0
-    e_status=$?
-    if [ ${e_status} != 0 ]; then
-      echo "Failed to conda install tensorflow."
-      exit ${e_status}
-    fi
-  fi
-
-  # reinstall numpy at the end to prevent some bugs
-  n_version=$(conda list numpy | grep numpy |awk '{print $2}')
-  conda install -fy numpy=$n_version
+  python ${SCT_SOURCE}/install/install_dependencies_with_workarounds.py
   e_status=$?
   if [ ${e_status} != 0 ]; then
-    echo "Failed to conda install numpy"
-    exit ${e_status}
+      echo "Working around distribution issues failed."
+      echo "Feel free to open an issue after looking at https://github.com/neuropoly/spinalcordtoolbox/issues/1704"
+      exit $e_status
   fi
-
 fi
 
 ## Install the spinalcordtoolbox into conda
