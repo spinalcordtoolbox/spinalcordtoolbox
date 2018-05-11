@@ -92,7 +92,7 @@ class Option:
     OPTION_TYPES = ["str", "int", "float", "long", "complex", "Coordinate"]
     # list of options that are path type
     # input file/folder
-    OPTION_PATH_INPUT = ["file", "folder", "image_nifti"]
+    OPTION_PATH_INPUT = ["file", "file-transfo", "folder", "image_nifti"]
     # output file/folder
     OPTION_PATH_OUTPUT = ["file_output", "folder_output"]
 
@@ -137,6 +137,13 @@ class Option:
 
         elif type_option == "file":
             return self.checkFile(param)
+
+        elif type_option == "file-transfo":
+            if param.startswith("-"):
+                self.checkFile(param[1:])
+                return param
+            else:
+                return self.checkFile(param)
 
         elif type_option == "file_output":  # check if permission are required
             if not os.path.isdir(os.path.dirname(os.path.abspath(param))):
