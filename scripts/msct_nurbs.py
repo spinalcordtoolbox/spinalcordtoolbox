@@ -61,11 +61,11 @@
 # ============================================================================================================
 # check if needed Python libraries are already installed or not
 
-import math
-from sys import exit
-
 import numpy as np
 import sct_utils as sct
+
+class ReconstructionError(RuntimeError):
+    pass
 
 class NURBS():
     def __init__(self, degre=3, precision=1000, liste=None, sens=False, nbControl=None, verbose=1, tolerance=0.01, maxControlPoints=50, all_slices=True, twodim=False, weights=True):
@@ -117,21 +117,20 @@ class NURBS():
                 self.nbControle = self.degre + 1
                 nb_points = len(P_x)
                 if self.nbControle > nb_points - 1:
-                    sct.printv('ERROR : There are too few points to compute. The number of points of the curve must be strictly superior to degre +2 which is: ', self.nbControle, '. Either change degre to a lower value, either add points to the curve.')
-                    exit(2)
+                    sct.printv('ERROR : There are too few points to compute. The number of points of the curve must be strictly superior to degre +2 which is: ', self.nbControle, '. Either change degre to a lower value, either add points to the curve.', type="error")
 
                 # compute weights based on curve density
                 w = [1.0] * len(P_x)
                 if weights:
                     if not twodim:
                         for i in range(1, len(P_x) - 1):
-                            dist_before = math.sqrt((P_x[i - 1] - P_x[i])**2 + (P_y[i - 1] - P_y[i])**2 + (P_z[i - 1] - P_z[i])**2)
-                            dist_after = math.sqrt((P_x[i] - P_x[i + 1])**2 + (P_y[i] - P_y[i + 1])**2 + (P_z[i] - P_z[i + 1])**2)
+                            dist_before = np.sqrt((P_x[i - 1] - P_x[i])**2 + (P_y[i - 1] - P_y[i])**2 + (P_z[i - 1] - P_z[i])**2)
+                            dist_after = np.sqrt((P_x[i] - P_x[i + 1])**2 + (P_y[i] - P_y[i + 1])**2 + (P_z[i] - P_z[i + 1])**2)
                             w[i] = (dist_before + dist_after) / 2.0
                     else:
                         for i in range(1, len(P_x) - 1):
-                            dist_before = math.sqrt((P_x[i - 1] - P_x[i])**2 + (P_y[i - 1] - P_y[i])**2)
-                            dist_after = math.sqrt((P_x[i] - P_x[i + 1])**2 + (P_y[i] - P_y[i + 1])**2)
+                            dist_before = np.sqrt((P_x[i - 1] - P_x[i])**2 + (P_y[i - 1] - P_y[i])**2)
+                            dist_after = np.sqrt((P_x[i] - P_x[i + 1])**2 + (P_y[i] - P_y[i + 1])**2)
                             w[i] = (dist_before + dist_after) / 2.0
                     w[0], w[-1] = w[1], w[-2]
 
@@ -182,7 +181,7 @@ class NURBS():
                         # Create a list of parameters that have worked in order to call back the last one that has worked
                         list_param_that_worked.append([self.nbControle, self.pointsControle, error_curve])
 
-                    except Exception as ex:
+                    except ReconstructionError as ex:
                         if verbose >= 1:
                             sct.log.error(ex)
                         error_curve = last_error_curve + 10000.0
@@ -300,7 +299,7 @@ class NURBS():
         c = []
         sumC = 0
         for i in range(n):
-            dist = math.sqrt((P[i + 1][0] - P[i][0])**2 + (P[i + 1][1] - P[i][1])**2 + (P[i + 1][2] - P[i][2])**2)
+            dist = np.sqrt((P[i + 1][0] - P[i][0])**2 + (P[i + 1][1] - P[i][1])**2 + (P[i + 1][2] - P[i][2])**2)
             c.append(dist)
             sumC += dist
 
@@ -319,7 +318,7 @@ class NURBS():
         c = []
         sumC = 0
         for i in range(n):
-            dist = math.sqrt((P[i + 1][0] - P[i][0])**2 + (P[i + 1][1] - P[i][1])**2)
+            dist = np.sqrt((P[i + 1][0] - P[i][0])**2 + (P[i + 1][1] - P[i][1])**2)
             c.append(dist)
             sumC += dist
 
@@ -390,7 +389,8 @@ class NURBS():
             P_z_d.append(sum_num_z_der)
 
             if sum_den <= 0.05:
-                raise Exception('WARNING: NURBS instability -> wrong reconstruction')
+                sct.printv('WARNING: NURBS instability -> wrong reconstruction', verbose=self.verbose, type="warning")
+                raise ReconstructionError()
 
         P_x = [P_x[i] for i in np.argsort(P_z)]
         P_y = [P_y[i] for i in np.argsort(P_z)]
@@ -490,7 +490,8 @@ class NURBS():
             P_y_d.append(sum_num_y_der)
 
             if sum_den <= 0.05:
-                raise Exception('WARNING: NURBS instability -> wrong reconstruction')
+                sct.printv('WARNING: NURBS instability -> wrong reconstruction', verbose=verbose, type="warning")
+                raise ReconstructionError()
 
         P_x = [P_x[i] for i in np.argsort(P_y)]
         P_x_d = [P_x_d[i] for i in np.argsort(P_y)]
@@ -553,12 +554,12 @@ class NURBS():
         # Calcul des chords
         di = 0.0
         for k in range(m - 1):
-            di += math.sqrt((P_x[k + 1] - P_x[k])**2 + (P_y[k + 1] - P_y[k])**2 + (P_z[k + 1] - P_z[k])**2)
+            di += np.sqrt((P_x[k + 1] - P_x[k])**2 + (P_y[k + 1] - P_y[k])**2 + (P_z[k + 1] - P_z[k])**2)
         ubar = [0]
         for k in range(m - 1):
             # ubar.append((k+1)/float(m))  # uniform method
             # ubar.append(ubar[-1]+abs((P_x[k+1]-P_x[k])**2 + (P_y[k+1]-P_y[k])**2 + (P_z[k+1]-P_z[k])**2)/di)  # chord length method
-            ubar.append(ubar[-1] + math.sqrt((P_x[k + 1] - P_x[k])**2 + (P_y[k + 1] - P_y[k])**2 + (P_z[k + 1] - P_z[k])**2) / di)  # centripetal method
+            ubar.append(ubar[-1] + np.sqrt((P_x[k + 1] - P_x[k])**2 + (P_y[k + 1] - P_y[k])**2 + (P_z[k + 1] - P_z[k])**2) / di)  # centripetal method
 
         # the knot vector should reflect the distribution of ubar
         d = (m + 1) / (n - p + 1)
@@ -658,7 +659,8 @@ class NURBS():
         std_factor = 10.0
         std_Px, std_Py, std_Pz, std_x, std_y, std_z = std(P_xb), std(P_yb), std(P_zb), std(np.array(P_x)), std(np.array(P_y)), std(np.array(P_z))
         if std_x >= 0.1 and std_y >= 0.1 and std_z >= 0.1 and (std_Px > std_factor * std_x or std_Py > std_factor * std_y or std_Pz > std_factor * std_z):
-            raise Exception('WARNING: NURBS instability -> wrong control points')
+            sct.printv('WARNING: NURBS instability -> wrong reconstruction', verbose=verbose, type="warning")
+            raise ReconstructionError()
 
         P = [[P_xb[i, 0], P_yb[i, 0], P_zb[i, 0]] for i in range(len(P_xb))]
 
@@ -674,12 +676,12 @@ class NURBS():
         # Calcul des chords
         di = 0.0
         for k in range(m - 1):
-            di += math.sqrt((P_x[k + 1] - P_x[k])**2 + (P_y[k + 1] - P_y[k])**2)
+            di += np.sqrt((P_x[k + 1] - P_x[k])**2 + (P_y[k + 1] - P_y[k])**2)
         ubar = [0]
         for k in range(m - 1):
             # ubar.append((k+1)/float(m))  # uniform method
             # ubar.append(ubar[-1]+abs((P_x[k+1]-P_x[k])**2 + (P_y[k+1]-P_y[k])**2 + (P_z[k+1]-P_z[k])**2)/di)  # chord length method
-            ubar.append(ubar[-1] + math.sqrt((P_x[k + 1] - P_x[k])**2 + (P_y[k + 1] - P_y[k])**2) / di)  # centripetal method
+            ubar.append(ubar[-1] + np.sqrt((P_x[k + 1] - P_x[k])**2 + (P_y[k + 1] - P_y[k])**2) / di)  # centripetal method
 
         # the knot vector should reflect the distribution of ubar
         d = (m + 1) / (n - p + 1)
@@ -770,7 +772,8 @@ class NURBS():
         std_factor = 10.0
         std_Px, std_Py, std_x, std_y = std(P_xb), std(P_yb), std(np.array(P_x)), std(np.array(P_y))
         if std_x >= 0.1 and std_y >= 0.1 and (std_Px > std_factor * std_x or std_Py > std_factor * std_y):
-            raise Exception('WARNING: NURBS instability -> wrong control points')
+            sct.printv('WARNING: NURBS instability -> wrong reconstruction', verbose=verbose, type="warning")
+            raise ReconstructionError()
 
         P = [[P_xb[i, 0], P_yb[i, 0]] for i in range(len(P_xb))]
 
@@ -791,11 +794,11 @@ class NURBS():
         # Calcul du vecteur de noeuds
         di = 0
         for k in range(n - 1):
-            di += math.sqrt((newPx[k + 1] - newPx[k])**2 + (newPy[k + 1] - newPy[k])**2 + (newPz[k + 1] - newPz[k])**2)
+            di += np.sqrt((newPx[k + 1] - newPx[k])**2 + (newPy[k + 1] - newPy[k])**2 + (newPz[k + 1] - newPz[k])**2)
         u = [0] * p
         ubar = [0]
         for k in range(n - 1):
-            ubar.append(ubar[-1] + math.sqrt((newPx[k + 1] - newPx[k])**2 + (newPy[k + 1] - newPy[k])**2 + (newPz[k + 1] - newPz[k])**2) / di)
+            ubar.append(ubar[-1] + np.sqrt((newPx[k + 1] - newPx[k])**2 + (newPy[k + 1] - newPy[k])**2 + (newPz[k + 1] - newPz[k])**2) / di)
         for j in range(n - p):
             sumU = 0
             for i in range(p):
@@ -866,7 +869,8 @@ class NURBS():
             P_z_d.append(sum_num_z_der)
 
             if sum_den <= 0.05:
-                raise Exception('WARNING: NURBS instability -> wrong reconstruction')
+                sct.printv('WARNING: NURBS instability -> wrong reconstruction', verbose=verbose, type="warning")
+                raise ReconstructionError()
 
         P_x = [P_x[i] for i in np.argsort(P_z)]
         P_y = [P_y[i] for i in np.argsort(P_z)]
@@ -908,7 +912,6 @@ class NURBS():
 
         # Calcul de la courbe
         # reparametrization of the curve
-        import numpy as np
         param = np.linspace(x[0], x[-1], prec)
         P_x, P_y, P_z, P_x_d, P_y_d, P_z_d = self.compute_curve_from_parametrization(P, k, x, Nik, Nikp, param)
         from msct_types import Centerline
@@ -963,7 +966,6 @@ class NURBS():
                 if ind_z not in self.P_z:
                     indexes_to_remove.append(i)
 
-            import numpy as np
             P_x = np.delete(P_x, indexes_to_remove)
             P_y = np.delete(P_y, indexes_to_remove)
             P_z = np.delete(P_z, indexes_to_remove)
