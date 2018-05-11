@@ -29,7 +29,6 @@ import argparse
 
 import sys, io, os, platform, importlib
 
-import sct_config
 import sct_utils as sct
 
 class bcolors:
@@ -159,7 +158,7 @@ def main():
     print('SCT path: {0}'.format(path_sct))
 
     # fetch SCT version
-    install_type, sct_commit, sct_branch, version_sct = sct_config._git_info()
+    install_type, sct_commit, sct_branch, version_sct = sct._git_info()
     print('Installation type: %s' % install_type)
     print('  version: ' + version_sct)
     print('  commit: ' + sct_commit)
