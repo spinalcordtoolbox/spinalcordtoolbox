@@ -140,9 +140,9 @@ class Option:
 
         elif type_option == "file_output":  # check if permission are required
             if not os.path.isdir(os.path.dirname(os.path.abspath(param))):
-                self.parser.usage.error("Error: parent folder doesn't exist for %s file %s" % (self.name, param))
+                self.parser.usage.error("ERROR: Option %s parent folder doesn't exist for file %s" % (self.name, param))
             if not sct.check_write_permission(param):
-                self.parser.usage.error("Error: no write permission for %s file %s" % (self.name, param))
+                self.parser.usage.error("ERROR: Option %s no write permission for file %s" % (self.name, param))
             return param
 
         elif type_option == "folder":
@@ -225,7 +225,7 @@ class Option:
         elif param.lower() in self.list_no_image:
             no_image = True
         else:
-            raise ValueError("File is not a NIFTI image file. Exiting")
+            self.parser.usage.error("ERROR: Option " + self.name + " file " + param + " is not a NIFTI image file. Exiting")
         if nii:
             return param_tmp + '.nii'
         elif niigz:
@@ -234,7 +234,7 @@ class Option:
             return param
         else:
             sct.log.debug('executed in {}'.format(os.getcwd()))
-            raise ValueError("File " + param + " does not exist. Exiting")
+            self.parser.usage.error("ERROR: Option " + self.name + " file " + param + " does not exist.")
 
     def checkFolder(self, param):
         # check if the folder exist. If not, create it.
