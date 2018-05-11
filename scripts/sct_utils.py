@@ -13,18 +13,13 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+import sys, io, os, re, time
 import errno
 import logging
 import logging.config
-import os
-import re
 import shutil
 import subprocess
-import sys
 import tempfile
-import time
-
-import sct_config
 
 if os.getenv('SENTRY_DSN', None):
     # do no import if Sentry is not set (i.e., if variable SENTRY_DSN is not defined)
@@ -38,6 +33,9 @@ else:
     import shlex
     def list2cmdline(lst):
         return " ".join(shlex.quote(x) for x in lst)
+
+
+
 
 """
 Basic logging setup for the sct
@@ -55,6 +53,86 @@ LOG_LEVEL = os.getenv('SCT_LOG_LEVEL')
 LOG_FORMAT = os.getenv('SCT_LOG_FORMAT')
 if not LOG_FORMAT:
     LOG_FORMAT = None
+
+
+def check_exe(name):
+    """
+    Ensure that a program exists
+    :type name: string
+    :param name: name or path to program
+    :return: path of the program or None
+    """
+    def is_exe(fpath):
+        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
+
+    fpath, fname = os.path.split(name)
+    if fpath and is_exe(name):
+        return fpath
+    else:
+        for path in os.environ["PATH"].split(os.pathsep):
+            path = path.strip('"')
+            exe_file = os.path.join(path, name)
+            if is_exe(exe_file):
+                return exe_file
+
+    return None
+
+
+def __get_branch():
+    """
+    Fallback if for some reason the value vas no set by sct_launcher
+    :return:
+    """
+
+    p = subprocess.Popen(["git", "rev-parse", "--abbrev-ref", "HEAD"], stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE, cwd=__sct_dir__)
+    output, _ = p.communicate()
+    status = p.returncode
+
+    if status == 0:
+        return output.decode().strip()
+
+
+def __get_commit():
+    """
+    Fallback if for some reason the value vas no set by sct_launcher
+    :return:
+    """
+    p = subprocess.Popen(["git", "rev-parse", "HEAD"], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                         cwd=__sct_dir__)
+    output, _ = p.communicate()
+    status = p.returncode
+    if status == 0:
+        return output.decode().strip()
+
+def _git_info(commit_env='SCT_COMMIT',branch_env='SCT_BRANCH'):
+
+    sct_commit = os.getenv(commit_env, "unknown")
+    sct_branch = os.getenv(branch_env, "unknown")
+    if check_exe("git"):
+        sct_commit = __get_commit() or sct_commit
+        sct_branch = __get_branch() or sct_branch
+
+    if sct_commit is not 'unknown':
+        install_type = 'git'
+    else:
+        install_type = 'package'
+
+    with io.open(os.path.join(__sct_dir__, 'version.txt'), 'r') as myfile:
+        version_sct = myfile.read().replace('\n', '')
+
+    return install_type, sct_commit, sct_branch, version_sct
+
+
+# Basic sct config
+__sct_dir__ = os.getenv("SCT_DIR", os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+__data_dir__ = os.getenv("SCT_DATA_DIR", os.path.join(__sct_dir__, 'data'))
+__version__ = '-'.join(_git_info())
+
+
+# statistic report level
+__report_log_level__ = logging.ERROR  # DEBUG, INFO, WARNING, ERROR
+__report_exception_level__ = Exception
 
 
 def init_sct():
@@ -96,7 +174,7 @@ def init_error_client():
     if os.getenv('SENTRY_DSN'):
         log.info('Configuring sentry report')
         try:
-            client = raven.Client(release=sct_config.__version__,
+            client = raven.Client(release=__version__,
                                   processors=('raven.processors.RemoveStackLocalsProcessor',
                                               'raven.processors.SanitizePasswordsProcessor'))
             server_log_handler(client)
@@ -113,7 +191,7 @@ def traceback_to_server(client):
     """
 
     def excepthook(exctype, value, traceback):
-        if issubclass(exctype, sct_config.__report_exception_level__):
+        if issubclass(exctype, __report_exception_level__):
             client.captureException(exc_info=(exctype, value, traceback))
         sys.__excepthook__(exctype, value, traceback)
 
@@ -127,7 +205,7 @@ def server_log_handler(client):
     """
     from raven.handlers.logging import SentryHandler
 
-    sh = SentryHandler(client=client, level=sct_config.__report_log_level__)
+    sh = SentryHandler(client=client, level=__report_log_level__)
     fmt = ("[%(asctime)s][%(levelname)s] %(filename)s: %(lineno)d | "
             "%(message)s")
     formatter = logging.Formatter(fmt=fmt, datefmt="%H:%M:%S")
@@ -348,29 +426,6 @@ def run(cmd, verbose=1, raise_exception=True, cwd=None, env=None):
         raise RunError(output)
 
     return status, output
-
-
-def check_exe(name):
-    """
-    Ensure that a program exists
-    :type name: string
-    :param name: name or path to program
-    :return: path of the program or None
-    """
-    def is_exe(fpath):
-        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
-
-    fpath, fname = os.path.split(name)
-    if fpath and is_exe(name):
-        return fpath
-    else:
-        for path in os.environ["PATH"].split(os.pathsep):
-            path = path.strip('"')
-            exe_file = os.path.join(path, name)
-            if is_exe(exe_file):
-                return exe_file
-
-    return None
 
 
 def display_viewer_syntax(files, colormaps=[], minmax=[], opacities=[], mode='', verbose=1):
