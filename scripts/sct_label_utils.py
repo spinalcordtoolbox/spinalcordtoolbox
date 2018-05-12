@@ -23,6 +23,7 @@ from scipy import ndimage
 
 from msct_parser import Parser
 from msct_image import Image
+from msct_types import CoordinateValue
 import sct_utils as sct
 
 
@@ -546,10 +547,42 @@ class ProcessLabels(object):
             sct.printv('Position=(' + str(coord.x) + ',' + str(coord.y) + ',' + str(coord.z) + ') -- Value= ' + str(coord.value), verbose=self.verbose)
             if self.useful_notation:
                 self.useful_notation = self.useful_notation + ':'
-            self.useful_notation = self.useful_notation + str(coord.x) + ',' + str(coord.y) + ',' + str(coord.z) + ',' + str(coord.value)
+            self.useful_notation += str(coord)
         sct.printv('All labels (useful syntax):', verbose=self.verbose)
         sct.printv(self.useful_notation, verbose=self.verbose)
         return coordinates_input
+
+    def get_physical_coordinates(self):
+        """
+        This function returns the coordinates of the labels in the physical referential system.
+        :return: a list of CoordinateValue, in the physical (scanner) space
+        """
+        coord = self.image_input.getNonZeroCoordinates(sorting='value')
+        phys_coord = []
+        for c in coord:
+            # convert pixelar coordinates to physical coordinates
+            c_p = self.image_input.transfo_pix2phys([[c.x, c.y, c.z]])[0]
+            phys_coord.append(CoordinateValue([c_p[0], c_p[1], c_p[2], c.value]))
+        return phys_coord
+
+    def get_coordinates_in_destination(self, im_dest, type='discrete'):
+        """
+        This function calculate the position of labels in the pixelar space of a destination image
+        :param im_dest: Object Image
+        :param type: 'discrete' or 'continuous'
+        :return: a list of CoordinateValue, in the pixelar (image) space of the destination image
+        """
+        phys_coord = self.get_physical_coordinates()
+        dest_coord = []
+        for c in phys_coord:
+            if type is 'discrete':
+                c_p = im_dest.transfo_phys2pix([[c.x, c.y, c.y]])[0]
+            elif type is 'continuous':
+                c_p = im_dest.transfo_phys2continuouspix([[c.x, c.y, c.y]])[0]
+            else:
+                raise ValueError("The value of 'type' should either be 'discrete' or 'continuous'.")
+            dest_coord.append(CoordinateValue([c_p[0], c_p[1], c_p[2], c.value]))
+        return dest_coord
 
     def diff(self):
         """

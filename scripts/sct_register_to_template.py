@@ -12,6 +12,7 @@
 
 # TODO: for -ref subject, crop data, otherwise registration is too long
 # TODO: testing script for all cases
+# TODO: enable vertebral alignment with -ref subject
 
 import sys, io, os, shutil, time
 
@@ -61,12 +62,24 @@ paramreg = ParamregMultiStep([step0, step1, step2])
 def get_parser():
     param = Param()
     parser = Parser(__file__)
-    parser.usage.set_description('Register anatomical image to the template.\n\n'
-      'To register a subject to the template, try the default command:\n'
-      'sct_register_to_template -i data.nii.gz -s data_seg.nii.gz -l data_labels.nii.gz\n'
-      'If this default command does not produce satisfactory results, please see: https://sourceforge.net/p/spinalcordtoolbox/wiki/registration_tricks/\n\n'
-      'To register the template to a subject, you need to use "-ref subject". Example below:\n'
-      'sct_register_to_template -i data.nii.gz -s data_seg.nii.gz -l data_labels.nii.gz -ref subject -param step=1,type=seg,algo=centermassrot,smooth=0:step=2,type=seg,algo=columnwise,smooth=0,smoothWarpXY=2'
+    parser.usage.set_description('Register an anatomical image to the spinal cord MRI template (default: PAM50).\n\n'
+                                 'The registration process includes three main registration steps:\n'
+                                   '1. straightening of the image using the spinal cord segmentation (see sct_straighten_spinalcord for details);\n'
+                                   '2. vertebral alignment between the image and the template, using labels along the spine;\n'
+                                   '3. iterative slice-wise non-linear registration (see sct_register_multimodal for details)\n\n'
+                                 'To register a subject to the template, try the default command:\n'
+                                   'sct_register_to_template -i data.nii.gz -s data_seg.nii.gz -l data_labels.nii.gz\n\n'
+                                 'If this default command does not produce satisfactory results, please refer to:\n'
+                                   'https://sourceforge.net/p/spinalcordtoolbox/wiki/registration_tricks/\n\n'
+                                 'The default registration method brings the subject image to the template, which can be problematic with highly non-isotropic images as it would induce large interpolation errors during the straightening procedure. Although the default method is recommended, you may want to register the template to the subject (instead of the subject to the template) by skipping the straightening procedure. To do so, use the parameter "-ref subject". Example below:\n'
+                                   'sct_register_to_template -i data.nii.gz -s data_seg.nii.gz -l data_labels.nii.gz -ref subject -param step=1,type=seg,algo=centermassrot,smooth=0:step=2,type=seg,algo=columnwise,smooth=0,smoothWarpXY=2\n\n'
+                                 'Vertebral alignment (step 2) consists in aligning the vertebrae between the subject and the template. Two types of labels are possible:\n'
+                                   '- Vertebrae mid-body labels, created at the center of the spinal cord using the parameter "-l";\n'
+                                   '- Posterior edge of the intervertebral discs, using the parameter "-ldisc".\n\n'
+                                 'If only one label is provided, a simple translation will be applied between the subject label and the template label. No scaling will be performed. \n\n'
+                                 'If two labels are provided, a linear transformation (translation + rotation + superior-inferior linear scaling) will be applied. The strategy here is to defined labels that cover the region of interest. For example, if you are interested in studying C2 to C6 levels, then provide one label at C2 and another at C6. However, note that if the two labels are very far apart (e.g. C2 and T12), there might be a mis-alignment of discs because a subject''s intervertebral discs distance might differ from that of the template.\n\n'
+                                 'If more than two labels (only with the parameter "-disc") are used, a non-linear registration will be applied to align the each intervertebral disc between the subject and the template, as described in sct_straighten_spinalcord. This the most accurate and preferred method. This feature does not work with the parameter "-ref subject".\n\n'
+                                 'More information about label creation can be found at http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/'
       )
     parser.add_option(name="-i",
                       type_value="file",
@@ -80,13 +93,19 @@ def get_parser():
                       example="anat_seg.nii.gz")
     parser.add_option(name="-l",
                       type_value="file",
-                      description="Labels. See: http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/",
+                      description="Labels located at the center of the spinal cord, on the mid-vertebral slice. For "
+                                  "more information about label creation, please refer to "
+                                  "http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/",
                       mandatory=False,
                       default_value='',
                       example="anat_labels.nii.gz")
     parser.add_option(name="-ldisc",
                       type_value="file",
-                      description="Labels centered at disks instead of mid-vertebral bodies. Several labels are possible (minimum 1). E.g.: Value=3 corresponds to C2-C3 disc. If only one label is used, no Z-scaling is performed. If more than 2 labels are used, then non-linear Z-scaling is performed (NOT IMPLEMENTED YET-- ADD LINK TO PAPER BEN).",
+                      description="Labels located at the posterior edge of the intervertebral discs. If you are using "
+                                  "more than 2 labels, all disc covering the region of interest should be provided. "
+                                  "E.g., if you are interested in levels C2 to C7, then you should provide disc labels "
+                                  "2,3,4,5,6,7). For more information about label creation, please refer to "
+                                  "http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/.",  # TODO: update URL
                       mandatory=False,
                       default_value='',
                       example="anat_labels.nii.gz")
@@ -257,6 +276,10 @@ def main(args=None):
     # check input labels
     labels = check_labels(fname_landmarks, label_type=label_type)
 
+    vertebral_alignment = False
+    if len(labels) > 2 and label_type == 'disc':
+        vertebral_alignment = True
+
     path_tmp = sct.tmp_create(basename="register_to_template", verbose=verbose)
 
     # set temporary file names
@@ -337,12 +360,23 @@ def main(args=None):
         sct.run(['sct_image', '-i', ftmp_label, '-setorient', 'RPI', '-o', add_suffix(ftmp_label, '_rpi')])
         ftmp_label = add_suffix(ftmp_label, '_rpi')
 
-        # get landmarks in native space
-        # crop segmentation
+        if vertebral_alignment:
+            # cropping the segmentation based on the label coverage to ensure good registration with vertebral alignment
+            # See https://github.com/neuropoly/spinalcordtoolbox/pull/1669 for details
+            image_labels = Image(ftmp_label)
+            coordinates_labels = image_labels.getNonZeroCoordinates(sorting='z')
+            nx, ny, nz, nt, px, py, pz, pt = image_labels.dim
+            offset_crop = 10.0 * pz  # cropping the image 10 mm above and below the highest and lowest label
+            cropping_slices = [coordinates_labels[0].z - offset_crop, coordinates_labels[-1].z + offset_crop]
+            status_crop, output_crop = sct.run(['sct_crop_image', '-i', ftmp_seg, '-o', add_suffix(ftmp_seg, '_crop'), '-dim', '2', '-start', str(cropping_slices[0]), '-end', str(cropping_slices[1])], verbose)
+        else:
+            # if we do not align the vertebral levels, we crop the segmentation from top to bottom
+            status_crop, output_crop = sct.run(['sct_crop_image', '-i', ftmp_seg, '-o', add_suffix(ftmp_seg, '_crop'), '-dim', '2', '-bzmax'], verbose)
+            cropping_slices = output_crop.split('Dimension 2: ')[1].split('\n')[0].split(' ')
+
         # output: segmentation_rpi_crop.nii.gz
-        status_crop, output_crop = sct.run(['sct_crop_image', '-i', ftmp_seg, '-o', add_suffix(ftmp_seg, '_crop'), '-dim', '2', '-bzmax'], verbose)
         ftmp_seg = add_suffix(ftmp_seg, '_crop')
-        cropping_slices = output_crop.split('Dimension 2: ')[1].split('\n')[0].split(' ')
+
 
         # straighten segmentation
         sct.printv('\nStraighten the spinal cord using centerline/segmentation...', verbose)
@@ -360,47 +394,56 @@ def main(args=None):
             # apply straightening
             sct.run(['sct_apply_transfo', '-i', ftmp_seg, '-w', 'warp_curve2straight.nii.gz', '-d', 'straight_ref.nii.gz', '-o', add_suffix(ftmp_seg, '_straight')])
         else:
-            import sct_straighten_spinalcord
-            if __name__ == '__main__':
-                sct_straighten_spinalcord.main(args=[
-                    '-i', ftmp_seg,
-                    '-s', ftmp_seg,
-                    '-o', add_suffix(ftmp_seg, '_straight'),
-                    '-qc', '0',
-                    '-r', str(remove_temp_files),
-                    '-v', str(verbose),
-                    '-param', 'template_orientation=1'])
+            from sct_straighten_spinalcord import SpinalCordStraightener
+            sc_straight = SpinalCordStraightener(ftmp_seg, ftmp_seg)
+            sc_straight.output_filename = add_suffix(ftmp_seg, '_straight')
+            sc_straight.path_output = './'
+            sc_straight.qc = '0'
+            sc_straight.remove_temp_files = remove_temp_files
+            sc_straight.verbose = verbose
+
+            if vertebral_alignment:
+                sc_straight.centerline_reference_filename = ftmp_template_seg
+                sc_straight.use_straight_reference = True
+                sc_straight.discs_input_filename = ftmp_label
+                sc_straight.discs_ref_filename = ftmp_template_label
+
+            sc_straight.straighten()
+
         # N.B. DO NOT UPDATE VARIABLE ftmp_seg BECAUSE TEMPORARY USED LATER
         # re-define warping field using non-cropped space (to avoid issue #367)
         sct.run(['sct_concat_transfo', '-w', 'warp_straight2curve.nii.gz', '-d', ftmp_data, '-o', 'warp_straight2curve.nii.gz'])
 
-        # Label preparation:
-        # --------------------------------------------------------------------------------
-        # Remove unused label on template. Keep only label present in the input label image
-        sct.printv('\nRemove unused label on template. Keep only label present in the input label image...', verbose)
-        sct.run(['sct_label_utils', '-i', ftmp_template_label, '-o', ftmp_template_label, '-remove', ftmp_label])
+        if vertebral_alignment:
+            sct.copy('warp_curve2straight.nii.gz', 'warp_curve2straightAffine.nii.gz')
+        else:
+            # Label preparation:
+            # --------------------------------------------------------------------------------
+            # Remove unused label on template. Keep only label present in the input label image
+            sct.printv('\nRemove unused label on template. Keep only label present in the input label image...', verbose)
+            sct.run(['sct_label_utils', '-i', ftmp_template_label, '-o', ftmp_template_label, '-remove', ftmp_label])
 
-        # Dilating the input label so they can be straighten without losing them
-        sct.printv('\nDilating input labels using 3vox ball radius')
-        sct.run(['sct_maths', '-i', ftmp_label, '-o', add_suffix(ftmp_label, '_dilate'), '-dilate', '3'])
-        ftmp_label = add_suffix(ftmp_label, '_dilate')
+            # Dilating the input label so they can be straighten without losing them
+            sct.printv('\nDilating input labels using 3vox ball radius')
+            sct.run(['sct_maths', '-i', ftmp_label, '-o', add_suffix(ftmp_label, '_dilate'), '-dilate', '3'])
+            ftmp_label = add_suffix(ftmp_label, '_dilate')
 
-        # Apply straightening to labels
-        sct.printv('\nApply straightening to labels...', verbose)
-        sct.run(['sct_apply_transfo', '-i', ftmp_label, '-o', add_suffix(ftmp_label, '_straight'), '-d', add_suffix(ftmp_seg, '_straight'), '-w', 'warp_curve2straight.nii.gz', '-x', 'nn'])
-        ftmp_label = add_suffix(ftmp_label, '_straight')
+            # Apply straightening to labels
+            sct.printv('\nApply straightening to labels...', verbose)
+            sct.run(['sct_apply_transfo', '-i', ftmp_label, '-o', add_suffix(ftmp_label, '_straight'), '-d', add_suffix(ftmp_seg, '_straight'), '-w', 'warp_curve2straight.nii.gz', '-x', 'nn'])
+            ftmp_label = add_suffix(ftmp_label, '_straight')
 
-        # Compute rigid transformation straight landmarks --> template landmarks
-        sct.printv('\nEstimate transformation for step #0...', verbose)
-        from msct_register_landmarks import register_landmarks
-        try:
-            register_landmarks(ftmp_label, ftmp_template_label, paramreg.steps['0'].dof, fname_affine='straight2templateAffine.txt', verbose=verbose)
-        except Exception:
-            sct.printv('ERROR: input labels do not seem to be at the right place. Please check the position of the labels. See documentation for more details: https://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/', verbose=verbose, type='error')
+            # Compute rigid transformation straight landmarks --> template landmarks
+            sct.printv('\nEstimate transformation for step #0...', verbose)
+            from msct_register_landmarks import register_landmarks
+            try:
+                register_landmarks(ftmp_label, ftmp_template_label, paramreg.steps['0'].dof, fname_affine='straight2templateAffine.txt', verbose=verbose)
+            except Exception:
+                sct.printv('ERROR: input labels do not seem to be at the right place. Please check the position of the labels. See documentation for more details: https://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/', verbose=verbose, type='error')
 
-        # Concatenate transformations: curve --> straight --> affine
-        sct.printv('\nConcatenate transformations: curve --> straight --> affine...', verbose)
-        sct.run(['sct_concat_transfo', '-w', 'warp_curve2straight.nii.gz,straight2templateAffine.txt', '-d', 'template.nii', '-o', 'warp_curve2straightAffine.nii.gz'])
+            # Concatenate transformations: curve --> straight --> affine
+            sct.printv('\nConcatenate transformations: curve --> straight --> affine...', verbose)
+            sct.run(['sct_concat_transfo', '-w', 'warp_curve2straight.nii.gz,straight2templateAffine.txt', '-d', 'template.nii', '-o', 'warp_curve2straightAffine.nii.gz'])
 
         # Apply transformation
         sct.printv('\nApply transformation...', verbose)
@@ -487,7 +530,11 @@ def main(args=None):
         # sct.run('sct_concat_transfo -w warp_curve2straight.nii.gz,straight2templateAffine.txt,'+','.join(warp_forward)+' -d template.nii -o warp_anat2template.nii.gz', verbose)
         sct.printv('\nConcatenate transformations: template --> anat...', verbose)
         warp_inverse.reverse()
-        sct.run(['sct_concat_transfo', '-w', ','.join(warp_inverse) + ',-straight2templateAffine.txt,warp_straight2curve.nii.gz', '-d', 'data.nii', '-o', 'warp_template2anat.nii.gz'], verbose)
+
+        if vertebral_alignment:
+            sct.run(['sct_concat_transfo', '-w', ','.join(warp_inverse) + ',warp_straight2curve.nii.gz', '-d', 'data.nii', '-o', 'warp_template2anat.nii.gz'], verbose)
+        else:
+            sct.run(['sct_concat_transfo', '-w', ','.join(warp_inverse) + ',-straight2templateAffine.txt,warp_straight2curve.nii.gz', '-d', 'data.nii', '-o', 'warp_template2anat.nii.gz'], verbose)
 
     # register template->subject
     elif ref == 'subject':
@@ -625,6 +672,7 @@ def resample_labels(fname_labels, fname_dest, fname_output):
     """
     This function re-create labels into a space that has been resampled. It works by re-defining the location of each
     label using the old and new voxel size.
+    IMPORTANT: this function assumes that the origin and FOV of the two images are the SAME.
     """
     # get dimensions of input and destination files
     nx, ny, nz, nt, px, py, pz, pt = Image(fname_labels).dim
