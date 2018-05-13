@@ -38,7 +38,20 @@ class Param:
 
 class ProcessLabels(object):
     def __init__(self, fname_label, fname_output=None, fname_ref=None, cross_radius=5, dilate=False,
-                 coordinates=None, verbose=1, vertebral_levels=None, value=None):
+                 coordinates=None, verbose=1, vertebral_levels=None, value=None, msg=""):
+        """
+        Collection of processes that deal with label creation/modification.
+        :param fname_label:
+        :param fname_output:
+        :param fname_ref:
+        :param cross_radius:
+        :param dilate:
+        :param coordinates:
+        :param verbose:
+        :param vertebral_levels:
+        :param value:
+        :param msg: string. message to display to the user.
+        """
         self.image_input = Image(fname_label, verbose=verbose)
         self.image_ref = None
         if fname_ref is not None:
@@ -57,6 +70,7 @@ class ProcessLabels(object):
         self.coordinates = coordinates
         self.verbose = verbose
         self.value = value
+        self.msg = msg
 
     def process(self, type_process):
         # for some processes, change orientation of input image to RPI
@@ -680,6 +694,7 @@ class ProcessLabels(object):
         params.vertebraes = labels
         params.input_file_name = self.image_input.file_name
         params.output_file_name = self.fname_output
+        params.subtitle = self.msg
         output = self.image_input.copy()
         output.data *= 0
         output.setFileName(self.fname_output)
@@ -699,12 +714,7 @@ def get_parser():
                       description="Input image.",
                       mandatory=True,
                       example="t2_labels.nii.gz")
-    parser.add_option(name="-o",
-                      type_value=[[','], "file_output"],
-                      description="Output image(s).",
-                      mandatory=False,
-                      example="t2_labels_cross.nii.gz",
-                      default_value="labels.nii.gz")
+
     parser.add_option(name='-add',
                       type_value='int',
                       description='Add value to all labels. Value can be negative.',
@@ -722,6 +732,10 @@ def get_parser():
     parser.add_option(name='-create-seg',
                       type_value=[[':'], 'str'],
                       description='Create labels along cord segmentation (or centerline) defined by "-i". First value is "z", second is the value of the label. Separate labels with ":". Example: 5,1:14,2:23,3. To select the mid-point in the superior-inferior direction, set z to "-1". For example if you know that C2-C3 disc is centered in the S-I direction, then enter: -1,3',
+                      mandatory=False)
+    parser.add_option(name='-create-viewer',
+                      type_value=[[','], 'int'],
+                      description='Manually label from a GUI a list of labels IDs, separated with ",". Example: 2,3,4,5',
                       mandatory=False)
     parser.add_option(name='-cross',
                       type_value='int',
@@ -761,16 +775,24 @@ def get_parser():
                       type_value='file',
                       description='Remove labels from input image (-i) and reference image (specified here) that don\'t match. You must provide two output names separated by ",".',
                       mandatory=False)
+
+    parser.usage.addSection("MISC")
+    parser.add_option(name="-msg",
+                      type_value="str",
+                      description='Display a message to explain the labeling task. Use with -create-viewer.',
+                      mandatory=False)
+    parser.add_option(name="-o",
+                      type_value=[[','], "file_output"],
+                      description="Output image(s).",
+                      mandatory=False,
+                      example="t2_labels_cross.nii.gz",
+                      default_value="labels.nii.gz")
     parser.add_option(name="-v",
                       type_value="multiple_choice",
                       description='Verbose. 0: nothing. 1: basic. 2: extended.',
                       mandatory=False,
                       default_value=param_default.verbose,
                       example=['0', '1', '2'])
-    parser.add_option(name='-create-viewer',
-                      type_value=[[','], 'int'],
-                      description='Manually label from a GUI a list of labels IDs, separated with ",". Example: 2,3,4,5',
-                      mandatory=False)
     return parser
 
 
@@ -837,13 +859,17 @@ def main(args=None):
     else:
         # no process chosen
         sct.printv('ERROR: No process was chosen.', 1, 'error')
+    if '-msg' in arguments:
+        msg = arguments['-msg']+"\n"
+    else:
+        msg = ""
     if '-o' in arguments:
         input_fname_output = arguments['-o']
     input_verbose = int(arguments['-v'])
 
     processor = ProcessLabels(input_filename, fname_output=input_fname_output, fname_ref=input_fname_ref,
                               cross_radius=input_cross_radius, dilate=input_dilate, coordinates=input_coordinates,
-                              verbose=input_verbose, vertebral_levels=vertebral_levels, value=value)
+                              verbose=input_verbose, vertebral_levels=vertebral_levels, value=value, msg=msg)
     processor.process(process_type)
 
     # return based on process type
