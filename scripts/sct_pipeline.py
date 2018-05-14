@@ -456,7 +456,6 @@ def get_parser():
                        "  - passwd: SMTP password\n"
                        "  - smtp_host: SMTP server (default: 'smtp.gmail.com')\n"
                        "  - smtp_port: port for SMTP server (default: 587)\n"
-                       "  - passwd: password for email_from\n"
                        "Note: will always use TLS",
                       mandatory=False,
                       default_value='')
