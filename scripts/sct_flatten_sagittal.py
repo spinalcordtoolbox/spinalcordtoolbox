@@ -12,16 +12,13 @@
 #########################################################################################
 
 
-import sys, io, os, getopt, shutil
+import sys, os
 
-import nibabel
 import numpy as np
 
 import sct_utils as sct
 from msct_nurbs import NURBS
-from sct_image import get_orientation_3d, set_orientation
 from msct_image import Image
-from sct_image import split_data, concat_data
 from msct_parser import Parser
 from sct_straighten_spinalcord import smooth_centerline
 from skimage import transform, img_as_float, img_as_uint
@@ -42,12 +39,6 @@ class Param:
 #=======================================================================================================================
 def main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, remove_temp_files, verbose):
 
-    # extract path of the script
-    path_script = os.path.dirname(__file__) + '/'
-
-    # extract path/file/extension
-    path_anat, file_anat, ext_anat = sct.extract_fname(fname_anat)
-
     # Display arguments
     sct.printv('\nCheck input arguments...')
     sct.printv('  Input volume ...................... ' + fname_anat)
@@ -59,18 +50,10 @@ def main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, 
     nx, ny, nz, nt, px, py, pz, pt = im_anat.dim
     # re-oriente to RPI
     orientation_native = im_anat.change_orientation('RPI')
-    # change type to uint16 (important, otherwise if type is not recognized by skitimage, e.g. dtype('<i2'), it will
-    # output black image).
-    # im_anat.changeType('uint16')
-    # input_image_orientation = get_orientation_3d(im_anat)
 
-    # Reorient input data into RL PA IS orientation
-    # im_anat_orient = set_orientation(im_anat, 'RPI')
-    # im_anat_orient.setFileName('tmp.anat_orient.nii')
+    # load centerline
     im_centerline = Image(fname_centerline)
     im_centerline.change_orientation('RPI')
-    # im_centerline_orient = set_orientation(im_centerline, 'RPI')
-    # im_centerline_orient.setFileName('tmp.centerline_orient.nii')
 
     # smooth centerline and return fitted coordinates in voxel space
     x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(
@@ -98,8 +81,10 @@ def main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, 
         # important to force input in float to skikit image, because it will output float values
         img = img_as_float(im_anat.data[:, :, iz])
         img_reg = transform.warp(img, tform)
-        # im_anat_flattened.data[:, :, iz] = img_as_uint(img_reg)
+        im_anat_flattened.data[:, :, iz] = img_as_uint(img_reg)
 
+    # change back to native orientation
+    im_anat_flattened.change_orientation(orientation_native)
     # save output
     fname_out = sct.add_suffix(fname_anat, '_flatten')
     im_anat_flattened.setFileName(fname_out)
