@@ -15,7 +15,7 @@
 import sys, io, os, getopt, shutil
 
 import nibabel
-import numpy
+import numpy as np
 
 import sct_utils as sct
 from msct_nurbs import NURBS
@@ -24,7 +24,7 @@ from msct_image import Image
 from sct_image import split_data, concat_data
 from msct_parser import Parser
 from sct_straighten_spinalcord import smooth_centerline
-
+from skimage import transform, img_as_float, img_as_uint
 
 # Default parameters
 class Param:
@@ -54,13 +54,19 @@ def main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, 
     sct.printv('  Centerline ........................ ' + fname_centerline)
     sct.printv('')
 
-    # Get input image orientation
+    # load input image
     im_anat = Image(fname_anat)
-    input_image_orientation = get_orientation_3d(im_anat)
+    nx, ny, nz, nt, px, py, pz, pt = im_anat.dim
+    # re-oriente to RPI
+    orientation_native = im_anat.change_orientation('RPI')
+    # change type to uint16 (important, otherwise if type is not recognized by skitimage, e.g. dtype('<i2'), it will
+    # output black image).
+    # im_anat.changeType('uint16')
+    # input_image_orientation = get_orientation_3d(im_anat)
 
     # Reorient input data into RL PA IS orientation
-    im_anat_orient = set_orientation(im_anat, 'RPI')
-    im_anat_orient.setFileName('tmp.anat_orient.nii')
+    # im_anat_orient = set_orientation(im_anat, 'RPI')
+    # im_anat_orient.setFileName('tmp.anat_orient.nii')
     im_centerline = Image(fname_centerline)
     im_centerline.change_orientation('RPI')
     # im_centerline_orient = set_orientation(im_centerline, 'RPI')
@@ -71,153 +77,33 @@ def main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, 
         im_centerline, algo_fitting='hanning', type_window='hanning', window_length=50,
         nurbs_pts_number=3000, phys_coordinates=False, verbose=verbose, all_slices=True)
 
-    #
+    # compute translation for each slice, such that the flattened centerline is centered in the medial plane (R-L) and
+    # avoid discontinuity in slices where there is no centerline (in which case, simply copy the translation of the
+    # closest Z).
+    # first, get zmin and zmax spanned by the centerline (i.e. with non-zero values)
+    indz_centerline = np.where([np.sum(im_centerline.data[:, :, iz]) for iz in range(nz)])[0]
+    zmin, zmax = indz_centerline[0], indz_centerline[-1]
+    # then, extend the centerline by padding values below zmin and above zmax
+    x_centerline_extended = np.concatenate([np.ones(zmin) * x_centerline_fit[0], x_centerline_fit, np.ones(nz-zmax-1) * x_centerline_fit[-1]])
 
-    # Open centerline
-    #==========================================================================================
-    # sct.printv('\nGet dimensions of input centerline...')
-    # nx, ny, nz, nt, px, py, pz, pt = im_centerline_orient.dim
-    # sct.printv('.. matrix size: ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz))
-    # sct.printv('.. voxel size:  ' + str(px) + 'mm x ' + str(py) + 'mm x ' + str(pz) + 'mm')
-    #
-    # sct.printv('\nOpen centerline volume...')
-    # data = im_centerline_orient.data
-    #
-    # X, Y, Z = (data > 0).nonzero()
-    # min_z_index, max_z_index = min(Z), max(Z)
-    #
-    # # loop across z and associate x,y coordinate with the point having maximum intensity
-    # x_centerline = [0 for iz in range(min_z_index, max_z_index + 1, 1)]
-    # y_centerline = [0 for iz in range(min_z_index, max_z_index + 1, 1)]
-    # z_centerline = [iz for iz in range(min_z_index, max_z_index + 1, 1)]
-    #
-    # # Two possible scenario:
-    # # 1. the centerline is probabilistic: each slices contains voxels with the probability of containing the centerline [0:...:1]
-    # # We only take the maximum value of the image to aproximate the centerline.
-    # # 2. The centerline/segmentation image contains many pixels per slice with values {0,1}.
-    # # We take all the points and approximate the centerline on all these points.
-    #
-    # X, Y, Z = ((data < 1) * (data > 0)).nonzero()  # X is empty if binary image
-    # if (len(X) > 0):  # Scenario 1
-    #     for iz in range(min_z_index, max_z_index + 1, 1):
-    #         x_centerline[iz - min_z_index], y_centerline[iz - min_z_index] = numpy.unravel_index(data[:, :, iz].argmax(), data[:, :, iz].shape)
-    # else:  # Scenario 2
-    #     for iz in range(min_z_index, max_z_index + 1, 1):
-    #         x_seg, y_seg = (data[:, :, iz] > 0).nonzero()
-    #         if len(x_seg) > 0:
-    #             x_centerline[iz - min_z_index] = numpy.mean(x_seg)
-    #             y_centerline[iz - min_z_index] = numpy.mean(y_seg)
-    #
-    # # TODO: find a way to do the previous loop with this, which is more neat:
-    # # [numpy.unravel_index(data[:,:,iz].argmax(), data[:,:,iz].shape) for iz in range(0,nz,1)]
-    #
-    # # clear variable
-    # del data
-    #
-    # # Fit the centerline points with the kind of curve given as argument of the script and return the new smoothed coordinates
-    # if centerline_fitting == 'nurbs':
-    #     try:
-    #         x_centerline_fit, y_centerline_fit = b_spline_centerline(x_centerline, y_centerline, z_centerline)
-    #     except ValueError:
-    #         sct.printv("splines fitting doesn't work, trying with polynomial fitting...\n")
-    #         x_centerline_fit, y_centerline_fit = polynome_centerline(x_centerline, y_centerline, z_centerline)
-    # elif centerline_fitting == 'polynome':
-    #     x_centerline_fit, y_centerline_fit = polynome_centerline(x_centerline, y_centerline, z_centerline)
+    # loop across slices and apply translation
+    im_anat_flattened = im_anat.copy()
+    im_anat_flattened.changeType('uint16')  # force uint16 because outputs are converted using img_as_uint()
+    for iz in range(nz):
+        # compute translation along x (R-L)
+        translation_x = x_centerline_extended[iz] - round(nx/2.0)
+        # apply transformation to 2D image with linear interpolation
+        # tform = tf.SimilarityTransform(scale=1, rotation=0, translation=(translation_x, 0))
+        tform = transform.SimilarityTransform(translation=(0, translation_x))
+        # important to force input in float to skikit image, because it will output float values
+        img = img_as_float(im_anat.data[:, :, iz])
+        img_reg = transform.warp(img, tform)
+        im_anat_flattened.data[:, :, iz] = img_as_uint(img_reg)
 
-    #==========================================================================================
-    # Split input volume
-    sct.printv('\nSplit input volume...')
-    im_anat_orient_split_list = split_data(im_anat_orient, 2)
-    file_anat_split = []
-    for im in im_anat_orient_split_list:
-        file_anat_split.append(im.absolutepath)
-        im.save()
-
-    # loop across slices and apply displacement field slice-wise
-
-
-
-    # initialize variables
-    file_mat_inv_cumul = ['tmp.mat_inv_cumul_Z' + str(z).zfill(4) for z in range(0, nz, 1)]
-    z_init = min_z_index
-    displacement_max_z_index = x_centerline_fit[z_init - min_z_index] - x_centerline_fit[max_z_index - min_z_index]
-
-
-
-
-    # write centerline as text file
-    sct.printv('\nGenerate fitted transformation matrices...')
-    file_mat_inv_cumul_fit = ['tmp.mat_inv_cumul_fit_Z' + str(z).zfill(4) for z in range(0, nz, 1)]
-    for iz in range(min_z_index, max_z_index + 1, 1):
-        # compute inverse cumulative fitted transformation matrix
-        fid = open(file_mat_inv_cumul_fit[iz], 'w')
-        if (x_centerline[iz - min_z_index] == 0 and y_centerline[iz - min_z_index] == 0):
-            displacement = 0
-        else:
-            displacement = x_centerline_fit[z_init - min_z_index] - x_centerline_fit[iz - min_z_index]
-        fid.write('%i %i %i %f\n' % (1, 0, 0, displacement))
-        fid.write('%i %i %i %f\n' % (0, 1, 0, 0))
-        fid.write('%i %i %i %i\n' % (0, 0, 1, 0))
-        fid.write('%i %i %i %i\n' % (0, 0, 0, 1))
-        fid.close()
-
-    # we complete the displacement matrix in z direction
-    for iz in range(0, min_z_index, 1):
-        fid = open(file_mat_inv_cumul_fit[iz], 'w')
-        fid.write('%i %i %i %f\n' % (1, 0, 0, 0))
-        fid.write('%i %i %i %f\n' % (0, 1, 0, 0))
-        fid.write('%i %i %i %i\n' % (0, 0, 1, 0))
-        fid.write('%i %i %i %i\n' % (0, 0, 0, 1))
-        fid.close()
-    for iz in range(max_z_index + 1, nz, 1):
-        fid = open(file_mat_inv_cumul_fit[iz], 'w')
-        fid.write('%i %i %i %f\n' % (1, 0, 0, displacement_max_z_index))
-        fid.write('%i %i %i %f\n' % (0, 1, 0, 0))
-        fid.write('%i %i %i %i\n' % (0, 0, 1, 0))
-        fid.write('%i %i %i %i\n' % (0, 0, 0, 1))
-        fid.close()
-
-    # apply transformations to data
-    sct.printv('\nApply fitted transformation matrices...')
-    file_anat_split_fit = ['tmp.anat_orient_fit_Z' + str(z).zfill(4) for z in range(0, nz, 1)]
-    for iz in range(0, nz, 1):
-        # forward cumulative transformation to data
-        cmd = ['flirt',
-         '-in', file_anat_split[iz],
-         '-ref', file_anat_split[iz],
-         '-applyxfm',
-         '-init', file_mat_inv_cumul_fit[iz],
-         '-out', file_anat_split_fit[iz],
-         '-interp', interp,
-        ]
-        env = dict()
-        env.update(os.environ)
-        env["FSLOUTPUTTYPE", "NIFTI"]
-        sct.run(cmd=cmd, env=env)
-
-    # Merge into 4D volume
-    sct.printv('\nMerge into 4D volume...')
-    from glob import glob
-    im_to_concat_list = [Image(fname) for fname in glob('tmp.anat_orient_fit_Z*.nii')]
-    im_concat_out = concat_data(im_to_concat_list, 2)
-    im_concat_out.setFileName('tmp.anat_orient_fit.nii')
-    im_concat_out.save()
-    # sct.run(fsloutput+'fslmerge -z tmp.anat_orient_fit tmp.anat_orient_fit_z*')
-
-    # Reorient data as it was before
-    sct.printv('\nReorient data back into native orientation...')
-    fname_anat_fit_orient = set_orientation(im_concat_out.absolutepath, input_image_orientation, filename=True)
-    shutil.move(fname_anat_fit_orient, 'tmp.anat_orient_fit_reorient.nii')
-
-    # Generate output file (in current folder)
-    sct.printv('\nGenerate output file (in current folder)...')
+    # save output
     fname_out = os.path.join(file_anat, '_flatten' + ext_anat)
-    sct.generate_output_file('tmp.anat_orient_fit_reorient.nii', fname_out)
-
-    # Delete temporary files
-    if remove_temp_files == 1:
-        sct.printv('\nDelete temporary files...')
-        sct.run('rm -rf tmp.*')
+    im_anat_flattened.setFileName(fname_out)
+    im_anat_flattened.save()
 
     sct.display_viewer_syntax([fname_anat, fname_out])
 
