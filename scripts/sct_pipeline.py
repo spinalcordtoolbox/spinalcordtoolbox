@@ -450,8 +450,8 @@ def get_parser():
                       type_value=[[','], 'str'],
                       description="Email information to send results." \
                        " Fields are assigned with '=' and are separated with ',':\n" \
-                       "  - email_to: address to send email to\n" \
-                       "  - email_from: address to send email from (default: spinalcordtoolbox@gmail.com)\n" \
+                       "  - addr_to: address to send email to\n" \
+                       "  - addr_from: address to send email from (default: spinalcordtoolbox@gmail.com)\n" \
                        "  - login: SMTP login (use if different from email_from)\n"
                        "  - passwd: SMTP password\n"
                        "  - smtp_host: SMTP server (default: 'smtp.gmail.com')\n"
