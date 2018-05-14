@@ -1052,47 +1052,42 @@ def printv(string, verbose=1, type='normal'):
         raise RunError('raise in printv, read log above for more info')
 
 
-#=======================================================================================================================
-# send email
-#=======================================================================================================================
-def send_email(addr_to='', addr_from='spinalcordtoolbox@gmail.com', passwd_from='', subject='', message='', filename=None, html=False):
+def send_email(addr_to, addr_from, passwd, subject, message='', filename=None, html=False, smtp_host=None, smtp_port=None, login=None):
+    if smtp_host is None:
+        smtp_host = os.environ.get("SCT_SMTP_SERVER", "smtp.gmail.com")
+    if smtp_port is None:
+        smtp_port = int(os.environ.get("SCT_SMTP_PORT", 587))
+    if login is None:
+        login = addr_from
+
     import smtplib
     from email.MIMEMultipart import MIMEMultipart
     from email.MIMEText import MIMEText
     from email.MIMEBase import MIMEBase
     from email import encoders
 
-    msg = MIMEMultipart()
+    if html:
+        msg = MIMEMultipart("alternative")
+    else:
+        msg = MIMEMultipart()
 
     msg['From'] = addr_from
     msg['To'] = addr_to
-    msg['Subject'] = subject  # "SUBJECT OF THE EMAIL"
-    body = message  # "TEXT YOU WANT TO SEND"
+    msg['Subject'] = subject
 
-    # body in html format for monospaced formatting
-    body_html = """
-    <html><pre style="font: monospace"><body>
-    """+body+"""
-    </body></pre></html>
-    """
+    body = message
+    if not isinstance(body, bytes):
+        body = body.encode("utf-8")
 
-    # # We must choose the body charset manually
-    # for body_charset in 'US-ASCII', 'ISO-8859-1', 'UTF-8':
-    #     try:
-    #         body.encode(body_charset)
-    #     except UnicodeError:
-    #         pass
-    #     else:
-    #         break
-
-    # msg.set_charset("utf-8")
+    body_html = b"""
+<html><pre style="font: monospace"><body>
+{}
+</body></pre></html>""".format(body)
 
     if html:
-        msg.attach(MIMEText(body_html, 'html'))
-    else:
-        msg.attach(MIMEText(body, 'plain'))
+        msg.attach(MIMEText(body_html, 'html', "utf-8"))
 
-    # msg.attach(MIMEText(body.encode(body_charset), 'plain', body_charset))
+    msg.attach(MIMEText(body, 'plain', "utf-8"))
 
     # filename = "NAME OF THE FILE WITH ITS EXTENSION"
     if filename:
@@ -1104,9 +1099,9 @@ def send_email(addr_to='', addr_from='spinalcordtoolbox@gmail.com', passwd_from=
         msg.attach(part)
 
     # send email
-    server = smtplib.SMTP('smtp.gmail.com', 587)
+    server = smtplib.SMTP(smtp_host, smtp_port)
     server.starttls()
-    server.login(addr_from, passwd_from)
+    server.login(login, passwd)
     text = msg.as_string()
     server.sendmail(addr_from, addr_to, text)
     server.quit()
