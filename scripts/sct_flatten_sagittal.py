@@ -11,7 +11,6 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-# TODO: remove FSL dependency
 
 import sys, io, os, getopt, shutil
 
@@ -24,6 +23,7 @@ from sct_image import get_orientation_3d, set_orientation
 from msct_image import Image
 from sct_image import split_data, concat_data
 from msct_parser import Parser
+from sct_straighten_spinalcord import smooth_centerline
 
 
 # Default parameters
@@ -59,62 +59,70 @@ def main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, 
     input_image_orientation = get_orientation_3d(im_anat)
 
     # Reorient input data into RL PA IS orientation
-    im_centerline = Image(fname_centerline)
     im_anat_orient = set_orientation(im_anat, 'RPI')
     im_anat_orient.setFileName('tmp.anat_orient.nii')
-    im_centerline_orient = set_orientation(im_centerline, 'RPI')
-    im_centerline_orient.setFileName('tmp.centerline_orient.nii')
+    im_centerline = Image(fname_centerline)
+    im_centerline.change_orientation('RPI')
+    # im_centerline_orient = set_orientation(im_centerline, 'RPI')
+    # im_centerline_orient.setFileName('tmp.centerline_orient.nii')
+
+    # smooth centerline and return fitted coordinates in voxel space
+    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(
+        im_centerline, algo_fitting='hanning', type_window='hanning', window_length=50,
+        nurbs_pts_number=3000, phys_coordinates=False, verbose=verbose, all_slices=True)
+
+    #
 
     # Open centerline
     #==========================================================================================
-    sct.printv('\nGet dimensions of input centerline...')
-    nx, ny, nz, nt, px, py, pz, pt = im_centerline_orient.dim
-    sct.printv('.. matrix size: ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz))
-    sct.printv('.. voxel size:  ' + str(px) + 'mm x ' + str(py) + 'mm x ' + str(pz) + 'mm')
-
-    sct.printv('\nOpen centerline volume...')
-    data = im_centerline_orient.data
-
-    X, Y, Z = (data > 0).nonzero()
-    min_z_index, max_z_index = min(Z), max(Z)
-
-    # loop across z and associate x,y coordinate with the point having maximum intensity
-    x_centerline = [0 for iz in range(min_z_index, max_z_index + 1, 1)]
-    y_centerline = [0 for iz in range(min_z_index, max_z_index + 1, 1)]
-    z_centerline = [iz for iz in range(min_z_index, max_z_index + 1, 1)]
-
-    # Two possible scenario:
-    # 1. the centerline is probabilistic: each slices contains voxels with the probability of containing the centerline [0:...:1]
-    # We only take the maximum value of the image to aproximate the centerline.
-    # 2. The centerline/segmentation image contains many pixels per slice with values {0,1}.
-    # We take all the points and approximate the centerline on all these points.
-
-    X, Y, Z = ((data < 1) * (data > 0)).nonzero()  # X is empty if binary image
-    if (len(X) > 0):  # Scenario 1
-        for iz in range(min_z_index, max_z_index + 1, 1):
-            x_centerline[iz - min_z_index], y_centerline[iz - min_z_index] = numpy.unravel_index(data[:, :, iz].argmax(), data[:, :, iz].shape)
-    else:  # Scenario 2
-        for iz in range(min_z_index, max_z_index + 1, 1):
-            x_seg, y_seg = (data[:, :, iz] > 0).nonzero()
-            if len(x_seg) > 0:
-                x_centerline[iz - min_z_index] = numpy.mean(x_seg)
-                y_centerline[iz - min_z_index] = numpy.mean(y_seg)
-
-    # TODO: find a way to do the previous loop with this, which is more neat:
-    # [numpy.unravel_index(data[:,:,iz].argmax(), data[:,:,iz].shape) for iz in range(0,nz,1)]
-
-    # clear variable
-    del data
-
-    # Fit the centerline points with the kind of curve given as argument of the script and return the new smoothed coordinates
-    if centerline_fitting == 'nurbs':
-        try:
-            x_centerline_fit, y_centerline_fit = b_spline_centerline(x_centerline, y_centerline, z_centerline)
-        except ValueError:
-            sct.printv("splines fitting doesn't work, trying with polynomial fitting...\n")
-            x_centerline_fit, y_centerline_fit = polynome_centerline(x_centerline, y_centerline, z_centerline)
-    elif centerline_fitting == 'polynome':
-        x_centerline_fit, y_centerline_fit = polynome_centerline(x_centerline, y_centerline, z_centerline)
+    # sct.printv('\nGet dimensions of input centerline...')
+    # nx, ny, nz, nt, px, py, pz, pt = im_centerline_orient.dim
+    # sct.printv('.. matrix size: ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz))
+    # sct.printv('.. voxel size:  ' + str(px) + 'mm x ' + str(py) + 'mm x ' + str(pz) + 'mm')
+    #
+    # sct.printv('\nOpen centerline volume...')
+    # data = im_centerline_orient.data
+    #
+    # X, Y, Z = (data > 0).nonzero()
+    # min_z_index, max_z_index = min(Z), max(Z)
+    #
+    # # loop across z and associate x,y coordinate with the point having maximum intensity
+    # x_centerline = [0 for iz in range(min_z_index, max_z_index + 1, 1)]
+    # y_centerline = [0 for iz in range(min_z_index, max_z_index + 1, 1)]
+    # z_centerline = [iz for iz in range(min_z_index, max_z_index + 1, 1)]
+    #
+    # # Two possible scenario:
+    # # 1. the centerline is probabilistic: each slices contains voxels with the probability of containing the centerline [0:...:1]
+    # # We only take the maximum value of the image to aproximate the centerline.
+    # # 2. The centerline/segmentation image contains many pixels per slice with values {0,1}.
+    # # We take all the points and approximate the centerline on all these points.
+    #
+    # X, Y, Z = ((data < 1) * (data > 0)).nonzero()  # X is empty if binary image
+    # if (len(X) > 0):  # Scenario 1
+    #     for iz in range(min_z_index, max_z_index + 1, 1):
+    #         x_centerline[iz - min_z_index], y_centerline[iz - min_z_index] = numpy.unravel_index(data[:, :, iz].argmax(), data[:, :, iz].shape)
+    # else:  # Scenario 2
+    #     for iz in range(min_z_index, max_z_index + 1, 1):
+    #         x_seg, y_seg = (data[:, :, iz] > 0).nonzero()
+    #         if len(x_seg) > 0:
+    #             x_centerline[iz - min_z_index] = numpy.mean(x_seg)
+    #             y_centerline[iz - min_z_index] = numpy.mean(y_seg)
+    #
+    # # TODO: find a way to do the previous loop with this, which is more neat:
+    # # [numpy.unravel_index(data[:,:,iz].argmax(), data[:,:,iz].shape) for iz in range(0,nz,1)]
+    #
+    # # clear variable
+    # del data
+    #
+    # # Fit the centerline points with the kind of curve given as argument of the script and return the new smoothed coordinates
+    # if centerline_fitting == 'nurbs':
+    #     try:
+    #         x_centerline_fit, y_centerline_fit = b_spline_centerline(x_centerline, y_centerline, z_centerline)
+    #     except ValueError:
+    #         sct.printv("splines fitting doesn't work, trying with polynomial fitting...\n")
+    #         x_centerline_fit, y_centerline_fit = polynome_centerline(x_centerline, y_centerline, z_centerline)
+    # elif centerline_fitting == 'polynome':
+    #     x_centerline_fit, y_centerline_fit = polynome_centerline(x_centerline, y_centerline, z_centerline)
 
     #==========================================================================================
     # Split input volume
@@ -125,10 +133,17 @@ def main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, 
         file_anat_split.append(im.absolutepath)
         im.save()
 
+    # loop across slices and apply displacement field slice-wise
+
+
+
     # initialize variables
     file_mat_inv_cumul = ['tmp.mat_inv_cumul_Z' + str(z).zfill(4) for z in range(0, nz, 1)]
     z_init = min_z_index
     displacement_max_z_index = x_centerline_fit[z_init - min_z_index] - x_centerline_fit[max_z_index - min_z_index]
+
+
+
 
     # write centerline as text file
     sct.printv('\nGenerate fitted transformation matrices...')
@@ -283,9 +298,9 @@ def get_parser():
                       example=['0', '1'])
     parser.add_option(name='-v',
                       type_value='multiple_choice',
-                      description='1: display on, 0: display off (default)',
+                      description='0: no verbose (default), 1: min verbose, 2: verbose + figures',
                       mandatory=False,
-                      example=['0', '1'],
+                      example=['0', '1', '2'],
                       default_value=str(param_default.verbose))
     parser.add_option(name='-h',
                       type_value=None,
