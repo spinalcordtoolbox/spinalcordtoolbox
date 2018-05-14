@@ -45,13 +45,6 @@ def main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, 
     # extract path of the script
     path_script = os.path.dirname(__file__) + '/'
 
-    # Parameters for debug mode
-    if param.debug == 1:
-        sct.printv('\n*** WARNING: DEBUG MODE ON ***\n')
-        path_sct_data = os.environ.get("SCT_TESTING_DATA_DIR", os.path.join(os.path.dirname(os.path.dirname(__file__))), "testing_data")
-        fname_anat = path_sct_data + '/t2/t2.nii.gz'
-        fname_centerline = path_sct_data + '/t2/t2_seg.nii.gz'
-
     # extract path/file/extension
     path_anat, file_anat, ext_anat = sct.extract_fname(fname_anat)
 
