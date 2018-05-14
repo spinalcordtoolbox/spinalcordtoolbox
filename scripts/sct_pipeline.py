@@ -448,10 +448,15 @@ def get_parser():
 
     parser.add_option(name='-email',
                       type_value=[[','], 'str'],
-                      description='Email information to send results. Fields are assigned with "=" and are separated with ",":\
-\nemail_to: address to send email to\
-\nemail_from: address to send email from (default value is: spinalcordtoolbox@gmail.com)\
-\npasswd_from: password for email_from',
+                      description="Email information to send results." \
+                       " Fields are assigned with '=' and are separated with ',':\n" \
+                       "  - addr_to: address to send email to\n" \
+                       "  - addr_from: address to send email from (default: spinalcordtoolbox@gmail.com)\n" \
+                       "  - login: SMTP login (use if different from email_from)\n"
+                       "  - passwd: SMTP password\n"
+                       "  - smtp_host: SMTP server (default: 'smtp.gmail.com')\n"
+                       "  - smtp_port: port for SMTP server (default: 587)\n"
+                       "Note: will always use TLS",
                       mandatory=False,
                       default_value='')
 
@@ -471,7 +476,7 @@ def get_parser():
 if __name__ == "__main__":
     sct.init_sct()
 
-    addr_from = 'spinalcordtoolbox@gmail.com'
+
     parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
     function_to_test = arguments["-f"]
@@ -498,19 +503,33 @@ if __name__ == "__main__":
     test_integrity = int(arguments['-test-integrity'])
     create_log = int(arguments['-log'])
     output_pickle = int(arguments['-pickle'])
+
+    send_email = False
     if '-email' in arguments:
         create_log = True
         send_email = True
+        addr_to = None
+        addr_from = None
+        login = None
+        passwd_from = None
+        smtp_host = None
+        smtp_port = None
         # loop across fields
         for i in arguments['-email']:
-            if 'addr_to' in i:
-                addr_to = i.split('=')[1]
-            if 'addr_from' in i:
-                addr_from = i.split('=')[1]
-            if 'passwd_from' in i:
-                passwd_from = i.split('=')[1]
-    else:
-        send_email = False
+            k, v = i.split("=")
+            if k == 'addr_to':
+                addr_to = v
+            if k == 'addr_from':
+                addr_from = v
+            if k == 'login':
+                login = v
+            if k == 'passwd':
+                passwd_from = v
+            if k == 'smtp_host':
+                smtp_host = v
+            if k == 'smtp_port':
+                smtp_port = int(v)
+
     verbose = int(arguments["-v"])
 
     # start timer
@@ -667,7 +686,9 @@ if __name__ == "__main__":
             with open(fname_log, "r") as fp:
                 message = fp.read()
             # send email
-            sct.send_email(addr_to=addr_to, addr_from=addr_from, passwd_from=passwd_from, subject=file_log,
-                           message=message, filename=fname_log, html=True)
+            sct.send_email(addr_to=addr_to, addr_from=addr_from,
+             subject=file_log, message=message, filename=fname_log,
+             login=login, passwd=passwd_from, smtp_host=smtp_host, smtp_port=smtp_port,
+             html=True)
             # handle_log.send_email(email=email, passwd_from=passwd, subject=file_log, attachment=True)
             sct.log.info('Email sent!\n')
