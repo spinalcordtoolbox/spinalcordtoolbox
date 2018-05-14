@@ -98,10 +98,10 @@ def main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, 
         # important to force input in float to skikit image, because it will output float values
         img = img_as_float(im_anat.data[:, :, iz])
         img_reg = transform.warp(img, tform)
-        im_anat_flattened.data[:, :, iz] = img_as_uint(img_reg)
+        # im_anat_flattened.data[:, :, iz] = img_as_uint(img_reg)
 
     # save output
-    fname_out = os.path.join(file_anat, '_flatten' + ext_anat)
+    fname_out = sct.add_suffix(fname_anat, '_flatten')
     im_anat_flattened.setFileName(fname_out)
     im_anat_flattened.save()
 
