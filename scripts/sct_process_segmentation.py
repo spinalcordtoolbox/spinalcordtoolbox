@@ -125,7 +125,7 @@ def get_parser():
                       mandatory=False)
     parser.add_option(name='-discfile',
                       type_value='image_nifti',
-                      description='Disc labeling. Only use with -p label-vert',
+                      description='Disc labeling with the convention "disc labelvalue=3 ==> disc C2/C3". Only use with -p label-vert',
                       mandatory=False)
     parser.add_option(name='-r',
                       type_value='multiple_choice',
@@ -906,6 +906,8 @@ def label_vert(fname_seg, fname_label, verbose=1):
     """
     # Open labels
     im_disc = Image(fname_label)
+    # change the orientation to RPI because the function label_segmentation assume this orientation as input
+    im_disc.change_orientation('RPI')
     # retrieve all labels
     coord_label = im_disc.getNonZeroCoordinates()
     # compute list_disc_z and list_disc_value
@@ -913,7 +915,8 @@ def label_vert(fname_seg, fname_label, verbose=1):
     list_disc_value = []
     for i in range(len(coord_label)):
         list_disc_z.insert(0, coord_label[i].z)
-        list_disc_value.insert(0, coord_label[i].value)
+        # '-1' because the function label_segmentation uses the convention "disc labelvalue=3 ==> disc C3/C4"
+        list_disc_value.insert(0, coord_label[i].value - 1)
 
     list_disc_value = [x for (y, x) in sorted(zip(list_disc_z, list_disc_value), reverse=True)]
     list_disc_z = [y for (y, x) in sorted(zip(list_disc_z, list_disc_value), reverse=True)]
