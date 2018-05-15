@@ -191,8 +191,8 @@ def main(args=None):
     # Get parser info
     parser = get_parser()
     arguments = parser.parse(args)
-    fname_in = arguments["-i"]
-    fname_seg = arguments['-s']
+    fname_in = os.path.abspath(arguments["-i"])
+    fname_seg = os.path.abspath(arguments['-s'])
     contrast = arguments['-c']
     path_template = arguments['-t']
     # if '-o' in arguments:
@@ -269,9 +269,13 @@ def main(args=None):
     # Straighten spinal cord
     sct.printv('\nStraighten spinal cord...', verbose)
     # check if warp_curve2straight and warp_straight2curve already exist (i.e. no need to do it another time)
-    if os.path.isfile(os.path.join(curdir, "warp_curve2straight.nii.gz")) and os.path.isfile(os.path.join(curdir, "warp_straight2curve.nii.gz")) and os.path.isfile(os.path.join(curdir, "straight_ref.nii.gz")):
+    cache_sig = sct.cache_signature(
+     input_files=[fname_in, fname_seg],
+    )
+    cachefile = os.path.join(curdir, "straightening.cache")
+    if sct.cache_valid(cachefile, cache_sig) and os.path.isfile(os.path.join(curdir, "warp_curve2straight.nii.gz")) and os.path.isfile(os.path.join(curdir, "warp_straight2curve.nii.gz")) and os.path.isfile(os.path.join(curdir, "straight_ref.nii.gz")):
         # if they exist, copy them into current folder
-        sct.printv('WARNING: It looks like straightening was already performed previously. Copying warping fields...', verbose, 'warning')
+        sct.printv('Reusing existing warping field which seems to be valid', verbose, 'warning')
         sct.copy(os.path.join(curdir, "warp_curve2straight.nii.gz"), 'warp_curve2straight.nii.gz')
         sct.copy(os.path.join(curdir, "warp_straight2curve.nii.gz"), 'warp_straight2curve.nii.gz')
         sct.copy(os.path.join(curdir, "straight_ref.nii.gz"), 'straight_ref.nii.gz')
@@ -282,6 +286,7 @@ def main(args=None):
         if param.path_qc is not None and os.environ.get("SCT_RECURSIVE_QC", None) == "1":
             cmd += ['-qc', param.path_qc]
         sct.run(cmd)
+        sct.cache_save(cachefile, cache_sig)
 
     # resample to 0.5mm isotropic to match template resolution
     sct.printv('\nResample to 0.5mm isotropic...', verbose)

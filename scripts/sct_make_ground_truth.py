@@ -414,9 +414,16 @@ def main():
         # straighten segmentation
         sct.printv('\nStraighten the spinal cord using centerline/segmentation...', verbose)
         # check if warp_curve2straight and warp_straight2curve already exist (i.e. no need to do it another time)
-        if os.path.isfile(os.path.join(curdir, "warp_curve2straight.nii.gz")) and os.path.isfile(os.path.join(curdir, "warp_straight2curve.nii.gz")) and os.path.isfile(os.path.join(curdir, "straight_ref.nii.gz")):
+        cache_sig = sct.cache_signature(
+         input_files=[
+          ftmp_seg,
+          ftmp_data, # as warp_straight2curve is updated after this block
+         ],
+        )
+        cachefile = os.path.join(curdir, "straightening.cache")
+        if sct.cache_valid(cachefile, cache_sig) and os.path.isfile(os.path.join(curdir, "warp_curve2straight.nii.gz")) and os.path.isfile(os.path.join(curdir, "warp_straight2curve.nii.gz")) and os.path.isfile(os.path.join(curdir, "straight_ref.nii.gz")):
             # if they exist, copy them into current folder
-            sct.printv('WARNING: It looks like straightening was already performed previously. Copying warping fields...', verbose, 'warning')
+            sct.printv('Reusing existing warping field which seems to be valid', verbose, 'warning')
             sct.copy(os.path.join(curdir, "warp_curve2straight.nii.gz"), 'warp_curve2straight.nii.gz')
             sct.copy(os.path.join(curdir, "warp_straight2curve.nii.gz"), 'warp_straight2curve.nii.gz')
             sct.copy(os.path.join(curdir, "straight_ref.nii.gz"), 'straight_ref.nii.gz')
@@ -427,6 +434,8 @@ def main():
             if param.path_qc is not None and os.environ.get("SCT_RECURSIVE_QC", None) == "1":
                 cmd += ["-qc", param.path_qc]
             sct.run(cmd, verbose)
+            sct.cache_save(cachefile, cache_sig)
+
         # N.B. DO NOT UPDATE VARIABLE ftmp_seg BECAUSE TEMPORARY USED LATER
         # re-define warping field using non-cropped space (to avoid issue #367)
         sct.run(['sct_concat_transfo', '-w', 'warp_straight2curve.nii.gz', '-d', ftmp_data, '-o', 'warp_straight2curve.nii.gz'])
