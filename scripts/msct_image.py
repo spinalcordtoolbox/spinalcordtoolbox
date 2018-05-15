@@ -677,7 +677,7 @@ class Image(object):
         Warning: the nifti image header is not changed!!!
         :param orientation: string of three character representing the new orientation (ex: AIL, default: RPI)
                inversion_orient: boolean. If True, the data change to match the orientation in the header, based on the orientation provided as the argument orientation.
-        :return:
+        :return: native orientation
         """
         opposite_character = {'L': 'R', 'R': 'L', 'A': 'P', 'P': 'A', 'I': 'S', 'S': 'I'}
 
