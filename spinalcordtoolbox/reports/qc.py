@@ -180,6 +180,7 @@ class QcImage(object):
                     """
                     min_, max_ = a.min(), a.max()
                     b = (np.float32(a) - min_) / (max_ - min_)
+                    b[b>=1] = 1 # 1+eps numerical error may happen (#1691)
 
                     h, w = b.shape
                     h1 = (h + (8-1))//8*8
