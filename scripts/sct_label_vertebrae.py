@@ -15,7 +15,7 @@
 # TODO: write label C2-C3 when user uses viewer
 # TODO: find automatically if -c =t1 or t2 (using dilated seg)
 # TODO: address the case when there is more than one max correlation
-# TODO: Change the disc convention: "disc labelvalue=3 ==> disc C2/C3" (expected) instead of "disc labelvalue=3 ==> disc C3/C4" (current)
+# TODO: Change the disc convention in label_segmentation: "disc labelvalue=3 ==> disc C2/C3" (expected) instead of "disc labelvalue=3 ==> disc C3/C4" (current)
 
 import sys, io, os
 
@@ -869,6 +869,7 @@ def label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=1):
     :return:
     """
     # TODO: Change the disc convention: "disc labelvalue=3 ==> disc C2/C3" (expected) instead of "disc labelvalue=3 ==> disc C3/C4" (current)
+    # TODO: When the disc convention has been changed: change the function label_vert in sct_process_segmentation which called this function (i.e. remove the "-1" in the loop for)
 
     # open segmentation
     seg = Image(fname_seg)
