@@ -899,7 +899,7 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
 def label_vert(fname_seg, fname_label, verbose=1):
     """
     Label segmentation using vertebral labeling information
-    :param fname_segmentation, expected image orientation: RPI
+    :param fname_segmentation, no orientation expected
     :param fname_label:
     :param verbose:
     :return:

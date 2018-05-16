@@ -861,7 +861,7 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
 def label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=1):
     """
     Label segmentation image
-    :param fname_seg: fname of the segmentation, expected image orientation: RPI
+    :param fname_seg: fname of the segmentation, no orientation expected
     :param list_disc_z: list of z that correspond to a disc
     :param list_disc_value: list of associated disc values
     :param verbose:
