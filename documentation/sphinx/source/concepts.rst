@@ -84,6 +84,17 @@ The former one is the fallback tool.
 .. TODO additional information, performance info, paper
 
 
+Temporary Directories
+*********************
+
+Many SCT commands will create in temporary directories to operate,
+and there is an option to avoid removing temporary directories, to be
+used for troubleshooting purposes.
+
+If you don't know where your temporary directory is located, you can
+look at:
+ https://docs.python.org/3/library/tempfile.html#tempfile.gettempdir
+
 
 .. _qc:
 
