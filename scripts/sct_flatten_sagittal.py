@@ -139,11 +139,6 @@ def get_parser():
                       description='Centerline.',
                       mandatory=True,
                       example='centerline.nii.gz')
-    parser.add_option(name='-c',
-                      type_value=None,
-                      description='Centerline.',
-                      mandatory=False,
-                      deprecated_by='-s')
     parser.add_option(name='-x',
                       type_value='multiple_choice',
                       description='Final interpolation.',
