@@ -1026,7 +1026,7 @@ def printv(string, verbose=1, type='normal'):
     colors = {'normal': bcolors.normal, 'info': bcolors.green, 'warning': bcolors.yellow, 'error': bcolors.red,
               'code': bcolors.blue, 'bold': bcolors.bold, 'process': bcolors.magenta}
 
-    if verbose:
+    if verbose or type=="error":
         # Print color only if the output is the terminal
         # Note jcohen: i added a try/except in case stdout does not have isatty field (it did happen to me)
         try:
@@ -1040,16 +1040,7 @@ def printv(string, verbose=1, type='normal'):
             log.info(string)
 
     if type == 'error':
-        from inspect import stack
-        import traceback
-
-        frame, filename, line_number, function_name, lines, index = stack()[1]
-        if sys.stdout.isatty():
-            log.error('\n' + bcolors.red + filename + traceback.format_exc() + bcolors.normal)
-        else:
-            log.error('\n' + filename + traceback.format_exc())
-
-        raise RunError('raise in printv, read log above for more info')
+        raise RuntimeError("printv(..., type=\"error\")")
 
 
 def send_email(addr_to, addr_from, passwd, subject, message='', filename=None, html=False, smtp_host=None, smtp_port=None, login=None):
