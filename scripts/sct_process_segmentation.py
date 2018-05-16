@@ -124,7 +124,7 @@ def get_parser():
                       mandatory=False)
     parser.add_option(name='-discfile',
                       type_value='image_nifti',
-                      description='Disc labeling. Only use with -p label-vert',
+                      description='Disc labeling with the convention "disc labelvalue=3 ==> disc C2/C3". Only use with -p label-vert',
                       mandatory=False)
     parser.add_option(name='-r',
                       type_value='multiple_choice',
@@ -898,13 +898,15 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
 def label_vert(fname_seg, fname_label, verbose=1):
     """
     Label segmentation using vertebral labeling information
-    :param fname_segmentation:
+    :param fname_segmentation, no orientation expected
     :param fname_label:
     :param verbose:
     :return:
     """
     # Open labels
     im_disc = Image(fname_label)
+    # Change the orientation to RPI so that the z axis corresponds to the superior-to-inferior axis
+    im_disc.change_orientation('RPI')
     # retrieve all labels
     coord_label = im_disc.getNonZeroCoordinates()
     # compute list_disc_z and list_disc_value
@@ -912,7 +914,8 @@ def label_vert(fname_seg, fname_label, verbose=1):
     list_disc_value = []
     for i in range(len(coord_label)):
         list_disc_z.insert(0, coord_label[i].z)
-        list_disc_value.insert(0, coord_label[i].value)
+        # '-1' to use the convention "disc labelvalue=3 ==> disc C2/C3"
+        list_disc_value.insert(0, coord_label[i].value - 1)
 
     list_disc_value = [x for (y, x) in sorted(zip(list_disc_z, list_disc_value), reverse=True)]
     list_disc_z = [y for (y, x) in sorted(zip(list_disc_z, list_disc_value), reverse=True)]
