@@ -861,14 +861,20 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
 def label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=1):
     """
     Label segmentation image
-    :param fname_seg: fname of the segmentation
+    :param fname_seg: fname of the segmentation, no orientation expected
     :param list_disc_z: list of z that correspond to a disc
     :param list_disc_value: list of associated disc values
     :param verbose:
     :return:
     """
+
     # open segmentation
     seg = Image(fname_seg)
+
+    # Change the orientation to RPI so that any orientation can be input
+    init_orientation = seg.orientation
+    seg.change_orientation('RPI')
+
     dim = seg.dim
     ny = dim[1]
     nz = dim[2]
@@ -895,6 +901,7 @@ def label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=1):
             plt.scatter(int(round(ny / 2)), iz, c=vertebral_level, vmin=min(list_disc_value), vmax=max(list_disc_value), cmap='prism', marker='_', s=200)
     # write file
     seg.file_name += '_labeled'
+    seg.change_orientation(init_orientation)
     seg.save()
 
 
