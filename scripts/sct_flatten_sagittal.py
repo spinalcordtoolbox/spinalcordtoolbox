@@ -51,7 +51,7 @@ def main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, 
 
     # smooth centerline and return fitted coordinates in voxel space
     x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(
-        im_centerline, algo_fitting='hanning', type_window='hanning', window_length=50,
+        im_centerline, algo_fitting=centerline_fitting, type_window='hanning', window_length=50,
         nurbs_pts_number=3000, phys_coordinates=False, verbose=verbose, all_slices=True)
 
     # compute translation for each slice, such that the flattened centerline is centered in the medial plane (R-L) and
@@ -148,8 +148,8 @@ def get_parser():
                       type_value='multiple_choice',
                       description='Fitting algorithm.',
                       mandatory=False,
-                      example=['polynome', 'nurbs'],
-                      default_value='nurbs')
+                      example=['hanning', 'nurbs'],
+                      default_value='hanning')
     parser.add_option(name='-r',
                       type_value='multiple_choice',
                       description='Removes the temporary folder and debug folder used for the algorithm at the end of execution',
