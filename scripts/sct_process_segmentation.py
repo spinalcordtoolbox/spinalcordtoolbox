@@ -906,7 +906,7 @@ def label_vert(fname_seg, fname_label, verbose=1):
     """
     # Open labels
     im_disc = Image(fname_label)
-    # change the orientation to RPI because the function label_segmentation assume this orientation as input
+    # Change the orientation to RPI so that the z axis correspond to the superior-to-inferior axis
     im_disc.change_orientation('RPI')
     # retrieve all labels
     coord_label = im_disc.getNonZeroCoordinates()

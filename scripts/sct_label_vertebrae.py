@@ -871,8 +871,8 @@ def label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=1):
     # open segmentation
     seg = Image(fname_seg)
 
-    # change the orientation to RPI because the function assume dim[2] to be the Superior-to-Inferior axis
-    init_oriantation = seg.orientation
+    # Change the orientation to RPI so that any orientation can be input
+    init_orientation = seg.orientation
     seg.change_orientation('RPI')
 
     dim = seg.dim
@@ -901,7 +901,7 @@ def label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=1):
             plt.scatter(int(round(ny / 2)), iz, c=vertebral_level, vmin=min(list_disc_value), vmax=max(list_disc_value), cmap='prism', marker='_', s=200)
     # write file
     seg.file_name += '_labeled'
-    seg.change_orientation(init_oriantation)
+    seg.change_orientation(init_orientation)
     seg.save()
 
 
