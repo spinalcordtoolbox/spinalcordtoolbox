@@ -136,9 +136,9 @@ def get_parser():
                       example='t2.nii.gz')
     parser.add_option(name='-s',
                       type_value='image_nifti',
-                      description='Centerline.',
+                      description='Spinal cord segmentation or centerline.',
                       mandatory=True,
-                      example='centerline.nii.gz')
+                      example='t2_seg.nii.gz')
     parser.add_option(name='-x',
                       type_value='multiple_choice',
                       description='Final interpolation.',
