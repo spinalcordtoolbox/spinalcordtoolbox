@@ -324,12 +324,6 @@ sct_label_vertebrae
 .. program-output:: ../../../bin/sct_label_vertebrae -h
 
 
-sct_make_ground_truth
-========================
-
-.. program-output:: ../../../bin/sct_make_ground_truth -h
-
-
 sct_maths
 ============
 
