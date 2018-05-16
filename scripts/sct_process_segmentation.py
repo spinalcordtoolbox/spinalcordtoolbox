@@ -899,14 +899,14 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
 def label_vert(fname_seg, fname_label, verbose=1):
     """
     Label segmentation using vertebral labeling information
-    :param fname_segmentation:
+    :param fname_segmentation, expected image orientation: RPI
     :param fname_label:
     :param verbose:
     :return:
     """
     # Open labels
     im_disc = Image(fname_label)
-    # Change the orientation to RPI so that the z axis correspond to the superior-to-inferior axis
+    # Change the orientation to RPI so that the z axis corresponds to the superior-to-inferior axis
     im_disc.change_orientation('RPI')
     # retrieve all labels
     coord_label = im_disc.getNonZeroCoordinates()
