@@ -915,7 +915,7 @@ def label_vert(fname_seg, fname_label, verbose=1):
     list_disc_value = []
     for i in range(len(coord_label)):
         list_disc_z.insert(0, coord_label[i].z)
-        # '-1' because the function label_segmentation uses the convention "disc labelvalue=3 ==> disc C3/C4"
+        # '-1' to use the convention "disc labelvalue=3 ==> disc C2/C3"
         list_disc_value.insert(0, coord_label[i].value - 1)
 
     list_disc_value = [x for (y, x) in sorted(zip(list_disc_z, list_disc_value), reverse=True)]
