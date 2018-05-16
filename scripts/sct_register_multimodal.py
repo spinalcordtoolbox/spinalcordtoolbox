@@ -383,9 +383,6 @@ def main(args=None):
         path_out = path if not path_out else path_out
         file_out_inv = file_out + '_inv'
 
-    # create QC folder
-    sct.create_folder(param.path_qc)
-
     # create temporary folder
     path_tmp = sct.tmp_create()
 
