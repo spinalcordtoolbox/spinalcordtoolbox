@@ -38,12 +38,6 @@ class Param:
 #=======================================================================================================================
 def main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, remove_temp_files, verbose):
 
-    # Display arguments
-    sct.printv('\nCheck input arguments...')
-    sct.printv('  Input volume ...................... ' + fname_anat)
-    sct.printv('  Centerline ........................ ' + fname_centerline)
-    sct.printv('')
-
     # load input image
     im_anat = Image(fname_anat)
     nx, ny, nz, nt, px, py, pz, pt = im_anat.dim
@@ -56,7 +50,7 @@ def main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, 
 
     # smooth centerline and return fitted coordinates in voxel space
     x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(
-        im_centerline, algo_fitting='hanning', type_window='hanning', window_length=50,
+        im_centerline, algo_fitting=centerline_fitting, type_window='hanning', window_length=50,
         nurbs_pts_number=3000, phys_coordinates=False, verbose=verbose, all_slices=True)
 
     # compute translation for each slice, such that the flattened centerline is centered in the medial plane (R-L) and
@@ -103,14 +97,9 @@ def get_parser():
                       example='t2.nii.gz')
     parser.add_option(name='-s',
                       type_value='image_nifti',
-                      description='Centerline.',
+                      description='Spinal cord segmentation or centerline.',
                       mandatory=True,
-                      example='centerline.nii.gz')
-    parser.add_option(name='-c',
-                      type_value=None,
-                      description='Centerline.',
-                      mandatory=False,
-                      deprecated_by='-s')
+                      example='t2_seg.nii.gz')
     parser.add_option(name='-x',
                       type_value='multiple_choice',
                       description='Final interpolation.',
@@ -126,8 +115,8 @@ def get_parser():
                       type_value='multiple_choice',
                       description='Fitting algorithm.',
                       mandatory=False,
-                      example=['polynome', 'nurbs'],
-                      default_value='nurbs')
+                      example=['hanning', 'nurbs'],
+                      default_value='hanning')
     parser.add_option(name='-r',
                       type_value='multiple_choice',
                       description='Removes the temporary folder and debug folder used for the algorithm at the end of execution',
