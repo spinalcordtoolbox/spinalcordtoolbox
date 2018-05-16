@@ -92,7 +92,7 @@ class Option:
     OPTION_TYPES = ["str", "int", "float", "long", "complex", "Coordinate"]
     # list of options that are path type
     # input file/folder
-    OPTION_PATH_INPUT = ["file", "folder", "image_nifti"]
+    OPTION_PATH_INPUT = ["file", "file-transfo", "folder", "image_nifti"]
     # output file/folder
     OPTION_PATH_OUTPUT = ["file_output", "folder_output"]
 
@@ -138,9 +138,18 @@ class Option:
         elif type_option == "file":
             return self.checkFile(param)
 
+        elif type_option == "file-transfo":
+            if param.startswith("-"):
+                self.checkFile(param[1:])
+                return param
+            else:
+                return self.checkFile(param)
+
         elif type_option == "file_output":  # check if permission are required
+            if not os.path.isdir(os.path.dirname(os.path.abspath(param))):
+                self.parser.usage.error("ERROR: Option %s parent folder doesn't exist for file %s" % (self.name, param))
             if not sct.check_write_permission(param):
-                self.parser.usage.error("Error of writing permissions on file: " + param)
+                self.parser.usage.error("ERROR: Option %s no write permission for file %s" % (self.name, param))
             return param
 
         elif type_option == "folder":
@@ -196,7 +205,8 @@ class Option:
         # check if the file exist
         sct.printv("Check file existence...", 0)
         if self.parser.check_file_exist:
-            sct.check_file_exist(param, 0)
+            if not os.path.isfile(param):
+                self.parser.usage.error("ERROR: Option " + self.name + " file doesn't exist: " + param)
         return param
 
     def checkIfNifti(self, param):
@@ -223,7 +233,7 @@ class Option:
         elif param.lower() in self.list_no_image:
             no_image = True
         else:
-            raise ValueError("File is not a NIFTI image file. Exiting")
+            self.parser.usage.error("ERROR: Option " + self.name + " file " + param + " is not a NIFTI image file. Exiting")
         if nii:
             return param_tmp + '.nii'
         elif niigz:
@@ -232,12 +242,13 @@ class Option:
             return param
         else:
             sct.log.debug('executed in {}'.format(os.getcwd()))
-            raise ValueError("File " + param + " does not exist. Exiting")
+            self.parser.usage.error("ERROR: Option " + self.name + " file " + param + " does not exist.")
 
     def checkFolder(self, param):
         # check if the folder exist. If not, create it.
         if self.parser.check_file_exist:
-            sct.check_folder_exist(param, 0)
+            if not os.path.isdir(param):
+                self.parser.usage.error("ERROR: Option " + self.name + " folder doesn't exist: " + param)
         return param
 
     def checkFolderCreation(self, param):
