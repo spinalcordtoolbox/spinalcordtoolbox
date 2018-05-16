@@ -17,7 +17,6 @@ import sys, os
 import numpy as np
 
 import sct_utils as sct
-from msct_nurbs import NURBS
 from msct_image import Image
 from msct_parser import Parser
 from sct_straighten_spinalcord import smooth_centerline
@@ -85,38 +84,6 @@ def main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, 
     im_anat_flattened.save()
 
     sct.display_viewer_syntax([fname_anat, fname_out])
-
-
-def b_spline_centerline(x_centerline, y_centerline, z_centerline):
-    """Give a better fitting of the centerline than the method 'spline_centerline' using b-splines"""
-
-    points = [[x_centerline[n], y_centerline[n], z_centerline[n]] for n in range(len(x_centerline))]
-
-    nurbs = NURBS(3, len(z_centerline) * 3, points, nbControl=None, verbose=2)  # for the third argument (number of points), give at least len(z_centerline)
-    # (len(z_centerline)+500 or 1000 is ok)
-    P = nurbs.getCourbe3D()
-    x_centerline_fit = P[0]
-    y_centerline_fit = P[1]
-
-    return x_centerline_fit, y_centerline_fit
-
-
-def polynome_centerline(x_centerline, y_centerline, z_centerline):
-    """Fit polynomial function through centerline"""
-
-    # Fit centerline in the Z-X plane using polynomial function
-    sct.printv('\nFit centerline in the Z-X plane using polynomial function...')
-    coeffsx = numpy.polyfit(z_centerline, x_centerline, deg=5)
-    polyx = numpy.poly1d(coeffsx)
-    x_centerline_fit = numpy.polyval(polyx, z_centerline)
-
-    # Fit centerline in the Z-Y plane using polynomial function
-    sct.printv('\nFit centerline in the Z-Y plane using polynomial function...')
-    coeffsy = numpy.polyfit(z_centerline, y_centerline, deg=5)
-    polyy = numpy.poly1d(coeffsy)
-    y_centerline_fit = numpy.polyval(polyy, z_centerline)
-
-    return x_centerline_fit, y_centerline_fit
 
 
 def get_parser():

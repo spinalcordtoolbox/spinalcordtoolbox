@@ -22,7 +22,6 @@ import scipy
 import pandas as pd
 
 import sct_utils as sct
-from msct_nurbs import NURBS
 from sct_image import set_orientation
 from sct_straighten_spinalcord import smooth_centerline
 from msct_image import Image
@@ -1137,25 +1136,6 @@ def get_slices_matching_with_vertebral_levels_based_centerline(vertebral_levels,
         sct.printv('\t' + slices)
 
     return slices, vert_levels_list, warning
-
-
-def b_spline_centerline(x_centerline, y_centerline, z_centerline):
-    sct.printv('\nFitting centerline using B-spline approximation...')
-    points = [[x_centerline[n], y_centerline[n], z_centerline[n]] for n in range(len(x_centerline))]
-    nurbs = NURBS(3, 3000, points)
-    # BE very careful with the spline order that you choose :
-    # if order is too high ( > 4 or 5) you need to set a higher number of Control Points (cf sct_nurbs ).
-    # For the third argument (number of points), give at least len(z_centerline)+500 or higher
-
-    P = nurbs.getCourbe3D()
-    x_centerline_fit = P[0]
-    y_centerline_fit = P[1]
-    Q = nurbs.getCourbe3D_deriv()
-    x_centerline_deriv = Q[0]
-    y_centerline_deriv = Q[1]
-    z_centerline_deriv = Q[2]
-
-    return x_centerline_fit, y_centerline_fit, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv
 
 
 #=======================================================================================================================
