@@ -39,12 +39,6 @@ class Param:
 #=======================================================================================================================
 def main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, remove_temp_files, verbose):
 
-    # Display arguments
-    sct.printv('\nCheck input arguments...')
-    sct.printv('  Input volume ...................... ' + fname_anat)
-    sct.printv('  Centerline ........................ ' + fname_centerline)
-    sct.printv('')
-
     # load input image
     im_anat = Image(fname_anat)
     nx, ny, nz, nt, px, py, pz, pt = im_anat.dim
