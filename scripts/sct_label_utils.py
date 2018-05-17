@@ -169,9 +169,6 @@ class ProcessLabels(object):
 
         # loop across labels
         for i, coord in enumerate(self.coordinates):
-            # display info
-            sct.printv('Label #' + str(i) + ': ' + str(coord.x) + ',' + str(coord.y) + ',' + str(coord.z) + ' --> ' +
-                       str(coord.value), 1)
             if len(image_output.data.shape) == 3:
                 image_output.data[int(coord.x), int(coord.y), int(coord.z)] = coord.value
             elif len(image_output.data.shape) == 2:
@@ -179,6 +176,9 @@ class ProcessLabels(object):
                 image_output.data[int(coord.x), int(coord.y)] = coord.value
             else:
                 sct.printv('ERROR: Data should be 2D or 3D. Current shape is: ' + str(image_output.data.shape), 1, 'error')
+            # display info
+            sct.printv('Label #' + str(i) + ': ' + str(coord.x) + ',' + str(coord.y) + ',' + str(coord.z) + ' --> ' +
+                       str(coord.value), 1)
         return image_output
 
     def create_label_along_segmentation(self):
