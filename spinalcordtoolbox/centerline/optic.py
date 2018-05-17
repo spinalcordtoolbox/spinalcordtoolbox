@@ -3,6 +3,7 @@ from string import Template
 
 import nibabel as nib
 import numpy as np
+from skimage.exposure import rescale_intensity
 
 import sct_utils as sct
 import sct_image
@@ -63,6 +64,17 @@ def centerline2roi(fname_image, folder_output='./', verbose=0):
     return fname_output
 
 
+def apply_intensity_normalization(fname_in, fname_out):
+    img = Image(fname_in)
+    img_normalized = img.copy()
+    p2, p98 = np.percentile(img.data, (2, 98))
+    img_normalized.data = rescale_intensity(img.data, in_range=(p2, p98), out_range=(0, 255))
+    img_normalized.setFileName(fname_out)
+    img_normalized.save()
+
+    return img_normalized
+
+
 def detect_centerline(image_fname, contrast_type,
                       optic_models_path, folder_output,
                       remove_temp_files=False, init_option=None, output_roi=False, verbose=0):
@@ -92,7 +104,8 @@ def detect_centerline(image_fname, contrast_type,
 
     # convert image data type to int16, as required by opencv (backend in OptiC)
     image_int_filename = sct.add_suffix(file_data + ext_data, "_int16")
-    sct_image.main(args=['-i', image_fname, '-type', 'int16', '-o', image_int_filename, '-v', '0'])
+    apply_intensity_normalization(image_fname, image_int_filename)
+    sct_image.main(args=['-i', image_int_filename, '-type', 'int16', '-o', image_int_filename, '-v', '0'])
 
     # reorient the input image to RPI + convert to .nii
     reoriented_image_filename = sct.add_suffix(image_int_filename, "_RPI")
