@@ -177,6 +177,8 @@ class ProcessLabels(object):
             elif len(image_output.data.shape) == 2:
                 assert str(coord.z) == '0', "ERROR: 2D coordinates should have a Z value of 0. Z coordinate is :" + str(coord.z)
                 image_output.data[int(coord.x), int(coord.y)] = coord.value
+            else:
+                sct.printv('ERROR: Data should be 2D or 3D. Current shape is: ' + str(image_output.data.shape), 1, 'error')
         return image_output
 
     def create_label_along_segmentation(self):
