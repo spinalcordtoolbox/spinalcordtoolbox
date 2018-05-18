@@ -386,11 +386,13 @@ class Image(object):
             min_out = iinfo(type).min
             max_out = iinfo(type).max
             # before rescaling, check if there would be an intensity overflow
-            if (min_in < min_out) or (max_in > max_out):
-                sct.printv('WARNING: To avoid intensity overflow due to convertion to '+type+', intensity will be rescaled to the maximum quantization scale.', 1, 'warning')
-                # rescale intensity
-                data_rescaled = self.data * (max_out - min_out) / (max_in - min_in)
-                self.data = data_rescaled - ( data_rescaled.min() - min_out )
+
+            # the two lines below were commented because of this PR: https://github.com/neuropoly/spinalcordtoolbox/pull/1746#issuecomment-390065138
+            # if (min_in < min_out) or (max_in > max_out):
+            # sct.printv('WARNING: To avoid intensity overflow due to convertion to '+type+', intensity will be rescaled to the maximum quantization scale.', 1, 'warning')
+            # rescale intensity
+            data_rescaled = self.data * (max_out - min_out) / (max_in - min_in)
+            self.data = data_rescaled - ( data_rescaled.min() - min_out )
 
         # change type of data in both numpy array and nifti header
         type_build = eval(type)
