@@ -3,7 +3,6 @@ from string import Template
 
 import nibabel as nib
 import numpy as np
-from skimage import img_as_int
 
 import sct_utils as sct
 import sct_image
@@ -95,7 +94,17 @@ def detect_centerline(image_fname, contrast_type,
     image_int_filename = sct.add_suffix(file_data + ext_data, "_int16")
     img = Image(image_fname)
     img_int16 = img.copy()
-    img_int16.data = img_as_int(img.data)
+
+    # rescale intensity
+    min_out = np.iinfo('uint16').min
+    max_out = np.iinfo('uint16').max
+    min_in = np.nanmin(img.data)
+    max_in = np.nanmax(img.data)
+    data_rescaled = img.data * (max_out - min_out) / (max_in - min_in)
+    img_int16.data = data_rescaled - (data_rescaled.min() - min_out)
+
+    # change data type
+    img_int16.changeType('uint16')
     img_int16.setFileName(image_int_filename)
     img_int16.save()
     del img, img_int16
