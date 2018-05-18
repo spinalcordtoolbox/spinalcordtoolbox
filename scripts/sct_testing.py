@@ -398,6 +398,7 @@ def test_function(param_test):
     sct.log.debug("Init dataframe")
     param_test.results = DataFrame(index=[subject_folder],
                                    data={'status': 0,
+                                         'duration': 0,
                                          'output': '',
                                          'path_data': param_test.path_data,
                                          'path_output': param_test.path_output})
@@ -448,7 +449,7 @@ def test_function(param_test):
         return update_param(param_test)
 
     param_test.output += o
-    param_test.duration = time.time() - time_start
+    param_test.results['duration'] = time.time() - time_start
 
     # test integrity
     if param_test.test_integrity:

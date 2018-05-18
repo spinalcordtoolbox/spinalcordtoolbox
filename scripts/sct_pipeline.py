@@ -607,7 +607,7 @@ if __name__ == "__main__":
         results_list = results.columns.tolist()
         [results_list.remove(i) for i in ['status', 'path_output', 'path_data', 'output']]
         # build new dataframe with nice order
-        results_display = results[['status', results_list[0], 'path_output']]
+        results_display = results[['status', 'duration', results_list[0], 'path_output']]
         # save panda structure
         if output_pickle:
             results.to_pickle(file_log + '.pickle')
