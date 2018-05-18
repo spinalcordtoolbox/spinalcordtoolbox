@@ -349,11 +349,11 @@ def run_function(function, folder_dataset, list_subj, list_args=[], nb_cpu=None,
             arguments = future_dirs[future][2]
             try:
                 result = future.result()
+                sct.log.info('{}/{}: {} done'.format(count, len(list_func_subj_args), subject))
+                all_results.append(result)
             except Exception as exc:
                 sct.log.error('{} {} generated an exception: {}'.format(subject, arguments, exc))
 
-            sct.log.info('{}/{}: {} done'.format(count, len(list_func_subj_args), subject))
-            all_results.append(result)
         compute_time = time() - compute_time
 
         # concatenate all_results into single Panda structure
