@@ -3,6 +3,7 @@ from string import Template
 
 import nibabel as nib
 import numpy as np
+from skimage import img_as_uint
 
 import sct_utils as sct
 import sct_image
@@ -93,11 +94,12 @@ def detect_centerline(image_fname, contrast_type,
     # convert image data type to int16, as required by opencv (backend in OptiC)
     image_int_filename = sct.add_suffix(file_data + ext_data, "_int16")
     img = Image(image_fname)
-    img_int16 = img.copy()
-    img_int16.changeType(type='int16')
-    img_int16.setFileName(image_int_filename)
-    img_int16.save()
-    del img, img_int16
+    img_uint16 = img.copy()
+    img_uint16.data += abs(np.min(img.data))  # intensity translation to be robust to negative intensities
+    img_uint16.data = img_as_uint(img_uint16.data)
+    img_uint16.setFileName(image_int_filename)
+    img_uint16.save()
+    del img, img_uint16
 
     # reorient the input image to RPI + convert to .nii
     reoriented_image_filename = sct.add_suffix(image_int_filename, "_RPI")
