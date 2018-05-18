@@ -604,26 +604,26 @@ if __name__ == "__main__":
         pd.set_option('display.max_colwidth', -1)  # to avoid truncation of long string
         pd.set_option('display.width', 1000)
         # drop entries for visibility
-        results_subset = results.drop('path_data', 1).drop('output', 1)
-        results_display = results_subset
-        # reorder for better display: status, path_output
-        results_display = results_display[['status', 'path_output']]
+        results_list = results.columns.tolist()
+        [results_list.remove(i) for i in ['status', 'path_output', 'path_data', 'output']]
+        # build new dataframe with nice order
+        results_display = results[['status', results_list[0], 'path_output']]
         # save panda structure
         if output_pickle:
-            results_subset.to_pickle(file_log + '.pickle')
+            results.to_pickle(file_log + '.pickle')
         # compute mean
-        results_mean = results_subset.query('status != 200 & status != 201').mean(numeric_only=True)
+        results_mean = results.query('status != 200 & status != 201').mean(numeric_only=True)
         results_mean['subject'] = 'Mean'
         results_mean.set_value('status', float('NaN'))  # set status to NaN
         # compute std
-        results_std = results_subset.query('status != 200 & status != 201').std(numeric_only=True)
+        results_std = results.query('status != 200 & status != 201').std(numeric_only=True)
         results_std['subject'] = 'STD'
         results_std.set_value('status', float('NaN'))  # set status to NaN
         # count tests that passed
-        count_passed = results_subset.status[results_subset.status == 0].count()
-        count_crashed = results_subset.status[results_subset.status == 1].count()
+        count_passed = results.status[results.status == 0].count()
+        count_crashed = results.status[results.status == 1].count()
         # count tests that ran
-        count_ran = results_subset.query('status != 200 & status != 201').count()['status']
+        count_ran = results.query('status != 200 & status != 201').count()['status']
         # display general results
         sct.log.info('\nGLOBAL RESULTS:')
         sct.log.info('Duration: ' + str(int(round(compute_time))) + 's')
