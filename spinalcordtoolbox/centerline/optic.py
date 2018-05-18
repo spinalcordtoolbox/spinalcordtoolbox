@@ -3,7 +3,6 @@ from string import Template
 
 import nibabel as nib
 import numpy as np
-from skimage import img_as_uint
 
 import sct_utils as sct
 import sct_image
@@ -64,18 +63,6 @@ def centerline2roi(fname_image, folder_output='./', verbose=0):
     return fname_output
 
 
-def scale_intensities_uint16(fname_in, fname_out):
-    img = Image(fname_in)
-    img_scaled = img.copy()
-    img_scaled.data = img_as_uint(img.data)
-    img_scaled.setFileName(fname_out)
-    img_scaled.save()
-
-    # img_as_uint clip negative values
-    if np.min(img.data) < 0:
-        sct.printv('WARNING: the input image has negative values', verbose, 'warning')
-
-
 def detect_centerline(image_fname, contrast_type,
                       optic_models_path, folder_output,
                       remove_temp_files=False, init_option=None, output_roi=False, verbose=0):
@@ -105,7 +92,12 @@ def detect_centerline(image_fname, contrast_type,
 
     # convert image data type to int16, as required by opencv (backend in OptiC)
     image_int_filename = sct.add_suffix(file_data + ext_data, "_int16")
-    scale_intensities_uint16(image_fname, image_int_filename)
+    img = Image(image_fname)
+    img_int16 = img.copy()
+    img_int16.changeType(type='int16')
+    img_int16.setFileName(image_int_filename)
+    img_int16.save()
+    del img, img_int16
 
     # reorient the input image to RPI + convert to .nii
     reoriented_image_filename = sct.add_suffix(image_int_filename, "_RPI")
