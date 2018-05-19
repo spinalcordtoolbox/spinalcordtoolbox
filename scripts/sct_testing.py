@@ -41,6 +41,7 @@ class Param:
         self.output = ''  # output string
         self.results = ''  # results in Panda DataFrame
         self.redirect_stdout = 0  # for debugging, set to 0. Otherwise set to 1.
+        self.fname_log = None
 
 
 # define nice colors
@@ -388,7 +389,10 @@ def test_function(param_test):
         param_test.args_with_path += ' -ofolder ' + param_test.path_output
     # open log file
     # Note: the statement below is not included in the if, because even if redirection does not occur, we want the file to be create otherwise write_to_log will fail
-    param_test.fname_log = os.path.join(param_test.path_output, param_test.function_to_test + '.log')
+
+    if param_test.fname_log is None:
+        param_test.fname_log = os.path.join(param_test.path_output, param_test.function_to_test + '.log')
+
     # redirect to log file
     if param_test.redirect_stdout:
         file_handler = sct.add_file_handler_to_logger(param_test.fname_log)
