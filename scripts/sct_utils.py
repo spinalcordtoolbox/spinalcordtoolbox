@@ -155,11 +155,6 @@ __data_dir__ = os.getenv("SCT_DATA_DIR", os.path.join(__sct_dir__, 'data'))
 __version__ = _version_string()
 
 
-# statistic report level
-__report_log_level__ = logging.ERROR  # DEBUG, INFO, WARNING, ERROR
-__report_exception_level__ = Exception
-
-
 def init_sct():
     """ Initialize the sct for typical terminal usage
 
@@ -219,7 +214,9 @@ def traceback_to_server(client):
     """
 
     def excepthook(exctype, value, traceback):
-        if issubclass(exctype, __report_exception_level__):
+        if exctype.__name__ in ("ReconstructionError",):
+            pass
+        elif issubclass(exctype, Exception):
             client.captureException(exc_info=(exctype, value, traceback))
         sys.__excepthook__(exctype, value, traceback)
 
@@ -233,7 +230,7 @@ def server_log_handler(client):
     """
     from raven.handlers.logging import SentryHandler
 
-    sh = SentryHandler(client=client, level=__report_log_level__)
+    sh = SentryHandler(client=client, level=logging.ERROR)
     fmt = ("[%(asctime)s][%(levelname)s] %(filename)s: %(lineno)d | "
             "%(message)s")
     formatter = logging.Formatter(fmt=fmt, datefmt="%H:%M:%S")
