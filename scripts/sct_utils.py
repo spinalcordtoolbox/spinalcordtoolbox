@@ -248,6 +248,17 @@ def server_log_handler(client):
     from raven.handlers.logging import SentryHandler
 
     sh = SentryHandler(client=client, level=logging.ERROR)
+
+    # Don't send Sentry events for command-line usage errors
+    old_emit = sh.emit
+    def emit(self, record):
+        if record.message.startswith("Command-line usage error:"):
+            return
+        return old_emit(record)
+
+    sh.emit = lambda x: emit(sh, x)
+
+
     fmt = ("[%(asctime)s][%(levelname)s] %(filename)s: %(lineno)d | "
             "%(message)s")
     formatter = logging.Formatter(fmt=fmt, datefmt="%H:%M:%S")
