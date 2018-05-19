@@ -192,7 +192,7 @@ def init_error_client():
     :return:
     """
     if os.getenv('SENTRY_DSN'):
-        log.info('Configuring sentry report')
+        log.debug('Configuring sentry report')
         try:
             client = raven.Client(
              release=__version__,
@@ -202,7 +202,6 @@ def init_error_client():
             )
             server_log_handler(client)
             traceback_to_server(client)
-            log.info('sentry is set!')
 
             old_exitfunc = sys.exitfunc
             def exitfunc():
@@ -222,7 +221,7 @@ def init_error_client():
             sys.exitfunc = exitfunc
         except raven.exceptions.InvalidDsn:
             # This could happen if sct staff change the dsn
-            log.debug('sentry dsn not valid anymore, not reporting errors')
+            log.debug('Sentry DSN not valid anymore, not reporting errors')
 
 
 def traceback_to_server(client):
