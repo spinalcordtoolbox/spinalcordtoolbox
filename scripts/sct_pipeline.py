@@ -480,7 +480,7 @@ if __name__ == "__main__":
     parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
     function_to_test = arguments["-f"]
-    path_data = arguments["-d"]
+    path_data = os.path.abspath(arguments["-d"])
     if "-p" in arguments:
         # in case users used more than one '-p' flag, the output will be a list of all arguments (for each -p)
         if isinstance(arguments['-p'], list):
