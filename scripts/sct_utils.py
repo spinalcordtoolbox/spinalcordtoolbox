@@ -203,6 +203,23 @@ def init_error_client():
             server_log_handler(client)
             traceback_to_server(client)
             log.info('sentry is set!')
+
+            old_exitfunc = sys.exitfunc
+            def exitfunc():
+                sent_something = False
+                try:
+                    # implementation-specific
+                    import atexit
+                    for handler, args, kw in atexit._exithandlers:
+                        if handler.__module__.startswith("raven."):
+                            sent_something = True
+                except:
+                    pass
+                old_exitfunc()
+                if sent_something:
+                    print("Note: you can opt out of Sentry reporting by editing the file ${SCT_DIR}/bin/sct_launcher and delete the line starting with \"export SENTRY_DSN\"")
+
+            sys.exitfunc = exitfunc
         except raven.exceptions.InvalidDsn:
             # This could happen if sct staff change the dsn
             log.debug('sentry dsn not valid anymore, not reporting errors')
