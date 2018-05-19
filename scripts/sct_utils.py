@@ -230,9 +230,7 @@ def traceback_to_server(client):
     """
 
     def excepthook(exctype, value, traceback):
-        if exctype.__name__ in ("ReconstructionError",):
-            pass
-        elif issubclass(exctype, Exception):
+        if issubclass(exctype, Exception):
             client.captureException(exc_info=(exctype, value, traceback))
         sys.__excepthook__(exctype, value, traceback)
 

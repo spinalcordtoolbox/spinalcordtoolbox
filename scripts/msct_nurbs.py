@@ -182,8 +182,7 @@ class NURBS():
                         list_param_that_worked.append([self.nbControle, self.pointsControle, error_curve])
 
                     except ReconstructionError as ex:
-                        if verbose >= 1:
-                            sct.log.error(ex)
+                        sct.printv('WARNING: NURBS instability -> wrong reconstruction', verbose=verbose, type="warning")
                         error_curve = last_error_curve + 10000.0
 
                     # prepare for next iteration
@@ -389,7 +388,6 @@ class NURBS():
             P_z_d.append(sum_num_z_der)
 
             if sum_den <= 0.05:
-                sct.printv('WARNING: NURBS instability -> wrong reconstruction', verbose=self.verbose, type="warning")
                 raise ReconstructionError()
 
         P_x = [P_x[i] for i in np.argsort(P_z)]
@@ -490,7 +488,6 @@ class NURBS():
             P_y_d.append(sum_num_y_der)
 
             if sum_den <= 0.05:
-                sct.printv('WARNING: NURBS instability -> wrong reconstruction', verbose=verbose, type="warning")
                 raise ReconstructionError()
 
         P_x = [P_x[i] for i in np.argsort(P_y)]
@@ -659,7 +656,6 @@ class NURBS():
         std_factor = 10.0
         std_Px, std_Py, std_Pz, std_x, std_y, std_z = std(P_xb), std(P_yb), std(P_zb), std(np.array(P_x)), std(np.array(P_y)), std(np.array(P_z))
         if std_x >= 0.1 and std_y >= 0.1 and std_z >= 0.1 and (std_Px > std_factor * std_x or std_Py > std_factor * std_y or std_Pz > std_factor * std_z):
-            sct.printv('WARNING: NURBS instability -> wrong reconstruction', verbose=verbose, type="warning")
             raise ReconstructionError()
 
         P = [[P_xb[i, 0], P_yb[i, 0], P_zb[i, 0]] for i in range(len(P_xb))]
@@ -772,7 +768,6 @@ class NURBS():
         std_factor = 10.0
         std_Px, std_Py, std_x, std_y = std(P_xb), std(P_yb), std(np.array(P_x)), std(np.array(P_y))
         if std_x >= 0.1 and std_y >= 0.1 and (std_Px > std_factor * std_x or std_Py > std_factor * std_y):
-            sct.printv('WARNING: NURBS instability -> wrong reconstruction', verbose=verbose, type="warning")
             raise ReconstructionError()
 
         P = [[P_xb[i, 0], P_yb[i, 0]] for i in range(len(P_xb))]
@@ -869,7 +864,6 @@ class NURBS():
             P_z_d.append(sum_num_z_der)
 
             if sum_den <= 0.05:
-                sct.printv('WARNING: NURBS instability -> wrong reconstruction', verbose=verbose, type="warning")
                 raise ReconstructionError()
 
         P_x = [P_x[i] for i in np.argsort(P_z)]
