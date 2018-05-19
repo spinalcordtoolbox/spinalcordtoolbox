@@ -605,10 +605,9 @@ if __name__ == "__main__":
         pd.set_option('display.max_colwidth', -1)  # to avoid truncation of long string
         pd.set_option('display.width', 1000)
         # drop entries for visibility
-        results_list = results.columns.tolist()
-        [results_list.remove(i) for i in ['status', 'path_output', 'path_data', 'output', 'duration']]
+        results_display = results.drop(labels=['status', 'duration', 'path_output', 'path_data', 'output'], axis=1)
         # build new dataframe with nice order
-        results_display = results[['status', 'duration', results_list[0], 'path_output']]
+        results_display = pd.concat([results[['status', 'duration']], results_display, results[['path_output']]], axis=1)
         # save panda structure
         if output_pickle:
             results.to_pickle(file_log + '.pickle')
