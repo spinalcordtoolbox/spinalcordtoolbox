@@ -77,10 +77,10 @@ def test_integrity(param_test):
             param_test.status = 99
             param_test.output += '\nWARNING: DICE = ' + str(result_dice) + ' < ' + str(param_test.th_dice)
 
-        # transform results into Pandas structure
-        param_test.results = DataFrame(data={'status': param_test.status, 'output': param_test.output, 'rmse': result_rmse, 'dist_max': result_dist_max,
-                                             'dice': result_dice, 'duration': param_test.duration, 'duration_accuracy_results': duration_accuracy_results},
-                                       index=[param_test.path_data])
+        # update Panda structure
+        param_test.results['dice'] = result_dice
+        param_test.results['rmse'] = result_rmse
+        param_test.results['dist_max'] = result_dist_max
 
     except Exception as e:
         param_test.status = 99
