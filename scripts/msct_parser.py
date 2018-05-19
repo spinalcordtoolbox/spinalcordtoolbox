@@ -147,9 +147,9 @@ class Option:
 
         elif type_option == "file_output":  # check if permission are required
             if not os.path.isdir(os.path.dirname(os.path.abspath(param))):
-                self.parser.usage.error("ERROR: Option %s parent folder doesn't exist for file %s" % (self.name, param))
+                self.parser.usage.error("Option %s parent folder doesn't exist for file %s" % (self.name, param))
             if not sct.check_write_permission(param):
-                self.parser.usage.error("ERROR: Option %s no write permission for file %s" % (self.name, param))
+                self.parser.usage.error("Option %s no write permission for file %s" % (self.name, param))
             return param
 
         elif type_option == "folder":
@@ -184,10 +184,10 @@ class Option:
                     param_splitted = param_splitted[0].split(' ')
                 return list([self.check_integrity(val, sub_type) for val in param_splitted])
             else:
-                self.parser.usage.error("ERROR: Option " + self.name + " must be correctly written. See usage.")
+                self.parser.usage.error("Option " + self.name + " must be correctly written. See usage.")
 
         else:
-            # self.parser.usage.error("ERROR: Type of option \"" + str(self.type_value) +"\" is not supported by the parser.")
+            # self.parser.usage.error("Type of option \"" + str(self.type_value) +"\" is not supported by the parser.")
             sct.printv("WARNING : Option " + str(self.type_value) + " does not exist and will have no effect on the execution of the script", "warining")
             sct.printv("Type -h to see supported options", "warning")
 
@@ -199,14 +199,14 @@ class Option:
         try:
             return self.__safe_cast__(param, eval(type_option))
         except ValueError:
-            self.parser.usage.error("ERROR: Option " + self.name + " must be " + type_option)
+            self.parser.usage.error("Option " + self.name + " must be " + type_option)
 
     def checkFile(self, param):
         # check if the file exist
         sct.printv("Check file existence...", 0)
         if self.parser.check_file_exist:
             if not os.path.isfile(param):
-                self.parser.usage.error("ERROR: Option " + self.name + " file doesn't exist: " + param)
+                self.parser.usage.error("Option " + self.name + " file doesn't exist: " + param)
         return param
 
     def checkIfNifti(self, param):
@@ -233,7 +233,7 @@ class Option:
         elif param.lower() in self.list_no_image:
             no_image = True
         else:
-            self.parser.usage.error("ERROR: Option " + self.name + " file " + param + " is not a NIFTI image file. Exiting")
+            self.parser.usage.error("Option " + self.name + " file " + param + " is not a NIFTI image file. Exiting")
         if nii:
             return param_tmp + '.nii'
         elif niigz:
@@ -242,13 +242,13 @@ class Option:
             return param
         else:
             sct.log.debug('executed in {}'.format(os.getcwd()))
-            self.parser.usage.error("ERROR: Option " + self.name + " file " + param + " does not exist.")
+            self.parser.usage.error("Option " + self.name + " file " + param + " does not exist.")
 
     def checkFolder(self, param):
         # check if the folder exist. If not, create it.
         if self.parser.check_file_exist:
             if not os.path.isdir(param):
-                self.parser.usage.error("ERROR: Option " + self.name + " folder doesn't exist: " + param)
+                self.parser.usage.error("Option " + self.name + " folder doesn't exist: " + param)
         return param
 
     def checkFolderCreation(self, param):
@@ -363,11 +363,11 @@ class Parser:
                     if len(arguments) > index + 1:  # Check if option is not the last item
                         param = arguments[index + 1]
                     else:
-                        self.usage.error("ERROR: Option " + self.options[arg].name + " needs an argument...")
+                        self.usage.error("Option " + self.options[arg].name + " needs an argument...")
 
                     # check if option has an argument that is not another option
                     if param in self.options:
-                        self.usage.error("ERROR: Option " + self.options[arg].name + " needs an argument...")
+                        self.usage.error("Option " + self.options[arg].name + " needs an argument...")
 
                     # check if this flag has already been used before, then create a list and append this string to the previous string
                     if arg in dictionary:
@@ -386,9 +386,9 @@ class Parser:
                 # check if the input argument is close to a known option
                 spelling_candidates = self.spelling.correct(arg)
                 if len(spelling_candidates) != 0:
-                    self.usage.error("ERROR: argument " + arg + " does not exist. Did you mean: " + ', '.join(spelling_candidates) + '?')
+                    self.usage.error("argument " + arg + " does not exist. Did you mean: " + ', '.join(spelling_candidates) + '?')
                 else:
-                    self.usage.error("ERROR: argument " + arg + " does not exist. See documentation.")
+                    self.usage.error("argument " + arg + " does not exist. See documentation.")
 
         # check if all mandatory arguments are provided by the user
         for option in [opt for opt in self.options if self.options[opt].mandatory and self.options[opt].deprecated_by is None]:
@@ -563,7 +563,7 @@ class Usage:
 
         if error:
             sct.log.info(usage)
-            sct.log.error(error + '\nAborted...')
+            sct.log.error("Command-line usage error: {}\nAborted...".format(error))
         else:
             sct.log.info(usage)
 
