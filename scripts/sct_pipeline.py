@@ -510,12 +510,6 @@ if __name__ == "__main__":
     if '-email' in arguments:
         create_log = True
         send_email = True
-        addr_to = None
-        addr_from = None
-        login = None
-        passwd_from = None
-        smtp_host = None
-        smtp_port = None
         # loop across fields
         for i in arguments['-email']:
             k, v = i.split("=")
