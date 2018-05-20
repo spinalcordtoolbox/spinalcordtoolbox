@@ -20,7 +20,7 @@ def init(param_test):
     Initialize class: param_test
     """
     # initialization
-    default_args = ['-i t2s/t2s_uncropped.nii.gz -igt t2s/t2s_uncropped_gmseg_manual.nii.gz -o t2s_uncropped_gmseg.nii.gz -qc testing-qc']
+    default_args = ['-i t2s/t2s_uncropped.nii.gz -igt t2s/t2s_uncropped_gmseg_manual.nii.gz -o output.nii.gz -qc testing-qc']
     param_test.dice_threshold = 0.85
 
     # assign default params
