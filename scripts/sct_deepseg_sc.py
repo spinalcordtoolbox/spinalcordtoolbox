@@ -224,7 +224,7 @@ def main():
         output_folder = os.getcwd()
 
     if '-r' in arguments:
-        remove_temp_files = arguments['-r']
+        remove_temp_files = int(arguments['-r'])
 
     if '-v' in arguments:
         verbose = arguments['-v']
