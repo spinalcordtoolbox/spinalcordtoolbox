@@ -601,9 +601,9 @@ if __name__ == "__main__":
         pd.set_option('display.max_colwidth', -1)  # to avoid truncation of long string
         pd.set_option('display.width', 1000)
         # drop entries for visibility
-        results_display = results.drop(labels=['status', 'duration', 'path_output', 'path_data', 'output'], axis=1)
+        results_subset = results.drop(labels=['status', 'duration', 'path_output', 'path_data', 'output'], axis=1)
         # build new dataframe with nice order
-        results_display = pd.concat([results[['status', 'duration']], results_display, results[['path_output']]], axis=1)
+        results_subset = pd.concat([results[['status', 'duration']], results_subset, results[['path_output']]], axis=1)
         # save panda structure
         if output_pickle:
             results.to_pickle(file_log + '.pickle')
@@ -637,7 +637,7 @@ if __name__ == "__main__":
         sct.log.info('STD: ' + str(dict_std))
         # sct.log.info(detailed results)
         sct.log.info('\nDETAILED RESULTS:')
-        sct.log.info(results_display.to_string())
+        sct.log.info(results_subset.to_string())
         sct.log.info('\nLegend status:\n0: Passed | 1: Function crashed | 2: Integrity testing crashed | 99: Failed | 200: Input file(s) missing | 201: Ground-truth file(s) missing')
 
         if verbose == 2:
@@ -645,19 +645,19 @@ if __name__ == "__main__":
             import matplotlib.pyplot as plt
             from numpy import asarray
 
-            n_plots = len(results_display.keys()) - 2
+            n_plots = len(results_subset.keys()) - 2
             sns.set_style("whitegrid")
             fig, ax = plt.subplots(1, n_plots, gridspec_kw={'wspace': 1}, figsize=(n_plots * 4, 15))
             i = 0
             ax_array = asarray(ax)
 
-            for key in results_display.keys():
+            for key in results_subset.keys():
                 if key not in ['status', 'subject']:
                     if ax_array.size == 1:
                         a = ax
                     else:
                         a = ax[i]
-                    data_passed = results_display[results_display['status'] == 0]
+                    data_passed = results_subset[results_subset['status'] == 0]
                     sns.violinplot(x='status', y=key, data=data_passed, ax=a, inner="quartile", cut=0,
                                    scale="count", color='lightgray')
                     sns.swarmplot(x='status', y=key, data=data_passed, ax=a, color='0.3', size=4)
