@@ -40,7 +40,7 @@ class Param:
         self.contrast = ''  # folder containing the data and corresponding to the contrast. Could be t2, t1, t2s, etc.
         self.output = ''  # output string
         self.results = ''  # results in Panda DataFrame
-        self.redirect_stdout = 0  # for debugging, set to 0. Otherwise set to 1.
+        self.redirect_stdout = True  # for debugging, set to 0. Otherwise set to 1.
         self.fname_log = None
 
 

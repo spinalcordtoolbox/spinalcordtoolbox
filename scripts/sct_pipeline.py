@@ -254,9 +254,7 @@ def function_launcher(args):
     param_testing.path_data = args[1]
     param_testing.args = args[2]
     param_testing.test_integrity = args[3]
-    param_testing.redirect_stdout = True # create individual logs for each subject.
-    if create_log:
-        param_testing.fname_log = os.path.join(os.getcwd(), "%s-%s.log" % (file_log, os.path.basename(args[1])))
+    param_testing.redirect_stdout = True  # create individual logs for each subject.
     # load modules of function to test
     module_testing = importlib.import_module('test_' + param_testing.function_to_test)
     # initialize parameters specific to the test
