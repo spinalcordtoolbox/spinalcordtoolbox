@@ -49,6 +49,11 @@ def get_parser():
                       example=['large', 'challenge'],
                       default_value='large')
 
+    parser.add_option(name='-igt',
+                      type_value='image_nifti',
+                      description='File name of ground-truth segmentation.',
+                      mandatory=False)
+
     parser.add_option(name="-v",
                       type_value='multiple_choice',
                       description="Verbose: 0 = no verbosity, 1 = verbose.",

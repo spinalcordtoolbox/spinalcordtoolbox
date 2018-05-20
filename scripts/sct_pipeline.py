@@ -39,6 +39,7 @@ usage:
     sct_pipeline  -f sct_a_tool -d /path/to/data/  -p  \" sct_a_tool option \" -cpu-nb 8
 """
 
+# TODO: remove compute duration which is now replaced with results.duration
 # TODO: create a dictionnary for param, such that results can display reduced param instead of full. Example: -param t1="blablabla",t2="blablabla"
 # TODO: read_database: hard coded fields to put somewhere else (e.g. config file)
 
@@ -253,9 +254,7 @@ def function_launcher(args):
     param_testing.path_data = args[1]
     param_testing.args = args[2]
     param_testing.test_integrity = args[3]
-    param_testing.redirect_stdout = True # create individual logs for each subject.
-    if create_log:
-        param_testing.fname_log = os.path.join(os.getcwd(), "%s-%s.log" % (file_log, os.path.basename(args[1])))
+    param_testing.redirect_stdout = True  # create individual logs for each subject.
     # load modules of function to test
     module_testing = importlib.import_module('test_' + param_testing.function_to_test)
     # initialize parameters specific to the test
@@ -306,7 +305,7 @@ def get_list_subj(folder_dataset, data_specifications=None, fname_database=''):
     else:
         sct.log.info('Selecting subjects using the following specifications: ' + data_specifications)
         list_subj = read_database(folder_dataset, specifications=data_specifications, fname_database=fname_database)
-    sct.log.info('  Total number of subjects: ' + str(len(list_subj)))
+    # sct.log.info('  Total number of subjects: ' + str(len(list_subj)))
 
     # if no subject to process, raise exception
     if len(list_subj) == 0:
@@ -341,7 +340,7 @@ def run_function(function, folder_dataset, list_subj, list_args=[], nb_cpu=None,
         count = 0
         all_results = []
 
-        sct.log.info('Waiting for results, be patient')
+        # sct.log.info('Waiting for results, be patient')
         future_dirs = {pool.submit(function_launcher, subject_arg): subject_arg
                          for subject_arg in list_func_subj_args}
 
@@ -351,7 +350,7 @@ def run_function(function, folder_dataset, list_subj, list_args=[], nb_cpu=None,
             arguments = future_dirs[future][2]
             try:
                 result = future.result()
-                sct.log.info('{}/{}: {} done'.format(count, len(list_func_subj_args), subject))
+                sct.no_new_line_log('Processing subjects... {}/{}'.format(count, len(list_func_subj_args)))
                 all_results.append(result)
             except Exception as exc:
                 sct.log.error('{} {} generated an exception: {}'.format(subject, arguments, exc))
@@ -600,15 +599,14 @@ if __name__ == "__main__":
         pd.set_option('display.max_colwidth', -1)  # to avoid truncation of long string
         pd.set_option('display.width', 1000)
         # drop entries for visibility
-        results_subset = results.drop('path_data', 1).drop('output', 1)
-        results_display = results_subset
-        # reorder for better display: status, path_output
-        results_display = results_display[['status', 'path_output']]
+        results_subset = results.drop(labels=['status', 'duration', 'path_output', 'path_data', 'output'], axis=1)
+        # build new dataframe with nice order
+        results_subset = pd.concat([results[['status', 'duration']], results_subset, results[['path_output']]], axis=1)
         # save panda structure
         if output_pickle:
-            results_subset.to_pickle(file_log + '.pickle')
+            results.to_pickle(file_log + '.pickle')
         # compute mean
-        results_mean = results_subset.query('status != 200 & status != 201').mean(numeric_only=True)
+        results_mean = results.query('status != 200 & status != 201').mean(numeric_only=True)
         results_mean['subject'] = 'Mean'
         results_mean.set_value('status', float('NaN'))  # set status to NaN
         # compute std
@@ -637,7 +635,7 @@ if __name__ == "__main__":
         sct.log.info('STD: ' + str(dict_std))
         # sct.log.info(detailed results)
         sct.log.info('\nDETAILED RESULTS:')
-        sct.log.info(results_display.to_string())
+        sct.log.info(results_subset.to_string())
         sct.log.info('\nLegend status:\n0: Passed | 1: Function crashed | 2: Integrity testing crashed | 99: Failed | 200: Input file(s) missing | 201: Ground-truth file(s) missing')
 
         if verbose == 2:
@@ -645,19 +643,19 @@ if __name__ == "__main__":
             import matplotlib.pyplot as plt
             from numpy import asarray
 
-            n_plots = len(results_display.keys()) - 2
+            n_plots = len(results_subset.keys()) - 2
             sns.set_style("whitegrid")
             fig, ax = plt.subplots(1, n_plots, gridspec_kw={'wspace': 1}, figsize=(n_plots * 4, 15))
             i = 0
             ax_array = asarray(ax)
 
-            for key in results_display.keys():
+            for key in results_subset.keys():
                 if key not in ['status', 'subject']:
                     if ax_array.size == 1:
                         a = ax
                     else:
                         a = ax[i]
-                    data_passed = results_display[results_display['status'] == 0]
+                    data_passed = results_subset[results_subset['status'] == 0]
                     sns.violinplot(x='status', y=key, data=data_passed, ax=a, inner="quartile", cut=0,
                                    scale="count", color='lightgray')
                     sns.swarmplot(x='status', y=key, data=data_passed, ax=a, color='0.3', size=4)
