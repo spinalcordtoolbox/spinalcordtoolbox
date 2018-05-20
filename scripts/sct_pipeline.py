@@ -305,7 +305,7 @@ def get_list_subj(folder_dataset, data_specifications=None, fname_database=''):
     else:
         sct.log.info('Selecting subjects using the following specifications: ' + data_specifications)
         list_subj = read_database(folder_dataset, specifications=data_specifications, fname_database=fname_database)
-    sct.log.info('  Total number of subjects: ' + str(len(list_subj)))
+    # sct.log.info('  Total number of subjects: ' + str(len(list_subj)))
 
     # if no subject to process, raise exception
     if len(list_subj) == 0:
@@ -340,7 +340,7 @@ def run_function(function, folder_dataset, list_subj, list_args=[], nb_cpu=None,
         count = 0
         all_results = []
 
-        sct.log.info('Waiting for results, be patient')
+        # sct.log.info('Waiting for results, be patient')
         future_dirs = {pool.submit(function_launcher, subject_arg): subject_arg
                          for subject_arg in list_func_subj_args}
 
@@ -353,7 +353,8 @@ def run_function(function, folder_dataset, list_subj, list_args=[], nb_cpu=None,
             except Exception as exc:
                 sct.log.error('{} {} generated an exception: {}'.format(subject, arguments, exc))
 
-            sct.log.info('{}/{}: {} done'.format(count, len(list_func_subj_args), subject))
+            sct.no_new_line_log('Processing subjects... {}/{}'.format(count, len(list_func_subj_args)))
+            # sct.log.info('{}/{}: {} done'.format(count, len(list_func_subj_args), subject))
             all_results.append(result)
         compute_time = time() - compute_time
 
@@ -625,7 +626,7 @@ if __name__ == "__main__":
         # count tests that ran
         count_ran = results.query('status != 200 & status != 201').count()['status']
         # display general results
-        sct.log.info('\nGLOBAL RESULTS:')
+        sct.log.info('\n\nGLOBAL RESULTS:')
         sct.log.info('Duration: ' + str(int(round(compute_time))) + 's')
         # display results
         sct.log.info('Passed: ' + str(count_passed) + '/' + str(count_ran))
