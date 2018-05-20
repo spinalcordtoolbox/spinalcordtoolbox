@@ -96,6 +96,10 @@ def module_import(module_name, suppress_stderr=False):
 # MAIN
 # ==========================================================================================
 def main():
+    path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
+    print("SCT info:")
+    print("- version: {}".format(sct.__version__))
+    print("- path: {0}".format(path_sct))
 
     # initialization
     fsl_is_working = 1
@@ -144,6 +148,7 @@ def main():
         os_running = 'osx'
     elif (platform_running.find('linux') != -1):
         os_running = 'linux'
+
     print('OS: ' + os_running + ' (' + platform.platform() + ')')
 
     # Check number of CPU cores
@@ -154,15 +159,6 @@ def main():
     # check RAM
     sct.checkRAM(os_running, 0)
 
-    path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
-    print('SCT path: {0}'.format(path_sct))
-
-    # fetch SCT version
-    install_type, sct_commit, sct_branch, version_sct = sct._git_info()
-    print('Installation type: %s' % install_type)
-    print('  version: ' + version_sct)
-    print('  commit: ' + sct_commit)
-    print('  branch: ' + sct_branch)
 
     # check if Python path is within SCT path
     print_line('Check Python executable')

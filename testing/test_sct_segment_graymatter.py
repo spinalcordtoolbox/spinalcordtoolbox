@@ -128,9 +128,10 @@ def test_integrity(param_test):
                              'WM dice: ' + str(result_dice_wm) + '\n' \
                              'Hausdorff distance: ' + str(result_hausdorff) + '\n'
 
-    # transform results into Pandas structure
-    results = DataFrame(data={'status': param_test.status, 'output': param_test.output, 'dice_gm': result_dice_gm, 'dice_wm': result_dice_wm,
-                              'hausdorff': result_hausdorff, 'med_dist': result_median_dist, 'duration_[s]': param_test.duration},
-                        index=[param_test.path_data])
+    # update Panda structure
+    param_test.results['dice_gm'] = result_dice_gm
+    param_test.results['dice_wm'] = result_dice_wm
+    param_test.results['hausdorff'] = result_hausdorff
+    param_test.results['med_dist'] = result_median_dist
 
     return param_test

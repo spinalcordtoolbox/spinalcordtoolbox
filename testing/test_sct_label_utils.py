@@ -57,8 +57,5 @@ def test_integrity(param_test):
             param_test.output += 'WARNING: Center of mass different from gold-standard. \n--> Results:   ' + centers_of_mass_image + '\n--> Should be: ' + param_test.centers_of_mass + '\n'
             param_test.status = 99
 
-    # transform results into Pandas structure
-    param_test.results = DataFrame(data={'status': param_test.status, 'output': param_test.output, 'duration [s]': param_test.duration}, index=[param_test.path_data])
-
     # end test
     return param_test
