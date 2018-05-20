@@ -55,7 +55,7 @@ def test_integrity(param_test):
     else:
         param_test.output += '--> PASSED'
 
-    # transform results into Pandas structure
-    param_test.results = DataFrame(index=[param_test.path_data], data={'status': param_test.status, 'output': param_test.output, 'max_hausdorff_distance': max_hausdorff_distance, 'duration [s]': param_test.duration})
+    # update Panda structure
+    param_test.results['max_hausdorff_distance'] = max_hausdorff_distance
 
     return param_test

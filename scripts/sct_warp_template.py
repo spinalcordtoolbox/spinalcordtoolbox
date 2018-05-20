@@ -168,11 +168,6 @@ def get_parser():
                       mandatory=False,
                       default_value=param_default.folder_out,
                       example="label")
-    parser.add_option(name="-o",
-                      type_value=None,
-                      description="name of output folder.",
-                      mandatory=False,
-                      deprecated_by='-ofolder')
     parser.add_option(name="-t",
                       type_value="folder",
                       description="Path to template.",
