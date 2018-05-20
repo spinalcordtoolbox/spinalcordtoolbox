@@ -95,21 +95,40 @@ def __get_branch():
 
 def __get_commit():
     """
-    Fallback if for some reason the value vas no set by sct_launcher
-    :return:
+    :return: git commit ID, with trailing '*' if modified
     """
     p = subprocess.Popen(["git", "rev-parse", "HEAD"], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                          cwd=__sct_dir__)
     output, _ = p.communicate()
     status = p.returncode
     if status == 0:
-        return output.decode().strip()
+        commit = output.decode().strip()
+    else:
+        commit = "?!?"
+
+    p = subprocess.Popen(["git", "status", "--porcelain"], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                         cwd=__sct_dir__)
+    output, _ = p.communicate()
+    status = p.returncode
+    if status == 0:
+        unclean = True
+        for line in output.decode().strip().splitlines():
+            line = line.rstrip()
+            if line.startswith("??"): # ignore ignored files, they can't hurt
+               continue
+            break
+        else:
+            unclean = False
+        if unclean:
+            commit += "*"
+
+    return commit
 
 def _git_info(commit_env='SCT_COMMIT',branch_env='SCT_BRANCH'):
 
     sct_commit = os.getenv(commit_env, "unknown")
     sct_branch = os.getenv(branch_env, "unknown")
-    if check_exe("git"):
+    if check_exe("git") and os.path.isdir(os.path.join(__sct_dir__, ".git")):
         sct_commit = __get_commit() or sct_commit
         sct_branch = __get_branch() or sct_branch
 
@@ -118,21 +137,22 @@ def _git_info(commit_env='SCT_COMMIT',branch_env='SCT_BRANCH'):
     else:
         install_type = 'package'
 
-    with io.open(os.path.join(__sct_dir__, 'version.txt'), 'r') as myfile:
-        version_sct = myfile.read().replace('\n', '')
+    with io.open(os.path.join(__sct_dir__, 'version.txt'), 'r') as f:
+        version_sct = f.read().rstrip()
 
     return install_type, sct_commit, sct_branch, version_sct
 
+def _version_string():
+    install_type, sct_commit, sct_branch, version_sct = _git_info()
+    if install_type == "package":
+        return version_sct
+    else:
+        return "{install_type}-{sct_branch}-{sct_commit}".format(**locals())
 
 # Basic sct config
 __sct_dir__ = os.getenv("SCT_DIR", os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 __data_dir__ = os.getenv("SCT_DATA_DIR", os.path.join(__sct_dir__, 'data'))
-__version__ = '-'.join(_git_info())
-
-
-# statistic report level
-__report_log_level__ = logging.ERROR  # DEBUG, INFO, WARNING, ERROR
-__report_exception_level__ = Exception
+__version__ = _version_string()
 
 
 def init_sct():
@@ -172,17 +192,36 @@ def init_error_client():
     :return:
     """
     if os.getenv('SENTRY_DSN'):
-        log.info('Configuring sentry report')
+        log.debug('Configuring sentry report')
         try:
-            client = raven.Client(release=__version__,
-                                  processors=('raven.processors.RemoveStackLocalsProcessor',
-                                              'raven.processors.SanitizePasswordsProcessor'))
+            client = raven.Client(
+             release=__version__,
+             processors=(
+              'raven.processors.RemoveStackLocalsProcessor',
+              'raven.processors.SanitizePasswordsProcessor'),
+            )
             server_log_handler(client)
             traceback_to_server(client)
-            log.info('sentry is set!')
+
+            old_exitfunc = sys.exitfunc
+            def exitfunc():
+                sent_something = False
+                try:
+                    # implementation-specific
+                    import atexit
+                    for handler, args, kw in atexit._exithandlers:
+                        if handler.__module__.startswith("raven."):
+                            sent_something = True
+                except:
+                    pass
+                old_exitfunc()
+                if sent_something:
+                    print("Note: you can opt out of Sentry reporting by editing the file ${SCT_DIR}/bin/sct_launcher and delete the line starting with \"export SENTRY_DSN\"")
+
+            sys.exitfunc = exitfunc
         except raven.exceptions.InvalidDsn:
             # This could happen if sct staff change the dsn
-            log.debug('sentry dsn not valid anymore, not reporting errors')
+            log.debug('Sentry DSN not valid anymore, not reporting errors')
 
 
 def traceback_to_server(client):
@@ -191,7 +230,7 @@ def traceback_to_server(client):
     """
 
     def excepthook(exctype, value, traceback):
-        if issubclass(exctype, __report_exception_level__):
+        if issubclass(exctype, Exception):
             client.captureException(exc_info=(exctype, value, traceback))
         sys.__excepthook__(exctype, value, traceback)
 
@@ -205,7 +244,18 @@ def server_log_handler(client):
     """
     from raven.handlers.logging import SentryHandler
 
-    sh = SentryHandler(client=client, level=__report_log_level__)
+    sh = SentryHandler(client=client, level=logging.ERROR)
+
+    # Don't send Sentry events for command-line usage errors
+    old_emit = sh.emit
+    def emit(self, record):
+        if record.message.startswith("Command-line usage error:"):
+            return
+        return old_emit(record)
+
+    sh.emit = lambda x: emit(sh, x)
+
+
     fmt = ("[%(asctime)s][%(levelname)s] %(filename)s: %(lineno)d | "
             "%(message)s")
     formatter = logging.Formatter(fmt=fmt, datefmt="%H:%M:%S")
@@ -574,8 +624,8 @@ def checkRAM(os, verbose=1):
         ram_total = float(ram_split[3])
 
         # Get process info
-        ps = subprocess.Popen(['ps', '-caxm', '-orss,comm'], stdout=subprocess.PIPE).communicate()[0].decode()
-        vm = subprocess.Popen(['vm_stat'], stdout=subprocess.PIPE).communicate()[0].decode()
+        ps = subprocess.Popen(['ps', '-caxm', '-orss,comm'], stdout=subprocess.PIPE).communicate()[0].decode(sys.stdout.encoding)
+        vm = subprocess.Popen(['vm_stat'], stdout=subprocess.PIPE).communicate()[0].decode(sys.stdout.encoding)
 
         # Iterate processes
         processLines = ps.split('\n')

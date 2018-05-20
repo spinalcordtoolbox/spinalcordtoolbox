@@ -253,7 +253,9 @@ def function_launcher(args):
     param_testing.path_data = args[1]
     param_testing.args = args[2]
     param_testing.test_integrity = args[3]
-    param_testing.redirect_to_file = True  # create individual logs for each subject.
+    param_testing.redirect_stdout = True # create individual logs for each subject.
+    if create_log:
+        param_testing.fname_log = os.path.join(os.getcwd(), "%s-%s.log" % (file_log, os.path.basename(args[1])))
     # load modules of function to test
     module_testing = importlib.import_module('test_' + param_testing.function_to_test)
     # initialize parameters specific to the test
@@ -349,11 +351,11 @@ def run_function(function, folder_dataset, list_subj, list_args=[], nb_cpu=None,
             arguments = future_dirs[future][2]
             try:
                 result = future.result()
+                sct.log.info('{}/{}: {} done'.format(count, len(list_func_subj_args), subject))
+                all_results.append(result)
             except Exception as exc:
                 sct.log.error('{} {} generated an exception: {}'.format(subject, arguments, exc))
 
-            sct.log.info('{}/{}: {} done'.format(count, len(list_func_subj_args), subject))
-            all_results.append(result)
         compute_time = time() - compute_time
 
         # concatenate all_results into single Panda structure
@@ -480,7 +482,7 @@ if __name__ == "__main__":
     parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
     function_to_test = arguments["-f"]
-    path_data = arguments["-d"]
+    path_data = os.path.abspath(arguments["-d"])
     if "-p" in arguments:
         # in case users used more than one '-p' flag, the output will be a list of all arguments (for each -p)
         if isinstance(arguments['-p'], list):
@@ -508,12 +510,6 @@ if __name__ == "__main__":
     if '-email' in arguments:
         create_log = True
         send_email = True
-        addr_to = None
-        addr_from = None
-        login = None
-        passwd_from = None
-        smtp_host = None
-        smtp_port = None
         # loop across fields
         for i in arguments['-email']:
             k, v = i.split("=")
