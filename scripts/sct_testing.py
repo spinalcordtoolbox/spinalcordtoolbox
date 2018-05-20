@@ -387,6 +387,12 @@ def test_function(param_test):
     # check if parser has key '-ofolder' that has not been added already. If so, then assign output folder
     if "-ofolder" in parser.options and '-ofolder' not in dict_args_with_path:
         param_test.args_with_path += ' -ofolder ' + param_test.path_output
+
+    # check if parser has key '-o' that has not been added already. If so, then assign output folder
+    # Note: this -o case has been added for compatibility with sct_deepseg_gm, which does not have -ofolder flag
+    if "-o" in parser.options and '-o' not in dict_args_with_path:
+        param_test.args_with_path += ' -o ' + os.path.join(param_test.path_output, 'output.nii.gz')
+
     # open log file
     # Note: the statement below is not included in the if, because even if redirection does not occur, we want the file to be create otherwise write_to_log will fail
 
