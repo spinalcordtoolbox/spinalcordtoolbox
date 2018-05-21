@@ -87,3 +87,24 @@ class TestCore(object):
         img = nib.Nifti1Image(np_data, np.eye(4))
         ret = gm_core.segment_volume(img, 'challenge')
         assert ret.shape == (200, 200, 2)
+
+    def test_standardization_transform(self):
+        """Test the standardization transform with specified parameters."""
+        np_data = np.ones((200, 200, 2), dtype=np.float32)
+        np_data[..., 0] = 5.0
+        transform = gm_core.StandardizationTransform(3.0, 2.0)
+        assert transform.mean == 3.0
+        assert transform.std == 2.0
+
+        np_transformed_data = transform(np_data)
+        assert np_transformed_data.mean() == 0.0
+        assert np_transformed_data.std() == 1.0
+
+    def test_volume_standardization_transform(self):
+        """Test the standardization transform with estimated parameters."""
+        np_data = np.ones((200, 200, 2), dtype=np.float32)
+        np_data[..., 0] = 5.0
+        transform = gm_core.VolumeStandardizationTransform()
+        np_transformed_data = transform(np_data)
+        assert np_transformed_data.mean() == 0.0
+        assert np_transformed_data.std() == 1.0
