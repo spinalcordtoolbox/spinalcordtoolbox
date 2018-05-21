@@ -175,11 +175,6 @@ def get_parser():
                       mandatory=False,
                       default_value='./',
                       example='dmri_moco_results/')
-    parser.add_option(name='-o',
-                      type_value=None,
-                      description='Output folder.',
-                      mandatory=False,
-                      deprecated_by='-o')
     parser.usage.addSection('MISC')
     parser.add_option(name="-r",
                       type_value="multiple_choice",
