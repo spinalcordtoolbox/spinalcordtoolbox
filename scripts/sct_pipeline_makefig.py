@@ -72,12 +72,14 @@ def main(args):
     plt.violinplot(list_data, pos, points=100, widths=0.8, showmeans=True, showextrema=True, showmedians=True,
                    bw_method=0.5)
     plt.grid(axis='y')
+    plt.ylabel('Dice coefficient')
     plt.xticks(pos, args.label)
     ax.spines['right'].set_visible(False)
     ax.spines['left'].set_visible(False)
     ax.spines['top'].set_visible(False)
+    ylim = ax.get_ylim()
     for i in range(nb_plots):
-        plt.text(i + 0.01, 0.01, text_results[i], horizontalalignment='left', verticalalignment='bottom')
+        plt.text(i + 0.02, ylim[0] + 0.01, text_results[i], horizontalalignment='left', verticalalignment='bottom')
     plt.savefig('violin_plot.png')
 
 
