@@ -373,7 +373,7 @@ class Parser:
                     if arg in dictionary:
                         # check if dictionary[arg] is already a list
                         if isinstance(dictionary[arg], list):
-                            dictionary[arg].append().check_integrity(param)
+                            dictionary[arg].append(self.options[arg].check_integrity(param))
                         else:
                             dictionary[arg] = [dictionary[arg], self.options[arg].check_integrity(param)]
                     else:
