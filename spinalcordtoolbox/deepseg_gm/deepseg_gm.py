@@ -21,16 +21,16 @@ import numpy as np
 # Avoid Keras logging
 original_stderr = sys.stderr
 if sys.hexversion < 0x03000000:
-	sys.stderr = io.BytesIO()
+    sys.stderr = io.BytesIO()
 else:
-	sys.stderr = io.TextIOWrapper(io.BytesIO(), sys.stderr.encoding)
+    sys.stderr = io.TextIOWrapper(io.BytesIO(), sys.stderr.encoding)
 try:
-	from keras import backend as K
+    from keras import backend as K
 except Exception as e:
-	sys.stderr = original_stderr
-	raise
+    sys.stderr = original_stderr
+    raise
 else:
-	sys.stderr = original_stderr
+    sys.stderr = original_stderr
 
 from spinalcordtoolbox.resample import nipy_resample
 from . import model
@@ -113,6 +113,50 @@ class CroppedRegion(object):
         return padded
 
 
+class StandardizationTransform(object):
+    """This transformation will standardize the volume
+    according to the specified mean/std.dev.
+    """
+    def __init__(self, mean, std):
+        """Constructor for the normalization transformation.
+
+        :param mean: the mean parameter
+        :param std: the standar deviation parameter
+        """
+        self.mean = mean
+        self.std = std
+
+    def __call__(self, volume):
+        """This method will enable the function call for the
+        class object.
+
+        :param volume: the volume to be normalized.
+        """
+        volume -= self.mean
+        volume /= self.std
+        return volume
+
+
+class VolumeStandardizationTransform(object):
+    """This transformation will standardize the volume with
+    the parameters estimated from the volume itself.
+    """
+
+    def __call__(self, volume):
+        """This method will enable the function call for the
+        class object.
+
+        :param volume: the volume to be normalized.
+        """
+        volume_mean = volume.mean()
+        volume_std = volume.std()
+
+        volume -= volume_mean
+        volume /= volume_std
+
+        return volume
+
+
 def crop_center(img, cropx, cropy):
     """This function will crop the center of the volume image.
 
@@ -183,8 +227,8 @@ def segment_volume(ninput_volume, model_name):
     axial_slices = np.asarray(axial_slices, dtype=np.float32)
     axial_slices = np.expand_dims(axial_slices, axis=3)
 
-    axial_slices -= metadata['mean_train']
-    axial_slices /= metadata['std_train']
+    normalization = VolumeStandardizationTransform()
+    axial_slices = normalization(axial_slices)
 
     preds = deepgmseg_model.predict(axial_slices, batch_size=8,
                                     verbose=True)
