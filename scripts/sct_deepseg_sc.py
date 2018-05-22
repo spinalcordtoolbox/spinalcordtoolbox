@@ -478,10 +478,14 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, ctr_
                                                          verbose=0)
     elif ctr_algo == 'cnn':
         # CNN parameters
-        dct_patch_ctr = {'t2': {'size': (80, 80), 'mean': 51.1417, 'std': 57.4408}}
+        dct_patch_ctr = {'t2': {'size': (80, 80), 'mean': 51.1417, 'std': 57.4408},
+                        't2s': {'size': (80, 80), 'mean': 68.8591, 'std': 71.4659}}
         dct_params_ctr = {'t2': {'height': 80, 'width': 80, 'channels': 1, 'classes': 1,
                                 'features': 16, 'depth': 2, 'padding': 'same', 'batchnorm': True,
-                                'dropout': 0.0, 'dilation_layers': 2, }}
+                                'dropout': 0.0, 'dilation_layers': 2},
+                        't2s': {'height': 80, 'width': 80, 'channels': 1, 'classes': 1,
+                                'features': 8, 'depth': 2, 'padding': 'same', 'batchnorm': True,
+                                'dropout': 0.0, 'dilation_layers': 3}}
         params_ctr = dct_params_ctr[contrast_type]
 
         # load model
