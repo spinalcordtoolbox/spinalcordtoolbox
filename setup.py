@@ -51,6 +51,7 @@ setup(
      'docs': [
       'sphinx',
       'sphinxcontrib-programoutput',
+      'sphinx_rtd_theme',
      ],
     },
     # To provide executable scripts, use entry points in preference to the
