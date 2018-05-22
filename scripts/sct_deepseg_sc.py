@@ -56,7 +56,7 @@ def get_parser():
                       description="indicate if the input image contains brain sections: 1: no brain section, 0: contains brain section. To indicate this parameter could speed the segmentation process.",
                       mandatory=False,
                       example=["0", "1"],
-                      default_value="cnn")
+                      default_value="1")
     parser.add_option(name="-ofolder",
                       type_value="folder_creation",
                       description="output folder.",
@@ -126,19 +126,20 @@ def crop_image_around_centerline(im_in, ctr_in, im_out, crop_size, x_dim_half, y
 
     x_lst, y_lst = [], []
     for zz in range(im_in.dim[2]):
-        x_ctr, y_ctr = center_of_mass(np.array(data_ctr[:, :, zz]))
+        if 1 in np.array(data_ctr[:, :, zz]):
+            x_ctr, y_ctr = center_of_mass(np.array(data_ctr[:, :, zz]))
 
-        x_start, x_end = _find_crop_start_end(x_ctr, crop_size, im_in.dim[0])
-        y_start, y_end = _find_crop_start_end(y_ctr, crop_size, im_in.dim[1])
+            x_start, x_end = _find_crop_start_end(x_ctr, crop_size, im_in.dim[0])
+            y_start, y_end = _find_crop_start_end(y_ctr, crop_size, im_in.dim[1])
 
-        crop_im = np.zeros((crop_size, crop_size))
-        x_shape, y_shape = im_in.data[x_start:x_end, y_start:y_end, zz].shape
-        crop_im[:x_shape, :y_shape] = im_in.data[x_start:x_end, y_start:y_end, zz]
+            crop_im = np.zeros((crop_size, crop_size))
+            x_shape, y_shape = im_in.data[x_start:x_end, y_start:y_end, zz].shape
+            crop_im[:x_shape, :y_shape] = im_in.data[x_start:x_end, y_start:y_end, zz]
 
-        data_im_new[:, :, zz] = crop_im
+            data_im_new[:, :, zz] = crop_im
 
-        x_lst.append(str(x_start))
-        y_lst.append(str(y_start))
+            x_lst.append(str(x_start))
+            y_lst.append(str(y_start))
 
     im_new.data = data_im_new
 
@@ -260,7 +261,7 @@ def scan_slice(z_slice, model, mean_train, std_train, coord_lst, patch_shape, y_
     return z_slice_out, x_CoM, y_CoM, coord_lst
 
 
-def heatmap(filename_in, filename_out, model, patch_shape, mean_train, std_train):
+def heatmap(filename_in, filename_out, model, patch_shape, mean_train, std_train, no_brain_bool=True):
     im = Image(filename_in)
     data_im = im.data.astype(np.float32)
     im_out = im.copy()
@@ -286,9 +287,11 @@ def heatmap(filename_in, filename_out, model, patch_shape, mean_train, std_train
                     for y_dim in range(y_shape_block) for x_dim in range(x_shape_block)]
 
     x_CoM, y_CoM = None, None
+    z_sc_notDetected_cmpt = 0
     for zz in range(data_im.shape[2]):
         # if SC was detected at zz-1, we will start doing the detection on the block centered around the previously conputed center of mass (CoM)
         if x_CoM is not None:
+            z_sc_notDetected_cmpt = 0  # SC detected, cmpt set to zero
             x_0, x_1 = _find_crop_start_end(x_CoM, patch_shape[0], data_im.shape[0])
             y_0, y_1 = _find_crop_start_end(y_CoM, patch_shape[1], data_im.shape[1])
             block = data_im[x_0:x_1, y_0:y_1, zz]
@@ -320,6 +323,12 @@ def heatmap(filename_in, filename_out, model, patch_shape, mean_train, std_train
                                                 mean_train, std_train,
                                                 coord_lst, patch_shape, y_crop, data.shape[:2])
             data[:, :, zz] = z_slice
+
+            z_sc_notDetected_cmpt += 1
+            # if the SC has not been detected on 10 consecutive z_slices, we stop the SC investigation
+            if z_sc_notDetected_cmpt > 10 and no_brain_bool == False:
+                sct.printv('Brain section detected.')
+                break
 
         # distance transform to deal with the harsh edges of the prediction boundaries (Dice)
         data[:, :, zz][np.where(data[:, :, zz] < 0.5)] = 0
@@ -377,7 +386,7 @@ def main():
         ctr_algo = arguments["-ctr"]
 
     if "-no-brain" in arguments:
-        noBrain_bool = bool(arguments["-no-brain"])
+        noBrain_bool = bool(int(arguments["-no-brain"]))
 
     if "-ofolder" in arguments:
         output_folder = arguments["-ofolder"]
@@ -479,13 +488,23 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, ctr_
     elif ctr_algo == 'cnn':
         # CNN parameters
         dct_patch_ctr = {'t2': {'size': (80, 80), 'mean': 51.1417, 'std': 57.4408},
-                        't2s': {'size': (80, 80), 'mean': 68.8591, 'std': 71.4659}}
+                        't2s': {'size': (80, 80), 'mean': 68.8591, 'std': 71.4659},
+                        't1': {'size': (80, 80), 'mean': 55.7359, 'std': 64.3149},
+                        'dwi': {'size': (80, 80), 'mean': 55.744, 'std': 45.003}
+                        }
         dct_params_ctr = {'t2': {'height': 80, 'width': 80, 'channels': 1, 'classes': 1,
                                 'features': 16, 'depth': 2, 'padding': 'same', 'batchnorm': True,
                                 'dropout': 0.0, 'dilation_layers': 2},
                         't2s': {'height': 80, 'width': 80, 'channels': 1, 'classes': 1,
                                 'features': 8, 'depth': 2, 'padding': 'same', 'batchnorm': True,
-                                'dropout': 0.0, 'dilation_layers': 3}}
+                                'dropout': 0.0, 'dilation_layers': 3},
+                        't1': {'height': 80, 'width': 80, 'channels': 1, 'classes': 1,
+                                'features': 24, 'depth': 2, 'padding': 'same', 'batchnorm': True,
+                                'dropout': 0.0, 'dilation_layers': 3},
+                        'dwi': {'height': 80, 'width': 80, 'channels': 1, 'classes': 1,
+                                'features': 8, 'depth': 2, 'padding': 'same', 'batchnorm': True,
+                                'dropout': 0.0, 'dilation_layers': 2}
+                        }
         params_ctr = dct_params_ctr[contrast_type]
 
         # load model
@@ -512,14 +531,15 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, ctr_
                         model=ctr_model,
                         patch_shape=dct_patch_ctr[contrast_type]['size'],
                         mean_train=dct_patch_ctr[contrast_type]['mean'],
-                        std_train=dct_patch_ctr[contrast_type]['std'])
+                        std_train=dct_patch_ctr[contrast_type]['std'],
+                        no_brain_bool=noBrain_bool)
 
         # run optic on the heatmap
         centerline_filename = sct.add_suffix(fname_heatmap, "_ctr")
         heatmap2optic(fname_heatmap=fname_heatmap_nii,
                       lambda_value=1,
                       fname_out=centerline_filename,
-                      z_max=z_max if noBrain_bool == 0 else None)
+                      z_max=z_max if noBrain_bool == False else None)
 
     # crop image around the spinal cord centerline
     sct.log.info("Cropping the image around the spinal cord...")
@@ -540,14 +560,14 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, ctr_
     seg_crop.data *= 0.0
     for zz in list(reversed(range(image_normalized.dim[2]))):
         pred_seg = seg_model.predict(np.expand_dims(np.expand_dims(image_normalized.data[:, :, zz], -1), 0))[0, :, :, 0]
-        pred_seg_th = (pred_seg > 0.0001).astype(int)
+        pred_seg_th = (pred_seg > 0.5).astype(int)
 
-        if contrast_type in ['t2', 't1']:
-            labeled_obj, num_obj = label(pred_seg_th)
-            if num_obj > 1:
-                pred_seg_th = (labeled_obj == (np.bincount(labeled_obj.flat)[1:].argmax() + 1))
+        # if contrast_type in ['t2', 't1']:
+        labeled_obj, num_obj = label(pred_seg_th)
+        if num_obj > 1:
+            pred_seg_th = (labeled_obj == (np.bincount(labeled_obj.flat)[1:].argmax() + 1))
 
-            pred_seg_th = binary_fill_holes(pred_seg_th, structure=np.ones((3, 3))).astype(np.int)
+        pred_seg_th = binary_fill_holes(pred_seg_th, structure=np.ones((3, 3))).astype(np.int)
 
         seg_crop.data[:, :, zz] = pred_seg_th
     seg_crop.setFileName(fname_seg_crop)
@@ -559,7 +579,7 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, ctr_
     seg_unCrop = im.copy()
     seg_unCrop.data *= 0
 
-    for zz in range(seg_unCrop.dim[2]):
+    for zz in range(len(X_CROP_LST)):
         pred_seg = seg_crop.data[:, :, zz]
         x_start, y_start = int(X_CROP_LST[zz]), int(Y_CROP_LST[zz])
         x_end = x_start + crop_size if x_start + crop_size < seg_unCrop.dim[0] else seg_unCrop.dim[0]
@@ -578,7 +598,7 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, ctr_
 
     # binarize the resampled image to remove interpolation effects
     sct.log.info("Binarizing the segmentation to avoid interpolation effects...")
-    sct.run(['sct_maths', '-i', fname_seg_RPI, '-bin', '0.75', '-o', fname_seg_RPI], verbose=0)
+    sct.run(['sct_maths', '-i', fname_seg_RPI, '-bin', '0.1', '-o', fname_seg_RPI], verbose=0)
 
     # post processing step to z_regularized
     fill_z_holes(fname_in=fname_seg_RPI)
