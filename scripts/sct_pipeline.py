@@ -43,14 +43,9 @@ usage:
 # TODO: create a dictionnary for param, such that results can display reduced param instead of full. Example: -param t1="blablabla",t2="blablabla"
 # TODO: read_database: hard coded fields to put somewhere else (e.g. config file)
 
-import copy_reg
-import os
+import sys, io, os, types, copy, copy_reg, time, itertools, glob, importlib, pickle
 import platform
 import signal
-import sys
-import types
-import copy
-from time import time, strftime
 
 path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
 path_script = os.path.dirname(__file__)
@@ -64,11 +59,11 @@ if "SCT_MPI_MODE" in os.environ:
 else:
     from concurrent.futures import ProcessPoolExecutor as PoolExecutor
     __MPI__ = False
+
 from multiprocessing import cpu_count
-import itertools
+
+import h5py
 import pandas as pd
-import glob
-import importlib
 
 import sct_utils as sct
 import msct_parser
@@ -336,7 +331,7 @@ def run_function(function, folder_dataset, list_subj, list_args=[], nb_cpu=None,
     pool = PoolExecutor(nb_cpu)
     compute_time = None
     try:
-        compute_time = time()
+        compute_time = time.time()
         count = 0
         all_results = []
 
@@ -355,7 +350,7 @@ def run_function(function, folder_dataset, list_subj, list_args=[], nb_cpu=None,
             except Exception as exc:
                 sct.log.error('{} {} generated an exception: {}'.format(subject, arguments, exc))
 
-        compute_time = time() - compute_time
+        compute_time = time.time() - compute_time
 
         # concatenate all_results into single Panda structure
         results_dataframe = pd.concat(all_results)
@@ -528,9 +523,9 @@ if __name__ == "__main__":
     verbose = int(arguments["-v"])
 
     # start timer
-    time_start = time()
+    time_start = time.time()
     # create single time variable for output names
-    output_time = strftime("%y%m%d%H%M%S")
+    output_time = time.strftime("%y%m%d%H%M%S")
 
     # build log file name
     if create_log:
@@ -540,7 +535,7 @@ if __name__ == "__main__":
         # handle_log = sct.ForkStdoutToFile(fname_log)
         file_handler = sct.add_file_handler_to_logger(fname_log)
 
-    sct.log.info('Testing started on: ' + strftime("%Y-%m-%d %H:%M:%S"))
+    sct.log.info('Testing started on: ' + time.strftime("%Y-%m-%d %H:%M:%S"))
 
     # fetch SCT version
     sct.log.info('SCT version: {}'.format(sct.__version__))
@@ -605,6 +600,13 @@ if __name__ == "__main__":
         # save panda structure
         if output_pickle:
             results.to_pickle(file_log + '.pickle')
+            with io.open(file_log + '.pickle', "ab") as f:
+                metadata = {
+                 "sct_version": sct.__version__,
+                 "command-line": sys.argv,
+                }
+                pickle.dump(metadata, f)
+
         # compute mean
         results_mean = results.query('status != 200 & status != 201').mean(numeric_only=True)
         results_mean['subject'] = 'Mean'
@@ -677,7 +679,7 @@ if __name__ == "__main__":
         if send_email:
             sct.log.info('\nSending email...')
             # open log file and read content
-            with open(fname_log, "r") as fp:
+            with io.open(fname_log, "r") as fp:
                 message = fp.read()
             # send email
             sct.send_email(addr_to=addr_to, addr_from=addr_from,
