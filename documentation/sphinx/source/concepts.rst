@@ -93,7 +93,7 @@ used for troubleshooting purposes.
 
 If you don't know where your temporary directory is located, you can
 look at:
- https://docs.python.org/3/library/tempfile.html#tempfile.gettempdir
+https://docs.python.org/3/library/tempfile.html#tempfile.gettempdir
 
 
 Matlab Integration on Mac
