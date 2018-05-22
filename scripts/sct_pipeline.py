@@ -441,7 +441,7 @@ def get_parser():
                       description="Output Pickle file.",
                       mandatory=False,
                       example=['0', '1'],
-                      default_value='0')
+                      default_value='1')
 
     parser.add_option(name='-email',
                       type_value=[[','], 'str'],
