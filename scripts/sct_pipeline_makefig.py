@@ -58,9 +58,12 @@ def main(args):
         list_data.append(df_dice.get_values())
         # compute statistics
         count_passed = df.status[df.status == 0].count()
+        count_failed = df.status[df.status == 99].count()
         count_crashed_run = df.status[df.status == 1].count()
         count_crashed_integrity = df.status[df.status == 2].count()
-        text_results.append('\n'.join(["PASS: "+str(count_passed),
+        count_total = count_passed + count_failed + count_crashed_run + count_crashed_integrity
+        text_results.append('\n'.join(["PASS: {}/{}".format(count_passed, count_total),
+                                       "FAIL: {}".format(count_failed),
                                        "CRASH_RUN: " + str(count_crashed_run),
                                        "CRASH_INTEGRITY: " + str(count_crashed_integrity)]))
 
@@ -72,12 +75,14 @@ def main(args):
     plt.violinplot(list_data, pos, points=100, widths=0.8, showmeans=True, showextrema=True, showmedians=True,
                    bw_method=0.5)
     plt.grid(axis='y')
+    plt.ylabel('Dice coefficient')
     plt.xticks(pos, args.label)
     ax.spines['right'].set_visible(False)
     ax.spines['left'].set_visible(False)
     ax.spines['top'].set_visible(False)
+    ylim = ax.get_ylim()
     for i in range(nb_plots):
-        plt.text(i + 0.01, 0.01, text_results[i], horizontalalignment='left', verticalalignment='bottom')
+        plt.text(i + 0.02, ylim[0] + 0.01, text_results[i], horizontalalignment='left', verticalalignment='bottom')
     plt.savefig('violin_plot.png')
 
 
