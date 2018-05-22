@@ -460,12 +460,6 @@ isct_check_detection
 .. program-output:: ../../../scripts/isct_check_detection.py -h
 
 
-isct_convert_scriptsary_to_trilinear
-===================================
-
-.. program-output:: ../../../scripts/isct_convert_scriptsary_to_trilinear.py -h
-
-
 isct_get_fractional_volume
 =============================
 
