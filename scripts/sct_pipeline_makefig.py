@@ -58,9 +58,12 @@ def main(args):
         list_data.append(df_dice.get_values())
         # compute statistics
         count_passed = df.status[df.status == 0].count()
+        count_failed = df.status[df.status == 99].count()
         count_crashed_run = df.status[df.status == 1].count()
         count_crashed_integrity = df.status[df.status == 2].count()
-        text_results.append('\n'.join(["PASS: "+str(count_passed),
+        count_total = count_passed + count_failed + count_crashed_run + count_crashed_integrity
+        text_results.append('\n'.join(["PASS: {}/{}".format(count_passed, count_total),
+                                       "FAIL: {}".format(count_failed),
                                        "CRASH_RUN: " + str(count_crashed_run),
                                        "CRASH_INTEGRITY: " + str(count_crashed_integrity)]))
 
