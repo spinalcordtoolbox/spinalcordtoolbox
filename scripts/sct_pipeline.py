@@ -530,7 +530,7 @@ if __name__ == "__main__":
     # build log file name
     if create_log:
         # global log:
-        file_log = 'results_test_' + function_to_test + '_' + output_time
+        file_log = "_".join([output_time, function_to_test, sct.__get_branch()]).replace("sct_", "")
         fname_log = file_log + '.log'
         # handle_log = sct.ForkStdoutToFile(fname_log)
         file_handler = sct.add_file_handler_to_logger(fname_log)
