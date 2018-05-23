@@ -26,20 +26,13 @@ class Slice(object):
     "i" position of the data of the 3D image. While the functions with the suffix
     `_dim` gets the size of the desired dimension of the 3D image.
 
-    Attributes
-    ----------
-    _images : msct_image.Image
-    The Image objects of the images to consider
     """
 
     __metaclass__ = abc.ABCMeta
 
     def __init__(self, images):
         """
-        Parameters
-        ----------
-        images : msct_image.Image
-            3D MRI to be separated into slices.
+        :param images: list of 3D volumes to be separated into slices.
         """
         self._images = list()
         for image in images:
@@ -102,23 +95,12 @@ class Slice(object):
 
         TODO : Move this into the Axial class
 
-        Parameters
-        ----------
-        matrix : ndarray
-            Array representation of the image
-        x : int
-            The center of the crop area in the x axis
-        y : int
-            The center of the crop area in the y axis
-        width : int
-            The width from the center
-        height : int
-            The height from the center
-
-        Returns
-        -------
-        ndarray
-            returns the cropped matrix
+        :param matrix: Array representation of the image
+        :param x: The center of the crop area in the x axis
+        :param y: The center of the crop area in the y axis
+        :param width: The width from the center
+        :param height: The height from the center
+        :returns: cropped matrix
         """
         if width * 2 > matrix.shape[0]:
             width = matrix.shape[0] // 2
@@ -140,21 +122,16 @@ class Slice(object):
 
     @staticmethod
     def add_slice(matrix, i, column, size, patch):
-        """Adds a slice to the Matrix containing all the slices
+        """Adds a slice to the canvas containing all the slices
 
         TODO : Move this to the Axial class
-        Parameters
-        ----------
-        matrix : ndarray
-        i : int
-        column : int
-        size : int
-        patch : ndarray
 
-        Returns
-        -------
-        ndarray
-            returns the matrix with the additional slice
+        :param matrix: input/output "big canvas"
+        :param i: slice position
+        :param column: number of columns in mosaic
+        :param size:
+        :param patch: patch to insert
+        :return: matrix
         """
         start_col = (i % column) * size * 2
         end_col = start_col + patch.shape[1]
@@ -191,15 +168,9 @@ class Slice(object):
     def get_slice(self, data, i):
         """Abstract method to obtain a slice of a 3d matrix
 
-        Parameters
-        ----------
-        data: numpy.ndarray
-        i: int
-
-        Returns
-        -------
-        numpy.ndarray
-            The 2D representation of the selected slice
+        :param data: volume
+        :param i: position to slice
+        :return: 2D slice
         """
         return
 
@@ -207,27 +178,17 @@ class Slice(object):
     def get_dim(self, image):
         """Abstract method to obtain the depth of the 3d matrix.
 
-        Parameters
-        ----------
-        image : msct_image.Image
-
-        Returns
-        -------
-        numpy.ndarray
+        :param image: input msct_image.Image
+        :returns: numpy.ndarray
         """
         return
 
     def _axial_center(self, image):
         """Gets the center of mass in the axial plan
 
-        Parameters
-        ----------
-        image : msct_image.Image
-
-        Returns
-        -------
-        tuple of numpy.ndarray of int
-            centers of mass in the x and y axis.
+        :param image : input msct_image.Image
+        :returns: centers of mass in the x and y axis (tuple of numpy.ndarray of int)
+            .
         """
         axial_dim = self.axial_dim(image)
         centers_x = np.zeros(axial_dim)
@@ -250,15 +211,9 @@ class Slice(object):
         Calculates how many squares will fit in a row based on the column and the size
         Multiply by 2 because the sides are of size*2. Central point is size +/-.
 
-        Parameters
-        ----------
-        nb_column : int
-        size : int
-
-        Returns
-        -------
-        tuple of numpy.ndarray
-            containing the mosaics of each slice pixels
+        :param nb_column: number of mosaic columns
+        :param size: each column size
+        :return: tuple of numpy.ndarray containing the mosaics of each slice pixels
         """
         image = self._images[0]
 
@@ -291,11 +246,9 @@ class Slice(object):
     def single(self):
         """Obtain the matrices of the single slices
 
-        Returns
-        -------
-        tuple of numpy.ndarray
-            matrix of the input 3D RMI containing the slices and matrix of the
-            transformed 3D RMI to output containing the slices
+        :returns: tuple of numpy.ndarray, matrix of the input 3D MRI
+                  containing the slices and matrix of the transformed 3D RMI
+                  to output containing the slices
         """
         assert len(set([x.data.shape for x in self._images])) == 1, "Volumes don't have the same size"
 
