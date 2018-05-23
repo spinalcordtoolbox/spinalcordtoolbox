@@ -386,7 +386,8 @@ class Image(object):
             min_out = iinfo(type).min
             max_out = iinfo(type).max
             # before rescaling, check if there would be an intensity overflow
-            if (min_in < min_out) or (max_in > max_out):
+
+            if (min_in < min_out) or (max_in > max_out):  # This condition is important for binary images since we do not want to scale them 
                 sct.printv('WARNING: To avoid intensity overflow due to convertion to '+type+', intensity will be rescaled to the maximum quantization scale.', 1, 'warning')
                 # rescale intensity
                 data_rescaled = self.data * (max_out - min_out) / (max_in - min_in)

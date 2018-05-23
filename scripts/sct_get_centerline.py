@@ -45,7 +45,7 @@ def viewer_centerline(image_fname, interslice_gap, verbose):
 def get_parser():
     # Initialize the parser
     parser = Parser(__file__)
-    parser.usage.set_description("""This function allows the extraction of the spinal cord centerline. Two methods are available: OptiC (automatic) and Viewer (manual).""")
+    parser.usage.set_description("""This function allows the extraction of the spinal cord centerline. Two methods are available: OptiC (automatic) and Viewer (manual).\n\nReference: C Gros, B De Leener, et al. Automatic spinal cord localization, robust to MRI contrasts using global curve optimization (2017). doi.org/10.1016/j.media.2017.12.001""")
 
     parser.add_option(name="-i",
                       type_value="image_nifti",
