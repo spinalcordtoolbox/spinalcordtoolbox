@@ -38,17 +38,22 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Operating System :: Unix',
         'Operating System :: MacOS',
-        'Operating System :: Microsoft :: Windows',
         'Programming Language :: Python',
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
     ],
     keywords='Magnetic Resonance Imaging MRI spinal cord analysis template',
-    packages=find_packages(exclude=['dev', 'dev.*', 'install', 'testing']),
+    packages=find_packages(exclude=['.git', 'data', 'dev', 'dev.*', 'install', 'testing']),
     package_data={},
     install_requires=requirements,
     include_package_data=True,
-
+    extras_require={
+     'docs': [
+      'sphinx',
+      'sphinxcontrib-programoutput',
+      'sphinx_rtd_theme',
+     ],
+    },
     # To provide executable scripts, use entry points in preference to the
     # "scripts" keyword. Entry points provide cross-platform support and allow
     # pip to create the appropriate form of executable for the target platform.
