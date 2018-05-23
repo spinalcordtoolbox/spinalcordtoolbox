@@ -119,10 +119,12 @@ class Option:
         return to_type(val)
 
     # Do we need to stop the execution if the input is not correct?
-    def check_integrity(self, param, type=None):
+    def checkIntegrity(self, param, type=None):
         """
         check integrity of each option type
-        if type is provided, use type instead of self.type_value --> allow recursive integrity checking
+        :param param: option to test (could be a string, file name, etc.)
+        :param type: if provided, use type instead of self.type_value to allow recursive integrity checking
+        :return:
         """
 
         type_option = self.type_value
@@ -182,14 +184,14 @@ class Option:
                 if not param_splitted[0].find(' ') == -1:
                     # if so, split and return list
                     param_splitted = param_splitted[0].split(' ')
-                return list([self.check_integrity(val, sub_type) for val in param_splitted])
+                return list([self.checkIntegrity(val, sub_type) for val in param_splitted])
             else:
                 self.parser.usage.error("Option " + self.name + " must be correctly written. See usage.")
 
         else:
             # self.parser.usage.error("Type of option \"" + str(self.type_value) +"\" is not supported by the parser.")
-            sct.printv("WARNING : Option " + str(self.type_value) + " does not exist and will have no effect on the execution of the script", "warining")
-            sct.printv("Type -h to see supported options", "warning")
+            sct.printv("Option " + str(self.type_value) + " does not exist and will have no effect on the execution of the script", 1, "warning")
+            sct.printv("Type -h to see supported options", 1, "warning")
 
     def checkStandardType(self, param, type=None):
         # check if a int is really a int (same for str, float, long and complex)
@@ -373,11 +375,11 @@ class Parser:
                     if arg in dictionary:
                         # check if dictionary[arg] is already a list
                         if isinstance(dictionary[arg], list):
-                            dictionary[arg].append(self.options[arg].check_integrity(param))
+                            dictionary[arg].append(self.options[arg].checkIntegrity(param))
                         else:
-                            dictionary[arg] = [dictionary[arg], self.options[arg].check_integrity(param)]
+                            dictionary[arg] = [dictionary[arg], self.options[arg].checkIntegrity(param)]
                     else:
-                        dictionary[arg] = self.options[arg].check_integrity(param)
+                        dictionary[arg] = self.options[arg].checkIntegrity(param)
                     skip = True
                 else:
                     dictionary[arg] = True
