@@ -93,22 +93,27 @@ sct_segment_graymatter -i mt0_crop_reg.nii.gz -s mt1_crop_seg.nii.gz -qc "$SCT_B
 # Register template->t2s (using warping field generated from template<->t2 registration)
 sct_register_multimodal -i $SCT_DIR/data/PAM50/template/PAM50_t2s.nii.gz -iseg $SCT_DIR/data/PAM50/template/PAM50_cord.nii.gz -d t2s.nii.gz -dseg t2s_seg.nii.gz -param step=1,type=seg,algo=centermass:step=2,type=seg,algo=bsplinesyn,slicewise=1,iter=5:step=3,type=im,algo=syn,slicewise=1,iter=5,metric=CC -initwarp ../t2/warp_template2anat.nii.gz
 # rename warping fields for clarity
-# mv warp_PAM50_t22mt1_crop.nii.gz warp_template2mt.nii.gz
-# mv warp_mt1_crop2PAM50_t2.nii.gz warp_mt2template.nii.gz
+mv warp_PAM50_t2s2t2s.nii.gz warp_template2t2s.nii.gz
 # Warp template
-sct_warp_template -d t2s.nii.gz -w warp_PAM50_t2s2t2s.nii.gz
+sct_warp_template -d t2s.nii.gz -w warp_template2t2s.nii.gz
+# Subtract GM segmentation from cord segmentation to obtain WM segmentation
+sct_maths -i t2s_seg.nii.gz -sub t2s_gmseg.nii.gz -o t2s_wmseg.nii.gz
+# Compute cross-sectional area (CSA) of the gray and white matter between C2 and C5
+sct_process_segmentation -i t2s_wmseg.nii.gz -p csa -vert 2:5 -ofolder csa_wm
+sct_process_segmentation -i t2s_gmseg.nii.gz -p csa -vert 2:5 -ofolder csa_gm
 
+# TODO:
 # OPTIONAL: SEGMENT GRAY MATTER AND USE IT TO IMPROVE TEMPLATE REGISTRATION
 # <<<
 # Segment gray matter
-sct_segment_graymatter -i mt0_crop_reg.nii.gz -s mt1_crop_seg.nii.gz -qc "$SCT_BP_QC_FOLDER"
+# sct_segment_graymatter -i mt0_crop_reg.nii.gz -s mt1_crop_seg.nii.gz -qc "$SCT_BP_QC_FOLDER"
 # Register WM/GM template to WM/GM seg
-sct_register_graymatter -gm mt0_crop_reg_gmseg.nii.gz -wm mt0_crop_reg_wmseg.nii.gz -w warp_template2mt.nii.gz -winv warp_mt2template.nii.gz
+# sct_register_graymatter -gm mt0_crop_reg_gmseg.nii.gz -wm mt0_crop_reg_wmseg.nii.gz -w warp_template2mt.nii.gz -winv warp_mt2template.nii.gz
 # rename warping fields for clarity
-mv warp_template2mt_reg_gm.nii.gz warp_template2mt.nii.gz
-mv warp_mt2template_reg_gm.nii.gz warp_mt2template.nii.gz
+# mv warp_template2mt_reg_gm.nii.gz warp_template2mt.nii.gz
+# mv warp_mt2template_reg_gm.nii.gz warp_mt2template.nii.gz
 # warp template (this time corrected for internal structure)
-sct_warp_template -d mt1_crop.nii.gz -w warp_template2mt.nii.gz
+# sct_warp_template -d mt1_crop.nii.gz -w warp_template2mt.nii.gz
 # >>>
 
 
@@ -144,12 +149,11 @@ sct_register_multimodal -i mt0.nii.gz -d mt1_crop.nii.gz -param step=1,type=im,a
 # Tips: here we only use the segmentations due to poor SC/CSF contrast at the bottom slice.
 # Tips: First step: slicereg based on images, with large smoothing to capture potential motion between anat and mt, then at second step: bpslinesyn in order to adapt the shape of the cord to the mt modality (in case there are distortions between anat and mt).
 sct_register_multimodal -i $SCT_DIR/data/PAM50/template/PAM50_t2.nii.gz -iseg $SCT_DIR/data/PAM50/template/PAM50_cord.nii.gz -d mt1_crop.nii.gz -dseg mt1_crop_seg.nii.gz -param step=1,type=seg,algo=slicereg,smooth=3:step=2,type=seg,algo=bsplinesyn,slicewise=1,iter=3 -initwarp ../t2/warp_template2anat.nii.gz -initwarpinv ../t2/warp_anat2template.nii.gz
-# Update variable for clarity
-# file_warp_template2mt="warp_PAM50_t22mt1_crop.nii.gz"
-# mv warp_PAM50_t22mt1_crop.nii.gz warp_template2mt.nii.gz
-# mv warp_mt1_crop2PAM50_t2.nii.gz warp_mt2template.nii.gz
+# Rename warping fields for clarity
+mv warp_PAM50_t22mt1_crop.nii.gz warp_template2mt.nii.gz
+mv warp_mt1_crop2PAM50_t2.nii.gz warp_mt2template.nii.gz
 # Warp template
-sct_warp_template -d mt1_crop.nii.gz -w warp_PAM50_t22mt1_crop.nii.gz
+sct_warp_template -d mt1_crop.nii.gz -w warp_template2mt.nii.gz
 # Compute mtr
 sct_compute_mtr -mt0 mt0_reg.nii.gz -mt1 mt1_crop.nii.gz
 # Register t1w->mt1
@@ -158,22 +162,20 @@ sct_register_multimodal -i t1w.nii.gz -d mt1_crop.nii.gz -param step=1,type=im,a
 # Compute MTsat
 # Tips: Check your TR and Flip Angle from the Dicom data
 sct_compute_mtsat -mt mt1_crop.nii.gz -pd mt0_crop_reg.nii.gz -t1 t1w_reg.nii.gz -trmt 30 -trpd 30 -trt1 15 -famt 9 -fapd 9 -fat1 15
-
-# Extract MTR within the white matter between C2 and C5
+# Extract MTR, T1 and MTsat within the white matter between C2 and C5
 sct_extract_metric -i mtr.nii.gz -method map -o mtr_in_wm.txt -l 51 -vert 2:5
-# Once we have register the WM atlas to the subject, we can compute the cross-sectional area (CSA) of the gray and white matter
-sct_process_segmentation -i label/template/PAM50_wm.nii.gz -p csa -vert 2:5 -ofolder csa_wm
-sct_process_segmentation -i label/template/PAM50_gm.nii.gz -p csa -vert 2:5 -ofolder csa_gm
-# Bring metric to template space (e.g. for group mapping)
+sct_extract_metric -i mtsat.nii.gz -method map -o mtsat_in_wm.txt -l 51 -vert 2:5
+sct_extract_metric -i t1map.nii.gz -method map -o t1_in_wm.txt -l 51 -vert 2:5
+# Bring MTR to template space (e.g. for group mapping)
 sct_apply_transfo -i mtr.nii.gz -d $SCT_DIR/data/PAM50/template/PAM50_t2.nii.gz -w warp_mt2template.nii.gz
 # Go back to root folder
-cd -
+cd ..
 
 
 # dmri
 # ===========================================================================================
 cd dmri
-# bring T2 segmentation in dmri space to create mask (no optimization)
+# bring t2 segmentation in dmri space to create mask (no optimization)
 sct_maths -i dmri.nii.gz -mean t -o dmri_mean.nii.gz
 sct_register_multimodal -i ../t2/t2_seg.nii.gz -d dmri_mean.nii.gz -identity 1 -x nn
 # create mask to help moco and for faster processing
@@ -181,29 +183,65 @@ sct_create_mask -i dmri_mean.nii.gz -p centerline,t2_seg_reg.nii.gz -size 35mm
 # crop data
 sct_crop_image -i dmri.nii.gz -m mask_dmri_mean.nii.gz -o dmri_crop.nii.gz
 # motion correction
+# Tips: if data have very low SNR you can increase the number of successive images that are averaged into group with "-g". Also see: sct_dmri_moco -h
 sct_dmri_moco -i dmri_crop.nii.gz -bvec bvecs.txt
 # segmentation with propseg
-sct_propseg -i dwi_moco_mean.nii.gz -c dwi -init-centerline t2_seg_reg.nii.gz -qc "$SCT_BP_QC_FOLDER"
+sct_propseg -i dwi_moco_mean.nii.gz -c dwi -qc "$SCT_BP_QC_FOLDER"
 # Register template to dwi
-# Tips: We use the template registered to the MT data in order to account for gray matter segmentation
-# Tips: again, here, we prefer no stick to rigid registration on segmentation following by slicereg to realign center of mass. If there are susceptibility distortions in your EPI, then you might consider adding a third step with bsplinesyn or syn transformation for local adjustment.
-sct_register_multimodal -i $SCT_DIR/data/PAM50/template/PAM50_t1.nii.gz -d dwi_moco_mean.nii.gz -iseg $SCT_DIR/data/PAM50/template/PAM50_cord.nii.gz -dseg dwi_moco_mean_seg.nii.gz -param step=1,type=seg,algo=slicereg,smooth=5:step=2,type=seg,algo=bsplinesyn,metric=MeanSquares,smooth=1,iter=3 -initwarp ../mt/warp_template2mt.nii.gz -initwarpinv ../mt/warp_mt2template.nii.gz
-# rename warping field for clarity
+# Tips: Again, here, we prefer to stick to segmentation-based registration. If there are susceptibility distortions in your EPI, then you might consider adding a third step with bsplinesyn or syn transformation for local adjustment.
+sct_register_multimodal -i $SCT_DIR/data/PAM50/template/PAM50_t1.nii.gz -iseg $SCT_DIR/data/PAM50/template/PAM50_cord.nii.gz -d dwi_moco_mean.nii.gz -dseg dwi_moco_mean_seg.nii.gz -param step=1,type=seg,algo=centermass:step=2,type=seg,algo=bsplinesyn,metric=MeanSquares,smooth=1,iter=3 -initwarp ../t2/warp_template2anat.nii.gz -initwarpinv ../t2/warp_anat2template.nii.gz
+# Rename warping fields for clarity
 mv warp_PAM50_t12dwi_moco_mean.nii.gz warp_template2dmri.nii.gz
 mv warp_dwi_moco_mean2PAM50_t1.nii.gz warp_dmri2template.nii.gz
 # Warp template and white matter atlas
 sct_warp_template -d dwi_moco_mean.nii.gz -w warp_template2dmri.nii.gz
 # Compute DTI metrics
-# Tips: the flag -method "restore" allows you to estimate the tensor with robust fit (see help)
+# Tips: The flag -method "restore" allows you to estimate the tensor with robust fit (see: sct_dmri_compute_dti -h)
 sct_dmri_compute_dti -i dmri_crop_moco.nii.gz -bval bvals.txt -bvec bvecs.txt
 # Compute FA within right and left lateral corticospinal tracts from slices 2 to 14 using weighted average method
 sct_extract_metric -i dti_FA.nii.gz -z 2:14 -method wa -l 4,5 -o fa_in_cst.txt
 # Bring metric to template space (e.g. for group mapping)
 sct_apply_transfo -i dti_FA.nii.gz -d $SCT_DIR/data/PAM50/template/PAM50_t2.nii.gz -w warp_dmri2template.nii.gz
 # Go back to root folder
-cd -
+cd ..
 
-set +x
+
+# fmri
+# ===========================================================================================
+cd fmri
+# Average all fMRI time series (to be able to do the next step)
+sct_maths -i fmri.nii.gz -mean t -o fmri_mean.nii.gz
+# Get cord centerline
+sct_get_centerline -i fmri_mean.nii.gz -c t2s
+# Create mask around the cord to help motion correction and for faster processing
+sct_create_mask -i fmri_mean.nii.gz -p centerline,fmri_mean_centerline_optic.nii.gz -size 35mm
+# Crop data
+sct_crop_image -i fmri.nii.gz -m mask_fmri_mean.nii.gz -o fmri_crop.nii.gz
+# Motion correction
+# Tips: Here data have sufficient SNR and there is visible motion between two consecutive scans, so motion correction is more efficient with -g 1 (i.e. not average consecutive scans)
+sct_fmri_moco -i fmri_crop.nii.gz -g 1
+
+# Segment spinal cord
+# tips: we use the T2 segmentation to help with fMRI segmentation
+# tips: we use "-radius 5" otherwise the segmentation is too small
+# tips: we use "-max-deformation 4" to prevent the propagation from stopping at the edge
+sct_propseg -i fmri_moco_mean.nii.gz -c t2 -radius 5 -max-deformation 4
+
+# here segmentation slightly failed due to the close proximity of susceptibility artifact --> use file "fmri_moco_mean_seg_modif.nii.gz"
+# register template to fmri: here we use the template register to the MT to get the correction of the internal structure
+sct_register_multimodal -i ../mt/label/template/PAM50_t2.nii.gz -d fmri_moco_mean.nii.gz -iseg ../mt/label/template/PAM50_cord.nii.gz -dseg fmri_moco_mean_seg_modif.nii.gz -param step=1,type=seg,algo=slicereg,metric=MeanSquares,smooth=2:step=2,type=im,algo=bsplinesyn,metric=MeanSquares,iter=5,gradStep=0.5
+# concatenate transfo: (1) template -> anat -> MT -> MT_gm ; (2) MT_gm -> fmri
+sct_concat_transfo -w ../mt/warp_template2mt1_gmseg.nii.gz,warp_PAM50_t22fmri_moco_mean.nii.gz -d fmri_moco_mean.nii.gz -o warp_template2fmri.nii.gz
+# warp template and spinal levels (here we don't need the WM atlas)
+# N.B. SPINAL LEVEL CURRENTLY NOT AVAILABLE FOR PAM50. WORK IN PROGRESS.
+# sct_warp_template -d fmri_moco_mean.nii.gz -w warp_template2fmri.nii.gz -a 0 -s 1
+# check results
+#if [ $DISPLAY = true ]; then
+#  fslview fmri_moco_mean -b 0,1300 label/spinal_levels/spinal_level_C3.nii.gz -l Red -b 0,0.05 label/spinal_levels/spinal_level_C4.nii.gz -l Blue -b 0,0.05 label/spinal_levels/spinal_level_C5.nii.gz -l Green -b 0,0.05 label/spinal_levels/spinal_level_C6.nii.gz -l Yellow -b 0,0.05 label/spinal_levels/spinal_level_C7.nii.gz -l Pink -b 0,0.05 &
+#fi
+cd ..
+
+
 
 # Display results (to easily compare integrity across SCT versions)
 # ===========================================================================================
@@ -216,3 +254,7 @@ echo "mt/CSA_WM:  " `grep -v '^#' mt/csa_wm/csa_mean.txt | grep -v '^$'`
 echo "dmri/FA: " `grep -v '^#' dmri/fa_in_cst.txt | grep -v 'right'`
 echo "dmri/FA: " `grep -v '^#' dmri/fa_in_cst.txt | grep -v 'left'`
 echo
+
+# TODO: 
+# open QC
+
