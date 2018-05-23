@@ -1,23 +1,24 @@
-# Can ignore specific files
 .DS_Store
-sct_utils.pyc
 
-# Use wildcards as well
 *~
 *.swp
+*.orig
 ._*
+.#*
 .nfs*
 *.pyc
+*.pyo
 *.log
 *.egg-info/
 *.egg
 
 .idea/*
 
-# Can also ignore all directories and files in a directory.
-bin
-python
-data
+/.coverage
+/.cache
+/bin
+/python
+/data
 tmp/**/*
 spinalcordtoolbox_v*
 dev/atlas/create_atlas/results
@@ -28,6 +29,3 @@ scripts/.idea/modules.xml
 scripts/.idea/scripts.iml
 scripts/.idea/vcs.xml
 scripts/.idea/workspace.xml
-
-bin/
-data/
