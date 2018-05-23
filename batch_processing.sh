@@ -1,25 +1,37 @@
 #!/bin/bash
 #
-# Example of commands to process multi-parametric data of the spinal cord
-# For information about acquisition parameters, see: https://osf.io/wkdym/
-# N.B. The parameters are set for these type of data. With your data, parameters might be slightly different.
+# Example of commands to process multi-parametric data of the spinal cord.
+# 
+# Please note that this batch script has a lot of redundancy and should not
+# be used as a pipeline for regular processing. For example, there is no need
+# to process both t1 and t2 to extract CSA values. 
 #
-# To prevent downloading sct_example_data and run from local folder, run:
-#   ./batch_processing.sh -nodownload
+# For information about acquisition parameters, see: https://osf.io/wkdym/
+# N.B. The parameters are set for these type of data. With your data, parameters 
+# might be slightly different.
+#
+# Usage:
+# 
+#   [option] $SCT_DIR/batch_processing.sh
+# 
+#   Prevent (re-)downloading sct_example_data, run:
+#   SCT_BP_DOWNLOAD=0 $SCT_DIR/batch_processing.sh
+# 
+#   Specify quality control (QC) folder (Default is ~/qc_batch_processing):
+#   SCT_BP_QC_FOLDER=/user/toto/my_qc_folder $SCT_DIR/batch_processing.sh
 
 # Abort on error
 set -e
 
-# Check if users wants to use his own data
-if [[ $@ == *"-nodownload"* ]]; then
-  echo "Use local folder."
-else
-  # download example data
-  sct_download_data -d sct_example_data
-  # go in folder
-fi
-cd sct_example_data
+# For full verbose, uncomment the next line
+# set -x
 
+# Check if users wants to use his own data
+if [ -z "$SCT_BP_DOWNLOAD" ]; then
+	SCT_BP_DOWNLOAD=1
+fi
+
+# QC folder
 if [ -z "$SCT_BP_QC_FOLDER" ]; then
 	SCT_BP_QC_FOLDER=~/qc_batch_processing
 fi
@@ -33,20 +45,34 @@ fi
 # display starting time:
 echo "Started at: $(date +%x_%r)"
 
-set -x
+# download example data
+if [ "$SCT_BP_DOWNLOAD" == "1" ]; then
+  sct_download_data -d sct_example_data
+fi
+cd sct_example_data
+
 
 # t2
 # ===========================================================================================
 cd t2
-# Spinal cord segmentation
-sct_propseg -i t2.nii.gz -c t2 -qc "$SCT_BP_QC_FOLDER"
+# Segment spinal cord
+sct_propseg -i t2.nii.gz -c t2 -ofolder propseg
+# Tips: If you are not satisfied with the results you can try with another algorithm:
+# sct_deepseg_sc -i t2.nii.gz -c t2 -qc "$SCT_BP_QC_FOLDER"
 # Vertebral labeling
-# tips: for manual initialization of labeling by clicking at disc C2-C3, use flag -initc2
-sct_label_vertebrae -i t2.nii.gz -s t2_seg.nii.gz -c t2 -v 2 -qc "$SCT_BP_QC_FOLDER"
-# Create labels at C2 and C5 vertebral levels
-sct_label_utils -i t2_seg_labeled.nii.gz -vert-body 2,5
+# Tips: for manual initialization of labeling by clicking at disc C2-C3, use flag -initc2
+sct_label_vertebrae -i t2.nii.gz -s t2_seg.nii.gz -c t2 -qc "$SCT_BP_QC_FOLDER"
+# Create labels at in the cord at C2 and C5 mid-vertebral levels
+sct_label_utils -i t2_seg_labeled.nii.gz -vert-body 2,5 -o labels_vert.nii.gz
+# Tips: you can also create labels manually using:
+# sct_label_utils -i t2.nii.gz -create-viewer 2,5 -o labels_vert.nii.gz
 # Register to template
-sct_register_to_template -i t2.nii.gz -s t2_seg.nii.gz -l labels.nii.gz -c t2 -qc "$SCT_BP_QC_FOLDER"
+sct_register_to_template -i t2.nii.gz -s t2_seg.nii.gz -l labels_vert.nii.gz -c t2 -qc "$SCT_BP_QC_FOLDER"
+# Tips: If you are not satisfied with the results, you can tweak registration parameters. 
+# For example here, we would like to take into account the rotation of the cord, as well as
+# adding a 3rd registration step that uses the image intensity (not only cord segmentations).
+# so we could do something like this:
+# sct_register_multimodal -i $SCT_DIR/data/PAM50/template/PAM50_t2s.nii.gz -iseg $SCT_DIR/data/PAM50/template/PAM50_cord.nii.gz -d t2s.nii.gz -dseg t2s_seg.nii.gz -param step=1,type=seg,algo=slicereg,smooth=3:step=2,type=seg,algo=bsplinesyn,slicewise=1,iter=3 -initwarp ../t2/warp_template2anat.nii.gz
 # Warp template without the white matter atlas (we don't need it at this point)
 sct_warp_template -d t2.nii.gz -w warp_template2anat.nii.gz -a 0
 # Compute average cross-sectional area and volume between C2 and C3 levels
@@ -54,35 +80,23 @@ sct_process_segmentation -i t2_seg.nii.gz -p csa -vert 2:3
 # Compute spinal cord shape information at each slice (e.g. AP/RL diameter, eccentricity, etc.)
 sct_process_segmentation -i t2_seg.nii.gz -p shape
 # Go back to root folder
-cd -
+cd ..
 
 
-# mt
+# t2s (stands for t2-star)
 # ===========================================================================================
-cd mt
-# bring T2 segmentation in MT space to help segmentation (no optimization)
-sct_register_multimodal -i ../t2/t2_seg.nii.gz -d mt1.nii.gz -identity 1 -x nn
-# create mask for faster processing
-sct_create_mask -i mt1.nii.gz -p centerline,t2_seg_reg.nii.gz -size 45mm
-# crop data
-sct_crop_image -i mt1.nii.gz -m mask_mt1.nii.gz -o mt1_crop.nii.gz
-sct_crop_image -i mt0.nii.gz -m mask_mt1.nii.gz -o mt0_crop.nii.gz
-# segment mt1
-sct_propseg -i mt1_crop.nii.gz -c t2 -init-centerline t2_seg_reg.nii.gz -qc "$SCT_BP_QC_FOLDER"
-# Create close mask around spinal cord (for more accurate registration results)
-sct_create_mask -i mt1_crop.nii.gz -p centerline,mt1_crop_seg.nii.gz -size 35mm -f cylinder
-# Register mt0 on mt1
-# Tips: here we only use rigid transformation because both images have very similar sequence parameters. We don't want to use SyN/BSplineSyN to avoid introducing spurious deformations.
-sct_register_multimodal -i mt0_crop.nii.gz -d mt1_crop.nii.gz -param step=1,type=im,algo=rigid,slicewise=1,metric=CC -m mask_mt1_crop.nii.gz -x spline
-# Register template to mt1
-# Tips: here we only use the segmentations due to poor SC/CSF contrast at the bottom slice.
-# Tips: First step: slicereg based on images, with large smoothing to capture potential motion between anat and mt, then at second step: bpslinesyn in order to adapt the shape of the cord to the mt modality (in case there are distortions between anat and mt).
-sct_register_multimodal -i $SCT_DIR/data/PAM50/template/PAM50_t2.nii.gz -d mt1_crop.nii.gz -iseg $SCT_DIR/data/PAM50/template/PAM50_cord.nii.gz -dseg mt1_crop_seg.nii.gz -param step=1,type=seg,algo=slicereg,smooth=3:step=2,type=seg,algo=bsplinesyn,slicewise=1,iter=3 -m mask_mt1_crop.nii.gz -initwarp ../t2/warp_template2anat.nii.gz -initwarpinv ../t2/warp_anat2template.nii.gz
+cd t2s
+# Spinal cord segmentation
+sct_deepseg_sc -i t2s.nii.gz -c t2s -qc "$SCT_BP_QC_FOLDER"
+# Segment gray matter
+sct_segment_graymatter -i mt0_crop_reg.nii.gz -s mt1_crop_seg.nii.gz -qc "$SCT_BP_QC_FOLDER"
+# Register template->t2s (using warping field generated from template<->t2 registration)
+sct_register_multimodal -i $SCT_DIR/data/PAM50/template/PAM50_t2s.nii.gz -iseg $SCT_DIR/data/PAM50/template/PAM50_cord.nii.gz -d t2s.nii.gz -dseg t2s_seg.nii.gz -param step=1,type=seg,algo=centermass:step=2,type=seg,algo=bsplinesyn,slicewise=1,iter=5:step=3,type=im,algo=syn,slicewise=1,iter=5,metric=CC -initwarp ../t2/warp_template2anat.nii.gz
 # rename warping fields for clarity
-mv warp_PAM50_t22mt1_crop.nii.gz warp_template2mt.nii.gz
-mv warp_mt1_crop2PAM50_t2.nii.gz warp_mt2template.nii.gz
+# mv warp_PAM50_t22mt1_crop.nii.gz warp_template2mt.nii.gz
+# mv warp_mt1_crop2PAM50_t2.nii.gz warp_mt2template.nii.gz
 # Warp template
-sct_warp_template -d mt1_crop.nii.gz -w warp_template2mt.nii.gz
+sct_warp_template -d t2s.nii.gz -w warp_PAM50_t2s2t2s.nii.gz
 
 # OPTIONAL: SEGMENT GRAY MATTER AND USE IT TO IMPROVE TEMPLATE REGISTRATION
 # <<<
@@ -97,8 +111,54 @@ mv warp_mt2template_reg_gm.nii.gz warp_mt2template.nii.gz
 sct_warp_template -d mt1_crop.nii.gz -w warp_template2mt.nii.gz
 # >>>
 
+
+# t1
+# ===========================================================================================
+cd t1
+# Segment spinal cord
+sct_propseg -i t1.nii.gz -c t1 -ofolder propseg
+# Smooth spinal cord along superior-inferior axis
+sct_smooth_spinalcord -i t1.nii.gz -s t1_seg.nii.gz
+# Flatten cord in the right-left direction (to make nice figure)
+sct_flatten_sagittal -i t1.nii.gz -s t1_seg.nii.gz
+# Go back to root folder
+cd ..
+
+
+# mt
+# ===========================================================================================
+cd mt
+# Get centerline from mt1 data
+sct_get_centerline -i mt1.nii.gz -c t2
+# sct_get_centerline -i mt1.nii.gz -c t2 -qc "$SCT_BP_QC_FOLDER"
+# Create mask
+sct_create_mask -i mt1.nii.gz -p centerline,mt1_centerline_optic.nii.gz -size 45mm
+# Crop data for faster processing
+sct_crop_image -i mt1.nii.gz -m mask_mt1.nii.gz -o mt1_crop.nii.gz
+# Segment spinal cord
+sct_propseg -i mt1_crop.nii.gz -c t2 -qc "$SCT_BP_QC_FOLDER"
+# Register mt0->mt1
+# Tips: here we only use rigid transformation because both images have very similar sequence parameters. We don't want to use SyN/BSplineSyN to avoid introducing spurious deformations.
+sct_register_multimodal -i mt0.nii.gz -d mt1_crop.nii.gz -param step=1,type=im,algo=rigid,slicewise=1,metric=CC -x spline
+# Register template->mt1
+# Tips: here we only use the segmentations due to poor SC/CSF contrast at the bottom slice.
+# Tips: First step: slicereg based on images, with large smoothing to capture potential motion between anat and mt, then at second step: bpslinesyn in order to adapt the shape of the cord to the mt modality (in case there are distortions between anat and mt).
+sct_register_multimodal -i $SCT_DIR/data/PAM50/template/PAM50_t2.nii.gz -iseg $SCT_DIR/data/PAM50/template/PAM50_cord.nii.gz -d mt1_crop.nii.gz -dseg mt1_crop_seg.nii.gz -param step=1,type=seg,algo=slicereg,smooth=3:step=2,type=seg,algo=bsplinesyn,slicewise=1,iter=3 -initwarp ../t2/warp_template2anat.nii.gz -initwarpinv ../t2/warp_anat2template.nii.gz
+# Update variable for clarity
+# file_warp_template2mt="warp_PAM50_t22mt1_crop.nii.gz"
+# mv warp_PAM50_t22mt1_crop.nii.gz warp_template2mt.nii.gz
+# mv warp_mt1_crop2PAM50_t2.nii.gz warp_mt2template.nii.gz
+# Warp template
+sct_warp_template -d mt1_crop.nii.gz -w warp_PAM50_t22mt1_crop.nii.gz
 # Compute mtr
-sct_compute_mtr -mt0 mt0_crop_reg.nii.gz -mt1 mt1_crop.nii.gz
+sct_compute_mtr -mt0 mt0_reg.nii.gz -mt1 mt1_crop.nii.gz
+# Register t1w->mt1
+# Tips: We do not need to crop the t1w image before registration because step=0 of the registration is to put the source image in the space of the destination image (equivalent to cropping the t1w)
+sct_register_multimodal -i t1w.nii.gz -d mt1_crop.nii.gz -param step=1,type=im,algo=rigid,slicewise=1,metric=CC -x spline
+# Compute MTsat
+# Tips: Check your TR and Flip Angle from the Dicom data
+sct_compute_mtsat -mt mt1_crop.nii.gz -pd mt0_crop_reg.nii.gz -t1 t1w_reg.nii.gz -trmt 30 -trpd 30 -trt1 15 -famt 9 -fapd 9 -fat1 15
+
 # Extract MTR within the white matter between C2 and C5
 sct_extract_metric -i mtr.nii.gz -method map -o mtr_in_wm.txt -l 51 -vert 2:5
 # Once we have register the WM atlas to the subject, we can compute the cross-sectional area (CSA) of the gray and white matter
