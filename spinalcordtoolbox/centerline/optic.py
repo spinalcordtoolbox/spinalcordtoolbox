@@ -15,13 +15,10 @@ def centerline2roi(fname_image, folder_output='./', verbose=0):
     """
     Tis method converts a binary centerline image to a .roi centerline file
 
-    Args:
-        fname_image: filename of the binary centerline image, in RPI orientation
-        folder_output: path to output folder where to copy .roi centerline
-        verbose: adjusts the verbosity of the logging.
-
-    Returns: filename of the .roi centerline that has been created
-
+    :param fname_image: filename of the binary centerline image, in RPI orientation
+    :param folder_output: path to output folder where to copy .roi centerline
+    :param verbose: adjusts the verbosity of the logging.
+    :returns: filename of the .roi centerline that has been created
     """
     path_data, file_data, ext_data = sct.extract_fname(fname_image)
     fname_output = file_data + '.roi'
@@ -92,7 +89,22 @@ def detect_centerline(image_fname, contrast_type,
 
     # convert image data type to int16, as required by opencv (backend in OptiC)
     image_int_filename = sct.add_suffix(file_data + ext_data, "_int16")
-    sct_image.main(args=['-i', image_fname, '-type', 'int16', '-o', image_int_filename, '-v', '0'])
+    img = Image(image_fname)
+    img_int16 = img.copy()
+
+    # rescale intensity
+    min_out = np.iinfo('uint16').min
+    max_out = np.iinfo('uint16').max
+    min_in = np.nanmin(img.data)
+    max_in = np.nanmax(img.data)
+    data_rescaled = img.data * (max_out - min_out) / (max_in - min_in)
+    img_int16.data = data_rescaled - (data_rescaled.min() - min_out)
+
+    # change data type
+    img_int16.changeType('uint16')
+    img_int16.setFileName(image_int_filename)
+    img_int16.save()
+    del img, img_int16
 
     # reorient the input image to RPI + convert to .nii
     reoriented_image_filename = sct.add_suffix(image_int_filename, "_RPI")

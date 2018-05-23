@@ -58,6 +58,6 @@ def test_integrity(param_test):
         param_test.output += '\n--> PASSED'
 
     # update Panda structure
-    param_test.results['dice_segmentation'] = dice_segmentation
+    param_test.results['dice'] = dice_segmentation
 
     return param_test

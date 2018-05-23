@@ -33,7 +33,7 @@ from spinalcordtoolbox.deepseg_sc.cnn_models import nn_architecture_seg, nn_arch
 def get_parser():
     # Initialize the parser
     parser = Parser(__file__)
-    parser.usage.set_description("""Spinal Cord Segmentation using deep convolutional networks.""")
+    parser.usage.set_description("""Spinal Cord Segmentation using convolutional networks. \n\nReference: C Gros, B De Leener, et al. Automatic segmentation of the spinal cord and intramedullary multiple sclerosis lesions with convolutional neural networks (2018). arxiv.org/abs/1805.06349""")
 
     parser.add_option(name="-i",
                       type_value="image_nifti",

@@ -332,15 +332,11 @@ class QcReport(object):
                 raise err
 
     def update_description_file(self, dimension):
-        """Creates the description file with a JSON structure
+        """Create the description file with a JSON structure
 
-        Parameters
-        ----------
-        dimension : (int, int)
-            The dimension of the image frame
+        :param: dimension 2-tuple, the dimension of the image frame (w, h)
         """
-        # get path of the toolbox
-
+ 
         output = {
             'python': sys.executable,
             'cwd': self.qc_params.cwd,
