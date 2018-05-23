@@ -412,10 +412,11 @@ def get_parser():
                       default_value='',
                       mandatory=False)
 
-    parser.add_option(name="-cpu-nb",
+    parser.add_option(name="-j",
                       type_value="int",
-                      description="Number of CPU used for testing. 0: no multiprocessing. If not provided, "
-                                  "it uses all the available cores.",
+                      description="Number of threads for parallel computing (one subject per thread)."
+                                  " By default, all available CPU cores will be used. Set to 0 for"
+                                  " no multiprocessing.",
                       mandatory=False,
                       example='42')
 
@@ -440,7 +441,7 @@ def get_parser():
                       description="Output Pickle file.",
                       mandatory=False,
                       example=['0', '1'],
-                      default_value='0')
+                      default_value='1')
 
     parser.add_option(name='-email',
                       type_value=[[','], 'str'],
@@ -492,10 +493,10 @@ if __name__ == "__main__":
         fname_database = arguments["-subj-file"]
     else:
         fname_database = ''  # if empty, it will look for xls file automatically in database folder
-    if "-cpu-nb" in arguments:
-        nb_cpu = arguments["-cpu-nb"]
+    if "-j" in arguments:
+        jobs = arguments["-j"]
     else:
-        nb_cpu = cpu_count()  # uses maximum number of available CPUs
+        jobs = cpu_count()  # uses maximum number of available CPUs
     test_integrity = int(arguments['-test-integrity'])
     create_log = int(arguments['-log'])
     output_pickle = int(arguments['-pickle'])
@@ -530,7 +531,7 @@ if __name__ == "__main__":
     # build log file name
     if create_log:
         # global log:
-        file_log = 'results_test_' + function_to_test + '_' + output_time
+        file_log = "_".join([output_time, function_to_test, sct.__get_branch()]).replace("sct_", "")
         fname_log = file_log + '.log'
         # handle_log = sct.ForkStdoutToFile(fname_log)
         file_handler = sct.add_file_handler_to_logger(fname_log)
@@ -554,7 +555,7 @@ if __name__ == "__main__":
     # Check number of CPU cores
     sct.log.info('CPU Thread on local machine: {} '.format(cpu_count()))
 
-    sct.log.info('    Requested threads:       {} '.format(nb_cpu))
+    sct.log.info('    Requested threads:       {} '.format(jobs))
 
     if __MPI__:
         sct.log.info("Running in MPI mode with mpi4py.futures's MPIPoolExecutor")
@@ -581,7 +582,7 @@ if __name__ == "__main__":
             sct.remove_handler(file_handler)
         # run function
         sct.log.debug("enter test fct")
-        tests_ret = run_function(function_to_test, path_data, list_subj, list_args=list_args, nb_cpu=nb_cpu, verbose=1, test_integrity=test_integrity)
+        tests_ret = run_function(function_to_test, path_data, list_subj, list_args=list_args, nb_cpu=jobs, verbose=1, test_integrity=test_integrity)
         sct.log.debug("exit test fct")
         results = tests_ret['results']
         compute_time = tests_ret['compute_time']

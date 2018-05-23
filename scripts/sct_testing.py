@@ -412,6 +412,7 @@ def test_function(param_test):
                                          'output': '',
                                          'path_data': param_test.path_data,
                                          'path_output': param_test.path_output})
+
     # retrieve input file (will be used later for integrity testing)
     if '-i' in dict_args:
         # check if list in case of multiple input files
@@ -419,6 +420,8 @@ def test_function(param_test):
             list_file_to_check = [dict_args_with_path['-i']]
             # assign field file_input for integrity testing
             param_test.file_input = dict_args['-i'].split('/')[-1]
+            # update index of dataframe by appending file name for more clarity
+            param_test.results = param_test.results.rename({subject_folder: os.path.join(subject_folder, dict_args['-i'])})
         else:
             list_file_to_check = dict_args_with_path['-i']
             # TODO: assign field file_input for integrity testing
