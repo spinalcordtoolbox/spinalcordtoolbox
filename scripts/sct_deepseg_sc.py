@@ -51,9 +51,9 @@ def get_parser():
                       mandatory=False,
                       example=['svm', 'cnn'],
                       default_value="cnn")
-    parser.add_option(name="-no-brain",
+    parser.add_option(name="-brain",
                       type_value="multiple_choice",
-                      description="indicate if the input image contains brain sections: 1: no brain section, 0: contains brain section. To indicate this parameter could speed the segmentation process.",
+                      description="indicate if the input image contains brain sections: 1: contains brain section, 0: no brain section. To indicate this parameter could speed the segmentation process.",
                       mandatory=False,
                       example=["0", "1"],
                       default_value="1")
@@ -261,7 +261,7 @@ def scan_slice(z_slice, model, mean_train, std_train, coord_lst, patch_shape, y_
     return z_slice_out, x_CoM, y_CoM, coord_lst
 
 
-def heatmap(filename_in, filename_out, model, patch_shape, mean_train, std_train, no_brain_bool=True):
+def heatmap(filename_in, filename_out, model, patch_shape, mean_train, std_train, brain_bool=True):
     im = Image(filename_in)
     data_im = im.data.astype(np.float32)
     im_out = im.copy()
@@ -326,7 +326,7 @@ def heatmap(filename_in, filename_out, model, patch_shape, mean_train, std_train
 
             z_sc_notDetected_cmpt += 1
             # if the SC has not been detected on 10 consecutive z_slices, we stop the SC investigation
-            if z_sc_notDetected_cmpt > 10 and no_brain_bool == False:
+            if z_sc_notDetected_cmpt > 10 and brain_bool:
                 sct.printv('Brain section detected.')
                 break
 
@@ -360,7 +360,7 @@ def heatmap2optic(fname_heatmap, lambda_value, fname_out, z_max, algo='dpdt'):
     img = nib.load(optic_hdr_filename)
     nib.save(img, fname_out)
 
-    # crop the centerline if z_max < data.shape[2] and -no-brain == 0
+    # crop the centerline if z_max < data.shape[2] and -brain == 1
     if z_max is not None:
         ctr_nii = Image(fname_out)
         ctr_nii.data[:, :, z_max:] = 0
@@ -385,8 +385,8 @@ def main():
     if "-ctr" in arguments:
         ctr_algo = arguments["-ctr"]
 
-    if "-no-brain" in arguments:
-        noBrain_bool = bool(int(arguments["-no-brain"]))
+    if "-brain" in arguments:
+        brain_bool = bool(int(arguments["-brain"]))
 
     if "-ofolder" in arguments:
         output_folder = arguments["-ofolder"]
@@ -401,7 +401,7 @@ def main():
 
     path_qc = arguments.get("-qc", None)
 
-    fname_seg = deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, ctr_algo, noBrain_bool,
+    fname_seg = deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, ctr_algo, brain_bool,
                                             remove_temp_files=remove_temp_files, verbose=verbose)
 
     if path_qc is not None:
@@ -430,7 +430,7 @@ def generate_qc(fn_in, fn_seg, args, path_qc):
     )
 
 
-def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, ctr_algo, noBrain_bool, remove_temp_files=1, verbose=1):
+def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, ctr_algo, brain_bool, remove_temp_files=1, verbose=1):
     # initalizing parameters
     crop_size = 64  # TODO: this parameter should actually be passed by the model, as it is one of its fixed parameter
 
@@ -532,14 +532,14 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, ctr_
                         patch_shape=dct_patch_ctr[contrast_type]['size'],
                         mean_train=dct_patch_ctr[contrast_type]['mean'],
                         std_train=dct_patch_ctr[contrast_type]['std'],
-                        no_brain_bool=noBrain_bool)
+                        brain_bool=brain_bool)
 
         # run optic on the heatmap
         centerline_filename = sct.add_suffix(fname_heatmap, "_ctr")
         heatmap2optic(fname_heatmap=fname_heatmap_nii,
                       lambda_value=1,
                       fname_out=centerline_filename,
-                      z_max=z_max if noBrain_bool == False else None)
+                      z_max=z_max if brain_bool else None)
 
     # crop image around the spinal cord centerline
     sct.log.info("Cropping the image around the spinal cord...")
