@@ -47,7 +47,7 @@ def get_parser():
                       example=['t1', 't2', 't2s', 'dwi'])
     parser.add_option(name="-ctr",
                       type_value="multiple_choice",
-                      description="type of spinal cord centerline detector.",
+                      description="choice of spinal cord centerline detector.",
                       mandatory=False,
                       example=['svm', 'cnn'],
                       default_value="cnn")
