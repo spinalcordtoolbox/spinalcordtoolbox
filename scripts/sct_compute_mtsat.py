@@ -21,7 +21,7 @@ import argparse
 
 def get_parser():
     parser = argparse.ArgumentParser(
-        description='Compute MTsat and T1map.'
+        description='Compute MTsat and T1map. '
                     'Reference: Helms G, Dathe H, Kallenberg K, Dechent P. High-resolution maps of magnetization '
                     'transfer with inherent correction for RF inhomogeneity and T1 relaxation obtained from 3D FLASH '
                     'MRI. Magn Reson Med 2008;60(6):1396-1407.')
