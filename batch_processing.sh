@@ -65,7 +65,7 @@ cd sct_example_data
 # ===========================================================================================
 cd t2
 # Segment spinal cord
-sct_propseg -i t2.nii.gz -c t2 -ofolder propseg
+sct_propseg -i t2.nii.gz -c t2
 # Tips: If you are not satisfied with the results you can try with another algorithm:
 # sct_deepseg_sc -i t2.nii.gz -c t2 -qc "$SCT_BP_QC_FOLDER"
 # Vertebral labeling
@@ -98,7 +98,7 @@ cd t2s
 # Spinal cord segmentation
 sct_deepseg_sc -i t2s.nii.gz -c t2s -qc "$SCT_BP_QC_FOLDER"
 # Segment gray matter
-sct_segment_graymatter -i mt0_crop_reg.nii.gz -s mt1_crop_seg.nii.gz -qc "$SCT_BP_QC_FOLDER"
+sct_deepseg_gm -i t2s.nii.gz -qc "$SCT_BP_QC_FOLDER"
 # Register template->t2s (using warping field generated from template<->t2 registration)
 sct_register_multimodal -i $SCT_DIR/data/PAM50/template/PAM50_t2s.nii.gz -iseg $SCT_DIR/data/PAM50/template/PAM50_cord.nii.gz -d t2s.nii.gz -dseg t2s_seg.nii.gz -param step=1,type=seg,algo=centermass:step=2,type=seg,algo=bsplinesyn,slicewise=1,iter=5:step=3,type=im,algo=syn,slicewise=1,iter=5,metric=CC -initwarp ../t2/warp_template2anat.nii.gz
 # rename warping fields for clarity
@@ -110,12 +110,8 @@ sct_maths -i t2s_seg.nii.gz -sub t2s_gmseg.nii.gz -o t2s_wmseg.nii.gz
 # Compute cross-sectional area (CSA) of the gray and white matter between C2 and C5
 sct_process_segmentation -i t2s_wmseg.nii.gz -p csa -vert 2:5 -ofolder csa_wm
 sct_process_segmentation -i t2s_gmseg.nii.gz -p csa -vert 2:5 -ofolder csa_gm
-
-# TODO:
 # OPTIONAL: SEGMENT GRAY MATTER AND USE IT TO IMPROVE TEMPLATE REGISTRATION
 # <<<
-# Segment gray matter
-# sct_segment_graymatter -i mt0_crop_reg.nii.gz -s mt1_crop_seg.nii.gz -qc "$SCT_BP_QC_FOLDER"
 # Register WM/GM template to WM/GM seg
 # sct_register_graymatter -gm mt0_crop_reg_gmseg.nii.gz -wm mt0_crop_reg_wmseg.nii.gz -w warp_template2mt.nii.gz -winv warp_mt2template.nii.gz
 # rename warping fields for clarity
@@ -130,7 +126,7 @@ sct_process_segmentation -i t2s_gmseg.nii.gz -p csa -vert 2:5 -ofolder csa_gm
 # ===========================================================================================
 cd t1
 # Segment spinal cord
-sct_propseg -i t1.nii.gz -c t1 -ofolder propseg
+sct_propseg -i t1.nii.gz -c t1
 # Smooth spinal cord along superior-inferior axis
 sct_smooth_spinalcord -i t1.nii.gz -s t1_seg.nii.gz
 # Flatten cord in the right-left direction (to make nice figure)
