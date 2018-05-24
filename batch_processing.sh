@@ -14,7 +14,7 @@
 # 
 #   [option] $SCT_DIR/batch_processing.sh
 # 
-#   Prevent (re-)downloading sct_example_data, run:
+#   Prevent (re-)downloading sct_example_data:
 #   SCT_BP_DOWNLOAD=0 $SCT_DIR/batch_processing.sh
 # 
 #   Specify quality control (QC) folder (Default is ~/qc_batch_processing):
@@ -25,6 +25,15 @@ set -e
 
 # For full verbose, uncomment the next line
 # set -x
+
+# Fetch OS type
+if uname -a | grep -i  darwin > /dev/null 2>&1; then
+  # OSX
+  open_command="open"
+elif uname -a | grep -i  linux > /dev/null 2>&1; then
+  # Linux
+  open_command="xdg-open"
+fi
 
 # Check if users wants to use his own data
 if [ -z "$SCT_BP_DOWNLOAD" ]; then
@@ -220,27 +229,19 @@ sct_crop_image -i fmri.nii.gz -m mask_fmri_mean.nii.gz -o fmri_crop.nii.gz
 # Motion correction
 # Tips: Here data have sufficient SNR and there is visible motion between two consecutive scans, so motion correction is more efficient with -g 1 (i.e. not average consecutive scans)
 sct_fmri_moco -i fmri_crop.nii.gz -g 1
-
-# Segment spinal cord
-# tips: we use the T2 segmentation to help with fMRI segmentation
-# tips: we use "-radius 5" otherwise the segmentation is too small
-# tips: we use "-max-deformation 4" to prevent the propagation from stopping at the edge
-sct_propseg -i fmri_moco_mean.nii.gz -c t2 -radius 5 -max-deformation 4
-
-# here segmentation slightly failed due to the close proximity of susceptibility artifact --> use file "fmri_moco_mean_seg_modif.nii.gz"
-# register template to fmri: here we use the template register to the MT to get the correction of the internal structure
-sct_register_multimodal -i ../mt/label/template/PAM50_t2.nii.gz -d fmri_moco_mean.nii.gz -iseg ../mt/label/template/PAM50_cord.nii.gz -dseg fmri_moco_mean_seg_modif.nii.gz -param step=1,type=seg,algo=slicereg,metric=MeanSquares,smooth=2:step=2,type=im,algo=bsplinesyn,metric=MeanSquares,iter=5,gradStep=0.5
-# concatenate transfo: (1) template -> anat -> MT -> MT_gm ; (2) MT_gm -> fmri
-sct_concat_transfo -w ../mt/warp_template2mt1_gmseg.nii.gz,warp_PAM50_t22fmri_moco_mean.nii.gz -d fmri_moco_mean.nii.gz -o warp_template2fmri.nii.gz
-# warp template and spinal levels (here we don't need the WM atlas)
-# N.B. SPINAL LEVEL CURRENTLY NOT AVAILABLE FOR PAM50. WORK IN PROGRESS.
-# sct_warp_template -d fmri_moco_mean.nii.gz -w warp_template2fmri.nii.gz -a 0 -s 1
-# check results
-#if [ $DISPLAY = true ]; then
-#  fslview fmri_moco_mean -b 0,1300 label/spinal_levels/spinal_level_C3.nii.gz -l Red -b 0,0.05 label/spinal_levels/spinal_level_C4.nii.gz -l Blue -b 0,0.05 label/spinal_levels/spinal_level_C5.nii.gz -l Green -b 0,0.05 label/spinal_levels/spinal_level_C6.nii.gz -l Yellow -b 0,0.05 label/spinal_levels/spinal_level_C7.nii.gz -l Pink -b 0,0.05 &
-#fi
+# Segment spinal cord manually
+# Since these data have very poor cord/CSF contrast, it is difficult to segment the cord properly
+# and hence in this case we do it manually. The file is called: fmri_crop_moco_mean_seg_manual.nii.gz
+# Register template->fmri
+sct_register_multimodal -i $SCT_DIR/data/PAM50/template/PAM50_t2.nii.gz -iseg $SCT_DIR/data/PAM50/template/PAM50_cord.nii.gz -d fmri_crop_moco_mean.nii.gz -dseg fmri_crop_moco_mean_seg_manual.nii.gz -param step=1,type=seg,algo=slicereg,metric=MeanSquares,smooth=2:step=2,type=im,algo=bsplinesyn,metric=MeanSquares,iter=5,gradStep=0.5 -initwarp ../t2/warp_template2anat.nii.gz -initwarpinv ../t2/warp_anat2template.nii.gz
+# Rename warping fields for clarity
+mv warp_PAM50_t22fmri_crop_moco_mean.nii.gz warp_template2fmri.nii.gz
+mv warp_fmri_crop_moco_mean2PAM50_t2.nii.gz warp_fmri2template.nii.gz
+# Warp template and spinal levels (here we don't need the WM atlas)
+sct_warp_template -d fmri_crop_moco_mean.nii.gz -w warp_template2fmri.nii.gz -a 0 -s 1
+# Note, once you have computed fMRI statistics in the subject's space, you can use
+# warp_fmri2template.nii.gz to bring the statistical maps on the template space, for group analysis.
 cd ..
-
 
 
 # Display results (to easily compare integrity across SCT versions)
@@ -249,12 +250,13 @@ echo "Ended at: $(date +%x_%r)"
 echo
 echo "t2/CSA:  " `grep -v '^#' t2/csa_mean.txt | grep -v '^$'`
 echo "mt/MTR:  " `grep -v '^#' mt/mtr_in_wm.txt | grep -v '^$'`
-echo "mt/CSA_GM:  " `grep -v '^#' mt/csa_gm/csa_mean.txt | grep -v '^$'`
-echo "mt/CSA_WM:  " `grep -v '^#' mt/csa_wm/csa_mean.txt | grep -v '^$'`
+echo "t2s/CSA_GM:  " `grep -v '^#' t2s/csa_gm/csa_mean.txt | grep -v '^$'`
+echo "t2s/CSA_WM:  " `grep -v '^#' t2s/csa_wm/csa_mean.txt | grep -v '^$'`
 echo "dmri/FA: " `grep -v '^#' dmri/fa_in_cst.txt | grep -v 'right'`
 echo "dmri/FA: " `grep -v '^#' dmri/fa_in_cst.txt | grep -v 'left'`
 echo
 
-# TODO: 
-# open QC
+# Display syntax to open QC report on web browser
+echo "To open Quality Control (QC) report on a web-browser, run the following:"
+echo "${open_command} ${SCT_BP_QC_FOLDER}/index.html"
 
