@@ -167,7 +167,7 @@ sct_compute_mtr -mt0 mt0_reg.nii.gz -mt1 mt1_crop.nii.gz
 sct_register_multimodal -i t1w.nii.gz -d mt1_crop.nii.gz -param step=1,type=im,algo=rigid,slicewise=1,metric=CC -x spline
 # Compute MTsat
 # Tips: Check your TR and Flip Angle from the Dicom data
-sct_compute_mtsat -mt mt1_crop.nii.gz -pd mt0_crop_reg.nii.gz -t1 t1w_reg.nii.gz -trmt 30 -trpd 30 -trt1 15 -famt 9 -fapd 9 -fat1 15
+sct_compute_mtsat -mt mt1_crop.nii.gz -pd mt0_reg.nii.gz -t1 t1w_reg.nii.gz -trmt 30 -trpd 30 -trt1 15 -famt 9 -fapd 9 -fat1 15
 # Extract MTR, T1 and MTsat within the white matter between C2 and C5
 sct_extract_metric -i mtr.nii.gz -method map -o mtr_in_wm.txt -l 51 -vert 2:5
 sct_extract_metric -i mtsat.nii.gz -method map -o mtsat_in_wm.txt -l 51 -vert 2:5
