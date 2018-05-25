@@ -120,6 +120,7 @@ sct_process_segmentation -i t2s_gmseg.nii.gz -p csa -vert 2:5 -ofolder csa_gm
 # warp template (this time corrected for internal structure)
 # sct_warp_template -d mt1_crop.nii.gz -w warp_template2mt.nii.gz
 # >>>
+cd ..
 
 
 # t1
