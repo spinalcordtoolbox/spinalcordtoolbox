@@ -128,71 +128,74 @@ class Option:
         :return:
         """
 
-        type_option = self.type_value
-        if type is not None:
-            type_option = type
+        if self.parser.check_file_exist:
+            type_option = self.type_value
+            if type is not None:
+                type_option = type
 
-        if type_option in self.OPTION_TYPES:
-            return self.checkStandardType(param, type)
+            if type_option in self.OPTION_TYPES:
+                return self.checkStandardType(param, type)
 
-        elif type_option == "image_nifti":
-            return self.checkIfNifti(param)
+            elif type_option == "image_nifti":
+                return self.checkIfNifti(param)
 
-        elif type_option == "file":
-            return self.checkFile(param)
-
-        elif type_option == "file-transfo":
-            if param.startswith("-"):
-                self.checkFile(param[1:])
-                return param
-            else:
+            elif type_option == "file":
                 return self.checkFile(param)
 
-        elif type_option == "file_output":  # check if permission are required
-            if not os.path.isdir(os.path.dirname(os.path.abspath(param))):
-                self.parser.usage.error("Option %s parent folder doesn't exist for file %s" % (self.name, param))
-            if not sct.check_write_permission(param):
-                self.parser.usage.error("Option %s no write permission for file %s" % (self.name, param))
-            return param
+            elif type_option == "file-transfo":
+                if param.startswith("-"):
+                    self.checkFile(param[1:])
+                    return param
+                else:
+                    return self.checkFile(param)
 
-        elif type_option == "folder":
-            return self.checkFolder(param)
+            elif type_option == "file_output":  # check if permission are required
+                if not os.path.isdir(os.path.dirname(os.path.abspath(param))):
+                    self.parser.usage.error("Option %s parent folder doesn't exist for file %s" % (self.name, param))
+                if not sct.check_write_permission(param):
+                    self.parser.usage.error("Option %s no write permission for file %s" % (self.name, param))
+                return param
 
-        elif type_option == "folder_creation":
-            return self.checkFolderCreation(param)
+            elif type_option == "folder":
+                return self.checkFolder(param)
 
-        elif type_option == "multiple_choice":
-            """
-            the choices are listed in example variable
-            """
-            if param not in self.example:
-                self.parser.usage.error(self.name + " only takes " + self.parser.usage.print_list_with_brackets(self.example) + " as potential arguments.")
-            return param
+            elif type_option == "folder_creation":
+                return self.checkFolderCreation(param)
 
-        elif isinstance(type_option, list):
-            """
-            This option is defined as a list delimited by a delimiter (that cannot be a space)
-            For now, only one-layer list are available
-            Examples:
-            [[','],'int']
-            [[':'],'coordinate']
-            """
-            delimiter = type_option[0][0]
-            sub_type = type_option[1]
-            param_splitted = param.split(delimiter)
-            if len(param_splitted) != 0:
-                # check if files are separated by space (if "*" was used)
-                if not param_splitted[0].find(' ') == -1:
-                    # if so, split and return list
-                    param_splitted = param_splitted[0].split(' ')
-                return list([self.checkIntegrity(val, sub_type) for val in param_splitted])
+            elif type_option == "multiple_choice":
+                """
+                the choices are listed in example variable
+                """
+                if param not in self.example:
+                    self.parser.usage.error(self.name + " only takes " + self.parser.usage.print_list_with_brackets(self.example) + " as potential arguments.")
+                return param
+
+            elif isinstance(type_option, list):
+                """
+                This option is defined as a list delimited by a delimiter (that cannot be a space)
+                For now, only one-layer list are available
+                Examples:
+                [[','],'int']
+                [[':'],'coordinate']
+                """
+                delimiter = type_option[0][0]
+                sub_type = type_option[1]
+                param_splitted = param.split(delimiter)
+                if len(param_splitted) != 0:
+                    # check if files are separated by space (if "*" was used)
+                    if not param_splitted[0].find(' ') == -1:
+                        # if so, split and return list
+                        param_splitted = param_splitted[0].split(' ')
+                    return list([self.checkIntegrity(val, sub_type) for val in param_splitted])
+                else:
+                    self.parser.usage.error("Option " + self.name + " must be correctly written. See usage.")
+
             else:
-                self.parser.usage.error("Option " + self.name + " must be correctly written. See usage.")
-
+                # self.parser.usage.error("Type of option \"" + str(self.type_value) +"\" is not supported by the parser.")
+                sct.printv("Option " + str(self.type_value) + " does not exist and will have no effect on the execution of the script", 1, "warning")
+                sct.printv("Type -h to see supported options", 1, "warning")
         else:
-            # self.parser.usage.error("Type of option \"" + str(self.type_value) +"\" is not supported by the parser.")
-            sct.printv("Option " + str(self.type_value) + " does not exist and will have no effect on the execution of the script", 1, "warning")
-            sct.printv("Type -h to see supported options", 1, "warning")
+            return param
 
     def checkStandardType(self, param, type=None):
         # check if a int is really a int (same for str, float, long and complex)
@@ -207,7 +210,7 @@ class Option:
     def checkFile(self, param):
         # check if the file exist
         sct.printv("Check file existence...", 0)
-        if self.parser.check_file_exist:
+        if self.check_file_exist:
             if not os.path.isfile(param):
                 self.parser.usage.error("Option " + self.name + " file doesn't exist: " + param)
         return param
@@ -279,6 +282,7 @@ class Parser:
         self.spelling = SpellingChecker()
         self.errors = ''
         self.usage = Usage(self, file_name)
+        self.check_file_exist = True
 
     def add_option(self, name, type_value=None, description=None, mandatory=False, example=None, help=None,
                    default_value=None, deprecated_by=None, deprecated_rm=False, deprecated=False, list_no_image=None,
@@ -303,7 +307,17 @@ class Parser:
         self.options[name] = Option(name, type_value, description, mandatory, example, default_value, help, self,
                                     order, deprecated_by, deprecated_rm, deprecated, list_no_image, check_file_exist)
 
-    def parse(self, arguments):
+    def parse(self, arguments, check_file_exist=True):
+        """
+        Parse a series of arguments.
+        :param arguments:
+        :param check_file_exist: If you don't want to check for file existence, set this value to False. Note that,
+        as opposed to the variable "check_file_exist" which can be set in each SCT function with the add_option()
+        method, this variable is more general and applies to ALL arguments. It has been introduced for sct_testing().
+        :return:
+        """
+        # if you only want to parse a string and not checking for file existence, change flag check_file_exist
+        self.check_file_exist = check_file_exist
 
         # if no arguments, sct.printv(usage and quit)
         if len(arguments) == 0 and len([opt for opt in self.options if self.options[opt].mandatory]) != 0:
