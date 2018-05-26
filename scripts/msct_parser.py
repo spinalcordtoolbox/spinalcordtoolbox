@@ -128,74 +128,71 @@ class Option:
         :return:
         """
 
-        if self.parser.check_file_exist:
-            type_option = self.type_value
-            if type is not None:
-                type_option = type
+        type_option = self.type_value
+        if type is not None:
+            type_option = type
 
-            if type_option in self.OPTION_TYPES:
-                return self.checkStandardType(param, type)
+        if type_option in self.OPTION_TYPES:
+            return self.checkStandardType(param, type)
 
-            elif type_option == "image_nifti":
-                return self.checkIfNifti(param)
+        elif type_option == "image_nifti":
+            return self.checkIfNifti(param)
 
-            elif type_option == "file":
+        elif type_option == "file":
+            return self.checkFile(param)
+
+        elif type_option == "file-transfo":
+            if param.startswith("-"):
+                self.checkFile(param[1:])
+                return param
+            else:
                 return self.checkFile(param)
 
-            elif type_option == "file-transfo":
-                if param.startswith("-"):
-                    self.checkFile(param[1:])
-                    return param
-                else:
-                    return self.checkFile(param)
-
-            elif type_option == "file_output":  # check if permission are required
-                if not os.path.isdir(os.path.dirname(os.path.abspath(param))):
-                    self.parser.usage.error("Option %s parent folder doesn't exist for file %s" % (self.name, param))
-                if not sct.check_write_permission(param):
-                    self.parser.usage.error("Option %s no write permission for file %s" % (self.name, param))
-                return param
-
-            elif type_option == "folder":
-                return self.checkFolder(param)
-
-            elif type_option == "folder_creation":
-                return self.checkFolderCreation(param)
-
-            elif type_option == "multiple_choice":
-                """
-                the choices are listed in example variable
-                """
-                if param not in self.example:
-                    self.parser.usage.error(self.name + " only takes " + self.parser.usage.print_list_with_brackets(self.example) + " as potential arguments.")
-                return param
-
-            elif isinstance(type_option, list):
-                """
-                This option is defined as a list delimited by a delimiter (that cannot be a space)
-                For now, only one-layer list are available
-                Examples:
-                [[','],'int']
-                [[':'],'coordinate']
-                """
-                delimiter = type_option[0][0]
-                sub_type = type_option[1]
-                param_splitted = param.split(delimiter)
-                if len(param_splitted) != 0:
-                    # check if files are separated by space (if "*" was used)
-                    if not param_splitted[0].find(' ') == -1:
-                        # if so, split and return list
-                        param_splitted = param_splitted[0].split(' ')
-                    return list([self.checkIntegrity(val, sub_type) for val in param_splitted])
-                else:
-                    self.parser.usage.error("Option " + self.name + " must be correctly written. See usage.")
-
-            else:
-                # self.parser.usage.error("Type of option \"" + str(self.type_value) +"\" is not supported by the parser.")
-                sct.printv("Option " + str(self.type_value) + " does not exist and will have no effect on the execution of the script", 1, "warning")
-                sct.printv("Type -h to see supported options", 1, "warning")
-        else:
+        elif type_option == "file_output":  # check if permission are required
+            if not os.path.isdir(os.path.dirname(os.path.abspath(param))):
+                self.parser.usage.error("Option %s parent folder doesn't exist for file %s" % (self.name, param))
+            if not sct.check_write_permission(param):
+                self.parser.usage.error("Option %s no write permission for file %s" % (self.name, param))
             return param
+
+        elif type_option == "folder":
+            return self.checkFolder(param)
+
+        elif type_option == "folder_creation":
+            return self.checkFolderCreation(param)
+
+        elif type_option == "multiple_choice":
+            """
+            the choices are listed in example variable
+            """
+            if param not in self.example:
+                self.parser.usage.error(self.name + " only takes " + self.parser.usage.print_list_with_brackets(self.example) + " as potential arguments.")
+            return param
+
+        elif isinstance(type_option, list):
+            """
+            This option is defined as a list delimited by a delimiter (that cannot be a space)
+            For now, only one-layer list are available
+            Examples:
+            [[','],'int']
+            [[':'],'coordinate']
+            """
+            delimiter = type_option[0][0]
+            sub_type = type_option[1]
+            param_splitted = param.split(delimiter)
+            if len(param_splitted) != 0:
+                # check if files are separated by space (if "*" was used)
+                if not param_splitted[0].find(' ') == -1:
+                    # if so, split and return list
+                    param_splitted = param_splitted[0].split(' ')
+                return list([self.checkIntegrity(val, sub_type) for val in param_splitted])
+            else:
+                self.parser.usage.error("Option " + self.name + " must be correctly written. See usage.")
+
+        else:
+            # self.parser.usage.error("Type of option \"" + str(self.type_value) +"\" is not supported by the parser.")
+            sct.printv("Option " + str(self.type_value) + " does not exist and will have no effect on the execution of the script", 1, "warning")
+            sct.printv("Type -h to see supported options", 1, "warning")
 
     def checkStandardType(self, param, type=None):
         # check if a int is really a int (same for str, float, long and complex)
@@ -210,7 +207,9 @@ class Option:
     def checkFile(self, param):
         # check if the file exist
         sct.printv("Check file existence...", 0)
-        if self.check_file_exist:
+        # note: self.check_file_exist is set inside SCT function, and self.parser.check_file_exist is set in parent
+        # call parse()
+        if self.check_file_exist and self.parser.check_file_exist:
             if not os.path.isfile(param):
                 self.parser.usage.error("Option " + self.name + " file doesn't exist: " + param)
         return param
@@ -223,14 +222,14 @@ class Option:
         no_image = False
         param_tmp = str()
         if param.lower().endswith('.nii'):
-            if self.check_file_exist:
+            if self.check_file_exist and self.parser.check_file_exist:
                 nii = os.path.isfile(param)
                 niigz = os.path.isfile(param + '.gz')
             else:
                 nii, niigz = True, False
             param_tmp = param[:-4]
         elif param.lower().endswith('.nii.gz'):
-            if self.check_file_exist:
+            if self.check_file_exist and self.parser.check_file_exist:
                 niigz = os.path.isfile(param)
                 nii = os.path.isfile(param[:-3])
             else:
@@ -252,14 +251,14 @@ class Option:
 
     def checkFolder(self, param):
         # check if the folder exist. If not, create it.
-        if self.check_file_exist:
+        if self.check_file_exist and self.parser.check_file_exist:
             if not os.path.isdir(param):
                 self.parser.usage.error("Option " + self.name + " folder doesn't exist: " + param)
         return param
 
     def checkFolderCreation(self, param):
         # check if the folder exist. If not, create it.
-        if self.check_file_exist:
+        if self.check_file_exist and self.parser.check_file_exist:
             result_creation = sct.create_folder(param)
         else:
             result_creation = 0  # no need for checking
