@@ -19,6 +19,8 @@ from scipy.ndimage.measurements import center_of_mass, label
 from scipy.ndimage.morphology import binary_fill_holes
 from skimage.exposure import rescale_intensity
 from scipy.ndimage import distance_transform_edt
+from scipy.interpolate.interpolate import interp1d
+import pandas as pd
 
 from spinalcordtoolbox.centerline import optic
 import sct_utils as sct
@@ -61,7 +63,7 @@ def get_parser():
                       type_value="multiple_choice",
                       description="choice of 2D or 3D kernels for the segmentation. Note that segmentation with 3D kernels is significantely longer than with 2D kernels.",
                       mandatory=False,
-                      example=["2d", "3d"],
+                      example=['2d', '3d'],
                       default_value="2d")
     parser.add_option(name="-ofolder",
                       type_value="folder_creation",
@@ -97,11 +99,84 @@ def scale_intensity(data):
     return rescale_intensity(data, in_range=(p2, p98), out_range=(0, 255))
 
 
-def apply_intensity_normalization(img_path, fname_out):
+def apply_intensity_normalization_model(img, landmarks_pd, max_interp='exp'):
+    """Description: apply the learned intensity landmarks to the input image."""
+    percent_decile_lst = [1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 99]
+    vals = list(img)
+    landmarks_lst_cur = np.percentile(vals, q=percent_decile_lst)
+
+    # landmarks_pd = pd.DataFrame.from_dict({'1_1': 0.000000, '1_10': 114.354926, '1_20': 200.487868, '1_30': 297.331272, '1_40': 432.747871, '1_50': 627.286683, '1_60': 867.530153, '1_70': 1124.958156, '1_80': 1420.004442, '1_90': 1838.005538, '1_99': 2611.000000})
+    landmarks_lst = [0.000000, 114.354926, 200.487868, 297.331272, 432.747871, 627.286683, 867.530153, 1124.958156, 1420.004442, 1838.005538, 2611.000000]
+
+    # treat single intensity accumulation error
+#     if not len(np.unique(landmarks_lst_cur)) == len(landmarks_lst_cur):
+#         raise SingleIntensityAccumulationError('The image shows an unusual single-intensity accumulation that leads to a situation where two percentile values are equal. This situation is usually caused, when the background has not been removed from the image. The only other possibility would be to re-train the model with a reduced number of landmark percentiles landmarkp or a changed distribution.')
+
+    # create linear mapping models for the percentile segments to the learned standard intensity space  
+    linear_mapping = interp1d(landmarks_lst_cur, landmarks_lst, bounds_error = False)
+
+    # transform the input image intensity values
+    output = linear_mapping(img)
+
+    # treat image intensity values outside of the cut-off percentiles range separately
+    # below_mapping = linear_model(landmarks_lst_cur[:2], landmarks_pd.values[:2])
+    below_mapping = exp_model(landmarks_lst_cur[:2], landmarks_lst[:2], landmarks_lst[0])
+    output[img < landmarks_lst_cur[0]] = below_mapping(img[img < landmarks_lst_cur[0]])
+
+    if max_interp == 'exp':
+        above_mapping = exp_model(landmarks_lst_cur[-3:-1], landmarks_lst[-3:-1], landmarks_lst[-1])
+    elif max_interp == 'linear':
+        above_mapping = linear_model(landmarks_lst_cur[-2:], landmarks_lst[-2:])
+    elif max_interp == 'flat':
+        above_mapping = lambda x: landmarks_lst[-1]
+    else:
+        print 'No model was chosen, will use flat'
+        above_mapping = lambda x: landmarks_lst[-1]
+    output[img > landmarks_lst_cur[-1]] = above_mapping(img[img > landmarks_lst_cur[-1]])
+
+    return output.astype(np.float32)
+
+
+def linear_model((x1, x2), (y1, y2)):
+    m = (y2 - y1) / (x2 - x1)
+    b = y1 - (m * x1)
+    return lambda x: m * x + b
+
+
+def exp_model((x1, x2), (y1, y2), s2):
+    m = (y2 - y1) / (x2 - x1)
+    b = y1 - (m * x1)
+    mu90 = x2
+
+    # y2 = alpha + beta * exp(gamma * x)
+    alpha = s2
+
+    omega = m * mu90 - s2 + b
+    beta = omega * np.exp(-m * mu90 * 1.0 / omega)
+
+    gamma = m * 1.0 / omega
+
+    return lambda x: alpha + beta * np.exp(gamma * x)
+
+
+class SingleIntensityAccumulationError(Exception):
+    """
+    Thrown when an image shows an unusual single-intensity peaks which would obstruct
+    both, training and transformation.
+    """
+
+
+def apply_intensity_normalization(img_path, fname_out, params=None):
     img = Image(img_path)
     img_normalized = img.copy()
-    p2, p98 = np.percentile(img.data, (2, 98))
-    img_normalized.data = scale_intensity(img.data.astype(np.float32))
+    data2norm = img.data.astype(np.float32)
+    print type(data2norm[0,0,0])
+    if params is None:
+        p2, p98 = np.percentile(data2norm, (2, 98))
+        img_normalized.data = scale_intensity(data2norm)
+    else:
+        img_normalized.data = apply_intensity_normalization_model(data2norm, params, max_interp='exp')
+        print np.max(img_normalized.data)
     img_normalized.changeType('float32')
     img_normalized.setFileName(fname_out)
     img_normalized.save()
@@ -384,6 +459,12 @@ def segment_2d(model_fname, contrast_type, input_size, fname_in, fname_out):
                     # 't2': {'mean': 92.3024483132, 'std': 57.9122089031,
                     #         'features': 32, 'depth': 2, 'batchnorm': True,
                     #         'dropout': 0.0},
+                    # 't2s': {'mean': 128.644173941, 'std': 74.0248206218,
+                    #         'features': 8, 'depth': 3, 'batchnorm': True,
+                    #         'dropout': 0.0},
+                    't2s': {'mean': 815.364, 'std': 606.198,
+                            'features': 8, 'depth': 3, 'batchnorm': True,
+                            'dropout': 0.0},
                     't1': {'mean': 84.5119262632, 'std': 39.607477199,
                             'features': 8, 'depth': 3, 'batchnorm': True,
                             'dropout': 0.0},
@@ -401,26 +482,22 @@ def segment_2d(model_fname, contrast_type, input_size, fname_in, fname_out):
     seg_model.load_weights(model_fname)
 
     # segment the spinal cord
-    sct.log.info("Segmenting the spinal cord using deep learning on 2D images...")
+    sct.log.info("Segmenting the spinal cord using deep learning on 2D patches...")
     image_normalized = Image(fname_in)
     seg_crop = image_normalized.copy()
     seg_crop.data *= 0
     seg_crop.changeType('uint8')
-    for zz in list(reversed(range(image_normalized.dim[2]))):
-        z_slice = normalize_data(image_normalized.data[:, :, zz],
+
+    data_norm = normalize_data(image_normalized.data,
                                 dct_params_seg[contrast_type]['mean'],
                                 dct_params_seg[contrast_type]['std'])
-        pred_seg = seg_model.predict(np.expand_dims(np.expand_dims(z_slice, -1), 0))[0, :, :, 0]
+    for zz in list(reversed(range(image_normalized.dim[2]))):
+        pred_seg = seg_model.predict(np.expand_dims(np.expand_dims(data_norm[:, :, zz], -1), 0))[0, :, :, 0]
         pred_seg_th = (pred_seg > 0.5).astype(int)
 
-        # keep the largest connected obejct per z_slice
-        labeled_obj, num_obj = label(pred_seg_th)
-        if num_obj > 1:
-            pred_seg_th = (labeled_obj == (np.bincount(labeled_obj.flat)[1:].argmax() + 1))
+        pred_seg_pp = basic_post_processing(pred_seg_th)
 
-        pred_seg_th = binary_fill_holes(pred_seg_th, structure=np.ones((3, 3))).astype(np.int)
-
-        seg_crop.data[:, :, zz] = pred_seg_th
+        seg_crop.data[:, :, zz] = pred_seg_pp
     seg_crop.setFileName(fname_out)
     seg_crop.save()
 
@@ -446,6 +523,73 @@ def uncrop_image(fname_ref, fname_out, data_crop, x_crop_lst, y_crop_lst):
 
     seg_unCrop.setFileName(fname_out)
     seg_unCrop.save()
+
+
+def basic_post_processing(z_slice):
+    # keep the largest connected obejct per z_slice
+    labeled_obj, num_obj = label(z_slice)
+    if num_obj > 1:
+        print 'hey'
+        z_slice = (labeled_obj == (np.bincount(labeled_obj.flat)[1:].argmax() + 1))
+
+    return binary_fill_holes(z_slice, structure=np.ones((3, 3))).astype(np.int)
+
+
+def segment_3d(model_fname, contrast_type, fname_in, fname_out):
+    from spinalcordtoolbox.deepseg_sc.cnn_models_3d import load_trained_model
+    dct_patch_sc_3d = {'t2': {'size': (64, 64, 48), 'mean': 65.8562, 'std': 59.7999},
+                        't2s': {'size': (96, 96, 48), 'mean': 87.0212, 'std': 64.425},
+                        't1': {'size': (64, 64, 48), 'mean': 88.5001, 'std': 66.275}
+                       }
+    # load 3d model
+    seg_model = load_trained_model(model_fname)
+
+    im = Image(fname_in)
+    out = im.copy()
+    out.data *= 0
+    out.changeType('uint8')
+
+    # segment the spinal cord
+    sct.log.info("Segmenting the spinal cord using deep learning on 3D patches...")
+    z_patch_size = dct_patch_sc_3d[contrast_type]['size'][2]
+    z_step_keep = range(0, im.data.shape[2], z_patch_size)
+    for zz in z_step_keep:
+        if zz == z_step_keep[-1]:
+            patch_im = np.zeros(dct_patch_sc_3d[contrast_type]['size'])
+            z_patch_extracted = im.data.shape[2] - zz
+            patch_im[:, :, :z_patch_extracted] = im.data[:, :, zz:]
+        else:
+            z_patch_extracted = z_patch_size
+            patch_im = im.data[:, :, zz:z_patch_size + zz]
+        patch_norm = normalize_data(patch_im, dct_patch_sc_3d[contrast_type]['mean'],
+                                                dct_patch_sc_3d[contrast_type]['std'])
+        patch_pred_proba = seg_model.predict(np.expand_dims(np.expand_dims(patch_norm, 0), 0))
+        pred_seg_th = (patch_pred_proba > 0.5).astype(int)[0, 0, :, :, :]
+
+        for zz_pp in range(z_patch_size):
+            pred_seg_th[:, :, zz_pp] = basic_post_processing(pred_seg_th[:, :, zz_pp])
+
+        if zz == z_step_keep[-1]:
+            out.data[:, :, zz:] = pred_seg_th[:, :, :z_patch_extracted]
+        else:
+            out.data[:, :, zz:z_patch_size + zz] = pred_seg_th
+
+    out.setFileName(fname_out)
+    out.save()
+    del im, out
+
+
+def stack_3dSC(im_data, patch_size):
+    x_size, y_size, z_size = patch_size
+
+    z_max = np.max(np.where(im_data)[2])
+
+    z_step_keep = range(0, z_max, z_size)
+    z_data_crop_max = max(z_step_keep) + z_size
+    im_data_crop = np.zeros((x_size, y_size, z_data_crop_max))
+    im_data_crop[:, :, :im_data.shape[2]] = im_data
+
+    return np.array([np.expand_dims(im_data_crop[:, :, zz:z_size + zz], 0) for zz in z_step_keep])
 
 
 def main():
@@ -512,12 +656,6 @@ def generate_qc(fn_in, fn_seg, args, path_qc):
 
 
 def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, ctr_algo='cnn', brain_bool=True, kernel_size='2d', remove_temp_files=1, verbose=1):
-    # initalizing parameters
-    crop_size = 64  # TODO: this parameter should actually be passed by the model, as it is one of its fixed parameter
-
-    # loading models required to perform the segmentation
-    # this step can be long, as some models (e.g., DL) are heavy
-    sct.log.info("Loading models...")
     path_script = os.path.dirname(__file__)
     path_sct = os.path.dirname(path_script)
 
@@ -614,10 +752,30 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, ctr_
         # run optic on the heatmap
         centerline_filename = sct.add_suffix(fname_heatmap, "_ctr")
         heatmap2optic(fname_heatmap=fname_heatmap_nii,
-                      lambda_value=1,
+                      lambda_value=7 if contrast_type == 't2s' else 1,
                       fname_out=centerline_filename,
                       z_max=z_max if brain_bool else None)
 
+    # # normalize the intensity of the images
+    # sct.log.info("Normalizing the intensity...")
+    # fname_norm = sct.add_suffix(fname_res, '_norm')
+    # apply_intensity_normalization(img_path=fname_res, fname_out=fname_norm)
+
+    # if kernel_size == '2d' or (kernel_size == '3d' and contrast_type != 't2s'):
+    #     crop_size = 64
+    # else:  # i.e. kernel_size == '3d' and contrast_type != 't2s'
+    #     crop_size = 96
+    # # crop image around the spinal cord centerline
+    # sct.log.info("Cropping the image around the spinal cord...")
+    # fname_crop = sct.add_suffix(fname_norm, '_crop')
+    # X_CROP_LST, Y_CROP_LST = crop_image_around_centerline(im_in=fname_norm, ctr_in=centerline_filename, im_out=fname_crop,
+    #                                                       crop_size=crop_size,
+    #                                                       x_dim_half=crop_size // 2, y_dim_half=crop_size // 2)
+
+    if kernel_size == '2d' or (kernel_size == '3d' and contrast_type != 't2s'):
+        crop_size = 64
+    else:  # i.e. kernel_size == '3d' and contrast_type != 't2s'
+        crop_size = 96
     # crop image around the spinal cord centerline
     sct.log.info("Cropping the image around the spinal cord...")
     fname_crop = sct.add_suffix(fname_res, '_crop')
@@ -628,8 +786,10 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, ctr_
     # normalize the intensity of the images
     sct.log.info("Normalizing the intensity...")
     fname_norm = sct.add_suffix(fname_crop, '_norm')
-    apply_intensity_normalization(img_path=fname_crop, fname_out=fname_norm)
-
+    norm_model_fname = os.path.join(path_sct, 'data', 'deepseg_sc_models', '{}_sc_nyul.pkl'.format(contrast_type))
+    params_norm = norm_model_fname if os.path.isfile(norm_model_fname) else None
+    print params_norm
+    apply_intensity_normalization(img_path=fname_crop, fname_out=fname_norm, params=params_norm)
 
     if kernel_size == '2d':
         segmentation_model_fname = os.path.join(path_sct, 'data', 'deepseg_sc_models', '{}_sc.h5'.format(contrast_type))
@@ -640,16 +800,30 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, ctr_
                                 input_size=(crop_size, crop_size),
                                 fname_in=fname_norm,
                                 fname_out=fname_seg_crop)
-
-        fname_seg_res_RPI = sct.add_suffix(file_fname, '_res_RPI_seg')
-        uncrop_image(fname_ref=fname_res,
-                    fname_out=fname_seg_res_RPI,
-                    data_crop=seg_crop_data,
-                    x_crop_lst=X_CROP_LST,
-                    y_crop_lst=Y_CROP_LST)
-
     elif kernel_size == '3d':
-        pass
+        fname_res3d = sct.add_suffix(fname_norm, '_resampled3d')
+        spinalcordtoolbox.resample.nipy_resample.resample_file(fname_norm, fname_res3d, '0.5x0.5x0.5',
+                                                               'mm', 'linear', verbose=0)
+
+        segmentation_model_fname = os.path.join(path_sct, 'data', 'deepseg_sc_models', '{}_sc_3d.h5'.format(contrast_type))
+        fname_seg_crop_res = sct.add_suffix(fname_res3d, '_seg')
+        segment_3d(model_fname=segmentation_model_fname,
+                    contrast_type=contrast_type,
+                    fname_in=fname_res3d,
+                    fname_out=fname_seg_crop_res)
+
+        fname_seg_res2d = sct.add_suffix(fname_seg_crop_res, '_resampled2d')
+        initial_2d_resolution = 'x'.join(['0.5', '0.5', str(input_resolution[2])])
+        spinalcordtoolbox.resample.nipy_resample.resample_file(fname_seg_crop_res, fname_seg_res2d, initial_2d_resolution,
+                                                               'mm', 'linear', verbose=0)
+        seg_crop_data = Image(fname_seg_res2d).data
+
+    fname_seg_res_RPI = sct.add_suffix(file_fname, '_res_RPI_seg')
+    uncrop_image(fname_ref=fname_res,
+                fname_out=fname_seg_res_RPI,
+                data_crop=seg_crop_data,
+                x_crop_lst=X_CROP_LST,
+                y_crop_lst=Y_CROP_LST)
 
     # resample to initial resolution
     sct.log.info("Resampling the segmentation to the original image resolution...")
