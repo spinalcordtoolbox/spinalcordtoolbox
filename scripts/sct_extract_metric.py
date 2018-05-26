@@ -66,9 +66,10 @@ def get_parser():
     # Optional arguments
     parser.add_option(name='-f',
                       type_value='folder',
-                      description='Folder containing WM tract labels, or single label file.',
+                      description='Single label file, or folder that contains WM tract labels.',
                       mandatory=False,
                       default_value=os.path.join("label", "atlas"),
+                      check_file_exist=False,
                       example=os.path.join(path_sct, 'data', 'atlas'))
     parser.add_option(name='-l',
                       type_value='str',
