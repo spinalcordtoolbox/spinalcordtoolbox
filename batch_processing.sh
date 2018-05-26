@@ -100,9 +100,10 @@ sct_deepseg_sc -i t2s.nii.gz -c t2s -qc "$SCT_BP_QC_FOLDER"
 # Segment gray matter
 sct_deepseg_gm -i t2s.nii.gz -qc "$SCT_BP_QC_FOLDER"
 # Register template->t2s (using warping field generated from template<->t2 registration)
-sct_register_multimodal -i $SCT_DIR/data/PAM50/template/PAM50_t2s.nii.gz -iseg $SCT_DIR/data/PAM50/template/PAM50_cord.nii.gz -d t2s.nii.gz -dseg t2s_seg.nii.gz -param step=1,type=seg,algo=centermass:step=2,type=seg,algo=bsplinesyn,slicewise=1,iter=5:step=3,type=im,algo=syn,slicewise=1,iter=5,metric=CC -initwarp ../t2/warp_template2anat.nii.gz
+sct_register_multimodal -i $SCT_DIR/data/PAM50/template/PAM50_t2s.nii.gz -iseg $SCT_DIR/data/PAM50/template/PAM50_cord.nii.gz -d t2s.nii.gz -dseg t2s_seg.nii.gz -param step=1,type=seg,algo=centermass:step=2,type=seg,algo=bsplinesyn,slicewise=1,iter=3:step=3,type=im,algo=syn,slicewise=1,iter=1,metric=CC -initwarp ../t2/warp_template2anat.nii.gz -initwarpinv ../t2/warp_anat2template.nii.gz
 # rename warping fields for clarity
 mv warp_PAM50_t2s2t2s.nii.gz warp_template2t2s.nii.gz
+mv warp_t2s2PAM50_t2s.nii.gz warp_t2s2template.nii.gz
 # Warp template
 sct_warp_template -d t2s.nii.gz -w warp_template2t2s.nii.gz
 # Subtract GM segmentation from cord segmentation to obtain WM segmentation
@@ -110,16 +111,16 @@ sct_maths -i t2s_seg.nii.gz -sub t2s_gmseg.nii.gz -o t2s_wmseg.nii.gz
 # Compute cross-sectional area (CSA) of the gray and white matter between C2 and C5
 sct_process_segmentation -i t2s_wmseg.nii.gz -p csa -vert 2:5 -ofolder csa_wm
 sct_process_segmentation -i t2s_gmseg.nii.gz -p csa -vert 2:5 -ofolder csa_gm
-# OPTIONAL: SEGMENT GRAY MATTER AND USE IT TO IMPROVE TEMPLATE REGISTRATION
-# <<<
-# Register WM/GM template to WM/GM seg
-# sct_register_graymatter -gm mt0_crop_reg_gmseg.nii.gz -wm mt0_crop_reg_wmseg.nii.gz -w warp_template2mt.nii.gz -winv warp_mt2template.nii.gz
-# rename warping fields for clarity
-# mv warp_template2mt_reg_gm.nii.gz warp_template2mt.nii.gz
-# mv warp_mt2template_reg_gm.nii.gz warp_mt2template.nii.gz
-# warp template (this time corrected for internal structure)
-# sct_warp_template -d mt1_crop.nii.gz -w warp_template2mt.nii.gz
-# >>>
+# OPTIONAL: Update template registration using information from gray matter segmentation
+# # <<<
+# # Register WM/GM template to WM/GM seg
+# sct_register_graymatter -gm t2s_gmseg.nii.gz -wm t2s_wmseg.nii.gz -w warp_template2t2s.nii.gz -winv warp_t2s2template.nii.gz
+# # Rename warping fields for clarity
+# mv warp_template2t2s_reg_gm.nii.gz warp_template2t2s.nii.gz
+# mv warp_t2s2template_reg_gm.nii.gz warp_t2s2template.nii.gz
+# # Warp template (this time corrected for internal structure)
+# sct_warp_template -d t2s.nii.gz -w warp_template2t2s.nii.gz
+# # >>>
 cd ..
 
 
