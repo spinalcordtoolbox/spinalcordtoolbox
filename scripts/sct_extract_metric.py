@@ -65,10 +65,11 @@ def get_parser():
                       example='FA.nii.gz')
     # Optional arguments
     parser.add_option(name='-f',
-                      type_value='str',
-                      description='Single label file, or folder that containe WM tract labels.',
+                      type_value='folder',
+                      description='Single label file, or folder that contains WM tract labels.',
                       mandatory=False,
                       default_value=os.path.join("label", "atlas"),
+                      check_file_exist=False,
                       example=os.path.join(path_sct, 'data', 'atlas'))
     parser.add_option(name='-l',
                       type_value='str',
