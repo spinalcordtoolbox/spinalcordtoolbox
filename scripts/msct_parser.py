@@ -220,14 +220,14 @@ class Option:
         no_image = False
         param_tmp = str()
         if param.lower().endswith('.nii'):
-            if self.parser.check_file_exist:
+            if self.check_file_exist:
                 nii = os.path.isfile(param)
                 niigz = os.path.isfile(param + '.gz')
             else:
                 nii, niigz = True, False
             param_tmp = param[:-4]
         elif param.lower().endswith('.nii.gz'):
-            if self.parser.check_file_exist:
+            if self.check_file_exist:
                 niigz = os.path.isfile(param)
                 nii = os.path.isfile(param[:-3])
             else:
@@ -249,14 +249,14 @@ class Option:
 
     def checkFolder(self, param):
         # check if the folder exist. If not, create it.
-        if self.parser.check_file_exist:
+        if self.check_file_exist:
             if not os.path.isdir(param):
                 self.parser.usage.error("Option " + self.name + " folder doesn't exist: " + param)
         return param
 
     def checkFolderCreation(self, param):
         # check if the folder exist. If not, create it.
-        if self.parser.check_file_exist:
+        if self.check_file_exist:
             result_creation = sct.create_folder(param)
         else:
             result_creation = 0  # no need for checking
@@ -279,7 +279,6 @@ class Parser:
         self.spelling = SpellingChecker()
         self.errors = ''
         self.usage = Usage(self, file_name)
-        self.check_file_exist = True
 
     def add_option(self, name, type_value=None, description=None, mandatory=False, example=None, help=None,
                    default_value=None, deprecated_by=None, deprecated_rm=False, deprecated=False, list_no_image=None,
@@ -304,9 +303,7 @@ class Parser:
         self.options[name] = Option(name, type_value, description, mandatory, example, default_value, help, self,
                                     order, deprecated_by, deprecated_rm, deprecated, list_no_image, check_file_exist)
 
-    def parse(self, arguments, check_file_exist=True):
-        # if you only want to parse a string and not checking for file existence, change flag check_file_exist
-        self.check_file_exist = check_file_exist
+    def parse(self, arguments):
 
         # if no arguments, sct.printv(usage and quit)
         if len(arguments) == 0 and len([opt for opt in self.options if self.options[opt].mandatory]) != 0:
