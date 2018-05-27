@@ -135,20 +135,14 @@ def check_and_correct_segmentation(fname_segmentation, fname_centerline, folder_
     # remove temporary files
     if remove_temp_files:
         sct.printv("\nRemove temporary files...", verbose)
-        shutil.rmtree(path_tmp, ignore_errors=True)
+        sct.rmtree(path_tmp)
 
 
 def get_parser():
     # Initialize the parser
     parser = Parser(__file__)
     parser.usage.set_description('''This program segments automatically the spinal cord on T1- and T2-weighted images, for any field of view. You must provide the type of contrast, the image as well as the output folder path.
-Initialization is provided by a spinal cord detection module based on the elliptical Hough transform on multiple axial slices. The result of the detection is available as a PNG image using option -detection-display.
-Parameters of the spinal cord detection are :
- - the position (in inferior-superior direction) of the initialization
- - the number of axial slices
- - the gap (in pixel) between two axial slices
- - the approximate radius of the spinal cord
-
+The segmentation follows the spinal cord centerline, which is provided by an automatic tool: Optic. The initialization of the segmentation is made on the median slice of the centerline, and can be ajusted using the -init parameter. The initial radius of the tubular mesh that will be propagated should be adapted to size of the spinal cord on the initial propagation slice.
 Primary output is the binary mask of the spinal cord segmentation. This method must provide VTK triangular mesh of the segmentation (option -mesh). Spinal cord centerline is available as a binary image (-centerline-binary) or a text file with coordinates in world referential (-centerline-coord).
 Cross-sectional areas along the spinal cord can be available (-cross).
 Several tips on segmentation correction can be found on the "Correction Tips" page of the documentation while advices on parameters adjustments can be found on the "Parameters" page.
@@ -231,14 +225,7 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       type_value=None,
                       description="output: low-resolution mesh",
                       mandatory=False)
-    parser.add_option(name="-detect-nii",
-                      type_value=None,
-                      description="output: spinal cord detection as a nifti image",
-                      mandatory=False)
-    parser.add_option(name="-detect-png",
-                      type_value=None,
-                      description="output: spinal cord detection as a PNG image",
-                      mandatory=False)
+
 
     parser.usage.addSection("\nOptions helping the segmentation")
     parser.add_option(name="-init-centerline",
@@ -266,33 +253,21 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       type_value="float",
                       description="approximate radius (in mm) of the spinal cord, default is 4",
                       mandatory=False)
-    parser.add_option(name="-detect-n",
-                      type_value="int",
-                      description="number of axial slices computed in the detection process, default is 4",
-                      mandatory=False)
-    parser.add_option(name="-detect-gap",
-                      type_value="int",
-                      description="gap along Z direction (in mm) for the detection process, default is 4",
-                      mandatory=False)
-    parser.add_option(name="-init-validation",
-                      type_value=None,
-                      description="enable validation on spinal cord detection based on discriminant analysis",
-                      mandatory=False)
     parser.add_option(name="-nbiter",
                       type_value="int",
-                      description="stop condition: number of iteration for the propagation for both direction, default is 200",
+                      description="stop condition (affects only the Z propogation): number of iteration for the propagation for both direction, default is 200",
                       mandatory=False)
     parser.add_option(name="-max-area",
                       type_value="float",
-                      description="[mm^2], stop condition: maximum cross-sectional area, default is 120",
+                      description="[mm^2], stop condition (affects only the Z propogation): maximum cross-sectional area, default is 120",
                       mandatory=False)
     parser.add_option(name="-max-deformation",
                       type_value="float",
-                      description="[mm], stop condition: maximum deformation per iteration, default is 2.5",
+                      description="[mm], stop condition (affects only the Z propogation): maximum deformation per iteration, default is 2.5",
                       mandatory=False)
     parser.add_option(name="-min-contrast",
                       type_value="float",
-                      description="[intensity value], stop condition: minimum local SC/CSF contrast, default is 50",
+                      description="[intensity value], stop condition (affects only the Z propogation): minimum local SC/CSF contrast, default is 50",
                       mandatory=False)
     parser.add_option(name="-d",
                       type_value="float",
@@ -309,24 +284,67 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
     parser.add_option(name='-qc',
                       type_value='folder_creation',
                       description='The path where the quality control generated content will be saved',
-                      default_value=os.path.expanduser('~/qc_data'))
-    parser.add_option(name='-noqc',
-                      type_value=None,
-                      description='Prevent the generation of the QC report',
-                      mandatory=False)
+                      default_value=None)
     parser.add_option(name='-igt',
                       type_value='image_nifti',
                       description='File name of ground-truth segmentation.',
                       mandatory=False)
+
+    ### DEPRECATED OPTIONS
+    parser.add_option(name="-detect-nii",
+                      type_value=None,
+                      description="output: spinal cord detection as a nifti image",
+                      mandatory=False,
+                      deprecated=True)
+    parser.add_option(name="-detect-png",
+                      type_value=None,
+                      description="output: spinal cord detection as a PNG image",
+                      mandatory=False,
+                      deprecated=True)
+    parser.add_option(name="-detect-n",
+                      type_value="int",
+                      description="number of axial slices computed in the detection process, default is 4",
+                      mandatory=False,
+                      deprecated=True)
+    parser.add_option(name="-detect-gap",
+                      type_value="int",
+                      description="gap along Z direction (in mm) for the detection process, default is 4",
+                      mandatory=False,
+                      deprecated=True)
+    parser.add_option(name="-init-validation",
+                      type_value=None,
+                      description="enable validation on spinal cord detection based on discriminant analysis",
+                      mandatory=False,
+                      deprecated=True)
+
     return parser
 
 
+def generate_qc(fn_in, fn_seg, args, path_qc):
+    """
+    Generate a QC entry allowing to quickly review the segmentation process.
+    """
+
+    import spinalcordtoolbox.reports.qc as qc
+    import spinalcordtoolbox.reports.slice as qcslice
+
+    qc.add_entry(
+     src=fn_in,
+     process="sct_propseg",
+     args=args,
+     path_qc=path_qc,
+     plane='Axial',
+     qcslice=qcslice.Axial([Image(fn_in), Image(fn_seg)]),
+     qcslice_operations=[qc.QcImage.listed_seg],
+     qcslice_layout=lambda x: x.mosaic(),
+    )
+
+
 if __name__ == "__main__":
-    sct.start_stream_logger()
+    sct.init_sct()
     parser = get_parser()
     args = sys.argv[1:]
     arguments = parser.parse(args)
-
     fname_input_data = arguments["-i"]
     fname_data = os.path.abspath(fname_input_data)
     contrast_type = arguments["-c"]
@@ -335,51 +353,54 @@ if __name__ == "__main__":
     contrast_type_propseg = contrast_type_conversion[contrast_type]
 
     # Building the command
-    cmd = 'isct_propseg -i "%s" -t %s' % (fname_data, contrast_type_propseg)
+    cmd = ['isct_propseg', '-i', fname_data, '-t', contrast_type_propseg]
 
     if "-ofolder" in arguments:
         folder_output = arguments["-ofolder"]
     else:
         folder_output = './'
-    cmd += ' -o "%s"' % folder_output
+    cmd += ['-o', folder_output]
     if not os.path.isdir(folder_output) and os.path.exists(folder_output):
         sct.log.error("output directory %s is not a valid directory" % folder_output)
     if not os.path.exists(folder_output):
         os.makedirs(folder_output)
 
     if "-down" in arguments:
-        cmd += " -down " + str(arguments["-down"])
+        cmd += ["-down", str(arguments["-down"])]
     if "-up" in arguments:
-        cmd += " -up " + str(arguments["-up"])
+        cmd += ["-up", str(arguments["-up"])]
 
     remove_temp_files = 1
     if "-r" in arguments:
         remove_temp_files = int(arguments["-r"])
+
+    path_qc = arguments.get("-qc", None)
+
     verbose = 0
     if "-v" in arguments:
         if arguments["-v"] is "1":
             verbose = 2
-            cmd += " -verbose"
+            cmd += ["-verbose"]
 
     # Output options
     if "-mesh" in arguments:
-        cmd += " -mesh"
+        cmd += ["-mesh"]
     if "-centerline-binary" in arguments:
-        cmd += " -centerline-binary"
+        cmd += ["-centerline-binary"]
     if "-CSF" in arguments:
-        cmd += " -CSF"
+        cmd += ["-CSF"]
     if "-centerline-coord" in arguments:
-        cmd += " -centerline-coord"
+        cmd += ["-centerline-coord"]
     if "-cross" in arguments:
-        cmd += " -cross"
+        cmd += ["-cross"]
     if "-init-tube" in arguments:
-        cmd += " -init-tube"
+        cmd += ["-init-tube"]
     if "-low-resolution-mesh" in arguments:
-        cmd += " -low-resolution-mesh"
+        cmd += ["-low-resolution-mesh"]
     if "-detect-nii" in arguments:
-        cmd += " -detect-nii"
+        cmd += ["-detect-nii"]
     if "-detect-png" in arguments:
-        cmd += " -detect-png"
+        cmd += ["-detect-png"]
 
     # Helping options
     use_viewer = None
@@ -391,7 +412,7 @@ if __name__ == "__main__":
         elif str(arguments["-init-centerline"]) == "hough":
             use_optic = False
         else:
-            cmd += " -init-centerline " + str(arguments["-init-centerline"])
+            cmd += ["-init-centerline", str(arguments["-init-centerline"])]
             use_optic = False
     if "-init" in arguments:
         init_option = float(arguments["-init"])
@@ -399,32 +420,32 @@ if __name__ == "__main__":
         if str(arguments["-init-mask"]) == "viewer":
             use_viewer = "mask"
         else:
-            cmd += " -init-mask " + str(arguments["-init-mask"])
+            cmd += ["-init-mask", str(arguments["-init-mask"])]
             use_optic = False
     if "-mask-correction" in arguments:
-        cmd += " -mask-correction " + str(arguments["-mask-correction"])
+        cmd += ["-mask-correction", str(arguments["-mask-correction"])]
     if "-radius" in arguments:
-        cmd += " -radius " + str(arguments["-radius"])
+        cmd += ["-radius", str(arguments["-radius"])]
     if "-detect-n" in arguments:
-        cmd += " -detect-n " + str(arguments["-detect-n"])
+        cmd += ["-detect-n", str(arguments["-detect-n"])]
     if "-detect-gap" in arguments:
-        cmd += " -detect-gap " + str(arguments["-detect-gap"])
+        cmd += ["-detect-gap", str(arguments["-detect-gap"])]
     if "-init-validation" in arguments:
-        cmd += " -init-validation"
+        cmd += ["-init-validation"]
     if "-nbiter" in arguments:
-        cmd += " -nbiter " + str(arguments["-nbiter"])
+        cmd += ["-nbiter", str(arguments["-nbiter"])]
     if "-max-area" in arguments:
-        cmd += " -max-area " + str(arguments["-max-area"])
+        cmd += ["-max-area", str(arguments["-max-area"])]
     if "-max-deformation" in arguments:
-        cmd += " -max-deformation " + str(arguments["-max-deformation"])
+        cmd += ["-max-deformation", str(arguments["-max-deformation"])]
     if "-min-contrast" in arguments:
-        cmd += " -min-contrast " + str(arguments["-min-contrast"])
+        cmd += ["-min-contrast", str(arguments["-min-contrast"])]
     if "-d" in arguments:
-        cmd += " -d " + str(arguments["-d"])
+        cmd += ["-d", str(arguments["-d"])]
     if "-distance-search" in arguments:
-        cmd += " -dsearch " + str(arguments["-distance-search"])
+        cmd += ["-dsearch", str(arguments["-distance-search"])]
     if "-alpha" in arguments:
-        cmd += " -alpha " + str(arguments["-alpha"])
+        cmd += ["-alpha", str(arguments["-alpha"])]
 
     # check if input image is in 3D. Otherwise itk image reader will cut the 4D image in 3D volumes and only take the first one.
     from msct_image import Image
@@ -440,16 +461,16 @@ if __name__ == "__main__":
         from spinalcordtoolbox.gui.base import AnatomicalParams
         from spinalcordtoolbox.gui.centerline import launch_centerline_dialog
 
-        starting_slice = arguments.get('-init', 0)
-
         params = AnatomicalParams()
-        params.starting_slice = starting_slice
         if use_viewer == 'mask':
             params.num_points = 3
-            # starting slice in the middle of the FOV
-            params.starting_slice = round(nz / 2)
-        if use_viewer == 'centerline' and not starting_slice:
-            params.starting_slice = 0
+            params.interval_in_mm = 15  # superior-inferior interval between two consecutive labels
+            params.starting_slice = 'midfovminusinterval'
+        if use_viewer == 'centerline':
+            # setting maximum number of points to a reasonable value
+            params.num_points = 20
+            params.interval_in_mm = 30
+            params.starting_slice = 'top'
         image = Image(fname_data)
         tmp_output_file = Image(image)
         tmp_output_file.data *= 0
@@ -463,9 +484,9 @@ if __name__ == "__main__":
         controller.as_niftii(tmp_output_file.absolutepath)
         # add mask filename to parameters string
         if use_viewer == "centerline":
-            cmd += " -init-centerline " + tmp_output_file.absolutepath
+            cmd += ["-init-centerline", tmp_output_file.absolutepath]
         elif use_viewer == "mask":
-            cmd += " -init-mask " + tmp_output_file.absolutepath
+            cmd += ["-init-mask", tmp_output_file.absolutepath]
 
     # If using OptiC, enabled by default
     elif use_optic:
@@ -480,12 +501,12 @@ if __name__ == "__main__":
                                                                     folder_output, remove_temp_files,
                                                                     init_option, verbose=verbose)
         if init_option is not None:
-            cmd += " -init " + str(init_option_optic)
+            cmd += ["-init", str(init_option_optic)]
 
-        cmd += " -init-centerline {}".format(optic_filename)
+        cmd += ["-init-centerline", optic_filename]
 
     # enabling centerline extraction by default
-    cmd += ' -centerline-binary'
+    cmd += ['-centerline-binary']
     status, output = sct.run(cmd, verbose, raise_exception=False)
 
     # check status is not 0
@@ -513,25 +534,7 @@ if __name__ == "__main__":
         sct.log.info("Remove temporary files...")
         os.remove(tmp_output_file.absolutepath)
 
-    if '-qc' in arguments and not arguments.get('-noqc', False):
-        qc_path = arguments['-qc']
-
-        import spinalcordtoolbox.reports.qc as qc
-        import spinalcordtoolbox.reports.slice as qcslice
-
-        param = qc.Params(fname_input_data, 'sct_propseg', args, 'Axial', qc_path)
-        report = qc.QcReport(param, '')
-
-        @qc.QcImage(report, 'none', [qc.QcImage.listed_seg, ])
-        def test(qslice):
-            return qslice.mosaic()
-
-        try:
-            test(qcslice.Axial(Image(fname_input_data), Image(fname_seg)))
-            sct.log.info('Sucessfully generated the QC results in %s' % param.qc_results)
-            sct.log.info('Use the following command to see the results in a browser:')
-            sct.log.info('sct_qc -folder %s' % qc_path)
-        except:
-            sct.log.warning('Issue when creating QC report.')
+    if path_qc is not None:
+        generate_qc(fname_input_data, fname_seg, args, os.path.abspath(path_qc))
 
     sct.display_viewer_syntax([fname_input_data, fname_seg], colormaps=['gray', 'red'], opacities=['', '0.7'])

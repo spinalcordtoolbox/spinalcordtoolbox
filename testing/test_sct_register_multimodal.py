@@ -35,8 +35,10 @@ def test_integrity(param_test):
     """
     # check if ground truth exists.
     if hasattr(param_test, 'fname_gt'):
-    # compare result and groundtruth images
+        # compare result and groundtruth images
         param_test = compare_two_images('mt0_reg.nii.gz', param_test.fname_gt, param_test)
+    else:
+        param_test.output += '\n--> N/A'
     return param_test
 
 
@@ -44,7 +46,7 @@ def compare_two_images(fname_result, fname_gt, param_test):
     """
     Compare two images and return status=99 if difference is above threshold
     """
-    output = '\nComparing: ' + fname_result + ' and ' + fname_gt
+    param_test.output += '\nComparing: ' + fname_result + ' and ' + fname_gt
 
     im_gt = Image(fname_gt)
     data_gt = im_gt.data

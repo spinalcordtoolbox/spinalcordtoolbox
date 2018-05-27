@@ -25,12 +25,11 @@ class Param:
         self.create_log_file = 0
         self.complete_test = 0
 
+import argparse
 
+import sys, io, os, platform, importlib
 
-import sys, io, os, commands, platform, importlib
 import sct_utils as sct
-from msct_parser import Parser
-
 
 class bcolors:
     HEADER = '\033[95m'
@@ -50,10 +49,15 @@ def resolve_module(framework_name):
     """
     # Framework name : (module name, suppress stderr)
     modules_map = {
+        'futures': ('concurrent.futures', False),
         'scikit-image': ('skimage', False),
         'scikit-learn': ('sklearn', False),
         'pyqt': ('PyQt4', False),
         'Keras': ('keras', True),
+        'futures': ("concurrent.futures", False),
+        'opencv': ('cv2', False),
+        'mkl-service': (None, False),
+        'pytest-cov': ('pytest_cov', False),
     }
 
     try:
@@ -71,9 +75,18 @@ def module_import(module_name, suppress_stderr=False):
     """
     if suppress_stderr:
         original_stderr = sys.stderr
-        sys.stderr = io.BytesIO()
-        module = importlib.import_module(module_name)
-        sys.stderr = original_stderr
+        if sys.hexversion < 0x03000000:
+            sys.stderr = io.BytesIO()
+        else:
+            sys.stderr = io.TextIOWrapper(io.BytesIO(), sys.stderr.encoding)
+        try:
+            module = importlib.import_module(module_name)
+        except Exception as e:
+            sys.stderr = original_stderr
+            raise
+        else:
+            sys.stderr = original_stderr
+
     else:
         module = importlib.import_module(module_name)
 
@@ -83,6 +96,10 @@ def module_import(module_name, suppress_stderr=False):
 # MAIN
 # ==========================================================================================
 def main():
+    path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
+    print("SCT info:")
+    print("- version: {}".format(sct.__version__))
+    print("- path: {0}".format(path_sct))
 
     # initialization
     fsl_is_working = 1
@@ -98,10 +115,10 @@ def main():
 
     # Check input parameters
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
-    if '-c' in arguments:
+    arguments = parser.parse_args()
+    if arguments.complete:
         complete_test = 1
-    if '-log' in arguments:
+    if arguments.generate_log:
         create_log_file = 1
 
     # use variable "verbose" when calling sct.run for more clarity
@@ -131,6 +148,7 @@ def main():
         os_running = 'osx'
     elif (platform_running.find('linux') != -1):
         os_running = 'linux'
+
     print('OS: ' + os_running + ' (' + platform.platform() + ')')
 
     # Check number of CPU cores
@@ -141,15 +159,6 @@ def main():
     # check RAM
     sct.checkRAM(os_running, 0)
 
-    path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
-    print('SCT path: {0}'.format(path_sct))
-
-    # fetch SCT version
-    install_type, sct_commit, sct_branch, version_sct = sct.get_sct_version()
-    print('Installation type: %s' % install_type)
-    print('  version: ' + version_sct)
-    print('  commit: ' + sct_commit)
-    print('  branch: ' + sct_branch)
 
     # check if Python path is within SCT path
     print_line('Check Python executable')
@@ -172,7 +181,9 @@ def main():
     version_requirements = get_version_requirements()
     for i in version_requirements:
         module_name, suppress_stderr = resolve_module(i)
-        print_line('Check if ' + i + ' (' + version_requirements.get(i) + ') is installed')
+        if module_name is None:
+            continue
+        print_line('Check if %s (%s) is installed' % (i, version_requirements.get(i)))
         try:
             module = module_import(module_name, suppress_stderr)
             # get version
@@ -197,12 +208,21 @@ def main():
     # loop across python packages -- PIP
     version_requirements_pip = get_version_requirements_pip()
     for i in version_requirements_pip:
+
         module_name, suppress_stderr = resolve_module(i)
+
         print_line('Check if ' + i + ' (' + version_requirements_pip.get(i) + ') is installed')
         try:
             module = module_import(module_name, suppress_stderr)
-            # get version
-            version = module.__version__
+            if module_name in ("raven",):
+                version = module.VERSION
+            else:
+                try:
+                    version = module.__version__
+                except AttributeError:
+                    # Futures package as no embedded version info
+                    version = version_requirements_pip[i]
+
             # check if version matches requirements
             if check_package_version(version, version_requirements_pip, i):
                 print_ok()
@@ -214,16 +234,21 @@ def main():
             install_software = 1
 
     # CHECK DEPENDENT MODULES (installed by nibabel/dipy):
-    print_line('Check if numpy is installed')
+    sys.stdout.write('Check if numpy is installed')
+    sys.stdout.flush()
     try:
-        importlib.import_module('numpy')
+        np = importlib.import_module('numpy')
+        sys.stdout.write(' ({})'.format(np.__version__).ljust(25, '.'))
         print_ok()
     except ImportError:
+        sys.stdout.write(' (........................')
         print_fail()
         install_software = 1
-    print_line('Check if scipy is installed')
+    sys.stdout.write('Check if scipy is installed')
+    sys.stdout.flush()
     try:
-        importlib.import_module('scipy')
+        sp = importlib.import_module('scipy')
+        sys.stdout.write(' ({})'.format(sp.__version__).ljust(25, '.'))
         print_ok()
     except ImportError:
         print_fail()
@@ -311,18 +336,8 @@ def main():
 # print without carriage return
 # ==========================================================================================
 def print_line(string):
-    sys.stdout.write(string + make_dot_lines(string))
+    sys.stdout.write(string.ljust(52, '.'))
     sys.stdout.flush()
-
-
-# fill line with dots
-# ==========================================================================================
-def make_dot_lines(string):
-    if len(string) < 52:
-        dot_lines = '.' * (52 - len(string))
-        return dot_lines
-    else:
-        return ''
 
 
 def print_ok():
@@ -348,11 +363,14 @@ def get_version_requirements():
     file = open(os.path.join(path_sct, "install", "requirements", "requirementsConda.txt"))
     dict = {}
     while True:
-        line = file.readline()
+        line = file.readline().rstrip()
         if line == "":
             break  # OH GOD HELP
         arg = line.split("==")
-        dict[arg[0]] = arg[1].rstrip("\n")
+        if len(arg) == 1:
+            dict[arg[0]] = None
+        else:
+            dict[arg[0]] = arg[1]
     file.close()
     return dict
 
@@ -372,21 +390,10 @@ def get_version_requirements_pip():
     return dict
 
 
-def get_package_version(package_name):
-    cmd = "conda list " + package_name
-    output = commands.getoutput(cmd)
-    while True:
-        line = output.split("\n")
-        for i in line:
-            if i.find(package_name) != -1:
-                vers = i.split(' ')
-                vers[:] = (value for value in vers if value != "")
-                return vers[1]
-        raise Exception("Could not find package: " + package_name)
-
-
 def check_package_version(installed, required, package_name):
     if package_name in required:
+        if required[package_name] is None:
+            return True
         if required[package_name] == installed:
             return True
         return False
@@ -395,27 +402,29 @@ def check_package_version(installed, required, package_name):
 # ==========================================================================================
 def get_parser():
     # Initialize the parser
-    parser = Parser(__file__)
-    parser.usage.set_description('Check the installation and environment variables of the'
-                                 ' toolbox and its dependencies.')
-    parser.add_option(name="-c",
-                      description="Complete test.",
-                      mandatory=False)
-    parser.add_option(name="-log",
-                      description="Generate log file.",
-                      mandatory=False)
-    parser.add_option(name="-l",
-                      type_value=None,
-                      description="Generate log file.",
-                      deprecated_by="-log",
-                      mandatory=False)
+
+    parser = argparse.ArgumentParser(
+     description='Check the installation and environment variables of the'
+                                 ' toolbox and its dependencies.',
+    )
+
+    parser.add_argument("--complete", "-c",
+     help="Complete test.",
+     action="store_true",
+    )
+
+    parser.add_argument("--generate-log", "-log", "-l",
+     help="Generate log file.",
+     action="store_true",
+    )
+
     return parser
 
 
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
-    sct.start_stream_logger()
+    sct.init_sct()
     # initialize parameters
     param = Param()
     # call main function

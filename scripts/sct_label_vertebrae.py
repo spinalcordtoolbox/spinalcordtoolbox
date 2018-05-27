@@ -16,7 +16,7 @@
 # TODO: find automatically if -c =t1 or t2 (using dilated seg)
 # TODO: address the case when there is more than one max correlation
 
-import sys, io, os, shutil, glob
+import sys, io, os
 
 import numpy as np
 from scipy.ndimage.measurements import center_of_mass
@@ -25,7 +25,7 @@ from sct_maths import mutual_information
 from msct_parser import Parser
 from msct_image import Image
 import sct_utils as sct
-from sct_warp_template import get_file_label
+from spinalcordtoolbox.metadata import get_file_label
 
 # get path of SCT
 path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
@@ -48,6 +48,7 @@ class Param:
         self.shift_AP_visu = 15  # 0#15  # shift AP for displaying disc values
         self.smooth_factor = [3, 1, 1]  # [3, 1, 1]
         self.gaussian_std = 1.0  # STD of the Gaussian function, centered at the most rostral point of the image, and used to weight C2-C3 disk location finding towards the rostral portion of the FOV. Values to set between 0.1 (strong weighting) and 999 (no weighting).
+        self.path_qc = None
 
     # update constructor with user's parameters
     def update(self, param_user):
@@ -110,6 +111,10 @@ sct_label_vertebrae -i t2.nii.gz -s t2_seg_manual.nii.gz  "$(< init_label_verteb
                       type_value='file',
                       description='Initialize labeling by providing a text file which includes either -initz or -initcenter flag.',
                       mandatory=False)
+    parser.add_option(name="-initlabel",
+                      type_value='file',
+                      description='Initialize vertebral labeling by providing a nifti file that has a single disc label. An example of such file is a single voxel with value "3", which would be located at the posterior tip of C2-C3 disc. Such label file can be created using: sct_label_utils -i IMAGE_REF -create-viewer 3',
+                      mandatory=False)
     parser.add_option(name="-ofolder",
                       type_value="folder_creation",
                       description="Output folder.",
@@ -162,11 +167,7 @@ sct_label_vertebrae -i t2.nii.gz -s t2_seg_manual.nii.gz  "$(< init_label_verteb
     parser.add_option(name='-qc',
                       type_value='folder_creation',
                       description='The path where the quality control generated content will be saved',
-                      default_value=os.path.expanduser('~/qc_data'))
-    parser.add_option(name='-noqc',
-                      type_value=None,
-                      description='Prevent the generation of the QC report',
-                      mandatory=False)
+                      default_value=param_default.path_qc)
     return parser
 
 
@@ -178,6 +179,9 @@ def main(args=None):
     initz = ''
     initcenter = ''
     initc2 = 'auto'
+    fname_initlabel = ''
+    fname_labelz = 'labelz.nii.gz'
+    initauto = False
     param = Param()
 
     # check user arguments
@@ -187,8 +191,8 @@ def main(args=None):
     # Get parser info
     parser = get_parser()
     arguments = parser.parse(args)
-    fname_in = arguments["-i"]
-    fname_seg = arguments['-s']
+    fname_in = os.path.abspath(arguments["-i"])
+    fname_seg = os.path.abspath(arguments['-s'])
     contrast = arguments['-c']
     path_template = arguments['-t']
     # if '-o' in arguments:
@@ -199,6 +203,8 @@ def main(args=None):
         path_output = arguments['-ofolder']
     else:
         path_output = os.curdir
+    param.path_qc = arguments.get("-qc", None)
+
     if '-initz' in arguments:
         initz = arguments['-initz']
     if '-initcenter' in arguments:
@@ -214,12 +220,15 @@ def main(args=None):
                 initz = [int(x) for x in arg_initfile[idx_arg + 1].split(',')]
             if arg == '-initcenter':
                 initcenter = int(arg_initfile[idx_arg + 1])
+    if '-initlabel' in arguments:
+        # get absolute path of label
+        fname_initlabel = os.path.abspath(arguments['-initlabel'])
     if '-initc2' in arguments:
         initc2 = 'manual'
     if '-param' in arguments:
         param.update(arguments['-param'][0])
     verbose = int(arguments['-v'])
-    remove_tmp_files = int(arguments['-r'])
+    remove_temp_files = int(arguments['-r'])
     denoise = int(arguments['-denoise'])
     laplacian = int(arguments['-laplacian'])
 
@@ -227,8 +236,8 @@ def main(args=None):
 
     # Copying input data to tmp folder
     sct.printv('\nCopying input data to tmp folder...', verbose)
-    sct.run('sct_convert -i ' + fname_in + ' -o ' + os.path.join(path_tmp, "data.nii"))
-    sct.run('sct_convert -i ' + fname_seg + ' -o ' + os.path.join(path_tmp, "segmentation.nii.gz"))
+    sct.run(['sct_convert', '-i', fname_in, '-o', os.path.join(path_tmp, "data.nii")])
+    sct.run(['sct_convert', '-i', fname_seg, '-o', os.path.join(path_tmp, "segmentation.nii.gz")])
 
     # Go go temp folder
     curdir = os.getcwd()
@@ -236,53 +245,66 @@ def main(args=None):
 
     # create label to identify disc
     sct.printv('\nCreate label to identify disc...', verbose)
-    initauto = False
     if initz:
-        create_label_z('segmentation.nii.gz', initz[0], initz[1])  # create label located at z_center
+        create_label_z('segmentation.nii.gz', initz[0], initz[1], fname_labelz=fname_labelz)  # create label located at z_center
     elif initcenter:
         # find z centered in FOV
         nii = Image('segmentation.nii.gz')
         nii.change_orientation('RPI')  # reorient to RPI
         nx, ny, nz, nt, px, py, pz, pt = nii.dim  # Get dimensions
         z_center = int(round(nz / 2))  # get z_center
-        create_label_z('segmentation.nii.gz', z_center, initcenter)  # create label located at z_center
+        create_label_z('segmentation.nii.gz', z_center, initcenter, fname_labelz=fname_labelz)  # create label located at z_center
+    elif fname_initlabel:
+        import sct_label_utils
+        # subtract "1" to label value because due to legacy, in this code the disc C2-C3 has value "2", whereas in the
+        # recent version of SCT it is defined as "3". Therefore, when asking the user to define a label, we point to the
+        # new definition of labels (i.e., C2-C3 = 3).
+        sct_label_utils.main(['-i', fname_initlabel, '-add', '-1', '-o', fname_labelz])
+        # dilate label so that it is not lost when applying warping
+        import sct_maths
+        sct_maths.main(['-i', fname_labelz, '-dilate', '3', '-o', fname_labelz])
     else:
         initauto = True
-        # printv('\nERROR: You need to initialize the disc detection algorithm using one of these two options: -initz, -initcenter\n', 1, 'error')
 
     # Straighten spinal cord
     sct.printv('\nStraighten spinal cord...', verbose)
     # check if warp_curve2straight and warp_straight2curve already exist (i.e. no need to do it another time)
-    if os.path.isfile(os.path.join(curdir, "warp_curve2straight.nii.gz")) and os.path.isfile(os.path.join(curdir, "warp_straight2curve.nii.gz")) and os.path.isfile(os.path.join(curdir, "straight_ref.nii.gz")):
+    cache_sig = sct.cache_signature(
+     input_files=[fname_in, fname_seg],
+    )
+    cachefile = os.path.join(curdir, "straightening.cache")
+    if sct.cache_valid(cachefile, cache_sig) and os.path.isfile(os.path.join(curdir, "warp_curve2straight.nii.gz")) and os.path.isfile(os.path.join(curdir, "warp_straight2curve.nii.gz")) and os.path.isfile(os.path.join(curdir, "straight_ref.nii.gz")):
         # if they exist, copy them into current folder
-        sct.printv('WARNING: Straightening was already run previously. Copying warping fields...', verbose, 'warning')
+        sct.printv('Reusing existing warping field which seems to be valid', verbose, 'warning')
         sct.copy(os.path.join(curdir, "warp_curve2straight.nii.gz"), 'warp_curve2straight.nii.gz')
         sct.copy(os.path.join(curdir, "warp_straight2curve.nii.gz"), 'warp_straight2curve.nii.gz')
         sct.copy(os.path.join(curdir, "straight_ref.nii.gz"), 'straight_ref.nii.gz')
         # apply straightening
-        sct.run('sct_apply_transfo -i data.nii -w warp_curve2straight.nii.gz -d straight_ref.nii.gz -o data_straight.nii')
+        sct.run(['sct_apply_transfo', '-i', 'data.nii', '-w', 'warp_curve2straight.nii.gz', '-d', 'straight_ref.nii.gz', '-o', 'data_straight.nii'])
     else:
-        sct.run('sct_straighten_spinalcord -i data.nii -s segmentation.nii.gz -r 0 -qc 0')
+        cmd = ['sct_straighten_spinalcord', '-i', 'data.nii', '-s', 'segmentation.nii.gz', '-r', str(remove_temp_files)]
+        if param.path_qc is not None and os.environ.get("SCT_RECURSIVE_QC", None) == "1":
+            cmd += ['-qc', param.path_qc]
+        sct.run(cmd)
+        sct.cache_save(cachefile, cache_sig)
 
     # resample to 0.5mm isotropic to match template resolution
     sct.printv('\nResample to 0.5mm isotropic...', verbose)
-    sct.run('sct_resample -i data_straight.nii -mm 0.5x0.5x0.5 -x linear -o data_straightr.nii', verbose)
-    # sct.run('sct_resample -i segmentation.nii.gz -mm 0.5x0.5x0.5 -x linear -o segmentationr.nii.gz', verbose)
-    # sct.run('sct_resample -i labelz.nii.gz -mm 0.5x0.5x0.5 -x linear -o labelzr.nii', verbose)
+    sct.run(['sct_resample', '-i', 'data_straight.nii', '-mm', '0.5x0.5x0.5', '-x', 'linear', '-o', 'data_straightr.nii'], verbose=verbose)
 
     # Apply straightening to segmentation
     # N.B. Output is RPI
     sct.printv('\nApply straightening to segmentation...', verbose)
-    sct.run('sct_apply_transfo -i segmentation.nii.gz -d data_straightr.nii -w warp_curve2straight.nii.gz -o segmentation_straight.nii.gz -x linear', verbose)
+    sct.run(['sct_apply_transfo', '-i', 'segmentation.nii.gz', '-d', 'data_straightr.nii', '-w', 'warp_curve2straight.nii.gz', '-o', 'segmentation_straight.nii.gz', '-x', 'linear'], verbose)
     # Threshold segmentation at 0.5
-    sct.run('sct_maths -i segmentation_straight.nii.gz -thr 0.5 -o segmentation_straight.nii.gz', verbose)
+    sct.run(['sct_maths', '-i', 'segmentation_straight.nii.gz', '-thr', '0.5', '-o', 'segmentation_straight.nii.gz'], verbose)
 
     if initauto:
         init_disc = []
     else:
         # Apply straightening to z-label
-        sct.printv('\nDilate z-label and apply straightening...', verbose)
-        sct.run('sct_apply_transfo -i labelz.nii.gz -d data_straightr.nii -w warp_curve2straight.nii.gz -o labelz_straight.nii.gz -x nn', verbose)
+        sct.printv('\nAnd apply straightening to label...', verbose)
+        sct.run(['sct_apply_transfo', '-i', 'labelz.nii.gz', '-d', 'data_straightr.nii', '-w', 'warp_curve2straight.nii.gz', '-o', 'labelz_straight.nii.gz', '-x', 'nn'], verbose)
         # get z value and disk value to initialize labeling
         sct.printv('\nGet z and disc values from straight label...', verbose)
         init_disc = get_z_and_disc_values_from_label('labelz_straight.nii.gz')
@@ -291,19 +313,19 @@ def main(args=None):
     # denoise data
     if denoise:
         sct.printv('\nDenoise data...', verbose)
-        sct.run('sct_maths -i data_straightr.nii -denoise h=0.05 -o data_straightr.nii', verbose)
+        sct.run(['sct_maths', '-i', 'data_straightr.nii', '-denoise', 'h=0.05', '-o', 'data_straightr.nii'], verbose)
 
     # apply laplacian filtering
     if laplacian:
         sct.printv('\nApply Laplacian filter...', verbose)
-        sct.run('sct_maths -i data_straightr.nii -laplacian 1 -o data_straightr.nii', verbose)
+        sct.run(['sct_maths', '-i', 'data_straightr.nii', '-laplacian', '1', '-o', 'data_straightr.nii'], verbose)
 
     # detect vertebral levels on straight spinal cord
     vertebral_detection('data_straightr.nii', 'segmentation_straight.nii.gz', contrast, param, init_disc=init_disc, verbose=verbose, path_template=path_template, initc2=initc2, path_output=path_output)
 
     # un-straighten labeled spinal cord
     sct.printv('\nUn-straighten labeling...', verbose)
-    sct.run('sct_apply_transfo -i segmentation_straight_labeled.nii.gz -d segmentation.nii.gz -w warp_straight2curve.nii.gz -o segmentation_labeled.nii.gz -x nn', verbose)
+    sct.run(['sct_apply_transfo', '-i', 'segmentation_straight_labeled.nii.gz', '-d', 'segmentation.nii.gz', '-w', 'warp_straight2curve.nii.gz', '-o', 'segmentation_labeled.nii.gz', '-x', 'nn'], verbose)
 
     # Clean labeled segmentation
     sct.printv('\nClean labeled segmentation (correct interpolation errors)...', verbose)
@@ -328,35 +350,69 @@ def main(args=None):
     sct.generate_output_file(os.path.join(path_tmp, "straight_ref.nii.gz"), os.path.join(path_output, "straight_ref.nii.gz"), verbose)
 
     # Remove temporary files
-    if remove_tmp_files == 1:
+    if remove_temp_files == 1:
         sct.printv('\nRemove temporary files...', verbose)
-        shutil.rmtree(path_tmp, ignore_errors=True)
+        sct.rmtree(path_tmp)
 
     # Generate QC report
-    try:
-        if '-qc' in arguments and not arguments.get('-noqc', False):
-            qc_path = arguments['-qc']
-
-            import spinalcordtoolbox.reports.qc as qc
-            import spinalcordtoolbox.reports.slice as qcslice
-
-            qc_param = qc.Params(fname_in, 'sct_label_vertebrae', args, 'Sagittal', qc_path)
-            report = qc.QcReport(qc_param, '')
-
-            @qc.QcImage(report, 'none', [qc.QcImage.label_vertebrae, ])
-            def test(qslice):
-                return qslice.single()
-
-            labeled_seg_file = os.path.join(path_output, file_seg + '_labeled' + ext_seg)
-            test(qcslice.Sagittal(Image(fname_in), Image(labeled_seg_file)))
-            sct.printv('Sucessfully generated the QC results in %s' % qc_param.qc_results)
-            sct.printv('Use the following command to see the results in a browser:')
-            sct.printv('sct_qc -folder %s' % qc_path, type='info')
-    except Exception as err:
-        sct.printv(err, verbose, 'warning')
-        sct.printv('WARNING: Cannot generate report.', verbose, 'warning')
+    if param.path_qc is not None:
+        path_qc = os.path.abspath(param.path_qc)
+        labeled_seg_file = os.path.join(path_output, file_seg + '_labeled' + ext_seg)
+        generate_qc(fname_in, labeled_seg_file, args, path_qc)
 
     sct.display_viewer_syntax([fname_in, fname_seg_labeled], colormaps=['', 'random'], opacities=['1', '0.5'])
+
+
+def generate_qc(fn_in, fn_labeled, args, path_qc):
+    """
+    Generate a quick visualization of vertebral labeling
+    """
+    import spinalcordtoolbox.reports.qc as qc
+    import spinalcordtoolbox.reports.slice as qcslice
+
+    def label_vertebrae(self, mask):
+        """
+        Draw vertebrae areas, then add text showing the vertebrae names.
+        """
+
+        import matplotlib.pyplot as plt
+        import scipy.ndimage
+
+        self.listed_seg(mask)
+
+        ax = plt.gca()
+        a = [0.0]
+        data = mask
+        for index, val in np.ndenumerate(data):
+            if val not in a:
+                a.append(val)
+                index = int(val)
+                if index in self._labels_regions.values():
+                    color = self._labels_color[index]
+                    y, x = scipy.ndimage.measurements.center_of_mass(np.where(data == val, data, 0))
+
+                    # Draw text with a shadow
+
+                    x += 10
+
+                    label = list(self._labels_regions.keys())[list(self._labels_regions.values()).index(index)]
+                    ax.text(x, y, label, color='black', clip_on=True)
+
+                    x -= 0.5
+                    y -= 0.5
+
+                    ax.text(x, y, label, color=color, clip_on=True)
+
+    qc.add_entry(
+     src=fn_in,
+     process='sct_label_vertebrae',
+     args=args,
+     path_qc=path_qc,
+     plane='Sagittal',
+     qcslice=qcslice.Sagittal([Image(fn_in), Image(fn_labeled)]),
+     qcslice_operations=[label_vertebrae],
+     qcslice_layout=lambda x: x.single(),
+    )
 
 
 # Detect vertebral levels
@@ -375,37 +431,11 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     :return:
     """
     sct.printv('\nLook for template...', verbose)
-    # if path_template == '':
-    #     # get path of SCT
-    #     from os import path
-    #     path_script = path.dirname(__file__)
-    #     path_sct = (path.dirname(path_script), 1)
-    #     folder_template = 'data/template/'
-    #     path_template = path_sct+folder_template
     sct.printv('Path template: ' + path_template, verbose)
 
     # adjust file names if MNI-Poly-AMU template is used
-    fname_level = get_file_label(os.path.join(path_template, 'template'), 'vertebral', output='filewithpath')
-    fname_template = get_file_label(os.path.join(path_template, 'template'), contrast.upper() + '-weighted', output='filewithpath')
-
-    # if not len(glob.glob(os.path.join(path_template, 'MNI-Poly-AMU*.*'))) == 0:
-    #     contrast = contrast.upper()
-    #     file_level = '*_level.nii.gz'
-    # else:
-    #     file_level = '*_levels.nii.gz'
-    #
-    # # retrieve file_template based on contrast
-    # try:
-    #     fname_template_list = glob.glob(os.path.join(path_template, '*' + contrast + '.nii.gz'))
-    #     fname_template = fname_template_list[0]
-    # except IndexError:
-    #     sct.printv('\nERROR: No template found. Please check the provided path.', 1, 'error')
-    # retrieve disc level from template
-    # try:
-    #     fname_level_list = glob.glob(os.path.join(path_template, file_level))
-    #     fname_level = fname_level_list[0]
-    # except IndexError:
-    #     sct.printv('\nERROR: File *_levels.nii.gz not found.', 1, 'error')
+    fname_level = get_file_label(os.path.join(path_template, 'template'), 'vertebral labeling', output='filewithpath')
+    fname_template = get_file_label(os.path.join(path_template, 'template'), contrast.upper() + '-weighted template', output='filewithpath')
 
     # Open template and vertebral levels
     sct.printv('\nOpen template and vertebral levels...', verbose)
@@ -470,7 +500,7 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
         params = AnatomicalParams()
         params.num_points = 1
         params.vertebraes = [3, ]
-        params.subtitle = 'Click at the posterior tip of C2-C3 disc'
+        params.subtitle = 'Click at the posterior tip of C2-C3 disc\n'
         input_file = Image(fname)
         output_file = input_file.copy()
         output_file.data *= 0
@@ -624,19 +654,18 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
 
 # Create label
 # ==========================================================================================
-def create_label_z(fname_seg, z, value):
+def create_label_z(fname_seg, z, value, fname_labelz='labelz.nii.gz'):
     """
     Create a label at coordinates x_center, y_center, z
     :param fname_seg: segmentation
     :param z: int
-    :return: fname_label
+    :param fname_labelz: string file name of output label
+    :return: fname_labelz
     """
-    fname_label = 'labelz.nii.gz'
     nii = Image(fname_seg)
     orientation_origin = nii.change_orientation('RPI')  # change orientation to RPI
     nx, ny, nz, nt, px, py, pz, pt = nii.dim  # Get dimensions
     # find x and y coordinates of the centerline at z using center of mass
-    from scipy.ndimage.measurements import center_of_mass
     x, y = center_of_mass(nii.data[:, :, z])
     x, y = int(round(x)), int(round(y))
     nii.data[:, :, :] = 0
@@ -644,23 +673,22 @@ def create_label_z(fname_seg, z, value):
     # dilate label to prevent it from disappearing due to nearestneighbor interpolation
     from sct_maths import dilate
     nii.data = dilate(nii.data, [3])
-    nii.setFileName(fname_label)
+    nii.setFileName(fname_labelz)
     nii.change_orientation(orientation_origin)  # put back in original orientation
     nii.save()
-    return fname_label
+    return fname_labelz
 
 
 # Get z and label value
 # ==========================================================================================
 def get_z_and_disc_values_from_label(fname_label):
     """
-    Find z-value and label-value based on labeled image
-    :param fname_label: image that contains label
+    Find z-value and label-value based on labeled image in RPI orientation
+    :param fname_label: image in RPI orientation that contains label
     :return: [z_label, value_label] int list
     """
     nii = Image(fname_label)
     # get center of mass of label
-    from scipy.ndimage.measurements import center_of_mass
     x_label, y_label, z_label = center_of_mass(nii.data)
     x_label, y_label, z_label = int(round(x_label)), int(round(y_label)), int(round(z_label))
     # get label value
@@ -681,11 +709,11 @@ def clean_labeled_segmentation(fname_labeled_seg, fname_seg, fname_labeled_seg_n
     :return: none
     """
     # remove voxels in segmentation_labeled that are not in segmentation
-    sct.run('sct_maths -i ' + fname_labeled_seg + ' -mul ' + fname_seg + ' -o segmentation_labeled_mul.nii.gz')
+    sct.run(['sct_maths', '-i', fname_labeled_seg, '-mul', fname_seg, '-o', 'segmentation_labeled_mul.nii.gz'])
     # add voxels in segmentation that are not in segmentation_labeled
-    sct.run('sct_maths -i ' + fname_labeled_seg + ' -dilate 2 -o segmentation_labeled_dilate.nii.gz')  # dilate labeled segmentation
+    sct.run(['sct_maths', '-i', fname_labeled_seg, '-dilate', '2', '-o', 'segmentation_labeled_dilate.nii.gz'])  # dilate labeled segmentation
     data_label_dilate = Image('segmentation_labeled_dilate.nii.gz').data
-    sct.run('sct_maths -i segmentation_labeled_mul.nii.gz -bin 0 -o segmentation_labeled_mul_bin.nii.gz')
+    sct.run(['sct_maths', '-i', 'segmentation_labeled_mul.nii.gz', '-bin', '0', '-o', 'segmentation_labeled_mul_bin.nii.gz'])
     data_label_bin = Image('segmentation_labeled_mul_bin.nii.gz').data
     data_seg = Image(fname_seg).data
     data_diff = data_seg - data_label_bin
@@ -833,14 +861,20 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
 def label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=1):
     """
     Label segmentation image
-    :param fname_seg: fname of the segmentation
+    :param fname_seg: fname of the segmentation, no orientation expected
     :param list_disc_z: list of z that correspond to a disc
     :param list_disc_value: list of associated disc values
     :param verbose:
     :return:
     """
+
     # open segmentation
     seg = Image(fname_seg)
+
+    # Change the orientation to RPI so that any orientation can be input
+    init_orientation = seg.orientation
+    seg.change_orientation('RPI')
+
     dim = seg.dim
     ny = dim[1]
     nz = dim[2]
@@ -867,6 +901,7 @@ def label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=1):
             plt.scatter(int(round(ny / 2)), iz, c=vertebral_level, vmin=min(list_disc_value), vmax=max(list_disc_value), cmap='prism', marker='_', s=200)
     # write file
     seg.file_name += '_labeled'
+    seg.change_orientation(init_orientation)
     seg.save()
 
 
@@ -913,6 +948,6 @@ def label_discs(fname_seg_labeled, verbose=1):
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
-    sct.start_stream_logger()
+    sct.init_sct()
     # call main function
     main()

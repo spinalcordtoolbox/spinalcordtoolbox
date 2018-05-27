@@ -7,9 +7,8 @@
  * \author Benjamin De Leener - NeuroPoly (http://www.neuropoly.info)
  */
 
-#include "util/Vector3.h"
-#include "util/Matrix3x3.h"
-#include "Mesh.h"
+#include <string>
+
 #include <itkImageAlgorithm.h>
 #include <itkImageFileReader.h>
 #include <itkImage.h>
@@ -20,7 +19,11 @@
 #include <itkLinearInterpolateImageFunction.h>
 #include <itkVectorLinearInterpolateImageFunction.h>
 #include <itkCastImageFilter.h>
-using namespace std;
+
+#include "util/Vector3.h"
+#include "util/Matrix3x3.h"
+#include "Mesh.h"
+//
 
 typedef itk::Image< double, 3 > ImageType;
 typedef itk::Image< unsigned char, 3 > BinaryImageType;
@@ -75,7 +78,7 @@ public:
 	void NormalizeByMaximum();
 	void DeleteHighVector();
 
-	void TransformMeshToBinaryImage(Mesh* m, string filename, OrientationType orient, bool sub_segmentation=false, bool cropUpDown=false, CVector3* upperSlicePoint=0, CVector3* upperSliceNormal=0, CVector3* downSlicePoint=0, CVector3* downSliceNormal=0);
+	void TransformMeshToBinaryImage(Mesh* m, std::string filename, OrientationType orient, bool sub_segmentation=false, bool cropUpDown=false, CVector3* upperSlicePoint=0, CVector3* upperSliceNormal=0, CVector3* downSlicePoint=0, CVector3* downSliceNormal=0);
 
 	void setImageOriginale(ImageType::Pointer i);
 	ImageType::Pointer getImageOriginale() { return imageOriginale_; };

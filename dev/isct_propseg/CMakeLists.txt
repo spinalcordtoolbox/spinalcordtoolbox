@@ -81,6 +81,7 @@ ITKIOGE
 ITKIOGIPL
 ITKIOHDF5
 ITKOptimizers
+ITKIOTransformBase
 vtkalglib
 vtkCommonCore
 vtkCommonDataModel
