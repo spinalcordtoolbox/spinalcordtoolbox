@@ -13,10 +13,29 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import sys, io, os, time, errno, tempfile, subprocess, re, logging, glob, shutil
+import sys, io, os, re, time
+import errno
+import logging
+import logging.config
+import shutil
+import subprocess
+import tempfile
 
-# TODO: under run(): add a flag "ignore error" for isct_ComposeMultiTransform
-# TODO: check if user has bash or t-schell for fsloutput definition
+if os.getenv('SENTRY_DSN', None):
+    # do no import if Sentry is not set (i.e., if variable SENTRY_DSN is not defined)
+    import raven
+
+if sys.hexversion < 0x03030000:
+    import pipes
+    def list2cmdline(lst):
+        return " ".join(pipes.quote(x) for x in lst)
+else:
+    import shlex
+    def list2cmdline(lst):
+        return " ".join(shlex.quote(x) for x in lst)
+
+
+
 
 """
 Basic logging setup for the sct
@@ -36,8 +55,117 @@ if not LOG_FORMAT:
     LOG_FORMAT = None
 
 
+def check_exe(name):
+    """
+    Ensure that a program exists
+    :type name: string
+    :param name: name or path to program
+    :return: path of the program or None
+    """
+    def is_exe(fpath):
+        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
+
+    fpath, fname = os.path.split(name)
+    if fpath and is_exe(name):
+        return fpath
+    else:
+        for path in os.environ["PATH"].split(os.pathsep):
+            path = path.strip('"')
+            exe_file = os.path.join(path, name)
+            if is_exe(exe_file):
+                return exe_file
+
+    return None
+
+
+def __get_branch():
+    """
+    Fallback if for some reason the value vas no set by sct_launcher
+    :return:
+    """
+
+    p = subprocess.Popen(["git", "rev-parse", "--abbrev-ref", "HEAD"], stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE, cwd=__sct_dir__)
+    output, _ = p.communicate()
+    status = p.returncode
+
+    if status == 0:
+        return output.decode().strip()
+
+
+def __get_commit():
+    """
+    :return: git commit ID, with trailing '*' if modified
+    """
+    p = subprocess.Popen(["git", "rev-parse", "HEAD"], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                         cwd=__sct_dir__)
+    output, _ = p.communicate()
+    status = p.returncode
+    if status == 0:
+        commit = output.decode().strip()
+    else:
+        commit = "?!?"
+
+    p = subprocess.Popen(["git", "status", "--porcelain"], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                         cwd=__sct_dir__)
+    output, _ = p.communicate()
+    status = p.returncode
+    if status == 0:
+        unclean = True
+        for line in output.decode().strip().splitlines():
+            line = line.rstrip()
+            if line.startswith("??"): # ignore ignored files, they can't hurt
+               continue
+            break
+        else:
+            unclean = False
+        if unclean:
+            commit += "*"
+
+    return commit
+
+def _git_info(commit_env='SCT_COMMIT',branch_env='SCT_BRANCH'):
+
+    sct_commit = os.getenv(commit_env, "unknown")
+    sct_branch = os.getenv(branch_env, "unknown")
+    if check_exe("git") and os.path.isdir(os.path.join(__sct_dir__, ".git")):
+        sct_commit = __get_commit() or sct_commit
+        sct_branch = __get_branch() or sct_branch
+
+    if sct_commit is not 'unknown':
+        install_type = 'git'
+    else:
+        install_type = 'package'
+
+    with io.open(os.path.join(__sct_dir__, 'version.txt'), 'r') as f:
+        version_sct = f.read().rstrip()
+
+    return install_type, sct_commit, sct_branch, version_sct
+
+def _version_string():
+    install_type, sct_commit, sct_branch, version_sct = _git_info()
+    if install_type == "package":
+        return version_sct
+    else:
+        return "{install_type}-{sct_branch}-{sct_commit}".format(**locals())
+
+# Basic sct config
+__sct_dir__ = os.getenv("SCT_DIR", os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+__data_dir__ = os.getenv("SCT_DATA_DIR", os.path.join(__sct_dir__, 'data'))
+__version__ = _version_string()
+
+
+def init_sct():
+    """ Initialize the sct for typical terminal usage
+
+    :return:
+    """
+    start_stream_logger()
+    init_error_client()
+
+
 def start_stream_logger():
-    """ Log to terminal, by default the formating is like a print() call
+    """ Log to terminal, by default the formatting is like a print() call
 
     :return: 
     """
@@ -56,6 +184,86 @@ def start_stream_logger():
             level = logging.INFO
     stream_handler.setLevel(level)
     log.addHandler(stream_handler)
+
+
+def init_error_client():
+    """ Send traceback to neuropoly servers
+
+    :return:
+    """
+    if os.getenv('SENTRY_DSN'):
+        log.debug('Configuring sentry report')
+        try:
+            client = raven.Client(
+             release=__version__,
+             processors=(
+              'raven.processors.RemoveStackLocalsProcessor',
+              'raven.processors.SanitizePasswordsProcessor'),
+            )
+            server_log_handler(client)
+            traceback_to_server(client)
+
+            old_exitfunc = sys.exitfunc
+            def exitfunc():
+                sent_something = False
+                try:
+                    # implementation-specific
+                    import atexit
+                    for handler, args, kw in atexit._exithandlers:
+                        if handler.__module__.startswith("raven."):
+                            sent_something = True
+                except:
+                    pass
+                old_exitfunc()
+                if sent_something:
+                    print("Note: you can opt out of Sentry reporting by editing the file ${SCT_DIR}/bin/sct_launcher and delete the line starting with \"export SENTRY_DSN\"")
+
+            sys.exitfunc = exitfunc
+        except raven.exceptions.InvalidDsn:
+            # This could happen if sct staff change the dsn
+            log.debug('Sentry DSN not valid anymore, not reporting errors')
+
+
+def traceback_to_server(client):
+    """
+        Send all traceback children of Exception to sentry
+    """
+
+    def excepthook(exctype, value, traceback):
+        if issubclass(exctype, Exception):
+            client.captureException(exc_info=(exctype, value, traceback))
+        sys.__excepthook__(exctype, value, traceback)
+
+    sys.excepthook = excepthook
+
+
+def server_log_handler(client):
+    """ Adds sentry log handler to the logger
+
+    :return: the sentry handler
+    """
+    from raven.handlers.logging import SentryHandler
+
+    sh = SentryHandler(client=client, level=logging.ERROR)
+
+    # Don't send Sentry events for command-line usage errors
+    old_emit = sh.emit
+    def emit(self, record):
+        if record.message.startswith("Command-line usage error:"):
+            return
+        return old_emit(record)
+
+    sh.emit = lambda x: emit(sh, x)
+
+
+    fmt = ("[%(asctime)s][%(levelname)s] %(filename)s: %(lineno)d | "
+            "%(message)s")
+    formatter = logging.Formatter(fmt=fmt, datefmt="%H:%M:%S")
+    formatter.converter = time.gmtime
+    sh.setFormatter(formatter)
+
+    log.addHandler(sh)
+    return sh
 
 
 def pause_stream_logger():
@@ -108,7 +316,7 @@ def remove_handler(handler):
     :param handler: 
     :return: 
     """
-    log.debug("Removing log handler {} ".format(handler))
+    log.debug("Pause log to {} ".format(handler.baseFilename))
     log.removeHandler(handler)
 
 # define class color
@@ -222,22 +430,30 @@ def run_old(cmd, verbose=1):
         return status, output
 
 
-def run(cmd, verbose=1, raise_exception=True, cwd=None):
+def run(cmd, verbose=1, raise_exception=True, cwd=None, env=None):
     # if verbose == 2:
     #     printv(sys._getframe().f_back.f_code.co_name, 1, 'process')
 
     if cwd is None:
         cwd = os.getcwd()
 
-    if verbose:
-        printv("%s # in %s" % (cmd, cwd), 1, 'code')
+    if env is None:
+        env = os.environ
 
     if sys.hexversion < 0x03000000 and isinstance(cmd, unicode):
         cmd = str(cmd)
 
+    if isinstance(cmd, str):
+        cmdline = cmd
+    else:
+        cmdline = list2cmdline(cmd)
+
+    if verbose:
+        printv("%s # in %s" % (cmdline, cwd), 1, 'code')
+
     shell = isinstance(cmd, str)
 
-    process = subprocess.Popen(cmd, shell=shell, cwd=cwd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    process = subprocess.Popen(cmd, shell=shell, cwd=cwd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env)
     output_final = ''
     while True:
         # Watch out for deadlock!!!
@@ -257,32 +473,9 @@ def run(cmd, verbose=1, raise_exception=True, cwd=None):
     # process.terminate()
 
     if status != 0 and raise_exception:
-        raise RunError(output_final[0:-1])
+        raise RunError(output)
 
     return status, output
-
-
-def check_exe(name):
-    """
-    Ensure that a program exists
-    :type name: string
-    :param name: name or path to program
-    :return: path of the program or None
-    """
-    def is_exe(fpath):
-        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
-
-    fpath, fname = os.path.split(name)
-    if fpath and is_exe(name):
-        return fpath
-    else:
-        for path in os.environ["PATH"].split(os.pathsep):
-            path = path.strip('"')
-            exe_file = os.path.join(path, name)
-            if is_exe(exe_file):
-                return exe_file
-
-    return None
 
 
 def display_viewer_syntax(files, colormaps=[], minmax=[], opacities=[], mode='', verbose=1):
@@ -304,9 +497,9 @@ def display_viewer_syntax(files, colormaps=[], minmax=[], opacities=[], mode='',
     sct.display_viewer_syntax([file1, file2, file3])
     sct.display_viewer_syntax([file1, file2], colormaps=['gray', 'red'], minmax=['', '0,1'], opacities=['', '0.7'])
     """
-    list_viewer = ['fslview', 'fslview_deprecated', 'fsleyes']  # list of known viewers. Can add more.
-    dict_fslview = {'gray': 'Greyscale', 'red-yellow': 'Red-Yellow', 'blue-lightblue': 'Blue-Lightblue', 'red': 'Red', 'random': 'Random-Rainbow'}
-    dict_fsleyes = {'gray': 'greyscale', 'red-yellow': 'red-yellow', 'blue-lightblue': 'blue-lightblue', 'red': 'red', 'random': 'random'}
+    list_viewer = ['fsleyes', 'fslview_deprecated', 'fslview']  # list of known viewers. Can add more.
+    dict_fslview = {'gray': 'Greyscale', 'red-yellow': 'Red-Yellow', 'blue-lightblue': 'Blue-Lightblue', 'red': 'Red', 'random': 'Random-Rainbow', 'hsv': 'hsv'}
+    dict_fsleyes = {'gray': 'greyscale', 'red-yellow': 'red-yellow', 'blue-lightblue': 'blue-lightblue', 'red': 'red', 'random': 'random', 'hsv': 'hsv'}
     selected_viewer = None
 
     # find viewer
@@ -352,11 +545,44 @@ def display_viewer_syntax(files, colormaps=[], minmax=[], opacities=[], mode='',
         printv(cmd + '\n', verbose=1, type='info')
 
 
-def copy(src, dst):
-    """Copy src to dst.
-    If src and dst are the same files, don't crash.
+def mkdir(path, verbose=1):
+    """Create a folder, like os.mkdir
     """
     try:
+        printv("mkdir %s" % (path), verbose=verbose, type="code")
+        os.mkdir(path)
+    except Exception as e:
+        raise
+
+def rm(path, verbose=1):
+    """Remove a file, almost like os.remove
+    """
+    try:
+        printv("rm %s" % (path), verbose=verbose, type="code")
+        os.remove(path)
+    except Exception as e:
+        raise
+
+def mv(src, dst, verbose=1):
+    """Move a file from src to dst, almost like os.rename
+    """
+    try:
+        printv("mv %s %s" % (src, dst), verbose=verbose, type="code")
+        os.rename(src, dst)
+    except Exception as e:
+        raise
+
+def copy(src, dst, verbose=1):
+    """Copy src to dst, almost like shutil.copy
+    If src and dst are the same files, don't crash.
+    """
+    if not os.path.isfile(src):
+        folder = os.path.dirname(src)
+        contents = os.listdir(folder)
+        raise Exception("Couldn't find %s in %s (contents: %s)" \
+         % (os.path.basename(src), folder, contents))
+    try:
+        printv("cp %s %s" % (src, dst), verbose=verbose, type="code")
         shutil.copy(src, dst)
     except Exception as e:
         if sys.hexversion < 0x03000000:
@@ -367,51 +593,14 @@ def copy(src, dst):
                 return
         raise # Must be another error
 
-
-def get_sct_version():
-    sct_commit = 'unknown'
-    sct_branch = 'unknown'
-
-    # get path of SCT
-    path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
-
-    if os.path.isdir(os.path.join(path_sct, '.git')):
-        install_type = 'git'
-        status, output = run(["git", "rev-parse", "HEAD"], verbose=0, cwd=path_sct)
-        if status == 0:
-            sct_commit = output
-        status, output = run(["git", "rev-parse", "--abbrev-ref", "HEAD"], verbose=0, cwd=path_sct)
-        if status == 0:
-            sct_branch = output
-    else:
-        install_type = 'package'
-
-    with io.open(os.path.join(path_sct, 'version.txt'), 'r') as myfile:
-        version_sct = myfile.read().replace('\n', '')
-
-    return install_type, sct_commit, sct_branch, version_sct
-
-#
-#
-#     # check if there is a .git repos
-#     if [-e ${SCT_DIR} /.git]; then
-#     # retrieve commit
-#     SCT_COMMIT = `git - -git - dir =${SCT_DIR} /.git
-#     rev - parse
-#     HEAD
-#     `
-#     # retrieve branch
-#     SCT_BRANCH = `git - -git - dir =${SCT_DIR} /.git
-#     branch | grep \ * | awk
-#     '{print $2}'
-#     `
-#     echo
-#     "Spinal Cord Toolbox ($SCT_BRANCH/$SCT_COMMIT)"
-#
-# else
-# echo
-# "Spinal Cord Toolbox (version: $SCT_VERSION)"
-# fi
+def rmtree(folder, verbose=1):
+    """Recursively remove folder, almost like shutil.rmtree
+    """
+    try:
+        printv("rm -rf %s" % (folder), verbose=verbose, type="code")
+        shutil.rmtree(folder, ignore_errors=True)
+    except Exception as e:
+        raise # Must be another error
 
 
 #=======================================================================================================================
@@ -435,8 +624,8 @@ def checkRAM(os, verbose=1):
         ram_total = float(ram_split[3])
 
         # Get process info
-        ps = subprocess.Popen(['ps', '-caxm', '-orss,comm'], stdout=subprocess.PIPE).communicate()[0]
-        vm = subprocess.Popen(['vm_stat'], stdout=subprocess.PIPE).communicate()[0]
+        ps = subprocess.Popen(['ps', '-caxm', '-orss,comm'], stdout=subprocess.PIPE).communicate()[0].decode(sys.stdout.encoding)
+        vm = subprocess.Popen(['vm_stat'], stdout=subprocess.PIPE).communicate()[0].decode(sys.stdout.encoding)
 
         # Iterate processes
         processLines = ps.split('\n')
@@ -771,7 +960,7 @@ class TempFolder(object):
 
     def cleanup(self):
         """Remove the created folder and its contents."""
-        shutil.rmtree(self.path_tmp, ignore_errors=True)
+        rmtree(self.path_tmp)
 
 
 #=======================================================================================================================
@@ -887,7 +1076,7 @@ def printv(string, verbose=1, type='normal'):
     colors = {'normal': bcolors.normal, 'info': bcolors.green, 'warning': bcolors.yellow, 'error': bcolors.red,
               'code': bcolors.blue, 'bold': bcolors.bold, 'process': bcolors.magenta}
 
-    if verbose:
+    if verbose or type=="error":
         # Print color only if the output is the terminal
         # Note jcohen: i added a try/except in case stdout does not have isatty field (it did happen to me)
         try:
@@ -901,59 +1090,45 @@ def printv(string, verbose=1, type='normal'):
             log.info(string)
 
     if type == 'error':
-        from inspect import stack
-        import traceback
-
-        frame, filename, line_number, function_name, lines, index = stack()[1]
-        if sys.stdout.isatty():
-            log.error('\n' + bcolors.red + filename + traceback.format_exc() + bcolors.normal)
-        else:
-            log.error('\n' + filename + traceback.format_exc())
-
-        raise RunError('raise in printv, read log above for more info')
+        raise RuntimeError("printv(..., type=\"error\")")
 
 
-#=======================================================================================================================
-# send email
-#=======================================================================================================================
-def send_email(addr_to='', addr_from='spinalcordtoolbox@gmail.com', passwd_from='', subject='', message='', filename=None, html=False):
+def send_email(addr_to, addr_from, passwd, subject, message='', filename=None, html=False, smtp_host=None, smtp_port=None, login=None):
+    if smtp_host is None:
+        smtp_host = os.environ.get("SCT_SMTP_SERVER", "smtp.gmail.com")
+    if smtp_port is None:
+        smtp_port = int(os.environ.get("SCT_SMTP_PORT", 587))
+    if login is None:
+        login = addr_from
+
     import smtplib
     from email.MIMEMultipart import MIMEMultipart
     from email.MIMEText import MIMEText
     from email.MIMEBase import MIMEBase
     from email import encoders
 
-    msg = MIMEMultipart()
+    if html:
+        msg = MIMEMultipart("alternative")
+    else:
+        msg = MIMEMultipart()
 
     msg['From'] = addr_from
     msg['To'] = addr_to
-    msg['Subject'] = subject  # "SUBJECT OF THE EMAIL"
-    body = message  # "TEXT YOU WANT TO SEND"
+    msg['Subject'] = subject
 
-    # body in html format for monospaced formatting
-    body_html = """
-    <html><pre style="font: monospace"><body>
-    """+body+"""
-    </body></pre></html>
-    """
+    body = message
+    if not isinstance(body, bytes):
+        body = body.encode("utf-8")
 
-    # # We must choose the body charset manually
-    # for body_charset in 'US-ASCII', 'ISO-8859-1', 'UTF-8':
-    #     try:
-    #         body.encode(body_charset)
-    #     except UnicodeError:
-    #         pass
-    #     else:
-    #         break
-
-    # msg.set_charset("utf-8")
+    body_html = b"""
+<html><pre style="font: monospace"><body>
+{}
+</body></pre></html>""".format(body)
 
     if html:
-        msg.attach(MIMEText(body_html, 'html'))
-    else:
-        msg.attach(MIMEText(body, 'plain'))
+        msg.attach(MIMEText(body_html, 'html', "utf-8"))
 
-    # msg.attach(MIMEText(body.encode(body_charset), 'plain', body_charset))
+    msg.attach(MIMEText(body, 'plain', "utf-8"))
 
     # filename = "NAME OF THE FILE WITH ITS EXTENSION"
     if filename:
@@ -965,9 +1140,9 @@ def send_email(addr_to='', addr_from='spinalcordtoolbox@gmail.com', passwd_from=
         msg.attach(part)
 
     # send email
-    server = smtplib.SMTP('smtp.gmail.com', 587)
+    server = smtplib.SMTP(smtp_host, smtp_port)
     server.starttls()
-    server.login(addr_from, passwd_from)
+    server.login(login, passwd)
     text = msg.as_string()
     server.sendmail(addr_from, addr_to, text)
     server.quit()
@@ -1025,7 +1200,7 @@ def get_interpolation(program, interp):
         printv('WARNING (' + os.path.basename(__file__) + '): interp_program not assigned. Using linear for ants_affine.', 1, 'warning')
         interp_program = ' -n Linear'
     # return
-    return interp_program
+    return interp_program.strip().split()
 
 
 #=======================================================================================================================
@@ -1352,9 +1527,68 @@ class RunError(Error):
     """
     pass
 
-if __name__ == "__main__":
-    info = get_sct_version()
-    print(info)
+
+def cache_signature(input_files=[], input_data=[], input_params={}):
+    """
+    Create a signature to be used for caching purposes
+
+    :param input_files: paths of input files (that can influence output)
+    :param input_data: input data (that can influence output)
+    :param input_params: input parameters (that can influence output)
+
+    Notes:
+
+    - Use this with cache_valid (to validate caching assumptions)
+      and cache_save (to store them)
+
+    - Using this system, the outputs are not checked, only the
+      inputs and parameters (to regenerate the outputs in case
+      these change).
+      If the outputs have been modified directly, then they may
+      be reused.
+      To prevent that, the next step would be to record the outputs
+      signature in the cache file, so as to also verify them prior
+      to taking a shortcut.
+
+    """
+    import hashlib
+    h = hashlib.md5()
+    for path in input_files:
+        with io.open(path, "rb") as f:
+            for chunk in iter(lambda: f.read(4096), b""):
+                h.update(chunk)
+    for data in input_data:
+        h.update(str(type(arg)))
+        try:
+            h.update(arg)
+        except:
+            h.update(str(arg))
+    for k, v in sorted(input_params.items()):
+        h.update(str(type(k)))
+        h.update(str(k))
+        h.update(str(type(v)))
+        h.update(str(v))
+
+    return "# Cache file generated by SCT\nDEPENDENCIES_SIG={}\n".format(h.hexdigest()).encode()
 
 
+def cache_valid(cachefile, sig_expected):
+    """
+    Verify that the cachefile contains the right signature
+    """
+    if not os.path.exists(cachefile):
+        return False
+    with io.open(cachefile, "rb") as f:
+        sig_measured = f.read()
+    return sig_measured == sig_expected
 
+
+def cache_save(cachefile, sig):
+    """
+    Save signature to cachefile
+
+    :param cachefile: path to cache file to be saved
+    :param sig: cache signature created with cache_signature()
+    """
+    with io.open(cachefile, "wb") as f:
+        f.write(sig)

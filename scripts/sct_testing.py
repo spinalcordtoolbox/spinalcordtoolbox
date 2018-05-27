@@ -9,7 +9,7 @@
 
 # TODO: list functions to test in help (do a search in testing folder)
 # TODO: find a way to be able to have list of arguments and loop across list elements.
-
+# TODO: do something about this ugly 'output.nii.gz'
 
 import sys, io, os, time, random, copy, shlex, importlib, shutil
 
@@ -40,7 +40,8 @@ class Param:
         self.contrast = ''  # folder containing the data and corresponding to the contrast. Could be t2, t1, t2s, etc.
         self.output = ''  # output string
         self.results = ''  # results in Panda DataFrame
-        self.redirect_stdout = 0  # for debugging, set to 0. Otherwise set to 1.
+        self.redirect_stdout = True  # for debugging, set to 0. Otherwise set to 1.
+        self.fname_log = None
 
 
 # define nice colors
@@ -159,13 +160,19 @@ def main(args=None):
             param_test = copy.deepcopy(param)
             param_test.default_args = param.args
             param_test.args = param.args[i]
+            param_test.test_integrity = True
             # if list_fname_gt is not empty, assign it
             # if param_test.list_fname_gt:
             #     param_test.fname_gt = param_test.list_fname_gt[i]
             # test function
-            param_test = test_function(param_test)
-            list_status_function.append(param_test.status)
-            list_output.append(param_test.output)
+            try:
+                param_test = test_function(param_test)
+            except Exception as e:
+                list_status_function.append(1)
+                list_output.append("TODO exception: %s" % e)
+            else:
+                list_status_function.append(param_test.status)
+                list_output.append(param_test.output)
         # manage status
         if any(list_status_function):
             if 1 in list_status_function:
@@ -195,7 +202,7 @@ def main(args=None):
     # remove temp files
     if param.remove_tmp_file:
         sct.printv('\nRemove temporary files...', 0)
-        shutil.rmtree(param.path_tmp)
+        sct.rmtree(param.path_tmp)
 
     e = 0
     if sum(list_status) != 0:
@@ -352,6 +359,7 @@ def test_function(param_test):
     -------
     path_output [str]: path where to output testing data
     """
+    sct.log.debug("Starting test function")
 
     # load modules of function to test
     module_function_to_test = importlib.import_module(param_test.function_to_test)
@@ -380,17 +388,30 @@ def test_function(param_test):
     if "-ofolder" in parser.options and '-ofolder' not in dict_args_with_path:
         param_test.args_with_path += ' -ofolder ' + param_test.path_output
 
+    # check if parser has key '-o' that has not been added already. If so, then assign output folder
+    # Note: this -o case has been added for compatibility with sct_deepseg_gm, which does not have -ofolder flag
+    if "-o" in parser.options and '-o' not in dict_args_with_path:
+        param_test.args_with_path += ' -o ' + os.path.join(param_test.path_output, 'output.nii.gz')
+
     # open log file
     # Note: the statement below is not included in the if, because even if redirection does not occur, we want the file to be create otherwise write_to_log will fail
-    param_test.fname_log = os.path.join(param_test.path_output, param_test.function_to_test + '.log')
-    stdout_log = io.open(param_test.fname_log, 'w')
+
+    if param_test.fname_log is None:
+        param_test.fname_log = os.path.join(param_test.path_output, param_test.function_to_test + '.log')
+
     # redirect to log file
     if param_test.redirect_stdout:
-        param_test.stdout_orig = sys.stdout
-        sys.stdout = stdout_log
+        file_handler = sct.add_file_handler_to_logger(param_test.fname_log)
+    sct.log.debug("logging to file")
 
     # initialize panda dataframe
-    param_test.results = DataFrame(index=[subject_folder], data={'status': 0, 'output': '', 'path_data': param_test.path_data})
+    sct.log.debug("Init dataframe")
+    param_test.results = DataFrame(index=[subject_folder],
+                                   data={'status': 0,
+                                         'duration': 0,
+                                         'output': '',
+                                         'path_data': param_test.path_data,
+                                         'path_output': param_test.path_output})
 
     # retrieve input file (will be used later for integrity testing)
     if '-i' in dict_args:
@@ -399,6 +420,8 @@ def test_function(param_test):
             list_file_to_check = [dict_args_with_path['-i']]
             # assign field file_input for integrity testing
             param_test.file_input = dict_args['-i'].split('/')[-1]
+            # update index of dataframe by appending file name for more clarity
+            param_test.results = param_test.results.rename({subject_folder: os.path.join(subject_folder, dict_args['-i'])})
         else:
             list_file_to_check = dict_args_with_path['-i']
             # TODO: assign field file_input for integrity testing
@@ -429,7 +452,7 @@ def test_function(param_test):
     param_test.output += '\n====================================================================================================\n' + cmd + '\n====================================================================================================\n\n'  # copy command
     time_start = time.time()
     try:
-        param_test.status, o = sct.run(cmd, 0)
+        param_test.status, o = sct.run(cmd, verbose=0)
         if param_test.status:
             raise Exception
     except Exception as err:
@@ -439,24 +462,24 @@ def test_function(param_test):
         return update_param(param_test)
 
     param_test.output += o
-    param_test.duration = time.time() - time_start
+    param_test.results['duration'] = time.time() - time_start
 
     # test integrity
-    param_test.output += '\n\n====================================================================================================\n' + 'INTEGRITY TESTING' + '\n====================================================================================================\n\n'  # copy command
-    try:
-        param_test = module_testing.test_integrity(param_test)
-    except Exception as err:
-        param_test.status = 2
-        param_test.output += str(err)
-        write_to_log_file(param_test.fname_log, param_test.output, 'w')
-        return update_param(param_test)
+    if param_test.test_integrity:
+        param_test.output += '\n\n====================================================================================================\n' + 'INTEGRITY TESTING' + '\n====================================================================================================\n\n'  # copy command
+        try:
+            param_test = module_testing.test_integrity(param_test)
+        except Exception as err:
+            param_test.status = 2
+            param_test.output += str(err)
+            write_to_log_file(param_test.fname_log, param_test.output, 'w')
+            return update_param(param_test)
 
     # manage stdout
     if param_test.redirect_stdout:
-        sys.stdout.close()
-        sys.stdout = param_test.stdout_orig
-        # write log file
+        sct.remove_handler(file_handler)
         write_to_log_file(param_test.fname_log, param_test.output, mode='r+', prepend=True)
+
 
     # go back to parent directory
     os.chdir(path_testing)
@@ -477,7 +500,7 @@ def update_param(param):
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
-    sct.start_stream_logger()
+    sct.init_sct()
     # initialize parameters
     param = Param()
     # call main function

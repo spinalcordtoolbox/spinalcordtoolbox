@@ -27,6 +27,7 @@
 # parser.add_option("-test","int")
 # parser.add_option("-dim", ['x', 'y', 'z', 't'], 'dimension: x|y|z|t')
 # parser.add_option("-test2") # this is a option without argument
+# parser.usage.addSection("NAME OF SECTION")  # this adds a custom section to the list of flags
 #
 # Here we define a multiple choice option named "-a"
 # To define the list of available choices, we define it in the example section
@@ -91,13 +92,13 @@ class Option:
     OPTION_TYPES = ["str", "int", "float", "long", "complex", "Coordinate"]
     # list of options that are path type
     # input file/folder
-    OPTION_PATH_INPUT = ["file", "folder", "image_nifti"]
+    OPTION_PATH_INPUT = ["file", "file-transfo", "folder", "image_nifti"]
     # output file/folder
     OPTION_PATH_OUTPUT = ["file_output", "folder_output"]
 
     # Constructor
     def __init__(self, name, type_value, description, mandatory, example, default_value, help, parser, order=0,
-                 deprecated_by=None, deprecated_rm=False, deprecated=False, list_no_image=None):
+                 deprecated_by=None, deprecated_rm=False, deprecated=False, list_no_image=None, check_file_exist=True):
         self.name = name
         self.type_value = type_value
         self.description = description
@@ -111,6 +112,7 @@ class Option:
         self.deprecated_rm = deprecated_rm
         self.deprecated = deprecated
         self.list_no_image = list_no_image
+        self.check_file_exist = check_file_exist
 
         # TODO: check if the option is correctly set
 
@@ -118,10 +120,12 @@ class Option:
         return to_type(val)
 
     # Do we need to stop the execution if the input is not correct?
-    def check_integrity(self, param, type=None):
+    def checkIntegrity(self, param, type=None):
         """
         check integrity of each option type
-        if type is provided, use type instead of self.type_value --> allow recursive integrity checking
+        :param param: option to test (could be a string, file name, etc.)
+        :param type: if provided, use type instead of self.type_value to allow recursive integrity checking
+        :return:
         """
 
         type_option = self.type_value
@@ -137,9 +141,18 @@ class Option:
         elif type_option == "file":
             return self.checkFile(param)
 
+        elif type_option == "file-transfo":
+            if param.startswith("-"):
+                self.checkFile(param[1:])
+                return param
+            else:
+                return self.checkFile(param)
+
         elif type_option == "file_output":  # check if permission are required
+            if not os.path.isdir(os.path.dirname(os.path.abspath(param))):
+                self.parser.usage.error("Option %s parent folder doesn't exist for file %s" % (self.name, param))
             if not sct.check_write_permission(param):
-                self.parser.usage.error("Error of writing permissions on file: " + param)
+                self.parser.usage.error("Option %s no write permission for file %s" % (self.name, param))
             return param
 
         elif type_option == "folder":
@@ -172,14 +185,14 @@ class Option:
                 if not param_splitted[0].find(' ') == -1:
                     # if so, split and return list
                     param_splitted = param_splitted[0].split(' ')
-                return list([self.check_integrity(val, sub_type) for val in param_splitted])
+                return list([self.checkIntegrity(val, sub_type) for val in param_splitted])
             else:
-                self.parser.usage.error("ERROR: Option " + self.name + " must be correctly written. See usage.")
+                self.parser.usage.error("Option " + self.name + " must be correctly written. See usage.")
 
         else:
-            # self.parser.usage.error("ERROR: Type of option \"" + str(self.type_value) +"\" is not supported by the parser.")
-            sct.printv("WARNING : Option " + str(self.type_value) + " does not exist and will have no effect on the execution of the script", "warining")
-            sct.printv("Type -h to see supported options", "warning")
+            # self.parser.usage.error("Type of option \"" + str(self.type_value) +"\" is not supported by the parser.")
+            sct.printv("Option " + str(self.type_value) + " does not exist and will have no effect on the execution of the script", 1, "warning")
+            sct.printv("Type -h to see supported options", 1, "warning")
 
     def checkStandardType(self, param, type=None):
         # check if a int is really a int (same for str, float, long and complex)
@@ -189,13 +202,16 @@ class Option:
         try:
             return self.__safe_cast__(param, eval(type_option))
         except ValueError:
-            self.parser.usage.error("ERROR: Option " + self.name + " must be " + type_option)
+            self.parser.usage.error("Option " + self.name + " must be " + type_option)
 
     def checkFile(self, param):
         # check if the file exist
         sct.printv("Check file existence...", 0)
-        if self.parser.check_file_exist:
-            sct.check_file_exist(param, 0)
+        # note: self.check_file_exist is set inside SCT function, and self.parser.check_file_exist is set in parent
+        # call parse()
+        if self.check_file_exist and self.parser.check_file_exist:
+            if not os.path.isfile(param):
+                self.parser.usage.error("Option " + self.name + " file doesn't exist: " + param)
         return param
 
     def checkIfNifti(self, param):
@@ -206,14 +222,14 @@ class Option:
         no_image = False
         param_tmp = str()
         if param.lower().endswith('.nii'):
-            if self.parser.check_file_exist:
+            if self.check_file_exist and self.parser.check_file_exist:
                 nii = os.path.isfile(param)
                 niigz = os.path.isfile(param + '.gz')
             else:
                 nii, niigz = True, False
             param_tmp = param[:-4]
         elif param.lower().endswith('.nii.gz'):
-            if self.parser.check_file_exist:
+            if self.check_file_exist and self.parser.check_file_exist:
                 niigz = os.path.isfile(param)
                 nii = os.path.isfile(param[:-3])
             else:
@@ -222,8 +238,7 @@ class Option:
         elif param.lower() in self.list_no_image:
             no_image = True
         else:
-            sct.printv("ERROR: File is not a NIFTI image file. Exiting", type='error')
-
+            self.parser.usage.error("Option " + self.name + " file " + param + " is not a NIFTI image file. Exiting")
         if nii:
             return param_tmp + '.nii'
         elif niigz:
@@ -231,24 +246,26 @@ class Option:
         elif no_image:
             return param
         else:
-            sct.printv("ERROR: File " + param + " does not exist. Exiting", type='error')
+            sct.log.debug('executed in {}'.format(os.getcwd()))
+            self.parser.usage.error("Option " + self.name + " file " + param + " does not exist.")
 
     def checkFolder(self, param):
         # check if the folder exist. If not, create it.
-        if self.parser.check_file_exist:
-            sct.check_folder_exist(param, 0)
+        if self.check_file_exist and self.parser.check_file_exist:
+            if not os.path.isdir(param):
+                self.parser.usage.error("Option " + self.name + " folder doesn't exist: " + param)
         return param
 
     def checkFolderCreation(self, param):
         # check if the folder exist. If not, create it.
-        if self.parser.check_file_exist:
+        if self.check_file_exist and self.parser.check_file_exist:
             result_creation = sct.create_folder(param)
         else:
             result_creation = 0  # no need for checking
         if result_creation == 2:
-            sct.printv("ERROR: Permission denied for folder creation...", type="error")
+            raise OSError("Permission denied for folder creation {}".format(param))
         elif result_creation == 1:
-            sct.printv("Folder " + param + " has been created.", 0, type='warning')
+            sct.log.info("Folder " + param + " has been created.")
         return param
 
 
@@ -266,11 +283,38 @@ class Parser:
         self.usage = Usage(self, file_name)
         self.check_file_exist = True
 
-    def add_option(self, name, type_value=None, description=None, mandatory=False, example=None, help=None, default_value=None, deprecated_by=None, deprecated_rm=False, deprecated=False, list_no_image=None):
+    def add_option(self, name, type_value=None, description=None, mandatory=False, example=None, help=None,
+                   default_value=None, deprecated_by=None, deprecated_rm=False, deprecated=False, list_no_image=None,
+                   check_file_exist=True):
+        """
+        Add option to the parser
+        :param name:
+        :param type_value:
+        :param description:
+        :param mandatory:
+        :param example:
+        :param help:
+        :param default_value:
+        :param deprecated_by:
+        :param deprecated_rm:
+        :param deprecated:
+        :param list_no_image:
+        :param check_file_exist:
+        :return:
+        """
         order = len(self.options) + 1
-        self.options[name] = Option(name, type_value, description, mandatory, example, default_value, help, self, order, deprecated_by, deprecated_rm, deprecated, list_no_image)
+        self.options[name] = Option(name, type_value, description, mandatory, example, default_value, help, self,
+                                    order, deprecated_by, deprecated_rm, deprecated, list_no_image, check_file_exist)
 
     def parse(self, arguments, check_file_exist=True):
+        """
+        Parse a series of arguments.
+        :param arguments:
+        :param check_file_exist: If you don't want to check for file existence, set this value to False. Note that,
+        as opposed to the variable "check_file_exist" which can be set in each SCT function with the add_option()
+        method, this variable is more general and applies to ALL arguments. It has been introduced for sct_testing().
+        :return:
+        """
         # if you only want to parse a string and not checking for file existence, change flag check_file_exist
         self.check_file_exist = check_file_exist
 
@@ -280,8 +324,8 @@ class Parser:
 
         # check if help is asked by the user
         if "-h" in arguments:
-            sct.printv(self.usage.generate())
-            exit(1)
+            self.usage.generate()
+            exit(0)
 
         if "-sf" in arguments:
             doc_sourceforge = DocSourceForge(self, self.file_name)
@@ -336,36 +380,36 @@ class Parser:
 
             if arg in self.options:
                 if self.options[arg].deprecated_rm:
-                    sct.printv("ERROR : " + arg + " is a deprecated argument and is no longer supported by the current version.", 1, 'error')
+                    raise SyntaxError("{} is a deprecated argument and is no longer supported by the current version.".format(arg))
                 # for each argument, check if is in the option list.
                 # if so, check the integrity of the argument
                 if self.options[arg].deprecated:
-                    sct.printv("WARNING : " + arg + " is a deprecated argument and will no longer be updated in future versions.", 1, 'warning')
+                    sct.log.warning(" {} is a deprecated argument and will no longer be updated in future versions.".format(arg))
                 if self.options[arg].deprecated_by is not None:
                     try:
-                        sct.printv("WARNING : " + arg + " is a deprecated argument and will no longer be updated in future versions. Changing argument to " + self.options[arg].deprecated_by + ".", 1, 'warning')
+                        sct.log.warning(arg + " is a deprecated argument and will no longer be updated in future versions. Changing argument to " + self.options[arg].deprecated_by + ".")
                         arg = self.options[arg].deprecated_by
                     except KeyError as e:
-                        sct.printv("ERROR : Current argument non existent : " + e.message, 1, 'error')
+                        raise SyntaxError("Argument {} non existent".format(arg))
                 if self.options[arg].type_value:
                     if len(arguments) > index + 1:  # Check if option is not the last item
                         param = arguments[index + 1]
                     else:
-                        self.usage.error("ERROR: Option " + self.options[arg].name + " needs an argument...")
+                        self.usage.error("Option " + self.options[arg].name + " needs an argument...")
 
                     # check if option has an argument that is not another option
                     if param in self.options:
-                        self.usage.error("ERROR: Option " + self.options[arg].name + " needs an argument...")
+                        self.usage.error("Option " + self.options[arg].name + " needs an argument...")
 
                     # check if this flag has already been used before, then create a list and append this string to the previous string
                     if arg in dictionary:
                         # check if dictionary[arg] is already a list
                         if isinstance(dictionary[arg], list):
-                            dictionary[arg].append().check_integrity(param)
+                            dictionary[arg].append(self.options[arg].checkIntegrity(param))
                         else:
-                            dictionary[arg] = [dictionary[arg], self.options[arg].check_integrity(param)]
+                            dictionary[arg] = [dictionary[arg], self.options[arg].checkIntegrity(param)]
                     else:
-                        dictionary[arg] = self.options[arg].check_integrity(param)
+                        dictionary[arg] = self.options[arg].checkIntegrity(param)
                     skip = True
                 else:
                     dictionary[arg] = True
@@ -374,9 +418,9 @@ class Parser:
                 # check if the input argument is close to a known option
                 spelling_candidates = self.spelling.correct(arg)
                 if len(spelling_candidates) != 0:
-                    self.usage.error("ERROR: argument " + arg + " does not exist. Did you mean: " + ', '.join(spelling_candidates) + '?')
+                    self.usage.error("argument " + arg + " does not exist. Did you mean: " + ', '.join(spelling_candidates) + '?')
                 else:
-                    self.usage.error("ERROR: argument " + arg + " does not exist. See documentation.")
+                    self.usage.error("argument " + arg + " does not exist. See documentation.")
 
         # check if all mandatory arguments are provided by the user
         for option in [opt for opt in self.options if self.options[opt].mandatory and self.options[opt].deprecated_by is None]:
@@ -429,7 +473,7 @@ class Parser:
                             else:
                                 dictionary[key] = os.path.join(path_to_add, option)
             else:
-                sct.printv("ERROR: the option you provided is not contained in this parser. Please check the dictionary", verbose=1, type='error')
+                raise SyntaxError("The option {} you provided is not contained in this parser. Please check the dictionary".format(key))
 
         return dictionary
 
@@ -463,16 +507,6 @@ class Usage:
         #self.error = parser.errors
         self.arguments_string = ''
         self.section = dict()
-
-#     def set_header(self):
-#         from time import gmtime
-#         from os.path import basename, getmtime
-#         creation = gmtime(getmtime(self.file))
-#         self.header = """
-# """+basename(self.file)+"""
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
-# Version: """ + str(self.get_sct_version())
 
     def set_description(self, description):
         self.description = '\nDESCRIPTION\n' + self.align(description, length=100, pad=0)
@@ -560,20 +594,16 @@ class Usage:
         usage = self.header + self.description + self.usage + self.arguments_string
 
         if error:
-            sct.printv(error + '\nAborted...', type='warning')
-            sct.printv(usage, type='normal')
-            raise SyntaxError(error)
-            exit(1)
+            sct.log.info(usage)
+            sct.log.error("Command-line usage error: {}\nAborted...".format(error))
         else:
-            return usage
+            sct.log.info(usage)
 
     def error(self, error=None):
+        self.generate(error)
         if error:
-            self.generate(error)
-        else:
-            sct.printv(self.generate())
-            from sys import exit
-            exit(0)
+            exit(255)
+        exit(0)
 
     def print_list_with_brackets(self, l):
         type_value = '{'

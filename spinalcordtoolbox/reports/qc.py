@@ -1,20 +1,24 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import json
-import logging
-import os
 
-import warnings
+import sys, os, json, logging, warnings, datetime, io
+from string import Template
+
 warnings.filterwarnings("ignore")
 
-import datetime
+import numpy as np
+
+import skimage
+import skimage.io
+import skimage.exposure
+
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.colorbar as colorbar
 import matplotlib.colors as color
 import matplotlib.pyplot as plt
-import numpy as np
-from scipy import ndimage
 
+import sct_utils as sct
 
 logger = logging.getLogger("sct.{}".format(__file__))
 
@@ -52,7 +56,7 @@ class QcImage(object):
                      "#a22abd", "#d58240", "#ac2aff"]
     _seg_colormap = plt.cm.autumn
 
-    def __init__(self, qc_report, interpolation, action_list):
+    def __init__(self, qc_report, interpolation, action_list, stretch_contrast=True):
         """
 
         Parameters
@@ -63,15 +67,17 @@ class QcImage(object):
             Type of interpolation used in matplotlib
         action_list : list of functions
             List of functions that generates a specific type of images
+        stretch_contrast : adjust image so as to improve contrast
         """
         self.qc_report = qc_report
         self.interpolation = interpolation
         self.action_list = action_list
+        self._stretch_contrast = stretch_contrast
 
     """
     action_list contain the list of images that has to be generated.
     It can be seen as "figures" of matplotlib to be shown
-    Ex: if 'colorbar' is in the list, the msct_qc process will generate a color bar in the "img" folder
+    Ex: if 'colorbar' is in the list, the process will generate a color bar in the "img" folder
     """
 
     def listed_seg(self, mask):
@@ -82,6 +88,26 @@ class QcImage(object):
                          interpolation=self.interpolation,
                          alpha=1,
                          aspect=float(self.aspect_mask))
+        fig.axes.get_xaxis().set_visible(False)
+        fig.axes.get_yaxis().set_visible(False)
+
+    def template(self, mask):
+        """
+        Show template statistical atlas
+        """
+        values = mask
+        values[values<0.5] = 0
+        color_white = color.colorConverter.to_rgba('white', alpha=0.0)
+        color_blue = color.colorConverter.to_rgba('blue', alpha=0.7)
+        color_cyan = color.colorConverter.to_rgba('cyan', alpha=0.8)
+        cmap = color.LinearSegmentedColormap.from_list('cmap_atlas',
+         [color_white, color_blue, color_cyan], N=256)
+
+        fig = plt.imshow(values,
+                         cmap=cmap,
+                         interpolation=self.interpolation,
+                         aspect=self.aspect_mask)
+
         fig.axes.get_xaxis().set_visible(False)
         fig.axes.get_yaxis().set_visible(False)
 
@@ -102,22 +128,6 @@ class QcImage(object):
                          aspect=self.aspect_mask)
         fig.axes.get_xaxis().set_visible(False)
         fig.axes.get_yaxis().set_visible(False)
-
-    def label_vertebrae(self, mask):
-        self.listed_seg(mask)
-        ax = plt.gca()
-        a = [0.0]
-        data = mask
-        for index, val in np.ndenumerate(data):
-            if val not in a:
-                a.append(val)
-                index = int(val)
-                if index in self._labels_regions.values():
-                    color = self._labels_color[index]
-                    x, y = ndimage.measurements.center_of_mass(np.where(data == val, data, 0))
-                    label = self._labels_regions.keys()[list(self._labels_regions.values()).index(index)]
-                    ax.text(y, x, label, color='black', weight='heavy', clip_on=True)
-                    ax.text(y, x, label, color=color, clip_on=True)
 
     def colorbar(self):
         fig = plt.figure(figsize=(9, 1.5))
@@ -149,13 +159,43 @@ class QcImage(object):
 
             """
             self.qc_report.slice_name = sct_slice.get_name()
-            aspect_img, self.aspect_mask = sct_slice.aspect()
+
+            # consider only the first 2 slices
+            aspect_img, self.aspect_mask = sct_slice.aspect()[:2]
+
             self.qc_report.make_content_path()
             logger.info('QC: %s with %s slice', func.__name__, sct_slice.get_name())
 
             img, mask = func(sct_slice, *args)
 
-            plt.figure(1)
+            if self._stretch_contrast:
+                def equalized(a):
+                    """
+                    Perform histogram equalization using CLAHE
+
+                    Notes:
+
+                    - Image value range is preserved
+                    - Workaround for adapthist artifact by padding (#1664)
+                    """
+                    min_, max_ = a.min(), a.max()
+                    b = (np.float32(a) - min_) / (max_ - min_)
+                    b[b>=1] = 1 # 1+eps numerical error may happen (#1691)
+
+                    h, w = b.shape
+                    h1 = (h + (8-1))//8*8
+                    w1 = (w + (8-1))//8*8
+                    if h != h1 or w != w1:
+                        b1 = np.zeros((h1, w1), dtype=b.dtype)
+                        b1[:h,:w] = b
+                        b = b1
+                    c = skimage.exposure.equalize_adapthist(b, kernel_size=(8,8))
+                    if h != h1 or w != w1:
+                        c = c[:h,:w]
+                    return np.array(c * (max_ - min_) + min_, dtype=a.dtype)
+                img = equalized(img)
+
+            plt.figure()
             fig = plt.imshow(img, cmap=plt.cm.gray, interpolation=self.interpolation, aspect=float(aspect_img))
             fig.axes.get_xaxis().set_visible(False)
             fig.axes.get_yaxis().set_visible(False)
@@ -164,7 +204,10 @@ class QcImage(object):
             for action in self.action_list:
                 logger.debug('Action List %s', action.__name__)
                 plt.clf()
-                plt.figure(1)
+                plt.figure()
+                if self._stretch_contrast and action.__name__ in ("no_seg_seg",):
+                    print("Mask type %s" % mask.dtype)
+                    mask = equalized(mask)
                 action(self, mask)
                 self._save(self.qc_report.qc_params.abs_overlay_img_path())
             plt.close()
@@ -220,8 +263,11 @@ class Params(object):
         abs_input_path = os.path.dirname(os.path.abspath(input_file))
         abs_input_path, contrast = os.path.split(abs_input_path)
         _, subject = os.path.split(abs_input_path)
+        if isinstance(args, list):
+            args = sct.list2cmdline(args)
 
         self.subject = subject
+        self.cwd = os.getcwd()
         self.contrast = contrast
         self.command = command
         self.args = args
@@ -286,18 +332,16 @@ class QcReport(object):
                 raise err
 
     def update_description_file(self, dimension):
-        """Creates the description file with a JSON structure
+        """Create the description file with a JSON structure
 
-        Parameters
-        ----------
-        dimension : (int, int)
-            The dimension of the image frame
+        :param: dimension 2-tuple, the dimension of the image frame (w, h)
         """
-        # get path of the toolbox
-
+ 
         output = {
+            'python': sys.executable,
+            'cwd': self.qc_params.cwd,
+            'cmdline': "{} {}".format(self.qc_params.command, self.qc_params.args),
             'command': self.qc_params.command,
-            'args': ' '.join(self.qc_params.args),
             'subject': self.qc_params.subject,
             'contrast': self.qc_params.contrast,
             'orientation': self.qc_params.orientation,
@@ -312,3 +356,61 @@ class QcReport(object):
             results = json.load(open(self.qc_params.qc_results, 'r'))
         results.append(output)
         json.dump(results, open(self.qc_params.qc_results, "w"), indent=2)
+        self._update_html_assets(results)
+
+    def _update_html_assets(self, json_data):
+        """Update the html file and assets"""
+        assets_path = os.path.join(os.path.dirname(__file__), 'assets')
+        dest_path = self.qc_params.root_folder
+
+        with io.open(os.path.join(assets_path, 'index.html')) as template_index:
+            template = Template(template_index.read())
+            output = template.substitute(sct_json_data=json.dumps(json_data))
+            io.open(os.path.join(dest_path, 'index.html'), 'w').write(output)
+
+        for path in ['css', 'js', 'imgs', 'fonts']:
+            src_path = os.path.join(assets_path, '_assets', path)
+            dest_full_path = os.path.join(dest_path, '_assets', path)
+            if not os.path.exists(dest_full_path):
+                os.makedirs(dest_full_path)
+            for file_ in os.listdir(src_path):
+                if not os.path.isfile(os.path.join(dest_full_path, file_)):
+                    sct.copy(os.path.join(src_path, file_),
+                             dest_full_path)
+
+
+def add_entry(src, process, args, path_qc, plane, background=None, foreground=None,
+ qcslice=None,
+ qcslice_operations=[],
+ qcslice_layout=None,
+):
+    """
+    """
+
+    qc_param = Params(src, process, args, plane, path_qc)
+    report = QcReport(qc_param, '')
+
+    if qcslice is not None:
+        @QcImage(report, 'none', qcslice_operations)
+        def layout(qslice):
+            return qcslice_layout(qslice)
+
+        layout(qcslice)
+    else:
+        report.make_content_path()
+
+        def normalized(img):
+            return np.uint8(skimage.exposure.rescale_intensity(img, out_range=np.uint8))
+
+        skimage.io.imsave(qc_param.abs_overlay_img_path(), normalized(foreground))
+
+        if background is None:
+            qc_param.bkg_img_path = qc_param.overlay_img_path
+        else:
+            skimage.io.imsave(qc_param.abs_bkg_img_path(), normalized(background))
+
+        report.update_description_file(foreground.shape[:2])
+
+    sct.printv('Sucessfully generated the QC results in %s' % qc_param.qc_results)
+    sct.printv('Use the following command to see the results in a browser:')
+    sct.printv('open file "{}/index.html"'.format(path_qc), type='info')

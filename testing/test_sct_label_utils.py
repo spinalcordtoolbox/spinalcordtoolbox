@@ -25,6 +25,7 @@ def init(param_test):
     Initialize class: param_test
     """
     # initialization
+    sct.log.debug('init test {}'.format(param_test))
     folder_data = ['t2']
     file_data = ['t2_seg.nii.gz', 't2_seg_labeled.nii.gz']
 
@@ -44,6 +45,7 @@ def test_integrity(param_test):
     Test integrity of function
     """
 
+    sct.log.debug('test integrity {}'.format(param_test.__dict__))
     # find the test that is performed and check the integrity of the output
     index_args = param_test.default_args.index(param_test.args)
 
@@ -54,9 +56,6 @@ def test_integrity(param_test):
         if centers_of_mass_image != param_test.centers_of_mass:
             param_test.output += 'WARNING: Center of mass different from gold-standard. \n--> Results:   ' + centers_of_mass_image + '\n--> Should be: ' + param_test.centers_of_mass + '\n'
             param_test.status = 99
-
-    # transform results into Pandas structure
-    param_test.results = DataFrame(data={'status': param_test.status, 'output': param_test.output, 'duration [s]': param_test.duration}, index=[param_test.path_data])
 
     # end test
     return param_test

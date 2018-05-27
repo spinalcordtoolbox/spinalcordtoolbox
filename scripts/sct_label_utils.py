@@ -23,6 +23,7 @@ from scipy import ndimage
 
 from msct_parser import Parser
 from msct_image import Image
+from msct_types import CoordinateValue
 import sct_utils as sct
 
 
@@ -37,7 +38,20 @@ class Param:
 
 class ProcessLabels(object):
     def __init__(self, fname_label, fname_output=None, fname_ref=None, cross_radius=5, dilate=False,
-                 coordinates=None, verbose=1, vertebral_levels=None, value=None):
+                 coordinates=None, verbose=1, vertebral_levels=None, value=None, msg=""):
+        """
+        Collection of processes that deal with label creation/modification.
+        :param fname_label:
+        :param fname_output:
+        :param fname_ref:
+        :param cross_radius:
+        :param dilate:
+        :param coordinates:
+        :param verbose:
+        :param vertebral_levels:
+        :param value:
+        :param msg: string. message to display to the user.
+        """
         self.image_input = Image(fname_label, verbose=verbose)
         self.image_ref = None
         if fname_ref is not None:
@@ -56,6 +70,7 @@ class ProcessLabels(object):
         self.coordinates = coordinates
         self.verbose = verbose
         self.value = value
+        self.msg = msg
 
     def process(self, type_process):
         # for some processes, change orientation of input image to RPI
@@ -154,14 +169,16 @@ class ProcessLabels(object):
 
         # loop across labels
         for i, coord in enumerate(self.coordinates):
-            # display info
-            sct.printv('Label #' + str(i) + ': ' + str(coord.x) + ',' + str(coord.y) + ',' + str(coord.z) + ' --> ' +
-                       str(coord.value), 1)
             if len(image_output.data.shape) == 3:
                 image_output.data[int(coord.x), int(coord.y), int(coord.z)] = coord.value
             elif len(image_output.data.shape) == 2:
                 assert str(coord.z) == '0', "ERROR: 2D coordinates should have a Z value of 0. Z coordinate is :" + str(coord.z)
                 image_output.data[int(coord.x), int(coord.y)] = coord.value
+            else:
+                sct.printv('ERROR: Data should be 2D or 3D. Current shape is: ' + str(image_output.data.shape), 1, 'error')
+            # display info
+            sct.printv('Label #' + str(i) + ': ' + str(coord.x) + ',' + str(coord.y) + ',' + str(coord.z) + ' --> ' +
+                       str(coord.value), 1)
         return image_output
 
     def create_label_along_segmentation(self):
@@ -475,9 +492,9 @@ class ProcessLabels(object):
             result_coord_ref = [coord for coord in coord_ref if coord in coord_intersection]
         else:
             result_coord_ref = coord_ref
-            result_coord_input = [coord for coord in coord_input if filter(lambda x: x.value == coord.value, coord_ref)]
+            result_coord_input = [coord for coord in coord_input if list(filter(lambda x: x.value == coord.value, coord_ref))]
             if symmetry:
-                result_coord_ref = [coord for coord in coord_ref if filter(lambda x: x.value == coord.value, result_coord_input)]
+                result_coord_ref = [coord for coord in coord_ref if list(filter(lambda x: x.value == coord.value, result_coord_input))]
 
         return result_coord_input, result_coord_ref
 
@@ -526,16 +543,48 @@ class ProcessLabels(object):
         Display all the labels that are contained in the input image.
         The image is suppose to be RPI to display voxels. But works also for other orientations
         """
-        coordinates_input = self.image_input.getNonZeroCoordinates(sorting='z')
+        coordinates_input = self.image_input.getNonZeroCoordinates(sorting='value')
         self.useful_notation = ''
         for coord in coordinates_input:
             sct.printv('Position=(' + str(coord.x) + ',' + str(coord.y) + ',' + str(coord.z) + ') -- Value= ' + str(coord.value), verbose=self.verbose)
             if self.useful_notation:
                 self.useful_notation = self.useful_notation + ':'
-            self.useful_notation = self.useful_notation + str(coord.x) + ',' + str(coord.y) + ',' + str(coord.z) + ',' + str(coord.value)
+            self.useful_notation += str(coord)
         sct.printv('All labels (useful syntax):', verbose=self.verbose)
         sct.printv(self.useful_notation, verbose=self.verbose)
         return coordinates_input
+
+    def get_physical_coordinates(self):
+        """
+        This function returns the coordinates of the labels in the physical referential system.
+        :return: a list of CoordinateValue, in the physical (scanner) space
+        """
+        coord = self.image_input.getNonZeroCoordinates(sorting='value')
+        phys_coord = []
+        for c in coord:
+            # convert pixelar coordinates to physical coordinates
+            c_p = self.image_input.transfo_pix2phys([[c.x, c.y, c.z]])[0]
+            phys_coord.append(CoordinateValue([c_p[0], c_p[1], c_p[2], c.value]))
+        return phys_coord
+
+    def get_coordinates_in_destination(self, im_dest, type='discrete'):
+        """
+        This function calculate the position of labels in the pixelar space of a destination image
+        :param im_dest: Object Image
+        :param type: 'discrete' or 'continuous'
+        :return: a list of CoordinateValue, in the pixelar (image) space of the destination image
+        """
+        phys_coord = self.get_physical_coordinates()
+        dest_coord = []
+        for c in phys_coord:
+            if type is 'discrete':
+                c_p = im_dest.transfo_phys2pix([[c.x, c.y, c.y]])[0]
+            elif type is 'continuous':
+                c_p = im_dest.transfo_phys2continuouspix([[c.x, c.y, c.y]])[0]
+            else:
+                raise ValueError("The value of 'type' should either be 'discrete' or 'continuous'.")
+            dest_coord.append(CoordinateValue([c_p[0], c_p[1], c_p[2], c.value]))
+        return dest_coord
 
     def diff(self):
         """
@@ -647,6 +696,7 @@ class ProcessLabels(object):
         params.vertebraes = labels
         params.input_file_name = self.image_input.file_name
         params.output_file_name = self.fname_output
+        params.subtitle = self.msg
         output = self.image_input.copy()
         output.data *= 0
         output.setFileName(self.fname_output)
@@ -666,12 +716,7 @@ def get_parser():
                       description="Input image.",
                       mandatory=True,
                       example="t2_labels.nii.gz")
-    parser.add_option(name="-o",
-                      type_value=[[','], "file_output"],
-                      description="Output image(s).",
-                      mandatory=False,
-                      example="t2_labels_cross.nii.gz",
-                      default_value="labels.nii.gz")
+
     parser.add_option(name='-add',
                       type_value='int',
                       description='Add value to all labels. Value can be negative.',
@@ -689,6 +734,10 @@ def get_parser():
     parser.add_option(name='-create-seg',
                       type_value=[[':'], 'str'],
                       description='Create labels along cord segmentation (or centerline) defined by "-i". First value is "z", second is the value of the label. Separate labels with ":". Example: 5,1:14,2:23,3. To select the mid-point in the superior-inferior direction, set z to "-1". For example if you know that C2-C3 disc is centered in the S-I direction, then enter: -1,3',
+                      mandatory=False)
+    parser.add_option(name='-create-viewer',
+                      type_value=[[','], 'int'],
+                      description='Manually label from a GUI a list of labels IDs, separated with ",". Example: 2,3,4,5',
                       mandatory=False)
     parser.add_option(name='-cross',
                       type_value='int',
@@ -728,16 +777,24 @@ def get_parser():
                       type_value='file',
                       description='Remove labels from input image (-i) and reference image (specified here) that don\'t match. You must provide two output names separated by ",".',
                       mandatory=False)
+
+    parser.usage.addSection("MISC")
+    parser.add_option(name="-msg",
+                      type_value="str",
+                      description='Display a message to explain the labeling task. Use with -create-viewer.',
+                      mandatory=False)
+    parser.add_option(name="-o",
+                      type_value=[[','], "file_output"],
+                      description="Output image(s).",
+                      mandatory=False,
+                      example="t2_labels_cross.nii.gz",
+                      default_value="labels.nii.gz")
     parser.add_option(name="-v",
                       type_value="multiple_choice",
                       description='Verbose. 0: nothing. 1: basic. 2: extended.',
                       mandatory=False,
                       default_value=param_default.verbose,
                       example=['0', '1', '2'])
-    parser.add_option(name='-create-viewer',
-                      type_value=[[','], 'int'],
-                      description='Manually label from a GUI a list of labels IDs, separated with ",". Example: 2,3,4,5',
-                      mandatory=False)
     return parser
 
 
@@ -804,13 +861,17 @@ def main(args=None):
     else:
         # no process chosen
         sct.printv('ERROR: No process was chosen.', 1, 'error')
+    if '-msg' in arguments:
+        msg = arguments['-msg']+"\n"
+    else:
+        msg = ""
     if '-o' in arguments:
         input_fname_output = arguments['-o']
     input_verbose = int(arguments['-v'])
 
     processor = ProcessLabels(input_filename, fname_output=input_fname_output, fname_ref=input_fname_ref,
                               cross_radius=input_cross_radius, dilate=input_dilate, coordinates=input_coordinates,
-                              verbose=input_verbose, vertebral_levels=vertebral_levels, value=value)
+                              verbose=input_verbose, vertebral_levels=vertebral_levels, value=value, msg=msg)
     processor.process(process_type)
 
     # return based on process type
@@ -819,6 +880,6 @@ def main(args=None):
 
 
 if __name__ == "__main__":
-    sct.start_stream_logger()
+    sct.init_sct()
     # call main function
     main()

@@ -12,12 +12,14 @@
 
 # TODO: for -ref subject, crop data, otherwise registration is too long
 # TODO: testing script for all cases
+# TODO: enable vertebral alignment with -ref subject
 
 import sys, io, os, shutil, time
 
 import sct_utils as sct
 import sct_label_utils
 import sct_convert
+from spinalcordtoolbox.metadata import get_file_label
 from sct_utils import add_suffix
 from sct_register_multimodal import Paramreg, ParamregMultiStep, register
 from msct_parser import Parser
@@ -40,7 +42,7 @@ class Param:
         self.padding = 10  # this field is needed in the function register@sct_register_multimodal
         self.verbose = 1  # verbose
         self.path_template = os.path.join(path_sct, 'data', 'PAM50')
-        self.path_qc = os.path.abspath("qc")
+        self.path_qc = None
         self.zsubsample = '0.25'
         self.param_straighten = ''
 
@@ -60,12 +62,24 @@ paramreg = ParamregMultiStep([step0, step1, step2])
 def get_parser():
     param = Param()
     parser = Parser(__file__)
-    parser.usage.set_description('Register anatomical image to the template.\n\n'
-      'To register a subject to the template, try the default command:\n'
-      'sct_register_to_template -i data.nii.gz -s data_seg.nii.gz -l data_labels.nii.gz\n'
-      'If this default command does not produce satisfactory results, please see: https://sourceforge.net/p/spinalcordtoolbox/wiki/registration_tricks/\n\n'
-      'To register the template to a subject, you need to use "-ref subject". Example below:\n'
-      'sct_register_to_template -i data.nii.gz -s data_seg.nii.gz -l data_labels.nii.gz -ref subject -param step=1,type=seg,algo=centermassrot,smooth=0:step=2,type=seg,algo=columnwise,smooth=0,smoothWarpXY=2'
+    parser.usage.set_description('Register an anatomical image to the spinal cord MRI template (default: PAM50).\n\n'
+                                 'The registration process includes three main registration steps:\n'
+                                   '1. straightening of the image using the spinal cord segmentation (see sct_straighten_spinalcord for details);\n'
+                                   '2. vertebral alignment between the image and the template, using labels along the spine;\n'
+                                   '3. iterative slice-wise non-linear registration (see sct_register_multimodal for details)\n\n'
+                                 'To register a subject to the template, try the default command:\n'
+                                   'sct_register_to_template -i data.nii.gz -s data_seg.nii.gz -l data_labels.nii.gz\n\n'
+                                 'If this default command does not produce satisfactory results, please refer to:\n'
+                                   'https://sourceforge.net/p/spinalcordtoolbox/wiki/registration_tricks/\n\n'
+                                 'The default registration method brings the subject image to the template, which can be problematic with highly non-isotropic images as it would induce large interpolation errors during the straightening procedure. Although the default method is recommended, you may want to register the template to the subject (instead of the subject to the template) by skipping the straightening procedure. To do so, use the parameter "-ref subject". Example below:\n'
+                                   'sct_register_to_template -i data.nii.gz -s data_seg.nii.gz -l data_labels.nii.gz -ref subject -param step=1,type=seg,algo=centermassrot,smooth=0:step=2,type=seg,algo=columnwise,smooth=0,smoothWarpXY=2\n\n'
+                                 'Vertebral alignment (step 2) consists in aligning the vertebrae between the subject and the template. Two types of labels are possible:\n'
+                                   '- Vertebrae mid-body labels, created at the center of the spinal cord using the parameter "-l";\n'
+                                   '- Posterior edge of the intervertebral discs, using the parameter "-ldisc".\n\n'
+                                 'If only one label is provided, a simple translation will be applied between the subject label and the template label. No scaling will be performed. \n\n'
+                                 'If two labels are provided, a linear transformation (translation + rotation + superior-inferior linear scaling) will be applied. The strategy here is to defined labels that cover the region of interest. For example, if you are interested in studying C2 to C6 levels, then provide one label at C2 and another at C6. However, note that if the two labels are very far apart (e.g. C2 and T12), there might be a mis-alignment of discs because a subject''s intervertebral discs distance might differ from that of the template.\n\n'
+                                 'If more than two labels (only with the parameter "-disc") are used, a non-linear registration will be applied to align the each intervertebral disc between the subject and the template, as described in sct_straighten_spinalcord. This the most accurate and preferred method. This feature does not work with the parameter "-ref subject".\n\n'
+                                 'More information about label creation can be found at http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/'
       )
     parser.add_option(name="-i",
                       type_value="file",
@@ -79,13 +93,19 @@ def get_parser():
                       example="anat_seg.nii.gz")
     parser.add_option(name="-l",
                       type_value="file",
-                      description="Labels. See: http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/",
+                      description="Labels located at the center of the spinal cord, on the mid-vertebral slice. For "
+                                  "more information about label creation, please refer to "
+                                  "http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/",
                       mandatory=False,
                       default_value='',
                       example="anat_labels.nii.gz")
     parser.add_option(name="-ldisc",
                       type_value="file",
-                      description="Labels centered at disks instead of mid-vertebral bodies. Several labels are possible (minimum 1). E.g.: Value=3 corresponds to C2-C3 disc. If only one label is used, no Z-scaling is performed. If more than 2 labels are used, then non-linear Z-scaling is performed (NOT IMPLEMENTED YET-- ADD LINK TO PAPER BEN).",
+                      description="Labels located at the posterior edge of the intervertebral discs. If you are using "
+                                  "more than 2 labels, all disc covering the region of interest should be provided. "
+                                  "E.g., if you are interested in levels C2 to C7, then you should provide disc labels "
+                                  "2,3,4,5,6,7). For more information about label creation, please refer to "
+                                  "http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/.",  # TODO: update URL
                       mandatory=False,
                       default_value='',
                       example="anat_labels.nii.gz")
@@ -131,11 +151,7 @@ def get_parser():
     parser.add_option(name='-qc',
                       type_value='folder_creation',
                       description='The path where the quality control generated content will be saved',
-                      default_value=os.path.expanduser('~/qc_data'))
-    parser.add_option(name='-noqc',
-                      type_value=None,
-                      description='Prevent the generation of the QC report',
-                      mandatory=False)
+                      default_value=param.path_qc)
     parser.add_option(name="-igt",
                       type_value="image_nifti",
                       description="File name of ground-truth template cord segmentation (binary nifti).",
@@ -144,7 +160,7 @@ def get_parser():
                       type_value="multiple_choice",
                       description="""Remove temporary files.""",
                       mandatory=False,
-                      default_value='1',
+                      default_value='0',
                       example=['0', '1'])
     parser.add_option(name="-v",
                       type_value="multiple_choice",
@@ -184,6 +200,9 @@ def main(args=None):
         path_output = arguments['-ofolder']
     else:
         path_output = ''
+
+    param.path_qc = arguments.get("-qc", None)
+
     path_template = arguments['-t']
     contrast_template = arguments['-c']
     ref = arguments['-ref']
@@ -217,9 +236,8 @@ def main(args=None):
     # smoothing_sigma = param.smoothing_sigma
 
     # retrieve template file names
-    from sct_warp_template import get_file_label
-    file_template_vertebral_labeling = get_file_label(os.path.join(path_template, 'template'), 'vertebral')
-    file_template = get_file_label(os.path.join(path_template, 'template'), contrast_template.upper() + '-weighted')
+    file_template_vertebral_labeling = get_file_label(os.path.join(path_template, 'template'), 'vertebral labeling')
+    file_template = get_file_label(os.path.join(path_template, 'template'), contrast_template.upper() + '-weighted template')
     file_template_seg = get_file_label(os.path.join(path_template, 'template'), 'spinal cord')
 
     # start timer
@@ -247,9 +265,6 @@ def main(args=None):
     sct.printv('  Path template:        ' + path_template, verbose)
     sct.printv('  Remove temp files:    ' + str(remove_temp_files), verbose)
 
-    # create QC folder
-    sct.create_folder(param.path_qc)
-
     # check if data, segmentation and landmarks are in the same space
     # JULIEN 2017-04-25: removed because of issue #1168
     # sct.printv('\nCheck if data, segmentation and landmarks are in the same space...')
@@ -260,6 +275,10 @@ def main(args=None):
 
     # check input labels
     labels = check_labels(fname_landmarks, label_type=label_type)
+
+    vertebral_alignment = False
+    if len(labels) > 2 and label_type == 'disc':
+        vertebral_alignment = True
 
     path_tmp = sct.tmp_create(basename="register_to_template", verbose=verbose)
 
@@ -274,11 +293,11 @@ def main(args=None):
 
     # copy files to temporary folder
     sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
-    sct.run('sct_convert -i ' + fname_data + ' -o ' + os.path.join(path_tmp, ftmp_data))
-    sct.run('sct_convert -i ' + fname_seg + ' -o ' + os.path.join(path_tmp, ftmp_seg))
-    sct.run('sct_convert -i ' + fname_landmarks + ' -o ' + os.path.join(path_tmp, ftmp_label))
-    sct.run('sct_convert -i ' + fname_template + ' -o ' + os.path.join(path_tmp, ftmp_template))
-    sct.run('sct_convert -i ' + fname_template_seg + ' -o ' + os.path.join(path_tmp, ftmp_template_seg))
+    sct.run(['sct_convert', '-i', fname_data, '-o', os.path.join(path_tmp, ftmp_data)])
+    sct.run(['sct_convert', '-i', fname_seg, '-o', os.path.join(path_tmp, ftmp_seg)])
+    sct.run(['sct_convert', '-i', fname_landmarks, '-o', os.path.join(path_tmp, ftmp_label)])
+    sct.run(['sct_convert', '-i', fname_template, '-o', os.path.join(path_tmp, ftmp_template)])
+    sct.run(['sct_convert', '-i', fname_template_seg, '-o', os.path.join(path_tmp, ftmp_template_seg)])
     sct_convert.main(args=['-i', fname_template_vertebral_labeling, '-o', os.path.join(path_tmp, ftmp_template_label)])
     if label_type == 'disc':
         sct_convert.main(args=['-i', fname_template_disc_labeling, '-o', os.path.join(path_tmp, ftmp_template_label)])
@@ -292,7 +311,6 @@ def main(args=None):
     if label_type == 'body':
         sct.printv('\nGenerate labels from template vertebral labeling', verbose)
         sct_label_utils.main(args=['-i', ftmp_template_label, '-vert-body', '0', '-o', ftmp_template_label])
-    # sct.run('sct_label_utils -i ' + fname_template_vertebral_labeling + ' -vert-body 0 -o ' + ftmp_template_label)
 
     # check if provided labels are available in the template
     sct.printv('\nCheck if provided labels are available in the template', verbose)
@@ -311,7 +329,7 @@ def main(args=None):
 
     # binarize segmentation (in case it has values below 0 caused by manual editing)
     sct.printv('\nBinarize segmentation', verbose)
-    sct.run('sct_maths -i seg.nii.gz -bin 0.5 -o seg.nii.gz')
+    sct.run(['sct_maths', '-i', 'seg.nii.gz', '-bin', '0.5', '-o', 'seg.nii.gz'])
 
     # smooth segmentation (jcohenadad, issue #613)
     # sct.printv('\nSmooth segmentation...', verbose)
@@ -325,9 +343,9 @@ def main(args=None):
 
         # resample data to 1mm isotropic
         sct.printv('\nResample data to 1mm isotropic...', verbose)
-        sct.run('sct_resample -i ' + ftmp_data + ' -mm 1.0x1.0x1.0 -x linear -o ' + add_suffix(ftmp_data, '_1mm'))
+        sct.run(['sct_resample', '-i', ftmp_data, '-mm', '1.0x1.0x1.0', '-x', 'linear', '-o', add_suffix(ftmp_data, '_1mm')])
         ftmp_data = add_suffix(ftmp_data, '_1mm')
-        sct.run('sct_resample -i ' + ftmp_seg + ' -mm 1.0x1.0x1.0 -x linear -o ' + add_suffix(ftmp_seg, '_1mm'))
+        sct.run(['sct_resample', '-i', ftmp_seg, '-mm', '1.0x1.0x1.0', '-x', 'linear', '-o', add_suffix(ftmp_seg, '_1mm')])
         ftmp_seg = add_suffix(ftmp_seg, '_1mm')
         # N.B. resampling of labels is more complicated, because they are single-point labels, therefore resampling with neighrest neighbour can make them disappear. Therefore a more clever approach is required.
         resample_labels(ftmp_label, ftmp_data, add_suffix(ftmp_label, '_1mm'))
@@ -335,19 +353,30 @@ def main(args=None):
 
         # Change orientation of input images to RPI
         sct.printv('\nChange orientation of input images to RPI...', verbose)
-        sct.run('sct_image -i ' + ftmp_data + ' -setorient RPI -o ' + add_suffix(ftmp_data, '_rpi'))
+        sct.run(['sct_image', '-i', ftmp_data, '-setorient', 'RPI', '-o', add_suffix(ftmp_data, '_rpi')])
         ftmp_data = add_suffix(ftmp_data, '_rpi')
-        sct.run('sct_image -i ' + ftmp_seg + ' -setorient RPI -o ' + add_suffix(ftmp_seg, '_rpi'))
+        sct.run(['sct_image', '-i', ftmp_seg, '-setorient', 'RPI', '-o', add_suffix(ftmp_seg, '_rpi')])
         ftmp_seg = add_suffix(ftmp_seg, '_rpi')
-        sct.run('sct_image -i ' + ftmp_label + ' -setorient RPI -o ' + add_suffix(ftmp_label, '_rpi'))
+        sct.run(['sct_image', '-i', ftmp_label, '-setorient', 'RPI', '-o', add_suffix(ftmp_label, '_rpi')])
         ftmp_label = add_suffix(ftmp_label, '_rpi')
 
-        # get landmarks in native space
-        # crop segmentation
+        if vertebral_alignment:
+            # cropping the segmentation based on the label coverage to ensure good registration with vertebral alignment
+            # See https://github.com/neuropoly/spinalcordtoolbox/pull/1669 for details
+            image_labels = Image(ftmp_label)
+            coordinates_labels = image_labels.getNonZeroCoordinates(sorting='z')
+            nx, ny, nz, nt, px, py, pz, pt = image_labels.dim
+            offset_crop = 10.0 * pz  # cropping the image 10 mm above and below the highest and lowest label
+            cropping_slices = [coordinates_labels[0].z - offset_crop, coordinates_labels[-1].z + offset_crop]
+            status_crop, output_crop = sct.run(['sct_crop_image', '-i', ftmp_seg, '-o', add_suffix(ftmp_seg, '_crop'), '-dim', '2', '-start', str(cropping_slices[0]), '-end', str(cropping_slices[1])], verbose)
+        else:
+            # if we do not align the vertebral levels, we crop the segmentation from top to bottom
+            status_crop, output_crop = sct.run(['sct_crop_image', '-i', ftmp_seg, '-o', add_suffix(ftmp_seg, '_crop'), '-dim', '2', '-bzmax'], verbose)
+            cropping_slices = output_crop.split('Dimension 2: ')[1].split('\n')[0].split(' ')
+
         # output: segmentation_rpi_crop.nii.gz
-        status_crop, output_crop = sct.run('sct_crop_image -i ' + ftmp_seg + ' -o ' + add_suffix(ftmp_seg, '_crop') + ' -dim 2 -bzmax', verbose)
         ftmp_seg = add_suffix(ftmp_seg, '_crop')
-        cropping_slices = output_crop.split('Dimension 2: ')[1].split('\n')[0].split(' ')
+
 
         # straighten segmentation
         sct.printv('\nStraighten the spinal cord using centerline/segmentation...', verbose)
@@ -356,62 +385,83 @@ def main(args=None):
         fn_warp_curve2straight = os.path.join(curdir, "warp_curve2straight.nii.gz")
         fn_warp_straight2curve = os.path.join(curdir, "warp_straight2curve.nii.gz")
         fn_straight_ref = os.path.join(curdir, "straight_ref.nii.gz")
-        if os.path.isfile(fn_warp_curve2straight) and os.path.isfile(fn_warp_straight2curve) and os.path.isfile(fn_straight_ref):
-            # if they exist, copy them into current folder
-            sct.printv('WARNING: Straightening was already run previously. Copying warping fields...', verbose, 'warning')
+
+        cache_input_files=[ftmp_seg]
+        if vertebral_alignment:
+            cache_input_files += [
+             ftmp_template_seg,
+             ftmp_label,
+             ftmp_template_label,
+            ]
+        cache_sig = sct.cache_signature(
+         input_files=cache_input_files,
+        )
+        cachefile = os.path.join(curdir, "straightening.cache")
+        if sct.cache_valid(cachefile, cache_sig) and os.path.isfile(fn_warp_curve2straight) and os.path.isfile(fn_warp_straight2curve) and os.path.isfile(fn_straight_ref):
+            sct.printv('Reusing existing warping field which seems to be valid', verbose, 'warning')
             sct.copy(fn_warp_curve2straight, 'warp_curve2straight.nii.gz')
             sct.copy(fn_warp_straight2curve, 'warp_straight2curve.nii.gz')
             sct.copy(fn_straight_ref, 'straight_ref.nii.gz')
             # apply straightening
-            sct.run('sct_apply_transfo -i ' + ftmp_seg + ' -w warp_curve2straight.nii.gz -d straight_ref.nii.gz -o ' + add_suffix(ftmp_seg, '_straight'))
+            sct.run(['sct_apply_transfo', '-i', ftmp_seg, '-w', 'warp_curve2straight.nii.gz', '-d', 'straight_ref.nii.gz', '-o', add_suffix(ftmp_seg, '_straight')])
         else:
-            import sct_straighten_spinalcord
-            if __name__ == '__main__':
-                sct_straighten_spinalcord.main(args=[
-                    '-i', ftmp_seg,
-                    '-s', ftmp_seg,
-                    '-o', add_suffix(ftmp_seg, '_straight'),
-                    '-qc', '0',
-                    '-r', '0',
-                    '-v', str(verbose),
-                    '-param', 'template_orientation=1'])
+            from sct_straighten_spinalcord import SpinalCordStraightener
+            sc_straight = SpinalCordStraightener(ftmp_seg, ftmp_seg)
+            sc_straight.output_filename = add_suffix(ftmp_seg, '_straight')
+            sc_straight.path_output = './'
+            sc_straight.qc = '0'
+            sc_straight.remove_temp_files = remove_temp_files
+            sc_straight.verbose = verbose
+
+            if vertebral_alignment:
+                sc_straight.centerline_reference_filename = ftmp_template_seg
+                sc_straight.use_straight_reference = True
+                sc_straight.discs_input_filename = ftmp_label
+                sc_straight.discs_ref_filename = ftmp_template_label
+
+            sc_straight.straighten()
+            sct.cache_save(cachefile, cache_sig)
+
         # N.B. DO NOT UPDATE VARIABLE ftmp_seg BECAUSE TEMPORARY USED LATER
         # re-define warping field using non-cropped space (to avoid issue #367)
-        sct.run('sct_concat_transfo -w warp_straight2curve.nii.gz -d ' + ftmp_data + ' -o warp_straight2curve.nii.gz')
+        sct.run(['sct_concat_transfo', '-w', 'warp_straight2curve.nii.gz', '-d', ftmp_data, '-o', 'warp_straight2curve.nii.gz'])
 
-        # Label preparation:
-        # --------------------------------------------------------------------------------
-        # Remove unused label on template. Keep only label present in the input label image
-        sct.printv('\nRemove unused label on template. Keep only label present in the input label image...', verbose)
-        sct.run('sct_label_utils -i ' + ftmp_template_label + ' -o ' + ftmp_template_label + ' -remove ' + ftmp_label)
+        if vertebral_alignment:
+            sct.copy('warp_curve2straight.nii.gz', 'warp_curve2straightAffine.nii.gz')
+        else:
+            # Label preparation:
+            # --------------------------------------------------------------------------------
+            # Remove unused label on template. Keep only label present in the input label image
+            sct.printv('\nRemove unused label on template. Keep only label present in the input label image...', verbose)
+            sct.run(['sct_label_utils', '-i', ftmp_template_label, '-o', ftmp_template_label, '-remove', ftmp_label])
 
-        # Dilating the input label so they can be straighten without losing them
-        sct.printv('\nDilating input labels using 3vox ball radius')
-        sct.run('sct_maths -i ' + ftmp_label + ' -o ' + add_suffix(ftmp_label, '_dilate') + ' -dilate 3')
-        ftmp_label = add_suffix(ftmp_label, '_dilate')
+            # Dilating the input label so they can be straighten without losing them
+            sct.printv('\nDilating input labels using 3vox ball radius')
+            sct.run(['sct_maths', '-i', ftmp_label, '-o', add_suffix(ftmp_label, '_dilate'), '-dilate', '3'])
+            ftmp_label = add_suffix(ftmp_label, '_dilate')
 
-        # Apply straightening to labels
-        sct.printv('\nApply straightening to labels...', verbose)
-        sct.run('sct_apply_transfo -i ' + ftmp_label + ' -o ' + add_suffix(ftmp_label, '_straight') + ' -d ' + add_suffix(ftmp_seg, '_straight') + ' -w warp_curve2straight.nii.gz -x nn')
-        ftmp_label = add_suffix(ftmp_label, '_straight')
+            # Apply straightening to labels
+            sct.printv('\nApply straightening to labels...', verbose)
+            sct.run(['sct_apply_transfo', '-i', ftmp_label, '-o', add_suffix(ftmp_label, '_straight'), '-d', add_suffix(ftmp_seg, '_straight'), '-w', 'warp_curve2straight.nii.gz', '-x', 'nn'])
+            ftmp_label = add_suffix(ftmp_label, '_straight')
 
-        # Compute rigid transformation straight landmarks --> template landmarks
-        sct.printv('\nEstimate transformation for step #0...', verbose)
-        from msct_register_landmarks import register_landmarks
-        try:
-            register_landmarks(ftmp_label, ftmp_template_label, paramreg.steps['0'].dof, fname_affine='straight2templateAffine.txt', verbose=verbose)
-        except Exception:
-            sct.printv('ERROR: input labels do not seem to be at the right place. Please check the position of the labels. See documentation for more details: https://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/', verbose=verbose, type='error')
+            # Compute rigid transformation straight landmarks --> template landmarks
+            sct.printv('\nEstimate transformation for step #0...', verbose)
+            from msct_register_landmarks import register_landmarks
+            try:
+                register_landmarks(ftmp_label, ftmp_template_label, paramreg.steps['0'].dof, fname_affine='straight2templateAffine.txt', verbose=verbose)
+            except Exception:
+                sct.printv('ERROR: input labels do not seem to be at the right place. Please check the position of the labels. See documentation for more details: https://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/', verbose=verbose, type='error')
 
-        # Concatenate transformations: curve --> straight --> affine
-        sct.printv('\nConcatenate transformations: curve --> straight --> affine...', verbose)
-        sct.run('sct_concat_transfo -w warp_curve2straight.nii.gz,straight2templateAffine.txt -d template.nii -o warp_curve2straightAffine.nii.gz')
+            # Concatenate transformations: curve --> straight --> affine
+            sct.printv('\nConcatenate transformations: curve --> straight --> affine...', verbose)
+            sct.run(['sct_concat_transfo', '-w', 'warp_curve2straight.nii.gz,straight2templateAffine.txt', '-d', 'template.nii', '-o', 'warp_curve2straightAffine.nii.gz'])
 
         # Apply transformation
         sct.printv('\nApply transformation...', verbose)
-        sct.run('sct_apply_transfo -i ' + ftmp_data + ' -o ' + add_suffix(ftmp_data, '_straightAffine') + ' -d ' + ftmp_template + ' -w warp_curve2straightAffine.nii.gz')
+        sct.run(['sct_apply_transfo', '-i', ftmp_data, '-o', add_suffix(ftmp_data, '_straightAffine'), '-d', ftmp_template, '-w', 'warp_curve2straightAffine.nii.gz'])
         ftmp_data = add_suffix(ftmp_data, '_straightAffine')
-        sct.run('sct_apply_transfo -i ' + ftmp_seg + ' -o ' + add_suffix(ftmp_seg, '_straightAffine') + ' -d ' + ftmp_template + ' -w warp_curve2straightAffine.nii.gz -x linear')
+        sct.run(['sct_apply_transfo', '-i', ftmp_seg, '-o', add_suffix(ftmp_seg, '_straightAffine'), '-d', ftmp_template, '-w', 'warp_curve2straightAffine.nii.gz', '-x', 'linear'])
         ftmp_seg = add_suffix(ftmp_seg, '_straightAffine')
 
         """
@@ -427,7 +477,7 @@ def main(args=None):
 
         # binarize
         sct.printv('\nBinarize segmentation...', verbose)
-        sct.run('sct_maths -i ' + ftmp_seg + ' -bin 0.5 -o ' + add_suffix(ftmp_seg, '_bin'))
+        sct.run(['sct_maths', '-i', ftmp_seg, '-bin', '0.5', '-o', add_suffix(ftmp_seg, '_bin')])
         ftmp_seg = add_suffix(ftmp_seg, '_bin')
 
         # find min-max of anat2template (for subsequent cropping)
@@ -435,24 +485,24 @@ def main(args=None):
 
         # crop template in z-direction (for faster processing)
         sct.printv('\nCrop data in template space (for faster processing)...', verbose)
-        sct.run('sct_crop_image -i ' + ftmp_template + ' -o ' + add_suffix(ftmp_template, '_crop') + ' -dim 2 -start ' + str(zmin_template) + ' -end ' + str(zmax_template))
+        sct.run(['sct_crop_image', '-i', ftmp_template, '-o', add_suffix(ftmp_template, '_crop'), '-dim', '2', '-start', str(zmin_template), '-end', str(zmax_template)])
         ftmp_template = add_suffix(ftmp_template, '_crop')
-        sct.run('sct_crop_image -i ' + ftmp_template_seg + ' -o ' + add_suffix(ftmp_template_seg, '_crop') + ' -dim 2 -start ' + str(zmin_template) + ' -end ' + str(zmax_template))
+        sct.run(['sct_crop_image', '-i', ftmp_template_seg, '-o', add_suffix(ftmp_template_seg, '_crop'), '-dim', '2', '-start', str(zmin_template), '-end', str(zmax_template)])
         ftmp_template_seg = add_suffix(ftmp_template_seg, '_crop')
-        sct.run('sct_crop_image -i ' + ftmp_data + ' -o ' + add_suffix(ftmp_data, '_crop') + ' -dim 2 -start ' + str(zmin_template) + ' -end ' + str(zmax_template))
+        sct.run(['sct_crop_image', '-i', ftmp_data, '-o', add_suffix(ftmp_data, '_crop'), '-dim', '2', '-start', str(zmin_template), '-end', str(zmax_template)])
         ftmp_data = add_suffix(ftmp_data, '_crop')
-        sct.run('sct_crop_image -i ' + ftmp_seg + ' -o ' + add_suffix(ftmp_seg, '_crop') + ' -dim 2 -start ' + str(zmin_template) + ' -end ' + str(zmax_template))
+        sct.run(['sct_crop_image', '-i', ftmp_seg, '-o', add_suffix(ftmp_seg, '_crop'), '-dim', '2', '-start', str(zmin_template), '-end', str(zmax_template)])
         ftmp_seg = add_suffix(ftmp_seg, '_crop')
 
         # sub-sample in z-direction
         sct.printv('\nSub-sample in z-direction (for faster processing)...', verbose)
-        sct.run('sct_resample -i ' + ftmp_template + ' -o ' + add_suffix(ftmp_template, '_sub') + ' -f 1x1x' + zsubsample, verbose)
+        sct.run(['sct_resample', '-i', ftmp_template, '-o', add_suffix(ftmp_template, '_sub'), '-f', '1x1x' + zsubsample], verbose)
         ftmp_template = add_suffix(ftmp_template, '_sub')
-        sct.run('sct_resample -i ' + ftmp_template_seg + ' -o ' + add_suffix(ftmp_template_seg, '_sub') + ' -f 1x1x' + zsubsample, verbose)
+        sct.run(['sct_resample', '-i', ftmp_template_seg, '-o', add_suffix(ftmp_template_seg, '_sub'), '-f', '1x1x' + zsubsample], verbose)
         ftmp_template_seg = add_suffix(ftmp_template_seg, '_sub')
-        sct.run('sct_resample -i ' + ftmp_data + ' -o ' + add_suffix(ftmp_data, '_sub') + ' -f 1x1x' + zsubsample, verbose)
+        sct.run(['sct_resample', '-i', ftmp_data, '-o', add_suffix(ftmp_data, '_sub'), '-f', '1x1x' + zsubsample], verbose)
         ftmp_data = add_suffix(ftmp_data, '_sub')
-        sct.run('sct_resample -i ' + ftmp_seg + ' -o ' + add_suffix(ftmp_seg, '_sub') + ' -f 1x1x' + zsubsample, verbose)
+        sct.run(['sct_resample', '-i', ftmp_seg, '-o', add_suffix(ftmp_seg, '_sub'), '-f', '1x1x' + zsubsample], verbose)
         ftmp_seg = add_suffix(ftmp_seg, '_sub')
 
         # Registration straight spinal cord to template
@@ -478,7 +528,7 @@ def main(args=None):
             if i_step > 1:
                 # sct.run('sct_apply_transfo -i '+src+' -d '+dest+' -w '+','.join(warp_forward)+' -o '+sct.add_suffix(src, '_reg')+' -x '+interp_step, verbose)
                 # apply transformation from previous step, to use as new src for registration
-                sct.run('sct_apply_transfo -i ' + src + ' -d ' + dest + ' -w ' + ','.join(warp_forward) + ' -o ' + add_suffix(src, '_regStep' + str(i_step - 1)) + ' -x ' + interp_step, verbose)
+                sct.run(['sct_apply_transfo', '-i', src, '-d', dest, '-w', ','.join(warp_forward), '-o', add_suffix(src, '_regStep' + str(i_step - 1)), '-x', interp_step], verbose)
                 src = add_suffix(src, '_regStep' + str(i_step - 1))
             # register src --> dest
             # TODO: display param for debugging
@@ -488,27 +538,31 @@ def main(args=None):
 
         # Concatenate transformations:
         sct.printv('\nConcatenate transformations: anat --> template...', verbose)
-        sct.run('sct_concat_transfo -w warp_curve2straightAffine.nii.gz,' + ','.join(warp_forward) + ' -d template.nii -o warp_anat2template.nii.gz', verbose)
+        sct.run(['sct_concat_transfo', '-w', 'warp_curve2straightAffine.nii.gz,' + ','.join(warp_forward), '-d', 'template.nii', '-o', 'warp_anat2template.nii.gz'], verbose)
         # sct.run('sct_concat_transfo -w warp_curve2straight.nii.gz,straight2templateAffine.txt,'+','.join(warp_forward)+' -d template.nii -o warp_anat2template.nii.gz', verbose)
         sct.printv('\nConcatenate transformations: template --> anat...', verbose)
         warp_inverse.reverse()
-        sct.run('sct_concat_transfo -w ' + ','.join(warp_inverse) + ',-straight2templateAffine.txt,warp_straight2curve.nii.gz -d data.nii -o warp_template2anat.nii.gz', verbose)
+
+        if vertebral_alignment:
+            sct.run(['sct_concat_transfo', '-w', ','.join(warp_inverse) + ',warp_straight2curve.nii.gz', '-d', 'data.nii', '-o', 'warp_template2anat.nii.gz'], verbose)
+        else:
+            sct.run(['sct_concat_transfo', '-w', ','.join(warp_inverse) + ',-straight2templateAffine.txt,warp_straight2curve.nii.gz', '-d', 'data.nii', '-o', 'warp_template2anat.nii.gz'], verbose)
 
     # register template->subject
     elif ref == 'subject':
 
         # Change orientation of input images to RPI
         sct.printv('\nChange orientation of input images to RPI...', verbose)
-        sct.run('sct_image -i ' + ftmp_data + ' -setorient RPI -o ' + add_suffix(ftmp_data, '_rpi'))
+        sct.run(['sct_image', '-i', ftmp_data, '-setorient', 'RPI', '-o', add_suffix(ftmp_data, '_rpi')])
         ftmp_data = add_suffix(ftmp_data, '_rpi')
-        sct.run('sct_image -i ' + ftmp_seg + ' -setorient RPI -o ' + add_suffix(ftmp_seg, '_rpi'))
+        sct.run(['sct_image', '-i', ftmp_seg, '-setorient', 'RPI', '-o', add_suffix(ftmp_seg, '_rpi')])
         ftmp_seg = add_suffix(ftmp_seg, '_rpi')
-        sct.run('sct_image -i ' + ftmp_label + ' -setorient RPI -o ' + add_suffix(ftmp_label, '_rpi'))
+        sct.run(['sct_image', '-i', ftmp_label, '-setorient', 'RPI', '-o', add_suffix(ftmp_label, '_rpi')])
         ftmp_label = add_suffix(ftmp_label, '_rpi')
 
         # Remove unused label on template. Keep only label present in the input label image
         sct.printv('\nRemove unused label on template. Keep only label present in the input label image...', verbose)
-        sct.run('sct_label_utils -i ' + ftmp_template_label + ' -o ' + ftmp_template_label + ' -remove ' + ftmp_label)
+        sct.run(['sct_label_utils', '-i', ftmp_template_label, '-o', ftmp_template_label, '-remove', ftmp_label])
 
         # Add one label because at least 3 orthogonal labels are required to estimate an affine transformation. This new label is added at the level of the upper most label (lowest value), at 1cm to the right.
         for i_file in [ftmp_label, ftmp_template_label]:
@@ -534,7 +588,7 @@ def main(args=None):
         warp_forward = ['template2subjectAffine.txt']
         warp_inverse = ['-template2subjectAffine.txt']
         try:
-            register_landmarks(ftmp_template_label, ftmp_label, paramreg.steps['0'].dof, fname_affine=warp_forward[0], verbose=verbose, path_qc=param.path_qc)
+            register_landmarks(ftmp_template_label, ftmp_label, paramreg.steps['0'].dof, fname_affine=warp_forward[0], verbose=verbose, path_qc="./")
         except Exception:
             sct.printv('ERROR: input labels do not seem to be at the right place. Please check the position of the labels. See documentation for more details: https://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/', verbose=verbose, type='error')
 
@@ -553,7 +607,7 @@ def main(args=None):
             else:
                 sct.printv('ERROR: Wrong image type.', 1, 'error')
             # apply transformation from previous step, to use as new src for registration
-            sct.run('sct_apply_transfo -i ' + src + ' -d ' + dest + ' -w ' + ','.join(warp_forward) + ' -o ' + add_suffix(src, '_regStep' + str(i_step - 1)) + ' -x ' + interp_step, verbose)
+            sct.run(['sct_apply_transfo', '-i', src, '-d', dest, '-w', ','.join(warp_forward), '-o', add_suffix(src, '_regStep' + str(i_step - 1)), '-x', interp_step], verbose)
             src = add_suffix(src, '_regStep' + str(i_step - 1))
             # register src --> dest
             # TODO: display param for debugging
@@ -563,13 +617,13 @@ def main(args=None):
 
         # Concatenate transformations:
         sct.printv('\nConcatenate transformations: template --> subject...', verbose)
-        sct.run('sct_concat_transfo -w ' + ','.join(warp_forward) + ' -d data.nii -o warp_template2anat.nii.gz', verbose)
+        sct.run(['sct_concat_transfo', '-w', ','.join(warp_forward), '-d', 'data.nii', '-o', 'warp_template2anat.nii.gz'], verbose)
         sct.printv('\nConcatenate transformations: subject --> template...', verbose)
-        sct.run('sct_concat_transfo -w ' + ','.join(warp_inverse) + ' -d template.nii -o warp_anat2template.nii.gz', verbose)
+        sct.run(['sct_concat_transfo', '-w', ','.join(warp_inverse), '-d', 'template.nii', '-o', 'warp_anat2template.nii.gz'], verbose)
 
     # Apply warping fields to anat and template
-    sct.run('sct_apply_transfo -i template.nii -o template2anat.nii.gz -d data.nii -w warp_template2anat.nii.gz -crop 1', verbose)
-    sct.run('sct_apply_transfo -i data.nii -o anat2template.nii.gz -d template.nii -w warp_anat2template.nii.gz -crop 1', verbose)
+    sct.run(['sct_apply_transfo', '-i', 'template.nii', '-o', 'template2anat.nii.gz', '-d', 'data.nii', '-w', 'warp_template2anat.nii.gz', '-crop', '1'], verbose)
+    sct.run(['sct_apply_transfo', '-i', 'data.nii', '-o', 'anat2template.nii.gz', '-d', 'template.nii', '-w', 'warp_anat2template.nii.gz', '-crop', '1'], verbose)
 
     # come back
     os.chdir(curdir)
@@ -591,33 +645,37 @@ def main(args=None):
     # Delete temporary files
     if remove_temp_files:
         sct.printv('\nDelete temporary files...', verbose)
-        shutil.rmtree(path_tmp)
+        sct.rmtree(path_tmp, verbose=verbose)
 
     # display elapsed time
     elapsed_time = time.time() - start_time
     sct.printv('\nFinished! Elapsed time: ' + str(int(round(elapsed_time))) + 's', verbose)
 
-    if '-qc' in arguments and not arguments.get('-noqc', False):
-        qc_path = arguments['-qc']
-
-        import spinalcordtoolbox.reports.qc as qc
-        import spinalcordtoolbox.reports.slice as qcslice
-
-        qc_param = qc.Params(fname_data, 'sct_register_to_template', args, 'Sagittal', qc_path)
-        report = qc.QcReport(qc_param, '')
-
-        @qc.QcImage(report, 'none', [qc.QcImage.no_seg_seg])
-        def test(qslice):
-            return qslice.single()
-
-        fname_template2anat = os.path.join(path_output, "template2anat" + ext_data)
-        test(qcslice.SagittalTemplate2Anat(Image(fname_data), Image(fname_template2anat), Image(fname_seg)))
-        sct.printv('Sucessfully generate the QC results in %s' % qc_param.qc_results)
-        sct.printv('Use the following command to see the results in a browser')
-        sct.printv('sct_qc -folder %s' % qc_path, type='info')
+    if param.path_qc is not None:
+        generate_qc(fname_data, fname_template2anat, fname_seg, args, os.path.abspath(param.path_qc))
 
     sct.display_viewer_syntax([fname_data, fname_template2anat], verbose=verbose)
     sct.display_viewer_syntax([fname_template, fname_anat2template], verbose=verbose)
+
+
+def generate_qc(fname_data, fname_template2anat, fname_seg, args, path_qc):
+    """
+    Generate a QC entry allowing to quickly review the straightening process.
+    """
+
+    import spinalcordtoolbox.reports.qc as qc
+    import spinalcordtoolbox.reports.slice as qcslice
+
+    qc.add_entry(
+     src=fname_data,
+     process="sct_register_to_template",
+     args=args,
+     path_qc=path_qc,
+     plane="Axial",
+     qcslice=qcslice.Axial([Image(fname_data), Image(fname_template2anat), Image(fname_seg)]),
+     qcslice_operations=[qc.QcImage.no_seg_seg],
+     qcslice_layout=lambda x: x.mosaic()[:2],
+    )
 
 
 # Resample labels
@@ -626,6 +684,7 @@ def resample_labels(fname_labels, fname_dest, fname_output):
     """
     This function re-create labels into a space that has been resampled. It works by re-defining the location of each
     label using the old and new voxel size.
+    IMPORTANT: this function assumes that the origin and FOV of the two images are the SAME.
     """
     # get dimensions of input and destination files
     nx, ny, nz, nt, px, py, pz, pt = Image(fname_labels).dim
@@ -644,7 +703,7 @@ def resample_labels(fname_labels, fname_dest, fname_output):
         label_new_list.append(','.join(label_sub_new))
     label_new_list = ':'.join(label_new_list)
     # create new labels
-    sct.run('sct_label_utils -i ' + fname_dest + ' -create ' + label_new_list + ' -v 1 -o ' + fname_output)
+    sct.run(['sct_label_utils', '-i', fname_dest, '-create', label_new_list, '-v', '1', '-o', fname_output])
 
 
 def check_labels(fname_landmarks, label_type='body'):
@@ -682,6 +741,6 @@ def check_labels(fname_landmarks, label_type='body'):
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
-    sct.start_stream_logger()
+    sct.init_sct()
     # call main function
     main()

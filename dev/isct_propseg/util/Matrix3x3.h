@@ -8,8 +8,8 @@
 #ifndef _MATRIX3X3_H_
 #define _MATRIX3X3_H_
 
-#include <iostream>
-using namespace std;
+#include <ostream>
+
 
 class CVector3;
 class CMatrix4x4;
@@ -114,7 +114,7 @@ public:
 
 	CVector3	getColumn(int i) const;
 
-	friend ostream& operator << (ostream& os, const CMatrix3x3 &mat );
+	friend std::ostream& operator << (std::ostream& os, const CMatrix3x3 &mat );
 
 protected:
 

@@ -7,7 +7,8 @@
  * \author Benjamin De Leener - NeuroPoly (http://www.neuropoly.info)
  */
 
-#include <iostream>
+#include <vector>
+
 #include "Image3D.h"
 #include "SpinalCord.h"
 #include "util/Vector3.h"
@@ -38,7 +39,7 @@ public:
     bool getVerbose() { return verbose_; };
     
 private:
-    void searchCenters(ImageType2D::Pointer im, vector<CVector3> &center, vector<double> &radius, vector<double> &accumulator, float z, CVector3 c);
+    void searchCenters(ImageType2D::Pointer im, std::vector<CVector3> &center, std::vector<double> &radius, std::vector<double> &accumulator, float z, CVector3 c);
 	unsigned int houghTransformCircles(ImageType2D* im, unsigned int numberOfCircles, double** center_result, double* radius_result, double* accumulator_result, double meanRadius, double valPrint=255);
     
 	Image3D* image_;

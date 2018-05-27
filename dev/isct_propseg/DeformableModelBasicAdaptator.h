@@ -9,14 +9,10 @@
  * \author Benjamin De Leener - NeuroPoly (http://www.neuropoly.info)
  */
 
-#include "Image3D.h"
-#include <itkPoint.h>
 #include <vector>
-#include "Mesh.h"
-#include "Vertex.h"
-#include "util/Matrix3x3.h"
-#include "util/MatrixNxM.h"
-#include "SpinalCord.h"
+#include <algorithm>
+
+#include <itkPoint.h>
 #include <itkImageAlgorithm.h>
 #include <itkImageFileReader.h>
 #include <itkSingleValuedCostFunction.h>
@@ -27,6 +23,13 @@
 #include <vtkPolyDataNormals.h>
 #include <vtkPointData.h>
 #include <vtkPoints.h>
+
+#include "Image3D.h"
+#include "Mesh.h"
+#include "Vertex.h"
+#include "util/Matrix3x3.h"
+#include "util/MatrixNxM.h"
+#include "SpinalCord.h"
 
 typedef itk::CovariantVector<double,3> PixelType;
 typedef itk::Image< PixelType, 3 > ImageVectorType;
@@ -67,9 +70,9 @@ public:
 
 	virtual void GetDerivative (const ParametersType &parameters, DerivativeType &derivative) const
 	{
-		//vector<CVector3> der;
+		//std::vector<CVector3> der;
 		unsigned int nbTrianglesInt = listeTriangles_.size(), nbTriangles = nbTrianglesInt/3, nbPoints = nbParametres_/3;
-		vector<CVector3> trianglesBarycentre(nbTriangles);
+		std::vector<CVector3> trianglesBarycentre(nbTriangles);
 		for (unsigned int i=0; i<nbTrianglesInt; i+=3)
 		{
 			trianglesBarycentre[(i+1)/3] = CVector3((parameters[3*listeTriangles_[i]]+parameters[3*listeTriangles_[i+1]]+parameters[3*listeTriangles_[i+2]])/3,
@@ -116,7 +119,7 @@ public:
 		double result = 0.0, interne1 = 0.0, interne2 = 0.0, externe = 0.0;
 		
 		unsigned int nbTrianglesInt = listeTriangles_.size(), nbTriangles = nbTrianglesInt/3, nbPoints = nbParametres_/3;
-		vector<CVector3> trianglesBarycentre(nbTriangles);
+		std::vector<CVector3> trianglesBarycentre(nbTriangles);
 		for (unsigned int i=0; i<nbTrianglesInt; i+=3)
 		{
 			trianglesBarycentre[(i+1)/3] = CVector3((parameters[3*listeTriangles_[i]]+parameters[3*listeTriangles_[i+1]]+parameters[3*listeTriangles_[i+2]])/3,
@@ -203,7 +206,7 @@ public:
 
 		listeXiOpt.resize(sizeBary);
 		listeWi.resize(sizeBary);
-		vector<double> listeDistancePointsOpt(sizeBary);
+		std::vector<double> listeDistancePointsOpt(sizeBary);
 
 		double threshold_distance_mask = 2.0;
 		CVector3 point_position;
@@ -250,17 +253,17 @@ public:
 			{
                 listeXiOpt[i] = xi + k_point_mask*deltaNormale*ni;
 			    listeDistancePointsOpt[i] = k_point_mask*deltaNormale;
-                listeWi[i] = max(0.0,resultCkMax_mask);
+                listeWi[i] = std::max(0.0,resultCkMax_mask);
 			}
 			else
 			{
 			    listeXiOpt[i] = xi + k*deltaNormale*ni;
 			    listeDistancePointsOpt[i] = k*deltaNormale;
-                listeWi[i] = max(0.0,resultCkMax);
+                listeWi[i] = std::max(0.0,resultCkMax);
             }
 		}
         
-        /*vector<int> indexOptPoints = minimalPath(imageDistance, true);
+        /*std::vector<int> indexOptPoints = minimalPath(imageDistance, true);
         double posDist;
         for (unsigned int i=0; i<indexOptPoints.size(); i++)
         {
@@ -269,7 +272,7 @@ public:
             posDist = indexOptPoints[i]-startPos;
             listeXiOpt[i] = xi + posDist*deltaNormale*ni;
             listeDistancePointsOpt[i] = posDist*deltaNormale;
-            listeWi[i] = max(0.0,imageDistance(i,indexOptPoints[i]));
+            listeWi[i] = std::max(0.0,imageDistance(i,indexOptPoints[i]));
         }*/
 
 		meanDistance = 0.0;
@@ -308,7 +311,7 @@ public:
         
         listeXiOpt.resize(sizeBary);
         listeWi.resize(sizeBary);
-        vector<double> listeDistancePointsOpt(sizeBary);
+        std::vector<double> listeDistancePointsOpt(sizeBary);
         
         for (unsigned int i=0; i<sizeBary; i++)
         {
@@ -328,10 +331,10 @@ public:
             }
             listeXiOpt[i] = xi + k*deltaNormale*ni;
             listeDistancePointsOpt[i] = k*deltaNormale;
-            listeWi[i] = max(0.0,resultCkMax);
+            listeWi[i] = std::max(0.0,resultCkMax);
         }
         
-        vector<int> indexOptPoints = minimalPath(imageDistance, true);
+        std::vector<int> indexOptPoints = minimalPath(imageDistance, true);
         double posDist;
         for (unsigned int i=0; i<indexOptPoints.size(); i++)
         {
@@ -340,7 +343,7 @@ public:
             posDist = indexOptPoints[i]-line_search;
             listeXiOpt[i] = xi + posDist*deltaNormale*ni;
             listeDistancePointsOpt[i] = posDist*deltaNormale;
-            listeWi[i] = max(0.0,imageDistance(i,indexOptPoints[i]));
+            listeWi[i] = std::max(0.0,imageDistance(i,indexOptPoints[i]));
         }
         
         meanDistance = 0.0;
@@ -357,7 +360,7 @@ public:
         }
     }*/
     
-    vector<int> minimalPath(Matrice image, bool invert=true, double factx=sqrt(2))
+    std::vector<int> minimalPath(Matrice image, bool invert=true, double factx=sqrt(2))
     {
         /*% MINIMALPATH Recherche du chemin minimum de Haut vers le bas et de
          % bas vers le haut tel que dÈcrit par Luc Vincent 1998
@@ -522,7 +525,7 @@ public:
         // Find the minimal value of S for each slice and create a binary image with all the coordinates
         // TO DO: the minimal path shouldn't be a pixelar path. It should be a continuous spline that is minimum.
         double val_temp;
-        vector<int> list_index;
+        std::vector<int> list_index;
         for (int row=0; row<m; row++)
         {
             double min_value_S = 1000000000;
@@ -544,7 +547,7 @@ public:
 
 	void setTransformation(CMatrix4x4 m) { transformation_ = m; };
 
-	vector<CVector3> getMostPromisingPoints() { return listeXiOpt; };
+	std::vector<CVector3> getMostPromisingPoints() { return listeXiOpt; };
 
 	void setDeltaNormale(double deltaNormale) { this->deltaNormale = deltaNormale; };
 	void setTradeOff(double tradeOff) { this->tradeOff = tradeOff; };
@@ -562,7 +565,7 @@ public:
     void setVerbose(bool verbose) { verbose_ = verbose; };
     bool getVerbose() { return verbose_; };
 
-    void addCorrectionPoints(vector<CVector3> points_mask_correction) { points_mask_correction_ = points_mask_correction; };
+    void addCorrectionPoints(std::vector<CVector3> points_mask_correction) { points_mask_correction_ = points_mask_correction; };
 
 private:
 	void InitParameters()
@@ -576,16 +579,16 @@ private:
 
 	Image3D* image_;
 	Mesh* mesh_;
-	vector<int> listeTriangles_;
+	std::vector<int> listeTriangles_;
 	ParametersType pointsInitiaux_;
 	CMatrix4x4 transformation_;
 
 	int nbParametres_;
-	vector<CVector3> listeXiOpt;
-	vector<double> listeWi;
-	vector< vector<int> > listeTrianglesContenantPoint;
-	vector< vector<int> > pointsVoisins;
-	vector<Vertex> trianglesBarycentre_;
+	std::vector<CVector3> listeXiOpt;
+	std::vector<double> listeWi;
+	std::vector< std::vector<int> > listeTrianglesContenantPoint;
+	std::vector< std::vector<int> > pointsVoisins;
+	std::vector<Vertex> trianglesBarycentre_;
 
 	double line_search, deltaNormale, tradeOff, alpha, beta;
 	double type_image_factor;
@@ -596,21 +599,21 @@ private:
     
     bool verbose_;
 
-    vector<CVector3> points_mask_correction_;
+    std::vector<CVector3> points_mask_correction_;
 };
 
 /*!
  * \class DeformableModelBasicAdaptator
  * \brief Deformation of a mesh to the gradient in an image.
  *
- * This class deform  a ttriangular mesh using deformable model based energy equation towards gradient vector in the input image. The deformation equation is quadratic and minimized using conjugate gradient.
+ * This class deform  a ttriangular mesh using deformable model based energy equation towards gradient std::vector in the input image. The deformation equation is quadratic and minimized using conjugate gradient.
  */
 class DeformableModelBasicAdaptator
 {
 public:
 	DeformableModelBasicAdaptator(Image3D* image, Mesh* m);
 	DeformableModelBasicAdaptator(Image3D* image, Mesh* m, int nbIteration, double contrast, bool computeFinalMesh=true);
-    DeformableModelBasicAdaptator(Image3D* image, Mesh* m, int nbIteration, vector<pair<CVector3,double> > contrast, bool computeFinalMesh=true);
+    DeformableModelBasicAdaptator(Image3D* image, Mesh* m, int nbIteration, std::vector<std::pair<CVector3,double> > contrast, bool computeFinalMesh=true);
 	~DeformableModelBasicAdaptator();
 
 	void setInput(Mesh* m) { mesh_ = m; };
@@ -637,7 +640,7 @@ public:
     void setVerbose(bool verbose) { verbose_ = verbose; };
     bool getVerbose() { return verbose_; };
 
-    void addCorrectionPoints(vector<CVector3> points_mask_correction) { points_mask_correction_ = points_mask_correction; };
+    void addCorrectionPoints(std::vector<CVector3> points_mask_correction) { points_mask_correction_ = points_mask_correction; };
 
 private:
 	Image3D* image_;
@@ -648,14 +651,14 @@ private:
 	bool changedParameters_;
 	int line_search;
 	double deltaNormale, tradeOff, alpha, beta, contrast;
-    vector<pair<CVector3,double> > contrastvector;
+	std::vector<std::pair<CVector3,double> > contrastvector;
 	double stopCondition;
 	int numberOptimizerIteration;
     bool progressiveLineSearchLength, tradeoff_bool;
     
     bool verbose_;
 
-    vector<CVector3> points_mask_correction_;
+    std::vector<CVector3> points_mask_correction_;
 };
 
 #endif

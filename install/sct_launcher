@@ -66,6 +66,8 @@ if [ -z "${SCT_LOADED_ONCE}" ]; then
   export PYTHONPATH
   export ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=${logicalCpuCount}
 
+  {DYNAMIC_INSTALL_TEMPLATE}
+
   if [ -e ${HOME}/.sctrc ]; then
   # Overwrite parameter with local config
     . ${HOME}/.sctrc

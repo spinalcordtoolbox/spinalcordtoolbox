@@ -122,18 +122,6 @@ def test_propseg(t2_image, t2_seg_image):
     assert os.path.isfile(param.qc_results)
 
 
-def test_register_to_template(t2_image, t2_seg_image):
-    param = qc.Params(t2_image, 'sct_register_to_template', ['-w', 'aaa'], 'SagittalTemplate2Anat', '/tmp')
-    report = qc.QcReport(param, 'bla bla')
-
-    @qc.QcImage(report, 'bicubic', [qc.QcImage.no_seg_seg])
-    def test(qslice):
-        return qslice.single()
-
-    test(qcslice.SagittalTemplate2Anat(t2_image, t2_seg_image, t2_seg_image))
-    assert os.path.isfile(param.abs_bkg_img_path())
-    assert os.path.isfile(param.abs_overlay_img_path())
-
 
 # def test_segment_graymatter(t2_image, t2_seg_image):
 #     param = qc.Params(['ofolder=/tmp/graymatter', ])

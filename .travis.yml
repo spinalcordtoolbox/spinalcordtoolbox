@@ -18,26 +18,54 @@ cache:
 matrix:
   include:
     - os: linux
-      python: 2.7  # these are just to make travis's UI a bit prettier
+      python: 2.7 # Just to make travis's UI a bit prettier
+      env: SCT_MINICONDA=2 SCT_VERBOSE_INSTALL=1 MPLBACKEND=Agg
+    - os: linux
+      python: 2.7
+      env: SCT_MINICONDA=2 MPLBACKEND=Agg
+    - os: linux
+      python: 2.7
+      env: SCT_MINICONDA=3 MPLBACKEND=Agg
     - os: osx
       language: generic
+      env: SCT_MINICONDA=2 MPLBACKEND=Agg
+    - os: osx
+      language: generic
+      env: SCT_MINICONDA=2 SCT_VERBOSE_INSTALL=1 MPLBACKEND=Agg
+    - os: osx
+      language: generic
+      env: SCT_MINICONDA=3 MPLBACKEND=Agg
+  allow_failures:
+    - os: linux
+      python: 2.7
+      env: SCT_MINICONDA=3 MPLBACKEND=Agg
+    - os: osx
+      language: generic
+      env: SCT_MINICONDA=3 MPLBACKEND=Agg
 
 before_install:
   - echo "HOME="
   - echo $HOME
+  - sudo apt-get update -qq; sudo apt-get install -qq libopenmpi-dev; echo
+
 
 install:
 # update tools
 #  - ./update_bin.sh
-  - yes | ./install_sct
+  - yes | ASK_REPORT_QUESTION=false ./install_sct
   # run launcher in order to update PATH
   - source $HOME/build/neuropoly/spinalcordtoolbox/bin/sct_launcher
   - echo $PATH
 
 script:
-#  - sct_check_dependencies   # test dependencies
-  - sct_testing -d 1  # test functions & integrity
+# test dependencies
+#  - sct_check_dependencies
+# test functions & integrity
+  - bash -c "sudo apt-get install -qq libalglib-dev libinsighttoolkit4-dev; apt-cache show libvtk6-dev && sudo apt-get install -qq libvtk6-dev; apt-cache show libvtk7-dev && sudo apt-get install -qq libvtk7-dev; cd $HOME/build/neuropoly/spinalcordtoolbox/dev/isct_propseg; mkdir -p build; cd build; cmake ..; make; echo"
+  - sct_testing -d 1
 #  - python create_package.py -s ${TRAVIS_OS_NAME}  # test package creation
 #  - cd ../spinalcordtoolbox_v*
 #  - yes | ./install_sct  # test installation of package
-  - echo "DONE"
+  - ./unit_testing.sh
+  - bash -c "pip install sphinx sphinxcontrib.programoutput; cd $HOME/build/neuropoly/spinalcordtoolbox/documentation/sphinx; make html; echo"
+  - echo "This is the end, thanks for reading up to here."

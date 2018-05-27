@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8
 #########################################################################################
 #
 # Function to segment the spinal cord using deep convolutional networks
@@ -11,14 +12,13 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+import os, sys
+
 import numpy as np
-import shutil
 from scipy.ndimage.measurements import center_of_mass, label
 from scipy.ndimage.morphology import binary_fill_holes
 from skimage.exposure import rescale_intensity
 
-import os
-import sys
 from spinalcordtoolbox.centerline import optic
 import sct_utils as sct
 from msct_image import Image
@@ -32,7 +32,7 @@ from spinalcordtoolbox.deepseg_sc.cnn_models import nn_architecture
 def get_parser():
     # Initialize the parser
     parser = Parser(__file__)
-    parser.usage.set_description("""Spinal Cord Segmentation using deep convolutional networks.""")
+    parser.usage.set_description("""Spinal Cord Segmentation using convolutional networks. \n\nReference: C Gros, B De Leener, et al. Automatic segmentation of the spinal cord and intramedullary multiple sclerosis lesions with convolutional neural networks (2018). arxiv.org/abs/1805.06349""")
 
     parser.add_option(name="-i",
                       type_value="image_nifti",
@@ -42,7 +42,7 @@ def get_parser():
     parser.add_option(name="-c",
                       type_value="multiple_choice",
                       description="type of image contrast.",
-                      mandatory=False,
+                      mandatory=True,
                       example=['t1', 't2', 't2s', 'dwi'])
     parser.add_option(name="-ofolder",
                       type_value="folder_creation",
@@ -65,11 +65,7 @@ def get_parser():
     parser.add_option(name='-qc',
                       type_value='folder_creation',
                       description='The path where the quality control generated content will be saved',
-                      default_value=os.path.expanduser('~/qc_data'))
-    parser.add_option(name='-noqc',
-                      type_value=None,
-                      description='Prevent the generation of the QC report',
-                      mandatory=False)
+                      default_value=None)
     parser.add_option(name='-igt',
                       type_value='image_nifti',
                       description='File name of ground-truth segmentation.',
@@ -103,7 +99,7 @@ def _find_crop_start_end(coord_ctr, crop_size, im_dim):
 
 
 def crop_image_around_centerline(im_in, ctr_in, im_out, crop_size, x_dim_half, y_dim_half):
-    im_in, im_ctr = Image(im_in), Image(ctr_in)
+    im_in, data_ctr = Image(im_in), Image(ctr_in).data
 
     im_new = im_in.copy()
     im_new.dim = tuple([crop_size, crop_size, im_in.dim[2]] + list(im_in.dim[3:]))
@@ -112,7 +108,7 @@ def crop_image_around_centerline(im_in, ctr_in, im_out, crop_size, x_dim_half, y
 
     x_lst, y_lst = [], []
     for zz in range(im_in.dim[2]):
-        x_ctr, y_ctr = center_of_mass(im_ctr.data[:, :, zz])
+        x_ctr, y_ctr = center_of_mass(np.array(data_ctr[:, :, zz]))
 
         x_start, x_end = _find_crop_start_end(x_ctr, crop_size, im_in.dim[0])
         y_start, y_end = _find_crop_start_end(y_ctr, crop_size, im_in.dim[1])
@@ -132,7 +128,7 @@ def crop_image_around_centerline(im_in, ctr_in, im_out, crop_size, x_dim_half, y
 
     im_new.save()
 
-    del im_in, im_ctr
+    del im_in
     del im_new
 
     return x_lst, y_lst
@@ -214,7 +210,7 @@ def fill_z_holes(fname_in):
 
 
 def main():
-    sct.start_stream_logger()
+    sct.init_sct()
     parser = get_parser()
     args = sys.argv[1:]
     arguments = parser.parse(args)
@@ -228,22 +224,43 @@ def main():
         output_folder = os.getcwd()
 
     if '-r' in arguments:
-        remove_temp_files = arguments['-r']
+        remove_temp_files = int(arguments['-r'])
 
     if '-v' in arguments:
         verbose = arguments['-v']
 
-    if '-qc' in arguments:
-        qc_path = arguments['-qc']
+    path_qc = arguments.get("-qc", None)
 
-    if '-noqc' in arguments:
-        qc_path = None
+    fname_seg = deep_segmentation_spinalcord(fname_image, contrast_type, output_folder,
+     remove_temp_files=remove_temp_files, verbose=verbose)
 
-    deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, qc_path=qc_path,
-                                 remove_temp_files=remove_temp_files, verbose=verbose, args=args)
+    if path_qc is not None:
+        generate_qc(fname_image, fname_seg, args, os.path.abspath(path_qc))
+
+    sct.display_viewer_syntax([fname_image, os.path.join(output_folder, fname_seg)], colormaps=['gray', 'red'], opacities=['', '0.7'])
 
 
-def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, qc_path=None, remove_temp_files=1, verbose=1, args=None):
+def generate_qc(fn_in, fn_seg, args, path_qc):
+    """
+    Generate a QC entry allowing to quickly review the segmentation process.
+    """
+
+    import spinalcordtoolbox.reports.qc as qc
+    import spinalcordtoolbox.reports.slice as qcslice
+
+    qc.add_entry(
+     src=fn_in,
+     process="sct_deepseg_sc",
+     args=args,
+     path_qc=path_qc,
+     plane='Axial',
+     qcslice=qcslice.Axial([Image(fn_in), Image(fn_seg)]),
+     qcslice_operations=[qc.QcImage.listed_seg],
+     qcslice_layout=lambda x: x.mosaic(),
+    )
+
+
+def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, remove_temp_files=1, verbose=1):
     # initalizing parameters
     crop_size = 64  # TODO: this parameter should actually be passed by the model, as it is one of its fixed parameter
 
@@ -252,9 +269,9 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, qc_p
     sct.log.info("Loading models...")
     path_script = os.path.dirname(__file__)
     path_sct = os.path.dirname(path_script)
-    optic_models_fname = os.path.join(path_sct, 'data/optic_models', '{}_model'.format(contrast_type))
+    optic_models_fname = os.path.join(path_sct, 'data', 'optic_models', '{}_model'.format(contrast_type))
 
-    segmentation_model_fname = os.path.join(path_sct, 'data/deepseg_sc_models', '{}_seg_sc.h5'.format(contrast_type))
+    segmentation_model_fname = os.path.join(path_sct, 'data', 'deepseg_sc_models', '{}_seg_sc.h5'.format(contrast_type))
     seg_model = nn_architecture(height=crop_size, width=crop_size, depth=2 if contrast_type != 't2' else 3)
     seg_model.load_weights(segmentation_model_fname)
 
@@ -265,7 +282,6 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, qc_p
     tmp_folder_path = tmp_folder.get_path()
     fname_image_tmp = tmp_folder.copy_from(fname_image)
     tmp_folder.chdir()
-    print tmp_folder_path
 
     # orientation of the image, should be RPI
     sct.log.info("Reorient the image to RPI, if necessary...")
@@ -278,7 +294,7 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, qc_p
         im_orient.save()
     else:
         im_orient = im_2orient
-        shutil.copyfile(fname_image_tmp, fname_orient)
+        sct.copy(fname_image_tmp, fname_orient)
 
     # resampling RPI image
     sct.log.info("Resample the image to 0.5 mm isotropic resolution...")
@@ -356,7 +372,7 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, qc_p
 
     # binarize the resampled image to remove interpolation effects
     sct.log.info("Binarizing the segmentation to avoid interpolation effects...")
-    sct.run('sct_maths -i ' + fname_seg_RPI + ' -bin 0.75 -o ' + fname_seg_RPI, verbose=0)
+    sct.run(['sct_maths', '-i', fname_seg_RPI, '-bin', '0.75', '-o', fname_seg_RPI], verbose=0)
 
     # post processing step to z_regularized
     fill_z_holes(fname_in=fname_seg_RPI)
@@ -369,38 +385,19 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, qc_p
         im_orient.setFileName(fname_seg)
         im_orient.save()
     else:
-        shutil.copyfile(fname_seg_RPI, fname_seg)
+        sct.copy(fname_seg_RPI, fname_seg)
 
     tmp_folder.chdir_undo()
 
     # copy image from temporary folder into output folder
-    shutil.copyfile(tmp_folder_path + '/' + fname_seg, output_folder + '/' + fname_seg)
+    sct.copy(os.path.join(tmp_folder_path, fname_seg), output_folder)
 
     # remove temporary files
     if remove_temp_files:
         sct.log.info("Remove temporary files...")
         tmp_folder.cleanup()
 
-    if qc_path is not None:
-        import spinalcordtoolbox.reports.qc as qc
-        import spinalcordtoolbox.reports.slice as qcslice
-
-        param = qc.Params(fname_image, 'sct_propseg', args, 'Axial', qc_path)
-        report = qc.QcReport(param, '')
-
-        @qc.QcImage(report, 'none', [qc.QcImage.listed_seg, ])
-        def test(qslice):
-            return qslice.mosaic()
-
-        try:
-            test(qcslice.Axial(Image(fname_image), Image(fname_seg)))
-            sct.log.info('Sucessfully generated the QC results in %s' % param.qc_results)
-            sct.log.info('Use the following command to see the results in a browser:')
-            sct.log.info('sct_qc -folder %s' % qc_path)
-        except:
-            sct.log.warning('Issue when creating QC report.')
-
-    sct.display_viewer_syntax([fname_image, output_folder + '/' + fname_seg], colormaps=['gray', 'red'], opacities=['', '0.7'])
+    return os.path.join(output_folder, fname_seg)
 
 
 if __name__ == "__main__":

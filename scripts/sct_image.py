@@ -1,14 +1,14 @@
 #!/usr/bin/env python
-#########################################################################################
+##############################################################################
 #
 # Perform operations on images
 #
-# ---------------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 # Copyright (c) 2015 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Authors: Julien Cohen-Adad, Sara Dupont
 #
 # About the license: see the file LICENSE.TXT
-#########################################################################################
+##############################################################################
 
 import os
 import sys
@@ -19,12 +19,10 @@ from numpy import newaxis, shape
 from sct_utils import add_suffix, extract_fname, printv, run, tmp_create
 import sct_utils as sct
 
+
 class Param:
     def __init__(self):
         self.verbose = '1'
-
-# PARSER
-# ==========================================================================================
 
 
 def get_parser():
@@ -263,7 +261,7 @@ def main(args=None):
     if im_out is not None:
         printv('Generate output files...', verbose)
         # if only one output
-        if len(im_out) == 1:
+        if len(im_out) == 1 and not '-split' in arguments:
             im_out[0].setFileName(fname_out) if fname_out is not None else None
             im_out[0].save(squeeze_data=False, type=output_type, verbose=verbose)
             sct.display_viewer_syntax([fname_out], verbose=verbose)
@@ -446,7 +444,7 @@ def remove_vol(im_in, index_vol_user, todo):
     nt = data.shape[3]
     # define index list of volumes to keep/remove
     if todo == 'remove':
-        index_vol = [i for i in range(0, nt) if not i in index_vol_user]
+        index_vol = [i for i in range(0, nt) if i not in index_vol_user]
     elif todo == 'keep':
         index_vol = index_vol_user
     else:
@@ -561,8 +559,17 @@ def multicomponent_merge(fname_list):
     return im_out
 
 
-def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1, fname_out=''):
+def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1, fname_out=None):
+    """
+    :param fname_out: when set is True, where to save the output file
+                      (default: in cwd, named basename_orientation.ext)
+    :returns: when get, the orientation; when set, the changed image data (not saved)
+    """
     verbose = 0 if get else verbose
+
+    if fname_out is None:
+        fname_out = "{}_{}{}".format(im.file_name, ori, im.ext)
+
     printv('Get dimensions of data...', verbose)
     nx, ny, nz, nt, px, py, pz, pt = get_dimension(im)
 
@@ -582,9 +589,19 @@ def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1, f
         elif set:
             # set orientation
             printv('Change orientation...', verbose)
+            tmp_folder = tmp_create(verbose)
+            curdir = os.getcwd()
+            os.chdir(tmp_folder)
             im_out = set_orientation(im, ori)
+            os.chdir(curdir)
+            sct.rmtree(tmp_folder)
         elif set_data:
+            tmp_folder = tmp_create(verbose)
+            curdir = os.getcwd()
+            os.chdir(tmp_folder)
             im_out = set_orientation(im, ori, True)
+            os.chdir(curdir)
+            sct.rmtree(tmp_folder)
         else:
             im_out = None
 
@@ -614,7 +631,7 @@ def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1, f
             im_out = None
             ori = get_orientation(im_split_list[0])
             os.chdir(curdir)
-            sct.run('rm -rf ' + tmp_folder)
+            sct.rmtree(tmp_folder)
             return ori
         elif set:
             # set orientation
@@ -630,20 +647,27 @@ def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1, f
                 fname_changed_ori_list = [im_ch_ori.absolutepath for im_ch_ori in im_changed_ori_list]
                 im_out = multicomponent_merge(fname_changed_ori_list)
         elif set_data:
-            printv('Set orientation of the data only is not compatible with 4D data...', verbose, 'error')
+            # set orientation
+            printv('Change orientation of data...', verbose)
+            im_changed_ori_list = []
+            for im_s in im_split_list:
+                im_set = set_orientation(im_s, ori, True)
+                im_changed_ori_list.append(im_set)
+            printv('Merge file back...', verbose)
+            if dim == 4:
+                im_out = concat_data(im_changed_ori_list, 3)
+            elif dim == 5:
+                printv('Set data orientation on 5D data is not supported. Sorry.', verbose, 'error')
         else:
             im_out = None
 
         # Go back to previous directory:
         os.chdir(curdir)
-        sct.run('rm -rf ' + tmp_folder)
+        sct.rmtree(tmp_folder)
 
-    if fname_out:
+    if im_out is not None:
         im_out.setFileName(fname_out)
-        if fname_out != im.file_name + '_' + ori + im.ext:
-            sct.run('rm -f ' + im.file_name + '_' + ori + im.ext)
-    else:
-        im_out.setFileName(im.file_name + '_' + ori + im.ext)
+
     return im_out
 
 
@@ -673,9 +697,9 @@ def get_orientation_3d(im, filename=False):
     string_out = 'Input image orientation : '
     # get orientation
     if filename:
-        status, output = sct.run('isct_orientation3d -i ' + im + ' -get ', 0)
+        status, output = sct.run(['isct_orientation3d', '-i', im, '-get'], 0)
     else:
-        status, output = sct.run('isct_orientation3d -i ' + im.absolutepath + ' -get ', 0)
+        status, output = sct.run(['isct_orientation3d', '-i', im.absolutepath, '-get'], 0)
     # check status
     if status != 0:
         printv('ERROR in get_orientation.', 1, 'error')
@@ -704,13 +728,13 @@ def set_orientation(im, orientation, data_inversion=False, filename=False, fname
 
     if not data_inversion:
         if filename:
-            sct.run('isct_orientation3d -i ' + im + ' -orientation ' + orientation + ' -o ' + fname_out, 0)
+            sct.run(['isct_orientation3d', '-i', im, '-orientation', orientation, '-o', fname_out], verbose=0)
             im_out = fname_out
         else:
             fname_in = im.absolutepath
             if not os.path.exists(fname_in):
                 im.save()
-            sct.run('isct_orientation3d -i ' + im.absolutepath + ' -orientation ' + orientation + ' -o ' + fname_out, 0)
+            sct.run(['isct_orientation3d', '-i', im.absolutepath, '-orientation', orientation, '-o', fname_out], verbose=0)
             im_out = Image(fname_out)
     else:
         im_out = im.copy()
@@ -724,7 +748,7 @@ def visualize_warp(fname_warp, fname_grid=None, step=3, rm_tmp=True):
         from numpy import zeros
         tmp_dir = tmp_create()
         im_warp = Image(fname_warp)
-        status, out = sct.run('fslhd ' + fname_warp)
+        status, out = sct.run(['fslhd', fname_warp])
         curdir = os.getcwd()
         os.chdir(tmp_dir)
         dim1 = 'dim1           '
@@ -749,18 +773,18 @@ def visualize_warp(fname_warp, fname_grid=None, step=3, rm_tmp=True):
         im_grid.setFileName(fname_grid)
         im_grid.save()
         fname_grid_resample = add_suffix(fname_grid, '_resample')
-        sct.run('sct_resample -i ' + fname_grid + ' -f 3x3x1 -x nn -o ' + fname_grid_resample)
+        sct.run(['sct_resample', '-i', fname_grid, '-f', '3x3x1', '-x', 'nn', '-o', fname_grid_resample])
         fname_grid = tmp_dir + fname_grid_resample
         os.chdir(curdir)
     path_warp, file_warp, ext_warp = extract_fname(fname_warp)
     grid_warped = path_warp + extract_fname(fname_grid)[1] + '_' + file_warp + ext_warp
-    sct.run('sct_apply_transfo -i ' + fname_grid + ' -d ' + fname_grid + ' -w ' + fname_warp + ' -o ' + grid_warped)
+    sct.run(['sct_apply_transfo', '-i', fname_grid, '-d', fname_grid, '-w', fname_warp, '-o', grid_warped])
     if rm_tmp:
-        sct.run('rm -rf ' + tmp_dir)
+        sct.rmtree(tmp_dir)
 
 
 if __name__ == "__main__":
-    sct.start_stream_logger()
+    sct.init_sct()
     # # initialize parameters
     param = Param()
     # call main function
