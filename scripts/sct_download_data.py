@@ -69,8 +69,8 @@ def main(args=None):
     # initialization
     # note: mirror servers are listed in order of priority
     dict_url = {
-        'sct_example_data': ['https://osf.io/4nnk3/?action=download',
-                             'https://www.neuro.polymtl.ca/_media/downloads/sct/20170208_sct_example_data.zip'],
+        'sct_example_data': ['https://osf.io/kjcgs/?action=download',
+                             'https://www.neuro.polymtl.ca/_media/downloads/sct/20180525_sct_example_data.zip'],
         'sct_testing_data': ['https://osf.io/z8gaj/?action=download',
                              'https://www.neuro.polymtl.ca/_media/downloads/sct/20180125_sct_testing_data.zip'],
         'PAM50': ['https://osf.io/xz7jk/?action=download',
