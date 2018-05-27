@@ -25,7 +25,7 @@ def init(param_test):
     Initialize class: param_test
     """
     # initialization
-    default_args = ['-i t2/t2.nii.gz -s t2/t2_seg.nii.gz -param accuracy_results=1']
+    default_args = ['-i t2/t2.nii.gz -s t2/t2_seg.nii.gz -param accuracy_results=1 -qc testing-qc']
 
     param_test.fname_segmentation = 't2/t2_seg.nii.gz'
     param_test.th_result_dist_max = 2.0
@@ -61,7 +61,7 @@ def test_integrity(param_test):
 
         # apply curved2straight, then straight2curve, then compared results
         path_input, file_input, ext_input = sct.extract_fname(param_test.file_input)
-        sct.run('sct_apply_transfo -i ' + os.path.join(param_test.path_data, param_test.fname_segmentation) + ' -d ' + os.path.join(param_test.path_output, file_input) + '_straight' + ext_input + ' -w ' + os.path.join(param_test.path_output, 'warp_curve2straight.nii.gz') + ' -o ' + os.path.join(param_test.path_output, 'tmp_seg_straight.nii.gz') + ' -x linear', 0)
+        sct.run('sct_apply_transfo -i ' + os.path.join(param_test.path_data, param_test.fname_segmentation) + ' -d ' + os.path.join(param_test.path_output, 'output.nii.gz') + ' -w ' + os.path.join(param_test.path_output, 'warp_curve2straight.nii.gz') + ' -o ' + os.path.join(param_test.path_output, 'tmp_seg_straight.nii.gz') + ' -x linear', 0)
         sct.run('sct_apply_transfo -i ' + os.path.join(param_test.path_output, 'tmp_seg_straight.nii.gz') + ' -d ' + os.path.join(param_test.path_data, param_test.fname_segmentation) + ' -w ' + os.path.join(param_test.path_output, 'warp_straight2curve.nii.gz') + ' -o ' + os.path.join(param_test.path_output, 'tmp_seg_straight_curved.nii.gz') + ' -x nn',0)
 
         # threshold and binarize
@@ -77,10 +77,10 @@ def test_integrity(param_test):
             param_test.status = 99
             param_test.output += '\nWARNING: DICE = ' + str(result_dice) + ' < ' + str(param_test.th_dice)
 
-        # transform results into Pandas structure
-        param_test.results = DataFrame(data={'status': param_test.status, 'output': param_test.output, 'rmse': result_rmse, 'dist_max': result_dist_max,
-                                             'dice': result_dice, 'duration': param_test.duration, 'duration_accuracy_results': duration_accuracy_results},
-                                       index=[param_test.path_data])
+        # update Panda structure
+        param_test.results['dice'] = result_dice
+        param_test.results['rmse'] = result_rmse
+        param_test.results['dist_max'] = result_dist_max
 
     except Exception as e:
         param_test.status = 99

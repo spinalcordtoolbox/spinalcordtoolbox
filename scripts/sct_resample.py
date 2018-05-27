@@ -10,6 +10,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+import os
 import sys
 
 
@@ -87,12 +88,12 @@ def get_parser():
 def run_main():
     # Parameters for debug mode
     if param.debug:
-        sct.printv('\n*** WARNING: DEBUG MODE ON ***\n')
+        sct.log.warning('\n*** WARNING: DEBUG MODE ON ***\n')
         # get path of the testing data
         path_sct_data = os.environ.get("SCT_TESTING_DATA_DIR", os.path.join(os.path.dirname(os.path.dirname(__file__))), "testing_data")
         param.fname_data = os.path.join(path_sct_data, "fmri", "fmri.nii.gz")
         param.new_size = '2'  # '0.5x0.5x1'
-        param.remove_tmp_files = 0
+        param.remove_temp_files = 0
         param.verbose = 1
     else:
         parser = get_parser()
@@ -131,7 +132,6 @@ def run_main():
         param.fname_out, param.new_size, param.new_size_type,
         param.interpolation, param.verbose)
 
-if __name__ == '__main__':
-    sct.start_stream_logger()
+if __name__ == "__main__":
+    sct.init_sct()
     run_main()
-

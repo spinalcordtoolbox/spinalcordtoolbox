@@ -386,18 +386,18 @@ def resample_image(fname, suffix='_resampled.nii.gz', binary=False, npx=0.3, npy
             interpolation = 'nn'
 
         if nz == 1:  # when data is 2d: we convert it to a 3d image in order to avoid nipy problem of conversion nifti-->nipy with 2d data
-            sct.run('sct_image -i ' + ','.join([fname, fname]) + ' -concat z -o ' + fname)
+            sct.run(['sct_image', '-i', ','.join([fname, fname]), '-concat', 'z', '-o', fname])
 
-        sct.run('sct_resample -i ' + fname + ' -mm ' + str(npx) + 'x' + str(npy) + 'x' + str(pz) + ' -o ' + name_resample + ' -x ' + interpolation)
+        sct.run(['sct_resample', '-i', fname, '-mm', str(npx) + 'x' + str(npy) + 'x' + str(pz), '-o', name_resample, '-x', interpolation])
 
         if nz == 1:  # when input data was 2d: re-convert data 3d-->2d
-            sct.run('sct_image -i ' + name_resample + ' -split z')
+            sct.run(['sct_image', '-i', name_resample, '-split', 'z'])
             im_split = Image(name_resample.split('.nii.gz')[0] + '_Z0000.nii.gz')
             im_split.setFileName(name_resample)
             im_split.save()
 
         if binary:
-            sct.run('sct_maths -i ' + name_resample + ' -bin ' + str(thr) + ' -o ' + name_resample)
+            sct.run(['sct_maths', '-i', name_resample, '-bin', str(thr), '-o', name_resample])
 
         if orientation != 'RPI':
             im_resample = Image(name_resample)
@@ -483,7 +483,7 @@ def get_parser():
 ########################################################################################################################
 
 if __name__ == "__main__":
-    sct.start_stream_logger()
+    sct.init_sct()
     param = Param()
     input_fname = None
     if param.debug:

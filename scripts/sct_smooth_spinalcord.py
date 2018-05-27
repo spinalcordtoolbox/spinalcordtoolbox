@@ -146,25 +146,30 @@ def main(args=None):
     # Straighten the spinal cord
     # straighten segmentation
     sct.printv('\nStraighten the spinal cord using centerline/segmentation...', verbose)
-    # check if warp_curve2straight and warp_straight2curve already exist (i.e. no need to do it another time)
-    if os.path.isfile(os.path.join(curdir, 'warp_curve2straight.nii.gz')) and os.path.isfile(os.path.join(curdir, 'warp_straight2curve.nii.gz')) and os.path.isfile(os.path.join(curdir, 'straight_ref.nii.gz')):
+    cache_sig = sct.cache_signature(
+     input_files=["anat_rpi.nii", "centerline_rpi.nii"],
+     input_params={"x": "spline"},
+    )
+    cachefile = os.path.join(curdir, "straightening.cache")
+    if sct.cache_valid(cachefile, cache_sig) and os.path.isfile(os.path.join(curdir, 'warp_curve2straight.nii.gz')) and os.path.isfile(os.path.join(curdir, 'warp_straight2curve.nii.gz')) and os.path.isfile(os.path.join(curdir, 'straight_ref.nii.gz')):
         # if they exist, copy them into current folder
-        sct.printv('WARNING: Straightening was already run previously. Copying warping fields...', verbose, 'warning')
+        sct.printv('Reusing existing warping field which seems to be valid', verbose, 'warning')
         sct.copy(os.path.join(curdir, 'warp_curve2straight.nii.gz'), 'warp_curve2straight.nii.gz')
         sct.copy(os.path.join(curdir, 'warp_straight2curve.nii.gz'), 'warp_straight2curve.nii.gz')
         sct.copy(os.path.join(curdir, 'straight_ref.nii.gz'), 'straight_ref.nii.gz')
         # apply straightening
-        sct.run('sct_apply_transfo -i anat_rpi.nii -w warp_curve2straight.nii.gz -d straight_ref.nii.gz -o anat_rpi_straight.nii -x spline', verbose)
+        sct.run(['sct_apply_transfo', '-i', 'anat_rpi.nii', '-w', 'warp_curve2straight.nii.gz', '-d', 'straight_ref.nii.gz', '-o', 'anat_rpi_straight.nii', '-x', 'spline'], verbose)
     else:
-        sct.run('sct_straighten_spinalcord -i anat_rpi.nii -s centerline_rpi.nii -qc 0 -x spline', verbose)
+        sct.run(['sct_straighten_spinalcord', '-i', 'anat_rpi.nii', '-s', 'centerline_rpi.nii', '-x', 'spline'], verbose)
+        sct.cache_save(cachefile, cache_sig)
 
     # Smooth the straightened image along z
     sct.printv('\nSmooth the straightened image along z...')
-    sct.run('sct_maths -i anat_rpi_straight.nii -smooth 0,0,' + str(sigma) + ' -o anat_rpi_straight_smooth.nii', verbose)
+    sct.run(['sct_maths', '-i', 'anat_rpi_straight.nii', '-smooth', '0,0,' + str(sigma), '-o', 'anat_rpi_straight_smooth.nii'], verbose)
 
     # Apply the reversed warping field to get back the curved spinal cord
     sct.printv('\nApply the reversed warping field to get back the curved spinal cord...')
-    sct.run('sct_apply_transfo -i anat_rpi_straight_smooth.nii -o anat_rpi_straight_smooth_curved.nii -d anat.nii -w warp_straight2curve.nii.gz -x spline', verbose)
+    sct.run(['sct_apply_transfo', '-i', 'anat_rpi_straight_smooth.nii', '-o', 'anat_rpi_straight_smooth_curved.nii', '-d', 'anat.nii', '-w', 'warp_straight2curve.nii.gz', '-x', 'spline'], verbose)
 
     # replace zeroed voxels by original image (issue #937)
     sct.printv('\nReplace zeroed voxels by original image...', verbose)
@@ -188,7 +193,7 @@ def main(args=None):
     # Remove temporary files
     if remove_temp_files == 1:
         sct.printv('\nRemove temporary files...')
-        shutil.rmtree(path_tmp)
+        sct.rmtree(path_tmp)
 
     # Display elapsed time
     elapsed_time = time.time() - start_time
@@ -200,7 +205,7 @@ def main(args=None):
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
-    sct.start_stream_logger()
+    sct.init_sct()
     # initialize parameters
     # param = Param()
     # call main function

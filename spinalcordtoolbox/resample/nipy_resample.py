@@ -162,8 +162,7 @@ def resample_file(fname_data, fname_out, new_size, new_size_type,
     nipy.save_image(nii_r, fname_out)
 
     # to view results
-    sct.printv('\nDone! To view results, type:', verbose)
-    sct.printv('fslview ' + fname_out + ' &', verbose, 'info')
+    sct.display_viewer_syntax([fname_out], verbose=verbose)
 
     return nii_r
 

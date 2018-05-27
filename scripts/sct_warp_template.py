@@ -12,11 +12,14 @@
 #########################################################################################
 
 
-import sys, io, os, time, shutil
+import sys, io, os, time
+
+import spinalcordtoolbox.metadata
+
+from msct_image import Image
 
 from msct_parser import Parser
 import sct_utils as sct
-from sct_extract_metric import read_label_file
 
 # get path of the script and the toolbox
 path_script = os.path.dirname(__file__)
@@ -39,13 +42,11 @@ class Param:
         self.warp_spinal_levels = 0
         self.list_labels_nn = ['_level.nii.gz', '_levels.nii.gz', '_csf.nii.gz', '_CSF.nii.gz', '_cord.nii.gz']  # list of files for which nn interpolation should be used. Default = linear.
         self.verbose = 1  # verbose
-        self.qc = 1
+        self.path_qc = None
 
 
-# MAIN
-# ==========================================================================================
 class WarpTemplate:
-    def __init__(self, fname_src, fname_transfo, warp_atlas, warp_spinal_levels, folder_out, path_template, verbose, qc):
+    def __init__(self, fname_src, fname_transfo, warp_atlas, warp_spinal_levels, folder_out, path_template, verbose):
 
         # Initialization
         self.fname_src = fname_src
@@ -58,7 +59,6 @@ class WarpTemplate:
         self.folder_atlas = param.folder_atlas
         self.folder_spinal_levels = param.folder_spinal_levels
         self.verbose = verbose
-        self.qc = qc
 
         # sct.printv(arguments)
         sct.printv('\nCheck parameters:')
@@ -86,25 +86,7 @@ class WarpTemplate:
             sct.printv('\nWARP SPINAL LEVELS:', self.verbose)
             warp_label(self.path_template, self.folder_spinal_levels, param.file_info_label, self.fname_src, self.fname_transfo, self.folder_out)
 
-        sct.display_viewer_syntax([self.fname_src,
-                                   os.path.join(self.folder_out, self.folder_template, get_file_label(os.path.join(self.folder_out, self.folder_template), 'T2')),
-                                   os.path.join(self.folder_out, self.folder_template, get_file_label(os.path.join(self.folder_out, self.folder_template), 'gray matter')),
-                                   os.path.join(self.folder_out, self.folder_template, get_file_label(os.path.join(self.folder_out, self.folder_template), 'white matter'))],
-                                  colormaps=['gray', 'gray', 'red-yellow', 'blue-lightblue'],
-                                  opacities=['1', '1', '0.5', '0.5'],
-                                  minmax=['', '0,4000', '0.4,1', '0.4,1'],
-                                  verbose=param.verbose)
 
-        if self.qc:
-            from msct_image import Image
-            # output QC image
-            im = Image(self.fname_src)
-            im_wm = Image(os.path.join(self.folder_out, self.folder_template, get_file_label(os.path.join(self.folder_out, self.folder_template), 'white matter')))
-            im.save_quality_control(plane='axial', n_slices=4, seg=im_wm, thr=0.5, cmap_col='blue-cyan', path_output=self.folder_out)
-
-
-# Warp labels
-# ==========================================================================================
 def warp_label(path_label, folder_label, file_label, fname_src, fname_transfo, path_out):
     """
     Warp label files according to info_label.txt file
@@ -119,15 +101,10 @@ def warp_label(path_label, folder_label, file_label, fname_src, fname_transfo, p
     # read label file and check if file exists
     sct.printv('\nRead label file...', param.verbose)
     try:
-        template_label_ids, template_label_names, template_label_file, combined_labels_ids, combined_labels_names, combined_labels_id_groups, clusters_apriori = read_label_file(os.path.join(path_label, folder_label), file_label)
+        template_label_ids, template_label_names, template_label_file, combined_labels_ids, combined_labels_names, combined_labels_id_groups, clusters_apriori = spinalcordtoolbox.metadata.read_label_file(os.path.join(path_label, folder_label), file_label)
     except Exception as error:
         sct.printv('\nWARNING: Cannot warp label ' + folder_label + ': ' + str(error), 1, 'warning')
-        # raise
-    # try:
-    #     template_label_ids, template_label_names, template_label_file, combined_labels_ids, combined_labels_names, combined_labels_id_groups = read_label_file(os.path.join(path_label, folder_label), file_label)
-    # except Exception:
-    #     import traceback
-    #     sct.printv('\nERROR: ' + traceback.format_exc(), 1, 'error')
+        raise
     else:
         # create output folder
         if not os.path.exists(os.path.join(path_out, folder_label)):
@@ -141,48 +118,6 @@ def warp_label(path_label, folder_label, file_label, fname_src, fname_transfo, p
             sct.run('sct_apply_transfo -i ' + fname_label + ' -o ' + os.path.join(path_out, folder_label, template_label_file[i]) + ' -d ' + fname_src + ' -w ' + fname_transfo + ' -x ' + get_interp(template_label_file[i]), param.verbose)
         # Copy list.txt
         sct.copy(os.path.join(path_label, folder_label, param.file_info_label), os.path.join(path_out, folder_label))
-
-
-# Get file label
-# ==========================================================================================
-def get_file_label(path_label='', label='', output='file'):
-    """
-    Get label file name given based on info_label.txt file.
-    Label needs to be a substring of the "name" field. E.g.: T1-weighted, spinal cord, white matter, etc.
-    :param path_label:
-    :param label:
-    :param output: {file, filewithpath}
-    :return:
-    """
-    # init
-    file_info_label = 'info_label.txt'
-    file_label = ''
-    # Open file
-    fname_label = os.path.join(path_label, file_info_label)
-    try:
-        f = io.open(fname_label)
-    except IOError:
-        sct.printv('\nWARNING: Cannot open ' + fname_label, 1, 'warning')
-        # raise
-    else:
-        # Extract lines from file
-        lines = [line for line in f.readlines() if line.strip()]
-        # find line corresponding to label
-        for line in lines:
-            # ignore comment
-            if not line[0] == '#':
-                # check "name" field
-                if label in line.split(',')[1].strip():
-                    file_label = line.split(',')[2].strip()
-                    # sct.printv('Found Label ' + label + ' in file: ' + file_label)
-                    break
-        if file_label == '':
-            sct.printv('\nWARNING: Label ' + label + ' not found.', 1, 'warning')
-        # output
-        if output == 'file':
-            return file_label
-        elif output == 'filewithpath':
-            return os.path.join(path_label, file_label)
 
 
 # Get interpolation method
@@ -233,22 +168,15 @@ def get_parser():
                       mandatory=False,
                       default_value=param_default.folder_out,
                       example="label")
-    parser.add_option(name="-o",
-                      type_value=None,
-                      description="name of output folder.",
-                      mandatory=False,
-                      deprecated_by='-ofolder')
     parser.add_option(name="-t",
                       type_value="folder",
                       description="Path to template.",
                       mandatory=False,
                       default_value=str(param_default.path_template))
     parser.add_option(name='-qc',
-                      type_value='multiple_choice',
-                      description='Output images for quality control.',
-                      mandatory=False,
-                      example=['0', '1'],
-                      default_value='1')
+                      type_value='folder_creation',
+                      description='The path where the quality control generated content will be saved',
+                      default_value=param_default.path_qc)
     parser.add_option(name="-v",
                       type_value="multiple_choice",
                       description="""Verbose.""",
@@ -258,8 +186,26 @@ def get_parser():
     return parser
 
 
-# MAIN
-# ==========================================================================================
+def generate_qc(fn_in, fn_wm, args, path_qc):
+    """
+    Generate a QC entry allowing to quickly review the warped template.
+    """
+
+    import spinalcordtoolbox.reports.qc as qc
+    import spinalcordtoolbox.reports.slice as qcslice
+
+    qc.add_entry(
+     src=fn_in,
+     process="sct_warp_template",
+     args=args,
+     path_qc=path_qc,
+     plane='Axial',
+     qcslice=qcslice.Axial([Image(fn_in), Image(fn_wm)]),
+     qcslice_operations=[qc.QcImage.template],
+     qcslice_layout=lambda x: x.mosaic(),
+    )
+
+
 def main(args=None):
 
     parser = get_parser()
@@ -274,15 +220,36 @@ def main(args=None):
     folder_out = arguments['-ofolder']
     path_template = arguments['-t']
     verbose = int(arguments['-v'])
-    qc = int(arguments['-qc'])
+    path_qc = arguments.get("-qc", None)
 
     # call main function
-    WarpTemplate(fname_src, fname_transfo, warp_atlas, warp_spinal_levels, folder_out, path_template, verbose, qc)
+    w = WarpTemplate(fname_src, fname_transfo, warp_atlas, warp_spinal_levels, folder_out, path_template, verbose)
+
+    path_template = os.path.join(w.folder_out, w.folder_template)
+    if set(spinalcordtoolbox.metadata.get_indiv_label_names(path_template)).issuperset(["white matter", "T2-weighted template", "gray matter"]):
+
+        if path_qc is not None:
+            fname_wm = os.path.join(w.folder_out, w.folder_template, spinalcordtoolbox.metadata.get_file_label(path_template, 'white matter'))
+            generate_qc(fname_src, fname_wm, sys.argv[1:], os.path.abspath(path_qc))
+
+        sct.display_viewer_syntax(
+         [
+          fname_src,
+          spinalcordtoolbox.metadata.get_file_label(path_template, 'T2-weighted template', output="filewithpath"),
+          spinalcordtoolbox.metadata.get_file_label(path_template, 'gray matter', output="filewithpath"),
+          spinalcordtoolbox.metadata.get_file_label(path_template, 'white matter', output="filewithpath")
+         ],
+         colormaps=['gray', 'gray', 'red-yellow', 'blue-lightblue'],
+         opacities=['1', '1', '0.5', '0.5'],
+         minmax=['', '0,4000', '0.4,1', '0.4,1'],
+         verbose=verbose,
+        )
+    else:
+        if path_qc is not None:
+            sct.printv("QC not generated since expected labels are missing from template", type="warning" )
 
 
-# START PROGRAM
-# ==========================================================================================
 if __name__ == "__main__":
-    sct.start_stream_logger()
+    sct.init_sct()
     param = Param()
     main()
