@@ -6,9 +6,6 @@
 //  Copyright (c) 2013 benji_admin. All rights reserved.
 //
 
-#include "Image3D.h"
-#include "util/Matrix3x3.h"
-#include "OrientImage.h"
 #include <vtkSmartPointer.h>
 #include <vtkPolyData.h>
 //
@@ -31,6 +28,12 @@
 #include <vtkPolyData.h>
 #include <vtkPolyDataNormals.h>
 #include <vtkPointData.h>
+
+#include "Image3D.h"
+#include "util/Matrix3x3.h"
+#include "OrientImage.h"
+
+using namespace std;
 
 typedef itk::Image< double, 3 > ImageType;
 typedef itk::Image< unsigned char, 3 > BinaryImageType;

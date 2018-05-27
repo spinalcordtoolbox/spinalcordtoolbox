@@ -1,9 +1,0 @@
-# Date - Time: 2014/11/27 - 18:28:44
-# Metric file: /Users/julien/code/spinalcordtoolbox/dev/atlas/WM_validation/partial_volume/20141127/WM_phantom_noise.nii.gz
-# Extraction method: ml
-# Vertebral levels: ALL
-# Slices (z): ALL
-# ID, label name, mean, std
-
-0,  mask_wm, 40.846545, 0.000000
-1,  mask_inv, -0.000706, 0.000000

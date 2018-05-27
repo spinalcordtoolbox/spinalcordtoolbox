@@ -12,7 +12,7 @@
 #pragma warning(disable:4786)
 #endif
 
-#include <iostream>
+#include <ostream>
 
 
 class	CMatrix3x3;

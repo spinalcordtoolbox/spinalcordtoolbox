@@ -69,12 +69,12 @@ def main(args=None):
     # initialization
     # note: mirror servers are listed in order of priority
     dict_url = {
-        'sct_example_data': ['https://osf.io/4nnk3/?action=download',
-                             'https://www.neuro.polymtl.ca/_media/downloads/sct/20170208_sct_example_data.zip'],
+        'sct_example_data': ['https://osf.io/kjcgs/?action=download',
+                             'https://www.neuro.polymtl.ca/_media/downloads/sct/20180525_sct_example_data.zip'],
         'sct_testing_data': ['https://osf.io/z8gaj/?action=download',
                              'https://www.neuro.polymtl.ca/_media/downloads/sct/20180125_sct_testing_data.zip'],
-        'PAM50': ['https://osf.io/gdwn6/?action=download',
-                  'https://www.neuro.polymtl.ca/_media/downloads/sct/20170101_PAM50.zip'],
+        'PAM50': ['https://osf.io/xz7jk/?action=download',
+                  'https://www.neuro.polymtl.ca/_media/downloads/sct/20180410_PAM50.zip'],
         'MNI-Poly-AMU': ['https://osf.io/sh6h4/?action=download',
                          'https://www.neuro.polymtl.ca/_media/downloads/sct/20170310_MNI-Poly-AMU.zip'],
         'gm_model': ['https://osf.io/ugscu/?action=download',
@@ -114,7 +114,7 @@ def main(args=None):
     sct.printv('\nCheck if folder already exists...', verbose)
     if os.path.isdir(data_name):
         sct.printv('WARNING: Folder ' + data_name + ' already exists. Removing it...', 1, 'warning')
-        shutil.rmtree(data_name, ignore_errors=True)
+        sct.rmtree(data_name)
 
     # unzip
     unzip(tmp_file, dest_folder, verbose)
@@ -195,5 +195,5 @@ def download_data(urls, verbose):
 
 
 if __name__ == "__main__":
-    sct.start_stream_logger()
+    sct.init_sct()
     main()

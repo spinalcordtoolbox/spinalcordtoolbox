@@ -1,11 +1,11 @@
 #ifndef _USE_MATH_DEFINES
 #define _USE_MATH_DEFINES
 #endif // !_USE_MATH_DEFINES
-#include "Initialisation.h"
-#include "OrientImage.h"
+
 #include <cmath>
 #include <map>
 #include <list>
+
 #include <itkImage.h>
 #include <itkNiftiImageIO.h>
 #include <itkPNGImageIO.h>
@@ -29,6 +29,10 @@
 #include <itkDiscreteGaussianImageFilter.h>
 #include <itkRescaleIntensityImageFilter.h>
 #include <itkRGBPixel.h>
+
+#include "Initialisation.h"
+#include "OrientImage.h"
+
 using namespace std;
 
 typedef itk::Image< double, 3 >	ImageType;

@@ -8,10 +8,10 @@
 #ifndef _MATRIX4X4_H_
 #define _MATRIX4X4_H_
 
+#include <ostream>
 
 #include "Vector3.h"
-#include <iostream>
-using namespace std;
+
 
 class	CMatrix3x3;
 
@@ -125,7 +125,7 @@ public:
 	/// Scalar-matrix division.
 	friend CVector3		operator * ( const CVector3& v, const CMatrix4x4& m );
 
-	friend ostream& operator << (ostream& os, const CMatrix4x4 &mat );
+	friend std::ostream& operator << (std::ostream& os, const CMatrix4x4 &mat );
 
 	CMatrix4x4	Inverse();
 

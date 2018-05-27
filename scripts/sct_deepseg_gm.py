@@ -1,4 +1,5 @@
-# coding: utf-8
+#!/usr/bin/env python
+# -*- coding: utf-8
 # This command-line tool is the interface for the deepseg_gm API
 # that implements the model for the Spinal Cord Gray Matter Segmentation.
 #
@@ -7,7 +8,7 @@
 #     Spinal cord gray matter segmentation using deep dilated convolutions.
 #     URL: https://arxiv.org/abs/1710.01269
 
-import sys
+import sys, os
 
 import sct_utils as sct
 from msct_parser import Parser
@@ -34,6 +35,11 @@ def get_parser():
 
     parser.usage.addSection('\nMISC')
 
+    parser.add_option(name='-qc',
+                      type_value='folder_creation',
+                      description='The path where the quality control generated content will be saved',
+                      default_value=None)
+
     parser.add_option(name="-m",
                       type_value='multiple_choice',
                       description="Model to use (large or challenge)."
@@ -43,6 +49,11 @@ def get_parser():
                       example=['large', 'challenge'],
                       default_value='large')
 
+    parser.add_option(name='-igt',
+                      type_value='image_nifti',
+                      description='File name of ground-truth segmentation.',
+                      mandatory=False)
+
     parser.add_option(name="-v",
                       type_value='multiple_choice',
                       description="Verbose: 0 = no verbosity, 1 = verbose.",
@@ -51,6 +62,27 @@ def get_parser():
                       default_value='1')
 
     return parser
+
+
+def generate_qc(fn_in, fn_seg, args, path_qc):
+    """
+    Generate a QC entry allowing to quickly review the segmentation process.
+    """
+
+    import spinalcordtoolbox.reports.qc as qc
+    import spinalcordtoolbox.reports.slice as qcslice
+    from msct_image import Image
+
+    qc.add_entry(
+     src=fn_in,
+     process="sct_deepseg_gm",
+     args=args,
+     path_qc=path_qc,
+     plane='Axial',
+     qcslice=qcslice.Axial([Image(fn_in), Image(fn_seg)]),
+     qcslice_operations=[qc.QcImage.listed_seg],
+     qcslice_layout=lambda x: x.mosaic(),
+    )
 
 
 def run_main():
@@ -70,6 +102,11 @@ def run_main():
     out_fname = deepseg_gm.segment_file(input_filename, output_filename,
                                         model_name, int(verbose))
 
+    path_qc = arguments.get("-qc", None)
+    if path_qc is not None:
+        generate_qc(input_filename, out_fname, sys.argv[1:], os.path.abspath(path_qc))
+
+
     sct.display_viewer_syntax([input_filename, format(out_fname)],
                               colormaps=['gray', 'red'],
                               opacities=['1', '0.7'],
@@ -77,5 +114,5 @@ def run_main():
 
 
 if __name__ == '__main__':
-    sct.start_stream_logger()
+    sct.init_sct()
     run_main()

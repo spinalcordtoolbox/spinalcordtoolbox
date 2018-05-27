@@ -319,7 +319,7 @@ class Model:
 
             # remove warping fields directory
             if self.param.rm_tmp:
-                shutil.rmtree(warp_dir)
+                sct.rmtree(warp_dir)
 
     # ------------------------------------------------------------------------------------------------------------------
     def normalize_model_data(self):
@@ -550,5 +550,5 @@ def main(args=None):
 
 
 if __name__ == "__main__":
-    sct.start_stream_logger()
+    sct.init_sct()
     main()

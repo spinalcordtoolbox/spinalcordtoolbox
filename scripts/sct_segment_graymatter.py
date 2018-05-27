@@ -49,6 +49,11 @@ from math import exp
 
 import numpy as np
 
+# Silly workaround as we use pyplt in qc
+import matplotlib
+matplotlib.use('Agg')
+
+
 import sct_maths
 import sct_process_segmentation
 import sct_register_multimodal
@@ -174,11 +179,9 @@ def get_parser():
 
     parser.usage.addSection('\nMISC')
     parser.add_option(name='-qc',
-                      type_value='multiple_choice',
-                      description='Output images for quality control.',
-                      mandatory=False,
-                      example=['0', '1'],
-                      default_value=str(int(ParamSeg().qc)))
+                      type_value='folder_creation',
+                      description='The path where the quality control generated content will be saved',
+                      default_value=None)
     parser.add_option(name="-r",
                       type_value="multiple_choice",
                       description='Remove temporary files.',
@@ -214,7 +217,7 @@ class ParamSeg:
         self.thr_bin = 0.5
         self.ratio = '0'  # '0', 'slice' or 'level'
 
-        self.qc = True
+        self.qc = False
 
 
 class SegmentGM:
@@ -608,7 +611,7 @@ class SegmentGM:
         sct.copy(os.path.join(self.tmp_dir, tmp_dir_val, fname_hd), self.param_seg.path_results)
 
         if self.param.rm_tmp:
-            shutil.rmtree(tmp_dir_val)
+            sct.rmtree(tmp_dir_val)
 
     def compute_ratio(self):
         type_ratio = self.param_seg.ratio
@@ -721,8 +724,9 @@ def main(args=None):
         param_seg.fname_manual_gmseg = arguments['-ref']
     if '-ofolder' in arguments:
         param_seg.path_results = os.path.abspath(arguments['-ofolder'])
-    if '-qc' in arguments:
-        param_seg.qc = bool(int(arguments['-qc']))
+
+    param_seg.qc = arguments.get("-qc", None)
+
     if '-r' in arguments:
         param.rm_tmp = bool(int(arguments['-r']))
     if '-v' in arguments:
@@ -744,20 +748,58 @@ def main(args=None):
         gm_col = 'red-yellow'
         b = '0.4,1'
 
-    if param_seg.qc:
-        # output QC image
-        printv('\nSave quality control images...', param.verbose, 'normal')
-        im = Image(os.path.join(seg_gm.tmp_dir, param_seg.fname_im))
-        im.save_quality_control(plane='axial', n_slices=5, seg=seg_gm.im_res_gmseg, thr=float(b.split(',')[0]),
-                                cmap_col='red-yellow', path_output=param_seg.path_results)
+    if param_seg.qc is not None:
+        generate_qc(param_seg.fname_im_original, seg_gm.fname_res_gmseg,
+         seg_gm.fname_res_wmseg, param_seg, args, os.path.abspath(param_seg.qc))
+
 
     if param.rm_tmp:
         # remove tmp_dir
-        shutil.rmtree(seg_gm.tmp_dir)
+        sct.rmtree(seg_gm.tmp_dir)
 
     sct.display_viewer_syntax([param_seg.fname_im_original, seg_gm.fname_res_gmseg, seg_gm.fname_res_wmseg], colormaps=['gray', gm_col, wm_col], minmax=['', b, b], opacities=['1', '0.7', '0.7'], verbose=param.verbose)
 
+def generate_qc(fname_in, fname_gm, fname_wm, param_seg, args, path_qc):
+    """
+    Generate a QC entry allowing to quickly review the segmentation process.
+    """
+
+    import spinalcordtoolbox.reports.qc as qc
+    import spinalcordtoolbox.reports.slice as qcslice
+
+    im_org = Image(fname_in)
+    im_gm = Image(fname_gm)
+    im_wm = Image(fname_wm)
+
+    # create simple compound segmentation image for QC purposes
+
+    if param_seg.type_seg == 'bin':
+        im_wm.data[im_wm.data == 1] = 1
+        im_gm.data[im_gm.data == 1] = 2
+    else:
+        # binarize anyway
+        im_wm.data[im_wm.data >= param_seg.thr_bin] = 1
+        im_wm.data[im_wm.data < param_seg.thr_bin] = 0
+        im_gm.data[im_gm.data >= param_seg.thr_bin] = 2
+        im_gm.data[im_gm.data < param_seg.thr_bin] = 0
+
+    im_seg = im_gm
+    im_seg.data += im_wm.data
+
+    s = qcslice.Axial([im_org, im_seg])
+
+    qc.add_entry(
+     src=fname_in,
+     process="sct_segment_graymatter",
+     args=args,
+     path_qc=path_qc,
+     plane='Axial',
+     qcslice=s,
+     qcslice_operations=[qc.QcImage.listed_seg],
+     qcslice_layout=lambda x: x.mosaic(),
+    )
+
 
 if __name__ == "__main__":
-    sct.start_stream_logger()
+    sct.init_sct()
     main()

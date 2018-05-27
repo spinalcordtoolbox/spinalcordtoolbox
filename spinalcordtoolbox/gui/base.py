@@ -1,7 +1,20 @@
-"""Base classes for creating GUI objects to create manually selected points."""
+"""Base classes for creating GUI objects to create manually selected points.
+The definition of X,Y axis is the following:
+
+  xmin,ymin o---------o xmax,ymin
+            |         |
+            |         |
+            |         |
+            |         |
+  xmin,ymax o---------o xmax,ymax
+
+
+"""
 
 from __future__ import absolute_import
 from __future__ import division
+
+from collections import namedtuple
 
 import logging
 import sys
@@ -16,13 +29,16 @@ from PyQt4 import QtCore, QtGui
 logger = logging.getLogger(__name__)
 
 
+Position = namedtuple('Position', ('x', 'y', 'z'))
+
+
 class AnatomicalParams(object):
     """The base parameter object for GUI configuration"""
     def __init__(self,
                  cmap='gray',
                  interp='nearest',
-                 vmin=5.,
-                 vmax=95.,
+                 perc_min=5.,
+                 perc_max=95.,
                  vmode='percentile',
                  alpha=1.0):
         """
@@ -31,15 +47,17 @@ class AnatomicalParams(object):
         ----------
         cmap : str
         interp : str
-        vmin : int
-        vmax : int
-        vmode : str
+        perc_min : float: low percentile threshold for intensity adjustment
+        perc_max : float: high percentile threshold for intensity adjustment
+        vmode : str: "percentile": intensity adjustment based on vmin/vmax percentile,
+                     "mean-std": intensity adjustment based on
+                     "clahe: CLAHE (not implemented yet)
         alpha : float
         """
         self.cmap = cmap
         self.interp = interp
-        self.min = vmin
-        self.max = vmax
+        self.perc_min = perc_min
+        self.perc_max = perc_max
         self.vmode = vmode
         self.alpha = alpha
         self.start_vertebrae = 50
@@ -49,7 +67,10 @@ class AnatomicalParams(object):
         self.subtitle = ''  # subplot title (will be displayed above the image)
         self._vertebraes = []
         self.input_file_name = ""
-        self.starting_slice = 0
+        self.starting_slice = 'top'  # used in centerline.py canvas and corresponds to the location of
+        # the first axial slice for labeling. Possible values are: 'top': top slice; 'midfovminusinterval': mid-FOV
+        # minus the interval.
+        self.interval_in_mm = 15  # superior-inferior distance between two consecutive labels in AUTO mode
 
     @property
     def dialog_title(self):
@@ -110,11 +131,52 @@ class BaseDialog(QtGui.QDialog):
         self._init_controls(layout)
         self._init_footer(layout)
 
-        QtGui.QShortcut(QtGui.QKeySequence.Undo, self, self.on_undo)
-        QtGui.QShortcut(QtGui.QKeySequence.Save, self, self.on_save_quit)
-        QtGui.QShortcut(QtGui.QKeySequence.Quit, self, self.close)
+        events = (
+            (QtGui.QKeySequence.Undo, self.on_undo),
+            (QtGui.QKeySequence.Save, self.on_save_quit),
+            (QtGui.QKeySequence.Quit, self.close),
+            (QtGui.QKeySequence.MoveToNextChar, self.increment_vertical_nav),
+            (QtGui.QKeySequence.MoveToPreviousChar, self.decrement_vertical_nav),
+            (QtGui.QKeySequence.MoveToNextLine, self.increment_horizontal_nav),
+            (QtGui.QKeySequence.MoveToPreviousLine, self.decrement_horizontal_nav)
+        )
+
+        for event, action in events:
+            QtGui.QShortcut(event, self, action)
 
         self.setWindowTitle(self.params.dialog_title)
+
+    def increment_vertical_nav(self):
+        """Action to increment the anatonical viewing position.
+
+        The common case is when the right arrow key is pressed. Ignore implementing
+        this function if no navigation functionality is required
+        """
+        pass
+
+    def decrement_vertical_nav(self):
+        """Action to decrement the anatonical viewing position.
+
+        The common case is when the left arrow key is pressed. Ignore implementing
+        this function if no navigation functionality is required
+        """
+        pass
+
+    def increment_horizontal_nav(self):
+        """Action to increment the anatonical viewing position.
+
+        The common case is when the down arrow key is pressed. Ignore implementing
+        this function if no navigation functionality is required
+        """
+        pass
+
+    def decrement_horizontal_nav(self):
+        """Action to decrement the anatonical viewing position.
+
+        The common case is when the up arrow key is pressed. Ignore implementing
+        this function if no navigation functionality is required
+        """
+        pass
 
     def _init_canvas(self, parent):
         """
@@ -225,7 +287,7 @@ class BaseController(object):
     _overlay_image = None
     _dialog = None
     default_position = ()
-    position = None
+    position = ()
     saved = False
 
     def __init__(self, image, params, init_values=None):
@@ -233,6 +295,19 @@ class BaseController(object):
         self.params = params
         self.points = []
         self._overlay_image = init_values
+        self.setup_intensity()
+
+    def setup_intensity(self):
+        if self.params.vmode == 'percentile':
+            self.params.vmin, self.params.vmax = np.percentile(self.image.data,
+                                                               (self.params.perc_min, self.params.perc_max))
+        elif self.params.vmode == 'mean-std':
+            # TODO: update this
+            self.mean_intensity = (self.params.vmax + self.params.vmin) / 2.0
+            self.std_intensity = (self.params.vmax - self.params.vmin) / 2.0
+        elif self.params.vmode == 'clahe':
+            # TODO: implement
+            logger.warning("CLAHE is not implemented yet.")
 
     def reformat_image(self):
         """Set the camera position and increase contrast.
@@ -252,11 +327,9 @@ class BaseController(object):
         x, y, z, t, dx, dy, dz, dt = self.image.dim
         self.params.aspect = dx / dy
         self.params.offset = x * dx
-        self.default_position = (x // 2, y // 2, z // 2)
+        self.default_position = Position(x // 2, y // 2, z // 2)
 
-        clip = np.percentile(self.image.data, (self.params.min,
-                                               self.params.max))
-        self.params.vmin, self.params.vmax = clip
+        self.setup_intensity()
         self.reset_position()
 
     def reset_position(self):
@@ -285,9 +358,8 @@ class BaseController(object):
         """Remove the last point selected and refresh the UI"""
         if self.points:
             x, y, z, label = self.points[-1]
-            self.position = (x, y, z)
+            self.position = Position(x, y, z)
             self.points = self.points[:-1]
-            self._slice = self.position[0]
             self.label = label
             logger.debug('Point removed {}'.format(self.position))
         else:

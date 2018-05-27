@@ -17,7 +17,7 @@ def init(param_test):
     Initialize class: param_test
     """
     # initialization
-    default_args = ['-i t2/t2.nii.gz -s t2/t2_seg.nii.gz -c t2 -initfile t2/init_label_vertebrae.txt -t template/']
+    default_args = ['-i t2/t2.nii.gz -s t2/t2_seg.nii.gz -c t2 -initfile t2/init_label_vertebrae.txt -t template -qc testing-qc']
     # assign default params
     if not param_test.args:
         param_test.args = default_args
@@ -147,7 +147,7 @@ def test_integrity(param_test):
 #
 #     if status == 0:
 #         # copy input data (for easier debugging)
-#         shutil.copy(dict_param_with_path['-i'], path_output)
+#         sct.copy(dict_param_with_path['-i'], path_output)
 #         # extract center of vertebral labels
 #         path_seg, file_seg, ext_seg = sct.extract_fname(dict_param['-s'])
 #         try:

@@ -22,7 +22,6 @@ import scipy
 import pandas as pd
 
 import sct_utils as sct
-from msct_nurbs import NURBS
 from sct_image import set_orientation
 from sct_straighten_spinalcord import smooth_centerline
 from msct_image import Image
@@ -125,7 +124,7 @@ def get_parser():
                       mandatory=False)
     parser.add_option(name='-discfile',
                       type_value='image_nifti',
-                      description='Disc labeling. Only use with -p label-vert',
+                      description='Disc labeling with the convention "disc labelvalue=3 ==> disc C2/C3". Only use with -p label-vert',
                       mandatory=False)
     parser.add_option(name='-r',
                       type_value='multiple_choice',
@@ -439,7 +438,7 @@ def compute_length(fname_segmentation, remove_temp_files, output_folder, overwri
     # Remove temporary files
     if remove_temp_files:
         sct.printv('\nRemove temporary files...', verbose)
-        shutil.rmtree(path_tmp, ignore_errors=True)
+        sct.rmtree(path_tmp)
 
     return length
 
@@ -457,7 +456,7 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
 
     # Copying input data to tmp folder
     sct.printv('\nCopying data to tmp folder...', verbose)
-    sct.run('sct_convert -i ' + fname_segmentation + ' -o ' + os.path.join(path_tmp, "segmentation.nii.gz"), verbose)
+    sct.run(['sct_convert', '-i', fname_segmentation, '-o', os.path.join(path_tmp, "segmentation.nii.gz")], verbose)
 
     # go to tmp folder
     curdir = os.getcwd()
@@ -471,7 +470,7 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
     # set_orientation(im_seg, 'RPI')
     # im_seg.setFileName(fname_segmentation_orient)
     # im_seg.save()
-    sct.run('sct_image -i segmentation.nii.gz -setorient RPI -o segmentation_RPI.nii.gz', verbose)
+    sct.run(['sct_image', '-i', 'segmentation.nii.gz', '-setorient', 'RPI', '-o', 'segmentation_RPI.nii.gz'], verbose)
 
     # Open segmentation volume
     sct.printv('\nOpen segmentation volume...', verbose)
@@ -572,7 +571,7 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
     # get orientation of the input data
     im_seg_original = Image('segmentation.nii.gz')
     orientation = im_seg_original.orientation
-    sct.run('sct_image -i centerline_RPI.nii.gz -setorient ' + orientation + ' -o centerline.nii.gz')
+    sct.run(['sct_image', '-i', 'centerline_RPI.nii.gz', '-setorient', orientation, '-o', 'centerline.nii.gz'])
 
     # create a txt file with the centerline
     name_output_txt = 'centerline.txt'
@@ -599,7 +598,7 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
     # Remove temporary files
     if remove_temp_files:
         sct.printv('\nRemove temporary files...', verbose)
-        shutil.rmtree(path_tmp)
+        sct.rmtree(path_tmp)
 
     return file_data + '_centerline.nii.gz'
 
@@ -617,13 +616,13 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
 
     # Copying input data to tmp folder
     sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
-    sct.run('sct_convert -i ' + fname_segmentation + ' -o ' + os.path.join(path_tmp, "segmentation.nii.gz"), verbose)
+    sct.run(['sct_convert', '-i', fname_segmentation, '-o', os.path.join(path_tmp, "segmentation.nii.gz")], verbose)
     # go to tmp folder
     curdir = os.getcwd()
     os.chdir(path_tmp)
     # Change orientation of the input segmentation into RPI
     sct.printv('\nChange orientation to RPI...', verbose)
-    sct.run('sct_image -i segmentation.nii.gz -setorient RPI -o segmentation_RPI.nii.gz', verbose)
+    sct.run(['sct_image', '-i', 'segmentation.nii.gz', '-setorient', 'RPI', '-o', 'segmentation_RPI.nii.gz'], verbose)
 
     # Open segmentation volume
     sct.printv('\nOpen segmentation volume...', verbose)
@@ -768,8 +767,8 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
     # get orientation of the input data
     im_seg_original = Image('segmentation.nii.gz')
     orientation = im_seg_original.orientation
-    sct.run('sct_image -i csa_volume_RPI.nii.gz -setorient ' + orientation + ' -o csa_volume_in_initial_orientation.nii.gz')
-    sct.run('sct_image -i angle_volume_RPI.nii.gz -setorient ' + orientation + ' -o angle_volume_in_initial_orientation.nii.gz')
+    sct.run(['sct_image', '-i', 'csa_volume_RPI.nii.gz', '-setorient', orientation, '-o', 'csa_volume_in_initial_orientation.nii.gz'])
+    sct.run(['sct_image', '-i', 'angle_volume_RPI.nii.gz', '-setorient', orientation, '-o', 'angle_volume_in_initial_orientation.nii.gz'])
 
     # come back
     os.chdir(curdir)
@@ -886,7 +885,7 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
     # Remove temporary files
     if remove_temp_files:
         sct.printv('\nRemove temporary files...')
-        shutil.rmtree(path_tmp)
+        sct.rmtree(path_tmp)
 
     # Sum up the output file names
     sct.printv('\nOutput a nifti file of CSA values along the segmentation: ' + os.path.join(output_folder, 'csa_image.nii.gz'), verbose, 'info')
@@ -899,13 +898,15 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
 def label_vert(fname_seg, fname_label, verbose=1):
     """
     Label segmentation using vertebral labeling information
-    :param fname_segmentation:
+    :param fname_segmentation, no orientation expected
     :param fname_label:
     :param verbose:
     :return:
     """
     # Open labels
     im_disc = Image(fname_label)
+    # Change the orientation to RPI so that the z axis corresponds to the superior-to-inferior axis
+    im_disc.change_orientation('RPI')
     # retrieve all labels
     coord_label = im_disc.getNonZeroCoordinates()
     # compute list_disc_z and list_disc_value
@@ -913,7 +914,8 @@ def label_vert(fname_seg, fname_label, verbose=1):
     list_disc_value = []
     for i in range(len(coord_label)):
         list_disc_z.insert(0, coord_label[i].z)
-        list_disc_value.insert(0, coord_label[i].value)
+        # '-1' to use the convention "disc labelvalue=3 ==> disc C2/C3"
+        list_disc_value.insert(0, coord_label[i].value - 1)
 
     list_disc_value = [x for (y, x) in sorted(zip(list_disc_z, list_disc_value), reverse=True)]
     list_disc_z = [y for (y, x) in sorted(zip(list_disc_z, list_disc_value), reverse=True)]
@@ -1139,25 +1141,6 @@ def get_slices_matching_with_vertebral_levels_based_centerline(vertebral_levels,
     return slices, vert_levels_list, warning
 
 
-def b_spline_centerline(x_centerline, y_centerline, z_centerline):
-    sct.printv('\nFitting centerline using B-spline approximation...')
-    points = [[x_centerline[n], y_centerline[n], z_centerline[n]] for n in range(len(x_centerline))]
-    nurbs = NURBS(3, 3000, points)
-    # BE very careful with the spline order that you choose :
-    # if order is too high ( > 4 or 5) you need to set a higher number of Control Points (cf sct_nurbs ).
-    # For the third argument (number of points), give at least len(z_centerline)+500 or higher
-
-    P = nurbs.getCourbe3D()
-    x_centerline_fit = P[0]
-    y_centerline_fit = P[1]
-    Q = nurbs.getCourbe3D_deriv()
-    x_centerline_deriv = Q[0]
-    y_centerline_deriv = Q[1]
-    z_centerline_deriv = Q[2]
-
-    return x_centerline_fit, y_centerline_fit, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv
-
-
 #=======================================================================================================================
 # Normalization
 #=======================================================================================================================
@@ -1239,7 +1222,7 @@ def edge_detection(f):
 
 
 if __name__ == "__main__":
-    sct.start_stream_logger()
+    sct.init_sct()
     # initialize parameters
     param = Param()
     param_default = Param()
