@@ -1,5 +1,35 @@
 # CHANGES TO RELEASE
 
+## 3.2.0 (2018-05-27)
+[View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.1.1...3.2.0)
+
+**BUG**
+
+ - Fixed re-use of the same figure during QC generation [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1711)
+ - Fslview no more called at the end of process if it it deprecated [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1648)
+ - Fixing the TensorFlow installation for some old platforms. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1646)
+ - Re-ordering of 4th dimension when apply transformation on 4D scans [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1638)
+
+**ENHANCEMENT**
+
+ - Make sct_get_centerline robust to intensities with range [0, 1] [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1746)
+ - Improved doc and minor fixes with centerline fitting [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1736)
+ - Make sct_process_segmentation compatible with the new ldisc convention [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1735)
+ - Removed flirt dependency [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1729)
+ - More pessimistic caching of outputs [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1719)
+ - Improvements in straightening and registration to the template [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1669)
+ - Set MeanSquares the default metric for sct_fmri_moco [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1649)
+ - Now possible to change data orientation on 4D data [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1637)
+ - Use python  concurrent.futures instead of multiprocessing  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1587)
+
+**FEATURE**
+
+ - Control the brightness of the image in the GUI. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1684)
+ - Implements MTsat function [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1672)
+ - Improvements in straightening and registration to the template [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1669)
+ - Integration of SCT into fsleyes UI [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1629)
+ - Add Sentry error reporting [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1544)
+ 
 ## 3.1.1 (2018-02-16)
 [View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.1.0...3.1.1)
 
