@@ -29,7 +29,7 @@ class Param:
     def __init__(self):
         self.debug = 0
         self.average = 0
-        self.remove_tmp_files = 1
+        self.remove_temp_files = 1
         self.verbose = 1
         self.bval_min = 100  # in case user does not have min bvalues at 0, set threshold.
 
@@ -95,7 +95,7 @@ def get_parser():
                       description='remove temporary files.',
                       mandatory=False,
                       example=['0', '1'],
-                      default_value=str(param_default.remove_tmp_files))
+                      default_value=str(param_default.remove_temp_files))
 
     return parser
 
@@ -116,7 +116,7 @@ def main(args=None):
     fname_bvecs = arguments['-bvec']
     average = arguments['-a']
     verbose = int(arguments['-v'])
-    remove_tmp_files = int(arguments['-r'])
+    remove_temp_files = int(arguments['-r'])
     path_out = arguments['-ofolder']
 
     if '-bval' in arguments:
@@ -164,7 +164,7 @@ def main(args=None):
     from sct_convert import convert
     if not convert(fname_data, os.path.join(path_tmp, dmri_name + ext)):
         sct.printv('ERROR in convert.', 1, 'error')
-    sct.run('cp ' + fname_bvecs + ' ' + os.path.join(path_tmp, "bvecs"), verbose)
+    sct.copy(fname_bvecs, os.path.join(path_tmp, "bvecs"), verbose=verbose)
 
     # go to tmp folder
     curdir = os.getcwd()
@@ -188,30 +188,32 @@ def main(args=None):
 
     # Merge b=0 images
     sct.printv('\nMerge b=0...', verbose)
-    cmd = 'sct_image -concat t -o ' + b0_name + ext + ' -i '
+    cmd = ['sct_image', '-concat', 't', '-o', b0_name + ext, '-i']
+    l = ""
     for it in range(nb_b0):
-        cmd = cmd + dmri_name + '_T' + str(index_b0[it]).zfill(4) + ext + ','
-    cmd = cmd[:-1]  # remove ',' at the end of the string
+        l += dmri_name + '_T' + str(index_b0[it]).zfill(4) + ext + ','
+    cmd += [l[:-1]]  # remove ',' at the end of the string
     # WARNING: calling concat_data in python instead of in command line causes a non understood issue
     status, output = sct.run(cmd, param.verbose)
 
     # Average b=0 images
     if average:
         sct.printv('\nAverage b=0...', verbose)
-        sct.run('sct_maths -i ' + b0_name + ext + ' -o ' + b0_mean_name + ext + ' -mean t', verbose)
+        sct.run(['sct_maths', '-i', b0_name + ext, '-o', b0_mean_name + ext, '-mean', 't'], verbose)
 
     # Merge DWI
-    cmd = 'sct_image -concat t -o ' + dwi_name + ext + ' -i '
+    cmd = ['sct_image', '-concat', 't', '-o', dwi_name + ext, '-i']
+    l = ""
     for it in range(nb_dwi):
-        cmd = cmd + dmri_name + '_T' + str(index_dwi[it]).zfill(4) + ext + ','
-    cmd = cmd[:-1]  # remove ',' at the end of the string
+        l += dmri_name + '_T' + str(index_dwi[it]).zfill(4) + ext + ','
+    cmd += [l[:-1]]  # remove ',' at the end of the string
     # WARNING: calling concat_data in python instead of in command line causes a non understood issue
     status, output = sct.run(cmd, param.verbose)
 
     # Average DWI images
     if average:
         sct.printv('\nAverage DWI...', verbose)
-        sct.run('sct_maths -i ' + dwi_name + ext + ' -o ' + dwi_mean_name + ext + ' -mean t', verbose)
+        sct.run(['sct_maths', '-i', dwi_name + ext, '-o', dwi_mean_name + ext, '-mean', 't'], verbose)
         # if not average_data_across_dimension('dwi.nii', 'dwi_mean.nii', 3):
         #     sct.printv('ERROR in average_data_across_dimension', 1, 'error')
         # sct.run(fsloutput + 'fslmaths dwi -Tmean dwi_mean', verbose)
@@ -228,9 +230,9 @@ def main(args=None):
         sct.generate_output_file(os.path.join(path_tmp, dwi_mean_name + ext), os.path.join(path_out, dwi_mean_name + ext_data), verbose)
 
     # Remove temporary files
-    if remove_tmp_files == 1:
+    if remove_temp_files == 1:
         sct.printv('\nRemove temporary files...', verbose)
-        sct.run('rm -rf ' + path_tmp, verbose)
+        sct.rmtree(path_tmp, verbose=verbose)
 
     # display elapsed time
     elapsed_time = time.time() - start_time
@@ -317,5 +319,5 @@ def identify_b0(fname_bvecs, fname_bvals, bval_min, verbose):
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
-    sct.start_stream_logger()
+    sct.init_sct()
     main()

@@ -10,7 +10,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import sys, io, os, commands
+import sys, io, os
 
 import sct_utils as sct
 from msct_image import Image, compute_dice
@@ -22,7 +22,7 @@ def init(param_test):
     Initialize class: param_test
     """
     # initialization
-    default_args = ['-i t2/t2.nii.gz -c t2 -igt t2/t2_seg_manual.nii.gz']  # default parameters
+    default_args = ['-i t2/t2.nii.gz -c t2 -igt t2/t2_seg_manual.nii.gz -qc testing-qc']  # default parameters
 
     param_test.dice_threshold = 0.8
 
@@ -58,6 +58,6 @@ def test_integrity(param_test):
         param_test.output += '\n--> PASSED'
 
     # update Panda structure
-    param_test.results['dice_segmentation'] = dice_segmentation
+    param_test.results['dice'] = dice_segmentation
 
     return param_test

@@ -15,7 +15,7 @@ def init(param_test):
     Initialize class: param_test
     """
     # initialization
-    default_args = ['-t mt/label/ -w mt/warp_template2mt.nii.gz -gm mt/mt1_gmseg.nii.gz -wm mt/mt1_wmseg.nii.gz -manual-gm mt/mt1_gmseg_goldstandard.nii.gz -sc mt/mt1_seg.nii.gz -qc 0 -param step=1,type=seg,algo=centermassrot,metric=MeanSquares:step=2,type=im,algo=syn,metric=MeanSquares,iter=3,smooth=0,shrink=2']
+    default_args = ['-t mt/label/ -w mt/warp_template2mt.nii.gz -gm mt/mt1_gmseg.nii.gz -wm mt/mt1_wmseg.nii.gz -manual-gm mt/mt1_gmseg_goldstandard.nii.gz -sc mt/mt1_seg.nii.gz -param step=1,type=seg,algo=centermassrot,metric=MeanSquares:step=2,type=im,algo=syn,metric=MeanSquares,iter=3,smooth=0,shrink=2']
     # assign default params
     if not param_test.args:
         param_test.args = default_args
@@ -59,7 +59,7 @@ def test_integrity(param_test):
 # def test(path_data, parameters=''):
 #
 #     if not parameters:
-#         parameters = ' -t mt/label/ -w mt/warp_template2mt.nii.gz -gm mt/mt1_gmseg.nii.gz -wm mt/mt1_wmseg.nii.gz -manual-gm mt/mt1_gmseg_goldstandard.nii.gz -sc mt/mt1_seg.nii.gz -qc 0' #-d mt/mt0.nii.gz
+#         parameters = ' -t mt/label/ -w mt/warp_template2mt.nii.gz -gm mt/mt1_gmseg.nii.gz -wm mt/mt1_wmseg.nii.gz -manual-gm mt/mt1_gmseg_goldstandard.nii.gz -sc mt/mt1_seg.nii.gz' #-d mt/mt0.nii.gz
 #
 #     parser = sct_register_graymatter.get_parser()
 #     dict_param = parser.parse(parameters.split(), check_file_exist=False)

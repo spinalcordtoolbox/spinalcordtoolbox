@@ -165,7 +165,7 @@ def merge_images(list_fname_src, fname_dest, list_fname_warp, param):
 
     # remove temporary folder
     if param.rm_tmp:
-        shutil.rmtree(path_tmp)
+        sct.rmtree(path_tmp)
 
 
 # MAIN
@@ -209,5 +209,5 @@ def main(args=None):
 
 
 if __name__ == "__main__":
-    sct.start_stream_logger()
+    sct.init_sct()
     main()

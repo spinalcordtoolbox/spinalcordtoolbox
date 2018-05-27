@@ -20,9 +20,8 @@ def init(param_test):
     Initialize class: param_test
     """
     # initialization
-    default_args = ['-i t2s/t2s_uncropped.nii.gz -o t2s_uncropped_gmseg.nii.gz']
+    default_args = ['-i t2s/t2s_uncropped.nii.gz -igt t2s/t2s_uncropped_gmseg_manual.nii.gz -o output.nii.gz -qc testing-qc']
     param_test.dice_threshold = 0.85
-    param_test.f_ground_truth = 't2s/t2s_uncropped_gmseg_manual.nii.gz'
 
     # assign default params
     if not param_test.args:
@@ -36,12 +35,11 @@ def test_integrity(param_test):
     """
     dice_segmentation = float('nan')
     # extract name of output segmentation: data_seg.nii.gz
-    file_seg = os.path.join(param_test.path_output, sct.add_suffix(param_test.file_input, '_gmseg'))
+    file_seg = os.path.join(param_test.path_output, 'output.nii.gz')
     # open output segmentation
     im_seg = Image(file_seg)
     # open ground truth
-    fname_gt_path = os.path.join(param_test.path_data, param_test.f_ground_truth)
-    im_seg_manual = Image(fname_gt_path)
+    im_seg_manual = Image(param_test.fname_gt)
     # compute dice coefficient between generated image and image from database
     dice_segmentation = compute_dice(im_seg, im_seg_manual, mode='3d', zboundaries=False)
     # display
@@ -55,5 +53,5 @@ def test_integrity(param_test):
         param_test.output += '\n--> PASSED'
 
     # update Panda structure
-    param_test.results['dice_segmentation'] = dice_segmentation
+    param_test.results['dice'] = dice_segmentation
     return param_test

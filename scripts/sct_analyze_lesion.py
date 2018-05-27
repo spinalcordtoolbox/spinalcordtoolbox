@@ -22,7 +22,7 @@ from msct_types import Centerline
 from sct_image import get_orientation, set_orientation
 from sct_straighten_spinalcord import smooth_centerline
 import sct_utils as sct
-from sct_utils import extract_fname, printv, tmp_create, start_stream_logger
+from sct_utils import extract_fname, printv, tmp_create
 from skimage.measure import label
 
 
@@ -573,7 +573,7 @@ def main(args=None):
 
     # remove tmp_dir
     if rm_tmp:
-        shutil.rmtree(lesion_obj.tmp_dir)
+        sct.rmtree(lesion_obj.tmp_dir)
 
     printv('\nDone! To view the labeled lesion file (one value per lesion), type:', verbose)
     if fname_ref is not None:
@@ -583,5 +583,5 @@ def main(args=None):
 
 
 if __name__ == "__main__":
-    start_stream_logger()
+    sct.init_sct()
     main()

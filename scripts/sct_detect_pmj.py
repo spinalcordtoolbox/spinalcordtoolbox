@@ -52,12 +52,10 @@ def get_parser():
                         description="Output folder",
                         mandatory=False,
                         example="My_Output_Folder/")
-    parser.add_option(name="-qc",
-                        type_value="multiple_choice",
-                        description="Output png image for quality control.",
-                        mandatory=False,
-                        example=["0", "1"],
-                        default_value="0")
+    parser.add_option(name='-qc',
+                      type_value='folder_creation',
+                      description='The path where the quality control generated content will be saved',
+                      default_value=None)
     parser.add_option(name="-igt",
                       type_value="image_nifti",
                       description="File name of ground-truth PMJ (single voxel).",
@@ -79,7 +77,7 @@ def get_parser():
 
 
 class DetectPMJ:
-    def __init__(self, fname_im, contrast, fname_seg, path_out, quality_control, verbose):
+    def __init__(self, fname_im, contrast, fname_seg, path_out, verbose):
 
         self.fname_im = fname_im
         self.contrast = contrast
@@ -87,8 +85,6 @@ class DetectPMJ:
         self.fname_seg = fname_seg
 
         self.path_out = path_out
-
-        self.quality_control = quality_control
 
         self.verbose = verbose
 
@@ -100,9 +96,8 @@ class DetectPMJ:
         self.dection_map_pmj = sct.extract_fname(self.fname_im)[1] + '_map_pmj'  # file resulting from the detection
 
         # path to the pmj detector
-        self.pmj_model = os.path.join(sct.run('echo $SCT_DIR')[1],
-                                            'data/pmj_models',
-                                            '{}_model'.format(self.contrast))
+        path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
+        self.pmj_model = os.path.join(path_sct, 'data', 'pmj_models', '{}_model'.format(self.contrast))
 
         self.threshold = -0.75 if self.contrast == 't1' else 0.8  # detection map threshold, depends on the contrast
 
@@ -137,35 +132,9 @@ class DetectPMJ:
             sct.copy(os.path.abspath(os.path.join(self.tmp_dir, self.fname_out)),
                         os.path.abspath(os.path.join(self.path_out, self.fname_out)))
 
-            if self.quality_control:
-                sct.copy(os.path.abspath(os.path.join(self.tmp_dir, self.fname_qc)),
-                                os.path.abspath(os.path.join(self.path_out, self.fname_qc)))
-
             return os.path.join(self.path_out, self.fname_out)
         else:
             return None
-
-    def save_qc(self, slice_arr, coord_lst):
-        """Output a QC PNG image with a green bounding box around the detected PMJ."""
-        sct.printv('\nSave quality control image...', self.verbose, 'normal')
-
-        import matplotlib.pyplot as plt
-        import matplotlib.patches as patches
-
-        fig, ax = plt.subplots(1)
-        ax.imshow(np.rot90(slice_arr), cmap='gray')
-
-        rect = patches.Rectangle((coord_lst[0] - 10, slice_arr.shape[1] - coord_lst[1] - 10),
-                                    20, 20,
-                                    linewidth=2,
-                                    edgecolor='lime',
-                                    facecolor='none')
-        ax.add_patch(rect)
-
-        plt.axis('off')
-        fig.savefig(self.fname_qc, bbox_inches='tight')
-
-        sct.printv('\nQC output image: ' + self.fname_qc, self.verbose, 'info')
 
     def generate_mask_pmj(self):
         """Output the PMJ mask."""
@@ -175,9 +144,6 @@ class DetectPMJ:
             im_mask.data *= 0  # empty mask
 
             im_mask.data[self.pa_coord, self.is_coord, self.rl_coord] = 50  # voxel with value = 50
-
-            if self.quality_control:  # output QC image
-                self.save_qc(im.data[:, :, self.rl_coord], [self.pa_coord, self.is_coord])
 
             im_mask.setFileName(self.fname_out)
 
@@ -212,8 +178,8 @@ class DetectPMJ:
         """Run the classifier on self.slice2D_im."""
         sct.printv('\nRun PMJ detector', self.verbose, 'normal')
         os.environ["FSLOUTPUTTYPE"] = "NIFTI_PAIR"
-        cmd_pmj = 'isct_spine_detect "%s" "%s" "%s"' % \
-                    (self.pmj_model, self.slice2D_im.split('.nii')[0], self.dection_map_pmj)
+        cmd_pmj = ['isct_spine_detect', self.pmj_model, self.slice2D_im.split('.nii')[0], self.dection_map_pmj]
+        print(cmd_pmj)
         sct.run(cmd_pmj, verbose=0)
 
         img = nib.load(self.dection_map_pmj + '_svm.hdr')  # convert .img and .hdr files to .nii
@@ -246,7 +212,7 @@ class DetectPMJ:
             self.rl_coord = int(img.dim[2] / 2)  # Right_left coordinate
             del img
 
-        sct.run('sct_crop_image -i ' + self.fname_im + ' -start ' + str(self.rl_coord) + ' -end ' + str(self.rl_coord) + ' -dim 2 -o ' + self.slice2D_im)
+        sct.run(['sct_crop_image', '-i', self.fname_im, '-start', str(self.rl_coord), '-end', str(self.rl_coord), '-dim', '2', '-o', self.slice2D_im])
 
     def orient2pir(self):
         """Orient input data to PIR orientation."""
@@ -304,29 +270,19 @@ def main(args=None):
     else:
         path_results = '.'
 
-    if '-qc' in arguments:
-        qc = bool(int(arguments['-qc']))
-    else:
-        qc = False
+    path_qc = arguments.get("-qc", None)
 
     # Remove temp folder
-    if '-r' in arguments:
-        rm_tmp = bool(int(arguments['-r']))
-    else:
-        rm_tmp = True
+    rm_tmp = bool(int(arguments.get("-r", 1)))
 
     # Verbosity
-    if '-v' in arguments:
-        verbose = int(arguments['-v'])
-    else:
-        verbose = '1'
+    verbose = int(arguments.get("-v", 1))
 
     # Initialize DetectPMJ
     detector = DetectPMJ(fname_im=fname_in,
                             contrast=contrast,
                             fname_seg=fname_seg,
                             path_out=path_results,
-                            quality_control=qc,
                             verbose=verbose)
 
     # run the extraction
@@ -334,13 +290,60 @@ def main(args=None):
 
     # Remove tmp_dir
     if rm_tmp:
-        shutil.rmtree(tmp_dir)
+        sct.rmtree(tmp_dir)
 
     # View results
     if fname_out is not None:
+        if path_qc is not None:
+            generate_qc(fname_in, fname_out, args, os.path.abspath(path_qc))
+
         sct.display_viewer_syntax([fname_in, fname_out], colormaps=['gray', 'red'])
 
 
+def generate_qc(fname_in, fname_out, args, path_qc):
+    """
+    Generate a QC entry allowing to quickly review the PMJ position
+    """
+
+    import spinalcordtoolbox.reports.qc as qc
+    import spinalcordtoolbox.reports.slice as qcslice
+
+    def highlight_pmj(self, mask):
+        """
+        Hook to show a rectangle where PMJ is on the slice
+        """
+
+        import matplotlib.pyplot as plt
+        import matplotlib.patches as patches
+
+        y, x = np.where(mask == 50)
+
+        ax = plt.gca()
+        img = np.full_like(mask, np.nan)
+        ax.imshow(img, cmap='gray', alpha=0)
+
+        rect = patches.Rectangle((x - 10, y - 10),
+                                    20, 20,
+                                    linewidth=2,
+                                    edgecolor='lime',
+                                    facecolor='none')
+
+        ax.add_patch(rect)
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
+
+    qc.add_entry(
+     src=fname_in,
+     process="sct_detect_pmj",
+     args=args,
+     path_qc=path_qc,
+     plane="Sagittal",
+     qcslice=qcslice.Sagittal([Image(fname_in), Image(fname_out)]),
+     qcslice_operations=[highlight_pmj],
+     qcslice_layout=lambda x: x.single(),
+    )
+
+
 if __name__ == "__main__":
-    sct.start_stream_logger()
+    sct.init_sct()
     main()

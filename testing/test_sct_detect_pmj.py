@@ -22,7 +22,7 @@ def init(param_test):
     Initialize class: param_test
     """
     # initialization
-    default_args = ['-i template/template/PAM50_small_t2.nii.gz -c t2 -igt template/template/PAM50_small_t2_pmj_manual.nii.gz']
+    default_args = ['-i template/template/PAM50_small_t2.nii.gz -c t2 -igt template/template/PAM50_small_t2_pmj_manual.nii.gz -qc testing-qc']
     param_test.dist_threshold = 10.0
 
     # assign default params
