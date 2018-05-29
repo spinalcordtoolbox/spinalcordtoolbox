@@ -1,7 +1,7 @@
 # CHANGES TO RELEASE
 
 ## 3.2.0 (2018-05-29)
-This release brings several improvements, such as: a new example dataset (now includes T2*-w and fMRI data), new functions such as sct_compute_mtsat, an improved straightening that can account for inter-vertebral disc positions which be used alongside sct_register_to_template for more accurate registration, and few improvements on sct_pipeline and quality control (QC) report generation. [View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.1.1...3.2.0)
+This release includes: a new example dataset (now includes T2*-w and fMRI data) with an updated batch_processing.sh, a new function to compute MT-saturation effect (sct_compute_mtsat), an improved straightening that can account for inter-vertebral disc positions to be used alongside sct_register_to_template for more accurate registration, and few improvements on sct_pipeline and quality control (QC) report generation. [View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.1.1...3.2.0)
 
 **BUG**
 
