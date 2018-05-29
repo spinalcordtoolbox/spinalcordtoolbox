@@ -1,29 +1,44 @@
 # CHANGES TO RELEASE
 
-## 3.2.0 (2018-05-27)
-[View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.1.1...3.2.0)
+## 3.2.0 (2018-05-29)
+This release includes: a new example dataset (now includes T2*-w and fMRI data) with an updated batch_processing.sh, a new function to compute MT-saturation effect (sct_compute_mtsat), an improved straightening that can account for inter-vertebral disc positions to be used alongside sct_register_to_template for more accurate registration, and few improvements on sct_pipeline and quality control (QC) report generation. [View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.1.1...3.2.0)
 
 **BUG**
 
+ - Fixed sct_pipeline if more than two -p flags are used [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1760)
  - Fixed re-use of the same figure during QC generation [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1711)
+ - sct_deepseg_sc - Issue when input is .nii instead of .nii.gz [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1706)
  - Fslview no more called at the end of process if it it deprecated [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1648)
  - Fixing the TensorFlow installation for some old platforms. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1646)
  - Re-ordering of 4th dimension when apply transformation on 4D scans [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1638)
+ - Fix "-split" option issues on sct_image [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1627)
 
 **ENHANCEMENT**
 
+ - Updated batch_processing and sct_example_data with new features [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1779)
+ - Various fixes for sct_pipeline [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1771)
+ - sct_pipeline: store metadata in Pickle report [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1761)
+ - Adding volume-wise standardization normalization for the sct_deepseg_gm [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1757)
  - Make sct_get_centerline robust to intensities with range [0, 1] [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1746)
  - Improved doc and minor fixes with centerline fitting [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1736)
  - Make sct_process_segmentation compatible with the new ldisc convention [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1735)
  - Removed flirt dependency [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1729)
  - More pessimistic caching of outputs [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1719)
+ - Slice counting fixed [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1687)
+ - output of -display ordered per label value [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1686)
  - Improvements in straightening and registration to the template [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1669)
+ - The QC report is now a standalone html file. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1668)
+ - Adding a port option for the qc server [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1657)
+ - Make QC generation opt-in [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1653)
+ - Fixing cropping issue in sct_straighten_spinalcord [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1652)
  - Set MeanSquares the default metric for sct_fmri_moco [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1649)
  - Now possible to change data orientation on 4D data [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1637)
  - Use python  concurrent.futures instead of multiprocessing  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1587)
 
 **FEATURE**
 
+ - New function to create violin plots from sct_pipeline results [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1759)
+ - Enable input file with label at a specific disc [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1698)
  - Control the brightness of the image in the GUI. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1684)
  - Implements MTsat function [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1672)
  - Improvements in straightening and registration to the template [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1669)
