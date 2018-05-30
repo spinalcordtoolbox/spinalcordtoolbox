@@ -98,7 +98,7 @@ class Option:
 
     # Constructor
     def __init__(self, name, type_value, description, mandatory, example, default_value, help, parser, order=0,
-                 deprecated_by=None, deprecated_rm=False, deprecated=False, list_no_image=None):
+                 deprecated_by=None, deprecated_rm=False, deprecated=False, list_no_image=None, check_file_exist=True):
         self.name = name
         self.type_value = type_value
         self.description = description
@@ -112,6 +112,7 @@ class Option:
         self.deprecated_rm = deprecated_rm
         self.deprecated = deprecated
         self.list_no_image = list_no_image
+        self.check_file_exist = check_file_exist
 
         # TODO: check if the option is correctly set
 
@@ -206,7 +207,9 @@ class Option:
     def checkFile(self, param):
         # check if the file exist
         sct.printv("Check file existence...", 0)
-        if self.parser.check_file_exist:
+        # note: self.check_file_exist is set inside SCT function, and self.parser.check_file_exist is set in parent
+        # call parse()
+        if self.check_file_exist and self.parser.check_file_exist:
             if not os.path.isfile(param):
                 self.parser.usage.error("Option " + self.name + " file doesn't exist: " + param)
         return param
@@ -219,14 +222,14 @@ class Option:
         no_image = False
         param_tmp = str()
         if param.lower().endswith('.nii'):
-            if self.parser.check_file_exist:
+            if self.check_file_exist and self.parser.check_file_exist:
                 nii = os.path.isfile(param)
                 niigz = os.path.isfile(param + '.gz')
             else:
                 nii, niigz = True, False
             param_tmp = param[:-4]
         elif param.lower().endswith('.nii.gz'):
-            if self.parser.check_file_exist:
+            if self.check_file_exist and self.parser.check_file_exist:
                 niigz = os.path.isfile(param)
                 nii = os.path.isfile(param[:-3])
             else:
@@ -248,14 +251,14 @@ class Option:
 
     def checkFolder(self, param):
         # check if the folder exist. If not, create it.
-        if self.parser.check_file_exist:
+        if self.check_file_exist and self.parser.check_file_exist:
             if not os.path.isdir(param):
                 self.parser.usage.error("Option " + self.name + " folder doesn't exist: " + param)
         return param
 
     def checkFolderCreation(self, param):
         # check if the folder exist. If not, create it.
-        if self.parser.check_file_exist:
+        if self.check_file_exist and self.parser.check_file_exist:
             result_creation = sct.create_folder(param)
         else:
             result_creation = 0  # no need for checking
@@ -280,11 +283,38 @@ class Parser:
         self.usage = Usage(self, file_name)
         self.check_file_exist = True
 
-    def add_option(self, name, type_value=None, description=None, mandatory=False, example=None, help=None, default_value=None, deprecated_by=None, deprecated_rm=False, deprecated=False, list_no_image=None):
+    def add_option(self, name, type_value=None, description=None, mandatory=False, example=None, help=None,
+                   default_value=None, deprecated_by=None, deprecated_rm=False, deprecated=False, list_no_image=None,
+                   check_file_exist=True):
+        """
+        Add option to the parser
+        :param name:
+        :param type_value:
+        :param description:
+        :param mandatory:
+        :param example:
+        :param help:
+        :param default_value:
+        :param deprecated_by:
+        :param deprecated_rm:
+        :param deprecated:
+        :param list_no_image:
+        :param check_file_exist:
+        :return:
+        """
         order = len(self.options) + 1
-        self.options[name] = Option(name, type_value, description, mandatory, example, default_value, help, self, order, deprecated_by, deprecated_rm, deprecated, list_no_image)
+        self.options[name] = Option(name, type_value, description, mandatory, example, default_value, help, self,
+                                    order, deprecated_by, deprecated_rm, deprecated, list_no_image, check_file_exist)
 
     def parse(self, arguments, check_file_exist=True):
+        """
+        Parse a series of arguments.
+        :param arguments:
+        :param check_file_exist: If you don't want to check for file existence, set this value to False. Note that,
+        as opposed to the variable "check_file_exist" which can be set in each SCT function with the add_option()
+        method, this variable is more general and applies to ALL arguments. It has been introduced for sct_testing().
+        :return:
+        """
         # if you only want to parse a string and not checking for file existence, change flag check_file_exist
         self.check_file_exist = check_file_exist
 

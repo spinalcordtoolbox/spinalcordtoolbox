@@ -83,7 +83,7 @@ def compute_mtsat(nii_mt, nii_pd, nii_t1,
 
     # Apply B1 correction to result
     # Weiskopf, N., Suckling, J., Williams, G., Correia, M.M., Inkster, B., Tait, R., Ooi, C., Bullmore, E.T., Lutti, A., 2013. Quantitative multi-parameter mapping of R1, PD(*), MT, and R2(*) at 3T: a multi-center validation. Front. Neurosci. 7, 95.
-    if not nii_b1map is None:
+    if nii_b1map is not None:
         nii_mtsat.data = np.true_divide(nii_mtsat.data * (1 - b1correctionfactor), (1 - b1correctionfactor * nii_b1map.data))
 
     # set back old seterr settings
@@ -117,7 +117,9 @@ def compute_mtsat_from_file(fname_mt, fname_pd, fname_t1, tr_mt, tr_pd, tr_t1, f
     nii_mt = Image(fname_mt)
     nii_pd = Image(fname_pd)
     nii_t1 = Image(fname_t1)
-    if fname_b1map is not None:
+    if fname_b1map is None:
+        nii_b1map = None
+    else:
         nii_b1map = Image(fname_b1map)
 
     # compute MTsat
