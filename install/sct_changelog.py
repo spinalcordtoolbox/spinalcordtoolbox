@@ -13,11 +13,9 @@ How it works: Once the new tag is ready, you can simply run
 and copy and paste the content of changlog.[tagId].md to CHANGES.md
 
 """
-import logging
+import sys, io, logging, datetime, time
 
-import datetime
 import requests
-import sys
 
 
 API_URL = 'https://api.github.com/repos/neuropoly/spinalcordtoolbox/'
@@ -51,7 +49,7 @@ def search(milestone, label=''):
     if label:
         query += ' label:%s' % (label)
     payload = {'q': query}
-    response = requests.get(search_url, payload)
+    response = requests.get(search_url, params=payload)
     data = response.json()
     logging.info('Pull requests "%s" labeled %s received %d', milestone, label, len(data))
     return data
@@ -84,6 +82,6 @@ if __name__ == '__main__':
         logging.warning('Pull request not labelled: %s', diff)
 
     filename = 'changelog.%d.md' % milestone['number']
-    with open(filename, 'w') as changelog:
-        changelog.write('\n'.join(lines))
+    with io.open(filename, "wb") as changelog:
+        changelog.write('\n'.join(lines).encode("utf-8"))
     logging.info('Changelog saved in %s', filename)
