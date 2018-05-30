@@ -13,13 +13,36 @@ How it works: Once the new tag is ready, you can simply run
 and copy and paste the content of changlog.[tagId].md to CHANGES.md
 
 """
-import sys, io, logging, datetime, time
+import sys, io, logging, datetime, time, collections
 
 import requests
 
 
 API_URL = 'https://api.github.com/repos/neuropoly/spinalcordtoolbox/'
 
+class RateLimiter(object):
+	def __init__(self, get, count, period):
+		self._count = count
+		self._period = period
+		self._requests = collections.deque()
+		self._get = get
+
+	def get(self, *args, **kw):
+		if len(self._requests) < self._count:
+			self._requests.append(time.time())
+			return self._get(*args, **kw)
+
+		now = time.time()
+		r = self._requests.popleft()
+		if now < r + self._period:
+			dt = r + self._period - now
+			logging.info("Waiting %.3fs so as to not go over the API rate limit", dt)
+			time.sleep(dt)
+
+		self._requests.append(time.time())
+		return self._get(*args, **kw)
+
+requests.get = RateLimiter(requests.get, 3, 10).get
 
 def latest_milestone():
     """Get from Github the details of the latest milestone
