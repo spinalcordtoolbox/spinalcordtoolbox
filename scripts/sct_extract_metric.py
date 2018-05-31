@@ -390,25 +390,6 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
         fixed_label = [label_to_fix[0], label_to_fix_name, label_to_fix[1]]
         sct.printv('\n*' + fixed_label[0] + ', ' + fixed_label[1] + ': ' + fixed_label[2] + ' (value fixed by user)', 1, 'info')
 
-    # section = ''
-    # if labels_id_user[0] <= max(indiv_labels_ids):
-    #     section = '\nWhite matter atlas:'
-    # elif labels_id_user[0] > max(indiv_labels_ids):
-    #     section = '\nCombined labels:'
-    # sct.printv(section, 1, 'info')
-    # for i_label_user in labels_id_user:
-    #     # change section if not individual label anymore
-    #     if i_label_user > max(indiv_labels_ids) and section == '\nWhite matter atlas:':
-    #         section = '\nCombined labels:'
-    #         sct.printv(section, 1, 'info')
-    #     # display result for this label
-    #     if section == '\nWhite matter atlas:':
-    #         index = indiv_labels_ids.index(i_label_user)
-    #         sct.printv(str(indiv_labels_ids[index]) + ', ' + str(indiv_labels_names[index]) + ':    ' + str(indiv_labels_value[index]) + ' +/- ' + str(indiv_labels_std[index]), 1, 'info')
-    #     elif section == '\nCombined labels:':
-    #         index = combined_labels_ids.index(i_label_user)
-    #         sct.printv(str(combined_labels_ids[index]) + ', ' + str(combined_labels_names[index]) + ':    ' + str(combined_labels_value[index]) + ' +/- ' + str(combined_labels_std[index]), 1, 'info')
-
     # save results in the selected output file type
     save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_labels_names, combined_labels_names, slices_of_interest, indiv_labels_value, indiv_labels_std, indiv_labels_fract_vol, combined_labels_value, combined_labels_std, combined_labels_fract_vol, fname_output, fname_data, method, overwrite, fname_normalizing_label, actual_vert_levels, warning_vert_levels, fixed_label)
 
