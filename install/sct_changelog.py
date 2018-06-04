@@ -30,7 +30,7 @@ def latest_milestone():
     response = requests.get(milestone_url)
     data = response.json()
     logging.info('Open milestones found %d', len(data))
-    logging.info('Latest milestone %s %d', data[0]['title'], data[0]['number'])
+    logging.info('Latest Milestone: %s', data[0]['title'])
     return data[0]
 
 
@@ -53,7 +53,7 @@ def search(milestone, label=''):
     payload = {'q': query}
     response = requests.get(search_url, payload)
     data = response.json()
-    logging.info('Pull requests "%s" labeled %s received %d', milestone, label, len(data))
+    logging.info('Milestone: %s, Label: %s, Count: %d', milestone, label, data['total_count'])
     return data
 
 
@@ -68,7 +68,7 @@ if __name__ == '__main__':
     ]
 
     changelog_pr = set()
-    for label in ['bug', 'enhancement', 'feature', 'doc', 'testing']:
+    for label in ['bug', 'enhancement', 'feature', 'documentation', 'installation', 'testing']:
         pulls = search(milestone['title'], label)
         items = pulls.get('items')
         if items:
@@ -77,11 +77,11 @@ if __name__ == '__main__':
             items = [" - %s [View pull request](%s)" % (x['title'], x['html_url']) for x in pulls.get('items') ]
             lines.extend(items)
 
-    logging.info('Total pull request in changelog: %d', len(changelog_pr))
+    logging.info('Total number of pull requests with label: %d', len(changelog_pr))
     all_pr = set([x['html_url'] for x in search(milestone['title'])['items']])
     diff_pr = all_pr - changelog_pr
     for diff in diff_pr:
-        logging.warning('Pull request not labelled: %s', diff)
+        logging.warning('Pull request not labeled: %s', diff)
 
     filename = 'changelog.%d.md' % milestone['number']
     with open(filename, 'w') as changelog:
