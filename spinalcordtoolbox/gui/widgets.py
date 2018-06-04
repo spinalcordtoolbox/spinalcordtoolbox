@@ -11,7 +11,8 @@ from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
 from matplotlib.widgets import Cursor
-
+import skimage.exposure
+import numpy as np
 from PyQt4 import QtCore, QtGui
 
 from spinalcordtoolbox.gui.base import MissingLabelWarning
@@ -146,12 +147,9 @@ class AnatomicalCanvas(FigureCanvas):
         self._axes = self._fig.add_axes([0, 0, 1, 1], frameon=True)
         self._axes.axis('off')
         self.view = self._axes.imshow(
-            data,
+            self.adjust_image(data),
             cmap=self._params.cmap,
-            interpolation=self._params.interp,
-            vmin=self._params.vmin,
-            vmax=self._params.vmax,
-            alpha=self._params.alpha)
+            interpolation=self._params.interp)
         self._axes.set_aspect(aspect)
 
         if self._crosshair:
@@ -190,6 +188,21 @@ class AnatomicalCanvas(FigureCanvas):
         if self._annotate_points:
             for x, y, label in zip(xdata, ydata, labels):
                 self.annotate(x, y, label)
+
+    def adjust_image(self, data):
+        if self._parent._controller.is_contrast_adjustment:
+            # rescale to range of UINT16 because equalize_adapthist is converting to this type anyway.
+            # for more info see: https://github.com/neuropoly/spinalcordtoolbox/pull/1661#issuecomment-377101783
+            data_scaled = skimage.exposure.rescale_intensity(np.uint16(data), out_range='uint16')
+            height, width = data_scaled.shape
+            pad_height = (height + 7) // 8 * 8
+            pad_width = (width + 7) // 8 * 8
+            if pad_width != width or pad_height != height:
+                buff_data = np.zeros((pad_height, pad_width), dtype='uint16')
+                buff_data[:height, :width] = data_scaled
+                data_scaled = buff_data
+            return skimage.exposure.equalize_adapthist(data_scaled, kernel_size=(8,8))
+        return data
 
     def on_zoom(self, event):
         if event.xdata is None or event.ydata is None:
@@ -293,7 +306,7 @@ class SagittalCanvas(AnatomicalCanvas):
 
     def refresh(self):
         self._x, self._y, self._z = [int(i) for i in self._parent._controller.position]
-        data = self._image.data[:, :, self._z]
+        data = self.adjust_image(self._image.data[:, :, self._z])
         self.view.set_array(data)
         super(SagittalCanvas, self).refresh()
 
@@ -329,7 +342,7 @@ class CoronalCanvas(AnatomicalCanvas):
 
     def refresh(self):
         self._x, self._y, self._z = [int(i) for i in self._parent._controller.position]
-        data = self._image.data[:, self._y, :]
+        data = self.adjust_image(self._image.data[:, self._y, :])
         self.view.set_array(data)
         super(CoronalCanvas, self).refresh()
 
@@ -360,7 +373,7 @@ class AxialCanvas(AnatomicalCanvas):
 
     def refresh(self):
         self._x, self._y, self._z = [int(i) for i in self._parent._controller.position]
-        data = self._image.data[self._x, :, :]
+        data = self.adjust_image(self._image.data[self._x, :, :])
         self.view.set_array(data)
         super(AxialCanvas, self).refresh()
 
