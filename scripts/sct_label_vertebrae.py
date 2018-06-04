@@ -360,7 +360,7 @@ def main(args=None):
         labeled_seg_file = os.path.join(path_output, file_seg + '_labeled' + ext_seg)
         generate_qc(fname_in, labeled_seg_file, args, path_qc)
 
-    sct.display_viewer_syntax([fname_in, fname_seg_labeled], colormaps=['', 'random'], opacities=['1', '0.5'])
+    sct.display_viewer_syntax([fname_in, fname_seg_labeled], colormaps=['', 'subcortical'], opacities=['1', '0.5'])
 
 
 def generate_qc(fn_in, fn_labeled, args, path_qc):

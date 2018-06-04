@@ -499,7 +499,7 @@ def display_viewer_syntax(files, colormaps=[], minmax=[], opacities=[], mode='',
     """
     list_viewer = ['fsleyes', 'fslview_deprecated', 'fslview']  # list of known viewers. Can add more.
     dict_fslview = {'gray': 'Greyscale', 'red-yellow': 'Red-Yellow', 'blue-lightblue': 'Blue-Lightblue', 'red': 'Red', 'random': 'Random-Rainbow', 'hsv': 'hsv'}
-    dict_fsleyes = {'gray': 'greyscale', 'red-yellow': 'red-yellow', 'blue-lightblue': 'blue-lightblue', 'red': 'red', 'random': 'random', 'hsv': 'hsv', 'subcortical': }
+    dict_fsleyes = {'gray': 'greyscale', 'red-yellow': 'red-yellow', 'blue-lightblue': 'blue-lightblue', 'red': 'red', 'random': 'random', 'hsv': 'hsv', 'subcortical': 'subcortical'}
     selected_viewer = None
 
     # find viewer
