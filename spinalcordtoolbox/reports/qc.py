@@ -1,7 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import sys, os, json, logging, warnings, datetime, io
+import sys
+import os
+import json
+import logging
+import warnings
+import datetime
+import io
 from string import Template
 
 warnings.filterwarnings("ignore")
@@ -96,12 +102,12 @@ class QcImage(object):
         Show template statistical atlas
         """
         values = mask
-        values[values<0.5] = 0
+        values[values < 0.5] = 0
         color_white = color.colorConverter.to_rgba('white', alpha=0.0)
         color_blue = color.colorConverter.to_rgba('blue', alpha=0.7)
         color_cyan = color.colorConverter.to_rgba('cyan', alpha=0.8)
         cmap = color.LinearSegmentedColormap.from_list('cmap_atlas',
-         [color_white, color_blue, color_cyan], N=256)
+                                                       [color_white, color_blue, color_cyan], N=256)
 
         fig = plt.imshow(values,
                          cmap=cmap,
@@ -180,18 +186,18 @@ class QcImage(object):
                     """
                     min_, max_ = a.min(), a.max()
                     b = (np.float32(a) - min_) / (max_ - min_)
-                    b[b>=1] = 1 # 1+eps numerical error may happen (#1691)
+                    b[b >= 1] = 1  # 1+eps numerical error may happen (#1691)
 
                     h, w = b.shape
-                    h1 = (h + (8-1))//8*8
-                    w1 = (w + (8-1))//8*8
+                    h1 = (h + (8 - 1)) // 8 * 8
+                    w1 = (w + (8 - 1)) // 8 * 8
                     if h != h1 or w != w1:
                         b1 = np.zeros((h1, w1), dtype=b.dtype)
-                        b1[:h,:w] = b
+                        b1[:h, :w] = b
                         b = b1
-                    c = skimage.exposure.equalize_adapthist(b, kernel_size=(8,8))
+                    c = skimage.exposure.equalize_adapthist(b, kernel_size=(8, 8))
                     if h != h1 or w != w1:
-                        c = c[:h,:w]
+                        c = c[:h, :w]
                     return np.array(c * (max_ - min_) + min_, dtype=a.dtype)
                 img = equalized(img)
 
@@ -336,7 +342,7 @@ class QcReport(object):
 
         :param: dimension 2-tuple, the dimension of the image frame (w, h)
         """
- 
+
         output = {
             'python': sys.executable,
             'cwd': self.qc_params.cwd,
@@ -380,10 +386,10 @@ class QcReport(object):
 
 
 def add_entry(src, process, args, path_qc, plane, background=None, foreground=None,
- qcslice=None,
- qcslice_operations=[],
- qcslice_layout=None,
-):
+              qcslice=None,
+              qcslice_operations=[],
+              qcslice_layout=None,
+              ):
     """
     """
 
@@ -413,4 +419,13 @@ def add_entry(src, process, args, path_qc, plane, background=None, foreground=No
 
     sct.printv('Sucessfully generated the QC results in %s' % qc_param.qc_results)
     sct.printv('Use the following command to see the results in a browser:')
-    sct.printv('open file "{}/index.html"'.format(path_qc), type='info')
+    try:
+        from sys import platform as _platform
+        if _platform == "linux" or _platform == "linux2":
+            sct.printv('xdg-open "{}/index.html"'.format(path_qc), type='info')
+        elif _platform == "darwin":
+            sct.printv('open "{}/index.html"'.format(path_qc), type='info')
+        else:
+            sct.printv('open file "{}/index.html"'.format(path_qc), type='info')
+    except ImportError:
+        print("WARNING! Platform undetectable.")
