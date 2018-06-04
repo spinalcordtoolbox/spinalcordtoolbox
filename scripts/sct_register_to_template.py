@@ -368,6 +368,11 @@ def main(args=None):
             nx, ny, nz, nt, px, py, pz, pt = image_labels.dim
             offset_crop = 10.0 * pz  # cropping the image 10 mm above and below the highest and lowest label
             cropping_slices = [coordinates_labels[0].z - offset_crop, coordinates_labels[-1].z + offset_crop]
+            # make sure that the cropping slices do not extend outside of the slice range (issue #1811)
+            if cropping_slices[0] < 0:
+                cropping_slices[0] = 0
+            if cropping_slices[1] > nz:
+                cropping_slices[1] = nz
             status_crop, output_crop = sct.run(['sct_crop_image', '-i', ftmp_seg, '-o', add_suffix(ftmp_seg, '_crop'), '-dim', '2', '-start', str(cropping_slices[0]), '-end', str(cropping_slices[1])], verbose)
         else:
             # if we do not align the vertebral levels, we crop the segmentation from top to bottom
