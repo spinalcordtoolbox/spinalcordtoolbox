@@ -25,11 +25,17 @@ class Param:
         self.create_log_file = 0
         self.complete_test = 0
 
+
 import argparse
 
-import sys, io, os, platform, importlib
+import sys
+import io
+import os
+import platform
+import importlib
 
 import sct_utils as sct
+
 
 class bcolors:
     HEADER = '\033[95m'
@@ -158,7 +164,6 @@ def main():
 
     # check RAM
     sct.checkRAM(os_running, 0)
-
 
     # check if Python path is within SCT path
     print_line('Check Python executable')
@@ -317,17 +322,29 @@ def main():
 
     # check if figure can be opened (in case running SCT via ssh connection)
     print_line('Check if figure can be opened')
-    try:
-        import warnings
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            import matplotlib.pyplot as plt
+    import warnings
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        import matplotlib.pyplot as plt
+        try:
             plt.figure()
             plt.close()
             print_ok()
-    except:
-        print_fail()
-        print(sys.exc_info())
+        except Exception:
+            if "MPLBACKEND" not in os.environ:
+                print("\nSecond attempt to plot ...")
+                print("\nOverwriting environment variable $MPLBACKEND=agg")
+                try:
+                    os.environ["MPLBACKEND"] = "agg"
+                    plt.figure()
+                    plt.close()
+                    print_ok()
+                except Exception:
+                    print_fail()
+                    print(sys.exc_info())
+            else:
+                print("Please try manually setting environment variable $MPLBACKEND=agg")
+                print_fail()
 
     print('')
     sys.exit(e + install_software)
@@ -404,19 +421,19 @@ def get_parser():
     # Initialize the parser
 
     parser = argparse.ArgumentParser(
-     description='Check the installation and environment variables of the'
-                                 ' toolbox and its dependencies.',
+        description='Check the installation and environment variables of the'
+        ' toolbox and its dependencies.',
     )
 
     parser.add_argument("--complete", "-c",
-     help="Complete test.",
-     action="store_true",
-    )
+                        help="Complete test.",
+                        action="store_true",
+                        )
 
     parser.add_argument("--generate-log", "-log", "-l",
-     help="Generate log file.",
-     action="store_true",
-    )
+                        help="Generate log file.",
+                        action="store_true",
+                        )
 
     return parser
 
