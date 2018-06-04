@@ -6,6 +6,7 @@
 [![Project Stats](https://www.openhub.net/p/spinalcordtoolbox/widgets/project_thin_badge.gif)](https://www.openhub.net/p/spinalcordtoolbox)
 [![User mailing list](http://img.shields.io/badge/mailing%20list-users-green.svg?style=flat)](https://sourceforge.net/p/spinalcordtoolbox/discussion/help/)
 [![Developer mailing list](http://img.shields.io/badge/mailing%20list-development-green.svg?style=flat)](https://groups.google.com/forum/#!forum/sct_developers)
+[![Coverage Status](https://coveralls.io/repos/github/neuropoly/spinalcordtoolbox/badge.svg?branch=master)](https://coveralls.io/github/neuropoly/spinalcordtoolbox?branch=master)
 
 SCT is a comprehensive, free and open-source software dedicated to the processing and analysis of spinal cord MRI data.
 
@@ -119,13 +120,13 @@ We organize **free** SCT courses, each year after the ISMRM conference. If you'd
 #### Manual vertebral labeling
 
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=Q3DhKOCEl5s
-" target="_blank"><img src="http://img.youtube.com/vi/Q3DhKOCEl5s/0.jpg" 
+" target="_blank"><img src="http://img.youtube.com/vi/Q3DhKOCEl5s/0.jpg"
 alt="Manual vertebral labeling" width="240" height="180" border="10" /></a>
 
 #### Fsleyes integration
 
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=XC0vu0brEB0
-" target="_blank"><img src="http://img.youtube.com/vi/XC0vu0brEB0/0.jpg" 
+" target="_blank"><img src="http://img.youtube.com/vi/XC0vu0brEB0/0.jpg"
 alt="Fsleyes integration" width="240" height="180" border="10" /></a>
 
 
@@ -220,7 +221,7 @@ When citing SCT please use this BibTeX entry:
 
 ## Contributors
 
-This project exists thanks to [all the people who contribute](https://github.com/neuropoly/spinalcordtoolbox/graphs/contributors). 
+This project exists thanks to [all the people who contribute](https://github.com/neuropoly/spinalcordtoolbox/graphs/contributors).
 If you would like to contribute as well, please follow the [contribution guidelines](CONTRIBUTING.md).
 
 ## License
