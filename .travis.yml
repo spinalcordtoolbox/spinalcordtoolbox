@@ -69,3 +69,6 @@ script:
   - ./unit_testing.sh
   - bash -c "pip install sphinx sphinxcontrib.programoutput; cd $HOME/build/neuropoly/spinalcordtoolbox/documentation/sphinx; make html; echo"
   - echo "This is the end, thanks for reading up to here."
+
+after_success:
+  - CI=true TRAVIS=true coveralls
