@@ -918,7 +918,9 @@ def label_discs(fname_seg_labeled, verbose=1):
     nx, ny, nz = im_seg_labeled.dim[0], im_seg_labeled.dim[1], im_seg_labeled.dim[2]
     data_disc = np.zeros([nx, ny, nz])
     vertebral_level_previous = np.max(im_seg_labeled.data)  # initialize with the max label value
-    # loop across z in the superior direction (i.e. starts with the bottom slice)
+    # loop across z in the superior direction (i.e. starts with the bottom slice), and each time the i/i+1 interface
+    # between two levels is found, create a label at the center of the cord with the value corresponding to the
+    # vertebral level below the point. E.g., at interface C3/C4, the value would be 4.
     for iz in range(nz):
         # get 2d slice
         slice = im_seg_labeled.data[:, :, iz]
@@ -926,6 +928,9 @@ def label_discs(fname_seg_labeled, verbose=1):
         if np.any(slice):
             slice_one = np.copy(slice)
             # set all non-zero values to 1 (to compute center of mass)
+            # Note: the reason we do this is because if one slice includes part of vertebral level i and i+1, the
+            # center of mass will be shifted towards the i+1 level.We don't want that here (i.e. the goal is to be at
+            # the center of the cord)
             slice_one[slice.nonzero()] = 1
             # compute center of mass
             cx, cy = [int(x) for x in np.round(center_of_mass(slice_one)).tolist()]
