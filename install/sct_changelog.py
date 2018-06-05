@@ -13,15 +13,36 @@ How it works: Once the new tag is ready, you can simply run
 and copy and paste the content of changlog.[tagId].md to CHANGES.md
 
 """
-import logging
+import sys, io, logging, datetime, time, collections
 
-import datetime
 import requests
-import sys
 
 
 API_URL = 'https://api.github.com/repos/neuropoly/spinalcordtoolbox/'
 
+class RateLimiter(object):
+	def __init__(self, get, count, period):
+		self._count = count
+		self._period = period
+		self._requests = collections.deque()
+		self._get = get
+
+	def get(self, *args, **kw):
+		if len(self._requests) < self._count:
+			self._requests.append(time.time())
+			return self._get(*args, **kw)
+
+		now = time.time()
+		r = self._requests.popleft()
+		if now < r + self._period:
+			dt = r + self._period - now
+			logging.info("Waiting %.3fs so as to not go over the API rate limit", dt)
+			time.sleep(dt)
+
+		self._requests.append(time.time())
+		return self._get(*args, **kw)
+
+requests.get = RateLimiter(requests.get, 3, 10).get
 
 def latest_milestone():
     """Get from Github the details of the latest milestone
@@ -51,7 +72,7 @@ def search(milestone, label=''):
     if label:
         query += ' label:%s' % (label)
     payload = {'q': query}
-    response = requests.get(search_url, payload)
+    response = requests.get(search_url, params=payload)
     data = response.json()
     logging.info('Pull requests "%s" labeled %s received %d', milestone, label, len(data))
     return data
@@ -84,6 +105,6 @@ if __name__ == '__main__':
         logging.warning('Pull request not labelled: %s', diff)
 
     filename = 'changelog.%d.md' % milestone['number']
-    with open(filename, 'w') as changelog:
-        changelog.write('\n'.join(lines))
+    with io.open(filename, "wb") as changelog:
+        changelog.write('\n'.join(lines).encode("utf-8"))
     logging.info('Changelog saved in %s', filename)
