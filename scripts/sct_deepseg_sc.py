@@ -20,7 +20,7 @@ from scipy.ndimage.morphology import binary_fill_holes
 from skimage.exposure import rescale_intensity
 from scipy.ndimage import distance_transform_edt
 from scipy.interpolate.interpolate import interp1d
-import pandas as pd
+import pickle
 
 from spinalcordtoolbox.centerline import optic
 import sct_utils as sct
@@ -99,21 +99,17 @@ def scale_intensity(data):
     return rescale_intensity(data, in_range=(p2, p98), out_range=(0, 255))
 
 
-def apply_intensity_normalization_model(img, landmarks_pd, max_interp='exp'):
+def apply_intensity_normalization_model(img, filename_landmarks):
     """Description: apply the learned intensity landmarks to the input image."""
     percent_decile_lst = [1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 99]
     vals = list(img)
     landmarks_lst_cur = np.percentile(vals, q=percent_decile_lst)
 
-    # landmarks_pd = pd.DataFrame.from_dict({'1_1': 0.000000, '1_10': 114.354926, '1_20': 200.487868, '1_30': 297.331272, '1_40': 432.747871, '1_50': 627.286683, '1_60': 867.530153, '1_70': 1124.958156, '1_80': 1420.004442, '1_90': 1838.005538, '1_99': 2611.000000})
-    landmarks_lst = [0.000000, 114.354926, 200.487868, 297.331272, 432.747871, 627.286683, 867.530153, 1124.958156, 1420.004442, 1838.005538, 2611.000000]
-
-    # treat single intensity accumulation error
-#     if not len(np.unique(landmarks_lst_cur)) == len(landmarks_lst_cur):
-#         raise SingleIntensityAccumulationError('The image shows an unusual single-intensity accumulation that leads to a situation where two percentile values are equal. This situation is usually caused, when the background has not been removed from the image. The only other possibility would be to re-train the model with a reduced number of landmark percentiles landmarkp or a changed distribution.')
+    dct_landmarks = pickle.load(open(filename_landmarks, "rb"))
+    landmarks_lst = sorted(dct_landmarks.values(), key=float)
 
     # create linear mapping models for the percentile segments to the learned standard intensity space  
-    linear_mapping = interp1d(landmarks_lst_cur, landmarks_lst, bounds_error = False)
+    linear_mapping = interp1d(landmarks_lst_cur, landmarks_lst, bounds_error=False)
 
     # transform the input image intensity values
     output = linear_mapping(img)
@@ -123,24 +119,11 @@ def apply_intensity_normalization_model(img, landmarks_pd, max_interp='exp'):
     below_mapping = exp_model(landmarks_lst_cur[:2], landmarks_lst[:2], landmarks_lst[0])
     output[img < landmarks_lst_cur[0]] = below_mapping(img[img < landmarks_lst_cur[0]])
 
-    if max_interp == 'exp':
-        above_mapping = exp_model(landmarks_lst_cur[-3:-1], landmarks_lst[-3:-1], landmarks_lst[-1])
-    elif max_interp == 'linear':
-        above_mapping = linear_model(landmarks_lst_cur[-2:], landmarks_lst[-2:])
-    elif max_interp == 'flat':
-        above_mapping = lambda x: landmarks_lst[-1]
-    else:
-        print 'No model was chosen, will use flat'
-        above_mapping = lambda x: landmarks_lst[-1]
+    above_mapping = exp_model(landmarks_lst_cur[-3:-1], landmarks_lst[-3:-1], landmarks_lst[-1])
+
     output[img > landmarks_lst_cur[-1]] = above_mapping(img[img > landmarks_lst_cur[-1]])
 
     return output.astype(np.float32)
-
-
-def linear_model((x1, x2), (y1, y2)):
-    m = (y2 - y1) / (x2 - x1)
-    b = y1 - (m * x1)
-    return lambda x: m * x + b
 
 
 def exp_model((x1, x2), (y1, y2), s2):
@@ -159,24 +142,16 @@ def exp_model((x1, x2), (y1, y2), s2):
     return lambda x: alpha + beta * np.exp(gamma * x)
 
 
-class SingleIntensityAccumulationError(Exception):
-    """
-    Thrown when an image shows an unusual single-intensity peaks which would obstruct
-    both, training and transformation.
-    """
-
-
 def apply_intensity_normalization(img_path, fname_out, params=None):
     img = Image(img_path)
     img_normalized = img.copy()
     data2norm = img.data.astype(np.float32)
-    print type(data2norm[0,0,0])
+
     if params is None:
-        p2, p98 = np.percentile(data2norm, (2, 98))
         img_normalized.data = scale_intensity(data2norm)
     else:
-        img_normalized.data = apply_intensity_normalization_model(data2norm, params, max_interp='exp')
-        print np.max(img_normalized.data)
+        img_normalized.data = apply_intensity_normalization_model(data2norm, params)
+
     img_normalized.changeType('float32')
     img_normalized.setFileName(fname_out)
     img_normalized.save()
@@ -268,6 +243,7 @@ def _list2range(lst):
 
 def _fill_z_holes(zz_lst, data, z_spaccing):
     data_interpol = np.copy(data)
+
     for z_hole_start, z_hole_end in list(_list2range(zz_lst)):
         z_ref_start, z_ref_end = z_hole_start - 1, z_hole_end
         slice_ref_start, slice_ref_end = data[:, :, z_ref_start], data[:, :, z_ref_end]
@@ -297,6 +273,20 @@ def fill_z_holes(fname_in):
     im_in = Image(fname_in)
     data_in = im_in.data.astype(np.int)
 
+    labeled_obj, num_obj = label(data_in)
+    if num_obj > 1:
+        bigger_obj = (labeled_obj == (np.bincount(labeled_obj.flat)[1:].argmax() + 1))
+        z_max = np.max(np.where(bigger_obj)[2])
+
+        data2clean = np.copy(data_in)
+        data2clean[:, :, :z_max] = 0
+        labeled_obj2clean, num_obj2clean = label(data2clean)
+        if num_obj2clean:
+            for obj_id in range(1, num_obj2clean + 1):
+                if np.sum(labeled_obj2clean == obj_id) < 0.1 * np.sum(bigger_obj):
+                    sct.printv('Removing small objects above slice#' + str(z_max))
+                    data_in[np.where(labeled_obj2clean == obj_id)] = 0
+
     zz_zeros = [zz for zz in range(im_in.dim[2]) if 1 not in list(np.unique(data_in[:, :, zz]))]
     zz_holes = _remove_extrem_holes(zz_zeros, im_in.dim[2] - 1, 0)
 
@@ -308,7 +298,7 @@ def fill_z_holes(fname_in):
     del im_in
 
 
-def scan_slice(z_slice, model, mean_train, std_train, coord_lst, patch_shape, y_crop, z_out_dim):
+def scan_slice(z_slice, model, mean_train, std_train, coord_lst, patch_shape, z_out_dim):
     z_slice_out = np.zeros(z_out_dim)
     sum_lst = []
     # loop across all the non-overlapping blocks of a cross-sectional slice
@@ -322,9 +312,13 @@ def scan_slice(z_slice, model, mean_train, std_train, coord_lst, patch_shape, y_
             x_end = patch_shape[0] - (coord[2] - z_out_dim[0])
         else:
             x_end = patch_shape[0]
+        if coord[3] > z_out_dim[1]:
+            y_end = patch_shape[1] - (coord[3] - z_out_dim[1])
+        else:
+            y_end = patch_shape[1]
 
-        z_slice_out[coord[0]:coord[2], coord[1]:coord[3]] = block_pred[0, :x_end, :, 0]
-        sum_lst.append(np.sum(block_pred[0, :x_end, :, 0]))
+        z_slice_out[coord[0]:coord[2], coord[1]:coord[3]] = block_pred[0, :x_end, :y_end, 0]
+        sum_lst.append(np.sum(block_pred[0, :x_end, :y_end, 0]))
 
     coord_lst.insert(0, coord_lst.pop(sum_lst.index(max(sum_lst))))
 
@@ -352,19 +346,21 @@ def heatmap(filename_in, filename_out, model, patch_shape, mean_train, std_train
     x_shape, y_shape = data_im.shape[:2]
     x_shape_block, y_shape_block = np.ceil(x_shape * 1.0 / patch_shape[0]).astype(np.int), np.int(y_shape * 1.0 / patch_shape[1])
     x_pad = int(x_shape_block * patch_shape[0] - x_shape)
-    y_crop = y_shape - y_shape_block * patch_shape[1]
-    # slightly crop the input data in the P-A direction so that data_im.shape[1] % patch_shape[1] == 0
-    data_im = data_im[:, :y_shape - y_crop, :]
-    # pad the input data in the R-L direction
-    data_im = np.pad(data_im, ((0, x_pad), (0, 0), (0, 0)), 'constant')
-
-    # scale intensities between 0 and 255
-    data_im = scale_intensity(data_im)
-
-    # coordinates of the blocks to scan during the detection, in the cross-sectional plane
-    coord_lst = [[x_dim * patch_shape[0], y_dim * patch_shape[1],
+    if y_shape > patch_shape[1]:
+        y_crop = y_shape - y_shape_block * patch_shape[1]
+        # slightly crop the input data in the P-A direction so that data_im.shape[1] % patch_shape[1] == 0
+        data_im = data_im[:, :y_shape - y_crop, :]
+        # coordinates of the blocks to scan during the detection, in the cross-sectional plane
+        coord_lst = [[x_dim * patch_shape[0], y_dim * patch_shape[1],
                    (x_dim + 1) * patch_shape[0], (y_dim + 1) * patch_shape[1]]
                     for y_dim in range(y_shape_block) for x_dim in range(x_shape_block)]
+    else:
+        data_im = np.pad(data_im, ((0, 0), (0, patch_shape[1] - y_shape), (0, 0)), 'constant')
+        coord_lst = [[x_dim * patch_shape[0], 0, (x_dim + 1) * patch_shape[0], patch_shape[1]] for x_dim in range(x_shape_block)]
+    # pad the input data in the R-L direction
+    data_im = np.pad(data_im, ((0, x_pad), (0, 0), (0, 0)), 'constant')
+    # scale intensities between 0 and 255
+    data_im = scale_intensity(data_im)
 
     x_CoM, y_CoM = None, None
     z_sc_notDetected_cmpt = 0
@@ -386,8 +382,14 @@ def heatmap(filename_in, filename_out, model, patch_shape, mean_train, std_train
                 x_0 = data.shape[0] - patch_shape[0] if data.shape[0] > patch_shape[0] else 0
             else:
                 x_end = patch_shape[0]
+            if y_1 > data.shape[1]:
+                y_end = data.shape[1]
+                y_1 = data.shape[1]
+                y_0 = data.shape[1] - patch_shape[1] if data.shape[1] > patch_shape[1] else 0
+            else:
+                y_end = patch_shape[1]
 
-            data[x_0:x_1, y_0:y_1, zz] = block_pred[0, :x_end, :, 0]
+            data[x_0:x_1, y_0:y_1, zz] = block_pred[0, :x_end, :y_end, 0]
 
             # computation of the new center of mass
             if np.max(data[:, :, zz]) > 0.5:
@@ -401,7 +403,7 @@ def heatmap(filename_in, filename_out, model, patch_shape, mean_train, std_train
         if x_CoM is None:
             z_slice, x_CoM, y_CoM, coord_lst = scan_slice(data_im[:, :, zz], model,
                                                 mean_train, std_train,
-                                                coord_lst, patch_shape, y_crop, data.shape[:2])
+                                                coord_lst, patch_shape, data.shape[:2])
             data[:, :, zz] = z_slice
 
             z_sc_notDetected_cmpt += 1
@@ -442,6 +444,7 @@ def heatmap2optic(fname_heatmap, lambda_value, fname_out, z_max, algo='dpdt'):
 
     # crop the centerline if z_max < data.shape[2] and -brain == 1
     if z_max is not None:
+        sct.printv('Cropping brain section.')
         ctr_nii = Image(fname_out)
         ctr_nii.data[:, :, z_max:] = 0
         ctr_nii.save()
@@ -456,14 +459,11 @@ def normalize_data(data, mean, std):
 def segment_2d(model_fname, contrast_type, input_size, fname_in, fname_out):
 
     dct_params_seg = {
-                    # 't2': {'mean': 92.3024483132, 'std': 57.9122089031,
-                    #         'features': 32, 'depth': 2, 'batchnorm': True,
-                    #         'dropout': 0.0},
-                    # 't2s': {'mean': 128.644173941, 'std': 74.0248206218,
-                    #         'features': 8, 'depth': 3, 'batchnorm': True,
-                    #         'dropout': 0.0},
                     't2s': {'mean': 815.364, 'std': 606.198,
                             'features': 8, 'depth': 3, 'batchnorm': True,
+                            'dropout': 0.0},
+                    't2': {'mean': 815.364, 'std': 606.198,
+                            'features': 32, 'depth': 2, 'batchnorm': True,
                             'dropout': 0.0},
                     't1': {'mean': 84.5119262632, 'std': 39.607477199,
                             'features': 8, 'depth': 3, 'batchnorm': True,
@@ -529,7 +529,6 @@ def basic_post_processing(z_slice):
     # keep the largest connected obejct per z_slice
     labeled_obj, num_obj = label(z_slice)
     if num_obj > 1:
-        print 'hey'
         z_slice = (labeled_obj == (np.bincount(labeled_obj.flat)[1:].argmax() + 1))
 
     return binary_fill_holes(z_slice, structure=np.ones((3, 3))).astype(np.int)
@@ -561,18 +560,20 @@ def segment_3d(model_fname, contrast_type, fname_in, fname_out):
         else:
             z_patch_extracted = z_patch_size
             patch_im = im.data[:, :, zz:z_patch_size + zz]
-        patch_norm = normalize_data(patch_im, dct_patch_sc_3d[contrast_type]['mean'],
-                                                dct_patch_sc_3d[contrast_type]['std'])
-        patch_pred_proba = seg_model.predict(np.expand_dims(np.expand_dims(patch_norm, 0), 0))
-        pred_seg_th = (patch_pred_proba > 0.5).astype(int)[0, 0, :, :, :]
 
-        for zz_pp in range(z_patch_size):
-            pred_seg_th[:, :, zz_pp] = basic_post_processing(pred_seg_th[:, :, zz_pp])
+        if np.sum(patch_im):
+            patch_norm = normalize_data(patch_im, dct_patch_sc_3d[contrast_type]['mean'],
+                                                    dct_patch_sc_3d[contrast_type]['std'])
+            patch_pred_proba = seg_model.predict(np.expand_dims(np.expand_dims(patch_norm, 0), 0))
+            pred_seg_th = (patch_pred_proba > 0.5).astype(int)[0, 0, :, :, :]
 
-        if zz == z_step_keep[-1]:
-            out.data[:, :, zz:] = pred_seg_th[:, :, :z_patch_extracted]
-        else:
-            out.data[:, :, zz:z_patch_size + zz] = pred_seg_th
+            for zz_pp in range(z_patch_size):
+                pred_seg_th[:, :, zz_pp] = basic_post_processing(pred_seg_th[:, :, zz_pp])
+
+            if zz == z_step_keep[-1]:
+                out.data[:, :, zz:] = pred_seg_th[:, :, :z_patch_extracted]
+            else:
+                out.data[:, :, zz:z_patch_size + zz] = pred_seg_th
 
     out.setFileName(fname_out)
     out.save()
@@ -611,6 +612,10 @@ def main():
 
     if "-kernel" in arguments:
         kernel_size = arguments["-kernel"]
+
+    if kernel_size == '3d' and contrast_type == 'dwi':
+        kernel_size = '2d'
+        sct.printv('3D kernel model for dwi contrast is not available. 2D kernel model is used instead.')
 
     if "-ofolder" in arguments:
         output_folder = arguments["-ofolder"]
@@ -756,25 +761,9 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, ctr_
                       fname_out=centerline_filename,
                       z_max=z_max if brain_bool else None)
 
-    # # normalize the intensity of the images
-    # sct.log.info("Normalizing the intensity...")
-    # fname_norm = sct.add_suffix(fname_res, '_norm')
-    # apply_intensity_normalization(img_path=fname_res, fname_out=fname_norm)
-
-    # if kernel_size == '2d' or (kernel_size == '3d' and contrast_type != 't2s'):
-    #     crop_size = 64
-    # else:  # i.e. kernel_size == '3d' and contrast_type != 't2s'
-    #     crop_size = 96
-    # # crop image around the spinal cord centerline
-    # sct.log.info("Cropping the image around the spinal cord...")
-    # fname_crop = sct.add_suffix(fname_norm, '_crop')
-    # X_CROP_LST, Y_CROP_LST = crop_image_around_centerline(im_in=fname_norm, ctr_in=centerline_filename, im_out=fname_crop,
-    #                                                       crop_size=crop_size,
-    #                                                       x_dim_half=crop_size // 2, y_dim_half=crop_size // 2)
-
     if kernel_size == '2d' or (kernel_size == '3d' and contrast_type != 't2s'):
         crop_size = 64
-    else:  # i.e. kernel_size == '3d' and contrast_type != 't2s'
+    else:  # i.e. kernel_size == '3d' and contrast_type == 't2s'
         crop_size = 96
     # crop image around the spinal cord centerline
     sct.log.info("Cropping the image around the spinal cord...")
@@ -786,14 +775,15 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, ctr_
     # normalize the intensity of the images
     sct.log.info("Normalizing the intensity...")
     fname_norm = sct.add_suffix(fname_crop, '_norm')
-    norm_model_fname = os.path.join(path_sct, 'data', 'deepseg_sc_models', '{}_sc_nyul.pkl'.format(contrast_type))
-    params_norm = norm_model_fname if os.path.isfile(norm_model_fname) else None
-    print params_norm
+    if kernel_size == '2d' and contrast_type in ['t2s', 't2']:
+        norm_model_fname = os.path.join(path_sct, 'data', 'deepseg_sc_models', '{}_sc.pkl'.format(contrast_type))
+        params_norm = norm_model_fname if os.path.isfile(norm_model_fname) else None
+    else:
+        params_norm = None
     apply_intensity_normalization(img_path=fname_crop, fname_out=fname_norm, params=params_norm)
 
     if kernel_size == '2d':
         segmentation_model_fname = os.path.join(path_sct, 'data', 'deepseg_sc_models', '{}_sc.h5'.format(contrast_type))
-        # segmentation_model_fname = os.path.join(path_sct, 'data', 'deepseg_sc_models', '{}_seg_sc.h5'.format(contrast_type))
         fname_seg_crop = sct.add_suffix(fname_norm, '_seg')
         seg_crop_data = segment_2d(model_fname=segmentation_model_fname,
                                 contrast_type=contrast_type,
@@ -805,7 +795,7 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, ctr_
         spinalcordtoolbox.resample.nipy_resample.resample_file(fname_norm, fname_res3d, '0.5x0.5x0.5',
                                                                'mm', 'linear', verbose=0)
 
-        segmentation_model_fname = os.path.join(path_sct, 'data', 'deepseg_sc_models', '{}_sc_3d.h5'.format(contrast_type))
+        segmentation_model_fname = os.path.join(path_sct, 'data', 'deepseg_sc_models', '{}_sc_3D.h5'.format(contrast_type))
         fname_seg_crop_res = sct.add_suffix(fname_res3d, '_seg')
         segment_3d(model_fname=segmentation_model_fname,
                     contrast_type=contrast_type,
@@ -834,7 +824,7 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, ctr_
 
     # binarize the resampled image to remove interpolation effects
     sct.log.info("Binarizing the segmentation to avoid interpolation effects...")
-    thr = '0.0001' if contrast_type in ['t1', 'dwi'] else '0.5'
+    thr = '0.000001' if contrast_type in ['t1', 'dwi'] else '0.5'
     sct.run(['sct_maths', '-i', fname_seg_RPI, '-bin', thr, '-o', fname_seg_RPI], verbose=0)
 
     # post processing step to z_regularized
@@ -844,9 +834,9 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, ctr_
     sct.log.info("Reorienting the segmentation to the original image orientation...")
     fname_seg = sct.add_suffix(file_fname, '_seg')
     if original_orientation != 'RPI':
-        im_orient = set_orientation(Image(fname_seg_RPI), original_orientation)
-        im_orient.setFileName(fname_seg)
-        im_orient.save()
+        im_seg_orient = set_orientation(Image(fname_seg_RPI), original_orientation)
+        im_seg_orient.setFileName(fname_seg)
+        im_seg_orient.save()
     else:
         sct.copy(fname_seg_RPI, fname_seg)
 
@@ -861,7 +851,6 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, ctr_
         tmp_folder.cleanup()
 
     return os.path.join(output_folder, fname_seg)
-
 
 if __name__ == "__main__":
     main()
