@@ -360,7 +360,7 @@ def main(args=None):
         labeled_seg_file = os.path.join(path_output, file_seg + '_labeled' + ext_seg)
         generate_qc(fname_in, labeled_seg_file, args, path_qc)
 
-    sct.display_viewer_syntax([fname_in, fname_seg_labeled], colormaps=['', 'random'], opacities=['1', '0.5'])
+    sct.display_viewer_syntax([fname_in, fname_seg_labeled], colormaps=['', 'subcortical'], opacities=['1', '0.5'])
 
 
 def generate_qc(fn_in, fn_labeled, args, path_qc):
@@ -907,7 +907,7 @@ def label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=1):
 
 def label_discs(fname_seg_labeled, verbose=1):
     """
-    Label discs from labaled_segmentation
+    Label discs from labeled_segmentation. The convention is C2/C3-->3, C3/C4-->4, etc.
     :param fname_seg_labeld: fname of the labeled segmentation
     :param verbose:
     :return:
@@ -917,15 +917,20 @@ def label_discs(fname_seg_labeled, verbose=1):
     orientation_native = im_seg_labeled.change_orientation('RPI')
     nx, ny, nz = im_seg_labeled.dim[0], im_seg_labeled.dim[1], im_seg_labeled.dim[2]
     data_disc = np.zeros([nx, ny, nz])
-    vertebral_level_previous = np.max(im_seg_labeled.data)
-    # loop across z
+    vertebral_level_previous = np.max(im_seg_labeled.data)  # initialize with the max label value
+    # loop across z in the superior direction (i.e. starts with the bottom slice), and each time the i/i+1 interface
+    # between two levels is found, create a label at the center of the cord with the value corresponding to the
+    # vertebral level below the point. E.g., at interface C3/C4, the value would be 4.
     for iz in range(nz):
         # get 2d slice
         slice = im_seg_labeled.data[:, :, iz]
         # check if at least one voxel is non-zero
         if np.any(slice):
             slice_one = np.copy(slice)
-            # set all non-zero values to 1
+            # set all non-zero values to 1 (to compute center of mass)
+            # Note: the reason we do this is because if one slice includes part of vertebral level i and i+1, the
+            # center of mass will be shifted towards the i+1 level.We don't want that here (i.e. the goal is to be at
+            # the center of the cord)
             slice_one[slice.nonzero()] = 1
             # compute center of mass
             cx, cy = [int(x) for x in np.round(center_of_mass(slice_one)).tolist()]
@@ -934,8 +939,7 @@ def label_discs(fname_seg_labeled, verbose=1):
             # if smaller than previous level, then labeled as a disc
             if vertebral_level < vertebral_level_previous:
                 # label disc
-                # sct.printv('iz='+iz+', disc='+vertebral_level)
-                data_disc[cx, cy, iz] = vertebral_level
+                data_disc[cx, cy, iz] = vertebral_level + 1
             # update variable
             vertebral_level_previous = vertebral_level
     # save disc labeled file
