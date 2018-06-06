@@ -64,7 +64,8 @@ def main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, 
 
     # loop across slices and apply translation
     im_anat_flattened = im_anat.copy()
-    im_anat_flattened.changeType('uint16')  # force uint16 because outputs are converted using img_as_uint()
+    # change type to float32 because of subsequent conversion (img_as_float). See #1790
+    im_anat_flattened.changeType('float32')
     for iz in range(nz):
         # compute translation along x (R-L)
         translation_x = x_centerline_extended[iz] - round(nx/2.0)
@@ -74,7 +75,7 @@ def main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, 
         # important to force input in float to skikit image, because it will output float values
         img = img_as_float(im_anat.data[:, :, iz])
         img_reg = transform.warp(img, tform)
-        im_anat_flattened.data[:, :, iz] = img_as_uint(img_reg)
+        im_anat_flattened.data[:, :, iz] = img_reg  # img_as_uint(img_reg)
 
     # change back to native orientation
     im_anat_flattened.change_orientation(orientation_native)
@@ -89,7 +90,8 @@ def main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, 
 def get_parser():
     param_default = Param()
     parser = Parser(__file__)
-    parser.usage.set_description("""Flatten the spinal cord in the sagittal plane (to make nice pictures).""")
+    parser.usage.set_description("""Flatten the spinal cord in the sagittal plane (to make nice pictures). Output data
+    type is float32 (regardless of input type) to minimize loss of precision during conversion.""")
     parser.add_option(name='-i',
                       type_value='image_nifti',
                       description='Input volume.',
