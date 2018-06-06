@@ -112,6 +112,11 @@ max: for each z-slice of the input data, extract the max value for each slice of
                       mandatory=False,
                       example='2:5',
                       default_value=param_default.vertebral_levels)
+    parser.add_option(name='-vertfile',
+                      type_value='str',  # note: even though it's a file, we cannot put the type='file' otherwise the full path will be added in sct_testing and it will crash
+                      description='Vertebral labeling file. Only use with flag -vert',
+                      default_value='./label/template/PAM50_levels.nii.gz',
+                      mandatory=False)
     parser.add_option(name='-v',
                       type_value='str',
                       description='Vertebral levels to estimate the metric across. Example: 2:9 for C2 to T2.',
@@ -194,11 +199,30 @@ To compute average MTR in a region defined by a single label file (could be bina
     return parser
 
 
-def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, fname_output, labels_user, overwrite, fname_normalizing_label, normalization_method, label_to_fix, adv_param_user, fname_output_metric_map, fname_mask_weight):
-    """Main."""
+def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, fname_output, labels_user, overwrite,
+         fname_normalizing_label, normalization_method, label_to_fix, adv_param_user, fname_output_metric_map,
+         fname_mask_weight, fname_vertebral_labeling=""):
+    """
+    Extract metrics from MRI data based on mask (could be single file of folder to atlas)
+    :param fname_data: data to extract metric from
+    :param path_label: mask: could be single file or folder to atlas (which contains info_label.txt)
+    :param method:
+    :param slices_of_interest:
+    :param vertebral_levels: Vertebral levels to extract metrics from. Should be associated with a template (e.g. PAM50/template/) or a specified file: fname_vertebral_labeling
+    :param fname_output:
+    :param labels_user:
+    :param overwrite:
+    :param fname_normalizing_label:
+    :param normalization_method:
+    :param label_to_fix:
+    :param adv_param_user:
+    :param fname_output_metric_map:
+    :param fname_mask_weight:
+    :param fname_vertebral_labeling: vertebral labeling to be used with vertebral_levels
+    :return:
+    """
 
     # Initialization
-    fname_vertebral_labeling = ''
     actual_vert_levels = None  # variable used in case the vertebral levels asked by the user don't correspond exactly to the vertebral levels available in the metric data
     warning_vert_levels = None  # variable used to warn the user in case the vertebral levels he asked don't correspond exactly to the vertebral levels available in the metric data
     verbose = param_default.verbose
@@ -227,9 +251,18 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
 
     # Find path to the vertebral labeling file if vertebral levels were specified by the user
     if vertebral_levels:
-        if slices_of_interest:  # impossible to select BOTH specific slices and specific vertebral levels
+        # check if user selected both specific slices and specific vertebral levels
+        if slices_of_interest:
             sct.printv(parser.usage.generate(error='ERROR: You cannot select BOTH vertebral levels AND slice numbers.'))
+        # check if user specified folder or single file as label
+        if single_label:
+            # check if user selected vert but failed to provide a vertebral labeling file
+            if not fname_vertebral_labeling:
+                sct.printv(
+                    '\nYou should indicate a vertebral labeling file with flag -vert.',
+                    1, 'error')
         else:
+            # if folder is specified, then the vertebral labeling file should be in there. Searching for it...
             fname_vertebral_labeling_list = sct.find_file_within_folder(suffix_vertebral_labeling, os.path.dirname(path_label))
             if len(fname_vertebral_labeling_list) > 1:
                 sct.printv(parser.usage.generate(error='ERROR: More than one file named "' + suffix_vertebral_labeling + '" were found in ' + path_label + '. Exit program.'))
@@ -389,25 +422,6 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
     if label_to_fix:
         fixed_label = [label_to_fix[0], label_to_fix_name, label_to_fix[1]]
         sct.printv('\n*' + fixed_label[0] + ', ' + fixed_label[1] + ': ' + fixed_label[2] + ' (value fixed by user)', 1, 'info')
-
-    # section = ''
-    # if labels_id_user[0] <= max(indiv_labels_ids):
-    #     section = '\nWhite matter atlas:'
-    # elif labels_id_user[0] > max(indiv_labels_ids):
-    #     section = '\nCombined labels:'
-    # sct.printv(section, 1, 'info')
-    # for i_label_user in labels_id_user:
-    #     # change section if not individual label anymore
-    #     if i_label_user > max(indiv_labels_ids) and section == '\nWhite matter atlas:':
-    #         section = '\nCombined labels:'
-    #         sct.printv(section, 1, 'info')
-    #     # display result for this label
-    #     if section == '\nWhite matter atlas:':
-    #         index = indiv_labels_ids.index(i_label_user)
-    #         sct.printv(str(indiv_labels_ids[index]) + ', ' + str(indiv_labels_names[index]) + ':    ' + str(indiv_labels_value[index]) + ' +/- ' + str(indiv_labels_std[index]), 1, 'info')
-    #     elif section == '\nCombined labels:':
-    #         index = combined_labels_ids.index(i_label_user)
-    #         sct.printv(str(combined_labels_ids[index]) + ', ' + str(combined_labels_names[index]) + ':    ' + str(combined_labels_value[index]) + ' +/- ' + str(combined_labels_std[index]), 1, 'info')
 
     # save results in the selected output file type
     save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_labels_names, combined_labels_names, slices_of_interest, indiv_labels_value, indiv_labels_std, indiv_labels_fract_vol, combined_labels_value, combined_labels_std, combined_labels_fract_vol, fname_output, fname_data, method, overwrite, fname_normalizing_label, actual_vert_levels, warning_vert_levels, fixed_label)
@@ -1197,6 +1211,10 @@ if __name__ == "__main__":
         vertebral_levels = arguments['-vert']
     else:
         vertebral_levels = ''
+    if '-vertfile' in arguments:
+        fname_vertebral_labeling = arguments['-vertfile']
+    else:
+        fname_vertebral_labeling = ""
     if '-overwrite' in arguments:
         overwrite = arguments['-overwrite']
     fname_normalizing_label = ''
@@ -1219,4 +1237,6 @@ if __name__ == "__main__":
         fname_mask_weight = ''
 
     # call main function
-    main(fname_data, path_label, method, slices_of_interest, vertebral_levels, fname_output, labels_user, overwrite, fname_normalizing_label, normalization_method, label_to_fix, adv_param_user, fname_output_metric_map, fname_mask_weight)
+    main(fname_data, path_label, method, slices_of_interest, vertebral_levels, fname_output, labels_user, overwrite,
+         fname_normalizing_label, normalization_method, label_to_fix, adv_param_user, fname_output_metric_map,
+         fname_mask_weight, fname_vertebral_labeling=fname_vertebral_labeling)
