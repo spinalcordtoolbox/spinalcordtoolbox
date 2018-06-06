@@ -327,6 +327,11 @@ def main(args=None):
         sct.printv('WARNING: Only one label is present. Forcing initial transformation to: ' + paramreg.steps['0'].dof,
                    1, 'warning')
 
+    # Project labels onto the spinal cord centerline because later, an affine transformation is estimated between the
+    # template's labels (centered in the cord) and the subject's labels (assumed to be centered in the cord).
+    # If labels are not centered, mis-registration errors are observed (see issue #1826)
+    ftmp_label = project_labels_on_spinalcord(ftmp_label, ftmp_seg)
+
     # binarize segmentation (in case it has values below 0 caused by manual editing)
     sct.printv('\nBinarize segmentation', verbose)
     sct.run(['sct_maths', '-i', 'seg.nii.gz', '-bin', '0.5', '-o', 'seg.nii.gz'])
@@ -347,7 +352,8 @@ def main(args=None):
         ftmp_data = add_suffix(ftmp_data, '_1mm')
         sct.run(['sct_resample', '-i', ftmp_seg, '-mm', '1.0x1.0x1.0', '-x', 'linear', '-o', add_suffix(ftmp_seg, '_1mm')])
         ftmp_seg = add_suffix(ftmp_seg, '_1mm')
-        # N.B. resampling of labels is more complicated, because they are single-point labels, therefore resampling with neighrest neighbour can make them disappear. Therefore a more clever approach is required.
+        # N.B. resampling of labels is more complicated, because they are single-point labels, therefore resampling
+        # with nearest neighbour can make them disappear.
         resample_labels(ftmp_label, ftmp_data, add_suffix(ftmp_label, '_1mm'))
         ftmp_label = add_suffix(ftmp_label, '_1mm')
 
@@ -569,7 +575,8 @@ def main(args=None):
         sct.printv('\nRemove unused label on template. Keep only label present in the input label image...', verbose)
         sct.run(['sct_label_utils', '-i', ftmp_template_label, '-o', ftmp_template_label, '-remove', ftmp_label])
 
-        # Add one label because at least 3 orthogonal labels are required to estimate an affine transformation. This new label is added at the level of the upper most label (lowest value), at 1cm to the right.
+        # Add one label because at least 3 orthogonal labels are required to estimate an affine transformation. This
+        # new label is added at the level of the upper most label (lowest value), at 1cm to the right.
         for i_file in [ftmp_label, ftmp_template_label]:
             im_label = Image(i_file)
             coord_label = im_label.getCoordinatesAveragedByValue()  # N.B. landmarks are sorted by value
@@ -681,6 +688,23 @@ def generate_qc(fname_data, fname_template2anat, fname_seg, args, path_qc):
      qcslice_operations=[qc.QcImage.no_seg_seg],
      qcslice_layout=lambda x: x.mosaic()[:2],
     )
+
+
+def project_labels_on_spinalcord(fname_label, fname_seg):
+    """
+    Project labels orthogonally on the spinal cord centerline. The algorithm works by finding the smallest distance
+    between each label and the spinal cord center of mass.
+    :param fname_label: file name of labels
+    :param fname_seg: file name of cord segmentation (could also be of centerline)
+    :return: file name of projected labels
+    """
+    # open labels and segmentation
+    nii_label = Image(fname_label)
+    # find all existing values
+    # loop across label values
+    for ilabel in label_values:
+        # get center of mass of label
+
 
 
 # Resample labels
