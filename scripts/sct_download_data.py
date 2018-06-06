@@ -92,8 +92,8 @@ def main(args=None):
         'course_hawaii17': 'https://osf.io/6exht/?action=download',
         'deepseg_gm_models': ['https://osf.io/b9y4x/?action=download',
                               'https://www.neuro.polymtl.ca/_media/downloads/sct/20180205_deepseg_gm_models.zip'],
-        'deepseg_sc_models': ['https://osf.io/mg8wr/?action=download',
-                              'https://www.neuro.polymtl.ca/_media/downloads/sct/20180211_deepseg_sc_models.zip']
+        'deepseg_sc_models': ['https://osf.io/5fqjt/?action=download',
+                              'TO_UPDATE']
     }
 
     # Get parser info
