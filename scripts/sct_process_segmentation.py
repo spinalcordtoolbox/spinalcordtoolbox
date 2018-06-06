@@ -640,32 +640,33 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
     min_z_index, max_z_index = min(Z), max(Z)
 
     # if angle correction is required, get segmentation centerline
-    if angle_correction:
-        if use_phys_coord:
-            # fit centerline, smooth it and return the first derivative (in physical space)
-            x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, nurbs_pts_number=3000, phys_coordinates=True, verbose=verbose, all_slices=False)
-            centerline = Centerline(x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
+    # Note: even if angle_correction=0, we should run the code below so that z_centerline_voxel is defined (later used
+    # with option -vert). See #1791
+    if use_phys_coord:
+        # fit centerline, smooth it and return the first derivative (in physical space)
+        x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, nurbs_pts_number=3000, phys_coordinates=True, verbose=verbose, all_slices=False)
+        centerline = Centerline(x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
 
-            # average centerline coordinates over slices of the image
-            x_centerline_fit_rescorr, y_centerline_fit_rescorr, z_centerline_rescorr, x_centerline_deriv_rescorr, y_centerline_deriv_rescorr, z_centerline_deriv_rescorr = centerline.average_coordinates_over_slices(im_seg)
+        # average centerline coordinates over slices of the image
+        x_centerline_fit_rescorr, y_centerline_fit_rescorr, z_centerline_rescorr, x_centerline_deriv_rescorr, y_centerline_deriv_rescorr, z_centerline_deriv_rescorr = centerline.average_coordinates_over_slices(im_seg)
 
-            # compute Z axis of the image, in physical coordinate
-            axis_X, axis_Y, axis_Z = im_seg.get_directions()
+        # compute Z axis of the image, in physical coordinate
+        axis_X, axis_Y, axis_Z = im_seg.get_directions()
 
-            # compute z_centerline in image coordinates for usage in vertebrae mapping
-            z_centerline_voxel = [coord[2] for coord in im_seg.transfo_phys2pix([[x_centerline_fit_rescorr[i], y_centerline_fit_rescorr[i], z_centerline_rescorr[i]] for i in range(len(z_centerline_rescorr))])]
+        # compute z_centerline in image coordinates for usage in vertebrae mapping
+        z_centerline_voxel = [coord[2] for coord in im_seg.transfo_phys2pix([[x_centerline_fit_rescorr[i], y_centerline_fit_rescorr[i], z_centerline_rescorr[i]] for i in range(len(z_centerline_rescorr))])]
 
-        else:
-            # fit centerline, smooth it and return the first derivative (in voxel space but FITTED coordinates)
-            x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, nurbs_pts_number=3000, phys_coordinates=False, verbose=verbose, all_slices=True)
+    else:
+        # fit centerline, smooth it and return the first derivative (in voxel space but FITTED coordinates)
+        x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, nurbs_pts_number=3000, phys_coordinates=False, verbose=verbose, all_slices=True)
 
-            # correct centerline fitted coordinates according to the data resolution
-            x_centerline_fit_rescorr, y_centerline_fit_rescorr, z_centerline_rescorr, x_centerline_deriv_rescorr, y_centerline_deriv_rescorr, z_centerline_deriv_rescorr = x_centerline_fit * px, y_centerline_fit * py, z_centerline * pz, x_centerline_deriv * px, y_centerline_deriv * py, z_centerline_deriv * pz
+        # correct centerline fitted coordinates according to the data resolution
+        x_centerline_fit_rescorr, y_centerline_fit_rescorr, z_centerline_rescorr, x_centerline_deriv_rescorr, y_centerline_deriv_rescorr, z_centerline_deriv_rescorr = x_centerline_fit * px, y_centerline_fit * py, z_centerline * pz, x_centerline_deriv * px, y_centerline_deriv * py, z_centerline_deriv * pz
 
-            axis_Z = [0.0, 0.0, 1.0]
+        axis_Z = [0.0, 0.0, 1.0]
 
-            # compute z_centerline in image coordinates for usage in vertebrae mapping
-            z_centerline_voxel = z_centerline
+        # compute z_centerline in image coordinates for usage in vertebrae mapping
+        z_centerline_voxel = z_centerline
 
     # Compute CSA
     sct.printv('\nCompute CSA...', verbose)
