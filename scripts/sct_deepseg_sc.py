@@ -52,7 +52,7 @@ def get_parser():
                       description="choice of spinal cord centerline detector.",
                       mandatory=False,
                       example=['svm', 'cnn'],
-                      default_value="cnn")
+                      default_value="svm")
     parser.add_option(name="-brain",
                       type_value="multiple_choice",
                       description="indicate if the input image contains brain sections: 1: contains brain section, 0: no brain section. To indicate this parameter could speed the segmentation process.",
@@ -602,33 +602,35 @@ def main():
     fname_image = arguments['-i']
     contrast_type = arguments['-c']
 
-    if "-ctr" in arguments:
-        ctr_algo = arguments["-ctr"]
+    ctr_algo = arguments["-ctr"]
+    if "-ctr" not in args and contrast_type == 't2s':
+        ctr_algo = 'cnn'
 
-    if "-brain" in arguments:
-        brain_bool = bool(int(arguments["-brain"]))
-    else:
-        brain_bool = False if contrast_type in ['t2s', 'dwi'] else True
+    brain_bool = bool(int(arguments["-brain"]))
+    if "-brain" not in args and contrast_type in ['t2s', 'dwi']:
+        brain_bool = False
 
-    if "-kernel" in arguments:
-        kernel_size = arguments["-kernel"]
-
+    kernel_size = arguments["-kernel"]
     if kernel_size == '3d' and contrast_type == 'dwi':
         kernel_size = '2d'
         sct.printv('3D kernel model for dwi contrast is not available. 2D kernel model is used instead.')
 
-    if "-ofolder" in arguments:
-        output_folder = arguments["-ofolder"]
-    else:
+    if '-ofolder' not in args:
         output_folder = os.getcwd()
+    else:
+        output_folder = arguments["-ofolder"]
 
-    if '-r' in arguments:
-        remove_temp_files = int(arguments['-r'])
+    remove_temp_files = int(arguments['-r'])
 
-    if '-v' in arguments:
-        verbose = arguments['-v']
+    verbose = arguments['-v']
 
     path_qc = arguments.get("-qc", None)
+
+    algo_config_stg = '\nMethod:'
+    algo_config_stg += '\n\tCenterline algorithm: ' + ctr_algo
+    algo_config_stg += '\n\tAssumes brain section included in the image: ' + str(brain_bool)
+    algo_config_stg += '\n\tDimension of the segmentation kernel convolutions: ' + kernel_size + '\n'
+    sct.printv(algo_config_stg)
 
     fname_seg = deep_segmentation_spinalcord(fname_image, contrast_type, output_folder,
                                             ctr_algo=ctr_algo, brain_bool=brain_bool, kernel_size=kernel_size,
