@@ -15,7 +15,7 @@
 # TODO: enable vertebral alignment with -ref subject
 
 import sys, io, os, shutil, time
-
+import numpy as np
 import sct_utils as sct
 import sct_label_utils
 import sct_convert
@@ -24,7 +24,7 @@ from sct_utils import add_suffix
 from sct_register_multimodal import Paramreg, ParamregMultiStep, register
 from msct_parser import Parser
 from msct_image import Image, find_zmin_zmax
-
+from sct_straighten_spinalcord import smooth_centerline
 
 # get path of the toolbox
 path_script = os.path.dirname(__file__)
@@ -327,6 +327,11 @@ def main(args=None):
         sct.printv('WARNING: Only one label is present. Forcing initial transformation to: ' + paramreg.steps['0'].dof,
                    1, 'warning')
 
+    # Project labels onto the spinal cord centerline because later, an affine transformation is estimated between the
+    # template's labels (centered in the cord) and the subject's labels (assumed to be centered in the cord).
+    # If labels are not centered, mis-registration errors are observed (see issue #1826)
+    ftmp_label = project_labels_on_spinalcord(ftmp_label, ftmp_seg)
+
     # binarize segmentation (in case it has values below 0 caused by manual editing)
     sct.printv('\nBinarize segmentation', verbose)
     sct.run(['sct_maths', '-i', 'seg.nii.gz', '-bin', '0.5', '-o', 'seg.nii.gz'])
@@ -347,7 +352,8 @@ def main(args=None):
         ftmp_data = add_suffix(ftmp_data, '_1mm')
         sct.run(['sct_resample', '-i', ftmp_seg, '-mm', '1.0x1.0x1.0', '-x', 'linear', '-o', add_suffix(ftmp_seg, '_1mm')])
         ftmp_seg = add_suffix(ftmp_seg, '_1mm')
-        # N.B. resampling of labels is more complicated, because they are single-point labels, therefore resampling with neighrest neighbour can make them disappear. Therefore a more clever approach is required.
+        # N.B. resampling of labels is more complicated, because they are single-point labels, therefore resampling
+        # with nearest neighbour can make them disappear.
         resample_labels(ftmp_label, ftmp_data, add_suffix(ftmp_label, '_1mm'))
         ftmp_label = add_suffix(ftmp_label, '_1mm')
 
@@ -569,7 +575,8 @@ def main(args=None):
         sct.printv('\nRemove unused label on template. Keep only label present in the input label image...', verbose)
         sct.run(['sct_label_utils', '-i', ftmp_template_label, '-o', ftmp_template_label, '-remove', ftmp_label])
 
-        # Add one label because at least 3 orthogonal labels are required to estimate an affine transformation. This new label is added at the level of the upper most label (lowest value), at 1cm to the right.
+        # Add one label because at least 3 orthogonal labels are required to estimate an affine transformation. This
+        # new label is added at the level of the upper most label (lowest value), at 1cm to the right.
         for i_file in [ftmp_label, ftmp_template_label]:
             im_label = Image(i_file)
             coord_label = im_label.getCoordinatesAveragedByValue()  # N.B. landmarks are sorted by value
@@ -681,6 +688,52 @@ def generate_qc(fname_data, fname_template2anat, fname_seg, args, path_qc):
      qcslice_operations=[qc.QcImage.no_seg_seg],
      qcslice_layout=lambda x: x.mosaic()[:2],
     )
+
+
+def project_labels_on_spinalcord(fname_label, fname_seg):
+    """
+    Project labels orthogonally on the spinal cord centerline. The algorithm works by finding the smallest distance
+    between each label and the spinal cord center of mass.
+    :param fname_label: file name of labels
+    :param fname_seg: file name of cord segmentation (could also be of centerline)
+    :return: file name of projected labels
+    """
+    # build output name
+    fname_label_projected = sct.add_suffix(fname_label, "_projected")
+    # open labels and segmentation
+    im_label = Image(fname_label)
+    im_seg = Image(fname_seg)
+    # orient to RPI
+    native_orient = im_seg.change_orientation('RPI')
+    im_label.change_orientation('RPI')
+    # smooth centerline and return fitted coordinates in voxel space
+    centerline_x, centerline_y, centerline_z, centerline_derivx, centerline_derivy, centerline_derivz = smooth_centerline(
+        im_seg, algo_fitting="hanning", type_window="hanning", window_length=50, nurbs_pts_number=3000,
+        phys_coordinates=False, all_slices=True)
+    # get center of mass of label
+    labels = im_label.getCoordinatesAveragedByValue()
+    # initialize image of projected labels
+    im_label_projected = im_label.copy()
+    im_label_projected.data = np.zeros(im_label_projected.data.shape, dtype='uint8')
+    # loop across label values
+    for label in labels:
+        # calculate distance between label and each point of the centerline
+        distance_centerline = [np.linalg.norm([centerline_x[i] - label.x,
+                                               centerline_y[i] - label.y,
+                                               centerline_z[i] - label.z]) for i in range(len(centerline_x))]
+        # get the index corresponding to the min distance
+        ind_min_distance = np.argmin(distance_centerline)
+        # get centerline coordinate as int
+        [minx, miny, minz] = [int(round(centerline_x[ind_min_distance])),
+                              int(round(centerline_y[ind_min_distance])),
+                              int(round(centerline_z[ind_min_distance]))]
+        # use that index to assign projected label in the centerline
+        im_label_projected.data[minx, miny, minz] = label.value
+    # re-orient projected labels to native orientation and save
+    im_label_projected.change_orientation(native_orient)
+    im_label_projected.setFileName(fname_label_projected)
+    im_label_projected.save()
+    return fname_label_projected
 
 
 # Resample labels
