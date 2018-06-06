@@ -69,17 +69,11 @@ def nn_architecture_seg_3d(input_shape, pool_size=(2, 2, 2), n_labels=1, initial
 
 def create_convolution_block(input_layer, n_filters, batch_normalization=False,
                             kernel=(3, 3, 3), activation=None, padding='same',
-                            strides=(1, 1, 1), instance_normalization=False):
+                            strides=(1, 1, 1)):
     layer = Conv3D(n_filters, kernel, padding=padding, strides=strides)(input_layer)
     if batch_normalization:
         layer = BatchNormalization(axis=1)(layer)
-    elif instance_normalization:
-        try:
-            from keras_contrib.layers.normalization import InstanceNormalization
-        except ImportError:
-            raise ImportError("Install keras_contrib in order to use instance normalization."
-                              "\nTry: pip install git+https://www.github.com/farizrahman4u/keras-contrib.git")
-        layer = InstanceNormalization(axis=1)(layer)
+
     if activation is None:
         return Activation('relu')(layer)
     else:
