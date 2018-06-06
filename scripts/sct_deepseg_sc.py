@@ -643,8 +643,8 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, ctr_
 
         # load model
         ctr_model_fname = os.path.join(path_sct, 'data', 'deepseg_sc_models', '{}_ctr.h5'.format(contrast_type))
-        ctr_model = nn_architecture_ctr(height=dct_patch_ctr[contrast_type]['height'],
-                                        width=dct_patch_ctr[contrast_type]['width'],
+        ctr_model = nn_architecture_ctr(height=dct_patch_ctr[contrast_type]['size'][0],
+                                        width=dct_patch_ctr[contrast_type]['size'][1],
                                         channels=1,
                                         classes=1,
                                         features=dct_params_ctr[contrast_type]['features'],
