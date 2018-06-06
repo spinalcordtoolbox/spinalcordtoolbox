@@ -98,11 +98,16 @@ General information on how to install the VM create a shared folder are availabl
 
 ## Getting started
 
-The best way to learn about the main functionalities of SCT is to run a typical processing pipeline, in the form of a batch script. We provide an example dataset (includes T1w, T2w, T2\*w, DTI and fMRI) with a collection of commands to process those files and output quantitative parameters.
+The best way to learn about the main functionalities of SCT is to run a typical processing pipeline, in the form of a 
+batch script. We provide an example dataset (includes T1w, T2w, T2\*w, DTI and fMRI) with a collection of commands to 
+process those files and output quantitative parameters.
 
 - Open a Terminal
 - Run: `$SCT_DIR/batch_processing.sh`
 - While the processing is being done, we encourage you to look at the [batch script](batch_processing.sh) and try to understand the mean of each command line. If you have any question, please do not hesitate to post on the [forum](https://sourceforge.net/p/spinalcordtoolbox/discussion/help/).
+
+If you would like to get more examples about what SCT can do, please visit [this address](https://github.com/sct-pipeline/).
+Each repository is a pipeline dedicated to a specific research project.
 
 ## Courses
 
