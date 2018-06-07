@@ -478,7 +478,7 @@ if __name__ == "__main__":
         controller = launch_centerline_dialog(image, tmp_output_file, params)
 
         if not controller.saved:
-            sct.log.error('the viewer has been closed before entering all manual points. Please try again.')
+            sct.log.error('The viewer has been closed before entering all manual points. Please try again.')
             sys.exit(1)
 
         controller.as_niftii(tmp_output_file.absolutepath)
@@ -488,7 +488,7 @@ if __name__ == "__main__":
         elif use_viewer == "mask":
             cmd += ["-init-mask", tmp_output_file.absolutepath]
 
-    # If using OptiC, enabled by default
+    # If using OptiC
     elif use_optic:
         path_script = os.path.dirname(__file__)
         path_sct = os.path.dirname(path_script)
@@ -530,9 +530,9 @@ if __name__ == "__main__":
     im_seg.save(type='int8')
 
     # remove temporary files
-    if remove_temp_files and use_viewer:
-        sct.log.info("Remove temporary files...")
-        os.remove(tmp_output_file.absolutepath)
+    # if remove_temp_files and use_viewer:
+    #     sct.log.info("Remove temporary files...")
+    #     os.remove(tmp_output_file.absolutepath)
 
     if path_qc is not None:
         generate_qc(fname_input_data, fname_seg, args, os.path.abspath(path_qc))
