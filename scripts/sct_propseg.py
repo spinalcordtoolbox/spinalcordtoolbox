@@ -474,7 +474,7 @@ if __name__ == "__main__":
         image = Image(fname_data)
         tmp_output_file = Image(image)
         tmp_output_file.data *= 0
-        tmp_output_file.setFileName(sct.add_suffix(fname_data, '_label_viewer'))
+        tmp_output_file.setFileName(sct.add_suffix(fname_data, '_labels_viewer'))
         controller = launch_centerline_dialog(image, tmp_output_file, params)
 
         if not controller.saved:
@@ -506,7 +506,9 @@ if __name__ == "__main__":
         cmd += ["-init-centerline", optic_filename]
 
     # enabling centerline extraction by default
-    cmd += ['-centerline-binary']
+    # cmd += ['-centerline-binary']
+
+    # run propseg
     status, output = sct.run(cmd, verbose, raise_exception=False)
 
     # check status is not 0
@@ -530,7 +532,7 @@ if __name__ == "__main__":
     im_seg.save(type='int8')
 
     # remove temporary files
-    # if remove_temp_files and use_viewer:
+    # if remove_temp_files:
     #     sct.log.info("Remove temporary files...")
     #     os.remove(tmp_output_file.absolutepath)
 

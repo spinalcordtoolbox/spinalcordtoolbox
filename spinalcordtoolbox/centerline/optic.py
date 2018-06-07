@@ -137,7 +137,7 @@ def detect_centerline(image_fname, contrast_type,
     nib.save(img, centerline_optic_RPI_filename)
 
     # reorient the output image to initial orientation
-    centerline_optic_filename = sct.add_suffix(file_data + ext_data, "_centerline_optic")
+    centerline_optic_filename = sct.add_suffix(file_data + ext_data, "_centerline")
     cmd_reorient = 'sct_image -i "%s" -o "%s" -setorient "%s" -v 0' % \
                    (centerline_optic_RPI_filename,
                     centerline_optic_filename,
