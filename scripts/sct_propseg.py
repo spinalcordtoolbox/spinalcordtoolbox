@@ -52,8 +52,8 @@ def check_and_correct_segmentation(fname_segmentation, fname_centerline, folder_
     im_input = Image('tmp.segmentation.nii.gz')
     image_input_orientation = orientation(im_input, get=True, verbose=False)
 
-    sct_image.main("-i tmp.segmentation.nii.gz -setorient RPI -o tmp.segmentation_RPI.nii.gz".split())
-    sct_image.main("-i tmp.centerline.nii.gz -setorient RPI -o tmp.centerline_RPI.nii.gz".split())
+    sct_image.main("-i tmp.segmentation.nii.gz -setorient RPI -o tmp.segmentation_RPI.nii.gz -v 0".split())
+    sct_image.main("-i tmp.centerline.nii.gz -setorient RPI -o tmp.centerline_RPI.nii.gz -v 0".split())
 
     # go through segmentation image, and compare with centerline from propseg
     im_seg = Image('tmp.segmentation_RPI.nii.gz')
@@ -125,7 +125,7 @@ def check_and_correct_segmentation(fname_segmentation, fname_centerline, folder_
     im_seg.save()
 
     # replacing old segmentation with the corrected one
-    sct_image.main('-i tmp.segmentation_RPI_c.nii.gz -setorient {} -o {}'.
+    sct_image.main('-i tmp.segmentation_RPI_c.nii.gz -setorient {} -o {} -v 0'.
                    format(image_input_orientation, fname_seg_absolute).split())
 
     os.chdir(curdir)
@@ -134,7 +134,7 @@ def check_and_correct_segmentation(fname_segmentation, fname_centerline, folder_
 
     # remove temporary files
     if remove_temp_files:
-        sct.printv("\nRemove temporary files...", verbose)
+        # sct.printv("\nRemove temporary files...", verbose)
         sct.rmtree(path_tmp)
 
 
@@ -474,7 +474,7 @@ if __name__ == "__main__":
         image = Image(fname_data)
         tmp_output_file = Image(image)
         tmp_output_file.data *= 0
-        tmp_output_file.setFileName(sct.add_suffix(fname_data, '_mask_viewer'))
+        tmp_output_file.setFileName(sct.add_suffix(fname_data, '_label_viewer'))
         controller = launch_centerline_dialog(image, tmp_output_file, params)
 
         if not controller.saved:
