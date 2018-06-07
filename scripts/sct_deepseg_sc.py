@@ -55,10 +55,9 @@ def get_parser():
                       default_value="svm")
     parser.add_option(name="-brain",
                       type_value="multiple_choice",
-                      description="indicate if the input image is expected to contain brain sections: 1: contains brain section, 0: no brain section. To indicate this parameter could speed the segmentation process.",
+                      description="indicate if the input image is expected to contain brain sections: 1: contains brain section, 0: no brain section. To indicate this parameter could speed the segmentation process. Default value is 1 if -c is t1 or t2 (likely includes the brain), or 0 otherwise. Note that this flag is only effective with -ctr cnn",
                       mandatory=False,
-                      example=["0", "1"],
-                      default_value="1")
+                      example=["0", "1"])
     parser.add_option(name="-kernel",
                       type_value="multiple_choice",
                       description="choice of 2D or 3D kernels for the segmentation. Note that segmentation with 3D kernels is significantely longer than with 2D kernels.",
@@ -804,9 +803,13 @@ def main():
     if "-ctr" not in args and contrast_type == 't2s':
         ctr_algo = 'cnn'
 
-    brain_bool = bool(int(arguments["-brain"]))
-    if "-brain" not in args and contrast_type in ['t2s', 'dwi']:
-        brain_bool = False
+    if "-brain" not in args:
+        if contrast_type in ['t2s', 'dwi']:
+            brain_bool = False
+        if contrast_type in ['t1', 't2']:
+            brain_bool = True
+    else:
+        brain_bool = bool(int(arguments["-brain"]))
 
     kernel_size = arguments["-kernel"]
     if kernel_size == '3d' and contrast_type == 'dwi':
