@@ -19,8 +19,6 @@ from scipy.ndimage.measurements import center_of_mass, label
 from scipy.ndimage.morphology import binary_fill_holes
 from skimage.exposure import rescale_intensity
 from scipy.ndimage import distance_transform_edt
-from scipy.interpolate.interpolate import interp1d
-import pickle
 
 from spinalcordtoolbox.centerline import optic
 import sct_utils as sct
@@ -770,7 +768,7 @@ def main():
     kernel_size = arguments["-kernel"]
     if kernel_size == '3d' and contrast_type == 'dwi':
         kernel_size = '2d'
-        sct.printv('3D kernel model for dwi contrast is not available. 2D kernel model is used instead.')
+        sct.printv('3D kernel model for dwi contrast is not available. 2D kernel model is used instead.', type="warning")
 
     if '-ofolder' not in args:
         output_folder = os.getcwd()
