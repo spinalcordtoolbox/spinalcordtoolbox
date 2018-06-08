@@ -100,61 +100,13 @@ def scale_intensity(data, out_min=0, out_max=255):
     return rescale_intensity(data, in_range=(p2, p98), out_range=(out_min, out_max))
 
 
-def apply_intensity_normalization_model(img, filename_landmarks):
-    """
-    Apply the learned intensity landmarks to the input image.
-
-    This method is inspired from Nyul et al. (1999).
-    """
-    percent_decile_lst = [1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 99]
-    landmarks_lst_cur = np.percentile(list(img), q=percent_decile_lst)
-
-    dct_landmarks = pickle.load(open(filename_landmarks, "rb"))
-    landmarks_lst = sorted(dct_landmarks.values(), key=float)
-
-    # create linear mapping models for the percentile segments to the learned standard intensity space
-    linear_mapping = interp1d(landmarks_lst_cur, landmarks_lst, bounds_error=False)
-
-    # transform the input image intensity values
-    output = linear_mapping(img)
-
-    # treat image intensity values outside of the cut-off percentiles range separately
-    below_mapping = exp_model(landmarks_lst_cur[:2], landmarks_lst[:2], landmarks_lst[0])
-    output[img < landmarks_lst_cur[0]] = below_mapping(img[img < landmarks_lst_cur[0]])
-
-    above_mapping = exp_model(landmarks_lst_cur[-3:-1], landmarks_lst[-3:-1], landmarks_lst[-1])
-
-    output[img > landmarks_lst_cur[-1]] = above_mapping(img[img > landmarks_lst_cur[-1]])
-
-    return output.astype(np.float32)
-
-
-def exp_model((x1, x2), (y1, y2), s2):
-    """Exponential function to map the intensities."""
-    m = (y2 - y1) / (x2 - x1)
-    b = y1 - (m * x1)
-    mu90 = x2
-
-    alpha = s2
-
-    omega = m * mu90 - s2 + b
-    beta = omega * np.exp(-m * mu90 * 1.0 / omega)
-
-    gamma = m * 1.0 / omega
-
-    return lambda x: alpha + beta * np.exp(gamma * x)
-
-
 def apply_intensity_normalization(img_path, fname_out, params=None):
     """Standardize the intensity range."""
     img = Image(img_path)
     img_normalized = img.copy()
     data2norm = img.data.astype(np.float32)
 
-    if params is None:  # simple scaling
-        img_normalized.data = scale_intensity(data2norm)
-    else:  # intensity standardization inspired by Nyul et al. (1999)
-        img_normalized.data = apply_intensity_normalization_model(data2norm, params)
+    img_normalized.data = scale_intensity(data2norm)
 
     img_normalized.changeType('float32')
     img_normalized.setFileName(fname_out)
@@ -281,7 +233,7 @@ def _remove_blobs(data):
 
         # remove blobs only above the bigger connected object
         z_max = np.max(np.where(bigger_obj)[2])
-        data2clean[:, :, :z_max] = 0
+        data2clean[:, :, :z_max + 1] = 0
 
         labeled_obj2clean, num_obj2clean = label(data2clean)
         if num_obj2clean:  # If there is connected object above the biffer connected one
@@ -477,16 +429,11 @@ def _normalize_data(data, mean, std):
 
 def segment_2d(model_fname, contrast_type, input_size, fname_in, fname_out):
     """Segment data using 2D convolutions."""
-    dct_params_seg = {'t2s': {'mean': 815.364, 'std': 606.198, 'features': 8, 'depth': 3},
-                        't2': {'mean': 815.364, 'std': 606.198, 'features': 32, 'depth': 2},
-                        't1': {'mean': 84.5119262632, 'std': 39.607477199, 'features': 8, 'depth': 3},
-                        'dwi': {'mean': 84.8337225877, 'std': 54.6299357786, 'features': 24, 'depth': 2}}
-
     seg_model = nn_architecture_seg(height=input_size[0],
                                     width=input_size[1],
-                                    depth=dct_params_seg[contrast_type]['depth'],
-                                    features=dct_params_seg[contrast_type]['features'],
-                                    batchnorm=True,
+                                    depth=2 if contrast_type != 't2' else 3,
+                                    features=32,
+                                    batchnorm=False,
                                     dropout=0.0)
     seg_model.load_weights(model_fname)
 
@@ -495,14 +442,19 @@ def segment_2d(model_fname, contrast_type, input_size, fname_in, fname_out):
     seg_crop.data *= 0
     seg_crop.changeType('uint8')
 
-    data_norm = _normalize_data(image_normalized.data, dct_params_seg[contrast_type]['mean'], dct_params_seg[contrast_type]['std'])
-    for zz in list(reversed(range(image_normalized.dim[2]))):
+    data_norm = image_normalized.data
+    x_cOm, y_cOm = None, None
+    # for zz in list(reversed(range(image_normalized.dim[2]))):
+    for zz in range(image_normalized.dim[2]):
         pred_seg = seg_model.predict(np.expand_dims(np.expand_dims(data_norm[:, :, zz], -1), 0))[0, :, :, 0]
         pred_seg_th = (pred_seg > 0.5).astype(int)
 
-        pred_seg_pp = post_processing_slice_wise(pred_seg_th)
-
+        pred_seg_pp = post_processing_slice_wise(pred_seg_th, x_cOm, y_cOm)
         seg_crop.data[:, :, zz] = pred_seg_pp
+
+        if 1 in pred_seg_pp:
+            x_cOm, y_cOm = center_of_mass(pred_seg_pp)
+            x_cOm, y_cOm = np.round(x_cOm), np.round(y_cOm)
     seg_crop.setFileName(fname_out)
     seg_crop.save()
 
@@ -529,11 +481,19 @@ def uncrop_image(fname_ref, fname_out, data_crop, x_crop_lst, y_crop_lst):
     seg_unCrop.save()
 
 
-def post_processing_slice_wise(z_slice):
+def post_processing_slice_wise(z_slice, x_cOm, y_cOm):
     """Keep the largest connected obejct per z_slice and fill little holes."""
     labeled_obj, num_obj = label(z_slice)
     if num_obj > 1:
-        z_slice = (labeled_obj == (np.bincount(labeled_obj.flat)[1:].argmax() + 1))
+        if x_cOm is None:  # slice 0
+            z_slice = (labeled_obj == (np.bincount(labeled_obj.flat)[1:].argmax() + 1))
+        else:
+            idx_z_minus_1 = np.bincount(labeled_obj.flat)[1:].argmax() + 1
+            for idx in range(1, num_obj + 1):
+                z_idx = labeled_obj == idx
+                if z_idx[x_cOm, y_cOm]:
+                    idx_z_minus_1 = idx
+            z_slice = (labeled_obj == idx_z_minus_1)
 
     return binary_fill_holes(z_slice, structure=np.ones((3, 3))).astype(np.int)
 
@@ -570,8 +530,12 @@ def segment_3d(model_fname, contrast_type, fname_in, fname_out):
             patch_pred_proba = seg_model.predict(np.expand_dims(np.expand_dims(patch_norm, 0), 0))
             pred_seg_th = (patch_pred_proba > 0.5).astype(int)[0, 0, :, :, :]
 
+            x_cOm, y_cOm = None, None
             for zz_pp in range(z_patch_size):
-                pred_seg_th[:, :, zz_pp] = post_processing_slice_wise(pred_seg_th[:, :, zz_pp])
+                pred_seg_pp = post_processing_slice_wise(pred_seg_th[:, :, zz_pp], x_cOm, y_cOm)
+                pred_seg_th[:, :, zz_pp] = pred_seg_pp
+                x_cOm, y_cOm = center_of_mass(pred_seg_pp)
+                x_cOm, y_cOm = np.round(x_cOm), np.round(y_cOm)
 
             if zz == z_step_keep[-1]:
                 out.data[:, :, zz:] = pred_seg_th[:, :, :z_patch_extracted]
@@ -678,7 +642,7 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, ctr_
     # crop image around the spinal cord centerline
     sct.log.info("Cropping the image around the spinal cord...")
     fname_crop = sct.add_suffix(fname_res, '_crop')
-    crop_size = 64  if (kernel_size == '2d' or (kernel_size == '3d' and contrast_type != 't2s')) else 96
+    crop_size = 64 if kernel_size == '2d' else 96
     X_CROP_LST, Y_CROP_LST = crop_image_around_centerline(filename_in=fname_res,
                                                           filename_ctr=centerline_filename,
                                                           filename_out=fname_crop,
@@ -687,12 +651,7 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, ctr_
     # normalize the intensity of the images
     sct.log.info("Normalizing the intensity...")
     fname_norm = sct.add_suffix(fname_crop, '_norm')
-    if kernel_size == '2d' and contrast_type in ['t2s', 't2']:  # in theses cases, a slice-wise intensity standardization model is available
-        norm_model_fname = os.path.join(path_sct, 'data', 'deepseg_sc_models', '{}_sc.pkl'.format(contrast_type))
-        params_norm = norm_model_fname if os.path.isfile(norm_model_fname) else None
-    else:
-        params_norm = None
-    apply_intensity_normalization(img_path=fname_crop, fname_out=fname_norm, params=params_norm)
+    apply_intensity_normalization(img_path=fname_crop, fname_out=fname_norm)
 
     if kernel_size == '2d':
         # segment data using 2D convolutions
