@@ -505,8 +505,8 @@ if __name__ == "__main__":
 
         cmd += ["-init-centerline", optic_filename]
 
-    # enabling centerline extraction by default
-    # cmd += ['-centerline-binary']
+    # enabling centerline extraction by default (needed by check_and_correct_segmentation() )
+    cmd += ['-centerline-binary']
 
     # run propseg
     status, output = sct.run(cmd, verbose, raise_exception=False)
