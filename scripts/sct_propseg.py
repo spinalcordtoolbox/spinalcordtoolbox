@@ -52,8 +52,8 @@ def check_and_correct_segmentation(fname_segmentation, fname_centerline, folder_
     im_input = Image('tmp.segmentation.nii.gz')
     image_input_orientation = orientation(im_input, get=True, verbose=False)
 
-    sct_image.main("-i tmp.segmentation.nii.gz -setorient RPI -o tmp.segmentation_RPI.nii.gz".split())
-    sct_image.main("-i tmp.centerline.nii.gz -setorient RPI -o tmp.centerline_RPI.nii.gz".split())
+    sct_image.main("-i tmp.segmentation.nii.gz -setorient RPI -o tmp.segmentation_RPI.nii.gz -v 0".split())
+    sct_image.main("-i tmp.centerline.nii.gz -setorient RPI -o tmp.centerline_RPI.nii.gz -v 0".split())
 
     # go through segmentation image, and compare with centerline from propseg
     im_seg = Image('tmp.segmentation_RPI.nii.gz')
@@ -125,7 +125,7 @@ def check_and_correct_segmentation(fname_segmentation, fname_centerline, folder_
     im_seg.save()
 
     # replacing old segmentation with the corrected one
-    sct_image.main('-i tmp.segmentation_RPI_c.nii.gz -setorient {} -o {}'.
+    sct_image.main('-i tmp.segmentation_RPI_c.nii.gz -setorient {} -o {} -v 0'.
                    format(image_input_orientation, fname_seg_absolute).split())
 
     os.chdir(curdir)
@@ -134,7 +134,7 @@ def check_and_correct_segmentation(fname_segmentation, fname_centerline, folder_
 
     # remove temporary files
     if remove_temp_files:
-        sct.printv("\nRemove temporary files...", verbose)
+        # sct.printv("\nRemove temporary files...", verbose)
         sct.rmtree(path_tmp)
 
 
@@ -474,11 +474,11 @@ if __name__ == "__main__":
         image = Image(fname_data)
         tmp_output_file = Image(image)
         tmp_output_file.data *= 0
-        tmp_output_file.setFileName(sct.add_suffix(fname_data, '_mask_viewer'))
+        tmp_output_file.setFileName(sct.add_suffix(fname_data, '_labels_viewer'))
         controller = launch_centerline_dialog(image, tmp_output_file, params)
 
         if not controller.saved:
-            sct.log.error('the viewer has been closed before entering all manual points. Please try again.')
+            sct.log.error('The viewer has been closed before entering all manual points. Please try again.')
             sys.exit(1)
 
         controller.as_niftii(tmp_output_file.absolutepath)
@@ -488,7 +488,7 @@ if __name__ == "__main__":
         elif use_viewer == "mask":
             cmd += ["-init-mask", tmp_output_file.absolutepath]
 
-    # If using OptiC, enabled by default
+    # If using OptiC
     elif use_optic:
         path_script = os.path.dirname(__file__)
         path_sct = os.path.dirname(path_script)
@@ -505,8 +505,10 @@ if __name__ == "__main__":
 
         cmd += ["-init-centerline", optic_filename]
 
-    # enabling centerline extraction by default
+    # enabling centerline extraction by default (needed by check_and_correct_segmentation() )
     cmd += ['-centerline-binary']
+
+    # run propseg
     status, output = sct.run(cmd, verbose, raise_exception=False)
 
     # check status is not 0
@@ -530,9 +532,9 @@ if __name__ == "__main__":
     im_seg.save(type='int8')
 
     # remove temporary files
-    if remove_temp_files and use_viewer:
-        sct.log.info("Remove temporary files...")
-        os.remove(tmp_output_file.absolutepath)
+    # if remove_temp_files:
+    #     sct.log.info("Remove temporary files...")
+    #     os.remove(tmp_output_file.absolutepath)
 
     if path_qc is not None:
         generate_qc(fname_input_data, fname_seg, args, os.path.abspath(path_qc))
