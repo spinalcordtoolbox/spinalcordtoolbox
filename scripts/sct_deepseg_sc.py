@@ -47,7 +47,7 @@ def get_parser():
                       description="type of image contrast.",
                       mandatory=True,
                       example=['t1', 't2', 't2s', 'dwi'])
-    parser.add_option(name="-ctr",
+    parser.add_option(name="-centerline",
                       type_value="multiple_choice",
                       description="choice of spinal cord centerline algorithm.",
                       mandatory=False,
@@ -759,8 +759,8 @@ def main():
     fname_image = arguments['-i']
     contrast_type = arguments['-c']
 
-    ctr_algo = arguments["-ctr"]
-    if "-ctr" not in args and contrast_type == 't2s':
+    ctr_algo = arguments["-centerline"]
+    if "-centerline" not in args and contrast_type == 't2s':
         ctr_algo = 'cnn'
 
     brain_bool = bool(int(arguments["-brain"]))
