@@ -183,9 +183,13 @@ def crop_center(img, cropx, cropy):
 def threshold_predictions(predictions, thr=0.999):
     """This method will threshold predictions.
 
-    :param thr: the threshold.
-    :return: thresholded predictions.
+    :param thr: the threshold (if None, no threshold will
+                be applied).
+    :return: thresholded predictions
     """
+    if thr is None:
+        return predictions[:]
+
     thresholded_preds = predictions[:]
     low_values_indices = thresholded_preds <= thr
     thresholded_preds[low_values_indices] = 0
@@ -194,11 +198,13 @@ def threshold_predictions(predictions, thr=0.999):
     return thresholded_preds
 
 
-def segment_volume(ninput_volume, model_name):
+def segment_volume(ninput_volume, model_name,
+                   threshold=0.999):
     """Segment a nifti volume.
 
     :param ninput_volume: the input volume.
     :param model_name: the name of the model to use.
+    :param threshold: threshold to be applied in predictions.
     :return: segmented slices.
     """
     gmseg_model_challenge = DataResource('deepseg_gm_models')
@@ -232,7 +238,7 @@ def segment_volume(ninput_volume, model_name):
 
     preds = deepgmseg_model.predict(axial_slices, batch_size=8,
                                     verbose=True)
-    preds = threshold_predictions(preds)
+    preds = threshold_predictions(preds, threshold)
     pred_slices = []
 
     # Un-cropping
@@ -248,12 +254,14 @@ def segment_volume(ninput_volume, model_name):
 
 
 def segment_file(input_filename, output_filename,
-                 model_name, verbosity):
+                 model_name, threshold, verbosity):
     """Segment a volume file.
 
     :param input_filename: the input filename.
     :param output_filename: the output filename.
     :param model_name: the name of model to use.
+    :param threshold: threshold to apply in predictions (if None,
+                      no threshold will be applied)
     :param verbosity: the verbosity level.
     :return: the output filename.
     """
@@ -273,7 +281,7 @@ def segment_file(input_filename, output_filename,
                            nii_resampled.shape[1]))
 
     nii_resampled = nipy2nifti(nii_resampled)
-    pred_slices = segment_volume(nii_resampled, model_name)
+    pred_slices = segment_volume(nii_resampled, model_name, threshold)
 
     original_res = "{:.5f}x{:.5f}x{:.5f}".format(
         nii_original.header["pixdim"][1],
@@ -290,10 +298,11 @@ def segment_file(input_filename, output_filename,
                                                           original_res,
                                                           'mm', 'linear',
                                                           verbosity)
-
     res_data = nii_resampled_original.get_data()
-    res_data = threshold_predictions(res_data, 0.5)
+
+    # Threshold after resampling, only if specified
+    if threshold is not None:
+        res_data = threshold_predictions(res_data, 0.5)
 
     nipy.save_image(nii_resampled_original, output_filename)
-
     return output_filename
