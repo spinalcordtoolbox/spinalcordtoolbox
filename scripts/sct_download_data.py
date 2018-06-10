@@ -169,9 +169,15 @@ def download_data(urls, verbose):
             session.mount('https://', HTTPAdapter(max_retries=retry))
             response = session.get(url, stream=True)
 
-            _, content = cgi.parse_header(response.headers['Content-Disposition'])
-            tmp_path = os.path.join(tempfile.mkdtemp(), content['filename'])
-            sct.printv('Downloading %s...' % content['filename'], verbose)
+            if "Content-Disposition" in response.headers:
+                _, content = cgi.parse_header(response.headers['Content-Disposition'])
+                filename = content["filename"]
+            else:
+                sct.printv("Unexpected: link doesn't provide a filename", type="warning")
+                continue
+
+            tmp_path = os.path.join(tempfile.mkdtemp(), filename)
+            sct.printv('Downloading %s...' % filename, verbose)
 
             with open(tmp_path, 'wb') as tmp_file:
                 total = int(response.headers.get('content-length', 1))
@@ -188,8 +194,8 @@ def download_data(urls, verbose):
                 tqdm_bar.close()
             return tmp_path
 
-        except requests.RequestException as err:
-            sct.printv(err.message, type='warning')
+        except Exception as e:
+            sct.printv("Link download error, trying next mirror (error was: %s)" % e, type='warning')
     else:
         sct.printv('\nDownload error', type='error')
 
