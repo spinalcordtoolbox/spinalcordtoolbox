@@ -757,8 +757,8 @@ def main():
     contrast_type = arguments['-c']
 
     ctr_algo = arguments["-centerline"]
-    if "-centerline" not in args and contrast_type == 't2s':
-        ctr_algo = 'cnn'
+    # if "-centerline" not in args and contrast_type == 't2s':
+    #     ctr_algo = 'cnn'
 
     if "-brain" not in args:
         if contrast_type in ['t2s', 'dwi']:
