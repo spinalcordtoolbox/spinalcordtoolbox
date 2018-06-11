@@ -25,8 +25,7 @@ else:
     sys.stderr = original_stderr
 
 
-def downsampling_block(input_tensor, filters, padding='valid',
-                       batchnorm=False, dropout=0.0):
+def downsampling_block(input_tensor, filters, padding='same', batchnorm=True, dropout=0.0):
     _, height, width, _ = K.int_shape(input_tensor)
     assert height % 2 == 0
     assert width % 2 == 0
@@ -44,7 +43,7 @@ def downsampling_block(input_tensor, filters, padding='valid',
     return MaxPooling2D(pool_size=(2, 2))(x), x
 
 
-def upsampling_block(input_tensor, skip_tensor, filters, padding='valid', batchnorm=False, dropout=0.0):
+def upsampling_block(input_tensor, skip_tensor, filters, padding='same', batchnorm=True, dropout=0.0):
     x = Conv2DTranspose(filters, kernel_size=(2, 2), strides=(2, 2))(input_tensor)
 
     # compute amount of cropping needed for skip_tensor
@@ -75,7 +74,7 @@ def upsampling_block(input_tensor, skip_tensor, filters, padding='valid', batchn
     return x
 
 
-def nn_architecture(height, width, channels=1, classes=1, features=32, depth=2, temperature=1.0, padding='same', batchnorm=False, dropout=0.0):
+def nn_architecture_seg(height, width, channels=1, classes=1, features=32, depth=2, temperature=1.0, padding='same', batchnorm=False, dropout=0.0):
     x = Input(shape=(height, width, channels))
     inputs = x
 
@@ -104,6 +103,58 @@ def nn_architecture(height, width, channels=1, classes=1, features=32, depth=2, 
     x = Conv2D(filters=classes, kernel_size=(1, 1))(x)
 
     logits = Lambda(lambda z: z / temperature)(x)
+    probabilities = Activation('sigmoid')(logits)
+
+    return Model(inputs=inputs, outputs=probabilities)
+
+
+def downsampling_block_ctr(input_tensor, filters, padding='same', batchnorm=True, dropout=0.0):
+    _, height, width, _ = K.int_shape(input_tensor)
+    assert height % 2 == 0
+    assert width % 2 == 0
+
+    x = Conv2D(filters, kernel_size=(3,3), padding=padding,
+               dilation_rate=1)(input_tensor)
+    x = BatchNormalization()(x) if batchnorm else x
+    x = Activation('relu')(x)
+    x = Dropout(dropout)(x) if dropout > 0 else x
+
+    x = Conv2D(filters, kernel_size=(3,3), padding=padding, dilation_rate=2)(x)
+    x = BatchNormalization()(x) if batchnorm else x
+    x = Activation('relu')(x)
+    x = Dropout(dropout)(x) if dropout > 0 else x
+
+    return MaxPooling2D(pool_size=(2,2))(x), x
+
+
+def nn_architecture_ctr(height, width, channels=1, classes=1, features=16, depth=2, temperature=1.0, padding='same', batchnorm=True, dropout=0.0, dilation_layers=2):
+    x = Input(shape=(height, width, channels))
+    inputs = x
+
+    skips = []
+    for i in range(depth):
+        x, x0 = downsampling_block_ctr(x, features, padding,
+                                   batchnorm, dropout)
+        skips.append(x0)
+        features *= 2
+
+    dilation_rate = 1
+    for n in range(dilation_layers):
+        x = Conv2D(filters=features, kernel_size=(3,3), padding=padding,
+                   dilation_rate=dilation_rate)(x)
+        x = BatchNormalization()(x) if batchnorm else x
+        x = Activation('relu')(x)
+        x = Dropout(dropout)(x) if dropout > 0 else x
+        dilation_rate *= 2
+
+    for i in reversed(range(depth)):
+        features //= 2
+        x = upsampling_block(x, skips[i], features, padding,
+                             batchnorm, dropout)
+
+    x = Conv2D(filters=classes, kernel_size=(1,1))(x)
+
+    logits = Lambda(lambda z: z/temperature)(x)
     probabilities = Activation('sigmoid')(logits)
 
     return Model(inputs=inputs, outputs=probabilities)
