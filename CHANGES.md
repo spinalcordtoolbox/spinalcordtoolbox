@@ -1,5 +1,39 @@
 # CHANGES TO RELEASE
 
+## 3.2.1 (2018-06-12)
+This release fixes a few bugs, notably one related to template registration when using disc-based alignment. It also features an improved version of sct_deepseg_sc with the introduction of 3D kernel models, as well as a more accurate segmentation on T1-weighted scans. The main documentation now includes a link to a new collection of repositories: sct-pipeline, which gathers examples of personalized analysis pipelines for processing spinal cord MRI data with SCT. [View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.2.0...3.2.1)
+
+**BUG**
+
+ - Skip URL if filename isn't provided by HTTP server; catch anything in URL try loop [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1843)
+ - Fixed registration issue caused by labels far from cord centerline [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1828)
+ - Fixed wrong disc labeling and other minor improvements [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1814)
+ - Added test to make sure not to crop outside of slice range [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1813)
+ - Forcing output type to be float32 [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1800)
+ - Fixed z_centerline_voxel not defined if -no-angle is set to 1 [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1797)
+
+**ENHANCEMENT**
+
+ - Adding threshold (or not) option for the sct_deepseg_gm [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1846)
+ - Manual centerline is now output when using viewer [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1840)
+ - Added CNN for centerline detection, brain detection and added possibility for 3d CNN kernel [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1822)
+ - Fixed verbose in QC, integrated coveralls [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1808)
+ - Now possible to specify a vertebral labeling file when using -vert [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1798)
+
+**DOCUMENTATION**
+
+ - Added link to github.com/sct-pipeline [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1796)
+
+**INSTALLATION**
+
+ - Adapted final verbose if user decided to not modify the .bashrc [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1832)
+
+**TESTING**
+
+ - Coveralls added to Travis to prevent build failure [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1847)
+
+
+
 ## 3.2.0 (2018-05-29)
 This release includes: a new example dataset (now includes T2*-w and fMRI data) with an updated batch_processing.sh, a new function to compute MT-saturation effect (sct_compute_mtsat), an improved straightening that can account for inter-vertebral disc positions to be used alongside sct_register_to_template for more accurate registration, and few improvements on sct_pipeline and quality control (QC) report generation. [View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.1.1...3.2.0)
 

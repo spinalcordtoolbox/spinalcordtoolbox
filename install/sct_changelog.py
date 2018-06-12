@@ -13,15 +13,36 @@ How it works: Once the new tag is ready, you can simply run
 and copy and paste the content of changlog.[tagId].md to CHANGES.md
 
 """
-import logging
+import sys, io, logging, datetime, time, collections
 
-import datetime
 import requests
-import sys
 
 
 API_URL = 'https://api.github.com/repos/neuropoly/spinalcordtoolbox/'
 
+class RateLimiter(object):
+	def __init__(self, get, count, period):
+		self._count = count
+		self._period = period
+		self._requests = collections.deque()
+		self._get = get
+
+	def get(self, *args, **kw):
+		if len(self._requests) < self._count:
+			self._requests.append(time.time())
+			return self._get(*args, **kw)
+
+		now = time.time()
+		r = self._requests.popleft()
+		if now < r + self._period:
+			dt = r + self._period - now
+			logging.info("Waiting %.3fs so as to not go over the API rate limit", dt)
+			time.sleep(dt)
+
+		self._requests.append(time.time())
+		return self._get(*args, **kw)
+
+requests.get = RateLimiter(requests.get, 3, 10).get
 
 def latest_milestone():
     """Get from Github the details of the latest milestone
@@ -30,7 +51,7 @@ def latest_milestone():
     response = requests.get(milestone_url)
     data = response.json()
     logging.info('Open milestones found %d', len(data))
-    logging.info('Latest milestone %s %d', data[0]['title'], data[0]['number'])
+    logging.info('Latest Milestone: %s', data[0]['title'])
     return data[0]
 
 
@@ -51,9 +72,9 @@ def search(milestone, label=''):
     if label:
         query += ' label:%s' % (label)
     payload = {'q': query}
-    response = requests.get(search_url, payload)
+    response = requests.get(search_url, params=payload)
     data = response.json()
-    logging.info('Pull requests "%s" labeled %s received %d', milestone, label, len(data))
+    logging.info('Milestone: %s, Label: %s, Count: %d', milestone, label, data['total_count'])
     return data
 
 
@@ -68,7 +89,7 @@ if __name__ == '__main__':
     ]
 
     changelog_pr = set()
-    for label in ['bug', 'enhancement', 'feature', 'doc', 'testing']:
+    for label in ['bug', 'enhancement', 'feature', 'documentation', 'installation', 'testing']:
         pulls = search(milestone['title'], label)
         items = pulls.get('items')
         if items:
@@ -77,13 +98,13 @@ if __name__ == '__main__':
             items = [" - %s [View pull request](%s)" % (x['title'], x['html_url']) for x in pulls.get('items') ]
             lines.extend(items)
 
-    logging.info('Total pull request in changelog: %d', len(changelog_pr))
+    logging.info('Total number of pull requests with label: %d', len(changelog_pr))
     all_pr = set([x['html_url'] for x in search(milestone['title'])['items']])
     diff_pr = all_pr - changelog_pr
     for diff in diff_pr:
-        logging.warning('Pull request not labelled: %s', diff)
+        logging.warning('Pull request not labeled: %s', diff)
 
     filename = 'changelog.%d.md' % milestone['number']
-    with open(filename, 'w') as changelog:
-        changelog.write('\n'.join(lines))
+    with io.open(filename, "wb") as changelog:
+        changelog.write('\n'.join(lines).encode("utf-8"))
     logging.info('Changelog saved in %s', filename)
