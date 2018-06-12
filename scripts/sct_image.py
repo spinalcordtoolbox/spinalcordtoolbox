@@ -13,11 +13,11 @@
 import os
 import sys
 
+import sct_utils as sct
 from msct_image import Image, get_dimension
 from msct_parser import Parser
 from numpy import newaxis, shape
 from sct_utils import add_suffix, extract_fname, printv, run, tmp_create
-import sct_utils as sct
 
 
 class Param:
@@ -272,7 +272,7 @@ def main(args=None):
                 fname_out.append(add_suffix(fname_in[0], '_' + dim_list[i_dim].upper()))
                 im_out[i_dim].setFileName(fname_out[i_dim])
                 im_out[i_dim].save(verbose=verbose)
-            sct.display_viewer_syntax([fname_out])
+            sct.display_viewer_syntax(fname_out)
         if '-split' in arguments:
             # use input file name and add _"DIM+NUMBER". Keep the same extension
             l_fname_out = []
