@@ -81,6 +81,10 @@ class TestCore(object):
         thr_ret = gm_core.threshold_predictions(dummy_preds, 0.5)
         assert np.count_nonzero(thr_ret) == 0
 
+        dummy_preds = np.full((200, 200), 0.4)
+        thr_ret = gm_core.threshold_predictions(dummy_preds, None)
+        assert np.allclose(dummy_preds, thr_ret)
+
     def test_segment_volume(self):
         """Call the segmentation routine itself with a dummy input."""
         np_data = np.ones((200, 200, 2), dtype=np.float32)
