@@ -44,7 +44,7 @@ def get_parser():
                       type_value="multiple_choice",
                       description="type of image contrast.",
                       mandatory=True,
-                      example=['t2', 't2s'])
+                      example=['t2', 't2_ax', 't2s'])
     parser.add_option(name="-centerline",
                       type_value="multiple_choice",
                       description="choice of spinal cord centerline algorithm.",
@@ -133,6 +133,7 @@ def apply_intensity_normalization(img_path, fname_out, contrast):
     data2norm = img.data.astype(np.float32)
 
     dct_norm = {'t2': [0.000000, 136.832187, 312.158435, 448.968030, 568.657779, 696.671586, 859.221138, 1074.463414, 1373.289174, 1811.522669, 2611.000000],
+                't2_ax': [0.000000, 112.195357, 291.611185, 446.727066, 581.103970, 702.979079, 833.318257, 1011.856313, 1268.801813, 1687.137075, 2611.000000],
                 't2s': [0.000000, 123.246969, 226.422561, 338.361023, 532.341924, 788.693675, 1096.975553, 1407.979466, 1716.524530, 2079.788451, 2611.000000]}
 
     img_normalized.data = apply_intensity_normalization_model(data2norm, dct_norm[contrast])
@@ -385,6 +386,7 @@ def segment_3d(model_fname, contrast_type, fname_in, fname_out):
     """Perform segmentation with 3D convolutions."""
     from spinalcordtoolbox.deepseg_sc.cnn_models_3d import load_trained_model
     dct_patch_3d = {'t2': {'size': (48, 48, 48), 'mean': 871.309, 'std': 557.916},
+                    't2_ax': {'size': (48, 48, 48), 'mean': 835.592, 'std': 528.386},
                     't2s': {'size': (48, 48, 48), 'mean': 1011.31, 'std': 678.985}}
 
     # load 3d model
@@ -410,8 +412,7 @@ def segment_3d(model_fname, contrast_type, fname_in, fname_out):
         if np.sum(patch_im):  # Check if the patch is (not) empty, which could occur after a brain detection.
             patch_norm = _normalize_data(patch_im, dct_patch_3d[contrast_type]['mean'], dct_patch_3d[contrast_type]['std'])
             patch_pred_proba = seg_model.predict(np.expand_dims(np.expand_dims(patch_norm, 0), 0))
-            pred_seg_th = (patch_pred_proba > 0.5).astype(int)[0, 0, :, :, :]
-
+            pred_seg_th = (patch_pred_proba > 0.1).astype(int)[0, 0, :, :, :]
             if zz == z_step_keep[-1]:
                 out.data[:, :, zz:] = pred_seg_th[:, :, :z_patch_extracted]
             else:
@@ -459,11 +460,12 @@ def deep_segmentation_MSlesion(fname_image, contrast_type, output_folder, ctr_al
 
     # find the spinal cord centerline - execute OptiC binary
     sct.log.info("\nFinding the spinal cord centerline...")
+    contrast_type_ctr = contrast_type.split('_')[0]
     if ctr_algo == 'svm':
         # run optic on a heatmap computed by a trained SVM+HoG algorithm
-        optic_models_fname = os.path.join(path_sct, 'data', 'optic_models', '{}_model'.format(contrast_type))
+        optic_models_fname = os.path.join(path_sct, 'data', 'optic_models', '{}_model'.format(contrast_type_ctr))
         _, centerline_filename = optic.detect_centerline(image_fname=fname_res,
-                                                         contrast_type=contrast_type,
+                                                         contrast_type=contrast_type_ctr,
                                                          optic_models_path=optic_models_fname,
                                                          folder_output=tmp_folder_path,
                                                          remove_temp_files=remove_temp_files,
@@ -477,18 +479,18 @@ def deep_segmentation_MSlesion(fname_image, contrast_type, output_folder, ctr_al
                             't2s': {'features': 8, 'dilation_layers': 3}}
 
         # load model
-        ctr_model_fname = os.path.join(path_sct, 'data', 'deepseg_sc_models', '{}_ctr.h5'.format(contrast_type))
-        ctr_model = nn_architecture_ctr(height=dct_patch_ctr[contrast_type]['size'][0],
-                                        width=dct_patch_ctr[contrast_type]['size'][1],
+        ctr_model_fname = os.path.join(path_sct, 'data', 'deepseg_sc_models', '{}_ctr.h5'.format(contrast_type_ctr))
+        ctr_model = nn_architecture_ctr(height=dct_patch_ctr[contrast_type_ctr]['size'][0],
+                                        width=dct_patch_ctr[contrast_type_ctr]['size'][1],
                                         channels=1,
                                         classes=1,
-                                        features=dct_params_ctr[contrast_type]['features'],
+                                        features=dct_params_ctr[contrast_type_ctr]['features'],
                                         depth=2,
                                         temperature=1.0,
                                         padding='same',
                                         batchnorm=True,
                                         dropout=0.0,
-                                        dilation_layers=dct_params_ctr[contrast_type]['dilation_layers'])
+                                        dilation_layers=dct_params_ctr[contrast_type_ctr]['dilation_layers'])
         ctr_model.load_weights(ctr_model_fname)
 
         # compute the heatmap
@@ -498,15 +500,15 @@ def deep_segmentation_MSlesion(fname_image, contrast_type, output_folder, ctr_al
         z_max = heatmap(filename_in=fname_res,
                         filename_out=fname_heatmap_nii,
                         model=ctr_model,
-                        patch_shape=dct_patch_ctr[contrast_type]['size'],
-                        mean_train=dct_patch_ctr[contrast_type]['mean'],
-                        std_train=dct_patch_ctr[contrast_type]['std'],
+                        patch_shape=dct_patch_ctr[contrast_type_ctr]['size'],
+                        mean_train=dct_patch_ctr[contrast_type_ctr]['mean'],
+                        std_train=dct_patch_ctr[contrast_type_ctr]['std'],
                         brain_bool=brain_bool)
 
         # run optic on the heatmap
         centerline_filename = sct.add_suffix(fname_heatmap, "_ctr")
         heatmap2optic(fname_heatmap=fname_heatmap_nii,
-                      lambda_value=7 if contrast_type == 't2s' else 1,
+                      lambda_value=7 if contrast_type_ctr == 't2s' else 1,
                       fname_out=centerline_filename,
                       z_max=z_max if brain_bool else None)
 
@@ -563,7 +565,7 @@ def deep_segmentation_MSlesion(fname_image, contrast_type, output_folder, ctr_al
 
     # binarize the resampled image to remove interpolation effects
     sct.log.info("\nBinarizing the segmentation to avoid interpolation effects...")
-    thr = '0.5'
+    thr = '0.1'
     sct.run(['sct_maths', '-i', fname_seg_RPI, '-bin', thr, '-o', fname_seg_RPI], verbose=0)
 
     # reorient to initial orientation
@@ -602,7 +604,7 @@ def main():
     ctr_algo = arguments["-centerline"]
 
     brain_bool = bool(int(arguments["-brain"]))
-    if "-brain" not in args and contrast_type in ['t2s', 'dwi']:
+    if "-brain" not in args and contrast_type in ['t2s', 't2_ax']:
         brain_bool = False
 
     if '-ofolder' not in args:
