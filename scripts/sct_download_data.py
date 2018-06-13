@@ -120,7 +120,8 @@ def main(args=None):
     try:
         tmp_file = download_data(url, verbose)
     except (KeyboardInterrupt):
-        sct.printv('\nERROR: User canceled process.\n', 1, 'error')
+        sct.printv('\nERROR: User canceled process.\n', 1, type='warning')
+        return 1
 
     # Check if folder already exists
     sct.printv('\nCheck if folder already exists...', verbose)
@@ -214,4 +215,6 @@ def download_data(urls, verbose):
 
 if __name__ == "__main__":
     sct.init_sct()
-    main()
+    res = main()
+    raise SystemExit(res)
+
