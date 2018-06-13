@@ -106,6 +106,11 @@ def main(args=None):
                               'https://www.neuro.polymtl.ca/_media/downloads/sct/20180205_deepseg_gm_models.zip'],
         'deepseg_sc_models': ['https://osf.io/avf97/?action=download',
                               'https://www.neuro.polymtl.ca/_media/downloads/sct/20180610_deepseg_sc_models.zip']
+        'deepseg_lesion_models': ['https://osf.io/eg7v9/?action=download',
+                              'https://www.neuro.polymtl.ca/_media/downloads/sct/20180613_deepseg_lesion_models.zip']
+
+
+                              
     }
 
     # Get parser info
