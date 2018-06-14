@@ -36,10 +36,20 @@ def get_parser():
         description="Name of the dataset.",
         mandatory=True,
         example=[
-            'sct_example_data', 'sct_testing_data', 'PAM50', 'MNI-Poly-AMU',
-            'gm_model', 'optic_models', 'pmj_models', 'binaries_debian',
-            'binaries_centos', 'binaries_osx', 'course_hawaii17',
-            'deepseg_gm_models', 'deepseg_sc_models'
+            'sct_example_data',
+            'sct_testing_data',
+            'course_hawaii17',
+            'course_paris18', 
+            'PAM50',
+            'MNI-Poly-AMU',
+            'gm_model',
+            'optic_models',
+            'pmj_models',
+            'binaries_debian',
+            'binaries_centos',
+            'binaries_osx', 
+            'deepseg_gm_models',
+            'deepseg_sc_models'
         ])
     parser.add_option(
         name="-v",
@@ -90,10 +100,12 @@ def main(args=None):
         'binaries_osx': ['https://osf.io/hsa5r/?action=download',
                          'https://www.neuro.polymtl.ca/_media/downloads/sct/20170915_sct_binaries_osx.tar.gz'],
         'course_hawaii17': 'https://osf.io/6exht/?action=download',
+        'course_paris18': ['https://osf.io/9bmn5/?action=download',
+                           'https://www.neuro.polymtl.ca/_media/downloads/sct/20180612_sct_course-paris18.zip'],
         'deepseg_gm_models': ['https://osf.io/b9y4x/?action=download',
                               'https://www.neuro.polymtl.ca/_media/downloads/sct/20180205_deepseg_gm_models.zip'],
-        'deepseg_sc_models': ['https://osf.io/mg8wr/?action=download',
-                              'https://www.neuro.polymtl.ca/_media/downloads/sct/20180211_deepseg_sc_models.zip']
+        'deepseg_sc_models': ['https://osf.io/avf97/?action=download',
+                              'https://www.neuro.polymtl.ca/_media/downloads/sct/20180610_deepseg_sc_models.zip']
     }
 
     # Get parser info
@@ -169,9 +181,15 @@ def download_data(urls, verbose):
             session.mount('https://', HTTPAdapter(max_retries=retry))
             response = session.get(url, stream=True)
 
-            _, content = cgi.parse_header(response.headers['Content-Disposition'])
-            tmp_path = os.path.join(tempfile.mkdtemp(), content['filename'])
-            sct.printv('Downloading %s...' % content['filename'], verbose)
+            if "Content-Disposition" in response.headers:
+                _, content = cgi.parse_header(response.headers['Content-Disposition'])
+                filename = content["filename"]
+            else:
+                sct.printv("Unexpected: link doesn't provide a filename", type="warning")
+                continue
+
+            tmp_path = os.path.join(tempfile.mkdtemp(), filename)
+            sct.printv('Downloading %s...' % filename, verbose)
 
             with open(tmp_path, 'wb') as tmp_file:
                 total = int(response.headers.get('content-length', 1))
@@ -188,8 +206,8 @@ def download_data(urls, verbose):
                 tqdm_bar.close()
             return tmp_path
 
-        except requests.RequestException as err:
-            sct.printv(err.message, type='warning')
+        except Exception as e:
+            sct.printv("Link download error, trying next mirror (error was: %s)" % e, type='warning')
     else:
         sct.printv('\nDownload error', type='error')
 
