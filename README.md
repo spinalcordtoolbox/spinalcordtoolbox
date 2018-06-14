@@ -83,6 +83,13 @@ cd sct
 ./install_sct
 ~~~
 
+To update SCT to the latest master version:
+
+~~~
+git pull
+./install_sct
+~~~
+
 ### Using virtual machine
 
 For more flexibility, you can also run the toolbox under a VM we provide. Useful information below:
