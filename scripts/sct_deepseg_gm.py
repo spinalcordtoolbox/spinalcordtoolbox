@@ -23,7 +23,9 @@ def get_parser():
 
     parser.add_option(name="-i",
                       type_value="file",
-                      description="Image filename to segment (3D volume). Contrast must be similar to T2*-weighted, i.e., WM dark, GM bright and CSF bright.",
+                      description="Image filename to segment (3D volume). "
+                                  "Contrast must be similar to T2*-weighted, "
+                                  "i.e., WM dark, GM bright and CSF bright.",
                       mandatory=True,
                       example='t2s.nii.gz')
 
@@ -37,17 +39,28 @@ def get_parser():
 
     parser.add_option(name='-qc',
                       type_value='folder_creation',
-                      description='The path where the quality control generated content will be saved',
+                      description="The path where the quality control generated "
+                                  "content will be saved",
                       default_value=None)
 
     parser.add_option(name="-m",
                       type_value='multiple_choice',
                       description="Model to use (large or challenge)."
                                   "The model 'large' will be slower but "
-                                  "will yield better results. The model 'challenge' was built using data from the following challenge: goo.gl/h4AVar.",
+                                  "will yield better results. The model "
+                                  "'challenge' was built using data from "
+                                  "the following challenge: goo.gl/h4AVar.",
                       mandatory=False,
                       example=['large', 'challenge'],
                       default_value='large')
+
+    parser.add_option(name="-thr",
+                      type_value='float',
+                      description="Threshold to apply in the segmentation "
+                                  "predictions, use 0 (zero) to disable it.",
+                      mandatory=False,
+                      default_value=0.999,
+                      example=0.999)
 
     parser.add_option(name='-igt',
                       type_value='image_nifti',
@@ -98,14 +111,21 @@ def run_main():
 
     verbose = arguments["-v"]
     model_name = arguments["-m"]
+    threshold = arguments['-thr']
+
+    if threshold > 1.0 or threshold < 0.0:
+        raise RuntimeError("Threshold should be between 0.0 and 1.0.")
+
+    # Threshold zero means no thresholding
+    if threshold == 0.0:
+        threshold = None
 
     out_fname = deepseg_gm.segment_file(input_filename, output_filename,
-                                        model_name, int(verbose))
+                                        model_name, threshold, int(verbose))
 
     path_qc = arguments.get("-qc", None)
     if path_qc is not None:
         generate_qc(input_filename, out_fname, sys.argv[1:], os.path.abspath(path_qc))
-
 
     sct.display_viewer_syntax([input_filename, format(out_fname)],
                               colormaps=['gray', 'red'],
