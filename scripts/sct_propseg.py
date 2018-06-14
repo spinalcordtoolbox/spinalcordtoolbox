@@ -10,16 +10,15 @@
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
-from msct_parser import Parser
-import sys
-import sct_utils as sct
 import os
-import shutil
-from scipy import ndimage as ndi
-import numpy as np
-from sct_image import orientation
-import sct_image
+import sys
 
+import numpy as np
+import sct_image
+import sct_utils as sct
+from msct_parser import Parser
+from scipy import ndimage as ndi
+from sct_image import orientation
 from spinalcordtoolbox.centerline import optic
 
 
@@ -226,7 +225,6 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       description="output: low-resolution mesh",
                       mandatory=False)
 
-
     parser.usage.addSection("\nOptions helping the segmentation")
     parser.add_option(name="-init-centerline",
                       type_value="image_nifti",
@@ -290,7 +288,7 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       description='File name of ground-truth segmentation.',
                       mandatory=False)
 
-    ### DEPRECATED OPTIONS
+    # DEPRECATED OPTIONS
     parser.add_option(name="-detect-nii",
                       type_value=None,
                       description="output: spinal cord detection as a nifti image",
@@ -329,14 +327,14 @@ def generate_qc(fn_in, fn_seg, args, path_qc):
     import spinalcordtoolbox.reports.slice as qcslice
 
     qc.add_entry(
-     src=fn_in,
-     process="sct_propseg",
-     args=args,
-     path_qc=path_qc,
-     plane='Axial',
-     qcslice=qcslice.Axial([Image(fn_in), Image(fn_seg)]),
-     qcslice_operations=[qc.QcImage.listed_seg],
-     qcslice_layout=lambda x: x.mosaic(),
+        src=fn_in,
+        process="sct_propseg",
+        args=args,
+        path_qc=path_qc,
+        plane='Axial',
+        qcslice=qcslice.Axial([Image(fn_in), Image(fn_seg)]),
+        qcslice_operations=[qc.QcImage.listed_seg],
+        qcslice_layout=lambda x: x.mosaic(),
     )
 
 
@@ -416,6 +414,9 @@ if __name__ == "__main__":
             use_optic = False
     if "-init" in arguments:
         init_option = float(arguments["-init"])
+        if init_option < 0:
+            sct.log.error('Command-line usage error: ' + str(init_option) + " is not a valid value for '-init'")
+            sys.exit(1)
     if "-init-mask" in arguments:
         if str(arguments["-init-mask"]) == "viewer":
             use_viewer = "mask"
