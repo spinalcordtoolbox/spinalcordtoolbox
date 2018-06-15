@@ -382,6 +382,7 @@ if [ "${SCT_DIR}" != "${SCT_SOURCE}" ]; then
   mkdir -p ${SCT_DIR}/install
   cp -vRp ${SCT_SOURCE}/install ${SCT_DIR}
   cp -vRp ${SCT_SOURCE}/testing ${SCT_DIR}/.
+  mkdir -p ${SCT_DIR}/documentation/imgs && cp -vRp ${SCT_SOURCE}/documentation/imgs/* ${SCT_DIR}/documentation/imgs
 else
   echo -e "\nSkipping copy of source files (source and destination folders are the same)"
 fi
