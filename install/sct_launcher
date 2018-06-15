@@ -106,8 +106,8 @@ if [[ "${0}" == "${BASH_SOURCE}" ]] && [[ -n "${1}"  ]]; then
   python ${SCT_DIR}/scripts/${@}
 
   end=$(date +%s)
-  difftimelps=$(($end-$start))
-  echo "Total elapsed time was : $(($difftimelps / 60)) minutes and $(($difftimelps % 60)) "
+  runtime=$(python -c "print '%u:%02u' % ((${end} - ${start})/60, (${end} - ${start})%60)")
+  echo "Total elapsed time (mm:ss): $runtime"
 
 else
   echo Sourcing sct_laucher in your environment ${SCT_DIR}
