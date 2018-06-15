@@ -57,40 +57,48 @@ class bcolors:
 # PARSER
 # ==========================================================================================
 def get_parser():
-    # initialize default param
+    import argparse
+
     param_default = Param()
-    # Initialize the parser
-    parser = Parser(__file__)
-    parser.usage.set_description(
-        'Crash and integrity testing for functions of the Spinal Cord Toolbox. Internet connection is required for downloading testing data.')
-    parser.add_option(name="-f",
-                      type_value="str",
-                      description="Test this specific script (do not add extension).",
-                      mandatory=False,
-                      example='sct_propseg')
-    parser.add_option(name="-d",
-                      type_value="multiple_choice",
-                      description="Download testing data.",
-                      mandatory=False,
-                      default_value=param_default.download,
-                      example=['0', '1'])
-    parser.add_option(name="-p",
-                      type_value="folder",
-                      description='Path to testing data. NB: no need to set if using "-d 1"',
-                      mandatory=False,
-                      default_value=param_default.path_data)
-    parser.add_option(name="-r",
-                      type_value="multiple_choice",
-                      description='Remove temporary files.',
-                      mandatory=False,
-                      default_value='1',
-                      example=['0', '1'])
-    parser.add_option(name="-j",
-                      type_value="int",
-                      description="# of simultaneous tests to run (jobs). -1 means # of cores",
-                      mandatory=False,
-                      default_value='1',
-                      )
+
+    parser = argparse.ArgumentParser(
+     description="Crash and integrity testing for functions of the Spinal Cord Toolbox. Internet connection is required for downloading testing data.",
+    )
+
+    parser.add_argument("--function", "-f",
+     help="Test this specific script (eg. 'sct_propseg').",
+     nargs="+",
+    )
+
+    def arg_jobs(s):
+        jobs = int(s)
+        if jobs > 0:
+            pass
+        elif jobs == -1:
+            jobs = None
+        else:
+            raise ValueError()
+        return jobs
+
+    parser.add_argument("--download", "-d",
+     choices=("0", "1"),
+     default=param_default.download,
+    )
+    parser.add_argument("--path", "-p",
+     help='Path to testing data. NB: no need to set if using "-d 1"',
+     default=param_default.path_data,
+    )
+    parser.add_argument("--remove-temps", "-r",
+     choices=("0", "1"),
+     help='Remove temporary files.',
+     default=param_default.remove_tmp_file,
+    )
+    parser.add_argument("--jobs", "-j",
+     type=arg_jobs,
+     help="# of simultaneous tests to run (jobs). -1 means # of cores",
+     default=arg_jobs(-1),
+    )
+
     return parser
 
 
@@ -143,26 +151,14 @@ def main(args=None):
 
     # get parser info
     parser = get_parser()
-    arguments = parser.parse(args)
-    if '-d' in arguments:
-        param.download = int(arguments['-d'])
-    if '-p' in arguments:
-        param.path_data = arguments['-p']
-    if '-f' in arguments:
-        param.function_to_test = arguments['-f']
-    if '-r' in arguments:
-        param.remove_tmp_file = int(arguments['-r'])
 
-    jobs = int(arguments.get("-j", 1))
-    if jobs > 0:
-        pass
-    elif jobs == -1:
-        jobs = None
-    else:
-        sct.log("Command-line usage error: -j takes a value >= -1", type="error")
+    arguments = parser.parse_args(args)
 
-    # path_data = param.path_data
-    function_to_test = param.function_to_test
+    param.download = int(arguments.download)
+    param.path_data = arguments.path
+    functions_to_test = arguments.function
+    param.remove_tmp_file = int(arguments.remove_temps)
+    jobs = arguments.jobs
 
     start_time = time.time()
 
@@ -183,12 +179,11 @@ def main(args=None):
 
     # get list of all scripts to test
     list_functions = fill_functions()
-    if function_to_test:
-        if function_to_test in list_functions:
-            # overwrite variable to include only the function to test
-            list_functions = [function_to_test]
-        else:
-            sct.printv('ERROR: Function "%s" is not part of the list of testing functions' % function_to_test, type='error')
+    if functions_to_test:
+        for f in functions_to_test:
+            if f not in list_functions:
+                sct.printv('Command-line usage error: Function "%s" is not part of the list of testing functions' % function_to_test, type='error')
+        list_functions = functions_to_test
 
     if jobs != 1:
         pool = multiprocessing.Pool(processes=jobs)
