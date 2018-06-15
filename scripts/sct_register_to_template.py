@@ -710,27 +710,36 @@ def project_labels_on_spinalcord(fname_label, fname_seg):
     centerline_x, centerline_y, centerline_z, centerline_derivx, centerline_derivy, centerline_derivz = smooth_centerline(
         im_seg, algo_fitting="hanning", type_window="hanning", window_length=50, nurbs_pts_number=3000,
         phys_coordinates=False, all_slices=True)
+    # convert pixel into physical coordinates
+    centerline_xyz_transposed = [im_seg.transfo_pix2phys([[centerline_x[i], centerline_y[i], centerline_z[i]]])[0]
+                                 for i in range(len(centerline_x))]
+    # transpose list
+    centerline_phys_x, centerline_phys_y, centerline_phys_z = map(list, map(None, *centerline_xyz_transposed))
     # get center of mass of label
     labels = im_label.getCoordinatesAveragedByValue()
-    # initialize image of projected labels
-    im_label_projected = im_label.copy()
+    # initialize image of projected labels. Note that we use the space of the seg (not label).
+    im_label_projected = im_seg.copy()
     im_label_projected.data = np.zeros(im_label_projected.data.shape, dtype='uint8')
     # loop across label values
     for label in labels:
+        # convert pixel into physical coordinates for the label
+        label_phys_x, label_phys_y, label_phys_z = im_label.transfo_pix2phys([[label.x, label.y, label.z]])[0]
         # calculate distance between label and each point of the centerline
-        distance_centerline = [np.linalg.norm([centerline_x[i] - label.x,
-                                               centerline_y[i] - label.y,
-                                               centerline_z[i] - label.z]) for i in range(len(centerline_x))]
+        distance_centerline = [np.linalg.norm([centerline_phys_x[i] - label_phys_x,
+                                               centerline_phys_y[i] - label_phys_y,
+                                               centerline_phys_z[i] - label_phys_z]) for i in range(len(centerline_x))]
         # get the index corresponding to the min distance
         ind_min_distance = np.argmin(distance_centerline)
-        # get centerline coordinate as int
-        [minx, miny, minz] = [int(round(centerline_x[ind_min_distance])),
-                              int(round(centerline_y[ind_min_distance])),
-                              int(round(centerline_z[ind_min_distance]))]
+        # get centerline coordinate (in physical space)
+        [min_phy_x, min_phy_y, min_phy_z] = [centerline_phys_x[ind_min_distance],
+                                             centerline_phys_y[ind_min_distance],
+                                             centerline_phys_z[ind_min_distance]]
+        # convert coordinate to voxel space
+        minx, miny, minz = im_seg.transfo_phys2pix([[min_phy_x, min_phy_y, min_phy_z]])[0]
         # use that index to assign projected label in the centerline
         im_label_projected.data[minx, miny, minz] = label.value
     # re-orient projected labels to native orientation and save
-    im_label_projected.change_orientation(native_orient)
+    im_label_projected.change_orientation(native_orient)  # note: native_orient refers to im_seg (not im_label)
     im_label_projected.setFileName(fname_label_projected)
     im_label_projected.save()
     return fname_label_projected
