@@ -61,7 +61,7 @@ if [ -z "${SCT_LOADED_ONCE}" ]; then
   export SCT_DIR=${SCT_DIR%/bin}
   export SCT_PYTHON=${SCT_DIR}/python
   export SCT_VERSION=$(cat $SCT_DIR/version.txt)
-
+  
   export PATH
   export PYTHONPATH
   export ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=${logicalCpuCount}
@@ -101,14 +101,8 @@ if [ -z "${SCT_LOADED_ONCE}" ]; then
 fi
 if [[ "${0}" == "${BASH_SOURCE}" ]] && [[ -n "${1}"  ]]; then
   echo "Running ${SCT_DIR}/scripts/${@}"
-  start=$(date +%s)
-
-  python ${SCT_DIR}/scripts/${@}
-
-  end=$(date +%s)
-  runtime=$(python -c "print '%u:%02u' % ((${end} - ${start})/60, (${end} - ${start})%60)")
-  echo "Total elapsed time (mm:ss): $runtime"
-
+   python ${SCT_DIR}/scripts/${@}
 else
   echo Sourcing sct_laucher in your environment ${SCT_DIR}
 fi
+
