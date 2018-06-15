@@ -11,7 +11,7 @@
 # TODO: find a way to be able to have list of arguments and loop across list elements.
 # TODO: do something about this ugly 'output.nii.gz'
 
-import sys, io, os, time, random, copy, shlex, importlib, shutil
+import sys, io, os, time, random, copy, shlex, importlib, multiprocessing
 
 from pandas import DataFrame
 
@@ -85,8 +85,49 @@ def get_parser():
                       mandatory=False,
                       default_value='1',
                       example=['0', '1'])
+    parser.add_option(name="-j",
+                      type_value="int",
+                      description="# of simultaneous tests to run (jobs). -1 means # of cores",
+                      mandatory=False,
+                      default_value='1',
+                      )
     return parser
 
+
+def process_function(fname, param):
+    """
+    """
+    param.function_to_test = fname
+    # display script name
+    # load modules of function to test
+    module_testing = importlib.import_module('test_' + fname)
+    # initialize default parameters of function to test
+    param.args = []
+    # param.list_fname_gt = []
+    # param.fname_groundtruth = ''
+    param = module_testing.init(param)
+    # loop over parameters to test
+    list_status_function = []
+    list_output = []
+    for i in range(0, len(param.args)):
+        param_test = copy.deepcopy(param)
+        param_test.default_args = param.args
+        param_test.args = param.args[i]
+        param_test.test_integrity = True
+        # if list_fname_gt is not empty, assign it
+        # if param_test.list_fname_gt:
+        #     param_test.fname_gt = param_test.list_fname_gt[i]
+        # test function
+        try:
+            param_test = test_function(param_test)
+        except Exception as e:
+            list_status_function.append(1)
+            list_output.append("TODO exception: %s" % e)
+        else:
+            list_status_function.append(param_test.status)
+            list_output.append(param_test.output)
+
+    return list_output, list_status_function
 
 # Main
 # ==========================================================================================
@@ -111,6 +152,14 @@ def main(args=None):
         param.function_to_test = arguments['-f']
     if '-r' in arguments:
         param.remove_tmp_file = int(arguments['-r'])
+
+    jobs = int(arguments.get("-j", 1))
+    if jobs > 0:
+        pass
+    elif jobs == -1:
+        jobs = None
+    else:
+        sct.log("Command-line usage error: -j takes a value >= -1", type="error")
 
     # path_data = param.path_data
     function_to_test = param.function_to_test
@@ -141,38 +190,23 @@ def main(args=None):
         else:
             sct.printv('ERROR: Function "%s" is not part of the list of testing functions' % function_to_test, type='error')
 
-    # loop across functions and run tests
-    for f in list_functions:
-        param.function_to_test = f
-        # display script name
+    if jobs != 1:
+        pool = multiprocessing.Pool(processes=jobs)
+
+        results = list()
+        # loop across functions and run tests
+        for f in list_functions:
+            res = pool.apply_async(process_function, (f, param,))
+            results.append(res)
+
+    for idx_function, f in enumerate(list_functions):
         print_line('Checking ' + f)
-        # load modules of function to test
-        module_testing = importlib.import_module('test_' + f)
-        # initialize default parameters of function to test
-        param.args = []
-        # param.list_fname_gt = []
-        # param.fname_groundtruth = ''
-        param = module_testing.init(param)
-        # loop over parameters to test
-        list_status_function = []
-        list_output = []
-        for i in range(0, len(param.args)):
-            param_test = copy.deepcopy(param)
-            param_test.default_args = param.args
-            param_test.args = param.args[i]
-            param_test.test_integrity = True
-            # if list_fname_gt is not empty, assign it
-            # if param_test.list_fname_gt:
-            #     param_test.fname_gt = param_test.list_fname_gt[i]
-            # test function
-            try:
-                param_test = test_function(param_test)
-            except Exception as e:
-                list_status_function.append(1)
-                list_output.append("TODO exception: %s" % e)
-            else:
-                list_status_function.append(param_test.status)
-                list_output.append(param_test.output)
+        if jobs == 1:
+            res = process_function(f, param)
+        else:
+            res = results[idx_function].get()
+
+        list_output, list_status_function = res
         # manage status
         if any(list_status_function):
             if 1 in list_status_function:
