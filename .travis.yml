@@ -62,14 +62,16 @@ script:
 #  - sct_check_dependencies
 # test functions & integrity
   - bash -c "sudo apt-get install -qq libalglib-dev libinsighttoolkit4-dev; apt-cache show libvtk6-dev && sudo apt-get install -qq libvtk6-dev; apt-cache show libvtk7-dev && sudo apt-get install -qq libvtk7-dev; cd $HOME/build/neuropoly/spinalcordtoolbox/dev/isct_propseg; mkdir -p build; cd build; cmake ..; make; echo"
-  - sct_testing -d 1
+  - pip install coverage
+  - SCT_PYTHON_WRAPPER="coverage run --parallel-mode --concurrency=multiprocessing" sct_testing -d 1
 #  - python create_package.py -s ${TRAVIS_OS_NAME}  # test package creation
 #  - cd ../spinalcordtoolbox_v*
 #  - yes | ./install_sct  # test installation of package
+  - coverage combine
   - ./unit_testing.sh
   - bash -c "pip install sphinx sphinxcontrib.programoutput; cd $HOME/build/neuropoly/spinalcordtoolbox/documentation/sphinx; make html; echo"
   - echo "This is the end, thanks for reading up to here."
-  - pip install coveralls coverage
+  - pip install coveralls
 
 after_success:
   - CI=true TRAVIS=true coveralls
