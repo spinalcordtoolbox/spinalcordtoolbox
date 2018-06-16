@@ -65,12 +65,11 @@ script:
   - pip install coverage
   - bash -c "echo 'import coverage; cov = coverage.process_startup()' > sitecustomize.py"
   - bash -c 'echo -ne "[run]\nconcurrency = multiprocessing\nparallel = True\n" > .coveragerc'
-  - mkdir -p tmp
-  - TMPDIR="$PWD/tmp" COVERAGE_PROCESS_START="$PWD/.coveragerc" PYTHONPATH="$PWD" sct_testing -d 1
+  - COVERAGE_PROCESS_START="$PWD/.coveragerc" COVERAGE_FILE="$PWD/.coverage" PYTHONPATH="$PWD" sct_testing -d 1
 #  - python create_package.py -s ${TRAVIS_OS_NAME}  # test package creation
 #  - cd ../spinalcordtoolbox_v*
 #  - yes | ./install_sct  # test installation of package
-  - coverage combine tmp/*/.coverage*
+  - coverage combine
   - ./unit_testing.sh
   - bash -c "pip install sphinx sphinxcontrib.programoutput; cd $HOME/build/neuropoly/spinalcordtoolbox/documentation/sphinx; make html; echo"
   - echo "This is the end, thanks for reading up to here."
