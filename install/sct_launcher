@@ -101,15 +101,11 @@ if [ -z "${SCT_LOADED_ONCE}" ]; then
 fi
 
 
-if [ -z "${SCT_PYTHON_WRAPPER}" ]; then
-  SCT_PYTHON_WRAPPER="python"
-fi
-
 if [[ "${0}" == "${BASH_SOURCE}" ]] && [[ -n "${1}"  ]]; then
   echo "Running ${SCT_DIR}/scripts/${@}"
   start=$(date +%s)
 
-  $SCT_PYTHON_WRAPPER ${SCT_DIR}/scripts/${@}
+  python ${SCT_DIR}/scripts/${@}
 
   end=$(date +%s)
   difftimelps=$(($end-$start))
