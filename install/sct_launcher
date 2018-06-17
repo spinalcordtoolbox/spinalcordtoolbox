@@ -107,7 +107,8 @@ if [[ "${0}" == "${BASH_SOURCE}" ]] && [[ -n "${1}"  ]]; then
 
   end=$(date +%s)
   difftimelps=$(($end-$start))
-  echo "Total elapsed time was : $(($difftimelps / 60)) minutes and $(($difftimelps % 60)) "
+  echo "Total processing time: $(($difftimelps / 60)) min $(($difftimelps % 60)) s"
+  echo
 
 else
   echo Sourcing sct_laucher in your environment ${SCT_DIR}
