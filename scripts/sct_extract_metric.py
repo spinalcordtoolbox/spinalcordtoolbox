@@ -461,15 +461,9 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, p
             fixed_label = [label_to_fix[0], label_to_fix_name, label_to_fix[1]]
             sct.printv('\n*' + fixed_label[0] + ', ' + fixed_label[1] + ': ' + fixed_label[2] + ' (value fixed by user)', 1, 'info')
 
-        # save results in the selected output file type
-        if perslice:
-            fname_output_tmp = sct.add_suffix(fname=fname_output, suffix='_z'+slicegroup)
-        else:
-            fname_output_tmp = fname_output
-
         save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_labels_names, combined_labels_names,
                      slicegroup, indiv_labels_value, indiv_labels_std, indiv_labels_fract_vol,
-                     combined_labels_value, combined_labels_std, combined_labels_fract_vol, fname_output_tmp, fname_data,
+                     combined_labels_value, combined_labels_std, combined_labels_fract_vol, fname_output, fname_data,
                      method, overwrite, fname_normalizing_label, actual_vert_levels, warning_vert_levels, fixed_label)
 
         # display results
