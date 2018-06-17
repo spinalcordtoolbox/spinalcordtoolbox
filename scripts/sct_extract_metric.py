@@ -13,6 +13,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+# TODO: move to csv output. However, we need to change the way z is represented: currently it is a list separated by ,. Maybe we can change it for: ;. e.g.: 0;1;2;3
 # TODO: remove fix_label_value() usage because it is used in isolated case and introduces confusion.
 # TODO (not urgent): vertebral levels selection should only consider voxels of the selected levels in slices where two different vertebral levels coexist (and not the whole slice)
 
@@ -467,7 +468,7 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, p
                      method, overwrite, fname_normalizing_label, actual_vert_levels, warning_vert_levels, fixed_label)
 
         # display results
-        # TODO: simply print out the created csv file
+        # TODO: simply print out the created csv file when we switch to csv output
         sct.printv('\nResults:\nID, label name [total fractional volume of the label in number of voxels]:    metric value +/- metric STDEV within label', 1)
         for i_label_user in labels_id_user:
             if i_label_user <= max(indiv_labels_ids):
