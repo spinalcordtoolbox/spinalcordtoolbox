@@ -413,19 +413,6 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
         slices_of_interest, actual_vert_levels, warning_vert_levels = get_slices_matching_with_vertebral_levels(data, vertebral_levels, data_vertebral_labeling, verbose)
         list_levels = num_parser(vertebral_levels)
 
-    # select slice of interest by cropping data and labels
-    # TODO: refactor to simplify with the new perslice option (currently duplicated action)
-    # if slices_of_interest:
-    #     data, slices_list = remove_slices(data, slices_of_interest)
-    #     for i_label in range(0, nb_labels):
-    #         labels[i_label], slices_list = remove_slices(labels[i_label], slices_of_interest)
-    #     if fname_normalizing_label:  # if the "normalization" option was selected,
-    #         normalizing_label[0], slices_list = remove_slices(normalizing_label[0], slices_of_interest)
-    #     if fname_mask_weight:  # if the flag -mask-weighted was specified,
-    #         im_weight.data, slices_list = remove_slices(im_weight.data, slices_of_interest)
-    # else:
-    #     slices_list = np.arange(nz).tolist()
-
     # parse clusters used for a priori (map method)
     clusters_all_labels = ml_clusters
     combined_labels_groups_all_IDs = combined_labels_id_groups
@@ -436,13 +423,6 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
 
     if slices_of_interest:
         slices_list = num_parser(slices_of_interest)
-        # data, slices_list = remove_slices(data, slices_of_interest)
-        # for i_label in range(0, nb_labels):
-        #     labels[i_label], slices_list = remove_slices(labels[i_label], slices_of_interest)
-        # if fname_normalizing_label:  # if the "normalization" option was selected,
-        #     normalizing_label[0], slices_list = remove_slices(normalizing_label[0], slices_of_interest)
-        # if fname_mask_weight:  # if the flag -mask-weighted was specified,
-        #     im_weight.data, slices_list = remove_slices(im_weight.data, slices_of_interest)
     else:
         slices_list = np.arange(nz).tolist()
 
@@ -455,7 +435,6 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
 
     # if user selected vertebral levels and asked for each separate levels
     # slicegroups = ['1,2', '3,4']
-    # TODO: add in doc that perlevel overrules perslice
     if vertebral_levels and perlevel:
         # initialize slicegroups (will be redefined below)
         slicegroups = []
@@ -755,23 +734,6 @@ def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_la
     """
 
     sct.printv('\nSaving results in: ' + fname_output + ' ...')
-
-    # define vertebral levels and slices fields
-    # if actual_vert:
-    #     vertebral_levels_field = str(int(actual_vert[0])) + ' to ' + str(int(actual_vert[1]))
-    #     if warning_vert_levels:
-    #         for i in range(0, len(warning_vert_levels)):
-    #             vertebral_levels_field += ' [' + str(warning_vert_levels[i]) + ']'
-    # else:
-    #     if slices_of_interest != '':
-    #         vertebral_levels_field = 'nan'
-    #     else:
-    #         vertebral_levels_field = 'ALL'
-    #
-    # if slices_of_interest != '':
-    #     slices_of_interest_field = slices_of_interest
-    # else:
-    #     slices_of_interest_field = 'ALL'
 
     # Format vertebral levels
     if isinstance(vert_levels, int):
