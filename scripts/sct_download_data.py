@@ -49,7 +49,8 @@ def get_parser():
             'binaries_centos',
             'binaries_osx', 
             'deepseg_gm_models',
-            'deepseg_sc_models'
+            'deepseg_sc_models',
+            'deepseg_lesion_models'
         ])
     parser.add_option(
         name="-v",
