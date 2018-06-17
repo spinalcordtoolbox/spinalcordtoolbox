@@ -250,8 +250,6 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
     """
 
     # Initialization
-    # actual_vert_levels = None  # variable used in case the vertebral levels asked by the user don't correspond exactly to the vertebral levels available in the metric data
-    # warning_vert_levels = None  # variable used to warn the user in case the vertebral levels he asked don't correspond exactly to the vertebral levels available in the metric data
     verbose = param_default.verbose
     adv_param = param_default.adv_param
     normalizing_label = []
