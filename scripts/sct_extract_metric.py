@@ -26,7 +26,7 @@ import numpy as np
 
 from spinalcordtoolbox.metadata import read_label_file, parse_id_group
 from spinalcordtoolbox.utils import num_parser
-from spinalcordtoolbox.template import get_slices_from_vertebral_levels
+from spinalcordtoolbox.template import get_slices_from_vertebral_levels, get_vertebral_level_from_slice
 
 import sct_utils as sct
 from sct_image import get_orientation_3d, set_orientation
@@ -500,6 +500,8 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
         if vertebral_levels:
             if perlevel:
                 vert_levels = list_levels[slicegroups.index(slicegroup)]
+            elif perslice:
+                vert_levels = get_vertebral_level_from_slice(im_vertebral_labeling, ind_slicegroup[0])
             else:
                 vert_levels = list_levels
         else:
