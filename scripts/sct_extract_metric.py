@@ -444,7 +444,7 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, p
 
     # if user selected vertebral levels and asked for each separate levels
     # slicegroups = ['1,2', '3,4']
-    # TODO: add in doc that pervertlevel overrules perslice
+    # TODO: add in doc that perlevel overrules perslice
     perlevel = 1
     if vertebral_levels and perlevel:
         # initialize slicegroups (will be redefined below)
@@ -487,10 +487,20 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, p
             fixed_label = [label_to_fix[0], label_to_fix_name, label_to_fix[1]]
             sct.printv('\n*' + fixed_label[0] + ', ' + fixed_label[1] + ': ' + fixed_label[2] + ' (value fixed by user)', 1, 'info')
 
+        # deal with output display
+        if vertebral_levels:
+            if perlevel:
+                vert_levels = list_levels[slicegroups.index(slicegroup)]
+            else:
+                vert_levels = list_levels
+        else:
+            vert_levels = None
+
+        # write metrics into file
         save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_labels_names, combined_labels_names,
                      slicegroup, indiv_labels_value, indiv_labels_std, indiv_labels_fract_vol,
                      combined_labels_value, combined_labels_std, combined_labels_fract_vol, fname_output, fname_data,
-                     method, overwrite, fname_normalizing_label, actual_vert_levels, warning_vert_levels, fixed_label)
+                     method, overwrite, fname_normalizing_label, fixed_label, vert_levels=vert_levels)
 
         # display results
         # TODO: simply print out the created csv file when we switch to csv output
@@ -705,27 +715,61 @@ def remove_slices(data_to_crop, slices_of_interest):
     return data_cropped, slices_list
 
 
-def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_labels_names, combined_labels_names, slices_of_interest, indiv_labels_value, indiv_labels_std, indiv_labels_fract_vol, combined_labels_value, combined_labels_std, combined_labels_fract_vol, fname_output, fname_data, method, overwrite, fname_normalizing_label, actual_vert=None, warning_vert_levels=None, fixed_label=None):
-    """Save results in the output type selected by user."""
+def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_labels_names, combined_labels_names,
+                 slices_of_interest, indiv_labels_value, indiv_labels_std, indiv_labels_fract_vol,
+                 combined_labels_value, combined_labels_std, combined_labels_fract_vol, fname_output, fname_data,
+                 method, overwrite, fname_normalizing_label, fixed_label=None, vert_levels=None):
+    """
+    Save results in the output type selected by user
+    :param labels_id_user:
+    :param indiv_labels_ids:
+    :param combined_labels_ids:
+    :param indiv_labels_names:
+    :param combined_labels_names:
+    :param slices_of_interest:
+    :param indiv_labels_value:
+    :param indiv_labels_std:
+    :param indiv_labels_fract_vol:
+    :param combined_labels_value:
+    :param combined_labels_std:
+    :param combined_labels_fract_vol:
+    :param fname_output:
+    :param fname_data:
+    :param method:
+    :param overwrite:
+    :param fname_normalizing_label:
+    :param fixed_label:
+    :param vert_levels: int, list of int, or None
+    :return:
+    """
 
     sct.printv('\nSaving results in: ' + fname_output + ' ...')
 
     # define vertebral levels and slices fields
-    if actual_vert:
-        vertebral_levels_field = str(int(actual_vert[0])) + ' to ' + str(int(actual_vert[1]))
-        if warning_vert_levels:
-            for i in range(0, len(warning_vert_levels)):
-                vertebral_levels_field += ' [' + str(warning_vert_levels[i]) + ']'
-    else:
-        if slices_of_interest != '':
-            vertebral_levels_field = 'nan'
-        else:
-            vertebral_levels_field = 'ALL'
+    # if actual_vert:
+    #     vertebral_levels_field = str(int(actual_vert[0])) + ' to ' + str(int(actual_vert[1]))
+    #     if warning_vert_levels:
+    #         for i in range(0, len(warning_vert_levels)):
+    #             vertebral_levels_field += ' [' + str(warning_vert_levels[i]) + ']'
+    # else:
+    #     if slices_of_interest != '':
+    #         vertebral_levels_field = 'nan'
+    #     else:
+    #         vertebral_levels_field = 'ALL'
+    #
+    # if slices_of_interest != '':
+    #     slices_of_interest_field = slices_of_interest
+    # else:
+    #     slices_of_interest_field = 'ALL'
 
-    if slices_of_interest != '':
-        slices_of_interest_field = slices_of_interest
+    # Format vertebral levels
+    if isinstance(vert_levels, int):
+        display_level = str(vert_levels)
+    elif isinstance(vert_levels, list):
+        display_level = ','.join([str(i) for i in vert_levels])
     else:
-        slices_of_interest_field = 'ALL'
+        # must be None
+        display_level = 'Unknown'
 
     # extract file extension of "fname_output" to know what type of file to output
     output_path, output_file, output_type = sct.extract_fname(fname_output)
@@ -748,10 +792,10 @@ def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_la
         fid_metric.write('\n' + '# Extraction method: ' + method)
 
         # Write selected vertebral levels
-        fid_metric.write('\n# Vertebral levels: ' + vertebral_levels_field)
+        fid_metric.write('\n# Vertebral levels: ' + display_level)
 
         # Write selected slices
-        fid_metric.write('\n' + '# Slices (z): ' + slices_of_interest_field)
+        fid_metric.write('\n' + '# Slices (z): ' + slices_of_interest)
 
         # label headers
         fid_metric.write('%s' % ('\n' + '# ID, label name, total fractional volume of the label (in number of voxels), metric value, metric stdev within label\n\n'))
@@ -830,8 +874,8 @@ def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_la
             sh.write(row_index, 0, time.strftime('%Y/%m/%d - %H:%M:%S'))
             sh.write(row_index, 1, os.path.abspath(fname_data))
             sh.write(row_index, 2, method)
-            sh.write(row_index, 3, vertebral_levels_field)
-            sh.write(row_index, 4, slices_of_interest_field)
+            sh.write(row_index, 3, vert_levels)
+            sh.write(row_index, 4, slices_of_interest)
             if fname_normalizing_label:
                 sh.write(row_index, 10, fname_normalizing_label)
 
