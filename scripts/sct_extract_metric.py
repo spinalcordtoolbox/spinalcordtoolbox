@@ -411,6 +411,7 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
     # Update the flag "slices_of_interest" according to the vertebral levels selected by user (if it's the case)
     if vertebral_levels:
         slices_of_interest, actual_vert_levels, warning_vert_levels = get_slices_matching_with_vertebral_levels(data, vertebral_levels, data_vertebral_labeling, verbose)
+        list_levels = num_parser(vertebral_levels)
 
     # select slice of interest by cropping data and labels
     # TODO: refactor to simplify with the new perslice option (currently duplicated action)
@@ -455,11 +456,9 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
     # if user selected vertebral levels and asked for each separate levels
     # slicegroups = ['1,2', '3,4']
     # TODO: add in doc that perlevel overrules perslice
-    perlevel = 1
     if vertebral_levels and perlevel:
         # initialize slicegroups (will be redefined below)
         slicegroups = []
-        list_levels = num_parser(vertebral_levels)
         # for each level, find the matching slices and group them
         for ilevel in list_levels:
             list_slices = get_slices_from_vertebral_levels(im_vertebral_labeling, ilevel)
@@ -884,7 +883,7 @@ def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_la
             sh.write(row_index, 0, time.strftime('%Y/%m/%d - %H:%M:%S'))
             sh.write(row_index, 1, os.path.abspath(fname_data))
             sh.write(row_index, 2, method)
-            sh.write(row_index, 3, vert_levels)
+            sh.write(row_index, 3, display_level)
             sh.write(row_index, 4, slices_of_interest)
             if fname_normalizing_label:
                 sh.write(row_index, 10, fname_normalizing_label)
