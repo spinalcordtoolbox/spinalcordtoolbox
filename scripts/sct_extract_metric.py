@@ -366,57 +366,6 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
         im_weight = Image(fname_mask_weight)
         im_weight.change_orientation(orientation='RPI')
 
-    #
-    #     # input_im.orientation('RPI')
-    # # Check if the orientation of the data is RPI
-    # # orientation_data = input_im.orientation
-    #
-    # # TODO: refactor to remove duplication below
-    # # if orientation_data != 'RPI':
-    #     # If orientation is not RPI, change to RPI and load data
-    #     # metric
-    #     sct.printv('\nChange metric image orientation into RPI and load it...', verbose)
-    #     input_im.change_orientation(orientation='RPI')
-    #     # labels
-    #     sct.printv('\nChange labels orientation into RPI and load them...', verbose)
-    #     labels = np.empty([nb_labels], dtype=object)
-    #     for i_label in range(nb_labels):
-    #         im_label = Image(os.path.join(path_label, indiv_labels_files[i_label]))
-    #         im_label.change_orientation(orientation='RPI')
-    #         labels[i_label] = im_label.data
-    #     # if the "normalization" option is wanted,
-    #     if fname_normalizing_label:
-    #         normalizing_label = np.empty([1], dtype=object)  # choose this kind of structure so as to keep easily the compatibility with the rest of the code (dimensions: (1, x, y, z))
-    #         im_normalizing_label = Image(fname_normalizing_label)
-    #         im_normalizing_label.change_orientation(orientation='RPI')
-    #         normalizing_label[0] = im_normalizing_label.data
-    #     # if vertebral levels were selected,
-    #     if vertebral_levels:
-    #         im_vertebral_labeling = Image(fname_vertebral_labeling)
-    #         im_vertebral_labeling.change_orientation(orientation='RPI')
-    #         data_vertebral_labeling = im_vertebral_labeling.data
-    #     # if flag "-mask-weighted" is specified
-    #     if fname_mask_weight:
-    #         im_weight = Image(fname_mask_weight)
-    #         im_weight.change_orientation(orientation='RPI')
-    # else:
-    #     # Load labels
-    #     sct.printv('\nLoad labels...', verbose)
-    #     labels = np.empty([nb_labels], dtype=object)
-    #     for i_label in range(0, nb_labels):
-    #         labels[i_label] = Image(os.path.join(path_label, indiv_labels_files[i_label])).data
-    #     # if the "normalization" option is wanted,
-    #     if fname_normalizing_label:
-    #         normalizing_label = np.empty([1], dtype=object)  # choose this kind of structure so as to keep easily the compatibility with the rest of the code (dimensions: (1, x, y, z))
-    #         normalizing_label[0] = Image(fname_normalizing_label).data  # load the data of the normalizing label
-    #     # if vertebral levels were selected,
-    #     if vertebral_levels:
-    #         data_vertebral_labeling = Image(fname_vertebral_labeling).data
-    #     if fname_mask_weight:
-    #         im_weight = Image(fname_mask_weight)
-    # data = input_im.data
-    # sct.printv('  OK!', verbose)
-
     # Change metric data type into floats for future manipulations (normalization)
     data = np.float64(data)
     data[np.isneginf(data)] = 0.0
