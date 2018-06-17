@@ -13,6 +13,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+# TODO: use argparse
 # TODO: move to csv output. However, we need to change the way z is represented: currently it is a list separated by ,. Maybe we can change it for: ;. e.g.: 0;1;2;3
 # TODO: remove fix_label_value() usage because it is used in isolated case and introduces confusion.
 # TODO (not urgent): vertebral levels selection should only consider voxels of the selected levels in slices where two different vertebral levels coexist (and not the whole slice)
@@ -110,6 +111,19 @@ max: for each z-slice of the input data, extract the max value for each slice of
                       description="""File name for an image consisting of the atlas labels multiplied by the estimated metric values yielding the metric value map, useful to assess the metric estimation and especially partial volume effects.""",
                       mandatory=False,
                       default_value='')
+    parser.add_option(name='-z',
+                      type_value='str',
+                      description='Slice range to estimate the metric from. First slice is 0. Example: 5:23\nYou can also select specific slices using commas. Example: 0,2,3,5,12',
+                      mandatory=False,
+                      default_value=param_default.slices_of_interest)
+    parser.add_option(name='-perslice',
+                      type_value='int',
+                      description='Set to 1 to output one metric per slice instead of a single output metric.'
+                                  'Please note that when methods ml or map is used, outputing a single '
+                                  'metric per slice and then averaging them all is not the same as outputting a single'
+                                  'metric at once across all slices.',
+                      mandatory=False,
+                      default_value=0)
     parser.add_option(name='-vert',
                       type_value='str',
                       description='Vertebral levels to estimate the metric across. Example: 2:9 for C2 to T2.',
@@ -121,24 +135,18 @@ max: for each z-slice of the input data, extract the max value for each slice of
                       description='Vertebral labeling file. Only use with flag -vert',
                       default_value='./label/template/PAM50_levels.nii.gz',
                       mandatory=False)
+    parser.add_option(name='-perlevel',
+                      type_value='int',
+                      description='Set to 1 to output one metric per vertebral level instead of a single '
+                                  'output metric.',
+                      mandatory=False,
+                      default_value=0)
     parser.add_option(name="-v",
                       type_value="multiple_choice",
                       description="1: display on, 0: display off (default)",
                       mandatory=False,
                       example=["0", "1"],
                       default_value="1")
-    parser.add_option(name='-perslice',
-                      type_value='int',
-                      description='Set to 1 to output one metric per slice (or vertebral level) instead of a single '
-                                  'output metric. Please note that averaging subsequently all slices (or levels) is not'
-                                  ' the same as a single estimation when methods ml or map are used.',
-                      mandatory=False,
-                      default_value=0)
-    parser.add_option(name='-z',
-                      type_value='str',
-                      description='Slice range to estimate the metric from. First slice is 0. Example: 5:23\nYou can also select specific slices using commas. Example: 0,2,3,5,12',
-                      mandatory=False,
-                      default_value=param_default.slices_of_interest)
     parser.usage.addSection("\nFOR ADVANCED USERS")
     parser.add_option(name='-param',
                       type_value='str',
@@ -210,9 +218,9 @@ To compute average MTR in a region defined by a single label file (could be bina
     return parser
 
 
-def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, perslice, fname_output, labels_user, overwrite,
+def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, fname_output, labels_user, overwrite,
          fname_normalizing_label, normalization_method, label_to_fix, adv_param_user, fname_output_metric_map,
-         fname_mask_weight, fname_vertebral_labeling=""):
+         fname_mask_weight, fname_vertebral_labeling="", perslice=1, perlevel=1):
     """
     Extract metrics from MRI data based on mask (could be single file of folder to atlas)
     :param fname_data: data to extract metric from
@@ -223,8 +231,6 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, p
            "0:3": slices 0,1,2,3
     :param vertebral_levels: Vertebral levels to extract metrics from. Should be associated with a template
            (e.g. PAM50/template/) or a specified file: fname_vertebral_labeling. Same format as slices_of_interest.
-    :param perslice: if user selected several slices (or vertebral levels), then output metric within each slice (or
-           vertebral level) instead of a single average output.
     :param fname_output:
     :param labels_user:
     :param overwrite:
@@ -235,6 +241,10 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, p
     :param fname_output_metric_map:
     :param fname_mask_weight:
     :param fname_vertebral_labeling: vertebral labeling to be used with vertebral_levels
+    :param perslice: if user selected several slices, then the function outputs a metric within each slice
+           instead of a single average output.
+    :param perlevel: if user selected several levels, then the function outputs a metric within each vertebral level
+           instead of a single average output.
     :return:
     """
 
@@ -1327,7 +1337,14 @@ if __name__ == "__main__":
         fname_vertebral_labeling = arguments['-vertfile']
     else:
         fname_vertebral_labeling = ""
-    perslice = arguments['-perslice']
+    if '-perslice' in arguments:
+        perslice = arguments['-perslice']
+    else:
+        perslice = 0
+    if '-perlevel' in arguments:
+        perlevel = arguments['-perlevel']
+    else:
+        perlevel = 0
     if '-overwrite' in arguments:
         overwrite = arguments['-overwrite']
     fname_normalizing_label = ''
@@ -1350,6 +1367,6 @@ if __name__ == "__main__":
         fname_mask_weight = ''
 
     # call main function
-    main(fname_data, path_label, method, slices_of_interest, vertebral_levels, perslice, fname_output, labels_user, overwrite,
+    main(fname_data, path_label, method, slices_of_interest, vertebral_levels, fname_output, labels_user, overwrite,
          fname_normalizing_label, normalization_method, label_to_fix, adv_param_user, fname_output_metric_map,
-         fname_mask_weight, fname_vertebral_labeling=fname_vertebral_labeling)
+         fname_mask_weight, fname_vertebral_labeling=fname_vertebral_labeling, perslice=perslice, perlevel=perlevel)
