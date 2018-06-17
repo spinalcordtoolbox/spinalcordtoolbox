@@ -25,6 +25,8 @@ import numpy as np
 
 from spinalcordtoolbox.metadata import read_label_file, parse_id_group
 from spinalcordtoolbox.utils import num_parser
+from spinalcordtoolbox.template import get_slices_from_vertebral_levels
+
 import sct_utils as sct
 from sct_image import get_orientation_3d, set_orientation
 from msct_image import Image
@@ -334,6 +336,7 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, p
     input_im = Image(fname_data)
     orientation_data = input_im.orientation
 
+    # TODO: refactor to remove duplication below
     if orientation_data != 'RPI':
         # If orientation is not RPI, change to RPI and load data
         # metric
@@ -435,18 +438,22 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, p
     # if perslice with slices: ['1', '2', '3', '4']
     # important: each slice number should be separated by "," not ":"
     slicegroups = [str(i) for i in slices_list]
-    if not perslice:
+    if not perslice and not perlevel:
         # ['1,2,3,4,5,6']
         slicegroups = [','.join(slicegroups)]
 
     # if user selected vertebral levels and asked for each separate levels
     # slicegroups = ['1,2', '3,4']
     # TODO: add in doc that pervertlevel overrules perslice
-    pervertlevel = 1
-    if vertebral_levels and pervertlevel:
-        a=1
-
-
+    perlevel = 1
+    if vertebral_levels and perlevel:
+        # initialize slicegroups (will be redefined below)
+        slicegroups = []
+        list_levels = num_parser(vertebral_levels)
+        # for each level, find the matching slices and group them
+        for ilevel in list_levels:
+            list_slices = get_slices_from_vertebral_levels(im_vertebral_labeling, ilevel)
+            slicegroups.append(','.join([str(i) for i in list_slices]))
 
     # loop across slices (if needed)
     for slicegroup in slicegroups:
