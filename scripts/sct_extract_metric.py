@@ -249,8 +249,8 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
     """
 
     # Initialization
-    actual_vert_levels = None  # variable used in case the vertebral levels asked by the user don't correspond exactly to the vertebral levels available in the metric data
-    warning_vert_levels = None  # variable used to warn the user in case the vertebral levels he asked don't correspond exactly to the vertebral levels available in the metric data
+    # actual_vert_levels = None  # variable used in case the vertebral levels asked by the user don't correspond exactly to the vertebral levels available in the metric data
+    # warning_vert_levels = None  # variable used to warn the user in case the vertebral levels he asked don't correspond exactly to the vertebral levels available in the metric data
     verbose = param_default.verbose
     adv_param = param_default.adv_param
     normalizing_label = []
@@ -408,11 +408,6 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
         sct.printv('\nERROR: Metric data and labels DO NOT HAVE SAME DIMENSIONS.')
         sys.exit(2)
 
-    # Update the flag "slices_of_interest" according to the vertebral levels selected by user (if it's the case)
-    if vertebral_levels:
-        slices_of_interest, actual_vert_levels, warning_vert_levels = get_slices_matching_with_vertebral_levels(data, vertebral_levels, data_vertebral_labeling, verbose)
-        list_levels = num_parser(vertebral_levels)
-
     # parse clusters used for a priori (map method)
     clusters_all_labels = ml_clusters
     combined_labels_groups_all_IDs = combined_labels_id_groups
@@ -435,56 +430,71 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
 
     # if user selected vertebral levels and asked for each separate levels
     # slicegroups = ['1,2', '3,4']
-    if vertebral_levels and perlevel:
-        # initialize slicegroups (will be redefined below)
-        slicegroups = []
-        # for each level, find the matching slices and group them
-        for ilevel in list_levels:
-            list_slices = get_slices_from_vertebral_levels(im_vertebral_labeling, ilevel)
-            slicegroups.append(','.join([str(i) for i in list_slices]))
+    if vertebral_levels:
+        list_levels = num_parser(vertebral_levels)
+        # Re-define slices_of_interest according to the vertebral levels selected by user
+        slices_of_interest = []
+        for level in list_levels:
+            slices_of_interest.append(get_slices_from_vertebral_levels(im_vertebral_labeling, level))
+        # if users wants to output one metric per level
+        if perlevel:
+            # initialize slicegroups (will be redefined below)
+            slicegroups = []
+            # for each level, find the matching slices and group them
+            for ilevel in list_levels:
+                list_slices = get_slices_from_vertebral_levels(im_vertebral_labeling, ilevel)
+                slicegroups.append(','.join([str(i) for i in list_slices]))
 
     # loop across slices (if needed)
     for slicegroup in slicegroups:
-        # convert list of strings into list of int to use as index
-        ind_slicegroup = [int(i) for i in slicegroup.split(',')]
-        # select portion of data and labels based on slicegroup
-        dataz = data[:, :, ind_slicegroup]
-        labelsz = np.copy(labels)
-        for i_label in range(0, nb_labels):
-            labelsz[i_label] = labels[i_label][:, :, ind_slicegroup]
-        # Extract metric in the labels specified by the file info_label.txt from the atlas folder given in input
-        # TODO: instead of estimating everything (all labels + combined labels), only compute what is asked by the user
-        # individual labels
-        indiv_labels_value, indiv_labels_std, indiv_labels_fract_vol = \
-            extract_metric(method, dataz, labelsz, indiv_labels_ids, clusters_all_labels, adv_param, normalizing_label,
-                           normalization_method, im_weight=im_weight)
-        # combined labels
-        combined_labels_value = np.zeros(len(combined_labels_groups_all_IDs), dtype=float)
-        combined_labels_std = np.zeros(len(combined_labels_groups_all_IDs), dtype=float)
-        combined_labels_fract_vol = np.zeros(len(combined_labels_groups_all_IDs), dtype=float)
-        for i_combined_labels in range(0, len(combined_labels_groups_all_IDs)):
-            combined_labels_value[i_combined_labels], \
-            combined_labels_std[i_combined_labels], \
-            combined_labels_fract_vol[i_combined_labels] = extract_metric(method, dataz, labelsz, indiv_labels_ids,
-                                                                          clusters_all_labels, adv_param,
-                                                                          normalizing_label, normalization_method,
-                                                                          im_weight=im_weight,
-                                                                          combined_labels_id_group=combined_labels_groups_all_IDs[i_combined_labels])
-        # TODO: remove that crap below at some point (check for dependencies, usage, etc.)
-        if label_to_fix:
-            fixed_label = [label_to_fix[0], label_to_fix_name, label_to_fix[1]]
-            sct.printv('\n*' + fixed_label[0] + ', ' + fixed_label[1] + ': ' + fixed_label[2] + ' (value fixed by user)', 1, 'info')
+        # initialization
+        # indiv_labels_value, indiv_labels_std, indiv_labels_fract_vol = np.NaN, np.NaN, np.NaN
+        # combined_labels_value, combined_labels_std, combined_labels_fract_vol = np.NaN, np.NaN, np.NaN
+        try:
+            # convert list of strings into list of int to use as index
+            ind_slicegroup = [int(i) for i in slicegroup.split(',')]
+            # select portion of data and labels based on slicegroup
+            dataz = data[:, :, ind_slicegroup]
+            labelsz = np.copy(labels)
+            for i_label in range(0, nb_labels):
+                labelsz[i_label] = labels[i_label][:, :, ind_slicegroup]
+            # Extract metric in the labels specified by the file info_label.txt from the atlas folder given in input
+            # TODO: instead of estimating everything (all labels + combined labels), only compute what is asked by the user
+            # individual labels
+            indiv_labels_value, indiv_labels_std, indiv_labels_fract_vol = \
+                extract_metric(method, dataz, labelsz, indiv_labels_ids, clusters_all_labels, adv_param, normalizing_label,
+                               normalization_method, im_weight=im_weight)
+            # combined labels
+            combined_labels_value = np.zeros(len(combined_labels_groups_all_IDs), dtype=float)
+            combined_labels_std = np.zeros(len(combined_labels_groups_all_IDs), dtype=float)
+            combined_labels_fract_vol = np.zeros(len(combined_labels_groups_all_IDs), dtype=float)
+            for i_combined_labels in range(0, len(combined_labels_groups_all_IDs)):
+                combined_labels_value[i_combined_labels], \
+                combined_labels_std[i_combined_labels], \
+                combined_labels_fract_vol[i_combined_labels] = extract_metric(method, dataz, labelsz, indiv_labels_ids,
+                                                                              clusters_all_labels, adv_param,
+                                                                              normalizing_label, normalization_method,
+                                                                              im_weight=im_weight,
+                                                                              combined_labels_id_group=combined_labels_groups_all_IDs[i_combined_labels])
+            # TODO: remove that crap below at some point (check for dependencies, usage, etc.)
+            if label_to_fix:
+                fixed_label = [label_to_fix[0], label_to_fix_name, label_to_fix[1]]
+                sct.printv('\n*' + fixed_label[0] + ', ' + fixed_label[1] + ': ' + fixed_label[2] + ' (value fixed by user)', 1, 'info')
 
-        # deal with output display
-        if vertebral_levels:
-            if perlevel:
-                vert_levels = list_levels[slicegroups.index(slicegroup)]
-            elif perslice:
-                vert_levels = get_vertebral_level_from_slice(im_vertebral_labeling, ind_slicegroup[0])
+            # deal with output display
+            if vertebral_levels:
+                if perlevel:
+                    vert_levels = list_levels[slicegroups.index(slicegroup)]
+                elif perslice:
+                    vert_levels = get_vertebral_level_from_slice(im_vertebral_labeling, ind_slicegroup[0])
+                else:
+                    vert_levels = list_levels
             else:
-                vert_levels = list_levels
-        else:
-            vert_levels = None
+                vert_levels = None
+
+        except ValueError:
+            # the slice request is out of the range of the image
+            sct.printv('The slice(s) requested is out of the range of the image', type='warning')
 
         # write metrics into file
         save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_labels_names, combined_labels_names,
@@ -574,126 +584,126 @@ def extract_metric(method, data, labels, indiv_labels_ids, clusters_labels='', a
     return metric_in_labels, metric_std_in_labels, fract_vol_per_label
 
 
-def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels, data_vertebral_labeling, verbose=1):
-    """Return the slices of the input image corresponding to the vertebral levels given as argument."""
-
-    sct.printv('\nFind slices corresponding to vertebral levels...', verbose)
-
-    # Convert the selected vertebral levels chosen into a 2-element list [start_level end_level]
-
-    vert_levels_list = [int(x) for x in vertebral_levels.split(':')]
-
-    # If only one vertebral level was selected (n), consider as n:n
-    if len(vert_levels_list) == 1:
-        vert_levels_list = [vert_levels_list[0], vert_levels_list[0]]
-
-    # Check if there are only two values [start_level, end_level] and if the end level is higher than the start level
-    if (len(vert_levels_list) > 2) or (vert_levels_list[0] > vert_levels_list[1]):
-        sct.printv('\nERROR:  "' + vertebral_levels + '" is not correct. Enter format "1:4". Exit program.\n')
-        sys.exit(2)
-
-    # Extract the vertebral levels available in the metric image
-    vertebral_levels_available = np.array(list(set(data_vertebral_labeling[data_vertebral_labeling > 0])))
-
-    # Check if the vertebral levels selected are available
-    warning = []  # list of strings gathering the potential following warning(s) to be written in the output .txt file
-    min_vert_level_available = min(vertebral_levels_available)  # lowest vertebral level available
-    max_vert_level_available = max(vertebral_levels_available)  # highest vertebral level available
-    if vert_levels_list[0] < min_vert_level_available:
-        vert_levels_list[0] = min_vert_level_available
-        warning.append('WARNING: the bottom vertebral level you selected is lower than the lowest level available --> '
-                       'Selected the lowest vertebral level available: ' + str(int(vert_levels_list[0])))  # record the
-                       # warning to write it later in the .txt output file
-        sct.printv('WARNING: the bottom vertebral level you selected is lower than the lowest level available \n--> Selected the lowest vertebral level available: ' + str(int(vert_levels_list[0])), type='warning')
-
-    if vert_levels_list[1] > max_vert_level_available:
-        vert_levels_list[1] = max_vert_level_available
-        warning.append('WARNING: the top vertebral level you selected is higher than the highest level available --> '
-                       'Selected the highest vertebral level available: ' + str(int(vert_levels_list[1])))  # record the
-        # warning to write it later in the .txt output file
-
-        sct.printv('WARNING: the top vertebral level you selected is higher than the highest level available \n--> Selected the highest vertebral level available: ' + str(int(vert_levels_list[1])), type='warning')
-
-    if vert_levels_list[0] not in vertebral_levels_available:
-        distance = vertebral_levels_available - vert_levels_list[0]  # relative distance
-        distance_min_among_negative_value = min(abs(distance[distance < 0]))  # minimal distance among the negative
-        # relative distances
-        vert_levels_list[0] = vertebral_levels_available[distance == distance_min_among_negative_value]  # element
-        # of the initial list corresponding to this minimal distance
-        warning.append('WARNING: the bottom vertebral level you selected is not available --> Selected the nearest '
-                       'inferior level available: ' + str(int(vert_levels_list[0])))
-        sct.printv('WARNING: the bottom vertebral level you selected is not available \n--> Selected the nearest inferior level available: ' + str(int(vert_levels_list[0])), type='warning')  # record the
-        # warning to write it later in the .txt output file
-
-    if vert_levels_list[1] not in vertebral_levels_available:
-        distance = vertebral_levels_available - vert_levels_list[1]  # relative distance
-        distance_min_among_positive_value = min(abs(distance[distance > 0]))  # minimal distance among the negative
-        # relative distances
-        vert_levels_list[1] = vertebral_levels_available[distance == distance_min_among_positive_value]  # element
-        # of the initial list corresponding to this minimal distance
-        warning.append('WARNING: the top vertebral level you selected is not available --> Selected the nearest superior'
-                       ' level available: ' + str(int(vert_levels_list[1])))  # record the warning to write it later in the .txt output file
-
-        sct.printv('WARNING: the top vertebral level you selected is not available \n--> Selected the nearest superior level available: ' + str(int(vert_levels_list[1])), type='warning')
-
-    # Extract metric data size X, Y, Z
-    [mx, my, mz] = metric_data.shape
-    # Extract vertebral labeling data size X, Y, Z
-    [vx, vy, vz] = data_vertebral_labeling.shape
-
-    sct.printv('  Check consistency of data size...', verbose)
-
-    # Initialisation of check error flag
-    exit_program = 0
-
-    # Check if sizes along X are the same
-    if mx != vx:
-        sct.printv('\tERROR: Size of vertebral_labeling.nii.gz along X is not the same as the metric data.')
-        exit_program = 1
-    # Check if sizes along Y are the same
-    if my != vy:
-        sct.printv('\tERROR: Size of vertebral_labeling.nii.gz along Y is not the same as the metric data.')
-        exit_program = 1
-    # Check if sizes along Z are the same
-    if mz != vz:
-        sct.printv('\tERROR: Size of vertebral_labeling.nii.gz along Z is not the same as the metric data.')
-        exit_program = 1
-
-    # Exit program if an error was detected
-    if exit_program == 1:
-        sct.printv('\nExit program.\n')
-        sys.exit(2)
-    else:
-        sct.printv('    OK!')
-
-    sct.printv('  Find slices corresponding to vertebral levels...', verbose)
-    # Extract the X, Y, Z positions of voxels belonging to the first vertebral level
-    X_bottom_level, Y_bottom_level, Z_bottom_level = (data_vertebral_labeling == vert_levels_list[0]).nonzero()
-    # Record the bottom and top slices of this level
-    slice_min_bottom = min(Z_bottom_level)
-    slice_max_bottom = max(Z_bottom_level)
-
-    # Extract the X, Y, Z positions of voxels belonging to the last vertebral level
-    X_top_level, Y_top_level, Z_top_level = (data_vertebral_labeling == vert_levels_list[1]).nonzero()
-    # Record the bottom and top slices of this level
-    slice_min_top = min(Z_top_level)
-    slice_max_top = max(Z_top_level)
-
-    # Take into account the case where the ordering of the slice is reversed compared to the ordering of the vertebral
-    # levels (usually the case) and if several slices include two different vertebral levels
-    if slice_min_bottom >= slice_min_top or slice_max_bottom >= slice_max_top:
-        slice_min = slice_min_top
-        slice_max = slice_max_bottom
-    else:
-        slice_min = slice_min_bottom
-        slice_max = slice_max_top
-
-    # display info
-    sct.printv('    ' + str(slice_min) + ':' + str(slice_max), verbose)
-
-    # Return the slice numbers in the right format ("-1" because the function "remove_slices", which runs next, add 1
-    # to the top slice
-    return str(slice_min) + ':' + str(slice_max), vert_levels_list, warning
+# def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels, data_vertebral_labeling, verbose=1):
+#     """Return the slices of the input image corresponding to the vertebral levels given as argument."""
+#
+#     sct.printv('\nFind slices corresponding to vertebral levels...', verbose)
+#
+#     # Convert the selected vertebral levels chosen into a 2-element list [start_level end_level]
+#
+#     vert_levels_list = [int(x) for x in vertebral_levels.split(':')]
+#
+#     # If only one vertebral level was selected (n), consider as n:n
+#     if len(vert_levels_list) == 1:
+#         vert_levels_list = [vert_levels_list[0], vert_levels_list[0]]
+#
+#     # Check if there are only two values [start_level, end_level] and if the end level is higher than the start level
+#     if (len(vert_levels_list) > 2) or (vert_levels_list[0] > vert_levels_list[1]):
+#         sct.printv('\nERROR:  "' + vertebral_levels + '" is not correct. Enter format "1:4". Exit program.\n')
+#         sys.exit(2)
+#
+#     # Extract the vertebral levels available in the metric image
+#     vertebral_levels_available = np.array(list(set(data_vertebral_labeling[data_vertebral_labeling > 0])))
+#
+#     # Check if the vertebral levels selected are available
+#     warning = []  # list of strings gathering the potential following warning(s) to be written in the output .txt file
+#     min_vert_level_available = min(vertebral_levels_available)  # lowest vertebral level available
+#     max_vert_level_available = max(vertebral_levels_available)  # highest vertebral level available
+#     if vert_levels_list[0] < min_vert_level_available:
+#         vert_levels_list[0] = min_vert_level_available
+#         warning.append('WARNING: the bottom vertebral level you selected is lower than the lowest level available --> '
+#                        'Selected the lowest vertebral level available: ' + str(int(vert_levels_list[0])))  # record the
+#                        # warning to write it later in the .txt output file
+#         sct.printv('WARNING: the bottom vertebral level you selected is lower than the lowest level available \n--> Selected the lowest vertebral level available: ' + str(int(vert_levels_list[0])), type='warning')
+#
+#     if vert_levels_list[1] > max_vert_level_available:
+#         vert_levels_list[1] = max_vert_level_available
+#         warning.append('WARNING: the top vertebral level you selected is higher than the highest level available --> '
+#                        'Selected the highest vertebral level available: ' + str(int(vert_levels_list[1])))  # record the
+#         # warning to write it later in the .txt output file
+#
+#         sct.printv('WARNING: the top vertebral level you selected is higher than the highest level available \n--> Selected the highest vertebral level available: ' + str(int(vert_levels_list[1])), type='warning')
+#
+#     if vert_levels_list[0] not in vertebral_levels_available:
+#         distance = vertebral_levels_available - vert_levels_list[0]  # relative distance
+#         distance_min_among_negative_value = min(abs(distance[distance < 0]))  # minimal distance among the negative
+#         # relative distances
+#         vert_levels_list[0] = vertebral_levels_available[distance == distance_min_among_negative_value]  # element
+#         # of the initial list corresponding to this minimal distance
+#         warning.append('WARNING: the bottom vertebral level you selected is not available --> Selected the nearest '
+#                        'inferior level available: ' + str(int(vert_levels_list[0])))
+#         sct.printv('WARNING: the bottom vertebral level you selected is not available \n--> Selected the nearest inferior level available: ' + str(int(vert_levels_list[0])), type='warning')  # record the
+#         # warning to write it later in the .txt output file
+#
+#     if vert_levels_list[1] not in vertebral_levels_available:
+#         distance = vertebral_levels_available - vert_levels_list[1]  # relative distance
+#         distance_min_among_positive_value = min(abs(distance[distance > 0]))  # minimal distance among the negative
+#         # relative distances
+#         vert_levels_list[1] = vertebral_levels_available[distance == distance_min_among_positive_value]  # element
+#         # of the initial list corresponding to this minimal distance
+#         warning.append('WARNING: the top vertebral level you selected is not available --> Selected the nearest superior'
+#                        ' level available: ' + str(int(vert_levels_list[1])))  # record the warning to write it later in the .txt output file
+#
+#         sct.printv('WARNING: the top vertebral level you selected is not available \n--> Selected the nearest superior level available: ' + str(int(vert_levels_list[1])), type='warning')
+#
+#     # Extract metric data size X, Y, Z
+#     [mx, my, mz] = metric_data.shape
+#     # Extract vertebral labeling data size X, Y, Z
+#     [vx, vy, vz] = data_vertebral_labeling.shape
+#
+#     sct.printv('  Check consistency of data size...', verbose)
+#
+#     # Initialisation of check error flag
+#     exit_program = 0
+#
+#     # Check if sizes along X are the same
+#     if mx != vx:
+#         sct.printv('\tERROR: Size of vertebral_labeling.nii.gz along X is not the same as the metric data.')
+#         exit_program = 1
+#     # Check if sizes along Y are the same
+#     if my != vy:
+#         sct.printv('\tERROR: Size of vertebral_labeling.nii.gz along Y is not the same as the metric data.')
+#         exit_program = 1
+#     # Check if sizes along Z are the same
+#     if mz != vz:
+#         sct.printv('\tERROR: Size of vertebral_labeling.nii.gz along Z is not the same as the metric data.')
+#         exit_program = 1
+#
+#     # Exit program if an error was detected
+#     if exit_program == 1:
+#         sct.printv('\nExit program.\n')
+#         sys.exit(2)
+#     else:
+#         sct.printv('    OK!')
+#
+#     sct.printv('  Find slices corresponding to vertebral levels...', verbose)
+#     # Extract the X, Y, Z positions of voxels belonging to the first vertebral level
+#     X_bottom_level, Y_bottom_level, Z_bottom_level = (data_vertebral_labeling == vert_levels_list[0]).nonzero()
+#     # Record the bottom and top slices of this level
+#     slice_min_bottom = min(Z_bottom_level)
+#     slice_max_bottom = max(Z_bottom_level)
+#
+#     # Extract the X, Y, Z positions of voxels belonging to the last vertebral level
+#     X_top_level, Y_top_level, Z_top_level = (data_vertebral_labeling == vert_levels_list[1]).nonzero()
+#     # Record the bottom and top slices of this level
+#     slice_min_top = min(Z_top_level)
+#     slice_max_top = max(Z_top_level)
+#
+#     # Take into account the case where the ordering of the slice is reversed compared to the ordering of the vertebral
+#     # levels (usually the case) and if several slices include two different vertebral levels
+#     if slice_min_bottom >= slice_min_top or slice_max_bottom >= slice_max_top:
+#         slice_min = slice_min_top
+#         slice_max = slice_max_bottom
+#     else:
+#         slice_min = slice_min_bottom
+#         slice_max = slice_max_top
+#
+#     # display info
+#     sct.printv('    ' + str(slice_min) + ':' + str(slice_max), verbose)
+#
+#     # Return the slice numbers in the right format ("-1" because the function "remove_slices", which runs next, add 1
+#     # to the top slice
+#     return str(slice_min) + ':' + str(slice_max), vert_levels_list, warning
 
 
 def remove_slices(data_to_crop, slices_of_interest):
@@ -843,30 +853,35 @@ def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_la
             row_index = 1
 
         # iterate on user's labels
+        # TODO: this should be done outside of this function
         for i_label_user in labels_id_user:
-            sh.write(row_index, 0, time.strftime('%Y/%m/%d - %H:%M:%S'))
-            sh.write(row_index, 1, os.path.abspath(fname_data))
-            sh.write(row_index, 2, method)
-            sh.write(row_index, 3, display_level)
-            sh.write(row_index, 4, slices_of_interest)
-            if fname_normalizing_label:
-                sh.write(row_index, 10, fname_normalizing_label)
+            try:
+                sh.write(row_index, 0, time.strftime('%Y/%m/%d - %H:%M:%S'))
+                sh.write(row_index, 1, os.path.abspath(fname_data))
+                sh.write(row_index, 2, method)
+                sh.write(row_index, 3, display_level)
+                sh.write(row_index, 4, slices_of_interest)
+                if fname_normalizing_label:
+                    sh.write(row_index, 10, fname_normalizing_label)
 
-            # display result for this label
-            if i_label_user <= max(indiv_labels_ids):
-                index = indiv_labels_ids.index(i_label_user)
-                sh.write(row_index, 5, indiv_labels_ids[index])
-                sh.write(row_index, 6, indiv_labels_names[index])
-                sh.write(row_index, 7, indiv_labels_fract_vol[index])
-                sh.write(row_index, 8, indiv_labels_value[index])
-                sh.write(row_index, 9, indiv_labels_std[index])
-            elif i_label_user > max(indiv_labels_ids):
-                index = combined_labels_ids.index(i_label_user)
-                sh.write(row_index, 5, combined_labels_ids[index])
-                sh.write(row_index, 6, combined_labels_names[index])
-                sh.write(row_index, 7, combined_labels_fract_vol[index])
-                sh.write(row_index, 8, combined_labels_value[index])
-                sh.write(row_index, 9, combined_labels_std[index])
+                # display result for this label
+                if i_label_user <= max(indiv_labels_ids):
+                    index = indiv_labels_ids.index(i_label_user)
+                    sh.write(row_index, 5, indiv_labels_ids[index])
+                    sh.write(row_index, 6, indiv_labels_names[index])
+                    sh.write(row_index, 7, indiv_labels_fract_vol[index])
+                    sh.write(row_index, 8, indiv_labels_value[index])
+                    sh.write(row_index, 9, indiv_labels_std[index])
+                elif i_label_user > max(indiv_labels_ids):
+                    index = combined_labels_ids.index(i_label_user)
+                    sh.write(row_index, 5, combined_labels_ids[index])
+                    sh.write(row_index, 6, combined_labels_names[index])
+                    sh.write(row_index, 7, combined_labels_fract_vol[index])
+                    sh.write(row_index, 8, combined_labels_value[index])
+                    sh.write(row_index, 9, combined_labels_std[index])
+            except TypeError:
+                # out of range. Ignore
+                break
 
             row_index += 1
 
@@ -874,8 +889,8 @@ def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_la
             sh.write(row_index, 0, time.strftime('%Y/%m/%d - %H:%M:%S'))
             sh.write(row_index, 1, os.path.abspath(fname_data))
             sh.write(row_index, 2, method)
-            sh.write(row_index, 3, vertebral_levels_field)
-            sh.write(row_index, 4, slices_of_interest_field)
+            sh.write(row_index, 3, display_level)
+            sh.write(row_index, 4, slices_of_interest)
             if fname_normalizing_label:
                 sh.write(row_index, 10, fname_normalizing_label)
 
