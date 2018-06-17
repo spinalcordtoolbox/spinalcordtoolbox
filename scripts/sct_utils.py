@@ -401,19 +401,17 @@ def no_new_line_log(msg, *args, **kwargs):
 #=======================================================================================================================
 def add_suffix(fname, suffix):
     """
-    Add suffix between end of file name and extension on a nii or nii.gz file.
+    Add suffix between end of file name and extension. If the file name is pouf.nii.gz, then the suffix will be added
+    before the .nii.gz. Like that: poufsuffix.nii.gz
     :param fname: absolute or relative file name. Example: t2.nii
     :param suffix: suffix. Example: _mean
     :return: file name with suffix. Example: t2_mean.nii
     """
-    # get index of extension. Here, we search from the end to avoid issue with folders that have ".nii" in their name.
-    ind_nii = fname.rfind('.nii')
-    # in case no extension was found (i.e. only prefix was specified by user)
-    if ind_nii == -1:
-        return fname[:len(fname)] + suffix
+    # check if extension is .nii.gz
+    if fname[4:] == '.nii.gz':
+        return fname[:4] + suffix + fname[4:]
     else:
-        # return file name with suffix
-        return fname[:ind_nii] + suffix + fname[ind_nii:]
+        return suffix.join(os.path.splitext(fname))
 
 
 #=======================================================================================================================
