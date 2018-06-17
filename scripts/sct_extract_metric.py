@@ -14,6 +14,7 @@
 #########################################################################################
 
 # TODO: use argparse
+# TODO: revisit the flags normalization and weighted mask-- useful?
 # TODO: move to csv output. However, we need to change the way z is represented: currently it is a list separated by ,. Maybe we can change it for: ;. e.g.: 0;1;2;3
 # TODO: remove fix_label_value() usage because it is used in isolated case and introduces confusion.
 # TODO (not urgent): vertebral levels selection should only consider voxels of the selected levels in slices where two different vertebral levels coexist (and not the whole slice)
