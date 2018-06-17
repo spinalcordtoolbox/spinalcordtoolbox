@@ -2,6 +2,9 @@
 # -*- coding: utf-8
 # Functions that utilize the template (e.g., PAM50)
 
+import numpy as np
+from sct_utils import log
+
 def get_slices_from_vertebral_levels(im_vertlevel, level):
     """
     Find the slices of the corresponding vertebral level.
@@ -10,17 +13,19 @@ def get_slices_from_vertebral_levels(im_vertlevel, level):
     :param level: int: vertebral level
     :return: list of int: slices
     """
-
-    vert_levels_list = [int(x) for x in vertebral_levels.split(':')]
-
-    # If only one vertebral level was selected (n), consider as n:n
-    if len(vert_levels_list) == 1:
-        vert_levels_list = [vert_levels_list[0], vert_levels_list[0]]
-
-    # Check if there are only two values [start_level, end_level] and if the end level is higher than the start level
-    if (len(vert_levels_list) > 2) or (vert_levels_list[0] > vert_levels_list[1]):
-        sct.printv('\nERROR:  "' + vertebral_levels + '" is not correct. Enter format "1:4". Exit program.\n')
-        sys.exit(2)
-
-    # Extract the vertebral levels available in the metric image
-    vertebral_levels_available = np.array(list(set(data_vertebral_labeling[data_vertebral_labeling > 0])))
+    data_vertlevel = im_vertlevel.data
+    slices = []
+    # loop across z
+    for iz in range(im_vertlevel.dim[2]):
+        # find indices of non-null values
+        indx, indy = np.where(data_vertlevel[:, :, iz])
+        # average non-null values and round to closest
+        try:
+            average_value = int(round(np.mean(data_vertlevel[indx, indy, iz])))
+            # if that matches the desired level, append it to slice list
+            if average_value == level:
+                slices.append(iz)
+        except ValueError:
+            # slice is empty (no indx found). Do nothing.
+            log.debug('Empty slice: z=%s'.format(iz))
+    return slices
