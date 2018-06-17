@@ -24,7 +24,7 @@ import nibabel as nib
 import numpy as np
 
 from spinalcordtoolbox.metadata import read_label_file, parse_id_group
-
+from spinalcordtoolbox.utils import num_parser
 import sct_utils as sct
 from sct_image import get_orientation_3d, set_orientation
 from msct_image import Image
@@ -401,16 +401,16 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, p
 
     # select slice of interest by cropping data and labels
     # TODO: refactor to simplify with the new perslice option (currently duplicated action)
-    if slices_of_interest:
-        data, slices_list = remove_slices(data, slices_of_interest)
-        for i_label in range(0, nb_labels):
-            labels[i_label], slices_list = remove_slices(labels[i_label], slices_of_interest)
-        if fname_normalizing_label:  # if the "normalization" option was selected,
-            normalizing_label[0], slices_list = remove_slices(normalizing_label[0], slices_of_interest)
-        if fname_mask_weight:  # if the flag -mask-weighted was specified,
-            im_weight.data, slices_list = remove_slices(im_weight.data, slices_of_interest)
-    else:
-        slices_list = np.arange(nz).tolist()
+    # if slices_of_interest:
+    #     data, slices_list = remove_slices(data, slices_of_interest)
+    #     for i_label in range(0, nb_labels):
+    #         labels[i_label], slices_list = remove_slices(labels[i_label], slices_of_interest)
+    #     if fname_normalizing_label:  # if the "normalization" option was selected,
+    #         normalizing_label[0], slices_list = remove_slices(normalizing_label[0], slices_of_interest)
+    #     if fname_mask_weight:  # if the flag -mask-weighted was specified,
+    #         im_weight.data, slices_list = remove_slices(im_weight.data, slices_of_interest)
+    # else:
+    #     slices_list = np.arange(nz).tolist()
 
     # parse clusters used for a priori (map method)
     clusters_all_labels = ml_clusters
@@ -420,15 +420,33 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, p
     if label_to_fix:
         data, labels, indiv_labels_ids, indiv_labels_names, clusters_all_labels, combined_labels_groups_all_IDs, labels_id_user, label_to_fix_name, label_to_fix_fract_vol = fix_label_value(label_to_fix, data, labels, indiv_labels_ids, indiv_labels_names, clusters_all_labels, combined_labels_groups_all_IDs, labels_id_user)
 
+    if slices_of_interest:
+        slices_list = num_parser(slices_of_interest)
+        # data, slices_list = remove_slices(data, slices_of_interest)
+        # for i_label in range(0, nb_labels):
+        #     labels[i_label], slices_list = remove_slices(labels[i_label], slices_of_interest)
+        # if fname_normalizing_label:  # if the "normalization" option was selected,
+        #     normalizing_label[0], slices_list = remove_slices(normalizing_label[0], slices_of_interest)
+        # if fname_mask_weight:  # if the flag -mask-weighted was specified,
+        #     im_weight.data, slices_list = remove_slices(im_weight.data, slices_of_interest)
+    else:
+        slices_list = np.arange(nz).tolist()
+
     # if perslice with slices: ['1', '2', '3', '4']
-    # if perslice with vertebral levels: ['1,2', '3,4']  # TODO: implement
     # important: each slice number should be separated by "," not ":"
     slicegroups = [str(i) for i in slices_list]
     if not perslice:
         # ['1,2,3,4,5,6']
         slicegroups = [','.join(slicegroups)]
-    # else:
-    #     slicegroups = slices_of_interest
+
+    # if user selected vertebral levels and asked for each separate levels
+    # slicegroups = ['1,2', '3,4']
+    # TODO: add in doc that pervertlevel overrules perslice
+    pervertlevel = 1
+    if vertebral_levels and pervertlevel:
+        a=1
+
+
 
     # loop across slices (if needed)
     for slicegroup in slicegroups:
@@ -555,6 +573,7 @@ def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels, dat
     sct.printv('\nFind slices corresponding to vertebral levels...', verbose)
 
     # Convert the selected vertebral levels chosen into a 2-element list [start_level end_level]
+
     vert_levels_list = [int(x) for x in vertebral_levels.split(':')]
 
     # If only one vertebral level was selected (n), consider as n:n
@@ -670,28 +689,10 @@ def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels, dat
     return str(slice_min) + ':' + str(slice_max), vert_levels_list, warning
 
 
-def slice_parser(slices_of_interest):
-    """
-    Parse numbers based on delimiter: ' or :
-    :param slices_of_interest:
-    :return: list
-    """
-    # check if user selected specific slices using delimitor ','
-    if not slices_of_interest.find(',') == -1:
-        slices_list = [int(x) for x in slices_of_interest.split(',')]  # n-element list
-    else:
-        slices_range = [int(x) for x in slices_of_interest.split(':')]  # 2-element list
-        # if only one slice (z) was selected, consider as z:z
-        if len(slices_range) == 1:
-            slices_range = [slices_range[0], slices_range[0]]
-        slices_list = [i for i in range(slices_range[0], slices_range[1] + 1)]
-    return slices_list
-
-
 def remove_slices(data_to_crop, slices_of_interest):
     """Crop data to only keep the slices asked by user."""
     # Parse numbers based on delimiter: ' or :
-    slices_list = slice_parser(slices_of_interest)
+    slices_list = num_parser(slices_of_interest)
     # Remove slices that are not wanted (+1 is to include the last selected slice as Python "includes -1"
     data_cropped = data_to_crop[..., slices_list]
     return data_cropped, slices_list
