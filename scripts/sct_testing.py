@@ -74,7 +74,7 @@ def get_parser():
         jobs = int(s)
         if jobs > 0:
             pass
-        elif jobs == -1:
+        elif jobs == 0:
             jobs = None
         else:
             raise ValueError()
@@ -95,8 +95,8 @@ def get_parser():
     )
     parser.add_argument("--jobs", "-j",
      type=arg_jobs,
-     help="# of simultaneous tests to run (jobs). -1 means # of cores",
-     default=arg_jobs(-1),
+     help="# of simultaneous tests to run (jobs). 0 means # of available CPU threads",
+     default=arg_jobs(0),
     )
 
     return parser
