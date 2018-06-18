@@ -12,6 +12,7 @@
 # TODO: do something about this ugly 'output.nii.gz'
 
 import sys, io, os, time, random, copy, shlex, importlib, multiprocessing
+import signal
 
 from pandas import DataFrame
 
@@ -137,6 +138,13 @@ def process_function(fname, param):
 
     return list_output, list_status_function
 
+def process_function_multiproc(fname, param):
+    """ Wrapper that makes ^C work in multiprocessing code """
+    # Ignore SIGINT, parent will take care of the clean-up
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
+    return process_function(fname, param)
+
+
 # Main
 # ==========================================================================================
 def main(args=None):
@@ -185,39 +193,46 @@ def main(args=None):
                 sct.printv('Command-line usage error: Function "%s" is not part of the list of testing functions' % function_to_test, type='error')
         list_functions = functions_to_test
 
-    if jobs != 1:
-        pool = multiprocessing.Pool(processes=jobs)
+    try:
+        if jobs != 1:
+            pool = multiprocessing.Pool(processes=jobs)
 
-        results = list()
-        # loop across functions and run tests
-        for f in list_functions:
-            res = pool.apply_async(process_function, (f, param,))
-            results.append(res)
+            results = list()
+            # loop across functions and run tests
+            for f in list_functions:
+                res = pool.apply_async(process_function_multiproc, (f, param,))
+                results.append(res)
 
-    for idx_function, f in enumerate(list_functions):
-        print_line('Checking ' + f)
-        if jobs == 1:
-            res = process_function(f, param)
-        else:
-            res = results[idx_function].get()
-
-        list_output, list_status_function = res
-        # manage status
-        if any(list_status_function):
-            if 1 in list_status_function:
-                print_fail()
-                status = 1
+        for idx_function, f in enumerate(list_functions):
+            print_line('Checking ' + f)
+            if jobs == 1:
+                res = process_function(f, param)
             else:
-                print_warning()
-                status = 99
-            for output in list_output:
-                for line in output.splitlines():
-                    print("   %s" % line)
-        else:
-            print_ok()
-            status = 0
-        # append status function to global list of status
-        list_status.append(status)
+                res = results[idx_function].get()
+
+            list_output, list_status_function = res
+            # manage status
+            if any(list_status_function):
+                if 1 in list_status_function:
+                    print_fail()
+                    status = 1
+                else:
+                    print_warning()
+                    status = 99
+                for output in list_output:
+                    for line in output.splitlines():
+                        print("   %s" % line)
+            else:
+                print_ok()
+                status = 0
+            # append status function to global list of status
+            list_status.append(status)
+    except KeyboardInterrupt:
+        print("Keyboard Interrupt")
+        if jobs != 1:
+            pool.terminate()
+            pool.join()
+        raise
 
     print('status: ' + str(list_status))
 
