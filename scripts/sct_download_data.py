@@ -117,11 +117,7 @@ def main(args=None):
 
     # Download data
     url = dict_url[data_name]
-    try:
-        tmp_file = download_data(url, verbose)
-    except (KeyboardInterrupt):
-        sct.printv('\nERROR: User canceled process.\n', 1, type='warning')
-        return 1
+    tmp_file = download_data(url, verbose)
 
     # Check if folder already exists
     sct.printv('\nCheck if folder already exists...', verbose)
