@@ -29,6 +29,7 @@ from sct_image import set_orientation
 import spinalcordtoolbox.resample.nipy_resample
 from spinalcordtoolbox.deepseg_sc.cnn_models import nn_architecture_seg, nn_architecture_ctr
 
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 def get_parser():
     """Initialize the parser."""
