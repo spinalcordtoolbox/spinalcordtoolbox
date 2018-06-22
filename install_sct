@@ -79,6 +79,14 @@ fi"
   if [ -z ${bidon} ] ; then
     echo "${sourceblock}" >> ~/.bash_profile
   fi
+
+  if [ -z ${LC_ALL} ]; then
+    echo "export LC_ALL=en_US.UTF-8" >> ~/.bash_profile
+  fi
+
+  if [ -z ${LANG} ]; then
+    echo "export LANG=en_US.UTF-8" >> ~/.bash_profile
+  fi
 }
 
 # Installation text to insert in .bashrc
