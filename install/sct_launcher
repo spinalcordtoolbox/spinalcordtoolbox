@@ -105,18 +105,6 @@ if [[ "${0}" == "${BASH_SOURCE}" ]] && [[ -n "${1}"  ]]; then
   echo "Running ${SCT_DIR}/scripts/${@}"
   start=$(date +%s)
 
-  # Fix for non-English Unicode systems on MAC
-  if uname -a | grep -i  darwin > /dev/null 2>&1; then
-    # macOS
-    if [ -z ${LC_ALL} ]; then
-      export LC_ALL=en_US.UTF-8
-    fi
-
-    if [ -z ${LANG} ]; then
-      export LANG=en_US.UTF-8
-    fi
-  fi
-
   python ${SCT_DIR}/scripts/${@}
 
   end=$(date +%s)
