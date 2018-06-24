@@ -242,11 +242,11 @@ if uname -a | grep -i  darwin > /dev/null 2>&1; then
 
   # Fix for non-English Unicode systems on MAC
   if [ -z ${LC_ALL} ]; then
-    echo "export LC_ALL=en_US.UTF-8" >> ~/.bash_profile
+    export LC_ALL=en_US.UTF-8
   fi
 
   if [ -z ${LANG} ]; then
-    echo "export LANG=en_US.UTF-8" >> ~/.bash_profile
+    export LANG=en_US.UTF-8
   fi
 
   OS=osx
