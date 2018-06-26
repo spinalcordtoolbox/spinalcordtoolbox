@@ -90,18 +90,12 @@ git pull
 ./install_sct
 ~~~
 
-### Using virtual machine
+### Installation on Windows
 
-For more flexibility, you can also run the toolbox under a VM we provide. Useful information below:
+In order to install the SCT in Windows, we provide a solution via Docker. This solution will allow you to use all the resources of SCT including the programs with graphical interface. In addition to the SCT, the Docker image contains the FSLeyes program for the visualization of the NIFTI volumes that you process.
 
-Download the [latest SCT VM](https://osf.io/y3phg/).
-Compatible with [VirtualBox 5.1.22](https://www.virtualbox.org/wiki/Downloads).
-General information on how to install the VM create a shared folder are available [here](http://neuro.debian.net/vm.html).
+[Tutorial how to install SCT on Windows via Docker](https://github.com/neuropoly/sct_docker#id7)
 
-* The password of the VM is "neurodebian".
-* Configure the VM:
-  * Increase the RAM: Settings > System > Motherboard. Slide until you have 1-2GB left for your OS.
-  * Increase number of processors: Settings > System > Processor. Slide until you have 1-2 CPU left for your OS.
 
 ## Getting started
 
