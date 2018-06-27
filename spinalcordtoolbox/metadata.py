@@ -2,6 +2,8 @@
 # -*- coding: utf-8
 # Deal with SCT dataset metadata
 
+# TODO: replace parse_id_group() by utils.parse_num_list
+
 import sys, io, os, re
 
 def parse_id_group(spec):

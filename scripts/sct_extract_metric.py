@@ -25,7 +25,7 @@ import sys, os, glob, time
 import numpy as np
 
 from spinalcordtoolbox.metadata import read_label_file, parse_id_group
-from spinalcordtoolbox.utils import num_parser
+from spinalcordtoolbox.utils import parse_num_list
 from spinalcordtoolbox.template import get_slices_from_vertebral_levels, get_vertebral_level_from_slice
 
 import sct_utils as sct
@@ -387,7 +387,7 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
         data, labels, indiv_labels_ids, indiv_labels_names, clusters_all_labels, combined_labels_groups_all_IDs, labels_id_user, label_to_fix_name, label_to_fix_fract_vol = fix_label_value(label_to_fix, data, labels, indiv_labels_ids, indiv_labels_names, clusters_all_labels, combined_labels_groups_all_IDs, labels_id_user)
 
     if slices_of_interest:
-        slices_list = num_parser(slices_of_interest)
+        slices_list = parse_num_list(slices_of_interest)
     else:
         slices_list = np.arange(nz).tolist()
 
@@ -401,7 +401,7 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
     # if user selected vertebral levels and asked for each separate levels
     # slicegroups = ['1,2', '3,4']
     if vertebral_levels:
-        list_levels = num_parser(vertebral_levels)
+        list_levels = parse_num_list(vertebral_levels)
         # Re-define slices_of_interest according to the vertebral levels selected by user
         slices_of_interest = []
         for level in list_levels:
@@ -554,7 +554,7 @@ def extract_metric(method, data, labels, indiv_labels_ids, clusters_labels='', a
 def remove_slices(data_to_crop, slices_of_interest):
     """Crop data to only keep the slices asked by user."""
     # Parse numbers based on delimiter: ' or :
-    slices_list = num_parser(slices_of_interest)
+    slices_list = parse_num_list(slices_of_interest)
     # Remove slices that are not wanted (+1 is to include the last selected slice as Python "includes -1"
     data_cropped = data_to_crop[..., slices_list]
     return data_cropped, slices_list
