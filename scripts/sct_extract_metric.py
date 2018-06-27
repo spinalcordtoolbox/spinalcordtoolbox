@@ -756,8 +756,8 @@ def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_la
         metric_extraction_results['Date - Time'] = time.strftime('%Y/%m/%d - %H:%M:%S')
         metric_extraction_results['Metric file'] = os.path.abspath(fname_data)
         metric_extraction_results['Extraction method'] = method
-        metric_extraction_results['Vertebral levels'] = vertebral_levels_field
-        metric_extraction_results['Slices (z)'] = slices_of_interest_field
+        metric_extraction_results['Vertebral levels'] = display_level
+        metric_extraction_results['Slices (z)'] = slices_of_interest
         if fname_normalizing_label:
             metric_extraction_results['Label used to normalize the metric estimation slice-by-slice'] = fname_normalizing_label
 
