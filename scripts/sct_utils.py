@@ -408,8 +408,10 @@ def add_suffix(fname, suffix):
     :return: file name with suffix. Example: t2_mean.nii
     """
     # check if extension is .nii.gz
-    if fname[4:] == '.nii.gz':
-        return fname[:4] + suffix + fname[4:]
+    if fname[-7:] == '.nii.gz':
+        # get index of extension
+        ind_ext = fname.find('.nii.gz')
+        return fname[:ind_ext] + suffix + '.nii.gz'
     else:
         return suffix.join(os.path.splitext(fname))
 
