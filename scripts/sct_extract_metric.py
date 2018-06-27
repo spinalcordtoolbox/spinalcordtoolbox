@@ -20,9 +20,8 @@
 # TODO (not urgent): vertebral levels selection should only consider voxels of the selected levels in slices where two different vertebral levels coexist (and not the whole slice)
 
 # Import common Python libraries
-import sys, io, os, glob, time
+import sys, os, glob, time
 
-import nibabel as nib
 import numpy as np
 
 from spinalcordtoolbox.metadata import read_label_file, parse_id_group
@@ -30,7 +29,6 @@ from spinalcordtoolbox.utils import num_parser
 from spinalcordtoolbox.template import get_slices_from_vertebral_levels, get_vertebral_level_from_slice
 
 import sct_utils as sct
-from sct_image import get_orientation_3d, set_orientation
 from msct_image import Image
 from msct_parser import Parser
 
@@ -52,7 +50,6 @@ class Param:
         self.average_all_labels = 0  # average all labels together after concatenation
         self.fname_output = 'metric_label.txt'
         self.file_info_label = 'info_label.txt'
-        # self.fname_vertebral_labeling = 'MNI-Poly-AMU_level.nii.gz'
         self.adv_param = ['10',  # STD of the metric value across labels, in percentage of the mean (mean is estimated using cluster-based ML)
                           '10']  # STD of the assumed gaussian-distributed noise
 
@@ -420,9 +417,6 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
 
     # loop across slices (if needed)
     for slicegroup in slicegroups:
-        # initialization
-        # indiv_labels_value, indiv_labels_std, indiv_labels_fract_vol = np.NaN, np.NaN, np.NaN
-        # combined_labels_value, combined_labels_std, combined_labels_fract_vol = np.NaN, np.NaN, np.NaN
         try:
             # convert list of strings into list of int to use as index
             ind_slicegroup = [int(i) for i in slicegroup.split(',')]
