@@ -24,7 +24,7 @@ import sys, os, glob, time
 
 import numpy as np
 
-from spinalcordtoolbox.metadata import read_label_file, parse_id_group
+from spinalcordtoolbox.metadata import read_label_file
 from spinalcordtoolbox.utils import parse_num_list
 from spinalcordtoolbox.template import get_slices_from_vertebral_levels, get_vertebral_level_from_slice
 
@@ -322,7 +322,7 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
         combined_labels_ids, combined_labels_names, combined_labels_id_groups, ml_clusters \
             = read_label_file(path_label, param_default.file_info_label)
         # check syntax of labels asked by user
-        labels_id_user = check_labels(indiv_labels_ids + combined_labels_ids, parse_id_group(labels_user))
+        labels_id_user = check_labels(indiv_labels_ids + combined_labels_ids, parse_num_list(labels_user))
     else:
         indiv_labels_ids = [0]
         labels_id_user = [0]
