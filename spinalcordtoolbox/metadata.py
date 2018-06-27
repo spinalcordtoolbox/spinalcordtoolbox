@@ -2,45 +2,9 @@
 # -*- coding: utf-8
 # Deal with SCT dataset metadata
 
-# TODO: replace parse_id_group() by utils.parse_num_list
 
-import sys, io, os, re
-
-def parse_id_group(spec):
-    """
-    Parse spec to extract ints, according to the rule:
-    :param spec: manual specification of list of ints
-    :returns: list of ints
-
-    ::
-
-       "" -> []
-       1,3:5 -> [1, 3, 4, 5]
-       1,1:5 -> [1, 2, 3, 4, 5]
-
-    """
-    ret = list()
-
-    if not spec:
-        return ret
-
-    elements = spec.split(",")
-    for element in elements:
-        m = re.match(r"^\d+$", element)
-        if m is not None:
-            val = int(element)
-            if val not in ret:
-                ret.append(val)
-            continue
-        m = re.match(r"^(?P<first>\d+):(?P<last>\d+)$", element)
-        if m is not None:
-            a = int(m.group("first"))
-            b = int(m.group("last"))
-            ret += [ x for x in range(a, b+1) if x not in ret ]
-            continue
-        raise ValueError("unexpected group element {} group spec {}".format(element, spec))
-
-    return ret
+import io, os, re
+from spinalcordtoolbox.utils import parse_num_list
 
 
 class InfoLabel(object):
@@ -125,7 +89,7 @@ class InfoLabel(object):
                 _name = m.group("name")
 
                 try:
-                    _group = parse_id_group(m.group("group"))
+                    _group = parse_num_list(m.group("group"))
                 except ValueError as e:
                     raise ValueError("Unexpected at line {}: {} in line: {}".format(idx_line+1, e, line))
 
@@ -139,7 +103,7 @@ class InfoLabel(object):
                 _name = m.group("name")
                 
                 try:
-                    _group = parse_id_group(m.group("group"))
+                    _group = parse_num_list(m.group("group"))
                 except ValueError as e:
                     raise ValueError("Unexpected at line {}: {} in line: {}".format(idx_line+1, e, line))
 
