@@ -53,6 +53,11 @@ class TestModel(object):
         model = gm_model.create_model(64)
         assert model.count_params() == 478017
 
+        diff_size_model = gm_model.create_model(32, (103, 102))
+        axial_slices_mock = np.random.randn(1, 103, 102, 1)
+        preds = diff_size_model.predict(axial_slices_mock, batch_size=8)
+        assert preds.shape == axial_slices_mock.shape
+
 
 class TestCore(object):
     def test_data_resource(self):
