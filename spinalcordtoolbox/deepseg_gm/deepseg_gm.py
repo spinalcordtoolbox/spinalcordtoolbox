@@ -39,6 +39,7 @@ from . import model
 # Suppress warnings and TensorFlow logging
 warnings.simplefilter(action='ignore', category=FutureWarning)
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+SMALL_INPUT_SIZE = 200
 
 
 def check_backend():
@@ -214,7 +215,18 @@ def segment_volume(ninput_volume, model_name,
     with open(metadata_abs_path) as fp:
         metadata = json.load(fp)
 
-    deepgmseg_model = model.create_model(metadata['filters'])
+    volume_size = np.array(ninput_volume.shape[0:2])
+    small_input = (volume_size <= SMALL_INPUT_SIZE).any()
+
+    if small_input:
+        # Smaller than the trained net, don't crop
+        net_input_size = volume_size
+    else:
+        # larger sizer, crop at 200x200
+        net_input_size = (SMALL_INPUT_SIZE, SMALL_INPUT_SIZE)
+
+    deepgmseg_model = model.create_model(metadata['filters'],
+                                         net_input_size)
 
     model_abs_path = gmseg_model_challenge.get_file_path(model_path)
     deepgmseg_model.load_weights(model_abs_path)
@@ -225,10 +237,13 @@ def segment_volume(ninput_volume, model_name,
 
     for slice_num in range(volume_data.shape[2]):
         data = volume_data[..., slice_num]
-        data, cropreg = crop_center(data, model.CROP_HEIGHT,
-                                    model.CROP_WIDTH)
+
+        if not small_input:
+            data, cropreg = crop_center(data, SMALL_INPUT_SIZE,
+                                        SMALL_INPUT_SIZE)
+            crops.append(cropreg)
+
         axial_slices.append(data)
-        crops.append(cropreg)
 
     axial_slices = np.asarray(axial_slices, dtype=np.float32)
     axial_slices = np.expand_dims(axial_slices, axis=3)
@@ -244,7 +259,8 @@ def segment_volume(ninput_volume, model_name,
     # Un-cropping
     for slice_num in range(preds.shape[0]):
         pred_slice = preds[slice_num][..., 0]
-        pred_slice = crops[slice_num].pad(pred_slice)
+        if not small_input:
+            pred_slice = crops[slice_num].pad(pred_slice)
         pred_slices.append(pred_slice)
 
     pred_slices = np.asarray(pred_slices, dtype=np.uint8)
@@ -273,12 +289,6 @@ def segment_file(input_filename, output_filename,
                                                  target_resample,
                                                  'mm', 'linear',
                                                  verbosity)
-
-    if (nii_resampled.shape[0] < 200) \
-       or (nii_resampled.shape[1] < 200):
-        raise RuntimeError("Image too small ({}, {})".format(
-                           nii_resampled.shape[0],
-                           nii_resampled.shape[1]))
 
     nii_resampled = nipy2nifti(nii_resampled)
     pred_slices = segment_volume(nii_resampled, model_name, threshold)
