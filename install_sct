@@ -188,10 +188,6 @@ while getopts ":dmhbpz" opt; do
       echo " Multiprocessing using MPI activated"
       export SCT_MPI_MODE=yes
       ;;
-    z)
-      echo " Development mode"
-      export SCT_DEV_MODE=yes
-      ;;
     h)
       usage
       exit 0
@@ -515,14 +511,9 @@ else
   fi
 fi
 
-## Install the spinalcordtoolbox into conda
-if [ ${SCT_DEV_MODE} ]; then
-  pip install -e ${SCT_SOURCE}
-  e_status=$?
-else
-  pip install -e ${SCT_DIR}
-  e_status=$?
-fi
+## Install the spinalcordtoolbox into the Conda venv
+pip install -e ${SCT_DIR}
+e_status=$?
 if [ ${e_status} != 0 ]; then
   echo "Failed to pip install sct, which is quite unexpected."
   exit ${e_status}
