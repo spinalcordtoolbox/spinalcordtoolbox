@@ -509,6 +509,23 @@ if __name__ == "__main__":
     # enabling centerline extraction by default (needed by check_and_correct_segmentation() )
     cmd += ['-centerline-binary']
 
+    # rescale header (see issue #1406)
+    rescale_header = 2
+    if rescale_header:
+        # TODO: rescale header of image and init-centerline/mask
+        import nibabel as nib
+        img = nib.load(fname_data)
+        # get qform
+        qform = img.header.get_qform()
+        # multiply by scaling factor
+        qform[0:3, 0:3] *= rescale_header
+        # save as new nifti file
+        new_header = img.header.copy()
+        new_header.set_qform(qform)
+        new_img = nib.nifti1.Nifti1Image(img.get_data(), None, header=new_header)
+        nib.save(new_img, "data_rescaled.nii.gz")
+
+
     # run propseg
     status, output = sct.run(cmd, verbose, raise_exception=False)
 
