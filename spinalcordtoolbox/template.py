@@ -25,9 +25,9 @@ def get_slices_from_vertebral_levels(im_vertlevel, level):
             # if that matches the desired level, append it to slice list
             if average_value == level:
                 slices.append(iz)
-        except ValueError:
+        except ValueError as e:
             # slice is empty (no indx found). Do nothing.
-            log.debug('Empty slice: z=%s'.format(iz))
+            log.debug('Empty slice: z=%s (%s)', iz, e)
     return slices
 
 
@@ -45,8 +45,9 @@ def get_vertebral_level_from_slice(im_vertlevel, slice):
         # find indices of non-null values
         indx, indy = np.where(data_vertlevel[:, :, slice])
         vert_level = int(round(np.mean(data_vertlevel[indx, indy, slice])))
-    except ValueError:
+    except ValueError as e:
         # slice is empty (no indx found). Do nothing.
-        log.debug('Empty slice: z=%s'.format(slice))
+        log.debug('Empty slice: z=%s (%s)', iz, e)
         vert_level = None
     return vert_level
+
