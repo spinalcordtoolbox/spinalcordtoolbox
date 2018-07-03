@@ -395,25 +395,21 @@ def no_new_line_log(msg, *args, **kwargs):
 
 
 
-
-#=======================================================================================================================
-# add suffix
-#=======================================================================================================================
 def add_suffix(fname, suffix):
     """
-    Add suffix between end of file name and extension. If the file name is pouf.nii.gz, then the suffix will be added
-    before the .nii.gz. Like that: poufsuffix.nii.gz
+    Add suffix between end of file name and extension.
+
     :param fname: absolute or relative file name. Example: t2.nii
     :param suffix: suffix. Example: _mean
     :return: file name with suffix. Example: t2_mean.nii
+
+    Examples:
+
+    - add_suffix(t2.nii, _mean) -> t2_mean.nii
+    - add_suffix(t2.nii.gz, a) -> t2a.nii.gz
     """
-    # check if extension is .nii.gz
-    if fname[-7:] == '.nii.gz':
-        # get index of extension
-        ind_ext = fname.find('.nii.gz')
-        return fname[:ind_ext] + suffix + '.nii.gz'
-    else:
-        return suffix.join(os.path.splitext(fname))
+    parent, stem, ext = extract_fname(fname)
+    return os.path.join(parent, stem + suffix + ext)
 
 
 #=======================================================================================================================
@@ -773,21 +769,21 @@ class ForkStdoutToFile(object):
     #         filename = None
     #     send_email(email, passwd_from=passwd_from, subject=subject, message=self.read(), filename=filename)
 
-#=======================================================================================================================
-# extract_fname
-#=======================================================================================================================
-# Extract path, file and extension
-def extract_fname(fname):
-    # extract path
-    path_fname = os.path.dirname(fname)
-    # extract file and extension
-    file_fname = os.path.basename(fname)
-    file_fname, ext_fname = os.path.splitext(file_fname)
-    # alter extension if .nii.gz file
-    if ext_fname == '.gz':
-        file_fname = file_fname[0:len(file_fname) - 4]
-        ext_fname = ".nii.gz"
-    return path_fname, file_fname, ext_fname
+
+
+def extract_fname(fpath):
+    """
+    Split a full path into a parent folder component, filename stem and extension.
+
+    Note: for .nii.gz the extension is understandably .nii.gz, not .gz
+    (``os.path.splitext()`` would want to do the latter, hence the special case).
+    """
+    parent, filename = os.path.split(fpath)
+    if filename.endswith(".nii.gz"):
+        stem, ext = filename[:-7], ".nii.gz"
+    else:
+        stem, ext = os.path.splitext(filename)
+    return parent, stem, ext
 
 
 #=======================================================================================================================
