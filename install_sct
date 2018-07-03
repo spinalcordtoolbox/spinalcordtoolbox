@@ -188,10 +188,6 @@ while getopts ":dmhbpz" opt; do
       echo " Multiprocessing using MPI activated"
       export SCT_MPI_MODE=yes
       ;;
-    z)
-      echo " Development mode"
-      export SCT_DEV_MODE=yes
-      ;;
     h)
       usage
       exit 0
@@ -372,29 +368,20 @@ else
 fi
 SCT_DIR=${INSTALL_DIR}
 
+# Copy files to destination directory
+if [ "${SCT_DIR}" != "${SCT_SOURCE}" ]; then
+  echo -e "\nCopying source files from ${SCT_SOURCE} to ${SCT_DIR}"
+  cp -vR ${SCT_INSTALL_CP_OPTIONS} "${SCT_SOURCE}/"*  "${SCT_DIR}/" | while read line; do echo -n "."; done
+
+else
+  echo -e "\nSkipping copy of source files (source and destination folders are the same)"
+fi
+
 # Clean old install setup in bin/ if existing
 if [ -x ${SCT_DIR}/${BIN_DIR} ]; then
   echo -e "\nRemoving sct and isct softlink from ${SCT_DIR}/${BIN_DIR}"
   find ${SCT_DIR}/${BIN_DIR} -type l -name "sct_*" -exec rm {} \;
   find ${SCT_DIR}/${BIN_DIR} -type l -name "isct_*" -exec rm {} \;
-fi
-
-# Copy files to destination directory
-if [ "${SCT_DIR}" != "${SCT_SOURCE}" ]; then
-  echo -e "\nCopying source files from ${SCT_SOURCE} to ${SCT_DIR}"
-  cp -vR ${SCT_SOURCE}/${SCRIPT_DIR}  ${SCT_DIR}/.
-  cp ${SCT_SOURCE}/version.txt  ${SCT_DIR}/.
-  cp ${SCT_SOURCE}/commit.txt  ${SCT_DIR}/.
-  cp ${SCT_SOURCE}/README.md  ${SCT_DIR}/.
-  cp ${SCT_SOURCE}/CHANGES.md  ${SCT_DIR}/.
-  cp ${SCT_SOURCE}/batch_processing.sh  ${SCT_DIR}/.
-  cp ${SCT_SOURCE}/batch_processing_PAM50.sh  ${SCT_DIR}/.
-  mkdir -p ${SCT_DIR}/install
-  cp -vRp ${SCT_SOURCE}/install ${SCT_DIR}
-  cp -vRp ${SCT_SOURCE}/testing ${SCT_DIR}/.
-  mkdir -p ${SCT_DIR}/documentation/imgs && cp -vRp ${SCT_SOURCE}/documentation/imgs/* ${SCT_DIR}/documentation/imgs
-else
-  echo -e "\nSkipping copy of source files (source and destination folders are the same)"
 fi
 
 # Go to installation folder
@@ -414,12 +401,13 @@ if [ ${REPORT_STATS} ]; then
   download "${TMP_DIR}/stats_dsn.txt" "$STATS_DSN"
   SCT_ADD_ENV_VARS="export SENTRY_DSN=$(cat ${TMP_DIR}/stats_dsn.txt)"
 fi
-echo -e "\nCreate launchers for Python scripts"
-cmd="mkdir -p ${SCT_DIR}/${BIN_DIR}"; echo ">> "$cmd; $cmd
-# update_bin has to be executed from the install directory
-cmd="cd ${SCT_DIR}/install"; echo ">> "$cmd; $cmd
-cmd="./update_bin.sh"; echo ">> "$cmd; $cmd  # N.B. This script needs to be run from /install folder (because uses relative path)
-# Copy binaries
+echo -e "\nCreating launchers for Python scripts..."
+cmd="install/update_bin.sh ${SCT_SOURCE} ${SCT_DIR}"; echo ">> "$cmd; $cmd
+res=$?
+if [[ $res != 0 ]]; then
+  echo "\nProblem creating launchers!"
+  exit $res
+fi
 
 ## INSTALL PYTHON
 # We make sure that there is no conflict with local python install by unsetting PYTHONPATH
@@ -533,14 +521,9 @@ else
   fi
 fi
 
-## Install the spinalcordtoolbox into conda
-if [ ${SCT_DEV_MODE} ]; then
-  pip install -e ${SCT_SOURCE}
-  e_status=$?
-else
-  pip install ${SCT_SOURCE}
-  e_status=$?
-fi
+## Install the spinalcordtoolbox into the Conda venv
+pip install -e ${SCT_DIR}
+e_status=$?
 if [ ${e_status} != 0 ]; then
   echo "Failed to pip install sct, which is quite unexpected."
   exit ${e_status}
@@ -553,13 +536,13 @@ else
   echo -e "\nInstalling binaries..."
   cmd=". ${SCT_DIR}/${PYTHON_DIR}/bin/activate ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
   if [ $OS == "linux" ]; then
-    cmd="python ../scripts/sct_download_data.py -d binaries_debian -o ${SCT_DIR}/${BIN_DIR}"; echo ">> "$cmd; $cmd
+    cmd="python scripts/sct_download_data.py -d binaries_debian -o ${SCT_DIR}/${BIN_DIR}"; echo ">> "$cmd; $cmd
     e_status=$?
   elif [ $OS == "linux_centos6" ]; then
-    cmd="python ../scripts/sct_download_data.py -d binaries_centos -o ${SCT_DIR}/${BIN_DIR}"; echo ">> "$cmd; $cmd
+    cmd="python scripts/sct_download_data.py -d binaries_centos -o ${SCT_DIR}/${BIN_DIR}"; echo ">> "$cmd; $cmd
     e_status=$?
   elif [ $OS == "osx" ]; then
-    cmd="python ../scripts/sct_download_data.py -d binaries_osx -o ${SCT_DIR}/${BIN_DIR}"; echo ">> "$cmd; $cmd
+    cmd="python scripts/sct_download_data.py -d binaries_osx -o ${SCT_DIR}/${BIN_DIR}"; echo ">> "$cmd; $cmd
     e_status=$?
   else
     echo "Unsupported OS $OS: can't install binaries."
