@@ -42,7 +42,7 @@ def get_parser():
                       mandatory=False,
                       example='data_pad.nii.gz')
 
-    parser.usage.addSection('\nBasic image operations:')
+    parser.usage.addSection('\nImage operations:')
     parser.add_option(name="-pad",
                       type_value="str",
                       description='Pad 3D image. Specify padding as: "x,y,z" (in voxel)',
