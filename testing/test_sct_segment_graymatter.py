@@ -11,19 +11,9 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-# import commands
-# import sys
 import os
-
 import numpy as np
-from pandas import DataFrame
-
-import sct_segment_graymatter
-# from msct_image import Image
 import sct_utils as sct
-# import time
-
-from spinalcordtoolbox.metadata import get_file_label
 
 
 def init(param_test):
@@ -47,9 +37,6 @@ def test_integrity(param_test):
     Test integrity of function
     """
 
-    # initialization of results: must be NaN if test fails
-    result_dice_gm, result_dice_wm, result_hausdorff, result_median_dist = float('nan'), float('nan'), float('nan'), float('nan')
-
     target_name = sct.extract_fname(param_test.file_input)[1]
 
     dice_fname = os.path.join(param_test.path_output, 'dice_coefficient_' + target_name + '.txt')
@@ -69,18 +56,23 @@ def test_integrity(param_test):
     null_slices = []
     gm_dice = []
     for line in gm_dice_lines:
-        n_slice, dc = line.split(' ')
-        # remove \n from dice result
-        dc = dc[:-1]
-        dc = dc[:-4] if '[0m' in dc else dc
+        try:
+            n_slice, dc = line.split(' ')
+            # remove \n from dice result
+            dc = dc[:-1]
+            dc = dc[:-4] if '[0m' in dc else dc
 
-        if dc == '0' or dc == 'nan':
-            null_slices.append(n_slice)
-        else:
-            try:
-                gm_dice.append(float(dc))
-            except ValueError:
-                gm_dice.append(float(dc[:-4]))
+            if dc == '0' or dc == 'nan':
+                null_slices.append(n_slice)
+            else:
+                try:
+                    gm_dice.append(float(dc))
+                except ValueError:
+                    gm_dice.append(float(dc[:-4]))
+        except ValueError:
+            # Hack to avoid "too many values to unpack" due to the recent addition of "Total processing time:" at the
+            # end of a process. In the future we should simply output dice results as external csv file.
+            sct.log.debug("ValueError: Ignoring this line.")
     result_dice_gm = np.mean(gm_dice)
 
     # extracting dice on WM
@@ -88,15 +80,20 @@ def test_integrity(param_test):
     wm_dice_lines = wm_dice_lines[wm_dice_lines.index('2D Dice coefficient by slice:\n') + 1:]
     wm_dice = []
     for line in wm_dice_lines:
-        n_slice, dc = line.split(' ')
-        # remove \n from dice result
-        if line is not wm_dice_lines[-1]:
-            dc = dc[:-1]
-        if n_slice not in null_slices:
-            try:
-                wm_dice.append(float(dc))
-            except ValueError:
-                wm_dice.append(float(dc[:-4]))
+        try:
+            n_slice, dc = line.split(' ')
+            # remove \n from dice result
+            if line is not wm_dice_lines[-1]:
+                dc = dc[:-1]
+            if n_slice not in null_slices:
+                try:
+                    wm_dice.append(float(dc))
+                except ValueError:
+                    wm_dice.append(float(dc[:-4]))
+        except ValueError:
+            # Hack to avoid "too many values to unpack" due to the recent addition of "Total processing time:" at the
+            # end of a process. In the future we should simply output dice results as external csv file.
+            sct.log.debug("ValueError: Ignoring this line.")
     result_dice_wm = np.mean(wm_dice)
 
     # Extracting hausdorff distance results
