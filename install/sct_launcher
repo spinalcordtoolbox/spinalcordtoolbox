@@ -106,6 +106,7 @@ if [[ "${0}" == "${BASH_SOURCE}" ]] && [[ -n "${1}"  ]]; then
   start=$(date +%s)
 
   python ${SCT_DIR}/scripts/${@}
+  res=$?
 
   end=$(date +%s)
   difftimelps=$(($end-$start))
@@ -116,3 +117,4 @@ else
   echo Sourcing sct_laucher in your environment ${SCT_DIR}
 fi
 
+exit $res
