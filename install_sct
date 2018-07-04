@@ -235,6 +235,16 @@ fi
 # Fetch OS type
 if uname -a | grep -i  darwin > /dev/null 2>&1; then
   # OSX
+
+  # Fix for non-English Unicode systems on MAC
+  if [ -z ${LC_ALL} ]; then
+    export LC_ALL=en_US.UTF-8
+  fi
+
+  if [ -z ${LANG} ]; then
+    export LANG=en_US.UTF-8
+  fi
+
   OS=osx
   force_bashrc_loading
 elif uname -a | grep -i  linux > /dev/null 2>&1; then
