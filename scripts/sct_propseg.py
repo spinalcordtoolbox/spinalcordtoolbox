@@ -283,6 +283,14 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       type_value='folder_creation',
                       description='The path where the quality control generated content will be saved',
                       default_value=None)
+    parser.add_option(name='-correct-seg',
+                      type_value="multiple_choice",
+                      description="Enable (1) or disable (0) the algorithm that checks and correct the output "
+                                  "segmentation. More specifically, the algorithm checks if the segmentation is "
+                                  "consistent with the centerline provided by isct_propseg.",
+                      mandatory=False,
+                      example=["0", "1"],
+                      default_value="1")
     parser.add_option(name='-igt',
                       type_value='image_nifti',
                       description='File name of ground-truth segmentation.',
@@ -510,7 +518,7 @@ if __name__ == "__main__":
     cmd += ['-centerline-binary']
 
     # rescale header (see issue #1406)
-    rescale_header = 2
+    rescale_header = 2  # TODO add flag
     if rescale_header:
         # TODO: rescale header of image and init-centerline/mask
         import nibabel as nib
@@ -545,8 +553,10 @@ if __name__ == "__main__":
     fname_seg = os.path.normpath(os.path.join(folder_output, file_seg))
 
     # check consistency of segmentation
-    fname_centerline = os.path.join(folder_output, file_data + '_centerline' + ext_data)
-    check_and_correct_segmentation(fname_seg, fname_centerline, folder_output=folder_output, threshold_distance=3.0, remove_temp_files=remove_temp_files, verbose=verbose)
+    if arguments["-correct-seg"] == "1":
+        fname_centerline = os.path.join(folder_output, file_data + '_centerline' + ext_data)
+        check_and_correct_segmentation(fname_seg, fname_centerline, folder_output=folder_output, threshold_distance=3.0,
+                                       remove_temp_files=remove_temp_files, verbose=verbose)
 
     # copy header from input to segmentation to make sure qform is the same
     from sct_image import copy_header
