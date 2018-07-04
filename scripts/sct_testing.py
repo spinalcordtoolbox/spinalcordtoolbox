@@ -99,6 +99,10 @@ def get_parser():
      help="# of simultaneous tests to run (jobs). 0 means # of available CPU threads",
      default=arg_jobs(0),
     )
+    parser.add_argument("--verbose", "-v",
+     choices=("0", "1"),
+     default=param_default.verbose,
+    )
 
     return parser
 
@@ -167,6 +171,7 @@ def main(args=None):
     functions_to_test = arguments.function
     param.remove_tmp_file = int(arguments.remove_temps)
     jobs = arguments.jobs
+    param.verbose = arguments.verbose
 
     start_time = time.time()
 
@@ -181,7 +186,7 @@ def main(args=None):
     sct.printv('\nPath to testing data: ' + param.path_data, param.verbose)
 
     # create temp folder that will have all results and go in it
-    param.path_tmp = sct.tmp_create(verbose=0)
+    param.path_tmp = sct.tmp_create(verbose=param.verbose)
     curdir = os.getcwd()
     os.chdir(param.path_tmp)
 
@@ -224,6 +229,10 @@ def main(args=None):
                         print("   %s" % line)
             else:
                 print_ok()
+                if param.verbose:
+                    for output in list_output:
+                        for line in output.splitlines():
+                            print("   %s" % line)
                 status = 0
             # append status function to global list of status
             list_status.append(status)
