@@ -33,7 +33,7 @@ class Param:
         self.path_output = []  # list of output folders
         self.function_to_test = None
         self.remove_tmp_file = 0
-        self.verbose = 1
+        self.verbose = 0
         self.path_tmp = None
         self.args = []  # list of input arguments to the function
         self.args_with_path = ''  # input arguments to the function, with path
