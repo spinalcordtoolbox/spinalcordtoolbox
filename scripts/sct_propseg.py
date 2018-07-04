@@ -351,7 +351,7 @@ if __name__ == "__main__":
     contrast_type_propseg = contrast_type_conversion[contrast_type]
 
     # Building the command
-    cmd = ['isct_propseg', '-i', fname_data, '-t', contrast_type_propseg]
+    cmd = ['isct_propseg', '-t', contrast_type_propseg]
 
     if "-ofolder" in arguments:
         folder_output = arguments["-ofolder"]
@@ -519,12 +519,17 @@ if __name__ == "__main__":
         qform = img.header.get_qform()
         # multiply by scaling factor
         qform[0:3, 0:3] *= rescale_header
-        # save as new nifti file
-        new_header = img.header.copy()
-        new_header.set_qform(qform)
-        new_img = nib.nifti1.Nifti1Image(img.get_data(), None, header=new_header)
-        nib.save(new_img, "data_rescaled.nii.gz")
-
+        # generate a new nifti file
+        header_rescaled = img.header.copy()
+        header_rescaled.set_qform(qform)
+        # the data are the same-- only the header changes
+        img_rescaled = nib.nifti1.Nifti1Image(img.get_data(), None, header=header_rescaled)
+        path_tmp = sct.tmp_create(basename="propseg", verbose=verbose)
+        fname_data_propseg = os.path.join(path_tmp, "data_rescaled.nii.gz")
+        nib.save(img_rescaled, fname_data_propseg)
+    else:
+        fname_data_propseg = fname_data
+    cmd += ['-i', fname_data_propseg]
 
     # run propseg
     status, output = sct.run(cmd, verbose, raise_exception=False)
