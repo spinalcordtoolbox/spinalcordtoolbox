@@ -171,6 +171,10 @@ def main(args=None):
     functions_to_test = arguments.function
     param.remove_tmp_file = int(arguments.remove_temps)
     jobs = arguments.jobs
+
+    if jobs == 0:
+        jobs = multiprocessing.cpu_count()
+
     param.verbose = arguments.verbose
 
     start_time = time.time()
@@ -197,6 +201,7 @@ def main(args=None):
             if f not in list_functions:
                 sct.printv('Command-line usage error: Function "%s" is not part of the list of testing functions' % function_to_test, type='error')
         list_functions = functions_to_test
+        jobs = min(jobs, len(functions_to_test))
 
     try:
         if jobs != 1:
