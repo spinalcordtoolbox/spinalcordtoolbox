@@ -481,7 +481,7 @@ if __name__ == "__main__":
             params.interval_in_mm = 30
             params.starting_slice = 'top'
         image = Image(fname_data)
-        tmp_output_file = Image(image)
+        tmp_output_file = Image(image)  # copy current image object into tmp_output_file
         tmp_output_file.data *= 0
         tmp_output_file.setFileName(sct.add_suffix(fname_data, '_labels_viewer'))
         controller = launch_centerline_dialog(image, tmp_output_file, params)
@@ -535,6 +535,8 @@ if __name__ == "__main__":
         path_tmp = sct.tmp_create(basename="propseg", verbose=verbose)
         fname_data_propseg = os.path.join(path_tmp, "data_rescaled.nii.gz")
         nib.save(img_rescaled, fname_data_propseg)
+        # if "-init-mask" in arguments:
+
     else:
         fname_data_propseg = fname_data
     cmd += ['-i', fname_data_propseg]
