@@ -480,22 +480,22 @@ if __name__ == "__main__":
             params.num_points = 20
             params.interval_in_mm = 30
             params.starting_slice = 'top'
-        image = Image(fname_data)
-        tmp_output_file = Image(image)  # copy current image object into tmp_output_file
-        tmp_output_file.data *= 0
-        tmp_output_file.setFileName(sct.add_suffix(fname_data, '_labels_viewer'))
-        controller = launch_centerline_dialog(image, tmp_output_file, params)
+        im_data = Image(fname_data)
+        im_mask_viewer = Image(im_data)  # copy current image object into im_mask_viewer
+        im_mask_viewer.data *= 0
+        im_mask_viewer.setFileName(sct.add_suffix(fname_data, '_labels_viewer'))
+        controller = launch_centerline_dialog(im_data, im_mask_viewer, params)
 
         if not controller.saved:
             sct.log.error('The viewer has been closed before entering all manual points. Please try again.')
             sys.exit(1)
 
-        controller.as_niftii(tmp_output_file.absolutepath)
+        controller.as_niftii(im_mask_viewer.absolutepath)
         # add mask filename to parameters string
         if use_viewer == "centerline":
-            cmd += ["-init-centerline", tmp_output_file.absolutepath]
+            cmd += ["-init-centerline", im_mask_viewer.absolutepath]
         elif use_viewer == "mask":
-            cmd += ["-init-mask", tmp_output_file.absolutepath]
+            cmd += ["-init-mask", im_mask_viewer.absolutepath]
 
     # If using OptiC
     elif use_optic:
@@ -569,7 +569,7 @@ if __name__ == "__main__":
     # remove temporary files
     # if remove_temp_files:
     #     sct.log.info("Remove temporary files...")
-    #     os.remove(tmp_output_file.absolutepath)
+    #     os.remove(im_mask_viewer.absolutepath)
 
     if path_qc is not None:
         generate_qc(fname_input_data, fname_seg, args, os.path.abspath(path_qc))
