@@ -59,8 +59,10 @@ def main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, 
     # first, get zmin and zmax spanned by the centerline (i.e. with non-zero values)
     indz_centerline = np.where([np.sum(im_centerline.data[:, :, iz]) for iz in range(nz)])[0]
     zmin, zmax = indz_centerline[0], indz_centerline[-1]
-    # then, extend the centerline by padding values below zmin and above zmax
-    x_centerline_extended = np.concatenate([np.ones(zmin) * x_centerline_fit[0], x_centerline_fit, np.ones(nz-zmax-1) * x_centerline_fit[-1]])
+    # then, extend the centerline by copying values below zmin and above zmax
+    x_centerline_extended = np.concatenate([np.ones(zmin) * x_centerline_fit[0],
+                                            x_centerline_fit,
+                                            np.ones(nz-zmax) * x_centerline_fit[-1]])
 
     # loop across slices and apply translation
     im_anat_flattened = im_anat.copy()
