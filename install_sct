@@ -151,7 +151,6 @@ usage()
   echo -e "\n\t-m \v Prevent the (re)-installation of the \"python/\" directory "
   echo -e "\n\t-b \v Prevent the (re)-installation of the SCT binaries files "
   echo -e "\n\t--mpi,-p \v Will use the MPI interface to run pipelines (Linux support only)"
-  echo -e "\n\t-z \v Will install spinalcordtoolbox in development mode"
 }
 
 
