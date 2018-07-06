@@ -14,11 +14,11 @@ import os
 import sys
 
 import numpy as np
+from scipy import ndimage as ndi
 import sct_image
+from sct_image import orientation, copy_header
 import sct_utils as sct
 from msct_parser import Parser
-from scipy import ndimage as ndi
-from sct_image import orientation
 from spinalcordtoolbox.centerline import optic
 
 
@@ -576,7 +576,6 @@ if __name__ == "__main__":
                                        remove_temp_files=remove_temp_files, verbose=verbose)
 
     # copy header from input to segmentation to make sure qform is the same
-    from sct_image import copy_header
     im_seg = Image(fname_seg)
     im_seg = copy_header(image_input, im_seg)
     im_seg.save(type='int8')
