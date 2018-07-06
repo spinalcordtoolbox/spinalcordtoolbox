@@ -346,6 +346,30 @@ def generate_qc(fn_in, fn_seg, args, path_qc):
     )
 
 
+def func_rescale_header(fname_data, rescale_factor):
+    """
+    Rescale the voxel dimension by modifying the NIFTI header qform. Write the output file in a temp folder.
+    :param fname_data:
+    :param rescale_factor:
+    :return: fname_data_rescaled
+    """
+    import nibabel as nib
+    img = nib.load(fname_data)
+    # get qform
+    qform = img.header.get_qform()
+    # multiply by scaling factor
+    qform[0:3, 0:3] *= rescale_factor
+    # generate a new nifti file
+    header_rescaled = img.header.copy()
+    header_rescaled.set_qform(qform)
+    # the data are the same-- only the header changes
+    img_rescaled = nib.nifti1.Nifti1Image(img.get_data(), None, header=header_rescaled)
+    path_tmp = sct.tmp_create(basename="propseg", verbose=verbose)
+    fname_data_rescaled = os.path.join(path_tmp, os.path.basename(sct.add_suffix(fname_data, "_rescaled")))
+    nib.save(img_rescaled, fname_data_rescaled)
+    return fname_data_rescaled
+
+
 if __name__ == "__main__":
     sct.init_sct()
     parser = get_parser()
@@ -354,11 +378,10 @@ if __name__ == "__main__":
     fname_input_data = arguments["-i"]
     fname_data = os.path.abspath(fname_input_data)
     contrast_type = arguments["-c"]
-
     contrast_type_conversion = {'t1': 't1', 't2': 't2', 't2s': 't2', 'dwi': 't1'}
     contrast_type_propseg = contrast_type_conversion[contrast_type]
 
-    # Building the command
+    # Starting building the command
     cmd = ['isct_propseg', '-t', contrast_type_propseg]
 
     if "-ofolder" in arguments:
@@ -465,6 +488,16 @@ if __name__ == "__main__":
 
     path_data, file_data, ext_data = sct.extract_fname(fname_data)
 
+    # rescale header (see issue #1406)
+    rescale_header = 2  # TODO add flag
+    if rescale_header:
+        fname_data_propseg = func_rescale_header(fname_data, rescale_header)
+    else:
+        fname_data_propseg = fname_data
+
+    # add to command
+    cmd = ['-i', fname_data_propseg]
+
     # if centerline or mask is asked using viewer
     if use_viewer:
         from spinalcordtoolbox.gui.base import AnatomicalParams
@@ -480,22 +513,24 @@ if __name__ == "__main__":
             params.num_points = 20
             params.interval_in_mm = 30
             params.starting_slice = 'top'
-        im_data = Image(fname_data)
+        im_data = Image(fname_data_propseg)
         im_mask_viewer = Image(im_data)  # copy current image object into im_mask_viewer
         im_mask_viewer.data *= 0
-        im_mask_viewer.setFileName(sct.add_suffix(fname_data, '_labels_viewer'))
+        im_mask_viewer.setFileName(sct.add_suffix(fname_data_propseg, '_labels_viewer'))
         controller = launch_centerline_dialog(im_data, im_mask_viewer, params)
+        fname_labels_viewer = im_mask_viewer.absolutepath
 
         if not controller.saved:
             sct.log.error('The viewer has been closed before entering all manual points. Please try again.')
             sys.exit(1)
+        # save labels
+        controller.as_niftii(fname_labels_viewer)
 
-        controller.as_niftii(im_mask_viewer.absolutepath)
         # add mask filename to parameters string
         if use_viewer == "centerline":
-            cmd += ["-init-centerline", im_mask_viewer.absolutepath]
+            cmd += ["-init-centerline", fname_labels_viewer]
         elif use_viewer == "mask":
-            cmd += ["-init-mask", im_mask_viewer.absolutepath]
+            cmd += ["-init-mask", fname_labels_viewer]
 
     # If using OptiC
     elif use_optic:
@@ -505,41 +540,18 @@ if __name__ == "__main__":
                                        'data/optic_models',
                                        '{}_model'.format(contrast_type))
 
-        init_option_optic, optic_filename = optic.detect_centerline(fname_data,
+        init_option_optic, fname_centerline = optic.detect_centerline(fname_data_propseg,
                                                                     contrast_type, path_classifier,
                                                                     folder_output, remove_temp_files,
                                                                     init_option, verbose=verbose)
         if init_option is not None:
+            # TODO: what's this???
             cmd += ["-init", str(init_option_optic)]
 
-        cmd += ["-init-centerline", optic_filename]
+        cmd += ["-init-centerline", fname_centerline]
 
     # enabling centerline extraction by default (needed by check_and_correct_segmentation() )
     cmd += ['-centerline-binary']
-
-    # rescale header (see issue #1406)
-    rescale_header = 2  # TODO add flag
-    if rescale_header:
-        # TODO: rescale header of image and init-centerline/mask
-        import nibabel as nib
-        img = nib.load(fname_data)
-        # get qform
-        qform = img.header.get_qform()
-        # multiply by scaling factor
-        qform[0:3, 0:3] *= rescale_header
-        # generate a new nifti file
-        header_rescaled = img.header.copy()
-        header_rescaled.set_qform(qform)
-        # the data are the same-- only the header changes
-        img_rescaled = nib.nifti1.Nifti1Image(img.get_data(), None, header=header_rescaled)
-        path_tmp = sct.tmp_create(basename="propseg", verbose=verbose)
-        fname_data_propseg = os.path.join(path_tmp, "data_rescaled.nii.gz")
-        nib.save(img_rescaled, fname_data_propseg)
-        # if "-init-mask" in arguments:
-
-    else:
-        fname_data_propseg = fname_data
-    cmd += ['-i', fname_data_propseg]
 
     # run propseg
     status, output = sct.run(cmd, verbose, raise_exception=False)
