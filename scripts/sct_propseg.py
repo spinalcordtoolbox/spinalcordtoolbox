@@ -247,6 +247,14 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       type_value="image_nifti",
                       description="mask containing binary pixels at edges of the spinal cord on which the segmentation algorithm will be forced to register the surface. Can be used in case of poor/missing contrast between spinal cord and CSF or in the presence of artefacts/pathologies.",
                       mandatory=False)
+    parser.add_option(name="-rescale",
+                      type_value="float",
+                      description="Rescale the image (only the header, not the data) in order to enable segmentation "
+                                  "on spinal cords with dimensions different than that of humans (e.g., mice, rats, "
+                                  "elephants, etc.). For example, if the spinal cord is 2x smaller than that of human,"
+                                  "then use -rescale 2",
+                      default_value=1,
+                      mandatory=False)
     parser.add_option(name="-radius",
                       type_value="float",
                       description="approximate radius (in mm) of the spinal cord, default is 4",
@@ -478,6 +486,7 @@ if __name__ == "__main__":
         cmd += ["-dsearch", str(arguments["-distance-search"])]
     if "-alpha" in arguments:
         cmd += ["-alpha", str(arguments["-alpha"])]
+    rescale_header = arguments["-rescale"]
 
     # check if input image is in 3D. Otherwise itk image reader will cut the 4D image in 3D volumes and only take the first one.
     from msct_image import Image
@@ -489,8 +498,7 @@ if __name__ == "__main__":
     path_data, file_data, ext_data = sct.extract_fname(fname_data)
 
     # rescale header (see issue #1406)
-    rescale_header = 2  # TODO add flag
-    if rescale_header:
+    if rescale_header is not 1:
         fname_data_propseg = func_rescale_header(fname_data, rescale_header)
     else:
         fname_data_propseg = fname_data
