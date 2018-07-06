@@ -1,6 +1,7 @@
 * [Introduction](#introduction)
-* [Fixing a bug](#fixing-a-bug)
+* [Reporting/Fixing a bug](#reportingfixing-a-bug)
 * [Adding a new feature](#adding-a-new-feature)
+* [Naming your branch](#naming-your-branch)
 * [Commit changes to your branch](#commit-changes-to-your-branch)
 * [Submit a pull request](#submit-a-pull-request)
 * [Code Review](#code-review)
@@ -16,24 +17,29 @@ If your are new to git or github, the following articles may help you:
 * See [Creating branches](https://help.github.com/articles/creating-and-deleting-branches-within-your-repository/) for an introduction on branching within GitHub.
 * See [Refining patches using git](https://github.com/erlang/otp/wiki/Refining-patches-using-git) for an introduction to cleaning up git branches.
 
-# Fixing a bug
+# Reporting/Fixing a bug
+
+## Reporting a bug
+
+Please use the following template to structure the bug report:
+
+    Title: Summary of the issue. ex:"Crashes during image cropping."
+    Environment: Specify what OS and SCT version you are using.
+    Step to reproduce: List all the steps that caused the issue, including the syntax
+    Data that caused the issue: when possible/relevant, copy the data there: `duke:sct_testing/issues`
+    Expected results:
+    Actual results:
+
+Please use label: [BUG] & [function] (see list of labels [here](https://github.com/neuropoly/spinalcordtoolbox/labels))
+
+Example of bug report here: Example here: https://github.com/neuropoly/spinalcordtoolbox/issues/444
+
+## Fixing a bug
 
 * In most cases, pull requests for bug fixes should be based on the `master` branch.
 * Write a test case before fixing the bug (so that you will know that the test case catches the bug). For applications without a test suite in the git repository, it would be appreciated if you provide a small code sample in the commit message or email a module that will provoke the failure.
 * Indicate issue number in the commit (see commit section below)
 * Do not close the issue yourself. The issue will be automatically closed when changes are pushed to master.
-
-## Bug reporting template
-
-For issues that are not straight forward, please use the template to structure the bug report:
-
-    Title: [BUG] Summary of the issue. ex:"[BUG] sct_image command crashes when cropping image."
-
-    Environment: Specify what OS and SCT version you are using.
-    Step to reproduce: List all the steps that caused the issue.
-    Expected results:
-    Actual results:
-    Data that caused the issue:
 
 # Adding a new feature
 
@@ -53,6 +59,32 @@ When proposing a new feature, a discussion will be conducted around the feature.
     Use Case: Explain how the feature will be used, provide all the necessary steps.
     Expected Outcome: What will the outcome be.
     Citation: Provide references to any theoretical work to help the reader better understand the feature.
+
+# Naming your branch
+
+Please remember to follow our conventions when creating branches:
+
+| FORMAT  | Example  |  Usage | Delete after commit | 
+|---|---|---|---|
+| bug/[Issue#]  | bug/1889  | Related to bug fix | Yes  |
+| feature/[Issue#] | feature/1851 | New features | Yes |
+| enh/[Issue#] | enh/1721 | Enhancement | Yes |
+| doc/[Issue#] | doc/1819 | Documentation | Yes |
+| release/[Version#] | release/3.2.1 | New release | No |
+| testing/dev_[any name] | testing/dev_JC | Related to testing | No |
+| inst/[Issue#] | inst/1771 | Related to SCT installation | No |
+
+---
+
+# Update your branch with master
+
+## git pull --rebase vs. git pull
+
+In general, to update your local repository please use:
+~~~
+git pull --rebase
+~~~
+Instead of `git pull`, which is equivalent to `git fetch` + `git merge` commands, which will result with an extra commit and ugly merge bubbles in your commit log. More details [here](https://coderwall.com/p/7aymfa/please-oh-please-use-git-pull-rebase).
 
 # Commit changes to your branch
 
@@ -108,15 +140,16 @@ Solves #1020
 
 # Submit a pull request
 
+We usually prefer specialized PRs that address one issue (it could be more if all issues falling in the PR are inter-related). The title of the PR should be specific to the issue.
+
 ### Title
-The title should be short (50 chars or less), and should explicitly summarize the purpose of the PR. Please note that the PR title is used to automatically generate the [Changelog](https://github.com/neuropoly/spinalcordtoolbox/blob/master/CHANGES.md) for each new release.
+The title should be short (50 chars or less), and should explicitly summarize the purpose of the PR. The PR title is used to automatically generate the [Changelog](https://github.com/neuropoly/spinalcordtoolbox/blob/master/CHANGES.md) for each new release. Do not include the issue number in the title (do it in the PR description). 
+
+### Description
+If the PR fixes some issues, please write it as follows: "Fixes #XXXX, Fixes #YYYY, Fixes ZZZZ". That syntax will automatically close the related issues upon merging.
 
 ### Labels
-To help prioritize the request, add labels that describe the type and impact of the change. A change can have multiple types if it is appropriate but would have only 1 impact label. Such as `bug documentation fix:patch`.
-Note that labels are used for organizing the Changelog into BUG, ENHANCEMENT, FEATURE, etc.
-See [label definitions](https://github.com/neuropoly/spinalcordtoolbox/wiki/Label-definition) on how to categorize the issue and pull request.
-
-[Here](https://github.com/neuropoly/spinalcordtoolbox/pull/1637) is an example of PR with proper labels and description.
+To help assigning reviewers and organizing the Changelog, add labels that describe the [category](https://github.com/neuropoly/spinalcordtoolbox/wiki/Label-definition#issue-category) and type of the change. A change can have multiple types if it is appropriate but **it can only have one category**. [Here](https://github.com/neuropoly/spinalcordtoolbox/pull/1637) is an example of PR with proper labels and description.
 
 # Code Review 
 
@@ -129,10 +162,7 @@ Any changes submitted to the master branch will go through code review. For a pu
 
 Reviewing members are :
 * @jcohenadad
-* @peristeri
 * @zougloub
-* @benjamindeleener
 * @charleygros
 * @fperdigon
 * @perone
-* @stephaniealley
