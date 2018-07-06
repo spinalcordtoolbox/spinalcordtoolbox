@@ -8,12 +8,11 @@
 #     Spinal cord gray matter segmentation using deep dilated convolutions.
 #     URL: https://arxiv.org/abs/1710.01269
 
-import sys, os
+import sys
+import os
 
 import sct_utils as sct
 from msct_parser import Parser
-
-from spinalcordtoolbox.deepseg_gm import deepseg_gm
 
 
 def get_parser():
@@ -106,7 +105,6 @@ def generate_qc(fn_in, fn_seg, args, path_qc):
 
 
 def run_main():
-    deepseg_gm.check_backend()
     parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
     input_filename = arguments["-i"]
@@ -127,6 +125,9 @@ def run_main():
     # Threshold zero means no thresholding
     if threshold == 0.0:
         threshold = None
+
+    from spinalcordtoolbox.deepseg_gm import deepseg_gm
+    deepseg_gm.check_backend()
 
     out_fname = deepseg_gm.segment_file(input_filename, output_filename,
                                         model_name, threshold, int(verbose),
