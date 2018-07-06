@@ -496,7 +496,7 @@ if __name__ == "__main__":
         fname_data_propseg = fname_data
 
     # add to command
-    cmd = ['-i', fname_data_propseg]
+    cmd += ['-i', fname_data_propseg]
 
     # if centerline or mask is asked using viewer
     if use_viewer:
@@ -563,8 +563,11 @@ if __name__ == "__main__":
         sys.exit(1)
 
     # build output filename
-    file_seg = file_data + "_seg" + ext_data
-    fname_seg = os.path.normpath(os.path.join(folder_output, file_seg))
+    fname_seg = os.path.join(folder_output, os.path.abspath(sct.add_suffix(fname_data, "_seg")))
+    # in case header was rescaled, we need to update the output segmentation file name by removing the "_rescaled"
+    if rescale_header:
+        os.rename(os.path.join(folder_output, sct.add_suffix(os.path.basename(fname_data_propseg), "_seg")),
+                  fname_seg)
 
     # check consistency of segmentation
     if arguments["-correct-seg"] == "1":
