@@ -572,14 +572,17 @@ if __name__ == "__main__":
 
     # build output filename
     fname_seg = os.path.join(folder_output, os.path.abspath(sct.add_suffix(fname_data, "_seg")))
-    # in case header was rescaled, we need to update the output segmentation file name by removing the "_rescaled"
+    fname_centerline = os.path.join(folder_output, os.path.abspath(sct.add_suffix(fname_data, "_centerline")))
+    # in case header was rescaled, we need to update the output file names by removing the "_rescaled"
     if rescale_header:
         os.rename(os.path.join(folder_output, sct.add_suffix(os.path.basename(fname_data_propseg), "_seg")),
                   fname_seg)
+        os.rename(os.path.join(folder_output, sct.add_suffix(os.path.basename(fname_data_propseg), "_centerline")),
+                  fname_centerline)
 
     # check consistency of segmentation
+    # TODO: if -rescale is used, make sure to rescale back the centerline used below
     if arguments["-correct-seg"] == "1":
-        fname_centerline = os.path.join(folder_output, file_data + '_centerline' + ext_data)
         check_and_correct_segmentation(fname_seg, fname_centerline, folder_output=folder_output, threshold_distance=3.0,
                                        remove_temp_files=remove_temp_files, verbose=verbose)
 
