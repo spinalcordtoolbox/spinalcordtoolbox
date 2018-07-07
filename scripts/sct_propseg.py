@@ -10,6 +10,9 @@
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
+
+# TODO: remove temp files in case rescaled is not "1"
+
 import os
 import sys
 
@@ -22,7 +25,8 @@ from msct_parser import Parser
 from spinalcordtoolbox.centerline import optic
 
 
-def check_and_correct_segmentation(fname_segmentation, fname_centerline, folder_output='', threshold_distance=5.0, remove_temp_files=1, verbose=0):
+def check_and_correct_segmentation(fname_segmentation, fname_centerline, folder_output='', threshold_distance=5.0,
+                                   remove_temp_files=1, verbose=0):
     """
     This function takes the outputs of isct_propseg (centerline and segmentation) and check if the centerline of the
     segmentation is coherent with the centerline provided by the isct_propseg, especially on the edges (related
@@ -589,11 +593,6 @@ if __name__ == "__main__":
     im_seg = Image(fname_seg)
     im_seg = copy_header(image_input, im_seg)
     im_seg.save(type='int8')
-
-    # remove temporary files
-    # if remove_temp_files:
-    #     sct.log.info("Remove temporary files...")
-    #     os.remove(im_mask_viewer.absolutepath)
 
     if path_qc is not None:
         generate_qc(fname_input_data, fname_seg, args, os.path.abspath(path_qc))
