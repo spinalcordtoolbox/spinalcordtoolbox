@@ -581,7 +581,6 @@ if __name__ == "__main__":
                                                                       "_centerline"))
 
     # check consistency of segmentation
-    # TODO: if -rescale is used, make sure to rescale back the centerline used below
     if arguments["-correct-seg"] == "1":
         check_and_correct_segmentation(fname_seg, fname_centerline, folder_output=folder_output, threshold_distance=3.0,
                                        remove_temp_files=remove_temp_files, verbose=verbose)
