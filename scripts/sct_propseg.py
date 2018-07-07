@@ -571,10 +571,10 @@ if __name__ == "__main__":
         sys.exit(1)
 
     # build output filename
-    fname_seg = os.path.join(folder_output, os.path.abspath(sct.add_suffix(fname_data, "_seg")))
-    fname_centerline = os.path.join(folder_output, os.path.abspath(sct.add_suffix(fname_data, "_centerline")))
+    fname_seg = os.path.join(folder_output, os.path.basename(sct.add_suffix(fname_data, "_seg")))
+    fname_centerline = os.path.join(folder_output, os.path.basename(sct.add_suffix(fname_data, "_centerline")))
     # in case header was rescaled, we need to update the output file names by removing the "_rescaled"
-    if rescale_header:
+    if rescale_header is not 1:
         os.rename(os.path.join(folder_output, sct.add_suffix(os.path.basename(fname_data_propseg), "_seg")),
                   fname_seg)
         os.rename(os.path.join(folder_output, sct.add_suffix(os.path.basename(fname_data_propseg), "_centerline")),
