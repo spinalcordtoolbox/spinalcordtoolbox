@@ -13,11 +13,11 @@
 import os
 import sys
 
+import sct_utils as sct
 from msct_image import Image, get_dimension
 from msct_parser import Parser
 from numpy import newaxis, shape
 from sct_utils import add_suffix, extract_fname, printv, run, tmp_create
-import sct_utils as sct
 
 
 class Param:
@@ -42,7 +42,7 @@ def get_parser():
                       mandatory=False,
                       example='data_pad.nii.gz')
 
-    parser.usage.addSection('\nBasic image operations:')
+    parser.usage.addSection('\nImage operations:')
     parser.add_option(name="-pad",
                       type_value="str",
                       description='Pad 3D image. Specify padding as: "x,y,z" (in voxel)',
@@ -53,11 +53,6 @@ def get_parser():
                       description='Pad 3D image with asymmetric padding. Specify padding as: "x_i,x_f,y_i,y_f,z_i,z_f" (in voxel)',
                       mandatory=False,
                       example='0,0,5,10,1,1')
-    parser.add_option(name="-copy-header",
-                      type_value="file",
-                      description='Copy the header of the input image (specified in -i) to the destination image (specified here)',
-                      mandatory=False,
-                      example='data_dest.nii.gz')
     parser.add_option(name="-split",
                       type_value="multiple_choice",
                       description='Split data along the specified dimension. The suffix _DIM+NUMBER will be added to the intput file name.',
@@ -84,18 +79,25 @@ def get_parser():
                       mandatory=False,
                       example=['uint8', 'int16', 'int32', 'float32', 'complex64', 'float64', 'int8', 'uint16', 'uint32', 'int64', 'uint64'])
 
+    parser.usage.addSection('\nHeader operations:')
+    parser.add_option(name="-copy-header",
+                      type_value="file",
+                      description='Copy the header of the input image (specified in -i) to the destination image (specified here)',
+                      mandatory=False,
+                      example='data_dest.nii.gz')
+
     parser.usage.addSection("\nOrientation operations: ")
     parser.add_option(name="-getorient",
                       description='Get orientation of the input image',
                       mandatory=False)
     parser.add_option(name="-setorient",
                       type_value="multiple_choice",
-                      description='Set orientation of the input image',
+                      description='Set orientation of the input image (only modifies the header).',
                       mandatory=False,
                       example='RIP LIP RSP LSP RIA LIA RSA LSA IRP ILP SRP SLP IRA ILA SRA SLA RPI LPI RAI LAI RPS LPS RAS LAS PRI PLI ARI ALI PRS PLS ARS ALS IPR SPR IAR SAR IPL SPL IAL SAL PIR PSR AIR ASR PIL PSL AIL ASL'.split())
     parser.add_option(name="-setorient-data",
                       type_value="multiple_choice",
-                      description='Set orientation of the input image\'s data. Use with care !ro',
+                      description='Set orientation of the input image\'s data (does NOT modify the header, but the data). Use with care !',
                       mandatory=False,
                       example='RIP LIP RSP LSP RIA LIA RSA LSA IRP ILP SRP SLP IRA ILA SRA SLA RPI LPI RAI LAI RPS LPS RAS LAS PRI PLI ARI ALI PRS PLS ARS ALS IPR SPR IAR SAR IPL SPL IAL SAL PIR PSR AIR ASR PIL PSL AIL ASL'.split())
 
@@ -272,7 +274,7 @@ def main(args=None):
                 fname_out.append(add_suffix(fname_in[0], '_' + dim_list[i_dim].upper()))
                 im_out[i_dim].setFileName(fname_out[i_dim])
                 im_out[i_dim].save(verbose=verbose)
-            sct.display_viewer_syntax([fname_out])
+            sct.display_viewer_syntax(fname_out)
         if '-split' in arguments:
             # use input file name and add _"DIM+NUMBER". Keep the same extension
             l_fname_out = []

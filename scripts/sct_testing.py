@@ -11,7 +11,8 @@
 # TODO: find a way to be able to have list of arguments and loop across list elements.
 # TODO: do something about this ugly 'output.nii.gz'
 
-import sys, io, os, time, random, copy, shlex, importlib, shutil
+import sys, io, os, time, random, copy, shlex, importlib, multiprocessing
+import signal
 
 from pandas import DataFrame
 
@@ -32,7 +33,7 @@ class Param:
         self.path_output = []  # list of output folders
         self.function_to_test = None
         self.remove_tmp_file = 0
-        self.verbose = 1
+        self.verbose = 0
         self.path_tmp = None
         self.args = []  # list of input arguments to the function
         self.args_with_path = ''  # input arguments to the function, with path
@@ -57,35 +58,95 @@ class bcolors:
 # PARSER
 # ==========================================================================================
 def get_parser():
-    # initialize default param
+    import argparse
+
     param_default = Param()
-    # Initialize the parser
-    parser = Parser(__file__)
-    parser.usage.set_description(
-        'Crash and integrity testing for functions of the Spinal Cord Toolbox. Internet connection is required for downloading testing data.')
-    parser.add_option(name="-f",
-                      type_value="str",
-                      description="Test this specific script (do not add extension).",
-                      mandatory=False,
-                      example='sct_propseg')
-    parser.add_option(name="-d",
-                      type_value="multiple_choice",
-                      description="Download testing data.",
-                      mandatory=False,
-                      default_value=param_default.download,
-                      example=['0', '1'])
-    parser.add_option(name="-p",
-                      type_value="folder",
-                      description='Path to testing data. NB: no need to set if using "-d 1"',
-                      mandatory=False,
-                      default_value=param_default.path_data)
-    parser.add_option(name="-r",
-                      type_value="multiple_choice",
-                      description='Remove temporary files.',
-                      mandatory=False,
-                      default_value='1',
-                      example=['0', '1'])
+
+    parser = argparse.ArgumentParser(
+     description="Crash and integrity testing for functions of the Spinal Cord Toolbox. Internet connection is required for downloading testing data.",
+    )
+
+    parser.add_argument("--function", "-f",
+     help="Test this specific script (eg. 'sct_propseg').",
+     nargs="+",
+    )
+
+    def arg_jobs(s):
+        jobs = int(s)
+        if jobs > 0:
+            pass
+        elif jobs == 0:
+            jobs = None
+        else:
+            raise ValueError()
+        return jobs
+
+    parser.add_argument("--download", "-d",
+     choices=("0", "1"),
+     default=param_default.download,
+    )
+    parser.add_argument("--path", "-p",
+     help='Path to testing data. NB: no need to set if using "-d 1"',
+     default=param_default.path_data,
+    )
+    parser.add_argument("--remove-temps", "-r",
+     choices=("0", "1"),
+     help='Remove temporary files.',
+     default=param_default.remove_tmp_file,
+    )
+    parser.add_argument("--jobs", "-j",
+     type=arg_jobs,
+     help="# of simultaneous tests to run (jobs). 0 means # of available CPU threads",
+     default=arg_jobs(0),
+    )
+    parser.add_argument("--verbose", "-v",
+     choices=("0", "1"),
+     default=param_default.verbose,
+    )
+
     return parser
+
+
+def process_function(fname, param):
+    """
+    """
+    param.function_to_test = fname
+    # display script name
+    # load modules of function to test
+    module_testing = importlib.import_module('test_' + fname)
+    # initialize default parameters of function to test
+    param.args = []
+    # param.list_fname_gt = []
+    # param.fname_groundtruth = ''
+    param = module_testing.init(param)
+    # loop over parameters to test
+    list_status_function = []
+    list_output = []
+    for i in range(0, len(param.args)):
+        param_test = copy.deepcopy(param)
+        param_test.default_args = param.args
+        param_test.args = param.args[i]
+        param_test.test_integrity = True
+        # if list_fname_gt is not empty, assign it
+        # if param_test.list_fname_gt:
+        #     param_test.fname_gt = param_test.list_fname_gt[i]
+        # test function
+        try:
+            param_test = test_function(param_test)
+        except Exception as e:
+            list_status_function.append(1)
+            list_output.append("TODO exception: %s" % e)
+        else:
+            list_status_function.append(param_test.status)
+            list_output.append(param_test.output)
+
+    return list_output, list_status_function
+
+def process_function_multiproc(fname, param):
+    """ Wrapper that makes ^C work in multiprocessing code """
+    # Ignore SIGINT, parent will take care of the clean-up
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
+    return process_function(fname, param)
 
 
 # Main
@@ -102,18 +163,19 @@ def main(args=None):
 
     # get parser info
     parser = get_parser()
-    arguments = parser.parse(args)
-    if '-d' in arguments:
-        param.download = int(arguments['-d'])
-    if '-p' in arguments:
-        param.path_data = arguments['-p']
-    if '-f' in arguments:
-        param.function_to_test = arguments['-f']
-    if '-r' in arguments:
-        param.remove_tmp_file = int(arguments['-r'])
 
-    # path_data = param.path_data
-    function_to_test = param.function_to_test
+    arguments = parser.parse_args(args)
+
+    param.download = int(arguments.download)
+    param.path_data = arguments.path
+    functions_to_test = arguments.function
+    param.remove_tmp_file = int(arguments.remove_temps)
+    jobs = arguments.jobs
+
+    if jobs == 0:
+        jobs = multiprocessing.cpu_count()
+
+    param.verbose = arguments.verbose
 
     start_time = time.time()
 
@@ -128,67 +190,63 @@ def main(args=None):
     sct.printv('\nPath to testing data: ' + param.path_data, param.verbose)
 
     # create temp folder that will have all results and go in it
-    param.path_tmp = sct.tmp_create(verbose=0)
+    param.path_tmp = sct.tmp_create(verbose=param.verbose)
     curdir = os.getcwd()
     os.chdir(param.path_tmp)
 
     # get list of all scripts to test
     list_functions = fill_functions()
-    if function_to_test:
-        if function_to_test in list_functions:
-            # overwrite variable to include only the function to test
-            list_functions = [function_to_test]
-        else:
-            sct.printv('ERROR: Function "%s" is not part of the list of testing functions' % function_to_test, type='error')
+    if functions_to_test:
+        for f in functions_to_test:
+            if f not in list_functions:
+                sct.printv('Command-line usage error: Function "%s" is not part of the list of testing functions' % function_to_test, type='error')
+        list_functions = functions_to_test
+        jobs = min(jobs, len(functions_to_test))
 
-    # loop across functions and run tests
-    for f in list_functions:
-        param.function_to_test = f
-        # display script name
-        print_line('Checking ' + f)
-        # load modules of function to test
-        module_testing = importlib.import_module('test_' + f)
-        # initialize default parameters of function to test
-        param.args = []
-        # param.list_fname_gt = []
-        # param.fname_groundtruth = ''
-        param = module_testing.init(param)
-        # loop over parameters to test
-        list_status_function = []
-        list_output = []
-        for i in range(0, len(param.args)):
-            param_test = copy.deepcopy(param)
-            param_test.default_args = param.args
-            param_test.args = param.args[i]
-            param_test.test_integrity = True
-            # if list_fname_gt is not empty, assign it
-            # if param_test.list_fname_gt:
-            #     param_test.fname_gt = param_test.list_fname_gt[i]
-            # test function
-            try:
-                param_test = test_function(param_test)
-            except Exception as e:
-                list_status_function.append(1)
-                list_output.append("TODO exception: %s" % e)
+    try:
+        if jobs != 1:
+            pool = multiprocessing.Pool(processes=jobs)
+
+            results = list()
+            # loop across functions and run tests
+            for f in list_functions:
+                res = pool.apply_async(process_function_multiproc, (f, param,))
+                results.append(res)
+
+        for idx_function, f in enumerate(list_functions):
+            print_line('Checking ' + f)
+            if jobs == 1:
+                res = process_function(f, param)
             else:
-                list_status_function.append(param_test.status)
-                list_output.append(param_test.output)
-        # manage status
-        if any(list_status_function):
-            if 1 in list_status_function:
-                print_fail()
-                status = 1
+                res = results[idx_function].get()
+
+            list_output, list_status_function = res
+            # manage status
+            if any(list_status_function):
+                if 1 in list_status_function:
+                    print_fail()
+                    status = 1
+                else:
+                    print_warning()
+                    status = 99
+                for output in list_output:
+                    for line in output.splitlines():
+                        print("   %s" % line)
             else:
-                print_warning()
-                status = 99
-            for output in list_output:
-                for line in output.splitlines():
-                    print("   %s" % line)
-        else:
-            print_ok()
-            status = 0
-        # append status function to global list of status
-        list_status.append(status)
+                print_ok()
+                if param.verbose:
+                    for output in list_output:
+                        for line in output.splitlines():
+                            print("   %s" % line)
+                status = 0
+            # append status function to global list of status
+            list_status.append(status)
+    except KeyboardInterrupt:
+        print("Keyboard Interrupt")
+        if jobs != 1:
+            pool.terminate()
+            pool.join()
+        raise
 
     print('status: ' + str(list_status))
 
@@ -272,7 +330,6 @@ def fill_functions():
         # 'sct_pipeline',
         'sct_process_segmentation',
         'sct_propseg',
-        'sct_register_graymatter',
         'sct_register_multimodal',
         'sct_register_to_template',
         'sct_resample',
