@@ -395,25 +395,21 @@ def no_new_line_log(msg, *args, **kwargs):
 
 
 
-
-#=======================================================================================================================
-# add suffix
-#=======================================================================================================================
 def add_suffix(fname, suffix):
     """
-    Add suffix between end of file name and extension on a nii or nii.gz file.
+    Add suffix between end of file name and extension.
+
     :param fname: absolute or relative file name. Example: t2.nii
     :param suffix: suffix. Example: _mean
     :return: file name with suffix. Example: t2_mean.nii
+
+    Examples:
+
+    - add_suffix(t2.nii, _mean) -> t2_mean.nii
+    - add_suffix(t2.nii.gz, a) -> t2a.nii.gz
     """
-    # get index of extension. Here, we search from the end to avoid issue with folders that have ".nii" in their name.
-    ind_nii = fname.rfind('.nii')
-    # in case no extension was found (i.e. only prefix was specified by user)
-    if ind_nii == -1:
-        return fname[:len(fname)] + suffix
-    else:
-        # return file name with suffix
-        return fname[:ind_nii] + suffix + fname[ind_nii:]
+    parent, stem, ext = extract_fname(fname)
+    return os.path.join(parent, stem + suffix + ext)
 
 
 #=======================================================================================================================
@@ -498,7 +494,7 @@ def display_viewer_syntax(files, colormaps=[], minmax=[], opacities=[], mode='',
     sct.display_viewer_syntax([file1, file2], colormaps=['gray', 'red'], minmax=['', '0,1'], opacities=['', '0.7'])
     """
     list_viewer = ['fsleyes', 'fslview_deprecated', 'fslview']  # list of known viewers. Can add more.
-    dict_fslview = {'gray': 'Greyscale', 'red-yellow': 'Red-Yellow', 'blue-lightblue': 'Blue-Lightblue', 'red': 'Red', 'random': 'Random-Rainbow', 'hsv': 'hsv'}
+    dict_fslview = {'gray': 'Greyscale', 'red-yellow': 'Red-Yellow', 'blue-lightblue': 'Blue-Lightblue', 'red': 'Red', 'random': 'Random-Rainbow', 'hsv': 'hsv', 'subcortical': 'MGH-Subcortical'}
     dict_fsleyes = {'gray': 'greyscale', 'red-yellow': 'red-yellow', 'blue-lightblue': 'blue-lightblue', 'red': 'red', 'random': 'random', 'hsv': 'hsv', 'subcortical': 'subcortical'}
     selected_viewer = None
 
@@ -773,21 +769,21 @@ class ForkStdoutToFile(object):
     #         filename = None
     #     send_email(email, passwd_from=passwd_from, subject=subject, message=self.read(), filename=filename)
 
-#=======================================================================================================================
-# extract_fname
-#=======================================================================================================================
-# Extract path, file and extension
-def extract_fname(fname):
-    # extract path
-    path_fname = os.path.dirname(fname)
-    # extract file and extension
-    file_fname = os.path.basename(fname)
-    file_fname, ext_fname = os.path.splitext(file_fname)
-    # alter extension if .nii.gz file
-    if ext_fname == '.gz':
-        file_fname = file_fname[0:len(file_fname) - 4]
-        ext_fname = ".nii.gz"
-    return path_fname, file_fname, ext_fname
+
+
+def extract_fname(fpath):
+    """
+    Split a full path into a parent folder component, filename stem and extension.
+
+    Note: for .nii.gz the extension is understandably .nii.gz, not .gz
+    (``os.path.splitext()`` would want to do the latter, hence the special case).
+    """
+    parent, filename = os.path.split(fpath)
+    if filename.endswith(".nii.gz"):
+        stem, ext = filename[:-7], ".nii.gz"
+    else:
+        stem, ext = os.path.splitext(filename)
+    return parent, stem, ext
 
 
 #=======================================================================================================================

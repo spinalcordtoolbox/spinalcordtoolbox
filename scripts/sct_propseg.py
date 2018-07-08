@@ -10,20 +10,23 @@
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
-from msct_parser import Parser
-import sys
-import sct_utils as sct
-import os
-import shutil
-from scipy import ndimage as ndi
-import numpy as np
-from sct_image import orientation
-import sct_image
 
+# TODO: remove temp files in case rescaled is not "1"
+
+import os
+import sys
+
+import numpy as np
+from scipy import ndimage as ndi
+import sct_image
+from sct_image import orientation, copy_header
+import sct_utils as sct
+from msct_parser import Parser
 from spinalcordtoolbox.centerline import optic
 
 
-def check_and_correct_segmentation(fname_segmentation, fname_centerline, folder_output='', threshold_distance=5.0, remove_temp_files=1, verbose=0):
+def check_and_correct_segmentation(fname_segmentation, fname_centerline, folder_output='', threshold_distance=5.0,
+                                   remove_temp_files=1, verbose=0):
     """
     This function takes the outputs of isct_propseg (centerline and segmentation) and check if the centerline of the
     segmentation is coherent with the centerline provided by the isct_propseg, especially on the edges (related
@@ -226,7 +229,6 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       description="output: low-resolution mesh",
                       mandatory=False)
 
-
     parser.usage.addSection("\nOptions helping the segmentation")
     parser.add_option(name="-init-centerline",
                       type_value="image_nifti",
@@ -248,6 +250,14 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
     parser.add_option(name="-mask-correction",
                       type_value="image_nifti",
                       description="mask containing binary pixels at edges of the spinal cord on which the segmentation algorithm will be forced to register the surface. Can be used in case of poor/missing contrast between spinal cord and CSF or in the presence of artefacts/pathologies.",
+                      mandatory=False)
+    parser.add_option(name="-rescale",
+                      type_value="float",
+                      description="Rescale the image (only the header, not the data) in order to enable segmentation "
+                                  "on spinal cords with dimensions different than that of humans (e.g., mice, rats, "
+                                  "elephants, etc.). For example, if the spinal cord is 2x smaller than that of human,"
+                                  "then use -rescale 2",
+                      default_value=1,
                       mandatory=False)
     parser.add_option(name="-radius",
                       type_value="float",
@@ -285,12 +295,20 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       type_value='folder_creation',
                       description='The path where the quality control generated content will be saved',
                       default_value=None)
+    parser.add_option(name='-correct-seg',
+                      type_value="multiple_choice",
+                      description="Enable (1) or disable (0) the algorithm that checks and correct the output "
+                                  "segmentation. More specifically, the algorithm checks if the segmentation is "
+                                  "consistent with the centerline provided by isct_propseg.",
+                      mandatory=False,
+                      example=["0", "1"],
+                      default_value="1")
     parser.add_option(name='-igt',
                       type_value='image_nifti',
                       description='File name of ground-truth segmentation.',
                       mandatory=False)
 
-    ### DEPRECATED OPTIONS
+    # DEPRECATED OPTIONS
     parser.add_option(name="-detect-nii",
                       type_value=None,
                       description="output: spinal cord detection as a nifti image",
@@ -329,15 +347,39 @@ def generate_qc(fn_in, fn_seg, args, path_qc):
     import spinalcordtoolbox.reports.slice as qcslice
 
     qc.add_entry(
-     src=fn_in,
-     process="sct_propseg",
-     args=args,
-     path_qc=path_qc,
-     plane='Axial',
-     qcslice=qcslice.Axial([Image(fn_in), Image(fn_seg)]),
-     qcslice_operations=[qc.QcImage.listed_seg],
-     qcslice_layout=lambda x: x.mosaic(),
+        src=fn_in,
+        process="sct_propseg",
+        args=args,
+        path_qc=path_qc,
+        plane='Axial',
+        qcslice=qcslice.Axial([Image(fn_in), Image(fn_seg)]),
+        qcslice_operations=[qc.QcImage.listed_seg],
+        qcslice_layout=lambda x: x.mosaic(),
     )
+
+
+def func_rescale_header(fname_data, rescale_factor):
+    """
+    Rescale the voxel dimension by modifying the NIFTI header qform. Write the output file in a temp folder.
+    :param fname_data:
+    :param rescale_factor:
+    :return: fname_data_rescaled
+    """
+    import nibabel as nib
+    img = nib.load(fname_data)
+    # get qform
+    qform = img.header.get_qform()
+    # multiply by scaling factor
+    qform[0:3, 0:3] *= rescale_factor
+    # generate a new nifti file
+    header_rescaled = img.header.copy()
+    header_rescaled.set_qform(qform)
+    # the data are the same-- only the header changes
+    img_rescaled = nib.nifti1.Nifti1Image(img.get_data(), None, header=header_rescaled)
+    path_tmp = sct.tmp_create(basename="propseg", verbose=verbose)
+    fname_data_rescaled = os.path.join(path_tmp, os.path.basename(sct.add_suffix(fname_data, "_rescaled")))
+    nib.save(img_rescaled, fname_data_rescaled)
+    return fname_data_rescaled
 
 
 if __name__ == "__main__":
@@ -348,12 +390,11 @@ if __name__ == "__main__":
     fname_input_data = arguments["-i"]
     fname_data = os.path.abspath(fname_input_data)
     contrast_type = arguments["-c"]
-
     contrast_type_conversion = {'t1': 't1', 't2': 't2', 't2s': 't2', 'dwi': 't1'}
     contrast_type_propseg = contrast_type_conversion[contrast_type]
 
-    # Building the command
-    cmd = ['isct_propseg', '-i', fname_data, '-t', contrast_type_propseg]
+    # Starting building the command
+    cmd = ['isct_propseg', '-t', contrast_type_propseg]
 
     if "-ofolder" in arguments:
         folder_output = arguments["-ofolder"]
@@ -416,6 +457,9 @@ if __name__ == "__main__":
             use_optic = False
     if "-init" in arguments:
         init_option = float(arguments["-init"])
+        if init_option < 0:
+            sct.log.error('Command-line usage error: ' + str(init_option) + " is not a valid value for '-init'")
+            sys.exit(1)
     if "-init-mask" in arguments:
         if str(arguments["-init-mask"]) == "viewer":
             use_viewer = "mask"
@@ -446,6 +490,7 @@ if __name__ == "__main__":
         cmd += ["-dsearch", str(arguments["-distance-search"])]
     if "-alpha" in arguments:
         cmd += ["-alpha", str(arguments["-alpha"])]
+    rescale_header = arguments["-rescale"]
 
     # check if input image is in 3D. Otherwise itk image reader will cut the 4D image in 3D volumes and only take the first one.
     from msct_image import Image
@@ -455,6 +500,15 @@ if __name__ == "__main__":
         sct.log.error('ERROR: your input image needs to be 3D in order to be segmented.')
 
     path_data, file_data, ext_data = sct.extract_fname(fname_data)
+
+    # rescale header (see issue #1406)
+    if rescale_header is not 1:
+        fname_data_propseg = func_rescale_header(fname_data, rescale_header)
+    else:
+        fname_data_propseg = fname_data
+
+    # add to command
+    cmd += ['-i', fname_data_propseg]
 
     # if centerline or mask is asked using viewer
     if use_viewer:
@@ -471,22 +525,24 @@ if __name__ == "__main__":
             params.num_points = 20
             params.interval_in_mm = 30
             params.starting_slice = 'top'
-        image = Image(fname_data)
-        tmp_output_file = Image(image)
-        tmp_output_file.data *= 0
-        tmp_output_file.setFileName(sct.add_suffix(fname_data, '_labels_viewer'))
-        controller = launch_centerline_dialog(image, tmp_output_file, params)
+        im_data = Image(fname_data_propseg)
+        im_mask_viewer = Image(im_data)  # copy current image object into im_mask_viewer
+        im_mask_viewer.data *= 0
+        im_mask_viewer.setFileName(sct.add_suffix(fname_data_propseg, '_labels_viewer'))
+        controller = launch_centerline_dialog(im_data, im_mask_viewer, params)
+        fname_labels_viewer = im_mask_viewer.absolutepath
 
         if not controller.saved:
             sct.log.error('The viewer has been closed before entering all manual points. Please try again.')
             sys.exit(1)
+        # save labels
+        controller.as_niftii(fname_labels_viewer)
 
-        controller.as_niftii(tmp_output_file.absolutepath)
         # add mask filename to parameters string
         if use_viewer == "centerline":
-            cmd += ["-init-centerline", tmp_output_file.absolutepath]
+            cmd += ["-init-centerline", fname_labels_viewer]
         elif use_viewer == "mask":
-            cmd += ["-init-mask", tmp_output_file.absolutepath]
+            cmd += ["-init-mask", fname_labels_viewer]
 
     # If using OptiC
     elif use_optic:
@@ -496,14 +552,15 @@ if __name__ == "__main__":
                                        'data/optic_models',
                                        '{}_model'.format(contrast_type))
 
-        init_option_optic, optic_filename = optic.detect_centerline(fname_data,
+        init_option_optic, fname_centerline = optic.detect_centerline(fname_data_propseg,
                                                                     contrast_type, path_classifier,
                                                                     folder_output, remove_temp_files,
                                                                     init_option, verbose=verbose)
         if init_option is not None:
+            # TODO: what's this???
             cmd += ["-init", str(init_option_optic)]
 
-        cmd += ["-init-centerline", optic_filename]
+        cmd += ["-init-centerline", fname_centerline]
 
     # enabling centerline extraction by default (needed by check_and_correct_segmentation() )
     cmd += ['-centerline-binary']
@@ -518,23 +575,24 @@ if __name__ == "__main__":
         sys.exit(1)
 
     # build output filename
-    file_seg = file_data + "_seg" + ext_data
-    fname_seg = os.path.normpath(os.path.join(folder_output, file_seg))
+    fname_seg = os.path.join(folder_output, os.path.basename(sct.add_suffix(fname_data, "_seg")))
+    fname_centerline = os.path.join(folder_output, os.path.basename(sct.add_suffix(fname_data, "_centerline")))
+    # in case header was rescaled, we need to update the output file names by removing the "_rescaled"
+    if rescale_header is not 1:
+        os.rename(os.path.join(folder_output, sct.add_suffix(os.path.basename(fname_data_propseg), "_seg")),
+                  fname_seg)
+        fname_centerline = os.path.join(folder_output, sct.add_suffix(os.path.basename(fname_data_propseg),
+                                                                      "_centerline"))
 
     # check consistency of segmentation
-    fname_centerline = os.path.join(folder_output, file_data + '_centerline' + ext_data)
-    check_and_correct_segmentation(fname_seg, fname_centerline, folder_output=folder_output, threshold_distance=3.0, remove_temp_files=remove_temp_files, verbose=verbose)
+    if arguments["-correct-seg"] == "1":
+        check_and_correct_segmentation(fname_seg, fname_centerline, folder_output=folder_output, threshold_distance=3.0,
+                                       remove_temp_files=remove_temp_files, verbose=verbose)
 
     # copy header from input to segmentation to make sure qform is the same
-    from sct_image import copy_header
     im_seg = Image(fname_seg)
     im_seg = copy_header(image_input, im_seg)
     im_seg.save(type='int8')
-
-    # remove temporary files
-    # if remove_temp_files:
-    #     sct.log.info("Remove temporary files...")
-    #     os.remove(tmp_output_file.absolutepath)
 
     if path_qc is not None:
         generate_qc(fname_input_data, fname_seg, args, os.path.abspath(path_qc))

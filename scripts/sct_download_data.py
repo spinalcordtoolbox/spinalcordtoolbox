@@ -36,10 +36,20 @@ def get_parser():
         description="Name of the dataset.",
         mandatory=True,
         example=[
-            'sct_example_data', 'sct_testing_data', 'PAM50', 'MNI-Poly-AMU',
-            'gm_model', 'optic_models', 'pmj_models', 'binaries_debian',
-            'binaries_centos', 'binaries_osx', 'course_hawaii17',
-            'deepseg_gm_models', 'deepseg_sc_models'
+            'sct_example_data',
+            'sct_testing_data',
+            'course_hawaii17',
+            'course_paris18', 
+            'PAM50',
+            'MNI-Poly-AMU',
+            'gm_model',
+            'optic_models',
+            'pmj_models',
+            'binaries_debian',
+            'binaries_centos',
+            'binaries_osx', 
+            'deepseg_gm_models',
+            'deepseg_sc_models'
         ])
     parser.add_option(
         name="-v",
@@ -90,6 +100,8 @@ def main(args=None):
         'binaries_osx': ['https://osf.io/hsa5r/?action=download',
                          'https://www.neuro.polymtl.ca/_media/downloads/sct/20170915_sct_binaries_osx.tar.gz'],
         'course_hawaii17': 'https://osf.io/6exht/?action=download',
+        'course_paris18': ['https://osf.io/9bmn5/?action=download',
+                           'https://www.neuro.polymtl.ca/_media/downloads/sct/20180612_sct_course-paris18.zip'],
         'deepseg_gm_models': ['https://osf.io/b9y4x/?action=download',
                               'https://www.neuro.polymtl.ca/_media/downloads/sct/20180205_deepseg_gm_models.zip'],
         'deepseg_sc_models': ['https://osf.io/avf97/?action=download',
@@ -105,10 +117,7 @@ def main(args=None):
 
     # Download data
     url = dict_url[data_name]
-    try:
-        tmp_file = download_data(url, verbose)
-    except (KeyboardInterrupt):
-        sct.printv('\nERROR: User canceled process.\n', 1, 'error')
+    tmp_file = download_data(url, verbose)
 
     # Check if folder already exists
     sct.printv('\nCheck if folder already exists...', verbose)
@@ -202,4 +211,6 @@ def download_data(urls, verbose):
 
 if __name__ == "__main__":
     sct.init_sct()
-    main()
+    res = main()
+    raise SystemExit(res)
+

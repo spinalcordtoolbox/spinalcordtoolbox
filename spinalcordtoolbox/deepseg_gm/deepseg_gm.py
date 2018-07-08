@@ -39,6 +39,7 @@ from . import model
 # Suppress warnings and TensorFlow logging
 warnings.simplefilter(action='ignore', category=FutureWarning)
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+SMALL_INPUT_SIZE = 200
 
 
 def check_backend():
@@ -199,12 +200,14 @@ def threshold_predictions(predictions, thr=0.999):
 
 
 def segment_volume(ninput_volume, model_name,
-                   threshold=0.999):
+                   threshold=0.999, use_tta=False):
     """Segment a nifti volume.
 
     :param ninput_volume: the input volume.
     :param model_name: the name of the model to use.
     :param threshold: threshold to be applied in predictions.
+    :param use_tta: whether TTA (test-time augmentation)
+                    should be used or not.
     :return: segmented slices.
     """
     gmseg_model_challenge = DataResource('deepseg_gm_models')
@@ -214,7 +217,18 @@ def segment_volume(ninput_volume, model_name,
     with open(metadata_abs_path) as fp:
         metadata = json.load(fp)
 
-    deepgmseg_model = model.create_model(metadata['filters'])
+    volume_size = np.array(ninput_volume.shape[0:2])
+    small_input = (volume_size <= SMALL_INPUT_SIZE).any()
+
+    if small_input:
+        # Smaller than the trained net, don't crop
+        net_input_size = volume_size
+    else:
+        # larger sizer, crop at 200x200
+        net_input_size = (SMALL_INPUT_SIZE, SMALL_INPUT_SIZE)
+
+    deepgmseg_model = model.create_model(metadata['filters'],
+                                         net_input_size)
 
     model_abs_path = gmseg_model_challenge.get_file_path(model_path)
     deepgmseg_model.load_weights(model_abs_path)
@@ -225,10 +239,13 @@ def segment_volume(ninput_volume, model_name,
 
     for slice_num in range(volume_data.shape[2]):
         data = volume_data[..., slice_num]
-        data, cropreg = crop_center(data, model.CROP_HEIGHT,
-                                    model.CROP_WIDTH)
+
+        if not small_input:
+            data, cropreg = crop_center(data, SMALL_INPUT_SIZE,
+                                        SMALL_INPUT_SIZE)
+            crops.append(cropreg)
+
         axial_slices.append(data)
-        crops.append(cropreg)
 
     axial_slices = np.asarray(axial_slices, dtype=np.float32)
     axial_slices = np.expand_dims(axial_slices, axis=3)
@@ -236,15 +253,33 @@ def segment_volume(ninput_volume, model_name,
     normalization = VolumeStandardizationTransform()
     axial_slices = normalization(axial_slices)
 
-    preds = deepgmseg_model.predict(axial_slices, batch_size=8,
-                                    verbose=True)
-    preds = threshold_predictions(preds, threshold)
+    if use_tta:
+        pred_sampled = []
+        for i in range(8):
+            sampled_value = np.random.uniform(high=2.0)
+            sampled_axial_slices = axial_slices + sampled_value
+            preds = deepgmseg_model.predict(sampled_axial_slices, batch_size=8,
+                                            verbose=True)
+            pred_sampled.append(preds)
+
+        preds = deepgmseg_model.predict(axial_slices, batch_size=8,
+                                        verbose=True)
+        pred_sampled.append(preds)
+        pred_sampled = np.asarray(pred_sampled)
+        pred_sampled = np.mean(pred_sampled, axis=0)
+        preds = threshold_predictions(pred_sampled, threshold)
+    else:
+        preds = deepgmseg_model.predict(axial_slices, batch_size=8,
+                                        verbose=True)
+        preds = threshold_predictions(preds, threshold)
+
     pred_slices = []
 
     # Un-cropping
     for slice_num in range(preds.shape[0]):
         pred_slice = preds[slice_num][..., 0]
-        pred_slice = crops[slice_num].pad(pred_slice)
+        if not small_input:
+            pred_slice = crops[slice_num].pad(pred_slice)
         pred_slices.append(pred_slice)
 
     pred_slices = np.asarray(pred_slices, dtype=np.uint8)
@@ -254,7 +289,8 @@ def segment_volume(ninput_volume, model_name,
 
 
 def segment_file(input_filename, output_filename,
-                 model_name, threshold, verbosity):
+                 model_name, threshold, verbosity,
+                 use_tta):
     """Segment a volume file.
 
     :param input_filename: the input filename.
@@ -263,6 +299,8 @@ def segment_file(input_filename, output_filename,
     :param threshold: threshold to apply in predictions (if None,
                       no threshold will be applied)
     :param verbosity: the verbosity level.
+    :param use_tta: whether it should use TTA (test-time augmentation)
+                    or not.
     :return: the output filename.
     """
     nii_original = nipy.load_image(input_filename)
@@ -274,14 +312,9 @@ def segment_file(input_filename, output_filename,
                                                  'mm', 'linear',
                                                  verbosity)
 
-    if (nii_resampled.shape[0] < 200) \
-       or (nii_resampled.shape[1] < 200):
-        raise RuntimeError("Image too small ({}, {})".format(
-                           nii_resampled.shape[0],
-                           nii_resampled.shape[1]))
-
     nii_resampled = nipy2nifti(nii_resampled)
-    pred_slices = segment_volume(nii_resampled, model_name, threshold)
+    pred_slices = segment_volume(nii_resampled, model_name, threshold,
+                                 use_tta)
 
     original_res = "{:.5f}x{:.5f}x{:.5f}".format(
         nii_original.header["pixdim"][1],

@@ -8,12 +8,11 @@
 #     Spinal cord gray matter segmentation using deep dilated convolutions.
 #     URL: https://arxiv.org/abs/1710.01269
 
-import sys, os
+import sys
+import os
 
 import sct_utils as sct
 from msct_parser import Parser
-
-from spinalcordtoolbox.deepseg_gm import deepseg_gm
 
 
 def get_parser():
@@ -67,6 +66,13 @@ def get_parser():
                       description='File name of ground-truth segmentation.',
                       mandatory=False)
 
+    parser.add_option(name="-t",
+                      type_value=None,
+                      description="Enable TTA (test-time augmentation). "
+                                  "Better results, but takes more time and "
+                                  "provides non-deterministic results.",
+                      mandatory=False)
+
     parser.add_option(name="-v",
                       type_value='multiple_choice',
                       description="Verbose: 0 = no verbosity, 1 = verbose.",
@@ -99,7 +105,6 @@ def generate_qc(fn_in, fn_seg, args, path_qc):
 
 
 def run_main():
-    deepseg_gm.check_backend()
     parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
     input_filename = arguments["-i"]
@@ -109,6 +114,7 @@ def run_main():
     except KeyError:
         output_filename = sct.add_suffix(input_filename, '_gmseg')
 
+    use_tta = "-t" in arguments
     verbose = arguments["-v"]
     model_name = arguments["-m"]
     threshold = arguments['-thr']
@@ -120,8 +126,12 @@ def run_main():
     if threshold == 0.0:
         threshold = None
 
+    from spinalcordtoolbox.deepseg_gm import deepseg_gm
+    deepseg_gm.check_backend()
+
     out_fname = deepseg_gm.segment_file(input_filename, output_filename,
-                                        model_name, threshold, int(verbose))
+                                        model_name, threshold, int(verbose),
+                                        use_tta)
 
     path_qc = arguments.get("-qc", None)
     if path_qc is not None:
