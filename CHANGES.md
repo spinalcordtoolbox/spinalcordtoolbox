@@ -1,5 +1,40 @@
 # CHANGES TO RELEASE
 
+## v3.2.2 (2018-07-08)
+Major changes to this release include a fix to SCT installation on OSX laptops with non-English encoding language. Another important fix is the inclusion of the link in `sct_download_data` for downloading the Paris'18 SCT course material. A nice enhancement is the possibility to calculate metrics slice-wise or level-wise in `sct_extract_metric`. View detailed changelog
+[View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.2.1...v3.2.2)
+
+**BUG**
+
+ - sct_label_vertebrae: Added subcortical colormap for fslview [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1883)
+ - sct_flatten_sagittal: Fixed wrong indexation [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1882)
+
+**ENHANCEMENT**
+
+ - sct_deepseg_gm: Lazy loading module: now faster when calling usage [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1908)
+ - sct_propseg: Now possible to rescale data header to be able to segment non-human spinal cord (mice, rats, etc.) [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1903)
+ - sct_deepseg_gm: Adding TTA (test-time augmentation) support for better segmentation results [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1894)
+ - sct_deepseg_gm: Removed restriction on the network input size (small inputs): Fixes bug that appeared when inputting images with small FOV [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1877)
+ - sct_deepseg_sc: Reducing TensorFlow cpp logging verbosity level [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1876)
+ - sct_extract_metric: Now possible to calculate metrics slice-wise or level-wise [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1875)
+
+**DOCUMENTATION**
+
+ - Added documentation for installing SCT on Windows using Docker [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1879)
+ - Added information on the README about how to update SCT from git install [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1867)
+ - Updated documentation and added link to the data for the SCT course in Paris [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1858)
+
+**INSTALLATION**
+
+ - Use pip install -e spinalcordtoolbox to gain flexibility [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1892)
+ - Local language support (LC_ALL) added to installation& launcher on macOS [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1881)
+
+**TESTING**
+
+ - Removed sct_register_graymatter (obsolete old code) from sct_testing functions [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1904)
+ - Implemented multiprocessing and argparse in sct_testing, and other improvements related to Sentry [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1872)
+
+
 ## 3.2.1 (2018-06-12)
 This release fixes a few bugs, notably one related to template registration when using disc-based alignment. It also features an improved version of sct_deepseg_sc with the introduction of 3D kernel models, as well as a more accurate segmentation on T1-weighted scans. The main documentation now includes a link to a new collection of repositories: sct-pipeline, which gathers examples of personalized analysis pipelines for processing spinal cord MRI data with SCT. [View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.2.0...3.2.1)
 
