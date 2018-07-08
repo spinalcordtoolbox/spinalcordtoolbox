@@ -16,9 +16,6 @@ from keras.layers import BatchNormalization
 from keras.layers import concatenate, GlobalAveragePooling2D
 from keras.optimizers import Adam
 
-CROP_WIDTH = 200
-CROP_HEIGHT = 200
-
 # Models
 # Tuple of (model, metadata)
 MODELS = {
@@ -50,12 +47,19 @@ def dice_coef_loss(y_true, y_pred):
     return -dice_coef(y_true, y_pred)
 
 
-def create_model(nfilters):
+def create_model(nfilters, input_size=(200, 200)):
+    """Create the ASPP model.
+
+    :param nfilters: number of filters at each block.
+    :param input_size: the network input size (H, W)
+    """
     drop_rate_concat = 0.4
     drop_rate_hidden = 0.4
     bn_momentum = 0.1
 
-    inputs = Input((CROP_HEIGHT, CROP_WIDTH, 1))
+    input_height, input_width = input_size
+
+    inputs = Input((input_height, input_width, 1))
 
     conv1 = Conv2D(nfilters, (3, 3), activation='relu', padding='same')(inputs)
     conv1 = BatchNormalization(momentum=bn_momentum)(conv1)
@@ -128,8 +132,8 @@ def create_model(nfilters):
 
     # Branch for the global context
     global_pool = GlobalAveragePooling2D()(conv1)
-    global_pool = RepeatVector(CROP_HEIGHT * CROP_WIDTH)(global_pool)
-    global_pool = Reshape((CROP_HEIGHT, CROP_WIDTH, nfilters))(global_pool)
+    global_pool = RepeatVector(input_height * input_width)(global_pool)
+    global_pool = Reshape((input_height, input_width, nfilters))(global_pool)
 
     # Concatenation
     concat = concatenate([conv3a, conv4, conv5,
