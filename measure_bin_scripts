@@ -1,0 +1,5 @@
+#!/bin/bash
+for x in bin/*
+do 
+	time $(basename $x); 
+done
