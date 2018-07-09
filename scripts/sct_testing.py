@@ -33,7 +33,7 @@ class Param:
         self.path_output = []  # list of output folders
         self.function_to_test = None
         self.remove_tmp_file = 0
-        self.verbose = 1
+        self.verbose = 0
         self.path_tmp = None
         self.args = []  # list of input arguments to the function
         self.args_with_path = ''  # input arguments to the function, with path
@@ -98,6 +98,10 @@ def get_parser():
      type=arg_jobs,
      help="# of simultaneous tests to run (jobs). 0 means # of available CPU threads",
      default=arg_jobs(0),
+    )
+    parser.add_argument("--verbose", "-v",
+     choices=("0", "1"),
+     default=param_default.verbose,
     )
 
     return parser
@@ -168,6 +172,11 @@ def main(args=None):
     param.remove_tmp_file = int(arguments.remove_temps)
     jobs = arguments.jobs
 
+    if jobs == 0:
+        jobs = multiprocessing.cpu_count()
+
+    param.verbose = arguments.verbose
+
     start_time = time.time()
 
     # get absolute path and add slash at the end
@@ -181,7 +190,7 @@ def main(args=None):
     sct.printv('\nPath to testing data: ' + param.path_data, param.verbose)
 
     # create temp folder that will have all results and go in it
-    param.path_tmp = sct.tmp_create(verbose=0)
+    param.path_tmp = sct.tmp_create(verbose=param.verbose)
     curdir = os.getcwd()
     os.chdir(param.path_tmp)
 
@@ -192,6 +201,7 @@ def main(args=None):
             if f not in list_functions:
                 sct.printv('Command-line usage error: Function "%s" is not part of the list of testing functions' % function_to_test, type='error')
         list_functions = functions_to_test
+        jobs = min(jobs, len(functions_to_test))
 
     try:
         if jobs != 1:
@@ -224,6 +234,10 @@ def main(args=None):
                         print("   %s" % line)
             else:
                 print_ok()
+                if param.verbose:
+                    for output in list_output:
+                        for line in output.splitlines():
+                            print("   %s" % line)
                 status = 0
             # append status function to global list of status
             list_status.append(status)
@@ -316,7 +330,6 @@ def fill_functions():
         # 'sct_pipeline',
         'sct_process_segmentation',
         'sct_propseg',
-        'sct_register_graymatter',
         'sct_register_multimodal',
         'sct_register_to_template',
         'sct_resample',

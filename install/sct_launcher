@@ -61,7 +61,7 @@ if [ -z "${SCT_LOADED_ONCE}" ]; then
   export SCT_DIR=${SCT_DIR%/bin}
   export SCT_PYTHON=${SCT_DIR}/python
   export SCT_VERSION=$(cat $SCT_DIR/version.txt)
-  
+
   export PATH
   export PYTHONPATH
   export ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=${logicalCpuCount}
@@ -105,14 +105,26 @@ if [[ "${0}" == "${BASH_SOURCE}" ]] && [[ -n "${1}"  ]]; then
   echo "Running ${SCT_DIR}/scripts/${@}"
   start=$(date +%s)
 
+  # Fix for non-English Unicode systems on MAC
+  if uname -a | grep -i  darwin > /dev/null 2>&1; then
+    # macOS
+    if [ -z ${LC_ALL} ]; then
+      export LC_ALL=en_US.UTF-8
+    fi
+
+    if [ -z ${LANG} ]; then
+      export LANG=en_US.UTF-8
+    fi
+  fi
+
   python ${SCT_DIR}/scripts/${@}
+  res=$?
 
   end=$(date +%s)
   difftimelps=$(($end-$start))
   echo "Total processing time: $(($difftimelps / 60)) min $(($difftimelps % 60)) s"
   echo
-
+  exit $res
 else
   echo Sourcing sct_laucher in your environment ${SCT_DIR}
 fi
-
