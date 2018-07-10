@@ -1,5 +1,15 @@
-#!/bin/bash
 for x in bin/*
 do 
-	time $(basename $x); 
+	# time $(basename $x); 
+	# time $(basename $x) > /dev/null 2>&1 &
+
+	# start=`date +%s%N | cut -b1-13`
+
+	start=`gdate +%s%N | cut -b1-13`
+	# $(basename $x) > somefile 2>&1 &
+	# $(basename $x);
+	end=`gdate +%s%N | cut -b1-13`
+	
+	runtime=$((end-start))
+	echo $(basename $x),  $start, $end, $runtime
 done

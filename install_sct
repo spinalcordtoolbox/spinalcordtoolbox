@@ -38,6 +38,8 @@ PYTHON_DIR="python"
 BIN_DIR="bin"
 STATS_DSN="https://www.neuro.polymtl.ca/_media/downloads/stats_dsn.txt"
 
+brew install coreutils
+
 # Force a clean exit
 finish ()
 {
