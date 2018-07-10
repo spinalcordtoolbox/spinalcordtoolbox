@@ -1,3 +1,5 @@
+> somefile
+
 for x in bin/*
 do 
 	# time $(basename $x); 
@@ -7,8 +9,8 @@ do
 
 	start=`gdate +%s%N | cut -b1-13`
 	# $(basename $x) > somefile 2>&1 &
-	# $(basename $x);
-	sleep 0.97
+	$(basename $x);
+	# sleep 0.97
 	end=`gdate +%s%N | cut -b1-13`
 	
 	# runtime=$((end-start))
@@ -17,8 +19,12 @@ do
 	
 	if [ $(echo " $runtime > 1" | bc) -eq 1 ]
 	then
-		echo $(basename $x),  $start, $end, $runtime > somefile 2>&1 &
+		printee=`echo "$(basename $x), $runtime"`
+		echo $printee >> somefile 2>&1 &
+		echo $printee
 	fi
 
 	echo $(basename $x),  $start, $end, $runtime
 done
+
+echo "Passed All"
