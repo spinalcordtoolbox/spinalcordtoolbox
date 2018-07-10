@@ -8,11 +8,17 @@ do
 	start=`gdate +%s%N | cut -b1-13`
 	# $(basename $x) > somefile 2>&1 &
 	# $(basename $x);
-	sleep 1.5
+	sleep 0.97
 	end=`gdate +%s%N | cut -b1-13`
 	
 	# runtime=$((end-start))
 
 	runtime=`echo "scale=3;($end - $start)/1000" | bc -l`
+	
+	if [ $(echo " $runtime > 1" | bc) -eq 1 ]
+	then
+		echo $(basename $x),  $start, $end, $runtime > somefile 2>&1 &
+	fi
+
 	echo $(basename $x),  $start, $end, $runtime
 done
