@@ -53,15 +53,10 @@ import numpy as np
 import matplotlib
 matplotlib.use('Agg')
 
-
-import sct_maths
-import sct_process_segmentation
-import sct_register_multimodal
 from msct_gmseg_utils import (apply_transfo, average_gm_wm, binarize,
                               normalize_slice, pre_processing, register_data)
 from msct_image import Image
 from msct_multiatlas_seg import Model, Param, ParamData, ParamModel
-from msct_parser import Parser
 from sct_image import set_orientation
 import sct_utils as sct
 from sct_utils import (add_suffix, extract_fname, printv, run, tmp_create)
@@ -69,6 +64,7 @@ from sct_utils import (add_suffix, extract_fname, printv, run, tmp_create)
 
 def get_parser():
     # Initialize the parser
+    from msct_parser import Parser
     parser = Parser(__file__)
     parser.usage.set_description('Segmentation of the white and gray matter.'
                                  ' The segmentation is based on a multi-atlas method that uses a dictionary of pre-segmented gray matter images (already included in SCT) and finds the most similar images for identifying the gray matter using label fusion approach. The model used by this method contains: a template of the white/gray matter segmentation along the cervical spinal cord, and a PCA reduced space to describe the variability of intensity in that template.'
@@ -560,6 +556,9 @@ class SegmentGM:
 
         # get manual WM seg:
         fname_manual_wmseg = 'manual_wmseg.nii.gz'
+        
+        import sct_maths
+
         sct_maths.main(args=['-i', fname_seg,
                              '-sub', fname_manual_gmseg,
                              '-o', fname_manual_wmseg])
@@ -571,6 +570,9 @@ class SegmentGM:
         except Exception:
             # put ref and res in the same space if needed
             fname_manual_gmseg_corrected = add_suffix(fname_manual_gmseg, '_reg')
+            
+            import sct_register_multimodal
+
             sct_register_multimodal.main(args=['-i', fname_manual_gmseg,
                                                '-d', fname_gmseg,
                                                '-identity', '1'])
@@ -631,6 +633,8 @@ class SegmentGM:
             im_res_wmseg = set_orientation(self.im_res_wmseg, 'RPI')
             fname_gmseg = im_res_gmseg.absolutepath
             fname_wmseg = im_res_wmseg.absolutepath
+
+        import sct_process_segmentation
 
         sct_process_segmentation.main(['-i', fname_gmseg, '-p', 'csa', '-ofolder', 'gm_csa', '-no-angle', '1'])
         sct_process_segmentation.main(['-i', fname_wmseg, '-p', 'csa', '-ofolder', 'wm_csa', '-no-angle', '1'])

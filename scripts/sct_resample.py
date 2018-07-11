@@ -16,7 +16,6 @@ import sys
 
 import sct_utils as sct
 from msct_parser import Parser
-import spinalcordtoolbox.resample.nipy_resample
 
 # DEFAULT PARAMETERS
 class Param:
@@ -128,6 +127,7 @@ def run_main():
         if "-v" in arguments:
             param.verbose = int(arguments["-v"])
 
+    import spinalcordtoolbox.resample.nipy_resample
     spinalcordtoolbox.resample.nipy_resample.resample_file(param.fname_data,
         param.fname_out, param.new_size, param.new_size_type,
         param.interpolation, param.verbose)
