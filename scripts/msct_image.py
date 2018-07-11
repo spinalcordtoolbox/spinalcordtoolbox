@@ -1203,16 +1203,26 @@ def compute_dice(image1, image2, mode='3d', label=1, zboundaries=False):
     return dice
 
 
-def find_zmin_zmax(fname):
-    # crop image
-    status, output = sct.run(["sct_crop_image",
-     "-i", fname,
-     "-dim", "2",
-     "-bmax",
-     "-o", "tmp.nii"])
-    # parse output
-    zmin, zmax = output[output.find('Dimension 2: ') + 13:].split('\n')[0].split(' ')
-    return int(zmin), int(zmax)
+def find_zmin_zmax(im, threshold=0.1):
+    """
+    Find the min (and max) z-slice index below which (and above which) slices only have voxels below a given threshold.
+    Important: This algorithm assumes that the 3rd dimension corresponds to the superior-inferior axis.
+    :param im: Image object
+    :param threshold: threshold to apply before looking for zmin/zmax, typically corresponding to noise level.
+    :return: [zmin, zmax]
+    """
+    # loop across slices and find zmin/zmax
+    continue_zmin_search = True
+    for iz in range(im.dim[2]):
+        dataz = im.data[:, :, iz]
+        # the following if statement deals with zmin search
+        if np.any(dataz > threshold) and continue_zmin_search:
+            zmin = iz
+            continue_zmin_search = False
+        # the following if statement deals with zmax search
+        if np.any(dataz > threshold):
+            zmax = iz
+    return zmin, zmax
 
 
 def get_dimension(im_file, verbose=1):
