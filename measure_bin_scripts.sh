@@ -26,9 +26,9 @@ do
 		inserted=0
 		while IFS=', ' read -r line || [[ -n "$line" ]]; do
 			IFS=', ' read -r -a array <<< "$line"
-			if [ $(echo "$runtime < ${array[1]}" | bc) -eq 1 ]
+			if [ $(echo "$runtime > ${array[1]}" | bc) -eq 1 ]
 			then
-				replacee=`echo "${count}i $printee"`
+				replacee=`echo "$((count))i $printee"`
 				# gsed -i "1i isct_minc2volume-viewer, 1.439" somefile
 				gsed -i "$replacee" somefile
 				inserted=1
