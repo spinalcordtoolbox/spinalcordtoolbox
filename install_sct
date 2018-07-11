@@ -39,6 +39,7 @@ BIN_DIR="bin"
 STATS_DSN="https://www.neuro.polymtl.ca/_media/downloads/stats_dsn.txt"
 
 brew install coreutils
+brew install gnu-sed
 
 # Force a clean exit
 finish ()

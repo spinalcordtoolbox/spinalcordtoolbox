@@ -20,7 +20,28 @@ do
 	if [ $(echo " $runtime > 1" | bc) -eq 1 ]
 	then
 		printee=`echo "$(basename $x), $runtime"`
-		echo $printee >> somefile 2>&1 &
+		
+		# while IFS=', ' read -r line; do
+		count=1
+		inserted=0
+		while IFS=', ' read -r line || [[ -n "$line" ]]; do
+			IFS=', ' read -r -a array <<< "$line"
+			if [ $(echo "$runtime < ${array[1]}" | bc) -eq 1 ]
+			then
+				replacee=`echo "${count}i $printee"`
+				# gsed -i "1i isct_minc2volume-viewer, 1.439" somefile
+				gsed -i "$replacee" somefile
+				inserted=1
+				break
+			fi
+			count=$count+1
+			echo "Text read from file: $line"
+		done < "somefile"
+		
+		if [ $inserted -eq 0 ]
+		then
+			echo $printee >> somefile 2>&1 &
+		fi
 		echo $printee
 	fi
 
