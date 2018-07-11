@@ -66,14 +66,8 @@ Please remember to follow our conventions when creating branches:
 
 | FORMAT  | Example  |  Usage | Delete after commit | 
 |---|---|---|---|
-| bug/[Issue#]  | bug/1889  | Related to bug fix | Yes  |
-| feature/[Issue#] | feature/1851 | New features | Yes |
-| enh/[Issue#] | enh/1721 | Enhancement | Yes |
-| doc/[Issue#] | doc/1819 | Documentation | Yes |
-| release/[Version#] | release/3.2.1 | New release | No |
-| testing/dev_[any name] | testing/dev_JC | Related to testing | No |
-| inst/[Issue#] | inst/1771 | Related to SCT installation | No |
-
+| [initials]/[Issue#]  | jca/1889  | Related to existing issue | Yes  |
+| [initials]/[any name] | cp/deepseg_improvements_tta | Not related to existing issue | No |
 ---
 
 # Update your branch with master
