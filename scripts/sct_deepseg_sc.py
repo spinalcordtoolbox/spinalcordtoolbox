@@ -20,14 +20,12 @@ from scipy.ndimage.morphology import binary_fill_holes
 from skimage.exposure import rescale_intensity
 from scipy.ndimage import distance_transform_edt
 
-from spinalcordtoolbox.centerline import optic
 import sct_utils as sct
 from msct_image import Image
 from msct_parser import Parser
 from sct_image import set_orientation
 
 import spinalcordtoolbox.resample.nipy_resample
-from spinalcordtoolbox.deepseg_sc.cnn_models import nn_architecture_seg, nn_architecture_ctr
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
@@ -427,6 +425,7 @@ def _normalize_data(data, mean, std):
 
 def segment_2d(model_fname, contrast_type, input_size, fname_in, fname_out):
     """Segment data using 2D convolutions."""
+    from spinalcordtoolbox.deepseg_sc.cnn_models import nn_architecture_seg
     seg_model = nn_architecture_seg(height=input_size[0],
                                     width=input_size[1],
                                     depth=2 if contrast_type != 't2' else 3,
@@ -584,6 +583,7 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, ctr_
     sct.log.info("Finding the spinal cord centerline...")
     if ctr_algo == 'svm':
         # run optic on a heatmap computed by a trained SVM+HoG algorithm
+        from spinalcordtoolbox.centerline import optic
         optic_models_fname = os.path.join(path_sct, 'data', 'optic_models', '{}_model'.format(contrast_type))
         _, centerline_filename = optic.detect_centerline(image_fname=fname_res,
                                                          contrast_type=contrast_type,
@@ -605,6 +605,7 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, ctr_
 
         # load model
         ctr_model_fname = os.path.join(path_sct, 'data', 'deepseg_sc_models', '{}_ctr.h5'.format(contrast_type))
+        from spinalcordtoolbox.deepseg_sc.cnn_models import nn_architecture_ctr
         ctr_model = nn_architecture_ctr(height=dct_patch_ctr[contrast_type]['size'][0],
                                         width=dct_patch_ctr[contrast_type]['size'][1],
                                         channels=1,
