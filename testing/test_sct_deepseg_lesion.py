@@ -1,24 +1,23 @@
 #!/usr/bin/env python
 #########################################################################################
 #
-# Test function for sct_apply_transfo
+# Test function for sct_deepseg_lesion
 #
 # ---------------------------------------------------------------------------------------
-# Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
+# Copyright (c) 2018 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Author: Julien Cohen-Adad
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-# TODO: generate warping field for dmri that makes sense (dmri --> T2).
+# TODO: Add integrity testing by comparing output with manually-segmented lesion.
 
 def init(param_test):
     """
     Initialize class: param_test
     """
     # initialization
-    default_args = ['-i template/template/PAM50_small_t2.nii.gz -d t2/t2.nii.gz -w t2/warp_template2anat.nii.gz',
-                    '-i dmri/dmri.nii.gz -d t2/t2.nii.gz -w t2/warp_template2anat.nii.gz']
+    default_args = ['-i t2/t2.nii.gz -c t2']
 
     # assign default params
     if not param_test.args:
