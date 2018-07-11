@@ -10,13 +10,16 @@ from spinalcordtoolbox.centerline import optic
 from msct_image import Image
 from sct_image import orientation
 from msct_types import Centerline
-from sct_viewer import ClickViewerPropseg
+
 from sct_straighten_spinalcord import smooth_centerline
 
 
 def viewer_centerline(image_fname, interslice_gap, verbose):
     image_input_reoriented = Image(image_fname)
     nx, ny, nz, nt, px, py, pz, pt = image_input_reoriented.dim
+
+    from sct_viewer import ClickViewerPropseg
+    
     viewer = ClickViewerPropseg(image_input_reoriented)
 
     viewer.gap_inter_slice = int(interslice_gap / px)  # px because the image is supposed to be SAL orientation
