@@ -305,6 +305,7 @@ def fill_functions():
         'sct_crop_image',
         'sct_dice_coefficient',
         'sct_deepseg_gm',
+        'sct_deepseg_lesion',
         'sct_deepseg_sc',
         'sct_detect_pmj',
         'sct_dmri_compute_dti',
