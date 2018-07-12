@@ -495,15 +495,6 @@ def main(args=None):
         # save binarized segmentation
         im_new.setFileName(add_suffix(ftmp_seg, '_bin'))
         im_new.save()
-
-
-        # sct.printv('\nBinarize segmentation...', verbose)
-        # sct.run(['sct_maths', '-i', ftmp_seg, '-bin', '0.5', '-o', add_suffix(ftmp_seg, '_bin')])
-        # ftmp_seg = add_suffix(ftmp_seg, '_bin')
-
-        # find min-max of anat2template (for subsequent cropping)
-        # zmin_template, zmax_template = find_zmin_zmax(ftmp_seg)
-
         # crop template in z-direction (for faster processing)
         # TODO: refactor to use python module instead of doing i/o
         sct.printv('\nCrop data in template space (for faster processing)...', verbose)
