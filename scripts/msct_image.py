@@ -1269,7 +1269,7 @@ def find_zmin_zmax(im, threshold=0.1):
 
     # Conversely from top to bottom
     for zmax in slicer.range("SI"):
-        dataz = im.data[slicer.range(zmax)]
+        dataz = im.data[slicer.slice(zmax)]
         if np.any(dataz > threshold):
             break
 
