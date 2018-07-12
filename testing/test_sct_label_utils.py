@@ -31,7 +31,7 @@ def init(param_test):
 
     default_args = ['-i ' + os.path.join(folder_data[0], file_data[0]) + ' -create 1,1,1,1:2,2,2,2',
                     '-i ' + os.path.join(folder_data[0], file_data[0]) + ' -cubic-to-point -o test_centerofmass.nii.gz']
-    param_test.centers_of_mass = '31,27,25,1'
+    param_test.centers_of_mass = '31,28,25,1'
 
     # assign default params
     if not param_test.args:
