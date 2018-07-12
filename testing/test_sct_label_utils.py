@@ -31,7 +31,7 @@ def init(param_test):
 
     default_args = ['-i ' + os.path.join(folder_data[0], file_data[0]) + ' -create 1,1,1,1:2,2,2,2',
                     '-i ' + os.path.join(folder_data[0], file_data[0]) + ' -cubic-to-point -o test_centerofmass.nii.gz']
-    param_test.centers_of_mass = '31,28,25,1'
+    param_test.centers_of_mass = '31,27,25,1'
 
     # assign default params
     if not param_test.args:
@@ -54,7 +54,8 @@ def test_integrity(param_test):
         centers_of_mass_image = sct_label_utils.main(['-i', 'test_centerofmass.nii.gz', '-display', '-v', '0'])
         # compare with ground truch value
         if centers_of_mass_image != param_test.centers_of_mass:
-            param_test.output += 'WARNING: Center of mass different from gold-standard. \n--> Results:   ' + centers_of_mass_image + '\n--> Should be: ' + param_test.centers_of_mass + '\n'
+            param_test.output += 'WARNING: Center of mass different from gold-standard. \n--> Results:   ' \
+                                 + centers_of_mass_image + '\n--> Should be: ' + param_test.centers_of_mass + '\n'
             param_test.status = 99
 
     # end test
