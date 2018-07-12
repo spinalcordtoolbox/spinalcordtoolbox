@@ -196,6 +196,55 @@ def decompose_affine_transform(A44):
     return T, Rmat, np.array([sx, sy, sz]), np.array([sxy, sxz, syz])
 
 
+class Slicer(object):
+    """
+    Image slicer utility class, that can help getting ranges and slice indices
+    """
+    def __init__(self, im, axis="IS"):
+        axis_labels = "LRPAIS"
+        if len(axis) != 2:
+            raise ValueError()
+        if axis[0] not in axis_labels:
+            raise ValueError()
+        if axis[1] not in axis_labels:
+            raise ValueError()
+
+        for idx_axis in range(2):
+            dim_nr = im.orientation.find(axis[idx_axis])
+            if dim_nr != -1:
+                break
+        if dim_nr == -1:
+            raise ValueError()
+
+        self.nb_slices = im.dim[dim_nr]
+        self.im = im
+        self.axis = axis
+        self._slice = lambda idx: tuple([(idx if x in axis else slice(None)) for x in im.orientation])
+
+    def slice(self, idx):
+        """
+        :return: a multi-dimensional slice (what goes in numpy array __getitem__)
+                 at the specified slice index of the slicer.
+        :param idx: slice index
+        """
+        return self._slice(idx)
+
+    def range(self, axis):
+        """
+        :return: a range allowing to traverse the desired axis
+
+        Example: Assuming image is in RPI with 3 z-slices,
+        constructing a Slicer on "IS" (or "SI"),
+        getting a range on "IS" would get [0,1,2],
+        getting a range on "SI" would get [2,1,0].
+        """
+        if axis == self.axis:
+            return range(0, self.nb_slices)
+        if axis == self.axis[::-1]:
+            return range(self.nb_slices-1, -1, -1)
+        raise ValueError()
+
+
 class Image(object):
     """
 
