@@ -13,9 +13,7 @@
 
 # TODO: remove temp files in case rescaled is not "1"
 
-import os
-import sys
-
+import os, shutil, sys
 import numpy as np
 from scipy import ndimage as ndi
 import sct_image
@@ -581,8 +579,15 @@ if __name__ == "__main__":
     if rescale_header is not 1:
         os.rename(os.path.join(folder_output, sct.add_suffix(os.path.basename(fname_data_propseg), "_seg")),
                   fname_seg)
-        fname_centerline = os.path.join(folder_output, sct.add_suffix(os.path.basename(fname_data_propseg),
-                                                                      "_centerline"))
+        os.rename(os.path.join(folder_output, sct.add_suffix(os.path.basename(fname_data_propseg), "_centerline")),
+                  fname_centerline)
+        # if user was used, copy the labelled points to the output folder (they will then be scaled back)
+        if use_viewer:
+            fname_labels_viewer_new = os.path.join(folder_output, os.path.basename(sct.add_suffix(fname_data,
+                                                                                                  "_labels_viewer")))
+            shutil.copy(fname_labels_viewer, fname_labels_viewer_new)
+            # update variable (used later)
+            fname_labels_viewer = fname_labels_viewer_new
 
     # check consistency of segmentation
     if arguments["-correct-seg"] == "1":
@@ -590,9 +595,14 @@ if __name__ == "__main__":
                                        remove_temp_files=remove_temp_files, verbose=verbose)
 
     # copy header from input to segmentation to make sure qform is the same
-    im_seg = Image(fname_seg)
-    im_seg = copy_header(image_input, im_seg)
-    im_seg.save(type='int8')
+    sct.printv("Copy header input --> output(s) to make sure qform is the same.", verbose)
+    list_fname = [fname_seg, fname_centerline]
+    if use_viewer:
+        list_fname.append(fname_labels_viewer)
+    for fname in list_fname:
+        im = Image(fname)
+        im = copy_header(image_input, im)
+        im.save(type='int8')  # they are all binary masks hence fine to save as int8
 
     if path_qc is not None:
         generate_qc(fname_input_data, fname_seg, args, os.path.abspath(path_qc))
