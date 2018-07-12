@@ -62,13 +62,37 @@ When proposing a new feature, a discussion will be conducted around the feature.
 
 # Naming your branch
 
-Please remember to follow our conventions when creating branches:
+When submitting PRs to SCT, please try to follow our convention and have your branches named as follows:
 
-| FORMAT  | Example  |  Usage | Delete after commit | 
-|---|---|---|---|
-| [initials]/[Issue#]  | jca/1889  | Related to existing issue | Yes  |
-| [initials]/[any name] | cp/deepseg_improvements_tta | Not related to existing issue | No |
----
+- If you're working on the upstream SCT repository, prefix the branch name with a personal identifier and a forward slash;
+- If the branch you're working on is in response to an issue, provide the issue number;
+- Try to add some additional text that make the branch name meaningful during its life cycle.
+
+Rationale:
+- A merge commit header contains by default the name of the branch to be merged
+- When working in the main SCT repo, the personal prefix makes the branch list prettier and more meaningful
+- As much as Emojis are used a lot in our github, non-ascii branch names are not OK (spelling is too hard)
+
+Examples:
+
+Best:
+- sct_propseg-fixup-div0
+  - outside contribution assumed
+  - can reasonably see what it's about
+- jca/1234-rewrite-sct-in-cobol
+  - can see who is doing it without looking at the code
+  - can see that there is an issue about it
+  - can see what it's about and that it's time to change the trajectory of this issue
+
+OK:
+- jca/1828
+  - you're busy with the science and don't care what the commit log will look like or that nobody else will know what this is about, nor you in one week... but it's OK since the branch will be deleted anyway after merge
+
+Bad:
+- wip-on-something
+  - yeah like we can figure that one out without looking at the code
+- זאת, cJ/😊-fixed-all-bugs
+  - please no ;)
 
 # Update your branch with master
 
