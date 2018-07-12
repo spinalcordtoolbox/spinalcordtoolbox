@@ -445,24 +445,33 @@ if __name__ == "__main__":
     use_viewer = None
     use_optic = True  # enabled by default
     init_option = None
+    rescale_header = arguments["-rescale"]
+    if "-init" in arguments:
+        init_option = float(arguments["-init"])
+        if init_option < 0:
+            sct.log.error('Command-line usage error: ' + str(init_option) + " is not a valid value for '-init'")
+            sys.exit(1)
     if "-init-centerline" in arguments:
         if str(arguments["-init-centerline"]) == "viewer":
             use_viewer = "centerline"
         elif str(arguments["-init-centerline"]) == "hough":
             use_optic = False
         else:
-            cmd += ["-init-centerline", str(arguments["-init-centerline"])]
+            if rescale_header is not 1:
+                fname_labels_viewer = func_rescale_header(str(arguments["-init-centerline"]), rescale_header)
+            else:
+                fname_labels_viewer = str(arguments["-init-centerline"])
+            cmd += ["-init-centerline", fname_labels_viewer]
             use_optic = False
-    if "-init" in arguments:
-        init_option = float(arguments["-init"])
-        if init_option < 0:
-            sct.log.error('Command-line usage error: ' + str(init_option) + " is not a valid value for '-init'")
-            sys.exit(1)
     if "-init-mask" in arguments:
         if str(arguments["-init-mask"]) == "viewer":
             use_viewer = "mask"
         else:
-            cmd += ["-init-mask", str(arguments["-init-mask"])]
+            if rescale_header is not 1:
+                fname_labels_viewer = func_rescale_header(str(arguments["-init-mask"]), rescale_header)
+            else:
+                fname_labels_viewer = str(arguments["-init-mask"])
+            cmd += ["-init-mask", fname_labels_viewer]
             use_optic = False
     if "-mask-correction" in arguments:
         cmd += ["-mask-correction", str(arguments["-mask-correction"])]
@@ -488,7 +497,6 @@ if __name__ == "__main__":
         cmd += ["-dsearch", str(arguments["-distance-search"])]
     if "-alpha" in arguments:
         cmd += ["-alpha", str(arguments["-alpha"])]
-    rescale_header = arguments["-rescale"]
 
     # check if input image is in 3D. Otherwise itk image reader will cut the 4D image in 3D volumes and only take the first one.
     from msct_image import Image
