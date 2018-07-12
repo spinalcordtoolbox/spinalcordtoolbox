@@ -1255,22 +1255,24 @@ def compute_dice(image1, image2, mode='3d', label=1, zboundaries=False):
 def find_zmin_zmax(im, threshold=0.1):
     """
     Find the min (and max) z-slice index below which (and above which) slices only have voxels below a given threshold.
-    Important: This algorithm assumes that the 3rd dimension corresponds to the superior-inferior axis.
     :param im: Image object
     :param threshold: threshold to apply before looking for zmin/zmax, typically corresponding to noise level.
     :return: [zmin, zmax]
     """
-    # loop across slices and find zmin/zmax
-    continue_zmin_search = True
-    for iz in range(im.dim[2]):
-        dataz = im.data[:, :, iz]
-        # the following if statement deals with zmin search
-        if np.any(dataz > threshold) and continue_zmin_search:
-            zmin = iz
-            continue_zmin_search = False
-        # the following if statement deals with zmax search
+    slicer = Slicer(im, axis="IS")
+
+    # Iterate from bottom to top until we find data
+    for zmin in slicer.range("IS"):
+        dataz = im.data[slicer.slice(zmin)]
         if np.any(dataz > threshold):
-            zmax = iz
+            break
+
+    # Conversely from top to bottom
+    for zmax in slicer.range("SI"):
+        dataz = im.data[slicer.range(zmax)]
+        if np.any(dataz > threshold):
+            break
+
     return zmin, zmax
 
 
