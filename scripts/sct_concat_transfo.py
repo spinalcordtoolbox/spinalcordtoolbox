@@ -17,8 +17,6 @@
 import sys, io, os, getopt, functools
 
 import sct_utils as sct
-from msct_parser import Parser
-from msct_image import Image
 
 # DEFAULT PARAMETERS
 
@@ -58,6 +56,14 @@ def main():
         if '-o' in arguments:
             fname_warp_final = arguments['-o']
         verbose = int(arguments['-v'])
+
+    return concat_transfo(fname_warp_list, fname_dest, fname_warp_final, verbose)
+
+
+def concat_transfo(fname_warp_list, fname_dest, fname_warp_final, verbose):
+    """
+    """
+    from msct_image import Image
 
     # Parse list of warping fields
     sct.printv('\nParse list of transformations...', verbose)
@@ -113,6 +119,7 @@ def main():
 
 # ==========================================================================================
 def get_parser():
+    from msct_parser import Parser
     # Initialize the parser
     parser = Parser(__file__)
     parser.usage.set_description('Concatenate transformations. This function is a wrapper for isct_ComposeMultiTransform (ANTs). N.B. Order of input warping fields is important. For example, if you want to concatenate: A->B and B->C to yield A->C, then you have to input warping fields like that: A->B,B->C.')
