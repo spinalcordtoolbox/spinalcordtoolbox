@@ -6,6 +6,7 @@ for x in bin/*
 do 
 	# time $(basename $x); 
 	# time $(basename $x) > /dev/null 2>&1 &
+	# time PYTHONPATH=$PWD python scripts/isct_test_ants.py > /dev/null  - Sample
 
 	# start=`date +%s%N | cut -b1-13`
 
