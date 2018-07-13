@@ -1,5 +1,7 @@
 > somefile
 
+source python/bin/activate
+
 for x in bin/*
 do 
 	# time $(basename $x); 
