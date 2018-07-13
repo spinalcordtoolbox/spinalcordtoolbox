@@ -22,9 +22,6 @@ import pandas as pd
 
 import sct_utils as sct
 
-from msct_image import Image
-from msct_parser import Parser
-
 class Param:
     def __init__(self):
         self.debug = 0
@@ -43,6 +40,7 @@ def get_parser():
     :return: Returns the parser with the command line documentation contained in it.
     """
     # Initialize the parser
+    from msct_parser import Parser
     parser = Parser(__file__)
     parser.usage.set_description("""This program is used to get the centerline of the spinal cord of a subject by using one of the three methods describe in the -method flag .""")
     parser.add_option(name='-i',

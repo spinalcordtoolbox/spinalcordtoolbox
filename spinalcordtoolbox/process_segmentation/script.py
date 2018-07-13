@@ -1,5 +1,6 @@
 from sct_straighten_spinalcord import smooth_centerline
 from msct_types import Centerline
+from msct_image import Image
 
 def compute_shape(fname_segmentation, remove_temp_files, output_folder, overwrite, slices, vert_levels, fname_disks=None, verbose=1):
     """
