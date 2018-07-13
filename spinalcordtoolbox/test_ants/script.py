@@ -18,7 +18,9 @@ def suf(verbose=1, remove_temp_files=1):
     path_tmp = sct.tmp_create(basename="test_ants", verbose=verbose)
 
     # go to tmp folder
+    
     curdir = os.getcwd()
+    
     os.chdir(path_tmp)
 
     import numpy as np
@@ -41,13 +43,11 @@ def suf(verbose=1, remove_temp_files=1):
 
     # save as nifti
     import nibabel as nib
-    
+
     img_src = nib.Nifti1Image(data_src, np.eye(4))
     nib.save(img_src, 'data_src.nii.gz')
     img_dest = nib.Nifti1Image(data_dest, np.eye(4))
     nib.save(img_dest, 'data_dest.nii.gz')
-
-
 
 
     # Estimate rigid transformation
