@@ -1,46 +1,23 @@
-### Prerequisites
+Hi, thanks for reporting an issue, please take some time to consider the applicable guidelines:
+https://github.com/neuropoly/spinalcordtoolbox/blob/master/CONTRIBUTING.rst#reporting-a-bug-or-a-requesting-a-feature
+(about how to suitably describe issues or requests) prior to deleting this blurb when about to submit the issue.
 
-* [ ] Did you check past issues for similar issue(s) ?
-* [ ] Can you reproduce the issue with any of the files found in `sct_testing_data` ?
-* [ ] If you are using a development environment, is your environment updated ?
 
 ### Description
 
-Description of the issue and use the labels to add additional context.
+<Description of the issue>
 
 ### Steps to Reproduce
 
-1. [First Step]
-2. [Second Step]
-3. [and so on...]
+0. Install SCT <release or git revision and platform, you can use the
+   first lines of output of sct_check_dependencies>
 
-**Expected behavior:**
+1. <First Step>
 
-What you expect to happen
+2. <Second Step>
 
-**Actual behavior:**
+3. <and so on...>
 
-What actually happens
+**Expected behavior:** <What you expect to happen>
 
-**Reproduces how often:**
-
-What percentage of the time does it reproduce?
-
-### State of spinalcordtoolbox
-
-Include the first 3 lines printed when running the command.
-Example:
-
-```
-$ sct_qc
-
---
-Spinal Cord Toolbox (github-templates/a63f51caa065655ad1b926901adf7ef144d2cc2b)
-Running /Users/geper/devel/spinalcordtoolbox/scripts/sct_qc.py
-
-...
-```
-
-### Additional Information
-
-Screen-shots, error logs and output files.
+**Actual behavior:** <What actually happens>
