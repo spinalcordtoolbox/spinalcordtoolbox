@@ -75,7 +75,7 @@ def get_parser():
         if jobs > 0:
             pass
         elif jobs == 0:
-            jobs = None
+            jobs = multiprocessing.cpu_count()
         else:
             raise ValueError()
         return jobs
@@ -170,9 +170,6 @@ def main(args=None):
     param.remove_tmp_file = int(arguments.remove_temps)
     jobs = arguments.jobs
 
-    if jobs == 0:
-        jobs = multiprocessing.cpu_count()
-
     param.verbose = arguments.verbose
 
     start_time = time.time()
@@ -224,6 +221,8 @@ def main(args=None):
                 for f in functions:
                     res = pool.apply_async(process_function_multiproc, (f, param,))
                     results.append(res)
+            else:
+                pool = None
 
             for idx_function, f in enumerate(functions):
                 print_line('Checking ' + f)
@@ -254,7 +253,7 @@ def main(args=None):
                 # append status function to global list of status
                 list_status.append(status)
         except KeyboardInterrupt:
-            if functions == functions_parallel and jobs != 1:
+            if pool:
                 pool.terminate()
                 pool.join()
             raise
