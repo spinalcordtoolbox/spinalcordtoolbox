@@ -1,8 +1,11 @@
 from sct_straighten_spinalcord import smooth_centerline
-from msct_types import Centerline
 from msct_image import Image
 
-import os
+import numpy as np
+import pandas as pd
+
+import os, time
+# import sys, io, os, shutil, time, math, pickle
 import sct_utils as sct
 
 def compute_shape(fname_segmentation, remove_temp_files, output_folder, overwrite, slices, vert_levels, fname_disks=None, verbose=1):
@@ -98,7 +101,7 @@ def compute_length(fname_segmentation, remove_temp_files, output_folder, overwri
     os.chdir(path_tmp)
 
     # Change orientation of the input centerline into RPI
-    sct.printv('\nOrient centerline to RPI orientation...', param.verbose)
+    sct.printv('\nOrient centerline to RPI orientation...', verbose)
     im_seg = Image(file_data + ext_data)
     fname_segmentation_orient = 'segmentation_rpi' + ext_data
 
@@ -108,10 +111,10 @@ def compute_length(fname_segmentation, remove_temp_files, output_folder, overwri
     im_seg_orient.save()
 
     # Get dimension
-    sct.printv('\nGet dimensions...', param.verbose)
+    sct.printv('\nGet dimensions...', verbose)
     nx, ny, nz, nt, px, py, pz, pt = im_seg_orient.dim
-    sct.printv('.. matrix size: ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz), param.verbose)
-    sct.printv('.. voxel size:  ' + str(px) + 'mm x ' + str(py) + 'mm x ' + str(pz) + 'mm', param.verbose)
+    sct.printv('.. matrix size: ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz), verbose)
+    sct.printv('.. voxel size:  ' + str(px) + 'mm x ' + str(py) + 'mm x ' + str(pz) + 'mm', verbose)
 
     # smooth segmentation/centerline
     x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(
@@ -261,6 +264,7 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
     if use_phys_coord:
         # fit centerline, smooth it and return the first derivative (in physical space)
         x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, nurbs_pts_number=3000, phys_coordinates=True, verbose=verbose, all_slices=False)
+        from msct_types import Centerline
         centerline = Centerline(x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
 
         # average centerline coordinates over slices of the image
@@ -394,6 +398,8 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
     if use_phys_coord:
         # fit centerline, smooth it and return the first derivative (in physical space)
         x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, nurbs_pts_number=3000, phys_coordinates=True, verbose=verbose, all_slices=False)
+
+        from msct_types import Centerline
         centerline = Centerline(x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
 
         # average centerline coordinates over slices of the image

@@ -17,9 +17,6 @@
 
 import sys, io, os, shutil, time, math, pickle
 
-import numpy as np
-import pandas as pd
-
 import sct_utils as sct
 
 class Param:
