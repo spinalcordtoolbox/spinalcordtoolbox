@@ -144,10 +144,12 @@ def main():
     sct.printv(algo_config_stg)
 
     from spinalcordtoolbox.deepseg_sc import script
+
+    path_script = os.path.dirname(__file__)
     fname_seg = script.deep_segmentation_spinalcord(
      fname_image, contrast_type, output_folder,
      ctr_algo=ctr_algo, brain_bool=brain_bool, kernel_size=kernel_size,
-     remove_temp_files=remove_temp_files, verbose=verbose)
+     remove_temp_files=remove_temp_files, verbose=verbose, path_script=path_script)
 
     if path_qc is not None:
         generate_qc(fname_image, fname_seg, args, os.path.abspath(path_qc))

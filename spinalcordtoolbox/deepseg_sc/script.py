@@ -482,9 +482,8 @@ def segment_3d(model_fname, contrast_type, fname_in, fname_out):
     del im, out
 
 
-def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, ctr_algo='cnn', brain_bool=True, kernel_size='2d', remove_temp_files=1, verbose=1):
+def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, path_script, ctr_algo='cnn', brain_bool=True, kernel_size='2d', remove_temp_files=1, verbose=1):
     """Pipeline."""
-    path_script = os.path.dirname(__file__)
     path_sct = os.path.dirname(path_script)
 
     # create temporary folder with intermediate results
