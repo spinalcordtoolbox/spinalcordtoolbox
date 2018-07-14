@@ -485,16 +485,18 @@ def main(args=None):
         sct.run('sct_crop_image -i ' + ftmp_seg + ' -start ' + str(min_point) + ' -end ' + str(max_point) + ' -dim 2 -b 0 -o ' + add_suffix(ftmp_seg, '_black'))
         ftmp_seg = add_suffix(ftmp_seg, '_black')
         """
-
+        # open segmentation
+        im = Image(ftmp_seg)
+        im_new = im.copy()
         # binarize
-        sct.printv('\nBinarize segmentation...', verbose)
-        sct.run(['sct_maths', '-i', ftmp_seg, '-bin', '0.5', '-o', add_suffix(ftmp_seg, '_bin')])
-        ftmp_seg = add_suffix(ftmp_seg, '_bin')
-
+        im_new.data = im.data > 0.5
         # find min-max of anat2template (for subsequent cropping)
-        zmin_template, zmax_template = find_zmin_zmax(ftmp_seg)
-
+        zmin_template, zmax_template = find_zmin_zmax(im_new, threshold=0.5)
+        # save binarized segmentation
+        im_new.setFileName(add_suffix(ftmp_seg, '_bin'))
+        im_new.save()
         # crop template in z-direction (for faster processing)
+        # TODO: refactor to use python module instead of doing i/o
         sct.printv('\nCrop data in template space (for faster processing)...', verbose)
         sct.run(['sct_crop_image', '-i', ftmp_template, '-o', add_suffix(ftmp_template, '_crop'), '-dim', '2', '-start', str(zmin_template), '-end', str(zmax_template)])
         ftmp_template = add_suffix(ftmp_template, '_crop')
@@ -506,6 +508,7 @@ def main(args=None):
         ftmp_seg = add_suffix(ftmp_seg, '_crop')
 
         # sub-sample in z-direction
+        # TODO: refactor to use python module instead of doing i/o
         sct.printv('\nSub-sample in z-direction (for faster processing)...', verbose)
         sct.run(['sct_resample', '-i', ftmp_template, '-o', add_suffix(ftmp_template, '_sub'), '-f', '1x1x' + zsubsample], verbose)
         ftmp_template = add_suffix(ftmp_template, '_sub')
