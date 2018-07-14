@@ -49,10 +49,7 @@ from math import exp
 
 import numpy as np
 
-# Silly workaround as we use pyplt in qc
 import matplotlib
-matplotlib.use('Agg')
-
 
 import sct_maths
 import sct_process_segmentation

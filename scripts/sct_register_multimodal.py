@@ -18,16 +18,17 @@
 # TODO: output name file for warp using "src" and "dest" file name, i.e. warp_filesrc2filedest.nii.gz
 # TODO: testing script for all cases
 # TODO: add following feature:
-#-r of isct_antsRegistration at the initial step (step 0).
-#-r [' dest ',' src ',0] --> align the geometric center of the two images
-#-r [' dest ',' src ',1] --> align the maximum intensities of the two images I use that quite often...
+# -r of isct_antsRegistration at the initial step (step 0).
+# -r [' dest ',' src ',0] --> align the geometric center of the two images
+# -r [' dest ',' src ',1] --> align the maximum intensities of the two images I use that quite often...
 # TODO: output reg for ants2d and centermass (2016-02-25)
 
 # Note for the developer: DO NOT use --collapse-output-transforms 1, otherwise inverse warping field is not output
 
 # TODO: make three possibilities:
 # - one-step registration, using only image registration (by sliceReg or antsRegistration)
-# - two-step registration, using first segmentation-based registration (based on sliceReg or antsRegistration) and second the image registration (and allow the choice of algo, metric, etc.)
+# - two-step registration, using first segmentation-based registration (based on sliceReg or antsRegistration) and
+# second the image registration (and allow the choice of algo, metric, etc.)
 # - two-step registration, using only segmentation-based registration
 
 
@@ -112,31 +113,43 @@ def get_parser(paramreg=None):
                                   "step: <int> Step number (starts at 1, except for type=label).\n"
                                   "type: {im,seg,label} type of data used for registration. Use type=label only at step=0.\n"
                                   "algo: Default=" + paramreg.steps['1'].algo + "\n"
-                                  "  translation: translation in X-Y plane (2dof)\n"
-                                  "  rigid: translation + rotation in X-Y plane (4dof)\n"
-                                  "  affine: translation + rotation + scaling in X-Y plane (6dof)\n"
-                                  "  syn: non-linear symmetric normalization\n"
-                                  "  bsplinesyn: syn regularized with b-splines\n"
-                                  "  slicereg: regularized translations (see: goo.gl/Sj3ZeU)\n"
-                                  "  centermass: slicewise center of mass alignment (seg only).\n"
-                                  "  centermassrot: slicewise center of mass and PCA-based rotation alignment (seg only)\n"
-                                  "  columnwise: R-L scaling followed by A-P columnwise alignment (seg only).\n"
-                                  "slicewise: <int> Slice-by-slice 2d transformation. Default=" + paramreg.steps['1'].slicewise + "\n"
-                                  "metric: {CC,MI,MeanSquares}. Default=" + paramreg.steps['1'].metric + "\n"
-                                  "iter: <int> Number of iterations. Default=" + paramreg.steps['1'].iter + "\n"
-                                  "shrink: <int> Shrink factor (only for syn/bsplinesyn). Default=" + paramreg.steps['1'].shrink + "\n"
-                                  "smooth: <int> Smooth factor (in mm). Note: if algo={centermassrot,columnwise} the smoothing kernel is: SxSx0. Otherwise it is SxSxS. Default=" + paramreg.steps['1'].smooth + "\n"
-                                  "laplacian: <int> Laplacian filter. Default=" + paramreg.steps['1'].laplacian + "\n"
-                                  "gradStep: <float> Gradient step. Default=" + paramreg.steps['1'].gradStep + "\n"
-                                  "deformation: ?x?x?: Restrict deformation (for ANTs algo). Replace ? by 0 (no deformation) or 1 (deformation). Default=" + paramreg.steps['1'].deformation + "\n"
-                                  "init: Initial translation alignment based on:\n"
-                                  "  geometric: Geometric center of images\n"
-                                  "  centermass: Center of mass of images\n"
-                                  "  origin: Physical origin of images\n"
-                                  "poly: <int> Polynomial degree of regularization (only for algo=slicereg,centermassrot). Default=" + paramreg.steps['1'].poly + "\n"
-                                  "smoothWarpXY: <int> Smooth XY warping field (only for algo=columnwize). Default=" + paramreg.steps['1'].smoothWarpXY + "\n"
-                                  "pca_eigenratio_th: <int> Min ratio between the two eigenvalues for PCA-based angular adjustment (only for algo=centermassrot). Default=" + paramreg.steps['1'].pca_eigenratio_th + "\n"
-                                  "dof: <str> Degree of freedom for type=label. Separate with '_'. Default=" + paramreg.steps['0'].dof + "\n",
+                                                                                "  translation: translation in X-Y plane (2dof)\n"
+                                                                                "  rigid: translation + rotation in X-Y plane (4dof)\n"
+                                                                                "  affine: translation + rotation + scaling in X-Y plane (6dof)\n"
+                                                                                "  syn: non-linear symmetric normalization\n"
+                                                                                "  bsplinesyn: syn regularized with b-splines\n"
+                                                                                "  slicereg: regularized translations (see: goo.gl/Sj3ZeU)\n"
+                                                                                "  centermass: slicewise center of mass alignment (seg only).\n"
+                                                                                "  centermassrot: slicewise center of mass and PCA-based rotation alignment (seg only)\n"
+                                                                                "  columnwise: R-L scaling followed by A-P columnwise alignment (seg only).\n"
+                                                                                "slicewise: <int> Slice-by-slice 2d transformation. Default=" +
+                                  paramreg.steps['1'].slicewise + "\n"
+                                                                  "metric: {CC,MI,MeanSquares}. Default=" +
+                                  paramreg.steps['1'].metric + "\n"
+                                                               "iter: <int> Number of iterations. Default=" +
+                                  paramreg.steps['1'].iter + "\n"
+                                                             "shrink: <int> Shrink factor (only for syn/bsplinesyn). Default=" +
+                                  paramreg.steps['1'].shrink + "\n"
+                                                               "smooth: <int> Smooth factor (in mm). Note: if algo={centermassrot,columnwise} the smoothing kernel is: SxSx0. Otherwise it is SxSxS. Default=" +
+                                  paramreg.steps['1'].smooth + "\n"
+                                                               "laplacian: <int> Laplacian filter. Default=" +
+                                  paramreg.steps['1'].laplacian + "\n"
+                                                                  "gradStep: <float> Gradient step. Default=" +
+                                  paramreg.steps['1'].gradStep + "\n"
+                                                                 "deformation: ?x?x?: Restrict deformation (for ANTs algo). Replace ? by 0 (no deformation) or 1 (deformation). Default=" +
+                                  paramreg.steps['1'].deformation + "\n"
+                                                                    "init: Initial translation alignment based on:\n"
+                                                                    "  geometric: Geometric center of images\n"
+                                                                    "  centermass: Center of mass of images\n"
+                                                                    "  origin: Physical origin of images\n"
+                                                                    "poly: <int> Polynomial degree of regularization (only for algo=slicereg,centermassrot). Default=" +
+                                  paramreg.steps['1'].poly + "\n"
+                                                             "smoothWarpXY: <int> Smooth XY warping field (only for algo=columnwize). Default=" +
+                                  paramreg.steps['1'].smoothWarpXY + "\n"
+                                                                     "pca_eigenratio_th: <int> Min ratio between the two eigenvalues for PCA-based angular adjustment (only for algo=centermassrot). Default=" +
+                                  paramreg.steps['1'].pca_eigenratio_th + "\n"
+                                                                          "dof: <str> Degree of freedom for type=label. Separate with '_'. Default=" +
+                                  paramreg.steps['0'].dof + "\n",
                       mandatory=False,
                       example="step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=im,algo=syn,metric=MI,iter=5,shrink=2")
     parser.add_option(name="-identity",
@@ -187,15 +200,18 @@ class Param:
     # The constructor
     def __init__(self):
         self.debug = 0
-        self.outSuffix  = "_reg"
+        self.outSuffix = "_reg"
         self.padding = 5
         self.path_qc = os.path.join(os.path.abspath(os.curdir), "qc")
+
 
 # Parameters for registration
 
 
 class Paramreg(object):
-    def __init__(self, step=None, type=None, algo='syn', metric='MeanSquares', iter='10', shrink='1', smooth='0', gradStep='0.5', deformation='1x1x0', init='', poly='5', slicewise='0', laplacian='0', dof='Tx_Ty_Tz_Rx_Ry_Rz', smoothWarpXY='2', pca_eigenratio_th='1.6'):
+    def __init__(self, step=None, type=None, algo='syn', metric='MeanSquares', iter='10', shrink='1', smooth='0',
+                 gradStep='0.5', deformation='1x1x0', init='', poly='5', slicewise='0', laplacian='0',
+                 dof='Tx_Ty_Tz_Rx_Ry_Rz', smoothWarpXY='2', pca_eigenratio_th='1.6'):
         self.step = step
         self.type = type
         self.algo = algo
@@ -240,7 +256,8 @@ class ParamregMultiStep:
                 self.addStep(stepParam)
 
     def addStep(self, stepParam):
-        # this function checks if the step is already present. If it is present, it must update it. If it is not, it must add it.
+        # this function checks if the step is already present. If it is present, it must update it. If it is not, it
+        # must add it.
         param_reg = Paramreg()
         param_reg.update(stepParam)
         # parameters must contain 'step'
@@ -281,7 +298,8 @@ def main(args=None):
 
     # get default registration parameters
     # step1 = Paramreg(step='1', type='im', algo='syn', metric='MI', iter='5', shrink='1', smooth='0', gradStep='0.5')
-    step0 = Paramreg(step='0', type='im', algo='syn', metric='MI', iter='0', shrink='1', smooth='0', gradStep='0.5', slicewise='0', dof='Tx_Ty_Tz_Rx_Ry_Rz')  # only used to put src into dest space
+    step0 = Paramreg(step='0', type='im', algo='syn', metric='MI', iter='0', shrink='1', smooth='0', gradStep='0.5',
+                     slicewise='0', dof='Tx_Ty_Tz_Rx_Ry_Rz')  # only used to put src into dest space
     step1 = Paramreg(step='1', type='im')
     paramreg = ParamregMultiStep([step0, step1])
 
@@ -423,7 +441,8 @@ def main(args=None):
     # TODO: Check if necessary to do that
     # TODO: use that as step=0
     # sct.printv('\nPut source into destination space using header...', verbose)
-    # sct.run('isct_antsRegistration -d 3 -t Translation[0] -m MI[dest_pad.nii,src.nii,1,16] -c 0 -f 1 -s 0 -o [regAffine,src_regAffine.nii] -n BSpline[3]', verbose)
+    # sct.run('isct_antsRegistration -d 3 -t Translation[0] -m MI[dest_pad.nii,src.nii,1,16] -c 0 -f 1 -s 0 -o
+    # [regAffine,src_regAffine.nii] -n BSpline[3]', verbose)
     # if segmentation, also do it for seg
 
     # initialize list of warping fields
@@ -440,7 +459,8 @@ def main(args=None):
         if fname_initwarpinv:
             warp_inverse = [fname_initwarpinv]
         else:
-            sct.printv('\nWARNING: No initial inverse warping field was specified, therefore the inverse warping field will NOT be generated.', param.verbose, 'warning')
+            sct.printv('\nWARNING: No initial inverse warping field was specified, therefore the inverse warping field '
+                       'will NOT be generated.', param.verbose, 'warning')
             generate_warpinv = 0
     else:
         start_step = 0
@@ -467,7 +487,8 @@ def main(args=None):
         # if step>0, apply warp_forward_concat to the src image to be used
         if i_step > 0:
             sct.printv('\nApply transformation from previous step', param.verbose)
-            sct.run(['sct_apply_transfo', '-i', src, '-d', dest, '-w', ','.join(warp_forward), '-o', sct.add_suffix(src, '_reg'), '-x', interp_step], verbose)
+            sct.run(['sct_apply_transfo', '-i', src, '-d', dest, '-w', ','.join(warp_forward), '-o',
+                     sct.add_suffix(src, '_reg'), '-x', interp_step], verbose)
             src = sct.add_suffix(src, '_reg')
         # register src --> dest
         warp_forward_out, warp_inverse_out = register(src, dest, paramreg, param, str(i_step))
@@ -476,14 +497,18 @@ def main(args=None):
 
     # Concatenate transformations
     sct.printv('\nConcatenate transformations...', verbose)
-    sct.run(['sct_concat_transfo', '-w', ','.join(warp_forward), '-d', 'dest.nii', '-o', 'warp_src2dest.nii.gz'], verbose)
-    sct.run(['sct_concat_transfo', '-w', ','.join(warp_inverse), '-d', 'src.nii', '-o', 'warp_dest2src.nii.gz'], verbose)
+    sct.run(['sct_concat_transfo', '-w', ','.join(warp_forward), '-d', 'dest.nii', '-o', 'warp_src2dest.nii.gz'],
+            verbose)
+    sct.run(['sct_concat_transfo', '-w', ','.join(warp_inverse), '-d', 'src.nii', '-o', 'warp_dest2src.nii.gz'],
+            verbose)
 
     # Apply warping field to src data
     sct.printv('\nApply transfo source --> dest...', verbose)
-    sct.run(['sct_apply_transfo', '-i', 'src.nii', '-o', 'src_reg.nii', '-d', 'dest.nii', '-w', 'warp_src2dest.nii.gz', '-x', interp], verbose)
+    sct.run(['sct_apply_transfo', '-i', 'src.nii', '-o', 'src_reg.nii', '-d', 'dest.nii', '-w', 'warp_src2dest.nii.gz',
+             '-x', interp], verbose)
     sct.printv('\nApply transfo dest --> source...', verbose)
-    sct.run(['sct_apply_transfo', '-i', 'dest.nii', '-o', 'dest_reg.nii', '-d', 'src.nii', '-w', 'warp_dest2src.nii.gz', '-x', interp], verbose)
+    sct.run(['sct_apply_transfo', '-i', 'dest.nii', '-o', 'dest_reg.nii', '-d', 'src.nii', '-w', 'warp_dest2src.nii.gz',
+             '-x', interp], verbose)
 
     # come back
     os.chdir(curdir)
@@ -491,16 +516,19 @@ def main(args=None):
     # Generate output files
     sct.printv('\nGenerate output files...', verbose)
     # generate: src_reg
-    fname_src2dest = sct.generate_output_file(os.path.join(path_tmp, "src_reg.nii"), os.path.join(path_out, file_out + ext_out), verbose)
+    fname_src2dest = sct.generate_output_file(os.path.join(path_tmp, "src_reg.nii"),
+                                              os.path.join(path_out, file_out + ext_out), verbose)
     # generate: forward warping field
     if fname_output_warp == '':
         fname_output_warp = path_out + 'warp_' + file_src + '2' + file_dest + '.nii.gz'
     sct.generate_output_file(os.path.join(path_tmp, "warp_src2dest.nii.gz"), fname_output_warp, verbose)
     if generate_warpinv:
         # generate: dest_reg
-        fname_dest2src = sct.generate_output_file(os.path.join(path_tmp, "dest_reg.nii"), os.path.join(path_out, file_out_inv + ext_dest), verbose)
+        fname_dest2src = sct.generate_output_file(os.path.join(path_tmp, "dest_reg.nii"),
+                                                  os.path.join(path_out, file_out_inv + ext_dest), verbose)
         # generate: inverse warping field
-        sct.generate_output_file(os.path.join(path_tmp, "warp_dest2src.nii.gz"), os.path.join(path_out, 'warp_' + file_dest + '2' + file_src + '.nii.gz'), verbose)
+        sct.generate_output_file(os.path.join(path_tmp, "warp_dest2src.nii.gz"),
+                                 os.path.join(path_out, 'warp_' + file_dest + '2' + file_src + '.nii.gz'), verbose)
 
     # Delete temporary files
     if remove_temp_files:
@@ -518,7 +546,6 @@ def main(args=None):
 # register images
 # ==========================================================================================
 def register(src, dest, paramreg, param, i_step_str):
-
     # initiate default parameters of antsRegistration transformation
     ants_registration_params = {'rigid': '', 'affine': '', 'compositeaffine': '', 'similarity': '', 'translation': '',
                                 'bspline': ',10', 'gaussiandisplacementfield': ',3,0',
@@ -559,37 +586,30 @@ def register(src, dest, paramreg, param, i_step_str):
     if paramreg.steps[i_step_str].algo == 'slicereg':
         # check if user used type=label
         if paramreg.steps[i_step_str].type == 'label':
-            sct.printv('\nERROR: this algo is not compatible with type=label. Please use type=im or type=seg', 1, 'error')
+            sct.printv('\nERROR: this algo is not compatible with type=label. Please use type=im or type=seg', 1,
+                       'error')
         else:
-            from msct_image import find_zmin_zmax
-            # threshold images (otherwise, automatic crop does not work -- see issue #293)
-            src_th = sct.add_suffix(src, '_th')
-            from msct_image import Image
-            nii = Image(src)
-            data = nii.data
-            data[data < 0.1] = 0
-            nii.data = data
-            nii.setFileName(src_th)
-            nii.save()
-            # sct.run(fsloutput+'fslmaths '+src+' -thr 0.1 '+src_th, param.verbose)
-            dest_th = sct.add_suffix(dest, '_th')
-            nii = Image(dest)
-            data = nii.data
-            data[data < 0.1] = 0
-            nii.data = data
-            nii.setFileName(dest_th)
-            nii.save()
-            # sct.run(fsloutput+'fslmaths '+dest+' -thr 0.1 '+dest_th, param.verbose)
-            # find zmin and zmax
-            zmin_src, zmax_src = find_zmin_zmax(src_th)
-            zmin_dest, zmax_dest = find_zmin_zmax(dest_th)
-            zmin_total = max([zmin_src, zmin_dest])
-            zmax_total = min([zmax_src, zmax_dest])
-            # crop data
+            # Find the min (and max) z-slice index below which (and above which) slices only have voxels below a given
+            # threshold.
+            from msct_image import Image, find_zmin_zmax
+            list_fname = [src, dest]
+            if not masking == []:
+                list_fname.append(fname_mask)
+            zmin_global, zmax_global = 0, 99999  # this is assuming that typical image has less slice than 99999
+            for fname in list_fname:
+                im = Image(fname)
+                zmin, zmax = find_zmin_zmax(im, threshold=0.1)
+                if zmin > zmin_global:
+                    zmin_global = zmin
+                if zmax < zmax_global:
+                    zmax_global = zmax
+            # crop images (see issue #293)
             src_crop = sct.add_suffix(src, '_crop')
-            sct.run(['sct_crop_image', '-i', src, '-o', src_crop, '-dim', '2', '-start', str(zmin_total), '-end', str(zmax_total)], param.verbose)
+            sct.run(['sct_crop_image', '-i', src, '-o', src_crop, '-dim', '2', '-start', str(zmin_global), '-end',
+                     str(zmax_global)], param.verbose)
             dest_crop = sct.add_suffix(dest, '_crop')
-            sct.run(['sct_crop_image', '-i', dest, '-o', dest_crop, '-dim', '2', '-start', str(zmin_total), '-end', str(zmax_total)], param.verbose)
+            sct.run(['sct_crop_image', '-i', dest, '-o', dest_crop, '-dim', '2', '-start', str(zmin_global), '-end',
+                     str(zmax_global)], param.verbose)
             # update variables
             src = src_crop
             dest = dest_crop
@@ -597,22 +617,25 @@ def register(src, dest, paramreg, param, i_step_str):
             # estimate transfo
             # TODO fixup isct_ants* parsers
             cmd = ['isct_antsSliceRegularizedRegistration',
-             '-t', 'Translation[' + paramreg.steps[i_step_str].gradStep + ']',
-             '-m', paramreg.steps[i_step_str].metric + '[' + dest + ',' + src + ',1,' + metricSize + ',Regular,0.2]',
-             '-p', paramreg.steps[i_step_str].poly,
-             '-i', paramreg.steps[i_step_str].iter,
-             '-f', paramreg.steps[i_step_str].shrink,
-             '-s', paramreg.steps[i_step_str].smooth,
-             '-v', '1',  # verbose (verbose=2 does not exist, so we force it to 1)
-             '-o', '[step' + i_step_str + ',' + scr_regStep + ']',  # here the warp name is stage10 because  antsSliceReg add "Warp"
-            ] + masking
+                   '-t', 'Translation[' + paramreg.steps[i_step_str].gradStep + ']',
+                   '-m',
+                   paramreg.steps[i_step_str].metric + '[' + dest + ',' + src + ',1,' + metricSize + ',Regular,0.2]',
+                   '-p', paramreg.steps[i_step_str].poly,
+                   '-i', paramreg.steps[i_step_str].iter,
+                   '-f', paramreg.steps[i_step_str].shrink,
+                   '-s', paramreg.steps[i_step_str].smooth,
+                   '-v', '1',  # verbose (verbose=2 does not exist, so we force it to 1)
+                   '-o', '[step' + i_step_str + ',' + scr_regStep + ']',  # here the warp name is stage10 because
+                   # antsSliceReg add "Warp"
+                   ] + masking
             warp_forward_out = 'step' + i_step_str + 'Warp.nii.gz'
             warp_inverse_out = 'step' + i_step_str + 'InverseWarp.nii.gz'
             # run command
             status, output = sct.run(cmd, param.verbose)
 
     # ANTS 3d
-    elif paramreg.steps[i_step_str].algo.lower() in ants_registration_params and paramreg.steps[i_step_str].slicewise == '0':
+    elif paramreg.steps[i_step_str].algo.lower() in ants_registration_params \
+            and paramreg.steps[i_step_str].slicewise == '0':
         # make sure type!=label. If type==label, this will be addressed later in the code.
         if not paramreg.steps[i_step_str].type == 'label':
             # Pad the destination image (because ants doesn't deform the extremities)
@@ -624,8 +647,10 @@ def register(src, dest, paramreg, param, i_step_str):
             # apply Laplacian filter
             if not paramreg.steps[i_step_str].laplacian == '0':
                 sct.printv('\nApply Laplacian filter', param.verbose)
-                sct.run(['sct_maths', '-i', src, '-laplacian', paramreg.steps[i_step_str].laplacian + ',' + paramreg.steps[i_step_str].laplacian + ',0', '-o', sct.add_suffix(src, '_laplacian')])
-                sct.run(['sct_maths', '-i', dest, '-laplacian', paramreg.steps[i_step_str].laplacian + ',' + paramreg.steps[i_step_str].laplacian + ',0', '-o', sct.add_suffix(dest, '_laplacian')])
+                sct.run(['sct_maths', '-i', src, '-laplacian', paramreg.steps[i_step_str].laplacian + ','
+                         + paramreg.steps[i_step_str].laplacian + ',0', '-o', sct.add_suffix(src, '_laplacian')])
+                sct.run(['sct_maths', '-i', dest, '-laplacian', paramreg.steps[i_step_str].laplacian + ','
+                         + paramreg.steps[i_step_str].laplacian + ',0', '-o', sct.add_suffix(dest, '_laplacian')])
                 src = sct.add_suffix(src, '_laplacian')
                 dest = sct.add_suffix(dest, '_laplacian')
             # Estimate transformation
@@ -633,17 +658,18 @@ def register(src, dest, paramreg, param, i_step_str):
             scr_regStep = sct.add_suffix(src, '_regStep' + i_step_str)
             # TODO fixup isct_ants* parsers
             cmd = ['isct_antsRegistration',
-             '--dimensionality', '3',
-             '--transform', paramreg.steps[i_step_str].algo + '[' + paramreg.steps[i_step_str].gradStep + ants_registration_params[paramreg.steps[i_step_str].algo.lower()] + ']',
-             '--metric', paramreg.steps[i_step_str].metric + '[' + dest + ',' + src + ',1,' + metricSize + ']',
-             '--convergence', paramreg.steps[i_step_str].iter,
-             '--shrink-factors', paramreg.steps[i_step_str].shrink,
-             '--smoothing-sigmas', paramreg.steps[i_step_str].smooth + 'mm',
-             '--restrict-deformation', paramreg.steps[i_step_str].deformation,
-             '--output', '[step' + i_step_str + ',' + scr_regStep + ']',
-             '--interpolation', 'BSpline[3]',
-             '--verbose', '1',
-            ] + masking
+                   '--dimensionality', '3',
+                   '--transform', paramreg.steps[i_step_str].algo + '[' + paramreg.steps[i_step_str].gradStep
+                   + ants_registration_params[paramreg.steps[i_step_str].algo.lower()] + ']',
+                   '--metric', paramreg.steps[i_step_str].metric + '[' + dest + ',' + src + ',1,' + metricSize + ']',
+                   '--convergence', paramreg.steps[i_step_str].iter,
+                   '--shrink-factors', paramreg.steps[i_step_str].shrink,
+                   '--smoothing-sigmas', paramreg.steps[i_step_str].smooth + 'mm',
+                   '--restrict-deformation', paramreg.steps[i_step_str].deformation,
+                   '--output', '[step' + i_step_str + ',' + scr_regStep + ']',
+                   '--interpolation', 'BSpline[3]',
+                   '--verbose', '1',
+                   ] + masking
             # add init translation
             if not paramreg.steps[i_step_str].init == '':
                 init_dict = {'geometric': '0', 'centermass': '1', 'origin': '2'}
@@ -659,13 +685,15 @@ def register(src, dest, paramreg, param, i_step_str):
                 warp_inverse_out = 'step' + i_step_str + '0InverseWarp.nii.gz'
 
     # ANTS 2d
-    elif paramreg.steps[i_step_str].algo.lower() in ants_registration_params and paramreg.steps[i_step_str].slicewise == '1':
+    elif paramreg.steps[i_step_str].algo.lower() in ants_registration_params \
+            and paramreg.steps[i_step_str].slicewise == '1':
         # make sure type!=label. If type==label, this will be addressed later in the code.
         if not paramreg.steps[i_step_str].type == 'label':
             from msct_register import register_slicewise
             # if shrink!=1, force it to be 1 (otherwise, it generates a wrong 3d warping field). TODO: fix that!
             if not paramreg.steps[i_step_str].shrink == '1':
-                sct.printv('\nWARNING: when using slicewise with SyN or BSplineSyN, shrink factor needs to be one. Forcing shrink=1.', 1, 'warning')
+                sct.printv('\nWARNING: when using slicewise with SyN or BSplineSyN, shrink factor needs to be one. '
+                           'Forcing shrink=1.', 1, 'warning')
                 paramreg.steps[i_step_str].shrink = '1'
             warp_forward_out = 'step' + i_step_str + 'Warp.nii.gz'
             warp_inverse_out = 'step' + i_step_str + 'InverseWarp.nii.gz'
@@ -684,18 +712,23 @@ def register(src, dest, paramreg, param, i_step_str):
     elif paramreg.steps[i_step_str].algo in ['centermass', 'centermassrot', 'columnwise']:
         # if type=im, sends warning
         if paramreg.steps[i_step_str].type == 'im':
-            sct.printv('\nWARNING: algo ' + paramreg.steps[i_step_str].algo + ' should be used with type=seg.\n', 1, 'warning')
+            sct.printv('\nWARNING: algo ' + paramreg.steps[i_step_str].algo + ' should be used with type=seg.\n', 1,
+                       'warning')
         # if type=label, exit with error
         elif paramreg.steps[i_step_str].type == 'label':
-            sct.printv('\nERROR: this algo is not compatible with type=label. Please use type=im or type=seg', 1, 'error')
+            sct.printv('\nERROR: this algo is not compatible with type=label. Please use type=im or type=seg', 1,
+                       'error')
         # check if user provided a mask-- if so, inform it will be ignored
         if not fname_mask == '':
-            sct.printv('\nWARNING: algo ' + paramreg.steps[i_step_str].algo + ' will ignore the provided mask.\n', 1, 'warning')
+            sct.printv('\nWARNING: algo ' + paramreg.steps[i_step_str].algo + ' will ignore the provided mask.\n', 1,
+                       'warning')
         # smooth data
         if not paramreg.steps[i_step_str].smooth == '0':
             sct.printv('\nSmooth data', param.verbose)
-            sct.run(['sct_maths', '-i', src, '-smooth', paramreg.steps[i_step_str].smooth + ',' + paramreg.steps[i_step_str].smooth + ',0', '-o', sct.add_suffix(src, '_smooth')])
-            sct.run(['sct_maths', '-i', dest, '-smooth', paramreg.steps[i_step_str].smooth + ',' + paramreg.steps[i_step_str].smooth + ',0', '-o', sct.add_suffix(dest, '_smooth')])
+            sct.run(['sct_maths', '-i', src, '-smooth', paramreg.steps[i_step_str].smooth + ','
+                     + paramreg.steps[i_step_str].smooth + ',0', '-o', sct.add_suffix(src, '_smooth')])
+            sct.run(['sct_maths', '-i', dest, '-smooth', paramreg.steps[i_step_str].smooth + ','
+                     + paramreg.steps[i_step_str].smooth + ',0', '-o', sct.add_suffix(dest, '_smooth')])
             src = sct.add_suffix(src, '_smooth')
             dest = sct.add_suffix(dest, '_smooth')
         from msct_register import register_slicewise
@@ -733,13 +766,16 @@ def register(src, dest, paramreg, param, i_step_str):
         # no forward warping field for rigid and affine
         sct.printv('\nERROR: file ' + warp_forward_out + ' doesn\'t exist (or is not a file).\n' + output +
                    '\nERROR: ANTs failed. Exit program.\n', 1, 'error')
-    elif not os.path.isfile(warp_inverse_out) and paramreg.steps[i_step_str].algo not in ['rigid', 'affine', 'translation'] and paramreg.steps[i_step_str].type not in ['label']:
+    elif not os.path.isfile(warp_inverse_out) and \
+            paramreg.steps[i_step_str].algo not in ['rigid', 'affine', 'translation'] and \
+            paramreg.steps[i_step_str].type not in ['label']:
         # no inverse warping field for rigid and affine
         sct.printv('\nERROR: file ' + warp_inverse_out + ' doesn\'t exist (or is not a file).\n' + output +
                    '\nERROR: ANTs failed. Exit program.\n', 1, 'error')
     else:
         # rename warping fields
-        if (paramreg.steps[i_step_str].algo.lower() in ['rigid', 'affine', 'translation'] and paramreg.steps[i_step_str].slicewise == '0'):
+        if (paramreg.steps[i_step_str].algo.lower() in ['rigid', 'affine', 'translation'] and
+                paramreg.steps[i_step_str].slicewise == '0'):
             # if ANTs is used with affine/rigid --> outputs .mat file
             warp_forward = 'warp_forward_' + i_step_str + '.mat'
             os.rename(warp_forward_out, warp_forward)
@@ -765,16 +801,16 @@ if __name__ == "__main__":
     # call main function
     main()
 
-
 # Convert deformation field to 4D volume (readable by fslview)
 # DONE: clean code below-- right now it does not work
-#===========
+# ===========
 # if convertDeformation:
 #    sct.printv('\nConvert deformation field...'))
 #    cmd = 'sct_image -i tmp.regWarp.nii -mcs  -o tmp.regWarp.nii'
 #    sct.printv(">> "+cmd))
 #    os.system(cmd)
-#    cmd = 'fslmerge -t '+os.path.join(path_out, 'warp_comp.nii') + ' tmp.regWarp_x.nii tmp.regWarp_y.nii tmp.regWarp_z.nii'
+#    cmd = 'fslmerge -t '+os.path.join(path_out, 'warp_comp.nii') + ' tmp.regWarp_x.nii tmp.regWarp_y.nii
+# tmp.regWarp_z.nii'
 #    sct.printv(">> "+cmd))
 #    os.system(cmd)
-#===========
+# ===========
