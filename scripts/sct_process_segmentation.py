@@ -15,7 +15,7 @@
 #########################################################################################
 # TODO: the import of scipy.misc imsave was moved to the specific cases (orth and ellipse) in order to avoid issue #62. This has to be cleaned in the future.
 
-import sys, io, os, shutil, time, math, pickle
+import sys, io, os, time
 
 import sct_utils as sct
 

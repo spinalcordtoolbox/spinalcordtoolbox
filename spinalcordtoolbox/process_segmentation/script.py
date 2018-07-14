@@ -4,7 +4,7 @@ from msct_image import Image
 import numpy as np
 import pandas as pd
 
-import os, time
+import os, time, pickle
 # import sys, io, os, shutil, time, math, pickle
 import sct_utils as sct
 
@@ -430,6 +430,8 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
     csa = np.zeros(max_z_index - min_z_index + 1)
     angles = np.zeros(max_z_index - min_z_index + 1)
 
+    import math
+
     for iz in range(min_z_index, max_z_index + 1):
         if angle_correction:
             # in the case of problematic segmentation (e.g., non continuous segmentation often at the extremities), display a warning but do not crash
@@ -555,6 +557,9 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
     # results_df = {'Slice (z)': range(min_z_index, max_z_index+1),
     #                            'CSA (mm^2)': csa,
     #                            'Angle with respect to the I-S direction (degrees)': angles}
+
+    import io
+
     output_file = io.open(os.path.join(output_folder, 'csa_per_slice.pickle'), 'wb')
     pickle.dump(results_df, output_file)
     output_file.close()
@@ -793,7 +798,6 @@ def save_results(fname_output, overwrite, fname_data, metric_name, method, mean,
     output_results['STDEV across slices'] = str(std)
 
     # save "output_results"
-    import pickle
     output_file = open(fname_output + '.pickle', 'wb')
     pickle.dump(output_results, output_file)
     output_file.close()
