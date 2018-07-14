@@ -30,6 +30,8 @@ class SinglePlot:
 
 
     def draw_line(self,display_cross):
+        from matplotlib.lines import Line2D
+        
         self.line_horizontal = Line2D(self.cross_to_display[1][1], self.cross_to_display[1][0], color='white')
         self.line_vertical = Line2D(self.cross_to_display[0][1], self.cross_to_display[0][0], color='white')
         if 'h' in display_cross:
@@ -39,6 +41,7 @@ class SinglePlot:
 
     def set_image_parameters(self,im_params,i,cm):
         if str(i) in im_params.images_parameters:
+            from copy import copy
             return(copy(cm.get_cmap(im_params.images_parameters[str(i)].cmap)),im_params.images_parameters[str(i)].interp,float(im_params.images_parameters[str(i)].alpha))
         else:
             return (cm.get_cmap('gray'), 'nearest', 1.0)

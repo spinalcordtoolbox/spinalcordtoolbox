@@ -318,6 +318,7 @@ class ClickViewer(Viewer):
 
     def press_help(self, event):
         if event.inaxes == self.dic_axis_buttons['help']:
+            import webbrowser
             webbrowser.open(self.help_web_adress, new=0, autoraise=True)
 
     def create_button_help(self):

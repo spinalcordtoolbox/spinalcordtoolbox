@@ -35,21 +35,15 @@
 #########################################################################################
 
 import sys, io, os
-from bisect import bisect
-from time import time
-from copy import copy
 
-import webbrowser
+from time import time
 
 from numpy import arange, max, pad, linspace, mean, median, std, percentile
 import numpy as np
-import matplotlib as mpl
 import matplotlib.pyplot as plt
-from matplotlib.lines import Line2D
 from matplotlib import cm
 
 from matplotlib.widgets import Slider, Button, RadioButtons
-
 
 
 from msct_parser import Parser
