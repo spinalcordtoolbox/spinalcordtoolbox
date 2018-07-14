@@ -2,6 +2,9 @@ from sct_straighten_spinalcord import smooth_centerline
 from msct_types import Centerline
 from msct_image import Image
 
+import os
+import sct_utils as sct
+
 def compute_shape(fname_segmentation, remove_temp_files, output_folder, overwrite, slices, vert_levels, fname_disks=None, verbose=1):
     """
     This function characterizes the shape of the spinal cord, based on the segmentation

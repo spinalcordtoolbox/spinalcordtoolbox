@@ -1,3 +1,6 @@
+from .SinglePlot import SinglePlot
+from .Viewer import Viewer
+
 class ThreeViewer(Viewer):
     """
     This class is a visualizer for volumes (3D images) and ask user to click on axial slices.
