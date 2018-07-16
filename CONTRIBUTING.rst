@@ -153,16 +153,28 @@ Pull requests for bug fixes or new features should be based on the
 Naming your Branch
 ==================
 
-When submitting PRs to SCT, please try to follow our convention and have your branches named as follows:
+When submitting PRs to SCT, please try to follow our convention and
+have your branches named as follows:
 
-- If you're working on the upstream SCT repository, prefix the branch name with a personal identifier and a forward slash;
-- If the branch you're working on is in response to an issue, provide the issue number;
-- Try to add some additional text that make the branch name meaningful during its life cycle.
+- If you're working on the upstream SCT repository, prefix the branch
+  name with a personal identifier and a forward slash;
+
+- If the branch you're working on is in response to an issue, provide
+  the issue number;
+
+- Try to add some additional text that make the branch name meaningful
+  during its life cycle.
 
 Rationale:
-- A merge commit header contains by default the name of the branch to be merged
-- When working in the main SCT repo, the personal prefix makes the branch list prettier and more meaningful
-- As much as Emojis are used a lot in our github, non-ascii branch names are not OK (spelling is too hard)
+
+- A merge commit header contains by default the name of the branch to
+  be merged
+
+- When working in the main SCT repo, the personal prefix makes the
+  branch list prettier and more meaningful.
+
+- As much as Emojis are used a lot in our github, non-ascii branch
+  names are not OK (spelling is too hard).
 
 Examples:
 
