@@ -13,7 +13,7 @@
 
 # TODO: remove temp files in case rescaled is not "1"
 
-import os, shutil, sys
+import os, sys
 import numpy as np
 from scipy import ndimage as ndi
 import sct_image
@@ -585,15 +585,15 @@ if __name__ == "__main__":
     fname_centerline = os.path.join(folder_output, os.path.basename(sct.add_suffix(fname_data, "_centerline")))
     # in case header was rescaled, we need to update the output file names by removing the "_rescaled"
     if rescale_header is not 1:
-        os.rename(os.path.join(folder_output, sct.add_suffix(os.path.basename(fname_data_propseg), "_seg")),
+        sct.mv(os.path.join(folder_output, sct.add_suffix(os.path.basename(fname_data_propseg), "_seg")),
                   fname_seg)
-        os.rename(os.path.join(folder_output, sct.add_suffix(os.path.basename(fname_data_propseg), "_centerline")),
+        sct.mv(os.path.join(folder_output, sct.add_suffix(os.path.basename(fname_data_propseg), "_centerline")),
                   fname_centerline)
         # if user was used, copy the labelled points to the output folder (they will then be scaled back)
         if use_viewer:
             fname_labels_viewer_new = os.path.join(folder_output, os.path.basename(sct.add_suffix(fname_data,
                                                                                                   "_labels_viewer")))
-            shutil.copy(fname_labels_viewer, fname_labels_viewer_new)
+            sct.copy(fname_labels_viewer, fname_labels_viewer_new)
             # update variable (used later)
             fname_labels_viewer = fname_labels_viewer_new
 
