@@ -100,6 +100,7 @@ Filling-out Other Fields
   and type of the change.
   A change can have multiple types if it is appropriate but **it can only have one
   category**.
+
   `Here <https://github.com/neuropoly/spinalcordtoolbox/pull/1637>`_
   is an example of PR with proper labels and description.
 
@@ -189,11 +190,12 @@ Examples:
 
     - can see who is doing it without looking at the code
     - can see that there is an issue about it
-    - can see what it's about and that it's time to change the trajectory of this issue
+    - can see what it's about and that it's time to change the
+      trajectory of this issue
 
 - OK:
 
-  - jca/1828
+  - *jca/1828*
 
     - you're busy with the science and don't care what the commit log
       will look like or that nobody else will know what this is about,
@@ -202,11 +204,11 @@ Examples:
 
 - Bad:
 
-  - wip-on-something
+  - *wip-on-something*
 
     - yeah like we can figure that one out without looking at the code
 
-  - ‎‮זאת‬, cJ/😊‎‮sgub-lla-dexif-‬
+  - *‎‮זאת‬, cJ/😊‎‮sgub-lla-dexif-‬*
 
     - please no ;)
 
