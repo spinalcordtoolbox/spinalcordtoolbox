@@ -185,6 +185,10 @@ def start_stream_logger():
     stream_handler.setLevel(level)
     log.addHandler(stream_handler)
 
+__sentry_data__ = dict(
+ client=None,
+ event_ids=list(),
+)
 
 def init_error_client():
     """ Send traceback to neuropoly servers
@@ -201,6 +205,7 @@ def init_error_client():
               'raven.processors.RemoveStackLocalsProcessor',
               'raven.processors.SanitizePasswordsProcessor'),
             )
+            __sentry_data__["client"] = client
             server_log_handler(client)
             traceback_to_server(client)
 
@@ -655,54 +660,41 @@ def checkRAM(os, verbose=1):
 
         return ram_total
 
-
-class ForkStdoutToFile(object):
-    """Use to redirect stdout to file
-    Default mode is to send stdout to file AND to terminal
-
+class StdoutLike(object):
     """
-    def __init__(self, filename="{}.log".format(__file__), to_file_only=False):
-        self.terminal = sys.stdout
-        self.log_file = open(filename, "a")
-        self.filename = filename
-        self.to_file_only = False
-        sys.stdout = self
+    Make a stream have the quirks of sys.stdout
+    """
+    def __init__(self, stream):
+        self._stream = stream
 
-    def __del__(self):
-        self.pause()
-        self.close()
+    def write(self, msg):
+        #if sys.hexversion < 0x03000000 and isinstance(msg, str):
+        #    msg = msg.decode("utf-8")
+        if sys.hexversion < 0x03000000 and isinstance(msg, unicode):
+            msg = msg.encode("utf-8")
+        #if sys.hexversion > 0x03000000 and isinstance(msg, bytes):
+        #    msg = msg.decode("utf-8")
+        self._stream.write(msg)
 
-    def pause(self):
-        sys.stdout = self.terminal
+    def __getattr__(self, attr):
+        return getattr(self._stream, attr)
 
-    def restart(self):
-        sys.stdout = self
+class SplitStream(object):
+    """
+    Fake output stream that writes the same thing to several underlying streams
+    """
+    def __init__(self, *streams):
+        self._streams = streams
 
     def write(self, message):
-        if not self.to_file_only:
-            self.terminal.write(message)
-        self.log_file.write(message)
+        for s in self._streams:
+            res = s.write(message)
+        return res
 
     def flush(self):
-        if not self.to_file_only:
-            self.terminal.flush()
-        self.log_file.flush()
-
-    def close(self):
-        self.log_file.close()
-        sys.stdout = self.terminal
-
-    def read(self):
-        with open(self.filename, "r") as fp:
-            fp.read()
-
-    # def send_email(self, email, passwd_from=None, subject="file_log", attachment=True):
-    #     if attachment:
-    #         filename = self.filename
-    #     else:
-    #         filename = None
-    #     send_email(email, passwd_from=passwd_from, subject=subject, message=self.read(), filename=filename)
-
+        for s in self._streams:
+            res = s.flush()
+        return res
 
 
 def extract_fname(fpath):

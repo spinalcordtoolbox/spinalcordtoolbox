@@ -130,9 +130,19 @@ def main():
     # use variable "verbose" when calling sct.run for more clarity
     verbose = complete_test
 
+    old_stdout = sys.stdout
+
     # redirect to log file
     if create_log_file:
-        handle_log = sct.ForkStdoutToFile(file_log)
+        f_log = sct.StdoutLike(io.open(file_log, "w"))
+        sys.stdout = sct.SplitStream(sys.stdout, f_log)
+
+    if arguments.transmit_report:
+        sentry_buf = io.BytesIO()
+        if sys.hexversion >= 0x03000000:
+            sentry_buf = io.TextIOWrapper(sentry_buf)
+        sentry_buf = sct.StdoutLike(sentry_buf)
+        sys.stdout = sct.SplitStream(sys.stdout, sentry_buf)
 
     # complete test
     if complete_test:
@@ -347,7 +357,23 @@ def main():
                 print_fail()
 
     print('')
-    sys.exit(e + install_software)
+
+    sys.stdout = old_stdout
+    if create_log_file:
+        f_log.close()
+
+    if arguments.transmit_report and sct.__sentry_data__["client"]:
+        print("Transmitting installation info")
+        fake_stdout = io.BytesIO()
+        if sys.hexversion >= 0x03000000:
+            fake_stdout = io.TextIOWrapper(sentry_buf)
+        fake_stdout = sct.StdoutLike(fake_stdout)
+        sys.stdout = fake_stdout
+        event = sct.__sentry_data__["client"].captureMessage("Installation", extra=dict(buf=sentry_buf.getvalue()))
+        raise NotImplementedError("why is buf cropped?")
+        #sys.stdout = old_stdout
+
+    return e + install_software
 
 
 # print without carriage return
@@ -435,6 +461,11 @@ def get_parser():
                         action="store_true",
                         )
 
+    parser.add_argument("--transmit-report",
+                        help="Transmit report (if enabled)",
+                        action="store_true",
+                        )
+
     return parser
 
 
@@ -445,4 +476,5 @@ if __name__ == "__main__":
     # initialize parameters
     param = Param()
     # call main function
-    main()
+    res = main()
+    raise SystemExit(res)
