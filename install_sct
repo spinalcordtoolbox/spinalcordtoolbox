@@ -283,10 +283,14 @@ if [[ ! ${ASK_REPORT_QUESTION} =~ ^([[Ff]alse?|[Nn]o?)$  ]]; then
   echo
   cat <<EOF
 To improve user experience and fix bugs, the SCT development team is using a
-report system to automatically receive crash reports and errors from users.
+report system (sentry.io) to automatically receive crash reports and errors from users.
 These reports are anonymous.
+- You may opt out at any time by removing the line featuring "export SENTRY_DSN"
+  in bin/sct_launcher.
+- You may also opt in at any time by setting:
+  export SENTRY_DSN=\$(curl -q $STATS_DSN)
 EOF
-  read -p 'Do you agree to help us improve SCT? [y]es/[n]o: ' -r REPORT_STATS
+  read -p 'Do you agree to help us improve SCT? [y]es/[N]o: ' -r REPORT_STATS
 fi
 
 if [[ ${REPORT_STATS} =~ [Yy](es)? ]]; then
