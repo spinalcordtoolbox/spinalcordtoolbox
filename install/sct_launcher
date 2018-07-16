@@ -67,7 +67,7 @@ if [ -z "${SCT_LOADED_ONCE}" ]; then
   export ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=${logicalCpuCount}
 
   # Note: default is overwritten by the installer script
-  export SENTRY_DSN="${SENTRY_DSN:-SCT_DEFAULT_SENTRY_DSN}"
+  export SCT_SENTRY_DSN="${SCT_SENTRY_DSN:-SCT_DEFAULT_SENTRY_DSN}"
 
   if [ -e ${HOME}/.sctrc ]; then
   # Overwrite parameter with local config

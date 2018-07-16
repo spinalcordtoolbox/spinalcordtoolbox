@@ -191,10 +191,11 @@ def init_error_client():
 
     :return:
     """
-    if os.getenv('SENTRY_DSN'):
+    if os.getenv('SCT_SENTRY_DSN'):
         log.debug('Configuring sentry report')
         try:
             client = raven.Client(
+             dsn=os.getenv("SCT_SENTRY_DSN"),
              release=__version__,
              processors=(
               'raven.processors.RemoveStackLocalsProcessor',

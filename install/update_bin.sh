@@ -31,7 +31,7 @@ EOF
 mkdir -p ${SCT_DIR}/bin
 
 # copy launcher while injecting the Sentry DSN
-sed -e "s|SCT_DEFAULT_SENTRY_DSN|${SENTRY_DSN}|" \
+sed -e "s|SCT_DEFAULT_SENTRY_DSN|${SCT_SENTRY_DSN}|" \
  "${SCT_SOURCE}/install/sct_launcher" > "${SCT_DIR}/bin/sct_launcher"
 
 cp "${SCT_SOURCE}/install/sct_env" "${SCT_DIR}/bin/"

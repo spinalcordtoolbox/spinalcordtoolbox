@@ -289,7 +289,7 @@ These reports are anonymous.
 - You may opt out at any time by removing the line featuring "export SENTRY_DSN"
   in bin/sct_launcher.
 - You may also opt in at any time by setting in your environment:
-  export SENTRY_DSN=${SENTRY_DSN}
+  export SCT_SENTRY_DSN=${SENTRY_DSN}
 EOF
   read -p 'Do you agree to help us improve SCT? [y]es/[N]o: ' -r REPORT_STATS
 fi
@@ -400,7 +400,7 @@ fi
 ## Create launchers for Python scripts
 
 if [ ${REPORT_STATS} ]; then
-  export SENTRY_DSN
+  export SCT_SENTRY_DSN="${SENTRY_DSN}"
 fi
 echo -e "\nCreating launchers for Python scripts..."
 cmd="install/update_bin.sh ${SCT_SOURCE} ${SCT_DIR}"; echo ">> "$cmd; $cmd
