@@ -29,7 +29,11 @@ mpiexec -n 1 \${SCT_DIR}/scripts/\$(basename \$0).py \$@
 EOF
 
 mkdir -p ${SCT_DIR}/bin
-sed "s|{DYNAMIC_INSTALL_TEMPLATE}|${SCT_ADD_ENV_VARS}|" "${SCT_SOURCE}/install/sct_launcher" > "${SCT_DIR}/bin/sct_launcher"
+
+# copy launcher while injecting the Sentry DSN
+sed -e "s|SCT_DEFAULT_SENTRY_DSN|${SENTRY_DSN}|" \
+ "${SCT_SOURCE}/install/sct_launcher" > "${SCT_DIR}/bin/sct_launcher"
+
 cp "${SCT_SOURCE}/install/sct_env" "${SCT_DIR}/bin/"
 
 grep -l "__main__" "${SCT_SOURCE}/scripts/"*.py | while read -r filename ; do

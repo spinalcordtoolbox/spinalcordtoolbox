@@ -394,11 +394,9 @@ fi
 
 ## Create launchers for Python scripts
 
-export SCT_ADD_ENV_VARS
-# add env vars to set in sct_laucher here SCT_ADD_ENV_VARS can have many lines
 if [ ${REPORT_STATS} ]; then
   download "${TMP_DIR}/stats_dsn.txt" "$STATS_DSN"
-  SCT_ADD_ENV_VARS="export SENTRY_DSN=$(cat ${TMP_DIR}/stats_dsn.txt)"
+  export SENTRY_DSN="$(cat "${TMP_DIR}/stats_dsn.txt")"
 fi
 echo -e "\nCreating launchers for Python scripts..."
 cmd="install/update_bin.sh ${SCT_SOURCE} ${SCT_DIR}"; echo ">> "$cmd; $cmd

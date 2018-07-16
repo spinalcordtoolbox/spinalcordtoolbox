@@ -66,7 +66,8 @@ if [ -z "${SCT_LOADED_ONCE}" ]; then
   export PYTHONPATH
   export ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=${logicalCpuCount}
 
-  {DYNAMIC_INSTALL_TEMPLATE}
+  # Note: default is overwritten by the installer script
+  export SENTRY_DSN="${SENTRY_DSN:-SCT_DEFAULT_SENTRY_DSN}"
 
   if [ -e ${HOME}/.sctrc ]; then
   # Overwrite parameter with local config
