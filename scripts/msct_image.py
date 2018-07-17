@@ -485,12 +485,6 @@ class Image(object):
         # save file
         save(img, fname_out)
 
-    # flatten the array in a single dimension vector, its shape will be (d, 1) compared to the flatten built in method
-    # which would have returned (d,)
-    def flatten(self):
-        # return self.data.flatten().reshape(self.data.flatten().shape[0], 1)
-        return self.data.flatten()
-
     # return a list of the image slices flattened
     def slices(self):
         slices = []
