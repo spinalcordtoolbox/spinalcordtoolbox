@@ -62,6 +62,7 @@ else:
 
 from multiprocessing import cpu_count
 
+import tqdm
 import h5py
 import pandas as pd
 
@@ -339,16 +340,17 @@ def run_function(function, folder_dataset, list_subj, list_args=[], nb_cpu=None,
         future_dirs = {pool.submit(function_launcher, subject_arg): subject_arg
                          for subject_arg in list_func_subj_args}
 
-        for future in concurrent.futures.as_completed(future_dirs):
-            count += 1
-            subject = os.path.basename(future_dirs[future][1])
-            arguments = future_dirs[future][2]
-            try:
-                result = future.result()
-                sct.no_new_line_log('Processing subjects... {}/{}'.format(count, len(list_func_subj_args)))
-                all_results.append(result)
-            except Exception as exc:
-                sct.log.error('{} {} generated an exception: {}'.format(subject, arguments, exc))
+        with tqdm.tqdm(total=len(list_func_subj_args)) as pbar:
+            for future in concurrent.futures.as_completed(future_dirs):
+                count += 1
+                subject = os.path.basename(future_dirs[future][1])
+                arguments = future_dirs[future][2]
+                try:
+                    result = future.result()
+                    pbar.update(1)
+                    all_results.append(result)
+                except Exception as exc:
+                    sct.log.error('{} {} generated an exception: {}'.format(subject, arguments, exc))
 
         compute_time = time.time() - compute_time
 
