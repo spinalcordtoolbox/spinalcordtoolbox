@@ -660,10 +660,6 @@ class Image(object):
             sct.add_suffix(self.absolutepath, suffix)
             self.save()
 
-    def invert(self):
-        self.data = self.data.max() - self.data
-        return self
-
     @staticmethod
     def get_permutation_from_orientations(orientation_in, orientation_out):
         """
