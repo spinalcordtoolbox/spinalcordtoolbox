@@ -485,13 +485,6 @@ class Image(object):
         # save file
         save(img, fname_out)
 
-    # return a list of the image slices flattened
-    def slices(self):
-        slices = []
-        for slc in self.data:
-            slices.append(slc.flatten())
-        return slices
-
     def getDataShape(self):
         """Return the data shape.
 
