@@ -757,13 +757,6 @@ class Image(object):
         self.orientation = orientation
         return raw_orientation
 
-    def show(self):
-        from matplotlib.pyplot import imshow, show
-        imgplot = imshow(self.data)
-        imgplot.set_cmap('gray')
-        imgplot.set_interpolation('nearest')
-        show()
-
     def compute_transform_matrix(self):
         m_p2f = self.hdr.get_sform()
         self.m_p2f_transfo = m_p2f[0:3, 0:3]
