@@ -45,15 +45,6 @@ format and level
 
 
 log = logging.getLogger('sct')
-log.setLevel(logging.DEBUG)
-stream_handler = logging.StreamHandler(sys.stdout)
-nh = logging.NullHandler()
-log.addHandler(nh)
-LOG_LEVEL = os.getenv('SCT_LOG_LEVEL')
-LOG_FORMAT = os.getenv('SCT_LOG_FORMAT')
-if not LOG_FORMAT:
-    LOG_FORMAT = None
-
 
 def check_exe(name):
     """
@@ -170,6 +161,12 @@ def start_stream_logger():
     :return: 
     """
 
+    LOG_LEVEL = os.getenv('SCT_LOG_LEVEL')
+    LOG_FORMAT = os.getenv('SCT_LOG_FORMAT')
+    if not LOG_FORMAT:
+        LOG_FORMAT = None
+
+    stream_handler = logging.StreamHandler(sys.stdout)
     formatter = logging.Formatter(LOG_FORMAT)
     stream_handler.setFormatter(formatter)
 
@@ -183,6 +180,9 @@ def start_stream_logger():
             logging.warn("SCT_LOG_LEVEL set to invalid value -> using default")
             level = logging.INFO
     stream_handler.setLevel(level)
+    log.setLevel(logging.DEBUG)
+    nh = logging.NullHandler()
+    log.addHandler(nh)
     log.addHandler(stream_handler)
 
 
