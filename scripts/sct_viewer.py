@@ -323,7 +323,7 @@ class Viewer(object):
                 vmax = self.im_params.images_parameters[str(i)].vmax
                 vmean = self.im_params.images_parameters[str(i)].vmean
                 if self.im_params.images_parameters[str(i)].vmode == 'percentile':
-                    flattened_volume = image.flatten()
+                    flattened_volume = image.data.flatten()
                     first_percentile = percentile(flattened_volume[flattened_volume > 0], int(vmin))
                     last_percentile = percentile(flattened_volume[flattened_volume > 0], int(vmax))
                     mean_intensity = percentile(flattened_volume[flattened_volume > 0], int(vmean))
@@ -333,7 +333,7 @@ class Viewer(object):
                     std_intensity = (float(vmax) - float(vmin)) / 2.0
 
             else:
-                flattened_volume = image.flatten()
+                flattened_volume = image.data.flatten()
                 first_percentile = percentile(flattened_volume[flattened_volume > 0], 0)
                 last_percentile = percentile(flattened_volume[flattened_volume > 0], 99)
                 mean_intensity = percentile(flattened_volume[flattened_volume > 0], 98)
