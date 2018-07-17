@@ -23,6 +23,7 @@ import numpy as np
 from scipy import ndimage
 from scipy.io import loadmat
 from nibabel import load, Nifti1Image, save
+import tqdm
 
 from msct_image import Image
 import sct_utils as sct
@@ -195,8 +196,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
     warp_inv_y = np.zeros(data_src.shape)
 
     # construct 3D warping matrix
-    for iz in z_nonzero:
-        sct.no_new_line_log('{}/{}..'.format(iz + 1, nz))
+    for iz in tqdm.tqdm(z_nonzero, file=sct.tqdm_file2log()):
         # get indices of x and y coordinates
         row, col = np.indices((nx, ny))
         # build 2xn array of coordinates in pixel space
@@ -349,8 +349,7 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
 
     # Loop across slices
     sct.printv('\nEstimate columnwise transformation...', verbose)
-    for iz in range(0, nz):
-        sct.printv(str(iz) + '/' + str(nz) + '..',)
+    for iz in tqdm.tqdm(range(0, nz), file=sct.tqdm_file2log()):
 
         # PREPARE COORDINATES
         # ============================================================

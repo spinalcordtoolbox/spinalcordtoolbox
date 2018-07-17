@@ -1021,6 +1021,24 @@ def printv(string, verbose=1, type='normal'):
     if type == 'error':
         raise RuntimeError("printv(..., type=\"error\")")
 
+class tqdm_file2log(object):
+    """
+    Shim to send tqdm progress bars to log.
+
+    Use with tqdm.tqdm(file=sct.tqdm_file2log())
+    """
+    def __init__(self,logger=None,level=None):
+        self.logger = logger or log
+        self.level = level if level is not None else logging.INFO
+        self.buf = ""
+
+    def write(self,buf):
+        self.buf += buf.strip('\r\n\t ')
+
+    def flush(self):
+        self.logger.log(self.level, self.buf)
+        self.buf = ""
+
 
 def send_email(addr_to, addr_from, passwd, subject, message='', filename=None, html=False, smtp_host=None, smtp_port=None, login=None):
     if smtp_host is None:
