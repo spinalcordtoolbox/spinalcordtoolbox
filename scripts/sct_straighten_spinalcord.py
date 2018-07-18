@@ -282,15 +282,15 @@ class SpinalCordStraightener(object):
 
         # Copying input data to tmp folder
         sct.printv('\nCopy files to tmp folder...', verbose)
-        sct.run(["sct_convert", "-i", fname_anat, "-o",os.path.join(path_tmp, "data.nii")])
-        sct.run(["sct_convert", "-i", fname_centerline, "-o", os.path.join(path_tmp, "centerline.nii.gz")])
+        Image(fname_anat).save(os.path.join(path_tmp, "data.nii"))
+        Image(fname_centerline).save(os.path.join(path_tmp, "centerline.nii.gz"))
 
         if self.use_straight_reference:
-            sct.run(["sct_convert", "-i", self.centerline_reference_filename, "-o", os.path.join(path_tmp, "centerline_ref.nii.gz")])
+            Image(self.centerline_reference_filename).save(os.path.join(path_tmp, "centerline_ref.nii.gz"))
         if self.discs_input_filename != '':
-            sct.run(["sct_convert", "-i", self.discs_input_filename, "-o", os.path.join(path_tmp, "labels_input.nii.gz")])
+            Image(self.discs_input_filename).save(os.path.join(path_tmp, "labels_input.nii.gz"))
         if self.discs_ref_filename != '':
-            sct.run(["sct_convert", "-i", self.discs_ref_filename, "-o", os.path.join(path_tmp, "labels_ref.nii.gz")])
+            Image(self.discs_ref_filename).save(os.path.join(path_tmp, "labels_ref.nii.gz"))
 
         # go to tmp folder
         curdir = os.getcwd()
@@ -299,11 +299,10 @@ class SpinalCordStraightener(object):
         try:
             # Change orientation of the input centerline into RPI
             sct.printv("\nOrient centerline to RPI orientation...", verbose)
-            sct.run(['sct_image', '-i', 'centerline.nii.gz', '-setorient', 'RPI', '-o', 'centerline_rpi.nii.gz'])
+            image_centerline = Image("centerline.nii.gz").change_orientation("RPI").save("centerline_rpi.nii.gz")
 
             # Get dimension
             sct.printv('\nGet dimensions...', verbose)
-            image_centerline = Image('centerline_rpi.nii.gz')
             nx, ny, nz, nt, px, py, pz, pt = image_centerline.dim
             sct.printv('.. matrix size: ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz), verbose)
             sct.printv('.. voxel size:  ' + str(px) + 'mm x ' + str(py) + 'mm x ' + str(pz) + 'mm', verbose)
@@ -431,7 +430,7 @@ class SpinalCordStraightener(object):
                 image_centerline_pad = Image('centerline_rpi.nii.gz')
                 nx, ny, nz, nt, px, py, pz, pt = image_centerline_pad.dim
 
-                sct.run(['sct_image', '-i', 'centerline_ref.nii.gz', '-setorient', 'RPI', '-o', 'centerline_ref_rpi.nii.gz'])
+                Image('centerline_ref.nii.gz').change_orientation("RPI").save('centerline_ref_rpi.nii.gz')
                 fname_ref = 'centerline_ref_rpi.nii.gz'
                 image_centerline_straight = Image('centerline_ref_rpi.nii.gz')
                 nx_s, ny_s, nz_s, nt_s, px_s, py_s, pz_s, pt_s = image_centerline_straight.dim

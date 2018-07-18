@@ -36,6 +36,7 @@ import sys, io, os, time, shutil
 
 import sct_utils as sct
 from msct_parser import Parser
+from msct_image import Image
 
 
 def get_parser(paramreg=None):
@@ -404,33 +405,31 @@ def main(args=None):
     # create temporary folder
     path_tmp = sct.tmp_create()
 
-    # copy files to temporary folder
-    from sct_convert import convert
     sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
-    convert(fname_src, os.path.join(path_tmp, "src.nii"))
-    convert(fname_dest, os.path.join(path_tmp, "dest.nii"))
+    Image(fname_src).save(os.path.join(path_tmp, "src.nii"))
+    Image(fname_dest).save(os.path.join(path_tmp, "dest.nii"))
 
     if fname_src_seg:
-        convert(fname_src_seg, os.path.join(path_tmp, "src_seg.nii"))
-        convert(fname_dest_seg, os.path.join(path_tmp, "dest_seg.nii"))
+        Image(fname_src_seg).save(os.path.join(path_tmp, "src_seg.nii"))
+        Image(fname_dest_seg).save(os.path.join(path_tmp, "dest_seg.nii"))
 
     if fname_src_label:
-        convert(fname_src_label, os.path.join(path_tmp, "src_label.nii"))
-        convert(fname_dest_label, os.path.join(path_tmp, "dest_label.nii"))
+        Image(fname_src_label).save(os.path.join(path_tmp, "src_label.nii"))
+        Image(fname_dest_label).save(os.path.join(path_tmp, "dest_label.nii"))
 
     if fname_mask != '':
-        convert(fname_mask, os.path.join(path_tmp, "mask.nii.gz"))
+        Image(fname_mask).save(os.path.join(path_tmp, "mask.nii.gz"))
 
     # go to tmp folder
     curdir = os.getcwd()
     os.chdir(path_tmp)
 
     # reorient destination to RPI
-    sct.run(['sct_image', '-i', 'dest.nii', '-setorient', 'RPI', '-o', 'dest_RPI.nii'])
+    Image('dest.nii').change_orientation("RPI").save('dest_RPI.nii')
     if fname_dest_seg:
-        sct.run(['sct_image', '-i', 'dest_seg.nii', '-setorient', 'RPI', '-o', 'dest_seg_RPI.nii'])
+        Image('dest_seg.nii').change_orientation("RPI").save('dest_seg_RPI.nii')
     if fname_dest_label:
-        sct.run(['sct_image', '-i', 'dest_label.nii', '-setorient', 'RPI', '-o', 'dest_label_RPI.nii'])
+        Image('dest_label.nii').change_orientation("RPI").save('dest_label_RPI.nii')
 
     if identity:
         # overwrite paramreg and only do one identity transformation

@@ -187,7 +187,7 @@ class Transform:
 
             # convert to nifti into temp folder
             sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
-            sct_convert.convert(fname_src, os.path.join(path_tmp, "data.nii"), squeeze_data=False)
+            Image(fname_src).save(os.path.join(path_tmp, "data.nii"))
             sct.copy(fname_dest, os.path.join(path_tmp, file_dest + ext_dest))
             fname_warp_list_tmp = []
             for fname_warp in fname_warp_list:
@@ -233,8 +233,7 @@ class Transform:
             fname_list = glob.glob('data_reg_T*.nii')
             fname_list.sort()
             im_out = concat_data(fname_list, 3, im_header['pixdim'])
-            im_out.setFileName(name_out + ext_out)
-            im_out.save(squeeze_data=False)
+            im_out.save(name_out + ext_out)
 
             os.chdir(curdir)
             sct.generate_output_file(os.path.join(path_tmp, name_out + ext_out), fname_out)

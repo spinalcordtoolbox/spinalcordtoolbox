@@ -639,8 +639,7 @@ class Centerline:
                     coord_pix = image.transfo_phys2pix([current_coord])[0]
                     image_output.data[int(coord_pix[0]), int(coord_pix[1]), int(coord_pix[2])] = float(self.labels_regions[current_label]) + current_dist_rel
 
-            image_output.setFileName(fname_output)
-            image_output.save(type='float32')
+            image_output.save(fname_output, dtype='float32')
         else:
             # save a .centerline file containing the centerline
             if self.disks_levels is None:

@@ -38,7 +38,7 @@ from sct_dmri_separate_b0_and_dwi import identify_b0
 import importlib
 from sct_convert import convert
 from msct_image import Image
-from sct_image import copy_header, split_data, concat_data
+from sct_image import split_data, concat_data
 from msct_parser import Parser
 
 
@@ -341,9 +341,8 @@ def dmri_moco(param):
     im_b0_list = []
     for it in range(nb_b0):
         im_b0_list.append(im_data_split_list[index_b0[it]])
-    im_b0_out = concat_data(im_b0_list, 3)
-    im_b0_out.setFileName(file_b0 + ext_data)
-    im_b0_out.save()
+    im_b0_out = concat_data(im_b0_list, 3) \
+     .save(file_b0 + ext_data)
     sct.printv(('  File created: ' + file_b0), param.verbose)
 
     # Average b=0 images
@@ -381,9 +380,8 @@ def dmri_moco(param):
         im_dwi_list = []
         for it in range(nb_dwi_i):
             im_dwi_list.append(im_data_split_list[index_dwi_i[it]])
-        im_dwi_out = concat_data(im_dwi_list, 3)
-        im_dwi_out.setFileName(file_dwi_merge_i + ext_data)
-        im_dwi_out.save()
+        im_dwi_out = concat_data(im_dwi_list, 3) \
+         .save(file_dwi_merge_i + ext_data)
 
         # Average DW Images
         sct.printv('Average DW images...', param.verbose)
@@ -396,9 +394,8 @@ def dmri_moco(param):
     im_dw_list = []
     for iGroup in range(nb_groups):
         im_dw_list.append(file_dwi_mean[iGroup] + ext_data)
-    im_dw_out = concat_data(im_dw_list, 3)
-    im_dw_out.setFileName(file_dwi_group + ext_data)
-    im_dw_out.save()
+    im_dw_out = concat_data(im_dw_list, 3) \
+     .save(file_dwi_group + ext_data)
 
     # Average DW Images
     # TODO: USEFULL ???
@@ -492,7 +489,7 @@ def dmri_moco(param):
     # NB: this is required because WarpImageMultiTransform in 2D mode wrongly sets pixdim(3) to "1".
     im_dmri = Image(file_data + ext_data)
     im_dmri_moco = Image(file_data + param.suffix + ext_data)
-    im_dmri_moco = copy_header(im_dmri, im_dmri_moco)
+    im_dmri_moco.header = im_dmri.header
     im_dmri_moco.save()
 
     # generate b0_moco_mean and dwi_moco_mean

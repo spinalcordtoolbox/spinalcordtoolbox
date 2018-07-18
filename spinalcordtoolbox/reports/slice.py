@@ -8,6 +8,7 @@ import math
 import numpy as np
 from scipy import ndimage
 
+import msct_image
 
 logger = logging.getLogger("sct.{}".format(__file__))
 
@@ -36,8 +37,7 @@ class Slice(object):
         """
         self._images = list()
         for image in images:
-            img = image.copy()
-            img.change_orientation("SAL")
+            img = msct_image.change_orientation(image, "SAL")
             self._images.append(img)
 
     @staticmethod
