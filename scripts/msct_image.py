@@ -679,19 +679,6 @@ class Image(object):
 
         return perm, inversion
 
-    def get_orientation_3d(self):
-        """Returns the orientation of an image.
-
-        Uses the binary implementation of `get_orientation`. Recommend using
-        `get_orientation` instead and deprecate this function.
-        """
-        status, output = sct.run(["isct_orientation3d", "-i", self.absolutepath, "-get"], 0)
-
-        if status != 0:
-            sct.printv('ERROR in get_orientation.', 1, 'error')
-        orientation = output.split()[-1]
-        return orientation
-
     def change_orientation(self, orientation='RPI', inversion_orient=False):
         """
         This function changes the orientation of the data by swapping the image axis.
@@ -703,7 +690,7 @@ class Image(object):
         opposite_character = {'L': 'R', 'R': 'L', 'A': 'P', 'P': 'A', 'I': 'S', 'S': 'I'}
 
         if self.orientation is None:
-            self.orientation = self.get_orientation_3d()
+            self.orientation = self.get_orientation()
         # get orientation to return at the end of function
         raw_orientation = self.orientation
 
