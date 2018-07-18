@@ -152,7 +152,7 @@ class ImageCropper(object):
             new_data += data_background
 
         # set image out
-        image_in.setFileName(self.output_filename)
+        image_in.absolutepath = self.output_filename
         image_in.data = new_data
         image_in.save()
 
@@ -200,7 +200,7 @@ class ImageCropper(object):
 
         # change orientation
         sct.printv('\nChange orientation to RPI...', verbose)
-        sct.run(['sct_image', '-i', 'data.nii', '-setorient', 'RPI', '-o', 'data_rpi.nii'])
+        Image('data.nii').change_orientation("RPI").save('data_rpi.nii')
 
         # get image of medial slab
         sct.printv('\nGet image of medial slab...', verbose)
@@ -242,7 +242,7 @@ class ImageCropper(object):
         nii = Image('data_rpi.nii')
         data_crop = nii.data[:, :, zcrop[0]:zcrop[1]]
         nii.data = data_crop
-        nii.setFileName('data_rpi_crop.nii')
+        nii.absolutepath = 'data_rpi_crop.nii'
         nii.save()
 
         # come back
