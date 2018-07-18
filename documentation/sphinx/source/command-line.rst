@@ -526,12 +526,6 @@ msct_parser
 .. program-output:: ../../../scripts/msct_parser.py -h
 
 
-msct_pca
-===========
-
-.. program-output:: ../../../scripts/msct_pca.py -h
-
-
 msct_register
 ================
 
