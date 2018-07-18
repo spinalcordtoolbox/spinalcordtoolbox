@@ -584,7 +584,7 @@ def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1, f
             try:
                 printv('Get orientation...', verbose)
                 im_out = None
-                ori = get_orientation(im)
+                ori = im.orientation
             except Exception as e:
                 printv('ERROR: an error occurred: ' + str(e), verbose, 'error')
             return ori
@@ -631,7 +631,7 @@ def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1, f
             # get orientation
             printv('Get orientation...', verbose)
             im_out = None
-            ori = get_orientation(im_split_list[0])
+            ori = im_split_list[0].orientation
             os.chdir(curdir)
             sct.rmtree(tmp_folder)
             return ori
@@ -672,42 +672,6 @@ def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1, f
 
     return im_out
 
-
-def get_orientation(im):
-    from nibabel import orientations
-    orientation_dic = {
-        (0, 1): 'L',
-        (0, -1): 'R',
-        (1, 1): 'P',
-        (1, -1): 'A',
-        (2, 1): 'I',
-        (2, -1): 'S',
-    }
-
-    orientation_matrix = orientations.io_orientation(im.hdr.get_best_affine())
-    ori = orientation_dic[tuple(orientation_matrix[0])] + orientation_dic[tuple(orientation_matrix[1])] + orientation_dic[tuple(orientation_matrix[2])]
-
-    return ori
-
-
-def get_orientation_3d(im, filename=False):
-    """
-    Get orientation from 3D data
-    :param im:
-    :return:
-    """
-    string_out = 'Input image orientation : '
-    # get orientation
-    if filename:
-        status, output = sct.run(['isct_orientation3d', '-i', im, '-get'], 0)
-    else:
-        status, output = sct.run(['isct_orientation3d', '-i', im.absolutepath, '-get'], 0)
-    # check status
-    if status != 0:
-        printv('ERROR in get_orientation.', 1, 'error')
-    orientation = output[output.index(string_out) + len(string_out):]
-    # orientation = output[26:]
-    return orientation
 
 
 def set_orientation(im, orientation, data_inversion=False, filename=False, fname_out=''):

@@ -21,7 +21,7 @@ import nibabel as nib
 from msct_image import Image
 from msct_parser import Parser
 import sct_utils as sct
-from sct_image import get_orientation, set_orientation
+from sct_image import set_orientation
 
 
 def get_parser():
@@ -90,7 +90,7 @@ class DetectPMJ:
 
         self.tmp_dir = sct.tmp_create(verbose=self.verbose)  # path to tmp directory
 
-        self.orientation_im = get_orientation(Image(self.fname_im))  # to re-orient the data at the end
+        self.orientation_im = Image(self.fname_im).orientation  # to re-orient the data at the end
 
         self.slice2D_im = sct.extract_fname(self.fname_im)[1] + '_midSag.nii'  # file used to do the detection, with only one slice
         self.dection_map_pmj = sct.extract_fname(self.fname_im)[1] + '_map_pmj'  # file resulting from the detection
