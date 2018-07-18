@@ -489,7 +489,7 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
     # nx, ny, nz, nt, px, py, pz, pt = im_seg.dim
     #
     # # Extract orientation of the input segmentation
-    # orientation = get_orientation(im_seg)
+    # orientation = im_seg.orientation
     # sct.printv('\nOrientation of segmentation image: ' + orientation, verbose)
     #
     # sct.printv('\nOpen segmentation volume...', verbose)
