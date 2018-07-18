@@ -44,7 +44,8 @@ def main(args=None):
 
     input_filename = arguments["-i"]
     image_input = Image(input_filename)
-    image_output = image_input.invert()
+    image_output = image_input
+    image_output.data = image_input.data.max() - image_input.data
     if '-o' in arguments:
         image_output.setFileName(arguments['-o'])
     image_output.save(type='minimize')

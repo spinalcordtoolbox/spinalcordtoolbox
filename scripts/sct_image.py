@@ -196,7 +196,7 @@ def main(args=None):
 
     elif "-pad" in arguments:
         im_in = Image(fname_in[0])
-        ndims = len(im_in.getDataShape())
+        ndims = len(im_in.data.shape)
         if ndims != 3:
             printv('ERROR: you need to specify a 3D input file.', 1, 'error')
             return
@@ -212,7 +212,7 @@ def main(args=None):
 
     elif "-pad-asym" in arguments:
         im_in = Image(fname_in[0])
-        ndims = len(im_in.getDataShape())
+        ndims = len(im_in.data.shape)
         if ndims != 3:
             printv('ERROR: you need to specify a 3D input file.', 1, 'error')
             return
