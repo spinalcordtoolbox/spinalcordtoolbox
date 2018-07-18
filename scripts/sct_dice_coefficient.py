@@ -16,7 +16,6 @@ import os
 from msct_parser import Parser
 import sct_utils as sct
 from msct_image import Image
-from sct_image import copy_header
 
 def get_parser():
     parser = Parser(__file__)
@@ -110,9 +109,10 @@ if __name__ == "__main__":
         fname_input2 = fname_input2_bin
 
     # copy header of im_1 to im_2
-    im_1, im_2 = Image(fname_input1), Image(fname_input2)
-    im_2_cor = copy_header(im_1, im_2)
-    im_2_cor.save()
+    im_1 = Image(fname_input1)
+    im_2 = Image(fname_input2)
+    im_2.header = im_1.header
+    im_2.save()
 
     cmd = ['isct_dice_coefficient', fname_input1, fname_input2]
 

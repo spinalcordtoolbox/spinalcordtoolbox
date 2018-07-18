@@ -160,8 +160,7 @@ def merge_images(list_fname_src, fname_dest, list_fname_warp, param):
 
     # write result in file
     nii_dest.data = data_merge
-    nii_dest.setFileName(param.fname_out)
-    nii_dest.save()
+    nii_dest.save(param.fname_out)
 
     # remove temporary folder
     if param.rm_tmp:

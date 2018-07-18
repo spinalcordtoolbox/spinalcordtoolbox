@@ -157,23 +157,19 @@ def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, file_mask):
     # FA
     from dipy.reconst.dti import fractional_anisotropy
     nii.data = fractional_anisotropy(tenfit.evals)
-    nii.setFileName(prefix + 'FA.nii.gz')
-    nii.save('float32')
+    nii.save(prefix + 'FA.nii.gz', dtype='float32')
     # MD
     from dipy.reconst.dti import mean_diffusivity
     nii.data = mean_diffusivity(tenfit.evals)
-    nii.setFileName(prefix + 'MD.nii.gz')
-    nii.save('float32')
+    nii.save(prefix + 'MD.nii.gz', dtype='float32')
     # RD
     from dipy.reconst.dti import radial_diffusivity
     nii.data = radial_diffusivity(tenfit.evals)
-    nii.setFileName(prefix + 'RD.nii.gz')
-    nii.save('float32')
+    nii.save(prefix + 'RD.nii.gz', dtype='float32')
     # AD
     from dipy.reconst.dti import axial_diffusivity
     nii.data = axial_diffusivity(tenfit.evals)
-    nii.setFileName(prefix + 'AD.nii.gz')
-    nii.save('float32')
+    nii.save(prefix + 'AD.nii.gz', dtype='float32')
 
     return True
 

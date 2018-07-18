@@ -274,14 +274,14 @@ def main(args=None):
 
     # copy files to temporary folder
     sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
-    sct.run(['sct_convert', '-i', fname_data, '-o', os.path.join(path_tmp, ftmp_data)])
-    sct.run(['sct_convert', '-i', fname_seg, '-o', os.path.join(path_tmp, ftmp_seg)])
-    sct.run(['sct_convert', '-i', fname_landmarks, '-o', os.path.join(path_tmp, ftmp_label)])
-    sct.run(['sct_convert', '-i', fname_template, '-o', os.path.join(path_tmp, ftmp_template)])
-    sct.run(['sct_convert', '-i', fname_template_seg, '-o', os.path.join(path_tmp, ftmp_template_seg)])
-    sct_convert.main(args=['-i', fname_template_vertebral_labeling, '-o', os.path.join(path_tmp, ftmp_template_label)])
+    Image(fname_data).save(os.path.join(path_tmp, ftmp_data))
+    Image(fname_seg).save(os.path.join(path_tmp, ftmp_seg))
+    Image(fname_landmarks).save(os.path.join(path_tmp, ftmp_label))
+    Image(fname_template).save(os.path.join(path_tmp, ftmp_template))
+    Image(fname_template_seg).save(os.path.join(path_tmp, ftmp_template_seg))
+    Image(fname_template_vertebral_labeling).save(os.path.join(path_tmp, ftmp_template_label))
     if label_type == 'disc':
-        sct_convert.main(args=['-i', fname_template_disc_labeling, '-o', os.path.join(path_tmp, ftmp_template_label)])
+        Image(fname_template_disc_labeling).save(os.path.join(path_tmp, ftmp_template_label))
 
     # go to tmp folder
     curdir = os.getcwd()
@@ -290,7 +290,8 @@ def main(args=None):
     # Generate labels from template vertebral labeling
     if label_type == 'body':
         sct.printv('\nGenerate labels from template vertebral labeling', verbose)
-        sct_label_utils.main(args=['-i', ftmp_template_label, '-vert-body', '0', '-o', ftmp_template_label])
+        ftmp_template_label_, ftmp_template_label = ftmp_template_label, sct.add_suffix(ftmp_template_label, "_body")
+        sct_label_utils.main(args=['-i', ftmp_template_label_, '-vert-body', '0', '-o', ftmp_template_label])
 
     # check if provided labels are available in the template
     sct.printv('\nCheck if provided labels are available in the template', verbose)
@@ -314,7 +315,9 @@ def main(args=None):
 
     # binarize segmentation (in case it has values below 0 caused by manual editing)
     sct.printv('\nBinarize segmentation', verbose)
-    sct.run(['sct_maths', '-i', 'seg.nii.gz', '-bin', '0.5', '-o', 'seg.nii.gz'])
+    ftmp_seg_, ftmp_seg = ftmp_seg, sct.add_suffix(ftmp_seg, "_bin")
+    sct.run(['sct_maths', '-i', ftmp_seg_, '-bin', '0.5', '-o', ftmp_seg])
+
 
     # Switch between modes: subject->template or template->subject
     if ref == 'template':
@@ -332,13 +335,10 @@ def main(args=None):
 
         # Change orientation of input images to RPI
         sct.printv('\nChange orientation of input images to RPI...', verbose)
-        sct.run(['sct_image', '-i', ftmp_data, '-setorient', 'RPI', '-o', add_suffix(ftmp_data, '_rpi')])
-        ftmp_data = add_suffix(ftmp_data, '_rpi')
-        sct.run(['sct_image', '-i', ftmp_seg, '-setorient', 'RPI', '-o', add_suffix(ftmp_seg, '_rpi')])
-        ftmp_seg = add_suffix(ftmp_seg, '_rpi')
-        sct.run(['sct_image', '-i', ftmp_label, '-setorient', 'RPI', '-o', add_suffix(ftmp_label, '_rpi')])
-        ftmp_label = add_suffix(ftmp_label, '_rpi')
 
+        ftmp_data = Image(ftmp_data).change_orientation("RPI", generate_path=True).save().absolutepath
+        ftmp_seg = Image(ftmp_seg).change_orientation("RPI", generate_path=True).save().absolutepath
+        ftmp_label = Image(ftmp_label).change_orientation("RPI", generate_path=True).save().absolutepath
         if vertebral_alignment:
             # cropping the segmentation based on the label coverage to ensure good registration with vertebral alignment
             # See https://github.com/neuropoly/spinalcordtoolbox/pull/1669 for details
@@ -460,14 +460,13 @@ def main(args=None):
         """
         # open segmentation
         im = Image(ftmp_seg)
-        im_new = im.copy()
+        im_new = msct_image.empty_like(im)
         # binarize
         im_new.data = im.data > 0.5
         # find min-max of anat2template (for subsequent cropping)
         zmin_template, zmax_template = find_zmin_zmax(im_new, threshold=0.5)
         # save binarized segmentation
-        im_new.setFileName(add_suffix(ftmp_seg, '_bin'))
-        im_new.save()
+        im_new.save(add_suffix(ftmp_seg, '_bin')) # unused?
         # crop template in z-direction (for faster processing)
         # TODO: refactor to use python module instead of doing i/o
         sct.printv('\nCrop data in template space (for faster processing)...', verbose)
@@ -540,12 +539,9 @@ def main(args=None):
 
         # Change orientation of input images to RPI
         sct.printv('\nChange orientation of input images to RPI...', verbose)
-        sct.run(['sct_image', '-i', ftmp_data, '-setorient', 'RPI', '-o', add_suffix(ftmp_data, '_rpi')])
-        ftmp_data = add_suffix(ftmp_data, '_rpi')
-        sct.run(['sct_image', '-i', ftmp_seg, '-setorient', 'RPI', '-o', add_suffix(ftmp_seg, '_rpi')])
-        ftmp_seg = add_suffix(ftmp_seg, '_rpi')
-        sct.run(['sct_image', '-i', ftmp_label, '-setorient', 'RPI', '-o', add_suffix(ftmp_label, '_rpi')])
-        ftmp_label = add_suffix(ftmp_label, '_rpi')
+        ftmp_data =  Image(ftmp_data).change_orientation("RPI", generate_path=True).save().absolutepath
+        ftmp_seg =  Image(ftmp_seg).change_orientation("RPI", generate_path=True).save().absolutepath
+        ftmp_label = Image(ftmp_label).change_orientation("RPI", generate_path=True).save().absolutepath
 
         # Remove unused label on template. Keep only label present in the input label image
         sct.printv('\nRemove unused label on template. Keep only label present in the input label image...', verbose)
@@ -567,7 +563,7 @@ def main(args=None):
             # Add to existing image
             im_label.data[int(new_label.x), int(new_label.y), int(new_label.z)] = new_label.value
             # Overwrite label file
-            # im_label.setFileName('label_rpi_modif.nii.gz')
+            # im_label.absolutepath = 'label_rpi_modif.nii.gz'
             im_label.save()
 
         # Bring template to subject space using landmark-based transformation
@@ -677,11 +673,11 @@ def project_labels_on_spinalcord(fname_label, fname_seg):
     # build output name
     fname_label_projected = sct.add_suffix(fname_label, "_projected")
     # open labels and segmentation
-    im_label = Image(fname_label)
+    im_label = Image(fname_label).change_orientation("RPI")
     im_seg = Image(fname_seg)
-    # orient to RPI
-    native_orient = im_seg.change_orientation('RPI')
-    im_label.change_orientation('RPI')
+    native_orient = im_seg.orientation
+    im_seg.change_orientation("RPI")
+
     # smooth centerline and return fitted coordinates in voxel space
     centerline_x, centerline_y, centerline_z, centerline_derivx, centerline_derivy, centerline_derivz = smooth_centerline(
         im_seg, algo_fitting="hanning", type_window="hanning", window_length=50, nurbs_pts_number=3000,
@@ -694,8 +690,8 @@ def project_labels_on_spinalcord(fname_label, fname_seg):
     # get center of mass of label
     labels = im_label.getCoordinatesAveragedByValue()
     # initialize image of projected labels. Note that we use the space of the seg (not label).
-    im_label_projected = im_seg.copy()
-    im_label_projected.data = np.zeros(im_label_projected.data.shape, dtype='uint8')
+    im_label_projected = msct_image.zeros_like(im_seg, dtype=np.uint8)
+
     # loop across label values
     for label in labels:
         # convert pixel into physical coordinates for the label
@@ -715,9 +711,7 @@ def project_labels_on_spinalcord(fname_label, fname_seg):
         # use that index to assign projected label in the centerline
         im_label_projected.data[minx, miny, minz] = label.value
     # re-orient projected labels to native orientation and save
-    im_label_projected.change_orientation(native_orient)  # note: native_orient refers to im_seg (not im_label)
-    im_label_projected.setFileName(fname_label_projected)
-    im_label_projected.save()
+    im_label_projected.change_orientation(native_orient).save(fname_label_projected)
     return fname_label_projected
 
 

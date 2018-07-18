@@ -13,6 +13,7 @@
 import os
 
 from pandas import DataFrame
+import msct_image
 from msct_image import Image, compute_dice
 import sct_apply_transfo
 

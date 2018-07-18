@@ -14,10 +14,12 @@
 # TODO: remove temp files in case rescaled is not "1"
 
 import os, sys
+
 import numpy as np
 from scipy import ndimage as ndi
+
+import msct_image
 import sct_image
-from sct_image import orientation, copy_header
 import sct_utils as sct
 from msct_parser import Parser
 from spinalcordtoolbox.centerline import optic
@@ -41,8 +43,8 @@ def check_and_correct_segmentation(fname_segmentation, fname_centerline, folder_
     # creating a temporary folder in which all temporary files will be placed and deleted afterwards
     path_tmp = sct.tmp_create(basename="propseg", verbose=verbose)
     from sct_convert import convert
-    convert(fname_segmentation, os.path.join(path_tmp, "tmp.segmentation.nii.gz"), squeeze_data=False, verbose=0)
-    convert(fname_centerline, os.path.join(path_tmp, "tmp.centerline.nii.gz"), squeeze_data=False, verbose=0)
+    convert(fname_segmentation, os.path.join(path_tmp, "tmp.segmentation.nii.gz"), verbose=0)
+    convert(fname_centerline, os.path.join(path_tmp, "tmp.centerline.nii.gz"), verbose=0)
     fname_seg_absolute = os.path.abspath(fname_segmentation)
 
     # go to tmp folder
@@ -51,7 +53,7 @@ def check_and_correct_segmentation(fname_segmentation, fname_centerline, folder_
 
     # convert segmentation image to RPI
     im_input = Image('tmp.segmentation.nii.gz')
-    image_input_orientation = orientation(im_input, get=True, verbose=False)
+    image_input_orientation = im_input.orientation
 
     sct_image.main("-i tmp.segmentation.nii.gz -setorient RPI -o tmp.segmentation_RPI.nii.gz -v 0".split())
     sct_image.main("-i tmp.centerline.nii.gz -setorient RPI -o tmp.centerline_RPI.nii.gz -v 0".split())
@@ -122,8 +124,7 @@ def check_and_correct_segmentation(fname_segmentation, fname_centerline, folder_
             im_seg.data[:, :, i] *= 0
 
     # saving the image
-    im_seg.setFileName('tmp.segmentation_RPI_c.nii.gz')
-    im_seg.save()
+    im_seg.save('tmp.segmentation_RPI_c.nii.gz')
 
     # replacing old segmentation with the corrected one
     sct_image.main('-i tmp.segmentation_RPI_c.nii.gz -setorient {} -o {} -v 0'.
@@ -532,9 +533,9 @@ if __name__ == "__main__":
             params.interval_in_mm = 30
             params.starting_slice = 'top'
         im_data = Image(fname_data_propseg)
-        im_mask_viewer = Image(im_data)  # copy current image object into im_mask_viewer
-        im_mask_viewer.data *= 0
-        im_mask_viewer.setFileName(sct.add_suffix(fname_data_propseg, '_labels_viewer'))
+
+        im_mask_viewer = msct_image.zeros_like(im_data)
+        im_mask_viewer.absolutepath = sct.add_suffix(fname_data_propseg, '_labels_viewer')
         controller = launch_centerline_dialog(im_data, im_mask_viewer, params)
         fname_labels_viewer = im_mask_viewer.absolutepath
 
@@ -609,8 +610,8 @@ if __name__ == "__main__":
         list_fname.append(fname_labels_viewer)
     for fname in list_fname:
         im = Image(fname)
-        im = copy_header(image_input, im)
-        im.save(type='int8')  # they are all binary masks hence fine to save as int8
+        im.header = image_input.header
+        im.save(dtype='int8')  # they are all binary masks hence fine to save as int8
 
     if path_qc is not None:
         generate_qc(fname_input_data, fname_seg, args, os.path.abspath(path_qc))
