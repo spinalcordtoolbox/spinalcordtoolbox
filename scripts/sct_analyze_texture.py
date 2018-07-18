@@ -18,10 +18,9 @@ import tqdm
 from skimage.feature import greycomatrix, greycoprops
 
 import sct_utils as sct
+import msct_image
 from msct_image import Image
 from msct_parser import Parser
-from sct_image import set_orientation
-
 
 def get_parser():
     # Initialize the parser
@@ -188,7 +187,8 @@ class ExtractGLCM:
         # open image and re-orient it to RPI if needed
         im, seg = Image(self.param.fname_im), Image(self.param.fname_seg)
         if self.orientation_im != self.orientation_extraction:
-            im, seg = set_orientation(im, self.orientation_extraction), set_orientation(seg, self.orientation_extraction)
+            im.change_orientation(self.orientation_extraction)
+            seg.change_orientation(self.orientation_extraction)
 
         # extract axial slices in self.dct_im_seg
         self.dct_im_seg['im'], self.dct_im_seg['seg'] = [im.data[:, :, z] for z in range(im.dim[2])], [seg.data[:, :, z] for z in range(im.dim[2])]
@@ -197,16 +197,13 @@ class ExtractGLCM:
     #     # open image and re-orient it to RPI if needed
     #     im_tmp = Image(self.param.fname_im)
     #     if self.orientation_im != self.orientation_extraction:
-    #         im_tmp = set_orientation(im_tmp, self.orientation_extraction)
+    #         im_tmp = msct_image.change_orientation(im_tmp, self.orientation_extraction)
 
     #     # create Image objects with zeros values for each output image needed
     #     for m in self.metric_lst:
-    #         im_2save = im_tmp.copy()
-    #         im_2save.changeType(type='float64')
-    #         im_2save.data *= 0
+    #         im_2save = msct_image.zeros_like(im_tmp, dtype=np.float64)
     #         fname_out = sct.add_suffix(''.join(sct.extract_fname(self.param.fname_im)[1:]), '_' + m)
-    #         im_2save.setFileName(fname_out)
-    #         im_2save.save()
+    #         im_2save.save(fname_out)
     #         self.fname_metric_lst[m] = fname_out
 
     def compute_texture(self):
@@ -217,13 +214,11 @@ class ExtractGLCM:
         # open image and re-orient it to RPI if needed
         im_tmp = Image(self.param.fname_im)
         if self.orientation_im != self.orientation_extraction:
-            im_tmp = set_orientation(im_tmp, self.orientation_extraction)
+            im_tmp.change_orientation(self.orientation_extraction)
 
         dct_metric = {}
         for m in self.metric_lst:
-            im_2save = im_tmp.copy()
-            im_2save.changeType(type='float64')
-            im_2save.data *= 0
+            im_2save = msct_image.zeros_like(im_tmp, dtype='float64')
             dct_metric[m] = im_2save
             # dct_metric[m] = Image(self.fname_metric_lst[m])
 
@@ -258,17 +253,15 @@ class ExtractGLCM:
 
         for m in self.metric_lst:
             fname_out = sct.add_suffix(''.join(sct.extract_fname(self.param.fname_im)[1:]), '_' + m)
-            dct_metric[m].setFileName(fname_out)
-            dct_metric[m].save()
+            dct_metric[m].save(fname_out)
             self.fname_metric_lst[m] = fname_out
 
     def reorient_data(self):
         for f in self.fname_metric_lst:
             os.rename(self.fname_metric_lst[f], sct.add_suffix(''.join(sct.extract_fname(self.param.fname_im)[1:]), '_2reorient'))
-            im = Image(sct.add_suffix(''.join(sct.extract_fname(self.param.fname_im)[1:]), '_2reorient'))
-            im = set_orientation(im, self.orientation_im)
-            im.setFileName(self.fname_metric_lst[f])
-            im.save()
+            im = Image(sct.add_suffix(''.join(sct.extract_fname(self.param.fname_im)[1:]), '_2reorient')) \
+             .change_orientation(self.orientation_im) \
+             .save(self.fname_metric_lst[f])
 
 
 class Param:

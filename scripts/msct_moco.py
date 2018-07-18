@@ -139,8 +139,7 @@ def moco(param):
             # im_list.append(Image(file_data_splitT_moco_num[indice_index] + ext))
             fname_list.append(file_data_splitT_moco_num[indice_index] + ext)
         im_out = concat_data(fname_list, 3)
-        im_out.setFileName(file_data_moco + ext)
-        im_out.save()
+        im_out.save(file_data_moco + ext)
 
     # delete file target.nii (to avoid conflict if this function is run another time)
     sct.printv('\nRemove temporary file...', verbose)

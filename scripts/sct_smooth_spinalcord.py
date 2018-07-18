@@ -20,7 +20,7 @@ import sys, io, os, getopt, shutil, time
 import numpy as np
 
 import sct_utils as sct
-from sct_image import set_orientation
+import msct_image
 from sct_convert import convert
 from msct_parser import Parser
 
@@ -136,18 +136,17 @@ def main(args=None):
 
     # Change orientation of the input image into RPI
     sct.printv('\nOrient input volume to RPI orientation...')
-    fname_anat_rpi = set_orientation('anat.nii', 'RPI', filename=True)
-    shutil.move(fname_anat_rpi, 'anat_rpi.nii')
+    fname_anat_rpi = msct_image.Image("anat.nii").change_orientation("RPI", generate_path=True).save().absolutepath
+
     # Change orientation of the input image into RPI
     sct.printv('\nOrient centerline to RPI orientation...')
-    fname_centerline_rpi = set_orientation('centerline.nii', 'RPI', filename=True)
-    shutil.move(fname_centerline_rpi, 'centerline_rpi.nii')
+    fname_centerline_rpi = msct_image.Image("centerline.nii").change_orientation("RPI", generate_path=True).save().absolutepath
 
     # Straighten the spinal cord
     # straighten segmentation
     sct.printv('\nStraighten the spinal cord using centerline/segmentation...', verbose)
     cache_sig = sct.cache_signature(
-     input_files=["anat_rpi.nii", "centerline_rpi.nii"],
+     input_files=[fname_anat_rpi, fname_centerline_rpi]
      input_params={"x": "spline"},
     )
     cachefile = os.path.join(curdir, "straightening.cache")
@@ -158,9 +157,9 @@ def main(args=None):
         sct.copy(os.path.join(curdir, 'warp_straight2curve.nii.gz'), 'warp_straight2curve.nii.gz')
         sct.copy(os.path.join(curdir, 'straight_ref.nii.gz'), 'straight_ref.nii.gz')
         # apply straightening
-        sct.run(['sct_apply_transfo', '-i', 'anat_rpi.nii', '-w', 'warp_curve2straight.nii.gz', '-d', 'straight_ref.nii.gz', '-o', 'anat_rpi_straight.nii', '-x', 'spline'], verbose)
+        sct.run(['sct_apply_transfo', '-i', fname_anat_rpi, '-w', 'warp_curve2straight.nii.gz', '-d', 'straight_ref.nii.gz', '-o', 'anat_rpi_straight.nii', '-x', 'spline'], verbose)
     else:
-        sct.run(['sct_straighten_spinalcord', '-i', 'anat_rpi.nii', '-s', 'centerline_rpi.nii', '-x', 'spline'], verbose)
+        sct.run(['sct_straighten_spinalcord', '-i', fname_anat_rpi, '-s', fname_centerline_rpi, '-x', 'spline'], verbose)
         sct.cache_save(cachefile, cache_sig)
 
     # Smooth the straightened image along z
@@ -179,8 +178,7 @@ def main(args=None):
     indzero = np.where(data_smooth == 0)
     data_smooth[indzero] = data_input[indzero]
     nii_smooth.data = data_smooth
-    nii_smooth.setFileName('anat_rpi_straight_smooth_curved_nonzero.nii')
-    nii_smooth.save()
+    nii_smooth.save('anat_rpi_straight_smooth_curved_nonzero.nii')
 
     # come back
     os.chdir(curdir)
