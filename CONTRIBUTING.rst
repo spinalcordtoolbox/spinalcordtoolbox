@@ -20,7 +20,8 @@ Reporting a Bug or Requesting a Feature
 #######################################
 
 
-Issues can be submitted `on our project's issue page
+Issues (bugs, feature requests, or others) can be submitted
+`on our project's issue page
 <https://github.com/neuropoly/spinalcordtoolbox/issues>`_.
 
 .. contents:: See below for guidelines on the steps for opening a
