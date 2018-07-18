@@ -18,7 +18,6 @@ import sct_utils as sct
 from msct_image import Image, get_dimension
 from sct_image import set_orientation
 from msct_parser import Parser
-from sct_image import get_orientation
 
 # TODO: display results ==> not only max : with a violin plot of h1 and h2 distribution ? see dev/straightening --> seaborn.violinplot
 # TODO: add the option Hyberbolic Hausdorff's distance : see  choi and seidel paper
@@ -373,7 +372,7 @@ def resample_image(fname, suffix='_resampled.nii.gz', binary=False, npx=0.3, npy
     :return: file name after resampling (or original fname if it was already in the correct resolution)
     """
     im_in = Image(fname)
-    orientation = get_orientation(im_in)
+    orientation = im_in.orientation
     if orientation != 'RPI':
         im_in = set_orientation(im_in, 'RPI')
         im_in.save()

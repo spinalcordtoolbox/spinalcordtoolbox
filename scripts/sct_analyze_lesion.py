@@ -19,7 +19,7 @@ import pandas as pd
 from msct_image import Image
 from msct_parser import Parser
 from msct_types import Centerline
-from sct_image import get_orientation, set_orientation
+from sct_image import set_orientation
 from sct_straighten_spinalcord import smooth_centerline
 import sct_utils as sct
 from sct_utils import extract_fname, printv, tmp_create
@@ -451,7 +451,7 @@ class AnalyzeLeion:
 
     def orient2rpi(self):
         # save input image orientation
-        self.orientation = get_orientation(Image(self.fname_mask))
+        self.orientation = Image(self.fname_mask).orientation
 
         if not self.orientation == 'RPI':
             printv('\nOrient input image(s) to RPI orientation...', self.verbose, 'normal')

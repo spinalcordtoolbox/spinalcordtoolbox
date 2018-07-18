@@ -17,7 +17,7 @@ import sys, io, os, shutil
 import numpy as np
 from msct_parser import Parser
 from msct_image import Image
-from sct_image import get_orientation, orientation
+from sct_image import orientation
 import sct_utils as sct
 
 
@@ -105,7 +105,7 @@ def main():
 
     # Check if data are in RPI
     input_im = Image(fname_data)
-    input_orient = get_orientation(input_im)
+    input_orient = input_im.orientation
 
     # If orientation is not RPI, change to RPI
     if input_orient != 'RPI':
