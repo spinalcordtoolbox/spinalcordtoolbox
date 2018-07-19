@@ -102,6 +102,9 @@ def get_parser():
      choices=("0", "1"),
      default=param_default.verbose,
     )
+    parser.add_argument("--abort-on-failure",
+     action="store_true",
+    )
 
     return parser
 
@@ -212,6 +215,9 @@ def main(args=None):
         if not functions:
             continue
 
+        if any(list_status) and arguments.abort_on_failure:
+            break
+
         try:
             if functions == functions_parallel and jobs != 1:
                 pool = multiprocessing.Pool(processes=jobs)
@@ -252,11 +258,14 @@ def main(args=None):
                     status = 0
                 # append status function to global list of status
                 list_status.append(status)
+                if any(list_status) and arguments.abort_on_failure:
+                    break
         except KeyboardInterrupt:
+            raise
+        finally:
             if pool:
                 pool.terminate()
                 pool.join()
-            raise
 
     print('status: ' + str(list_status))
 
