@@ -65,7 +65,7 @@ script:
   - pip install coverage
   - bash -c 'echo -ne "import coverage\ncov = coverage.process_startup()\n" > sitecustomize.py'
   - bash -c 'echo -ne "[run]\nconcurrency = multiprocessing\nparallel = True\n" > .coveragerc'
-  - COVERAGE_PROCESS_START="$PWD/.coveragerc" COVERAGE_FILE="$PWD/.coverage" PYTHONPATH="$PWD" sct_testing -d 1
+  - COVERAGE_PROCESS_START="$PWD/.coveragerc" COVERAGE_FILE="$PWD/.coverage" PYTHONPATH="$PWD" sct_testing -d 1 --abort-on-failure
   - coverage combine
   - ./unit_testing.sh
   - bash -c "pip install sphinx sphinxcontrib.programoutput sphinx_rtd_theme; cd $HOME/build/neuropoly/spinalcordtoolbox/documentation/sphinx; make html; echo"
