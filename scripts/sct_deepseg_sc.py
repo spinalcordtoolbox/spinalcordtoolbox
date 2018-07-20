@@ -30,6 +30,8 @@ import spinalcordtoolbox.resample.nipy_resample
 from spinalcordtoolbox.deepseg_sc.cnn_models import nn_architecture_seg, nn_architecture_ctr
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+BATCH_SIZE = 4
+
 
 def get_parser():
     """Initialize the parser."""
@@ -270,7 +272,7 @@ def scan_slice(z_slice, model, mean_train, std_train, coord_lst, patch_shape, z_
         block = z_slice[coord[0]:coord[2], coord[1]:coord[3]]
         block_nn = np.expand_dims(np.expand_dims(block, 0), -1)
         block_nn_norm = _normalize_data(block_nn, mean_train, std_train)
-        block_pred = model.predict(block_nn_norm)
+        block_pred = model.predict(block_nn_norm, batch_size=BATCH_SIZE)
 
         if coord[2] > z_out_dim[0]:
             x_end = patch_shape[0] - (coord[2] - z_out_dim[0])
@@ -339,7 +341,7 @@ def heatmap(filename_in, filename_out, model, patch_shape, mean_train, std_train
             block = data_im[x_0:x_1, y_0:y_1, zz]
             block_nn = np.expand_dims(np.expand_dims(block, 0), -1)
             block_nn_norm = _normalize_data(block_nn, mean_train, std_train)
-            block_pred = model.predict(block_nn_norm)
+            block_pred = model.predict(block_nn_norm, batch_size=BATCH_SIZE)
 
             # coordinates manipulation due to the above padding and cropping
             if x_1 > data.shape[0]:
@@ -444,7 +446,7 @@ def segment_2d(model_fname, contrast_type, input_size, fname_in, fname_out):
     x_cOm, y_cOm = None, None
     # for zz in list(reversed(range(image_normalized.dim[2]))):
     for zz in range(image_normalized.dim[2]):
-        pred_seg = seg_model.predict(np.expand_dims(np.expand_dims(data_norm[:, :, zz], -1), 0))[0, :, :, 0]
+        pred_seg = seg_model.predict(np.expand_dims(np.expand_dims(data_norm[:, :, zz], -1), 0), batch_size=BATCH_SIZE)[0, :, :, 0]
         pred_seg_th = (pred_seg > 0.5).astype(int)
 
         pred_seg_pp = post_processing_slice_wise(pred_seg_th, x_cOm, y_cOm)
@@ -525,7 +527,7 @@ def segment_3d(model_fname, contrast_type, fname_in, fname_out):
 
         if np.sum(patch_im):  # Check if the patch is (not) empty, which could occur after a brain detection.
             patch_norm = _normalize_data(patch_im, dct_patch_sc_3d[contrast_type]['mean'], dct_patch_sc_3d[contrast_type]['std'])
-            patch_pred_proba = seg_model.predict(np.expand_dims(np.expand_dims(patch_norm, 0), 0))
+            patch_pred_proba = seg_model.predict(np.expand_dims(np.expand_dims(patch_norm, 0), 0), batch_size=BATCH_SIZE)
             pred_seg_th = (patch_pred_proba > 0.5).astype(int)[0, 0, :, :, :]
 
             x_cOm, y_cOm = None, None
