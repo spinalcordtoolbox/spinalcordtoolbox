@@ -93,8 +93,8 @@ def get_parser():
                       example="anat_seg.nii.gz")
     parser.add_option(name="-l",
                       type_value="file",
-                      description="Labels located at the center of the spinal cord, on the mid-vertebral slice. For "
-                                  "more information about label creation, please refer to "
+                      description="One or two labels (preferred) located at the center of the spinal cord, on the "
+                                  "mid-vertebral slice. For more information about label creation, please see: "
                                   "http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/",
                       mandatory=False,
                       default_value='',
@@ -793,8 +793,9 @@ def check_labels(fname_landmarks, label_type='body'):
     # -> all labels must be different
     labels = image_label.getNonZeroCoordinates(sorting='value')
     # check if there is two labels
-    if label_type=='body' and not len(labels) == 2:
-        sct.printv('ERROR: Label file has ' + str(len(labels)) + ' label(s). It must contain exactly two labels.', 1, 'error')
+    if label_type == 'body' and not len(labels) <= 2:
+        sct.printv('ERROR: Label file has ' + str(len(labels)) + ' label(s). It must contain one or two labels.', 1,
+                   'error')
     # check if labels are integer
     for label in labels:
         if not int(label.value) == label.value:
