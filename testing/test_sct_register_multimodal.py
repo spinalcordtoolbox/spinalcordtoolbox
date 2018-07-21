@@ -10,6 +10,8 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+import os
+
 from msct_image import Image
 import numpy as np
 
@@ -36,7 +38,7 @@ def test_integrity(param_test):
     # check if ground truth exists.
     if hasattr(param_test, 'fname_gt'):
         # compare result and groundtruth images
-        param_test = compare_two_images('mt0_reg.nii.gz', param_test.fname_gt, param_test)
+        param_test = compare_two_images(os.path.join(param_test.path_output, 'mt0_reg.nii.gz'), param_test.fname_gt, param_test)
     else:
         param_test.output += '\n--> N/A'
     return param_test
