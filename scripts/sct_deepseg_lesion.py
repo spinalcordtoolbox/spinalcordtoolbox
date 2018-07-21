@@ -2,12 +2,12 @@
 # -*- coding: utf-8
 #########################################################################################
 #
-# Function to segment the spinal cord using convolutional neural networks
+# Function to segment the multiple sclerosis lesions using convolutional neural networks
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: Benjamin De Leener & Charley Gros
-# Modified: 2018-06-05
+# Authors: Charley Gros
+# Modified: 2018-06-11
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
@@ -16,9 +16,9 @@ import os
 import sys
 import numpy as np
 from scipy.ndimage.measurements import center_of_mass, label
-from scipy.ndimage.morphology import binary_fill_holes
-from skimage.exposure import rescale_intensity
 from scipy.ndimage import distance_transform_edt
+from skimage.exposure import rescale_intensity
+from scipy.interpolate.interpolate import interp1d
 
 from spinalcordtoolbox.centerline import optic
 import sct_utils as sct
@@ -27,16 +27,15 @@ from msct_parser import Parser
 from sct_image import set_orientation
 
 import spinalcordtoolbox.resample.nipy_resample
-from spinalcordtoolbox.deepseg_sc.cnn_models import nn_architecture_seg, nn_architecture_ctr
+from spinalcordtoolbox.deepseg_sc.cnn_models import nn_architecture_ctr
 
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 BATCH_SIZE = 4
 
 
 def get_parser():
     """Initialize the parser."""
     parser = Parser(__file__)
-    parser.usage.set_description("""Spinal Cord Segmentation using convolutional networks. \n\nReference: C Gros, B De Leener, et al. Automatic segmentation of the spinal cord and intramedullary multiple sclerosis lesions with convolutional neural networks (2018). arxiv.org/abs/1805.06349""")
+    parser.usage.set_description("""MS lesion Segmentation using convolutional networks. \n\nReference: C Gros, B De Leener, et al. Automatic segmentation of the spinal cord and intramedullary multiple sclerosis lesions with convolutional neural networks (2018). arxiv.org/abs/1805.06349""")
 
     parser.add_option(name="-i",
                       type_value="image_nifti",
@@ -47,7 +46,7 @@ def get_parser():
                       type_value="multiple_choice",
                       description="type of image contrast.",
                       mandatory=True,
-                      example=['t1', 't2', 't2s', 'dwi'])
+                      example=['t2', 't2_ax', 't2s'])
     parser.add_option(name="-centerline",
                       type_value="multiple_choice",
                       description="choice of spinal cord centerline algorithm.",
@@ -56,15 +55,10 @@ def get_parser():
                       default_value="svm")
     parser.add_option(name="-brain",
                       type_value="multiple_choice",
-                      description="indicate if the input image is expected to contain brain sections: 1: contains brain section, 0: no brain section. To indicate this parameter could speed the segmentation process. Default value is 1 if -c is t1 or t2 (likely includes the brain), or 0 otherwise. Note that this flag is only effective with -ctr cnn",
+                      description="indicate if the input image is expected to contain brain sections: 1: contains brain section, 0: no brain section. To indicate this parameter could speed the segmentation process.",
                       mandatory=False,
-                      example=["0", "1"])
-    parser.add_option(name="-kernel",
-                      type_value="multiple_choice",
-                      description="choice of 2D or 3D kernels for the segmentation. Note that segmentation with 3D kernels is significantely longer than with 2D kernels.",
-                      mandatory=False,
-                      example=['2d', '3d'],
-                      default_value="2d")
+                      example=["0", "1"],
+                      default_value="1")
     parser.add_option(name="-ofolder",
                       type_value="folder_creation",
                       description="output folder.",
@@ -83,10 +77,6 @@ def get_parser():
                       mandatory=False,
                       example=["0", "1"],
                       default_value="1")
-    parser.add_option(name='-qc',
-                      type_value='folder_creation',
-                      description='The path where the quality control generated content will be saved',
-                      default_value=None)
     parser.add_option(name='-igt',
                       type_value='image_nifti',
                       description='File name of ground-truth segmentation.',
@@ -100,13 +90,55 @@ def scale_intensity(data, out_min=0, out_max=255):
     return rescale_intensity(data, in_range=(p2, p98), out_range=(out_min, out_max))
 
 
-def apply_intensity_normalization(img_path, fname_out, params=None):
+def apply_intensity_normalization_model(img, landmarks_lst):
+    """Description: apply the learned intensity landmarks to the input image."""
+    percent_decile_lst = [1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 99]
+    vals = list(img)
+    landmarks_lst_cur = np.percentile(vals, q=percent_decile_lst)
+
+    # create linear mapping models for the percentile segments to the learned standard intensity space
+    linear_mapping = interp1d(landmarks_lst_cur, landmarks_lst, bounds_error=False)
+
+    # transform the input image intensity values
+    output = linear_mapping(img)
+
+    # treat image intensity values outside of the cut-off percentiles range separately
+    below_mapping = exp_model(landmarks_lst_cur[:2], landmarks_lst[:2], landmarks_lst[0])
+    output[img < landmarks_lst_cur[0]] = below_mapping(img[img < landmarks_lst_cur[0]])
+
+    above_mapping = exp_model(landmarks_lst_cur[-3:-1], landmarks_lst[-3:-1], landmarks_lst[-1])
+    output[img > landmarks_lst_cur[-1]] = above_mapping(img[img > landmarks_lst_cur[-1]])
+
+    return output.astype(np.float32)
+
+
+def exp_model((x1, x2), (y1, y2), s2):
+    m = (y2 - y1) / (x2 - x1)
+    b = y1 - (m * x1)
+    mu90 = x2
+
+    # y2 = alpha + beta * exp(gamma * x)
+    alpha = s2
+
+    omega = m * mu90 - s2 + b
+    beta = omega * np.exp(-m * mu90 * 1.0 / omega)
+
+    gamma = m * 1.0 / omega
+
+    return lambda x: alpha + beta * np.exp(gamma * x)
+
+
+def apply_intensity_normalization(img_path, fname_out, contrast):
     """Standardize the intensity range."""
     img = Image(img_path)
     img_normalized = img.copy()
     data2norm = img.data.astype(np.float32)
 
-    img_normalized.data = scale_intensity(data2norm)
+    dct_norm = {'t2': [0.000000, 136.832187, 312.158435, 448.968030, 568.657779, 696.671586, 859.221138, 1074.463414, 1373.289174, 1811.522669, 2611.000000],
+                't2_ax': [0.000000, 112.195357, 291.611185, 446.727066, 581.103970, 702.979079, 833.318257, 1011.856313, 1268.801813, 1687.137075, 2611.000000],
+                't2s': [0.000000, 123.246969, 226.422561, 338.361023, 532.341924, 788.693675, 1096.975553, 1407.979466, 1716.524530, 2079.788451, 2611.000000]}
+
+    img_normalized.data = apply_intensity_normalization_model(data2norm, dct_norm[contrast])
 
     img_normalized.changeType('float32')
     img_normalized.setFileName(fname_out)
@@ -130,13 +162,20 @@ def _find_crop_start_end(coord_ctr, crop_size, im_dim):
 
 def crop_image_around_centerline(filename_in, filename_ctr, filename_out, crop_size):
     """Crop the input image around the input centerline file."""
-    im_in, data_ctr = Image(filename_in), Image(filename_ctr).data
+    im_in, data_ctr = Image(filename_in), Image(filename_ctr).data.astype(np.int8)
+    data_in = im_in.data.astype(np.float32)
+
+    # z_step_keep = range(0, len(range(data_in.shape[2])), crop_size)
+    # z_data_crop_max = max(z_step_keep) + crop_size
+
+    # im_data_crop = np.zeros((crop_size, crop_size, z_data_crop_max))
+    im_data_crop = np.zeros((crop_size, crop_size, im_in.dim[2]))
 
     im_new = im_in.copy()
+    # im_new.dim = tuple([crop_size, crop_size, z_data_crop_max] + list(im_in.dim[3:]))
     im_new.dim = tuple([crop_size, crop_size, im_in.dim[2]] + list(im_in.dim[3:]))
 
     x_lst, y_lst = [], []
-    data_im_new = np.zeros((crop_size, crop_size, im_in.dim[2]))
     for zz in range(im_in.dim[2]):
         if 1 in np.array(data_ctr[:, :, zz]):
             x_ctr, y_ctr = center_of_mass(np.array(data_ctr[:, :, zz]))
@@ -145,122 +184,20 @@ def crop_image_around_centerline(filename_in, filename_ctr, filename_out, crop_s
             y_start, y_end = _find_crop_start_end(y_ctr, crop_size, im_in.dim[1])
 
             crop_im = np.zeros((crop_size, crop_size))
-            x_shape, y_shape = im_in.data[x_start:x_end, y_start:y_end, zz].shape
-            crop_im[:x_shape, :y_shape] = im_in.data[x_start:x_end, y_start:y_end, zz]
+            x_shape, y_shape = data_in[x_start:x_end, y_start:y_end, zz].shape
+            crop_im[:x_shape, :y_shape] = data_in[x_start:x_end, y_start:y_end, zz]
 
-            data_im_new[:, :, zz] = crop_im
+            im_data_crop[:, :, zz] = crop_im
 
             x_lst.append(str(x_start))
             y_lst.append(str(y_start))
 
-    im_new.data = data_im_new
+    im_new.data = im_data_crop
     im_new.setFileName(filename_out)
     im_new.save()
     del im_in, im_new
 
     return x_lst, y_lst
-
-
-def _remove_extrem_holes(z_lst, end_z, start_z=0):
-    """Remove extrem holes from the list of holes so that we will not interpolate on the extrem slices."""
-    if start_z in z_lst:
-        while start_z in z_lst:
-            z_lst = z_lst[1:]
-            start_z += 1
-        if len(z_lst):
-            z_lst.pop(0)
-
-    if end_z in z_lst:
-        while end_z in z_lst:
-            z_lst = z_lst[:-1]
-            end_z -= 1
-
-    return z_lst
-
-
-def _list2range(lst):
-    tmplst = lst[:]
-    tmplst.sort()
-    start = tmplst[0]
-
-    currentrange = [start, start + 1]
-
-    for item in tmplst[1:]:
-        if currentrange[1] == item:  # contiguous
-            currentrange[1] += 1
-        else:  # new range start
-            yield list(currentrange)
-            currentrange = [item, item + 1]
-
-    yield list(currentrange)  # last range
-
-
-def _fill_z_holes(zz_lst, data, z_spaccing):
-    data_interpol = np.copy(data)
-
-    for z_hole_start, z_hole_end in list(_list2range(zz_lst)):
-        z_ref_start, z_ref_end = z_hole_start - 1, z_hole_end
-        slice_ref_start, slice_ref_end = data[:, :, z_ref_start], data[:, :, z_ref_end]
-
-        hole_cur_lst = range(z_hole_start, z_hole_end)
-        lenght_hole = len(hole_cur_lst) + 1
-        phys_lenght_hole = lenght_hole * z_spaccing
-
-        denom_interpolation = (lenght_hole + 1)
-
-        if phys_lenght_hole < 10:
-            sct.log.warning('Filling a hole in the segmentation around z_slice #:' + str(z_ref_start))
-
-            for idx_z, z_hole_cur in enumerate(hole_cur_lst):
-                num_interpolation = (lenght_hole - idx_z - 1) * slice_ref_start  # Contribution of the bottom ref slice
-                num_interpolation += (idx_z + 1) * slice_ref_end  # Contribution of the top ref slice
-
-                slice_interpolation = num_interpolation * 1. / denom_interpolation
-                slice_interpolation = (slice_interpolation > 0).astype(np.int)
-
-                data_interpol[:, :, z_hole_cur] = slice_interpolation
-
-    return data_interpol
-
-
-def _remove_blobs(data):
-    """Remove false positive blobs, likely occuring in brain sections."""
-    labeled_obj, num_obj = label(data)
-    if num_obj > 1:  # If there is more than one connected object
-        bigger_obj = (labeled_obj == (np.bincount(labeled_obj.flat)[1:].argmax() + 1))
-
-        data2clean = np.copy(data)
-
-        # remove blobs only above the bigger connected object
-        z_max = np.max(np.where(bigger_obj)[2])
-        data2clean[:, :, :z_max + 1] = 0
-
-        labeled_obj2clean, num_obj2clean = label(data2clean)
-        if num_obj2clean:  # If there is connected object above the biffer connected one
-            for obj_id in range(1, num_obj2clean + 1):
-                # if the blob has a volume < 10% of the bigger connected object, then remove it
-                if np.sum(labeled_obj2clean == obj_id) < 0.1 * np.sum(bigger_obj):
-                    sct.printv('Removing small objects above slice#' + str(z_max))
-                    data[np.where(labeled_obj2clean == obj_id)] = 0
-
-    return data
-
-
-def post_processing_volume_wise(fname_in):
-    """Post processing function."""
-    im_in = Image(fname_in)
-    data_in = im_in.data.astype(np.int)
-
-    data_in = _remove_blobs(data_in)
-
-    zz_zeros = [zz for zz in range(im_in.dim[2]) if 1 not in list(np.unique(data_in[:, :, zz]))]
-    zz_holes = _remove_extrem_holes(zz_zeros, im_in.dim[2] - 1, 0)
-    # filling z_holes, i.e. interpolate for z_slice not segmented
-    im_in.data = _fill_z_holes(zz_holes, data_in, im_in.dim[6]) if len(zz_holes) else data_in
-
-    im_in.setFileName(fname_in)
-    im_in.save()
-    del im_in
 
 
 def scan_slice(z_slice, model, mean_train, std_train, coord_lst, patch_shape, z_out_dim):
@@ -377,7 +314,7 @@ def heatmap(filename_in, filename_out, model, patch_shape, mean_train, std_train
             z_sc_notDetected_cmpt += 1
             # if the SC has not been detected on 10 consecutive z_slices, we stop the SC investigation
             if z_sc_notDetected_cmpt > 10 and brain_bool:
-                sct.printv('Brain section detected.')
+                sct.printv('\nBrain section detected.')
                 break
 
         # distance transform to deal with the harsh edges of the prediction boundaries (Dice)
@@ -414,7 +351,7 @@ def heatmap2optic(fname_heatmap, lambda_value, fname_out, z_max, algo='dpdt'):
 
     # crop the centerline if z_max < data.shape[2] and -brain == 1
     if z_max is not None:
-        sct.printv('Cropping brain section.')
+        sct.printv('\nCropping brain section.')
         ctr_nii = Image(fname_out)
         ctr_nii.data[:, :, z_max:] = 0
         ctr_nii.save()
@@ -425,40 +362,6 @@ def _normalize_data(data, mean, std):
     data -= mean
     data /= std
     return data
-
-
-def segment_2d(model_fname, contrast_type, input_size, fname_in, fname_out):
-    """Segment data using 2D convolutions."""
-    seg_model = nn_architecture_seg(height=input_size[0],
-                                    width=input_size[1],
-                                    depth=2 if contrast_type != 't2' else 3,
-                                    features=32,
-                                    batchnorm=False,
-                                    dropout=0.0)
-    seg_model.load_weights(model_fname)
-
-    image_normalized = Image(fname_in)
-    seg_crop = image_normalized.copy()
-    seg_crop.data *= 0
-    seg_crop.changeType('uint8')
-
-    data_norm = image_normalized.data
-    x_cOm, y_cOm = None, None
-    # for zz in list(reversed(range(image_normalized.dim[2]))):
-    for zz in range(image_normalized.dim[2]):
-        pred_seg = seg_model.predict(np.expand_dims(np.expand_dims(data_norm[:, :, zz], -1), 0), batch_size=BATCH_SIZE)[0, :, :, 0]
-        pred_seg_th = (pred_seg > 0.5).astype(int)
-
-        pred_seg_pp = post_processing_slice_wise(pred_seg_th, x_cOm, y_cOm)
-        seg_crop.data[:, :, zz] = pred_seg_pp
-
-        if 1 in pred_seg_pp:
-            x_cOm, y_cOm = center_of_mass(pred_seg_pp)
-            x_cOm, y_cOm = np.round(x_cOm), np.round(y_cOm)
-    seg_crop.setFileName(fname_out)
-    seg_crop.save()
-
-    return seg_crop.data
 
 
 def uncrop_image(fname_ref, fname_out, data_crop, x_crop_lst, y_crop_lst):
@@ -481,29 +384,13 @@ def uncrop_image(fname_ref, fname_out, data_crop, x_crop_lst, y_crop_lst):
     seg_unCrop.save()
 
 
-def post_processing_slice_wise(z_slice, x_cOm, y_cOm):
-    """Keep the largest connected obejct per z_slice and fill little holes."""
-    labeled_obj, num_obj = label(z_slice)
-    if num_obj > 1:
-        if x_cOm is None:  # slice 0
-            z_slice = (labeled_obj == (np.bincount(labeled_obj.flat)[1:].argmax() + 1))
-        else:
-            idx_z_minus_1 = np.bincount(labeled_obj.flat)[1:].argmax() + 1
-            for idx in range(1, num_obj + 1):
-                z_idx = labeled_obj == idx
-                if z_idx[x_cOm, y_cOm]:
-                    idx_z_minus_1 = idx
-            z_slice = (labeled_obj == idx_z_minus_1)
-
-    return binary_fill_holes(z_slice, structure=np.ones((3, 3))).astype(np.int)
-
-
 def segment_3d(model_fname, contrast_type, fname_in, fname_out):
     """Perform segmentation with 3D convolutions."""
     from spinalcordtoolbox.deepseg_sc.cnn_models_3d import load_trained_model
-    dct_patch_sc_3d = {'t2': {'size': (64, 64, 48), 'mean': 65.8562, 'std': 59.7999},
-                        't2s': {'size': (96, 96, 48), 'mean': 87.0212, 'std': 64.425},
-                        't1': {'size': (64, 64, 48), 'mean': 88.5001, 'std': 66.275}}
+    dct_patch_3d = {'t2': {'size': (48, 48, 48), 'mean': 871.309, 'std': 557.916},
+                    't2_ax': {'size': (48, 48, 48), 'mean': 835.592, 'std': 528.386},
+                    't2s': {'size': (48, 48, 48), 'mean': 1011.31, 'std': 678.985}}
+
     # load 3d model
     seg_model = load_trained_model(model_fname)
 
@@ -513,12 +400,11 @@ def segment_3d(model_fname, contrast_type, fname_in, fname_out):
     out.changeType('uint8')
 
     # segment the spinal cord
-    sct.log.info("Segmenting the spinal cord using deep learning on 3D patches...")
-    z_patch_size = dct_patch_sc_3d[contrast_type]['size'][2]
+    z_patch_size = dct_patch_3d[contrast_type]['size'][2]
     z_step_keep = range(0, im.data.shape[2], z_patch_size)
     for zz in z_step_keep:
         if zz == z_step_keep[-1]:  # deal with instances where the im.data.shape[2] % patch_size_z != 0
-            patch_im = np.zeros(dct_patch_sc_3d[contrast_type]['size'])
+            patch_im = np.zeros(dct_patch_3d[contrast_type]['size'])
             z_patch_extracted = im.data.shape[2] - zz
             patch_im[:, :, :z_patch_extracted] = im.data[:, :, zz:]
         else:
@@ -526,17 +412,9 @@ def segment_3d(model_fname, contrast_type, fname_in, fname_out):
             patch_im = im.data[:, :, zz:z_patch_size + zz]
 
         if np.sum(patch_im):  # Check if the patch is (not) empty, which could occur after a brain detection.
-            patch_norm = _normalize_data(patch_im, dct_patch_sc_3d[contrast_type]['mean'], dct_patch_sc_3d[contrast_type]['std'])
+            patch_norm = _normalize_data(patch_im, dct_patch_3d[contrast_type]['mean'], dct_patch_3d[contrast_type]['std'])
             patch_pred_proba = seg_model.predict(np.expand_dims(np.expand_dims(patch_norm, 0), 0), batch_size=BATCH_SIZE)
-            pred_seg_th = (patch_pred_proba > 0.5).astype(int)[0, 0, :, :, :]
-
-            x_cOm, y_cOm = None, None
-            for zz_pp in range(z_patch_size):
-                pred_seg_pp = post_processing_slice_wise(pred_seg_th[:, :, zz_pp], x_cOm, y_cOm)
-                pred_seg_th[:, :, zz_pp] = pred_seg_pp
-                x_cOm, y_cOm = center_of_mass(pred_seg_pp)
-                x_cOm, y_cOm = np.round(x_cOm), np.round(y_cOm)
-
+            pred_seg_th = (patch_pred_proba > 0.1).astype(int)[0, 0, :, :, :]
             if zz == z_step_keep[-1]:
                 out.data[:, :, zz:] = pred_seg_th[:, :, :z_patch_extracted]
             else:
@@ -547,13 +425,13 @@ def segment_3d(model_fname, contrast_type, fname_in, fname_out):
     del im, out
 
 
-def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, ctr_algo='cnn', brain_bool=True, kernel_size='2d', remove_temp_files=1, verbose=1):
+def deep_segmentation_MSlesion(fname_image, contrast_type, output_folder, ctr_algo='svm', brain_bool=True, remove_temp_files=1, verbose=1):
     """Pipeline."""
     path_script = os.path.dirname(__file__)
     path_sct = os.path.dirname(path_script)
 
     # create temporary folder with intermediate results
-    sct.log.info("Creating temporary folder...")
+    sct.log.info("\nCreating temporary folder...")
     file_fname = os.path.basename(fname_image)
     tmp_folder = sct.TempFolder()
     tmp_folder_path = tmp_folder.get_path()
@@ -561,7 +439,7 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, ctr_
     tmp_folder.chdir()
 
     # orientation of the image, should be RPI
-    sct.log.info("Reorient the image to RPI, if necessary...")
+    sct.log.info("\nReorient the image to RPI, if necessary...")
     fname_orient = sct.add_suffix(file_fname, '_RPI')
     im_2orient = Image(file_fname)
     original_orientation = im_2orient.orientation
@@ -574,7 +452,7 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, ctr_
         sct.copy(fname_image_tmp, fname_orient)
 
     # resampling RPI image
-    sct.log.info("Resample the image to 0.5 mm isotropic resolution...")
+    sct.log.info("\nResample the image to 0.5 mm isotropic resolution...")
     fname_res = sct.add_suffix(fname_orient, '_resampled')
     im_2res = im_orient
     input_resolution = im_2res.dim[4:7]
@@ -583,12 +461,13 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, ctr_
                                                            'mm', 'linear', verbose=0)
 
     # find the spinal cord centerline - execute OptiC binary
-    sct.log.info("Finding the spinal cord centerline...")
+    sct.log.info("\nFinding the spinal cord centerline...")
+    contrast_type_ctr = contrast_type.split('_')[0]
     if ctr_algo == 'svm':
         # run optic on a heatmap computed by a trained SVM+HoG algorithm
-        optic_models_fname = os.path.join(path_sct, 'data', 'optic_models', '{}_model'.format(contrast_type))
+        optic_models_fname = os.path.join(path_sct, 'data', 'optic_models', '{}_model'.format(contrast_type_ctr))
         _, centerline_filename = optic.detect_centerline(image_fname=fname_res,
-                                                         contrast_type=contrast_type,
+                                                         contrast_type=contrast_type_ctr,
                                                          optic_models_path=optic_models_fname,
                                                          folder_output=tmp_folder_path,
                                                          remove_temp_files=remove_temp_files,
@@ -597,27 +476,23 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, ctr_
     elif ctr_algo == 'cnn':
         # CNN parameters
         dct_patch_ctr = {'t2': {'size': (80, 80), 'mean': 51.1417, 'std': 57.4408},
-                            't2s': {'size': (80, 80), 'mean': 68.8591, 'std': 71.4659},
-                            't1': {'size': (80, 80), 'mean': 55.7359, 'std': 64.3149},
-                            'dwi': {'size': (80, 80), 'mean': 55.744, 'std': 45.003}}
+                            't2s': {'size': (80, 80), 'mean': 68.8591, 'std': 71.4659}}
         dct_params_ctr = {'t2': {'features': 16, 'dilation_layers': 2},
-                            't2s': {'features': 8, 'dilation_layers': 3},
-                            't1': {'features': 24, 'dilation_layers': 3},
-                            'dwi': {'features': 8, 'dilation_layers': 2}}
+                            't2s': {'features': 8, 'dilation_layers': 3}}
 
         # load model
-        ctr_model_fname = os.path.join(path_sct, 'data', 'deepseg_sc_models', '{}_ctr.h5'.format(contrast_type))
-        ctr_model = nn_architecture_ctr(height=dct_patch_ctr[contrast_type]['size'][0],
-                                        width=dct_patch_ctr[contrast_type]['size'][1],
+        ctr_model_fname = os.path.join(path_sct, 'data', 'deepseg_sc_models', '{}_ctr.h5'.format(contrast_type_ctr))
+        ctr_model = nn_architecture_ctr(height=dct_patch_ctr[contrast_type_ctr]['size'][0],
+                                        width=dct_patch_ctr[contrast_type_ctr]['size'][1],
                                         channels=1,
                                         classes=1,
-                                        features=dct_params_ctr[contrast_type]['features'],
+                                        features=dct_params_ctr[contrast_type_ctr]['features'],
                                         depth=2,
                                         temperature=1.0,
                                         padding='same',
                                         batchnorm=True,
                                         dropout=0.0,
-                                        dilation_layers=dct_params_ctr[contrast_type]['dilation_layers'])
+                                        dilation_layers=dct_params_ctr[contrast_type_ctr]['dilation_layers'])
         ctr_model.load_weights(ctr_model_fname)
 
         # compute the heatmap
@@ -627,66 +502,55 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, ctr_
         z_max = heatmap(filename_in=fname_res,
                         filename_out=fname_heatmap_nii,
                         model=ctr_model,
-                        patch_shape=dct_patch_ctr[contrast_type]['size'],
-                        mean_train=dct_patch_ctr[contrast_type]['mean'],
-                        std_train=dct_patch_ctr[contrast_type]['std'],
+                        patch_shape=dct_patch_ctr[contrast_type_ctr]['size'],
+                        mean_train=dct_patch_ctr[contrast_type_ctr]['mean'],
+                        std_train=dct_patch_ctr[contrast_type_ctr]['std'],
                         brain_bool=brain_bool)
 
         # run optic on the heatmap
         centerline_filename = sct.add_suffix(fname_heatmap, "_ctr")
         heatmap2optic(fname_heatmap=fname_heatmap_nii,
-                      lambda_value=7 if contrast_type == 't2s' else 1,
+                      lambda_value=7 if contrast_type_ctr == 't2s' else 1,
                       fname_out=centerline_filename,
                       z_max=z_max if brain_bool else None)
 
     # crop image around the spinal cord centerline
-    sct.log.info("Cropping the image around the spinal cord...")
+    sct.log.info("\nCropping the image around the spinal cord...")
     fname_crop = sct.add_suffix(fname_res, '_crop')
-    crop_size = 64 if kernel_size == '2d' else 96
+    crop_size = 48
     X_CROP_LST, Y_CROP_LST = crop_image_around_centerline(filename_in=fname_res,
                                                           filename_ctr=centerline_filename,
                                                           filename_out=fname_crop,
                                                           crop_size=crop_size)
 
     # normalize the intensity of the images
-    sct.log.info("Normalizing the intensity...")
+    sct.log.info("\nNormalizing the intensity...")
     fname_norm = sct.add_suffix(fname_crop, '_norm')
-    apply_intensity_normalization(img_path=fname_crop, fname_out=fname_norm)
+    apply_intensity_normalization(img_path=fname_crop, fname_out=fname_norm, contrast=contrast_type)
 
-    if kernel_size == '2d':
-        # segment data using 2D convolutions
-        sct.log.info("Segmenting the spinal cord using deep learning on 2D patches...")
-        segmentation_model_fname = os.path.join(path_sct, 'data', 'deepseg_sc_models', '{}_sc.h5'.format(contrast_type))
-        fname_seg_crop = sct.add_suffix(fname_norm, '_seg')
-        seg_crop_data = segment_2d(model_fname=segmentation_model_fname,
-                                contrast_type=contrast_type,
-                                input_size=(crop_size, crop_size),
-                                fname_in=fname_norm,
-                                fname_out=fname_seg_crop)
-    elif kernel_size == '3d':
-        # resample to 0.5mm isotropic
-        fname_res3d = sct.add_suffix(fname_norm, '_resampled3d')
-        spinalcordtoolbox.resample.nipy_resample.resample_file(fname_norm, fname_res3d, '0.5x0.5x0.5',
+    # resample to 0.5mm isotropic
+    fname_res3d = sct.add_suffix(fname_norm, '_resampled3d')
+    spinalcordtoolbox.resample.nipy_resample.resample_file(fname_norm, fname_res3d, '0.5x0.5x0.5',
                                                                'mm', 'linear', verbose=0)
 
-        # segment data using 3D convolutions
-        sct.log.info("Segmenting the spinal cord using deep learning on 3D patches...")
-        segmentation_model_fname = os.path.join(path_sct, 'data', 'deepseg_sc_models', '{}_sc_3D.h5'.format(contrast_type))
-        fname_seg_crop_res = sct.add_suffix(fname_res3d, '_seg')
-        segment_3d(model_fname=segmentation_model_fname,
-                    contrast_type=contrast_type,
-                    fname_in=fname_res3d,
-                    fname_out=fname_seg_crop_res)
+    # segment data using 3D convolutions
+    sct.log.info("\nSegmenting the MS lesions using deep learning on 3D patches...")
+    segmentation_model_fname = os.path.join(path_sct, 'data', 'deepseg_lesion_models', '{}_lesion.h5'.format(contrast_type))
+    fname_seg_crop_res = sct.add_suffix(fname_res3d, '_lesionseg')
+    segment_3d(model_fname=segmentation_model_fname,
+                contrast_type=contrast_type,
+                fname_in=fname_res3d,
+                fname_out=fname_seg_crop_res)
 
-        # resample to the initial pz resolution
-        fname_seg_res2d = sct.add_suffix(fname_seg_crop_res, '_resampled2d')
-        initial_2d_resolution = 'x'.join(['0.5', '0.5', str(input_resolution[2])])
-        spinalcordtoolbox.resample.nipy_resample.resample_file(fname_seg_crop_res, fname_seg_res2d, initial_2d_resolution,
-                                                               'mm', 'linear', verbose=0)
-        seg_crop_data = Image(fname_seg_res2d).data
+    # resample to the initial pz resolution
+    fname_seg_res2d = sct.add_suffix(fname_seg_crop_res, '_resampled2d')
+    initial_2d_resolution = 'x'.join(['0.5', '0.5', str(input_resolution[2])])
+    spinalcordtoolbox.resample.nipy_resample.resample_file(fname_seg_crop_res, fname_seg_res2d, initial_2d_resolution,
+                                                           'mm', 'linear', verbose=0)
+    seg_crop_data = Image(fname_seg_res2d).data
 
     # reconstruct the segmentation from the crop data
-    sct.log.info("Reassembling the image...")
+    sct.log.info("\nReassembling the image...")
     fname_seg_res_RPI = sct.add_suffix(file_fname, '_res_RPI_seg')
     uncrop_image(fname_ref=fname_res,
                 fname_out=fname_seg_res_RPI,
@@ -695,23 +559,20 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, ctr_
                 y_crop_lst=Y_CROP_LST)
 
     # resample to initial resolution
-    sct.log.info("Resampling the segmentation to the original image resolution...")
-    fname_seg_RPI = sct.add_suffix(file_fname, '_RPI_seg')
+    sct.log.info("\nResampling the segmentation to the original image resolution...")
+    fname_seg_RPI = sct.add_suffix(file_fname, '_RPI_lesionseg')
     initial_resolution = 'x'.join([str(input_resolution[0]), str(input_resolution[1]), str(input_resolution[2])])
     spinalcordtoolbox.resample.nipy_resample.resample_file(fname_seg_res_RPI, fname_seg_RPI, initial_resolution,
                                                            'mm', 'linear', verbose=0)
 
     # binarize the resampled image to remove interpolation effects
-    sct.log.info("Binarizing the segmentation to avoid interpolation effects...")
-    thr = '0.0001' if contrast_type in ['t1', 'dwi'] else '0.5'
+    sct.log.info("\nBinarizing the segmentation to avoid interpolation effects...")
+    thr = '0.1'
     sct.run(['sct_maths', '-i', fname_seg_RPI, '-bin', thr, '-o', fname_seg_RPI], verbose=0)
 
-    # post processing step to z_regularized
-    post_processing_volume_wise(fname_in=fname_seg_RPI)
-
     # reorient to initial orientation
-    sct.log.info("Reorienting the segmentation to the original image orientation...")
-    fname_seg = sct.add_suffix(file_fname, '_seg')
+    sct.log.info("\nReorienting the segmentation to the original image orientation...")
+    fname_seg = sct.add_suffix(file_fname, '_lesionseg')
     if original_orientation != 'RPI':
         im_seg_orient = set_orientation(Image(fname_seg_RPI), original_orientation)
         im_seg_orient.setFileName(fname_seg)
@@ -726,27 +587,10 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, ctr_
 
     # remove temporary files
     if remove_temp_files:
-        sct.log.info("Remove temporary files...")
+        sct.log.info("\nRemove temporary files...")
         tmp_folder.cleanup()
 
     return os.path.join(output_folder, fname_seg)
-
-
-def generate_qc(fn_in, fn_seg, args, path_qc):
-    """Generate a QC entry allowing to quickly review the segmentation process."""
-    import spinalcordtoolbox.reports.qc as qc
-    import spinalcordtoolbox.reports.slice as qcslice
-
-    qc.add_entry(
-     src=fn_in,
-     process="sct_deepseg_sc",
-     args=args,
-     path_qc=path_qc,
-     plane='Axial',
-     qcslice=qcslice.Axial([Image(fn_in), Image(fn_seg)]),
-     qcslice_operations=[qc.QcImage.listed_seg],
-     qcslice_layout=lambda x: x.mosaic(),
-    )
 
 
 def main():
@@ -760,21 +604,10 @@ def main():
     contrast_type = arguments['-c']
 
     ctr_algo = arguments["-centerline"]
-    # if "-centerline" not in args and contrast_type == 't2s':
-    #     ctr_algo = 'cnn'
 
-    if "-brain" not in args:
-        if contrast_type in ['t2s', 'dwi']:
-            brain_bool = False
-        if contrast_type in ['t1', 't2']:
-            brain_bool = True
-    else:
-        brain_bool = bool(int(arguments["-brain"]))
-
-    kernel_size = arguments["-kernel"]
-    if kernel_size == '3d' and contrast_type == 'dwi':
-        kernel_size = '2d'
-        sct.printv('3D kernel model for dwi contrast is not available. 2D kernel model is used instead.', type="warning")
+    brain_bool = bool(int(arguments["-brain"]))
+    if "-brain" not in args and contrast_type in ['t2s', 't2_ax']:
+        brain_bool = False
 
     if '-ofolder' not in args:
         output_folder = os.getcwd()
@@ -785,20 +618,14 @@ def main():
 
     verbose = arguments['-v']
 
-    path_qc = arguments.get("-qc", None)
-
     algo_config_stg = '\nMethod:'
     algo_config_stg += '\n\tCenterline algorithm: ' + ctr_algo
-    algo_config_stg += '\n\tAssumes brain section included in the image: ' + str(brain_bool)
-    algo_config_stg += '\n\tDimension of the segmentation kernel convolutions: ' + kernel_size + '\n'
+    algo_config_stg += '\n\tAssumes brain section included in the image: ' + str(brain_bool) + '\n'
     sct.printv(algo_config_stg)
 
-    fname_seg = deep_segmentation_spinalcord(fname_image, contrast_type, output_folder,
-                                            ctr_algo=ctr_algo, brain_bool=brain_bool, kernel_size=kernel_size,
+    fname_seg = deep_segmentation_MSlesion(fname_image, contrast_type, output_folder,
+                                            ctr_algo=ctr_algo, brain_bool=brain_bool,
                                             remove_temp_files=remove_temp_files, verbose=verbose)
-
-    if path_qc is not None:
-        generate_qc(fname_image, fname_seg, args, os.path.abspath(path_qc))
 
     sct.display_viewer_syntax([fname_image, os.path.join(output_folder, fname_seg)], colormaps=['gray', 'red'], opacities=['', '0.7'])
 

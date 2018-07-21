@@ -8,7 +8,6 @@
 # Authors: Julien Cohen-Adad, Benjamin De Leener, Augustin Roux
 
 # TODO: list functions to test in help (do a search in testing folder)
-# TODO: find a way to be able to have list of arguments and loop across list elements.
 # TODO: do something about this ugly 'output.nii.gz'
 
 import sys, io, os, time, random, copy, shlex, importlib, multiprocessing
@@ -76,7 +75,7 @@ def get_parser():
         if jobs > 0:
             pass
         elif jobs == 0:
-            jobs = None
+            jobs = multiprocessing.cpu_count()
         else:
             raise ValueError()
         return jobs
@@ -96,12 +95,19 @@ def get_parser():
     )
     parser.add_argument("--jobs", "-j",
      type=arg_jobs,
-     help="# of simultaneous tests to run (jobs). 0 means # of available CPU threads",
+     help="# of simultaneous tests to run (jobs). 0 or unspecified means # of available CPU threads ({})".format(multiprocessing.cpu_count()),
      default=arg_jobs(0),
     )
     parser.add_argument("--verbose", "-v",
      choices=("0", "1"),
      default=param_default.verbose,
+    )
+    parser.add_argument("--abort-on-failure",
+     help="Instead of iterating through all tests, abort at the first one that would fail.",
+     action="store_true",
+    )
+    parser.add_argument("--continue-from",
+     help="Instead of running all tests (or those specified by --function, start from this one",
     )
 
     return parser
@@ -154,7 +160,6 @@ def process_function_multiproc(fname, param):
 def main(args=None):
 
     # initializations
-    list_status = []
     param = Param()
 
     # check user arguments
@@ -171,9 +176,6 @@ def main(args=None):
     functions_to_test = arguments.function
     param.remove_tmp_file = int(arguments.remove_temps)
     jobs = arguments.jobs
-
-    if jobs == 0:
-        jobs = multiprocessing.cpu_count()
 
     param.verbose = arguments.verbose
 
@@ -194,59 +196,88 @@ def main(args=None):
     curdir = os.getcwd()
     os.chdir(param.path_tmp)
 
-    # get list of all scripts to test
-    list_functions = fill_functions()
+    functions_parallel = list()
+    functions_serial = list()
     if functions_to_test:
         for f in functions_to_test:
-            if f not in list_functions:
-                sct.printv('Command-line usage error: Function "%s" is not part of the list of testing functions' % function_to_test, type='error')
-        list_functions = functions_to_test
-        jobs = min(jobs, len(functions_to_test))
-
-    try:
-        if jobs != 1:
-            pool = multiprocessing.Pool(processes=jobs)
-
-            results = list()
-            # loop across functions and run tests
-            for f in list_functions:
-                res = pool.apply_async(process_function_multiproc, (f, param,))
-                results.append(res)
-
-        for idx_function, f in enumerate(list_functions):
-            print_line('Checking ' + f)
-            if jobs == 1:
-                res = process_function(f, param)
+            if f in get_functions_parallelizable():
+                functions_parallel.append(f)
+            elif f in get_functions_nonparallelizable():
+                functions_serial.append(f)
             else:
-                res = results[idx_function].get()
+                sct.printv('Command-line usage error: Function "%s" is not part of the list of testing functions' % f, type='error')
+        jobs = min(jobs, len(functions_parallel))
+    else:
+        functions_parallel = get_functions_parallelizable()
+        functions_serial = get_functions_nonparallelizable()
 
-            list_output, list_status_function = res
-            # manage status
-            if any(list_status_function):
-                if 1 in list_status_function:
-                    print_fail()
-                    status = 1
+    if arguments.continue_from:
+        first_func = arguments.continue_from
+        if first_func in functions_parallel:
+            functions_serial = []
+            functions_parallel = functions_parallel[functions_parallel.index(first_func):]
+        elif first_func in functions_serial:
+            functions_serial = functions_serial[functions_serial.index(first_func):]
+
+    list_status = []
+    for name, functions in (
+      ("serial", functions_serial),
+      ("parallel", functions_parallel),
+     ):
+        if not functions:
+            continue
+
+        if any(list_status) and arguments.abort_on_failure:
+            break
+
+        try:
+            if functions == functions_parallel and jobs != 1:
+                pool = multiprocessing.Pool(processes=jobs)
+
+                results = list()
+                # loop across functions and run tests
+                for f in functions:
+                    res = pool.apply_async(process_function_multiproc, (f, param,))
+                    results.append(res)
+            else:
+                pool = None
+
+            for idx_function, f in enumerate(functions):
+                print_line('Checking ' + f)
+                if functions == functions_serial or jobs == 1:
+                    res = process_function(f, param)
                 else:
-                    print_warning()
-                    status = 99
-                for output in list_output:
-                    for line in output.splitlines():
-                        print("   %s" % line)
-            else:
-                print_ok()
-                if param.verbose:
+                    res = results[idx_function].get()
+
+                list_output, list_status_function = res
+                # manage status
+                if any(list_status_function):
+                    if 1 in list_status_function:
+                        print_fail()
+                        status = 1
+                    else:
+                        print_warning()
+                        status = 99
                     for output in list_output:
                         for line in output.splitlines():
                             print("   %s" % line)
-                status = 0
-            # append status function to global list of status
-            list_status.append(status)
-    except KeyboardInterrupt:
-        print("Keyboard Interrupt")
-        if jobs != 1:
-            pool.terminate()
-            pool.join()
-        raise
+                else:
+                    print_ok()
+                    if param.verbose:
+                        for output in list_output:
+                            for line in output.splitlines():
+                                print("   %s" % line)
+                    status = 0
+                # append status function to global list of status
+                list_status.append(status)
+                if any(list_status) and arguments.abort_on_failure:
+                    break
+        except KeyboardInterrupt:
+            raise
+        finally:
+            if pool:
+                pool.terminate()
+                pool.join()
 
     print('status: ' + str(list_status))
 
@@ -286,10 +317,15 @@ def downloaddata(param):
     sct_download_data.main(['-d', 'sct_testing_data'])
 
 
-# list of all functions to test
-# ==========================================================================================
-def fill_functions():
-    functions = [
+def get_functions_nonparallelizable():
+    return [
+        'sct_deepseg_gm',
+        'sct_deepseg_lesion',
+        'sct_deepseg_sc',
+    ]
+
+def get_functions_parallelizable():
+    return [
         'sct_analyze_lesion',
         'sct_analyze_texture',
         'sct_apply_transfo',
@@ -304,8 +340,6 @@ def fill_functions():
         'sct_create_mask',
         'sct_crop_image',
         'sct_dice_coefficient',
-        'sct_deepseg_gm',
-        'sct_deepseg_sc',
         'sct_detect_pmj',
         'sct_dmri_compute_dti',
         'sct_dmri_concat_bvals',
@@ -338,7 +372,6 @@ def fill_functions():
         'sct_straighten_spinalcord',
         'sct_warp_template',
     ]
-    return functions
 
 
 # print without carriage return

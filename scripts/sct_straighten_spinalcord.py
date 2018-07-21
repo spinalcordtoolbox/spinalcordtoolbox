@@ -18,6 +18,7 @@ from math import sqrt
 import numpy as np
 from nibabel import Nifti1Image, save
 from scipy import ndimage
+import tqdm
 
 from msct_image import Image
 from msct_parser import Parser
@@ -666,10 +667,7 @@ class SpinalCordStraightener(object):
             # sct.printv(nx * ny * nz, nx_s * ny_s * nz_s)
 
             if self.curved2straight:
-                timer_straightening = sct.Timer(nz_s)
-                timer_straightening.start()
-                for u in range(nz_s):
-                    timer_straightening.add_iteration()
+                for u in tqdm.tqdm(range(nz_s)):
                     x_s, y_s, z_s = np.mgrid[0:nx_s, 0:ny_s, u:u + 1]
                     indexes_straight = np.array(list(zip(x_s.ravel(), y_s.ravel(), z_s.ravel())))
                     physical_coordinates_straight = image_centerline_straight.transfo_pix2phys(indexes_straight)
@@ -688,13 +686,9 @@ class SpinalCordStraightener(object):
                     displacements_straight[indexes_out_distance_straight] = [100000.0, 100000.0, 100000.0]
 
                     data_warp_curved2straight[indexes_straight[:, 0], indexes_straight[:, 1], indexes_straight[:, 2], 0, :] = -displacements_straight
-                timer_straightening.stop()
 
             if self.straight2curved:
-                timer_straightening = sct.Timer(nz)
-                timer_straightening.start()
-                for u in range(nz):
-                    timer_straightening.add_iteration()
+                for u in tqdm.tqdm(range(nz)):
                     x, y, z = np.mgrid[0:nx, 0:ny, u:u + 1]
                     indexes = np.array(list(zip(x.ravel(), y.ravel(), z.ravel())))
                     physical_coordinates = image_centerline_pad.transfo_pix2phys(indexes)
@@ -716,7 +710,6 @@ class SpinalCordStraightener(object):
                     displacements_curved[indexes_out_distance_curved] = [100000.0, 100000.0, 100000.0]
 
                     data_warp_straight2curved[indexes[:, 0], indexes[:, 1], indexes[:, 2], 0, :] = -displacements_curved
-                timer_straightening.stop()
 
             # Creation of the safe zone based on pre-calculated safe boundaries
             coord_bound_curved_inf, coord_bound_curved_sup = image_centerline_pad.transfo_phys2pix([[0, 0, bound_curved[0]]]), image_centerline_pad.transfo_phys2pix([[0, 0, bound_curved[1]]])

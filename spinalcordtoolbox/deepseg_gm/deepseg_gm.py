@@ -40,6 +40,7 @@ from . import model
 warnings.simplefilter(action='ignore', category=FutureWarning)
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 SMALL_INPUT_SIZE = 200
+BATCH_SIZE = 4
 
 
 def check_backend():
@@ -258,18 +259,19 @@ def segment_volume(ninput_volume, model_name,
         for i in range(8):
             sampled_value = np.random.uniform(high=2.0)
             sampled_axial_slices = axial_slices + sampled_value
-            preds = deepgmseg_model.predict(sampled_axial_slices, batch_size=8,
+            preds = deepgmseg_model.predict(sampled_axial_slices,
+                                            batch_size=BATCH_SIZE,
                                             verbose=True)
             pred_sampled.append(preds)
 
-        preds = deepgmseg_model.predict(axial_slices, batch_size=8,
+        preds = deepgmseg_model.predict(axial_slices, batch_size=BATCH_SIZE,
                                         verbose=True)
         pred_sampled.append(preds)
         pred_sampled = np.asarray(pred_sampled)
         pred_sampled = np.mean(pred_sampled, axis=0)
         preds = threshold_predictions(pred_sampled, threshold)
     else:
-        preds = deepgmseg_model.predict(axial_slices, batch_size=8,
+        preds = deepgmseg_model.predict(axial_slices, batch_size=BATCH_SIZE,
                                         verbose=True)
         preds = threshold_predictions(preds, threshold)
 
