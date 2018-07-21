@@ -196,6 +196,7 @@ def main(args):
         output_folder = arguments["-ofolder"]
     else:
         output_folder = os.getcwd()
+    output_folder = os.path.abspath(output_folder)
 
     if '-overwrite' in arguments:
         overwrite = arguments['-overwrite']
