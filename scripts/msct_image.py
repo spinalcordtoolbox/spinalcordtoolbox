@@ -198,15 +198,21 @@ def decompose_affine_transform(A44):
 
 class Slicer(object):
     """
-    Image slicer utility class, that can help getting ranges and slice indices
+    Image slicer utility class.
+
+    Can help getting ranges and slice indices.
+    Can provide slices (being an *iterator*).
     """
     def __init__(self, im, axis="IS"):
+        opposite_character = {'L': 'R', 'R': 'L', 'A': 'P', 'P': 'A', 'I': 'S', 'S': 'I'}
         axis_labels = "LRPAIS"
         if len(axis) != 2:
             raise ValueError()
         if axis[0] not in axis_labels:
             raise ValueError()
         if axis[1] not in axis_labels:
+            raise ValueError()
+        if axis[0] != opposite_character[axis[1]]:
             raise ValueError()
 
         for idx_axis in range(2):
@@ -216,6 +222,9 @@ class Slicer(object):
         if dim_nr == -1:
             raise ValueError()
 
+        # SCT convention
+        from_dir = im.orientation[dim_nr]
+        self.direction = +1 if axis[0] == from_dir else -1
         self.nb_slices = im.dim[dim_nr]
         self.im = im
         self.axis = axis
@@ -237,12 +246,37 @@ class Slicer(object):
         constructing a Slicer on "IS" (or "SI"),
         getting a range on "IS" would get [0,1,2],
         getting a range on "SI" would get [2,1,0].
+
+        Notes:
+
+        - To be used with direct image indexing, not as indexes for Slice[]
+          which are "logical" according to the slicing direction..
+
         """
         if axis == self.axis:
             return range(0, self.nb_slices)
         if axis == self.axis[::-1]:
             return range(self.nb_slices-1, -1, -1)
         raise ValueError()
+
+    def __len__(self):
+       return self.nb_slices
+
+    def __getitem__(self, idx):
+       """
+       :return: an image slice, at slicing index idx
+       :param idx: slicing index (according to the slicing direction)
+       """
+       if isinstance(idx, slice):
+           raise NotImplementedError()
+
+       if idx >= self.nb_slices:
+           raise IndexError("I just have {} slices!".format(self.nb_slices))
+
+       if self.direction == -1:
+           idx = self.nb_slices - 1 - idx
+
+       return self.im.data[self.slice(idx)]
 
 
 class Image(object):
