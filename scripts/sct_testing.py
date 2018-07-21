@@ -263,6 +263,10 @@ def main(args=None):
         print("Check filesystem used -> jobs forced to 1")
         jobs = 1
 
+    print("Will run through the following tests:")
+    print("- sequentially: {}".format(" ".join(functions_serial)))
+    print("- in parallel with {} jobs: {}".format(jobs, " ".join(functions_parallel)))
+
     list_status = []
     for name, functions in (
       ("serial", functions_serial),
