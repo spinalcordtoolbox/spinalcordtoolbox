@@ -10,6 +10,8 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+import os
+
 def init(param_test):
     """
     Initialize class: param_test
@@ -28,7 +30,7 @@ def test_integrity(param_test):
     """
     from msct_image import Image
     # check if cropping was correct
-    nx, ny, nz, nt, px, py, pz, pt = Image('cropped_normal.nii.gz').dim
+    nx, ny, nz, nt, px, py, pz, pt = Image(os.path.join(param_test.path_output, 'cropped_normal.nii.gz')).dim
     if (ny != 41):
         param_test.status = 99
         param_test.output += '--> FAILED'
