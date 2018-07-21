@@ -596,6 +596,7 @@ def test_function(param_test):
 
     # run command
     cmd = param_test.function_to_test + param_test.args_with_path
+    param_test.output += '\nWill run in %s:' % (os.path.join(path_testing, param_test.path_output))
     param_test.output += '\n====================================================================================================\n' + cmd + '\n====================================================================================================\n\n'  # copy command
     time_start = time.time()
     try:
