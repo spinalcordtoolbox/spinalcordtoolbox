@@ -258,7 +258,7 @@ class SlicerSingle(object):
 
     def range(self, axis):
         """
-        :return: a range allowing to traverse the desired axis
+        :return: a range providing indices for all the slices along the desired axis
 
         Example: Assuming image is in RPI with 3 z-slices,
         constructing a Slicer on "IS" (or "SI"),
@@ -308,10 +308,12 @@ class SlicerSingle(object):
 
 class SlicerMany(object):
     """
-    Images slicer utility class.
+    Image*s* slicer utility class.
 
     Can help getting ranges and slice indices.
     Can provide slices (being an *iterator*).
+
+    Use with great care for now, that it's not very documented.
     """
     def __init__(self, images, axis="IS"):
         if len(images) == 0:
