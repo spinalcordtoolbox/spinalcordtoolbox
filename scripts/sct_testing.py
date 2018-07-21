@@ -109,6 +109,9 @@ def get_parser():
     parser.add_argument("--continue-from",
      help="Instead of running all tests (or those specified by --function, start from this one",
     )
+    parser.add_argument("--execution-folder",
+     help="Folder where to run tests from (default. temporary)",
+    )
 
     return parser
 
@@ -192,7 +195,7 @@ def main(args=None):
     sct.printv('\nPath to testing data: ' + param.path_data, param.verbose)
 
     # create temp folder that will have all results and go in it
-    param.path_tmp = sct.tmp_create(verbose=param.verbose)
+    param.path_tmp = os.path.abspath(arguments.execution_folder or sct.tmp_create(verbose=param.verbose))
     curdir = os.getcwd()
     os.chdir(param.path_tmp)
 
@@ -289,7 +292,7 @@ def main(args=None):
     os.chdir(curdir)
 
     # remove temp files
-    if param.remove_tmp_file:
+    if param.remove_tmp_file and arguments.execution_folder is None:
         sct.printv('\nRemove temporary files...', 0)
         sct.rmtree(param.path_tmp)
 
