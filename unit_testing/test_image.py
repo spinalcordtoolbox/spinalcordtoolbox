@@ -58,6 +58,28 @@ def fake_3dimage():
     affine = np.eye(4)
     return nibabel.nifti1.Nifti1Image(data, affine)
 
+@pytest.fixture(scope="session")
+def fake_3dimage2():
+    """
+    :return: a Nifti1Image (3D) in RAS+ space
+
+    Following characteristics:
+
+    - shape[LR] = 1
+    - shape[PA] = 2
+    - shape[IS] = 3
+    """
+    shape = (1,2,3)
+    data = np.zeros(shape, dtype=np.float32, order="F")
+
+    for z in range(shape[2]):
+        for y in range(shape[1]):
+            for x in range(shape[0]):
+                data[x,y,z] = (1+x)*1 + (1+y)*10 + (1+z)*100
+
+    affine = np.eye(4)
+    return nibabel.nifti1.Nifti1Image(data, affine)
+
 
 @pytest.fixture(scope="session")
 def fake_3dimage_sct():
@@ -71,8 +93,20 @@ def fake_3dimage_sct():
     )
     return img
 
+@pytest.fixture(scope="session")
+def fake_3dimage_sct2():
+    """
+    :return: an Image (3D) in RAS+ (aka SCT LPI) space
+    """
+    i = fake_3dimage2()
+    img = msct_image.Image(i.get_data(), hdr=i.header,
+     orientation="LPI",
+     dim=i.header.get_data_shape(),
+    )
+    return img
 
-def test_slicer(fake_3dimage_sct):
+
+def test_slicer(fake_3dimage_sct, fake_3dimage_sct2):
     im3d = fake_3dimage_sct
     slicer = msct_image.Slicer(im3d, "IS")
     assert slicer.direction == +1
@@ -96,3 +130,24 @@ def test_slicer(fake_3dimage_sct):
     with pytest.raises(ValueError):
         slicer = msct_image.Slicer(im3d, "LI")
 
+    with pytest.raises(ValueError):
+        slicer = msct_image.Slicer(im3d, "L")
+
+    with pytest.raises(ValueError):
+        slicer = msct_image.Slicer(im3d, "Lx")
+
+    with pytest.raises(ValueError):
+        slicer = msct_image.Slicer(im3d, "LA")
+
+    im3d2 = fake_3dimage_sct.copy()
+    im3d2.data += 1000
+    slicer = msct_image.Slicer((im3d, im3d2), "IS")
+    for idx_slice, (im2d_a, im2d_b) in enumerate(slicer):
+        assert np.all(im2d_b == im2d_a + 1000)
+
+    im3d2 = fake_3dimage_sct2
+    with pytest.raises(ValueError):
+        slicer = msct_image.Slicer((im3d, im3d2), "IS")
+
+    with pytest.raises(ValueError):
+        slicer = msct_image.Slicer(1)
