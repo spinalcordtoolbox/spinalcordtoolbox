@@ -198,11 +198,29 @@ def decompose_affine_transform(A44):
 
 class Slicer(object):
     """
+    Image(s) slicer utility class.
+
+    Can help getting ranges and slice indices.
+    Can provide slices (being an *iterator*).
+    """
+
+    def __new__(cls, arg, axis="IS"):
+        if isinstance(arg, (list, tuple)):
+            return SlicerMany(arg, axis=axis)
+        elif isinstance(arg, Image):
+            return SlicerSingle(arg, axis=axis)
+        else:
+            raise ValueError()
+
+
+class SlicerSingle(object):
+    """
     Image slicer utility class.
 
     Can help getting ranges and slice indices.
     Can provide slices (being an *iterator*).
     """
+
     def __init__(self, im, axis="IS"):
         opposite_character = {'L': 'R', 'R': 'L', 'A': 'P', 'P': 'A', 'I': 'S', 'S': 'I'}
         axis_labels = "LRPAIS"
@@ -277,6 +295,47 @@ class Slicer(object):
            idx = self.nb_slices - 1 - idx
 
        return self.im.data[self.slice(idx)]
+
+    def __call__(self):
+        """
+        Slice generator
+
+        Example: [slice for slice in Slicer(im)()]
+        """
+        for idx_slice in self.range(self.axis):
+            yield self.im[self.slice(idx_slice)]
+
+
+class SlicerMany(object):
+    """
+    Images slicer utility class.
+
+    Can help getting ranges and slice indices.
+    Can provide slices (being an *iterator*).
+    """
+    def __init__(self, images, axis="IS"):
+        if len(images) == 0:
+            raise ValueError("Don't expect me to work on 0 images!")
+
+        self.slicers = [ Slicer(im, axis=axis) for im in images ]
+
+
+        nb_slices = [ x.nb_slices for x in self.slicers ]
+        if len(set(nb_slices)) != 1:
+            raise ValueError("All images must have the same number of slices along the slicing axis!")
+        self.nb_slices = nb_slices[0]
+
+    def __len__(self):
+        return self.nb_slices
+
+    def __getitem__(self, idx):
+        return [ x[idx] for x in self.slicers ]
+
+    def range(self, axis):
+        return self.slicer[0].range(axis)
+
+    def slice(self, idx):
+        return self.slicer[0].slice(idx)
 
 
 class Image(object):
