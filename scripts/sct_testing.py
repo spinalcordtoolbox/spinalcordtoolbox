@@ -10,8 +10,8 @@
 # TODO: list functions to test in help (do a search in testing folder)
 # TODO: do something about this ugly 'output.nii.gz'
 
-import sys, io, os, time, random, copy, shlex, importlib, multiprocessing
-import signal
+import sys, io, os, time, random, copy, shlex, importlib, multiprocessing, tempfile, shutil
+import signal, stat
 
 from pandas import DataFrame
 
@@ -24,16 +24,49 @@ path_sct = os.path.dirname(path_script)
 sys.path.append(os.path.join(path_sct, 'testing'))
 
 
+def fs_signature(root):
+    ret = dict()
+    root = os.path.abspath(root)
+    for cwd, dirs, files in os.walk(root):
+        if cwd == os.path.abspath(tempfile.gettempdir()):
+            continue
+        if cwd == os.path.join(root, "testing-qc"):
+            files[:] = []
+            dirs[:] = []
+            continue
+        dirs.sort()
+        files.sort()
+        for file in files:
+            if cwd == root:
+                continue
+            path = os.path.relpath(os.path.join(cwd, file), root)
+            data = os.stat(path)
+            ret[path] = data
+    return ret
+
+def fs_ok(sig_a, sig_b, exclude=()):
+    errors = list()
+    for path, data in sig_b.items():
+        if path not in sig_a:
+            errors.append((path, "added: {}".format(path)))
+            continue
+        if sig_a[path] != data:
+            errors.append((path, "modified: {}".format(path)))
+    errors = [ (x,y) for (x,y) in errors if not x.startswith(exclude) ]
+    if errors:
+        for error in errors:
+            sct.log.error("Error: %s", error)
+        raise RuntimeError()
+
 # Parameters
 class Param:
     def __init__(self):
         self.download = 0
         self.path_data = 'sct_testing_data'  # path to the testing data
-        self.path_output = "."
+        self.path_output = None
         self.function_to_test = None
         self.remove_tmp_file = 0
         self.verbose = 0
-        self.path_tmp = None
         self.args = []  # list of input arguments to the function
         self.args_with_path = ''  # input arguments to the function, with path
         # self.list_fname_gt = []  # list of fname for ground truth data
@@ -108,6 +141,10 @@ def get_parser():
     )
     parser.add_argument("--continue-from",
      help="Instead of running all tests (or those specified by --function, start from this one",
+    )
+    parser.add_argument("--check-filesystem",
+     help="Check filesystem for unwanted modifications",
+     action="store_true",
     )
     parser.add_argument("--execution-folder",
      help="Folder where to run tests from (default. temporary)",
@@ -195,9 +232,9 @@ def main(args=None):
     sct.printv('\nPath to testing data: ' + param.path_data, param.verbose)
 
     # create temp folder that will have all results and go in it
-    param.path_tmp = os.path.abspath(arguments.execution_folder or sct.tmp_create(verbose=param.verbose))
+    path_tmp = os.path.abspath(arguments.execution_folder or sct.tmp_create(verbose=param.verbose))
     curdir = os.getcwd()
-    os.chdir(param.path_tmp)
+    os.chdir(path_tmp)
 
     functions_parallel = list()
     functions_serial = list()
@@ -222,6 +259,10 @@ def main(args=None):
         elif first_func in functions_serial:
             functions_serial = functions_serial[functions_serial.index(first_func):]
 
+    if arguments.check_filesystem and jobs != 1:
+        print("Check filesystem used -> jobs forced to 1")
+        jobs = 1
+
     list_status = []
     for name, functions in (
       ("serial", functions_serial),
@@ -240,7 +281,9 @@ def main(args=None):
                 results = list()
                 # loop across functions and run tests
                 for f in functions:
-                    res = pool.apply_async(process_function_multiproc, (f, param,))
+                    func_param = copy.deepcopy(param)
+                    func_param.path_output = f
+                    res = pool.apply_async(process_function_multiproc, (f, func_param,))
                     results.append(res)
             else:
                 pool = None
@@ -248,7 +291,19 @@ def main(args=None):
             for idx_function, f in enumerate(functions):
                 print_line('Checking ' + f)
                 if functions == functions_serial or jobs == 1:
-                    res = process_function(f, param)
+                    if arguments.check_filesystem:
+                        if os.path.exists(os.path.join(path_tmp, f)):
+                            shutil.rmtree(os.path.join(path_tmp, f))
+                        sig_0 = fs_signature(path_tmp)
+
+                    func_param = copy.deepcopy(param)
+                    func_param.path_output = f
+
+                    res = process_function(f, func_param)
+
+                    if arguments.check_filesystem:
+                        sig_1 = fs_signature(path_tmp)
+                        fs_ok(sig_0, sig_1, exclude=(f,))
                 else:
                     res = results[idx_function].get()
 
@@ -294,7 +349,7 @@ def main(args=None):
     # remove temp files
     if param.remove_tmp_file and arguments.execution_folder is None:
         sct.printv('\nRemove temporary files...', 0)
-        sct.rmtree(param.path_tmp)
+        sct.rmtree(path_tmp)
 
     e = 0
     if sum(list_status) != 0:
@@ -434,7 +489,7 @@ def write_to_log_file(fname_log, string, mode='w', prepend=False):
             f.close()
         f = open(fname_log, mode)
     except Exception as ex:
-        raise Exception('WARNING: Cannot open log file.')
+        raise Exception('WARNING: Cannot open log file {}.'.format(os.path.abspath(fname_log)))
     f.write(string + string_to_append + '\n')
     f.close()
 
@@ -466,9 +521,14 @@ def test_function(param_test):
 
     if not param_test.path_output:
         param_test.path_output = sct.tmp_create(basename=(param_test.function_to_test + '_' + subject_folder), verbose=0)
+    elif not os.path.isdir(param_test.path_output):
+        os.makedirs(param_test.path_output)
 
     # get parser information
     parser = module_function_to_test.get_parser()
+    if '-ofolder' in parser.options and '-ofolder' not in param_test.args:
+        param_test.args += " -ofolder " + param_test.path_output
+
     dict_args = parser.parse(shlex.split(param_test.args), check_file_exist=False)
     # TODO: if file in list does not exist, raise exception and assign status=200
     # add data path to each input argument
@@ -478,15 +538,6 @@ def test_function(param_test):
     # save into class
     param_test.dict_args_with_path = dict_args_with_path
     param_test.args_with_path = parser.dictionary_to_string(dict_args_with_path)
-
-    # check if parser has key '-ofolder' that has not been added already. If so, then assign output folder
-    if "-ofolder" in parser.options and '-ofolder' not in dict_args_with_path:
-        param_test.args_with_path += ' -ofolder ' + param_test.path_output
-
-    # check if parser has key '-o' that has not been added already. If so, then assign output folder
-    # Note: this -o case has been added for compatibility with sct_deepseg_gm, which does not have -ofolder flag
-    if "-o" in parser.options and '-o' not in dict_args_with_path:
-        param_test.args_with_path += ' -o ' + os.path.join(param_test.path_output, 'output.nii.gz')
 
     # open log file
     # Note: the statement below is not included in the if, because even if redirection does not occur, we want the file to be create otherwise write_to_log will fail
@@ -539,15 +590,17 @@ def test_function(param_test):
             write_to_log_file(param_test.fname_log, param_test.output, 'w')
             return update_param(param_test)
 
-    # go to specific testing directory
-    os.chdir(param_test.path_output)
-
     # run command
     cmd = param_test.function_to_test + param_test.args_with_path
     param_test.output += '\n====================================================================================================\n' + cmd + '\n====================================================================================================\n\n'  # copy command
     time_start = time.time()
     try:
-        param_test.status, o = sct.run(cmd, verbose=0)
+        os.chdir(param_test.path_output)
+        if not os.path.exists(param_test.path_output):
+            # in case of relative path, we want a subfolder too
+            os.makedirs(param_test.path_output)
+        os.chdir(path_testing)
+        param_test.status, o = sct.run(cmd, cwd=param_test.path_output, verbose=0)
         if param_test.status:
             raise Exception
     except Exception as err:
@@ -563,8 +616,11 @@ def test_function(param_test):
     if param_test.test_integrity:
         param_test.output += '\n\n====================================================================================================\n' + 'INTEGRITY TESTING' + '\n====================================================================================================\n\n'  # copy command
         try:
+            os.chdir(param_test.path_output)
             param_test = module_testing.test_integrity(param_test)
+            os.chdir(path_testing)
         except Exception as err:
+            os.chdir(path_testing)
             param_test.status = 2
             param_test.output += str(err)
             write_to_log_file(param_test.fname_log, param_test.output, 'w')
@@ -575,9 +631,6 @@ def test_function(param_test):
         sct.remove_handler(file_handler)
         write_to_log_file(param_test.fname_log, param_test.output, mode='r+', prepend=True)
 
-
-    # go back to parent directory
-    os.chdir(path_testing)
 
     return update_param(param_test)
 
