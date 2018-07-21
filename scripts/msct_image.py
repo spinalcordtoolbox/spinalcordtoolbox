@@ -196,6 +196,55 @@ def decompose_affine_transform(A44):
     return T, Rmat, np.array([sx, sy, sz]), np.array([sxy, sxz, syz])
 
 
+class Slicer(object):
+    """
+    Image slicer utility class, that can help getting ranges and slice indices
+    """
+    def __init__(self, im, axis="IS"):
+        axis_labels = "LRPAIS"
+        if len(axis) != 2:
+            raise ValueError()
+        if axis[0] not in axis_labels:
+            raise ValueError()
+        if axis[1] not in axis_labels:
+            raise ValueError()
+
+        for idx_axis in range(2):
+            dim_nr = im.orientation.find(axis[idx_axis])
+            if dim_nr != -1:
+                break
+        if dim_nr == -1:
+            raise ValueError()
+
+        self.nb_slices = im.dim[dim_nr]
+        self.im = im
+        self.axis = axis
+        self._slice = lambda idx: tuple([(idx if x in axis else slice(None)) for x in im.orientation])
+
+    def slice(self, idx):
+        """
+        :return: a multi-dimensional slice (what goes in numpy array __getitem__)
+                 at the specified slice index of the slicer.
+        :param idx: slice index
+        """
+        return self._slice(idx)
+
+    def range(self, axis):
+        """
+        :return: a range allowing to traverse the desired axis
+
+        Example: Assuming image is in RPI with 3 z-slices,
+        constructing a Slicer on "IS" (or "SI"),
+        getting a range on "IS" would get [0,1,2],
+        getting a range on "SI" would get [2,1,0].
+        """
+        if axis == self.axis:
+            return range(0, self.nb_slices)
+        if axis == self.axis[::-1]:
+            return range(self.nb_slices-1, -1, -1)
+        raise ValueError()
+
+
 class Image(object):
     """
 
@@ -436,27 +485,6 @@ class Image(object):
         # save file
         save(img, fname_out)
 
-    # flatten the array in a single dimension vector, its shape will be (d, 1) compared to the flatten built in method
-    # which would have returned (d,)
-    def flatten(self):
-        # return self.data.flatten().reshape(self.data.flatten().shape[0], 1)
-        return self.data.flatten()
-
-    # return a list of the image slices flattened
-    def slices(self):
-        slices = []
-        for slc in self.data:
-            slices.append(slc.flatten())
-        return slices
-
-    def getDataShape(self):
-        """Return the data shape.
-
-        :returns: the data shape from the header.
-        """
-        data_shape = self.hdr.get_data_shape()
-        return data_shape
-
     def getNonZeroCoordinates(self, sorting=None, reverse_coord=False, coordValue=False):
         """
         This function return all the non-zero coordinates that the image contains.
@@ -532,109 +560,6 @@ class Image(object):
         averaged_coordinates = sorted(averaged_coordinates, key=lambda obj: obj.value, reverse=False)
         return averaged_coordinates
 
-    # crop the image in order to keep only voxels in the mask, therefore the mask's slices must be squares or rectangles of the same size
-    # orientation must be IRP to be able to go trough slices as first dimension
-    def crop_and_stack(self, mask, suffix='_resized', save=True):
-        """
-        Cropping function to be used with a mask centered on the spinal cord. The crop slices are stack in the z direction.
-        The result will be a kind of straighten image centered on the center of the mask (aka the center of the spinal cord)
-        :param mask: mask image
-        :param suffix: suffix to add to the file name (usefull only with the save option)
-        :param save: save the image if True
-        :return: no return, the image data is set to the new (crop) data
-        """
-
-        original_orientation = self.orientation
-        mask_original_orientation = mask.orientation
-        self.change_orientation('IRP')
-        mask.change_orientation('IRP')
-        data_array = self.data
-        data_mask = mask.data
-
-        # if the image to crop is smaller than the mask in total, we assume the image was centered and add a padding to fit the mask's shape
-        if data_array.shape != data_mask.shape:
-            old_data_array = data_array
-            pad_1 = int((data_mask.shape[1] - old_data_array.shape[1]) / 2 + 1)
-            pad_2 = int((data_mask.shape[2] - old_data_array.shape[2]) / 2 + 1)
-
-            data_array = np.zeros(data_mask.shape)
-            for n_slice, data_slice in enumerate(data_array):
-                data_slice[pad_1:pad_1 + old_data_array.shape[1], pad_2:pad_2 + old_data_array.shape[2]] = old_data_array[n_slice]
-
-            for n_slice, data_slice in enumerate(data_array):
-                n_row_old_data_array = 0
-                for row in data_slice[pad_2:-pad_2 - 1]:
-                    row[pad_1:pad_1 + old_data_array.shape[1]] = old_data_array[n_slice, n_row_old_data_array]
-                    n_row_old_data_array += 1
-
-            self.data = data_array
-            '''
-            if save:
-                self.file_name += suffix
-                self.save()
-            '''
-
-        data_array = np.asarray(data_array)
-        data_mask = np.asarray(data_mask)
-        new_data = []
-        buffer = []
-        buffer_mask = []
-
-        if len(data_array.shape) == 3:
-            empty_slices = []
-            for n_slice, mask_slice in enumerate(data_mask):
-                for n_row, row in enumerate(mask_slice):
-                    if sum(row) > 0:  # and n_row<=data_array.shape[1] and n_slice<=data_array.shape[0]:
-                        buffer_mask.append(row)
-                        buffer.append(data_array[n_slice][n_row])
-                if buffer_mask == [] and buffer == []:
-                    empty_slices.append(n_slice)
-                    new_slice = []
-                else:
-                    new_slice_mask = np.asarray(buffer_mask).T
-                    new_slice = np.asarray(buffer).T
-                    buffer = []
-                    for n_row, row in enumerate(new_slice_mask):
-                        if sum(row) != 0:
-                            buffer.append(new_slice[n_row])
-                    new_slice = np.asarray(buffer).T
-                    shape_mask = new_slice.shape
-                    buffer_mask = []
-                    buffer = []
-                new_data.append(new_slice)
-            if empty_slices is not []:
-                for iz in empty_slices:
-                    new_data[iz] = np.zeros(shape_mask)
-
-        elif len(data_array.shape) == 2:
-            for n_row, row in enumerate(data_mask):
-                if sum(row) > 0:  # and n_row<=data_array.shape[1] and n_slice<=data_array.shape[0]:
-                    buffer_mask.append(row)
-                    buffer.append(data_array[n_row])
-
-            new_slice_mask = np.asarray(buffer_mask).T
-            new_slice = np.asarray(buffer).T
-            buffer = []
-            for n_row, row in enumerate(new_slice_mask):
-                if sum(row) != 0:
-                    buffer.append(new_slice[n_row])
-            new_data = np.asarray(buffer).T
-            buffer_mask = []
-            buffer = []
-
-        new_data = np.asarray(new_data)
-        self.data = new_data
-
-        self.change_orientation(original_orientation)
-        mask.change_orientation(mask_original_orientation)
-        if save:
-            self.file_name += suffix
-            sct.add_suffix(self.absolutepath, suffix)
-            self.save()
-
-    def invert(self):
-        self.data = self.data.max() - self.data
-        return self
 
     @staticmethod
     def get_permutation_from_orientations(orientation_in, orientation_out):
@@ -732,13 +657,6 @@ class Image(object):
         # update orientation
         self.orientation = orientation
         return raw_orientation
-
-    def show(self):
-        from matplotlib.pyplot import imshow, show
-        imgplot = imshow(self.data)
-        imgplot.set_cmap('gray')
-        imgplot.set_interpolation('nearest')
-        show()
 
     def compute_transform_matrix(self):
         m_p2f = self.hdr.get_sform()
@@ -962,176 +880,6 @@ class Image(object):
             im_output.save()
         return im_output
 
-    def get_slice(self, plane='sagittal', index=None, seg=None):
-        """
-
-        :param plane: 'sagittal', 'coronal' or 'axial'. default = 'sagittal'
-        :param index: index of the slice to save (if none, middle slice in the given direction/plan)
-        :param seg: segmentation to add in transparency to the image to save. Type Image.
-        :return slice, slice_seg: ndarrays of the selected slices
-        """
-        copy_rpi = Image(self)
-        copy_rpi.change_orientation('RPI')
-        if seg is not None:
-            seg.change_orientation('RPI')
-        nx, ny, nz, nt, px, py, pz, pt = self.dim
-        slice = None
-        slice_seg = None
-        if plane == 'sagittal':
-            if index is None:
-                slice = copy_rpi.data[int(round(nx / 2)), :, :]
-                if seg is not None:
-                    slice_seg = seg.data[int(round(nx / 2)), :, :]
-            else:
-                assert index < nx, 'Index larger than image dimension.'
-                slice = copy_rpi.data[index, :, :]
-                if seg is not None:
-                    slice_seg = seg.data[index, :, :]
-
-        elif plane == 'coronal':
-            if index is None:
-                slice = copy_rpi.data[:, int(round(ny / 2)), :]
-                if seg is not None:
-                    slice_seg = seg.data[:, int(round(ny / 2)), :]
-            else:
-                assert index < ny, 'Index larger than image dimension.'
-                slice = copy_rpi.data[:, index, :]
-                if seg is not None:
-                    slice_seg = seg.data[:, index, :]
-
-        elif plane == 'axial' or plane == 'transverse':
-            if index is None:
-                slice = copy_rpi.data[:, :, int(round(nz / 2))]
-                if seg is not None:
-                    slice_seg = seg.data[:, :, int(round(nz / 2))]
-            else:
-                assert index < nz, 'Index larger than image dimension.'
-                slice = copy_rpi.data[:, :, index]
-                if seg is not None:
-                    slice_seg = seg.data[:, :, index]
-        else:
-            sct.printv('ERROR: wrong plan input to save slice. Please choose "sagittal", "coronal" or "axial"', self.verbose, type='error')
-
-        return (slice, slice_seg)
-
-    #
-    def save_plane(self, plane='sagittal', index=None, format='.png', suffix='', seg=None, thr=0, cmap_col='red', path_output='./'):
-        """
-        Save a slice of self in the specified plan.
-
-        :param plane: 'sagittal', 'coronal' or 'axial'. default = 'sagittal'
-
-        :param index: index of the slice to save (if none, middle slice in the given direction/plan)
-
-        :param format: format to be saved in. default = '.png'
-
-        :param suffix: suffix to add to the image file name.
-
-        :param seg: segmentation to add in transparency to the image to save. Type Image.
-
-        :param thr: threshold to apply to the segmentation
-
-        :param col: colormap description : 'red', 'red-yellow', or 'blue-cyan'
-
-        :return filename_png: file name of the saved image
-        """
-        import matplotlib.pyplot as plt
-        import matplotlib.cm as cm
-        from math import sqrt
-        if type(index) is not list:
-            index = [index]
-
-        slice_list = [self.get_slice(plane=plane, index=i, seg=seg) for i in index]
-        if seg is not None:
-            import matplotlib.colors as col
-            color_white = col.colorConverter.to_rgba('white', alpha=0.0)
-            if cmap_col == 'red-yellow':
-                color_red = col.colorConverter.to_rgba('red', alpha=0.7)
-                color_yellow = col.colorConverter.to_rgba('yellow', alpha=0.8)
-                cmap_seg = col.LinearSegmentedColormap.from_list('cmap_seg', [color_white, color_yellow, color_red], N=256)
-            elif cmap_col == 'blue-cyan':
-                color_blue = col.colorConverter.to_rgba('blue', alpha=0.7)
-                color_cyan = col.colorConverter.to_rgba('cyan', alpha=0.8)
-                cmap_seg = col.LinearSegmentedColormap.from_list('cmap_seg', [color_white, color_blue, color_cyan], N=256)
-            else:
-                color_red = col.colorConverter.to_rgba('red', alpha=0.7)
-                cmap_seg = col.LinearSegmentedColormap.from_list('cmap_seg', [color_white, color_red], N=256)
-
-        n_lines = int(sqrt(len(slice_list)))
-        n_col = int(len(slice_list) / n_lines)
-        n_lines += 1
-
-        try:
-            fig = plt.figure(figsize=(n_lines * 10, n_col * 20))
-            for i, slices in enumerate(slice_list):
-                slice_im, slice_seg = slices
-                plot = fig.add_subplot(n_lines, n_col, i + 1)
-                plot.imshow(slice_im, cmap=cm.gray, interpolation='nearest')
-                if index[i] is None:
-                    title = 'mid slice'
-                else:
-                    title = 'slice ' + str(index[i])
-                plot.set_title(title)
-                if seg is not None:
-                    slice_seg[slice_seg < thr] = 0
-                    plot.imshow(slice_seg, cmap=cmap_seg, interpolation='nearest')
-                plt.axis('off')
-
-            # plt.imshow(slice, cmap=cm.gray, interpolation='nearest')
-            # if seg is not None:
-            #     plt.imshow(slice_seg, cmap=cmap_seg, interpolation='nearest')
-            # plt.axis('off')
-            fname_png = os.path.join(path_output, self.file_name + suffix + format)
-            plt.savefig(fname_png, bbox_inches='tight')
-            plt.close(fig)
-
-        except RuntimeError as e:
-            sct.printv('WARNING: your device does not seem to have display feature', self.verbose, type='warning')
-            sct.printv(str(e), self.verbose, type='warning')
-
-        return fname_png
-
-    def save_quality_control(self, plane='sagittal', n_slices=1, seg=None, thr=0, cmap_col='red', format='.png', index_list=None, path_output='./', verbose=1):
-        ori = self.change_orientation('RPI')
-        if seg is not None:
-            ori_seg = seg.change_orientation('RPI')
-
-        nx, ny, nz, nt, px, py, pz, pt = self.dim
-        if plane == 'sagittal':
-            max_n_slices = nx
-        elif plane == 'coronal':
-            max_n_slices = ny
-        elif plane == 'axial' or plane == 'transverse':
-            max_n_slices = nz
-        else:
-            max_n_slices = None
-            sct.printv('ERROR: wrong plan input to save slice. Please choose "sagittal", "coronal" or "axial"', self.verbose, type='error')
-
-        if index_list is None:
-            if n_slices > max_n_slices:
-                index_list = range(max_n_slices)
-            elif n_slices == 1:
-                index_list = [int(round(max_n_slices / 2))]
-            else:
-                gap = max_n_slices / n_slices
-                index_list = [((i + 1) * gap) - 1 for i in range(n_slices)]
-        index_list.sort()
-
-        try:
-            filename_image_png = self.save_plane(plane=plane, suffix='_' + plane + '_plane', index=index_list, format=format, path_output=path_output)
-            info_str = 'QC output image: ' + filename_image_png
-            if seg is not None:
-                filename_gmseg_image_png = self.save_plane(plane=plane, suffix='_' + plane + '_plane_seg', index=index_list, seg=seg, thr=thr, cmap_col=cmap_col, format=format, path_output=path_output)
-                info_str += ' & ' + filename_gmseg_image_png
-            sct.printv(info_str, verbose, 'info')
-        except RuntimeError as e:
-            sct.printv('WARNING: your device does not seem to have display feature', self.verbose, type='warning')
-            sct.printv(str(e), self.verbose, type='warning')
-
-        self.change_orientation(ori)
-        if seg is not None:
-            seg.change_orientation(ori_seg)
-
 
 def compute_dice(image1, image2, mode='3d', label=1, zboundaries=False):
     """
@@ -1203,16 +951,28 @@ def compute_dice(image1, image2, mode='3d', label=1, zboundaries=False):
     return dice
 
 
-def find_zmin_zmax(fname):
-    # crop image
-    status, output = sct.run(["sct_crop_image",
-     "-i", fname,
-     "-dim", "2",
-     "-bmax",
-     "-o", "tmp.nii"])
-    # parse output
-    zmin, zmax = output[output.find('Dimension 2: ') + 13:].split('\n')[0].split(' ')
-    return int(zmin), int(zmax)
+def find_zmin_zmax(im, threshold=0.1):
+    """
+    Find the min (and max) z-slice index below which (and above which) slices only have voxels below a given threshold.
+    :param im: Image object
+    :param threshold: threshold to apply before looking for zmin/zmax, typically corresponding to noise level.
+    :return: [zmin, zmax]
+    """
+    slicer = Slicer(im, axis="IS")
+
+    # Iterate from bottom to top until we find data
+    for zmin in slicer.range("IS"):
+        dataz = im.data[slicer.slice(zmin)]
+        if np.any(dataz > threshold):
+            break
+
+    # Conversely from top to bottom
+    for zmax in slicer.range("SI"):
+        dataz = im.data[slicer.slice(zmax)]
+        if np.any(dataz > threshold):
+            break
+
+    return zmin, zmax
 
 
 def get_dimension(im_file, verbose=1):

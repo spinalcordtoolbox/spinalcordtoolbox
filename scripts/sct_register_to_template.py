@@ -14,7 +14,7 @@
 # TODO: testing script for all cases
 # TODO: enable vertebral alignment with -ref subject
 
-import sys, io, os, shutil, time
+import sys, os, time
 import numpy as np
 import sct_utils as sct
 import sct_label_utils
@@ -51,9 +51,7 @@ class Param:
 # Note: step0 is used as pre-registration
 step0 = Paramreg(step='0', type='label', dof='Tx_Ty_Tz_Sz')  # if ref=template, we only need translations and z-scaling because the cord is already straight
 step1 = Paramreg(step='1', type='seg', algo='centermass', smooth='2')
-# step2 = Paramreg(step='2', type='seg', algo='columnwise', smooth='0', smoothWarpXY='2')
 step2 = Paramreg(step='2', type='seg', algo='bsplinesyn', metric='MeanSquares', iter='3', smooth='1')
-# step3 = Paramreg(step='3', type='im', algo='syn', metric='CC', iter='1')
 paramreg = ParamregMultiStep([step0, step1, step2])
 
 
@@ -93,8 +91,8 @@ def get_parser():
                       example="anat_seg.nii.gz")
     parser.add_option(name="-l",
                       type_value="file",
-                      description="Labels located at the center of the spinal cord, on the mid-vertebral slice. For "
-                                  "more information about label creation, please refer to "
+                      description="One or two labels (preferred) located at the center of the spinal cord, on the "
+                                  "mid-vertebral slice. For more information about label creation, please see: "
                                   "http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/",
                       mandatory=False,
                       default_value='',
@@ -143,11 +141,6 @@ def get_parser():
                       description="""Parameters for straightening (see sct_straighten_spinalcord).""",
                       mandatory=False,
                       default_value='')
-    # parser.add_option(name="-cpu-nb",
-    #                   type_value="int",
-    #                   description="Number of CPU used for straightening. 0: no multiprocessing. By default, uses all the available cores.",
-    #                   mandatory=False,
-    #                   example="8")
     parser.add_option(name='-qc',
                       type_value='folder_creation',
                       description='The path where the quality control generated content will be saved',
@@ -181,7 +174,6 @@ def main(args=None):
     # check user arguments
     if not args:
         args = sys.argv[1:]
-
 
     # Get parser info
     parser = get_parser()
@@ -231,9 +223,7 @@ def main(args=None):
             paramreg.steps['0'].dof = 'Tx_Ty_Tz_Rx_Ry_Rz_Sz'
 
     # initialize other parameters
-    # file_template_label = param.file_template_label
     zsubsample = param.zsubsample
-    # smoothing_sigma = param.smoothing_sigma
 
     # retrieve template file names
     file_template_vertebral_labeling = get_file_label(os.path.join(path_template, 'template'), 'vertebral labeling')
@@ -265,14 +255,6 @@ def main(args=None):
     sct.printv('  Path template:        ' + path_template, verbose)
     sct.printv('  Remove temp files:    ' + str(remove_temp_files), verbose)
 
-    # check if data, segmentation and landmarks are in the same space
-    # JULIEN 2017-04-25: removed because of issue #1168
-    # sct.printv('\nCheck if data, segmentation and landmarks are in the same space...')
-    # if not sct.check_if_same_space(fname_data, fname_seg):
-    #     sct.printv('ERROR: Data image and segmentation are not in the same space. Please check space and orientation of your files', verbose, 'error')
-    # if not sct.check_if_same_space(fname_data, fname_landmarks):
-    #     sct.printv('ERROR: Data image and landmarks are not in the same space. Please check space and orientation of your files', verbose, 'error')
-
     # check input labels
     labels = check_labels(fname_landmarks, label_type=label_type)
 
@@ -289,7 +271,6 @@ def main(args=None):
     ftmp_template = 'template.nii'
     ftmp_template_seg = 'template_seg.nii.gz'
     ftmp_template_label = 'template_label.nii.gz'
-    # ftmp_template_label_disc = 'template_label_disc.nii.gz'
 
     # copy files to temporary folder
     sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
@@ -301,7 +282,6 @@ def main(args=None):
     sct_convert.main(args=['-i', fname_template_vertebral_labeling, '-o', os.path.join(path_tmp, ftmp_template_label)])
     if label_type == 'disc':
         sct_convert.main(args=['-i', fname_template_disc_labeling, '-o', os.path.join(path_tmp, ftmp_template_label)])
-    # sct.run('sct_convert -i '+fname_template_label+' -o '+os.path.join(path_tmp, ftmp_template_label))
 
     # go to tmp folder
     curdir = os.getcwd()
@@ -335,13 +315,6 @@ def main(args=None):
     # binarize segmentation (in case it has values below 0 caused by manual editing)
     sct.printv('\nBinarize segmentation', verbose)
     sct.run(['sct_maths', '-i', 'seg.nii.gz', '-bin', '0.5', '-o', 'seg.nii.gz'])
-
-    # smooth segmentation (jcohenadad, issue #613)
-    # sct.printv('\nSmooth segmentation...', verbose)
-    # sct.run('sct_maths -i '+ftmp_seg+' -smooth 1.5 -o '+add_suffix(ftmp_seg, '_smooth'))
-    # jcohenadad: updated 2016-06-16: DO NOT smooth the seg anymore. Issue #
-    # sct.run('sct_maths -i '+ftmp_seg+' -smooth 0 -o '+add_suffix(ftmp_seg, '_smooth'))
-    # ftmp_seg = add_suffix(ftmp_seg, '_smooth')
 
     # Switch between modes: subject->template or template->subject
     if ref == 'template':
@@ -485,16 +458,18 @@ def main(args=None):
         sct.run('sct_crop_image -i ' + ftmp_seg + ' -start ' + str(min_point) + ' -end ' + str(max_point) + ' -dim 2 -b 0 -o ' + add_suffix(ftmp_seg, '_black'))
         ftmp_seg = add_suffix(ftmp_seg, '_black')
         """
-
+        # open segmentation
+        im = Image(ftmp_seg)
+        im_new = im.copy()
         # binarize
-        sct.printv('\nBinarize segmentation...', verbose)
-        sct.run(['sct_maths', '-i', ftmp_seg, '-bin', '0.5', '-o', add_suffix(ftmp_seg, '_bin')])
-        ftmp_seg = add_suffix(ftmp_seg, '_bin')
-
+        im_new.data = im.data > 0.5
         # find min-max of anat2template (for subsequent cropping)
-        zmin_template, zmax_template = find_zmin_zmax(ftmp_seg)
-
+        zmin_template, zmax_template = find_zmin_zmax(im_new, threshold=0.5)
+        # save binarized segmentation
+        im_new.setFileName(add_suffix(ftmp_seg, '_bin'))
+        im_new.save()
         # crop template in z-direction (for faster processing)
+        # TODO: refactor to use python module instead of doing i/o
         sct.printv('\nCrop data in template space (for faster processing)...', verbose)
         sct.run(['sct_crop_image', '-i', ftmp_template, '-o', add_suffix(ftmp_template, '_crop'), '-dim', '2', '-start', str(zmin_template), '-end', str(zmax_template)])
         ftmp_template = add_suffix(ftmp_template, '_crop')
@@ -506,6 +481,7 @@ def main(args=None):
         ftmp_seg = add_suffix(ftmp_seg, '_crop')
 
         # sub-sample in z-direction
+        # TODO: refactor to use python module instead of doing i/o
         sct.printv('\nSub-sample in z-direction (for faster processing)...', verbose)
         sct.run(['sct_resample', '-i', ftmp_template, '-o', add_suffix(ftmp_template, '_sub'), '-f', '1x1x' + zsubsample], verbose)
         ftmp_template = add_suffix(ftmp_template, '_sub')
@@ -790,8 +766,9 @@ def check_labels(fname_landmarks, label_type='body'):
     # -> all labels must be different
     labels = image_label.getNonZeroCoordinates(sorting='value')
     # check if there is two labels
-    if label_type=='body' and not len(labels) == 2:
-        sct.printv('ERROR: Label file has ' + str(len(labels)) + ' label(s). It must contain exactly two labels.', 1, 'error')
+    if label_type == 'body' and not len(labels) <= 2:
+        sct.printv('ERROR: Label file has ' + str(len(labels)) + ' label(s). It must contain one or two labels.', 1,
+                   'error')
     # check if labels are integer
     for label in labels:
         if not int(label.value) == label.value:

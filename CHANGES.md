@@ -1,5 +1,22 @@
 # CHANGES TO RELEASE
 
+## v3.2.3 (2018-07-21)
+This release notably brings a useful feature, which now makes it possible to use single-label with -l flag for registration to the template. This feature was required by the recently-introduced [analysis pipeline for multi-parametric data when FOV is systematically centered at a particular disc or mid-vertebral level](https://github.com/sct-pipeline/multiparametric-fixed-fov). [View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.2.2...v3.2.3)
+
+**BUG**
+
+ - `sct_register_multimodal`: Fixed bug when using partial mask with algo=slicereg [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1917)
+
+**ENHANCEMENT**
+
+ - `sct_propseg`: Labels and centerline are now output with correct header if -rescale is used [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1926)
+ - Adding a batch size of 4 for all deep learning methods. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1924)
+
+**FEATURE**
+
+ - `sct_register_to_template`: Enable single-label with -l flag [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1955)
+
+
 ## v3.2.2 (2018-07-08)
 Major changes to this release include a fix to SCT installation on OSX laptops with non-English encoding language. Another important fix is the inclusion of the link in `sct_download_data` for downloading the Paris'18 SCT course material. A nice enhancement is the possibility to calculate metrics slice-wise or level-wise in `sct_extract_metric`. View detailed changelog
 [View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.2.1...v3.2.2)
