@@ -102,6 +102,13 @@ def get_parser():
      choices=("0", "1"),
      default=param_default.verbose,
     )
+    parser.add_argument("--abort-on-failure",
+     help="Instead of iterating through all tests, abort at the first one that would fail.",
+     action="store_true",
+    )
+    parser.add_argument("--continue-from",
+     help="Instead of running all tests (or those specified by --function, start from this one",
+    )
 
     return parser
 
@@ -204,6 +211,14 @@ def main(args=None):
         functions_parallel = get_functions_parallelizable()
         functions_serial = get_functions_nonparallelizable()
 
+    if arguments.continue_from:
+        first_func = arguments.continue_from
+        if first_func in functions_parallel:
+            functions_serial = []
+            functions_parallel = functions_parallel[functions_parallel.index(first_func):]
+        elif first_func in functions_serial:
+            functions_serial = functions_serial[functions_serial.index(first_func):]
+
     list_status = []
     for name, functions in (
       ("serial", functions_serial),
@@ -211,6 +226,9 @@ def main(args=None):
      ):
         if not functions:
             continue
+
+        if any(list_status) and arguments.abort_on_failure:
+            break
 
         try:
             if functions == functions_parallel and jobs != 1:
@@ -252,11 +270,14 @@ def main(args=None):
                     status = 0
                 # append status function to global list of status
                 list_status.append(status)
+                if any(list_status) and arguments.abort_on_failure:
+                    break
         except KeyboardInterrupt:
+            raise
+        finally:
             if pool:
                 pool.terminate()
                 pool.join()
-            raise
 
     print('status: ' + str(list_status))
 
