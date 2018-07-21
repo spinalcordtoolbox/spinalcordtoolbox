@@ -10,6 +10,8 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+import os
+
 def init(param_test):
      """
      Initialize class: param_test
@@ -29,7 +31,7 @@ def test_integrity(param_test):
      Test integrity of function
      """
      # open result file
-     f = open('ernst_angle.txt', 'r')
+     f = open(os.path.join(param_test.path_output, 'ernst_angle.txt'), 'r')
      angle_result = float(f.read())
      f.close()
      # compare with GT
