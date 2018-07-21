@@ -29,7 +29,7 @@ class Param:
     def __init__(self):
         self.download = 0
         self.path_data = 'sct_testing_data'  # path to the testing data
-        self.path_output = []  # list of output folders
+        self.path_output = "."
         self.function_to_test = None
         self.remove_tmp_file = 0
         self.verbose = 0
@@ -450,7 +450,7 @@ def test_function(param_test):
 
     Returns
     -------
-    path_output [str]: path where to output testing data
+    path_output str: path where to output testing data
     """
     sct.log.debug("Starting test function")
 
@@ -463,7 +463,9 @@ def test_function(param_test):
 
     # build path_output variable
     path_testing = os.getcwd()
-    param_test.path_output = sct.tmp_create(basename=(param_test.function_to_test + '_' + subject_folder), verbose=0)
+
+    if not param_test.path_output:
+        param_test.path_output = sct.tmp_create(basename=(param_test.function_to_test + '_' + subject_folder), verbose=0)
 
     # get parser information
     parser = module_function_to_test.get_parser()
