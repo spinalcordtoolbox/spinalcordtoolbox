@@ -264,8 +264,10 @@ def main(args=None):
         jobs = 1
 
     print("Will run through the following tests:")
-    print("- sequentially: {}".format(" ".join(functions_serial)))
-    print("- in parallel with {} jobs: {}".format(jobs, " ".join(functions_parallel)))
+    if functions_serial:
+        print("- sequentially: {}".format(" ".join(functions_serial)))
+    if functions_parallel:
+        print("- in parallel with {} jobs: {}".format(jobs, " ".join(functions_parallel)))
 
     list_status = []
     for name, functions in (
@@ -275,7 +277,7 @@ def main(args=None):
         if not functions:
             continue
 
-        if any(list_status) and arguments.abort_on_failure:
+        if any([s for (f, s) in list_status]) and arguments.abort_on_failure:
             break
 
         try:
@@ -316,10 +318,10 @@ def main(args=None):
                 if any(list_status_function):
                     if 1 in list_status_function:
                         print_fail()
-                        status = 1
+                        status = (f, 1)
                     else:
                         print_warning()
-                        status = 99
+                        status = (f, 99)
                     for output in list_output:
                         for line in output.splitlines():
                             print("   %s" % line)
@@ -329,10 +331,10 @@ def main(args=None):
                         for output in list_output:
                             for line in output.splitlines():
                                 print("   %s" % line)
-                    status = 0
+                    status = (f, 0)
                 # append status function to global list of status
                 list_status.append(status)
-                if any(list_status) and arguments.abort_on_failure:
+                if any([s for (f, s) in list_status]) and arguments.abort_on_failure:
                     break
         except KeyboardInterrupt:
             raise
@@ -341,7 +343,9 @@ def main(args=None):
                 pool.terminate()
                 pool.join()
 
-    print('status: ' + str(list_status))
+    print('status: ' + str([s for (f, s) in list_status]))
+    if any([s for (f, s) in list_status]):
+        print("Failures: {}".format(" ".join([f for (f, s) in list_status if s])))
 
     # display elapsed time
     elapsed_time = time.time() - start_time
@@ -356,7 +360,7 @@ def main(args=None):
         sct.rmtree(path_tmp)
 
     e = 0
-    if sum(list_status) != 0:
+    if any([s for (f, s) in list_status]):
         e = 1
     # print(e)
 
