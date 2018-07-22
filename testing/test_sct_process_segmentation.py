@@ -15,13 +15,15 @@
 # TODO: make it compatible with isct_test_function
 # TODO: add log file
 
+import sys
+import os
+import time
+
 import sct_utils as sct
 from pandas import DataFrame
-import time
 import numpy as np
 import nibabel as nib
 import pickle
-import sys
 
 
 def init(param_test):

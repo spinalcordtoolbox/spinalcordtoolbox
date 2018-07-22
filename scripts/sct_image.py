@@ -279,7 +279,7 @@ def main(args=None):
             # use input file name and add _"DIM+NUMBER". Keep the same extension
             l_fname_out = []
             for i, im in enumerate(im_out):
-                l_fname_out.append(add_suffix(fname_in[0], '_' + dim_list[dim].upper() + str(i).zfill(4)))
+                l_fname_out.append(add_suffix(fname_out or fname_in[0], '_' + dim_list[dim].upper() + str(i).zfill(4)))
                 im.setFileName(l_fname_out[i])
                 im.save(verbose=verbose)
             sct.display_viewer_syntax(l_fname_out)
