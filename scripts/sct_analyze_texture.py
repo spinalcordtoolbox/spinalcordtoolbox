@@ -20,7 +20,7 @@ from skimage.feature import greycomatrix, greycoprops
 import sct_utils as sct
 from msct_image import Image
 from msct_parser import Parser
-from sct_image import set_orientation, get_orientation
+from sct_image import set_orientation
 
 
 def get_parser():
@@ -112,7 +112,7 @@ class ExtractGLCM:
         self.dct_im_seg = {'im': None, 'seg': None}
 
         # to re-orient the data at the end if needed
-        self.orientation_im = get_orientation(Image(self.param.fname_im))
+        self.orientation_im = Image(self.param.fname_im).orientation
 
         self.fname_metric_lst = {}
 
