@@ -136,17 +136,23 @@ def main(args=None):
 
     # Change orientation of the input image into RPI
     sct.printv('\nOrient input volume to RPI orientation...')
-    fname_anat_rpi = msct_image.Image("anat.nii").change_orientation("RPI", generate_path=True).save().absolutepath
+    fname_anat_rpi = msct_image.Image("anat.nii") \
+     .change_orientation("RPI", generate_path=True) \
+     .save() \
+     .absolutepath
 
     # Change orientation of the input image into RPI
     sct.printv('\nOrient centerline to RPI orientation...')
-    fname_centerline_rpi = msct_image.Image("centerline.nii").change_orientation("RPI", generate_path=True).save().absolutepath
+    fname_centerline_rpi = msct_image.Image("centerline.nii") \
+     .change_orientation("RPI", generate_path=True) \
+     .save() \
+     .absolutepath
 
     # Straighten the spinal cord
     # straighten segmentation
     sct.printv('\nStraighten the spinal cord using centerline/segmentation...', verbose)
     cache_sig = sct.cache_signature(
-     input_files=[fname_anat_rpi, fname_centerline_rpi]
+     input_files=[fname_anat_rpi, fname_centerline_rpi],
      input_params={"x": "spline"},
     )
     cachefile = os.path.join(curdir, "straightening.cache")
@@ -159,7 +165,7 @@ def main(args=None):
         # apply straightening
         sct.run(['sct_apply_transfo', '-i', fname_anat_rpi, '-w', 'warp_curve2straight.nii.gz', '-d', 'straight_ref.nii.gz', '-o', 'anat_rpi_straight.nii', '-x', 'spline'], verbose)
     else:
-        sct.run(['sct_straighten_spinalcord', '-i', fname_anat_rpi, '-s', fname_centerline_rpi, '-x', 'spline'], verbose)
+        sct.run(['sct_straighten_spinalcord', '-i', fname_anat_rpi, '-o', 'anat_rpi_straight.nii', '-s', fname_centerline_rpi, '-x', 'spline'], verbose)
         sct.cache_save(cachefile, cache_sig)
 
     # Smooth the straightened image along z
