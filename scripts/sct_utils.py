@@ -13,7 +13,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import sys, io, os, re, time
+import sys, io, os, re, time, datetime
 import errno
 import logging
 import logging.config
@@ -838,7 +838,7 @@ def find_file_within_folder(fname, directory, seek_type='file'):
 def tmp_create(basename=None, verbose=1):
     """Create temporary folder and return its path
     """
-    prefix = "sct-%s-" % time.strftime("%y%m%d%H%M%S")
+    prefix = "sct-%s-" % datetime.datetime.now().strftime("%Y%m%d%H%M%S.%f")
     if basename:
         prefix += "%s-" % basename
     tmpdir = tempfile.mkdtemp(prefix=prefix)
