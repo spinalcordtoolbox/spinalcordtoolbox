@@ -9,6 +9,71 @@ when using it.
    :local:
 ..
 
+
+Voxel Space Orientation and Coordinate Conventions
+**************************************************
+
+
+Reference Spaces
+================
+
+SCT follows nibabel's reference orientation naming convention, using a character
+string to describe the orientation of a surface/volume.
+
+The string is formed from character label among:
+
+- `L` / `R`: left-right
+- `P` / `A`: posterior-anterior
+- `I` / `S`: inferior-superior
+
+The character position corresponds to the axis index.
+
+
+For example, a `RAS` orientation corresponds to a 3D image with:
+
+- first axis is oriented `L` towards `R`;
+- second axis is oriented `P` towards `A`;
+- third axis is oriented `I` towards `S`.
+
+References:
+
+- http://nipy.org/nibabel/coordinate_systems.html#naming-reference-spaces
+
+
+Coordinate Conventions
+======================
+
+TODO example and relation with voxel coordinates.
+TODO make definitions rock-solid.
+
+Voxel Coordinates
++++++++++++++++++
+
+When voxel coordinates are integers, coordinates are indices.
+Indices are expressed starting from 0 and up to N-1 where N is the
+number of voxels in the considered dimension.
+
+When voxel coordinates are real numbers, we are using a half-integer
+voxel center convention.
+This means that:
+
+- A coordinate such as :code:`x == np.round(x)` expresses the origin
+  corner of a voxel.
+
+- A coordinate such as :code:`x-0.5 == np.round(x-0.5)` expresses the
+  center of a voxel.
+
+
+Physical Coordinates
+++++++++++++++++++++
+
+Physical coordinates are always expressed as real numbers.
+They are defined from the relation expressed by the transform and unit
+system expressed in a image header.
+
+
+
+
 Template / Atlas
 ****************
 
