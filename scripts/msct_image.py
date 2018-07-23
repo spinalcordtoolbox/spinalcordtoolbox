@@ -362,7 +362,7 @@ class Image(object):
             self.hdr = hdr
 
         if absolutepath is not None:
-            self.absolutepath = absolutepath
+            self._path = os.path.abspath(absolutepath)
 
         self.verbose = verbose
 
@@ -441,7 +441,7 @@ class Image(object):
             self.im_file = deepcopy(image.im_file)
             self.data = deepcopy(image.data)
             self.hdr = deepcopy(image.hdr)
-            self.absolutepath = deepcopy(image.absolutepath)
+            self._path = deepcopy(image._path)
         else:
             return deepcopy(self)
 
