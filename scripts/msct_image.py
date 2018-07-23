@@ -460,6 +460,10 @@ class Image(object):
         self.data = self.im_file.get_data()
         self.hdr = self.im_file.get_header()
         self.absolutepath = path
+        if path != self.absolutepath:
+            sct.log.info("Loaded %s (%s) orientation %s shape %s", path, self.absolutepath, self.orientation, self.data.shape)
+        else:
+            sct.log.info("Loaded %s orientation %s shape %s", path, self.orientation, self.data.shape)
 
 
     def change_shape(self, shape, generate_path=False):
@@ -556,6 +560,13 @@ class Image(object):
             sct.printv('WARNING: File ' + path + ' already exists. Will overwrite it.', verbose, 'warning')
 
         # save file
+        if os.path.isabs(path):
+            sct.log.info("Saving image to %s orientation %s shape %s",
+             path, self.orientation, data.shape)
+        else:
+            sct.log.info("Saving image to %s (%s) orientation %s shape %s",
+             path, os.path.abspath(path), self.orientation, data.shape)
+
         nibabel.save(img, path)
 
         if mutable:
