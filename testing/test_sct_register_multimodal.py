@@ -21,8 +21,12 @@ def init(param_test):
     Initialize class: param_test
     """
     # initialization
-    default_args = ['-i mt/mt0.nii.gz -d mt/mt1.nii.gz -o mt0_reg.nii.gz -param step=1,algo=syn,type=im,iter=1,smooth=1,shrink=2,metric=MI -x linear -r 0 -igt mt/mt0_reg_syn_goldstandard.nii.gz',
-                    '-i mt/mt0.nii.gz -d mt/mt1.nii.gz -o mt0_reg.nii.gz -param step=1,algo=slicereg,type=im,iter=5,smooth=0,metric=MeanSquares -x linear -r 0 -igt mt/mt0_reg_slicereg_goldstandard.nii.gz',
+    default_args = ['-i mt/mt0.nii.gz -d mt/mt1.nii.gz -o mt0_reg.nii.gz' \
+                     ' -param step=1,algo=syn,type=im,iter=1,smooth=1,shrink=2,metric=MI' \
+                     ' -x linear -r 0 -igt mt/mt0_reg_syn_goldstandard.nii.gz',
+                    '-i mt/mt0.nii.gz -d mt/mt1.nii.gz -o mt0_reg.nii.gz' \
+                     ' -param step=1,algo=slicereg,type=im,iter=5,smooth=0,metric=MeanSquares' \
+                     ' -x linear -r 0 -igt mt/mt0_reg_slicereg_goldstandard.nii.gz', # failing for now
                     '-i mt/mt0.nii.gz -iseg mt/mt0_seg.nii.gz -d mt/mt1.nii.gz -dseg mt/mt1_seg.nii.gz -o mt0_reg.nii.gz -param step=1,algo=centermassrot,type=seg,smooth=1 -x linear -r 0',
                     '-i mt/mt0.nii.gz -iseg mt/mt0_seg.nii.gz -d mt/mt1.nii.gz -dseg mt/mt1_seg.nii.gz -o mt0_reg.nii.gz -param step=1,algo=columnwise,type=seg,smooth=1 -x linear -r 0']
     # assign default params
@@ -62,7 +66,7 @@ def compare_two_images(fname_result, fname_gt, param_test):
     # compare images
     if abs(np.sum(diff)) > threshold:
         param_test.status = 99
-        param_test.output += '\n--> FAILED'
+        param_test.output += '\n--> FAILED (%.3f)' % (np.sum(np.abs(diff)) / threshold)
     else:
         param_test.output += '\n--> PASSED'
     return param_test
