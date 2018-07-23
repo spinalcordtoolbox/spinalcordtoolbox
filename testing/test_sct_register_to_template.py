@@ -10,6 +10,8 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+import os
+
 from pandas import DataFrame
 from msct_image import Image, compute_dice
 import sct_apply_transfo
@@ -40,8 +42,8 @@ def test_integrity(param_test):
     sct_apply_transfo.main(args=[
         '-i', param_test.fname_gt,
         '-d', param_test.dict_args_with_path['-s'],
-        '-w', 'warp_template2anat.nii.gz',
-        '-o', 'test_template2anat.nii.gz',
+        '-w', os.path.join(param_test.path_output, 'warp_template2anat.nii.gz'),
+        '-o', os.path.join(param_test.path_output, 'test_template2anat.nii.gz'),
         '-x', 'nn',
         '-v', '0'])
 
@@ -49,14 +51,14 @@ def test_integrity(param_test):
     sct_apply_transfo.main(args=[
         '-i', param_test.dict_args_with_path['-s'],
         '-d', param_test.fname_gt,
-        '-w', 'warp_anat2template.nii.gz',
-        '-o', 'test_anat2template.nii.gz',
+        '-w', os.path.join(param_test.path_output, 'warp_anat2template.nii.gz'),
+        '-o', os.path.join(param_test.path_output, 'test_anat2template.nii.gz'),
         '-x', 'nn',
         '-v', '0'])
 
     # compute dice coefficient between template segmentation warped to anat and segmentation from anat
     im_seg = Image(param_test.dict_args_with_path['-s'])
-    im_template_seg_reg = Image('test_template2anat.nii.gz')
+    im_template_seg_reg = Image(os.path.join(param_test.path_output, 'test_template2anat.nii.gz'))
     dice_template2anat = compute_dice(im_seg, im_template_seg_reg, mode='3d', zboundaries=True)
     # check
     param_test.output += 'Dice[seg,template_seg_reg]: '+str(dice_template2anat)
@@ -67,7 +69,7 @@ def test_integrity(param_test):
         param_test.output += '\n--> FAILED'
 
     # compute dice coefficient between anat segmentation warped to template and segmentation from template
-    im_seg_reg = Image('test_anat2template.nii.gz')
+    im_seg_reg = Image(os.path.join(param_test.path_output, 'test_anat2template.nii.gz'))
     im_template_seg = Image(param_test.fname_gt)
     dice_anat2template = compute_dice(im_seg_reg, im_template_seg, mode='3d', zboundaries=True)
     # check
