@@ -154,11 +154,6 @@ def main():
     elapsed_time = time.time() - start_time
     print('Finished! Elapsed time: '+str(int(round(elapsed_time)))+'s\n')
 
-    # remove temp files
-    if param.remove_tmp_file:
-        sct.printv('\nRemove temporary files...', param.verbose)
-        sct.rmtree(param.path_tmp)
-
     e = 0
     for i in range(0,len(results_t2)):
         if (results_t2[i][4] < 0.8 or results_t2[i][4] < results_t2[i][3]):
