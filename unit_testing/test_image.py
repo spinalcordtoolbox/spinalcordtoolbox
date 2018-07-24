@@ -383,6 +383,40 @@ def test_change_orientation(fake_3dimage_sct, fake_3dimage_sct_vis):
         assert orientation == dst.orientation
 
 
+def test_change_orientation_nd(fake_4dimage_sct):
+    import sct_image
+
+    im_src = fake_4dimage_sct.copy()
+    path_tmp = sct.tmp_create(basename="test_reorient")
+    im_src.save(os.path.join(path_tmp, "src.nii"), mutable=True)
+
+    print(im_src.orientation, im_src.data.shape)
+
+    def orient2shape(orient):
+        # test-data-specific thing
+        letter2dim = dict(
+         L=2,
+         R=2,
+         A=3,
+         P=3,
+         I=4,
+         S=4,
+        )
+        return tuple([letter2dim[x] for x in orient] + [5])
+
+    orientation = im_src.orientation
+    assert orientation == "LPI"
+    assert im_src.header.get_best_affine()[:3,3].tolist() == [0,0,0]
+
+    print("RPI...")
+    im_dst = msct_image.change_orientation(im_src, "RPI")
+    print(im_dst.orientation, im_dst.data.shape)
+    assert im_dst.orientation == "RPI"
+    assert im_dst.data.shape == orient2shape("RPI")
+    assert im_dst.header.get_best_affine()[:3,3].tolist() == [2-1,0,0]
+
+
+
 def test_crop(fake_3dimage_sct):
 
 
