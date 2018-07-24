@@ -1019,8 +1019,14 @@ def change_orientation(im_src, orientation, im_dst=None, inverse=False):
     Note: the resulting image has no path
     """
 
-    if len(im_src.data.shape) > 3:
-        raise NotImplementedError("Use sct_image.orientation in that case")
+    if len(im_src.data.shape) == 3:
+        pass # OK, standard 3D volume
+    elif len(im_src.data.shape) == 4:
+        pass # OK, standard 4D volume
+    elif len(im_src.data.shape) == 5 and im_src.header.get_intent()[0] == "vector":
+        pass # OK, physical displacement field
+    else:
+        raise NotImplementedError("Don't know how to change orientation for this image")
 
     opposite_character = {'L': 'R', 'R': 'L', 'A': 'P', 'P': 'A', 'I': 'S', 'S': 'I'}
 
@@ -1051,10 +1057,10 @@ def change_orientation(im_src, orientation, im_dst=None, inverse=False):
 
     # Update data by performing inversions and swaps
 
-    # axes inversion
+    # axes inversion (flip)
     data = im_src.data[::inversion[0], ::inversion[1], ::inversion[2]]
 
-    # axes manipulations
+    # axes manipulations (transpose)
     if perm == [1, 0, 2]:
         data = np.swapaxes(data, 0, 1)
     elif perm == [2, 1, 0]:
@@ -1077,7 +1083,9 @@ def change_orientation(im_src, orientation, im_dst=None, inverse=False):
     # Update header
 
     im_src_aff = im_src.hdr.get_best_affine()
-    aff = nibabel.orientations.inv_ornt_aff(np.array((perm, inversion)).T, im_src.data.shape)
+    aff = nibabel.orientations.inv_ornt_aff(
+     np.array((perm, inversion)).T,
+     im_src.data.shape)
     im_dst_aff = np.matmul(im_src_aff, aff)
 
     im_dst.header.set_qform(im_dst_aff)
