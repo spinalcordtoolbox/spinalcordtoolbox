@@ -15,7 +15,7 @@ def init(param_test):
     Initialize class: param_test
     """
     # initialization
-    default_args = ['-bvec dmri/bvecs.txt']
+    default_args = ['-bvec dmri/bvecs.txt -o bvecs.txt']
     # assign default params
     if not param_test.args:
         param_test.args = default_args

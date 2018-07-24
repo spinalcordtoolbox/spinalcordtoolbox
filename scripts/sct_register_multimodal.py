@@ -520,7 +520,7 @@ def main(args=None):
                                               os.path.join(path_out, file_out + ext_out), verbose)
     # generate: forward warping field
     if fname_output_warp == '':
-        fname_output_warp = path_out + 'warp_' + file_src + '2' + file_dest + '.nii.gz'
+        fname_output_warp = os.path.join(path_out, 'warp_' + file_src + '2' + file_dest + '.nii.gz')
     sct.generate_output_file(os.path.join(path_tmp, "warp_src2dest.nii.gz"), fname_output_warp, verbose)
     if generate_warpinv:
         # generate: dest_reg
