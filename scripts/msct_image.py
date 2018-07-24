@@ -1228,3 +1228,46 @@ def zeros_like(img, dtype=None):
 def empty_like(img, dtype=None):
     dst = change_type(img, dtype)
     return dst
+
+
+def spatial_crop(im_src, spec, im_dst=None):
+    """
+    Crop an image in {0,1,2} dimension(s),
+    properly altering the header to not change the physical-logical corresondance.
+
+    :param spec: dict of dim -> [lo,hi] bounds (integer voxel coordinates)
+    """
+
+    # Compute bounds
+    bounds = [ (0, x-1) for x in im_src.data.shape ]
+    for k, v in spec.items():
+        bounds[k] = v
+
+    bounds_ndslice = tuple([ slice(a,b+1) for (a,b) in bounds ])
+
+    bounds = np.array(bounds)
+
+    # Crop data
+    new_data = im_src.data[bounds_ndslice]
+
+    # Update header
+    #
+    # Ref: https://mail.python.org/pipermail/neuroimaging/2017-August/001501.html
+    # Given A, we want to find A' that is identical up to the intercept, such
+    # that A * [x_0, y_0, z_0, 1]' == A' * [0, 0, 0, 1].
+    # Conveniently, A' * [0, 0, 0, 1]' is the fourth row in the affine matrix, so
+    # we're done as soon as we calculate the LHS:
+
+    aff = im_src.header.get_best_affine()
+    new_aff = aff.copy()
+    new_aff[:, [3]] = aff.dot(np.vstack((bounds[:, [0]], [1])))
+
+    new_img = nibabel.Nifti1Image(new_data, new_aff, im_src.header)
+
+    if im_dst is None:
+        im_dst = im_src.copy()
+
+    im_dst.header = new_img.header
+    im_dst.data = new_data
+
+    return im_dst
