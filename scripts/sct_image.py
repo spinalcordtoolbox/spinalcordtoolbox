@@ -553,6 +553,8 @@ def multicomponent_merge(fname_list):
 def change_orientation_nd(src, orientation, dst=None, inverse=False):
     """
     """
+    warnings.warn("Deprecated, this function has no value over msct_image.change_orientation()")
+
     nx, ny, nz, nt, px, py, pz, pt = src.dim
 
     if dst is None:
