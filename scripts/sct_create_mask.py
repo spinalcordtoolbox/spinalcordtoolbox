@@ -24,7 +24,6 @@ import nibabel
 from scipy import ndimage
 
 import sct_utils as sct
-from sct_convert import convert
 import msct_image
 from msct_image import Image
 from sct_image import concat_data
@@ -138,12 +137,12 @@ def create_mask(param):
     sct.printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz) + ' x ' + str(nt), param.verbose)
     # in case user input 4d data
     if nt != 1:
-        sct.printv('WARNING in ' + os.path.basename(__file__) + ': Input image is 4d but output mask will 3D.', param.verbose, 'warning')
+        sct.printv('WARNING in ' + os.path.basename(__file__) + ': Input image is 4d but output mask will be 3D from first time slice.', param.verbose, 'warning')
         # extract first volume to have 3d reference
-        nii = Image('data_RPI.nii')
+        nii = msct_image.empty_like(Image('data_RPI.nii'))
         data3d = nii.data[:, :, :, 0]
         nii.data = data3d
-        nii.save()
+        nii.save('data_RPI.nii')
 
     if method_type == 'coord':
         # parse to get coordinate
