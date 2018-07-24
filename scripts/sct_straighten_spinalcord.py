@@ -487,11 +487,12 @@ class SpinalCordStraightener(object):
                         warp_space_y[1] += warp_space_y[0] - 2
                         warp_space_y[0] = 0
 
-                    sct.run(['sct_crop_image', '-i', 'tmp.centerline_pad_native.nii.gz', '-o', 'tmp.centerline_pad_crop_native.nii.gz',
-                         '-dim', '0,1,2',
-                         '-start', str(warp_space_x[0]) + ',' + str(warp_space_y[0]) + ',0',
-                         '-end', str(warp_space_x[1]) + ',' + str(warp_space_y[1]) + ',' + str(end_point_coord_native[2] - start_point_coord_native[2]),
-                        ])
+                    spec = dict((
+                     (0, warp_space_x),
+                     (1, warp_space_y),
+                     (2, (0, end_point_coord_native[2] - start_point_coord_native[2])),
+                    ))
+                    msct_image.spatial_crop(Image("tmp.centerline_pad_native.nii.gz"), spec).save("tmp.centerline_pad_crop_native.nii.gz")
 
                     fname_ref = 'tmp.centerline_pad_crop_native.nii.gz'
                     offset_z = 4
@@ -523,13 +524,12 @@ class SpinalCordStraightener(object):
                 if warp_space_y[1] >= ny:
                     warp_space_y[1] = ny - 1
 
-                sct.run(['sct_crop_image',
-                 '-i', 'tmp.centerline_pad.nii.gz',
-                 '-o', 'tmp.centerline_pad_crop.nii.gz',
-                 '-dim', '0,1,2',
-                 '-start', str(warp_space_x[0]) + ',' + str(warp_space_y[0]) + ',0',
-                 '-end', str(warp_space_x[1]) + ',' + str(warp_space_y[1]) + ',' + str(end_point_coord[2] - start_point_coord[2] + offset_z),
-                ])
+                spec = dict((
+                 (0, warp_space_x),
+                 (1, warp_space_y),
+                 (2, (0, end_point_coord[2] - start_point_coord[2] + offset_z)),
+                ))
+                msct_image.spatial_crop(Image("tmp.centerline_pad.nii.gz"), spec).save("tmp.centerline_pad_crop.nii.gz")
 
                 image_centerline_straight = Image('tmp.centerline_pad_crop.nii.gz')
                 nx_s, ny_s, nz_s, nt_s, px_s, py_s, pz_s, pt_s = image_centerline_straight.dim
