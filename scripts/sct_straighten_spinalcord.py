@@ -679,8 +679,10 @@ class SpinalCordStraightener(object):
 
                     coord_straight2curved = centerline.get_inverse_plans_coordinates(coord_in_planes_straight, lookup)
                     displacements_straight = coord_straight2curved - physical_coordinates_straight
-                    # for some reason, displacement in Z is inverted. Probably due to left/right-handed definition of referential.
-                    #displacements_straight[:, 0] = -displacements_straight[:, 0]
+                    # Invert Z coordinate as ITK & ANTs physical coordinate system is LPS- (RAI+)
+                    # while ours is LPI-
+                    # Refs: https://sourceforge.net/p/advants/discussion/840261/thread/2a1e9307/#fb5a
+                    #  https://www.slicer.org/wiki/Coordinate_systems
                     displacements_straight[:, 2] = -displacements_straight[:, 2]
                     displacements_straight[indexes_out_distance_straight] = [100000.0, 100000.0, 100000.0]
 
@@ -703,8 +705,7 @@ class SpinalCordStraightener(object):
                     coord_curved2straight[:, 2] += distances_curved
 
                     displacements_curved = coord_curved2straight - physical_coordinates
-                    # for some reason, displacement in Z is inverted. Probably due to left/right-hended definition of referential.
-                    #displacements_curved[:, 0] = -displacements_curved[:, 0]
+
                     displacements_curved[:, 2] = -displacements_curved[:, 2]
                     displacements_curved[indexes_out_distance_curved] = [100000.0, 100000.0, 100000.0]
 
