@@ -290,7 +290,7 @@ def main(args=None):
 
 
 def pad_image(im, pad_x_i=0, pad_x_f=0, pad_y_i=0, pad_y_f=0, pad_z_i=0, pad_z_f=0):
-    from numpy import zeros, dot
+
     nx, ny, nz, nt, px, py, pz, pt = im.dim
     pad_x_i, pad_x_f, pad_y_i, pad_y_f, pad_z_i, pad_z_f = int(pad_x_i), int(pad_x_f), int(pad_y_i), int(pad_y_f), int(pad_z_i), int(pad_z_f)
 
@@ -300,7 +300,7 @@ def pad_image(im, pad_x_i=0, pad_x_f=0, pad_y_i=0, pad_y_f=0, pad_z_i=0, pad_z_f
         im.data = im.data.reshape(new_shape)
 
     # initialize padded_data, with same type as im.data
-    padded_data = zeros((nx + pad_x_i + pad_x_f, ny + pad_y_i + pad_y_f, nz + pad_z_i + pad_z_f), dtype=im.data.dtype)
+    padded_data = np.zeros((nx + pad_x_i + pad_x_f, ny + pad_y_i + pad_y_f, nz + pad_z_i + pad_z_f), dtype=im.data.dtype)
 
     if pad_x_f == 0:
         pad_x_f = None
@@ -321,7 +321,7 @@ def pad_image(im, pad_x_i=0, pad_x_f=0, pad_y_i=0, pad_y_f=0, pad_z_i=0, pad_z_f
     im_out.absolutepath = sct.add_suffix(im_out.absolutepath, "_pad")
 
     # adapt the origin in the sform and qform matrix
-    new_origin = dot(im_out.hdr.get_qform(), [-pad_x_i, -pad_y_i, -pad_z_i, 1])
+    new_origin = np.dot(im_out.hdr.get_qform(), [-pad_x_i, -pad_y_i, -pad_z_i, 1])
 
     im_out.hdr.structarr['qoffset_x'] = new_origin[0]
     im_out.hdr.structarr['qoffset_y'] = new_origin[1]
