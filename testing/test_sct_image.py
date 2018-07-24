@@ -37,7 +37,7 @@ def init(param_test):
     default_args = ['-i ' + os.path.join(param_test.folder_data[0], param_test.file_data[0]) + ' -o test.nii.gz' + ' -pad 0,0,'+str(param_test.pad),
                     '-i ' + os.path.join(param_test.folder_data[1], param_test.file_data[1]) + ' -getorient',  # 3D
                     '-i ' + os.path.join(param_test.folder_data[2], param_test.file_data[2]) + ' -getorient',  # 4D
-                    '-i ' + os.path.join(param_test.folder_data[2], param_test.file_data[2]) + ' -split t',
+                    '-i ' + os.path.join(param_test.folder_data[2], param_test.file_data[2]) + ' -split t -o dmri.nii.gz',
                     '-i ' + input_concat + ' -concat t -o dmri_concat.nii.gz']
 
     # assign default params
@@ -70,7 +70,7 @@ def test_integrity(param_test):
         try:
             path_fname, file_fname, ext_fname = sct.extract_fname(os.path.join(param_test.path_data, param_test.folder_data[2], param_test.file_data[2]))
             ref = Image(os.path.join(param_test.path_data, param_test.dmri_t_slices[0]))
-            new = Image(os.path.join(param_test.path_data, param_test.folder_data[2], file_fname + '_T0000' + ext_fname))
+            new = Image(os.path.join(param_test.path_output, file_fname + '_T0000' + ext_fname))
             diff = ref.data - new.data
             if np.sum(diff) > threshold:
                 param_test.status = 99

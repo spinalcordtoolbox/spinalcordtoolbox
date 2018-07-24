@@ -13,11 +13,12 @@
 # ######################################################################################################################
 
 import sys
+
+import numpy as np
+
 import sct_utils as sct
 from msct_parser import Parser
 from msct_image import Image
-import numpy as np
-
 
 class Param:
     def __init__(self):
@@ -26,13 +27,14 @@ class Param:
 
 
 class Tsnr:
-    def __init__(self, param=None, fmri=None, anat=None):
+    def __init__(self, param=None, fmri=None, anat=None, out=None):
         if param is not None:
             self.param = param
         else:
             self.param = Param()
         self.fmri = fmri
         self.anat = anat
+        self.out = out
 
     def compute(self):
 
@@ -50,7 +52,7 @@ class Tsnr:
         data_tsnr = data_mean / data_std
 
         # save TSNR
-        fname_tsnr = sct.add_suffix(fname_data, '_tsnr')
+        fname_tsnr = self.out
         nii_tsnr = nii_data
         nii_tsnr.data = data_tsnr
         nii_tsnr.setFileName(fname_tsnr)
@@ -75,6 +77,11 @@ def get_parser():
                       mandatory=False,
                       default_value='1',
                       example=['0', '1'])
+    parser.add_option(name='-o',
+                      type_value='file_output',
+                      description='tSNR data output file',
+                      mandatory=False,
+                      example='fmri_tsnr.nii.gz')
     return parser
 
 
@@ -87,10 +94,11 @@ def main(args=None):
 
     arguments = parser.parse(sys.argv[1:])
     fname_src = arguments['-i']
+    fname_dst = arguments.get("-o", sct.add_suffix(fname_src, "_tsnr"))
     verbose = int(arguments['-v'])
 
     # call main function
-    tsnr = Tsnr(param=param, fmri=fname_src)
+    tsnr = Tsnr(param=param, fmri=fname_src, out=fname_dst)
     tsnr.compute()
 
 
