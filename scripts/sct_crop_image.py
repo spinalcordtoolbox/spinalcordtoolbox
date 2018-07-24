@@ -127,28 +127,28 @@ class ImageCropper(object):
     # mask the image in order to keep only voxels in the mask
     # doesn't change the image dimension
     def crop_from_mask_with_background(self):
-        from numpy import asarray, einsum
+
         image_in = Image(self.input_filename)
-        data_array = asarray(image_in.data)
-        data_mask = asarray(Image(self.mask).data)
+        data_array = np.asarray(image_in.data)
+        data_mask = np.asarray(Image(self.mask).data)
         assert data_array.shape == data_mask.shape
 
         # Element-wise matrix multiplication:
         new_data = None
         dim = len(data_array.shape)
         if dim == 3:
-            new_data = einsum('ijk,ijk->ijk', data_mask, data_array)
+            new_data = data_mask * data_array
         elif dim == 2:
-            new_data = einsum('ij,ij->ij', data_mask, data_array)
+            new_data = data_mask * data_array
 
         if self.background != 0:
             from sct_maths import get_data_or_scalar
             data_background = get_data_or_scalar(str(self.background), data_array)
             data_mask_inv = data_mask.max() - data_mask
             if dim == 3:
-                data_background = einsum('ijk,ijk->ijk', data_mask_inv, data_background)
+                data_background = data_mask_inv * data_background
             elif dim == 2:
-                data_background = einsum('ij,ij->ij', data_mask_inv, data_background)
+                data_background = data_mask_inv * data_background
             new_data += data_background
 
         # set image out
