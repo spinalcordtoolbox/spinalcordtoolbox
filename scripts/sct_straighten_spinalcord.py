@@ -781,8 +781,9 @@ class SpinalCordStraightener(object):
             sct.printv('WARNING: Exception during Straightening:', 1, 'warning')
             sct.printv('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), 1, 'warning')
             sct.printv(str(e), 1, 'warning')
-
-        os.chdir(curdir)
+            raise
+        finally:
+            os.chdir(curdir)
 
         # Generate output file (in current folder)
         # TODO: do not uncompress the warping field, it is too time consuming!
