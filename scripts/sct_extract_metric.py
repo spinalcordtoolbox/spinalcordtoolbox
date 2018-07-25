@@ -406,16 +406,17 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
         slices_of_interest = []
         for level in list_levels:
             slices_of_interest.append(get_slices_from_vertebral_levels(im_vertebral_labeling, level))
-        # if users wants to output one metric per level
-        if perlevel:
-            # initialize slicegroups (will be redefined below)
-            slicegroups = []
-            # for each level, find the matching slices and group them
-            for ilevel in list_levels:
-                list_slices = get_slices_from_vertebral_levels(im_vertebral_labeling, ilevel)
-                slicegroups.append(','.join([str(i) for i in list_slices]))
+        # convert to comma-separated list for each level
+        slicegroups = []
+        for group in slices_of_interest:
+            # for each group: [1, 2, 3, 4] --> ['1,2,3,4']
+            # so that slicegroups looks like: ['1,2,3,4','5,6,7,8','9,10,11,12']
+            slicegroups.append([','.join([str(i) for i in group])][0])
+        # if user wants to concatenate all slices of interest into a single slicegroups
+        if not perlevel:
+            slicegroups = [",".join(slicegroups)]
 
-    # loop across slices (if needed)
+    # loop across slicegroups
     for slicegroup in slicegroups:
         try:
             # convert list of strings into list of int to use as index
