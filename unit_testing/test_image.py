@@ -14,6 +14,20 @@ import sct_utils as sct
 import msct_image
 import sct_image
 
+
+def old_change_orientation(im_src, orientation, im_dst=None):
+    im_src.save("a.nii")
+    sct.run(["isct_orientation3d", "-i", "a.nii", "-orientation", orientation, "-o", "b.nii"])
+    im_dst2 = msct_image.Image("b.nii")
+    if im_dst is None:
+        return im_dst2
+    else:
+        im_dst.data = im_dst2.data
+        im_dst.header = im_dst2.header
+        return im_dst
+
+#msct_image.change_orientation = old_change_orientation
+
 @pytest.fixture(scope="session")
 def image_paths():
     ret = []
@@ -427,7 +441,6 @@ def test_change_nd_orientation(fake_4dimage_sct):
     assert im_dst.orientation == "RPI"
     assert im_dst.data.shape == orient2shape("RPI")
     assert im_dst.header.get_best_affine()[:3,3].tolist() == [2-1,0,0]
-
 
 
 def test_crop(fake_3dimage_sct):
