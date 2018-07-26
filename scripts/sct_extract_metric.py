@@ -608,7 +608,7 @@ def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_la
     fname_output_xls = os.path.join(output_path, output_file + '.xls')
 
     # if the user asked for no overwriting but the specified output file does not exist yet
-    if (not overwrite) and (not os.path.isfile(fname_output)):
+    if (not overwrite) and (not os.path.isfile(fname_output_xls)):
         sct.printv('WARNING: You asked to edit the pre-existing file \"' + fname_output + '\" but this file does not exist. It will be created.', type='warning')
         overwrite = 1
 
