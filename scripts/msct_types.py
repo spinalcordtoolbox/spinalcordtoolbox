@@ -621,7 +621,7 @@ class Centerline:
         x_grid, y_grid, z_grid = np.mgrid[-size:size:resolution, -size:size:resolution, 0:1]
         coordinates_grid = np.array(list(zip(x_grid.ravel(), y_grid.ravel(), z_grid.ravel())))
         coordinates_phys = self.get_inverse_plans_coordinates(coordinates_grid, np.array([index] * len(coordinates_grid)))
-        coordinates_im = np.array(image.transfo_phys2continuouspix(coordinates_phys))
+        coordinates_im = image.transfo_phys2pix(coordinates_phys, real=False)
         square = image.get_values(coordinates_im.transpose(), interpolation_mode=interpolation_mode, border=border, cval=cval)
         return square.reshape((len(x_grid), len(x_grid)))
 
