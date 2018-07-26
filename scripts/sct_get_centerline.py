@@ -185,7 +185,7 @@ def run_main():
             z_centerline_voxel = [coord[2] for coord in voxel_coordinates]
 
             # compute z_centerline in image coordinates with continuous precision
-            voxel_coordinates = image_input_reoriented.transfo_phys2continuouspix([[x_centerline_fit_rescorr[i], y_centerline_fit_rescorr[i], z_centerline_rescorr[i]] for i in range(len(z_centerline_rescorr))])
+            voxel_coordinates = image_input_reoriented.transfo_phys2pix([[x_centerline_fit_rescorr[i], y_centerline_fit_rescorr[i], z_centerline_rescorr[i]] for i in range(len(z_centerline_rescorr))], real=False)
             x_centerline_voxel_cont = [coord[0] for coord in voxel_coordinates]
             y_centerline_voxel_cont = [coord[1] for coord in voxel_coordinates]
             z_centerline_voxel_cont = [coord[2] for coord in voxel_coordinates]

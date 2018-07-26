@@ -678,9 +678,10 @@ class Image(object):
 
     def transfo_pix2phys(self, coordi=None):
         """
-        This function returns the physical coordinates of all points of 'coordi'. 'coordi' is a list of list of size
-        (nb_points * 3) containing the pixel coordinate of points. The function will return a list with the physical
-        coordinates of the points in the space of the image.
+        This function returns the physical coordinates of all points of 'coordi'.
+
+        :param coordi: sequence of (nb_points x 3) values containing the pixel coordinate of points.
+        :return: sequence with the physical coordinates of the points in the space of the image.
 
         Example:
         img = Image('file.nii.gz')
@@ -688,96 +689,38 @@ class Image(object):
         coordi_pix = [[1,1,1],[2,2,2],[4,4,4]]   # for points: (1,1,1), (2,2,2) and (4,4,4)
         coordi_phys = img.transfo_pix2phys(coordi=coordi_pix)
 
-        :return:
         """
 
-        m_p2f = self.hdr.get_sform()
-        m_p2f_transfo = m_p2f[0:3, 0:3]
-        coord_origin = np.array([[m_p2f[0, 3]], [m_p2f[1, 3]], [m_p2f[2, 3]]])
+        m_p2f = self.hdr.get_best_affine()
+        aug = np.hstack((np.asarray(coordi), np.ones((len(coordi), 1))))
+        ret = np.empty_like(coordi, dtype=np.float64)
+        for idx_coord, coord in enumerate(aug):
+            phys = np.matmul(m_p2f, coord)
+            ret[idx_coord] = phys[:3]
+        return ret
 
-        if coordi is not None:
-            coordi = np.asarray(coordi)
-            number_of_coordinates = coordi.shape[0]
-            num_c = 100000
-            result_temp = np.empty(shape=(0, 3))
 
-            for i in range(int(number_of_coordinates / num_c)):
-                coordi_temp = coordi[num_c * i:(i + 1) * num_c, :]
-                coordi_pix = np.transpose(coordi_temp)
-                dot_result = np.dot(m_p2f_transfo, coordi_pix)
-                coordi_phys = np.transpose(coord_origin + dot_result)
-                result_temp = np.concatenate((result_temp, coordi_phys), axis=0)
-
-            if int(number_of_coordinates / num_c) == 0:
-                coordi_temp = coordi
-            else:
-                coordi_temp = coordi[int(number_of_coordinates / num_c) * num_c:, :]
-            coordi_pix = np.transpose(coordi_temp)
-            coordi_phys = np.transpose(coord_origin + np.dot(m_p2f_transfo, coordi_pix))
-
-            coordi_phys = np.concatenate((result_temp, coordi_phys), axis=0)
-            coordi_phys_list = coordi_phys.tolist()
-            # sct.printv(coordi_phys.shape)
-
-            return coordi_phys_list
-        """
-        if coordi != None:
-            coordi_phys = transpose(self.coord_origin + dot(self.m_p2f_transfo, transpose(asarray(coordi))))
-            return coordi_phys.tolist()
-        else:
-            return None
-        """
-        return np.transpose(self.coord_origin + np.dot(self.m_p2f_transfo, np.transpose(np.asarray(coordi))))
-
-    def transfo_phys2pix(self, coordi):
+    def transfo_phys2pix(self, coordi, real=True):
         """
         This function returns the pixels coordinates of all points of 'coordi'
-        'coordi' is a list of list of size (nb_points * 3) containing the pixel coordinate of points. The function will return a list with the physical coordinates of the points in the space of the image.
 
-
-        :return:
+        :param coordi: sequence of (nb_points x 3) values containing the pixel coordinate of points.
+        :param real: whether to return real pixel coordinates
+        :return: sequence with the physical coordinates of the points in the space of the image.
         """
 
-        m_p2f = self.hdr.get_sform()
-        m_p2f_transfo = m_p2f[0:3, 0:3]
-        m_f2p_transfo = np.linalg.inv(m_p2f_transfo)
+        m_p2f = self.hdr.get_best_affine()
+        m_f2p = np.linalg.inv(m_p2f)
+        aug = np.hstack((np.asarray(coordi), np.ones((len(coordi), 1))))
+        ret = np.empty_like(coordi, dtype=np.float64)
+        for idx_coord, coord in enumerate(aug):
+            phys = np.matmul(m_f2p, coord)
+            ret[idx_coord] = phys[:3]
+        if real:
+            return np.int32(np.round(ret))
+        else:
+            return ret
 
-        coord_origin = np.array([[m_p2f[0, 3]], [m_p2f[1, 3]], [m_p2f[2, 3]]])
-
-        coordi_phys = np.transpose(np.asarray(coordi))
-        coordi_pix = np.transpose(np.dot(m_f2p_transfo, (coordi_phys - coord_origin)))
-        coordi_pix_tmp = coordi_pix.tolist()
-        coordi_pix_list = [[int(np.round(coordi_pix_tmp[j][i])) for i in range(len(coordi_pix_tmp[j]))] for j in range(len(coordi_pix_tmp))]
-
-        return coordi_pix_list
-
-    def transfo_phys2continuouspix(self, coordi=None, data_phys=None):
-        """
-        This function returns the pixels coordinates of all points of data_pix in the space of the image. The output is a matrix of size: size(data_phys) but containing a 3D vector.
-        This vector is the pixel position of the point in the space of the image.
-        data_phys must be an array of 3 dimensions for which each point contains a vector (physical position of the point).
-
-        If coordi is different from none:
-        coordi is a list of list of size (nb_points * 3) containing the pixel coordinate of points. The function will return a list with the physical coordinates of the points in the space of the image.
-
-
-        :return:
-        """
-
-        m_p2f = self.hdr.get_sform()
-        m_p2f_transfo = m_p2f[0:3, 0:3]
-        m_f2p_transfo = np.linalg.inv(m_p2f_transfo)
-
-        coord_origin = np.array([[m_p2f[0, 3]], [m_p2f[1, 3]], [m_p2f[2, 3]]])
-
-        if coordi is not None:
-            coordi_phys = np.transpose(np.asarray(coordi))
-            coordi_pix = np.transpose(np.dot(m_f2p_transfo, (coordi_phys - coord_origin)))
-            coordi_pix_tmp = coordi_pix.tolist()
-            coordi_pix_list = [[coordi_pix_tmp[j][i] for i in range(len(coordi_pix_tmp[j]))] for j in
-                               range(len(coordi_pix_tmp))]
-
-            return coordi_pix_list
 
     def get_values(self, coordi=None, interpolation_mode=0, border='constant', cval=0.0):
         """
@@ -879,7 +822,7 @@ class Image(object):
         # 1. get transformation
         # 2. apply transformation on coordinates
 
-        coord_im = np.array(self.transfo_phys2continuouspix(physical_coordinates_ref))
+        coord_im = self.transfo_phys2pix(physical_coordinates_ref, real=False)
         interpolated_values = self.get_values(np.array([coord_im[:, 0], coord_im[:, 1], coord_im[:, 2]]), interpolation_mode=interpolation_mode, border=border)
 
         im_output = Image(im_ref)
