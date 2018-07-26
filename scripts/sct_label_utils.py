@@ -572,7 +572,7 @@ class ProcessLabels(object):
             if type is 'discrete':
                 c_p = im_dest.transfo_phys2pix([[c.x, c.y, c.y]])[0]
             elif type is 'continuous':
-                c_p = im_dest.transfo_phys2continuouspix([[c.x, c.y, c.y]])[0]
+                c_p = im_dest.transfo_phys2pix([[c.x, c.y, c.y]], real=False)[0]
             else:
                 raise ValueError("The value of 'type' should either be 'discrete' or 'continuous'.")
             dest_coord.append(CoordinateValue([c_p[0], c_p[1], c_p[2], c.value]))
