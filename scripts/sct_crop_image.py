@@ -74,6 +74,9 @@ class ImageCropper(object):
         """
 
         # create command line
+
+        img_in = Image(self.input_filename)
+
         self.cmd = ["isct_crop_image", "-i", self.input_filename, "-o", self.output_filename]
         # Handling optional arguments
 
@@ -151,10 +154,9 @@ class ImageCropper(object):
                 data_background = data_mask_inv * data_background
             new_data += data_background
 
-        # set image out
-        image_in.absolutepath = self.output_filename
-        image_in.data = new_data
-        image_in.save()
+        image_out = msct_image.empty_like(image_in)
+        image_out.data = new_data
+        image_out.save(self.output_filename)
 
     # shows the gui to crop the image
     def crop_with_gui(self):
