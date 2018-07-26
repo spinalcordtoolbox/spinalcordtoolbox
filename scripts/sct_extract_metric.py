@@ -13,6 +13,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+# TODO: add unit tests: perlevel/perslice, overwrite,
 # TODO: use argparse
 # TODO: revisit the flags normalization and weighted mask-- useful?
 # TODO: move to csv output. However, we need to change the way z is represented: currently it is a list separated by ,. Maybe we can change it for: ;. e.g.: 0;1;2;3
@@ -406,16 +407,17 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
         slices_of_interest = []
         for level in list_levels:
             slices_of_interest.append(get_slices_from_vertebral_levels(im_vertebral_labeling, level))
-        # if users wants to output one metric per level
-        if perlevel:
-            # initialize slicegroups (will be redefined below)
-            slicegroups = []
-            # for each level, find the matching slices and group them
-            for ilevel in list_levels:
-                list_slices = get_slices_from_vertebral_levels(im_vertebral_labeling, ilevel)
-                slicegroups.append(','.join([str(i) for i in list_slices]))
+        # convert to comma-separated list for each level
+        slicegroups = []
+        for group in slices_of_interest:
+            # for each group: [1, 2, 3, 4] --> ['1,2,3,4']
+            # so that slicegroups looks like: ['1,2,3,4','5,6,7,8','9,10,11,12']
+            slicegroups.append([','.join([str(i) for i in group])][0])
+        # if user wants to concatenate all slices of interest into a single slicegroups
+        if not perlevel:
+            slicegroups = [",".join(slicegroups)]
 
-    # loop across slices (if needed)
+    # loop across slicegroups
     for slicegroup in slicegroups:
         try:
             # convert list of strings into list of int to use as index
@@ -599,138 +601,55 @@ def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_la
         # must be None
         display_level = 'Unknown'
 
-    # extract file extension of "fname_output" to know what type of file to output
+    # Note: Because of the pressing issue #1963 and the current refactoring of metric_saving (see PR #1931), a quick-
+    # -and-dirty workaround here is to always save as xsl file, and if user asked for a .txt file, then the .xls will
+    # be converted to a txt.
     output_path, output_file, output_type = sct.extract_fname(fname_output)
-    # if the user chose to output results under a .txt file
-    if output_type == '.txt':
-        # CSV format, header lines start with "#"
+    fname_output_xls = os.path.join(output_path, output_file + '.xls')
 
-        # Write mode of file
-        fid_metric = open(fname_output, 'w')
+    # if the user asked for no overwriting but the specified output file does not exist yet
+    if (not overwrite) and (not os.path.isfile(fname_output)):
+        sct.printv('WARNING: You asked to edit the pre-existing file \"' + fname_output + '\" but this file does not exist. It will be created.', type='warning')
+        overwrite = 1
 
-        # WRITE HEADER:
-        # Write date and time
-        fid_metric.write('# Date - Time: ' + time.strftime('%Y/%m/%d - %H:%M:%S'))
-        # Write metric data file path
-        fid_metric.write('\n' + '# Metric file: ' + os.path.abspath(fname_data))
-        # If it's the case, write the label used to normalize the metric estimation:
+    if not overwrite:
+        from xlrd import open_workbook
+        from xlutils.copy import copy
+
+        existing_book = open_workbook(fname_output_xls)
+
+        # get index of the first empty row and leave one empty row between the two subjects
+        row_index = existing_book.sheet_by_index(0).nrows
+
+        book = copy(existing_book)
+        sh = book.get_sheet(0)
+
+    elif overwrite:
+        from xlwt import Workbook
+
+        book = Workbook()
+        sh = book.add_sheet('Results', cell_overwrite_ok=True)
+
+        # write header line
+        sh.write(0, 0, 'Date - Time')
+        sh.write(0, 1, 'Metric file')
+        sh.write(0, 2, 'Extraction method')
+        sh.write(0, 3, 'Vertebral levels')
+        sh.write(0, 4, 'Slices (z)')
+        sh.write(0, 5, 'ID')
+        sh.write(0, 6, 'Label name')
+        sh.write(0, 7, 'Total fractional volume of the label (in number of voxels)')
+        sh.write(0, 8, 'Metric value')
+        sh.write(0, 9, 'Metric STDEV within label')
         if fname_normalizing_label:
-            fid_metric.write('\n' + '# Label used to normalize the metric estimation slice-by-slice: ' + fname_normalizing_label)
-        # Write method used for the metric estimation
-        fid_metric.write('\n' + '# Extraction method: ' + method)
+            sh.write(0, 10, 'Label used to normalize the metric estimation slice-by-slice')
 
-        # Write selected vertebral levels
-        fid_metric.write('\n# Vertebral levels: ' + display_level)
+        row_index = 1
 
-        # Write selected slices
-        fid_metric.write('\n' + '# Slices (z): ' + slices_of_interest)
-
-        # label headers
-        fid_metric.write('%s' % ('\n' + '# ID, label name, total fractional volume of the label (in number of voxels), metric value, metric stdev within label\n\n'))
-
-        # WRITE RESULTS
-        labels_id_user.sort()
-        section = ''
-        if labels_id_user[0] <= max(indiv_labels_ids):
-            section = '\n# White matter atlas\n'
-        elif labels_id_user[0] > max(indiv_labels_ids):
-            section = '\n# Combined labels\n'
-            fid_metric.write(section)
-        for i_label_user in labels_id_user:
-            # change section if not individual label anymore
-            if i_label_user > max(indiv_labels_ids) and section == '\n# White matter atlas\n':
-                section = '\n# Combined labels\n'
-                fid_metric.write(section)
-            # display result for this label
-            if section == '\n# White matter atlas\n':
-                index = indiv_labels_ids.index(i_label_user)
-                fid_metric.write('%i, %s, %f, %f, %f\n' % (indiv_labels_ids[index], indiv_labels_names[index], indiv_labels_fract_vol[index], indiv_labels_value[index], indiv_labels_std[index]))
-            elif section == '\n# Combined labels\n':
-                index = combined_labels_ids.index(i_label_user)
-                fid_metric.write('%i, %s, %f, %f, %f\n' % (combined_labels_ids[index], combined_labels_names[index], combined_labels_fract_vol[index], combined_labels_value[index], combined_labels_std[index]))
-
-        if fixed_label:
-            fid_metric.write('\n*' + fixed_label[0] + ', ' + fixed_label[1] + ': ' + fixed_label[2] + ' (value fixed by user)')
-
-        # Close file .txt
-        fid_metric.close()
-
-    # if user chose to output results under an Excel file
-    elif output_type == '.xls':
-
-        # if the user asked for no overwriting but the specified output file does not exist yet
-        if (not overwrite) and (not os.path.isfile(fname_output)):
-            sct.printv('WARNING: You asked to edit the pre-existing file \"' + fname_output + '\" but this file does not exist. It will be created.', type='warning')
-            overwrite = 1
-
-        if not overwrite:
-            from xlrd import open_workbook
-            from xlutils.copy import copy
-
-            existing_book = open_workbook(fname_output)
-
-            # get index of the first empty row and leave one empty row between the two subjects
-            row_index = existing_book.sheet_by_index(0).nrows
-
-            book = copy(existing_book)
-            sh = book.get_sheet(0)
-
-        elif overwrite:
-            from xlwt import Workbook
-
-            book = Workbook()
-            sh = book.add_sheet('Results', cell_overwrite_ok=True)
-
-            # write header line
-            sh.write(0, 0, 'Date - Time')
-            sh.write(0, 1, 'Metric file')
-            sh.write(0, 2, 'Extraction method')
-            sh.write(0, 3, 'Vertebral levels')
-            sh.write(0, 4, 'Slices (z)')
-            sh.write(0, 5, 'ID')
-            sh.write(0, 6, 'Label name')
-            sh.write(0, 7, 'Total fractional volume of the label (in number of voxels)')
-            sh.write(0, 8, 'Metric value')
-            sh.write(0, 9, 'Metric STDEV within label')
-            if fname_normalizing_label:
-                sh.write(0, 10, 'Label used to normalize the metric estimation slice-by-slice')
-
-            row_index = 1
-
-        # iterate on user's labels
-        # TODO: this should be done outside of this function
-        for i_label_user in labels_id_user:
-            try:
-                sh.write(row_index, 0, time.strftime('%Y/%m/%d - %H:%M:%S'))
-                sh.write(row_index, 1, os.path.abspath(fname_data))
-                sh.write(row_index, 2, method)
-                sh.write(row_index, 3, display_level)
-                sh.write(row_index, 4, slices_of_interest)
-                if fname_normalizing_label:
-                    sh.write(row_index, 10, fname_normalizing_label)
-
-                # display result for this label
-                if i_label_user <= max(indiv_labels_ids):
-                    index = indiv_labels_ids.index(i_label_user)
-                    sh.write(row_index, 5, indiv_labels_ids[index])
-                    sh.write(row_index, 6, indiv_labels_names[index])
-                    sh.write(row_index, 7, indiv_labels_fract_vol[index])
-                    sh.write(row_index, 8, indiv_labels_value[index])
-                    sh.write(row_index, 9, indiv_labels_std[index])
-                elif i_label_user > max(indiv_labels_ids):
-                    index = combined_labels_ids.index(i_label_user)
-                    sh.write(row_index, 5, combined_labels_ids[index])
-                    sh.write(row_index, 6, combined_labels_names[index])
-                    sh.write(row_index, 7, combined_labels_fract_vol[index])
-                    sh.write(row_index, 8, combined_labels_value[index])
-                    sh.write(row_index, 9, combined_labels_std[index])
-            except TypeError:
-                # out of range. Ignore
-                break
-
-            row_index += 1
-
-        if fixed_label:
+    # iterate on user's labels
+    # TODO: this should be done outside of this function
+    for i_label_user in labels_id_user:
+        try:
             sh.write(row_index, 0, time.strftime('%Y/%m/%d - %H:%M:%S'))
             sh.write(row_index, 1, os.path.abspath(fname_data))
             sh.write(row_index, 2, method)
@@ -739,13 +658,106 @@ def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_la
             if fname_normalizing_label:
                 sh.write(row_index, 10, fname_normalizing_label)
 
-            sh.write(row_index, 5, int(fixed_label[0]))
-            sh.write(row_index, 6, fixed_label[1])
-            sh.write(row_index, 7, 'nan')
-            sh.write(row_index, 8, '*' + fixed_label[2] + ' (value fixed by user)')
-            sh.write(row_index, 9, 'nan')
+            # display result for this label
+            if i_label_user <= max(indiv_labels_ids):
+                index = indiv_labels_ids.index(i_label_user)
+                sh.write(row_index, 5, indiv_labels_ids[index])
+                sh.write(row_index, 6, indiv_labels_names[index])
+                sh.write(row_index, 7, indiv_labels_fract_vol[index])
+                sh.write(row_index, 8, indiv_labels_value[index])
+                sh.write(row_index, 9, indiv_labels_std[index])
+            elif i_label_user > max(indiv_labels_ids):
+                index = combined_labels_ids.index(i_label_user)
+                sh.write(row_index, 5, combined_labels_ids[index])
+                sh.write(row_index, 6, combined_labels_names[index])
+                sh.write(row_index, 7, combined_labels_fract_vol[index])
+                sh.write(row_index, 8, combined_labels_value[index])
+                sh.write(row_index, 9, combined_labels_std[index])
+        except TypeError:
+            # out of range. Ignore
+            break
 
-        book.save(fname_output)
+        row_index += 1
+
+    if fixed_label:
+        sh.write(row_index, 0, time.strftime('%Y/%m/%d - %H:%M:%S'))
+        sh.write(row_index, 1, os.path.abspath(fname_data))
+        sh.write(row_index, 2, method)
+        sh.write(row_index, 3, display_level)
+        sh.write(row_index, 4, slices_of_interest)
+        if fname_normalizing_label:
+            sh.write(row_index, 10, fname_normalizing_label)
+
+        sh.write(row_index, 5, int(fixed_label[0]))
+        sh.write(row_index, 6, fixed_label[1])
+        sh.write(row_index, 7, 'nan')
+        sh.write(row_index, 8, '*' + fixed_label[2] + ' (value fixed by user)')
+        sh.write(row_index, 9, 'nan')
+
+    book.save(fname_output_xls)
+
+    # if the user chose to output results under a .txt file
+    if output_type == '.txt':
+        # simply convert the XLS into TXT (see comment above)
+        import pandas as pd
+        data_xls = pd.read_excel(fname_output_xls, index_col=None)
+        # add "#" to first column element because this is going to be the header
+        columns = data_xls.columns.tolist()
+        columns[0] = "#" + columns[0]
+        data_xls.columns = columns
+        data_xls.to_csv(fname_output, encoding='utf-8', index=False)
+        # # CSV format, header lines start with "#"
+        #
+        # # Write mode of file
+        # fid_metric = open(fname_output, 'w')
+        #
+        # # WRITE HEADER:
+        # # Write date and time
+        # fid_metric.write('# Date - Time: ' + time.strftime('%Y/%m/%d - %H:%M:%S'))
+        # # Write metric data file path
+        # fid_metric.write('\n' + '# Metric file: ' + os.path.abspath(fname_data))
+        # # If it's the case, write the label used to normalize the metric estimation:
+        # if fname_normalizing_label:
+        #     fid_metric.write('\n' + '# Label used to normalize the metric estimation slice-by-slice: ' + fname_normalizing_label)
+        # # Write method used for the metric estimation
+        # fid_metric.write('\n' + '# Extraction method: ' + method)
+        #
+        # # Write selected vertebral levels
+        # fid_metric.write('\n# Vertebral levels: ' + display_level)
+        #
+        # # Write selected slices
+        # fid_metric.write('\n' + '# Slices (z): ' + slices_of_interest)
+        #
+        # # label headers
+        # fid_metric.write('%s' % ('\n' + '# ID, label name, total fractional volume of the label (in number of voxels), metric value, metric stdev within label\n\n'))
+        #
+        # # WRITE RESULTS
+        # labels_id_user.sort()
+        # section = ''
+        # if labels_id_user[0] <= max(indiv_labels_ids):
+        #     section = '\n# White matter atlas\n'
+        # elif labels_id_user[0] > max(indiv_labels_ids):
+        #     section = '\n# Combined labels\n'
+        #     fid_metric.write(section)
+        # for i_label_user in labels_id_user:
+        #     # change section if not individual label anymore
+        #     if i_label_user > max(indiv_labels_ids) and section == '\n# White matter atlas\n':
+        #         section = '\n# Combined labels\n'
+        #         fid_metric.write(section)
+        #     # display result for this label
+        #     if section == '\n# White matter atlas\n':
+        #         index = indiv_labels_ids.index(i_label_user)
+        #         fid_metric.write('%i, %s, %f, %f, %f\n' % (indiv_labels_ids[index], indiv_labels_names[index], indiv_labels_fract_vol[index], indiv_labels_value[index], indiv_labels_std[index]))
+        #     elif section == '\n# Combined labels\n':
+        #         index = combined_labels_ids.index(i_label_user)
+        #         fid_metric.write('%i, %s, %f, %f, %f\n' % (combined_labels_ids[index], combined_labels_names[index], combined_labels_fract_vol[index], combined_labels_value[index], combined_labels_std[index]))
+        #
+        # if fixed_label:
+        #     fid_metric.write('\n*' + fixed_label[0] + ', ' + fixed_label[1] + ': ' + fixed_label[2] + ' (value fixed by user)')
+        #
+        # # Close file .txt
+        # fid_metric.close()
+
 
     # if user chose to output results under a pickle file (variables that can be loaded in a python environment)
     elif output_type == '.pickle':
