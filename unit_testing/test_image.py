@@ -280,14 +280,30 @@ def test_change_orientation(fake_3dimage_sct, fake_3dimage_sct_vis):
         shape = (7,8,9)
         print("Simple image with shape {}".format(shape))
 
-        data = np.ones(shape, order="F")
+        data = np.ones(shape, order="F") * 10
         data[4,4,4] = 4
         data[3,3,3] = 3
-        values = (3,4)
+        data[0,0,0] = 0
+        values = (0,3,4)
 
         im_ref = fake_3dimage_sct_custom(data)
+        im_ref.header.set_xyzt_units("mm", "msec")
+
+        import scipy.linalg
+
+        def rand_rot():
+            q, _ = scipy.linalg.qr(np.random.randn(3, 3))
+            if scipy.linalg.det(q) < 0:
+                q[:, 0] = -q[:, 0]
+            return q
+
         affine = im_ref.header.get_best_affine()
-        affine[0:3,3] = (1000,2000,3000)
+        affine[:3,:3] = rand_rot()
+        affine[3,:3] = 0.0
+        affine[:3,3] = np.random.random((3))
+        affine[3,3] = 1.0
+
+        affine[0,0] *= 2
         im_ref.header.set_sform(affine, code='scanner')
 
         orientations = msct_image.all_refspace_strings()
@@ -318,8 +334,7 @@ def test_change_orientation(fake_3dimage_sct, fake_3dimage_sct_vis):
                     if 0:
                         print("P at src {}".format(pos_src.T))
                         print("P at dst {}".format(pos_dst.T))
-                    assert (pos_src == pos_dst).all()
-
+                    assert np.allclose(pos_src, pos_dst, atol=1e-3)
 
     im_src = fake_3dimage_sct.copy()
     im_src.save(os.path.join(path_tmp, "src.nii"), mutable=True)
@@ -357,7 +372,7 @@ def test_change_orientation(fake_3dimage_sct, fake_3dimage_sct_vis):
     assert im_dst2.orientation == im_src.orientation
     assert im_dst2.data.shape == orient2shape(orientation)
     assert (im_dst2.data == im_src.data).all()
-    assert im_dst2.header == im_src.header
+    assert np.allclose(im_src.header.get_best_affine(), im_dst2.header.get_best_affine())
 
 
     # copy
@@ -383,7 +398,7 @@ def test_change_orientation(fake_3dimage_sct, fake_3dimage_sct_vis):
         assert orientation == dst.orientation
 
 
-def test_change_orientation_nd(fake_4dimage_sct):
+def test_change_nd_orientation(fake_4dimage_sct):
     import sct_image
 
     im_src = fake_4dimage_sct.copy()
@@ -408,9 +423,7 @@ def test_change_orientation_nd(fake_4dimage_sct):
     assert orientation == "LPI"
     assert im_src.header.get_best_affine()[:3,3].tolist() == [0,0,0]
 
-    print("RPI...")
     im_dst = msct_image.change_orientation(im_src, "RPI")
-    print(im_dst.orientation, im_dst.data.shape)
     assert im_dst.orientation == "RPI"
     assert im_dst.data.shape == orient2shape("RPI")
     assert im_dst.header.get_best_affine()[:3,3].tolist() == [2-1,0,0]
