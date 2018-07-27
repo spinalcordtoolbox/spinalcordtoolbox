@@ -1,16 +1,13 @@
 #!/usr/bin/env python
-#############################################################################
+#########################################################################################
 #
-# Image class implementation
+# SCT Image API
 #
-#
-# ---------------------------------------------------------------------------
-# Copyright (c) 2015 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: Augustin Roux, Benjamin De Leener
-# Modified: 2015-02-20
+# ---------------------------------------------------------------------------------------
+# Copyright (c) 2018 Polytechnique Montreal <www.neuro.polymtl.ca>
 #
 # About the license: see the file LICENSE.TXT
-#############################################################################
+#########################################################################################
 
 import sys, io, os, math, itertools, warnings
 
@@ -411,12 +408,10 @@ class Image(object):
         elif isinstance(param, list):
             self.data = np.zeros(param)
             self.hdr = hdr
-            self.absolutepath = absolutepath
         # create a copy of im_ref
         elif isinstance(param, (np.ndarray, np.generic)):
             self.data = param
             self.hdr = hdr
-            self.absolutepath = absolutepath
         else:
             raise TypeError('Image constructor takes at least one argument.')
 
@@ -813,7 +808,7 @@ class Image(object):
         This function interpolates an image by following the grid of a reference image.
         Example of use:
 
-        from msct_image import Image
+        from spinalcordtoolbox.image import Image
         im_input = Image(fname_input)
         im_ref = Image(fname_ref)
         im_input.interpolate_from_image(im_ref, fname_output, interpolation_mode=1)
@@ -1016,7 +1011,7 @@ def change_shape(im_src, shape, im_dst=None):
         im_dst.data = im_src.data.reshape(shape, order="C")
     else:
         # image data may be a view
-        im_dst_data = im_src_data.copy().reshape(shape, order="F")
+        im_dst_data = im_src.data.copy().reshape(shape, order="F")
 
     pair = nibabel.nifti1.Nifti1Pair(im_dst.data, im_dst.hdr.get_best_affine(), im_dst.hdr)
     im_dst.hdr = pair.header
@@ -1131,7 +1126,7 @@ def change_type(im_src, dtype, im_dst=None):
         # check if voxel values are real or integer
         isInteger = True
         if dtype == 'minimize':
-            for vox in self.data.flatten():
+            for vox in im_src.data.flatten():
                 if int(vox) != vox:
                     isInteger = False
                     break

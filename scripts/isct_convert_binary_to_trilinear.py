@@ -20,7 +20,7 @@ import os
 import getopt
 import time
 import sct_utils as sct
-from msct_image import Image
+from spinalcordtoolbox.image import Image
 
 
 class Param:

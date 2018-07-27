@@ -22,7 +22,7 @@ import math
 import sct_utils as sct
 import msct_moco as moco
 from sct_convert import convert
-from msct_image import Image
+from spinalcordtoolbox.image import Image
 from sct_image import split_data, concat_data
 # from sct_average_data_across_dimension import average_data_across_dimension
 from msct_parser import Parser

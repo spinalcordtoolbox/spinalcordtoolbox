@@ -15,8 +15,8 @@ import sys, io, os, time, shutil
 import numpy as np
 
 import sct_utils as sct
-import msct_image
-from msct_image import Image
+import spinalcordtoolbox.image as msct_image
+from spinalcordtoolbox.image import Image
 from msct_parser import Parser
 
 # TODO: display results ==> not only max : with a violin plot of h1 and h2 distribution ? see dev/straightening --> seaborn.violinplot
@@ -409,9 +409,7 @@ def resample_image(fname, suffix='_resampled.nii.gz', binary=False, npx=0.3, npy
     else:
         if orientation != 'RPI':
             fname = sct.add_suffix(fname, "_RPI")
-            im_in = msct_image \
-             .change_orientation(im_in, orientation) \
-             .save(fname)
+            im_in = msct_image.change_orientation(im_in, orientation).save(fname)
 
         sct.printv('Image resolution already ' + str(npx) + 'x' + str(npy) + 'xpz')
         return fname

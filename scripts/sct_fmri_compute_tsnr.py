@@ -17,9 +17,9 @@ import sys
 import numpy as np
 
 import sct_utils as sct
-import msct_image
+import spinalcordtoolbox.image as msct_image
 from msct_parser import Parser
-from msct_image import Image
+from spinalcordtoolbox.image import Image
 
 
 class Param:

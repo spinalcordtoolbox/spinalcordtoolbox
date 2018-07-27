@@ -12,7 +12,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-from msct_image import Image
+from spinalcordtoolbox.image import Image
 from scipy.misc import toimage
 
 import sct_utils as sct

@@ -23,8 +23,8 @@ import pandas as pd
 
 import sct_utils as sct
 from sct_straighten_spinalcord import smooth_centerline
-import msct_image
-from msct_image import Image
+import spinalcordtoolbox.image as msct_image
+from spinalcordtoolbox.image import Image
 from msct_parser import Parser
 import msct_shape
 from msct_types import Centerline
@@ -1151,7 +1151,7 @@ def ellipse_dim(a):
 #=======================================================================================================================
 def edge_detection(f):
 
-    img = Image.open(f)  # grayscale
+    img = Image(f)  # grayscale
     imgdata = np.array(img, dtype = float)
     G = imgdata
     #G = ndi.filters.gaussian_filter(imgdata, sigma)

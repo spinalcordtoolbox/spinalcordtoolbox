@@ -15,8 +15,8 @@ import sys, io, os, math, time, random, shutil
 
 import numpy as np
 
-import msct_image
-from msct_image import Image
+import spinalcordtoolbox.image as msct_image
+from spinalcordtoolbox.image import Image
 from sct_utils import extract_fname, printv, add_suffix
 import sct_utils as sct
 from sct_crop_image import ImageCropper

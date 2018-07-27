@@ -17,7 +17,7 @@ import sys, io, os, shutil
 path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
 
 from msct_parser import Parser
-from msct_image import Image
+from spinalcordtoolbox.image import Image
 from sct_convert import convert
 import sct_utils as sct
 

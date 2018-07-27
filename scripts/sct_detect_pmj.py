@@ -17,8 +17,8 @@ import numpy as np
 from scipy.ndimage.measurements import center_of_mass
 import nibabel as nib
 
-import msct_image
-from msct_image import Image
+import spinalcordtoolbox.image as msct_image
+from spinalcordtoolbox.image import Image
 from msct_parser import Parser
 import sct_utils as sct
 

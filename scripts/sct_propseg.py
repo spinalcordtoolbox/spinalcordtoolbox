@@ -18,8 +18,8 @@ import os, sys
 import numpy as np
 from scipy import ndimage as ndi
 
-import msct_image
-from msct_image import Image
+import spinalcordtoolbox.image as msct_image
+from spinalcordtoolbox.image import Image
 import sct_image
 import sct_utils as sct
 from msct_parser import Parser
@@ -502,7 +502,6 @@ def propseg(img_input, options_dict):
         cmd += ["-alpha", str(arguments["-alpha"])]
 
     # check if input image is in 3D. Otherwise itk image reader will cut the 4D image in 3D volumes and only take the first one.
-    from msct_image import Image
     image_input = Image(fname_data)
     nx, ny, nz, nt, px, py, pz, pt = image_input.dim
     if nt > 1:

@@ -35,7 +35,7 @@ class Param:
 #=======================================================================================================================
 def main(args=None):
     import numpy as np
-    import msct_image
+    import spinalcordtoolbox.image as msct_image
 
     # Initialization
     fname_mt0 = ''
