@@ -36,6 +36,7 @@ import sys, io, os, time, shutil
 
 import sct_utils as sct
 from msct_parser import Parser
+import msct_image
 from msct_image import Image
 
 
@@ -604,11 +605,9 @@ def register(src, dest, paramreg, param, i_step_str):
                     zmax_global = zmax
             # crop images (see issue #293)
             src_crop = sct.add_suffix(src, '_crop')
-            sct.run(['sct_crop_image', '-i', src, '-o', src_crop, '-dim', '2', '-start', str(zmin_global), '-end',
-                     str(zmax_global)], param.verbose)
+            msct_image.spatial_crop(Image(src), dict(((2, (zmin_global, zmax_global)),))).save(src_crop)
             dest_crop = sct.add_suffix(dest, '_crop')
-            sct.run(['sct_crop_image', '-i', dest, '-o', dest_crop, '-dim', '2', '-start', str(zmin_global), '-end',
-                     str(zmax_global)], param.verbose)
+            msct_image.spatial_crop(Image(dest), dict(((2, (zmin_global, zmax_global)),))).save(dest_crop)
             # update variables
             src = src_crop
             dest = dest_crop
