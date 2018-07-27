@@ -591,14 +591,13 @@ def register(src, dest, paramreg, param, i_step_str):
         else:
             # Find the min (and max) z-slice index below which (and above which) slices only have voxels below a given
             # threshold.
-            from msct_image import Image, find_zmin_zmax
             list_fname = [src, dest]
             if not masking == []:
                 list_fname.append(fname_mask)
             zmin_global, zmax_global = 0, 99999  # this is assuming that typical image has less slice than 99999
             for fname in list_fname:
                 im = Image(fname)
-                zmin, zmax = find_zmin_zmax(im, threshold=0.1)
+                zmin, zmax = msct_image.find_zmin_zmax(im, threshold=0.1)
                 if zmin > zmin_global:
                     zmin_global = zmin
                 if zmax < zmax_global:
