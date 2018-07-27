@@ -19,7 +19,7 @@
 import sys, io, os
 
 import numpy as np
-from scipy.ndimage.measurements import center_of_mass
+import scipy.ndimage.measurements
 
 from sct_maths import mutual_information
 from msct_parser import Parser
@@ -29,6 +29,15 @@ from spinalcordtoolbox.metadata import get_file_label
 
 # get path of SCT
 path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
+
+
+def center_of_mass(x):
+    """
+    :return: array center of mass
+    """
+    if (x == 0).all():
+        raise ValueError("Array has no mass")
+    return scipy.ndimage.measurements.center_of_mass(x)
 
 
 # PARAMETERS
@@ -279,22 +288,22 @@ def main(args=None):
         sct.copy(os.path.join(curdir, "warp_straight2curve.nii.gz"), 'warp_straight2curve.nii.gz')
         sct.copy(os.path.join(curdir, "straight_ref.nii.gz"), 'straight_ref.nii.gz')
         # apply straightening
-        sct.run(['sct_apply_transfo', '-i', 'data.nii', '-w', 'warp_curve2straight.nii.gz', '-d', 'straight_ref.nii.gz', '-o', 'data_straight.nii'])
+        s, o = sct.run(['sct_apply_transfo', '-i', 'data.nii', '-w', 'warp_curve2straight.nii.gz', '-d', 'straight_ref.nii.gz', '-o', 'data_straight.nii'])
     else:
         cmd = ['sct_straighten_spinalcord', '-i', 'data.nii', '-s', 'segmentation.nii.gz', '-r', str(remove_temp_files)]
         if param.path_qc is not None and os.environ.get("SCT_RECURSIVE_QC", None) == "1":
             cmd += ['-qc', param.path_qc]
-        sct.run(cmd)
+        s, o = sct.run(cmd)
         sct.cache_save(cachefile, cache_sig)
 
     # resample to 0.5mm isotropic to match template resolution
     sct.printv('\nResample to 0.5mm isotropic...', verbose)
-    sct.run(['sct_resample', '-i', 'data_straight.nii', '-mm', '0.5x0.5x0.5', '-x', 'linear', '-o', 'data_straightr.nii'], verbose=verbose)
+    s, o = sct.run(['sct_resample', '-i', 'data_straight.nii', '-mm', '0.5x0.5x0.5', '-x', 'linear', '-o', 'data_straightr.nii'], verbose=verbose)
 
     # Apply straightening to segmentation
     # N.B. Output is RPI
     sct.printv('\nApply straightening to segmentation...', verbose)
-    sct.run(['sct_apply_transfo', '-i', 'segmentation.nii.gz', '-d', 'data_straightr.nii', '-w', 'warp_curve2straight.nii.gz', '-o', 'segmentation_straight.nii.gz', '-x', 'linear'], verbose)
+    s, o = sct.run(['sct_apply_transfo', '-i', 'segmentation.nii.gz', '-d', 'data_straightr.nii', '-w', 'warp_curve2straight.nii.gz', '-o', 'segmentation_straight.nii.gz', '-x', 'linear'], verbose)
     # Threshold segmentation at 0.5
     sct.run(['sct_maths', '-i', 'segmentation_straight.nii.gz', '-thr', '0.5', '-o', 'segmentation_straight.nii.gz'], verbose)
 
