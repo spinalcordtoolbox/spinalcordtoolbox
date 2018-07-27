@@ -381,6 +381,28 @@ def test_change_orientation(fake_3dimage_sct, fake_3dimage_sct_vis):
     for orientation in possibilities:
         dst = msct_image.change_orientation(im_src, orientation)
         assert orientation == dst.orientation
+
+
+def test_crop(fake_3dimage_sct):
+
+
+    im_src = fake_3dimage_sct.copy()
+
+    crop_spec = dict(((0, (1,3)),(1, (2,4)),(2, (3,5))))
+    print(crop_spec)
+
+    im_dst = msct_image.spatial_crop(im_src, crop_spec)
+
+    print("Check shape")
+    assert im_dst.data.shape == (3,3,3)
+    print("Check world pos")
+    aff_src = im_src.header.get_best_affine()
+    aff_dst = im_dst.header.get_best_affine()
+    pos_src = np.matmul(aff_src, np.array([[1,2,3,1]]).T)
+    pos_dst = np.matmul(aff_dst, np.array([[0,0,0,1]]).T)
+    assert (pos_src == pos_dst).all()
+
+
 def test_change_shape(fake_3dimage_sct):
 
     # Add dimension
