@@ -363,12 +363,12 @@ def main(args=None):
             # if we do not align the vertebral levels, we crop the segmentation from top to bottom
             im_seg_rpi = Image(ftmp_seg_)
             bottom = 0
-            for data in msct_image.Slicer(im_seg_rpi, "IS"):
+            for data in msct_image.SlicerOneAxis(im_seg_rpi, "IS"):
                 if (data != 0).any():
                     break
                 bottom += 1
             top = im_seg_rpi.data.shape[2]
-            for data in msct_image.Slicer(im_seg_rpi, "SI"):
+            for data in msct_image.SlicerOneAxis(im_seg_rpi, "SI"):
                 if (data != 0).any():
                     break
                 top -= 1

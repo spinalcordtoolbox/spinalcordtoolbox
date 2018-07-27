@@ -198,29 +198,110 @@ def decompose_affine_transform(A44):
     return T, Rmat, np.array([sx, sy, sz]), np.array([sxy, sxz, syz])
 
 
+def _get_permutations(im_src_orientation, im_dst_orientation):
+    """
+    :return: list of axes permutations and list of inversions to achive an orientation change
+    """
+
+    opposite_character = {'L': 'R', 'R': 'L', 'A': 'P', 'P': 'A', 'I': 'S', 'S': 'I'}
+
+    perm = [0, 1, 2]
+    inversion = [1, 1, 1]
+    for i, character in enumerate(im_src_orientation):
+        try:
+            perm[i] = im_dst_orientation.index(character)
+        except ValueError:
+            perm[i] = im_dst_orientation.index(opposite_character[character])
+            inversion[i] = -1
+
+    return perm, inversion
+
+
 class Slicer(object):
     """
-    Image(s) slicer utility class.
+    Provides a sliced view onto original image data.
+    Can be used as a sequence.
 
-    Can help getting ranges and slice indices.
-    Can provide slices (being an *iterator*).
+    Notes:
+
+    - The original image data is directly available without copy,
+      which is a nice feature, not a bug! Use .copy() if you need copies...
+
+    Example:
+
+    .. code:: python
+
+       for slice2d in msct_image.SlicerFancy(im3d, "RPI"):
+           print(slice)
+
     """
+    def __init__(self, im, orientation="LPI"):
+        """
+        :param im: image to iterate through
+        :param spec: "from" letters to indicate how to slice the image.
+                     The slices are done on the last letter axis,
+                     and they are defined as the first/second letter.
+        """
 
-    def __new__(cls, arg, axis="IS"):
-        if isinstance(arg, (list, tuple)):
-            return SlicerMany(arg, axis=axis)
-        elif isinstance(arg, Image):
-            return SlicerSingle(arg, axis=axis)
+        if not isinstance(im, Image):
+            raise ValueError("Expecting an image")
+        if not orientation in all_refspace_strings():
+            raise ValueError("Invalid orientation spec")
+
+        # Get a different view on data, as if we were doing a reorientation
+
+        perm, inversion = _get_permutations(im.orientation, orientation)
+
+        # axes inversion (flip)
+        data = im.data[::inversion[0], ::inversion[1], ::inversion[2]]
+
+        # axes manipulations (transpose)
+        if perm == [1, 0, 2]:
+            data = np.swapaxes(data, 0, 1)
+        elif perm == [2, 1, 0]:
+            data = np.swapaxes(data, 0, 2)
+        elif perm == [0, 2, 1]:
+            data = np.swapaxes(data, 1, 2)
+        elif perm == [2, 0, 1]:
+            data = np.swapaxes(data, 0, 2)  # transform [2, 0, 1] to [1, 0, 2]
+            data = np.swapaxes(data, 0, 1)  # transform [1, 0, 2] to [0, 1, 2]
+        elif perm == [1, 2, 0]:
+            data = np.swapaxes(data, 0, 2)  # transform [1, 2, 0] to [0, 2, 1]
+            data = np.swapaxes(data, 1, 2)  # transform [0, 2, 1] to [0, 1, 2]
+        elif perm == [0, 1, 2]:
+            # do nothing
+            pass
         else:
-            raise ValueError()
+            raise NotImplementedError()
 
+        self._data = data
+        self._orientation = orientation
+        self._nb_slices = data.shape[2]
 
-class SlicerSingle(object):
+    def __len__(self):
+       return self._nb_slices
+
+    def __getitem__(self, idx):
+       """
+       :return: an image slice, at slicing index idx
+       :param idx: slicing index (according to the slicing direction)
+       """
+       if not isinstance(idx, int):
+           raise NotImplementedError()
+
+       if idx >= self._nb_slices:
+           raise IndexError("I just have {} slices!".format(self._nb_slices))
+
+       return self._data[:,:,idx]
+
+class SlicerOneAxis(object):
     """
-    Image slicer utility class.
+    Image slicer to use when you don't care about the 2D slice orientation,
+    and don't want to specify them.
+    The slicer will just iterate through the right axis that corresponds to
+    its specification.
 
     Can help getting ranges and slice indices.
-    Can provide slices (being an *iterator*).
     """
 
     def __init__(self, im, axis="IS"):
@@ -250,35 +331,6 @@ class SlicerSingle(object):
         self.axis = axis
         self._slice = lambda idx: tuple([(idx if x in axis else slice(None)) for x in im.orientation])
 
-    def slice(self, idx):
-        """
-        :return: a multi-dimensional slice (what goes in numpy array __getitem__)
-                 at the specified slice index of the slicer.
-        :param idx: slice index
-        """
-        return self._slice(idx)
-
-    def range(self, axis):
-        """
-        :return: a range providing indices for all the slices along the desired axis
-
-        Example: Assuming image is in RPI with 3 z-slices,
-        constructing a Slicer on "IS" (or "SI"),
-        getting a range on "IS" would get [0,1,2],
-        getting a range on "SI" would get [2,1,0].
-
-        Notes:
-
-        - To be used with direct image indexing, not as indexes for Slice[]
-          which are "logical" according to the slicing direction..
-
-        """
-        if axis == self.axis:
-            return range(0, self.nb_slices)
-        if axis == self.axis[::-1]:
-            return range(self.nb_slices-1, -1, -1)
-        raise ValueError()
-
     def __len__(self):
        return self.nb_slices
 
@@ -296,17 +348,7 @@ class SlicerSingle(object):
        if self.direction == -1:
            idx = self.nb_slices - 1 - idx
 
-       return self.im.data[self.slice(idx)]
-
-    def __call__(self):
-        """
-        Slice generator
-
-        Example: [slice for slice in Slicer(im)()]
-        """
-        for idx_slice in self.range(self.axis):
-            yield self.im[self.slice(idx_slice)]
-
+       return self.im.data[self._slice(idx)]
 
 class SlicerMany(object):
     """
@@ -317,29 +359,22 @@ class SlicerMany(object):
 
     Use with great care for now, that it's not very documented.
     """
-    def __init__(self, images, axis="IS"):
+    def __init__(self, images, slicerclass, *args, **kw):
         if len(images) == 0:
             raise ValueError("Don't expect me to work on 0 images!")
 
-        self.slicers = [ Slicer(im, axis=axis) for im in images ]
+        self.slicers = [ slicerclass(im, *args, **kw) for im in images ]
 
-
-        nb_slices = [ x.nb_slices for x in self.slicers ]
+        nb_slices = [ x._nb_slices for x in self.slicers ]
         if len(set(nb_slices)) != 1:
             raise ValueError("All images must have the same number of slices along the slicing axis!")
-        self.nb_slices = nb_slices[0]
+        self._nb_slices = nb_slices[0]
 
     def __len__(self):
-        return self.nb_slices
+        return self._nb_slices
 
     def __getitem__(self, idx):
         return [ x[idx] for x in self.slicers ]
-
-    def range(self, axis):
-        return self.slicer[0].range(axis)
-
-    def slice(self, idx):
-        return self.slicer[0].slice(idx)
 
 
 class Image(object):
@@ -652,30 +687,6 @@ class Image(object):
         return averaged_coordinates
 
 
-    @staticmethod
-    def get_permutation_from_orientations(orientation_in, orientation_out):
-        """
-        This function return the permutation necessary to convert a coordinate/image from orientation_in
-        to orientation_out
-        :param orientation_in: string (ex: AIL)
-        :param orientation_out: string (ex: RPI)
-        :return: two lists: permutation list (int) and inversion list (-1 if need to inverse)
-        """
-        opposite_character = {'L': 'R', 'R': 'L', 'A': 'P', 'P': 'A', 'I': 'S', 'S': 'I'}
-
-        # change the orientation of the image
-        perm = [0, 1, 2]
-        inversion = [1, 1, 1]
-        for i, character in enumerate(orientation_in):
-            try:
-                perm[i] = orientation_out.index(character)
-            except ValueError:
-                perm[i] = orientation_out.index(opposite_character[character])
-                inversion[i] = -1
-
-        return perm, inversion
-
-
     def transfo_pix2phys(self, coordi=None):
         """
         This function returns the physical coordinates of all points of 'coordi'.
@@ -910,18 +921,17 @@ def find_zmin_zmax(im, threshold=0.1):
     :param threshold: threshold to apply before looking for zmin/zmax, typically corresponding to noise level.
     :return: [zmin, zmax]
     """
-    slicer = Slicer(im, axis="IS")
+    slicer = SlicerOneAxis(im, axis="IS")
 
     # Iterate from bottom to top until we find data
-    for zmin in slicer.range("IS"):
-        dataz = im.data[slicer.slice(zmin)]
-        if np.any(dataz > threshold):
+    for zmin in range(0, len(slicer)):
+        if np.any(slicer[zmin] > threshold):
             break
 
     # Conversely from top to bottom
-    for zmax in slicer.range("SI"):
-        dataz = im.data[slicer.slice(zmax)]
-        if np.any(dataz > threshold):
+    for zmax in range(len(slicer)-1, zmin, -1):
+        dataz = slicer[zmax]
+        if np.any(slicer[zmax] > threshold):
             break
 
     return zmin, zmax
@@ -1028,28 +1038,13 @@ def change_orientation(im_src, orientation, im_dst=None, inverse=False):
     else:
         raise NotImplementedError("Don't know how to change orientation for this image")
 
-    opposite_character = {'L': 'R', 'R': 'L', 'A': 'P', 'P': 'A', 'I': 'S', 'S': 'I'}
-
-    im_src_orientation = orientation_string_sct2nib(im_src.orientation)
-    im_dst_orientation = orientation_string_sct2nib(orientation)
+    im_src_orientation = im_src.orientation
+    im_dst_orientation = orientation
     if inverse:
         im_src_orientation, im_dst_orientation = im_dst_orientation, im_src_orientation
 
 
-    def get_permutations(im_src_orientation, im_dst_orientation):
-        # change the orientation of the image
-        perm = [0, 1, 2]
-        inversion = [1, 1, 1]
-        for i, character in enumerate(im_src_orientation):
-            try:
-                perm[i] = im_dst_orientation.index(character)
-            except ValueError:
-                perm[i] = im_dst_orientation.index(opposite_character[character])
-                inversion[i] = -1
-
-        return perm, inversion
-
-    perm, inversion = get_permutations(im_src_orientation, im_dst_orientation)
+    perm, inversion = _get_permutations(im_src_orientation, im_dst_orientation)
 
     if im_dst is None:
         im_dst = im_src.copy()
