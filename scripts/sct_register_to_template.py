@@ -15,7 +15,9 @@
 # TODO: enable vertebral alignment with -ref subject
 
 import sys, os, time
+
 import numpy as np
+
 import sct_utils as sct
 import sct_label_utils
 import sct_convert
@@ -420,7 +422,7 @@ def main(args=None):
 
         # N.B. DO NOT UPDATE VARIABLE ftmp_seg BECAUSE TEMPORARY USED LATER
         # re-define warping field using non-cropped space (to avoid issue #367)
-        sct.run(['sct_concat_transfo', '-w', 'warp_straight2curve.nii.gz', '-d', ftmp_data, '-o', 'warp_straight2curve.nii.gz'])
+        s, o = sct.run(['sct_concat_transfo', '-w', 'warp_straight2curve.nii.gz', '-d', ftmp_data, '-o', 'warp_straight2curve.nii.gz'])
 
         if vertebral_alignment:
             sct.copy('warp_curve2straight.nii.gz', 'warp_curve2straightAffine.nii.gz')
