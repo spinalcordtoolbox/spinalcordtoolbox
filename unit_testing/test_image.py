@@ -151,3 +151,26 @@ def test_slicer(fake_3dimage_sct, fake_3dimage_sct2):
 
     with pytest.raises(ValueError):
         slicer = msct_image.Slicer(1)
+def test_change_shape(fake_3dimage_sct):
+
+    # Add dimension
+    im_src = fake_3dimage_sct
+    shape = tuple(list(im_src.data.shape) + [1])
+    im_dst = msct_image.change_shape(im_src, shape)
+    path_tmp = sct.tmp_create(basename="test_reshape")
+    src_path = os.path.join(path_tmp, "src.nii")
+    dst_path = os.path.join(path_tmp, "dst.nii")
+    im_src.save(src_path)
+    im_dst.save(dst_path)
+    im_src = msct_image.Image(src_path)
+    im_dst = msct_image.Image(dst_path)
+    assert im_dst.data.shape == shape
+
+    data_src = im_src.data
+    data_dst = im_dst.data
+
+    assert (data_dst.reshape(data_src.shape) == data_src).all()
+
+    # Remove dimension
+    im_dst = im_dst.change_shape(im_src.data.shape)
+    assert im_dst.data.shape == im_src.data.shape
