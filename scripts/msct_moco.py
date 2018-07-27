@@ -21,7 +21,7 @@
 import sys, os, glob
 import numpy as np
 import sct_utils as sct
-from msct_image import Image
+from spinalcordtoolbox.image import Image
 from sct_image import split_data
 
 path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))

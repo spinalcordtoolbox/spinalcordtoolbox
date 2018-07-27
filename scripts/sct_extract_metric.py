@@ -30,7 +30,7 @@ from spinalcordtoolbox.utils import parse_num_list
 from spinalcordtoolbox.template import get_slices_from_vertebral_levels, get_vertebral_level_from_slice
 
 import sct_utils as sct
-from msct_image import Image
+from spinalcordtoolbox.image import Image
 from msct_parser import Parser
 
 # get path of the script and the toolbox

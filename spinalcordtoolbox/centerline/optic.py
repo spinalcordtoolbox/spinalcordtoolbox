@@ -6,8 +6,8 @@ import numpy as np
 
 import sct_utils as sct
 import sct_image
-import msct_image
-from msct_image import Image
+from .. import image as msct_image
+from ..image import Image
 
 
 

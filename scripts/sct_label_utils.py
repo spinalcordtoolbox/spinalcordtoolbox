@@ -22,8 +22,8 @@ import numpy as np
 from scipy import ndimage
 
 from msct_parser import Parser
-import msct_image
-from msct_image import Image
+import spinalcordtoolbox.image as msct_image
+from spinalcordtoolbox.image import Image
 from msct_types import CoordinateValue
 import sct_utils as sct
 
@@ -685,7 +685,7 @@ class ProcessLabels(object):
 
         params = base.AnatomicalParams()
         params.vertebraes = labels
-        params.input_file_name = self.image_input.file_name
+        params.input_file_name = self.image_input.absolutepath
         params.output_file_name = self.fname_output
         params.subtitle = self.msg
         output = msct_image.zeros_like(self.image_input)

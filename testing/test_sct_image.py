@@ -14,7 +14,7 @@
 import sys, io, os
 
 import sct_utils as sct
-from msct_image import Image
+from spinalcordtoolbox.image import Image
 import numpy as np
 
 

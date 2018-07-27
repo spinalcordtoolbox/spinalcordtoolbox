@@ -23,7 +23,8 @@ import scipy.ndimage.measurements
 
 from sct_maths import mutual_information
 from msct_parser import Parser
-from msct_image import Image
+import spinalcordtoolbox.image as msct_image
+from spinalcordtoolbox.image import Image
 import sct_utils as sct
 from spinalcordtoolbox.metadata import get_file_label
 

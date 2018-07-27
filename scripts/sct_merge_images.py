@@ -22,7 +22,7 @@ import numpy as np
 from msct_parser import Parser
 import sct_utils as sct
 import sct_apply_transfo
-import msct_image
+import spinalcordtoolbox.image as msct_image
 import sct_maths
 
 

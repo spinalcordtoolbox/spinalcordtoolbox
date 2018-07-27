@@ -37,7 +37,7 @@ import msct_moco as moco
 from sct_dmri_separate_b0_and_dwi import identify_b0
 import importlib
 from sct_convert import convert
-from msct_image import Image
+from spinalcordtoolbox.image import Image
 from sct_image import split_data, concat_data
 from msct_parser import Parser
 

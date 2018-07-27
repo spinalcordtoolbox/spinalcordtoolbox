@@ -25,8 +25,8 @@ import tqdm
 from skimage import measure, filters
 import matplotlib.pyplot as plt
 from itertools import compress
-import msct_image
-from msct_image import Image
+import spinalcordtoolbox.image as msct_image
+from spinalcordtoolbox.image import Image
 from msct_types import Centerline
 from sct_straighten_spinalcord import smooth_centerline
 

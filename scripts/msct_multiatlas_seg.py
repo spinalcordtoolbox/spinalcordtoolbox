@@ -24,7 +24,7 @@ from sklearn import decomposition, manifold
 
 from msct_gmseg_utils import (apply_transfo, average_gm_wm, normalize_slice,
                               pre_processing, register_data)
-from msct_image import Image
+from spinalcordtoolbox.image import Image
 from msct_parser import Parser
 from sct_utils import printv
 import sct_utils as sct
