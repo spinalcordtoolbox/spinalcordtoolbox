@@ -369,7 +369,6 @@ class Image(object):
         # load an image from file
         if isinstance(param, str) or (sys.hexversion < 0x03000000 and isinstance(param, unicode)):
             self.loadFromPath(param, verbose)
-            self.compute_transform_matrix()
         # copy constructor
         elif isinstance(param, type(self)):
             self.copy(param)
@@ -676,10 +675,6 @@ class Image(object):
 
         return perm, inversion
 
-    def compute_transform_matrix(self):
-        m_p2f = self.hdr.get_sform()
-        self.m_p2f_transfo = m_p2f[0:3, 0:3]
-        self.coord_origin = np.array([[m_p2f[0, 3]], [m_p2f[1, 3]], [m_p2f[2, 3]]])
 
     def transfo_pix2phys(self, coordi=None):
         """
