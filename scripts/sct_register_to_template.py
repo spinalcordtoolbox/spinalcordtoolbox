@@ -23,6 +23,7 @@ from spinalcordtoolbox.metadata import get_file_label
 from sct_utils import add_suffix
 from sct_register_multimodal import Paramreg, ParamregMultiStep, register
 from msct_parser import Parser
+import msct_image
 from msct_image import Image, find_zmin_zmax
 from sct_straighten_spinalcord import smooth_centerline
 
@@ -339,6 +340,9 @@ def main(args=None):
         ftmp_data = Image(ftmp_data).change_orientation("RPI", generate_path=True).save().absolutepath
         ftmp_seg = Image(ftmp_seg).change_orientation("RPI", generate_path=True).save().absolutepath
         ftmp_label = Image(ftmp_label).change_orientation("RPI", generate_path=True).save().absolutepath
+
+
+        ftmp_seg_, ftmp_seg = ftmp_seg, add_suffix(ftmp_seg, '_crop')
         if vertebral_alignment:
             # cropping the segmentation based on the label coverage to ensure good registration with vertebral alignment
             # See https://github.com/neuropoly/spinalcordtoolbox/pull/1669 for details
@@ -352,14 +356,22 @@ def main(args=None):
                 cropping_slices[0] = 0
             if cropping_slices[1] > nz:
                 cropping_slices[1] = nz
-            status_crop, output_crop = sct.run(['sct_crop_image', '-i', ftmp_seg, '-o', add_suffix(ftmp_seg, '_crop'), '-dim', '2', '-start', str(cropping_slices[0]), '-end', str(cropping_slices[1])], verbose)
+            msct_image.spatial_crop(Image(ftmp_seg_), dict(((2, np.int32(np.round(cropping_slices))),))).save(ftmp_seg)
         else:
             # if we do not align the vertebral levels, we crop the segmentation from top to bottom
-            status_crop, output_crop = sct.run(['sct_crop_image', '-i', ftmp_seg, '-o', add_suffix(ftmp_seg, '_crop'), '-dim', '2', '-bzmax'], verbose)
-            cropping_slices = output_crop.split('Dimension 2: ')[1].split('\n')[0].split(' ')
+            im_seg_rpi = Image(ftmp_seg_)
+            bottom = 0
+            for data in msct_image.Slicer(im_seg_rpi, "IS"):
+                if (data != 0).any():
+                    break
+                bottom += 1
+            top = im_seg_rpi.data.shape[2]
+            for data in msct_image.Slicer(im_seg_rpi, "SI"):
+                if (data != 0).any():
+                    break
+                top -= 1
 
-        # output: segmentation_rpi_crop.nii.gz
-        ftmp_seg = add_suffix(ftmp_seg, '_crop')
+        msct_image.spatial_crop(im_seg_rpi, dict(((2, (bottom, top)),))).save(ftmp_seg)
 
 
         # straighten segmentation
@@ -455,8 +467,9 @@ def main(args=None):
         for coord in landmark_template:
             points_straight.append(coord.z)
         min_point, max_point = int(round(np.min(points_straight))), int(round(np.max(points_straight)))
-        sct.run('sct_crop_image -i ' + ftmp_seg + ' -start ' + str(min_point) + ' -end ' + str(max_point) + ' -dim 2 -b 0 -o ' + add_suffix(ftmp_seg, '_black'))
-        ftmp_seg = add_suffix(ftmp_seg, '_black')
+        ftmp_seg_, ftmp_seg = ftmp_seg, add_suffix(ftmp_seg, '_black')
+        msct_image.spatial_crop(Image(ftmp_seg_), dict(((2, (min_point,max_point)),))).save(ftmp_seg)
+
         """
         # open segmentation
         im = Image(ftmp_seg)
@@ -470,14 +483,17 @@ def main(args=None):
         # crop template in z-direction (for faster processing)
         # TODO: refactor to use python module instead of doing i/o
         sct.printv('\nCrop data in template space (for faster processing)...', verbose)
-        sct.run(['sct_crop_image', '-i', ftmp_template, '-o', add_suffix(ftmp_template, '_crop'), '-dim', '2', '-start', str(zmin_template), '-end', str(zmax_template)])
-        ftmp_template = add_suffix(ftmp_template, '_crop')
-        sct.run(['sct_crop_image', '-i', ftmp_template_seg, '-o', add_suffix(ftmp_template_seg, '_crop'), '-dim', '2', '-start', str(zmin_template), '-end', str(zmax_template)])
-        ftmp_template_seg = add_suffix(ftmp_template_seg, '_crop')
-        sct.run(['sct_crop_image', '-i', ftmp_data, '-o', add_suffix(ftmp_data, '_crop'), '-dim', '2', '-start', str(zmin_template), '-end', str(zmax_template)])
-        ftmp_data = add_suffix(ftmp_data, '_crop')
-        sct.run(['sct_crop_image', '-i', ftmp_seg, '-o', add_suffix(ftmp_seg, '_crop'), '-dim', '2', '-start', str(zmin_template), '-end', str(zmax_template)])
-        ftmp_seg = add_suffix(ftmp_seg, '_crop')
+        ftmp_template_, ftmp_template = ftmp_template, add_suffix(ftmp_template, '_crop')
+        msct_image.spatial_crop(Image(ftmp_template_), dict(((2, (zmin_template,zmax_template)),))).save(ftmp_template)
+
+        ftmp_template_seg_, ftmp_template_seg = ftmp_template_seg, add_suffix(ftmp_template_seg, '_crop')
+        msct_image.spatial_crop(Image(ftmp_template_seg_), dict(((2, (zmin_template,zmax_template)),))).save(ftmp_template_seg)
+
+        ftmp_data_, ftmp_data = ftmp_data, add_suffix(ftmp_data, '_crop')
+        msct_image.spatial_crop(Image(ftmp_data_), dict(((2, (zmin_template,zmax_template)),))).save(ftmp_data)
+
+        ftmp_seg_, ftmp_seg = ftmp_seg, add_suffix(ftmp_seg, '_crop')
+        msct_image.spatial_crop(Image(ftmp_seg_), dict(((2, (zmin_template,zmax_template)),))).save(ftmp_seg)
 
         # sub-sample in z-direction
         # TODO: refactor to use python module instead of doing i/o
