@@ -2,7 +2,7 @@ import logging
 import os
 import unittest
 
-from scripts import msct_image
+import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.gui import base, centerline, sagittal
 from spinalcordtoolbox.gui.base import InvalidActionWarning
 

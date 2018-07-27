@@ -13,7 +13,7 @@
 # If you are interested into selecting manually some points in an image, you can use the following code.
 
 # from sct_viewer import ClickViewer
-# from msct_image import Image
+# from spinalcordtoolbox.image import Image
 #
 # im_input = Image('my_image.nii.gz')
 #
@@ -51,7 +51,7 @@ from matplotlib.widgets import Slider, Button, RadioButtons
 
 
 from msct_parser import Parser
-from msct_image import Image
+from spinalcordtoolbox.image import Image
 from msct_types import *
 import sct_utils as sct
 

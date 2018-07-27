@@ -11,7 +11,7 @@ import nibabel
 import nibabel.orientations
 
 import sct_utils as sct
-import msct_image
+import spinalcordtoolbox.image as msct_image
 import sct_image
 import sct_apply_transfo
 

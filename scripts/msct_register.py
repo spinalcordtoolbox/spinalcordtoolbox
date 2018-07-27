@@ -24,7 +24,7 @@ from scipy import ndimage
 from scipy.io import loadmat
 from nibabel import load, Nifti1Image, save
 
-from msct_image import Image
+from spinalcordtoolbox.image import Image
 import sct_utils as sct
 from sct_convert import convert
 from sct_register_multimodal import Paramreg

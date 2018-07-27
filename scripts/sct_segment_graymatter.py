@@ -56,8 +56,8 @@ import sct_process_segmentation
 import sct_register_multimodal
 from msct_gmseg_utils import (apply_transfo, average_gm_wm, binarize,
                               normalize_slice, pre_processing, register_data)
-import msct_image
-from msct_image import Image
+import spinalcordtoolbox.image as msct_image
+from spinalcordtoolbox.image import Image
 from msct_multiatlas_seg import Model, Param, ParamData, ParamModel
 from msct_parser import Parser
 import sct_utils as sct

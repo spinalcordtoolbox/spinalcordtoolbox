@@ -22,8 +22,8 @@ from scipy.ndimage import distance_transform_edt
 
 from spinalcordtoolbox.centerline import optic
 import sct_utils as sct
-import msct_image
-from msct_image import Image
+import spinalcordtoolbox.image as msct_image
+from spinalcordtoolbox.image import Image
 from msct_parser import Parser
 
 import spinalcordtoolbox.resample.nipy_resample
