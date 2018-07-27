@@ -733,9 +733,10 @@ class SpinalCordStraightener(object):
                 sct.printv('\nDONE ! Warping field generated: tmp.straight2curve.nii.gz', verbose)
 
             if self.curved2straight:
-                # Apply transformation to input image
                 sct.printv('\nApply transformation to input image...', verbose)
-                sct.run(['sct_apply_transfo', '-i', 'data.nii', '-d', fname_ref, '-o', 'tmp.anat_rigid_warp.nii.gz', '-w', 'tmp.curve2straight.nii.gz', '-x', interpolation_warp], verbose)
+                s, o = sct.run(['sct_apply_transfo', '-i', 'data.nii', '-d', fname_ref, '-o', 'tmp.anat_rigid_warp.nii.gz', '-w', 'tmp.curve2straight.nii.gz', '-x', interpolation_warp], verbose)
+                for line in o.splitlines():
+                    sct.printv("> %s" % line)
 
             if self.accuracy_results:
                 time_accuracy_results = time.time()
@@ -747,6 +748,7 @@ class SpinalCordStraightener(object):
                           output_filename="tmp.centerline_straight.nii.gz", interp="nn",
                           warp="tmp.curve2straight.nii.gz", verbose=verbose).apply()
                 file_centerline_straight = Image('tmp.centerline_straight.nii.gz', verbose=verbose)
+                nx, ny, nz, nt, px, py, pz, pt = file_centerline_straight.dim
                 coordinates_centerline = file_centerline_straight.getNonZeroCoordinates(sorting='z')
                 mean_coord = []
                 for z in range(coordinates_centerline[0].z, coordinates_centerline[-1].z):
