@@ -366,7 +366,7 @@ def compute_length(fname_segmentation, remove_temp_files, output_folder, overwri
 
     # smooth segmentation/centerline
     x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(
-        fname_segmentation_orient, nurbs_pts_number=3000, phys_coordinates=False, all_slices=True, algo_fitting='nurbs', verbose=verbose)
+        im_seg_orient, nurbs_pts_number=3000, phys_coordinates=False, all_slices=True, algo_fitting='nurbs', verbose=verbose)
 
     # average csa across vertebral levels or slices if asked (flag -z or -l)
     if slices or vert_levels:
@@ -631,7 +631,7 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
     # with option -vert). See #1791
     if use_phys_coord:
         # fit centerline, smooth it and return the first derivative (in physical space)
-        x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, nurbs_pts_number=3000, phys_coordinates=True, verbose=verbose, all_slices=False)
+        x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(im_seg, algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, nurbs_pts_number=3000, phys_coordinates=True, verbose=verbose, all_slices=False)
         centerline = Centerline(x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
 
         # average centerline coordinates over slices of the image
