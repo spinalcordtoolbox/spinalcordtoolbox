@@ -63,6 +63,94 @@ def fake_3dimage_sct_custom(data):
 
 
 @pytest.fixture(scope="session")
+def fake_3dimage_vis():
+    """
+    :return: a Nifti1Image (3D) in RAS+ space
+
+    Following characteristics:
+
+    - shape[LR] = 7
+    - shape[PA] = 8
+    - shape[IS] = 9
+
+
+    Visual thing using voxel art...
+
+    """
+    shape = (7,8,9)
+    data = np.zeros(shape, dtype=np.float32, order="F")
+
+    # "L"
+    indices =np.array([
+     (0,1,6),
+     (0,1,5),
+     (0,1,4),
+     (0,1,3),
+     (0,1,2),
+     (0,1,1),
+     (0,2,1),
+     (0,3,1),
+     (0,4,1),
+     (0,5,1),
+     ]).T
+    data[indices[0], indices[1], indices[2]] = 7
+
+    # "P"
+    indices =np.array([
+     (1,0,6),
+     (1,0,5),
+     (1,0,4),
+     (1,0,3),
+     (1,0,2),
+     (1,0,1),
+     (2,0,6),
+     (3,0,5),
+     (3,0,4),
+     (2,0,3),
+     (1,0,2),
+     ]).T
+    data[indices[0], indices[1], indices[2]] = 9
+
+    # "I"
+    indices =np.array([
+     (3,1,0),
+     (2,1,0),
+     (1,1,0),
+     (4,1,0),
+     (5,1,0),
+     (3,1,0),
+     (3,2,0),
+     (3,3,0),
+     (3,4,0),
+     (3,5,0),
+     (3,6,0),
+     (3,7,0),
+     (2,7,0),
+     (1,7,0),
+     (4,7,0),
+     (5,7,0),
+     ]).T
+    data[indices[0], indices[1], indices[2]] = 9
+
+
+    affine = np.eye(4)
+    return nibabel.nifti1.Nifti1Image(data, affine)
+
+
+@pytest.fixture(scope="session")
+def fake_3dimage_sct_vis():
+    """
+    :return: an Image (3D) in RAS+ (aka SCT LPI) space
+    """
+    i = fake_3dimage_vis()
+    img = msct_image.Image(i.get_data(), hdr=i.header,
+     orientation="LPI",
+     dim=i.header.get_data_shape(),
+    )
+    return img
+
+
+@pytest.fixture(scope="session")
 def fake_3dimage():
     """
     :return: a Nifti1Image (3D) in RAS+ space
@@ -350,6 +438,10 @@ def test_change_orientation(fake_3dimage_sct, fake_3dimage_sct_vis):
                         print("P at dst {}".format(pos_dst.T))
                     assert np.allclose(pos_src, pos_dst, atol=1e-3)
 
+def test_more_change_orientation(fake_3dimage_sct, fake_3dimage_sct_vis):
+    path_tmp = sct.tmp_create(basename="test_reorient")
+    path_tmp = "."
+
     im_src = fake_3dimage_sct.copy()
     im_src.save(os.path.join(path_tmp, "src.nii"), mutable=True)
 
@@ -389,6 +481,25 @@ def test_change_orientation(fake_3dimage_sct, fake_3dimage_sct_vis):
     assert np.allclose(im_src.header.get_best_affine(), im_dst2.header.get_best_affine())
 
 
+    #fn = os.path.join(path_tmp, "pouet.nii")
+    im_ref = fake_3dimage_sct.copy()
+    im_src = fake_3dimage_sct.copy()
+    orientation = im_src.orientation
+    im_src.change_orientation("ASR").change_orientation(orientation)
+    assert im_src.orientation == im_ref.orientation
+    assert (im_dst2.data == im_src.data).all()
+    assert np.allclose(im_src.header.get_best_affine(), im_ref.header.get_best_affine())
+
+
+    im_dst2 = msct_image.change_orientation(im_dst, orientation)
+    print(im_dst2.orientation, im_dst2.data.shape)
+    assert im_dst2.orientation == im_src.orientation
+    assert im_dst2.data.shape == orient2shape(orientation)
+    assert (im_dst2.data == im_src.data).all()
+    assert np.allclose(im_src.header.get_best_affine(), im_dst2.header.get_best_affine())
+
+
+
     # copy
     im_dst = im_src.copy().change_orientation("IRP")
     assert im_dst.data.shape == orient2shape("IRP")
@@ -406,10 +517,47 @@ def test_change_orientation(fake_3dimage_sct, fake_3dimage_sct_vis):
     assert img.data.shape == orient2shape("PIR")
     print(img.orientation, img.data.shape)
 
+    # typical pattern
+    img = fake_3dimage_sct_vis.copy()
+    print(img.header.get_best_affine())
+    orientation = img.orientation
+    path_tmp = "."
+    fn = os.path.join(path_tmp, "vis.nii")
+    fn2 = img.save(fn, mutable=True).change_orientation("ALS", generate_path=True).save().absolutepath
+    img = msct_image.Image(fn2)
+    assert img.orientation == "ALS"
+    assert img.data.shape == orient2shape("ALS")
+    print(img.header.get_best_affine())
+
+    fn2 = img.save(fn, mutable=True).change_orientation("RAS", generate_path=True).save().absolutepath
+    img = msct_image.Image(fn2)
+    assert img.orientation == "RAS"
+    assert img.data.shape == orient2shape("RAS")
+    print(img.header.get_best_affine())
+
+
+    fn2 = img.save(fn, mutable=True).change_orientation("RPI", generate_path=True).save().absolutepath
+    img = msct_image.Image(fn2)
+    assert img.orientation == "RPI"
+    assert img.data.shape == orient2shape("RPI")
+    print(img.header.get_best_affine())
+
+    fn2 = img.save(fn, mutable=True).change_orientation("PLI", generate_path=True).save().absolutepath
+    img = msct_image.Image(fn2)
+    assert img.orientation == "PLI"
+    assert img.data.shape == orient2shape("PLI")
+    print(img.header.get_best_affine())
+
+    #print(src.header)
+    possibilities = [ "ASR", "SRA", "RAS", ]
     possibilities = msct_image.all_refspace_strings()
     for orientation in possibilities:
         dst = msct_image.change_orientation(im_src, orientation)
+        #dst.save("pouet-{}.nii".format(dst.orientation))
+        print(orientation, dst.orientation, dst.data.shape, dst.dim)
         assert orientation == dst.orientation
+        #assert dst.data.shape[:] == np.array(dst.dim)[:3]
+        #print(dst.header)
 
 
 def test_change_nd_orientation(fake_4dimage_sct):
@@ -489,3 +637,28 @@ def test_change_shape(fake_3dimage_sct):
 
 
 
+def test_sequences(fake_3dimage_sct):
+    """
+    Test correct behaviour in some Image manipulation sequences
+    """
+
+    img = fake_3dimage_sct.copy()
+
+    path_tmp = sct.tmp_create(basename="test_sequences")
+
+    path_a = os.path.join(path_tmp, 'a.nii')
+    path_b = os.path.join(path_tmp, 'b.nii')
+
+    img.save(path_a)
+    assert img.absolutepath is None
+
+    img.save(path_b, mutable=True)
+    assert img._path is not None
+    assert img.absolutepath is not None
+    assert img.absolutepath == os.path.abspath(path_b)
+
+    img.save(path_a) \
+     .change_orientation("RPI") \
+     .save(path_b, mutable=True)
+    assert img.absolutepath is not None
+    assert img.absolutepath == os.path.abspath(path_b)
