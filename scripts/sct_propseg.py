@@ -16,6 +16,7 @@
 import os, sys
 import numpy as np
 from scipy import ndimage as ndi
+from msct_image import Image
 import sct_image
 from sct_image import orientation, copy_header
 import sct_utils as sct
@@ -356,7 +357,7 @@ def generate_qc(fn_in, fn_seg, args, path_qc):
     )
 
 
-def func_rescale_header(fname_data, rescale_factor):
+def func_rescale_header(fname_data, rescale_factor, verbose=0):
     """
     Rescale the voxel dimension by modifying the NIFTI header qform. Write the output file in a temp folder.
     :param fname_data:
@@ -380,12 +381,15 @@ def func_rescale_header(fname_data, rescale_factor):
     return fname_data_rescaled
 
 
-if __name__ == "__main__":
-    sct.init_sct()
-    parser = get_parser()
-    args = sys.argv[1:]
-    arguments = parser.parse(args)
-    fname_input_data = arguments["-i"]
+
+def propseg(img_input, options_dict):
+    """
+    :param img_input: source image, to be segmented
+    :param options_dict: arguments as dictionary
+    :return: segmented Image
+    """
+    arguments = options_dict
+    fname_input_data = img_input.absolutepath
     fname_data = os.path.abspath(fname_input_data)
     contrast_type = arguments["-c"]
     contrast_type_conversion = {'t1': 't1', 't2': 't2', 't2s': 't2', 'dwi': 't1'}
@@ -412,8 +416,6 @@ if __name__ == "__main__":
     remove_temp_files = 1
     if "-r" in arguments:
         remove_temp_files = int(arguments["-r"])
-
-    path_qc = arguments.get("-qc", None)
 
     verbose = 0
     if "-v" in arguments:
@@ -458,7 +460,7 @@ if __name__ == "__main__":
             use_optic = False
         else:
             if rescale_header is not 1:
-                fname_labels_viewer = func_rescale_header(str(arguments["-init-centerline"]), rescale_header)
+                fname_labels_viewer = func_rescale_header(str(arguments["-init-centerline"]), rescale_header, verbose=verbose)
             else:
                 fname_labels_viewer = str(arguments["-init-centerline"])
             cmd += ["-init-centerline", fname_labels_viewer]
@@ -612,7 +614,24 @@ if __name__ == "__main__":
         im = copy_header(image_input, im)
         im.save(type='int8')  # they are all binary masks hence fine to save as int8
 
+    return Image(fname_seg)
+
+
+def main(arguments):
+    fname_input_data = os.path.abspath(arguments["-i"])
+    img_input = Image(fname_input_data)
+    img_seg = propseg(img_input, arguments)
+    fname_seg = img_seg.absolutepath
+    path_qc = arguments.get("-qc", None)
     if path_qc is not None:
         generate_qc(fname_input_data, fname_seg, args, os.path.abspath(path_qc))
-
     sct.display_viewer_syntax([fname_input_data, fname_seg], colormaps=['gray', 'red'], opacities=['', '0.7'])
+
+
+if __name__ == "__main__":
+    sct.init_sct()
+    parser = get_parser()
+    args = sys.argv[1:]
+    arguments = parser.parse(args)
+    res = main(arguments)
+    raise SystemExit(res)
