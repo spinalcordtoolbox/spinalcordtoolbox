@@ -299,7 +299,7 @@ class SpinalCordStraightener(object):
         try:
             # Change orientation of the input centerline into RPI
             sct.printv("\nOrient centerline to RPI orientation...", verbose)
-            image_centerline = Image("centerline.nii.gz").change_orientation("RPI").save("centerline_rpi.nii.gz")
+            image_centerline = Image("centerline.nii.gz").change_orientation("RPI").save("centerline_rpi.nii.gz", mutable=True)
 
             # Get dimension
             sct.printv('\nGet dimensions...', verbose)
@@ -429,8 +429,7 @@ class SpinalCordStraightener(object):
                 nx, ny, nz, nt, px, py, pz, pt = image_centerline_pad.dim
 
                 fname_ref = 'centerline_ref_rpi.nii.gz'
-                Image('centerline_ref.nii.gz').change_orientation("RPI").save(fname_ref)
-                image_centerline_straight = Image(fname_ref)
+                image_centerline_straight = Image('centerline_ref.nii.gz').change_orientation("RPI").save(fname_ref, mutable=True)
                 nx_s, ny_s, nz_s, nt_s, px_s, py_s, pz_s, pt_s = image_centerline_straight.dim
                 x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('centerline_ref_rpi.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, verbose=verbose, nurbs_pts_number=number_of_points, all_slices=False, phys_coordinates=True, remove_outliers=True)
                 centerline_straight = Centerline(x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
