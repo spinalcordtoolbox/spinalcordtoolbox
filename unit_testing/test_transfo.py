@@ -287,6 +287,98 @@ def test_transfo_exhaustive_wrt_orientations():
     print("Orientations DK: {}".format(" ".join(orientations_dk)))
 
 
+def test_transfo_more_exhaustive_wrt_orientations():
+
+    dir_tmp = "."
+
+    print("Figuring out which orientations work without workaround")
+
+    all_orientations = msct_image.all_refspace_strings()
+
+    orientations_ok = []
+    orientations_ng = []
+    orientations_dk = []
+
+    for orientation_src in all_orientations:
+        for orientation_ref in all_orientations:
+            shift = np.array([1,2,3])
+            shift_wanted = shift.copy()
+            shift[2] *= -1 # ANTs / ITK reference frame is LPS, ours is LPI
+            # (see docs or test_transfo_figure_out_ants_frame_exhaustive())
+
+            print(" Shifting {} in {} ref {}".format(shift_wanted, orientation_src, orientation_ref))
+
+            path_src = "warp2-{}.nii".format(orientation_src)
+            img_src = fake_3dimage_sct().change_orientation(orientation_src).save(path_src)
+
+            path_ref = "warp2-{}.nii".format(orientation_ref)
+            img_ref = fake_3dimage_sct().change_orientation(orientation_ref).save(path_ref)
+
+
+            # Create warping field
+            shape = tuple(list(img_src.data.shape) + [1,3])
+            data = np.zeros(shape, order="F")
+            data[:,:,:,0] = shift
+
+            path_warp = "warp-{}-{}-field.nii".format(orientation_src, orientation_ref)
+            img_warp = fake_image_sct_custom(data)
+            img_warp.header.set_intent('vector', (), '')
+            img_warp.change_orientation(orientation_ref).save(path_warp)
+            #print(" Affine:\n{}".format(img_warp.header.get_best_affine()))
+
+            path_dst = "warp-{}-{}-dst.nii".format(orientation_src, orientation_ref)
+            xform = sct_apply_transfo.Transform(path_src, path_warp, path_ref, path_dst)
+            xform.apply()
+
+            img_src2 = msct_image.Image(path_src)
+            img_dst = msct_image.Image(path_dst)
+
+            assert img_ref.orientation == img_dst.orientation
+            assert img_ref.data.shape == img_dst.data.shape
+
+            dat_src = img_src.data
+            dat_dst = np.array(img_dst.data)
+
+            value = 50505
+            aff_src = img_src.header.get_best_affine()
+            aff_dst = img_dst.header.get_best_affine()
+
+            pt_src = np.argwhere(dat_src == value)[0]
+            try:
+                pt_dst = np.argwhere(dat_dst == value)[0]
+                1/0
+            except:
+                # Work around numerical inaccuracy, that is somehow introduced by ANTs
+                min_ = np.round(np.min(np.abs(dat_dst - value)), 1)
+                pt_dst = np.array(np.unravel_index(np.argmin(np.abs(dat_dst - value)), dat_dst.shape))#, order="F"))
+
+            print(" Point %s -> %s (%s) %s" % (pt_src, pt_dst, dat_dst[tuple(pt_dst)], min_))
+            if min_ != 0:
+                orientations_dk.append((orientation_src, orientation_ref))
+                continue
+
+            pos_src = np.matmul(aff_src, np.hstack((pt_src, [1])).reshape((4,1)))
+            pos_dst = np.matmul(aff_dst, np.hstack((pt_dst, [1])).reshape((4,1)))
+
+            displacement = (pos_dst - pos_src).reshape((-1))[:3]
+            displacement_log = pt_dst - pt_src
+            #print(" Displacement (logical): %s" % (displacement_log))
+            if not np.allclose(displacement, shift_wanted):
+                orientations_ng.append((orientation_src, orientation_ref))
+                print(" \x1B[31;1mDisplacement (physical): %s\x1B[0m" % (displacement))
+            else:
+                orientations_ok.append((orientation_src, orientation_ref))
+                print(" Displacement (physical): %s" % (displacement))
+            print("")
+
+    def ori_str(x):
+        return " ".join(["{}->{}".format(x,y) for (x,y) in x])
+
+    print("Orientations OK: {}".format(ori_str(orientations_ok)))
+    print("Orientations NG: {}".format(ori_str(orientations_ng)))
+    print("Orientations DK: {}".format(ori_str(orientations_dk)))
+
+
 
 def test_transfo_skip_pix2phys():
     # "Recipe" useful if you want to skip pix2phys, which is *not* a good idea
