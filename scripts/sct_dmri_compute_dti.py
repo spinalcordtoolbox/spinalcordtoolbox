@@ -26,13 +26,6 @@ class Param:
 def get_parser():
     param = Param()
 
-    # parser initialisation
-    parser = Parser(__file__)
-
-    # # initialize parameters
-    # param = Param()
-    # param_default = Param()
-
     # Initialize the parser
     parser = Parser(__file__)
     parser.usage.set_description('Compute Diffusion Tensor Images (DTI) using dipy.')
@@ -176,27 +169,6 @@ def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, file_mask):
     nii.save('float32')
 
     return True
-
-
-# # Get bvecs
-# # ==========================================================================================
-# def get_bvecs(fname):
-#     """
-#     Read bvecs file and output array
-#     :param fname: bvecs file
-#     :return: (nx3) array
-#     """
-#     text_file = open(fname, 'r')
-#     list_bvecs = text_file.readlines()
-#     text_file.close()
-#     # parse txt file and transform to array
-#     from numpy import array
-#     bvecs = array([[float(j.strip("\n")) for j in list_bvecs[i].split(" ")] for i in range(len(list_bvecs))])
-#     # make sure one dimension is "3"
-#     if not 3 in bvecs.shape:
-#         sct.printv('ERROR: bvecs should be text file with 3 lines (or columns).', 1, 'error')
-#     return bvecs
-#
 
 
 # START PROGRAM
