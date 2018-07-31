@@ -50,6 +50,12 @@ def get_parser():
                       mandatory=False,
                       default_value='standard',
                       example=['standard', 'restore'])
+    parser.add_option(name="-evecs",
+                      type_value="multiple_choice",
+                      description="""To output tensor eigenvectors, set to 1.""",
+                      mandatory=False,
+                      default_value='0',
+                      example=['0', '1'])
     parser.add_option(name='-m',
                       type_value='file',
                       description='Mask used to compute DTI in for faster processing.',
@@ -87,18 +93,19 @@ def main(args = None):
     fname_bvecs = arguments['-bvec']
     prefix = arguments['-o']
     method = arguments['-method']
+    evecs = bool(arguments['-evecs'])
     if "-m" in arguments:
         file_mask = arguments['-m']
     param.verbose = int(arguments['-v'])
 
     # compute DTI
-    if not compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, file_mask):
+    if not compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, evecs, file_mask):
         sct.printv('ERROR in compute_dti()', 1, 'error')
 
 
 # compute_dti
 # ==========================================================================================
-def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, file_mask):
+def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, evecs, file_mask):
     """
     Compute DTI.
     :param fname_in: input 4d file.
@@ -106,6 +113,7 @@ def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, file_mask):
     :param bvecs: bvecs txt file
     :param prefix: output prefix. Example: "dti_"
     :param method: algo for computing dti
+    :param evecs: bool: output diffusion tensor eigenvectors
     :return: True/False
     """
     # Open file.
@@ -148,25 +156,25 @@ def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, file_mask):
     # Compute metrics
     sct.printv('Computing metrics...', param.verbose)
     # FA
-    from dipy.reconst.dti import fractional_anisotropy
-    nii.data = fractional_anisotropy(tenfit.evals)
+    nii.data = tenfit.fa
     nii.setFileName(prefix + 'FA.nii.gz')
     nii.save('float32')
     # MD
-    from dipy.reconst.dti import mean_diffusivity
-    nii.data = mean_diffusivity(tenfit.evals)
+    nii.data = tenfit.md
     nii.setFileName(prefix + 'MD.nii.gz')
     nii.save('float32')
     # RD
-    from dipy.reconst.dti import radial_diffusivity
-    nii.data = radial_diffusivity(tenfit.evals)
+    nii.data = tenfit.rd
     nii.setFileName(prefix + 'RD.nii.gz')
     nii.save('float32')
     # AD
-    from dipy.reconst.dti import axial_diffusivity
-    nii.data = axial_diffusivity(tenfit.evals)
+    nii.data = tenfit.ad
     nii.setFileName(prefix + 'AD.nii.gz')
     nii.save('float32')
+    # if evecs:
+    from dipy.reconst import dti
+    data_evecs =
+
 
     return True
 
