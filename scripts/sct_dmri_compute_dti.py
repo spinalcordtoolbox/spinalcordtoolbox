@@ -162,7 +162,7 @@ def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, evecs, file_
     if evecs:
         # output 1st (V1), 2nd (V2) and 3rd (V3) eigenvectors as 4d data
         for idim in range(3):
-            nib.save(nib.Nifti1Image(tenfit.evecs[:, :, :, idim], nii.affine), prefix + 'V'+str(idim+1)+'.nii.gz')
+            nib.save(nib.Nifti1Image(tenfit.evecs[:, :, :, :, idim], nii.affine), prefix + 'V'+str(idim+1)+'.nii.gz')
 
     return True
 
