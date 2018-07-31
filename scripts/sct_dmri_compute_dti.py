@@ -11,10 +11,13 @@
 #########################################################################################
 
 import sys
-
 from msct_parser import Parser
 import sct_utils as sct
 import nibabel as nib
+from dipy.io import read_bvals_bvecs
+from dipy.core.gradients import gradient_table
+import dipy.reconst.dti as dti
+
 
 class Param:
     def __init__(self):
@@ -123,9 +126,7 @@ def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, evecs, file_
     sct.printv('data.shape (%d, %d, %d, %d)' % data.shape)
 
     # open bvecs/bvals
-    from dipy.io import read_bvals_bvecs
     bvals, bvecs = read_bvals_bvecs(fname_bvals, fname_bvecs)
-    from dipy.core.gradients import gradient_table
     gtab = gradient_table(bvals, bvecs)
 
     # mask and crop the data. This is a quick way to avoid calculating Tensors on the background of the image.
@@ -137,7 +138,6 @@ def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, evecs, file_
 
     # fit tensor model
     sct.printv('Computing tensor using "' + method + '" method...', param.verbose)
-    import dipy.reconst.dti as dti
     if method == 'standard':
         tenmodel = dti.TensorModel(gtab)
         if file_mask == '':
