@@ -13,7 +13,6 @@
 import sys
 from msct_parser import Parser
 import sct_utils as sct
-import nibabel as nib
 from dipy.io import read_bvals_bvecs
 from dipy.core.gradients import gradient_table
 import dipy.reconst.dti as dti
@@ -119,10 +118,10 @@ def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, evecs, file_
     :param evecs: bool: output diffusion tensor eigenvectors
     :return: True/False
     """
-    # Open file
-    # from msct_image import Image
-    nii = nib.load(fname_in)
-    data = nii.get_data()
+    # Open file.
+    from msct_image import Image
+    nii = Image(fname_in)
+    data = nii.data
     sct.printv('data.shape (%d, %d, %d, %d)' % data.shape)
 
     # open bvecs/bvals
@@ -133,8 +132,8 @@ def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, evecs, file_
     if not file_mask == '':
         sct.printv('Open mask file...', param.verbose)
         # open mask file
-        nii_mask = nib.load(file_mask)
-        mask = nii_mask.get_data()
+        nii_mask = Image(file_mask)
+        mask = nii_mask.data
 
     # fit tensor model
     sct.printv('Computing tensor using "' + method + '" method...', param.verbose)
@@ -155,14 +154,29 @@ def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, evecs, file_
 
     # Compute metrics
     sct.printv('Computing metrics...', param.verbose)
-    nib.save(nib.Nifti1Image(tenfit.fa, nii.affine), prefix + 'FA.nii.gz')
-    nib.save(nib.Nifti1Image(tenfit.md, nii.affine), prefix + 'MD.nii.gz')
-    nib.save(nib.Nifti1Image(tenfit.rd, nii.affine), prefix + 'RD.nii.gz')
-    nib.save(nib.Nifti1Image(tenfit.ad, nii.affine), prefix + 'AD.nii.gz')
+    # FA
+    nii.data = tenfit.fa
+    nii.setFileName(prefix + 'FA.nii.gz')
+    nii.save('float32')
+    # MD
+    nii.data = tenfit.md
+    nii.setFileName(prefix + 'MD.nii.gz')
+    nii.save('float32')
+    # RD
+    nii.data = tenfit.rd
+    nii.setFileName(prefix + 'RD.nii.gz')
+    nii.save('float32')
+    # AD
+    nii.data = tenfit.ad
+    nii.setFileName(prefix + 'AD.nii.gz')
+    nii.save('float32')
     if evecs:
+        data_evecs = tenfit.evecs
         # output 1st (V1), 2nd (V2) and 3rd (V3) eigenvectors as 4d data
         for idim in range(3):
-            nib.save(nib.Nifti1Image(tenfit.evecs[:, :, :, :, idim], nii.affine), prefix + 'V'+str(idim+1)+'.nii.gz')
+            nii.data = data_evecs[:, :, :, :, idim]
+            nii.setFileName(prefix + 'V' + str(idim+1) + '.nii.gz')
+            nii.save('float32')
 
     return True
 
