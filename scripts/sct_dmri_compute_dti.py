@@ -173,8 +173,12 @@ def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, evecs, file_
     nii.save('float32')
     # if evecs:
     from dipy.reconst import dti
-    data_evecs =
-
+    data_evecs = tenfit.evecs
+    # output 1st (V1), 2nd (V2) and 3rd (V3) eigenvectors as 4d data
+    for idim in range(3):
+        nii.data = data_evecs[:, :, :, :, idim]
+        nii.setFileName(prefix + 'V' + str(idim+1) + '.nii.gz')
+        nii.save('float32')
 
     return True
 
