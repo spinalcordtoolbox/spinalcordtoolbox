@@ -116,7 +116,7 @@ def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, evecs, file_
     :param evecs: bool: output diffusion tensor eigenvectors
     :return: True/False
     """
-    # Open file.
+    # Open file
     from msct_image import Image
     nii = Image(fname_in)
     data = nii.data
@@ -171,14 +171,13 @@ def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, evecs, file_
     nii.data = tenfit.ad
     nii.setFileName(prefix + 'AD.nii.gz')
     nii.save('float32')
-    # if evecs:
-    from dipy.reconst import dti
-    data_evecs = tenfit.evecs
-    # output 1st (V1), 2nd (V2) and 3rd (V3) eigenvectors as 4d data
-    for idim in range(3):
-        nii.data = data_evecs[:, :, :, :, idim]
-        nii.setFileName(prefix + 'V' + str(idim+1) + '.nii.gz')
-        nii.save('float32')
+    if evecs:
+        data_evecs = tenfit.evecs
+        # output 1st (V1), 2nd (V2) and 3rd (V3) eigenvectors as 4d data
+        for idim in range(3):
+            nii.data = data_evecs[:, :, :, :, idim]
+            nii.setFileName(prefix + 'V' + str(idim+1) + '.nii.gz')
+            nii.save('float32')
 
     return True
 
