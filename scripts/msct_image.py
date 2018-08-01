@@ -679,19 +679,6 @@ class Image(object):
 
         return perm, inversion
 
-    def get_orientation_3d(self):
-        """Returns the orientation of an image.
-
-        Uses the binary implementation of `get_orientation`. Recommend using
-        `get_orientation` instead and deprecate this function.
-        """
-        status, output = sct.run(["isct_orientation3d", "-i", self.absolutepath, "-get"], 0)
-
-        if status != 0:
-            sct.printv('ERROR in get_orientation.', 1, 'error')
-        orientation = output.split()[-1]
-        return orientation
-
     def change_orientation(self, orientation='RPI', inversion_orient=False):
         """
         This function changes the orientation of the data by swapping the image axis.
@@ -703,7 +690,7 @@ class Image(object):
         opposite_character = {'L': 'R', 'R': 'L', 'A': 'P', 'P': 'A', 'I': 'S', 'S': 'I'}
 
         if self.orientation is None:
-            self.orientation = self.get_orientation_3d()
+            self.orientation = self.get_orientation()
         # get orientation to return at the end of function
         raw_orientation = self.orientation
 
@@ -1099,50 +1086,3 @@ def get_dimension(im_file, verbose=1):
 
     return nx, ny, nz, nt, px, py, pz, pt
 
-
-def change_data_orientation(data, old_orientation='RPI', orientation="RPI"):
-    """
-    This function changes the orientation of a data matrix from a give orientation to another.
-    This function assumes that the user already knows the orientation of the data
-    :param data: data of the image
-    :param old_orientation: Current orientation of the data
-    :param orientation: Desired orientation for the data
-    :return: Data matrix representing the
-    """
-    opposite_character = {'L': 'R', 'R': 'L', 'A': 'P', 'P': 'A', 'I': 'S', 'S': 'I'}
-
-    # change the orientation of the image
-    perm = [0, 1, 2]
-    inversion = [1, 1, 1]
-    for i, character in enumerate(old_orientation):
-        try:
-            perm[i] = orientation.index(character)
-        except ValueError:
-            perm[i] = orientation.index(opposite_character[character])
-            inversion[i] = -1
-
-    # axes inversion
-    data = data[::inversion[0], ::inversion[1], ::inversion[2]]
-
-    # axes manipulations
-    if perm == [1, 0, 2]:
-        data = np.swapaxes(data, 0, 1)
-    elif perm == [2, 1, 0]:
-        data = np.swapaxes(data, 0, 2)
-    elif perm == [0, 2, 1]:
-        data = np.swapaxes(data, 1, 2)
-    elif perm == [2, 1, 0]:
-        data = np.swapaxes(data, 0, 2)
-    elif perm == [2, 0, 1]:
-        data = np.swapaxes(data, 0, 2)  # transform [2, 0, 1] to [1, 0, 2]
-        data = np.swapaxes(data, 0, 1)  # transform [1, 0, 2] to [0, 1, 2]
-    elif perm == [1, 2, 0]:
-        data = np.swapaxes(data, 0, 2)  # transform [1, 2, 0] to [0, 2, 1]
-        data = np.swapaxes(data, 1, 2)  # transform [0, 2, 1] to [0, 1, 2]
-    elif perm == [0, 1, 2]:
-        # do nothing
-        pass
-    else:
-        sct.printv('Error: wrong orientation')
-
-    return data
