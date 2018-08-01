@@ -203,6 +203,8 @@ alt="Fsleyes integration" width="240" height="180" border="10" /></a>
 - [Dostal et al. Analysis of diffusion tensor measurements of the human cervical spinal cord based on semiautomatic segmentation of the white and gray matter. J Magn Reson Imaging 2018](https://www.ncbi.nlm.nih.gov/pubmed/29707834)
 - [Calabrese et al. Postmortem diffusion MRI of the entire human spinal cord at microscopic resolution. Neuroimage Clin. 2018](https://www.ncbi.nlm.nih.gov/pubmed/29876281)
 - [Combès et al. Focal and diffuse cervical spinal cord damage in patients with early relapsing-remitting MS: A multicentre magnetisation transfer ratio study. Multiple Sclerosis Journal. 2018](https://www.ncbi.nlm.nih.gov/m/pubmed/29909771/)
+- [Martin et al. Monitoring for myelopathic progression with multiparametric quantitative MRI. PLoS One. 2018 Apr 17;13(4):e0195733](https://www.ncbi.nlm.nih.gov/pubmed/29664964)
+- [Martin et al. Can microstructural MRI detect subclinical tissue injury in subjects with asymptomatic cervical spinal cord compression? A prospective cohort study. BMJ Open. 2018 Apr 13;8(4):e019809](https://www.ncbi.nlm.nih.gov/pubmed/29654015)
 
 ## Citing spinalcordtoolbox
 
