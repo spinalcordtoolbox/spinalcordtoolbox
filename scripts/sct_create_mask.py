@@ -24,7 +24,6 @@ import nibabel
 from scipy import ndimage
 
 import sct_utils as sct
-from sct_image import get_orientation
 from sct_convert import convert
 from msct_image import Image
 from sct_image import copy_header, concat_data
@@ -109,7 +108,7 @@ def create_mask(param):
     path_tmp = sct.tmp_create(basename="create_mask", verbose=param.verbose)
 
     sct.printv('\nCheck orientation...', param.verbose)
-    orientation_input = get_orientation(Image(param.fname_data))
+    orientation_input = Image(param.fname_data).orientation
     sct.printv('.. ' + orientation_input, param.verbose)
     reorient_coordinates = False
 
@@ -134,7 +133,7 @@ def create_mask(param):
         sct.run(['sct_image', '-i', 'point.nii.gz', '-o', 'point_RPI.nii.gz', '-setorient', 'RPI', '-v', '0'], verbose=False)
     #
     # if method_type == 'centerline':
-    #     orientation_centerline = get_orientation_3d(method_val, filename=True)
+    #     orientation_centerline = Image(method_val).orientation
     #     if not orientation_centerline == 'RPI':
     #         sct.run('sct_image -i ' + method_val + ' -o ' + os.path.join(path_tmp, "centerline.nii.gz") + ' -setorient RPI -v 0', verbose=False)
     #     else:
