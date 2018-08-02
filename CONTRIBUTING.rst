@@ -98,13 +98,7 @@ Filling-out Other Fields
 
   To help assigning reviewers and organizing the Changelog, add labels
   that describe the `category <https://github.com/neuropoly/spinalcordtoolbox/wiki/Label-definition#issue-category>`_
-  and type of the change.
-  A change can have multiple types if it is appropriate but **it can only have one
-  category**.
-
-  `Here <https://github.com/neuropoly/spinalcordtoolbox/pull/1637>`_
-  is an example of PR with proper labels and description.
-
+  and type of issue.
 
 
 More Examples
@@ -476,6 +470,18 @@ Other PR Fields
   If that's the case and you don't know better, add all of these suggestions.
 
   The reviewers will be notified when you add them.
+
+- SCT Core Developers must add **Labels** to issues, external developers
+  should try to add them.
+
+  To help assigning reviewers and organizing the Changelog, add labels
+  that describe the `category <https://github.com/neuropoly/spinalcordtoolbox/wiki/Label-definition#issue-category>`_
+  and type of the change.
+  A change can have multiple types if it is appropriate but **it can only have one
+  category**.
+
+  `Here <https://github.com/neuropoly/spinalcordtoolbox/pull/1637>`_
+  is an example of PR with proper labels and description.
 
 
 After Submitting a PR
