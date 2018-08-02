@@ -681,7 +681,6 @@ def project_labels_on_spinalcord(fname_label, fname_seg):
     im_seg = Image(fname_seg)
     # orient to RPI
     native_orient = im_seg.change_orientation('RPI')
-    im_label.change_orientation('RPI')
     # smooth centerline and return fitted coordinates in voxel space
     centerline_x, centerline_y, centerline_z, centerline_derivx, centerline_derivy, centerline_derivz = smooth_centerline(
         im_seg, algo_fitting="hanning", type_window="hanning", window_length=50, nurbs_pts_number=3000,
