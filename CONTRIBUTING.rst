@@ -410,20 +410,24 @@ for each new release.
 Filling-out the PR Body
 =======================
 
-- If the PR relates to open issue(s) don't forget to indicate that you are
-  fixing them, referring to their number in the PR introduction
-  (eg. “This PR fixes #1234”).
+- If the PR relates to open issue(s):
 
-  If the PR fixes several issues, please write it as follows: “*Fixes
-  #XXXX, Fixes #YYYY, Fixes #ZZZZ*”.
+  - Don't forget to indicate that you are fixing them, referring to their
+    number in the PR introduction (eg. “This PR fixes #1234”).
 
-  That syntax will allow to automatically close all the related
-  issues upon merging.
+    If the PR fixes several issues, please write it as follows:
+    “*Fixes #XXXX, Fixes #YYYY, Fixes #ZZZZ*”.
 
-  If the issue was opened by a non-core developer, you may elect to
-  not use the “fixes #id” syntax to avoid to close the corresponding
-  issue automatically, rather request the reporter to confirm
-  resolution then close.
+    That syntax will allow to automatically close all the related
+    issues upon merging.
+
+    If the issue was opened by a non-core developer, you may elect to
+    not use the “fixes #id” syntax to avoid to close the corresponding
+    issue automatically, rather request the reporter to confirm
+    resolution then close.
+
+  - Review the issue according to our documentation in
+    `When Submitting an Issue`_.
 
 
 - Explain the benefit of merging the PR.
