@@ -670,6 +670,8 @@ def project_labels_on_spinalcord(fname_label, fname_seg):
     """
     Project labels orthogonally on the spinal cord centerline. The algorithm works by finding the smallest distance
     between each label and the spinal cord center of mass.
+    Note that the calculation is done in the physical coordinate system, hence fname_label and fname_seg do not need to
+    be in the same voxel space.
     :param fname_label: file name of labels
     :param fname_seg: file name of cord segmentation (could also be of centerline)
     :return: file name of projected labels
@@ -681,6 +683,7 @@ def project_labels_on_spinalcord(fname_label, fname_seg):
     im_seg = Image(fname_seg)
     # orient to RPI
     native_orient = im_seg.change_orientation('RPI')
+    # im_label.change_orientation('RPI')
     # smooth centerline and return fitted coordinates in voxel space
     centerline_x, centerline_y, centerline_z, centerline_derivx, centerline_derivy, centerline_derivz = smooth_centerline(
         im_seg, algo_fitting="hanning", type_window="hanning", window_length=50, nurbs_pts_number=3000,
