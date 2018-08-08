@@ -377,6 +377,8 @@ def test_change_orientation(fake_3dimage_sct, fake_3dimage_sct_vis):
         im_dst.save("{}-dst.nii".format(fn))
 
 
+    np.random.seed(0)
+
     print("More checking that physical coordinates don't change")
     if 1:
         shape = (7,8,9)
