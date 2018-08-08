@@ -130,12 +130,11 @@ def compute_mtsat_from_file(fname_mt, fname_pd, fname_t1, tr_mt, tr_pd, tr_t1, f
     # by default, output in the same directory as the input images
     sct.printv('Generate output files...', verbose)
     if fname_mtsat is None:
-        fname_mtsat = os.path.join(nii_mt.path, "mtsat.nii.gz")
-    nii_mtsat.setFileName(fname_mtsat)
-    nii_mtsat.save()
+        fname_mtsat = os.path.join(os.path.dirname(nii_mt.absolutepath), "mtsat.nii.gz")
+    nii_mtsat.save(fname_mtsat)
     if fname_t1map is None:
-        fname_t1map = os.path.join(nii_mt.path, "t1map.nii.gz")
-    nii_t1map.setFileName(fname_t1map)
-    nii_t1map.save()
+        fname_t1map = os.path.join(os.path.dirname(nii_mt.absolutepath), "t1map.nii.gz")
+
+    nii_t1map.save(fname_t1map)
 
     return fname_mtsat, fname_t1map
