@@ -62,7 +62,7 @@ def main(args=None):
     parser = get_parser()
     arguments = parser.parse(args)
 
-    param.fname_data = arguments['-i']
+    param.fname_data = os.path.abspath(arguments['-i'])
 
     if '-p' in arguments:
         param.process = arguments['-p']
