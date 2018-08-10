@@ -497,6 +497,17 @@ class Image(object):
 
     def change_shape(self, shape, generate_path=False):
         """
+        Change data shape (in-place)
+
+        :param generate_path: whether to create a derived path name from the
+                              original absolutepath (note: while it will generate
+                              a file suffix, don't expect the suffix but rather
+                              use the Image's absolutepath.
+                              If not set, the absolutepath is voided.
+
+        This is mostly useful for adding/removing a fourth dimension,
+        you probably don't want to use this function.
+
         """
         if shape is not None:
             change_shape(self, shape, self)
@@ -510,9 +521,19 @@ class Image(object):
 
     def change_orientation(self, orientation, inverse=False, generate_path=False):
         """
-        Change orientation on image.
+        Change orientation on image (in-place).
 
-        Note: the image path is voided.
+        :param orientation: orientation string (SCT "from" convention)
+
+        :param inverse: if you think backwards, use this to specify that you actually
+                        want to transform *from* the specified orientation, not *to*
+                        it.
+        :param generate_path: whether to create a derived path name from the
+                              original absolutepath (note: while it will generate
+                              a file suffix, don't expect the suffix but rather
+                              use the Image's absolutepath.
+                              If not set, the absolutepath is voided.
+
         """
         if orientation is not None:
             change_orientation(self, orientation, self, inverse=inverse)
@@ -542,8 +563,13 @@ class Image(object):
         """
         Write an image in a nifti file
 
-        :param type:    if not set, the image is saved in the same type as input data
-                        if 'minimize', image storage space is minimized
+        :param path: Where to save the data, if None it will be taken from the
+                     absolutepath member.
+                     If path is a directory, will save to a file under this directory
+                     with the basename from the absolutepath member.
+
+        :param dtype: if not set, the image is saved in the same type as input data
+                      if 'minimize', image storage space is minimized
                         (2, 'uint8', np.uint8, "NIFTI_TYPE_UINT8"),
                         (4, 'int16', np.int16, "NIFTI_TYPE_INT16"),
                         (8, 'int32', np.int32, "NIFTI_TYPE_INT32"),
@@ -558,6 +584,8 @@ class Image(object):
                         (1536, 'float128', _float128t, "NIFTI_TYPE_FLOAT128"),
                         (1792, 'complex128', np.complex128, "NIFTI_TYPE_COMPLEX128"),
                         (2048, 'complex256', _complex256t, "NIFTI_TYPE_COMPLEX256"),
+
+        :param mutable: whether to update members with newly created path or dtype
         """
 
         if path is None and self.absolutepath is None:
@@ -600,6 +628,7 @@ class Image(object):
 
         if mutable:
             self.absolutepath = path
+            self.data = data
 
         if not os.path.isfile(path):
             raise RuntimeError("Couldn't save {}".format(path))
@@ -1020,8 +1049,12 @@ def change_shape(im_src, shape, im_dst=None):
 def change_orientation(im_src, orientation, im_dst=None, inverse=False):
     """
     :return: an image with changed orientation
+    :param im_src: source image
+    :param orientation: orientation string (SCT "from" convention)
+    :param im_dst: destination image (can be the source image for in-place
+                   operation, can be unset to generate one)
 
-    Note: the resulting image has no path
+    Note: the resulting image has no path member set
     """
 
     if len(im_src.data.shape) == 3:
@@ -1210,12 +1243,35 @@ def to_dtype(dtype):
 
     raise TypeError("data type {}: {} not understood".format(dtype.__class__, dtype))
 
+
 def zeros_like(img, dtype=None):
+    """
+    :return: an Image with the same shape and header, filled with zeros
+    :param img: reference image
+    :param dtype: desired data type (optional)
+
+    Similar to numpy.zeros_like(), the goal of the function is to show the developer's
+    intent and avoid doing a copy, which is slower than initialization with a constant.
+
+    Feel free to improve the implementation ;)
+    """
     dst = change_type(img, dtype)
     dst.data[:] = 0
     return dst
 
+
 def empty_like(img, dtype=None):
+    """
+    :return: an Image with the same shape and header, whose data is uninitialized
+    :param img: reference image
+    :param dtype: desired data type (optional)
+
+    Similar to numpy.empty_like(), the goal of the function is to show the developer's
+    intent and avoid touching the allocated memory, because it will be written to
+    afterwards.
+
+    Feel free to improve the implementation ;)
+    """
     dst = change_type(img, dtype)
     return dst
 
