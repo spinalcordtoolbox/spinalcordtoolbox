@@ -103,8 +103,7 @@ if __name__ == "__main__":
              "-d", reference_image,
              "-w", filename_warp,
              "-o", filename_output])
-            result = Image(filename_output)
-            result.change_orientation()
+            result = Image(filename_output).change_orientation("RPI")
 
             toimage(result.data[int(result.data.shape[0] / 2)].squeeze(), cmin=0.0).save('images/' + extract_fname(filename_output)[1] + '.jpg')
             filenames_output.append(filename_output)

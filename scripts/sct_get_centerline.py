@@ -7,8 +7,8 @@ import shutil
 import sct_utils as sct
 from msct_parser import Parser
 from spinalcordtoolbox.centerline import optic
+import msct_image
 from msct_image import Image
-from sct_image import orientation
 from msct_types import Centerline
 from sct_viewer import ClickViewerPropseg
 from sct_straighten_spinalcord import smooth_centerline
@@ -161,20 +161,15 @@ def run_main():
 
         # make sure image is in SAL orientation, as it is the orientation used by the viewer
         image_input = Image(fname_data)
-        image_input_orientation = orientation(image_input, get=True, verbose=False)
+        image_input_orientation = image_input.orientation
         reoriented_image_filename = sct.add_suffix(file_data + ext_data, "_SAL")
-        cmd_image = ['sct_image', '-i', fname_data, '-o', reoriented_image_filename, '-setorient', 'SAL', '-v', '0']
-        sct.run(cmd_image, verbose=False)
+        image_input.change_orientation("SAL", generate_path=True).save(".")
 
         # extract points manually using the viewer
         fname_points = viewer_centerline(image_fname=reoriented_image_filename, interslice_gap=interslice_gap, verbose=verbose)
 
         if fname_points is not None:
-            image_points_RPI = sct.add_suffix(fname_points, "_RPI")
-            cmd_image = ['sct_image', '-i', fname_points, '-o', image_points_RPI, '-setorient', 'RPI', '-v', '0']
-            sct.run(cmd_image, verbose=False)
-
-            image_input_reoriented = Image(image_points_RPI)
+            image_input_reoriented = Image(fname_points).change_orientation("RPI", generate_path=True).save(".", mutable=True)
 
             # fit centerline, smooth it and return the first derivative (in physical space)
             x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(image_points_RPI, algo_fitting='nurbs', nurbs_pts_number=3000, phys_coordinates=True, verbose=verbose, all_slices=False)
@@ -190,7 +185,7 @@ def run_main():
             z_centerline_voxel = [coord[2] for coord in voxel_coordinates]
 
             # compute z_centerline in image coordinates with continuous precision
-            voxel_coordinates = image_input_reoriented.transfo_phys2continuouspix([[x_centerline_fit_rescorr[i], y_centerline_fit_rescorr[i], z_centerline_rescorr[i]] for i in range(len(z_centerline_rescorr))])
+            voxel_coordinates = image_input_reoriented.transfo_phys2pix([[x_centerline_fit_rescorr[i], y_centerline_fit_rescorr[i], z_centerline_rescorr[i]] for i in range(len(z_centerline_rescorr))], real=False)
             x_centerline_voxel_cont = [coord[0] for coord in voxel_coordinates]
             y_centerline_voxel_cont = [coord[1] for coord in voxel_coordinates]
             z_centerline_voxel_cont = [coord[2] for coord in voxel_coordinates]
@@ -203,13 +198,11 @@ def run_main():
 
             # Write the centerline image
             sct.printv('\nWrite NIFTI volumes...', verbose)
-            fname_centerline_oriented = file_data + '_centerline' + ext_data
-            image_input_reoriented.setFileName(fname_centerline_oriented)
-            image_input_reoriented.changeType('uint8')
-            image_input_reoriented.save()
-
-            sct.printv('\nSet to original orientation...', verbose)
-            sct.run(['sct_image', '-i', fname_centerline_oriented, '-setorient', image_input_orientation, '-o', fname_centerline_oriented], verbose=verbose)
+            fname_centerline_oriented = sct.add_suffix(fname_data, "_centerline")
+            image_input_reoriented \
+             .change_type(np.uint8) \
+             .change_orientation(image_input_orientation) \
+             .save(fname_centerline_oriented)
 
             # create a txt file with the centerline
             fname_centerline_oriented_txt = file_data + '_centerline.txt'

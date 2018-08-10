@@ -16,14 +16,15 @@ from math import pi, sqrt
 
 import numpy as np
 import pandas as pd
+from skimage.measure import label
+
+import msct_image
 from msct_image import Image
 from msct_parser import Parser
 from msct_types import Centerline
-from sct_image import set_orientation
 from sct_straighten_spinalcord import smooth_centerline
 import sct_utils as sct
 from sct_utils import extract_fname, printv, tmp_create
-from skimage.measure import label
 
 
 def get_parser():
@@ -439,15 +440,13 @@ class AnalyzeLeion:
         im = Image(self.fname_mask)
         im_2save = im.copy()
         im_2save.data = label(im.data, connectivity=2)
-        im_2save.setFileName(self.fname_label)
-        im_2save.save()
+        im_2save.save(self.fname_label)
 
         self.measure_pd['label'] = [l for l in np.unique(im_2save.data) if l]
         printv('Lesion count = ' + str(len(self.measure_pd['label'])), self.verbose, 'info')
 
     def _orient(self, fname, orientation):
-        im = Image(fname)
-        im = set_orientation(im, orientation, fname_out=fname)
+        return Image(fname).change_orientation(orientation).save(fname, mutable=True)
 
     def orient2rpi(self):
         # save input image orientation
