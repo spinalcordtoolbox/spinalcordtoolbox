@@ -19,6 +19,8 @@ import sys, io, os, time, functools
 from msct_parser import Parser
 import sct_utils as sct
 import sct_convert
+import sct_image
+import msct_image
 from sct_crop_image import ImageCropper
 
 
@@ -121,16 +123,21 @@ class Transform:
         fname_warp_list_invert = []
         # fname_warp_list = fname_warp_list.replace(' ', '')  # remove spaces
         # fname_warp_list = fname_warp_list.split(",")  # parse with comma
-        for i in range(len(fname_warp_list)):
+        for idx_warp, path_warp in enumerate(fname_warp_list):
             # Check if inverse matrix is specified with '-' at the beginning of file name
-            if fname_warp_list[i].find('-') == 0:
+            if path_warp.startswith("-"):
                 use_inverse.append('-i')
-                fname_warp_list[i] = fname_warp_list[i][1:]  # remove '-'
-                fname_warp_list_invert += [[use_inverse[i], fname_warp_list[i]]]
+                fname_warp_list[idx_warp] = path_warp[1:]  # remove '-'
+                fname_warp_list_invert += [[use_inverse[idx_warp], fname_warp_list[idx_warp]]]
             else:
                 use_inverse.append('')
-                fname_warp_list_invert += [[fname_warp_list[i]]]
-            sct.printv('  Transfo #' + str(i) + ': ' + use_inverse[i] + fname_warp_list[i], verbose)
+                fname_warp_list_invert += [[path_warp]]
+            path_warp = fname_warp_list[idx_warp]
+            if msct_image.Image(fname_warp_list[idx_warp]).header.get_intent()[0] != 'vector':
+                raise ValueError("Displacement field in {} is invalid: should be encoded" \
+                 " in a 5D file with vector intent code" \
+                 " (see https://nifti.nimh.nih.gov/pub/dist/src/niftilib/nifti1.h" \
+                 .format(path_warp))
 
         # need to check if last warping field is an affine transfo
         isLastAffine = False
@@ -159,8 +166,8 @@ class Transform:
 
         # Get dimensions of data
         sct.printv('\nGet dimensions of data...', verbose)
-        from msct_image import Image
-        nx, ny, nz, nt, px, py, pz, pt = Image(fname_src).dim
+        img_src = msct_image.Image(fname_src)
+        nx, ny, nz, nt, px, py, pz, pt = img_src.dim
         # nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_src)
         sct.printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz) + ' x ' + str(nt), verbose)
 
@@ -187,7 +194,7 @@ class Transform:
 
             # convert to nifti into temp folder
             sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
-            sct_convert.convert(fname_src, os.path.join(path_tmp, "data.nii"), squeeze_data=False)
+            img_src.save(os.path.join(path_tmp, "data.nii"))
             sct.copy(fname_dest, os.path.join(path_tmp, file_dest + ext_dest))
             fname_warp_list_tmp = []
             for fname_warp in fname_warp_list:
@@ -201,10 +208,10 @@ class Transform:
 
             # split along T dimension
             sct.printv('\nSplit along T dimension...', verbose)
-            from sct_image import split_data
-            im_dat = Image('data.nii')
+
+            im_dat = msct_image.Image('data.nii')
             im_header = im_dat.hdr
-            data_split_list = split_data(im_dat, 3)
+            data_split_list = sct_image.split_data(im_dat, 3)
             for im in data_split_list:
                 im.save()
 
@@ -225,16 +232,14 @@ class Transform:
 
             # Merge files back
             sct.printv('\nMerge file back...', verbose)
-            from sct_image import concat_data
             import glob
             path_out, name_out, ext_out = sct.extract_fname(fname_out)
             # im_list = [Image(file_name) for file_name in glob.glob('data_reg_T*.nii')]
             # concat_data use to take a list of image in input, now takes a list of file names to open the files one by one (see issue #715)
             fname_list = glob.glob('data_reg_T*.nii')
             fname_list.sort()
-            im_out = concat_data(fname_list, 3, im_header['pixdim'])
-            im_out.setFileName(name_out + ext_out)
-            im_out.save(squeeze_data=False)
+            im_out = sct_image.concat_data(fname_list, 3, im_header['pixdim'])
+            im_out.save(name_out + ext_out)
 
             os.chdir(curdir)
             sct.generate_output_file(os.path.join(path_tmp, name_out + ext_out), fname_out)

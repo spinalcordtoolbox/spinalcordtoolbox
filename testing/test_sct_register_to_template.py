@@ -13,7 +13,8 @@
 import os
 
 from pandas import DataFrame
-from msct_image import Image, compute_dice
+import msct_image
+from msct_image import Image
 import sct_apply_transfo
 
 
@@ -59,7 +60,7 @@ def test_integrity(param_test):
     # compute dice coefficient between template segmentation warped to anat and segmentation from anat
     im_seg = Image(param_test.dict_args_with_path['-s'])
     im_template_seg_reg = Image(os.path.join(param_test.path_output, 'test_template2anat.nii.gz'))
-    dice_template2anat = compute_dice(im_seg, im_template_seg_reg, mode='3d', zboundaries=True)
+    dice_template2anat = msct_image.compute_dice(im_seg, im_template_seg_reg, mode='3d', zboundaries=True)
     # check
     param_test.output += 'Dice[seg,template_seg_reg]: '+str(dice_template2anat)
     if dice_template2anat > param_test.dice_threshold:
@@ -71,7 +72,7 @@ def test_integrity(param_test):
     # compute dice coefficient between anat segmentation warped to template and segmentation from template
     im_seg_reg = Image(os.path.join(param_test.path_output, 'test_anat2template.nii.gz'))
     im_template_seg = Image(param_test.fname_gt)
-    dice_anat2template = compute_dice(im_seg_reg, im_template_seg, mode='3d', zboundaries=True)
+    dice_anat2template = msct_image.compute_dice(im_seg_reg, im_template_seg, mode='3d', zboundaries=True)
     # check
     param_test.output += '\n\nDice[seg_reg,template_seg]: '+str(dice_anat2template)
     if dice_anat2template > param_test.dice_threshold:

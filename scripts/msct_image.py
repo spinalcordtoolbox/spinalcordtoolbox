@@ -12,9 +12,11 @@
 # About the license: see the file LICENSE.TXT
 #############################################################################
 
-import sys, io, os, math
+import sys, io, os, math, itertools, warnings
 
-from nibabel import load, spatialimages
+import nibabel
+import nibabel.orientations
+
 import numpy as np
 from scipy.ndimage import map_coordinates
 
@@ -345,51 +347,89 @@ class Image(object):
 
     """
 
-    def __init__(self, param=None, hdr=None, orientation=None, absolutepath="", dim=None, verbose=1):
+    def __init__(self, param=None, hdr=None, orientation=None, absolutepath=None, dim=None, verbose=1):
         from nibabel import Nifti1Header
 
         # initialization of all parameters
         self.im_file = None
         self.data = None
-        self.orientation = None
-        self.absolutepath = ""
-        self.path = ""
-        self.file_name = ""
+        self._path = None
         self.ext = ""
-        self.dim = None
 
         if hdr is None:
             hdr = self.hdr = Nifti1Header()  # an empty header
         else:
             self.hdr = hdr
 
+        if absolutepath is not None:
+            self._path = os.path.abspath(absolutepath)
+
         self.verbose = verbose
 
         # load an image from file
         if isinstance(param, str) or (sys.hexversion < 0x03000000 and isinstance(param, unicode)):
             self.loadFromPath(param, verbose)
-            self.compute_transform_matrix()
         # copy constructor
         elif isinstance(param, type(self)):
             self.copy(param)
         # create an empty image (full of zero) of dimension [dim]. dim must be [x,y,z] or (x,y,z). No header.
         elif isinstance(param, list):
             self.data = np.zeros(param)
-            self.dim = param
             self.hdr = hdr
-            self.orientation = orientation
             self.absolutepath = absolutepath
-            self.path, self.file_name, self.ext = sct.extract_fname(absolutepath)
         # create a copy of im_ref
         elif isinstance(param, (np.ndarray, np.generic)):
             self.data = param
-            self.dim = dim
             self.hdr = hdr
-            self.orientation = orientation
             self.absolutepath = absolutepath
-            self.path, self.file_name, self.ext = sct.extract_fname(absolutepath)
         else:
             raise TypeError('Image constructor takes at least one argument.')
+
+
+    @property
+    def dim(self):
+        return get_dimension(self)
+
+    @property
+    def orientation(self):
+        return get_orientation(self)
+
+    @property
+    def absolutepath(self):
+        """
+        Storage path (either actual or potential)
+
+        Notes:
+
+        - As several tools perform chdir() it's very important to have absolute paths
+        - When set, if relative:
+
+          - If it already existed, it becomes a new basename in the old dirname
+          - Else, it becomes absolute (shortcut)
+
+        Usually not directly touched (use `Image.save`), but in some cases it's
+        the best way to set it.
+        """
+        return self._path
+
+    @absolutepath.setter
+    def absolutepath(self, value):
+        if value is None:
+            self._path = None
+            return
+        elif not os.path.isabs(value) and self._path is not None:
+            value = os.path.join(os.path.dirname(self._path), value)
+        elif not os.path.isabs(value):
+            value = os.path.abspath(value)
+        self._path = value
+
+    @property
+    def header(self):
+        return self.hdr
+
+    @header.setter
+    def header(self, value):
+        self.hdr = value
 
     def __deepcopy__(self, memo):
         from copy import deepcopy
@@ -400,28 +440,10 @@ class Image(object):
         if image is not None:
             self.im_file = deepcopy(image.im_file)
             self.data = deepcopy(image.data)
-            self.dim = deepcopy(image.dim)
             self.hdr = deepcopy(image.hdr)
-            self.orientation = deepcopy(image.orientation)
-            self.absolutepath = deepcopy(image.absolutepath)
-            self.path, self.file_name, self.ext = sct.extract_fname(self.absolutepath)
+            self._path = deepcopy(image._path)
         else:
             return deepcopy(self)
-
-    def get_orientation(self):
-        from nibabel import orientations
-        orientation_dic = {
-            (0, 1): 'L',
-            (0, -1): 'R',
-            (1, 1): 'P',
-            (1, -1): 'A',
-            (2, 1): 'I',
-            (2, -1): 'S',
-        }
-
-        orientation_matrix = orientations.io_orientation(self.hdr.get_best_affine())
-        ori = "".join([orientation_dic[tuple(i)] for i in orientation_matrix])
-        return ori
 
     def loadFromPath(self, path, verbose):
         """
@@ -431,122 +453,67 @@ class Image(object):
         """
 
         try:
-            self.im_file = load(path)
-        except spatialimages.ImageFileError:
+            self.im_file = nibabel.load(path)
+        except nibabel.spatialimages.ImageFileError:
             sct.printv('Error: make sure ' + path + ' is an image.', 1, 'error')
         self.data = self.im_file.get_data()
         self.hdr = self.im_file.get_header()
-        self.orientation = self.get_orientation()
         self.absolutepath = path
-        self.path, self.file_name, self.ext = sct.extract_fname(path)
-        self.dim = get_dimension(self.im_file)
+        if path != self.absolutepath:
+            sct.log.info("Loaded %s (%s) orientation %s shape %s", path, self.absolutepath, self.orientation, self.data.shape)
+        else:
+            sct.log.info("Loaded %s orientation %s shape %s", path, self.orientation, self.data.shape)
 
-    def setFileName(self, filename):
+
+    def change_shape(self, shape, generate_path=False):
         """
-        :param filename: file name with extension
-        :return:
         """
-        self.absolutepath = filename
-        self.path, self.file_name, self.ext = sct.extract_fname(filename)
+        if shape is not None:
+            change_shape(self, shape, self)
 
-    def changeType(self, type=''):
+        if generate_path and self._path is not None:
+            self._path = sct.add_suffix(self._path, "_shape-{}".format("-".join([str(x) for x in shape])))
+        else:
+            # safe option: remove path to avoid overwrites
+            self._path = None
+        return self
+
+    def change_orientation(self, orientation, inverse=False, generate_path=False):
         """
-        Change the voxel type of the image
-        :param type:    if not set, the image is saved in standard type
-                        if 'minimize', image space is minimize
-                        if 'minimize_int', image space is minimize and values are approximated to integers
-                        (2, 'uint8', np.uint8, "NIFTI_TYPE_UINT8"),
-                        (4, 'int16', np.int16, "NIFTI_TYPE_INT16"),
-                        (8, 'int32', np.int32, "NIFTI_TYPE_INT32"),
-                        (16, 'float32', np.float32, "NIFTI_TYPE_FLOAT32"),
-                        (32, 'complex64', np.complex64, "NIFTI_TYPE_COMPLEX64"),
-                        (64, 'float64', np.float64, "NIFTI_TYPE_FLOAT64"),
-                        (256, 'int8', np.int8, "NIFTI_TYPE_INT8"),
-                        (512, 'uint16', np.uint16, "NIFTI_TYPE_UINT16"),
-                        (768, 'uint32', np.uint32, "NIFTI_TYPE_UINT32"),
-                        (1024,'int64', np.int64, "NIFTI_TYPE_INT64"),
-                        (1280, 'uint64', np.uint64, "NIFTI_TYPE_UINT64"),
-                        (1536, 'float128', _float128t, "NIFTI_TYPE_FLOAT128"),
-                        (1792, 'complex128', np.complex128, "NIFTI_TYPE_COMPLEX128"),
-                        (2048, 'complex256', _complex256t, "NIFTI_TYPE_COMPLEX256"),
-        :return:
+        Change orientation on image.
+
+        Note: the image path is voided.
         """
-        from numpy import iinfo, uint8, uint16, uint32, uint64, int8, int16, int32, int64, float32, float64  # DON'T REMOVE THIS, IT IS MANDATORY FOR EVAL
+        if orientation is not None:
+            change_orientation(self, orientation, self, inverse=inverse)
+        if generate_path and self._path is not None:
+            self._path = sct.add_suffix(self._path, "_{}".format(orientation.lower()))
+        else:
+            # safe option: remove path to avoid overwrites
+            self._path = None
+        return self
 
-        # if not output type specified, use input type
-        if type == '':
-            type = self.hdr.get_data_dtype()
+    def change_type(self, dtype, generate_path=False):
+        """
+        Change data type on image.
 
-        # get min/max from input image
-        min_in = np.nanmin(self.data)
-        max_in = np.nanmax(self.data)
+        Note: the image path is voided.
+        """
+        if dtype is not None:
+            change_type(self, dtype, self)
+        if generate_path and self._path is not None:
+            self._path = sct.add_suffix(self._path, "_{}".format(dtype.name))
+        else:
+            # safe option: remove path to avoid overwrites
+            self._path = None
+        return self
 
-        # find optimum type for the input image
-        if type == 'minimize' or type == 'minimize_int':
-            # warning: does not take intensity resolution into account, neither complex voxels
-
-            # check if voxel values are real or integer
-            isInteger = True
-            if type == 'minimize':
-                for vox in self.data.flatten():
-                    if int(vox) != vox:
-                        isInteger = False
-                        break
-
-            if isInteger:
-                if min_in >= 0:  # unsigned
-                    if max_in <= np.iinfo(np.uint8).max:
-                        type = 'uint8'
-                    elif max_in <= np.iinfo(np.uint16):
-                        type = 'uint16'
-                    elif max_in <= np.iinfo(np.uint32).max:
-                        type = 'uint32'
-                    elif max_in <= np.iinfo(np.uint64).max:
-                        type = 'uint64'
-                    else:
-                        raise ValueError("Maximum value of the image is to big to be represented.")
-                else:
-                    if max_in <= np.iinfo(np.int8).max and min_in >= np.iinfo(np.int8).min:
-                        type = 'int8'
-                    elif max_in <= np.iinfo(np.int16).max and min_in >= np.iinfo(np.int16).min:
-                        type = 'int16'
-                    elif max_in <= np.iinfo(np.int32).max and min_in >= np.iinfo(np.int32).min:
-                        type = 'int32'
-                    elif max_in <= np.iinfo(np.int64).max and min_in >= np.iinfo(np.int64).min:
-                        type = 'int64'
-                    else:
-                        raise ValueError("Maximum value of the image is to big to be represented.")
-            else:
-                # if max_in <= np.finfo(np.float16).max and min_in >= np.finfo(np.float16).min:
-                #    type = 'np.float16' # not supported by nibabel
-                if max_in <= np.finfo(np.float32).max and min_in >= np.finfo(np.float32).min:
-                    type = 'float32'
-                elif max_in <= np.finfo(np.float64).max and min_in >= np.finfo(np.float64).min:
-                    type = 'float64'
-
-        # if output type is int, check if it needs intensity rescaling
-        elif 'int' in type:
-            # get min/max from output type
-            min_out = iinfo(type).min
-            max_out = iinfo(type).max
-            # before rescaling, check if there would be an intensity overflow
-
-            if (min_in < min_out) or (max_in > max_out):  # This condition is important for binary images since we do not want to scale them 
-                sct.printv('WARNING: To avoid intensity overflow due to convertion to '+type+', intensity will be rescaled to the maximum quantization scale.', 1, 'warning')
-                # rescale intensity
-                data_rescaled = self.data * (max_out - min_out) / (max_in - min_in)
-                self.data = data_rescaled - ( data_rescaled.min() - min_out )
-
-        # change type of data in both numpy array and nifti header
-        type_build = eval(type)
-        self.data = type_build(self.data)
-        self.hdr.set_data_dtype(type)
-
-    def save(self, type='', squeeze_data=True, verbose=1):
+    def save(self, path=None, dtype=None, verbose=1, mutable=False):
         """
         Write an image in a nifti file
+
         :param type:    if not set, the image is saved in the same type as input data
-                        if 'minimize', image space is minimize
+                        if 'minimize', image storage space is minimized
                         (2, 'uint8', np.uint8, "NIFTI_TYPE_UINT8"),
                         (4, 'int16', np.int16, "NIFTI_TYPE_INT16"),
                         (8, 'int32', np.int32, "NIFTI_TYPE_INT32"),
@@ -562,23 +529,52 @@ class Image(object):
                         (1792, 'complex128', np.complex128, "NIFTI_TYPE_COMPLEX128"),
                         (2048, 'complex256', _complex256t, "NIFTI_TYPE_COMPLEX256"),
         """
-        from nibabel import Nifti1Image, save
-        from os import path, remove
-        if squeeze_data:
-            # remove singleton
-            self.data = np.squeeze(self.data)
-        if type != '':
-            self.changeType(type)
+
+        if path is None and self.absolutepath is None:
+            raise RuntimeError("Don't know where to save the image (no absolutepath or path parameter)")
+        elif path is not None and os.path.isdir(path) and self.absolutepath is not None:
+            # Save to destination directory with original basename
+            path = os.path.join(path, os.path.basename(self.absolutepath))
+
+        path = path or self.absolutepath
+
+        from nibabel import Nifti1Image
+
+        if dtype is not None:
+            dst = self.copy()
+            dst.change_type(dtype)
+            data = dst.data
+        else:
+            data = self.data
+
         # update header
-        if self.hdr:
-            self.hdr.set_data_shape(self.data.shape)
-        img = Nifti1Image(self.data, None, self.hdr)
-        fname_out = os.path.join(self.path, self.file_name + self.ext)
-        if path.isfile(fname_out):
-            sct.printv('WARNING: File ' + fname_out + ' already exists. Deleting it.', verbose, 'warning')
-            remove(fname_out)
+        hdr = self.hdr.copy() if self.hdr else None
+        if hdr:
+            hdr.set_data_shape(data.shape)
+
+        # nb. that copy() is important because if it were a memory map, save()
+        # would corrupt it
+        img = Nifti1Image(data.copy(), None, hdr)
+        if os.path.isfile(path):
+            sct.printv('WARNING: File ' + path + ' already exists. Will overwrite it.', verbose, 'warning')
+
         # save file
-        save(img, fname_out)
+        if os.path.isabs(path):
+            sct.log.info("Saving image to %s orientation %s shape %s",
+             path, self.orientation, data.shape)
+        else:
+            sct.log.info("Saving image to %s (%s) orientation %s shape %s",
+             path, os.path.abspath(path), self.orientation, data.shape)
+
+        nibabel.save(img, path)
+
+        if mutable:
+            self.absolutepath = path
+
+        if not os.path.isfile(path):
+            raise RuntimeError("Couldn't save {}".format(path))
+
+        return self
 
     def getNonZeroCoordinates(self, sorting=None, reverse_coord=False, coordValue=False):
         """
@@ -679,77 +675,13 @@ class Image(object):
 
         return perm, inversion
 
-    def change_orientation(self, orientation='RPI', inversion_orient=False):
-        """
-        This function changes the orientation of the data by swapping the image axis.
-        Warning: the nifti image header is not changed!!!
-        :param orientation: string of three character representing the new orientation (ex: AIL, default: RPI)
-               inversion_orient: boolean. If True, the data change to match the orientation in the header, based on the orientation provided as the argument orientation.
-        :return: native orientation
-        """
-        opposite_character = {'L': 'R', 'R': 'L', 'A': 'P', 'P': 'A', 'I': 'S', 'S': 'I'}
-
-        if self.orientation is None:
-            self.orientation = self.get_orientation()
-        # get orientation to return at the end of function
-        raw_orientation = self.orientation
-
-        if inversion_orient:
-            temp_orientation = self.orientation
-            self.orientation = orientation
-            orientation = temp_orientation
-
-        perm, inversion = self.get_permutation_from_orientations(self.orientation, orientation)
-
-        # axes inversion
-        self.data = self.data[::inversion[0], ::inversion[1], ::inversion[2]]
-
-        # axes manipulations
-        if perm == [1, 0, 2]:
-            self.data = np.swapaxes(self.data, 0, 1)
-        elif perm == [2, 1, 0]:
-            self.data = np.swapaxes(self.data, 0, 2)
-        elif perm == [0, 2, 1]:
-            self.data = np.swapaxes(self.data, 1, 2)
-        elif perm == [2, 0, 1]:
-            self.data = np.swapaxes(self.data, 0, 2)  # transform [2, 0, 1] to [1, 0, 2]
-            self.data = np.swapaxes(self.data, 0, 1)  # transform [1, 0, 2] to [0, 1, 2]
-        elif perm == [1, 2, 0]:
-            self.data = np.swapaxes(self.data, 0, 2)  # transform [1, 2, 0] to [0, 2, 1]
-            self.data = np.swapaxes(self.data, 1, 2)  # transform [0, 2, 1] to [0, 1, 2]
-        elif perm == [0, 1, 2]:
-            # do nothing
-            pass
-        else:
-            sct.printv('Error: wrong orientation')
-        # update dim
-        # http://math.stackexchange.com/questions/122916/what-is-the-inverse-cycle-of-permutation
-        # TODO: change permutations
-        # a = np.array([0,1,2,3,4])
-        # perm = [4,1,2,0,3]
-        # a[perm].tolist() --> [4, 1, 2, 0, 3]
-        dim_temp = list(self.dim)
-        dim_temp[0] = self.dim[[i for i, x in enumerate(perm) if x == 0][0]]  # nx
-        dim_temp[1] = self.dim[[i for i, x in enumerate(perm) if x == 1][0]]  # ny
-        dim_temp[2] = self.dim[[i for i, x in enumerate(perm) if x == 2][0]]  # nz
-        dim_temp[4] = self.dim[[i for i, x in enumerate(perm) if x == 0][0] + 4]  # px
-        dim_temp[5] = self.dim[[i for i, x in enumerate(perm) if x == 1][0] + 4]  # py
-        dim_temp[6] = self.dim[[i for i, x in enumerate(perm) if x == 2][0] + 4]  # pz
-        self.dim = tuple(dim_temp)
-        # update orientation
-        self.orientation = orientation
-        return raw_orientation
-
-    def compute_transform_matrix(self):
-        m_p2f = self.hdr.get_sform()
-        self.m_p2f_transfo = m_p2f[0:3, 0:3]
-        self.coord_origin = np.array([[m_p2f[0, 3]], [m_p2f[1, 3]], [m_p2f[2, 3]]])
 
     def transfo_pix2phys(self, coordi=None):
         """
-        This function returns the physical coordinates of all points of 'coordi'. 'coordi' is a list of list of size
-        (nb_points * 3) containing the pixel coordinate of points. The function will return a list with the physical
-        coordinates of the points in the space of the image.
+        This function returns the physical coordinates of all points of 'coordi'.
+
+        :param coordi: sequence of (nb_points x 3) values containing the pixel coordinate of points.
+        :return: sequence with the physical coordinates of the points in the space of the image.
 
         Example:
         img = Image('file.nii.gz')
@@ -757,96 +689,38 @@ class Image(object):
         coordi_pix = [[1,1,1],[2,2,2],[4,4,4]]   # for points: (1,1,1), (2,2,2) and (4,4,4)
         coordi_phys = img.transfo_pix2phys(coordi=coordi_pix)
 
-        :return:
         """
 
-        m_p2f = self.hdr.get_sform()
-        m_p2f_transfo = m_p2f[0:3, 0:3]
-        coord_origin = np.array([[m_p2f[0, 3]], [m_p2f[1, 3]], [m_p2f[2, 3]]])
+        m_p2f = self.hdr.get_best_affine()
+        aug = np.hstack((np.asarray(coordi), np.ones((len(coordi), 1))))
+        ret = np.empty_like(coordi, dtype=np.float64)
+        for idx_coord, coord in enumerate(aug):
+            phys = np.matmul(m_p2f, coord)
+            ret[idx_coord] = phys[:3]
+        return ret
 
-        if coordi is not None:
-            coordi = np.asarray(coordi)
-            number_of_coordinates = coordi.shape[0]
-            num_c = 100000
-            result_temp = np.empty(shape=(0, 3))
 
-            for i in range(int(number_of_coordinates / num_c)):
-                coordi_temp = coordi[num_c * i:(i + 1) * num_c, :]
-                coordi_pix = np.transpose(coordi_temp)
-                dot_result = np.dot(m_p2f_transfo, coordi_pix)
-                coordi_phys = np.transpose(coord_origin + dot_result)
-                result_temp = np.concatenate((result_temp, coordi_phys), axis=0)
-
-            if int(number_of_coordinates / num_c) == 0:
-                coordi_temp = coordi
-            else:
-                coordi_temp = coordi[int(number_of_coordinates / num_c) * num_c:, :]
-            coordi_pix = np.transpose(coordi_temp)
-            coordi_phys = np.transpose(coord_origin + np.dot(m_p2f_transfo, coordi_pix))
-
-            coordi_phys = np.concatenate((result_temp, coordi_phys), axis=0)
-            coordi_phys_list = coordi_phys.tolist()
-            # sct.printv(coordi_phys.shape)
-
-            return coordi_phys_list
-        """
-        if coordi != None:
-            coordi_phys = transpose(self.coord_origin + dot(self.m_p2f_transfo, transpose(asarray(coordi))))
-            return coordi_phys.tolist()
-        else:
-            return None
-        """
-        return np.transpose(self.coord_origin + np.dot(self.m_p2f_transfo, np.transpose(np.asarray(coordi))))
-
-    def transfo_phys2pix(self, coordi):
+    def transfo_phys2pix(self, coordi, real=True):
         """
         This function returns the pixels coordinates of all points of 'coordi'
-        'coordi' is a list of list of size (nb_points * 3) containing the pixel coordinate of points. The function will return a list with the physical coordinates of the points in the space of the image.
 
-
-        :return:
+        :param coordi: sequence of (nb_points x 3) values containing the pixel coordinate of points.
+        :param real: whether to return real pixel coordinates
+        :return: sequence with the physical coordinates of the points in the space of the image.
         """
 
-        m_p2f = self.hdr.get_sform()
-        m_p2f_transfo = m_p2f[0:3, 0:3]
-        m_f2p_transfo = np.linalg.inv(m_p2f_transfo)
+        m_p2f = self.hdr.get_best_affine()
+        m_f2p = np.linalg.inv(m_p2f)
+        aug = np.hstack((np.asarray(coordi), np.ones((len(coordi), 1))))
+        ret = np.empty_like(coordi, dtype=np.float64)
+        for idx_coord, coord in enumerate(aug):
+            phys = np.matmul(m_f2p, coord)
+            ret[idx_coord] = phys[:3]
+        if real:
+            return np.int32(np.round(ret))
+        else:
+            return ret
 
-        coord_origin = np.array([[m_p2f[0, 3]], [m_p2f[1, 3]], [m_p2f[2, 3]]])
-
-        coordi_phys = np.transpose(np.asarray(coordi))
-        coordi_pix = np.transpose(np.dot(m_f2p_transfo, (coordi_phys - coord_origin)))
-        coordi_pix_tmp = coordi_pix.tolist()
-        coordi_pix_list = [[int(np.round(coordi_pix_tmp[j][i])) for i in range(len(coordi_pix_tmp[j]))] for j in range(len(coordi_pix_tmp))]
-
-        return coordi_pix_list
-
-    def transfo_phys2continuouspix(self, coordi=None, data_phys=None):
-        """
-        This function returns the pixels coordinates of all points of data_pix in the space of the image. The output is a matrix of size: size(data_phys) but containing a 3D vector.
-        This vector is the pixel position of the point in the space of the image.
-        data_phys must be an array of 3 dimensions for which each point contains a vector (physical position of the point).
-
-        If coordi is different from none:
-        coordi is a list of list of size (nb_points * 3) containing the pixel coordinate of points. The function will return a list with the physical coordinates of the points in the space of the image.
-
-
-        :return:
-        """
-
-        m_p2f = self.hdr.get_sform()
-        m_p2f_transfo = m_p2f[0:3, 0:3]
-        m_f2p_transfo = np.linalg.inv(m_p2f_transfo)
-
-        coord_origin = np.array([[m_p2f[0, 3]], [m_p2f[1, 3]], [m_p2f[2, 3]]])
-
-        if coordi is not None:
-            coordi_phys = np.transpose(np.asarray(coordi))
-            coordi_pix = np.transpose(np.dot(m_f2p_transfo, (coordi_phys - coord_origin)))
-            coordi_pix_tmp = coordi_pix.tolist()
-            coordi_pix_list = [[coordi_pix_tmp[j][i] for i in range(len(coordi_pix_tmp[j]))] for j in
-                               range(len(coordi_pix_tmp))]
-
-            return coordi_pix_list
 
     def get_values(self, coordi=None, interpolation_mode=0, border='constant', cval=0.0):
         """
@@ -919,7 +793,7 @@ class Image(object):
         Returns:
             X, Y and Z axes of the image
         """
-        direction_matrix = self.im_file.affine
+        direction_matrix = self.header.get_best_affine()
         T_self, R_self, Sc_self, Sh_self = decompose_affine_transform(direction_matrix)
         return R_self[0:3, 0], R_self[0:3, 1], R_self[0:3, 2]
 
@@ -948,17 +822,17 @@ class Image(object):
         # 1. get transformation
         # 2. apply transformation on coordinates
 
-        coord_im = np.array(self.transfo_phys2continuouspix(physical_coordinates_ref))
+        coord_im = self.transfo_phys2pix(physical_coordinates_ref, real=False)
         interpolated_values = self.get_values(np.array([coord_im[:, 0], coord_im[:, 1], coord_im[:, 2]]), interpolation_mode=interpolation_mode, border=border)
 
         im_output = Image(im_ref)
         if interpolation_mode == 0:
-            im_output.changeType('int32')
+            im_output.change_type('int32')
         else:
-            im_output.changeType('float32')
+            im_output.change_type('float32')
         im_output.data = np.reshape(interpolated_values, (nx, ny, nz))
         if fname_output is not None:
-            im_output.setFileName(fname_output)
+            im_output.absolutepath = fname_output
             im_output.save()
         return im_output
 
@@ -992,13 +866,9 @@ def compute_dice(image1, image2, mode='3d', label=1, zboundaries=False):
     if mode == '2d-slices' or (mode == '3d' and zboundaries):
         # changing orientation to RPI if necessary
         if image1.orientation != 'RPI':
-            image1_c = image1.copy()
-            image1_c.change_orientation('RPI')
-            image1 = image1_c
+            image1 = change_orientation(image1, "RPI")
         if image2.orientation != 'RPI':
-            image2_c = image2.copy()
-            image2_c.change_orientation('RPI')
-            image2 = image2_c
+            image2 = change_orientation(image2, "RPI")
 
         zmin, zmax = 0, image1.data.shape[2] - 1
         if zboundaries:
@@ -1086,3 +956,318 @@ def get_dimension(im_file, verbose=1):
 
     return nx, ny, nz, nt, px, py, pz, pt
 
+
+def all_refspace_strings():
+    """
+    :return: all possible orientation strings ['RAI', 'RAS', 'RPI', 'RPS', ...]
+    """
+    return [x for x in itertools.chain(*[ [ "".join(x) for x in itertools.product(*seq) ] for seq in itertools.permutations(("RL", "AP", "IS"), 3)])]
+
+
+def get_orientation(im):
+    """
+    :param im: an Image
+    :return: reference space string (ie. what's in Image.orientation)
+    """
+    res = "".join(nibabel.orientations.aff2axcodes(im.hdr.get_best_affine()))
+    return orientation_string_nib2sct(res)
+    return res # for later ;)
+
+
+def orientation_string_nib2sct(s):
+    """
+    :return: SCT reference space code from nibabel one
+    """
+    opposite_character = {'L': 'R', 'R': 'L', 'A': 'P', 'P': 'A', 'I': 'S', 'S': 'I'}
+    return "".join([opposite_character[x] for x in s])
+
+
+orientation_string_sct2nib = orientation_string_nib2sct
+
+
+def change_shape(im_src, shape, im_dst=None):
+    """
+    :return: an image with changed shape
+    :param shape: shape to obtain (must be compatible with original one)
+
+    Notes:
+
+    - the resulting image has no path
+    """
+
+    if im_dst is None:
+        im_dst = im_src.copy()
+        im_dst._path = None
+
+    if im_src.data.flags.f_contiguous:
+        im_dst.data = im_src.data.reshape(shape, order="F")
+    elif im_src.data.flags.c_contiguous:
+        warnings.warn("Encountered an array with C order, strange!")
+        im_dst.data = im_src.data.reshape(shape, order="C")
+    else:
+        # image data may be a view
+        im_dst_data = im_src_data.copy().reshape(shape, order="F")
+
+    pair = nibabel.nifti1.Nifti1Pair(im_dst.data, im_dst.hdr.get_best_affine(), im_dst.hdr)
+    im_dst.hdr = pair.header
+    return im_dst
+
+def change_orientation(im_src, orientation, im_dst=None, inverse=False):
+    """
+    :return: an image with changed orientation
+
+    Note: the resulting image has no path
+    """
+
+    if len(im_src.data.shape) == 3:
+        pass # OK, standard 3D volume
+    elif len(im_src.data.shape) == 4:
+        pass # OK, standard 4D volume
+    elif len(im_src.data.shape) == 5 and im_src.header.get_intent()[0] == "vector":
+        pass # OK, physical displacement field
+    else:
+        raise NotImplementedError("Don't know how to change orientation for this image")
+
+    opposite_character = {'L': 'R', 'R': 'L', 'A': 'P', 'P': 'A', 'I': 'S', 'S': 'I'}
+
+    im_src_orientation = orientation_string_sct2nib(im_src.orientation)
+    im_dst_orientation = orientation_string_sct2nib(orientation)
+    if inverse:
+        im_src_orientation, im_dst_orientation = im_dst_orientation, im_src_orientation
+
+
+    def get_permutations(im_src_orientation, im_dst_orientation):
+        # change the orientation of the image
+        perm = [0, 1, 2]
+        inversion = [1, 1, 1]
+        for i, character in enumerate(im_src_orientation):
+            try:
+                perm[i] = im_dst_orientation.index(character)
+            except ValueError:
+                perm[i] = im_dst_orientation.index(opposite_character[character])
+                inversion[i] = -1
+
+        return perm, inversion
+
+    perm, inversion = get_permutations(im_src_orientation, im_dst_orientation)
+
+    if im_dst is None:
+        im_dst = im_src.copy()
+        im_dst._path = None
+
+    # Update data by performing inversions and swaps
+
+    # axes inversion (flip)
+    data = im_src.data[::inversion[0], ::inversion[1], ::inversion[2]]
+
+    # axes manipulations (transpose)
+    if perm == [1, 0, 2]:
+        data = np.swapaxes(data, 0, 1)
+    elif perm == [2, 1, 0]:
+        data = np.swapaxes(data, 0, 2)
+    elif perm == [0, 2, 1]:
+        data = np.swapaxes(data, 1, 2)
+    elif perm == [2, 0, 1]:
+        data = np.swapaxes(data, 0, 2)  # transform [2, 0, 1] to [1, 0, 2]
+        data = np.swapaxes(data, 0, 1)  # transform [1, 0, 2] to [0, 1, 2]
+    elif perm == [1, 2, 0]:
+        data = np.swapaxes(data, 0, 2)  # transform [1, 2, 0] to [0, 2, 1]
+        data = np.swapaxes(data, 1, 2)  # transform [0, 2, 1] to [0, 1, 2]
+    elif perm == [0, 1, 2]:
+        # do nothing
+        pass
+    else:
+        raise NotImplementedError()
+
+
+    # Update header
+
+    im_src_aff = im_src.hdr.get_best_affine()
+    aff = nibabel.orientations.inv_ornt_aff(
+     np.array((perm, inversion)).T,
+     im_src.data.shape)
+    im_dst_aff = np.matmul(im_src_aff, aff)
+
+    im_dst.header.set_qform(im_dst_aff)
+    im_dst.header.set_sform(im_dst_aff)
+    im_dst.header.set_data_shape(data.shape)
+    im_dst.data = data
+
+    return im_dst
+
+def change_type(im_src, dtype, im_dst=None):
+    """
+    Change the voxel type of the image
+    :param dtype:    if not set, the image is saved in standard type
+                    if 'minimize', image space is minimize
+                    if 'minimize_int', image space is minimize and values are approximated to integers
+                    (2, 'uint8', np.uint8, "NIFTI_TYPE_UINT8"),
+                    (4, 'int16', np.int16, "NIFTI_TYPE_INT16"),
+                    (8, 'int32', np.int32, "NIFTI_TYPE_INT32"),
+                    (16, 'float32', np.float32, "NIFTI_TYPE_FLOAT32"),
+                    (32, 'complex64', np.complex64, "NIFTI_TYPE_COMPLEX64"),
+                    (64, 'float64', np.float64, "NIFTI_TYPE_FLOAT64"),
+                    (256, 'int8', np.int8, "NIFTI_TYPE_INT8"),
+                    (512, 'uint16', np.uint16, "NIFTI_TYPE_UINT16"),
+                    (768, 'uint32', np.uint32, "NIFTI_TYPE_UINT32"),
+                    (1024,'int64', np.int64, "NIFTI_TYPE_INT64"),
+                    (1280, 'uint64', np.uint64, "NIFTI_TYPE_UINT64"),
+                    (1536, 'float128', _float128t, "NIFTI_TYPE_FLOAT128"),
+                    (1792, 'complex128', np.complex128, "NIFTI_TYPE_COMPLEX128"),
+                    (2048, 'complex256', _complex256t, "NIFTI_TYPE_COMPLEX256"),
+    :return:
+    """
+
+    if im_dst is None:
+        im_dst = im_src.copy()
+        im_dst._path = None
+
+    if dtype is None:
+        return im_dst
+
+    # get min/max from input image
+    min_in = np.nanmin(im_src.data)
+    max_in = np.nanmax(im_src.data)
+
+    # find optimum type for the input image
+    if dtype in ('minimize', 'minimize_int'):
+        # warning: does not take intensity resolution into account, neither complex voxels
+
+        # check if voxel values are real or integer
+        isInteger = True
+        if dtype == 'minimize':
+            for vox in self.data.flatten():
+                if int(vox) != vox:
+                    isInteger = False
+                    break
+
+        if isInteger:
+            if min_in >= 0:  # unsigned
+                if max_in <= np.iinfo(np.uint8).max:
+                    dtype = np.uint8
+                elif max_in <= np.iinfo(np.uint16):
+                    dtype = np.uint16
+                elif max_in <= np.iinfo(np.uint32).max:
+                    dtype = np.uint32
+                elif max_in <= np.iinfo(np.uint64).max:
+                    dtype = np.uint64
+                else:
+                    raise ValueError("Maximum value of the image is to big to be represented.")
+            else:
+                if max_in <= np.iinfo(np.int8).max and min_in >= np.iinfo(np.int8).min:
+                    dtype = np.int8
+                elif max_in <= np.iinfo(np.int16).max and min_in >= np.iinfo(np.int16).min:
+                    dtype = np.int16
+                elif max_in <= np.iinfo(np.int32).max and min_in >= np.iinfo(np.int32).min:
+                    dtype = np.int32
+                elif max_in <= np.iinfo(np.int64).max and min_in >= np.iinfo(np.int64).min:
+                    dtype = np.int64
+                else:
+                    raise ValueError("Maximum value of the image is to big to be represented.")
+        else:
+            # if max_in <= np.finfo(np.float16).max and min_in >= np.finfo(np.float16).min:
+            #    type = 'np.float16' # not supported by nibabel
+            if max_in <= np.finfo(np.float32).max and min_in >= np.finfo(np.float32).min:
+                dtype = np.float32
+            elif max_in <= np.finfo(np.float64).max and min_in >= np.finfo(np.float64).min:
+                dtype = np.float64
+
+        dtype = to_dtype(dtype)
+    else:
+        dtype = to_dtype(dtype)
+
+        # if output type is int, check if it needs intensity rescaling
+        if "int" in dtype.name:
+            # get min/max from output type
+            min_out = np.iinfo(dtype).min
+            max_out = np.iinfo(dtype).max
+            # before rescaling, check if there would be an intensity overflow
+
+            if (min_in < min_out) or (max_in > max_out):
+                # This condition is important for binary images since we do not want to scale them
+                sct.printv('WARNING: To avoid intensity overflow due to convertion to '+dtype.name+', intensity will be rescaled to the maximum quantization scale.', 1, 'warning')
+                # rescale intensity
+                data_rescaled = im_src.data * (max_out - min_out) / (max_in - min_in)
+                im_dst.data = data_rescaled - ( data_rescaled.min() - min_out )
+
+    # change type of data in both numpy array and nifti header
+    im_dst.data = getattr(np, dtype.name)(im_dst.data)
+    im_dst.hdr.set_data_dtype(dtype)
+    return im_dst
+
+
+def to_dtype(dtype):
+    """
+    Take a dtypeification and return an np.dtype
+
+    :param dtype: dtypeification (string or np.dtype or None are supported for now)
+    :return: dtype or None
+    """
+    # TODO add more or filter on things supported by nibabel
+
+    if dtype is None:
+        return None
+    if isinstance(dtype, type):
+        try:
+            if isinstance(dtype(0).dtype, np.dtype):
+                 return dtype(0).dtype
+        except: # TODO
+            raise
+    if isinstance(dtype, np.dtype):
+        return dtype
+    if isinstance(dtype, str):
+        return np.dtype(dtype)
+
+    raise TypeError("data type {}: {} not understood".format(dtype.__class__, dtype))
+
+def zeros_like(img, dtype=None):
+    dst = change_type(img, dtype)
+    dst.data[:] = 0
+    return dst
+
+def empty_like(img, dtype=None):
+    dst = change_type(img, dtype)
+    return dst
+
+
+def spatial_crop(im_src, spec, im_dst=None):
+    """
+    Crop an image in {0,1,2} dimension(s),
+    properly altering the header to not change the physical-logical corresondance.
+
+    :param spec: dict of dim -> [lo,hi] bounds (integer voxel coordinates)
+    """
+
+    # Compute bounds
+    bounds = [ (0, x-1) for x in im_src.data.shape ]
+    for k, v in spec.items():
+        bounds[k] = v
+
+    bounds_ndslice = tuple([ slice(a,b+1) for (a,b) in bounds ])
+
+    bounds = np.array(bounds)
+
+    # Crop data
+    new_data = im_src.data[bounds_ndslice]
+
+    # Update header
+    #
+    # Ref: https://mail.python.org/pipermail/neuroimaging/2017-August/001501.html
+    # Given A, we want to find A' that is identical up to the intercept, such
+    # that A * [x_0, y_0, z_0, 1]' == A' * [0, 0, 0, 1].
+    # Conveniently, A' * [0, 0, 0, 1]' is the fourth row in the affine matrix, so
+    # we're done as soon as we calculate the LHS:
+
+    aff = im_src.header.get_best_affine()
+    new_aff = aff.copy()
+    new_aff[:, [3]] = aff.dot(np.vstack((bounds[:, [0]], [1])))
+
+    new_img = nibabel.Nifti1Image(new_data, new_aff, im_src.header)
+
+    if im_dst is None:
+        im_dst = im_src.copy()
+
+    im_dst.header = new_img.header
+    im_dst.data = new_data
+
+    return im_dst

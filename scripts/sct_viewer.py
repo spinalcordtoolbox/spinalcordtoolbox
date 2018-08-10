@@ -17,9 +17,7 @@
 #
 # im_input = Image('my_image.nii.gz')
 #
-# im_input_SAL = im_input.copy()
-# # SAL orientation is mandatory
-# im_input_SAL.change_orientation('SAL')
+# im_input_SAL = im_input.change_orientation('SAL')
 # # The viewer is composed by a primary plot and a secondary plot. The primary plot is the one you will click points in.
 # # The secondary plot will help you go throughout slices in another dimensions to help manual selection.
 # viewer = ClickViewer(im_input_SAL, orientation_subplot=['sag', 'ax'])
@@ -2036,8 +2034,7 @@ class ParamMultiImageVisualization(object):
 def prepare(list_images):
     fname_images, orientation_images = [], []
     for fname_im in list_images:
-        from sct_image import orientation
-        orientation_images.append(orientation(Image(fname_im), get=True, verbose=False))
+        orientation_images.append(Image(fname_im).orientation)
         path_fname, file_fname, ext_fname = sct.extract_fname(fname_im)
         reoriented_image_filename = 'tmp.' + sct.add_suffix(file_fname + ext_fname, "_SAL")
         sct.run('sct_image -i ' + fname_im + ' -o ' + reoriented_image_filename + ' -setorient SAL -v 0', verbose=False)
