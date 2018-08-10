@@ -16,8 +16,9 @@ import sys, io, os, shutil
 
 import numpy as np
 from msct_parser import Parser
+import msct_image
 from msct_image import Image
-from sct_image import orientation
+import sct_image
 import sct_utils as sct
 
 
@@ -109,25 +110,19 @@ def main():
 
     # If orientation is not RPI, change to RPI
     if input_orient != 'RPI':
-        sct.printv('\nCreate temporary folder to change the orientation of the NIFTI files into RPI...', verbose)
-        path_tmp = sct.tmp_create()
         # change orientation and load data
         sct.printv('\nChange input image orientation and load it...', verbose)
-        input_im_rpi = orientation(input_im, ori='RPI', set=True, fname_out=os.path.join(path_tmp, "input_RPI.nii"))
+        input_im_rpi = sct_image.change_orientation_nd(input_im, "RPI")
         input_data = input_im_rpi.data
         # Do the same for the mask
         sct.printv('\nChange mask orientation and load it...', verbose)
-        mask_im_rpi = orientation(Image(fname_mask), ori='RPI', set=True, fname_out=os.path.join(path_tmp, "mask_RPI.nii"))
+        mask_im_rpi = sct_image.change_orientation_nd(Image(fname_mask), "RPI")
         mask_data = mask_im_rpi.data
         # Do the same for vertebral labeling if present
         if vert_levels != 'None':
             sct.printv('\nChange vertebral labeling file orientation and load it...', verbose)
-            vert_label_im_rpi = orientation(Image(vert_label_fname), ori='RPI', set=True, fname_out=os.path.join(path_tmp, "vert_labeling_RPI.nii"))
+            vert_label_im_rpi = sct_image.change_orientation_nd(Image(vert_label_fname), "RPI")
             vert_labeling_data = vert_label_im_rpi.data
-        # Remove the temporary folder used to change the NIFTI files orientation into RPI
-        if remove_temp_files:
-            sct.printv('\nRemove the temporary folder...', verbose)
-            sct.rmtree(path_tmp, True)
     else:
         # Load data
         sct.printv('\nLoad data...', verbose)

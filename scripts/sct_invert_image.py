@@ -47,7 +47,7 @@ def main(args=None):
     image_output = image_input
     image_output.data = image_input.data.max() - image_input.data
     if '-o' in arguments:
-        image_output.setFileName(arguments['-o'])
+        image_output.absolutepath = arguments['-o']
     image_output.save(type='minimize')
 
 

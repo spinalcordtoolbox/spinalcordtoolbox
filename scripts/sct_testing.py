@@ -264,8 +264,10 @@ def main(args=None):
         jobs = 1
 
     print("Will run through the following tests:")
-    print("- sequentially: {}".format(" ".join(functions_serial)))
-    print("- in parallel with {} jobs: {}".format(jobs, " ".join(functions_parallel)))
+    if functions_serial:
+        print("- sequentially: {}".format(" ".join(functions_serial)))
+    if functions_parallel:
+        print("- in parallel with {} jobs: {}".format(jobs, " ".join(functions_parallel)))
 
     list_status = []
     for name, functions in (
@@ -275,7 +277,7 @@ def main(args=None):
         if not functions:
             continue
 
-        if any(list_status) and arguments.abort_on_failure:
+        if any([s for (f, s) in list_status]) and arguments.abort_on_failure:
             break
 
         try:
@@ -316,10 +318,10 @@ def main(args=None):
                 if any(list_status_function):
                     if 1 in list_status_function:
                         print_fail()
-                        status = 1
+                        status = (f, 1)
                     else:
                         print_warning()
-                        status = 99
+                        status = (f, 99)
                     for output in list_output:
                         for line in output.splitlines():
                             print("   %s" % line)
@@ -329,10 +331,10 @@ def main(args=None):
                         for output in list_output:
                             for line in output.splitlines():
                                 print("   %s" % line)
-                    status = 0
+                    status = (f, 0)
                 # append status function to global list of status
                 list_status.append(status)
-                if any(list_status) and arguments.abort_on_failure:
+                if any([s for (f, s) in list_status]) and arguments.abort_on_failure:
                     break
         except KeyboardInterrupt:
             raise
@@ -341,7 +343,9 @@ def main(args=None):
                 pool.terminate()
                 pool.join()
 
-    print('status: ' + str(list_status))
+    print('status: ' + str([s for (f, s) in list_status]))
+    if any([s for (f, s) in list_status]):
+        print("Failures: {}".format(" ".join([f for (f, s) in list_status if s])))
 
     # display elapsed time
     elapsed_time = time.time() - start_time
@@ -356,7 +360,7 @@ def main(args=None):
         sct.rmtree(path_tmp)
 
     e = 0
-    if sum(list_status) != 0:
+    if any([s for (f, s) in list_status]):
         e = 1
     # print(e)
 
@@ -391,13 +395,18 @@ def get_functions_parallelizable():
         'sct_analyze_lesion',
         'sct_analyze_texture',
         'sct_apply_transfo',
+        'sct_warp_template',
+        'sct_resample',
+        'sct_convert',
+        'sct_image',
+        'sct_maths',
+        'sct_merge_images',
         'sct_compute_ernst_angle',
         'sct_compute_hausdorff_distance',
         'sct_compute_mtr',
         'sct_compute_mscc',
         'sct_compute_snr',
         'sct_concat_transfo',
-        'sct_convert',
         # 'sct_convert_binary_to_trilinear',  # not useful
         'sct_create_mask',
         'sct_crop_image',
@@ -417,22 +426,17 @@ def get_functions_parallelizable():
         'sct_fmri_compute_tsnr',
         'sct_fmri_moco',
         'sct_get_centerline',
-        'sct_image',
         # 'sct_invert_image',  # function not available from command-line
         'sct_label_utils',
-        'sct_label_vertebrae',
-        'sct_maths',
-        'sct_merge_images',
         # 'sct_pipeline',
         'sct_process_segmentation',
         'sct_propseg',
         'sct_register_multimodal',
+        'sct_straighten_spinalcord', # deps: sct_apply_transfo
         'sct_register_to_template',
-        'sct_resample',
         'sct_segment_graymatter',
         'sct_smooth_spinalcord',
-        'sct_straighten_spinalcord',
-        'sct_warp_template',
+        'sct_label_vertebrae',
     ]
 
 

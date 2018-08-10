@@ -73,7 +73,7 @@ def segment_image_cli():
         printv('The output file exists, the contents will be overwritten', type='warning')
     output_file = input_file.copy()
     output_file.data *= 0
-    output_file.setFileName(output_file_name)
+    output_file.absolutepath = output_file_name
 
     controller = launch_modes[mode](input_file, output_file, params)
     if controller.saved:
