@@ -15,19 +15,6 @@ import spinalcordtoolbox.image as msct_image
 import sct_image
 
 
-def old_change_orientation(im_src, orientation, im_dst=None):
-    im_src.save("a.nii")
-    sct.run(["isct_orientation3d", "-i", "a.nii", "-orientation", orientation, "-o", "b.nii"])
-    im_dst2 = msct_image.Image("b.nii")
-    if im_dst is None:
-        return im_dst2
-    else:
-        im_dst.data = im_dst2.data
-        im_dst.header = im_dst2.header
-        return im_dst
-
-#msct_image.change_orientation = old_change_orientation
-
 @pytest.fixture(scope="session")
 def image_paths():
     ret = []
