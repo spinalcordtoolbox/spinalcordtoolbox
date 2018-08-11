@@ -234,11 +234,11 @@ def main(args=None):
     elif "-setorient" in arguments:
         sct.printv(fname_in[0])
         im_in = Image(fname_in[0])
-        im_out = [change_orientation_nd(im_in, arguments["-setorient"]).save(fname_out)]
+        im_out = [msct_image.change_orientation(im_in, arguments["-setorient"]).save(fname_out)]
 
     elif "-setorient-data" in arguments:
         im_in = Image(fname_in[0])
-        im_out = [change_orientation_nd(im_in, arguments["-setorient-data"], inverse=True).save(fname_out)]
+        im_out = [msct_image.change_orientation(im_in, arguments["-setorient-data"], inverse=True).save(fname_out)]
 
     elif "-split" in arguments:
         dim = arguments["-split"]
@@ -548,50 +548,6 @@ def multicomponent_merge(fname_list):
     im_out.hdr.set_intent('vector', (), '')
     im_out.absolutepath = sct.add_suffix(im_out.absolutepath, '_multicomponent')
     return im_out
-
-
-def change_orientation_nd(src, orientation, dst=None, inverse=False):
-    """
-    """
-    warnings.warn("Deprecated, this function has no value over msct_image.change_orientation()")
-
-    nx, ny, nz, nt, px, py, pz, pt = src.dim
-
-    if dst is None:
-        dst = msct_image.empty_like(src)
-        dst._path = None
-
-    if (nz == 1 or nt == 1) and len(src.data.shape) < 5:
-        dst = msct_image.change_orientation(src, orientation, dst, inverse=inverse)
-    else:
-        # 4D data: split along T dimension
-        # or 5D data: split along 5th dimension
-
-        if len(src.data.shape) == 5 and src.data.shape[-1] not in [0, 1]:
-            # 5D data
-            im_split_list = multicomponent_split(src)
-            dim = 5
-        else:
-            # 4D data
-            im_split_list = split_data(src, 3)
-            dim = 4
-
-        for im_s in im_split_list:
-            im_s.save()
-
-        if 1:
-            im_changed_ori_list = []
-            for im_s in im_split_list:
-                im_set = msct_image.change_orientation(im_s, orientation, inverse=inverse)
-                im_changed_ori_list.append(im_set)
-
-            if dim == 4:
-                dst.data = concat_data(im_changed_ori_list, 3).data
-            elif dim == 5:
-                fname_changed_ori_list = [im_ch_ori.absolutepath for im_ch_ori in im_changed_ori_list]
-                dst.data = multicomponent_merge(fname_changed_ori_list).data
-
-    return dst
 
 
 def visualize_warp(fname_warp, fname_grid=None, step=3, rm_tmp=True):
