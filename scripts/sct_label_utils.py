@@ -238,14 +238,14 @@ class ProcessLabels(object):
         return output_image
 
     @staticmethod
-    def get_crosses_coordinates(coordinates_input, gapxy=15, image_ref=None, dilate=False):
+    def get_crosses_coordinates(coordinates_input, gapxy=15, image_ref=None, dilate=False, verbose=0):
         from msct_types import Coordinate
 
         # if reference image is provided (segmentation), we draw the cross perpendicular to the centerline
         if image_ref is not None:
             # smooth centerline
             from sct_straighten_spinalcord import smooth_centerline
-            x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(self.image_ref, verbose=self.verbose)
+            x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(image_ref, verbose=verbose)
 
         # compute crosses
         cross_coordinates = []
