@@ -31,6 +31,7 @@
 # second the image registration (and allow the choice of algo, metric, etc.)
 # - two-step registration, using only segmentation-based registration
 
+from __future__ import division, absolute_import
 
 import sys, io, os, time, shutil
 

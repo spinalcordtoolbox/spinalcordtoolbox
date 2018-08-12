@@ -10,8 +10,11 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+from __future__ import absolute_import, division
+
 from pandas import DataFrame
 import numpy as np
+
 from spinalcordtoolbox.image import Image
 import sct_utils as sct
 

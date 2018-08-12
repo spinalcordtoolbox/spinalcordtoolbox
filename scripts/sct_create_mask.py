@@ -14,6 +14,8 @@
 
 # TODO: scale size in mm.
 
+from __future__ import division, absolute_import
+
 import sys
 import os
 

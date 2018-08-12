@@ -24,6 +24,8 @@
 # Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Modified by : Benjamin De Leener
 
+from __future__ import print_function, absolute_import
+
 import os.path
 import argparse
 import subprocess

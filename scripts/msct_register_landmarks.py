@@ -23,6 +23,8 @@
 # TODO: normalize SSE: currently, it depends on the number of landmarks
 
 # from msct_types import Point
+from __future__ import absolute_import, division
+
 import sys, io, os
 
 from numpy import array, sin, cos, matrix, sum, mean, absolute

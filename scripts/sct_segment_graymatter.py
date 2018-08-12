@@ -40,6 +40,8 @@ Then use the folder gm_model/ (output from msct_multiatlas_seg) in this function
 
 '''
 
+from __future__ import division, absolute_import
+
 import os
 import shutil
 import sys

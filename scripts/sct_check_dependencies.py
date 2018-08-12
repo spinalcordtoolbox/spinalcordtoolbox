@@ -25,6 +25,7 @@ class Param:
         self.create_log_file = 0
         self.complete_test = 0
 
+from __future__ import print_function, absolute_import
 
 import argparse
 

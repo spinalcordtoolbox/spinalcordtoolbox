@@ -5,6 +5,8 @@
 # Copyright (c) 2018 Polytechnique Montreal <www.neuro.polymtl.ca>
 # About the license: see the file LICENSE.TXT
 
+from __future__ import absolute_import, division
+
 import os
 import sct_utils as sct
 import numpy as np

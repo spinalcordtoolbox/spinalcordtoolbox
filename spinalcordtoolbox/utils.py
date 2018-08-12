@@ -2,6 +2,8 @@
 # -*- coding: utf-8
 # Collection of useful functions
 
+from __future__ import absolute_import
+
 import re
 
 def parse_num_list(str_num):

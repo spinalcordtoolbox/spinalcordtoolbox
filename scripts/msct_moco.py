@@ -18,6 +18,8 @@
 # TODO: do not output inverse warp for ants
 # TODO: ants: explore optin  --float  for faster computation
 
+from __future__ import absolute_import
+
 import sys, os, glob
 import numpy as np
 import sct_utils as sct

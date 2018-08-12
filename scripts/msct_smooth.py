@@ -11,6 +11,8 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+from __future__ import division, absolute_import
+
 import os
 
 from scipy.interpolate import splrep, splev
