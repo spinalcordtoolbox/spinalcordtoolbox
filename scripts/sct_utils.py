@@ -1478,11 +1478,11 @@ def cache_signature(input_files=[], input_data=[], input_params={}):
             for chunk in iter(lambda: f.read(4096), b""):
                 h.update(chunk)
     for data in input_data:
-        h.update(str(type(arg)))
+        h.update(str(type(data)))
         try:
-            h.update(arg)
+            h.update(data)
         except:
-            h.update(str(arg))
+            h.update(str(data))
     for k, v in sorted(input_params.items()):
         h.update(str(type(k)))
         h.update(str(k))

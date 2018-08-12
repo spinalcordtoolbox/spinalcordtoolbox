@@ -1130,6 +1130,7 @@ def generate_metric_value_map(fname_output_metric_map, input_im, labels, indiv_l
     metric_map.save(fname_output_metric_map)
 
     sct.printv('\tDone.')
+    return metric_map
 
 
 # =======================================================================================================================
