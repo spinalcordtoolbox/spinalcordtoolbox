@@ -20,7 +20,7 @@ from __future__ import division, absolute_import
 
 import os
 import sys
-import math
+
 import numpy as np
 from scipy import ndimage
 
@@ -203,11 +203,11 @@ class ProcessLabels(object):
             z, value = [int(i) for i in list_coord]
             # if z=-1, replace with nz/2
             if z == -1:
-                z = int(round(image_output.dim[2] / 2.0))
+                z = int(np.round(image_output.dim[2] / 2.0))
             # get center of mass of segmentation at given z
             x, y = ndimage.measurements.center_of_mass(np.array(self.image_input.data[:, :, z]))
             # round values to make indices
-            x, y = int(round(x)), int(round(y))
+            x, y = int(np.round(x)), int(np.round(y))
             # display info
             sct.printv('Label #' + str(i) + ': ' + str(x) + ',' + str(y) + ',' + str(z) + ' --> ' + str(value), 1)
             if len(image_output.data.shape) == 3:
@@ -233,7 +233,7 @@ class ProcessLabels(object):
         cross_coordinates = self.get_crosses_coordinates(coordinates_input, dx, self.image_ref, self.dilate)
 
         for coord in cross_coordinates:
-            output_image.data[int(round(coord.x)), int(round(coord.y)), int(round(coord.z))] = coord.value
+            output_image.data[int(np.round(coord.x)), int(np.round(coord.y)), int(np.round(coord.z))] = coord.value
 
         return output_image
 
@@ -373,8 +373,8 @@ class ProcessLabels(object):
         # 3. Compute the center of mass of each group of voxels and write them into the output image
         for value, list_coord in groups.items():
             center_of_mass = sum(list_coord) / float(len(list_coord))
-            sct.printv("Value = " + str(center_of_mass.value) + " : (" + str(center_of_mass.x) + ", " + str(center_of_mass.y) + ", " + str(center_of_mass.z) + ") --> ( " + str(round(center_of_mass.x)) + ", " + str(round(center_of_mass.y)) + ", " + str(round(center_of_mass.z)) + ")", verbose=self.verbose)
-            output_image.data[int(round(center_of_mass.x)), int(round(center_of_mass.y)), int(round(center_of_mass.z))] = center_of_mass.value
+            sct.printv("Value = " + str(center_of_mass.value) + " : (" + str(center_of_mass.x) + ", " + str(center_of_mass.y) + ", " + str(center_of_mass.z) + ") --> ( " + str(np.round(center_of_mass.x)) + ", " + str(np.round(center_of_mass.y)) + ", " + str(np.round(center_of_mass.z)) + ")", verbose=self.verbose)
+            output_image.data[int(np.round(center_of_mass.x)), int(np.round(center_of_mass.y)), int(np.round(center_of_mass.z))] = center_of_mass.value
 
         return output_image
 
@@ -447,23 +447,24 @@ class ProcessLabels(object):
         if len(coordinates_input) != len(coordinates_ref):
             sct.printv('ERROR: labels mismatch', 1, 'warning')
         for coord in coordinates_input:
-            if round(coord.value) not in [round(coord_ref.value) for coord_ref in coordinates_ref]:
+            if np.round(coord.value) not in [np.round(coord_ref.value) for coord_ref in coordinates_ref]:
                 sct.printv('ERROR: labels mismatch', 1, 'warning')
         for coord_ref in coordinates_ref:
-            if round(coord_ref.value) not in [round(coord.value) for coord in coordinates_input]:
+            if np.round(coord_ref.value) not in [np.round(coord.value) for coord in coordinates_input]:
                 sct.printv('ERROR: labels mismatch', 1, 'warning')
 
         result = 0.0
         for coord in coordinates_input:
             for coord_ref in coordinates_ref:
-                if round(coord_ref.value) == round(coord.value):
+                if np.round(coord_ref.value) == np.round(coord.value):
                     result += (coord_ref.z - coord.z) ** 2
                     break
-        result = math.sqrt(result / len(coordinates_input))
+        result = np.sqrt(result / len(coordinates_input))
         sct.printv('MSE error in Z direction = ' + str(result) + ' mm')
 
         if result > threshold_mse:
-            fname_report = self.image_input.path + 'error_log_' + sct.extract_fname(self.image_input.absolutepath)[1] + '.txt'
+            parent, stem, ext = sct.extract_fname(self.image_input.absolutepath)
+            fname_report = os.path.join(parent, 'error_log_{}.txt'.format(stem))
             with open(fname_report, 'w') as f:
                 f.write('The labels error (MSE) between {} and {} is: {}\n'.format(
                  os.path.relpath(self.image_input.absolutepath, os.path.dirname(fname_report)),
@@ -506,13 +507,13 @@ class ProcessLabels(object):
                                                                        self.image_ref.getNonZeroCoordinates(coordValue=True), symmetry)
 
         for coord in result_coord_input:
-            image_output.data[int(coord.x), int(coord.y), int(coord.z)] = int(round(coord.value))
+            image_output.data[int(coord.x), int(coord.y), int(coord.z)] = int(np.round(coord.value))
 
         if symmetry:
             # image_output_ref = Image(self.image_ref.dim, orientation=self.image_ref.orientation, hdr=self.image_ref.hdr, verbose=self.verbose)
             image_output_ref = Image(self.image_ref, verbose=self.verbose)
             for coord in result_coord_ref:
-                image_output_ref.data[int(coord.x), int(coord.y), int(coord.z)] = int(round(coord.value))
+                image_output_ref.data[int(coord.x), int(coord.y), int(coord.z)] = int(np.round(coord.value))
             image_output_ref.absolutepath = self.fname_output[1]
             image_output_ref.save('minimize_int')
 
@@ -617,7 +618,7 @@ class ProcessLabels(object):
 
         # for all points with non-zeros neighbors, force the neighbors to 0
         for i in range(0, len(coordinates_input) - 1):
-            dist = math.sqrt((coordinates_input[i].x - coordinates_input[i + 1].x)**2 + (coordinates_input[i].y - coordinates_input[i + 1].y)**2 + (coordinates_input[i].z - coordinates_input[i + 1].z)**2)
+            dist = np.sqrt((coordinates_input[i].x - coordinates_input[i + 1].x)**2 + (coordinates_input[i].y - coordinates_input[i + 1].y)**2 + (coordinates_input[i].z - coordinates_input[i + 1].z)**2)
             if dist < max_dist:
                 sct.printv('Warning: the distance between label ' + str(i) + '[' + str(coordinates_input[i].x) + ',' + str(coordinates_input[i].y) + ',' + str(
                     coordinates_input[i].z) + ']=' + str(coordinates_input[i].value) + ' and label ' + str(i + 1) + '[' + str(
@@ -652,7 +653,7 @@ class ProcessLabels(object):
         length_levels = {}
         for level in vertebral_levels:
             indexes_slice = np.where(value_centerline == level)
-            length_levels[level] = np.sum([math.sqrt(((x_centerline_fit[indexes_slice[0][index_slice + 1]] - x_centerline_fit[indexes_slice[0][index_slice]]) * px)**2 +
+            length_levels[level] = np.sum([np.sqrt(((x_centerline_fit[indexes_slice[0][index_slice + 1]] - x_centerline_fit[indexes_slice[0][index_slice]]) * px)**2 +
                                                      ((y_centerline_fit[indexes_slice[0][index_slice + 1]] - y_centerline_fit[indexes_slice[0][index_slice]]) * py)**2 +
                                                      ((z_centerline_fit[indexes_slice[0][index_slice + 1]] - z_centerline_fit[indexes_slice[0][index_slice]]) * pz)**2)
                                            for index_slice in range(len(indexes_slice[0]) - 1)])
@@ -666,7 +667,7 @@ class ProcessLabels(object):
             level = value_centerline[it]
             indexes_slice = np.where(value_centerline == level)
             indexes_slice = indexes_slice[0][indexes_slice[0] >= it]
-            distance_from_level = np.sum([math.sqrt(((x_centerline_fit[indexes_slice[index_slice + 1]] - x_centerline_fit[indexes_slice[index_slice]]) * px * px) ** 2 +
+            distance_from_level = np.sum([np.sqrt(((x_centerline_fit[indexes_slice[index_slice + 1]] - x_centerline_fit[indexes_slice[index_slice]]) * px * px) ** 2 +
                                                     ((y_centerline_fit[indexes_slice[index_slice + 1]] - y_centerline_fit[indexes_slice[index_slice]]) * py * py) ** 2 +
                                                     ((z_centerline_fit[indexes_slice[index_slice + 1]] - z_centerline_fit[indexes_slice[index_slice]]) * pz * pz) ** 2)
                                           for index_slice in range(len(indexes_slice) - 1)])

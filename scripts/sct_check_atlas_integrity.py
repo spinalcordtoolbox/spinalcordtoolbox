@@ -149,7 +149,7 @@ def check_integrity(atlas, atlas_id, atlas_name, method='wath'):
             sum_tract = np.sum(atlas[i_atlas][ind_atlas_positive])
             if sum_tract_outside_SC > ALMOST_ZERO:
                 percentage_out = float(sum_tract_outside_SC / sum_tract)
-                sct.printv('The tract #' + str(atlas_id[i_atlas]) + atlas_name[i_atlas] + ' gets out the spinal cord of ' + str(round(percentage_out * 100, 2)) + '%', param.verbose)
+                sct.printv('The tract #' + str(atlas_id[i_atlas]) + atlas_name[i_atlas] + ' gets out the spinal cord of ' + str(np.round(percentage_out * 100, 2)) + '%', param.verbose)
                 tracts_are_inside_SC = False
                 total_outside += sum_tract_outside_SC
             total_sum_tracts += sum_tract
@@ -158,7 +158,7 @@ def check_integrity(atlas, atlas_id, atlas_name, method='wath'):
             sct.printv('\nTotal percentage of present tracts outside the spinal cord: 0%', param.verbose)
         else:
             total_percentage_out = float(total_outside / total_sum_tracts)
-            sct.printv('\nTotal percentage of present tracts outside the spinal cord: ' + str(round(total_percentage_out * 100, 2)) + '%', param.verbose)
+            sct.printv('\nTotal percentage of present tracts outside the spinal cord: ' + str(np.round(total_percentage_out * 100, 2)) + '%', param.verbose)
 
     # Does any tract overlaps the spinal cord gray matter?
     if param.fname_GM != '':
@@ -184,7 +184,7 @@ def check_integrity(atlas, atlas_id, atlas_name, method='wath'):
             sum_tract = np.sum(atlas[i_atlas])
             if sum_tract_overlap_GM > ALMOST_ZERO:
                 percentage_overlap = float(sum_tract_overlap_GM / sum_tract)
-                sct.printv('The tract #' + str(atlas_id[i_atlas]) + atlas_name[i_atlas] + ' overlaps the spinal cord gray matter of ' + str(round(percentage_overlap * 100, 2)) + '%', param.verbose)
+                sct.printv('The tract #' + str(atlas_id[i_atlas]) + atlas_name[i_atlas] + ' overlaps the spinal cord gray matter of ' + str(np.round(percentage_overlap * 100, 2)) + '%', param.verbose)
                 tracts_overlap_GM = True
                 total_overlaps += sum_tract_overlap_GM
             total_sum_tracts += sum_tract
@@ -193,7 +193,7 @@ def check_integrity(atlas, atlas_id, atlas_name, method='wath'):
             sct.printv('\nTotal percentage of present tracts overlapping gray matter: 0%', param.verbose)
         else:
             total_percentage_overlap = float(total_overlaps / total_sum_tracts)
-            sct.printv('\nTotal percentage of present tracts overlapping gray matter: ' + str(round(total_percentage_overlap * 100, 2)) + '%', param.verbose)
+            sct.printv('\nTotal percentage of present tracts overlapping gray matter: ' + str(np.round(total_percentage_overlap * 100, 2)) + '%', param.verbose)
 
 
 # ==========================================================================================

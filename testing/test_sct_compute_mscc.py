@@ -13,8 +13,9 @@
 
 from __future__ import absolute_import
 
-import sct_compute_mscc
+import numpy as np
 
+import sct_compute_mscc
 
 def init(param_test):
     """
@@ -40,7 +41,7 @@ def test_integrity(param_test):
                                  da=param_test.default_args_values['da'],
                                  db=param_test.default_args_values['db'])
 
-    error = abs(round(mscc, 4) - round(param_test.default_result, 4))
+    error = np.abs(np.round(mscc, 4) - np.round(param_test.default_result, 4))
 
     if error != 0.0:
         param_test.status = 99

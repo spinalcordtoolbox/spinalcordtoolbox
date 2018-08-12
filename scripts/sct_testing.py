@@ -16,6 +16,8 @@ import sys, io, os, time, random, copy, shlex, importlib, multiprocessing, tempf
 import signal, stat
 
 
+
+import numpy as np
 from pandas import DataFrame
 
 from msct_parser import Parser
@@ -352,7 +354,7 @@ def main(args=None):
 
     # display elapsed time
     elapsed_time = time.time() - start_time
-    sct.printv('Finished! Elapsed time: ' + str(int(round(elapsed_time))) + 's\n')
+    sct.printv('Finished! Elapsed time: ' + str(int(np.round(elapsed_time))) + 's\n')
 
     # come back
     os.chdir(curdir)

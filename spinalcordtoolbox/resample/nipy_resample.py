@@ -54,13 +54,13 @@ def resample_image(input_image, new_size, new_size_type,
             # isotropic resampling
             new_size = tuple([new_size[0] for i in range(len(n))])
         # compute new shape as: n_r = n * f
-        n_r = tuple([int(round(n[i] * float(new_size[i]))) for i in range(len(n))])
+        n_r = tuple([int(np.round(n[i] * float(new_size[i]))) for i in range(len(n))])
     elif new_size_type == 'mm':
         if len(new_size) == 1:
             # isotropic resampling
             new_size = tuple([new_size[0] for i in range(len(n))])
         # compute new shape as: n_r = n * (p_r / p)
-        n_r = tuple([int(round(n[i] * float(p[i]) / float(new_size[i]))) for i in range(len(n))])
+        n_r = tuple([int(np.round(n[i] * float(p[i]) / float(new_size[i]))) for i in range(len(n))])
     else:
         sct.printv('\nERROR: new_size_type is not recognized.', 1, 'error')
     sct.printv('  new shape: ' + str(n_r), verbose)

@@ -8,6 +8,8 @@
 from __future__ import absolute_import, division, print_function
 
 import logging
+
+import numpy as np
 from PyQt4 import QtCore, QtGui
 
 import sct_utils as sct
@@ -34,13 +36,13 @@ class CenterlineController(base.BaseController):
         max_x, max_z = self.image.dim[:3:2]
         self.params.num_points = self.params.num_points or 11
         # update interval (in pixel) between two consecutive points based on pixel size
-        self.INTERVAL = round(self.params.interval_in_mm // self.image.dim[4])
+        self.INTERVAL = np.round(self.params.interval_in_mm // self.image.dim[4])
 
         # set first slice location (see definitions in base.py)
         if self.params.starting_slice == 'fov':
             self.START_SLICE = 0
         elif self.params.starting_slice == 'midfovminusinterval':
-            self.START_SLICE = round(self.image.dim[0] / 2 - self.INTERVAL)
+            self.START_SLICE = np.round(self.image.dim[0] / 2 - self.INTERVAL)
 
         # if the starting slice is of invalid value then use default value
         if self.START_SLICE > max_x or self.START_SLICE < 0:
@@ -190,7 +192,7 @@ class Centerline(base.BaseDialog):
             self.sagittal_canvas.refresh()
             self.axial_canvas.refresh()
         except InvalidActionWarning as warn:
-            self.update_warning(warn.message)
+            self.update_warning(str(warn))
 
     def on_toggle_mode(self):
         widget = self.sender()
@@ -211,7 +213,7 @@ class Centerline(base.BaseDialog):
             self.sagittal_canvas.refresh()
             self.update_status('Sagittal position at {:8.2f}'.format(self._controller.position[0]))
         except (TooManyPointsWarning, InvalidActionWarning) as warn:
-            self.update_warning(warn.message)
+            self.update_warning(str(warn))
 
     def increment_horizontal_nav(self):
         self._controller.increment_slice()
@@ -231,7 +233,7 @@ class Centerline(base.BaseDialog):
             self.sagittal_canvas.refresh()
             self.update_status('{} point(s) selected'.format(len(self._controller.points)))
         except (TooManyPointsWarning, InvalidActionWarning) as warn:
-            self.update_warning(warn.message)
+            self.update_warning(str(warn))
 
     def on_undo(self):
         super(Centerline, self).on_undo()

@@ -104,7 +104,7 @@ def main():
 
     # display elapsed time
     elapsed_time = time.time() - start_time
-    sct.printv('\nFinished! Elapsed time: ' + str(int(round(elapsed_time))) + 's')
+    sct.printv('\nFinished! Elapsed time: ' + str(int(np.round(elapsed_time))) + 's')
 
 #=======================================================================================================================
 # Function eddy_correct

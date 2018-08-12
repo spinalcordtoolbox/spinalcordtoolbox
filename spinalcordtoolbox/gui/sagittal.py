@@ -9,6 +9,7 @@ from __future__ import absolute_import, division
 
 import logging
 
+import numpy as np
 from PyQt4 import QtGui
 
 from spinalcordtoolbox.gui import base
@@ -58,7 +59,7 @@ class SagittalDialog(base.BaseDialog):
 
     def on_select_point(self, x, y, z):
         try:
-            x, y, z = int(round(x)), int(round(y)), int(round(z))
+            x, y, z = np.array(np.round((x,y,z)), dtype=int)
             label = self.labels.label
             self._controller.select_point(x, y, z, label)
             self.labels.refresh()
@@ -68,7 +69,7 @@ class SagittalDialog(base.BaseDialog):
             if index + 1 < len(self.params.vertebraes):
                 self.labels.label = self.params.vertebraes[index + 1]
         except (TooManyPointsWarning, MissingLabelWarning) as warn:
-            self.update_warning(warn.message)
+            self.update_warning(str(warn))
 
     def on_undo(self):
         super(SagittalDialog, self).on_undo()

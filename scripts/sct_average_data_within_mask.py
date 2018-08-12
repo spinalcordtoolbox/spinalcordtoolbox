@@ -21,8 +21,10 @@ from __future__ import absolute_import, division
 import sys
 import getopt
 import os
-from numpy import asarray, sqrt
+
+import numpy as np
 import nibabel
+
 from sct_utils import printv
 import sct_utils as sct
 from msct_parser import Parser
@@ -123,13 +125,13 @@ def average_within_mask(fname_src, fname_mask, tmask='', zmask='', verbose=1):
         # get value in the image
         data.append(data_src[x, y, z])
     # compute weighted average
-    data = asarray(data)
-    weight = asarray(weight)
+    data = np.asarray(data)
+    weight = np.asarray(weight)
     n = len(data)
     # compute weighted_average
     weighted_average = sum(data * weight) / sum(weight)
     # compute weighted STD
-    weighted_std = sqrt(sum(weight * (data - weighted_average)**2) / ((n / (n - 1)) * sum(weight)))
+    weighted_std = np.sqrt(sum(weight * (data - weighted_average)**2) / ((n / (n - 1)) * sum(weight)))
 
     # sct.printv(result)
     printv('\n' + str(weighted_average) + ' +/- ' + str(weighted_std), verbose)
