@@ -330,7 +330,7 @@ class Model:
         id_by_level = {}
         for dic_slice in self.slices:
             level_int = int(np.round(dic_slice.level))
-            if level_int not in id_by_level.keys():
+            if level_int not in set(id_by_level.keys()):
                 id_by_level[level_int] = [dic_slice.id]
             else:
                 id_by_level[level_int].append(dic_slice.id)
@@ -484,7 +484,7 @@ class Model:
         slices_by_level = {}
         for dic_slice in self.slices:
             level_int = int(np.round(dic_slice.level))
-            if level_int not in slices_by_level.keys():
+            if level_int not in set(slices_by_level.keys()):
                 slices_by_level[level_int] = [dic_slice]
             else:
                 slices_by_level[level_int].append(dic_slice)
@@ -494,8 +494,8 @@ class Model:
             gm_seg_model[level] = data_mean_gm
             wm_seg_model[level] = data_mean_wm
         # for level=0 (no leve or level not in model) output average GM and WM seg across all model data
-        gm_seg_model[0] = np.mean(gm_seg_model.values(), axis=0)
-        wm_seg_model[0] = np.mean(wm_seg_model.values(), axis=0)
+        gm_seg_model[0] = np.mean(list(gm_seg_model.values()), axis=0)
+        wm_seg_model[0] = np.mean(list(wm_seg_model.values()), axis=0)
 
         return gm_seg_model, wm_seg_model
 

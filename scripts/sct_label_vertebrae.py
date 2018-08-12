@@ -495,7 +495,7 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     # if automatic mode, find C2/C3 disc
     if init_disc == [] and initc2 == 'auto':
         sct.printv('\nDetect C2/C3 disk...', verbose)
-        zrange = range(0, nz)
+        zrange = list(range(0, nz))
         ind_c2 = list_disc_value_template.index(2)
         z_peak = compute_corr_3d(data, data_template, x=xc, xshift=0, xsize=param.size_RL_initc2,
                                  y=yc, yshift=param.shift_AP_initc2, ysize=param.size_AP_initc2,
@@ -550,7 +550,7 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     # create list for z and disc
     list_disc_z = []
     list_disc_value = []
-    zrange = range(-10, 10)
+    zrange = list(range(-10, 10))
     direction = 'superior'
     search_next_disc = True
     while search_next_disc:

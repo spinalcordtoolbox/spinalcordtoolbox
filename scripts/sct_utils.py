@@ -178,7 +178,7 @@ def start_stream_logger():
     stream_handler.setFormatter(formatter)
 
     if LOG_LEVEL == "DISABLE":
-        level = sys.maxint
+        level = sys.maxsize
     elif LOG_LEVEL is None:
         level = logging.INFO
     else:

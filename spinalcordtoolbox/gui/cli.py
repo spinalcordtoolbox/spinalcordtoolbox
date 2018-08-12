@@ -57,7 +57,7 @@ def segment_image_cli():
     try:
         arguments = parser.parse(args)
     except SyntaxError as err:
-        printv(err.message, type='error')
+        printv(str(err), type='error')
 
     launch_modes = {'centerline': launch_centerline_dialog,
                     'sagittal': launch_sagittal_dialog}

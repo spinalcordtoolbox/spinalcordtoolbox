@@ -248,7 +248,7 @@ def fmri_moco(param):
         im.save()
 
     # assign an index to each volume
-    index_fmri = range(0, nt)
+    index_fmri = list(range(0, nt))
 
     # Number of groups
     nb_groups = int(math.floor(nt / param.group_size))

@@ -183,7 +183,7 @@ def read_label_file_atlas(path_info_label, file_info_label):
     il = InfoLabel()
     fname_label = os.path.join(path_info_label, file_info_label)
     il.load(fname_label)
-    return zip(*il._indiv_labels)
+    return list(zip(*il._indiv_labels))
 
 
 def get_file_label(path_label='', label='', output='file'):
