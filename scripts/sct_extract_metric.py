@@ -20,7 +20,8 @@
 # TODO: remove fix_label_value() usage because it is used in isolated case and introduces confusion.
 # TODO (not urgent): vertebral levels selection should only consider voxels of the selected levels in slices where two different vertebral levels coexist (and not the whole slice)
 
-# Import common Python libraries
+from __future__ import division, absolute_import
+
 import sys, os, glob, time
 
 import numpy as np

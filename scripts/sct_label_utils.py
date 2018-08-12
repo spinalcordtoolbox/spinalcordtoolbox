@@ -16,6 +16,8 @@
 # TODO: check if use specified several processes.
 # TODO: currently it seems like cross_radius is given in pixel instead of mm
 
+from __future__ import division, absolute_import
+
 import sys
 import math
 import numpy as np

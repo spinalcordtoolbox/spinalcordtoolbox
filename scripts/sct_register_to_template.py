@@ -14,6 +14,8 @@
 # TODO: testing script for all cases
 # TODO: enable vertebral alignment with -ref subject
 
+from __future__ import division, absolute_import
+
 import sys, os, time
 
 import numpy as np

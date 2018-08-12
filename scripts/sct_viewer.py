@@ -32,6 +32,8 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+from __future__ import absolute_import, division
+
 import sys, io, os
 from bisect import bisect
 from time import time

@@ -11,7 +11,10 @@
 #
 # About the license: see the file LICENSE.TXT
 ########################################################################################################################
-import sys, io, os, math, time, random, shutil
+
+from __future__ import absolute_import, division
+
+import sys, io, os, time, random, shutil
 
 import numpy as np
 

@@ -2,6 +2,8 @@
 # -*- coding: utf-8
 # pytest unit tests for transform stuff
 
+from __future__ import print_function, absolute_import, division
+
 import sys, io, os, time, itertools
 
 import pytest

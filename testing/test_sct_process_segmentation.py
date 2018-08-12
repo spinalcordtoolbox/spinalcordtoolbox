@@ -15,6 +15,8 @@
 # TODO: make it compatible with isct_test_function
 # TODO: add log file
 
+from __future__ import absolute_import
+
 import sys
 import os
 import time

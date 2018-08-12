@@ -5,8 +5,7 @@
 
 """ Qt dialog for manual labeling of an image """
 
-from __future__ import absolute_import
-from __future__ import division
+from __future__ import absolute_import, division, print_function
 
 import sct_utils as sct
 import logging

@@ -2,6 +2,8 @@
 # -*- coding: utf-8
 # pytest unit tests for Image stuff
 
+from __future__ import print_function, absolute_import
+
 import sys, io, os, time, itertools
 
 import pytest

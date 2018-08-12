@@ -5,6 +5,9 @@
 #
 # About the license: see the file LICENSE.TXT
 # Notes on how to use classes in this script.
+
+from __future__ import absolute_import
+
 import os
 import sys
 

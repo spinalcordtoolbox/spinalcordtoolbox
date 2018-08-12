@@ -1,3 +1,5 @@
+from __future__ import absolute_import, division
+
 import sys, io, os, shutil, datetime
 from string import Template
 

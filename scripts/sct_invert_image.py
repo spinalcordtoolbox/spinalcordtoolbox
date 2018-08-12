@@ -11,6 +11,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+from __future__ import division, absolute_import
 
 import sys
 from msct_parser import Parser

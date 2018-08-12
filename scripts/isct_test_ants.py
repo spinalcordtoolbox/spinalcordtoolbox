@@ -12,6 +12,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+from __future__ import print_function, absolute_import
 
 import sys
 
