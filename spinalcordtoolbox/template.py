@@ -50,7 +50,7 @@ def get_vertebral_level_from_slice(im_vertlevel, idx_slice):
         vert_level = int(np.round(np.mean(data_vertlevel[indx, indy, idx_slice])))
     except ValueError as e:
         # slice is empty (no indx found). Do nothing.
-        log.debug('Empty slice: z=%s (%s)', iz, e)
+        log.debug('Empty slice: z=%s (%s)', idx_slice, e)
         vert_level = None
     return vert_level
 
