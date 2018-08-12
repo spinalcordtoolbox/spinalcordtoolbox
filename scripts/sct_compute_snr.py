@@ -12,6 +12,8 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+from __future__ import division, absolute_import
+
 import sys, io, os, shutil
 
 import numpy as np

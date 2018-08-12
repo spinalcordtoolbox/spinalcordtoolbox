@@ -43,6 +43,8 @@ usage:
 # TODO: create a dictionnary for param, such that results can display reduced param instead of full. Example: -param t1="blablabla",t2="blablabla"
 # TODO: read_database: hard coded fields to put somewhere else (e.g. config file)
 
+from __future__ import print_function, absolute_import
+
 import sys, io, os, types, copy, copy_reg, time, itertools, glob, importlib, pickle
 import platform
 import signal

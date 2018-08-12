@@ -12,6 +12,8 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+from __future__ import absolute_import, division
+
 from spinalcordtoolbox.image import Image
 from scipy.misc import toimage
 

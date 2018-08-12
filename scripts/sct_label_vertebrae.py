@@ -16,6 +16,8 @@
 # TODO: find automatically if -c =t1 or t2 (using dilated seg)
 # TODO: address the case when there is more than one max correlation
 
+from __future__ import division, absolute_import
+
 import sys, io, os
 
 import numpy as np

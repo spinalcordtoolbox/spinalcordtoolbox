@@ -12,6 +12,8 @@
 
 # TODO: generate warping field for dmri that makes sense (dmri --> T2).
 
+from __future__ import absolute_import
+
 import os
 import numpy as np
 import sct_utils as sct

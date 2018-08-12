@@ -14,6 +14,8 @@
 # TODO: add test.
 # TODO: remove FSL dependency
 
+from __future__ import print_function, absolute_import, division
+
 # check if needed Python libraries are already installed or not
 import sys
 import os

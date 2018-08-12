@@ -61,6 +61,9 @@
 # ============================================================================================================
 # check if needed Python libraries are already installed or not
 
+from __future__ import division, absolute_import
+
+
 import numpy as np
 import sct_utils as sct
 

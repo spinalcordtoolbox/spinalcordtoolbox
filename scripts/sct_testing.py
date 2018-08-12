@@ -10,8 +10,11 @@
 # TODO: list functions to test in help (do a search in testing folder)
 # TODO: do something about this ugly 'output.nii.gz'
 
+from __future__ import print_function, absolute_import
+
 import sys, io, os, time, random, copy, shlex, importlib, multiprocessing, tempfile, shutil
 import signal, stat
+
 
 from pandas import DataFrame
 

@@ -13,6 +13,8 @@
 
 # TODO: remove temp files in case rescaled is not "1"
 
+from __future__ import division, absolute_import
+
 import os, sys
 
 import numpy as np
