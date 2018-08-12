@@ -879,7 +879,7 @@ class SpellingChecker:
 
     # fname must be the path of the file containing the dictionary
     def setWordsAsFile(self, fname):
-        self.NWORDS = self.train(self.words(file(fname).read()))
+        self.NWORDS = self.train(self.words(open(fname, "r").read()))
 
     def words(self, text):
         from re import findall

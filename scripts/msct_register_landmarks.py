@@ -205,9 +205,9 @@ def getRigidTransformFromImages(img_dest, img_src, constraints='none', metric = 
     list_constraints = [None, 'none', 'xy', 'translation', 'translation-xy', 'rotation', 'rotation-xy']
     list_center_rotation = [None, 'BarycenterImage']
     if constraints not in list_constraints:
-        raise 'ERROR: the constraints must be one of those: ' + ', '.join(list_constraints)
+        raise ValueError('ERROR: the constraints must be one of those: ' + ', '.join(list_constraints))
     if center_rotation not in list_center_rotation:
-        raise 'ERROR: the center_rotation must be one of those: ' + ', '.join(list_center_rotation)
+        raise ValueError('ERROR: the center_rotation must be one of those: ' + ', '.join(list_center_rotation))
 
     from scipy.optimize import minimize
 

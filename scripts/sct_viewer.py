@@ -1572,7 +1572,7 @@ class ClickViewerGroundTruth(ClickViewer):
         return imMean
 
     def check_first_label(self,i):
-        if i in range (1,27) or i in range (49,51):
+        if i in range(1, 27) or i in range(49, 51):
             return True
         else:
             sct.printv('Warning : You have selected a wrong number for \'-start\' : starting from label 50.',True,'warning')

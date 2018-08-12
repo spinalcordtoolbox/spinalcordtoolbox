@@ -401,7 +401,7 @@ def compute_length(fname_segmentation, remove_temp_files, output_folder, overwri
         else:
             # parse the selected slices
             slices_lim = slices.strip().split(':')
-            slices_list = range(int(slices_lim[0]), int(slices_lim[-1]) + 1)
+            slices_list = list(range(int(slices_lim[0]), int(slices_lim[-1]) + 1))
             sct.printv('Spinal cord length slices ' + str(slices_lim[0]) + ' to ' + str(slices_lim[-1]) + '...',
                        type='info')
 
@@ -808,7 +808,7 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
         else:
             # parse the selected slices
             slices_lim = slices.strip().split(':')
-            slices_list = range(int(slices_lim[0]), int(slices_lim[-1]) + 1)
+            slices_list = list(range(int(slices_lim[0]), int(slices_lim[-1]) + 1))
             sct.printv('Average CSA across slices ' + str(slices_lim[0]) + ' to ' + str(slices_lim[-1]) + '...', type='info')
 
             CSA_for_selected_slices = []
@@ -1090,7 +1090,7 @@ def get_slices_matching_with_vertebral_levels_based_centerline(vertebral_levels,
     matching_slices_centerline_vert_labeling = []
 
     z_centerline = [x for x in z_centerline if 0 < int(x) < vertebral_labeling_data.shape[2]]
-    vert_range = range(vert_levels_list[0], vert_levels_list[1] + 1)
+    vert_range = list(range(vert_levels_list[0], vert_levels_list[1] + 1))
 
     for idx, z_slice in enumerate(vertebral_labeling_data.T[z_centerline, :, :]):
         slice_idxs = np.nonzero(z_slice)

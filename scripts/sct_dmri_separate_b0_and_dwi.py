@@ -268,7 +268,7 @@ def identify_b0(fname_bvecs, fname_bvals, bval_min, verbose):
             sct.printv('  WARNING: bvecs file is 3xn instead of nx3. Consider using sct_dmri_transpose_bvecs.', verbose, 'warning')
             sct.printv('  Transpose bvecs...', verbose)
             # transpose bvecs
-            bvecs = zip(*bvecs)
+            bvecs = list(zip(*bvecs))
 
         # get number of lines
         nt = len(bvecs)

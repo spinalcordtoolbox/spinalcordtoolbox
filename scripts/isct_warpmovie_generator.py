@@ -30,7 +30,7 @@ class WarpingField(Image):
     def __iter__(self):
         return self
 
-    def next(self):
+    def __next__(self):
         if self.iteration <= self.num_of_frames:
             result = Image(self)
             sct.printv("Iteration #" + str(self.iteration))
@@ -96,7 +96,7 @@ if __name__ == "__main__":
     while True:
         try:
             warping_fields[0].num_of_frames = number_of_frames
-            image_output_iter, iteration = warping_fields[0].next()
+            image_output_iter, iteration = next(warping_fields[0])
             image_output_iter.save()
             filename_warp = image_output_iter.path + image_output_iter.file_name + image_output_iter.ext
             filename_output = "niftis/tmp.warped_image_" + str(iteration - 1) + image_output_iter.ext

@@ -253,7 +253,7 @@ class BaseDialog(QtGui.QDialog):
         try:
             self._controller.undo()
         except InvalidActionWarning as err:
-            self.update_warning(err.message)
+            self.update_warning(str(err))
 
     def show(self):
         """Override the base class show to fix a bug found in MAC"""
