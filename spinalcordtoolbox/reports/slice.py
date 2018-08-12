@@ -201,7 +201,7 @@ class Slice(object):
             Slice.nan_fill(centers_x)
             Slice.nan_fill(centers_y)
         except ValueError as err:
-            logger.error("Axial center of the spinal cord is not found", err)
+            logger.error("Axial center of the spinal cord is not found: %s", err)
             raise
         return centers_x, centers_y
 
