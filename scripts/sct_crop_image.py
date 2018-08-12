@@ -15,6 +15,7 @@ from __future__ import absolute_import, division
 
 import sys, io, os, math, time
 
+import numpy as np
 import scipy
 import nibabel
 

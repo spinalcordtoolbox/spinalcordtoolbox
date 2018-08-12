@@ -305,7 +305,7 @@ class ComputeDistances:
     def compute_dist_2im_3d(self):
         nx1, ny1, nz1, nt1, px1, py1, pz1, pt1 = self.im1.dim
         nx2, ny2, nz2, nt2, px2, py2, pz2, pt2 = self.im2.dim
-        # assert round(pz1, 5) == round(pz2, 5) and round(py1, 5) == round(py2, 5)
+        # assert np.round(pz1, 5) == np.round(pz2, 5) and np.round(py1, 5) == np.round(py2, 5)
         assert nx1 == nx2
         self.dim_pix = py1
 
@@ -383,7 +383,7 @@ def resample_image(fname, suffix='_resampled.nii.gz', binary=False, npx=0.3, npy
 
     nx, ny, nz, nt, px, py, pz, pt = im_in.dim
 
-    if round(px, 2) != round(npx, 2) or round(py, 2) != round(npy, 2):
+    if np.round(px, 2) != np.round(npx, 2) or np.round(py, 2) != np.round(npy, 2):
         name_resample = sct.extract_fname(fname)[1] + suffix
         if binary:
             interpolation = 'nn'

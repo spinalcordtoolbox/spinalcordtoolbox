@@ -263,7 +263,7 @@ def main(args=None):
         # find z centered in FOV
         nii = Image('segmentation.nii.gz').change_orientation("RPI")
         nx, ny, nz, nt, px, py, pz, pt = nii.dim  # Get dimensions
-        z_center = int(round(nz / 2))  # get z_center
+        z_center = int(np.round(nz / 2))  # get z_center
         create_label_z('segmentation.nii.gz', z_center, initcenter, fname_labelz=fname_labelz)  # create label located at z_center
     elif fname_initlabel:
         import sct_label_utils
@@ -464,13 +464,13 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     # get dimension of src
     nx, ny, nz = data.shape
     # define xc and yc (centered in the field of view)
-    xc = int(round(nx / 2))  # direction RL
-    yc = int(round(ny / 2))  # direction AP
+    xc = int(np.round(nx / 2))  # direction RL
+    yc = int(np.round(ny / 2))  # direction AP
     # get dimension of template
     nxt, nyt, nzt = data_template.shape
     # define xc and yc (centered in the field of view)
-    xct = int(round(nxt / 2))  # direction RL
-    yct = int(round(nyt / 2))  # direction AP
+    xct = int(np.round(nxt / 2))  # direction RL
+    yct = int(np.round(nyt / 2))  # direction AP
 
     # define mean distance (in voxel) between adjacent discs: [C1/C2 -> C2/C3], [C2/C3 -> C4/C5], ..., [L1/L2 -> L2/L3]
     centerline_level = data_disc_template[xct, yct, :]
@@ -601,9 +601,9 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
         else:
             correcting_factor = 1
         # update list_distance specific for the subject
-        list_distance = [int(round(list_distance_template[i] * correcting_factor)) for i in range(len(list_distance_template))]
+        list_distance = [int(np.round(list_distance_template[i] * correcting_factor)) for i in range(len(list_distance_template))]
         # updated average_disc_distance (in case it is needed)
-        # average_disc_distance = int(round(np.mean(list_distance)))
+        # average_disc_distance = int(np.round(np.mean(list_distance)))
 
         # assign new current_z and disc value
         if direction == 'superior':
@@ -678,7 +678,7 @@ def create_label_z(fname_seg, z, value, fname_labelz='labelz.nii.gz'):
     nx, ny, nz, nt, px, py, pz, pt = nii.dim  # Get dimensions
     # find x and y coordinates of the centerline at z using center of mass
     x, y = center_of_mass(nii.data[:, :, z])
-    x, y = int(round(x)), int(round(y))
+    x, y = int(np.round(x)), int(np.round(y))
     nii.data[:, :, :] = 0
     nii.data[x, y, z] = value
     # dilate label to prevent it from disappearing due to nearestneighbor interpolation
@@ -700,7 +700,7 @@ def get_z_and_disc_values_from_label(fname_label):
     nii = Image(fname_label)
     # get center of mass of label
     x_label, y_label, z_label = center_of_mass(nii.data)
-    x_label, y_label, z_label = int(round(x_label)), int(round(y_label)), int(round(z_label))
+    x_label, y_label, z_label = int(np.round(x_label)), int(np.round(y_label)), int(np.round(z_label))
     # get label value
     value_label = int(nii.data[x_label, y_label, z_label])
     return [z_label, value_label]
@@ -906,7 +906,7 @@ def label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=1):
             matplotlib.use('Agg')
             import matplotlib.pyplot as plt
             plt.figure(50)
-            plt.scatter(int(round(ny / 2)), iz, c=vertebral_level, vmin=min(list_disc_value), vmax=max(list_disc_value), cmap='prism', marker='_', s=200)
+            plt.scatter(int(np.round(ny / 2)), iz, c=vertebral_level, vmin=min(list_disc_value), vmax=max(list_disc_value), cmap='prism', marker='_', s=200)
     # write file
     seg.change_orientation(init_orientation).save(sct.add_suffix(fname_seg, '_labeled'))
 

@@ -89,7 +89,7 @@ def main():
                             d_new = 'OK'
                             sum_new = sum_new+1
                         else: d_new = 'Not In'
-                        results_t1.append([dirname,d_old,d_new,round(r_old,2),round(r_new,2)])
+                        results_t1.append([dirname,d_old,d_new,np.round(r_old,2),np.round(r_new,2)])
         # compute average
         results_t1.append(['average',sum_old,sum_new,np.mean([line[3] for line in results_t1]),np.mean([line[4] for line in results_t1])])
 
@@ -112,7 +112,7 @@ def main():
                             d_new = 'OK'
                             sum_new = sum_new+1
                         else: d_new = 'Not In'
-                        results_t2.append([dirname,d_old,d_new,round(r_old,2),round(r_new,2)])
+                        results_t2.append([dirname,d_old,d_new,np.round(r_old,2),np.round(r_new,2)])
         # compute average
         results_t2.append(['average',sum_old,sum_new,np.mean([line[3] for line in results_t2]),np.mean([line[4] for line in results_t2])])
 
@@ -134,7 +134,7 @@ def main():
                             d_new = 'OK'
                             sum_new = sum_new+1
                         else: d_new = 'Not In'
-                        results_dmri.append([dirname,d_old,d_new,round(r_old,2),round(r_new,2)])
+                        results_dmri.append([dirname,d_old,d_new,np.round(r_old,2),np.round(r_new,2)])
 
         # compute average
         results_dmri.append(['average',sum_old,sum_new,np.mean([line[3] for line in results_dmri]),np.mean([line[4] for line in results_dmri])])
@@ -154,7 +154,7 @@ def main():
 
     # display elapsed time
     elapsed_time = time.time() - start_time
-    print('Finished! Elapsed time: '+str(int(round(elapsed_time)))+'s\n')
+    print('Finished! Elapsed time: '+str(int(np.round(elapsed_time)))+'s\n')
 
     e = 0
     for i in range(0,len(results_t2)):

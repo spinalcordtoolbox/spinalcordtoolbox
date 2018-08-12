@@ -64,6 +64,7 @@ else:
 
 from multiprocessing import cpu_count
 
+import numpy as np
 import h5py
 import pandas as pd
 
@@ -625,7 +626,7 @@ if __name__ == "__main__":
         count_ran = results_subset.query('status != 200 & status != 201').count()['status']
         # display general results
         sct.log.info('\nGLOBAL RESULTS:')
-        sct.log.info('Duration: ' + str(int(round(compute_time))) + 's')
+        sct.log.info('Duration: ' + str(int(np.round(compute_time))) + 's')
         # display results
         sct.log.info('Passed: ' + str(count_passed) + '/' + str(count_ran))
         sct.log.info('Crashed: ' + str(count_crashed) + '/' + str(count_ran))

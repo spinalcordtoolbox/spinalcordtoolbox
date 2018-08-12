@@ -23,6 +23,8 @@ import shutil
 import subprocess
 import tempfile
 
+import numpy as np
+
 if os.getenv('SENTRY_DSN', None):
     # do no import if Sentry is not set (i.e., if variable SENTRY_DSN is not defined)
     import raven
@@ -976,18 +978,15 @@ def check_if_installed(cmd, name_software):
 # check if two images are in the same space and same orientation
 def check_if_same_space(fname_1, fname_2):
     from spinalcordtoolbox.image import Image
-    from numpy import min, nonzero, all, around
-    from numpy import abs as np_abs
-    from numpy import log10 as np_log10
 
     im_1 = Image(fname_1)
     im_2 = Image(fname_2)
     q1 = im_1.hdr.get_qform()
     q2 = im_2.hdr.get_qform()
 
-    dec = int(np_abs(round(np_log10(min(np_abs(q1[nonzero(q1)]))))) + 1)
+    dec = int(np.abs(np.round(np.log10(np.min(np.abs(q1[np.nonzero(q1)]))))) + 1)
     dec = 4 if dec > 4 else dec
-    return all(around(q1, dec) == around(q2, dec))
+    return np.all(np.around(q1, dec) == np.around(q2, dec))
 
 
 def printv(string, verbose=1, type='normal'):
