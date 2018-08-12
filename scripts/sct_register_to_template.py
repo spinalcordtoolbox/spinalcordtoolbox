@@ -706,7 +706,7 @@ def project_labels_on_spinalcord(fname_label, fname_seg):
     centerline_xyz_transposed = [im_seg.transfo_pix2phys([[centerline_x[i], centerline_y[i], centerline_z[i]]])[0]
                                  for i in range(len(centerline_x))]
     # transpose list
-    centerline_phys_x, centerline_phys_y, centerline_phys_z = map(list, map(None, *centerline_xyz_transposed))
+    centerline_phys_x, centerline_phys_y, centerline_phys_z = list(map(list, map(None, *centerline_xyz_transposed)))
     # get center of mass of label
     labels = im_label.getCoordinatesAveragedByValue()
     # initialize image of projected labels. Note that we use the space of the seg (not label).

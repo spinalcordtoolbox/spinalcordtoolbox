@@ -188,7 +188,7 @@ def eddy_correct(param):
     bvecs = []
     with open(param.fname_bvecs) as f:
         for line in f:
-            bvecs_new = map(float, line.split())
+            bvecs_new = list(map(float, line.split()))
             bvecs.append(bvecs_new)
 
     # Check if bvecs file is nx3
@@ -196,7 +196,7 @@ def eddy_correct(param):
         sct.printv('.. WARNING: bvecs file is 3xn instead of nx3. Consider using sct_dmri_transpose_bvecs.', verbose)
         sct.printv('Transpose bvecs...', verbose)
         # transpose bvecs
-        bvecs = zip(*bvecs)
+        bvecs = list(zip(*bvecs))
     bvecs = np.array(bvecs)
 
     opposite_gradients_iT = []

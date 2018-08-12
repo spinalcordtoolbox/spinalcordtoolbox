@@ -834,7 +834,7 @@ def check_labels(indiv_labels_ids, selected_labels):
     # TODO: allow selection of combined labels as "36, Ventral, 7:14,22:19"
 
     # convert strings to int
-    list_ids_of_labels_of_interest = map(int, indiv_labels_ids)
+    list_ids_of_labels_of_interest = list(map(int, indiv_labels_ids))
 
     # if selected_labels:
     #     # Check if label chosen is in the right format
@@ -1105,7 +1105,7 @@ def remove_label_from_group(list_label_groups, label_ID):
         if label_ID in list_label_groups[i_group]:
             list_label_groups[i_group].remove(label_ID)
 
-    list_label_groups = filter(None, list_label_groups)
+    list_label_groups = list(filter(None, list_label_groups))
 
     return list_label_groups
 
