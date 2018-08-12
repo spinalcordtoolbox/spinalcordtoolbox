@@ -19,12 +19,14 @@ from __future__ import print_function, absolute_import, division
 # check if needed Python libraries are already installed or not
 import sys
 import os
-
 import getopt
 import time
+
 import numpy as np
+
 from spinalcordtoolbox.image import Image
 import sct_utils as sct
+
 # get path of the toolbox
 path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
 

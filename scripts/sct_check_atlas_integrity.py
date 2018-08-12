@@ -21,14 +21,14 @@ from __future__ import absolute_import, division
 
 import os
 import sys
-
-from spinalcordtoolbox.metadata import read_label_file_atlas
-
 import getopt
-import sct_utils as sct
-from msct_parser import Parser
+
 import nibabel as nib
 import numpy as np
+
+from spinalcordtoolbox.metadata import read_label_file_atlas
+import sct_utils as sct
+from msct_parser import Parser
 
 
 # DEFAULT PARAMETERS

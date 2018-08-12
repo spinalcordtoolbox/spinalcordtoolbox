@@ -16,13 +16,13 @@ from __future__ import absolute_import, division
 import sys, os
 
 import numpy as np
+from skimage import transform, img_as_float, img_as_uint
 
 import sct_utils as sct
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
 from msct_parser import Parser
 from sct_straighten_spinalcord import smooth_centerline
-from skimage import transform, img_as_float, img_as_uint
 
 # Default parameters
 class Param:

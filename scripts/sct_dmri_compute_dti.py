@@ -14,12 +14,12 @@ from __future__ import absolute_import
 
 import sys
 
-from msct_parser import Parser
-import sct_utils as sct
 from dipy.io import read_bvals_bvecs
 from dipy.core.gradients import gradient_table
 import dipy.reconst.dti as dti
 
+from msct_parser import Parser
+import sct_utils as sct
 
 class Param:
     def __init__(self):

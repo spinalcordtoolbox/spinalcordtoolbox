@@ -17,8 +17,9 @@ from __future__ import division, absolute_import
 import sys
 import math
 import time
-
 import os
+
+import numpy as np
 
 import sct_utils as sct
 from spinalcordtoolbox.image import Image

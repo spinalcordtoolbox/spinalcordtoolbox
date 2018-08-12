@@ -7,10 +7,10 @@
 
 from __future__ import absolute_import, division, print_function
 
-import sct_utils as sct
 import logging
 from PyQt4 import QtCore, QtGui
 
+import sct_utils as sct
 from spinalcordtoolbox.gui import base
 from spinalcordtoolbox.gui import widgets
 from spinalcordtoolbox.gui.base import TooManyPointsWarning, InvalidActionWarning

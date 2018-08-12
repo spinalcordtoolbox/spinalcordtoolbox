@@ -21,7 +21,10 @@
 from __future__ import absolute_import
 
 import sys, os, glob
+
 import numpy as np
+import scipy.interpolate
+
 import sct_utils as sct
 from spinalcordtoolbox.image import Image
 from sct_image import split_data
