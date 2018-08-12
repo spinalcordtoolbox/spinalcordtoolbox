@@ -137,6 +137,7 @@ def main(args=None):
     os.remove(tmp_file)
 
     sct.printv('Done!\n', verbose)
+    return 0
 
 
 def unzip(compressed, dest_folder, verbose):
