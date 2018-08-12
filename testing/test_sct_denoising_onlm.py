@@ -13,10 +13,9 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-#import sct_utils as sct
 from __future__ import absolute_import
 
-import os, commands
+import os
 
 
 def test(path_data):

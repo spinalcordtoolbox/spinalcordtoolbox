@@ -446,7 +446,6 @@ def get_functions_parallelizable():
 # print without carriage return
 # ==========================================================================================
 def print_line(string):
-    import sys
     sys.stdout.write(string + make_dot_lines(string))
     sys.stdout.flush()
 

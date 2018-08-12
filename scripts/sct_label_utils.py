@@ -18,6 +18,7 @@
 
 from __future__ import division, absolute_import
 
+import os
 import sys
 import math
 import numpy as np

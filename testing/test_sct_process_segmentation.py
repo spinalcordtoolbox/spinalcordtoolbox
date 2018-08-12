@@ -21,11 +21,12 @@ import sys
 import os
 import time
 
-import sct_utils as sct
 from pandas import DataFrame
 import numpy as np
 import nibabel as nib
 import pickle
+
+import sct_utils as sct
 
 
 def init(param_test):

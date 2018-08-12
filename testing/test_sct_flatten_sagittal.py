@@ -16,7 +16,6 @@ from __future__ import absolute_import
 import sct_utils as sct
 
 
-
 def init(param_test):
     """
     Initialize testing.

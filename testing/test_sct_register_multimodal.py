@@ -14,8 +14,9 @@ from __future__ import absolute_import, division
 
 import os
 
-from spinalcordtoolbox.image import Image
 import numpy as np
+
+from spinalcordtoolbox.image import Image
 
 
 def init(param_test):

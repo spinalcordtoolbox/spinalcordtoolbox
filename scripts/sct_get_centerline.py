@@ -4,7 +4,7 @@ from __future__ import division, absolute_import
 
 import os
 import sys
-import shutil
+
 
 import sct_utils as sct
 from msct_parser import Parser

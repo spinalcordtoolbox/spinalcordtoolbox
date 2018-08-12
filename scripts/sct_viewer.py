@@ -43,6 +43,7 @@ import webbrowser
 
 from numpy import arange, max, pad, linspace, mean, median, std, percentile
 import numpy as np
+
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D

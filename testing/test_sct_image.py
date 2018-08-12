@@ -15,9 +15,10 @@ from __future__ import absolute_import
 
 import sys, io, os
 
+import numpy as np
+
 import sct_utils as sct
 from spinalcordtoolbox.image import Image
-import numpy as np
 
 
 def init(param_test):
