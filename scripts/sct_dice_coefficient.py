@@ -87,8 +87,6 @@ if __name__ == "__main__":
     fname_input2 = arguments['-d']
 
     verbose = arguments['-v']
-    if verbose == '0':
-        cmd += ' -v '
 
     tmp_dir = sct.tmp_create(verbose=verbose)  # create tmp directory
     tmp_dir = os.path.abspath(tmp_dir)
