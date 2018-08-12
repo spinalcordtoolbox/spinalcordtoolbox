@@ -26,8 +26,6 @@ def test(data_path):
     # test 3d data
     cmd = 'sct_orientation -i ' + data_path + folder_data[0] + file_data[0]
     status, output = sct.run(cmd)
-    from time import sleep
-    sleep(1)  # here add one second, otherwise the next test will try to create a temporary folder with the same name (because it runs in less than one second)
 
     # test 4d data
     if status == 0:
