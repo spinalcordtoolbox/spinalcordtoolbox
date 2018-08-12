@@ -15,10 +15,10 @@ from __future__ import print_function, absolute_import
 import os, sys
 import getopt
 
-import sys
-import sct_utils as sct
 import nibabel
 import numpy as np
+
+import sct_utils as sct
 
 # DEFAULT PARAMETERS
 

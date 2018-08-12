@@ -4,14 +4,15 @@ import os
 
 import pytest
 
-from spinalcordtoolbox.deepseg_gm import model as gm_model
-from spinalcordtoolbox.deepseg_gm import deepseg_gm as gm_core
-
 import nibabel as nib
 
 import numpy as np
 
 import keras.backend as K
+
+from spinalcordtoolbox.deepseg_gm import model as gm_model
+from spinalcordtoolbox.deepseg_gm import deepseg_gm as gm_core
+
 
 
 class TestModel(object):

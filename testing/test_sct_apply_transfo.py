@@ -15,7 +15,9 @@
 from __future__ import absolute_import
 
 import os
+
 import numpy as np
+
 import sct_utils as sct
 import spinalcordtoolbox.image as msct_image
 

@@ -13,8 +13,7 @@
 
 from __future__ import absolute_import
 
-#import sct_utils as sct
-import os, commands
+import os
 
 def test(path_data):
 

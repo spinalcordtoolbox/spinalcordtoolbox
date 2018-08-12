@@ -5,6 +5,7 @@
 from __future__ import absolute_import
 
 import io, os, re
+
 from spinalcordtoolbox.utils import parse_num_list
 
 

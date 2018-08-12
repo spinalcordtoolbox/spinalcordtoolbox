@@ -13,10 +13,12 @@
 from __future__ import absolute_import
 
 import sys
+
+from dipy.data.fetcher import read_bvals_bvecs
+
 from msct_parser import Parser
 from sct_utils import extract_fname
 import sct_utils as sct
-from dipy.data.fetcher import read_bvals_bvecs
 
 # PARSER
 # ==========================================================================================
