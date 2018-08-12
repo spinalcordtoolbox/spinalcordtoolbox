@@ -1148,47 +1148,6 @@ def ellipse_dim(a):
     return np.array([res1, res2])
 
 
-#=======================================================================================================================
-# Detect edges of an image
-#=======================================================================================================================
-def edge_detection(f):
-
-    img = Image(f)  # grayscale
-    imgdata = np.array(img, dtype = float)
-    G = imgdata
-    #G = ndi.filters.gaussian_filter(imgdata, sigma)
-    gradx = np.array(G, dtype = float)
-    grady = np.array(G, dtype = float)
-
-    mask_x = np.array([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]])
-
-    mask_y = np.array([[1, 2, 1], [0, 0, 0], [-1, -2, -1]])
-
-    width = img.size[1]
-    height = img.size[0]
-
-    for i in range(1, width - 1):
-        for j in range(1, height - 1):
-
-            px = np.sum(mask_x * G[(i - 1):(i + 1) + 1, (j - 1):(j + 1) + 1])
-            py = np.sum(mask_y * G[(i - 1):(i + 1) + 1, (j - 1):(j + 1) + 1])
-            gradx[i][j] = px
-            grady[i][j] = py
-
-    mag = scipy.hypot(gradx, grady)
-
-    treshold = np.max(mag) * 0.9
-
-    for i in range(width):
-        for j in range(height):
-            if mag[i][j] > treshold:
-                mag[i][j] = 1
-            else:
-                mag[i][j] = 0
-
-    return mag
-
-
 if __name__ == "__main__":
     sct.init_sct()
     # initialize parameters
