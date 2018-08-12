@@ -72,7 +72,7 @@ def main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, 
 
     for iz in range(nz):
         # compute translation along x (R-L)
-        translation_x = x_centerline_extended[iz] - round(nx/2.0)
+        translation_x = x_centerline_extended[iz] - np.round(nx/2.0)
         # apply transformation to 2D image with linear interpolation
         # tform = tf.SimilarityTransform(scale=1, rotation=0, translation=(translation_x, 0))
         tform = transform.SimilarityTransform(translation=(0, translation_x))

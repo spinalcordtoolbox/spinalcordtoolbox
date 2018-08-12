@@ -261,7 +261,7 @@ class Slice(object):
             matrix = self.get_slice(image.data, dim / 2)
             index = self.get_center_spit()
             for j in range(len(index)):
-                matrix[j] = self.get_slice(image.data, int(round(index[j])))[j]
+                matrix[j] = self.get_slice(image.data, int(np.round(index[j])))[j]
             matrices.append(matrix)
 
         return matrices

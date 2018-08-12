@@ -15,6 +15,8 @@ from __future__ import division, absolute_import
 
 import os
 
+import numpy as np
+
 from scipy.interpolate import splrep, splev
 import sct_utils as sct
 
@@ -295,7 +297,7 @@ def b_spline_nurbs(x, y, z, fname_centerline=None, degree=3, point_number=3000, 
     if nbControl == -1:
         centerlineSize = getSize(x, y, z, fname_centerline)
         nbControl = 30 * log(centerlineSize, 10) - 42
-        nbControl = round(nbControl)
+        nbControl = np.round(nbControl)
 
     nurbs = NURBS(degree, point_number, data, False, nbControl, verbose, all_slices=all_slices, twodim=twodim)
 
@@ -586,7 +588,7 @@ def smoothing_window(x, window_len=11, window='hanning', verbose = 0, robust=0, 
     window_len_int = ceil((floor(window_len) + 1) / 2) * 2 - 1
 
     # Add padding
-    size_padding = int(round((window_len_int - 1) / 2.0) + remove_edge_points)
+    size_padding = int(np.round((window_len_int - 1) / 2.0) + remove_edge_points)
     for i in range(size_padding):
         x_extended = append(x_extended, 2 * x_extended[-1 - i] - x_extended[-1 - 2 * i - 1])
         x_extended = insert(x_extended, 0, 2 * x_extended[i] - x_extended[2 * i + 1])

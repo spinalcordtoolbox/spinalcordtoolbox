@@ -65,6 +65,7 @@ from __future__ import division, absolute_import
 
 
 import numpy as np
+
 import sct_utils as sct
 
 class ReconstructionError(RuntimeError):
@@ -120,7 +121,7 @@ class NURBS():
                 self.nbControle = self.degre + 1
                 nb_points = len(P_x)
                 if self.nbControle > nb_points - 1:
-                    sct.printv('ERROR : There are too few points to compute. The number of points of the curve must be strictly superior to degre +2 which is: ', self.nbControle, '. Either change degre to a lower value, either add points to the curve.', type="error")
+                    sct.printv('ERROR : There are too few points to compute. The number of points of the curve must be strictly superior to degre +2 which is: ' + str(self.nbControle) + '. Either change degre to a lower value, either add points to the curve.', type="error")
 
                 # compute weights based on curve density
                 w = [1.0] * len(P_x)
@@ -179,7 +180,7 @@ class NURBS():
                         error_curve /= float(len(P_x))
 
                         if verbose >= 1:
-                            sct.printv('Error on approximation = ' + str(round(error_curve, 2)) + ' mm')
+                            sct.printv('Error on approximation = ' + str(np.round(error_curve, 2)) + ' mm')
 
                         # Create a list of parameters that have worked in order to call back the last one that has worked
                         list_param_that_worked.append([self.nbControle, self.pointsControle, error_curve])
@@ -206,7 +207,7 @@ class NURBS():
 
                 if verbose >= 1:
                     if self.nbControle != nbControle_that_last_worked:
-                        sct.printv("The fitting of the curve was done using {} control points: the number that gave the best results. \nError on approximation = {} mm".format(nbControle_that_last_worked, round(self.error_curve_that_last_worked, 2)))
+                        sct.printv("The fitting of the curve was done using {} control points: the number that gave the best results. \nError on approximation = {} mm".format(nbControle_that_last_worked, np.round(self.error_curve_that_last_worked, 2)))
                     else:
                         sct.printv('Number of control points of the optimal NURBS = {}'.format(self.nbControle))
             else:
@@ -408,7 +409,7 @@ class NURBS():
         P_z_d = np.array(P_z_d)
 
         if self.all_slices:
-            P_z = np.array([int(round(P_z[i])) for i in range(0, len(P_z))])
+            P_z = np.array([int(np.round(P_z[i])) for i in range(0, len(P_z))])
 
             # not perfect but works (if "enough" points), in order to deal with missing z slices
             for i in range(min(P_z), max(P_z) + 1, 1):
@@ -505,7 +506,7 @@ class NURBS():
         P_y_d = np.array(P_y_d)
 
         if self.all_slices:
-            P_y = np.array([int(round(P_y[i])) for i in range(0, len(P_y))])
+            P_y = np.array([int(np.round(P_y[i])) for i in range(0, len(P_y))])
 
             # not perfect but works (if "enough" points), in order to deal with missing z slices
             for i in range(min(P_y), max(P_y) + 1, 1):
@@ -781,9 +782,9 @@ class NURBS():
         global Nik_temp
         n = 13
         l = len(P_x)
-        newPx = P_x[::int(round(l / (n - 1)))]
-        newPy = P_y[::int(round(l / (n - 1)))]
-        newPz = P_y[::int(round(l / (n - 1)))]
+        newPx = P_x[::int(np.round(l / (n - 1)))]
+        newPy = P_y[::int(np.round(l / (n - 1)))]
+        newPz = P_y[::int(np.round(l / (n - 1)))]
         newPx.append(P_x[-1])
         newPy.append(P_y[-1])
         newPz.append(P_z[-1])
@@ -922,7 +923,7 @@ class NURBS():
         P_x, P_y, P_z, P_x_d, P_y_d, P_z_d = self.compute_curve_from_parametrization(P, k, x, Nik, Nikp, param)
 
         if self.all_slices:
-            P_z = np.array([int(round(P_z[i])) for i in range(0, len(P_z))])
+            P_z = np.array([int(np.round(P_z[i])) for i in range(0, len(P_z))])
 
             # not perfect but works (if "enough" points), in order to deal with missing z slices
             for i in range(min(P_z), max(P_z) + 1, 1):

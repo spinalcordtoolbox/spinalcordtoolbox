@@ -410,7 +410,7 @@ def compute_length(fname_segmentation, remove_temp_files, output_folder, overwri
                 if z_centerline[i] in slices_list:
                     length += sqrt(((x_centerline_fit[i + 1] - x_centerline_fit[i]) * px)**2 + ((y_centerline_fit[i + 1] - y_centerline_fit[i]) * py)**2 + ((z_centerline[i + 1] - z_centerline[i]) * pz)**2)
 
-        sct.printv('\nLength of the segmentation = ' + str(round(length, 2)) + ' mm\n', verbose, 'info')
+        sct.printv('\nLength of the segmentation = ' + str(np.round(length, 2)) + ' mm\n', verbose, 'info')
 
         # write result into output file
         save_results(os.path.join(output_folder, 'length'), overwrite, fname_segmentation, 'length',
@@ -427,7 +427,7 @@ def compute_length(fname_segmentation, remove_temp_files, output_folder, overwri
         for i in range(len(x_centerline_fit) - 1):
             length += sqrt(((x_centerline_fit[i + 1] - x_centerline_fit[i]) * px)**2 + ((y_centerline_fit[i + 1] - y_centerline_fit[i]) * py)**2 + ((z_centerline[i + 1] - z_centerline[i]) * pz)**2)
 
-        sct.printv('\nLength of the segmentation = ' + str(round(length, 2)) + ' mm\n', verbose, 'info')
+        sct.printv('\nLength of the segmentation = ' + str(np.round(length, 2)) + ' mm\n', verbose, 'info')
         # write result into output file
         save_results(os.path.join(output_folder, 'length'), overwrite, fname_segmentation, 'length', '(in mm)', length, np.nan,
                      slices, actual_vert=[], warning_vert_levels='')
@@ -549,9 +549,9 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
         plt.show()
 
     # Create an image with the centerline
-    min_z_index, max_z_index = int(round(min(z_centerline_voxel))), int(round(max(z_centerline_voxel)))
+    min_z_index, max_z_index = int(np.round(min(z_centerline_voxel))), int(np.round(max(z_centerline_voxel)))
     for iz in range(min_z_index, max_z_index + 1):
-        data[int(round(x_centerline_voxel[iz - min_z_index])), int(round(y_centerline_voxel[iz - min_z_index])), int(iz)] = 1  # if index is out of bounds here for hanning: either the segmentation has holes or labels have been added to the file
+        data[int(np.round(x_centerline_voxel[iz - min_z_index])), int(np.round(y_centerline_voxel[iz - min_z_index])), int(iz)] = 1  # if index is out of bounds here for hanning: either the segmentation has holes or labels have been added to the file
     # Write the centerline image in RPI orientation
     # hdr.set_data_dtype('uint8') # set imagetype to uint8
     sct.printv('\nWrite NIFTI volumes...', verbose)

@@ -15,6 +15,8 @@ from __future__ import absolute_import
 
 import sys, io, os
 
+import numpy as np
+
 from spinalcordtoolbox.image import Image
 
 
@@ -52,7 +54,7 @@ def test_integrity(param_test):
     image_result = Image(os.path.join(param_test.path_output, 'resampled.nii.gz'))
     dims = image_result.dim
 
-    if not all(round(i, 4) == round(j, 4) for i, j in zip(dims, param_test.results_dims[index_args])):
+    if not np.all(np.round(i, 4) == np.round(j, 4) for i, j in zip(dims, param_test.results_dims[index_args])):
         param_test.output += 'WARNING: dimensions and spacing different from expected.' \
                              '\n--> Results: ' + str(dims) + \
                              '\n--> Expected: ' + str(param_test.results_dims[index_args])
