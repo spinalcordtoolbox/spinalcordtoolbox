@@ -149,10 +149,10 @@ def read_database(folder_dataset, specifications=None, fname_database='', verbos
         sct.log.info('  Looking for an XLS file describing the database...')
         list_fname_database = glob.glob(os.path.join(folder_dataset, '*.xls*'))
         if list_fname_database == []:
-            sct.log.warning('WARNING: No XLS file found. Returning empty list.', verbose, 'warning')
+            sct.log.warning('WARNING: No XLS file found. Returning empty list.')
             return subj_selected
         elif len(list_fname_database) > 1:
-            sct.log.warning('WARNING: More than one XLS file found. Returning empty list.', verbose, 'warning')
+            sct.log.warning('WARNING: More than one XLS file found. Returning empty list.')
             return subj_selected
         else:
             fname_database = list_fname_database[0]
@@ -163,7 +163,7 @@ def read_database(folder_dataset, specifications=None, fname_database='', verbos
     try:
         data_base = pd.read_excel(fname_database)
     except:
-        sct.log.error('ERROR: File '+fname_database+' cannot be read. Please check format or get help from SCT forum.', verbose, 'error')
+        sct.log.error('ERROR: File '+fname_database+' cannot be read. Please check format or get help from SCT forum.')
     #
     # correct some values and clean panda data base
     # convert columns to int
