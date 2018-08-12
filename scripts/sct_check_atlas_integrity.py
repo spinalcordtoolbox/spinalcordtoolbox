@@ -76,7 +76,7 @@ def main():
             param.verbose = int(arguments['-v'])
 
     # Extract atlas info
-    atlas_id, atlas_name, atlas_file = read_label_file_atlas(path_atlas)
+    atlas_id, atlas_name, atlas_file = read_label_file_atlas(path_atlas, 'info_label.txt')
     nb_tracts_total = len(atlas_id)
 
     # Load atlas
