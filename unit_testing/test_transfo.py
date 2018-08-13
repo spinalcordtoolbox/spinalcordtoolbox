@@ -289,7 +289,7 @@ def test_transfo_exhaustive_wrt_orientations():
     print("Orientations DK: {}".format(" ".join(orientations_dk)))
 
 
-def test_transfo_more_exhaustive_wrt_orientations():
+def notest_transfo_more_exhaustive_wrt_orientations():
 
     dir_tmp = "."
 
