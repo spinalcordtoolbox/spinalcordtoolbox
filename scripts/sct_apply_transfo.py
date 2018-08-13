@@ -20,7 +20,7 @@ from msct_parser import Parser
 import sct_utils as sct
 import sct_convert
 import sct_image
-import msct_image
+import spinalcordtoolbox.image as msct_image
 from sct_crop_image import ImageCropper
 
 

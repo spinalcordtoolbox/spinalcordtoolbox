@@ -3,7 +3,7 @@
 #
 # msct_types
 # This file contains many useful (and tiny) classes corresponding to data types.
-# Large data types with many options have their own file (e.g., msct_image)
+# Large data types with many options have their own file (e.g., spinalcordtoolbox.image)
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>

@@ -7,8 +7,8 @@ import shutil
 import sct_utils as sct
 from msct_parser import Parser
 from spinalcordtoolbox.centerline import optic
-import msct_image
-from msct_image import Image
+import spinalcordtoolbox.image as msct_image
+from spinalcordtoolbox.image import Image
 from msct_types import Centerline
 from sct_viewer import ClickViewerPropseg
 from sct_straighten_spinalcord import smooth_centerline

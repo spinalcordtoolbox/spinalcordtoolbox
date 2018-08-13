@@ -20,7 +20,7 @@ import time
 import os
 
 import sct_utils as sct
-from msct_image import Image
+from spinalcordtoolbox.image import Image
 from sct_image import split_data
 from msct_parser import Parser
 

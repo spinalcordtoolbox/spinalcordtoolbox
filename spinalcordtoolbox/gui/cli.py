@@ -8,7 +8,8 @@
 import os
 import sys
 
-from scripts.msct_image import Image
+from ..image import Image
+
 from scripts.msct_parser import Parser
 from scripts.sct_utils import printv
 from spinalcordtoolbox.gui import base

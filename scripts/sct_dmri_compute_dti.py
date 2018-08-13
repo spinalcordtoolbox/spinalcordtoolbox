@@ -120,7 +120,7 @@ def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, evecs, file_
     :return: True/False
     """
     # Open file.
-    from msct_image import Image
+    from spinalcordtoolbox.image import Image
     nii = Image(fname_in)
     data = nii.data
     sct.printv('data.shape (%d, %d, %d, %d)' % data.shape)

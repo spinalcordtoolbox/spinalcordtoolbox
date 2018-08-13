@@ -11,22 +11,9 @@ import nibabel
 import nibabel.orientations
 
 import sct_utils as sct
-import msct_image
+import spinalcordtoolbox.image as msct_image
 import sct_image
 
-
-def old_change_orientation(im_src, orientation, im_dst=None):
-    im_src.save("a.nii")
-    sct.run(["isct_orientation3d", "-i", "a.nii", "-orientation", orientation, "-o", "b.nii"])
-    im_dst2 = msct_image.Image("b.nii")
-    if im_dst is None:
-        return im_dst2
-    else:
-        im_dst.data = im_dst2.data
-        im_dst.header = im_dst2.header
-        return im_dst
-
-#msct_image.change_orientation = old_change_orientation
 
 @pytest.fixture(scope="session")
 def image_paths():
@@ -264,25 +251,22 @@ def fake_3dimage_sct2():
 
 
 def test_slicer(fake_3dimage_sct, fake_3dimage_sct2):
-    im3d = fake_3dimage_sct
-    slicer = msct_image.Slicer(im3d, "IS")
-    assert slicer.direction == +1
-    assert slicer.nb_slices == 9
+    im3d = fake_3dimage_sct.copy()
+    slicer = msct_image.Slicer(im3d, "LPI")
     if 0:
         for im2d in slicer:
             print(im2d)
-
+    assert slicer._nb_slices == 9
     assert 100 < np.mean(slicer[0]) < 200
 
-    slicer = msct_image.Slicer(im3d, "SI")
-    assert slicer.direction == -1
-    assert slicer.nb_slices == 9
 
+    slicer = msct_image.Slicer(im3d, "LPS")
     if 0:
         for im2d in slicer:
             print(im2d)
-
+    assert slicer._nb_slices == 9
     assert 900 < np.mean(slicer[0]) < 1000
+
 
     with pytest.raises(ValueError):
         slicer = msct_image.Slicer(im3d, "LI")
@@ -298,16 +282,40 @@ def test_slicer(fake_3dimage_sct, fake_3dimage_sct2):
 
     im3d2 = fake_3dimage_sct.copy()
     im3d2.data += 1000
-    slicer = msct_image.Slicer((im3d, im3d2), "IS")
+    slicer = msct_image.SlicerMany((im3d, im3d2), msct_image.Slicer, orientation="LPI")
     for idx_slice, (im2d_a, im2d_b) in enumerate(slicer):
         assert np.all(im2d_b == im2d_a + 1000)
 
-    im3d2 = fake_3dimage_sct2
     with pytest.raises(ValueError):
-        slicer = msct_image.Slicer((im3d, im3d2), "IS")
+        slicer = msct_image.SlicerMany((im3d, im3d2), msct_image.Slicer, orientation="IS")
+
+    im3d2 = fake_3dimage_sct2.copy()
+    with pytest.raises(ValueError):
+        slicer = msct_image.SlicerMany((im3d, im3d2), msct_image.Slicer, orientation="LPI")
 
     with pytest.raises(ValueError):
         slicer = msct_image.Slicer(1)
+
+    im3d = fake_3dimage_sct.copy()
+
+    d = im3d.data.copy()
+
+    slicer = msct_image.Slicer(im3d, "RPI")
+    if 0:
+        for im2d in slicer:
+            print(im2d)
+    slicer = msct_image.Slicer(im3d, "ASR")
+    if 0:
+        for im2d in slicer:
+            print(im2d)
+
+    msct_image.Slicer(im3d, "ASR")[0][0,0] = -1
+
+    for idx_slice, (slice2d_new, slice2d_old) in enumerate(msct_image.SlicerMany((im3d, fake_3dimage_sct.copy()), msct_image.Slicer, orientation="ASR")):
+        if idx_slice == 0:
+            assert slice2d_new[0,0] == -1
+            slice2d_new[0,0] = slice2d_old[0,0]
+        assert (slice2d_new == slice2d_old).all()
 
 
 def test_nibabel(fake_3dimage):

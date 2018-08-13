@@ -16,8 +16,8 @@ import sys, io, os, shutil
 
 import numpy as np
 from msct_parser import Parser
-import msct_image
-from msct_image import Image
+import spinalcordtoolbox.image as msct_image
+from spinalcordtoolbox.image import Image
 import sct_image
 import sct_utils as sct
 
@@ -112,16 +112,16 @@ def main():
     if input_orient != 'RPI':
         # change orientation and load data
         sct.printv('\nChange input image orientation and load it...', verbose)
-        input_im_rpi = sct_image.change_orientation_nd(input_im, "RPI")
+        input_im_rpi = msct_image.change_orientation(input_im, "RPI")
         input_data = input_im_rpi.data
         # Do the same for the mask
         sct.printv('\nChange mask orientation and load it...', verbose)
-        mask_im_rpi = sct_image.change_orientation_nd(Image(fname_mask), "RPI")
+        mask_im_rpi = msct_image.change_orientation(Image(fname_mask), "RPI")
         mask_data = mask_im_rpi.data
         # Do the same for vertebral labeling if present
         if vert_levels != 'None':
             sct.printv('\nChange vertebral labeling file orientation and load it...', verbose)
-            vert_label_im_rpi = sct_image.change_orientation_nd(Image(vert_label_fname), "RPI")
+            vert_label_im_rpi = msct_image.change_orientation(Image(vert_label_fname), "RPI")
             vert_labeling_data = vert_label_im_rpi.data
     else:
         # Load data
