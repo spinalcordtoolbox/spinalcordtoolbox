@@ -19,8 +19,8 @@ from nibabel import Nifti1Image, save
 from scipy import ndimage
 import tqdm
 
-import msct_image
-from msct_image import Image
+import spinalcordtoolbox.image as msct_image
+from spinalcordtoolbox.image import Image
 from msct_parser import Parser
 from msct_types import Centerline
 from sct_apply_transfo import Transform

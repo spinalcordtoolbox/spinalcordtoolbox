@@ -36,8 +36,8 @@ import sys, io, os, time, shutil
 
 import sct_utils as sct
 from msct_parser import Parser
-import msct_image
-from msct_image import Image
+import spinalcordtoolbox.image as msct_image
+from spinalcordtoolbox.image import Image
 
 
 def get_parser(paramreg=None):

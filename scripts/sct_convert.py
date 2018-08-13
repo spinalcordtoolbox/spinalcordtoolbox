@@ -62,7 +62,7 @@ def convert(fname_in, fname_out, squeeze_data=True, dtype=None, verbose=1):
     Convert data
     :return True/False
     """
-    import msct_image
+    import spinalcordtoolbox.image as msct_image
     sct.printv('sct_convert -i ' + fname_in + ' -o ' + fname_out, verbose, 'code')
     im = msct_image.Image(fname_in)
     if squeeze_data:

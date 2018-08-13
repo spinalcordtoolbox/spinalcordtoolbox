@@ -18,8 +18,8 @@ import numpy as np
 import pandas as pd
 from skimage.measure import label
 
-import msct_image
-from msct_image import Image
+import spinalcordtoolbox.image as msct_image
+from spinalcordtoolbox.image import Image
 from msct_parser import Parser
 from msct_types import Centerline
 from sct_straighten_spinalcord import smooth_centerline

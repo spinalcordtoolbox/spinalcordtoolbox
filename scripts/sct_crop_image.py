@@ -18,7 +18,8 @@ import nibabel
 
 import sct_utils as sct
 from msct_parser import Parser
-from msct_image import Image
+import spinalcordtoolbox.image as msct_image
+from spinalcordtoolbox.image import Image
 
 
 class LineBuilder:

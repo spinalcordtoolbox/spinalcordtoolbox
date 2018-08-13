@@ -25,8 +25,8 @@ from spinalcordtoolbox.metadata import get_file_label
 from sct_utils import add_suffix
 from sct_register_multimodal import Paramreg, ParamregMultiStep, register
 from msct_parser import Parser
-import msct_image
-from msct_image import Image, find_zmin_zmax
+import spinalcordtoolbox.image as msct_image
+from spinalcordtoolbox.image import Image
 from sct_straighten_spinalcord import smooth_centerline
 
 # get path of the toolbox
@@ -363,12 +363,12 @@ def main(args=None):
             # if we do not align the vertebral levels, we crop the segmentation from top to bottom
             im_seg_rpi = Image(ftmp_seg_)
             bottom = 0
-            for data in msct_image.Slicer(im_seg_rpi, "IS"):
+            for data in msct_image.SlicerOneAxis(im_seg_rpi, "IS"):
                 if (data != 0).any():
                     break
                 bottom += 1
             top = im_seg_rpi.data.shape[2]
-            for data in msct_image.Slicer(im_seg_rpi, "SI"):
+            for data in msct_image.SlicerOneAxis(im_seg_rpi, "SI"):
                 if (data != 0).any():
                     break
                 top -= 1
@@ -479,7 +479,7 @@ def main(args=None):
         # binarize
         im_new.data = im.data > 0.5
         # find min-max of anat2template (for subsequent cropping)
-        zmin_template, zmax_template = find_zmin_zmax(im_new, threshold=0.5)
+        zmin_template, zmax_template = msct_image.find_zmin_zmax(im_new, threshold=0.5)
         # save binarized segmentation
         im_new.save(add_suffix(ftmp_seg, '_bin')) # unused?
         # crop template in z-direction (for faster processing)

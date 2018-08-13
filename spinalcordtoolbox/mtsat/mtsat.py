@@ -7,9 +7,10 @@
 
 import os
 import sct_utils as sct
-from msct_image import Image
 import numpy as np
 
+
+from ..image import Image
 
 def compute_mtsat(nii_mt, nii_pd, nii_t1,
                   tr_mt, tr_pd, tr_t1,

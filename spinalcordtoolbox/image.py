@@ -1,16 +1,13 @@
 #!/usr/bin/env python
-#############################################################################
+#########################################################################################
 #
-# Image class implementation
+# SCT Image API
 #
-#
-# ---------------------------------------------------------------------------
-# Copyright (c) 2015 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: Augustin Roux, Benjamin De Leener
-# Modified: 2015-02-20
+# ---------------------------------------------------------------------------------------
+# Copyright (c) 2018 Polytechnique Montreal <www.neuro.polymtl.ca>
 #
 # About the license: see the file LICENSE.TXT
-#############################################################################
+#########################################################################################
 
 import sys, io, os, math, itertools, warnings
 
@@ -20,207 +17,116 @@ import nibabel.orientations
 import numpy as np
 from scipy.ndimage import map_coordinates
 
+import transforms3d.affines as affines
+
 from msct_types import Coordinate
 import sct_utils as sct
 
 
-def striu2mat(striu):
+def _get_permutations(im_src_orientation, im_dst_orientation):
     """
-    Construct shear matrix from upper triangular vector
-    Parameters
-    ----------
-    striu : array, shape (N,)
-       vector giving triangle above diagonal of shear matrix.
-    Returns
-    -------
-    SM : array, shape (N, N)
-       shear matrix
-    Notes
-    -----
-    Shear lengths are triangular numbers.
-    See http://en.wikipedia.org/wiki/Triangular_number
-    This function has been taken from https://github.com/matthew-brett/transforms3d/blob/39a1b01398f1d932630f722a540a5020c6c07422/transforms3d/affines.py
+    :return: list of axes permutations and list of inversions to achive an orientation change
     """
-    # Caching dictionary for common shear Ns, indices
-    _shearers = {}
-    for n in range(1, 11):
-        x = (n ** 2 + n) / 2.0
-        i = n + 1
-        _shearers[x] = (i, np.triu(np.ones((i, i)), 1).astype(bool))
 
-    n = len(striu)
-    # cached case
-    if n in _shearers:
-        N, inds = _shearers[n]
-    else:  # General case
-        N = ((-1 + math.sqrt(8 * n + 1)) / 2.0) + 1  # n+1 th root
-        if N != math.floor(N):
-            raise ValueError('%d is a strange number of shear elements' %
-                             n)
-        inds = np.triu(np.ones((N, N)), 1).astype(bool)
-    M = np.eye(N)
-    M[inds] = striu
-    return M
+    opposite_character = {'L': 'R', 'R': 'L', 'A': 'P', 'P': 'A', 'I': 'S', 'S': 'I'}
 
+    perm = [0, 1, 2]
+    inversion = [1, 1, 1]
+    for i, character in enumerate(im_src_orientation):
+        try:
+            perm[i] = im_dst_orientation.index(character)
+        except ValueError:
+            perm[i] = im_dst_orientation.index(opposite_character[character])
+            inversion[i] = -1
 
-def compose(T, R, Z, S=None):
-    """
-    Compose translations, rotations, zooms, [shears]  to affine
-    Parameters
-    ----------
-    T : array-like shape (N,)
-        Translations, where N is usually 3 (3D case)
-    R : array-like shape (N,N)
-        Rotation matrix where N is usually 3 (3D case)
-    Z : array-like shape (N,)
-        Zooms, where N is usually 3 (3D case)
-    S : array-like, shape (P,), optional
-       Shear vector, such that shears fill upper triangle above
-       diagonal to form shear matrix.  P is the (N-2)th Triangular
-       number, which happens to be 3 for a 4x4 affine (3D case)
-    Returns
-    -------
-    A : array, shape (N+1, N+1)
-        Affine transformation matrix where N usually == 3
-        (3D case)
-    This function has been taken from https://github.com/matthew-brett/transforms3d/blob/39a1b01398f1d932630f722a540a5020c6c07422/transforms3d/affines.py
-    """
-    n = len(T)
-    R = np.asarray(R)
-    if R.shape != (n, n):
-        raise ValueError('Expecting shape (%d,%d) for rotations' % (n, n))
-    A = np.eye(n + 1)
-    if S is not None:
-        Smat = striu2mat(S)
-        ZS = np.dot(np.diag(Z), Smat)
-    else:
-        ZS = np.diag(Z)
-    A[:n, :n] = np.dot(R, ZS)
-    A[:n, n] = T[:]
-    return A
-
-
-def decompose_affine_transform(A44):
-    """
-    Decompose 4x4 homogenous affine matrix into parts.
-    The parts are translations, rotations, zooms, shears.
-    This is the same as :func:`decompose` but specialized for 4x4 affines.
-    Decomposes `A44` into ``T, R, Z, S``, such that::
-       Smat = np.array([[1, S[0], S[1]],
-                        [0,    1, S[2]],
-                        [0,    0,    1]])
-       RZS = np.dot(R, np.dot(np.diag(Z), Smat))
-       A44 = np.eye(4)
-       A44[:3,:3] = RZS
-       A44[:-1,-1] = T
-    The order of transformations is therefore shears, followed by
-    zooms, followed by rotations, followed by translations.
-    This routine only works for shape (4,4) matrices
-    Parameters
-    ----------
-    A44 : array shape (4,4)
-    Returns
-    -------
-    T : array, shape (3,)
-       Translation vector
-    R : array shape (3,3)
-        rotation matrix
-    Z : array, shape (3,)
-       Zoom vector.  May have one negative zoom to prevent need for negative
-       determinant R matrix above
-    S : array, shape (3,)
-       Shear vector, such that shears fill upper triangle above
-       diagonal to form shear matrix (type ``striu``).
-    Notes
-    -----
-    The implementation inspired by:
-    *Decomposing a matrix into simple transformations* by Spencer
-    W. Thomas, pp 320-323 in *Graphics Gems II*, James Arvo (editor),
-    Academic Press, 1991, ISBN: 0120644819.
-    The upper left 3x3 of the affine consists of a matrix we'll call
-    RZS::
-       RZS = R * Z *S
-    where R is a rotation matrix, Z is a diagonal matrix of scalings::
-       Z = diag([sx, sy, sz])
-    and S is a shear matrix of form::
-       S = [[1, sxy, sxz],
-            [0,   1, syz],
-            [0,   0,   1]])
-    Running all this through sympy (see 'derivations' folder) gives
-    ``RZS`` as ::
-       [R00*sx, R01*sy + R00*sx*sxy, R02*sz + R00*sx*sxz + R01*sy*syz]
-       [R10*sx, R11*sy + R10*sx*sxy, R12*sz + R10*sx*sxz + R11*sy*syz]
-       [R20*sx, R21*sy + R20*sx*sxy, R22*sz + R20*sx*sxz + R21*sy*syz]
-    ``R`` is defined as being a rotation matrix, so the dot products between
-    the columns of ``R`` are zero, and the norm of each column is 1.  Thus
-    the dot product::
-       R[:,0].T * RZS[:,1]
-    that results in::
-       [R00*R01*sy + R10*R11*sy + R20*R21*sy + sx*sxy*R00**2 + sx*sxy*R10**2 + sx*sxy*R20**2]
-    simplifies to ``sy*0 + sx*sxy*1`` == ``sx*sxy``.  Therefore::
-       R[:,1] * sy = RZS[:,1] - R[:,0] * (R[:,0].T * RZS[:,1])
-    allowing us to get ``sy`` with the norm, and sxy with ``R[:,0].T *
-    RZS[:,1] / sx``.
-    Similarly ``R[:,0].T * RZS[:,2]`` simplifies to ``sx*sxz``, and
-    ``R[:,1].T * RZS[:,2]`` to ``sy*syz`` giving us the remaining
-    unknowns.
-    This function has been taken from https://github.com/matthew-brett/transforms3d/blob/39a1b01398f1d932630f722a540a5020c6c07422/transforms3d/affines.py
-    """
-    A44 = np.asarray(A44)
-    T = A44[:-1, -1]
-    RZS = A44[:-1, :-1]
-    # compute scales and shears
-    M0, M1, M2 = np.array(RZS).T
-    # extract x scale and normalize
-    sx = math.sqrt(np.sum(M0**2))
-    M0 /= sx
-    # orthogonalize M1 with respect to M0
-    sx_sxy = np.dot(M0, M1)
-    M1 -= sx_sxy * M0
-    # extract y scale and normalize
-    sy = math.sqrt(np.sum(M1**2))
-    M1 /= sy
-    sxy = sx_sxy / sx
-    # orthogonalize M2 with respect to M0 and M1
-    sx_sxz = np.dot(M0, M2)
-    sy_syz = np.dot(M1, M2)
-    M2 -= (sx_sxz * M0 + sy_syz * M1)
-    # extract z scale and normalize
-    sz = math.sqrt(np.sum(M2**2))
-    M2 /= sz
-    sxz = sx_sxz / sx
-    syz = sy_syz / sy
-    # Reconstruct rotation matrix, ensure positive determinant
-    Rmat = np.array([M0, M1, M2]).T
-    if np.linalg.det(Rmat) < 0:
-        sx *= -1
-        Rmat[:, 0] *= -1
-    return T, Rmat, np.array([sx, sy, sz]), np.array([sxy, sxz, syz])
+    return perm, inversion
 
 
 class Slicer(object):
     """
-    Image(s) slicer utility class.
+    Provides a sliced view onto original image data.
+    Can be used as a sequence.
 
-    Can help getting ranges and slice indices.
-    Can provide slices (being an *iterator*).
+    Notes:
+
+    - The original image data is directly available without copy,
+      which is a nice feature, not a bug! Use .copy() if you need copies...
+
+    Example:
+
+    .. code:: python
+
+       for slice2d in msct_image.SlicerFancy(im3d, "RPI"):
+           print(slice)
+
     """
+    def __init__(self, im, orientation="LPI"):
+        """
+        :param im: image to iterate through
+        :param spec: "from" letters to indicate how to slice the image.
+                     The slices are done on the last letter axis,
+                     and they are defined as the first/second letter.
+        """
 
-    def __new__(cls, arg, axis="IS"):
-        if isinstance(arg, (list, tuple)):
-            return SlicerMany(arg, axis=axis)
-        elif isinstance(arg, Image):
-            return SlicerSingle(arg, axis=axis)
+        if not isinstance(im, Image):
+            raise ValueError("Expecting an image")
+        if not orientation in all_refspace_strings():
+            raise ValueError("Invalid orientation spec")
+
+        # Get a different view on data, as if we were doing a reorientation
+
+        perm, inversion = _get_permutations(im.orientation, orientation)
+
+        # axes inversion (flip)
+        data = im.data[::inversion[0], ::inversion[1], ::inversion[2]]
+
+        # axes manipulations (transpose)
+        if perm == [1, 0, 2]:
+            data = np.swapaxes(data, 0, 1)
+        elif perm == [2, 1, 0]:
+            data = np.swapaxes(data, 0, 2)
+        elif perm == [0, 2, 1]:
+            data = np.swapaxes(data, 1, 2)
+        elif perm == [2, 0, 1]:
+            data = np.swapaxes(data, 0, 2)  # transform [2, 0, 1] to [1, 0, 2]
+            data = np.swapaxes(data, 0, 1)  # transform [1, 0, 2] to [0, 1, 2]
+        elif perm == [1, 2, 0]:
+            data = np.swapaxes(data, 0, 2)  # transform [1, 2, 0] to [0, 2, 1]
+            data = np.swapaxes(data, 1, 2)  # transform [0, 2, 1] to [0, 1, 2]
+        elif perm == [0, 1, 2]:
+            # do nothing
+            pass
         else:
-            raise ValueError()
+            raise NotImplementedError()
 
+        self._data = data
+        self._orientation = orientation
+        self._nb_slices = data.shape[2]
 
-class SlicerSingle(object):
+    def __len__(self):
+       return self._nb_slices
+
+    def __getitem__(self, idx):
+       """
+       :return: an image slice, at slicing index idx
+       :param idx: slicing index (according to the slicing direction)
+       """
+       if not isinstance(idx, int):
+           raise NotImplementedError()
+
+       if idx >= self._nb_slices:
+           raise IndexError("I just have {} slices!".format(self._nb_slices))
+
+       return self._data[:,:,idx]
+
+class SlicerOneAxis(object):
     """
-    Image slicer utility class.
+    Image slicer to use when you don't care about the 2D slice orientation,
+    and don't want to specify them.
+    The slicer will just iterate through the right axis that corresponds to
+    its specification.
 
     Can help getting ranges and slice indices.
-    Can provide slices (being an *iterator*).
     """
 
     def __init__(self, im, axis="IS"):
@@ -250,35 +156,6 @@ class SlicerSingle(object):
         self.axis = axis
         self._slice = lambda idx: tuple([(idx if x in axis else slice(None)) for x in im.orientation])
 
-    def slice(self, idx):
-        """
-        :return: a multi-dimensional slice (what goes in numpy array __getitem__)
-                 at the specified slice index of the slicer.
-        :param idx: slice index
-        """
-        return self._slice(idx)
-
-    def range(self, axis):
-        """
-        :return: a range providing indices for all the slices along the desired axis
-
-        Example: Assuming image is in RPI with 3 z-slices,
-        constructing a Slicer on "IS" (or "SI"),
-        getting a range on "IS" would get [0,1,2],
-        getting a range on "SI" would get [2,1,0].
-
-        Notes:
-
-        - To be used with direct image indexing, not as indexes for Slice[]
-          which are "logical" according to the slicing direction..
-
-        """
-        if axis == self.axis:
-            return range(0, self.nb_slices)
-        if axis == self.axis[::-1]:
-            return range(self.nb_slices-1, -1, -1)
-        raise ValueError()
-
     def __len__(self):
        return self.nb_slices
 
@@ -296,17 +173,7 @@ class SlicerSingle(object):
        if self.direction == -1:
            idx = self.nb_slices - 1 - idx
 
-       return self.im.data[self.slice(idx)]
-
-    def __call__(self):
-        """
-        Slice generator
-
-        Example: [slice for slice in Slicer(im)()]
-        """
-        for idx_slice in self.range(self.axis):
-            yield self.im[self.slice(idx_slice)]
-
+       return self.im.data[self._slice(idx)]
 
 class SlicerMany(object):
     """
@@ -317,29 +184,22 @@ class SlicerMany(object):
 
     Use with great care for now, that it's not very documented.
     """
-    def __init__(self, images, axis="IS"):
+    def __init__(self, images, slicerclass, *args, **kw):
         if len(images) == 0:
             raise ValueError("Don't expect me to work on 0 images!")
 
-        self.slicers = [ Slicer(im, axis=axis) for im in images ]
+        self.slicers = [ slicerclass(im, *args, **kw) for im in images ]
 
-
-        nb_slices = [ x.nb_slices for x in self.slicers ]
+        nb_slices = [ x._nb_slices for x in self.slicers ]
         if len(set(nb_slices)) != 1:
             raise ValueError("All images must have the same number of slices along the slicing axis!")
-        self.nb_slices = nb_slices[0]
+        self._nb_slices = nb_slices[0]
 
     def __len__(self):
-        return self.nb_slices
+        return self._nb_slices
 
     def __getitem__(self, idx):
         return [ x[idx] for x in self.slicers ]
-
-    def range(self, axis):
-        return self.slicer[0].range(axis)
-
-    def slice(self, idx):
-        return self.slicer[0].slice(idx)
 
 
 class Image(object):
@@ -376,12 +236,10 @@ class Image(object):
         elif isinstance(param, list):
             self.data = np.zeros(param)
             self.hdr = hdr
-            self.absolutepath = absolutepath
         # create a copy of im_ref
         elif isinstance(param, (np.ndarray, np.generic)):
             self.data = param
             self.hdr = hdr
-            self.absolutepath = absolutepath
         else:
             raise TypeError('Image constructor takes at least one argument.')
 
@@ -460,13 +318,24 @@ class Image(object):
         self.hdr = self.im_file.get_header()
         self.absolutepath = path
         if path != self.absolutepath:
-            sct.log.info("Loaded %s (%s) orientation %s shape %s", path, self.absolutepath, self.orientation, self.data.shape)
+            sct.log.debug("Loaded %s (%s) orientation %s shape %s", path, self.absolutepath, self.orientation, self.data.shape)
         else:
-            sct.log.info("Loaded %s orientation %s shape %s", path, self.orientation, self.data.shape)
+            sct.log.debug("Loaded %s orientation %s shape %s", path, self.orientation, self.data.shape)
 
 
     def change_shape(self, shape, generate_path=False):
         """
+        Change data shape (in-place)
+
+        :param generate_path: whether to create a derived path name from the
+                              original absolutepath (note: while it will generate
+                              a file suffix, don't expect the suffix but rather
+                              use the Image's absolutepath.
+                              If not set, the absolutepath is voided.
+
+        This is mostly useful for adding/removing a fourth dimension,
+        you probably don't want to use this function.
+
         """
         if shape is not None:
             change_shape(self, shape, self)
@@ -480,9 +349,19 @@ class Image(object):
 
     def change_orientation(self, orientation, inverse=False, generate_path=False):
         """
-        Change orientation on image.
+        Change orientation on image (in-place).
 
-        Note: the image path is voided.
+        :param orientation: orientation string (SCT "from" convention)
+
+        :param inverse: if you think backwards, use this to specify that you actually
+                        want to transform *from* the specified orientation, not *to*
+                        it.
+        :param generate_path: whether to create a derived path name from the
+                              original absolutepath (note: while it will generate
+                              a file suffix, don't expect the suffix but rather
+                              use the Image's absolutepath.
+                              If not set, the absolutepath is voided.
+
         """
         if orientation is not None:
             change_orientation(self, orientation, self, inverse=inverse)
@@ -512,8 +391,13 @@ class Image(object):
         """
         Write an image in a nifti file
 
-        :param type:    if not set, the image is saved in the same type as input data
-                        if 'minimize', image storage space is minimized
+        :param path: Where to save the data, if None it will be taken from the
+                     absolutepath member.
+                     If path is a directory, will save to a file under this directory
+                     with the basename from the absolutepath member.
+
+        :param dtype: if not set, the image is saved in the same type as input data
+                      if 'minimize', image storage space is minimized
                         (2, 'uint8', np.uint8, "NIFTI_TYPE_UINT8"),
                         (4, 'int16', np.int16, "NIFTI_TYPE_INT16"),
                         (8, 'int32', np.int32, "NIFTI_TYPE_INT32"),
@@ -528,6 +412,8 @@ class Image(object):
                         (1536, 'float128', _float128t, "NIFTI_TYPE_FLOAT128"),
                         (1792, 'complex128', np.complex128, "NIFTI_TYPE_COMPLEX128"),
                         (2048, 'complex256', _complex256t, "NIFTI_TYPE_COMPLEX256"),
+
+        :param mutable: whether to update members with newly created path or dtype
         """
 
         if path is None and self.absolutepath is None:
@@ -560,16 +446,17 @@ class Image(object):
 
         # save file
         if os.path.isabs(path):
-            sct.log.info("Saving image to %s orientation %s shape %s",
+            sct.log.debug("Saving image to %s orientation %s shape %s",
              path, self.orientation, data.shape)
         else:
-            sct.log.info("Saving image to %s (%s) orientation %s shape %s",
+            sct.log.debug("Saving image to %s (%s) orientation %s shape %s",
              path, os.path.abspath(path), self.orientation, data.shape)
 
         nibabel.save(img, path)
 
         if mutable:
             self.absolutepath = path
+            self.data = data
 
         if not os.path.isfile(path):
             raise RuntimeError("Couldn't save {}".format(path))
@@ -652,30 +539,6 @@ class Image(object):
         return averaged_coordinates
 
 
-    @staticmethod
-    def get_permutation_from_orientations(orientation_in, orientation_out):
-        """
-        This function return the permutation necessary to convert a coordinate/image from orientation_in
-        to orientation_out
-        :param orientation_in: string (ex: AIL)
-        :param orientation_out: string (ex: RPI)
-        :return: two lists: permutation list (int) and inversion list (-1 if need to inverse)
-        """
-        opposite_character = {'L': 'R', 'R': 'L', 'A': 'P', 'P': 'A', 'I': 'S', 'S': 'I'}
-
-        # change the orientation of the image
-        perm = [0, 1, 2]
-        inversion = [1, 1, 1]
-        for i, character in enumerate(orientation_in):
-            try:
-                perm[i] = orientation_out.index(character)
-            except ValueError:
-                perm[i] = orientation_out.index(opposite_character[character])
-                inversion[i] = -1
-
-        return perm, inversion
-
-
     def transfo_pix2phys(self, coordi=None):
         """
         This function returns the physical coordinates of all points of 'coordi'.
@@ -738,23 +601,23 @@ class Image(object):
         if mode == 'affine':
             transform = np.matmul(np.linalg.inv(aff_im_self), aff_im_ref)
         else:
-            T_self, R_self, Sc_self, Sh_self = decompose_affine_transform(aff_im_self)
-            T_ref, R_ref, Sc_ref, Sh_ref = decompose_affine_transform(aff_im_ref)
+            T_self, R_self, Sc_self, Sh_self = affines.decompose44(aff_im_self)
+            T_ref, R_ref, Sc_ref, Sh_ref = affines.decompose44(aff_im_ref)
             if mode == 'translation':
                 T_transform = T_ref - T_self
                 R_transform = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
                 Sc_transform = np.array([1.0, 1.0, 1.0])
-                transform = compose(T_transform, R_transform, Sc_transform)
+                transform = affines.compose(T_transform, R_transform, Sc_transform)
             elif mode == 'rigid':
                 T_transform = T_ref - T_self
                 R_transform = np.matmul(np.linalg.inv(R_self), R_ref)
                 Sc_transform = np.array([1.0, 1.0, 1.0])
-                transform = compose(T_transform, R_transform, Sc_transform)
+                transform = affines.compose(T_transform, R_transform, Sc_transform)
             elif mode == 'rigid_scaling':
                 T_transform = T_ref - T_self
                 R_transform = np.matmul(np.linalg.inv(R_self), R_ref)
                 Sc_transform = Sc_ref / Sc_self
-                transform = compose(T_transform, R_transform, Sc_transform)
+                transform = affines.compose(T_transform, R_transform, Sc_transform)
             else:
                 transform = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
         return transform
@@ -765,23 +628,23 @@ class Image(object):
         if mode == 'affine':
             transform = np.matmul(np.linalg.inv(aff_im_ref), aff_im_self)
         else:
-            T_self, R_self, Sc_self, Sh_self = decompose_affine_transform(aff_im_self)
-            T_ref, R_ref, Sc_ref, Sh_ref = decompose_affine_transform(aff_im_ref)
+            T_self, R_self, Sc_self, Sh_self = affines.decompose44(aff_im_self)
+            T_ref, R_ref, Sc_ref, Sh_ref = affines.decompose44(aff_im_ref)
             if mode == 'translation':
                 T_transform = T_self - T_ref
                 R_transform = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
                 Sc_transform = np.array([1.0, 1.0, 1.0])
-                transform = compose(T_transform, R_transform, Sc_transform)
+                transform = affines.compose(T_transform, R_transform, Sc_transform)
             elif mode == 'rigid':
                 T_transform = T_self - T_ref
                 R_transform = np.matmul(np.linalg.inv(R_ref), R_self)
                 Sc_transform = np.array([1.0, 1.0, 1.0])
-                transform = compose(T_transform, R_transform, Sc_transform)
+                transform = affines.compose(T_transform, R_transform, Sc_transform)
             elif mode == 'rigid_scaling':
                 T_transform = T_self - T_ref
                 R_transform = np.matmul(np.linalg.inv(R_ref), R_self)
                 Sc_transform = Sc_self / Sc_ref
-                transform = compose(T_transform, R_transform, Sc_transform)
+                transform = affines.compose(T_transform, R_transform, Sc_transform)
             else:
                 transform = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
 
@@ -794,7 +657,7 @@ class Image(object):
             X, Y and Z axes of the image
         """
         direction_matrix = self.header.get_best_affine()
-        T_self, R_self, Sc_self, Sh_self = decompose_affine_transform(direction_matrix)
+        T_self, R_self, Sc_self, Sh_self = affines.decompose44(direction_matrix)
         return R_self[0:3, 0], R_self[0:3, 1], R_self[0:3, 2]
 
     def interpolate_from_image(self, im_ref, fname_output=None, interpolation_mode=1, border='constant'):
@@ -802,7 +665,7 @@ class Image(object):
         This function interpolates an image by following the grid of a reference image.
         Example of use:
 
-        from msct_image import Image
+        from spinalcordtoolbox.image import Image
         im_input = Image(fname_input)
         im_ref = Image(fname_ref)
         im_input.interpolate_from_image(im_ref, fname_output, interpolation_mode=1)
@@ -910,18 +773,17 @@ def find_zmin_zmax(im, threshold=0.1):
     :param threshold: threshold to apply before looking for zmin/zmax, typically corresponding to noise level.
     :return: [zmin, zmax]
     """
-    slicer = Slicer(im, axis="IS")
+    slicer = SlicerOneAxis(im, axis="IS")
 
     # Iterate from bottom to top until we find data
-    for zmin in slicer.range("IS"):
-        dataz = im.data[slicer.slice(zmin)]
-        if np.any(dataz > threshold):
+    for zmin in range(0, len(slicer)):
+        if np.any(slicer[zmin] > threshold):
             break
 
     # Conversely from top to bottom
-    for zmax in slicer.range("SI"):
-        dataz = im.data[slicer.slice(zmax)]
-        if np.any(dataz > threshold):
+    for zmax in range(len(slicer)-1, zmin, -1):
+        dataz = slicer[zmax]
+        if np.any(slicer[zmax] > threshold):
             break
 
     return zmin, zmax
@@ -1006,7 +868,7 @@ def change_shape(im_src, shape, im_dst=None):
         im_dst.data = im_src.data.reshape(shape, order="C")
     else:
         # image data may be a view
-        im_dst_data = im_src_data.copy().reshape(shape, order="F")
+        im_dst_data = im_src.data.copy().reshape(shape, order="F")
 
     pair = nibabel.nifti1.Nifti1Pair(im_dst.data, im_dst.hdr.get_best_affine(), im_dst.hdr)
     im_dst.hdr = pair.header
@@ -1015,8 +877,12 @@ def change_shape(im_src, shape, im_dst=None):
 def change_orientation(im_src, orientation, im_dst=None, inverse=False):
     """
     :return: an image with changed orientation
+    :param im_src: source image
+    :param orientation: orientation string (SCT "from" convention)
+    :param im_dst: destination image (can be the source image for in-place
+                   operation, can be unset to generate one)
 
-    Note: the resulting image has no path
+    Note: the resulting image has no path member set
     """
 
     if len(im_src.data.shape) == 3:
@@ -1028,28 +894,13 @@ def change_orientation(im_src, orientation, im_dst=None, inverse=False):
     else:
         raise NotImplementedError("Don't know how to change orientation for this image")
 
-    opposite_character = {'L': 'R', 'R': 'L', 'A': 'P', 'P': 'A', 'I': 'S', 'S': 'I'}
-
-    im_src_orientation = orientation_string_sct2nib(im_src.orientation)
-    im_dst_orientation = orientation_string_sct2nib(orientation)
+    im_src_orientation = im_src.orientation
+    im_dst_orientation = orientation
     if inverse:
         im_src_orientation, im_dst_orientation = im_dst_orientation, im_src_orientation
 
 
-    def get_permutations(im_src_orientation, im_dst_orientation):
-        # change the orientation of the image
-        perm = [0, 1, 2]
-        inversion = [1, 1, 1]
-        for i, character in enumerate(im_src_orientation):
-            try:
-                perm[i] = im_dst_orientation.index(character)
-            except ValueError:
-                perm[i] = im_dst_orientation.index(opposite_character[character])
-                inversion[i] = -1
-
-        return perm, inversion
-
-    perm, inversion = get_permutations(im_src_orientation, im_dst_orientation)
+    perm, inversion = _get_permutations(im_src_orientation, im_dst_orientation)
 
     if im_dst is None:
         im_dst = im_src.copy()
@@ -1136,7 +987,7 @@ def change_type(im_src, dtype, im_dst=None):
         # check if voxel values are real or integer
         isInteger = True
         if dtype == 'minimize':
-            for vox in self.data.flatten():
+            for vox in im_src.data.flatten():
                 if int(vox) != vox:
                     isInteger = False
                     break
@@ -1220,12 +1071,35 @@ def to_dtype(dtype):
 
     raise TypeError("data type {}: {} not understood".format(dtype.__class__, dtype))
 
+
 def zeros_like(img, dtype=None):
+    """
+    :return: an Image with the same shape and header, filled with zeros
+    :param img: reference image
+    :param dtype: desired data type (optional)
+
+    Similar to numpy.zeros_like(), the goal of the function is to show the developer's
+    intent and avoid doing a copy, which is slower than initialization with a constant.
+
+    Feel free to improve the implementation ;)
+    """
     dst = change_type(img, dtype)
     dst.data[:] = 0
     return dst
 
+
 def empty_like(img, dtype=None):
+    """
+    :return: an Image with the same shape and header, whose data is uninitialized
+    :param img: reference image
+    :param dtype: desired data type (optional)
+
+    Similar to numpy.empty_like(), the goal of the function is to show the developer's
+    intent and avoid touching the allocated memory, because it will be written to
+    afterwards.
+
+    Feel free to improve the implementation ;)
+    """
     dst = change_type(img, dtype)
     return dst
 

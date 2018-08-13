@@ -12,7 +12,7 @@
 
 import os
 
-from msct_image import Image
+from spinalcordtoolbox.image import Image
 import numpy as np
 
 

@@ -15,7 +15,7 @@ import os
 
 from msct_parser import Parser
 import sct_utils as sct
-from msct_image import Image
+from spinalcordtoolbox.image import Image
 
 def get_parser():
     parser = Parser(__file__)
@@ -134,7 +134,7 @@ if __name__ == "__main__":
 
     # # Computation of Dice coefficient using Python implementation.
     # # commented for now as it does not cover all the feature of isct_dice_coefficient
-    # #from msct_image import Image, compute_dice
+    # #from spinalcordtoolbox.image import Image, compute_dice
     # #dice = compute_dice(Image(fname_input1), Image(fname_input2), mode='3d', zboundaries=False)
     # #sct.printv('Dice (python-based) = ' + str(dice), verbose)
 

@@ -8,7 +8,7 @@ import math
 import numpy as np
 from scipy import ndimage
 
-import msct_image
+from .. import image as msct_image
 
 logger = logging.getLogger("sct.{}".format(__file__))
 

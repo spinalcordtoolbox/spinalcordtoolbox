@@ -24,8 +24,8 @@ import nibabel
 from scipy import ndimage
 
 import sct_utils as sct
-import msct_image
-from msct_image import Image
+import spinalcordtoolbox.image as msct_image
+from spinalcordtoolbox.image import Image
 from sct_image import concat_data
 from msct_parser import Parser
 

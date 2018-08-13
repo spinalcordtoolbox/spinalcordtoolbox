@@ -20,7 +20,7 @@ import sys, io, os, getopt, shutil, time
 import numpy as np
 
 import sct_utils as sct
-import msct_image
+import spinalcordtoolbox.image as msct_image
 from sct_convert import convert
 from msct_parser import Parser
 
@@ -103,7 +103,7 @@ def main(args=None):
     sct.printv('  Verbose ........................... ' + str(verbose))
 
     # Check that input is 3D:
-    from msct_image import Image
+    from spinalcordtoolbox.image import Image
     nx, ny, nz, nt, px, py, pz, pt = Image(fname_anat).dim
     dim = 4  # by default, will be adjusted later
     if nt == 1:
