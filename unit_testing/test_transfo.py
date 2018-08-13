@@ -11,7 +11,7 @@ import nibabel
 import nibabel.orientations
 
 import sct_utils as sct
-import msct_image
+import spinalcordtoolbox.image as msct_image
 import sct_image
 import sct_apply_transfo
 
@@ -112,7 +112,7 @@ def test_transfo_null():
     print(" Check that the destination is identical to the source since the field was null")
     dat_src = img_src.data
     dat_dst = np.array(img_dst.data)
-    for idx_slice, (slice_src, slice_dst) in enumerate(msct_image.Slicer((img_src, img_dst))):
+    for idx_slice, (slice_src, slice_dst) in enumerate(msct_image.SlicerMany((img_src, img_dst), msct_image.Slicer)):
         slice_src = np.array(slice_src)
         slice_dst = np.array(slice_dst)
         print(slice_src)

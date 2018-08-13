@@ -13,8 +13,8 @@
 import os
 
 from pandas import DataFrame
-import msct_image
-from msct_image import Image
+import spinalcordtoolbox.image as msct_image
+from spinalcordtoolbox.image import Image
 import sct_apply_transfo
 
 

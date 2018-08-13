@@ -51,7 +51,7 @@ def test_integrity(param_test):
 # import time
 # from pandas import DataFrame
 # import sct_register_graymatter
-# from msct_image import Image
+# from spinalcordtoolbox.image import Image
 # import sct_utils as sct
 # from numpy import sum, mean
 #
