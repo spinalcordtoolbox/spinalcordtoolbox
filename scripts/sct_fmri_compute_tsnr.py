@@ -17,8 +17,10 @@ import sys
 import numpy as np
 
 import sct_utils as sct
+import spinalcordtoolbox.image as msct_image
 from msct_parser import Parser
-from msct_image import Image
+from spinalcordtoolbox.image import Image
+
 
 class Param:
     def __init__(self):
@@ -53,10 +55,9 @@ class Tsnr:
 
         # save TSNR
         fname_tsnr = self.out
-        nii_tsnr = nii_data
+        nii_tsnr = msct_image.empty_like(nii_data)
         nii_tsnr.data = data_tsnr
-        nii_tsnr.setFileName(fname_tsnr)
-        nii_tsnr.save(type='float32')
+        nii_tsnr.save(fname_tsnr, dtype=np.float32)
 
         sct.display_viewer_syntax([fname_tsnr])
 

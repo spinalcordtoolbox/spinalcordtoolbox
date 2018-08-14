@@ -12,7 +12,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-from msct_image import Image
+from spinalcordtoolbox.image import Image
 from scipy.misc import toimage
 
 import sct_utils as sct
@@ -103,8 +103,7 @@ if __name__ == "__main__":
              "-d", reference_image,
              "-w", filename_warp,
              "-o", filename_output])
-            result = Image(filename_output)
-            result.change_orientation()
+            result = Image(filename_output).change_orientation("RPI")
 
             toimage(result.data[int(result.data.shape[0] / 2)].squeeze(), cmin=0.0).save('images/' + extract_fname(filename_output)[1] + '.jpg')
             filenames_output.append(filename_output)

@@ -90,7 +90,7 @@ def generate_qc(fn_in, fn_seg, args, path_qc):
 
     import spinalcordtoolbox.reports.qc as qc
     import spinalcordtoolbox.reports.slice as qcslice
-    from msct_image import Image
+    from spinalcordtoolbox.image import Image
 
     qc.add_entry(
      src=fn_in,

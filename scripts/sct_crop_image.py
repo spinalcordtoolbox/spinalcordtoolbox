@@ -18,7 +18,8 @@ import nibabel
 
 import sct_utils as sct
 from msct_parser import Parser
-from msct_image import Image
+import spinalcordtoolbox.image as msct_image
+from spinalcordtoolbox.image import Image
 
 
 class LineBuilder:
@@ -74,6 +75,9 @@ class ImageCropper(object):
         """
 
         # create command line
+
+        img_in = Image(self.input_filename)
+
         self.cmd = ["isct_crop_image", "-i", self.input_filename, "-o", self.output_filename]
         # Handling optional arguments
 
@@ -127,34 +131,33 @@ class ImageCropper(object):
     # mask the image in order to keep only voxels in the mask
     # doesn't change the image dimension
     def crop_from_mask_with_background(self):
-        from numpy import asarray, einsum
+
         image_in = Image(self.input_filename)
-        data_array = asarray(image_in.data)
-        data_mask = asarray(Image(self.mask).data)
+        data_array = np.asarray(image_in.data)
+        data_mask = np.asarray(Image(self.mask).data)
         assert data_array.shape == data_mask.shape
 
         # Element-wise matrix multiplication:
         new_data = None
         dim = len(data_array.shape)
         if dim == 3:
-            new_data = einsum('ijk,ijk->ijk', data_mask, data_array)
+            new_data = data_mask * data_array
         elif dim == 2:
-            new_data = einsum('ij,ij->ij', data_mask, data_array)
+            new_data = data_mask * data_array
 
         if self.background != 0:
             from sct_maths import get_data_or_scalar
             data_background = get_data_or_scalar(str(self.background), data_array)
             data_mask_inv = data_mask.max() - data_mask
             if dim == 3:
-                data_background = einsum('ijk,ijk->ijk', data_mask_inv, data_background)
+                data_background = data_mask_inv * data_background
             elif dim == 2:
-                data_background = einsum('ij,ij->ij', data_mask_inv, data_background)
+                data_background = data_mask_inv * data_background
             new_data += data_background
 
-        # set image out
-        image_in.setFileName(self.output_filename)
-        image_in.data = new_data
-        image_in.save()
+        image_out = msct_image.empty_like(image_in)
+        image_out.data = new_data
+        image_out.save(self.output_filename)
 
     # shows the gui to crop the image
     def crop_with_gui(self):
@@ -200,7 +203,7 @@ class ImageCropper(object):
 
         # change orientation
         sct.printv('\nChange orientation to RPI...', verbose)
-        sct.run(['sct_image', '-i', 'data.nii', '-setorient', 'RPI', '-o', 'data_rpi.nii'])
+        Image('data.nii').change_orientation("RPI").save('data_rpi.nii')
 
         # get image of medial slab
         sct.printv('\nGet image of medial slab...', verbose)
@@ -242,7 +245,7 @@ class ImageCropper(object):
         nii = Image('data_rpi.nii')
         data_crop = nii.data[:, :, zcrop[0]:zcrop[1]]
         nii.data = data_crop
-        nii.setFileName('data_rpi_crop.nii')
+        nii.absolutepath = 'data_rpi_crop.nii'
         nii.save()
 
         # come back

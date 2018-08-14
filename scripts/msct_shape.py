@@ -23,10 +23,10 @@ from random import randint
 
 import tqdm
 from skimage import measure, filters
-import shutil
 import matplotlib.pyplot as plt
 from itertools import compress
-from sct_image import Image, set_orientation
+import spinalcordtoolbox.image as msct_image
+from spinalcordtoolbox.image import Image
 from msct_types import Centerline
 from sct_straighten_spinalcord import smooth_centerline
 
@@ -217,24 +217,20 @@ def compute_properties_along_centerline(fname_seg_image, property_list, fname_di
     # TODO: make sure fname_segmentation and fname_disks are in the same space
     path_tmp = sct.tmp_create(basename="compute_properties_along_centerline", verbose=verbose)
 
-    sct.copy(fname_seg_image, path_tmp)
+    image = msct_image.Image(fname_seg_image) \
+     .change_orientation("RPI", generate_path=True) \
+     .save(path_tmp, mutable=True)
+    fname_segmentation_orient = image.absolutepath
+
     if fname_disks_image is not None:
-        sct.copy(fname_disks_image, path_tmp)
+        image_disks = msct_image.Image(fname_disks_image) \
+         .change_orientation("RPI", generate_path=True) \
+         .save(path_tmp, mutable=True)
+        fname_disks_orient = image_disks.absolutepath
 
     # go to tmp folder
     curdir = os.getcwd()
     os.chdir(path_tmp)
-
-    fname_segmentation = os.path.abspath(fname_seg_image)
-    path_data, file_data, ext_data = sct.extract_fname(fname_segmentation)
-
-    # Change orientation of the input centerline into RPI
-    sct.printv('\nOrient centerline to RPI orientation...', verbose)
-    im_seg = Image(file_data + ext_data)
-    fname_segmentation_orient = 'segmentation_rpi' + ext_data
-    image = set_orientation(im_seg, 'RPI')
-    image.setFileName(fname_segmentation_orient)
-    image.save()
 
     # Initiating some variables
     nx, ny, nz, nt, px, py, pz, pt = image.dim
@@ -252,15 +248,6 @@ def compute_properties_along_centerline(fname_seg_image, property_list, fname_di
 
     # Compute vertebral distribution along centerline based on position of intervertebral disks
     if fname_disks_image is not None:
-        fname_disks = os.path.abspath(fname_disks_image)
-        path_data, file_data, ext_data = sct.extract_fname(fname_disks)
-        im_disks = Image(file_data + ext_data)
-        fname_disks_orient = 'disks_rpi' + ext_data
-        image_disks = set_orientation(im_disks, 'RPI')
-        image_disks.setFileName(fname_disks_orient)
-        image_disks.save()
-
-        image_disks = Image(fname_disks_orient)
         coord = image_disks.getNonZeroCoordinates(sorting='z', reverse_coord=True)
         coord_physical = []
         for c in coord:

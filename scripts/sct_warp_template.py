@@ -16,7 +16,7 @@ import sys, io, os, time
 
 import spinalcordtoolbox.metadata
 
-from msct_image import Image
+from spinalcordtoolbox.image import Image
 
 from msct_parser import Parser
 import sct_utils as sct

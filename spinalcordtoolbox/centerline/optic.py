@@ -6,8 +6,8 @@ import numpy as np
 
 import sct_utils as sct
 import sct_image
-from sct_image import orientation
-from msct_image import Image
+from .. import image as msct_image
+from ..image import Image
 
 
 
@@ -80,7 +80,7 @@ def detect_centerline(image_fname, contrast_type,
     path_data, file_data, ext_data = sct.extract_fname(image_fname)
 
     sct.printv('Detecting the spinal cord using OptiC', verbose=verbose)
-    image_input_orientation = orientation(image_input, get=True, verbose=False)
+    image_input_orientation = image_input.orientation
 
     temp_folder = sct.TempFolder()
     temp_folder.copy_from(image_fname)
@@ -101,9 +101,7 @@ def detect_centerline(image_fname, contrast_type,
     img_int16.data = data_rescaled - (data_rescaled.min() - min_out)
 
     # change data type
-    img_int16.changeType('uint16')
-    img_int16.setFileName(image_int_filename)
-    img_int16.save()
+    img_int16.save(image_int_filename, dtype=np.uint16)
     del img, img_int16
 
     # reorient the input image to RPI + convert to .nii
