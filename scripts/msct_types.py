@@ -3,7 +3,7 @@
 #
 # msct_types
 # This file contains many useful (and tiny) classes corresponding to data types.
-# Large data types with many options have their own file (e.g., msct_image)
+# Large data types with many options have their own file (e.g., spinalcordtoolbox.image)
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
@@ -621,7 +621,7 @@ class Centerline:
         x_grid, y_grid, z_grid = np.mgrid[-size:size:resolution, -size:size:resolution, 0:1]
         coordinates_grid = np.array(list(zip(x_grid.ravel(), y_grid.ravel(), z_grid.ravel())))
         coordinates_phys = self.get_inverse_plans_coordinates(coordinates_grid, np.array([index] * len(coordinates_grid)))
-        coordinates_im = np.array(image.transfo_phys2continuouspix(coordinates_phys))
+        coordinates_im = image.transfo_phys2pix(coordinates_phys, real=False)
         square = image.get_values(coordinates_im.transpose(), interpolation_mode=interpolation_mode, border=border, cval=cval)
         return square.reshape((len(x_grid), len(x_grid)))
 
@@ -639,8 +639,7 @@ class Centerline:
                     coord_pix = image.transfo_phys2pix([current_coord])[0]
                     image_output.data[int(coord_pix[0]), int(coord_pix[1]), int(coord_pix[2])] = float(self.labels_regions[current_label]) + current_dist_rel
 
-            image_output.setFileName(fname_output)
-            image_output.save(type='float32')
+            image_output.save(fname_output, dtype='float32')
         else:
             # save a .centerline file containing the centerline
             if self.disks_levels is None:

@@ -14,7 +14,7 @@ import sys, io, os
 
 import numpy as np
 
-from msct_image import Image
+from spinalcordtoolbox.image import Image
 
 
 def init(param_test):

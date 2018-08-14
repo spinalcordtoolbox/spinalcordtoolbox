@@ -49,7 +49,7 @@ def register_landmarks(fname_src, fname_dest, dof, fname_affine='affine.txt', ve
     :param verbose: 0, 1, 2
     :return:
     """
-    from msct_image import Image
+    from spinalcordtoolbox.image import Image
     # open src label
     im_src = Image(fname_src)
     # coord_src = im_src.getNonZeroCoordinates(sorting='value')  # landmarks are sorted by value

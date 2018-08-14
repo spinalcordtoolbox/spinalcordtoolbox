@@ -22,8 +22,8 @@ import math
 import sct_utils as sct
 import msct_moco as moco
 from sct_convert import convert
-from msct_image import Image
-from sct_image import copy_header, split_data, concat_data
+from spinalcordtoolbox.image import Image
+from sct_image import split_data, concat_data
 # from sct_average_data_across_dimension import average_data_across_dimension
 from msct_parser import Parser
 
@@ -278,9 +278,8 @@ def fmri_moco(param):
         im_fmri_list = []
         for it in range(nt_i):
             im_fmri_list.append(im_data_split_list[index_fmri_i[it]])
-        im_fmri_concat = concat_data(im_fmri_list, 3)
-        im_fmri_concat.setFileName(file_data_merge_i + ext_data)
-        im_fmri_concat.save()
+        im_fmri_concat = concat_data(im_fmri_list, 3) \
+         .save(file_data_merge_i + ext_data)
 
         # Average Images
         sct.printv('Average volumes...', param.verbose)
@@ -297,9 +296,8 @@ def fmri_moco(param):
     im_mean_list = []
     for iGroup in range(nb_groups):
         im_mean_list.append(Image(file_data + '_mean_' + str(iGroup) + ext_data))
-    im_mean_concat = concat_data(im_mean_list, 3)
-    im_mean_concat.setFileName(file_data_groups_means_merge + ext_data)
-    im_mean_concat.save()
+    im_mean_concat = concat_data(im_mean_list, 3) \
+     .save(file_data_groups_means_merge + ext_data)
 
     # Estimate moco
     sct.printv('\n-------------------------------------------------------------------------------', param.verbose)
@@ -337,7 +335,7 @@ def fmri_moco(param):
     # NB: this is required because WarpImageMultiTransform in 2D mode wrongly sets pixdim(3) to "1".
     im_fmri = Image('fmri.nii')
     im_fmri_moco = Image('fmri_moco.nii')
-    im_fmri_moco = copy_header(im_fmri, im_fmri_moco)
+    im_fmri_moco.header = im_fmri.header
     im_fmri_moco.save()
 
     # Average volumes
