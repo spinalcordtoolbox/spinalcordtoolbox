@@ -13,7 +13,7 @@
 
 import sys, io, os
 
-from msct_image import Image
+from spinalcordtoolbox.image import Image
 
 
 def init(param_test):

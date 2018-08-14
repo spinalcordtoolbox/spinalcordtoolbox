@@ -24,9 +24,9 @@ import nibabel
 from scipy import ndimage
 
 import sct_utils as sct
-from sct_convert import convert
-from msct_image import Image
-from sct_image import copy_header, concat_data
+import spinalcordtoolbox.image as msct_image
+from spinalcordtoolbox.image import Image
+from sct_image import concat_data
 from msct_parser import Parser
 
 
@@ -62,7 +62,7 @@ def main(args=None):
     parser = get_parser()
     arguments = parser.parse(args)
 
-    param.fname_data = arguments['-i']
+    param.fname_data = os.path.abspath(arguments['-i'])
 
     if '-p' in arguments:
         param.process = arguments['-p']
@@ -73,7 +73,7 @@ def main(args=None):
     if '-f' in arguments:
         param.shape = arguments['-f']
     if '-o' in arguments:
-        param.fname_out = arguments['-o']
+        param.fname_out = os.path.abspath(arguments['-o'])
     if '-r' in arguments:
         param.remove_temp_files = int(arguments['-r'])
     if '-v' in arguments:
@@ -103,7 +103,7 @@ def create_mask(param):
 
     # Get output folder and file name
     if param.fname_out == '':
-        param.fname_out = param.file_prefix + file_data + ext_data
+        param.fname_out = os.path.abspath(param.file_prefix + file_data + ext_data)
 
     path_tmp = sct.tmp_create(basename="create_mask", verbose=param.verbose)
 
@@ -113,24 +113,16 @@ def create_mask(param):
     reorient_coordinates = False
 
     # copy input data to tmp folder
-    convert(param.fname_data, os.path.join(path_tmp, "data.nii"))
+    Image(param.fname_data).change_orientation("RPI").save(os.path.join(path_tmp, "data_RPI.nii"))
     if method_type == 'centerline':
-        convert(method_val, os.path.join(path_tmp, "centerline.nii.gz"))
+        Image(method_val).change_orientation("RPI").save(os.path.join(path_tmp, "centerline_RPI.nii"))
     if method_type == 'point':
-        convert(method_val, os.path.join(path_tmp, "point.nii.gz"))
+        Image(method_val).change_orientation("RPI").save(os.path.join(path_tmp, "point_RPI.nii"))
 
     # go to tmp folder
     curdir = os.getcwd()
     os.chdir(path_tmp)
 
-    # reorient to RPI
-    sct.printv('\nReorient to RPI...', param.verbose)
-    # if not orientation_input == 'RPI':
-    sct.run(['sct_image', '-i', 'data.nii', '-o', 'data_RPI.nii', '-setorient', 'RPI', '-v', '0'], verbose=False)
-    if method_type == 'centerline':
-        sct.run(['sct_image', '-i', 'centerline.nii.gz', '-o', 'centerline_RPI.nii.gz', '-setorient', 'RPI', '-v', '0'], verbose=False)
-    if method_type == 'point':
-        sct.run(['sct_image', '-i', 'point.nii.gz', '-o', 'point_RPI.nii.gz', '-setorient', 'RPI', '-v', '0'], verbose=False)
     #
     # if method_type == 'centerline':
     #     orientation_centerline = Image(method_val).orientation
@@ -145,12 +137,12 @@ def create_mask(param):
     sct.printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz) + ' x ' + str(nt), param.verbose)
     # in case user input 4d data
     if nt != 1:
-        sct.printv('WARNING in ' + os.path.basename(__file__) + ': Input image is 4d but output mask will 3D.', param.verbose, 'warning')
+        sct.printv('WARNING in ' + os.path.basename(__file__) + ': Input image is 4d but output mask will be 3D from first time slice.', param.verbose, 'warning')
         # extract first volume to have 3d reference
-        nii = Image('data_RPI.nii')
+        nii = msct_image.empty_like(Image('data_RPI.nii'))
         data3d = nii.data[:, :, :, 0]
         nii.data = data3d
-        nii.save()
+        nii.save('data_RPI.nii')
 
     if method_type == 'coord':
         # parse to get coordinate
@@ -162,7 +154,7 @@ def create_mask(param):
         # extract coordinate of point
         sct.printv('\nExtract coordinate of point...', param.verbose)
         # TODO: change this way to remove dependence to sct.run. ProcessLabels.display_voxel returns list of coordinates
-        status, output = sct.run(['sct_label_utils', '-i', 'point_RPI.nii.gz', '-display'], verbose=param.verbose)
+        status, output = sct.run(['sct_label_utils', '-i', 'point_RPI.nii', '-display'], verbose=param.verbose)
         # parse to get coordinate
         # TODO fixup... this is quite magic
         coord = output[output.find('Position=') + 10:-17].split(',')
@@ -173,7 +165,7 @@ def create_mask(param):
 
     if method_type == 'centerline':
         # get name of centerline from user argument
-        fname_centerline = 'centerline_RPI.nii.gz'
+        fname_centerline = 'centerline_RPI.nii'
     else:
         # generate volume with line along Z at coordinates 'coord'
         sct.printv('\nCreate line...', param.verbose)
@@ -234,26 +226,15 @@ def create_mask(param):
         im_out = concat_data(im_list, 2)
     '''
     fname_list = [file_mask + str(iz) + '.nii' for iz in range(nz)]
-    im_out = concat_data(fname_list, dim=2)
-    im_out.setFileName('mask_RPI.nii.gz')
-    im_out.save()
+    im_out = concat_data(fname_list, dim=2) \
+     .save('mask_RPI.nii.gz')
 
-    # reorient if necessary
-    # if not orientation_input == 'RPI':
-    sct.run(['sct_image', '-i', 'mask_RPI.nii.gz', '-o', 'mask.nii.gz', '-setorient', orientation_input], param.verbose)
-
-    # copy header input --> mask
-    im_dat = Image('data.nii')
-    im_mask = Image('mask.nii.gz')
-    im_mask = copy_header(im_dat, im_mask)
-    im_mask.save()
+    im_out.change_orientation(orientation_input)
+    im_out.header = Image(param.fname_data).header
+    im_out.save(param.fname_out)
 
     # come back
     os.chdir(curdir)
-
-    # Generate output files
-    sct.printv('\nGenerate output files...', param.verbose)
-    sct.generate_output_file(os.path.join(path_tmp, "mask.nii.gz"), param.fname_out)
 
     # Remove temporary files
     if param.remove_temp_files == 1:

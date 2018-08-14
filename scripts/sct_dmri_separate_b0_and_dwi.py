@@ -20,7 +20,7 @@ import time
 import os
 
 import sct_utils as sct
-from msct_image import Image
+from spinalcordtoolbox.image import Image
 from sct_image import split_data
 from msct_parser import Parser
 
@@ -188,13 +188,11 @@ def main(args=None):
 
     # Merge b=0 images
     sct.printv('\nMerge b=0...', verbose)
-    cmd = ['sct_image', '-concat', 't', '-o', b0_name + ext, '-i']
-    l = ""
+    from sct_image import concat_data
+    l = []
     for it in range(nb_b0):
-        l += dmri_name + '_T' + str(index_b0[it]).zfill(4) + ext + ','
-    cmd += [l[:-1]]  # remove ',' at the end of the string
-    # WARNING: calling concat_data in python instead of in command line causes a non understood issue
-    status, output = sct.run(cmd, param.verbose)
+        l.append(dmri_name + '_T' + str(index_b0[it]).zfill(4) + ext)
+    im_out = concat_data(l, 3).save(b0_name + ext)
 
     # Average b=0 images
     if average:
@@ -202,13 +200,10 @@ def main(args=None):
         sct.run(['sct_maths', '-i', b0_name + ext, '-o', b0_mean_name + ext, '-mean', 't'], verbose)
 
     # Merge DWI
-    cmd = ['sct_image', '-concat', 't', '-o', dwi_name + ext, '-i']
-    l = ""
+    l = []
     for it in range(nb_dwi):
-        l += dmri_name + '_T' + str(index_dwi[it]).zfill(4) + ext + ','
-    cmd += [l[:-1]]  # remove ',' at the end of the string
-    # WARNING: calling concat_data in python instead of in command line causes a non understood issue
-    status, output = sct.run(cmd, param.verbose)
+        l.append(dmri_name + '_T' + str(index_dwi[it]).zfill(4) + ext)
+    im_out = concat_data(l, 3).save(dwi_name + ext)
 
     # Average DWI images
     if average:

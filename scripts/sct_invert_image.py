@@ -14,7 +14,7 @@
 
 import sys
 from msct_parser import Parser
-from msct_image import Image
+from spinalcordtoolbox.image import Image
 import sct_utils as sct
 
 
@@ -47,7 +47,7 @@ def main(args=None):
     image_output = image_input
     image_output.data = image_input.data.max() - image_input.data
     if '-o' in arguments:
-        image_output.setFileName(arguments['-o'])
+        image_output.absolutepath = arguments['-o']
     image_output.save(type='minimize')
 
 

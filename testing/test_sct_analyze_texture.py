@@ -12,7 +12,7 @@
 
 from pandas import DataFrame
 import numpy as np
-from msct_image import Image
+from spinalcordtoolbox.image import Image
 import sct_utils as sct
 
 

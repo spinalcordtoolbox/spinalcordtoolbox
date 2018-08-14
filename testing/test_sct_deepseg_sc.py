@@ -13,7 +13,7 @@
 import sys, io, os
 
 import sct_utils as sct
-from msct_image import Image, compute_dice
+from spinalcordtoolbox.image import Image, compute_dice
 from pandas import DataFrame
 
 

@@ -21,7 +21,7 @@ import os
 import getopt
 import time
 import numpy as np
-from msct_image import Image
+from spinalcordtoolbox.image import Image
 import sct_utils as sct
 # get path of the toolbox
 path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))

@@ -22,9 +22,9 @@ import scipy
 import pandas as pd
 
 import sct_utils as sct
-from sct_image import set_orientation
 from sct_straighten_spinalcord import smooth_centerline
-from msct_image import Image
+import spinalcordtoolbox.image as msct_image
+from spinalcordtoolbox.image import Image
 from msct_parser import Parser
 import msct_shape
 from msct_types import Centerline
@@ -355,10 +355,8 @@ def compute_length(fname_segmentation, remove_temp_files, output_folder, overwri
     # Change orientation of the input centerline into RPI
     sct.printv('\nOrient centerline to RPI orientation...', param.verbose)
     im_seg = Image(file_data + ext_data)
-    fname_segmentation_orient = 'segmentation_rpi' + ext_data
-    im_seg_orient = set_orientation(im_seg, 'RPI')
-    im_seg_orient.setFileName(fname_segmentation_orient)
-    im_seg_orient.save()
+    fname_segmentation_orient = 'segmentation_RPI' + ext_data
+    im_seg_orient = msct_image.change_orientation(im_seg, 'RPI').save(fname_segmentation_orient)
 
     # Get dimension
     sct.printv('\nGet dimensions...', param.verbose)
@@ -368,7 +366,7 @@ def compute_length(fname_segmentation, remove_temp_files, output_folder, overwri
 
     # smooth segmentation/centerline
     x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(
-        fname_segmentation_orient, nurbs_pts_number=3000, phys_coordinates=False, all_slices=True, algo_fitting='nurbs', verbose=verbose)
+        im_seg_orient, nurbs_pts_number=3000, phys_coordinates=False, all_slices=True, algo_fitting='nurbs', verbose=verbose)
 
     # average csa across vertebral levels or slices if asked (flag -z or -l)
     if slices or vert_levels:
@@ -384,8 +382,7 @@ def compute_length(fname_segmentation, remove_temp_files, output_folder, overwri
             sct.printv('Selected vertebral levels... ' + vert_levels)
 
             # convert the vertebral labeling file to RPI orientation
-            im_vertebral_labeling = Image(fname_vertebral_labeling)
-            im_vertebral_labeling.change_orientation(orientation='RPI')
+            im_vertebral_labeling = Image(fname_vertebral_labeling).change_orientation("RPI")
 
             # get the slices corresponding to the vertebral levels
             # slices, vert_levels_list, warning = get_slices_matching_with_vertebral_levels(data_seg, vert_levels, im_vertebral_labeling.data, 1)
@@ -457,25 +454,18 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
 
     # Copying input data to tmp folder
     sct.printv('\nCopying data to tmp folder...', verbose)
-    sct.run(['sct_convert', '-i', fname_segmentation, '-o', os.path.join(path_tmp, "segmentation.nii.gz")], verbose)
+
+    im_seg = msct_image.Image(fname_segmentation)
+    orientation = im_seg.orientation
+    im_seg \
+     .save(os.path.join(path_tmp, "segmentation.nii.gz")) \
+     .change_orientation("RPI") \
+     .save(os.path.join(path_tmp, "segmentation_RPI.nii.gz"))
 
     # go to tmp folder
     curdir = os.getcwd()
     os.chdir(path_tmp)
 
-    # Change orientation of the input centerline into RPI
-    sct.printv('\nOrient centerline to RPI orientation...', verbose)
-    # fname_segmentation_orient = 'segmentation_RPI.nii.gz'
-    # BELOW DOES NOT WORK (JULIEN, 2015-10-17)
-    # im_seg = Image(file_data+ext_data)
-    # set_orientation(im_seg, 'RPI')
-    # im_seg.setFileName(fname_segmentation_orient)
-    # im_seg.save()
-    sct.run(['sct_image', '-i', 'segmentation.nii.gz', '-setorient', 'RPI', '-o', 'segmentation_RPI.nii.gz'], verbose)
-
-    # Open segmentation volume
-    sct.printv('\nOpen segmentation volume...', verbose)
-    im_seg = Image('segmentation_RPI.nii.gz')
     data = im_seg.data
 
     # Get size of data
@@ -564,15 +554,11 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
     # hdr.set_data_dtype('uint8') # set imagetype to uint8
     sct.printv('\nWrite NIFTI volumes...', verbose)
     im_seg.data = data
-    im_seg.setFileName('centerline_RPI.nii.gz')
-    im_seg.changeType('uint8')
-    im_seg.save()
-
-    sct.printv('\nSet to original orientation...', verbose)
-    # get orientation of the input data
-    im_seg_original = Image('segmentation.nii.gz')
-    orientation = im_seg_original.orientation
-    sct.run(['sct_image', '-i', 'centerline_RPI.nii.gz', '-setorient', orientation, '-o', 'centerline.nii.gz'])
+    im_seg \
+     .change_type(np.uint8) \
+     .save('centerline_RPI.nii.gz') \
+     .change_orientation(orientation) \
+     .save("centerline.nii.gz")
 
     # create a txt file with the centerline
     name_output_txt = 'centerline.txt'
@@ -617,17 +603,17 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
 
     # Copying input data to tmp folder
     sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
-    sct.run(['sct_convert', '-i', fname_segmentation, '-o', os.path.join(path_tmp, "segmentation.nii.gz")], verbose)
+
     # go to tmp folder
     curdir = os.getcwd()
     os.chdir(path_tmp)
-    # Change orientation of the input segmentation into RPI
-    sct.printv('\nChange orientation to RPI...', verbose)
-    sct.run(['sct_image', '-i', 'segmentation.nii.gz', '-setorient', 'RPI', '-o', 'segmentation_RPI.nii.gz'], verbose)
+
+    im_seg_original = Image(fname_segmentation)
+    im_seg = msct_image.change_orientation(im_seg_original, "RPI")
+    #im_seg.save(os.path.join(path_tmp, "segmentation.nii.gz"))
 
     # Open segmentation volume
     sct.printv('\nOpen segmentation volume...', verbose)
-    im_seg = Image('segmentation_RPI.nii.gz')
     data_seg = im_seg.data
     # hdr_seg = im_seg.hdr
 
@@ -645,7 +631,7 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
     # with option -vert). See #1791
     if use_phys_coord:
         # fit centerline, smooth it and return the first derivative (in physical space)
-        x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, nurbs_pts_number=3000, phys_coordinates=True, verbose=verbose, all_slices=False)
+        x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(im_seg, algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, nurbs_pts_number=3000, phys_coordinates=True, verbose=verbose, all_slices=False)
         centerline = Centerline(x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
 
         # average centerline coordinates over slices of the image
@@ -736,12 +722,8 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
     im_seg.data = data_csa
     # set original orientation
     # TODO: FIND ANOTHER WAY!!
-    # im_seg.change_orientation(orientation) --> DOES NOT WORK!
-    # set file name -- use .gz because faster to write
-    im_seg.setFileName('csa_volume_RPI.nii.gz')
-    im_seg.changeType('float32')
-    # save volume
-    im_seg.save()
+    msct_image.change_orientation(im_seg, im_seg_original.orientation) \
+     .save(os.path.join(output_folder, "csa_image.nii.gz"), dtype="float32")
 
     # output volume of csa values
     sct.printv('\nCreate volume of angle values...', verbose)
@@ -757,29 +739,12 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
             data_angle[i[0], i[1], iz] = angles[iz - min_z_index]
     # replace data
     im_seg.data = data_angle
-    # set original orientation
-    # TODO: FIND ANOTHER WAY!!
-    # im_seg.change_orientation(orientation) --> DOES NOT WORK!
-    # set file name -- use .gz because faster to write
-    im_seg.setFileName('angle_volume_RPI.nii.gz')
-    im_seg.changeType('float32')
-    # save volume
-    im_seg.save()
-
-    # get orientation of the input data
-    im_seg_original = Image('segmentation.nii.gz')
-    orientation = im_seg_original.orientation
-    sct.run(['sct_image', '-i', 'csa_volume_RPI.nii.gz', '-setorient', orientation, '-o', 'csa_volume_in_initial_orientation.nii.gz'])
-    sct.run(['sct_image', '-i', 'angle_volume_RPI.nii.gz', '-setorient', orientation, '-o', 'angle_volume_in_initial_orientation.nii.gz'])
+    msct_image.change_orientation(im_seg, im_seg_original.orientation) \
+     .save(os.path.join(output_folder, "angle_image.nii.gz"), dtype="float32")
 
     # come back
     os.chdir(curdir)
 
-    # Generate output files
-    sct.printv('\nGenerate output files...', verbose)
-    sct.generate_output_file(os.path.join(path_tmp, "csa_volume_in_initial_orientation.nii.gz"), os.path.join(output_folder, 'csa_image.nii.gz'))  # extension already included in name_output
-    sct.generate_output_file(os.path.join(path_tmp, "angle_volume_in_initial_orientation.nii.gz"), os.path.join(output_folder, 'angle_image.nii.gz'))  # extension already included in name_output
-    sct.printv('\n')
 
     # Create output text file
     sct.printv('Display CSA per slice:', verbose)
@@ -821,8 +786,7 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
             sct.check_file_exist(fname_vertebral_labeling)
 
             # convert the vertebral labeling file to RPI orientation
-            im_vertebral_labeling = Image(fname_vertebral_labeling)
-            im_vertebral_labeling.change_orientation(orientation='RPI')
+            im_vertebral_labeling = Image(fname_vertebral_labeling).change_orientation("RPI")
 
             # get the slices corresponding to the vertebral levels
             # slices, vert_levels_list, warning = get_slices_matching_with_vertebral_levels(data_seg, vert_levels, im_vertebral_labeling.data, 1)
@@ -1187,7 +1151,7 @@ def ellipse_dim(a):
 #=======================================================================================================================
 def edge_detection(f):
 
-    img = Image.open(f)  # grayscale
+    img = Image(f)  # grayscale
     imgdata = np.array(img, dtype = float)
     G = imgdata
     #G = ndi.filters.gaussian_filter(imgdata, sigma)

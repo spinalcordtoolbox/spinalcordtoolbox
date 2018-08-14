@@ -13,7 +13,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import sys, io, os, re, time
+import sys, io, os, re, time, datetime
 import errno
 import logging
 import logging.config
@@ -805,7 +805,7 @@ def check_if_3d(fname):
     :param fname:
     :return: True or False
     """
-    from msct_image import Image
+    from spinalcordtoolbox.image import Image
     nx, ny, nz, nt, px, py, pz, pt = Image(fname).dim
     if not nt == 1:
         printv('\nERROR: ' + fname + ' is not a 3D volume. Exit program.\n', 1, 'error')
@@ -838,7 +838,7 @@ def find_file_within_folder(fname, directory, seek_type='file'):
 def tmp_create(basename=None, verbose=1):
     """Create temporary folder and return its path
     """
-    prefix = "sct-%s-" % time.strftime("%y%m%d%H%M%S")
+    prefix = "sct-%s-" % datetime.datetime.now().strftime("%Y%m%d%H%M%S.%f")
     if basename:
         prefix += "%s-" % basename
     tmpdir = tempfile.mkdtemp(prefix=prefix)
@@ -973,7 +973,7 @@ def check_if_installed(cmd, name_software):
 #=======================================================================================================================
 # check if two images are in the same space and same orientation
 def check_if_same_space(fname_1, fname_2):
-    from msct_image import Image
+    from spinalcordtoolbox.image import Image
     from numpy import min, nonzero, all, around
     from numpy import abs as np_abs
     from numpy import log10 as np_log10

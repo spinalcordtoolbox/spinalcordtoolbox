@@ -30,7 +30,7 @@ from spinalcordtoolbox.utils import parse_num_list
 from spinalcordtoolbox.template import get_slices_from_vertebral_levels, get_vertebral_level_from_slice
 
 import sct_utils as sct
-from msct_image import Image
+from spinalcordtoolbox.image import Image
 from msct_parser import Parser
 
 # get path of the script and the toolbox
@@ -339,29 +339,25 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
 
     # Load data and systematically reorient to RPI because we need the 3rd dimension to be z
     sct.printv('\nLoad metric image...', verbose)
-    input_im = Image(fname_data)
-    input_im.change_orientation(orientation='RPI')
+    input_im = Image(fname_data).change_orientation("RPI")
+
     data = input_im.data
     # Load labels
     labels = np.empty([nb_labels], dtype=object)
     for i_label in range(nb_labels):
-        im_label = Image(os.path.join(path_label, indiv_labels_files[i_label]))
-        im_label.change_orientation(orientation='RPI')
+        im_label = Image(os.path.join(path_label, indiv_labels_files[i_label])).change_orientation("RPI")
         labels[i_label] = im_label.data
     # Load vertebral levels
     if vertebral_levels:
-        im_vertebral_labeling = Image(fname_vertebral_labeling)
-        im_vertebral_labeling.change_orientation(orientation='RPI')
+        im_vertebral_labeling = Image(fname_vertebral_labeling).change_orientation("RPI")
     # if the "normalization" option is wanted,
     if fname_normalizing_label:
         normalizing_label = np.empty([1], dtype=object)  # choose this kind of structure so as to keep easily the compatibility with the rest of the code (dimensions: (1, x, y, z))
-        im_normalizing_label = Image(fname_normalizing_label)
-        im_normalizing_label.change_orientation(orientation='RPI')
+        im_normalizing_label = Image(fname_normalizing_label).change_orientation("RPI")
         normalizing_label[0] = im_normalizing_label.data
     # if flag "-mask-weighted" is specified
     if fname_mask_weight:
-        im_weight = Image(fname_mask_weight)
-        im_weight.change_orientation(orientation='RPI')
+        im_weight = Image(fname_mask_weight).change_orientation("RPI")
 
     # Change metric data type into floats for future manipulations (normalization)
     data = np.float64(data)
@@ -1130,8 +1126,7 @@ def generate_metric_value_map(fname_output_metric_map, input_im, labels, indiv_l
         metric_map.data[:, :, slices_list] = metric_map.data[:, :, slices_list] + label_to_fix_fract_vol * float(label_to_fix[1])
 
     # save metric value map
-    metric_map.setFileName(fname_output_metric_map)
-    metric_map.save()
+    metric_map.save(fname_output_metric_map)
 
     sct.printv('\tDone.')
 
