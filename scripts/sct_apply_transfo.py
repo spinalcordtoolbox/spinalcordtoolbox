@@ -48,7 +48,7 @@ def get_parser():
                       example="out.nii.gz")
     parser.add_option(name="-w",
                       type_value=[[','], "file"],
-                      description="warping field",
+                      description="Transformation, which can be a warping field (nifti image) or an affine transformation matrix (text file).",
                       mandatory=True,
                       example="warp1.nii.gz,warp2.nii.gz")
     parser.add_option(name="-crop",
@@ -139,7 +139,6 @@ class Transform:
                  " in a 5D file with vector intent code" \
                  " (see https://nifti.nimh.nih.gov/pub/dist/src/niftilib/nifti1.h" \
                  .format(path_warp))
-
         # need to check if last warping field is an affine transfo
         isLastAffine = False
         path_fname, file_fname, ext_fname = sct.extract_fname(fname_warp_list_invert[-1][-1])
