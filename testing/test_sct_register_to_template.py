@@ -41,7 +41,7 @@ def test_integrity(param_test):
     Test integrity of function
     """
 
-    if param_test.args == default_args[1]:
+    if param_test.args.startswith(default_args[1]):
         return param_test # no integrity test
 
     # apply transformation to binary mask: template --> anat
