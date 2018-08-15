@@ -11,7 +11,10 @@
 #
 # About the license: see the file LICENSE.TXT
 ########################################################################################################################
-import sys, io, os, math, time, random, shutil
+
+from __future__ import absolute_import, division
+
+import sys, io, os, time, random, shutil
 
 import numpy as np
 
@@ -135,7 +138,7 @@ def pre_processing(fname_target, fname_sc_seg, fname_level=None, fname_manual_gm
         # crop image before denoising to fasten denoising
         nx, ny, nz, nt, px, py, pz, pt = im_target_rpi.dim
         size_x, size_y = (square_size_size_mm + 1) / px, (square_size_size_mm + 1) / py
-        size = int(math.ceil(max(size_x, size_y)))
+        size = int(np.ceil(max(size_x, size_y)))
         # create mask
         fname_mask = 'mask_pre_crop.nii.gz'
         sct_create_mask.main(['-i', im_target_rpi.absolutepath, '-p', 'centerline,' + im_sc_seg_rpi.absolutepath, '-f', 'box', '-size', str(size), '-o', fname_mask])
@@ -301,7 +304,7 @@ def load_level(list_slices_target, fname_level):
         # if all median of level are int for all slices : consider level as int
         if all([isinstance(med, int) for med in list_med_level]):
             # level as int are placed in the middle of each vertebra (that's why there is a "+0.5")
-            list_level = [int(round(l)) + 0.5 for l in list_level]
+            list_level = [int(np.round(l)) + 0.5 for l in list_level]
 
     # Level file is a text file
     elif ext_level == '.txt':

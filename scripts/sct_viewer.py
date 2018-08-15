@@ -32,6 +32,8 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+from __future__ import absolute_import, division
+
 import sys, io, os
 from bisect import bisect
 from time import time
@@ -41,6 +43,7 @@ import webbrowser
 
 from numpy import arange, max, pad, linspace, mean, median, std, percentile
 import numpy as np
+
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
@@ -300,9 +303,9 @@ class Viewer(object):
         array_dim = [self.image_dim[0]*self.im_spacing[0], self.image_dim[1]*self.im_spacing[1], self.image_dim[2]*self.im_spacing[2]]
         index_max = np.argmax(array_dim)
         max_size = array_dim[index_max]
-        self.offset = [int(round((max_size - array_dim[0]) / self.im_spacing[0]) / 2),
-                       int(round((max_size - array_dim[1]) / self.im_spacing[1]) / 2),
-                       int(round((max_size - array_dim[2]) / self.im_spacing[2]) / 2)]
+        self.offset = [int(np.round((max_size - array_dim[0]) / self.im_spacing[0]) / 2),
+                       int(np.round((max_size - array_dim[1]) / self.im_spacing[1]) / 2),
+                       int(np.round((max_size - array_dim[2]) / self.im_spacing[2]) / 2)]
 
     def pad_data(self):
         for image in self.images:
@@ -374,15 +377,15 @@ class Viewer(object):
         point = None
         if plot.view == 1:
             point = Coordinate([self.current_point.x,
-                                int(round(event.ydata)),
-                                int(round(event.xdata)), 1])
+                                int(np.round(event.ydata)),
+                                int(np.round(event.xdata)), 1])
         elif plot.view == 2:
-            point = Coordinate([int(round(event.ydata)),
+            point = Coordinate([int(np.round(event.ydata)),
                                 self.current_point.y,
-                                int(round(event.xdata)), 1])
+                                int(np.round(event.xdata)), 1])
         elif plot.view == 3:
-            point = Coordinate([int(round(event.ydata)),
-                                int(round(event.xdata)),
+            point = Coordinate([int(np.round(event.ydata)),
+                                int(np.round(event.xdata)),
                                 self.current_point.z, 1])
         return point
 
@@ -592,8 +595,8 @@ class ClickViewer(Viewer):
             if self.list_slices[-1] != self.image_dim[self.orientation[self.primary_subplot]-1] - 1:
                 self.list_slices.append(self.image_dim[self.orientation[self.primary_subplot]-1] - 1)
         else:
-            self.gap_inter_slice = int(max([round(self.image_dim[self.orientation[self.primary_subplot]-1] / 15.0), 1]))
-            self.number_of_slices = int(round(self.image_dim[self.orientation[self.primary_subplot]-1] / self.gap_inter_slice))
+            self.gap_inter_slice = int(max([np.round(self.image_dim[self.orientation[self.primary_subplot]-1] / 15.0), 1]))
+            self.number_of_slices = int(np.round(self.image_dim[self.orientation[self.primary_subplot]-1] / self.gap_inter_slice))
             self.list_slices = [int(item) for item in
                                 linspace(0, self.image_dim[self.orientation[self.primary_subplot]-1] - 1, self.number_of_slices, endpoint=True)]
             if self.list_slices[-1] != self.image_dim[self.orientation[self.primary_subplot]-1] - 1:
@@ -613,21 +616,21 @@ class ClickViewer(Viewer):
             index_max = np.argmax(array_dim)
             max_size = array_dim[index_max]
             self.offset = [0,
-                           int(round((max_size - array_dim[0]) / self.im_spacing[1]) / 2),
-                           int(round((max_size - array_dim[1]) / self.im_spacing[2]) / 2)]
+                           int(np.round((max_size - array_dim[0]) / self.im_spacing[1]) / 2),
+                           int(np.round((max_size - array_dim[1]) / self.im_spacing[2]) / 2)]
         elif self.primary_subplot == 'cor':
             array_dim = [self.image_dim[0] * self.im_spacing[0], self.image_dim[2] * self.im_spacing[2]]
             index_max = np.argmax(array_dim)
             max_size = array_dim[index_max]
-            self.offset = [int(round((max_size - array_dim[0]) / self.im_spacing[0]) / 2),
+            self.offset = [int(np.round((max_size - array_dim[0]) / self.im_spacing[0]) / 2),
                            0,
-                           int(round((max_size - array_dim[1]) / self.im_spacing[2]) / 2)]
+                           int(np.round((max_size - array_dim[1]) / self.im_spacing[2]) / 2)]
         elif self.primary_subplot == 'sag':
             array_dim = [self.image_dim[0] * self.im_spacing[0], self.image_dim[1] * self.im_spacing[1]]
             index_max = np.argmax(array_dim)
             max_size = array_dim[index_max]
-            self.offset = [int(round((max_size - array_dim[0]) / self.im_spacing[0]) / 2),
-                           int(round((max_size - array_dim[1]) / self.im_spacing[1]) / 2),
+            self.offset = [int(np.round((max_size - array_dim[0]) / self.im_spacing[0]) / 2),
+                           int(np.round((max_size - array_dim[1]) / self.im_spacing[1]) / 2),
                            0]
 
     def check_point_is_valid(self,target_point):
@@ -1569,7 +1572,7 @@ class ClickViewerGroundTruth(ClickViewer):
         return imMean
 
     def check_first_label(self,i):
-        if i in range (1,27) or i in range (49,51):
+        if i in range(1, 27) or i in range(49, 51):
             return True
         else:
             sct.printv('Warning : You have selected a wrong number for \'-start\' : starting from label 50.',True,'warning')

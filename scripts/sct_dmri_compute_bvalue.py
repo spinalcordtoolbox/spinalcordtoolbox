@@ -13,11 +13,13 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+from __future__ import absolute_import, division
 
 import sys
 import os
 import getopt
 import math
+
 from msct_parser import Parser
 import sct_utils as sct
 

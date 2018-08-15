@@ -13,11 +13,14 @@
 
 # TODO: add test to other processes.
 
+from __future__ import absolute_import
+
 import os
-import sct_utils as sct
-import sct_label_utils
 
 from pandas import DataFrame
+
+import sct_utils as sct
+import sct_label_utils
 
 
 def init(param_test):

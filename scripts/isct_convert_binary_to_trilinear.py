@@ -13,12 +13,15 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+from __future__ import print_function, absolute_import
 
 import sys
 import os
-
 import getopt
 import time
+
+import numpy as np
+
 import sct_utils as sct
 from spinalcordtoolbox.image import Image
 
@@ -147,7 +150,7 @@ def main():
 
     # display elapsed time
     elapsed_time = time.time() - start_time
-    sct.printv('\nFinished! Elapsed time: ' + str(int(round(elapsed_time))) + 's')
+    sct.printv('\nFinished! Elapsed time: ' + str(int(np.round(elapsed_time))) + 's')
 
     # to view results
     sct.printv('\nTo view results, type:')

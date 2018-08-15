@@ -14,12 +14,15 @@
 
 # TODO: scale size in mm.
 
+from __future__ import division, absolute_import
+
 import sys
 import os
 
 import time
 
-import numpy
+import numpy as np
+
 import nibabel
 from scipy import ndimage
 
@@ -161,7 +164,7 @@ def create_mask(param):
 
     if method_type == 'center':
         # set coordinate at center of FOV
-        coord = round(float(nx) / 2), round(float(ny) / 2)
+        coord = np.round(float(nx) / 2), np.round(float(ny) / 2)
 
     if method_type == 'centerline':
         # get name of centerline from user argument
@@ -189,7 +192,7 @@ def create_mask(param):
     cy = [0] * nz
     for iz in range(0, nz, 1):
         if iz in z_centerline_not_null:
-            cx[iz], cy[iz] = ndimage.measurements.center_of_mass(numpy.array(data_centerline[:, :, iz]))
+            cx[iz], cy[iz] = ndimage.measurements.center_of_mass(np.array(data_centerline[:, :, iz]))
     # create 2d masks
     file_mask = 'data_mask'
     for iz in range(nz):
@@ -198,7 +201,7 @@ def create_mask(param):
             img = nibabel.Nifti1Image(data_centerline[:, :, iz], None, hdr)
             nibabel.save(img, (file_mask + str(iz) + '.nii'))
         else:
-            center = numpy.array([cx[iz], cy[iz]])
+            center = np.array([cx[iz], cy[iz]])
             mask2d = create_mask2d(param, center, param.shape, param.size, nx, ny, even=param.even, spacing=spacing)
             # Write NIFTI volumes
             img = nibabel.Nifti1Image(mask2d, None, hdr)
@@ -277,19 +280,17 @@ def create_mask2d(param, center, shape, size, nx, ny, even=0, spacing=None):
     offset[1] = int(offset[1])
 
     # initialize 2d grid
-    xx, yy = numpy.mgrid[:nx, :ny]
-    mask2d = numpy.zeros((nx, ny))
+    xx, yy = np.mgrid[:nx, :ny]
+    mask2d = np.zeros((nx, ny))
     xc = center[0]
     yc = center[1]
     if 'mm' in size:
-        from numpy import ceil
         size = int(size[:-2])
         mean_spacing_xy = (spacing[1] + spacing[2]) / 2.0
-        length = round(float(size) / mean_spacing_xy)
-        radius = ceil((int(length) - 1) / 2.0)
+        length = np.round(float(size) / mean_spacing_xy)
+        radius = np.ceil((int(length) - 1) / 2.0)
     else:
-        from numpy import ceil
-        radius = ceil((int(size) - 1) / 2.0)
+        radius = np.ceil((int(size) - 1) / 2.0)
 
     if shape == 'box':
         mask2d[int(xc - radius):int(xc + radius) + 1, int(yc - radius):int(yc + radius) + 1] = 1
@@ -299,7 +300,7 @@ def create_mask2d(param, center, shape, size, nx, ny, even=0, spacing=None):
 
     elif shape == 'gaussian':
         sigma = float(radius)
-        mask2d = numpy.exp(-(((xx + offset[0] - xc)**2) / (2 * (sigma**2)) + ((yy + offset[1] - yc)**2) / (2 * (sigma**2))))
+        mask2d = np.exp(-(((xx + offset[0] - xc)**2) / (2 * (sigma**2)) + ((yy + offset[1] - yc)**2) / (2 * (sigma**2))))
 
     # import matplotlib.pyplot as plt
     # plt.imshow(mask2d)

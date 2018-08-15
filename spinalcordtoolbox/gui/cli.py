@@ -5,6 +5,9 @@
 #
 # About the license: see the file LICENSE.TXT
 # Notes on how to use classes in this script.
+
+from __future__ import absolute_import
+
 import os
 import sys
 
@@ -54,7 +57,7 @@ def segment_image_cli():
     try:
         arguments = parser.parse(args)
     except SyntaxError as err:
-        printv(err.message, type='error')
+        printv(str(err), type='error')
 
     launch_modes = {'centerline': launch_centerline_dialog,
                     'sagittal': launch_sagittal_dialog}

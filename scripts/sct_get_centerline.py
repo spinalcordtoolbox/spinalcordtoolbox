@@ -1,8 +1,11 @@
 #!/usr/bin/env python
 
+from __future__ import division, absolute_import
+
 import os
 import sys
-import shutil
+
+import numpy as np
 
 import sct_utils as sct
 from msct_parser import Parser
@@ -192,9 +195,9 @@ def run_main():
 
             # Create an image with the centerline
             image_input_reoriented.data *= 0
-            min_z_index, max_z_index = int(round(min(z_centerline_voxel))), int(round(max(z_centerline_voxel)))
+            min_z_index, max_z_index = int(np.round(min(z_centerline_voxel))), int(np.round(max(z_centerline_voxel)))
             for iz in range(min_z_index, max_z_index + 1):
-                image_input_reoriented.data[int(round(x_centerline_voxel[iz - min_z_index])), int(round(y_centerline_voxel[iz - min_z_index])), int(iz)] = 1  # if index is out of bounds here for hanning: either the segmentation has holes or labels have been added to the file
+                image_input_reoriented.data[int(np.round(x_centerline_voxel[iz - min_z_index])), int(np.round(y_centerline_voxel[iz - min_z_index])), int(iz)] = 1  # if index is out of bounds here for hanning: either the segmentation has holes or labels have been added to the file
 
             # Write the centerline image
             sct.printv('\nWrite NIFTI volumes...', verbose)
@@ -208,7 +211,7 @@ def run_main():
             fname_centerline_oriented_txt = file_data + '_centerline.txt'
             file_results = open(fname_centerline_oriented_txt, 'w')
             for i in range(min_z_index, max_z_index + 1):
-                file_results.write(str(int(i)) + ' ' + str(round(x_centerline_voxel_cont[i - min_z_index], 2)) + ' ' + str(round(y_centerline_voxel_cont[i - min_z_index], 2)) + '\n')
+                file_results.write(str(int(i)) + ' ' + str(np.round(x_centerline_voxel_cont[i - min_z_index], 2)) + ' ' + str(np.round(y_centerline_voxel_cont[i - min_z_index], 2)) + '\n')
             file_results.close()
 
             fname_centerline_oriented_roi = optic.centerline2roi(fname_image=fname_centerline_oriented,

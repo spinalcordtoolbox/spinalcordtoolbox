@@ -14,6 +14,8 @@
 # TODO: display message at the end
 # TODO: interpolation methods
 
+from __future__ import division, absolute_import
+
 import sys, io, os, time, functools
 
 from msct_parser import Parser

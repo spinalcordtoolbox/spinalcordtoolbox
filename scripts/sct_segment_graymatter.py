@@ -40,12 +40,13 @@ Then use the folder gm_model/ (output from msct_multiatlas_seg) in this function
 
 '''
 
+from __future__ import division, absolute_import
+
 import os
 import shutil
 import sys
 import time
 import copy
-from math import exp
 
 import numpy as np
 
@@ -364,7 +365,7 @@ class SegmentGM:
 
         # for each target slice: normalize
         for target_slice in self.target_im:
-            level_int = int(round(target_slice.level))
+            level_int = int(np.round(target_slice.level))
             if level_int not in self.model.intensities.index:
                 level_int = 0
             norm_im_M = normalize_slice(target_slice.im_M, gm_seg_model[level_int], wm_seg_model[level_int], self.model.intensities['GM'][level_int], self.model.intensities['WM'][level_int], val_min=self.model.intensities['MIN'][level_int], val_max=self.model.intensities['MAX'][level_int])
@@ -392,10 +393,10 @@ class SegmentGM:
                 # compute similarity with or without levels
                 if self.param_seg.fname_level is not None:
                     # EQUATION WITH LEVELS
-                    similarity = exp(-self.param_seg.weight_level * abs(self.target_im[i].level - self.model.slices[j].level)) * exp(-self.param_seg.weight_coord * square_norm)
+                    similarity = np.exp(-self.param_seg.weight_level * abs(self.target_im[i].level - self.model.slices[j].level)) * np.exp(-self.param_seg.weight_coord * square_norm)
                 else:
                     # EQUATION WITHOUT LEVELS
-                    similarity = exp(-self.param_seg.weight_coord * square_norm)
+                    similarity = np.exp(-self.param_seg.weight_coord * square_norm)
                 # add similarity to list
                 list_dic_similarities.append(similarity)
             list_norm_similarities = [float(s) / sum(list_dic_similarities) for s in list_dic_similarities]
@@ -724,7 +725,7 @@ def main(args=None):
     seg_gm = SegmentGM(param_seg=param_seg, param_data=param_data, param_model=param_model, param=param)
     seg_gm.segment()
     elapsed_time = time.time() - start_time
-    printv('\nFinished! Elapsed time: ' + str(int(round(elapsed_time))) + 's', param.verbose)
+    printv('\nFinished! Elapsed time: ' + str(int(np.round(elapsed_time))) + 's', param.verbose)
 
     # save quality control and sct.printv(info)
     if param_seg.type_seg == 'bin':

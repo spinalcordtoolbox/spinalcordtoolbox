@@ -12,15 +12,16 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+from __future__ import print_function, absolute_import
 
 import sys
+import getopt
+import os
 
 import numpy as np
 
 import nibabel as nib
 
-import getopt
-import os
 import sct_utils as sct
 
 

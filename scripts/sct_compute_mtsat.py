@@ -15,6 +15,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+from __future__ import absolute_import, division
 
 import argparse
 
@@ -75,7 +76,7 @@ def get_parser():
     return parser
 
 
-def run_main(args):
+def main(args):
     import sct_utils as sct
     from spinalcordtoolbox.mtsat import mtsat
 
@@ -95,4 +96,4 @@ def run_main(args):
 if __name__ == '__main__':
     parser = get_parser()
     arguments = parser.parse_args()
-    run_main(arguments)
+    main(arguments)
