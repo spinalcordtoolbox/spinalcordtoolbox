@@ -17,14 +17,16 @@ import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
 import sct_apply_transfo
 
+default_args = [
+ '-i t2/t2.nii.gz -l t2/labels.nii.gz -s t2/t2_seg.nii.gz -param step=1,type=seg,algo=centermassrot,metric=MeanSquares:step=2,type=seg,algo=bsplinesyn,iter=5,metric=MeanSquares -t template -r 0 -igt template/template/PAM50_small_cord.nii.gz -qc testing-qc',
+ '-i t2/t2.nii.gz -s t2/t2_seg.nii.gz -ldisc t2/labels.nii.gz -ref subject',
+]
 
 def init(param_test):
     """
     Initialize class: param_test
     """
 
-    # initialization
-    default_args = ['-i t2/t2.nii.gz -l t2/labels.nii.gz -s t2/t2_seg.nii.gz -param step=1,type=seg,algo=centermassrot,metric=MeanSquares:step=2,type=seg,algo=bsplinesyn,iter=5,metric=MeanSquares -t template -r 0 -igt template/template/PAM50_small_cord.nii.gz -qc testing-qc']
     param_test.dice_threshold = 0.9
 
     # assign default params
@@ -38,6 +40,9 @@ def test_integrity(param_test):
     """
     Test integrity of function
     """
+
+    if param_test.args == default_args[1]:
+        return param_test # no integrity test
 
     # apply transformation to binary mask: template --> anat
     sct_apply_transfo.main(args=[
