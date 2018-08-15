@@ -133,7 +133,8 @@ class Transform:
                 use_inverse.append('')
                 fname_warp_list_invert += [[path_warp]]
             path_warp = fname_warp_list[idx_warp]
-            if msct_image.Image(fname_warp_list[idx_warp]).header.get_intent()[0] != 'vector':
+            if path_warp.endswith((".nii", ".nii.gz")) \
+             and msct_image.Image(fname_warp_list[idx_warp]).header.get_intent()[0] != 'vector':
                 raise ValueError("Displacement field in {} is invalid: should be encoded" \
                  " in a 5D file with vector intent code" \
                  " (see https://nifti.nimh.nih.gov/pub/dist/src/niftilib/nifti1.h" \
