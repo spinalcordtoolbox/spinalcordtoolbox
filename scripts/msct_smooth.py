@@ -11,7 +11,11 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+from __future__ import division, absolute_import
+
 import os
+
+import numpy as np
 
 from scipy.interpolate import splrep, splev
 import sct_utils as sct
@@ -192,80 +196,16 @@ def non_parametric(x, y, f = 0.25, iter = 3):
     return yest
 
 
-#=======================================================================================================================
-# TODO: ADD DESCRIPTION
-#=======================================================================================================================
-def opt_f(x, y, z):
-    from numpy import max, mean, linalg
-    sct.printv('optimizing f parameter in non-parametric...')
-    f_list = [0.1, 0.15, 0.20, 0.22, 0.25, 0.3, 0.35, 0.40, 0.45, 0.5]
-    msx_min = 2
-    msy_min = 2
-    f_opt_y = 5
-    f_opt_x = 5
-    for f in f_list:
-        try:
-            x_fit = non_parametric(z, x, f)
-            y_fit = non_parametric(z, y, f)
-
-            msex = mean_squared_error(x, x_fit)
-            msey = mean_squared_error(y, y_fit)
-
-            if msex < msx_min:
-                msx_min = msex
-                f_opt_x = f
-            if msey < msy_min:
-                msy_min = msey
-                f_opt_y = f
-
-            x_fit_d, y_fit_d, z_d = evaluate_derivative_3D(x_fit, y_fit, z)
-            x_fit_dd, y_fit_dd, z_dd = evaluate_derivative_3D(x_fit_d, y_fit_d, z_d)
-            amp_xd = max(abs(x_fit_dd))
-            amp_yd = max(abs(y_fit_dd))
-            mean_xd = mean(x_fit_dd)
-            mean_yd = mean(y_fit_dd)
-            mean = mean_xd + mean_yd
-
-            # ax = plt.subplot(1,2,1)
-            # plt.plot(z, x_fit, 'b-', label='centerline')
-            # plt.plot(z, x_fit_d, 'r-', label='deriv')
-            # plt.plot(z, x_fit_dd, 'y-', label='derivsec')
-            # plt.xlabel('x')
-            # plt.ylabel('z')
-            # ax = plt.subplot(1,2,2)
-            # plt.plot(z, y_fit, 'b-', label='centerline')
-            # plt.plot(z, y_fit_d, 'r-', label='deriv')
-            # plt.plot(z, y_fit_dd, 'r-', label='fit')
-            # plt.xlabel('y')
-            # plt.ylabel('z')
-            # handles, labels = ax.get_legend_handles_labels()
-            # ax.legend(handles, labels)
-            # plt.show()
-
-            sct.printv('AMP', amp_xd, amp_yd)
-            sct.printv('MEAN', mean_xd, mean_yd, mean)
-
-        except linalg.linalg.LinAlgError:
-            sct.printv('LinAlgError raised')
-    sct.printv(msx_min, f_opt_x)
-    sct.printv(msy_min, f_opt_y)
-    return f_opt_x, f_opt_y
-
-
-#=======================================================================================================================
-# Univariate Spline fitting
-#=======================================================================================================================
 def Univariate_Spline(x, y, w=None, bbox=[None, None], k=3, s=None) :
+    # Univariate Spline fitting
     from scipy.interpolate import UnivariateSpline
     s = UnivariateSpline(x, y, w, bbox, k, s)
     ys = s(x)
     return ys
 
 
-#=======================================================================================================================
-# 3D B-Spline function, sct_nurbs
-#=======================================================================================================================
 def b_spline_nurbs(x, y, z, fname_centerline=None, degree=3, point_number=3000, nbControl=-1, verbose=1, all_slices=True, path_qc='.'):
+    # 3D B-Spline function, sct_nurbs
 
     from math import log
     from msct_nurbs import NURBS
@@ -293,7 +233,7 @@ def b_spline_nurbs(x, y, z, fname_centerline=None, degree=3, point_number=3000, 
     if nbControl == -1:
         centerlineSize = getSize(x, y, z, fname_centerline)
         nbControl = 30 * log(centerlineSize, 10) - 42
-        nbControl = round(nbControl)
+        nbControl = np.round(nbControl)
 
     nurbs = NURBS(degree, point_number, data, False, nbControl, verbose, all_slices=all_slices, twodim=twodim)
 
@@ -584,7 +524,7 @@ def smoothing_window(x, window_len=11, window='hanning', verbose = 0, robust=0, 
     window_len_int = ceil((floor(window_len) + 1) / 2) * 2 - 1
 
     # Add padding
-    size_padding = int(round((window_len_int - 1) / 2.0) + remove_edge_points)
+    size_padding = int(np.round((window_len_int - 1) / 2.0) + remove_edge_points)
     for i in range(size_padding):
         x_extended = append(x_extended, 2 * x_extended[-1 - i] - x_extended[-1 - 2 * i - 1])
         x_extended = insert(x_extended, 0, 2 * x_extended[i] - x_extended[2 * i + 1])

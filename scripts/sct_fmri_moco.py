@@ -13,12 +13,16 @@
 
 # TODO: estimate and apply, no need to reapply afterwards
 
+from __future__ import absolute_import, division
+
 import sys
 import os
-
 import getopt
 import time
 import math
+
+import numpy as np
+
 import sct_utils as sct
 import msct_moco as moco
 from sct_convert import convert
@@ -215,7 +219,7 @@ def main(args=None):
 
     # display elapsed time
     elapsed_time = time.time() - start_time
-    sct.printv('\nFinished! Elapsed time: ' + str(int(round(elapsed_time))) + 's', param.verbose)
+    sct.printv('\nFinished! Elapsed time: ' + str(int(np.round(elapsed_time))) + 's', param.verbose)
 
     sct.display_viewer_syntax([fname_fmri_moco, file_data], mode='ortho,ortho')
 
@@ -244,7 +248,7 @@ def fmri_moco(param):
         im.save()
 
     # assign an index to each volume
-    index_fmri = range(0, nt)
+    index_fmri = list(range(0, nt))
 
     # Number of groups
     nb_groups = int(math.floor(nt / param.group_size))

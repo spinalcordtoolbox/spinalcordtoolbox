@@ -14,6 +14,8 @@
 # TODO: testing script for all cases
 # TODO: enable vertebral alignment with -ref subject
 
+from __future__ import division, absolute_import
+
 import sys, os, time
 
 import numpy as np
@@ -358,7 +360,7 @@ def main(args=None):
                 cropping_slices[0] = 0
             if cropping_slices[1] > nz:
                 cropping_slices[1] = nz
-            msct_image.spatial_crop(Image(ftmp_seg_), dict(((2, np.int32(np.round(cropping_slices))),))).save(ftmp_seg)
+            msct_image.spatial_crop(Image(ftmp_seg_), dict(((2, np.int32(np.np.round(cropping_slices))),))).save(ftmp_seg)
         else:
             # if we do not align the vertebral levels, we crop the segmentation from top to bottom
             im_seg_rpi = Image(ftmp_seg_)
@@ -468,7 +470,7 @@ def main(args=None):
         points_straight = []
         for coord in landmark_template:
             points_straight.append(coord.z)
-        min_point, max_point = int(round(np.min(points_straight))), int(round(np.max(points_straight)))
+        min_point, max_point = int(np.round(np.min(points_straight))), int(np.round(np.max(points_straight)))
         ftmp_seg_, ftmp_seg = ftmp_seg, add_suffix(ftmp_seg, '_black')
         msct_image.spatial_crop(Image(ftmp_seg_), dict(((2, (min_point,max_point)),))).save(ftmp_seg)
 
@@ -575,7 +577,7 @@ def main(args=None):
             new_label = deepcopy(coord_label[0])
             # move it 5mm to the left (orientation is RAS)
             nx, ny, nz, nt, px, py, pz, pt = im_label.dim
-            new_label.x = round(coord_label[0].x + 5.0 / px)
+            new_label.x = np.round(coord_label[0].x + 5.0 / px)
             # assign value 99
             new_label.value = 99
             # Add to existing image
@@ -651,7 +653,7 @@ def main(args=None):
 
     # display elapsed time
     elapsed_time = time.time() - start_time
-    sct.printv('\nFinished! Elapsed time: ' + str(int(round(elapsed_time))) + 's', verbose)
+    sct.printv('\nFinished! Elapsed time: ' + str(int(np.round(elapsed_time))) + 's', verbose)
 
     if param.path_qc is not None:
         generate_qc(fname_data, fname_template2anat, fname_seg, args, os.path.abspath(param.path_qc))
@@ -704,7 +706,7 @@ def project_labels_on_spinalcord(fname_label, fname_seg):
     centerline_xyz_transposed = [im_seg.transfo_pix2phys([[centerline_x[i], centerline_y[i], centerline_z[i]]])[0]
                                  for i in range(len(centerline_x))]
     # transpose list
-    centerline_phys_x, centerline_phys_y, centerline_phys_z = map(list, map(None, *centerline_xyz_transposed))
+    centerline_phys_x, centerline_phys_y, centerline_phys_z = list(map(list, map(None, *centerline_xyz_transposed)))
     # get center of mass of label
     labels = im_label.getCoordinatesAveragedByValue()
     # initialize image of projected labels. Note that we use the space of the seg (not label).
@@ -751,9 +753,9 @@ def resample_labels(fname_labels, fname_dest, fname_output):
     label_list = processor.display_voxel()
     label_new_list = []
     for label in label_list:
-        label_sub_new = [str(int(round(int(label.x) / sampling_factor[0]))),
-                         str(int(round(int(label.y) / sampling_factor[1]))),
-                         str(int(round(int(label.z) / sampling_factor[2]))),
+        label_sub_new = [str(int(np.round(int(label.x) / sampling_factor[0]))),
+                         str(int(np.round(int(label.y) / sampling_factor[1]))),
+                         str(int(np.round(int(label.z) / sampling_factor[2]))),
                          str(int(float(label.value)))]
         label_new_list.append(','.join(label_sub_new))
     label_new_list = ':'.join(label_new_list)

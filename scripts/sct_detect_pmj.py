@@ -10,6 +10,8 @@ Modified: 2017-09-12
 About the license: see the file LICENSE.TXT
 """
 
+from __future__ import print_function, absolute_import, division
+
 import os
 import shutil
 import sys

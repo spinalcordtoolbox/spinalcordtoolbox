@@ -2,8 +2,10 @@
 # -*- coding: utf-8
 # Deal with SCT dataset metadata
 
+from __future__ import absolute_import
 
 import io, os, re
+
 from spinalcordtoolbox.utils import parse_num_list
 
 
@@ -181,7 +183,7 @@ def read_label_file_atlas(path_info_label, file_info_label):
     il = InfoLabel()
     fname_label = os.path.join(path_info_label, file_info_label)
     il.load(fname_label)
-    return zip(*il._indiv_labels)
+    return list(zip(*il._indiv_labels))
 
 
 def get_file_label(path_label='', label='', output='file'):

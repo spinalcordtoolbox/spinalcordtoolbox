@@ -11,8 +11,9 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import sct_utils as sct
+from __future__ import absolute_import
 
+import sct_utils as sct
 
 
 def init(param_test):

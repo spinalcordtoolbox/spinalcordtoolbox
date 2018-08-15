@@ -15,6 +15,8 @@
 #########################################################################################
 # TODO: the import of scipy.misc imsave was moved to the specific cases (orth and ellipse) in order to avoid issue #62. This has to be cleaned in the future.
 
+from __future__ import absolute_import, division
+
 import sys, io, os, shutil, time, math, pickle
 
 import numpy as np
@@ -399,7 +401,7 @@ def compute_length(fname_segmentation, remove_temp_files, output_folder, overwri
         else:
             # parse the selected slices
             slices_lim = slices.strip().split(':')
-            slices_list = range(int(slices_lim[0]), int(slices_lim[-1]) + 1)
+            slices_list = list(range(int(slices_lim[0]), int(slices_lim[-1]) + 1))
             sct.printv('Spinal cord length slices ' + str(slices_lim[0]) + ' to ' + str(slices_lim[-1]) + '...',
                        type='info')
 
@@ -408,7 +410,7 @@ def compute_length(fname_segmentation, remove_temp_files, output_folder, overwri
                 if z_centerline[i] in slices_list:
                     length += sqrt(((x_centerline_fit[i + 1] - x_centerline_fit[i]) * px)**2 + ((y_centerline_fit[i + 1] - y_centerline_fit[i]) * py)**2 + ((z_centerline[i + 1] - z_centerline[i]) * pz)**2)
 
-        sct.printv('\nLength of the segmentation = ' + str(round(length, 2)) + ' mm\n', verbose, 'info')
+        sct.printv('\nLength of the segmentation = ' + str(np.round(length, 2)) + ' mm\n', verbose, 'info')
 
         # write result into output file
         save_results(os.path.join(output_folder, 'length'), overwrite, fname_segmentation, 'length',
@@ -425,7 +427,7 @@ def compute_length(fname_segmentation, remove_temp_files, output_folder, overwri
         for i in range(len(x_centerline_fit) - 1):
             length += sqrt(((x_centerline_fit[i + 1] - x_centerline_fit[i]) * px)**2 + ((y_centerline_fit[i + 1] - y_centerline_fit[i]) * py)**2 + ((z_centerline[i + 1] - z_centerline[i]) * pz)**2)
 
-        sct.printv('\nLength of the segmentation = ' + str(round(length, 2)) + ' mm\n', verbose, 'info')
+        sct.printv('\nLength of the segmentation = ' + str(np.round(length, 2)) + ' mm\n', verbose, 'info')
         # write result into output file
         save_results(os.path.join(output_folder, 'length'), overwrite, fname_segmentation, 'length', '(in mm)', length, np.nan,
                      slices, actual_vert=[], warning_vert_levels='')
@@ -547,9 +549,9 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
         plt.show()
 
     # Create an image with the centerline
-    min_z_index, max_z_index = int(round(min(z_centerline_voxel))), int(round(max(z_centerline_voxel)))
+    min_z_index, max_z_index = int(np.round(min(z_centerline_voxel))), int(np.round(max(z_centerline_voxel)))
     for iz in range(min_z_index, max_z_index + 1):
-        data[int(round(x_centerline_voxel[iz - min_z_index])), int(round(y_centerline_voxel[iz - min_z_index])), int(iz)] = 1  # if index is out of bounds here for hanning: either the segmentation has holes or labels have been added to the file
+        data[int(np.round(x_centerline_voxel[iz - min_z_index])), int(np.round(y_centerline_voxel[iz - min_z_index])), int(iz)] = 1  # if index is out of bounds here for hanning: either the segmentation has holes or labels have been added to the file
     # Write the centerline image in RPI orientation
     # hdr.set_data_dtype('uint8') # set imagetype to uint8
     sct.printv('\nWrite NIFTI volumes...', verbose)
@@ -806,7 +808,7 @@ def compute_csa(fname_segmentation, output_folder, overwrite, verbose, remove_te
         else:
             # parse the selected slices
             slices_lim = slices.strip().split(':')
-            slices_list = range(int(slices_lim[0]), int(slices_lim[-1]) + 1)
+            slices_list = list(range(int(slices_lim[0]), int(slices_lim[-1]) + 1))
             sct.printv('Average CSA across slices ' + str(slices_lim[0]) + ' to ' + str(slices_lim[-1]) + '...', type='info')
 
             CSA_for_selected_slices = []
@@ -1088,7 +1090,7 @@ def get_slices_matching_with_vertebral_levels_based_centerline(vertebral_levels,
     matching_slices_centerline_vert_labeling = []
 
     z_centerline = [x for x in z_centerline if 0 < int(x) < vertebral_labeling_data.shape[2]]
-    vert_range = range(vert_levels_list[0], vert_levels_list[1] + 1)
+    vert_range = list(range(vert_levels_list[0], vert_levels_list[1] + 1))
 
     for idx, z_slice in enumerate(vertebral_labeling_data.T[z_centerline, :, :]):
         slice_idxs = np.nonzero(z_slice)
@@ -1144,47 +1146,6 @@ def ellipse_dim(a):
     res1 = np.sqrt(up / down1)
     res2 = np.sqrt(up / down2)
     return np.array([res1, res2])
-
-
-#=======================================================================================================================
-# Detect edges of an image
-#=======================================================================================================================
-def edge_detection(f):
-
-    img = Image(f)  # grayscale
-    imgdata = np.array(img, dtype = float)
-    G = imgdata
-    #G = ndi.filters.gaussian_filter(imgdata, sigma)
-    gradx = np.array(G, dtype = float)
-    grady = np.array(G, dtype = float)
-
-    mask_x = np.array([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]])
-
-    mask_y = np.array([[1, 2, 1], [0, 0, 0], [-1, -2, -1]])
-
-    width = img.size[1]
-    height = img.size[0]
-
-    for i in range(1, width - 1):
-        for j in range(1, height - 1):
-
-            px = np.sum(mask_x * G[(i - 1):(i + 1) + 1, (j - 1):(j + 1) + 1])
-            py = np.sum(mask_y * G[(i - 1):(i + 1) + 1, (j - 1):(j + 1) + 1])
-            gradx[i][j] = px
-            grady[i][j] = py
-
-    mag = scipy.hypot(gradx, grady)
-
-    treshold = np.max(mag) * 0.9
-
-    for i in range(width):
-        for j in range(height):
-            if mag[i][j] > treshold:
-                mag[i][j] = 1
-            else:
-                mag[i][j] = 0
-
-    return mag
 
 
 if __name__ == "__main__":

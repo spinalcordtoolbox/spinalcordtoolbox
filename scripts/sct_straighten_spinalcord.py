@@ -11,7 +11,9 @@
 #
 # License: see the LICENSE.TXT
 # ======================================================================================================================
-# check if needed Python libraries are already installed or not
+
+from __future__ import division, absolute_import
+
 import sys, io, os, shutil, time, bisect
 
 import numpy as np
@@ -586,7 +588,7 @@ class SpinalCordStraightener(object):
             #alignment_mode = 'length'
             alignment_mode = 'levels'
 
-            lookup_curved2straight = range(centerline.number_of_points)
+            lookup_curved2straight = list(range(centerline.number_of_points))
             if self.discs_input_filename != "":
                 # create look-up table curved to straight
                 for index in range(centerline.number_of_points):
@@ -612,7 +614,7 @@ class SpinalCordStraightener(object):
                     break
             lookup_curved2straight = np.array(lookup_curved2straight)
 
-            lookup_straight2curved = range(centerline_straight.number_of_points)
+            lookup_straight2curved = list(range(centerline_straight.number_of_points))
             if self.discs_input_filename != "":
                 for index in range(centerline_straight.number_of_points):
                     disc_label = centerline_straight.l_points[index]

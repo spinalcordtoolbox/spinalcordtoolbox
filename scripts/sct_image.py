@@ -10,6 +10,8 @@
 # About the license: see the file LICENSE.TXT
 ##############################################################################
 
+from __future__ import absolute_import
+
 import os, sys, warnings
 
 import numpy as np

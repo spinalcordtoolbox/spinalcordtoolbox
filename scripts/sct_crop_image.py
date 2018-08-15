@@ -11,8 +11,11 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+from __future__ import absolute_import, division
+
 import sys, io, os, math, time
 
+import numpy as np
 import scipy
 import nibabel
 
@@ -385,7 +388,7 @@ def find_mask_boundaries(fname_mask):
     # ind_start = ','.join(str(i) for i in xyzmin)
     # ind_end = ','.join(str(i) for i in xyzmax)
     # return values
-    return ind_start, ind_end, range(dim)
+    return ind_start, ind_end, list(range(dim))
 
 
 if __name__ == "__main__":

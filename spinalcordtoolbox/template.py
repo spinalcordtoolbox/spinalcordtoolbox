@@ -2,7 +2,10 @@
 # -*- coding: utf-8
 # Functions that utilize the template (e.g., PAM50)
 
+from __future__ import absolute_import
+
 import numpy as np
+
 from sct_utils import log
 
 def get_slices_from_vertebral_levels(im_vertlevel, level):
@@ -21,7 +24,7 @@ def get_slices_from_vertebral_levels(im_vertlevel, level):
         indx, indy = np.where(data_vertlevel[:, :, iz])
         # average non-null values and round to closest
         try:
-            average_value = int(round(np.mean(data_vertlevel[indx, indy, iz])))
+            average_value = int(np.round(np.mean(data_vertlevel[indx, indy, iz])))
             # if that matches the desired level, append it to slice list
             if average_value == level:
                 slices.append(iz)
@@ -44,10 +47,10 @@ def get_vertebral_level_from_slice(im_vertlevel, idx_slice):
     try:
         # find indices of non-null values
         indx, indy = np.where(data_vertlevel[:, :, idx_slice])
-        vert_level = int(round(np.mean(data_vertlevel[indx, indy, idx_slice])))
+        vert_level = int(np.round(np.mean(data_vertlevel[indx, indy, idx_slice])))
     except ValueError as e:
         # slice is empty (no indx found). Do nothing.
-        log.debug('Empty slice: z=%s (%s)', iz, e)
+        log.debug('Empty slice: z=%s (%s)', idx_slice, e)
         vert_level = None
     return vert_level
 

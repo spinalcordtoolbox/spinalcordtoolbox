@@ -12,12 +12,14 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+from __future__ import division, absolute_import
 
 import sys
 import math
 import time
-
 import os
+
+import numpy as np
 
 import sct_utils as sct
 from spinalcordtoolbox.image import Image
@@ -231,7 +233,7 @@ def main(args=None):
 
     # display elapsed time
     elapsed_time = time.time() - start_time
-    sct.printv('\nFinished! Elapsed time: ' + str(int(round(elapsed_time))) + 's', verbose)
+    sct.printv('\nFinished! Elapsed time: ' + str(int(np.round(elapsed_time))) + 's', verbose)
 
     # to view results
     sct.printv('\nTo view results, type: ', verbose)
@@ -266,7 +268,7 @@ def identify_b0(fname_bvecs, fname_bvals, bval_min, verbose):
             sct.printv('  WARNING: bvecs file is 3xn instead of nx3. Consider using sct_dmri_transpose_bvecs.', verbose, 'warning')
             sct.printv('  Transpose bvecs...', verbose)
             # transpose bvecs
-            bvecs = zip(*bvecs)
+            bvecs = list(zip(*bvecs))
 
         # get number of lines
         nt = len(bvecs)

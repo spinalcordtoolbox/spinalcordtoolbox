@@ -12,6 +12,8 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+from __future__ import division, absolute_import
+
 import os
 import sys
 import numpy as np
@@ -195,7 +197,7 @@ def _fill_z_holes(zz_lst, data, z_spaccing):
         z_ref_start, z_ref_end = z_hole_start - 1, z_hole_end
         slice_ref_start, slice_ref_end = data[:, :, z_ref_start], data[:, :, z_ref_end]
 
-        hole_cur_lst = range(z_hole_start, z_hole_end)
+        hole_cur_lst = list(range(z_hole_start, z_hole_end))
         lenght_hole = len(hole_cur_lst) + 1
         phys_lenght_hole = lenght_hole * z_spaccing
 
@@ -496,7 +498,7 @@ def segment_3d(model_fname, contrast_type, fname_in, fname_out):
     # segment the spinal cord
     sct.log.info("Segmenting the spinal cord using deep learning on 3D patches...")
     z_patch_size = dct_patch_sc_3d[contrast_type]['size'][2]
-    z_step_keep = range(0, im.data.shape[2], z_patch_size)
+    z_step_keep = list(range(0, im.data.shape[2], z_patch_size))
     for zz in z_step_keep:
         if zz == z_step_keep[-1]:  # deal with instances where the im.data.shape[2] % patch_size_z != 0
             patch_im = np.zeros(dct_patch_sc_3d[contrast_type]['size'])

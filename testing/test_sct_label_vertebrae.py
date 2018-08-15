@@ -10,7 +10,6 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import shutil
 
 def init(param_test):
     """

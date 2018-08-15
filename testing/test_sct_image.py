@@ -11,11 +11,14 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+from __future__ import absolute_import
+
 import sys, io, os
+
+import numpy as np
 
 import sct_utils as sct
 from spinalcordtoolbox.image import Image
-import numpy as np
 
 
 def init(param_test):
@@ -77,7 +80,7 @@ def test_integrity(param_test):
                 param_test.output += '\nResulting split image differs from gold-standard.\n'
         except Exception as e:
             param_test.status = 99
-            param_test.output += 'ERROR: ' + str(e.message) + str(e.args)
+            param_test.output += 'ERROR: ' + str(e)
 
     elif index_args == 4:
         try:
@@ -90,6 +93,6 @@ def test_integrity(param_test):
                 param_test.output += '\nResulting concatenated image differs from gold-standard (original dmri image).\n'
         except Exception as e:
             param_test.status = 99
-            param_test.output += 'ERROR: ' + str(e.message) + str(e.args)
+            param_test.output += 'ERROR: ' + str(e)
 
     return param_test

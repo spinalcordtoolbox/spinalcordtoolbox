@@ -10,6 +10,8 @@
 # About the license: see the file LICENSE.TXT
 ###############################################################################
 
+from __future__ import absolute_import
+
 import cgi
 import os
 import sys
@@ -135,6 +137,7 @@ def main(args=None):
     os.remove(tmp_file)
 
     sct.printv('Done!\n', verbose)
+    return 0
 
 
 def unzip(compressed, dest_folder, verbose):

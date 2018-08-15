@@ -7,6 +7,8 @@
 #     Spinal cord gray matter segmentation using deep dilated convolutions.
 #     URL: https://arxiv.org/abs/1710.01269
 
+from __future__ import absolute_import, print_function
+
 import warnings
 import json
 import os

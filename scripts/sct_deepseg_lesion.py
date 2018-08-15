@@ -12,8 +12,11 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+from __future__ import print_function, absolute_import, division
+
 import os
 import sys
+
 import numpy as np
 from scipy.ndimage.measurements import center_of_mass, label
 from scipy.ndimage import distance_transform_edt
@@ -112,7 +115,9 @@ def apply_intensity_normalization_model(img, landmarks_lst):
     return output.astype(np.float32)
 
 
-def exp_model((x1, x2), (y1, y2), s2):
+def exp_model(xs, ys, s2):
+    x1, x2 = xs
+    y1, y2 = ys
     m = (y2 - y1) / (x2 - x1)
     b = y1 - (m * x1)
     mu90 = x2
@@ -387,7 +392,7 @@ def segment_3d(model_fname, contrast_type, fname_in, fname_out):
 
     # segment the spinal cord
     z_patch_size = dct_patch_3d[contrast_type]['size'][2]
-    z_step_keep = range(0, im.data.shape[2], z_patch_size)
+    z_step_keep = list(range(0, im.data.shape[2], z_patch_size))
     for zz in z_step_keep:
         if zz == z_step_keep[-1]:  # deal with instances where the im.data.shape[2] % patch_size_z != 0
             patch_im = np.zeros(dct_patch_3d[contrast_type]['size'])

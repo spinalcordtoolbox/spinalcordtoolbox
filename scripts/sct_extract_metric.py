@@ -20,7 +20,8 @@
 # TODO: remove fix_label_value() usage because it is used in isolated case and introduces confusion.
 # TODO (not urgent): vertebral levels selection should only consider voxels of the selected levels in slices where two different vertebral levels coexist (and not the whole slice)
 
-# Import common Python libraries
+from __future__ import division, absolute_import
+
 import sys, os, glob, time
 
 import numpy as np
@@ -473,10 +474,10 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
         for i_label_user in labels_id_user:
             if i_label_user <= max(indiv_labels_ids):
                 index = indiv_labels_ids.index(i_label_user)
-                sct.printv(str(indiv_labels_ids[index]) + ', ' + str(indiv_labels_names[index]) + ' [' + str(round(indiv_labels_fract_vol[index], 2)) + ']:    ' + str(indiv_labels_value[index]) + ' +/- ' + str(indiv_labels_std[index]), 1, 'info')
+                sct.printv(str(indiv_labels_ids[index]) + ', ' + str(indiv_labels_names[index]) + ' [' + str(np.round(indiv_labels_fract_vol[index], 2)) + ']:    ' + str(indiv_labels_value[index]) + ' +/- ' + str(indiv_labels_std[index]), 1, 'info')
             elif i_label_user > max(indiv_labels_ids):
                 index = combined_labels_ids.index(i_label_user)
-                sct.printv(str(combined_labels_ids[index]) + ', ' + str(combined_labels_names[index]) + ' [' + str(round(combined_labels_fract_vol[index], 2)) + ']:    ' + str(combined_labels_value[index]) + ' +/- ' + str(combined_labels_std[index]), 1, 'info')
+                sct.printv(str(combined_labels_ids[index]) + ', ' + str(combined_labels_names[index]) + ' [' + str(np.round(combined_labels_fract_vol[index], 2)) + ']:    ' + str(combined_labels_value[index]) + ' +/- ' + str(combined_labels_std[index]), 1, 'info')
 
     # output a metric value map
     if fname_output_metric_map:
@@ -833,7 +834,7 @@ def check_labels(indiv_labels_ids, selected_labels):
     # TODO: allow selection of combined labels as "36, Ventral, 7:14,22:19"
 
     # convert strings to int
-    list_ids_of_labels_of_interest = map(int, indiv_labels_ids)
+    list_ids_of_labels_of_interest = list(map(int, indiv_labels_ids))
 
     # if selected_labels:
     #     # Check if label chosen is in the right format
@@ -1104,7 +1105,7 @@ def remove_label_from_group(list_label_groups, label_ID):
         if label_ID in list_label_groups[i_group]:
             list_label_groups[i_group].remove(label_ID)
 
-    list_label_groups = filter(None, list_label_groups)
+    list_label_groups = list(filter(None, list_label_groups))
 
     return list_label_groups
 
@@ -1129,6 +1130,7 @@ def generate_metric_value_map(fname_output_metric_map, input_im, labels, indiv_l
     metric_map.save(fname_output_metric_map)
 
     sct.printv('\tDone.')
+    return metric_map
 
 
 # =======================================================================================================================

@@ -43,6 +43,8 @@ usage:
 # TODO: create a dictionnary for param, such that results can display reduced param instead of full. Example: -param t1="blablabla",t2="blablabla"
 # TODO: read_database: hard coded fields to put somewhere else (e.g. config file)
 
+from __future__ import print_function, absolute_import
+
 import sys, io, os, types, copy, copy_reg, time, itertools, glob, importlib, pickle
 import platform
 import signal
@@ -62,6 +64,7 @@ else:
 
 from multiprocessing import cpu_count
 
+import numpy as np
 import h5py
 import pandas as pd
 
@@ -146,10 +149,10 @@ def read_database(folder_dataset, specifications=None, fname_database='', verbos
         sct.log.info('  Looking for an XLS file describing the database...')
         list_fname_database = glob.glob(os.path.join(folder_dataset, '*.xls*'))
         if list_fname_database == []:
-            sct.log.warning('WARNING: No XLS file found. Returning empty list.', verbose, 'warning')
+            sct.log.warning('WARNING: No XLS file found. Returning empty list.')
             return subj_selected
         elif len(list_fname_database) > 1:
-            sct.log.warning('WARNING: More than one XLS file found. Returning empty list.', verbose, 'warning')
+            sct.log.warning('WARNING: More than one XLS file found. Returning empty list.')
             return subj_selected
         else:
             fname_database = list_fname_database[0]
@@ -160,7 +163,7 @@ def read_database(folder_dataset, specifications=None, fname_database='', verbos
     try:
         data_base = pd.read_excel(fname_database)
     except:
-        sct.log.error('ERROR: File '+fname_database+' cannot be read. Please check format or get help from SCT forum.', verbose, 'error')
+        sct.log.error('ERROR: File '+fname_database+' cannot be read. Please check format or get help from SCT forum.')
     #
     # correct some values and clean panda data base
     # convert columns to int
@@ -623,7 +626,7 @@ if __name__ == "__main__":
         count_ran = results_subset.query('status != 200 & status != 201').count()['status']
         # display general results
         sct.log.info('\nGLOBAL RESULTS:')
-        sct.log.info('Duration: ' + str(int(round(compute_time))) + 's')
+        sct.log.info('Duration: ' + str(int(np.round(compute_time))) + 's')
         # display results
         sct.log.info('Passed: ' + str(count_passed) + '/' + str(count_ran))
         sct.log.info('Crashed: ' + str(count_crashed) + '/' + str(count_ran))

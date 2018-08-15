@@ -13,6 +13,8 @@
 
 # TODO: parameter "almost_zero" might case problem if merging data with very low values (e.g. MD from diffusion)
 
+from __future__ import absolute_import
+
 # Python imports
 import sys
 import os

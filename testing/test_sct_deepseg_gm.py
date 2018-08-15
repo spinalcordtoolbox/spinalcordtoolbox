@@ -10,7 +10,10 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+from __future__ import absolute_import
+
 import os
+
 import sct_utils as sct
 from spinalcordtoolbox.image import Image, compute_dice
 

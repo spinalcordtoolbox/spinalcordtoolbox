@@ -16,6 +16,8 @@
 # TODO: add flag for setting threshold on PCA
 # TODO: clean code for generate_warping_field (unify with centermass_rot)
 
+from __future__ import division, absolute_import
+
 import sys, os, shutil
 from math import asin, cos, sin, acos
 import numpy as np
@@ -452,7 +454,7 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
                     # coord_src2d_scaleX[:, 0] = (coord_src2d[:, 0] - mean_src) * Sx + mean_dest
                     # coord_init_pix_scaleY = np.copy(coord_init_pix)  # need to use np.copy to avoid copying pointer
                     # coord_init_pix_scaleY[:, 0] = (coord_init_pix[:, 0] - mean_src ) * Sx + mean_dest
-                    range_x = range(ix * ny, ix * ny + nx)
+                    range_x = list(range(ix * ny, ix * ny + nx))
                     coord_init_pix_scaleY[range_x, 1] = (coord_init_pix[range_x, 1] - mean_src_y) * Sy + mean_dest_y
                     coord_init_pix_scaleYinv[range_x, 1] = (coord_init_pix[range_x, 1] - mean_dest_y) / float(Sy) + mean_src_y
             # apply transformation to image
