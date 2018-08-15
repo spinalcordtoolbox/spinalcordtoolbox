@@ -22,6 +22,8 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+from __future__ import absolute_import, division
+
 import sys
 from msct_parser import Parser
 from sct_utils import extract_fname, printv

@@ -12,6 +12,8 @@
 
 # TODO: offer the option not to compute Hausdorff and Dice at the end: too long for testing.
 
+from __future__ import division, absolute_import
+
 import sys, io, os, shutil
 
 path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))

@@ -10,6 +10,8 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+from __future__ import division, absolute_import
+
 import sys
 
 import numpy as np
@@ -311,7 +313,7 @@ def main(args = None):
         data_out = denoise_nlmeans(data, patch_radius=p, block_radius=b)
 
     elif '-symmetrize' in arguments:
-        data_out = (data + data[range(data.shape[0] - 1, -1, -1), :, :]) / float(2)
+        data_out = (data + data[list(range(data.shape[0] - 1, -1, -1)), :, :]) / float(2)
 
     elif '-mi' in arguments:
         # input 1 = from flag -i --> im

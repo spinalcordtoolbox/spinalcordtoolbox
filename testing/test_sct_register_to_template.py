@@ -10,9 +10,12 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+from __future__ import absolute_import
+
 import os
 
 from pandas import DataFrame
+
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
 import sct_apply_transfo

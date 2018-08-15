@@ -29,13 +29,16 @@
 # TDOD: if -f, we only need two plots. Plot 1: X params with fitted spline, plot 2: Y param with fitted splines. Each plot will have all Z slices (with legend Z=0, Z=1, ...) and labels: y; translation (mm), xlabel: volume #. Plus add grid.
 # TODO (no priority): for sinc interp, use ANTs instead of flirt
 
+from __future__ import division, absolute_import
+
 import sys, os, time, math
+import importlib
 
 import numpy as np
+
 import sct_utils as sct
 import msct_moco as moco
 from sct_dmri_separate_b0_and_dwi import identify_b0
-import importlib
 from sct_convert import convert
 from spinalcordtoolbox.image import Image
 from sct_image import split_data, concat_data
@@ -295,7 +298,7 @@ def main(args=None):
 
     # display elapsed time
     elapsed_time = time.time() - start_time
-    sct.printv('\nFinished! Elapsed time: ' + str(int(round(elapsed_time))) + 's', param.verbose)
+    sct.printv('\nFinished! Elapsed time: ' + str(int(np.round(elapsed_time))) + 's', param.verbose)
 
     sct.display_viewer_syntax([fname_dmri_moco, file_data], mode='ortho,ortho')
 

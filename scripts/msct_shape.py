@@ -13,22 +13,26 @@
 # About the license: see the file LICENSE.TXT
 ########################################################################################################################
 
+from __future__ import print_function, absolute_import, division
 
-import numpy as np
-import sct_utils as sct
 import os
 import time
 import math
 from random import randint
+from itertools import compress
+
+import numpy as np
 
 import tqdm
 from skimage import measure, filters
 import matplotlib.pyplot as plt
-from itertools import compress
+
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
 from msct_types import Centerline
 from sct_straighten_spinalcord import smooth_centerline
+
+import sct_utils as sct
 
 
 def find_contours(image, threshold=0.5, smooth_sigma=0.0, verbose=1):

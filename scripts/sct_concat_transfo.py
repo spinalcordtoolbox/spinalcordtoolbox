@@ -13,6 +13,7 @@
 
 # TODO: also enable to concatenate reversed transfo
 
+from __future__ import absolute_import, division
 
 import sys, io, os, getopt, functools
 

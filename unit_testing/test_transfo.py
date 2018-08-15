@@ -2,6 +2,8 @@
 # -*- coding: utf-8
 # pytest unit tests for transform stuff
 
+from __future__ import print_function, absolute_import, division
+
 import sys, io, os, time, itertools
 
 import pytest
@@ -287,7 +289,7 @@ def test_transfo_exhaustive_wrt_orientations():
     print("Orientations DK: {}".format(" ".join(orientations_dk)))
 
 
-def test_transfo_more_exhaustive_wrt_orientations():
+def notest_transfo_more_exhaustive_wrt_orientations():
 
     dir_tmp = "."
 

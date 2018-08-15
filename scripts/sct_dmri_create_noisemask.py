@@ -10,11 +10,15 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+from __future__ import absolute_import
+
 import sys
+
+from dipy.denoise.noise_estimate import piesno
 import nibabel as nib
+
 import sct_utils as sct
 from msct_parser import Parser
-from dipy.denoise.noise_estimate import piesno
 
 # PARSER
 # ==========================================================================================

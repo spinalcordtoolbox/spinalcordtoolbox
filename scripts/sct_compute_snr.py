@@ -12,6 +12,8 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+from __future__ import division, absolute_import
+
 import sys, io, os, shutil
 
 import numpy as np
@@ -141,14 +143,14 @@ def main():
     if slices_of_interest == 'None':
         slices_of_interest = '0:' + str(mask_data.shape[2] - 1)
     slices_boundary = slices_of_interest.split(':')
-    slices_of_interest_list = range(int(slices_boundary[0]), int(slices_boundary[1]) + 1)
+    slices_of_interest_list = list(range(int(slices_boundary[0]), int(slices_boundary[1]) + 1))
     # Crop
     input_data = input_data[:, :, slices_of_interest_list, :]
     mask_data = mask_data[:, :, slices_of_interest_list]
 
     # if user selected all slices (-vol -1), then assign index_vol
     if index_vol[0] == -1:
-        index_vol = range(0, input_data.shape[3], 1)
+        index_vol = list(range(0, input_data.shape[3], 1))
 
     # Get signal and noise
     indexes_roi = np.where(mask_data == 1)

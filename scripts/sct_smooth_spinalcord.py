@@ -14,6 +14,7 @@
 
 # TODO: maybe no need to convert RPI at the beginning because strainghten spinal cord already does it!
 
+from __future__ import absolute_import
 
 import sys, io, os, getopt, shutil, time
 
@@ -201,7 +202,7 @@ def main(args=None):
 
     # Display elapsed time
     elapsed_time = time.time() - start_time
-    sct.printv('\nFinished! Elapsed time: ' + str(int(round(elapsed_time))) + 's\n')
+    sct.printv('\nFinished! Elapsed time: ' + str(int(np.round(elapsed_time))) + 's\n')
 
     sct.display_viewer_syntax([file_anat, file_anat + '_smooth'], verbose=verbose)
 
