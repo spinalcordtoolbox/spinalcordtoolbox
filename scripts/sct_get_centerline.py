@@ -17,8 +17,9 @@ from sct_viewer import ClickViewerPropseg
 from sct_straighten_spinalcord import smooth_centerline
 
 
-def viewer_centerline(image_fname, interslice_gap, verbose):
-    image_input_reoriented = Image(image_fname)
+def viewer_centerline(image_input_reoriented, interslice_gap, verbose):
+
+    image_fname = image_input_reoriented.absolutepath
     nx, ny, nz, nt, px, py, pz, pt = image_input_reoriented.dim
     viewer = ClickViewerPropseg(image_input_reoriented)
 
@@ -165,44 +166,44 @@ def run_main():
         # make sure image is in SAL orientation, as it is the orientation used by the viewer
         image_input = Image(fname_data)
         image_input_orientation = image_input.orientation
-        reoriented_image_filename = sct.add_suffix(file_data + ext_data, "_SAL")
-        image_input.change_orientation("SAL", generate_path=True).save(".")
+
+        image_reoriented = image_input.change_orientation("SAL", generate_path=True).save(".", mutable=True)
 
         # extract points manually using the viewer
-        fname_points = viewer_centerline(image_fname=reoriented_image_filename, interslice_gap=interslice_gap, verbose=verbose)
+        fname_points = viewer_centerline(image_reoriented, interslice_gap=interslice_gap, verbose=verbose)
 
         if fname_points is not None:
-            image_input_reoriented = Image(fname_points).change_orientation("RPI", generate_path=True).save(".", mutable=True)
+            image_points_reoriented = Image(fname_points).change_orientation("RPI", generate_path=True).save(".", mutable=True)
 
             # fit centerline, smooth it and return the first derivative (in physical space)
-            x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(image_points_RPI, algo_fitting='nurbs', nurbs_pts_number=3000, phys_coordinates=True, verbose=verbose, all_slices=False)
+            x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(image_points_reoriented, algo_fitting='nurbs', nurbs_pts_number=3000, phys_coordinates=True, verbose=verbose, all_slices=False)
             centerline = Centerline(x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
 
             # average centerline coordinates over slices of the image
-            x_centerline_fit_rescorr, y_centerline_fit_rescorr, z_centerline_rescorr, x_centerline_deriv_rescorr, y_centerline_deriv_rescorr, z_centerline_deriv_rescorr = centerline.average_coordinates_over_slices(image_input_reoriented)
+            x_centerline_fit_rescorr, y_centerline_fit_rescorr, z_centerline_rescorr, x_centerline_deriv_rescorr, y_centerline_deriv_rescorr, z_centerline_deriv_rescorr = centerline.average_coordinates_over_slices(image_points_reoriented)
 
             # compute z_centerline in image coordinates for usage in vertebrae mapping
-            voxel_coordinates = image_input_reoriented.transfo_phys2pix([[x_centerline_fit_rescorr[i], y_centerline_fit_rescorr[i], z_centerline_rescorr[i]] for i in range(len(z_centerline_rescorr))])
+            voxel_coordinates = image_points_reoriented.transfo_phys2pix([[x_centerline_fit_rescorr[i], y_centerline_fit_rescorr[i], z_centerline_rescorr[i]] for i in range(len(z_centerline_rescorr))])
             x_centerline_voxel = [coord[0] for coord in voxel_coordinates]
             y_centerline_voxel = [coord[1] for coord in voxel_coordinates]
             z_centerline_voxel = [coord[2] for coord in voxel_coordinates]
 
             # compute z_centerline in image coordinates with continuous precision
-            voxel_coordinates = image_input_reoriented.transfo_phys2pix([[x_centerline_fit_rescorr[i], y_centerline_fit_rescorr[i], z_centerline_rescorr[i]] for i in range(len(z_centerline_rescorr))], real=False)
+            voxel_coordinates = image_points_reoriented.transfo_phys2pix([[x_centerline_fit_rescorr[i], y_centerline_fit_rescorr[i], z_centerline_rescorr[i]] for i in range(len(z_centerline_rescorr))], real=False)
             x_centerline_voxel_cont = [coord[0] for coord in voxel_coordinates]
             y_centerline_voxel_cont = [coord[1] for coord in voxel_coordinates]
             z_centerline_voxel_cont = [coord[2] for coord in voxel_coordinates]
 
             # Create an image with the centerline
-            image_input_reoriented.data *= 0
+            image_centerline_reoriented = msct_image.zeros_like(image_points_reoriented)
             min_z_index, max_z_index = int(np.round(min(z_centerline_voxel))), int(np.round(max(z_centerline_voxel)))
             for iz in range(min_z_index, max_z_index + 1):
-                image_input_reoriented.data[int(np.round(x_centerline_voxel[iz - min_z_index])), int(np.round(y_centerline_voxel[iz - min_z_index])), int(iz)] = 1  # if index is out of bounds here for hanning: either the segmentation has holes or labels have been added to the file
+                image_centerline_reoriented.data[int(np.round(x_centerline_voxel[iz - min_z_index])), int(np.round(y_centerline_voxel[iz - min_z_index])), int(iz)] = 1  # if index is out of bounds here for hanning: either the segmentation has holes or labels have been added to the file
 
             # Write the centerline image
             sct.printv('\nWrite NIFTI volumes...', verbose)
             fname_centerline_oriented = sct.add_suffix(fname_data, "_centerline")
-            image_input_reoriented \
+            image_centerline_reoriented \
              .change_type(np.uint8) \
              .change_orientation(image_input_orientation) \
              .save(fname_centerline_oriented)
