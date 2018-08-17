@@ -177,7 +177,7 @@ class DetectPMJ:
         os.environ["FSLOUTPUTTYPE"] = "NIFTI_PAIR"
         cmd_pmj = ['isct_spine_detect', self.pmj_model, self.slice2D_im.split('.nii')[0], self.dection_map_pmj]
         print(cmd_pmj)
-        sct.run(cmd_pmj, verbose=0)
+        sct.run(cmd_pmj, verbose=0, is_sct_binary=True)
 
         img = nib.load(self.dection_map_pmj + '_svm.hdr')  # convert .img and .hdr files to .nii
         nib.save(img, self.dection_map_pmj + '.nii')

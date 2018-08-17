@@ -9,7 +9,7 @@ import os, datetime
 import numpy as np
 
 import sct_utils as sct
-from spinalcordtoolbox.image import Image
+from ..image import Image
 
 
 def centerline2roi(fname_image, folder_output='./', verbose=0):

@@ -101,7 +101,7 @@ def main():
     fname_warp_list_invert = functools.reduce(lambda x,y: x+y, fname_warp_list_invert)
 
     cmd = ['isct_ComposeMultiTransform', dimensionality, 'warp_final' + ext_out, '-R', fname_dest] + fname_warp_list_invert
-    status, output = sct.run(cmd, verbose=verbose)
+    status, output = sct.run(cmd, verbose=verbose, is_sct_binary=True)
 
     # check if output was generated
     if not os.path.isfile('warp_final' + ext_out):
