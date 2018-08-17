@@ -432,7 +432,7 @@ def run_old(cmd, verbose=1):
         return status, output
 
 
-def run(cmd, verbose=1, raise_exception=True, cwd=None, env=None):
+def run(cmd, verbose=1, raise_exception=True, cwd=None, env=None, is_sct_binary=False):
     # if verbose == 2:
     #     printv(sys._getframe().f_back.f_code.co_name, 1, 'process')
 
@@ -445,10 +445,29 @@ def run(cmd, verbose=1, raise_exception=True, cwd=None, env=None):
     if sys.hexversion < 0x03000000 and isinstance(cmd, unicode):
         cmd = str(cmd)
 
+
+    if is_sct_binary:
+        name = cmd[0] if isinstance(cmd, list) else cmd.split(" ", 1)[0]
+        path = None
+        for directory in (
+         os.path.expanduser("~/.cache/spinalcordtoolbox/bin"),
+         os.path.join(__sct_dir__, "bin"),
+         ):
+            candidate = os.path.join(directory, name)
+            if os.path.exists(candidate):
+                path = candidate
+        if path is None:
+            raise RuntimeError("Please download the SCT binaries")
+        elif isinstance(cmd, list):
+            cmd[0] = path
+        elif isinstance(cmd, str):
+            cmd = "{} {}".format(path, cmd.split(" ", 1)[1])
+
     if isinstance(cmd, str):
         cmdline = cmd
     else:
         cmdline = list2cmdline(cmd)
+
 
     if verbose:
         printv("%s # in %s" % (cmdline, cwd), 1, 'code')
