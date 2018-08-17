@@ -15,7 +15,7 @@
 
 from __future__ import print_function, division, absolute_import
 
-import sys, io, os, re, time, datetime
+import sys, io, os, re, time, datetime, platform
 import errno
 import logging
 import logging.config
@@ -431,6 +431,21 @@ def run_old(cmd, verbose=1):
     else:
         return status, output
 
+def which_sct_binaries():
+    """
+    :return name of the sct binaries to use on this platform
+    """
+
+    if sys.platform.startswith("linux"):
+        distro = platform.linux_distribution()
+        if "CentOS Linux" in distro:
+            return "binaries_centos"
+        if "Red Hat Enterprise Linux Server" in distro:
+            return "binaries_centos"
+        return "binaries_debian"
+    else:
+        return "binaries_osx"
+
 
 def run(cmd, verbose=1, raise_exception=True, cwd=None, env=None, is_sct_binary=False):
     # if verbose == 2:
@@ -449,16 +464,19 @@ def run(cmd, verbose=1, raise_exception=True, cwd=None, env=None, is_sct_binary=
     if is_sct_binary:
         name = cmd[0] if isinstance(cmd, list) else cmd.split(" ", 1)[0]
         path = None
+        binaries_location_default = os.path.expanduser("~/.cache/spinalcordtoolbox/bin")
         for directory in (
-         os.path.expanduser("~/.cache/spinalcordtoolbox/bin"),
+         binaries_location_default,
          os.path.join(__sct_dir__, "bin"),
          ):
             candidate = os.path.join(directory, name)
             if os.path.exists(candidate):
                 path = candidate
         if path is None:
-            raise RuntimeError("Please download the SCT binaries")
-        elif isinstance(cmd, list):
+            run(["sct_download_data", "-d", which_sct_binaries(), "-o", binaries_location_default])
+            path = os.path.join(binaries_location_default, name)
+
+        if isinstance(cmd, list):
             cmd[0] = path
         elif isinstance(cmd, str):
             cmd = "{} {}".format(path, cmd.split(" ", 1)[1])
