@@ -518,13 +518,13 @@ else
   echo -e "\nInstalling binaries..."
   cmd=". ${SCT_DIR}/${PYTHON_DIR}/bin/activate ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
   if [ $OS == "linux" ]; then
-    cmd="python scripts/sct_download_data.py -d binaries_debian -o ${SCT_DIR}/${BIN_DIR}"; echo ">> "$cmd; $cmd
+    cmd="sct_download_data -d binaries_debian -o ${SCT_DIR}/${BIN_DIR}"; echo ">> "$cmd; $cmd
     e_status=$?
   elif [ $OS == "linux_centos6" ]; then
-    cmd="python scripts/sct_download_data.py -d binaries_centos -o ${SCT_DIR}/${BIN_DIR}"; echo ">> "$cmd; $cmd
+    cmd="sct_download_data -d binaries_centos -o ${SCT_DIR}/${BIN_DIR}"; echo ">> "$cmd; $cmd
     e_status=$?
   elif [ $OS == "osx" ]; then
-    cmd="python scripts/sct_download_data.py -d binaries_osx -o ${SCT_DIR}/${BIN_DIR}"; echo ">> "$cmd; $cmd
+    cmd="sct_download_data -d binaries_osx -o ${SCT_DIR}/${BIN_DIR}"; echo ">> "$cmd; $cmd
     e_status=$?
   else
     echo "Unsupported OS $OS: can't install binaries."
@@ -553,7 +553,7 @@ else
   cmd="mkdir -p ${SCT_DIR}/${DATA_DIR}"; echo ">> "$cmd; $cmd
   cmd="cd ${SCT_DIR}/${DATA_DIR}"; echo ">> "$cmd; $cmd
   for data in PAM50 gm_model optic_models pmj_models deepseg_sc_models deepseg_gm_models deepseg_lesion_models c2c3_disc_models; do
-    cmd="python ../scripts/sct_download_data.py -d ${data}"; echo ">> "$cmd; $cmd
+    cmd="sct_download_data -d ${data}"; echo ">> "$cmd; $cmd
     e_status=$?
     if [ ${e_status} != 0 ]; then
       echo "Failed to download SCT binaries."
