@@ -80,7 +80,7 @@ def get_parser():
                       type_value="folder",
                       description="Path to template.",
                       mandatory=False,
-                      default_value=os.path.join(sct.__data_dir__, 'PAM50'))
+                      default_value=os.path.join(sct.__data_dir__, "PAM50"))
     parser.add_option(name="-initz",
                       type_value=[[','], 'int'],
                       description='Initialize using slice number and disc value. Example: 68,4 (slice 68 corresponds to disc C3/C4). WARNING: Slice number should correspond to superior-inferior direction (e.g. Z in RPI orientation, but Y in LIP orientation).',
@@ -261,7 +261,9 @@ def main(args=None):
              'warp_curve2straight.nii.gz',
              'segmentation_straight.nii',
              'Linear'),
-            verbose=verbose)
+            verbose=verbose,
+            is_sct_binary=True,
+           )
     # Threshold segmentation at 0.5
     sct.run(['sct_maths', '-i', 'segmentation_straight.nii', '-thr', '0.5', '-o', 'segmentation_straight.nii'], verbose)
 
@@ -275,7 +277,9 @@ def main(args=None):
                  'warp_curve2straight.nii.gz',
                  'labeldisc_straight.nii.gz',
                  'NearestNeighbor'),
-                verbose=verbose)
+                 verbose=verbose,
+                 is_sct_binary=True,
+                )
 
         label_vert('segmentation_straight.nii', 'labeldisc_straight.nii.gz', verbose=1)
 
@@ -322,7 +326,9 @@ def main(args=None):
                  'warp_curve2straight.nii.gz',
                  'labelz_straight.nii.gz',
                  'NearestNeighbor'),
-                verbose=verbose)
+                verbose=verbose,
+                is_sct_binary=True,
+               )
         # get z value and disk value to initialize labeling
         sct.printv('\nGet z and disc values from straight label...', verbose)
         init_disc = get_z_and_disc_values_from_label('labelz_straight.nii.gz')
@@ -350,8 +356,9 @@ def main(args=None):
              'warp_straight2curve.nii.gz',
              'segmentation_labeled.nii',
              'NearestNeighbor'),
-            verbose=verbose)
-
+            verbose=verbose,
+            is_sct_binary=True,
+           )
     # Clean labeled segmentation
     sct.printv('\nClean labeled segmentation (correct interpolation errors)...', verbose)
     clean_labeled_segmentation('segmentation_labeled.nii', 'segmentation.nii', 'segmentation_labeled.nii')

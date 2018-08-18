@@ -23,10 +23,7 @@ from pandas import DataFrame
 from msct_parser import Parser
 import sct_utils as sct
 
-# get path of SCT
-path_script = os.path.dirname(__file__)
-path_sct = os.path.dirname(path_script)
-sys.path.append(os.path.join(path_sct, 'testing'))
+sys.path.append(os.path.join(sct.__sct_dir__, 'testing'))
 
 
 def fs_signature(root):

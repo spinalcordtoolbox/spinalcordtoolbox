@@ -44,7 +44,7 @@ def main():
     # Parameters for debug mode
     if param.debug:
         sct.printv('\n*** WARNING: DEBUG MODE ON ***\n')
-        path_sct_data = os.environ.get("SCT_TESTING_DATA_DIR", os.path.join(os.path.dirname(os.path.dirname(__file__))), "testing_data")
+        path_sct_data = os.path.join(sct.__data_dir__, "sct_testing_data")
         fname_warp_list = os.path.join(path_sct_data, 't2', 'warp_template2anat.nii.gz') + '-' + os.path.join(path_sct_data, 'mt', 'warp_template2mt.nii.gz')
         fname_dest = os.path.join(path_sct_data, 'mt', 'mtr.nii.gz')
         verbose = 1

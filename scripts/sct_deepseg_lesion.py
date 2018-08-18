@@ -23,6 +23,7 @@ import sct_utils as sct
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.deepseg_lesion.core import deep_segmentation_MSlesion
 
+
 def get_parser():
     """Initialize the parser."""
     parser = Parser(__file__)

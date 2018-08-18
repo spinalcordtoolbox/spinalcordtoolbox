@@ -300,9 +300,6 @@ def main(args=None):
 
     start_time = time.time()
 
-    # get path of the toolbox
-    path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
-
     # get default registration parameters
     # step1 = Paramreg(step='1', type='im', algo='syn', metric='MI', iter='5', shrink='1', smooth='0', gradStep='0.5')
     step0 = Paramreg(step='0', type='im', algo='syn', metric='MI', iter='0', shrink='1', smooth='0', gradStep='0.5',

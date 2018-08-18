@@ -102,10 +102,9 @@ def module_import(module_name, suppress_stderr=False):
 # MAIN
 # ==========================================================================================
 def main():
-    path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
     print("SCT info:")
     print("- version: {}".format(sct.__version__))
-    print("- path: {0}".format(path_sct))
+    print("- path: {0}".format(sct.__sct_dir__))
 
     # initialization
     fsl_is_working = 1
@@ -168,7 +167,7 @@ def main():
     # check if Python path is within SCT path
     print_line('Check Python executable')
     path_python = sys.executable
-    if path_sct in path_python:
+    if sct.__sct_dir__ in path_python:
         print_ok()
         print('  Using bundled python {} at {}'.format(sys.version, path_python))
     else:
@@ -177,7 +176,7 @@ def main():
 
     # check if data folder is empty
     print_line('Check if data are installed')
-    if os.listdir(os.path.join(path_sct, "data")):
+    if os.listdir(sct.__data_dir__):
         print_ok()
     else:
         print_fail()
@@ -364,8 +363,7 @@ def add_bash_profile(string):
 
 
 def get_version_requirements():
-    path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
-    file = open(os.path.join(path_sct, "install", "requirements", "requirementsConda.txt"))
+    file = open(os.path.join(sct.__sct_dir__, "install", "requirements", "requirementsConda.txt"))
     dict = {}
     while True:
         line = file.readline().rstrip()
@@ -381,8 +379,7 @@ def get_version_requirements():
 
 
 def get_version_requirements_pip():
-    path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
-    file = open(os.path.join(path_sct, "install", "requirements", "requirementsSetup.txt"))
+    file = open(os.path.join(sct.__sct_dir__, "install", "requirements", "requirementsSetup.txt"))
     dict = {}
     while True:
         line = file.readline()
