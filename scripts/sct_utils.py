@@ -44,6 +44,8 @@ from spinalcordtoolbox import __version__, __sct_dir__, __data_dir__
 
 from spinalcordtoolbox.utils import check_exe
 
+from spinalcordtoolbox.utils import logger as log
+
 """
 Basic logging setup for the sct
 set SCT_LOG_LEVEL and SCT_LOG_FORMAT in ~/.sctrc to change the sct log
@@ -51,7 +53,6 @@ format and level
 """
 
 
-log = logging.getLogger('sct')
 log.setLevel(logging.DEBUG)
 stream_handler = logging.StreamHandler(sys.stdout)
 nh = logging.NullHandler()
