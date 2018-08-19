@@ -3,6 +3,7 @@ pyqt==4.11.4
 scikit-learn==0.17.1
 scikit-image==0.12.3
 pandas==0.18.1
+scipy=1.1.0
 xlwt==1.0.0
 xlrd==0.9.4
 xlutils==1.7.1
