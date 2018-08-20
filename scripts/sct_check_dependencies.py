@@ -309,7 +309,7 @@ def main():
 
     # check PropSeg compatibility with OS
     print_line('Check PropSeg compatibility with OS ')
-    status, output = sct.run('isct_propseg', verbose=0, raise_exception=False)
+    status, output = sct.run('isct_propseg', verbose=0, raise_exception=False, is_sct_binary=True)
     if status in (0, 1):
         print_ok()
     else:
