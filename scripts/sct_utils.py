@@ -367,9 +367,10 @@ def run(cmd, verbose=1, raise_exception=True, cwd=None, env=None, is_sct_binary=
     if is_sct_binary:
         name = cmd[0] if isinstance(cmd, list) else cmd.split(" ", 1)[0]
         path = None
-        binaries_location_default = os.path.expanduser("~/.cache/spinalcordtoolbox/bin")
+        #binaries_location_default = os.path.expanduser("~/.cache/spinalcordtoolbox-{}/bin".format(__version__)
+        binaries_location_default = os.path.join(__sct_dir__, "bin")
         for directory in (
-         binaries_location_default,
+         #binaries_location_default,
          os.path.join(__sct_dir__, "bin"),
          ):
             candidate = os.path.join(directory, name)
@@ -382,7 +383,8 @@ def run(cmd, verbose=1, raise_exception=True, cwd=None, env=None, is_sct_binary=
         if isinstance(cmd, list):
             cmd[0] = path
         elif isinstance(cmd, str):
-            cmd = "{} {}".format(path, cmd.split(" ", 1)[1])
+            rem = cmd.split(" ", 1)[1:]
+            cmd = path if len(rem) == 0 else "{} {}".format(path, rem[0])
 
     if isinstance(cmd, str):
         cmdline = cmd
