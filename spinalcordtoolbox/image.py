@@ -884,10 +884,15 @@ def change_orientation(im_src, orientation, im_dst=None, inverse=False):
     :param im_dst: destination image (can be the source image for in-place
                    operation, can be unset to generate one)
 
-    Note: the resulting image has no path member set
+    Notes:
+
+    - the resulting image has no path member set
+    - if the source image is < 3D, it is reshaped to 3D and the destination is 3D
     """
 
-    if len(im_src.data.shape) == 3:
+    if len(im_src.data.shape) < 3:
+        pass # Will reshape to 3D
+    elif len(im_src.data.shape) == 3:
         pass # OK, standard 3D volume
     elif len(im_src.data.shape) == 4:
         pass # OK, standard 4D volume
@@ -908,10 +913,14 @@ def change_orientation(im_src, orientation, im_dst=None, inverse=False):
         im_dst = im_src.copy()
         im_dst._path = None
 
+    im_src_data = im_src.data
+    if len(im_src_data.shape) < 3:
+        im_src_data = im_src_data.reshape(tuple(list(im_src_data.shape) + ([1]*(3-len(im_src_data.shape)))))
+
     # Update data by performing inversions and swaps
 
     # axes inversion (flip)
-    data = im_src.data[::inversion[0], ::inversion[1], ::inversion[2]]
+    data = im_src_data[::inversion[0], ::inversion[1], ::inversion[2]]
 
     # axes manipulations (transpose)
     if perm == [1, 0, 2]:
@@ -938,7 +947,7 @@ def change_orientation(im_src, orientation, im_dst=None, inverse=False):
     im_src_aff = im_src.hdr.get_best_affine()
     aff = nibabel.orientations.inv_ornt_aff(
      np.array((perm, inversion)).T,
-     im_src.data.shape)
+     im_src_data.shape)
     im_dst_aff = np.matmul(im_src_aff, aff)
 
     im_dst.header.set_qform(im_dst_aff)
