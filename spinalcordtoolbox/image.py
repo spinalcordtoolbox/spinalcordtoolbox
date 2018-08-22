@@ -422,7 +422,7 @@ class Image(object):
             raise RuntimeError("Don't know where to save the image (no absolutepath or path parameter)")
         elif path is not None and os.path.isdir(path) and self.absolutepath is not None:
             # Save to destination directory with original basename
-            path = os.path.join(path, os.path.basename(self.absolutepath))
+            path = os.path.join(os.path.abspath(path), os.path.basename(self.absolutepath))
 
         path = path or self.absolutepath
 
