@@ -394,7 +394,7 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
     slicegroups = [str(i) for i in slices_list]
     if not perslice and not perlevel:
         # ['1,2,3,4,5,6']
-        slicegroups = [','.join(slicegroups)]
+        slicegroups = [';'.join(slicegroups)]
 
     # if user selected vertebral levels and asked for each separate levels
     # slicegroups = ['1,2', '3,4']
@@ -409,16 +409,16 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
         for group in slices_of_interest:
             # for each group: [1, 2, 3, 4] --> ['1,2,3,4']
             # so that slicegroups looks like: ['1,2,3,4','5,6,7,8','9,10,11,12']
-            slicegroups.append([','.join([str(i) for i in group])][0])
+            slicegroups.append([';'.join([str(i) for i in group])][0])
         # if user wants to concatenate all slices of interest into a single slicegroups
         if not perlevel:
-            slicegroups = [",".join(slicegroups)]
+            slicegroups = [";".join(slicegroups)]
 
     # loop across slicegroups
     for slicegroup in slicegroups:
         try:
             # convert list of strings into list of int to use as index
-            ind_slicegroup = [int(i) for i in slicegroup.split(',')]
+            ind_slicegroup = [int(i) for i in slicegroup.split(';')]
             # select portion of data and labels based on slicegroup
             dataz = data[:, :, ind_slicegroup]
             labelsz = np.copy(labels)
@@ -455,6 +455,8 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
                     vert_levels = get_vertebral_level_from_slice(im_vertebral_labeling, ind_slicegroup[0])
                 else:
                     vert_levels = list_levels
+                    # replace "," with ";" for easier CSV parsing
+                vert_levels = ';'.join([str(level) for level in vert_levels])
             else:
                 vert_levels = None
 
