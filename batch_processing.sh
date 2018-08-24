@@ -65,7 +65,7 @@ cd sct_example_data
 # ===========================================================================================
 cd t2
 # Segment spinal cord
-sct_propseg -i t2.nii.gz -c t2
+sct_propseg -i t2.nii.gz -c t2 -qc "$SCT_BP_QC_FOLDER"
 # Tips: If you are not satisfied with the results you can try with another algorithm:
 # sct_deepseg_sc -i t2.nii.gz -c t2 -qc "$SCT_BP_QC_FOLDER"
 # Vertebral labeling
@@ -247,11 +247,11 @@ cd ..
 echo "Ended at: $(date +%x_%r)"
 echo
 echo "t2/CSA:  " `grep -v '^#' t2/csa_mean.txt | grep -v '^$'`
-echo "mt/MTR:  " `awk -F"," ' {print $9}' mtr_in_wm.txt | tail -1`
+echo "mt/MTR(WM):  " `awk -F"," ' {print $9}' mtr_in_wm.txt | tail -1`
 echo "t2s/CSA_GM:  " `grep -v '^#' t2s/csa_gm/csa_mean.txt | grep -v '^$'`
 echo "t2s/CSA_WM:  " `grep -v '^#' t2s/csa_wm/csa_mean.txt | grep -v '^$'`
-echo "dmri/FA: " `grep -v '^#' dmri/fa_in_cst.txt | grep -v 'right'`
-echo "dmri/FA: " `grep -v '^#' dmri/fa_in_cst.txt | grep -v 'left'`
+echo "dmri/FA(CST_r): " `awk -F"," ' {print $9}' dmri/fa_in_cst.txt | tail -1`
+echo "dmri/FA(CST_l): " `awk -F"," ' {print $9}' dmri/fa_in_cst.txt | tail -2 | head -1`
 echo
 
 # Display syntax to open QC report on web browser
