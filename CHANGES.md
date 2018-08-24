@@ -1,5 +1,22 @@
 # CHANGES TO RELEASE
 
+## v3.2.4 (2018-08-24)
+[View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.2.3...v3.2.4)
+
+**BUG**
+
+ - Updated URL for PAM50 [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1997)
+ - sct_register_to_template: Fixed wrong projection in case labels not in same space [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1978)
+ - sct_extract_metric: Fixed recently-introduced bug related to output results [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1965)
+
+**ENHANCEMENT**
+
+ - Few fixes in sct_extract_metric and batch processing outputs [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2008)
+ - sct_dmri_compute_dti: Output tensor eigenvectors [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1975)
+ - Totally pimp the Image Slicer (to act like a sequence, to slice many images), and add unit tests for the slicer [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1956)
+ - Second pass at image refactoring [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1948)
+
+
 ## v3.2.3 (2018-07-21)
 This release notably brings a useful feature, which now makes it possible to use single-label with -l flag for registration to the template. This feature was required by the recently-introduced [analysis pipeline for multi-parametric data when FOV is systematically centered at a particular disc or mid-vertebral level](https://github.com/sct-pipeline/multiparametric-fixed-fov). [View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.2.2...v3.2.3)
 
