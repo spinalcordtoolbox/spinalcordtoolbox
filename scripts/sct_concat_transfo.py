@@ -13,12 +13,13 @@
 
 # TODO: also enable to concatenate reversed transfo
 
+from __future__ import absolute_import, division
 
 import sys, io, os, getopt, functools
 
 import sct_utils as sct
 from msct_parser import Parser
-from msct_image import Image
+from spinalcordtoolbox.image import Image
 
 # DEFAULT PARAMETERS
 

@@ -9,14 +9,16 @@
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
+
+from __future__ import absolute_import
+
 import sys
 import shutil
 import os
 
 from msct_parser import Parser
 import sct_utils as sct
-from msct_image import Image
-from sct_image import copy_header
+from spinalcordtoolbox.image import Image
 
 def get_parser():
     parser = Parser(__file__)
@@ -85,8 +87,6 @@ if __name__ == "__main__":
     fname_input2 = arguments['-d']
 
     verbose = arguments['-v']
-    if verbose == '0':
-        cmd += ' -v '
 
     tmp_dir = sct.tmp_create(verbose=verbose)  # create tmp directory
     tmp_dir = os.path.abspath(tmp_dir)
@@ -110,9 +110,10 @@ if __name__ == "__main__":
         fname_input2 = fname_input2_bin
 
     # copy header of im_1 to im_2
-    im_1, im_2 = Image(fname_input1), Image(fname_input2)
-    im_2_cor = copy_header(im_1, im_2)
-    im_2_cor.save()
+    im_1 = Image(fname_input1)
+    im_2 = Image(fname_input2)
+    im_2.header = im_1.header
+    im_2.save()
 
     cmd = ['isct_dice_coefficient', fname_input1, fname_input2]
 
@@ -134,7 +135,7 @@ if __name__ == "__main__":
 
     # # Computation of Dice coefficient using Python implementation.
     # # commented for now as it does not cover all the feature of isct_dice_coefficient
-    # #from msct_image import Image, compute_dice
+    # #from spinalcordtoolbox.image import Image, compute_dice
     # #dice = compute_dice(Image(fname_input1), Image(fname_input2), mode='3d', zboundaries=False)
     # #sct.printv('Dice (python-based) = ' + str(dice), verbose)
 

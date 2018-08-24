@@ -8,22 +8,24 @@
 #
 # About the license: see the file LICENSE.TXT
 
+from __future__ import print_function, absolute_import, division
+
 import os
 import pickle
 import shutil
 import sys
-from math import pi, sqrt
 
 import numpy as np
 import pandas as pd
-from msct_image import Image
+from skimage.measure import label
+
+import spinalcordtoolbox.image as msct_image
+from spinalcordtoolbox.image import Image
 from msct_parser import Parser
 from msct_types import Centerline
-from sct_image import get_orientation, set_orientation
 from sct_straighten_spinalcord import smooth_centerline
 import sct_utils as sct
 from sct_utils import extract_fname, printv, tmp_create
-from skimage.measure import label
 
 
 def get_parser():
@@ -198,9 +200,9 @@ class AnalyzeLeion:
     def show_total_results(self):
         printv('\n\nAveraged measures...', self.verbose, 'normal')
         for stg, key in zip(['  Volume [mm^3] = ', '  (S-I) Length [mm] = ', '  Equivalent Diameter [mm] = '], ['volume [mm3]', 'length [mm]', 'max_equivalent_diameter [mm]']):
-            printv(stg + str(round(np.mean(self.measure_pd[key]), 2)) + '+/-' + str(round(np.std(self.measure_pd[key]), 2)), self.verbose, type='info')
+            printv(stg + str(np.round(np.mean(self.measure_pd[key]), 2)) + '+/-' + str(np.round(np.std(self.measure_pd[key]), 2)), self.verbose, type='info')
 
-        printv('\nTotal volume = ' + str(round(np.sum(self.measure_pd['volume [mm3]']), 2)) + ' mm^3', self.verbose, 'info')
+        printv('\nTotal volume = ' + str(np.round(np.sum(self.measure_pd['volume [mm3]']), 2)) + ' mm^3', self.verbose, 'info')
         printv('Lesion count = ' + str(len(self.measure_pd['volume [mm3]'].values)), self.verbose, 'info')
 
     def reorient(self):
@@ -219,7 +221,7 @@ class AnalyzeLeion:
             label_idx = self.measure_pd[self.measure_pd.label == lesion_label].index
             self.measure_pd.loc[label_idx, 'mean_' + extract_fname(self.fname_ref)[1]] = mean_cur
             self.measure_pd.loc[label_idx, 'std_' + extract_fname(self.fname_ref)[1]] = std_cur
-            printv('Mean+/-std of lesion #' + str(lesion_label) + ' in ' + extract_fname(self.fname_ref)[1] + ' file: ' + str(round(mean_cur, 2)) + '+/-' + str(round(std_cur, 2)), self.verbose, type='info')
+            printv('Mean+/-std of lesion #' + str(lesion_label) + ' in ' + extract_fname(self.fname_ref)[1] + ' file: ' + str(np.round(mean_cur, 2)) + '+/-' + str(np.round(std_cur, 2)), self.verbose, type='info')
 
     def _measure_volume(self, im_data, p_lst, idx):
         for zz in range(im_data.shape[2]):
@@ -227,20 +229,20 @@ class AnalyzeLeion:
 
         vol_tot_cur = np.sum(self.volumes[:, idx - 1])
         self.measure_pd.loc[idx, 'volume [mm3]'] = vol_tot_cur
-        printv('  Volume : ' + str(round(vol_tot_cur, 2)) + ' mm^3', self.verbose, type='info')
+        printv('  Volume : ' + str(np.round(vol_tot_cur, 2)) + ' mm^3', self.verbose, type='info')
 
     def _measure_length(self, im_data, p_lst, idx):
         print(len(self.angles))
         print(np.unique(np.where(im_data)[2]))
         length_cur = np.sum([np.cos(self.angles[zz]) * p_lst[2] for zz in np.unique(np.where(im_data)[2])])
         self.measure_pd.loc[idx, 'length [mm]'] = length_cur
-        printv('  (S-I) length : ' + str(round(length_cur, 2)) + ' mm', self.verbose, type='info')
+        printv('  (S-I) length : ' + str(np.round(length_cur, 2)) + ' mm', self.verbose, type='info')
 
     def _measure_diameter(self, im_data, p_lst, idx):
         area_lst = [np.sum(im_data[:, :, zz]) * np.cos(self.angles[zz]) * p_lst[0] * p_lst[1] for zz in range(im_data.shape[2])]
-        diameter_cur = 2 * sqrt(max(area_lst) / (4 * pi))
+        diameter_cur = 2 * np.sqrt(max(area_lst) / (4 * np.pi))
         self.measure_pd.loc[idx, 'max_equivalent_diameter [mm]'] = diameter_cur
-        printv('  Max. equivalent diameter : ' + str(round(diameter_cur, 2)) + ' mm', self.verbose, type='info')
+        printv('  Max. equivalent diameter : ' + str(np.round(diameter_cur, 2)) + ' mm', self.verbose, type='info')
 
     def ___pve_weighted_avg(self, im_mask_data, im_atlas_data):
         return im_mask_data * im_atlas_data
@@ -439,19 +441,17 @@ class AnalyzeLeion:
         im = Image(self.fname_mask)
         im_2save = im.copy()
         im_2save.data = label(im.data, connectivity=2)
-        im_2save.setFileName(self.fname_label)
-        im_2save.save()
+        im_2save.save(self.fname_label)
 
         self.measure_pd['label'] = [l for l in np.unique(im_2save.data) if l]
         printv('Lesion count = ' + str(len(self.measure_pd['label'])), self.verbose, 'info')
 
     def _orient(self, fname, orientation):
-        im = Image(fname)
-        im = set_orientation(im, orientation, fname_out=fname)
+        return Image(fname).change_orientation(orientation).save(fname, mutable=True)
 
     def orient2rpi(self):
         # save input image orientation
-        self.orientation = get_orientation(Image(self.fname_mask))
+        self.orientation = Image(self.fname_mask).orientation
 
         if not self.orientation == 'RPI':
             printv('\nOrient input image(s) to RPI orientation...', self.verbose, 'normal')

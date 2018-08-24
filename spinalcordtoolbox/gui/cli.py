@@ -5,10 +5,14 @@
 #
 # About the license: see the file LICENSE.TXT
 # Notes on how to use classes in this script.
+
+from __future__ import absolute_import
+
 import os
 import sys
 
-from scripts.msct_image import Image
+from ..image import Image
+
 from scripts.msct_parser import Parser
 from scripts.sct_utils import printv
 from spinalcordtoolbox.gui import base
@@ -53,7 +57,7 @@ def segment_image_cli():
     try:
         arguments = parser.parse(args)
     except SyntaxError as err:
-        printv(err.message, type='error')
+        printv(str(err), type='error')
 
     launch_modes = {'centerline': launch_centerline_dialog,
                     'sagittal': launch_sagittal_dialog}
@@ -73,7 +77,7 @@ def segment_image_cli():
         printv('The output file exists, the contents will be overwritten', type='warning')
     output_file = input_file.copy()
     output_file.data *= 0
-    output_file.setFileName(output_file_name)
+    output_file.absolutepath = output_file_name
 
     controller = launch_modes[mode](input_file, output_file, params)
     if controller.saved:

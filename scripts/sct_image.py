@@ -10,14 +10,16 @@
 # About the license: see the file LICENSE.TXT
 ##############################################################################
 
-import os
-import sys
+from __future__ import absolute_import
+
+import os, sys, warnings
+
+import numpy as np
 
 import sct_utils as sct
-from msct_image import Image, get_dimension
+import spinalcordtoolbox.image as msct_image
+from spinalcordtoolbox.image import Image
 from msct_parser import Parser
-from numpy import newaxis, shape
-from sct_utils import add_suffix, extract_fname, printv, run, tmp_create
 
 
 class Param:
@@ -127,7 +129,7 @@ def get_parser():
 def main(args=None):
 
     # initializations
-    output_type = ''
+    output_type = None
     param = Param()
     dim_list = ['x', 'y', 'z', 't']
 
@@ -160,7 +162,8 @@ def main(args=None):
     elif "-copy-header" in arguments:
         im_in = Image(fname_in[0])
         im_dest = Image(arguments["-copy-header"])
-        im_out = [copy_header(im_in, im_dest)]
+        im_dest.header = im_in.header
+        im_out = [im_dest]
 
     elif '-display-warp' in arguments:
         im_in = fname_in[0]
@@ -169,7 +172,7 @@ def main(args=None):
 
     elif "-getorient" in arguments:
         im_in = Image(fname_in[0])
-        orient = orientation(im_in, get=True, verbose=verbose)
+        orient = im_in.orientation
         im_out = None
 
     elif '-keep-vol' in arguments:
@@ -180,9 +183,9 @@ def main(args=None):
     elif '-mcs' in arguments:
         im_in = Image(fname_in[0])
         if n_in != 1:
-            printv(parser.usage.generate(error='ERROR: -mcs need only one input'))
+            sct.printv(parser.usage.generate(error='ERROR: -mcs need only one input'))
         if len(im_in.data.shape) != 5:
-            printv(parser.usage.generate(error='ERROR: -mcs input need to be a multi-component image'))
+            sct.printv(parser.usage.generate(error='ERROR: -mcs input need to be a multi-component image'))
         im_out = multicomponent_split(im_in)
 
     elif '-omc' in arguments:
@@ -190,7 +193,7 @@ def main(args=None):
         for fname in fname_in:
             im = Image(fname)
             if im.data.shape != im_ref.data.shape:
-                printv(parser.usage.generate(error='ERROR: -omc inputs need to have all the same shapes'))
+                sct.printv(parser.usage.generate(error='ERROR: -omc inputs need to have all the same shapes'))
             del im
         im_out = [multicomponent_merge(fname_in)]  # TODO: adapt to fname_in
 
@@ -198,12 +201,12 @@ def main(args=None):
         im_in = Image(fname_in[0])
         ndims = len(im_in.data.shape)
         if ndims != 3:
-            printv('ERROR: you need to specify a 3D input file.', 1, 'error')
+            sct.printv('ERROR: you need to specify a 3D input file.', 1, 'error')
             return
 
         pad_arguments = arguments["-pad"].split(',')
         if len(pad_arguments) != 3:
-            printv('ERROR: you need to specify 3 padding values.', 1, 'error')
+            sct.printv('ERROR: you need to specify 3 padding values.', 1, 'error')
 
         padx, pady, padz = pad_arguments
         padx, pady, padz = int(padx), int(pady), int(padz)
@@ -214,12 +217,12 @@ def main(args=None):
         im_in = Image(fname_in[0])
         ndims = len(im_in.data.shape)
         if ndims != 3:
-            printv('ERROR: you need to specify a 3D input file.', 1, 'error')
+            sct.printv('ERROR: you need to specify a 3D input file.', 1, 'error')
             return
 
         pad_arguments = arguments["-pad-asym"].split(',')
         if len(pad_arguments) != 6:
-            printv('ERROR: you need to specify 6 padding values.', 1, 'error')
+            sct.printv('ERROR: you need to specify 6 padding values.', 1, 'error')
 
         padxi, padxf, padyi, padyf, padzi, padzf = pad_arguments
         padxi, padxf, padyi, padyf, padzi, padzf = int(padxi), int(padxf), int(padyi), int(padyf), int(padzi), int(padzf)
@@ -233,11 +236,11 @@ def main(args=None):
     elif "-setorient" in arguments:
         sct.printv(fname_in[0])
         im_in = Image(fname_in[0])
-        im_out = [orientation(im_in, ori=arguments["-setorient"], set=True, verbose=verbose, fname_out=fname_out)]
+        im_out = [msct_image.change_orientation(im_in, arguments["-setorient"]).save(fname_out)]
 
     elif "-setorient-data" in arguments:
         im_in = Image(fname_in[0])
-        im_out = [orientation(im_in, ori=arguments["-setorient-data"], set_data=True, verbose=verbose)]
+        im_out = [msct_image.change_orientation(im_in, arguments["-setorient-data"], inverse=True).save(fname_out)]
 
     elif "-split" in arguments:
         dim = arguments["-split"]
@@ -253,7 +256,7 @@ def main(args=None):
 
     else:
         im_out = None
-        printv(parser.usage.generate(error='ERROR: you need to specify an operation to do on the input image'))
+        sct.printv(parser.usage.generate(error='ERROR: you need to specify an operation to do on the input image'))
 
     # in case fname_out is not defined, use first element of input file name list
     if fname_out == None:
@@ -261,38 +264,35 @@ def main(args=None):
 
     # Write output
     if im_out is not None:
-        printv('Generate output files...', verbose)
+        sct.printv('Generate output files...', verbose)
         # if only one output
         if len(im_out) == 1 and not '-split' in arguments:
-            im_out[0].setFileName(fname_out) if fname_out is not None else None
-            im_out[0].save(squeeze_data=False, type=output_type, verbose=verbose)
+            im_out[0].save(fname_out, dtype=output_type, verbose=verbose)
             sct.display_viewer_syntax([fname_out], verbose=verbose)
         if '-mcs' in arguments:
             # use input file name and add _X, _Y _Z. Keep the same extension
-            fname_out = []
+            l_fname_out = []
             for i_dim in range(3):
-                fname_out.append(add_suffix(fname_in[0], '_' + dim_list[i_dim].upper()))
-                im_out[i_dim].setFileName(fname_out[i_dim])
-                im_out[i_dim].save(verbose=verbose)
+                l_fname_out.append(sct.add_suffix(fname_out or fname_in[0], '_' + dim_list[i_dim].upper()))
+                im_out[i_dim].save(l_fname_out[i_dim], verbose=verbose)
             sct.display_viewer_syntax(fname_out)
         if '-split' in arguments:
             # use input file name and add _"DIM+NUMBER". Keep the same extension
             l_fname_out = []
             for i, im in enumerate(im_out):
-                l_fname_out.append(add_suffix(fname_in[0], '_' + dim_list[dim].upper() + str(i).zfill(4)))
-                im.setFileName(l_fname_out[i])
-                im.save(verbose=verbose)
+                l_fname_out.append(sct.add_suffix(fname_out or fname_in[0], '_' + dim_list[dim].upper() + str(i).zfill(4)))
+                im.save(l_fname_out[i])
             sct.display_viewer_syntax(l_fname_out)
 
     elif "-getorient" in arguments:
         sct.printv(orient)
 
     elif '-display-warp' in arguments:
-        printv('Warping grid generated.', verbose, 'info')
+        sct.printv('Warping grid generated.', verbose, 'info')
 
 
 def pad_image(im, pad_x_i=0, pad_x_f=0, pad_y_i=0, pad_y_f=0, pad_z_i=0, pad_z_f=0):
-    from numpy import zeros, dot
+
     nx, ny, nz, nt, px, py, pz, pt = im.dim
     pad_x_i, pad_x_f, pad_y_i, pad_y_f, pad_z_i, pad_z_f = int(pad_x_i), int(pad_x_f), int(pad_y_i), int(pad_y_f), int(pad_z_i), int(pad_z_f)
 
@@ -302,7 +302,7 @@ def pad_image(im, pad_x_i=0, pad_x_f=0, pad_y_i=0, pad_y_f=0, pad_z_i=0, pad_z_f
         im.data = im.data.reshape(new_shape)
 
     # initialize padded_data, with same type as im.data
-    padded_data = zeros((nx + pad_x_i + pad_x_f, ny + pad_y_i + pad_y_f, nz + pad_z_i + pad_z_f), dtype=im.data.dtype)
+    padded_data = np.zeros((nx + pad_x_i + pad_x_f, ny + pad_y_i + pad_y_f, nz + pad_z_i + pad_z_f), dtype=im.data.dtype)
 
     if pad_x_f == 0:
         pad_x_f = None
@@ -320,10 +320,10 @@ def pad_image(im, pad_x_i=0, pad_x_f=0, pad_y_i=0, pad_y_f=0, pad_z_i=0, pad_z_f
     padded_data[pad_x_i:pad_x_f, pad_y_i:pad_y_f, pad_z_i:pad_z_f] = im.data
     im_out = im.copy()
     im_out.data = padded_data  # done after the call of the function
-    im_out.setFileName(im_out.file_name + '_pad' + im_out.ext)
+    im_out.absolutepath = sct.add_suffix(im_out.absolutepath, "_pad")
 
     # adapt the origin in the sform and qform matrix
-    new_origin = dot(im_out.hdr.get_qform(), [-pad_x_i, -pad_y_i, -pad_z_i, 1])
+    new_origin = np.dot(im_out.hdr.get_qform(), [-pad_x_i, -pad_y_i, -pad_z_i, 1])
 
     im_out.hdr.structarr['qoffset_x'] = new_origin[0]
     im_out.hdr.structarr['qoffset_y'] = new_origin[1]
@@ -335,19 +335,6 @@ def pad_image(im, pad_x_i=0, pad_x_f=0, pad_y_i=0, pad_y_f=0, pad_z_i=0, pad_z_f
     return im_out
 
 
-def copy_header(im_src, im_dest):
-    """
-    Copy header from the source image to the destination image
-    :param im_src: source image
-    :param im_dest: destination image
-    :return im_src: destination data with the source header
-    """
-    im_out = im_src.copy()
-    im_out.data = im_dest.data
-    im_out.setFileName(im_dest.absolutepath)
-    return im_out
-
-
 def split_data(im_in, dim):
     """
     Split data
@@ -355,21 +342,21 @@ def split_data(im_in, dim):
     :param dim: dimension: 0, 1, 2, 3.
     :return: list of split images
     """
-    from numpy import array_split
+
     dim_list = ['x', 'y', 'z', 't']
     # Parse file name
     # Open first file.
     data = im_in.data
-    if dim + 1 > len(shape(data)):  # in case input volume is 3d and dim=t
-        data = data[..., newaxis]
+    if dim + 1 > len(np.shape(data)):  # in case input volume is 3d and dim=t
+        data = data[..., np.newaxis]
     # Split data into list
-    data_split = array_split(data, data.shape[dim], dim)
+    data_split = np.array_split(data, data.shape[dim], dim)
     # Write each file
     im_out_list = []
-    for i, dat in enumerate(data_split):
-        im_out = im_in.copy()
-        im_out.data = dat
-        im_out.setFileName(im_out.file_name + '_' + dim_list[dim].upper() + str(i).zfill(4) + im_out.ext)
+    for idx_img, dat in enumerate(data_split):
+        im_out = msct_image.empty_like(im_in)
+        im_out.data = dat.reshape(tuple([ x for (idx_shape,x) in enumerate(data.shape) if idx_shape != dim]))
+        im_out.absolutepath = sct.add_suffix(im_in.absolutepath, "_{}{}".format(dim_list[dim].upper(), str(idx_img).zfill(4)))
         im_out_list.append(im_out)
 
     return im_out_list
@@ -378,7 +365,7 @@ def split_data(im_in, dim):
 def concat_data(fname_in_list, dim, pixdim=None):
     """
     Concatenate data
-    :param im_in_list: list of images.
+    :param im_in_list: list of Images or image filenames
     :param dim: dimension: 0, 1, 2, 3.
     :param pixdim: pixel resolution to join to image header
     :return im_out: concatenated image
@@ -423,9 +410,13 @@ def concat_data(fname_in_list, dim, pixdim=None):
     else:
         data_concat = concatenate(dat_list, axis=dim)
     # write file
-    im_out = Image(fname_in_list[0]).copy()
+    im_out = msct_image.empty_like(Image(fname_in_list[0]))
     im_out.data = data_concat
-    im_out.setFileName(im_out.file_name + '_concat' + im_out.ext)
+    if isinstance(fname_in_list[0], str):
+        im_out.absolutepath = sct.add_suffix(fname_in_list[0], "_concat")
+    else:
+        if fname_in_list[0].absolutepath:
+            im_out.absolutepath = sct.add_suffix(fname_in_list[0].absolutepath, "_concat")
 
     if pixdim is not None:
         im_out.hdr['pixdim'] = pixdim
@@ -450,7 +441,7 @@ def remove_vol(im_in, index_vol_user, todo):
     elif todo == 'keep':
         index_vol = index_vol_user
     else:
-        printv('ERROR: wrong assignment of variable "todo"', 1, 'error')
+        sct.printv('ERROR: wrong assignment of variable "todo"', 1, 'error')
     # define new 4d matrix with selected volumes
     data_out = data[:, :, :, index_vol]
     # save matrix inside new Image object
@@ -500,7 +491,7 @@ def concat_warp2d(fname_list, fname_warp3d, fname_dest):
     # im_warp3d.hdr.set_data_shape([nx, ny, nz, 1, 3])
     #
     # im_warp3d.hdr.set_intent('vector', (), '')
-    # im_warp3d.setFileName(fname_warp3d)
+    # im_warp3d.absolutepath = fname_warp3d
     # # save 3d warping field
     # im_warp3d.save()
     # return im_out
@@ -527,7 +518,7 @@ def multicomponent_split(im):
     for i, im in enumerate(im_out):
         im.data = data_out[i]
         im.hdr.set_intent('vector', (), '')
-        im.setFileName(im.file_name + '_' + str(i) + im.ext)
+        im.absolutepath = sct.add_suffix(im.absolutepath, "_{}".format(i))
     return im_out
 
 
@@ -557,198 +548,14 @@ def multicomponent_merge(fname_list):
     im_out = im_0.copy()
     im_out.data = data_out.astype('float32')
     im_out.hdr.set_intent('vector', (), '')
-    im_out.setFileName(im_out.file_name + '_multicomponent' + im_out.ext)
-    return im_out
-
-
-def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1, fname_out=None):
-    """
-    :param fname_out: when set is True, where to save the output file
-                      (default: in cwd, named basename_orientation.ext)
-    :returns: when get, the orientation; when set, the changed image data (not saved)
-    """
-    verbose = 0 if get else verbose
-
-    if fname_out is None:
-        fname_out = "{}_{}{}".format(im.file_name, ori, im.ext)
-
-    printv('Get dimensions of data...', verbose)
-    nx, ny, nz, nt, px, py, pz, pt = get_dimension(im)
-
-    printv(str(nx) + ' x ' + str(ny) + ' x ' + str(nz) + ' x ' + str(nt), verbose)
-
-    # if data are 2d or 3d, get orientation from header using fslhd
-
-    if (nz == 1 or nt == 1) and len(im.data.shape) < 5:
-        if get:
-            try:
-                printv('Get orientation...', verbose)
-                im_out = None
-                ori = get_orientation(im)
-            except Exception as e:
-                printv('ERROR: an error occurred: ' + str(e), verbose, 'error')
-            return ori
-        elif set:
-            # set orientation
-            printv('Change orientation...', verbose)
-            tmp_folder = tmp_create(verbose)
-            curdir = os.getcwd()
-            os.chdir(tmp_folder)
-            im_out = set_orientation(im, ori)
-            os.chdir(curdir)
-            sct.rmtree(tmp_folder)
-        elif set_data:
-            tmp_folder = tmp_create(verbose)
-            curdir = os.getcwd()
-            os.chdir(tmp_folder)
-            im_out = set_orientation(im, ori, True)
-            os.chdir(curdir)
-            sct.rmtree(tmp_folder)
-        else:
-            im_out = None
-
-    else:
-        # 4D data: split along T dimension
-        # or 5D data: split along 5th dimension
-        # Create a temporary directory and go in it
-        tmp_folder = tmp_create(verbose)
-        curdir = os.getcwd()
-        os.chdir(tmp_folder)
-        if len(im.data.shape) == 5 and im.data.shape[-1] not in [0, 1]:
-            # 5D data
-            printv('Split along 5th dimension...', verbose)
-            im_split_list = multicomponent_split(im)
-            dim = 5
-        else:
-            # 4D data
-            printv('Split along T dimension...', verbose)
-            im_split_list = split_data(im, 3)
-            dim = 4
-        for im_s in im_split_list:
-            im_s.save(verbose=verbose)
-
-        if get:
-            # get orientation
-            printv('Get orientation...', verbose)
-            im_out = None
-            ori = get_orientation(im_split_list[0])
-            os.chdir(curdir)
-            sct.rmtree(tmp_folder)
-            return ori
-        elif set:
-            # set orientation
-            printv('Change orientation...', verbose)
-            im_changed_ori_list = []
-            for im_s in im_split_list:
-                im_set = set_orientation(im_s, ori)
-                im_changed_ori_list.append(im_set)
-            printv('Merge file back...', verbose)
-            if dim == 4:
-                im_out = concat_data(im_changed_ori_list, 3)
-            elif dim == 5:
-                fname_changed_ori_list = [im_ch_ori.absolutepath for im_ch_ori in im_changed_ori_list]
-                im_out = multicomponent_merge(fname_changed_ori_list)
-        elif set_data:
-            # set orientation
-            printv('Change orientation of data...', verbose)
-            im_changed_ori_list = []
-            for im_s in im_split_list:
-                im_set = set_orientation(im_s, ori, True)
-                im_changed_ori_list.append(im_set)
-            printv('Merge file back...', verbose)
-            if dim == 4:
-                im_out = concat_data(im_changed_ori_list, 3)
-            elif dim == 5:
-                printv('Set data orientation on 5D data is not supported. Sorry.', verbose, 'error')
-        else:
-            im_out = None
-
-        # Go back to previous directory:
-        os.chdir(curdir)
-        sct.rmtree(tmp_folder)
-
-    if im_out is not None:
-        im_out.setFileName(fname_out)
-
-    return im_out
-
-
-def get_orientation(im):
-    from nibabel import orientations
-    orientation_dic = {
-        (0, 1): 'L',
-        (0, -1): 'R',
-        (1, 1): 'P',
-        (1, -1): 'A',
-        (2, 1): 'I',
-        (2, -1): 'S',
-    }
-
-    orientation_matrix = orientations.io_orientation(im.hdr.get_best_affine())
-    ori = orientation_dic[tuple(orientation_matrix[0])] + orientation_dic[tuple(orientation_matrix[1])] + orientation_dic[tuple(orientation_matrix[2])]
-
-    return ori
-
-
-def get_orientation_3d(im, filename=False):
-    """
-    Get orientation from 3D data
-    :param im:
-    :return:
-    """
-    string_out = 'Input image orientation : '
-    # get orientation
-    if filename:
-        status, output = sct.run(['isct_orientation3d', '-i', im, '-get'], 0)
-    else:
-        status, output = sct.run(['isct_orientation3d', '-i', im.absolutepath, '-get'], 0)
-    # check status
-    if status != 0:
-        printv('ERROR in get_orientation.', 1, 'error')
-    orientation = output[output.index(string_out) + len(string_out):]
-    # orientation = output[26:]
-    return orientation
-
-
-def set_orientation(im, orientation, data_inversion=False, filename=False, fname_out=''):
-    """
-    Set orientation on image
-    :param im: either Image object or file name. Carefully set param filename.
-    :param orientation:
-    :param data_inversion:
-    :param filename:
-    :return:
-    """
-
-    if fname_out:
-        pass
-    elif filename:
-        path, fname, ext = extract_fname(im)
-        fname_out = fname + '_' + orientation + ext
-    else:
-        fname_out = im.file_name + '_' + orientation + im.ext
-
-    if not data_inversion:
-        if filename:
-            sct.run(['isct_orientation3d', '-i', im, '-orientation', orientation, '-o', fname_out], verbose=0)
-            im_out = fname_out
-        else:
-            fname_in = im.absolutepath
-            if not os.path.exists(fname_in):
-                im.save()
-            sct.run(['isct_orientation3d', '-i', im.absolutepath, '-orientation', orientation, '-o', fname_out], verbose=0)
-            im_out = Image(fname_out)
-    else:
-        im_out = im.copy()
-        im_out.change_orientation(orientation, True)
-        im_out.setFileName(fname_out)
+    im_out.absolutepath = sct.add_suffix(im_out.absolutepath, '_multicomponent')
     return im_out
 
 
 def visualize_warp(fname_warp, fname_grid=None, step=3, rm_tmp=True):
     if fname_grid is None:
         from numpy import zeros
-        tmp_dir = tmp_create()
+        tmp_dir = sct.tmp_create()
         im_warp = Image(fname_warp)
         status, out = sct.run(['fslhd', fname_warp])
         curdir = os.getcwd()
@@ -772,14 +579,14 @@ def visualize_warp(fname_warp, fname_grid=None, step=3, rm_tmp=True):
         im_grid = Image(param=dat)
         grid_hdr = im_warp.hdr
         im_grid.hdr = grid_hdr
-        im_grid.setFileName(fname_grid)
+        im_grid.absolutepath = fname_grid
         im_grid.save()
-        fname_grid_resample = add_suffix(fname_grid, '_resample')
+        fname_grid_resample = sct.add_suffix(fname_grid, '_resample')
         sct.run(['sct_resample', '-i', fname_grid, '-f', '3x3x1', '-x', 'nn', '-o', fname_grid_resample])
-        fname_grid = tmp_dir + fname_grid_resample
+        fname_grid = os.path.join(tmp_dir, fname_grid_resample)
         os.chdir(curdir)
-    path_warp, file_warp, ext_warp = extract_fname(fname_warp)
-    grid_warped = path_warp + extract_fname(fname_grid)[1] + '_' + file_warp + ext_warp
+    path_warp, file_warp, ext_warp = sct.extract_fname(fname_warp)
+    grid_warped = os.path.join(path_warp, sct.extract_fname(fname_grid)[1] + '_' + file_warp + ext_warp)
     sct.run(['sct_apply_transfo', '-i', fname_grid, '-d', fname_grid, '-w', fname_warp, '-o', grid_warped])
     if rm_tmp:
         sct.rmtree(tmp_dir)

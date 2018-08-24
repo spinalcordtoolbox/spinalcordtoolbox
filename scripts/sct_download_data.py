@@ -10,6 +10,8 @@
 # About the license: see the file LICENSE.TXT
 ###############################################################################
 
+from __future__ import absolute_import
+
 import cgi
 import os
 import sys
@@ -84,8 +86,8 @@ def main(args=None):
                              'https://www.neuro.polymtl.ca/_media/downloads/sct/20180525_sct_example_data.zip'],
         'sct_testing_data': ['https://osf.io/z8gaj/?action=download',
                              'https://www.neuro.polymtl.ca/_media/downloads/sct/20180125_sct_testing_data.zip'],
-        'PAM50': ['https://osf.io/xz7jk/?action=download',
-                  'https://www.neuro.polymtl.ca/_media/downloads/sct/20180410_PAM50.zip'],
+        'PAM50': ['https://osf.io/jmfpw/?action=download',
+                  'https://www.neuro.polymtl.ca/_media/downloads/sct/20180813_PAM50.zip'],
         'MNI-Poly-AMU': ['https://osf.io/sh6h4/?action=download',
                          'https://www.neuro.polymtl.ca/_media/downloads/sct/20170310_MNI-Poly-AMU.zip'],
         'gm_model': ['https://osf.io/ugscu/?action=download',
@@ -135,6 +137,7 @@ def main(args=None):
     os.remove(tmp_file)
 
     sct.printv('Done!\n', verbose)
+    return 0
 
 
 def unzip(compressed, dest_folder, verbose):

@@ -11,6 +11,9 @@
 #
 # About the license: see the file LICENSE.TXT
 ########################################################################################################################
+
+from __future__ import absolute_import, division
+
 import gzip
 import os
 import pickle
@@ -24,7 +27,7 @@ from sklearn import decomposition, manifold
 
 from msct_gmseg_utils import (apply_transfo, average_gm_wm, normalize_slice,
                               pre_processing, register_data)
-from msct_image import Image
+from spinalcordtoolbox.image import Image
 from msct_parser import Parser
 from sct_utils import printv
 import sct_utils as sct
@@ -326,8 +329,8 @@ class Model:
         # get the id of the slices by vertebral level
         id_by_level = {}
         for dic_slice in self.slices:
-            level_int = int(round(dic_slice.level))
-            if level_int not in id_by_level.keys():
+            level_int = int(np.round(dic_slice.level))
+            if level_int not in set(id_by_level.keys()):
                 id_by_level[level_int] = [dic_slice.id]
             else:
                 id_by_level[level_int].append(dic_slice.id)
@@ -378,7 +381,7 @@ class Model:
 
         # Normalize slices using dic values
         for dic_slice in self.slices:
-            level_int = int(round(dic_slice.level))
+            level_int = int(np.round(dic_slice.level))
             av_gm_slice, av_wm_slice = average_gm_wm([dic_slice], bin=True)
             norm_im_M = normalize_slice(dic_slice.im_M, av_gm_slice, av_wm_slice, self.intensities['GM'][level_int], self.intensities['WM'][level_int], val_min=self.intensities['MIN'][level_int], val_max=self.intensities['MAX'][level_int])
             dic_slice.set(im_m=norm_im_M)
@@ -480,8 +483,8 @@ class Model:
         # get id of the slices by level
         slices_by_level = {}
         for dic_slice in self.slices:
-            level_int = int(round(dic_slice.level))
-            if level_int not in slices_by_level.keys():
+            level_int = int(np.round(dic_slice.level))
+            if level_int not in set(slices_by_level.keys()):
                 slices_by_level[level_int] = [dic_slice]
             else:
                 slices_by_level[level_int].append(dic_slice)
@@ -491,8 +494,8 @@ class Model:
             gm_seg_model[level] = data_mean_gm
             wm_seg_model[level] = data_mean_wm
         # for level=0 (no leve or level not in model) output average GM and WM seg across all model data
-        gm_seg_model[0] = np.mean(gm_seg_model.values(), axis=0)
-        wm_seg_model[0] = np.mean(wm_seg_model.values(), axis=0)
+        gm_seg_model[0] = np.mean(list(gm_seg_model.values()), axis=0)
+        wm_seg_model[0] = np.mean(list(wm_seg_model.values()), axis=0)
 
         return gm_seg_model, wm_seg_model
 
@@ -546,7 +549,7 @@ def main(args=None):
     model.compute_model()
     end = time.time()
     t = end - start
-    printv('Model computed in ' + str(int(round(t / 60))) + ' min, ' + str(t%60) + ' sec', param.verbose, 'info')
+    printv('Model computed in ' + str(int(np.round(t / 60))) + ' min, ' + str(t%60) + ' sec', param.verbose, 'info')
 
 
 if __name__ == "__main__":

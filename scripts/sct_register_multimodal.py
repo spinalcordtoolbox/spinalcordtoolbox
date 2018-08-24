@@ -31,11 +31,16 @@
 # second the image registration (and allow the choice of algo, metric, etc.)
 # - two-step registration, using only segmentation-based registration
 
+from __future__ import division, absolute_import
 
 import sys, io, os, time, shutil
 
+import numpy as np
+
 import sct_utils as sct
 from msct_parser import Parser
+import spinalcordtoolbox.image as msct_image
+from spinalcordtoolbox.image import Image
 
 
 def get_parser(paramreg=None):
@@ -404,33 +409,31 @@ def main(args=None):
     # create temporary folder
     path_tmp = sct.tmp_create()
 
-    # copy files to temporary folder
-    from sct_convert import convert
     sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
-    convert(fname_src, os.path.join(path_tmp, "src.nii"))
-    convert(fname_dest, os.path.join(path_tmp, "dest.nii"))
+    Image(fname_src).save(os.path.join(path_tmp, "src.nii"))
+    Image(fname_dest).save(os.path.join(path_tmp, "dest.nii"))
 
     if fname_src_seg:
-        convert(fname_src_seg, os.path.join(path_tmp, "src_seg.nii"))
-        convert(fname_dest_seg, os.path.join(path_tmp, "dest_seg.nii"))
+        Image(fname_src_seg).save(os.path.join(path_tmp, "src_seg.nii"))
+        Image(fname_dest_seg).save(os.path.join(path_tmp, "dest_seg.nii"))
 
     if fname_src_label:
-        convert(fname_src_label, os.path.join(path_tmp, "src_label.nii"))
-        convert(fname_dest_label, os.path.join(path_tmp, "dest_label.nii"))
+        Image(fname_src_label).save(os.path.join(path_tmp, "src_label.nii"))
+        Image(fname_dest_label).save(os.path.join(path_tmp, "dest_label.nii"))
 
     if fname_mask != '':
-        convert(fname_mask, os.path.join(path_tmp, "mask.nii.gz"))
+        Image(fname_mask).save(os.path.join(path_tmp, "mask.nii.gz"))
 
     # go to tmp folder
     curdir = os.getcwd()
     os.chdir(path_tmp)
 
     # reorient destination to RPI
-    sct.run(['sct_image', '-i', 'dest.nii', '-setorient', 'RPI', '-o', 'dest_RPI.nii'])
+    Image('dest.nii').change_orientation("RPI").save('dest_RPI.nii')
     if fname_dest_seg:
-        sct.run(['sct_image', '-i', 'dest_seg.nii', '-setorient', 'RPI', '-o', 'dest_seg_RPI.nii'])
+        Image('dest_seg.nii').change_orientation("RPI").save('dest_seg_RPI.nii')
     if fname_dest_label:
-        sct.run(['sct_image', '-i', 'dest_label.nii', '-setorient', 'RPI', '-o', 'dest_label_RPI.nii'])
+        Image('dest_label.nii').change_orientation("RPI").save('dest_label_RPI.nii')
 
     if identity:
         # overwrite paramreg and only do one identity transformation
@@ -520,7 +523,7 @@ def main(args=None):
                                               os.path.join(path_out, file_out + ext_out), verbose)
     # generate: forward warping field
     if fname_output_warp == '':
-        fname_output_warp = path_out + 'warp_' + file_src + '2' + file_dest + '.nii.gz'
+        fname_output_warp = os.path.join(path_out, 'warp_' + file_src + '2' + file_dest + '.nii.gz')
     sct.generate_output_file(os.path.join(path_tmp, "warp_src2dest.nii.gz"), fname_output_warp, verbose)
     if generate_warpinv:
         # generate: dest_reg
@@ -537,7 +540,7 @@ def main(args=None):
 
     # display elapsed time
     elapsed_time = time.time() - start_time
-    sct.printv('\nFinished! Elapsed time: ' + str(int(round(elapsed_time))) + 's', verbose)
+    sct.printv('\nFinished! Elapsed time: ' + str(int(np.round(elapsed_time))) + 's', verbose)
     if generate_warpinv:
         sct.display_viewer_syntax([fname_src, fname_dest2src], verbose=verbose)
     sct.display_viewer_syntax([fname_dest, fname_src2dest], verbose=verbose)
@@ -591,25 +594,22 @@ def register(src, dest, paramreg, param, i_step_str):
         else:
             # Find the min (and max) z-slice index below which (and above which) slices only have voxels below a given
             # threshold.
-            from msct_image import Image, find_zmin_zmax
             list_fname = [src, dest]
             if not masking == []:
                 list_fname.append(fname_mask)
             zmin_global, zmax_global = 0, 99999  # this is assuming that typical image has less slice than 99999
             for fname in list_fname:
                 im = Image(fname)
-                zmin, zmax = find_zmin_zmax(im, threshold=0.1)
+                zmin, zmax = msct_image.find_zmin_zmax(im, threshold=0.1)
                 if zmin > zmin_global:
                     zmin_global = zmin
                 if zmax < zmax_global:
                     zmax_global = zmax
             # crop images (see issue #293)
             src_crop = sct.add_suffix(src, '_crop')
-            sct.run(['sct_crop_image', '-i', src, '-o', src_crop, '-dim', '2', '-start', str(zmin_global), '-end',
-                     str(zmax_global)], param.verbose)
+            msct_image.spatial_crop(Image(src), dict(((2, (zmin_global, zmax_global)),))).save(src_crop)
             dest_crop = sct.add_suffix(dest, '_crop')
-            sct.run(['sct_crop_image', '-i', dest, '-o', dest_crop, '-dim', '2', '-start', str(zmin_global), '-end',
-                     str(zmax_global)], param.verbose)
+            msct_image.spatial_crop(Image(dest), dict(((2, (zmin_global, zmax_global)),))).save(dest_crop)
             # update variables
             src = src_crop
             dest = dest_crop

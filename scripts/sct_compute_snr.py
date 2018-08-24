@@ -12,12 +12,15 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+from __future__ import division, absolute_import
+
 import sys, io, os, shutil
 
 import numpy as np
 from msct_parser import Parser
-from msct_image import Image
-from sct_image import get_orientation, orientation
+import spinalcordtoolbox.image as msct_image
+from spinalcordtoolbox.image import Image
+import sct_image
 import sct_utils as sct
 
 
@@ -105,29 +108,23 @@ def main():
 
     # Check if data are in RPI
     input_im = Image(fname_data)
-    input_orient = get_orientation(input_im)
+    input_orient = input_im.orientation
 
     # If orientation is not RPI, change to RPI
     if input_orient != 'RPI':
-        sct.printv('\nCreate temporary folder to change the orientation of the NIFTI files into RPI...', verbose)
-        path_tmp = sct.tmp_create()
         # change orientation and load data
         sct.printv('\nChange input image orientation and load it...', verbose)
-        input_im_rpi = orientation(input_im, ori='RPI', set=True, fname_out=os.path.join(path_tmp, "input_RPI.nii"))
+        input_im_rpi = msct_image.change_orientation(input_im, "RPI")
         input_data = input_im_rpi.data
         # Do the same for the mask
         sct.printv('\nChange mask orientation and load it...', verbose)
-        mask_im_rpi = orientation(Image(fname_mask), ori='RPI', set=True, fname_out=os.path.join(path_tmp, "mask_RPI.nii"))
+        mask_im_rpi = msct_image.change_orientation(Image(fname_mask), "RPI")
         mask_data = mask_im_rpi.data
         # Do the same for vertebral labeling if present
         if vert_levels != 'None':
             sct.printv('\nChange vertebral labeling file orientation and load it...', verbose)
-            vert_label_im_rpi = orientation(Image(vert_label_fname), ori='RPI', set=True, fname_out=os.path.join(path_tmp, "vert_labeling_RPI.nii"))
+            vert_label_im_rpi = msct_image.change_orientation(Image(vert_label_fname), "RPI")
             vert_labeling_data = vert_label_im_rpi.data
-        # Remove the temporary folder used to change the NIFTI files orientation into RPI
-        if remove_temp_files:
-            sct.printv('\nRemove the temporary folder...', verbose)
-            sct.rmtree(path_tmp, True)
     else:
         # Load data
         sct.printv('\nLoad data...', verbose)
@@ -146,14 +143,14 @@ def main():
     if slices_of_interest == 'None':
         slices_of_interest = '0:' + str(mask_data.shape[2] - 1)
     slices_boundary = slices_of_interest.split(':')
-    slices_of_interest_list = range(int(slices_boundary[0]), int(slices_boundary[1]) + 1)
+    slices_of_interest_list = list(range(int(slices_boundary[0]), int(slices_boundary[1]) + 1))
     # Crop
     input_data = input_data[:, :, slices_of_interest_list, :]
     mask_data = mask_data[:, :, slices_of_interest_list]
 
     # if user selected all slices (-vol -1), then assign index_vol
     if index_vol[0] == -1:
-        index_vol = range(0, input_data.shape[3], 1)
+        index_vol = list(range(0, input_data.shape[3], 1))
 
     # Get signal and noise
     indexes_roi = np.where(mask_data == 1)

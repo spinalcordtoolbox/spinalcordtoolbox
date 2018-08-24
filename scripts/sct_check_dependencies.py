@@ -17,6 +17,7 @@
 # TODO: manage .cshrc files
 # TODO: add linux distrib when checking OS
 
+from __future__ import print_function, absolute_import
 
 # DEFAULT PARAMETERS
 class Param:
@@ -24,7 +25,6 @@ class Param:
     def __init__(self):
         self.create_log_file = 0
         self.complete_test = 0
-
 
 import argparse
 

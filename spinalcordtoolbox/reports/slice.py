@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from __future__ import division
+
+from __future__ import print_function, absolute_import, division
 
 import abc
 import logging
@@ -8,6 +9,7 @@ import math
 import numpy as np
 from scipy import ndimage
 
+from .. import image as msct_image
 
 logger = logging.getLogger("sct.{}".format(__file__))
 
@@ -36,8 +38,7 @@ class Slice(object):
         """
         self._images = list()
         for image in images:
-            img = image.copy()
-            img.change_orientation("SAL")
+            img = msct_image.change_orientation(image, "SAL")
             self._images.append(img)
 
     @staticmethod
@@ -200,7 +201,7 @@ class Slice(object):
             Slice.nan_fill(centers_x)
             Slice.nan_fill(centers_y)
         except ValueError as err:
-            logger.error("Axial center of the spinal cord is not found", err)
+            logger.error("Axial center of the spinal cord is not found: %s", err)
             raise
         return centers_x, centers_y
 
@@ -260,7 +261,7 @@ class Slice(object):
             matrix = self.get_slice(image.data, dim / 2)
             index = self.get_center_spit()
             for j in range(len(index)):
-                matrix[j] = self.get_slice(image.data, int(round(index[j])))[j]
+                matrix[j] = self.get_slice(image.data, int(np.round(index[j])))[j]
             matrices.append(matrix)
 
         return matrices

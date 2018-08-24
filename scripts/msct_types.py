@@ -3,7 +3,7 @@
 #
 # msct_types
 # This file contains many useful (and tiny) classes corresponding to data types.
-# Large data types with many options have their own file (e.g., msct_image)
+# Large data types with many options have their own file (e.g., spinalcordtoolbox.image)
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
@@ -14,8 +14,8 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-from __future__ import division
-from math import sqrt
+from __future__ import division, absolute_import
+
 from numpy import dot, cross, array, dstack, einsum, tile, multiply, stack, rollaxis, zeros
 from numpy.linalg import norm, inv
 import numpy as np
@@ -30,7 +30,7 @@ class Point(object):
 
     # Euclidean distance
     def euclideanDistance(self, other_point):
-        return sqrt(pow((self.x - other_point.x), 2) + pow((self.y - other_point.y), 2) + pow((self.z - other_point.z), 2))
+        return np.sqrt(np.pow((self.x - other_point.x), 2) + np.pow((self.y - other_point.y), 2) + np.pow((self.z - other_point.z), 2))
 
     def __eq__(self, other):
         if isinstance(other, self.__class__):
@@ -229,14 +229,14 @@ class Centerline:
 
     def compute_length(self):
         for i in range(0, self.number_of_points - 1):
-            distance = sqrt((self.points[i][0] - self.points[i + 1][0]) ** 2 +
+            distance = np.sqrt((self.points[i][0] - self.points[i + 1][0]) ** 2 +
                             (self.points[i][1] - self.points[i + 1][1]) ** 2 +
                             (self.points[i][2] - self.points[i + 1][2]) ** 2)
             self.length += distance
             self.progressive_length.append(distance)
             self.incremental_length.append(self.incremental_length[-1] + distance)
         for i in range(self.number_of_points - 1, 0, -1):
-            distance = sqrt((self.points[i][0] - self.points[i - 1][0]) ** 2 +
+            distance = np.sqrt((self.points[i][0] - self.points[i - 1][0]) ** 2 +
                             (self.points[i][1] - self.points[i - 1][1]) ** 2 +
                             (self.points[i][2] - self.points[i - 1][2]) ** 2)
             self.progressive_length_inverse.append(distance)
@@ -306,7 +306,7 @@ class Centerline:
             raise ValueError('ERROR in msct_types.Centerline.get_distance_from_plane: derivative at this location is '
                              'nul. Impossible to compute plane distance.')
 
-        return (a * coord[0] + b * coord[1] + c * coord[2] + d) / sqrt(a * a + b * b + c * c)
+        return (a * coord[0] + b * coord[1] + c * coord[2] + d) / np.sqrt(a * a + b * b + c * c)
 
     def get_distances_from_planes(self, coordinates, indexes):
         return (einsum('ij,ij->i', self.derivatives[indexes], coordinates) + self.offset_plans[indexes]) / norm(self.derivatives[indexes], axis=1)
@@ -621,7 +621,7 @@ class Centerline:
         x_grid, y_grid, z_grid = np.mgrid[-size:size:resolution, -size:size:resolution, 0:1]
         coordinates_grid = np.array(list(zip(x_grid.ravel(), y_grid.ravel(), z_grid.ravel())))
         coordinates_phys = self.get_inverse_plans_coordinates(coordinates_grid, np.array([index] * len(coordinates_grid)))
-        coordinates_im = np.array(image.transfo_phys2continuouspix(coordinates_phys))
+        coordinates_im = image.transfo_phys2pix(coordinates_phys, real=False)
         square = image.get_values(coordinates_im.transpose(), interpolation_mode=interpolation_mode, border=border, cval=cval)
         return square.reshape((len(x_grid), len(x_grid)))
 
@@ -639,8 +639,7 @@ class Centerline:
                     coord_pix = image.transfo_phys2pix([current_coord])[0]
                     image_output.data[int(coord_pix[0]), int(coord_pix[1]), int(coord_pix[2])] = float(self.labels_regions[current_label]) + current_dist_rel
 
-            image_output.setFileName(fname_output)
-            image_output.save(type='float32')
+            image_output.save(fname_output, dtype='float32')
         else:
             # save a .centerline file containing the centerline
             if self.disks_levels is None:
@@ -799,7 +798,7 @@ class Centerline:
                     index_other = other.find_nearest_index([x[index], y[index], z[index]])
                     coord_other = other.points[index_other]
                     distance = (x[index] - coord_other[0])**2 + (y[index] - coord_other[1])**2 + (z[index] - coord_other[2])**2
-                    distances.append(sqrt(distance))
+                    distances.append(np.sqrt(distance))
                     mse += distance
                     count_mean += 1
 
@@ -807,7 +806,7 @@ class Centerline:
             raise ValueError('Computation of centerline validation metrics without reference images is not yet '
                              'available. Please provide a reference image.')
 
-        mse = sqrt(mse / float(count_mean))
+        mse = np.sqrt(mse / float(count_mean))
         mean = np.mean(distances)
         std = np.std(distances)
         max = np.max(distances)

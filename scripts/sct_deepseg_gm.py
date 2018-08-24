@@ -8,6 +8,8 @@
 #     Spinal cord gray matter segmentation using deep dilated convolutions.
 #     URL: https://arxiv.org/abs/1710.01269
 
+from __future__ import absolute_import
+
 import sys
 import os
 
@@ -90,7 +92,7 @@ def generate_qc(fn_in, fn_seg, args, path_qc):
 
     import spinalcordtoolbox.reports.qc as qc
     import spinalcordtoolbox.reports.slice as qcslice
-    from msct_image import Image
+    from spinalcordtoolbox.image import Image
 
     qc.add_entry(
      src=fn_in,

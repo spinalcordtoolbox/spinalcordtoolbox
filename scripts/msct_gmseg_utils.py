@@ -11,12 +11,15 @@
 #
 # About the license: see the file LICENSE.TXT
 ########################################################################################################################
-import sys, io, os, math, time, random, shutil
+
+from __future__ import absolute_import, division
+
+import sys, io, os, time, random, shutil
 
 import numpy as np
 
-from msct_image import Image
-from sct_image import set_orientation
+import spinalcordtoolbox.image as msct_image
+from spinalcordtoolbox.image import Image
 from sct_utils import extract_fname, printv, add_suffix
 import sct_utils as sct
 from sct_crop_image import ImageCropper
@@ -125,8 +128,8 @@ def pre_processing(fname_target, fname_sc_seg, fname_level=None, fname_manual_gm
     # assert images are in the same orientation
     assert im_target.orientation == im_sc_seg.orientation, "ERROR: the image to segment and it's SC segmentation are not in the same orientation"
 
-    im_target_rpi = set_orientation(im_target, 'RPI')
-    im_sc_seg_rpi = set_orientation(im_sc_seg, 'RPI')
+    im_target_rpi = im_target.copy().change_orientation('RPI', generate_path=True).save()
+    im_sc_seg_rpi = im_sc_seg.copy().change_orientation('RPI', generate_path=True).save()
     original_info['im_sc_seg_rpi'] = im_sc_seg_rpi.copy()  # target image in RPI will be used to post-process segmentations
 
     # denoise using P. Coupe non local means algorithm (see [Manjon et al. JMRI 2010]) implemented in dipy
@@ -135,7 +138,7 @@ def pre_processing(fname_target, fname_sc_seg, fname_level=None, fname_manual_gm
         # crop image before denoising to fasten denoising
         nx, ny, nz, nt, px, py, pz, pt = im_target_rpi.dim
         size_x, size_y = (square_size_size_mm + 1) / px, (square_size_size_mm + 1) / py
-        size = int(math.ceil(max(size_x, size_y)))
+        size = int(np.ceil(max(size_x, size_y)))
         # create mask
         fname_mask = 'mask_pre_crop.nii.gz'
         sct_create_mask.main(['-i', im_target_rpi.absolutepath, '-p', 'centerline,' + im_sc_seg_rpi.absolutepath, '-f', 'box', '-size', str(size), '-o', fname_mask])
@@ -232,9 +235,7 @@ def interpolate_im_to_ref(im_input, im_input_sc, new_res=0.3, sq_size_size_mm=22
 
     # save image to set orientation to RPI (not properly done at the creation of the image)
     fname_ref = 'im_ref.nii.gz'
-    im_ref.setFileName(fname_ref)
-    im_ref.save()
-    im_ref = set_orientation(im_ref, 'RPI', fname_out=fname_ref)
+    im_ref.save(fname_ref).change_orientation("RPI")
 
     # set header origin to zero to get physical coordinates of the center of the square
     im_ref.hdr.as_analyze_map()['qoffset_x'] = 0
@@ -281,8 +282,7 @@ def load_level(list_slices_target, fname_level):
     #  ####### Check if the level file is an image or a text file
     # Level file is an image
     if ext_level in ['.nii', '.nii.gz']:
-        im_level = Image(fname_level)
-        im_level.change_orientation('IRP')
+        im_level = Image(fname_level).change_orientation("IRP")
 
         list_level = []
         list_med_level = []
@@ -304,7 +304,7 @@ def load_level(list_slices_target, fname_level):
         # if all median of level are int for all slices : consider level as int
         if all([isinstance(med, int) for med in list_med_level]):
             # level as int are placed in the middle of each vertebra (that's why there is a "+0.5")
-            list_level = [int(round(l)) + 0.5 for l in list_level]
+            list_level = [int(np.round(l)) + 0.5 for l in list_level]
 
     # Level file is a text file
     elif ext_level == '.txt':
@@ -381,10 +381,7 @@ def load_manual_gmseg(list_slices_target, list_fname_manual_gmseg, tmp_dir, im_s
         fname_manual_gmseg = file_gm + ext_gm
         os.chdir(tmp_dir)
 
-        im_manual_gmseg = Image(fname_manual_gmseg)
-
-        # reorient to RPI
-        im_manual_gmseg = set_orientation(im_manual_gmseg, 'RPI')
+        im_manual_gmseg = Image(fname_manual_gmseg).change_orientation("RPI")
 
         if fname_mask is not None:
             fname_gmseg_crop = add_suffix(im_manual_gmseg.absolutepath, '_pre_crop')
@@ -446,17 +443,13 @@ def register_data(im_src, im_dest, param_reg, path_copy_warp=None, rm_tmp=True):
     os.chdir(tmp_dir)
     # save image and seg
     fname_src = 'src.nii.gz'
-    im_src.setFileName(fname_src)
-    im_src.save()
+    im_src.save(fname_src)
     fname_src_seg = 'src_seg.nii.gz'
-    im_src_seg.setFileName(fname_src_seg)
-    im_src_seg.save()
+    im_src_seg.save(fname_src_seg)
     fname_dest = 'dest.nii.gz'
-    im_dest.setFileName(fname_dest)
-    im_dest.save()
+    im_dest.save(fname_dest)
     fname_dest_seg = 'dest_seg.nii.gz'
-    im_dest_seg.setFileName(fname_dest_seg)
-    im_dest_seg.save()
+    im_dest_seg.save(fname_dest_seg)
     # do registration using param_reg
     sct_register_multimodal.main(args=['-i', fname_src,
                                        '-d', fname_dest,
@@ -498,11 +491,9 @@ def apply_transfo(im_src, im_dest, warp, interp='spline', rm_tmp=True):
     os.chdir(tmp_dir)
     # save image and seg
     fname_src = 'src.nii.gz'
-    im_src.setFileName(fname_src)
-    im_src.save()
+    im_src.save(fname_src)
     fname_dest = 'dest.nii.gz'
-    im_dest.setFileName(fname_dest)
-    im_dest.save()
+    im_dest.save(fname_dest)
     # apply warping field
     fname_src_reg = add_suffix(fname_src, '_reg')
     sct_apply_transfo.main(args=['-i', fname_src,

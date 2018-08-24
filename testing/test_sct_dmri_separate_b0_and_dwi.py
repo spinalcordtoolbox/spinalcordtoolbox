@@ -10,11 +10,13 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+from __future__ import absolute_import
+
 import sys, io, os
 
 import numpy as np
 
-from msct_image import Image
+from spinalcordtoolbox.image import Image
 
 
 def init(param_test):
@@ -22,7 +24,7 @@ def init(param_test):
     Initialize class: param_test
     """
     # initialization
-    default_args = ['-i dmri/dmri.nii.gz -bvec dmri/bvecs.txt -a 1 -ofolder . -r 0']
+    default_args = ['-i dmri/dmri.nii.gz -bvec dmri/bvecs.txt -a 1 -r 0']
     param_test.threshold = 0.001
     # assign default params
     if not param_test.args:

@@ -14,8 +14,12 @@
 # TODO: testing script for all cases
 # TODO: enable vertebral alignment with -ref subject
 
+from __future__ import division, absolute_import
+
 import sys, os, time
+
 import numpy as np
+
 import sct_utils as sct
 import sct_label_utils
 import sct_convert
@@ -23,7 +27,8 @@ from spinalcordtoolbox.metadata import get_file_label
 from sct_utils import add_suffix
 from sct_register_multimodal import Paramreg, ParamregMultiStep, register
 from msct_parser import Parser
-from msct_image import Image, find_zmin_zmax
+import spinalcordtoolbox.image as msct_image
+from spinalcordtoolbox.image import Image
 from sct_straighten_spinalcord import smooth_centerline
 
 # get path of the toolbox
@@ -274,14 +279,14 @@ def main(args=None):
 
     # copy files to temporary folder
     sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
-    sct.run(['sct_convert', '-i', fname_data, '-o', os.path.join(path_tmp, ftmp_data)])
-    sct.run(['sct_convert', '-i', fname_seg, '-o', os.path.join(path_tmp, ftmp_seg)])
-    sct.run(['sct_convert', '-i', fname_landmarks, '-o', os.path.join(path_tmp, ftmp_label)])
-    sct.run(['sct_convert', '-i', fname_template, '-o', os.path.join(path_tmp, ftmp_template)])
-    sct.run(['sct_convert', '-i', fname_template_seg, '-o', os.path.join(path_tmp, ftmp_template_seg)])
-    sct_convert.main(args=['-i', fname_template_vertebral_labeling, '-o', os.path.join(path_tmp, ftmp_template_label)])
+    Image(fname_data).save(os.path.join(path_tmp, ftmp_data))
+    Image(fname_seg).save(os.path.join(path_tmp, ftmp_seg))
+    Image(fname_landmarks).save(os.path.join(path_tmp, ftmp_label))
+    Image(fname_template).save(os.path.join(path_tmp, ftmp_template))
+    Image(fname_template_seg).save(os.path.join(path_tmp, ftmp_template_seg))
+    Image(fname_template_vertebral_labeling).save(os.path.join(path_tmp, ftmp_template_label))
     if label_type == 'disc':
-        sct_convert.main(args=['-i', fname_template_disc_labeling, '-o', os.path.join(path_tmp, ftmp_template_label)])
+        Image(fname_template_disc_labeling).save(os.path.join(path_tmp, ftmp_template_label))
 
     # go to tmp folder
     curdir = os.getcwd()
@@ -290,7 +295,8 @@ def main(args=None):
     # Generate labels from template vertebral labeling
     if label_type == 'body':
         sct.printv('\nGenerate labels from template vertebral labeling', verbose)
-        sct_label_utils.main(args=['-i', ftmp_template_label, '-vert-body', '0', '-o', ftmp_template_label])
+        ftmp_template_label_, ftmp_template_label = ftmp_template_label, sct.add_suffix(ftmp_template_label, "_body")
+        sct_label_utils.main(args=['-i', ftmp_template_label_, '-vert-body', '0', '-o', ftmp_template_label])
 
     # check if provided labels are available in the template
     sct.printv('\nCheck if provided labels are available in the template', verbose)
@@ -314,7 +320,9 @@ def main(args=None):
 
     # binarize segmentation (in case it has values below 0 caused by manual editing)
     sct.printv('\nBinarize segmentation', verbose)
-    sct.run(['sct_maths', '-i', 'seg.nii.gz', '-bin', '0.5', '-o', 'seg.nii.gz'])
+    ftmp_seg_, ftmp_seg = ftmp_seg, sct.add_suffix(ftmp_seg, "_bin")
+    sct.run(['sct_maths', '-i', ftmp_seg_, '-bin', '0.5', '-o', ftmp_seg])
+
 
     # Switch between modes: subject->template or template->subject
     if ref == 'template':
@@ -332,13 +340,13 @@ def main(args=None):
 
         # Change orientation of input images to RPI
         sct.printv('\nChange orientation of input images to RPI...', verbose)
-        sct.run(['sct_image', '-i', ftmp_data, '-setorient', 'RPI', '-o', add_suffix(ftmp_data, '_rpi')])
-        ftmp_data = add_suffix(ftmp_data, '_rpi')
-        sct.run(['sct_image', '-i', ftmp_seg, '-setorient', 'RPI', '-o', add_suffix(ftmp_seg, '_rpi')])
-        ftmp_seg = add_suffix(ftmp_seg, '_rpi')
-        sct.run(['sct_image', '-i', ftmp_label, '-setorient', 'RPI', '-o', add_suffix(ftmp_label, '_rpi')])
-        ftmp_label = add_suffix(ftmp_label, '_rpi')
 
+        ftmp_data = Image(ftmp_data).change_orientation("RPI", generate_path=True).save().absolutepath
+        ftmp_seg = Image(ftmp_seg).change_orientation("RPI", generate_path=True).save().absolutepath
+        ftmp_label = Image(ftmp_label).change_orientation("RPI", generate_path=True).save().absolutepath
+
+
+        ftmp_seg_, ftmp_seg = ftmp_seg, add_suffix(ftmp_seg, '_crop')
         if vertebral_alignment:
             # cropping the segmentation based on the label coverage to ensure good registration with vertebral alignment
             # See https://github.com/neuropoly/spinalcordtoolbox/pull/1669 for details
@@ -352,14 +360,22 @@ def main(args=None):
                 cropping_slices[0] = 0
             if cropping_slices[1] > nz:
                 cropping_slices[1] = nz
-            status_crop, output_crop = sct.run(['sct_crop_image', '-i', ftmp_seg, '-o', add_suffix(ftmp_seg, '_crop'), '-dim', '2', '-start', str(cropping_slices[0]), '-end', str(cropping_slices[1])], verbose)
+            msct_image.spatial_crop(Image(ftmp_seg_), dict(((2, np.int32(np.np.round(cropping_slices))),))).save(ftmp_seg)
         else:
             # if we do not align the vertebral levels, we crop the segmentation from top to bottom
-            status_crop, output_crop = sct.run(['sct_crop_image', '-i', ftmp_seg, '-o', add_suffix(ftmp_seg, '_crop'), '-dim', '2', '-bzmax'], verbose)
-            cropping_slices = output_crop.split('Dimension 2: ')[1].split('\n')[0].split(' ')
+            im_seg_rpi = Image(ftmp_seg_)
+            bottom = 0
+            for data in msct_image.SlicerOneAxis(im_seg_rpi, "IS"):
+                if (data != 0).any():
+                    break
+                bottom += 1
+            top = im_seg_rpi.data.shape[2]
+            for data in msct_image.SlicerOneAxis(im_seg_rpi, "SI"):
+                if (data != 0).any():
+                    break
+                top -= 1
 
-        # output: segmentation_rpi_crop.nii.gz
-        ftmp_seg = add_suffix(ftmp_seg, '_crop')
+        msct_image.spatial_crop(im_seg_rpi, dict(((2, (bottom, top)),))).save(ftmp_seg)
 
 
         # straighten segmentation
@@ -408,7 +424,7 @@ def main(args=None):
 
         # N.B. DO NOT UPDATE VARIABLE ftmp_seg BECAUSE TEMPORARY USED LATER
         # re-define warping field using non-cropped space (to avoid issue #367)
-        sct.run(['sct_concat_transfo', '-w', 'warp_straight2curve.nii.gz', '-d', ftmp_data, '-o', 'warp_straight2curve.nii.gz'])
+        s, o = sct.run(['sct_concat_transfo', '-w', 'warp_straight2curve.nii.gz', '-d', ftmp_data, '-o', 'warp_straight2curve.nii.gz'])
 
         if vertebral_alignment:
             sct.copy('warp_curve2straight.nii.gz', 'warp_curve2straightAffine.nii.gz')
@@ -454,31 +470,34 @@ def main(args=None):
         points_straight = []
         for coord in landmark_template:
             points_straight.append(coord.z)
-        min_point, max_point = int(round(np.min(points_straight))), int(round(np.max(points_straight)))
-        sct.run('sct_crop_image -i ' + ftmp_seg + ' -start ' + str(min_point) + ' -end ' + str(max_point) + ' -dim 2 -b 0 -o ' + add_suffix(ftmp_seg, '_black'))
-        ftmp_seg = add_suffix(ftmp_seg, '_black')
+        min_point, max_point = int(np.round(np.min(points_straight))), int(np.round(np.max(points_straight)))
+        ftmp_seg_, ftmp_seg = ftmp_seg, add_suffix(ftmp_seg, '_black')
+        msct_image.spatial_crop(Image(ftmp_seg_), dict(((2, (min_point,max_point)),))).save(ftmp_seg)
+
         """
         # open segmentation
         im = Image(ftmp_seg)
-        im_new = im.copy()
+        im_new = msct_image.empty_like(im)
         # binarize
         im_new.data = im.data > 0.5
         # find min-max of anat2template (for subsequent cropping)
-        zmin_template, zmax_template = find_zmin_zmax(im_new, threshold=0.5)
+        zmin_template, zmax_template = msct_image.find_zmin_zmax(im_new, threshold=0.5)
         # save binarized segmentation
-        im_new.setFileName(add_suffix(ftmp_seg, '_bin'))
-        im_new.save()
+        im_new.save(add_suffix(ftmp_seg, '_bin')) # unused?
         # crop template in z-direction (for faster processing)
         # TODO: refactor to use python module instead of doing i/o
         sct.printv('\nCrop data in template space (for faster processing)...', verbose)
-        sct.run(['sct_crop_image', '-i', ftmp_template, '-o', add_suffix(ftmp_template, '_crop'), '-dim', '2', '-start', str(zmin_template), '-end', str(zmax_template)])
-        ftmp_template = add_suffix(ftmp_template, '_crop')
-        sct.run(['sct_crop_image', '-i', ftmp_template_seg, '-o', add_suffix(ftmp_template_seg, '_crop'), '-dim', '2', '-start', str(zmin_template), '-end', str(zmax_template)])
-        ftmp_template_seg = add_suffix(ftmp_template_seg, '_crop')
-        sct.run(['sct_crop_image', '-i', ftmp_data, '-o', add_suffix(ftmp_data, '_crop'), '-dim', '2', '-start', str(zmin_template), '-end', str(zmax_template)])
-        ftmp_data = add_suffix(ftmp_data, '_crop')
-        sct.run(['sct_crop_image', '-i', ftmp_seg, '-o', add_suffix(ftmp_seg, '_crop'), '-dim', '2', '-start', str(zmin_template), '-end', str(zmax_template)])
-        ftmp_seg = add_suffix(ftmp_seg, '_crop')
+        ftmp_template_, ftmp_template = ftmp_template, add_suffix(ftmp_template, '_crop')
+        msct_image.spatial_crop(Image(ftmp_template_), dict(((2, (zmin_template,zmax_template)),))).save(ftmp_template)
+
+        ftmp_template_seg_, ftmp_template_seg = ftmp_template_seg, add_suffix(ftmp_template_seg, '_crop')
+        msct_image.spatial_crop(Image(ftmp_template_seg_), dict(((2, (zmin_template,zmax_template)),))).save(ftmp_template_seg)
+
+        ftmp_data_, ftmp_data = ftmp_data, add_suffix(ftmp_data, '_crop')
+        msct_image.spatial_crop(Image(ftmp_data_), dict(((2, (zmin_template,zmax_template)),))).save(ftmp_data)
+
+        ftmp_seg_, ftmp_seg = ftmp_seg, add_suffix(ftmp_seg, '_crop')
+        msct_image.spatial_crop(Image(ftmp_seg_), dict(((2, (zmin_template,zmax_template)),))).save(ftmp_seg)
 
         # sub-sample in z-direction
         # TODO: refactor to use python module instead of doing i/o
@@ -540,12 +559,9 @@ def main(args=None):
 
         # Change orientation of input images to RPI
         sct.printv('\nChange orientation of input images to RPI...', verbose)
-        sct.run(['sct_image', '-i', ftmp_data, '-setorient', 'RPI', '-o', add_suffix(ftmp_data, '_rpi')])
-        ftmp_data = add_suffix(ftmp_data, '_rpi')
-        sct.run(['sct_image', '-i', ftmp_seg, '-setorient', 'RPI', '-o', add_suffix(ftmp_seg, '_rpi')])
-        ftmp_seg = add_suffix(ftmp_seg, '_rpi')
-        sct.run(['sct_image', '-i', ftmp_label, '-setorient', 'RPI', '-o', add_suffix(ftmp_label, '_rpi')])
-        ftmp_label = add_suffix(ftmp_label, '_rpi')
+        ftmp_data =  Image(ftmp_data).change_orientation("RPI", generate_path=True).save().absolutepath
+        ftmp_seg =  Image(ftmp_seg).change_orientation("RPI", generate_path=True).save().absolutepath
+        ftmp_label = Image(ftmp_label).change_orientation("RPI", generate_path=True).save().absolutepath
 
         # Remove unused label on template. Keep only label present in the input label image
         sct.printv('\nRemove unused label on template. Keep only label present in the input label image...', verbose)
@@ -561,13 +577,13 @@ def main(args=None):
             new_label = deepcopy(coord_label[0])
             # move it 5mm to the left (orientation is RAS)
             nx, ny, nz, nt, px, py, pz, pt = im_label.dim
-            new_label.x = round(coord_label[0].x + 5.0 / px)
+            new_label.x = np.round(coord_label[0].x + 5.0 / px)
             # assign value 99
             new_label.value = 99
             # Add to existing image
             im_label.data[int(new_label.x), int(new_label.y), int(new_label.z)] = new_label.value
             # Overwrite label file
-            # im_label.setFileName('label_rpi_modif.nii.gz')
+            # im_label.absolutepath = 'label_rpi_modif.nii.gz'
             im_label.save()
 
         # Bring template to subject space using landmark-based transformation
@@ -637,7 +653,7 @@ def main(args=None):
 
     # display elapsed time
     elapsed_time = time.time() - start_time
-    sct.printv('\nFinished! Elapsed time: ' + str(int(round(elapsed_time))) + 's', verbose)
+    sct.printv('\nFinished! Elapsed time: ' + str(int(np.round(elapsed_time))) + 's', verbose)
 
     if param.path_qc is not None:
         generate_qc(fname_data, fname_template2anat, fname_seg, args, os.path.abspath(param.path_qc))
@@ -677,11 +693,11 @@ def project_labels_on_spinalcord(fname_label, fname_seg):
     # build output name
     fname_label_projected = sct.add_suffix(fname_label, "_projected")
     # open labels and segmentation
-    im_label = Image(fname_label)
+    im_label = Image(fname_label).change_orientation("RPI")
     im_seg = Image(fname_seg)
-    # orient to RPI
-    native_orient = im_seg.change_orientation('RPI')
-    im_label.change_orientation('RPI')
+    native_orient = im_seg.orientation
+    im_seg.change_orientation("RPI")
+
     # smooth centerline and return fitted coordinates in voxel space
     centerline_x, centerline_y, centerline_z, centerline_derivx, centerline_derivy, centerline_derivz = smooth_centerline(
         im_seg, algo_fitting="hanning", type_window="hanning", window_length=50, nurbs_pts_number=3000,
@@ -690,12 +706,12 @@ def project_labels_on_spinalcord(fname_label, fname_seg):
     centerline_xyz_transposed = [im_seg.transfo_pix2phys([[centerline_x[i], centerline_y[i], centerline_z[i]]])[0]
                                  for i in range(len(centerline_x))]
     # transpose list
-    centerline_phys_x, centerline_phys_y, centerline_phys_z = map(list, map(None, *centerline_xyz_transposed))
+    centerline_phys_x, centerline_phys_y, centerline_phys_z = list(map(list, map(None, *centerline_xyz_transposed)))
     # get center of mass of label
     labels = im_label.getCoordinatesAveragedByValue()
     # initialize image of projected labels. Note that we use the space of the seg (not label).
-    im_label_projected = im_seg.copy()
-    im_label_projected.data = np.zeros(im_label_projected.data.shape, dtype='uint8')
+    im_label_projected = msct_image.zeros_like(im_seg, dtype=np.uint8)
+
     # loop across label values
     for label in labels:
         # convert pixel into physical coordinates for the label
@@ -715,9 +731,7 @@ def project_labels_on_spinalcord(fname_label, fname_seg):
         # use that index to assign projected label in the centerline
         im_label_projected.data[minx, miny, minz] = label.value
     # re-orient projected labels to native orientation and save
-    im_label_projected.change_orientation(native_orient)  # note: native_orient refers to im_seg (not im_label)
-    im_label_projected.setFileName(fname_label_projected)
-    im_label_projected.save()
+    im_label_projected.change_orientation(native_orient).save(fname_label_projected)
     return fname_label_projected
 
 
@@ -739,9 +753,9 @@ def resample_labels(fname_labels, fname_dest, fname_output):
     label_list = processor.display_voxel()
     label_new_list = []
     for label in label_list:
-        label_sub_new = [str(int(round(int(label.x) / sampling_factor[0]))),
-                         str(int(round(int(label.y) / sampling_factor[1]))),
-                         str(int(round(int(label.z) / sampling_factor[2]))),
+        label_sub_new = [str(int(np.round(int(label.x) / sampling_factor[0]))),
+                         str(int(np.round(int(label.y) / sampling_factor[1]))),
+                         str(int(np.round(int(label.z) / sampling_factor[2]))),
                          str(int(float(label.value)))]
         label_new_list.append(','.join(label_sub_new))
     label_new_list = ':'.join(label_new_list)
