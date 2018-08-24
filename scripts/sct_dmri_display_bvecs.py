@@ -10,12 +10,16 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+from __future__ import absolute_import
+
 import sys
-from msct_parser import Parser
-from dipy.data.fetcher import read_bvals_bvecs
+
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+from dipy.data.fetcher import read_bvals_bvecs
+
 import sct_utils as sct
+from msct_parser import Parser
 
 bzero = 0.0001  # b-zero threshold
 

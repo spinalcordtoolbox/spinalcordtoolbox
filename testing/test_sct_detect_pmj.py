@@ -10,12 +10,14 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+from __future__ import absolute_import
+
 import math, shutil, os
 
 import numpy as np
 
 import sct_utils as sct
-from msct_image import Image
+from spinalcordtoolbox.image import Image
 
 def init(param_test):
     """

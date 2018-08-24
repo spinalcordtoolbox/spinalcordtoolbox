@@ -10,6 +10,10 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+from __future__ import absolute_import
+
+import os
+
 from pandas import DataFrame
 
 def init(param_test):
@@ -35,7 +39,7 @@ def test_integrity(param_test):
     max_hausdorff_distance = float('nan')
 
     # extract name of output: hausdorff_distance.txt
-    file_hausdorff = 'hausdorff_distance.txt'
+    file_hausdorff = os.path.join(param_test.path_output, 'hausdorff_distance.txt')
 
     # open output segmentation
     hausdorff_txt = open(file_hausdorff, 'r')

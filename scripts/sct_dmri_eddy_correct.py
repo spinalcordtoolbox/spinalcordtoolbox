@@ -14,15 +14,19 @@
 # TODO: add test.
 # TODO: remove FSL dependency
 
+from __future__ import print_function, absolute_import, division
+
 # check if needed Python libraries are already installed or not
 import sys
 import os
-
 import getopt
 import time
+
 import numpy as np
-from msct_image import Image
+
+from spinalcordtoolbox.image import Image
 import sct_utils as sct
+
 # get path of the toolbox
 path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
 
@@ -100,7 +104,7 @@ def main():
 
     # display elapsed time
     elapsed_time = time.time() - start_time
-    sct.printv('\nFinished! Elapsed time: ' + str(int(round(elapsed_time))) + 's')
+    sct.printv('\nFinished! Elapsed time: ' + str(int(np.round(elapsed_time))) + 's')
 
 #=======================================================================================================================
 # Function eddy_correct
@@ -184,7 +188,7 @@ def eddy_correct(param):
     bvecs = []
     with open(param.fname_bvecs) as f:
         for line in f:
-            bvecs_new = map(float, line.split())
+            bvecs_new = list(map(float, line.split()))
             bvecs.append(bvecs_new)
 
     # Check if bvecs file is nx3
@@ -192,7 +196,7 @@ def eddy_correct(param):
         sct.printv('.. WARNING: bvecs file is 3xn instead of nx3. Consider using sct_dmri_transpose_bvecs.', verbose)
         sct.printv('Transpose bvecs...', verbose)
         # transpose bvecs
-        bvecs = zip(*bvecs)
+        bvecs = list(zip(*bvecs))
     bvecs = np.array(bvecs)
 
     opposite_gradients_iT = []

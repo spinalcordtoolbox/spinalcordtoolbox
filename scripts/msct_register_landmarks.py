@@ -22,12 +22,13 @@
 # TODO: add full affine transfo
 # TODO: normalize SSE: currently, it depends on the number of landmarks
 
-# from msct_types import Point
-import sys, io, os
+from __future__ import absolute_import, division
 
-from numpy import array, sin, cos, matrix, sum, mean, absolute
-from math import pow, sqrt
+import sys, io, os
 from operator import itemgetter
+
+import numpy as np
+
 # from msct_register_regularized import generate_warping_field
 import sct_utils as sct
 from nibabel import load
@@ -49,7 +50,7 @@ def register_landmarks(fname_src, fname_dest, dof, fname_affine='affine.txt', ve
     :param verbose: 0, 1, 2
     :return:
     """
-    from msct_image import Image
+    from spinalcordtoolbox.image import Image
     # open src label
     im_src = Image(fname_src)
     # coord_src = im_src.getNonZeroCoordinates(sorting='value')  # landmarks are sorted by value
@@ -124,7 +125,7 @@ def SSE(pointsA, pointsB):
     :param pointsB:
     :return:
     """
-    return sum(array(pointsA[:, 0:3] - pointsB[:, 0:3])**2.0)
+    return np.sum(np.array(pointsA[:, 0:3] - pointsB[:, 0:3])**2.0)
 
 
 def real_optimization_parameters(param_from_optimizer, initial_param = 0, initial_step = 10):
@@ -148,11 +149,11 @@ def Metric_Images(imageA, imageB, type=''):
         list_B = list_B + data_B_list[i]
     # Calculate metric depending on the type
     if type == 'MeanSquares':
-        result_metric = 1.0 / (len(list_A)) * sum(array([list_A[i][0] - list_B[i][0] for i in range(len(list_A))])**2)
-        #result_metric = 1/(len(list_A)) * sum(array(list_A - list_B)**2)
+        result_metric = 1.0 / (len(list_A)) * np.sum(np.array([list_A[i][0] - list_B[i][0] for i in range(len(list_A))])**2)
+        #result_metric = 1/(len(list_A)) * np.sum(np.array(list_A - list_B)**2)
 
     if type == 'Correlation':
-        result_metric = 1.0 / (len(list_A)) * sum(absolute(array([list_A[i][0] - list_B[i][0] for i in range(len(list_A))])))
+        result_metric = 1.0 / (len(list_A)) * np.sum(np.absolute(np.array([list_A[i][0] - list_B[i][0] for i in range(len(list_A))])))
 
     if type == 'MI':
         sct.printv('\nto do: MI')
@@ -183,35 +184,35 @@ def minimize_transform(params, points_dest, points_src, constraints):
     # convert dof to more intuitive variables
     tx, ty, tz, alpha, beta, gamma, scx, scy, scz = dof[0], dof[1], dof[2], dof[3], dof[4], dof[5], dof[6], dof[7], dof[8]
     # build rotation matrix
-    rotation_matrix = matrix([[cos(alpha) * cos(beta), cos(alpha) * sin(beta) * sin(gamma) - sin(alpha) * cos(gamma), cos(alpha) * sin(beta) * cos(gamma) + sin(alpha) * sin(gamma)],
-                              [sin(alpha) * cos(beta), sin(alpha) * sin(beta) * sin(gamma) + cos(alpha) * cos(gamma), sin(alpha) * sin(beta) * cos(gamma) - cos(alpha) * sin(gamma)],
-                              [-sin(beta), cos(beta) * sin(gamma), cos(beta) * cos(gamma)]])
+    rotation_matrix = np.matrix([[np.cos(alpha) * np.cos(beta), np.cos(alpha) * np.sin(beta) * np.sin(gamma) - np.sin(alpha) * np.cos(gamma), np.cos(alpha) * np.sin(beta) * np.cos(gamma) + np.sin(alpha) * np.sin(gamma)],
+                              [np.sin(alpha) * np.cos(beta), np.sin(alpha) * np.sin(beta) * np.sin(gamma) + np.cos(alpha) * np.cos(gamma), np.sin(alpha) * np.sin(beta) * np.cos(gamma) - np.cos(alpha) * np.sin(gamma)],
+                              [-np.sin(beta), np.cos(beta) * np.sin(gamma), np.cos(beta) * np.cos(gamma)]])
     # build scaling matrix
-    scaling_matrix = matrix([[scx, 0.0, 0.0], [0.0, scy, 0.0], [0.0, 0.0, scz]])
+    scaling_matrix = np.matrix([[scx, 0.0, 0.0], [0.0, scy, 0.0], [0.0, 0.0, scz]])
     # compute rotation+scaling matrix
     rotsc_matrix = scaling_matrix * rotation_matrix
     # compute center of mass from moving points (src)
-    points_src_barycenter = mean(points_src, axis=0)
+    points_src_barycenter = np.mean(points_src, axis=0)
     # apply transformation to moving points (src)
-    points_src_reg = ((rotsc_matrix * (matrix(points_src) - points_src_barycenter).T).T + points_src_barycenter) + matrix([tx, ty, tz])
+    points_src_reg = ((rotsc_matrix * (np.matrix(points_src) - points_src_barycenter).T).T + points_src_barycenter) + np.matrix([tx, ty, tz])
     # record SSE for later display
-    sse_results.append(SSE(matrix(points_dest), points_src_reg))
+    sse_results.append(SSE(np.matrix(points_dest), points_src_reg))
     # return SSE
-    return SSE(matrix(points_dest), points_src_reg)
+    return SSE(np.matrix(points_dest), points_src_reg)
 
 
 def getRigidTransformFromImages(img_dest, img_src, constraints='none', metric = 'MeanSquares', center_rotation=None):
     list_constraints = [None, 'none', 'xy', 'translation', 'translation-xy', 'rotation', 'rotation-xy']
     list_center_rotation = [None, 'BarycenterImage']
     if constraints not in list_constraints:
-        raise 'ERROR: the constraints must be one of those: ' + ', '.join(list_constraints)
+        raise ValueError('ERROR: the constraints must be one of those: ' + ', '.join(list_constraints))
     if center_rotation not in list_center_rotation:
-        raise 'ERROR: the center_rotation must be one of those: ' + ', '.join(list_center_rotation)
+        raise ValueError('ERROR: the center_rotation must be one of those: ' + ', '.join(list_center_rotation))
 
     from scipy.optimize import minimize
 
-    rotation_matrix = matrix([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
-    translation_array = matrix([0.0, 0.0, 0.0])
+    rotation_matrix = np.matrix([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
+    translation_array = np.matrix([0.0, 0.0, 0.0])
 
     # Get barycenter of the images if specified
     if center_rotation == 'BarycenterImage':
@@ -225,20 +226,20 @@ def getRigidTransformFromImages(img_dest, img_src, constraints='none', metric = 
         data_moving_10percent = data_moving > amax(data_moving) * 0.1
         data_fixed_10percent = data_fixed > amax(data_fixed) * 0.1
         # Calculating position of barycenters
-        coord_barycenter_moving = (1.0 / (sum(data_moving))) * sum(array([[data_moving[i, j, k] * i, data_moving[i, j, k] * j, data_moving[i, j, k] * k] for i in range(data_moving.shape[0]) for j in range(data_moving.shape[1]) for k in range(data_moving.shape[2])]), axis=0)
-        coord_barycenter_fixed = (1.0 / (sum(data_fixed))) * sum(array([[data_fixed[i, j, k] * i, data_fixed[i, j, k] * j, data_fixed[i, j, k] * k] for i in range(data_fixed.shape[0]) for j in range(data_fixed.shape[1]) for k in range(data_fixed.shape[2])]), axis=0)
-        coord_barycenter_moving_10percent = (1.0 / (sum(data_moving_10percent))) * sum(array([[data_moving_10percent[i, j, k] * i, data_moving_10percent[i, j, k] * j, data_moving_10percent[i, j, k] * k] for i in range(data_moving_10percent.shape[0]) for j in range(data_moving_10percent.shape[1]) for k in range(data_moving_10percent.shape[2])]), axis=0)
-        coord_barycenter_fixed_10percent = (1.0 / (sum(data_fixed_10percent))) * sum(array([[data_fixed_10percent[i, j, k] * i, data_fixed_10percent[i, j, k] * j, data_fixed_10percent[i, j, k] * k] for i in range(data_fixed_10percent.shape[0]) for j in range(data_fixed_10percent.shape[1]) for k in range(data_fixed_10percent.shape[2])]), axis=0)
+        coord_barycenter_moving = (1.0 / (np.sum(data_moving))) * np.sum(np.array([[data_moving[i, j, k] * i, data_moving[i, j, k] * j, data_moving[i, j, k] * k] for i in range(data_moving.shape[0]) for j in range(data_moving.shape[1]) for k in range(data_moving.shape[2])]), axis=0)
+        coord_barycenter_fixed = (1.0 / (np.sum(data_fixed))) * np.sum(np.array([[data_fixed[i, j, k] * i, data_fixed[i, j, k] * j, data_fixed[i, j, k] * k] for i in range(data_fixed.shape[0]) for j in range(data_fixed.shape[1]) for k in range(data_fixed.shape[2])]), axis=0)
+        coord_barycenter_moving_10percent = (1.0 / (np.sum(data_moving_10percent))) * np.sum(np.array([[data_moving_10percent[i, j, k] * i, data_moving_10percent[i, j, k] * j, data_moving_10percent[i, j, k] * k] for i in range(data_moving_10percent.shape[0]) for j in range(data_moving_10percent.shape[1]) for k in range(data_moving_10percent.shape[2])]), axis=0)
+        coord_barycenter_fixed_10percent = (1.0 / (np.sum(data_fixed_10percent))) * np.sum(np.array([[data_fixed_10percent[i, j, k] * i, data_fixed_10percent[i, j, k] * j, data_fixed_10percent[i, j, k] * k] for i in range(data_fixed_10percent.shape[0]) for j in range(data_fixed_10percent.shape[1]) for k in range(data_fixed_10percent.shape[2])]), axis=0)
 
         sct.printv('\nPosition of the barycenters:' 
                    '\n\t-moving image : ' + str(coord_barycenter_moving) +
                    '\n\t-fixed image: ' + str(coord_barycenter_fixed))
         # Evaluating initial translations to match the barycenters
-        ini_param_trans_x_real = int(round(coord_barycenter_fixed[0] - coord_barycenter_moving[0]))
-        ini_param_trans_y_real = int(round(coord_barycenter_fixed[1] - coord_barycenter_moving[1]))
+        ini_param_trans_x_real = int(np.round(coord_barycenter_fixed[0] - coord_barycenter_moving[0]))
+        ini_param_trans_y_real = int(np.round(coord_barycenter_fixed[1] - coord_barycenter_moving[1]))
 
         # Defining new center of rotation
-        coord_center_rotation = [int(round(coord_barycenter_fixed[0])), int(round(coord_barycenter_fixed[1])), int(round(coord_barycenter_fixed[2]))]
+        coord_center_rotation = [int(np.round(coord_barycenter_fixed[0])), int(np.round(coord_barycenter_fixed[1])), int(np.round(coord_barycenter_fixed[2]))]
 
         # Evaluating the initial rotation to match the 10 percent barycenters
         # We have calculated two relevant points to evaluate the best initial registration for the algorithm so that it may converge more quickly
@@ -251,9 +252,9 @@ def getRigidTransformFromImages(img_dest, img_src, constraints='none', metric = 
         c = dot(vector_bar_10p_fix_2_10p_moving, vector_bar_10p_fix_2_10p_moving)  # AfAm
         e = cross(vector_bar_fix_2_bar_10p_moving, vector_bar_fix_2_bar_10p_fixed)
         if e[2] >= 0:
-            ini_param_rotation_real = acos((a + b - c) / (2.0 * sqrt(a) * sqrt(b)))   # theorem of Al-Kashi
+            ini_param_rotation_real = np.arccos((a + b - c) / (2.0 * np.sqrt(a) * np.sqrt(b)))   # theorem of Al-Kashi
         else:
-            ini_param_rotation_real = -acos((a + b - c) / (2.0 * sqrt(a) * sqrt(b)))    # theorem of Al-Kashi
+            ini_param_rotation_real = -np.arccos((a + b - c) / (2.0 * np.sqrt(a) * np.sqrt(b)))    # theorem of Al-Kashi
 
     else:
         coord_center_rotation = None
@@ -267,8 +268,8 @@ def getRigidTransformFromImages(img_dest, img_src, constraints='none', metric = 
                        options={'maxiter': 1000, 'disp': True})
 
         gamma = res.x[0]
-        rotation_matrix = matrix([[cos(gamma), - sin(gamma), 0],
-                                  [sin(gamma), cos(gamma), 0],
+        rotation_matrix = np.matrix([[np.cos(gamma), - np.sin(gamma), 0],
+                                  [np.sin(gamma), np.cos(gamma), 0],
                                   [0, 0, 1]])
 
     elif constraints == 'xy':
@@ -279,10 +280,10 @@ def getRigidTransformFromImages(img_dest, img_src, constraints='none', metric = 
         # change result if input parameters are changed
         # tx_real = ini_param_trans + (ini_param_trans - tx) * 10
         gamma, tx, ty = res.x[0], real_optimization_parameters(res.x[1], initial_param=ini_param_trans_x, initial_step=initial_step), real_optimization_parameters(res.x[2], initial_param=ini_param_trans_y, initial_step=initial_step)
-        rotation_matrix = matrix([[cos(gamma), - sin(gamma), 0],
-                                  [sin(gamma), cos(gamma), 0],
+        rotation_matrix = np.matrix([[np.cos(gamma), - np.sin(gamma), 0],
+                                  [np.sin(gamma), np.cos(gamma), 0],
                                   [0, 0, 1]])
-        translation_array = matrix([tx, ty, 0])
+        translation_array = np.matrix([tx, ty, 0])
 
     return rotation_matrix, translation_array
 
@@ -324,19 +325,19 @@ def getRigidTransformFromLandmarks(points_dest, points_src, constraints='Tx_Ty_T
     # convert results to intuitive variables
     # tx, ty, tz, alpha, beta, gamma, scx, scy, scz = res.x[0], res.x[1], res.x[2], res.x[3], res.x[4], res.x[5], res.x[6], res.x[7], res.x[8]
     # build translation matrix
-    translation_array = matrix([tx, ty, tz])
+    translation_array = np.matrix([tx, ty, tz])
     # build rotation matrix
-    rotation_matrix = matrix([[cos(alpha) * cos(beta), cos(alpha) * sin(beta) * sin(gamma) - sin(alpha) * cos(gamma), cos(alpha) * sin(beta) * cos(gamma) + sin(alpha) * sin(gamma)],
-                              [sin(alpha) * cos(beta), sin(alpha) * sin(beta) * sin(gamma) + cos(alpha) * cos(gamma), sin(alpha) * sin(beta) * cos(gamma) - cos(alpha) * sin(gamma)],
-                              [-sin(beta), cos(beta) * sin(gamma), cos(beta) * cos(gamma)]])
+    rotation_matrix = np.matrix([[np.cos(alpha) * np.cos(beta), np.cos(alpha) * np.sin(beta) * np.sin(gamma) - np.sin(alpha) * np.cos(gamma), np.cos(alpha) * np.sin(beta) * np.cos(gamma) + np.sin(alpha) * np.sin(gamma)],
+                              [np.sin(alpha) * np.cos(beta), np.sin(alpha) * np.sin(beta) * np.sin(gamma) + np.cos(alpha) * np.cos(gamma), np.sin(alpha) * np.sin(beta) * np.cos(gamma) - np.cos(alpha) * np.sin(gamma)],
+                              [-np.sin(beta), np.cos(beta) * np.sin(gamma), np.cos(beta) * np.cos(gamma)]])
     # build scaling matrix
-    scaling_matrix = matrix([[scx, 0.0, 0.0], [0.0, scy, 0.0], [0.0, 0.0, scz]])
+    scaling_matrix = np.matrix([[scx, 0.0, 0.0], [0.0, scy, 0.0], [0.0, 0.0, scz]])
     # compute rotation+scaling matrix
     rotsc_matrix = scaling_matrix * rotation_matrix
     # compute center of mass from moving points (src)
-    points_src_barycenter = mean(points_src, axis=0)
+    points_src_barycenter = np.mean(points_src, axis=0)
     # apply transformation to moving points (src)
-    points_src_reg = ((rotsc_matrix * (matrix(points_src) - points_src_barycenter).T).T + points_src_barycenter) + translation_array
+    points_src_reg = ((rotsc_matrix * (np.matrix(points_src) - points_src_barycenter).T).T + points_src_barycenter) + translation_array
     # display results
     sct.printv('Matrix:\n' + str(rotation_matrix))
     sct.printv('Center:\n' + str(points_src_barycenter))
@@ -353,8 +354,8 @@ def getRigidTransformFromLandmarks(points_dest, points_src, constraints='Tx_Ty_T
 
         fig = plt.figure()
         ax = fig.gca(projection='3d')
-        points_src_matrix = matrix(points_src)
-        points_dest_matrix = matrix(points_dest)
+        points_src_matrix = np.matrix(points_src)
+        points_dest_matrix = np.matrix(points_dest)
 
         number_points = len(points_dest)
 

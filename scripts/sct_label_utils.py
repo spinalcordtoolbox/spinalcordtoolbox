@@ -16,13 +16,17 @@
 # TODO: check if use specified several processes.
 # TODO: currently it seems like cross_radius is given in pixel instead of mm
 
+from __future__ import division, absolute_import
+
+import os
 import sys
-import math
+
 import numpy as np
 from scipy import ndimage
 
 from msct_parser import Parser
-from msct_image import Image
+import spinalcordtoolbox.image as msct_image
+from spinalcordtoolbox.image import Image
 from msct_types import CoordinateValue
 import sct_utils as sct
 
@@ -126,15 +130,14 @@ class ProcessLabels(object):
         if type_process == 'create-viewer':
             self.output_image = self.launch_sagittal_viewer(self.value)
 
-        # save the output image as minimized integers
         if self.fname_output is not None:
-            self.output_image.setFileName(self.fname_output)
             if change_orientation:
                 self.output_image.change_orientation(input_orientation)
+            self.output_image.absolutepath = self.fname_output
             if type_process == 'vert-continuous':
-                self.output_image.save('float32')
+                self.output_image.save(dtype='float32')
             elif type_process != 'plan_ref':
-                self.output_image.save('minimize_int')
+                self.output_image.save(dtype='minimize_int')
             else:
                 self.output_image.save()
 
@@ -142,8 +145,9 @@ class ProcessLabels(object):
         """
         This function add a specified value to all non-zero voxels.
         """
-        image_output = Image(self.image_input, self.verbose)
+        image_output = self.image_input.copy()
         # image_output.data *= 0
+
         coordinates_input = self.image_input.getNonZeroCoordinates()
 
         # for all points with non-zeros neighbors, force the neighbors to 0
@@ -163,9 +167,7 @@ class ProcessLabels(object):
         For one label:  object_define=ProcessLabels( fname_label, coordinates=[coordi]) where coordi is a 'Coordinate' object from msct_types
         For two labels: object_define=ProcessLabels( fname_label, coordinates=[coordi1, coordi2]) where coordi1 and coordi2 are 'Coordinate' objects from msct_types
         """
-        image_output = self.image_input.copy()
-        if not add:
-            image_output.data *= 0
+        image_output = self.image_input.copy() if add else msct_image.zeros_like(self.image_input)
 
         # loop across labels
         for i, coord in enumerate(self.coordinates):
@@ -190,10 +192,9 @@ class ProcessLabels(object):
         -------
         image_output: Image object with labels.
         """
-        # copy input Image object (will use the same header)
-        image_output = self.image_input.copy()
-        # set all voxels to 0
-        image_output.data *= 0
+
+        image_output = msct_image.zeros_like(self.image_input)
+
         # loop across labels
         for i, coord in enumerate(self.coordinates):
             # split coord string
@@ -202,11 +203,11 @@ class ProcessLabels(object):
             z, value = [int(i) for i in list_coord]
             # if z=-1, replace with nz/2
             if z == -1:
-                z = int(round(image_output.dim[2] / 2.0))
+                z = int(np.round(image_output.dim[2] / 2.0))
             # get center of mass of segmentation at given z
             x, y = ndimage.measurements.center_of_mass(np.array(self.image_input.data[:, :, z]))
             # round values to make indices
-            x, y = int(round(x)), int(round(y))
+            x, y = int(np.round(x)), int(np.round(y))
             # display info
             sct.printv('Label #' + str(i) + ': ' + str(x) + ',' + str(y) + ',' + str(z) + ' --> ' + str(value), 1)
             if len(image_output.data.shape) == 3:
@@ -221,33 +222,30 @@ class ProcessLabels(object):
         create a cross.
         :return:
         """
-        output_image = Image(self.image_input, self.verbose)
-        nx, ny, nz, nt, px, py, pz, pt = Image(self.image_input.absolutepath).dim
+        output_image = msct_image.zeros_like(self.image_input)
+        nx, ny, nz, nt, px, py, pz, pt = self.image_input.dim
 
         coordinates_input = self.image_input.getNonZeroCoordinates()
         d = self.cross_radius  # cross radius in pixel
         dx = d / px  # cross radius in mm
         dy = d / py
 
-        # clean output_image
-        output_image.data *= 0
-
         cross_coordinates = self.get_crosses_coordinates(coordinates_input, dx, self.image_ref, self.dilate)
 
         for coord in cross_coordinates:
-            output_image.data[int(round(coord.x)), int(round(coord.y)), int(round(coord.z))] = coord.value
+            output_image.data[int(np.round(coord.x)), int(np.round(coord.y)), int(np.round(coord.z))] = coord.value
 
         return output_image
 
     @staticmethod
-    def get_crosses_coordinates(coordinates_input, gapxy=15, image_ref=None, dilate=False):
+    def get_crosses_coordinates(coordinates_input, gapxy=15, image_ref=None, dilate=False, verbose=0):
         from msct_types import Coordinate
 
         # if reference image is provided (segmentation), we draw the cross perpendicular to the centerline
         if image_ref is not None:
             # smooth centerline
             from sct_straighten_spinalcord import smooth_centerline
-            x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(self.image_ref, verbose=self.verbose)
+            x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(image_ref, verbose=verbose)
 
         # compute crosses
         cross_coordinates = []
@@ -309,8 +307,8 @@ class ProcessLabels(object):
         """
         Create a plane of thickness="width" and changes its value with an offset and a gap between labels.
         """
-        image_output = Image(self.image_input, self.verbose)
-        image_output.data *= 0
+        image_output = msct_image.zeros_like(self.image_input)
+
         coordinates_input = self.image_input.getNonZeroCoordinates()
 
         # for all points with non-zeros neighbors, force the neighbors to 0
@@ -324,13 +322,11 @@ class ProcessLabels(object):
         Generate a plane in the reference space for each label present in the input image
         """
 
-        image_output = Image(self.image_ref, self.verbose)
-        image_output.data *= 0
+        image_output = msct_image.zeros_like(Image(self.image_ref))
 
-        image_input_neg = Image(self.image_input, self.verbose).copy()
-        image_input_pos = Image(self.image_input, self.verbose).copy()
-        image_input_neg.data *= 0
-        image_input_pos.data *= 0
+        image_input_neg = msct_image.zeros_like(Image(self.image_input))
+        image_input_pos = msct_image.zeros_like(Image(self.image_input))
+
         X, Y, Z = (self.image_input.data < 0).nonzero()
         for i in range(len(X)):
             image_input_neg.data[X[i], Y[i], Z[i]] = -self.image_input.data[X[i], Y[i], Z[i]]  # in order to apply getNonZeroCoordinates
@@ -341,7 +337,7 @@ class ProcessLabels(object):
         coordinates_input_neg = image_input_neg.getNonZeroCoordinates()
         coordinates_input_pos = image_input_pos.getNonZeroCoordinates()
 
-        image_output.changeType('float32')
+        image_output.change_type('float32')
         for coord in coordinates_input_neg:
             image_output.data[:, :, int(coord.z)] = -coord.value  # PB: takes the int value of coord.value
         for coord in coordinates_input_pos:
@@ -361,8 +357,7 @@ class ProcessLabels(object):
         """
 
         # 0. Initialization of output image
-        output_image = self.image_input.copy()
-        output_image.data *= 0
+        output_image = msct_image.zeros_like(self.image_input)
 
         # 1. Extraction of coordinates from all non-null voxels in the image. Coordinates are sorted by value.
         coordinates = self.image_input.getNonZeroCoordinates(sorting='value')
@@ -378,8 +373,8 @@ class ProcessLabels(object):
         # 3. Compute the center of mass of each group of voxels and write them into the output image
         for value, list_coord in groups.items():
             center_of_mass = sum(list_coord) / float(len(list_coord))
-            sct.printv("Value = " + str(center_of_mass.value) + " : (" + str(center_of_mass.x) + ", " + str(center_of_mass.y) + ", " + str(center_of_mass.z) + ") --> ( " + str(round(center_of_mass.x)) + ", " + str(round(center_of_mass.y)) + ", " + str(round(center_of_mass.z)) + ")", verbose=self.verbose)
-            output_image.data[int(round(center_of_mass.x)), int(round(center_of_mass.y)), int(round(center_of_mass.z))] = center_of_mass.value
+            sct.printv("Value = " + str(center_of_mass.value) + " : (" + str(center_of_mass.x) + ", " + str(center_of_mass.y) + ", " + str(center_of_mass.z) + ") --> ( " + str(np.round(center_of_mass.x)) + ", " + str(np.round(center_of_mass.y)) + ", " + str(np.round(center_of_mass.z)) + ")", verbose=self.verbose)
+            output_image.data[int(np.round(center_of_mass.x)), int(np.round(center_of_mass.y)), int(np.round(center_of_mass.z))] = center_of_mass.value
 
         return output_image
 
@@ -388,8 +383,8 @@ class ProcessLabels(object):
         Take all non-zero values, sort them along the inverse z direction, and attributes the values 1,
         2, 3, etc. This function assuming RPI orientation.
         """
-        image_output = Image(self.image_input, self.verbose)
-        image_output.data *= 0
+        image_output = msct_image.zeros_like(self.image_input)
+
         coordinates_input = self.image_input.getNonZeroCoordinates(sorting='z', reverse_coord=True)
 
         # for all points with non-zeros neighbors, force the neighbors to 0
@@ -405,8 +400,8 @@ class ProcessLabels(object):
         a segmentation image with vertebral levels labelized.
         Labels are assumed to be non-zero and incremented from top to bottom, assuming a RPI orientation
         """
-        image_output = Image(self.image_input, self.verbose)
-        image_output.data *= 0
+        image_output = msct_image.zeros_like(self.image_input)
+
         coordinates_input = self.image_input.getNonZeroCoordinates()
         coordinates_ref = self.image_ref.getNonZeroCoordinates(sorting='value')
 
@@ -452,27 +447,29 @@ class ProcessLabels(object):
         if len(coordinates_input) != len(coordinates_ref):
             sct.printv('ERROR: labels mismatch', 1, 'warning')
         for coord in coordinates_input:
-            if round(coord.value) not in [round(coord_ref.value) for coord_ref in coordinates_ref]:
+            if np.round(coord.value) not in [np.round(coord_ref.value) for coord_ref in coordinates_ref]:
                 sct.printv('ERROR: labels mismatch', 1, 'warning')
         for coord_ref in coordinates_ref:
-            if round(coord_ref.value) not in [round(coord.value) for coord in coordinates_input]:
+            if np.round(coord_ref.value) not in [np.round(coord.value) for coord in coordinates_input]:
                 sct.printv('ERROR: labels mismatch', 1, 'warning')
 
         result = 0.0
         for coord in coordinates_input:
             for coord_ref in coordinates_ref:
-                if round(coord_ref.value) == round(coord.value):
+                if np.round(coord_ref.value) == np.round(coord.value):
                     result += (coord_ref.z - coord.z) ** 2
                     break
-        result = math.sqrt(result / len(coordinates_input))
+        result = np.sqrt(result / len(coordinates_input))
         sct.printv('MSE error in Z direction = ' + str(result) + ' mm')
 
         if result > threshold_mse:
-            f = open(self.image_input.path + 'error_log_' + self.image_input.file_name + '.txt', 'w')
-            f.write(
-                'The labels error (MSE) between ' + self.image_input.file_name + ' and ' + self.image_ref.file_name + ' is: ' + str(
-                    result))
-            f.close()
+            parent, stem, ext = sct.extract_fname(self.image_input.absolutepath)
+            fname_report = os.path.join(parent, 'error_log_{}.txt'.format(stem))
+            with open(fname_report, 'w') as f:
+                f.write('The labels error (MSE) between {} and {} is: {}\n'.format(
+                 os.path.relpath(self.image_input.absolutepath, os.path.dirname(fname_report)),
+                 os.path.relpath(self.image_ref.absolutepath, os.path.dirname(fname_report)),
+                 result))
 
         return result
 
@@ -504,21 +501,20 @@ class ProcessLabels(object):
         The symmetry option enables to remove labels from reference image that are not in input image
         """
         # image_output = Image(self.image_input.dim, orientation=self.image_input.orientation, hdr=self.image_input.hdr, verbose=self.verbose)
-        image_output = Image(self.image_input, verbose=self.verbose)
-        image_output.data *= 0  # put all voxels to 0
+        image_output = msct_image.zeros_like(self.image_input)
 
         result_coord_input, result_coord_ref = self.remove_label_coord(self.image_input.getNonZeroCoordinates(coordValue=True),
                                                                        self.image_ref.getNonZeroCoordinates(coordValue=True), symmetry)
 
         for coord in result_coord_input:
-            image_output.data[int(coord.x), int(coord.y), int(coord.z)] = int(round(coord.value))
+            image_output.data[int(coord.x), int(coord.y), int(coord.z)] = int(np.round(coord.value))
 
         if symmetry:
             # image_output_ref = Image(self.image_ref.dim, orientation=self.image_ref.orientation, hdr=self.image_ref.hdr, verbose=self.verbose)
             image_output_ref = Image(self.image_ref, verbose=self.verbose)
             for coord in result_coord_ref:
-                image_output_ref.data[int(coord.x), int(coord.y), int(coord.z)] = int(round(coord.value))
-            image_output_ref.setFileName(self.fname_output[1])
+                image_output_ref.data[int(coord.x), int(coord.y), int(coord.z)] = int(np.round(coord.value))
+            image_output_ref.absolutepath = self.fname_output[1]
             image_output_ref.save('minimize_int')
 
             self.fname_output = self.fname_output[0]
@@ -580,7 +576,7 @@ class ProcessLabels(object):
             if type is 'discrete':
                 c_p = im_dest.transfo_phys2pix([[c.x, c.y, c.y]])[0]
             elif type is 'continuous':
-                c_p = im_dest.transfo_phys2continuouspix([[c.x, c.y, c.y]])[0]
+                c_p = im_dest.transfo_phys2pix([[c.x, c.y, c.y]], real=False)[0]
             else:
                 raise ValueError("The value of 'type' should either be 'discrete' or 'continuous'.")
             dest_coord.append(CoordinateValue([c_p[0], c_p[1], c_p[2], c.value]))
@@ -622,7 +618,7 @@ class ProcessLabels(object):
 
         # for all points with non-zeros neighbors, force the neighbors to 0
         for i in range(0, len(coordinates_input) - 1):
-            dist = math.sqrt((coordinates_input[i].x - coordinates_input[i + 1].x)**2 + (coordinates_input[i].y - coordinates_input[i + 1].y)**2 + (coordinates_input[i].z - coordinates_input[i + 1].z)**2)
+            dist = np.sqrt((coordinates_input[i].x - coordinates_input[i + 1].x)**2 + (coordinates_input[i].y - coordinates_input[i + 1].y)**2 + (coordinates_input[i].z - coordinates_input[i + 1].z)**2)
             if dist < max_dist:
                 sct.printv('Warning: the distance between label ' + str(i) + '[' + str(coordinates_input[i].x) + ',' + str(coordinates_input[i].y) + ',' + str(
                     coordinates_input[i].z) + ']=' + str(coordinates_input[i].value) + ' and label ' + str(i + 1) + '[' + str(
@@ -638,8 +634,7 @@ class ProcessLabels(object):
         :return:
         """
         im_input = Image(self.image_input, self.verbose)
-        im_output = Image(self.image_input, self.verbose)
-        im_output.data *= 0
+        im_output = msct_image.zeros_like(self.image_input)
 
         # 1. extract vertebral levels from input image
         #   a. extract centerline
@@ -658,7 +653,7 @@ class ProcessLabels(object):
         length_levels = {}
         for level in vertebral_levels:
             indexes_slice = np.where(value_centerline == level)
-            length_levels[level] = np.sum([math.sqrt(((x_centerline_fit[indexes_slice[0][index_slice + 1]] - x_centerline_fit[indexes_slice[0][index_slice]]) * px)**2 +
+            length_levels[level] = np.sum([np.sqrt(((x_centerline_fit[indexes_slice[0][index_slice + 1]] - x_centerline_fit[indexes_slice[0][index_slice]]) * px)**2 +
                                                      ((y_centerline_fit[indexes_slice[0][index_slice + 1]] - y_centerline_fit[indexes_slice[0][index_slice]]) * py)**2 +
                                                      ((z_centerline_fit[indexes_slice[0][index_slice + 1]] - z_centerline_fit[indexes_slice[0][index_slice]]) * pz)**2)
                                            for index_slice in range(len(indexes_slice[0]) - 1)])
@@ -672,7 +667,7 @@ class ProcessLabels(object):
             level = value_centerline[it]
             indexes_slice = np.where(value_centerline == level)
             indexes_slice = indexes_slice[0][indexes_slice[0] >= it]
-            distance_from_level = np.sum([math.sqrt(((x_centerline_fit[indexes_slice[index_slice + 1]] - x_centerline_fit[indexes_slice[index_slice]]) * px * px) ** 2 +
+            distance_from_level = np.sum([np.sqrt(((x_centerline_fit[indexes_slice[index_slice + 1]] - x_centerline_fit[indexes_slice[index_slice]]) * px * px) ** 2 +
                                                     ((y_centerline_fit[indexes_slice[index_slice + 1]] - y_centerline_fit[indexes_slice[index_slice]]) * py * py) ** 2 +
                                                     ((z_centerline_fit[indexes_slice[index_slice + 1]] - z_centerline_fit[indexes_slice[index_slice]]) * pz * pz) ** 2)
                                           for index_slice in range(len(indexes_slice) - 1)])
@@ -681,7 +676,7 @@ class ProcessLabels(object):
         # 3. saving data
         # for each slice, get all non-zero pixels and replace with continuous values
         coordinates_input = self.image_input.getNonZeroCoordinates()
-        im_output.changeType('float32')
+        im_output.change_type(np.float32)
         # for all points in input, find the value that has to be set up, depending on the vertebral level
         for i, coord in enumerate(coordinates_input):
             im_output.data[int(coord.x), int(coord.y), int(coord.z)] = continuous_values[coord.z]
@@ -694,12 +689,11 @@ class ProcessLabels(object):
 
         params = base.AnatomicalParams()
         params.vertebraes = labels
-        params.input_file_name = self.image_input.file_name
+        params.input_file_name = self.image_input.absolutepath
         params.output_file_name = self.fname_output
         params.subtitle = self.msg
-        output = self.image_input.copy()
-        output.data *= 0
-        output.setFileName(self.fname_output)
+        output = msct_image.zeros_like(self.image_input)
+        output.absolutepath = self.fname_output
         launch_sagittal_dialog(self.image_input, output, params)
 
         return output

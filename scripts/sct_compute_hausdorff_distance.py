@@ -10,15 +10,16 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+from __future__ import absolute_import, division
+
 import sys, io, os, time, shutil
 
 import numpy as np
 
 import sct_utils as sct
-from msct_image import Image, get_dimension
-from sct_image import set_orientation
+import spinalcordtoolbox.image as msct_image
+from spinalcordtoolbox.image import Image
 from msct_parser import Parser
-from sct_image import get_orientation
 
 # TODO: display results ==> not only max : with a violin plot of h1 and h2 distribution ? see dev/straightening --> seaborn.violinplot
 # TODO: add the option Hyberbolic Hausdorff's distance : see  choi and seidel paper
@@ -44,17 +45,20 @@ class Thinning:
         self.dim_im = len(self.image.data.shape)
 
         if self.dim_im == 2:
-            self.thinned_image = Image(param=self.zhang_suen(self.image.data), absolutepath=os.path.join(self.image.path, self.image.file_name + '_thinned' + self.image.ext), hdr=self.image.hdr)
+            self.thinned_image = msct_image.empty_like(self.image)
+            self.thinned_image.data = self.zhang_suen(self.image.data)
+            self.thinned_image.absolutepath = sct.add_suffix(self.image.absolutepath, "_thinned")
 
         elif self.dim_im == 3:
             if not self.image.orientation == 'IRP':
-                from sct_image import set_orientation
                 sct.printv('-- changing orientation ...')
-                self.image = set_orientation(self.image, 'IRP')
+                self.image.change_orientation('IRP')
 
             thinned_data = np.asarray([self.zhang_suen(im_slice) for im_slice in self.image.data])
 
-            self.thinned_image = Image(param=thinned_data, absolutepath=os.path.join(self.image.path, self.image.file_name + '_thinned' + self.image.ext), hdr=self.image.hdr)
+            self.thinned_image = msct_image.empty_like(self.image)
+            self.thinned_image.data = thinned_data
+            self.thinned_image.absolutepath = sct.add_suffix(self.image.absolutepath, "_thinned")
 
     # ------------------------------------------------------------------------------------------------------------------
     def get_neighbours(self, x, y, image):
@@ -207,12 +211,12 @@ class ComputeDistances:
         if self.dim_im == 3:
             self.orientation1 = self.im1.orientation
             if self.orientation1 != 'IRP':
-                self.im1 = set_orientation(self.im1, 'IRP')
+                self.im1.change_orientation('IRP', generate_path=True)
 
             if self.im2 is not None:
                 self.orientation2 = self.im2.orientation
                 if self.orientation2 != 'IRP':
-                    self.im2 = set_orientation(self.im2, 'IRP')
+                    self.im2.change_orientation('IRP', generate_path=True)
 
         if self.param.thinning:
             self.thinning1 = Thinning(self.im1, self.param.verbose)
@@ -265,8 +269,8 @@ class ComputeDistances:
 
     # ------------------------------------------------------------------------------------------------------------------
     def compute_dist_2im_2d(self):
-        nx1, ny1, nz1, nt1, px1, py1, pz1, pt1 = get_dimension(self.im1)
-        nx2, ny2, nz2, nt2, px2, py2, pz2, pt2 = get_dimension(self.im2)
+        nx1, ny1, nz1, nt1, px1, py1, pz1, pt1 = self.im1.dim
+        nx2, ny2, nz2, nt2, px2, py2, pz2, pt2 = self.im2.dim
 
         assert np.isclose(px1, px2) and np.isclose(py1, py2) and np.isclose(px1, py1)
         self.dim_pix = py1
@@ -285,7 +289,7 @@ class ComputeDistances:
 
     # ------------------------------------------------------------------------------------------------------------------
     def compute_dist_1im_3d(self):
-        nx1, ny1, nz1, nt1, px1, py1, pz1, pt1 = get_dimension(self.im1)
+        nx1, ny1, nz1, nt1, px1, py1, pz1, pt1 = self.im1.dim
         self.dim_pix = py1
 
         if self.param.thinning:
@@ -299,9 +303,9 @@ class ComputeDistances:
 
     # ------------------------------------------------------------------------------------------------------------------
     def compute_dist_2im_3d(self):
-        nx1, ny1, nz1, nt1, px1, py1, pz1, pt1 = get_dimension(self.im1)
-        nx2, ny2, nz2, nt2, px2, py2, pz2, pt2 = get_dimension(self.im2)
-        # assert round(pz1, 5) == round(pz2, 5) and round(py1, 5) == round(py2, 5)
+        nx1, ny1, nz1, nt1, px1, py1, pz1, pt1 = self.im1.dim
+        nx2, ny2, nz2, nt2, px2, py2, pz2, pt2 = self.im2.dim
+        # assert np.round(pz1, 5) == np.round(pz2, 5) and np.round(py1, 5) == np.round(py2, 5)
         assert nx1 == nx2
         self.dim_pix = py1
 
@@ -373,14 +377,13 @@ def resample_image(fname, suffix='_resampled.nii.gz', binary=False, npx=0.3, npy
     :return: file name after resampling (or original fname if it was already in the correct resolution)
     """
     im_in = Image(fname)
-    orientation = get_orientation(im_in)
+    orientation = im_in.orientation
     if orientation != 'RPI':
-        im_in = set_orientation(im_in, 'RPI')
-        im_in.save()
-        fname = im_in.absolutepath
+        fname = im_in.change_orientation(im_in, 'RPI', generate_path=True).save().absolutepath
+
     nx, ny, nz, nt, px, py, pz, pt = im_in.dim
 
-    if round(px, 2) != round(npx, 2) or round(py, 2) != round(npy, 2):
+    if np.round(px, 2) != np.round(npx, 2) or np.round(py, 2) != np.round(npy, 2):
         name_resample = sct.extract_fname(fname)[1] + suffix
         if binary:
             interpolation = 'nn'
@@ -393,23 +396,23 @@ def resample_image(fname, suffix='_resampled.nii.gz', binary=False, npx=0.3, npy
         if nz == 1:  # when input data was 2d: re-convert data 3d-->2d
             sct.run(['sct_image', '-i', name_resample, '-split', 'z'])
             im_split = Image(name_resample.split('.nii.gz')[0] + '_Z0000.nii.gz')
-            im_split.setFileName(name_resample)
-            im_split.save()
+            im_split.save(name_resample)
 
         if binary:
             sct.run(['sct_maths', '-i', name_resample, '-bin', str(thr), '-o', name_resample])
 
         if orientation != 'RPI':
-            im_resample = Image(name_resample)
-            im_resample = set_orientation(im_resample, orientation)
-            im_resample.save()
-            name_resample = im_resample.absolutepath
+            name_resample = Image(name_resample) \
+             .change_orientation(orientation, generate_path=True) \
+             .save() \
+             .absolutepath
+
         return name_resample
     else:
         if orientation != 'RPI':
-            im_in = set_orientation(im_in, orientation)
-            im_in.save()
-            fname = im_in.absolutepath
+            fname = sct.add_suffix(fname, "_RPI")
+            im_in = msct_image.change_orientation(im_in, orientation).save(fname)
+
         sct.printv('Image resolution already ' + str(npx) + 'x' + str(npy) + 'xpz')
         return fname
 
@@ -523,8 +526,10 @@ if __name__ == "__main__":
 
         # now = time.time()
         input_im1 = Image(resample_image(im1_name, binary=True, thr=0.5, npx=resample_to, npy=resample_to))
+        input_im1.absolutepath = os.path.basename(input_fname)
         if im2_name is not None:
             input_im2 = Image(resample_image(im2_name, binary=True, thr=0.5, npx=resample_to, npy=resample_to))
+            input_im2.absolutepath = os.path.basename(input_second_fname)
         else:
             input_im2 = None
 
@@ -532,9 +537,9 @@ if __name__ == "__main__":
 
         # TODO change back the orientatin of the thinned image
         if param.thinning:
-            sct.copy(computation.thinning1.thinned_image.file_name + computation.thinning1.thinned_image.ext, os.path.join(curdir, sct.extract_fname(input_fname)[1] + '_thinned' + sct.extract_fname(input_fname)[2]))
+            computation.thinning1.thinned_image.save(os.path.join(curdir, sct.add_suffix(os.path.basename(input_fname), '_thinned')))
             if im2_name is not None:
-                sct.copy(computation.thinning2.thinned_image.file_name + computation.thinning2.thinned_image.ext, os.path.join(curdir, sct.extract_fname(input_second_fname)[1] + '_thinned' + sct.extract_fname(input_second_fname)[2]))
+                computation.thinning2.thinned_image.save(os.path.join(curdir, sct.add_suffix(os.path.basename(input_second_fname), '_thinned')))
 
         os.chdir(curdir)
 

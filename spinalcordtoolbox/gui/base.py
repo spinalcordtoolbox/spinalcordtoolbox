@@ -253,7 +253,7 @@ class BaseDialog(QtGui.QDialog):
         try:
             self._controller.undo()
         except InvalidActionWarning as err:
-            self.update_warning(err.message)
+            self.update_warning(str(err))
 
     def show(self):
         """Override the base class show to fix a bug found in MAC"""
@@ -381,7 +381,7 @@ class BaseController(object):
             logger.warning('There is no information to save')
             raise IOError('There is no information to save')
         if file_name:
-            self._overlay_image.setFileName(file_name)
+            self._overlay_image.absolutepath = file_name
 
         if self._overlay_image.absolutepath == self.image.absolutepath:
             raise IOError('Aborting: the original file and the labeled file are the same', self._overlay_image.absolutepath)

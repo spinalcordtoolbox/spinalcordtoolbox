@@ -12,6 +12,8 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+from __future__ import division, absolute_import
+
 import os
 import sys
 import numpy as np
@@ -22,9 +24,9 @@ from scipy.ndimage import distance_transform_edt
 
 from spinalcordtoolbox.centerline import optic
 import sct_utils as sct
-from msct_image import Image
+import spinalcordtoolbox.image as msct_image
+from spinalcordtoolbox.image import Image
 from msct_parser import Parser
-from sct_image import set_orientation
 
 import spinalcordtoolbox.resample.nipy_resample
 from spinalcordtoolbox.deepseg_sc.cnn_models import nn_architecture_seg, nn_architecture_ctr
@@ -103,14 +105,10 @@ def scale_intensity(data, out_min=0, out_max=255):
 def apply_intensity_normalization(img_path, fname_out, params=None):
     """Standardize the intensity range."""
     img = Image(img_path)
-    img_normalized = img.copy()
-    data2norm = img.data.astype(np.float32)
 
-    img_normalized.data = scale_intensity(data2norm)
-
-    img_normalized.changeType('float32')
-    img_normalized.setFileName(fname_out)
-    img_normalized.save()
+    img_normalized = img.change_type(np.float32)
+    img_normalized.data = scale_intensity(img_normalized.data)
+    img_normalized.save(fname_out)
 
 
 def _find_crop_start_end(coord_ctr, crop_size, im_dim):
@@ -132,8 +130,7 @@ def crop_image_around_centerline(filename_in, filename_ctr, filename_out, crop_s
     """Crop the input image around the input centerline file."""
     im_in, data_ctr = Image(filename_in), Image(filename_ctr).data
 
-    im_new = im_in.copy()
-    im_new.dim = tuple([crop_size, crop_size, im_in.dim[2]] + list(im_in.dim[3:]))
+    im_new = msct_image.empty_like(im_in) # but in fact we're going to crop it
 
     x_lst, y_lst = [], []
     data_im_new = np.zeros((crop_size, crop_size, im_in.dim[2]))
@@ -154,9 +151,7 @@ def crop_image_around_centerline(filename_in, filename_ctr, filename_out, crop_s
             y_lst.append(str(y_start))
 
     im_new.data = data_im_new
-    im_new.setFileName(filename_out)
-    im_new.save()
-    del im_in, im_new
+    im_new.save(filename_out)
 
     return x_lst, y_lst
 
@@ -202,7 +197,7 @@ def _fill_z_holes(zz_lst, data, z_spaccing):
         z_ref_start, z_ref_end = z_hole_start - 1, z_hole_end
         slice_ref_start, slice_ref_end = data[:, :, z_ref_start], data[:, :, z_ref_end]
 
-        hole_cur_lst = range(z_hole_start, z_hole_end)
+        hole_cur_lst = list(range(z_hole_start, z_hole_end))
         lenght_hole = len(hole_cur_lst) + 1
         phys_lenght_hole = lenght_hole * z_spaccing
 
@@ -257,10 +252,7 @@ def post_processing_volume_wise(fname_in):
     zz_holes = _remove_extrem_holes(zz_zeros, im_in.dim[2] - 1, 0)
     # filling z_holes, i.e. interpolate for z_slice not segmented
     im_in.data = _fill_z_holes(zz_holes, data_in, im_in.dim[6]) if len(zz_holes) else data_in
-
-    im_in.setFileName(fname_in)
-    im_in.save()
-    del im_in
+    im_in.save(fname_in)
 
 
 def scan_slice(z_slice, model, mean_train, std_train, coord_lst, patch_shape, z_out_dim):
@@ -306,8 +298,7 @@ def heatmap(filename_in, filename_out, model, patch_shape, mean_train, std_train
     """Compute the heatmap with CNN_1 representing the SC localization."""
     im = Image(filename_in)
     data_im = im.data.astype(np.float32)
-    im_out = im.copy()
-    im_out.changeType('uint8')
+    im_out = msct_image.change_type(im, "uint8")
     del im
     data = np.zeros(im_out.data.shape)
 
@@ -385,8 +376,7 @@ def heatmap(filename_in, filename_out, model, patch_shape, mean_train, std_train
         data[:, :, zz] = distance_transform_edt(data[:, :, zz])
 
     im_out.data = data
-    im_out.setFileName(filename_out)
-    im_out.save()
+    im_out.save(filename_out)
     del im_out
 
     # z_max is used to reject brain sections
@@ -438,9 +428,7 @@ def segment_2d(model_fname, contrast_type, input_size, fname_in, fname_out):
     seg_model.load_weights(model_fname)
 
     image_normalized = Image(fname_in)
-    seg_crop = image_normalized.copy()
-    seg_crop.data *= 0
-    seg_crop.changeType('uint8')
+    seg_crop = msct_image.zeros_like(image_normalized, dtype=np.uint8)
 
     data_norm = image_normalized.data
     x_cOm, y_cOm = None, None
@@ -455,8 +443,8 @@ def segment_2d(model_fname, contrast_type, input_size, fname_in, fname_out):
         if 1 in pred_seg_pp:
             x_cOm, y_cOm = center_of_mass(pred_seg_pp)
             x_cOm, y_cOm = np.round(x_cOm), np.round(y_cOm)
-    seg_crop.setFileName(fname_out)
-    seg_crop.save()
+
+    seg_crop.save(fname_out)
 
     return seg_crop.data
 
@@ -464,9 +452,7 @@ def segment_2d(model_fname, contrast_type, input_size, fname_in, fname_out):
 def uncrop_image(fname_ref, fname_out, data_crop, x_crop_lst, y_crop_lst):
     """Reconstruc the data from the crop segmentation."""
     im = Image(fname_ref)
-    seg_unCrop = im.copy()
-    seg_unCrop.data *= 0
-    seg_unCrop.changeType('uint8')
+    seg_unCrop = msct_image.zeros_like(im, dtype=np.uint8)
 
     crop_size_x, crop_size_y = data_crop.shape[:2]
 
@@ -477,8 +463,7 @@ def uncrop_image(fname_ref, fname_out, data_crop, x_crop_lst, y_crop_lst):
         y_end = y_start + crop_size_y if y_start + crop_size_y < seg_unCrop.dim[1] else seg_unCrop.dim[1]
         seg_unCrop.data[x_start:x_end, y_start:y_end, zz] = pred_seg[0:x_end - x_start, 0:y_end - y_start]
 
-    seg_unCrop.setFileName(fname_out)
-    seg_unCrop.save()
+    seg_unCrop.save(fname_out)
 
 
 def post_processing_slice_wise(z_slice, x_cOm, y_cOm):
@@ -508,14 +493,12 @@ def segment_3d(model_fname, contrast_type, fname_in, fname_out):
     seg_model = load_trained_model(model_fname)
 
     im = Image(fname_in)
-    out = im.copy()
-    out.data *= 0
-    out.changeType('uint8')
+    out = msct_image.zeros_like(im, dtype=np.uint8)
 
     # segment the spinal cord
     sct.log.info("Segmenting the spinal cord using deep learning on 3D patches...")
     z_patch_size = dct_patch_sc_3d[contrast_type]['size'][2]
-    z_step_keep = range(0, im.data.shape[2], z_patch_size)
+    z_step_keep = list(range(0, im.data.shape[2], z_patch_size))
     for zz in z_step_keep:
         if zz == z_step_keep[-1]:  # deal with instances where the im.data.shape[2] % patch_size_z != 0
             patch_im = np.zeros(dct_patch_sc_3d[contrast_type]['size'])
@@ -542,9 +525,7 @@ def segment_3d(model_fname, contrast_type, fname_in, fname_out):
             else:
                 out.data[:, :, zz:z_patch_size + zz] = pred_seg_th
 
-    out.setFileName(fname_out)
-    out.save()
-    del im, out
+    out.save(fname_out)
 
 
 def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, ctr_algo='cnn', brain_bool=True, kernel_size='2d', remove_temp_files=1, verbose=1):
@@ -566,9 +547,7 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, ctr_
     im_2orient = Image(file_fname)
     original_orientation = im_2orient.orientation
     if original_orientation != 'RPI':
-        im_orient = set_orientation(im_2orient, 'RPI')
-        im_orient.setFileName(fname_orient)
-        im_orient.save()
+        im_orient = msct_image.change_orientation(im_2orient, 'RPI').save(fname_orient)
     else:
         im_orient = im_2orient
         sct.copy(fname_image_tmp, fname_orient)
@@ -713,9 +692,7 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, ctr_
     sct.log.info("Reorienting the segmentation to the original image orientation...")
     fname_seg = sct.add_suffix(file_fname, '_seg')
     if original_orientation != 'RPI':
-        im_seg_orient = set_orientation(Image(fname_seg_RPI), original_orientation)
-        im_seg_orient.setFileName(fname_seg)
-        im_seg_orient.save()
+        im_seg_orient = msct_image.change_orientation(Image(fname_seg_RPI), original_orientation).save(fname_seg)
     else:
         sct.copy(fname_seg_RPI, fname_seg)
 

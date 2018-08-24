@@ -11,11 +11,14 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+from __future__ import absolute_import
+
 import sys, io, os
 
-import sct_utils as sct
-from msct_image import Image
 import numpy as np
+
+import sct_utils as sct
+from spinalcordtoolbox.image import Image
 
 
 def init(param_test):
@@ -37,7 +40,7 @@ def init(param_test):
     default_args = ['-i ' + os.path.join(param_test.folder_data[0], param_test.file_data[0]) + ' -o test.nii.gz' + ' -pad 0,0,'+str(param_test.pad),
                     '-i ' + os.path.join(param_test.folder_data[1], param_test.file_data[1]) + ' -getorient',  # 3D
                     '-i ' + os.path.join(param_test.folder_data[2], param_test.file_data[2]) + ' -getorient',  # 4D
-                    '-i ' + os.path.join(param_test.folder_data[2], param_test.file_data[2]) + ' -split t',
+                    '-i ' + os.path.join(param_test.folder_data[2], param_test.file_data[2]) + ' -split t -o dmri.nii.gz',
                     '-i ' + input_concat + ' -concat t -o dmri_concat.nii.gz']
 
     # assign default params
@@ -70,14 +73,14 @@ def test_integrity(param_test):
         try:
             path_fname, file_fname, ext_fname = sct.extract_fname(os.path.join(param_test.path_data, param_test.folder_data[2], param_test.file_data[2]))
             ref = Image(os.path.join(param_test.path_data, param_test.dmri_t_slices[0]))
-            new = Image(os.path.join(param_test.path_data, param_test.folder_data[2], file_fname + '_T0000' + ext_fname))
+            new = Image(os.path.join(param_test.path_output, file_fname + '_T0000' + ext_fname))
             diff = ref.data - new.data
             if np.sum(diff) > threshold:
                 param_test.status = 99
                 param_test.output += '\nResulting split image differs from gold-standard.\n'
         except Exception as e:
             param_test.status = 99
-            param_test.output += 'ERROR: ' + str(e.message) + str(e.args)
+            param_test.output += 'ERROR: ' + str(e)
 
     elif index_args == 4:
         try:
@@ -90,6 +93,6 @@ def test_integrity(param_test):
                 param_test.output += '\nResulting concatenated image differs from gold-standard (original dmri image).\n'
         except Exception as e:
             param_test.status = 99
-            param_test.output += 'ERROR: ' + str(e.message) + str(e.args)
+            param_test.output += 'ERROR: ' + str(e)
 
     return param_test

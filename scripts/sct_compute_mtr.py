@@ -11,9 +11,11 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+from __future__ import absolute_import, division
 
 import sys
 import os
+
 import sct_utils as sct
 from msct_parser import Parser
 
@@ -33,6 +35,8 @@ class Param:
 # main
 #=======================================================================================================================
 def main(args=None):
+    import numpy as np
+    import spinalcordtoolbox.image as msct_image
 
     # Initialization
     fname_mt0 = ''
@@ -65,8 +69,8 @@ def main(args=None):
     # Copying input data to tmp folder and convert to nii
     sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
     from sct_convert import convert
-    convert(fname_mt0, os.path.join(path_tmp, "mt0.nii"), type='float32')
-    convert(fname_mt1, os.path.join(path_tmp, "mt1.nii"), type='float32')
+    convert(fname_mt0, os.path.join(path_tmp, "mt0.nii"), dtype=np.float32)
+    convert(fname_mt1, os.path.join(path_tmp, "mt1.nii"), dtype=np.float32)
 
     # go to tmp folder
     curdir = os.getcwd()
@@ -74,16 +78,14 @@ def main(args=None):
 
     # compute MTR
     sct.printv('\nCompute MTR...', verbose)
-    from msct_image import Image
-    nii_mt1 = Image('mt1.nii')
+    nii_mt1 = msct_image.Image('mt1.nii')
     data_mt1 = nii_mt1.data
-    data_mt0 = Image('mt0.nii').data
+    data_mt0 = msct_image.Image('mt0.nii').data
     data_mtr = 100 * (data_mt0 - data_mt1) / data_mt0
     # save MTR file
     nii_mtr = nii_mt1
     nii_mtr.data = data_mtr
-    nii_mtr.setFileName('mtr.nii')
-    nii_mtr.save()
+    nii_mtr.save("mtr.nii")
     # sct.run(fsloutput+'fslmaths -dt double mt0.nii -sub mt1.nii -mul 100 -div mt0.nii -thr 0 -uthr 100 mtr.nii', verbose)
 
     # come back

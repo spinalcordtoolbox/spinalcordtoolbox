@@ -4,6 +4,8 @@
 
 """ Qt widgets for manual labeling of images """
 
+from __future__ import absolute_import, division
+
 import logging
 from time import time
 
@@ -63,7 +65,7 @@ class VertebraeWidget(QtGui.QWidget):
             self._checked = labels
             self._unchecked = set(self._check_boxes.keys()) - set(labels)
 
-        for checkbox in self._check_boxes.itervalues():
+        for checkbox in self._check_boxes.values():
             checkbox.setCheckState(QtCore.Qt.Unchecked)
 
         logger.debug('refresh labels {}'.format(self.parent._controller.points))

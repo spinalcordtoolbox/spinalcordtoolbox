@@ -12,12 +12,14 @@
 
 # TODO: offer the option not to compute Hausdorff and Dice at the end: too long for testing.
 
+from __future__ import division, absolute_import
+
 import sys, io, os, shutil
 
 path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
 
 from msct_parser import Parser
-from msct_image import Image
+from spinalcordtoolbox.image import Image
 from sct_convert import convert
 import sct_utils as sct
 
@@ -97,8 +99,8 @@ class MultiLabelRegistration:
         # set new names
         fname_automatic_ml = 'multilabel_automatic_seg.nii.gz'
         fname_template_ml = 'multilabel_template_seg.nii.gz'
-        im_automatic_ml.setFileName(fname_automatic_ml)
-        im_template_ml.setFileName(fname_template_ml)
+        im_automatic_ml.absolutepath = fname_automatic_ml
+        im_template_ml.absolutepath = fname_template_ml
 
         # Create temporary folder and put files in it
         tmp_dir = sct.tmp_create()
@@ -107,10 +109,10 @@ class MultiLabelRegistration:
         path_warp_template2target, file_warp_template2target, ext_warp_template2target = sct.extract_fname(self.fname_warp_template2target)
 
         convert(fname_gm, os.path.join(tmp_dir, file_gm + ext_gm))
-        convert(fname_warp_template, os.path.join(tmp_dir, file_warp_template2target + ext_warp_template2target), squeeze_data=0)
+        convert(fname_warp_template, os.path.join(tmp_dir, file_warp_template2target + ext_warp_template2target))
         if self.fname_warp_target2template is not None:
             path_warp_target2template, file_warp_target2template, ext_warp_target2template = sct.extract_fname(self.fname_warp_target2template)
-            convert(self.fname_warp_target2template, os.path.join(tmp_dir, file_warp_target2template + ext_warp_target2template), squeeze_data=0)
+            convert(self.fname_warp_target2template, os.path.join(tmp_dir, file_warp_target2template + ext_warp_target2template))
 
         curdir = os.getcwd()
         os.chdir(tmp_dir)
@@ -228,19 +230,19 @@ class MultiLabelRegistration:
         self.im_template_wm = thr_im(self.im_template_wm, self.param.thr, self.param.thr)
 
         fname_new_template_gm = 'new_template_gm.nii.gz'
-        im_new_template_gm.setFileName(fname_new_template_gm)
+        im_new_template_gm.absolutepath = fname_new_template_gm
         im_new_template_gm.save()
 
         fname_new_template_wm = 'new_template_wm.nii.gz'
-        im_new_template_wm.setFileName(fname_new_template_wm)
+        im_new_template_wm.absolutepath = fname_new_template_wm
         im_new_template_wm.save()
 
         fname_old_template_wm = 'old_template_wm.nii.gz'
-        self.im_template_wm.setFileName(fname_old_template_wm)
+        self.im_template_wm.absolutepath = fname_old_template_wm
         self.im_template_wm.save()
 
         fname_old_template_gm = 'old_template_gm.nii.gz'
-        self.im_template_gm.setFileName(fname_old_template_gm)
+        self.im_template_gm.absolutepath = fname_old_template_gm
         self.im_template_gm.save()
 
         fname_manual_wmseg = 'target_manual_wmseg.nii.gz'
@@ -440,7 +442,7 @@ def visualize_warp(fname_warp, fname_grid=None, step=3, rm_tmp=True):
         im_grid = Image(param=dat)
         grid_hdr = im_warp.hdr
         im_grid.hdr = grid_hdr
-        im_grid.setFileName(fname_grid)
+        im_grid.absolutepath = fname_grid
         im_grid.save()
         fname_grid_resample = sct.add_suffix(fname_grid, '_resample')
         sct.run(['sct_resample', '-i', fname_grid, '-f', '3x3x1', '-x', 'nn', '-o', fname_grid_resample])

@@ -12,8 +12,13 @@
 
 # TODO: add output check in convert
 
-from msct_parser import Parser
+from __future__ import absolute_import
+
 import sys
+
+import numpy as np
+
+from msct_parser import Parser
 import sct_utils as sct
 
 
@@ -54,21 +59,19 @@ def get_parser():
 
 # conversion
 # ==========================================================================================
-def convert(fname_in, fname_out, squeeze_data=True, type=None, verbose=1):
+def convert(fname_in, fname_out, squeeze_data=True, dtype=None, verbose=1):
     """
     Convert data
     :return True/False
     """
-    from msct_image import Image
-    from sct_utils import printv
-    printv('sct_convert -i ' + fname_in + ' -o ' + fname_out, verbose, 'code')
-    # Open file
-    im = Image(fname_in)
-    # Save file
-    im.setFileName(fname_out)
-    if type is not None:
-        im.changeType(type=type)
-    im.save(squeeze_data=squeeze_data)
+    import spinalcordtoolbox.image as msct_image
+    sct.printv('sct_convert -i ' + fname_in + ' -o ' + fname_out, verbose, 'code')
+    im = msct_image.Image(fname_in)
+    if squeeze_data:
+        im.data = np.squeeze(im.data)
+    if dtype:
+        im.change_type(dtype)
+    im.save(fname_out, mutable=True)
     return im
 
 

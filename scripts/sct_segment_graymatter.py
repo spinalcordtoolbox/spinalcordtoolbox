@@ -40,12 +40,13 @@ Then use the folder gm_model/ (output from msct_multiatlas_seg) in this function
 
 '''
 
+from __future__ import division, absolute_import
+
 import os
 import shutil
 import sys
 import time
 import copy
-from math import exp
 
 import numpy as np
 
@@ -56,10 +57,10 @@ import sct_process_segmentation
 import sct_register_multimodal
 from msct_gmseg_utils import (apply_transfo, average_gm_wm, binarize,
                               normalize_slice, pre_processing, register_data)
-from msct_image import Image
+import spinalcordtoolbox.image as msct_image
+from spinalcordtoolbox.image import Image
 from msct_multiatlas_seg import Model, Param, ParamData, ParamModel
 from msct_parser import Parser
-from sct_image import set_orientation
 import sct_utils as sct
 from sct_utils import (add_suffix, extract_fname, printv, run, tmp_create)
 
@@ -292,8 +293,8 @@ class SegmentGM:
         self.fname_res_gmseg = os.path.join(self.param_seg.path_results, add_suffix(''.join(extract_fname(self.param_seg.fname_im)[1:]), '_gmseg'))
         self.fname_res_wmseg = os.path.join(self.param_seg.path_results, add_suffix(''.join(extract_fname(self.param_seg.fname_im)[1:]), '_wmseg'))
 
-        self.im_res_gmseg.setFileName(self.fname_res_gmseg)
-        self.im_res_wmseg.setFileName(self.fname_res_wmseg)
+        self.im_res_gmseg.absolutepath = self.fname_res_gmseg
+        self.im_res_wmseg.absolutepath = self.fname_res_wmseg
 
         self.im_res_gmseg.save()
         self.im_res_wmseg.save()
@@ -329,10 +330,10 @@ class SegmentGM:
         im.hdr.structarr['pixdim'][1] = self.param_data.axial_res
         im.hdr.structarr['pixdim'][2] = self.param_data.axial_res
         # set the correct orientation
-        im.setFileName('im_to_orient.nii.gz')
-        im.save()
-        im = set_orientation(im, 'IRP')
-        im = set_orientation(im, 'PIL', data_inversion=True)
+        im.save('im_to_orient.nii.gz')
+        # TODO explain this quirk
+        im = msct_image.change_orientation(im, 'IRP')
+        im = msct_image.change_orientation(im, 'PIL', inverse=True)
 
         return im
 
@@ -364,7 +365,7 @@ class SegmentGM:
 
         # for each target slice: normalize
         for target_slice in self.target_im:
-            level_int = int(round(target_slice.level))
+            level_int = int(np.round(target_slice.level))
             if level_int not in self.model.intensities.index:
                 level_int = 0
             norm_im_M = normalize_slice(target_slice.im_M, gm_seg_model[level_int], wm_seg_model[level_int], self.model.intensities['GM'][level_int], self.model.intensities['WM'][level_int], val_min=self.model.intensities['MIN'][level_int], val_max=self.model.intensities['MAX'][level_int])
@@ -392,10 +393,10 @@ class SegmentGM:
                 # compute similarity with or without levels
                 if self.param_seg.fname_level is not None:
                     # EQUATION WITH LEVELS
-                    similarity = exp(-self.param_seg.weight_level * abs(self.target_im[i].level - self.model.slices[j].level)) * exp(-self.param_seg.weight_coord * square_norm)
+                    similarity = np.exp(-self.param_seg.weight_level * abs(self.target_im[i].level - self.model.slices[j].level)) * np.exp(-self.param_seg.weight_coord * square_norm)
                 else:
                     # EQUATION WITHOUT LEVELS
-                    similarity = exp(-self.param_seg.weight_coord * square_norm)
+                    similarity = np.exp(-self.param_seg.weight_coord * square_norm)
                 # add similarity to list
                 list_dic_similarities.append(similarity)
             list_norm_similarities = [float(s) / sum(list_dic_similarities) for s in list_dic_similarities]
@@ -459,7 +460,8 @@ class SegmentGM:
             # (use only one slice to accelerate interpolation)
             im_ref = im_sc_seg_original_rpi.copy()
             im_ref.data = im_ref.data[:, :, iz]
-            im_ref.dim = (nx_ref, ny_ref, 1, nt_ref, px_ref, py_ref, pz_ref, pt_ref)
+            im_ref.header.set_data_shape(im_ref.data.shape)
+
             # correct reference header for this slice
             [[x_0_ref, y_0_ref, z_0_ref]] = im_ref.transfo_pix2phys(coordi=[[0, 0, iz]])
             im_ref.hdr.as_analyze_map()['qoffset_x'] = x_0_ref
@@ -516,17 +518,14 @@ class SegmentGM:
 
         # Put res back in original orientation
         printv('  Reorient resulting segmentations to native orientation...', self.param.verbose, 'normal')
-        fname_gmseg = 'res_gmseg.nii.gz'
-        fname_wmseg = 'res_wmseg.nii.gz'
 
-        im_res_gmseg.setFileName(fname_gmseg)
-        im_res_gmseg.save()
+        im_res_gmseg.save('res_gmseg_rpi.nii.gz') \
+         .change_orientation(self.info_preprocessing['orientation']) \
+         .save('res_gmseg.nii.gz', mutable=True)
 
-        im_res_wmseg.setFileName(fname_wmseg)
-        im_res_wmseg.save()
-
-        im_res_gmseg = set_orientation(im_res_gmseg, self.info_preprocessing['orientation'])
-        im_res_wmseg = set_orientation(im_res_wmseg, self.info_preprocessing['orientation'])
+        im_res_wmseg.save('res_wmseg_rpi.nii.gz') \
+         .change_orientation(self.info_preprocessing['orientation']) \
+         .save('res_wmseg.nii.gz', mutable=True)
 
         return im_res_gmseg, im_res_wmseg
 
@@ -537,8 +536,8 @@ class SegmentGM:
         sct.copy(self.param_seg.fname_seg, tmp_dir_val)
         curdir = os.getcwd()
         os.chdir(tmp_dir_val)
-        fname_manual_gmseg = ''.join(extract_fname(self.param_seg.fname_manual_gmseg)[1:])
-        fname_seg = ''.join(extract_fname(self.param_seg.fname_seg)[1:])
+        fname_manual_gmseg = os.path.basename(self.param_seg.fname_manual_gmseg)
+        fname_seg = os.path.basename(self.param_seg.fname_seg)
 
         im_gmseg = self.im_res_gmseg.copy()
         im_wmseg = self.im_res_wmseg.copy()
@@ -548,12 +547,10 @@ class SegmentGM:
             im_wmseg = binarize(im_wmseg, thr_max=0.5, thr_min=0.5)
 
         fname_gmseg = 'res_gmseg.nii.gz'
-        im_gmseg.setFileName(fname_gmseg)
-        im_gmseg.save()
+        im_gmseg.save(fname_gmseg)
 
         fname_wmseg = 'res_wmseg.nii.gz'
-        im_wmseg.setFileName(fname_wmseg)
-        im_wmseg.save()
+        im_wmseg.save(fname_wmseg)
 
         # get manual WM seg:
         fname_manual_wmseg = 'manual_wmseg.nii.gz'
@@ -620,14 +617,9 @@ class SegmentGM:
         fname_gmseg = self.im_res_gmseg.absolutepath
         fname_wmseg = self.im_res_wmseg.absolutepath
 
-        self.im_res_gmseg.save()
-        self.im_res_wmseg.save()
-
-        if self.im_res_gmseg.orientation is not 'RPI':
-            im_res_gmseg = set_orientation(self.im_res_gmseg, 'RPI')
-            im_res_wmseg = set_orientation(self.im_res_wmseg, 'RPI')
-            fname_gmseg = im_res_gmseg.absolutepath
-            fname_wmseg = im_res_wmseg.absolutepath
+        if self.im_res_gmseg.orientation != "RPI":
+            fname_gmseg = self.im_res_gmseg.change_orientation(self.im_res_gmseg, 'RPI', generate_path=True).save().absolutepath
+            fname_wmseg = self.im_res_wmseg.change_orientation(self.im_res_wmseg, 'RPI', generate_path=True).save().absolutepath
 
         sct_process_segmentation.main(['-i', fname_gmseg, '-p', 'csa', '-ofolder', 'gm_csa', '-no-angle', '1'])
         sct_process_segmentation.main(['-i', fname_wmseg, '-p', 'csa', '-ofolder', 'wm_csa', '-no-angle', '1'])
@@ -733,7 +725,7 @@ def main(args=None):
     seg_gm = SegmentGM(param_seg=param_seg, param_data=param_data, param_model=param_model, param=param)
     seg_gm.segment()
     elapsed_time = time.time() - start_time
-    printv('\nFinished! Elapsed time: ' + str(int(round(elapsed_time))) + 's', param.verbose)
+    printv('\nFinished! Elapsed time: ' + str(int(np.round(elapsed_time))) + 's', param.verbose)
 
     # save quality control and sct.printv(info)
     if param_seg.type_seg == 'bin':

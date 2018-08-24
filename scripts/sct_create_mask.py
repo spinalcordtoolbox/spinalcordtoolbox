@@ -14,20 +14,22 @@
 
 # TODO: scale size in mm.
 
+from __future__ import division, absolute_import
+
 import sys
 import os
 
 import time
 
-import numpy
+import numpy as np
+
 import nibabel
 from scipy import ndimage
 
 import sct_utils as sct
-from sct_image import get_orientation
-from sct_convert import convert
-from msct_image import Image
-from sct_image import copy_header, concat_data
+import spinalcordtoolbox.image as msct_image
+from spinalcordtoolbox.image import Image
+from sct_image import concat_data
 from msct_parser import Parser
 
 
@@ -63,7 +65,7 @@ def main(args=None):
     parser = get_parser()
     arguments = parser.parse(args)
 
-    param.fname_data = arguments['-i']
+    param.fname_data = os.path.abspath(arguments['-i'])
 
     if '-p' in arguments:
         param.process = arguments['-p']
@@ -74,7 +76,7 @@ def main(args=None):
     if '-f' in arguments:
         param.shape = arguments['-f']
     if '-o' in arguments:
-        param.fname_out = arguments['-o']
+        param.fname_out = os.path.abspath(arguments['-o'])
     if '-r' in arguments:
         param.remove_temp_files = int(arguments['-r'])
     if '-v' in arguments:
@@ -104,37 +106,29 @@ def create_mask(param):
 
     # Get output folder and file name
     if param.fname_out == '':
-        param.fname_out = param.file_prefix + file_data + ext_data
+        param.fname_out = os.path.abspath(param.file_prefix + file_data + ext_data)
 
     path_tmp = sct.tmp_create(basename="create_mask", verbose=param.verbose)
 
     sct.printv('\nCheck orientation...', param.verbose)
-    orientation_input = get_orientation(Image(param.fname_data))
+    orientation_input = Image(param.fname_data).orientation
     sct.printv('.. ' + orientation_input, param.verbose)
     reorient_coordinates = False
 
     # copy input data to tmp folder
-    convert(param.fname_data, os.path.join(path_tmp, "data.nii"))
+    Image(param.fname_data).change_orientation("RPI").save(os.path.join(path_tmp, "data_RPI.nii"))
     if method_type == 'centerline':
-        convert(method_val, os.path.join(path_tmp, "centerline.nii.gz"))
+        Image(method_val).change_orientation("RPI").save(os.path.join(path_tmp, "centerline_RPI.nii"))
     if method_type == 'point':
-        convert(method_val, os.path.join(path_tmp, "point.nii.gz"))
+        Image(method_val).change_orientation("RPI").save(os.path.join(path_tmp, "point_RPI.nii"))
 
     # go to tmp folder
     curdir = os.getcwd()
     os.chdir(path_tmp)
 
-    # reorient to RPI
-    sct.printv('\nReorient to RPI...', param.verbose)
-    # if not orientation_input == 'RPI':
-    sct.run(['sct_image', '-i', 'data.nii', '-o', 'data_RPI.nii', '-setorient', 'RPI', '-v', '0'], verbose=False)
-    if method_type == 'centerline':
-        sct.run(['sct_image', '-i', 'centerline.nii.gz', '-o', 'centerline_RPI.nii.gz', '-setorient', 'RPI', '-v', '0'], verbose=False)
-    if method_type == 'point':
-        sct.run(['sct_image', '-i', 'point.nii.gz', '-o', 'point_RPI.nii.gz', '-setorient', 'RPI', '-v', '0'], verbose=False)
     #
     # if method_type == 'centerline':
-    #     orientation_centerline = get_orientation_3d(method_val, filename=True)
+    #     orientation_centerline = Image(method_val).orientation
     #     if not orientation_centerline == 'RPI':
     #         sct.run('sct_image -i ' + method_val + ' -o ' + os.path.join(path_tmp, "centerline.nii.gz") + ' -setorient RPI -v 0', verbose=False)
     #     else:
@@ -146,12 +140,12 @@ def create_mask(param):
     sct.printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz) + ' x ' + str(nt), param.verbose)
     # in case user input 4d data
     if nt != 1:
-        sct.printv('WARNING in ' + os.path.basename(__file__) + ': Input image is 4d but output mask will 3D.', param.verbose, 'warning')
+        sct.printv('WARNING in ' + os.path.basename(__file__) + ': Input image is 4d but output mask will be 3D from first time slice.', param.verbose, 'warning')
         # extract first volume to have 3d reference
-        nii = Image('data_RPI.nii')
+        nii = msct_image.empty_like(Image('data_RPI.nii'))
         data3d = nii.data[:, :, :, 0]
         nii.data = data3d
-        nii.save()
+        nii.save('data_RPI.nii')
 
     if method_type == 'coord':
         # parse to get coordinate
@@ -163,18 +157,18 @@ def create_mask(param):
         # extract coordinate of point
         sct.printv('\nExtract coordinate of point...', param.verbose)
         # TODO: change this way to remove dependence to sct.run. ProcessLabels.display_voxel returns list of coordinates
-        status, output = sct.run(['sct_label_utils', '-i', 'point_RPI.nii.gz', '-display'], verbose=param.verbose)
+        status, output = sct.run(['sct_label_utils', '-i', 'point_RPI.nii', '-display'], verbose=param.verbose)
         # parse to get coordinate
         # TODO fixup... this is quite magic
         coord = output[output.find('Position=') + 10:-17].split(',')
 
     if method_type == 'center':
         # set coordinate at center of FOV
-        coord = round(float(nx) / 2), round(float(ny) / 2)
+        coord = np.round(float(nx) / 2), np.round(float(ny) / 2)
 
     if method_type == 'centerline':
         # get name of centerline from user argument
-        fname_centerline = 'centerline_RPI.nii.gz'
+        fname_centerline = 'centerline_RPI.nii'
     else:
         # generate volume with line along Z at coordinates 'coord'
         sct.printv('\nCreate line...', param.verbose)
@@ -198,7 +192,7 @@ def create_mask(param):
     cy = [0] * nz
     for iz in range(0, nz, 1):
         if iz in z_centerline_not_null:
-            cx[iz], cy[iz] = ndimage.measurements.center_of_mass(numpy.array(data_centerline[:, :, iz]))
+            cx[iz], cy[iz] = ndimage.measurements.center_of_mass(np.array(data_centerline[:, :, iz]))
     # create 2d masks
     file_mask = 'data_mask'
     for iz in range(nz):
@@ -207,7 +201,7 @@ def create_mask(param):
             img = nibabel.Nifti1Image(data_centerline[:, :, iz], None, hdr)
             nibabel.save(img, (file_mask + str(iz) + '.nii'))
         else:
-            center = numpy.array([cx[iz], cy[iz]])
+            center = np.array([cx[iz], cy[iz]])
             mask2d = create_mask2d(param, center, param.shape, param.size, nx, ny, even=param.even, spacing=spacing)
             # Write NIFTI volumes
             img = nibabel.Nifti1Image(mask2d, None, hdr)
@@ -235,26 +229,15 @@ def create_mask(param):
         im_out = concat_data(im_list, 2)
     '''
     fname_list = [file_mask + str(iz) + '.nii' for iz in range(nz)]
-    im_out = concat_data(fname_list, dim=2)
-    im_out.setFileName('mask_RPI.nii.gz')
-    im_out.save()
+    im_out = concat_data(fname_list, dim=2) \
+     .save('mask_RPI.nii.gz')
 
-    # reorient if necessary
-    # if not orientation_input == 'RPI':
-    sct.run(['sct_image', '-i', 'mask_RPI.nii.gz', '-o', 'mask.nii.gz', '-setorient', orientation_input], param.verbose)
-
-    # copy header input --> mask
-    im_dat = Image('data.nii')
-    im_mask = Image('mask.nii.gz')
-    im_mask = copy_header(im_dat, im_mask)
-    im_mask.save()
+    im_out.change_orientation(orientation_input)
+    im_out.header = Image(param.fname_data).header
+    im_out.save(param.fname_out)
 
     # come back
     os.chdir(curdir)
-
-    # Generate output files
-    sct.printv('\nGenerate output files...', param.verbose)
-    sct.generate_output_file(os.path.join(path_tmp, "mask.nii.gz"), param.fname_out)
 
     # Remove temporary files
     if param.remove_temp_files == 1:
@@ -297,19 +280,17 @@ def create_mask2d(param, center, shape, size, nx, ny, even=0, spacing=None):
     offset[1] = int(offset[1])
 
     # initialize 2d grid
-    xx, yy = numpy.mgrid[:nx, :ny]
-    mask2d = numpy.zeros((nx, ny))
+    xx, yy = np.mgrid[:nx, :ny]
+    mask2d = np.zeros((nx, ny))
     xc = center[0]
     yc = center[1]
     if 'mm' in size:
-        from numpy import ceil
         size = int(size[:-2])
         mean_spacing_xy = (spacing[1] + spacing[2]) / 2.0
-        length = round(float(size) / mean_spacing_xy)
-        radius = ceil((int(length) - 1) / 2.0)
+        length = np.round(float(size) / mean_spacing_xy)
+        radius = np.ceil((int(length) - 1) / 2.0)
     else:
-        from numpy import ceil
-        radius = ceil((int(size) - 1) / 2.0)
+        radius = np.ceil((int(size) - 1) / 2.0)
 
     if shape == 'box':
         mask2d[int(xc - radius):int(xc + radius) + 1, int(yc - radius):int(yc + radius) + 1] = 1
@@ -319,7 +300,7 @@ def create_mask2d(param, center, shape, size, nx, ny, even=0, spacing=None):
 
     elif shape == 'gaussian':
         sigma = float(radius)
-        mask2d = numpy.exp(-(((xx + offset[0] - xc)**2) / (2 * (sigma**2)) + ((yy + offset[1] - yc)**2) / (2 * (sigma**2))))
+        mask2d = np.exp(-(((xx + offset[0] - xc)**2) / (2 * (sigma**2)) + ((yy + offset[1] - yc)**2) / (2 * (sigma**2))))
 
     # import matplotlib.pyplot as plt
     # plt.imshow(mask2d)

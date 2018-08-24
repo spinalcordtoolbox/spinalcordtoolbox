@@ -10,11 +10,16 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+from __future__ import absolute_import
+
 import sys
+
+from dipy.io import read_bvals_bvecs
+from dipy.core.gradients import gradient_table
+import dipy.reconst.dti as dti
 
 from msct_parser import Parser
 import sct_utils as sct
-
 
 class Param:
     def __init__(self):
@@ -25,13 +30,6 @@ class Param:
 # ==========================================================================================
 def get_parser():
     param = Param()
-
-    # parser initialisation
-    parser = Parser(__file__)
-
-    # # initialize parameters
-    # param = Param()
-    # param_default = Param()
 
     # Initialize the parser
     parser = Parser(__file__)
@@ -57,6 +55,12 @@ def get_parser():
                       mandatory=False,
                       default_value='standard',
                       example=['standard', 'restore'])
+    parser.add_option(name="-evecs",
+                      type_value="multiple_choice",
+                      description="""To output tensor eigenvectors, set to 1.""",
+                      mandatory=False,
+                      default_value='0',
+                      example=['0', '1'])
     parser.add_option(name='-m',
                       type_value='file',
                       description='Mask used to compute DTI in for faster processing.',
@@ -94,18 +98,19 @@ def main(args = None):
     fname_bvecs = arguments['-bvec']
     prefix = arguments['-o']
     method = arguments['-method']
+    evecs = bool(arguments['-evecs'])
     if "-m" in arguments:
         file_mask = arguments['-m']
     param.verbose = int(arguments['-v'])
 
     # compute DTI
-    if not compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, file_mask):
+    if not compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, evecs, file_mask):
         sct.printv('ERROR in compute_dti()', 1, 'error')
 
 
 # compute_dti
 # ==========================================================================================
-def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, file_mask):
+def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, evecs, file_mask):
     """
     Compute DTI.
     :param fname_in: input 4d file.
@@ -113,18 +118,17 @@ def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, file_mask):
     :param bvecs: bvecs txt file
     :param prefix: output prefix. Example: "dti_"
     :param method: algo for computing dti
+    :param evecs: bool: output diffusion tensor eigenvectors
     :return: True/False
     """
     # Open file.
-    from msct_image import Image
+    from spinalcordtoolbox.image import Image
     nii = Image(fname_in)
     data = nii.data
     sct.printv('data.shape (%d, %d, %d, %d)' % data.shape)
 
     # open bvecs/bvals
-    from dipy.io import read_bvals_bvecs
     bvals, bvecs = read_bvals_bvecs(fname_bvals, fname_bvecs)
-    from dipy.core.gradients import gradient_table
     gtab = gradient_table(bvals, bvecs)
 
     # mask and crop the data. This is a quick way to avoid calculating Tensors on the background of the image.
@@ -155,48 +159,25 @@ def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, file_mask):
     # Compute metrics
     sct.printv('Computing metrics...', param.verbose)
     # FA
-    from dipy.reconst.dti import fractional_anisotropy
-    nii.data = fractional_anisotropy(tenfit.evals)
-    nii.setFileName(prefix + 'FA.nii.gz')
-    nii.save('float32')
+    nii.data = tenfit.fa
+    nii.save(prefix + 'FA.nii.gz', dtype='float32')
     # MD
-    from dipy.reconst.dti import mean_diffusivity
-    nii.data = mean_diffusivity(tenfit.evals)
-    nii.setFileName(prefix + 'MD.nii.gz')
-    nii.save('float32')
+    nii.data = tenfit.md
+    nii.save(prefix + 'MD.nii.gz', dtype='float32')
     # RD
-    from dipy.reconst.dti import radial_diffusivity
-    nii.data = radial_diffusivity(tenfit.evals)
-    nii.setFileName(prefix + 'RD.nii.gz')
-    nii.save('float32')
+    nii.data = tenfit.rd
+    nii.save(prefix + 'RD.nii.gz', dtype='float32')
     # AD
-    from dipy.reconst.dti import axial_diffusivity
-    nii.data = axial_diffusivity(tenfit.evals)
-    nii.setFileName(prefix + 'AD.nii.gz')
-    nii.save('float32')
+    nii.data = tenfit.ad
+    nii.save(prefix + 'AD.nii.gz', dtype='float32')
+    if evecs:
+        data_evecs = tenfit.evecs
+        # output 1st (V1), 2nd (V2) and 3rd (V3) eigenvectors as 4d data
+        for idim in range(3):
+            nii.data = data_evecs[:, :, :, :, idim]
+            nii.save(prefix + 'V' + str(idim+1) + '.nii.gz', dtype="float32")
 
     return True
-
-
-# # Get bvecs
-# # ==========================================================================================
-# def get_bvecs(fname):
-#     """
-#     Read bvecs file and output array
-#     :param fname: bvecs file
-#     :return: (nx3) array
-#     """
-#     text_file = open(fname, 'r')
-#     list_bvecs = text_file.readlines()
-#     text_file.close()
-#     # parse txt file and transform to array
-#     from numpy import array
-#     bvecs = array([[float(j.strip("\n")) for j in list_bvecs[i].split(" ")] for i in range(len(list_bvecs))])
-#     # make sure one dimension is "3"
-#     if not 3 in bvecs.shape:
-#         sct.printv('ERROR: bvecs should be text file with 3 lines (or columns).', 1, 'error')
-#     return bvecs
-#
 
 
 # START PROGRAM

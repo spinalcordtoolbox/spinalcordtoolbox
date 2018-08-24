@@ -10,6 +10,8 @@ Modified: 2017-09-12
 About the license: see the file LICENSE.TXT
 """
 
+from __future__ import print_function, absolute_import, division
+
 import os
 import shutil
 import sys
@@ -17,12 +19,10 @@ import numpy as np
 from scipy.ndimage.measurements import center_of_mass
 import nibabel as nib
 
-
-from msct_image import Image
+import spinalcordtoolbox.image as msct_image
+from spinalcordtoolbox.image import Image
 from msct_parser import Parser
 import sct_utils as sct
-from sct_image import get_orientation, set_orientation
-
 
 def get_parser():
     # Initialize the parser
@@ -90,7 +90,7 @@ class DetectPMJ:
 
         self.tmp_dir = sct.tmp_create(verbose=self.verbose)  # path to tmp directory
 
-        self.orientation_im = get_orientation(Image(self.fname_im))  # to re-orient the data at the end
+        self.orientation_im = Image(self.fname_im).orientation  # to re-orient the data at the end
 
         self.slice2D_im = sct.extract_fname(self.fname_im)[1] + '_midSag.nii'  # file used to do the detection, with only one slice
         self.dection_map_pmj = sct.extract_fname(self.fname_im)[1] + '_map_pmj'  # file resulting from the detection
@@ -140,21 +140,17 @@ class DetectPMJ:
         """Output the PMJ mask."""
         if self.pa_coord != -1:  # If PMJ has been detected
             im = Image(''.join(sct.extract_fname(self.fname_im)[1:]))  # image in PIR orientation
-            im_mask = im.copy()
-            im_mask.data *= 0  # empty mask
+            im_mask = msct_image.zeros_like(im)
 
             im_mask.data[self.pa_coord, self.is_coord, self.rl_coord] = 50  # voxel with value = 50
 
-            im_mask.setFileName(self.fname_out)
-
-            im_mask = set_orientation(im_mask, self.orientation_im, fname_out=self.fname_out)  # reorient data
+            im_mask.change_orientation(self.orientation_im).save(self.fname_out)
 
             x_pmj, y_pmj, z_pmj = np.where(im_mask.data == 50)
             sct.printv('\tx_pmj = ' + str(x_pmj[0]), self.verbose, 'info')
             sct.printv('\ty_pmj = ' + str(y_pmj[0]), self.verbose, 'info')
             sct.printv('\tz_pmj = ' + str(z_pmj[0]), self.verbose, 'info')
 
-            im_mask.save()
 
     def get_max_position(self):
         """Find the position of the PMJ by thresholding the probabilistic map."""
@@ -217,11 +213,10 @@ class DetectPMJ:
     def orient2pir(self):
         """Orient input data to PIR orientation."""
         if self.orientation_im != 'PIR':  # open image and re-orient it to PIR if needed
-            im_tmp = Image(self.fname_im)
-            set_orientation(im_tmp, 'PIR', fname_out=''.join(sct.extract_fname(self.fname_im)[1:]))
+            Image(self.fname_im).change_orientation("PIR").save(''.join(sct.extract_fname(self.fname_im)[1:]))
 
             if self.fname_seg is not None:
-                set_orientation(Image(self.fname_seg), 'PIR', fname_out=''.join(sct.extract_fname(self.fname_seg)[1:]))
+                Image(self.fname_seg).change_orientation('PIR').save(''.join(sct.extract_fname(self.fname_seg)[1:]))
 
     def ifolder2tmp(self):
         """Copy data to tmp folder."""

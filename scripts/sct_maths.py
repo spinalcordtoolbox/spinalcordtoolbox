@@ -10,11 +10,13 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+from __future__ import division, absolute_import
+
 import sys
 
 import numpy as np
 from msct_parser import Parser
-from msct_image import Image
+from spinalcordtoolbox.image import Image
 from sct_utils import printv, extract_fname
 import sct_utils as sct
 
@@ -197,7 +199,7 @@ def main(args = None):
     if '-type' in arguments:
         output_type = arguments['-type']
     else:
-        output_type = ''
+        output_type = None
 
     # Open file(s)
     im = Image(fname_in)
@@ -311,7 +313,7 @@ def main(args = None):
         data_out = denoise_nlmeans(data, patch_radius=p, block_radius=b)
 
     elif '-symmetrize' in arguments:
-        data_out = (data + data[range(data.shape[0] - 1, -1, -1), :, :]) / float(2)
+        data_out = (data + data[list(range(data.shape[0] - 1, -1, -1)), :, :]) / float(2)
 
     elif '-mi' in arguments:
         # input 1 = from flag -i --> im
@@ -341,20 +343,19 @@ def main(args = None):
         # Write output
         nii_out = Image(fname_in)  # use header of input file
         nii_out.data = data_out
-        nii_out.setFileName(fname_out)
-        nii_out.save(type=output_type)
+        nii_out.save(fname_out, dtype=output_type)
     # TODO: case of multiple outputs
     # assert len(data_out) == n_out
     # if n_in == n_out:
     #     for im_in, d_out, fn_out in zip(nii, data_out, fname_out):
     #         im_in.data = d_out
-    #         im_in.setFileName(fn_out)
+    #         im_in.absolutepath = fn_out
     #         if "-w" in arguments:
     #             im_in.hdr.set_intent('vector', (), '')
     #         im_in.save()
     # elif n_out == 1:
     #     nii[0].data = data_out[0]
-    #     nii[0].setFileName(fname_out[0])
+    #     nii[0].absolutepath = fname_out[0]
     #     if "-w" in arguments:
     #             nii[0].hdr.set_intent('vector', (), '')
     #     nii[0].save()
@@ -362,7 +363,7 @@ def main(args = None):
     #     for dat_out, name_out in zip(data_out, fname_out):
     #         im_out = nii[0].copy()
     #         im_out.data = dat_out
-    #         im_out.setFileName(name_out)
+    #         im_out.absolutepath = name_out
     #         if "-w" in arguments:
     #             im_out.hdr.set_intent('vector', (), '')
     #         im_out.save()

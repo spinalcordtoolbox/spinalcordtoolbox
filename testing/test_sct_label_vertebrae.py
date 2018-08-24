@@ -10,7 +10,6 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import shutil
 
 def init(param_test):
     """
@@ -155,7 +154,7 @@ def test_integrity(param_test):
 #             label_results = ProcessLabels(os.path.join(path_output, contrast + '_seg_labeled_center.nii.gz'))
 #             list_label_results = label_results.image_input.getNonZeroCoordinates(sorting='value')
 #             # get dimension
-#             # from msct_image import Image
+#             # from spinalcordtoolbox.image import Image
 #             # img = Image(os.path.join(path_output, contrast+'_seg_labeled.nii.gz'))
 #             nx, ny, nz, nt, px, py, pz, pt = label_results.image_input.dim
 #         except:

@@ -23,18 +23,18 @@ matrix:
     - os: linux
       python: 2.7
       env: SCT_MINICONDA=2 MPLBACKEND=Agg
-    - os: linux
-      python: 2.7
-      env: SCT_MINICONDA=3 MPLBACKEND=Agg
+#    - os: linux
+#      python: 2.7
+#      env: SCT_MINICONDA=3 MPLBACKEND=Agg
     - os: osx
       language: generic
       env: SCT_MINICONDA=2 MPLBACKEND=Agg
 #    - os: osx
 #      language: generic
 #      env: SCT_MINICONDA=2 SCT_VERBOSE_INSTALL=1 MPLBACKEND=Agg
-    - os: osx
-      language: generic
-      env: SCT_MINICONDA=3 MPLBACKEND=Agg
+#    - os: osx
+#      language: generic
+#      env: SCT_MINICONDA=3 MPLBACKEND=Agg
   allow_failures:
     - os: linux
       python: 2.7
@@ -61,7 +61,9 @@ script:
 # test dependencies
 #  - sct_check_dependencies
 # test functions & integrity
-  - bash -c "sudo apt-get install -qq libalglib-dev libinsighttoolkit4-dev; apt-cache show libvtk6-dev && sudo apt-get install -qq libvtk6-dev; apt-cache show libvtk7-dev && sudo apt-get install -qq libvtk7-dev; cd $HOME/build/neuropoly/spinalcordtoolbox/dev/isct_propseg; mkdir -p build; cd build; cmake ..; make; echo"
+#  - bash -c "sudo apt-get install -qq libalglib-dev libinsighttoolkit4-dev; apt-cache show libvtk6-dev && sudo apt-get install -qq libvtk6-dev; apt-cache show libvtk7-dev && sudo apt-get install -qq libvtk7-dev; cd $HOME/build/neuropoly/spinalcordtoolbox/dev/isct_propseg; mkdir -p build; cd build; cmake ..; make; echo"
+  - pip install pylint
+  - bash -c "PYTHONPATH=\"$PWD/scripts:$PWD\" pylint -j3 --py3k --output-format=parseable --errors-only $(git ls-tree --name-only -r HEAD | sort | grep -E '(spinalcordtoolbox|scripts|testing).*\.py' | xargs); exit $(((($?&3))!=0))"
   - pip install coverage
   - bash -c 'echo -ne "import coverage\ncov = coverage.process_startup()\n" > sitecustomize.py'
   - bash -c 'echo -ne "[run]\nconcurrency = multiprocessing\nparallel = True\n" > .coveragerc'

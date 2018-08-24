@@ -10,6 +10,8 @@
 
 # TODO: generalize this code for other things than Dice
 
+from __future__ import absolute_import
+
 import argparse
 
 
