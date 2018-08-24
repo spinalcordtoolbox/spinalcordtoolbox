@@ -394,7 +394,7 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
     slicegroups = [str(i) for i in slices_list]
     if not perslice and not perlevel:
         # ['1,2,3,4,5,6']
-        slicegroups = [','.join(slicegroups)]
+        slicegroups = [';'.join(slicegroups)]
 
     # if user selected vertebral levels and asked for each separate levels
     # slicegroups = ['1,2', '3,4']
@@ -409,16 +409,24 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
         for group in slices_of_interest:
             # for each group: [1, 2, 3, 4] --> ['1,2,3,4']
             # so that slicegroups looks like: ['1,2,3,4','5,6,7,8','9,10,11,12']
-            slicegroups.append([','.join([str(i) for i in group])][0])
-        # if user wants to concatenate all slices of interest into a single slicegroups
-        if not perlevel:
-            slicegroups = [",".join(slicegroups)]
+            slicegroups.append([';'.join([str(i) for i in group])][0])
 
+        if not perlevel:
+            # if user wants to concatenate all slices of interest into a single slicegroups
+            slicegroups = [";".join(slicegroups)]
+            if perslice:
+                # if user wants to get metric per individual slice
+                slicegroups = slicegroups[0].split(';')
     # loop across slicegroups
+    first_pass = True
     for slicegroup in slicegroups:
+        if overwrite and first_pass:
+            overwrite_tmp = 1  # overwrite
+        else:
+            overwrite_tmp = 0
         try:
             # convert list of strings into list of int to use as index
-            ind_slicegroup = [int(i) for i in slicegroup.split(',')]
+            ind_slicegroup = [int(i) for i in slicegroup.split(';')]
             # select portion of data and labels based on slicegroup
             dataz = data[:, :, ind_slicegroup]
             labelsz = np.copy(labels)
@@ -455,8 +463,13 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
                     vert_levels = get_vertebral_level_from_slice(im_vertebral_labeling, ind_slicegroup[0])
                 else:
                     vert_levels = list_levels
+                    # replace "," with ";" for easier CSV parsing
+                if isinstance(vert_levels, int):
+                    vert_levels = str(vert_levels)
+                else:
+                    vert_levels = ';'.join([str(level) for level in vert_levels])
             else:
-                vert_levels = None
+                vert_levels = 'Unknown'
 
         except ValueError:
             # the slice request is out of the range of the image
@@ -466,7 +479,8 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
         save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_labels_names, combined_labels_names,
                      slicegroup, indiv_labels_value, indiv_labels_std, indiv_labels_fract_vol,
                      combined_labels_value, combined_labels_std, combined_labels_fract_vol, fname_output, fname_data,
-                     method, overwrite, fname_normalizing_label, fixed_label, vert_levels=vert_levels)
+                     method, overwrite_tmp, fname_normalizing_label, fixed_label, vert_levels=vert_levels)
+        first_pass = False  # now we can systematically overwrite
 
         # display results
         # TODO: simply print out the created csv file when we switch to csv output
@@ -562,7 +576,7 @@ def remove_slices(data_to_crop, slices_of_interest):
 def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_labels_names, combined_labels_names,
                  slices_of_interest, indiv_labels_value, indiv_labels_std, indiv_labels_fract_vol,
                  combined_labels_value, combined_labels_std, combined_labels_fract_vol, fname_output, fname_data,
-                 method, overwrite, fname_normalizing_label, fixed_label=None, vert_levels=None):
+                 method, overwrite, fname_normalizing_label, fixed_label=None, vert_levels='Unknown'):
     """
     Save results in the output type selected by user
     :param labels_id_user:
@@ -570,7 +584,7 @@ def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_la
     :param combined_labels_ids:
     :param indiv_labels_names:
     :param combined_labels_names:
-    :param slices_of_interest:
+    :param slices_of_interest: str
     :param indiv_labels_value:
     :param indiv_labels_std:
     :param indiv_labels_fract_vol:
@@ -583,20 +597,11 @@ def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_la
     :param overwrite:
     :param fname_normalizing_label:
     :param fixed_label:
-    :param vert_levels: int, list of int, or None
+    :param vert_levels: str
     :return:
     """
 
     sct.printv('\nSaving results in: ' + fname_output + ' ...')
-
-    # Format vertebral levels
-    if isinstance(vert_levels, int):
-        display_level = str(vert_levels)
-    elif isinstance(vert_levels, list):
-        display_level = ','.join([str(i) for i in vert_levels])
-    else:
-        # must be None
-        display_level = 'Unknown'
 
     # Note: Because of the pressing issue #1963 and the current refactoring of metric_saving (see PR #1931), a quick-
     # -and-dirty workaround here is to always save as xsl file, and if user asked for a .txt file, then the .xls will
@@ -650,7 +655,7 @@ def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_la
             sh.write(row_index, 0, time.strftime('%Y/%m/%d - %H:%M:%S'))
             sh.write(row_index, 1, os.path.abspath(fname_data))
             sh.write(row_index, 2, method)
-            sh.write(row_index, 3, display_level)
+            sh.write(row_index, 3, vert_levels)
             sh.write(row_index, 4, slices_of_interest)
             if fname_normalizing_label:
                 sh.write(row_index, 10, fname_normalizing_label)
@@ -680,7 +685,7 @@ def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_la
         sh.write(row_index, 0, time.strftime('%Y/%m/%d - %H:%M:%S'))
         sh.write(row_index, 1, os.path.abspath(fname_data))
         sh.write(row_index, 2, method)
-        sh.write(row_index, 3, display_level)
+        sh.write(row_index, 3, vert_levels)
         sh.write(row_index, 4, slices_of_interest)
         if fname_normalizing_label:
             sh.write(row_index, 10, fname_normalizing_label)
@@ -720,7 +725,7 @@ def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_la
         # fid_metric.write('\n' + '# Extraction method: ' + method)
         #
         # # Write selected vertebral levels
-        # fid_metric.write('\n# Vertebral levels: ' + display_level)
+        # fid_metric.write('\n# Vertebral levels: ' + vert_levels)
         #
         # # Write selected slices
         # fid_metric.write('\n' + '# Slices (z): ' + slices_of_interest)
@@ -765,7 +770,7 @@ def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_la
         metric_extraction_results['Date - Time'] = time.strftime('%Y/%m/%d - %H:%M:%S')
         metric_extraction_results['Metric file'] = os.path.abspath(fname_data)
         metric_extraction_results['Extraction method'] = method
-        metric_extraction_results['Vertebral levels'] = display_level
+        metric_extraction_results['Vertebral levels'] = vert_levels
         metric_extraction_results['Slices (z)'] = slices_of_interest
         if fname_normalizing_label:
             metric_extraction_results['Label used to normalize the metric estimation slice-by-slice'] = fname_normalizing_label
