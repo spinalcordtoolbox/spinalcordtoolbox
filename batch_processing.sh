@@ -247,7 +247,7 @@ cd ..
 echo "Ended at: $(date +%x_%r)"
 echo
 echo "t2/CSA:  " `grep -v '^#' t2/csa_mean.txt | grep -v '^$'`
-echo "mt/MTR:  " `grep -v '^#' mt/mtr_in_wm.txt | grep -v '^$'`
+echo "mt/MTR:  " `awk -F"," ' {print $9}' mtr_in_wm.txt | tail -1`
 echo "t2s/CSA_GM:  " `grep -v '^#' t2s/csa_gm/csa_mean.txt | grep -v '^$'`
 echo "t2s/CSA_WM:  " `grep -v '^#' t2s/csa_wm/csa_mean.txt | grep -v '^$'`
 echo "dmri/FA: " `grep -v '^#' dmri/fa_in_cst.txt | grep -v 'right'`

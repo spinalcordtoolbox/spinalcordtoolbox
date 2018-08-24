@@ -410,12 +410,20 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
             # for each group: [1, 2, 3, 4] --> ['1,2,3,4']
             # so that slicegroups looks like: ['1,2,3,4','5,6,7,8','9,10,11,12']
             slicegroups.append([';'.join([str(i) for i in group])][0])
-        # if user wants to concatenate all slices of interest into a single slicegroups
-        if not perlevel:
-            slicegroups = [";".join(slicegroups)]
 
+        if not perlevel:
+            # if user wants to concatenate all slices of interest into a single slicegroups
+            slicegroups = [";".join(slicegroups)]
+            if perslice:
+                # if user wants to get metric per individual slice
+                slicegroups = slicegroups[0].split(';')
     # loop across slicegroups
+    first_pass = True
     for slicegroup in slicegroups:
+        if overwrite and first_pass:
+            overwrite_tmp = 1  # overwrite
+        else:
+            overwrite_tmp = 0
         try:
             # convert list of strings into list of int to use as index
             ind_slicegroup = [int(i) for i in slicegroup.split(';')]
@@ -456,9 +464,12 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
                 else:
                     vert_levels = list_levels
                     # replace "," with ";" for easier CSV parsing
-                vert_levels = ';'.join([str(level) for level in vert_levels])
+                if isinstance(vert_levels, int):
+                    vert_levels = str(vert_levels)
+                else:
+                    vert_levels = ';'.join([str(level) for level in vert_levels])
             else:
-                vert_levels = None
+                vert_levels = 'Unknown'
 
         except ValueError:
             # the slice request is out of the range of the image
@@ -468,7 +479,8 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
         save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_labels_names, combined_labels_names,
                      slicegroup, indiv_labels_value, indiv_labels_std, indiv_labels_fract_vol,
                      combined_labels_value, combined_labels_std, combined_labels_fract_vol, fname_output, fname_data,
-                     method, overwrite, fname_normalizing_label, fixed_label, vert_levels=vert_levels)
+                     method, overwrite_tmp, fname_normalizing_label, fixed_label, vert_levels=vert_levels)
+        first_pass = False  # now we can systematically overwrite
 
         # display results
         # TODO: simply print out the created csv file when we switch to csv output
@@ -564,7 +576,7 @@ def remove_slices(data_to_crop, slices_of_interest):
 def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_labels_names, combined_labels_names,
                  slices_of_interest, indiv_labels_value, indiv_labels_std, indiv_labels_fract_vol,
                  combined_labels_value, combined_labels_std, combined_labels_fract_vol, fname_output, fname_data,
-                 method, overwrite, fname_normalizing_label, fixed_label=None, vert_levels=None):
+                 method, overwrite, fname_normalizing_label, fixed_label=None, vert_levels='Unknown'):
     """
     Save results in the output type selected by user
     :param labels_id_user:
