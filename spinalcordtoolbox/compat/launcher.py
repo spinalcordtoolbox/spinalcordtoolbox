@@ -31,4 +31,4 @@ def main():
 			mpi_flags = "-n 1"
 		cmd = ["mpiexec"] + mpi_flags.split() + cmd
 
-	os.execvpe(cmd[0], cmd[1:], env)
+	os.execvpe(cmd[0], cmd[0:], env)
