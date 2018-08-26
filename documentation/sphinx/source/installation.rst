@@ -143,9 +143,17 @@ Procedure:
 
 #. Install sct using pip
 
+   If running in a virtualenv:
+
    .. code:: sh
 
       pip install -e .
+
+   else:
+
+   .. code:: sh
+
+      pip install --user -e .
 
 
 
