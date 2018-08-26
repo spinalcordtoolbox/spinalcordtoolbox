@@ -331,20 +331,8 @@ def main():
             plt.close()
             print_ok()
         except Exception:
-            if "MPLBACKEND" not in os.environ:
-                print("\nSecond attempt to plot ...")
-                print("\nOverwriting environment variable $MPLBACKEND=agg")
-                try:
-                    os.environ["MPLBACKEND"] = "agg"
-                    plt.figure()
-                    plt.close()
-                    print_ok()
-                except Exception:
-                    print_fail()
-                    print(sys.exc_info())
-            else:
-                print("Please try manually setting environment variable $MPLBACKEND=agg")
-                print_fail()
+            print("Please try manually setting environment variable $MPLBACKEND=agg")
+            print_fail()
 
     print('')
     sys.exit(e + install_software)
