@@ -36,6 +36,7 @@ else:
 
 from spinalcordtoolbox import resampling
 from . import model
+from ..utils import __data_dir__
 
 
 # Suppress warnings and TensorFlow logging
@@ -66,10 +67,7 @@ class DataResource(object):
 
         :param dirname: the root directory name.
         """
-        # TODO __sct_dir__
-        path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
-        # TODO __data_dir__
-        self.data_root = os.path.abspath(os.path.join(path_sct, "data", dirname))
+        self.data_root = os.path.join(__data_dir__, dirname)
 
     def get_file_path(self, filename):
         """Get the absolute file path based on the
