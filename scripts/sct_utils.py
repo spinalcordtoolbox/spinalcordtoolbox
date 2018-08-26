@@ -71,6 +71,20 @@ def init_sct():
     """
     start_stream_logger()
     init_error_client()
+    add_elapsed_time_counter()
+
+
+def add_elapsed_time_counter()
+    """
+    """
+    import atexit
+    class Timer():
+        def __init__(self):
+            self._t0 = time.time()
+        def atexit(self):
+            print("Elapsed time: %.3 seconds" % (time.time()-self._t0))
+    t = Timer()
+    atexit.register(t.atexit)
 
 
 def start_stream_logger():
