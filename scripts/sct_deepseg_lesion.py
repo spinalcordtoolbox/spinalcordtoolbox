@@ -28,6 +28,7 @@ import sct_utils as sct
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
 from msct_parser import Parser
+from sct_deepseg_sc import find_centerline
 
 import spinalcordtoolbox.resample.nipy_resample
 from spinalcordtoolbox.deepseg_sc.cnn_models import nn_architecture_ctr
@@ -450,56 +451,63 @@ def deep_segmentation_MSlesion(fname_image, contrast_type, output_folder, ctr_al
     # find the spinal cord centerline - execute OptiC binary
     sct.log.info("\nFinding the spinal cord centerline...")
     contrast_type_ctr = contrast_type.split('_')[0]
-    if ctr_algo == 'svm':
-        # run optic on a heatmap computed by a trained SVM+HoG algorithm
-        optic_models_fname = os.path.join(path_sct, 'data', 'optic_models', '{}_model'.format(contrast_type_ctr))
-        _, centerline_filename = optic.detect_centerline(image_fname=fname_res,
-                                                         contrast_type=contrast_type_ctr,
-                                                         optic_models_path=optic_models_fname,
-                                                         folder_output=tmp_folder_path,
-                                                         remove_temp_files=remove_temp_files,
-                                                         output_roi=False,
-                                                         verbose=0)
-    elif ctr_algo == 'cnn':
-        # CNN parameters
-        dct_patch_ctr = {'t2': {'size': (80, 80), 'mean': 51.1417, 'std': 57.4408},
-                            't2s': {'size': (80, 80), 'mean': 68.8591, 'std': 71.4659}}
-        dct_params_ctr = {'t2': {'features': 16, 'dilation_layers': 2},
-                            't2s': {'features': 8, 'dilation_layers': 3}}
+    centerline_filename = find_centerline(algo=ctr_algo,
+                                      image_fname=fname_res,
+                                      path_sct=path_sct,
+                                      contrast_type=contrast_type_ctr,
+                                      brain_bool=brain_bool,
+                                      folder_output=tmp_folder_path,
+                                      remove_temp_files=remove_temp_files)
+    # if ctr_algo == 'svm':
+    #     # run optic on a heatmap computed by a trained SVM+HoG algorithm
+    #     optic_models_fname = os.path.join(path_sct, 'data', 'optic_models', '{}_model'.format(contrast_type_ctr))
+    #     _, centerline_filename = optic.detect_centerline(image_fname=fname_res,
+    #                                                      contrast_type=contrast_type_ctr,
+    #                                                      optic_models_path=optic_models_fname,
+    #                                                      folder_output=tmp_folder_path,
+    #                                                      remove_temp_files=remove_temp_files,
+    #                                                      output_roi=False,
+    #                                                      verbose=0)
+    # elif ctr_algo == 'cnn':
+    #     # CNN parameters
+    #     dct_patch_ctr = {'t2': {'size': (80, 80), 'mean': 51.1417, 'std': 57.4408},
+    #                         't2s': {'size': (80, 80), 'mean': 68.8591, 'std': 71.4659}}
+    #     dct_params_ctr = {'t2': {'features': 16, 'dilation_layers': 2},
+    #                         't2s': {'features': 8, 'dilation_layers': 3}}
 
-        # load model
-        ctr_model_fname = os.path.join(path_sct, 'data', 'deepseg_sc_models', '{}_ctr.h5'.format(contrast_type_ctr))
-        ctr_model = nn_architecture_ctr(height=dct_patch_ctr[contrast_type_ctr]['size'][0],
-                                        width=dct_patch_ctr[contrast_type_ctr]['size'][1],
-                                        channels=1,
-                                        classes=1,
-                                        features=dct_params_ctr[contrast_type_ctr]['features'],
-                                        depth=2,
-                                        temperature=1.0,
-                                        padding='same',
-                                        batchnorm=True,
-                                        dropout=0.0,
-                                        dilation_layers=dct_params_ctr[contrast_type_ctr]['dilation_layers'])
-        ctr_model.load_weights(ctr_model_fname)
+    #     # load model
+    #     ctr_model_fname = os.path.join(path_sct, 'data', 'deepseg_sc_models', '{}_ctr.h5'.format(contrast_type_ctr))
+    #     ctr_model = nn_architecture_ctr(height=dct_patch_ctr[contrast_type_ctr]['size'][0],
+    #                                     width=dct_patch_ctr[contrast_type_ctr]['size'][1],
+    #                                     channels=1,
+    #                                     classes=1,
+    #                                     features=dct_params_ctr[contrast_type_ctr]['features'],
+    #                                     depth=2,
+    #                                     temperature=1.0,
+    #                                     padding='same',
+    #                                     batchnorm=True,
+    #                                     dropout=0.0,
+    #                                     dilation_layers=dct_params_ctr[contrast_type_ctr]['dilation_layers'])
+    #     ctr_model.load_weights(ctr_model_fname)
 
-        # compute the heatmap
-        fname_heatmap = sct.add_suffix(fname_res, "_heatmap")
-        img_filename = ''.join(sct.extract_fname(fname_heatmap)[:2])
-        fname_heatmap_nii = img_filename + '.nii'
-        z_max = heatmap(filename_in=fname_res,
-                        filename_out=fname_heatmap_nii,
-                        model=ctr_model,
-                        patch_shape=dct_patch_ctr[contrast_type_ctr]['size'],
-                        mean_train=dct_patch_ctr[contrast_type_ctr]['mean'],
-                        std_train=dct_patch_ctr[contrast_type_ctr]['std'],
-                        brain_bool=brain_bool)
+    #     # compute the heatmap
+    #     fname_heatmap = sct.add_suffix(fname_res, "_heatmap")
+    #     img_filename = ''.join(sct.extract_fname(fname_heatmap)[:2])
+    #     fname_heatmap_nii = img_filename + '.nii'
+    #     z_max = heatmap(filename_in=fname_res,
+    #                     filename_out=fname_heatmap_nii,
+    #                     model=ctr_model,
+    #                     patch_shape=dct_patch_ctr[contrast_type_ctr]['size'],
+    #                     mean_train=dct_patch_ctr[contrast_type_ctr]['mean'],
+    #                     std_train=dct_patch_ctr[contrast_type_ctr]['std'],
+    #                     brain_bool=brain_bool)
 
-        # run optic on the heatmap
-        centerline_filename = sct.add_suffix(fname_heatmap, "_ctr")
-        heatmap2optic(fname_heatmap=fname_heatmap_nii,
-                      lambda_value=7 if contrast_type_ctr == 't2s' else 1,
-                      fname_out=centerline_filename,
-                      z_max=z_max if brain_bool else None)
+    #     # run optic on the heatmap
+    #     centerline_filename = sct.add_suffix(fname_heatmap, "_ctr")
+    #     heatmap2optic(fname_heatmap=fname_heatmap_nii,
+    #                   lambda_value=7 if contrast_type_ctr == 't2s' else 1,
+    #                   fname_out=centerline_filename,
+    #                   z_max=z_max if brain_bool else None)
 
     # crop image around the spinal cord centerline
     sct.log.info("\nCropping the image around the spinal cord...")
