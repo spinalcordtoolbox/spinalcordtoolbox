@@ -291,7 +291,6 @@ def main():
             plt.close()
             print_ok()
         except Exception:
-            print("Please try manually setting environment variable $MPLBACKEND=agg")
             print_fail()
 
     print('')
