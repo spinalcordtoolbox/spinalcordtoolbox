@@ -82,7 +82,7 @@ def add_elapsed_time_counter():
         def __init__(self):
             self._t0 = time.time()
         def atexit(self):
-            print("Elapsed time: %.3 seconds" % (time.time()-self._t0))
+            print("Elapsed time: %.3f seconds" % (time.time()-self._t0))
     t = Timer()
     atexit.register(t.atexit)
 
