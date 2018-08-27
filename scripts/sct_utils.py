@@ -71,7 +71,8 @@ def init_sct():
     """
     start_stream_logger()
     init_error_client()
-    add_elapsed_time_counter()
+    if os.environ.get("SCT_TIMER", None) is not None:
+        add_elapsed_time_counter()
 
 
 def add_elapsed_time_counter():
