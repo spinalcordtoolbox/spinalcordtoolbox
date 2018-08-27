@@ -111,7 +111,7 @@ script:
       brew update;
       brew install gdb;
       echo Running integration tests
-      COVERAGE_PROCESS_START="$PWD/.coveragerc" COVERAGE_FILE="$PWD/.coverage" gdb python/bin/python --batch --ex "b __THE_PROCESS_HAS_FORKED_AND_YOU_CANNOT_USE_THIS_COREFOUNDATION_FUNCTIONALITY___YOU_MUST_EXEC__"  -ex r --ex "threads apply all bt" --args $(which sct_testing) -d 1 --abort-on-failure
+      COVERAGE_PROCESS_START="$PWD/.coveragerc" COVERAGE_FILE="$PWD/.coverage" gdb --batch --ex "b __THE_PROCESS_HAS_FORKED_AND_YOU_CANNOT_USE_THIS_COREFOUNDATION_FUNCTIONALITY___YOU_MUST_EXEC__"  -ex r --ex "threads apply all bt" --args python/bin/python  $(which sct_testing) -d 1 --abort-on-failure
       coverage combine
     else
       echo Running integration tests
