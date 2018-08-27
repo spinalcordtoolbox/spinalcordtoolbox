@@ -563,7 +563,7 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, ctr_
 
     # find the spinal cord centerline - execute OptiC binary
     sct.log.info("Finding the spinal cord centerline...")
-    if ctr_algo == 'svm':
+    if ctr_algo == 'svm' and Image(fname_res).dim[2] > 1:  # isct_spine_detect requires nz > 1
         # run optic on a heatmap computed by a trained SVM+HoG algorithm
         optic_models_fname = os.path.join(path_sct, 'data', 'optic_models', '{}_model'.format(contrast_type))
         _, centerline_filename = optic.detect_centerline(image_fname=fname_res,
@@ -617,6 +617,8 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, ctr_
                       lambda_value=7 if contrast_type == 't2s' else 1,
                       fname_out=centerline_filename,
                       z_max=z_max if brain_bool else None)
+    else:
+        sct.log.error("\nYour image contains only one axial slice, please re-run the function using -centerline cnn.\n")
 
     # crop image around the spinal cord centerline
     sct.log.info("Cropping the image around the spinal cord...")
