@@ -58,7 +58,7 @@ def get_parser():
                       type_value='image_nifti',
                       description='File name of the vertebral labeling registered to the input images.',
                       mandatory=False,
-                      default_value='label/template/MNI-Poly-AMU_level.nii.gz')
+                      default_value='label/template/PAM50_levels.nii.gz')
     parser.add_option(name="-vert",
                       type_value='str',
                       description='Vertebral levels where to compute the SNR.',
