@@ -642,7 +642,7 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, ctr_
     # crop image around the spinal cord centerline
     sct.log.info("Cropping the image around the spinal cord...")
     fname_crop = sct.add_suffix(fname_res, '_crop')
-    crop_size = 64 if kernel_size == '2d' else 96
+    crop_size = 96 if (kernel_size == '3d' and contrast_type == 't2s') else 64
     X_CROP_LST, Y_CROP_LST = crop_image_around_centerline(filename_in=fname_res,
                                                           filename_ctr=centerline_filename,
                                                           filename_out=fname_crop,
@@ -758,8 +758,8 @@ def main():
     contrast_type = arguments['-c']
 
     ctr_algo = arguments["-centerline"]
-    # if "-centerline" not in args and contrast_type == 't2s':
-    #     ctr_algo = 'cnn'
+    if "-centerline" not in args and contrast_type == 't1':
+        ctr_algo = 'cnn'
 
     if "-brain" not in args:
         if contrast_type in ['t2s', 'dwi']:
