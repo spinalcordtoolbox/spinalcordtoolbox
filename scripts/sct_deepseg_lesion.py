@@ -28,7 +28,7 @@ import sct_utils as sct
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
 from msct_parser import Parser
-from sct_deepseg_sc import find_centerline
+from sct_deepseg_sc import find_centerline, crop_image_around_centerline
 
 import spinalcordtoolbox.resample.nipy_resample
 from spinalcordtoolbox.deepseg_sc.cnn_models import nn_architecture_ctr
@@ -161,42 +161,6 @@ def _find_crop_start_end(coord_ctr, crop_size, im_dim):
         coord_end = crop_size if im_dim >= crop_size else im_dim
 
     return coord_start, coord_end
-
-
-def crop_image_around_centerline(filename_in, filename_ctr, filename_out, crop_size):
-    """Crop the input image around the input centerline file."""
-    im_in, data_ctr = Image(filename_in), Image(filename_ctr).data.astype(np.int8)
-    data_in = im_in.data.astype(np.float32)
-
-    # z_step_keep = range(0, len(range(data_in.shape[2])), crop_size)
-    # z_data_crop_max = max(z_step_keep) + crop_size
-
-    # im_data_crop = np.zeros((crop_size, crop_size, z_data_crop_max))
-    im_data_crop = np.zeros((crop_size, crop_size, im_in.dim[2]))
-
-    im_new = msct_image.empty_like(im_in)
-
-    x_lst, y_lst = [], []
-    for zz in range(im_in.dim[2]):
-        if 1 in np.array(data_ctr[:, :, zz]):
-            x_ctr, y_ctr = center_of_mass(np.array(data_ctr[:, :, zz]))
-
-            x_start, x_end = _find_crop_start_end(x_ctr, crop_size, im_in.dim[0])
-            y_start, y_end = _find_crop_start_end(y_ctr, crop_size, im_in.dim[1])
-
-            crop_im = np.zeros((crop_size, crop_size))
-            x_shape, y_shape = data_in[x_start:x_end, y_start:y_end, zz].shape
-            crop_im[:x_shape, :y_shape] = data_in[x_start:x_end, y_start:y_end, zz]
-
-            im_data_crop[:, :, zz] = crop_im
-
-            x_lst.append(str(x_start))
-            y_lst.append(str(y_start))
-
-    im_new.data = im_data_crop
-    im_new.save(filename_out)
-
-    return x_lst, y_lst
 
 
 def scan_slice(z_slice, model, mean_train, std_train, coord_lst, patch_shape, z_out_dim):
