@@ -393,22 +393,15 @@ def heatmap2optic(fname_heatmap, lambda_value, fname_out, z_max, algo='dpdt'):
     import nibabel as nib
     os.environ["FSLOUTPUTTYPE"] = "NIFTI_PAIR"
 
-    if Image(fname_heatmap).dim[2] > 1:  # isct_spine_detect requires nz>1
-        optic_input = fname_heatmap.split('.nii')[0]
+    optic_input = fname_heatmap.split('.nii')[0]
 
-        cmd_optic = 'isct_spine_detect -ctype="%s" -lambda="%s" "%s" "%s" "%s"' % \
-                    (algo, str(lambda_value), "NONE", optic_input, optic_input)
-        sct.run(cmd_optic, verbose=1)
+    cmd_optic = 'isct_spine_detect -ctype="%s" -lambda="%s" "%s" "%s" "%s"' % \
+                (algo, str(lambda_value), "NONE", optic_input, optic_input)
+    sct.run(cmd_optic, verbose=1)
 
-        optic_hdr_filename = optic_input + '_ctr.hdr'
-        img = nib.load(optic_hdr_filename)
-        nib.save(img, fname_out)
-    else:
-        img_heatmap = Image(fname_heatmap)
-        img_ctr = msct_image.zeros_like(img_heatmap, dtype=np.uint8)
-        x_cOm, y_cOm, _ = center_of_mass(np.array(img_heatmap.data))
-        img_ctr.data[int(np.round(x_cOm)), int(np.round(y_cOm)), 0] = 1
-        img_ctr.save(fname_out)
+    optic_hdr_filename = optic_input + '_ctr.hdr'
+    img = nib.load(optic_hdr_filename)
+    nib.save(img, fname_out)
 
     # crop the centerline if z_max < data.shape[2] and -brain == 1
     if z_max is not None:
