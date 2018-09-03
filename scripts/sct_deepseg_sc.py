@@ -128,7 +128,9 @@ def _find_crop_start_end(coord_ctr, crop_size, im_dim):
 
 def crop_image_around_centerline(filename_in, filename_ctr, filename_out, crop_size):
     """Crop the input image around the input centerline file."""
-    im_in, data_ctr = Image(filename_in), Image(filename_ctr).data
+    im_in, data_ctr = Image(filename_in), Image(filename_ctr).data.astype(np.int8)
+    data_ctr = data_ctr if len(data_ctr.shape) >= 3 else np.expand_dims(data_ctr, 2)
+    data_in = im_in.data.astype(np.float32)
     im_new = msct_image.empty_like(im_in) # but in fact we're going to crop it
 
     x_lst, y_lst = [], []
@@ -141,8 +143,8 @@ def crop_image_around_centerline(filename_in, filename_ctr, filename_out, crop_s
             y_start, y_end = _find_crop_start_end(y_ctr, crop_size, im_in.dim[1])
 
             crop_im = np.zeros((crop_size, crop_size))
-            x_shape, y_shape = im_in.data[x_start:x_end, y_start:y_end, zz].shape
-            crop_im[:x_shape, :y_shape] = im_in.data[x_start:x_end, y_start:y_end, zz]
+            x_shape, y_shape = data_in[x_start:x_end, y_start:y_end, zz].shape
+            crop_im[:x_shape, :y_shape] = data_in[x_start:x_end, y_start:y_end, zz]
 
             data_im_new[:, :, zz] = crop_im
 
@@ -418,7 +420,16 @@ def heatmap2optic(fname_heatmap, lambda_value, fname_out, z_max, algo='dpdt'):
 
 def find_centerline(algo, image_fname, path_sct, contrast_type, brain_bool, folder_output, remove_temp_files):
 
-    if algo == 'svm' and Image(image_fname).dim[2] > 1:  # isct_spine_detect requires nz > 1
+    if Image(image_fname).dim[2] == 1:  # isct_spine_detect requires nz > 1
+        from sct_image import concat_data
+        im_concat = concat_data([image_fname, image_fname], dim=2)
+        im_concat.save(sct.add_suffix(image_fname, '_concat'))
+        image_fname = sct.add_suffix(image_fname, '_concat')
+        bool_2d = True
+    else:
+        bool_2d = False
+
+    if algo == 'svm':
         # run optic on a heatmap computed by a trained SVM+HoG algorithm
         optic_models_fname = os.path.join(path_sct, 'data', 'optic_models', '{}_model'.format(contrast_type))
         _, centerline_filename = optic.detect_centerline(image_fname=image_fname,
@@ -472,8 +483,11 @@ def find_centerline(algo, image_fname, path_sct, contrast_type, brain_bool, fold
                       lambda_value=7 if contrast_type == 't2s' else 1,
                       fname_out=centerline_filename,
                       z_max=z_max if brain_bool else None)
-    else:
-        sct.log.error("\nYour image contains only one axial slice, please re-run the function using -centerline cnn.\n")
+
+    if bool_2d:
+        from sct_image import split_data
+        im_split_lst = split_data(Image(centerline_filename), dim=2)
+        im_split_lst[0].save(centerline_filename)
 
     return centerline_filename
 
@@ -564,7 +578,6 @@ def segment_3d(model_fname, contrast_type, fname_in, fname_out):
     out = msct_image.zeros_like(im, dtype=np.uint8)
 
     # segment the spinal cord
-    sct.log.info("Segmenting the spinal cord using deep learning on 3D patches...")
     z_patch_size = dct_patch_sc_3d[contrast_type]['size'][2]
     z_step_keep = list(range(0, im.data.shape[2], z_patch_size))
     for zz in z_step_keep:
