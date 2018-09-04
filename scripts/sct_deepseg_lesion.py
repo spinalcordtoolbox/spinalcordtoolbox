@@ -20,7 +20,6 @@ import sys
 import numpy as np
 from scipy.ndimage.measurements import center_of_mass, label
 from scipy.ndimage import distance_transform_edt
-from skimage.exposure import rescale_intensity
 from scipy.interpolate.interpolate import interp1d
 
 from spinalcordtoolbox.centerline import optic
@@ -28,6 +27,7 @@ import sct_utils as sct
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
 from msct_parser import Parser
+from sct_deepseg_sc import find_centerline, crop_image_around_centerline, uncrop_image, _normalize_data
 
 import spinalcordtoolbox.resample.nipy_resample
 from spinalcordtoolbox.deepseg_sc.cnn_models import nn_architecture_ctr
@@ -87,12 +87,6 @@ def get_parser():
     return parser
 
 
-def scale_intensity(data, out_min=0, out_max=255):
-    """Scale intensity of data in a range defined by [out_min, out_max], based on the 2nd and 98th percentiles."""
-    p2, p98 = np.percentile(data, (2, 98))
-    return rescale_intensity(data, in_range=(p2, p98), out_range=(out_min, out_max))
-
-
 def apply_intensity_normalization_model(img, landmarks_lst):
     """Description: apply the learned intensity landmarks to the input image."""
     percent_decile_lst = [1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 99]
@@ -145,235 +139,6 @@ def apply_intensity_normalization(img_path, fname_out, contrast):
     img_normalized = msct_image.empty_like(img)
     img_normalized.data = apply_intensity_normalization_model(data2norm, dct_norm[contrast])
     img_normalized.save(fname_out, dtype="float32")
-
-
-def _find_crop_start_end(coord_ctr, crop_size, im_dim):
-    """Util function to find the coordinates to crop the image around the centerline (coord_ctr)."""
-    half_size = crop_size // 2
-    coord_start, coord_end = int(coord_ctr) - half_size + 1, int(coord_ctr) + half_size + 1
-
-    if coord_end > im_dim:
-        coord_end = im_dim
-        coord_start = im_dim - crop_size if im_dim >= crop_size else 0
-    if coord_start < 0:
-        coord_start = 0
-        coord_end = crop_size if im_dim >= crop_size else im_dim
-
-    return coord_start, coord_end
-
-
-def crop_image_around_centerline(filename_in, filename_ctr, filename_out, crop_size):
-    """Crop the input image around the input centerline file."""
-    im_in, data_ctr = Image(filename_in), Image(filename_ctr).data.astype(np.int8)
-    data_in = im_in.data.astype(np.float32)
-
-    # z_step_keep = range(0, len(range(data_in.shape[2])), crop_size)
-    # z_data_crop_max = max(z_step_keep) + crop_size
-
-    # im_data_crop = np.zeros((crop_size, crop_size, z_data_crop_max))
-    im_data_crop = np.zeros((crop_size, crop_size, im_in.dim[2]))
-
-    im_new = msct_image.empty_like(im_in)
-
-    x_lst, y_lst = [], []
-    for zz in range(im_in.dim[2]):
-        if 1 in np.array(data_ctr[:, :, zz]):
-            x_ctr, y_ctr = center_of_mass(np.array(data_ctr[:, :, zz]))
-
-            x_start, x_end = _find_crop_start_end(x_ctr, crop_size, im_in.dim[0])
-            y_start, y_end = _find_crop_start_end(y_ctr, crop_size, im_in.dim[1])
-
-            crop_im = np.zeros((crop_size, crop_size))
-            x_shape, y_shape = data_in[x_start:x_end, y_start:y_end, zz].shape
-            crop_im[:x_shape, :y_shape] = data_in[x_start:x_end, y_start:y_end, zz]
-
-            im_data_crop[:, :, zz] = crop_im
-
-            x_lst.append(str(x_start))
-            y_lst.append(str(y_start))
-
-    im_new.data = im_data_crop
-    im_new.save(filename_out)
-
-    return x_lst, y_lst
-
-
-def scan_slice(z_slice, model, mean_train, std_train, coord_lst, patch_shape, z_out_dim):
-    """Scan the entire axial slice to detect the centerline."""
-    z_slice_out = np.zeros(z_out_dim)
-    sum_lst = []
-    # loop across all the non-overlapping blocks of a cross-sectional slice
-    for idx, coord in enumerate(coord_lst):
-        block = z_slice[coord[0]:coord[2], coord[1]:coord[3]]
-        block_nn = np.expand_dims(np.expand_dims(block, 0), -1)
-        block_nn_norm = _normalize_data(block_nn, mean_train, std_train)
-        block_pred = model.predict(block_nn_norm, batch_size=BATCH_SIZE)
-
-        if coord[2] > z_out_dim[0]:
-            x_end = patch_shape[0] - (coord[2] - z_out_dim[0])
-        else:
-            x_end = patch_shape[0]
-        if coord[3] > z_out_dim[1]:
-            y_end = patch_shape[1] - (coord[3] - z_out_dim[1])
-        else:
-            y_end = patch_shape[1]
-
-        z_slice_out[coord[0]:coord[2], coord[1]:coord[3]] = block_pred[0, :x_end, :y_end, 0]
-        sum_lst.append(np.sum(block_pred[0, :x_end, :y_end, 0]))
-
-    # Put first the coord of the patch were the centerline is likely located so that the search could be faster for the next axial slices
-    coord_lst.insert(0, coord_lst.pop(sum_lst.index(max(sum_lst))))
-
-    # computation of the new center of mass
-    if np.max(z_slice_out) > 0.5:
-        z_slice_out_bin = z_slice_out > 0.5
-        labeled_mask, numpatches = label(z_slice_out_bin)
-        largest_cc_mask = (labeled_mask == (np.bincount(labeled_mask.flat)[1:].argmax() + 1))
-        x_CoM, y_CoM = center_of_mass(largest_cc_mask)
-        x_CoM, y_CoM = int(x_CoM), int(y_CoM)
-    else:
-        x_CoM, y_CoM = None, None
-
-    return z_slice_out, x_CoM, y_CoM, coord_lst
-
-
-def heatmap(filename_in, filename_out, model, patch_shape, mean_train, std_train, brain_bool=True):
-    """Compute the heatmap with CNN_1 representing the SC localization."""
-    im = Image(filename_in)
-    data_im = im.data.astype(np.float32)
-    im_out = msct_image.change_type(im, np.uint8)
-    del im
-    data = np.zeros(im_out.data.shape)
-
-    x_shape, y_shape = data_im.shape[:2]
-    x_shape_block, y_shape_block = np.ceil(x_shape * 1.0 / patch_shape[0]).astype(np.int), np.int(y_shape * 1.0 / patch_shape[1])
-    x_pad = int(x_shape_block * patch_shape[0] - x_shape)
-    if y_shape > patch_shape[1]:
-        y_crop = y_shape - y_shape_block * patch_shape[1]
-        # slightly crop the input data in the P-A direction so that data_im.shape[1] % patch_shape[1] == 0
-        data_im = data_im[:, :y_shape - y_crop, :]
-        # coordinates of the blocks to scan during the detection, in the cross-sectional plane
-        coord_lst = [[x_dim * patch_shape[0], y_dim * patch_shape[1],
-                   (x_dim + 1) * patch_shape[0], (y_dim + 1) * patch_shape[1]]
-                    for y_dim in range(y_shape_block) for x_dim in range(x_shape_block)]
-    else:
-        data_im = np.pad(data_im, ((0, 0), (0, patch_shape[1] - y_shape), (0, 0)), 'constant')
-        coord_lst = [[x_dim * patch_shape[0], 0, (x_dim + 1) * patch_shape[0], patch_shape[1]] for x_dim in range(x_shape_block)]
-    # pad the input data in the R-L direction
-    data_im = np.pad(data_im, ((0, x_pad), (0, 0), (0, 0)), 'constant')
-    # scale intensities between 0 and 255
-    data_im = scale_intensity(data_im)
-
-    x_CoM, y_CoM = None, None
-    z_sc_notDetected_cmpt = 0
-    for zz in range(data_im.shape[2]):
-        # if SC was detected at zz-1, we will start doing the detection on the block centered around the previously conputed center of mass (CoM)
-        if x_CoM is not None:
-            z_sc_notDetected_cmpt = 0  # SC detected, cmpt set to zero
-            x_0, x_1 = _find_crop_start_end(x_CoM, patch_shape[0], data_im.shape[0])
-            y_0, y_1 = _find_crop_start_end(y_CoM, patch_shape[1], data_im.shape[1])
-            block = data_im[x_0:x_1, y_0:y_1, zz]
-            block_nn = np.expand_dims(np.expand_dims(block, 0), -1)
-            block_nn_norm = _normalize_data(block_nn, mean_train, std_train)
-            block_pred = model.predict(block_nn_norm, batch_size=BATCH_SIZE)
-
-            # coordinates manipulation due to the above padding and cropping
-            if x_1 > data.shape[0]:
-                x_end = data.shape[0]
-                x_1 = data.shape[0]
-                x_0 = data.shape[0] - patch_shape[0] if data.shape[0] > patch_shape[0] else 0
-            else:
-                x_end = patch_shape[0]
-            if y_1 > data.shape[1]:
-                y_end = data.shape[1]
-                y_1 = data.shape[1]
-                y_0 = data.shape[1] - patch_shape[1] if data.shape[1] > patch_shape[1] else 0
-            else:
-                y_end = patch_shape[1]
-
-            data[x_0:x_1, y_0:y_1, zz] = block_pred[0, :x_end, :y_end, 0]
-
-            # computation of the new center of mass
-            if np.max(data[:, :, zz]) > 0.5:
-                z_slice_out_bin = data[:, :, zz] > 0.5  # if the SC was detection
-                x_CoM, y_CoM = center_of_mass(z_slice_out_bin)
-                x_CoM, y_CoM = int(x_CoM), int(y_CoM)
-            else:
-                x_CoM, y_CoM = None, None
-
-        # if the SC was not detected at zz-1 or on the patch centered around CoM in slice zz, the entire cross-sectional slice is scaned
-        if x_CoM is None:
-            z_slice, x_CoM, y_CoM, coord_lst = scan_slice(data_im[:, :, zz], model,
-                                                mean_train, std_train,
-                                                coord_lst, patch_shape, data.shape[:2])
-            data[:, :, zz] = z_slice
-
-            z_sc_notDetected_cmpt += 1
-            # if the SC has not been detected on 10 consecutive z_slices, we stop the SC investigation
-            if z_sc_notDetected_cmpt > 10 and brain_bool:
-                sct.printv('\nBrain section detected.')
-                break
-
-        # distance transform to deal with the harsh edges of the prediction boundaries (Dice)
-        data[:, :, zz][np.where(data[:, :, zz] < 0.5)] = 0
-        data[:, :, zz] = distance_transform_edt(data[:, :, zz])
-
-    im_out.data = data
-    im_out.save(filename_out)
-
-    # z_max is used to reject brain sections
-    z_max = np.max(list(set(np.where(data)[2])))
-    if z_max == data.shape[2] - 1:
-        return None
-    else:
-        return z_max
-
-
-def heatmap2optic(fname_heatmap, lambda_value, fname_out, z_max, algo='dpdt'):
-    """Run OptiC on the heatmap computed by CNN_1."""
-    import nibabel as nib
-    os.environ["FSLOUTPUTTYPE"] = "NIFTI_PAIR"
-
-    optic_input = fname_heatmap.split('.nii')[0]
-
-    cmd_optic = 'isct_spine_detect -ctype="%s" -lambda="%s" "%s" "%s" "%s"' % \
-                (algo, str(lambda_value), "NONE", optic_input, optic_input)
-    sct.run(cmd_optic, verbose=1)
-
-    optic_hdr_filename = optic_input + '_ctr.hdr'
-    img = nib.load(optic_hdr_filename)
-    nib.save(img, fname_out)
-
-    # crop the centerline if z_max < data.shape[2] and -brain == 1
-    if z_max is not None:
-        sct.printv('\nCropping brain section.')
-        ctr_nii = Image(fname_out)
-        ctr_nii.data[:, :, z_max:] = 0
-        ctr_nii.save()
-
-
-def _normalize_data(data, mean, std):
-    """Util function to normalized data based on learned mean and std."""
-    data -= mean
-    data /= std
-    return data
-
-
-def uncrop_image(fname_ref, fname_out, data_crop, x_crop_lst, y_crop_lst):
-    """Reconstruc the data from the crop segmentation."""
-    im = Image(fname_ref)
-    seg_unCrop = msct_image.zeros_like(im, dtype=np.uint8)
-
-    crop_size_x, crop_size_y = data_crop.shape[:2]
-
-    for zz in range(len(x_crop_lst)):
-        pred_seg = data_crop[:, :, zz]
-        x_start, y_start = int(x_crop_lst[zz]), int(y_crop_lst[zz])
-        x_end = x_start + crop_size_x if x_start + crop_size_x < seg_unCrop.dim[0] else seg_unCrop.dim[0]
-        y_end = y_start + crop_size_y if y_start + crop_size_y < seg_unCrop.dim[1] else seg_unCrop.dim[1]
-        seg_unCrop.data[x_start:x_end, y_start:y_end, zz] = pred_seg[0:x_end - x_start, 0:y_end - y_start]
-
-    seg_unCrop.save(fname_out)
 
 
 def segment_3d(model_fname, contrast_type, fname_in, fname_out):
@@ -450,56 +215,13 @@ def deep_segmentation_MSlesion(fname_image, contrast_type, output_folder, ctr_al
     # find the spinal cord centerline - execute OptiC binary
     sct.log.info("\nFinding the spinal cord centerline...")
     contrast_type_ctr = contrast_type.split('_')[0]
-    if ctr_algo == 'svm':
-        # run optic on a heatmap computed by a trained SVM+HoG algorithm
-        optic_models_fname = os.path.join(path_sct, 'data', 'optic_models', '{}_model'.format(contrast_type_ctr))
-        _, centerline_filename = optic.detect_centerline(image_fname=fname_res,
-                                                         contrast_type=contrast_type_ctr,
-                                                         optic_models_path=optic_models_fname,
-                                                         folder_output=tmp_folder_path,
-                                                         remove_temp_files=remove_temp_files,
-                                                         output_roi=False,
-                                                         verbose=0)
-    elif ctr_algo == 'cnn':
-        # CNN parameters
-        dct_patch_ctr = {'t2': {'size': (80, 80), 'mean': 51.1417, 'std': 57.4408},
-                            't2s': {'size': (80, 80), 'mean': 68.8591, 'std': 71.4659}}
-        dct_params_ctr = {'t2': {'features': 16, 'dilation_layers': 2},
-                            't2s': {'features': 8, 'dilation_layers': 3}}
-
-        # load model
-        ctr_model_fname = os.path.join(path_sct, 'data', 'deepseg_sc_models', '{}_ctr.h5'.format(contrast_type_ctr))
-        ctr_model = nn_architecture_ctr(height=dct_patch_ctr[contrast_type_ctr]['size'][0],
-                                        width=dct_patch_ctr[contrast_type_ctr]['size'][1],
-                                        channels=1,
-                                        classes=1,
-                                        features=dct_params_ctr[contrast_type_ctr]['features'],
-                                        depth=2,
-                                        temperature=1.0,
-                                        padding='same',
-                                        batchnorm=True,
-                                        dropout=0.0,
-                                        dilation_layers=dct_params_ctr[contrast_type_ctr]['dilation_layers'])
-        ctr_model.load_weights(ctr_model_fname)
-
-        # compute the heatmap
-        fname_heatmap = sct.add_suffix(fname_res, "_heatmap")
-        img_filename = ''.join(sct.extract_fname(fname_heatmap)[:2])
-        fname_heatmap_nii = img_filename + '.nii'
-        z_max = heatmap(filename_in=fname_res,
-                        filename_out=fname_heatmap_nii,
-                        model=ctr_model,
-                        patch_shape=dct_patch_ctr[contrast_type_ctr]['size'],
-                        mean_train=dct_patch_ctr[contrast_type_ctr]['mean'],
-                        std_train=dct_patch_ctr[contrast_type_ctr]['std'],
-                        brain_bool=brain_bool)
-
-        # run optic on the heatmap
-        centerline_filename = sct.add_suffix(fname_heatmap, "_ctr")
-        heatmap2optic(fname_heatmap=fname_heatmap_nii,
-                      lambda_value=7 if contrast_type_ctr == 't2s' else 1,
-                      fname_out=centerline_filename,
-                      z_max=z_max if brain_bool else None)
+    centerline_filename = find_centerline(algo=ctr_algo,
+                                      image_fname=fname_res,
+                                      path_sct=path_sct,
+                                      contrast_type=contrast_type_ctr,
+                                      brain_bool=brain_bool,
+                                      folder_output=tmp_folder_path,
+                                      remove_temp_files=remove_temp_files)
 
     # crop image around the spinal cord centerline
     sct.log.info("\nCropping the image around the spinal cord...")
