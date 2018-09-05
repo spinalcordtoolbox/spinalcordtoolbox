@@ -10,6 +10,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+# TODO: do not merge group if g=1
 # TODO: estimate and apply, no need to reapply afterwards
 
 from __future__ import absolute_import, division
@@ -18,6 +19,7 @@ import sys
 import os
 import time
 import math
+import shutil
 import numpy as np
 import sct_utils as sct
 import msct_moco as moco
@@ -252,13 +254,14 @@ def fmri_moco(param):
     for iGroup in range(nb_groups):
         group_indexes.append(index_fmri[(iGroup * param.group_size):((iGroup + 1) * param.group_size)])
 
-    # add the remaining images to the last DWI group
+    # add the remaining images to the last fMRI group
     nb_remaining = nt%param.group_size  # number of remaining images
     if nb_remaining > 0:
         nb_groups += 1
         group_indexes.append(index_fmri[len(index_fmri) - nb_remaining:len(index_fmri)])
 
     # groups
+    sct.printv('Merge consecutive volumes within groups...', param.verbose)
     for iGroup in range(nb_groups):
         sct.printv('\nGroup: ' + str((iGroup + 1)) + '/' + str(nb_groups), param.verbose)
 
@@ -267,7 +270,6 @@ def fmri_moco(param):
         nt_i = len(index_fmri_i)
 
         # Merge Images
-        sct.printv('Merge consecutive volumes...', param.verbose)
         file_data_merge_i = file_data + '_' + str(iGroup)
         # cmd = fsloutput + 'fslmerge -t ' + file_data_merge_i
         # for it in range(nt_i):
@@ -276,26 +278,28 @@ def fmri_moco(param):
         im_fmri_list = []
         for it in range(nt_i):
             im_fmri_list.append(im_data_split_list[index_fmri_i[it]])
-        im_fmri_concat = concat_data(im_fmri_list, 3) \
-         .save(file_data_merge_i + ext_data)
+        im_fmri_concat = concat_data(im_fmri_list, 3, squeeze_data=True).save(file_data_merge_i + ext_data)
 
-        # Average Images
-        sct.printv('Average volumes...', param.verbose)
         file_data_mean = file_data + '_mean_' + str(iGroup)
-        sct.run(['sct_maths', '-i', file_data_merge_i + '.nii', '-o', file_data_mean + '.nii', '-mean', 't'], verbose=param.verbose)
+        if param.group_size == 1:
+            # copy to new file name instead of averaging (faster)
+            # note: this is a bandage. Ideally we should skip this entire for loop if g=1
+            shutil.copy(file_data_merge_i + '.nii', file_data_mean + '.nii')
+        else:
+            # Average Images
+            sct.run(['sct_maths', '-i', file_data_merge_i + '.nii', '-o', file_data_mean + '.nii', '-mean', 't'], verbose=param.verbose)
         # if not average_data_across_dimension(file_data_merge_i+'.nii', file_data_mean+'.nii', 3):
         #     sct.printv('ERROR in average_data_across_dimension', 1, 'error')
         # cmd = fsloutput + 'fslmaths ' + file_data_merge_i + ' -Tmean ' + file_data_mean
         # sct.run(cmd, param.verbose)
 
-    # Merge groups means
+    # Merge groups means. The output 4D volume will be used for motion correction.
     sct.printv('\nMerging volumes...', param.verbose)
     file_data_groups_means_merge = 'fmri_averaged_groups'
     im_mean_list = []
     for iGroup in range(nb_groups):
         im_mean_list.append(Image(file_data + '_mean_' + str(iGroup) + ext_data))
-    im_mean_concat = concat_data(im_mean_list, 3) \
-     .save(file_data_groups_means_merge + ext_data)
+    im_mean_concat = concat_data(im_mean_list, 3).save(file_data_groups_means_merge + ext_data)
 
     # Estimate moco
     sct.printv('\n-------------------------------------------------------------------------------', param.verbose)
