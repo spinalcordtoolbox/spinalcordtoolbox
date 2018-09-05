@@ -185,7 +185,7 @@ def main(args=None):
 
     # Copying input data to tmp folder and convert to nii
     sct.printv('\nCopying input data to tmp folder and convert to nii...', param.verbose)
-    convert(param.fname_data, os.path.join(path_tmp, "fmri.nii"))
+    convert(param.fname_data, os.path.join(path_tmp, "fmri.nii"), squeeze_data=False)
 
     # go to tmp folder
     curdir = os.getcwd()
