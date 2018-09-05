@@ -355,7 +355,8 @@ def split_data(im_in, dim):
     im_out_list = []
     for idx_img, dat in enumerate(data_split):
         im_out = msct_image.empty_like(im_in)
-        im_out.data = dat.reshape(tuple([ x for (idx_shape,x) in enumerate(data.shape) if idx_shape != dim]))
+        # im_out.data = dat.reshape(tuple([ x for (idx_shape, x) in enumerate(data.shape) if idx_shape != dim]))
+        im_out.data = dat
         im_out.absolutepath = sct.add_suffix(im_in.absolutepath, "_{}{}".format(dim_list[dim].upper(), str(idx_img).zfill(4)))
         im_out_list.append(im_out)
 
