@@ -371,12 +371,13 @@ def split_data(im_in, dim):
     return im_out_list
 
 
-def concat_data(fname_in_list, dim, pixdim=None):
+def concat_data(fname_in_list, dim, pixdim=None, squeeze_data=False):
     """
     Concatenate data
     :param im_in_list: list of Images or image filenames
     :param dim: dimension: 0, 1, 2, 3.
     :param pixdim: pixel resolution to join to image header
+    :param squeeze_data: bool: if True, remove the last dim if it is a singleton.
     :return im_out: concatenated image
     """
     # WARNING: calling concat_data in python instead of in command line causes a non understood issue (results are different with both options)
@@ -429,6 +430,11 @@ def concat_data(fname_in_list, dim, pixdim=None):
 
     if pixdim is not None:
         im_out.hdr['pixdim'] = pixdim
+
+    if squeeze_data:
+        im_out.data = data_concat.reshape(tuple([ x for (idx_shape, x) in enumerate(data_concat.shape) if idx_shape != dim]))
+    else:
+        im_out.data = data_concat
 
     return im_out
 
