@@ -347,16 +347,24 @@ def split_data(im_in, dim):
     # Parse file name
     # Open first file.
     data = im_in.data
-    if dim + 1 > len(np.shape(data)):  # in case input volume is 3d and dim=t
+    # in case input volume is 3d and dim=t, create new axis
+    if dim + 1 > len(np.shape(data)):
         data = data[..., np.newaxis]
+    # in case splitting along the last dim, make sure to remove the last dim to avoid singleton
+    if dim + 1 == len(np.shape(data)):
+        do_reshape = True
+    else:
+        do_reshape = False
     # Split data into list
     data_split = np.array_split(data, data.shape[dim], dim)
     # Write each file
     im_out_list = []
     for idx_img, dat in enumerate(data_split):
         im_out = msct_image.empty_like(im_in)
-        # im_out.data = dat.reshape(tuple([ x for (idx_shape, x) in enumerate(data.shape) if idx_shape != dim]))
-        im_out.data = dat
+        if do_reshape:
+            im_out.data = dat.reshape(tuple([ x for (idx_shape, x) in enumerate(data.shape) if idx_shape != dim]))
+        else:
+            im_out.data = dat
         im_out.absolutepath = sct.add_suffix(im_in.absolutepath, "_{}{}".format(dim_list[dim].upper(), str(idx_img).zfill(4)))
         im_out_list.append(im_out)
 
