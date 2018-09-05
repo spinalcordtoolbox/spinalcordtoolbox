@@ -6,7 +6,6 @@
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Authors: Karun Raju, Tanguy Duval, Julien Cohen-Adad
-# Modified: 2014-10-06
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
@@ -17,18 +16,14 @@ from __future__ import absolute_import, division
 
 import sys
 import os
-import getopt
 import time
 import math
-
 import numpy as np
-
 import sct_utils as sct
 import msct_moco as moco
 from sct_convert import convert
 from spinalcordtoolbox.image import Image
 from sct_image import split_data, concat_data
-# from sct_average_data_across_dimension import average_data_across_dimension
 from msct_parser import Parser
 
 
@@ -232,7 +227,6 @@ def fmri_moco(param):
     file_data = 'fmri'
     ext_data = '.nii'
     mat_final = 'mat_final/'
-    fsloutput = 'export FSLOUTPUTTYPE=NIFTI; '  # for faster processing, all outputs are in NIFTI
     ext_mat = 'Warp.nii.gz'  # warping field
 
     # Get dimensions of data
