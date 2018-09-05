@@ -37,7 +37,6 @@ path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
 def moco(param):
 
     # retrieve parameters
-    fsloutput = 'export FSLOUTPUTTYPE=NIFTI; '  # for faster processing, all outputs are in NIFTI
     file_data = param.file_data
     file_target = param.file_target
     folder_mat = param.mat_moco  # output folder of mat file
