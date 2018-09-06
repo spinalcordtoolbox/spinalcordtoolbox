@@ -87,8 +87,6 @@ class ProcessLabels(object):
             change_orientation = True
         if type_process == 'add':
             self.output_image = self.add(self.value)
-        if type_process == 'cross':
-            self.output_image = self.cross()
         if type_process == 'plan':
             self.output_image = self.plan(self.cross_radius, 100, 5)
         if type_process == 'plan_ref':
@@ -216,92 +214,6 @@ class ProcessLabels(object):
                 assert str(z) == '0', "ERROR: 2D coordinates should have a Z value of 0. Z coordinate is :" + str(z)
                 image_output.data[x, y] = value
         return image_output
-
-    def cross(self):
-        """
-        create a cross.
-        :return:
-        """
-        output_image = msct_image.zeros_like(self.image_input)
-        nx, ny, nz, nt, px, py, pz, pt = self.image_input.dim
-
-        coordinates_input = self.image_input.getNonZeroCoordinates()
-        d = self.cross_radius  # cross radius in pixel
-        dx = d / px  # cross radius in mm
-        dy = d / py
-
-        cross_coordinates = self.get_crosses_coordinates(coordinates_input, dx, self.image_ref, self.dilate)
-
-        for coord in cross_coordinates:
-            output_image.data[int(np.round(coord.x)), int(np.round(coord.y)), int(np.round(coord.z))] = coord.value
-
-        return output_image
-
-    @staticmethod
-    def get_crosses_coordinates(coordinates_input, gapxy=15, image_ref=None, dilate=False, verbose=0):
-        from msct_types import Coordinate
-
-        # if reference image is provided (segmentation), we draw the cross perpendicular to the centerline
-        if image_ref is not None:
-            # smooth centerline
-            from sct_straighten_spinalcord import smooth_centerline
-            x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(image_ref, verbose=verbose)
-
-        # compute crosses
-        cross_coordinates = []
-        for coord in coordinates_input:
-            if image_ref is None:
-                from sct_straighten_spinalcord import compute_cross
-                cross_coordinates_temp = compute_cross(coord, gapxy)
-            else:
-                from sct_straighten_spinalcord import compute_cross_centerline
-                from numpy import where
-                index_z = where(z_centerline == coord.z)
-                deriv = Coordinate([x_centerline_deriv[index_z][0], y_centerline_deriv[index_z][0], z_centerline_deriv[index_z][0], 0.0])
-                cross_coordinates_temp = compute_cross_centerline(coord, deriv, gapxy)
-
-            for i, coord_cross in enumerate(cross_coordinates_temp):
-                coord_cross.value = coord.value * 10 + i + 1
-
-            # dilate cross to 3x3x3
-            if dilate:
-                additional_coordinates = []
-                for coord_temp in cross_coordinates_temp:
-                    additional_coordinates.append(Coordinate([coord_temp.x, coord_temp.y, coord_temp.z + 1.0, coord_temp.value]))
-                    additional_coordinates.append(Coordinate([coord_temp.x, coord_temp.y, coord_temp.z - 1.0, coord_temp.value]))
-                    additional_coordinates.append(Coordinate([coord_temp.x, coord_temp.y + 1.0, coord_temp.z, coord_temp.value]))
-                    additional_coordinates.append(Coordinate([coord_temp.x, coord_temp.y + 1.0, coord_temp.z + 1.0, coord_temp.value]))
-                    additional_coordinates.append(Coordinate([coord_temp.x, coord_temp.y + 1.0, coord_temp.z - 1.0, coord_temp.value]))
-                    additional_coordinates.append(Coordinate([coord_temp.x, coord_temp.y - 1.0, coord_temp.z, coord_temp.value]))
-                    additional_coordinates.append(Coordinate([coord_temp.x, coord_temp.y - 1.0, coord_temp.z + 1.0, coord_temp.value]))
-                    additional_coordinates.append(Coordinate([coord_temp.x, coord_temp.y - 1.0, coord_temp.z - 1.0, coord_temp.value]))
-
-                    additional_coordinates.append(Coordinate([coord_temp.x + 1.0, coord_temp.y, coord_temp.z, coord_temp.value]))
-                    additional_coordinates.append(Coordinate([coord_temp.x + 1.0, coord_temp.y, coord_temp.z + 1.0, coord_temp.value]))
-                    additional_coordinates.append(Coordinate([coord_temp.x + 1.0, coord_temp.y, coord_temp.z - 1.0, coord_temp.value]))
-                    additional_coordinates.append(Coordinate([coord_temp.x + 1.0, coord_temp.y + 1.0, coord_temp.z, coord_temp.value]))
-                    additional_coordinates.append(Coordinate([coord_temp.x + 1.0, coord_temp.y + 1.0, coord_temp.z + 1.0, coord_temp.value]))
-                    additional_coordinates.append(Coordinate([coord_temp.x + 1.0, coord_temp.y + 1.0, coord_temp.z - 1.0, coord_temp.value]))
-                    additional_coordinates.append(Coordinate([coord_temp.x + 1.0, coord_temp.y - 1.0, coord_temp.z, coord_temp.value]))
-                    additional_coordinates.append(Coordinate([coord_temp.x + 1.0, coord_temp.y - 1.0, coord_temp.z + 1.0, coord_temp.value]))
-                    additional_coordinates.append(Coordinate([coord_temp.x + 1.0, coord_temp.y - 1.0, coord_temp.z - 1.0, coord_temp.value]))
-
-                    additional_coordinates.append(Coordinate([coord_temp.x - 1.0, coord_temp.y, coord_temp.z, coord_temp.value]))
-                    additional_coordinates.append(Coordinate([coord_temp.x - 1.0, coord_temp.y, coord_temp.z + 1.0, coord_temp.value]))
-                    additional_coordinates.append(Coordinate([coord_temp.x - 1.0, coord_temp.y, coord_temp.z - 1.0, coord_temp.value]))
-                    additional_coordinates.append(Coordinate([coord_temp.x - 1.0, coord_temp.y + 1.0, coord_temp.z, coord_temp.value]))
-                    additional_coordinates.append(Coordinate([coord_temp.x - 1.0, coord_temp.y + 1.0, coord_temp.z + 1.0, coord_temp.value]))
-                    additional_coordinates.append(Coordinate([coord_temp.x - 1.0, coord_temp.y + 1.0, coord_temp.z - 1.0, coord_temp.value]))
-                    additional_coordinates.append(Coordinate([coord_temp.x - 1.0, coord_temp.y - 1.0, coord_temp.z, coord_temp.value]))
-                    additional_coordinates.append(Coordinate([coord_temp.x - 1.0, coord_temp.y - 1.0, coord_temp.z + 1.0, coord_temp.value]))
-                    additional_coordinates.append(Coordinate([coord_temp.x - 1.0, coord_temp.y - 1.0, coord_temp.z - 1.0, coord_temp.value]))
-
-                cross_coordinates_temp.extend(additional_coordinates)
-
-            cross_coordinates.extend(cross_coordinates_temp)
-
-        cross_coordinates = sorted(cross_coordinates, key=lambda obj: obj.value)
-        return cross_coordinates
 
     def plan(self, width, offset=0, gap=1):
         """
@@ -732,11 +644,6 @@ def get_parser():
     parser.add_option(name='-create-viewer',
                       type_value=[[','], 'int'],
                       description='Manually label from a GUI a list of labels IDs, separated with ",". Example: 2,3,4,5',
-                      mandatory=False)
-    parser.add_option(name='-cross',
-                      type_value='int',
-                      description='Create a cross around each non-zero value. Input cross radius in mm.',
-                      example=param_default.cross_size,
                       mandatory=False)
     parser.add_option(name='-cubic-to-point',
                       type_value=None,
