@@ -335,7 +335,7 @@ def pad_image(im, pad_x_i=0, pad_x_f=0, pad_y_i=0, pad_y_f=0, pad_z_i=0, pad_z_f
     return im_out
 
 
-def split_data(im_in, dim):
+def split_data(im_in, dim, squeeze_data=True):
     """
     Split data
     :param im_in: input image.
@@ -352,7 +352,10 @@ def split_data(im_in, dim):
         data = data[..., np.newaxis]
     # in case splitting along the last dim, make sure to remove the last dim to avoid singleton
     if dim + 1 == len(np.shape(data)):
-        do_reshape = True
+        if squeeze_data:
+            do_reshape = True
+        else:
+            do_reshape = False
     else:
         do_reshape = False
     # Split data into list
@@ -381,7 +384,7 @@ def concat_data(fname_in_list, dim, pixdim=None, squeeze_data=False):
     :return im_out: concatenated image
     """
     # WARNING: calling concat_data in python instead of in command line causes a non understood issue (results are different with both options)
-    from numpy import concatenate, expand_dims
+    # from numpy import concatenate, expand_dims
 
     dat_list = []
     data_concat_list = []
@@ -396,12 +399,12 @@ def concat_data(fname_in_list, dim, pixdim=None, squeeze_data=False):
     for i, fname in enumerate(fname_in_list):
         # if there is more than 100 images to concatenate, then it does it iteratively to avoid memory issue.
         if i != 0 and i % 100 == 0:
-            data_concat_list.append(concatenate(dat_list, axis=dim))
+            data_concat_list.append(np.concatenate(dat_list, axis=dim))
             im = Image(fname)
             dat = im.data
             # if image shape is smaller than asked dim, then expand dim
             if len(dat.shape) <= dim:
-                dat = expand_dims(dat, dim)
+                dat = np.expand_dims(dat, dim)
             dat_list = [dat]
             del im
             del dat
@@ -410,15 +413,15 @@ def concat_data(fname_in_list, dim, pixdim=None, squeeze_data=False):
             dat = im.data
             # if image shape is smaller than asked dim, then expand dim
             if len(dat.shape) <= dim:
-                dat = expand_dims(dat, dim)
+                dat = np.expand_dims(dat, dim)
             dat_list.append(dat)
             del im
             del dat
     if data_concat_list:
-        data_concat_list.append(concatenate(dat_list, axis=dim))
-        data_concat = concatenate(data_concat_list, axis=dim)
+        data_concat_list.append(np.concatenate(dat_list, axis=dim))
+        data_concat = np.concatenate(data_concat_list, axis=dim)
     else:
-        data_concat = concatenate(dat_list, axis=dim)
+        data_concat = np.concatenate(dat_list, axis=dim)
     # write file
     im_out = msct_image.empty_like(Image(fname_in_list[0]))
     im_out.data = data_concat
