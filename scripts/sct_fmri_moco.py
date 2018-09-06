@@ -311,7 +311,7 @@ def fmri_moco(param):
     param_moco.path_out = ''
     param_moco.todo = 'estimate_and_apply'
     param_moco.mat_moco = 'mat_groups'
-    moco.moco(param_moco)
+    file_mat = moco.moco(param_moco)
 
     # create final mat folder
     sct.create_folder(mat_final)
@@ -320,8 +320,11 @@ def fmri_moco(param):
     sct.printv('\nCopy transformations...', param.verbose)
     for iGroup in range(nb_groups):
         for data in range(len(group_indexes[iGroup])):
-            sct.copy(os.path.join('mat_groups', 'mat.T' + str(iGroup) + ext_mat), mat_final + 'mat.T' + str(group_indexes[iGroup][data]) + ext_mat, verbose=param.verbose)
+            list_file = file_mat[:, iGroup]
+            for file in list_file:
+                sct.copy(file + ext_mat, file.replace('mat_groups', 'mat_final') + ext_mat)  # TODO: remove hardcode
 
+    # TODO: if g=1, no need to run the block below (already applied)
     # Apply moco on all fmri data
     sct.printv('\n-------------------------------------------------------------------------------', param.verbose)
     sct.printv('  Apply moco', param.verbose)
