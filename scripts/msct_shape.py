@@ -364,15 +364,6 @@ def compute_properties_along_centerline(fname_seg_image, property_list, fname_di
     return property_list, properties
 
 
-def surface(volume, threshold=0.5, verbose=1):
-    verts, faces = measure.marching_cubes(volume, threshold)
-
-    if verbose == 2:
-        import visvis as vv
-        vv.mesh(np.fliplr(verts), faces)
-        vv.use().Run()
-
-
 def shape_pca(data):
     return
 
