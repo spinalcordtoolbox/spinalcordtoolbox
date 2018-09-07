@@ -17,9 +17,6 @@
 # TODO: add tests with sag and ax orientation, with -g 1 and 3
 # TODO: make it a spinalcordtoolbox module with im as input
 # TODO: params for ANTS: CC/MI, shrink fact, nb_it
-# TODO: use mask
-# TODO: unpad after applying transfo
-# TODO: do not output inverse warp for ants
 # TODO: ants: explore optin  --float  for faster computation
 
 from __future__ import absolute_import
@@ -161,7 +158,7 @@ def moco(param):
                 data_mocoz = Image(file_data_splitZ_splitT_moco[it]).data
                 data_targetz = (data_targetz * (indice_index + 1) + data_mocoz) / (indice_index + 2)
                 im_targetz.data = data_targetz
-                im_targetz.save()
+                im_targetz.save(verbose=0)
                 # sct.run(["sct_maths", "-i", file_target_splitZ[iz], "-mul", str(indice_index + 1), "-o", file_target_splitZ[iz]])
                 # sct.run(["sct_maths", "-i", file_target_splitZ[iz], "-add", file_data_splitZ_splitT_moco[it], "-o", file_target_splitZ[iz]])
                 # sct.run(["sct_maths", "-i", file_target_splitZ[iz], "-div", str(indice_index + 2), "-o", file_target_splitZ[iz]])
@@ -294,7 +291,12 @@ def register(param, file_src, file_dest, file_mat, file_out):
     # check if output file exists
     if not os.path.isfile(file_out_concat):
         # sct.printv(output, verbose, 'error')
-        sct.printv('WARNING in ' + os.path.basename(__file__) + ': No output. Maybe related to improper calculation of mutual information. Either the mask you provided is too small, or the subject moved a lot. If you see too many messages like this try with a bigger mask. Using previous transformation for this volume.', param.verbose, 'warning')
+        sct.printv('WARNING in ' + os.path.basename(__file__) + ': No output. Maybe related to improper calculation of '
+                                                                'mutual information. Either the mask you provided is '
+                                                                'too small, or the subject moved a lot. If you see too '
+                                                                'many messages like this try with a bigger mask. '
+                                                                'Using previous transformation for this volume (if it'
+                                                                'exists).', param.verbose, 'warning')
         failed_transfo = 1
 
     # TODO: if sagittal, remove x values from mat, remove concat and put back in original orientation
