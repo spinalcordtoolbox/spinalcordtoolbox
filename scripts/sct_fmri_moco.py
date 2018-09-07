@@ -319,10 +319,15 @@ def fmri_moco(param):
     sct.printv('\nCopy transformations...', param.verbose)
     for iGroup in range(nb_groups):
         for data in range(len(group_indexes[iGroup])):
-            list_file = file_mat[:, iGroup]
-            for file in list_file:
-                sct.copy(file + ext_mat,
-                         mat_final + 'mat.T' + str(group_indexes[iGroup][data]).zfill(4) + ext_mat)
+            # fetch all file_mat_z for given t-group
+            list_file_mat_z = file_mat[:, iGroup]
+            # loop across file_mat_z and copy to mat_final folder
+            for file_mat_z in list_file_mat_z:
+                # we want to copy 'mat_groups/mat.ZXXXXTYYYYWarp.nii.gz' --> 'mat_final/mat.ZXXXXTYYYZWarp.nii.gz'
+                # Notice the Y->Z in the under the T index: the idea here is to use the single matrix from each group,
+                # and apply it to all images belonging to the same group.
+                sct.copy(file_mat_z + ext_mat,
+                         mat_final + file_mat_z[11:20] + 'T' + str(group_indexes[iGroup][data]).zfill(4) + ext_mat)
 
     # TODO: if g=1, no need to run the block below (already applied)
     if param.group_size == 1:
