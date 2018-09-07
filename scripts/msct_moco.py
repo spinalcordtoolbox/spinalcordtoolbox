@@ -152,7 +152,7 @@ def moco(param):
 
             # average registered volume with target image
             # N.B. use weighted averaging: (target * nb_it + moco) / (nb_it + 1)
-            if param.iterative_averaging and indice_index < 10 and failed_transfo[it] == 0 and not param.todo == 'apply':
+            if param.iterAvg and indice_index < 10 and failed_transfo[it] == 0 and not param.todo == 'apply':
                 im_targetz = Image(file_target_splitZ[iz])
                 data_targetz = im_targetz.data
                 data_mocoz = Image(file_data_splitZ_splitT_moco[it]).data
@@ -263,7 +263,7 @@ def register(param, file_src, file_dest, file_mat, file_out):
                '--polydegree', param.poly,
                '--transform', 'Translation[%s]' %param.gradStep,
                '--metric', param.metric + '[' + file_dest + ',' + file_src + ',1,' + metric_radius + ',Regular,' + param.sampling + ']',
-               '--iterations', '5',
+               '--iterations', param.iter,
                '--shrinkFactors', '1',
                '--smoothingSigmas', param.smooth,
                '--verbose', '1',
