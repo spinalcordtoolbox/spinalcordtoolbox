@@ -72,25 +72,13 @@ def moco(param):
     nx, ny, nz, nt, px, py, pz, pt = im_data.dim
     sct.printv(('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz) + ' x ' + str(nt)), verbose)
 
-    # Get orientation
-    sct.printv('\nData orientation: ' + im_data.orientation, verbose)
-    if im_data.orientation[2] in 'LR':
-        is_sagittal = True
-        sct.printv('  Treated as sagittal')
-    elif im_data.orientation[2] in 'IS':
-        is_sagittal = False
-        sct.printv('  Treated as axial')
-    else:
-        is_sagittal = False
-        sct.printv('WARNING: Orientation seems to be neither axial nor sagittal.')
-
     # copy file_target to a temporary file
     sct.printv('\nCopy file_target to a temporary file...', verbose)
     sct.copy(file_target + ext, 'target.nii')
     file_target = 'target'
 
     # If scan is sagittal, split src and target along Z (slice)
-    if is_sagittal:
+    if param.is_sagittal:
         dim_sag = 2  # TODO: find it
         # z-split data (time series)
         im_z_list = split_data(im_data, dim=dim_sag, squeeze_data=False)
@@ -199,7 +187,7 @@ def moco(param):
             im_out.save(file_data_splitZ_moco[iz])
 
     # If sagittal, merge along Z
-    if is_sagittal:
+    if param.is_sagittal:
         sct.printv('\nMerge data back along Z...', verbose)
         im_out = concat_data(file_data_splitZ_moco, 2)
         im_out.save(file_data + suffix + ext)

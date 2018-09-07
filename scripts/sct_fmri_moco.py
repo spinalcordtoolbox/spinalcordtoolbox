@@ -61,6 +61,7 @@ class Param:
         self.otsu = 0  # use otsu algorithm to segment dwi data for better moco. Value coresponds to data threshold. For no segmentation set to 0.
         self.iterAvg = 1  # iteratively average target image for more robust moco
         self.num_target = '0'
+        self.is_sagittal = False  # if True, then split along Z (right-left) and register each 2D slice (vs. 3D volume)
 
     # update constructor with user's parameters
     def update(self, param_user):
@@ -243,8 +244,26 @@ def fmri_moco(param):
 
     # Get dimensions of data
     sct.printv('\nGet dimensions of data...', param.verbose)
-    nx, ny, nz, nt, px, py, pz, pt = Image(file_data + '.nii').dim
+    im_data = Image(file_data + '.nii')
+    nx, ny, nz, nt, px, py, pz, pt = im_data.dim
     sct.printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz) + ' x ' + str(nt), param.verbose)
+
+    # Get orientation
+    sct.printv('\nData orientation: ' + im_data.orientation, param.verbose)
+    if im_data.orientation[2] in 'LR':
+        param.is_sagittal = True
+        sct.printv('  Treated as sagittal')
+    elif im_data.orientation[2] in 'IS':
+        param.is_sagittal = False
+        sct.printv('  Treated as axial')
+    else:
+        param.is_sagittal = False
+        sct.printv('WARNING: Orientation seems to be neither axial nor sagittal.')
+
+    # Adjust group size in case of sagittal scan
+    if param.is_sagittal and param.group_size != 1:
+        sct.printv('For sagittal data group_size should be one for more robustness. Forcing group_size=1.', 1, 'warning')
+        param.group_size = 1
 
     # Split into T dimension
     sct.printv('\nSplit along T dimension...', param.verbose)
