@@ -323,28 +323,28 @@ def fmri_moco(param):
     param_moco.mat_moco = 'mat_groups'
     file_mat = moco.moco(param_moco)
 
-    # create final mat folder
-    sct.create_folder(mat_final)
-
-    # Copy registration matrices
-    sct.printv('\nCopy transformations...', param.verbose)
-    for iGroup in range(nb_groups):
-        for data in range(len(group_indexes[iGroup])):
-            # fetch all file_mat_z for given t-group
-            list_file_mat_z = file_mat[:, iGroup]
-            # loop across file_mat_z and copy to mat_final folder
-            for file_mat_z in list_file_mat_z:
-                # we want to copy 'mat_groups/mat.ZXXXXTYYYYWarp.nii.gz' --> 'mat_final/mat.ZXXXXTYYYZWarp.nii.gz'
-                # Notice the Y->Z in the under the T index: the idea here is to use the single matrix from each group,
-                # and apply it to all images belonging to the same group.
-                sct.copy(file_mat_z + ext_mat,
-                         mat_final + file_mat_z[11:20] + 'T' + str(group_indexes[iGroup][data]).zfill(4) + ext_mat)
-
     # TODO: if g=1, no need to run the block below (already applied)
     if param.group_size == 1:
         # if flag g=1, it means that all images have already been corrected, so we just need to rename the file
         sct.mv('fmri_averaged_groups_moco.nii', 'fmri_moco.nii')
     else:
+        # create final mat folder
+        sct.create_folder(mat_final)
+
+        # Copy registration matrices
+        sct.printv('\nCopy transformations...', param.verbose)
+        for iGroup in range(nb_groups):
+            for data in range(len(group_indexes[iGroup])):
+                # fetch all file_mat_z for given t-group
+                list_file_mat_z = file_mat[:, iGroup]
+                # loop across file_mat_z and copy to mat_final folder
+                for file_mat_z in list_file_mat_z:
+                    # we want to copy 'mat_groups/mat.ZXXXXTYYYYWarp.nii.gz' --> 'mat_final/mat.ZXXXXTYYYZWarp.nii.gz'
+                    # Notice the Y->Z in the under the T index: the idea here is to use the single matrix from each group,
+                    # and apply it to all images belonging to the same group.
+                    sct.copy(file_mat_z + ext_mat,
+                             mat_final + file_mat_z[11:20] + 'T' + str(group_indexes[iGroup][data]).zfill(4) + ext_mat)
+
         # Apply moco on all fmri data
         sct.printv('\n-------------------------------------------------------------------------------', param.verbose)
         sct.printv('  Apply moco', param.verbose)

@@ -232,58 +232,76 @@ def register(param, file_src, file_dest, file_mat, file_out):
         metric_radius = '4'
 
     # If orientation is sagittal, we need to do a couple of things...
-    im_data = Image(file_src)
-    if im_data.orientation[2] in 'LR':
-        im = Image(file_src)
-        # reorient to RPI because ANTs algo will assume that the 3rd dim is along the S-I axis (where we want the
-        # regularization)
-        native_orientation = im.orientation
-        im.change_orientation('RPI')
-        # since we are dealing with a 2D slice, we need to pad (by copying the same slice) because this ANTs function
-        # only accepts 3D input
-        im_concat = concat_data([im, im, im, im, im], 0, squeeze_data=False)  # TODO: do it more elegantly inside the list
-        file_src_concat = sct.add_suffix(file_src, '_rpi_concat')
-        im_concat.save(file_src_concat)
-        # and we need to do the same thing with the target (if not already done at the previous iteration)
-        file_dest_concat = sct.add_suffix(file_dest, '_rpi_concat')
-        if not os.path.isfile(file_dest_concat):
-            im_dest = Image(file_dest)
-            im_dest.change_orientation('RPI')
-            im_dest_concat = concat_data([im_dest, im_dest, im_dest, im_dest, im_dest], 0, squeeze_data=False)
-            im_dest_concat.save(file_dest_concat)
-        # and the same thing with the mask (if there is one)
-        if not param.fname_mask == '':
-            file_mask_concat = 'mask_rpi_concat.nii.gz'
-            if not os.path.isfile(file_mask_concat):
-                im_mask = Image(param.fname_mask)
-                im_mask.change_orientation('RPI')
-                im_mask_concat = concat_data([im_mask, im_mask, im_mask, im_mask, im_mask], 0, squeeze_data=False)
-                im_mask_concat.save(file_mask_concat)
-        # update variables
-        file_src = file_src_concat
-        file_dest = file_dest_concat
-        file_out_concat = sct.add_suffix(file_src, '_moco')
-    else:
-        file_out_concat = file_out
-        file_mask_concat = file_mask
+    # im_data = Image(file_src)
+    # if im_data.orientation[2] in 'LR':
+    #     im = Image(file_src)
+    #     # reorient to RPI because ANTs algo will assume that the 3rd dim is along the S-I axis (where we want the
+    #     # regularization)
+    #     native_orientation = im.orientation
+    #     im.change_orientation('RPI')
+    #     # since we are dealing with a 2D slice, we need to pad (by copying the same slice) because this ANTs function
+    #     # only accepts 3D input
+    #     im_concat = concat_data([im, im, im, im, im], 0, squeeze_data=False)  # TODO: do it more elegantly inside the list
+    #     file_src_concat = sct.add_suffix(file_src, '_rpi_concat')
+    #     im_concat.save(file_src_concat)
+    #     # and we need to do the same thing with the target (if not already done at the previous iteration)
+    #     file_dest_concat = sct.add_suffix(file_dest, '_rpi_concat')
+    #     if not os.path.isfile(file_dest_concat):
+    #         im_dest = Image(file_dest)
+    #         im_dest.change_orientation('RPI')
+    #         im_dest_concat = concat_data([im_dest, im_dest, im_dest, im_dest, im_dest], 0, squeeze_data=False)
+    #         im_dest_concat.save(file_dest_concat)
+    #     # and the same thing with the mask (if there is one)
+    #     if not param.fname_mask == '':
+    #         file_mask_concat = 'mask_rpi_concat.nii.gz'
+    #         if not os.path.isfile(file_mask_concat):
+    #             im_mask = Image(param.fname_mask)
+    #             im_mask.change_orientation('RPI')
+    #             im_mask_concat = concat_data([im_mask, im_mask, im_mask, im_mask, im_mask], 0, squeeze_data=False)
+    #             im_mask_concat.save(file_mask_concat)
+    #     # update variables
+    #     file_src = file_src_concat
+    #     file_dest = file_dest_concat
+    #     file_out_concat = sct.add_suffix(file_src, '_moco')
+    # else:
+    file_out_concat = file_out
+    file_mask_concat = file_mask
 
     # register file_src to file_dest
     if param.todo == 'estimate' or param.todo == 'estimate_and_apply':
-        cmd = ['isct_antsSliceRegularizedRegistration',
-               '--polydegree', param.poly,
-               '--transform', 'Translation[%s]' %param.gradStep,
-               '--metric', param.metric + '[' + file_dest + ',' + file_src + ',1,' + metric_radius + ',Regular,' + param.sampling + ']',
-               '--iterations', param.iter,
-               '--shrinkFactors', '1',
-               '--smoothingSigmas', param.smooth,
-               '--verbose', '1',
-               '--output', '[' + file_mat + ',' + file_out_concat + ']']
-        cmd += sct.get_interpolation('isct_antsSliceRegularizedRegistration', param.interp)
-        if not file_mask_concat == '':
-            cmd += ['--mask', file_mask_concat]
+        # If orientation is sagittal, use antsRegistration in 2D mode
+        im_data = Image(file_src)  # TODO: pass argument to use antsReg instead of opening Image each time
+        if im_data.orientation[2] in 'LR':
+            cmd = ['isct_antsRegistration',
+                   '-d', '2',
+                   '--transform', 'affine[%s]' %param.gradStep,
+                   '--metric', param.metric + '[' + file_dest + ',' + file_src + ',1,' + metric_radius + ',Regular,' + param.sampling + ']',
+                   '--convergence', param.iter,
+                   '--shrink-factors', '1',
+                   '--smoothing-sigmas', param.smooth,
+                   '--verbose', '1',
+                   '--restrict-deformation', '0x1',  # restrict deformation along A-P axis
+                   '--output', '[' + file_mat + ',' + file_out_concat + ']']
+            cmd += sct.get_interpolation('isct_antsRegistration', param.interp)
+            if not file_mask_concat == '':
+                cmd += ['--masks', file_mask_concat]
+        else:
+            cmd = ['isct_antsSliceRegularizedRegistration',
+                   '--polydegree', param.poly,
+                   '--transform', 'Translation[%s]' %param.gradStep,
+                   '--metric', param.metric + '[' + file_dest + ',' + file_src + ',1,' + metric_radius + ',Regular,' + param.sampling + ']',
+                   '--iterations', param.iter,
+                   '--shrinkFactors', '1',
+                   '--smoothingSigmas', param.smooth,
+                   '--verbose', '1',
+                   '--output', '[' + file_mat + ',' + file_out_concat + ']']
+            cmd += sct.get_interpolation('isct_antsSliceRegularizedRegistration', param.interp)
+            if not file_mask_concat == '':
+                cmd += ['--mask', file_mask_concat]
+        # run command
         status, output = sct.run(cmd, param.verbose)
 
-    if param.todo == 'apply':
+    elif param.todo == 'apply':
         sct_apply_transfo.main(args=['-i', file_src,
                                      '-d', file_dest,
                                      '-w', file_mat + 'Warp.nii.gz',
@@ -309,13 +327,12 @@ def register(param, file_src, file_dest, file_mat, file_out):
                                                                 'exists).', param.verbose, 'warning')
         failed_transfo = 1
 
-    # TODO: if sagittal, remove x values from mat, remove concat and put back in original orientation
+    # TODO: if sagittal, copy header (because ANTs screws it) and add singleton in 3rd dimension (for z-concatenation)
     if im_data.orientation[2] in 'LR':
         im_out = Image(file_out_concat)
-        im_out.change_orientation(native_orientation)
-        im_out.data = im_out.data[:, :, 3]
-        im_out.data = np.expand_dims(im_out.data, 2)  # need to have 3D data because target is also 3D (even though last dim is a singleton)
-        im_out.save(file_out)
+        im_out.header = im_data.header
+        im_out.data = np.expand_dims(im_out.data, 2)
+        im_out.save(file_out, verbose=0)
 
     # return status of failure
     return failed_transfo
