@@ -10,8 +10,6 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-# TODO: do not merge group if g=1
-# TODO: estimate and apply, no need to reapply afterwards
 
 from __future__ import absolute_import, division
 
@@ -23,6 +21,7 @@ import shutil
 import numpy as np
 import sct_utils as sct
 import msct_moco as moco
+import sct_maths
 from sct_convert import convert
 from spinalcordtoolbox.image import Image
 from sct_image import split_data, concat_data
@@ -322,19 +321,24 @@ def fmri_moco(param):
         for data in range(len(group_indexes[iGroup])):
             list_file = file_mat[:, iGroup]
             for file in list_file:
-                sct.copy(file + ext_mat, file.replace('mat_groups', 'mat_final') + ext_mat)  # TODO: remove hardcode
+                sct.copy(file + ext_mat,
+                         mat_final + 'mat.T' + str(group_indexes[iGroup][data]).zfill(4) + ext_mat)
 
     # TODO: if g=1, no need to run the block below (already applied)
-    # Apply moco on all fmri data
-    sct.printv('\n-------------------------------------------------------------------------------', param.verbose)
-    sct.printv('  Apply moco', param.verbose)
-    sct.printv('-------------------------------------------------------------------------------', param.verbose)
-    param_moco.file_data = 'fmri'
-    param_moco.file_target = file_data + '_mean_' + str(0)
-    param_moco.path_out = ''
-    param_moco.mat_moco = mat_final
-    param_moco.todo = 'apply'
-    moco.moco(param_moco)
+    if param.group_size == 1:
+        # if flag g=1, it means that all images have already been corrected, so we just need to rename the file
+        sct.mv('fmri_averaged_groups_moco.nii', 'fmri_moco.nii')
+    else:
+        # Apply moco on all fmri data
+        sct.printv('\n-------------------------------------------------------------------------------', param.verbose)
+        sct.printv('  Apply moco', param.verbose)
+        sct.printv('-------------------------------------------------------------------------------', param.verbose)
+        param_moco.file_data = 'fmri'
+        param_moco.file_target = file_data + '_mean_' + str(0)
+        param_moco.path_out = ''
+        param_moco.mat_moco = mat_final
+        param_moco.todo = 'apply'
+        moco.moco(param_moco)
 
     # copy geometric information from header
     # NB: this is required because WarpImageMultiTransform in 2D mode wrongly sets pixdim(3) to "1".
@@ -345,7 +349,10 @@ def fmri_moco(param):
 
     # Average volumes
     sct.printv('\nAveraging data...', param.verbose)
-    sct.run(['sct_maths', '-i', 'fmri_moco.nii', '-o', 'fmri_moco_mean.nii', '-mean', 't'], verbose=param.verbose)
+    sct_maths.main(args=['-i', 'fmri_moco.nii',
+                         '-o', 'fmri_moco_mean.nii',
+                         '-mean', 't',
+                         '-v', '0'])
 
 
 #=======================================================================================================================
