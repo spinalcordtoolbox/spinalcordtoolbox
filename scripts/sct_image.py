@@ -434,7 +434,8 @@ def concat_data(fname_in_list, dim, pixdim=None, squeeze_data=False):
     if pixdim is not None:
         im_out.hdr['pixdim'] = pixdim
 
-    if squeeze_data:
+    if squeeze_data and data_concat.shape[dim] == 1:
+        # remove the last dim if it is a singleton.
         im_out.data = data_concat.reshape(tuple([ x for (idx_shape, x) in enumerate(data_concat.shape) if idx_shape != dim]))
     else:
         im_out.data = data_concat
