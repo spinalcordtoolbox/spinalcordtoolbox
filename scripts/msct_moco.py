@@ -32,6 +32,7 @@ import scipy.interpolate
 import sct_utils as sct
 from spinalcordtoolbox.image import Image
 from sct_image import split_data, concat_data
+import sct_apply_transfo
 
 path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
 
@@ -106,14 +107,21 @@ def moco(param):
         for im_targetz in im_targetz_list:
             im_targetz.save()
             file_target_splitZ.append(im_targetz.absolutepath)
+        # initialize file list for output matrices
+        file_mat = np.chararray([nz, nt],
+                                itemsize=50)  # itemsize=50 is to accomodate relative path to matrix file name.
+
     else:
         file_data_splitZ = [file_data + ext]  # TODO: make it absolute like above
         file_target_splitZ = [file_target + ext]  # TODO: make it absolute like above
+        # initialize file list for output matrices
+        file_mat = np.chararray([1, nt],
+                                itemsize=50)  # itemsize=50 is to accomodate relative path to matrix file name.
 
     # Loop across file list, where each file is either a 2D volume (if sagittal) or a 3D volume (otherwise)
     # file_mat = tuple([[[] for i in range(nt)] for i in range(nz)])
-    file_mat = np.chararray([nz, nt], itemsize=50)  # itemsize=50 is to accomodate relative path to matrix file name.
     file_mat[:] = ''  # init
+    file_data_splitZ_moco = []
     for file in file_data_splitZ:
         iz = file_data_splitZ.index(file)
         # Split data along T dimension
@@ -129,7 +137,7 @@ def moco(param):
         # Motion correction: initialization
         index = np.arange(nt)
         file_data_splitT_num = []
-        file_data_splitT_moco_num = []
+        file_data_splitZ_splitT_moco = []
         failed_transfo = [0 for i in range(nt)]
 
         # Motion correction: Loop across T
@@ -138,24 +146,24 @@ def moco(param):
             # create indices and display stuff
             it = index[indice_index]
             # file_data_splitT_num.append(file_data_splitT + str(it).zfill(4))
-            # file_data_splitT_moco_num.append(file_data + suffix + '_T' + str(it).zfill(4))
+            # file_data_splitZ_splitT_moco.append(file_data + suffix + '_T' + str(it).zfill(4))
             sct.printv(('\nVolume ' + str((it)) + '/' + str(nt - 1) + ':'), verbose)
             file_mat[iz][it] = os.path.join(folder_mat, "mat.Z") + str(iz).zfill(4) + 'T' + str(it).zfill(4)
-            file_data_splitT_moco_num.append(sct.add_suffix(file_data_splitZ_splitT[it], '_moco'))
+            file_data_splitZ_splitT_moco.append(sct.add_suffix(file_data_splitZ_splitT[it], '_moco'))
             # run 3D registration
-            failed_transfo[it] = register(param, file_data_splitZ_splitT[it], file_target_splitZ[iz], file_mat[iz][it], file_data_splitT_moco_num[it])
+            failed_transfo[it] = register(param, file_data_splitZ_splitT[it], file_target_splitZ[iz], file_mat[iz][it], file_data_splitZ_splitT_moco[it])
 
             # average registered volume with target image
             # N.B. use weighted averaging: (target * nb_it + moco) / (nb_it + 1)
             if param.iterative_averaging and indice_index < 10 and failed_transfo[it] == 0 and not param.todo == 'apply':
                 im_targetz = Image(file_target_splitZ[iz])
                 data_targetz = im_targetz.data
-                data_mocoz = Image(file_data_splitT_moco_num[it]).data
+                data_mocoz = Image(file_data_splitZ_splitT_moco[it]).data
                 data_targetz = (data_targetz * (indice_index + 1) + data_mocoz) / (indice_index + 2)
                 im_targetz.data = data_targetz
                 im_targetz.save()
                 # sct.run(["sct_maths", "-i", file_target_splitZ[iz], "-mul", str(indice_index + 1), "-o", file_target_splitZ[iz]])
-                # sct.run(["sct_maths", "-i", file_target_splitZ[iz], "-add", file_data_splitT_moco_num[it], "-o", file_target_splitZ[iz]])
+                # sct.run(["sct_maths", "-i", file_target_splitZ[iz], "-add", file_data_splitZ_splitT_moco[it], "-o", file_target_splitZ[iz]])
                 # sct.run(["sct_maths", "-i", file_target_splitZ[iz], "-div", str(indice_index + 2), "-o", file_target_splitZ[iz]])
 
         # Replace failed transformation with the closest good one
@@ -174,7 +182,7 @@ def moco(param):
                  "-i", file_data_splitT_num[fT[it]] + ".nii",
                  "-d", file_target + ".nii",
                  "-w", file_mat[iz][fT[it]] + 'Warp.nii.gz',
-                 "-o", file_data_splitT_moco_num[fT[it]] + '.nii',
+                 "-o", file_data_splitZ_splitT_moco[fT[it]] + '.nii',
                  "-x", param.interp], verbose)
             else:
                 # exit program if no transformation exists.
@@ -182,18 +190,25 @@ def moco(param):
                 sys.exit(2)
 
         # Merge data along T
-        file_moco = sct.add_suffix(file, suffix)
+        file_data_splitZ_moco.append(sct.add_suffix(file, suffix))
         if todo != 'estimate':
             sct.printv('\nMerge data back along T...', verbose)
             # im_list = []
             # fname_list = []
             # for indice_index in range(len(index)):
-                # im_list.append(Image(file_data_splitT_moco_num[indice_index] + ext))
-                # fname_list.append(file_data_splitT_moco_num[indice_index] + ext)
-            im_out = concat_data(file_data_splitT_moco_num, 3)
-            im_out.save(file_moco)
+                # im_list.append(Image(file_data_splitZ_splitT_moco[indice_index] + ext))
+                # fname_list.append(file_data_splitZ_splitT_moco[indice_index] + ext)
+            im_out = concat_data(file_data_splitZ_splitT_moco, 3)
+            im_out.save(file_data_splitZ_moco[iz])
+
+    # If sagittal, merge along Z
+    if is_sagittal:
+        sct.printv('\nMerge data back along Z...', verbose)
+        im_out = concat_data(file_data_splitZ_moco, 2)
+        im_out.save(file_data + suffix + ext)
 
     return file_mat
+
 
 def register(param, file_src, file_dest, file_mat, file_out):
     """
@@ -259,17 +274,22 @@ def register(param, file_src, file_dest, file_mat, file_out):
         cmd += sct.get_interpolation('isct_antsSliceRegularizedRegistration', param.interp)
         if not param.fname_mask == '':
             cmd += ['--mask', param.fname_mask]
+        status, output = sct.run(cmd, param.verbose)
 
     if param.todo == 'apply':
-        cmd = ['sct_apply_transfo',
-         '-i', file_src + '.nii',
-         '-d', file_dest + '.nii',
-         '-w', file_mat + 'Warp.nii.gz',
-         '-o', file_out + '.nii',
-         '-x', param.interp,
-        ]
-    # run the stuff
-    status, output = sct.run(cmd, param.verbose)
+        sct_apply_transfo.main(args=['-i', file_src,
+                                     '-d', file_dest,
+                                     '-w', file_mat + 'Warp.nii.gz',
+                                     '-o', file_out_concat,
+                                     '-x', param.interp])
+    #     cmd = ['sct_apply_transfo',
+    #      '-i', file_src,
+    #      '-d', file_dest,
+    #      '-w', file_mat + 'Warp.nii.gz',
+    #      '-o', file_out,
+    #      '-x', param.interp]
+    # # run the stuff
+    # status, output = sct.run(cmd, param.verbose)
 
     # check if output file exists
     if not os.path.isfile(file_out_concat):
