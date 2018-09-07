@@ -223,6 +223,7 @@ def register(param, file_src, file_dest, file_mat, file_out):
 
     # initialization
     failed_transfo = 0  # by default, failed matrix is 0 (i.e., no failure)
+    file_mask = param.fname_mask
 
     # get metric radius (if MeanSquares, CC) or nb bins (if MI)
     if param.metric == 'MI':
@@ -250,12 +251,21 @@ def register(param, file_src, file_dest, file_mat, file_out):
             im_dest.change_orientation('RPI')
             im_dest_concat = concat_data([im_dest, im_dest, im_dest, im_dest, im_dest], 0, squeeze_data=False)
             im_dest_concat.save(file_dest_concat)
+        # and the same thing with the mask (if there is one)
+        if not param.fname_mask == '':
+            file_mask_concat = 'mask_rpi_concat.nii.gz'
+            if not os.path.isfile(file_mask_concat):
+                im_mask = Image(param.fname_mask)
+                im_mask.change_orientation('RPI')
+                im_mask_concat = concat_data([im_mask, im_mask, im_mask, im_mask, im_mask], 0, squeeze_data=False)
+                im_mask_concat.save(file_mask_concat)
         # update variables
         file_src = file_src_concat
         file_dest = file_dest_concat
         file_out_concat = sct.add_suffix(file_src, '_moco')
     else:
         file_out_concat = file_out
+        file_mask_concat = file_mask
 
     # register file_src to file_dest
     if param.todo == 'estimate' or param.todo == 'estimate_and_apply':
@@ -269,8 +279,8 @@ def register(param, file_src, file_dest, file_mat, file_out):
                '--verbose', '1',
                '--output', '[' + file_mat + ',' + file_out_concat + ']']
         cmd += sct.get_interpolation('isct_antsSliceRegularizedRegistration', param.interp)
-        if not param.fname_mask == '':
-            cmd += ['--mask', param.fname_mask]
+        if not file_mask_concat == '':
+            cmd += ['--mask', file_mask_concat]
         status, output = sct.run(cmd, param.verbose)
 
     if param.todo == 'apply':
