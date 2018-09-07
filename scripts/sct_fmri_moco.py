@@ -49,6 +49,7 @@ class Param:
         self.poly = '2'  # degree of polynomial function for moco
         self.smooth = '2'  # smoothing sigma in mm
         self.gradStep = '1'  # gradientStep for searching algorithm
+        self.iter = '5'  # number of iterations
         self.metric = 'MeanSquares'  # metric: MI, MeanSquares, CC
         self.sampling = '0.2'  # sampling rate used for registration metric
         self.interp = 'spline'  # nn, linear, spline
@@ -58,7 +59,7 @@ class Param:
         self.swapXY = 0
         self.bval_min = 100  # in case user does not have min bvalues at 0, set threshold (where csf disapeared).
         self.otsu = 0  # use otsu algorithm to segment dwi data for better moco. Value coresponds to data threshold. For no segmentation set to 0.
-        self.iterative_averaging = 1  # iteratively average target image for more robust moco
+        self.iterAvg = 1  # iteratively average target image for more robust moco
         self.num_target = '0'
 
     # update constructor with user's parameters
@@ -68,7 +69,15 @@ class Param:
             if len(object) < 2:
                 sct.printv('ERROR: Wrong usage.', 1, type='error')
             obj = object.split('=')
-            setattr(self, obj[0], obj[1])
+            # set type based on default param field
+            # isinstance(i, int)
+            # isinstance(f, float)
+            # isinstance(s, str)
+
+            field = obj[1]
+            if isinstance(getattr(self, obj[0]), int):
+                field = int(field)
+            setattr(self, obj[0], field)
 
 # PARSER
 # ==========================================================================================
@@ -104,10 +113,12 @@ def get_parser():
                       description="Advanced parameters. Assign value with \"=\"; Separate arguments with \",\"\n"
                                   "poly [int]: Degree of polynomial function used for regularization along Z. For no regularization set to 0. Default=" + param_default.poly + ".\n"
                                   "smooth [mm]: Smoothing kernel. Default=" + param_default.smooth + ".\n"
+                                  "iter [int]: Number of iterations. Default=" + param_default.iter + ".\n"
                                   "metric {MI, MeanSquares, CC}: Metric used for registration. Default=" + param_default.metric + ".\n"
                                   "gradStep [float]: Searching step used by registration algorithm. The higher the more deformation allowed. Default=" + param_default.gradStep + ".\n"
-                                  "sample [0-1]: Sampling rate used for registration metric. Default=" + param_default.sampling + ".\n"
-                                  "numTarget [int]: Target volume or group (starting with 0). Default=" + param_default.num_target + ".\n",
+                                  "sampling [0-1]: Sampling rate used for registration metric. Default=" + param_default.sampling + ".\n"
+                                  "numTarget [int]: Target volume or group (starting with 0). Default=" + param_default.num_target + ".\n"
+                                  "iterAvg [int]: Iterative averaging: Target volume is a weighted average of the previously-registered volumes. Default=" + str(param_default.iterAvg) + ".\n",
                       mandatory=False)
     parser.add_option(name='-ofolder',
                       type_value='folder_creation',
