@@ -14,7 +14,7 @@
 
 # TODO: check the status of spline()
 # TODO: check the status of combine_matrix()
-# TODO: add tests with sag and ax orientation, with -g 1 and 3
+# TODO: add tests with sag and ax orientation, with -g 1 and 3, with mask (not covering all slices)
 # TODO: make it a spinalcordtoolbox module with im as input
 # TODO: params for ANTS: CC/MI, shrink fact, nb_it
 # TODO: ants: explore optin  --float  for faster computation
@@ -27,6 +27,7 @@ import numpy as np
 import scipy.interpolate
 
 import sct_utils as sct
+from sct_convert import convert
 from spinalcordtoolbox.image import Image
 from sct_image import split_data, concat_data
 import sct_apply_transfo
@@ -76,6 +77,9 @@ def moco(param):
     sct.printv('\nCopy file_target to a temporary file...', verbose)
     sct.copy(file_target + ext, 'target.nii')
     file_target = 'target'
+    if not param.fname_mask == '':
+        file_mask = 'mask.nii'
+        convert(param.fname_mask, file_mask, squeeze_data=False)
 
     # If scan is sagittal, split src and target along Z (slice)
     if param.is_sagittal:
@@ -92,6 +96,13 @@ def moco(param):
         for im_targetz in im_targetz_list:
             im_targetz.save()
             file_target_splitZ.append(im_targetz.absolutepath)
+        # z-split mask (if exists)
+        if not param.fname_mask == '':
+            im_maskz_list = split_data(Image(file_mask), dim=dim_sag, squeeze_data=False)
+            file_mask_splitZ = []
+            for im_maskz in im_maskz_list:
+                im_maskz.save()
+                file_mask_splitZ.append(im_maskz.absolutepath)
         # initialize file list for output matrices
         file_mat = np.chararray([nz, nt],
                                 itemsize=50)  # itemsize=50 is to accomodate relative path to matrix file name.
@@ -136,7 +147,8 @@ def moco(param):
             file_mat[iz][it] = os.path.join(folder_mat, "mat.Z") + str(iz).zfill(4) + 'T' + str(it).zfill(4)
             file_data_splitZ_splitT_moco.append(sct.add_suffix(file_data_splitZ_splitT[it], '_moco'))
             # run 3D registration
-            failed_transfo[it] = register(param, file_data_splitZ_splitT[it], file_target_splitZ[iz], file_mat[iz][it], file_data_splitZ_splitT_moco[it])
+            failed_transfo[it] = register(param, file_data_splitZ_splitT[it], file_target_splitZ[iz], file_mat[iz][it],
+                                          file_data_splitZ_splitT_moco[it], im_mask=im_maskz_list[iz])
 
             # average registered volume with target image
             # N.B. use weighted averaging: (target * nb_it + moco) / (nb_it + 1)
@@ -195,7 +207,7 @@ def moco(param):
     return file_mat
 
 
-def register(param, file_src, file_dest, file_mat, file_out):
+def register(param, file_src, file_dest, file_mat, file_out, im_mask=None):
     """
     Register two images by estimating slice-wise Tx and Ty transformations, which are regularized along Z. This function
     uses ANTs' isct_antsSliceRegularizedRegistration.
@@ -204,6 +216,7 @@ def register(param, file_src, file_dest, file_mat, file_out):
     :param file_dest:
     :param file_mat:
     :param file_out:
+    :param im_mask: Image of mask, could be 2D or 3D
     :return:
     """
 
@@ -211,7 +224,8 @@ def register(param, file_src, file_dest, file_mat, file_out):
 
     # initialization
     failed_transfo = 0  # by default, failed matrix is 0 (i.e., no failure)
-    file_mask = param.fname_mask
+    do_registration = True
+    # file_mask = param.fname_mask
 
     # get metric radius (if MeanSquares, CC) or nb bins (if MI)
     if param.metric == 'MI':
@@ -253,12 +267,12 @@ def register(param, file_src, file_dest, file_mat, file_out):
     #     file_out_concat = sct.add_suffix(file_src, '_moco')
     # else:
     file_out_concat = file_out
-    file_mask_concat = file_mask
+    # file_mask_concat = file_mask  # TODO: do we need this temp variable?
 
     # register file_src to file_dest
     if param.todo == 'estimate' or param.todo == 'estimate_and_apply':
-        # If orientation is sagittal, use antsRegistration in 2D mode
         im_data = Image(file_src)  # TODO: pass argument to use antsReg instead of opening Image each time
+        # If orientation is sagittal, use antsRegistration in 2D mode
         if im_data.orientation[2] in 'LR':
             cmd = ['isct_antsRegistration',
                    '-d', '2',
@@ -271,8 +285,16 @@ def register(param, file_src, file_dest, file_mat, file_out):
                    '--restrict-deformation', '0x1',  # restrict deformation along A-P axis
                    '--output', '[' + file_mat + ',' + file_out_concat + ']']
             cmd += sct.get_interpolation('isct_antsRegistration', param.interp)
-            if not file_mask_concat == '':
-                cmd += ['--masks', file_mask_concat]
+            if im_mask is not None:
+                # if user specified a mask, make sure there are non-null voxels in the image before running the registration
+                if np.count_nonzero(im_mask.data):
+                    cmd += ['--masks', im_mask.absolutepath]
+                else:
+                    # Mask only contains zeros. Copying the image instead of estimating registration.
+                    sct.copy(file_src, file_out_concat, verbose=0)
+                    do_registration = False
+                    # TODO: create affine mat file with identity, in case used by -g 2
+        # 3D mode
         else:
             cmd = ['isct_antsSliceRegularizedRegistration',
                    '--polydegree', param.poly,
@@ -284,10 +306,11 @@ def register(param, file_src, file_dest, file_mat, file_out):
                    '--verbose', '1',
                    '--output', '[' + file_mat + ',' + file_out_concat + ']']
             cmd += sct.get_interpolation('isct_antsSliceRegularizedRegistration', param.interp)
-            if not file_mask_concat == '':
-                cmd += ['--mask', file_mask_concat]
+            if im_mask is not None:
+                cmd += ['--mask', im_mask.absolutepath]
         # run command
-        status, output = sct.run(cmd, param.verbose)
+        if do_registration:
+            status, output = sct.run(cmd, param.verbose)
 
     elif param.todo == 'apply':
         sct_apply_transfo.main(args=['-i', file_src,
@@ -316,7 +339,7 @@ def register(param, file_src, file_dest, file_mat, file_out):
         failed_transfo = 1
 
     # TODO: if sagittal, copy header (because ANTs screws it) and add singleton in 3rd dimension (for z-concatenation)
-    if im_data.orientation[2] in 'LR':
+    if im_data.orientation[2] in 'LR' and do_registration:
         im_out = Image(file_out_concat)
         im_out.header = im_data.header
         im_out.data = np.expand_dims(im_out.data, 2)
