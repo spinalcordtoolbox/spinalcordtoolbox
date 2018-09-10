@@ -52,9 +52,9 @@ def get_parser():
                       example=['t2', 't2_ax', 't2s'])
     parser.add_option(name="-centerline",
                       type_value="multiple_choice",
-                      description="choice of spinal cord centerline algorithm.",
+                      description="\n- Automatic spinal cord centerline detection algorithm: 'svm' or 'cnn'.\n- To use an interactive viewer for providing the centerline: 'viewer'.\n- Provide the filename of a manual centerline (e.g. t2_centerline_manual.nii.gz).\n",
                       mandatory=False,
-                      example=['svm', 'cnn'],
+                      example=['svm', 'cnn', 'viewer', 'filename'],
                       default_value="svm")
     parser.add_option(name="-brain",
                       type_value="multiple_choice",
