@@ -305,7 +305,8 @@ def create_mask2d(param, center, shape, size, im_data):
         # length = np.round(float(size) / mean_spacing_xy)
         # radius = np.ceil((int(length) - 1) / 2.0)
     else:
-        radius = np.ceil((int(size) - 1) / 2.0)
+        radius_x = np.ceil((int(size) - 1) / 2.0)
+        radius_y = radius_x
 
     if shape == 'box':
         # mask2d[int(xc - radius):int(xc + radius) + 1, int(yc - radius):int(yc + radius) + 1] = 1
@@ -316,7 +317,7 @@ def create_mask2d(param, center, shape, size, im_data):
         # mask2d = ((xx + offset[0] - xc)**2 + (yy + offset[1] - yc)**2 <= radius**2) * 1
 
     elif shape == 'gaussian':
-        sigma = float(radius)
+        sigma = float(radius_x)
         mask2d = np.exp(-(((xx + offset[0] - xc)**2) / (2 * (sigma**2)) + ((yy + offset[1] - yc)**2) / (2 * (sigma**2))))
 
     # import matplotlib.pyplot as plt
