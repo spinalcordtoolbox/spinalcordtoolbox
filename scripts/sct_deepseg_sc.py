@@ -52,13 +52,13 @@ def get_parser():
                       example=['t1', 't2', 't2s', 'dwi'])
     parser.add_option(name="-centerline",
                       type_value="image_nifti",
-                      description="\n- Automatic spinal cord centerline detection algorithm: 'svm' or 'cnn'.\n- To use an interactive viewer for providing the centerline: 'viewer'.\n- Provide the filename of a manual centerline (e.g. t2_centerline_manual.nii.gz).\n",
+                      description="Method used for extracting the centerline.\nsvm: automatic centerline detection, based on Support Vector Machine algorithm.\ncnn: automatic centerline detection, based on Convolutional Neural Network.\nviewer: semi-automatic centerline generation, based on manual selection of a few points using an interactive viewer, then approximation with NURBS.\nprovide the filename of a manual centerline (e.g. t2_centerline_manual.nii.gz).\n",
                       mandatory=False,
                       list_no_image=['svm', 'cnn', 'viewer'],
                       default_value="svm")
     parser.add_option(name="-brain",
                       type_value="multiple_choice",
-                      description="indicate if the input image is expected to contain brain sections: 1: contains brain section, 0: no brain section. To indicate this parameter could speed the segmentation process. Default value is 1 if -c is t1 or t2 (likely includes the brain), or 0 otherwise. Note that this flag is only effective with -ctr cnn",
+                      description="indicate if the input image is expected to contain brain sections:\n1: contains brain section\n0: no brain section.\nTo indicate this parameter could speed the segmentation process. Note that this flag is only effective with -centerline cnn.",
                       mandatory=False,
                       example=["0", "1"])
     parser.add_option(name="-kernel",
