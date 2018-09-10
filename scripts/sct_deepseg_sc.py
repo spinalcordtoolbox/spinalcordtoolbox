@@ -51,10 +51,10 @@ def get_parser():
                       mandatory=True,
                       example=['t1', 't2', 't2s', 'dwi'])
     parser.add_option(name="-centerline",
-                      type_value="multiple_choice",
+                      type_value="image_nifti",
                       description="\n- Automatic spinal cord centerline detection algorithm: 'svm' or 'cnn'.\n- To use an interactive viewer for providing the centerline: 'viewer'.\n- Provide the filename of a manual centerline (e.g. t2_centerline_manual.nii.gz).\n",
                       mandatory=False,
-                      example=['svm', 'cnn', 'viewer', 'filename'],
+                      list_no_image=['svm', 'cnn', 'viewer'],
                       default_value="svm")
     parser.add_option(name="-brain",
                       type_value="multiple_choice",
@@ -136,7 +136,7 @@ def crop_image_around_centerline(filename_in, filename_ctr, filename_out, crop_s
     x_lst, y_lst = [], []
     data_im_new = np.zeros((crop_size, crop_size, im_in.dim[2]))
     for zz in range(im_in.dim[2]):
-        if 1 in np.array(data_ctr[:, :, zz]):
+        if np.sum(np.array(data_ctr[:, :, zz])):
             x_ctr, y_ctr = center_of_mass(np.array(data_ctr[:, :, zz]))
 
             x_start, x_end = _find_crop_start_end(x_ctr, crop_size, im_in.dim[0])
@@ -548,7 +548,7 @@ def find_centerline(algo, image_fname, path_sct, contrast_type, brain_bool, fold
         input_resolution = image_centerline_reoriented.dim[4:7]
         new_resolution = 'x'.join(['0.5', '0.5', str(input_resolution[2])])
         spinalcordtoolbox.resample.nipy_resample.resample_file(centerline_filename, centerline_filename, new_resolution,
-                                                           'mm', 'nearest', verbose=0)
+                                                           'mm', 'linear', verbose=0)
 
     else:
         sct.log.error('The parameter "-centerline" is incorrect. Please try again.')
@@ -690,6 +690,9 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, ctr_
     tmp_folder = sct.TempFolder()
     tmp_folder_path = tmp_folder.get_path()
     fname_image_tmp = tmp_folder.copy_from(fname_image)
+    if os.path.isfile(ctr_algo):  # if the ctr_algo is a manual centerline file
+        ctr_algo = os.path.basename(ctr_algo)
+        tmp_folder.copy_from(ctr_algo)
     tmp_folder.chdir()
 
     # orientation of the image, should be RPI
