@@ -332,7 +332,7 @@ def main():
     verbose = arguments['-v']
 
     algo_config_stg = '\nMethod:'
-    algo_config_stg += '\n\tCenterline algorithm: ' + ctr_algo
+    algo_config_stg += '\n\tCenterline algorithm: ' + str(ctr_algo)
     algo_config_stg += '\n\tAssumes brain section included in the image: ' + str(brain_bool) + '\n'
     sct.printv(algo_config_stg)
 
