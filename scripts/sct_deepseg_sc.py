@@ -448,11 +448,11 @@ def _from_viewerLabels_to_centerline(fname_labels, fname_out):
     # average centerline coordinates over slices of the image
     x_centerline_fit_rescorr, y_centerline_fit_rescorr, z_centerline_rescorr, x_centerline_deriv_rescorr, y_centerline_deriv_rescorr, z_centerline_deriv_rescorr = centerline.average_coordinates_over_slices(image_labels)
 
-    # compute z_centerline in image coordinates for usage in vertebrae mapping
-    voxel_coordinates = image_labels.transfo_phys2pix([[x_centerline_fit_rescorr[i], y_centerline_fit_rescorr[i], z_centerline_rescorr[i]] for i in range(len(z_centerline_rescorr))])
-    x_centerline_voxel = [coord[0] for coord in voxel_coordinates]
-    y_centerline_voxel = [coord[1] for coord in voxel_coordinates]
-    z_centerline_voxel = [coord[2] for coord in voxel_coordinates]
+    # # compute z_centerline in image coordinates for usage in vertebrae mapping
+    # voxel_coordinates = image_labels.transfo_phys2pix([[x_centerline_fit_rescorr[i], y_centerline_fit_rescorr[i], z_centerline_rescorr[i]] for i in range(len(z_centerline_rescorr))])
+    # x_centerline_voxel = [coord[0] for coord in voxel_coordinates]
+    # y_centerline_voxel = [coord[1] for coord in voxel_coordinates]
+    # z_centerline_voxel = [coord[2] for coord in voxel_coordinates]
 
     # compute z_centerline in image coordinates with continuous precision
     voxel_coordinates = image_labels.transfo_phys2pix([[x_centerline_fit_rescorr[i], y_centerline_fit_rescorr[i], z_centerline_rescorr[i]] for i in range(len(z_centerline_rescorr))], real=False)
@@ -462,9 +462,9 @@ def _from_viewerLabels_to_centerline(fname_labels, fname_out):
 
     # Create an image with the centerline
     image_centerline = msct_image.zeros_like(image_labels)
-    min_z_index, max_z_index = int(np.round(min(z_centerline_voxel))), int(np.round(max(z_centerline_voxel)))
+    min_z_index, max_z_index = int(np.round(min(z_centerline_voxel_cont))), int(np.round(max(z_centerline_voxel_cont)))
     for iz in range(min_z_index, max_z_index + 1):
-        image_centerline.data[int(np.round(x_centerline_voxel[iz - min_z_index])), int(np.round(y_centerline_voxel[iz - min_z_index])), int(iz)] = 1  # if index is out of bounds here for hanning: either the segmentation has holes or labels have been added to the file
+        image_centerline.data[int(np.round(x_centerline_voxel_cont[iz - min_z_index])), int(np.round(y_centerline_voxel_cont[iz - min_z_index])), int(iz)] = 1  # if index is out of bounds here for hanning: either the segmentation has holes or labels have been added to the file
 
     # Write the centerline image
     image_centerline.change_type(np.uint8).save(fname_out)
