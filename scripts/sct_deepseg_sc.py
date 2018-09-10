@@ -52,7 +52,7 @@ def get_parser():
                       example=['t1', 't2', 't2s', 'dwi'])
     parser.add_option(name="-centerline",
                       type_value="image_nifti",
-                      description="Method used for extracting the centerline.\nsvm: automatic centerline detection, based on Support Vector Machine algorithm.\ncnn: automatic centerline detection, based on Convolutional Neural Network.\nviewer: semi-automatic centerline generation, based on manual selection of a few points using an interactive viewer, then approximation with NURBS.\nprovide the filename of a manual centerline (e.g. t2_centerline_manual.nii.gz).\n",
+                      description="Method used for extracting the centerline.\nsvm: automatic centerline detection, based on Support Vector Machine algorithm.\ncnn: automatic centerline detection, based on Convolutional Neural Network.\nviewer: semi-automatic centerline generation, based on manual selection of a few points using an interactive viewer, then approximation with NURBS.\nFILENAME: filename of an existing centerline (e.g. t2_centerline_manual.nii.gz).\n",
                       mandatory=False,
                       list_no_image=['svm', 'cnn', 'viewer'],
                       default_value="svm")
