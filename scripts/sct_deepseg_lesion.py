@@ -51,10 +51,10 @@ def get_parser():
                       mandatory=True,
                       example=['t2', 't2_ax', 't2s'])
     parser.add_option(name="-centerline",
-                      type_value="multiple_choice",
+                      type_value="image_nifti",
                       description="\n- Automatic spinal cord centerline detection algorithm: 'svm' or 'cnn'.\n- To use an interactive viewer for providing the centerline: 'viewer'.\n- Provide the filename of a manual centerline (e.g. t2_centerline_manual.nii.gz).\n",
                       mandatory=False,
-                      example=['svm', 'cnn', 'viewer', 'filename'],
+                      list_no_image=['svm', 'cnn', 'viewer'],
                       default_value="svm")
     parser.add_option(name="-brain",
                       type_value="multiple_choice",
@@ -190,6 +190,9 @@ def deep_segmentation_MSlesion(fname_image, contrast_type, output_folder, ctr_al
     tmp_folder = sct.TempFolder()
     tmp_folder_path = tmp_folder.get_path()
     fname_image_tmp = tmp_folder.copy_from(fname_image)
+    if os.path.isfile(ctr_algo):  # if the ctr_algo is a manual centerline file
+        ctr_algo = os.path.basename(ctr_algo)
+        tmp_folder.copy_from(ctr_algo)
     tmp_folder.chdir()
 
     # orientation of the image, should be RPI
