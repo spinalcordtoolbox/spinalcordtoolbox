@@ -540,6 +540,20 @@ def find_centerline(algo, image_fname, path_sct, contrast_type, brain_bool, fold
         fname_labels_viewer = _call_viewer_centerline(fname_in=image_fname)
         _from_viewerLabels_to_centerline(fname_labels=fname_labels_viewer, fname_out=centerline_filename)
 
+    elif os.path.isfile(algo):
+        centerline_filename = sct.add_suffix(image_fname, "_ctr")
+        image_manual_centerline = Image(algo)
+        # Re-orient and Re-sample the manual centerline
+        image_centerline_reoriented = msct_image.change_orientation(image_manual_centerline, 'RPI').save(centerline_filename)
+        input_resolution = image_centerline_reoriented.dim[4:7]
+        new_resolution = 'x'.join(['0.5', '0.5', str(input_resolution[2])])
+        spinalcordtoolbox.resample.nipy_resample.resample_file(centerline_filename, centerline_filename, new_resolution,
+                                                           'mm', 'nearest', verbose=0)
+
+    else:
+        sct.log.error('The parameter "-centerline" is incorrect. Please try again.')
+        sys.exit(1)
+
     if bool_2d:
         from sct_image import split_data
         im_split_lst = split_data(Image(centerline_filename), dim=2)
@@ -855,7 +869,7 @@ def main():
     path_qc = arguments.get("-qc", None)
 
     algo_config_stg = '\nMethod:'
-    algo_config_stg += '\n\tCenterline algorithm: ' + ctr_algo
+    algo_config_stg += '\n\tCenterline algorithm: ' + str(ctr_algo)
     algo_config_stg += '\n\tAssumes brain section included in the image: ' + str(brain_bool)
     algo_config_stg += '\n\tDimension of the segmentation kernel convolutions: ' + kernel_size + '\n'
     sct.printv(algo_config_stg)
