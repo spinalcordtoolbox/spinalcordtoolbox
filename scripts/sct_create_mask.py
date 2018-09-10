@@ -19,8 +19,6 @@ from __future__ import division, absolute_import
 import sys
 import os
 
-import time
-
 import numpy as np
 
 import nibabel
@@ -49,12 +47,8 @@ class Param:
         self.verbose = 1
         self.remove_temp_files = 1
         self.offset = '0,0'
-# param = Param()
-# param_default = Param()
 
 
-# main
-#=======================================================================================================================
 def main(args=None):
 
     if args is None:
@@ -86,10 +80,7 @@ def main(args=None):
     create_mask(param)
 
 
-# create_mask
-#=======================================================================================================================
 def create_mask(param):
-    fsloutput = 'export FSLOUTPUTTYPE=NIFTI; '  # for faster processing, all outputs are in NIFTI
 
     # parse argument for method
     method_type = param.process[0]
@@ -113,7 +104,6 @@ def create_mask(param):
     sct.printv('\nOrientation:', param.verbose)
     orientation_input = Image(param.fname_data).orientation
     sct.printv('  ' + orientation_input, param.verbose)
-    reorient_coordinates = False
 
     # copy input data to tmp folder and re-orient to RPI
     Image(param.fname_data).change_orientation("RPI").save(os.path.join(path_tmp, "data_RPI.nii"))
@@ -125,14 +115,6 @@ def create_mask(param):
     # go to tmp folder
     curdir = os.getcwd()
     os.chdir(path_tmp)
-
-    #
-    # if method_type == 'centerline':
-    #     orientation_centerline = Image(method_val).orientation
-    #     if not orientation_centerline == 'RPI':
-    #         sct.run('sct_image -i ' + method_val + ' -o ' + os.path.join(path_tmp, "centerline.nii.gz") + ' -setorient RPI -v 0', verbose=False)
-    #     else:
-    #         convert(method_val, path_tmp+'centerline.nii.gz')
 
     # Get dimensions of data
     im_data = Image('data_RPI.nii')
@@ -154,7 +136,6 @@ def create_mask(param):
 
     if method_type == 'point':
         # get file name
-        fname_point = method_val
         # extract coordinate of point
         sct.printv('\nExtract coordinate of point...', param.verbose)
         # TODO: change this way to remove dependence to sct.run. ProcessLabels.display_voxel returns list of coordinates
@@ -207,31 +188,9 @@ def create_mask(param):
             # Write NIFTI volumes
             img = nibabel.Nifti1Image(mask2d, None, hdr)
             nibabel.save(img, (file_mask + str(iz) + '.nii'))
-    # merge along Z
-    # cmd = 'fslmerge -z mask '
 
-    # CHANGE THAT CAN IMPACT SPEED:
-    # related to issue #755, we cannot open more than 256 files at one time.
-    # to solve this issue, we do not open more than 100 files
-    '''
-    im_list = []
-    im_temp = []
-    for iz in range(nz_not_null):
-        if iz != 0 and iz % 100 == 0:
-            im_temp.append(concat_data(im_list, 2))
-            im_list = [Image(file_mask + str(iz) + '.nii')]
-        else:
-            im_list.append(Image(file_mask+str(iz)+'.nii'))
-
-    if im_temp:
-        im_temp.append(concat_data(im_list, 2))
-        im_out = concat_data(im_temp, 2, no_expand=True)
-    else:
-        im_out = concat_data(im_list, 2)
-    '''
     fname_list = [file_mask + str(iz) + '.nii' for iz in range(nz)]
-    im_out = concat_data(fname_list, dim=2) \
-     .save('mask_RPI.nii.gz')
+    im_out = concat_data(fname_list, dim=2).save('mask_RPI.nii.gz')
 
     im_out.change_orientation(orientation_input)
     im_out.header = Image(param.fname_data).header
@@ -248,9 +207,15 @@ def create_mask(param):
     sct.display_viewer_syntax([param.fname_data, param.fname_out], colormaps=['gray', 'red'], opacities=['', '0.5'])
 
 
-# create_line
-# ==========================================================================================
 def create_line(param, fname, coord, nz):
+    """
+    Create vertical line in 3D volume
+    :param param:
+    :param fname:
+    :param coord:
+    :param nz:
+    :return:
+    """
 
     # duplicate volume (assumes input file is nifti)
     sct.copy(fname, 'line.nii', verbose=param.verbose)
@@ -270,8 +235,6 @@ def create_line(param, fname, coord, nz):
     return 'line.nii'
 
 
-# create_mask2d
-# ==========================================================================================
 def create_mask2d(param, center, shape, size, im_data):
     """
     Create a 2D mask
@@ -285,8 +248,6 @@ def create_mask2d(param, center, shape, size, im_data):
     # get dim
     nx, ny, nz, nt, px, py, pz, pt = im_data.dim
     # extract offset d = 2r+1 --> r=ceil((d-1)/2.0)
-    # s=11 -> r=5
-    # s=10 -> r=5
     offset = param.offset.split(',')
     offset[0] = int(offset[0])
     offset[1] = int(offset[1])
@@ -301,28 +262,19 @@ def create_mask2d(param, center, shape, size, im_data):
         size = float(size[:-2])
         radius_x = np.ceil((int(np.round(size / px)) - 1) / 2.0)
         radius_y = np.ceil((int(np.round(size / py)) - 1) / 2.0)
-        # mean_spacing_xy = (spacing[1] + spacing[2]) / 2.0
-        # length = np.round(float(size) / mean_spacing_xy)
-        # radius = np.ceil((int(length) - 1) / 2.0)
     else:
         radius_x = np.ceil((int(size) - 1) / 2.0)
         radius_y = radius_x
 
     if shape == 'box':
-        # mask2d[int(xc - radius):int(xc + radius) + 1, int(yc - radius):int(yc + radius) + 1] = 1
         mask2d = ((abs(xx + offset[0] - xc) <= radius_x) & (abs(yy + offset[1] - yc) <= radius_y)) * 1
 
     elif shape == 'cylinder':
         mask2d = (((xx + offset[0] - xc) / radius_x) ** 2 + ((yy + offset[1] - yc) / radius_y) ** 2 <= 1) * 1
-        # mask2d = ((xx + offset[0] - xc)**2 + (yy + offset[1] - yc)**2 <= radius**2) * 1
 
     elif shape == 'gaussian':
         sigma = float(radius_x)
         mask2d = np.exp(-(((xx + offset[0] - xc)**2) / (2 * (sigma**2)) + ((yy + offset[1] - yc)**2) / (2 * (sigma**2))))
-
-    # import matplotlib.pyplot as plt
-    # plt.imshow(mask2d)
-    # plt.show()
 
     return mask2d
 
@@ -394,9 +346,7 @@ def get_parser():
 
     return parser
 
-#=======================================================================================================================
-# Start program
-#=======================================================================================================================
+
 if __name__ == "__main__":
     sct.init_sct()
     main()
