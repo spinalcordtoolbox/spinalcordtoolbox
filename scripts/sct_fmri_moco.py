@@ -197,6 +197,7 @@ def main(args=None):
     path_tmp = sct.tmp_create(basename="fmri_moco", verbose=param.verbose)
 
     # Copying input data to tmp folder and convert to nii
+    # TODO: no need to do that (takes time for nothing)
     sct.printv('\nCopying input data to tmp folder and convert to nii...', param.verbose)
     convert(param.fname_data, os.path.join(path_tmp, "fmri.nii"), squeeze_data=False)
 
