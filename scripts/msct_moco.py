@@ -80,8 +80,9 @@ def moco(param):
     if not param.fname_mask == '':
         file_mask = 'mask.nii'
         convert(param.fname_mask, file_mask, squeeze_data=False)
+        im_maskz_list = [file_mask]  # use a list with single element if not sagittal. Otherwise, will be updated.
 
-    # If scan is sagittal, split src and target along Z (slice)
+        # If scan is sagittal, split src and target along Z (slice)
     if param.is_sagittal:
         dim_sag = 2  # TODO: find it
         # z-split data (time series)
@@ -146,9 +147,14 @@ def moco(param):
             sct.printv(('\nVolume ' + str((it)) + '/' + str(nt - 1) + ':'), verbose)
             file_mat[iz][it] = os.path.join(folder_mat, "mat.Z") + str(iz).zfill(4) + 'T' + str(it).zfill(4)
             file_data_splitZ_splitT_moco.append(sct.add_suffix(file_data_splitZ_splitT[it], '_moco'))
+            # deal with masking
+            if not param.fname_mask == '':
+                input_mask = im_maskz_list[iz]
+            else:
+                input_mask = None
             # run 3D registration
             failed_transfo[it] = register(param, file_data_splitZ_splitT[it], file_target_splitZ[iz], file_mat[iz][it],
-                                          file_data_splitZ_splitT_moco[it], im_mask=im_maskz_list[iz])
+                                          file_data_splitZ_splitT_moco[it], im_mask=input_mask)
 
             # average registered volume with target image
             # N.B. use weighted averaging: (target * nb_it + moco) / (nb_it + 1)
@@ -269,9 +275,10 @@ def register(param, file_src, file_dest, file_mat, file_out, im_mask=None):
     file_out_concat = file_out
     # file_mask_concat = file_mask  # TODO: do we need this temp variable?
 
+    im_data = Image(file_src)  # TODO: pass argument to use antsReg instead of opening Image each time
+
     # register file_src to file_dest
     if param.todo == 'estimate' or param.todo == 'estimate_and_apply':
-        im_data = Image(file_src)  # TODO: pass argument to use antsReg instead of opening Image each time
         # If orientation is sagittal, use antsRegistration in 2D mode
         # Note: the parameter --restrict-deformation is irrelevant with affine transfo
         if im_data.orientation[2] in 'LR':
