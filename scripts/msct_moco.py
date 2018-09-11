@@ -273,16 +273,16 @@ def register(param, file_src, file_dest, file_mat, file_out, im_mask=None):
     if param.todo == 'estimate' or param.todo == 'estimate_and_apply':
         im_data = Image(file_src)  # TODO: pass argument to use antsReg instead of opening Image each time
         # If orientation is sagittal, use antsRegistration in 2D mode
+        # Note: the parameter --restrict-deformation is irrelevant with affine transfo
         if im_data.orientation[2] in 'LR':
             cmd = ['isct_antsRegistration',
                    '-d', '2',
-                   '--transform', 'affine[%s]' %param.gradStep,
+                   '--transform', 'Affine[%s]' %param.gradStep,
                    '--metric', param.metric + '[' + file_dest + ',' + file_src + ',1,' + metric_radius + ',Regular,' + param.sampling + ']',
                    '--convergence', param.iter,
                    '--shrink-factors', '1',
                    '--smoothing-sigmas', param.smooth,
                    '--verbose', '1',
-                   '--restrict-deformation', '0x1',  # restrict deformation along A-P axis
                    '--output', '[' + file_mat + ',' + file_out_concat + ']']
             cmd += sct.get_interpolation('isct_antsRegistration', param.interp)
             if im_mask is not None:
