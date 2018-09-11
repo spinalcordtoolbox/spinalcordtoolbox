@@ -22,7 +22,7 @@
 from __future__ import absolute_import
 
 import sys, os, glob
-
+from tqdm import tqdm
 import numpy as np
 import scipy.interpolate
 
@@ -119,10 +119,11 @@ def moco(param):
     # file_mat = tuple([[[] for i in range(nt)] for i in range(nz)])
     file_mat[:] = ''  # init
     file_data_splitZ_moco = []
+    sct.printv('\nRegister. Loop across Z (note: there is only one Z if orientation is axial')
     for file in file_data_splitZ:
         iz = file_data_splitZ.index(file)
         # Split data along T dimension
-        sct.printv('\nSplit data along T dimension...', verbose)
+        # sct.printv('\nSplit data along T dimension.', verbose)
         im_z = Image(file)
         list_im_zt = split_data(im_z, dim=3)
         file_data_splitZ_splitT = []
@@ -138,13 +139,14 @@ def moco(param):
         failed_transfo = [0 for i in range(nt)]
 
         # Motion correction: Loop across T
+        tqdm_bar = tqdm(total=nt, unit='iter', unit_scale=False, desc="Z=" + str(iz), ascii=True, ncols=80)
         for indice_index in range(nt):
 
             # create indices and display stuff
             it = index[indice_index]
             # file_data_splitT_num.append(file_data_splitT + str(it).zfill(4))
             # file_data_splitZ_splitT_moco.append(file_data + suffix + '_T' + str(it).zfill(4))
-            sct.printv(('\nVolume ' + str((it)) + '/' + str(nt - 1) + ':'), verbose)
+            # sct.printv(('\nVolume ' + str((it)) + '/' + str(nt - 1) + ':'), verbose)
             file_mat[iz][it] = os.path.join(folder_mat, "mat.Z") + str(iz).zfill(4) + 'T' + str(it).zfill(4)
             file_data_splitZ_splitT_moco.append(sct.add_suffix(file_data_splitZ_splitT[it], '_moco'))
             # deal with masking
@@ -168,9 +170,11 @@ def moco(param):
                 # sct.run(["sct_maths", "-i", file_target_splitZ[iz], "-mul", str(indice_index + 1), "-o", file_target_splitZ[iz]])
                 # sct.run(["sct_maths", "-i", file_target_splitZ[iz], "-add", file_data_splitZ_splitT_moco[it], "-o", file_target_splitZ[iz]])
                 # sct.run(["sct_maths", "-i", file_target_splitZ[iz], "-div", str(indice_index + 2), "-o", file_target_splitZ[iz]])
+            tqdm_bar.update()
+        tqdm_bar.close()
 
         # Replace failed transformation with the closest good one
-        sct.printv(('\nReplace failed transformations...'), verbose)
+        # sct.printv(('\nReplace failed transformations...'), verbose)
         fT = [i for i, j in enumerate(failed_transfo) if j == 1]
         gT = [i for i, j in enumerate(failed_transfo) if j == 0]
         for it in range(len(fT)):
@@ -186,7 +190,7 @@ def moco(param):
                  "-d", file_target + ".nii",
                  "-w", file_mat[iz][fT[it]] + 'Warp.nii.gz',
                  "-o", file_data_splitZ_splitT_moco[fT[it]] + '.nii',
-                 "-x", param.interp], verbose)
+                 "-x", param.interp], verbose=0)
             else:
                 # exit program if no transformation exists.
                 sct.printv('\nERROR in ' + os.path.basename(__file__) + ': No good transformation exist. Exit program.\n', verbose, 'error')
@@ -195,7 +199,7 @@ def moco(param):
         # Merge data along T
         file_data_splitZ_moco.append(sct.add_suffix(file, suffix))
         if todo != 'estimate':
-            sct.printv('\nMerge data back along T...', verbose)
+            # sct.printv('\nMerge data back along T...', verbose)
             # im_list = []
             # fname_list = []
             # for indice_index in range(len(index)):
@@ -206,7 +210,7 @@ def moco(param):
 
     # If sagittal, merge along Z
     if param.is_sagittal:
-        sct.printv('\nMerge data back along Z...', verbose)
+        # sct.printv('\nMerge data back along Z...', verbose)
         im_out = concat_data(file_data_splitZ_moco, 2)
         im_out.save(file_data + suffix + ext)
 
@@ -317,7 +321,7 @@ def register(param, file_src, file_dest, file_mat, file_out, im_mask=None):
                 cmd += ['--mask', im_mask.absolutepath]
         # run command
         if do_registration:
-            status, output = sct.run(cmd, param.verbose)
+            status, output = sct.run(cmd, verbose=0)
 
     elif param.todo == 'apply':
         sct_apply_transfo.main(args=['-i', file_src,
