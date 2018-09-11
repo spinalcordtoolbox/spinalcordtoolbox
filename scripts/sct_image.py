@@ -84,7 +84,7 @@ def get_parser():
     parser.usage.addSection('\nHeader operations:')
     parser.add_option(name="-copy-header",
                       type_value="file",
-                      description='Copy the header of the input image (specified in -i) to the destination image (specified here)',
+                      description='Copy the header of the source image (specified in -i) to the destination image (specified here)',
                       mandatory=False,
                       example='data_dest.nii.gz')
 
@@ -162,8 +162,12 @@ def main(args=None):
     elif "-copy-header" in arguments:
         im_in = Image(fname_in[0])
         im_dest = Image(arguments["-copy-header"])
-        im_dest.header = im_in.header
-        im_out = [im_dest]
+        im_dest_new = im_in.copy()
+        im_dest_new.data = im_dest.data.copy()
+        # im_dest.header = im_in.header
+        im_dest_new.absolutepath = im_dest.absolutepath
+        im_out = [im_dest_new]
+        fname_out = arguments["-copy-header"]
 
     elif '-display-warp' in arguments:
         im_in = fname_in[0]
