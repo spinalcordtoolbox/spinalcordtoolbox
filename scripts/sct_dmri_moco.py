@@ -23,10 +23,11 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+# TODO: check if image is sagittal, and if it is, say that it is currently not supported.
 # TODO: Do not merge per group if no group is asked.
 # TODO: make sure slicewise not used with ants, eddy not used with ants
 # TODO: make sure images are axial
-# TDOD: if -f, we only need two plots. Plot 1: X params with fitted spline, plot 2: Y param with fitted splines. Each plot will have all Z slices (with legend Z=0, Z=1, ...) and labels: y; translation (mm), xlabel: volume #. Plus add grid.
+# TODO: if -f, we only need two plots. Plot 1: X params with fitted spline, plot 2: Y param with fitted splines. Each plot will have all Z slices (with legend Z=0, Z=1, ...) and labels: y; translation (mm), xlabel: volume #. Plus add grid.
 # TODO (no priority): for sinc interp, use ANTs instead of flirt
 
 from __future__ import division, absolute_import
@@ -66,6 +67,7 @@ class Param:
         self.poly = '2'  # degree of polynomial function for moco
         self.smooth = '2'  # smoothing sigma in mm
         self.gradStep = '1'  # gradientStep for searching algorithm
+        self.iter = '10'  # number of iterations
         self.metric = 'MI'  # metric: MI, MeanSquares, CC
         self.sampling = '0.2'  # sampling rate used for registration metric
         self.interp = 'spline'  # nn, linear, spline
@@ -441,7 +443,7 @@ def dmri_moco(param):
     param_moco.path_out = ''
     param_moco.todo = 'estimate'
     param_moco.mat_moco = 'mat_b0groups'
-    moco.moco(param_moco)
+    file_mat_b0 = moco.moco(param_moco)
 
     # Estimate moco on dwi groups
     sct.printv('\n-------------------------------------------------------------------------------', param.verbose)
@@ -452,22 +454,24 @@ def dmri_moco(param):
     param_moco.path_out = ''
     param_moco.todo = 'estimate_and_apply'
     param_moco.mat_moco = 'mat_dwigroups'
-    moco.moco(param_moco)
+    file_mat_dwi = moco.moco(param_moco)
 
     # create final mat folder
     sct.create_folder(mat_final)
 
     # Copy b=0 registration matrices
+    # TODO: use file_mat_b0 and file_mat_dwi instead of the hardcoding below
     sct.printv('\nCopy b=0 registration matrices...', param.verbose)
-
     for it in range(nb_b0):
-        sct.copy('mat_b0groups/' + 'mat.T' + str(it) + ext_mat, mat_final + 'mat.T' + str(index_b0[it]) + ext_mat)
+        sct.copy('mat_b0groups/' + 'mat.Z0000T' + str(it).zfill(4) + ext_mat,
+                 mat_final + 'mat.Z0000T' + str(index_b0[it]).zfill(4) + ext_mat)
 
     # Copy DWI registration matrices
     sct.printv('\nCopy DWI registration matrices...', param.verbose)
     for iGroup in range(nb_groups):
         for dwi in range(len(group_indexes[iGroup])):
-            sct.copy('mat_dwigroups/' + 'mat.T' + str(iGroup) + ext_mat, mat_final + 'mat.T' + str(group_indexes[iGroup][dwi]) + ext_mat)
+            sct.copy('mat_dwigroups/' + 'mat.Z0000T' + str(iGroup).zfill(4) + ext_mat,
+                     mat_final + 'mat.Z0000T' + str(group_indexes[iGroup][dwi]).zfill(4) + ext_mat)
 
     # Spline Regularization along T
     if param.spline_fitting:
