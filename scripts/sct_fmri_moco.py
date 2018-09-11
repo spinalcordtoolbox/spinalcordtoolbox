@@ -18,6 +18,7 @@ import os
 import time
 import math
 import shutil
+from tqdm import tqdm
 import numpy as np
 import sct_utils as sct
 import msct_moco as moco
@@ -291,9 +292,9 @@ def fmri_moco(param):
         group_indexes.append(index_fmri[len(index_fmri) - nb_remaining:len(index_fmri)])
 
     # groups
-    sct.printv('Merge consecutive volumes within groups...', param.verbose)
+    tqdm_bar = tqdm(total=nb_groups, unit='iter', unit_scale=False, desc="Merge within groups", ascii=True, ncols=80)
     for iGroup in range(nb_groups):
-        sct.printv('\nGroup: ' + str((iGroup + 1)) + '/' + str(nb_groups), param.verbose)
+        # sct.printv('\nGroup: ' + str((iGroup + 1)) + '/' + str(nb_groups), param.verbose)
 
         # get index
         index_fmri_i = group_indexes[iGroup]
@@ -317,12 +318,14 @@ def fmri_moco(param):
             shutil.copy(file_data_merge_i + '.nii', file_data_mean + '.nii')
         else:
             # Average Images
-            sct.run(['sct_maths', '-i', file_data_merge_i + '.nii', '-o', file_data_mean + '.nii', '-mean', 't'], verbose=param.verbose)
+            sct.run(['sct_maths', '-i', file_data_merge_i + '.nii', '-o', file_data_mean + '.nii', '-mean', 't'], verbose=0)
         # if not average_data_across_dimension(file_data_merge_i+'.nii', file_data_mean+'.nii', 3):
         #     sct.printv('ERROR in average_data_across_dimension', 1, 'error')
         # cmd = fsloutput + 'fslmaths ' + file_data_merge_i + ' -Tmean ' + file_data_mean
         # sct.run(cmd, param.verbose)
+        tqdm_bar.update()
 
+    tqdm_bar.close()
     # Merge groups means. The output 4D volume will be used for motion correction.
     sct.printv('\nMerging volumes...', param.verbose)
     file_data_groups_means_merge = 'fmri_averaged_groups'
