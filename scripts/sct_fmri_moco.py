@@ -49,7 +49,7 @@ class Param:
         self.poly = '2'  # degree of polynomial function for moco
         self.smooth = '2'  # smoothing sigma in mm
         self.gradStep = '1'  # gradientStep for searching algorithm
-        self.iter = '5'  # number of iterations
+        self.iter = '10'  # number of iterations
         self.metric = 'MeanSquares'  # metric: MI, MeanSquares, CC
         self.sampling = '0.2'  # sampling rate used for registration metric
         self.interp = 'spline'  # nn, linear, spline
