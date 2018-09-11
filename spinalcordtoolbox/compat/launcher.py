@@ -13,7 +13,7 @@ def main():
 	env.update(os.environ)
 
 	if "DISPLAY" not in os.environ:
-		# Set suitable default matplotlib backend
+		# No DISPLAY, set suitable default matplotlib backend as pyplot is used
 		env["MPLBACKEND"] = "Agg"
 
 	if "ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS" not in os.environ:
