@@ -41,7 +41,7 @@ class Param:
         self.fname_mask = ''
         self.mat_final = ''
         self.todo = ''
-        self.group_size = 3  # number of images averaged for 'dwi' method.
+        self.group_size = 1  # number of images averaged for 'dwi' method.
         self.spline_fitting = 0
         self.remove_temp_files = 1
         self.verbose = 1

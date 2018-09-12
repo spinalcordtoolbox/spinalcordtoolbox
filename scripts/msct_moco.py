@@ -128,7 +128,7 @@ def moco(param):
         list_im_zt = split_data(im_z, dim=3)
         file_data_splitZ_splitT = []
         for im_zt in list_im_zt:
-            im_zt.save()
+            im_zt.save(verbose=0)
             file_data_splitZ_splitT.append(im_zt.absolutepath)
         # file_data_splitT = file_data + '_T'
 
@@ -139,14 +139,12 @@ def moco(param):
         failed_transfo = [0 for i in range(nt)]
 
         # Motion correction: Loop across T
-        tqdm_bar = tqdm(total=nt, unit='iter', unit_scale=False, desc="Z=" + str(iz), ascii=True, ncols=80)
+        tqdm_bar = tqdm(total=nt, unit='iter', unit_scale=False,
+                        desc="Z=" + str(iz) + "/" + str(len(file_data_splitZ)-1), ascii=True, ncols=80)
         for indice_index in range(nt):
 
             # create indices and display stuff
             it = index[indice_index]
-            # file_data_splitT_num.append(file_data_splitT + str(it).zfill(4))
-            # file_data_splitZ_splitT_moco.append(file_data + suffix + '_T' + str(it).zfill(4))
-            # sct.printv(('\nVolume ' + str((it)) + '/' + str(nt - 1) + ':'), verbose)
             file_mat[iz][it] = os.path.join(folder_mat, "mat.Z") + str(iz).zfill(4) + 'T' + str(it).zfill(4)
             file_data_splitZ_splitT_moco.append(sct.add_suffix(file_data_splitZ_splitT[it], '_moco'))
             # deal with masking
@@ -167,14 +165,10 @@ def moco(param):
                 data_targetz = (data_targetz * (indice_index + 1) + data_mocoz) / (indice_index + 2)
                 im_targetz.data = data_targetz
                 im_targetz.save(verbose=0)
-                # sct.run(["sct_maths", "-i", file_target_splitZ[iz], "-mul", str(indice_index + 1), "-o", file_target_splitZ[iz]])
-                # sct.run(["sct_maths", "-i", file_target_splitZ[iz], "-add", file_data_splitZ_splitT_moco[it], "-o", file_target_splitZ[iz]])
-                # sct.run(["sct_maths", "-i", file_target_splitZ[iz], "-div", str(indice_index + 2), "-o", file_target_splitZ[iz]])
             tqdm_bar.update()
         tqdm_bar.close()
 
         # Replace failed transformation with the closest good one
-        # sct.printv(('\nReplace failed transformations...'), verbose)
         fT = [i for i, j in enumerate(failed_transfo) if j == 1]
         gT = [i for i, j in enumerate(failed_transfo) if j == 0]
         for it in range(len(fT)):
@@ -199,18 +193,11 @@ def moco(param):
         # Merge data along T
         file_data_splitZ_moco.append(sct.add_suffix(file, suffix))
         if todo != 'estimate':
-            # sct.printv('\nMerge data back along T...', verbose)
-            # im_list = []
-            # fname_list = []
-            # for indice_index in range(len(index)):
-                # im_list.append(Image(file_data_splitZ_splitT_moco[indice_index] + ext))
-                # fname_list.append(file_data_splitZ_splitT_moco[indice_index] + ext)
             im_out = concat_data(file_data_splitZ_splitT_moco, 3)
             im_out.save(file_data_splitZ_moco[iz])
 
     # If sagittal, merge along Z
     if param.is_sagittal:
-        # sct.printv('\nMerge data back along Z...', verbose)
         im_out = concat_data(file_data_splitZ_moco, 2)
         im_out.save(file_data + suffix + ext)
 
@@ -235,49 +222,13 @@ def register(param, file_src, file_dest, file_mat, file_out, im_mask=None):
     # initialization
     failed_transfo = 0  # by default, failed matrix is 0 (i.e., no failure)
     do_registration = True
-    # file_mask = param.fname_mask
 
     # get metric radius (if MeanSquares, CC) or nb bins (if MI)
     if param.metric == 'MI':
         metric_radius = '16'
     else:
         metric_radius = '4'
-
-    # If orientation is sagittal, we need to do a couple of things...
-    # im_data = Image(file_src)
-    # if im_data.orientation[2] in 'LR':
-    #     im = Image(file_src)
-    #     # reorient to RPI because ANTs algo will assume that the 3rd dim is along the S-I axis (where we want the
-    #     # regularization)
-    #     native_orientation = im.orientation
-    #     im.change_orientation('RPI')
-    #     # since we are dealing with a 2D slice, we need to pad (by copying the same slice) because this ANTs function
-    #     # only accepts 3D input
-    #     im_concat = concat_data([im, im, im, im, im], 0, squeeze_data=False)  # TODO: do it more elegantly inside the list
-    #     file_src_concat = sct.add_suffix(file_src, '_rpi_concat')
-    #     im_concat.save(file_src_concat)
-    #     # and we need to do the same thing with the target (if not already done at the previous iteration)
-    #     file_dest_concat = sct.add_suffix(file_dest, '_rpi_concat')
-    #     if not os.path.isfile(file_dest_concat):
-    #         im_dest = Image(file_dest)
-    #         im_dest.change_orientation('RPI')
-    #         im_dest_concat = concat_data([im_dest, im_dest, im_dest, im_dest, im_dest], 0, squeeze_data=False)
-    #         im_dest_concat.save(file_dest_concat)
-    #     # and the same thing with the mask (if there is one)
-    #     if not param.fname_mask == '':
-    #         file_mask_concat = 'mask_rpi_concat.nii.gz'
-    #         if not os.path.isfile(file_mask_concat):
-    #             im_mask = Image(param.fname_mask)
-    #             im_mask.change_orientation('RPI')
-    #             im_mask_concat = concat_data([im_mask, im_mask, im_mask, im_mask, im_mask], 0, squeeze_data=False)
-    #             im_mask_concat.save(file_mask_concat)
-    #     # update variables
-    #     file_src = file_src_concat
-    #     file_dest = file_dest_concat
-    #     file_out_concat = sct.add_suffix(file_src, '_moco')
-    # else:
     file_out_concat = file_out
-    # file_mask_concat = file_mask  # TODO: do we need this temp variable?
 
     im_data = Image(file_src)  # TODO: pass argument to use antsReg instead of opening Image each time
 
@@ -328,15 +279,8 @@ def register(param, file_src, file_dest, file_mat, file_out, im_mask=None):
                                      '-d', file_dest,
                                      '-w', file_mat + 'Warp.nii.gz',
                                      '-o', file_out_concat,
-                                     '-x', param.interp])
-    #     cmd = ['sct_apply_transfo',
-    #      '-i', file_src,
-    #      '-d', file_dest,
-    #      '-w', file_mat + 'Warp.nii.gz',
-    #      '-o', file_out,
-    #      '-x', param.interp]
-    # # run the stuff
-    # status, output = sct.run(cmd, param.verbose)
+                                     '-x', param.interp,
+                                     '-v', '0'])
 
     # check if output file exists
     if not os.path.isfile(file_out_concat):
@@ -360,28 +304,6 @@ def register(param, file_src, file_dest, file_mat, file_out, im_mask=None):
     return failed_transfo
 
 
-# #=======================================================================================================================
-# # check_transformation_absurdity:  find outliers
-# #=======================================================================================================================
-# def check_transformation_absurdity(file_mat):
-#
-#     # init param
-#     failed_transfo = 0
-#
-#     file = open(file_mat)
-#     M_transform = np.loadtxt(file)
-#     file.close()
-#
-#     if abs(M_transform[0, 3]) > 10 or abs(M_transform[1, 3]) > 10 or abs(M_transform[2, 3]) > 10 or abs(M_transform[3, 3]) > 10:
-#         failed_transfo = 1
-#         sct.printv('  WARNING: This tranformation matrix is absurd, try others parameters (Gaussian mask, group size, ...)', 1, 'warning')
-#
-#     return failed_transfo
-
-
-#=======================================================================================================================
-# spline
-#=======================================================================================================================
 def spline(folder_mat, nt, nz, verbose, index_b0 = [], graph=0):
 
     sct.printv('\n\n\n------------------------------------------------------------------------------', verbose)
@@ -422,13 +344,6 @@ def spline(folder_mat, nt, nz, verbose, index_b0 = [], graph=0):
 
     for iz in range(nz):
 
-#        frequency = scipy.fftpack.fftfreq(len(X[iz][:]), d=1)
-#        spectrum = np.abs(scipy.fftpack.fft(X[iz][:], n=None, axis=-1, overwrite_x=False))
-#        Wn = np.amax(frequency)/10
-#        N = 5              #Order of the filter
-#        b, a = scipy.signal.iirfilter(N, Wn, rp=None, rs=None, btype='low', analog=False, ftype='butter', output='ba')
-#        X_smooth[iz][:] = scipy.signal.filtfilt(b, a, X[iz][:], axis=-1, padtype=None)
-
         spline = scipy.interpolate.UnivariateSpline(T, X[iz][:], w=None, bbox=[None, None], k=3, s=None)
         X_smooth[iz][:] = spline(T)
 
@@ -443,13 +358,6 @@ def spline(folder_mat, nt, nz, verbose, index_b0 = [], graph=0):
             pl.grid()
             pl.legend()
             pl.show()
-
-#        frequency = scipy.fftpack.fftfreq(len(Y[iz][:]), d=1)
-#        spectrum = np.abs(scipy.fftpack.fft(Y[iz][:], n=None, axis=-1, overwrite_x=False))
-#        Wn = np.amax(frequency)/10
-#        N = 5              #Order of the filter
-#        b, a = scipy.signal.iirfilter(N, Wn, rp=None, rs=None, btype='low', analog=False, ftype='butter', output='ba')
-#        Y_smooth[iz][:] = scipy.signal.filtfilt(b, a, Y[iz][:], axis=-1, padtype=None)
 
         spline = scipy.interpolate.UnivariateSpline(T, Y[iz][:], w=None, bbox=[None, None], k=3, s=None)
         Y_smooth[iz][:] = spline(T)
@@ -485,9 +393,6 @@ def spline(folder_mat, nt, nz, verbose, index_b0 = [], graph=0):
     sct.printv('------------------------------------------------------------------------------\n', verbose)
 
 
-#=======================================================================================================================
-# combine_matrix
-#=======================================================================================================================
 def combine_matrix(param):
 
     # required fields
@@ -521,21 +426,3 @@ def combine_matrix(param):
             file = open(os.path.join(param.mat_final, fname), 'w')
             np.savetxt(os.path.join(param.mat_final, fname), Matrix_final, fmt="%s", delimiter='  ', newline='\n')
             file.close()
-
-#
-# #=======================================================================================================================
-# # gauss2d: creates a 2D Gaussian Function
-# #=======================================================================================================================
-# def gauss2d(dims, sigma, center):
-#     x = np.zeros((dims[0],dims[1]))
-#     y = np.zeros((dims[0],dims[1]))
-#
-#     for i in range(dims[0]):
-#         x[i,:] = i+1
-#     for i in range(dims[1]):
-#         y[:,i] = i+1
-#
-#     xc = center[0]
-#     yc = center[1]
-#
-#     return np.exp(-(((x-xc)**2)/(2*(sigma[0]**2)) + ((y-yc)**2)/(2*(sigma[1]**2))))
