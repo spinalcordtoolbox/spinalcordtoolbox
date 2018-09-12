@@ -34,7 +34,7 @@ from __future__ import division, absolute_import
 
 import sys, os, time, math
 import importlib
-
+from tqdm import tqdm
 import numpy as np
 
 import sct_utils as sct
@@ -327,7 +327,6 @@ def dmri_moco(param):
     sct.printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz), param.verbose)
 
     # Identify b=0 and DWI images
-    sct.printv('\nIdentify b=0 and DWI images...', param.verbose)
     index_b0, index_dwi, nb_b0, nb_dwi = identify_b0('bvecs.txt', param.fname_bvals, param.bval_min, param.verbose)
 
     # check if dmri and bvecs are the same size
@@ -373,27 +372,22 @@ def dmri_moco(param):
 
     # DWI groups
     file_dwi_mean = []
+    tqdm_bar = tqdm(total=nb_groups, unit='iter', unit_scale=False, desc="Merge within groups", ascii=True, ncols=80)
     for iGroup in range(nb_groups):
-        sct.printv('\nDWI group: ' + str((iGroup + 1)) + '/' + str(nb_groups), param.verbose)
-
         # get index
         index_dwi_i = group_indexes[iGroup]
         nb_dwi_i = len(index_dwi_i)
-
         # Merge DW Images
-        sct.printv('Merge DW images...', param.verbose)
         file_dwi_merge_i = file_dwi + '_' + str(iGroup)
-
         im_dwi_list = []
         for it in range(nb_dwi_i):
             im_dwi_list.append(im_data_split_list[index_dwi_i[it]])
-        im_dwi_out = concat_data(im_dwi_list, 3) \
-         .save(file_dwi_merge_i + ext_data)
-
+        im_dwi_out = concat_data(im_dwi_list, 3).save(file_dwi_merge_i + ext_data)
         # Average DW Images
-        sct.printv('Average DW images...', param.verbose)
         file_dwi_mean.append(file_dwi + '_mean_' + str(iGroup))
-        sct.run(["sct_maths", "-i", file_dwi_merge_i + ext_data, "-o", file_dwi_mean[iGroup] + ext_data, "-mean", "t"], param.verbose)
+        sct.run(["sct_maths", "-i", file_dwi_merge_i + ext_data, "-o", file_dwi_mean[iGroup] + ext_data, "-mean", "t"], 0)
+        tqdm_bar.update()
+    tqdm_bar.close()
 
     # Merge DWI groups means
     sct.printv('\nMerging DW files...', param.verbose)
@@ -401,8 +395,7 @@ def dmri_moco(param):
     im_dw_list = []
     for iGroup in range(nb_groups):
         im_dw_list.append(file_dwi_mean[iGroup] + ext_data)
-    im_dw_out = concat_data(im_dw_list, 3) \
-     .save(file_dwi_group + ext_data)
+    im_dw_out = concat_data(im_dw_list, 3).save(file_dwi_group + ext_data)
 
     # Average DW Images
     # TODO: USEFULL ???
