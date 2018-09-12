@@ -690,9 +690,9 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, ctr_
     tmp_folder = sct.TempFolder()
     tmp_folder_path = tmp_folder.get_path()
     fname_image_tmp = tmp_folder.copy_from(fname_image)
-    if os.path.isfile(ctr_algo):  # if the ctr_algo is a manual centerline file
-        ctr_algo = os.path.basename(ctr_algo)
+    if os.path.isfile(ctr_algo):  # if the ctr_algo is a manual centerline 
         tmp_folder.copy_from(ctr_algo)
+        ctr_algo = os.path.basename(ctr_algo)
     tmp_folder.chdir()
 
     # orientation of the image, should be RPI
