@@ -136,7 +136,7 @@ def crop_image_around_centerline(filename_in, filename_ctr, filename_out, crop_s
     x_lst, y_lst = [], []
     data_im_new = np.zeros((crop_size, crop_size, im_in.dim[2]))
     for zz in range(im_in.dim[2]):
-        if np.sum(np.array(data_ctr[:, :, zz])):
+        if np.any(np.array(data_ctr[:, :, zz])):
             x_ctr, y_ctr = center_of_mass(np.array(data_ctr[:, :, zz]))
 
             x_start, x_end = _find_crop_start_end(x_ctr, crop_size, im_in.dim[0])
@@ -659,7 +659,7 @@ def segment_3d(model_fname, contrast_type, fname_in, fname_out):
             z_patch_extracted = z_patch_size
             patch_im = im.data[:, :, zz:z_patch_size + zz]
 
-        if np.sum(patch_im):  # Check if the patch is (not) empty, which could occur after a brain detection.
+        if np.any(patch_im):  # Check if the patch is (not) empty, which could occur after a brain detection.
             patch_norm = _normalize_data(patch_im, dct_patch_sc_3d[contrast_type]['mean'], dct_patch_sc_3d[contrast_type]['std'])
             patch_pred_proba = seg_model.predict(np.expand_dims(np.expand_dims(patch_norm, 0), 0), batch_size=BATCH_SIZE)
             pred_seg_th = (patch_pred_proba > 0.5).astype(int)[0, 0, :, :, :]
