@@ -449,7 +449,7 @@ class SpinalCordStraightener(object):
                     coord = discs_input_image.getNonZeroCoordinates(sorting='z', reverse_coord=True)
                     coord_physical = []
                     for c in coord:
-                        c_p = discs_input_image.transfo_pix2phys([[c.x, c.y, c.z]])[0]
+                        c_p = discs_input_image.transfo_pix2phys([[c.x, c.y, c.z]]).tolist()[0]
                         c_p.append(c.value)
                         coord_physical.append(c_p)
                     centerline.compute_vertebral_distribution(coord_physical)
@@ -459,7 +459,7 @@ class SpinalCordStraightener(object):
                     coord = discs_ref_image.getNonZeroCoordinates(sorting='z', reverse_coord=True)
                     coord_physical = []
                     for c in coord:
-                        c_p = discs_ref_image.transfo_pix2phys([[c.x, c.y, c.z]])[0]
+                        c_p = discs_ref_image.transfo_pix2phys([[c.x, c.y, c.z]]).tolist()[0]
                         c_p.append(c.value)
                         coord_physical.append(c_p)
                     centerline_straight.compute_vertebral_distribution(coord_physical)
