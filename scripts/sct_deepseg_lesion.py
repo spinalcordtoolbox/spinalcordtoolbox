@@ -167,7 +167,7 @@ def segment_3d(model_fname, contrast_type, fname_in, fname_out):
             z_patch_extracted = z_patch_size
             patch_im = im.data[:, :, zz:z_patch_size + zz]
 
-        if np.sum(patch_im):  # Check if the patch is (not) empty, which could occur after a brain detection.
+        if np.any(patch_im):  # Check if the patch is (not) empty, which could occur after a brain detection.
             patch_norm = _normalize_data(patch_im, dct_patch_3d[contrast_type]['mean'], dct_patch_3d[contrast_type]['std'])
             patch_pred_proba = seg_model.predict(np.expand_dims(np.expand_dims(patch_norm, 0), 0), batch_size=BATCH_SIZE)
             pred_seg_th = (patch_pred_proba > 0.1).astype(int)[0, 0, :, :, :]
