@@ -184,7 +184,7 @@ def segment_3d(model_fname, contrast_type, fname_in, fname_out):
     out.save(fname_out)
 
 
-def deep_segmentation_MSlesion(fname_image, contrast_type, output_folder, ctr_algo='svm', brain_bool=True, remove_temp_files=1, verbose=1):
+def deep_segmentation_MSlesion(fname_image, contrast_type, output_folder, ctr_algo='svm', ctr_file=None, brain_bool=True, remove_temp_files=1, verbose=1):
     """Pipeline."""
     path_script = os.path.dirname(__file__)
     path_sct = os.path.dirname(path_script)
@@ -195,9 +195,11 @@ def deep_segmentation_MSlesion(fname_image, contrast_type, output_folder, ctr_al
     tmp_folder = sct.TempFolder()
     tmp_folder_path = tmp_folder.get_path()
     fname_image_tmp = tmp_folder.copy_from(fname_image)
-    if os.path.isfile(ctr_algo):  # if the ctr_algo is a manual centerline file
-        tmp_folder.copy_from(ctr_algo)
-        ctr_algo = os.path.basename(ctr_algo)
+    if ctr_algo == 'manual':  # if the ctr_file is provided
+        tmp_folder.copy_from(ctr_file)
+        file_ctr = os.path.basename(ctr_file)
+    else:
+        file_ctr = None
     tmp_folder.chdir()
 
     # orientation of the image, should be RPI
@@ -229,7 +231,8 @@ def deep_segmentation_MSlesion(fname_image, contrast_type, output_folder, ctr_al
                                       contrast_type=contrast_type_ctr,
                                       brain_bool=brain_bool,
                                       folder_output=tmp_folder_path,
-                                      remove_temp_files=remove_temp_files)
+                                      remove_temp_files=remove_temp_files,
+                                      centerline_fname=file_ctr)
 
     # crop image around the spinal cord centerline
     sct.log.info("\nCropping the image around the spinal cord...")
@@ -332,6 +335,15 @@ def main():
     else:
         output_folder = arguments["-ofolder"]
 
+    if ctr_algo == 'manual' and "-file_centerline" not in args:
+        sct.log.error('Please use the flag -file_centerline to indicate the centerline filename.')
+        sys.exit(1)
+    
+    manual_centerline_fname = arguments["-file_centerline"]
+    if "-file_centerline" in args and ctr_algo != 'manual':
+        sct.log.error('Please add to the command "-centerline manual".')
+        sys.exit(1)
+
     remove_temp_files = int(arguments['-r'])
 
     verbose = arguments['-v']
@@ -342,7 +354,7 @@ def main():
     sct.printv(algo_config_stg)
 
     fname_seg = deep_segmentation_MSlesion(fname_image, contrast_type, output_folder,
-                                            ctr_algo=ctr_algo, brain_bool=brain_bool,
+                                            ctr_algo=ctr_algo, ctr_file=manual_centerline_fname, brain_bool=brain_bool,
                                             remove_temp_files=remove_temp_files, verbose=verbose)
 
     sct.display_viewer_syntax([fname_image, os.path.join(output_folder, fname_seg)], colormaps=['gray', 'red'], opacities=['', '0.7'])
