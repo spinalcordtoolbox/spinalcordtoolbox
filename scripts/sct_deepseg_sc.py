@@ -133,7 +133,7 @@ def _find_crop_start_end(coord_ctr, crop_size, im_dim):
 
 def crop_image_around_centerline(filename_in, filename_ctr, filename_out, crop_size):
     """Crop the input image around the input centerline file."""
-    im_in, data_ctr = Image(filename_in), Image(filename_ctr).data.astype(np.int8)
+    im_in, data_ctr = Image(filename_in), Image(filename_ctr).data
     data_ctr = data_ctr if len(data_ctr.shape) >= 3 else np.expand_dims(data_ctr, 2)
     data_in = im_in.data.astype(np.float32)
     im_new = msct_image.empty_like(im_in) # but in fact we're going to crop it
@@ -475,7 +475,7 @@ def _from_viewerLabels_to_centerline(fname_labels, fname_out):
     image_centerline.change_type(np.uint8).save(fname_out)
 
 
-def find_centerline(algo, image_fname, path_sct, contrast_type, brain_bool, folder_output, remove_temp_files):
+def find_centerline(algo, image_fname, path_sct, contrast_type, brain_bool, folder_output, remove_temp_files, centerline_fname):
 
     if Image(image_fname).dim[2] == 1:  # isct_spine_detect requires nz > 1
         from sct_image import concat_data
@@ -540,14 +540,15 @@ def find_centerline(algo, image_fname, path_sct, contrast_type, brain_bool, fold
                       lambda_value=7 if contrast_type == 't2s' else 1,
                       fname_out=centerline_filename,
                       z_max=z_max if brain_bool else None)
+
     elif algo == 'viewer':
         centerline_filename = sct.add_suffix(image_fname, "_ctr")
         fname_labels_viewer = _call_viewer_centerline(fname_in=image_fname)
         _from_viewerLabels_to_centerline(fname_labels=fname_labels_viewer, fname_out=centerline_filename)
 
-    elif os.path.isfile(algo):
+    elif algo == 'manual':
         centerline_filename = sct.add_suffix(image_fname, "_ctr")
-        image_manual_centerline = Image(algo)
+        image_manual_centerline = Image(centerline_fname)
         # Re-orient and Re-sample the manual centerline
         image_centerline_reoriented = msct_image.change_orientation(image_manual_centerline, 'RPI').save(centerline_filename)
         input_resolution = image_centerline_reoriented.dim[4:7]
@@ -593,7 +594,6 @@ def segment_2d(model_fname, contrast_type, input_size, fname_in, fname_out):
     for zz in range(image_normalized.dim[2]):
         pred_seg = seg_model.predict(np.expand_dims(np.expand_dims(data_norm[:, :, zz], -1), 0), batch_size=BATCH_SIZE)[0, :, :, 0]
         pred_seg_th = (pred_seg > 0.5).astype(int)
-
         pred_seg_pp = post_processing_slice_wise(pred_seg_th, x_cOm, y_cOm)
         seg_crop.data[:, :, zz] = pred_seg_pp
 
@@ -633,7 +633,7 @@ def post_processing_slice_wise(z_slice, x_cOm, y_cOm):
             idx_z_minus_1 = np.bincount(labeled_obj.flat)[1:].argmax() + 1
             for idx in range(1, num_obj + 1):
                 z_idx = labeled_obj == idx
-                if z_idx[x_cOm, y_cOm]:
+                if z_idx[int(x_cOm), int(y_cOm)]:
                     idx_z_minus_1 = idx
             z_slice = (labeled_obj == idx_z_minus_1)
 
@@ -684,7 +684,7 @@ def segment_3d(model_fname, contrast_type, fname_in, fname_out):
     out.save(fname_out)
 
 
-def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, ctr_algo='cnn', brain_bool=True, kernel_size='2d', remove_temp_files=1, verbose=1):
+def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, ctr_algo='cnn', ctr_file=None, brain_bool=True, kernel_size='2d', remove_temp_files=1, verbose=1):
     """Pipeline."""
     path_script = os.path.dirname(__file__)
     path_sct = os.path.dirname(path_script)
@@ -695,9 +695,11 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, ctr_
     tmp_folder = sct.TempFolder()
     tmp_folder_path = tmp_folder.get_path()
     fname_image_tmp = tmp_folder.copy_from(fname_image)
-    if os.path.isfile(ctr_algo):  # if the ctr_algo is a manual centerline 
-        tmp_folder.copy_from(ctr_algo)
-        ctr_algo = os.path.basename(ctr_algo)
+    if ctr_algo == 'manual':  # if the ctr_file is provided
+        tmp_folder.copy_from(ctr_file)
+        file_ctr = os.path.basename(ctr_file)
+    else:
+        file_ctr = None
     tmp_folder.chdir()
 
     # orientation of the image, should be RPI
@@ -728,7 +730,8 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, ctr_
                                           contrast_type=contrast_type,
                                           brain_bool=brain_bool,
                                           folder_output=tmp_folder_path,
-                                          remove_temp_files=remove_temp_files)
+                                          remove_temp_files=remove_temp_files,
+                                          centerline_fname=file_ctr)
     
     # crop image around the spinal cord centerline
     sct.log.info("Cropping the image around the spinal cord...")
@@ -870,6 +873,15 @@ def main():
     else:
         output_folder = arguments["-ofolder"]
 
+    if ctr_algo == 'manual' and "-file_centerline" not in args:
+		sct.log.error('Please use the flag -file_centerline to indicate the centerline filename.')
+		sys.exit(1)
+    
+    manual_centerline_fname = arguments["-file_centerline"]
+    if "-file_centerline" in args and ctr_algo != 'manual':
+		sct.log.error('Please add to the command "-centerline manual".')
+		sys.exit(1)
+
     remove_temp_files = int(arguments['-r'])
 
     verbose = arguments['-v']
@@ -883,7 +895,8 @@ def main():
     sct.printv(algo_config_stg)
 
     fname_seg = deep_segmentation_spinalcord(fname_image, contrast_type, output_folder,
-                                            ctr_algo=ctr_algo, brain_bool=brain_bool, kernel_size=kernel_size,
+                                            ctr_algo=ctr_algo, ctr_file=manual_centerline_fname,
+                                            brain_bool=brain_bool, kernel_size=kernel_size,
                                             remove_temp_files=remove_temp_files, verbose=verbose)
 
     if path_qc is not None:
