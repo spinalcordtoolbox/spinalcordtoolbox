@@ -339,10 +339,13 @@ def main():
         sct.log.error('Please use the flag -file_centerline to indicate the centerline filename.')
         sys.exit(1)
     
-    manual_centerline_fname = arguments["-file_centerline"]
-    if "-file_centerline" in args and ctr_algo != 'manual':
-        sct.log.error('Please add to the command "-centerline manual".')
-        sys.exit(1)
+    if "-file_centerline" in args:
+        manual_centerline_fname = arguments["-file_centerline"]
+        if ctr_algo != 'manual':
+            sct.log.error('Please add to the command "-centerline manual".')
+            sys.exit(1)
+    else:
+        manual_centerline_fname = None
 
     remove_temp_files = int(arguments['-r'])
 
