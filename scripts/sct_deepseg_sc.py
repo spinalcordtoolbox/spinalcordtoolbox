@@ -879,9 +879,7 @@ def main():
     
     if "-file_centerline" in args:
         manual_centerline_fname = arguments["-file_centerline"]
-        if ctr_algo != 'manual':
-            sct.log.error('Please add to the command "-centerline manual".')
-            sys.exit(1)
+        ctr_algo = 'manual'
     else:
         manual_centerline_fname = None
 
