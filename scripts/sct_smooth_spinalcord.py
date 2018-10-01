@@ -25,12 +25,31 @@ import spinalcordtoolbox.image as msct_image
 from sct_convert import convert
 from msct_parser import Parser
 
+# PARAMETERS
+class Param:
+    # The constructor
+    def __init__(self):
+        self.algo_fitting = 'nurbs'  # Fitting algorithm for centerline. See sct_straighten_spinalcord.
+
+    # update constructor with user's parameters
+    def update(self, param_user):
+        # list_objects = param_user.split(',')
+        for object in param_user:
+            if len(object) < 2:
+                sct.printv('ERROR: Wrong usage.', 1, type='error')
+            obj = object.split('=')
+            setattr(self, obj[0], obj[1])
+
 
 # PARSER
 # ==========================================================================================
 def get_parser():
     # Initialize the parser
     parser = Parser(__file__)
+
+    # initialize default parameters
+    param_default = Param()
+
     parser.usage.set_description('Smooth the spinal cord along its centerline. Steps are:\n'
                                  '1) Spinal cord is straightened (using centerline),\n'
                                  '2) a Gaussian kernel is applied in the superior-inferior direction,\n'
@@ -56,6 +75,11 @@ def get_parser():
                       mandatory=False,
                       default_value=3,
                       example='2')
+    parser.add_option(name='-param',
+                      type_value=[[','], 'str'],
+                      description="Advanced parameters. Assign value with \"=\"; Separate params with \",\"\n"
+                                  "algo_fitting {hanning,nurbs}: Algorithm for curve fitting. For more information, see sct_straighten_spinalcord. Default="+ param_default.algo_fitting + ".\n",
+                      mandatory=False)
     parser.usage.addSection('MISC')
     parser.add_option(name="-r",
                       type_value="multiple_choice",
@@ -80,6 +104,7 @@ def main(args=None):
     # fname_anat = ''
     # fname_centerline = ''
     sigma = 3  # default value of the standard deviation for the Gaussian smoothing (in terms of number of voxels)
+    param = Param()
     # remove_temp_files = param.remove_temp_files
     # verbose = param.verbose
     start_time = time.time()
@@ -91,6 +116,8 @@ def main(args=None):
     fname_centerline = arguments['-s']
     if '-smooth' in arguments:
         sigma = arguments['-smooth']
+    if '-param' in arguments:
+        param.update(arguments['-param'])
     if '-r' in arguments:
         remove_temp_files = int(arguments['-r'])
     if '-v' in arguments:
@@ -166,7 +193,7 @@ def main(args=None):
         # apply straightening
         sct.run(['sct_apply_transfo', '-i', fname_anat_rpi, '-w', 'warp_curve2straight.nii.gz', '-d', 'straight_ref.nii.gz', '-o', 'anat_rpi_straight.nii', '-x', 'spline'], verbose)
     else:
-        sct.run(['sct_straighten_spinalcord', '-i', fname_anat_rpi, '-o', 'anat_rpi_straight.nii', '-s', fname_centerline_rpi, '-x', 'spline'], verbose)
+        sct.run(['sct_straighten_spinalcord', '-i', fname_anat_rpi, '-o', 'anat_rpi_straight.nii', '-s', fname_centerline_rpi, '-x', 'spline', '-param', 'algo_fitting='+param.algo_fitting], verbose)
         sct.cache_save(cachefile, cache_sig)
 
     # Smooth the straightened image along z
