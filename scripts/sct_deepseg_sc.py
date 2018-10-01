@@ -52,13 +52,18 @@ def get_parser():
                       example=['t1', 't2', 't2s', 'dwi'])
     parser.add_option(name="-centerline",
                       type_value="multiple_choice",
-                      description="choice of spinal cord centerline algorithm.",
+                      description="Method used for extracting the centerline.\nsvm: automatic centerline detection, based on Support Vector Machine algorithm.\ncnn: automatic centerline detection, based on Convolutional Neural Network.\nviewer: semi-automatic centerline generation, based on manual selection of a few points using an interactive viewer, then approximation with NURBS.\nmanual: use an existing centerline by specifying its filename with flag -file_centerline (e.g. -file_centerline t2_centerline_manual.nii.gz).\n",
                       mandatory=False,
-                      example=['svm', 'cnn'],
+                      example=['svm', 'cnn', 'viewer', 'manual'],
                       default_value="svm")
+    parser.add_option(name="-file_centerline",
+                      type_value="image_nifti",
+                      description="Input centerline file (to use with flag -centerline manual).",
+                      mandatory=False,
+                      example="t2_centerline_manual.nii.gz")
     parser.add_option(name="-brain",
                       type_value="multiple_choice",
-                      description="indicate if the input image is expected to contain brain sections: 1: contains brain section, 0: no brain section. To indicate this parameter could speed the segmentation process. Default value is 1 if -c is t1 or t2 (likely includes the brain), or 0 otherwise. Note that this flag is only effective with -ctr cnn",
+                      description="indicate if the input image is expected to contain brain sections:\n1: contains brain section\n0: no brain section.\nTo indicate this parameter could speed the segmentation process. Note that this flag is only effective with -centerline cnn.",
                       mandatory=False,
                       example=["0", "1"])
     parser.add_option(name="-kernel",
@@ -128,7 +133,7 @@ def _find_crop_start_end(coord_ctr, crop_size, im_dim):
 
 def crop_image_around_centerline(filename_in, filename_ctr, filename_out, crop_size):
     """Crop the input image around the input centerline file."""
-    im_in, data_ctr = Image(filename_in), Image(filename_ctr).data.astype(np.int8)
+    im_in, data_ctr = Image(filename_in), Image(filename_ctr).data
     data_ctr = data_ctr if len(data_ctr.shape) >= 3 else np.expand_dims(data_ctr, 2)
     data_in = im_in.data.astype(np.float32)
     im_new = msct_image.empty_like(im_in) # but in fact we're going to crop it
@@ -136,7 +141,7 @@ def crop_image_around_centerline(filename_in, filename_ctr, filename_out, crop_s
     x_lst, y_lst = [], []
     data_im_new = np.zeros((crop_size, crop_size, im_in.dim[2]))
     for zz in range(im_in.dim[2]):
-        if 1 in np.array(data_ctr[:, :, zz]):
+        if np.any(np.array(data_ctr[:, :, zz])):
             x_ctr, y_ctr = center_of_mass(np.array(data_ctr[:, :, zz]))
 
             x_start, x_end = _find_crop_start_end(x_ctr, crop_size, im_in.dim[0])
@@ -411,7 +416,66 @@ def heatmap2optic(fname_heatmap, lambda_value, fname_out, z_max, algo='dpdt'):
         ctr_nii.save()
 
 
-def find_centerline(algo, image_fname, path_sct, contrast_type, brain_bool, folder_output, remove_temp_files):
+def _call_viewer_centerline(fname_in):
+    from spinalcordtoolbox.gui.base import AnatomicalParams
+    from spinalcordtoolbox.gui.centerline import launch_centerline_dialog
+
+    params = AnatomicalParams()
+    # setting maximum number of points to a reasonable value
+    params.num_points = 20
+    params.interval_in_mm = 30
+    params.starting_slice = 'top'
+    im_data = Image(fname_in)
+
+    im_mask_viewer = msct_image.zeros_like(im_data)
+    im_mask_viewer.absolutepath = sct.add_suffix(fname_in, '_labels_viewer')
+    controller = launch_centerline_dialog(im_data, im_mask_viewer, params)
+    fname_labels_viewer = sct.add_suffix(fname_in, '_labels_viewer')
+
+    if not controller.saved:
+        sct.log.error('The viewer has been closed before entering all manual points. Please try again.')
+        sys.exit(1)
+    # save labels
+    controller.as_niftii(fname_labels_viewer)
+
+    return fname_labels_viewer
+
+
+def _from_viewerLabels_to_centerline(fname_labels, fname_out):
+    from sct_straighten_spinalcord import smooth_centerline
+    from msct_types import Centerline
+
+    image_labels = Image(fname_labels)
+    # fit centerline, smooth it and return the first derivative (in physical space)
+    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(image_labels, algo_fitting='nurbs', nurbs_pts_number=10000, phys_coordinates=True, verbose=False, all_slices=False)
+    centerline = Centerline(x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
+
+    # average centerline coordinates over slices of the image
+    x_centerline_fit_rescorr, y_centerline_fit_rescorr, z_centerline_rescorr, x_centerline_deriv_rescorr, y_centerline_deriv_rescorr, z_centerline_deriv_rescorr = centerline.average_coordinates_over_slices(image_labels)
+
+    # # compute z_centerline in image coordinates for usage in vertebrae mapping
+    # voxel_coordinates = image_labels.transfo_phys2pix([[x_centerline_fit_rescorr[i], y_centerline_fit_rescorr[i], z_centerline_rescorr[i]] for i in range(len(z_centerline_rescorr))])
+    # x_centerline_voxel = [coord[0] for coord in voxel_coordinates]
+    # y_centerline_voxel = [coord[1] for coord in voxel_coordinates]
+    # z_centerline_voxel = [coord[2] for coord in voxel_coordinates]
+
+    # compute z_centerline in image coordinates with continuous precision
+    voxel_coordinates = image_labels.transfo_phys2pix([[x_centerline_fit_rescorr[i], y_centerline_fit_rescorr[i], z_centerline_rescorr[i]] for i in range(len(z_centerline_rescorr))], real=False)
+    x_centerline_voxel_cont = [coord[0] for coord in voxel_coordinates]
+    y_centerline_voxel_cont = [coord[1] for coord in voxel_coordinates]
+    z_centerline_voxel_cont = [coord[2] for coord in voxel_coordinates]
+
+    # Create an image with the centerline
+    image_centerline = msct_image.zeros_like(image_labels)
+    min_z_index, max_z_index = int(np.round(min(z_centerline_voxel_cont))), int(np.round(max(z_centerline_voxel_cont)))
+    for iz in range(min_z_index, max_z_index + 1):
+        image_centerline.data[int(np.round(x_centerline_voxel_cont[iz - min_z_index])), int(np.round(y_centerline_voxel_cont[iz - min_z_index])), int(iz)] = 1  # if index is out of bounds here for hanning: either the segmentation has holes or labels have been added to the file
+
+    # Write the centerline image
+    image_centerline.change_type(np.uint8).save(fname_out)
+
+
+def find_centerline(algo, image_fname, path_sct, contrast_type, brain_bool, folder_output, remove_temp_files, centerline_fname):
 
     if Image(image_fname).dim[2] == 1:  # isct_spine_detect requires nz > 1
         from sct_image import concat_data
@@ -477,6 +541,25 @@ def find_centerline(algo, image_fname, path_sct, contrast_type, brain_bool, fold
                       fname_out=centerline_filename,
                       z_max=z_max if brain_bool else None)
 
+    elif algo == 'viewer':
+        centerline_filename = sct.add_suffix(image_fname, "_ctr")
+        fname_labels_viewer = _call_viewer_centerline(fname_in=image_fname)
+        _from_viewerLabels_to_centerline(fname_labels=fname_labels_viewer, fname_out=centerline_filename)
+
+    elif algo == 'manual':
+        centerline_filename = sct.add_suffix(image_fname, "_ctr")
+        image_manual_centerline = Image(centerline_fname)
+        # Re-orient and Re-sample the manual centerline
+        image_centerline_reoriented = msct_image.change_orientation(image_manual_centerline, 'RPI').save(centerline_filename)
+        input_resolution = image_centerline_reoriented.dim[4:7]
+        new_resolution = 'x'.join(['0.5', '0.5', str(input_resolution[2])])
+        spinalcordtoolbox.resample.nipy_resample.resample_file(centerline_filename, centerline_filename, new_resolution,
+                                                           'mm', 'linear', verbose=0)
+
+    else:
+        sct.log.error('The parameter "-centerline" is incorrect. Please try again.')
+        sys.exit(1)
+
     if bool_2d:
         from sct_image import split_data
         im_split_lst = split_data(Image(centerline_filename), dim=2)
@@ -511,7 +594,6 @@ def segment_2d(model_fname, contrast_type, input_size, fname_in, fname_out):
     for zz in range(image_normalized.dim[2]):
         pred_seg = seg_model.predict(np.expand_dims(np.expand_dims(data_norm[:, :, zz], -1), 0), batch_size=BATCH_SIZE)[0, :, :, 0]
         pred_seg_th = (pred_seg > 0.5).astype(int)
-
         pred_seg_pp = post_processing_slice_wise(pred_seg_th, x_cOm, y_cOm)
         seg_crop.data[:, :, zz] = pred_seg_pp
 
@@ -551,7 +633,7 @@ def post_processing_slice_wise(z_slice, x_cOm, y_cOm):
             idx_z_minus_1 = np.bincount(labeled_obj.flat)[1:].argmax() + 1
             for idx in range(1, num_obj + 1):
                 z_idx = labeled_obj == idx
-                if z_idx[x_cOm, y_cOm]:
+                if z_idx[int(x_cOm), int(y_cOm)]:
                     idx_z_minus_1 = idx
             z_slice = (labeled_obj == idx_z_minus_1)
 
@@ -582,7 +664,7 @@ def segment_3d(model_fname, contrast_type, fname_in, fname_out):
             z_patch_extracted = z_patch_size
             patch_im = im.data[:, :, zz:z_patch_size + zz]
 
-        if np.sum(patch_im):  # Check if the patch is (not) empty, which could occur after a brain detection.
+        if np.any(patch_im):  # Check if the patch is (not) empty, which could occur after a brain detection.
             patch_norm = _normalize_data(patch_im, dct_patch_sc_3d[contrast_type]['mean'], dct_patch_sc_3d[contrast_type]['std'])
             patch_pred_proba = seg_model.predict(np.expand_dims(np.expand_dims(patch_norm, 0), 0), batch_size=BATCH_SIZE)
             pred_seg_th = (patch_pred_proba > 0.5).astype(int)[0, 0, :, :, :]
@@ -602,7 +684,7 @@ def segment_3d(model_fname, contrast_type, fname_in, fname_out):
     out.save(fname_out)
 
 
-def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, ctr_algo='cnn', brain_bool=True, kernel_size='2d', remove_temp_files=1, verbose=1):
+def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, ctr_algo='cnn', ctr_file=None, brain_bool=True, kernel_size='2d', remove_temp_files=1, verbose=1):
     """Pipeline."""
     path_script = os.path.dirname(__file__)
     path_sct = os.path.dirname(path_script)
@@ -613,6 +695,11 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, ctr_
     tmp_folder = sct.TempFolder()
     tmp_folder_path = tmp_folder.get_path()
     fname_image_tmp = tmp_folder.copy_from(fname_image)
+    if ctr_algo == 'manual':  # if the ctr_file is provided
+        tmp_folder.copy_from(ctr_file)
+        file_ctr = os.path.basename(ctr_file)
+    else:
+        file_ctr = None
     tmp_folder.chdir()
 
     # orientation of the image, should be RPI
@@ -643,7 +730,8 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, ctr_
                                           contrast_type=contrast_type,
                                           brain_bool=brain_bool,
                                           folder_output=tmp_folder_path,
-                                          remove_temp_files=remove_temp_files)
+                                          remove_temp_files=remove_temp_files,
+                                          centerline_fname=file_ctr)
     
     # crop image around the spinal cord centerline
     sct.log.info("Cropping the image around the spinal cord...")
@@ -785,6 +873,16 @@ def main():
     else:
         output_folder = arguments["-ofolder"]
 
+    if ctr_algo == 'manual' and "-file_centerline" not in args:
+		sct.log.error('Please use the flag -file_centerline to indicate the centerline filename.')
+		sys.exit(1)
+    
+    if "-file_centerline" in args:
+        manual_centerline_fname = arguments["-file_centerline"]
+        ctr_algo = 'manual'
+    else:
+        manual_centerline_fname = None
+
     remove_temp_files = int(arguments['-r'])
 
     verbose = arguments['-v']
@@ -792,13 +890,14 @@ def main():
     path_qc = arguments.get("-qc", None)
 
     algo_config_stg = '\nMethod:'
-    algo_config_stg += '\n\tCenterline algorithm: ' + ctr_algo
+    algo_config_stg += '\n\tCenterline algorithm: ' + str(ctr_algo)
     algo_config_stg += '\n\tAssumes brain section included in the image: ' + str(brain_bool)
     algo_config_stg += '\n\tDimension of the segmentation kernel convolutions: ' + kernel_size + '\n'
     sct.printv(algo_config_stg)
 
     fname_seg = deep_segmentation_spinalcord(fname_image, contrast_type, output_folder,
-                                            ctr_algo=ctr_algo, brain_bool=brain_bool, kernel_size=kernel_size,
+                                            ctr_algo=ctr_algo, ctr_file=manual_centerline_fname,
+                                            brain_bool=brain_bool, kernel_size=kernel_size,
                                             remove_temp_files=remove_temp_files, verbose=verbose)
 
     if path_qc is not None:
