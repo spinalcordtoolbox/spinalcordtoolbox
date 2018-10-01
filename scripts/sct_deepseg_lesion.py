@@ -52,13 +52,18 @@ def get_parser():
                       example=['t2', 't2_ax', 't2s'])
     parser.add_option(name="-centerline",
                       type_value="multiple_choice",
-                      description="choice of spinal cord centerline algorithm.",
+                      description="Method used for extracting the centerline.\nsvm: automatic centerline detection, based on Support Vector Machine algorithm.\ncnn: automatic centerline detection, based on Convolutional Neural Network.\nviewer: semi-automatic centerline generation, based on manual selection of a few points using an interactive viewer, then approximation with NURBS.\nmanual: use an existing centerline by specifying its filename with flag -file_centerline (e.g. -file_centerline t2_centerline_manual.nii.gz).\n",
                       mandatory=False,
-                      example=['svm', 'cnn'],
+                      example=['svm', 'cnn', 'viewer', 'manual'],
                       default_value="svm")
+    parser.add_option(name="-file_centerline",
+                      type_value="image_nifti",
+                      description="Input centerline file (to use with flag -centerline manual).",
+                      mandatory=False,
+                      example="t2_centerline_manual.nii.gz")
     parser.add_option(name="-brain",
                       type_value="multiple_choice",
-                      description="indicate if the input image is expected to contain brain sections: 1: contains brain section, 0: no brain section. To indicate this parameter could speed the segmentation process.",
+                      description="indicate if the input image is expected to contain brain sections:\n1: contains brain section\n0: no brain section.\nTo indicate this parameter could speed the segmentation process. Note that this flag is only effective with -centerline cnn.",
                       mandatory=False,
                       example=["0", "1"],
                       default_value="1")
@@ -167,7 +172,7 @@ def segment_3d(model_fname, contrast_type, fname_in, fname_out):
             z_patch_extracted = z_patch_size
             patch_im = im.data[:, :, zz:z_patch_size + zz]
 
-        if np.sum(patch_im):  # Check if the patch is (not) empty, which could occur after a brain detection.
+        if np.any(patch_im):  # Check if the patch is (not) empty, which could occur after a brain detection.
             patch_norm = _normalize_data(patch_im, dct_patch_3d[contrast_type]['mean'], dct_patch_3d[contrast_type]['std'])
             patch_pred_proba = seg_model.predict(np.expand_dims(np.expand_dims(patch_norm, 0), 0), batch_size=BATCH_SIZE)
             pred_seg_th = (patch_pred_proba > 0.1).astype(int)[0, 0, :, :, :]
@@ -179,7 +184,7 @@ def segment_3d(model_fname, contrast_type, fname_in, fname_out):
     out.save(fname_out)
 
 
-def deep_segmentation_MSlesion(fname_image, contrast_type, output_folder, ctr_algo='svm', brain_bool=True, remove_temp_files=1, verbose=1):
+def deep_segmentation_MSlesion(fname_image, contrast_type, output_folder, ctr_algo='svm', ctr_file=None, brain_bool=True, remove_temp_files=1, verbose=1):
     """Pipeline."""
     path_script = os.path.dirname(__file__)
     path_sct = os.path.dirname(path_script)
@@ -190,6 +195,11 @@ def deep_segmentation_MSlesion(fname_image, contrast_type, output_folder, ctr_al
     tmp_folder = sct.TempFolder()
     tmp_folder_path = tmp_folder.get_path()
     fname_image_tmp = tmp_folder.copy_from(fname_image)
+    if ctr_algo == 'manual':  # if the ctr_file is provided
+        tmp_folder.copy_from(ctr_file)
+        file_ctr = os.path.basename(ctr_file)
+    else:
+        file_ctr = None
     tmp_folder.chdir()
 
     # orientation of the image, should be RPI
@@ -221,7 +231,8 @@ def deep_segmentation_MSlesion(fname_image, contrast_type, output_folder, ctr_al
                                       contrast_type=contrast_type_ctr,
                                       brain_bool=brain_bool,
                                       folder_output=tmp_folder_path,
-                                      remove_temp_files=remove_temp_files)
+                                      remove_temp_files=remove_temp_files,
+                                      centerline_fname=file_ctr)
 
     # crop image around the spinal cord centerline
     sct.log.info("\nCropping the image around the spinal cord...")
@@ -324,17 +335,27 @@ def main():
     else:
         output_folder = arguments["-ofolder"]
 
+    if ctr_algo == 'manual' and "-file_centerline" not in args:
+        sct.log.error('Please use the flag -file_centerline to indicate the centerline filename.')
+        sys.exit(1)
+    
+    if "-file_centerline" in args:
+        manual_centerline_fname = arguments["-file_centerline"]
+        ctr_algo = 'manual'
+    else:
+        manual_centerline_fname = None
+
     remove_temp_files = int(arguments['-r'])
 
     verbose = arguments['-v']
 
     algo_config_stg = '\nMethod:'
-    algo_config_stg += '\n\tCenterline algorithm: ' + ctr_algo
+    algo_config_stg += '\n\tCenterline algorithm: ' + str(ctr_algo)
     algo_config_stg += '\n\tAssumes brain section included in the image: ' + str(brain_bool) + '\n'
     sct.printv(algo_config_stg)
 
     fname_seg = deep_segmentation_MSlesion(fname_image, contrast_type, output_folder,
-                                            ctr_algo=ctr_algo, brain_bool=brain_bool,
+                                            ctr_algo=ctr_algo, ctr_file=manual_centerline_fname, brain_bool=brain_bool,
                                             remove_temp_files=remove_temp_files, verbose=verbose)
 
     sct.display_viewer_syntax([fname_image, os.path.join(output_folder, fname_seg)], colormaps=['gray', 'red'], opacities=['', '0.7'])
