@@ -139,9 +139,8 @@ def moco(param):
         failed_transfo = [0 for i in range(nt)]
 
         # Motion correction: Loop across T
-        tqdm_bar = tqdm(total=nt, unit='iter', unit_scale=False,
-                        desc="Z=" + str(iz) + "/" + str(len(file_data_splitZ)-1), ascii=True, ncols=80)
-        for indice_index in range(nt):
+        for indice_index in tqdm(range(nt), unit='iter', unit_scale=False,
+                                 desc="Z=" + str(iz) + "/" + str(len(file_data_splitZ)-1), ascii=False, ncols=80):
 
             # create indices and display stuff
             it = index[indice_index]
@@ -165,8 +164,6 @@ def moco(param):
                 data_targetz = (data_targetz * (indice_index + 1) + data_mocoz) / (indice_index + 2)
                 im_targetz.data = data_targetz
                 im_targetz.save(verbose=0)
-            tqdm_bar.update()
-        tqdm_bar.close()
 
         # Replace failed transformation with the closest good one
         fT = [i for i, j in enumerate(failed_transfo) if j == 1]

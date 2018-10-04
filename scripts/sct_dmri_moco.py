@@ -372,8 +372,7 @@ def dmri_moco(param):
 
     # DWI groups
     file_dwi_mean = []
-    tqdm_bar = tqdm(total=nb_groups, unit='iter', unit_scale=False, desc="Merge within groups", ascii=True, ncols=80)
-    for iGroup in range(nb_groups):
+    for iGroup in tqdm(range(nb_groups), unit='iter', unit_scale=False, desc="Merge within groups", ascii=False, ncols=80):
         # get index
         index_dwi_i = group_indexes[iGroup]
         nb_dwi_i = len(index_dwi_i)
@@ -386,8 +385,6 @@ def dmri_moco(param):
         # Average DW Images
         file_dwi_mean.append(file_dwi + '_mean_' + str(iGroup))
         sct.run(["sct_maths", "-i", file_dwi_merge_i + ext_data, "-o", file_dwi_mean[iGroup] + ext_data, "-mean", "t"], 0)
-        tqdm_bar.update()
-    tqdm_bar.close()
 
     # Merge DWI groups means
     sct.printv('\nMerging DW files...', param.verbose)
