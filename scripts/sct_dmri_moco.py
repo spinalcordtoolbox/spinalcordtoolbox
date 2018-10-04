@@ -372,7 +372,7 @@ def dmri_moco(param):
 
     # DWI groups
     file_dwi_mean = []
-    for iGroup in tqdm(range(nb_groups), unit='iter', unit_scale=False, desc="Merge within groups", ascii=False, ncols=80):
+    for iGroup in tqdm(range(nb_groups), unit='iter', unit_scale=False, desc="Merge within groups", ascii=True, ncols=80):
         # get index
         index_dwi_i = group_indexes[iGroup]
         nb_dwi_i = len(index_dwi_i)

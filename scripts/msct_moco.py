@@ -140,7 +140,7 @@ def moco(param):
 
         # Motion correction: Loop across T
         for indice_index in tqdm(range(nt), unit='iter', unit_scale=False,
-                                 desc="Z=" + str(iz) + "/" + str(len(file_data_splitZ)-1), ascii=False, ncols=80):
+                                 desc="Z=" + str(iz) + "/" + str(len(file_data_splitZ)-1), ascii=True, ncols=80):
 
             # create indices and display stuff
             it = index[indice_index]
