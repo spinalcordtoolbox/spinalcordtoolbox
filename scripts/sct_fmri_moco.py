@@ -17,7 +17,6 @@ import sys
 import os
 import time
 import math
-import shutil
 from tqdm import tqdm
 import numpy as np
 import sct_utils as sct
@@ -313,7 +312,7 @@ def fmri_moco(param):
         if param.group_size == 1:
             # copy to new file name instead of averaging (faster)
             # note: this is a bandage. Ideally we should skip this entire for loop if g=1
-            shutil.copy(file_data_merge_i + '.nii', file_data_mean + '.nii')
+            sct.copy(file_data_merge_i + '.nii', file_data_mean + '.nii')
         else:
             # Average Images
             sct.run(['sct_maths', '-i', file_data_merge_i + '.nii', '-o', file_data_mean + '.nii', '-mean', 't'], verbose=0)
