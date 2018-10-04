@@ -292,9 +292,7 @@ def fmri_moco(param):
         group_indexes.append(index_fmri[len(index_fmri) - nb_remaining:len(index_fmri)])
 
     # groups
-    tqdm_bar = tqdm(total=nb_groups, unit='iter', unit_scale=False, desc="Merge within groups", ascii=True, ncols=80)
-    for iGroup in range(nb_groups):
-        # sct.printv('\nGroup: ' + str((iGroup + 1)) + '/' + str(nb_groups), param.verbose)
+    for iGroup in tqdm(range(nb_groups), unit='iter', unit_scale=False, desc="Merge within groups", ascii=False, ncols=80):
 
         # get index
         index_fmri_i = group_indexes[iGroup]
@@ -323,9 +321,7 @@ def fmri_moco(param):
         #     sct.printv('ERROR in average_data_across_dimension', 1, 'error')
         # cmd = fsloutput + 'fslmaths ' + file_data_merge_i + ' -Tmean ' + file_data_mean
         # sct.run(cmd, param.verbose)
-        tqdm_bar.update()
 
-    tqdm_bar.close()
     # Merge groups means. The output 4D volume will be used for motion correction.
     sct.printv('\nMerging volumes...', param.verbose)
     file_data_groups_means_merge = 'fmri_averaged_groups'
