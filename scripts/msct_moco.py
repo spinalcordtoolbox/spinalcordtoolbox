@@ -169,7 +169,7 @@ def moco(param):
         fT = [i for i, j in enumerate(failed_transfo) if j == 1]
         gT = [i for i, j in enumerate(failed_transfo) if j == 0]
         for it in enumerate(fT):
-            abs_dist = [abs(gT[i] - fT[it]) for i in enumerate(gT)]
+            abs_dist = [np.abs(gT[i] - fT[it]) for i in enumerate(gT)]
             if not abs_dist == []:
                 index_good = abs_dist.index(min(abs_dist))
                 sct.printv('  transfo #' + str(fT[it]) + ' --> use transfo #' + str(gT[index_good]), verbose)
