@@ -35,9 +35,6 @@ def smooth_centerline(fname_centerline, algo_fitting='hanning', type_window='han
     :param fname_centerline: centerline in RPI orientation, or an Image
     :return: x_centerline_fit, y_centerline_fit, z_centerline_fit, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv
     """
-    # window_length = param.window_length
-    # type_window = param.type_window
-    # algo_fitting = param.algo_fitting
     remove_edge_points = 2  # remove points at the edge (issue #513)
 
     sct.printv('\nSmooth centerline/segmentation...', verbose)
@@ -813,7 +810,6 @@ class SpinalCordStraightener(object):
         return fname_straight
 
 
-
 def get_parser():
     # Initialize parser
     parser = Parser(__file__)
@@ -939,50 +935,11 @@ def get_parser():
                                   "\ntemplate_orientation: {0, 1} Disable/Enable orientation of the straight image to be the same as the template. Default=0",
                       mandatory=False,
                       example="algo_fitting=nurbs")
-    parser.add_option(name="-params",
-                      type_value=None,
-                      description="Parameters for spinal cord straightening. Separate arguments with ','."
-                                  "\nalgo_fitting: {hanning,nurbs} algorithm for curve fitting. Default=nurbs"
-                                  "\nprecision: [1.0,inf[. Precision factor of straightening, related to the number of slices. Increasing this parameter increases the precision along with a loss of time. Is not taken into account with hanning fitting method. Default=2.0"
-                                  "\nthreshold_distance: [0.0,inf[. Threshold for which voxels are not considered into displacement. Default=1.0",
-                      mandatory=False,
-                      deprecated_by='-param')
 
     parser.add_option(name='-qc',
                       type_value='folder_creation',
                       description='The path where the quality control generated content will be saved',
                       default_value=None)
-
-
-    ##### DEPRECATED
-    parser.add_option(name="-resample",
-                      type_value='float',
-                      description='Acceleration factor for the calculation of the straightening warping field.\n'
-                                  'This speed factor enables an intermediate resampling to a lower resolution, which decreases the computational time while decreasing straightening accuracy.\n'
-                                  'To keep native resolution, set this option to 0.\n',
-                      mandatory=False,
-                      default_value=0,
-                      deprecated=True)  # TODO: the fact that it is still displayed on the usage is confusing. I suggest to remove.
-    parser.add_option(name="-ref",
-                      type_value="image_nifti",
-                      description='Isotropic resolution of the straightening output, in millimeters.\n'
-                                  'Resampling to lower resolution decreases computational time while decreasing straightening accuracy.\n'
-                                  'To keep native resolution, set this option to 0.\n',
-                      mandatory=False,
-                      example="centerline.nii.gz",
-                      deprecated_by='-dest')
-    parser.add_option(name="-disks-input",
-                      type_value="image_nifti",
-                      description="",
-                      mandatory=False,
-                      example="disks.nii.gz",
-                      deprecated_by='-ldisc_input')
-    parser.add_option(name="-disks-ref",
-                      type_value="image_nifti",
-                      description="",
-                      mandatory=False,
-                      example="disks_ref.nii.gz",
-                      deprecated_by='-ldisc_dest')
 
     return parser
 
@@ -1059,9 +1016,9 @@ def main(args=None):
             param_split = param.split('=')
             if param_split[0] == 'algo_fitting':
                 sc_straight.algo_fitting = param_split[1]
-                if sc_straight.algo_fitting == 'hanning':
-                    sct.printv("WARNING: hanning has been disabled in this function. The fitting algorithm has been changed to NURBS.", type='warning')
-                    sc_straight.algo_fitting = 'nurbs'
+                # if sc_straight.algo_fitting == 'hanning':
+                #     sct.printv("WARNING: hanning has been disabled in this function. The fitting algorithm has been changed to NURBS.", type='warning')
+                #     sc_straight.algo_fitting = 'nurbs'
             if param_split[0] == 'precision':
                 sc_straight.precision = float(param_split[1])
             if param_split[0] == 'threshold_distance':
