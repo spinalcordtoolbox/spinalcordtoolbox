@@ -291,8 +291,7 @@ def fmri_moco(param):
         group_indexes.append(index_fmri[len(index_fmri) - nb_remaining:len(index_fmri)])
 
     # groups
-    for iGroup in tqdm(range(nb_groups), unit='iter', unit_scale=False, desc="Merge within groups", ascii=False, ncols=80):
-
+    for iGroup in tqdm(range(nb_groups), unit='iter', unit_scale=False, desc="Merge within groups", ascii=True, ncols=80):
         # get index
         index_fmri_i = group_indexes[iGroup]
         nt_i = len(index_fmri_i)
