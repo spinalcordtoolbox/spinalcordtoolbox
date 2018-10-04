@@ -459,7 +459,7 @@ def dmri_moco(param):
     # Copy DWI registration matrices
     sct.printv('\nCopy DWI registration matrices...', param.verbose)
     for iGroup in range(nb_groups):
-        for dwi in enumerate(group_indexes[iGroup]):
+        for dwi in range(len(group_indexes[iGroup])):  # we cannot use enumerate because group_indexes has 2 dim.
             sct.copy('mat_dwigroups/' + 'mat.Z0000T' + str(iGroup).zfill(4) + ext_mat,
                      mat_final + 'mat.Z0000T' + str(group_indexes[iGroup][dwi]).zfill(4) + ext_mat)
 
