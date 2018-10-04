@@ -352,7 +352,7 @@ def fmri_moco(param):
         # Copy registration matrices
         sct.printv('\nCopy transformations...', param.verbose)
         for iGroup in range(nb_groups):
-            for data in enumerate(group_indexes[iGroup]):
+            for data in range(len(group_indexes[iGroup])):  # we cannot use enumerate because group_indexes has 2 dim.
                 # fetch all file_mat_z for given t-group
                 list_file_mat_z = file_mat[:, iGroup]
                 # loop across file_mat_z and copy to mat_final folder
