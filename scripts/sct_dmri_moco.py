@@ -23,17 +23,18 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+# TODO: check if image is sagittal, and if it is, say that it is currently not supported.
 # TODO: Do not merge per group if no group is asked.
 # TODO: make sure slicewise not used with ants, eddy not used with ants
 # TODO: make sure images are axial
-# TDOD: if -f, we only need two plots. Plot 1: X params with fitted spline, plot 2: Y param with fitted splines. Each plot will have all Z slices (with legend Z=0, Z=1, ...) and labels: y; translation (mm), xlabel: volume #. Plus add grid.
+# TODO: if -f, we only need two plots. Plot 1: X params with fitted spline, plot 2: Y param with fitted splines. Each plot will have all Z slices (with legend Z=0, Z=1, ...) and labels: y; translation (mm), xlabel: volume #. Plus add grid.
 # TODO (no priority): for sinc interp, use ANTs instead of flirt
 
 from __future__ import division, absolute_import
 
 import sys, os, time, math
 import importlib
-
+from tqdm import tqdm
 import numpy as np
 
 import sct_utils as sct
@@ -66,6 +67,7 @@ class Param:
         self.poly = '2'  # degree of polynomial function for moco
         self.smooth = '2'  # smoothing sigma in mm
         self.gradStep = '1'  # gradientStep for searching algorithm
+        self.iter = '10'  # number of iterations
         self.metric = 'MI'  # metric: MI, MeanSquares, CC
         self.sampling = '0.2'  # sampling rate used for registration metric
         self.interp = 'spline'  # nn, linear, spline
@@ -75,7 +77,9 @@ class Param:
         self.swapXY = 0
         self.bval_min = 100  # in case user does not have min bvalues at 0, set threshold (where csf disapeared).
         self.otsu = 0  # use otsu algorithm to segment dwi data for better moco. Value coresponds to data threshold. For no segmentation set to 0.
-        self.iterative_averaging = 1  # iteratively average target image for more robust moco
+        self.iterAvg = 1  # iteratively average target image for more robust moco
+        self.is_sagittal = False  # if True, then split along Z (right-left) and register each 2D slice (vs. 3D volume)
+# Note: this feature is currently ONLY supported by sct_fmri_moco (not here).
 
     # update constructor with user's parameters
     def update(self, param_user):
@@ -323,7 +327,6 @@ def dmri_moco(param):
     sct.printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz), param.verbose)
 
     # Identify b=0 and DWI images
-    sct.printv('\nIdentify b=0 and DWI images...', param.verbose)
     index_b0, index_dwi, nb_b0, nb_dwi = identify_b0('bvecs.txt', param.fname_bvals, param.bval_min, param.verbose)
 
     # check if dmri and bvecs are the same size
@@ -369,27 +372,19 @@ def dmri_moco(param):
 
     # DWI groups
     file_dwi_mean = []
-    for iGroup in range(nb_groups):
-        sct.printv('\nDWI group: ' + str((iGroup + 1)) + '/' + str(nb_groups), param.verbose)
-
+    for iGroup in tqdm(range(nb_groups), unit='iter', unit_scale=False, desc="Merge within groups", ascii=True, ncols=80):
         # get index
         index_dwi_i = group_indexes[iGroup]
         nb_dwi_i = len(index_dwi_i)
-
         # Merge DW Images
-        sct.printv('Merge DW images...', param.verbose)
         file_dwi_merge_i = file_dwi + '_' + str(iGroup)
-
         im_dwi_list = []
         for it in range(nb_dwi_i):
             im_dwi_list.append(im_data_split_list[index_dwi_i[it]])
-        im_dwi_out = concat_data(im_dwi_list, 3) \
-         .save(file_dwi_merge_i + ext_data)
-
+        im_dwi_out = concat_data(im_dwi_list, 3).save(file_dwi_merge_i + ext_data)
         # Average DW Images
-        sct.printv('Average DW images...', param.verbose)
         file_dwi_mean.append(file_dwi + '_mean_' + str(iGroup))
-        sct.run(["sct_maths", "-i", file_dwi_merge_i + ext_data, "-o", file_dwi_mean[iGroup] + ext_data, "-mean", "t"], param.verbose)
+        sct.run(["sct_maths", "-i", file_dwi_merge_i + ext_data, "-o", file_dwi_mean[iGroup] + ext_data, "-mean", "t"], 0)
 
     # Merge DWI groups means
     sct.printv('\nMerging DW files...', param.verbose)
@@ -397,8 +392,7 @@ def dmri_moco(param):
     im_dw_list = []
     for iGroup in range(nb_groups):
         im_dw_list.append(file_dwi_mean[iGroup] + ext_data)
-    im_dw_out = concat_data(im_dw_list, 3) \
-     .save(file_dwi_group + ext_data)
+    im_dw_out = concat_data(im_dw_list, 3).save(file_dwi_group + ext_data)
 
     # Average DW Images
     # TODO: USEFULL ???
@@ -439,7 +433,7 @@ def dmri_moco(param):
     param_moco.path_out = ''
     param_moco.todo = 'estimate'
     param_moco.mat_moco = 'mat_b0groups'
-    moco.moco(param_moco)
+    file_mat_b0 = moco.moco(param_moco)
 
     # Estimate moco on dwi groups
     sct.printv('\n-------------------------------------------------------------------------------', param.verbose)
@@ -450,22 +444,24 @@ def dmri_moco(param):
     param_moco.path_out = ''
     param_moco.todo = 'estimate_and_apply'
     param_moco.mat_moco = 'mat_dwigroups'
-    moco.moco(param_moco)
+    file_mat_dwi = moco.moco(param_moco)
 
     # create final mat folder
     sct.create_folder(mat_final)
 
     # Copy b=0 registration matrices
+    # TODO: use file_mat_b0 and file_mat_dwi instead of the hardcoding below
     sct.printv('\nCopy b=0 registration matrices...', param.verbose)
-
     for it in range(nb_b0):
-        sct.copy('mat_b0groups/' + 'mat.T' + str(it) + ext_mat, mat_final + 'mat.T' + str(index_b0[it]) + ext_mat)
+        sct.copy('mat_b0groups/' + 'mat.Z0000T' + str(it).zfill(4) + ext_mat,
+                 mat_final + 'mat.Z0000T' + str(index_b0[it]).zfill(4) + ext_mat)
 
     # Copy DWI registration matrices
     sct.printv('\nCopy DWI registration matrices...', param.verbose)
     for iGroup in range(nb_groups):
-        for dwi in range(len(group_indexes[iGroup])):
-            sct.copy('mat_dwigroups/' + 'mat.T' + str(iGroup) + ext_mat, mat_final + 'mat.T' + str(group_indexes[iGroup][dwi]) + ext_mat)
+        for dwi in range(len(group_indexes[iGroup])):  # we cannot use enumerate because group_indexes has 2 dim.
+            sct.copy('mat_dwigroups/' + 'mat.Z0000T' + str(iGroup).zfill(4) + ext_mat,
+                     mat_final + 'mat.Z0000T' + str(group_indexes[iGroup][dwi]).zfill(4) + ext_mat)
 
     # Spline Regularization along T
     if param.spline_fitting:
