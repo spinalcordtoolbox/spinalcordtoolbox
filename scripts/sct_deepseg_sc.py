@@ -27,6 +27,7 @@ import sct_utils as sct
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
 from msct_parser import Parser
+from sct_get_centerline import _call_viewer_centerline, _from_viewerLabels_to_centerline
 
 import spinalcordtoolbox.resample.nipy_resample
 from spinalcordtoolbox.deepseg_sc.cnn_models import nn_architecture_seg, nn_architecture_ctr
@@ -414,65 +415,6 @@ def heatmap2optic(fname_heatmap, lambda_value, fname_out, z_max, algo='dpdt'):
         ctr_nii = Image(fname_out)
         ctr_nii.data[:, :, z_max:] = 0
         ctr_nii.save()
-
-
-def _call_viewer_centerline(fname_in):
-    from spinalcordtoolbox.gui.base import AnatomicalParams
-    from spinalcordtoolbox.gui.centerline import launch_centerline_dialog
-
-    params = AnatomicalParams()
-    # setting maximum number of points to a reasonable value
-    params.num_points = 20
-    params.interval_in_mm = 30
-    params.starting_slice = 'top'
-    im_data = Image(fname_in)
-
-    im_mask_viewer = msct_image.zeros_like(im_data)
-    im_mask_viewer.absolutepath = sct.add_suffix(fname_in, '_labels_viewer')
-    controller = launch_centerline_dialog(im_data, im_mask_viewer, params)
-    fname_labels_viewer = sct.add_suffix(fname_in, '_labels_viewer')
-
-    if not controller.saved:
-        sct.log.error('The viewer has been closed before entering all manual points. Please try again.')
-        sys.exit(1)
-    # save labels
-    controller.as_niftii(fname_labels_viewer)
-
-    return fname_labels_viewer
-
-
-def _from_viewerLabels_to_centerline(fname_labels, fname_out):
-    from sct_straighten_spinalcord import smooth_centerline
-    from msct_types import Centerline
-
-    image_labels = Image(fname_labels)
-    # fit centerline, smooth it and return the first derivative (in physical space)
-    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(image_labels, algo_fitting='nurbs', nurbs_pts_number=10000, phys_coordinates=True, verbose=False, all_slices=False)
-    centerline = Centerline(x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
-
-    # average centerline coordinates over slices of the image
-    x_centerline_fit_rescorr, y_centerline_fit_rescorr, z_centerline_rescorr, x_centerline_deriv_rescorr, y_centerline_deriv_rescorr, z_centerline_deriv_rescorr = centerline.average_coordinates_over_slices(image_labels)
-
-    # # compute z_centerline in image coordinates for usage in vertebrae mapping
-    # voxel_coordinates = image_labels.transfo_phys2pix([[x_centerline_fit_rescorr[i], y_centerline_fit_rescorr[i], z_centerline_rescorr[i]] for i in range(len(z_centerline_rescorr))])
-    # x_centerline_voxel = [coord[0] for coord in voxel_coordinates]
-    # y_centerline_voxel = [coord[1] for coord in voxel_coordinates]
-    # z_centerline_voxel = [coord[2] for coord in voxel_coordinates]
-
-    # compute z_centerline in image coordinates with continuous precision
-    voxel_coordinates = image_labels.transfo_phys2pix([[x_centerline_fit_rescorr[i], y_centerline_fit_rescorr[i], z_centerline_rescorr[i]] for i in range(len(z_centerline_rescorr))], real=False)
-    x_centerline_voxel_cont = [coord[0] for coord in voxel_coordinates]
-    y_centerline_voxel_cont = [coord[1] for coord in voxel_coordinates]
-    z_centerline_voxel_cont = [coord[2] for coord in voxel_coordinates]
-
-    # Create an image with the centerline
-    image_centerline = msct_image.zeros_like(image_labels)
-    min_z_index, max_z_index = int(np.round(min(z_centerline_voxel_cont))), int(np.round(max(z_centerline_voxel_cont)))
-    for iz in range(min_z_index, max_z_index + 1):
-        image_centerline.data[int(np.round(x_centerline_voxel_cont[iz - min_z_index])), int(np.round(y_centerline_voxel_cont[iz - min_z_index])), int(iz)] = 1  # if index is out of bounds here for hanning: either the segmentation has holes or labels have been added to the file
-
-    # Write the centerline image
-    image_centerline.change_type(np.uint8).save(fname_out)
 
 
 def find_centerline(algo, image_fname, path_sct, contrast_type, brain_bool, folder_output, remove_temp_files, centerline_fname):
