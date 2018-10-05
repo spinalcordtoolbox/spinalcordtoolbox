@@ -84,7 +84,7 @@ def get_parser():
     parser.usage.addSection('\nHeader operations:')
     parser.add_option(name="-copy-header",
                       type_value="file",
-                      description='Copy the header of the input image (specified in -i) to the destination image (specified here)',
+                      description='Copy the header of the source image (specified in -i) to the destination image (specified here)',
                       mandatory=False,
                       example='data_dest.nii.gz')
 
@@ -162,8 +162,12 @@ def main(args=None):
     elif "-copy-header" in arguments:
         im_in = Image(fname_in[0])
         im_dest = Image(arguments["-copy-header"])
-        im_dest.header = im_in.header
-        im_out = [im_dest]
+        im_dest_new = im_in.copy()
+        im_dest_new.data = im_dest.data.copy()
+        # im_dest.header = im_in.header
+        im_dest_new.absolutepath = im_dest.absolutepath
+        im_out = [im_dest_new]
+        fname_out = arguments["-copy-header"]
 
     elif '-display-warp' in arguments:
         im_in = fname_in[0]
@@ -335,7 +339,7 @@ def pad_image(im, pad_x_i=0, pad_x_f=0, pad_y_i=0, pad_y_f=0, pad_z_i=0, pad_z_f
     return im_out
 
 
-def split_data(im_in, dim):
+def split_data(im_in, dim, squeeze_data=True):
     """
     Split data
     :param im_in: input image.
@@ -347,31 +351,44 @@ def split_data(im_in, dim):
     # Parse file name
     # Open first file.
     data = im_in.data
-    if dim + 1 > len(np.shape(data)):  # in case input volume is 3d and dim=t
+    # in case input volume is 3d and dim=t, create new axis
+    if dim + 1 > len(np.shape(data)):
         data = data[..., np.newaxis]
+    # in case splitting along the last dim, make sure to remove the last dim to avoid singleton
+    if dim + 1 == len(np.shape(data)):
+        if squeeze_data:
+            do_reshape = True
+        else:
+            do_reshape = False
+    else:
+        do_reshape = False
     # Split data into list
     data_split = np.array_split(data, data.shape[dim], dim)
     # Write each file
     im_out_list = []
     for idx_img, dat in enumerate(data_split):
         im_out = msct_image.empty_like(im_in)
-        im_out.data = dat.reshape(tuple([ x for (idx_shape,x) in enumerate(data.shape) if idx_shape != dim]))
+        if do_reshape:
+            im_out.data = dat.reshape(tuple([ x for (idx_shape, x) in enumerate(data.shape) if idx_shape != dim]))
+        else:
+            im_out.data = dat
         im_out.absolutepath = sct.add_suffix(im_in.absolutepath, "_{}{}".format(dim_list[dim].upper(), str(idx_img).zfill(4)))
         im_out_list.append(im_out)
 
     return im_out_list
 
 
-def concat_data(fname_in_list, dim, pixdim=None):
+def concat_data(fname_in_list, dim, pixdim=None, squeeze_data=False):
     """
     Concatenate data
     :param im_in_list: list of Images or image filenames
     :param dim: dimension: 0, 1, 2, 3.
     :param pixdim: pixel resolution to join to image header
+    :param squeeze_data: bool: if True, remove the last dim if it is a singleton.
     :return im_out: concatenated image
     """
     # WARNING: calling concat_data in python instead of in command line causes a non understood issue (results are different with both options)
-    from numpy import concatenate, expand_dims
+    # from numpy import concatenate, expand_dims
 
     dat_list = []
     data_concat_list = []
@@ -386,12 +403,12 @@ def concat_data(fname_in_list, dim, pixdim=None):
     for i, fname in enumerate(fname_in_list):
         # if there is more than 100 images to concatenate, then it does it iteratively to avoid memory issue.
         if i != 0 and i % 100 == 0:
-            data_concat_list.append(concatenate(dat_list, axis=dim))
+            data_concat_list.append(np.concatenate(dat_list, axis=dim))
             im = Image(fname)
             dat = im.data
             # if image shape is smaller than asked dim, then expand dim
             if len(dat.shape) <= dim:
-                dat = expand_dims(dat, dim)
+                dat = np.expand_dims(dat, dim)
             dat_list = [dat]
             del im
             del dat
@@ -400,15 +417,15 @@ def concat_data(fname_in_list, dim, pixdim=None):
             dat = im.data
             # if image shape is smaller than asked dim, then expand dim
             if len(dat.shape) <= dim:
-                dat = expand_dims(dat, dim)
+                dat = np.expand_dims(dat, dim)
             dat_list.append(dat)
             del im
             del dat
     if data_concat_list:
-        data_concat_list.append(concatenate(dat_list, axis=dim))
-        data_concat = concatenate(data_concat_list, axis=dim)
+        data_concat_list.append(np.concatenate(dat_list, axis=dim))
+        data_concat = np.concatenate(data_concat_list, axis=dim)
     else:
-        data_concat = concatenate(dat_list, axis=dim)
+        data_concat = np.concatenate(dat_list, axis=dim)
     # write file
     im_out = msct_image.empty_like(Image(fname_in_list[0]))
     im_out.data = data_concat
@@ -420,6 +437,12 @@ def concat_data(fname_in_list, dim, pixdim=None):
 
     if pixdim is not None:
         im_out.hdr['pixdim'] = pixdim
+
+    if squeeze_data and data_concat.shape[dim] == 1:
+        # remove the last dim if it is a singleton.
+        im_out.data = data_concat.reshape(tuple([ x for (idx_shape, x) in enumerate(data_concat.shape) if idx_shape != dim]))
+    else:
+        im_out.data = data_concat
 
     return im_out
 

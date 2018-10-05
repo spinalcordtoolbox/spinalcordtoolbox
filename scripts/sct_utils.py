@@ -1093,10 +1093,13 @@ def delete_nifti(fname_in):
         os.system('rm ' + os.path.join(path_in, file_in + '.nii.gz'))
 
 
-#=======================================================================================================================
-# get_interpolation: get correct interpolation field depending on program used. Supported programs: ants, flirt, WarpImageMultiTransform
-#=======================================================================================================================
 def get_interpolation(program, interp):
+    """
+    Get syntax on interpolation field depending on program. Supported programs: ants, flirt, WarpImageMultiTransform
+    :param program:
+    :param interp:
+    :return:
+    """
     # TODO: check if field and program exists
     interp_program = ''
     # FLIRT
@@ -1108,7 +1111,8 @@ def get_interpolation(program, interp):
         elif interp == 'spline':
             interp_program = ' -interp spline'
     # ANTs
-    elif program == 'ants' or program == 'ants_affine' or program == 'isct_antsApplyTransforms' or program == 'isct_antsSliceRegularizedRegistration':
+    elif program == 'ants' or program == 'ants_affine' or program == 'isct_antsApplyTransforms' \
+            or program == 'isct_antsSliceRegularizedRegistration' or program == 'isct_antsRegistration':
         if interp == 'nn':
             interp_program = ' -n NearestNeighbor'
         elif interp == 'linear':

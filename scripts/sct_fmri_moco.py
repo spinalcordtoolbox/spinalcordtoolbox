@@ -6,29 +6,25 @@
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Authors: Karun Raju, Tanguy Duval, Julien Cohen-Adad
-# Modified: 2014-10-06
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-# TODO: estimate and apply, no need to reapply afterwards
 
 from __future__ import absolute_import, division
 
 import sys
 import os
-import getopt
 import time
 import math
-
+from tqdm import tqdm
 import numpy as np
-
 import sct_utils as sct
 import msct_moco as moco
+import sct_maths
 from sct_convert import convert
 from spinalcordtoolbox.image import Image
 from sct_image import split_data, concat_data
-# from sct_average_data_across_dimension import average_data_across_dimension
 from msct_parser import Parser
 
 
@@ -44,7 +40,7 @@ class Param:
         self.fname_mask = ''
         self.mat_final = ''
         self.todo = ''
-        self.group_size = 3  # number of images averaged for 'dwi' method.
+        self.group_size = 1  # number of images averaged for 'dwi' method.
         self.spline_fitting = 0
         self.remove_temp_files = 1
         self.verbose = 1
@@ -53,6 +49,7 @@ class Param:
         self.poly = '2'  # degree of polynomial function for moco
         self.smooth = '2'  # smoothing sigma in mm
         self.gradStep = '1'  # gradientStep for searching algorithm
+        self.iter = '10'  # number of iterations
         self.metric = 'MeanSquares'  # metric: MI, MeanSquares, CC
         self.sampling = '0.2'  # sampling rate used for registration metric
         self.interp = 'spline'  # nn, linear, spline
@@ -62,8 +59,9 @@ class Param:
         self.swapXY = 0
         self.bval_min = 100  # in case user does not have min bvalues at 0, set threshold (where csf disapeared).
         self.otsu = 0  # use otsu algorithm to segment dwi data for better moco. Value coresponds to data threshold. For no segmentation set to 0.
-        self.iterative_averaging = 1  # iteratively average target image for more robust moco
+        self.iterAvg = 1  # iteratively average target image for more robust moco
         self.num_target = '0'
+        self.is_sagittal = False  # if True, then split along Z (right-left) and register each 2D slice (vs. 3D volume)
 
     # update constructor with user's parameters
     def update(self, param_user):
@@ -72,7 +70,15 @@ class Param:
             if len(object) < 2:
                 sct.printv('ERROR: Wrong usage.', 1, type='error')
             obj = object.split('=')
-            setattr(self, obj[0], obj[1])
+            # set type based on default param field
+            # isinstance(i, int)
+            # isinstance(f, float)
+            # isinstance(s, str)
+
+            field = obj[1]
+            if isinstance(getattr(self, obj[0]), int):
+                field = int(field)
+            setattr(self, obj[0], field)
 
 # PARSER
 # ==========================================================================================
@@ -108,10 +114,12 @@ def get_parser():
                       description="Advanced parameters. Assign value with \"=\"; Separate arguments with \",\"\n"
                                   "poly [int]: Degree of polynomial function used for regularization along Z. For no regularization set to 0. Default=" + param_default.poly + ".\n"
                                   "smooth [mm]: Smoothing kernel. Default=" + param_default.smooth + ".\n"
+                                  "iter [int]: Number of iterations. Default=" + param_default.iter + ".\n"
                                   "metric {MI, MeanSquares, CC}: Metric used for registration. Default=" + param_default.metric + ".\n"
                                   "gradStep [float]: Searching step used by registration algorithm. The higher the more deformation allowed. Default=" + param_default.gradStep + ".\n"
-                                  "sample [0-1]: Sampling rate used for registration metric. Default=" + param_default.sampling + ".\n"
-                                  "numTarget [int]: Target volume or group (starting with 0). Default=" + param_default.num_target + ".\n",
+                                  "sampling [0-1]: Sampling rate used for registration metric. Default=" + param_default.sampling + ".\n"
+                                  "numTarget [int]: Target volume or group (starting with 0). Default=" + param_default.num_target + ".\n"
+                                  "iterAvg [int]: Iterative averaging: Target volume is a weighted average of the previously-registered volumes. Default=" + str(param_default.iterAvg) + ".\n",
                       mandatory=False)
     parser.add_option(name='-ofolder',
                       type_value='folder_creation',
@@ -189,8 +197,9 @@ def main(args=None):
     path_tmp = sct.tmp_create(basename="fmri_moco", verbose=param.verbose)
 
     # Copying input data to tmp folder and convert to nii
+    # TODO: no need to do that (takes time for nothing)
     sct.printv('\nCopying input data to tmp folder and convert to nii...', param.verbose)
-    convert(param.fname_data, os.path.join(path_tmp, "fmri.nii"))
+    convert(param.fname_data, os.path.join(path_tmp, "fmri.nii"), squeeze_data=False)
 
     # go to tmp folder
     curdir = os.getcwd()
@@ -232,13 +241,30 @@ def fmri_moco(param):
     file_data = 'fmri'
     ext_data = '.nii'
     mat_final = 'mat_final/'
-    fsloutput = 'export FSLOUTPUTTYPE=NIFTI; '  # for faster processing, all outputs are in NIFTI
     ext_mat = 'Warp.nii.gz'  # warping field
 
     # Get dimensions of data
     sct.printv('\nGet dimensions of data...', param.verbose)
-    nx, ny, nz, nt, px, py, pz, pt = Image(file_data + '.nii').dim
+    im_data = Image(file_data + '.nii')
+    nx, ny, nz, nt, px, py, pz, pt = im_data.dim
     sct.printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz) + ' x ' + str(nt), param.verbose)
+
+    # Get orientation
+    sct.printv('\nData orientation: ' + im_data.orientation, param.verbose)
+    if im_data.orientation[2] in 'LR':
+        param.is_sagittal = True
+        sct.printv('  Treated as sagittal')
+    elif im_data.orientation[2] in 'IS':
+        param.is_sagittal = False
+        sct.printv('  Treated as axial')
+    else:
+        param.is_sagittal = False
+        sct.printv('WARNING: Orientation seems to be neither axial nor sagittal.')
+
+    # Adjust group size in case of sagittal scan
+    if param.is_sagittal and param.group_size != 1:
+        sct.printv('For sagittal data group_size should be one for more robustness. Forcing group_size=1.', 1, 'warning')
+        param.group_size = 1
 
     # Split into T dimension
     sct.printv('\nSplit along T dimension...', param.verbose)
@@ -258,22 +284,19 @@ def fmri_moco(param):
     for iGroup in range(nb_groups):
         group_indexes.append(index_fmri[(iGroup * param.group_size):((iGroup + 1) * param.group_size)])
 
-    # add the remaining images to the last DWI group
+    # add the remaining images to the last fMRI group
     nb_remaining = nt%param.group_size  # number of remaining images
     if nb_remaining > 0:
         nb_groups += 1
         group_indexes.append(index_fmri[len(index_fmri) - nb_remaining:len(index_fmri)])
 
     # groups
-    for iGroup in range(nb_groups):
-        sct.printv('\nGroup: ' + str((iGroup + 1)) + '/' + str(nb_groups), param.verbose)
-
+    for iGroup in tqdm(range(nb_groups), unit='iter', unit_scale=False, desc="Merge within groups", ascii=True, ncols=80):
         # get index
         index_fmri_i = group_indexes[iGroup]
         nt_i = len(index_fmri_i)
 
         # Merge Images
-        sct.printv('Merge consecutive volumes...', param.verbose)
         file_data_merge_i = file_data + '_' + str(iGroup)
         # cmd = fsloutput + 'fslmerge -t ' + file_data_merge_i
         # for it in range(nt_i):
@@ -282,26 +305,28 @@ def fmri_moco(param):
         im_fmri_list = []
         for it in range(nt_i):
             im_fmri_list.append(im_data_split_list[index_fmri_i[it]])
-        im_fmri_concat = concat_data(im_fmri_list, 3) \
-         .save(file_data_merge_i + ext_data)
+        im_fmri_concat = concat_data(im_fmri_list, 3, squeeze_data=True).save(file_data_merge_i + ext_data)
 
-        # Average Images
-        sct.printv('Average volumes...', param.verbose)
         file_data_mean = file_data + '_mean_' + str(iGroup)
-        sct.run(['sct_maths', '-i', file_data_merge_i + '.nii', '-o', file_data_mean + '.nii', '-mean', 't'], verbose=param.verbose)
+        if param.group_size == 1:
+            # copy to new file name instead of averaging (faster)
+            # note: this is a bandage. Ideally we should skip this entire for loop if g=1
+            sct.copy(file_data_merge_i + '.nii', file_data_mean + '.nii')
+        else:
+            # Average Images
+            sct.run(['sct_maths', '-i', file_data_merge_i + '.nii', '-o', file_data_mean + '.nii', '-mean', 't'], verbose=0)
         # if not average_data_across_dimension(file_data_merge_i+'.nii', file_data_mean+'.nii', 3):
         #     sct.printv('ERROR in average_data_across_dimension', 1, 'error')
         # cmd = fsloutput + 'fslmaths ' + file_data_merge_i + ' -Tmean ' + file_data_mean
         # sct.run(cmd, param.verbose)
 
-    # Merge groups means
+    # Merge groups means. The output 4D volume will be used for motion correction.
     sct.printv('\nMerging volumes...', param.verbose)
     file_data_groups_means_merge = 'fmri_averaged_groups'
     im_mean_list = []
     for iGroup in range(nb_groups):
         im_mean_list.append(Image(file_data + '_mean_' + str(iGroup) + ext_data))
-    im_mean_concat = concat_data(im_mean_list, 3) \
-     .save(file_data_groups_means_merge + ext_data)
+    im_mean_concat = concat_data(im_mean_list, 3).save(file_data_groups_means_merge + ext_data)
 
     # Estimate moco
     sct.printv('\n-------------------------------------------------------------------------------', param.verbose)
@@ -313,27 +338,40 @@ def fmri_moco(param):
     param_moco.path_out = ''
     param_moco.todo = 'estimate_and_apply'
     param_moco.mat_moco = 'mat_groups'
-    moco.moco(param_moco)
+    file_mat = moco.moco(param_moco)
 
-    # create final mat folder
-    sct.create_folder(mat_final)
+    # TODO: if g=1, no need to run the block below (already applied)
+    if param.group_size == 1:
+        # if flag g=1, it means that all images have already been corrected, so we just need to rename the file
+        sct.mv('fmri_averaged_groups_moco.nii', 'fmri_moco.nii')
+    else:
+        # create final mat folder
+        sct.create_folder(mat_final)
 
-    # Copy registration matrices
-    sct.printv('\nCopy transformations...', param.verbose)
-    for iGroup in range(nb_groups):
-        for data in range(len(group_indexes[iGroup])):
-            sct.copy(os.path.join('mat_groups', 'mat.T' + str(iGroup) + ext_mat), mat_final + 'mat.T' + str(group_indexes[iGroup][data]) + ext_mat, verbose=param.verbose)
+        # Copy registration matrices
+        sct.printv('\nCopy transformations...', param.verbose)
+        for iGroup in range(nb_groups):
+            for data in range(len(group_indexes[iGroup])):  # we cannot use enumerate because group_indexes has 2 dim.
+                # fetch all file_mat_z for given t-group
+                list_file_mat_z = file_mat[:, iGroup]
+                # loop across file_mat_z and copy to mat_final folder
+                for file_mat_z in list_file_mat_z:
+                    # we want to copy 'mat_groups/mat.ZXXXXTYYYYWarp.nii.gz' --> 'mat_final/mat.ZXXXXTYYYZWarp.nii.gz'
+                    # Notice the Y->Z in the under the T index: the idea here is to use the single matrix from each group,
+                    # and apply it to all images belonging to the same group.
+                    sct.copy(file_mat_z + ext_mat,
+                             mat_final + file_mat_z[11:20] + 'T' + str(group_indexes[iGroup][data]).zfill(4) + ext_mat)
 
-    # Apply moco on all fmri data
-    sct.printv('\n-------------------------------------------------------------------------------', param.verbose)
-    sct.printv('  Apply moco', param.verbose)
-    sct.printv('-------------------------------------------------------------------------------', param.verbose)
-    param_moco.file_data = 'fmri'
-    param_moco.file_target = file_data + '_mean_' + str(0)
-    param_moco.path_out = ''
-    param_moco.mat_moco = mat_final
-    param_moco.todo = 'apply'
-    moco.moco(param_moco)
+        # Apply moco on all fmri data
+        sct.printv('\n-------------------------------------------------------------------------------', param.verbose)
+        sct.printv('  Apply moco', param.verbose)
+        sct.printv('-------------------------------------------------------------------------------', param.verbose)
+        param_moco.file_data = 'fmri'
+        param_moco.file_target = file_data + '_mean_' + str(0)
+        param_moco.path_out = ''
+        param_moco.mat_moco = mat_final
+        param_moco.todo = 'apply'
+        moco.moco(param_moco)
 
     # copy geometric information from header
     # NB: this is required because WarpImageMultiTransform in 2D mode wrongly sets pixdim(3) to "1".
@@ -344,7 +382,10 @@ def fmri_moco(param):
 
     # Average volumes
     sct.printv('\nAveraging data...', param.verbose)
-    sct.run(['sct_maths', '-i', 'fmri_moco.nii', '-o', 'fmri_moco_mean.nii', '-mean', 't'], verbose=param.verbose)
+    sct_maths.main(args=['-i', 'fmri_moco.nii',
+                         '-o', 'fmri_moco_mean.nii',
+                         '-mean', 't',
+                         '-v', '0'])
 
 
 #=======================================================================================================================
