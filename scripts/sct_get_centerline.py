@@ -12,39 +12,67 @@ from msct_parser import Parser
 from spinalcordtoolbox.centerline import optic
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
-from msct_types import Centerline
-from sct_viewer import ClickViewerPropseg
-from sct_straighten_spinalcord import smooth_centerline
 
 
-def viewer_centerline(image_input_reoriented, interslice_gap, verbose):
+def _call_viewer_centerline(fname_in):
+    from spinalcordtoolbox.gui.base import AnatomicalParams
+    from spinalcordtoolbox.gui.centerline import launch_centerline_dialog
 
-    image_fname = image_input_reoriented.absolutepath
-    nx, ny, nz, nt, px, py, pz, pt = image_input_reoriented.dim
-    viewer = ClickViewerPropseg(image_input_reoriented)
+    params = AnatomicalParams()
+    # setting maximum number of points to a reasonable value
+    params.num_points = 20
+    params.interval_in_mm = 30
+    params.starting_slice = 'top'
+    im_data = Image(fname_in)
 
-    viewer.gap_inter_slice = int(interslice_gap / px)  # px because the image is supposed to be SAL orientation
-    viewer.number_of_slices = 0
-    viewer.calculate_list_slices()
+    im_mask_viewer = msct_image.zeros_like(im_data)
+    im_mask_viewer.absolutepath = sct.add_suffix(fname_in, '_labels_viewer')
+    controller = launch_centerline_dialog(im_data, im_mask_viewer, params)
+    fname_labels_viewer = sct.add_suffix(fname_in, '_labels_viewer')
 
-    # start the viewer that ask the user to enter a few points along the spinal cord
-    mask_points = viewer.start()
+    if not controller.saved:
+        sct.log.error('The viewer has been closed before entering all manual points. Please try again.')
+        sys.exit(1)
+    # save labels
+    controller.as_niftii(fname_labels_viewer)
 
-    if not mask_points and viewer.closed:
-        mask_points = viewer.list_points_useful_notation
+    return fname_labels_viewer
 
-    if mask_points:
-        # create the mask containing either the three-points or centerline mask for initialization
-        mask_filename = sct.add_suffix(image_fname, "_mask_viewer")
-        sct.run(["sct_label_utils", "-i", image_fname, "-create", mask_points, "-o", mask_filename], verbose=False)
 
-        fname_output = mask_filename
+def _from_viewerLabels_to_centerline(fname_labels, fname_out):
+    from sct_straighten_spinalcord import smooth_centerline
+    from msct_types import Centerline
 
-    else:
-        sct.printv('\nERROR: the viewer has been closed before entering all manual points. Please try again.', 1, type='error')
-        fname_output = None
+    image_labels = Image(fname_labels)
+    orientation = image_labels.orientation
+    if orientation != 'RPI':
+        image_labels.change_orientation('RPI')
 
-    return fname_output
+    # fit centerline, smooth it and return the first derivative (in physical space)
+    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(image_labels, algo_fitting='nurbs', nurbs_pts_number=10000, phys_coordinates=True, verbose=False, all_slices=False)
+    centerline = Centerline(x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
+
+    # average centerline coordinates over slices of the image
+    x_centerline_fit_rescorr, y_centerline_fit_rescorr, z_centerline_rescorr, x_centerline_deriv_rescorr, y_centerline_deriv_rescorr, z_centerline_deriv_rescorr = centerline.average_coordinates_over_slices(image_labels)
+
+    # compute z_centerline in image coordinates with continuous precision
+    voxel_coordinates = image_labels.transfo_phys2pix([[x_centerline_fit_rescorr[i], y_centerline_fit_rescorr[i], z_centerline_rescorr[i]] for i in range(len(z_centerline_rescorr))], real=False)
+    x_centerline_voxel_cont = [coord[0] for coord in voxel_coordinates]
+    y_centerline_voxel_cont = [coord[1] for coord in voxel_coordinates]
+    z_centerline_voxel_cont = [coord[2] for coord in voxel_coordinates]
+
+    # Create an image with the centerline
+    image_centerline = msct_image.zeros_like(image_labels)
+    min_z_index, max_z_index = int(np.round(min(z_centerline_voxel_cont))), int(np.round(max(z_centerline_voxel_cont)))
+    for iz in range(min_z_index, max_z_index + 1):
+        image_centerline.data[int(np.round(x_centerline_voxel_cont[iz - min_z_index])), int(np.round(y_centerline_voxel_cont[iz - min_z_index])), int(iz)] = 1  # if index is out of bounds here for hanning: either the segmentation has holes or labels have been added to the file
+
+    if orientation != 'RPI':
+        image_centerline.change_orientation(orientation)
+
+    # Write the centerline image
+    image_centerline.change_type(np.uint8).save(fname_out)
+
 
 def get_parser():
     # Initialize the parser
@@ -156,87 +184,9 @@ def run_main():
         verbose = int(arguments["-v"])
 
     if method == 'viewer':
-        path_data, file_data, ext_data = sct.extract_fname(fname_data)
-
-        # create temporary folder
-        temp_folder = sct.TempFolder()
-        temp_folder.copy_from(fname_data)
-        temp_folder.chdir()
-
-        # make sure image is in SAL orientation, as it is the orientation used by the viewer
-        image_input = Image(fname_data)
-        image_input_orientation = image_input.orientation
-
-        image_reoriented = image_input.change_orientation("SAL", generate_path=True).save(".", mutable=True)
-
-        # extract points manually using the viewer
-        fname_points = viewer_centerline(image_reoriented, interslice_gap=interslice_gap, verbose=verbose)
-
-        if fname_points is not None:
-            image_points_reoriented = Image(fname_points).change_orientation("RPI", generate_path=True).save(".", mutable=True)
-
-            # fit centerline, smooth it and return the first derivative (in physical space)
-            x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(image_points_reoriented, algo_fitting='nurbs', nurbs_pts_number=3000, phys_coordinates=True, verbose=verbose, all_slices=False)
-            centerline = Centerline(x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
-
-            # average centerline coordinates over slices of the image
-            x_centerline_fit_rescorr, y_centerline_fit_rescorr, z_centerline_rescorr, x_centerline_deriv_rescorr, y_centerline_deriv_rescorr, z_centerline_deriv_rescorr = centerline.average_coordinates_over_slices(image_points_reoriented)
-
-            # compute z_centerline in image coordinates for usage in vertebrae mapping
-            voxel_coordinates = image_points_reoriented.transfo_phys2pix([[x_centerline_fit_rescorr[i], y_centerline_fit_rescorr[i], z_centerline_rescorr[i]] for i in range(len(z_centerline_rescorr))])
-            x_centerline_voxel = [coord[0] for coord in voxel_coordinates]
-            y_centerline_voxel = [coord[1] for coord in voxel_coordinates]
-            z_centerline_voxel = [coord[2] for coord in voxel_coordinates]
-
-            # compute z_centerline in image coordinates with continuous precision
-            voxel_coordinates = image_points_reoriented.transfo_phys2pix([[x_centerline_fit_rescorr[i], y_centerline_fit_rescorr[i], z_centerline_rescorr[i]] for i in range(len(z_centerline_rescorr))], real=False)
-            x_centerline_voxel_cont = [coord[0] for coord in voxel_coordinates]
-            y_centerline_voxel_cont = [coord[1] for coord in voxel_coordinates]
-            z_centerline_voxel_cont = [coord[2] for coord in voxel_coordinates]
-
-            # Create an image with the centerline
-            image_centerline_reoriented = msct_image.zeros_like(image_points_reoriented)
-            min_z_index, max_z_index = int(np.round(min(z_centerline_voxel))), int(np.round(max(z_centerline_voxel)))
-            for iz in range(min_z_index, max_z_index + 1):
-                image_centerline_reoriented.data[int(np.round(x_centerline_voxel[iz - min_z_index])), int(np.round(y_centerline_voxel[iz - min_z_index])), int(iz)] = 1  # if index is out of bounds here for hanning: either the segmentation has holes or labels have been added to the file
-
-            # Write the centerline image
-            sct.printv('\nWrite NIFTI volumes...', verbose)
-            fname_centerline_oriented = sct.add_suffix(fname_data, "_centerline")
-            image_centerline_reoriented \
-             .change_type(np.uint8) \
-             .change_orientation(image_input_orientation) \
-             .save(fname_centerline_oriented)
-
-            # create a txt file with the centerline
-            fname_centerline_oriented_txt = file_data + '_centerline.txt'
-            file_results = open(fname_centerline_oriented_txt, 'w')
-            for i in range(min_z_index, max_z_index + 1):
-                file_results.write(str(int(i)) + ' ' + str(np.round(x_centerline_voxel_cont[i - min_z_index], 2)) + ' ' + str(np.round(y_centerline_voxel_cont[i - min_z_index], 2)) + '\n')
-            file_results.close()
-
-            fname_centerline_oriented_roi = optic.centerline2roi(fname_image=fname_centerline_oriented,
-                                                                     folder_output='./',
-                                                                     verbose=verbose)
-
-            # return to initial folder
-            temp_folder.chdir_undo()
-
-            # copy result to output folder
-            sct.copy(os.path.join(temp_folder.get_path(), fname_centerline_oriented), folder_output)
-            sct.copy(os.path.join(temp_folder.get_path(), fname_centerline_oriented_txt), folder_output)
-            if output_roi:
-                sct.copy(os.path.join(temp_folder.get_path(), fname_centerline_oriented_roi), folder_output)
-            centerline_filename = os.path.join(folder_output, fname_centerline_oriented)
-
-
-
-        else:
-            centerline_filename = 'error'
-
-        # delete temporary folder
-        if remove_temp_files:
-            temp_folder.cleanup()
+        centerline_filename = sct.add_suffix(fname_data, "_centerline")
+        fname_labels_viewer = _call_viewer_centerline(fname_in=fname_data)
+        _from_viewerLabels_to_centerline(fname_labels=fname_labels_viewer, fname_out=centerline_filename)
 
     else:
         # condition on verbose when using OptiC
