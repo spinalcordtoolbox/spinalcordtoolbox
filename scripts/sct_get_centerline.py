@@ -45,11 +45,7 @@ def _from_viewerLabels_to_centerline(fname_labels, fname_out):
 
     image_labels = Image(fname_labels)
     orientation = image_labels.orientation
-<<<<<<< HEAD
-    if orientation != 'RPI':  # RPI orientation assumed in this function
-=======
     if orientation != 'RPI':
->>>>>>> ba40d2f0349d5fe96f69bc6ce6318e34cd50aedb
         image_labels.change_orientation('RPI')
 
     # fit centerline, smooth it and return the first derivative (in physical space)
