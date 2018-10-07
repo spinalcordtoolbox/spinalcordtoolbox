@@ -14,16 +14,22 @@ import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
 
 
-def _call_viewer_centerline(fname_in):
+def _call_viewer_centerline(fname_in, interslice_gap):
     from spinalcordtoolbox.gui.base import AnatomicalParams
     from spinalcordtoolbox.gui.centerline import launch_centerline_dialog
 
+    im_data = Image(fname_in)
+
+    # Get the number of slice along the (IS) axis
+    im_tmp = msct_image.change_orientation(im_data, 'RPI')
+    _, _, nz, _, _, _, pz, _ = im_tmp.dim
+    del im_tmp
+
     params = AnatomicalParams()
     # setting maximum number of points to a reasonable value
-    params.num_points = 20
-    params.interval_in_mm = 30
+    params.num_points = np.ceil(nz * pz / interslice_gap) + 1
+    params.interval_in_mm = interslice_gap
     params.starting_slice = 'top'
-    im_data = Image(fname_in)
 
     im_mask_viewer = msct_image.zeros_like(im_data)
     im_mask_viewer.absolutepath = sct.add_suffix(fname_in, '_labels_viewer')
@@ -185,7 +191,7 @@ def run_main():
 
     if method == 'viewer':
         centerline_filename = sct.add_suffix(fname_data, "_centerline")
-        fname_labels_viewer = _call_viewer_centerline(fname_in=fname_data)
+        fname_labels_viewer = _call_viewer_centerline(fname_in=fname_data, interslice_gap=interslice_gap)
         _from_viewerLabels_to_centerline(fname_labels=fname_labels_viewer, fname_out=centerline_filename)
 
     else:
