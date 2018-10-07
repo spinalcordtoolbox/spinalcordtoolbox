@@ -28,7 +28,6 @@ import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
 from msct_parser import Parser
 from sct_deepseg_sc import find_centerline, crop_image_around_centerline, uncrop_image, _normalize_data
-from sct_get_centerline import _call_viewer_centerline, _from_viewerLabels_to_centerline
 
 import spinalcordtoolbox.resample.nipy_resample
 from spinalcordtoolbox.deepseg_sc.cnn_models import nn_architecture_ctr

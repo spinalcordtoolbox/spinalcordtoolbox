@@ -27,7 +27,8 @@ import sct_utils as sct
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
 from msct_parser import Parser
-from sct_get_centerline import _call_viewer_centerline, _from_viewerLabels_to_centerline
+from sct_get_centerline import _call_viewer_centerline
+from sct_process_segmentation import extract_centerline
 
 import spinalcordtoolbox.resample.nipy_resample
 from spinalcordtoolbox.deepseg_sc.cnn_models import nn_architecture_seg, nn_architecture_ctr
@@ -486,7 +487,7 @@ def find_centerline(algo, image_fname, path_sct, contrast_type, brain_bool, fold
     elif algo == 'viewer':
         centerline_filename = sct.add_suffix(image_fname, "_ctr")
         fname_labels_viewer = _call_viewer_centerline(fname_in=image_fname)
-        _from_viewerLabels_to_centerline(fname_labels=fname_labels_viewer, fname_out=centerline_filename)
+        centerline_filename = extract_centerline(fname_labels_viewer, remove_temp_files=True, algo_fitting='nurbs')
 
     elif algo == 'manual':
         centerline_filename = sct.add_suffix(image_fname, "_ctr")

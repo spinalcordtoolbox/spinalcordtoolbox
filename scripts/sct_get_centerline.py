@@ -15,7 +15,7 @@ from spinalcordtoolbox.image import Image
 from sct_process_segmentation import extract_centerline
 
 
-def _call_viewer_centerline(fname_in, interslice_gap):
+def _call_viewer_centerline(fname_in, interslice_gap=10):
     from spinalcordtoolbox.gui.base import AnatomicalParams
     from spinalcordtoolbox.gui.centerline import launch_centerline_dialog
 
@@ -29,7 +29,6 @@ def _call_viewer_centerline(fname_in, interslice_gap):
     params = AnatomicalParams()
     # setting maximum number of points to a reasonable value
     params.num_points = np.ceil(nz * pz / interslice_gap) + 2
-    print nz, pz, np.ceil(nz * pz / interslice_gap) + 1
     params.interval_in_mm = interslice_gap
     params.starting_slice = 'top'
 
