@@ -49,7 +49,7 @@ def _from_viewerLabels_to_centerline(fname_labels, fname_out):
         image_labels.change_orientation('RPI')
 
     # fit centerline, smooth it and return the first derivative (in physical space)
-    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(image_labels, algo_fitting='nurbs', nurbs_pts_number=5000, phys_coordinates=True, verbose=False, all_slices=False)
+    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(image_labels, algo_fitting='nurbs', nurbs_pts_number=5000, phys_coordinates=True, verbose=True, all_slices=False)
     centerline = Centerline(x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
 
     # average centerline coordinates over slices of the image
