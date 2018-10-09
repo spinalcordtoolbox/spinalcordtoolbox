@@ -15,7 +15,7 @@ from spinalcordtoolbox.image import Image
 from sct_process_segmentation import extract_centerline
 
 
-def _call_viewer_centerline(fname_in, interslice_gap=10):
+def _call_viewer_centerline(fname_in, interslice_gap=20.0):
     from spinalcordtoolbox.gui.base import AnatomicalParams
     from spinalcordtoolbox.gui.centerline import launch_centerline_dialog
 
@@ -85,7 +85,7 @@ def get_parser():
                       type_value="float",
                       description="Gap in mm between manually selected points when using the Viewer method.",
                       mandatory=False,
-                      default_value='10.0')
+                      default_value='20.0')
     parser.add_option(name="-igt",
                       type_value="image_nifti",
                       description="File name of ground-truth centerline or segmentation (binary nifti).",
@@ -157,7 +157,7 @@ def run_main():
 
     if method == 'viewer':
         fname_labels_viewer = _call_viewer_centerline(fname_in=fname_data, interslice_gap=interslice_gap)
-        centerline_filename = extract_centerline(fname_labels_viewer, remove_temp_files=True, algo_fitting='nurbs')
+        centerline_filename = extract_centerline(fname_labels_viewer, remove_temp_files=True, algo_fitting='nurbs', nurbs_pts_number=8000)
 
     else:
         # condition on verbose when using OptiC

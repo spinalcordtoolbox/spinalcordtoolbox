@@ -487,7 +487,7 @@ def find_centerline(algo, image_fname, path_sct, contrast_type, brain_bool, fold
     elif algo == 'viewer':
         centerline_filename = sct.add_suffix(image_fname, "_ctr")
         fname_labels_viewer = _call_viewer_centerline(fname_in=image_fname)
-        centerline_filename = extract_centerline(fname_labels_viewer, remove_temp_files=True, algo_fitting='nurbs')
+        centerline_filename = extract_centerline(fname_labels_viewer, remove_temp_files=True, algo_fitting='nurbs', nurbs_pts_number=8000)
 
     elif algo == 'manual':
         centerline_filename = sct.add_suffix(image_fname, "_ctr")
