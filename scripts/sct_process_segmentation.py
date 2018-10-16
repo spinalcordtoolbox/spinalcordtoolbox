@@ -445,7 +445,7 @@ def compute_length(fname_segmentation, remove_temp_files, output_folder, overwri
 
 # extract_centerline
 # ==========================================================================================
-def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_fitting = 'hanning', type_window = 'hanning', window_length = 80, use_phys_coord=True):
+def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_fitting = 'hanning', type_window = 'hanning', window_length = 80, use_phys_coord = True, nurbs_pts_number = 3000):
 
     # Extract path, file and extension
     fname_segmentation = os.path.abspath(fname_segmentation)
@@ -505,7 +505,7 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
     # extract centerline and smooth it
     if use_phys_coord:
         # fit centerline, smooth it and return the first derivative (in physical space)
-        x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, nurbs_pts_number=3000, phys_coordinates=True, verbose=verbose, all_slices=False)
+        x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, nurbs_pts_number=nurbs_pts_number, phys_coordinates=True, verbose=1, all_slices=False)
         centerline = Centerline(x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
 
         # average centerline coordinates over slices of the image
@@ -519,7 +519,7 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
 
     else:
         # fit centerline, smooth it and return the first derivative (in voxel space but FITTED coordinates)
-        x_centerline_voxel, y_centerline_voxel, z_centerline_voxel, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, nurbs_pts_number=3000, phys_coordinates=False, verbose=verbose, all_slices=True)
+        x_centerline_voxel, y_centerline_voxel, z_centerline_voxel, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, nurbs_pts_number=nurbs_pts_number, phys_coordinates=False, verbose=verbose, all_slices=True)
 
     if verbose == 2:
         import matplotlib.pyplot as plt
