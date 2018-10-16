@@ -559,7 +559,6 @@ class NURBS():
         global Nik_temp
         m = len(P_x)
 
-
         # Calcul des chords
         di = 0.0
         for k in range(m - 1):
