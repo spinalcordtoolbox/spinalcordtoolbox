@@ -83,11 +83,10 @@ cd sct
 ./install_sct
 ~~~
 
-To update SCT to the latest master version:
+At anytime, you can update your local SCT installation to the latest version on Github:
 
 ~~~
 git pull
-./install_sct
 ~~~
 
 ### Installation on Windows

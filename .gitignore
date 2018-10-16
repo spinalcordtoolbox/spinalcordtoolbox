@@ -29,3 +29,8 @@ scripts/.idea/modules.xml
 scripts/.idea/scripts.iml
 scripts/.idea/vcs.xml
 scripts/.idea/workspace.xml
+
+.pytest_cache/
+unit_testing/*.csv
+unit_testing/*.nii.gz
+unit_testing/*.roi
