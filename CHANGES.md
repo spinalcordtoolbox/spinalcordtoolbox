@@ -1,5 +1,25 @@
 # CHANGES TO RELEASE
 
+## v3.2.6 (2018-10-16)
+[View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.2.5...v3.2.6)
+
+**BUG**
+
+ - sct_propseg: Reordered variable assignment [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2039)
+ - sct_straighten_spinalcord: Fixed AttributeError related to conversion of numpy array to list [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2026)
+ - sct_create_mask: Few fixes and improvements [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2021)
+
+**ENHANCEMENT**
+
+ - sct_get_centerline: Use the new viewer [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2035)
+ - sct_fmri_moco: Generalize motion correction for sagittal acquisitions and other improvements [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2022)
+
+**FEATURE**
+
+ - sct_straighten_spinalcord: Few fixes and improvements [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2033)
+ - sct_deepseg_sc/lesion: Allow to input manual or semi-manual centerline [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2020)
+
+
 ## v3.2.4 (2018-08-24)
 [View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.2.3...v3.2.4)
 
