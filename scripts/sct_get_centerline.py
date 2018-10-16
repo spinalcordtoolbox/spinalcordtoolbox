@@ -33,7 +33,6 @@ def _call_viewer_centerline(fname_in, interslice_gap=20.0):
     params.starting_slice = 'top'
 
     im_mask_viewer = msct_image.zeros_like(im_data)
-    im_mask_viewer.absolutepath = sct.add_suffix(fname_in, '_viewer')
     controller = launch_centerline_dialog(im_data, im_mask_viewer, params)
     fname_labels_viewer = sct.add_suffix(fname_in, '_viewer')
 

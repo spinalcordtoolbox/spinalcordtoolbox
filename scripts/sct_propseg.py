@@ -538,9 +538,9 @@ def propseg(img_input, options_dict):
         im_data = Image(fname_data_propseg)
 
         im_mask_viewer = msct_image.zeros_like(im_data)
-        im_mask_viewer.absolutepath = sct.add_suffix(fname_data_propseg, '_labels_viewer')
+        # im_mask_viewer.absolutepath = sct.add_suffix(fname_data_propseg, '_labels_viewer')
         controller = launch_centerline_dialog(im_data, im_mask_viewer, params)
-        fname_labels_viewer = im_mask_viewer.absolutepath
+        fname_labels_viewer = sct.add_suffix(fname_data_propseg, '_labels_viewer')
 
         if not controller.saved:
             sct.log.error('The viewer has been closed before entering all manual points. Please try again.')
