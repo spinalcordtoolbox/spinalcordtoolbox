@@ -142,7 +142,7 @@ class NURBS():
                 last_error_curve = 0.0
                 second_last_error_curve = 0.0
                 while self.nbControle < len(P_x) and self.nbControle <= self.maxControlPoints:
-                    if abs(error_curve - last_error_curve) <= self.tolerance and abs(error_curve - second_last_error_curve) <= self.tolerance and error_curve <= last_error_curve and error_curve <= last_error_curve:
+                    if abs(error_curve - last_error_curve) <= self.tolerance and abs(error_curve - second_last_error_curve) <= self.tolerance and error_curve <= last_error_curve and error_curve <= second_last_error_curve:
                         break
 
                     second_last_error_curve = last_error_curve
@@ -185,9 +185,16 @@ class NURBS():
                         # Create a list of parameters that have worked in order to call back the last one that has worked
                         list_param_that_worked.append([self.nbControle, self.pointsControle, error_curve])
 
-                    except ReconstructionError as ex:
+                    except ReconstructionError:
                         sct.printv('WARNING: NURBS instability -> wrong reconstruction', verbose=verbose, type="warning")
                         error_curve = last_error_curve + 10000.0
+
+                    except np.linalg.LinAlgError as err_linalg:  # if there is a linalg error
+                        if 'singular matrix' in str(err_linalg): # and if it is a singular matrix
+                            sct.printv('Warning: Singular Matrix in NURBS algorithm -> wrong reconstruction', verbose=verbose, type="warning")
+                            error_curve = last_error_curve + 10000.0
+                        else:
+                            raise  # if it is another linalg error, raises it (so it stops the script)
 
                     # prepare for next iteration
                     self.nbControle += 1
@@ -551,6 +558,7 @@ class NURBS():
         # w is the weigth on each point P
         global Nik_temp
         m = len(P_x)
+
 
         # Calcul des chords
         di = 0.0
