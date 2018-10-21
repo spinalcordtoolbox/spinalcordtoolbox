@@ -303,7 +303,7 @@ def b_spline_nurbs(x, y, z, fname_centerline=None, degree=3, point_number=3000, 
             plt.ylabel('x')
             plt.legend(["centerline", "NURBS", "control points"])
             # plt.show()
-        plt.savefig(os.path.join(path_qc, 'b_spline_nurbs.png'))
+        plt.savefig(os.path.join(path_qc, 'fig_b_spline_nurbs.png'))
         plt.close()
 
     if not twodim:
@@ -542,7 +542,10 @@ def smoothing_window(x, window_len=11, window='hanning', verbose = 0, robust=0, 
 
     # Display smoothing
     if verbose == 2:
+        import matplotlib
+        matplotlib.use('Agg')  # prevent display figure
         import matplotlib.pyplot as plt
+        import random  # to prevent overwriting of figure
         from copy import copy
         z = [i + size_padding - remove_edge_points for i in range(x.shape[0])]
         z_extended = [i for i in range(x_extended.shape[0])]
@@ -556,7 +559,8 @@ def smoothing_window(x, window_len=11, window='hanning', verbose = 0, robust=0, 
         plt.xlabel('z')
         plt.ylabel('x')
         plt.legend([pltx_ext, pltx, pltx_fit], ['Extended', 'Normal', 'Smoothed'])
-        plt.show()
+        plt.savefig('fig_smoothing_window_'+str(random.randint(100, 100000))+'.png')
+        plt.close()
 
     return y
 
