@@ -156,7 +156,7 @@ def run_main():
 
     if method == 'viewer':
         fname_labels_viewer = _call_viewer_centerline(fname_in=fname_data, interslice_gap=interslice_gap)
-        centerline_filename = extract_centerline(fname_labels_viewer, remove_temp_files=True, algo_fitting='nurbs', nurbs_pts_number=8000)
+        centerline_filename = extract_centerline(fname_labels_viewer, remove_temp_files=remove_temp_files, algo_fitting='nurbs', nurbs_pts_number=8000)
 
     else:
         # condition on verbose when using OptiC
