@@ -270,7 +270,7 @@ def b_spline_nurbs(x, y, z, fname_centerline=None, degree=3, point_number=3000, 
             PC_z = [p[2] for p in PC]
 
         import matplotlib
-        # matplotlib.use('Agg')  # prevent display figure
+        matplotlib.use('Agg')  # prevent display figure
         import matplotlib.pyplot as plt
         if not twodim:
             plt.figure(1)
@@ -292,7 +292,7 @@ def b_spline_nurbs(x, y, z, fname_centerline=None, degree=3, point_number=3000, 
             plt.xlabel('z')
             plt.ylabel('y')
             plt.legend(["centerline", "NURBS", "control points"],loc=4)
-            plt.show()
+            # plt.show()
         else:
             plt.figure(1)
             plt.plot(y, x, 'r.')
@@ -302,7 +302,7 @@ def b_spline_nurbs(x, y, z, fname_centerline=None, degree=3, point_number=3000, 
             plt.xlabel('y')
             plt.ylabel('x')
             plt.legend(["centerline", "NURBS", "control points"])
-            plt.show()
+            # plt.show()
         plt.savefig(os.path.join(path_qc, 'b_spline_nurbs.png'))
         plt.close()
 
