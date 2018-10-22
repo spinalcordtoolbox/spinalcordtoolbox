@@ -505,7 +505,7 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
     # extract centerline and smooth it
     if use_phys_coord:
         # fit centerline, smooth it and return the first derivative (in physical space)
-        x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, nurbs_pts_number=nurbs_pts_number, phys_coordinates=True, verbose=1, all_slices=False)
+        x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, nurbs_pts_number=nurbs_pts_number, phys_coordinates=True, verbose=verbose, all_slices=False)
         centerline = Centerline(x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
 
         # average centerline coordinates over slices of the image
@@ -521,32 +521,32 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
         # fit centerline, smooth it and return the first derivative (in voxel space but FITTED coordinates)
         x_centerline_voxel, y_centerline_voxel, z_centerline_voxel, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, nurbs_pts_number=nurbs_pts_number, phys_coordinates=False, verbose=verbose, all_slices=True)
 
-    if verbose == 2:
-        import matplotlib.pyplot as plt
-
-        # Creation of a vector x that takes into account the distance between the labels
-        nz_nonz = len(z_centerline_voxel)
-        x_display = [0 for i in range(x_centerline_voxel.shape[0])]
-        y_display = [0 for i in range(y_centerline_voxel.shape[0])]
-        for i in range(0, nz_nonz, 1):
-            x_display[int(z_centerline_voxel[i] - z_centerline_voxel[0])] = x_centerline[i]
-            y_display[int(z_centerline_voxel[i] - z_centerline_voxel[0])] = y_centerline[i]
-
-        plt.figure(1)
-        plt.subplot(2, 1, 1)
-        plt.plot(z_centerline_voxel, x_display, 'ro')
-        plt.plot(z_centerline_voxel, x_centerline_voxel)
-        plt.xlabel("Z")
-        plt.ylabel("X")
-        plt.title("x and x_fit coordinates")
-
-        plt.subplot(2, 1, 2)
-        plt.plot(z_centerline_voxel, y_display, 'ro')
-        plt.plot(z_centerline_voxel, y_centerline_voxel)
-        plt.xlabel("Z")
-        plt.ylabel("Y")
-        plt.title("y and y_fit coordinates")
-        plt.show()
+    # if verbose == 2:
+    #     import matplotlib.pyplot as plt
+    #
+    #     # Creation of a vector x that takes into account the distance between the labels
+    #     nz_nonz = len(z_centerline_voxel)
+    #     x_display = [0 for i in range(x_centerline_voxel.shape[0])]
+    #     y_display = [0 for i in range(y_centerline_voxel.shape[0])]
+    #     for i in range(0, nz_nonz, 1):
+    #         x_display[int(z_centerline_voxel[i] - z_centerline_voxel[0])] = x_centerline[i]
+    #         y_display[int(z_centerline_voxel[i] - z_centerline_voxel[0])] = y_centerline[i]
+    #
+    #     plt.figure(1)
+    #     plt.subplot(2, 1, 1)
+    #     plt.plot(z_centerline_voxel, x_display, 'ro')
+    #     plt.plot(z_centerline_voxel, x_centerline_voxel)
+    #     plt.xlabel("Z")
+    #     plt.ylabel("X")
+    #     plt.title("x and x_fit coordinates")
+    #
+    #     plt.subplot(2, 1, 2)
+    #     plt.plot(z_centerline_voxel, y_display, 'ro')
+    #     plt.plot(z_centerline_voxel, y_centerline_voxel)
+    #     plt.xlabel("Z")
+    #     plt.ylabel("Y")
+    #     plt.title("y and y_fit coordinates")
+    #     plt.show()
 
     # Create an image with the centerline
     min_z_index, max_z_index = int(np.round(min(z_centerline_voxel))), int(np.round(max(z_centerline_voxel)))
