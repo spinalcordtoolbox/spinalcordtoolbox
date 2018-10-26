@@ -176,12 +176,11 @@ def moco(param):
                 # copy transformation
                 sct.copy(file_mat[iz][gT[index_good]] + 'Warp.nii.gz', file_mat[iz][fT[it]] + 'Warp.nii.gz')
                 # apply transformation
-                sct.run(["sct_apply_transfo",
-                 "-i", file_data_splitZ_splitT[fT[it]],
-                 "-d", file_target + ".nii",
-                 "-w", file_mat[iz][fT[it]] + 'Warp.nii.gz',
-                 "-o", file_data_splitZ_splitT_moco[fT[it]],
-                 "-x", param.interp], verbose=0)
+                sct_apply_transfo.main(args=['-i', file_data_splitZ_splitT[fT[it]],
+                                             '-d', file_target + ".nii",
+                                             '-w', file_mat[iz][fT[it]] + 'Warp.nii.gz',
+                                             '-o', file_data_splitZ_splitT_moco[fT[it]],
+                                             '-x', param.interp])
             else:
                 # exit program if no transformation exists.
                 sct.printv('\nERROR in ' + os.path.basename(__file__) + ': No good transformation exist. Exit program.\n', verbose, 'error')
