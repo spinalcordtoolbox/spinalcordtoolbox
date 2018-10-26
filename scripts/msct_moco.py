@@ -45,13 +45,12 @@ def moco(param):
     folder_mat = param.mat_moco  # output folder of mat file
     todo = param.todo
     suffix = param.suffix
-    #file_schedule = param.file_schedule
     verbose = param.verbose
+
+    # other parameters
     ext = '.nii'
+    file_mask = 'mask.nii'
 
-    # get path of the toolbox
-
-    # sct.printv(arguments)
     sct.printv('\nInput parameters:', param.verbose)
     sct.printv('  Input file ............' + file_data, param.verbose)
     sct.printv('  Reference file ........' + file_target, param.verbose)
@@ -77,12 +76,8 @@ def moco(param):
     sct.printv('\nCopy file_target to a temporary file...', verbose)
     sct.copy(file_target + ext, 'target.nii')
     file_target = 'target'
-    if not param.fname_mask == '':
-        file_mask = 'mask.nii'
-        convert(param.fname_mask, file_mask, squeeze_data=False)
-        im_maskz_list = [file_mask]  # use a list with single element if not sagittal. Otherwise, will be updated.
 
-        # If scan is sagittal, split src and target along Z (slice)
+    # If scan is sagittal, split src and target along Z (slice)
     if param.is_sagittal:
         dim_sag = 2  # TODO: find it
         # z-split data (time series)
@@ -108,12 +103,17 @@ def moco(param):
         file_mat = np.chararray([nz, nt],
                                 itemsize=50)  # itemsize=50 is to accomodate relative path to matrix file name.
 
+    # axial orientation
     else:
         file_data_splitZ = [file_data + ext]  # TODO: make it absolute like above
         file_target_splitZ = [file_target + ext]  # TODO: make it absolute like above
         # initialize file list for output matrices
         file_mat = np.chararray([1, nt],
                                 itemsize=50)  # itemsize=50 is to accomodate relative path to matrix file name.
+        # deal with mask
+        if not param.fname_mask == '':
+            convert(param.fname_mask, file_mask, squeeze_data=False)
+            im_maskz_list = [Image(file_mask)]  # use a list with single element
 
     # Loop across file list, where each file is either a 2D volume (if sagittal) or a 3D volume (otherwise)
     # file_mat = tuple([[[] for i in range(nt)] for i in range(nz)])
