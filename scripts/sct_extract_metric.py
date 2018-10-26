@@ -362,10 +362,12 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
 
     # Change metric data type into floats for future manipulations (normalization)
     data = np.float64(data)
-    data[np.isneginf(data)] = 0.0
-    # data[data < 0.0] = 0.0
-    data[np.isnan(data)] = 0.0
-    data[np.isposinf(data)] = np.nanmax(data)
+    # loop across labels and set voxel to zero if...
+    for i_label in range(nb_labels):
+        labels[i_label][np.isneginf(data)] = 0  # ...data voxel is -inf
+        labels[i_label][np.isnan(data)] = 0  # ...data voxel is nan
+        labels[i_label][data < 0.0] = 0  # ...data voxel is negative
+        labels[i_label][np.isposinf(data)] = 0  # ...data voxel is +inf
 
     # Get dimensions of data and labels
     nx, ny, nz = data.shape
