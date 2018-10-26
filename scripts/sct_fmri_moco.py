@@ -47,7 +47,7 @@ class Param:
         self.plot_graph = 0
         self.suffix = '_moco'
         self.poly = '2'  # degree of polynomial function for moco
-        self.smooth = '2'  # smoothing sigma in mm
+        self.smooth = '0'  # smoothing sigma in mm
         self.gradStep = '1'  # gradientStep for searching algorithm
         self.iter = '10'  # number of iterations
         self.metric = 'MeanSquares'  # metric: MI, MeanSquares, CC
