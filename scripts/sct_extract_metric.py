@@ -185,6 +185,12 @@ max: for each z-slice of the input data, extract the max value for each slice of
                       description='Nifti mask to weight each voxel during ML or MAP estimation.',
                       example='PAM50_wm.nii.gz',
                       mandatory=False)
+    parser.add_option(name='-discard-neg-val',
+                      type_value='multiple_choice',
+                      mandatory=False,
+                      description='Discard voxels with negative value when computing metrics statistics.',
+                      example=["0", "1"],
+                      default_value="0")
 
     # read the .txt files referencing the labels
     file_label = os.path.join(param_default.path_label, param_default.file_info_label)
@@ -220,7 +226,7 @@ To compute average MTR in a region defined by a single label file (could be bina
 
 def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, fname_output, labels_user, overwrite,
          fname_normalizing_label, normalization_method, label_to_fix, adv_param_user, fname_output_metric_map,
-         fname_mask_weight, fname_vertebral_labeling="", perslice=1, perlevel=1):
+         fname_mask_weight, fname_vertebral_labeling="", perslice=1, perlevel=1, discard_negative_values=False):
     """
     Extract metrics from MRI data based on mask (could be single file of folder to atlas)
     :param fname_data: data to extract metric from
@@ -245,6 +251,7 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
            instead of a single average output.
     :param perlevel: if user selected several levels, then the function outputs a metric within each vertebral level
            instead of a single average output.
+    :param discard_negative_values: Bool: Discard negative voxels when computing metrics statistics
     :return:
     """
 
@@ -366,7 +373,8 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
     for i_label in range(nb_labels):
         labels[i_label][np.isneginf(data)] = 0  # ...data voxel is -inf
         labels[i_label][np.isnan(data)] = 0  # ...data voxel is nan
-        labels[i_label][data < 0.0] = 0  # ...data voxel is negative
+        if discard_negative_values:
+            labels[i_label][data < 0.0] = 0  # ...data voxel is negative
         labels[i_label][np.isposinf(data)] = 0  # ...data voxel is +inf
 
     # Get dimensions of data and labels
@@ -1204,8 +1212,11 @@ if __name__ == "__main__":
         fname_mask_weight = arguments['-mask-weighted']
     else:
         fname_mask_weight = ''
+    # if 'discard_negative_values' in arguments:
+    discard_negative_values = int(arguments['-discard-neg-val'])
 
     # call main function
     main(fname_data, path_label, method, slices_of_interest, vertebral_levels, fname_output, labels_user, overwrite,
          fname_normalizing_label, normalization_method, label_to_fix, adv_param_user, fname_output_metric_map,
-         fname_mask_weight, fname_vertebral_labeling=fname_vertebral_labeling, perslice=perslice, perlevel=perlevel)
+         fname_mask_weight, fname_vertebral_labeling=fname_vertebral_labeling, perslice=perslice, perlevel=perlevel,
+         discard_negative_values=discard_negative_values)
