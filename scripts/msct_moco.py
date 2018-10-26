@@ -168,8 +168,8 @@ def moco(param):
         # Replace failed transformation with the closest good one
         fT = [i for i, j in enumerate(failed_transfo) if j == 1]
         gT = [i for i, j in enumerate(failed_transfo) if j == 0]
-        for it in enumerate(fT):
-            abs_dist = [np.abs(gT[i] - fT[it]) for i in enumerate(gT)]
+        for it in range(len(fT)):
+            abs_dist = [np.abs(gT[i] - fT[it]) for i in range(len(gT))]
             if not abs_dist == []:
                 index_good = abs_dist.index(min(abs_dist))
                 sct.printv('  transfo #' + str(fT[it]) + ' --> use transfo #' + str(gT[index_good]), verbose)
@@ -177,10 +177,10 @@ def moco(param):
                 sct.copy(file_mat[iz][gT[index_good]] + 'Warp.nii.gz', file_mat[iz][fT[it]] + 'Warp.nii.gz')
                 # apply transformation
                 sct.run(["sct_apply_transfo",
-                 "-i", file_data_splitT_num[fT[it]] + ".nii",
+                 "-i", file_data_splitZ_splitT[fT[it]],
                  "-d", file_target + ".nii",
                  "-w", file_mat[iz][fT[it]] + 'Warp.nii.gz',
-                 "-o", file_data_splitZ_splitT_moco[fT[it]] + '.nii',
+                 "-o", file_data_splitZ_splitT_moco[fT[it]],
                  "-x", param.interp], verbose=0)
             else:
                 # exit program if no transformation exists.
