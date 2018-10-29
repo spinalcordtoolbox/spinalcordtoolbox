@@ -1,5 +1,18 @@
 # CHANGES TO RELEASE
 
+## v3.2.7 (2018-10-29)
+[View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.2.6...v3.2.7)
+
+**BUG**
+
+ - sct_fmri_moco: Fixed regression bug related to the use of a mask [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2047)
+ - msct_nurbs: Fixed singular matrix error [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2042)
+
+**ENHANCEMENT**
+
+ - sct_extract_metric: Do not zero negative values [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2049)
+
+
 ## v3.2.6 (2018-10-16)
 [View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.2.5...v3.2.6)
 

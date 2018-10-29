@@ -45,13 +45,12 @@ def moco(param):
     folder_mat = param.mat_moco  # output folder of mat file
     todo = param.todo
     suffix = param.suffix
-    #file_schedule = param.file_schedule
     verbose = param.verbose
+
+    # other parameters
     ext = '.nii'
+    file_mask = 'mask.nii'
 
-    # get path of the toolbox
-
-    # sct.printv(arguments)
     sct.printv('\nInput parameters:', param.verbose)
     sct.printv('  Input file ............' + file_data, param.verbose)
     sct.printv('  Reference file ........' + file_target, param.verbose)
@@ -77,12 +76,8 @@ def moco(param):
     sct.printv('\nCopy file_target to a temporary file...', verbose)
     sct.copy(file_target + ext, 'target.nii')
     file_target = 'target'
-    if not param.fname_mask == '':
-        file_mask = 'mask.nii'
-        convert(param.fname_mask, file_mask, squeeze_data=False)
-        im_maskz_list = [file_mask]  # use a list with single element if not sagittal. Otherwise, will be updated.
 
-        # If scan is sagittal, split src and target along Z (slice)
+    # If scan is sagittal, split src and target along Z (slice)
     if param.is_sagittal:
         dim_sag = 2  # TODO: find it
         # z-split data (time series)
@@ -108,12 +103,17 @@ def moco(param):
         file_mat = np.chararray([nz, nt],
                                 itemsize=50)  # itemsize=50 is to accomodate relative path to matrix file name.
 
+    # axial orientation
     else:
         file_data_splitZ = [file_data + ext]  # TODO: make it absolute like above
         file_target_splitZ = [file_target + ext]  # TODO: make it absolute like above
         # initialize file list for output matrices
         file_mat = np.chararray([1, nt],
                                 itemsize=50)  # itemsize=50 is to accomodate relative path to matrix file name.
+        # deal with mask
+        if not param.fname_mask == '':
+            convert(param.fname_mask, file_mask, squeeze_data=False)
+            im_maskz_list = [Image(file_mask)]  # use a list with single element
 
     # Loop across file list, where each file is either a 2D volume (if sagittal) or a 3D volume (otherwise)
     # file_mat = tuple([[[] for i in range(nt)] for i in range(nz)])
@@ -168,20 +168,19 @@ def moco(param):
         # Replace failed transformation with the closest good one
         fT = [i for i, j in enumerate(failed_transfo) if j == 1]
         gT = [i for i, j in enumerate(failed_transfo) if j == 0]
-        for it in enumerate(fT):
-            abs_dist = [np.abs(gT[i] - fT[it]) for i in enumerate(gT)]
+        for it in range(len(fT)):
+            abs_dist = [np.abs(gT[i] - fT[it]) for i in range(len(gT))]
             if not abs_dist == []:
                 index_good = abs_dist.index(min(abs_dist))
                 sct.printv('  transfo #' + str(fT[it]) + ' --> use transfo #' + str(gT[index_good]), verbose)
                 # copy transformation
                 sct.copy(file_mat[iz][gT[index_good]] + 'Warp.nii.gz', file_mat[iz][fT[it]] + 'Warp.nii.gz')
                 # apply transformation
-                sct.run(["sct_apply_transfo",
-                 "-i", file_data_splitT_num[fT[it]] + ".nii",
-                 "-d", file_target + ".nii",
-                 "-w", file_mat[iz][fT[it]] + 'Warp.nii.gz',
-                 "-o", file_data_splitZ_splitT_moco[fT[it]] + '.nii',
-                 "-x", param.interp], verbose=0)
+                sct_apply_transfo.main(args=['-i', file_data_splitZ_splitT[fT[it]],
+                                             '-d', file_target + ".nii",
+                                             '-w', file_mat[iz][fT[it]] + 'Warp.nii.gz',
+                                             '-o', file_data_splitZ_splitT_moco[fT[it]],
+                                             '-x', param.interp])
             else:
                 # exit program if no transformation exists.
                 sct.printv('\nERROR in ' + os.path.basename(__file__) + ': No good transformation exist. Exit program.\n', verbose, 'error')
