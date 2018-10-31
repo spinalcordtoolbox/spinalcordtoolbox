@@ -360,7 +360,7 @@ def main(args=None):
                 cropping_slices[0] = 0
             if cropping_slices[1] > nz:
                 cropping_slices[1] = nz
-            msct_image.spatial_crop(Image(ftmp_seg_), dict(((2, np.int32(np.np.round(cropping_slices))),))).save(ftmp_seg)
+            msct_image.spatial_crop(Image(ftmp_seg_), dict(((2, np.int32(np.round(cropping_slices))),))).save(ftmp_seg)
         else:
             # if we do not align the vertebral levels, we crop the segmentation from top to bottom
             im_seg_rpi = Image(ftmp_seg_)
