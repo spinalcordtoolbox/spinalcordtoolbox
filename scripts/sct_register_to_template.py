@@ -374,8 +374,7 @@ def main(args=None):
                 if (data != 0).any():
                     break
                 top -= 1
-
-        msct_image.spatial_crop(im_seg_rpi, dict(((2, (bottom, top)),))).save(ftmp_seg)
+            msct_image.spatial_crop(im_seg_rpi, dict(((2, (bottom, top)),))).save(ftmp_seg)
 
 
         # straighten segmentation
