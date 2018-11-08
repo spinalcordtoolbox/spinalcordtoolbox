@@ -383,6 +383,10 @@ def heatmap(filename_in, filename_out, model, patch_shape, mean_train, std_train
         data[:, :, zz][np.where(data[:, :, zz] < 0.5)] = 0
         data[:, :, zz] = distance_transform_edt(data[:, :, zz])
 
+    if not np.any(data):
+        sct.log.error('\nSpinal cord was not detected using "-centerline cnn". Please try another "-centerline" method.\n')
+        sys.exit(1)
+
     im_out.data = data
     im_out.save(filename_out)
     del im_out
@@ -817,7 +821,7 @@ def main():
         output_folder = arguments["-ofolder"]
 
     if ctr_algo == 'manual' and "-file_centerline" not in args:
-		sct.log.error('Please use the flag -file_centerline to indicate the centerline filename.')
+		sct.log.warning('Please use the flag -file_centerline to indicate the centerline filename.')
 		sys.exit(1)
     
     if "-file_centerline" in args:
