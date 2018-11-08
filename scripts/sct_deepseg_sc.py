@@ -574,7 +574,7 @@ def post_processing_slice_wise(z_slice, x_cOm, y_cOm):
     """Keep the largest connected obejct per z_slice and fill little holes."""
     labeled_obj, num_obj = label(z_slice)
     if num_obj > 1:
-        if x_cOm is None:  # slice 0
+        if x_cOm is None or np.isnan(x_cOm):  # slice 0 or empty slice
             z_slice = (labeled_obj == (np.bincount(labeled_obj.flat)[1:].argmax() + 1))
         else:
             idx_z_minus_1 = np.bincount(labeled_obj.flat)[1:].argmax() + 1
