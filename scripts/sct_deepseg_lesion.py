@@ -358,7 +358,7 @@ def main():
                                             ctr_algo=ctr_algo, ctr_file=manual_centerline_fname, brain_bool=brain_bool,
                                             remove_temp_files=remove_temp_files, verbose=verbose)
 
-    sct.display_viewer_syntax([fname_image, os.path.join(output_folder, fname_seg)], colormaps=['gray', 'red'], opacities=['', '0.7'])
+    sct.display_viewer_syntax([fname_image, fname_seg], colormaps=['gray', 'red'], opacities=['', '0.7'])
 
 
 if __name__ == "__main__":
