@@ -47,7 +47,7 @@ def get_parser():
                       example="t1.nii.gz")
     parser.add_option(name="-c",
                       type_value="multiple_choice",
-                      description="type of image contrast. For 't2_like' contrast images, a specific model for images with axial orientation is available: 't2_ax'.",
+                      description="type of image contrast. \nt2: T2w scan with isotropic or anisotropic resolution. \nt2_ax: T2w scan with axial orientation and thick slices. \nt2s: T2*w scan with axial orientation and thick slices.",
                       mandatory=True,
                       example=['t2', 't2_ax', 't2s'])
     parser.add_option(name="-centerline",
