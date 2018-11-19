@@ -99,7 +99,7 @@ def detect_centerline(image_fname, contrast_type,
     max_out = np.iinfo('uint16').max
     min_in = np.nanmin(img.data)
     max_in = np.nanmax(img.data)
-    data_rescaled = img.data * (max_out - min_out) / (max_in - min_in)
+    data_rescaled = img.data.astype('float') * (max_out - min_out) / (max_in - min_in)
     img_int16.data = data_rescaled - (data_rescaled.min() - min_out)
 
     # change data type
