@@ -66,10 +66,12 @@ def main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, 
                                             x_centerline_fit,
                                             np.ones(nz-zmax) * x_centerline_fit[-1]])
 
-    # loop across slices and apply translation
+    # change type to float32 and scale between -1 and 1 as requested by img_as_float(). See #1790, #2069
     im_anat_flattened = msct_image.change_type(im_anat, np.float32)
-    # change type to float32 because of subsequent conversion (img_as_float). See #1790
+    min_data, max_data = np.min(im_anat_flattened.data), np.max(im_anat_flattened.data)
+    im_anat_flattened.data = 2 * im_anat_flattened.data/(max_data - min_data) - 1
 
+    # loop across slices and apply translation
     for iz in range(nz):
         # compute translation along x (R-L)
         translation_x = x_centerline_extended[iz] - np.round(nx/2.0)
@@ -77,7 +79,7 @@ def main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, 
         # tform = tf.SimilarityTransform(scale=1, rotation=0, translation=(translation_x, 0))
         tform = transform.SimilarityTransform(translation=(0, translation_x))
         # important to force input in float to skikit image, because it will output float values
-        img = img_as_float(im_anat.data[:, :, iz])
+        img = img_as_float(im_anat_flattened.data[:, :, iz])
         img_reg = transform.warp(img, tform)
         im_anat_flattened.data[:, :, iz] = img_reg  # img_as_uint(img_reg)
 
