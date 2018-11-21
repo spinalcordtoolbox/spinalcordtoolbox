@@ -42,10 +42,10 @@ def main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, 
 
     # load input image
     im_anat = Image(fname_anat)
-    nx, ny, nz, nt, px, py, pz, pt = im_anat.dim
     # re-oriente to RPI
     orientation_native = im_anat.orientation
     im_anat.change_orientation("RPI")
+    nx, ny, nz, nt, px, py, pz, pt = im_anat.dim
 
     # load centerline
     im_centerline = Image(fname_centerline).change_orientation("RPI")
