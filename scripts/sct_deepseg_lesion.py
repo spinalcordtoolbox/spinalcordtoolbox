@@ -47,7 +47,7 @@ def get_parser():
                       example="t1.nii.gz")
     parser.add_option(name="-c",
                       type_value="multiple_choice",
-                      description="type of image contrast.",
+                      description="type of image contrast. \nt2: T2w scan with isotropic or anisotropic resolution. \nt2_ax: T2w scan with axial orientation and thick slices. \nt2s: T2*w scan with axial orientation and thick slices.",
                       mandatory=True,
                       example=['t2', 't2_ax', 't2s'])
     parser.add_option(name="-centerline",
@@ -358,7 +358,7 @@ def main():
                                             ctr_algo=ctr_algo, ctr_file=manual_centerline_fname, brain_bool=brain_bool,
                                             remove_temp_files=remove_temp_files, verbose=verbose)
 
-    sct.display_viewer_syntax([fname_image, os.path.join(output_folder, fname_seg)], colormaps=['gray', 'red'], opacities=['', '0.7'])
+    sct.display_viewer_syntax([fname_image, fname_seg], colormaps=['gray', 'red'], opacities=['', '0.7'])
 
 
 if __name__ == "__main__":

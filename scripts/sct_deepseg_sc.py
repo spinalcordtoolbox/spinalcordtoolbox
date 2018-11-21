@@ -383,6 +383,10 @@ def heatmap(filename_in, filename_out, model, patch_shape, mean_train, std_train
         data[:, :, zz][np.where(data[:, :, zz] < 0.5)] = 0
         data[:, :, zz] = distance_transform_edt(data[:, :, zz])
 
+    if not np.any(data):
+        sct.log.error('\nSpinal cord was not detected using "-centerline cnn". Please try another "-centerline" method.\n')
+        sys.exit(1)
+
     im_out.data = data
     im_out.save(filename_out)
     del im_out
@@ -570,7 +574,7 @@ def post_processing_slice_wise(z_slice, x_cOm, y_cOm):
     """Keep the largest connected obejct per z_slice and fill little holes."""
     labeled_obj, num_obj = label(z_slice)
     if num_obj > 1:
-        if x_cOm is None:  # slice 0
+        if x_cOm is None or np.isnan(x_cOm):  # slice 0 or empty slice
             z_slice = (labeled_obj == (np.bincount(labeled_obj.flat)[1:].argmax() + 1))
         else:
             idx_z_minus_1 = np.bincount(labeled_obj.flat)[1:].argmax() + 1
@@ -795,8 +799,6 @@ def main():
     contrast_type = arguments['-c']
 
     ctr_algo = arguments["-centerline"]
-    if "-centerline" not in args and contrast_type == 't1':
-        ctr_algo = 'cnn'
 
     if "-brain" not in args:
         if contrast_type in ['t2s', 'dwi']:
@@ -817,7 +819,7 @@ def main():
         output_folder = arguments["-ofolder"]
 
     if ctr_algo == 'manual' and "-file_centerline" not in args:
-		sct.log.error('Please use the flag -file_centerline to indicate the centerline filename.')
+		sct.log.warning('Please use the flag -file_centerline to indicate the centerline filename.')
 		sys.exit(1)
     
     if "-file_centerline" in args:
@@ -846,7 +848,7 @@ def main():
     if path_qc is not None:
         generate_qc(fname_image, fname_seg, args, os.path.abspath(path_qc))
 
-    sct.display_viewer_syntax([fname_image, os.path.join(output_folder, fname_seg)], colormaps=['gray', 'red'], opacities=['', '0.7'])
+    sct.display_viewer_syntax([fname_image, fname_seg], colormaps=['gray', 'red'], opacities=['', '0.7'])
 
 
 if __name__ == "__main__":
