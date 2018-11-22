@@ -25,6 +25,7 @@ import sct_utils as sct
 from spinalcordtoolbox.image import Image
 from sct_image import split_data
 from msct_parser import Parser
+from sct_convert import convert
 
 
 class Param:
@@ -141,10 +142,6 @@ def main(args=None):
     # Extract path, file and extension
     path_data, file_data, ext_data = sct.extract_fname(fname_data)
 
-    # # get output folder
-    # if path_out == '':
-    #     path_out = ''
-
     # create temporary folder
     path_tmp = sct.tmp_create(basename="dmri_separate", verbose=verbose)
 
@@ -152,12 +149,11 @@ def main(args=None):
     sct.printv('\nCopy files into temporary folder...', verbose)
     ext = '.nii'
     dmri_name = 'dmri'
-    b0_name = 'b0'
+    b0_name = file_data + '_b0'
     b0_mean_name = b0_name + '_mean'
-    dwi_name = 'dwi'
+    dwi_name = file_data + '_dwi'
     dwi_mean_name = dwi_name + '_mean'
 
-    from sct_convert import convert
     if not convert(fname_data, os.path.join(path_tmp, dmri_name + ext)):
         sct.printv('ERROR in convert.', 1, 'error')
     sct.copy(fname_bvecs, os.path.join(path_tmp, "bvecs"), verbose=verbose)
@@ -205,9 +201,6 @@ def main(args=None):
     if average:
         sct.printv('\nAverage DWI...', verbose)
         sct.run(['sct_maths', '-i', dwi_name + ext, '-o', dwi_mean_name + ext, '-mean', 't'], verbose)
-        # if not average_data_across_dimension('dwi.nii', 'dwi_mean.nii', 3):
-        #     sct.printv('ERROR in average_data_across_dimension', 1, 'error')
-        # sct.run(fsloutput + 'fslmaths dwi -Tmean dwi_mean', verbose)
 
     # come back
     os.chdir(curdir)
@@ -250,7 +243,6 @@ def identify_b0(fname_bvecs, fname_bvals, bval_min, verbose):
     # if bval is not provided
     if not fname_bvals:
         # Open bvecs file
-        #sct.printv('\nOpen bvecs file...', verbose)
         bvecs = []
         with open(fname_bvecs) as f:
             for line in f:
