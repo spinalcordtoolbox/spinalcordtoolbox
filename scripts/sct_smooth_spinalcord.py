@@ -70,11 +70,13 @@ def get_parser():
                       mandatory=False,
                       deprecated_by='-s')
     parser.add_option(name="-smooth",
-                      type_value="int",
-                      description="Sigma of the smoothing Gaussian kernel (in mm).",
+                      type_value=[[','], 'float'],
+                      description='Sigma (standard deviation) of the smoothing Gaussian kernel (in mm). For isotropic '
+                                  'smoothing you only need to specify a value (e.g. 2). For anisotropic smoothing '
+                                  'specify a value for each axis, separated with a comma. The order should follow axes '
+                                  'Right-Left, Antero-Posterior, Superior-Inferior (e.g.: 1,1,3).',
                       mandatory=False,
-                      default_value=3,
-                      example='2')
+                      default_value=[1, 1, 3])
     parser.add_option(name='-param',
                       type_value=[[','], 'str'],
                       description="Advanced parameters. Assign value with \"=\"; Separate params with \",\"\n"
@@ -198,7 +200,7 @@ def main(args=None):
 
     # Smooth the straightened image along z
     sct.printv('\nSmooth the straightened image along z...')
-    sct.run(['sct_maths', '-i', 'anat_rpi_straight.nii', '-smooth', '0,0,' + str(sigma), '-o', 'anat_rpi_straight_smooth.nii'], verbose)
+    sct.run(['sct_maths', '-i', 'anat_rpi_straight.nii', '-smooth ', str(sigma), ' -o', 'anat_rpi_straight_smooth.nii'], verbose)
 
     # Apply the reversed warping field to get back the curved spinal cord
     sct.printv('\nApply the reversed warping field to get back the curved spinal cord...')
