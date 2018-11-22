@@ -17,32 +17,34 @@ import sys, io, logging, datetime, time, collections
 
 import requests
 
-
 API_URL = 'https://api.github.com/repos/neuropoly/spinalcordtoolbox/'
 
+
 class RateLimiter(object):
-	def __init__(self, get, count, period):
-		self._count = count
-		self._period = period
-		self._requests = collections.deque()
-		self._get = get
+    def __init__(self, get, count, period):
+        self._count = count
+        self._period = period
+        self._requests = collections.deque()
+        self._get = get
 
-	def get(self, *args, **kw):
-		if len(self._requests) < self._count:
-			self._requests.append(time.time())
-			return self._get(*args, **kw)
+    def get(self, *args, **kw):
+        if len(self._requests) < self._count:
+            self._requests.append(time.time())
+            return self._get(*args, **kw)
 
-		now = time.time()
-		r = self._requests.popleft()
-		if now < r + self._period:
-			dt = r + self._period - now
-			logging.info("Waiting %.3fs so as to not go over the API rate limit", dt)
-			time.sleep(dt)
+        now = time.time()
+        r = self._requests.popleft()
+        if now < r + self._period:
+            dt = r + self._period - now
+            logging.info("Waiting %.3fs so as to not go over the API rate limit", dt)
+            time.sleep(dt)
 
-		self._requests.append(time.time())
-		return self._get(*args, **kw)
+        self._requests.append(time.time())
+        return self._get(*args, **kw)
+
 
 requests.get = RateLimiter(requests.get, 3, 10).get
+
 
 def latest_milestone():
     """Get from Github the details of the latest milestone
@@ -95,7 +97,7 @@ if __name__ == '__main__':
         if items:
             lines.append('\n**{}**\n'.format(label.upper()))
             changelog_pr = changelog_pr.union(set([x['html_url'] for x in items]))
-            items = [" - %s [View pull request](%s)" % (x['title'], x['html_url']) for x in pulls.get('items') ]
+            items = [" - %s [View pull request](%s)" % (x['title'], x['html_url']) for x in pulls.get('items')]
             lines.extend(items)
 
     logging.info('Total number of pull requests with label: %d', len(changelog_pr))
