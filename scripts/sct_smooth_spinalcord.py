@@ -200,7 +200,7 @@ def main(args=None):
     sct.printv('\nSmooth the straightened image...')
     sigma_smooth = ",".join([str(i) for i in sigma])
     sct_maths.main(args=['-i', 'anat_rpi_straight.nii',
-                         '-smooth', ",".join([str(i) for i in sigma]),
+                         '-smooth', sigma_smooth,
                          '-o', 'anat_rpi_straight_smooth.nii',
                          '-v', '0'])
     # Apply the reversed warping field to get back the curved spinal cord
