@@ -198,6 +198,7 @@ def main(args=None):
 
     # Smooth the straightened image along z
     sct.printv('\nSmooth the straightened image...')
+    sigma_smooth = ",".join([str(i) for i in sigma])
     sct_maths.main(args=['-i', 'anat_rpi_straight.nii',
                          '-smooth', ",".join([str(i) for i in sigma]),
                          '-o', 'anat_rpi_straight_smooth.nii',
