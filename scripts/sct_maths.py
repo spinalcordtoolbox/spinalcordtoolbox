@@ -523,6 +523,9 @@ def denoise_nlmeans(data_in, patch_radius=1, block_radius=5):
 def smooth(data, sigmas):
     """
     Smooth data by convolving Gaussian kernel
+    :param data: input 3D numpy array
+    :param sigmas: Kernel SD in voxel
+    :return:
     """
     assert len(data.shape) == len(sigmas)
     from scipy.ndimage.filters import gaussian_filter

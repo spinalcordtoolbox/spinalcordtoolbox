@@ -16,7 +16,7 @@ def init(param_test):
     Initialize class: param_test
     """
     # initialization
-    default_args = ['-i t2/t2.nii.gz -s t2/t2_seg.nii.gz -smooth 5']
+    default_args = ['-i t2/t2.nii.gz -s t2/t2_seg.nii.gz -smooth 0,0,5']
 
     # assign default params
     if not param_test.args:
