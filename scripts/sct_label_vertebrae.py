@@ -192,7 +192,7 @@ def main(args=None):
     initcenter = ''
     initc2 = 'auto'
     fname_initlabel = ''
-    fname_labelz = 'labelz.nii.gz'
+    file_labelz = 'labelz.nii.gz'
     initauto = False
     param = Param()
 
@@ -257,6 +257,7 @@ def main(args=None):
 
     # create label to identify disc
     sct.printv('\nCreate label to identify disc...', verbose)
+    fname_labelz = os.path.join(path_tmp, file_labelz)
     if initz:
         create_label_z('segmentation.nii.gz', initz[0], initz[1], fname_labelz=fname_labelz)  # create label located at z_center
     elif initcenter:
