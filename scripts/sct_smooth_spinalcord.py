@@ -21,6 +21,7 @@ import sys, io, os, getopt, shutil, time
 import numpy as np
 
 import sct_utils as sct
+import sct_maths
 import spinalcordtoolbox.image as msct_image
 from sct_convert import convert
 from msct_parser import Parser
@@ -74,9 +75,10 @@ def get_parser():
                       description='Sigma (standard deviation) of the smoothing Gaussian kernel (in mm). For isotropic '
                                   'smoothing you only need to specify a value (e.g. 2). For anisotropic smoothing '
                                   'specify a value for each axis, separated with a comma. The order should follow axes '
-                                  'Right-Left, Antero-Posterior, Superior-Inferior (e.g.: 1,1,3).',
+                                  'Right-Left, Antero-Posterior, Superior-Inferior (e.g.: 1,1,3). For no smoothing, set '
+                                  'value to 0.',
                       mandatory=False,
-                      default_value=[1, 1, 3])
+                      default_value=[0, 0, 3])
     parser.add_option(name='-param',
                       type_value=[[','], 'str'],
                       description="Advanced parameters. Assign value with \"=\"; Separate params with \",\"\n"
@@ -199,9 +201,11 @@ def main(args=None):
         sct.cache_save(cachefile, cache_sig)
 
     # Smooth the straightened image along z
-    sct.printv('\nSmooth the straightened image along z...')
-    sct.run(['sct_maths', '-i', 'anat_rpi_straight.nii', '-smooth ', str(sigma), ' -o', 'anat_rpi_straight_smooth.nii'], verbose)
-
+    sct.printv('\nSmooth the straightened image...')
+    sct_maths.main(args=['-i', 'anat_rpi_straight.nii',
+                         '-smooth', ",".join([str(i) for i in sigma]),
+                         '-o', 'anat_rpi_straight_smooth.nii',
+                         '-v', '0'])
     # Apply the reversed warping field to get back the curved spinal cord
     sct.printv('\nApply the reversed warping field to get back the curved spinal cord...')
     sct.run(['sct_apply_transfo', '-i', 'anat_rpi_straight_smooth.nii', '-o', 'anat_rpi_straight_smooth_curved.nii', '-d', 'anat.nii', '-w', 'warp_straight2curve.nii.gz', '-x', 'spline'], verbose)
