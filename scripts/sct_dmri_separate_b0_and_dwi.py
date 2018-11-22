@@ -42,18 +42,12 @@ def get_parser():
     parser = Parser(__file__)
 
     # Mandatory arguments
-    parser.usage.set_description("Separate b=0 and DW images from diffusion dataset.")
+    parser.usage.set_description("Separate b=0 and DW images from diffusion dataset. The output files will have a suffix (_b0 and _dwi) appended to the input file name.")
     parser.add_option(name='-i',
                       type_value='image_nifti',
                       description='Diffusion data',
                       mandatory=True,
                       example='dmri.nii.gz')
-    parser.add_option(name='-b',
-                      type_value='file',
-                      description='bvecs file',
-                      mandatory=False,
-                      example='bvecs.txt',
-                      deprecated_by='-bvec')
     parser.add_option(name='-bvec',
                       type_value='file',
                       description='bvecs file',
