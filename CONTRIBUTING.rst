@@ -1,3 +1,7 @@
+=====================
+ Contributing to SCT
+=====================
+
 
 .. contents:: Table of Contents
    :depth: 2
@@ -46,8 +50,8 @@ When Submitting an Issue
 ************************
 
 
-Filling-out the Issue Title
-===========================
+Title
+=====
 
 Try to have a self-descriptive, meaningful issue title,
 summarizing the problem you see.
@@ -59,67 +63,51 @@ Examples:
 - “*add a special mode for squirrel WM/GM segmentation*”
 
 
-Filling-out the Issue Body
-==========================
+Body (Issue)
+============
 
-- Describe the issue (the title is probably not enough to explain
-  it)
+- Describe the issue.
 
 - Provide steps to reproduce the issue.
 
-  Please try to reproduce your issue using SCT example data as
-  inputs, and to provide a sequence of commands that can reproduce it.
+  Please try to reproduce your issue using ``sct_testing_data`` or
+  ``sct_example_data`` as inputs, and to provide a sequence of commands
+  that can reproduce it.
 
   If this is not possible, try to isolate a minimal input on which the issue
-  happens (eg. one file among a dataset), and to provide this file publicly,
+  happens (eg. one file among a dataset), and provide this file publicly,
   or if not possible, privately (coordinate with @jcohenadad).
 
-- Feel free to add additional information such as screenshots, etc.
+- Feel free to add useful information such as screenshots, etc.
 
 
-Filling-out the Feature Request Body
-====================================
+Body (Feature Request)
+======================
 
-- Try to justify why the feature is desired, and should be in SCT
+- Justify why the feature should be in SCT.
 
-- If you have an idea of it, try to provide a *usage scenario*, imagining
+- Try to provide a *usage scenario*, imagining
   how the feature would be used (ideally inputs, a sequence of commands,
   and a desired outcome).
 
-- If you can, provide references to any theoretical work to help the reader
+- Provide references to any theoretical work to help the reader
   better understand the feature.
 
 
-Filling-out Other Fields
-========================
+Labels
+======
 
-- SCT Core Developers must add **Labels** to issues, external developers
-  should try to add them.
-
-  To help assigning reviewers and organizing the Changelog, add labels
+- To help assigning reviewers and organizing the Changelog, add labels
   that describe the `category <https://github.com/neuropoly/spinalcordtoolbox/wiki/Label-definition#issue-category>`_
   and type of issue.
 
 
-More Examples
-=============
+Examples
+========
 
-Some real-life examples:
-
-- Good:
+Some good real-life examples:
 
   - https://github.com/neuropoly/spinalcordtoolbox/issues/444
-
-
-After Submitting an Issue
-*************************
-
-Consider the following:
-
-- Please try to be of assistance to help developers with additional
-  information, and to confirm resolution of the issue (you may be
-  asked to close the issue to confirm).
-
 
 
 Contributing to the SCT Repository
@@ -131,7 +119,6 @@ submitted through github pull requests.
 
 .. contents::
    :local:
-
 
 
 Prior to Contributing
@@ -152,60 +139,17 @@ Naming your Branch
 When submitting PRs to SCT, please try to follow our convention and
 have your branches named as follows:
 
-- If you're working on the upstream SCT repository, prefix the branch
-  name with a personal identifier and a forward slash;
+- Prefix the branch name with a personal identifier and a forward slash;
 
 - If the branch you're working on is in response to an issue, provide
   the issue number;
 
-- Try to add some additional text that make the branch name meaningful
-  during its life cycle.
-
-Rationale:
-
-- A merge commit header contains by default the name of the branch to
-  be merged
-
-- When working in the main SCT repo, the personal prefix makes the
-  branch list prettier and more meaningful.
-
-- As much as Emojis are used a lot in our github, non-ascii branch
-  names are not OK (spelling is too hard).
+- Add some text that make the branch name meaningful.
 
 Examples:
 
-- Best:
-
-  - *sct_propseg-fixup-div0*
-
-    - outside contribution assumed
-    - can reasonably see what it's about
-
-  - *jca/1234-rewrite-sct-in-cobol*
-
-    - can see who is doing it without looking at the code
-    - can see that there is an issue about it
-    - can see what it's about and that it's time to change the
-      trajectory of this issue
-
-- OK:
-
-  - *jca/1828*
-
-    - you're busy with the science and don't care what the commit log
-      will look like or that nobody else will know what this is about,
-      nor you in one week... but it's OK since the branch will be
-      deleted anyway after merge
-
-- Bad:
-
-  - *wip-on-something*
-
-    - yeah like we can figure that one out without looking at the code
-
-  - *‎‮זאת‬, cJ/😊‎‮sgub-lla-dexif-‬*
-
-    - please no ;)
+  - ``cg/propseg-fixup-div0``
+  - ``jca/1234-rewrite-sct-in-cobol``
 
 
 Additional Info on Github
@@ -239,7 +183,6 @@ The Content Itself
   SCT Wiki, or SourceForge wiki.
 
   If conflict, address them.
-
 
 - Please add tests, especially with new code:
 
@@ -282,8 +225,6 @@ The Content Itself
   and if that is not the case, ensure that the borrowed/adapted code
   is compatible with the SCT MIT license.
 
-  Keep in mind that you are responsible for your contributions!
-
 
 The Commits Metadata
 ====================
@@ -292,15 +233,7 @@ The Commits Metadata
 Guidelines on Commit Titles
 +++++++++++++++++++++++++++
 
-- Provide a concise and self-descriptive title (especially avoid > 80 characters)
-
-  Some terminology tips:
-
-  - When adding/moving/removing something, use “add/move/remove ...”
-
-  - When correcting a blatant issue, use “fixup ...”
-
-  - When refactoring code, use “refactor ...”
+- Provide a concise and self-descriptive title (avoid > 80 characters)
 
 - You may “scope” the title using the applicable command name(s),
   folder or other "module" as a prefix.
@@ -310,32 +243,21 @@ Guidelines on Commit Titles
 
 - Examples:
 
-  Good:
-
-  - “*sct_testing: add ability to run tests in parallel (fixes #1539)*”
-  - “*deepseg_sc: add utility functions*”
-  - “*documentation: sphinx: add a section about support*”
-  - “*documentation: sphinx: development: fixup typo*”
-  - “*refactor msct_image into image module and compatibility layer*”
-  - “*Travis: remove jobs running Python 2.7*”
-  - “*setup.py: add optional label for installing documentation tooling deps*”
-  - “*testing: add image unit tests*”
-  - “*testing: add sct_deepseg integration tests*”
-
-  Bad:
-
-  - “*cleaning*” / “*added todo*”: no scope
-  - “*Update README.md*”: only scope
-
-Some development operations involve reading commit titles and poor
-ones are not helping. Run ``git log --oneline`` and imagine you're
-someone else running through it.
+  - ``testing: add ability to run tests in parallel (fixes #1539)``
+  - ``deepseg_sc: add utility functions``
+  - ``documentation: sphinx: add a section about support``
+  - ``documentation: sphinx: development: fixup typo``
+  - ``refactor msct_image into image module and compatibility layer``
+  - ``Travis: remove jobs running Python 2.7``
+  - ``setup.py: add optional label for installing documentation tooling deps``
+  - ``testing: add image unit tests``
+  - ``testing: add sct_deepseg integration tests``
 
 
 Guidelines on Commit Sequences
 ++++++++++++++++++++++++++++++
 
-- Update your branch to be baselined on the latest master if new
+- Update your branch to be baseline on the latest master if new
   developments were merged while you were developing.
 
   See `this tutorial
