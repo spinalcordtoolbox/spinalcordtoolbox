@@ -26,7 +26,7 @@ import sct_utils as sct
 class Param(object):
     # The constructor
     def __init__(self):
-        self.almost_zero = 0.000000001
+        self.almost_zero = np.finfo(float).eps
 
 # PARSER
 # ==========================================================================================
