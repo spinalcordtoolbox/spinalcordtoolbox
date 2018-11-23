@@ -226,7 +226,7 @@ def main(args=None):
     elapsed_time = time.time() - start_time
     sct.printv('\nFinished! Elapsed time: ' + str(int(np.round(elapsed_time))) + 's', verbose)
 
-    return fname_b0, fname_dwi, fname_b0_mean, fname_dwi_mean
+    return fname_b0, fname_b0_mean, fname_dwi, fname_dwi_mean
 
 
 # ==========================================================================================
