@@ -62,11 +62,6 @@ def get_parser():
                       mandatory=False,
                       example=['0', '1'],
                       default_value=str(param_default.average))
-    parser.add_option(name='-m',
-                      type_value='file',
-                      description='bvals file. Used to identify low b-values (in case different from 0).',
-                      mandatory=False,
-                      deprecated_by='-bval')
     parser.add_option(name='-bval',
                       type_value='file',
                       description='bvals file. Used to identify low b-values (in case different from 0).',
