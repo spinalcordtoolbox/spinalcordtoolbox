@@ -12,17 +12,12 @@
 # About the license: see the file LICENSE.TXT
 ########################################################################################
 
-# TODO: compute in float64
-
 from __future__ import division, absolute_import
 
 import sys
-import operator
 import numpy as np
 from msct_parser import Parser
 from spinalcordtoolbox.image import Image, empty_like
-from spinalcordtoolbox.utils import parse_num_list
-from spinalcordtoolbox.template import get_slices_from_vertebral_levels
 import sct_utils as sct
 
 
@@ -66,23 +61,6 @@ def get_parser():
                                   'To select all volumes in series set to -1.',
                       mandatory=False,
                       default_value=[-1])
-    parser.add_option(name="-vertfile",
-                      type_value='image_nifti',
-                      description='File name of the vertebral labeling registered to the input images.',
-                      mandatory=False,
-                      default_value='label/template/PAM50_levels.nii.gz')
-    parser.add_option(name="-vert",
-                      type_value='str',
-                      description='Vertebral levels where to compute the SNR.',
-                      mandatory=False,
-                      example='2:6',
-                      default_value='None')
-    parser.add_option(name="-z",
-                      type_value='str',
-                      description='Slices where to compute the SNR.',
-                      mandatory=False,
-                      example='2:6',
-                      default_value='None')
     parser.add_option(name="-r",
                       type_value="multiple_choice",
                       description='Remove temporary files.',
@@ -123,11 +101,8 @@ def main():
         fname_mask = arguments['-m']
     else:
         fname_mask = ''
-    vert_label_fname = arguments["-vertfile"]
-    vert_levels = arguments["-vert"]
-    slices_of_interest = arguments["-z"]
-    index_vol = arguments['-vol']
     method = arguments["-method"]
+    index_vol = arguments['-vol']
 
     # Check parameters
     if method == 'diff':
@@ -149,29 +124,8 @@ def main():
         if not len(index_vol) == 2:
             sct.printv('Method "diff" should be used with exactly two volumes (specify with flag "-vol").', 1, 'error')
 
-    # Fetch slices to compute SNR on
-    slices_list = []
-    if not vert_levels == 'None':
-        list_levels = parse_num_list(vert_levels)
-        im_vertlevel = Image(vert_label_fname).change_orientation('RPI')
-        for level in list_levels:
-            slices_list.append(get_slices_from_vertebral_levels(im_vertlevel, level))
-        if slices_list == []:
-            sct.log.error('The specified vertebral levels are not in the vertebral labeling file.')
-        else:
-            slices_list = reduce(operator.add, slices_list)  # flatten and sort
-            slices_list.sort()
-    elif not slices_of_interest == 'None':
-        slices_list = parse_num_list(slices_of_interest)
-    else:
-        slices_list = np.arange(data.shape[2]).tolist()
-
-    # Set to 0 all slices in the mask that are not includes in the slices_list
-    # nz_to_exclude = [i for i in range(mask.shape[2]) if not i in slices_list]
-    # mask[:, :, nz_to_exclude] = 0
-
-    # Compute SNR map
-    # "time" is assumed to be the 4th dimension of the variable "data"
+    # Compute SNR
+    # NB: "time" is assumed to be the 4th dimension of the variable "data"
     if method == 'mult':
         # Compute mean and STD across time
         data_mean = np.mean(data[:, :, :, index_vol], axis=3)
@@ -209,7 +163,7 @@ def main():
         # Compute SNR, correcting for Rayleigh noise (see eq. 7 in Dietrich et al.)
         snr_roi = (2/np.sqrt(2)) * mean_in_roi / std_in_roi
 
-    # Compute SNR in ROI and display result
+    # Display result
     if fname_mask:
         sct.printv('\nSNR_' + method + ' = ' + str(snr_roi) + '\n', type='info')
 
