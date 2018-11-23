@@ -25,6 +25,7 @@ import sct_utils as sct
 from spinalcordtoolbox.image import Image
 from sct_image import split_data
 from msct_parser import Parser
+from sct_convert import convert
 
 
 class Param:
@@ -42,18 +43,12 @@ def get_parser():
     parser = Parser(__file__)
 
     # Mandatory arguments
-    parser.usage.set_description("Separate b=0 and DW images from diffusion dataset.")
+    parser.usage.set_description("Separate b=0 and DW images from diffusion dataset. The output files will have a suffix (_b0 and _dwi) appended to the input file name.")
     parser.add_option(name='-i',
                       type_value='image_nifti',
                       description='Diffusion data',
                       mandatory=True,
                       example='dmri.nii.gz')
-    parser.add_option(name='-b',
-                      type_value='file',
-                      description='bvecs file',
-                      mandatory=False,
-                      example='bvecs.txt',
-                      deprecated_by='-bvec')
     parser.add_option(name='-bvec',
                       type_value='file',
                       description='bvecs file',
@@ -67,11 +62,6 @@ def get_parser():
                       mandatory=False,
                       example=['0', '1'],
                       default_value=str(param_default.average))
-    parser.add_option(name='-m',
-                      type_value='file',
-                      description='bvals file. Used to identify low b-values (in case different from 0).',
-                      mandatory=False,
-                      deprecated_by='-bval')
     parser.add_option(name='-bval',
                       type_value='file',
                       description='bvals file. Used to identify low b-values (in case different from 0).',
@@ -147,10 +137,6 @@ def main(args=None):
     # Extract path, file and extension
     path_data, file_data, ext_data = sct.extract_fname(fname_data)
 
-    # # get output folder
-    # if path_out == '':
-    #     path_out = ''
-
     # create temporary folder
     path_tmp = sct.tmp_create(basename="dmri_separate", verbose=verbose)
 
@@ -158,12 +144,11 @@ def main(args=None):
     sct.printv('\nCopy files into temporary folder...', verbose)
     ext = '.nii'
     dmri_name = 'dmri'
-    b0_name = 'b0'
+    b0_name = file_data + '_b0'
     b0_mean_name = b0_name + '_mean'
-    dwi_name = 'dwi'
+    dwi_name = file_data + '_dwi'
     dwi_mean_name = dwi_name + '_mean'
 
-    from sct_convert import convert
     if not convert(fname_data, os.path.join(path_tmp, dmri_name + ext)):
         sct.printv('ERROR in convert.', 1, 'error')
     sct.copy(fname_bvecs, os.path.join(path_tmp, "bvecs"), verbose=verbose)
@@ -211,20 +196,21 @@ def main(args=None):
     if average:
         sct.printv('\nAverage DWI...', verbose)
         sct.run(['sct_maths', '-i', dwi_name + ext, '-o', dwi_mean_name + ext, '-mean', 't'], verbose)
-        # if not average_data_across_dimension('dwi.nii', 'dwi_mean.nii', 3):
-        #     sct.printv('ERROR in average_data_across_dimension', 1, 'error')
-        # sct.run(fsloutput + 'fslmaths dwi -Tmean dwi_mean', verbose)
 
     # come back
     os.chdir(curdir)
 
     # Generate output files
+    fname_b0 = os.path.abspath(os.path.join(path_out, b0_name + ext_data))
+    fname_dwi = os.path.abspath(os.path.join(path_out, dwi_name + ext_data))
+    fname_b0_mean = os.path.abspath(os.path.join(path_out, b0_mean_name + ext_data))
+    fname_dwi_mean = os.path.abspath(os.path.join(path_out, dwi_mean_name + ext_data))
     sct.printv('\nGenerate output files...', verbose)
-    sct.generate_output_file(os.path.join(path_tmp, b0_name + ext), os.path.join(path_out, b0_name + ext_data), verbose)
-    sct.generate_output_file(os.path.join(path_tmp, dwi_name + ext), os.path.join(path_out, dwi_name + ext_data), verbose)
+    sct.generate_output_file(os.path.join(path_tmp, b0_name + ext), fname_b0, verbose)
+    sct.generate_output_file(os.path.join(path_tmp, dwi_name + ext), fname_dwi, verbose)
     if average:
-        sct.generate_output_file(os.path.join(path_tmp, b0_mean_name + ext), os.path.join(path_out, b0_mean_name + ext_data), verbose)
-        sct.generate_output_file(os.path.join(path_tmp, dwi_mean_name + ext), os.path.join(path_out, dwi_mean_name + ext_data), verbose)
+        sct.generate_output_file(os.path.join(path_tmp, b0_mean_name + ext), fname_b0_mean, verbose)
+        sct.generate_output_file(os.path.join(path_tmp, dwi_mean_name + ext), fname_dwi_mean, verbose)
 
     # Remove temporary files
     if remove_temp_files == 1:
@@ -235,12 +221,7 @@ def main(args=None):
     elapsed_time = time.time() - start_time
     sct.printv('\nFinished! Elapsed time: ' + str(int(np.round(elapsed_time))) + 's', verbose)
 
-    # to view results
-    sct.printv('\nTo view results, type: ', verbose)
-    if average:
-        sct.display_viewer_syntax(['b0', 'b0_mean', 'dwi', 'dwi_mean'])
-    else:
-        sct.display_viewer_syntax(['b0', 'dwi'])
+    return fname_b0, fname_b0_mean, fname_dwi, fname_dwi_mean
 
 
 # ==========================================================================================
@@ -256,7 +237,6 @@ def identify_b0(fname_bvecs, fname_bvals, bval_min, verbose):
     # if bval is not provided
     if not fname_bvals:
         # Open bvecs file
-        #sct.printv('\nOpen bvecs file...', verbose)
         bvecs = []
         with open(fname_bvecs) as f:
             for line in f:

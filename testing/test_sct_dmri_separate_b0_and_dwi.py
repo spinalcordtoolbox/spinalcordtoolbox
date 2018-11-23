@@ -11,11 +11,8 @@
 #########################################################################################
 
 from __future__ import absolute_import
-
-import sys, io, os
-
+import os
 import numpy as np
-
 from spinalcordtoolbox.image import Image
 
 
@@ -39,7 +36,7 @@ def test_integrity(param_test):
     # check DWI
     param_test.output += 'Checking DWI\n'
     ref_dwi = Image(os.path.join(param_test.path_data, 'dmri', 'dwi.nii.gz'))
-    new_dwi = Image(os.path.join(param_test.path_output, 'dwi.nii.gz'))
+    new_dwi = Image(os.path.join(param_test.path_output, 'dmri_dwi.nii.gz'))
     diff_dwi = ref_dwi.data - new_dwi.data
     if np.sum(diff_dwi) > param_test.threshold:
         param_test.status = 99
@@ -49,7 +46,7 @@ def test_integrity(param_test):
     # check b=0
     param_test.output += '\n\nChecking b=0\n'
     ref_b0 = Image(os.path.join(param_test.path_data, 'dmri', 'dmri_T0000.nii.gz'))
-    new_b0 = Image(os.path.join(param_test.path_output, 'b0.nii.gz'))
+    new_b0 = Image(os.path.join(param_test.path_output, 'dmri_b0.nii.gz'))
     diff_b0 = ref_b0.data - new_b0.data
     if np.sum(diff_b0) > param_test.threshold:
         param_test.status = 99
