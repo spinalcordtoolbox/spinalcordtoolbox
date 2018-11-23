@@ -308,12 +308,15 @@ PR Labels
 
 You **must** add Labels to PRs, as these are used to automatically generate Changelog:
 
-- Choose **one** label that describes the
+- **Category:** Choose **one** label that describes the
   `category <https://github.com/neuropoly/spinalcordtoolbox/wiki/Label-definition#category>`_
   (white font over purple background).
 
-- Choose one or multiple labels corresponding to the SCT functions that are mainly affected by the PR (black font over
+- **SCT Function:** Choose one or multiple labels corresponding to the SCT functions that are mainly affected by the PR (black font over
   light purple background).
+
+- **Cross-compatibility:** If your PR breaks cross-compatibility with a previous stable release of SCT, you should add the
+  label ``compatibility``.
 
 `Here <https://github.com/neuropoly/spinalcordtoolbox/pull/1637>`_ is an example of PR with proper labels and
 description.
