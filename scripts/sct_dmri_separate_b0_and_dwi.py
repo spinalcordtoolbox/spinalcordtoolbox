@@ -201,10 +201,10 @@ def main(args=None):
     os.chdir(curdir)
 
     # Generate output files
-    fname_b0 = os.path.join(path_out, b0_name + ext_data)
-    fname_dwi = os.path.join(path_out, dwi_name + ext_data)
-    fname_b0_mean = os.path.join(path_out, b0_mean_name + ext_data)
-    fname_dwi_mean = os.path.join(path_out, dwi_mean_name + ext_data)
+    fname_b0 = os.path.abspath(os.path.join(path_out, b0_name + ext_data))
+    fname_dwi = os.path.abspath(os.path.join(path_out, dwi_name + ext_data))
+    fname_b0_mean = os.path.abspath(os.path.join(path_out, b0_mean_name + ext_data))
+    fname_dwi_mean = os.path.abspath(os.path.join(path_out, dwi_mean_name + ext_data))
     sct.printv('\nGenerate output files...', verbose)
     sct.generate_output_file(os.path.join(path_tmp, b0_name + ext), fname_b0, verbose)
     sct.generate_output_file(os.path.join(path_tmp, dwi_name + ext), fname_dwi, verbose)
