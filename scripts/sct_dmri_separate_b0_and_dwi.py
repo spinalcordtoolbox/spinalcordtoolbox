@@ -206,12 +206,16 @@ def main(args=None):
     os.chdir(curdir)
 
     # Generate output files
+    fname_b0 = os.path.join(path_out, b0_name + ext_data)
+    fname_dwi = os.path.join(path_out, dwi_name + ext_data)
+    fname_b0_mean = os.path.join(path_out, b0_mean_name + ext_data)
+    fname_dwi_mean = os.path.join(path_out, dwi_mean_name + ext_data)
     sct.printv('\nGenerate output files...', verbose)
-    sct.generate_output_file(os.path.join(path_tmp, b0_name + ext), os.path.join(path_out, b0_name + ext_data), verbose)
-    sct.generate_output_file(os.path.join(path_tmp, dwi_name + ext), os.path.join(path_out, dwi_name + ext_data), verbose)
+    sct.generate_output_file(os.path.join(path_tmp, b0_name + ext), fname_b0, verbose)
+    sct.generate_output_file(os.path.join(path_tmp, dwi_name + ext), fname_dwi, verbose)
     if average:
-        sct.generate_output_file(os.path.join(path_tmp, b0_mean_name + ext), os.path.join(path_out, b0_mean_name + ext_data), verbose)
-        sct.generate_output_file(os.path.join(path_tmp, dwi_mean_name + ext), os.path.join(path_out, dwi_mean_name + ext_data), verbose)
+        sct.generate_output_file(os.path.join(path_tmp, b0_mean_name + ext), fname_b0_mean, verbose)
+        sct.generate_output_file(os.path.join(path_tmp, dwi_mean_name + ext), fname_dwi_mean, verbose)
 
     # Remove temporary files
     if remove_temp_files == 1:
@@ -221,6 +225,8 @@ def main(args=None):
     # display elapsed time
     elapsed_time = time.time() - start_time
     sct.printv('\nFinished! Elapsed time: ' + str(int(np.round(elapsed_time))) + 's', verbose)
+
+    return fname_b0, fname_dwi, fname_b0_mean, fname_dwi_mean
 
 
 # ==========================================================================================
