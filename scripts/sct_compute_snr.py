@@ -18,6 +18,7 @@ import sys
 import numpy as np
 from msct_parser import Parser
 from spinalcordtoolbox.image import Image, empty_like
+from spinalcordtoolbox.utils import parse_num_list
 import sct_utils as sct
 
 
@@ -56,11 +57,11 @@ def get_parser():
                       default_value='diff',
                       example=['diff', 'mult'])
     parser.add_option(name='-vol',
-                      type_value=[[','], 'int'],
-                      description='List of volume numbers to use for computing SNR, separated with ",". Example: 0,31. '
-                                  'To select all volumes in series set to -1.',
+                      type_value='str',
+                      description='Volumes to compute SNR from. Separate with "," (e.g. -vol 0,1), or select range '
+                                  'using ":" (e.g. -vol 2:50). By default, all volumes in series are selected.',
                       mandatory=False,
-                      default_value=[-1])
+                      default_value='')
     parser.add_option(name="-r",
                       type_value="multiple_choice",
                       description='Remove temporary files.',
@@ -102,7 +103,10 @@ def main():
     else:
         fname_mask = ''
     method = arguments["-method"]
-    index_vol = arguments['-vol']
+    if '-vol' in arguments:
+        index_vol_user = arguments['-vol']
+    else:
+        index_vol_user = ''
 
     # Check parameters
     if method == 'diff':
@@ -115,8 +119,10 @@ def main():
     if fname_mask:
         mask = Image(fname_mask).change_orientation('RPI').data
 
-    # if user selected all 3d volumes from the input 4d volume ("-vol -1"), then assign index_vol
-    if index_vol[0] == -1:
+    # Retrieve selected volumes
+    if index_vol_user:
+        index_vol = parse_num_list(index_vol_user)
+    else:
         index_vol = range(data.shape[3])
 
     # Make sure user selected 2 volumes with diff method
