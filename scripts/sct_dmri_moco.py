@@ -302,7 +302,7 @@ def main(args=None):
     sct.printv('\nGenerate output files...', param.verbose)
     sct.generate_output_file(fname_data_moco_tmp, fname_dmri_moco, param.verbose)
     sct.generate_output_file(fname_b0_mean, fname_dmri_moco_b0_mean, param.verbose)
-    sct.generate_output_file(fname_dwi, fname_dmri_moco_dwi_mean, param.verbose)
+    sct.generate_output_file(fname_dwi_mean, fname_dmri_moco_dwi_mean, param.verbose)
 
     # Delete temporary files
     if param.remove_temp_files == 1:
