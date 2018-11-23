@@ -222,13 +222,6 @@ def main(args=None):
     elapsed_time = time.time() - start_time
     sct.printv('\nFinished! Elapsed time: ' + str(int(np.round(elapsed_time))) + 's', verbose)
 
-    # to view results
-    sct.printv('\nTo view results, type: ', verbose)
-    if average:
-        sct.display_viewer_syntax(['b0', 'b0_mean', 'dwi', 'dwi_mean'])
-    else:
-        sct.display_viewer_syntax(['b0', 'dwi'])
-
 
 # ==========================================================================================
 # identify b=0 and DW images
