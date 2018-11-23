@@ -49,9 +49,8 @@ Consider the following:
 When Submitting an Issue
 ************************
 
-
-Title
-=====
+Issue Title
+===========
 
 Try to have a self-descriptive, meaningful issue title,
 summarizing the problem you see.
@@ -63,8 +62,8 @@ Examples:
 - “*add a special mode for squirrel WM/GM segmentation*”
 
 
-Body (Issue)
-============
+Issue Body
+==========
 
 - Describe the issue.
 
@@ -80,30 +79,22 @@ Body (Issue)
 
 - Feel free to add useful information such as screenshots, etc.
 
-
-Body (Feature Request)
-======================
-
-- Justify why the feature should be in SCT.
-
-- Try to provide a *usage scenario*, imagining
+- If you submit a feature request, provide a *usage scenario*, imagining
   how the feature would be used (ideally inputs, a sequence of commands,
-  and a desired outcome).
-
-- Provide references to any theoretical work to help the reader
+  and a desired outcome). Also provide references to any theoretical work to help the reader
   better understand the feature.
 
 
-Labels
-======
+Issue Labels
+============
 
 - To help assigning reviewers and organizing the Changelog, add labels
-  that describe the `category <https://github.com/neuropoly/spinalcordtoolbox/wiki/Label-definition#issue-category>`_
+  that describe the `category <https://github.com/neuropoly/spinalcordtoolbox/wiki/Label-definition#category>`_
   and type of issue.
 
 
-Examples
-========
+Issue Examples
+==============
 
 Some good real-life examples:
 
@@ -148,8 +139,8 @@ have your branches named as follows:
 
 Examples:
 
-  - ``cg/propseg-fixup-div0``
-  - ``jca/1234-rewrite-sct-in-cobol``
+- ``cg/propseg-fixup-div0``
+- ``jca/1234-rewrite-sct-in-cobol``
 
 
 Additional Info on Github
@@ -169,14 +160,14 @@ The following github documentation may be of use:
   for an introduction on branching within GitHub.
 
 
-When Developing
-***************
+Developing and committing
+*************************
 
 .. contents::
    :local:
 
-The Content Itself
-==================
+Guidelines for developing
+=========================
 
 - Make sure the PR changes are not in conflict with the documentation,
   either documentation files (`/README.md`, `/documentation/`), program help,
@@ -226,12 +217,12 @@ The Content Itself
   is compatible with the SCT MIT license.
 
 
-The Commits Metadata
-====================
+Guidelines on Commits
+=====================
 
 
-Guidelines on Commit Titles
-+++++++++++++++++++++++++++
+Commit Titles
++++++++++++++
 
 - Provide a concise and self-descriptive title (avoid > 80 characters)
 
@@ -241,181 +232,110 @@ Guidelines on Commit Titles
 - If a commit is responsible for fixing an issue, post-fix the
   description with ``(fixes #ISSUE_NUMBER)``.
 
-- Examples:
+Examples:
 
-  - ``testing: add ability to run tests in parallel (fixes #1539)``
-  - ``deepseg_sc: add utility functions``
-  - ``documentation: sphinx: add a section about support``
-  - ``documentation: sphinx: development: fixup typo``
-  - ``refactor msct_image into image module and compatibility layer``
-  - ``Travis: remove jobs running Python 2.7``
-  - ``setup.py: add optional label for installing documentation tooling deps``
-  - ``testing: add image unit tests``
-  - ``testing: add sct_deepseg integration tests``
+- ``testing: add ability to run tests in parallel (fixes #1539)``
+- ``deepseg_sc: add utility functions``
+- ``documentation: sphinx: add a section about support``
+- ``documentation: sphinx: development: fixup typo``
+- ``refactor msct_image into image module and compatibility layer``
+- ``Travis: remove jobs running Python 2.7``
+- ``setup.py: add optional label for installing documentation tooling deps``
+- ``testing: add image unit tests``
+- ``testing: add sct_deepseg integration tests``
 
 
-Guidelines on Commit Sequences
-++++++++++++++++++++++++++++++
+Commit Sequences
+++++++++++++++++
 
 - Update your branch to be baseline on the latest master if new
   developments were merged while you were developing.
 
-  See `this tutorial
-  <https://coderwall.com/p/7aymfa/please-oh-please-use-git-pull-rebase>`_
-  about avoiding using merges within your PR,
-  rather rebasing your changes onto the master branch.
-
+- **Please prefer `rebasing` to `merging`**, as explained in `this tutorial
+  <https://coderwall.com/p/7aymfa/please-oh-please-use-git-pull-rebase>`_.
   Note that if you do rebases after review have started,
   they will be cancelled, so at this point it may be more
   appropriate to do a pull.
 
-- Try to clean-up your commit sequence.
-
-  If your are not familiar with git, this good tutorial on the
-  subject may help you:
+- Clean-up your commit sequence. If your are not familiar
+  with git, this good tutorial on the subject may help you:
   https://www.atlassian.com/git/tutorials/rewriting-history
 
-If the commit sequence is not “clean”, it may make future
-developments more costly.
-
-
-Additional Guidelines on Commits
-++++++++++++++++++++++++++++++++
-
-Whole books could be written about that, here are some tips:
-
-- Commit messages are no substitute for in-code documentation.
-  The code should be understandable without commit messages,
-  commit messages are about explaining *changes*.
-
-- Focus on committing 1 logical change at a time.
-
-- See `this article
+- Focus on committing 1 logical change at a time. See `this article
   <https://github.com/erlang/otp/wiki/writing-good-commit-messages>`_
   on the subject.
 
 
 
-When Submitting your Pull Request
-*********************************
+Submitting a Pull Request
+*************************
 
 .. contents::
    :local:
 
 
-Filling-out the PR Title
-========================
-
-- Provide a concise and self-descriptive title.
-
-  Some terminology tips:
-
-  - When adding something, “add ...”
-
-  - When correcting a blatant issue, use “fixup ...”
-
-- You may “scope” the title using the applicable command name(s),
-  folder or other "module" as a prefix.
-
-  Examples:
-
-  - “*sct_testing: add ability to run tests in parallel*”
-  - “*documentation: sphinx: add a section about support*”
-
-- Do not include the applicable issue number(s) in the title.
+PR Title
+========
 
 The PR title is used to automatically generate the `Changelog
 <https://github.com/neuropoly/spinalcordtoolbox/blob/master/CHANGES.md>`_
-for each new release.
+for each new release, so please follow the following rules:
+
+- Provide a concise and self-descriptive title (see `Issue Title`_).
+
+- Do not include the applicable issue number in the title (do it in the `PR Body`_).
+
+- Do not include the function name (use a `PR Labels`_ instead).
 
 
-Filling-out the PR Body
-=======================
+PR Body
+=======
 
-- If the PR relates to open issue(s):
+- Describe what the PR is about, explain the approach and possible drawbacks.
+  Don't hesitate to repeat some of the text from the related issue
+  (easier to read than having to click on the link).
 
-  - Don't forget to indicate that you are fixing them, referring to their
-    number in the PR introduction (eg. “This PR fixes #1234”).
+- If the PR fixes issue(s), indicate it after your introduction:
+  ``Fixes #XXXX, Fixes #YYYY``.
+  Note: it is important to respect the syntax above so that the issue(s) will be closed upon merging the PR.
 
-    If the PR fixes several issues, please write it as follows:
-    “*Fixes #XXXX, Fixes #YYYY, Fixes #ZZZZ*”.
-
-    That syntax will allow to automatically close all the related
-    issues upon merging.
-
-    If the issue was opened by a non-core developer, you may elect to
-    not use the “fixes #id” syntax to avoid to close the corresponding
-    issue automatically, rather request the reporter to confirm
-    resolution then close.
-
-  - Review the issue according to our documentation in
-    `When Submitting an Issue`_.
+- Review the issue according to our documentation in
+  `When Submitting an Issue`_.
 
 
-- Explain the benefit of merging the PR.
+PR Labels
+=========
 
-- Explain the approach and possible drawbacks.
+You **must** add Labels to PRs, as these are used to automatically generate Changelog:
 
-  It does not hurt to duplicate/rephrase text coming from the PR commit messages.
+- Choose **one** label that describes the
+  `category <https://github.com/neuropoly/spinalcordtoolbox/wiki/Label-definition#category>`_
+  (white font over purple background).
 
-- The PR description is no substitute for the commit descriptions.
+- Choose one or multiple labels corresponding to the SCT functions that are mainly affected by the PR (black font over
+  light purple background).
 
-  Accessing github should not be necessary to figure out that the
-  changes brought by a commit are useful.
-
-
-Other PR Fields
-===============
-
-- Take a second look at the commit titles and sequence under the “commits” tab.
-
-  You might notice issues.
-
-- Take a second look at the code changes under “files changed” tab.
-
-  You might notice issues.
+`Here <https://github.com/neuropoly/spinalcordtoolbox/pull/1637>`_ is an example of PR with proper labels and
+description.
 
 
-- Continuous Integration tests
+Continuous Integration
+======================
 
-  The PR can't be merged if the Travis build hasn't succeeded, so
-  that's that.
+The PR can't be merged if the Travis build hasn't succeeded. If you are familiar with it, consult the Travis test
+results and check for possibility of allowed failures.
 
-  If you are familiar with it, consult the Travis test results
-  and check for possibility of allowed failures.
 
-- Reviewers
+Reviewers
+=========
 
-  Any changes submitted for inclusion to the master branch will have
+- Any changes submitted for inclusion to the master branch will have
   to go through a `review
   <https://help.github.com/articles/about-pull-request-reviews/>`_.
 
-  Only request a review when you deem the PR as “good to go”.
+- Only request a review when you deem the PR as “good to go”. If the PR is not ready for review, add "(WIP)" at the
+  beginning of the title.
 
-  Github may suggest you to add particular reviewers to your PR.
+- Github may suggest you to add particular reviewers to your PR.
   If that's the case and you don't know better, add all of these suggestions.
-
   The reviewers will be notified when you add them.
-
-- SCT Core Developers must add **Labels** to issues, external developers
-  should try to add them.
-
-  To help assigning reviewers and organizing the Changelog, add labels
-  that describe the `category <https://github.com/neuropoly/spinalcordtoolbox/wiki/Label-definition#issue-category>`_
-  and type of the change.
-  A change can have multiple types if it is appropriate but **it can only have one
-  category**.
-
-  `Here <https://github.com/neuropoly/spinalcordtoolbox/pull/1637>`_
-  is an example of PR with proper labels and description.
-
-
-After Submitting a PR
-*********************
-
-Consider that:
-
-- Your collaboration may be requested as part of the PR review process.
-
-- Keep in mind that as the author of a contribution in an free
-  software project, you might be contacted about it in the future.
