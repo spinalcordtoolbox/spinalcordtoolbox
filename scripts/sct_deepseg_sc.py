@@ -469,11 +469,19 @@ def find_centerline(algo, image_fname, path_sct, contrast_type, brain_bool, fold
                                         dilation_layers=dct_params_ctr[contrast_type]['dilation_layers'])
         ctr_model.load_weights(ctr_model_fname)
 
+        sct.log.info("Resample the image to 0.5 mm isotropic resolution...")
+        fname_res = sct.add_suffix(image_fname, '_resampled')
+        input_resolution = Image(image_fname).dim[4:7]
+        new_resolution = 'x'.join(['0.5', '0.5', str(input_resolution[2])])
+
+        spinalcordtoolbox.resample.nipy_resample.resample_file(image_fname, fname_res, new_resolution,
+                                                               'mm', 'linear', verbose=0)
+
         # compute the heatmap
         fname_heatmap = sct.add_suffix(image_fname, "_heatmap")
         img_filename = ''.join(sct.extract_fname(fname_heatmap)[:2])
         fname_heatmap_nii = img_filename + '.nii'
-        z_max = heatmap(filename_in=image_fname,
+        z_max = heatmap(filename_in=fname_res,
                         filename_out=fname_heatmap_nii,
                         model=ctr_model,
                         patch_shape=dct_patch_ctr[contrast_type]['size'],
@@ -492,27 +500,33 @@ def find_centerline(algo, image_fname, path_sct, contrast_type, brain_bool, fold
         centerline_filename = sct.add_suffix(image_fname, "_ctr")
         fname_labels_viewer = _call_viewer_centerline(fname_in=image_fname)
         centerline_filename = extract_centerline(fname_labels_viewer, remove_temp_files=True, algo_fitting='nurbs', nurbs_pts_number=8000)
-
     elif algo == 'manual':
         centerline_filename = sct.add_suffix(image_fname, "_ctr")
         image_manual_centerline = Image(centerline_fname)
         # Re-orient and Re-sample the manual centerline
         image_centerline_reoriented = msct_image.change_orientation(image_manual_centerline, 'RPI').save(centerline_filename)
-        input_resolution = image_centerline_reoriented.dim[4:7]
-        new_resolution = 'x'.join(['0.5', '0.5', str(input_resolution[2])])
-        spinalcordtoolbox.resample.nipy_resample.resample_file(centerline_filename, centerline_filename, new_resolution,
-                                                           'mm', 'linear', verbose=0)
-
     else:
         sct.log.error('The parameter "-centerline" is incorrect. Please try again.')
         sys.exit(1)
+
+    if algo != 'cnn':
+        sct.log.info("Resample the image to 0.5 mm isotropic resolution...")
+        fname_res = sct.add_suffix(image_fname, '_resampled')
+        input_resolution = Image(image_fname).dim[4:7]
+        new_resolution = 'x'.join(['0.5', '0.5', str(input_resolution[2])])
+
+        spinalcordtoolbox.resample.nipy_resample.resample_file(image_fname, fname_res, new_resolution,
+                                                               'mm', 'linear', verbose=0)
+
+        spinalcordtoolbox.resample.nipy_resample.resample_file(centerline_filename, centerline_filename, new_resolution,
+                                                           'mm', 'linear', verbose=0)
 
     if bool_2d:
         from sct_image import split_data
         im_split_lst = split_data(Image(centerline_filename), dim=2)
         im_split_lst[0].save(centerline_filename)
-
-    return centerline_filename
+    print Image(fname_res).dim[4:7], Image(centerline_filename).dim[4:7]
+    return fname_res, centerline_filename
 
 
 def _normalize_data(data, mean, std):
@@ -660,26 +674,19 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, ctr_
         im_orient = im_2orient
         sct.copy(fname_image_tmp, fname_orient)
 
-    # resampling RPI image
-    sct.log.info("Resample the image to 0.5 mm isotropic resolution...")
-    fname_res = sct.add_suffix(fname_orient, '_resampled')
-    im_2res = im_orient
-    input_resolution = im_2res.dim[4:7]
-    new_resolution = 'x'.join(['0.5', '0.5', str(input_resolution[2])])
-    spinalcordtoolbox.resample.nipy_resample.resample_file(fname_orient, fname_res, new_resolution,
-                                                           'mm', 'linear', verbose=0)
+    input_resolution = im_orient.dim[4:7]
 
     # find the spinal cord centerline - execute OptiC binary
     sct.log.info("Finding the spinal cord centerline...")
-    centerline_filename = find_centerline(algo=ctr_algo,
-                                          image_fname=fname_res,
-                                          path_sct=path_sct,
-                                          contrast_type=contrast_type,
-                                          brain_bool=brain_bool,
-                                          folder_output=tmp_folder_path,
-                                          remove_temp_files=remove_temp_files,
-                                          centerline_fname=file_ctr)
-    
+    fname_res, centerline_filename = find_centerline(algo=ctr_algo,
+                                              image_fname=fname_orient,
+                                              path_sct=path_sct,
+                                              contrast_type=contrast_type,
+                                              brain_bool=brain_bool,
+                                              folder_output=tmp_folder_path,
+                                              remove_temp_files=remove_temp_files,
+                                              centerline_fname=file_ctr)
+
     # crop image around the spinal cord centerline
     sct.log.info("Cropping the image around the spinal cord...")
     fname_crop = sct.add_suffix(fname_res, '_crop')
