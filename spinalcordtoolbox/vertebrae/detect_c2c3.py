@@ -27,6 +27,10 @@ def detect_c2c3(nii_im, nii_seg, contrast, verbose=1):
     :param verbose:
     :return:
     """
+    # path to the pmj detector
+    path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
+    path_model = os.path.join(path_sct, 'data', 'c2c3_disc_models', '{}_model'.format(contrast))
+
     orientation_init = nii_im.orientation
 
     # Flatten sagittal
@@ -47,7 +51,7 @@ def detect_c2c3(nii_im, nii_seg, contrast, verbose=1):
     sct.printv('Run C2-C3 detector...', verbose)
     os.environ["FSLOUTPUTTYPE"] = "NIFTI_PAIR"
     cmd_detection = 'isct_spine_detect -ctype=dpdt "%s" "%s" "%s"' % \
-                    (PATH_MODEL.split('.yml')[0], 'data_midSlice', 'data_midSlice_pred')
+                    (path_model, 'data_midSlice', 'data_midSlice_pred')
     os.system(cmd_detection)
     pred = nib.load('data_midSlice_pred_svm.hdr').get_data()
 
