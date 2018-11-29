@@ -50,7 +50,7 @@ def detect_c2c3(nii_im, nii_seg, contrast, verbose=1):
     os.environ["FSLOUTPUTTYPE"] = "NIFTI_PAIR"
     cmd_detection = 'isct_spine_detect -ctype=dpdt "%s" "%s" "%s"' % \
                     (path_model, 'data_midSlice', 'data_midSlice_pred')
-    os.system(cmd_detection)
+    sct.run(cmd_detection, verbose=0)
     pred = nib.load('data_midSlice_pred_svm.hdr').get_data()
 
     # Create mask along centerline
