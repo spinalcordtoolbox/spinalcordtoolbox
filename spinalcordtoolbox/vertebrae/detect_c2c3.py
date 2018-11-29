@@ -39,6 +39,13 @@ def detect_c2c3(nii_im, nii_seg, contrast, verbose=1):
     nii_im = flatten_sagittal(nii_im, nii_seg, centerline_fitting='hanning', verbose=verbose)
     nii_seg_flat = flatten_sagittal(nii_seg, nii_seg, centerline_fitting='hanning', verbose=verbose)
 
+    # create temporary folder with intermediate results
+    sct.log.info("Creating temporary folder...")
+    file_fname = os.path.basename(fname_image)
+    tmp_folder = sct.TempFolder()
+    tmp_folder_path = tmp_folder.get_path()
+    tmp_folder.chdir()
+
     # Extract mid-slice
     nii_im.change_orientation('PIR')
     nii_seg_flat.change_orientation('PIR')
@@ -47,7 +54,7 @@ def detect_c2c3(nii_im, nii_seg, contrast, verbose=1):
     midSlice_seg = nii_seg_flat.data[:, :, mid_RL]
     nii_midSlice = msct_image.zeros_like(nii_im)
     nii_midSlice.data = midSlice
-    nii_midSlice.save('data_midSlice.nii')
+    nii_midSlice.save(os.path.join(tmp_folder_path, 'data_midSlice.nii'))
 
     # Run detection
     sct.printv('Run C2-C3 detector...', verbose)
@@ -55,7 +62,7 @@ def detect_c2c3(nii_im, nii_seg, contrast, verbose=1):
     cmd_detection = 'isct_spine_detect -ctype=dpdt "%s" "%s" "%s"' % \
                     (path_model, 'data_midSlice', 'data_midSlice_pred')
     sct.run(cmd_detection, verbose=0)
-    pred = nib.load('data_midSlice_pred_svm.hdr').get_data()
+    pred = nib.load(os.path.join(tmp_folder_path, 'data_midSlice_pred_svm.hdr')).get_data()
 
     # Create mask along centerline
     midSlice_mask = np.zeros(midSlice_seg.shape)
@@ -82,9 +89,9 @@ def detect_c2c3(nii_im, nii_seg, contrast, verbose=1):
         sct.printv('C2-C3 not detected...', verbose)
 
     # remove temporary files
-    sct.rm('data_midSlice.nii')
-    sct.rm('data_midSlice_pred_svm.hdr')
-    sct.rm('data_midSlice_pred_svm.img')
+    tmp_folder.chdir_undo()
+    sct.log.info("Remove temporary files...")
+    tmp_folder.cleanup()
 
     nii_c2c3.change_orientation(orientation_init)
     return nii_c2c3
