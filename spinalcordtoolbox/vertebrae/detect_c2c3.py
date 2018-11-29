@@ -16,7 +16,7 @@ from scipy.ndimage.measurements import center_of_mass
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image, zeros_like
 
-PATH_MODEL = '/home/charley/code/c2c3_disc/detect_c2c3/model_c2c3_20181117.yml'
+PATH_MODEL = '/home/charley/Téléchargements/20181128_model_c2c3_t1.yml'
 
 def detect_c2c3(nii_im, nii_seg, contrast, verbose=1):
     """
@@ -31,14 +31,14 @@ def detect_c2c3(nii_im, nii_seg, contrast, verbose=1):
 
     # Flatten sagittal
     nii_im = flatten_sagittal(nii_im, nii_seg, centerline_fitting='hanning', verbose=verbose)
-    nii_seg = flatten_sagittal(nii_seg, nii_seg, centerline_fitting='hanning', verbose=verbose)
+    nii_seg_flat = flatten_sagittal(nii_seg, nii_seg, centerline_fitting='hanning', verbose=verbose)
 
     # Extract mid-slice
     nii_im.change_orientation('PIR')
-    nii_seg.change_orientation('PIR')
+    nii_seg_flat.change_orientation('PIR')
     mid_RL = int(np.rint(nii_im.dim[2] * 1.0 / 2))
     midSlice = nii_im.data[:, :, mid_RL]
-    midSlice_seg = nii_seg.data[:, :, mid_RL]
+    midSlice_seg = nii_seg_flat.data[:, :, mid_RL]
     nii_midSlice = msct_image.zeros_like(nii_im)
     nii_midSlice.data = midSlice
     nii_midSlice.save('data_midSlice.nii')
@@ -64,11 +64,12 @@ def detect_c2c3(nii_im, nii_seg, contrast, verbose=1):
     pred[midSlice_mask == 0] = 0
 
     # assign label to voxel
-    nii_c2c3 = zeros_like(nii_seg)
+    nii_c2c3 = zeros_like(nii_seg_flat)
     if np.any(pred > 0):
         sct.printv('C2-C3 detected...', verbose)
         coord_max = np.where(pred == np.max(pred))
         pa_c2c3, is_c2c3 = coord_max[0][0], coord_max[1][0]
+        nii_seg.change_orientation('PIR')
         rl_c2c3 = int(np.rint(center_of_mass(nii_seg.data[:, is_c2c3, :])[1]))
         nii_c2c3.data[pa_c2c3, is_c2c3, rl_c2c3] = 3
     else:
