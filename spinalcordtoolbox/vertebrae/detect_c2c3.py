@@ -41,7 +41,6 @@ def detect_c2c3(nii_im, nii_seg, contrast, verbose=1):
 
     # create temporary folder with intermediate results
     sct.log.info("Creating temporary folder...")
-    file_fname = os.path.basename(fname_image)
     tmp_folder = sct.TempFolder()
     tmp_folder_path = tmp_folder.get_path()
     tmp_folder.chdir()
