@@ -16,8 +16,6 @@ from scipy.ndimage.measurements import center_of_mass
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image, zeros_like
 
-PATH_MODEL = '/home/charley/Téléchargements/20181128_model_c2c3_t1.yml'
-
 def detect_c2c3(nii_im, nii_seg, contrast, verbose=1):
     """
     Detect the posterior edge of C2-C3 disc.
