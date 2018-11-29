@@ -1,5 +1,9 @@
 # coding: utf-8
 # This is the interface API to detect the posterior edge of C2-C3 disc.
+#
+# The models have been trained as explained in (Gros et al. 2018, MIA, doi.org/10.1016/j.media.2017.12.001),
+# in section 2.1.2, except that the cords are not straightened for the C2-C3 disc detection task.
+#
 # Author: charley
 # Copyright (c) 2018 Polytechnique Montreal <www.neuro.polymtl.ca>
 # About the license: see the file LICENSE.TXT
