@@ -29,6 +29,8 @@ import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
 import sct_utils as sct
 from spinalcordtoolbox.metadata import get_file_label
+from spinalcordtoolbox.vertebrae.detect_c2c3 import detect_c2c3
+from spinalcordtoolbox.image import Image
 
 # get path of SCT
 path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
@@ -193,7 +195,7 @@ def main(args=None):
     initc2 = 'auto'
     fname_initlabel = ''
     file_labelz = 'labelz.nii.gz'
-    initauto = False
+    # initauto = False
     param = Param()
 
     # check user arguments
@@ -268,11 +270,24 @@ def main(args=None):
         # recent version of SCT it is defined as "3". Therefore, when asking the user to define a label, we point to the
         # new definition of labels (i.e., C2-C3 = 3).
         sct_label_utils.main(['-i', fname_initlabel, '-add', '-1', '-o', fname_labelz])
-        # dilate label so that it is not lost when applying warping
-        import sct_maths
-        sct_maths.main(['-i', fname_labelz, '-dilate', '3', '-o', fname_labelz])
     else:
-        initauto = True
+        # automatically finds C2-C3 disc
+        im_data = Image('data.nii')
+        im_seg = Image('segmentation.nii.gz')
+        im_label_c2c3 = detect_c2c3(im_data, im_seg, contrast)
+        ind_label = np.where(im_label_c2c3.data)
+        if not np.size(ind_label) == 0:
+            # subtract "1" to label value because due to legacy, in this code the disc C2-C3 has value "2", whereas in the
+            # recent version of SCT it is defined as "3".
+            im_label_c2c3.data[ind_label] = 2
+        else:
+            sct.printv('Automatic C2-C3 detection failed. Please run the function with flag -initc2', 1, 'error')
+        im_label_c2c3.save(fname_labelz)
+        # initauto = True
+
+    # dilate label so it is not lost when applying warping
+    import sct_maths
+    sct_maths.main(['-i', fname_labelz, '-dilate', '3', '-o', fname_labelz])
 
     # Straighten spinal cord
     sct.printv('\nStraighten spinal cord...', verbose)
@@ -307,16 +322,16 @@ def main(args=None):
     # Threshold segmentation at 0.5
     sct.run(['sct_maths', '-i', 'segmentation_straight.nii.gz', '-thr', '0.5', '-o', 'segmentation_straight.nii.gz'], verbose)
 
-    if initauto:
-        init_disc = []
-    else:
-        # Apply straightening to z-label
-        sct.printv('\nAnd apply straightening to label...', verbose)
-        sct.run(['sct_apply_transfo', '-i', 'labelz.nii.gz', '-d', 'data_straightr.nii', '-w', 'warp_curve2straight.nii.gz', '-o', 'labelz_straight.nii.gz', '-x', 'nn'], verbose)
-        # get z value and disk value to initialize labeling
-        sct.printv('\nGet z and disc values from straight label...', verbose)
-        init_disc = get_z_and_disc_values_from_label('labelz_straight.nii.gz')
-        sct.printv('.. ' + str(init_disc), verbose)
+    # if initauto:
+    #     init_disc = []
+    # else:
+    # Apply straightening to z-label
+    sct.printv('\nAnd apply straightening to label...', verbose)
+    sct.run(['sct_apply_transfo', '-i', file_labelz, '-d', 'data_straightr.nii', '-w', 'warp_curve2straight.nii.gz', '-o', 'labelz_straight.nii.gz', '-x', 'nn'], verbose)
+    # get z value and disk value to initialize labeling
+    sct.printv('\nGet z and disc values from straight label...', verbose)
+    init_disc = get_z_and_disc_values_from_label('labelz_straight.nii.gz')
+    sct.printv('.. ' + str(init_disc), verbose)
 
     # denoise data
     if denoise:
