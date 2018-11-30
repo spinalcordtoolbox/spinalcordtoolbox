@@ -888,7 +888,7 @@ def estimate_metric_within_tract(data, labels, method, verbose, clustered_labels
     nb_labels = len(labels)  # number of labels
 
     # if user asks for binary regions, binarize atlas
-    if method == 'bin':
+    if method == 'bin' or method == 'max':
         for i in range(0, nb_labels):
             labels[i][labels[i] < 0.5] = 0
             labels[i][labels[i] >= 0.5] = 1
@@ -1011,11 +1011,16 @@ def estimate_metric_within_tract(data, labels, method, verbose, clustered_labels
                 metric_mean[i_label] = 0
                 metric_std[i_label] = 0
             else:
-                # estimate the weighted average
-                metric_mean[i_label] = sum(data1d * labels2d[i_label, :]) / sum(labels2d[i_label, :])
-                # estimate the biased weighted standard deviation
-                metric_std[i_label] = np.sqrt(
-                    sum(labels2d[i_label, :] * (data1d - metric_mean[i_label]) ** 2) / sum(labels2d[i_label, :]))
+                if method == 'max':
+                    # just take the max within the mask
+                    metric_mean[i_label] = max(data1d * labels2d[i_label, :])
+                    metric_std[i_label] = 0  # set to 0, although this value is irrelevant here
+                else:
+                    # estimate the weighted average
+                    metric_mean[i_label] = sum(data1d * labels2d[i_label, :]) / sum(labels2d[i_label, :])
+                    # estimate the biased weighted standard deviation
+                    metric_std[i_label] = np.sqrt(
+                        sum(labels2d[i_label, :] * (data1d - metric_mean[i_label]) ** 2) / sum(labels2d[i_label, :]))
 
     return metric_mean, metric_std
 
