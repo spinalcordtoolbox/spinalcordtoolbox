@@ -20,6 +20,7 @@ from scipy.ndimage.measurements import center_of_mass
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image, zeros_like
 
+
 def detect_c2c3(nii_im, nii_seg, contrast, verbose=1):
     """
     Detect the posterior edge of C2-C3 disc.
@@ -42,7 +43,6 @@ def detect_c2c3(nii_im, nii_seg, contrast, verbose=1):
     # create temporary folder with intermediate results
     sct.log.info("Creating temporary folder...")
     tmp_folder = sct.TempFolder()
-    tmp_folder_path = tmp_folder.get_path()
     tmp_folder.chdir()
 
     # Extract mid-slice
@@ -53,15 +53,17 @@ def detect_c2c3(nii_im, nii_seg, contrast, verbose=1):
     midSlice_seg = nii_seg_flat.data[:, :, mid_RL]
     nii_midSlice = msct_image.zeros_like(nii_im)
     nii_midSlice.data = midSlice
-    nii_midSlice.save(os.path.join(tmp_folder_path, 'data_midSlice.nii'))
+    nii_midSlice.save('data_midSlice.nii')
 
     # Run detection
     sct.printv('Run C2-C3 detector...', verbose)
     os.environ["FSLOUTPUTTYPE"] = "NIFTI_PAIR"
     cmd_detection = 'isct_spine_detect -ctype=dpdt "%s" "%s" "%s"' % \
                     (path_model, 'data_midSlice', 'data_midSlice_pred')
-    sct.run(cmd_detection, verbose=0)
-    pred = nib.load(os.path.join(tmp_folder_path, 'data_midSlice_pred_svm.hdr')).get_data()
+    sct.run(cmd_detection, verbose=0, raise_exception=False)
+
+    # sct.run(cmd_detection, verbose=0)
+    pred = nib.load('data_midSlice_pred_svm.hdr').get_data()
 
     # Create mask along centerline
     midSlice_mask = np.zeros(midSlice_seg.shape)
