@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 #########################################################################################
 #
-# Detect vertebral levels from centerline.
-# Tips to run the function with init txt file as input:
-# sct_label_vertebrae -i t2.nii.gz -s t2_seg_manual.nii.gz  "$(< init_label_vertebrae.txt)" -v 2
+# Detect vertebral levels using cord centerline (or segmentation).
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
@@ -12,15 +10,15 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-# TODO: write label C2-C3 when user uses viewer
 # TODO: find automatically if -c =t1 or t2 (using dilated seg)
 # TODO: address the case when there is more than one max correlation
 
 from __future__ import division, absolute_import
 
-import sys, io, os
+import sys, os
 
 import numpy as np
+import sct_maths
 import scipy.ndimage.measurements
 
 from sct_maths import mutual_information
@@ -30,7 +28,6 @@ from spinalcordtoolbox.image import Image
 import sct_utils as sct
 from spinalcordtoolbox.metadata import get_file_label
 from spinalcordtoolbox.vertebrae.detect_c2c3 import detect_c2c3
-from spinalcordtoolbox.image import Image
 
 # get path of SCT
 path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
@@ -77,8 +74,6 @@ class Param:
                 setattr(self, obj[0], int(obj[1]))
 
 
-# PARSER
-# ==========================================================================================
 def get_parser():
     # initialize default param
     param_default = Param()
@@ -185,8 +180,6 @@ sct_label_vertebrae -i t2.nii.gz -s t2_seg_manual.nii.gz  "$(< init_label_verteb
     return parser
 
 
-# MAIN
-# ==========================================================================================
 def main(args=None):
 
     # initializations
@@ -195,7 +188,6 @@ def main(args=None):
     initc2 = 'auto'
     fname_initlabel = ''
     file_labelz = 'labelz.nii.gz'
-    # initauto = False
     param = Param()
 
     # check user arguments
@@ -221,7 +213,6 @@ def main(args=None):
         initcenter = arguments['-initcenter']
     # if user provided text file, parse and overwrite arguments
     if '-initfile' in arguments:
-        # open file
         file = open(arguments['-initfile'], 'r')
         initfile = ' ' + file.read().replace('\n', '')
         arg_initfile = initfile.split(' ')
@@ -283,10 +274,8 @@ def main(args=None):
         else:
             sct.printv('Automatic C2-C3 detection failed. Please run the function with flag -initc2', 1, 'error')
         im_label_c2c3.save(fname_labelz)
-        # initauto = True
 
     # dilate label so it is not lost when applying warping
-    import sct_maths
     sct_maths.main(['-i', fname_labelz, '-dilate', '3', '-o', fname_labelz])
 
     # Straighten spinal cord
@@ -322,9 +311,6 @@ def main(args=None):
     # Threshold segmentation at 0.5
     sct.run(['sct_maths', '-i', 'segmentation_straight.nii.gz', '-thr', '0.5', '-o', 'segmentation_straight.nii.gz'], verbose)
 
-    # if initauto:
-    #     init_disc = []
-    # else:
     # Apply straightening to z-label
     sct.printv('\nAnd apply straightening to label...', verbose)
     sct.run(['sct_apply_transfo', '-i', file_labelz, '-d', 'data_straightr.nii', '-w', 'warp_curve2straight.nii.gz', '-o', 'labelz_straight.nii.gz', '-x', 'nn'], verbose)
@@ -439,8 +425,6 @@ def generate_qc(fn_in, fn_labeled, args, path_qc):
     )
 
 
-# Detect vertebral levels
-# ==========================================================================================
 def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1, path_template='', initc2='auto', path_output='../'):
     """
     Find intervertebral discs in straightened image using template matching
@@ -558,8 +542,6 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     # assign initial z and disc
     current_z = init_disc[0]
     current_disc = init_disc[1]
-    # mean_distance = mean_distance * pz
-    # mean_distance_real = np.zeros(len(mean_distance))
     # create list for z and disc
     list_disc_z = []
     list_disc_value = []
@@ -615,8 +597,6 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
             correcting_factor = 1
         # update list_distance specific for the subject
         list_distance = [int(np.round(list_distance_template[i] * correcting_factor)) for i in range(len(list_distance_template))]
-        # updated average_disc_distance (in case it is needed)
-        # average_disc_distance = int(np.round(np.mean(list_distance)))
 
         # assign new current_z and disc value
         if direction == 'superior':
@@ -636,7 +616,8 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
             current_z = current_z - approx_distance_to_next_disc
             current_disc = current_disc + 1
 
-        # if current_z is larger than searching zone, switch direction (and start from initial z minus approximate distance from updated template distance)
+        # if current_z is larger than searching zone, switch direction (and start from initial z minus approximate
+        # distance from updated template distance)
         if current_z >= nz or current_disc == 0:
             sct.printv('.. Switching to inferior direction.', verbose)
             direction = 'inferior'
@@ -645,11 +626,6 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
         # if current_z is lower than searching zone, stop searching
         if current_z <= 0:
             search_next_disc = False
-
-        # if verbose == 2:
-        #     # close figures
-        #     plt.figure(fig_corr), plt.close()
-        #     plt.figure(fig_pattern), plt.close()
 
     # if upper disc is not 1, add disc above top disc based on mean_distance_adjusted
     upper_disc = min(list_disc_value)
@@ -675,8 +651,6 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
         # plt.close()
 
 
-# Create label
-# ==========================================================================================
 def create_label_z(fname_seg, z, value, fname_labelz='labelz.nii.gz'):
     """
     Create a label at coordinates x_center, y_center, z
@@ -702,8 +676,6 @@ def create_label_z(fname_seg, z, value, fname_labelz='labelz.nii.gz'):
     return fname_labelz
 
 
-# Get z and label value
-# ==========================================================================================
 def get_z_and_disc_values_from_label(fname_label):
     """
     Find z-value and label-value based on labeled image in RPI orientation
@@ -719,8 +691,6 @@ def get_z_and_disc_values_from_label(fname_label):
     return [z_label, value_label]
 
 
-# Clean labeled segmentation
-# ==========================================================================================
 def clean_labeled_segmentation(fname_labeled_seg, fname_seg, fname_labeled_seg_new):
     """
     Clean labeled segmentation by:
@@ -967,8 +937,6 @@ def label_discs(fname_seg_labeled, verbose=1):
     im_seg_labeled.change_orientation(orientation_native).save(sct.add_suffix(fname_seg_labeled, '_disc'))
 
 
-# START PROGRAM
-# ==========================================================================================
 if __name__ == "__main__":
     sct.init_sct()
     # call main function
