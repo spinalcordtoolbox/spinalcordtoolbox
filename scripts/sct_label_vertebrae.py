@@ -20,6 +20,7 @@ import sys, os
 import numpy as np
 import sct_maths
 import scipy.ndimage.measurements
+from scipy.ndimage.filters import gaussian_filter
 
 from sct_maths import mutual_information
 from msct_parser import Parser
@@ -47,11 +48,6 @@ class Param:
     # The constructor
     def __init__(self):
         # self.path_template = os.path.join(path_sct, 'data', 'template')
-        self.shift_AP_initc2 = 35
-        self.size_AP_initc2 = 9  # 15
-        self.shift_IS_initc2 = 15  # 15
-        self.size_IS_initc2 = 30  # 30
-        self.size_RL_initc2 = 1
         self.shift_AP = 32  # 0#32  # shift the centerline towards the spine (in voxel).
         self.size_AP = 11  # 41#11  # window size in AP direction (=y) (in voxel)
         self.size_RL = 1  # 1 # window size in RL direction (=x) (in voxel)
@@ -79,10 +75,10 @@ def get_parser():
     param_default = Param()
     # parser initialisation
     parser = Parser(__file__)
-    parser.usage.set_description('''This function takes an anatomical image and its cord segmentation (binary file), and outputs the cord segmentation labeled with vertebral level. The algorithm requires an initialization (first disc) and then performs a disc search in the superior, then inferior direction, using template disc matching based on mutual information score.
-Tips: To run the function with init txt file that includes flags -initz/-initcenter:
-sct_label_vertebrae -i t2.nii.gz -s t2_seg_manual.nii.gz  "$(< init_label_vertebrae.txt)"
-''')
+    parser.usage.set_description('''This function takes an anatomical image and its cord segmentation (binary file), and outputs the cord segmentation labeled with vertebral level. The algorithm requires an initialization (first disc) and then performs a disc search in the superior, then inferior direction, using template disc matching based on mutual information score. 
+    Tips: To run the function with init txt file that includes flags -initz/-initcenter:
+    sct_label_vertebrae -i t2.nii.gz -s t2_seg_manual.nii.gz  "$(< init_label_vertebrae.txt)"
+    ''')
     parser.add_option(name="-i",
                       type_value="file",
                       description="input image.",
@@ -90,7 +86,7 @@ sct_label_vertebrae -i t2.nii.gz -s t2_seg_manual.nii.gz  "$(< init_label_verteb
                       example="t2.nii.gz")
     parser.add_option(name="-s",
                       type_value="file",
-                      description="Segmentation or centerline of the spinal cord.",
+                      description="Segmentation of the spinal cord.",
                       mandatory=True,
                       example="t2_seg.nii.gz")
     parser.add_option(name="-c",
@@ -144,11 +140,6 @@ sct_label_vertebrae -i t2.nii.gz -s t2_seg_manual.nii.gz  "$(< init_label_verteb
     parser.add_option(name="-param",
                       type_value=[[','], 'str'],
                       description="Advanced parameters. Assign value with \"=\"; Separate arguments with \",\"\n"
-                                  "shift_AP_initc2 [mm]: AP shift for finding C2 disc. Default=" + str(param_default.shift_AP_initc2) + ".\n"
-                                  "size_AP_initc2 [mm]: AP window size finding C2 disc. Default=" + str(param_default.size_AP_initc2) + ".\n"
-                                  "shift_IS_initc2 [mm]: IS shift for finding C2 disc. Default=" + str(param_default.shift_IS_initc2) + ".\n"
-                                  "size_IS_initc2 [mm]: IS window size finding C2 disc. Default=" + str(param_default.size_IS_initc2) + ".\n"
-                                  "size_RL_initc2 [mm]: RL shift for size finding C2 disc. Default=" + str(param_default.size_RL_initc2) + ".\n"
                                   "shift_AP [mm]: AP shift of centerline for disc search. Default=" + str(param_default.shift_AP) + ".\n"
                                   "size_AP [mm]: AP window size for disc search. Default=" + str(param_default.size_AP) + ".\n"
                                   "size_RL [mm]: RL window size for disc search. Default=" + str(param_default.size_RL) + ".\n"
@@ -428,9 +419,9 @@ def generate_qc(fn_in, fn_labeled, args, path_qc):
 def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1, path_template='', initc2='auto', path_output='../'):
     """
     Find intervertebral discs in straightened image using template matching
-    :param fname:
-    :param fname_seg:
-    :param contrast:
+    :param fname: file name of straigthened spinal cord
+    :param fname_seg: file name of straigthened spinal cord segmentation
+    :param contrast: t1 or t2
     :param param:  advanced parameters
     :param init_disc:
     :param verbose:
@@ -441,7 +432,7 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     sct.printv('\nLook for template...', verbose)
     sct.printv('Path template: ' + path_template, verbose)
 
-    # adjust file names if MNI-Poly-AMU template is used
+    # adjust file names if MNI-Poly-AMU template is used (by default: PAM50)
     fname_level = get_file_label(os.path.join(path_template, 'template'), 'vertebral labeling', output='filewithpath')
     fname_template = get_file_label(os.path.join(path_template, 'template'), contrast.upper() + '-weighted template', output='filewithpath')
 
@@ -455,7 +446,6 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     data = im_input.data
 
     # smooth data
-    from scipy.ndimage.filters import gaussian_filter
     data = gaussian_filter(data, param.smooth_factor, output=None, mode="reflect")
 
     # get dimension of src
@@ -488,17 +478,6 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     list_distance_template = (
         np.diff(list_disc_z_template) * (-1)).tolist()  # multiplies by -1 to get positive distances
     sct.printv('Distances between discs (in voxel): ' + str(list_distance_template), verbose)
-
-    # if automatic mode, find C2/C3 disc
-    if init_disc == [] and initc2 == 'auto':
-        sct.printv('\nDetect C2/C3 disk...', verbose)
-        zrange = list(range(0, nz))
-        ind_c2 = list_disc_value_template.index(2)
-        z_peak = compute_corr_3d(data, data_template, x=xc, xshift=0, xsize=param.size_RL_initc2,
-                                 y=yc, yshift=param.shift_AP_initc2, ysize=param.size_AP_initc2,
-                                 z=0, zshift=param.shift_IS_initc2, zsize=param.size_IS_initc2,
-                                 xtarget=xct, ytarget=yct, ztarget=list_disc_z_template[ind_c2], zrange=zrange, verbose=verbose, save_suffix='_initC2', gaussian_std=param.gaussian_std, path_output=path_output)
-        init_disc = [z_peak, 2]
 
     # if manual mode, open viewer for user to click on C2/C3 disc
     if init_disc == [] and initc2 == 'manual':
