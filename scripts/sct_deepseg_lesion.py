@@ -213,26 +213,19 @@ def deep_segmentation_MSlesion(fname_image, contrast_type, output_folder, ctr_al
         im_orient = im_2orient
         sct.copy(fname_image_tmp, fname_orient)
 
-    # resampling RPI image
-    sct.log.info("\nResample the image to 0.5 mm isotropic resolution...")
-    fname_res = sct.add_suffix(fname_orient, '_resampled')
-    im_2res = im_orient
-    input_resolution = im_2res.dim[4:7]
-    new_resolution = 'x'.join(['0.5', '0.5', str(input_resolution[2])])
-    spinalcordtoolbox.resample.nipy_resample.resample_file(fname_orient, fname_res, new_resolution,
-                                                           'mm', 'linear', verbose=0)
+    input_resolution = im_orient.dim[4:7]
 
     # find the spinal cord centerline - execute OptiC binary
     sct.log.info("\nFinding the spinal cord centerline...")
     contrast_type_ctr = contrast_type.split('_')[0]
-    centerline_filename = find_centerline(algo=ctr_algo,
-                                      image_fname=fname_res,
-                                      path_sct=path_sct,
-                                      contrast_type=contrast_type_ctr,
-                                      brain_bool=brain_bool,
-                                      folder_output=tmp_folder_path,
-                                      remove_temp_files=remove_temp_files,
-                                      centerline_fname=file_ctr)
+    fname_res, centerline_filename = find_centerline(algo=ctr_algo,
+                                                    image_fname=fname_orient,
+                                                    path_sct=path_sct,
+                                                    contrast_type=contrast_type_ctr,
+                                                    brain_bool=brain_bool,
+                                                    folder_output=tmp_folder_path,
+                                                    remove_temp_files=remove_temp_files,
+                                                    centerline_fname=file_ctr)
 
     # crop image around the spinal cord centerline
     sct.log.info("\nCropping the image around the spinal cord...")
