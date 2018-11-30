@@ -525,7 +525,7 @@ def find_centerline(algo, image_fname, path_sct, contrast_type, brain_bool, fold
         from sct_image import split_data
         im_split_lst = split_data(Image(centerline_filename), dim=2)
         im_split_lst[0].save(centerline_filename)
-    print Image(fname_res).dim[4:7], Image(centerline_filename).dim[4:7]
+
     return fname_res, centerline_filename
 
 
