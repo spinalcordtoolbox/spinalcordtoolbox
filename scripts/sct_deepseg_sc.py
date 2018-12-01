@@ -854,14 +854,13 @@ def main():
     algo_config_stg += '\n\tDimension of the segmentation kernel convolutions: ' + kernel_size + '\n'
     sct.printv(algo_config_stg)
 
-    # fname_seg = deep_segmentation_spinalcord(fname_image, contrast_type, output_folder,
-    #                                         ctr_algo=ctr_algo, ctr_file=manual_centerline_fname,
-    #                                         brain_bool=brain_bool, kernel_size=kernel_size,
-    #                                         remove_temp_files=remove_temp_files, verbose=verbose)
+    fname_seg = deep_segmentation_spinalcord(fname_image, contrast_type, output_folder,
+                                            ctr_algo=ctr_algo, ctr_file=manual_centerline_fname,
+                                            brain_bool=brain_bool, kernel_size=kernel_size,
+                                            remove_temp_files=remove_temp_files, verbose=verbose)
 
     if path_qc is not None:
-        # generate_qc(fname_image, fname_seg, args, os.path.abspath(path_qc))
-        generate_qc(fname_image, 't2_seg.nii.gz', args, os.path.abspath(path_qc))
+        generate_qc(fname_image, fname_seg, args, os.path.abspath(path_qc))
 
     sct.display_viewer_syntax([fname_image, fname_seg], colormaps=['gray', 'red'], opacities=['', '0.7'])
 
