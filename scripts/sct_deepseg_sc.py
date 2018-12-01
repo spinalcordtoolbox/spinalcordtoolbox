@@ -775,14 +775,28 @@ def generate_qc(fn_in, fn_seg, args, path_qc):
     """Generate a QC entry allowing to quickly review the segmentation process."""
     import spinalcordtoolbox.reports.qc as qc
     import spinalcordtoolbox.reports.slice as qcslice
+    from spinalcordtoolbox.resample.nipy_resample import resample_file
 
+    # Resample to fixed resolution (see #2063)
+    tmp_folder = sct.TempFolder()
+    fn_in_r = os.path.join(tmp_folder.path_tmp, 'img_r.nii.gz')
+    # Orient to RPI and retrieve pixel size in IS direction (z)
+    im_fn = Image(fn_in).change_orientation('RPI').save(fn_in_r)
+    resample_file(fn_in_r, fn_in_r, '0.5x0.5x'+str(im_fn.dim[6]), 'mm', 'linear', 0)
+    fn_seg_r = os.path.join(tmp_folder.path_tmp, 'seg_r.nii.gz')
+    Image(fn_seg).change_orientation('RPI').save(fn_seg_r)
+    resample_file(fn_seg_r, fn_seg_r, '0.5x0.5x'+str(im_fn.dim[6]), 'mm', 'nn', 0)
+
+    # TODO: investigate the following issue further (Julien 2018-12-01):
+    # fn_in_r and fn_seg_r should be in nii.gz format, otherwise qcslice.Axial outputs an memmap instead of
+    # an array.
     qc.add_entry(
      src=fn_in,
      process="sct_deepseg_sc",
      args=args,
      path_qc=path_qc,
      plane='Axial',
-     qcslice=qcslice.Axial([Image(fn_in), Image(fn_seg)]),
+     qcslice=qcslice.Axial([Image(fn_in_r), Image(fn_seg_r)]),
      qcslice_operations=[qc.QcImage.listed_seg],
      qcslice_layout=lambda x: x.mosaic(),
     )
@@ -819,9 +833,9 @@ def main():
         output_folder = arguments["-ofolder"]
 
     if ctr_algo == 'manual' and "-file_centerline" not in args:
-		sct.log.warning('Please use the flag -file_centerline to indicate the centerline filename.')
-		sys.exit(1)
-    
+        sct.log.warning('Please use the flag -file_centerline to indicate the centerline filename.')
+        sys.exit(1)
+
     if "-file_centerline" in args:
         manual_centerline_fname = arguments["-file_centerline"]
         ctr_algo = 'manual'
@@ -847,6 +861,7 @@ def main():
 
     if path_qc is not None:
         generate_qc(fname_image, fname_seg, args, os.path.abspath(path_qc))
+        # generate_qc(fname_image, 't2_r_seg.nii.gz', args, os.path.abspath(path_qc))
 
     sct.display_viewer_syntax([fname_image, fname_seg], colormaps=['gray', 'red'], opacities=['', '0.7'])
 
