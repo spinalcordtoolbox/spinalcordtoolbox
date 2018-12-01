@@ -168,7 +168,7 @@ class QcImage(object):
             """
             self.qc_report.slice_name = sct_slice.get_name()
 
-            # consider only the first 2 slices
+            # Get the aspect ratio (height/width) based on pixel size. Consider only the first 2 slices.
             aspect_img, self.aspect_mask = sct_slice.aspect()[:2]
 
             self.qc_report.make_content_path()
@@ -393,6 +393,19 @@ def add_entry(src, process, args, path_qc, plane, background=None, foreground=No
               qcslice_layout=None,
               ):
     """
+    Starting point to QC report creation.
+
+    :param src: Path to input file (only used to populate report metadata)
+    :param process:
+    :param args:
+    :param path_qc:
+    :param plane:
+    :param background:
+    :param foreground:
+    :param qcslice: spinalcordtoolbox.reports.slice:Axial
+    :param qcslice_operations:
+    :param qcslice_layout:
+    :return:
     """
 
     qc_param = Params(src, process, args, plane, path_qc)
