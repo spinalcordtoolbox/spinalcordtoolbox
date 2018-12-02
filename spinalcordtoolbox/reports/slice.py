@@ -227,9 +227,6 @@ class Slice(object):
 
         nb_row = math.ceil(dim // nb_column) + 1
 
-        # Get shape of input image
-        length, width = self.get_slice(image.data, 1).shape
-
         # Compute the matrix size of the final mosaic image
         matrix_sz = (int(size * 2 * nb_row), int(size * 2 * nb_column))
 
