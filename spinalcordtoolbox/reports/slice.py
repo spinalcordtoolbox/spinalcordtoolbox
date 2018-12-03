@@ -297,7 +297,6 @@ class Axial(Slice):
         return self._axial_center(image)
 
 
-
 class Sagittal(Slice):
     """The sagittal representation of a slice"""
 

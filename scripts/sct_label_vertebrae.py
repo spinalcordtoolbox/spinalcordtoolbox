@@ -244,6 +244,12 @@ def main(args=None):
     denoise = int(arguments['-denoise'])
     laplacian = int(arguments['-laplacian'])
 
+    # Generate QC report  # JULIEN
+    if param.path_qc is not None:
+        path_qc = os.path.abspath(param.path_qc)
+        generate_qc(fname_in, sct.add_suffix(fname_seg, '_labeled'), args, path_qc)
+
+
     path_tmp = sct.tmp_create(basename="label_vertebrae", verbose=verbose)
 
     # Copying input data to tmp folder
@@ -416,14 +422,15 @@ def generate_qc(fn_in, fn_labeled, args, path_qc):
                     ax.text(x, y, label, color=color, clip_on=True)
 
     qc.add_entry(
-     src=fn_in,
-     process='sct_label_vertebrae',
-     args=args,
-     path_qc=path_qc,
-     plane='Sagittal',
-     qcslice=qcslice.Sagittal([Image(fn_in), Image(fn_labeled)]),
-     qcslice_operations=[label_vertebrae],
-     qcslice_layout=lambda x: x.single(),
+        src=fn_in,
+        process='sct_label_vertebrae',
+        args=args,
+        path_qc=path_qc,
+        plane='Sagittal',
+        dpi=100,
+        qcslice=qcslice.Sagittal([Image(fn_in), Image(fn_labeled)]),
+        qcslice_operations=[label_vertebrae],
+        qcslice_layout=lambda x: x.single(),
     )
 
 
