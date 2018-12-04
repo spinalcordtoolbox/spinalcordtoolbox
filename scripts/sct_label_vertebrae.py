@@ -75,7 +75,7 @@ def get_parser():
     param_default = Param()
     # parser initialisation
     parser = Parser(__file__)
-    parser.usage.set_description('''This function takes an anatomical image and its cord segmentation (binary file), and outputs the cord segmentation labeled with vertebral level. The algorithm requires an initialization (first disc) and then performs a disc search in the superior, then inferior direction, using template disc matching based on mutual information score. 
+    parser.usage.set_description('''This function takes an anatomical image and its cord segmentation (binary file), and outputs the cord segmentation labeled with vertebral level. The algorithm requires an initialization (first disc) and then performs a disc search in the superior, then inferior direction, using template disc matching based on mutual information score. The automatic method uses the module implemented in "spinalcordtoolbox/vertebrae/detect_c2c3.py" to detect the C2-C3 disc.
     Tips: To run the function with init txt file that includes flags -initz/-initcenter:
     sct_label_vertebrae -i t2.nii.gz -s t2_seg_manual.nii.gz  "$(< init_label_vertebrae.txt)"
     ''')
@@ -118,7 +118,7 @@ def get_parser():
                       mandatory=False)
     parser.add_option(name="-initlabel",
                       type_value='file',
-                      description='Initialize vertebral labeling by providing a nifti file that has a single disc label. An example of such file is a single voxel with value "3", which would be located at the posterior tip of C2-C3 disc. Such label file can be created using: sct_label_utils -i IMAGE_REF -create-viewer 3',
+                      description='Initialize vertebral labeling by providing a nifti file that has a single disc label. An example of such file is a single voxel with value "3", which would be located at the posterior tip of C2-C3 disc. Such label file can be created using: sct_label_utils -i IMAGE_REF -create-viewer 3 ; or by using the Python module "detect_c2c3" implemented in "spinalcordtoolbox/vertebrae/detect_c2c3.py".',
                       mandatory=False)
     parser.add_option(name="-ofolder",
                       type_value="folder_creation",
