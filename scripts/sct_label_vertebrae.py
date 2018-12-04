@@ -207,10 +207,6 @@ def main(args=None):
     fname_seg = os.path.abspath(arguments['-s'])
     contrast = arguments['-c']
     path_template = arguments['-t']
-    # if '-o' in arguments:
-    #     file_out = arguments["-o"]
-    # else:
-    #     file_out = ''
     if '-ofolder' in arguments:
         path_output = arguments['-ofolder']
     else:
@@ -243,12 +239,6 @@ def main(args=None):
     remove_temp_files = int(arguments['-r'])
     denoise = int(arguments['-denoise'])
     laplacian = int(arguments['-laplacian'])
-
-    # Generate QC report  # JULIEN
-    if param.path_qc is not None:
-        path_qc = os.path.abspath(param.path_qc)
-        generate_qc(fname_in, sct.add_suffix(fname_seg, '_labeled'), args, path_qc)
-
 
     path_tmp = sct.tmp_create(basename="label_vertebrae", verbose=verbose)
 
