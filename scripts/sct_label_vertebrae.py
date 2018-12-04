@@ -207,10 +207,6 @@ def main(args=None):
     fname_seg = os.path.abspath(arguments['-s'])
     contrast = arguments['-c']
     path_template = arguments['-t']
-    # if '-o' in arguments:
-    #     file_out = arguments["-o"]
-    # else:
-    #     file_out = ''
     if '-ofolder' in arguments:
         path_output = arguments['-ofolder']
     else:
@@ -416,14 +412,15 @@ def generate_qc(fn_in, fn_labeled, args, path_qc):
                     ax.text(x, y, label, color=color, clip_on=True)
 
     qc.add_entry(
-     src=fn_in,
-     process='sct_label_vertebrae',
-     args=args,
-     path_qc=path_qc,
-     plane='Sagittal',
-     qcslice=qcslice.Sagittal([Image(fn_in), Image(fn_labeled)]),
-     qcslice_operations=[label_vertebrae],
-     qcslice_layout=lambda x: x.single(),
+        src=fn_in,
+        process='sct_label_vertebrae',
+        args=args,
+        path_qc=path_qc,
+        plane='Sagittal',
+        dpi=100,
+        qcslice=qcslice.Sagittal([Image(fn_in), Image(fn_labeled)]),
+        qcslice_operations=[label_vertebrae],
+        qcslice_layout=lambda x: x.single(),
     )
 
 
