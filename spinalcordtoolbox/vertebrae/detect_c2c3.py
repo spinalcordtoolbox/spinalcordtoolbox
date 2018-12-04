@@ -4,6 +4,14 @@
 # The models have been trained as explained in (Gros et al. 2018, MIA, doi.org/10.1016/j.media.2017.12.001),
 # in section 2.1.2, except that the cords are not straightened for the C2-C3 disc detection task.
 #
+# To train a new model:
+# - Edit "$SCT_DIR/dev/detect_c2c3/config_file.py" according to your needs, then save the file.
+# - Run "source sct_launcher" in a terminal
+# - Run the script "$SCT_DIR/dev/detect_c2c3/train.py"
+#
+# To use this model when running the module "detect_c2c3" (herebelow) and "sct_label_vertebrae":
+# - Save the trained model in "$SCT_DIR/data/c2c3_disc_models/"
+#
 # Author: charley
 # Copyright (c) 2018 Polytechnique Montreal <www.neuro.polymtl.ca>
 # About the license: see the file LICENSE.TXT
