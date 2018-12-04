@@ -504,7 +504,7 @@ def find_centerline(algo, image_fname, path_sct, contrast_type, brain_bool, fold
         centerline_filename = sct.add_suffix(image_fname, "_ctr")
         image_manual_centerline = Image(centerline_fname)
         # Re-orient and Re-sample the manual centerline
-        image_centerline_reoriented = msct_image.change_orientation(image_manual_centerline, 'RPI').save(centerline_filename)
+        msct_image.change_orientation(image_manual_centerline, 'RPI').save(centerline_filename)
     else:
         sct.log.error('The parameter "-centerline" is incorrect. Please try again.')
         sys.exit(1)
