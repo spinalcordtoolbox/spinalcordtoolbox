@@ -9,6 +9,8 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+# TODO: Sort out the use of Image.hdr and Image.header --> they seem to carry duplicated information.
+
 from __future__ import division, absolute_import
 
 import sys, io, os, math, itertools, warnings
