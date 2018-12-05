@@ -112,7 +112,8 @@ def main(args=None):
                               'https://www.neuro.polymtl.ca/_media/downloads/sct/20180610_deepseg_sc_models.zip'],
         'deepseg_lesion_models': ['https://osf.io/eg7v9/?action=download',
                               'https://www.neuro.polymtl.ca/_media/downloads/sct/20180613_deepseg_lesion_models.zip'],
-        'c2c3_disc_models': ['https://www.neuro.polymtl.ca/_media/downloads/sct/20181129_c2c3_disc_models.zip']
+        'c2c3_disc_models': ['https://osf.io/fk79z/?action=download',
+                            'https://www.neuro.polymtl.ca/_media/downloads/sct/20181129_c2c3_disc_models.zip']
     }
 
     # Get parser info
