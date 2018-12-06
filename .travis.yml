@@ -21,6 +21,7 @@ matrix:
 #      python: 2.7 # Just to make travis's UI a bit prettier
 #      env: SCT_MINICONDA=2 SCT_VERBOSE_INSTALL=1 MPLBACKEND=Agg
     - os: linux
+      dist: xenial
       python: 2.7
       env: SCT_MINICONDA=2 MPLBACKEND=Agg
 #    - os: linux

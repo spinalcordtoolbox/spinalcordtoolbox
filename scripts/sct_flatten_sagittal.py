@@ -34,21 +34,12 @@ class Param:
         self.remove_temp_files = 1  # remove temporary files
         self.verbose = 1
 
-
-#=======================================================================================================================
-# main
-#=======================================================================================================================
-def main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, remove_temp_files, verbose):
-
-    # load input image
-    im_anat = Image(fname_anat)
+def flatten_sagittal(im_anat, im_centerline, centerline_fitting, verbose):
     # re-oriente to RPI
     orientation_native = im_anat.orientation
     im_anat.change_orientation("RPI")
+    im_centerline.change_orientation("RPI")
     nx, ny, nz, nt, px, py, pz, pt = im_anat.dim
-
-    # load centerline
-    im_centerline = Image(fname_centerline).change_orientation("RPI")
 
     # smooth centerline and return fitted coordinates in voxel space
     x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(
@@ -85,6 +76,21 @@ def main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, 
 
     # change back to native orientation
     im_anat_flattened.change_orientation(orientation_native)
+
+    return im_anat_flattened
+
+#=======================================================================================================================
+# main
+#=======================================================================================================================
+def main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, remove_temp_files, verbose):
+
+    # load input images
+    im_anat = Image(fname_anat)
+    im_centerline = Image(fname_centerline)
+
+    # flatten sagittal
+    im_anat_flattened = flatten_sagittal(im_anat, im_centerline, centerline_fitting, verbose)
+
     # save output
     fname_out = sct.add_suffix(fname_anat, '_flatten')
     im_anat_flattened.save(fname_out)
