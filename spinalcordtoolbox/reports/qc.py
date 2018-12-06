@@ -260,12 +260,14 @@ class Params(object):
         :param dest_folder: str: The absolute path of the QC root
         :param dpi: int: Output resolution of the image
         """
-        abs_input_path = os.path.dirname(os.path.abspath(input_file))
-        abs_input_path, contrast = os.path.split(abs_input_path)
+        path_in, file_in, ext_in = sct.extract_fname(os.path.abspath(input_file))
+        # abs_input_path = os.path.dirname(os.path.abspath(input_file))
+        abs_input_path, contrast = os.path.split(path_in)
         _, subject = os.path.split(abs_input_path)
         if isinstance(args, list):
             args = sct.list2cmdline(args)
 
+        self.fname_in = file_in+ext_in
         self.subject = subject
         self.cwd = os.getcwd()
         self.contrast = contrast
@@ -337,6 +339,7 @@ class QcReport(object):
             'command': self.qc_params.command,
             'subject': self.qc_params.subject,
             'contrast': self.qc_params.contrast,
+            'fname_in': self.qc_params.fname_in,
             'orientation': self.qc_params.orientation,
             'background_img': self.qc_params.bkg_img_path,
             'overlay_img': self.qc_params.overlay_img_path,
