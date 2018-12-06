@@ -52,7 +52,8 @@ def get_parser():
             'binaries_osx', 
             'deepseg_gm_models',
             'deepseg_sc_models',
-            'deepseg_lesion_models'
+            'deepseg_lesion_models',
+            'c2c3_disc_models'
         ])
     parser.add_option(
         name="-v",
@@ -96,12 +97,12 @@ def main(args=None):
                          'https://www.neuro.polymtl.ca/_media/downloads/sct/20170413_optic_models.zip'],
         'pmj_models': ['https://osf.io/4gufr/?action=download',
                        'https://www.neuro.polymtl.ca/_media/downloads/sct/20170922_pmj_models.zip'],
-        'binaries_debian': ['https://osf.io/2egh5/?action=download',
-                            'https://www.neuro.polymtl.ca/_media/downloads/sct/20170915_sct_binaries_linux.tar.gz'],
-        'binaries_centos': ['https://osf.io/qngj2/?action=download',
-                            'https://www.neuro.polymtl.ca/_media/downloads/sct/20170915_sct_binaries_linux_centos6.tar.gz'],
-        'binaries_osx': ['https://osf.io/hsa5r/?action=download',
-                         'https://www.neuro.polymtl.ca/_media/downloads/sct/20170915_sct_binaries_osx.tar.gz'],
+        'binaries_debian': ['https://osf.io/z72vn/?action=download',
+                            'https://www.neuro.polymtl.ca/_media/downloads/sct/20181204_sct_binaries_linux.tar.gz'],
+        'binaries_centos': ['https://osf.io/97ybd/?action=download',
+                            'https://www.neuro.polymtl.ca/_media/downloads/sct/20181204_sct_binaries_linux_centos6.tar.gz'],
+        'binaries_osx': ['https://osf.io/zjv4c/?action=download',
+                         'https://www.neuro.polymtl.ca/_media/downloads/sct/20181204_sct_binaries_osx.tar.gz'],
         'course_hawaii17': 'https://osf.io/6exht/?action=download',
         'course_paris18': ['https://osf.io/9bmn5/?action=download',
                            'https://www.neuro.polymtl.ca/_media/downloads/sct/20180612_sct_course-paris18.zip'],
@@ -110,7 +111,9 @@ def main(args=None):
         'deepseg_sc_models': ['https://osf.io/avf97/?action=download',
                               'https://www.neuro.polymtl.ca/_media/downloads/sct/20180610_deepseg_sc_models.zip'],
         'deepseg_lesion_models': ['https://osf.io/eg7v9/?action=download',
-                              'https://www.neuro.polymtl.ca/_media/downloads/sct/20180613_deepseg_lesion_models.zip']
+                              'https://www.neuro.polymtl.ca/_media/downloads/sct/20180613_deepseg_lesion_models.zip'],
+        'c2c3_disc_models': ['https://osf.io/fk79z/?action=download',
+                            'https://www.neuro.polymtl.ca/_media/downloads/sct/20181129_c2c3_disc_models.zip']
     }
 
     # Get parser info
