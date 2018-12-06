@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 #########################################################################################
 #  This code permits to run the function sct_axial_rotation on multiple subjects
-#
+#  The user needs to input the folder to search for the files, the filename and the
+#  segmentation filename
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2018 NeuroPoly, Polytechnique Montreal <www.neuro.polymtl.ca>
 # Authors: Nicolas Pinon
@@ -31,6 +32,11 @@ def get_parser():
     parser.add_option(name="-i",
                       type_value="str",
                       description="File to search for in the folder",
+                      mandatory=True,
+                      example="t2.nii.gz")
+    parser.add_option(name="-iseg",
+                      type_value="str",
+                      description="Segmentation file to search for in the folder",
                       mandatory=True,
                       example="t2.nii.gz")
     # parser.add_option(name="-iseg",
@@ -72,6 +78,7 @@ def main(args=None):
     parser = get_parser()
     arguments = parser.parse(args)
     fname_search = arguments['-i']
+    fname_seg_search = arguments['-iseg']
     path_data = arguments['-f']
     path_output = arguments['-o']
 
@@ -80,18 +87,45 @@ def main(args=None):
     os.chdir(path_output)
 
     list_file = []
-    for root, dirnames, filenames in os.walk(path_data):
-        for filename in fnmatch.filter(filenames, fname_search):
-            list_file.append(os.path.join(root, filename))
+    list_seg = []
+    sct.printv("Begin searching phase")
+    for root, dirnames, filenames in os.walk(path_data):  # searching the given directory
+        for filename in fnmatch.filter(filenames, fname_search):  # if file with given name found
+            sct.printv("\nFile  " + os.path.join(root, filename) + " found for sct_axial_rotation")
+            list_file.append(os.path.join(root, filename))  # add to the list
+            filename_seg = fnmatch.filter(filenames, fname_seg_search)  # search for segmentation of this file
+            if len(filename_seg) > 0:  # if segmentation found
+                if len(filename_seg) > 1:
+                    sct.printv("More than one segmentation found for file : " + filename + " in : " + root)
+                    raise NotImplementedError
+                else:
+                    sct.printv("Segmentation : " + filename_seg[0] + " found for file : " + os.path.join(root, filename))
+                    list_seg.append(os.path.join(root, filename_seg[0]))  # add it to the list
+            else:
+                sct.printv("No segmentation found for file : " + os.path.join(root, filename))
+                list_seg.append(None)
 
-    for file in list_file:
+    sct.printv("Searching phase done")
+
+    sct.printv("Begin computing phase")
+
+    for k, file in enumerate(list_file):
+        sct.printv("\nComputing " + str(k) + " th image :")
         from sct_axial_rotation import main as axrot
-        sct.run("sct_propseg -i " + file + " -c t2", verbose=2)
-        axrot(args=["-i", file, "-iseg", "t2_seg.nii.gz", "-f", "."])
+        if list_seg[k] is None:
+            sct.printv("Segmenting " + file + " with sct_propseg")
+            sct.run("sct_propseg -i " + file + " -c t2", verbose=0)
+            file_seg = "t2_seg.nii.gz"
+        else:
+            file_seg = list_seg[k]
+        sct.printv("\nRunning sct_axial_rotation for file : " + file)
+        axrot(args=["-i", file, "-iseg", file_seg, "-onumber", str(k), "-ofolder", path_output])
 
-    # TODO : check if manual segmentation present, if so, use it
+    sct.printv("Computing phase done")
+
+
     # back to cwd
-
+    os.chdir(cwd)
     1+1
 
 

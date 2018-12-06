@@ -18,7 +18,7 @@ import numpy as np
 
 from scipy.ndimage import convolve
 from scipy.io import loadmat
-from scipy.signal import medfilt
+from scipy.signal import medfilt, find_peaks_cwt, argrelextrema
 from skimage.filters import sobel_h, sobel_v
 from skimage.draw import line
 from nibabel import load, Nifti1Image, save
@@ -57,11 +57,16 @@ def get_parser():
     #                   description="Segmentation destination.",
     #                   mandatory=True,
     #                   example="dest_seg.nii.gz")
-    parser.add_option(name="-f",
-                      type_value="folder",
-                      description="path output",
+    parser.add_option(name="-onumber",
+                      type_value="str",
+                      description="outputnumber",
                       mandatory=False,
-                      example=" ")
+                      example="56")
+    parser.add_option(name="-ofolder",
+                      type_value="str",
+                      description="output folder",
+                      mandatory=False,
+                      example="path/to/output/folder")
     # parser.add_option(name="-r",
     #                   type_value="multiple_choice",
     #                   description="""Remove temporary files.""",
@@ -89,15 +94,21 @@ def main(args=None):
     # fname_dest = arguments['-d']
     fname_src_seg = arguments['-iseg']
     # fname_dest_seg = arguments['-dseg']
-    if '-f' in arguments:
-        path_output = arguments['-f']
+    if '-onumber' in arguments:
+        output_number = arguments['-onumber']
+    else:
+        name_output = "output.nii.gz"  # TODO: arrange this
+    if '-ofolder' in arguments:
+        path_output = arguments['-ofolder']
+    else:
+        path_output = os.getcwd()
     # remove_temp_files = int(arguments['-r'])
     # verbose = int(arguments['-v'])
 
     # SCT Image object
-    im_src = Image(fname_src)
+    im_src = Image(fname_src).change_orientation("RPI")
     # im_dest = Image(fname_dest)
-    im_src_seg = Image(fname_src_seg)
+    im_src_seg = Image(fname_src_seg).change_orientation("RPI")
     # im_dest_seg = Image(fname_dest_seg)
 
     # extracting data
@@ -108,6 +119,11 @@ def main(args=None):
 
     # Get image dimensions
     sct.printv('\nGet image dimensions of tutut image...', verbose=1)
+    if im_src.dim != im_src_seg.dim:
+        sct.printv("Dimensions of seg and image are not the same, don't know how to deal with this problem")
+        # TODO: deal with this
+        return
+
     nx, ny, nz, nt, px, py, pz, pt = im_src.dim
     sct.printv('  matrix size: ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz), verbose=1)
     sct.printv('  voxel size:  ' + str(px) + 'mm x ' + str(py) + 'mm x ' + str(pz) + 'mm', verbose=1)
@@ -115,12 +131,15 @@ def main(args=None):
     # Initialisation
     centermass_dest = np.zeros([nx, ny, nz])
     data_dest_wline = np.copy(data_src)
-    angle_src = np.full(nz, -1)
+    angle_src = np.full(nz, -1, dtype=float)
+    angle_src2 = np.full(nz, -1, dtype=float)
 
     # Number of bins for orientation histogram
-    nb_bin = 360
+    nb_bin = 360  # TODO : relate to the resolution
 
     kmedian_size = 5
+
+    conv_plot = np.zeros((nz, nb_bin))
 
     for iz in range(0, nz):
 
@@ -146,25 +165,45 @@ def main(args=None):
             # fft than square than ifft to calculate convolution
             hog_fft2 = np.fft.fft(hog_ancest_smooth) ** 2
             hog_conv = np.real(np.fft.ifft(hog_fft2))
+            conv_plot[iz, :] = hog_conv
             # search for maximum to find angle of rotation
             angle_src[iz] = np.argmax(hog_conv) * 360 / nb_bin
+            argmaxs = argrelextrema(hog_conv, np.greater, mode='wrap', order=kmedian_size)[0]  # get local maxima
+            argmaxs_sorted = [tutut for _, tutut in sorted(zip(hog_conv[argmaxs], argmaxs))]  # sort maxima based on value
+            angle_src2[iz] = argmaxs[1]
             # generate image to visualise angle of orientation
-            data_dest_wline[:, :, iz] = generate_2Dimage_line(data_src[:, :, iz], centermass[0], centermass[1], angle_src[iz])
+            # data_dest_wline[:, :, iz] = generate_2Dimage_line(data_src[:, :, iz], centermass[0], centermass[1], angle_src[iz])
+            data_dest_wline[:, :, iz] = generate_2Dimage_line(generate_2Dimage_line(data_src[:, :, iz], centermass[0], centermass[1], argmaxs_sorted[0]), centermass[0], centermass[1],
+                                                              argmaxs_sorted[1])
 
 
     save_nifti_like(data=centermass_dest, fname="centermass.nii", fname_like=fname_src, ofolder=path_output)
-    save_nifti_like(data=data_dest_wline, fname="line_" + fname_src, fname_like=fname_src, ofolder=path_output)
+    save_nifti_like(data=data_dest_wline, fname="t2_wline_" + output_number + ".nii.gz", fname_like=fname_src, ofolder=path_output)
 
     plt.ioff()
 
     plt.figure()
     plt.plot(np.arange(0, nz), angle_src)
-    plt.title("angle en fonction de la slice")
+    plt.plot(np.arange(0, nz), angle_src2)
+    plt.title("angle at a given slice")
+    plt.xlabel("slice number")
+    plt.ylabel("angle (degrees)")
 
     if '-f' in arguments:
         os.chdir(path_output)
 
-    plt.savefig("angle_z.png")
+    plt.savefig("angle_z_" + output_number + ".png")
+    plt.close()
+
+    from mpl_toolkits.mplot3d import Axes3D
+    fig = plt.figure()
+    ax = fig.gca(projection='3d')
+    for z in range(0, nz):
+        if np.amax(conv_plot[z, :]) > 0 :
+            ax.plot(np.arange(0, 360, 360.0 / nb_bin), conv_plot[z, :], zs=z)
+    plt.show()
+
+    sct.printv("done !")
     # plt.show()
 
 
@@ -291,10 +330,13 @@ def hog_ancestor(image, nb_bin, grad_ksize=123456789): # TODO implement selectio
     negatives = orient < 0
     orient[negatives] = orient[negatives] + 360
 
-    # weight by gradient magnitude : TODO : this step seems dumb, it alters the histogram
-    # orient_weighted = np.multiply(orient, (gradx**2+grady**2)**0.5)
+    # weight by gradient magnitude : TODO : this step seems dumb, it alters the angles
+    # actually it can be smart but by doing a weighted histogram, not weight the image
+
+    grad_mag = (gradx**2+grady**2)**0.5
 
     # compute histogram :
+    # hog_ancest = np.histogram(np.concatenate(orient), bins=nb_bin, weights=np.concatenate(grad_mag))
     hog_ancest = np.histogram(np.concatenate(orient), bins=nb_bin)
 
     return hog_ancest[0]  # return only the values of the bins, not the bins (we know them)
@@ -367,6 +409,32 @@ def generate_2Dimage_line(image, x0, y0, angle):
     # this
 
     return image_wline
+
+def symmetry_angle(image_data, nb_bin=360, kmedian_size=5, nb_axes=1):
+
+    "This function outputs the symetry angle, put -1 in nb_axes to get all the axes found" #  TODO: detail this
+
+    # acquire histogram of gradient orientation
+    hog_ancest = hog_ancestor(image_data, nb_bin=nb_bin)
+    # smooth it with median filter
+    hog_ancest_smooth = circular_median_filter_1d(hog_ancest, kmedian_size)
+    # fft than square than ifft to calculate convolution
+    hog_fft2 = np.fft.fft(hog_ancest_smooth) ** 2
+    hog_conv = np.real(np.fft.ifft(hog_fft2))
+    # search for maximum to find angle of rotation
+    argmaxs = argrelextrema(hog_conv, np.greater, mode='wrap', order=kmedian_size)[0]  # get local maxima
+    argmaxs_sorted = [tutut for _, tutut in sorted(zip(hog_conv[argmaxs], argmaxs))]  # sort maxima based on
+    if nb_axes == -1:
+        angles = argmaxs_sorted
+    elif nb_axes > len(argmaxs_sorted):
+        sct.printv(str(nb_axes) + " were asked for, only found " + str(len(argmaxs_sorted)))
+        angles = argmaxs_sorted
+    else:
+        angles = argmaxs_sorted[0:nb_axes]
+
+    return angles
+
+
 
 
 
