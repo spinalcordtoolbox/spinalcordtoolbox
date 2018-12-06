@@ -569,7 +569,7 @@ else
   cmd="rm -rf ${SCT_DIR}/${DATA_DIR}"; echo ">> "$cmd; $cmd
   cmd="mkdir -p ${SCT_DIR}/${DATA_DIR}"; echo ">> "$cmd; $cmd
   cmd="cd ${SCT_DIR}/${DATA_DIR}"; echo ">> "$cmd; $cmd
-  for data in PAM50 gm_model optic_models pmj_models deepseg_sc_models deepseg_gm_models deepseg_lesion_models; do
+  for data in PAM50 gm_model optic_models pmj_models deepseg_sc_models deepseg_gm_models deepseg_lesion_models c2c3_disc_models; do
     cmd="python ../scripts/sct_download_data.py -d ${data}"; echo ">> "$cmd; $cmd
     e_status=$?
     if [ ${e_status} != 0 ]; then
