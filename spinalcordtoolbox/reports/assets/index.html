@@ -12,6 +12,14 @@
   <link rel="stylesheet" href="_assets/css/bootstrap-table.min.css">
   <link rel="stylesheet" type="text/css" href="_assets/css/style.css">
   <title> </title>
+  <script>
+    function fetch_image_height()
+    {
+      var image_height=document.getElementById('sprite-img').height;
+      image_height+=10;
+      document.getElementById("mosaic-container").style.marginBottom=image_height+"px";
+    }
+  </script>
 </head>
 
 <body>
@@ -72,10 +80,12 @@
           </div>
           <div class="col-md-8">
               <div class="result-body" id="mosaic-container">
-                  <img id="sprite-img"/>
+                  <img id="sprite-img" onload="fetch_image_height()"/>
                   <img id="overlay-img"/>
               </div>
+              <div id="cmdLine"></div>
           </div>
+
       </div>
   </div>
 

@@ -17,6 +17,7 @@ $(document).ready(function(){
     var item = list[index];
     $("#sprite-img").attr("src", item.background_img).removeClass().addClass(item.orientation);
     $("#overlay-img").attr("src", item.overlay_img).removeClass().addClass(item.orientation);
+    document.getElementById("cmdLine").innerHTML = "Command: " + item.cmdline;
     $(this).addClass('active').siblings().removeClass('active');
   });
 
