@@ -341,7 +341,7 @@ class QcReport(object):
             'background_img': self.qc_params.bkg_img_path,
             'overlay_img': self.qc_params.overlay_img_path,
             'dimension': '%dx%d' % dimension,
-            'moddate': datetime.datetime.now().isoformat(' ')
+            'moddate': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
         logger.debug('Description file: %s', self.qc_params.qc_results)
         results = []
