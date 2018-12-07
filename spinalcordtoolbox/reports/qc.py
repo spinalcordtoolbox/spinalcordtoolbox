@@ -272,6 +272,7 @@ class Params(object):
         self.cwd = os.getcwd()
         self.contrast = contrast
         self.command = command
+        self.sct_version = sct.__version__
         self.args = args
         self.orientation = orientation
         self.dpi = dpi
@@ -337,6 +338,7 @@ class QcReport(object):
             'cwd': self.qc_params.cwd,
             'cmdline': "{} {}".format(self.qc_params.command, self.qc_params.args),
             'command': self.qc_params.command,
+            'sct_version': self.qc_params.sct_version,
             'subject': self.qc_params.subject,
             'contrast': self.qc_params.contrast,
             'fname_in': self.qc_params.fname_in,
