@@ -6,7 +6,7 @@ from nibabel import load, Nifti1Image, save
 import numpy as np
 import os
 
-os.chdir("/Users/nipin_local")
-img=mpimg.imread('circle2.png')
+os.chdir("/home/nicolas/Sample_images")
+img=mpimg.imread('test2.png')
 imgnif = Nifti1Image(img, np.eye(4))
-save(imgnif, "circle2.nii")
+save(imgnif, "test2.nii")

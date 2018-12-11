@@ -23,6 +23,7 @@ from skimage.filters import sobel_h, sobel_v
 from skimage.draw import line
 from nibabel import load, Nifti1Image, save
 from skimage import feature as ft
+from scipy.ndimage.filters import gaussian_filter
 
 from spinalcordtoolbox.image import Image
 import sct_utils as sct
@@ -132,20 +133,30 @@ def main(args=None):
     centermass_dest = np.zeros([nx, ny, nz])
     data_dest_wline = np.copy(data_src)
     angle_src = np.full(nz, -1, dtype=float)
-    angle_src2 = np.full(nz, -1, dtype=float)
 
     # Number of bins for orientation histogram
     nb_bin = 360  # TODO : relate to the resolution
 
-    kmedian_size = 5
+    kfilter_param = 1
+
+    nb_max = 5  #search for 5 maximums
+
+    angle_max = 15
+
+    filter = 'median'
 
     conv_plot = np.zeros((nz, nb_bin))
 
+    # portion = 5
+    # portion2 = 2
+    # tut = int(floor(ny / portion))
+    #
+    # data_crop = data_src[:, tut:portion2 * tut, :]
+    # save_nifti_like(data=data_crop, fname="t2_crop.nii.gz", fname_like=fname_src,
+    #                 ofolder=path_output)
+
     for iz in range(0, nz):
 
-        # portion = 5
-        # portion2 = 2
-        # tut = int(floor(ny/portion))
 
         # slice_data = data_src[:, tut:portion2*tut, iz]
         slice_data = data_src[:, :, iz]
@@ -161,20 +172,35 @@ def main(args=None):
             # acquire histogram of gradient orientation
             hog_ancest = hog_ancestor(slice_data, nb_bin=nb_bin)
             # smooth it with median filter
-            hog_ancest_smooth = circular_median_filter_1d(hog_ancest, kmedian_size)
+            hog_ancest_smooth = circular_filter_1d(hog_ancest, kfilter_param, filter=filter)
             # fft than square than ifft to calculate convolution
             hog_fft2 = np.fft.fft(hog_ancest_smooth) ** 2
             hog_conv = np.real(np.fft.ifft(hog_fft2))
             conv_plot[iz, :] = hog_conv
             # search for maximum to find angle of rotation
-            angle_src[iz] = np.argmax(hog_conv) * 360 / nb_bin
-            argmaxs = argrelextrema(hog_conv, np.greater, mode='wrap', order=kmedian_size)[0]  # get local maxima
+            argmaxs = argrelextrema(hog_conv, np.greater, mode='wrap', order=kfilter_param)[0]  # get local maxima
             argmaxs_sorted = [tutut for _, tutut in sorted(zip(hog_conv[argmaxs], argmaxs))]  # sort maxima based on value
-            angle_src2[iz] = argmaxs[1]
+
+            found = False
+            for angle in range(0, nb_max):
+                if len(argmaxs_sorted)>=angle+1:
+                    if (-angle_max < argmaxs_sorted[angle]-135 < angle_max):
+                        angle_src[iz] = argmaxs_sorted[angle] -135
+                        found = True
+            # TODO URGENT MODIFIER CES HISTOIRES DE 135 DEGRES
+
+
+            if found == False:
+                angle_src[iz] = None
+                data_dest_wline[:, :, iz] = data_src[:, :, iz]
+            else:
+                data_dest_wline[:, :, iz] = generate_2Dimage_line(data_src[:, :, iz], centermass[0], centermass[1],
+                                                                  angle_src[iz])
             # generate image to visualise angle of orientation
             # data_dest_wline[:, :, iz] = generate_2Dimage_line(data_src[:, :, iz], centermass[0], centermass[1], angle_src[iz])
-            data_dest_wline[:, :, iz] = generate_2Dimage_line(generate_2Dimage_line(data_src[:, :, iz], centermass[0], centermass[1], argmaxs_sorted[0]), centermass[0], centermass[1],
-                                                              argmaxs_sorted[1])
+            # data_dest_wline[:, :, iz] = generate_2Dimage_line(generate_2Dimage_line(data_src[:, :, iz], centermass[0], centermass[1], argmaxs_sorted[0]), centermass[0], centermass[1],
+            #                                                   argmaxs_sorted[1])
+
 
 
     save_nifti_like(data=centermass_dest, fname="centermass.nii", fname_like=fname_src, ofolder=path_output)
@@ -184,7 +210,6 @@ def main(args=None):
 
     plt.figure()
     plt.plot(np.arange(0, nz), angle_src)
-    plt.plot(np.arange(0, nz), angle_src2)
     plt.title("angle at a given slice")
     plt.xlabel("slice number")
     plt.ylabel("angle (degrees)")
@@ -204,69 +229,7 @@ def main(args=None):
     plt.show()
 
     sct.printv("done !")
-    # plt.show()
 
-
-    # hog, hog_image = ft.hog(
-    #     data_dest[:, :, int(round(nz/2.0))], visualise=True, orientations=360, pixels_per_cell=(8, 8),
-    #     cells_per_block=(3, 3))
-
-
-
-    # hog_ancest = hog_ancestor(data_dest[:, :, int(round(nz/2.0))], nb_bin=nb_bin)
-
-    # plt.figure()
-    # plt.plot(np.arange(0, 360, 360.0/len(hog_ancest[0])), hog_ancest[0])
-    #
-    # plt.figure()
-    # plt.imshow(data_dest[:, :, int(round(nz/2.0))])
-    #
-    # plt.figure()
-    # plt.imshow(hog_image)
-
-    # hog_ancest_smooth = circular_median_filter_1d(hog_ancest, 5)
-    #
-    # hog_fft2 = np.fft.fft(hog_ancest_smooth)**2
-    #
-    # hog_conv = np.real(np.fft.ifft(hog_fft2))
-    #
-    # teta = np.arange(0, 360, 360.0/nb_bin)
-
-    # plt.figure()
-    # plt.subplot(221)
-    # plt.plot(teta, hog_ancest)
-    # plt.title("HOG")
-    # plt.subplot(222)
-    # plt.plot(teta, hog_ancest_smooth)
-    # plt.title("HOG smoothed")
-    # plt.subplot(223)
-    # plt.plot(teta, np.abs(hog_fft2))
-    # plt.title("abs FFT HOG")
-    # plt.subplot(224)
-    # plt.plot(teta, hog_conv)
-    # plt.title("conv HOG")
-
-
-
-    # angle_sym = np.argmax(hog_conv)*360/nb_bin  #angle in degree
-    #
-    # sct.printv("angle of the symetric axe is : " + str(angle_sym))
-
-
-
-    # centermass = np.array(data_dest_seg[:, :, int(round(nz/2.0))].nonzero()).mean(1).round().astype(int)
-    #
-    # image_wline = generate_2Dimage_line(data_dest[:, :, int(round(nz/2.0))], centermass[0], centermass[1], angle_sym)
-
-    # plt.figure()
-    # plt.imshow(image_wline, cmap='Greys')
-
-    # plt.show()
-
-
-    1+1
-
-    # plt.close('all')
 
 
 def save_nifti_like(data, fname, fname_like, ofolder=None):
@@ -289,7 +252,7 @@ def save_nifti_like(data, fname, fname_like, ofolder=None):
     if ofolder is not None:
         os.chdir(cwd)
 
-def circular_median_filter_1d(signal,window_size):
+def circular_filter_1d(signal, param_filt, filter='gaussian'):
 
     """ This function filters circularly the signal inputted with a median filter of inputted size, in this context
     circularly means that the signal is wrapped around and then filtered
@@ -300,7 +263,14 @@ def circular_median_filter_1d(signal,window_size):
         - signal_smoothed : 1D numpy array"""
 
     signal_extended = np.concatenate((signal, signal, signal))  # replicate signal at both ends
-    signal_extended_smooth = medfilt(signal_extended, window_size)  # median filtering
+    if filter == 'gaussian':
+        signal_extended_smooth = gaussian_filter(signal_extended, param_filt)  # gaussian
+    elif filter == 'median':
+        signal_extended_smooth = medfilt(signal_extended, param_filt)  # median filtering
+    else:
+        sct.printv("unknow type of filter")
+        raise
+
     length = len(signal)
     signal_smoothed = signal_extended_smooth[length:2*length]  # truncate back the signal
 
@@ -327,20 +297,20 @@ def hog_ancestor(image, nb_bin, grad_ksize=123456789): # TODO implement selectio
     # orientation gradient
     orient = np.arctan2(grady, gradx)*180/pi
     # changing results from [-180,180] to [0,360] (more convenient to visualise) :
-    negatives = orient < 0
-    orient[negatives] = orient[negatives] + 360
+    # negatives = orient < 0
+    # orient[negatives] = orient[negatives] + 360  #TODO !!!
 
     # weight by gradient magnitude : TODO : this step seems dumb, it alters the angles
     # actually it can be smart but by doing a weighted histogram, not weight the image
 
-    grad_mag = (gradx**2+grady**2)**0.5
+    grad_mag = (np.abs(gradx.astype(object))**2+np.abs(grady.astype(object))**2)**0.5
     grad_weight = (grad_mag > 0).astype(int)
 
     # compute histogram :
-    hog_ancest = np.histogram(np.concatenate(orient), bins=nb_bin, range=(0, nb_bin), weights=np.concatenate(grad_weight))
+    hog_ancest = np.histogram(np.concatenate(orient), bins=nb_bin, range=(-nb_bin/2, nb_bin/2), weights=np.concatenate(grad_weight))
     # hog_ancest = np.histogram(np.concatenate(orient), bins=nb_bin)
 
-    return hog_ancest[0]  # return only the values of the bins, not the bins (we know them)
+    return hog_ancest[0].astype(float)  # return only the values of the bins, not the bins (we know them)
 
 def generate_2Dimage_line(image, x0, y0, angle):
 
@@ -418,11 +388,12 @@ def symmetry_angle(image_data, nb_bin=360, kmedian_size=5, nb_axes=1):
     # acquire histogram of gradient orientation
     hog_ancest = hog_ancestor(image_data, nb_bin=nb_bin)
     # smooth it with median filter
-    hog_ancest_smooth = circular_median_filter_1d(hog_ancest, kmedian_size)
+    hog_ancest_smooth = circular_filter_1d(hog_ancest, kmedian_size, filter='median')
     # fft than square than ifft to calculate convolution
     hog_fft2 = np.fft.fft(hog_ancest_smooth) ** 2
     hog_conv = np.real(np.fft.ifft(hog_fft2))
 
+    # TODO FFT CHECK SAMPLING
     # hog_conv = np.convolve(hog_ancest_smooth, hog_ancest_smooth, mode='same')
 
     # search for maximum to find angle of rotation
