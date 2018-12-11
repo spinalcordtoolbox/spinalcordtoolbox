@@ -141,11 +141,12 @@ def get_parser():
                       \n--\nstep=1\ntype=' + paramreg.steps['1'].type + '\nalgo=' + paramreg.steps['1'].algo + '\nmetric=' + paramreg.steps['1'].metric + '\niter=' + paramreg.steps['1'].iter + '\nsmooth=' + paramreg.steps['1'].smooth + '\ngradStep=' + paramreg.steps['1'].gradStep + '\nslicewise=' + paramreg.steps['1'].slicewise + '\nsmoothWarpXY=' + paramreg.steps['1'].smoothWarpXY + '\npca_eigenratio_th=' + paramreg.steps['1'].pca_eigenratio_th + '\
                       \n--\nstep=2\ntype=' + paramreg.steps['2'].type + '\nalgo=' + paramreg.steps['2'].algo + '\nmetric=' + paramreg.steps['2'].metric + '\niter=' + paramreg.steps['2'].iter + '\nsmooth=' + paramreg.steps['2'].smooth + '\ngradStep=' + paramreg.steps['2'].gradStep + '\nslicewise=' + paramreg.steps['2'].slicewise + '\nsmoothWarpXY=' + paramreg.steps['2'].smoothWarpXY + '\npca_eigenratio_th=' + paramreg.steps['1'].pca_eigenratio_th,
                       mandatory=False)
-    parser.add_option(name="-param-straighten",
+    parser.add_option(name="-straighten-fitting",
                       type_value='str',
-                      description="""Parameters for straightening (see sct_straighten_spinalcord).""",
+                      description="""Algorithm used by the cord straightening procedure for fitting the centerline.""",
                       mandatory=False,
-                      default_value='')
+                      default_value='nurbs',
+                      example=['nurbs', 'hanning'])
     parser.add_option(name='-qc',
                       type_value='folder_creation',
                       description='The path where the quality control generated content will be saved',
@@ -206,8 +207,8 @@ def main(args=None):
     remove_temp_files = int(arguments['-r'])
     verbose = int(arguments['-v'])
     param.verbose = verbose  # TODO: not clean, unify verbose or param.verbose in code, but not both
-    if '-param-straighten' in arguments:
-        param.param_straighten = arguments['-param-straighten']
+    # if '-straighten-fitting' in arguments:
+    param.straighten_fitting = arguments['-straighten-fitting']
     # if '-cpu-nb' in arguments:
     #     arg_cpu = ' -cpu-nb '+str(arguments['-cpu-nb'])
     # else:
@@ -406,6 +407,7 @@ def main(args=None):
         else:
             from sct_straighten_spinalcord import SpinalCordStraightener
             sc_straight = SpinalCordStraightener(ftmp_seg, ftmp_seg)
+            sc_straight.algo_fitting = param.straighten_fitting
             sc_straight.output_filename = add_suffix(ftmp_seg, '_straight')
             sc_straight.path_output = './'
             sc_straight.qc = '0'
