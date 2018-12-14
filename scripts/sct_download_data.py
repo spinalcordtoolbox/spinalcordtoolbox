@@ -88,7 +88,7 @@ def main(args=None):
         'sct_testing_data': ['https://osf.io/z8gaj/?action=download',
                              'https://www.neuro.polymtl.ca/_media/downloads/sct/20180125_sct_testing_data.zip'],
         'PAM50': ['https://osf.io/jmfpw/?action=download',
-                  'https://www.neuro.polymtl.ca/_media/downloads/sct/20180813_PAM50.zip'],
+                  'https://www.neuro.polymtl.ca/_media/downloads/sct/20181214_PAM50.zip'],
         'MNI-Poly-AMU': ['https://osf.io/sh6h4/?action=download',
                          'https://www.neuro.polymtl.ca/_media/downloads/sct/20170310_MNI-Poly-AMU.zip'],
         'gm_model': ['https://osf.io/ugscu/?action=download',
