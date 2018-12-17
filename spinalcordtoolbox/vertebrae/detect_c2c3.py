@@ -24,6 +24,7 @@ from sct_flatten_sagittal import flatten_sagittal
 import numpy as np
 import nibabel as nib
 from scipy.ndimage.measurements import center_of_mass
+from skimage.measure import label as label_regions
 
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image, zeros_like
@@ -84,11 +85,26 @@ def detect_c2c3(nii_im, nii_seg, contrast, verbose=1):
 
     # mask prediction
     pred[midSlice_mask == 0] = 0
+    z_seg_max = np.max(np.where(midSlice_seg)[1])
+    pred[:, z_seg_max:] = 0  # Mask above SC segmentation
 
     # assign label to voxel
     nii_c2c3 = zeros_like(nii_seg_flat)
     if np.any(pred > 0):
         sct.printv('C2-C3 detected...', verbose)
+
+        pred_bin = (pred > 0).astype(np.int_)
+        labeled_pred, nb_regions = label_regions(pred_bin, return_num=True)
+        if nb_regions > 1:  # if there is several detected clusters of voxels
+            region_idx_top, region_z_top = 0, 0
+            for region_idx in range(1, nb_regions+1):
+                pred_idx = (labeled_pred == region_idx).astype(np.int_)
+                pa_com, is_com = center_of_mass(pred_idx)
+                if is_com >= region_z_top:
+                    region_idx_top = region_idx
+                    region_z_top = is_com
+            pred[labeled_pred != region_idx_top] = 0  # then keep the one located at the top (IS direction)
+
         coord_max = np.where(pred == np.max(pred))
         pa_c2c3, is_c2c3 = coord_max[0][0], coord_max[1][0]
         nii_seg.change_orientation('PIR')
