@@ -82,7 +82,7 @@ def get_parser():
                                  'If only one label is provided, a simple translation will be applied between the subject label and the template label. No scaling will be performed. \n\n'
                                  'If two labels are provided, a linear transformation (translation + rotation + superior-inferior linear scaling) will be applied. The strategy here is to defined labels that cover the region of interest. For example, if you are interested in studying C2 to C6 levels, then provide one label at C2 and another at C6. However, note that if the two labels are very far apart (e.g. C2 and T12), there might be a mis-alignment of discs because a subject''s intervertebral discs distance might differ from that of the template.\n\n'
                                  'If more than two labels (only with the parameter "-disc") are used, a non-linear registration will be applied to align the each intervertebral disc between the subject and the template, as described in sct_straighten_spinalcord. This the most accurate and preferred method. This feature does not work with the parameter "-ref subject".\n\n'
-                                 'More information about label creation can be found at http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/'
+                                 'More information about label creation can be found at https://www.slideshare.net/neuropoly/sct-course-20190121/42'
       )
     parser.add_option(name="-i",
                       type_value="file",
@@ -98,7 +98,7 @@ def get_parser():
                       type_value="file",
                       description="One or two labels (preferred) located at the center of the spinal cord, on the "
                                   "mid-vertebral slice. For more information about label creation, please see: "
-                                  "http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/",
+                                  "https://www.slideshare.net/neuropoly/sct-course-20190121/42",
                       mandatory=False,
                       default_value='',
                       example="anat_labels.nii.gz")
@@ -108,7 +108,7 @@ def get_parser():
                                   "more than 2 labels, all disc covering the region of interest should be provided. "
                                   "E.g., if you are interested in levels C2 to C7, then you should provide disc labels "
                                   "2,3,4,5,6,7). For more information about label creation, please refer to "
-                                  "http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/.",  # TODO: update URL
+                                  "https://www.slideshare.net/neuropoly/sct-course-20190121/42",  # TODO: update URL
                       mandatory=False,
                       default_value='',
                       example="anat_labels.nii.gz")
@@ -452,7 +452,7 @@ def main(args=None):
             try:
                 register_landmarks(ftmp_label, ftmp_template_label, paramreg.steps['0'].dof, fname_affine='straight2templateAffine.txt', verbose=verbose)
             except Exception:
-                sct.printv('ERROR: input labels do not seem to be at the right place. Please check the position of the labels. See documentation for more details: https://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/', verbose=verbose, type='error')
+                sct.printv('ERROR: input labels do not seem to be at the right place. Please check the position of the labels. See documentation for more details: https://www.slideshare.net/neuropoly/sct-course-20190121/42', verbose=verbose, type='error')
 
             # Concatenate transformations: curve --> straight --> affine
             sct.printv('\nConcatenate transformations: curve --> straight --> affine...', verbose)
@@ -595,7 +595,7 @@ def main(args=None):
         try:
             register_landmarks(ftmp_template_label, ftmp_label, paramreg.steps['0'].dof, fname_affine=warp_forward[0], verbose=verbose, path_qc="./")
         except Exception:
-            sct.printv('ERROR: input labels do not seem to be at the right place. Please check the position of the labels. See documentation for more details: https://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/', verbose=verbose, type='error')
+            sct.printv('ERROR: input labels do not seem to be at the right place. Please check the position of the labels. See documentation for more details: https://www.slideshare.net/neuropoly/sct-course-20190121/42', verbose=verbose, type='error')
 
         # loop across registration steps
         for i_step in range(1, len(paramreg.steps)):
