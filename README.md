@@ -111,8 +111,11 @@ Each repository is a pipeline dedicated to a specific research project.
 
 ## Courses
 
-We organize **free** SCT courses, each year after the ISMRM conference. If you'd like to be added to the mailing list, please send an email to `spinalcordtoolbox@gmail.com`. The past courses handouts are available hereafter:
+We organize **free** SCT courses, each year after the ISMRM conference. If you'd like to be added to the mailing list, please send an email to `spinalcordtoolbox@gmail.com`. The latest course is embeded below. The past courses handouts are listed after the slides below.
 
+<iframe src="https://www.slideshare.net/slideshow/embed_code/key/gQEQp7aQN99wd4" width="427" height="356" frameborder="0" marginwidth="0" marginheight="0" scrolling="no" style="border:1px solid #CCC; border-width:1px; margin-bottom:5px; max-width: 100%;" allowfullscreen> </iframe> <div style="margin-bottom:5px"> <strong> <a href="https://www.slideshare.net/secret/gQEQp7aQN99wd4" title="SCT course 2019-01-21" target="_blank">SCT course 2019-01-21</a> </strong> from <strong><a href="https://www.slideshare.net/neuropoly" target="_blank">NeuroPoly </a></strong> </div>
+
+* [SCT course, London, 2019-01-18](https://www.slideshare.net/secret/gQEQp7aQN99wd4)
 * [SCT course, Paris, 2018-06-12](https://osf.io/386h7/)
 * [SCT course, Honolulu, 2017-04-28](https://osf.io/fvnjq/)
 * [SCT course, Geneva, 2016-06-28](https://sourceforge.net/p/spinalcordtoolbox/wiki/Home/attachment/SCT_Course_20160628.pdf)
