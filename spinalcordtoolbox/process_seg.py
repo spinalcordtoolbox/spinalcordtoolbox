@@ -166,7 +166,7 @@ def compute_csa(segmentation, algo_fitting='hanning', type_window='hanning', win
     """
     # create temporary folder
     path_tmp = sct.tmp_create()
-    # open image, reorient as RPI and save in temp folder
+    # open image and save in temp folder
     im_seg = msct_image.Image(segmentation).save(path_tmp, )
 
     # TODO: do everything in RAM instead of adding unecessary i/o. For that we need a wrapper for smooth_centerline()
@@ -176,7 +176,7 @@ def compute_csa(segmentation, algo_fitting='hanning', type_window='hanning', win
     fname_seg = os.path.join(path_tmp, 'segmentation_RPI.nii.gz')
     im_seg.save(fname_seg)
 
-    # # Extract min and max index in Z direction
+    # Extract min and max index in Z direction
     data_seg = im_seg.data
     X, Y, Z = (data_seg > 0).nonzero()
     min_z_index, max_z_index = min(Z), max(Z)
@@ -323,26 +323,19 @@ def compute_csa(segmentation, algo_fitting='hanning', type_window='hanning', win
         sct.rmtree(path_tmp)
 
     # prepare output
+    # TODO: use simpler keys for dict and introduce labels (more flexible)
     metrics = {'CSA [mm^2]': csa,
                'Angle between cord axis and z [deg]': angles}
     return metrics
 
 
-def compute_shape(segmentation, slices='', vert_levels='', fname_vert_levels='', perslice=0, perlevel=0,
-                  file_out='shape', overwrite=0, remove_temp_files=1, verbose=1):
+def compute_shape(segmentation, remove_temp_files=1, verbose=1):
     """
     This function characterizes the shape of the spinal cord, based on the segmentation
     Shape properties are computed along the spinal cord and averaged per z-slices.
     Option is to provide intervertebral disks to average shape properties over vertebral levels (fname_discs).
     WARNING: the segmentation needs to be binary.
     :param segmentation: input segmentation. Could be either an Image or a file name.
-    :param slices:
-    :param vert_levels:
-    :param fname_vert_levels:
-    :param perslice:
-    :param perlevel:
-    :param file_out:
-    :param overwrite:
     :param remove_temp_files:
     :param verbose:
     :return:
@@ -366,9 +359,9 @@ def compute_shape(segmentation, slices='', vert_levels='', fname_vert_levels='',
 
     # write output file
     # TODO: move to parent function
-    average_per_slice_or_level(metrics, header=headers, slices=slices, perslice=perslice, vert_levels=vert_levels,
-                               perlevel=perlevel, fname_vert_levels=fname_vert_levels, file_out=file_out,
-                               overwrite=overwrite)
+    # average_per_slice_or_level(metrics, header=headers, slices=slices, perslice=perslice, vert_levels=vert_levels,
+    #                            perlevel=perlevel, fname_vert_levels=fname_vert_levels, file_out=file_out,
+    #                            overwrite=overwrite)
 
 
 def extract_centerline(fname_segmentation, remove_temp_files, verbose=0, algo_fitting='hanning', type_window='hanning',

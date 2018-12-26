@@ -5,15 +5,11 @@
 # TODO: directly pass image (not fname)
 
 from __future__ import absolute_import
-
-import csv
-
 import pytest
-
 import numpy as np
+import csv
 import nibabel as nib
 from skimage.transform import rotate
-
 from spinalcordtoolbox import process_seg
 
 
@@ -64,8 +60,7 @@ def test_extract_centerline(dummy_segmentation):
 def test_compute_csa(dummy_segmentation):
     """Test computation of cross-sectional area from input segmentation"""
     metrics = process_seg.compute_csa(dummy_segmentation, algo_fitting='hanning', type_window='hanning',
-                                      window_length=80, angle_correction=True, use_phys_coord=True, remove_temp_files=1,
-                                      verbose=1)
+                                      window_length=80, angle_correction=True, use_phys_coord=True)
     assert np.mean(metrics['CSA [mm^2]'][20:180]) == pytest.approx(4730.0, rel=1)
     assert np.mean(metrics['Angle between cord axis and z [deg]'][20:180]) == pytest.approx(13.0, rel=0.01)
 
@@ -74,20 +69,5 @@ def test_compute_csa(dummy_segmentation):
 def test_compute_shape(dummy_segmentation):
     """Test computation of cross-sectional area from input segmentation."""
     # here we only quantify between 5:15 because we want to avoid edge effects due to the rotation.
-    process_seg.compute_shape(dummy_segmentation, slices='5:15', vert_levels='', fname_vert_levels='', perslice=0,
-                              perlevel=0, file_out='shape', overwrite=0, remove_temp_files=1, verbose=1)
-    # open created csv file
-    with open('shape.csv', 'rb') as f:
-        reader = csv.reader(f)
-        reader.next()  # skip header
-        area, equivalent_diameter, AP_diameter, RL_diameter, ratio_minor_major, eccentricity, solidity, orientation, \
-        symmetry = [float(i) for i in reader.next()[2:]]
-    assert area == pytest.approx(44.863, abs=1e-3)
-    assert equivalent_diameter == pytest.approx(7.554, abs=1e-3)
-    assert AP_diameter == pytest.approx(5.807, abs=1e-3)
-    assert RL_diameter == pytest.approx(10.170, abs=1e-3)
-    assert ratio_minor_major == pytest.approx(0.571, abs=1e-3)
-    assert eccentricity == pytest.approx(0.818, abs=1e-3)
-    assert solidity == pytest.approx(0.854, abs=1e-3)
-    assert orientation == pytest.approx(-0.010, abs=1e-3)
-    assert symmetry == pytest.approx(0.998, abs=1e-3)
+    metrics, headers = process_seg.compute_shape(dummy_segmentation)
+    assert np.mean(metrics[0][20:180]) == pytest.approx(1600.0, rel=1e-8)  # area
