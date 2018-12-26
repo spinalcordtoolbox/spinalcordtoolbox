@@ -9,7 +9,7 @@ import os, math
 import numpy as np
 
 import sct_utils as sct
-import .image as msct_image
+import spinalcordtoolbox.image as msct_image
 # TODO don't import SCT stuff outside of spinalcordtoolbox/
 from sct_straighten_spinalcord import smooth_centerline
 import msct_shape
