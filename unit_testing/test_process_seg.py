@@ -61,13 +61,15 @@ def test_compute_csa(dummy_segmentation):
     """Test computation of cross-sectional area from input segmentation"""
     metrics = process_seg.compute_csa(dummy_segmentation, algo_fitting='hanning', type_window='hanning',
                                       window_length=80, angle_correction=True, use_phys_coord=True)
-    assert np.mean(metrics['CSA [mm^2]'][20:180]) == pytest.approx(4730.0, rel=1)
-    assert np.mean(metrics['Angle between cord axis and z [deg]'][20:180]) == pytest.approx(13.0, rel=0.01)
+    assert np.mean(metrics['csa'].value[20:180]) == pytest.approx(4730.0, rel=1)
+    assert np.mean(metrics['angle'].value[20:180]) == pytest.approx(13.0, rel=0.01)
 
 
 # noinspection 801,PyShadowingNames
 def test_compute_shape(dummy_segmentation):
     """Test computation of cross-sectional area from input segmentation."""
     # here we only quantify between 5:15 because we want to avoid edge effects due to the rotation.
-    metrics, headers = process_seg.compute_shape(dummy_segmentation)
-    assert np.mean(metrics[0][20:180]) == pytest.approx(1600.0, rel=1e-8)  # area
+    metrics = process_seg.compute_shape(dummy_segmentation)
+    assert np.mean(metrics['area'].value[20:180]) == pytest.approx(1600.0, rel=1e-8)
+    # TODO: add other metrics
+    # TODO: check why area different from compute_csa

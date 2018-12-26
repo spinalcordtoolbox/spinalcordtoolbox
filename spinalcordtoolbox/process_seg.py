@@ -24,6 +24,15 @@ OUTPUT_CSA_VOLUME = 0
 OUTPUT_ANGLE_VOLUME = 0
 
 
+class Metric:
+    """
+    Class to include in dictionaries to associate metric value and label
+    """
+    def __init__(self, value=[], label=''):
+        self.value = value
+        self.label = label
+
+
 def compute_length(fname_segmentation, remove_temp_files, output_folder, overwrite, slices, vert_levels,
                    fname_vertebral_labeling='', verbose=0):
     from math import sqrt
@@ -163,6 +172,7 @@ def compute_csa(segmentation, algo_fitting='hanning', type_window='hanning', win
     :param window_length:
     :param angle_correction:
     :param use_phys_coord:
+    :return metrics: Dict of class Metric()
     """
     # create temporary folder
     path_tmp = sct.tmp_create()
@@ -323,9 +333,8 @@ def compute_csa(segmentation, algo_fitting='hanning', type_window='hanning', win
         sct.rmtree(path_tmp)
 
     # prepare output
-    # TODO: use simpler keys for dict and introduce labels (more flexible)
-    metrics = {'CSA [mm^2]': csa,
-               'Angle between cord axis and z [deg]': angles}
+    metrics = {'csa': Metric(value=csa, label='CSA [mm^2]'),
+               'angle': Metric(value=angles, label='Angle between cord axis and z [deg]')}
     return metrics
 
 
@@ -338,7 +347,7 @@ def compute_shape(segmentation, remove_temp_files=1, verbose=1):
     :param segmentation: input segmentation. Could be either an Image or a file name.
     :param remove_temp_files:
     :param verbose:
-    :return:
+    :return metrics: Dict of class Metric()
     """
     im_seg = msct_image.Image(segmentation)
 
@@ -348,14 +357,13 @@ def compute_shape(segmentation, remove_temp_files=1, verbose=1):
                                                                       remove_temp_files=remove_temp_files,
                                                                       verbose=verbose)
     # TODO: when switching to Python3, replace iteritems() by items()
-    headers = []
-    metrics = []
+    metrics = {}
     for key, value in shape_properties.iteritems():
         # Making sure all entries added to metrics have results
         if not value == []:
-            headers.append(key)
-            metrics.append(np.array(value))
-    return metrics, headers
+            metrics[key] = Metric(value=np.array(value), label=key)
+
+    return metrics
 
     # write output file
     # TODO: move to parent function
