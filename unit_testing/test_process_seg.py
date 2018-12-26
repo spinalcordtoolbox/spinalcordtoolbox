@@ -3,6 +3,7 @@
 # pytest unit tests for spinalcordtoolbox.process_seg
 
 # TODO: directly pass image (not fname)
+# TODO: add dummy image with different resolution to check impact of input res
 
 from __future__ import absolute_import
 import pytest
@@ -24,7 +25,7 @@ def dummy_segmentation():
     data = np.random.random((nx, ny, nz))
     xx, yy = np.mgrid[:nx, :ny]
     # loop across slices and add an ellipse of axis length a and b
-    a, b = 50.0, 30.0  # diameter of ellipse. Theoretical CSA: 4712.4
+    a, b = 50.0, 30.0  # diameter of ellipse (in pix size). Theoretical CSA: 4712.4
     for iz in range(nz):
         data[:, :, iz] = (((xx - nx / 2) / a) ** 2 + ((yy - ny / 2) / b) ** 2 <= 1) * 1
     # swap x-z axes (to make a rotation within y-z plane)
@@ -35,7 +36,9 @@ def dummy_segmentation():
     # swap back
     data_rot = data_swap_rot.swapaxes(0, 2)
     xform = np.eye(4)
-    img = nib.nifti1.Nifti1Image(data_rot, xform)
+    for i in range(3):
+        xform[i][i] = 0.1  # adjust voxel dimension to get realistic spinal cord size (important for some functions)
+    img = nib.nifti1.Nifti1Image(data_rot.astype('int8'), xform)
     nib.save(img, fname_seg)
     return fname_seg
 
@@ -52,24 +55,32 @@ def test_extract_centerline(dummy_segmentation):
         for row in reader:
             centerline_out.append([int(i) for i in row])
     # build ground-truth centerline
-    centerline_true_50to55 = [[50, 99, 87], [51, 99, 87], [52, 99, 87], [53, 99, 88], [54, 99, 88]]
-    assert centerline_out[50:55] == centerline_true_50to55
+    centerline_true_20to180 = [[20, 99, 79], [60, 99, 89], [100, 99, 100], [140, 99, 111], [180, 99, 122]]
+    assert centerline_out[20:200:40] == centerline_true_20to180
 
 
 # noinspection 801,PyShadowingNames
 def test_compute_csa(dummy_segmentation):
     """Test computation of cross-sectional area from input segmentation"""
     metrics = process_seg.compute_csa(dummy_segmentation, algo_fitting='hanning', type_window='hanning',
-                                      window_length=80, angle_correction=True, use_phys_coord=True)
-    assert np.mean(metrics['csa'].value[20:180]) == pytest.approx(4730.0, rel=1)
-    assert np.mean(metrics['angle'].value[20:180]) == pytest.approx(13.0, rel=0.01)
+                                      window_length=50, angle_correction=True, use_phys_coord=True)
+    assert np.mean(metrics['csa'].value[20:180]) == pytest.approx(46.94, rel=0.01)
+    assert np.mean(metrics['angle'].value[20:180]) == pytest.approx(14.96, rel=0.01)
 
 
 # noinspection 801,PyShadowingNames
 def test_compute_shape(dummy_segmentation):
     """Test computation of cross-sectional area from input segmentation."""
-    # here we only quantify between 5:15 because we want to avoid edge effects due to the rotation.
-    metrics = process_seg.compute_shape(dummy_segmentation)
-    assert np.mean(metrics['area'].value[20:180]) == pytest.approx(1600.0, rel=1e-8)
+    # Using hanning because faster
+    metrics = process_seg.compute_shape(dummy_segmentation, algo_fitting='hanning', window_length=50)
+    assert np.mean(metrics['area'].value[20:180]) == pytest.approx(46.30, rel=0.01)
+    assert np.mean(metrics['AP_diameter'].value[20:180]) == pytest.approx(6, rel=1)
+    assert np.mean(metrics['symmetry'].value[20:180]) == pytest.approx(1.0, rel=1e-8)
+    assert np.mean(metrics['ratio_minor_major'].value[20:180]) == pytest.approx(0.59, rel=0.01)
+    assert np.mean(metrics['solidity'].value[20:180]) == pytest.approx(0.94, rel=0.01)
+    assert np.mean(metrics['RL_diameter'].value[20:180]) == pytest.approx(10, rel=1)
+    assert np.mean(metrics['equivalent_diameter'].value[20:180]) == pytest.approx(7.7, rel=0.1)
+    assert np.mean(metrics['eccentricity'].value[20:180]) == pytest.approx(0.8, rel=0.1)
+
     # TODO: add other metrics
     # TODO: check why area different from compute_csa
