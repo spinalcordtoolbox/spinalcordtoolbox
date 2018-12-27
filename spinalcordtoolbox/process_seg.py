@@ -338,13 +338,15 @@ def compute_csa(segmentation, algo_fitting='hanning', type_window='hanning', win
     return metrics
 
 
-def compute_shape(segmentation, remove_temp_files=1, verbose=1):
+def compute_shape(segmentation, algo_fitting='hanning', window_length=50, remove_temp_files=1, verbose=1):
     """
     This function characterizes the shape of the spinal cord, based on the segmentation
     Shape properties are computed along the spinal cord and averaged per z-slices.
     Option is to provide intervertebral disks to average shape properties over vertebral levels (fname_discs).
     WARNING: the segmentation needs to be binary.
     :param segmentation: input segmentation. Could be either an Image or a file name.
+    :param algo_fitting:
+    :param window_length:
     :param remove_temp_files:
     :param verbose:
     :return metrics: Dict of class Metric()
@@ -354,6 +356,8 @@ def compute_shape(segmentation, remove_temp_files=1, verbose=1):
     shape_properties = msct_shape.compute_properties_along_centerline(im_seg=im_seg,
                                                                       smooth_factor=0.0,
                                                                       interpolation_mode=0,
+                                                                      algo_fitting=algo_fitting,
+                                                                      window_length=window_length,
                                                                       remove_temp_files=remove_temp_files,
                                                                       verbose=verbose)
     # TODO: when switching to Python3, replace iteritems() by items()
@@ -387,6 +391,7 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose=0, algo_fi
     :param file_out:
     :return: None
     """
+    # TODO: output continuous centerline (and add in unit test)
     # TODO: centerline coordinate should have the same orientation as the input image
     # TODO: no need for unecessary i/o. Everything could be done in RAM
 

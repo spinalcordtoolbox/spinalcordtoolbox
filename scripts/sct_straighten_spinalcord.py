@@ -121,9 +121,9 @@ def smooth_centerline(fname_centerline, algo_fitting='hanning', type_window='han
         y_centerline = np.asarray(y_centerline)
 
         # Smooth the curve
-        x_centerline_smooth = smoothing_window(x_centerline, window_len=window_length * pz, window=type_window,
+        x_centerline_smooth = smoothing_window(x_centerline, window_len=window_length / pz, window=type_window,
                                                verbose=verbose, robust=0, remove_edge_points=remove_edge_points)
-        y_centerline_smooth = smoothing_window(y_centerline, window_len=window_length * pz, window=type_window,
+        y_centerline_smooth = smoothing_window(y_centerline, window_len=window_length / pz, window=type_window,
                                                verbose=verbose, robust=0, remove_edge_points=remove_edge_points)
 
         # convert to list final result

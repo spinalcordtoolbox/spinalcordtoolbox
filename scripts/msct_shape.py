@@ -137,8 +137,8 @@ def assign_AP_and_RL_diameter(properties):
     return properties
 
 
-def compute_properties_along_centerline(im_seg, smooth_factor=5.0, interpolation_mode=0, remove_temp_files=1,
-                                        verbose=1):
+def compute_properties_along_centerline(im_seg, smooth_factor=5.0, interpolation_mode=0, algo_fitting='hanning',
+                                        window_length=50, remove_temp_files=1, verbose=1):
     """
     Compute shape property along spinal cord centerline. This algorithm estimates the centerline using NURBS,
     oversample it, extract 2D patch orthogonal to the centerline, compute the shape on the 2D patches, and finally
@@ -146,6 +146,8 @@ def compute_properties_along_centerline(im_seg, smooth_factor=5.0, interpolation
     :param im_seg:
     :param smooth_factor:
     :param interpolation_mode:
+    :param algo_fitting:
+    :param window_length:
     :param remove_temp_files:
     :param verbose:
     :return:
@@ -190,10 +192,10 @@ def compute_properties_along_centerline(im_seg, smooth_factor=5.0, interpolation
     properties['z_slice'] = []
 
     # compute the spinal cord centerline based on the spinal cord segmentation
-    number_of_points = 5 * nz
+    number_of_points = nz  # 5 * nz
     x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = \
-        smooth_centerline(fname_segmentation_orient, algo_fitting='nurbs', verbose=verbose,
-                          nurbs_pts_number=number_of_points, all_slices=False, phys_coordinates=True,
+        smooth_centerline(fname_segmentation_orient, algo_fitting=algo_fitting, window_length=window_length,
+                          verbose=verbose, nurbs_pts_number=number_of_points, all_slices=False, phys_coordinates=True,
                           remove_outliers=True)
     centerline = Centerline(x_centerline_fit, y_centerline_fit, z_centerline,
                             x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
