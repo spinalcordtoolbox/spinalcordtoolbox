@@ -51,7 +51,7 @@ def properties2d(image, resolution=None):
         except ZeroDivisionError:
             ratio_minor_major = 0.0
 
-        area = sc_region.area
+        area = sc_region.area  # TODO: increase precision (currently single decimal)
         diameter = sc_region.equivalent_diameter
         major_l = sc_region.major_axis_length
         minor_l = sc_region.minor_axis_length
@@ -73,24 +73,24 @@ def properties2d(image, resolution=None):
         plt.show()
         """
 
-        y0, x0 = sc_region.centroid
-        orientation = sc_region.orientation
+        # y0, x0 = sc_region.centroid
+        # orientation = sc_region.orientation
+        #
+        # resolution_grid = 0.25
+        # x_grid, y_grid = np.mgrid[-size_grid:size_grid:resolution_grid, -size_grid:size_grid:resolution_grid]
+        # coordinates_grid = np.array(list(zip(x_grid.ravel(), y_grid.ravel())))
+        # coordinates_grid_image = np.array([[x0 + math.cos(orientation) * coordinates_grid[i, 0], y0 - math.sin(orientation) * coordinates_grid[i, 1]] for i in range(coordinates_grid.shape[0])])
+        #
+        # square = scipy.ndimage.map_coordinates(image, coordinates_grid_image.T, output=np.float32, order=0, mode='constant', cval=0.0)
+        # square_image = square.reshape((len(x_grid), len(x_grid)))
+        #
+        # size_half = square_image.shape[1] / 2
+        # left_image = square_image[:, :size_half]
+        # right_image = np.fliplr(square_image[:, size_half:])
+        #
+        # dice_symmetry = np.sum(left_image[right_image == 1]) * 2.0 / (np.sum(left_image) + np.sum(right_image))
 
-        resolution_grid = 0.25
-        x_grid, y_grid = np.mgrid[-size_grid:size_grid:resolution_grid, -size_grid:size_grid:resolution_grid]
-        coordinates_grid = np.array(list(zip(x_grid.ravel(), y_grid.ravel())))
-        coordinates_grid_image = np.array([[x0 + math.cos(orientation) * coordinates_grid[i, 0], y0 - math.sin(orientation) * coordinates_grid[i, 1]] for i in range(coordinates_grid.shape[0])])
-
-        square = scipy.ndimage.map_coordinates(image, coordinates_grid_image.T, output=np.float32, order=0, mode='constant', cval=0.0)
-        square_image = square.reshape((len(x_grid), len(x_grid)))
-
-        size_half = square_image.shape[1] / 2
-        left_image = square_image[:, :size_half]
-        right_image = np.fliplr(square_image[:, size_half:])
-
-        dice_symmetry = np.sum(left_image[right_image == 1]) * 2.0 / (np.sum(left_image) + np.sum(right_image))
-
-        """
+        """DEBUG
         import matplotlib.pyplot as plt
         plt.imshow(square_image)
         plt.text(3, 3, dice, color='white')
@@ -112,8 +112,8 @@ def properties2d(image, resolution=None):
                          'orientation': sc_region.orientation * 180.0 / math.pi,
                          'perimeter': sc_region.perimeter,
                          'ratio_minor_major': ratio_minor_major,
-                         'solidity': sc_region.solidity,  # convexity measure
-                         'symmetry': dice_symmetry
+                         'solidity': sc_region.solidity  # convexity measure
+                         # 'symmetry': dice_symmetry
                          }
     else:
         sc_properties = None
@@ -138,9 +138,9 @@ def assign_AP_and_RL_diameter(properties):
 
 
 def compute_properties_along_centerline(im_seg, smooth_factor=5.0, interpolation_mode=0, algo_fitting='hanning',
-                                        window_length=50, remove_temp_files=1, verbose=1):
+                                        window_length=50, size_patch=7, remove_temp_files=1, verbose=1):
     """
-    Compute shape property along spinal cord centerline. This algorithm estimates the centerline using NURBS,
+    Compute shape property along spinal cord centerline. This algorithm computes the centerline,
     oversample it, extract 2D patch orthogonal to the centerline, compute the shape on the 2D patches, and finally
     undersample the shape information in order to match the input slice #.
     :param im_seg:
@@ -161,8 +161,7 @@ def compute_properties_along_centerline(im_seg, smooth_factor=5.0, interpolation
                      'ratio_minor_major',
                      'eccentricity',
                      'solidity',
-                     'orientation',
-                     'symmetry']
+                     'orientation']
 
     # TODO: make sure fname_segmentation and fname_disks are in the same space
     path_tmp = sct.tmp_create(basename="compute_properties_along_centerline", verbose=verbose)
@@ -184,7 +183,10 @@ def compute_properties_along_centerline(im_seg, smooth_factor=5.0, interpolation
 
     # Initiating some variables
     nx, ny, nz, nt, px, py, pz, pt = im_seg.dim
-    resolution = 0.5
+    # Define the resampling resolution. Here, we take the minimum of half the pixel size along X or Y in order to have
+    # sufficient precision upon resampling. Since we want isotropic resamping, we take the min between the two dims.
+    resolution = min(float(px) / 2, float(py) / 2)
+    # resolution = 0.5
     properties = {key: [] for key in property_list}
     properties['incremental_length'] = []
     properties['distance_from_C1'] = []
@@ -207,7 +209,13 @@ def compute_properties_along_centerline(im_seg, smooth_factor=5.0, interpolation
         for index in range(centerline.number_of_points):
             # value_out = -5.0
             value_out = 0.0
-            current_patch = centerline.extract_perpendicular_square(im_seg, index, resolution=resolution,
+            # TODO: instead of iterating along the cord centerline, it would be better to simply iterate along Z, and
+            # correct for angulation using the cosine. The current approach has 2 issues:
+            # - the centerline is not homogeneously sampled along z (which is the reason it is oversampled)
+            # - computationally expensive
+            # - requires resampling to higher resolution --> to check: maybe required with cosine approach
+            current_patch = centerline.extract_perpendicular_square(im_seg, index, size=size_patch,
+                                                                    resolution=resolution,
                                                                     interpolation_mode=interpolation_mode,
                                                                     border='constant', cval=value_out)
 
