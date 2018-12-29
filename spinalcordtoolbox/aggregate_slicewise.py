@@ -62,7 +62,8 @@ def aggregate_per_slice_or_level(metrics, slices=None, levels=None, perslice=Tru
                     if iz in metrics['z'].value:
                         metric_data.append(metrics[metric].value[metrics['z'].value.index(iz)])
                     else:
-                        sct.log.warning('z={} is not listed in the metric.'.format(iz))
+                        # sct.log.warning('z={} is not listed in the metric.'.format(iz))
+                        agg_metrics[metric][slicegroup] = {'error': 'z={} is not listed in the metric.'.format(iz)}
                 try:
                     agg_metrics[metric][slicegroup] = dict((name, func(metric_data)) for (name, func) in group_funcs)
                 except Exception as e:

@@ -30,7 +30,6 @@ def dummy_segmentation():
         :return:
         """
         nx, ny, nz = 200, 200, 100  # image dimension
-        fname_seg = 'dummy_segmentation.nii.gz'  # output seg
         data = np.random.random((nx, ny, nz))
         xx, yy = np.mgrid[:nx, :ny]
         # loop across slices and add an ellipse of axis length a and b
@@ -51,11 +50,9 @@ def dummy_segmentation():
         for i in range(3):
             xform[i][i] = 0.1  # adjust voxel dimension to get realistic spinal cord size (important for some functions)
         nii = nib.nifti1.Nifti1Image(data_rot.astype('float32'), xform)
-        # i = fake_3dimage_custom(data)
-        img = Image(nii.get_data(), hdr=nii.header, orientation="RPI", dim=nii.header.get_data_shape(), absolutepath='dummy_segmentation.nii.gz')
-        # nib.save(img, fname_seg)
+        img = Image(nii.get_data(), hdr=nii.header, orientation="RPI", dim=nii.header.get_data_shape(),
+                    absolutepath='dummy_segmentation.nii.gz')
         return img
-        # return _dummy_seg
     return _dummy_seg
 
 
