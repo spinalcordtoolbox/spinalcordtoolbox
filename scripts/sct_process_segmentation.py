@@ -33,9 +33,9 @@ import numpy as np
 import sct_utils as sct
 from msct_parser import Parser
 from spinalcordtoolbox import process_seg
-from spinalcordtoolbox.aggregate_slicewise import aggregate_per_slice_or_level
-from spinalcordtoolbox import save_struct
-from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.aggregate_slicewise import aggregate_per_slice_or_level, save_as_csv
+from spinalcordtoolbox.utils import parse_num_list
+
 
 class Param:
     def __init__(self):
@@ -251,11 +251,12 @@ def main(args):
                                           angle_correction=angle_correction, use_phys_coord=use_phys_coord,
                                           remove_temp_files=remove_temp_files, verbose=verbose)
 
-        metrics_agg = aggregate_per_slice_or_level(metrics, slices=slices, levels=vert_levels, perslice=perslice,
+        metrics_agg = aggregate_per_slice_or_level(metrics, slices=parse_num_list(slices),
+                                                   levels=parse_num_list(vert_levels), perslice=perslice,
                                                    perlevel=perlevel, vert_level=fname_vert_levels,
                                                    group_funcs=group_funcs)
 
-        fname_metrics = save_struct.save_as_csv(metrics_agg, fname_out)
+        fname_metrics = save_as_csv(metrics_agg, file_out)
 
 
     if name_process == 'label-vert':

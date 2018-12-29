@@ -28,11 +28,12 @@ class Metric:
     """
     Class to include in dictionaries to associate metric value and label
     """
-    def __init__(self, value=[], label=''):
+    def __init__(self, z=[], value=[], label=''):
         """
         :param value:
         :param label:
         """
+        self.z = z
         self.value = value
         self.label = label
 
@@ -337,9 +338,9 @@ def compute_csa(segmentation, algo_fitting='hanning', type_window='hanning', win
         sct.rmtree(path_tmp)
 
     # prepare output
-    metrics = {'z': range(min_z_index, max_z_index+1),
-               'csa': Metric(value=csa, label='CSA [mm^2]'),
-               'angle': Metric(value=angles, label='Angle between cord axis and z [deg]')}
+    metrics = {'csa': Metric(z=range(min_z_index, max_z_index+1), value=csa, label='CSA [mm^2]'),
+               'angle': Metric(z=range(min_z_index, max_z_index+1), value=angles,
+                               label='Angle between cord axis and z [deg]')}
     return metrics
 
 

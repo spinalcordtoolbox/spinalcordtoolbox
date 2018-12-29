@@ -6,6 +6,8 @@ from __future__ import absolute_import
 
 import re
 
+# TODO: add test
+
 def parse_num_list(str_num):
     """
     Parse numbers in string based on delimiter: , or :

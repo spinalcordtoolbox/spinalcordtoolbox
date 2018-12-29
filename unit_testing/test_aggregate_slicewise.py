@@ -17,12 +17,11 @@ from spinalcordtoolbox.image import Image
 @pytest.fixture(scope="session")
 def dummy_metric():
     """Create a dummy metric dictionary."""
-    metrics = {'z': Metric(value=[3, 4, 5, 6, 7], label='z'),
-               'metric1': Metric(value=[29., 31., 39., 41., 50.], label='Metric with float [a.u.]'),
-               'metric2': Metric(value=[99, 100, 101, 102, 103], label='Metric with int [a.u.]'),
-               'metric3': Metric(value=[99, np.nan, 101, 102, 103], label='Metric with nan'),
-               'metric4': Metric(value=[99, 100, 101, 102], label='Inconsistent value and z length.'),
-               'metric5': Metric(value=[99, "boo!", 101, 102, 103], label='Metric with string')}
+    metrics = {'metric1': Metric(z=[3, 4, 5, 6, 7], value=[29., 31., 39., 41., 50.], label='Metric with float [a.u.]'),
+               'metric2': Metric(z=[3, 4, 5, 6, 7], value=[99, 100, 101, 102, 103], label='Metric with int [a.u.]'),
+               'metric3': Metric(z=[3, 4, 5, 6, 7], value=[99, np.nan, 101, 102, 103], label='Metric with nan'),
+               'metric4': Metric(z=[3, 4, 5, 6, 7], value=[99, 100, 101, 102], label='Inconsistent value and z length.'),
+               'metric5': Metric(z=[3, 4, 5, 6, 7], value=[99, "boo!", 101, 102, 103], label='Metric with string')}
     return metrics
 
 
@@ -51,12 +50,13 @@ def test_aggregate_across_slices(dummy_metric):
     # metrics = {'metric1': [1, 2, 3, 4, 5, 6, 7, 8, 9]}
     agg_metrics = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metric, slices=[3, 4], perslice=False,
                                                                    group_funcs=group_funcs)
-    assert agg_metrics['metric1'][(3, 4)] == {'mean': 30.0, 'std': 1.0, 'VertLevel': None}
-    assert agg_metrics['metric2'][(3, 4)] == {'mean': 99.5, 'std': 0.5, 'VertLevel': None}
+    assert agg_metrics[(3, 4)]['metrics']['metric1']['mean'] == 30.0
+    assert agg_metrics[(3, 4)]['metrics']['metric1']['std'] == 1.0
+    assert agg_metrics[(3, 4)]['metrics']['metric2']['mean'] == 99.5
     # check that even if there is an error in metric estimation, the function outputs a dict for specific slicegroup
-    assert np.isnan(agg_metrics['metric3'][(3, 4)]['mean'])
-    assert agg_metrics['metric4'][(3, 4)]['error'] == 'metric and z have do not have the same length'
-    assert agg_metrics['metric5'][(3, 4)]['error'] == 'cannot perform reduce with flexible type'
+    assert np.isnan(agg_metrics[(3, 4)]['metrics']['metric3']['mean'])
+    assert agg_metrics[(3, 4)]['metrics']['metric4']['error'] == 'metric and z have do not have the same length'
+    assert agg_metrics[(3, 4)]['metrics']['metric5']['error'] == 'cannot perform reduce with flexible type'
 
 
 # noinspection 801,PyShadowingNames
