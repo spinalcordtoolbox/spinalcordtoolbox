@@ -64,7 +64,7 @@ def get_parser():
     parser.add_option(name='-p',
                       type_value='multiple_choice',
                       description='type of process to be performed:\n'
-                                  '- centerline: extract centerline as binary file.\n'
+                                  '- centerline: Extract centerline. Output coordinates (.csv), image with one pixel per slice (.nii.gz) and JIM-compatible ROI file (.roi).\n'
                                   '- label-vert: Transform segmentation into vertebral level using a file that contains labels with disc value (flag: -discfile)\n'
                                   '- length: compute length of the segmentation.\n'
                                   '- csa: computes cross-sectional area by counting pixels in each'
@@ -241,7 +241,7 @@ def main(args):
         file_out = name_process
 
     if name_process == 'centerline':
-        process_seg.extract_centerline(fname_segmentation, remove_temp_files, verbose=param.verbose,
+        process_seg.extract_centerline(fname_segmentation, verbose=param.verbose,
                                        algo_fitting=param.algo_fitting, use_phys_coord=use_phys_coord,
                                        file_out=file_out)
 

@@ -176,7 +176,7 @@ def compute_csa(segmentation, algo_fitting='hanning', type_window='hanning', win
     :param window_length:
     :param angle_correction:
     :param use_phys_coord:
-    :return metrics: Dict of class Metric()
+    :return metrics: Dict of class process_seg.Metric()
     """
     # create temporary folder
     path_tmp = sct.tmp_create()
@@ -337,7 +337,8 @@ def compute_csa(segmentation, algo_fitting='hanning', type_window='hanning', win
         sct.rmtree(path_tmp)
 
     # prepare output
-    metrics = {'csa': Metric(value=csa, label='CSA [mm^2]'),
+    metrics = {'z': range(min_z_index, max_z_index+1),
+               'csa': Metric(value=csa, label='CSA [mm^2]'),
                'angle': Metric(value=angles, label='Angle between cord axis and z [deg]')}
     return metrics
 
@@ -380,13 +381,11 @@ def compute_shape(segmentation, algo_fitting='hanning', window_length=50, remove
     #                            overwrite=overwrite)
 
 
-def extract_centerline(fname_segmentation, remove_temp_files, verbose=0, algo_fitting='hanning', type_window='hanning',
-                       window_length=80, use_phys_coord=True, file_out='centerline'):
+def extract_centerline(segmentation, verbose=0, algo_fitting='hanning', type_window='hanning',
+                       window_length=5, use_phys_coord=True, file_out='centerline'):
     """
-    Extract centerline from a binary or weighted segmentation by computing the center of mass. Create centerline
-    coordinates (.csv), image with one pixel per slice (.nii.gz) and JIM-compatible ROI file (.roi)
-    :param fname_segmentation:
-    :param remove_temp_files:
+    Extract centerline from a binary or weighted segmentation by computing the center of mass slicewise.
+    :param segmentation: input segmentation. Could be either an Image or a file name.
     :param verbose:
     :param algo_fitting:
     :param type_window:
@@ -402,7 +401,8 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose=0, algo_fi
     # Create temp folder
     path_tmp = sct.tmp_create()
     # Open segmentation volume
-    im_seg = msct_image.Image(fname_segmentation)
+    im_seg = msct_image.Image(segmentation)
+    # im_seg.change_orientation('RPI', generate_path=True)
     native_orientation = im_seg.orientation
     im_seg.change_orientation("RPI", generate_path=True).save(path_tmp, mutable=True)
     fname_tmp_seg = im_seg.absolutepath
@@ -484,7 +484,7 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose=0, algo_fi
     fname_centerline = file_out + '.nii.gz'
     im_centerline.save(fname_centerline, dtype='uint8')
     # display stuff
-    sct.display_viewer_syntax([fname_segmentation, fname_centerline], colormaps=['gray', 'green'])
+    # sct.display_viewer_syntax([fname_segmentation, fname_centerline], colormaps=['gray', 'green'])
 
     # output csv with centerline coordinates
     fname_centerline_csv = file_out + '.csv'
@@ -503,9 +503,9 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose=0, algo_fi
                                                 verbose=verbose)
 
     # Remove temporary files
-    if remove_temp_files:
-        sct.printv('\nRemove temporary files...', verbose)
-        sct.rmtree(path_tmp)
+    # if remove_temp_files:
+    #     sct.printv('\nRemove temporary files...', verbose)
+    #     sct.rmtree(path_tmp)
 
 
 def label_vert(fname_seg, fname_label, fname_out='', verbose=1):

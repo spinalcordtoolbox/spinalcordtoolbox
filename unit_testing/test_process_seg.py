@@ -30,11 +30,11 @@ def dummy_segmentation():
         :return:
         """
         nx, ny, nz = 200, 200, 100  # image dimension
-        data = np.random.random((nx, ny, nz))
+        data = np.random.random((nx, ny, nz)) * 0.
         xx, yy = np.mgrid[:nx, :ny]
         # loop across slices and add an ellipse of axis length a and b
         # a, b = 50.0, 30.0  # radius of the ellipse (in pix size). Theoretical CSA: 4712.4
-        for iz in range(nz):
+        for iz in range(nz-5):  # remove 5 to make sure SCT does not crash if incomplete segmentation
             if shape == 'rectangle':  # theoretical CSA: (a*2+1)(b*2+1)
                 data[:, :, iz] = ((abs(xx - nx / 2) <= a) & (abs(yy - ny / 2) <= b)) * 1
             if shape == 'ellipse':
@@ -78,6 +78,7 @@ def test_compute_csa_noangle(dummy_segmentation):
     metrics = process_seg.compute_csa(dummy_segmentation(shape='rectangle', angle=0, a=50.0, b=30.0),
                                       algo_fitting='hanning', window_length=5, angle_correction=False,
                                       use_phys_coord=True, verbose=0)
+    assert metrics['z'] == range(0, 95)
     assert np.mean(metrics['csa'].value[20:80]) == pytest.approx(61.61, rel=0.01)
     assert np.mean(metrics['angle'].value[20:80]) == pytest.approx(0.0, rel=0.01)
 

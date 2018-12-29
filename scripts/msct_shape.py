@@ -151,7 +151,7 @@ def compute_properties_along_centerline(im_seg, smooth_factor=5.0, interpolation
     :param verbose:
     :return:
     """
-
+    # TODO: put size_patch back to 20 (was put to 7 for debugging purpose)
     # List of properties to output (in the right order)
     property_list = ['area',
                      'equivalent_diameter',
