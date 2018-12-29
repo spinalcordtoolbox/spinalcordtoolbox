@@ -99,26 +99,40 @@ def aggregate_per_slice_or_level(metrics, slices=None, levels=None, perslice=Tru
                     agg_metrics[slicegroup]['metrics'][metric]['error'] = e.message
     return agg_metrics
 
+def make_a_string(item):
+    """Convert tuple or list or None to a string. Important: elements in tuple or list are separated with ; (not ,)
+    for compatibility with csv."""
+    if isinstance(item, tuple) or isinstance(item, list):
+        return ';'.join([str(i) for i in item])
+    elif item is None:
+        return 'None'
+    else:
+        return item
 
-def save_as_csv(metrics, fname):
+
+def save_as_csv(agg_metrics, fname):
     """
     Write metric structure as csv
     :param metric: output of aggregate_per_slice_or_level()
     :param fname: output filename. Include extension (.csv)
     :return:
     """
+    # TODO: deal with error (in case the field error appears in a dict)
     # Create output csv file
     # fname_out = file_out + '.csv'
     file_results = open(fname, 'w')
     # build header
-    header = (','.join(['I-S Slice', 'Vertebral level']))
-    for metric in metrics.keys():
+    header = (','.join(['Slice (I->S)', 'Vertebral level']))
+    for metric in agg_metrics[agg_metrics.keys()[0]]['metrics'].keys():
         header = ','.join([header, 'MEAN({})'.format(metric), 'STD({})'.format(metric)])
     file_results.write(header+'\n')
     # populate data
-    for slicegroup in metrics[metrics.keys()[0]].keys():
-        line = ','.join([slicegroup, metrics[metric][slicegroup]['VertLevel']])
-        for metric in metrics.keys():
-            line = ','.join([line, metrics[metric][slicegroup]['mean'], metrics[metric][slicegroup]['std']])
+    for slicegroup in agg_metrics.keys():
+        line = ','.join([make_a_string(slicegroup),  # list all slices in slicegroup
+                         make_a_string(agg_metrics[slicegroup]['VertLevel'])])  # list vertebral levels
+        for metric in agg_metrics[slicegroup]['metrics'].keys():
+            line = ','.join([line,
+                             str(agg_metrics[slicegroup]['metrics'][metric]['mean']),
+                             str(agg_metrics[slicegroup]['metrics'][metric]['std'])])
         file_results.write(line+'\n')
     file_results.close()

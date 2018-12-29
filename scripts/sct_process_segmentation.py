@@ -256,7 +256,7 @@ def main(args):
                                                    perlevel=perlevel, vert_level=fname_vert_levels,
                                                    group_funcs=group_funcs)
 
-        fname_metrics = save_as_csv(metrics_agg, file_out)
+        save_as_csv(metrics_agg, file_out)
 
 
     if name_process == 'label-vert':
