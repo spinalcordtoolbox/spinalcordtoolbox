@@ -74,7 +74,6 @@ def properties2d(image, resolution=None):
         """
 
         # y0, x0 = sc_region.centroid
-        # orientation = sc_region.orientation
         #
         # resolution_grid = 0.25
         # x_grid, y_grid = np.mgrid[-size_grid:size_grid:resolution_grid, -size_grid:size_grid:resolution_grid]
@@ -255,19 +254,19 @@ def compute_properties_along_centerline(im_seg, smooth_factor=5.0, interpolation
         for property_name in property_list:
             properties[property_name] = scipy.signal.convolve(properties[property_name], window, mode='same') / np.sum(window)
 
-    # Display properties on the referential space. Requires intervertebral disks
-    if verbose == 2:
-        x_increment = 'distance_from_C1'
-        import matplotlib.pyplot as plt
-        # Display the image and plot all contours found
-        fig, axes = plt.subplots(len(property_list), sharex=True, sharey=False)
-        for k, property_name in enumerate(property_list):
-            axes[k].plot(properties[x_increment], properties[property_name])
-            axes[k].set_ylabel(property_name)
-
-        axes[-1].set_xlabel('Position along the spinal cord (in mm)')
-
-        plt.show()
+    # # Display properties on the referential space. Requires intervertebral disks
+    # if verbose == 2:
+    #     x_increment = 'distance_from_C1'
+    #     import matplotlib.pyplot as plt
+    #     # Display the image and plot all contours found
+    #     fig, axes = plt.subplots(len(property_list), sharex=True, sharey=False)
+    #     for k, property_name in enumerate(property_list):
+    #         axes[k].plot(properties[x_increment], properties[property_name])
+    #         axes[k].set_ylabel(property_name)
+    #
+    #     axes[-1].set_xlabel('Position along the spinal cord (in mm)')
+    #
+    #     plt.show()
 
     # extract all values for shape properties to be averaged across the oversampled centerline in order to match the
     # input slice #

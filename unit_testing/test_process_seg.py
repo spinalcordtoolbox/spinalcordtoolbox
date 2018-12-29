@@ -20,9 +20,16 @@ def dummy_segmentation():
     to make sure that compute_csa and compute_shape properly estimate the centerline angle.
     :return: fname_seg: filename of 3D binary image
     """
-    def _dummy_seg(shape='rectangle', angle=15, a=50, b=30):
-        """Nested function to allow input parameters"""
-        nx, ny, nz = 200, 200, 200  # image dimension
+    def _dummy_seg(shape='rectangle', angle=15, a=50.0, b=30.0):
+        """
+        Nested function to allow input parameters
+        :param shape: {'rectangle', 'ellipse'}
+        :param angle: int: in deg
+        :param a: float: 1st radius
+        :param b: float: 2nd radius
+        :return:
+        """
+        nx, ny, nz = 200, 200, 100  # image dimension
         fname_seg = 'dummy_segmentation.nii.gz'  # output seg
         data = np.random.random((nx, ny, nz))
         xx, yy = np.mgrid[:nx, :ny]
@@ -53,7 +60,7 @@ def dummy_segmentation():
 # noinspection 801,PyShadowingNames
 def test_extract_centerline(dummy_segmentation):
     """Test extraction of centerline from input segmentation"""
-    process_seg.extract_centerline(dummy_segmentation(shape='rectangle', angle=0, a=3, b=1), 0, file_out='centerline')
+    process_seg.extract_centerline(dummy_segmentation(shape='rectangle', angle=0, a=3.0, b=1.0), 0, file_out='centerline')
     # open created csv file
     centerline_out = []
     with open('centerline.csv', 'rb') as f:
@@ -62,44 +69,67 @@ def test_extract_centerline(dummy_segmentation):
         for row in reader:
             centerline_out.append([int(i) for i in row])
     # build ground-truth centerline
-    centerline_true_20to180 = [[20, 99, 100], [60, 99, 100], [100, 99, 100], [140, 99, 100], [180, 99, 100]]
-    assert centerline_out[20:200:40] == centerline_true_20to180
+    centerline_true_20to80 = [[20, 99, 100], [40, 99, 100], [60, 99, 100], [80, 99, 100]]
+    assert centerline_out[20:200:20] == centerline_true_20to80
 
 
 # noinspection 801,PyShadowingNames
 def test_compute_csa_noangle(dummy_segmentation):
     """Test computation of cross-sectional area from input segmentation"""
-    metrics = process_seg.compute_csa(dummy_segmentation(shape='rectangle', angle=0, a=50, b=30),
+    metrics = process_seg.compute_csa(dummy_segmentation(shape='rectangle', angle=0, a=50.0, b=30.0),
                                       algo_fitting='hanning', window_length=5, angle_correction=False,
                                       use_phys_coord=True, verbose=0)
-    assert np.mean(metrics['csa'].value[50:150]) == pytest.approx(61.61, rel=0.01)
-    assert np.mean(metrics['angle'].value[50:150]) == pytest.approx(0.0, rel=0.01)
+    assert np.mean(metrics['csa'].value[20:80]) == pytest.approx(61.61, rel=0.01)
+    assert np.mean(metrics['angle'].value[20:80]) == pytest.approx(0.0, rel=0.01)
 
 
 # noinspection 801,PyShadowingNames
 def test_compute_csa(dummy_segmentation):
+    """Test computation of cross-sectional area from input segmentation
+    Note: here, compared to the previous tests with no angle, we use smaller hanning window and smaller range for
+    computing the mean, because the smoothing creates spurious errors at edges."""
+    metrics = process_seg.compute_csa(dummy_segmentation(shape='rectangle', angle=15, a=50.0, b=30.0),
+                                      algo_fitting='hanning', type_window='hanning',
+                                      window_length=3, angle_correction=True, use_phys_coord=True, verbose=0)
+    assert np.mean(metrics['csa'].value[30:70]) == pytest.approx(61.61, rel=0.01)
+    assert np.mean(metrics['angle'].value[30:70]) == pytest.approx(15.00, rel=0.01)
+
+
+# noinspection 801,PyShadowingNames
+def test_compute_csa_ellipse(dummy_segmentation):
     """Test computation of cross-sectional area from input segmentation"""
-    metrics = process_seg.compute_csa(dummy_segmentation(shape='rectangle', angle=15, a=50, b=30),
+    metrics = process_seg.compute_csa(dummy_segmentation(shape='ellipse', angle=0, a=50.0, b=30.0),
                                       algo_fitting='hanning', type_window='hanning',
                                       window_length=5, angle_correction=True, use_phys_coord=True, verbose=0)
-    assert np.mean(metrics['csa'].value[50:150]) == pytest.approx(61.61, rel=0.01)
-    assert np.mean(metrics['angle'].value[50:150]) == pytest.approx(15.00, rel=0.01)
+    assert np.mean(metrics['csa'].value[30:70]) == pytest.approx(47.01, rel=0.01)
+    assert np.mean(metrics['angle'].value[30:70]) == pytest.approx(0.0, rel=0.01)
+
+
+# noinspection 801,PyShadowingNames
+def test_compute_shape_noangle(dummy_segmentation):
+    """Test computation of cross-sectional area from input segmentation."""
+    # Using hanning because faster
+    metrics = process_seg.compute_shape(dummy_segmentation(shape='ellipse', angle=0, a=50.0, b=30.0),
+                                        algo_fitting='hanning', window_length=3, verbose=0)
+    assert np.mean(metrics['area'].value[30:70]) == pytest.approx(47.01, rel=0.05)
+    assert np.mean(metrics['AP_diameter'].value[30:70]) == pytest.approx(6.0, rel=0.05)
+    assert np.mean(metrics['RL_diameter'].value[30:70]) == pytest.approx(10.0, rel=0.05)
+    assert np.mean(metrics['ratio_minor_major'].value[30:70]) == pytest.approx(0.6, rel=0.05)
+    assert np.mean(metrics['eccentricity'].value[30:70]) == pytest.approx(0.8, rel=0.05)
+    assert np.mean(metrics['orientation'].value[30:70]) == pytest.approx(0.0, rel=0.05)
+    assert np.mean(metrics['solidity'].value[30:70]) == pytest.approx(1.0, rel=0.05)
 
 
 # noinspection 801,PyShadowingNames
 def test_compute_shape(dummy_segmentation):
     """Test computation of cross-sectional area from input segmentation."""
     # Using hanning because faster
-    metrics = process_seg.compute_shape(dummy_segmentation(shape='ellipse', angle=15, a=50, b=30),
-                                        algo_fitting='hanning', window_length=50)
-    assert np.mean(metrics['area'].value[20:180]) == pytest.approx(46.30, rel=0.01)
-    assert np.mean(metrics['AP_diameter'].value[20:180]) == pytest.approx(6, rel=1)
-    assert np.mean(metrics['symmetry'].value[20:180]) == pytest.approx(1.0, rel=1e-8)
-    assert np.mean(metrics['ratio_minor_major'].value[20:180]) == pytest.approx(0.59, rel=0.01)
-    assert np.mean(metrics['solidity'].value[20:180]) == pytest.approx(0.94, rel=0.01)
-    assert np.mean(metrics['RL_diameter'].value[20:180]) == pytest.approx(10, rel=1)
-    assert np.mean(metrics['equivalent_diameter'].value[20:180]) == pytest.approx(7.7, rel=0.1)
-    assert np.mean(metrics['eccentricity'].value[20:180]) == pytest.approx(0.8, rel=0.1)
-
-    # TODO: add other metrics
-    # TODO: check why area different from compute_csa
+    metrics = process_seg.compute_shape(dummy_segmentation(shape='ellipse', angle=15, a=50.0, b=30.0),
+                                        algo_fitting='hanning', window_length=3, verbose=0)
+    assert np.mean(metrics['area'].value[30:70]) == pytest.approx(47.01, rel=0.05)
+    assert np.mean(metrics['AP_diameter'].value[30:70]) == pytest.approx(6.0, rel=0.05)
+    assert np.mean(metrics['RL_diameter'].value[30:70]) == pytest.approx(10.0, rel=0.05)
+    assert np.mean(metrics['ratio_minor_major'].value[30:70]) == pytest.approx(0.6, rel=0.05)
+    assert np.mean(metrics['eccentricity'].value[30:70]) == pytest.approx(0.8, rel=0.05)
+    assert np.mean(metrics['orientation'].value[30:70]) == pytest.approx(0.0, rel=0.05)
+    assert np.mean(metrics['solidity'].value[30:70]) == pytest.approx(1.0, rel=0.05)

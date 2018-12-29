@@ -72,13 +72,13 @@ def get_parser():
                                   '  is possible to input a binary mask or a mask comprising values within the range '
                                   '  [0,1] to account for partial volume effect. Default output file is: ./csa.csv'
                                   '- shape: compute spinal shape properties, using scikit-image region measures, including:\n'
+                                  '  - csa: cross-sectional area.\n'
                                   '  - AP and RL diameters\n'
-                                  '  - ratio between AP and RL diameters\n'
-                                  '  - spinal cord area\n'
+                                  '  - ratio_minor_major: AP_axis / RL_axis ratio.\n'
                                   '  - eccentricity: Eccentricity of the ellipse that has the same second-moments as the spinal cord. The eccentricity is the ratio of the focal distance (distance between focal points) over the major axis length. The value is in the interval [0, 1). When it is 0, the ellipse becomes a circle.\n'
                                   '  - equivalent diameter: The diameter of a circle with the same area as the spinal cord.\n'
                                   '  - orientation: angle (in degrees) between the AP axis of the spinal cord and the AP axis of the image\n'
-                                  '  - solidity: ratio of positive (spinal cord) over null (background) pixels that are contained in the convex hull region. The convex hull region is the smallest convex polygon that surround all positive pixels in the image.',
+                                  '  - solidity: CSA(spinal_cord) / CSA_convex(spinal_cord). If perfect ellipse, it should be one. This metric is interesting to detect non-convex shape (e.g., in case of strong compression).',
                       mandatory=True,
                       example=['centerline', 'label-vert', 'length', 'csa', 'shape'])
     parser.usage.addSection('Optional Arguments')
