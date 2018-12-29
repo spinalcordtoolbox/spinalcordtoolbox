@@ -34,7 +34,7 @@ import sct_utils as sct
 from msct_parser import Parser
 from spinalcordtoolbox import process_seg
 from spinalcordtoolbox.aggregate_slicewise import aggregate_per_slice_or_level
-from spinalcordtoolbox import save_struct
+# from spinalcordtoolbox import save_struct
 
 
 class Param:

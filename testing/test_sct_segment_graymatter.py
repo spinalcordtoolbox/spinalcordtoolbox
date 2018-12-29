@@ -25,7 +25,7 @@ def init(param_test):
     Initialize class: param_test
     """
     # initialization
-    default_args = ['-i t2s/t2s.nii.gz -s t2s/t2s_seg.nii.gz -vertfile t2s/MNI-Poly-AMU_level_crop.nii.gz -ref t2s/t2s_gmseg_manual.nii.gz -ratio level -qc testing-qc']
+    default_args = ['-i t2s/t2s.nii.gz -s t2s/t2s_seg.nii.gz -vertfile t2s/MNI-Poly-AMU_level_crop.nii.gz -ref t2s/t2s_gmseg_manual.nii.gz']
 
     param_test.hd_threshold = 3  # in mm
     param_test.wm_dice_threshold = 0.8
