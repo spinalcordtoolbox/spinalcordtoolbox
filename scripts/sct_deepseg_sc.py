@@ -28,7 +28,7 @@ import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
 from msct_parser import Parser
 from sct_get_centerline import _call_viewer_centerline
-from sct_process_segmentation import extract_centerline
+from spinalcordtoolbox.process_seg import extract_centerline
 
 import spinalcordtoolbox.resample.nipy_resample
 from spinalcordtoolbox.deepseg_sc.cnn_models import nn_architecture_seg, nn_architecture_ctr
