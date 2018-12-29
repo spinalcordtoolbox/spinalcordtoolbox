@@ -15,8 +15,8 @@ from sct_straighten_spinalcord import smooth_centerline
 import msct_shape
 from msct_types import Centerline
 from .centerline import optic
-from .aggregate_slicewise import aggregate_per_slice_or_level
 
+# TODO: introduce z in class Metric to associate a metric value with a specific slice
 # TODO: only use logging, don't use printing, pass images, not filenames, do imports at beginning of file, no chdir()
 
 # on v3.2.2 and earlier, the following volumes were output by default, which was a waste of time (people don't use it)
@@ -29,6 +29,10 @@ class Metric:
     Class to include in dictionaries to associate metric value and label
     """
     def __init__(self, value=[], label=''):
+        """
+        :param value:
+        :param label:
+        """
         self.value = value
         self.label = label
 

@@ -14,7 +14,7 @@ def aggregate_per_slice_or_level(metrics, slices=None, levels=None, perslice=Tru
                                  group_funcs=(('mean', np.mean),)):
     """
     It is assumed that each element of a metric's vector correspond to a slice. E.g., index #2 corresponds to slice #2.
-    :param dict metrics: Dict of metrics to aggregate
+    :param dict metrics: Dict of Class process_seg.Metric() to aggregate.
     :param slices: List[int]: Slices to aggregate metrics from
     :param levels: List[int]: Vertebral levels to aggregate metrics from
     :param Bool perslice: Aggregate per slice (True) or across slices (False)
@@ -51,15 +51,27 @@ def aggregate_per_slice_or_level(metrics, slices=None, levels=None, perslice=Tru
             slicegroups = [tuple(slices)]
     # loop across slice group
     for slicegroup in slicegroups:
-        try:
-            for metric in metrics.keys():
-                metric_data = [metrics[metric][slice] for slice in slicegroup]
-                agg_metrics[metric][slicegroup] = dict((name, func(metric_data)) for (name, func) in group_funcs)
+        for metric in metrics.keys():
+            metric_data = []
+            # make sure metric and z have same length
+            if not len(metrics['z'].value) == len(metrics[metric].value):
+                # TODO: raise custom exception instead of hard-coding error message
+                agg_metrics[metric][slicegroup] = {'error': 'metric and z have do not have the same length'}
+            else:
+                for iz in slicegroup:
+                    if iz in metrics['z'].value:
+                        metric_data.append(metrics[metric].value[metrics['z'].value.index(iz)])
+                    else:
+                        sct.log.warning('z={} is not listed in the metric.'.format(iz))
+                try:
+                    agg_metrics[metric][slicegroup] = dict((name, func(metric_data)) for (name, func) in group_funcs)
+                except Exception as e:
+                    sct.log.warning(e)
+                    # sct.log.warning('TypeError for metric {}'.format(metric))
+                    agg_metrics[metric][slicegroup] = {'error': e.message}
                 # add level info
                 if levels:
                     agg_metrics[metric][slicegroup]["VertLevel"] = vertgroups[slicegroups.index(slicegroup)]
                 else:
                     agg_metrics[metric][slicegroup]["VertLevel"] = None
-        except IndexError:
-            sct.log.warning('The slice request is out of the range of the image')
     return agg_metrics
