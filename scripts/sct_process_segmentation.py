@@ -34,8 +34,8 @@ import sct_utils as sct
 from msct_parser import Parser
 from spinalcordtoolbox import process_seg
 from spinalcordtoolbox.aggregate_slicewise import aggregate_per_slice_or_level
-# from spinalcordtoolbox import save_struct
-
+from spinalcordtoolbox import save_struct
+from spinalcordtoolbox.image import Image
 
 class Param:
     def __init__(self):
@@ -252,7 +252,7 @@ def main(args):
                                           remove_temp_files=remove_temp_files, verbose=verbose)
 
         metrics_agg = aggregate_per_slice_or_level(metrics, slices=slices, levels=vert_levels, perslice=perslice,
-                                                   perlevel=perlevel, im_vert_level=fname_vert_levels,
+                                                   perlevel=perlevel, vert_level=fname_vert_levels,
                                                    group_funcs=group_funcs)
 
         fname_metrics = save_struct.save_as_csv(metrics_agg, fname_out)

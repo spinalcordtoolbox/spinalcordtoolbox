@@ -8,9 +8,9 @@ import numpy as np
 
 import sct_utils as sct
 from spinalcordtoolbox.template import get_slices_from_vertebral_levels
+from spinalcordtoolbox.image import Image
 
-
-def aggregate_per_slice_or_level(metrics, slices=None, levels=None, perslice=True, perlevel=False, im_vert_level=None,
+def aggregate_per_slice_or_level(metrics, slices=None, levels=None, perslice=True, perlevel=False, vert_level=None,
                                  group_funcs=(('mean', np.mean),)):
     """
     It is assumed that each element of a metric's vector correspond to a slice. E.g., index #2 corresponds to slice #2.
@@ -19,7 +19,7 @@ def aggregate_per_slice_or_level(metrics, slices=None, levels=None, perslice=Tru
     :param levels: List[int]: Vertebral levels to aggregate metrics from
     :param Bool perslice: Aggregate per slice (True) or across slices (False)
     :param Bool perlevel: Aggregate per level (True) or across levels (False)
-    :param Image im_vert_level: Image of vertebral level
+    :param vert_level: Vertebral level. Could be either an Image or a file name.
     :param tuple group_funcs: Functions to apply on metrics. Example: (('mean', np.mean),))
     :return: Aggregated metrics
     """
@@ -28,7 +28,8 @@ def aggregate_per_slice_or_level(metrics, slices=None, levels=None, perslice=Tru
     agg_metrics = dict((metric, dict()) for metric in metrics.keys())
     # aggregation based on levels
     if levels:
-        im_vert_level.change_orientation("RPI")  # last dim should be k
+        im_vert_level = Image(vert_level).change_orientation('RPI')
+        # im_vert_level.change_orientation("RPI")  # last dim should be k
         slicegroups = [tuple(get_slices_from_vertebral_levels(im_vert_level, level)) for level in levels]
         if perlevel:
             # slicegroups = [(0, 1, 2), (3, 4, 5), (6, 7, 8)]
