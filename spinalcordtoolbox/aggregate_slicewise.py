@@ -30,7 +30,7 @@ def aggregate_per_slice_or_level(metrics, slices=None, levels=None, perslice=Tru
     """
     It is assumed that each element of a metric's vector correspond to a slice. E.g., index #2 corresponds to slice #2.
     :param dict metrics: Dict of Class process_seg.Metric() to aggregate.
-    :param slices: List[int]: Slices to aggregate metrics from
+    :param slices: List[int]: Slices to aggregate metrics from. If empty, select all slices.
     :param levels: List[int]: Vertebral levels to aggregate metrics from
     :param Bool perslice: Aggregate per slice (True) or across slices (False)
     :param Bool perlevel: Aggregate per level (True) or across levels (False)
@@ -38,9 +38,8 @@ def aggregate_per_slice_or_level(metrics, slices=None, levels=None, perslice=Tru
     :param tuple group_funcs: Functions to apply on metrics. Example: (('mean', np.mean),))
     :return: Aggregated metrics
     """
-    # TODO: include parse_num_list
-    # Create a dictionary for the output aggregated metrics
-    # agg_metrics = dict((metric, dict()) for metric in metrics.keys())
+    # if slices is empty, select all available slices from the metrics
+    slices = metrics[metrics.keys()[0]].z
     # aggregation based on levels
     if levels:
         im_vert_level = Image(vert_level).change_orientation('RPI')

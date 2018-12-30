@@ -102,7 +102,7 @@ def get_parser():
                                   'metric per slice and then averaging them all is not the same as outputting a single'
                                   'metric at once across all slices.',
                       mandatory=False,
-                      default_value=0)
+                      default_value=1)
     parser.add_option(name='-vert',
                       type_value='str',
                       description='Vertebral levels to compute the CSA across (requires \"-p csa\"). Example: 2:9 for C2 to T2.',
@@ -118,7 +118,7 @@ def get_parser():
                       description='Set to 1 to output one metric per vertebral level instead of a single '
                                   'output metric.',
                       mandatory=False,
-                      default_value=0)
+                      default_value=1)
     parser.add_option(name='-discfile',
                       type_value='image_nifti',
                       description='Disc labeling with the convention "disc labelvalue=3 ==> disc C2/C3". Only use with -p label-vert',
