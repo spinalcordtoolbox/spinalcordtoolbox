@@ -86,10 +86,6 @@ def get_parser():
                       type_value='file_output',
                       description="Output file name (add extension). Ex: my_csa.csv (with -p csa).",
                       mandatory=False)
-    parser.add_option(name="-ofolder",
-                      type_value="str",
-                      description="Deprecated. Please use -o.",
-                      mandatory=False)
     parser.add_option(name='-overwrite',
                       type_value='int',
                       description="""In the case you specified, in flag \"-ofolder\", a pre-existing folder that already includes a .xls result file (see flags \"-p csa\" and \"-z\" or \"-vert\"), this option will allow you to overwrite the .xls file (\"-overwrite 1\") or to add the results to it (\"-overwrite 0\").""",

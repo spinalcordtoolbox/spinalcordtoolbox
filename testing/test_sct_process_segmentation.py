@@ -34,8 +34,11 @@ def init(param_test):
     Initialize class: param_test
     """
     # initialization
-    default_args = ['-i t2/t2_seg.nii.gz -p centerline -v 1',
-                    '-i t2/t2_seg.nii.gz -p length']
+    default_args = ['-i t2/t2_seg.nii.gz -p centerline',
+                    '-i t2/t2_seg.nii.gz -p length',
+                    '-i t2/t2_seg.nii.gz -p csa',
+                    '-i t2/t2_seg.nii.gz -p shape',
+                    '-i t2/t2_seg.nii.gz -p label-vert -discfile t2/labels.nii.gz']
 
     # try:
     #     # Creation of files for multiple testing. These files are created in param_test.full_path_tmp

@@ -434,7 +434,7 @@ def get_functions_parallelizable():
         # 'sct_invert_image',  # function not available from command-line
         'sct_label_utils',
         # 'sct_pipeline',
-        #'sct_process_segmentation',
+        'sct_process_segmentation',
         'sct_propseg',
         'sct_register_multimodal',
         'sct_straighten_spinalcord', # deps: sct_apply_transfo
