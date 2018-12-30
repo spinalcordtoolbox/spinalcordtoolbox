@@ -142,7 +142,7 @@ def compute_properties_along_centerline(im_seg, smooth_factor=5.0, interpolation
     Compute shape property along spinal cord centerline. This algorithm computes the centerline,
     oversample it, extract 2D patch orthogonal to the centerline, compute the shape on the 2D patches, and finally
     undersample the shape information in order to match the input slice #.
-    :param im_seg:
+    :param im_seg: Image of segmentation, already oriented in RPI
     :param smooth_factor:
     :param interpolation_mode:
     :param algo_fitting:
@@ -163,14 +163,14 @@ def compute_properties_along_centerline(im_seg, smooth_factor=5.0, interpolation
                      'orientation']
 
     # TODO: make sure fname_segmentation and fname_disks are in the same space
-    path_tmp = sct.tmp_create(basename="compute_properties_along_centerline", verbose=verbose)
+    # path_tmp = sct.tmp_create(basename="compute_properties_along_centerline", verbose=verbose)
 
     # go to tmp folder
-    curdir = os.getcwd()
-    os.chdir(path_tmp)
+    # curdir = os.getcwd()
+    # os.chdir(path_tmp)
 
-    im_seg.change_orientation("RPI", generate_path=True).save(path_tmp, mutable=True)
-    fname_segmentation_orient = im_seg.absolutepath
+    # im_seg.change_orientation("RPI", generate_path=True).save(path_tmp, mutable=True)
+    # fname_segmentation_orient = im_seg.absolutepath
 
     # # Change orientation of the input centerline into RPI
     # sct.printv('\nOrient centerline to RPI orientation...', verbose)
@@ -195,7 +195,7 @@ def compute_properties_along_centerline(im_seg, smooth_factor=5.0, interpolation
     # compute the spinal cord centerline based on the spinal cord segmentation
     number_of_points = nz  # 5 * nz
     x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = \
-        smooth_centerline(fname_segmentation_orient, algo_fitting=algo_fitting, window_length=window_length,
+        smooth_centerline(im_seg, algo_fitting=algo_fitting, window_length=window_length,
                           verbose=verbose, nurbs_pts_number=number_of_points, all_slices=False, phys_coordinates=True,
                           remove_outliers=True)
     centerline = Centerline(x_centerline_fit, y_centerline_fit, z_centerline,
@@ -284,9 +284,9 @@ def compute_properties_along_centerline(im_seg, smooth_factor=5.0, interpolation
                  properties['z_slice'][i] == label]))
 
     # Removing temporary folder
-    os.chdir(curdir)
-    if remove_temp_files:
-        sct.rmtree(path_tmp)
+    # os.chdir(curdir)
+    # if remove_temp_files:
+    #     sct.rmtree(path_tmp)
 
     return averaged_shape
 

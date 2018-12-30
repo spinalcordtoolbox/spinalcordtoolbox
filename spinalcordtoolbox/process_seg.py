@@ -16,6 +16,7 @@ import msct_shape
 from msct_types import Centerline
 from .centerline import optic
 
+# TODO: deal with reorientation: output metric csv should display z as a function of I-S native orientation
 # TODO: introduce z in class Metric to associate a metric value with a specific slice
 # TODO: only use logging, don't use printing, pass images, not filenames, do imports at beginning of file, no chdir()
 
@@ -357,7 +358,11 @@ def compute_shape(segmentation, algo_fitting='hanning', window_length=50, remove
     :param verbose:
     :return metrics: Dict of class Metric()
     """
-    im_seg = msct_image.Image(segmentation)
+    im_seg = msct_image.Image(segmentation).change_orientation('RPI')
+    # Extract min and max index in Z direction
+    data_seg = im_seg.data
+    X, Y, Z = (data_seg > 0).nonzero()
+    min_z_index, max_z_index = min(Z), max(Z)
 
     shape_properties = msct_shape.compute_properties_along_centerline(im_seg=im_seg,
                                                                       smooth_factor=0.0,
@@ -371,7 +376,7 @@ def compute_shape(segmentation, algo_fitting='hanning', window_length=50, remove
     for key, value in shape_properties.iteritems():
         # Making sure all entries added to metrics have results
         if not value == []:
-            metrics[key] = Metric(value=np.array(value), label=key)
+            metrics[key] = Metric(z=range(min_z_index, max_z_index+1), value=np.array(value), label=key)
 
     return metrics
 

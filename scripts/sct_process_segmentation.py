@@ -269,10 +269,13 @@ def main(args):
         fname_discs = None
         if '-discfile' in arguments:
             fname_discs = arguments['-discfile']
-        process_seg.compute_shape(fname_segmentation, slices=slices, vert_levels=vert_levels,
-                                  fname_vert_levels=fname_vert_levels, perslice=perslice, perlevel=perlevel,
-                                  file_out=file_out, overwrite=overwrite, remove_temp_files=remove_temp_files,
-                                  verbose=verbose)
+        metrics = process_seg.compute_shape(fname_segmentation, remove_temp_files=remove_temp_files, verbose=verbose)
+        metrics_agg = aggregate_per_slice_or_level(metrics, slices=parse_num_list(slices),
+                                                   levels=parse_num_list(vert_levels), perslice=perslice,
+                                                   perlevel=perlevel, vert_level=fname_vert_levels,
+                                                   group_funcs=group_funcs)
+        save_as_csv(metrics_agg, file_out)
+
 
 
 if __name__ == "__main__":

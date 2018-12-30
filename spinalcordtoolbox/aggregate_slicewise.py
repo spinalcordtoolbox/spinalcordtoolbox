@@ -116,6 +116,7 @@ def save_as_csv(agg_metrics, fname):
     :param fname: output filename. Include extension (.csv)
     :return:
     """
+    # TODO: write in order, sorted by "Slices"
     # TODO: deal with error (in case the field error appears in a dict)
     # Create output csv file
     # fname_out = file_out + '.csv'
