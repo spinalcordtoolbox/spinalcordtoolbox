@@ -66,7 +66,6 @@ def get_parser():
                       description='type of process to be performed:\n'
                                   '- centerline: Extract centerline. Output coordinates (.csv), image with one pixel per slice (.nii.gz) and JIM-compatible ROI file (.roi).\n'
                                   '- label-vert: Transform segmentation into vertebral level using a file that contains labels with disc value (flag: -discfile)\n'
-                                  '- length: compute length of the segmentation.\n'
                                   '- csa: computes cross-sectional area by counting pixels in each'
                                   '  slice and then geometrically adjusting using centerline orientation. Note that it '
                                   '  is possible to input a binary mask or a mask comprising values within the range '
@@ -80,7 +79,7 @@ def get_parser():
                                   '  - orientation: angle (in degrees) between the AP axis of the spinal cord and the AP axis of the image\n'
                                   '  - solidity: CSA(spinal_cord) / CSA_convex(spinal_cord). If perfect ellipse, it should be one. This metric is interesting to detect non-convex shape (e.g., in case of strong compression).',
                       mandatory=True,
-                      example=['centerline', 'label-vert', 'length', 'csa', 'shape'])
+                      example=['centerline', 'label-vert', 'csa', 'shape'])
     parser.usage.addSection('Optional Arguments')
     parser.add_option(name='-o',
                       type_value='file_output',
@@ -262,10 +261,10 @@ def main(args):
             sct.printv('\nERROR: Disc label file is mandatory (flag: -discfile).\n', 1, 'error')
         process_seg.label_vert(fname_segmentation, fname_discs, file_out=file_out, verbose=verbose)
 
-    if name_process == 'length':
-        process_seg.compute_length(fname_segmentation, remove_temp_files, output_folder, overwrite, slices,
-                                   vert_levels, fname_vert_levels, verbose=verbose)
-
+    # if name_process == 'length':
+    #     process_seg.compute_length(fname_segmentation, remove_temp_files, output_folder, overwrite, slices,
+    #                                vert_levels, fname_vert_levels, verbose=verbose)
+    #
     if name_process == 'shape':
         fname_discs = None
         if '-discfile' in arguments:

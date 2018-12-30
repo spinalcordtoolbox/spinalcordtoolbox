@@ -38,132 +38,132 @@ class Metric:
         self.label = label
 
 
-def compute_length(fname_segmentation, remove_temp_files, output_folder, overwrite, slices, vert_levels,
-                   fname_vertebral_labeling='', verbose=0):
-    from math import sqrt
-
-    # Extract path, file and extension
-    fname_segmentation = os.path.abspath(fname_segmentation)
-    path_data, file_data, ext_data = sct.extract_fname(fname_segmentation)
-
-    path_tmp = sct.tmp_create(basename="process_segmentation", verbose=verbose)
-
-    # copy files into tmp folder
-    sct.printv('cp ' + fname_segmentation + ' ' + path_tmp)
-    sct.copy(fname_segmentation, path_tmp)
-
-    if slices or vert_levels:
-        # check if vertebral labeling file exists
-        sct.check_file_exist(fname_vertebral_labeling)
-        path_vert, file_vert, ext_vert = sct.extract_fname(fname_vertebral_labeling)
-        sct.printv('cp ' + fname_vertebral_labeling + ' ' + path_tmp)
-        sct.copy(fname_vertebral_labeling, path_tmp)
-        fname_vertebral_labeling = file_vert + ext_vert
-
-    # go to tmp folder
-    curdir = os.getcwd()
-    os.chdir(path_tmp)
-
-    # Change orientation of the input centerline into RPI
-    sct.printv('\nOrient centerline to RPI orientation...', verbose)
-    im_seg = msct_image.Image(file_data + ext_data) \
-        .change_orientation("RPI", generate_path=True) \
-        .save(path_tmp, mutable=True)
-    fname_segmentation_orient = im_seg.absolutepath
-
-    # Get dimension
-    sct.printv('\nGet dimensions...', verbose)
-    nx, ny, nz, nt, px, py, pz, pt = im_seg.dim
-    sct.printv('.. matrix size: ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz), verbose)
-    sct.printv('.. voxel size:  ' + str(px) + 'mm x ' + str(py) + 'mm x ' + str(pz) + 'mm', verbose)
-
-    # smooth segmentation/centerline
-    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(
-        fname_segmentation_orient, nurbs_pts_number=3000, phys_coordinates=False, all_slices=True, algo_fitting='nurbs',
-        verbose=verbose)
-
-    # average csa across vertebral levels or slices if asked (flag -z or -l)
-    if slices or vert_levels:
-        warning = ''
-        if vert_levels and not fname_vertebral_labeling:
-            sct.printv(
-                '\nERROR: You asked for specific vertebral levels (option -vert) but you did not provide any vertebral labeling file (see option -vertfile). The path to the vertebral labeling file is usually \"./label/template/PAM50_levels.nii.gz\". See usage.\n',
-                1, 'error')
-
-        elif vert_levels and fname_vertebral_labeling:
-
-            # from sct_extract_metric import get_slices_matching_with_vertebral_levels
-            sct.printv('Selected vertebral levels... ' + vert_levels)
-
-            # convert the vertebral labeling file to RPI orientation
-            im_vertebral_labeling = msct_image.Image(fname_vertebral_labeling)
-            im_vertebral_labeling.change_orientation(orientation='RPI')
-
-            # get the slices corresponding to the vertebral levels
-            # TODO: refactor with the new get_slices_from_vertebral_levels()
-            # slices, vert_levels_list, warning = get_slices_matching_with_vertebral_levels(data_seg, vert_levels, im_vertebral_labeling.data, 1)
-            slices, vert_levels_list, warning = get_slices_matching_with_vertebral_levels_based_centerline(vert_levels,
-                                                                                                           im_vertebral_labeling.data,
-                                                                                                           z_centerline)
-
-        elif not vert_levels:
-            vert_levels_list = []
-
-        if slices is None:
-            length = np.nan
-            slices = '0'
-            vert_levels_list = []
-
-        else:
-            # parse the selected slices
-            slices_lim = slices.strip().split(':')
-            slices_list = range(int(slices_lim[0]), int(slices_lim[-1]) + 1)
-            sct.printv('Spinal cord length slices ' + str(slices_lim[0]) + ' to ' + str(slices_lim[-1]) + '...',
-                       type='info')
-
-            length = 0.0
-            for i in range(len(x_centerline_fit) - 1):
-                if z_centerline[i] in slices_list:
-                    length += sqrt(((x_centerline_fit[i + 1] - x_centerline_fit[i]) * px) ** 2 + (
-                            (y_centerline_fit[i + 1] - y_centerline_fit[i]) * py) ** 2 + (
-                                           (z_centerline[i + 1] - z_centerline[i]) * pz) ** 2)
-
-        sct.printv('\nLength of the segmentation = ' + str(round(length, 2)) + ' mm\n', verbose, 'info')
-
-        # write result into output file
-        save_results(os.path.join(output_folder, 'length'), overwrite, fname_segmentation, 'length',
-                     '(in mm)', length, np.nan, slices, actual_vert=vert_levels_list,
-                     warning_vert_levels=warning)
-
-    elif (not (slices or vert_levels)) and (overwrite == 1):
-        sct.printv(
-            'WARNING: Flag \"-overwrite\" is only available if you select (a) slice(s) or (a) vertebral level(s) (flag -z or -vert) ==> CSA estimation per slice will be output in .csv files only.',
-            type='warning')
-        length = np.nan
-
-    else:
-        # compute length of full centerline
-        length = 0.0
-        for i in range(len(x_centerline_fit) - 1):
-            length += sqrt(((x_centerline_fit[i + 1] - x_centerline_fit[i]) * px) ** 2 + (
-                    (y_centerline_fit[i + 1] - y_centerline_fit[i]) * py) ** 2 + (
-                                   (z_centerline[i + 1] - z_centerline[i]) * pz) ** 2)
-
-        sct.printv('\nLength of the segmentation = ' + str(round(length, 2)) + ' mm\n', verbose, 'info')
-        # write result into output file
-        save_results(os.path.join(output_folder, 'length'), overwrite, fname_segmentation, 'length', '(in mm)', length,
-                     np.nan,
-                     slices, actual_vert=[], warning_vert_levels='')
-
-    # come back
-    os.chdir(curdir)
-
-    # Remove temporary files
-    if remove_temp_files:
-        sct.printv('\nRemove temporary files...', verbose)
-        sct.rmtree(path_tmp)
-
-    return length
+# def compute_length(fname_segmentation, remove_temp_files, output_folder, overwrite, slices, vert_levels,
+#                    fname_vertebral_labeling='', verbose=0):
+#     from math import sqrt
+#
+#     # Extract path, file and extension
+#     fname_segmentation = os.path.abspath(fname_segmentation)
+#     path_data, file_data, ext_data = sct.extract_fname(fname_segmentation)
+#
+#     path_tmp = sct.tmp_create(basename="process_segmentation", verbose=verbose)
+#
+#     # copy files into tmp folder
+#     sct.printv('cp ' + fname_segmentation + ' ' + path_tmp)
+#     sct.copy(fname_segmentation, path_tmp)
+#
+#     if slices or vert_levels:
+#         # check if vertebral labeling file exists
+#         sct.check_file_exist(fname_vertebral_labeling)
+#         path_vert, file_vert, ext_vert = sct.extract_fname(fname_vertebral_labeling)
+#         sct.printv('cp ' + fname_vertebral_labeling + ' ' + path_tmp)
+#         sct.copy(fname_vertebral_labeling, path_tmp)
+#         fname_vertebral_labeling = file_vert + ext_vert
+#
+#     # go to tmp folder
+#     curdir = os.getcwd()
+#     os.chdir(path_tmp)
+#
+#     # Change orientation of the input centerline into RPI
+#     sct.printv('\nOrient centerline to RPI orientation...', verbose)
+#     im_seg = msct_image.Image(file_data + ext_data) \
+#         .change_orientation("RPI", generate_path=True) \
+#         .save(path_tmp, mutable=True)
+#     fname_segmentation_orient = im_seg.absolutepath
+#
+#     # Get dimension
+#     sct.printv('\nGet dimensions...', verbose)
+#     nx, ny, nz, nt, px, py, pz, pt = im_seg.dim
+#     sct.printv('.. matrix size: ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz), verbose)
+#     sct.printv('.. voxel size:  ' + str(px) + 'mm x ' + str(py) + 'mm x ' + str(pz) + 'mm', verbose)
+#
+#     # smooth segmentation/centerline
+#     x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(
+#         fname_segmentation_orient, nurbs_pts_number=3000, phys_coordinates=False, all_slices=True, algo_fitting='nurbs',
+#         verbose=verbose)
+#
+#     # average csa across vertebral levels or slices if asked (flag -z or -l)
+#     if slices or vert_levels:
+#         warning = ''
+#         if vert_levels and not fname_vertebral_labeling:
+#             sct.printv(
+#                 '\nERROR: You asked for specific vertebral levels (option -vert) but you did not provide any vertebral labeling file (see option -vertfile). The path to the vertebral labeling file is usually \"./label/template/PAM50_levels.nii.gz\". See usage.\n',
+#                 1, 'error')
+#
+#         elif vert_levels and fname_vertebral_labeling:
+#
+#             # from sct_extract_metric import get_slices_matching_with_vertebral_levels
+#             sct.printv('Selected vertebral levels... ' + vert_levels)
+#
+#             # convert the vertebral labeling file to RPI orientation
+#             im_vertebral_labeling = msct_image.Image(fname_vertebral_labeling)
+#             im_vertebral_labeling.change_orientation(orientation='RPI')
+#
+#             # get the slices corresponding to the vertebral levels
+#             # TODO: refactor with the new get_slices_from_vertebral_levels()
+#             # slices, vert_levels_list, warning = get_slices_matching_with_vertebral_levels(data_seg, vert_levels, im_vertebral_labeling.data, 1)
+#             slices, vert_levels_list, warning = get_slices_matching_with_vertebral_levels_based_centerline(vert_levels,
+#                                                                                                            im_vertebral_labeling.data,
+#                                                                                                            z_centerline)
+#
+#         elif not vert_levels:
+#             vert_levels_list = []
+#
+#         if slices is None:
+#             length = np.nan
+#             slices = '0'
+#             vert_levels_list = []
+#
+#         else:
+#             # parse the selected slices
+#             slices_lim = slices.strip().split(':')
+#             slices_list = range(int(slices_lim[0]), int(slices_lim[-1]) + 1)
+#             sct.printv('Spinal cord length slices ' + str(slices_lim[0]) + ' to ' + str(slices_lim[-1]) + '...',
+#                        type='info')
+#
+#             length = 0.0
+#             for i in range(len(x_centerline_fit) - 1):
+#                 if z_centerline[i] in slices_list:
+#                     length += sqrt(((x_centerline_fit[i + 1] - x_centerline_fit[i]) * px) ** 2 + (
+#                             (y_centerline_fit[i + 1] - y_centerline_fit[i]) * py) ** 2 + (
+#                                            (z_centerline[i + 1] - z_centerline[i]) * pz) ** 2)
+#
+#         sct.printv('\nLength of the segmentation = ' + str(round(length, 2)) + ' mm\n', verbose, 'info')
+#
+#         # write result into output file
+#         save_results(os.path.join(output_folder, 'length'), overwrite, fname_segmentation, 'length',
+#                      '(in mm)', length, np.nan, slices, actual_vert=vert_levels_list,
+#                      warning_vert_levels=warning)
+#
+#     elif (not (slices or vert_levels)) and (overwrite == 1):
+#         sct.printv(
+#             'WARNING: Flag \"-overwrite\" is only available if you select (a) slice(s) or (a) vertebral level(s) (flag -z or -vert) ==> CSA estimation per slice will be output in .csv files only.',
+#             type='warning')
+#         length = np.nan
+#
+#     else:
+#         # compute length of full centerline
+#         length = 0.0
+#         for i in range(len(x_centerline_fit) - 1):
+#             length += sqrt(((x_centerline_fit[i + 1] - x_centerline_fit[i]) * px) ** 2 + (
+#                     (y_centerline_fit[i + 1] - y_centerline_fit[i]) * py) ** 2 + (
+#                                    (z_centerline[i + 1] - z_centerline[i]) * pz) ** 2)
+#
+#         sct.printv('\nLength of the segmentation = ' + str(round(length, 2)) + ' mm\n', verbose, 'info')
+#         # write result into output file
+#         save_results(os.path.join(output_folder, 'length'), overwrite, fname_segmentation, 'length', '(in mm)', length,
+#                      np.nan,
+#                      slices, actual_vert=[], warning_vert_levels='')
+#
+#     # come back
+#     os.chdir(curdir)
+#
+#     # Remove temporary files
+#     if remove_temp_files:
+#         sct.printv('\nRemove temporary files...', verbose)
+#         sct.rmtree(path_tmp)
+#
+#     return length
 
 
 def compute_csa(segmentation, algo_fitting='hanning', type_window='hanning', window_length=80, angle_correction=True,
