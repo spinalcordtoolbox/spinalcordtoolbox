@@ -11,20 +11,6 @@ from spinalcordtoolbox.template import get_slices_from_vertebral_levels
 from spinalcordtoolbox.image import Image
 
 
-# class AggMetric:
-#     """
-#     Class to include in dictionaries to associate metric value and label
-#     """
-#     def __init__(self, z=[], value=[], label=''):
-#         """
-#         :param value:
-#         :param label:
-#         """
-#         self.slicegroup = tuple()
-#         self.vertlevel = tuple()
-#         self.metric = dict()
-
-
 def aggregate_per_slice_or_level(metrics, slices=None, levels=None, perslice=True, perlevel=False, vert_level=None,
                                  group_funcs=(('mean', np.mean),)):
     """
@@ -39,7 +25,8 @@ def aggregate_per_slice_or_level(metrics, slices=None, levels=None, perslice=Tru
     :return: Aggregated metrics
     """
     # if slices is empty, select all available slices from the metrics
-    slices = metrics[metrics.keys()[0]].z
+    if not slices:
+        slices = metrics[metrics.keys()[0]].z
     # aggregation based on levels
     if levels:
         im_vert_level = Image(vert_level).change_orientation('RPI')
@@ -97,6 +84,7 @@ def aggregate_per_slice_or_level(metrics, slices=None, levels=None, perslice=Tru
                     # sct.log.warning('TypeError for metric {}'.format(metric))
                     agg_metrics[slicegroup]['metrics'][metric]['error'] = e.message
     return agg_metrics
+
 
 def make_a_string(item):
     """Convert tuple or list or None to a string. Important: elements in tuple or list are separated with ; (not ,)

@@ -46,12 +46,10 @@ def dummy_vert_level():
 
 
 # noinspection 801,PyShadowingNames
-def test_aggregate_across_slices(dummy_metric):
+def test_aggregate_across_selected_slices(dummy_metric):
     """Test extraction of metrics aggregation across slices"""
-    group_funcs = (('mean', np.mean), ('std', np.std))
-    # metrics = {'metric1': [1, 2, 3, 4, 5, 6, 7, 8, 9]}
     agg_metrics = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metric, slices=[3, 4], perslice=False,
-                                                                   group_funcs=group_funcs)
+                                                                   group_funcs=(('mean', np.mean), ('std', np.std)))
     assert agg_metrics[(3, 4)]['metrics']['metric1']['mean'] == 30.0
     assert agg_metrics[(3, 4)]['metrics']['metric1']['std'] == 1.0
     assert agg_metrics[(3, 4)]['metrics']['metric2']['mean'] == 99.5
@@ -62,19 +60,20 @@ def test_aggregate_across_slices(dummy_metric):
 
 
 # noinspection 801,PyShadowingNames
+def test_aggregate_across_all_slices(dummy_metric):
+    """Test extraction of metrics aggregation across slices"""
+    agg_metrics = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metric, perslice=False,
+                                                                   group_funcs=(('mean', np.mean),))
+    assert agg_metrics[(3, 4, 5, 6, 7)]['metrics']['metric1']['mean'] == 38.0
+
+
+# noinspection 801,PyShadowingNames
 def test_aggregate_per_slice(dummy_metric):
     """Test extraction of metrics aggregation per slice"""
-    group_funcs = (('mean', np.mean),)
     agg_metrics = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metric, slices=[3, 4], perslice=True,
-                                                                   group_funcs=group_funcs)
-    assert agg_metrics['metric1'] == {(3,): {'VertLevel': None, 'mean': 29.0},
-                                      (4,): {'VertLevel': None, 'mean': 31.0}}
-    assert agg_metrics['metric2'] == {(3,): {'VertLevel': None, 'mean': 99.0},
-                                      (4,): {'VertLevel': None, 'mean': 100.0}}
-    assert np.isnan(agg_metrics['metric3'][(4, )]['mean'])
-    assert agg_metrics['metric4'][(3,)]['error'] == 'metric and z have do not have the same length'
-    # TODO: use built-in Python message from error:
-    assert agg_metrics['metric5'][(4,)]['error'] == 'cannot perform reduce with flexible type'
+                                                                   group_funcs=(('mean', np.mean),))
+    assert agg_metrics[(3,)]['metrics']['metric1']['mean'] == 29.0
+    assert agg_metrics[(4,)]['metrics']['metric1']['mean'] == 31.0
 
 
 # noinspection 801,PyShadowingNames
@@ -82,12 +81,10 @@ def test_aggregate_across_levels(dummy_metric, dummy_vert_level):
     """Test extraction of metrics aggregation across vertebral levels"""
     group_funcs = (('mean', np.mean),)
     agg_metrics = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metric, levels=[2, 3], perlevel=False,
-                                                                   im_vert_level=dummy_vert_level,
+                                                                   vert_level=dummy_vert_level,
                                                                    group_funcs=group_funcs)
-    assert agg_metrics['metric1'] == {(3, 4, 5, 6): {'VertLevel': (2, 3), 'mean': 35.0}}
-    assert np.isnan(agg_metrics['metric3'][(3, 4, 5, 6)]['mean'])
-    assert agg_metrics['metric4'] == {(3, 4, 5, 6): {'error': 'metric and z have do not have the same length'}}
-    assert agg_metrics['metric5'][(3, 4, 5, 6)]['error'] == 'cannot perform reduce with flexible type'
+    assert agg_metrics[(3, 4, 5, 6)]['metrics']['metric1']['mean'] == 35.0
+    assert agg_metrics[(3, 4, 5, 6)]['VertLevel'] == (2, 3)
 
 
 # noinspection 801,PyShadowingNames
@@ -95,9 +92,9 @@ def test_aggregate_per_level(dummy_metric, dummy_vert_level):
     """Test extraction of metrics aggregation per vertebral level"""
     group_funcs = (('mean', np.mean),)
     agg_metrics = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metric, levels=[2, 3], perlevel=True,
-                                                                   im_vert_level=dummy_vert_level,
+                                                                   vert_level=dummy_vert_level,
                                                                    group_funcs=group_funcs)
-    assert agg_metrics['metric1'] == {(5, 6): {'VertLevel': (3,), 'mean': 40.0},
-                                      (3, 4): {'VertLevel': (2,), 'mean': 30.0}}
-    assert agg_metrics['metric5'] == {(5, 6): {'VertLevel': (3,), 'mean': 101.5},
-                                      (3, 4): {'VertLevel': (2,), 'error': 'cannot perform reduce with flexible type'}}
+    assert agg_metrics[(5, 6)]['metrics']['metric1']['mean'] == 40.0
+    assert agg_metrics[(5, 6)]['VertLevel'] == (3,)
+    assert agg_metrics[(5, 6)]['metrics']['metric5']['mean'] == 101.5
+    assert agg_metrics[(3, 4)]['metrics']['metric5']['error'] == 'cannot perform reduce with flexible type'
