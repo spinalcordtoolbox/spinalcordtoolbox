@@ -113,9 +113,10 @@ def save_as_csv(agg_metrics, fname):
     """
     Write metric structure as csv
     :param metric: output of aggregate_per_slice_or_level()
-    :param fname: output filename. Include extension (.csv)
+    :param fname: output filename. Extention (.csv) will be added if it does not exist.
     :return:
     """
+    # TODO: if no extension, add it
     # TODO: write in order, sorted by "Slices"
     # TODO: deal with error (in case the field error appears in a dict)
     # Create output csv file

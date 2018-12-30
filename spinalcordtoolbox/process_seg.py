@@ -514,7 +514,7 @@ def extract_centerline(segmentation, verbose=0, algo_fitting='hanning', type_win
     #     sct.rmtree(path_tmp)
 
 
-def label_vert(fname_seg, fname_label, fname_out='', verbose=1):
+def label_vert(fname_seg, fname_label, verbose=1):
     """
     Label segmentation using vertebral labeling information. No orientation expected.
     :param fname_seg: file name of segmentation.
@@ -539,7 +539,7 @@ def label_vert(fname_seg, fname_label, fname_out='', verbose=1):
     list_disc_z = [y for (y, x) in sorted(zip(list_disc_z, list_disc_value), reverse=True)]
     # label segmentation
     from sct_label_vertebrae import label_segmentation
-    label_segmentation(fname_seg, list_disc_z, list_disc_value, fname_out=fname_out, verbose=verbose)
+    label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=verbose)
 
 
 def normalize(vect):
