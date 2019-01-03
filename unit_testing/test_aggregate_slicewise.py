@@ -54,7 +54,7 @@ def test_aggregate_across_selected_slices(dummy_metric):
     assert agg_metrics[(3, 4)]['metrics']['metric1']['std'] == 1.0
     assert agg_metrics[(3, 4)]['metrics']['metric2']['mean'] == 99.5
     # check that even if there is an error in metric estimation, the function outputs a dict for specific slicegroup
-    assert np.isnan(agg_metrics[(3, 4)]['metrics']['metric3']['mean'])
+    assert agg_metrics[(3, 4)]['metrics']['metric3']['error'] == 'Contains nan'
     assert agg_metrics[(3, 4)]['metrics']['metric4']['error'] == 'metric and z have do not have the same length'
     assert agg_metrics[(3, 4)]['metrics']['metric5']['error'] == 'cannot perform reduce with flexible type'
 
@@ -98,3 +98,22 @@ def test_aggregate_per_level(dummy_metric, dummy_vert_level):
     assert agg_metrics[(5, 6)]['VertLevel'] == (3,)
     assert agg_metrics[(5, 6)]['metrics']['metric5']['mean'] == 101.5
     assert agg_metrics[(3, 4)]['metrics']['metric5']['error'] == 'cannot perform reduce with flexible type'
+
+
+# noinspection 801,PyShadowingNames
+def test_save_as_csv(dummy_metric):
+    """Test writing of output metric csv file"""
+    agg_metrics = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metric, slices=[3, 4], perslice=False,
+                                                                   group_funcs=(('mean', np.mean), ('std', np.std)))
+    # standard scenario
+    aggregate_slicewise.save_as_csv(agg_metrics, 'tmp_file_out.csv')
+    file_metric = open('tmp_file_out.csv')
+    line_metric = file_metric.readlines()
+    assert line_metric[1] == '3;4,None,nan,nan,99.5,0.5,30.0,1.0,nan,nan,nan,nan\n'
+    # with appending
+    aggregate_slicewise.save_as_csv(agg_metrics, 'tmp_file_out.csv')
+    aggregate_slicewise.save_as_csv(agg_metrics, 'tmp_file_out.csv', append=True)
+    file_metric = open('tmp_file_out.csv')
+    line_metric = file_metric.readlines()
+    assert line_metric[1] == '3;4,None,nan,nan,99.5,0.5,30.0,1.0,nan,nan,nan,nan\n'
+    assert line_metric[2] == '3;4,None,nan,nan,99.5,0.5,30.0,1.0,nan,nan,nan,nan\n'

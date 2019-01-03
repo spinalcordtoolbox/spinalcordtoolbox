@@ -78,7 +78,12 @@ def aggregate_per_slice_or_level(metrics, slices=None, levels=None, perslice=Tru
                 try:
                     # Loop across functions (typically: mean, std)
                     for (name, func) in group_funcs:
-                        agg_metrics[slicegroup]['metrics'][metric][name] = func(metric_data)
+                        # check if nan
+                        result = func(metric_data)
+                        if np.isnan(result):
+                            agg_metrics[slicegroup]['metrics'][metric]['error'] = 'Contains nan'
+                        else:
+                            agg_metrics[slicegroup]['metrics'][metric][name] = result
                 except Exception as e:
                     sct.log.warning(e)
                     # sct.log.warning('TypeError for metric {}'.format(metric))
@@ -97,31 +102,37 @@ def make_a_string(item):
         return item
 
 
-def save_as_csv(agg_metrics, fname):
+def save_as_csv(agg_metrics, fname, append=False):
     """
-    Write metric structure as csv
+    Write metric structure as csv. If field 'error' exists, it will add a specific column.
     :param metric: output of aggregate_per_slice_or_level()
     :param fname: output filename. Extention (.csv) will be added if it does not exist.
+    :param append: Bool: Append results at the end of file (if exists) instead of overwrite.
     :return:
     """
-    # TODO: if no extension, add it
     # TODO: write in order, sorted by "Slices"
-    # TODO: deal with error (in case the field error appears in a dict)
     # Create output csv file
-    # fname_out = file_out + '.csv'
-    file_results = open(fname, 'w')
-    # build header
-    header = (','.join(['Slice (I->S)', 'Vertebral level']))
-    for metric in agg_metrics[agg_metrics.keys()[0]]['metrics'].keys():
-        header = ','.join([header, 'MEAN({})'.format(metric), 'STD({})'.format(metric)])
-    file_results.write(header+'\n')
+    # If appending to existing file, no need to create header. Jump directly to appending of results.
+    if append:
+        file_results = open(fname, 'a')
+    else:
+        file_results = open(fname, 'w')
+        # build header
+        header = (','.join(['Slice (I->S)', 'Vertebral level']))
+        for metric in agg_metrics[agg_metrics.keys()[0]]['metrics'].keys():
+            header = ','.join([header, 'MEAN({})'.format(metric), 'STD({})'.format(metric)])
+        file_results.write(header+'\n')
     # populate data
     for slicegroup in agg_metrics.keys():
         line = ','.join([make_a_string(slicegroup),  # list all slices in slicegroup
                          make_a_string(agg_metrics[slicegroup]['VertLevel'])])  # list vertebral levels
         for metric in agg_metrics[slicegroup]['metrics'].keys():
-            line = ','.join([line,
-                             str(agg_metrics[slicegroup]['metrics'][metric]['mean']),
-                             str(agg_metrics[slicegroup]['metrics'][metric]['std'])])
+            try:
+                line = ','.join([line,
+                                 str(agg_metrics[slicegroup]['metrics'][metric]['mean']),
+                                 str(agg_metrics[slicegroup]['metrics'][metric]['std'])])
+            except KeyError:
+                # if mean or std field does not exist, fill value with 'nan'
+                line = ','.join([line, 'nan', 'nan'])
         file_results.write(line+'\n')
     file_results.close()
