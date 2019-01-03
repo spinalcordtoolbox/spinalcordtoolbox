@@ -110,7 +110,7 @@ def save_as_csv(agg_metrics, fname, append=False):
     :param append: Bool: Append results at the end of file (if exists) instead of overwrite.
     :return:
     """
-    # TODO: write in order, sorted by "Slices"
+    # TODO: build header based on existing func (e.g., will currently crash if no STD).
     # Create output csv file
     # If appending to existing file, no need to create header. Jump directly to appending of results.
     if append:
@@ -123,7 +123,7 @@ def save_as_csv(agg_metrics, fname, append=False):
             header = ','.join([header, 'MEAN({})'.format(metric), 'STD({})'.format(metric)])
         file_results.write(header+'\n')
     # populate data
-    for slicegroup in agg_metrics.keys():
+    for slicegroup in sorted(agg_metrics.keys()):
         line = ','.join([make_a_string(slicegroup),  # list all slices in slicegroup
                          make_a_string(agg_metrics[slicegroup]['VertLevel'])])  # list vertebral levels
         for metric in agg_metrics[slicegroup]['metrics'].keys():

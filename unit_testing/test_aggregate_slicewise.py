@@ -117,3 +117,15 @@ def test_save_as_csv(dummy_metric):
     line_metric = file_metric.readlines()
     assert line_metric[1] == '3;4,None,nan,nan,99.5,0.5,30.0,1.0,nan,nan,nan,nan\n'
     assert line_metric[2] == '3;4,None,nan,nan,99.5,0.5,30.0,1.0,nan,nan,nan,nan\n'
+
+
+# noinspection 801,PyShadowingNames
+def test_save_as_csv_sorting(dummy_metric):
+    """Make sure slices are sorted in output csv file"""
+    agg_metrics = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metric, perslice=True,
+                                                                   group_funcs=(('mean', np.mean), ('std', np.std)))
+    # standard scenario
+    aggregate_slicewise.save_as_csv(agg_metrics, 'tmp_file_out.csv')
+    file_metric = open('tmp_file_out.csv')
+    line_metric = file_metric.readlines()
+    assert [i[0] for i in line_metric[1:]] == ['3', '4', '5', '6', '7']
