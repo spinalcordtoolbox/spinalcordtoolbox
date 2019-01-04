@@ -14,6 +14,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+# TODO: update -p centerline with new modifs
 # TODO: have file_out being by default the process name
 # TODO: generalize "-o xxx" flag when used as a prefix file name (without extension):
 # - centerline: xxx.csv (centerline coordinates as csv), xxx.nii.gz (centerline as binary nifti volume)
@@ -55,7 +56,7 @@ def get_parser():
     # Initialize the parser
     parser = Parser(__file__)
     parser.usage.set_description(
-        """This program is used to get the centerline of the spinal cord of a subject by using one of the three methods describe in the -method flag .""")
+        """Compute various processes on the spinal cord segmentation, such as cross-sectional area.""")
     parser.add_option(name='-i',
                       type_value='image_nifti',
                       description='Spinal Cord segmentation',
@@ -85,9 +86,10 @@ def get_parser():
                       type_value='file_output',
                       description="Output file name (add extension). Ex: my_csa.csv (with -p csa).",
                       mandatory=False)
-    parser.add_option(name='-overwrite',
+    parser.add_option(name='-append',
                       type_value='int',
-                      description="""In the case you specified, in flag \"-ofolder\", a pre-existing folder that already includes a .xls result file (see flags \"-p csa\" and \"-z\" or \"-vert\"), this option will allow you to overwrite the .xls file (\"-overwrite 1\") or to add the results to it (\"-overwrite 0\").""",
+                      description='Append results as a new line in the output csv file instead of overwriting it. This '
+                                  'only concerns processes "csa" and "shape".',
                       mandatory=False,
                       default_value=0)
     parser.add_option(name='-z',
@@ -193,8 +195,10 @@ def main(args):
         file_out = ''
     if "-ofolder" in arguments:
         sct.printv('The flag "-ofolder" is deprecated. Please use -o. Exiting.', 1, 'error')
-    if '-overwrite' in arguments:
-        overwrite = arguments['-overwrite']
+    if '-append' in arguments:
+        append = int(arguments['-append'])
+    else:
+        append = 0
     if '-vert' in arguments:
         vert_levels = arguments['-vert']
     else:
@@ -233,7 +237,7 @@ def main(args):
 
     # update file_out with name of process
     if not file_out:
-        file_out = name_process
+        file_out = name_process + '.csv'
 
     if name_process == 'centerline':
         process_seg.extract_centerline(fname_segmentation, verbose=param.verbose,
@@ -251,7 +255,7 @@ def main(args):
                                                    perlevel=perlevel, vert_level=fname_vert_levels,
                                                    group_funcs=group_funcs)
 
-        save_as_csv(metrics_agg, file_out)
+        save_as_csv(metrics_agg, file_out, append=append)
 
 
     if name_process == 'label-vert':
@@ -275,7 +279,6 @@ def main(args):
                                                    perlevel=perlevel, vert_level=fname_vert_levels,
                                                    group_funcs=group_funcs)
         save_as_csv(metrics_agg, file_out)
-
 
 
 if __name__ == "__main__":

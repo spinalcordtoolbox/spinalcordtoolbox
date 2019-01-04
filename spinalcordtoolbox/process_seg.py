@@ -17,7 +17,6 @@ from msct_types import Centerline
 from .centerline import optic
 
 # TODO: deal with reorientation: output metric csv should display z as a function of I-S native orientation
-# TODO: introduce z in class Metric to associate a metric value with a specific slice
 # TODO: only use logging, don't use printing, pass images, not filenames, do imports at beginning of file, no chdir()
 
 # on v3.2.2 and earlier, the following volumes were output by default, which was a waste of time (people don't use it)
