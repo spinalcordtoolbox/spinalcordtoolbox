@@ -247,10 +247,10 @@ cd ..
 # ===========================================================================================
 echo "Ended at: $(date +%x_%r)"
 echo
-echo "t2/CSA:         " `grep -v '^#' t2/csa_mean.txt | grep -v '^$'`
+echo "t2/CSA:         " `awk -F"," ' {print $3}' csa.csv | tail -1`
 echo "mt/MTR(WM):     " `awk -F"," ' {print $9}' mt/mtr_in_wm.txt | tail -1`
-echo "t2s/CSA_GM:     " `grep -v '^#' t2s/csa_gm/csa_mean.txt | grep -v '^$'`
-echo "t2s/CSA_WM:     " `grep -v '^#' t2s/csa_wm/csa_mean.txt | grep -v '^$'`
+echo "t2s/CSA_GM:     " `awk -F"," ' {print $3}' csa_gm.csv | tail -1`
+echo "t2s/CSA_WM:     " `awk -F"," ' {print $3}' csa_wm.csv | tail -1`
 echo "dmri/FA(CST_r): " `awk -F"," ' {print $9}' dmri/fa_in_cst.txt | tail -1`
 echo "dmri/FA(CST_l): " `awk -F"," ' {print $9}' dmri/fa_in_cst.txt | tail -2 | head -1`
 echo
@@ -258,4 +258,3 @@ echo
 # Display syntax to open QC report on web browser
 echo "To open Quality Control (QC) report on a web-browser, run the following:"
 echo "${open_command} ${SCT_BP_QC_FOLDER}/index.html"
-
