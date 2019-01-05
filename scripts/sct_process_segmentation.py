@@ -14,15 +14,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-# TODO: update -p centerline with new modifs
-# TODO: have file_out being by default the process name
-# TODO: generalize "-o xxx" flag when used as a prefix file name (without extension):
-# - centerline: xxx.csv (centerline coordinates as csv), xxx.nii.gz (centerline as binary nifti volume)
-# - label-vert: xxx.nii.gz (labeled segmentation)
-# - csa: xxx.csv (output csa values)
-#   - other flags: -csa_volume xxx.nii.gz and -angle_volume xxx.nii.gz
-# - shape: xxx.csv (output shape)
-# - length: xxx.csv (spinal cord length)
+# TODO: update "-p centerline" with new modifs
 # TODO: the import of scipy.misc imsave was moved to the specific cases (orth and ellipse) in order to avoid issue #62. This has to be cleaned in the future.
 
 from __future__ import absolute_import, division
@@ -256,7 +248,8 @@ def main(args):
                                                    group_funcs=group_funcs)
 
         save_as_csv(metrics_agg, file_out, append=append)
-
+        sct.printv('\nDone! To view results, type:')
+        sct.printv('open ' + file_out + '\n', verbose=1, type='info')
 
     if name_process == 'label-vert':
         if '-discfile' in arguments:
@@ -265,10 +258,6 @@ def main(args):
             sct.printv('\nERROR: Disc label file is mandatory (flag: -discfile).\n', 1, 'error')
         process_seg.label_vert(fname_segmentation, fname_discs, verbose=verbose)
 
-    # if name_process == 'length':
-    #     process_seg.compute_length(fname_segmentation, remove_temp_files, output_folder, overwrite, slices,
-    #                                vert_levels, fname_vert_levels, verbose=verbose)
-    #
     if name_process == 'shape':
         fname_discs = None
         if '-discfile' in arguments:
@@ -279,6 +268,8 @@ def main(args):
                                                    perlevel=perlevel, vert_level=fname_vert_levels,
                                                    group_funcs=group_funcs)
         save_as_csv(metrics_agg, file_out)
+        sct.printv('\nDone! To view results, type:')
+        sct.printv('open ' + file_out + '\n', verbose=1, type='info')
 
 
 if __name__ == "__main__":
