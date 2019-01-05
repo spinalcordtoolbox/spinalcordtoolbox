@@ -13,24 +13,18 @@
 # About the license: see the file LICENSE.TXT
 ########################################################################################################################
 
+# TODO: get rid of msct_shape and move content to process_seg
+
 from __future__ import print_function, absolute_import, division
 
-import os
-import time
 import math
-from collections import OrderedDict
-from random import randint
-from itertools import compress
 
 import numpy as np
-import scipy.ndimage
 
 import tqdm
 from skimage import measure, filters
 
 import sct_utils as sct
-import spinalcordtoolbox.image as msct_image
-from spinalcordtoolbox.image import Image
 from msct_types import Centerline
 from sct_straighten_spinalcord import smooth_centerline
 
@@ -70,29 +64,6 @@ def properties2d(image, resolution=None):
         import matplotlib.pyplot as plt
         plt.imshow(label_img)
         plt.text(1, 1, sc_region.orientation, color='white')
-        plt.show()
-        """
-
-        # y0, x0 = sc_region.centroid
-        #
-        # resolution_grid = 0.25
-        # x_grid, y_grid = np.mgrid[-size_grid:size_grid:resolution_grid, -size_grid:size_grid:resolution_grid]
-        # coordinates_grid = np.array(list(zip(x_grid.ravel(), y_grid.ravel())))
-        # coordinates_grid_image = np.array([[x0 + math.cos(orientation) * coordinates_grid[i, 0], y0 - math.sin(orientation) * coordinates_grid[i, 1]] for i in range(coordinates_grid.shape[0])])
-        #
-        # square = scipy.ndimage.map_coordinates(image, coordinates_grid_image.T, output=np.float32, order=0, mode='constant', cval=0.0)
-        # square_image = square.reshape((len(x_grid), len(x_grid)))
-        #
-        # size_half = square_image.shape[1] / 2
-        # left_image = square_image[:, :size_half]
-        # right_image = np.fliplr(square_image[:, size_half:])
-        #
-        # dice_symmetry = np.sum(left_image[right_image == 1]) * 2.0 / (np.sum(left_image) + np.sum(right_image))
-
-        """DEBUG
-        import matplotlib.pyplot as plt
-        plt.imshow(square_image)
-        plt.text(3, 3, dice, color='white')
         plt.show()
         """
 
@@ -162,24 +133,6 @@ def compute_properties_along_centerline(im_seg, smooth_factor=5.0, interpolation
                      'solidity',
                      'orientation']
 
-    # TODO: make sure fname_segmentation and fname_disks are in the same space
-    # path_tmp = sct.tmp_create(basename="compute_properties_along_centerline", verbose=verbose)
-
-    # go to tmp folder
-    # curdir = os.getcwd()
-    # os.chdir(path_tmp)
-
-    # im_seg.change_orientation("RPI", generate_path=True).save(path_tmp, mutable=True)
-    # fname_segmentation_orient = im_seg.absolutepath
-
-    # # Change orientation of the input centerline into RPI
-    # sct.printv('\nOrient centerline to RPI orientation...', verbose)
-    # # im_seg = Image(file_data + ext_data)
-    # fname_segmentation_orient = 'segmentation_rpi.nii.gz'
-    # image = set_orientation(im_seg, 'RPI')
-    # image.setFileName(fname_segmentation_orient)
-    # image.save()
-
     # Initiating some variables
     nx, ny, nz, nt, px, py, pz, pt = im_seg.dim
     # Define the resampling resolution. Here, we take the minimum of half the pixel size along X or Y in order to have
@@ -247,26 +200,11 @@ def compute_properties_along_centerline(im_seg, smooth_factor=5.0, interpolation
 
     # smooth the spinal cord shape with a gaussian kernel if required
     # TODO: remove this smoothing
-    # TODO: not all properties can be smoothed
     if smooth_factor != 0.0:  # smooth_factor is in mm
         import scipy
         window = scipy.signal.hann(smooth_factor / np.mean(centerline.progressive_length))
         for property_name in property_list:
             properties[property_name] = scipy.signal.convolve(properties[property_name], window, mode='same') / np.sum(window)
-
-    # # Display properties on the referential space. Requires intervertebral disks
-    # if verbose == 2:
-    #     x_increment = 'distance_from_C1'
-    #     import matplotlib.pyplot as plt
-    #     # Display the image and plot all contours found
-    #     fig, axes = plt.subplots(len(property_list), sharex=True, sharey=False)
-    #     for k, property_name in enumerate(property_list):
-    #         axes[k].plot(properties[x_increment], properties[property_name])
-    #         axes[k].set_ylabel(property_name)
-    #
-    #     axes[-1].set_xlabel('Position along the spinal cord (in mm)')
-    #
-    #     plt.show()
 
     # extract all values for shape properties to be averaged across the oversampled centerline in order to match the
     # input slice #
@@ -275,7 +213,7 @@ def compute_properties_along_centerline(im_seg, smooth_factor=5.0, interpolation
         if label not in sorting_values:
             sorting_values.append(label)
     # average spinal cord shape properties
-    averaged_shape = OrderedDict()
+    averaged_shape = dict()
     for property_name in property_list:
         averaged_shape[property_name] = []
         for label in sorting_values:
@@ -283,51 +221,4 @@ def compute_properties_along_centerline(im_seg, smooth_factor=5.0, interpolation
                 [item for i, item in enumerate(properties[property_name]) if
                  properties['z_slice'][i] == label]))
 
-    # Removing temporary folder
-    # os.chdir(curdir)
-    # if remove_temp_files:
-    #     sct.rmtree(path_tmp)
-
     return averaged_shape
-
-
-"""
-Example of script that averages spinal cord shape from multiple subjects/patients, in a common reference frame (PAM50)
-def prepare_data():
-
-    folder_dataset = '/Volumes/data_shared/sct_testing/large/'
-    import isct_test_function
-    import json
-    json_requirements = 'gm_model=0'
-    data_subjects, subjects_name = sct_pipeline.generate_data_list(folder_dataset, json_requirements=json_requirements)
-
-    fname_seg_images = []
-    fname_disks_images = []
-    group_images = []
-
-    for subject_folder in data_subjects:
-        if os.path.exists(os.path.join(subject_folder, 't2')):
-            if os.path.exists(os.path.join(subject_folder, 't2', 't2_seg_manual.nii.gz')) and os.path.exists(os.path.join(subject_folder, 't2', 't2_disks_manual.nii.gz')):
-                fname_seg_images.append(os.path.join(subject_folder, 't2', 't2_seg_manual.nii.gz'))
-                fname_disks_images.append(os.path.join(subject_folder, 't2', 't2_disks_manual.nii.gz'))
-                json_file = io.open(os.path.join(subject_folder, 'dataset_description.json'))
-                dic_info = json.load(json_file)
-                json_file.close()
-                # pass keys and items to lower case
-                dic_info = dict((k.lower(), v.lower()) for k, v in dic_info.items())
-                if dic_info['pathology'] == 'HC':
-                    group_images.append('b')
-                else:
-                    group_images.append('r')
-
-    sct.printv('Number of images', len(fname_seg_images))
-
-    property_list = ['area',
-                     'equivalent_diameter',
-                     'ratio_major_minor',
-                     'eccentricity',
-                     'solidity']
-
-    average_properties(fname_seg_images, property_list, fname_disks_images, group_images, verbose=1)
-
-"""
