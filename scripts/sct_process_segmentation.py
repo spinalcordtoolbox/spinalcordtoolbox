@@ -95,7 +95,7 @@ def get_parser():
                                   'metric per slice and then averaging them all is not the same as outputting a single'
                                   'metric at once across all slices.',
                       mandatory=False,
-                      default_value=param_default.perslice)
+                      default_value=Param().perslice)
     parser.add_option(name='-vert',
                       type_value='str',
                       description='Vertebral levels to compute the CSA across (requires \"-p csa\"). Example: 2:9 for C2 to T2.',
@@ -111,7 +111,7 @@ def get_parser():
                       description='Set to 1 to output one metric per vertebral level instead of a single '
                                   'output metric.',
                       mandatory=False,
-                      default_value=param_default.perlevel)
+                      default_value=Param().perlevel)
     parser.add_option(name='-discfile',
                       type_value='image_nifti',
                       description='Disc labeling with the convention "disc labelvalue=3 ==> disc C2/C3". Only use with -p label-vert',
@@ -196,7 +196,7 @@ def main(args):
     if '-perlevel' in arguments:
         perlevel = arguments['-perlevel']
     else:
-        perlevel = param_default.perlevel
+        perlevel = Param().perlevel
     if '-v' in arguments:
         verbose = int(arguments['-v'])
     if '-z' in arguments:
@@ -204,7 +204,7 @@ def main(args):
     if '-perslice' in arguments:
         perslice = arguments['-perslice']
     else:
-        perslice = param_default.perslice
+        perslice = Param().perslice
     if '-a' in arguments:
         param.algo_fitting = arguments['-a']
     if '-no-angle' in arguments:
