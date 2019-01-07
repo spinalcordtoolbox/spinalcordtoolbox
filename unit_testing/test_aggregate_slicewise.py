@@ -107,19 +107,19 @@ def test_save_as_csv(dummy_metric):
     agg_metrics = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metric, slices=[3, 4], perslice=False,
                                                                    group_funcs=(('mean', np.mean), ('std', np.std)))
     # standard scenario
-    aggregate_slicewise.save_as_csv(agg_metrics, 'tmp_file_out.csv')
+    aggregate_slicewise.save_as_csv(agg_metrics, 'tmp_file_out.csv', fname_in='FakeFile.txt')
     with open('tmp_file_out.csv', 'r') as csvfile:
         spamreader = csv.reader(csvfile, delimiter=',')
         spamreader.next()  # skip header
-        assert spamreader.next() == ['3;4', 'None', 'nan', 'nan', '99.5', '0.5', '30.0', '1.0', 'nan', 'nan', 'nan', 'nan']
+        assert spamreader.next() == ['FakeFile.txt', '3;4', 'None', 'nan', 'nan', '99.5', '0.5', '30.0', '1.0', 'nan', 'nan', 'nan', 'nan']
     # with appending
     aggregate_slicewise.save_as_csv(agg_metrics, 'tmp_file_out.csv')
     aggregate_slicewise.save_as_csv(agg_metrics, 'tmp_file_out.csv', append=True)
     with open('tmp_file_out.csv', 'r') as csvfile:
         spamreader = csv.reader(csvfile, delimiter=',')
         spamreader.next()  # skip header
-        assert spamreader.next() == ['3;4', 'None', 'nan', 'nan', '99.5', '0.5', '30.0', '1.0', 'nan', 'nan', 'nan', 'nan']
-        assert spamreader.next() == ['3;4', 'None', 'nan', 'nan', '99.5', '0.5', '30.0', '1.0', 'nan', 'nan', 'nan', 'nan']
+        assert spamreader.next() == ['', '3;4', 'None', 'nan', 'nan', '99.5', '0.5', '30.0', '1.0', 'nan', 'nan', 'nan', 'nan']
+        assert spamreader.next() == ['', '3;4', 'None', 'nan', 'nan', '99.5', '0.5', '30.0', '1.0', 'nan', 'nan', 'nan', 'nan']
 
 
 # noinspection 801,PyShadowingNames

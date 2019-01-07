@@ -106,20 +106,21 @@ def make_a_string(item):
         return item
 
 
-def save_as_csv(agg_metrics, fname, append=False):
+def save_as_csv(agg_metrics, fname_out, fname_in=None, append=False):
     """
     Write metric structure as csv. If field 'error' exists, it will add a specific column.
     :param metric: output of aggregate_per_slice_or_level()
-    :param fname: output filename. Extention (.csv) will be added if it does not exist.
+    :param fname_out: output filename. Extention (.csv) will be added if it does not exist.
+    :param fname_in: input file to be listed in the csv file (e.g., segmentation file which produced the results).
     :param append: Bool: Append results at the end of file (if exists) instead of overwrite.
     :return:
     """
     # TODO: build header based on existing func (e.g., will currently crash if no STD).
     # write header (only if append=False)
     if not append:
-        with open(fname, 'w') as csvfile:
+        with open(fname_out, 'w') as csvfile:
             # spamwriter = csv.writer(csvfile, delimiter=',')
-            header = ['Slice (I->S)', 'Vertebral level']
+            header = ['File', 'Slice (I->S)', 'Vertebral level']
             for metric in agg_metrics[agg_metrics.keys()[0]]['metrics'].keys():
                 header.append('MEAN({})'.format(metric))
                 header.append('STD({})'.format(metric))
@@ -127,10 +128,12 @@ def save_as_csv(agg_metrics, fname, append=False):
             writer.writeheader()
 
     # populate data
-    with open(fname, 'a') as csvfile:
+    with open(fname_out, 'a') as csvfile:
         spamwriter = csv.writer(csvfile, delimiter=',')
         for slicegroup in sorted(agg_metrics.keys()):
-            line = [make_a_string(slicegroup)]  # list all slices in slicegroup
+            line = []
+            line.append(fname_in)  # file name associated with the results
+            line.append(make_a_string(slicegroup))  # list all slices in slicegroup
             line.append(make_a_string(agg_metrics[slicegroup]['VertLevel']))  # list vertebral levels
             for metric in agg_metrics[slicegroup]['metrics'].keys():
                 try:
