@@ -7,6 +7,7 @@
 from __future__ import absolute_import
 
 import pytest
+import csv
 
 import numpy as np
 import nibabel as nib
@@ -107,16 +108,18 @@ def test_save_as_csv(dummy_metric):
                                                                    group_funcs=(('mean', np.mean), ('std', np.std)))
     # standard scenario
     aggregate_slicewise.save_as_csv(agg_metrics, 'tmp_file_out.csv')
-    file_metric = open('tmp_file_out.csv')
-    line_metric = file_metric.readlines()
-    assert line_metric[1] == '3;4,None,nan,nan,99.5,0.5,30.0,1.0,nan,nan,nan,nan\n'
+    with open('tmp_file_out.csv', 'r') as csvfile:
+        spamreader = csv.reader(csvfile, delimiter=',')
+        spamreader.next()  # skip header
+        assert spamreader.next() == ['3;4', 'None', 'nan', 'nan', '99.5', '0.5', '30.0', '1.0', 'nan', 'nan', 'nan', 'nan']
     # with appending
     aggregate_slicewise.save_as_csv(agg_metrics, 'tmp_file_out.csv')
     aggregate_slicewise.save_as_csv(agg_metrics, 'tmp_file_out.csv', append=True)
-    file_metric = open('tmp_file_out.csv')
-    line_metric = file_metric.readlines()
-    assert line_metric[1] == '3;4,None,nan,nan,99.5,0.5,30.0,1.0,nan,nan,nan,nan\n'
-    assert line_metric[2] == '3;4,None,nan,nan,99.5,0.5,30.0,1.0,nan,nan,nan,nan\n'
+    with open('tmp_file_out.csv', 'r') as csvfile:
+        spamreader = csv.reader(csvfile, delimiter=',')
+        spamreader.next()  # skip header
+        assert spamreader.next() == ['3;4', 'None', 'nan', 'nan', '99.5', '0.5', '30.0', '1.0', 'nan', 'nan', 'nan', 'nan']
+        assert spamreader.next() == ['3;4', 'None', 'nan', 'nan', '99.5', '0.5', '30.0', '1.0', 'nan', 'nan', 'nan', 'nan']
 
 
 # noinspection 801,PyShadowingNames
@@ -126,6 +129,6 @@ def test_save_as_csv_sorting(dummy_metric):
                                                                    group_funcs=(('mean', np.mean), ('std', np.std)))
     # standard scenario
     aggregate_slicewise.save_as_csv(agg_metrics, 'tmp_file_out.csv')
-    file_metric = open('tmp_file_out.csv')
-    line_metric = file_metric.readlines()
-    assert [i[0] for i in line_metric[1:]] == ['3', '4', '5', '6', '7']
+    with open('tmp_file_out.csv', 'r') as csvfile:
+        reader = csv.DictReader(csvfile, delimiter=',')
+        assert [row['Slice (I->S)'] for row in reader] == ['3', '4', '5', '6', '7']

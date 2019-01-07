@@ -8,6 +8,7 @@
 from __future__ import absolute_import
 
 import numpy as np
+import csv
 
 import sct_utils as sct
 from spinalcordtoolbox.template import get_slices_from_vertebral_levels
@@ -114,28 +115,29 @@ def save_as_csv(agg_metrics, fname, append=False):
     :return:
     """
     # TODO: build header based on existing func (e.g., will currently crash if no STD).
-    # Create output csv file
-    # If appending to existing file, no need to create header. Jump directly to appending of results.
-    if append:
-        file_results = open(fname, 'a')
-    else:
-        file_results = open(fname, 'w')
-        # build header
-        header = (','.join(['Slice (I->S)', 'Vertebral level']))
-        for metric in agg_metrics[agg_metrics.keys()[0]]['metrics'].keys():
-            header = ','.join([header, 'MEAN({})'.format(metric), 'STD({})'.format(metric)])
-        file_results.write(header+'\n')
+    # write header (only if append=False)
+    if not append:
+        with open(fname, 'w') as csvfile:
+            # spamwriter = csv.writer(csvfile, delimiter=',')
+            header = ['Slice (I->S)', 'Vertebral level']
+            for metric in agg_metrics[agg_metrics.keys()[0]]['metrics'].keys():
+                header.append('MEAN({})'.format(metric))
+                header.append('STD({})'.format(metric))
+            writer = csv.DictWriter(csvfile, fieldnames=header)
+            writer.writeheader()
+
     # populate data
-    for slicegroup in sorted(agg_metrics.keys()):
-        line = ','.join([make_a_string(slicegroup),  # list all slices in slicegroup
-                         make_a_string(agg_metrics[slicegroup]['VertLevel'])])  # list vertebral levels
-        for metric in agg_metrics[slicegroup]['metrics'].keys():
-            try:
-                line = ','.join([line,
-                                 str(agg_metrics[slicegroup]['metrics'][metric]['mean']),
-                                 str(agg_metrics[slicegroup]['metrics'][metric]['std'])])
-            except KeyError:
-                # if mean or std field does not exist, fill value with 'nan'
-                line = ','.join([line, 'nan', 'nan'])
-        file_results.write(line+'\n')
-    file_results.close()
+    with open(fname, 'a') as csvfile:
+        spamwriter = csv.writer(csvfile, delimiter=',')
+        for slicegroup in sorted(agg_metrics.keys()):
+            line = [make_a_string(slicegroup)]  # list all slices in slicegroup
+            line.append(make_a_string(agg_metrics[slicegroup]['VertLevel']))  # list vertebral levels
+            for metric in agg_metrics[slicegroup]['metrics'].keys():
+                try:
+                    line.append(str(agg_metrics[slicegroup]['metrics'][metric]['mean']))
+                    line.append(str(agg_metrics[slicegroup]['metrics'][metric]['std']))
+                except KeyError:
+                    # if mean or std field does not exist, fill value with 'nan'
+                    line.append('nan')
+                    line.append('nan')
+            spamwriter.writerow(line)
