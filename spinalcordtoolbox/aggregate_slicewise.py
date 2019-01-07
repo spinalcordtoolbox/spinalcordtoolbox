@@ -2,6 +2,9 @@
 # -*- coding: utf-8
 # Functions dealing with metrics aggregation (mean, std, etc.) across slices and/or vertebral levels
 
+# TODO: use csv library
+# TODO: add full file path in csv + SCT version
+
 from __future__ import absolute_import
 
 import numpy as np

@@ -175,9 +175,8 @@ def compute_shape(segmentation, algo_fitting='hanning', window_length=50, remove
                                                                       window_length=window_length,
                                                                       remove_temp_files=remove_temp_files,
                                                                       verbose=verbose)
-    # TODO: when switching to Python3, replace iteritems() by items()
     metrics = {}
-    for key, value in shape_properties.iteritems():
+    for key, value in shape_properties.items():
         # Making sure all entries added to metrics have results
         if not value == []:
             metrics[key] = Metric(z=range(min_z_index, max_z_index+1), value=np.array(value), label=key)
