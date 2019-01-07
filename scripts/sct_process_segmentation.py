@@ -241,7 +241,7 @@ def main(args):
                                                    perlevel=perlevel, vert_level=fname_vert_levels,
                                                    group_funcs=group_funcs)
 
-        save_as_csv(metrics_agg, file_out, file_in=fname_segmentation, append=append)
+        save_as_csv(metrics_agg, file_out, fname_in=fname_segmentation, append=append)
         sct.printv('\nDone! To view results, type:')
         sct.printv('open ' + file_out + '\n', verbose=1, type='info')
 
@@ -261,7 +261,7 @@ def main(args):
                                                    levels=parse_num_list(vert_levels), perslice=perslice,
                                                    perlevel=perlevel, vert_level=fname_vert_levels,
                                                    group_funcs=group_funcs)
-        save_as_csv(metrics_agg, file_out, file_in=fname_segmentation, append=append)
+        save_as_csv(metrics_agg, file_out, fname_in=fname_segmentation, append=append)
         sct.printv('\nDone! To view results, type:')
         sct.printv('open ' + file_out + '\n', verbose=1, type='info')
 

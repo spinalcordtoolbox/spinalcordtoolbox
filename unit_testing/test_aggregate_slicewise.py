@@ -2,7 +2,6 @@
 # -*- coding: utf-8
 # pytest unit tests for spinalcordtoolbox.aggregate_slicewise
 
-# TODO: add tests: with perslice/perlevel, if slices and/or levels is empty
 
 from __future__ import absolute_import
 
