@@ -2,8 +2,6 @@
 # -*- coding: utf-8
 # Functions dealing with metrics aggregation (mean, std, etc.) across slices and/or vertebral levels
 
-# TODO: use csv library
-# TODO: add full file path in csv + SCT version
 
 from __future__ import absolute_import
 
@@ -120,7 +118,7 @@ def save_as_csv(agg_metrics, fname_out, fname_in=None, append=False):
     if not append:
         with open(fname_out, 'w') as csvfile:
             # spamwriter = csv.writer(csvfile, delimiter=',')
-            header = ['File', 'Slice (I->S)', 'Vertebral level']
+            header = ['Filename', 'SCT version', 'Slice (I->S)', 'Vertebral level']
             for metric in agg_metrics[agg_metrics.keys()[0]]['metrics'].keys():
                 header.append('MEAN({})'.format(metric))
                 header.append('STD({})'.format(metric))
@@ -133,6 +131,7 @@ def save_as_csv(agg_metrics, fname_out, fname_in=None, append=False):
         for slicegroup in sorted(agg_metrics.keys()):
             line = []
             line.append(fname_in)  # file name associated with the results
+            line.append(sct.__version__)
             line.append(make_a_string(slicegroup))  # list all slices in slicegroup
             line.append(make_a_string(agg_metrics[slicegroup]['VertLevel']))  # list vertebral levels
             for metric in agg_metrics[slicegroup]['metrics'].keys():
