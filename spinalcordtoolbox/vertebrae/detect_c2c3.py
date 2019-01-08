@@ -93,7 +93,7 @@ def detect_c2c3(nii_im, nii_seg, contrast, verbose=1):
     if np.any(pred > 0):
         sct.printv('C2-C3 detected...', verbose)
 
-        pred_bin = (pred > 0).astype(np.int_)
+        pred_bin = (pred > 0.5).astype(np.int_)
         labeled_pred, nb_regions = label_regions(pred_bin, return_num=True)
         if nb_regions > 1:  # if there is several detected clusters of voxels
             region_idx_top, region_z_top = 0, 0
