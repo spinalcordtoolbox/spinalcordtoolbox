@@ -101,7 +101,7 @@ def get_parser():
                       default_value=os.path.join(path_sct, "data", "PAM50"))
     parser.add_option(name="-initz",
                       type_value=[[','], 'int'],
-                      description='Initialize using slice number and disc value. Example: 68,3 (slice 68 corresponds to disc C3/C4). WARNING: Slice number should correspond to superior-inferior direction (e.g. Z in RPI orientation, but Y in LIP orientation).',
+                      description='Initialize using slice number and disc value. Example: 68,4 (slice 68 corresponds to disc C3/C4). WARNING: Slice number should correspond to superior-inferior direction (e.g. Z in RPI orientation, but Y in LIP orientation).',
                       mandatory=False,
                       example=['125,3'])
     parser.add_option(name="-initcenter",
