@@ -124,7 +124,7 @@ def test_save_as_csv(dummy_metric):
     with open('tmp_file_out.csv', 'r') as csvfile:
         spamreader = csv.reader(csvfile, delimiter=',')
         spamreader.next()  # skip header
-        assert spamreader.next() == ['FakeFile.txt', sct.__version__, '3;4', 'None', 'nan', 'nan', '99.5', '0.5',
+        assert spamreader.next() == ['FakeFile.txt', sct.__version__, '3:4', '', 'nan', 'nan', '99.5', '0.5',
                                      '30.0', '1.0', 'nan', 'nan', 'nan', 'nan']
     # with appending
     aggregate_slicewise.save_as_csv(agg_metrics, 'tmp_file_out.csv')
@@ -132,10 +132,25 @@ def test_save_as_csv(dummy_metric):
     with open('tmp_file_out.csv', 'r') as csvfile:
         spamreader = csv.reader(csvfile, delimiter=',')
         spamreader.next()  # skip header
-        assert spamreader.next() == ['', sct.__version__, '3;4', 'None', 'nan', 'nan', '99.5', '0.5', '30.0', '1.0',
+        assert spamreader.next() == ['', sct.__version__, '3:4', '', 'nan', 'nan', '99.5', '0.5', '30.0', '1.0',
                                      'nan', 'nan', 'nan', 'nan']
-        assert spamreader.next() == ['', sct.__version__, '3;4', 'None', 'nan', 'nan', '99.5', '0.5', '30.0', '1.0',
+        assert spamreader.next() == ['', sct.__version__, '3:4', '', 'nan', 'nan', '99.5', '0.5', '30.0', '1.0',
                                      'nan', 'nan', 'nan', 'nan']
+
+
+# noinspection 801,PyShadowingNames
+def test_save_as_csv_slices(dummy_metric, dummy_vert_level):
+    """Make sure slices are listed in reduced form"""
+    agg_metrics = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metric, levels=[3, 4], perslice=False,
+                                                                   perlevel=False, vert_level=dummy_vert_level,
+                                                                   group_funcs=(('mean', np.mean), ('std', np.std)))
+    # standard scenario
+    aggregate_slicewise.save_as_csv(agg_metrics, 'tmp_file_out.csv')
+    with open('tmp_file_out.csv', 'r') as csvfile:
+        reader = csv.DictReader(csvfile, delimiter=',')
+        row = reader.next()
+        assert row['Slice (I->S)'] == '5:8'
+        assert row['Vertebral level'] == '3:4'
 
 
 # noinspection 801,PyShadowingNames

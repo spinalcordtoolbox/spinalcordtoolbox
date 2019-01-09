@@ -55,7 +55,7 @@ def parse_num_list_inv(list_int):
     :return: str_num: string
     """
     # deal with empty list
-    if not list_int:
+    if not list_int or list_int is None:
         return ''
     # Sort list in increasing number
     list_int = sorted(list_int)

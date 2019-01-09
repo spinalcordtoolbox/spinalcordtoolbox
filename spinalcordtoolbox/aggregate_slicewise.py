@@ -12,6 +12,7 @@ import csv
 import sct_utils as sct
 from spinalcordtoolbox.template import get_slices_from_vertebral_levels, get_vertebral_level_from_slice
 from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.utils import parse_num_list_inv
 
 
 def aggregate_per_slice_or_level(metrics, slices=None, levels=None, perslice=True, perlevel=False, vert_level=None,
@@ -137,8 +138,8 @@ def save_as_csv(agg_metrics, fname_out, fname_in=None, append=False):
             line = []
             line.append(fname_in)  # file name associated with the results
             line.append(sct.__version__)
-            line.append(make_a_string(slicegroup))  # list all slices in slicegroup
-            line.append(make_a_string(agg_metrics[slicegroup]['VertLevel']))  # list vertebral levels
+            line.append(parse_num_list_inv(slicegroup))  # list all slices in slicegroup
+            line.append(parse_num_list_inv(agg_metrics[slicegroup]['VertLevel']))  # list vertebral levels
             for metric in agg_metrics[slicegroup]['metrics'].keys():
                 try:
                     line.append(str(agg_metrics[slicegroup]['metrics'][metric]['mean']))
