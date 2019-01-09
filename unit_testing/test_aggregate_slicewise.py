@@ -48,7 +48,7 @@ def dummy_vert_level():
 
 # noinspection 801,PyShadowingNames
 def test_aggregate_across_selected_slices(dummy_metric):
-    """Test extraction of metrics aggregation across slices"""
+    """Test extraction of metrics aggregation across slices: Selected slices"""
     agg_metrics = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metric, slices=[3, 4], perslice=False,
                                                                    group_funcs=(('mean', np.mean), ('std', np.std)))
     assert agg_metrics[(3, 4)]['metrics']['metric1']['mean'] == 30.0
@@ -62,7 +62,7 @@ def test_aggregate_across_selected_slices(dummy_metric):
 
 # noinspection 801,PyShadowingNames
 def test_aggregate_across_all_slices(dummy_metric):
-    """Test extraction of metrics aggregation across slices"""
+    """Test extraction of metrics aggregation across slices: All slices by default"""
     agg_metrics = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metric, perslice=False,
                                                                    group_funcs=(('mean', np.mean),))
     assert agg_metrics[(3, 4, 5, 6, 7)]['metrics']['metric1']['mean'] == 38.0
@@ -70,7 +70,7 @@ def test_aggregate_across_all_slices(dummy_metric):
 
 # noinspection 801,PyShadowingNames
 def test_aggregate_per_slice(dummy_metric):
-    """Test extraction of metrics aggregation per slice"""
+    """Test extraction of metrics aggregation per slice: Selected slices"""
     agg_metrics = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metric, slices=[3, 4], perslice=True,
                                                                    group_funcs=(('mean', np.mean),))
     assert agg_metrics[(3,)]['metrics']['metric1']['mean'] == 29.0
@@ -81,11 +81,24 @@ def test_aggregate_per_slice(dummy_metric):
 def test_aggregate_across_levels(dummy_metric, dummy_vert_level):
     """Test extraction of metrics aggregation across vertebral levels"""
     group_funcs = (('mean', np.mean),)
-    agg_metrics = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metric, levels=[2, 3], perlevel=False,
-                                                                   vert_level=dummy_vert_level,
+    agg_metrics = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metric, levels=[2, 3], perslice=False,
+                                                                   perlevel=False, vert_level=dummy_vert_level,
                                                                    group_funcs=group_funcs)
     assert agg_metrics[(3, 4, 5, 6)]['metrics']['metric1']['mean'] == 35.0
     assert agg_metrics[(3, 4, 5, 6)]['VertLevel'] == (2, 3)
+
+
+# noinspection 801,PyShadowingNames
+def test_aggregate_across_levels_perslice(dummy_metric, dummy_vert_level):
+    """Test extraction of metrics aggregation within selected vertebral levels and per slice"""
+    group_funcs = (('mean', np.mean),)
+    agg_metrics = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metric, levels=[2, 3], perslice=True,
+                                                                   perlevel=False, vert_level=dummy_vert_level,
+                                                                   group_funcs=group_funcs)
+    assert agg_metrics[(3,)]['metrics']['metric1']['mean'] == 29.0
+    assert agg_metrics[(3,)]['VertLevel'] == (2,)
+    assert agg_metrics[(5,)]['metrics']['metric1']['mean'] == 39.0
+    assert agg_metrics[(5,)]['VertLevel'] == (3,)
 
 
 # noinspection 801,PyShadowingNames
