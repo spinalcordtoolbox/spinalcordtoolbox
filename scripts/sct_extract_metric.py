@@ -14,6 +14,7 @@
 #########################################################################################
 
 # TODO: add unit tests: perlevel/perslice, overwrite,
+# TODO: check: not sure flag perslice is working 
 # TODO: use argparse
 # TODO: revisit the flags normalization and weighted mask-- useful?
 # TODO: move to csv output. However, we need to change the way z is represented: currently it is a list separated by ,. Maybe we can change it for: ;. e.g.: 0;1;2;3
