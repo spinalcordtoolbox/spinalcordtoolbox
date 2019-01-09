@@ -1,16 +1,20 @@
+#!/usr/bin/env python
+# -*- coding: utf-8
+# Functions dealing with centerline detection and manipulation
+
+# TODO: rename this file "centerline" and move it to the parent folder
+
 from __future__ import absolute_import, division
 
-import sys, io, os, shutil, datetime
-from string import Template
+import os, datetime
 
-import nibabel as nib
 import numpy as np
+import nibabel as nib
 
 import sct_utils as sct
 import sct_image
 from .. import image as msct_image
 from ..image import Image
-
 
 
 def centerline2roi(fname_image, folder_output='./', verbose=0):
@@ -22,6 +26,7 @@ def centerline2roi(fname_image, folder_output='./', verbose=0):
     :param verbose: adjusts the verbosity of the logging.
     :returns: filename of the .roi centerline that has been created
     """
+    # TODO: change folder_output to fname_out
     path_data, file_data, ext_data = sct.extract_fname(fname_image)
     fname_output = file_data + '.roi'
 

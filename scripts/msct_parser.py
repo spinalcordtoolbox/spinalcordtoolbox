@@ -554,7 +554,7 @@ class Usage:
                 # display argument
                 type_value = self.refactor_type_value(opt)
                 description = self.arguments[opt].description
-                if self.arguments[opt].default_value:
+                if self.arguments[opt].default_value is not None:
                     description += " Default value = " + str(self.arguments[opt].default_value)
                 if self.arguments[opt].deprecated:
                     description += " Deprecated argument!"

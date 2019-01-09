@@ -14,7 +14,7 @@
 from __future__ import division, absolute_import
 
 import os
-
+from datetime import datetime
 import numpy as np
 
 from scipy.interpolate import splrep, splev
@@ -130,6 +130,7 @@ def evaluate_derivative_3D(x, y, z, px, py, pz):
     :param pz:
     :return:
     """
+    # TODO: replace with existing function (it must exist somewhere!)
     from numpy import array, sqrt, insert, append
 
     x = [x_elem * px for x_elem in x]
@@ -555,11 +556,9 @@ def smoothing_window(x, window_len=11, window='hanning', verbose = 0, robust=0, 
         pltx, = plt.plot(z, x, 'bx')
         #pltx, = plt.plot(z_extended[size_padding:size_padding + size_curve], x_display[size_padding:size_padding + size_curve], 'bo')
         pltx_fit, = plt.plot(z, y, 'r', linewidth=2)
-        plt.title("Type of window: %s     Window_length= %d mm" % (window, window_len))
-        plt.xlabel('z')
-        plt.ylabel('x')
+        plt.title("Type of window: %s     Window_length= %d pix" % (window, window_len))
         plt.legend([pltx_ext, pltx, pltx_fit], ['Extended', 'Normal', 'Smoothed'])
-        plt.savefig('fig_smoothing_window_'+str(random.randint(100, 100000))+'.png')
+        plt.savefig('fig_smoothing_window_'+datetime.now().strftime("%y%m%d%H%M%S%f")+'.png')
         plt.close()
 
     return y

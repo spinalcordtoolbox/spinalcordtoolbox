@@ -154,12 +154,6 @@ def get_parser():
                       mandatory=False,
                       default_value=ParamSeg().type_seg,
                       example=['bin', 'prob'])
-    parser.add_option(name="-ratio",
-                      type_value='multiple_choice',
-                      description="Compute GM/WM CSA ratio by slice or by vertebral level (average across levels). For no computation of ratio, set to 0.",
-                      mandatory=False,
-                      default_value=ParamSeg().ratio,
-                      example=['0', 'slice', 'level'])
     parser.add_option(name="-ofolder",
                       type_value="folder_creation",
                       description="Output folder",
@@ -213,7 +207,6 @@ class ParamSeg:
 
         self.type_seg = 'prob'  # 'prob' or 'bin'
         self.thr_bin = 0.5
-        self.ratio = '0'  # '0', 'slice' or 'level'
 
         self.qc = False
 
@@ -282,10 +275,6 @@ class SegmentGM:
             # compute validation metrics
             printv('\nCompute validation metrics...', self.param.verbose, 'normal')
             self.validation()
-
-        if self.param_seg.ratio is not '0':
-            printv('\nCompute GM/WM CSA ratio...', self.param.verbose, 'normal')
-            self.compute_ratio()
 
         # go back to original directory
         os.chdir(curdir)
@@ -607,62 +596,6 @@ class SegmentGM:
         if self.param.rm_tmp:
             sct.rmtree(tmp_dir_val)
 
-    def compute_ratio(self):
-        type_ratio = self.param_seg.ratio
-
-        tmp_dir_ratio = tmp_create(basename="compute_ratio")
-        curdir = os.getcwd()
-        os.chdir(tmp_dir_ratio)
-
-        fname_gmseg = self.im_res_gmseg.absolutepath
-        fname_wmseg = self.im_res_wmseg.absolutepath
-
-        if self.im_res_gmseg.orientation != "RPI":
-            fname_gmseg = self.im_res_gmseg.change_orientation(self.im_res_gmseg, 'RPI', generate_path=True).save().absolutepath
-            fname_wmseg = self.im_res_wmseg.change_orientation(self.im_res_wmseg, 'RPI', generate_path=True).save().absolutepath
-
-        sct_process_segmentation.main(['-i', fname_gmseg, '-p', 'csa', '-ofolder', 'gm_csa', '-no-angle', '1'])
-        sct_process_segmentation.main(['-i', fname_wmseg, '-p', 'csa', '-ofolder', 'wm_csa', '-no-angle', '1'])
-
-        gm_csa = open(os.path.join('gm_csa', 'csa_per_slice.txt'), 'r')
-        wm_csa = open(os.path.join('wm_csa', 'csa_per_slice.txt'), 'r')
-        gm_csa_lines = gm_csa.readlines()
-        wm_csa_lines = wm_csa.readlines()
-        gm_csa.close()
-        wm_csa.close()
-
-        fname_ratio = 'ratio_by_' + type_ratio + '.txt'
-        file_ratio = open(fname_ratio, 'w')
-
-        file_ratio.write(type_ratio + ', ratio GM/WM CSA\n')
-        csa_gm_wm_by_level = {0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [], 8: [], 9: [], 10: [], 11: [], 12: [], 13: [], 14: [], 15: [], 16: [], 17: [], 18: [], 19: [], 20: [], 21: [], 22: [], 23: [], 24: []}
-        for gm_line, wm_line in zip(gm_csa_lines[1:], wm_csa_lines[1:]):
-            i, gm_area, gm_angle = gm_line.split(',')
-            j, wm_area, wm_angle = wm_line.split(',')
-            assert i == j
-            if type_ratio == 'level':
-                level_slice = int(self.target_im[int(i)].level)
-                csa_gm_wm_by_level[level_slice].append((float(gm_area), float(wm_area)))
-            else:
-                file_ratio.write(i + ', ' + str(float(gm_area) / float(wm_area)) + '\n')
-
-        if type_ratio == 'level':
-            for l, gm_wm_list in sorted(csa_gm_wm_by_level.items()):
-                if str(gm_wm_list) != '[]':
-                    csa_gm_list = []
-                    csa_wm_list = []
-                    for gm, wm in gm_wm_list:
-                        csa_gm_list.append(gm)
-                        csa_wm_list.append(wm)
-                    csa_gm = np.mean(csa_gm_list)
-                    csa_wm = np.mean(csa_wm_list)
-                    file_ratio.write(str(l) + ', ' + str(csa_gm / csa_wm) + '\n')
-
-        file_ratio.close()
-        sct.copy(fname_ratio, os.path.join(self.param_seg.path_results, fname_ratio))
-
-        os.chdir(curdir)
-
 
 def main(args=None):
     if args is None:
@@ -707,8 +640,6 @@ def main(args=None):
         param_model.path_model_to_load = os.path.abspath(arguments['-model'])
     if '-res-type' in arguments:
         param_seg.type_seg = arguments['-res-type']
-    if '-ratio' in arguments:
-        param_seg.ratio = arguments['-ratio']
     if '-ref' in arguments:
         param_seg.fname_manual_gmseg = arguments['-ref']
     if '-ofolder' in arguments:
