@@ -2,7 +2,6 @@
 # -*- coding: utf-8
 # pytest unit tests for spinalcordtoolbox.process_seg
 
-# TODO: directly pass image (not fname)
 # TODO: add dummy image with different resolution to check impact of input res
 
 from __future__ import absolute_import

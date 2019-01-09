@@ -16,7 +16,6 @@ import msct_shape
 from msct_types import Centerline
 from .centerline import optic
 
-# TODO: deal with reorientation: output metric csv should display z as a function of I-S native orientation
 # TODO: only use logging, don't use printing, pass images, not filenames, do imports at beginning of file, no chdir()
 
 # on v3.2.2 and earlier, the following volumes were output by default, which was a waste of time (people don't use it)
@@ -56,7 +55,6 @@ def compute_csa(segmentation, algo_fitting='hanning', type_window='hanning', win
     # open image and save in temp folder
     im_seg = msct_image.Image(segmentation).save(path_tmp, )
 
-    # TODO: do everything in RAM instead of adding unecessary i/o. For that we need a wrapper for smooth_centerline()
     # change orientation to RPI
     im_seg.change_orientation('RPI')
     nx, ny, nz, nt, px, py, pz, pt = im_seg.dim
@@ -182,12 +180,6 @@ def compute_shape(segmentation, algo_fitting='hanning', window_length=50, remove
             metrics[key] = Metric(z=range(min_z_index, max_z_index+1), value=np.array(value), label=key)
 
     return metrics
-
-    # write output file
-    # TODO: move to parent function
-    # average_per_slice_or_level(metrics, header=headers, slices=slices, perslice=perslice, vert_levels=vert_levels,
-    #                            perlevel=perlevel, fname_vert_levels=fname_vert_levels, file_out=file_out,
-    #                            overwrite=overwrite)
 
 
 def extract_centerline(segmentation, verbose=0, algo_fitting='hanning', type_window='hanning',
