@@ -15,7 +15,10 @@ from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.utils import parse_num_list_inv
 
 
-def aggregate_per_slice_or_level(metrics, slices=None, levels=None, perslice=True, perlevel=False, vert_level=None,
+# TODO: don't make metrics a dict anymore-- it complicates things.
+# TODO: generalize this function to accept n-dim np.array instead of list in Metric().value
+# TODO: maybe no need to bring Metric() class here. Just np.array, then labeling is done in parent function.
+def aggregate_per_slice_or_level(metrics, mask=None, slices=None, levels=None, perslice=True, perlevel=False, vert_level=None,
                                  group_funcs=(('mean', np.mean),)):
     """
     It is assumed that each element of a metric's vector correspond to a slice. E.g., index #2 corresponds to slice #2.
@@ -30,7 +33,9 @@ def aggregate_per_slice_or_level(metrics, slices=None, levels=None, perslice=Tru
     """
     # if slices is empty, select all available slices from the metrics
     if not slices:
-        slices = metrics[metrics.keys()[0]].z
+        slices = range(metrics.shape[2])
+        # slices = metrics[metrics.keys()[0]].z
+
     # aggregation based on levels
     if levels:
         im_vert_level = Image(vert_level).change_orientation('RPI')
@@ -60,6 +65,7 @@ def aggregate_per_slice_or_level(metrics, slices=None, levels=None, perslice=Tru
             # slicegroups = [(0, 1, 2, 3, 4, 5, 6, 7, 8)]
             slicegroups = [tuple(slices)]
     agg_metrics = dict((slicegroup, dict()) for slicegroup in slicegroups)
+
     # loop across slice group
     for slicegroup in slicegroups:
         # add level info
@@ -67,36 +73,57 @@ def aggregate_per_slice_or_level(metrics, slices=None, levels=None, perslice=Tru
             agg_metrics[slicegroup]['VertLevel'] = vertgroups[slicegroups.index(slicegroup)]
         else:
             agg_metrics[slicegroup]['VertLevel'] = None
-        # create dict for each metric
-        agg_metrics[slicegroup]['metrics'] = dict((metric, dict()) for metric in metrics)
-        for metric in metrics.keys():
-            agg_metrics[slicegroup]['metrics'][metric]['label'] = metrics[metric].label
-            metric_data = []
-            # make sure metric and z have same length
-            if not len(metrics[metric].z) == len(metrics[metric].value):
-                # TODO: raise custom exception instead of hard-coding error message
-                agg_metrics[slicegroup]['metrics'][metric]['error'] = 'metric and z have do not have the same length'
-            else:
-                for iz in slicegroup:
-                    if iz in metrics[metric].z:
-                        metric_data.append(metrics[metric].value[metrics[metric].z.index(iz)])
-                    else:
-                        # sct.log.warning('z={} is not listed in the metric.'.format(iz))
-                        agg_metrics[slicegroup]['metrics'][metric]['error'] = 'z={} is not listed in the metric.'.format(iz)
-                try:
-                    # Loop across functions (typically: mean, std)
-                    for (name, func) in group_funcs:
-                        # check if nan
-                        result = func(metric_data)
-                        if np.isnan(result):
-                            agg_metrics[slicegroup]['metrics'][metric]['error'] = 'Contains nan'
-                        else:
-                            agg_metrics[slicegroup]['metrics'][metric][name] = result
-                except Exception as e:
-                    sct.log.warning(e)
-                    # sct.log.warning('TypeError for metric {}'.format(metric))
-                    agg_metrics[slicegroup]['metrics'][metric]['error'] = e.message
+
+        # add label info
+        # agg_metrics[slicegroup]['label'] = metrics.label  # TODO
+        # metric_data = []
+        # # make sure metric and z have same length
+        # if not len(metrics[metric].z) == len(metrics[metric].value):
+        #     # TODO: raise custom exception instead of hard-coding error message
+        #     agg_metrics[slicegroup]['metrics'][metric]['error'] = 'metric and z have do not have the same length'
+        # else:
+        # for iz in slicegroup:
+            # if iz in metrics[metric].z:
+            #     metric_data.append(metrics[metric].value[metrics[metric].z.index(iz)])
+            # else:
+            #     # sct.log.warning('z={} is not listed in the metric.'.format(iz))
+            #     agg_metrics[slicegroup]['metrics'][metric]['error'] = 'z={} is not listed in the metric.'.format(iz)
+        try:
+            # Loop across functions (typically: mean, std)
+            for (name, func) in group_funcs:
+                data_slicegroup = metrics[:, :, slicegroup]
+                if mask is not None:
+                    mask_slicegroup = mask[:, :, slicegroup]
+                # check if nan
+                result = func(data_slicegroup, mask_slicegroup)
+                if np.isnan(result):
+                    # TODO: fix below
+                    agg_metrics[slicegroup]['error'] = 'Contains nan'
+                else:
+                    agg_metrics[slicegroup][name] = result
+        except Exception as e:
+            sct.log.warning(e)
+            # sct.log.warning('TypeError for metric {}'.format(metric))
+            # TODO
+            agg_metrics[slicegroup]['error'] = e.message
     return agg_metrics
+
+
+def func_bin(data, mask):
+    # Binarize mask
+    # TODO
+    # run weighted average
+    return func_weighted_average(data, mask_bin)
+
+
+def func_weighted_average(data, mask):
+    """
+    Compute weighted average
+    :param data: ndarray: input data
+    :param mask: ndarray: input mask to weight average
+    :return: weighted_average
+    """
+    return np.sum(np.multiply(data, mask))
 
 
 def make_a_string(item):
