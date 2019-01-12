@@ -146,15 +146,18 @@ def save_as_csv(agg_metrics, fname_out, fname_in=None, append=False):
     :param append: Bool: Append results at the end of file (if exists) instead of overwrite.
     :return:
     """
+    # TODO: if append=True but file does not exist yet, raise warning and set append=False
     # TODO: build header based on existing func (e.g., will currently crash if no STD).
     # write header (only if append=False)
     if not append:
         with open(fname_out, 'w') as csvfile:
             # spamwriter = csv.writer(csvfile, delimiter=',')
-            header = ['Filename', 'SCT version', 'Slice (I->S)', 'Vertebral level']
-            for metric in agg_metrics[agg_metrics.keys()[0]]['metrics'].keys():
-                header.append('MEAN({})'.format(metric))
-                header.append('STD({})'.format(metric))
+            header = ['Filename', 'Slice (I->S)', 'Vertebral level']
+            funcs = agg_metrics[agg_metrics.keys()[0]].keys()
+            funcs.remove('VertLevel')  # Remove VertLevel because already added above
+            for func in funcs:
+                header.append(func)  # TODO: write label instead of field name
+            header.append('SCT Version')
             writer = csv.DictWriter(csvfile, fieldnames=header)
             writer.writeheader()
 
@@ -164,15 +167,14 @@ def save_as_csv(agg_metrics, fname_out, fname_in=None, append=False):
         for slicegroup in sorted(agg_metrics.keys()):
             line = []
             line.append(fname_in)  # file name associated with the results
-            line.append(sct.__version__)
             line.append(parse_num_list_inv(slicegroup))  # list all slices in slicegroup
             line.append(parse_num_list_inv(agg_metrics[slicegroup]['VertLevel']))  # list vertebral levels
-            for metric in agg_metrics[slicegroup]['metrics'].keys():
+            funcs = agg_metrics[slicegroup].keys()
+            funcs.remove('VertLevel')  # Remove VertLevel because already added above
+            for func in funcs:
                 try:
-                    line.append(str(agg_metrics[slicegroup]['metrics'][metric]['mean']))
-                    line.append(str(agg_metrics[slicegroup]['metrics'][metric]['std']))
+                    line.append(str(agg_metrics[slicegroup][func]))
                 except KeyError:
-                    # if mean or std field does not exist, fill value with 'nan'
-                    line.append('nan')
-                    line.append('nan')
+                    line.append('')
+            line.append(sct.__version__)
             spamwriter.writerow(line)
