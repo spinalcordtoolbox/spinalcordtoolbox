@@ -19,9 +19,9 @@ class Metric:
     """
     Class to include in dictionaries to associate data and label
     """
-    def __init__(self, data=[], label=''):
+    def __init__(self, data=None, label=''):
         """
-        :param value: ndarray
+        :param data: ndarray
         :param label: str
         """
         self.data = data
@@ -31,24 +31,24 @@ class Metric:
 # TODO: don't make metrics a dict anymore-- it complicates things.
 # TODO: generalize this function to accept n-dim np.array instead of list in Metric().value
 # TODO: maybe no need to bring Metric() class here. Just np.array, then labeling is done in parent function.
-def aggregate_per_slice_or_level(metrics, mask=None, slices=None, levels=None, perslice=True, perlevel=False, vert_level=None,
+def aggregate_per_slice_or_level(metric, mask=None, slices=None, levels=None, perslice=True, perlevel=False, vert_level=None,
                                  group_funcs=(('MEAN', np.mean),)):
     """
     It is assumed that each element of a metric's vector correspond to a slice. E.g., index #2 corresponds to slice #2.
-    :param metrics: Class Metric(): data to aggregate.
+    :param metric: Class Metric(): data to aggregate.
     :param mask: Class Metric(): mask to use for aggregating the data. Optional.
-    :param slices: List[int]: Slices to aggregate metrics from. If empty, select all slices.
-    :param levels: List[int]: Vertebral levels to aggregate metrics from. It has priority over "slices".
+    :param slices: List[int]: Slices to aggregate metric from. If empty, select all slices.
+    :param levels: List[int]: Vertebral levels to aggregate metric from. It has priority over "slices".
     :param Bool perslice: Aggregate per slice (True) or across slices (False)
     :param Bool perlevel: Aggregate per level (True) or across levels (False). Has priority over "perslice".
     :param vert_level: Vertebral level. Could be either an Image or a file name.
-    :param tuple group_funcs: Functions to apply on metrics. Example: (('mean', np.mean),))
-    :return: Aggregated metrics
+    :param tuple group_funcs: Functions to apply on metric. Example: (('mean', np.mean),))
+    :return: Aggregated metric
     """
-    # if slices is empty, select all available slices from the metrics
+    # if slices is empty, select all available slices from the metric
     if not slices:
-        slices = range(metrics.data.shape[2])
-        # slices = metrics[metrics.keys()[0]].z
+        slices = range(metric.data.shape[2])
+        # slices = metric[metric.keys()[0]].z
 
     # aggregation based on levels
     if levels:
@@ -63,7 +63,7 @@ def aggregate_per_slice_or_level(metrics, mask=None, slices=None, levels=None, p
             slicegroups = [tuple([i]) for i in reduce(operator.concat, slicegroups)]  # reduce to individual tuple
             # vertgroups = [(2,), (2,), (2,), (3,), (3,), (3,), (4,), (4,), (4,)]
             vertgroups = [tuple([get_vertebral_level_from_slice(im_vert_level, i[0])]) for i in slicegroups]
-        # output aggregate metrics across levels
+        # output aggregate metric across levels
         else:
             # slicegroups = [(0, 1, 2, 3, 4, 5, 6, 7, 8)]
             slicegroups = [tuple([val for sublist in slicegroups for val in sublist])]  # flatten into single tuple
@@ -78,51 +78,51 @@ def aggregate_per_slice_or_level(metrics, mask=None, slices=None, levels=None, p
         else:
             # slicegroups = [(0, 1, 2, 3, 4, 5, 6, 7, 8)]
             slicegroups = [tuple(slices)]
-    agg_metrics = dict((slicegroup, dict()) for slicegroup in slicegroups)
+    agg_metric = dict((slicegroup, dict()) for slicegroup in slicegroups)
 
     # loop across slice group
     for slicegroup in slicegroups:
         # add level info
         if levels:
-            agg_metrics[slicegroup]['VertLevel'] = vertgroups[slicegroups.index(slicegroup)]
+            agg_metric[slicegroup]['VertLevel'] = vertgroups[slicegroups.index(slicegroup)]
         else:
-            agg_metrics[slicegroup]['VertLevel'] = None
+            agg_metric[slicegroup]['VertLevel'] = None
 
         # add label info
-        # agg_metrics[slicegroup]['label'] = metrics.label  # TODO
+        # agg_metric[slicegroup]['label'] = metric.label  # TODO
         # metric_data = []
         # # make sure metric and z have same length
-        # if not len(metrics[metric].z) == len(metrics[metric].value):
+        # if not len(metric[metric].z) == len(metric[metric].value):
         #     # TODO: raise custom exception instead of hard-coding error message
-        #     agg_metrics[slicegroup]['metrics'][metric]['error'] = 'metric and z have do not have the same length'
+        #     agg_metric[slicegroup]['metric'][metric]['error'] = 'metric and z have do not have the same length'
         # else:
         # for iz in slicegroup:
-            # if iz in metrics[metric].z:
-            #     metric_data.append(metrics[metric].value[metrics[metric].z.index(iz)])
+            # if iz in metric[metric].z:
+            #     metric_data.append(metric[metric].value[metric[metric].z.index(iz)])
             # else:
             #     # sct.log.warning('z={} is not listed in the metric.'.format(iz))
-            #     agg_metrics[slicegroup]['metrics'][metric]['error'] = 'z={} is not listed in the metric.'.format(iz)
+            #     agg_metric[slicegroup]['metric'][metric]['error'] = 'z={} is not listed in the metric.'.format(iz)
         try:
             # Loop across functions (typically: mean, std)
             for (name, func) in group_funcs:
-                data_slicegroup = metrics.data[:, :, slicegroup]
+                data_slicegroup = metric.data[:, :, slicegroup]
                 if mask is not None:
                     mask_slicegroup = mask.data[:, :, slicegroup]
-                    agg_metrics[slicegroup]['Mask'] = mask.label
+                    agg_metric[slicegroup]['Mask'] = mask.label
                 # check if nan
                 result = func(data_slicegroup, mask_slicegroup)
                 if np.isnan(result):
                     # TODO: fix below
-                    agg_metrics[slicegroup]['error'] = 'Contains nan'
+                    agg_metric[slicegroup]['error'] = 'Contains nan'
                 else:
                     # here we create a field with name: FUNC(METRIC_NAME). Example: MEAN(CSA)
-                    agg_metrics[slicegroup]['{}({})'.format(name, metrics.label)] = result
+                    agg_metric[slicegroup]['{}({})'.format(name, metric.label)] = result
         except Exception as e:
             sct.log.warning(e)
             # sct.log.warning('TypeError for metric {}'.format(metric))
             # TODO
-            agg_metrics[slicegroup]['error'] = e.message
-    return agg_metrics
+            agg_metric[slicegroup]['error'] = e.message
+    return agg_metric
 
 
 def func_bin(data, mask):
@@ -153,10 +153,10 @@ def make_a_string(item):
         return item
 
 
-def save_as_csv(agg_metrics, fname_out, fname_in=None, append=False):
+def save_as_csv(agg_metric, fname_out, fname_in=None, append=False):
     """
     Write metric structure as csv. If field 'error' exists, it will add a specific column.
-    :param metric: output of aggregate_per_slice_or_level()
+    :param agg_metric: output of aggregate_per_slice_or_level()
     :param fname_out: output filename. Extention (.csv) will be added if it does not exist.
     :param fname_in: input file to be listed in the csv file (e.g., segmentation file which produced the results).
     :param append: Bool: Append results at the end of file (if exists) instead of overwrite.
@@ -169,7 +169,7 @@ def save_as_csv(agg_metrics, fname_out, fname_in=None, append=False):
         with open(fname_out, 'w') as csvfile:
             # spamwriter = csv.writer(csvfile, delimiter=',')
             header = ['Filename', 'Slice (I->S)', 'Vertebral level']
-            funcs = agg_metrics[agg_metrics.keys()[0]].keys()
+            funcs = agg_metric[agg_metric.keys()[0]].keys()
             funcs.remove('VertLevel')  # Remove VertLevel because already added above
             for func in funcs:
                 header.append(func)  # TODO: write label instead of field name
@@ -180,16 +180,16 @@ def save_as_csv(agg_metrics, fname_out, fname_in=None, append=False):
     # populate data
     with open(fname_out, 'a') as csvfile:
         spamwriter = csv.writer(csvfile, delimiter=',')
-        for slicegroup in sorted(agg_metrics.keys()):
-            line = []
+        for slicegroup in sorted(agg_metric.keys()):
+            line = list()
             line.append(fname_in)  # file name associated with the results
             line.append(parse_num_list_inv(slicegroup))  # list all slices in slicegroup
-            line.append(parse_num_list_inv(agg_metrics[slicegroup]['VertLevel']))  # list vertebral levels
-            funcs = agg_metrics[slicegroup].keys()
+            line.append(parse_num_list_inv(agg_metric[slicegroup]['VertLevel']))  # list vertebral levels
+            funcs = agg_metric[slicegroup].keys()
             funcs.remove('VertLevel')  # Remove VertLevel because already added above
             for func in funcs:
                 try:
-                    line.append(str(agg_metrics[slicegroup][func]))
+                    line.append(str(agg_metric[slicegroup][func]))
                 except KeyError:
                     line.append('')
             line.append(sct.__version__)
