@@ -31,6 +31,8 @@ from spinalcordtoolbox.extract_metric import extract_metric, check_labels
 from spinalcordtoolbox.metadata import read_label_file
 from spinalcordtoolbox.utils import parse_num_list
 from spinalcordtoolbox.template import get_slices_from_vertebral_levels, get_vertebral_level_from_slice
+from spinalcordtoolbox.aggregate_slicewise import aggregate_per_slice_or_level, func_bin, func_weighted_average, \
+    save_as_csv, Metric
 
 import sct_utils as sct
 from spinalcordtoolbox.image import Image
@@ -348,7 +350,7 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
     sct.printv('\nLoad metric image...', verbose)
     input_im = Image(fname_data).change_orientation("RPI")
 
-    data = input_im.data
+    data = Metric(data=input_im.data, label='')
     # Load labels
     labels = np.empty([nb_labels], dtype=object)
     for i_label in range(nb_labels):
@@ -377,7 +379,7 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
     #     labels[i_label][np.isposinf(data)] = 0  # ...data voxel is +inf
 
     # Get dimensions of data and labels
-    nx, ny, nz = data.shape
+    nx, ny, nz = data.data.shape
     nx_atlas, ny_atlas, nz_atlas = labels[0].shape
 
     # Check dimensions consistency between atlas and data
@@ -392,12 +394,14 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
     # # If specified, remove the label to fix its value
     # if label_to_fix:
     #     data, labels, indiv_labels_ids, indiv_labels_names, clusters_all_labels, combined_labels_groups_all_IDs, labels_id_user, label_to_fix_name, label_to_fix_fract_vol = fix_label_value(label_to_fix, data, labels, indiv_labels_ids, indiv_labels_names, clusters_all_labels, combined_labels_groups_all_IDs, labels_id_user)
-    from spinalcordtoolbox.aggregate_slicewise import aggregate_per_slice_or_level, func_bin, func_weighted_average, save_as_csv
+
     for id_label in labels_id_user:
         # TODO: build mask based on id_label
-        mask = labels[id_label]
-        agg_metrics = aggregate_per_slice_or_level(data, mask=mask, slices=None, levels=None, perslice=True, perlevel=False, vert_level=None,
-                                     group_funcs=(('wa', func_weighted_average),))
+        # TODO: build labels as a struc with data and label, incl. indiv and combined labels
+        mask = Metric(data=labels[id_label], label='TODO')
+        group_funcs = (('WA', func_weighted_average),)
+        agg_metrics = aggregate_per_slice_or_level(data, mask=mask, slices=None, levels=None, perslice=True,
+                                                   perlevel=False, vert_level=None, group_funcs=group_funcs)
         append = False  # TODO
         save_as_csv(agg_metrics, fname_output, fname_in=fname_data, append=append)
 
@@ -515,36 +519,36 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
     #     data_metric_map = generate_metric_value_map(fname_output_metric_map, input_im, labels, indiv_labels_value, slices_list, label_to_fix, label_to_fix_fract_vol)
 
 
-def generate_metric_value_map(fname_output_metric_map, input_im, labels, indiv_labels_value, slices_list, label_to_fix, label_to_fix_fract_vol):
-    """Produces a map where each label is assigned the metric value estimated previously based on their fractional volumes."""
-
-    sct.printv('\nGenerate metric value map based on each label fractional volumes: ' + fname_output_metric_map + '...')
-
-    # initialize metric value map with zeros
-    metric_map = input_im
-    metric_map.data = np.zeros(input_im.data.shape)
-
-    # assign to each label the corresponding estimated metric value
-    for i_label in range(len(labels)):
-        metric_map.data[:, :, slices_list] = metric_map.data[:, :, slices_list] + labels[i_label] * indiv_labels_value[i_label]
-
-    if label_to_fix:
-        metric_map.data[:, :, slices_list] = metric_map.data[:, :, slices_list] + label_to_fix_fract_vol * float(label_to_fix[1])
-
-    # save metric value map
-    metric_map.save(fname_output_metric_map)
-
-    sct.printv('\tDone.')
-    return metric_map
-
-
-def remove_slices(data_to_crop, slices_of_interest):
-    """Crop data to only keep the slices asked by user."""
-    # Parse numbers based on delimiter: ' or :
-    slices_list = parse_num_list(slices_of_interest)
-    # Remove slices that are not wanted (+1 is to include the last selected slice as Python "includes -1"
-    data_cropped = data_to_crop[..., slices_list]
-    return data_cropped, slices_list
+# def generate_metric_value_map(fname_output_metric_map, input_im, labels, indiv_labels_value, slices_list, label_to_fix, label_to_fix_fract_vol):
+#     """Produces a map where each label is assigned the metric value estimated previously based on their fractional volumes."""
+#
+#     sct.printv('\nGenerate metric value map based on each label fractional volumes: ' + fname_output_metric_map + '...')
+#
+#     # initialize metric value map with zeros
+#     metric_map = input_im
+#     metric_map.data = np.zeros(input_im.data.shape)
+#
+#     # assign to each label the corresponding estimated metric value
+#     for i_label in range(len(labels)):
+#         metric_map.data[:, :, slices_list] = metric_map.data[:, :, slices_list] + labels[i_label] * indiv_labels_value[i_label]
+#
+#     if label_to_fix:
+#         metric_map.data[:, :, slices_list] = metric_map.data[:, :, slices_list] + label_to_fix_fract_vol * float(label_to_fix[1])
+#
+#     # save metric value map
+#     metric_map.save(fname_output_metric_map)
+#
+#     sct.printv('\tDone.')
+#     return metric_map
+#
+#
+# def remove_slices(data_to_crop, slices_of_interest):
+#     """Crop data to only keep the slices asked by user."""
+#     # Parse numbers based on delimiter: ' or :
+#     slices_list = parse_num_list(slices_of_interest)
+#     # Remove slices that are not wanted (+1 is to include the last selected slice as Python "includes -1"
+#     data_cropped = data_to_crop[..., slices_list]
+#     return data_cropped, slices_list
 
 
 # def save_metrics(labels_id_user, indiv_labels_ids, combined_labels_ids, indiv_labels_names, combined_labels_names,
@@ -819,7 +823,7 @@ if __name__ == "__main__":
     fname_data = sct.get_absolute_path(arguments['-i'])
     path_label = arguments['-f']
     method = arguments['-method']
-    fname_output = sct.get_absolute_path(arguments['-o'])
+    fname_output = arguments['-o']
     if '-l' in arguments:
         labels_user = arguments['-l']
     else:

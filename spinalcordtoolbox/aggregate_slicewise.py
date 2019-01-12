@@ -15,14 +15,28 @@ from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.utils import parse_num_list_inv
 
 
+class Metric:
+    """
+    Class to include in dictionaries to associate data and label
+    """
+    def __init__(self, data=[], label=''):
+        """
+        :param value: ndarray
+        :param label: str
+        """
+        self.data = data
+        self.label = label
+
+
 # TODO: don't make metrics a dict anymore-- it complicates things.
 # TODO: generalize this function to accept n-dim np.array instead of list in Metric().value
 # TODO: maybe no need to bring Metric() class here. Just np.array, then labeling is done in parent function.
 def aggregate_per_slice_or_level(metrics, mask=None, slices=None, levels=None, perslice=True, perlevel=False, vert_level=None,
-                                 group_funcs=(('mean', np.mean),)):
+                                 group_funcs=(('MEAN', np.mean),)):
     """
     It is assumed that each element of a metric's vector correspond to a slice. E.g., index #2 corresponds to slice #2.
-    :param dict metrics: Dict of Class process_seg.Metric() to aggregate.
+    :param metrics: Class Metric(): data to aggregate.
+    :param mask: Class Metric(): mask to use for aggregating the data. Optional.
     :param slices: List[int]: Slices to aggregate metrics from. If empty, select all slices.
     :param levels: List[int]: Vertebral levels to aggregate metrics from. It has priority over "slices".
     :param Bool perslice: Aggregate per slice (True) or across slices (False)
@@ -33,7 +47,7 @@ def aggregate_per_slice_or_level(metrics, mask=None, slices=None, levels=None, p
     """
     # if slices is empty, select all available slices from the metrics
     if not slices:
-        slices = range(metrics.shape[2])
+        slices = range(metrics.data.shape[2])
         # slices = metrics[metrics.keys()[0]].z
 
     # aggregation based on levels
@@ -91,16 +105,18 @@ def aggregate_per_slice_or_level(metrics, mask=None, slices=None, levels=None, p
         try:
             # Loop across functions (typically: mean, std)
             for (name, func) in group_funcs:
-                data_slicegroup = metrics[:, :, slicegroup]
+                data_slicegroup = metrics.data[:, :, slicegroup]
                 if mask is not None:
-                    mask_slicegroup = mask[:, :, slicegroup]
+                    mask_slicegroup = mask.data[:, :, slicegroup]
+                    agg_metrics[slicegroup]['Mask'] = mask.label
                 # check if nan
                 result = func(data_slicegroup, mask_slicegroup)
                 if np.isnan(result):
                     # TODO: fix below
                     agg_metrics[slicegroup]['error'] = 'Contains nan'
                 else:
-                    agg_metrics[slicegroup][name] = result
+                    # here we create a field with name: FUNC(METRIC_NAME). Example: MEAN(CSA)
+                    agg_metrics[slicegroup]['{}({})'.format(name, metrics.label)] = result
         except Exception as e:
             sct.log.warning(e)
             # sct.log.warning('TypeError for metric {}'.format(metric))
@@ -147,7 +163,7 @@ def save_as_csv(agg_metrics, fname_out, fname_in=None, append=False):
     :return:
     """
     # TODO: if append=True but file does not exist yet, raise warning and set append=False
-    # TODO: build header based on existing func (e.g., will currently crash if no STD).
+    # TODO: build header and data based on existing keys, and find a way to sort them
     # write header (only if append=False)
     if not append:
         with open(fname_out, 'w') as csvfile:

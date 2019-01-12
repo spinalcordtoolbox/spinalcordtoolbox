@@ -23,20 +23,6 @@ OUTPUT_CSA_VOLUME = 0
 OUTPUT_ANGLE_VOLUME = 0
 
 
-class Metric:
-    """
-    Class to include in dictionaries to associate metric value and label
-    """
-    def __init__(self, z=[], value=[], label=''):
-        """
-        :param value:
-        :param label:
-        """
-        self.z = z
-        self.value = value
-        self.label = label
-
-
 def compute_csa(segmentation, algo_fitting='hanning', type_window='hanning', window_length=80, angle_correction=True,
                 use_phys_coord=True, remove_temp_files=1, verbose=1):
     """
