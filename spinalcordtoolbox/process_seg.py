@@ -163,7 +163,7 @@ def compute_shape(segmentation, algo_fitting='hanning', window_length=50, remove
     for key, value in shape_properties.items():
         # Making sure all entries added to metrics have results
         if not value == []:
-            metrics[key] = Metric(value=np.array(value), label=key)
+            metrics[key] = Metric(data=np.array(value), label=key)
 
     return metrics
 

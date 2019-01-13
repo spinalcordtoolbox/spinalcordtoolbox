@@ -135,15 +135,22 @@ def compute_properties_along_centerline(im_seg, smooth_factor=5.0, interpolation
 
     # Initiating some variables
     nx, ny, nz, nt, px, py, pz, pt = im_seg.dim
+
+    # Extract min and max index in Z direction
+    data_seg = im_seg.data
+    X, Y, Z = (data_seg > 0).nonzero()
+    min_z_index, max_z_index = min(Z), max(Z)
+
     # Define the resampling resolution. Here, we take the minimum of half the pixel size along X or Y in order to have
     # sufficient precision upon resampling. Since we want isotropic resamping, we take the min between the two dims.
     resolution = min(float(px) / 2, float(py) / 2)
     # resolution = 0.5
-    properties = {key: [] for key in property_list}
-    properties['incremental_length'] = []
-    properties['distance_from_C1'] = []
-    properties['vertebral_level'] = []
-    properties['z_slice'] = []
+    # Initialize 1d array with nan. Each element corresponds to a slice.
+    properties = {key: np.full_like(np.empty(nz), np.nan, dtype=np.double) for key in property_list}
+    # properties['incremental_length'] = np.full_like(np.empty(nz), np.nan, dtype=np.double)
+    # properties['distance_from_C1'] = np.full_like(np.empty(nz), np.nan, dtype=np.double)
+    # properties['vertebral_level'] = np.full_like(np.empty(nz), np.nan, dtype=np.double)
+    # properties['z_slice'] = []
 
     # compute the spinal cord centerline based on the spinal cord segmentation
     number_of_points = nz  # 5 * nz
@@ -155,18 +162,19 @@ def compute_properties_along_centerline(im_seg, smooth_factor=5.0, interpolation
                             x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
 
     sct.printv('Computing spinal cord shape along the spinal cord...')
-    with tqdm.tqdm(total=centerline.number_of_points) as pbar:
+    with tqdm.tqdm(total=nz) as pbar:
 
         # Extracting patches perpendicular to the spinal cord and computing spinal cord shape
-        for index in range(centerline.number_of_points):
+        i_centerline = 0  # index of the centerline() object
+        for iz in range(min_z_index, max_z_index + 1):
+        # for index in range(centerline.number_of_points):  Julien
             # value_out = -5.0
             value_out = 0.0
-            # TODO: instead of iterating along the cord centerline, it would be better to simply iterate along Z, and
-            # correct for angulation using the cosine. The current approach has 2 issues:
+            # TODO: correct for angulation using the cosine. The current approach has 2 issues:
             # - the centerline is not homogeneously sampled along z (which is the reason it is oversampled)
             # - computationally expensive
             # - requires resampling to higher resolution --> to check: maybe required with cosine approach
-            current_patch = centerline.extract_perpendicular_square(im_seg, index, size=size_patch,
+            current_patch = centerline.extract_perpendicular_square(im_seg, i_centerline, size=size_patch,
                                                                     resolution=resolution,
                                                                     interpolation_mode=interpolation_mode,
                                                                     border='constant', cval=value_out)
@@ -188,37 +196,37 @@ def compute_properties_along_centerline(im_seg, smooth_factor=5.0, interpolation
             sc_properties = assign_AP_and_RL_diameter(sc_properties)
             # loop across properties and assign values for function output
             if sc_properties is not None:
-                properties['incremental_length'].append(centerline.incremental_length[index])
-                properties['z_slice'].append(im_seg.transfo_phys2pix([centerline.points[index]])[0][2])
+                # properties['incremental_length'][iz] = centerline.incremental_length[i_centerline]
                 for property_name in property_list:
-                    properties[property_name].append(sc_properties[property_name])
+                    properties[property_name][iz] = sc_properties[property_name]
             else:
-                c = im_seg.transfo_phys2pix([centerline.points[index]])[0]
+                c = im_seg.transfo_phys2pix([centerline.points[i_centerline]])[0]
                 sct.printv('WARNING: no properties for slice', c[2])
 
+            i_centerline += 1
             pbar.update(1)
 
-    # smooth the spinal cord shape with a gaussian kernel if required
-    # TODO: remove this smoothing
-    if smooth_factor != 0.0:  # smooth_factor is in mm
-        import scipy
-        window = scipy.signal.hann(smooth_factor / np.mean(centerline.progressive_length))
-        for property_name in property_list:
-            properties[property_name] = scipy.signal.convolve(properties[property_name], window, mode='same') / np.sum(window)
+    # # smooth the spinal cord shape with a gaussian kernel if required
+    # # TODO: remove this smoothing
+    # if smooth_factor != 0.0:  # smooth_factor is in mm
+    #     import scipy
+    #     window = scipy.signal.hann(smooth_factor / np.mean(centerline.progressive_length))
+    #     for property_name in property_list:
+    #         properties[property_name] = scipy.signal.convolve(properties[property_name], window, mode='same') / np.sum(window)
 
     # extract all values for shape properties to be averaged across the oversampled centerline in order to match the
     # input slice #
-    sorting_values = []
-    for label in properties['z_slice']:
-        if label not in sorting_values:
-            sorting_values.append(label)
-    # average spinal cord shape properties
-    averaged_shape = dict()
-    for property_name in property_list:
-        averaged_shape[property_name] = []
-        for label in sorting_values:
-            averaged_shape[property_name].append(np.mean(
-                [item for i, item in enumerate(properties[property_name]) if
-                 properties['z_slice'][i] == label]))
+    # sorting_values = []
+    # for label in properties['z_slice']:
+    #     if label not in sorting_values:
+    #         sorting_values.append(label)
+    # prepare output
+    # shape_output = dict()
+    # for property_name in property_list:
+    #     shape_output[property_name] = []
+    #     for label in sorting_values:
+    #         averaged_shape[property_name].append(np.mean(
+    #             [item for i, item in enumerate(properties[property_name]) if
+    #              properties['z_slice'][i] == label]))
 
-    return averaged_shape
+    return properties
