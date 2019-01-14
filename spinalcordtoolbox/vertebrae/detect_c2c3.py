@@ -44,6 +44,7 @@ def detect_c2c3(nii_im, nii_seg, contrast, verbose=1):
     path_model = os.path.join(path_sct, 'data', 'c2c3_disc_models', '{}_model'.format(contrast))
 
     orientation_init = nii_im.orientation
+    z_seg_max = np.max(np.where(nii_seg.change_orientation('PIR').data)[1])
 
     # Flatten sagittal
     nii_im = flatten_sagittal(nii_im, nii_seg, centerline_fitting='hanning', verbose=verbose)
@@ -71,12 +72,11 @@ def detect_c2c3(nii_im, nii_seg, contrast, verbose=1):
                     (path_model, 'data_midSlice', 'data_midSlice_pred')
     sct.run(cmd_detection, verbose=0, raise_exception=False)
 
-    # sct.run(cmd_detection, verbose=0)
     pred = nib.load('data_midSlice_pred_svm.hdr').get_data()
 
     # Create mask along centerline
     midSlice_mask = np.zeros(midSlice_seg.shape)
-    mask_halfSize = 25
+    mask_halfSize = int(np.rint(25.0 / nii_midSlice.dim[4]))
     for z in range(midSlice_mask.shape[1]):
         row = midSlice_seg[:, z]
         if np.any(row):
@@ -85,7 +85,8 @@ def detect_c2c3(nii_im, nii_seg, contrast, verbose=1):
 
     # mask prediction
     pred[midSlice_mask == 0] = 0
-    z_seg_max = np.max(np.where(midSlice_seg)[1])
+    dist_medulla = 30.0 if contrast == 't1' else 40.0  # Observation: segmentation ends higher on t2 images than t1
+    z_seg_max -= int(np.rint(dist_medulla / nii_midSlice.dim[5])) # TODO: take into account the curvature
     pred[:, z_seg_max:] = 0  # Mask above SC segmentation
 
     # assign label to voxel
@@ -93,9 +94,9 @@ def detect_c2c3(nii_im, nii_seg, contrast, verbose=1):
     if np.any(pred > 0):
         sct.printv('C2-C3 detected...', verbose)
 
-        pred_bin = (pred > 1).astype(np.int_) # normalised margin
+        pred_bin = (pred > 0).astype(np.int_)
         labeled_pred, nb_regions = label_regions(pred_bin, return_num=True)
-        if nb_regions > 1:  # if there is several detected clusters of voxels
+        if nb_regions > 1:  # if there are several clusters of voxels detected
             region_idx_top, region_z_top = 0, 0
             for region_idx in range(1, nb_regions+1):
                 pred_idx = (labeled_pred == region_idx).astype(np.int_)
