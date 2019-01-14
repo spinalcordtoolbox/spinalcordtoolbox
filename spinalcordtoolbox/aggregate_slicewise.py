@@ -7,6 +7,7 @@ from __future__ import absolute_import
 
 import numpy as np
 import operator
+import functools
 import csv
 
 import sct_utils as sct
@@ -107,7 +108,7 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=None, levels=None, pe
             for (name, func) in group_funcs:
                 data_slicegroup = metric.data[:, :, slicegroup]
                 if mask is not None:
-                    mask_slicegroup = mask.data[:, :, slicegroup]
+                    mask_slicegroup = mask.data[:, :, slicegroup, :]
                     agg_metric[slicegroup]['Mask'] = mask.label
                 # check if nan
                 result = func(data_slicegroup, mask_slicegroup)
@@ -125,21 +126,49 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=None, levels=None, pe
     return agg_metric
 
 
-def func_bin(data, mask):
+# def func_mean(data):
+
+def func_bin(data, mask=None):
     # Binarize mask
     # TODO
     # run weighted average
-    return func_weighted_average(data, mask_bin)
+    return func_wa(data, mask_bin)
 
 
-def func_weighted_average(data, mask):
+def func_wa(data, mask=None):
     """
     Compute weighted average
-    :param data: ndarray: input data
-    :param mask: ndarray: input mask to weight average
+    :param data: 3d array: input data
+    :param mask: 4d array: input mask to weight average
     :return: weighted_average
     """
-    return np.sum(np.multiply(data, mask))
+    # TODO: fix computation of WA (needs normalization with voxel fraction)
+    return np.sum(np.multiply(data, mask[:, :, :, 0]))
+
+
+def func_ml(data, mask):
+    """
+    Compute maximum likelihood (ML) for the first label of mask.
+    :param data: ndarray: input data
+    :param mask: 4d-array: input mask. Note: this mask should include ALL labels to satisfy the necessary condition for
+    ML-based estimation, i.e., at each voxel, the sum of all labels (across the 4th dimension) equals the probability
+    to be inside the tissue. For example, for a pixel within the spinal cord, the sum of all labels should be 1.
+    :return: float: beta corresponding to the first label
+    """
+    # reshape as 1d vector (for data) and 2d vector (for mask)
+    n_vox = functools.reduce(operator.mul, data.shape, 1)
+    data1d = np.reshape(data, n_vox)
+    mask2d = np.reshape(mask, (n_vox, mask.shape[3]))
+    # ML estimation:
+    #   y: measurements vector (to which weights are applied)
+    #   x: linear relation between the measurements y
+    #   W: weights to apply to each voxel
+    #   beta = (Xt . X)-1 . Xt . y     The true metric value to be estimated
+    W = np.diag(np.ones(n_vox))
+    y = np.dot(W, data1d)  # [nb_vox x 1]
+    x = np.dot(W, mask2d)  # [nb_vox x nb_labels]
+    beta = np.dot(np.linalg.pinv(np.dot(x.T, x)), np.dot(x.T, y))
+    return beta[0]
 
 
 def make_a_string(item):
@@ -162,6 +191,7 @@ def save_as_csv(agg_metric, fname_out, fname_in=None, append=False):
     :param append: Bool: Append results at the end of file (if exists) instead of overwrite.
     :return:
     """
+    # TODO: add timestamp + move file at the end
     # TODO: if append=True but file does not exist yet, raise warning and set append=False
     # TODO: build header and data based on existing keys, and find a way to sort them
     # write header (only if append=False)

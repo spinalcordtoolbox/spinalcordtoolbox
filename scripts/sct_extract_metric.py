@@ -31,8 +31,8 @@ from spinalcordtoolbox.extract_metric import extract_metric, check_labels
 from spinalcordtoolbox.metadata import read_label_file
 from spinalcordtoolbox.utils import parse_num_list
 from spinalcordtoolbox.template import get_slices_from_vertebral_levels, get_vertebral_level_from_slice
-from spinalcordtoolbox.aggregate_slicewise import aggregate_per_slice_or_level, func_bin, func_weighted_average, \
-    save_as_csv, Metric
+from spinalcordtoolbox.aggregate_slicewise import aggregate_per_slice_or_level, func_bin, func_wa, \
+    save_as_csv, Metric, func_ml
 
 import sct_utils as sct
 from spinalcordtoolbox.image import Image
@@ -55,6 +55,13 @@ class Param:
         self.file_info_label = 'info_label.txt'
         # self.adv_param = ['10',  # STD of the metric value across labels, in percentage of the mean (mean is estimated using cluster-based ML)
         #                   '10']  # STD of the assumed gaussian-distributed noise
+
+
+class LabelStruc:
+    def __init__(self, id, name, filename=None):
+        self.id = id
+        self.name = name
+        self.filename = filename
 
 
 def get_parser():
@@ -224,6 +231,17 @@ To compute average MTR in a region defined by a single label file (could be bina
 
     return parser
 
+def diff_between_list_or_int(l1, l2):
+    """
+    Return list l1 minus the elements in l2
+    :param l1: a list of int
+    :param l2: could be a list or an int
+    :return:
+    """
+    if isinstance(l2, int):
+        l2 = [l2]
+    return [x for x in l1 if x not in l2]
+
 
 def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, fname_output, labels_user, overwrite,
          fname_normalizing_label, normalization_method, label_to_fix, adv_param_user, fname_output_metric_map,
@@ -258,82 +276,11 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
 
     # Initialization
     verbose = param_default.verbose
-    # adv_param = param_default.adv_param
-    # normalizing_label = []
-    # fixed_label = []
-    # label_to_fix_fract_vol = None
-    # im_weight = None
 
-    # check if path_label is a file instead of a folder
+    # check if path_label is a file (e.g., single binary mask) instead of a folder (e.g., SCT atlas structure which
+    # contains info_label.txt file)
     if os.path.isfile(path_label):
-        single_label = 1
-    elif os.path.isdir(path_label):
-        single_label = 0
-    else:
-        sct.printv('\nERROR: ' + path_label + ' does not exist.', 1, 'error')
-
-    # # adjust file names and parameters for old MNI-Poly-AMU template
-    # if not single_label:
-    #     if not len(glob.glob(os.path.join(path_label, 'WMtract*.*'))) == 0:
-    #         # MNI-Poly-AMU
-    #         suffix_vertebral_labeling = '*_level.nii.gz'
-    #     else:
-    #         # PAM50 and later
-    #         suffix_vertebral_labeling = '*_levels.nii.gz'
-
-    # # Find path to the vertebral labeling file if vertebral levels were specified by the user
-    # if vertebral_levels:
-    #     # check if user selected both specific slices and specific vertebral levels
-    #     if slices_of_interest:
-    #         sct.printv(parser.usage.generate(error='ERROR: You cannot select BOTH vertebral levels AND slice numbers.'))
-    #     # check if user specified folder or single file as label
-    #     if single_label:
-    #         # check if user selected vert but failed to provide a vertebral labeling file
-    #         if not fname_vertebral_labeling:
-    #             sct.printv(
-    #                 '\nYou should indicate a vertebral labeling file with flag -vert.',
-    #                 1, 'error')
-    #     else:
-    #         # if folder is specified, then the vertebral labeling file should be in there. Searching for it...
-    #         fname_vertebral_labeling_list = sct.find_file_within_folder(suffix_vertebral_labeling, os.path.dirname(path_label))
-    #         if len(fname_vertebral_labeling_list) > 1:
-    #             sct.printv(parser.usage.generate(error='ERROR: More than one file named "' + suffix_vertebral_labeling + '" were found in ' + path_label + '. Exit program.'))
-    #         elif len(fname_vertebral_labeling_list) == 0:
-    #             sct.printv(parser.usage.generate(error='ERROR: No file named "' + suffix_vertebral_labeling + '" were found in ' + path_label + '. Exit program.'))
-    #         else:
-    #             fname_vertebral_labeling = os.path.abspath(fname_vertebral_labeling_list[0])
-    #
-    # # Check input parameters
-    # check_method(method, fname_normalizing_label, normalization_method)
-
-    # # parse argument for param
-    # if not adv_param_user == '':
-    #     adv_param = adv_param_user.replace(' ', '').split(',')  # remove spaces and parse with comma
-    #     del adv_param_user  # clean variable
-    #     # TODO: check integrity of input
-    #
-    # # sct.printv(parameters)
-    # sct.printv('\nChecked parameters:')
-    # sct.printv('  data ...................... ' + fname_data)
-    # sct.printv('  path to label ............. ' + path_label)
-    # sct.printv('  label ..................... ' + labels_user)
-    # sct.printv('  method .................... ' + method)
-    # sct.printv('  slices of interest ........ ' + slices_of_interest)
-    # sct.printv('  vertebral levels .......... ' + vertebral_levels)
-    # sct.printv('  vertebral labeling file.... ' + fname_vertebral_labeling)
-    # sct.printv('  advanced parameters ....... ' + str(adv_param) + '\n')
-
-    # parse labels according to the file info_label.txt
-    # note: the "combined_labels_*" is a list of single labels that are defined in the section defined by the keyword
-    # "# Keyword=CombinedLabels" in info_label.txt.
-    # TODO: redirect to appropriate Sphinx documentation
-    if not single_label:
-        indiv_labels_ids, indiv_labels_names, indiv_labels_files, \
-        combined_labels_ids, combined_labels_names, combined_labels_id_groups, ml_clusters \
-            = read_label_file(path_label, param_default.file_info_label)
-        # check syntax of labels asked by user
-        labels_id_user = check_labels(indiv_labels_ids + combined_labels_ids, parse_num_list(labels_user))
-    else:
+        # Label is a single file
         indiv_labels_ids = [0]
         labels_id_user = [0]
         indiv_labels_names = [path_label]
@@ -344,6 +291,41 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
         ml_clusters = []
         # set path_label to empty string, because indiv_labels_files will replace it from now on
         path_label = ''
+    elif os.path.isdir(path_label):
+        # Labels is an SCT atlas folder structure
+        # Parse labels according to the file info_label.txt
+        # Note: the "combined_labels_*" is a list of single labels that are defined in the section defined by the keyword
+        # "# Keyword=CombinedLabels" in info_label.txt.
+        # TODO: redirect to appropriate Sphinx documentation
+        # TODO: output Class instead of multiple variables.
+        # TODO: output dict in form: labels_struc.
+        #   Example 1:
+        #     label_struc[2].id = (2)
+        #     label_struc[2].name = "left fasciculus cuneatus"
+        #     label_struc[2].filename = "PAM50_atlas_02.nii.gz"
+        #   Example 2:
+        #     label_struc[51].id = (1, 2, 3, ..., 29)
+        #     label_struc[51].name = "White Matter"
+        #     label_struc[51].filename = ""  # no name because it is combined
+        indiv_labels_ids, indiv_labels_names, indiv_labels_files, \
+        combined_labels_ids, combined_labels_names, combined_labels_id_groups, ml_clusters \
+            = read_label_file(path_label, param_default.file_info_label)
+    else:
+        sct.printv('\nERROR: ' + path_label + ' does not exist.', 1, 'error')
+
+    label_struc = {}
+    # fill IDs for indiv labels
+    for i_label in range(len(indiv_labels_ids)):
+        label_struc[indiv_labels_ids[i_label]] = LabelStruc(id=indiv_labels_ids[i_label],
+                                                            name=indiv_labels_names[i_label],
+                                                            filename=indiv_labels_files[i_label])
+    # fill IDs for combined labels
+    for i_label in range(len(combined_labels_ids)):
+        label_struc[combined_labels_ids[i_label]] = LabelStruc(id=combined_labels_id_groups[i_label],
+                                                               name=combined_labels_names[i_label])
+
+    # check syntax of labels asked by user
+    labels_id_user = check_labels(indiv_labels_ids + combined_labels_ids, parse_num_list(labels_user))
     nb_labels = len(indiv_labels_files)
 
     # Load data and systematically reorient to RPI because we need the 3rd dimension to be z
@@ -352,35 +334,19 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
 
     data = Metric(data=input_im.data, label='')
     # Load labels
-    labels = np.empty([nb_labels], dtype=object)
+    labels_tmp = np.empty([nb_labels], dtype=object)
     for i_label in range(nb_labels):
         im_label = Image(os.path.join(path_label, indiv_labels_files[i_label])).change_orientation("RPI")
-        labels[i_label] = im_label.data
+        labels_tmp[i_label] = np.expand_dims(im_label.data, 3)  # TODO: generalize to 2D input label
+    labels = np.concatenate(labels_tmp[:], 3)  # labels: (x,y,z,label)
     # Load vertebral levels
     if vertebral_levels:
         im_vertebral_labeling = Image(fname_vertebral_labeling).change_orientation("RPI")
     # # if the "normalization" option is wanted,
-    # if fname_normalizing_label:
-    #     normalizing_label = np.empty([1], dtype=object)  # choose this kind of structure so as to keep easily the compatibility with the rest of the code (dimensions: (1, x, y, z))
-    #     im_normalizing_label = Image(fname_normalizing_label).change_orientation("RPI")
-    #     normalizing_label[0] = im_normalizing_label.data
-    # # if flag "-mask-weighted" is specified
-    # if fname_mask_weight:
-    #     im_weight = Image(fname_mask_weight).change_orientation("RPI")
-
-    # # Change metric data type into floats for future manipulations (normalization)
-    # data = np.float64(data)
-    # # loop across labels and set voxel to zero if...
-    # for i_label in range(nb_labels):
-    #     labels[i_label][np.isneginf(data)] = 0  # ...data voxel is -inf
-    #     labels[i_label][np.isnan(data)] = 0  # ...data voxel is nan
-    #     if discard_negative_values:
-    #         labels[i_label][data < 0.0] = 0  # ...data voxel is negative
-    #     labels[i_label][np.isposinf(data)] = 0  # ...data voxel is +inf
 
     # Get dimensions of data and labels
     nx, ny, nz = data.data.shape
-    nx_atlas, ny_atlas, nz_atlas = labels[0].shape
+    nx_atlas, ny_atlas, nz_atlas, nt_atlas = labels.shape
 
     # Check dimensions consistency between atlas and data
     if (nx, ny, nz) != (nx_atlas, ny_atlas, nz_atlas):
@@ -388,8 +354,8 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
         # sys.exit(2)
 
     # parse clusters used for a priori (map method)
-    clusters_all_labels = ml_clusters
-    combined_labels_groups_all_IDs = combined_labels_id_groups
+    # clusters_all_labels = ml_clusters
+    # combined_labels_groups_all_IDs = combined_labels_id_groups
 
     # # If specified, remove the label to fix its value
     # if label_to_fix:
@@ -398,8 +364,28 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
     for id_label in labels_id_user:
         # TODO: build mask based on id_label
         # TODO: build labels as a struc with data and label, incl. indiv and combined labels
-        mask = Metric(data=labels[id_label], label='TODO')
-        group_funcs = (('WA', func_weighted_average),)
+
+        # If label_struc[id_label].id is a list, it means that it comes from a combined labels
+        if isinstance(label_struc[id_label].id, list):
+            # Sum across labels
+            labels_sum = np.sum(labels[:, :, :, label_struc[id_label].id], axis=3)  # (nx, ny, nz, 1)
+        else:
+            # Simply extract
+            labels_sum = labels[:, :, :, label_struc[id_label].id]
+        # expand dim: labels_sum=(nx, ny, nz, 1)
+        labels_sum = np.expand_dims(labels_sum, axis=3)
+
+        # Maximum Likelihood
+        if method == 'ml':
+            id_label_compl = diff_between_list_or_int(indiv_labels_ids, label_struc[id_label].id)
+            labels_sum = np.concatenate([labels_sum, labels[:, :, :, id_label_compl]], axis=3)
+            mask = Metric(data=labels_sum, label='TODO')
+            group_funcs = (('ML', func_ml),)
+        # Weighted average
+        elif method == 'wa':
+            mask = Metric(data=labels_sum, label='TODO')
+            group_funcs = (('WA', func_wa),)
+
         agg_metrics = aggregate_per_slice_or_level(data, mask=mask, slices=None, levels=None, perslice=True,
                                                    perlevel=False, vert_level=None, group_funcs=group_funcs)
         append = False  # TODO
@@ -812,6 +798,8 @@ def check_method(method, fname_normalizing_label, normalization_method):
 
 
 if __name__ == "__main__":
+
+    # TODO: add flag to combine labels (issue #1807)
     sct.init_sct()
 
     param_default = Param()
