@@ -12,7 +12,7 @@ from msct_parser import Parser
 from spinalcordtoolbox.centerline import optic
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
-from sct_process_segmentation import extract_centerline
+from spinalcordtoolbox.process_seg import extract_centerline
 
 
 def _call_viewer_centerline(fname_in, interslice_gap=20.0):

@@ -618,6 +618,8 @@ class Centerline:
         return coordinate_result
 
     def extract_perpendicular_square(self, image, index, size=20, resolution=0.5, interpolation_mode=0, border='constant', cval=0.0):
+        # TODO: use native resolution instead of forcing to 0.5. In case native is much higher res, we loose precision!!!
+        # TODO: replace with existing function (if exists). There is a lot of arbitrary params in there
         x_grid, y_grid, z_grid = np.mgrid[-size:size:resolution, -size:size:resolution, 0:1]
         coordinates_grid = np.array(list(zip(x_grid.ravel(), y_grid.ravel(), z_grid.ravel())))
         coordinates_phys = self.get_inverse_plans_coordinates(coordinates_grid, np.array([index] * len(coordinates_grid)))

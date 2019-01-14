@@ -109,8 +109,8 @@ sct_warp_template -d t2s.nii.gz -w warp_template2t2s.nii.gz
 # Subtract GM segmentation from cord segmentation to obtain WM segmentation
 sct_maths -i t2s_seg.nii.gz -sub t2s_gmseg.nii.gz -o t2s_wmseg.nii.gz
 # Compute cross-sectional area (CSA) of the gray and white matter between C2 and C5
-sct_process_segmentation -i t2s_wmseg.nii.gz -p csa -vert 2:5 -ofolder csa_wm
-sct_process_segmentation -i t2s_gmseg.nii.gz -p csa -vert 2:5 -ofolder csa_gm
+sct_process_segmentation -i t2s_wmseg.nii.gz -p csa -vert 2:5 -o csa_wm.csv
+sct_process_segmentation -i t2s_gmseg.nii.gz -p csa -vert 2:5 -o csa_gm.csv
 # OPTIONAL: Update template registration using information from gray matter segmentation
 # # <<<
 # # Register WM/GM template to WM/GM seg
@@ -247,10 +247,10 @@ cd ..
 # ===========================================================================================
 echo "Ended at: $(date +%x_%r)"
 echo
-echo "t2/CSA:         " `grep -v '^#' t2/csa_mean.txt | grep -v '^$'`
+echo "t2/CSA:         " `awk -F"," ' {print $5}' t2/csa.csv | tail -1`
 echo "mt/MTR(WM):     " `awk -F"," ' {print $9}' mt/mtr_in_wm.txt | tail -1`
-echo "t2s/CSA_GM:     " `grep -v '^#' t2s/csa_gm/csa_mean.txt | grep -v '^$'`
-echo "t2s/CSA_WM:     " `grep -v '^#' t2s/csa_wm/csa_mean.txt | grep -v '^$'`
+echo "t2s/CSA_GM:     " `awk -F"," ' {print $5}' t2s/csa_gm.csv | tail -1`
+echo "t2s/CSA_WM:     " `awk -F"," ' {print $5}' t2s/csa_wm.csv | tail -1`
 echo "dmri/FA(CST_r): " `awk -F"," ' {print $9}' dmri/fa_in_cst.txt | tail -1`
 echo "dmri/FA(CST_l): " `awk -F"," ' {print $9}' dmri/fa_in_cst.txt | tail -2 | head -1`
 echo
@@ -258,4 +258,3 @@ echo
 # Display syntax to open QC report on web browser
 echo "To open Quality Control (QC) report on a web-browser, run the following:"
 echo "${open_command} ${SCT_BP_QC_FOLDER}/index.html"
-
