@@ -6,6 +6,7 @@
 from __future__ import absolute_import
 
 import numpy as np
+import math
 import operator
 import functools
 import csv
@@ -35,7 +36,7 @@ class Metric:
 def aggregate_per_slice_or_level(metric, mask=None, slices=None, levels=None, perslice=True, perlevel=False, vert_level=None,
                                  group_funcs=(('MEAN', np.mean),)):
     """
-    It is assumed that each element of a metric's vector correspond to a slice. E.g., index #2 corresponds to slice #2.
+    The aggregation will be performed along the last dimension of 'metric' ndarray.
     :param metric: Class Metric(): data to aggregate.
     :param mask: Class Metric(): mask to use for aggregating the data. Optional.
     :param slices: List[int]: Slices to aggregate metric from. If empty, select all slices.
@@ -47,8 +48,9 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=None, levels=None, pe
     :return: Aggregated metric
     """
     # if slices is empty, select all available slices from the metric
+    ndim = metric.data.ndim
     if not slices:
-        slices = range(metric.data.shape[2])
+        slices = range(metric.data.shape[ndim-1])
         # slices = metric[metric.keys()[0]].z
 
     # aggregation based on levels
@@ -106,10 +108,12 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=None, levels=None, pe
         try:
             # Loop across functions (typically: mean, std)
             for (name, func) in group_funcs:
-                data_slicegroup = metric.data[:, :, slicegroup]
+                data_slicegroup = metric.data[..., slicegroup]  # selection is done in the last dimension
                 if mask is not None:
                     mask_slicegroup = mask.data[:, :, slicegroup, :]
                     agg_metric[slicegroup]['Mask'] = mask.label
+                else:
+                    mask_slicegroup = np.ones(data_slicegroup.shape)
                 # check if nan
                 result = func(data_slicegroup, mask_slicegroup)
                 if np.isnan(result):
@@ -229,15 +233,27 @@ def func_bin(data, mask=None):
     return func_wa(data, mask_bin)
 
 
+def func_std(data, mask=None):
+    """
+    Compute standard deviation
+    :param data: ndarray: input data
+    :param mask: ndarray: input mask to weight average
+    :return: std
+    """
+    average = func_wa(data, mask)
+    variance = np.average((data - average) ** 2, weights=mask)
+    return math.sqrt(variance)
+
+
 def func_wa(data, mask=None):
     """
     Compute weighted average
-    :param data: 3d array: input data
-    :param mask: 4d array: input mask to weight average
+    :param data: ndarray: input data
+    :param mask: ndarray: input mask to weight average
     :return: weighted_average
     """
-    # TODO: fix computation of WA (needs normalization with voxel fraction)
-    return np.sum(np.multiply(data, mask[:, :, :, 0]))
+    return np.average(data, weights=mask)
+    # return np.sum(np.multiply(data, mask))) / np.sum(mask)
 
 
 def func_ml(data, mask):
