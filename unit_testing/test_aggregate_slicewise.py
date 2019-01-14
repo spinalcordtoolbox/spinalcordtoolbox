@@ -18,13 +18,13 @@ from spinalcordtoolbox.image import Image
 
 
 @pytest.fixture(scope="session")
-def dummy_metric():
-    """Create a dummy metric dictionary."""
-    metrics = {'metric1': Metric(z=[3, 4, 5, 6, 7], value=[29., 31., 39., 41., 50.], label='Metric with float [a.u.]'),
-               'metric2': Metric(z=[3, 4, 5, 6, 7], value=[99, 100, 101, 102, 103], label='Metric with int [a.u.]'),
-               'metric3': Metric(z=[3, 4, 5, 6, 7], value=[99, np.nan, 101, 102, 103], label='Metric with nan'),
-               'metric4': Metric(z=[3, 4, 5, 6, 7], value=[99, 100, 101, 102], label='Inconsistent value and z length.'),
-               'metric5': Metric(z=[3, 4, 5, 6, 7], value=[99, "boo!", 101, 102, 103], label='Metric with string')}
+def dummy_metrics():
+    """Create a Dict of dummy metric."""
+    metrics = {'with float': Metric(data=np.array([29., 31., 39., 41., 50.])),
+               'with int': Metric(data=np.array([99, 100, 101, 102, 103])),
+               'with nan': Metric(data=np.array([99, np.nan, 101, 102, 103])),
+               'inconsistent length': Metric(data=np.array([99, 100])),
+               'with string': Metric(data=np.array([99, "boo!", 101, 102, 103]))}
     return metrics
 
 
@@ -47,17 +47,21 @@ def dummy_vert_level():
 
 
 # noinspection 801,PyShadowingNames
-def test_aggregate_across_selected_slices(dummy_metric):
+def test_aggregate_across_selected_slices(dummy_metrics):
     """Test extraction of metrics aggregation across slices: Selected slices"""
-    agg_metrics = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metric, slices=[3, 4], perslice=False,
-                                                                   group_funcs=(('mean', np.mean), ('std', np.std)))
-    assert agg_metrics[(3, 4)]['metrics']['metric1']['mean'] == 30.0
-    assert agg_metrics[(3, 4)]['metrics']['metric1']['std'] == 1.0
-    assert agg_metrics[(3, 4)]['metrics']['metric2']['mean'] == 99.5
+    agg_metrics = {}
+    for metric in dummy_metrics:
+        agg_metrics[metric] = \
+            aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics[metric], slices=[1, 2], perslice=False,
+                                                             group_funcs=(('MEAN', aggregate_slicewise.func_wa),
+                                                                          ('STD', aggregate_slicewise.func_std)))
+    assert agg_metrics['with float'][(1, 2)]['MEAN()'] == 35.0
+    assert agg_metrics['with float'][(1, 2)]['STD()'] == 4.0
+    assert agg_metrics['with int'][(1, 2)]['MEAN()'] == 100.5
     # check that even if there is an error in metric estimation, the function outputs a dict for specific slicegroup
-    assert agg_metrics[(3, 4)]['metrics']['metric3']['error'] == 'Contains nan'
-    assert agg_metrics[(3, 4)]['metrics']['metric4']['error'] == 'metric and z have do not have the same length'
-    assert agg_metrics[(3, 4)]['metrics']['metric5']['error'] == 'cannot perform reduce with flexible type'
+    assert 'error' in agg_metrics['with nan'][(1, 2)]
+    assert 'error' in agg_metrics['inconsistent length'][(1, 2)]
+    assert 'error' in agg_metrics['with string'][(1, 2)]
 
 
 # noinspection 801,PyShadowingNames
