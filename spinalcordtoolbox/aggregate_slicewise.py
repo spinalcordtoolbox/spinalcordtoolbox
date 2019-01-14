@@ -126,6 +126,100 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=None, levels=None, pe
     return agg_metric
 
 
+def check_labels(indiv_labels_ids, selected_labels):
+    """Check the consistency of the labels asked by the user."""
+
+    # TODO: allow selection of combined labels as "36, Ventral, 7:14,22:19"
+
+    # convert strings to int
+    list_ids_of_labels_of_interest = list(map(int, indiv_labels_ids))
+
+    # if selected_labels:
+    #     # Check if label chosen is in the right format
+    #     for char in selected_labels:
+    #         if not char in '0123456789,:':
+    #             sct.printv(parser.usage.generate(error='\nERROR: ' + selected_labels + ' is not the correct format to select combined labels.\n Exit program.\n'))
+    #
+    #     if ':' in selected_labels:
+    #         label_ids_range = [int(x) for x in selected_labels.split(':')]
+    #         if len(label_ids_range) > 2:
+    #             sct.printv(parser.usage.generate(error='\nERROR: Combined labels ID selection must be in format X:Y, with X and Y between 0 and 31.\nExit program.\n\n'))
+    #         else:
+    #             label_ids_range.sort()
+    #             list_ids_of_labels_of_interest = [int(x) for x in range(label_ids_range[0], label_ids_range[1]+1)]
+    #
+    #     else:
+    #         list_ids_of_labels_of_interest = [int(x) for x in selected_labels.split(',')]
+
+    if selected_labels:
+        # Remove redundant values
+        list_ids_of_labels_of_interest = [i_label for n, i_label in enumerate(selected_labels) if i_label not in selected_labels[:n]]
+
+        # Check if the selected labels are in the available labels ids
+        if not set(list_ids_of_labels_of_interest).issubset(set(indiv_labels_ids)):
+            sct.log.error(
+                'At least one of the selected labels (' + str(list_ids_of_labels_of_interest) + ') is not available \
+                according to the label list from the text file in the atlas folder.')
+
+    return list_ids_of_labels_of_interest
+
+
+def diff_between_list_or_int(l1, l2):
+    """
+    Return list l1 minus the elements in l2
+    :param l1: a list of int
+    :param l2: could be a list or an int
+    :return:
+    """
+    if isinstance(l2, int):
+        l2 = [l2]
+    return [x for x in l1 if x not in l2]
+
+
+def extract_metric(data, labels=None, slices=None, levels=None, perslice=True, perlevel=False,
+                   vert_level=None, method=None, label_struc=None, id_label=None, indiv_labels_ids=None,
+                   id_label_compl=None):
+    """
+
+    :param data:
+    :param labels:
+    :param slices:
+    :param levels:
+    :param perslice:
+    :param perlevel:
+    :param vert_level:
+    :param method:
+    :param label_struc:
+    :param id_label:
+    :param indiv_labels_ids:
+    :return:
+    """
+
+    # If label_struc[id_label].id is a list, it means that it comes from a combined labels
+    if isinstance(label_struc[id_label].id, list):
+        # Sum across labels
+        labels_sum = np.sum(labels[:, :, :, label_struc[id_label].id], axis=3)  # (nx, ny, nz, 1)
+    else:
+        # Simply extract
+        labels_sum = labels[:, :, :, label_struc[id_label].id]
+    # expand dim: labels_sum=(nx, ny, nz, 1)
+    labels_sum = np.expand_dims(labels_sum, axis=3)
+
+    # Maximum Likelihood
+    if method == 'ml':
+        id_label_compl = diff_between_list_or_int(indiv_labels_ids, label_struc[id_label].id)
+        labels_sum = np.concatenate([labels_sum, labels[:, :, :, id_label_compl]], axis=3)
+        mask = Metric(data=labels_sum, label='TODO')
+        group_funcs = (('ML', func_ml),)
+    # Weighted average
+    elif method == 'wa':
+        mask = Metric(data=labels_sum, label='TODO')
+        group_funcs = (('WA', func_wa),)
+
+    # TODO: update fields below with users choices
+    return aggregate_per_slice_or_level(data, mask=mask, slices=None, levels=None, perslice=True, perlevel=False,
+                                        vert_level=None, group_funcs=group_funcs)
+
 # def func_mean(data):
 
 def func_bin(data, mask=None):

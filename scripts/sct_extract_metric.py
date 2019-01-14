@@ -23,22 +23,21 @@
 
 from __future__ import division, absolute_import
 
-import sys, os, glob, time
+import sys, os
 
 import numpy as np
 
-from spinalcordtoolbox.extract_metric import extract_metric, check_labels
+# from spinalcordtoolbox.extract_metric import extract_metric, check_labels
 from spinalcordtoolbox.metadata import read_label_file
 from spinalcordtoolbox.utils import parse_num_list
-from spinalcordtoolbox.template import get_slices_from_vertebral_levels, get_vertebral_level_from_slice
-from spinalcordtoolbox.aggregate_slicewise import aggregate_per_slice_or_level, func_bin, func_wa, \
-    save_as_csv, Metric, func_ml
-
+# from spinalcordtoolbox.template import get_slices_from_vertebral_levels, get_vertebral_level_from_slice
+from spinalcordtoolbox.aggregate_slicewise import check_labels, extract_metric, save_as_csv, Metric
 import sct_utils as sct
 from spinalcordtoolbox.image import Image
 from msct_parser import Parser
 
 # get path of the script and the toolbox
+# TODO: is that useful??
 path_script = os.path.dirname(__file__)
 path_sct = os.path.dirname(path_script)
 
@@ -231,17 +230,6 @@ To compute average MTR in a region defined by a single label file (could be bina
 
     return parser
 
-def diff_between_list_or_int(l1, l2):
-    """
-    Return list l1 minus the elements in l2
-    :param l1: a list of int
-    :param l2: could be a list or an int
-    :return:
-    """
-    if isinstance(l2, int):
-        l2 = [l2]
-    return [x for x in l1 if x not in l2]
-
 
 def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, fname_output, labels_user, overwrite,
          fname_normalizing_label, normalization_method, label_to_fix, adv_param_user, fname_output_metric_map,
@@ -362,32 +350,11 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
     #     data, labels, indiv_labels_ids, indiv_labels_names, clusters_all_labels, combined_labels_groups_all_IDs, labels_id_user, label_to_fix_name, label_to_fix_fract_vol = fix_label_value(label_to_fix, data, labels, indiv_labels_ids, indiv_labels_names, clusters_all_labels, combined_labels_groups_all_IDs, labels_id_user)
 
     for id_label in labels_id_user:
-        # TODO: build mask based on id_label
-        # TODO: build labels as a struc with data and label, incl. indiv and combined labels
 
-        # If label_struc[id_label].id is a list, it means that it comes from a combined labels
-        if isinstance(label_struc[id_label].id, list):
-            # Sum across labels
-            labels_sum = np.sum(labels[:, :, :, label_struc[id_label].id], axis=3)  # (nx, ny, nz, 1)
-        else:
-            # Simply extract
-            labels_sum = labels[:, :, :, label_struc[id_label].id]
-        # expand dim: labels_sum=(nx, ny, nz, 1)
-        labels_sum = np.expand_dims(labels_sum, axis=3)
+        agg_metrics = extract_metric(data, labels=labels, slices=None, levels=None, perslice=True, perlevel=False,
+                                     vert_level=None, method=method, label_struc=label_struc, id_label=id_label,
+                                     indiv_labels_ids=indiv_labels_ids)
 
-        # Maximum Likelihood
-        if method == 'ml':
-            id_label_compl = diff_between_list_or_int(indiv_labels_ids, label_struc[id_label].id)
-            labels_sum = np.concatenate([labels_sum, labels[:, :, :, id_label_compl]], axis=3)
-            mask = Metric(data=labels_sum, label='TODO')
-            group_funcs = (('ML', func_ml),)
-        # Weighted average
-        elif method == 'wa':
-            mask = Metric(data=labels_sum, label='TODO')
-            group_funcs = (('WA', func_wa),)
-
-        agg_metrics = aggregate_per_slice_or_level(data, mask=mask, slices=None, levels=None, perslice=True,
-                                                   perlevel=False, vert_level=None, group_funcs=group_funcs)
         append = False  # TODO
         save_as_csv(agg_metrics, fname_output, fname_in=fname_data, append=append)
 
