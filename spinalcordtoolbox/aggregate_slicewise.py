@@ -2,6 +2,8 @@
 # -*- coding: utf-8
 # Functions dealing with metrics aggregation (mean, std, etc.) across slices and/or vertebral levels
 
+# TODO: fix: /Users/julien/code/sct/python/lib/python2.7/site-packages/numpy/lib/function_base.py:961: RuntimeWarning: invalid value encountered in multiply
+#   avg = np.multiply(a, wgt).sum(axis)/scl
 
 from __future__ import absolute_import
 
@@ -233,6 +235,12 @@ def extract_metric(data, labels=None, slices=None, levels=None, perslice=True, p
         labels_sum = np.concatenate([labels_sum, labels[..., id_label_compl]], axis=ndim)
         mask = Metric(data=labels_sum, label=label_struc[id_label].name)
         group_funcs = (('ML', func_ml), ('STD', func_std))
+    # Maximum Likelihood
+    elif method == 'map':
+        id_label_compl = diff_between_list_or_int(indiv_labels_ids, label_struc[id_label].id)
+        labels_sum = np.concatenate([labels_sum, labels[..., id_label_compl]], axis=ndim)
+        mask = Metric(data=labels_sum, label=label_struc[id_label].name)
+        group_funcs = (('MAP', func_map), ('STD', func_std))
     # Weighted average
     elif method == 'wa':
         mask = Metric(data=labels_sum, label=label_struc[id_label].name)
@@ -302,6 +310,33 @@ def func_wa(data, mask=None):
     # return np.sum(np.multiply(data, mask))) / np.sum(mask)
 
 
+def func_map(data, mask, ml_cluster):
+    """
+    Compute maximum a posteriori (MAP) for the first label of mask.
+    :param data: nd-array: input data
+    :param mask: (n+1)d-array: input mask. Note: this mask should include ALL labels to satisfy the necessary condition for
+    ML-based estimation, i.e., at each voxel, the sum of all labels (across the last dimension) equals the probability
+    to be inside the tissue. For example, for a pixel within the spinal cord, the sum of all labels should be 1.
+    :param
+    :return: float: beta corresponding to the first label
+    """
+    # TODO: support weighted least square. Currently, W set to ones(n_vox).
+    # reshape as 1d vector (for data) and 2d vector (for mask)
+    n_vox = functools.reduce(operator.mul, data.shape, 1)
+    data1d = np.reshape(data, n_vox)
+    mask2d = np.reshape(mask, (n_vox, mask.shape[mask.ndim - 1]))
+    # ML estimation:
+    #   y: measurements vector (to which weights are applied)
+    #   x: linear relation between the measurements y
+    #   W: weights to apply to each voxel
+    #   beta = (Xt . X)-1 . Xt . y     The true metric value to be estimated
+    W = np.diag(np.ones(n_vox))
+    y = np.dot(W, data1d)  # [nb_vox x 1]
+    x = np.dot(W, mask2d)  # [nb_vox x nb_labels]
+    beta = np.dot(np.linalg.pinv(np.dot(x.T, x)), np.dot(x.T, y))
+    return beta[0]
+
+
 def func_ml(data, mask):
     """
     Compute maximum likelihood (ML) for the first label of mask.
@@ -311,18 +346,15 @@ def func_ml(data, mask):
     to be inside the tissue. For example, for a pixel within the spinal cord, the sum of all labels should be 1.
     :return: float: beta corresponding to the first label
     """
+    # TODO: support weighted least square
     # reshape as 1d vector (for data) and 2d vector (for mask)
     n_vox = functools.reduce(operator.mul, data.shape, 1)
-    data1d = np.reshape(data, n_vox)
-    mask2d = np.reshape(mask, (n_vox, mask.shape[mask.ndim-1]))
     # ML estimation:
     #   y: measurements vector (to which weights are applied)
     #   x: linear relation between the measurements y
-    #   W: weights to apply to each voxel
     #   beta = (Xt . X)-1 . Xt . y     The true metric value to be estimated
-    W = np.diag(np.ones(n_vox))
-    y = np.dot(W, data1d)  # [nb_vox x 1]
-    x = np.dot(W, mask2d)  # [nb_vox x nb_labels]
+    y = np.reshape(data, n_vox)  # [nb_vox x 1]
+    x = np.reshape(mask, (n_vox, mask.shape[mask.ndim-1]))  # [nb_vox x nb_labels]
     beta = np.dot(np.linalg.pinv(np.dot(x.T, x)), np.dot(x.T, y))
     return beta[0]
 
