@@ -318,8 +318,10 @@ def main(fname_data, path_label, method, slices, levels, fname_output, labels_us
     # Load vertebral levels
     if vertebral_levels:
         im_vertebral_labeling = Image(fname_vertebral_labeling).change_orientation("RPI")
+    else:
+        im_vertebral_labeling = None
 
-    # Get dimensions of data and labels
+        # Get dimensions of data and labels
     nx, ny, nz = data.data.shape
     nx_atlas, ny_atlas, nz_atlas, nt_atlas = labels.shape
 
@@ -328,7 +330,7 @@ def main(fname_data, path_label, method, slices, levels, fname_output, labels_us
         sct.printv('\nERROR: Metric data and labels DO NOT HAVE SAME DIMENSIONS.', 1, type='error')
 
     for id_label in labels_id_user:
-
+        sct.printv('\nEstimation for label: '+label_struc[id_label].name, verbose)
         agg_metric = extract_metric(data, labels=labels, slices=slices, levels=levels, perslice=perslice,
                                     perlevel=perlevel, vert_level=im_vertebral_labeling, method=method,
                                     label_struc=label_struc, id_label=id_label, indiv_labels_ids=indiv_labels_ids)
