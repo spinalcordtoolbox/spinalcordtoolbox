@@ -234,12 +234,12 @@ def extract_metric(data, labels=None, slices=None, levels=None, perslice=True, p
     if method == 'ml':
         id_label_compl = diff_between_list_or_int(indiv_labels_ids, label_struc[id_label].id)
         labels_sum = np.concatenate([labels_sum, labels[..., id_label_compl]], axis=ndim)
-        mask = Metric(data=labels_sum, label='TODO')
-        group_funcs = (('ML', func_ml),)
+        mask = Metric(data=labels_sum, label=label_struc[id_label].name)
+        group_funcs = (('ML', func_ml), ('STD', func_std))
     # Weighted average
     elif method == 'wa':
-        mask = Metric(data=labels_sum, label='TODO')
-        group_funcs = (('WA', func_wa),)
+        mask = Metric(data=labels_sum, label=label_struc[id_label].name)
+        group_funcs = (('WA', func_wa), ('STD', func_std))
 
     return aggregate_per_slice_or_level(data, mask=mask, slices=slices, levels=levels, perslice=perslice, perlevel=perlevel,
                                         vert_level=vert_level, group_funcs=group_funcs)
@@ -260,6 +260,9 @@ def func_std(data, mask=None):
     :param mask: ndarray: input mask to weight average
     :return: std
     """
+    # Check if mask has an additional dimension (in case it is a label). If so, squeeze matrix to match dim with data.
+    if mask.ndim == data.ndim + 1:
+        mask = mask.squeeze()
     average = func_wa(data, mask)
     variance = np.average((data - average) ** 2, weights=mask)
     return math.sqrt(variance)
@@ -272,7 +275,7 @@ def func_wa(data, mask=None):
     :param mask: ndarray: input mask to weight average
     :return: weighted_average
     """
-    # Check if mask has an additional dimention (in case it is a label), and if so, squeeze matrix to match dim with data.
+    # Check if mask has an additional dimension (in case it is a label). If so, squeeze matrix to match dim with data.
     if mask.ndim == data.ndim + 1:
         mask = mask.squeeze()
     return np.average(data, weights=mask)

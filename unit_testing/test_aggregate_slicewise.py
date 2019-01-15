@@ -185,5 +185,22 @@ def test_save_as_csv_sorting(dummy_metrics):
                                                                   group_funcs=(('MEAN', aggregate_slicewise.func_wa),))
     aggregate_slicewise.save_as_csv(agg_metric, 'tmp_file_out.csv')
     with open('tmp_file_out.csv', 'r') as csvfile:
-        reader = csv.DictReader(csvfile, delimiter=',')
-        assert [row['Slice (I->S)'] for row in reader] == ['0', '1', '2', '3', '4']
+        spamreader = csv.DictReader(csvfile, delimiter=',')
+        assert [row['Slice (I->S)'] for row in spamreader] == ['0', '1', '2', '3', '4']
+
+
+# noinspection 801,PyShadowingNames
+def test_save_as_csv_extract_metric(dummy_data_and_labels):
+    """Test file output with extract_metric()"""
+    agg_metric = aggregate_slicewise.extract_metric(dummy_data_and_labels[0], labels=dummy_data_and_labels[1],
+                                                    label_struc=dummy_data_and_labels[2], id_label=0,
+                                                    indiv_labels_ids=[0, 1], perslice=False, method='wa')
+    aggregate_slicewise.save_as_csv(agg_metric, 'tmp_file_out.csv')
+    with open('tmp_file_out.csv', 'r') as csvfile:
+        spamreader = csv.reader(csvfile, delimiter=',')
+        spamreader.next()  # skip header
+        assert spamreader.next() == ['', '0:4', '', '38.0', 'label_0', '4.0', sct.__version__]
+
+
+
+# TODO: test extract_metric with single file.
