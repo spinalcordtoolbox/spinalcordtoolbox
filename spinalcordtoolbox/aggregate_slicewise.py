@@ -263,7 +263,12 @@ def func_std(data, mask=None):
     """
     # Check if mask has an additional dimension (in case it is a label). If so, squeeze matrix to match dim with data.
     if mask.ndim == data.ndim + 1:
-        mask = mask.squeeze()
+        # Check if last dim is not equal to one, meaning: the input mask has several labels and we only want to keep
+        # the first label. This is a "hack" to ML estimation, which forces to input all labels.
+        if mask.shape[mask.ndim-1] > 1:
+            mask = mask[..., 0]
+        else:
+            mask = mask.squeeze()
     average = func_wa(data, mask)
     variance = np.average((data - average) ** 2, weights=mask)
     return math.sqrt(variance)

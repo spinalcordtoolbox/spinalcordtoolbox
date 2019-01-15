@@ -344,12 +344,12 @@ def main(fname_data, path_label, method, slices_of_interest, vertebral_levels, f
 
     for id_label in labels_id_user:
 
-        agg_metrics = extract_metric(data, labels=labels, slices=None, levels=None, perslice=True, perlevel=False,
-                                     vert_level=None, method=method, label_struc=label_struc, id_label=id_label,
-                                     indiv_labels_ids=indiv_labels_ids)
+        agg_metric = extract_metric(data, labels=labels, slices=None, levels=None, perslice=True, perlevel=False,
+                                    vert_level=None, method=method, label_struc=label_struc, id_label=id_label,
+                                    indiv_labels_ids=indiv_labels_ids)
 
         append = False  # TODO
-        save_as_csv(agg_metrics, fname_output, fname_in=fname_data, append=append)
+        save_as_csv(agg_metric, fname_output, fname_in=fname_data, append=append)
 
     # if slices_of_interest:
     #     slices_list = parse_num_list(slices_of_interest)

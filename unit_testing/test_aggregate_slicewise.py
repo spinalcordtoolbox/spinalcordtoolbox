@@ -42,6 +42,19 @@ def dummy_data_and_labels():
 
 
 @pytest.fixture(scope="session")
+def dummy_data_and_labels_2d():
+    """Create a dummy 2d data with associated 2d label, for testing extract_metric()."""
+    data = Metric(data=np.array([[5, 5],
+                                 [5, 5]]))
+    labels = np.array([[1, 1],
+                       [1, 1]]).T  # need to transpose because last dim are labels
+    labels = np.expand_dims(labels, axis=2)  # because ndim(label) = ndim(data)+1
+    # Create label_struc{}
+    label_struc = {0: aggregate_slicewise.LabelStruc(id=0, name='mask')}
+    return data, labels, label_struc
+
+
+@pytest.fixture(scope="session")
 def dummy_vert_level():
     """
     Create a dummy Image representing vertebral labeling.
@@ -138,6 +151,15 @@ def test_extract_metric(dummy_data_and_labels):
                                                     label_struc=dummy_data_and_labels[2], id_label=0,
                                                     indiv_labels_ids=[0, 1], perslice=False, method='ml')
     assert agg_metric[agg_metric.keys()[0]]['ML()'] == 40.0
+
+
+# noinspection 801,PyShadowingNames
+def test_extract_metric_2d(dummy_data_and_labels_2d):
+    """Test different estimation methods."""
+    agg_metric = aggregate_slicewise.extract_metric(dummy_data_and_labels_2d[0], labels=dummy_data_and_labels_2d[1],
+                                                    label_struc=dummy_data_and_labels_2d[2], id_label=0,
+                                                    indiv_labels_ids=0, perslice=False, method='wa')
+    assert agg_metric[agg_metric.keys()[0]]['WA()'] == 5.0
 
 
 # noinspection 801,PyShadowingNames
