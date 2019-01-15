@@ -237,6 +237,10 @@ def extract_metric(data, labels=None, slices=None, levels=None, perslice=True, p
     elif method == 'wa':
         mask = Metric(data=labels_sum, label=label_struc[id_label].name)
         group_funcs = (('WA', func_wa), ('STD', func_std))
+    # Binarize mask
+    elif method == 'bin':
+        mask = Metric(data=labels_sum, label=label_struc[id_label].name)
+        group_funcs = (('BIN', func_bin), ('STD', func_std))
 
     return aggregate_per_slice_or_level(data, mask=mask, slices=slices, levels=levels, perslice=perslice, perlevel=perlevel,
                                         vert_level=vert_level, group_funcs=group_funcs)
@@ -245,7 +249,7 @@ def extract_metric(data, labels=None, slices=None, levels=None, perslice=True, p
 
 def func_bin(data, mask=None):
     # Binarize mask
-    # TODO
+    mask_bin = np.where(mask >= 0.5, 1, 0)
     # run weighted average
     return func_wa(data, mask_bin)
 

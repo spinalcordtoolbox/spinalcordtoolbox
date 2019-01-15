@@ -143,11 +143,19 @@ def test_aggregate_per_level(dummy_metrics, dummy_vert_level):
 # noinspection 801,PyShadowingNames
 def test_extract_metric(dummy_data_and_labels):
     """Test different estimation methods."""
+    # Weighted average
     agg_metric = aggregate_slicewise.extract_metric(dummy_data_and_labels[0], labels=dummy_data_and_labels[1],
                                                     label_struc=dummy_data_and_labels[2], id_label=0,
                                                     indiv_labels_ids=[0, 1], perslice=False, method='wa')
     assert agg_metric[agg_metric.keys()[0]]['WA()'] == 38.0
 
+    # Binarized mask
+    agg_metric = aggregate_slicewise.extract_metric(dummy_data_and_labels[0], labels=dummy_data_and_labels[1],
+                                                    label_struc=dummy_data_and_labels[2], id_label=0,
+                                                    indiv_labels_ids=[0, 1], perslice=False, method='bin')
+    assert agg_metric[agg_metric.keys()[0]]['BIN()'] == pytest.approx(36.66, rel=0.01)
+
+    # Maximum Likelihood
     agg_metric = aggregate_slicewise.extract_metric(dummy_data_and_labels[0], labels=dummy_data_and_labels[1],
                                                     label_struc=dummy_data_and_labels[2], id_label=0,
                                                     indiv_labels_ids=[0, 1], perslice=False, method='ml')
