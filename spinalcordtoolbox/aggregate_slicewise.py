@@ -331,9 +331,7 @@ def save_as_csv(agg_metric, fname_out, fname_in=None, append=False):
     """
     # Item sorted in order for display in csv output
     list_item = ['VertLevel', 'Label', 'MEAN', 'WA', 'WATH', 'BIN', 'ML', 'MAP', 'STD']
-    # TODO: add timestamp + move file at the end
     # TODO: if append=True but file does not exist yet, raise warning and set append=False
-    # TODO: build header and data based on existing keys, and find a way to sort them
     # write header (only if append=False)
     if not append:
         with open(fname_out, 'w') as csvfile:

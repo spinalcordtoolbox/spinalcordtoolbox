@@ -66,9 +66,9 @@ def parse_num_list_inv(list_int):
     for i in range(1, len(list_int)):
         # if previous element is the previous integer: I(i-1) = I(i)-1
         if list_int[i] == list_int[i-1] + 1:
-            # if ":" already there, update the last char
+            # if ":" already there, update the last chars (based on the number of digits)
             if colon_is_present:
-                str_num = str_num[:-1] + str(list_int[i])
+                str_num = str_num[:-len(str(list_int[i-1]))] + str(list_int[i])
             # if not, add it along with the new int value
             else:
                 str_num += ':' + str(list_int[i])
