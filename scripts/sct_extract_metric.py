@@ -87,7 +87,6 @@ ml: maximum likelihood (only use with well-defined regions and low noise)
 map: maximum a posteriori. Mean priors are estimated by maximum likelihood within three clusters (white matter, gray matter and CSF). Tract and  noise variance are set with flag -p.
   N.B. ONLY USE THIS METHOD WITH THE WHITE MATTER ATLAS! The sum of all tracts should be 1 in all voxels (the algorithm doesn't normalize the atlas).
 wa: weighted average
-wath: weighted average (only consider values >0.5)
 bin: binarize mask (threshold=0.5)
 max: for each z-slice of the input data, extract the max value for each slice of the input data. This mode is useful to extract CSA from an interpolated image (ignore partial volume effect).""",
                       example=['ml', 'map', 'wa', 'wath', 'bin', 'max'],
