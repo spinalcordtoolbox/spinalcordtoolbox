@@ -45,7 +45,7 @@ class LabelStruc:
 # TODO: don't make metrics a dict anymore-- it complicates things.
 # TODO: generalize this function to accept n-dim np.array instead of list in Metric().value
 # TODO: maybe no need to bring Metric() class here. Just np.array, then labeling is done in parent function.
-def aggregate_per_slice_or_level(metric, mask=None, slices=None, levels=None, perslice=True, perlevel=False, vert_level=None,
+def aggregate_per_slice_or_level(metric, mask=None, slices=None, levels=None, perslice=None, perlevel=False, vert_level=None,
                                  group_funcs=(('MEAN', np.mean),)):
     """
     The aggregation will be performed along the last dimension of 'metric' ndarray.
@@ -64,6 +64,13 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=None, levels=None, pe
     if not slices:
         slices = range(metric.data.shape[ndim-1])
         # slices = metric[metric.keys()[0]].z
+
+    # If user set perlevel but did not set perslice, force perslice==False. Otherwise, set to True.
+    if perslice is None:
+        if perlevel:
+            perslice = False
+        else:
+            perslice = True
 
     # aggregation based on levels
     if levels:

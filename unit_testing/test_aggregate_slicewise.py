@@ -46,13 +46,13 @@ def dummy_vert_level():
     """
     Create a dummy Image representing vertebral labeling.
     Note: The z-size of this image can to be equal or larger than the metric's length, however the indexation needs
-    to match the metric['z'] field.
+    to match the data last dim (typically "z").
     Example: data[4, 4, 5] = 2 means that at z=5, the vertebral level is C2.
     """
     nx, ny, nz = 9, 9, 9  # image dimension
     data = np.zeros((nx, ny, nz))
     # define vertebral level for each slice as a pixel at the center of the image
-    data[4, 4, :] = [1, 1, 1, 2, 2, 3, 3, 4, 4]
+    data[4, 4, :] = [2, 2, 3, 3, 4, 4, 5, 5, 6]
     affine = np.eye(4)
     nii = nib.nifti1.Nifti1Image(data, affine)
     img = Image(nii.get_data(), hdr=nii.header, orientation='RPI', dim=nii.header.get_data_shape())
@@ -78,119 +78,112 @@ def test_aggregate_across_selected_slices(dummy_metrics):
 
 
 # noinspection 801,PyShadowingNames
-def test_aggregate_across_all_slices(dummy_metric):
+def test_aggregate_across_all_slices(dummy_metrics):
     """Test extraction of metrics aggregation across slices: All slices by default"""
-    agg_metrics = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metric, perslice=False,
-                                                                   group_funcs=(('mean', np.mean),))
-    assert agg_metrics[(3, 4, 5, 6, 7)]['metrics']['metric1']['mean'] == 38.0
+    agg_metric = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], perslice=False,
+                                                                  group_funcs=(('MEAN', aggregate_slicewise.func_wa),))
+    assert agg_metric[agg_metric.keys()[0]]['MEAN()'] == 38.0
 
 
 # noinspection 801,PyShadowingNames
-def test_aggregate_per_slice(dummy_metric):
+def test_aggregate_per_slice(dummy_metrics):
     """Test extraction of metrics aggregation per slice: Selected slices"""
-    agg_metrics = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metric, slices=[3, 4], perslice=True,
-                                                                   group_funcs=(('mean', np.mean),))
-    assert agg_metrics[(3,)]['metrics']['metric1']['mean'] == 29.0
-    assert agg_metrics[(4,)]['metrics']['metric1']['mean'] == 31.0
+    agg_metric = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], slices=[3, 4],
+                                                                  perslice=True,
+                                                                  group_funcs=(('MEAN', aggregate_slicewise.func_wa),))
+    assert agg_metric[(3,)]['MEAN()'] == 41.0
+    assert agg_metric[(4,)]['MEAN()'] == 50.0
 
 
 # noinspection 801,PyShadowingNames
-def test_aggregate_across_levels(dummy_metric, dummy_vert_level):
+def test_aggregate_across_levels(dummy_metrics, dummy_vert_level):
     """Test extraction of metrics aggregation across vertebral levels"""
-    group_funcs = (('mean', np.mean),)
-    agg_metrics = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metric, levels=[2, 3], perslice=False,
-                                                                   perlevel=False, vert_level=dummy_vert_level,
-                                                                   group_funcs=group_funcs)
-    assert agg_metrics[(3, 4, 5, 6)]['metrics']['metric1']['mean'] == 35.0
-    assert agg_metrics[(3, 4, 5, 6)]['VertLevel'] == (2, 3)
+    agg_metric = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], levels=[2, 3],
+                                                                  perslice=False, perlevel=False,
+                                                                  vert_level=dummy_vert_level,
+                                                                  group_funcs=(('MEAN', aggregate_slicewise.func_wa),))
+    assert agg_metric[(0, 1, 2, 3)] == {'VertLevel': (2, 3), 'MEAN()': 35.0}
 
 
 # noinspection 801,PyShadowingNames
-def test_aggregate_across_levels_perslice(dummy_metric, dummy_vert_level):
+def test_aggregate_across_levels_perslice(dummy_metrics, dummy_vert_level):
     """Test extraction of metrics aggregation within selected vertebral levels and per slice"""
-    group_funcs = (('mean', np.mean),)
-    agg_metrics = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metric, levels=[2, 3], perslice=True,
-                                                                   perlevel=False, vert_level=dummy_vert_level,
-                                                                   group_funcs=group_funcs)
-    assert agg_metrics[(3,)]['metrics']['metric1']['mean'] == 29.0
-    assert agg_metrics[(3,)]['VertLevel'] == (2,)
-    assert agg_metrics[(5,)]['metrics']['metric1']['mean'] == 39.0
-    assert agg_metrics[(5,)]['VertLevel'] == (3,)
+    agg_metric = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], levels=[2, 3],
+                                                                  perslice=True, perlevel=False,
+                                                                  vert_level=dummy_vert_level,
+                                                                  group_funcs=(('MEAN', aggregate_slicewise.func_wa),))
+    assert agg_metric[(0,)] == {'VertLevel': (2,), 'MEAN()': 29.0}
+    assert agg_metric[(2,)] == {'VertLevel': (3,), 'MEAN()': 39.0}
 
 
 # noinspection 801,PyShadowingNames
-def test_aggregate_per_level(dummy_metric, dummy_vert_level):
+def test_aggregate_per_level(dummy_metrics, dummy_vert_level):
     """Test extraction of metrics aggregation per vertebral level"""
-    group_funcs = (('mean', np.mean),)
-    agg_metrics = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metric, levels=[2, 3], perlevel=True,
-                                                                   vert_level=dummy_vert_level,
-                                                                   group_funcs=group_funcs)
-    assert agg_metrics[(5, 6)]['metrics']['metric1']['mean'] == 40.0
-    assert agg_metrics[(5, 6)]['VertLevel'] == (3,)
-    assert agg_metrics[(5, 6)]['metrics']['metric5']['mean'] == 101.5
-    assert agg_metrics[(3, 4)]['metrics']['metric5']['error'] == 'cannot perform reduce with flexible type'
+    agg_metric = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], levels=[2, 3],
+                                                                  perlevel=True, vert_level=dummy_vert_level,
+                                                                  group_funcs=(('MEAN', aggregate_slicewise.func_wa),))
+    assert agg_metric[(0, 1)] == {'VertLevel': (2,), 'MEAN()': 30.0}
+    assert agg_metric[(2, 3)] == {'VertLevel': (3,), 'MEAN()': 40.0}
 
 
 # noinspection 801,PyShadowingNames
 def test_extract_metric(dummy_data_and_labels):
     """Test different estimation methods."""
-    agg_metrics = aggregate_slicewise.extract_metric(dummy_data_and_labels[0], labels=dummy_data_and_labels[1],
-                                                     label_struc=dummy_data_and_labels[2], id_label=0,
-                                                     indiv_labels_ids=[0, 1], perslice=False, method='wa')
-    assert agg_metrics[agg_metrics.keys()[0]]['WA()'] == 38.0
+    agg_metric = aggregate_slicewise.extract_metric(dummy_data_and_labels[0], labels=dummy_data_and_labels[1],
+                                                    label_struc=dummy_data_and_labels[2], id_label=0,
+                                                    indiv_labels_ids=[0, 1], perslice=False, method='wa')
+    assert agg_metric[agg_metric.keys()[0]]['WA()'] == 38.0
 
-    agg_metrics = aggregate_slicewise.extract_metric(dummy_data_and_labels[0], labels=dummy_data_and_labels[1],
-                                                     label_struc=dummy_data_and_labels[2], id_label=0,
-                                                     indiv_labels_ids=[0, 1], perslice=False, method='ml')
-    assert agg_metrics[agg_metrics.keys()[0]]['ML()'] == 40.0
+    agg_metric = aggregate_slicewise.extract_metric(dummy_data_and_labels[0], labels=dummy_data_and_labels[1],
+                                                    label_struc=dummy_data_and_labels[2], id_label=0,
+                                                    indiv_labels_ids=[0, 1], perslice=False, method='ml')
+    assert agg_metric[agg_metric.keys()[0]]['ML()'] == 40.0
 
 
 # noinspection 801,PyShadowingNames
-def test_save_as_csv(dummy_metric):
+def test_save_as_csv(dummy_metrics):
     """Test writing of output metric csv file"""
-    agg_metrics = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metric, slices=[3, 4], perslice=False,
-                                                                   group_funcs=(('mean', np.mean), ('std', np.std)))
+    agg_metric = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], slices=[3, 4],
+                                                                  perslice=False,
+                                                                  group_funcs=(('MEAN', aggregate_slicewise.func_wa),
+                                                                               ('STD', aggregate_slicewise.func_std)))
     # standard scenario
-    aggregate_slicewise.save_as_csv(agg_metrics, 'tmp_file_out.csv', fname_in='FakeFile.txt')
+    aggregate_slicewise.save_as_csv(agg_metric, 'tmp_file_out.csv', fname_in='FakeFile.txt')
     with open('tmp_file_out.csv', 'r') as csvfile:
         spamreader = csv.reader(csvfile, delimiter=',')
         spamreader.next()  # skip header
-        assert spamreader.next() == ['FakeFile.txt', sct.__version__, '3:4', '', 'nan', 'nan', '99.5', '0.5',
-                                     '30.0', '1.0', 'nan', 'nan', 'nan', 'nan']
+        assert spamreader.next() == ['FakeFile.txt', '3:4', '', '45.5', '4.5', sct.__version__]
     # with appending
-    aggregate_slicewise.save_as_csv(agg_metrics, 'tmp_file_out.csv')
-    aggregate_slicewise.save_as_csv(agg_metrics, 'tmp_file_out.csv', append=True)
+    aggregate_slicewise.save_as_csv(agg_metric, 'tmp_file_out.csv')
+    aggregate_slicewise.save_as_csv(agg_metric, 'tmp_file_out.csv', append=True)
     with open('tmp_file_out.csv', 'r') as csvfile:
         spamreader = csv.reader(csvfile, delimiter=',')
         spamreader.next()  # skip header
-        assert spamreader.next() == ['', sct.__version__, '3:4', '', 'nan', 'nan', '99.5', '0.5', '30.0', '1.0',
-                                     'nan', 'nan', 'nan', 'nan']
-        assert spamreader.next() == ['', sct.__version__, '3:4', '', 'nan', 'nan', '99.5', '0.5', '30.0', '1.0',
-                                     'nan', 'nan', 'nan', 'nan']
+        assert spamreader.next() == ['', '3:4', '', '45.5', '4.5', sct.__version__]
+        assert spamreader.next() == ['', '3:4', '', '45.5', '4.5', sct.__version__]
 
 
 # noinspection 801,PyShadowingNames
-def test_save_as_csv_slices(dummy_metric, dummy_vert_level):
+def test_save_as_csv_slices(dummy_metrics, dummy_vert_level):
     """Make sure slices are listed in reduced form"""
-    agg_metrics = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metric, levels=[3, 4], perslice=False,
-                                                                   perlevel=False, vert_level=dummy_vert_level,
-                                                                   group_funcs=(('mean', np.mean), ('std', np.std)))
-    # standard scenario
-    aggregate_slicewise.save_as_csv(agg_metrics, 'tmp_file_out.csv')
+    agg_metric = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], levels=[3, 4],
+                                                                  perslice=False, perlevel=False,
+                                                                  vert_level=dummy_vert_level,
+                                                                  group_funcs=(('MEAN', aggregate_slicewise.func_wa),))
+    aggregate_slicewise.save_as_csv(agg_metric, 'tmp_file_out.csv')
     with open('tmp_file_out.csv', 'r') as csvfile:
         reader = csv.DictReader(csvfile, delimiter=',')
         row = reader.next()
-        assert row['Slice (I->S)'] == '5:8'
+        assert row['Slice (I->S)'] == '2:5'
         assert row['Vertebral level'] == '3:4'
 
 
 # noinspection 801,PyShadowingNames
-def test_save_as_csv_sorting(dummy_metric):
+def test_save_as_csv_sorting(dummy_metrics):
     """Make sure slices are sorted in output csv file"""
-    agg_metrics = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metric, perslice=True,
-                                                                   group_funcs=(('mean', np.mean), ('std', np.std)))
-    # standard scenario
-    aggregate_slicewise.save_as_csv(agg_metrics, 'tmp_file_out.csv')
+    agg_metric = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], perslice=True,
+                                                                  group_funcs=(('MEAN', aggregate_slicewise.func_wa),))
+    aggregate_slicewise.save_as_csv(agg_metric, 'tmp_file_out.csv')
     with open('tmp_file_out.csv', 'r') as csvfile:
         reader = csv.DictReader(csvfile, delimiter=',')
-        assert [row['Slice (I->S)'] for row in reader] == ['3', '4', '5', '6', '7']
+        assert [row['Slice (I->S)'] for row in reader] == ['0', '1', '2', '3', '4']
