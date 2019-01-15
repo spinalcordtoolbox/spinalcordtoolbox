@@ -29,6 +29,19 @@ def dummy_metrics():
 
 
 @pytest.fixture(scope="session")
+def dummy_data_and_labels():
+    """Create a dummy data with partial volume effect, with associated mask, for testing extract_metric()."""
+    data = Metric(data=np.array([20., 20., 30., 40., 40.]))
+    labels = np.array([[0., 0., 0.5, 1., 1.],
+                       [1., 1., 0.5, 0., 0.]]).T  # need to transpose because last dim are labels
+    # Create label_struc{}
+    label_struc = {0: aggregate_slicewise.LabelStruc(id=0, name='label_0'),
+                   1: aggregate_slicewise.LabelStruc(id=1, name='label_1')}
+
+    return data, labels, label_struc
+
+
+@pytest.fixture(scope="session")
 def dummy_vert_level():
     """
     Create a dummy Image representing vertebral labeling.
@@ -116,6 +129,20 @@ def test_aggregate_per_level(dummy_metric, dummy_vert_level):
     assert agg_metrics[(5, 6)]['VertLevel'] == (3,)
     assert agg_metrics[(5, 6)]['metrics']['metric5']['mean'] == 101.5
     assert agg_metrics[(3, 4)]['metrics']['metric5']['error'] == 'cannot perform reduce with flexible type'
+
+
+# noinspection 801,PyShadowingNames
+def test_extract_metric(dummy_data_and_labels):
+    """Test different estimation methods."""
+    agg_metrics = aggregate_slicewise.extract_metric(dummy_data_and_labels[0], labels=dummy_data_and_labels[1],
+                                                     label_struc=dummy_data_and_labels[2], id_label=0,
+                                                     indiv_labels_ids=[0, 1], perslice=False, method='wa')
+    assert agg_metrics[agg_metrics.keys()[0]]['WA()'] == 38.0
+
+    agg_metrics = aggregate_slicewise.extract_metric(dummy_data_and_labels[0], labels=dummy_data_and_labels[1],
+                                                     label_struc=dummy_data_and_labels[2], id_label=0,
+                                                     indiv_labels_ids=[0, 1], perslice=False, method='ml')
+    assert agg_metrics[agg_metrics.keys()[0]]['ML()'] == 40.0
 
 
 # noinspection 801,PyShadowingNames

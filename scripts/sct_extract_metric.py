@@ -31,7 +31,7 @@ import numpy as np
 from spinalcordtoolbox.metadata import read_label_file
 from spinalcordtoolbox.utils import parse_num_list
 # from spinalcordtoolbox.template import get_slices_from_vertebral_levels, get_vertebral_level_from_slice
-from spinalcordtoolbox.aggregate_slicewise import check_labels, extract_metric, save_as_csv, Metric
+from spinalcordtoolbox.aggregate_slicewise import check_labels, extract_metric, save_as_csv, Metric, LabelStruc
 import sct_utils as sct
 from spinalcordtoolbox.image import Image
 from msct_parser import Parser
@@ -54,13 +54,6 @@ class Param:
         self.file_info_label = 'info_label.txt'
         # self.adv_param = ['10',  # STD of the metric value across labels, in percentage of the mean (mean is estimated using cluster-based ML)
         #                   '10']  # STD of the assumed gaussian-distributed noise
-
-
-class LabelStruc:
-    def __init__(self, id, name, filename=None):
-        self.id = id
-        self.name = name
-        self.filename = filename
 
 
 def get_parser():

@@ -30,6 +30,18 @@ class Metric:
         self.label = label
 
 
+class LabelStruc:
+    """
+    Class for labels
+    """
+    # TODO: at some point, simplify the number of classes and variables related to labels. For example, we should be
+    # able to use Metric for labels and combine data and metadata.
+    def __init__(self, id, name, filename=None):
+        self.id = id
+        self.name = name
+        self.filename = filename
+
+
 # TODO: don't make metrics a dict anymore-- it complicates things.
 # TODO: generalize this function to accept n-dim np.array instead of list in Metric().value
 # TODO: maybe no need to bring Metric() class here. Just np.array, then labeling is done in parent function.
@@ -110,7 +122,7 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=None, levels=None, pe
             for (name, func) in group_funcs:
                 data_slicegroup = metric.data[..., slicegroup]  # selection is done in the last dimension
                 if mask is not None:
-                    mask_slicegroup = mask.data[:, :, slicegroup, :]
+                    mask_slicegroup = mask.data[..., slicegroup, :]
                     agg_metric[slicegroup]['Mask'] = mask.label
                 else:
                     mask_slicegroup = np.ones(data_slicegroup.shape)
@@ -185,34 +197,36 @@ def extract_metric(data, labels=None, slices=None, levels=None, perslice=True, p
                    id_label_compl=None):
     """
 
-    :param data:
-    :param labels:
+    :param data: Class Metric(): Data (a.k.a. metric) of n-dimension to extract aggregated value from
+    :param labels: Class Metric(): Labels of (n+1)dim. The last dim encloses the labels.
     :param slices:
     :param levels:
     :param perslice:
     :param perlevel:
     :param vert_level:
     :param method:
-    :param label_struc:
-    :param id_label:
-    :param indiv_labels_ids:
-    :return:
+    :param label_struc: Label structure defined in sct_extract_metric
+    :param id_label: int: ID of label to select
+    :param indiv_labels_ids: list of int: IDs of labels corresponding to individual (as opposed to combined) labels for
+    use with ML or MAP estimation.
+    :return: aggregate_per_slice_or_level()
     """
 
     # If label_struc[id_label].id is a list, it means that it comes from a combined labels
     if isinstance(label_struc[id_label].id, list):
         # Sum across labels
-        labels_sum = np.sum(labels[:, :, :, label_struc[id_label].id], axis=3)  # (nx, ny, nz, 1)
+        labels_sum = np.sum(labels[..., label_struc[id_label].id], axis=3)  # (nx, ny, nz, 1)
     else:
         # Simply extract
-        labels_sum = labels[:, :, :, label_struc[id_label].id]
-    # expand dim: labels_sum=(nx, ny, nz, 1)
-    labels_sum = np.expand_dims(labels_sum, axis=3)
+        labels_sum = labels[..., label_struc[id_label].id]
+    # expand dim: labels_sum=(..., 1)
+    ndim = labels_sum.ndim
+    labels_sum = np.expand_dims(labels_sum, axis=ndim)
 
     # Maximum Likelihood
     if method == 'ml':
         id_label_compl = diff_between_list_or_int(indiv_labels_ids, label_struc[id_label].id)
-        labels_sum = np.concatenate([labels_sum, labels[:, :, :, id_label_compl]], axis=3)
+        labels_sum = np.concatenate([labels_sum, labels[..., id_label_compl]], axis=ndim)
         mask = Metric(data=labels_sum, label='TODO')
         group_funcs = (('ML', func_ml),)
     # Weighted average
@@ -220,9 +234,8 @@ def extract_metric(data, labels=None, slices=None, levels=None, perslice=True, p
         mask = Metric(data=labels_sum, label='TODO')
         group_funcs = (('WA', func_wa),)
 
-    # TODO: update fields below with users choices
-    return aggregate_per_slice_or_level(data, mask=mask, slices=None, levels=None, perslice=True, perlevel=False,
-                                        vert_level=None, group_funcs=group_funcs)
+    return aggregate_per_slice_or_level(data, mask=mask, slices=slices, levels=levels, perslice=perslice, perlevel=perlevel,
+                                        vert_level=vert_level, group_funcs=group_funcs)
 
 # def func_mean(data):
 
@@ -252,6 +265,9 @@ def func_wa(data, mask=None):
     :param mask: ndarray: input mask to weight average
     :return: weighted_average
     """
+    # Check if mask has an additional dimention (in case it is a label), and if so, squeeze matrix to match dim with data.
+    if mask.ndim == data.ndim + 1:
+        mask = mask.squeeze()
     return np.average(data, weights=mask)
     # return np.sum(np.multiply(data, mask))) / np.sum(mask)
 
@@ -259,16 +275,16 @@ def func_wa(data, mask=None):
 def func_ml(data, mask):
     """
     Compute maximum likelihood (ML) for the first label of mask.
-    :param data: ndarray: input data
-    :param mask: 4d-array: input mask. Note: this mask should include ALL labels to satisfy the necessary condition for
-    ML-based estimation, i.e., at each voxel, the sum of all labels (across the 4th dimension) equals the probability
+    :param data: nd-array: input data
+    :param mask: (n+1)d-array: input mask. Note: this mask should include ALL labels to satisfy the necessary condition for
+    ML-based estimation, i.e., at each voxel, the sum of all labels (across the last dimension) equals the probability
     to be inside the tissue. For example, for a pixel within the spinal cord, the sum of all labels should be 1.
     :return: float: beta corresponding to the first label
     """
     # reshape as 1d vector (for data) and 2d vector (for mask)
     n_vox = functools.reduce(operator.mul, data.shape, 1)
     data1d = np.reshape(data, n_vox)
-    mask2d = np.reshape(mask, (n_vox, mask.shape[3]))
+    mask2d = np.reshape(mask, (n_vox, mask.shape[mask.ndim-1]))
     # ML estimation:
     #   y: measurements vector (to which weights are applied)
     #   x: linear relation between the measurements y
