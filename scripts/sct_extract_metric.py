@@ -13,12 +13,8 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-# TODO: add unit tests: perlevel/perslice, overwrite,
-# TODO: check: not sure flag perslice is working 
+# TODO: fetch vert level in atlas by default-- would be nice to output in csv
 # TODO: use argparse
-# TODO: revisit the flags normalization and weighted mask-- useful?
-# TODO: move to csv output. However, we need to change the way z is represented: currently it is a list separated by ,. Maybe we can change it for: ;. e.g.: 0;1;2;3
-# TODO: remove fix_label_value() usage because it is used in isolated case and introduces confusion.
 # TODO (not urgent): vertebral levels selection should only consider voxels of the selected levels in slices where two different vertebral levels coexist (and not the whole slice)
 
 from __future__ import division, absolute_import
@@ -50,8 +46,7 @@ class Param:
         self.average_all_labels = 0  # average all labels together after concatenation
         self.fname_output = 'extract_metric.csv'
         self.file_info_label = 'info_label.txt'
-        # self.adv_param = ['10',  # STD of the metric value across labels, in percentage of the mean (mean is estimated using cluster-based ML)
-        #                   '10']  # STD of the assumed gaussian-distributed noise
+        self.perslice = 1
 
 
 def get_parser():
@@ -119,7 +114,7 @@ max: for each z-slice of the input data, extract the max value for each slice of
                                   'metric per slice and then averaging them all is not the same as outputting a single'
                                   'metric at once across all slices.',
                       mandatory=False,
-                      default_value=0)
+                      default_value=param_default.perslice)
     parser.add_option(name='-vert',
                       type_value='str',
                       description='Vertebral levels to estimate the metric across. Example: 2:9 for C2 to T2.',
@@ -380,7 +375,7 @@ if __name__ == "__main__":
     if '-perslice' in arguments:
         perslice = arguments['-perslice']
     else:
-        perslice = 0
+        perslice = param_default.perslice
     if '-perlevel' in arguments:
         perlevel = arguments['-perlevel']
     else:
