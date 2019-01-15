@@ -137,16 +137,12 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=None, levels=None, pe
                 # check if nan
                 result = func(data_slicegroup, mask_slicegroup)
                 if np.isnan(result):
-                    # TODO: fix below
-                    agg_metric[slicegroup]['error'] = 'Contains nan'
-                else:
-                    # here we create a field with name: FUNC(METRIC_NAME). Example: MEAN(CSA)
-                    agg_metric[slicegroup]['{}({})'.format(name, metric.label)] = result
+                    result = 'nan'
+                # here we create a field with name: FUNC(METRIC_NAME). Example: MEAN(CSA)
+                agg_metric[slicegroup]['{}({})'.format(name, metric.label)] = result
         except Exception as e:
             sct.log.warning(e)
-            # sct.log.warning('TypeError for metric {}'.format(metric))
-            # TODO
-            agg_metric[slicegroup]['error'] = e.message
+            agg_metric[slicegroup]['{}({})'.format(name, metric.label)] = e.message
     return agg_metric
 
 
