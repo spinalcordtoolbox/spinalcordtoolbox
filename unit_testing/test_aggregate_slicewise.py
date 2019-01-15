@@ -152,15 +152,15 @@ def test_save_as_csv(dummy_metrics):
     with open('tmp_file_out.csv', 'r') as csvfile:
         spamreader = csv.reader(csvfile, delimiter=',')
         spamreader.next()  # skip header
-        assert spamreader.next() == ['FakeFile.txt', '3:4', '', '45.5', '4.5', sct.__version__]
+        assert spamreader.next()[1:] == [sct.__version__, 'FakeFile.txt', '3:4', '', '45.5', '4.5']
     # with appending
     aggregate_slicewise.save_as_csv(agg_metric, 'tmp_file_out.csv')
     aggregate_slicewise.save_as_csv(agg_metric, 'tmp_file_out.csv', append=True)
     with open('tmp_file_out.csv', 'r') as csvfile:
         spamreader = csv.reader(csvfile, delimiter=',')
         spamreader.next()  # skip header
-        assert spamreader.next() == ['', '3:4', '', '45.5', '4.5', sct.__version__]
-        assert spamreader.next() == ['', '3:4', '', '45.5', '4.5', sct.__version__]
+        assert spamreader.next()[1:] == [sct.__version__, '', '3:4', '', '45.5', '4.5']
+        assert spamreader.next()[1:] == [sct.__version__, '', '3:4', '', '45.5', '4.5']
 
 
 # noinspection 801,PyShadowingNames
@@ -175,7 +175,7 @@ def test_save_as_csv_slices(dummy_metrics, dummy_vert_level):
         reader = csv.DictReader(csvfile, delimiter=',')
         row = reader.next()
         assert row['Slice (I->S)'] == '2:5'
-        assert row['Vertebral level'] == '3:4'
+        assert row['VertLevel'] == '3:4'
 
 
 # noinspection 801,PyShadowingNames
@@ -192,6 +192,8 @@ def test_save_as_csv_sorting(dummy_metrics):
 # noinspection 801,PyShadowingNames
 def test_save_as_csv_extract_metric(dummy_data_and_labels):
     """Test file output with extract_metric()"""
+
+    # With input label file
     agg_metric = aggregate_slicewise.extract_metric(dummy_data_and_labels[0], labels=dummy_data_and_labels[1],
                                                     label_struc=dummy_data_and_labels[2], id_label=0,
                                                     indiv_labels_ids=[0, 1], perslice=False, method='wa')
@@ -199,8 +201,4 @@ def test_save_as_csv_extract_metric(dummy_data_and_labels):
     with open('tmp_file_out.csv', 'r') as csvfile:
         spamreader = csv.reader(csvfile, delimiter=',')
         spamreader.next()  # skip header
-        assert spamreader.next() == ['', '0:4', '', '38.0', 'label_0', '4.0', sct.__version__]
-
-
-
-# TODO: test extract_metric with single file.
+        assert spamreader.next()[1:] == [sct.__version__, '', '0:4', '', 'label_0', '38.0', '4.0']

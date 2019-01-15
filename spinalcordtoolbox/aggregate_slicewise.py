@@ -10,6 +10,7 @@ import math
 import operator
 import functools
 import csv
+import datetime
 
 import sct_utils as sct
 from spinalcordtoolbox.template import get_slices_from_vertebral_levels, get_vertebral_level_from_slice
@@ -130,7 +131,7 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=None, levels=None, pe
                 data_slicegroup = metric.data[..., slicegroup]  # selection is done in the last dimension
                 if mask is not None:
                     mask_slicegroup = mask.data[..., slicegroup, :]
-                    agg_metric[slicegroup]['Mask'] = mask.label
+                    agg_metric[slicegroup]['Label'] = mask.label
                 else:
                     mask_slicegroup = np.ones(data_slicegroup.shape)
                 # check if nan
@@ -327,6 +328,8 @@ def save_as_csv(agg_metric, fname_out, fname_in=None, append=False):
     :param append: Bool: Append results at the end of file (if exists) instead of overwrite.
     :return:
     """
+    # Item sorted in order for display in csv output
+    list_item = ['VertLevel', 'Label', 'MEAN', 'WA', 'WATH', 'BIN', 'ML', 'MAP', 'STD']
     # TODO: add timestamp + move file at the end
     # TODO: if append=True but file does not exist yet, raise warning and set append=False
     # TODO: build header and data based on existing keys, and find a way to sort them
@@ -334,12 +337,12 @@ def save_as_csv(agg_metric, fname_out, fname_in=None, append=False):
     if not append:
         with open(fname_out, 'w') as csvfile:
             # spamwriter = csv.writer(csvfile, delimiter=',')
-            header = ['Filename', 'Slice (I->S)', 'Vertebral level']
-            funcs = agg_metric[agg_metric.keys()[0]].keys()
-            funcs.remove('VertLevel')  # Remove VertLevel because already added above
-            for func in funcs:
-                header.append(func)  # TODO: write label instead of field name
-            header.append('SCT Version')
+            header = ['Timestamp', 'SCT Version', 'Filename', 'Slice (I->S)']
+            agg_metric_key = agg_metric[agg_metric.keys()[0]].keys()
+            for item in list_item:
+                for key in agg_metric_key:
+                    if item in key:
+                        header.append(key)
             writer = csv.DictWriter(csvfile, fieldnames=header)
             writer.writeheader()
 
@@ -348,15 +351,18 @@ def save_as_csv(agg_metric, fname_out, fname_in=None, append=False):
         spamwriter = csv.writer(csvfile, delimiter=',')
         for slicegroup in sorted(agg_metric.keys()):
             line = list()
+            line.append(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))  # Timestamp
+            line.append(sct.__version__)  # SCT Version
             line.append(fname_in)  # file name associated with the results
             line.append(parse_num_list_inv(slicegroup))  # list all slices in slicegroup
-            line.append(parse_num_list_inv(agg_metric[slicegroup]['VertLevel']))  # list vertebral levels
-            funcs = agg_metric[slicegroup].keys()
-            funcs.remove('VertLevel')  # Remove VertLevel because already added above
-            for func in funcs:
-                try:
-                    line.append(str(agg_metric[slicegroup][func]))
-                except KeyError:
-                    line.append('')
-            line.append(sct.__version__)
+            agg_metric_key = agg_metric[agg_metric.keys()[0]].keys()
+            for item in list_item:
+                for key in agg_metric_key:
+                    if item in key:
+                        # Special case for VertLevel
+                        if key == 'VertLevel':
+                            line.append(
+                                parse_num_list_inv(agg_metric[slicegroup]['VertLevel']))  # list vertebral levels
+                        else:
+                            line.append(str(agg_metric[slicegroup][key]))
             spamwriter.writerow(line)
