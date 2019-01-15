@@ -39,7 +39,7 @@ class Param:
         self.type_window = 'hanning'  # for smooth_centerline @sct_straighten_spinalcord
         self.window_length = 50  # for smooth_centerline @sct_straighten_spinalcord
         self.algo_fitting = 'hanning'  # nurbs, hanning
-        self.perslice = 0
+        self.perslice = 1
         self.perlevel = 0
 
 
@@ -169,7 +169,7 @@ def main(args):
     slices = param.slices
     angle_correction = True
     use_phys_coord = True
-    group_funcs = (('MEAN', func_wa), ('std', func_std))  # functions to perform when aggregating metrics along S-I
+    group_funcs = (('MEAN', func_wa), ('STD', func_std))  # functions to perform when aggregating metrics along S-I
 
     fname_segmentation = sct.get_absolute_path(arguments['-i'])
     name_process = arguments['-p']

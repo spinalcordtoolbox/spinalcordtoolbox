@@ -162,11 +162,11 @@ def compute_properties_along_centerline(im_seg, smooth_factor=5.0, interpolation
                             x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
 
     sct.printv('Computing spinal cord shape along the spinal cord...')
-    with tqdm.tqdm(total=nz) as pbar:
+    with tqdm.tqdm(total=len(range(min_z_index, max_z_index))) as pbar:
 
         # Extracting patches perpendicular to the spinal cord and computing spinal cord shape
         i_centerline = 0  # index of the centerline() object
-        for iz in range(min_z_index, max_z_index + 1):
+        for iz in range(min_z_index, max_z_index-1):
         # for index in range(centerline.number_of_points):  Julien
             # value_out = -5.0
             value_out = 0.0
