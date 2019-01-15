@@ -88,8 +88,8 @@ map: maximum a posteriori. Mean priors are estimated by maximum likelihood withi
   N.B. ONLY USE THIS METHOD WITH THE WHITE MATTER ATLAS! The sum of all tracts should be 1 in all voxels (the algorithm doesn't normalize the atlas).
 wa: weighted average
 bin: binarize mask (threshold=0.5)
-max: for each z-slice of the input data, extract the max value for each slice of the input data. This mode is useful to extract CSA from an interpolated image (ignore partial volume effect).""",
-                      example=['ml', 'map', 'wa', 'wath', 'bin', 'max'],
+max: for each z-slice of the input data, extract the max value for each slice of the input data.""",
+                      example=['ml', 'map', 'wa', 'bin', 'max'],
                       mandatory=False,
                       default_value=param_default.method)
     parser.add_option(name='-append',

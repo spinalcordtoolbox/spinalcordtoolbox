@@ -241,6 +241,10 @@ def extract_metric(data, labels=None, slices=None, levels=None, perslice=True, p
     elif method == 'bin':
         mask = Metric(data=labels_sum, label=label_struc[id_label].name)
         group_funcs = (('BIN', func_bin), ('STD', func_std))
+    # Maximum
+    elif method == 'max':
+        mask = Metric(data=labels_sum, label=label_struc[id_label].name)
+        group_funcs = (('MAX', func_max),)
 
     return aggregate_per_slice_or_level(data, mask=mask, slices=slices, levels=levels, perslice=perslice, perlevel=perlevel,
                                         vert_level=vert_level, group_funcs=group_funcs)
@@ -252,6 +256,16 @@ def func_bin(data, mask=None):
     mask_bin = np.where(mask >= 0.5, 1, 0)
     # run weighted average
     return func_wa(data, mask_bin)
+
+
+def func_max(data, mask=None):
+    """
+    Get the max of an array
+    :param data:
+    :param mask:
+    :return:
+    """
+    return np.max(data)
 
 
 def func_std(data, mask=None):

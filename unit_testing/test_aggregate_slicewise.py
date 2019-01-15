@@ -161,6 +161,11 @@ def test_extract_metric(dummy_data_and_labels):
                                                     indiv_labels_ids=[0, 1], perslice=False, method='ml')
     assert agg_metric[agg_metric.keys()[0]]['ML()'] == 40.0
 
+    # Maximum Likelihood
+    agg_metric = aggregate_slicewise.extract_metric(dummy_data_and_labels[0], labels=dummy_data_and_labels[1],
+                                                    label_struc=dummy_data_and_labels[2], id_label=0,
+                                                    indiv_labels_ids=[0, 1], perslice=False, method='max')
+    assert agg_metric[agg_metric.keys()[0]]['MAX()'] == 40.0
 
 # noinspection 801,PyShadowingNames
 def test_extract_metric_2d(dummy_data_and_labels_2d):
