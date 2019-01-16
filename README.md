@@ -58,7 +58,7 @@ procedures.
 
 The simplest way to install SCT is to do it via a stable release. First, download the [latest release](https://github.com/neuropoly/spinalcordtoolbox/releases/latest). Major changes to each release are listed [here](CHANGES.md).
 
-N.B. We currently cover OS X (10.8+) and Debian/Ubuntu/Fedora/RedHat/CentOS platforms. If you have another OS, please use a [virtual machine](#using-virtual-machine).
+N.B. We currently cover OS X (10.8+) and Debian/Ubuntu/Fedora/RedHat/CentOS platforms. If you have another OS, please see [Installation with Docker](#installation-with-docker).
 
 If you have 10.7 or less, the only incompatibility is with ANTs, which you can compile on your station and then copy the binaries under SCT installation as explained [here](https://github.com/neuropoly/spinalcordtoolbox/wiki/binaries).
 
@@ -73,7 +73,7 @@ Once you have downloaded SCT, unpack it (note: Safari will automatically unzip i
 Download source code from Github (N.B. you need to have git installed):
 
 ~~~
-git clone --depth=1 --branch=master https://github.com/neuropoly/spinalcordtoolbox.git sct
+git clone --branch=master https://github.com/neuropoly/spinalcordtoolbox.git sct
 ~~~
 
 Then install SCT:
@@ -89,11 +89,11 @@ At anytime, you can update your local SCT installation to the latest version on 
 git pull
 ~~~
 
-### Installation on Windows
+### Installation with Docker
 
-In order to install the SCT in Windows, we provide a solution via Docker. This solution will allow you to use all the resources of SCT including the programs with graphical interface. In addition to the SCT, the Docker image contains the FSLeyes program for the visualization of the NIFTI volumes that you process.
+In order to install the SCT in Windows or other unsupported OS, we provide a solution via Docker. This solution will allow you to use all the resources of SCT including the programs with graphical interface. In addition to the SCT, the Docker image contains the FSLeyes program for the visualization of the NIFTI volumes that you process.
 
-[Tutorial how to install SCT on Windows via Docker](https://github.com/neuropoly/sct_docker#id7)
+[Tutorial how to install SCT via Docker](https://github.com/neuropoly/sct_docker#spinal-cord-toolbox-docker)
 
 
 ## Getting started
