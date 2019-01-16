@@ -31,13 +31,15 @@ def dummy_metrics():
 @pytest.fixture(scope="session")
 def dummy_data_and_labels():
     """Create a dummy data with partial volume effect, with associated mask, for testing extract_metric()."""
-    data = Metric(data=np.array([20., 20., 30., 40., 40.]))
+    data = Metric(data=np.array([19., 21., 30., 39., 41.]))
+    # Create 3 labels. The last label has very small volume fraction to assess the efficacy of MAP estimation.
     labels = np.array([[0., 0., 0.5, 1., 1.],
-                       [1., 1., 0.5, 0., 0.]]).T  # need to transpose because last dim are labels
+                       [0.9, 1., 0.5, 0., 0.],
+                       [0.1, 0., 0., 0., 0.]]).T  # need to transpose because last dim are labels
     # Create label_struc{}
     label_struc = {0: aggregate_slicewise.LabelStruc(id=0, name='label_0'),
-                   1: aggregate_slicewise.LabelStruc(id=1, name='label_1')}
-
+                   1: aggregate_slicewise.LabelStruc(id=1, name='label_1'),
+                   2: aggregate_slicewise.LabelStruc(id=2, name='label_2')}
     return data, labels, label_struc
 
 
@@ -146,26 +148,32 @@ def test_extract_metric(dummy_data_and_labels):
     # Weighted average
     agg_metric = aggregate_slicewise.extract_metric(dummy_data_and_labels[0], labels=dummy_data_and_labels[1],
                                                     label_struc=dummy_data_and_labels[2], id_label=0,
-                                                    indiv_labels_ids=[0, 1], perslice=False, method='wa')
+                                                    perslice=False, method='wa')
     assert agg_metric[agg_metric.keys()[0]]['WA()'] == 38.0
 
     # Binarized mask
     agg_metric = aggregate_slicewise.extract_metric(dummy_data_and_labels[0], labels=dummy_data_and_labels[1],
                                                     label_struc=dummy_data_and_labels[2], id_label=0,
-                                                    indiv_labels_ids=[0, 1], perslice=False, method='bin')
+                                                    perslice=False, method='bin')
     assert agg_metric[agg_metric.keys()[0]]['BIN()'] == pytest.approx(36.66, rel=0.01)
 
     # Maximum Likelihood
     agg_metric = aggregate_slicewise.extract_metric(dummy_data_and_labels[0], labels=dummy_data_and_labels[1],
                                                     label_struc=dummy_data_and_labels[2], id_label=0,
-                                                    indiv_labels_ids=[0, 1], perslice=False, method='ml')
-    assert agg_metric[agg_metric.keys()[0]]['ML()'] == 40.0
+                                                    indiv_labels_ids=[0, 1, 2], perslice=False, method='ml')
+    assert agg_metric[agg_metric.keys()[0]]['ML()'] == pytest.approx(39.9, rel=0.01)
 
-    # Maximum Likelihood
+    # Maximum A Posteriori
+    agg_metric = aggregate_slicewise.extract_metric(dummy_data_and_labels[0], labels=dummy_data_and_labels[1],
+                                                    label_struc=dummy_data_and_labels[2], id_label=0,
+                                                    indiv_labels_ids=[0, 1, 2], perslice=False, method='map')
+    assert agg_metric[agg_metric.keys()[0]]['MAP()'] == pytest.approx(40.0, rel=0.01)
+
+    # Maximum
     agg_metric = aggregate_slicewise.extract_metric(dummy_data_and_labels[0], labels=dummy_data_and_labels[1],
                                                     label_struc=dummy_data_and_labels[2], id_label=0,
                                                     indiv_labels_ids=[0, 1], perslice=False, method='max')
-    assert agg_metric[agg_metric.keys()[0]]['MAX()'] == 40.0
+    assert agg_metric[agg_metric.keys()[0]]['MAX()'] == 41.0
 
 # noinspection 801,PyShadowingNames
 def test_extract_metric_2d(dummy_data_and_labels_2d):
@@ -237,4 +245,4 @@ def test_save_as_csv_extract_metric(dummy_data_and_labels):
     with open('tmp_file_out.csv', 'r') as csvfile:
         spamreader = csv.reader(csvfile, delimiter=',')
         spamreader.next()  # skip header
-        assert spamreader.next()[1:] == [sct.__version__, '', '0:4', '', 'label_0', '38.0', '4.0']
+        assert spamreader.next()[1:-1] == [sct.__version__, '', '0:4', '', 'label_0', '38.0']

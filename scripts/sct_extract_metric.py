@@ -267,6 +267,7 @@ def main(fname_data, path_label, method, slices, levels, fname_output, labels_us
         # Parse labels according to the file info_label.txt
         # Note: the "combined_labels_*" is a list of single labels that are defined in the section defined by the keyword
         # "# Keyword=CombinedLabels" in info_label.txt.
+        # TODO: include ML clusters in structure
         # TODO: redirect to appropriate Sphinx documentation
         # TODO: output Class instead of multiple variables.
         # TODO: output dict in form: labels_struc.

@@ -136,8 +136,9 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=None, levels=None, pe
                     agg_metric[slicegroup]['Label'] = mask.label
                 else:
                     mask_slicegroup = np.ones(data_slicegroup.shape)
+                # Run estimation
+                result, _ = func(data_slicegroup, mask_slicegroup)
                 # check if nan
-                result = func(data_slicegroup, mask_slicegroup)
                 if np.isnan(result):
                     result = 'nan'
                 # here we create a field with name: FUNC(METRIC_NAME). Example: MEAN(CSA)
@@ -155,23 +156,6 @@ def check_labels(indiv_labels_ids, selected_labels):
 
     # convert strings to int
     list_ids_of_labels_of_interest = list(map(int, indiv_labels_ids))
-
-    # if selected_labels:
-    #     # Check if label chosen is in the right format
-    #     for char in selected_labels:
-    #         if not char in '0123456789,:':
-    #             sct.printv(parser.usage.generate(error='\nERROR: ' + selected_labels + ' is not the correct format to select combined labels.\n Exit program.\n'))
-    #
-    #     if ':' in selected_labels:
-    #         label_ids_range = [int(x) for x in selected_labels.split(':')]
-    #         if len(label_ids_range) > 2:
-    #             sct.printv(parser.usage.generate(error='\nERROR: Combined labels ID selection must be in format X:Y, with X and Y between 0 and 31.\nExit program.\n\n'))
-    #         else:
-    #             label_ids_range.sort()
-    #             list_ids_of_labels_of_interest = [int(x) for x in range(label_ids_range[0], label_ids_range[1]+1)]
-    #
-    #     else:
-    #         list_ids_of_labels_of_interest = [int(x) for x in selected_labels.split(',')]
 
     if selected_labels:
         # Remove redundant values
@@ -257,7 +241,6 @@ def extract_metric(data, labels=None, slices=None, levels=None, perslice=True, p
     return aggregate_per_slice_or_level(data, mask=mask, slices=slices, levels=levels, perslice=perslice, perlevel=perlevel,
                                         vert_level=vert_level, group_funcs=group_funcs)
 
-# def func_mean(data):
 
 def func_bin(data, mask=None):
     # Binarize mask
@@ -273,44 +256,10 @@ def func_max(data, mask=None):
     :param mask:
     :return:
     """
-    return np.max(data)
+    return np.max(data), None
 
 
-def func_std(data, mask=None):
-    """
-    Compute standard deviation
-    :param data: ndarray: input data
-    :param mask: ndarray: input mask to weight average
-    :return: std
-    """
-    # Check if mask has an additional dimension (in case it is a label). If so, squeeze matrix to match dim with data.
-    if mask.ndim == data.ndim + 1:
-        # Check if last dim is not equal to one, meaning: the input mask has several labels and we only want to keep
-        # the first label. This is a "hack" to ML estimation, which forces to input all labels.
-        if mask.shape[mask.ndim-1] > 1:
-            mask = mask[..., 0]
-        else:
-            mask = mask.squeeze()
-    average = func_wa(data, mask)
-    variance = np.average((data - average) ** 2, weights=mask)
-    return math.sqrt(variance)
-
-
-def func_wa(data, mask=None):
-    """
-    Compute weighted average
-    :param data: ndarray: input data
-    :param mask: ndarray: input mask to weight average
-    :return: weighted_average
-    """
-    # Check if mask has an additional dimension (in case it is a label). If so, squeeze matrix to match dim with data.
-    if mask.ndim == data.ndim + 1:
-        mask = mask.squeeze()
-    return np.average(data, weights=mask)
-    # return np.sum(np.multiply(data, mask))) / np.sum(mask)
-
-
-def func_map(data, mask, ml_cluster):
+def func_map(data, mask, ml_cluster=None):
     """
     Compute maximum a posteriori (MAP) for the first label of mask.
     :param data: nd-array: input data
@@ -320,21 +269,37 @@ def func_map(data, mask, ml_cluster):
     :param
     :return: float: beta corresponding to the first label
     """
-    # TODO: support weighted least square. Currently, W set to ones(n_vox).
-    # reshape as 1d vector (for data) and 2d vector (for mask)
+    # Compute ML in each cluster
+    ml_clusters = [[0], [1, 2]]  # TODO: remove debug hard-code
+
+    # Estimate beta_0 for each cluster
+    # Sum across each clustered labels, then concatenate
+    # TODO: generalize axis to n-dim
+    mask_cluster = np.concatenate(
+        [np.expand_dims(np.sum(mask[..., i_label], axis=1), axis=1) for i_label in ml_clusters], axis=1)
+    # Run ML estimation for each clustered labels
+    _, beta_cluster = func_ml(data, mask_cluster)
+    # MAP estimation:
+    #   y [nb_vox x 1]: measurements vector (to which weights are applied)
+    #   x [nb_vox x nb_labels]: linear relation between the measurements y
+    #   beta_0 [nb_labels]: A priori values estimated per cluster using ML.
+    #   beta [nb_labels] = beta_0 + (Xt . X + 1)^(-1) . Xt . (y - X . beta_0) : The estimated metric value in each label
+    #
+    # Note: for simplicity we consider that sigma_noise = sigma_label
+
     n_vox = functools.reduce(operator.mul, data.shape, 1)
-    data1d = np.reshape(data, n_vox)
-    mask2d = np.reshape(mask, (n_vox, mask.shape[mask.ndim - 1]))
-    # ML estimation:
-    #   y: measurements vector (to which weights are applied)
-    #   x: linear relation between the measurements y
-    #   W: weights to apply to each voxel
-    #   beta = (Xt . X)-1 . Xt . y     The true metric value to be estimated
-    W = np.diag(np.ones(n_vox))
-    y = np.dot(W, data1d)  # [nb_vox x 1]
-    x = np.dot(W, mask2d)  # [nb_vox x nb_labels]
-    beta = np.dot(np.linalg.pinv(np.dot(x.T, x)), np.dot(x.T, y))
-    return beta[0]
+    y = np.reshape(data, n_vox)
+    x = np.reshape(mask, (n_vox, mask.shape[mask.ndim-1]))
+    beta_0 = np.zeros(mask.shape[-1])
+    for i_label in range(mask.shape[-1]):
+        # Fetch index of ml_cluster corresponding to the current i_label
+        i_cluster = [i_label in ml_cluster for ml_cluster in ml_clusters].index(True)
+        # Then assign this beta_cluster value to beta_0[i_label]
+        beta_0[i_label] = beta_cluster[i_cluster]
+    beta = beta_0 + np.dot(np.linalg.pinv(np.dot(x.T, x) + np.diag(np.ones(mask.shape[-1]))),
+                           np.dot(x.T,
+                                  (y - np.dot(x, beta_0))))
+    return beta[0], beta
 
 
 def func_ml(data, mask):
@@ -352,11 +317,45 @@ def func_ml(data, mask):
     # ML estimation:
     #   y: measurements vector (to which weights are applied)
     #   x: linear relation between the measurements y
-    #   beta = (Xt . X)-1 . Xt . y     The true metric value to be estimated
+    #   beta [nb_labels] = (Xt . X)^(-1) . Xt . y: The estimated metric value in each label
     y = np.reshape(data, n_vox)  # [nb_vox x 1]
-    x = np.reshape(mask, (n_vox, mask.shape[mask.ndim-1]))  # [nb_vox x nb_labels]
+    x = np.reshape(mask, (n_vox, mask.shape[mask.ndim-1]))
     beta = np.dot(np.linalg.pinv(np.dot(x.T, x)), np.dot(x.T, y))
-    return beta[0]
+    return beta[0], beta
+
+
+def func_std(data, mask=None):
+    """
+    Compute standard deviation
+    :param data: ndarray: input data
+    :param mask: ndarray: input mask to weight average
+    :return: std
+    """
+    # Check if mask has an additional dimension (in case it is a label). If so, squeeze matrix to match dim with data.
+    if mask.ndim == data.ndim + 1:
+        # Check if last dim is not equal to one, meaning: the input mask has several labels and we only want to keep
+        # the first label. This is a "hack" to ML estimation, which forces to input all labels.
+        if mask.shape[mask.ndim - 1] > 1:
+            mask = mask[..., 0]
+        else:
+            mask = mask.squeeze()
+    average, _ = func_wa(data, mask)
+    variance = np.average((data - average) ** 2, weights=mask)
+    return math.sqrt(variance), None
+
+
+def func_wa(data, mask=None):
+    """
+    Compute weighted average
+    :param data: ndarray: input data
+    :param mask: ndarray: input mask to weight average
+    :return: weighted_average
+    """
+    # Check if mask has an additional dimension (in case it is a label). If so, squeeze matrix to match dim with data.
+    if mask.ndim == data.ndim + 1:
+        mask = mask.squeeze()
+    return np.average(data, weights=mask), None
+    # return np.sum(np.multiply(data, mask))) / np.sum(mask)
 
 
 def make_a_string(item):

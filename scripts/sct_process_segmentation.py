@@ -21,8 +21,6 @@ from __future__ import absolute_import, division
 
 import sys, os
 
-import numpy as np
-
 import sct_utils as sct
 from msct_parser import Parser
 from spinalcordtoolbox import process_seg
