@@ -5,43 +5,74 @@ import os
 import numpy as np
 from spinalcordtoolbox.image import Image
 import matplotlib.pyplot as plt
-
+from msct_parser import Parser
+import sct_utils as sct
+import sys, os, shutil
 
 from sct_axial_rotation import symmetry_angle, save_nifti_like, generate_2Dimage_line
 
 
-test1 = ( np.array(Image("/home/nicolas/unf_spineGeneric/sub-01/anat/sub-01_T2star.nii.gz").data[:, :, 7]), "test1.nii")
-# TODO: au lieu de .data prendre la bonne slice qui va bien
+def get_parser():
 
-# triangle2 = np.mean(np.array(Image("triangle2.nii").data), axis=2)
-# triangle3 = np.mean(np.array(Image("triangle3.nii").data), axis=2)
-#
-# circle = np.mean(np.array(Image("circle.nii").data), axis=2)
-# circle2 = np.mean(np.array(Image("circle2.nii").data), axis=2)
-#
-# square = np.array(Image("square.nii").data)
-#
-# test = np.mean(np.array(Image("test.nii").data), axis=2)
-# test2 = np.mean(np.array(Image("test2.nii").data), axis=2)
-
-nb_axes = 3
-
-kmedian_size = 1
-
-for image in [test1]:
-
-    angles = symmetry_angle(image[0], nb_axes=nb_axes, kmedian_size=kmedian_size)
-    # centermass = image[0].mean(1).round().astype(int)  # will act weird if image is non binary
-    centermass = [int(round(image[0].shape[0]/2)), int(round(image[0].shape[1]/2))]  # center of image
-
-    image_wline = image[0]
-
-    for i_angle in range(0, len(angles)):
-
-        image_wline = generate_2Dimage_line(image_wline, centermass[0], centermass[1], angles[i_angle]-135)
-
-    save_nifti_like(image_wline, "sym_" + image[1], "/home/nicolas/unf_spineGeneric/sub-01/anat/sub-01_T2star.nii.gz")
+    parser = Parser(__file__)
+    parser.usage.set_description('Blablablabla')
+    parser.add_option(name="-i",
+                      type_value="folder",
+                      description="Folder to test images",
+                      mandatory=True,
+                      example="/home/Documents")
+    parser.add_option(name="-o",
+                      type_value="folder",
+                      description="output folder",
+                      mandatory=True,
+                      example="path/to/output")
+    return parser
 
 
+def main(args=None):
+
+    if args is None:
+        args = sys.argv[1:]
+
+    parser = get_parser()
+    arguments = parser.parse(args)
+    folder_test = arguments['-i']
+    folder_output = arguments['-o']
+    fname_test = []
+    data_test = []
+
+    fname_test.append(folder_test + "/sub-01/anat/sub-01_T2star.nii.gz")
+    data_test.append(np.array(Image(fname_test[0]).data[:, :, 7]))
+
+    # fname_test.append(folder_test + "/sub-02/anat/sub-02_T2star.nii.gz")
+    # data_test.append(np.array(Image(fname_test[0]).data[:, :, 7]))
+    #
+    # fname_test.append(folder_test + "/sub-02/anat/sub-02_T2star.nii.gz")
+    # data_test.append(np.array(Image(fname_test[0]).data[:, :, 7]))
 
 
+    nb_axes = 3
+
+    kmedian_size = 1
+
+    for no, file in enumerate(fname_test):
+
+        angles = symmetry_angle(data_test[0], nb_axes=nb_axes, kmedian_size=kmedian_size)
+        # centermass = image[0].mean(1).round().astype(int)  # will act weird if image is non binary
+        centermass = [int(round(data_test[0].shape[0]/2)), int(round(data_test[0].shape[1]/2))]  # center of image
+
+        image_wline = data_test[0]
+
+        for i_angle in range(0, len(angles)):
+
+            image_wline = generate_2Dimage_line(image_wline, centermass[0], centermass[1], angles[i_angle]-135)
+
+        save_nifti_like(data=image_wline, fname="test_sym" + str(no) + ".nii", fname_like=file, ofolder=folder_output)
+
+
+
+
+if __name__ == "__main__":
+    sct.init_sct()
+    # call main function
+    main()

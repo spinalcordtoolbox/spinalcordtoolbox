@@ -303,11 +303,12 @@ def hog_ancestor(image, nb_bin, grad_ksize=123456789): # TODO implement selectio
     # weight by gradient magnitude : TODO : this step seems dumb, it alters the angles
     # actually it can be smart but by doing a weighted histogram, not weight the image
 
-    grad_mag = (np.abs(gradx.astype(object))**2+np.abs(grady.astype(object))**2)**0.5
-    grad_weight = (grad_mag > 0).astype(int)
+    grad_mag = ((np.abs(gradx.astype(object))**2+np.abs(grady.astype(object))**2)**0.5).astype(int)
+    # TODO: weird data type manipulation, to explain
+    # grad_weight = (grad_mag > 0).astype(int)
 
     # compute histogram :
-    hog_ancest = np.histogram(np.concatenate(orient), bins=nb_bin, range=(-nb_bin/2, nb_bin/2), weights=np.concatenate(grad_weight))
+    hog_ancest = np.histogram(np.concatenate(orient), bins=nb_bin, range=(-nb_bin/2, nb_bin/2), weights=np.concatenate(grad_mag))
     # hog_ancest = np.histogram(np.concatenate(orient), bins=nb_bin)
 
     return hog_ancest[0].astype(float)  # return only the values of the bins, not the bins (we know them)
