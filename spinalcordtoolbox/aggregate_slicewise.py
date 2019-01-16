@@ -337,10 +337,10 @@ def func_std(data, mask=None, map_clusters=None):
     :param map_clusters: not used
     :return:
     """
-    # Check if mask has an additional dimension (in case it is a label). If so, reshape to match dim with data.
+    # Check if mask has an additional dimension (in case it is a label). If so, select the first label
     if mask.ndim == data.ndim + 1:
-        mask = np.reshape(mask, data.shape)
-    average, _ = func_wa(data, np.expand_dims(mask, axis=(mask.ndim-1)))
+        mask = mask[..., 0]
+    average, _ = func_wa(data, np.expand_dims(mask, axis=mask.ndim))
     variance = np.average((data - average) ** 2, weights=mask)
     return math.sqrt(variance), None
 
@@ -353,9 +353,9 @@ def func_wa(data, mask=None, map_clusters=None):
     :param map_clusters: not used
     :return:
     """
-    # Check if mask has an additional dimension (in case it is a label). If so, reshape to match dim with data.
+    # Check if mask has an additional dimension (in case it is a label). If so, select the first label
     if mask.ndim == data.ndim + 1:
-        mask = np.reshape(mask, data.shape)
+        mask = mask[..., 0]
     return np.average(data, weights=mask), None
 
 
