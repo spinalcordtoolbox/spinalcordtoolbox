@@ -112,23 +112,27 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=None, levels=None, pe
             agg_metric[slicegroup]['VertLevel'] = None
         # Loop across functions (e.g.: MEAN, STD)
         for (name, func) in group_funcs:
-            data_slicegroup = metric.data[..., slicegroup]  # selection is done in the last dimension
-            if mask is not None:
-                mask_slicegroup = mask.data[..., slicegroup, :]
-                agg_metric[slicegroup]['Label'] = mask.label
-            else:
-                mask_slicegroup = np.ones(data_slicegroup.shape)
-            # Ignore nonfinite values
-            i_nonfinite = np.where(np.isfinite(data_slicegroup) == False)
-            data_slicegroup[i_nonfinite] = 0.
-            arr_tmp_concat = []
-            for i in range(data_slicegroup.shape[-1]):
-                arr_tmp = np.reshape(mask_slicegroup[..., i], data_slicegroup.shape)
-                arr_tmp[i_nonfinite] = 0.
-                arr_tmp_concat.append(np.expand_dims(arr_tmp, axis=(mask_slicegroup.ndim-1)))
-            mask_slicegroup = np.concatenate(arr_tmp_concat, axis=(mask_slicegroup.ndim-1))
-            # Run estimation
             try:
+                data_slicegroup = metric.data[..., slicegroup]  # selection is done in the last dimension
+                if mask is not None:
+                    mask_slicegroup = mask.data[..., slicegroup, :]
+                    agg_metric[slicegroup]['Label'] = mask.label
+                else:
+                    mask_slicegroup = np.ones(data_slicegroup.shape)
+                # Ignore nonfinite values
+                i_nonfinite = np.where(np.isfinite(data_slicegroup) == False)
+                data_slicegroup[i_nonfinite] = 0.
+                # TODO: the lines below could probably be done more elegantly
+                if mask_slicegroup.ndim == data_slicegroup.ndim + 1:
+                    arr_tmp_concat = []
+                    for i in range(mask_slicegroup.shape[-1]):
+                        arr_tmp = np.reshape(mask_slicegroup[..., i], data_slicegroup.shape)
+                        arr_tmp[i_nonfinite] = 0.
+                        arr_tmp_concat.append(np.expand_dims(arr_tmp, axis=(mask_slicegroup.ndim-1)))
+                    mask_slicegroup = np.concatenate(arr_tmp_concat, axis=(mask_slicegroup.ndim-1))
+                else:
+                    mask_slicegroup[i_nonfinite] = 0.
+                # Run estimation
                 result, _ = func(data_slicegroup, mask_slicegroup, map_clusters)
                 # check if nan
                 if np.isnan(result):
@@ -306,9 +310,10 @@ def func_ml(data, mask, map_clusters=None):
     """
     Compute maximum likelihood (ML) for the first label of mask.
     :param data: nd-array: input data
-    :param mask: (n+1)d-array: input mask. Note: this mask should include ALL labels to satisfy the necessary condition for
-    ML-based estimation, i.e., at each voxel, the sum of all labels (across the last dimension) equals the probability
-    to be inside the tissue. For example, for a pixel within the spinal cord, the sum of all labels should be 1.
+    :param mask: (n+1)d-array: input mask. Note: this mask should include ALL labels to satisfy the necessary condition
+    for ML-based estimation, i.e., at each voxel, the sum of all labels (across the last dimension) equals the
+    probability to be inside the tissue. For example, for a pixel within the spinal cord, the sum of all labels should
+    be 1.
     :return: float: beta corresponding to the first label
     """
     # TODO: support weighted least square

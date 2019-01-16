@@ -87,10 +87,11 @@ def test_aggregate_across_selected_slices(dummy_metrics):
     assert agg_metrics['with float'][(1, 2)]['STD()'] == 4.0
     assert agg_metrics['with int'][(1, 2)]['MEAN()'] == 100.5
     # check that even if there is an error in metric estimation, the function outputs a dict for specific slicegroup
-    assert agg_metrics['with nan'][(1, 2)]['MEAN()'] == 'nan'
+    assert agg_metrics['with nan'][(1, 2)]['MEAN()'] == 101.0
     assert agg_metrics['inconsistent length'][(1, 2)]['MEAN()'] == 'index 2 is out of bounds for axis 0 with size 2'
-    assert agg_metrics['with string'][(1, 2)]['MEAN()'] == "ufunc 'add' did not contain a loop with signature " \
-                                                           "matching types dtype('S32') dtype('S32') dtype('S32')"
+    assert agg_metrics['with string'][(1, 2)]['MEAN()'] == "ufunc 'isfinite' not supported for the input types, and " \
+                                                           "the inputs could not be safely coerced to any supported " \
+                                                           "types according to the casting rule ''safe''"
 
 
 # noinspection 801,PyShadowingNames
