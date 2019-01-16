@@ -12,7 +12,8 @@
 
 from __future__ import absolute_import
 
-import sys, io, os, pickle
+import os, csv
+import numpy as np
 
 
 def init(param_test):
@@ -20,8 +21,8 @@ def init(param_test):
     Initialize class: param_test
     """
     # initialization
-    default_args = ['-i mt/mtr.nii.gz -f mt/label/atlas -method wa -l 51 -z 2:4 -o quantif_mtr.csv']
-    param_test.mtr_groundtruth = 32.6404  # ground truth value
+    default_args = ['-i mt/mtr.nii.gz -f mt/label/atlas -method wa -l 51 -z 1:2 -o quantif_mtr.csv']
+    param_test.mtr_groundtruth = 35.2682  # ground truth value
     param_test.threshold_diff = 0.001  # threshold for computing difference between result and ground truth
 
     # assign default params
@@ -34,7 +35,10 @@ def test_integrity(param_test):
     """
     Test integrity of function
     """
-    mtr_result = pickle.load(io.open(os.path.join(param_test.path_output, "quantif_mtr.pickle"), "rb"))['Metric value'][0]
+    with open(os.path.join(param_test.path_output, "quantif_mtr.csv"), 'r') as csvfile:
+        spamreader = csv.DictReader(csvfile, delimiter=',')
+        mtr_result = np.float([row['WA()'] for row in spamreader][0])
+
     param_test.output += 'Computed MTR:     ' + str(mtr_result)
     param_test.output += '\nGround truth MTR: ' + str(param_test.mtr_groundtruth) + '\n'
     if abs(mtr_result - param_test.mtr_groundtruth) < param_test.threshold_diff:
