@@ -118,6 +118,15 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=None, levels=None, pe
                 agg_metric[slicegroup]['Label'] = mask.label
             else:
                 mask_slicegroup = np.ones(data_slicegroup.shape)
+            # Ignore nonfinite values
+            i_nonfinite = np.where(np.isfinite(data_slicegroup) == False)
+            data_slicegroup[i_nonfinite] = 0.
+            arr_tmp_concat = []
+            for i in range(data_slicegroup.shape[-1]):
+                arr_tmp = np.reshape(mask_slicegroup[..., i], data_slicegroup.shape)
+                arr_tmp[i_nonfinite] = 0.
+                arr_tmp_concat.append(np.expand_dims(arr_tmp, axis=(mask_slicegroup.ndim-1)))
+            mask_slicegroup = np.concatenate(arr_tmp_concat, axis=(mask_slicegroup.ndim-1))
             # Run estimation
             try:
                 result, _ = func(data_slicegroup, mask_slicegroup, map_clusters)
