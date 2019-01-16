@@ -366,7 +366,7 @@ def save_as_csv(agg_metric, fname_out, fname_in=None, append=False):
     :return:
     """
     # Item sorted in order for display in csv output
-    list_item = ['VertLevel', 'Label', 'MEAN', 'WA', 'WA', 'BIN', 'ML', 'MAP', 'STD', 'MAX']
+    list_item = ['VertLevel', 'Label', 'MEAN', 'WA', 'BIN', 'ML', 'MAP', 'STD', 'MAX']
     # TODO: if append=True but file does not exist yet, raise warning and set append=False
     # write header (only if append=False)
     if not append:
