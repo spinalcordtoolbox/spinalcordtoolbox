@@ -37,9 +37,9 @@ def dummy_data_and_labels():
                        [0.9, 1., 0.5, 0., 0.],
                        [0.1, 0., 0., 0., 0.]]).T  # need to transpose because last dim are labels
     # Create label_struc{}
-    label_struc = {0: aggregate_slicewise.LabelStruc(id=0, name='label_0'),
-                   1: aggregate_slicewise.LabelStruc(id=1, name='label_1'),
-                   2: aggregate_slicewise.LabelStruc(id=2, name='label_2')}
+    label_struc = {0: aggregate_slicewise.LabelStruc(id=0, name='label_0', map_cluster=0),
+                   1: aggregate_slicewise.LabelStruc(id=1, name='label_1', map_cluster=1),
+                   2: aggregate_slicewise.LabelStruc(id=2, name='label_2', map_cluster=1)}
     return data, labels, label_struc
 
 
@@ -144,6 +144,7 @@ def test_aggregate_per_level(dummy_metrics, dummy_vert_level):
 
 # noinspection 801,PyShadowingNames
 def test_extract_metric(dummy_data_and_labels):
+    # TODO: test with combined labels
     """Test different estimation methods."""
     # Weighted average
     agg_metric = aggregate_slicewise.extract_metric(dummy_data_and_labels[0], labels=dummy_data_and_labels[1],

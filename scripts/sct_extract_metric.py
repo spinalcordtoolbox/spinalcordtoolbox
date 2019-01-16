@@ -280,7 +280,7 @@ def main(fname_data, path_label, method, slices, levels, fname_output, labels_us
         #     label_struc[51].name = "White Matter"
         #     label_struc[51].filename = ""  # no name because it is combined
         indiv_labels_ids, indiv_labels_names, indiv_labels_files, \
-        combined_labels_ids, combined_labels_names, combined_labels_id_groups, ml_clusters \
+        combined_labels_ids, combined_labels_names, combined_labels_id_groups, map_clusters \
             = read_label_file(path_label, param_default.file_info_label)
     else:
         sct.printv('\nERROR: ' + path_label + ' does not exist.', 1, 'error')
@@ -290,12 +290,15 @@ def main(fname_data, path_label, method, slices, levels, fname_output, labels_us
     for i_label in range(len(indiv_labels_ids)):
         label_struc[indiv_labels_ids[i_label]] = LabelStruc(id=indiv_labels_ids[i_label],
                                                             name=indiv_labels_names[i_label],
-                                                            filename=indiv_labels_files[i_label])
+                                                            filename=indiv_labels_files[i_label],
+                                                            map_cluster=[indiv_labels_ids[i_label] in map_cluster for
+                                                                         map_cluster in map_clusters].index(True))
     # fill IDs for combined labels
     for i_label in range(len(combined_labels_ids)):
         label_struc[combined_labels_ids[i_label]] = LabelStruc(id=combined_labels_id_groups[i_label],
-                                                               name=combined_labels_names[i_label])
-
+                                                               name=combined_labels_names[i_label],
+                                                               map_cluster=[indiv_labels_ids[i_label] in map_cluster for
+                                                                            map_cluster in map_clusters].index(True))
     # check syntax of labels asked by user
     labels_id_user = check_labels(indiv_labels_ids + combined_labels_ids, parse_num_list(labels_user))
     nb_labels = len(indiv_labels_files)
