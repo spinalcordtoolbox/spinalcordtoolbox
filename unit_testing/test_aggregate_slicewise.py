@@ -176,6 +176,7 @@ def test_extract_metric(dummy_data_and_labels):
                                                     indiv_labels_ids=[0, 1], perslice=False, method='max')
     assert agg_metric[agg_metric.keys()[0]]['MAX()'] == 41.0
 
+
 # noinspection 801,PyShadowingNames
 def test_extract_metric_2d(dummy_data_and_labels_2d):
     """Test different estimation methods."""

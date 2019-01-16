@@ -37,8 +37,6 @@ class LabelStruc:
     """
     Class for labels
     """
-    # TODO: at some point, simplify the number of classes and variables related to labels. For example, we should be
-    # able to use Metric for labels and combine data and metadata.
     def __init__(self, id, name, filename=None, map_cluster=None):
         self.id = id
         self.name = name
@@ -46,9 +44,6 @@ class LabelStruc:
         self.map_cluster = map_cluster
 
 
-# TODO: don't make metrics a dict anymore-- it complicates things.
-# TODO: generalize this function to accept n-dim np.array instead of list in Metric().value
-# TODO: maybe no need to bring Metric() class here. Just np.array, then labeling is done in parent function.
 def aggregate_per_slice_or_level(metric, mask=None, slices=None, levels=None, perslice=None, perlevel=False,
                                  vert_level=None, group_funcs=(('MEAN', np.mean),), map_clusters=None):
     """
@@ -138,9 +133,6 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=None, levels=None, pe
 
 def check_labels(indiv_labels_ids, selected_labels):
     """Check the consistency of the labels asked by the user."""
-
-    # TODO: allow selection of combined labels as "36, Ventral, 7:14,22:19"
-
     # convert strings to int
     list_ids_of_labels_of_interest = list(map(int, indiv_labels_ids))
 
@@ -330,15 +322,10 @@ def func_std(data, mask=None, map_clusters=None):
     :param map_clusters: not used
     :return:
     """
-    # Check if mask has an additional dimension (in case it is a label). If so, squeeze matrix to match dim with data.
+    # Check if mask has an additional dimension (in case it is a label). If so, reshape to match dim with data.
     if mask.ndim == data.ndim + 1:
-        # Check if last dim is not equal to one, meaning: the input mask has several labels and we only want to keep
-        # the first label. This is a "hack" to ML estimation, which forces to input all labels.
-        if mask.shape[mask.ndim - 1] > 1:
-            mask = mask[..., 0]
-        else:
-            mask = mask.squeeze()
-    average, _ = func_wa(data, mask)
+        mask = np.reshape(mask, data.shape)
+    average, _ = func_wa(data, np.expand_dims(mask, axis=(mask.ndim-1)))
     variance = np.average((data - average) ** 2, weights=mask)
     return math.sqrt(variance), None
 
@@ -351,9 +338,9 @@ def func_wa(data, mask=None, map_clusters=None):
     :param map_clusters: not used
     :return:
     """
-    # Check if mask has an additional dimension (in case it is a label). If so, squeeze matrix to match dim with data.
+    # Check if mask has an additional dimension (in case it is a label). If so, reshape to match dim with data.
     if mask.ndim == data.ndim + 1:
-        mask = mask.squeeze()
+        mask = np.reshape(mask, data.shape)
     return np.average(data, weights=mask), None
     # return np.sum(np.multiply(data, mask))) / np.sum(mask)
 
@@ -379,7 +366,7 @@ def save_as_csv(agg_metric, fname_out, fname_in=None, append=False):
     :return:
     """
     # Item sorted in order for display in csv output
-    list_item = ['VertLevel', 'Label', 'MEAN', 'WA', 'WATH', 'BIN', 'ML', 'MAP', 'STD']
+    list_item = ['VertLevel', 'Label', 'MEAN', 'WA', 'WA', 'BIN', 'ML', 'MAP', 'STD', 'MAX']
     # TODO: if append=True but file does not exist yet, raise warning and set append=False
     # write header (only if append=False)
     if not append:
