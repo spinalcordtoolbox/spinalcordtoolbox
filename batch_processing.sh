@@ -109,8 +109,8 @@ sct_warp_template -d t2s.nii.gz -w warp_template2t2s.nii.gz
 # Subtract GM segmentation from cord segmentation to obtain WM segmentation
 sct_maths -i t2s_seg.nii.gz -sub t2s_gmseg.nii.gz -o t2s_wmseg.nii.gz
 # Compute cross-sectional area (CSA) of the gray and white matter between C2 and C5
-sct_process_segmentation -i t2s_wmseg.nii.gz -p csa -vert 2:5 -o csa_wm.csv
-sct_process_segmentation -i t2s_gmseg.nii.gz -p csa -vert 2:5 -o csa_gm.csv
+sct_process_segmentation -i t2s_wmseg.nii.gz -p csa -vert 2:5 -perlevel 1 -o wm_
+sct_process_segmentation -i t2s_gmseg.nii.gz -p csa -vert 2:5 -perlevel 1 -o gm_
 # OPTIONAL: Update template registration using information from gray matter segmentation
 # # <<<
 # # Register WM/GM template to WM/GM seg
@@ -171,9 +171,9 @@ sct_register_multimodal -i t1w.nii.gz -d mt1_crop.nii.gz -param step=1,type=im,a
 sct_compute_mtsat -mt mt1_crop.nii.gz -pd mt0_reg.nii.gz -t1 t1w_reg.nii.gz -trmt 30 -trpd 30 -trt1 15 -famt 9 -fapd 9 -fat1 15
 # Extract MTR, T1 and MTsat within the white matter between C2 and C5.
 # Tips: Here we use "-discard-neg-val 1" to discard inconsistent negative values in MTR calculation which are caused by noise.
-sct_extract_metric -i mtr.nii.gz -method map -o mtr_in_wm.txt -l 51 -vert 2:5 -discard-neg-val 1
-sct_extract_metric -i mtsat.nii.gz -method map -o mtsat_in_wm.txt -l 51 -vert 2:5 -discard-neg-val 1
-sct_extract_metric -i t1map.nii.gz -method map -o t1_in_wm.txt -l 51 -vert 2:5 -discard-neg-val 1
+sct_extract_metric -i mtr.nii.gz -method map -o mtr_in_wm.csv -l 51 -vert 2:5
+sct_extract_metric -i mtsat.nii.gz -method map -o mtsat_in_wm.csv -l 51 -vert 2:5
+sct_extract_metric -i t1map.nii.gz -method map -o t1_in_wm.csv -l 51 -vert 2:5
 # Bring MTR to template space (e.g. for group mapping)
 sct_apply_transfo -i mtr.nii.gz -d $SCT_DIR/data/PAM50/template/PAM50_t2.nii.gz -w warp_mt2template.nii.gz
 # Go back to root folder
@@ -207,7 +207,7 @@ sct_warp_template -d dmri_crop_moco_dwi_mean.nii.gz -w warp_template2dmri.nii.gz
 # Tips: The flag -method "restore" allows you to estimate the tensor with robust fit (see: sct_dmri_compute_dti -h)
 sct_dmri_compute_dti -i dmri_crop_moco.nii.gz -bval bvals.txt -bvec bvecs.txt
 # Compute FA within right and left lateral corticospinal tracts from slices 2 to 14 using weighted average method
-sct_extract_metric -i dti_FA.nii.gz -z 2:14 -method wa -l 4,5 -o fa_in_cst.txt -discard-neg-val 1
+sct_extract_metric -i dti_FA.nii.gz -z 2:14 -method wa -l 4,5 -o fa_in_cst.csv
 # Bring metric to template space (e.g. for group mapping)
 sct_apply_transfo -i dti_FA.nii.gz -d $SCT_DIR/data/PAM50/template/PAM50_t2.nii.gz -w warp_dmri2template.nii.gz
 # Go back to root folder
@@ -247,12 +247,12 @@ cd ..
 # ===========================================================================================
 echo "Ended at: $(date +%x_%r)"
 echo
-echo "t2/CSA:         " `awk -F"," ' {print $5}' t2/csa.csv | tail -1`
-echo "mt/MTR(WM):     " `awk -F"," ' {print $9}' mt/mtr_in_wm.txt | tail -1`
-echo "t2s/CSA_GM:     " `awk -F"," ' {print $5}' t2s/csa_gm.csv | tail -1`
-echo "t2s/CSA_WM:     " `awk -F"," ' {print $5}' t2s/csa_wm.csv | tail -1`
-echo "dmri/FA(CST_r): " `awk -F"," ' {print $9}' dmri/fa_in_cst.txt | tail -1`
-echo "dmri/FA(CST_l): " `awk -F"," ' {print $9}' dmri/fa_in_cst.txt | tail -2 | head -1`
+echo "t2/CSA:         " `awk -F"," ' {print $6}' t2/csa.csv | tail -1`
+echo "mt/MTR(WM):     " `awk -F"," ' {print $7}' mt/mtr_in_wm.csv | tail -1`
+echo "t2s/CSA_GM:     " `awk -F"," ' {print $6}' t2s/gm_csa.csv | tail -1`
+echo "t2s/CSA_WM:     " `awk -F"," ' {print $6}' t2s/wm_csa.csv | tail -1`
+echo "dmri/FA(CST_r): " `awk -F"," ' {print $7}' dmri/fa_in_cst.csv | tail -1`
+echo "dmri/FA(CST_l): " `awk -F"," ' {print $7}' dmri/fa_in_cst.csv | tail -2 | head -1`
 echo
 
 # Display syntax to open QC report on web browser
