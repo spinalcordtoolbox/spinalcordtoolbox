@@ -59,6 +59,7 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=None, levels=None, pe
     :param map_clusters: list of list of int: See func_map()
     :return: Aggregated metric
     """
+    # TODO: always add vertLevel if exists
     # if slices is empty, select all available slices from the metric
     ndim = metric.data.ndim
     if not slices:
@@ -109,25 +110,25 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=None, levels=None, pe
             agg_metric[slicegroup]['VertLevel'] = vertgroups[slicegroups.index(slicegroup)]
         else:
             agg_metric[slicegroup]['VertLevel'] = None
-        try:
-            # Loop across functions (e.g.: MEAN, STD)
-            for (name, func) in group_funcs:
-                data_slicegroup = metric.data[..., slicegroup]  # selection is done in the last dimension
-                if mask is not None:
-                    mask_slicegroup = mask.data[..., slicegroup, :]
-                    agg_metric[slicegroup]['Label'] = mask.label
-                else:
-                    mask_slicegroup = np.ones(data_slicegroup.shape)
-                # Run estimation
+        # Loop across functions (e.g.: MEAN, STD)
+        for (name, func) in group_funcs:
+            data_slicegroup = metric.data[..., slicegroup]  # selection is done in the last dimension
+            if mask is not None:
+                mask_slicegroup = mask.data[..., slicegroup, :]
+                agg_metric[slicegroup]['Label'] = mask.label
+            else:
+                mask_slicegroup = np.ones(data_slicegroup.shape)
+            # Run estimation
+            try:
                 result, _ = func(data_slicegroup, mask_slicegroup, map_clusters)
                 # check if nan
                 if np.isnan(result):
                     result = 'nan'
                 # here we create a field with name: FUNC(METRIC_NAME). Example: MEAN(CSA)
                 agg_metric[slicegroup]['{}({})'.format(name, metric.label)] = result
-        except Exception as e:
-            sct.log.warning(e)
-            agg_metric[slicegroup]['{}({})'.format(name, metric.label)] = e.message
+            except Exception as e:
+                sct.log.warning(e)
+                agg_metric[slicegroup]['{}({})'.format(name, metric.label)] = e.message
     return agg_metric
 
 
@@ -342,7 +343,6 @@ def func_wa(data, mask=None, map_clusters=None):
     if mask.ndim == data.ndim + 1:
         mask = np.reshape(mask, data.shape)
     return np.average(data, weights=mask), None
-    # return np.sum(np.multiply(data, mask))) / np.sum(mask)
 
 
 def make_a_string(item):

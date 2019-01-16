@@ -20,7 +20,7 @@ def init(param_test):
     Initialize class: param_test
     """
     # initialization
-    default_args = ['-i mt/mtr.nii.gz -f mt/label/atlas -method wa -vert 4:5 -l 51 -o quantif_mtr.pickle']
+    default_args = ['-i mt/mtr.nii.gz -f mt/label/atlas -method wa -l 51 -z 2:4 -o quantif_mtr.csv']
     param_test.mtr_groundtruth = 32.6404  # ground truth value
     param_test.threshold_diff = 0.001  # threshold for computing difference between result and ground truth
 
