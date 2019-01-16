@@ -2,6 +2,8 @@
 # -*- coding: utf-8
 # Functions dealing with metrics aggregation (mean, std, etc.) across slices and/or vertebral levels
 
+# TODO: when specifying -z, set perslice=0 by default (current behaviour)
+# TODO: when specifying -vert, set perlevel=0 by default (current behaviour)
 # TODO: fix: /Users/julien/code/sct/python/lib/python2.7/site-packages/numpy/lib/function_base.py:961: RuntimeWarning: invalid value encountered in multiply
 #   avg = np.multiply(a, wgt).sum(axis)/scl
 
