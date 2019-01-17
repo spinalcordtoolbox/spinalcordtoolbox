@@ -38,8 +38,8 @@ class Param:
         self.type_window = 'hanning'  # for smooth_centerline @sct_straighten_spinalcord
         self.window_length = 50  # for smooth_centerline @sct_straighten_spinalcord
         self.algo_fitting = 'hanning'  # nurbs, hanning
-        self.perslice = 1
-        self.perlevel = 0
+        self.perslice = None
+        self.perlevel = None
 
 
 def get_parser():

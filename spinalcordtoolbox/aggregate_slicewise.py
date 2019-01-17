@@ -2,8 +2,7 @@
 # -*- coding: utf-8
 # Functions dealing with metrics aggregation (mean, std, etc.) across slices and/or vertebral levels
 
-# TODO: when specifying -z, set perslice=0 by default (current behaviour)
-# TODO: when specifying -vert, set perlevel=0 by default (current behaviour)
+# TODO: when mask is empty, raise specific message instead of throwing "Weight sum to zero..."
 # TODO: fix: /Users/julien/code/sct/python/lib/python2.7/site-packages/numpy/lib/function_base.py:961: RuntimeWarning: invalid value encountered in multiply
 #   avg = np.multiply(a, wgt).sum(axis)/scl
 
@@ -46,7 +45,7 @@ class LabelStruc:
         self.map_cluster = map_cluster
 
 
-def aggregate_per_slice_or_level(metric, mask=None, slices=None, levels=None, perslice=None, perlevel=False,
+def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], perslice=None, perlevel=False,
                                  vert_level=None, group_funcs=(('MEAN', np.mean),), map_clusters=None):
     """
     The aggregation will be performed along the last dimension of 'metric' ndarray.
@@ -62,18 +61,19 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=None, levels=None, pe
     :return: Aggregated metric
     """
     # TODO: always add vertLevel if exists
+
+    # If user neither specified slices nor levels, set perslice=True, otherwise, the output will likely contain nan
+    # because in many cases the segmentation does not span the whole I-S dimension.
+    if perslice is None:
+        if not slices and not levels:
+            perslice = True
+        else:
+            perslice = False
+
     # if slices is empty, select all available slices from the metric
     ndim = metric.data.ndim
     if not slices:
         slices = range(metric.data.shape[ndim-1])
-        # slices = metric[metric.keys()[0]].z
-
-    # If user set perlevel but did not set perslice, force perslice==False. Otherwise, set to True.
-    if perslice is None:
-        if perlevel:
-            perslice = False
-        else:
-            perslice = True
 
     # aggregation based on levels
     if levels:
