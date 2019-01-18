@@ -384,8 +384,8 @@ def merge_dict(dict_in):
     # Fetch first parent key (metric), then loop across children keys (slicegroup):
     for key_children in dict_in[dict_in.keys()[0]].keys():
         # Loop across remaining parent keys
+        dict_merged[key_children] = dict_in[dict_in.keys()[0]][key_children].copy()
         for key_parent in dict_in.keys()[1:]:
-            dict_merged[key_children] = dict_in[dict_in.keys()[0]][key_children].copy()
             dict_merged[key_children].update(dict_in[key_parent][key_children])
     return dict_merged
 
