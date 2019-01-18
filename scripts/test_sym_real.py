@@ -51,13 +51,13 @@ def main(args=None):
     # data_test.append(np.array(Image(fname_test[0]).data[:, :, 7]))
 
 
-    nb_axes = 3
+    nb_axes = 6
 
-    kmedian_size = 1
+    kmedian_size = 3
 
     for no, file in enumerate(fname_test):
 
-        angles = symmetry_angle(data_test[0], nb_axes=nb_axes, kmedian_size=kmedian_size)
+        angles = symmetry_angle(data_test[0], nb_axes=nb_axes, kmedian_size=kmedian_size, figure=False)
         # centermass = image[0].mean(1).round().astype(int)  # will act weird if image is non binary
         centermass = [int(round(data_test[0].shape[0]/2)), int(round(data_test[0].shape[1]/2))]  # center of image
 

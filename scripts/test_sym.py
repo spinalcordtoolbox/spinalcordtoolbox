@@ -22,7 +22,7 @@ square = np.array(Image("square.nii").data)
 test = np.mean(np.array(Image("test.nii").data), axis=2)
 test2 = np.mean(np.array(Image("test2.nii").data), axis=2)
 
-nb_axes = 3
+nb_axes = 6
 
 kmedian_size = 1
 

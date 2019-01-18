@@ -303,7 +303,7 @@ def hog_ancestor(image, nb_bin, grad_ksize=123456789): # TODO implement selectio
     # weight by gradient magnitude : TODO : this step seems dumb, it alters the angles
     # actually it can be smart but by doing a weighted histogram, not weight the image
 
-    grad_mag = ((np.abs(gradx.astype(object))**2+np.abs(grady.astype(object))**2)**0.5).astype(int)
+    grad_mag = ((np.abs(gradx.astype(object)) ** 2 + np.abs(grady.astype(object)) ** 2) ** 0.5)
     # TODO: weird data type manipulation, to explain
     # grad_weight = (grad_mag > 0).astype(int)
 
@@ -382,7 +382,7 @@ def generate_2Dimage_line(image, x0, y0, angle):
 
     return image_wline
 
-def symmetry_angle(image_data, nb_bin=360, kmedian_size=5, nb_axes=1):
+def symmetry_angle(image_data, nb_bin=360, kmedian_size=5, nb_axes=1, figure=False):
 
     "This function outputs the symetry angle, put -1 in nb_axes to get all the axes found" #  TODO: detail this
 
@@ -409,7 +409,10 @@ def symmetry_angle(image_data, nb_bin=360, kmedian_size=5, nb_axes=1):
     else:
         angles = argmaxs_sorted[0:nb_axes]
 
-    return angles
+    if figure:
+        return angles, hog_conv
+    else:
+        return angles
 
 
 
