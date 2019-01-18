@@ -81,15 +81,15 @@ def test_aggregate_across_selected_slices(dummy_metrics):
     for metric in dummy_metrics:
         agg_metrics[metric] = \
             aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics[metric], slices=[1, 2], perslice=False,
-                                                             group_funcs=(('MEAN', aggregate_slicewise.func_wa),
+                                                             group_funcs=(('WA', aggregate_slicewise.func_wa),
                                                                           ('STD', aggregate_slicewise.func_std)))
-    assert agg_metrics['with float'][(1, 2)]['MEAN()'] == 35.0
+    assert agg_metrics['with float'][(1, 2)]['WA()'] == 35.0
     assert agg_metrics['with float'][(1, 2)]['STD()'] == 4.0
-    assert agg_metrics['with int'][(1, 2)]['MEAN()'] == 100.5
+    assert agg_metrics['with int'][(1, 2)]['WA()'] == 100.5
     # check that even if there is an error in metric estimation, the function outputs a dict for specific slicegroup
-    assert agg_metrics['with nan'][(1, 2)]['MEAN()'] == 101.0
-    assert agg_metrics['inconsistent length'][(1, 2)]['MEAN()'] == 'index 2 is out of bounds for axis 0 with size 2'
-    assert agg_metrics['with string'][(1, 2)]['MEAN()'] == "ufunc 'isfinite' not supported for the input types, and " \
+    assert agg_metrics['with nan'][(1, 2)]['WA()'] == 101.0
+    assert agg_metrics['inconsistent length'][(1, 2)]['WA()'] == 'index 2 is out of bounds for axis 0 with size 2'
+    assert agg_metrics['with string'][(1, 2)]['WA()'] == "ufunc 'isfinite' not supported for the input types, and " \
                                                            "the inputs could not be safely coerced to any supported " \
                                                            "types according to the casting rule ''safe''"
 
@@ -98,8 +98,8 @@ def test_aggregate_across_selected_slices(dummy_metrics):
 def test_aggregate_across_all_slices(dummy_metrics):
     """Test extraction of metrics aggregation across slices: All slices by default"""
     agg_metric = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], perslice=False,
-                                                                  group_funcs=(('MEAN', aggregate_slicewise.func_wa),))
-    assert agg_metric[agg_metric.keys()[0]]['MEAN()'] == 38.0
+                                                                  group_funcs=(('WA', aggregate_slicewise.func_wa),))
+    assert agg_metric[agg_metric.keys()[0]]['WA()'] == 38.0
 
 
 # noinspection 801,PyShadowingNames
@@ -107,9 +107,9 @@ def test_aggregate_per_slice(dummy_metrics):
     """Test extraction of metrics aggregation per slice: Selected slices"""
     agg_metric = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], slices=[3, 4],
                                                                   perslice=True,
-                                                                  group_funcs=(('MEAN', aggregate_slicewise.func_wa),))
-    assert agg_metric[(3,)]['MEAN()'] == 41.0
-    assert agg_metric[(4,)]['MEAN()'] == 50.0
+                                                                  group_funcs=(('WA', aggregate_slicewise.func_wa),))
+    assert agg_metric[(3,)]['WA()'] == 41.0
+    assert agg_metric[(4,)]['WA()'] == 50.0
 
 
 # noinspection 801,PyShadowingNames
@@ -118,8 +118,8 @@ def test_aggregate_across_levels(dummy_metrics, dummy_vert_level):
     agg_metric = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], levels=[2, 3],
                                                                   perslice=False, perlevel=False,
                                                                   vert_level=dummy_vert_level,
-                                                                  group_funcs=(('MEAN', aggregate_slicewise.func_wa),))
-    assert agg_metric[(0, 1, 2, 3)] == {'VertLevel': (2, 3), 'MEAN()': 35.0}
+                                                                  group_funcs=(('WA', aggregate_slicewise.func_wa),))
+    assert agg_metric[(0, 1, 2, 3)] == {'VertLevel': (2, 3), 'WA()': 35.0}
 
 
 # noinspection 801,PyShadowingNames
@@ -128,9 +128,9 @@ def test_aggregate_across_levels_perslice(dummy_metrics, dummy_vert_level):
     agg_metric = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], levels=[2, 3],
                                                                   perslice=True, perlevel=False,
                                                                   vert_level=dummy_vert_level,
-                                                                  group_funcs=(('MEAN', aggregate_slicewise.func_wa),))
-    assert agg_metric[(0,)] == {'VertLevel': (2,), 'MEAN()': 29.0}
-    assert agg_metric[(2,)] == {'VertLevel': (3,), 'MEAN()': 39.0}
+                                                                  group_funcs=(('WA', aggregate_slicewise.func_wa),))
+    assert agg_metric[(0,)] == {'VertLevel': (2,), 'WA()': 29.0}
+    assert agg_metric[(2,)] == {'VertLevel': (3,), 'WA()': 39.0}
 
 
 # noinspection 801,PyShadowingNames
@@ -138,9 +138,9 @@ def test_aggregate_per_level(dummy_metrics, dummy_vert_level):
     """Test extraction of metrics aggregation per vertebral level"""
     agg_metric = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], levels=[2, 3],
                                                                   perlevel=True, vert_level=dummy_vert_level,
-                                                                  group_funcs=(('MEAN', aggregate_slicewise.func_wa),))
-    assert agg_metric[(0, 1)] == {'VertLevel': (2,), 'MEAN()': 30.0}
-    assert agg_metric[(2, 3)] == {'VertLevel': (3,), 'MEAN()': 40.0}
+                                                                  group_funcs=(('WA', aggregate_slicewise.func_wa),))
+    assert agg_metric[(0, 1)] == {'VertLevel': (2,), 'WA()': 30.0}
+    assert agg_metric[(2, 3)] == {'VertLevel': (3,), 'WA()': 40.0}
 
 
 # noinspection 801,PyShadowingNames
@@ -192,7 +192,7 @@ def test_save_as_csv(dummy_metrics):
     """Test writing of output metric csv file"""
     agg_metric = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], slices=[3, 4],
                                                                   perslice=False,
-                                                                  group_funcs=(('MEAN', aggregate_slicewise.func_wa),
+                                                                  group_funcs=(('WA', aggregate_slicewise.func_wa),
                                                                                ('STD', aggregate_slicewise.func_std)))
     # standard scenario
     aggregate_slicewise.save_as_csv(agg_metric, 'tmp_file_out.csv', fname_in='FakeFile.txt')
@@ -216,7 +216,7 @@ def test_save_as_csv_slices(dummy_metrics, dummy_vert_level):
     agg_metric = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], levels=[3, 4],
                                                                   perslice=False, perlevel=False,
                                                                   vert_level=dummy_vert_level,
-                                                                  group_funcs=(('MEAN', aggregate_slicewise.func_wa),))
+                                                                  group_funcs=(('WA', aggregate_slicewise.func_wa),))
     aggregate_slicewise.save_as_csv(agg_metric, 'tmp_file_out.csv')
     with open('tmp_file_out.csv', 'r') as csvfile:
         reader = csv.DictReader(csvfile, delimiter=',')
@@ -229,7 +229,7 @@ def test_save_as_csv_slices(dummy_metrics, dummy_vert_level):
 def test_save_as_csv_sorting(dummy_metrics):
     """Make sure slices are sorted in output csv file"""
     agg_metric = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], perslice=True,
-                                                                  group_funcs=(('MEAN', aggregate_slicewise.func_wa),))
+                                                                  group_funcs=(('WA', aggregate_slicewise.func_wa),))
     aggregate_slicewise.save_as_csv(agg_metric, 'tmp_file_out.csv')
     with open('tmp_file_out.csv', 'r') as csvfile:
         spamreader = csv.DictReader(csvfile, delimiter=',')
