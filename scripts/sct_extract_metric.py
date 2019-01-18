@@ -261,7 +261,10 @@ def main(fname_data, path_label, method, slices, levels, fname_output, labels_us
         combined_labels_ids = []
         combined_labels_names = []
         combined_labels_id_groups = []
-        ml_clusters = []
+        map_clusters = []
+        label_struc = {0: LabelStruc(id=0,
+                                     name=sct.extract_fname(path_label)[1],
+                                     filename=path_label)}
         # set path_label to empty string, because indiv_labels_files will replace it from now on
         path_label = ''
     elif os.path.isdir(path_label):
@@ -282,23 +285,24 @@ def main(fname_data, path_label, method, slices, levels, fname_output, labels_us
         indiv_labels_ids, indiv_labels_names, indiv_labels_files, \
         combined_labels_ids, combined_labels_names, combined_labels_id_groups, map_clusters \
             = read_label_file(path_label, param_default.file_info_label)
+
+        label_struc = {}
+        # fill IDs for indiv labels
+        for i_label in range(len(indiv_labels_ids)):
+            label_struc[indiv_labels_ids[i_label]] = LabelStruc(id=indiv_labels_ids[i_label],
+                                                                name=indiv_labels_names[i_label],
+                                                                filename=indiv_labels_files[i_label],
+                                                                map_cluster=[indiv_labels_ids[i_label] in map_cluster for
+                                                                             map_cluster in map_clusters].index(True))
+        # fill IDs for combined labels
+        for i_label in range(len(combined_labels_ids)):
+            label_struc[combined_labels_ids[i_label]] = LabelStruc(id=combined_labels_id_groups[i_label],
+                                                                   name=combined_labels_names[i_label],
+                                                                   map_cluster=[indiv_labels_ids[i_label] in map_cluster for
+                                                                                map_cluster in map_clusters].index(True))
     else:
         sct.printv('\nERROR: ' + path_label + ' does not exist.', 1, 'error')
 
-    label_struc = {}
-    # fill IDs for indiv labels
-    for i_label in range(len(indiv_labels_ids)):
-        label_struc[indiv_labels_ids[i_label]] = LabelStruc(id=indiv_labels_ids[i_label],
-                                                            name=indiv_labels_names[i_label],
-                                                            filename=indiv_labels_files[i_label],
-                                                            map_cluster=[indiv_labels_ids[i_label] in map_cluster for
-                                                                         map_cluster in map_clusters].index(True))
-    # fill IDs for combined labels
-    for i_label in range(len(combined_labels_ids)):
-        label_struc[combined_labels_ids[i_label]] = LabelStruc(id=combined_labels_id_groups[i_label],
-                                                               name=combined_labels_names[i_label],
-                                                               map_cluster=[indiv_labels_ids[i_label] in map_cluster for
-                                                                            map_cluster in map_clusters].index(True))
     # check syntax of labels asked by user
     labels_id_user = check_labels(indiv_labels_ids + combined_labels_ids, parse_num_list(labels_user))
     nb_labels = len(indiv_labels_files)
