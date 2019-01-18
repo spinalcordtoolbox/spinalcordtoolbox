@@ -120,7 +120,7 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], persli
                 else:
                     mask_slicegroup = np.ones(data_slicegroup.shape)
                 # Ignore nonfinite values
-                i_nonfinite = np.where(np.isfinite(data_slicegroup) is False)
+                i_nonfinite = np.where(np.isfinite(data_slicegroup) == False)
                 data_slicegroup[i_nonfinite] = 0.
                 # TODO: the lines below could probably be done more elegantly
                 if mask_slicegroup.ndim == data_slicegroup.ndim + 1:
