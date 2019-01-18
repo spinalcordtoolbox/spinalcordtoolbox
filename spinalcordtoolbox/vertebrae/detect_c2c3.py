@@ -30,7 +30,7 @@ import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image, zeros_like
 
 
-def detect_c2c3(nii_im, nii_seg, contrast, verbose=1):
+def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, verbose=1):
     """
     Detect the posterior edge of C2-C3 disc.
     :param nii_im:
@@ -53,13 +53,15 @@ def detect_c2c3(nii_im, nii_seg, contrast, verbose=1):
     # create temporary folder with intermediate results
     sct.log.info("Creating temporary folder...")
     tmp_folder = sct.TempFolder()
+    # print tmp_folder.path_tmp
     tmp_folder.chdir()
 
     # Extract mid-slice
     nii_im.change_orientation('PIR')
     nii_seg_flat.change_orientation('PIR')
     mid_RL = int(np.rint(nii_im.dim[2] * 1.0 / 2))
-    midSlice = np.mean(nii_im.data[:, :, mid_RL-3:mid_RL+4], 2) # average 7 slices
+    nb_sag_avg_half = int(nb_sag_avg / 2 / nii_im.dim[6])
+    midSlice = np.mean(nii_im.data[:, :, mid_RL-nb_sag_avg_half:mid_RL+nb_sag_avg_half+1], 2) # average 7 slices
     midSlice_seg = nii_seg_flat.data[:, :, mid_RL]
     nii_midSlice = msct_image.zeros_like(nii_im)
     nii_midSlice.data = midSlice
