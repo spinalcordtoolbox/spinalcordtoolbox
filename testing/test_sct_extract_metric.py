@@ -22,7 +22,7 @@ def init(param_test):
     """
     # initialization
     default_args = ['-i mt/mtr.nii.gz -f mt/label/atlas -method wa -l 51 -z 1:2 -o quantif_mtr.csv']
-    param_test.mtr_groundtruth = 35.2682  # ground truth value
+    param_test.mtr_groundtruth = 32.6404  # ground truth value
     param_test.threshold_diff = 0.001  # threshold for computing difference between result and ground truth
 
     # assign default params
