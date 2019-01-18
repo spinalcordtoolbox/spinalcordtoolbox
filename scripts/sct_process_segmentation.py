@@ -14,7 +14,6 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-# TODO: flag -o is not friendly. Maybe we should concatenate all metrics across columns instead of outputing various metrics.
 # TODO: update "-p centerline" with new modifs
 # TODO: the import of scipy.misc imsave was moved to the specific cases (orth and ellipse) in order to avoid issue #62. This has to be cleaned in the future.
 

@@ -3,8 +3,6 @@
 # Functions dealing with metrics aggregation (mean, std, etc.) across slices and/or vertebral levels
 
 # TODO: when mask is empty, raise specific message instead of throwing "Weight sum to zero..."
-# TODO: fix: /Users/julien/code/sct/python/lib/python2.7/site-packages/numpy/lib/function_base.py:961: RuntimeWarning: invalid value encountered in multiply
-#   avg = np.multiply(a, wgt).sum(axis)/scl
 
 from __future__ import absolute_import
 
@@ -400,7 +398,14 @@ def save_as_csv(agg_metric, fname_out, fname_in=None, append=False):
     :return:
     """
     # Item sorted in order for display in csv output
-    list_item = ['VertLevel', 'Label', 'MEAN', 'WA', 'BIN', 'ML', 'MAP', 'STD', 'MAX']
+    # list_item = ['VertLevel', 'Label', 'MEAN', 'WA', 'BIN', 'ML', 'MAP', 'STD', 'MAX']
+    # The thing below is ugly, but this is the only solution I found to order the columns without refactoring the code
+    # with OrderedDict.
+    list_item = ['VertLevel', 'Label', 'MEAN(area)', 'STD(area)', 'MEAN(AP_diameter)', 'STD(AP_diameter)',
+                 'MEAN(RL_diameter)', 'STD(RL_diameter)', 'MEAN(ratio_minor_major)', 'STD(ratio_minor_major)',
+                 'MEAN(eccentricity)', 'STD(eccentricity)', 'MEAN(orientation)', 'STD(orientation)',
+                 'MEAN(equivalent_diameter)', 'STD(equivalent_diameter)', 'MEAN(solidity)', 'STD(solidity)',
+                 'WA()', 'BIN()', 'ML()', 'MAP()', 'STD()', 'MAX()']
     # TODO: if append=True but file does not exist yet, raise warning and set append=False
     # write header (only if append=False)
     if not append:
@@ -412,6 +417,7 @@ def save_as_csv(agg_metric, fname_out, fname_in=None, append=False):
                 for key in agg_metric_key:
                     if item in key:
                         header.append(key)
+                        break
             writer = csv.DictWriter(csvfile, fieldnames=header)
             writer.writeheader()
 
@@ -434,4 +440,5 @@ def save_as_csv(agg_metric, fname_out, fname_in=None, append=False):
                                 parse_num_list_inv(agg_metric[slicegroup]['VertLevel']))  # list vertebral levels
                         else:
                             line.append(str(agg_metric[slicegroup][key]))
+                        break
             spamwriter.writerow(line)
