@@ -399,13 +399,13 @@ def save_as_csv(agg_metric, fname_out, fname_in=None, append=False):
     """
     # Item sorted in order for display in csv output
     # list_item = ['VertLevel', 'Label', 'MEAN', 'WA', 'BIN', 'ML', 'MAP', 'STD', 'MAX']
-    # The thing below is ugly, but this is the only solution I found to order the columns without refactoring the code
-    # with OrderedDict.
+    # TODO: The thing below is ugly and needs to be fixed, but this is the only solution I found to order the columns
+    #  without refactoring the code with OrderedDict.
     list_item = ['VertLevel', 'Label', 'MEAN(area)', 'STD(area)', 'MEAN(AP_diameter)', 'STD(AP_diameter)',
                  'MEAN(RL_diameter)', 'STD(RL_diameter)', 'MEAN(ratio_minor_major)', 'STD(ratio_minor_major)',
                  'MEAN(eccentricity)', 'STD(eccentricity)', 'MEAN(orientation)', 'STD(orientation)',
                  'MEAN(equivalent_diameter)', 'STD(equivalent_diameter)', 'MEAN(solidity)', 'STD(solidity)',
-                 'WA()', 'BIN()', 'ML()', 'MAP()', 'STD()', 'MAX()']
+                 'MEAN(CSA', 'STD(CSA', 'MEAN(Angle', 'STD(Angle', 'WA()', 'BIN()', 'ML()', 'MAP()', 'STD()', 'MAX()']
     # TODO: if append=True but file does not exist yet, raise warning and set append=False
     # write header (only if append=False)
     if not append:
