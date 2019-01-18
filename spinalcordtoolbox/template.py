@@ -19,18 +19,17 @@ def get_slices_from_vertebral_levels(im_vertlevel, level):
     data_vertlevel = im_vertlevel.data
     slices = []
     # loop across z
-    for iz in range(im_vertlevel.dim[2]):
-        # find indices of non-null values
-        indx, indy = np.where(data_vertlevel[:, :, iz])
-        # average non-null values and round to closest
-        try:
-            average_value = int(np.round(np.mean(data_vertlevel[indx, indy, iz])))
+    for iz in range(data_vertlevel.shape[-1]):
+        # fetch non-null and finite values
+        data_vertlevel_nonzero = data_vertlevel[..., iz].flatten()[np.nonzero(data_vertlevel[..., iz].flatten())]
+        data_vertlevel_nonzero_finite = [i for i in data_vertlevel_nonzero if np.isfinite(i)]
+        # avoid empty slice
+        if not data_vertlevel_nonzero_finite == []:
+            # average non-null values and round to closest
+            average_value = int(np.round(np.mean(data_vertlevel_nonzero_finite)))
             # if that matches the desired level, append it to slice list
             if average_value == level:
                 slices.append(iz)
-        except ValueError as e:
-            # slice is empty (no indx found). Do nothing.
-            log.debug('Empty slice: z=%s (%s)', iz, e)
     return slices
 
 

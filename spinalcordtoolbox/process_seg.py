@@ -10,6 +10,7 @@ import numpy as np
 
 import sct_utils as sct
 import spinalcordtoolbox.image as msct_image
+from spinalcordtoolbox.aggregate_slicewise import Metric
 # TODO don't import SCT stuff outside of spinalcordtoolbox/
 from sct_straighten_spinalcord import smooth_centerline
 import msct_shape
@@ -21,20 +22,6 @@ from .centerline import optic
 # on v3.2.2 and earlier, the following volumes were output by default, which was a waste of time (people don't use it)
 OUTPUT_CSA_VOLUME = 0
 OUTPUT_ANGLE_VOLUME = 0
-
-
-class Metric:
-    """
-    Class to include in dictionaries to associate metric value and label
-    """
-    def __init__(self, z=[], value=[], label=''):
-        """
-        :param value:
-        :param label:
-        """
-        self.z = z
-        self.value = value
-        self.label = label
 
 
 def compute_csa(segmentation, algo_fitting='hanning', type_window='hanning', window_length=80, angle_correction=True,
@@ -103,9 +90,9 @@ def compute_csa(segmentation, algo_fitting='hanning', type_window='hanning', win
     # Compute CSA
     sct.printv('\nCompute CSA...', verbose)
 
-    # Empty arrays in which CSA for each z slice will be stored
-    csa = np.zeros(max_z_index - min_z_index + 1)
-    angles = np.zeros(max_z_index - min_z_index + 1)
+    # Initialize 1d array with nan. Each element corresponds to a slice.
+    csa = np.full_like(np.empty(nz), np.nan, dtype=np.double)
+    angles = np.full_like(np.empty(nz), np.nan, dtype=np.double)
 
     for iz in range(min_z_index, max_z_index + 1):
         if angle_correction:
@@ -132,8 +119,8 @@ def compute_csa(segmentation, algo_fitting='hanning', type_window='hanning', win
         number_voxels = np.sum(data_seg[:, :, iz])
 
         # compute CSA, by scaling with voxel size (in mm) and adjusting for oblique plane
-        csa[iz - min_z_index] = number_voxels * px * py * np.cos(angle)
-        angles[iz - min_z_index] = math.degrees(angle)
+        csa[iz] = number_voxels * px * py * np.cos(angle)
+        angles[iz] = math.degrees(angle)
 
     # Remove temporary files
     if remove_temp_files:
@@ -141,9 +128,8 @@ def compute_csa(segmentation, algo_fitting='hanning', type_window='hanning', win
         sct.rmtree(path_tmp)
 
     # prepare output
-    metrics = {'csa': Metric(z=range(min_z_index, max_z_index+1), value=csa, label='CSA [mm^2]'),
-               'angle': Metric(z=range(min_z_index, max_z_index+1), value=angles,
-                               label='Angle between cord axis and z [deg]')}
+    metrics = {'csa': Metric(data=csa, label='CSA [mm^2]'),
+               'angle': Metric(data=angles, label='Angle between cord axis and z [deg]')}
     return metrics
 
 
@@ -164,7 +150,7 @@ def compute_shape(segmentation, algo_fitting='hanning', window_length=50, remove
     # Extract min and max index in Z direction
     data_seg = im_seg.data
     X, Y, Z = (data_seg > 0).nonzero()
-    min_z_index, max_z_index = min(Z), max(Z)
+    # min_z_index, max_z_index = min(Z), max(Z)
 
     shape_properties = msct_shape.compute_properties_along_centerline(im_seg=im_seg,
                                                                       smooth_factor=0.0,
@@ -177,7 +163,7 @@ def compute_shape(segmentation, algo_fitting='hanning', window_length=50, remove
     for key, value in shape_properties.items():
         # Making sure all entries added to metrics have results
         if not value == []:
-            metrics[key] = Metric(z=range(min_z_index, max_z_index+1), value=np.array(value), label=key)
+            metrics[key] = Metric(data=np.array(value), label=key)
 
     return metrics
 
