@@ -115,6 +115,8 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], persli
                 if mask is not None:
                     mask_slicegroup = mask.data[..., slicegroup, :]
                     agg_metric[slicegroup]['Label'] = mask.label
+                    # Add volume fraction
+                    agg_metric[slicegroup]['Size [vox]'] = np.sum(mask_slicegroup.flatten())
                 else:
                     mask_slicegroup = np.ones(data_slicegroup.shape)
                 # Ignore nonfinite values
@@ -399,7 +401,7 @@ def save_as_csv(agg_metric, fname_out, fname_in=None, append=False):
     # list_item = ['VertLevel', 'Label', 'MEAN', 'WA', 'BIN', 'ML', 'MAP', 'STD', 'MAX']
     # TODO: The thing below is ugly and needs to be fixed, but this is the only solution I found to order the columns
     #  without refactoring the code with OrderedDict.
-    list_item = ['VertLevel', 'Label', 'MEAN(area)', 'STD(area)', 'MEAN(AP_diameter)', 'STD(AP_diameter)',
+    list_item = ['VertLevel', 'Label', 'Size [vox]', 'MEAN(area)', 'STD(area)', 'MEAN(AP_diameter)', 'STD(AP_diameter)',
                  'MEAN(RL_diameter)', 'STD(RL_diameter)', 'MEAN(ratio_minor_major)', 'STD(ratio_minor_major)',
                  'MEAN(eccentricity)', 'STD(eccentricity)', 'MEAN(orientation)', 'STD(orientation)',
                  'MEAN(equivalent_diameter)', 'STD(equivalent_diameter)', 'MEAN(solidity)', 'STD(solidity)',
