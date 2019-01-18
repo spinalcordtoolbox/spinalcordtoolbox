@@ -39,7 +39,7 @@ path_sct = os.path.dirname(path_script)
 
 class Param:
     def __init__(self):
-        self.method = 'wath'
+        self.method = 'wa'
         self.path_label = os.path.join(path_sct, "data", "PAM50", "atlas")
         self.verbose = 1
         self.vertebral_levels = ''
