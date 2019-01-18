@@ -372,6 +372,24 @@ def make_a_string(item):
         return item
 
 
+def merge_dict(dict_in):
+    """
+    Merge n dictionaries that are contained at the root key
+    Example:
+      dict = {'key1': {'subkey1': dict1}, 'key2': {'subkey2': dict2}} --> {'subkey1': dict1+dict2, ...}
+    :param dict_in:
+    :return:
+    """
+    dict_merged = {}
+    # Fetch first parent key (metric), then loop across children keys (slicegroup):
+    for key_children in dict_in[dict_in.keys()[0]].keys():
+        # Loop across remaining parent keys
+        for key_parent in dict_in.keys()[1:]:
+            dict_merged[key_children] = dict_in[dict_in.keys()[0]][key_children].copy()
+            dict_merged[key_children].update(dict_in[key_parent][key_children])
+    return dict_merged
+
+
 def save_as_csv(agg_metric, fname_out, fname_in=None, append=False):
     """
     Write metric structure as csv. If field 'error' exists, it will add a specific column.
