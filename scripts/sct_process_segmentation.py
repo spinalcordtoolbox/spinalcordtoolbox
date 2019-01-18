@@ -21,12 +21,11 @@ from __future__ import absolute_import, division
 
 import sys, os
 
-import numpy as np
-
 import sct_utils as sct
 from msct_parser import Parser
 from spinalcordtoolbox import process_seg
-from spinalcordtoolbox.aggregate_slicewise import aggregate_per_slice_or_level, save_as_csv
+from spinalcordtoolbox.aggregate_slicewise import aggregate_per_slice_or_level, save_as_csv, func_wa, func_std, \
+    merge_dict
 from spinalcordtoolbox.utils import parse_num_list
 
 
@@ -39,8 +38,8 @@ class Param:
         self.type_window = 'hanning'  # for smooth_centerline @sct_straighten_spinalcord
         self.window_length = 50  # for smooth_centerline @sct_straighten_spinalcord
         self.algo_fitting = 'hanning'  # nurbs, hanning
-        self.perslice = 0
-        self.perlevel = 0
+        self.perslice = None
+        self.perlevel = None
 
 
 def get_parser():
@@ -169,18 +168,15 @@ def main(args):
     slices = param.slices
     angle_correction = True
     use_phys_coord = True
-    group_funcs = (('mean', np.mean), ('std', np.std))  # functions to perform when aggregating metrics along S-I
+    group_funcs = (('MEAN', func_wa), ('STD', func_std))  # functions to perform when aggregating metrics along S-I
 
     fname_segmentation = sct.get_absolute_path(arguments['-i'])
     name_process = arguments['-p']
-    overwrite = 0
     fname_vert_levels = ''
     if '-o' in arguments:
         file_out = os.path.abspath(arguments['-o'])
     else:
         file_out = ''
-    if "-ofolder" in arguments:
-        sct.printv('The flag "-ofolder" is deprecated. Please use -o. Exiting.', 1, 'error')
     if '-append' in arguments:
         append = int(arguments['-append'])
     else:
@@ -220,8 +216,7 @@ def main(args):
 
     # update fields
     param.verbose = verbose
-
-    # update file_out with name of process
+    metrics_agg = {}
     if not file_out:
         file_out = name_process + '.csv'
 
@@ -236,14 +231,14 @@ def main(args):
                                           angle_correction=angle_correction, use_phys_coord=use_phys_coord,
                                           remove_temp_files=remove_temp_files, verbose=verbose)
 
-        metrics_agg = aggregate_per_slice_or_level(metrics, slices=parse_num_list(slices),
-                                                   levels=parse_num_list(vert_levels), perslice=perslice,
-                                                   perlevel=perlevel, vert_level=fname_vert_levels,
-                                                   group_funcs=group_funcs)
-
-        save_as_csv(metrics_agg, file_out, fname_in=fname_segmentation, append=append)
-        sct.printv('\nDone! To view results, type:')
-        sct.printv('open ' + file_out + '\n', verbose=1, type='info')
+        for key in metrics:
+            metrics_agg[key] = aggregate_per_slice_or_level(metrics[key], slices=parse_num_list(slices),
+                                                            levels=parse_num_list(vert_levels), perslice=perslice,
+                                                            perlevel=perlevel, vert_level=fname_vert_levels,
+                                                            group_funcs=group_funcs)
+        metrics_agg_merged = merge_dict(metrics_agg)
+        save_as_csv(metrics_agg_merged, file_out, fname_in=fname_segmentation, append=append)
+        sct.printv('\nFile created: '+file_out, verbose=1, type='info')
 
     if name_process == 'label-vert':
         if '-discfile' in arguments:
@@ -257,13 +252,14 @@ def main(args):
         if '-discfile' in arguments:
             fname_discs = arguments['-discfile']
         metrics = process_seg.compute_shape(fname_segmentation, remove_temp_files=remove_temp_files, verbose=verbose)
-        metrics_agg = aggregate_per_slice_or_level(metrics, slices=parse_num_list(slices),
-                                                   levels=parse_num_list(vert_levels), perslice=perslice,
-                                                   perlevel=perlevel, vert_level=fname_vert_levels,
-                                                   group_funcs=group_funcs)
-        save_as_csv(metrics_agg, file_out, fname_in=fname_segmentation, append=append)
-        sct.printv('\nDone! To view results, type:')
-        sct.printv('open ' + file_out + '\n', verbose=1, type='info')
+        for key in metrics:
+            metrics_agg[key] = aggregate_per_slice_or_level(metrics[key], slices=parse_num_list(slices),
+                                                            levels=parse_num_list(vert_levels), perslice=perslice,
+                                                            perlevel=perlevel, vert_level=fname_vert_levels,
+                                                            group_funcs=group_funcs)
+        metrics_agg_merged = merge_dict(metrics_agg)
+        save_as_csv(metrics_agg_merged, file_out, fname_in=fname_segmentation, append=append)
+        sct.printv('\nFile created: ' + file_out, verbose=1, type='info')
 
 
 if __name__ == "__main__":
