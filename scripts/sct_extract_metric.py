@@ -262,11 +262,11 @@ def main(fname_data, path_label, method, slices, levels, fname_output, labels_us
         combined_labels_names = []
         combined_labels_id_groups = []
         map_clusters = []
+        label_struc = {0: LabelStruc(id=0,
+                                     name=sct.extract_fname(path_label)[1],
+                                     filename=path_label)}
         # set path_label to empty string, because indiv_labels_files will replace it from now on
         path_label = ''
-        label_struc = {0: LabelStruc(id=0,
-                                     name='Mask',
-                                     filename=path_label)}
     elif os.path.isdir(path_label):
         # Labels is an SCT atlas folder structure
         # Parse labels according to the file info_label.txt
