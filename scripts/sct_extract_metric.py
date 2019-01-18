@@ -15,7 +15,8 @@
 
 # TODO: fetch vert level in atlas by default-- would be nice to output in csv
 # TODO: use argparse
-# TODO (not urgent): vertebral levels selection should only consider voxels of the selected levels in slices where two different vertebral levels coexist (and not the whole slice)
+# TODO (not urgent): vertebral levels selection should only consider voxels of the selected levels in slices where
+#  two different vertebral levels coexist (and not the whole slice)
 
 from __future__ import division, absolute_import
 
@@ -46,7 +47,8 @@ class Param:
         self.average_all_labels = 0  # average all labels together after concatenation
         self.fname_output = 'extract_metric.csv'
         self.file_info_label = 'info_label.txt'
-        self.perslice = 1
+        self.perslice = None
+        self.perlevel = None
 
 
 def get_parser():
@@ -267,10 +269,8 @@ def main(fname_data, path_label, method, slices, levels, fname_output, labels_us
         # Parse labels according to the file info_label.txt
         # Note: the "combined_labels_*" is a list of single labels that are defined in the section defined by the keyword
         # "# Keyword=CombinedLabels" in info_label.txt.
-        # TODO: include ML clusters in structure
         # TODO: redirect to appropriate Sphinx documentation
         # TODO: output Class instead of multiple variables.
-        # TODO: output dict in form: labels_struc.
         #   Example 1:
         #     label_struc[2].id = (2)
         #     label_struc[2].name = "left fasciculus cuneatus"
@@ -329,13 +329,14 @@ def main(fname_data, path_label, method, slices, levels, fname_output, labels_us
         sct.printv('\nERROR: Metric data and labels DO NOT HAVE SAME DIMENSIONS.', 1, type='error')
 
     for id_label in labels_id_user:
-        sct.printv('\nEstimation for label: '+label_struc[id_label].name, verbose)
+        sct.printv('Estimation for label: '+label_struc[id_label].name, verbose)
         agg_metric = extract_metric(data, labels=labels, slices=slices, levels=levels, perslice=perslice,
                                     perlevel=perlevel, vert_level=im_vertebral_labeling, method=method,
                                     label_struc=label_struc, id_label=id_label, indiv_labels_ids=indiv_labels_ids)
 
         save_as_csv(agg_metric, fname_output, fname_in=fname_data, append=append)
         append = True  # when looping across labels, need to append results in the same file
+    sct.printv('\nFile created: ' + fname_output, verbose=1, type='info')
 
 
 if __name__ == "__main__":
