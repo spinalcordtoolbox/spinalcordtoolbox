@@ -108,8 +108,6 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], persli
         # add level info
         if levels:
             agg_metric[slicegroup]['VertLevel'] = vertgroups[slicegroups.index(slicegroup)]
-        else:
-            agg_metric[slicegroup]['VertLevel'] = None
         # Loop across functions (e.g.: MEAN, STD)
         for (name, func) in group_funcs:
             try:
@@ -120,7 +118,7 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], persli
                 else:
                     mask_slicegroup = np.ones(data_slicegroup.shape)
                 # Ignore nonfinite values
-                i_nonfinite = np.where(np.isfinite(data_slicegroup) == False)
+                i_nonfinite = np.where(np.isfinite(data_slicegroup) is False)
                 data_slicegroup[i_nonfinite] = 0.
                 # TODO: the lines below could probably be done more elegantly
                 if mask_slicegroup.ndim == data_slicegroup.ndim + 1:
