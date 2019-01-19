@@ -108,10 +108,6 @@ def get_parser():
                       type_value='int',
                       description='Initialize using disc value centered in the rostro-caudal direction. If the spine is curved, then consider the disc that projects onto the cord at the center of the z-FOV',
                       mandatory=False)
-    parser.add_option(name="-initc2",
-                      type_value=None,
-                      description='Initialize by clicking on C2-C3 disc using interactive window.',
-                      mandatory=False)
     parser.add_option(name="-initfile",
                       type_value='file',
                       description='Initialize labeling by providing a text file which includes either -initz or -initcenter flag.',
@@ -176,7 +172,6 @@ def main(args=None):
     # initializations
     initz = ''
     initcenter = ''
-    initc2 = 'auto'
     fname_initlabel = ''
     file_labelz = 'labelz.nii.gz'
     param = Param()
@@ -215,8 +210,6 @@ def main(args=None):
     if '-initlabel' in arguments:
         # get absolute path of label
         fname_initlabel = os.path.abspath(arguments['-initlabel'])
-    if '-initc2' in arguments:
-        initc2 = 'manual'
     if '-param' in arguments:
         param.update(arguments['-param'][0])
     verbose = int(arguments['-v'])
@@ -263,7 +256,7 @@ def main(args=None):
             # recent version of SCT it is defined as "3".
             im_label_c2c3.data[ind_label] = 2
         else:
-            sct.printv('Automatic C2-C3 detection failed. Please run the function with flag -initc2', 1, 'error')
+            sct.printv('Automatic C2-C3 detection failed. Please provide manual label with sct_label_utils', 1, 'error')
         im_label_c2c3.save(fname_labelz)
 
     # dilate label so it is not lost when applying warping
@@ -321,7 +314,7 @@ def main(args=None):
         sct.run(['sct_maths', '-i', 'data_straightr.nii', '-laplacian', '1', '-o', 'data_straightr.nii'], verbose)
 
     # detect vertebral levels on straight spinal cord
-    vertebral_detection('data_straightr.nii', 'segmentation_straight.nii.gz', contrast, param, init_disc=init_disc, verbose=verbose, path_template=path_template, initc2=initc2, path_output=path_output)
+    vertebral_detection('data_straightr.nii', 'segmentation_straight.nii.gz', contrast, param, init_disc=init_disc, verbose=verbose, path_template=path_template, path_output=path_output)
 
     # un-straighten labeled spinal cord
     sct.printv('\nUn-straighten labeling...', verbose)
@@ -416,7 +409,7 @@ def generate_qc(fn_in, fn_labeled, args, path_qc):
     )
 
 
-def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1, path_template='', initc2='auto', path_output='../'):
+def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1, path_template='', path_output='../'):
     """
     Find intervertebral discs in straightened image using template matching
     :param fname: file name of straigthened spinal cord
@@ -478,24 +471,6 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     list_distance_template = (
         np.diff(list_disc_z_template) * (-1)).tolist()  # multiplies by -1 to get positive distances
     sct.printv('Distances between discs (in voxel): ' + str(list_distance_template), verbose)
-
-    # if manual mode, open viewer for user to click on C2/C3 disc
-    if init_disc == [] and initc2 == 'manual':
-        from spinalcordtoolbox.gui.base import AnatomicalParams
-        from spinalcordtoolbox.gui.sagittal import launch_sagittal_dialog
-
-        params = AnatomicalParams()
-        params.num_points = 1
-        params.vertebraes = [3, ]
-        params.subtitle = 'Click at the posterior tip of C2-C3 disc\n'
-        input_file = Image(fname)
-        output_file = msct_image.zeros_like(input_file)
-        output_file.absolutepath = os.path.join(path_output, 'labels.nii.gz')
-        controller = launch_sagittal_dialog(input_file, output_file, params)
-        mask_points = controller.as_string()
-        # assign new init_disc_z value
-        # Note: there is a discrepancy between the label value (3) and the disc value (2). As of mid-2017, the SCT convention for disc C2-C3 is value=3. Before that it was value=2.
-        init_disc = [int(mask_points.split(',')[2]), 2]
 
     # display init disc
     if verbose == 2:
