@@ -6,6 +6,7 @@
 
 from __future__ import absolute_import
 
+import os
 import numpy as np
 import math
 import operator
@@ -408,7 +409,7 @@ def save_as_csv(agg_metric, fname_out, fname_in=None, append=False):
                  'MEAN(CSA', 'STD(CSA', 'MEAN(Angle', 'STD(Angle', 'WA()', 'BIN()', 'ML()', 'MAP()', 'STD()', 'MAX()']
     # TODO: if append=True but file does not exist yet, raise warning and set append=False
     # write header (only if append=False)
-    if not append:
+    if not append or not os.path.isfile(fname_out):
         with open(fname_out, 'w') as csvfile:
             # spamwriter = csv.writer(csvfile, delimiter=',')
             header = ['Timestamp', 'SCT Version', 'Filename', 'Slice (I->S)']
