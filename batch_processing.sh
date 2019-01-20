@@ -248,7 +248,7 @@ cd ..
 echo "Ended at: $(date +%x_%r)"
 echo
 echo "t2/CSA:         " `awk -F"," ' {print $6}' t2/csa.csv | tail -1`
-echo "mt/MTR(WM):     " `awk -F"," ' {print $7}' mt/mtr_in_wm.csv | tail -1`
+echo "mt/MTR(WM):     " `awk -F"," ' {print $8}' mt/mtr_in_wm.csv | tail -1`
 echo "t2s/CSA_GM:     " `awk -F"," ' {print $6}' t2s/csa_gm.csv | tail -1`
 echo "t2s/CSA_WM:     " `awk -F"," ' {print $6}' t2s/csa_wm.csv | tail -1`
 echo "dmri/FA(CST_r): " `awk -F"," ' {print $7}' dmri/fa_in_cst.csv | tail -1`
