@@ -751,11 +751,6 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
     # post processing step to z_regularized
     im_image_res_seg_downsamp_postproc = post_processing_volume_wise(im_in=im_image_res_seg_downsamp)
 
-    # reorient to initial orientation
-    sct.log.info("Reorienting the segmentation to the original image orientation...")
-    fname_res_seg_downsamp_reorient = sct.add_suffix(fname_in, '_seg')
-    im_image_res_seg_downsamp_postproc.change_orientation(original_orientation).save(fname_res_seg_downsamp_reorient)
-
     tmp_folder.chdir_undo()
 
     # remove temporary files
@@ -763,6 +758,7 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
         sct.log.info("Remove temporary files...")
         tmp_folder.cleanup()
 
+    # reorient to initial orientation
     return im_image_res_seg_downsamp_postproc.change_orientation(original_orientation), im_nii, seg_uncrop_nii.change_orientation('RPI').save('image_in_RPI_resampled_seg.nii.gz')
 
 
