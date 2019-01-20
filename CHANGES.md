@@ -1,5 +1,41 @@
 # CHANGES TO RELEASE
 
+## v4.0.0 (2019-01-20)
+[View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.2.7...v4.0.0)
+
+**BUG**
+
+ - **sct_extract_metric:** Fixed bug in method max. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2087)
+ - **sct_flatten_sagittal:** Fix bugs related to image scaling. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2070)
+ - **sct_label_vertebrae:** Fixed path issue when using -initlabel flag. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2068)
+ - **sct_get_centerline:** Convert data to float before intensity rescaling (in optic). [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2065)
+ - **sct_deepseg_lesion,sct_deepseg_sc:** Fixed ValueError and IndexError. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2060)
+ - **sct_register_to_template:** Fixed regression bugs. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2052)
+
+**ENHANCEMENT**
+
+ - **sct_label_vertebrae:** Removed support for -initc2 flag because there is an alternative approach with sct_label_utils. **WARNING: Breaks compatibility with previous versions of SCT.** [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2125)
+ - **sct_extract_metric:** Expose aggregate_slicewise() API and various improvements. **WARNING: Breaks compatibility with previous versions of SCT.** [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2115)
+ - **sct_register_to_template:** Updated PAM50 template header to be in the same coordinate system as the MNI template. **WARNING: Breaks compatibility with previous versions of SCT.** [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2102)
+ - **sct_qc:** Various improvements. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2097)
+ - **sct_deepseg_lesion,sct_deepseg_sc:** deepseg_sc: Speed processing up . [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2094)
+ - **sct_qc:** QC now scales images based on physical dimensions (previously based on voxels). [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2089)
+ - **sct_process_segmentation:** Major refactoring to bring few improvements. **WARNING: Breaks compatibility with previous versions of SCT.** [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1931)
+
+**FEATURE**
+
+ - **sct_register_to_template:** Now possible to specify the type of algorithm used for cord straightening. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2101)
+ - **sct_label_vertebrae:** spinalcordtoolbox/vertebrae/detect_c2c3 -- New module. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2084)
+ - **sct_compute_snr:** Now possible to output SNR map, removed requirement for inputing mask, and few other improvements. **WARNING: Breaks compatibility with previous versions of SCT.** [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2080)
+ - **sct_dmri_separate_b0_and_dwi:** sct_dmri_separate_b0_and_dwi: Now append suffix to input file name to prevent conflicts. **WARNING: Breaks compatibility with previous versions of SCT.** [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2075)
+ - **sct_smooth_spinalcord:** Enable to set smoothing parameters in all axes. **WARNING: Breaks compatibility with previous versions of SCT.** [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2073)
+
+**DOCUMENTATION**
+
+ - **sct_label_vertebrae:** Updated documention on how to create vertebral and disc labels. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2107)
+ - **sct_changelog:** Few improvements on automatic Changelog generation. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2077)
+
+
 ## v3.2.7 (2018-10-29)
 [View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.2.6...v3.2.7)
 
@@ -599,7 +635,7 @@ This release includes: a new example dataset (now includes T2*-w and fMRI data) 
 ## 2.0.4 (2015-06-06)
 - BUG: **sct_process_segmentation**: fixed error when calculating CSA (issue #388)
 - BUG: Hanning smoothing: fixed error that occurred when window size was larger than data (issue #390)
-- OPT: **sct_check_dependences**: now checks if git is installed
+- OPT: **sct_check_dependencies**: now checks if git is installed
 - OPT: simplified batch_processing.sh
 
 ## 2.0.3 (2015-05-19)

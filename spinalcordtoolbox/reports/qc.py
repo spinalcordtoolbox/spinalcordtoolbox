@@ -168,7 +168,7 @@ class QcImage(object):
             """
             self.qc_report.slice_name = sct_slice.get_name()
 
-            # consider only the first 2 slices
+            # Get the aspect ratio (height/width) based on pixel size. Consider only the first 2 slices.
             aspect_img, self.aspect_mask = sct_slice.aspect()[:2]
 
             self.qc_report.make_content_path()
@@ -207,7 +207,7 @@ class QcImage(object):
             fig = plt.imshow(img, cmap=plt.cm.gray, interpolation=self.interpolation, aspect=float(aspect_img))
             fig.axes.get_xaxis().set_visible(False)
             fig.axes.get_yaxis().set_visible(False)
-            self._save(self.qc_report.qc_params.abs_bkg_img_path())
+            self._save(self.qc_report.qc_params.abs_bkg_img_path(), dpi=self.qc_report.qc_params.dpi)
 
             for action in self.action_list:
                 logger.debug('Action List %s', action.__name__)
@@ -217,25 +217,22 @@ class QcImage(object):
                     print("Mask type %s" % mask.dtype)
                     mask = equalized(mask)
                 action(self, mask)
-                self._save(self.qc_report.qc_params.abs_overlay_img_path())
+                self._save(self.qc_report.qc_params.abs_overlay_img_path(), dpi=self.qc_report.qc_params.dpi)
             plt.close()
 
             self.qc_report.update_description_file(img.shape)
 
         return wrapped_f
 
-    def _save(self, img_path, format='png', bbox_inches='tight', pad_inches=0.00):
-        """ Save the current figure into an image.
-
-        Parameters
-        ----------
-        img_path : str
-            path of the folder where the image is saved
-        format : str
-            image format
-        bbox_inches : str
-        pad_inches : float
-
+    def _save(self, img_path, format='png', bbox_inches='tight', pad_inches=0.00, dpi=300):
+        """
+        Save the current figure into an image.
+        :param img_path: str: path of the folder where the image is saved
+        :param format: str: image format
+        :param bbox_inches: str
+        :param pad_inches: float
+        :param dpi: int: Output resolution of the image
+        :return:
         """
         logger.debug('Save image %s', img_path)
         plt.savefig(img_path,
@@ -243,7 +240,7 @@ class QcImage(object):
                     bbox_inches=bbox_inches,
                     pad_inches=pad_inches,
                     transparent=True,
-                    dpi=600)
+                    dpi=dpi)
 
 
 class Params(object):
@@ -253,36 +250,34 @@ class Params(object):
     by splitting it into `[subject]/[contrast]/input_file`
     """
 
-    def __init__(self, input_file, command, args, orientation, dest_folder):
+    def __init__(self, input_file, command, args, orientation, dest_folder, dpi=300):
         """
         Parameters
-        ----------
-        input_file : str
-            the input nifti file name
-        command : str
-            the command name
-        args : str
-            the command's arguments
-        orientation : str
-            The anatomical orientation
-        dest_folder : str
-            The absolute path of the QC root
+        :param input_file: str: the input nifti file name
+        :param command: str: command name
+        :param args: str: the command's arguments
+        :param orientation: str: The anatomical orientation
+        :param dest_folder: str: The absolute path of the QC root
+        :param dpi: int: Output resolution of the image
         """
-        abs_input_path = os.path.dirname(os.path.abspath(input_file))
-        abs_input_path, contrast = os.path.split(abs_input_path)
+        path_in, file_in, ext_in = sct.extract_fname(os.path.abspath(input_file))
+        # abs_input_path = os.path.dirname(os.path.abspath(input_file))
+        abs_input_path, contrast = os.path.split(path_in)
         _, subject = os.path.split(abs_input_path)
         if isinstance(args, list):
             args = sct.list2cmdline(args)
 
+        self.fname_in = file_in+ext_in
         self.subject = subject
         self.cwd = os.getcwd()
         self.contrast = contrast
         self.command = command
+        self.sct_version = sct.__version__
         self.args = args
         self.orientation = orientation
+        self.dpi = dpi
         self.root_folder = dest_folder
         self.mod_date = datetime.datetime.strftime(datetime.datetime.now(), '%Y_%m_%d_%H%M%S')
-
         self.qc_results = os.path.join(dest_folder, 'qc_results.json')
         self.bkg_img_path = os.path.join(subject, contrast, command, self.mod_date, 'bkg_img.png')
         self.overlay_img_path = os.path.join(subject, contrast, command, self.mod_date, 'overlay_img.png')
@@ -303,15 +298,8 @@ class QcReport(object):
     def __init__(self, qc_params, usage):
         """
         Parameters
-        ----------
-        tool_name : str
-            name of the sct tool being used. Is used to name the image file.
-        qc_params : Params
-            arguments of the "-param-qc" option in Terminal
-        cmd_args : list of str
-            the commands of the process being used to generate the images
-        usage : str
-             description of the process
+        :param qc_params: arguments of the "-param-qc" option in Terminal
+        :param usage: str: description of the process
         """
         self.tool_name = qc_params.command
         self.slice_name = qc_params.orientation
@@ -350,13 +338,15 @@ class QcReport(object):
             'cwd': self.qc_params.cwd,
             'cmdline': "{} {}".format(self.qc_params.command, self.qc_params.args),
             'command': self.qc_params.command,
+            'sct_version': self.qc_params.sct_version,
             'subject': self.qc_params.subject,
             'contrast': self.qc_params.contrast,
+            'fname_in': self.qc_params.fname_in,
             'orientation': self.qc_params.orientation,
             'background_img': self.qc_params.bkg_img_path,
             'overlay_img': self.qc_params.overlay_img_path,
             'dimension': '%dx%d' % dimension,
-            'moddate': datetime.datetime.now().isoformat(' ')
+            'moddate': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
         logger.debug('Description file: %s', self.qc_params.qc_results)
         results = []
@@ -391,11 +381,25 @@ def add_entry(src, process, args, path_qc, plane, background=None, foreground=No
               qcslice=None,
               qcslice_operations=[],
               qcslice_layout=None,
-              ):
+              dpi=300):
     """
+    Starting point to QC report creation.
+
+    :param src: Path to input file (only used to populate report metadata)
+    :param process:
+    :param args:
+    :param path_qc:
+    :param plane:
+    :param background:
+    :param foreground:
+    :param qcslice: spinalcordtoolbox.reports.slice:Axial
+    :param qcslice_operations:
+    :param qcslice_layout:
+    :param dpi: int: Output resolution of the image
+    :return:
     """
 
-    qc_param = Params(src, process, args, plane, path_qc)
+    qc_param = Params(src, process, args, plane, path_qc, dpi)
     report = QcReport(qc_param, '')
 
     if qcslice is not None:

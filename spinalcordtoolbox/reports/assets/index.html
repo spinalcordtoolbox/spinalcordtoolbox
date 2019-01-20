@@ -12,6 +12,14 @@
   <link rel="stylesheet" href="_assets/css/bootstrap-table.min.css">
   <link rel="stylesheet" type="text/css" href="_assets/css/style.css">
   <title> </title>
+  <script>
+    function fetch_image_height()
+    {
+      var image_height=document.getElementById('sprite-img').height;
+      image_height+=10;
+      document.getElementById("mosaic-container").style.marginBottom=image_height+"px";
+    }
+  </script>
 </head>
 
 <body>
@@ -46,7 +54,7 @@
 
   <div class="container-fluid">
       <div class="row">
-          <div class="col-md-4">
+          <div class="col-md-4">Keyboard shortcuts:
               <a id="prev-img" href="#" class="previous">
                   <span class="glyphicon glyphicon-arrow-up">
                       Previous
@@ -64,18 +72,20 @@
 		                  <tr>
 			                    <th data-field="moddate" data-sortable="true">Date</th>
 			                    <th data-field="subject" data-sortable="true">Subject</th>
-			                    <th data-field="contrast" data-sortable="true">Contrast</th>
-			                    <th data-field="command" data-sortable="true">Command</th>
+			                    <th data-field="command" data-sortable="true">Function</th>
 		                  </tr>
 	                </thead>
               </table>
           </div>
           <div class="col-md-8">
               <div class="result-body" id="mosaic-container">
-                  <img id="sprite-img"/>
+                  <img id="sprite-img" onload="fetch_image_height()"/>
                   <img id="overlay-img"/>
               </div>
+              <div id="cmdLine"></div>
+              <div id="sctVer"></div>
           </div>
+
       </div>
   </div>
 

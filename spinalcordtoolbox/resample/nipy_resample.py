@@ -8,6 +8,10 @@
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
+
+# TODO: Ultimately replace resample_image (based on nipy) with Image, to avoid confusion.
+
+
 from __future__ import division, absolute_import
 
 import copy
@@ -21,9 +25,8 @@ import sct_utils as sct
 
 def resample_image(input_image, new_size, new_size_type,
                    interpolation='linear', verbose=1):
-    """This function will resample the specified input
-    image to the target size.
-
+    """This function will resample the specified input nipy image object to the target size.
+    Can deal with 2d, 3d or 4d image objects.
     :param input_image: The input image.
     :param new_size: The target size, i.e. '0.25x0.25'
     :param new_size_type: Unit of resample (mm, vox, factor)
@@ -85,7 +88,8 @@ def resample_image(input_image, new_size, new_size_type,
     if len(p) == 4:
         transfo = np.delete(transfo, 3, 0)
         transfo = np.delete(transfo, 3, 1)
-    # translate to account for voxel size (otherwise resulting image will be shifted by half a voxel). Modify the three first rows of the last column, corresponding to the translation.
+    # translate to account for voxel size (otherwise resulting image will be shifted by half a voxel). Modify the three
+    # first rows of the last column, corresponding to the translation.
     transfo[:3, -1] = np.array(((R[0, 0] - 1) / 2, (R[1, 1] - 1) / 2, (R[2, 2] - 1) / 2), dtype='f8')
     sct.printv('  transfo: \n' + str(transfo), verbose)
 
@@ -138,7 +142,7 @@ def resample_file(fname_data, fname_out, new_size, new_size_type,
                   interpolation, verbose):
     """This function will resample the specified input
     image file to the target size.
-
+    Can deal with 2d, 3d or 4d image objects.
     :param fname_data: The input image filename.
     :param fname_out: The output image filename.
     :param new_size: The target size, i.e. 0.25x0.25

@@ -16,11 +16,12 @@
 
 from __future__ import absolute_import
 
-import sys, io, os, getopt, shutil, time
+import sys, os, time
 
 import numpy as np
 
 import sct_utils as sct
+import sct_maths
 import spinalcordtoolbox.image as msct_image
 from sct_convert import convert
 from msct_parser import Parser
@@ -70,11 +71,14 @@ def get_parser():
                       mandatory=False,
                       deprecated_by='-s')
     parser.add_option(name="-smooth",
-                      type_value="int",
-                      description="Sigma of the smoothing Gaussian kernel (in mm).",
+                      type_value=[[','], 'float'],
+                      description='Sigma (standard deviation) of the smoothing Gaussian kernel (in mm). For isotropic '
+                                  'smoothing you only need to specify a value (e.g. 2). For anisotropic smoothing '
+                                  'specify a value for each axis, separated with a comma. The order should follow axes '
+                                  'Right-Left, Antero-Posterior, Superior-Inferior (e.g.: 1,1,3). For no smoothing, set '
+                                  'value to 0.',
                       mandatory=False,
-                      default_value=3,
-                      example='2')
+                      default_value=[0, 0, 3])
     parser.add_option(name='-param',
                       type_value=[[','], 'str'],
                       description="Advanced parameters. Assign value with \"=\"; Separate params with \",\"\n"
@@ -101,12 +105,7 @@ def get_parser():
 def main(args=None):
 
     # Initialization
-    # fname_anat = ''
-    # fname_centerline = ''
-    sigma = 3  # default value of the standard deviation for the Gaussian smoothing (in terms of number of voxels)
     param = Param()
-    # remove_temp_files = param.remove_temp_files
-    # verbose = param.verbose
     start_time = time.time()
 
     parser = get_parser()
@@ -179,10 +178,8 @@ def main(args=None):
     # Straighten the spinal cord
     # straighten segmentation
     sct.printv('\nStraighten the spinal cord using centerline/segmentation...', verbose)
-    cache_sig = sct.cache_signature(
-     input_files=[fname_anat_rpi, fname_centerline_rpi],
-     input_params={"x": "spline"},
-    )
+    cache_sig = sct.cache_signature(input_files=[fname_anat_rpi, fname_centerline_rpi],
+                                    input_params={"x": "spline"})
     cachefile = os.path.join(curdir, "straightening.cache")
     if sct.cache_valid(cachefile, cache_sig) and os.path.isfile(os.path.join(curdir, 'warp_curve2straight.nii.gz')) and os.path.isfile(os.path.join(curdir, 'warp_straight2curve.nii.gz')) and os.path.isfile(os.path.join(curdir, 'straight_ref.nii.gz')):
         # if they exist, copy them into current folder
@@ -195,11 +192,17 @@ def main(args=None):
     else:
         sct.run(['sct_straighten_spinalcord', '-i', fname_anat_rpi, '-o', 'anat_rpi_straight.nii', '-s', fname_centerline_rpi, '-x', 'spline', '-param', 'algo_fitting='+param.algo_fitting], verbose)
         sct.cache_save(cachefile, cache_sig)
+        # move warping fields locally (to use caching next time)
+        sct.copy('warp_curve2straight.nii.gz', os.path.join(curdir, 'warp_curve2straight.nii.gz'))
+        sct.copy('warp_straight2curve.nii.gz', os.path.join(curdir, 'warp_straight2curve.nii.gz'))
 
     # Smooth the straightened image along z
-    sct.printv('\nSmooth the straightened image along z...')
-    sct.run(['sct_maths', '-i', 'anat_rpi_straight.nii', '-smooth', '0,0,' + str(sigma), '-o', 'anat_rpi_straight_smooth.nii'], verbose)
-
+    sct.printv('\nSmooth the straightened image...')
+    sigma_smooth = ",".join([str(i) for i in sigma])
+    sct_maths.main(args=['-i', 'anat_rpi_straight.nii',
+                         '-smooth', sigma_smooth,
+                         '-o', 'anat_rpi_straight_smooth.nii',
+                         '-v', '0'])
     # Apply the reversed warping field to get back the curved spinal cord
     sct.printv('\nApply the reversed warping field to get back the curved spinal cord...')
     sct.run(['sct_apply_transfo', '-i', 'anat_rpi_straight_smooth.nii', '-o', 'anat_rpi_straight_smooth_curved.nii', '-d', 'anat.nii', '-w', 'warp_straight2curve.nii.gz', '-x', 'spline'], verbose)
@@ -238,87 +241,4 @@ def main(args=None):
 # ==========================================================================================
 if __name__ == "__main__":
     sct.init_sct()
-    # initialize parameters
-    # param = Param()
-    # call main function
     main()
-
-
-# OLD CODE
-
-# ## new
-#
-# ### Make sure that centerline file does not have halls
-# file_c = load('centerline_rpi.nii')
-# data_c = file_c.get_data()
-# hdr_c = file_c.get_header()
-#
-# data_temp = copy(data_c)
-# data_temp *= 0
-# data_output = copy(data_c)
-# data_output *= 0
-# nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension('centerline_rpi.nii')
-#
-# ## Change seg to centerline if it is a segmentation
-# sct.printv('\nChange segmentation to centerline if it is a centerline...\n')
-# z_centerline = [iz for iz in range(0, nz, 1) if data_c[:,:,iz].any() ]
-# nz_nonz = len(z_centerline)
-# if nz_nonz==0 :
-#     sct.printv('\nERROR: Centerline is empty')
-#     sys.exit()
-# x_centerline = [0 for iz in range(0, nz_nonz, 1)]
-# y_centerline = [0 for iz in range(0, nz_nonz, 1)]
-# #sct.printv("z_centerline", z_centerline,nz_nonz,len(x_centerline)))
-# sct.printv('\nGet center of mass of the centerline ...')
-# for iz in range(len(z_centerline)):
-#     x_centerline[iz], y_centerline[iz] = ndimage.measurements.center_of_mass(array(data_c[:,:,z_centerline[iz]]))
-#     data_temp[x_centerline[iz], y_centerline[iz], z_centerline[iz]] = 1
-#
-# ## Complete centerline
-# sct.printv('\nComplete the halls of the centerline if there are any...\n')
-# X,Y,Z = data_temp.nonzero()
-#
-# x_centerline_extended = [0 for i in range(0, nz, 1)]
-# y_centerline_extended = [0 for i in range(0, nz, 1)]
-# for iz in range(len(Z)):
-#     x_centerline_extended[Z[iz]] = X[iz]
-#     y_centerline_extended[Z[iz]] = Y[iz]
-#
-# X_centerline_extended = nonzero(x_centerline_extended)
-# X_centerline_extended = transpose(X_centerline_extended)
-# Y_centerline_extended = nonzero(y_centerline_extended)
-# Y_centerline_extended = transpose(Y_centerline_extended)
-#
-# # initialization: we set the extrem values to avoid edge effects
-# x_centerline_extended[0] = x_centerline_extended[X_centerline_extended[0]]
-# x_centerline_extended[-1] = x_centerline_extended[X_centerline_extended[-1]]
-# y_centerline_extended[0] = y_centerline_extended[Y_centerline_extended[0]]
-# y_centerline_extended[-1] = y_centerline_extended[Y_centerline_extended[-1]]
-#
-# # Add two rows to the vector X_means_smooth_extended:
-# # one before as means_smooth_extended[0] is now diff from 0
-# # one after as means_smooth_extended[-1] is now diff from 0
-# X_centerline_extended = append(X_centerline_extended, len(x_centerline_extended)-1)
-# X_centerline_extended = insert(X_centerline_extended, 0, 0)
-# Y_centerline_extended = append(Y_centerline_extended, len(y_centerline_extended)-1)
-# Y_centerline_extended = insert(Y_centerline_extended, 0, 0)
-#
-# #recurrence
-# count_zeros_x=0
-# count_zeros_y=0
-# for i in range(1,nz-1):
-#     if x_centerline_extended[i]==0:
-#        x_centerline_extended[i] = 0.5*(x_centerline_extended[X_centerline_extended[i-1-count_zeros_x]] + x_centerline_extended[X_centerline_extended[i-count_zeros_x]])
-#        count_zeros_x += 1
-#     if y_centerline_extended[i]==0:
-#        y_centerline_extended[i] = 0.5*(y_centerline_extended[Y_centerline_extended[i-1-count_zeros_y]] + y_centerline_extended[Y_centerline_extended[i-count_zeros_y]])
-#        count_zeros_y += 1
-#
-# # Save image centerline completed to be used after
-# sct.printv('\nSave image completed: centerline_rpi_completed.nii...\n')
-# for i in range(nz):
-#     data_output[x_centerline_extended[i],y_centerline_extended[i],i] = 1
-# img = Nifti1Image(data_output, None, hdr_c)
-# save(img, 'centerline_rpi_completed.nii')
-#
-# #end new
