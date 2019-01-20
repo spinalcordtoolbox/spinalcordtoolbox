@@ -132,9 +132,8 @@ def exp_model(xs, ys, s2):
     return lambda x: alpha + beta * np.exp(gamma * x)
 
 
-def apply_intensity_normalization(img_path, fname_out, contrast):
+def apply_intensity_normalization(img, contrast):
     """Standardize the intensity range."""
-    img = Image(img_path)
     data2norm = img.data.astype(np.float32)
 
     dct_norm = {'t2': [0.000000, 136.832187, 312.158435, 448.968030, 568.657779, 696.671586, 859.221138, 1074.463414, 1373.289174, 1811.522669, 2611.000000],
@@ -143,7 +142,7 @@ def apply_intensity_normalization(img_path, fname_out, contrast):
 
     img_normalized = msct_image.empty_like(img)
     img_normalized.data = apply_intensity_normalization_model(data2norm, dct_norm[contrast])
-    img_normalized.save(fname_out, dtype="float32")
+    return img_normalized
 
 
 def segment_3d(model_fname, contrast_type, fname_in, fname_out):
@@ -213,42 +212,39 @@ def deep_segmentation_MSlesion(fname_image, contrast_type, output_folder, ctr_al
         im_orient = im_2orient
         sct.copy(fname_image_tmp, fname_orient)
 
-    # resampling RPI image
-    sct.log.info("\nResample the image to 0.5 mm isotropic resolution...")
-    fname_res = sct.add_suffix(fname_orient, '_resampled')
-    im_2res = im_orient
-    input_resolution = im_2res.dim[4:7]
-    new_resolution = 'x'.join(['0.5', '0.5', str(input_resolution[2])])
-    spinalcordtoolbox.resample.nipy_resample.resample_file(fname_orient, fname_res, new_resolution,
-                                                           'mm', 'linear', verbose=0)
+    input_resolution = im_orient.dim[4:7]
+    del im_2orient, im_orient
 
     # find the spinal cord centerline - execute OptiC binary
     sct.log.info("\nFinding the spinal cord centerline...")
     contrast_type_ctr = contrast_type.split('_')[0]
-    centerline_filename = find_centerline(algo=ctr_algo,
-                                      image_fname=fname_res,
-                                      path_sct=path_sct,
-                                      contrast_type=contrast_type_ctr,
-                                      brain_bool=brain_bool,
-                                      folder_output=tmp_folder_path,
-                                      remove_temp_files=remove_temp_files,
-                                      centerline_fname=file_ctr)
+    fname_res, centerline_filename = find_centerline(algo=ctr_algo,
+                                                    image_fname=fname_orient,
+                                                    path_sct=path_sct,
+                                                    contrast_type=contrast_type_ctr,
+                                                    brain_bool=brain_bool,
+                                                    folder_output=tmp_folder_path,
+                                                    remove_temp_files=remove_temp_files,
+                                                    centerline_fname=file_ctr)
+    im_nii, ctr_nii = Image(fname_res), Image(centerline_filename)
 
     # crop image around the spinal cord centerline
     sct.log.info("\nCropping the image around the spinal cord...")
     fname_crop = sct.add_suffix(fname_res, '_crop')
     crop_size = 48
-    X_CROP_LST, Y_CROP_LST = crop_image_around_centerline(filename_in=fname_res,
-                                                          filename_ctr=centerline_filename,
-                                                          filename_out=fname_crop,
-                                                          crop_size=crop_size)
+    X_CROP_LST, Y_CROP_LST, im_crop_nii = crop_image_around_centerline(im_in=im_nii,
+                                                                      ctr_in=ctr_nii,
+                                                                      crop_size=crop_size)
+    del ctr_nii
 
     # normalize the intensity of the images
-    sct.log.info("\nNormalizing the intensity...")
-    fname_norm = sct.add_suffix(fname_crop, '_norm')
-    apply_intensity_normalization(img_path=fname_crop, fname_out=fname_norm, contrast=contrast_type)
+    sct.log.info("Normalizing the intensity...")
+    im_norm_in = apply_intensity_normalization(img=im_crop_nii, contrast=contrast_type)
+    del im_crop_nii
 
     # resample to 0.5mm isotropic
+    fname_norm = sct.add_suffix(fname_orient, '_norm')
+    im_norm_in.save(fname_norm)
     fname_res3d = sct.add_suffix(fname_norm, '_resampled3d')
     spinalcordtoolbox.resample.nipy_resample.resample_file(fname_norm, fname_res3d, '0.5x0.5x0.5',
                                                                'mm', 'linear', verbose=0)
@@ -271,35 +267,36 @@ def deep_segmentation_MSlesion(fname_image, contrast_type, output_folder, ctr_al
 
     # reconstruct the segmentation from the crop data
     sct.log.info("\nReassembling the image...")
+    seg_uncrop_nii = uncrop_image(ref_in=im_nii,
+                                data_crop=seg_crop_data,
+                                x_crop_lst=X_CROP_LST,
+                                y_crop_lst=Y_CROP_LST)
     fname_seg_res_RPI = sct.add_suffix(file_fname, '_res_RPI_seg')
-    uncrop_image(fname_ref=fname_res,
-                fname_out=fname_seg_res_RPI,
-                data_crop=seg_crop_data,
-                x_crop_lst=X_CROP_LST,
-                y_crop_lst=Y_CROP_LST)
+    seg_uncrop_nii.save(fname_seg_res_RPI)
+    del seg_uncrop_nii, im_nii, seg_crop_data
 
     # resample to initial resolution
-    sct.log.info("\nResampling the segmentation to the original image resolution...")
-    fname_seg_RPI = sct.add_suffix(file_fname, '_RPI_lesionseg')
+    sct.log.info("Resampling the segmentation to the original image resolution...")
     initial_resolution = 'x'.join([str(input_resolution[0]), str(input_resolution[1]), str(input_resolution[2])])
+    fname_seg_RPI = sct.add_suffix(file_fname, '_RPI_seg')
     spinalcordtoolbox.resample.nipy_resample.resample_file(fname_seg_res_RPI, fname_seg_RPI, initial_resolution,
                                                            'mm', 'linear', verbose=0)
+    seg_initres_nii = Image(fname_seg_RPI)
 
     # binarize the resampled image to remove interpolation effects
     sct.log.info("\nBinarizing the segmentation to avoid interpolation effects...")
-    thr = '0.1'
-    sct.run(['sct_maths', '-i', fname_seg_RPI, '-bin', thr, '-o', fname_seg_RPI], verbose=0)
+    thr = 0.1
+    seg_initres_nii.data[np.where(seg_initres_nii.data >= thr)] = 1
+    seg_initres_nii.data[np.where(seg_initres_nii.data < thr)] = 0
 
     # reorient to initial orientation
     sct.log.info("\nReorienting the segmentation to the original image orientation...")
-    fname_seg = sct.add_suffix(file_fname, '_lesionseg')
+    fname_seg = sct.add_suffix(file_fname, '_seg')
     if original_orientation != 'RPI':
-        im_seg_orient = Image(fname_seg_RPI) \
-         .change_orientation(original_orientation) \
-         .save(fname_seg)
-
-    else:
-        sct.copy(fname_seg_RPI, fname_seg)
+        out_nii = msct_image.change_orientation(seg_initres_nii, original_orientation)
+    
+    seg_initres_nii.save(fname_seg)
+    del seg_initres_nii
 
     tmp_folder.chdir_undo()
 
