@@ -860,7 +860,8 @@ def main():
         brain_bool=brain_bool, kernel_size=kernel_size, remove_temp_files=remove_temp_files, verbose=verbose)
 
     # Save segmentation
-    fname_seg = os.path.abspath(os.path.join(output_folder, sct.add_suffix(fname_image, '_seg')))
+    fname_seg = os.path.abspath(os.path.join(output_folder, sct.extract_fname(fname_image)[1] + '_seg' +
+                                             sct.extract_fname(fname_image)[2]))
     im_seg.save(fname_seg)
 
     if path_qc is not None:
