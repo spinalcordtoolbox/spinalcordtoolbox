@@ -746,7 +746,7 @@ def deep_segmentation_spinalcord(fname_image, contrast_type, output_folder, ctr_
 
     # binarize the resampled image to remove interpolation effects
     sct.log.info("Binarizing the segmentation to avoid interpolation effects...")
-    thr = '0.0001' if contrast_type in ['t1', 'dwi'] else '0.5'
+    thr = 0.0001 if contrast_type in ['t1', 'dwi'] else 0.5
     seg_initres_nii.data[np.where(seg_initres_nii.data >= thr)] = 1
     seg_initres_nii.data[np.where(seg_initres_nii.data < thr)] = 0
 
