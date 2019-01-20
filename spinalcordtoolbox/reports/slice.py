@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+# TODO: Replace slice by spinalcordtoolbox.image.Slicer
+
+
 from __future__ import print_function, absolute_import, division
 
 import abc
@@ -89,10 +92,10 @@ class Slice(object):
 
     @staticmethod
     def crop(matrix, x, y, width, height):
-        """Crops the matrix to width and heigth from the center
+        """Crops the matrix to width and height from the center
 
-        Select the size of the matrix if the calulated crop `width` or `height`
-        are larger then the size of the matrix.
+        Select the size of the matrix if the calculated crop `width` or `height`
+        are larger than the size of the matrix.
 
         TODO : Move this into the Axial class
 
@@ -205,7 +208,6 @@ class Slice(object):
             raise
         return centers_x, centers_y
 
-
     def mosaic(self, nb_column=0, size=15):
         """Obtain matrices of the mosaics
 
@@ -218,16 +220,18 @@ class Slice(object):
         """
         image = self._images[0]
 
-        dim = self.get_dim(image)
+        # Calculate number of columns to display on the report
+        dim = self.get_dim(image)  # dim represents the 3rd dimension of the 3D matrix
         if nb_column == 0:
             nb_column = 600 // (size * 2)
 
         nb_row = math.ceil(dim // nb_column) + 1
 
-        length, width = self.get_slice(image.data, 1).shape
-
+        # Compute the matrix size of the final mosaic image
         matrix_sz = (int(size * 2 * nb_row), int(size * 2 * nb_column))
 
+        # Get center of mass of the image. If the input is the cord segmentation, these coordinates are used to center
+        # the image on each panel of the mosaid.
         centers_x, centers_y = self.get_center()
 
         matrices = list()
@@ -236,9 +240,8 @@ class Slice(object):
             for i in range(dim):
                 x = int(centers_x[i])
                 y = int(centers_y[i])
-
-                self.add_slice(matrix, i, nb_column, size,
-                 self.crop(self.get_slice(image.data, i), x, y, size, size))
+                # crop slice around center of mass and add slice to the matrix layout
+                self.add_slice(matrix, i, nb_column, size, self.crop(self.get_slice(image.data, i), x, y, size, size))
 
             matrices.append(matrix)
 
@@ -292,7 +295,6 @@ class Axial(Slice):
     def get_center(self, img_idx=-1):
         image = self._images[img_idx]
         return self._axial_center(image)
-
 
 
 class Sagittal(Slice):

@@ -82,7 +82,7 @@ def get_parser():
                                  'If only one label is provided, a simple translation will be applied between the subject label and the template label. No scaling will be performed. \n\n'
                                  'If two labels are provided, a linear transformation (translation + rotation + superior-inferior linear scaling) will be applied. The strategy here is to defined labels that cover the region of interest. For example, if you are interested in studying C2 to C6 levels, then provide one label at C2 and another at C6. However, note that if the two labels are very far apart (e.g. C2 and T12), there might be a mis-alignment of discs because a subject''s intervertebral discs distance might differ from that of the template.\n\n'
                                  'If more than two labels (only with the parameter "-disc") are used, a non-linear registration will be applied to align the each intervertebral disc between the subject and the template, as described in sct_straighten_spinalcord. This the most accurate and preferred method. This feature does not work with the parameter "-ref subject".\n\n'
-                                 'More information about label creation can be found at http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/'
+                                 'More information about label creation can be found at https://www.slideshare.net/neuropoly/sct-course-20190121/42'
       )
     parser.add_option(name="-i",
                       type_value="file",
@@ -98,7 +98,7 @@ def get_parser():
                       type_value="file",
                       description="One or two labels (preferred) located at the center of the spinal cord, on the "
                                   "mid-vertebral slice. For more information about label creation, please see: "
-                                  "http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/",
+                                  "https://www.slideshare.net/neuropoly/sct-course-20190121/42",
                       mandatory=False,
                       default_value='',
                       example="anat_labels.nii.gz")
@@ -108,7 +108,7 @@ def get_parser():
                                   "more than 2 labels, all disc covering the region of interest should be provided. "
                                   "E.g., if you are interested in levels C2 to C7, then you should provide disc labels "
                                   "2,3,4,5,6,7). For more information about label creation, please refer to "
-                                  "http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/.",  # TODO: update URL
+                                  "https://www.slideshare.net/neuropoly/sct-course-20190121/42",  # TODO: update URL
                       mandatory=False,
                       default_value='',
                       example="anat_labels.nii.gz")
@@ -141,11 +141,12 @@ def get_parser():
                       \n--\nstep=1\ntype=' + paramreg.steps['1'].type + '\nalgo=' + paramreg.steps['1'].algo + '\nmetric=' + paramreg.steps['1'].metric + '\niter=' + paramreg.steps['1'].iter + '\nsmooth=' + paramreg.steps['1'].smooth + '\ngradStep=' + paramreg.steps['1'].gradStep + '\nslicewise=' + paramreg.steps['1'].slicewise + '\nsmoothWarpXY=' + paramreg.steps['1'].smoothWarpXY + '\npca_eigenratio_th=' + paramreg.steps['1'].pca_eigenratio_th + '\
                       \n--\nstep=2\ntype=' + paramreg.steps['2'].type + '\nalgo=' + paramreg.steps['2'].algo + '\nmetric=' + paramreg.steps['2'].metric + '\niter=' + paramreg.steps['2'].iter + '\nsmooth=' + paramreg.steps['2'].smooth + '\ngradStep=' + paramreg.steps['2'].gradStep + '\nslicewise=' + paramreg.steps['2'].slicewise + '\nsmoothWarpXY=' + paramreg.steps['2'].smoothWarpXY + '\npca_eigenratio_th=' + paramreg.steps['1'].pca_eigenratio_th,
                       mandatory=False)
-    parser.add_option(name="-param-straighten",
+    parser.add_option(name="-straighten-fitting",
                       type_value='str',
-                      description="""Parameters for straightening (see sct_straighten_spinalcord).""",
+                      description="""Algorithm used by the cord straightening procedure for fitting the centerline.""",
                       mandatory=False,
-                      default_value='')
+                      default_value='nurbs',
+                      example=['nurbs', 'hanning'])
     parser.add_option(name='-qc',
                       type_value='folder_creation',
                       description='The path where the quality control generated content will be saved',
@@ -206,8 +207,8 @@ def main(args=None):
     remove_temp_files = int(arguments['-r'])
     verbose = int(arguments['-v'])
     param.verbose = verbose  # TODO: not clean, unify verbose or param.verbose in code, but not both
-    if '-param-straighten' in arguments:
-        param.param_straighten = arguments['-param-straighten']
+    # if '-straighten-fitting' in arguments:
+    param.straighten_fitting = arguments['-straighten-fitting']
     # if '-cpu-nb' in arguments:
     #     arg_cpu = ' -cpu-nb '+str(arguments['-cpu-nb'])
     # else:
@@ -360,7 +361,7 @@ def main(args=None):
                 cropping_slices[0] = 0
             if cropping_slices[1] > nz:
                 cropping_slices[1] = nz
-            msct_image.spatial_crop(Image(ftmp_seg_), dict(((2, np.int32(np.np.round(cropping_slices))),))).save(ftmp_seg)
+            msct_image.spatial_crop(Image(ftmp_seg_), dict(((2, np.int32(np.round(cropping_slices))),))).save(ftmp_seg)
         else:
             # if we do not align the vertebral levels, we crop the segmentation from top to bottom
             im_seg_rpi = Image(ftmp_seg_)
@@ -374,8 +375,7 @@ def main(args=None):
                 if (data != 0).any():
                     break
                 top -= 1
-
-        msct_image.spatial_crop(im_seg_rpi, dict(((2, (bottom, top)),))).save(ftmp_seg)
+            msct_image.spatial_crop(im_seg_rpi, dict(((2, (bottom, top)),))).save(ftmp_seg)
 
 
         # straighten segmentation
@@ -407,6 +407,7 @@ def main(args=None):
         else:
             from sct_straighten_spinalcord import SpinalCordStraightener
             sc_straight = SpinalCordStraightener(ftmp_seg, ftmp_seg)
+            sc_straight.algo_fitting = param.straighten_fitting
             sc_straight.output_filename = add_suffix(ftmp_seg, '_straight')
             sc_straight.path_output = './'
             sc_straight.qc = '0'
@@ -451,7 +452,7 @@ def main(args=None):
             try:
                 register_landmarks(ftmp_label, ftmp_template_label, paramreg.steps['0'].dof, fname_affine='straight2templateAffine.txt', verbose=verbose)
             except Exception:
-                sct.printv('ERROR: input labels do not seem to be at the right place. Please check the position of the labels. See documentation for more details: https://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/', verbose=verbose, type='error')
+                sct.printv('ERROR: input labels do not seem to be at the right place. Please check the position of the labels. See documentation for more details: https://www.slideshare.net/neuropoly/sct-course-20190121/42', verbose=verbose, type='error')
 
             # Concatenate transformations: curve --> straight --> affine
             sct.printv('\nConcatenate transformations: curve --> straight --> affine...', verbose)
@@ -594,7 +595,7 @@ def main(args=None):
         try:
             register_landmarks(ftmp_template_label, ftmp_label, paramreg.steps['0'].dof, fname_affine=warp_forward[0], verbose=verbose, path_qc="./")
         except Exception:
-            sct.printv('ERROR: input labels do not seem to be at the right place. Please check the position of the labels. See documentation for more details: https://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/', verbose=verbose, type='error')
+            sct.printv('ERROR: input labels do not seem to be at the right place. Please check the position of the labels. See documentation for more details: https://www.slideshare.net/neuropoly/sct-course-20190121/42', verbose=verbose, type='error')
 
         # loop across registration steps
         for i_step in range(1, len(paramreg.steps)):

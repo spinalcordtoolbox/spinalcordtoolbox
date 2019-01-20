@@ -34,21 +34,12 @@ class Param:
         self.remove_temp_files = 1  # remove temporary files
         self.verbose = 1
 
-
-#=======================================================================================================================
-# main
-#=======================================================================================================================
-def main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, remove_temp_files, verbose):
-
-    # load input image
-    im_anat = Image(fname_anat)
-    nx, ny, nz, nt, px, py, pz, pt = im_anat.dim
+def flatten_sagittal(im_anat, im_centerline, centerline_fitting, verbose):
     # re-oriente to RPI
     orientation_native = im_anat.orientation
     im_anat.change_orientation("RPI")
-
-    # load centerline
-    im_centerline = Image(fname_centerline).change_orientation("RPI")
+    im_centerline.change_orientation("RPI")
+    nx, ny, nz, nt, px, py, pz, pt = im_anat.dim
 
     # smooth centerline and return fitted coordinates in voxel space
     x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(
@@ -66,10 +57,12 @@ def main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, 
                                             x_centerline_fit,
                                             np.ones(nz-zmax) * x_centerline_fit[-1]])
 
-    # loop across slices and apply translation
+    # change type to float32 and scale between -1 and 1 as requested by img_as_float(). See #1790, #2069
     im_anat_flattened = msct_image.change_type(im_anat, np.float32)
-    # change type to float32 because of subsequent conversion (img_as_float). See #1790
+    min_data, max_data = np.min(im_anat_flattened.data), np.max(im_anat_flattened.data)
+    im_anat_flattened.data = 2 * im_anat_flattened.data/(max_data - min_data) - 1
 
+    # loop across slices and apply translation
     for iz in range(nz):
         # compute translation along x (R-L)
         translation_x = x_centerline_extended[iz] - np.round(nx/2.0)
@@ -77,12 +70,27 @@ def main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, 
         # tform = tf.SimilarityTransform(scale=1, rotation=0, translation=(translation_x, 0))
         tform = transform.SimilarityTransform(translation=(0, translation_x))
         # important to force input in float to skikit image, because it will output float values
-        img = img_as_float(im_anat.data[:, :, iz])
+        img = img_as_float(im_anat_flattened.data[:, :, iz])
         img_reg = transform.warp(img, tform)
         im_anat_flattened.data[:, :, iz] = img_reg  # img_as_uint(img_reg)
 
     # change back to native orientation
     im_anat_flattened.change_orientation(orientation_native)
+
+    return im_anat_flattened
+
+#=======================================================================================================================
+# main
+#=======================================================================================================================
+def main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, remove_temp_files, verbose):
+
+    # load input images
+    im_anat = Image(fname_anat)
+    im_centerline = Image(fname_centerline)
+
+    # flatten sagittal
+    im_anat_flattened = flatten_sagittal(im_anat, im_centerline, centerline_fitting, verbose)
+
     # save output
     fname_out = sct.add_suffix(fname_anat, '_flatten')
     im_anat_flattened.save(fname_out)

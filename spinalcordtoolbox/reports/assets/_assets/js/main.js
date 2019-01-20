@@ -17,6 +17,8 @@ $(document).ready(function(){
     var item = list[index];
     $("#sprite-img").attr("src", item.background_img).removeClass().addClass(item.orientation);
     $("#overlay-img").attr("src", item.overlay_img).removeClass().addClass(item.orientation);
+    document.getElementById("cmdLine").innerHTML = "<b>Command:</b> " + item.cmdline;
+    document.getElementById("sctVer").innerHTML = "<b>SCT version:</b> " + item.sct_version;
     $(this).addClass('active').siblings().removeClass('active');
   });
 
@@ -46,7 +48,7 @@ $(document).ready(function(){
         obj.prev().click();
       }
     }
-    evt.preventDefault();
+//    evt.preventDefault();
   });
 
   $("#table").bootstrapTable({
