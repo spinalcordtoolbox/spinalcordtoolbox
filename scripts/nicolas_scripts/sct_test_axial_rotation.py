@@ -12,7 +12,7 @@
 
 from __future__ import division, absolute_import
 
-import sys, os, shutil
+import sys, os
 
 import sct_utils as sct
 
@@ -111,7 +111,7 @@ def main(args=None):
 
     for k, file in enumerate(list_file):
         sct.printv("\nComputing " + str(k) + " th image :")
-        from sct_axial_rotation import main as axrot
+        from nicolas_scripts.sct_axial_rotation import main as axrot
         if list_seg[k] is None:
             sct.printv("Segmenting " + file + " with sct_propseg")
             sct.run("sct_propseg -i " + file + " -c t2", verbose=0)
