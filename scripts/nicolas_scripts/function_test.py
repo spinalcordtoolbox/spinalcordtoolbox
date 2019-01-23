@@ -58,8 +58,7 @@ def main(args=None):
             elif test_str == "test_2D_hogancest":
                 test_2D_hogancest(file_input= os.path.join(root, filename), path_output=path_output)
             else:
-                sct.printv("no such test as " + test_str + " exists")
-                raise
+                raise Exception("no such test as " + test_str + " exists")
 
 
 def test_list_folder(file_input, path_output):
@@ -120,8 +119,7 @@ def load_image(file_input, dimension):
     if dimension == 3:
         image_data = np.array(Image(file_input).data) # just retrieve the data
         if len(image_data.shape) != 3:
-            sct.printv("Dimension said to be 3 but is " + str(len(image_data.shape)))
-            raise
+            raise Exception("Dimension said to be 3 but is " + str(len(image_data.shape)))
 
     elif dimension == 2:
         image_data = np.array(Image(file_input).data) # retrieve data
@@ -129,12 +127,10 @@ def load_image(file_input, dimension):
             image_data = np.mean(np.array(Image(file_input).data), axis=2) #but mean because 3r axe might be rgb
 
         if len(image_data.shape) != 2:
-            sct.printv("Dimension said to be 2 but is " + str(len(image_data.shape)))
-            raise
+            raise Exception("Dimension said to be 2 but is " + str(len(image_data.shape)))
 
     else:
-        sct.printv("Dimension input must be 2 or 3, not " + str(dimension))
-        raise
+        raise Exception("Dimension input must be 2 or 3, not " + str(dimension))
 
     return image_data
 

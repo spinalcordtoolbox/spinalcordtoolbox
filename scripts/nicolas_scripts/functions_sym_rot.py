@@ -37,8 +37,7 @@ def circular_filter_1d(signal, param_filt, filter='gaussian'):
     elif filter == 'median':
         signal_extended_smooth = medfilt(signal_extended, param_filt)  # median filtering
     else:
-        sct.printv("unknow type of filter")
-        raise
+        raise Exception("unknow type of filter")
 
     length = len(signal)
     signal_smoothed = signal_extended_smooth[length:2*length]  # truncate back the signal
