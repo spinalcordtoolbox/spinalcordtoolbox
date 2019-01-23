@@ -93,7 +93,7 @@ def generate_qc(fn_in, fn_seg, args, path_qc):
     import spinalcordtoolbox.reports.qc as qc
     import spinalcordtoolbox.reports.slice as qcslice
     from spinalcordtoolbox.image import Image
-    from spinalcordtoolbox.resample.nipy_resample import resample_file
+    from spinalcordtoolbox.resample import resample_file
 
     # Resample to fixed resolution (see #2063)
     tmp_folder = sct.TempFolder()
