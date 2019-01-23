@@ -230,8 +230,8 @@ class Slice(object):
         # Compute the matrix size of the final mosaic image
         matrix_sz = (int(size * 2 * nb_row), int(size * 2 * nb_column))
 
-        # Get center of mass of the image. If the input is the cord segmentation, these coordinates are used to center
-        # the image on each panel of the mosaid.
+        # Get center of mass for each slice of the image. If the input is the cord segmentation, these coordinates are
+        # used to center the image on each panel of the mosaid.
         centers_x, centers_y = self.get_center()
 
         matrices = list()
@@ -293,6 +293,8 @@ class Axial(Slice):
         return np.ones(size) * size / 2
 
     def get_center(self, img_idx=-1):
+        """Get the center of mass of each slice. By default, it assumes that self._images is a list of images, and the
+        last item is the segmentation from which the center of mass is computed."""
         image = self._images[img_idx]
         return self._axial_center(image)
 
