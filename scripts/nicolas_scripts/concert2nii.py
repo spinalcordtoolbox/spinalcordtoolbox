@@ -6,7 +6,7 @@ from nibabel import load, Nifti1Image, save
 import numpy as np
 import os
 
-os.chdir("/home/nicolas/Sample_images")
-img=mpimg.imread('test2.png')
+img=mpimg.imread('mask_rotated110.png')
+img = np.mean(img, axis=2)
 imgnif = Nifti1Image(img, np.eye(4))
-save(imgnif, "test2.nii")
+save(imgnif, "mask_rotated110.nii")

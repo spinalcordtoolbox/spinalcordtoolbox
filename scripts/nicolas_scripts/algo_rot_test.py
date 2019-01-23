@@ -54,9 +54,9 @@ def main(args=None):
     for root, dirnames, filenames in os.walk(input_folder):  # searching the given directory
         for filename in fnmatch.filter(filenames, "*.nii"):  # if file with nii extension (.nii or .nii.gz) found
             if test_str == "test_list_folder":
-                test_list_folder(file_input= os.path.join(root, filename), path_output=path_output)
+                test_list_folder(file_input=os.path.join(root, filename), path_output=path_output)
             elif test_str == "test_2D_hogancest":
-                test_2D_hogancest(file_input= os.path.join(root, filename), path_output=path_output)
+                test_2D_hogancest(file_input=os.path.join(root, filename), path_output=path_output)
             else:
                 raise Exception("no such test as " + test_str + " exists")
 
@@ -68,7 +68,7 @@ def test_list_folder(file_input, path_output):
 def test_2D_hogancest(file_input, path_output):
 
     # Params
-    nb_axes = 6
+    nb_axes = 4
     kmedian_size = 3
     nb_bin = 360
 
@@ -79,16 +79,17 @@ def test_2D_hogancest(file_input, path_output):
     hog_ancest = hog_ancestor(image_data, nb_bin=nb_bin)
     # smooth it with median filter
     hog_ancest_smooth = circular_filter_1d(hog_ancest, kmedian_size,
-                                           filter='median') # fft than square than ifft to calculate convolution
+                                           filter='median')  # fft than square than ifft to calculate convolution
     hog_fft2 = np.fft.fft(hog_ancest_smooth) ** 2
-    hog_conv = np.real(np.fft.ifft(hog_fft2))
+    hog_conv = np.real(np.fft.ifft(hog_fft2))  # hog_conv contains 2x the same info
         # TODO FFT CHECK SAMPLING
         # hog_conv = np.convolve(hog_ancest_smooth, hog_ancest_smooth, mode='same')
     # search for maximum to find angle of rotation
     # TODO : works only if nb_bin = 360
     argmaxs = argrelextrema(hog_conv, np.greater, mode='wrap', order=kmedian_size)[0]  # get local maxima
-    argmaxs_sorted = [tutut for _, tutut in
-                      sorted(zip(hog_conv[argmaxs], argmaxs), reverse=True)]  # sort maxima based on
+    argmaxs_sorted = np.asarray([tutut for _, tutut in
+                      sorted(zip(hog_conv[argmaxs], argmaxs), reverse=True)])  # sort maxima based on
+    argmaxs_sorted_nodouble = argmaxs_sorted[np.where(argmaxs_sorted < 181)]  # now we only have angles from 0 to 180
     if nb_axes == -1:
         angles = argmaxs_sorted
     elif nb_axes > len(argmaxs_sorted):

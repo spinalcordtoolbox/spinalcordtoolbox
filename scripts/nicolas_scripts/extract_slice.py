@@ -7,7 +7,7 @@ from msct_parser import Parser
 import sct_utils as sct
 import sys, os, shutil
 from functions_sym_rot import *
-from function_test import *
+from algo_rot_test import *
 import fnmatch
 
 
