@@ -78,6 +78,7 @@ def hog_ancestor(image, nb_bin, grad_ksize=123456789): # TODO implement selectio
     # compute histogram :
     hog_ancest = np.histogram(np.concatenate(orient), bins=nb_bin, range=(-nb_bin/2, nb_bin/2), weights=np.concatenate(grad_mag))
     # hog_ancest = np.histogram(np.concatenate(orient), bins=nb_bin)
+    grad_mag = (grad_mag * 255/np.max(grad_mag)).astype(float).round()  # just for debbuguing purpose
 
     return hog_ancest[0].astype(float)  # return only the values of the bins, not the bins (we know them)
 
