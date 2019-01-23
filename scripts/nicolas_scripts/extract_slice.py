@@ -31,6 +31,8 @@ def get_parser():
                       mandatory=True,
                       example="path/to/output/folder")
 
+    return parser
+
 
 def main(args=None):
 
