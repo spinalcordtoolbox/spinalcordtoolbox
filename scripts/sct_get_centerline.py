@@ -12,7 +12,7 @@ from msct_parser import Parser
 from spinalcordtoolbox.centerline import optic
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.process_seg import extract_centerline
+from spinalcordtoolbox.centerline.core import get_centerline
 
 
 def _call_viewer_centerline(fname_in, interslice_gap=20.0):
@@ -156,8 +156,9 @@ def run_main():
 
     if method == 'viewer':
         fname_labels_viewer = _call_viewer_centerline(fname_in=fname_data, interslice_gap=interslice_gap)
-        centerline_filename = extract_centerline(fname_labels_viewer, verbose=verbose, algo_fitting='nurbs')
-
+        im_centerline, arr_centerline = get_centerline(fname_labels_viewer, algo_fitting='polyfit')
+        im_centerline.save(os.path.join(folder_output, 'centerline.nii.gz'))
+        np.savetxt(os.path.join(folder_output, 'centerline.csv'), arr_centerline.transpose(), delimiter=",")
     else:
         # condition on verbose when using OptiC
         if verbose == 1:
