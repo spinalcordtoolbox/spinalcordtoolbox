@@ -146,6 +146,7 @@ def _git_info(commit_env='SCT_COMMIT',branch_env='SCT_BRANCH'):
 
     return install_type, sct_commit, sct_branch, version_sct
 
+
 def _version_string():
     install_type, sct_commit, sct_branch, version_sct = _git_info()
     if install_type == "package":
