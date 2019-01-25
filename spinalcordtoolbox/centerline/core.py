@@ -2,11 +2,18 @@
 # -*- coding: utf-8
 # Core functions dealing with centerline extraction from 3D data.
 
+# TODO: create class ParamCenterline
+
 import numpy as np
 from spinalcordtoolbox.image import Image
 
 
-def get_centerline(segmentation, algo_fitting='polyfit', verbose=1):
+class ParamCenterline:
+    def __init__(self, contrast=None):
+        self.contrast = contrast
+
+
+def get_centerline(segmentation, algo_fitting='polyfit', param=ParamCenterline(), verbose=1):
     """
     Extract centerline from a binary or weighted segmentation by computing the center of mass slicewise.
     :param segmentation: input segmentation or series of points along the centerline. Could be an Image or a file name.
@@ -14,37 +21,38 @@ def get_centerline(segmentation, algo_fitting='polyfit', verbose=1):
         nurbs:
         hanning:
         polyfit: Polynomial fitting
+    :param param: ParamCenterline()
+    :param verbose: int: verbose level
     :return: im_centerline: Image: Centerline in discrete coordinate (int)
     :return: arr_centerline: nparray: Centerline in continuous coordinate (float) for each slice
     """
-    # open image and change to RPI orientation
+    # Open image and change to RPI orientation
     im_seg = Image(segmentation)
     native_orientation = im_seg.orientation
     im_seg.change_orientation('RPI')
-    # nx, ny, nz, nt, px, py, pz, pt = im_seg.dim
+    x, y, z = np.where(im_seg.data)
 
-    # Extract min and max index in Z direction
-    # data_seg = im_seg.data
-    # X, Y, Z = (data_seg > 0).nonzero()
-    # min_z_index, max_z_index = min(Z), max(Z)
-
+    # Choose method
     if algo_fitting == 'polyfit':
         from spinalcordtoolbox.centerline import curve_fitting
-        x, y, z = np.where(im_seg.data)
         z_centerline = np.array(range(im_seg.dim[2]))
         x_centerline_fit, x_centerline_deriv = curve_fitting.polyfit_1d(z, x, z_centerline, deg=3)
         y_centerline_fit, y_centerline_deriv = curve_fitting.polyfit_1d(z, y, z_centerline, deg=3)
 
     elif algo_fitting == 'nurbs':
         from spinalcordtoolbox.centerline.nurbs import b_spline_nurbs
-        x, y, z = np.where(im_seg.data)
         z_centerline = np.array(range(im_seg.dim[2]))
         # TODO: do something about nbControl: previous default was -1.
         x_centerline_fit, y_centerline_fit, z_centerline_fit, x_centerline_deriv, y_centerline_deriv, \
             z_centerline_deriv, error = b_spline_nurbs(x, y, z, nbControl=None)
 
+    elif algo_fitting == 'optic':
+        from spinalcordtoolbox.centerline import optic
+        img_ctl = optic.detect_centerline(im_seg, param.contrast)
+        x_centerline_fit, y_centerline_fit, z_centerline = np.where(img_ctl.data)
+
+    # Display fig of fitted curves
     if verbose == 2:
-        # Display fig of fitted curves
         from datetime import datetime
         import matplotlib
         matplotlib.use('Agg')  # prevent display figure
@@ -52,12 +60,12 @@ def get_centerline(segmentation, algo_fitting='polyfit', verbose=1):
         plt.figure()
         plt.title("Fitting algo: %s" % algo_fitting)
         plt.subplot(2, 1, 1)
-        plt.plot(z_centerline, x, 'ro')
+        plt.plot(z, x, 'ro')
         plt.plot(z_centerline, x_centerline_fit)
         plt.xlabel("Z")
         plt.ylabel("X")
         plt.subplot(2, 1, 2)
-        plt.plot(z_centerline, y, 'ro')
+        plt.plot(z, y, 'ro')
         plt.plot(z_centerline, y_centerline_fit)
         plt.xlabel("Z")
         plt.ylabel("Y")
@@ -73,25 +81,3 @@ def get_centerline(segmentation, algo_fitting='polyfit', verbose=1):
     im_centerline.change_orientation(native_orientation)
     # TODO: reorient output array in native orientation
     return im_centerline, np.array([x_centerline_fit, y_centerline_fit, z_centerline])
-
-    #
-    # # output csv with centerline coordinates
-    # fname_centerline_csv = file_out + '.csv'
-    # f_csv = open(fname_centerline_csv, 'w')
-    # f_csv.write('x,y,z\n')  # csv header
-    # for i in range(min_z_index, max_z_index + 1):
-    #     f_csv.write("%d,%d,%d\n" % (int(i),
-    #                                 x_centerline_voxel[i - min_z_index],
-    #                                 y_centerline_voxel[i - min_z_index]))
-    # f_csv.close()
-    # TODO: display open syntax for csv
-
-    # create a .roi file
-    # fname_roi_centerline = optic.centerline2roi(fname_image=fname_centerline,
-    #                                             folder_output='./',
-    #                                             verbose=verbose)
-
-    # Remove temporary files
-    # if remove_temp_files:
-    #     sct.printv('\nRemove temporary files...', verbose)
-    #     sct.rmtree(path_tmp)

@@ -2,19 +2,14 @@
 # -*- coding: utf-8
 # Functions dealing with centerline detection and manipulation
 
-# TODO: rename this file "centerline" and move it to the parent folder
-
 from __future__ import absolute_import, division
 
 import os, datetime
 
 import numpy as np
-import nibabel as nib
 
 import sct_utils as sct
-import sct_image
-from .. import image as msct_image
-from ..image import Image
+from spinalcordtoolbox.image import Image
 
 
 def centerline2roi(fname_image, folder_output='./', verbose=0):
@@ -67,27 +62,23 @@ def centerline2roi(fname_image, folder_output='./', verbose=0):
     return fname_output
 
 
-def detect_centerline(image_fname, optic_models_path, file_output):
-    """This method will use the OptiC to detect the centerline.
-
-    :param image_fname: The input image filename.
-    :param optic_models_path: The path with the Optic model files.
-    :param file_output: The OptiC output folder.
-
-    :returns: The OptiC output filename.
+def detect_centerline(img, contrast):
+    """Detect spinal cord centerline using OptiC.
+    :param img: input Image() object.
+    :param contrast: str: The type of contrast. Will define the path to Optic model.
+    :returns: Image(): Output centerline
     """
 
-    image_input = Image(image_fname)
+    # Fetch path to Optic model based on contrast
+    optic_models_path = os.path.join(sct.__sct_dir__, 'data', 'optic_models', '{}_model'.format(contrast))
 
     sct.log.debug('Detecting the spinal cord using OptiC')
-    image_input_orientation = image_input.orientation
+    img_orientation = img.orientation
 
     temp_folder = sct.TempFolder()
-    temp_folder.copy_from(image_fname)
     temp_folder.chdir()
 
     # convert image data type to int16, as required by opencv (backend in OptiC)
-    img = Image(image_fname)
     img_int16 = img.copy()
 
     # rescale intensity
@@ -110,14 +101,14 @@ def detect_centerline(image_fname, optic_models_path, file_output):
     os.environ["FSLOUTPUTTYPE"] = "NIFTI_PAIR"
     cmd_optic = 'isct_spine_detect -ctype=dpdt -lambda=1 "%s" "%s" "%s"' % \
                 (optic_models_path, optic_input, optic_filename)
+
     sct.run(cmd_optic, verbose=0)
 
     # convert .img and .hdr files to .nii.gz
-    img_ctr = Image(file_img + '_optic_ctr.hdr')
-    # img_ctr.change_orientation(image_input_orientation)
-    # img_ctr.save(file_output)
+    img_ctl = Image(file_img + '_optic_ctr.hdr')
+    img_ctl.change_orientation(img_orientation)
 
     # return to initial folder
     temp_folder.chdir_undo()
 
-    return img_ctr
+    return img_ctl
