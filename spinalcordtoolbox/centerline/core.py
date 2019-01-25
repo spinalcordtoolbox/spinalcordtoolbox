@@ -76,7 +76,7 @@ def get_centerline(segmentation, algo_fitting='polyfit', param=ParamCenterline()
     im_centerline = im_seg.copy()
     im_centerline.data = np.zeros(im_centerline.data.shape)
     # assign value=1 to centerline
-    im_centerline.data[x_centerline_fit.round().astype(int), x_centerline_fit.round().astype(int), :] = 1
+    im_centerline.data[x_centerline_fit.round().astype(int), y_centerline_fit.round().astype(int), z_centerline] = 1
     # reorient centerline to native orientation
     im_centerline.change_orientation(native_orientation)
     # TODO: reorient output array in native orientation
