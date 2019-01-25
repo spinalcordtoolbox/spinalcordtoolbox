@@ -9,10 +9,9 @@ import numpy as np
 
 import sct_utils as sct
 from msct_parser import Parser
-from spinalcordtoolbox.centerline import optic
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.centerline.core import get_centerline
+from spinalcordtoolbox.centerline.core import get_centerline, ParamCenterline
 
 
 def _call_viewer_centerline(fname_in, interslice_gap=20.0):
@@ -136,22 +135,13 @@ def run_main():
     if method == 'viewer':
         fname_labels_viewer = _call_viewer_centerline(fname_in=fname_data, interslice_gap=interslice_gap)
         im_centerline, arr_centerline = get_centerline(fname_labels_viewer, algo_fitting='polyfit')
-        np.savetxt(file_output+'.csv', arr_centerline.transpose(), delimiter=",")
     else:
-        # condition on verbose when using OptiC
-        if verbose == 1:
-            verbose = 2
+        im_centerline, arr_centerline = \
+            get_centerline(fname_data, algo_fitting='optic', param=ParamCenterline(contrast=contrast_type))
 
-        # OptiC models
-        path_script = os.path.dirname(__file__)
-        path_sct = os.path.dirname(path_script)
-        optic_models_path = os.path.join(path_sct, 'data', 'optic_models', '{}_model'.format(contrast_type))
-
-        # Execute OptiC binary
-        im_centerline = optic.detect_centerline(image_fname=fname_data, optic_models_path=optic_models_path,
-                                                file_output=file_output+'.nii.gz')
-    # save centerline as nifti file
+    # save centerline as nifti (discrete) and csv (continuous) files
     im_centerline.save(file_output + '.nii.gz')
+    np.savetxt(file_output + '.csv', arr_centerline.transpose(), delimiter=",")
 
     sct.display_viewer_syntax([fname_input_data, file_output+'.nii.gz'], colormaps=['gray', 'red'], opacities=['', '1'])
 
