@@ -35,6 +35,14 @@ def get_centerline(segmentation, algo_fitting='polyfit'):
         x_centerline_fit, x_centerline_deriv = curve_fitting.polyfit_1d(z, x, z_centerline, deg=3)
         y_centerline_fit, y_centerline_deriv = curve_fitting.polyfit_1d(z, y, z_centerline, deg=3)
 
+    elif algo_fitting == 'nurbs':
+        from spinalcordtoolbox.centerline.nurbs import b_spline_nurbs
+        x, y, z = np.where(im_seg.data)
+        z_centerline = np.array(range(im_seg.dim[2]))
+        # TODO: do something about nbControl: previous default was -1.
+        x_centerline_fit, y_centerline_fit, z_centerline_fit, x_centerline_deriv, y_centerline_deriv, \
+            z_centerline_deriv, error = b_spline_nurbs(x, y, z, nbControl=None)
+
     # if verbose == 2:
     #     # TODO: code below does not work
     #     import matplotlib.pyplot as plt
