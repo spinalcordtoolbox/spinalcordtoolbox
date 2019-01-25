@@ -41,11 +41,11 @@ def get_parser():
                       type_value="multiple_choice",
                       description="Method used for extracting the centerline.\nsvm: automatic centerline detection, based on Support Vector Machine algorithm.\ncnn: automatic centerline detection, based on Convolutional Neural Network.\nviewer: semi-automatic centerline generation, based on manual selection of a few points using an interactive viewer, then approximation with NURBS.\nmanual: use an existing centerline by specifying its filename with flag -file_centerline (e.g. -file_centerline t2_centerline_manual.nii.gz).\n",
                       mandatory=False,
-                      example=['svm', 'cnn', 'viewer', 'manual'],
+                      example=['svm', 'cnn', 'viewer', 'file'],
                       default_value="svm")
     parser.add_option(name="-file_centerline",
                       type_value="image_nifti",
-                      description="Input centerline file (to use with flag -centerline manual).",
+                      description="Input centerline file (to use with flag -centerline file).",
                       mandatory=False,
                       example="t2_centerline_manual.nii.gz")
     parser.add_option(name="-brain",
@@ -153,13 +153,13 @@ def main():
     else:
         output_folder = arguments["-ofolder"]
 
-    if ctr_algo == 'manual' and "-file_centerline" not in args:
+    if ctr_algo == 'file' and "-file_centerline" not in args:
         sct.log.warning('Please use the flag -file_centerline to indicate the centerline filename.')
         sys.exit(1)
     
     if "-file_centerline" in args:
         manual_centerline_fname = arguments["-file_centerline"]
-        ctr_algo = 'manual'
+        ctr_algo = 'file'
     else:
         manual_centerline_fname = None
 
