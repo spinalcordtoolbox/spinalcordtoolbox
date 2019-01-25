@@ -2,19 +2,25 @@
 # -*- coding: utf-8
 # pytest unit tests for spinalcordtoolbox.centerline
 
+# TODO: test various orientations.
+# TODO: create synthetic centerline using polynomial functions.
+# TODO: adjust this threshold
 
 from __future__ import absolute_import
 
+import os
 import pytest
-
+import tempfile
 import numpy as np
 import nibabel as nib
 
+from spinalcordtoolbox.centerline import optic
 from spinalcordtoolbox.centerline.core import get_centerline
 from spinalcordtoolbox.image import Image
 
-# TODO: test various orientations.
-# TODO: create synthetic centerline using polynomial functions.
+
+def temp_file_nii():
+    return os.path.join(tempfile.tempdir, 'img.nii')
 
 
 @pytest.fixture(scope="session")
@@ -46,8 +52,22 @@ def dummy_centerline_small():
 
 
 # noinspection 801,PyShadowingNames
-def test_get_centerline(dummy_centerline_small):
+def test_get_centerline_polyfit(dummy_centerline_small):
     """Test extraction of metrics aggregation across slices: All slices by default"""
     img, img_sub = dummy_centerline_small
     img_out, arr_out = get_centerline(img, algo_fitting='polyfit')
-    assert np.linalg.norm(np.where(img.data) - arr_out) < 5  # TODO: adjust this threshold
+    assert np.linalg.norm(np.where(img.data) - arr_out) < 5
+
+
+# noinspection 801,PyShadowingNames
+def test_get_centerline_optic(dummy_centerline_small):
+    """Test extraction of metrics aggregation across slices: All slices by default"""
+    img, img_sub = dummy_centerline_small
+    path_script = os.path.dirname(__file__)
+    path_sct = os.path.dirname(path_script)
+    optic_models_path = os.path.join(path_sct, 'data', 'optic_models', '{}_model'.format('t1'))
+    file_nii = temp_file_nii()
+    _ = img.save(file_nii)
+    img_ctr = optic.detect_centerline(image_fname=file_nii, optic_models_path=optic_models_path,
+                                      file_output='img_centerline.nii')
+    assert np.linalg.norm(np.where(img.data) - np.array(np.where(img_ctr.data))) < 10
