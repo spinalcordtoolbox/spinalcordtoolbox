@@ -48,7 +48,9 @@ def _call_viewer_centerline(fname_in, interslice_gap=20.0):
 def get_parser():
     # Initialize the parser
     parser = Parser(__file__)
-    parser.usage.set_description("""This function allows the extraction of the spinal cord centerline. Two methods are available: OptiC (automatic) and Viewer (manual).\n\nReference: C Gros, B De Leener, et al. Automatic spinal cord localization, robust to MRI contrasts using global curve optimization (2017). doi.org/10.1016/j.media.2017.12.001""")
+    parser.usage.set_description("""This function allows the extraction of the spinal cord centerline. Two methods are 
+    available: OptiC (automatic) and Viewer (manual).\n\nReference: C Gros, B De Leener, et al. Automatic spinal cord 
+    localization, robust to MRI contrast using global curve optimization (2017). doi.org/10.1016/j.media.2017.12.001""")
 
     parser.add_option(name="-i",
                       type_value="image_nifti",
@@ -60,18 +62,6 @@ def get_parser():
                       description="type of image contrast.",
                       mandatory=False,
                       example=['t1', 't2', 't2s', 'dwi'])
-    parser.add_option(name="-ofolder",
-                      type_value="folder_creation",
-                      description="output folder.",
-                      mandatory=False,
-                      example="My_Output_Folder/",
-                      default_value="")
-    parser.add_option(name="-roi",
-                      type_value="multiple_choice",
-                      description="outputs a ROI file, compatible with JIM software.",
-                      mandatory=False,
-                      example=['0', '1'],
-                      default_value='0')
     parser.add_option(name="-method",
                       type_value="multiple_choice",
                       description="Method used for extracting the centerline.\n"
@@ -80,6 +70,12 @@ def get_parser():
                       mandatory=False,
                       example=['optic', 'viewer'],
                       default_value='optic')
+    parser.add_option(name="-o",
+                      type_value='file_output',
+                      description="Prefix of centerline output files.",
+                      mandatory=False,
+                      example="centerline",
+                      default_value="centerline")
     parser.add_option(name="-gap",
                       type_value="float",
                       description="Gap in mm between manually selected points when using the Viewer method.",
@@ -89,12 +85,6 @@ def get_parser():
                       type_value="image_nifti",
                       description="File name of ground-truth centerline or segmentation (binary nifti).",
                       mandatory=False)
-    parser.add_option(name="-r",
-                      type_value="multiple_choice",
-                      description="remove temporary files.",
-                      mandatory=False,
-                      example=['0', '1'],
-                      default_value='1')
     parser.add_option(name="-v",
                       type_value="multiple_choice",
                       description="1: display on, 0: display off (default)",
@@ -102,6 +92,7 @@ def get_parser():
                       example=["0", "1", "2"],
                       default_value="1")
     return parser
+
 
 def run_main():
     sct.init_sct()
@@ -134,20 +125,8 @@ def run_main():
         interslice_gap = float(arguments["-gap"])
 
     # Output folder
-    if "-ofolder" in arguments:
-        folder_output = arguments["-ofolder"]
-    else:
-        folder_output = '.'
-
-    # Remove temporary files
-    remove_temp_files = True
-    if "-r" in arguments:
-        remove_temp_files = bool(int(arguments["-r"]))
-
-    # Outputs a ROI file
-    output_roi = False
-    if "-roi" in arguments:
-        output_roi = bool(int(arguments["-roi"]))
+    if "-o" in arguments:
+        file_output = arguments["-o"]
 
     # Verbosity
     verbose = 0
@@ -157,8 +136,7 @@ def run_main():
     if method == 'viewer':
         fname_labels_viewer = _call_viewer_centerline(fname_in=fname_data, interslice_gap=interslice_gap)
         im_centerline, arr_centerline = get_centerline(fname_labels_viewer, algo_fitting='polyfit')
-        im_centerline.save(os.path.join(folder_output, 'centerline.nii.gz'))
-        np.savetxt(os.path.join(folder_output, 'centerline.csv'), arr_centerline.transpose(), delimiter=",")
+        np.savetxt(file_output+'.csv', arr_centerline.transpose(), delimiter=",")
     else:
         # condition on verbose when using OptiC
         if verbose == 1:
@@ -170,15 +148,13 @@ def run_main():
         optic_models_path = os.path.join(path_sct, 'data', 'optic_models', '{}_model'.format(contrast_type))
 
         # Execute OptiC binary
-        _, centerline_filename = optic.detect_centerline(image_fname=fname_data,
-                                                    contrast_type=contrast_type,
-                                                    optic_models_path=optic_models_path,
-                                                    folder_output=folder_output,
-                                                    remove_temp_files=remove_temp_files,
-                                                    output_roi=output_roi,
-                                                    verbose=verbose)
+        im_centerline = optic.detect_centerline(image_fname=fname_data, optic_models_path=optic_models_path,
+                                                file_output=file_output+'.nii.gz')
+    # save centerline as nifti file
+    im_centerline.save(file_output + '.nii.gz')
 
-    sct.display_viewer_syntax([fname_input_data, centerline_filename], colormaps=['gray', 'red'], opacities=['', '1'])
+    sct.display_viewer_syntax([fname_input_data, file_output+'.nii.gz'], colormaps=['gray', 'red'], opacities=['', '1'])
+
 
 if __name__ == '__main__':
     run_main()
