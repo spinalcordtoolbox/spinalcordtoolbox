@@ -23,11 +23,12 @@ import tqdm
 
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.centerline.nurbs import b_spline_nurbs
 from msct_parser import Parser
 from msct_types import Centerline
 from sct_apply_transfo import Transform
 import sct_utils as sct
-from msct_smooth import smoothing_window, evaluate_derivative_3D, b_spline_nurbs
+# from msct_smooth import smoothing_window, evaluate_derivative_3D, b_spline_nurbs
 
 
 def smooth_centerline(fname_centerline, algo_fitting='hanning', type_window='hanning', window_length=80, verbose=0, nurbs_pts_number=1000, all_slices=True, phys_coordinates=False, remove_outliers=False):
