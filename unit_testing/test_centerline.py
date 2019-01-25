@@ -16,12 +16,10 @@ import nibabel as nib
 
 from spinalcordtoolbox.centerline import optic
 from spinalcordtoolbox.centerline.core import get_centerline
-from spinalcordtoolbox.centerline.nurbs import b_spline_nurbs
 from spinalcordtoolbox.image import Image
 
-
-def temp_file_nii():
-    return os.path.join(tempfile.tempdir, 'img.nii')
+os.chdir(tempfile.gettempdir())
+verbose = 1
 
 
 @pytest.fixture(scope="session")
@@ -43,12 +41,14 @@ def dummy_centerline_small():
     data[5, 8, 8] = 1
     affine = np.eye(4)
     nii = nib.nifti1.Nifti1Image(data, affine)
-    img = Image(data, hdr=nii.header, orientation='RPI', dim=nii.header.get_data_shape())
+    img = Image(data, hdr=nii.header, dim=nii.header.get_data_shape())
+    img.change_orientation('RPI')
+    img.data = data  # overwrite data with RPI orientation
     # define sub data
-    data_sub = np.zeros((nx, ny, nz))
+    img_sub = img.copy()  #Image(data_sub, hdr=nii.header, orientation='RPI', dim=nii.header.get_data_shape())
+    img_sub.data = np.zeros((nx, ny, nz))
     for iz in range(0, nz, 3):
-        data_sub[..., iz] = data[..., iz]
-    img_sub = Image(data_sub, hdr=nii.header, orientation='RPI', dim=nii.header.get_data_shape())
+        img_sub.data[..., iz] = data[..., iz]
     return img, img_sub
 
 
@@ -57,11 +57,11 @@ def test_get_centerline_polyfit(dummy_centerline_small):
     """Test centerline fitting using polyfit"""
     img, img_sub = dummy_centerline_small
     # All points
-    img_out, arr_out = get_centerline(img, algo_fitting='polyfit')
-    assert np.linalg.norm(np.where(img.data) - arr_out) < 5
+    img_out, arr_out = get_centerline(img, algo_fitting='polyfit', verbose=verbose)
+    assert np.linalg.norm(np.where(img.data) - arr_out) < 0.9
     # Sparse points
-    img_out, arr_out = get_centerline(img_sub, algo_fitting='polyfit')
-    assert np.linalg.norm(np.where(img.data) - arr_out) < 5.5
+    img_out, arr_out = get_centerline(img_sub, algo_fitting='polyfit', verbose=verbose)
+    assert np.linalg.norm(np.where(img.data) - arr_out) < 2.5
 
 
 # noinspection 801,PyShadowingNames
@@ -69,8 +69,8 @@ def test_get_centerline_nurbs(dummy_centerline_small):
     """Test centerline fitting using nurbs"""
     img, img_sub = dummy_centerline_small
     # All points
-    img_out, arr_out = get_centerline(img, algo_fitting='nurbs')
-    assert np.linalg.norm(np.where(img.data) - arr_out) < 4.4
+    img_out, arr_out = get_centerline(img, algo_fitting='nurbs', verbose=verbose)
+    assert np.linalg.norm(np.where(img.data) - arr_out) < 0.8
     # Sparse points
     # TODO: fix error below and un-mask it
     # img_out, arr_out = get_centerline(img_sub, algo_fitting='nurbs')
@@ -84,7 +84,7 @@ def test_get_centerline_optic(dummy_centerline_small):
     path_script = os.path.dirname(__file__)
     path_sct = os.path.dirname(path_script)
     optic_models_path = os.path.join(path_sct, 'data', 'optic_models', '{}_model'.format('t1'))
-    file_nii = temp_file_nii()
+    file_nii = 'img.nii'
     _ = img_sub.save(file_nii)
     img_ctr = optic.detect_centerline(image_fname=file_nii, optic_models_path=optic_models_path,
                                       file_output='img_centerline.nii')

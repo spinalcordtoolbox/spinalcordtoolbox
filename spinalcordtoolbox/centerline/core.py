@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8
-# Core functions dealing with centerline extraction
+# Core functions dealing with centerline extraction from 3D data.
 
 import numpy as np
 from spinalcordtoolbox.image import Image
 
-def get_centerline(segmentation, algo_fitting='polyfit'):
+
+def get_centerline(segmentation, algo_fitting='polyfit', verbose=1):
     """
     Extract centerline from a binary or weighted segmentation by computing the center of mass slicewise.
     :param segmentation: input segmentation or series of points along the centerline. Could be an Image or a file name.
@@ -16,7 +17,6 @@ def get_centerline(segmentation, algo_fitting='polyfit'):
     :return: im_centerline: Image: Centerline in discrete coordinate (int)
     :return: arr_centerline: nparray: Centerline in continuous coordinate (float) for each slice
     """
-    # TODO: output continuous centerline (and add in unit test)
     # open image and change to RPI orientation
     im_seg = Image(segmentation)
     native_orientation = im_seg.orientation
@@ -43,33 +43,26 @@ def get_centerline(segmentation, algo_fitting='polyfit'):
         x_centerline_fit, y_centerline_fit, z_centerline_fit, x_centerline_deriv, y_centerline_deriv, \
             z_centerline_deriv, error = b_spline_nurbs(x, y, z, nbControl=None)
 
-    # if verbose == 2:
-    #     # TODO: code below does not work
-    #     import matplotlib.pyplot as plt
-    #
-    #     # Creation of a vector x that takes into account the distance between the labels
-    #     nz_nonz = len(z_centerline_voxel)
-    #     x_display = [0 for i in range(x_centerline_voxel.shape[0])]
-    #     y_display = [0 for i in range(y_centerline_voxel.shape[0])]
-    #     for i in range(0, nz_nonz, 1):
-    #         x_display[int(z_centerline_voxel[i] - z_centerline_voxel[0])] = x_centerline[i]
-    #         y_display[int(z_centerline_voxel[i] - z_centerline_voxel[0])] = y_centerline[i]
-    #
-    #     plt.figure(1)
-    #     plt.subplot(2, 1, 1)
-    #     plt.plot(z_centerline_voxel, x_display, 'ro')
-    #     plt.plot(z_centerline_voxel, x_centerline_voxel)
-    #     plt.xlabel("Z")
-    #     plt.ylabel("X")
-    #     plt.title("x and x_fit coordinates")
-    #
-    #     plt.subplot(2, 1, 2)
-    #     plt.plot(z_centerline_voxel, y_display, 'ro')
-    #     plt.plot(z_centerline_voxel, y_centerline_voxel)
-    #     plt.xlabel("Z")
-    #     plt.ylabel("Y")
-    #     plt.title("y and y_fit coordinates")
-    #     plt.show()
+    if verbose == 2:
+        # Display fig of fitted curves
+        from datetime import datetime
+        import matplotlib
+        matplotlib.use('Agg')  # prevent display figure
+        import matplotlib.pyplot as plt
+        plt.figure()
+        plt.title("Fitting algo: %s" % algo_fitting)
+        plt.subplot(2, 1, 1)
+        plt.plot(z_centerline, x, 'ro')
+        plt.plot(z_centerline, x_centerline_fit)
+        plt.xlabel("Z")
+        plt.ylabel("X")
+        plt.subplot(2, 1, 2)
+        plt.plot(z_centerline, y, 'ro')
+        plt.plot(z_centerline, y_centerline_fit)
+        plt.xlabel("Z")
+        plt.ylabel("Y")
+        plt.savefig('fig_centerline_' + algo_fitting +'_' + datetime.now().strftime("%y%m%d%H%M%S%f") + '.png')
+        plt.close()
 
     # Create an image with the centerline
     im_centerline = im_seg.copy()

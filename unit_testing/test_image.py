@@ -4,7 +4,7 @@
 
 from __future__ import print_function, absolute_import
 
-import sys, io, os, time, itertools
+import sys, os, tempfile
 
 import pytest
 
@@ -14,8 +14,8 @@ import nibabel.orientations
 
 import sct_utils as sct
 import spinalcordtoolbox.image as msct_image
-import sct_image
 
+os.chdir(tempfile.gettempdir())
 
 @pytest.fixture(scope="session")
 def image_paths():
@@ -28,7 +28,6 @@ def image_paths():
                 path = os.path.join(cwd, file)
                 ret.append(path)
     return ret
-
 
 
 def fake_3dimage_custom(data):
