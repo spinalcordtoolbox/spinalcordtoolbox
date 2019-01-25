@@ -98,7 +98,7 @@ def evaluate_derivative_2D(x, y, px, py):
     :return:
     """
 
-    from numpy import array, sqrt, insert, append
+    from numpy import array, insert, append
 
     x = [x_elem * px for x_elem in x]
     y = [y_elem * py for y_elem in y]
@@ -205,114 +205,6 @@ def Univariate_Spline(x, y, w=None, bbox=[None, None], k=3, s=None) :
     return ys
 
 
-def b_spline_nurbs(x, y, z, fname_centerline=None, degree=3, point_number=3000, nbControl=-1, verbose=1, all_slices=True, path_qc='.'):
-    # 3D B-Spline function, sct_nurbs
-
-    from math import log
-    from msct_nurbs import NURBS
-
-    twodim = False
-    if z is None:
-        twodim = True
-
-    """x.reverse()
-    y.reverse()
-    z.reverse()"""
-
-    sct.printv('\nFitting centerline using B-spline approximation...', verbose)
-    if not twodim:
-        data = [[x[n], y[n], z[n]] for n in range(len(x))]
-    else:
-        data = [[x[n], y[n]] for n in range(len(x))]
-
-    # if control_points == 0:
-    #     nurbs = NURBS(degree, point_number, data) # BE very careful with the spline order that you choose : if order is too high ( > 4 or 5) you need to set a higher number of Control Points (cf sct_nurbs ). For the third argument (number of points), give at least len(z_centerline)+500 or higher
-    # else:
-    #     sct.printv('In b_spline_nurbs we get control_point = ', control_points)
-    #     nurbs = NURBS(degree, point_number, data, False, control_points)
-
-    if nbControl == -1:
-        centerlineSize = getSize(x, y, z, fname_centerline)
-        nbControl = 30 * log(centerlineSize, 10) - 42
-        nbControl = np.round(nbControl)
-
-    nurbs = NURBS(degree, point_number, data, False, nbControl, verbose, all_slices=all_slices, twodim=twodim)
-
-    if not twodim:
-        P = nurbs.getCourbe3D()
-        x_fit = P[0]
-        y_fit = P[1]
-        z_fit = P[2]
-        Q = nurbs.getCourbe3D_deriv()
-        x_deriv = Q[0]
-        y_deriv = Q[1]
-        z_deriv = Q[2]
-    else:
-        P = nurbs.getCourbe2D()
-        x_fit = P[0]
-        y_fit = P[1]
-        Q = nurbs.getCourbe2D_deriv()
-        x_deriv = Q[0]
-        y_deriv = Q[1]
-
-    """x_fit = x_fit[::-1]
-    y_fit = x_fit[::-1]
-    z_fit = x_fit[::-1]
-    x_deriv = x_fit[::-1]
-    y_deriv = x_fit[::-1]
-    z_deriv = x_fit[::-1]"""
-
-    if verbose == 2:
-        # TODO qc
-        PC = nurbs.getControle()
-        PC_x = [p[0] for p in PC]
-        PC_y = [p[1] for p in PC]
-        if not twodim:
-            PC_z = [p[2] for p in PC]
-
-        import matplotlib
-        matplotlib.use('Agg')  # prevent display figure
-        import matplotlib.pyplot as plt
-        if not twodim:
-            plt.figure(1)
-            #ax = plt.subplot(211)
-            plt.subplot(211)
-            plt.plot(z, x, 'r.')
-            plt.plot(z_fit, x_fit)
-            plt.plot(PC_z, PC_x, 'go')
-            # ax.set_aspect('equal')
-            plt.xlabel('z')
-            plt.ylabel('x')
-            plt.legend(["centerline", "NURBS", "control points"])
-            #ay = plt.subplot(212)
-            plt.subplot(212)
-            plt.plot(z, y, 'r.')
-            plt.plot(z_fit, y_fit)
-            plt.plot(PC_z, PC_y, 'go')
-            # ay.set_aspect('equal')
-            plt.xlabel('z')
-            plt.ylabel('y')
-            plt.legend(["centerline", "NURBS", "control points"],loc=4)
-            # plt.show()
-        else:
-            plt.figure(1)
-            plt.plot(y, x, 'r.')
-            plt.plot(y_fit, x_fit)
-            plt.plot(PC_y, PC_x, 'go')
-            # ax.set_aspect('equal')
-            plt.xlabel('y')
-            plt.ylabel('x')
-            plt.legend(["centerline", "NURBS", "control points"])
-            # plt.show()
-        plt.savefig(os.path.join(path_qc, 'fig_b_spline_nurbs.png'))
-        plt.close()
-
-    if not twodim:
-        return x_fit, y_fit, z_fit, x_deriv, y_deriv, z_deriv, nurbs.error_curve_that_last_worked
-    else:
-        return x_fit, y_fit, x_deriv, y_deriv, nurbs.error_curve_that_last_worked
-
-
 #=======================================================================================================================
 # 3D B-Spline function using ITK
 #=======================================================================================================================
@@ -346,28 +238,6 @@ def b_spline_nurbs_itk(fname_centerline, numberOfLevels=10):
 #=======================================================================================================================
 # get size
 #=======================================================================================================================
-def getSize(x, y, z, file_name=None):
-    from math import sqrt
-    # get pixdim
-    if file_name is not None:
-        cmd1 = ['fslval', file_name, 'pixdim1']
-        status, output = sct.run(cmd1)
-        p1 = float(output)
-        cmd2 = ['fslval', file_name, 'pixdim2']
-        status, output = sct.run(cmd2)
-        p2 = float(output)
-        cmd3 = ['fslval', file_name, 'pixdim3']
-        status, output = sct.run(cmd3)
-        p3 = float(output)
-    else:
-        p1, p2, p3 = 1.0, 1.0, 1.0
-
-    # Centerline size
-    s = 0
-    for i in range(len(x) - 1):
-        s += sqrt((p1 * (x[i + 1] - x[i]))**2 + (p2 * (y[i + 1] - y[i]))**2 + (p3 * (z[i + 1] - z[i])**2))
-    # sct.printv("centerline size: ", s)
-    return s
 
 
 #=======================================================================================================================
@@ -485,7 +355,7 @@ def smoothing_window(x, window_len=11, window='hanning', verbose = 0, robust=0, 
 
     TODO: the window parameter could be the window itself if an array instead of a string
     """
-    from numpy import append, insert, ones, convolve, hanning  # IMPORTANT: here, we only import hanning. For more windows, add here.
+    from numpy import append, insert, ones, convolve  # IMPORTANT: here, we only import hanning. For more windows, add here.
     from math import ceil, floor
     import sct_utils as sct
 
@@ -546,7 +416,6 @@ def smoothing_window(x, window_len=11, window='hanning', verbose = 0, robust=0, 
         import matplotlib
         matplotlib.use('Agg')  # prevent display figure
         import matplotlib.pyplot as plt
-        import random  # to prevent overwriting of figure
         from copy import copy
         z = [i + size_padding - remove_edge_points for i in range(x.shape[0])]
         z_extended = [i for i in range(x_extended.shape[0])]
@@ -677,7 +546,7 @@ def outliers_completion(mask, verbose=0):
     N.B.: this outlier replacement technique is not a good statistical solution. Our desire of replacing outliers comes
     from the fact that we need to treat data of same shape but by doing so we are also flawing the signal.
     """
-    from numpy import nan_to_num, nonzero, transpose, append, insert, isnan
+    from numpy import nan_to_num, nonzero, transpose, append, insert
     # Complete mask that as nan values by linear interpolation of the closest points
     # Define signal completed
     signal_completed = nan_to_num(mask)
