@@ -102,8 +102,6 @@ class ProcessLabels(object):
             self.output_image = self.remove_label()
         if type_process == 'remove-symm':
             self.output_image = self.remove_label(symmetry=True)
-        if type_process == 'centerline':
-            self.extract_centerline()
         if type_process == 'create':
             self.output_image = self.create_label()
         if type_process == 'create-add':
@@ -432,19 +430,6 @@ class ProcessLabels(object):
             self.fname_output = self.fname_output[0]
 
         return image_output
-
-    def extract_centerline(self):
-        """
-        Write a text file with the coordinates of the centerline.
-        The image is suppose to be RPI
-        """
-        coordinates_input = self.image_input.getNonZeroCoordinates(sorting='z')
-
-        fo = open(self.fname_output, "wb")
-        for coord in coordinates_input:
-            line = (coord.x, coord.y, coord.z)
-            fo.write("%i %i %i\n" % line)
-        fo.close()
 
     def display_voxel(self):
         """
