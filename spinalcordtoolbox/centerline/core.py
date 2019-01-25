@@ -4,8 +4,11 @@
 
 # TODO: create class ParamCenterline
 
+import sys
+
 import numpy as np
-from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.image import Image, zeros_like
+import sct_utils as sct
 
 
 class ParamCenterline:
@@ -81,3 +84,33 @@ def get_centerline(segmentation, algo_fitting='polyfit', param=ParamCenterline()
     im_centerline.change_orientation(native_orientation)
     # TODO: reorient output array in native orientation
     return im_centerline, np.array([x_centerline_fit, y_centerline_fit, z_centerline])
+
+
+def _call_viewer_centerline(fname_in, interslice_gap=20.0):
+    from spinalcordtoolbox.gui.base import AnatomicalParams
+    from spinalcordtoolbox.gui.centerline import launch_centerline_dialog
+
+    im_data = Image(fname_in)
+
+    # Get the number of slice along the (IS) axis
+    im_tmp = im_data.copy().change_orientation('RPI')
+    _, _, nz, _, _, _, pz, _ = im_tmp.dim
+    del im_tmp
+
+    params = AnatomicalParams()
+    # setting maximum number of points to a reasonable value
+    params.num_points = np.ceil(nz * pz / interslice_gap) + 2
+    params.interval_in_mm = interslice_gap
+    params.starting_slice = 'top'
+
+    im_mask_viewer = zeros_like(im_data)
+    controller = launch_centerline_dialog(im_data, im_mask_viewer, params)
+    fname_labels_viewer = sct.add_suffix(fname_in, '_viewer')
+
+    if not controller.saved:
+        sct.log.error('The viewer has been closed before entering all manual points. Please try again.')
+        sys.exit(1)
+    # save labels
+    controller.as_niftii(fname_labels_viewer)
+
+    return fname_labels_viewer
