@@ -5,6 +5,8 @@
 
 from __future__ import absolute_import
 
+import os
+import tempfile
 import pytest
 import csv
 
@@ -16,6 +18,7 @@ from spinalcordtoolbox import aggregate_slicewise
 from spinalcordtoolbox.process_seg import Metric
 from spinalcordtoolbox.image import Image
 
+os.chdir(tempfile.gettempdir())
 
 @pytest.fixture(scope="session")
 def dummy_metrics():
