@@ -12,8 +12,9 @@ import sct_utils as sct
 
 
 class ParamCenterline:
-    def __init__(self, contrast=None):
+    def __init__(self, contrast=None, degree=3):
         self.contrast = contrast
+        self.degree = degree  # Degree of polynomial function
 
 
 def get_centerline(segmentation, algo_fitting='polyfit', param=ParamCenterline(), verbose=1):
@@ -37,10 +38,23 @@ def get_centerline(segmentation, algo_fitting='polyfit', param=ParamCenterline()
 
     # Choose method
     if algo_fitting == 'polyfit':
-        from spinalcordtoolbox.centerline import curve_fitting
+        from spinalcordtoolbox.centerline.curve_fitting import polyfit_1d
         z_centerline = np.array(range(im_seg.dim[2]))
-        x_centerline_fit, x_centerline_deriv = curve_fitting.polyfit_1d(z, x, z_centerline, deg=3)
-        y_centerline_fit, y_centerline_deriv = curve_fitting.polyfit_1d(z, y, z_centerline, deg=3)
+        x_centerline_fit, x_centerline_deriv = polyfit_1d(z, x, z_centerline, deg=param.degree)
+        y_centerline_fit, y_centerline_deriv = polyfit_1d(z, y, z_centerline, deg=param.degree)
+
+    elif algo_fitting == 'sinc':
+        from spinalcordtoolbox.centerline.curve_fitting import sinc_interp
+        z_centerline = np.array(range(im_seg.dim[2]))
+        x_centerline_fit, x_centerline_deriv = sinc_interp(z, x, z_centerline)
+        y_centerline_fit, y_centerline_deriv = sinc_interp(z, y, z_centerline)
+
+    # elif algo_fitting == 'polyfit_hann':
+    #     # Sinc interpolation followed by Hanning smoothing
+    #     from spinalcordtoolbox.centerline.curve_fitting import sinc_interp
+    #     z_centerline = np.array(range(im_seg.dim[2]))
+    #     x_centerline_fit, x_centerline_deriv = sinc_interp(z, x, z_centerline)
+    #     y_centerline_fit, y_centerline_deriv = sinc_interp(z, y, z_centerline)
 
     elif algo_fitting == 'nurbs':
         from spinalcordtoolbox.centerline.nurbs import b_spline_nurbs
@@ -79,11 +93,20 @@ def get_centerline(segmentation, algo_fitting='polyfit', param=ParamCenterline()
     im_centerline = im_seg.copy()
     im_centerline.data = np.zeros(im_centerline.data.shape)
     # assign value=1 to centerline
-    im_centerline.data[x_centerline_fit.round().astype(int), y_centerline_fit.round().astype(int), z_centerline] = 1
+    im_centerline.data[round_and_clip(x_centerline_fit), round_and_clip(y_centerline_fit), z_centerline] = 1
     # reorient centerline to native orientation
     im_centerline.change_orientation(native_orientation)
     # TODO: reorient output array in native orientation
     return im_centerline, np.array([x_centerline_fit, y_centerline_fit, z_centerline])
+
+
+def round_and_clip(arr):
+    """
+    Round to closest int, convert to dtype=int and clip to min/max values allowed by the list length
+    :param arr:
+    :return:
+    """
+    return np.clip(arr.round().astype(int), 0, len(arr)-1)
 
 
 def _call_viewer_centerline(fname_in, interslice_gap=20.0):
