@@ -17,11 +17,23 @@ def polyfit_1d(x, y, xref, deg=3):
     """
     from numpy import poly1d, polyfit, polyder
     p = poly1d(polyfit(x, y, deg=deg))
-    # Debug
-    # import matplotlib.pyplot as plt
-    # _ = plt.plot(x, y, '.', z, p(z), '-')
-    # plt.show()
     return p(xref), polyder(p)
+
+
+def bspline(x, y, xref, deg=3):
+    """
+    Bspline interpolation
+    :param x:
+    :param y:
+    :param xref:
+    :param deg:
+    :return:
+    """
+    from scipy import interpolate
+    tck = interpolate.splrep(x, y, s=1, k=3)  # TODO: find s based on pix dim
+    y_fit = interpolate.splev(xref, tck, der=0)
+    y_fit_der = interpolate.splev(xref, tck, der=1)
+    return y_fit, y_fit_der
 
 
 def sinc_interp(y, x, xref):

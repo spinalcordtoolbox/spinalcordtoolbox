@@ -2,9 +2,8 @@
 # -*- coding: utf-8
 # pytest unit tests for spinalcordtoolbox.centerline
 
-# TODO: test various orientations.
+# TODO: test various orientations, length, pix dim
 # TODO: create synthetic centerline using polynomial functions.
-# TODO: adjust this threshold
 
 from __future__ import absolute_import
 
@@ -19,7 +18,7 @@ from spinalcordtoolbox.image import Image
 
 os.chdir(tempfile.gettempdir())
 print("\nOuptut folder:\n" + os.path.abspath(os.curdir) + "\n")
-verbose = 1
+verbose = 2
 
 
 @pytest.fixture(scope="session")
@@ -74,9 +73,21 @@ def test_get_centerline_sinc(dummy_centerline_small):
     img, img_sub = dummy_centerline_small
     # All points
     img_out, arr_out = get_centerline(img, algo_fitting='sinc', verbose=verbose)
-    assert np.linalg.norm(np.where(img.data) - arr_out) < 0.9
+    assert np.linalg.norm(np.where(img.data) - arr_out) < 0.1
     # Sparse points
     img_out, arr_out = get_centerline(img_sub, algo_fitting='sinc', verbose=verbose)
+    assert np.linalg.norm(np.where(img.data) - arr_out) < 2.5
+
+
+# noinspection 801,PyShadowingNames
+def test_get_centerline_bspline(dummy_centerline_small):
+    """Test centerline fitting using polyfit"""
+    img, img_sub = dummy_centerline_small
+    # All points
+    img_out, arr_out = get_centerline(img, algo_fitting='bspline', verbose=verbose)
+    assert np.linalg.norm(np.where(img.data) - arr_out) < 0.1
+    # Sparse points
+    img_out, arr_out = get_centerline(img_sub, algo_fitting='bspline', verbose=verbose)
     assert np.linalg.norm(np.where(img.data) - arr_out) < 2.5
 
 

@@ -49,6 +49,12 @@ def get_centerline(segmentation, algo_fitting='polyfit', param=ParamCenterline()
         x_centerline_fit, x_centerline_deriv = sinc_interp(z, x, z_centerline)
         y_centerline_fit, y_centerline_deriv = sinc_interp(z, y, z_centerline)
 
+    elif algo_fitting == 'bspline':
+        from spinalcordtoolbox.centerline.curve_fitting import bspline
+        z_centerline = np.array(range(im_seg.dim[2]))
+        x_centerline_fit, x_centerline_deriv = bspline(z, x, z_centerline)
+        y_centerline_fit, y_centerline_deriv = bspline(z, y, z_centerline)
+
     # elif algo_fitting == 'polyfit_hann':
     #     # Sinc interpolation followed by Hanning smoothing
     #     from spinalcordtoolbox.centerline.curve_fitting import sinc_interp
@@ -86,7 +92,7 @@ def get_centerline(segmentation, algo_fitting='polyfit', param=ParamCenterline()
         plt.plot(z_centerline, y_centerline_fit)
         plt.xlabel("Z")
         plt.ylabel("Y")
-        plt.savefig('fig_centerline_' + algo_fitting +'_' + datetime.now().strftime("%y%m%d%H%M%S%f") + '.png')
+        plt.savefig('fig_centerline_' + datetime.now().strftime("%y%m%d%H%M%S%f") + '_' + algo_fitting + '.png')
         plt.close()
 
     # Create an image with the centerline
