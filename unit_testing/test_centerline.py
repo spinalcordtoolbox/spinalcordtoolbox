@@ -22,29 +22,26 @@ verbose = 2
 
 
 @pytest.fixture(scope="session")
-def dummy_centerline_small():
+def dummy_centerline_small(size_arr=(9, 9, 9), orientation='RPI'):
     """
     Create a dummy Image centerline of small size. Return the full and sub-sampled version along z.
     """
-    nx, ny, nz = 9, 9, 9
+    from numpy import poly1d, polyfit
+    nx, ny, nz = size_arr
+    # define polynomial-based centerline within X-Z plane, located at y=ny/4
+    x = np.array([round(nx/4.), round(nx/2.), round(3*nx/4.)])
+    z = np.array([0, round(nz/2.), nz-1])
+    p = poly1d(polyfit(z, x, deg=3))
     data = np.zeros((nx, ny, nz))
-    # define curved centerline with value=1 voxels.
-    data[4, 4, 0] = 1
-    data[4, 4, 1] = 1
-    data[4, 4, 2] = 1
-    data[4, 5, 3] = 1
-    data[5, 5, 4] = 1
-    data[5, 6, 5] = 1
-    data[5, 7, 6] = 1
-    data[5, 8, 7] = 1
-    data[5, 8, 8] = 1
+    data[p(range(nz)).astype(np.int), round(ny / 4.), range(nz)] = 1
+    # generate Image object
     affine = np.eye(4)
     nii = nib.nifti1.Nifti1Image(data, affine)
     img = Image(data, hdr=nii.header, dim=nii.header.get_data_shape())
-    img.change_orientation('RPI')
+    img.change_orientation(orientation)
     img.data = data  # overwrite data with RPI orientation
     # define sub data
-    img_sub = img.copy()  #Image(data_sub, hdr=nii.header, orientation='RPI', dim=nii.header.get_data_shape())
+    img_sub = img.copy()
     img_sub.data = np.zeros((nx, ny, nz))
     for iz in range(0, nz, 3):
         img_sub.data[..., iz] = data[..., iz]
