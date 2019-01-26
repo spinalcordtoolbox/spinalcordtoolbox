@@ -14,12 +14,12 @@ import tempfile
 import numpy as np
 import nibabel as nib
 
-from spinalcordtoolbox.centerline import optic
 from spinalcordtoolbox.centerline.core import get_centerline, ParamCenterline
 from spinalcordtoolbox.image import Image
 
 os.chdir(tempfile.gettempdir())
-verbose = 2
+print("\nOuptut folder:\n" + os.path.abspath(os.curdir) + "\n")
+verbose = 1
 
 
 @pytest.fixture(scope="session")
@@ -57,10 +57,26 @@ def test_get_centerline_polyfit(dummy_centerline_small):
     """Test centerline fitting using polyfit"""
     img, img_sub = dummy_centerline_small
     # All points
-    img_out, arr_out = get_centerline(img, algo_fitting='polyfit', verbose=verbose)
+    img_out, arr_out = get_centerline(img, algo_fitting='polyfit', param=ParamCenterline(degree=3), verbose=verbose)
+    assert np.linalg.norm(np.where(img.data) - arr_out) < 0.9
+    img_out, arr_out = get_centerline(img, algo_fitting='polyfit', param=ParamCenterline(degree=5), verbose=verbose)
+    assert np.linalg.norm(np.where(img.data) - arr_out) < 0.7
+    # Sparse points
+    img_out, arr_out = get_centerline(img_sub, algo_fitting='polyfit', param=ParamCenterline(degree=3), verbose=verbose)
+    assert np.linalg.norm(np.where(img.data) - arr_out) < 2.5
+    img_out, arr_out = get_centerline(img_sub, algo_fitting='polyfit', param=ParamCenterline(degree=5), verbose=verbose)
+    assert np.linalg.norm(np.where(img.data) - arr_out) < 3.5
+
+
+# noinspection 801,PyShadowingNames
+def test_get_centerline_sinc(dummy_centerline_small):
+    """Test centerline fitting using polyfit"""
+    img, img_sub = dummy_centerline_small
+    # All points
+    img_out, arr_out = get_centerline(img, algo_fitting='sinc', verbose=verbose)
     assert np.linalg.norm(np.where(img.data) - arr_out) < 0.9
     # Sparse points
-    img_out, arr_out = get_centerline(img_sub, algo_fitting='polyfit', verbose=verbose)
+    img_out, arr_out = get_centerline(img_sub, algo_fitting='sinc', verbose=verbose)
     assert np.linalg.norm(np.where(img.data) - arr_out) < 2.5
 
 
