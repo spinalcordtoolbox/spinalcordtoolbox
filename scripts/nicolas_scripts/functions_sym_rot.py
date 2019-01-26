@@ -93,7 +93,7 @@ def generate_2Dimage_line(image, x0, y0, angle):
     outputs :
         - image_wline : base image with the line drawn on it, 2D numpy array"""
 
-    angle = (angle - 90)*pi/180  # TODO : justify this
+    angle = angle *pi/180  # converting to radians
 
     # coordinates of image's borders :
     x_max, y_max = image.shape
@@ -109,12 +109,12 @@ def generate_2Dimage_line(image, x0, y0, angle):
 
     # Justification of the later : basic geometry
 
-    x = round( (y_min - y0)/(np.tan(angle) + 0.00001) + x0 ) # not elegant at all, must change TODO : change this
+    x = round((y_min - y0)/(np.tan(angle) + 0.00001) + x0)  # not elegant at all, must change TODO : change this
     if  x >= 0 and x<= x_max:
         x1 = x
         y1 = y_min
         first_point_found = True
-    x = round( (y_max - y0)/(np.tan(angle) + 0.00001) + x0 )
+    x = round((y_max - y0)/(np.tan(angle) + 0.00001) + x0)
     if x >= 0 and x <= x_max:
         if first_point_found is False:  # this condition means the first point has not been found yet
             x1 = x
@@ -123,7 +123,7 @@ def generate_2Dimage_line(image, x0, y0, angle):
         else:
             x2 = x
             y2 = y_max
-    y = round( (x_min - x0)*np.tan(angle) + y0 )
+    y = round((x_min - x0)*np.tan(angle) + y0)
     if y >= 0 and y <= y_max:
         if first_point_found is False:
             x1 = x_min
@@ -132,7 +132,7 @@ def generate_2Dimage_line(image, x0, y0, angle):
         else:
             x2 = x_min
             y2 = y
-    y = round( (x_max - x0) * np.tan(angle) + y0 )
+    y = round((x_max - x0) * np.tan(angle) + y0)
     if y >= 0 and y <= y_max:
         if first_point_found is False:
             sct.printv("Error, this is not supposed to happen")  # impossible not to have found the first point at
@@ -150,35 +150,3 @@ def generate_2Dimage_line(image, x0, y0, angle):
     # this
 
     return image_wline
-
-def symmetry_angle(image_data, nb_bin=360, kmedian_size=5, nb_axes=1, figure=False):
-
-    "This function outputs the symetry angle, put -1 in nb_axes to get all the axes found" #  TODO: detail this
-
-    # acquire histogram of gradient orientation
-    hog_ancest = hog_ancestor(image_data, nb_bin=nb_bin)
-    # smooth it with median filter
-    hog_ancest_smooth = circular_filter_1d(hog_ancest, kmedian_size, filter='median')
-    # fft than square than ifft to calculate convolution
-    hog_fft2 = np.fft.fft(hog_ancest_smooth) ** 2
-    hog_conv = np.real(np.fft.ifft(hog_fft2))
-
-    # TODO FFT CHECK SAMPLING
-    # hog_conv = np.convolve(hog_ancest_smooth, hog_ancest_smooth, mode='same')
-
-    # search for maximum to find angle of rotation
-    # TODO : works only if nb_bin = 360
-    argmaxs = argrelextrema(hog_conv, np.greater, mode='wrap', order=kmedian_size)[0]  # get local maxima
-    argmaxs_sorted = [tutut for _, tutut in sorted(zip(hog_conv[argmaxs], argmaxs), reverse=True)]  # sort maxima based on
-    if nb_axes == -1:
-        angles = argmaxs_sorted
-    elif nb_axes > len(argmaxs_sorted):
-        sct.printv(str(nb_axes) + " were asked for, only found " + str(len(argmaxs_sorted)))
-        angles = argmaxs_sorted
-    else:
-        angles = argmaxs_sorted[0:nb_axes]
-
-    if figure:
-        return angles, hog_conv
-    else:
-        return angles

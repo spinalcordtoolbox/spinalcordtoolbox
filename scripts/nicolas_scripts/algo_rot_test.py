@@ -68,7 +68,7 @@ def test_list_folder(file_input, path_output):
 def test_2D_hogancest(file_input, path_output):
 
     # Params
-    nb_axes = 4
+    nb_axes = 4  # put -1 for all axes found
     kmedian_size = 3
     nb_bin = 360
 
@@ -80,20 +80,36 @@ def test_2D_hogancest(file_input, path_output):
     # smooth it with median filter
     hog_ancest_smooth = circular_filter_1d(hog_ancest, kmedian_size,
                                            filter='median')  # fft than square than ifft to calculate convolution
-    hog_fft2 = np.fft.fft(hog_ancest_smooth) ** 2
-    hog_conv = np.real(np.fft.ifft(hog_fft2))  # hog_conv contains 2x the same info
+    hog_fft2 = np.fft.rfft(hog_ancest_smooth) ** 2
+    hog_conv = np.real(np.fft.irfft(hog_fft2))  # hog_conv contains 2x the same info
         # TODO FFT CHECK SAMPLING
         # hog_conv = np.convolve(hog_ancest_smooth, hog_ancest_smooth, mode='same')
     # search for maximum to find angle of rotation
-    # TODO : works only if nb_bin = 360
     argmaxs = argrelextrema(hog_conv, np.greater, mode='wrap', order=kmedian_size)[0]  # get local maxima
     argmaxs_sorted = np.asarray([tutut for _, tutut in
-                      sorted(zip(hog_conv[argmaxs], argmaxs), reverse=True)])  # sort maxima based on
-    argmaxs_sorted_nodouble = argmaxs_sorted[np.where(argmaxs_sorted < 181)]  # now we only have angles from 0 to 180
+                      sorted(zip(hog_conv[argmaxs], argmaxs), reverse=True)])  # sort maxima based on value
+    # argmaxs_sorted_nodouble = argmaxs_sorted[np.where(argmaxs_sorted >= 0)]
+    argmaxs_sorted = (argmaxs_sorted - nb_bin/2) * 360/nb_bin  # angles are computed from -180 to 180
+
+    plt.figure()
+    plt.subplot(221)
+    plt.plot(np.arange(-180,180,1), hog_ancest)
+    plt.title("hog_ancest")
+    plt.subplot(222)
+    plt.plot(np.arange(-180,180,1), hog_ancest_smooth)
+    plt.title("hog_ancest_smooth")
+    plt.subplot(223)
+    plt.plot(np.arange(-180,180,1), hog_conv)
+    plt.title("hog_conv")
+    plt.subplot(224)
+    plt.imshow(image_data)
+    plt.title((file_input.split("/")[-1]).split(".nii")[0])
+
     if nb_axes == -1:
         angles = argmaxs_sorted
     elif nb_axes > len(argmaxs_sorted):
-        sct.printv(str(nb_axes) + " were asked for, only found " + str(len(argmaxs_sorted)))
+        sct.printv("For file " + file_input + str(nb_axes) +
+                   " axes of symmetry were asked for, only found " + str(len(argmaxs_sorted)))
         angles = argmaxs_sorted
     else:
         angles = argmaxs_sorted[0:nb_axes]
@@ -105,12 +121,13 @@ def test_2D_hogancest(file_input, path_output):
     # Draw axes on image
     image_wline = image_data
     for i_angle in range(0, len(angles)):
-        image_wline = generate_2Dimage_line(image_wline, centermass[0], centermass[1], angles[i_angle] - 135)
+        image_wline = generate_2Dimage_line(image_wline, centermass[0], centermass[1], angles[i_angle])
 
     # Saving image with axes drawn on it
     save_image(image_wline, "sym_" + (file_input.split("/")[-1]).split(".nii")[0] + ".nii",
                file_input, ofolder=path_output)  #  the character manipulation permits to have the name of the file
     #  which is at the end of the path ( / ) and just before .nii
+    plt.close()
 
 
 def load_image(file_input, dimension):
