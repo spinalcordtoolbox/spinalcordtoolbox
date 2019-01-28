@@ -48,50 +48,58 @@ def dummy_centerline_small(size_arr=(9, 9, 9), orientation='RPI'):
     return img, img_sub
 
 
-# noinspection 801,PyShadowingNames
-def test_get_centerline_polyfit(dummy_centerline_small):
-    """Test centerline fitting using polyfit"""
-    img, img_sub = dummy_centerline_small
-    for deg in [3, 5]:
-        # All points
-        img_out, arr_out = get_centerline(img, algo_fitting='polyfit', param=ParamCenterline(degree=deg), verbose=verbose)
-        assert np.linalg.norm(np.where(img.data) - arr_out) < 1
-        # Sparse points
-        img_out, arr_out = get_centerline(img_sub, algo_fitting='polyfit', param=ParamCenterline(degree=deg), verbose=verbose)
-        assert np.linalg.norm(np.where(img.data) - arr_out) < 3.5
+im_centerlines = [dummy_centerline_small(size_arr=(9, 9, 9)),
+                  dummy_centerline_small(size_arr=(30, 20, 50))]
 
 
 # noinspection 801,PyShadowingNames
-def test_get_centerline_sinc(dummy_centerline_small):
+@pytest.mark.parametrize('im_centerline', im_centerlines)
+def test_get_centerline_polyfit(im_centerline):
     """Test centerline fitting using polyfit"""
-    img, img_sub = dummy_centerline_small
+    img, img_sub = im_centerline
+    deg = 3
+    # All points
+    img_out, arr_out = get_centerline(img, algo_fitting='polyfit', param=ParamCenterline(degree=deg), verbose=verbose)
+    assert np.linalg.norm(np.where(img.data) - arr_out) < 3
+    # Sparse points
+    img_out, arr_out = get_centerline(img_sub, algo_fitting='polyfit', param=ParamCenterline(degree=deg), verbose=verbose)
+    assert np.linalg.norm(np.where(img.data) - arr_out) < 3.5
+
+
+# noinspection 801,PyShadowingNames
+@pytest.mark.parametrize('im_centerline', im_centerlines)
+def test_get_centerline_sinc(im_centerline):
+    """Test centerline fitting using polyfit"""
+    img, img_sub = im_centerline
     # All points
     img_out, arr_out = get_centerline(img, algo_fitting='sinc', verbose=verbose)
     assert np.linalg.norm(np.where(img.data) - arr_out) < 0.1
     # Sparse points
     img_out, arr_out = get_centerline(img_sub, algo_fitting='sinc', verbose=verbose)
-    assert np.linalg.norm(np.where(img.data) - arr_out) < 3.5
+    assert np.linalg.norm(np.where(img.data) - arr_out) < 4.5
 
 
 # noinspection 801,PyShadowingNames
-def test_get_centerline_bspline(dummy_centerline_small):
+@pytest.mark.parametrize('im_centerline', im_centerlines)
+def test_get_centerline_bspline(im_centerline):
     """Test centerline fitting using polyfit"""
-    img, img_sub = dummy_centerline_small
+    img, img_sub = im_centerline
     # All points
     img_out, arr_out = get_centerline(img, algo_fitting='bspline', verbose=verbose)
-    assert np.linalg.norm(np.where(img.data) - arr_out) < 0.8
+    assert np.linalg.norm(np.where(img.data) - arr_out) < 1.
     # Sparse points
     img_out, arr_out = get_centerline(img_sub, algo_fitting='bspline', param=ParamCenterline(degree=2), verbose=verbose)
     assert np.linalg.norm(np.where(img.data) - arr_out) < 2.5
 
 
 # noinspection 801,PyShadowingNames
-def test_get_centerline_nurbs(dummy_centerline_small):
+@pytest.mark.parametrize('im_centerline', im_centerlines)
+def test_get_centerline_nurbs(im_centerline):
     """Test centerline fitting using nurbs"""
-    img, img_sub = dummy_centerline_small
+    img, img_sub = im_centerline
     # All points
     img_out, arr_out = get_centerline(img, algo_fitting='nurbs', verbose=verbose)
-    assert np.linalg.norm(np.where(img.data) - arr_out) < 0.8
+    assert np.linalg.norm(np.where(img.data) - arr_out) < 2.5
     # Sparse points
     # TODO: fix error below and un-mask it
     # img_out, arr_out = get_centerline(img_sub, algo_fitting='nurbs')
@@ -99,9 +107,10 @@ def test_get_centerline_nurbs(dummy_centerline_small):
 
 
 # noinspection 801,PyShadowingNames
-def test_get_centerline_optic(dummy_centerline_small):
+@pytest.mark.parametrize('im_centerline', im_centerlines)
+def test_get_centerline_optic(im_centerline):
     """Test extraction of metrics aggregation across slices: All slices by default"""
-    img, img_sub = dummy_centerline_small
+    img, img_sub = im_centerline
     # All points
     img_out, arr_out = get_centerline(img, algo_fitting='optic', param=ParamCenterline(contrast='t2'),
                                       verbose=verbose)
