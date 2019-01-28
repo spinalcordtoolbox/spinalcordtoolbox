@@ -52,16 +52,13 @@ def dummy_centerline_small(size_arr=(9, 9, 9), orientation='RPI'):
 def test_get_centerline_polyfit(dummy_centerline_small):
     """Test centerline fitting using polyfit"""
     img, img_sub = dummy_centerline_small
-    # All points
-    img_out, arr_out = get_centerline(img, algo_fitting='polyfit', param=ParamCenterline(degree=3), verbose=verbose)
-    assert np.linalg.norm(np.where(img.data) - arr_out) < 0.9
-    img_out, arr_out = get_centerline(img, algo_fitting='polyfit', param=ParamCenterline(degree=5), verbose=verbose)
-    assert np.linalg.norm(np.where(img.data) - arr_out) < 0.7
-    # Sparse points
-    img_out, arr_out = get_centerline(img_sub, algo_fitting='polyfit', param=ParamCenterline(degree=3), verbose=verbose)
-    assert np.linalg.norm(np.where(img.data) - arr_out) < 2.5
-    img_out, arr_out = get_centerline(img_sub, algo_fitting='polyfit', param=ParamCenterline(degree=5), verbose=verbose)
-    assert np.linalg.norm(np.where(img.data) - arr_out) < 3.5
+    for deg in [3, 5]:
+        # All points
+        img_out, arr_out = get_centerline(img, algo_fitting='polyfit', param=ParamCenterline(degree=deg), verbose=verbose)
+        assert np.linalg.norm(np.where(img.data) - arr_out) < 1
+        # Sparse points
+        img_out, arr_out = get_centerline(img_sub, algo_fitting='polyfit', param=ParamCenterline(degree=deg), verbose=verbose)
+        assert np.linalg.norm(np.where(img.data) - arr_out) < 3.5
 
 
 # noinspection 801,PyShadowingNames
@@ -73,7 +70,7 @@ def test_get_centerline_sinc(dummy_centerline_small):
     assert np.linalg.norm(np.where(img.data) - arr_out) < 0.1
     # Sparse points
     img_out, arr_out = get_centerline(img_sub, algo_fitting='sinc', verbose=verbose)
-    assert np.linalg.norm(np.where(img.data) - arr_out) < 2.5
+    assert np.linalg.norm(np.where(img.data) - arr_out) < 3.5
 
 
 # noinspection 801,PyShadowingNames
@@ -82,9 +79,9 @@ def test_get_centerline_bspline(dummy_centerline_small):
     img, img_sub = dummy_centerline_small
     # All points
     img_out, arr_out = get_centerline(img, algo_fitting='bspline', verbose=verbose)
-    assert np.linalg.norm(np.where(img.data) - arr_out) < 0.1
+    assert np.linalg.norm(np.where(img.data) - arr_out) < 0.8
     # Sparse points
-    img_out, arr_out = get_centerline(img_sub, algo_fitting='bspline', verbose=verbose)
+    img_out, arr_out = get_centerline(img_sub, algo_fitting='bspline', param=ParamCenterline(degree=2), verbose=verbose)
     assert np.linalg.norm(np.where(img.data) - arr_out) < 2.5
 
 
@@ -108,5 +105,5 @@ def test_get_centerline_optic(dummy_centerline_small):
     # All points
     img_out, arr_out = get_centerline(img, algo_fitting='optic', param=ParamCenterline(contrast='t2'),
                                       verbose=verbose)
-    assert np.linalg.norm(np.where(img.data) - arr_out) < 7.5  # this is obviously a dummy quantitative test, given that
+    assert np.linalg.norm(np.where(img.data) - arr_out) < 10.5  # this is obviously a dummy quantitative test, given that
     #  Optic model was not trained on this synthetic data.
