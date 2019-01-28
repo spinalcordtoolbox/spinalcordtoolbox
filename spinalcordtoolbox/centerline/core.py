@@ -103,7 +103,9 @@ def get_centerline(segmentation, algo_fitting='polyfit', param=ParamCenterline()
     # reorient centerline to native orientation
     im_centerline.change_orientation(native_orientation)
     # TODO: reorient output array in native orientation
-    return im_centerline, np.array([x_centerline_fit, y_centerline_fit, z_centerline])
+    return im_centerline, \
+           np.array([x_centerline_fit, y_centerline_fit, z_centerline]), \
+           np.array([x_centerline_deriv, y_centerline_deriv, z_centerline]),
 
 
 def round_and_clip(arr):
