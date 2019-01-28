@@ -74,6 +74,7 @@ def get_centerline(segmentation, algo_fitting='polyfit', param=ParamCenterline()
         from spinalcordtoolbox.centerline import optic
         img_ctl = optic.detect_centerline(im_seg, param.contrast)
         x_centerline_fit, y_centerline_fit, z_centerline = np.where(img_ctl.data)
+        # TODO: compute derivatives after smoothing
 
     # Display fig of fitted curves
     if verbose == 2:
