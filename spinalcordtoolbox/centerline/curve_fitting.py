@@ -17,7 +17,8 @@ def polyfit_1d(x, y, xref, deg=3):
     """
     from numpy import poly1d, polyfit, polyder
     p = poly1d(polyfit(x, y, deg=deg))
-    return p(xref), polyder(p)
+    p_der = polyder(p)
+    return p(xref), p_der(xref)
 
 
 def bspline(x, y, xref, deg=3):
