@@ -30,7 +30,7 @@ def bspline(x, y, xref, deg=3):
     :return:
     """
     from scipy import interpolate
-    tck = interpolate.splrep(x, y, s=1, k=deg)  # TODO: find s based on pix dim
+    tck = interpolate.splrep(x, y, s=5, k=deg)  # TODO: find s based on pix dim
     y_fit = interpolate.splev(xref, tck, der=0)
     y_fit_der = interpolate.splev(xref, tck, der=1)
     return y_fit, y_fit_der

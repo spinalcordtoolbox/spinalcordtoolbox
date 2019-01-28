@@ -22,9 +22,13 @@ verbose = 2
 
 
 @pytest.fixture(scope="session")
-def dummy_centerline_small(size_arr=(9, 9, 9), orientation='RPI'):
+def dummy_centerline_small(size_arr=(9, 9, 9), subsampling=1, orientation='RPI'):
     """
     Create a dummy Image centerline of small size. Return the full and sub-sampled version along z.
+    :param size_arr: tuple: (nx, ny, nz)
+    :param subsampling: int >=1. Subsampling factor along z. 1: no subsampling. 2: centerline defined every other z.
+    :param orientation:
+    :return:
     """
     from numpy import poly1d, polyfit
     nx, ny, nz = size_arr
@@ -40,79 +44,63 @@ def dummy_centerline_small(size_arr=(9, 9, 9), orientation='RPI'):
     img = Image(data, hdr=nii.header, dim=nii.header.get_data_shape())
     img.change_orientation(orientation)
     img.data = data  # overwrite data with RPI orientation
-    # define sub data
+    # subsample data
     img_sub = img.copy()
     img_sub.data = np.zeros((nx, ny, nz))
-    for iz in range(0, nz, 3):
+    for iz in range(0, nz, subsampling):
         img_sub.data[..., iz] = data[..., iz]
     return img, img_sub
 
 
-im_centerlines = [dummy_centerline_small(size_arr=(9, 9, 9)),
-                  dummy_centerline_small(size_arr=(30, 20, 50))]
+im_centerlines = [(dummy_centerline_small(size_arr=(9, 9, 9), subsampling=1), 2.),
+                  (dummy_centerline_small(size_arr=(9, 9, 9), subsampling=3), 3.),
+                  (dummy_centerline_small(size_arr=(30, 20, 50), subsampling=1), 3.),
+                  (dummy_centerline_small(size_arr=(30, 20, 50), subsampling=5), 3.)]
 
 
 # noinspection 801,PyShadowingNames
-@pytest.mark.parametrize('im_centerline', im_centerlines)
-def test_get_centerline_polyfit(im_centerline):
+@pytest.mark.parametrize('img_ctl,expected', im_centerlines)
+def test_get_centerline_polyfit(img_ctl, expected):
     """Test centerline fitting using polyfit"""
-    img, img_sub = im_centerline
     deg = 3
-    # All points
-    img_out, arr_out = get_centerline(img, algo_fitting='polyfit', param=ParamCenterline(degree=deg), verbose=verbose)
-    assert np.linalg.norm(np.where(img.data) - arr_out) < 3
-    # Sparse points
+    img, img_sub = img_ctl
     img_out, arr_out = get_centerline(img_sub, algo_fitting='polyfit', param=ParamCenterline(degree=deg), verbose=verbose)
-    assert np.linalg.norm(np.where(img.data) - arr_out) < 3.5
+    assert np.linalg.norm(np.where(img.data) - arr_out) < expected
 
 
 # noinspection 801,PyShadowingNames
-@pytest.mark.parametrize('im_centerline', im_centerlines)
-def test_get_centerline_sinc(im_centerline):
+@pytest.mark.parametrize('img_ctl,expected', im_centerlines)
+def test_get_centerline_sinc(img_ctl, expected):
     """Test centerline fitting using polyfit"""
-    img, img_sub = im_centerline
-    # All points
-    img_out, arr_out = get_centerline(img, algo_fitting='sinc', verbose=verbose)
-    assert np.linalg.norm(np.where(img.data) - arr_out) < 0.1
-    # Sparse points
+    img, img_sub = img_ctl
     img_out, arr_out = get_centerline(img_sub, algo_fitting='sinc', verbose=verbose)
-    assert np.linalg.norm(np.where(img.data) - arr_out) < 4.5
+    assert np.linalg.norm(np.where(img.data) - arr_out) < expected
 
 
 # noinspection 801,PyShadowingNames
-@pytest.mark.parametrize('im_centerline', im_centerlines)
-def test_get_centerline_bspline(im_centerline):
+@pytest.mark.parametrize('img_ctl,expected', im_centerlines)
+def test_get_centerline_bspline(img_ctl, expected):
     """Test centerline fitting using polyfit"""
-    img, img_sub = im_centerline
-    # All points
-    img_out, arr_out = get_centerline(img, algo_fitting='bspline', verbose=verbose)
-    assert np.linalg.norm(np.where(img.data) - arr_out) < 1.
-    # Sparse points
-    img_out, arr_out = get_centerline(img_sub, algo_fitting='bspline', param=ParamCenterline(degree=2), verbose=verbose)
-    assert np.linalg.norm(np.where(img.data) - arr_out) < 2.5
+    img, img_sub = img_ctl
+    img_out, arr_out = get_centerline(img_sub, algo_fitting='bspline', verbose=verbose)
+    assert np.linalg.norm(np.where(img.data) - arr_out) < expected
 
 
 # noinspection 801,PyShadowingNames
-@pytest.mark.parametrize('im_centerline', im_centerlines)
-def test_get_centerline_nurbs(im_centerline):
+@pytest.mark.parametrize('img_ctl,expected', im_centerlines)
+def test_get_centerline_nurbs(img_ctl, expected):
     """Test centerline fitting using nurbs"""
-    img, img_sub = im_centerline
-    # All points
-    img_out, arr_out = get_centerline(img, algo_fitting='nurbs', verbose=verbose)
-    assert np.linalg.norm(np.where(img.data) - arr_out) < 2.5
-    # Sparse points
-    # TODO: fix error below and un-mask it
-    # img_out, arr_out = get_centerline(img_sub, algo_fitting='nurbs')
-    # assert np.linalg.norm(np.where(img.data) - arr_out) < 5.5
+    img, img_sub = img_ctl
+    img_out, arr_out = get_centerline(img_sub, algo_fitting='nurbs', verbose=verbose)
+    assert np.linalg.norm(np.where(img.data) - arr_out) < expected
 
 
 # noinspection 801,PyShadowingNames
-@pytest.mark.parametrize('im_centerline', im_centerlines)
-def test_get_centerline_optic(im_centerline):
-    """Test extraction of metrics aggregation across slices: All slices by default"""
-    img, img_sub = im_centerline
-    # All points
-    img_out, arr_out = get_centerline(img, algo_fitting='optic', param=ParamCenterline(contrast='t2'),
-                                      verbose=verbose)
-    assert np.linalg.norm(np.where(img.data) - arr_out) < 10.5  # this is obviously a dummy quantitative test, given that
-    #  Optic model was not trained on this synthetic data.
+# @pytest.mark.parametrize('img_ctl,expected', im_centerlines)
+# def test_get_centerline_optic(img_ctl, expected):
+#     """Test extraction of metrics aggregation across slices: All slices by default"""
+#     img, img_sub = img_ctl
+#     img_out, arr_out = get_centerline(img_sub, algo_fitting='optic', param=ParamCenterline(contrast='t2'),
+#                                       verbose=verbose)
+#     assert np.linalg.norm(np.where(img.data) - arr_out) < expected
+#     # this is obviously a dummy quantitative test, given that Optic model was not trained on this synthetic data.
