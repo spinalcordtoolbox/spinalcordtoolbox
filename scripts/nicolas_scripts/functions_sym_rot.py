@@ -44,7 +44,7 @@ def circular_filter_1d(signal, param_filt, filter='gaussian'):
 
     return signal_smoothed
 
-def hog_ancestor(image, nb_bin, grad_ksize=123456789): # TODO implement selection of gradient's kernel size
+def hog_ancestor(image, nb_bin, grad_ksize=123456789, seg_probability_map=None): # TODO implement selection of gradient's kernel size
 
     """ This function takes an image as an input and return its orientation histogram
     inputs :
@@ -72,13 +72,21 @@ def hog_ancestor(image, nb_bin, grad_ksize=123456789): # TODO implement selectio
     # actually it can be smart but by doing a weighted histogram, not weight the image
 
     grad_mag = ((np.abs(gradx.astype(object)) ** 2 + np.abs(grady.astype(object)) ** 2) ** 0.5)
+    grad_mag = grad_mag / np.max(grad_mag)  # to have map between 0 and 1
     # TODO: weird data type manipulation, to explain
-    # grad_weight = (grad_mag > 0).astype(int)
 
+    if seg_probability_map is not None:
+        weighting_map = np.multiply(seg_probability_map, grad_mag)  # include weightning by segmentation
+    else:
+        weighting_map = grad_mag
     # compute histogram :
-    hog_ancest = np.histogram(np.concatenate(orient), bins=nb_bin, range=(-nb_bin/2, nb_bin/2), weights=np.concatenate(grad_mag))
+    hog_ancest = np.histogram(np.concatenate(orient), bins=nb_bin, range=(-nb_bin/2, nb_bin/2),
+                              weights=np.concatenate(weighting_map))  # check param density that permits outputting a distribution that has integral of 1
     # hog_ancest = np.histogram(np.concatenate(orient), bins=nb_bin)
-    grad_mag = (grad_mag * 255/np.max(grad_mag)).astype(float).round()  # just for debbuguing purpose
+    grad_mag = (grad_mag * 255).astype(float).round()  # just for debbuguing purpose
+    if seg_probability_map is not None:
+        seg_probability_map = (seg_probability_map * 255).astype(float).round()
+    weighting_map = (weighting_map * 255).astype(float).round()
 
     return hog_ancest[0].astype(float)  # return only the values of the bins, not the bins (we know them)
 

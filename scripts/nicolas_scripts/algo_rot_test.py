@@ -11,6 +11,7 @@ import sct_utils as sct
 import sys, os, shutil
 from functions_sym_rot import *
 import fnmatch
+import scipy
 
 def get_parser():
 
@@ -53,10 +54,18 @@ def main(args=None):
 
     for root, dirnames, filenames in os.walk(input_folder):  # searching the given directory
         for filename in fnmatch.filter(filenames, "*.nii"):  # if file with nii extension (.nii or .nii.gz) found
+            if "seg" in filename:
+                continue  # do not consider it if it's a sgmentation
+            if filename.split(".nii")[0] + "_seg.nii" in filenames:  # find potential seg associated with the file
+                file_seg_input = os.path.join(root,filename.split(".nii")[0] + "_seg.nii")
+            else:
+                file_seg_input = None
+
             if test_str == "test_list_folder":
                 test_list_folder(file_input=os.path.join(root, filename), path_output=path_output)
             elif test_str == "test_2D_hogancest":
-                test_2D_hogancest(file_input=os.path.join(root, filename), path_output=path_output)
+                test_2D_hogancest(file_input=os.path.join(root, filename),
+                                  path_output=path_output, file_seg_input=file_seg_input)
             else:
                 raise Exception("no such test as " + test_str + " exists")
 
@@ -65,23 +74,38 @@ def test_list_folder(file_input, path_output):
 
     sct.printv("input " + file_input + "\n ouput " + path_output)
 
-def test_2D_hogancest(file_input, path_output):
+def test_2D_hogancest(file_input, path_output, file_seg_input=None):
 
     # Params
-    nb_axes = 4  # put -1 for all axes found
+    nb_axes = 1  # put -1 for all axes found
     kmedian_size = 3
     nb_bin = 360
+    sigma = 10  # TODO : create 2 sigmas (x and y) and make it dependent of size of segmentation
 
     # Loading image
     image_data = load_image(file_input=file_input, dimension=2)
 
+    # Center of mass (to draw axes later or to create mask)
+    if file_seg_input is None:
+        # centermass = image[0].mean(1).round().astype(int)  # will act weird if image is non binary
+        centermass = [int(round(image_data.shape[0] / 2)), int(round(image_data.shape[1] / 2))]  # center of image
+    else:
+        image_seg_data = load_image(file_input=file_seg_input, dimension=2)
+        centermass = np.round(scipy.ndimage.measurements.center_of_mass(image_seg_data))
+
+        (nx, ny) = image_data.shape
+        xx, yy = np.mgrid[:nx, :ny]
+        mask = np.zeros((nx, ny))
+        mask = np.exp(
+            -(((xx - centermass[0]) ** 2) / (2 * (sigma ** 2)) + ((yy - centermass[1]) ** 2) / (2 * (sigma ** 2))))
+
     # Finding axes of symmetry
-    hog_ancest = hog_ancestor(image_data, nb_bin=nb_bin)
+    hog_ancest = hog_ancestor(image_data, nb_bin=nb_bin, seg_probability_map=mask)
     # smooth it with median filter
     hog_ancest_smooth = circular_filter_1d(hog_ancest, kmedian_size,
                                            filter='median')  # fft than square than ifft to calculate convolution
     hog_fft2 = np.fft.rfft(hog_ancest_smooth) ** 2
-    hog_conv = np.real(np.fft.irfft(hog_fft2))  # hog_conv contains 2x the same info
+    hog_conv = np.real(np.fft.irfft(hog_fft2))
         # TODO FFT CHECK SAMPLING
         # hog_conv = np.convolve(hog_ancest_smooth, hog_ancest_smooth, mode='same')
     # search for maximum to find angle of rotation
@@ -89,21 +113,22 @@ def test_2D_hogancest(file_input, path_output):
     argmaxs_sorted = np.asarray([tutut for _, tutut in
                       sorted(zip(hog_conv[argmaxs], argmaxs), reverse=True)])  # sort maxima based on value
     # argmaxs_sorted_nodouble = argmaxs_sorted[np.where(argmaxs_sorted >= 0)]
-    argmaxs_sorted = (argmaxs_sorted - nb_bin/2) * 360/nb_bin  # angles are computed from -180 to 180
+    argmaxs_sorted = (argmaxs_sorted - nb_bin/2) * 180/nb_bin  # angles are computed from -90 to 90
+    argmaxs_sorted = -1 * argmaxs_sorted  # not sure why but angles are are positive clockwise (inverse convention)
 
     plt.figure()
     plt.subplot(221)
-    plt.plot(np.arange(-180,180,1), hog_ancest)
+    plt.plot(np.arange(-180, 180, 1), hog_ancest)
     plt.title("hog_ancest")
     plt.subplot(222)
-    plt.plot(np.arange(-180,180,1), hog_ancest_smooth)
+    plt.plot(np.arange(-180, 180, 1), hog_ancest_smooth)
     plt.title("hog_ancest_smooth")
     plt.subplot(223)
-    plt.plot(np.arange(-180,180,1), hog_conv)
+    plt.plot(np.arange(-90, 90, 0.5), hog_conv)
     plt.title("hog_conv")
     plt.subplot(224)
     plt.imshow(image_data)
-    plt.title((file_input.split("/")[-1]).split(".nii")[0])
+    plt.title((file_input.split("/")[-1]).split(".nii")[0] + " angle found : " + str(argmaxs_sorted[0]))
 
     if nb_axes == -1:
         angles = argmaxs_sorted
@@ -114,9 +139,6 @@ def test_2D_hogancest(file_input, path_output):
     else:
         angles = argmaxs_sorted[0:nb_axes]
 
-    # Center of mass to draw axes
-    # centermass = image[0].mean(1).round().astype(int)  # will act weird if image is non binary
-    centermass = [int(round(image_data.shape[0] / 2)), int(round(image_data.shape[1] / 2))]  # center of image
 
     # Draw axes on image
     image_wline = image_data
@@ -133,6 +155,7 @@ def test_2D_hogancest(file_input, path_output):
 def load_image(file_input, dimension):
     """ Users asks what dimension he wants in output
         """
+    # This function's purpose is for testing, it is not clean
 
     if dimension == 3:
         image_data = np.array(Image(file_input).data) # just retrieve the data
