@@ -12,10 +12,9 @@ import sct_utils as sct
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.aggregate_slicewise import Metric
 # TODO don't import SCT stuff outside of spinalcordtoolbox/
-from sct_straighten_spinalcord import smooth_centerline
+from spinalcordtoolbox.centerline.core import get_centerline
 import msct_shape
 from msct_types import Centerline
-from .centerline import optic
 
 # TODO: only use logging, don't use printing, pass images, not filenames, do imports at beginning of file, no chdir()
 
@@ -24,7 +23,7 @@ OUTPUT_CSA_VOLUME = 0
 OUTPUT_ANGLE_VOLUME = 0
 
 
-def compute_csa(segmentation, algo_fitting='hanning', type_window='hanning', window_length=80, angle_correction=True,
+def compute_csa(segmentation, algo_fitting='bspline', type_window='hanning', window_length=80, angle_correction=True,
                 use_phys_coord=True, remove_temp_files=1, verbose=1):
     """
     Compute CSA.
@@ -58,12 +57,11 @@ def compute_csa(segmentation, algo_fitting='hanning', type_window='hanning', win
     # with option -vert). See #1791
     if use_phys_coord:
         # fit centerline, smooth it and return the first derivative (in physical space)
-        x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = \
-            smooth_centerline(fname_seg, algo_fitting=algo_fitting, type_window=type_window,
-                              window_length=window_length, nurbs_pts_number=3000, phys_coordinates=True,
-                              verbose=verbose, all_slices=False)
-        centerline = Centerline(x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv,
-                                y_centerline_deriv, z_centerline_deriv)
+        _, arr_ctl, arr_ctl_der = get_centerline(im_seg, algo_fitting=algo_fitting)
+        x_centerline_fit, y_centerline_fit, z_centerline = arr_ctl
+        x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = arr_ctl_der
+        centerline = Centerline(x_centerline_fit.tolist(), y_centerline_fit.tolist(), z_centerline.tolist(), x_centerline_deriv.tolist(),
+                                y_centerline_deriv.tolist(), z_centerline_deriv.tolist())
 
         # average centerline coordinates over slices of the image
         x_centerline_fit_rescorr, y_centerline_fit_rescorr, z_centerline_rescorr, x_centerline_deriv_rescorr, \
@@ -74,10 +72,9 @@ def compute_csa(segmentation, algo_fitting='hanning', type_window='hanning', win
 
     else:
         # fit centerline, smooth it and return the first derivative (in voxel space but FITTED coordinates)
-        x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = \
-            smooth_centerline(fname_seg, algo_fitting=algo_fitting, type_window=type_window,
-                              window_length=window_length,
-                              nurbs_pts_number=3000, phys_coordinates=False, verbose=verbose, all_slices=True)
+        _, arr_ctl, arr_ctl_der = get_centerline(im_seg, algo_fitting=algo_fitting)
+        x_centerline_fit, y_centerline_fit, z_centerline = arr_ctl
+        x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = arr_ctl_der
 
         # correct centerline fitted coordinates according to the data resolution
         x_centerline_fit_rescorr, y_centerline_fit_rescorr, z_centerline_rescorr, \

@@ -26,7 +26,7 @@ from skimage import measure, filters
 
 import sct_utils as sct
 from msct_types import Centerline
-from sct_straighten_spinalcord import smooth_centerline
+from spinalcordtoolbox.centerline.core import get_centerline
 
 
 def smoothing(image, sigma=1.0):
@@ -153,11 +153,9 @@ def compute_properties_along_centerline(im_seg, smooth_factor=5.0, interpolation
     # properties['z_slice'] = []
 
     # compute the spinal cord centerline based on the spinal cord segmentation
-    number_of_points = nz  # 5 * nz
-    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = \
-        smooth_centerline(im_seg, algo_fitting=algo_fitting, window_length=window_length,
-                          verbose=verbose, nurbs_pts_number=number_of_points, all_slices=False, phys_coordinates=True,
-                          remove_outliers=True)
+    _, arr_ctl, arr_ctl_der = get_centerline(im_seg, algo_fitting=algo_fitting)
+    x_centerline_fit, y_centerline_fit, z_centerline = arr_ctl
+    x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = arr_ctl_der
     centerline = Centerline(x_centerline_fit, y_centerline_fit, z_centerline,
                             x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
 

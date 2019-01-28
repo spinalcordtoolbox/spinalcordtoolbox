@@ -64,7 +64,7 @@ def test_get_centerline_polyfit(img_ctl, expected):
     """Test centerline fitting using polyfit"""
     deg = 3
     img, img_sub = img_ctl
-    img_out, arr_out = get_centerline(img_sub, algo_fitting='polyfit', param=ParamCenterline(degree=deg), verbose=verbose)
+    img_out, arr_out, _ = get_centerline(img_sub, algo_fitting='polyfit', param=ParamCenterline(degree=deg), verbose=verbose)
     assert np.linalg.norm(np.where(img.data) - arr_out) < expected
 
 
@@ -73,7 +73,7 @@ def test_get_centerline_polyfit(img_ctl, expected):
 def test_get_centerline_sinc(img_ctl, expected):
     """Test centerline fitting using polyfit"""
     img, img_sub = img_ctl
-    img_out, arr_out = get_centerline(img_sub, algo_fitting='sinc', verbose=verbose)
+    img_out, arr_out, _ = get_centerline(img_sub, algo_fitting='sinc', verbose=verbose)
     assert np.linalg.norm(np.where(img.data) - arr_out) < expected
 
 
@@ -82,7 +82,7 @@ def test_get_centerline_sinc(img_ctl, expected):
 def test_get_centerline_bspline(img_ctl, expected):
     """Test centerline fitting using polyfit"""
     img, img_sub = img_ctl
-    img_out, arr_out = get_centerline(img_sub, algo_fitting='bspline', verbose=verbose)
+    img_out, arr_out, _ = get_centerline(img_sub, algo_fitting='bspline', verbose=verbose)
     assert np.linalg.norm(np.where(img.data) - arr_out) < expected
 
 
@@ -91,7 +91,7 @@ def test_get_centerline_bspline(img_ctl, expected):
 def test_get_centerline_nurbs(img_ctl, expected):
     """Test centerline fitting using nurbs"""
     img, img_sub = img_ctl
-    img_out, arr_out = get_centerline(img_sub, algo_fitting='nurbs', verbose=verbose)
+    img_out, arr_out, _ = get_centerline(img_sub, algo_fitting='nurbs', verbose=verbose)
     assert np.linalg.norm(np.where(img.data) - arr_out) < expected
 
 

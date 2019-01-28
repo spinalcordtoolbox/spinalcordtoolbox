@@ -75,8 +75,7 @@ def test_extract_centerline(dummy_segmentation):
 def test_compute_csa_noangle(dummy_segmentation):
     """Test computation of cross-sectional area from input segmentation"""
     metrics = process_seg.compute_csa(dummy_segmentation(shape='rectangle', angle=0, a=50.0, b=30.0),
-                                      algo_fitting='hanning', window_length=5, angle_correction=False,
-                                      use_phys_coord=True, verbose=0)
+                                      algo_fitting='polyfit', angle_correction=False, use_phys_coord=True, verbose=0)
     assert np.isnan(metrics['csa'].data[95])
     assert np.mean(metrics['csa'].data[20:80]) == pytest.approx(61.61, rel=0.01)
     assert np.mean(metrics['angle'].data[20:80]) == pytest.approx(0.0, rel=0.01)
@@ -88,8 +87,7 @@ def test_compute_csa(dummy_segmentation):
     Note: here, compared to the previous tests with no angle, we use smaller hanning window and smaller range for
     computing the mean, because the smoothing creates spurious errors at edges."""
     metrics = process_seg.compute_csa(dummy_segmentation(shape='rectangle', angle=15, a=50.0, b=30.0),
-                                      algo_fitting='hanning', type_window='hanning',
-                                      window_length=3, angle_correction=True, use_phys_coord=True, verbose=0)
+                                      algo_fitting='polyfit', angle_correction=True, use_phys_coord=True, verbose=0)
     assert np.mean(metrics['csa'].data[30:70]) == pytest.approx(61.61, rel=0.01)
     assert np.mean(metrics['angle'].data[30:70]) == pytest.approx(15.00, rel=0.01)
 
@@ -98,8 +96,7 @@ def test_compute_csa(dummy_segmentation):
 def test_compute_csa_ellipse(dummy_segmentation):
     """Test computation of cross-sectional area from input segmentation"""
     metrics = process_seg.compute_csa(dummy_segmentation(shape='ellipse', angle=0, a=50.0, b=30.0),
-                                      algo_fitting='hanning', type_window='hanning',
-                                      window_length=5, angle_correction=True, use_phys_coord=True, verbose=0)
+                                      algo_fitting='polyfit', angle_correction=True, use_phys_coord=True, verbose=0)
     assert np.mean(metrics['csa'].data[30:70]) == pytest.approx(47.01, rel=0.01)
     assert np.mean(metrics['angle'].data[30:70]) == pytest.approx(0.0, rel=0.01)
 
@@ -109,7 +106,7 @@ def test_compute_shape_noangle(dummy_segmentation):
     """Test computation of cross-sectional area from input segmentation."""
     # Using hanning because faster
     metrics = process_seg.compute_shape(dummy_segmentation(shape='ellipse', angle=0, a=50.0, b=30.0),
-                                        algo_fitting='hanning', window_length=3, verbose=0)
+                                        algo_fitting='polyfit', verbose=0)
     assert np.mean(metrics['area'].data[30:70]) == pytest.approx(47.01, rel=0.05)
     assert np.mean(metrics['AP_diameter'].data[30:70]) == pytest.approx(6.0, rel=0.05)
     assert np.mean(metrics['RL_diameter'].data[30:70]) == pytest.approx(10.0, rel=0.05)
