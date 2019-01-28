@@ -35,6 +35,7 @@ def get_centerline(segmentation, algo_fitting='polyfit', param=ParamCenterline()
     native_orientation = im_seg.orientation
     im_seg.change_orientation('RPI')
     x, y, z = np.where(im_seg.data)
+    px, py, pz = im_seg.dim[4:7]
 
     # Choose method
     if algo_fitting == 'polyfit':
@@ -52,8 +53,8 @@ def get_centerline(segmentation, algo_fitting='polyfit', param=ParamCenterline()
     elif algo_fitting == 'bspline':
         from spinalcordtoolbox.centerline.curve_fitting import bspline
         z_centerline = np.array(range(im_seg.dim[2]))
-        x_centerline_fit, x_centerline_deriv = bspline(z, x, z_centerline)
-        y_centerline_fit, y_centerline_deriv = bspline(z, y, z_centerline)
+        x_centerline_fit, x_centerline_deriv = bspline(z, x, z_centerline, deg=param.degree)
+        y_centerline_fit, y_centerline_deriv = bspline(z, y, z_centerline, deg=param.degree)
 
     # elif algo_fitting == 'polyfit_hann':
     #     # Sinc interpolation followed by Hanning smoothing
@@ -81,17 +82,16 @@ def get_centerline(segmentation, algo_fitting='polyfit', param=ParamCenterline()
         matplotlib.use('Agg')  # prevent display figure
         import matplotlib.pyplot as plt
         plt.figure()
-        plt.title("Fitting algo: %s" % algo_fitting)
         plt.subplot(2, 1, 1)
-        plt.plot(z, x, 'ro')
-        plt.plot(z_centerline, x_centerline_fit)
-        plt.xlabel("Z")
-        plt.ylabel("X")
+        plt.title("Algo=%s, Deg=%s" % (algo_fitting, param.degree))
+        plt.plot(z * pz, x * px, 'ro')
+        plt.plot(z_centerline * pz, x_centerline_fit * px)
+        plt.ylabel("X [mm]")
         plt.subplot(2, 1, 2)
         plt.plot(z, y, 'ro')
         plt.plot(z_centerline, y_centerline_fit)
-        plt.xlabel("Z")
-        plt.ylabel("Y")
+        plt.xlabel("Z [mm]")
+        plt.ylabel("Y [mm]")
         plt.savefig('fig_centerline_' + datetime.now().strftime("%y%m%d%H%M%S%f") + '_' + algo_fitting + '.png')
         plt.close()
 

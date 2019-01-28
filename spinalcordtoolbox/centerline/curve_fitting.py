@@ -22,7 +22,7 @@ def polyfit_1d(x, y, xref, deg=3):
 
 def bspline(x, y, xref, deg=3):
     """
-    Bspline interpolation
+    Bspline interpolation. Length of x needs to be superior to deg.
     :param x:
     :param y:
     :param xref:
@@ -30,7 +30,7 @@ def bspline(x, y, xref, deg=3):
     :return:
     """
     from scipy import interpolate
-    tck = interpolate.splrep(x, y, s=1, k=3)  # TODO: find s based on pix dim
+    tck = interpolate.splrep(x, y, s=1, k=deg)  # TODO: find s based on pix dim
     y_fit = interpolate.splev(xref, tck, der=0)
     y_fit_der = interpolate.splev(xref, tck, der=1)
     return y_fit, y_fit_der
