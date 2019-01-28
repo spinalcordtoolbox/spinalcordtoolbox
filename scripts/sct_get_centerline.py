@@ -102,9 +102,9 @@ def run_main():
 
     if method == 'viewer':
         fname_labels_viewer = _call_viewer_centerline(fname_in=fname_data, interslice_gap=interslice_gap)
-        im_centerline, arr_centerline = get_centerline(fname_labels_viewer, algo_fitting='polyfit')
+        im_centerline, arr_centerline, _ = get_centerline(fname_labels_viewer, algo_fitting='polyfit')
     else:
-        im_centerline, arr_centerline = \
+        im_centerline, arr_centerline, _ = \
             get_centerline(fname_data, algo_fitting='optic', param=ParamCenterline(contrast=contrast_type))
 
     # save centerline as nifti (discrete) and csv (continuous) files
