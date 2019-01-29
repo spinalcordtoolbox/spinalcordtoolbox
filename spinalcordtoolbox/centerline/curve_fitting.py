@@ -6,7 +6,8 @@ from __future__ import absolute_import
 
 import sct_utils as sct
 
-def polyfit_1d(x, y, xref, deg=3):
+
+def polyfit_1d(x, y, xref, deg=5):
     """
     1d Polynomial fitting using np.polyfit
     :param x:

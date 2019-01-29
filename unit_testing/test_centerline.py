@@ -3,7 +3,7 @@
 # pytest unit tests for spinalcordtoolbox.centerline
 
 # TODO: test various orientations, length, pix dim
-# TODO: create synthetic centerline using polynomial functions.
+# TODO: create synthetic segmentation (in addition to centerline)
 
 from __future__ import absolute_import
 
