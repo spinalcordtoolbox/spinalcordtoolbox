@@ -21,8 +21,9 @@ from skimage import transform, img_as_float, img_as_uint
 import sct_utils as sct
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.centerline.core import get_centerline
 from msct_parser import Parser
-from sct_straighten_spinalcord import smooth_centerline
+
 
 # Default parameters
 class Param:
@@ -42,10 +43,8 @@ def flatten_sagittal(im_anat, im_centerline, centerline_fitting, verbose):
     nx, ny, nz, nt, px, py, pz, pt = im_anat.dim
 
     # smooth centerline and return fitted coordinates in voxel space
-    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(
-        im_centerline, algo_fitting=centerline_fitting, type_window='hanning', window_length=50,
-        nurbs_pts_number=3000, phys_coordinates=False, verbose=verbose, all_slices=True)
-
+    _, arr_ctl, _ = get_centerline(im_centerline, algo_fitting='bspline')
+    x_centerline_fit, y_centerline_fit, z_centerline = arr_ctl
     # compute translation for each slice, such that the flattened centerline is centered in the medial plane (R-L) and
     # avoid discontinuity in slices where there is no centerline (in which case, simply copy the translation of the
     # closest Z).

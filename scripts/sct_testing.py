@@ -427,7 +427,7 @@ def get_functions_parallelizable():
         'sct_dmri_transpose_bvecs',
         # 'sct_documentation',
         'sct_extract_metric',
-        # 'sct_flatten_sagittal',
+        'sct_flatten_sagittal',
         'sct_fmri_compute_tsnr',
         'sct_fmri_moco',
         'sct_get_centerline',
