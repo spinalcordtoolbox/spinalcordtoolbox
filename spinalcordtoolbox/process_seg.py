@@ -55,9 +55,10 @@ def compute_csa(segmentation, algo_fitting='bspline', type_window='hanning', win
     # if angle correction is required, get segmentation centerline
     # Note: even if angle_correction=0, we should run the code below so that z_centerline_voxel is defined (later used
     # with option -vert). See #1791
+    # TODO: check if we need use_phys_coord case with recent changes in centerline
     if use_phys_coord:
         # fit centerline, smooth it and return the first derivative (in physical space)
-        _, arr_ctl, arr_ctl_der = get_centerline(im_seg, algo_fitting=algo_fitting)
+        _, arr_ctl, arr_ctl_der = get_centerline(im_seg, algo_fitting=algo_fitting, verbose=verbose)
         x_centerline_fit, y_centerline_fit, z_centerline = arr_ctl
         x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = arr_ctl_der
         centerline = Centerline(x_centerline_fit.tolist(), y_centerline_fit.tolist(), z_centerline.tolist(), x_centerline_deriv.tolist(),
@@ -72,7 +73,7 @@ def compute_csa(segmentation, algo_fitting='bspline', type_window='hanning', win
 
     else:
         # fit centerline, smooth it and return the first derivative (in voxel space but FITTED coordinates)
-        _, arr_ctl, arr_ctl_der = get_centerline(im_seg, algo_fitting=algo_fitting)
+        _, arr_ctl, arr_ctl_der = get_centerline(im_seg, algo_fitting=algo_fitting, verbose=verbose)
         x_centerline_fit, y_centerline_fit, z_centerline = arr_ctl
         x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = arr_ctl_der
 
