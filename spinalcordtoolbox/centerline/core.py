@@ -22,9 +22,8 @@ def get_centerline(segmentation, algo_fitting='polyfit', param=ParamCenterline()
     Extract centerline from a binary or weighted segmentation by computing the center of mass slicewise.
     :param segmentation: input segmentation or series of points along the centerline. Could be an Image or a file name.
     :param algo_fitting: str:
-        nurbs:
-        hanning:
         polyfit: Polynomial fitting
+        nurbs:
     :param param: ParamCenterline()
     :param verbose: int: verbose level
     :return: im_centerline: Image: Centerline in discrete coordinate (int)
@@ -45,11 +44,11 @@ def get_centerline(segmentation, algo_fitting='polyfit', param=ParamCenterline()
         x_centerline_fit, x_centerline_deriv = polyfit_1d(z, x, z_centerline, deg=param.degree)
         y_centerline_fit, y_centerline_deriv = polyfit_1d(z, y, z_centerline, deg=param.degree)
 
-    elif algo_fitting == 'sinc':
-        from spinalcordtoolbox.centerline.curve_fitting import sinc_interp
-        z_centerline = np.array(range(im_seg.dim[2]))
-        x_centerline_fit, x_centerline_deriv = sinc_interp(z, x, z_centerline)
-        y_centerline_fit, y_centerline_deriv = sinc_interp(z, y, z_centerline)
+    # elif algo_fitting == 'sinc':
+    #     from spinalcordtoolbox.centerline.curve_fitting import sinc_interp
+    #     z_centerline = np.array(range(im_seg.dim[2]))
+    #     x_centerline_fit, x_centerline_deriv = sinc_interp(z, x, z_centerline)
+    #     y_centerline_fit, y_centerline_deriv = sinc_interp(z, y, z_centerline)
 
     elif algo_fitting == 'bspline':
         from spinalcordtoolbox.centerline.curve_fitting import bspline
