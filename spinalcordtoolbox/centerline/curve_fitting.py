@@ -4,6 +4,7 @@
 
 from __future__ import absolute_import
 
+import sct_utils as sct
 
 def polyfit_1d(x, y, xref, deg=3):
     """
@@ -41,6 +42,10 @@ def bspline(x, y, xref, deg=3):
             # Average all y values at ind_x
             x_mean.append(ix)
             y_mean.append(y[ind_x].mean())
+    # Make sure the condition len(x_mean) > k is satisfied. Otherwise, change k to avoid crashing.
+    if not len(x_mean) > deg:
+        deg = len(x_mean) - 1
+        sct.log.warning('Input array size is smaller than degree. Forcing deg = ' + str(deg))
     # Then, run bspline interpolation
     tck = interpolate.splrep(x_mean, y_mean, s=5, k=deg)  # TODO: find s based on pix dim
     y_fit = interpolate.splev(xref, tck, der=0)
