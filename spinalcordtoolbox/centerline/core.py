@@ -17,7 +17,7 @@ class ParamCenterline:
         self.degree = degree  # Degree of polynomial function
 
 
-def get_centerline(segmentation, algo_fitting='polyfit', param=ParamCenterline(), verbose=1):
+def get_centerline(segmentation, algo_fitting='polyfit', param=ParamCenterline(), phys_coord=False, verbose=1):
     """
     Extract centerline from a binary or weighted segmentation by computing the center of mass slicewise.
     :param segmentation: input segmentation or series of points along the centerline. Could be an Image or a file name.
@@ -34,41 +34,57 @@ def get_centerline(segmentation, algo_fitting='polyfit', param=ParamCenterline()
     im_seg = Image(segmentation)
     native_orientation = im_seg.orientation
     im_seg.change_orientation('RPI')
-    x, y, z = np.where(im_seg.data)
     px, py, pz = im_seg.dim[4:7]
+    x, y, z = np.where(im_seg.data)
+    z_ref = np.array(range(im_seg.dim[2]))
+
+    # Overwrite x, y, z, zref variables if phys_coord are asked
+    if phys_coord:
+        xyz_phys = im_seg.transfo_pix2phys([[x[i], y[i], z[i]] for i in range(len(x))])
+        x, y, z = xyz_phys[:, 0], xyz_phys[:, 1], xyz_phys[:, 2]
+        xyzref_phys = im_seg.transfo_pix2phys([[0, 0, i] for i in zref])
+        z_ref = xyzref_phys[:, 2]
+
+    # Take the center of mass at each slice to avoid: https://stackoverflow.com/questions/2009379/interpolate-question
+    x_mean, y_mean, z_mean = np.array([]), np.array([]), np.array([])
+    # Loop across unique x values (and sort it)
+    for iz in sorted(set(z)):
+        # Get indices corresponding to iz
+        ind_z = np.where(z == iz)
+        if len(ind_z[0]):
+            # Average all x and y values at ind_z
+            x_mean = np.append(x_mean, x[ind_z].mean())
+            y_mean = np.append(y_mean, y[ind_z].mean())
+            z_mean = np.append(z_mean, iz)
 
     # Choose method
     if algo_fitting == 'polyfit':
         from spinalcordtoolbox.centerline.curve_fitting import polyfit_1d
-        z_centerline = np.array(range(im_seg.dim[2]))
-        x_centerline_fit, x_centerline_deriv = polyfit_1d(z, x, z_centerline, deg=param.degree)
-        y_centerline_fit, y_centerline_deriv = polyfit_1d(z, y, z_centerline, deg=param.degree)
+        x_centerline_fit, x_centerline_deriv = polyfit_1d(z_mean, x_mean, z_ref, deg=param.degree)
+        y_centerline_fit, y_centerline_deriv = polyfit_1d(z_mean, y_mean, z_ref, deg=param.degree)
 
     # elif algo_fitting == 'sinc':
     #     from spinalcordtoolbox.centerline.curve_fitting import sinc_interp
-    #     z_centerline = np.array(range(im_seg.dim[2]))
-    #     x_centerline_fit, x_centerline_deriv = sinc_interp(z, x, z_centerline)
-    #     y_centerline_fit, y_centerline_deriv = sinc_interp(z, y, z_centerline)
+    #     z_ref = np.array(range(im_seg.dim[2]))
+    #     x_centerline_fit, x_centerline_deriv = sinc_interp(z_mean, x_mean, z_ref)
+    #     y_centerline_fit, y_centerline_deriv = sinc_interp(z_mean, y_mean, z_ref)
 
     elif algo_fitting == 'bspline':
         from spinalcordtoolbox.centerline.curve_fitting import bspline
-        z_centerline = np.array(range(im_seg.dim[2]))
-        x_centerline_fit, x_centerline_deriv = bspline(z, x, z_centerline, deg=param.degree)
-        y_centerline_fit, y_centerline_deriv = bspline(z, y, z_centerline, deg=param.degree)
+        x_centerline_fit, x_centerline_deriv = bspline(z_mean, x_mean, z_ref, deg=param.degree)
+        y_centerline_fit, y_centerline_deriv = bspline(z_mean, y_mean, z_ref, deg=param.degree)
 
     # elif algo_fitting == 'polyfit_hann':
     #     # Sinc interpolation followed by Hanning smoothing
     #     from spinalcordtoolbox.centerline.curve_fitting import sinc_interp
-    #     z_centerline = np.array(range(im_seg.dim[2]))
-    #     x_centerline_fit, x_centerline_deriv = sinc_interp(z, x, z_centerline)
-    #     y_centerline_fit, y_centerline_deriv = sinc_interp(z, y, z_centerline)
+    #     x_centerline_fit, x_centerline_deriv = sinc_interp(z_mean, x_mean, z_ref)
+    #     y_centerline_fit, y_centerline_deriv = sinc_interp(z_mean, y_mean, z_ref)
 
     elif algo_fitting == 'nurbs':
         from spinalcordtoolbox.centerline.nurbs import b_spline_nurbs
-        z_centerline = np.array(range(im_seg.dim[2]))
         # TODO: do something about nbControl: previous default was -1.
         x_centerline_fit, y_centerline_fit, z_centerline_fit, x_centerline_deriv, y_centerline_deriv, \
-            z_centerline_deriv, error = b_spline_nurbs(x, y, z, nbControl=None)
+            z_centerline_deriv, error = b_spline_nurbs(x_mean, y_mean, z_mean, nbControl=None)
 
     elif algo_fitting == 'optic':
         from spinalcordtoolbox.centerline import optic
@@ -76,8 +92,8 @@ def get_centerline(segmentation, algo_fitting='polyfit', param=ParamCenterline()
         img_ctl = optic.detect_centerline(im_seg, param.contrast)
         x_centerline_fit, y_centerline_fit, z_centerline = np.where(img_ctl.data)
         # Compute derivatives using polynomial fit
-        x_centerline_fit, x_centerline_deriv = polyfit_1d(z_centerline, x_centerline_fit, z_centerline, deg=5)
-        y_centerline_fit, y_centerline_deriv = polyfit_1d(z_centerline, y_centerline_fit, z_centerline, deg=5)
+        x_centerline_fit, x_centerline_deriv = polyfit_1d(z_ref, x_centerline_fit, z_ref, deg=5)
+        y_centerline_fit, y_centerline_deriv = polyfit_1d(z_ref, y_centerline_fit, z_ref, deg=5)
 
 
     # Display fig of fitted curves
@@ -89,12 +105,12 @@ def get_centerline(segmentation, algo_fitting='polyfit', param=ParamCenterline()
         plt.figure()
         plt.subplot(2, 1, 1)
         plt.title("Algo=%s, Deg=%s" % (algo_fitting, param.degree))
-        plt.plot(z * pz, x * px, 'ro')
-        plt.plot(z_centerline * pz, x_centerline_fit * px)
+        plt.plot(z_mean * pz, x_mean * px, 'ro')
+        plt.plot(z_ref * pz, x_centerline_fit * px)
         plt.ylabel("X [mm]")
         plt.subplot(2, 1, 2)
-        plt.plot(z, y, 'ro')
-        plt.plot(z_centerline, y_centerline_fit)
+        plt.plot(z_mean, y_mean, 'ro')
+        plt.plot(z_ref, y_centerline_fit)
         plt.xlabel("Z [mm]")
         plt.ylabel("Y [mm]")
         plt.savefig('fig_centerline_' + datetime.now().strftime("%y%m%d%H%M%S%f") + '_' + algo_fitting + '.png')
@@ -104,12 +120,12 @@ def get_centerline(segmentation, algo_fitting='polyfit', param=ParamCenterline()
     im_centerline = im_seg.copy()
     im_centerline.data = np.zeros(im_centerline.data.shape)
     # assign value=1 to centerline
-    im_centerline.data[round_and_clip(x_centerline_fit), round_and_clip(y_centerline_fit), z_centerline] = 1
+    im_centerline.data[round_and_clip(x_centerline_fit), round_and_clip(y_centerline_fit), z_ref] = 1
     # reorient centerline to native orientation
     im_centerline.change_orientation(native_orientation)
     # TODO: reorient output array in native orientation
     return im_centerline, \
-           np.array([x_centerline_fit, y_centerline_fit, z_centerline]), \
+           np.array([x_centerline_fit, y_centerline_fit, z_ref]), \
            np.array([x_centerline_deriv, y_centerline_deriv]),
 
 
