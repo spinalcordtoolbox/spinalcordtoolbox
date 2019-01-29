@@ -14,165 +14,19 @@
 
 from __future__ import division, absolute_import
 
-import sys, io, os, shutil, time, bisect
+import sys, os, time, bisect
 
 import numpy as np
 from nibabel import Nifti1Image, save
-from scipy import ndimage
 import tqdm
 
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.centerline.nurbs import b_spline_nurbs
+from spinalcordtoolbox.centerline.core import get_centerline
 from msct_parser import Parser
 from msct_types import Centerline
 from sct_apply_transfo import Transform
 import sct_utils as sct
-# from msct_smooth import smoothing_window, evaluate_derivative_3D, b_spline_nurbs
-
-
-def smooth_centerline(fname_centerline, algo_fitting='hanning', type_window='hanning', window_length=80, verbose=0, nurbs_pts_number=1000, all_slices=True, phys_coordinates=False, remove_outliers=False):
-    """
-    :param fname_centerline: centerline in RPI orientation, or an Image
-    :return: x_centerline_fit, y_centerline_fit, z_centerline_fit, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv
-    """
-    remove_edge_points = 2  # remove points at the edge (issue #513)
-
-    sct.printv('\nSmooth centerline/segmentation...', verbose)
-
-    # get dimensions (again!)
-    file_image = None
-    if isinstance(fname_centerline, str):
-        file_image = Image(fname_centerline)
-    elif isinstance(fname_centerline, Image):
-        file_image = fname_centerline
-    else:
-        sct.printv('ERROR: wrong input image', 1, 'error')
-
-    nx, ny, nz, nt, px, py, pz, pt = file_image.dim
-
-    # open centerline
-    data = file_image.data
-
-    # loop across z and associate x,y coordinate with the point having maximum intensity
-    # N.B. len(z_centerline) = nz_nonz can be smaller than nz in case the centerline is smaller than the input volume
-    z_centerline = [iz for iz in range(0, nz, 1) if data[:, :, iz].any()]
-    nz_nonz = len(z_centerline)
-    x_centerline = [0 for _ in range(0, nz_nonz, 1)]
-    y_centerline = [0 for _ in range(0, nz_nonz, 1)]
-    x_centerline_fit = [0 for _ in range(0, nz_nonz, 1)]
-    y_centerline_fit = [0 for _ in range(0, nz_nonz, 1)]
-    z_centerline_fit = [0 for _ in range(0, nz_nonz, 1)]
-    x_centerline_deriv = [0 for _ in range(0, nz_nonz, 1)]
-    y_centerline_deriv = [0 for _ in range(0, nz_nonz, 1)]
-    z_centerline_deriv = [0 for _ in range(0, nz_nonz, 1)]
-    num_features = [0 for _ in range(0, nz_nonz, 1)]
-    distances = []
-
-    if nz_nonz <= 5 and algo_fitting == 'nurbs':
-        sct.printv('WARNING: switching to hanning smoothing due to low number of slices.', verbose=verbose, type='warning')
-        algo_fitting = 'hanning'
-
-    # get center of mass of the centerline/segmentation and remove outliers
-    sct.printv('.. Get center of mass of the centerline/segmentation...', verbose)
-    for iz in range(0, nz_nonz, 1):
-        slice = np.array(data[:, :, z_centerline[iz]])
-        labeled_array, num_f = ndimage.measurements.label(slice)
-        num_features[iz] = num_f
-        x_centerline[iz], y_centerline[iz] = ndimage.measurements.center_of_mass(slice)
-        if iz != 0:
-            distances.append(np.sqrt((x_centerline[iz] - x_centerline[iz - 1]) ** 2 + (y_centerline[iz] - y_centerline[iz - 1]) ** 2))
-
-    if remove_outliers:
-        mean_distances = np.mean(distances)
-        std_distances = np.std(distances)
-        indices_to_remove = []
-
-        # ascending verification
-        for iz in range(0, nz_nonz // 2, 1):
-            distance = np.sqrt((x_centerline[iz] - x_centerline[iz + 1]) ** 2 + (y_centerline[iz] - y_centerline[iz + 1]) ** 2)
-            if num_features[iz] > 1 or abs(distance - mean_distances) > 3 * std_distances:
-                indices_to_remove.append(iz)
-
-        # descending verification
-        for iz in range(nz_nonz - 1, nz_nonz // 2, -1):
-            distance = np.sqrt((x_centerline[iz] - x_centerline[iz - 1]) ** 2 + (y_centerline[iz] - y_centerline[iz - 1]) ** 2)
-            if num_features[iz] > 1 or abs(distance - mean_distances) > 3 * std_distances:
-                indices_to_remove.append(iz)
-
-        x_centerline = np.delete(x_centerline, indices_to_remove)
-        y_centerline = np.delete(y_centerline, indices_to_remove)
-        z_centerline = np.delete(z_centerline, indices_to_remove)
-
-    if phys_coordinates:
-        sct.printv('.. Computing physical coordinates of centerline/segmentation...', verbose)
-        coord_centerline = np.array(list(zip(x_centerline, y_centerline, z_centerline)))
-        phys_coord_centerline = np.asarray(file_image.transfo_pix2phys(coord_centerline))
-        x_centerline = phys_coord_centerline[:, 0]
-        y_centerline = phys_coord_centerline[:, 1]
-        z_centerline = phys_coord_centerline[:, 2]
-
-    sct.printv('.. Smoothing algo = ' + algo_fitting, verbose)
-    if algo_fitting == 'hanning':
-        # 2D smoothing
-        sct.printv('.. Windows length = ' + str(window_length), verbose)
-
-        # change to array
-        x_centerline = np.asarray(x_centerline)
-        y_centerline = np.asarray(y_centerline)
-
-        # Smooth the curve
-        x_centerline_smooth = smoothing_window(x_centerline, window_len=window_length / pz, window=type_window,
-                                               verbose=verbose, robust=0, remove_edge_points=remove_edge_points)
-        y_centerline_smooth = smoothing_window(y_centerline, window_len=window_length / pz, window=type_window,
-                                               verbose=verbose, robust=0, remove_edge_points=remove_edge_points)
-
-        # convert to list final result
-        x_centerline_smooth = x_centerline_smooth.tolist()
-        y_centerline_smooth = y_centerline_smooth.tolist()
-
-        # clear variable
-        del data
-
-        x_centerline_fit = x_centerline_smooth
-        y_centerline_fit = y_centerline_smooth
-        z_centerline_fit = z_centerline
-
-        # get derivative
-        x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = evaluate_derivative_3D(x_centerline_fit,
-                                                                                            y_centerline_fit,
-                                                                                            z_centerline, px, py, pz)
-
-        x_centerline_fit = np.asarray(x_centerline_fit)
-        y_centerline_fit = np.asarray(y_centerline_fit)
-        z_centerline_fit = np.asarray(z_centerline_fit)
-
-    elif algo_fitting == "nurbs":
-
-        # TODO: remove outliers that are at the edges of the spinal cord
-        # simple way to do it: go from one end and remove point if the distance from mean is higher than 2 * std
-
-        curdir = os.getcwd()
-
-        x_centerline_fit, y_centerline_fit, z_centerline_fit, x_centerline_deriv, y_centerline_deriv,\
-            z_centerline_deriv, mse = b_spline_nurbs(x_centerline, y_centerline, z_centerline, nbControl=None, path_qc=curdir, point_number=nurbs_pts_number, verbose=verbose, all_slices=all_slices)
-
-        # Checking accuracy of fitting. If NURBS fitting is not accurate enough, do not smooth segmentation
-        if mse >= 2.0:
-            x_centerline_fit = np.asarray(x_centerline)
-            y_centerline_fit = np.asarray(y_centerline)
-            z_centerline_fit = np.asarray(z_centerline)
-            # get derivative
-            x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = evaluate_derivative_3D(x_centerline_fit,
-                                                                                                y_centerline_fit,
-                                                                                                z_centerline_fit,
-                                                                                                px, py, pz)
-
-    else:
-        sct.printv("ERROR: wrong algorithm for fitting", 1, "error")
-
-    return x_centerline_fit, y_centerline_fit, z_centerline_fit, \
-            x_centerline_deriv, y_centerline_deriv, z_centerline_deriv
 
 
 def generate_qc(fn_input, fn_centerline, fn_output, args, path_qc):
@@ -200,7 +54,7 @@ def generate_qc(fn_input, fn_centerline, fn_output, args, path_qc):
 class SpinalCordStraightener(object):
 
     def __init__(self, input_filename, centerline_filename, debug=0, deg_poly=10, gapxy=30, gapz=15,
-                 leftright_width=150, interpolation_warp='spline', rm_tmp_files=1, verbose=1, algo_fitting='nurbs',
+                 leftright_width=150, interpolation_warp='spline', rm_tmp_files=1, verbose=1, algo_fitting='bspline',
                  precision=2.0, threshold_distance=10, type_window='hanning', window_length=50, output_filename=''):
         self.input_filename = input_filename
         self.centerline_filename = centerline_filename
@@ -355,17 +209,23 @@ class SpinalCordStraightener(object):
             """
 
             # number of points along the spinal cord
-            if algo_fitting == 'hanning':
-                number_of_points = nz
-            else:
+            if algo_fitting == 'nurbs':
                 number_of_points = int(self.precision * (float(nz) / pz))
                 if number_of_points < 100:
                     number_of_points *= 50
                 if number_of_points == 0:
                     number_of_points = 50
+            else:
+                number_of_points = nz
 
             # 2. extract bspline fitting of the centreline, and its derivatives
-            centerline = Centerline(*smooth_centerline('centerline_rpi.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, verbose=verbose, nurbs_pts_number=number_of_points, all_slices=False, phys_coordinates=True, remove_outliers=True))
+            _, arr_ctl, arr_ctl_der = get_centerline(Image('centerline_rpi.nii.gz'), algo_fitting=algo_fitting,
+                                                     verbose=verbose)
+            x_centerline_fit, y_centerline_fit, z_centerline = arr_ctl
+            x_centerline_deriv, y_centerline_deriv = arr_ctl_der
+            centerline = Centerline(x_centerline_fit.tolist(), y_centerline_fit.tolist(), z_centerline.tolist(),
+                                    x_centerline_deriv.tolist(), y_centerline_deriv.tolist(),
+                                    np.ones_like(x_centerline_deriv).tolist())
 
             number_of_points = centerline.number_of_points
 
@@ -398,7 +258,7 @@ class SpinalCordStraightener(object):
             inferior_bound = bisect.bisect(centerline.progressive_length, length_safe_inferior) - 1
             superior_bound = centerline.number_of_points - bisect.bisect(centerline.progressive_length_inverse, length_safe_superior)
 
-            z_centerline = centerline.points[:,2]
+            z_centerline = centerline.points[:, 2]
             length_centerline = centerline.length
             size_z_centerline = z_centerline[-1] - z_centerline[0]
 
@@ -422,19 +282,24 @@ class SpinalCordStraightener(object):
             # points along curved centerline are already regularly spaced.
             # calculate position of points along straight centerline
 
-            # Create straight NIFTI volumes
+            # Create straight NIFTI volumes. TODO: maybe this if case is not needed?
             # ==========================================================================================
             if self.use_straight_reference:
                 image_centerline_pad = Image('centerline_rpi.nii.gz')
                 nx, ny, nz, nt, px, py, pz, pt = image_centerline_pad.dim
 
                 fname_ref = 'centerline_ref_rpi.nii.gz'
-                image_centerline_straight = Image('centerline_ref.nii.gz') \
-                 .change_orientation("RPI") \
-                 .save(fname_ref, mutable=True)
-
+                image_centerline_straight = Image('centerline_ref.nii.gz')\
+                    .change_orientation("RPI")\
+                    .save(fname_ref, mutable=True)
                 nx_s, ny_s, nz_s, nt_s, px_s, py_s, pz_s, pt_s = image_centerline_straight.dim
-                centerline_straight = Centerline(*smooth_centerline('centerline_ref_rpi.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, verbose=verbose, nurbs_pts_number=number_of_points, all_slices=False, phys_coordinates=True, remove_outliers=True))
+                _, arr_ctl, arr_ctl_der = get_centerline(image_centerline_straight, algo_fitting=algo_fitting,
+                                                         verbose=verbose)
+                x_centerline_fit, y_centerline_fit, z_centerline = arr_ctl
+                x_centerline_deriv, y_centerline_deriv = arr_ctl_der
+                centerline_straight = Centerline(x_centerline_fit.tolist(), y_centerline_fit.tolist(), z_centerline.tolist(),
+                                                 x_centerline_deriv.tolist(), y_centerline_deriv.tolist(),
+                                                 np.ones_like(x_centerline_deriv).tolist())
 
                 # Prepare warping fields headers
                 hdr_warp = image_centerline_pad.hdr.copy()
@@ -471,7 +336,7 @@ class SpinalCordStraightener(object):
 
                 offset_z = 0
 
-                # if the destination image is resampled, we still create the straight reference space with the native resolution
+                # if the destination image is resampled, we still create the straight reference space with the native resolution. # TODO: Maybe this if case is not needed?
                 if intermediate_resampling:
                     padding_z = int(np.ceil(1.5 * ((length_centerline - size_z_centerline) / 2.0) / pz_native))
                     sct.run(['sct_image', '-i', 'centerline_rpi_native.nii.gz', '-o', 'tmp.centerline_pad_native.nii.gz', '-pad', '0,0,' + str(padding_z)])
@@ -568,8 +433,9 @@ class SpinalCordStraightener(object):
                 sct.printv('Time to generate centerline: ' + str(np.round(time_centerlines * 1000.0)) + ' ms', verbose)
 
 
-            if 0:
+            if verbose == 2:
                 import matplotlib.pyplot as plt
+                from datetime import datetime
                 curved_points = centerline.progressive_length
                 straight_points = centerline_straight.progressive_length
                 range_points = np.linspace(0, 1, number_of_points)
@@ -581,7 +447,8 @@ class SpinalCordStraightener(object):
                 plt.plot(range_points, dist_curved)
                 plt.plot(range_points, dist_straight)
                 plt.grid(True)
-                plt.show()
+                plt.savefig('fig_straighten_' + datetime.now().strftime("%y%m%d%H%M%S%f") + '.png')
+                plt.close()
 
             #alignment_mode = 'length'
             alignment_mode = 'levels'
