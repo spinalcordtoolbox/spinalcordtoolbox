@@ -40,8 +40,8 @@ def find_centerline(algo, image_fname, contrast_type, brain_bool, folder_output,
         # run optic on a heatmap computed by a trained SVM+HoG algorithm
         # optic_models_fname = os.path.join(path_sct, 'data', 'optic_models', '{}_model'.format(contrast_type))
         # # TODO: replace with get_centerline(method=optic)
-        img_ctl, arr_ctl = get_centerline(image_fname, algo_fitting='optic',
-                                          param=ParamCenterline(contrast=contrast_type))
+        img_ctl, arr_ctl, _ = get_centerline(image_fname, algo_fitting='optic',
+                                             param=ParamCenterline(contrast=contrast_type))
         centerline_filename = sct.add_suffix(image_fname, "_ctr")
         img_ctl.save(centerline_filename)
 
@@ -101,7 +101,7 @@ def find_centerline(algo, image_fname, contrast_type, brain_bool, folder_output,
     elif algo == 'viewer':
         centerline_filename = sct.add_suffix(image_fname, "_ctr")
         fname_labels_viewer = _call_viewer_centerline(fname_in=image_fname)
-        im_centerline, arr_centerline = get_centerline(fname_labels_viewer)
+        im_centerline, arr_centerline, _ = get_centerline(fname_labels_viewer)
         im_centerline.save(centerline_filename)
     elif algo == 'manual':
         centerline_filename = sct.add_suffix(image_fname, "_ctr")
