@@ -81,8 +81,9 @@ def test_get_centerline_polyfit(img_ctl, expected):
 @pytest.mark.parametrize('img_ctl,expected', im_centerlines)
 def test_get_centerline_bspline(img_ctl, expected):
     """Test centerline fitting using polyfit"""
+    deg = 2
     img, img_sub = img_ctl
-    img_out, arr_out, _ = get_centerline(img_sub, algo_fitting='bspline', verbose=verbose)
+    img_out, arr_out, _ = get_centerline(img_sub, algo_fitting='bspline', param=ParamCenterline(degree=deg), verbose=verbose)
     assert np.linalg.norm(np.where(img.data) - arr_out) < expected
 
 
