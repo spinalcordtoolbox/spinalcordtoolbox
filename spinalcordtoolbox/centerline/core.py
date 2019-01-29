@@ -28,7 +28,8 @@ def get_centerline(segmentation, algo_fitting='polyfit', param=ParamCenterline()
     :param param: ParamCenterline()
     :param verbose: int: verbose level
     :return: im_centerline: Image: Centerline in discrete coordinate (int)
-    :return: arr_centerline: nparray: Centerline in continuous coordinate (float) for each slice
+    :return: arr_centerline: 3x1 array: Centerline in continuous coordinate (float) for each slice
+    :return: arr_centerline_deriv: 2x1 array: Derivatives of x and y centerline wrt. z for each slice
     """
     # Open image and change to RPI orientation
     im_seg = Image(segmentation)
@@ -106,7 +107,7 @@ def get_centerline(segmentation, algo_fitting='polyfit', param=ParamCenterline()
     # TODO: reorient output array in native orientation
     return im_centerline, \
            np.array([x_centerline_fit, y_centerline_fit, z_centerline]), \
-           np.array([x_centerline_deriv, y_centerline_deriv, z_centerline]),
+           np.array([x_centerline_deriv, y_centerline_deriv]),
 
 
 def round_and_clip(arr):

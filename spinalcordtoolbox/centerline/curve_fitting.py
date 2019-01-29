@@ -29,8 +29,20 @@ def bspline(x, y, xref, deg=3):
     :param deg:
     :return:
     """
+    from numpy import where
     from scipy import interpolate
-    tck = interpolate.splrep(x, y, s=5, k=deg)  # TODO: find s based on pix dim
+    # First, take the center of mass to avoid issue (https://stackoverflow.com/questions/2009379/interpolate-question)
+    x_mean, y_mean = [], []
+    # Loop across min/max indices
+    for ix in range(x.min(), x.max()):
+        # Get indices corresponding to ix
+        ind_x = where(x == ix)
+        if ind_x:
+            # Average all y values at ind_x
+            x_mean.append(ix)
+            y_mean.append(y[ind_x].mean())
+    # Then, run bspline interpolation
+    tck = interpolate.splrep(x_mean, y_mean, s=5, k=deg)  # TODO: find s based on pix dim
     y_fit = interpolate.splev(xref, tck, der=0)
     y_fit_der = interpolate.splev(xref, tck, der=1)
     return y_fit, y_fit_der

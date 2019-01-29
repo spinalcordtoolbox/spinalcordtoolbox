@@ -98,7 +98,7 @@ def test_compute_csa(dummy_segmentation):
     Note: here, compared to the previous tests with no angle, we use smaller hanning window and smaller range for
     computing the mean, because the smoothing creates spurious errors at edges."""
     metrics = process_seg.compute_csa(dummy_segmentation(shape='rectangle', angle=15, a=50.0, b=30.0),
-                                      algo_fitting='polyfit', angle_correction=True, use_phys_coord=True,
+                                      algo_fitting='polyfit', angle_correction=True, use_phys_coord=False,
                                       verbose=VERBOSE)
     assert np.mean(metrics['csa'].data[30:70]) == pytest.approx(61.61, rel=0.01)  # theoretical: 61.61
     assert np.mean(metrics['angle'].data[30:70]) == pytest.approx(15.00, rel=0.01)
