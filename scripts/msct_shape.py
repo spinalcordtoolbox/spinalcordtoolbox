@@ -155,9 +155,9 @@ def compute_properties_along_centerline(im_seg, smooth_factor=5.0, interpolation
     # compute the spinal cord centerline based on the spinal cord segmentation
     _, arr_ctl, arr_ctl_der = get_centerline(im_seg, algo_fitting=algo_fitting)
     x_centerline_fit, y_centerline_fit, z_centerline = arr_ctl
-    x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = arr_ctl_der
+    x_centerline_deriv, y_centerline_deriv = arr_ctl_der
     centerline = Centerline(x_centerline_fit, y_centerline_fit, z_centerline,
-                            x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
+                            x_centerline_deriv, y_centerline_deriv, np.ones_like(x_centerline_deriv))
 
     sct.printv('Computing spinal cord shape along the spinal cord...')
     with tqdm.tqdm(total=len(range(min_z_index, max_z_index))) as pbar:

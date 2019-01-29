@@ -66,22 +66,6 @@ def dummy_segmentation():
 
 
 # noinspection 801,PyShadowingNames
-def test_extract_centerline(dummy_segmentation):
-    """Test extraction of centerline from input segmentation"""
-    process_seg.extract_centerline(dummy_segmentation(shape='rectangle', angle=0, a=3.0, b=1.0), 0, file_out='centerline')
-    # open created csv file
-    centerline_out = []
-    with open('centerline.csv', 'rb') as f:
-        reader = csv.reader(f)
-        reader.next()  # skip header
-        for row in reader:
-            centerline_out.append([int(i) for i in row])
-    # build ground-truth centerline
-    centerline_true_20to80 = [[20, 99, 100], [40, 99, 100], [60, 99, 100], [80, 99, 100]]
-    assert centerline_out[20:200:20] == centerline_true_20to80
-
-
-# noinspection 801,PyShadowingNames
 def test_compute_csa_noangle(dummy_segmentation):
     """Test computation of cross-sectional area from input segmentation"""
     metrics = process_seg.compute_csa(dummy_segmentation(shape='rectangle', angle=0, a=50.0, b=30.0),
@@ -101,7 +85,7 @@ def test_compute_csa(dummy_segmentation):
                                       algo_fitting='polyfit', angle_correction=True, use_phys_coord=False,
                                       verbose=VERBOSE)
     assert np.mean(metrics['csa'].data[30:70]) == pytest.approx(61.61, rel=0.01)  # theoretical: 61.61
-    assert np.mean(metrics['angle'].data[30:70]) == pytest.approx(15.00, rel=0.01)
+    assert np.mean(metrics['angle'].data[30:70]) == pytest.approx(15.00, rel=0.02)
 
 
 # noinspection 801,PyShadowingNames
