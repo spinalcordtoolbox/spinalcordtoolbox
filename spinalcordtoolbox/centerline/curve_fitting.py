@@ -33,22 +33,12 @@ def bspline(x, y, xref, deg=3):
     """
     from numpy import where
     from scipy import interpolate
-    # First, take the center of mass to avoid issue (https://stackoverflow.com/questions/2009379/interpolate-question)
-    x_mean, y_mean = [], []
-    # Loop across min/max indices
-    for ix in range(x.min(), x.max()+1):
-        # Get indices corresponding to ix
-        ind_x = where(x == ix)
-        if len(ind_x[0]):
-            # Average all y values at ind_x
-            x_mean.append(ix)
-            y_mean.append(y[ind_x].mean())
     # Make sure the condition len(x_mean) > k is satisfied. Otherwise, change k to avoid crashing.
-    if not len(x_mean) > deg:
-        deg = len(x_mean) - 1
+    if not len(x) > deg:
+        deg = len(x) - 1
         sct.log.warning('Input array size is smaller than degree. Forcing deg = ' + str(deg))
     # Then, run bspline interpolation
-    tck = interpolate.splrep(x_mean, y_mean, s=5, k=deg)  # TODO: find s based on pix dim
+    tck = interpolate.splrep(x, y, s=5, k=deg)  # TODO: find s based on pix dim
     y_fit = interpolate.splev(xref, tck, der=0)
     y_fit_der = interpolate.splev(xref, tck, der=1)
     return y_fit, y_fit_der
