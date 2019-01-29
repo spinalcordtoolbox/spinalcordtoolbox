@@ -8,7 +8,7 @@ from spinalcordtoolbox.image import Image
 
 from spinalcordtoolbox.deepseg_lesion import core as deepseg_lesion
 
-def test_model_file_exists(self):
+def test_model_file_exists():
     for model_name in deepseg_lesion.MODEL_LST:
         model_path = os.path.join(sct.__sct_dir__, 'data', 'deepseg_lesion_models', '{}_lesion.h5'.format(model_name))
         assert os.path.isfile(model_path)
