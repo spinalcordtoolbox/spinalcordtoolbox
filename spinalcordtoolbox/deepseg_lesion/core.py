@@ -20,7 +20,7 @@ import spinalcordtoolbox.resample.nipy_resample
 from spinalcordtoolbox.deepseg_sc.cnn_models import nn_architecture_ctr
 
 BATCH_SIZE = 4
-
+MODEL_LST = ['t2', 't2_ax', 't2s']
 
 
 def apply_intensity_normalization_model(img, landmarks_lst):
@@ -76,7 +76,7 @@ def apply_intensity_normalization(img, contrast):
     return img_normalized
 
 
-def segment_3d(model_fname, contrast_type, fname_in, fname_out):
+def segment_3d(model_fname, contrast_type, im):
     """Perform segmentation with 3D convolutions."""
     from spinalcordtoolbox.deepseg_sc.cnn_models_3d import load_trained_model
     dct_patch_3d = {'t2': {'size': (48, 48, 48), 'mean': 871.309, 'std': 557.916},
@@ -85,8 +85,6 @@ def segment_3d(model_fname, contrast_type, fname_in, fname_out):
 
     # load 3d model
     seg_model = load_trained_model(model_fname)
-
-    im = Image(fname_in)
 
     out = msct_image.zeros_like(im, dtype=np.uint8)
 
@@ -111,7 +109,7 @@ def segment_3d(model_fname, contrast_type, fname_in, fname_out):
             else:
                 out.data[:, :, zz:z_patch_size + zz] = pred_seg_th
 
-    out.save(fname_out)
+    return out
 
 
 def deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo='svm', ctr_file=None, brain_bool=True,
@@ -176,10 +174,12 @@ def deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo='svm', ctr_file
     sct.log.info("\nSegmenting the MS lesions using deep learning on 3D patches...")
     segmentation_model_fname = os.path.join(sct.__sct_dir__, 'data', 'deepseg_lesion_models', '{}_lesion.h5'.format(contrast_type))
     fname_seg_crop_res = sct.add_suffix(fname_res3d, '_lesionseg')
-    segment_3d(model_fname=segmentation_model_fname,
+    im_res3d = Image(fname_res3d)
+    seg_data = segment_3d(model_fname=segmentation_model_fname,
                 contrast_type=contrast_type,
-                fname_in=fname_res3d,
-                fname_out=fname_seg_crop_res)
+                im=im_res3d.copy())
+    seg_data.save(fname_seg_crop_res)
+    del im_res3d, seg_data
 
     # resample to the initial pz resolution
     fname_seg_res2d = sct.add_suffix(fname_seg_crop_res, '_resampled2d')
