@@ -699,9 +699,8 @@ def project_labels_on_spinalcord(fname_label, fname_seg):
     im_seg.change_orientation("RPI")
 
     # smooth centerline and return fitted coordinates in voxel space
-    im_seg, arr_ctl, arr_ctl_der = get_centerline(im_seg, algo_fitting='bspline')
+    _, arr_ctl, _ = get_centerline(im_seg, algo_fitting='bspline')
     x_centerline_fit, y_centerline_fit, z_centerline = arr_ctl
-    x_centerline_deriv, y_centerline_deriv = arr_ctl_der
     # convert pixel into physical coordinates
     centerline_xyz_transposed = \
         [im_seg.transfo_pix2phys([[x_centerline_fit[i], y_centerline_fit[i], z_centerline[i]]])[0]
