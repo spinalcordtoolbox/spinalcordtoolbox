@@ -101,6 +101,8 @@ class NURBS:
                 self.nbControle = self.degre + 1
                 nb_points = len(P_x)
                 if self.nbControle > nb_points - 1:
+                    # self.nbControle = nb_points - 1
+                    # self.degre = self.nbControle - 1
                     sct.printv(
                         'ERROR : There are too few points to compute. The number of points of the curve must be '
                         'strictly superior to degre +2 which is: '
@@ -874,7 +876,7 @@ class NURBS:
 
             for l in range(n - k + 1):  # utilisation que des points non nuls
                 if x[l + k - 1] <= param[i] < x[l + k]:
-                    debut = l
+                    debut = l  # TODO: can yield UnboundLocalError: local variable 'debut' referenced before assignment
             fin = debut + k - 1
 
             for j, point in enumerate(P[debut:fin + 1]):
