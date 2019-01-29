@@ -34,10 +34,10 @@ def bspline(x, y, xref, deg=3):
     # First, take the center of mass to avoid issue (https://stackoverflow.com/questions/2009379/interpolate-question)
     x_mean, y_mean = [], []
     # Loop across min/max indices
-    for ix in range(x.min(), x.max()):
+    for ix in range(x.min(), x.max()+1):
         # Get indices corresponding to ix
         ind_x = where(x == ix)
-        if ind_x:
+        if len(ind_x[0]):
             # Average all y values at ind_x
             x_mean.append(ix)
             y_mean.append(y[ind_x].mean())
