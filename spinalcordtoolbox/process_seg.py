@@ -60,9 +60,9 @@ def compute_csa(segmentation, algo_fitting='bspline', type_window='hanning', win
         # fit centerline, smooth it and return the first derivative (in physical space)
         _, arr_ctl, arr_ctl_der = get_centerline(im_seg, algo_fitting=algo_fitting, verbose=verbose)
         x_centerline_fit, y_centerline_fit, z_centerline = arr_ctl
-        x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = arr_ctl_der
+        x_centerline_deriv, y_centerline_deriv = arr_ctl_der
         centerline = Centerline(x_centerline_fit.tolist(), y_centerline_fit.tolist(), z_centerline.tolist(), x_centerline_deriv.tolist(),
-                                y_centerline_deriv.tolist(), z_centerline_deriv.tolist())
+                                y_centerline_deriv.tolist(), np.ones_like(x_centerline_deriv).tolist())
 
         # average centerline coordinates over slices of the image
         x_centerline_fit_rescorr, y_centerline_fit_rescorr, z_centerline_rescorr, x_centerline_deriv_rescorr, \
