@@ -458,11 +458,11 @@ def _normalize_data(data, mean, std):
 def segment_2d(model_fname, contrast_type, input_size, im_in):
     """Segment data using 2D convolutions."""
     seg_model = nn_architecture_seg(height=input_size[0],
-                                    width=input_size[1],
-                                    depth=2 if contrast_type != 't2' else 3,
-                                    features=32,
-                                    batchnorm=False,
-                                    dropout=0.0)
+    				width=input_size[1],
+    				depth=2 if contrast_type != 't2' else 3,
+					features=32,
+                    batchnorm=False,
+                    dropout=0.0)
     seg_model.load_weights(model_fname)
 
     seg_crop = zeros_like(im_in, dtype=np.uint8)
