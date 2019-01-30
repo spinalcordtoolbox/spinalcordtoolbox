@@ -17,7 +17,7 @@ class ParamCenterline:
         self.degree = degree  # Degree of polynomial function
 
 
-def get_centerline(segmentation, algo_fitting='polyfit', param=ParamCenterline(), phys_coord=False, verbose=1):
+def get_centerline(segmentation, algo_fitting='polyfit', param=ParamCenterline(), verbose=1):
     """
     Extract centerline from a binary or weighted segmentation by computing the center of mass slicewise.
     :param segmentation: input segmentation or series of points along the centerline. Could be an Image or a file name.
