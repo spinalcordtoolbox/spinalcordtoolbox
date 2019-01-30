@@ -38,13 +38,6 @@ def get_centerline(segmentation, algo_fitting='polyfit', param=ParamCenterline()
     x, y, z = np.where(im_seg.data)
     z_ref = np.array(range(im_seg.dim[2]))
 
-    # Overwrite x, y, z, zref variables if phys_coord are asked
-    if phys_coord:
-        xyz_phys = im_seg.transfo_pix2phys([[x[i], y[i], z[i]] for i in range(len(x))])
-        x, y, z = xyz_phys[:, 0], xyz_phys[:, 1], xyz_phys[:, 2]
-        xyzref_phys = im_seg.transfo_pix2phys([[0, 0, i] for i in zref])
-        z_ref = xyzref_phys[:, 2]
-
     # Take the center of mass at each slice to avoid: https://stackoverflow.com/questions/2009379/interpolate-question
     x_mean, y_mean, z_mean = np.array([]), np.array([]), np.array([])
     # Loop across unique x values (and sort it)
