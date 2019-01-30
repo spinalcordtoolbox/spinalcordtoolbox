@@ -10,10 +10,7 @@
 
 from __future__ import print_function, absolute_import, division
 
-import os
-import pickle
-import shutil
-import sys
+import os, math, sys, pickle, shutil
 
 import numpy as np
 import pandas as pd
@@ -23,9 +20,9 @@ import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
 from msct_parser import Parser
 from msct_types import Centerline
-from sct_straighten_spinalcord import smooth_centerline
 import sct_utils as sct
 from sct_utils import extract_fname, printv, tmp_create
+from spinalcordtoolbox.centerline.core import get_centerline
 
 
 def get_parser():
@@ -232,8 +229,6 @@ class AnalyzeLeion:
         printv('  Volume : ' + str(np.round(vol_tot_cur, 2)) + ' mm^3', self.verbose, type='info')
 
     def _measure_length(self, im_data, p_lst, idx):
-        print(len(self.angles))
-        print(np.unique(np.where(im_data)[2]))
         length_cur = np.sum([np.cos(self.angles[zz]) * p_lst[2] for zz in np.unique(np.where(im_data)[2])])
         self.measure_pd.loc[idx, 'length [mm]'] = length_cur
         printv('  (S-I) length : ' + str(np.round(length_cur, 2)) + ' mm', self.verbose, type='info')
@@ -406,35 +401,39 @@ class AnalyzeLeion:
         return vect / norm
 
     def angle_correction(self):
-        # Empty arrays in which angle for each z slice will be stored
-        self.angles = np.zeros(Image(self.fname_mask).dim[2])
+        im_seg = Image(self.fname_sc)
+        nx, ny, nz, nt, px, py, pz, pt = im_seg.dim
+        data_seg = im_seg.data
+        X, Y, Z = (data_seg > 0).nonzero()
+        min_z_index, max_z_index = min(Z), max(Z)
 
-        if self.fname_sc is not None:
-            im_seg = Image(self.fname_sc)
-            data_seg = im_seg.data
-            X, Y, Z = (data_seg > 0).nonzero()
-            min_z_index, max_z_index = min(Z), max(Z)
+        # fit centerline, smooth it and return the first derivative (in physical space)
+        _, arr_ctl, arr_ctl_der = get_centerline(im_seg, algo_fitting='bspline', verbose=1)
+        x_centerline_fit, y_centerline_fit, z_centerline = arr_ctl
+        x_centerline_deriv, y_centerline_deriv = arr_ctl_der
+        centerline = Centerline(x_centerline_fit.tolist(), y_centerline_fit.tolist(), z_centerline.tolist(),
+                                x_centerline_deriv.tolist(), y_centerline_deriv.tolist(),
+                                np.ones_like(x_centerline_deriv).tolist())
 
-            # fit centerline, smooth it and return the first derivative (in physical space)
-            x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(self.fname_sc, algo_fitting='hanning', type_window='hanning', window_length=80, nurbs_pts_number=3000, phys_coordinates=True, verbose=self.verbose, all_slices=False)
-            centerline = Centerline(x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
+        self.angles = np.full_like(np.empty(nz), np.nan, dtype=np.double)
 
-            # average centerline coordinates over slices of the image
-            x_centerline_deriv_rescorr, y_centerline_deriv_rescorr, z_centerline_deriv_rescorr = centerline.average_coordinates_over_slices(im_seg)[3:]
+        for iz in range(min_z_index, max_z_index + 1):
+            # in the case of problematic segmentation (e.g., non continuous segmentation often at the extremities),
+            # display a warning but do not crash
+            try:
+                # normalize the tangent vector to the centerline (i.e. its derivative)
+                tangent_vect = self._normalize(np.array(
+                    [x_centerline_deriv[iz - min_z_index] * px, y_centerline_deriv[iz - min_z_index] * py, pz]))
 
-            # compute Z axis of the image, in physical coordinate
-            axis_Z = im_seg.get_directions()[2]
+            except IndexError:
+                sct.printv(
+                    'WARNING: Your segmentation does not seem continuous, which could cause wrong estimations at the '
+                    'problematic slices. Please check it, especially at the extremities.',
+                    type='warning')
 
-            # for iz in range(min_z_index, max_z_index + 1):
-            for zz in range(im_seg.dim[2]):
-                if zz >= min_z_index and zz <= max_z_index:
-                    # in the case of problematic segmentation (e.g., non continuous segmentation often at the extremities), display a warning but do not crash
-                    try:  # normalize the tangent vector to the centerline (i.e. its derivative)
-                        tangent_vect = self._normalize(np.array([x_centerline_deriv_rescorr[zz], y_centerline_deriv_rescorr[zz], z_centerline_deriv_rescorr[zz]]))
-                        # compute the angle between the normal vector of the plane and the vector z
-                        self.angles[zz] = np.arccos(np.vdot(tangent_vect, axis_Z))
-                    except IndexError:
-                        printv('WARNING: Your segmentation does not seem continuous, which could cause wrong estimations at the problematic slices. Please check it, especially at the extremities.', type='warning')
+            # compute the angle between the normal vector of the plane and the vector z
+            angle = np.arccos(np.vdot(tangent_vect, np.array([0, 0, 1])))
+            self.angles[iz] = math.degrees(angle)
 
     def label_lesion(self):
         printv('\nLabel connected regions of the masked image...', self.verbose, 'normal')
