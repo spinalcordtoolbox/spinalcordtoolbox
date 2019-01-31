@@ -23,15 +23,13 @@ OUTPUT_CSA_VOLUME = 0
 OUTPUT_ANGLE_VOLUME = 0
 
 
-def compute_csa(segmentation, algo_fitting='bspline', type_window='hanning', window_length=80, angle_correction=True,
+def compute_csa(segmentation, algo_fitting='bspline', angle_correction=True,
                 use_phys_coord=True, remove_temp_files=1, verbose=1):
     """
     Compute CSA.
     Note: segmentation can be binary or weighted for partial volume effect.
     :param segmentation: input segmentation. Could be either an Image or a file name.
     :param algo_fitting:
-    :param type_window:
-    :param window_length:
     :param angle_correction:
     :param use_phys_coord:
     :return metrics: Dict of class process_seg.Metric()
