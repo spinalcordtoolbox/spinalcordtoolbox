@@ -417,13 +417,14 @@ class AnalyzeLeion:
 
         self.angles = np.full_like(np.empty(nz), np.nan, dtype=np.double)
 
-        for iz in range(min_z_index, max_z_index + 1):
+        # loop across x_centerline_deriv (instead of [min_z_index, max_z_index], which could vary after interpolation)
+        for iz in range(x_centerline_deriv.shape[0]):
             # in the case of problematic segmentation (e.g., non continuous segmentation often at the extremities),
             # display a warning but do not crash
             try:
                 # normalize the tangent vector to the centerline (i.e. its derivative)
                 tangent_vect = self._normalize(np.array(
-                    [x_centerline_deriv[iz - min_z_index] * px, y_centerline_deriv[iz - min_z_index] * py, pz]))
+                    [x_centerline_deriv[iz] * px, y_centerline_deriv[iz] * py, pz]))
 
             except IndexError:
                 sct.printv(
