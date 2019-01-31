@@ -31,11 +31,11 @@ class Param:
     def __init__(self):
         self.debug = 0
         self.interp = 'sinc'  # final interpolation
-        self.deg_poly = 10  # maximum degree of polynomial function for fitting centerline.
         self.remove_temp_files = 1  # remove temporary files
         self.verbose = 1
 
-def flatten_sagittal(im_anat, im_centerline, centerline_fitting, verbose):
+
+def flatten_sagittal(im_anat, im_centerline, algo_fitting, verbose):
     # re-oriente to RPI
     orientation_native = im_anat.orientation
     im_anat.change_orientation("RPI")
@@ -43,7 +43,7 @@ def flatten_sagittal(im_anat, im_centerline, centerline_fitting, verbose):
     nx, ny, nz, nt, px, py, pz, pt = im_anat.dim
 
     # smooth centerline and return fitted coordinates in voxel space
-    _, arr_ctl, _ = get_centerline(im_centerline, algo_fitting='bspline')
+    _, arr_ctl, _ = get_centerline(im_centerline, algo_fitting=algo_fitting)
     x_centerline_fit, y_centerline_fit, z_centerline = arr_ctl
     # compute translation for each slice, such that the flattened centerline is centered in the medial plane (R-L) and
     # avoid discontinuity in slices where there is no centerline (in which case, simply copy the translation of the
@@ -81,14 +81,14 @@ def flatten_sagittal(im_anat, im_centerline, centerline_fitting, verbose):
 #=======================================================================================================================
 # main
 #=======================================================================================================================
-def main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, remove_temp_files, verbose):
+def main(fname_anat, fname_centerline, algo_fitting, interp, remove_temp_files, verbose):
 
     # load input images
     im_anat = Image(fname_anat)
     im_centerline = Image(fname_centerline)
 
     # flatten sagittal
-    im_anat_flattened = flatten_sagittal(im_anat, im_centerline, centerline_fitting, verbose)
+    im_anat_flattened = flatten_sagittal(im_anat, im_centerline, algo_fitting, verbose)
 
     # save output
     fname_out = sct.add_suffix(fname_anat, '_flatten')
@@ -118,17 +118,12 @@ def get_parser():
                       mandatory=False,
                       example=['nearestneighbour', 'trilinear', 'sinc'],
                       default_value=str(param_default.interp))
-    parser.add_option(name='-d',
-                      type_value='int',
-                      description='Degree of fitting polynome.',
-                      mandatory=False,
-                      default_value=param_default.deg_poly)
     parser.add_option(name='-f',
                       type_value='multiple_choice',
-                      description='Fitting algorithm.',
+                      description='Method for smoothing the spinal cord segmentation or centerline.',
                       mandatory=False,
-                      example=['hanning', 'nurbs'],
-                      default_value='hanning')
+                      example=['polyfit', 'bspline', 'nurbs'],
+                      default_value='bspline')
     parser.add_option(name='-r',
                       type_value='multiple_choice',
                       description='Removes the temporary folder and debug folder used for the algorithm at the end of execution',
@@ -162,11 +157,10 @@ if __name__ == "__main__":
     arguments = parser.parse(sys.argv[1:])
     fname_anat = arguments['-i']
     fname_centerline = arguments['-s']
-    degree_poly = arguments['-d']
-    centerline_fitting = arguments['-f']
+    algo_fitting = arguments['-f']
     interp = arguments['-x']
     remove_temp_files = arguments['-r']
     verbose = int(arguments['-v'])
 
     # call main function
-    main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, remove_temp_files, verbose)
+    main(fname_anat, fname_centerline, algo_fitting, interp, remove_temp_files, verbose)
