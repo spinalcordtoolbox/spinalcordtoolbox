@@ -12,7 +12,7 @@
 
 from __future__ import absolute_import, division
 
-import sys, io, os, math
+import os, math
 
 import numpy as np
 from scipy.ndimage.measurements import center_of_mass
@@ -20,7 +20,6 @@ from scipy.ndimage.measurements import center_of_mass
 import sct_utils as sct
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
-from pandas import DataFrame
 
 
 def compute_mse(im_true, im_pred):
@@ -62,11 +61,10 @@ def test_integrity(param_test):
     """
     Test integrity of function
     """
-    # initializations
-    mse_detection = float('nan')
 
     # extract name of output centerline: data_centerline_optic.nii.gz
-    file_ctr = os.path.join(param_test.path_output, sct.add_suffix(param_test.file_input, '_centerline_optic'))
+    # file_ctr = os.path.join(param_test.path_output, sct.add_suffix(param_test.file_input, '_centerline_optic'))
+    file_ctr = os.path.join(param_test.path_output, 'centerline.nii.gz')
 
     # open ground truth
     im_seg_manual = Image(param_test.fname_gt).change_orientation("RPI")

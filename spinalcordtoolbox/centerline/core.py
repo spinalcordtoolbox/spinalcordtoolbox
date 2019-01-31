@@ -2,7 +2,6 @@
 # -*- coding: utf-8
 # Core functions dealing with centerline extraction from 3D data.
 
-# TODO: create class ParamCenterline
 
 import sys
 
@@ -19,11 +18,12 @@ class ParamCenterline:
 
 def get_centerline(segmentation, algo_fitting='polyfit', param=ParamCenterline(), verbose=1):
     """
-    Extract centerline from a binary or weighted segmentation by computing the center of mass slicewise.
+    Extract centerline from an image (using optic) or from a binary or weighted segmentation (using the center of mass).
     :param segmentation: input segmentation or series of points along the centerline. Could be an Image or a file name.
     :param algo_fitting: str:
         polyfit: Polynomial fitting
         nurbs:
+        optic: Automatic segmentation using SVM and HOG. See [Gros et al. MIA 2018].
     :param param: ParamCenterline()
     :param verbose: int: verbose level
     :return: im_centerline: Image: Centerline in discrete coordinate (int)
@@ -80,14 +80,19 @@ def get_centerline(segmentation, algo_fitting='polyfit', param=ParamCenterline()
             z_centerline_deriv, error = b_spline_nurbs(x_mean, y_mean, z_mean, nbControl=None)
 
     elif algo_fitting == 'optic':
+        # This method is particular compared to the previous ones, as here we estimate the centerline based on the
+        # image itself (not the segmentation). Hence, we can bypass the fitting procedure and centerline creation
+        # and directly output results.
         from spinalcordtoolbox.centerline import optic
         from spinalcordtoolbox.centerline.curve_fitting import polyfit_1d
-        img_ctl = optic.detect_centerline(im_seg, param.contrast)
-        x_centerline_fit, y_centerline_fit, z_centerline = np.where(img_ctl.data)
+        im_centerline = optic.detect_centerline(im_seg, param.contrast)
+        x_centerline_fit, y_centerline_fit, z_centerline = np.where(im_centerline.data)
         # Compute derivatives using polynomial fit
         _, x_centerline_deriv = polyfit_1d(z_ref, x_centerline_fit, z_ref, deg=5)
         _, y_centerline_deriv = polyfit_1d(z_ref, y_centerline_fit, z_ref, deg=5)
-
+        return im_centerline, \
+               np.array([x_centerline_fit, y_centerline_fit, z_ref]), \
+               np.array([x_centerline_deriv, y_centerline_deriv]),
 
     # Display fig of fitted curves
     if verbose == 2:
@@ -132,6 +137,7 @@ def round_and_clip(arr):
 
 
 def _call_viewer_centerline(fname_in, interslice_gap=20.0):
+    # TODO: input should be im, not fname
     from spinalcordtoolbox.gui.base import AnatomicalParams
     from spinalcordtoolbox.gui.centerline import launch_centerline_dialog
 
