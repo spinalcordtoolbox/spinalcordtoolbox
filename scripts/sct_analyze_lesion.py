@@ -419,18 +419,9 @@ class AnalyzeLeion:
 
         # loop across x_centerline_deriv (instead of [min_z_index, max_z_index], which could vary after interpolation)
         for iz in range(x_centerline_deriv.shape[0]):
-            # in the case of problematic segmentation (e.g., non continuous segmentation often at the extremities),
-            # display a warning but do not crash
-            try:
-                # normalize the tangent vector to the centerline (i.e. its derivative)
-                tangent_vect = self._normalize(np.array(
-                    [x_centerline_deriv[iz] * px, y_centerline_deriv[iz] * py, pz]))
-
-            except IndexError:
-                sct.printv(
-                    'WARNING: Your segmentation does not seem continuous, which could cause wrong estimations at the '
-                    'problematic slices. Please check it, especially at the extremities.',
-                    type='warning')
+            # normalize the tangent vector to the centerline (i.e. its derivative)
+            tangent_vect = self._normalize(np.array(
+                [x_centerline_deriv[iz] * px, y_centerline_deriv[iz] * py, pz]))
 
             # compute the angle between the normal vector of the plane and the vector z
             angle = np.arccos(np.vdot(tangent_vect, np.array([0, 0, 1])))
