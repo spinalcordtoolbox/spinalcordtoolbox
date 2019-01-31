@@ -85,7 +85,7 @@ def register_slicewise(fname_src,
         sct.rmtree(path_tmp, verbose=verbose)
 
 
-def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii.gz', fname_warp_inv='warp_inverse.nii.gz', rot=1, poly=0, path_qc='./', verbose=0, pca_eigenratio_th=1.6):
+def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii.gz', fname_warp_inv='warp_inverse.nii.gz', rot=1, polydeg=0, path_qc='./', verbose=0, pca_eigenratio_th=1.6):
     """
     Rotate the source image to match the orientation of the destination image, using the first and second eigenvector
     of the PCA. This function should be used on segmentations (not images).
@@ -96,7 +96,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
         fname_warp: name of output 3d forward warping field
         fname_warp_inv: name of output 3d inverse warping field
         rot: estimate rotation with PCA (type: int)
-        poly: degree of polynomial regularization along z for rotation angle (type: int). 0: no regularization
+        polydeg: degree of polynomial regularization along z for rotation angle (type: int). 0: no regularization
         verbose:
     output:
         none
@@ -174,9 +174,10 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
             sct.printv('WARNING: Slice #' + str(iz) + ' is empty. It will be ignored.', verbose, 'warning')
 
     # regularize rotation
-    if not poly == 0 and rot == 1:
-        from msct_smooth import polynomial_fit
-        angle_src_dest_regularized = polynomial_fit(z_nonzero, angle_src_dest[z_nonzero], poly)[0]
+    if not polydeg == 0 and rot == 1:
+        coeffs = np.polyfit(z_nonzero, angle_src_dest[z_nonzero], polydeg)
+        poly = np.poly1d(coeffs)
+        angle_src_dest_regularized = np.polyval(poly, z_nonzero)
         # display
         if verbose == 2:
             plt.plot(180 * angle_src_dest[z_nonzero] / np.pi)
