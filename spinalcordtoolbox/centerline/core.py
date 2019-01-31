@@ -85,8 +85,8 @@ def get_centerline(segmentation, algo_fitting='polyfit', param=ParamCenterline()
         img_ctl = optic.detect_centerline(im_seg, param.contrast)
         x_centerline_fit, y_centerline_fit, z_centerline = np.where(img_ctl.data)
         # Compute derivatives using polynomial fit
-        x_centerline_fit, x_centerline_deriv = polyfit_1d(z_ref, x_centerline_fit, z_ref, deg=5)
-        y_centerline_fit, y_centerline_deriv = polyfit_1d(z_ref, y_centerline_fit, z_ref, deg=5)
+        _, x_centerline_deriv = polyfit_1d(z_ref, x_centerline_fit, z_ref, deg=5)
+        _, y_centerline_deriv = polyfit_1d(z_ref, y_centerline_fit, z_ref, deg=5)
 
 
     # Display fig of fitted curves
