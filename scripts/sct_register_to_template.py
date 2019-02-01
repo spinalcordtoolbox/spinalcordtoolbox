@@ -144,8 +144,8 @@ def get_parser():
                       type_value='str',
                       description="""Algorithm used by the cord straightening procedure for fitting the centerline.""",
                       mandatory=False,
-                      default_value='nurbs',
-                      example=['nurbs', 'hanning'])
+                      default_value='bspline',
+                      example=['nurbs', 'bspline'])
     parser.add_option(name='-qc',
                       type_value='folder_creation',
                       description='The path where the quality control generated content will be saved',

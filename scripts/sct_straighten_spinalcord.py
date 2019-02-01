@@ -53,27 +53,21 @@ def generate_qc(fn_input, fn_centerline, fn_output, args, path_qc):
 
 class SpinalCordStraightener(object):
 
-    def __init__(self, input_filename, centerline_filename, debug=0, deg_poly=10, gapxy=30, gapz=15,
-                 leftright_width=150, interpolation_warp='spline', rm_tmp_files=1, verbose=1, algo_fitting='bspline',
-                 precision=2.0, threshold_distance=10, type_window='hanning', window_length=50, output_filename=''):
+    def __init__(self, input_filename, centerline_filename, debug=0, deg_poly=10,
+                 interpolation_warp='spline', rm_tmp_files=1, verbose=1, algo_fitting='bspline',
+                 precision=2.0, threshold_distance=10, output_filename=''):
         self.input_filename = input_filename
         self.centerline_filename = centerline_filename
         self.output_filename = output_filename
         self.debug = debug
         self.deg_poly = deg_poly  # maximum degree of polynomial function for fitting centerline.
-        self.gapxy = gapxy  # size of cross in x and y direction for the landmarks
-        self.gapz = gapz  # gap between landmarks along z voxels
         # the FOV due to the curvature of the spinal cord
-        self.leftright_width = leftright_width
         self.interpolation_warp = interpolation_warp
         self.remove_temp_files = rm_tmp_files  # remove temporary files
         self.verbose = verbose
-        self.algo_fitting = algo_fitting  # 'hanning' or 'nurbs'
+        self.algo_fitting = algo_fitting  # 'bspline' or 'nurbs'
         self.precision = precision
         self.threshold_distance = threshold_distance
-        self.type_window = type_window  # !! for more choices, edit msct_smooth. Possibilities: 'flat', 'hanning',
-        # 'hamming', 'bartlett', 'blackman'
-        self.window_length = window_length
         self.path_output = ""
         self.use_straight_reference = False
         self.centerline_reference_filename = ""
@@ -102,15 +96,10 @@ class SpinalCordStraightener(object):
         fname_anat = self.input_filename
         fname_centerline = self.centerline_filename
         fname_output = self.output_filename
-        gapxy = self.gapxy
-        gapz = self.gapz
-        leftright_width = self.leftright_width
         remove_temp_files = self.remove_temp_files
         verbose = self.verbose
         interpolation_warp = self.interpolation_warp
         algo_fitting = self.algo_fitting
-        window_length = self.window_length
-        type_window = self.type_window
 
         # start timer
         start_time = time.time()
