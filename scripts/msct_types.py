@@ -130,6 +130,8 @@ class Centerline:
     This class represents a centerline in an image. Its coordinates can be in voxel space as well as in physical space.
     A centerline is defined by its points and the derivatives of each point.
     When initialized, the lenght of the centerline is computed as well as the coordinate reference system of each plane.
+    # TODO: Check if the description above is correct. I've tried to input voxel space coordinates, and it broke the
+    #  code. For example, the method extract_perpendicular_square() is (i think) expecting physical coordinates.
     """
     labels_regions = {'PMJ': 50, 'PMG': 49,
                       'C1': 1, 'C2': 2, 'C3': 3, 'C4': 4, 'C5': 5, 'C6': 6, 'C7': 7,
@@ -174,7 +176,8 @@ class Centerline:
     potential_list_labels = [50, 49, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22,
                              23, 24, 25, 26, 27, 28, 29, 30]
 
-    def __init__(self, points_x=None, points_y=None, points_z=None, deriv_x=None, deriv_y=None, deriv_z=None, fname=None):
+    def __init__(self, points_x=None, points_y=None, points_z=None, deriv_x=None, deriv_y=None, deriv_z=None,
+                 fname=None):
         # initialization of variables
         self.length = 0.0
         self.progressive_length = [0.0]
