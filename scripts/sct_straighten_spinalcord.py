@@ -159,7 +159,6 @@ class SpinalCordStraightener(object):
             nx, ny, nz, nt, px, py, pz, pt = image_centerline.dim
             sct.printv('.. matrix size: ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz), verbose)
             sct.printv('.. voxel size:  ' + str(px) + 'mm x ' + str(py) + 'mm x ' + str(pz) + 'mm', verbose)
-
             if self.speed_factor != 1.0:
                 intermediate_resampling = True
                 px_r, py_r, pz_r = px * self.speed_factor, py * self.speed_factor, pz * self.speed_factor
@@ -757,10 +756,9 @@ def get_parser():
                                   'before calculating the straightening warping field. For example, a 1x1x1 mm^3 image '
                                   'will be downsampled to 2x2x2 mm3, providing a speed factor of approximately 8.'
                                   ' Note that accelerating the straightening process reduces the precision of the '
-                                  'algorithm, and induces undesirable edges effects. To keep the native resolution, '
-                                  'set this option to 0 (default).',
+                                  'algorithm, and induces undesirable edges effects. Default=1 (no downsampling).',
                       mandatory=False,
-                      default_value=0)
+                      default_value=1)
     parser.add_option(name="-xy_size",
                       type_value='float',
                       description='Change the size of the XY FOV, in mm. The resolution of the destination image is '
