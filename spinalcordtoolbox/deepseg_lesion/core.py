@@ -86,7 +86,7 @@ def segment_3d(model_fname, contrast_type, im):
     # load 3d model
     seg_model = load_trained_model(model_fname)
 
-    out = msct_image.zeros_like(im, dtype=np.uint8)
+    out_data = np.zeros(im.data.shape)
 
     # segment the spinal cord
     z_patch_size = dct_patch_3d[contrast_type]['size'][2]
@@ -105,11 +105,13 @@ def segment_3d(model_fname, contrast_type, im):
             patch_pred_proba = seg_model.predict(np.expand_dims(np.expand_dims(patch_norm, 0), 0), batch_size=BATCH_SIZE)
             pred_seg_th = (patch_pred_proba > 0.1).astype(int)[0, 0, :, :, :]
             if zz == z_step_keep[-1]:
-                out.data[:, :, zz:] = pred_seg_th[:, :, :z_patch_extracted]
+                out_data[:, :, zz:] = pred_seg_th[:, :, :z_patch_extracted]
             else:
-                out.data[:, :, zz:z_patch_size + zz] = pred_seg_th
+                out_data[:, :, zz:z_patch_size + zz] = pred_seg_th
 
-    return out
+    out = msct_image.zeros_like(im, dtype=np.uint8)
+    out.data = out_data
+    return out.copy()
 
 
 def deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo='svm', ctr_file=None, brain_bool=True,
@@ -175,28 +177,28 @@ def deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo='svm', ctr_file
     segmentation_model_fname = os.path.join(sct.__sct_dir__, 'data', 'deepseg_lesion_models', '{}_lesion.h5'.format(contrast_type))
     fname_seg_crop_res = sct.add_suffix(fname_res3d, '_lesionseg')
     im_res3d = Image(fname_res3d)
-    seg_data = segment_3d(model_fname=segmentation_model_fname,
+    seg_im = segment_3d(model_fname=segmentation_model_fname,
                 contrast_type=contrast_type,
                 im=im_res3d.copy())
-    seg_data.save(fname_seg_crop_res)
-    del im_res3d, seg_data
+    seg_im.save(fname_seg_crop_res)
+    del im_res3d, seg_im
 
     # resample to the initial pz resolution
     fname_seg_res2d = sct.add_suffix(fname_seg_crop_res, '_resampled2d')
     initial_2d_resolution = 'x'.join(['0.5', '0.5', str(input_resolution[2])])
     spinalcordtoolbox.resample.nipy_resample.resample_file(fname_seg_crop_res, fname_seg_res2d, initial_2d_resolution,
                                                            'mm', 'linear', verbose=0)
-    seg_crop_data = Image(fname_seg_res2d).data
+    seg_crop = Image(fname_seg_res2d)
 
     # reconstruct the segmentation from the crop data
     sct.log.info("\nReassembling the image...")
     seg_uncrop_nii = uncrop_image(ref_in=im_nii,
-                                data_crop=seg_crop_data,
+                                data_crop=seg_crop.copy().data,
                                 x_crop_lst=X_CROP_LST,
                                 y_crop_lst=Y_CROP_LST)
     fname_seg_res_RPI = sct.add_suffix(fname_in, '_res_RPI_seg')
     seg_uncrop_nii.save(fname_seg_res_RPI)
-    del seg_crop_data
+    del seg_crop
 
     # resample to initial resolution
     sct.log.info("Resampling the segmentation to the original image resolution...")
