@@ -129,7 +129,7 @@ def compute_csa(segmentation, algo_fitting='bspline', angle_correction=True,
     return metrics
 
 
-def compute_shape(segmentation, algo_fitting='hanning', window_length=50, remove_temp_files=1, verbose=1):
+def compute_shape(segmentation, algo_fitting='bspline', window_length=50, remove_temp_files=1, verbose=1):
     """
     This function characterizes the shape of the spinal cord, based on the segmentation
     Shape properties are computed along the spinal cord and averaged per z-slices.

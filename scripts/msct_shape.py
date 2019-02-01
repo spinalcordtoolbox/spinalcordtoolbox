@@ -153,7 +153,7 @@ def compute_properties_along_centerline(im_seg, smooth_factor=5.0, interpolation
     # properties['z_slice'] = []
 
     # compute the spinal cord centerline based on the spinal cord segmentation
-    _, arr_ctl, arr_ctl_der = get_centerline(im_seg, algo_fitting=algo_fitting)
+    _, arr_ctl, arr_ctl_der = get_centerline(im_seg, algo_fitting=algo_fitting, verbose=verbose)
     x_centerline_fit, y_centerline_fit, z_centerline = arr_ctl
     x_centerline_deriv, y_centerline_deriv = arr_ctl_der
     centerline = Centerline(x_centerline_fit, y_centerline_fit, z_centerline,
