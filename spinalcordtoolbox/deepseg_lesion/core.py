@@ -176,8 +176,8 @@ def deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo='svm', ctr_file
     fname_norm = sct.add_suffix(fname_orient, '_norm')
     im_norm_in.save(fname_norm)
     fname_res3d = sct.add_suffix(fname_norm, '_resampled3d')
-    spinalcordtoolbox.resample.nipy_resample.resample_file(fname_norm, fname_res3d, '0.5x0.5x0.5',
-                                                               'mm', 'linear', verbose=0)
+    spinalcordtoolbox.resample.nipy_resample.resample_file(fname_norm, fname_res3d, '0.5x0.5x0.5', 'mm', 'linear',
+                                                           verbose=0)
 
     # segment data using 3D convolutions
     sct.log.info("\nSegmenting the MS lesions using deep learning on 3D patches...")
@@ -186,8 +186,8 @@ def deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo='svm', ctr_file
     fname_seg_crop_res = sct.add_suffix(fname_res3d, '_lesionseg')
     im_res3d = Image(fname_res3d)
     seg_im = segment_3d(model_fname=segmentation_model_fname,
-                contrast_type=contrast_type,
-                im=im_res3d.copy())
+                        contrast_type=contrast_type,
+                        im=im_res3d.copy())
     seg_im.save(fname_seg_crop_res)
     del im_res3d, seg_im
 
@@ -200,10 +200,8 @@ def deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo='svm', ctr_file
 
     # reconstruct the segmentation from the crop data
     sct.log.info("\nReassembling the image...")
-    seg_uncrop_nii = uncrop_image(ref_in=im_nii,
-                                data_crop=seg_crop.copy().data,
-                                x_crop_lst=X_CROP_LST,
-                                y_crop_lst=Y_CROP_LST)
+    seg_uncrop_nii = uncrop_image(ref_in=im_nii, data_crop=seg_crop.copy().data, x_crop_lst=X_CROP_LST,
+                                  y_crop_lst=Y_CROP_LST)
     fname_seg_res_RPI = sct.add_suffix(fname_in, '_res_RPI_seg')
     seg_uncrop_nii.save(fname_seg_res_RPI)
     del seg_crop
@@ -224,12 +222,6 @@ def deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo='svm', ctr_file
 
     # reorient to initial orientation
     sct.log.info("\nReorienting the segmentation to the original image orientation...")
-    fname_seg = sct.add_suffix(fname_in, '_seg')
-    if original_orientation != 'RPI':
-        msct_image.change_orientation(seg_initres_nii, original_orientation)
-    
-    seg_initres_nii.save(fname_seg)
-
     tmp_folder.chdir_undo()
 
     # remove temporary files
