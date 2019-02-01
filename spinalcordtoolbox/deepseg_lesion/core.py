@@ -115,7 +115,7 @@ def segment_3d(model_fname, contrast_type, im):
 
 
 def deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo='svm', ctr_file=None, brain_bool=True,
-								remove_temp_files=1, verbose=1):
+                               remove_temp_files=1):
     """Pipeline."""
     path_script = os.path.dirname(__file__)
 
@@ -230,4 +230,4 @@ def deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo='svm', ctr_file
         tmp_folder.cleanup()
 
     # reorient to initial orientation
-    return seg_initres_nii.change_orientation(original_orientation), im_nii, seg_uncrop_nii.change_orientation('RPI').save('image_in_RPI_resampled_seg.nii.gz')
+    return seg_initres_nii.change_orientation(original_orientation)

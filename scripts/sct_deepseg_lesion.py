@@ -121,9 +121,8 @@ def main():
     sct.printv(algo_config_stg)
 
     im_image = Image(fname_image)
-    im_seg, im_image_RPI_upsamp, im_seg_RPI_upsamp = deep_segmentation_MSlesion(im_image.copy(), contrast_type,
-                                            ctr_algo=ctr_algo, ctr_file=manual_centerline_fname, brain_bool=brain_bool,
-                                            remove_temp_files=remove_temp_files, verbose=verbose)
+    im_seg = deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo=ctr_algo, ctr_file=manual_centerline_fname,
+                                        brain_bool=brain_bool, remove_temp_files=remove_temp_files)
 
     # Save segmentation
     fname_seg = os.path.abspath(os.path.join(output_folder, sct.extract_fname(fname_image)[1] + '_lesionseg' +
