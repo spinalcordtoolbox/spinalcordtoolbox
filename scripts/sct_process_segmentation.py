@@ -35,9 +35,8 @@ class Param:
         self.verbose = 1  # verbose
         self.remove_temp_files = 1
         self.slices = ''
-        self.type_window = 'hanning'  # for smooth_centerline @sct_straighten_spinalcord
         self.window_length = 50  # for smooth_centerline @sct_straighten_spinalcord
-        self.algo_fitting = 'hanning'  # nurbs, hanning
+        self.algo_fitting = 'bspline'  # nurbs, hanning
         self.perslice = None
         self.perlevel = None
 
@@ -227,7 +226,6 @@ def main(args):
 
     if name_process == 'csa':
         metrics = process_seg.compute_csa(fname_segmentation, algo_fitting=param.algo_fitting,
-                                          type_window=param.type_window, window_length=param.window_length,
                                           angle_correction=angle_correction, use_phys_coord=use_phys_coord,
                                           remove_temp_files=remove_temp_files, verbose=verbose)
 
