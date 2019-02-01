@@ -87,7 +87,6 @@ class SpinalCordStraightener(object):
         self.straight2curved = True
 
         self.speed_factor = 1.0
-        self.resample_factor = 0.0
         self.accuracy_results = 0
 
         self.elapsed_time = 0.0
@@ -164,9 +163,6 @@ class SpinalCordStraightener(object):
             if self.speed_factor != 1.0:
                 intermediate_resampling = True
                 px_r, py_r, pz_r = px * self.speed_factor, py * self.speed_factor, pz * self.speed_factor
-            elif self.resample_factor != 0.0:  # resample_factor is deprecated but still present to ensure retrocompatibility
-                intermediate_resampling = True
-                px_r, py_r, pz_r = self.resample_factor, self.resample_factor, self.resample_factor
             else:
                 intermediate_resampling = False
 
@@ -879,8 +875,6 @@ def main(args=None):
 
     if '-speed_factor' in arguments:
         sc_straight.speed_factor = arguments['-speed_factor']
-    if '-resample' in arguments:
-        sc_straight.resample_factor = arguments['-resample']
 
     if '-xy_size' in arguments:
         sc_straight.xy_size = arguments['-xy_size']
