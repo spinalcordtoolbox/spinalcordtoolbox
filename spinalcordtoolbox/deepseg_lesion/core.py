@@ -116,8 +116,16 @@ def segment_3d(model_fname, contrast_type, im):
 
 def deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo='svm', ctr_file=None, brain_bool=True,
                                remove_temp_files=1):
-    """Pipeline."""
-    path_script = os.path.dirname(__file__)
+    """
+    Segment lesions from MRI data.
+    :param im_image: Image() object containing the lesions to segment
+    :param contrast_type: Constrast of the image. Need to use one supported by the CNN models.
+    :param ctr_algo: Algo to find the centerline. See sct_get_centerline
+    :param ctr_file: Centerline or segmentation (optional)
+    :param brain_bool: If brain if present or not in the image.
+    :param remove_temp_files:
+    :return:
+    """
 
     # create temporary folder with intermediate results
     sct.log.info("\nCreating temporary folder...")
@@ -153,7 +161,6 @@ def deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo='svm', ctr_file
 
     # crop image around the spinal cord centerline
     sct.log.info("\nCropping the image around the spinal cord...")
-    fname_crop = sct.add_suffix(fname_res, '_crop')
     crop_size = 48
     X_CROP_LST, Y_CROP_LST, im_crop_nii = crop_image_around_centerline(im_in=im_nii,
                                                                       ctr_in=ctr_nii,
@@ -174,7 +181,8 @@ def deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo='svm', ctr_file
 
     # segment data using 3D convolutions
     sct.log.info("\nSegmenting the MS lesions using deep learning on 3D patches...")
-    segmentation_model_fname = os.path.join(sct.__sct_dir__, 'data', 'deepseg_lesion_models', '{}_lesion.h5'.format(contrast_type))
+    segmentation_model_fname = os.path.join(sct.__sct_dir__, 'data', 'deepseg_lesion_models',
+                                            '{}_lesion.h5'.format(contrast_type))
     fname_seg_crop_res = sct.add_suffix(fname_res3d, '_lesionseg')
     im_res3d = Image(fname_res3d)
     seg_im = segment_3d(model_fname=segmentation_model_fname,
@@ -218,7 +226,7 @@ def deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo='svm', ctr_file
     sct.log.info("\nReorienting the segmentation to the original image orientation...")
     fname_seg = sct.add_suffix(fname_in, '_seg')
     if original_orientation != 'RPI':
-        out_nii = msct_image.change_orientation(seg_initres_nii, original_orientation)
+        msct_image.change_orientation(seg_initres_nii, original_orientation)
     
     seg_initres_nii.save(fname_seg)
 
