@@ -126,7 +126,7 @@ def main():
                                             remove_temp_files=remove_temp_files, verbose=verbose)
 
     # Save segmentation
-    fname_seg = os.path.abspath(os.path.join(output_folder, sct.extract_fname(fname_image)[1] + '_seg' +
+    fname_seg = os.path.abspath(os.path.join(output_folder, sct.extract_fname(fname_image)[1] + '_lesionseg' +
                                              sct.extract_fname(fname_image)[2]))
     im_seg.save(fname_seg)
 
