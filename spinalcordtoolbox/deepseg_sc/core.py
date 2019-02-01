@@ -631,7 +631,7 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
         segmentation_model_fname = os.path.join(sct.__sct_dir__, 'data', 'deepseg_sc_models', '{}_sc_3D.h5'.format(contrast_type))
         seg_crop_nii = segment_3d(model_fname=segmentation_model_fname,
                                   contrast_type=contrast_type,
-                                  im_in=Image(fname_res3d))
+                                  im_in=Image(fname_res3d).copy())
         seg_crop_nii.save(fname_seg_crop_res)
         del seg_crop_nii
 
@@ -673,6 +673,7 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
     im_image_res_seg_downsamp_postproc = post_processing_volume_wise(im_in=im_image_res_seg_downsamp)
 
     tmp_folder.chdir_undo()
+    print(tmp_folder.path_tmp)
 
     # remove temporary files
     if remove_temp_files:
