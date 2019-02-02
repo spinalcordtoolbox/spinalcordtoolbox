@@ -9,11 +9,6 @@ import spinalcordtoolbox.image as msct_image
 
 from spinalcordtoolbox.deepseg_sc import core as deepseg_sc
 
-def test_model_file_exists():
-    for model_name in deepseg_lesion.MODEL_LST:
-        model_path = os.path.join(sct.__sct_dir__, 'data', 'deepseg_lesion_models', '{}_lesion.h5'.format(model_name))
-        assert os.path.isfile(model_path)
-
 
 def _create_fake_t2_sc(input_size):
     data = np.zeros(input_size)
