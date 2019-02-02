@@ -15,7 +15,10 @@ import nibabel.orientations
 import sct_utils as sct
 import spinalcordtoolbox.image as msct_image
 
+# Move to temp folder
+curdir = os.path.abspath(os.curdir)
 os.chdir(tempfile.gettempdir())
+print("\nOuptut folder:\n" + os.path.abspath(os.curdir) + "\n")
 
 @pytest.fixture(scope="session")
 def image_paths():
@@ -673,3 +676,6 @@ def test_sequences(fake_3dimage_sct):
      .save(path_b, mutable=True)
     assert img.absolutepath is not None
     assert img.absolutepath == os.path.abspath(path_b)
+
+
+os.chdir(curdir)

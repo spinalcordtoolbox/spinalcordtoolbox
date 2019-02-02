@@ -18,7 +18,9 @@ from spinalcordtoolbox import aggregate_slicewise
 from spinalcordtoolbox.process_seg import Metric
 from spinalcordtoolbox.image import Image
 
+curdir = os.path.abspath(os.curdir)
 os.chdir(tempfile.gettempdir())
+print("\nOuptut folder:\n" + os.path.abspath(os.curdir) + "\n")
 
 @pytest.fixture(scope="session")
 def dummy_metrics():
@@ -252,3 +254,6 @@ def test_save_as_csv_extract_metric(dummy_data_and_labels):
         spamreader = csv.reader(csvfile, delimiter=',')
         spamreader.next()  # skip header
         assert spamreader.next()[1:-1] == [sct.__version__, '', '0:4', 'label_0', '2.5', '38.0']
+
+
+os.chdir(curdir)

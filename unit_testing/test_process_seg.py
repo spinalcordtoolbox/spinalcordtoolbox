@@ -16,6 +16,8 @@ from spinalcordtoolbox import process_seg
 from spinalcordtoolbox.image import Image
 
 VERBOSE = 0
+# Move to temp folder
+curdir = os.path.abspath(os.curdir)
 os.chdir(tempfile.gettempdir())
 print("\nOuptut folder:\n" + os.path.abspath(os.curdir) + "\n")
 
@@ -127,3 +129,5 @@ def test_compute_shape_noangle(dummy_segmentation):
 #     assert np.mean(metrics['eccentricity'].value[30:70]) == pytest.approx(0.8, rel=0.05)
 #     assert np.mean(metrics['orientation'].value[30:70]) == pytest.approx(0.0, rel=0.05)
 #     assert np.mean(metrics['solidity'].value[30:70]) == pytest.approx(1.0, rel=0.05)
+
+os.chdir(curdir)
