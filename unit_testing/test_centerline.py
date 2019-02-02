@@ -17,9 +17,11 @@ import nibabel as nib
 from spinalcordtoolbox.centerline.core import get_centerline, ParamCenterline
 from spinalcordtoolbox.image import Image
 
+# Move to temp folder
+curdir = os.path.abspath(os.curdir)
 os.chdir(tempfile.gettempdir())
 print("\nOuptut folder:\n" + os.path.abspath(os.curdir) + "\n")
-verbose = 2
+verbose = 0
 
 
 @pytest.fixture(scope="session")
@@ -69,15 +71,6 @@ def test_get_centerline_polyfit(img_ctl, expected):
     assert np.linalg.norm(np.where(img.data) - arr_out) < expected
 
 
-# # noinspection 801,PyShadowingNames
-# @pytest.mark.parametrize('img_ctl,expected', im_centerlines)
-# def test_get_centerline_sinc(img_ctl, expected):
-#     """Test centerline fitting using polyfit"""
-#     img, img_sub = img_ctl
-#     img_out, arr_out, _ = get_centerline(img_sub, algo_fitting='sinc', verbose=verbose)
-#     assert np.linalg.norm(np.where(img.data) - arr_out) < expected
-
-
 # noinspection 801,PyShadowingNames
 @pytest.mark.parametrize('img_ctl,expected', im_centerlines)
 def test_get_centerline_bspline(img_ctl, expected):
@@ -102,11 +95,16 @@ def test_get_centerline_nurbs(img_ctl, expected):
 
 
 # noinspection 801,PyShadowingNames
-# @pytest.mark.parametrize('img_ctl,expected', im_centerlines)
-# def test_get_centerline_optic(img_ctl, expected):
-#     """Test extraction of metrics aggregation across slices: All slices by default"""
-#     img, img_sub = img_ctl
-#     img_out, arr_out = get_centerline(img_sub, algo_fitting='optic', param=ParamCenterline(contrast='t2'),
-#                                       verbose=verbose)
-#     assert np.linalg.norm(np.where(img.data) - arr_out) < expected
-#     # this is obviously a dummy quantitative test, given that Optic model was not trained on this synthetic data.
+def test_get_centerline_optic():
+    """Test extraction of metrics aggregation across slices: All slices by default"""
+    fname_t2 = os.path.join(curdir, 'sct_testing_data/t2/t2.nii.gz')  # install: sct_download_data -d sct_testing_data
+    img = Image(fname_t2)
+    img_out, arr_out, _ = get_centerline(img, algo_fitting='optic', param=ParamCenterline(contrast='t2'),
+                                         verbose=verbose)
+    # Open ground truth segmentation and compare
+    fname_t2_seg = os.path.join(curdir, 'sct_testing_data/t2/t2_seg.nii.gz')
+    _, arr_seg_out, _ = get_centerline(Image(fname_t2_seg), algo_fitting='bspline', verbose=verbose)
+    assert np.linalg.norm(arr_seg_out - arr_out) < 3.0
+
+
+os.chdir(curdir)
