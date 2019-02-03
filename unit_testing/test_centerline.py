@@ -3,33 +3,31 @@
 # pytest unit tests for spinalcordtoolbox.centerline
 
 # TODO: test various orientations, length, pix dim
-# TODO: create test in physical coordinate
 # TODO: create synthetic segmentation (in addition to centerline)
 
 from __future__ import absolute_import
 
 import os
 import pytest
-import tempfile
+import itertools
 import numpy as np
 import nibabel as nib
 
 from spinalcordtoolbox.centerline.core import get_centerline, ParamCenterline
 from spinalcordtoolbox.image import Image
+import sct_utils as sct
 
-# Move to temp folder
-curdir = os.path.abspath(os.curdir)
-os.chdir(tempfile.gettempdir())
-print("\nOuptut folder:\n" + os.path.abspath(os.curdir) + "\n")
-verbose = 0
+VERBOSE = 0
 
 
 @pytest.fixture(scope="session")
-def dummy_centerline_small(size_arr=(9, 9, 9), subsampling=1, orientation='RPI'):
+def dummy_centerline_small(size_arr=(9, 9, 9), subsampling=1, dilate_ctl=0, orientation='RPI'):
     """
     Create a dummy Image centerline of small size. Return the full and sub-sampled version along z.
     :param size_arr: tuple: (nx, ny, nz)
     :param subsampling: int >=1. Subsampling factor along z. 1: no subsampling. 2: centerline defined every other z.
+    :param dilate_ctl: Dilation of centerline. E.g., if dilate_ctl=1, result will be a square of 3x3 per slice.
+                         if dilate_ctl=0, result will be a single pixel per slice.
     :param orientation:
     :return:
     """
@@ -40,7 +38,9 @@ def dummy_centerline_small(size_arr=(9, 9, 9), subsampling=1, orientation='RPI')
     z = np.array([0, round(nz/2.), nz-1])
     p = poly1d(polyfit(z, x, deg=3))
     data = np.zeros((nx, ny, nz))
-    data[p(range(nz)).astype(np.int), round(ny / 4.), range(nz)] = 1
+    # Loop across dilation of centerline. E.g., if dilate_ctl=1, result will be a square of 3x3 per slice.
+    for ixiy_ctl in itertools.product(range(-dilate_ctl, dilate_ctl+1, 1), range(-dilate_ctl, dilate_ctl+1, 1)):
+        data[p(range(nz)).astype(np.int) + ixiy_ctl[0], round(ny / 4.) + ixiy_ctl[1], range(nz)] = 1
     # generate Image object
     affine = np.eye(4)
     nii = nib.nifti1.Nifti1Image(data, affine)
@@ -55,11 +55,12 @@ def dummy_centerline_small(size_arr=(9, 9, 9), subsampling=1, orientation='RPI')
     return img, img_sub
 
 
+# Generate a list of fake centerlines for testing different algorithms
 im_centerlines = [(dummy_centerline_small(size_arr=(9, 9, 9), subsampling=1), 2.),
                   (dummy_centerline_small(size_arr=(9, 9, 9), subsampling=3), 3.),
                   (dummy_centerline_small(size_arr=(30, 20, 50), subsampling=1), 3.),
-                  (dummy_centerline_small(size_arr=(30, 20, 50), subsampling=5), 3.)]
-
+                  (dummy_centerline_small(size_arr=(30, 20, 50), subsampling=5), 3.),
+                  (dummy_centerline_small(size_arr=(30, 20, 50), dilate_ctl=2, subsampling=3), 3.)]
 
 # noinspection 801,PyShadowingNames
 @pytest.mark.parametrize('img_ctl,expected', im_centerlines)
@@ -67,7 +68,7 @@ def test_get_centerline_polyfit(img_ctl, expected):
     """Test centerline fitting using polyfit"""
     deg = 3
     img, img_sub = img_ctl
-    img_out, arr_out, _ = get_centerline(img_sub, algo_fitting='polyfit', param=ParamCenterline(degree=deg), verbose=verbose)
+    img_out, arr_out, _ = get_centerline(img_sub, algo_fitting='polyfit', param=ParamCenterline(degree=deg), verbose=VERBOSE)
     assert np.linalg.norm(np.where(img.data) - arr_out) < expected
 
 
@@ -77,7 +78,7 @@ def test_get_centerline_bspline(img_ctl, expected):
     """Test centerline fitting using polyfit"""
     deg = 3
     img, img_sub = img_ctl
-    img_out, arr_out, _ = get_centerline(img_sub, algo_fitting='bspline', param=ParamCenterline(degree=deg), verbose=verbose)
+    img_out, arr_out, _ = get_centerline(img_sub, algo_fitting='bspline', param=ParamCenterline(degree=deg), verbose=VERBOSE)
     assert np.linalg.norm(np.where(img.data) - arr_out) < expected
 
 
@@ -88,7 +89,7 @@ def test_get_centerline_nurbs(img_ctl, expected):
     img, img_sub = img_ctl
     # Here we need a try/except because nurbs crashes with too few points.
     try:
-        img_out, arr_out, _ = get_centerline(img_sub, algo_fitting='nurbs', verbose=verbose)
+        img_out, arr_out, _ = get_centerline(img_sub, algo_fitting='nurbs', verbose=VERBOSE)
         assert np.linalg.norm(np.where(img.data) - arr_out) < expected
     except Exception as e:
         print(e)
@@ -97,14 +98,11 @@ def test_get_centerline_nurbs(img_ctl, expected):
 # noinspection 801,PyShadowingNames
 def test_get_centerline_optic():
     """Test extraction of metrics aggregation across slices: All slices by default"""
-    fname_t2 = os.path.join(curdir, 'sct_testing_data/t2/t2.nii.gz')  # install: sct_download_data -d sct_testing_data
+    fname_t2 = os.path.join(sct.__sct_dir__, 'sct_testing_data/t2/t2.nii.gz')  # install: sct_download_data -d sct_testing_data
     img = Image(fname_t2)
     img_out, arr_out, _ = get_centerline(img, algo_fitting='optic', param=ParamCenterline(contrast='t2'),
-                                         verbose=verbose)
+                                         verbose=VERBOSE)
     # Open ground truth segmentation and compare
-    fname_t2_seg = os.path.join(curdir, 'sct_testing_data/t2/t2_seg.nii.gz')
-    _, arr_seg_out, _ = get_centerline(Image(fname_t2_seg), algo_fitting='bspline', verbose=verbose)
+    fname_t2_seg = os.path.join(sct.__sct_dir__, 'sct_testing_data/t2/t2_seg.nii.gz')
+    _, arr_seg_out, _ = get_centerline(Image(fname_t2_seg), algo_fitting='bspline', verbose=VERBOSE)
     assert np.linalg.norm(arr_seg_out - arr_out) < 3.0
-
-
-os.chdir(curdir)
