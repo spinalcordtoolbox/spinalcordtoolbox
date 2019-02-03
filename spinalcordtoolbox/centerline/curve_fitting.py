@@ -31,7 +31,6 @@ def bspline(x, y, xref, deg=3):
     :param deg:
     :return:
     """
-    from numpy import where
     from scipy import interpolate
     # Make sure the condition len(x_mean) > k is satisfied. Otherwise, change k to avoid crashing.
     if not len(x) > deg:

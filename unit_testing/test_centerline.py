@@ -13,7 +13,7 @@ import itertools
 import numpy as np
 import nibabel as nib
 
-from spinalcordtoolbox.centerline.core import get_centerline, ParamCenterline
+from spinalcordtoolbox.centerline.core import get_centerline, ParamCenterline, centermass_slicewise
 from spinalcordtoolbox.image import Image
 import sct_utils as sct
 
@@ -68,8 +68,11 @@ def test_get_centerline_polyfit(img_ctl, expected):
     """Test centerline fitting using polyfit"""
     deg = 3
     img, img_sub = img_ctl
-    img_out, arr_out, _ = get_centerline(img_sub, algo_fitting='polyfit', param=ParamCenterline(degree=deg), verbose=VERBOSE)
-    assert np.linalg.norm(np.where(img.data) - arr_out) < expected
+    img_out, arr_out, _ = get_centerline(img_sub, algo_fitting='polyfit', param=ParamCenterline(degree=deg),
+                                         verbose=VERBOSE)
+    x, y, z = np.where(img.data)
+    x_mean, y_mean, z_mean = centermass_slicewise(x, y, z)
+    assert np.linalg.norm(np.array([x_mean, y_mean, z_mean]) - arr_out) < expected
 
 
 # noinspection 801,PyShadowingNames
@@ -79,7 +82,9 @@ def test_get_centerline_bspline(img_ctl, expected):
     deg = 3
     img, img_sub = img_ctl
     img_out, arr_out, _ = get_centerline(img_sub, algo_fitting='bspline', param=ParamCenterline(degree=deg), verbose=VERBOSE)
-    assert np.linalg.norm(np.where(img.data) - arr_out) < expected
+    x, y, z = np.where(img.data)
+    x_mean, y_mean, z_mean = centermass_slicewise(x, y, z)
+    assert np.linalg.norm(np.array([x_mean, y_mean, z_mean]) - arr_out) < expected
 
 
 # noinspection 801,PyShadowingNames
@@ -90,7 +95,9 @@ def test_get_centerline_nurbs(img_ctl, expected):
     # Here we need a try/except because nurbs crashes with too few points.
     try:
         img_out, arr_out, _ = get_centerline(img_sub, algo_fitting='nurbs', verbose=VERBOSE)
-        assert np.linalg.norm(np.where(img.data) - arr_out) < expected
+        x, y, z = np.where(img.data)
+        x_mean, y_mean, z_mean = centermass_slicewise(x, y, z)
+        assert np.linalg.norm(np.array([x_mean, y_mean, z_mean]) - arr_out) < expected
     except Exception as e:
         print(e)
 

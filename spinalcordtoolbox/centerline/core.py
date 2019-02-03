@@ -16,6 +16,28 @@ class ParamCenterline:
         self.degree = degree  # Degree of polynomial function
 
 
+def centermass_slicewise(x, y, z):
+    """
+    # Get the center of mass at each z. Note: x, y and z must have same length.
+    :param x: 1d-array: X-coordinates
+    :param y: 1d-array: Y-coordinates
+    :param z: 1d-array: Z-coordinates
+    :return: x_mean, y_mean, z_mean: 1d-array, 1d-array, 1d-array
+    """
+    assert len(x) == len(y) == len(z)
+    x_mean, y_mean, z_mean = np.array([]), np.array([]), np.array([])
+    # Loop across unique x values (and sort it)
+    for iz in sorted(set(z)):
+        # Get indices corresponding to iz
+        ind_z = np.where(z == iz)
+        if len(ind_z[0]):
+            # Average all x and y values at ind_z
+            x_mean = np.append(x_mean, x[ind_z].mean())
+            y_mean = np.append(y_mean, y[ind_z].mean())
+            z_mean = np.append(z_mean, iz)
+    return x_mean, y_mean, z_mean
+
+
 def get_centerline(segmentation, algo_fitting='polyfit', param=ParamCenterline(), verbose=1):
     """
     Extract centerline from an image (using optic) or from a binary or weighted segmentation (using the center of mass).
@@ -39,16 +61,7 @@ def get_centerline(segmentation, algo_fitting='polyfit', param=ParamCenterline()
     z_ref = np.array(range(im_seg.dim[2]))
 
     # Take the center of mass at each slice to avoid: https://stackoverflow.com/questions/2009379/interpolate-question
-    x_mean, y_mean, z_mean = np.array([]), np.array([]), np.array([])
-    # Loop across unique x values (and sort it)
-    for iz in sorted(set(z)):
-        # Get indices corresponding to iz
-        ind_z = np.where(z == iz)
-        if len(ind_z[0]):
-            # Average all x and y values at ind_z
-            x_mean = np.append(x_mean, x[ind_z].mean())
-            y_mean = np.append(y_mean, y[ind_z].mean())
-            z_mean = np.append(z_mean, iz)
+    x_mean, y_mean, z_mean = centermass_slicewise(x, y, z)
 
     # Choose method
     if algo_fitting == 'polyfit':
@@ -66,12 +79,6 @@ def get_centerline(segmentation, algo_fitting='polyfit', param=ParamCenterline()
         from spinalcordtoolbox.centerline.curve_fitting import bspline
         x_centerline_fit, x_centerline_deriv = bspline(z_mean, x_mean, z_ref, deg=param.degree)
         y_centerline_fit, y_centerline_deriv = bspline(z_mean, y_mean, z_ref, deg=param.degree)
-
-    # elif algo_fitting == 'polyfit_hann':
-    #     # Sinc interpolation followed by Hanning smoothing
-    #     from spinalcordtoolbox.centerline.curve_fitting import sinc_interp
-    #     x_centerline_fit, x_centerline_deriv = sinc_interp(z_mean, x_mean, z_ref)
-    #     y_centerline_fit, y_centerline_deriv = sinc_interp(z_mean, y_mean, z_ref)
 
     elif algo_fitting == 'nurbs':
         from spinalcordtoolbox.centerline.nurbs import b_spline_nurbs
