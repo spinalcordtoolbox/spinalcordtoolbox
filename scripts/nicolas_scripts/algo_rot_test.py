@@ -55,9 +55,9 @@ def main(args=None):
     for root, dirnames, filenames in os.walk(input_folder):  # searching the given directory
         for filename in fnmatch.filter(filenames, "*.nii"):  # if file with nii extension (.nii or .nii.gz) found
             if "seg" in filename:
-                continue  # do not consider it if it's a sgmentation
+                continue  # do not consider it if it's a segmentation
             if filename.split(".nii")[0] + "_seg.nii" in filenames:  # find potential seg associated with the file
-                file_seg_input = os.path.join(root,filename.split(".nii")[0] + "_seg.nii")
+                file_seg_input = os.path.join(root, filename.split(".nii")[0] + "_seg.nii")
             else:
                 file_seg_input = None
 
@@ -99,8 +99,12 @@ def test_2D_hogancest(file_input, path_output, file_seg_input=None):
         mask = np.exp(
             -(((xx - centermass[0]) ** 2) / (2 * (sigma ** 2)) + ((yy - centermass[1]) ** 2) / (2 * (sigma ** 2))))
 
+    if np.isnan(image_data).any() or np.isnan(centermass).any():  # if nan present in image_data or in centermass
+        sct.printv("image corrupted or segmentation = 0 everywhere in this slice for image : " + file_input)
+        return  # exit function
+
     # Finding axes of symmetry
-    hog_ancest = hog_ancestor(image_data, nb_bin=nb_bin, seg_probability_map=mask)
+    hog_ancest, weighting_map = hog_ancestor(image_data, nb_bin=nb_bin, seg_probability_map=mask, return_image=True)
     # smooth it with median filter
     hog_ancest_smooth = circular_filter_1d(hog_ancest, kmedian_size,
                                            filter='median')  # fft than square than ifft to calculate convolution
@@ -116,19 +120,28 @@ def test_2D_hogancest(file_input, path_output, file_seg_input=None):
     argmaxs_sorted = (argmaxs_sorted - nb_bin/2) * 180/nb_bin  # angles are computed from -90 to 90
     argmaxs_sorted = -1 * argmaxs_sorted  # not sure why but angles are are positive clockwise (inverse convention)
 
-    plt.figure()
-    plt.subplot(221)
+    plt.figure(figsize=(20, 10))
+    plt.suptitle("angle found : " + str(argmaxs_sorted[0]))
+    plt.subplot(231)
     plt.plot(np.arange(-180, 180, 1), hog_ancest)
     plt.title("hog_ancest")
-    plt.subplot(222)
+    plt.subplot(232)
     plt.plot(np.arange(-180, 180, 1), hog_ancest_smooth)
     plt.title("hog_ancest_smooth")
-    plt.subplot(223)
+    plt.subplot(233)
     plt.plot(np.arange(-90, 90, 0.5), hog_conv)
     plt.title("hog_conv")
-    plt.subplot(224)
-    plt.imshow(image_data)
-    plt.title((file_input.split("/")[-1]).split(".nii")[0] + " angle found : " + str(argmaxs_sorted[0]))
+    plt.subplot(234)
+    plt.imshow(255 - image_data, cmap="Greys")
+    plt.title((file_input.split("/")[-1]).split(".nii")[0])
+    plt.subplot(235)
+    plt.imshow(mask)
+    plt.title("segmentation weighted map")
+    plt.colorbar()
+    plt.subplot(236)
+    plt.imshow(weighting_map)
+    plt.colorbar()
+    plt.title("final weighting map")
 
     if nb_axes == -1:
         angles = argmaxs_sorted
@@ -147,8 +160,11 @@ def test_2D_hogancest(file_input, path_output, file_seg_input=None):
 
     # Saving image with axes drawn on it
     save_image(image_wline, "sym_" + (file_input.split("/")[-1]).split(".nii")[0] + ".nii",
-               file_input, ofolder=path_output)  #  the character manipulation permits to have the name of the file
+               file_input, ofolder=path_output)  # the character manipulation permits to have the name of the file
     #  which is at the end of the path ( / ) and just before .nii
+    cwd = os.getcwd()
+    os.chdir(path_output)
+    plt.savefig("results_" + (file_input.split("/")[-1]).split(".nii")[0] + ".png")
     plt.close()
 
 

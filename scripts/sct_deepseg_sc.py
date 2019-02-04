@@ -784,11 +784,14 @@ def generate_qc(fn_in, fn_seg, args, path_qc):
     )
 
 
-def main():
+def main(args=None):
     """Main function."""
+
+    if args is None:
+        args = sys.argv[1:]
+
     sct.init_sct()
     parser = get_parser()
-    args = sys.argv[1:]
     arguments = parser.parse(args)
 
     fname_image = arguments['-i']

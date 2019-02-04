@@ -44,7 +44,7 @@ def circular_filter_1d(signal, param_filt, filter='gaussian'):
 
     return signal_smoothed
 
-def hog_ancestor(image, nb_bin, grad_ksize=123456789, seg_probability_map=None): # TODO implement selection of gradient's kernel size
+def hog_ancestor(image, nb_bin, grad_ksize=123456789, seg_probability_map=None, return_image=False): # TODO implement selection of gradient's kernel size
 
     """ This function takes an image as an input and return its orientation histogram
     inputs :
@@ -88,7 +88,10 @@ def hog_ancestor(image, nb_bin, grad_ksize=123456789, seg_probability_map=None):
         seg_probability_map = (seg_probability_map * 255).astype(float).round()
     weighting_map = (weighting_map * 255).astype(float).round()
 
-    return hog_ancest[0].astype(float)  # return only the values of the bins, not the bins (we know them)
+    if return_image:
+        return hog_ancest[0].astype(float), weighting_map
+    else:
+        return hog_ancest[0].astype(float)  # return only the values of the bins, not the bins (we know them)
 
 def generate_2Dimage_line(image, x0, y0, angle):
 
