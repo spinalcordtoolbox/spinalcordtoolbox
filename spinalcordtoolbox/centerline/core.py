@@ -48,8 +48,8 @@ def get_centerline(im_seg, algo_fitting='polyfit', param=ParamCenterline(), verb
     :param param: ParamCenterline()
     :param verbose: int: verbose level
     :return: im_centerline: Image: Centerline in discrete coordinate (int)
-    :return: arr_centerline: 3x1 array: Centerline in continuous coordinate (float) for each slice
-    :return: arr_centerline_deriv: 2x1 array: Derivatives of x and y centerline wrt. z for each slice
+    :return: arr_centerline: 3x1 array: Centerline in continuous coordinate (float) for each slice in RPI orientation.
+    :return: arr_centerline_deriv: 3x1 array: Derivatives of x and y centerline wrt. z for each slice in RPI orient.
     """
 
     if not isinstance(im_seg, Image):
@@ -132,17 +132,21 @@ def get_centerline(im_seg, algo_fitting='polyfit', param=ParamCenterline(), verb
                        z_ref] = 1
     # reorient centerline to native orientation
     im_centerline.change_orientation(native_orientation)
-
-    # Get a permutation and inversion based on native orientation
-    perm, inversion = _get_permutations(im_seg.orientation, native_orientation)
-    # axes inversion (flip)
-    # ctl = np.array([x_centerline_fit[::inversion[0]], y_centerline_fit[::inversion[1]], z_ref[::inversion[2]]])
-    ctl = np.array([x_centerline_fit, y_centerline_fit, z_ref])
-    ctl_deriv = np.array([x_centerline_deriv[::inversion[0]], y_centerline_deriv[::inversion[1]], np.ones_like(z_ref)])
-
+    # TODO: Reorient centerline in native orientation. For now, we output the array in RPI. Note that it is tricky to
+    #   reorient in native orientation, because the voxel center is not in the middle, but in the top corner, so this
+    #   needs to be taken into accound during reorientation. The code below does not work properly.
+    # # Get a permutation and inversion based on native orientation
+    # perm, inversion = _get_permutations(im_seg.orientation, native_orientation)
+    # # axes inversion (flip)
+    # # ctl = np.array([x_centerline_fit[::inversion[0]], y_centerline_fit[::inversion[1]], z_ref[::inversion[2]]])
+    # ctl = np.array([x_centerline_fit, y_centerline_fit, z_ref])
+    # ctl_deriv = np.array([x_centerline_deriv[::inversion[0]], y_centerline_deriv[::inversion[1]], np.ones_like(z_ref)])
+    # return im_centerline, \
+    #        np.array([ctl[perm[0]], ctl[perm[1]], ctl[perm[2]]]), \
+    #        np.array([ctl_deriv[perm[0]], ctl_deriv[perm[1]], ctl_deriv[perm[2]]])
     return im_centerline, \
-           np.array([ctl[perm[0]], ctl[perm[1]], ctl[perm[2]]]), \
-           np.array([ctl_deriv[perm[0]], ctl_deriv[perm[1]], ctl_deriv[perm[2]]])
+           np.array([x_centerline_fit, y_centerline_fit, z_ref]), \
+           np.array([x_centerline_deriv, y_centerline_deriv, np.ones_like(z_ref)])
 
 
 def round_and_clip(arr, clip=None):
