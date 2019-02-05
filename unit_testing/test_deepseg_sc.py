@@ -31,8 +31,8 @@ def test_segment_2d():
     contrast_test = 't2'
     model_path = os.path.join(sct.__sct_dir__, 'data', 'deepseg_sc_models', '{}_sc.h5'.format(contrast_test))   
 
-    img = _create_fake_t2_sc((48,48,96))
-    seg = deepseg_sc.segment_2d(model_path, contrast_test, (48, 48), img.copy())
+    img = _create_fake_t2_sc((48,48,1))
+    seg = deepseg_sc.segment_2d(model_path, contrast_test, (48, 48), img)
     
     seg_im = msct_image.zeros_like(img)
     seg_gt_im = seg_im.copy()
