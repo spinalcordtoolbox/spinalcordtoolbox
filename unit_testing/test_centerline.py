@@ -12,11 +12,11 @@ import itertools
 import numpy as np
 import nibabel as nib
 
-from spinalcordtoolbox.centerline.core import get_centerline, ParamCenterline, centermass_slicewise
+from spinalcordtoolbox.centerline.core import get_centerline, ParamCenterline, centermass_slicewise, round_and_clip
 from spinalcordtoolbox.image import Image
 import sct_utils as sct
 
-VERBOSE = 0
+VERBOSE = 2
 
 
 @pytest.fixture(scope="session")
@@ -113,3 +113,8 @@ def test_get_centerline_optic():
     fname_t2_seg = os.path.join(sct.__sct_dir__, 'sct_testing_data/t2/t2_seg.nii.gz')
     _, arr_seg_out, _ = get_centerline(Image(fname_t2_seg), algo_fitting='bspline', verbose=VERBOSE)
     assert np.linalg.norm(arr_seg_out - arr_out) < 3.0
+
+
+def test_round_and_clip():
+    arr = round_and_clip(np.array([-0.2, 3.00001, 2.99999, 49]), clip=[0, 41])
+    assert arr == np.array([ 0,  3,  3, 41])

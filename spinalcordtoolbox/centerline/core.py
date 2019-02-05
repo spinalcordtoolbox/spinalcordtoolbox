@@ -127,7 +127,9 @@ def get_centerline(im_seg, algo_fitting='polyfit', param=ParamCenterline(), verb
     im_centerline.data = np.zeros(im_centerline.data.shape)
     # assign value=1 to centerline
     # TODO: check this round and clip-- suspicious
-    im_centerline.data[round_and_clip(x_centerline_fit), round_and_clip(y_centerline_fit), z_ref] = 1
+    im_centerline.data[round_and_clip(x_centerline_fit, clip=[0, im_centerline.data.shape[0]]),
+                       round_and_clip(y_centerline_fit, clip=[0, im_centerline.data.shape[1]]),
+                       z_ref] = 1
     # reorient centerline to native orientation
     im_centerline.change_orientation(native_orientation)
 
@@ -143,13 +145,17 @@ def get_centerline(im_seg, algo_fitting='polyfit', param=ParamCenterline(), verb
            np.array([ctl_deriv[perm[0]], ctl_deriv[perm[1]], ctl_deriv[perm[2]]])
 
 
-def round_and_clip(arr):
+def round_and_clip(arr, clip=None):
     """
     Round to closest int, convert to dtype=int and clip to min/max values allowed by the list length
     :param arr:
+    :param clip: [min, max]: Clip values in arr to min and max
     :return:
     """
-    return np.clip(arr.round().astype(int), 0, len(arr)-1)
+    if clip:
+        return np.clip(arr.round().astype(int), clip[0], clip[1])
+    else:
+        return arr.round().astype(int)
 
 
 def _call_viewer_centerline(fname_in, interslice_gap=20.0):
