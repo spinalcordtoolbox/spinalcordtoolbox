@@ -6,7 +6,7 @@
 import sys
 
 import numpy as np
-from spinalcordtoolbox.image import Image, zeros_like
+from spinalcordtoolbox.image import Image, zeros_like, _get_permutations
 import sct_utils as sct
 
 
@@ -16,32 +16,31 @@ class ParamCenterline:
         self.degree = degree  # Degree of polynomial function
 
 
-def centermass_slicewise(x, y, z):
+def centermass_slicewise(im):
     """
-    # Get the center of mass at each z. Note: x, y and z must have same length.
-    :param x: 1d-array: X-coordinates
-    :param y: 1d-array: Y-coordinates
-    :param z: 1d-array: Z-coordinates
-    :return: x_mean, y_mean, z_mean: 1d-array, 1d-array, 1d-array
+    # Get the center of mass along the S-I direction. Note that some slices could be empty.
+    :param im: Image(): Input image. Could be any orientation.
+    :return: xyz_data_centermass: [1d-array] * 3
     """
-    assert len(x) == len(y) == len(z)
-    x_mean, y_mean, z_mean = np.array([]), np.array([]), np.array([])
-    # Loop across unique x values (and sort it)
-    for iz in sorted(set(z)):
-        # Get indices corresponding to iz
-        ind_z = np.where(z == iz)
-        if len(ind_z[0]):
-            # Average all x and y values at ind_z
-            x_mean = np.append(x_mean, x[ind_z].mean())
-            y_mean = np.append(y_mean, y[ind_z].mean())
-            z_mean = np.append(z_mean, iz)
-    return x_mean, y_mean, z_mean
+    # Get dimension index corresponding to S-I axis
+    dim_si = [im.orientation.find(x) for x in ['I', 'S'] if im.orientation.find(x) is not -1][0]
+    xyz_data = np.where(im.data)
+    # Loop across unique SI values (and sort it)
+    xyz_data_centermass = [np.array([])] * 3
+    # TODO: maybe should not be sorted!
+    for i_si in sorted(set(xyz_data[dim_si])):
+        # Get indices corresponding to i_si
+        ind_si_all = np.where(xyz_data[dim_si] == i_si)
+        if len(ind_si_all[0]):
+            for i_dim in range(3):
+                xyz_data_centermass[i_dim] = np.append(xyz_data_centermass[i_dim], xyz_data[i_dim][ind_si_all].mean())
+    return xyz_data_centermass
 
 
-def get_centerline(segmentation, algo_fitting='polyfit', param=ParamCenterline(), verbose=1):
+def get_centerline(im_seg, algo_fitting='polyfit', param=ParamCenterline(), verbose=1):
     """
     Extract centerline from an image (using optic) or from a binary or weighted segmentation (using the center of mass).
-    :param segmentation: input segmentation or series of points along the centerline. Could be an Image or a file name.
+    :param im_seg: Image(): Input segmentation or series of points along the centerline.
     :param algo_fitting: str:
         polyfit: Polynomial fitting
         nurbs:
@@ -52,16 +51,17 @@ def get_centerline(segmentation, algo_fitting='polyfit', param=ParamCenterline()
     :return: arr_centerline: 3x1 array: Centerline in continuous coordinate (float) for each slice
     :return: arr_centerline_deriv: 2x1 array: Derivatives of x and y centerline wrt. z for each slice
     """
+
+    if not isinstance(im_seg, Image):
+        raise ValueError("Expecting an image")
     # Open image and change to RPI orientation
-    im_seg = Image(segmentation)
     native_orientation = im_seg.orientation
     im_seg.change_orientation('RPI')
     px, py, pz = im_seg.dim[4:7]
-    x, y, z = np.where(im_seg.data)
     z_ref = np.array(range(im_seg.dim[2]))
 
     # Take the center of mass at each slice to avoid: https://stackoverflow.com/questions/2009379/interpolate-question
-    x_mean, y_mean, z_mean = centermass_slicewise(x, y, z)
+    x_mean, y_mean, z_mean = centermass_slicewise(im_seg)
 
     # Choose method
     if algo_fitting == 'polyfit':
@@ -95,6 +95,7 @@ def get_centerline(segmentation, algo_fitting='polyfit', param=ParamCenterline()
         im_centerline = optic.detect_centerline(im_seg, param.contrast)
         x_centerline_fit, y_centerline_fit, z_centerline = np.where(im_centerline.data)
         # Compute derivatives using polynomial fit
+        # TODO: Fix below with reorientation of axes
         _, x_centerline_deriv = polyfit_1d(z_ref, x_centerline_fit, z_ref, deg=5)
         _, y_centerline_deriv = polyfit_1d(z_ref, y_centerline_fit, z_ref, deg=5)
         return im_centerline, \
@@ -125,13 +126,21 @@ def get_centerline(segmentation, algo_fitting='polyfit', param=ParamCenterline()
     im_centerline = im_seg.copy()
     im_centerline.data = np.zeros(im_centerline.data.shape)
     # assign value=1 to centerline
+    # TODO: check this round and clip-- suspicious
     im_centerline.data[round_and_clip(x_centerline_fit), round_and_clip(y_centerline_fit), z_ref] = 1
     # reorient centerline to native orientation
     im_centerline.change_orientation(native_orientation)
-    # TODO: reorient output array in native orientation
+
+    # Get a permutation and inversion based on native orientation
+    perm, inversion = _get_permutations(im_seg.orientation, native_orientation)
+    # axes inversion (flip)
+    # ctl = np.array([x_centerline_fit[::inversion[0]], y_centerline_fit[::inversion[1]], z_ref[::inversion[2]]])
+    ctl = np.array([x_centerline_fit, y_centerline_fit, z_ref])
+    ctl_deriv = np.array([x_centerline_deriv[::inversion[0]], y_centerline_deriv[::inversion[1]], np.ones_like(z_ref)])
+
     return im_centerline, \
-           np.array([x_centerline_fit, y_centerline_fit, z_ref]), \
-           np.array([x_centerline_deriv, y_centerline_deriv]),
+           np.array([ctl[perm[0]], ctl[perm[1]], ctl[perm[2]]]), \
+           np.array([ctl_deriv[perm[0]], ctl_deriv[perm[1]], ctl_deriv[perm[2]]])
 
 
 def round_and_clip(arr):

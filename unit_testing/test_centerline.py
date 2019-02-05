@@ -3,7 +3,6 @@
 # pytest unit tests for spinalcordtoolbox.centerline
 
 # TODO: test various orientations, length, pix dim
-# TODO: create synthetic segmentation (in addition to centerline)
 
 from __future__ import absolute_import
 
@@ -41,26 +40,27 @@ def dummy_centerline_small(size_arr=(9, 9, 9), subsampling=1, dilate_ctl=0, orie
     # Loop across dilation of centerline. E.g., if dilate_ctl=1, result will be a square of 3x3 per slice.
     for ixiy_ctl in itertools.product(range(-dilate_ctl, dilate_ctl+1, 1), range(-dilate_ctl, dilate_ctl+1, 1)):
         data[p(range(nz)).astype(np.int) + ixiy_ctl[0], round(ny / 4.) + ixiy_ctl[1], range(nz)] = 1
-    # generate Image object
+    # generate Image object with RPI orientation
     affine = np.eye(4)
     nii = nib.nifti1.Nifti1Image(data, affine)
     img = Image(data, hdr=nii.header, dim=nii.header.get_data_shape())
-    img.change_orientation(orientation)
-    img.data = data  # overwrite data with RPI orientation
     # subsample data
     img_sub = img.copy()
     img_sub.data = np.zeros((nx, ny, nz))
     for iz in range(0, nz, subsampling):
         img_sub.data[..., iz] = data[..., iz]
+    # Update orientation
+    img.change_orientation(orientation)
+    img_sub.change_orientation(orientation)
     return img, img_sub
 
 
 # Generate a list of fake centerlines for testing different algorithms
-im_centerlines = [(dummy_centerline_small(size_arr=(9, 9, 9), subsampling=1), 2.),
+im_centerlines = [(dummy_centerline_small(size_arr=(41, 7, 9), subsampling=1, orientation='SAL'), 2.),
                   (dummy_centerline_small(size_arr=(9, 9, 9), subsampling=3), 3.),
                   (dummy_centerline_small(size_arr=(30, 20, 50), subsampling=1), 3.),
                   (dummy_centerline_small(size_arr=(30, 20, 50), subsampling=5), 3.),
-                  (dummy_centerline_small(size_arr=(30, 20, 50), dilate_ctl=2, subsampling=3), 3.)]
+                  (dummy_centerline_small(size_arr=(30, 20, 50), dilate_ctl=2, subsampling=3, orientation='AIL'), 3.)]
 
 # noinspection 801,PyShadowingNames
 @pytest.mark.parametrize('img_ctl,expected', im_centerlines)
@@ -71,7 +71,7 @@ def test_get_centerline_polyfit(img_ctl, expected):
     img_out, arr_out, _ = get_centerline(img_sub, algo_fitting='polyfit', param=ParamCenterline(degree=deg),
                                          verbose=VERBOSE)
     x, y, z = np.where(img.data)
-    x_mean, y_mean, z_mean = centermass_slicewise(x, y, z)
+    ctl_centermass = centermass_slicewise(img)
     assert np.linalg.norm(np.array([x_mean, y_mean, z_mean]) - arr_out) < expected
 
 
