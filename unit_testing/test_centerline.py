@@ -105,16 +105,14 @@ def test_get_centerline_nurbs(img_ctl, expected):
 def test_get_centerline_optic():
     """Test extraction of metrics aggregation across slices: All slices by default"""
     fname_t2 = os.path.join(sct.__sct_dir__, 'sct_testing_data/t2/t2.nii.gz')  # install: sct_download_data -d sct_testing_data
-    img = Image(fname_t2)
-    img_out, arr_out, _ = get_centerline(img, algo_fitting='optic', param=ParamCenterline(contrast='t2'),
+    img_out, arr_out, _ = get_centerline(Image(fname_t2), algo_fitting='optic', param=ParamCenterline(contrast='t2'),
                                          verbose=VERBOSE)
     # Open ground truth segmentation and compare
     fname_t2_seg = os.path.join(sct.__sct_dir__, 'sct_testing_data/t2/t2_seg.nii.gz')
     img_seg_out, arr_seg_out, _ = get_centerline(Image(fname_t2_seg), algo_fitting='bspline', verbose=VERBOSE)
-    assert np.linalg.norm(np.array(np.where(img_seg_out.data)) - np.array(np.where(img_out.data))) < 3.0
-    # assert np.linalg.norm(arr_seg_out - arr_out) < 3.0
+    assert np.linalg.norm(find_and_sort_coord(img_seg_out) - find_and_sort_coord(img_out)) < 3.5
 
 
 def test_round_and_clip():
     arr = round_and_clip(np.array([-0.2, 3.00001, 2.99999, 49]), clip=[0, 41])
-    assert arr == np.array([ 0,  3,  3, 41])
+    assert np.all(arr == np.array([0,  3,  3, 41]))  # Check element-wise equality between the two arrays

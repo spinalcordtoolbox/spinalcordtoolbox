@@ -117,14 +117,14 @@ def get_centerline(im_seg, algo_fitting='polyfit', param=ParamCenterline(), verb
         from spinalcordtoolbox.centerline import optic
         from spinalcordtoolbox.centerline.curve_fitting import polyfit_1d
         im_centerline = optic.detect_centerline(im_seg, param.contrast)
-        x_centerline_fit, y_centerline_fit, z_centerline = np.where(im_centerline.data)
+        x_centerline_fit, y_centerline_fit, z_centerline = find_and_sort_coord(im_centerline)
         # Compute derivatives using polynomial fit
         # TODO: Fix below with reorientation of axes
-        _, x_centerline_deriv = polyfit_1d(z_ref, x_centerline_fit, z_ref, deg=5)
-        _, y_centerline_deriv = polyfit_1d(z_ref, y_centerline_fit, z_ref, deg=5)
-        return im_centerline, \
-               np.array([x_centerline_fit, y_centerline_fit, z_ref]), \
-               np.array([x_centerline_deriv, y_centerline_deriv]),
+        _, x_centerline_deriv = polyfit_1d(z_centerline, x_centerline_fit, z_centerline, deg=5)
+        _, y_centerline_deriv = polyfit_1d(z_centerline, y_centerline_fit, z_centerline, deg=5)
+        return im_centerline.change_orientation(native_orientation), \
+               np.array([x_centerline_fit, y_centerline_fit, z_centerline]), \
+               np.array([x_centerline_deriv, y_centerline_deriv, np.ones_like(z_centerline)]),
 
     # Display fig of fitted curves
     if verbose == 2:
