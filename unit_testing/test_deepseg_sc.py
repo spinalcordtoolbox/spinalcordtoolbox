@@ -6,7 +6,6 @@ import nibabel as nib
 import sct_utils as sct
 from spinalcordtoolbox.image import Image
 import spinalcordtoolbox.image as msct_image
-
 from spinalcordtoolbox.deepseg_sc import core as deepseg_sc
 
 

@@ -40,27 +40,6 @@ def find_and_sort_coord(img):
     return np.array(arr_sorted_avg)
 
 
-def centermass_slicewise(im):
-    """
-    # Get the center of mass along the S-I direction. Note that some slices could be empty.
-    :param im: Image(): Input image. Could be any orientation.
-    :return: xyz_data_centermass: [1d-array] * 3
-    """
-    # Get dimension index corresponding to S-I axis
-    dim_si = [im.orientation.find(x) for x in ['I', 'S'] if im.orientation.find(x) is not -1][0]
-    xyz_data = np.where(im.data)
-    # Loop across unique SI values (and sort it)
-    xyz_data_centermass = [np.array([])] * 3
-    # TODO: maybe should not be sorted!
-    for i_si in sorted(set(xyz_data[dim_si])):
-        # Get indices corresponding to i_si
-        ind_si_all = np.where(xyz_data[dim_si] == i_si)
-        if len(ind_si_all[0]):
-            for i_dim in range(3):
-                xyz_data_centermass[i_dim] = np.append(xyz_data_centermass[i_dim], xyz_data[i_dim][ind_si_all].mean())
-    return xyz_data_centermass
-
-
 def get_centerline(im_seg, algo_fitting='polyfit', param=ParamCenterline(), verbose=1):
     """
     Extract centerline from an image (using optic) or from a binary or weighted segmentation (using the center of mass).
@@ -85,7 +64,7 @@ def get_centerline(im_seg, algo_fitting='polyfit', param=ParamCenterline(), verb
     z_ref = np.array(range(im_seg.dim[2]))
 
     # Take the center of mass at each slice to avoid: https://stackoverflow.com/questions/2009379/interpolate-question
-    x_mean, y_mean, z_mean = centermass_slicewise(im_seg)
+    x_mean, y_mean, z_mean = find_and_sort_coord(im_seg)
 
     # Choose method
     if algo_fitting == 'polyfit':
