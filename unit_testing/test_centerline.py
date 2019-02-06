@@ -67,7 +67,7 @@ im_centerlines = [(dummy_centerline_small(size_arr=(41, 7, 9), subsampling=1, or
 def test_get_centerline_polyfit(img_ctl, expected):
     """Test centerline fitting using polyfit"""
     deg = 3
-    img, img_sub = img_ctl
+    img, img_sub = [img_ctl[0].copy(), img_ctl[1].copy()]
     img_out, arr_out, _ = get_centerline(img_sub, algo_fitting='polyfit', param=ParamCenterline(degree=deg),
                                          verbose=VERBOSE)
 
@@ -82,7 +82,7 @@ def test_get_centerline_polyfit(img_ctl, expected):
 def test_get_centerline_bspline(img_ctl, expected):
     """Test centerline fitting using bspline"""
     deg = 3
-    img, img_sub = img_ctl
+    img, img_sub = [img_ctl[0].copy(), img_ctl[1].copy()]
     img_out, arr_out, _ = get_centerline(img_sub, algo_fitting='bspline', param=ParamCenterline(degree=deg),
                                          verbose=VERBOSE)
     assert np.linalg.norm(find_and_sort_coord(img) - find_and_sort_coord(img_out)) < expected
@@ -92,7 +92,7 @@ def test_get_centerline_bspline(img_ctl, expected):
 @pytest.mark.parametrize('img_ctl,expected', im_centerlines)
 def test_get_centerline_nurbs(img_ctl, expected):
     """Test centerline fitting using nurbs"""
-    img, img_sub = img_ctl
+    img, img_sub = [img_ctl[0].copy(), img_ctl[1].copy()]
     # Here we need a try/except because nurbs crashes with too few points.
     try:
         img_out, arr_out, _ = get_centerline(img_sub, algo_fitting='nurbs', verbose=VERBOSE)
