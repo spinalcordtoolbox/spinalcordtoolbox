@@ -12,24 +12,11 @@ import itertools
 import numpy as np
 import nibabel as nib
 
-from spinalcordtoolbox.centerline.core import get_centerline, ParamCenterline, centermass_slicewise, round_and_clip
+from spinalcordtoolbox.centerline.core import get_centerline, ParamCenterline, find_and_sort_coord, round_and_clip
 from spinalcordtoolbox.image import Image
 import sct_utils as sct
 
-VERBOSE = 2
-
-
-def find_and_sort_si(img):
-    """
-    Find x,y,z coordinate of centerline and output an array which is sorted along SI direction
-    :param img:
-    :return:
-    """
-    # Sort along SI axis
-    dim_si = [img.orientation.find(x) for x in ['I', 'S'] if img.orientation.find(x) is not -1][0]
-    arr = np.array(np.where(img.data))
-    ind = np.argsort(arr[dim_si])
-    return arr[:, ind]
+VERBOSE = 0
 
 
 @pytest.fixture(scope="session")
@@ -84,20 +71,21 @@ def test_get_centerline_polyfit(img_ctl, expected):
     img_out, arr_out, _ = get_centerline(img_sub, algo_fitting='polyfit', param=ParamCenterline(degree=deg),
                                          verbose=VERBOSE)
 
-    assert np.linalg.norm(find_and_sort_si(img) - find_and_sort_si(img_out)) < expected
+    assert np.linalg.norm(find_and_sort_coord(img) - find_and_sort_coord(img_out)) < expected
     # check arr_out and arr_out_deriv only if input orientation is RPI (because the output array is always in RPI)
     if img.orientation == 'RPI':
-        assert np.linalg.norm(centermass_slicewise(img) - arr_out) < expected
+        assert np.linalg.norm(find_and_sort_coord(img) - arr_out) < expected
 
 
 # noinspection 801,PyShadowingNames
 @pytest.mark.parametrize('img_ctl,expected', im_centerlines)
 def test_get_centerline_bspline(img_ctl, expected):
-    """Test centerline fitting using polyfit"""
+    """Test centerline fitting using bspline"""
     deg = 3
     img, img_sub = img_ctl
-    img_out, arr_out, _ = get_centerline(img_sub, algo_fitting='bspline', param=ParamCenterline(degree=deg), verbose=VERBOSE)
-    assert np.linalg.norm(np.array(np.where(img.data)) - np.array(np.where(img_out.data))) < expected
+    img_out, arr_out, _ = get_centerline(img_sub, algo_fitting='bspline', param=ParamCenterline(degree=deg),
+                                         verbose=VERBOSE)
+    assert np.linalg.norm(find_and_sort_coord(img) - find_and_sort_coord(img_out)) < expected
 
 
 # noinspection 801,PyShadowingNames
@@ -108,7 +96,7 @@ def test_get_centerline_nurbs(img_ctl, expected):
     # Here we need a try/except because nurbs crashes with too few points.
     try:
         img_out, arr_out, _ = get_centerline(img_sub, algo_fitting='nurbs', verbose=VERBOSE)
-        assert np.linalg.norm(np.array(np.where(img.data)) - np.array(np.where(img_out.data))) < expected
+        assert np.linalg.norm(find_and_sort_coord(img) - find_and_sort_coord(img_out)) < expected
     except Exception as e:
         print(e)
 
