@@ -9,6 +9,7 @@ import numpy as np
 
 import sct_utils as sct
 from msct_parser import Parser
+from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.centerline.core import get_centerline, ParamCenterline, _call_viewer_centerline
 
 
@@ -105,7 +106,7 @@ def run_main():
         im_centerline, arr_centerline, _ = get_centerline(fname_labels_viewer, algo_fitting='polyfit')
     else:
         im_centerline, arr_centerline, _ = \
-            get_centerline(fname_data, algo_fitting='optic', param=ParamCenterline(contrast=contrast_type))
+            get_centerline(Image(fname_data), algo_fitting='optic', param=ParamCenterline(contrast=contrast_type))
 
     # save centerline as nifti (discrete) and csv (continuous) files
     im_centerline.save(file_output + '.nii.gz')

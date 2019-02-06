@@ -72,12 +72,6 @@ def get_centerline(im_seg, algo_fitting='polyfit', param=ParamCenterline(), verb
         x_centerline_fit, x_centerline_deriv = polyfit_1d(z_mean, x_mean, z_ref, deg=param.degree)
         y_centerline_fit, y_centerline_deriv = polyfit_1d(z_mean, y_mean, z_ref, deg=param.degree)
 
-    # elif algo_fitting == 'sinc':
-    #     from spinalcordtoolbox.centerline.curve_fitting import sinc_interp
-    #     z_ref = np.array(range(im_seg.dim[2]))
-    #     x_centerline_fit, x_centerline_deriv = sinc_interp(z_mean, x_mean, z_ref)
-    #     y_centerline_fit, y_centerline_deriv = sinc_interp(z_mean, y_mean, z_ref)
-
     elif algo_fitting == 'bspline':
         from spinalcordtoolbox.centerline.curve_fitting import bspline
         x_centerline_fit, x_centerline_deriv = bspline(z_mean, x_mean, z_ref, deg=param.degree)

@@ -70,7 +70,9 @@ def test_integrity(param_test):
     im_seg_manual = Image(param_test.fname_gt).change_orientation("RPI")
 
     # Compute center of mass of the SC seg on each axial slice.
-    center_of_mass_x_y_z_lst = [[int(center_of_mass(im_seg_manual.data[:,:,zz])[0]), int(center_of_mass(im_seg_manual.data[:,:,zz])[1]), zz] for zz in range(im_seg_manual.dim[2])]
+    center_of_mass_x_y_z_lst = [[int(center_of_mass(im_seg_manual.data[:, :, zz])[0]),
+                                 int(center_of_mass(im_seg_manual.data[:, :, zz])[1]),
+                                 zz] for zz in range(im_seg_manual.dim[2])]
 
     im_ctr_manual = msct_image.zeros_like(im_seg_manual)
     for x_y_z in center_of_mass_x_y_z_lst:
