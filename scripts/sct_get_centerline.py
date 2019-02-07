@@ -102,8 +102,8 @@ def run_main():
         verbose = int(arguments["-v"])
 
     if method == 'viewer':
-        fname_labels_viewer = _call_viewer_centerline(fname_in=fname_data, interslice_gap=interslice_gap)
-        im_centerline, arr_centerline, _ = get_centerline(fname_labels_viewer, algo_fitting='polyfit')
+        im_labels = _call_viewer_centerline(Image(fname_data), interslice_gap=interslice_gap)
+        im_centerline, arr_centerline, _ = get_centerline(im_labels, algo_fitting='polyfit')
     else:
         im_centerline, arr_centerline, _ = \
             get_centerline(Image(fname_data), algo_fitting='optic', param=ParamCenterline(contrast=contrast_type))

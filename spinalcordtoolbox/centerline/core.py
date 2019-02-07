@@ -160,6 +160,12 @@ def round_and_clip(arr, clip=None):
 
 
 def _call_viewer_centerline(im_data, interslice_gap=20.0):
+    """
+    Call Qt viewer for manually selecting labels.
+    :param im_data:
+    :param interslice_gap:
+    :return: Image() of labels.
+    """
     from spinalcordtoolbox.gui.base import AnatomicalParams
     from spinalcordtoolbox.gui.centerline import launch_centerline_dialog
 
@@ -179,12 +185,12 @@ def _call_viewer_centerline(im_data, interslice_gap=20.0):
 
     im_mask_viewer = zeros_like(im_data)
     controller = launch_centerline_dialog(im_data, im_mask_viewer, params)
-    fname_labels_viewer = sct.add_suffix(fname_in, '_viewer')
+    # fname_labels_viewer = sct.add_suffix(fname_in, '_viewer')
+    #
+    # if not controller.saved:
+    #     sct.log.error('The viewer has been closed before entering all manual points. Please try again.')
+    #     sys.exit(1)
+    # # save labels
+    # controller.as_niftii(fname_labels_viewer)
 
-    if not controller.saved:
-        sct.log.error('The viewer has been closed before entering all manual points. Please try again.')
-        sys.exit(1)
-    # save labels
-    controller.as_niftii(fname_labels_viewer)
-
-    return fname_labels_viewer
+    return im_mask_viewer
