@@ -36,7 +36,7 @@ def get_parser():
                       type_value="multiple_choice",
                       description="Method used for extracting the centerline.\n"
                                   "optic: automatic spinal cord detection method\n"
-                                  "viewer: manually selected a few points, approximation with NURBS",
+                                  "viewer: manually selected a few points, followed by interpolation with polynoms.",
                       mandatory=False,
                       example=['optic', 'viewer'],
                       default_value='optic')
@@ -105,7 +105,8 @@ def run_main():
 
     if method == 'viewer':
         im_labels = _call_viewer_centerline(Image(fname_data), interslice_gap=interslice_gap)
-        im_centerline, arr_centerline, _ = get_centerline(im_labels, algo_fitting='polyfit', verbose=verbose)
+        im_centerline, arr_centerline, _ = \
+            get_centerline(im_labels, algo_fitting='polyfit', param=ParamCenterline(degree=3), verbose=verbose)
     else:
         im_centerline, arr_centerline, _ = \
             get_centerline(Image(fname_data), algo_fitting='optic', param=ParamCenterline(contrast=contrast_type),
