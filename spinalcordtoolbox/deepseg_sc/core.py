@@ -23,9 +23,19 @@ BATCH_SIZE = 4
 
 
 def find_centerline(algo, image_fname, contrast_type, brain_bool, folder_output, remove_temp_files, centerline_fname):
+    """
+    Assumes RPI orientation
+    :param algo:
+    :param image_fname:
+    :param contrast_type:
+    :param brain_bool:
+    :param folder_output:
+    :param remove_temp_files:
+    :param centerline_fname:
+    :return:
+    """
 
     # TODO: remove unnecessary i/o
-
     if Image(image_fname).dim[2] == 1:  # isct_spine_detect requires nz > 1
         from sct_image import concat_data
         im_concat = concat_data([image_fname, image_fname], dim=2)
@@ -40,7 +50,7 @@ def find_centerline(algo, image_fname, contrast_type, brain_bool, folder_output,
         # run optic on a heatmap computed by a trained SVM+HoG algorithm
         # optic_models_fname = os.path.join(path_sct, 'data', 'optic_models', '{}_model'.format(contrast_type))
         # # TODO: replace with get_centerline(method=optic)
-        img_ctl, arr_ctl, _ = get_centerline(image_fname, algo_fitting='optic',
+        img_ctl, arr_ctl, _ = get_centerline(Image(image_fname), algo_fitting='optic',
                                              param=ParamCenterline(contrast=contrast_type))
         centerline_filename = sct.add_suffix(image_fname, "_ctr")
         img_ctl.save(centerline_filename)
@@ -99,9 +109,9 @@ def find_centerline(algo, image_fname, contrast_type, brain_bool, folder_output,
                       z_max=z_max if brain_bool else None)
 
     elif algo == 'viewer':
+        im_labels = _call_viewer_centerline(Image(image_fname))
+        im_centerline, arr_centerline, _ = get_centerline(im_labels)
         centerline_filename = sct.add_suffix(image_fname, "_ctr")
-        fname_labels_viewer = _call_viewer_centerline(fname_in=image_fname)
-        im_centerline, arr_centerline, _ = get_centerline(fname_labels_viewer)
         im_centerline.save(centerline_filename)
     elif algo == 'manual':
         centerline_filename = sct.add_suffix(image_fname, "_ctr")
