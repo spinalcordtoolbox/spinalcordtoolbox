@@ -7,7 +7,7 @@ import sys
 
 import numpy as np
 from spinalcordtoolbox.image import Image, zeros_like
-import sct_utils as sct
+from spinalcordtoolbox.centerline import curve_fitting
 
 
 class ParamCenterline:
@@ -68,33 +68,39 @@ def get_centerline(im_seg, algo_fitting='polyfit', param=ParamCenterline(), verb
 
     # Choose method
     if algo_fitting == 'polyfit':
-        from spinalcordtoolbox.centerline.curve_fitting import polyfit_1d
-        x_centerline_fit, x_centerline_deriv = polyfit_1d(z_mean, x_mean, z_ref, deg=param.degree)
-        y_centerline_fit, y_centerline_deriv = polyfit_1d(z_mean, y_mean, z_ref, deg=param.degree)
+        x_centerline_fit, x_centerline_deriv = curve_fitting.polyfit_1d(z_mean, x_mean, z_ref, deg=param.degree)
+        y_centerline_fit, y_centerline_deriv = curve_fitting.polyfit_1d(z_mean, y_mean, z_ref, deg=param.degree)
 
     elif algo_fitting == 'bspline':
-        from spinalcordtoolbox.centerline.curve_fitting import bspline
-        x_centerline_fit, x_centerline_deriv = bspline(z_mean, x_mean, z_ref, deg=param.degree)
-        y_centerline_fit, y_centerline_deriv = bspline(z_mean, y_mean, z_ref, deg=param.degree)
+        x_centerline_fit, x_centerline_deriv = curve_fitting.bspline(z_mean, x_mean, z_ref, deg=param.degree)
+        y_centerline_fit, y_centerline_deriv = curve_fitting.bspline(z_mean, y_mean, z_ref, deg=param.degree)
+
+    elif algo_fitting == 'linear':
+        # Simple linear interpolation
+        x_centerline_fit = curve_fitting.linear(z_mean, x_mean, z_ref)
+        y_centerline_fit = curve_fitting.linear(z_mean, y_mean, z_ref)
+        # Compute derivatives using polynomial fit due to undefined derivatives using linear interpolation
+        _, x_centerline_deriv = curve_fitting.polyfit_1d(z_mean, x_mean, z_ref, deg=5)
+        _, y_centerline_deriv = curve_fitting.polyfit_1d(z_mean, y_mean, z_ref, deg=5)
 
     elif algo_fitting == 'nurbs':
         from spinalcordtoolbox.centerline.nurbs import b_spline_nurbs
-        # TODO: do something about nbControl: previous default was -1.
+        # TODO: Interpolate such that the output centerline has the same length as z_ref.
         x_centerline_fit, y_centerline_fit, z_centerline_fit, x_centerline_deriv, y_centerline_deriv, \
-            z_centerline_deriv, error = b_spline_nurbs(x_mean, y_mean, z_mean, nbControl=None)
+            z_centerline_deriv, error = b_spline_nurbs(x_mean, y_mean, z_mean, nbControl=None, point_number=3000,
+                                                       all_slices=True)
 
     elif algo_fitting == 'optic':
         # This method is particular compared to the previous ones, as here we estimate the centerline based on the
         # image itself (not the segmentation). Hence, we can bypass the fitting procedure and centerline creation
         # and directly output results.
         from spinalcordtoolbox.centerline import optic
-        from spinalcordtoolbox.centerline.curve_fitting import polyfit_1d
         im_centerline = optic.detect_centerline(im_seg, param.contrast)
         x_centerline_fit, y_centerline_fit, z_centerline = find_and_sort_coord(im_centerline)
         # Compute derivatives using polynomial fit
         # TODO: Fix below with reorientation of axes
-        _, x_centerline_deriv = polyfit_1d(z_centerline, x_centerline_fit, z_centerline, deg=5)
-        _, y_centerline_deriv = polyfit_1d(z_centerline, y_centerline_fit, z_centerline, deg=5)
+        _, x_centerline_deriv = curve_fitting.polyfit_1d(z_centerline, x_centerline_fit, z_centerline, deg=5)
+        _, y_centerline_deriv = curve_fitting.polyfit_1d(z_centerline, y_centerline_fit, z_centerline, deg=5)
         return im_centerline.change_orientation(native_orientation), \
                np.array([x_centerline_fit, y_centerline_fit, z_centerline]), \
                np.array([x_centerline_deriv, y_centerline_deriv, np.ones_like(z_centerline)]),

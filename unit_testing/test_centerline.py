@@ -16,7 +16,7 @@ from spinalcordtoolbox.centerline.core import get_centerline, ParamCenterline, f
 from spinalcordtoolbox.image import Image
 import sct_utils as sct
 
-VERBOSE = 0
+VERBOSE = 2
 
 
 @pytest.fixture(scope="session")
@@ -65,7 +65,7 @@ im_centerlines = [(dummy_centerline_small(size_arr=(41, 7, 9), subsampling=1, or
                   (dummy_centerline_small(size_arr=(9, 9, 9), subsampling=3), 3.),
                   (dummy_centerline_small(size_arr=(9, 9, 9), subsampling=1, hasnan=True), 2.),
                   (dummy_centerline_small(size_arr=(30, 20, 50), subsampling=1), 3.),
-                  (dummy_centerline_small(size_arr=(30, 20, 50), subsampling=5), 3.),
+                  (dummy_centerline_small(size_arr=(30, 20, 50), subsampling=5), 4.),
                   (dummy_centerline_small(size_arr=(30, 20, 50), dilate_ctl=2, subsampling=3, orientation='AIL'), 3.)]
 
 
@@ -91,6 +91,17 @@ def test_get_centerline_bspline(img_ctl, expected):
     deg = 3
     img, img_sub = [img_ctl[0].copy(), img_ctl[1].copy()]
     img_out, arr_out, _ = get_centerline(img_sub, algo_fitting='bspline', param=ParamCenterline(degree=deg),
+                                         verbose=VERBOSE)
+    assert np.linalg.norm(find_and_sort_coord(img) - find_and_sort_coord(img_out)) < expected
+
+
+# noinspection 801,PyShadowingNames
+@pytest.mark.parametrize('img_ctl,expected', im_centerlines)
+def test_get_centerline_linear(img_ctl, expected):
+    """Test centerline fitting using linear interpolation"""
+    deg = 3
+    img, img_sub = [img_ctl[0].copy(), img_ctl[1].copy()]
+    img_out, arr_out, _ = get_centerline(img_sub, algo_fitting='linear', param=ParamCenterline(degree=deg),
                                          verbose=VERBOSE)
     assert np.linalg.norm(find_and_sort_coord(img) - find_and_sort_coord(img_out)) < expected
 
