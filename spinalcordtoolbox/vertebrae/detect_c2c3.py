@@ -47,8 +47,8 @@ def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, verbose=1):
     z_seg_max = np.max(np.where(nii_seg.change_orientation('PIR').data)[1])
 
     # Flatten sagittal
-    nii_im = flatten_sagittal(nii_im, nii_seg, centerline_fitting='hanning', verbose=verbose)
-    nii_seg_flat = flatten_sagittal(nii_seg, nii_seg, centerline_fitting='hanning', verbose=verbose)
+    nii_im = flatten_sagittal(nii_im, nii_seg, algo_fitting='bspline', verbose=verbose)
+    nii_seg_flat = flatten_sagittal(nii_seg, nii_seg, algo_fitting='bspline', verbose=verbose)
 
     # create temporary folder with intermediate results
     sct.log.info("Creating temporary folder...")
