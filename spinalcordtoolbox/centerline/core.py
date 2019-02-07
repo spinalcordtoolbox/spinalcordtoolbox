@@ -159,12 +159,12 @@ def round_and_clip(arr, clip=None):
         return arr.round().astype(int)
 
 
-def _call_viewer_centerline(fname_in, interslice_gap=20.0):
-    # TODO: input should be im, not fname
+def _call_viewer_centerline(im_data, interslice_gap=20.0):
     from spinalcordtoolbox.gui.base import AnatomicalParams
     from spinalcordtoolbox.gui.centerline import launch_centerline_dialog
 
-    im_data = Image(fname_in)
+    if not isinstance(im_data, Image):
+        raise ValueError("Expecting an image")
 
     # Get the number of slice along the (IS) axis
     im_tmp = im_data.copy().change_orientation('RPI')
