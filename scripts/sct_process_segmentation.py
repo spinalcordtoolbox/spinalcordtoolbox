@@ -124,8 +124,8 @@ def get_parser():
                       type_value='multiple_choice',
                       description='Algorithm for curve fitting.',
                       mandatory=False,
-                      default_value='nurbs',
-                      example=['hanning', 'nurbs'])
+                      default_value='bspline',
+                      example=['bspline', 'nurbs', 'polyfit'])
     parser.add_option(name='-no-angle',
                       type_value='multiple_choice',
                       description='0: angle correction for csa computation. 1: no angle correction. When angle '

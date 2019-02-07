@@ -101,14 +101,17 @@ class NURBS:
                 self.nbControle = self.degre + 1
                 nb_points = len(P_x)
                 if self.nbControle > nb_points - 1:
+                    raise ArithmeticError('There are too few points to compute. The number of points of the curve must '
+                                          'be strictly superior to degre + 2, in this case: ' + str(self.nbControle)
+                                          + '. Either change degree to a lower value, or add points to the curve.')
                     # self.nbControle = nb_points - 1
                     # self.degre = self.nbControle - 1
-                    sct.printv(
-                        'ERROR : There are too few points to compute. The number of points of the curve must be '
-                        'strictly superior to degre +2 which is: '
-                        + str(self.nbControle)
-                        + '. Either change degre to a lower value, either add points to the curve.',
-                        type="error")
+                    # sct.printv(
+                    #     'ERROR : There are too few points to compute. The number of points of the curve must be '
+                    #     'strictly superior to degre +2 which is: '
+                    #     + str(self.nbControle)
+                    #     + '. Either change degre to a lower value, either add points to the curve.',
+                    #     type="error")
 
                 # compute weights based on curve density
                 w = [1.0] * len(P_x)

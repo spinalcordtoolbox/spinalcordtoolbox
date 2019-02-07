@@ -104,7 +104,7 @@ def test_get_centerline_nurbs(img_ctl, expected):
     try:
         img_out, arr_out, _ = get_centerline(img_sub, algo_fitting='nurbs', verbose=VERBOSE)
         assert np.linalg.norm(find_and_sort_coord(img) - find_and_sort_coord(img_out)) < expected
-    except Exception as e:
+    except ArithmeticError as e:
         print(e)
 
 
