@@ -16,18 +16,20 @@ from spinalcordtoolbox.centerline.core import get_centerline, ParamCenterline, _
 def get_parser():
     # Initialize the parser
     parser = Parser(__file__)
-    parser.usage.set_description("""This function allows the extraction of the spinal cord centerline. Two methods are 
-    available: OptiC (automatic) and Viewer (manual).\n\nReference: C Gros, B De Leener, et al. Automatic spinal cord 
+    parser.usage.set_description("""This function extracts the spinal cord centerline. Two methods are 
+    available: OptiC (automatic) and Viewer (manual). This function outputs (i) a NIFTI file with labels corresponding
+    to the discrete centerline, and (ii) a csv file containing the float (more precise) coordinates of the centerline
+    in the RPI orientation. \n\nReference: C Gros, B De Leener, et al. Automatic spinal cord 
     localization, robust to MRI contrast using global curve optimization (2017). doi.org/10.1016/j.media.2017.12.001""")
 
     parser.add_option(name="-i",
                       type_value="image_nifti",
-                      description="input image.",
+                      description="Input image.",
                       mandatory=True,
                       example="t1.nii.gz")
     parser.add_option(name="-c",
                       type_value="multiple_choice",
-                      description="type of image contrast.",
+                      description="Type of image contrast. Only with method=optic.",
                       mandatory=False,
                       example=['t1', 't2', 't2s', 'dwi'])
     parser.add_option(name="-method",
@@ -40,13 +42,13 @@ def get_parser():
                       default_value='optic')
     parser.add_option(name="-o",
                       type_value='file_output',
-                      description="Prefix of centerline output files.",
+                      description="File name (without extension) for the centerline output files.",
                       mandatory=False,
                       example="centerline",
                       default_value="centerline")
     parser.add_option(name="-gap",
                       type_value="float",
-                      description="Gap in mm between manually selected points when using the Viewer method.",
+                      description="Gap in mm between manually selected points. Only with method=viewer.",
                       mandatory=False,
                       default_value='20.0')
     parser.add_option(name="-igt",
@@ -103,10 +105,11 @@ def run_main():
 
     if method == 'viewer':
         im_labels = _call_viewer_centerline(Image(fname_data), interslice_gap=interslice_gap)
-        im_centerline, arr_centerline, _ = get_centerline(im_labels, algo_fitting='polyfit')
+        im_centerline, arr_centerline, _ = get_centerline(im_labels, algo_fitting='polyfit', verbose=verbose)
     else:
         im_centerline, arr_centerline, _ = \
-            get_centerline(Image(fname_data), algo_fitting='optic', param=ParamCenterline(contrast=contrast_type))
+            get_centerline(Image(fname_data), algo_fitting='optic', param=ParamCenterline(contrast=contrast_type),
+                           verbose=verbose)
 
     # save centerline as nifti (discrete) and csv (continuous) files
     im_centerline.save(file_output + '.nii.gz')
