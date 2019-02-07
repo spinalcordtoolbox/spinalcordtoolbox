@@ -20,13 +20,14 @@ VERBOSE = 0
 
 
 @pytest.fixture(scope="session")
-def dummy_centerline_small(size_arr=(9, 9, 9), subsampling=1, dilate_ctl=0, orientation='RPI'):
+def dummy_centerline_small(size_arr=(9, 9, 9), subsampling=1, dilate_ctl=0, hasnan=False, orientation='RPI'):
     """
     Create a dummy Image centerline of small size. Return the full and sub-sampled version along z.
     :param size_arr: tuple: (nx, ny, nz)
     :param subsampling: int >=1. Subsampling factor along z. 1: no subsampling. 2: centerline defined every other z.
     :param dilate_ctl: Dilation of centerline. E.g., if dilate_ctl=1, result will be a square of 3x3 per slice.
                          if dilate_ctl=0, result will be a single pixel per slice.
+    :param hasnan: Bool: Image has non-numerical values: nan, inf. In this case, do not subsample.
     :param orientation:
     :return:
     """
@@ -49,6 +50,10 @@ def dummy_centerline_small(size_arr=(9, 9, 9), subsampling=1, dilate_ctl=0, orie
     img_sub.data = np.zeros((nx, ny, nz))
     for iz in range(0, nz, subsampling):
         img_sub.data[..., iz] = data[..., iz]
+    # Add non-numerical values at the top corner of the image
+    if hasnan:
+        img.data[0, 0, 0] = np.nan
+        img.data[1, 0, 0] = np.inf
     # Update orientation
     img.change_orientation(orientation)
     img_sub.change_orientation(orientation)
@@ -58,9 +63,11 @@ def dummy_centerline_small(size_arr=(9, 9, 9), subsampling=1, dilate_ctl=0, orie
 # Generate a list of fake centerlines for testing different algorithms
 im_centerlines = [(dummy_centerline_small(size_arr=(41, 7, 9), subsampling=1, orientation='SAL'), 2.),
                   (dummy_centerline_small(size_arr=(9, 9, 9), subsampling=3), 3.),
+                  (dummy_centerline_small(size_arr=(9, 9, 9), subsampling=1, hasnan=True), 2.),
                   (dummy_centerline_small(size_arr=(30, 20, 50), subsampling=1), 3.),
                   (dummy_centerline_small(size_arr=(30, 20, 50), subsampling=5), 3.),
                   (dummy_centerline_small(size_arr=(30, 20, 50), dilate_ctl=2, subsampling=3, orientation='AIL'), 3.)]
+
 
 # noinspection 801,PyShadowingNames
 @pytest.mark.parametrize('img_ctl,expected', im_centerlines)
@@ -105,7 +112,12 @@ def test_get_centerline_nurbs(img_ctl, expected):
 def test_get_centerline_optic():
     """Test extraction of metrics aggregation across slices: All slices by default"""
     fname_t2 = os.path.join(sct.__sct_dir__, 'sct_testing_data/t2/t2.nii.gz')  # install: sct_download_data -d sct_testing_data
-    img_out, arr_out, _ = get_centerline(Image(fname_t2), algo_fitting='optic', param=ParamCenterline(contrast='t2'),
+    img_t2 = Image(fname_t2)
+    # Add non-numerical values at the top corner of the image for testing purpose
+    img_t2.change_type('float32')
+    img_t2.data[0, 0, 0] = np.nan
+    img_t2.data[1, 0, 0] = np.inf
+    img_out, arr_out, _ = get_centerline(img_t2, algo_fitting='optic', param=ParamCenterline(contrast='t2'),
                                          verbose=VERBOSE)
     # Open ground truth segmentation and compare
     fname_t2_seg = os.path.join(sct.__sct_dir__, 'sct_testing_data/t2/t2_seg.nii.gz')
