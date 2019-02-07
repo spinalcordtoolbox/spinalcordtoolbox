@@ -85,9 +85,11 @@ def get_centerline(im_seg, algo_fitting='polyfit', param=ParamCenterline(), verb
 
     elif algo_fitting == 'nurbs':
         from spinalcordtoolbox.centerline.nurbs import b_spline_nurbs
-        # TODO: Interpolate such that the output centerline has the same length as z_ref.
+        # Interpolate such that the output centerline has the same length as z_ref
+        x_mean_interp = curve_fitting.linear(z_mean, x_mean, z_ref)
+        y_mean_interp = curve_fitting.linear(z_mean, y_mean, z_ref)
         x_centerline_fit, y_centerline_fit, z_centerline_fit, x_centerline_deriv, y_centerline_deriv, \
-            z_centerline_deriv, error = b_spline_nurbs(x_mean, y_mean, z_mean, nbControl=None, point_number=3000,
+            z_centerline_deriv, error = b_spline_nurbs(x_mean_interp, y_mean_interp, z_ref, nbControl=None, point_number=3000,
                                                        all_slices=True)
 
     elif algo_fitting == 'optic':
