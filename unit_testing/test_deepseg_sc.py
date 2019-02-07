@@ -27,6 +27,9 @@ def _create_fake_t2_sc(input_size):
 
 
 def test_segment_2d():
+    from keras import backend as K
+    K.set_image_data_format("channels_last")  # Set at channels_first in test_deepseg_lesion.test_segment()
+
     contrast_test = 't2'
     model_path = os.path.join(sct.__sct_dir__, 'data', 'deepseg_sc_models', '{}_sc.h5'.format(contrast_test))   
 

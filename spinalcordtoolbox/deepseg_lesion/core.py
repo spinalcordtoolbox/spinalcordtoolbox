@@ -111,6 +111,7 @@ def segment_3d(model_fname, contrast_type, im):
 
     out = msct_image.zeros_like(im, dtype=np.uint8)
     out.data = out_data
+
     return out.copy()
 
 
