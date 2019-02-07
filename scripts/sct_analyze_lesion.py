@@ -404,16 +404,10 @@ class AnalyzeLeion:
         im_seg = Image(self.fname_sc)
         nx, ny, nz, nt, px, py, pz, pt = im_seg.dim
         data_seg = im_seg.data
-        X, Y, Z = (data_seg > 0).nonzero()
-        min_z_index, max_z_index = min(Z), max(Z)
 
         # fit centerline, smooth it and return the first derivative (in physical space)
         _, arr_ctl, arr_ctl_der = get_centerline(im_seg, algo_fitting='bspline', verbose=1)
-        x_centerline_fit, y_centerline_fit, z_centerline = arr_ctl
-        x_centerline_deriv, y_centerline_deriv = arr_ctl_der
-        centerline = Centerline(x_centerline_fit.tolist(), y_centerline_fit.tolist(), z_centerline.tolist(),
-                                x_centerline_deriv.tolist(), y_centerline_deriv.tolist(),
-                                np.ones_like(x_centerline_deriv).tolist())
+        x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = arr_ctl_der
 
         self.angles = np.full_like(np.empty(nz), np.nan, dtype=np.double)
 
