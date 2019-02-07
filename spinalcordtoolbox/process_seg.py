@@ -73,7 +73,7 @@ def compute_csa(segmentation, algo_fitting='bspline', angle_correction=True,
         # fit centerline, smooth it and return the first derivative (in voxel space but FITTED coordinates)
         _, arr_ctl, arr_ctl_der = get_centerline(im_seg, algo_fitting=algo_fitting, verbose=verbose)
         x_centerline_fit, y_centerline_fit, z_centerline = arr_ctl
-        x_centerline_deriv, y_centerline_deriv = arr_ctl_der
+        x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = arr_ctl_der
 
         # # correct centerline fitted coordinates according to the data resolution
         # x_centerline_fit_rescorr, y_centerline_fit_rescorr, z_centerline_rescorr, \
