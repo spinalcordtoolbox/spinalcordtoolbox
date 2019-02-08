@@ -3,7 +3,7 @@
 # Core functions dealing with centerline extraction from 3D data.
 
 
-import sys
+# TODO: Add feature to born centerline at min/max z, for compatibility with flatten_sagittal
 
 import numpy as np
 from spinalcordtoolbox.image import Image, zeros_like
@@ -132,7 +132,7 @@ def get_centerline(im_seg, algo_fitting='polyfit', param=ParamCenterline(), verb
     # Create an image with the centerline
     im_centerline = im_seg.copy()
     im_centerline.data = np.zeros(im_centerline.data.shape)
-    # assign value=1 to centerline
+    # Assign value=1 to centerline. Make sure to clip to avoid array overflow.
     # TODO: check this round and clip-- suspicious
     im_centerline.data[round_and_clip(x_centerline_fit, clip=[0, im_centerline.data.shape[0]]),
                        round_and_clip(y_centerline_fit, clip=[0, im_centerline.data.shape[1]]),
@@ -164,7 +164,7 @@ def round_and_clip(arr, clip=None):
     :return:
     """
     if clip:
-        return np.clip(arr.round().astype(int), clip[0], clip[1])
+        return np.clip(arr.round().astype(int), clip[0], clip[1]-1)
     else:
         return arr.round().astype(int)
 
@@ -194,13 +194,6 @@ def _call_viewer_centerline(im_data, interslice_gap=20.0):
     params.starting_slice = 'top'
 
     im_mask_viewer = zeros_like(im_data)
-    controller = launch_centerline_dialog(im_data, im_mask_viewer, params)
-    # fname_labels_viewer = sct.add_suffix(fname_in, '_viewer')
-    #
-    # if not controller.saved:
-    #     sct.log.error('The viewer has been closed before entering all manual points. Please try again.')
-    #     sys.exit(1)
-    # # save labels
-    # controller.as_niftii(fname_labels_viewer)
+    launch_centerline_dialog(im_data, im_mask_viewer, params)
 
     return im_mask_viewer
