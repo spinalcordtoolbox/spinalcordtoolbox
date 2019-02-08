@@ -36,7 +36,7 @@ class Param:
         self.remove_temp_files = 1
         self.slices = ''
         self.window_length = 50  # for smooth_centerline @sct_straighten_spinalcord
-        self.algo_fitting = 'bspline'  # nurbs, hanning
+        self.algo_fitting = 'bspline'  # polyfit, bspline
         self.perslice = None
         self.perlevel = None
 
@@ -120,12 +120,6 @@ def get_parser():
                       mandatory=False,
                       default_value='1',
                       example=['0', '1'])
-    parser.add_option(name='-a',
-                      type_value='multiple_choice',
-                      description='Algorithm for curve fitting.',
-                      mandatory=False,
-                      default_value='bspline',
-                      example=['bspline', 'nurbs', 'polyfit'])
     parser.add_option(name='-no-angle',
                       type_value='multiple_choice',
                       description='0: angle correction for csa computation. 1: no angle correction. When angle '
@@ -200,8 +194,6 @@ def main(args):
         perslice = arguments['-perslice']
     else:
         perslice = Param().perslice
-    if '-a' in arguments:
-        param.algo_fitting = arguments['-a']
     if '-no-angle' in arguments:
         if arguments['-no-angle'] == '1':
             angle_correction = False

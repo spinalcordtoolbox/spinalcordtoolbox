@@ -14,7 +14,10 @@ import nibabel as nib
 from skimage.transform import rotate
 from spinalcordtoolbox import process_seg
 from spinalcordtoolbox.image import Image
+from sct_process_segmentation import Param
 
+# Define global variables
+PARAM = Param()
 VERBOSE = 0
 
 @pytest.fixture(scope="session")
@@ -67,7 +70,7 @@ def dummy_segmentation():
 def test_compute_csa_noangle(dummy_segmentation):
     """Test computation of cross-sectional area from input segmentation"""
     metrics = process_seg.compute_csa(dummy_segmentation(shape='rectangle', angle=0, a=50.0, b=30.0),
-                                      algo_fitting='polyfit', angle_correction=True, use_phys_coord=False,
+                                      algo_fitting=PARAM.algo_fitting, angle_correction=True, use_phys_coord=False,
                                       verbose=VERBOSE)
     assert np.isnan(metrics['csa'].data[95])
     assert np.mean(metrics['csa'].data[20:80]) == pytest.approx(61.61, rel=0.01)
@@ -80,7 +83,7 @@ def test_compute_csa(dummy_segmentation):
     Note: here, compared to the previous tests with no angle, we use smaller hanning window and smaller range for
     computing the mean, because the smoothing creates spurious errors at edges."""
     metrics = process_seg.compute_csa(dummy_segmentation(shape='rectangle', angle=15, a=50.0, b=30.0),
-                                      algo_fitting='polyfit', angle_correction=True, use_phys_coord=False,
+                                      algo_fitting=PARAM.algo_fitting, angle_correction=True, use_phys_coord=False,
                                       verbose=VERBOSE)
     assert np.mean(metrics['csa'].data[30:70]) == pytest.approx(61.61, rel=0.01)  # theoretical: 61.61
     assert np.mean(metrics['angle'].data[30:70]) == pytest.approx(15.00, rel=0.02)
@@ -90,7 +93,7 @@ def test_compute_csa(dummy_segmentation):
 def test_compute_csa_ellipse(dummy_segmentation):
     """Test computation of cross-sectional area from input segmentation"""
     metrics = process_seg.compute_csa(dummy_segmentation(shape='ellipse', angle=0, a=50.0, b=30.0),
-                                      algo_fitting='polyfit', angle_correction=True, use_phys_coord=False,
+                                      algo_fitting=PARAM.algo_fitting, angle_correction=True, use_phys_coord=False,
                                       verbose=VERBOSE)
     assert np.mean(metrics['csa'].data[30:70]) == pytest.approx(47.01, rel=0.01)
     assert np.mean(metrics['angle'].data[30:70]) == pytest.approx(0.0, rel=0.01)
@@ -101,7 +104,7 @@ def test_compute_shape_noangle(dummy_segmentation):
     """Test computation of cross-sectional area from input segmentation."""
     # Using hanning because faster
     metrics = process_seg.compute_shape(dummy_segmentation(shape='ellipse', angle=0, a=50.0, b=30.0),
-                                        algo_fitting='polyfit', verbose=VERBOSE)
+                                        algo_fitting=PARAM.algo_fitting, verbose=VERBOSE)
     assert np.mean(metrics['area'].data[30:70]) == pytest.approx(47.01, rel=0.05)
     assert np.mean(metrics['AP_diameter'].data[30:70]) == pytest.approx(6.0, rel=0.05)
     assert np.mean(metrics['RL_diameter'].data[30:70]) == pytest.approx(10.0, rel=0.05)
