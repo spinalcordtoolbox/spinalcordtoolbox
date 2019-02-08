@@ -138,4 +138,4 @@ def test_get_centerline_optic():
 
 def test_round_and_clip():
     arr = round_and_clip(np.array([-0.2, 3.00001, 2.99999, 49]), clip=[0, 41])
-    assert np.all(arr == np.array([0,  3,  3, 41]))  # Check element-wise equality between the two arrays
+    assert np.all(arr == np.array([0,  3,  3, 40]))  # Check element-wise equality between the two arrays
