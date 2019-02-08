@@ -42,10 +42,10 @@ def get_parser():
                       default_value='optic')
     parser.add_option(name="-o",
                       type_value='file_output',
-                      description="File name (without extension) for the centerline output files.",
+                      description='File name (without extension) for the centerline output files. By default, output'
+                                  'file will be the input with suffix "_centerline"',
                       mandatory=False,
-                      example="centerline",
-                      default_value="centerline")
+                      example="centerline_optic")
     parser.add_option(name="-gap",
                       type_value="float",
                       description="Gap in mm between manually selected points. Only with method=viewer.",
@@ -97,6 +97,9 @@ def run_main():
     # Output folder
     if "-o" in arguments:
         file_output = arguments["-o"]
+    else:
+        path_data, file_data, ext_data = sct.extract_fname(fname_data)
+        file_output = os.path.join(path_data, file_data + '_centerline')
 
     # Verbosity
     verbose = 0
