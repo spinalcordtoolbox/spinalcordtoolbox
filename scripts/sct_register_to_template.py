@@ -22,14 +22,13 @@ import numpy as np
 
 import sct_utils as sct
 import sct_label_utils
-import sct_convert
 from spinalcordtoolbox.metadata import get_file_label
 from sct_utils import add_suffix
 from sct_register_multimodal import Paramreg, ParamregMultiStep, register
 from msct_parser import Parser
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
-from sct_straighten_spinalcord import smooth_centerline
+from spinalcordtoolbox.centerline.core import get_centerline
 
 # get path of the toolbox
 path_script = os.path.dirname(__file__)
@@ -145,8 +144,8 @@ def get_parser():
                       type_value='str',
                       description="""Algorithm used by the cord straightening procedure for fitting the centerline.""",
                       mandatory=False,
-                      default_value='nurbs',
-                      example=['nurbs', 'hanning'])
+                      default_value='bspline',
+                      example=['nurbs', 'bspline'])
     parser.add_option(name='-qc',
                       type_value='folder_creation',
                       description='The path where the quality control generated content will be saved',
@@ -700,12 +699,12 @@ def project_labels_on_spinalcord(fname_label, fname_seg):
     im_seg.change_orientation("RPI")
 
     # smooth centerline and return fitted coordinates in voxel space
-    centerline_x, centerline_y, centerline_z, centerline_derivx, centerline_derivy, centerline_derivz = smooth_centerline(
-        im_seg, algo_fitting="hanning", type_window="hanning", window_length=50, nurbs_pts_number=3000,
-        phys_coordinates=False, all_slices=True)
+    _, arr_ctl, _ = get_centerline(im_seg, algo_fitting='bspline')
+    x_centerline_fit, y_centerline_fit, z_centerline = arr_ctl
     # convert pixel into physical coordinates
-    centerline_xyz_transposed = [im_seg.transfo_pix2phys([[centerline_x[i], centerline_y[i], centerline_z[i]]])[0]
-                                 for i in range(len(centerline_x))]
+    centerline_xyz_transposed = \
+        [im_seg.transfo_pix2phys([[x_centerline_fit[i], y_centerline_fit[i], z_centerline[i]]])[0]
+                                 for i in range(len(x_centerline_fit))]
     # transpose list
     centerline_phys_x, centerline_phys_y, centerline_phys_z = list(map(list, map(None, *centerline_xyz_transposed)))
     # get center of mass of label
@@ -720,7 +719,8 @@ def project_labels_on_spinalcord(fname_label, fname_seg):
         # calculate distance between label and each point of the centerline
         distance_centerline = [np.linalg.norm([centerline_phys_x[i] - label_phys_x,
                                                centerline_phys_y[i] - label_phys_y,
-                                               centerline_phys_z[i] - label_phys_z]) for i in range(len(centerline_x))]
+                                               centerline_phys_z[i] - label_phys_z])
+                               for i in range(len(x_centerline_fit))]
         # get the index corresponding to the min distance
         ind_min_distance = np.argmin(distance_centerline)
         # get centerline coordinate (in physical space)
