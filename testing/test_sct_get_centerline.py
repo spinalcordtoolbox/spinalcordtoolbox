@@ -62,10 +62,6 @@ def test_integrity(param_test):
     Test integrity of function
     """
 
-    # extract name of output centerline: data_centerline_optic.nii.gz
-    # file_ctr = os.path.join(param_test.path_output, sct.add_suffix(param_test.file_input, '_centerline_optic'))
-    file_ctr = os.path.join(param_test.path_output, 'centerline.nii.gz')
-
     # open ground truth
     im_seg_manual = Image(param_test.fname_gt).change_orientation("RPI")
 
@@ -79,6 +75,8 @@ def test_integrity(param_test):
         im_ctr_manual.data[x_y_z[0], x_y_z[1], x_y_z[2]] = 1
 
     # open output segmentation
+    path_in, file_in, _ = sct.extract_fname(param_test.file_input)
+    file_ctr = os.path.join(param_test.path_data, 't2s', sct.add_suffix(param_test.file_input, '_centerline'))
     im_ctr = Image(file_ctr).change_orientation("RPI")
 
     # compute MSE between generated ctr and ctr from database
