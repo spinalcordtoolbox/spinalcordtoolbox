@@ -573,15 +573,9 @@ def propseg(img_input, options_dict):
                                        'data/optic_models',
                                        '{}_model'.format(contrast_type))
 
-        init_option_optic, fname_centerline = optic.detect_centerline(fname_data_propseg,
-                                                                    contrast_type, path_classifier,
-                                                                    folder_output, remove_temp_files,
-                                                                    init_option, verbose=verbose)
-        if init_option is not None:
-            # TODO: what's this???
-            cmd += ["-init", str(init_option_optic)]
-
-        cmd += ["-init-centerline", fname_centerline]
+        image_centerline = optic.detect_centerline(image_input, contrast_type)
+        image_centerline.save('centerline.nii.gz')
+        cmd += ["-init-centerline", 'centerline.nii.gz']
 
     # enabling centerline extraction by default (needed by check_and_correct_segmentation() )
     cmd += ['-centerline-binary']

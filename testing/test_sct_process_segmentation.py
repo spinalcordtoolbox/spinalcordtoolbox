@@ -23,8 +23,7 @@ def init(param_test):
     Initialize class: param_test
     """
     # initialization
-    default_args = ['-i t2/t2_seg.nii.gz -p centerline',
-                    '-i t2/t2_seg.nii.gz -p csa',
+    default_args = ['-i t2/t2_seg.nii.gz -p csa',
                     '-i t2/t2_seg.nii.gz -p shape',
                     '-i t2/t2_seg.nii.gz -p label-vert -discfile t2/labels.nii.gz']
 
