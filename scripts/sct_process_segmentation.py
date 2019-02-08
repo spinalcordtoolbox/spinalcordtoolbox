@@ -68,7 +68,7 @@ def get_parser():
                                   '  - orientation: angle (in degrees) between the AP axis of the spinal cord and the AP axis of the image\n'
                                   '  - solidity: CSA(spinal_cord) / CSA_convex(spinal_cord). If perfect ellipse, it should be one. This metric is interesting to detect non-convex shape (e.g., in case of strong compression).',
                       mandatory=True,
-                      example=['centerline', 'label-vert', 'csa', 'shape'])
+                      example=['label-vert', 'csa', 'shape'])
     parser.usage.addSection('Optional Arguments')
     parser.add_option(name='-o',
                       type_value='file_output',
