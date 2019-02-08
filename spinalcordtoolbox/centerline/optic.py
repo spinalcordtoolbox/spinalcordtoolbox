@@ -81,16 +81,17 @@ def detect_centerline(img, contrast):
     # convert image data type to int16, as required by opencv (backend in OptiC)
     img_int16 = img.copy()
     # Replace non-numeric values by zero
-    img.data[np.where(np.isnan(img.data))] = 0
-    img.data[np.where(np.isinf(img.data))] = 0
+    img_data = img.data
+    img_data[np.where(np.isnan(img_data))] = 0
+    img_data[np.where(np.isinf(img_data))] = 0
     img_int16.data[np.where(np.isnan(img_int16.data))] = 0
     img_int16.data[np.where(np.isinf(img_int16.data))] = 0
     # rescale intensity
     min_out = np.iinfo('uint16').min
     max_out = np.iinfo('uint16').max
-    min_in = np.nanmin(img.data)
-    max_in = np.nanmax(img.data)
-    data_rescaled = img.data.astype('float') * (max_out - min_out) / (max_in - min_in)
+    min_in = np.nanmin(img_data)
+    max_in = np.nanmax(img_data)
+    data_rescaled = img_data.astype('float') * (max_out - min_out) / (max_in - min_in)
     img_int16.data = data_rescaled - (data_rescaled.min() - min_out)
     # change data type
     img_int16.change_type(np.uint16)
