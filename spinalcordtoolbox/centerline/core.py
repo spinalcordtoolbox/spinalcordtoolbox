@@ -40,7 +40,7 @@ def find_and_sort_coord(img):
     return np.array(arr_sorted_avg)
 
 
-def get_centerline(im_seg, algo_fitting='polyfit', param=ParamCenterline(), verbose=1):
+def get_centerline(im_seg, algo_fitting='polyfit', minmax=False, param=ParamCenterline(), verbose=1):
     """
     Extract centerline from an image (using optic) or from a binary or weighted segmentation (using the center of mass).
     :param im_seg: Image(): Input segmentation or series of points along the centerline.
@@ -48,6 +48,7 @@ def get_centerline(im_seg, algo_fitting='polyfit', param=ParamCenterline(), verb
         polyfit: Polynomial fitting
         nurbs:
         optic: Automatic segmentation using SVM and HOG. See [Gros et al. MIA 2018].
+    :param minmax: Crop output centerline to where the segmentation starts/end
     :param param: ParamCenterline()
     :param verbose: int: verbose level
     :return: im_centerline: Image: Centerline in discrete coordinate (int)
@@ -61,10 +62,15 @@ def get_centerline(im_seg, algo_fitting='polyfit', param=ParamCenterline(), verb
     native_orientation = im_seg.orientation
     im_seg.change_orientation('RPI')
     px, py, pz = im_seg.dim[4:7]
-    z_ref = np.array(range(im_seg.dim[2]))
 
     # Take the center of mass at each slice to avoid: https://stackoverflow.com/questions/2009379/interpolate-question
     x_mean, y_mean, z_mean = find_and_sort_coord(im_seg)
+
+    # Crop output centerline to where the segmentation starts/end
+    if minmax:
+        z_ref = np.array(range(z_mean.min().astype(int), z_mean.max().astype(int)))
+    else:
+        z_ref = np.array(range(im_seg.dim[2]))
 
     # Choose method
     if algo_fitting == 'polyfit':
