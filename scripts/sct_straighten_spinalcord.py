@@ -787,13 +787,13 @@ def get_parser():
     parser.add_option(name="-param",
                       type_value=[[','], 'str'],
                       description="Parameters for spinal cord straightening. Separate arguments with ','."
-                                  "\nalgo_fitting: {hanning,nurbs} algorithm for curve fitting. Default=nurbs"
+                                  "\nalgo_fitting: {polyfit,bspline,nurbs} algorithm for curve fitting. Default=bspline"
                                   "\nprecision: [1.0,inf[. Precision factor of straightening, related to the number of slices. Increasing this parameter increases the precision along with increased computational time. Not taken into account with hanning fitting method. Default=2"
                                   "\nthreshold_distance: [0.0,inf[. Threshold at which voxels are not considered into displacement. Increase this threshold if the image is blackout around the spinal cord too much. Default=10"
                                   "\naccuracy_results: {0, 1} Disable/Enable computation of accuracy results after straightening. Default=0"
                                   "\ntemplate_orientation: {0, 1} Disable/Enable orientation of the straight image to be the same as the template. Default=0",
                       mandatory=False,
-                      example="algo_fitting=nurbs")
+                      example="algo_fitting=nurbs,accuracy_results=1")
 
     parser.add_option(name='-qc',
                       type_value='folder_creation',
@@ -873,9 +873,6 @@ def main(args=None):
             param_split = param.split('=')
             if param_split[0] == 'algo_fitting':
                 sc_straight.algo_fitting = param_split[1]
-                # if sc_straight.algo_fitting == 'hanning':
-                #     sct.printv("WARNING: hanning has been disabled in this function. The fitting algorithm has been changed to NURBS.", type='warning')
-                #     sc_straight.algo_fitting = 'nurbs'
             if param_split[0] == 'precision':
                 sc_straight.precision = float(param_split[1])
             if param_split[0] == 'threshold_distance':
