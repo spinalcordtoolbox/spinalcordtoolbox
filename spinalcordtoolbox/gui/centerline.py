@@ -241,14 +241,15 @@ class Centerline(base.BaseDialog):
         self.sagittal_canvas.refresh()
 
 
-def launch_centerline_dialog(im_input, im_output, params):
+def launch_centerline_dialog(im_input_orig, im_output, params):
     """
     Launch GUI where user clicks on axial view to generate centerline information.
-    :param im_input: input image object
+    :param im_input_orig: input image object
     :param im_output: output image object that will contain the generated manual labels
     :param params: # TODO: define all params
     :return:
     """
+    im_input = im_input_orig.copy()  # need to copy otherwise the field absolutepath becomes None when exiting
     params.input_file_name = im_input.absolutepath
     params.subtitle += u"[KEYBOARD] Up/Down arrows: Navigate the superior-inferior direction" \
                        "\n[MOUSE] Right click: Change brightness (left/right) and contrast (up/down)." \

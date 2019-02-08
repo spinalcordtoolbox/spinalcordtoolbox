@@ -26,7 +26,7 @@ from skimage import measure, filters
 
 import sct_utils as sct
 from msct_types import Centerline
-from sct_straighten_spinalcord import smooth_centerline
+from spinalcordtoolbox.centerline.core import get_centerline
 
 
 def smoothing(image, sigma=1.0):
@@ -153,13 +153,17 @@ def compute_properties_along_centerline(im_seg, smooth_factor=5.0, interpolation
     # properties['z_slice'] = []
 
     # compute the spinal cord centerline based on the spinal cord segmentation
-    number_of_points = nz  # 5 * nz
-    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = \
-        smooth_centerline(im_seg, algo_fitting=algo_fitting, window_length=window_length,
-                          verbose=verbose, nurbs_pts_number=number_of_points, all_slices=False, phys_coordinates=True,
-                          remove_outliers=True)
-    centerline = Centerline(x_centerline_fit, y_centerline_fit, z_centerline,
-                            x_centerline_deriv, y_centerline_deriv, z_centerline_deriv)
+    _, arr_ctl, arr_ctl_der = get_centerline(im_seg, algo_fitting=algo_fitting, verbose=verbose)
+    # x_centerline_fit, y_centerline_fit, z_centerline = arr_ctl
+    # x_centerline_deriv, y_centerline_deriv = arr_ctl_der
+    # Transform centerline and derivatives to physical coordinate system
+    arr_ctl_phys = im_seg.transfo_pix2phys(
+        [[arr_ctl[0][i], arr_ctl[1][i], arr_ctl[2][i]] for i in range(len(arr_ctl[0]))])
+    x_centerline, y_centerline, z_centerline = arr_ctl_phys[:, 0], arr_ctl_phys[:, 1], arr_ctl_phys[:, 2]
+    x_centerline_deriv, y_centerline_deriv = arr_ctl_der[0][:] * px, arr_ctl_der[1][:] * py
+    # TODO: maybe multiply by pz
+    centerline = Centerline(x_centerline, y_centerline, z_centerline, x_centerline_deriv, y_centerline_deriv,
+                            np.ones_like(x_centerline_deriv))
 
     sct.printv('Computing spinal cord shape along the spinal cord...')
     with tqdm.tqdm(total=len(range(min_z_index, max_z_index))) as pbar:

@@ -144,7 +144,7 @@ cd mt
 sct_get_centerline -i mt1.nii.gz -c t2
 # sct_get_centerline -i mt1.nii.gz -c t2 -qc "$SCT_BP_QC_FOLDER"
 # Create mask
-sct_create_mask -i mt1.nii.gz -p centerline,mt1_centerline_optic.nii.gz -size 45mm
+sct_create_mask -i mt1.nii.gz -p centerline,mt1_centerline.nii.gz -size 45mm
 # Crop data for faster processing
 sct_crop_image -i mt1.nii.gz -m mask_mt1.nii.gz -o mt1_crop.nii.gz
 # Segment spinal cord
@@ -222,7 +222,7 @@ sct_maths -i fmri.nii.gz -mean t -o fmri_mean.nii.gz
 # Get cord centerline
 sct_get_centerline -i fmri_mean.nii.gz -c t2s
 # Create mask around the cord to help motion correction and for faster processing
-sct_create_mask -i fmri_mean.nii.gz -p centerline,fmri_mean_centerline_optic.nii.gz -size 35mm
+sct_create_mask -i fmri_mean.nii.gz -p centerline,fmri_mean_centerline.nii.gz -size 35mm
 # Crop data
 sct_crop_image -i fmri.nii.gz -m mask_fmri_mean.nii.gz -o fmri_crop.nii.gz
 # Motion correction

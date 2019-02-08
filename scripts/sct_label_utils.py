@@ -102,8 +102,6 @@ class ProcessLabels(object):
             self.output_image = self.remove_label()
         if type_process == 'remove-symm':
             self.output_image = self.remove_label(symmetry=True)
-        if type_process == 'centerline':
-            self.extract_centerline()
         if type_process == 'create':
             self.output_image = self.create_label()
         if type_process == 'create-add':
@@ -433,19 +431,6 @@ class ProcessLabels(object):
 
         return image_output
 
-    def extract_centerline(self):
-        """
-        Write a text file with the coordinates of the centerline.
-        The image is suppose to be RPI
-        """
-        coordinates_input = self.image_input.getNonZeroCoordinates(sorting='z')
-
-        fo = open(self.fname_output, "wb")
-        for coord in coordinates_input:
-            line = (coord.x, coord.y, coord.z)
-            fo.write("%i %i %i\n" % line)
-        fo.close()
-
     def display_voxel(self):
         """
         Display all the labels that are contained in the input image.
@@ -552,9 +537,12 @@ class ProcessLabels(object):
         #   a. extract centerline
         #   b. for each slice, extract corresponding level
         nx, ny, nz, nt, px, py, pz, pt = im_input.dim
-        from sct_straighten_spinalcord import smooth_centerline
-        x_centerline_fit, y_centerline_fit, z_centerline_fit, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(self.image_input, algo_fitting='nurbs', verbose=0)
-        value_centerline = np.array([im_input.data[int(x_centerline_fit[it]), int(y_centerline_fit[it]), int(z_centerline_fit[it])] for it in range(len(z_centerline_fit))])
+        from spinalcordtoolbox.centerline.core import get_centerline
+        _, arr_ctl, _ = get_centerline(self.image_input, algo_fitting='bspline')
+        x_centerline_fit, y_centerline_fit, z_centerline = arr_ctl
+        value_centerline = np.array(
+            [im_input.data[int(x_centerline_fit[it]), int(y_centerline_fit[it]), int(z_centerline[it])]
+             for it in range(len(z_centerline))])
 
         # 2. compute distance for each vertebral level --> Di for i being the vertebral levels
         vertebral_levels = {}
@@ -567,7 +555,7 @@ class ProcessLabels(object):
             indexes_slice = np.where(value_centerline == level)
             length_levels[level] = np.sum([np.sqrt(((x_centerline_fit[indexes_slice[0][index_slice + 1]] - x_centerline_fit[indexes_slice[0][index_slice]]) * px)**2 +
                                                      ((y_centerline_fit[indexes_slice[0][index_slice + 1]] - y_centerline_fit[indexes_slice[0][index_slice]]) * py)**2 +
-                                                     ((z_centerline_fit[indexes_slice[0][index_slice + 1]] - z_centerline_fit[indexes_slice[0][index_slice]]) * pz)**2)
+                                                     ((z_centerline[indexes_slice[0][index_slice + 1]] - z_centerline[indexes_slice[0][index_slice]]) * pz)**2)
                                            for index_slice in range(len(indexes_slice[0]) - 1)])
 
         # 2. for each slice:
@@ -575,13 +563,13 @@ class ProcessLabels(object):
         #   b. calculate distance of slice from upper vertebral level --> d
         #   c. compute relative distance in the vertebral level coordinate system --> d/Di
         continuous_values = {}
-        for it, iz in enumerate(z_centerline_fit):
+        for it, iz in enumerate(z_centerline):
             level = value_centerline[it]
             indexes_slice = np.where(value_centerline == level)
             indexes_slice = indexes_slice[0][indexes_slice[0] >= it]
             distance_from_level = np.sum([np.sqrt(((x_centerline_fit[indexes_slice[index_slice + 1]] - x_centerline_fit[indexes_slice[index_slice]]) * px * px) ** 2 +
                                                     ((y_centerline_fit[indexes_slice[index_slice + 1]] - y_centerline_fit[indexes_slice[index_slice]]) * py * py) ** 2 +
-                                                    ((z_centerline_fit[indexes_slice[index_slice + 1]] - z_centerline_fit[indexes_slice[index_slice]]) * pz * pz) ** 2)
+                                                    ((z_centerline[indexes_slice[index_slice + 1]] - z_centerline[indexes_slice[index_slice]]) * pz * pz) ** 2)
                                           for index_slice in range(len(indexes_slice) - 1)])
             continuous_values[iz] = level + 2.0 * distance_from_level / float(length_levels[level])
 
