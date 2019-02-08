@@ -15,6 +15,7 @@
 #########################################################################################
 
 # TODO: the import of scipy.misc imsave was moved to the specific cases (orth and ellipse) in order to avoid issue #62. This has to be cleaned in the future.
+# TODO: deal with flag -use-image-coord
 
 from __future__ import absolute_import, division
 
