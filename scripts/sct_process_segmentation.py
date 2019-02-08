@@ -14,7 +14,6 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-# TODO: update "-p centerline" with new modifs
 # TODO: the import of scipy.misc imsave was moved to the specific cases (orth and ellipse) in order to avoid issue #62. This has to be cleaned in the future.
 
 from __future__ import absolute_import, division
@@ -29,6 +28,7 @@ from spinalcordtoolbox.aggregate_slicewise import aggregate_per_slice_or_level, 
 from spinalcordtoolbox.utils import parse_num_list
 
 
+# TODO: Move this class somewhere else
 class Param:
     def __init__(self):
         self.debug = 0
@@ -57,7 +57,6 @@ def get_parser():
     parser.add_option(name='-p',
                       type_value='multiple_choice',
                       description='type of process to be performed:\n'
-                                  '- centerline: Extract centerline. Output coordinates (.csv), image with one pixel per slice (.nii.gz) and JIM-compatible ROI file (.roi).\n'
                                   '- label-vert: Transform segmentation into vertebral level using a file that contains labels with disc value (flag: -discfile)\n'
                                   '- csa: computes cross-sectional area by counting pixels in each slice and then geometrically adjusting using centerline orientation. Note that it is possible to input a binary mask or a mask comprising values within the range [0,1] to account for partial volume effect.\n'
                                   '- shape: compute spinal shape properties, using scikit-image region measures, including:\n'
@@ -210,11 +209,6 @@ def main(args):
     metrics_agg = {}
     if not file_out:
         file_out = name_process + '.csv'
-
-    if name_process == 'centerline':
-        process_seg.extract_centerline(fname_segmentation, verbose=param.verbose,
-                                       algo_fitting=param.algo_fitting, use_phys_coord=use_phys_coord,
-                                       file_out=file_out)
 
     if name_process == 'csa':
         metrics = process_seg.compute_csa(fname_segmentation, algo_fitting=param.algo_fitting,
