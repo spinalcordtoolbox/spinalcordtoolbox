@@ -204,7 +204,7 @@ class SpinalCordStraightener(object):
 
             # 2. extract bspline fitting of the centerline, and its derivatives
             img_ctl = Image('centerline_rpi.nii.gz')
-            _, arr_ctl, arr_ctl_der = get_centerline(img_ctl, algo_fitting=algo_fitting, verbose=verbose)
+            _, arr_ctl, arr_ctl_der = get_centerline(img_ctl, algo_fitting=algo_fitting, minmax=True, verbose=verbose)
             # Transform centerline and derivatives to physical coordinate system
             arr_ctl_phys = img_ctl.transfo_pix2phys(
                 [[arr_ctl[0][i], arr_ctl[1][i], arr_ctl[2][i]] for i in range(len(arr_ctl[0]))])
@@ -286,7 +286,7 @@ class SpinalCordStraightener(object):
                 nx_s, ny_s, nz_s, nt_s, px_s, py_s, pz_s, pt_s = image_centerline_straight.dim
                 # TODO: update this chunk below to work with physical coordinates
                 _, arr_ctl, arr_ctl_der = get_centerline(image_centerline_straight, algo_fitting=algo_fitting,
-                                                         verbose=verbose)
+                                                         minmax=True, verbose=verbose)
                 x_centerline, y_centerline, z_centerline = arr_ctl
                 x_centerline_deriv, y_centerline_deriv = arr_ctl_der
                 centerline_straight = Centerline(x_centerline.tolist(), y_centerline.tolist(), z_centerline.tolist(),
