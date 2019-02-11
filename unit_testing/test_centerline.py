@@ -16,7 +16,7 @@ from spinalcordtoolbox.centerline.core import get_centerline, ParamCenterline, f
 from spinalcordtoolbox.image import Image
 import sct_utils as sct
 
-VERBOSE = 2
+VERBOSE = 0
 
 
 @pytest.fixture(scope="session")
@@ -76,7 +76,7 @@ def test_get_centerline_polyfit(img_ctl, expected):
     deg = 3
     img, img_sub = [img_ctl[0].copy(), img_ctl[1].copy()]
     img_out, arr_out, _ = get_centerline(img_sub, algo_fitting='polyfit', param=ParamCenterline(degree=deg),
-                                         verbose=VERBOSE)
+                                         minmax=False, verbose=VERBOSE)
 
     assert np.linalg.norm(find_and_sort_coord(img) - find_and_sort_coord(img_out)) < expected
     # check arr_out and arr_out_deriv only if input orientation is RPI (because the output array is always in RPI)
@@ -91,7 +91,7 @@ def test_get_centerline_bspline(img_ctl, expected):
     deg = 3
     img, img_sub = [img_ctl[0].copy(), img_ctl[1].copy()]
     img_out, arr_out, _ = get_centerline(img_sub, algo_fitting='bspline', param=ParamCenterline(degree=deg),
-                                         verbose=VERBOSE)
+                                         minmax=False, verbose=VERBOSE)
     assert np.linalg.norm(find_and_sort_coord(img) - find_and_sort_coord(img_out)) < expected
 
 
@@ -102,7 +102,7 @@ def test_get_centerline_linear(img_ctl, expected):
     deg = 3
     img, img_sub = [img_ctl[0].copy(), img_ctl[1].copy()]
     img_out, arr_out, _ = get_centerline(img_sub, algo_fitting='linear', param=ParamCenterline(degree=deg),
-                                         verbose=VERBOSE)
+                                         minmax=False, verbose=VERBOSE)
     assert np.linalg.norm(find_and_sort_coord(img) - find_and_sort_coord(img_out)) < expected
 
 
@@ -113,7 +113,7 @@ def test_get_centerline_nurbs(img_ctl, expected):
     img, img_sub = [img_ctl[0].copy(), img_ctl[1].copy()]
     # Here we need a try/except because nurbs crashes with too few points.
     try:
-        img_out, arr_out, _ = get_centerline(img_sub, algo_fitting='nurbs', verbose=VERBOSE)
+        img_out, arr_out, _ = get_centerline(img_sub, algo_fitting='nurbs', minmax=False, verbose=VERBOSE)
         assert np.linalg.norm(find_and_sort_coord(img) - find_and_sort_coord(img_out)) < expected
     except ArithmeticError as e:
         print(e)
@@ -129,10 +129,11 @@ def test_get_centerline_optic():
     img_t2.data[0, 0, 0] = np.nan
     img_t2.data[1, 0, 0] = np.inf
     img_out, arr_out, _ = get_centerline(img_t2, algo_fitting='optic', param=ParamCenterline(contrast='t2'),
-                                         verbose=VERBOSE)
+                                         minmax=False, verbose=VERBOSE)
     # Open ground truth segmentation and compare
     fname_t2_seg = os.path.join(sct.__sct_dir__, 'sct_testing_data/t2/t2_seg.nii.gz')
-    img_seg_out, arr_seg_out, _ = get_centerline(Image(fname_t2_seg), algo_fitting='bspline', verbose=VERBOSE)
+    img_seg_out, arr_seg_out, _ = get_centerline(Image(fname_t2_seg), algo_fitting='bspline', minmax=False,
+                                                 verbose=VERBOSE)
     assert np.linalg.norm(find_and_sort_coord(img_seg_out) - find_and_sort_coord(img_out)) < 3.5
 
 
