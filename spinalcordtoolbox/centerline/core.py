@@ -40,7 +40,7 @@ def find_and_sort_coord(img):
     return np.array(arr_sorted_avg)
 
 
-def get_centerline(im_seg, algo_fitting='polyfit', minmax=False, param=ParamCenterline(), verbose=1):
+def get_centerline(im_seg, algo_fitting='polyfit', minmax=True, param=ParamCenterline(), verbose=1):
     """
     Extract centerline from an image (using optic) or from a binary or weighted segmentation (using the center of mass).
     :param im_seg: Image(): Input segmentation or series of points along the centerline.
@@ -48,7 +48,7 @@ def get_centerline(im_seg, algo_fitting='polyfit', minmax=False, param=ParamCent
         polyfit: Polynomial fitting
         nurbs:
         optic: Automatic segmentation using SVM and HOG. See [Gros et al. MIA 2018].
-    :param minmax: Crop output centerline to where the segmentation starts/end
+    :param minmax: Crop output centerline where the segmentation starts/end. If False, centerline will span all slices.
     :param param: ParamCenterline()
     :param verbose: int: verbose level
     :return: im_centerline: Image: Centerline in discrete coordinate (int)
