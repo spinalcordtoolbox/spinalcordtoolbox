@@ -344,7 +344,6 @@ def generate_qc(fn_in, fn_seg, args, path_qc):
     """
     Generate a QC entry allowing to quickly review the segmentation process.
     """
-
     import spinalcordtoolbox.reports.qc as qc
     import spinalcordtoolbox.reports.slice as qcslice
 
