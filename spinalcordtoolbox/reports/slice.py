@@ -12,7 +12,6 @@ import math
 import numpy as np
 from scipy import ndimage
 
-from .. import image as msct_image
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.resample import resample_nipy
 from nibabel.nifti1 import Nifti1Image
@@ -47,7 +46,7 @@ class Slice(object):
         """
         self._images = list()
         for image in images:
-            img = msct_image.change_orientation(image, "SAL")
+            img = Image.change_orientation(image, "SAL")
             self._images.append(img)
 
     @staticmethod
@@ -188,7 +187,7 @@ class Slice(object):
     def get_dim(self, image):
         """Abstract method to obtain the depth of the 3d matrix.
 
-        :param image: input msct_image.Image
+        :param image: input Image
         :returns: numpy.ndarray
         """
         return
@@ -196,7 +195,7 @@ class Slice(object):
     def _axial_center(self, image):
         """Gets the center of mass in the axial plan
 
-        :param image : input msct_image.Image
+        :param image : input Image
         :returns: centers of mass in the x and y axis (tuple of numpy.ndarray of int)
             .
         """
