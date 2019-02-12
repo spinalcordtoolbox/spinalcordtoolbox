@@ -347,17 +347,6 @@ def generate_qc(fn_in, fn_seg, args, path_qc):
 
     import spinalcordtoolbox.reports.qc as qc
     import spinalcordtoolbox.reports.slice as qcslice
-    # from spinalcordtoolbox.resample.nipy_resample import resample_file
-    #
-    # # Resample to fixed resolution (see #2063)
-    # tmp_folder = sct.TempFolder()
-    # fn_in_r = os.path.join(tmp_folder.path_tmp, 'img_r.nii.gz')
-    # # Orient to RPI and retrieve pixel size in IS direction (z)
-    # im_fn = Image(fn_in).change_orientation('RPI').save(fn_in_r)
-    # resample_file(fn_in_r, fn_in_r, '0.5x0.5x'+str(im_fn.dim[6]), 'mm', 'nn', 0)
-    # fn_seg_r = os.path.join(tmp_folder.path_tmp, 'seg_r.nii.gz')
-    # Image(fn_seg).change_orientation('RPI').save(fn_seg_r)
-    # resample_file(fn_seg_r, fn_seg_r, '0.5x0.5x'+str(im_fn.dim[6]), 'mm', 'nn', 0)
 
     qc.add_entry(
         src=fn_in,
