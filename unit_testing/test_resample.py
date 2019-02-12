@@ -2,6 +2,7 @@
 # -*- coding: utf-8
 # pytest unit tests for spinalcordtoolbox.resample
 
+# TODO: add test for 2d image
 
 from __future__ import absolute_import
 
