@@ -88,38 +88,22 @@ def get_parser():
     return parser
 
 
-def generate_qc(im_image, im_seg, args, path_qc):
-    """Generate a QC entry allowing to quickly review the segmentation process."""
+def generate_qc(fn_in, fn_seg, args, path_qc):
+    """
+    Generate a QC entry allowing to quickly review the segmentation process.
+    """
     import spinalcordtoolbox.reports.qc as qc
     import spinalcordtoolbox.reports.slice as qcslice
-    from spinalcordtoolbox.resample import resample_file
-    # Resample to fixed resolution (see #2063)
-    tmp_folder = sct.TempFolder()
-    fname_image = im_image.absolutepath
-    # Orient to RPI:
-    # Image
-    fn_image_rpi = os.path.join(tmp_folder.path_tmp, 'img_rpi.nii')
-    im_image.change_orientation('RPI').save(fn_image_rpi)
-    fn_image_rpi_r = os.path.join(tmp_folder.path_tmp, 'img_rpi_r.nii.gz')
-    resample_file(fn_image_rpi, fn_image_rpi_r, '0.5x0.5x'+str(im_image.dim[6]), 'mm', 'nn', 0)
-    # Seg
-    fn_seg_rpi = os.path.join(tmp_folder.path_tmp, 'seg_rpi.nii')
-    im_seg.change_orientation('RPI').save(fn_seg_rpi)
-    fn_seg_rpi_r = os.path.join(tmp_folder.path_tmp, 'seg_rpi_r.nii.gz')
-    resample_file(fn_seg_rpi, fn_seg_rpi_r, '0.5x0.5x'+str(im_image.dim[6]), 'mm', 'nn', 0)
 
-    # TODO: investigate the following issue further (Julien 2018-12-01):
-    # fn_image_rpi_r and fn_seg_rpi_r should be in nii.gz format, otherwise qcslice.Axial outputs an memmap instead of
-    # an array.
     qc.add_entry(
-     src=fname_image,
-     process="sct_deepseg_sc",
-     args=args,
-     path_qc=path_qc,
-     plane='Axial',
-     qcslice=qcslice.Axial([Image(fn_image_rpi_r), Image(fn_seg_rpi_r)]),
-     qcslice_operations=[qc.QcImage.listed_seg],
-     qcslice_layout=lambda x: x.mosaic(),
+        src=fn_in,
+        process="sct_deepseg_sc",
+        args=args,
+        path_qc=path_qc,
+        plane='Axial',
+        qcslice=qcslice.Axial([Image(fn_in), Image(fn_seg)]),
+        qcslice_operations=[qc.QcImage.listed_seg],
+        qcslice_layout=lambda x: x.mosaic(),
     )
 
 
@@ -187,7 +171,7 @@ def main():
     im_seg.save(fname_seg)
 
     if path_qc is not None:
-        generate_qc(im_image, im_seg, args, os.path.abspath(path_qc))
+        generate_qc(fname_image, fname_seg, args, os.path.abspath(path_qc))
 
     sct.display_viewer_syntax([fname_image, fname_seg], colormaps=['gray', 'red'], opacities=['', '0.7'])
 
