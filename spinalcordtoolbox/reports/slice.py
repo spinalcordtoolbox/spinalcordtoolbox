@@ -227,8 +227,9 @@ class Slice(object):
         # TODO: interp_type should ideally be ['spline', 'nn'], however i noticed a slight translation between nn and
         #   spline (or linear), hence this is problematic for comparing the overlay of the segmentation on the image.
         #   Until we correct this translation, we should use the same interpolation for the segmentation and the image.
-        interp_type = ['nn', 'nn']  # because self._image[0,1] is [image, segmentation]
-        for i in [0, 1]:
+        n_images = len(self._images)
+        interp_type = n_images * ['nn']  # because self._image[] is [image, segmentation] (or [im, im, seg])
+        for i in range(n_images):
             image = self._images[i]
             # Create nibabel object
             nii = Nifti1Image(image.data, image.hdr.get_base_affine())
