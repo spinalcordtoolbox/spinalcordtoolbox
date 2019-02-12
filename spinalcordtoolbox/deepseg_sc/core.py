@@ -622,9 +622,6 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
         # segment data using 2D convolutions
         sct.log.info("Segmenting the spinal cord using deep learning on 2D patches...")
         segmentation_model_fname = os.path.join(sct.__sct_dir__, 'data', 'deepseg_sc_models', '{}_sc.h5'.format(contrast_type))
-        print(segmentation_model_fname)
-        print(contrast_type)
-        print((crop_size, crop_size))
         seg_crop_data = segment_2d(model_fname=segmentation_model_fname,
                                    contrast_type=contrast_type,
                                    input_size=(crop_size, crop_size),
@@ -693,4 +690,4 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
         tmp_folder.cleanup()
 
     # reorient to initial orientation
-    return im_image_res_seg_downsamp_postproc.change_orientation(original_orientation), im_nii, seg_uncrop_nii.change_orientation('RPI').save('image_in_RPI_resampled_seg.nii.gz')
+    return im_image_res_seg_downsamp_postproc.change_orientation(original_orientation), im_nii, seg_uncrop_nii.change_orientation('RPI')
