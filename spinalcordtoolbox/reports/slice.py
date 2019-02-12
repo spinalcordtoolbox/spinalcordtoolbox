@@ -13,6 +13,10 @@ import numpy as np
 from scipy import ndimage
 
 from .. import image as msct_image
+from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.resample import resample_nipy
+from nibabel.nifti1 import Nifti1Image
+from nipy.io.nifti_ref import nifti2nipy, nipy2nifti
 
 logger = logging.getLogger("sct.{}".format(__file__))
 
@@ -220,15 +224,6 @@ class Slice(object):
         :param size: each column size
         :return: tuple of numpy.ndarray containing the mosaics of each slice pixels
         """
-        # image = self._images[0]
-        # image.change_orientation('RPI')  # TODO: THIS WILL BREAK WITH SAGITTAL IMAGES!!!
-
-        # TODO: TRY RESAMPLING TO 0.5mm HERE
-        from spinalcordtoolbox.image import Image
-        from spinalcordtoolbox.resample import resample_nipy
-        from nibabel.nifti1 import Nifti1Image
-        from nipy.io.nifti_ref import nifti2nipy, nipy2nifti
-
         image_r = list()
         # TODO: interp_type should ideally be ['spline', 'nn'], however i noticed a slight translation between nn and
         #   spline (or linear), hence this is problematic for comparing the overlay of the segmentation on the image.
@@ -236,7 +231,6 @@ class Slice(object):
         interp_type = ['nn', 'nn']  # because self._image[0,1] is [image, segmentation]
         for i in [0, 1]:
             image = self._images[i]
-            # image.change_orientation('RPI')  # TODO: THIS WILL BREAK WITH SAGITTAL IMAGES!!!
             # Create nibabel object
             nii = Nifti1Image(image.data, image.hdr.get_base_affine())
             img = nifti2nipy(nii)
@@ -300,7 +294,7 @@ class Slice(object):
         return matrices
 
     def aspect(self):
-        return [ self.get_aspect(x) for x in self._images ]
+        return [self.get_aspect(x) for x in self._images]
 
 
 class Axial(Slice):
