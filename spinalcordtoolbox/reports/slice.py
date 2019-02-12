@@ -31,6 +31,8 @@ class Slice(object):
     "i" position of the data of the 3D image. While the functions with the suffix
     `_dim` gets the size of the desired dimension of the 3D image.
 
+    IMPORTANT: Convention for orientation is "SAL"
+
     """
 
     __metaclass__ = abc.ABCMeta
@@ -218,10 +220,38 @@ class Slice(object):
         :param size: each column size
         :return: tuple of numpy.ndarray containing the mosaics of each slice pixels
         """
-        image = self._images[0]
+        # image = self._images[0]
+        # image.change_orientation('RPI')  # TODO: THIS WILL BREAK WITH SAGITTAL IMAGES!!!
+
+        # TODO: TRY RESAMPLING TO 0.5mm HERE
+        from spinalcordtoolbox.image import Image
+        from spinalcordtoolbox.resample import resample_nipy
+        from nibabel.nifti1 import Nifti1Image
+        from nipy.io.nifti_ref import nifti2nipy, nipy2nifti
+
+        image_r = list()
+        # TODO: interp_type should ideally be ['spline', 'nn'], however i noticed a slight translation between nn and
+        #   spline (or linear), hence this is problematic for comparing the overlay of the segmentation on the image.
+        #   Until we correct this translation, we should use the same interpolation for the segmentation and the image.
+        interp_type = ['nn', 'nn']  # because self._image[0,1] is [image, segmentation]
+        for i in [0, 1]:
+            image = self._images[i]
+            # image.change_orientation('RPI')  # TODO: THIS WILL BREAK WITH SAGITTAL IMAGES!!!
+            # Create nibabel object
+            nii = Nifti1Image(image.data, image.hdr.get_base_affine())
+            img = nifti2nipy(nii)
+            # Resample to px x 0.5 x 0.5 mm (orientation is SAL by convention in QC module)
+            img_r = resample_nipy(img, new_size=str(image.dim[4])+'x0.5x0.5', new_size_type='mm',
+                                  interpolation=interp_type[i])
+            nii_r = nipy2nifti(img_r)
+            image_r.append(Image(nii_r.get_data(), hdr=nii_r.header, orientation='SAL',
+                                 dim=nii_r.header.get_data_shape()))
+
+        # Update self._image because used later on
+        self._images = image_r
 
         # Calculate number of columns to display on the report
-        dim = self.get_dim(image)  # dim represents the 3rd dimension of the 3D matrix
+        dim = self.get_dim(image_r[0])  # dim represents the 3rd dimension of the 3D matrix
         if nb_column == 0:
             nb_column = 600 // (size * 2)
 
@@ -231,7 +261,7 @@ class Slice(object):
         matrix_sz = (int(size * 2 * nb_row), int(size * 2 * nb_column))
 
         # Get center of mass for each slice of the image. If the input is the cord segmentation, these coordinates are
-        # used to center the image on each panel of the mosaid.
+        # used to center the image on each panel of the mosaic.
         centers_x, centers_y = self.get_center()
 
         matrices = list()
@@ -251,7 +281,7 @@ class Slice(object):
         """Obtain the matrices of the single slices
 
         :returns: tuple of numpy.ndarray, matrix of the input 3D MRI
-                  containing the slices and matrix of the transformed 3D RMI
+                  containing the slices and matrix of the transformed 3D MRI
                   to output containing the slices
         """
         assert len(set([x.data.shape for x in self._images])) == 1, "Volumes don't have the same size"
