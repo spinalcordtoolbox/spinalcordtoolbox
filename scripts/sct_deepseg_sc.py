@@ -92,7 +92,7 @@ def generate_qc(im_image, im_seg, args, path_qc):
     """Generate a QC entry allowing to quickly review the segmentation process."""
     import spinalcordtoolbox.reports.qc as qc
     import spinalcordtoolbox.reports.slice as qcslice
-    from spinalcordtoolbox.resample.nipy_resample import resample_file
+    from spinalcordtoolbox.resample import resample_file
     # Resample to fixed resolution (see #2063)
     tmp_folder = sct.TempFolder()
     fname_image = im_image.absolutepath
