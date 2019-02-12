@@ -23,10 +23,14 @@ import sct_utils as sct
 
 def resample_nipy(img, new_size, new_size_type, interpolation='linear', verbose=1):
     """Resample a nipy image object based on a specified resampling factor.
-    Can deal with 2d, 3d or 4d image objects.  TODO: make test for that
+    Can deal with 2d, 3d or 4d image objects.
     :param img: nipy Image.
-    :param factor: list of float: Resampling factor. E.g., for 2x isotropic upsampling of a 3d image: factor=[2, 2, 2]
+    :param new_size: list of float: Resampling factor, final dimension or resolution, depending on new_size_type.
     TODO: implement as list.
+    :param new_size_type: {'vox', 'factor', 'mm'}: Feature used for resampling. Examples:
+      new_size=[128, 128, 90], new_size_type='vox' --> Resampling to a dimension of 128x128x90 voxels
+      new_size=[2, 2, 2], new_size_type='factor' --> 2x isotropic upsampling
+      new_size=[1, 1, 5], new_size_type='mm' --> Resampling to a resolution of 1x1x5 mm
     :param interpolation: {'nn', 'linear', 'spline'}. The interpolation type
     :return: The resampled nipy Image.
     """
