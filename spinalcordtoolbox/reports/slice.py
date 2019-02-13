@@ -213,7 +213,7 @@ class Slice(object):
             raise
         return centers_x, centers_y
 
-    def mosaic(self, nb_column=0, size=15):
+    def mosaic(self, nb_column=0, size=15, p_resample=0.6):
         """Obtain matrices of the mosaics
 
         Calculates how many squares will fit in a row based on the column and the size
@@ -221,6 +221,7 @@ class Slice(object):
 
         :param nb_column: number of mosaic columns
         :param size: each column size
+        :param p_resample: float: Pixel size in mm for resampling the data.
         :return: tuple of numpy.ndarray containing the mosaics of each slice pixels
         """
         image_r = list()
@@ -234,9 +235,9 @@ class Slice(object):
             # Create nibabel object
             nii = Nifti1Image(image.data, image.hdr.get_base_affine())
             img = nifti2nipy(nii)
-            # Resample to px x 0.5 x 0.5 mm (orientation is SAL by convention in QC module)
-            img_r = resample_nipy(img, new_size=str(image.dim[4])+'x0.5x0.5', new_size_type='mm',
-                                  interpolation=interp_type[i])
+            # Resample to px x p_resample x p_resample mm (orientation is SAL by convention in QC module)
+            img_r = resample_nipy(img, new_size=str(image.dim[4])+'x'+str(p_resample)+'x'+str(p_resample),
+                                  new_size_type='mm', interpolation=interp_type[i])
             nii_r = nipy2nifti(img_r)
             image_r.append(Image(nii_r.get_data(), hdr=nii_r.header, orientation='SAL',
                                  dim=nii_r.header.get_data_shape()))
