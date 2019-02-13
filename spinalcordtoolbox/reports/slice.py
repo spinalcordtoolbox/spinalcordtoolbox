@@ -24,9 +24,8 @@ class Slice(object):
     """Abstract class representing slicing applied to >=1 volumes for the purpose
     of generating ROI slices.
 
-    The many volumes that are worked on are usually an original MRI volume, then
-    other ones which can be processed or segmentations of the first volumes; the ROIs
-    are computed on the last volume by default.
+    Typically, the first volumes are images, while the last volume is a segmentation, which is used as overlay on the
+    image, and/or to retrieve the center of mass to center the image on each QC mosaic square.
 
     For convenience, the volumes are all brought in the SAL reference frame.
 
@@ -40,14 +39,21 @@ class Slice(object):
 
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, images):
+    def __init__(self, images, p_resample=0.6):
         """
         :param images: list of 3D volumes to be separated into slices.
         """
         self._images = list()
-        for image in images:
+        for i, image in enumerate(images):
             img = Image.change_orientation(image, "SAL")
-            self._images.append(img)
+            if i == len(images) - 1:
+                # Last volume corresponds to a segmentation, therefore use linear interpolation here
+                type = 'seg'
+            else:
+                # Otherwise it's an image: use spline interpolation
+                type = 'im'
+            img_r = self._resample(img, p_resample, type=type)
+            self._images.append(img_r)
 
     @staticmethod
     def axial_slice(data, i):
@@ -213,7 +219,7 @@ class Slice(object):
             raise
         return centers_x, centers_y
 
-    def mosaic(self, nb_column=0, size=15, p_resample=0.6):
+    def mosaic(self, nb_column=0, size=15):
         """Obtain matrices of the mosaics
 
         Calculates how many squares will fit in a row based on the column and the size
@@ -221,32 +227,11 @@ class Slice(object):
 
         :param nb_column: number of mosaic columns
         :param size: each column size
-        :param p_resample: float: Pixel size in mm for resampling the data.
         :return: tuple of numpy.ndarray containing the mosaics of each slice pixels
         """
-        image_r = list()
-        # TODO: interp_type should ideally be ['spline', 'nn'], however i noticed a slight translation between nn and
-        #   spline (or linear), hence this is problematic for comparing the overlay of the segmentation on the image.
-        #   Until we correct this translation, we should use the same interpolation for the segmentation and the image.
-        n_images = len(self._images)
-        interp_type = n_images * ['linear']  # because self._image[] is [image, segmentation] (or [im, im, seg])
-        for i in range(n_images):
-            image = self._images[i]
-            # Create nibabel object
-            nii = Nifti1Image(image.data, image.hdr.get_base_affine())
-            img = nifti2nipy(nii)
-            # Resample to px x p_resample x p_resample mm (orientation is SAL by convention in QC module)
-            img_r = resample_nipy(img, new_size=str(image.dim[4])+'x'+str(p_resample)+'x'+str(p_resample),
-                                  new_size_type='mm', interpolation=interp_type[i])
-            nii_r = nipy2nifti(img_r)
-            image_r.append(Image(nii_r.get_data(), hdr=nii_r.header, orientation='SAL',
-                                 dim=nii_r.header.get_data_shape()))
-
-        # Update self._image because used later on
-        self._images = image_r
 
         # Calculate number of columns to display on the report
-        dim = self.get_dim(image_r[0])  # dim represents the 3rd dimension of the 3D matrix
+        dim = self.get_dim(self._images[0])  # dim represents the 3rd dimension of the 3D matrix
         if nb_column == 0:
             nb_column = 600 // (size * 2)
 
@@ -296,6 +281,35 @@ class Slice(object):
 
     def aspect(self):
         return [self.get_aspect(x) for x in self._images]
+
+    def _resample(self, image, p_resample, type):
+        """
+        Resample at a fixed resolution to make sure the cord always appears with similar scale, regardless of the native
+        resolution of the image. Assumes SAL orientation.
+        :param p_resample: float: Resampling resolution in mm
+        :param type: {'im', 'seg'}: If im, interpolate using spline. If seg, interpolate using linear then binarize.
+        :return:
+        """
+        # Create nibabel object
+        nii = Nifti1Image(image.data, image.hdr.get_base_affine())
+        img = nifti2nipy(nii)
+        # Resample to px x p_resample x p_resample mm (orientation is SAL by convention in QC module)
+        if type == 'im':
+            interp = 'spline'
+        elif type == 'seg':
+            interp = 'linear'
+        img_r = resample_nipy(img, new_size=str(image.dim[4])+'x'+str(p_resample)+'x'+str(p_resample),
+                              new_size_type='mm', interpolation=interp)
+        # If segmentation, binarize using threshold at 0.5
+        if type == 'seg':
+            img_r_data = (img_r.get_data() > 0.5)*1
+        else:
+            img_r_data = img_r.get_data()
+        nii_r = nipy2nifti(img_r)
+        # Create Image objects
+        image_r = Image(img_r_data, hdr=nii_r.header, orientation=image.orientation,
+                        dim=nii_r.header.get_data_shape())
+        return image_r
 
 
 class Axial(Slice):
