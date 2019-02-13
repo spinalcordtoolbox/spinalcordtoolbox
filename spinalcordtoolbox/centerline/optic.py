@@ -104,11 +104,17 @@ def detect_centerline(img, contrast, verbose=1):
     optic_input = file_img
     optic_filename = file_img + '_optic'
     os.environ["FSLOUTPUTTYPE"] = "NIFTI_PAIR"
-    cmd_optic = 'isct_spine_detect -ctype=dpdt -lambda=1 "%s" "%s" "%s"' % \
-                (optic_models_path, optic_input, optic_filename)
+    cmd_optic = [
+     'isct_spine_detect',
+     '-ctype=dpdt',
+     '-lambda=1',
+     optic_models_path,
+     optic_input,
+     optic_filename,
+    ]
     # TODO: output coordinates, for each slice, in continuous (not discrete) values.
 
-    sct.run(cmd_optic, verbose=0)
+    sct.run(cmd_optic, is_sct_binary=True, verbose=0)
 
     # convert .img and .hdr files to .nii.gz
     img_ctl = Image(file_img + '_optic_ctr.hdr')
