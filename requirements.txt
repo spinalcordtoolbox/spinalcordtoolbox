@@ -9,7 +9,7 @@ pandas
 psutil
 raven
 requests
-numpy==1.11 # warnings if using newer version
+numpy #==1.11 # warnings if using newer version
 scipy
 scikit-image
 scikit-learn==0.17.1 # PCA pickles incompatibility

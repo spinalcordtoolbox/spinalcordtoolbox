@@ -59,7 +59,7 @@ install:
     echo Installing SCT
     if [ "x${SCT_MINICONDA}" == "x" ]; then
      pip install --upgrade pip
-     pip install numpy
+     #pip install numpy
      pip install -e .
      mkdir data
      cd data
