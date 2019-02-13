@@ -44,3 +44,21 @@ def test_segment_2d():
     assert np.any(seg[img.data == 100]) == True  # check if SC detected
     assert np.any(seg[img.data != 100]) == False  # check if no FP
     assert msct_image.compute_dice(seg_im, seg_gt_im) > 0.80
+
+def test_intensity_normalization():
+    pass # todo
+
+def test_crop_image_around_centerline():
+    pass # todo
+
+def test_fill_z_holes():
+    pass # todo
+
+def test_remove_blobs():
+    pass # todo
+
+def test_uncrop_image():
+    pass # todo
+
+def test_segment_3d():
+    pass # todo
