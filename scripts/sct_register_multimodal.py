@@ -549,10 +549,10 @@ def main(args=None):
     sct.printv('\nFinished! Elapsed time: ' + str(int(np.round(elapsed_time))) + 's', verbose)
 
     if param.path_qc is not None:
-        if fname_src_seg:
-            generate_qc(fname_src, fname_dest2src, fname_src_seg, args, os.path.abspath(param.path_qc))
+        if fname_dest_seg:
+            generate_qc(fname_src2dest, fname_dest, fname_dest_seg, args, os.path.abspath(param.path_qc))
         else:
-            sct.printv('WARNING: Cannot generate QC because it requires input segmentation.', 1, 'warning')
+            sct.printv('WARNING: Cannot generate QC because it requires destination segmentation.', 1, 'warning')
 
     if generate_warpinv:
         sct.display_viewer_syntax([fname_src, fname_dest2src], verbose=verbose)
