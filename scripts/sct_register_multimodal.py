@@ -419,6 +419,8 @@ def main(args=None):
 
     if fname_src_seg:
         Image(fname_src_seg).save(os.path.join(path_tmp, "src_seg.nii"))
+
+    if fname_dest_seg:
         Image(fname_dest_seg).save(os.path.join(path_tmp, "dest_seg.nii"))
 
     if fname_src_label:
