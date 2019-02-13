@@ -211,12 +211,9 @@ class Param:
         self.debug = 0
         self.outSuffix = "_reg"
         self.padding = 5
-        self.path_qc = os.path.join(os.path.abspath(os.curdir), "qc")
 
 
 # Parameters for registration
-
-
 class Paramreg(object):
     def __init__(self, step=None, type=None, algo='syn', metric='MeanSquares', iter='10', shrink='1', smooth='0',
                  gradStep='0.5', deformation='1x1x0', init='', poly='5', slicewise='0', laplacian='0',
@@ -353,6 +350,7 @@ def main(args=None):
         # update registration parameters
         for paramStep in paramreg_user:
             paramreg.addStep(paramStep)
+    path_qc = arguments.get("-qc", None)
 
     identity = int(arguments['-identity'])
     interp = arguments['-x']
@@ -548,9 +546,9 @@ def main(args=None):
     elapsed_time = time.time() - start_time
     sct.printv('\nFinished! Elapsed time: ' + str(int(np.round(elapsed_time))) + 's', verbose)
 
-    if param.path_qc is not None:
+    if path_qc is not None:
         if fname_dest_seg:
-            generate_qc(fname_src2dest, fname_dest, fname_dest_seg, args, os.path.abspath(param.path_qc))
+            generate_qc(fname_src2dest, fname_dest, fname_dest_seg, args, os.path.abspath(path_qc))
         else:
             sct.printv('WARNING: Cannot generate QC because it requires destination segmentation.', 1, 'warning')
 
@@ -736,7 +734,6 @@ def register(src, dest, paramreg, param, i_step_str):
                                warp_forward_out=warp_forward_out,
                                warp_inverse_out=warp_inverse_out,
                                ants_registration_params=ants_registration_params,
-                               path_qc=param.path_qc,
                                remove_temp_files=param.remove_temp_files,
                                verbose=param.verbose)
 
@@ -773,7 +770,6 @@ def register(src, dest, paramreg, param, i_step_str):
                            warp_forward_out=warp_forward_out,
                            warp_inverse_out=warp_inverse_out,
                            ants_registration_params=ants_registration_params,
-                           path_qc=param.path_qc,
                            remove_temp_files=param.remove_temp_files,
                            verbose=param.verbose)
 
@@ -791,8 +787,7 @@ def register(src, dest, paramreg, param, i_step_str):
                            dest,
                            paramreg.steps[i_step_str].dof,
                            fname_affine=warp_forward_out,
-                           verbose=param.verbose,
-                           path_qc=param.path_qc)
+                           verbose=param.verbose)
 
     if not os.path.isfile(warp_forward_out):
         # no forward warping field for rigid and affine
