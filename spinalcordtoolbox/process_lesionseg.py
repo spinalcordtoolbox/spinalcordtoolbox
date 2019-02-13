@@ -99,19 +99,22 @@ def _measure_totLesion_distribution(im_lesion, atlas_data, im_vert, p_lst):
                 self.distrib_matrix_dct[sheet_name].loc[idx, 'PAM50_' + str(tract_id).zfill(2)] = res_perTract_dct[tract_id][0] * 100.0 / res_perTract_dct[tract_id][1]
 
 
-def _measure_within_im(im_ref, label_lst):
-    printv('\nCompute reference image features...', self.verbose, 'normal')
+def _measure_within_im(lesion_data, ref_data, label_lst, verbose, df=None, fname_ref=None):
+	printv('\nCompute reference image features...', self.verbose, 'normal')
 
-    for lesion_label in label_lst:
-        im_label_data_cur = im_lesion == lesion_label
-        im_label_data_cur[np.where(im_ref == 0)] = 0  # if the ref object is eroded compared to the labeled object
-        mean_cur, std_cur = np.mean(im_ref[np.where(im_label_data_cur)]), np.std(im_ref[np.where(im_label_data_cur)])
+	for lesion_label in label_lst:
+		im_label_data_cur = lesion_data == lesion_label
+		im_label_data_cur[np.where(ref_data == 0)] = 0  # if the ref object is eroded compared to the labeled object
+		mean_cur, std_cur = np.mean(ref_data[np.where(im_label_data_cur)]), np.std(ref_data[np.where(im_label_data_cur)])
 
-        label_idx = self.measure_pd[self.measure_pd.label == lesion_label].index
-        self.measure_pd.loc[label_idx, 'mean_' + extract_fname(self.fname_ref)[1]] = mean_cur
-        self.measure_pd.loc[label_idx, 'std_' + extract_fname(self.fname_ref)[1]] = std_cur
-        printv('Mean+/-std of lesion #' + str(lesion_label) + ' in ' + extract_fname(self.fname_ref)[1] + ' file: ' + str(np.round(mean_cur, 2)) + '+/-' + str(np.round(std_cur, 2)), self.verbose, type='info')
+		if df is not None:
+			label_idx = df[df.label == lesion_label].index
+			df.loc[label_idx, 'mean_' + fname_ref] = mean_cur
+			df.loc[label_idx, 'std_' + fname_ref] = std_cur
 
+		printv('Mean+/-std of lesion #' + str(lesion_label) + ' in ' + fname_ref + ' file: ' + str(np.round(mean_cur, 2)) + '+/-' + str(np.round(std_cur, 2)), verbose, type='info')
+
+	return df
 
 def measure_lesion(im_lesion, path_template=None, im_vert=None, atlas_roi_lst=None, measure_pd=None, fname_ref=None, verbose='1'):
     im_lesion_data = im_lesion.data
@@ -166,6 +169,11 @@ def measure_lesion(im_lesion, path_template=None, im_vert=None, atlas_roi_lst=No
 
     if fname_ref is not None:
         # Compute mean and std value in each labeled lesion
-        _measure_within_im(im_lesion=im_lesion_data, im_ref=Image(self.fname_ref).data, label_lst=label_lst)
+        _measure_within_im(im_lesion=im_lesion_data,
+        					ref_data=Image(fname_ref).data,
+        					label_lst=label_lst,
+        					verbose=verbose,
+        					df=measure_pd,
+        					fname_ref=sct.extract_fname(fname_ref)[1])
 
     return volumes, measure_pd
