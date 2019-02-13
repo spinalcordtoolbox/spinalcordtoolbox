@@ -35,3 +35,8 @@ def test_segment():
 
     assert np.any(seg.data[16:22, 16:22, 64:90]) == True  # check if lesion detected
     assert np.any(seg.data[img.data != 1000]) == False  # check if no FP
+
+
+def test_intensity_normalization():
+    pass # todo
+
