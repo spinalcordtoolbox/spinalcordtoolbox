@@ -45,8 +45,17 @@ def test_segment_2d():
     assert np.any(seg[img.data != 100]) == False  # check if no FP
     assert msct_image.compute_dice(seg_im, seg_gt_im) > 0.80
 
+
 def test_intensity_normalization():
-    pass # todo
+    data_in = np.random.rand(10, 10)
+    min_out, max_out = 0, 255
+
+    data_out = deepseg_sc.scale_intensity(data_in, out_min=0, out_max=255)
+
+    assert data_in.shape == data_out.shape
+    assert np.min(data_out) >= min_out
+    assert np.max(data_out) >= max_out
+
 
 def test_crop_image_around_centerline():
     pass # todo
