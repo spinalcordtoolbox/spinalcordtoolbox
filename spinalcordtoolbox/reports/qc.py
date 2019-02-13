@@ -42,6 +42,8 @@ class QcImage(object):
                        'L1': 20, 'L2': 21, 'L3': 22, 'L4': 23, 'L5': 24,
                        'S1': 25, 'S2': 26, 'S3': 27, 'S4': 28, 'S5': 29,
                        'Co': 30}
+    _color_bin_green = ["#ffffff", "#00ff00"]
+    _color_bin_red = ["#ffffff", "#ff0000"]
     _labels_color = ["#04663c", "#ff0000", "#50ff30",
                      "#ed1339", "#ffffff", "#e002e8",
                      "#ffee00", "#00c7ff", "#199f26",
@@ -91,8 +93,19 @@ class QcImage(object):
     def listed_seg(self, mask):
         img = np.rint(np.ma.masked_where(mask < 1, mask))
         fig = plt.imshow(img,
-                         cmap=color.ListedColormap(self._labels_color),
-                         norm=color.Normalize(vmin=0, vmax=len(self._labels_color)),
+                         cmap=color.ListedColormap(self._color_bin_red),
+                         norm=color.Normalize(vmin=0, vmax=1),
+                         interpolation=self.interpolation,
+                         alpha=1,
+                         aspect=float(self.aspect_mask))
+        fig.axes.get_xaxis().set_visible(False)
+        fig.axes.get_yaxis().set_visible(False)
+
+    def listed_seg_green(self, mask):
+        img = np.rint(np.ma.masked_where(mask < 1, mask))
+        fig = plt.imshow(img,
+                         cmap=color.ListedColormap(self._color_bin_green),
+                         norm=color.Normalize(vmin=0, vmax=1),
                          interpolation=self.interpolation,
                          alpha=1,
                          aspect=float(self.aspect_mask))
