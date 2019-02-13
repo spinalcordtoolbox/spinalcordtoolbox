@@ -183,6 +183,10 @@ def get_parser(paramreg=None):
                       type_value="image_nifti",
                       description="File name of ground-truth registered data (nifti).",
                       mandatory=False)
+    parser.add_option(name='-qc',
+                      type_value='folder_creation',
+                      description='The path where the quality control generated content will be saved',
+                      default_value=None)
     parser.add_option(name="-r",
                       type_value="multiple_choice",
                       description="""Remove temporary files.""",
@@ -541,9 +545,35 @@ def main(args=None):
     # display elapsed time
     elapsed_time = time.time() - start_time
     sct.printv('\nFinished! Elapsed time: ' + str(int(np.round(elapsed_time))) + 's', verbose)
+
+    if param.path_qc is not None:
+        if fname_src_seg:
+            generate_qc(fname_src, fname_dest2src, fname_src_seg, args, os.path.abspath(param.path_qc))
+        else:
+            sct.printv('WARNING: Cannot generate QC because it requires input segmentation.', 1, 'warning')
+
     if generate_warpinv:
         sct.display_viewer_syntax([fname_src, fname_dest2src], verbose=verbose)
     sct.display_viewer_syntax([fname_dest, fname_src2dest], verbose=verbose)
+
+
+def generate_qc(fname_data, fname_dest2src, fname_seg, args, path_qc):
+    """
+    Generate a QC entry allowing to quickly review the straightening process.
+    """
+    import spinalcordtoolbox.reports.qc as qc
+    import spinalcordtoolbox.reports.slice as qcslice
+
+    qc.add_entry(
+     src=fname_data,
+     process="sct_register_multimodal",
+     args=args,
+     path_qc=path_qc,
+     plane="Axial",
+     qcslice=qcslice.Axial([Image(fname_data), Image(fname_dest2src), Image(fname_seg)]),
+     qcslice_operations=[qc.QcImage.no_seg_seg],
+     qcslice_layout=lambda x: x.mosaic()[:2],
+    )
 
 
 # register images
