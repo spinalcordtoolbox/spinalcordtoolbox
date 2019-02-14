@@ -54,7 +54,7 @@ def test_intensity_normalization():
 
     assert data_in.shape == data_out.shape
     assert np.min(data_out) >= min_out
-    assert np.max(data_out) >= max_out
+    assert np.max(data_out) <= max_out
 
 
 def test_crop_image_around_centerline():
