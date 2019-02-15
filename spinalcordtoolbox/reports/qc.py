@@ -305,8 +305,8 @@ class Params(object):
         self.root_folder = dest_folder
         self.mod_date = datetime.datetime.strftime(datetime.datetime.now(), '%Y_%m_%d_%H%M%S.%f')
         self.qc_results = os.path.join(dest_folder, 'qc_results.json')
-        self.bkg_img_path = os.path.join(subject, contrast, command, self.mod_date, 'bkg_img.png')
-        self.overlay_img_path = os.path.join(subject, contrast, command, self.mod_date, 'overlay_img.png')
+        self.bkg_img_path = os.path.join(dataset, subject, contrast, command, self.mod_date, 'bkg_img.png')
+        self.overlay_img_path = os.path.join(dataset, subject, contrast, command, self.mod_date, 'overlay_img.png')
 
     def abs_bkg_img_path(self):
         return os.path.join(self.root_folder, self.bkg_img_path)
@@ -365,6 +365,7 @@ class QcReport(object):
             'cmdline': "{} {}".format(self.qc_params.command, self.qc_params.args),
             'command': self.qc_params.command,
             'sct_version': self.qc_params.sct_version,
+            'dataset': self.qc_params.dataset,
             'subject': self.qc_params.subject,
             'contrast': self.qc_params.contrast,
             'fname_in': self.qc_params.fname_in,
