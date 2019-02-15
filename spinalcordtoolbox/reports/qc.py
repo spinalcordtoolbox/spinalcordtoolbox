@@ -104,11 +104,23 @@ class QcImage(object):
         fig.axes.get_xaxis().set_visible(False)
         fig.axes.get_yaxis().set_visible(False)
 
+    # TODO: avoid duplication with code above
     def listed_seg_green(self, mask):
         img = np.rint(np.ma.masked_where(mask < 1, mask))
         fig = plt.imshow(img,
                          cmap=color.ListedColormap(self._color_bin_green),
                          norm=color.Normalize(vmin=0, vmax=1),
+                         interpolation=self.interpolation,
+                         alpha=1,
+                         aspect=float(self.aspect_mask))
+        fig.axes.get_xaxis().set_visible(False)
+        fig.axes.get_yaxis().set_visible(False)
+
+    def listed_seg_multicolor(self, mask):
+        img = np.rint(np.ma.masked_where(mask < 1, mask))
+        fig = plt.imshow(img,
+                         cmap=color.ListedColormap(self._labels_color),
+                         norm=color.Normalize(vmin=0, vmax=len(self._labels_color)),
                          interpolation=self.interpolation,
                          alpha=1,
                          aspect=float(self.aspect_mask))
