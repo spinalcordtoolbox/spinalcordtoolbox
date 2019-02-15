@@ -371,7 +371,7 @@ def generate_qc(fn_in, fn_labeled, args, path_qc):
         import matplotlib.pyplot as plt
         import scipy.ndimage
 
-        self.listed_seg(mask)
+        self.listed_seg_multicolor(mask)
 
         ax = plt.gca()
         a = [0.0]
@@ -403,7 +403,7 @@ def generate_qc(fn_in, fn_labeled, args, path_qc):
         path_qc=path_qc,
         plane='Sagittal',
         dpi=100,
-        qcslice=qcslice.Sagittal([Image(fn_in), Image(fn_labeled)]),
+        qcslice=qcslice.Sagittal([Image(fn_in), Image(fn_labeled)], p_resample=None),
         qcslice_operations=[label_vertebrae],
         qcslice_layout=lambda x: x.single(),
     )
