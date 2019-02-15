@@ -83,6 +83,7 @@ class QcImage(object):
         self.interpolation = interpolation
         self.action_list = action_list
         self._stretch_contrast = stretch_contrast
+        self._stretch_contrast_method = 'contrast_stretching'  # contrast_stretching, equalized
 
     """
     action_list contain the list of images that has to be generated.
@@ -214,7 +215,15 @@ class QcImage(object):
                     if h != h1 or w != w1:
                         c = c[:h, :w]
                     return np.array(c * (max_ - min_) + min_, dtype=a.dtype)
-                img = equalized(img)
+
+                def contrast_stretching(a):
+                    p2, p98 = np.percentile(a, (2, 98))
+                    return skimage.exposure.rescale_intensity(a, in_range=(p2, p98))
+
+                func_stretch_contrast = {'equalized': equalized,
+                                         'contrast_stretching': contrast_stretching}
+
+                img = func_stretch_contrast[self._stretch_contrast_method](img)
 
             plt.figure()
             fig = plt.imshow(img, cmap=plt.cm.gray, interpolation=self.interpolation, aspect=float(aspect_img))
@@ -228,7 +237,7 @@ class QcImage(object):
                 plt.figure()
                 if self._stretch_contrast and action.__name__ in ("no_seg_seg",):
                     print("Mask type %s" % mask.dtype)
-                    mask = equalized(mask)
+                    mask = func_stretch_contrast[self._stretch_contrast_method](mask)
                 action(self, mask)
                 self._save(self.qc_report.qc_params.abs_overlay_img_path(), dpi=self.qc_report.qc_params.dpi)
             plt.close()
