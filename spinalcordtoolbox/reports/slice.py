@@ -46,13 +46,16 @@ class Slice(object):
         self._images = list()
         for i, image in enumerate(images):
             img = Image.change_orientation(image, "SAL")
-            if i == len(images) - 1:
-                # Last volume corresponds to a segmentation, therefore use linear interpolation here
-                type = 'seg'
+            if p_resample:
+                if i == len(images) - 1:
+                    # Last volume corresponds to a segmentation, therefore use linear interpolation here
+                    type = 'seg'
+                else:
+                    # Otherwise it's an image: use spline interpolation
+                    type = 'im'
+                img_r = self._resample(img, p_resample, type=type)
             else:
-                # Otherwise it's an image: use spline interpolation
-                type = 'im'
-            img_r = self._resample(img, p_resample, type=type)
+                img_r = img.copy()
             self._images.append(img_r)
 
     @staticmethod
