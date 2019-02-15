@@ -303,7 +303,7 @@ class Params(object):
         self.orientation = orientation
         self.dpi = dpi
         self.root_folder = dest_folder
-        self.mod_date = datetime.datetime.strftime(datetime.datetime.now(), '%Y_%m_%d_%H%M%S')
+        self.mod_date = datetime.datetime.strftime(datetime.datetime.now(), '%Y_%m_%d_%H%M%S.%f')
         self.qc_results = os.path.join(dest_folder, 'qc_results.json')
         self.bkg_img_path = os.path.join(subject, contrast, command, self.mod_date, 'bkg_img.png')
         self.overlay_img_path = os.path.join(subject, contrast, command, self.mod_date, 'overlay_img.png')
