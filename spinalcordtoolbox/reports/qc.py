@@ -270,8 +270,8 @@ class QcImage(object):
 class Params(object):
     """Parses and stores the variables that will included into the QC details
 
-    We derive the value of the contrast and subject name from the `input_file` path,
-    by splitting it into `[subject]/[contrast]/input_file`
+    Assuming BIDS convention, we derive the value of the dataset, subject and contrast from the `input_file`
+    by splitting it into `[dataset]/[subject]/[contrast]/input_file`
     """
 
     def __init__(self, input_file, command, args, orientation, dest_folder, dpi=300):
@@ -287,11 +287,13 @@ class Params(object):
         path_in, file_in, ext_in = sct.extract_fname(os.path.abspath(input_file))
         # abs_input_path = os.path.dirname(os.path.abspath(input_file))
         abs_input_path, contrast = os.path.split(path_in)
-        _, subject = os.path.split(abs_input_path)
+        abs_input_path, subject = os.path.split(abs_input_path)
+        _, dataset = os.path.split(abs_input_path)
         if isinstance(args, list):
             args = sct.list2cmdline(args)
 
         self.fname_in = file_in+ext_in
+        self.dataset = dataset
         self.subject = subject
         self.cwd = os.getcwd()
         self.contrast = contrast
