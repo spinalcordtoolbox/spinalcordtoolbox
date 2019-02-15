@@ -66,7 +66,8 @@ class QcImage(object):
                      "#a22abd", "#d58240", "#ac2aff"]
     _seg_colormap = plt.cm.autumn
 
-    def __init__(self, qc_report, interpolation, action_list, stretch_contrast=True):
+    def __init__(self, qc_report, interpolation, action_list, stretch_contrast=True,
+                 stretch_contrast_method='contrast_stretching'):
         """
 
         Parameters
@@ -78,12 +79,13 @@ class QcImage(object):
         action_list : list of functions
             List of functions that generates a specific type of images
         stretch_contrast : adjust image so as to improve contrast
+        stretch_contrast_method: {'contrast_stretching', 'equalized'}: Method for stretching contrast
         """
         self.qc_report = qc_report
         self.interpolation = interpolation
         self.action_list = action_list
         self._stretch_contrast = stretch_contrast
-        self._stretch_contrast_method = 'contrast_stretching'  # contrast_stretching, equalized
+        self._stretch_contrast_method = stretch_contrast_method
 
     """
     action_list contain the list of images that has to be generated.
@@ -418,6 +420,7 @@ def add_entry(src, process, args, path_qc, plane, background=None, foreground=No
     :param qcslice_operations:
     :param qcslice_layout:
     :param dpi: int: Output resolution of the image
+    :param stretch_contrast_method: Method for stretching contrast. See QcImage
     :return:
     """
 
