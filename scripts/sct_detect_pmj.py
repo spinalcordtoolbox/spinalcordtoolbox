@@ -318,24 +318,24 @@ def generate_qc(fname_in, fname_out, args, path_qc):
         ax.imshow(img, cmap='gray', alpha=0)
 
         rect = patches.Rectangle((x - 10, y - 10),
-                                    20, 20,
-                                    linewidth=2,
-                                    edgecolor='lime',
-                                    facecolor='none')
+                                 20, 20,
+                                 linewidth=2,
+                                 edgecolor='lime',
+                                 facecolor='none')
 
         ax.add_patch(rect)
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
 
     qc.add_entry(
-     src=fname_in,
-     process="sct_detect_pmj",
-     args=args,
-     path_qc=path_qc,
-     plane="Sagittal",
-     qcslice=qcslice.Sagittal([Image(fname_in), Image(fname_out)]),
-     qcslice_operations=[highlight_pmj],
-     qcslice_layout=lambda x: x.single(),
+        src=fname_in,
+        process="sct_detect_pmj",
+        args=args,
+        path_qc=path_qc,
+        plane="Sagittal",
+        qcslice=qcslice.Sagittal([Image(fname_in), Image(fname_out)], p_resample=None),
+        qcslice_operations=[highlight_pmj],
+        qcslice_layout=lambda x: x.single(),
     )
 
 
