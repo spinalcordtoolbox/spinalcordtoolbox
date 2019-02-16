@@ -13,6 +13,7 @@
 from __future__ import print_function, absolute_import
 
 import sys, io, os, time, random, copy, shlex, importlib, multiprocessing, tempfile, shutil
+import traceback, inspect
 import signal, stat
 
 
@@ -184,6 +185,7 @@ def process_function(fname, param):
         except Exception as e:
             list_status_function.append(1)
             list_output.append("TODO exception: %s" % e)
+            list_output += traceback.format_exc().splitlines()
         else:
             list_status_function.append(param_test.status)
             list_output.append(param_test.output)
