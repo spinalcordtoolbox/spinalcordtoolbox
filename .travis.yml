@@ -86,6 +86,7 @@ script:
     else
       ls -lA bin
     fi
+    sct_download_data -d sct_testing_data # for tests
 
   - |
     echo Linting
@@ -109,7 +110,7 @@ script:
   - |
     echo Running integration tests
     if [ "${TRAVIS_OS_NAME}" = "osx" ]; then
-      COVERAGE_PROCESS_START="$PWD/.coveragerc" COVERAGE_FILE="$PWD/.coverage" sct_testing -j1 -d 1 --abort-on-failure
+      COVERAGE_PROCESS_START="$PWD/.coveragerc" COVERAGE_FILE="$PWD/.coverage" sct_testing -j1 -d 0 --abort-on-failure
       #brew update;
       #brew install gdb;
       #COVERAGE_PROCESS_START="$PWD/.coveragerc" COVERAGE_FILE="$PWD/.coverage" gdb --batch --ex "b __THE_PROCESS_HAS_FORKED_AND_YOU_CANNOT_USE_THIS_COREFOUNDATION_FUNCTIONALITY___YOU_MUST_EXEC__"  -ex r --ex "threads apply all bt" -ex "quit" --args python/bin/python  $(which sct_testing) -d 1 --abort-on-failure
@@ -122,7 +123,7 @@ script:
       #  python/bin/python
       coverage combine
     else
-      COVERAGE_PROCESS_START="$PWD/.coveragerc" COVERAGE_FILE="$PWD/.coverage" sct_testing -d 1 --abort-on-failure
+      COVERAGE_PROCESS_START="$PWD/.coveragerc" COVERAGE_FILE="$PWD/.coverage" sct_testing -d 0 --abort-on-failure
       coverage combine
     fi
 
