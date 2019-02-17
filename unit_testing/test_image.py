@@ -49,7 +49,6 @@ def fake_3dimage_sct_custom(data):
     return img
 
 
-@pytest.fixture(scope="session")
 def fake_3dimage_vis():
     """
     :return: a Nifti1Image (3D) in RAS+ space
@@ -124,7 +123,6 @@ def fake_3dimage_vis():
     return nibabel.nifti1.Nifti1Image(data, affine)
 
 
-@pytest.fixture(scope="session")
 def fake_3dimage_sct_vis():
     """
     :return: an Image (3D) in RAS+ (aka SCT LPI) space
@@ -137,7 +135,6 @@ def fake_3dimage_sct_vis():
     return img
 
 
-@pytest.fixture(scope="session")
 def fake_3dimage():
     """
     :return: a Nifti1Image (3D) in RAS+ space
@@ -167,7 +164,7 @@ def fake_3dimage():
     affine = np.eye(4)
     return nibabel.nifti1.Nifti1Image(data, affine)
 
-@pytest.fixture(scope="session")
+
 def fake_3dimage2():
     """
     :return: a Nifti1Image (3D) in RAS+ space
@@ -189,7 +186,6 @@ def fake_3dimage2():
     affine = np.eye(4)
     return nibabel.nifti1.Nifti1Image(data, affine)
 
-@pytest.fixture(scope="session")
 def fake_4dimage():
     """
     :return: a Nifti1Image (3D) in RAS+ space
@@ -213,7 +209,6 @@ def fake_4dimage():
     affine = np.eye(4)
     return nibabel.nifti1.Nifti1Image(data, affine)
 
-@pytest.fixture(scope="session")
 def fake_4dimage_sct():
     """
     :return: an Image (4D) in RAS+ (aka SCT LPI) space
@@ -225,7 +220,6 @@ def fake_4dimage_sct():
     )
     return img
 
-@pytest.fixture(scope="session")
 def fake_3dimage_sct():
     """
     :return: an Image (3D) in RAS+ (aka SCT LPI) space
@@ -237,7 +231,6 @@ def fake_3dimage_sct():
     )
     return img
 
-@pytest.fixture(scope="session")
 def fake_3dimage_sct2():
     """
     :return: an Image (3D) in RAS+ (aka SCT LPI) space
