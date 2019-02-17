@@ -603,7 +603,7 @@ def checkRAM(os, verbose=1):
 
         # Iterate processes
         processLines = ps.split('\n')
-        sep = re.compile('[\s]+')
+        sep = re.compile(r'[\s]+')
         rssTotal = 0  # kB
         for row in range(1, len(processLines)):
             rowText = processLines[row].strip()
@@ -616,12 +616,12 @@ def checkRAM(os, verbose=1):
 
         # Process vm_stat
         vmLines = vm.split('\n')
-        sep = re.compile(':[\s]+')
+        sep = re.compile(r':[\s]+')
         vmStats = {}
         for row in range(1, len(vmLines) - 2):
             rowText = vmLines[row].strip()
             rowElements = sep.split(rowText)
-            vmStats[(rowElements[0])] = int(rowElements[1].strip('\.')) * 4096
+            vmStats[(rowElements[0])] = int(rowElements[1].strip(r'\.')) * 4096
 
         if verbose:
             printv('  Wired Memory:\t\t%d MB' % (vmStats["Pages wired down"] / 1024 / 1024))
