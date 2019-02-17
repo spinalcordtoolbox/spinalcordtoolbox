@@ -494,11 +494,11 @@ def write_to_log_file(fname_log, string, mode='w', prepend=False):
     try:
         # if prepend, read current file and then overwrite
         if prepend:
-            f = open(fname_log, 'r')
+            f = open(fname_log, 'r', encoding="utf-8")
             # string_to_append = '\n\nOUTPUT:\n--\n' + f.read()
             string_to_append = f.read()
             f.close()
-        f = open(fname_log, mode)
+        f = open(fname_log, mode, encoding="utf-8")
     except Exception as ex:
         raise Exception('WARNING: Cannot open log file {}.'.format(os.path.abspath(fname_log)))
     f.write(string + string_to_append + '\n')
