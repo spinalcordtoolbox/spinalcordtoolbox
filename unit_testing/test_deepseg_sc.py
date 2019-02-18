@@ -2,11 +2,13 @@ from __future__ import absolute_import
 
 import os
 import numpy as np
+import nibabel as nib
 import sct_utils as sct
 from spinalcordtoolbox.image import Image
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.deepseg_sc import core as deepseg_sc
 from spinalcordtoolbox.resample.nipy_resample import resample_file
+from test_centerline import dummy_centerline_small
 
 
 def _preprocess_segment(fname_t2, fname_t2_seg, contrast_test, dim_3=False):
@@ -112,7 +114,30 @@ def test_intensity_normalization():
 
 
 def test_crop_image_around_centerline():
-    pass # todo
+    input_shape = (100, 100, 100)
+    crop_size = 20
+    crop_size_half = crop_size // 2
+
+    data = np.random.rand(input_shape[0], input_shape[1], input_shape[2])
+    affine = np.eye(4)
+    nii = nib.nifti1.Nifti1Image(data, affine)
+    img = Image(data, hdr=nii.header, dim=nii.header.get_data_shape())
+
+    ctr, _ = dummy_centerline_small(size_arr=input_shape)
+
+    _, _, img_out = deepseg_sc.crop_image_around_centerline(im_in=img.copy(),
+                                                        ctr_in=ctr.copy(),
+                                                        crop_size=crop_size)
+
+    img_in_z0 = img.data[:,:,0]
+    x_ctr_z0, y_ctr_z0 = np.where(ctr.data[:,:,0])[0][0], np.where(ctr.data[:,:,0])[1][0]
+    x_start, x_end = deepseg_sc._find_crop_start_end(x_ctr_z0, crop_size, img.dim[0])
+    y_start, y_end = deepseg_sc._find_crop_start_end(y_ctr_z0, crop_size, img.dim[1])
+    img_in_z0_crop = img_in_z0[x_start:x_end, y_start:y_end]
+
+    assert img_out.data.shape == (crop_size, crop_size, input_shape[2])
+    assert np.allclose(img_in_z0_crop, img_out.data[:,:,0])
+
 
 def test_fill_z_holes():
     pass # todo
