@@ -88,13 +88,13 @@ install_refresh ()
     echo
     echo "" >> ${THE_BASHRC}
     echo "# SPINALCORDTOOLBOX (installed on $(date +%Y-%m-%d\ %H:%M:%S))" >> ${THE_BASHRC}
-    echo "PATH+=\":${SCT_DIR}/${BIN_DIR}\"" >> ${THE_BASHRC}
+    echo "PATH=\"${SCT_DIR}/${BIN_DIR}:\${PATH}\"" >> ${THE_BASHRC}
     echo "" >> ${THE_BASHRC}
   else
     # (t)csh for good measure
     echo "" >> ${THE_CSHRC}
     echo "# SPINALCORDTOOLBOX" >> ${THE_CSHRC}
-    echo "setenv PATH \"\${PATH}:${SCT_DIR}/${BIN_DIR}\"" >> ${THE_CSHRC}
+    echo "setenv PATH \"${SCT_DIR}/${BIN_DIR}:\${PATH}\"" >> ${THE_CSHRC}
     echo "" >> ${THE_CSHRC}
   fi
 }
