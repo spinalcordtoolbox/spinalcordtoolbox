@@ -44,7 +44,7 @@ def circular_filter_1d(signal, param_filt, filter='gaussian'):
 
     return signal_smoothed
 
-def hog_ancestor(image, nb_bin, grad_ksize=123456789, seg_probability_map=None, return_image=False): # TODO implement selection of gradient's kernel size
+def hog_ancestor(image, nb_bin, grad_ksize=123456789, seg_weighted_mask=None, return_image=False): # TODO implement selection of gradient's kernel size
 
     """ This function takes an image as an input and return its orientation histogram
     inputs :
@@ -75,8 +75,8 @@ def hog_ancestor(image, nb_bin, grad_ksize=123456789, seg_probability_map=None, 
     grad_mag = grad_mag / np.max(grad_mag)  # to have map between 0 and 1
     # TODO: weird data type manipulation, to explain
 
-    if seg_probability_map is not None:
-        weighting_map = np.multiply(seg_probability_map, grad_mag)  # include weightning by segmentation
+    if seg_weighted_mask is not None:
+        weighting_map = np.multiply(seg_weighted_mask, grad_mag)  # include weightning by segmentation
     else:
         weighting_map = grad_mag
     # compute histogram :
@@ -84,8 +84,8 @@ def hog_ancestor(image, nb_bin, grad_ksize=123456789, seg_probability_map=None, 
                               weights=np.concatenate(weighting_map))  # check param density that permits outputting a distribution that has integral of 1
     # hog_ancest = np.histogram(np.concatenate(orient), bins=nb_bin)
     grad_mag = (grad_mag * 255).astype(float).round()  # just for debbuguing purpose
-    if seg_probability_map is not None:
-        seg_probability_map = (seg_probability_map * 255).astype(float).round()
+    if seg_weighted_mask is not None:
+        seg_weighted_mask = (seg_weighted_mask * 255).astype(float).round()
     weighting_map = (weighting_map * 255).astype(float).round()
 
     if return_image:
@@ -93,7 +93,7 @@ def hog_ancestor(image, nb_bin, grad_ksize=123456789, seg_probability_map=None, 
     else:
         return hog_ancest[0].astype(float)  # return only the values of the bins, not the bins (we know them)
 
-def generate_2Dimage_line(image, x0, y0, angle):
+def generate_2Dimage_line(image, x0, y0, angle, value=0):
 
     """ This function takes an image and a line (defined by a point and an angle) as inputs and outputs the same image
     but with the line drawn on it
@@ -156,7 +156,10 @@ def generate_2Dimage_line(image, x0, y0, angle):
     # use the line function from scikit image to acquire pixel coordinates of the line
 
     image_wline = image
-    image_wline[coord_linex, coord_liney] = np.amax(image)  # put the line at full intensity (not really elegant)
+    if value == 0:
+        image_wline[coord_linex, coord_liney] = np.amax(image)  # put the line at full intensity (not really elegant)
+    else:
+        image_wline[coord_linex, coord_liney] = value
     # actually the "copy" is not useful, just used to clarify, because python does not make an actual copy when you do
     # this
 
