@@ -420,7 +420,8 @@ def add_entry(src, process, args, path_qc, plane, background=None, foreground=No
               qcslice=None,
               qcslice_operations=[],
               qcslice_layout=None,
-              dpi=300):
+              dpi=300,
+              stretch_contrast_method='contrast_stretching'):
     """
     Starting point to QC report creation.
 
@@ -443,7 +444,7 @@ def add_entry(src, process, args, path_qc, plane, background=None, foreground=No
     report = QcReport(qc_param, '')
 
     if qcslice is not None:
-        @QcImage(report, 'none', qcslice_operations)
+        @QcImage(report, 'none', qcslice_operations, stretch_contrast_method=stretch_contrast_method)
         def layout(qslice):
             return qcslice_layout(qslice)
 
