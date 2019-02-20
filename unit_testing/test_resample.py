@@ -31,6 +31,21 @@ def fake_3dimage_nipy():
 
 
 @pytest.fixture(scope="session")
+def fake_3dimage_nipy_big():
+    """
+    :return: an empty 3-d nipy Image
+    """
+    nx, ny, nz = 29, 39, 19  # image dimension
+    data = np.zeros((nx, ny, nz), dtype=np.int8)
+    data[14, 19, 9] = 1.
+    affine = np.eye(4)
+    # Create nibabel object
+    nii = nib.nifti1.Nifti1Image(data, affine)
+    # return nipy object
+    return nifti2nipy(nii)
+
+
+@pytest.fixture(scope="session")
 def fake_4dimage_nipy():
     """
     :return: an empty 4-d nipy Image
@@ -54,6 +69,14 @@ def test_nipy_resample_image_3d(fake_3dimage_nipy):
     assert nipy2nifti(img_r).header.get_zooms() == (0.5, 0.5, 1.0)
     # debug
     # nib.save(nipy2nifti(img_r), 'test_4.nii.gz')
+
+
+# noinspection 801,PyShadowingNames
+def test_nipy_resample_image_3d_to_dest(fake_3dimage_nipy, fake_3dimage_nipy_big):
+    """Test resampling with 3D nipy image"""
+    img_r = resample.resample_nipy(fake_3dimage_nipy, img_dest=fake_3dimage_nipy_big, interpolation='linear')
+    assert img_r.get_data().shape == (29, 39, 19)
+    assert img_r.get_data()[4, 4, 4] == 1.0
 
 
 # noinspection 801,PyShadowingNames
