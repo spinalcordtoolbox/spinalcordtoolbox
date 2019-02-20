@@ -95,14 +95,15 @@ def generate_qc(fn_in, fn_seg, args, path_qc):
     from spinalcordtoolbox.image import Image
 
     qc.add_entry(
-     src=fn_in,
-     process="sct_deepseg_gm",
-     args=args,
-     path_qc=path_qc,
-     plane='Axial',
-     qcslice=qcslice.Axial([Image(fn_in), Image(fn_seg)]),
-     qcslice_operations=[qc.QcImage.listed_seg],
-     qcslice_layout=lambda x: x.mosaic(),
+        src=fn_in,
+        process="sct_deepseg_gm",
+        args=args,
+        path_qc=path_qc,
+        plane='Axial',
+        qcslice=qcslice.Axial([Image(fn_in), Image(fn_seg)]),
+        qcslice_operations=[qc.QcImage.listed_seg],
+        qcslice_layout=lambda x: x.mosaic(),
+        stretch_contrast_method='contrast_stretching'  # here we want to maximize WM/GM contrast, hence this choice
     )
 
 
