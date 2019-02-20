@@ -9,8 +9,6 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-# TODO: Ultimately replace resample_image (based on nipy) with Image, to avoid confusion.
-
 
 from __future__ import division, absolute_import
 
@@ -21,7 +19,7 @@ from nipy.algorithms.registration.resample import resample as n_resample
 import sct_utils as sct
 
 
-def resample_nipy(img, new_size, new_size_type, interpolation='linear', verbose=1):
+def resample_nipy(img, new_size=None, new_size_type=None, img_dest=None, interpolation='linear', verbose=1):
     """Resample a nipy image object based on a specified resampling factor.
     Can deal with 2d, 3d or 4d image objects.
     :param img: nipy Image.
@@ -31,49 +29,13 @@ def resample_nipy(img, new_size, new_size_type, interpolation='linear', verbose=
       new_size=[128, 128, 90], new_size_type='vox' --> Resampling to a dimension of 128x128x90 voxels
       new_size=[2, 2, 2], new_size_type='factor' --> 2x isotropic upsampling
       new_size=[1, 1, 5], new_size_type='mm' --> Resampling to a resolution of 1x1x5 mm
+    :param img_dest: Destination nipy Image to resample the input image to. In this case, new_size and new_size_type are
+      ignored
     :param interpolation: {'nn', 'linear', 'spline'}. The interpolation type
     :return: The resampled nipy Image.
     """
     # TODO: deal with 4d (and other dim) data
 
-    # Get dimensions of data
-    p = img.header.get_zooms()
-    shape = img.header.get_data_shape()
-
-    # parse input argument
-    new_size = new_size.split('x')
-
-    if img.ndim == 4:
-        new_size += ['1']  # needed because the code below is general, i.e., does not assume 3d input and uses img.shape
-
-    # assert len(shape) == len(new_size)
-
-    # compute new shape based on specific resampling method
-    if new_size_type == 'vox':
-        shape_r = tuple([int(new_size[i]) for i in range(img.ndim)])
-    elif new_size_type == 'factor':
-        if len(new_size) == 1:
-            # isotropic resampling
-            new_size = tuple([new_size[0] for i in range(img.ndim)])
-        # compute new shape as: shape_r = shape * f
-        shape_r = tuple([int(np.round(shape[i] * float(new_size[i]))) for i in range(img.ndim)])
-    elif new_size_type == 'mm':
-        if len(new_size) == 1:
-            # isotropic resampling
-            new_size = tuple([new_size[0] for i in range(img.ndim)])
-        # compute new shape as: shape_r = shape * (p_r / p)
-        shape_r = tuple([int(np.round(shape[i] * float(p[i]) / float(new_size[i]))) for i in range(img.ndim)])
-    else:
-        sct.log.error('new_size_type is not recognized.')
-
-    # Generate 3d affine transformation: R
-    affine = img.affine[:4, :4]
-    affine[3, :] = np.array([0, 0, 0, 1])  # satisfy to nifti convention. Otherwise it grabs the temporal
-    sct.log.debug('Affine matrix: \n' + str(affine), verbose)
-    R = np.eye(4)
-    for i in range(3):
-        R[i, i] = img.shape[i] / float(shape_r[i])
-    affine_r = np.dot(affine, R)
 
     # set interpolation method
     # TODO: make a dict
@@ -84,9 +46,57 @@ def resample_nipy(img, new_size, new_size_type, interpolation='linear', verbose=
     elif interpolation == 'spline':
         interp_order = 2
 
+    if img_dest is None:
+        # Get dimensions of data
+        p = img.header.get_zooms()
+        shape = img.header.get_data_shape()
+
+        # parse input argument
+        new_size = new_size.split('x')
+
+        if img.ndim == 4:
+            new_size += ['1']  # needed because the code below is general, i.e., does not assume 3d input and uses img.shape
+
+        # assert len(shape) == len(new_size)
+
+        # compute new shape based on specific resampling method
+        if new_size_type == 'vox':
+            shape_r = tuple([int(new_size[i]) for i in range(img.ndim)])
+        elif new_size_type == 'factor':
+            if len(new_size) == 1:
+                # isotropic resampling
+                new_size = tuple([new_size[0] for i in range(img.ndim)])
+            # compute new shape as: shape_r = shape * f
+            shape_r = tuple([int(np.round(shape[i] * float(new_size[i]))) for i in range(img.ndim)])
+        elif new_size_type == 'mm':
+            if len(new_size) == 1:
+                # isotropic resampling
+                new_size = tuple([new_size[0] for i in range(img.ndim)])
+            # compute new shape as: shape_r = shape * (p_r / p)
+            shape_r = tuple([int(np.round(shape[i] * float(p[i]) / float(new_size[i]))) for i in range(img.ndim)])
+        else:
+            sct.log.error('new_size_type is not recognized.')
+
+        # Generate 3d affine transformation: R
+        affine = img.affine[:4, :4]
+        affine[3, :] = np.array([0, 0, 0, 1])  # satisfy to nifti convention. Otherwise it grabs the temporal
+        sct.log.debug('Affine matrix: \n' + str(affine), verbose)
+        R = np.eye(4)
+        for i in range(3):
+            R[i, i] = img.shape[i] / float(shape_r[i])
+        affine_r = np.dot(affine, R)
+
+        reference = (shape_r, affine_r)
+
+    else:
+        # If reference is provided
+        reference = img_dest
+        R = None
+
     if img.ndim == 3:
-        img_r = n_resample(img, transform=R, reference=(shape_r, affine_r), mov_voxel_coords=True,
+        img_r = n_resample(img, transform=R, reference=reference, mov_voxel_coords=True,
                            ref_voxel_coords=True, dtype='double', interp_order=interp_order, mode='nearest')
+
     elif img.ndim == 4:
         # Import here instead of top of the file because this is an isolated case and nibabel takes time to import
         import nibabel as nib
