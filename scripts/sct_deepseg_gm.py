@@ -103,7 +103,7 @@ def generate_qc(fn_in, fn_seg, args, path_qc):
         qcslice=qcslice.Axial([Image(fn_in), Image(fn_seg)]),
         qcslice_operations=[qc.QcImage.listed_seg],
         qcslice_layout=lambda x: x.mosaic(),
-        stretch_contrast_method='contrast_stretching'  # here we want to maximize WM/GM contrast, hence this choice
+        stretch_contrast_method='equalized'  # here we want to maximize WM/GM contrast, hence this choice
     )
 
 
