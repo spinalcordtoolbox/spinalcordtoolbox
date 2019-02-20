@@ -148,11 +148,7 @@ class QcImage(object):
         fig.axes.get_yaxis().set_visible(False)
 
     def no_seg_seg(self, mask):
-        values = np.ma.masked_equal(np.rint(mask), 0)
-        fig = plt.imshow(values,
-                         cmap=plt.cm.gray,
-                         interpolation=self.interpolation,
-                         aspect=self.aspect_mask)
+        fig = plt.imshow(mask, cmap=plt.cm.gray, interpolation=self.interpolation, aspect=self.aspect_mask)
         fig.axes.get_xaxis().set_visible(False)
         fig.axes.get_yaxis().set_visible(False)
 
