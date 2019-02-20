@@ -12,6 +12,7 @@ import sys, os, shutil
 from functions_sym_rot import *
 import fnmatch
 import scipy
+from msct_register import compute_pca, angle_between
 
 def get_parser():
 
@@ -53,11 +54,13 @@ def main(args=None):
         path_output = os.getcwd()
 
     for root, dirnames, filenames in os.walk(input_folder):  # searching the given directory
-        for filename in fnmatch.filter(filenames, "*.nii"):  # if file with nii extension (.nii or .nii.gz) found
+        for filename in fnmatch.filter(filenames, "*.nii*"):  # if file with nii extension (.nii or .nii.gz) found
             if "seg" in filename:
                 continue  # do not consider it if it's a segmentation
-            if filename.split(".nii")[0] + "_seg.nii" in filenames:  # find potential seg associated with the file
-                file_seg_input = os.path.join(root, filename.split(".nii")[0] + "_seg.nii")
+            if "dwi" in filename:
+                continue  # do not consider it if it's DWI
+            if filename.split(".nii")[0] + "_seg.nii" + filename.split(".nii")[1] in filenames:  # find potential seg associated with the file
+                file_seg_input = os.path.join(root, filename.split(".nii")[0] + "_seg.nii" + filename.split(".nii")[1])
             else:
                 file_seg_input = None
 
@@ -66,6 +69,24 @@ def main(args=None):
             elif test_str == "test_2D_hogancest":
                 test_2D_hogancest(file_input=os.path.join(root, filename),
                                   path_output=path_output, file_seg_input=file_seg_input)
+            elif test_str == "test_3D_hogancest":
+                if file_seg_input is None:
+                    sct.printv("no segmentation for file : " + filename)
+                    continue
+                test_3D_hogancest(file_input=os.path.join(root, filename),
+                                  path_output=path_output, file_seg_input=file_seg_input)
+            elif test_str == "test_3D_PCA":
+                if file_seg_input is None:
+                    sct.printv("no segmentation for file : " + filename)
+                    continue
+                test_3D_PCA(file_input=os.path.join(root, filename),
+                            path_output=path_output, file_seg_input=file_seg_input)
+            elif test_str == "compare_PCA_Hogancest":
+                if file_seg_input is None:
+                    sct.printv("no segmentation for file : " + filename)
+                    continue
+                compare_PCA_Hogancest(file_input=os.path.join(root, filename),
+                            path_output=path_output, file_seg_input=file_seg_input)
             else:
                 raise Exception("no such test as " + test_str + " exists")
 
@@ -73,6 +94,234 @@ def main(args=None):
 def test_list_folder(file_input, path_output):
 
     sct.printv("input " + file_input + "\n ouput " + path_output)
+
+def compare_PCA_Hogancest(file_input, file_seg_input, path_output):
+
+    # parameters :
+    sigma = 10
+    nb_bin = 360
+    kmedian_size = 3
+    # TODO implemente kernel gradient size parameter
+
+    image = Image(file_input)
+    image_data = image.data
+    seg = Image(file_seg_input)
+    seg_data = seg.data
+    if image_data.shape != seg_data.shape:
+        raise Exception("error, data and seg have not the same dimension")
+    if len(image_data.shape) > 3:
+        raise Exception("error, data is not 3D")
+    nx, ny, nz, _, px, py, pz, _ = image.dim
+    mask_rot = np.zeros((nx, ny, nz))
+    weighting_map = np.zeros((nx, ny, nz))
+    angles_slices = np.zeros((2, nz))
+
+    sigmax = sigma/px
+    sigmay = sigma/py
+
+    for zslice in range(0, nz):
+
+        slice_image = image_data[:, :, zslice]
+        slice_seg = seg_data[:, :, zslice]
+        if not np.any(slice_seg):  # if no segmentation on that slice
+            angles_slices[:, zslice] = -120
+            continue
+
+        # PCA :
+
+        _, pca, centermass = compute_pca(slice_seg)
+        eigenv = pca.components_.T[0][0], pca.components_.T[1][0]
+        angle_found = 180 / pi * angle_between((0, 1), eigenv)
+        if -180 <= angle_found < -90:  # translate angles that are not between -90 abd 90
+            angle_found = 180 + angle_found
+        elif 90 < angle_found <= 180:
+            angle_found = 180 - angle_found
+
+        if -90 <= angle_found <= 0:  # just a quick switch of origin for visualisation purpose
+            angles_slices[0, zslice] = angle_found + 90
+        else:  # 0 < angle_found <= 90
+            angles_slices[0, zslice] = angle_found - 90
+
+        mask_rot[:, :, zslice] = generate_2Dimage_line(mask_rot[:, :, zslice], centermass[0], centermass[1], angle_found, value=1)
+
+        # Hogancest :
+
+        centermass = np.round(scipy.ndimage.measurements.center_of_mass(slice_seg))
+        xx, yy = np.mgrid[:nx, :ny]
+        seg_weighted_mask = np.exp(
+            -(((xx - centermass[0]) ** 2) / (2 * (sigmax ** 2)) + ((yy - centermass[1]) ** 2) / (2 * (sigmay ** 2))))
+
+        hog_ancest, slice_weighting_map = hog_ancestor(slice_image, nb_bin=nb_bin, seg_weighted_mask=seg_weighted_mask,
+                                                 return_image=True)
+        weighting_map[:, :, zslice] = slice_weighting_map
+        hog_ancest_smooth = circular_filter_1d(hog_ancest, kmedian_size,
+                                               filter='median')  # fft than square than ifft to calculate convolution
+        hog_fft2 = np.fft.rfft(hog_ancest_smooth) ** 2
+        hog_conv = np.real(np.fft.irfft(hog_fft2))
+
+        hog_conv_reordered = np.zeros(nb_bin)
+        hog_conv_reordered[0:180] = hog_conv[180:360]
+        hog_conv_reordered[180:360] = hog_conv[0:180]
+
+        argmaxs = argrelextrema(hog_conv_reordered, np.greater, mode='wrap', order=kmedian_size)[0]  # get local maxima
+        argmaxs_sorted = np.asarray([tutut for _, tutut in
+                                     sorted(zip(hog_conv_reordered[argmaxs], argmaxs),
+                                            reverse=True)])  # sort maxima based on value
+        argmaxs_sorted = (argmaxs_sorted - nb_bin / 2) * 180 / nb_bin  # angles are computed from -90 to 90
+        argmaxs_sorted = -1 * argmaxs_sorted  # not sure why but angles are are positive clockwise (inverse convention)
+        if len(argmaxs_sorted) == 0:  # no angle found
+            angles_slices[zslice] = -140
+
+        else:
+            angle_found = argmaxs_sorted[0]
+            if -90 < angle_found <= 0:  # just a quick switch of origin because np array are not oriented the same as images
+                angle_draw = angle_found + 90
+            else:  # 0 < angle_found <= 90
+                angle_draw = angle_found - 90
+            mask_rot[:, :, zslice] = generate_2Dimage_line(mask_rot[:, :, zslice], centermass[0], centermass[1], angle_draw, value=2)
+            angles_slices[1, zslice] = angle_found
+        1+1
+
+    path_output = path_output + "/" + (file_input.split("/")[-1]).split(".nii")[0]
+    if not os.path.exists(path_output):
+        os.makedirs(path_output)
+
+    save_image(mask_rot, (file_input.split("/")[-1]).split(".nii")[0] + "_RotMask" + ".nii.gz",
+               file_input, ofolder=path_output)
+    save_image(weighting_map, (file_input.split("/")[-1]).split(".nii")[0] + "_weightmap" + ".nii.gz",
+               file_input, ofolder=path_output)
+    sct.copy(file_input, path_output + "/" + file_input.split("/")[-1], verbose=0)  # copy original file to help visualization
+    sct.copy(file_seg_input, path_output + "/" + file_seg_input.split("/")[-1], verbose=0)
+
+    plt.figure(figsize=(8, 8))
+    plt.title("Results for file : " + file_input.split("/")[-1])
+    plt.plot(range(0, nz), angles_slices[0, :], "bo")
+    plt.plot(range(0, nz), angles_slices[1, :], "ro")
+    plt.legend(("PCA", "Hogancest"))
+    plt.xlabel("no slice")
+    plt.ylabel("angle found in degrees")
+
+    os.chdir(path_output)
+    plt.savefig("angles_for_V2_" + (file_input.split("/")[-1]).split(".nii")[0] + ".png")
+    plt.close()
+
+    sct.display_viewer_syntax([file_input, file_seg_input, path_output + "/" + (file_input.split("/")[-1]).split(".nii")[0] + "_RotMask" + ".nii.gz"],
+                              colormaps=['gray', 'red', 'random'], opacities=['', '0.7', '1'])
+
+
+def test_3D_hogancest(file_input, file_seg_input, path_output):
+
+    # parameters :
+    sigma = 10
+    nb_bin = 360
+    kmedian_size = 3
+    angle_range = 30
+    # TODO implemente kernel gradient size parameter
+
+    image = Image(file_input)
+    image_data = image.data
+    seg = Image(file_seg_input)
+    seg_data = seg.data
+    if image_data.shape != seg_data.shape:
+        raise Exception("error, data and seg have not the same dimension")
+    if len(image_data.shape) > 3:
+        raise Exception("error, data is not 3D")
+    nx, ny, nz = image_data.shape
+    imagerot_data = np.zeros((nx, ny, nz))
+    angles_slices = np.zeros(nz)
+
+    for zslice in range(0, nz):
+
+        slice_image = image_data[:, :, zslice]
+        slice_seg = seg_data[:, :, zslice]
+        if not np.any(slice_seg):  # if no segmentation on that slice
+            angles_slices[zslice] = -200
+            imagerot_data[:, :, zslice] = slice_image
+            continue
+
+        centermass = np.round(scipy.ndimage.measurements.center_of_mass(slice_seg))
+        xx, yy = np.mgrid[:nx, :ny]
+        seg_weighted_mask = np.exp(
+            -(((xx - centermass[0]) ** 2) / (2 * (sigma ** 2)) + ((yy - centermass[1]) ** 2) / (2 * (sigma ** 2))))
+
+        hog_ancest, weighting_map = hog_ancestor(slice_image, nb_bin=nb_bin, seg_weighted_mask=seg_weighted_mask,
+                                                 return_image=True)
+
+        hog_ancest_smooth = circular_filter_1d(hog_ancest, kmedian_size,
+                                               filter='median')  # fft than square than ifft to calculate convolution
+        hog_fft2 = np.fft.rfft(hog_ancest_smooth) ** 2
+        hog_conv = np.real(np.fft.irfft(hog_fft2))
+        argmaxs = argrelextrema(hog_conv, np.greater, mode='wrap', order=kmedian_size)[0]  # get local maxima
+
+        argmaxs_sorted = np.asarray([tutut for _, tutut in
+                                     sorted(zip(hog_conv[argmaxs], argmaxs),
+                                            reverse=True)])  # sort maxima based on value
+        argmaxs_sorted = (argmaxs_sorted - nb_bin / 2) * 180 / nb_bin  # angles are computed from -90 to 90
+        argmaxs_sorted = -1 * argmaxs_sorted  # not sure why but angles are are positive clockwise (inverse convention)
+        if len(argmaxs_sorted) == 0:
+            angle_found = None
+            imagerot_data[:, :, zslice] = slice_image
+            angles_slices[zslice] = -200  # TODO : difference between no angle found and no seg
+
+        else:
+            angle_found = argmaxs_sorted[0]
+            imagerot_data[:, :, zslice] = generate_2Dimage_line(slice_image, centermass[0], centermass[1], angle_found)
+            if -90 < angle_found <= 0:  # just a quick switch of origin for visualisation purpose
+                angles_slices[zslice] = angle_found + 90
+            else:  # 0 < angle_found <= 90
+                angles_slices[zslice] = angle_found - 90
+
+    save_image(imagerot_data, "symHogancest_" + (file_input.split("/")[-1]).split(".nii")[0] + ".nii",
+               file_input, ofolder=path_output)
+
+    plt.figure(figsize=(8, 8))
+    plt.title("Results for file : " + file_input.split("/")[-1])
+    plt.scatter(range(0, nz), angles_slices, c=np.where((angles_slices < 30) * (angles_slices > -30), 0, 1))
+    plt.xlabel("no slice")
+    plt.ylabel("angle found in degrees")
+
+    os.chdir(path_output)
+    plt.savefig("angles_for_" + (file_input.split("/")[-1]).split(".nii")[0] + ".png")
+    plt.close()
+
+def test_3D_PCA(file_input, file_seg_input, path_output):
+
+    image = Image(file_input)
+    image_data = image.data
+    seg = Image(file_seg_input)
+    seg_data = seg.data
+    nx, ny, nz = seg_data.shape
+    imagerot_data = np.zeros((nx, ny, nz))
+    angles_slices = np.zeros(nz)
+
+    for zslice in range(0, nz):
+
+        slice_seg = seg_data[:, :, zslice]
+        slice_image = image_data[:, :, zslice]
+        if not np.any(slice_seg):  # if no segmentation on that slice
+            angles_slices[zslice] = -200
+            imagerot_data[:, :, zslice] = slice_image
+            continue
+
+        _, pca, centermass = compute_pca(slice_seg)
+        eigenv = pca.components_.T[0][0], pca.components_.T[1][0]
+        angle_found = 180/pi * angle_between((0, 1), eigenv)
+        imagerot_data[:, :, zslice] = generate_2Dimage_line(slice_image, centermass[0], centermass[1], angle_found)
+        angles_slices[zslice] = angle_found
+
+    save_image(imagerot_data, "symPCA_" + (file_input.split("/")[-1]).split(".nii")[0] + ".nii",
+               file_input, ofolder=path_output)
+
+    plt.figure(figsize=(8, 8))
+    plt.title("Results for file : " + file_input.split("/")[-1])
+    plt.scatter(range(0, nz), angles_slices, c=np.where((angles_slices < 30) * (angles_slices > -30), 0, 1))
+    plt.xlabel("no slice")
+    plt.ylabel("angle found in degrees")
+
+    os.chdir(path_output)
+    plt.savefig("angles_for_" + (file_input.split("/")[-1]).split(".nii")[0] + ".png")
+    plt.close()
+
 
 def test_2D_hogancest(file_input, path_output, file_seg_input=None):
 
@@ -93,10 +342,9 @@ def test_2D_hogancest(file_input, path_output, file_seg_input=None):
         image_seg_data = load_image(file_input=file_seg_input, dimension=2)
         centermass = np.round(scipy.ndimage.measurements.center_of_mass(image_seg_data))
 
-        (nx, ny) = image_data.shape
+        (nx, ny) = image_data.shape  # TODO : make this a function, make_mask_seg or smth
         xx, yy = np.mgrid[:nx, :ny]
-        mask = np.zeros((nx, ny))
-        mask = np.exp(
+        seg_weighted_mask = np.exp(
             -(((xx - centermass[0]) ** 2) / (2 * (sigma ** 2)) + ((yy - centermass[1]) ** 2) / (2 * (sigma ** 2))))
 
     if np.isnan(image_data).any() or np.isnan(centermass).any():  # if nan present in image_data or in centermass
@@ -104,7 +352,8 @@ def test_2D_hogancest(file_input, path_output, file_seg_input=None):
         return  # exit function
 
     # Finding axes of symmetry
-    hog_ancest, weighting_map = hog_ancestor(image_data, nb_bin=nb_bin, seg_probability_map=mask, return_image=True)
+    hog_ancest, weighting_map = hog_ancestor(image_data, nb_bin=nb_bin,
+                                             seg_weighted_maskp=seg_weighted_mask, return_image=True)
     # smooth it with median filter
     hog_ancest_smooth = circular_filter_1d(hog_ancest, kmedian_size,
                                            filter='median')  # fft than square than ifft to calculate convolution
@@ -135,7 +384,7 @@ def test_2D_hogancest(file_input, path_output, file_seg_input=None):
     plt.imshow(255 - image_data, cmap="Greys")
     plt.title((file_input.split("/")[-1]).split(".nii")[0])
     plt.subplot(235)
-    plt.imshow(mask)
+    plt.imshow(seg_weighted_mask)
     plt.title("segmentation weighted map")
     plt.colorbar()
     plt.subplot(236)
@@ -162,7 +411,6 @@ def test_2D_hogancest(file_input, path_output, file_seg_input=None):
     save_image(image_wline, "sym_" + (file_input.split("/")[-1]).split(".nii")[0] + ".nii",
                file_input, ofolder=path_output)  # the character manipulation permits to have the name of the file
     #  which is at the end of the path ( / ) and just before .nii
-    cwd = os.getcwd()
     os.chdir(path_output)
     plt.savefig("results_" + (file_input.split("/")[-1]).split(".nii")[0] + ".png")
     plt.close()
@@ -174,7 +422,7 @@ def load_image(file_input, dimension):
     # This function's purpose is for testing, it is not clean
 
     if dimension == 3:
-        image_data = np.array(Image(file_input).data) # just retrieve the data
+        image_data = np.array(Image(file_input).data)  # just retrieve the data
         if len(image_data.shape) != 3:
             raise Exception("Dimension said to be 3 but is " + str(len(image_data.shape)))
 
