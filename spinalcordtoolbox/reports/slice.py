@@ -44,8 +44,10 @@ class Slice(object):
         :param images: list of 3D volumes to be separated into slices.
         """
         self._images = list()
+        image_ref = None  # first pass: we don't have a reference image to resample to
         for i, image in enumerate(images):
-            img = Image.change_orientation(image, "SAL")
+            img = image.copy()
+            img.change_orientation('SAL')
             if p_resample:
                 if i == len(images) - 1:
                     # Last volume corresponds to a segmentation, therefore use linear interpolation here
@@ -53,10 +55,11 @@ class Slice(object):
                 else:
                     # Otherwise it's an image: use spline interpolation
                     type = 'im'
-                img_r = self._resample(img, p_resample, type=type)
+                img_r = self._resample(img, p_resample, type=type, image_ref=image_ref)
             else:
                 img_r = img.copy()
             self._images.append(img_r)
+            image_ref = self._images[0]  # 2nd and next passes: we resample any image to the space of the first one
 
     @staticmethod
     def axial_slice(data, i):
@@ -285,33 +288,38 @@ class Slice(object):
     def aspect(self):
         return [self.get_aspect(x) for x in self._images]
 
-    def _resample(self, image, p_resample, type):
+    def _resample(self, image, p_resample, type, image_ref=None):
         """
         Resample at a fixed resolution to make sure the cord always appears with similar scale, regardless of the native
         resolution of the image. Assumes SAL orientation.
+        :param image: Image() to resample
         :param p_resample: float: Resampling resolution in mm
         :param type: {'im', 'seg'}: If im, interpolate using spline. If seg, interpolate using linear then binarize.
+        :param image_ref: Destination Image() to resample image to.
         :return:
         """
-        # Create nibabel object
-        nii = Nifti1Image(image.data, image.hdr.get_base_affine())
-        img = nifti2nipy(nii)
-        # Resample to px x p_resample x p_resample mm (orientation is SAL by convention in QC module)
-        if type == 'im':
-            interp = 'spline'
-        elif type == 'seg':
-            interp = 'linear'
-        img_r = resample_nipy(img, new_size=str(image.dim[4])+'x'+str(p_resample)+'x'+str(p_resample),
-                              new_size_type='mm', interpolation=interp)
-        # If segmentation, binarize using threshold at 0.5
-        if type == 'seg':
-            img_r_data = (img_r.get_data() > 0.5)*1
+        # If no reference image is provided, create nipy object and resample using resample_nipy()
+        if image_ref is None:
+            dict_interp = {'im': 'spline', 'seg': 'linear'}
+            # Create nibabel object
+            nii = Nifti1Image(image.data, image.hdr.get_best_affine())
+            img = nifti2nipy(nii)
+            # Resample to px x p_resample x p_resample mm (orientation is SAL by convention in QC module)
+            img_r = resample_nipy(img, new_size=str(image.dim[4]) + 'x' + str(p_resample) + 'x' + str(p_resample),
+                                  new_size_type='mm', interpolation=dict_interp[type])
+            # If segmentation, binarize using threshold at 0.5
+            if type == 'seg':
+                img_r_data = (img_r.get_data() > 0.5) * 1
+            else:
+                img_r_data = img_r.get_data()
+            nii_r = nipy2nifti(img_r)
+            # Create Image objects
+            image_r = Image(img_r_data, hdr=nii_r.header, dim=nii_r.header.get_data_shape()). \
+                change_orientation(image.orientation)
+        # If resampling to reference image, use Image() built-in resampling function to ref image
         else:
-            img_r_data = img_r.get_data()
-        nii_r = nipy2nifti(img_r)
-        # Create Image objects
-        image_r = Image(img_r_data, hdr=nii_r.header, orientation=image.orientation,
-                        dim=nii_r.header.get_data_shape())
+            dict_interp = {'im': 3, 'seg': 0}
+            image_r = image.interpolate_from_image(image_ref, interpolation_mode=dict_interp[type], border='nearest')
         return image_r
 
 
