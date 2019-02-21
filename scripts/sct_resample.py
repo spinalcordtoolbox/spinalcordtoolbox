@@ -10,6 +10,8 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+# TODO: add possiblity to resample to destination image
+
 from __future__ import division, absolute_import
 
 import os
