@@ -156,9 +156,6 @@ def main(args=None):
     start_time = time.time()
     param = Param()
 
-    # reducing the number of CPU used for moco (see issue #201)
-    os.environ["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"] = "1"
-
     # check user arguments
     if not args:
         args = sys.argv[1:]
@@ -215,10 +212,7 @@ def main(args=None):
     fname_fmri_moco = os.path.join(path_out, file_data + param.suffix + ext_data)
     sct.create_folder(path_out)
     sct.printv('\nGenerate output files...', param.verbose)
-    if os.path.isfile(os.path.join(path_tmp, "fmri" + param.suffix + '.nii')):
-        sct.printv(os.path.join(path_tmp, "fmri" + param.suffix + '.nii'))
-        sct.printv(os.path.join(path_out, file_data + param.suffix + ext_data))
-    sct.generate_output_file(os.path.join(path_tmp, "fmri" + param.suffix + '.nii'), os.path.join(path_out, file_data + param.suffix + ext_data), param.verbose)
+    sct.generate_output_file(os.path.join(path_tmp, "fmri" + param.suffix + '.nii'), fname_fmri_moco, param.verbose)
     sct.generate_output_file(os.path.join(path_tmp, "fmri" + param.suffix + '_mean.nii'), os.path.join(path_out, file_data + param.suffix + '_mean' + ext_data), param.verbose)
 
     # Delete temporary files
@@ -233,19 +227,15 @@ def main(args=None):
     sct.display_viewer_syntax([fname_fmri_moco, file_data], mode='ortho,ortho')
 
 
-#=======================================================================================================================
-# fmri_moco: motion correction specific to fmri data
-#=======================================================================================================================
 def fmri_moco(param):
 
-    file_data = 'fmri'
-    ext_data = '.nii'
+    file_data = "fmri.nii"
     mat_final = 'mat_final/'
     ext_mat = 'Warp.nii.gz'  # warping field
 
     # Get dimensions of data
     sct.printv('\nGet dimensions of data...', param.verbose)
-    im_data = Image(file_data + '.nii')
+    im_data = Image(param.fname_data)
     nx, ny, nz, nt, px, py, pz, pt = im_data.dim
     sct.printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz) + ' x ' + str(nt), param.verbose)
 
@@ -268,9 +258,11 @@ def fmri_moco(param):
 
     # Split into T dimension
     sct.printv('\nSplit along T dimension...', param.verbose)
-    im_data = Image(file_data + ext_data)
     im_data_split_list = split_data(im_data, 3)
     for im in im_data_split_list:
+        x_dirname, x_basename, x_ext = sct.extract_fname(im.absolutepath)
+        # Make further steps slurp the data to avoid too many open files (#2149)
+        im.absolutepath = os.path.join(x_dirname, x_basename + ".nii.gz")
         im.save()
 
     # assign an index to each volume
@@ -297,7 +289,7 @@ def fmri_moco(param):
         nt_i = len(index_fmri_i)
 
         # Merge Images
-        file_data_merge_i = file_data + '_' + str(iGroup)
+        file_data_merge_i = sct.add_suffix(file_data, '_' + str(iGroup))
         # cmd = fsloutput + 'fslmerge -t ' + file_data_merge_i
         # for it in range(nt_i):
         #     cmd = cmd + ' ' + file_data + '_T' + str(index_fmri_i[it]).zfill(4)
@@ -305,16 +297,18 @@ def fmri_moco(param):
         im_fmri_list = []
         for it in range(nt_i):
             im_fmri_list.append(im_data_split_list[index_fmri_i[it]])
-        im_fmri_concat = concat_data(im_fmri_list, 3, squeeze_data=True).save(file_data_merge_i + ext_data)
+        im_fmri_concat = concat_data(im_fmri_list, 3, squeeze_data=True).save(file_data_merge_i)
 
-        file_data_mean = file_data + '_mean_' + str(iGroup)
+        file_data_mean = sct.add_suffix(file_data, '_mean_' + str(iGroup))
+        if file_data_mean.endswith(".nii"):
+            file_data_mean += ".gz" # #2149
         if param.group_size == 1:
             # copy to new file name instead of averaging (faster)
             # note: this is a bandage. Ideally we should skip this entire for loop if g=1
-            sct.copy(file_data_merge_i + '.nii', file_data_mean + '.nii')
+            convert(file_data_merge_i, file_data_mean)
         else:
             # Average Images
-            sct.run(['sct_maths', '-i', file_data_merge_i + '.nii', '-o', file_data_mean + '.nii', '-mean', 't'], verbose=0)
+            sct.run(['sct_maths', '-i', file_data_merge_i, '-o', file_data_mean, '-mean', 't'], verbose=0)
         # if not average_data_across_dimension(file_data_merge_i+'.nii', file_data_mean+'.nii', 3):
         #     sct.printv('ERROR in average_data_across_dimension', 1, 'error')
         # cmd = fsloutput + 'fslmaths ' + file_data_merge_i + ' -Tmean ' + file_data_mean
@@ -322,19 +316,24 @@ def fmri_moco(param):
 
     # Merge groups means. The output 4D volume will be used for motion correction.
     sct.printv('\nMerging volumes...', param.verbose)
-    file_data_groups_means_merge = 'fmri_averaged_groups'
+    file_data_groups_means_merge = 'fmri_averaged_groups.nii'
     im_mean_list = []
     for iGroup in range(nb_groups):
-        im_mean_list.append(Image(file_data + '_mean_' + str(iGroup) + ext_data))
-    im_mean_concat = concat_data(im_mean_list, 3).save(file_data_groups_means_merge + ext_data)
+        file_data_mean = sct.add_suffix(file_data, '_mean_' + str(iGroup))
+        if file_data_mean.endswith(".nii"):
+            file_data_mean += ".gz" # #2149
+        im_mean_list.append(Image(file_data_mean))
+    im_mean_concat = concat_data(im_mean_list, 3).save(file_data_groups_means_merge)
 
     # Estimate moco
     sct.printv('\n-------------------------------------------------------------------------------', param.verbose)
     sct.printv('  Estimating motion...', param.verbose)
     sct.printv('-------------------------------------------------------------------------------', param.verbose)
     param_moco = param
-    param_moco.file_data = 'fmri_averaged_groups'
-    param_moco.file_target = file_data + '_mean_' + param.num_target
+    param_moco.file_data = 'fmri_averaged_groups.nii'
+    param_moco.file_target = sct.add_suffix(file_data, '_mean_' + param.num_target)
+    if param_moco.file_target.endswith(".nii"):
+        param_moco.file_target += ".gz" # #2149
     param_moco.path_out = ''
     param_moco.todo = 'estimate_and_apply'
     param_moco.mat_moco = 'mat_groups'
@@ -366,8 +365,10 @@ def fmri_moco(param):
         sct.printv('\n-------------------------------------------------------------------------------', param.verbose)
         sct.printv('  Apply moco', param.verbose)
         sct.printv('-------------------------------------------------------------------------------', param.verbose)
-        param_moco.file_data = 'fmri'
-        param_moco.file_target = file_data + '_mean_' + str(0)
+        param_moco.file_data = 'fmri.nii'
+        param_moco.file_target = sct.add_suffix(file_data, '_mean_' + str(0))
+        if param_moco.file_target.endswith(".nii"):
+            param_moco.file_target += ".gz"
         param_moco.path_out = ''
         param_moco.mat_moco = mat_final
         param_moco.todo = 'apply'
@@ -388,9 +389,6 @@ def fmri_moco(param):
                          '-v', '0'])
 
 
-#=======================================================================================================================
-# Start program
-#=======================================================================================================================
 if __name__ == "__main__":
     sct.init_sct()
     main()
