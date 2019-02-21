@@ -36,15 +36,8 @@ def resample_nipy(img, new_size=None, new_size_type=None, img_dest=None, interpo
     """
     # TODO: deal with 4d (and other dim) data
 
-
     # set interpolation method
-    # TODO: make a dict
-    if interpolation == 'nn':
-        interp_order = 0
-    elif interpolation == 'linear':
-        interp_order = 1
-    elif interpolation == 'spline':
-        interp_order = 2
+    dict_interp = {'nn': 0, 'linear': 1, 'spline': 2}
 
     if img_dest is None:
         # Get dimensions of data
@@ -94,10 +87,11 @@ def resample_nipy(img, new_size=None, new_size_type=None, img_dest=None, interpo
         R = None
 
     if img.ndim == 3:
-        img_r = n_resample(img, transform=R, reference=reference, mov_voxel_coords=True,
-                           ref_voxel_coords=True, dtype='double', interp_order=interp_order, mode='nearest')
+        img_r = n_resample(img, transform=R, reference=reference, mov_voxel_coords=True, ref_voxel_coords=True,
+                           dtype='double', interp_order=dict_interp[interpolation], mode='nearest')
 
     elif img.ndim == 4:
+        # TODO: Cover img_dest with 4D volumes
         # Import here instead of top of the file because this is an isolated case and nibabel takes time to import
         import nibabel as nib
         from nipy.io.nifti_ref import nifti2nipy, nipy2nifti
@@ -108,13 +102,16 @@ def resample_nipy(img, new_size=None, new_size_type=None, img_dest=None, interpo
             nii_tmp = nib.nifti1.Nifti1Image(img.get_data()[..., it], affine)
             img3d_r = n_resample(nifti2nipy(nii_tmp), transform=R, reference=(shape_r[:-1], affine_r),
                                  mov_voxel_coords=True, ref_voxel_coords=True, dtype='double',
-                                 interp_order=interp_order, mode='nearest')
+                                 interp_order=dict_interp[interpolation], mode='nearest')
             data4d[..., it] = img3d_r.get_data()
         # Create 4d nipy Image
         nii4d = nib.nifti1.Nifti1Image(data4d, affine_r)
         # Convert to nipy object
         img_r = nifti2nipy(nii4d)
 
+    # print "HOLA!!!"
+    # print img.coordmap
+    # print img_r.coordmap
     return img_r
 
 
@@ -134,8 +131,7 @@ def resample_file(fname_data, fname_out, new_size, new_size_type, interpolation,
     sct.printv('\nLoad data...', verbose)
     nii = nipy.load_image(fname_data)
 
-    nii_r = resample_nipy(nii, new_size, new_size_type,
-                          interpolation, verbose)
+    nii_r = resample_nipy(nii, new_size, new_size_type, img_dest=None, interpolation=interpolation, verbose=verbose)
 
     # build output file name
     if fname_out == '':
