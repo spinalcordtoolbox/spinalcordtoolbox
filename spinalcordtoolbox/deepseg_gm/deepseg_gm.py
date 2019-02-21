@@ -311,11 +311,8 @@ def segment_file(input_filename, output_filename,
     pixdim = nii_original.header["pixdim"][3]
     target_resample = "0.25x0.25x{:.5f}".format(pixdim)
 
-    nii_resampled = resample.resample_nipy(nii_original,
-                                           target_resample,
-                                                 'mm', 'linear',
-                                           verbosity)
-
+    nii_resampled = resample.resample_nipy(nii_original, new_size=target_resample, new_size_type='mm',
+                                           interpolation='linear', verbose=verbosity)
     nii_resampled = nipy2nifti(nii_resampled)
     pred_slices = segment_volume(nii_resampled, model_name, threshold,
                                  use_tta)
@@ -331,10 +328,8 @@ def segment_file(input_filename, output_filename,
                                        volume_header)
     nii_segmentation = nifti2nipy(nii_segmentation)
 
-    nii_resampled_original = resample.resample_nipy(nii_segmentation,
-                                                    original_res,
-                                                          'mm', 'linear',
-                                                    verbosity)
+    nii_resampled_original = resample.resample_nipy(nii_segmentation, new_size=original_res, new_size_type='mm',
+                                                    interpolation='linear', verbose=verbosity)
     res_data = nii_resampled_original.get_data()
 
     # Threshold after resampling, only if specified
