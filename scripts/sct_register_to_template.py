@@ -671,14 +671,15 @@ def generate_qc(fname_data, fname_template2anat, fname_seg, args, path_qc):
     import spinalcordtoolbox.reports.slice as qcslice
 
     qc.add_entry(
-     src=fname_data,
-     process="sct_register_to_template",
-     args=args,
-     path_qc=path_qc,
-     plane="Axial",
-     qcslice=qcslice.Axial([Image(fname_data), Image(fname_template2anat), Image(fname_seg)]),
-     qcslice_operations=[qc.QcImage.no_seg_seg],
-     qcslice_layout=lambda x: x.mosaic()[:2],
+        src=fname_data,
+        process="sct_register_to_template",
+        args=args,
+        path_qc=path_qc,
+        plane="Axial",
+        qcslice=qcslice.Axial([Image(fname_data), Image(fname_template2anat), Image(fname_seg)]),
+        qcslice_operations=[qc.QcImage.no_seg_seg],
+        qcslice_layout=lambda x: x.mosaic()[:2],
+        stretch_contrast_method='equalized',
     )
 
 
