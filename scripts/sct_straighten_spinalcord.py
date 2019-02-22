@@ -51,6 +51,22 @@ def generate_qc(fn_input, fn_centerline, fn_output, args, path_qc):
     )
 
 
+def _get_centerline(img, algo_fitting, verbose):
+    nx, ny, nz, nt, px, py, pz, pt = img.dim
+    _, arr_ctl, arr_ctl_der = get_centerline(img, algo_fitting=algo_fitting, minmax=True, verbose=verbose)
+    # Transform centerline to physical coordinate system
+    arr_ctl_phys = img.transfo_pix2phys(
+        [[arr_ctl[0][i], arr_ctl[1][i], arr_ctl[2][i]] for i in range(len(arr_ctl[0]))])
+    x_centerline, y_centerline, z_centerline = arr_ctl_phys[:, 0], arr_ctl_phys[:, 1], arr_ctl_phys[:, 2]
+    # Adjust derivatives with pixel size
+    x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = arr_ctl_der[0][:] * px, \
+                                                                 arr_ctl_der[1][:] * py, \
+                                                                 arr_ctl_der[2][:] * pz
+    # Construct centerline object
+    return Centerline(x_centerline.tolist(), y_centerline.tolist(), z_centerline.tolist(),
+                      x_centerline_deriv.tolist(), y_centerline_deriv.tolist(), z_centerline_deriv.tolist())
+
+
 class SpinalCordStraightener(object):
 
     def __init__(self, input_filename, centerline_filename, debug=0, deg_poly=10,
@@ -204,20 +220,7 @@ class SpinalCordStraightener(object):
 
             # 2. extract bspline fitting of the centerline, and its derivatives
             img_ctl = Image('centerline_rpi.nii.gz')
-            _, arr_ctl, arr_ctl_der = get_centerline(img_ctl, algo_fitting=algo_fitting, minmax=True, verbose=verbose)
-            # Transform centerline and derivatives to physical coordinate system
-            arr_ctl_phys = img_ctl.transfo_pix2phys(
-                [[arr_ctl[0][i], arr_ctl[1][i], arr_ctl[2][i]] for i in range(len(arr_ctl[0]))])
-            x_centerline, y_centerline, z_centerline = arr_ctl_phys[:, 0], arr_ctl_phys[:, 1], arr_ctl_phys[:, 2]
-            # arr_ctl_der_phys = img_ctl.transfo_pix2phys(
-            #     [[arr_ctl_der[0][i], arr_ctl_der[1][i], 1] for i in range(len(arr_ctl_der[0]))])
-            # x_centerline_deriv, y_centerline_deriv = arr_ctl_der_phys[:, 0], arr_ctl_der_phys[:, 1]
-            x_centerline_deriv, y_centerline_deriv = arr_ctl_der[0][:] * px, arr_ctl_der[1][:] * py
-            # Construct centerline object
-            centerline = Centerline(x_centerline.tolist(), y_centerline.tolist(), z_centerline.tolist(),
-                                    x_centerline_deriv.tolist(), y_centerline_deriv.tolist(),
-                                    np.ones_like(x_centerline_deriv).tolist())
-
+            centerline = _get_centerline(img_ctl, algo_fitting, verbose)
             number_of_points = centerline.number_of_points
 
             # ==========================================================================================
@@ -283,15 +286,8 @@ class SpinalCordStraightener(object):
                 image_centerline_straight = Image('centerline_ref.nii.gz')\
                     .change_orientation("RPI")\
                     .save(fname_ref, mutable=True)
+                centerline_straight = _get_centerline(image_centerline_straight, algo_fitting, verbose)
                 nx_s, ny_s, nz_s, nt_s, px_s, py_s, pz_s, pt_s = image_centerline_straight.dim
-                # TODO: update this chunk below to work with physical coordinates
-                _, arr_ctl, arr_ctl_der = get_centerline(image_centerline_straight, algo_fitting=algo_fitting,
-                                                         minmax=True, verbose=verbose)
-                x_centerline, y_centerline, z_centerline = arr_ctl
-                x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = arr_ctl_der
-                centerline_straight = Centerline(x_centerline.tolist(), y_centerline.tolist(), z_centerline.tolist(),
-                                                 x_centerline_deriv.tolist(), y_centerline_deriv.tolist(),
-                                                 z_centerline_deriv.tolist())
 
                 # Prepare warping fields headers
                 hdr_warp = image_centerline_pad.hdr.copy()
