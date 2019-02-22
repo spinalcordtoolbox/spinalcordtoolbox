@@ -288,10 +288,10 @@ class SpinalCordStraightener(object):
                 _, arr_ctl, arr_ctl_der = get_centerline(image_centerline_straight, algo_fitting=algo_fitting,
                                                          minmax=True, verbose=verbose)
                 x_centerline, y_centerline, z_centerline = arr_ctl
-                x_centerline_deriv, y_centerline_deriv = arr_ctl_der
+                x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = arr_ctl_der
                 centerline_straight = Centerline(x_centerline.tolist(), y_centerline.tolist(), z_centerline.tolist(),
                                                  x_centerline_deriv.tolist(), y_centerline_deriv.tolist(),
-                                                 np.ones_like(x_centerline_deriv).tolist())
+                                                 z_centerline_deriv.tolist())
 
                 # Prepare warping fields headers
                 hdr_warp = image_centerline_pad.hdr.copy()
