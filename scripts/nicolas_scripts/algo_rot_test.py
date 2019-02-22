@@ -101,6 +101,7 @@ def compare_PCA_Hogancest(file_input, file_seg_input, path_output):
     sigma = 10
     nb_bin = 360
     kmedian_size = 3
+    angle_range = 30
     # TODO implemente kernel gradient size parameter
 
     image = Image(file_input)
@@ -162,15 +163,15 @@ def compare_PCA_Hogancest(file_input, file_seg_input, path_output):
         hog_conv_reordered = np.zeros(nb_bin)
         hog_conv_reordered[0:180] = hog_conv[180:360]
         hog_conv_reordered[180:360] = hog_conv[0:180]
+        hog_conv_restrained = hog_conv_reordered[nb_bin/2-np.true_divide(angle_range, 180)*nb_bin:nb_bin/2+np.true_divide(angle_range, 180)*nb_bin]
 
-        argmaxs = argrelextrema(hog_conv_reordered, np.greater, mode='wrap', order=kmedian_size)[0]  # get local maxima
+        argmaxs = argrelextrema(hog_conv_restrained, np.greater, mode='wrap', order=kmedian_size)[0]  # get local maxima
         argmaxs_sorted = np.asarray([tutut for _, tutut in
-                                     sorted(zip(hog_conv_reordered[argmaxs], argmaxs),
+                                     sorted(zip(hog_conv_restrained[argmaxs], argmaxs),
                                             reverse=True)])  # sort maxima based on value
-        argmaxs_sorted = (argmaxs_sorted - nb_bin / 2) * 180 / nb_bin  # angles are computed from -90 to 90
-        argmaxs_sorted = -1 * argmaxs_sorted  # not sure why but angles are are positive clockwise (inverse convention)
+        argmaxs_sorted = (argmaxs_sorted - nb_bin / 2) * np.true_divide(180, nb_bin*angle_range)  # angles are computed from -angle_range to angle_range
         if len(argmaxs_sorted) == 0:  # no angle found
-            angles_slices[zslice] = -140
+            angles_slices[1, zslice] = -140
 
         else:
             angle_found = argmaxs_sorted[0]
