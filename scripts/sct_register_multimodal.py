@@ -573,6 +573,7 @@ def generate_qc(fname_data, fname_template2anat, fname_seg, args, path_qc):
         qcslice=qcslice.Axial([Image(fname_data), Image(fname_template2anat), Image(fname_seg)]),
         qcslice_operations=[qc.QcImage.no_seg_seg],
         qcslice_layout=lambda x: x.mosaic()[:2],
+        stretch_contrast_method='equalized',
     )
 
 
