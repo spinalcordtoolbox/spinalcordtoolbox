@@ -215,7 +215,7 @@ class Slice(object):
         centers_x = np.zeros(axial_dim)
         centers_y = np.zeros(axial_dim)
         for i in range(axial_dim):
-            aslice = self.axial_slice(image.data, i)
+            aslice = self.axial_slice(np.array(image.data), i)  # we cast np.array to overcome
             centers_x[i], centers_y[i] = ndimage.measurements.center_of_mass(aslice)
         try:
             Slice.nan_fill(centers_x)
