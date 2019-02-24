@@ -29,6 +29,7 @@ from msct_parser import Parser
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.centerline.core import get_centerline
+from spinalcordtoolbox.reports.qc import generate_qc
 
 # get path of the toolbox
 path_script = os.path.dirname(__file__)
@@ -656,31 +657,10 @@ def main(args=None):
     sct.printv('\nFinished! Elapsed time: ' + str(int(np.round(elapsed_time))) + 's', verbose)
 
     if param.path_qc is not None:
-        generate_qc(fname_data, fname_template2anat, fname_seg, args, os.path.abspath(param.path_qc))
-
+        generate_qc(fname_data, fname_in2=fname_template2anat, fname_seg=fname_seg, args=args,
+                    path_qc=os.path.abspath(param.path_qc), process='sct_register_to_template')
     sct.display_viewer_syntax([fname_data, fname_template2anat], verbose=verbose)
     sct.display_viewer_syntax([fname_template, fname_anat2template], verbose=verbose)
-
-
-def generate_qc(fname_data, fname_template2anat, fname_seg, args, path_qc):
-    """
-    Generate a QC entry allowing to quickly review the straightening process.
-    """
-
-    import spinalcordtoolbox.reports.qc as qc
-    import spinalcordtoolbox.reports.slice as qcslice
-
-    qc.add_entry(
-        src=fname_data,
-        process="sct_register_to_template",
-        args=args,
-        path_qc=path_qc,
-        plane="Axial",
-        qcslice=qcslice.Axial([Image(fname_data), Image(fname_template2anat), Image(fname_seg)]),
-        qcslice_operations=[qc.QcImage.no_seg_seg],
-        qcslice_layout=lambda x: x.mosaic()[:2],
-        stretch_contrast_method='equalized',
-    )
 
 
 def project_labels_on_spinalcord(fname_label, fname_seg):

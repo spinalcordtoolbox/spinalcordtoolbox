@@ -27,6 +27,8 @@ import matplotlib.colors as color
 import matplotlib.pyplot as plt
 
 import sct_utils as sct
+from spinalcordtoolbox.image import Image
+import spinalcordtoolbox.reports.slice as qcslice
 
 logger = logging.getLogger("sct.{}".format(__file__))
 
@@ -473,3 +475,31 @@ def add_entry(src, process, args, path_qc, plane, background=None, foreground=No
             sct.printv('open file "{}/index.html"'.format(path_qc), type='info')
     except ImportError:
         print("WARNING! Platform undetectable.")
+
+
+def generate_qc(fname_in1, fname_in2=None, fname_seg=None, args=None, path_qc=None, process=None):
+    """
+    Generate a QC entry allowing to quickly review results. This function is called by SCT scripts (e.g. sct_propseg).
+    """
+    if fname_in2:
+        # there are two input images, therefore the QC output will switch between the two
+        qcslice_type = qcslice.Axial([Image(fname_in1), Image(fname_in2), Image(fname_seg)])
+        qcslice_operations = [QcImage.no_seg_seg]
+        qcslice_layout = lambda x: x.mosaic()[:2]
+    else:
+        # otherwise, the QC output will switch between the image and the segmentation
+        qcslice_type = qcslice.Axial([Image(fname_in1), Image(fname_seg)])
+        qcslice_operations = [QcImage.listed_seg]
+        qcslice_layout = lambda x: x.mosaic()
+
+    add_entry(
+        src=fname_in1,
+        process=process,
+        args=args,
+        path_qc=path_qc,
+        plane='Axial',
+        qcslice=qcslice_type,
+        qcslice_operations=qcslice_operations,
+        qcslice_layout=qcslice_layout,
+        stretch_contrast_method='equalized',
+    )

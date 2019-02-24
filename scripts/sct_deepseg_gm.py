@@ -15,6 +15,7 @@ import os
 
 import sct_utils as sct
 from msct_parser import Parser
+from spinalcordtoolbox.reports.qc import generate_qc
 
 
 def get_parser():
@@ -85,28 +86,6 @@ def get_parser():
     return parser
 
 
-def generate_qc(fn_in, fn_seg, args, path_qc):
-    """
-    Generate a QC entry allowing to quickly review the segmentation process.
-    """
-
-    import spinalcordtoolbox.reports.qc as qc
-    import spinalcordtoolbox.reports.slice as qcslice
-    from spinalcordtoolbox.image import Image
-
-    qc.add_entry(
-        src=fn_in,
-        process="sct_deepseg_gm",
-        args=args,
-        path_qc=path_qc,
-        plane='Axial',
-        qcslice=qcslice.Axial([Image(fn_in), Image(fn_seg)]),
-        qcslice_operations=[qc.QcImage.listed_seg],
-        qcslice_layout=lambda x: x.mosaic(),
-        stretch_contrast_method='equalized'
-    )
-
-
 def run_main():
     parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
@@ -138,7 +117,8 @@ def run_main():
 
     path_qc = arguments.get("-qc", None)
     if path_qc is not None:
-        generate_qc(input_filename, out_fname, sys.argv[1:], os.path.abspath(path_qc))
+        generate_qc(fname_in1=input_filename, fname_seg=out_fname, args=sys.argv[1:], path_qc=os.path.abspath(path_qc),
+                    process='sct_deepseg_gm')
 
     sct.display_viewer_syntax([input_filename, format(out_fname)],
                               colormaps=['gray', 'red'],

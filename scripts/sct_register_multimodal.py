@@ -41,6 +41,7 @@ import sct_utils as sct
 from msct_parser import Parser
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.reports.qc import generate_qc
 
 
 def get_parser(paramreg=None):
@@ -548,33 +549,14 @@ def main(args=None):
 
     if path_qc is not None:
         if fname_dest_seg:
-            generate_qc(fname_src2dest, fname_dest, fname_dest_seg, args, os.path.abspath(path_qc))
+            generate_qc(fname_src2dest, fname_in2=fname_dest, fname_seg=fname_dest_seg, args=args,
+                        path_qc=os.path.abspath(path_qc), process='sct_register_multimodal')
         else:
             sct.printv('WARNING: Cannot generate QC because it requires destination segmentation.', 1, 'warning')
 
     if generate_warpinv:
         sct.display_viewer_syntax([fname_src, fname_dest2src], verbose=verbose)
     sct.display_viewer_syntax([fname_dest, fname_src2dest], verbose=verbose)
-
-
-def generate_qc(fname_data, fname_template2anat, fname_seg, args, path_qc):
-    """
-    Generate a QC entry allowing to quickly review the straightening process.
-    """
-    import spinalcordtoolbox.reports.qc as qc
-    import spinalcordtoolbox.reports.slice as qcslice
-
-    qc.add_entry(
-        src=fname_data,
-        process="sct_register_multimodal",
-        args=args,
-        path_qc=path_qc,
-        plane="Axial",
-        qcslice=qcslice.Axial([Image(fname_data), Image(fname_template2anat), Image(fname_seg)]),
-        qcslice_operations=[qc.QcImage.no_seg_seg],
-        qcslice_layout=lambda x: x.mosaic()[:2],
-        stretch_contrast_method='equalized',
-    )
 
 
 # register images

@@ -26,6 +26,7 @@ import sct_image
 import sct_utils as sct
 from msct_parser import Parser
 from spinalcordtoolbox.centerline import optic
+from spinalcordtoolbox.reports.qc import generate_qc
 
 
 def check_and_correct_segmentation(fname_segmentation, fname_centerline, folder_output='', threshold_distance=5.0,
@@ -340,26 +341,6 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
     return parser
 
 
-def generate_qc(fn_in, fn_seg, args, path_qc):
-    """
-    Generate a QC entry allowing to quickly review the segmentation process.
-    """
-    import spinalcordtoolbox.reports.qc as qc
-    import spinalcordtoolbox.reports.slice as qcslice
-
-    qc.add_entry(
-        src=fn_in,
-        process="sct_propseg",
-        args=args,
-        path_qc=path_qc,
-        plane='Axial',
-        qcslice=qcslice.Axial([Image(fn_in), Image(fn_seg)]),
-        qcslice_operations=[qc.QcImage.listed_seg],
-        qcslice_layout=lambda x: x.mosaic(),
-        stretch_contrast_method='equalized',
-    )
-
-
 def func_rescale_header(fname_data, rescale_factor, verbose=0):
     """
     Rescale the voxel dimension by modifying the NIFTI header qform. Write the output file in a temp folder.
@@ -620,7 +601,8 @@ def main(arguments):
     fname_seg = img_seg.absolutepath
     path_qc = arguments.get("-qc", None)
     if path_qc is not None:
-        generate_qc(fname_input_data, fname_seg, args, os.path.abspath(path_qc))
+        generate_qc(fname_in1=fname_input_data, fname_seg=fname_seg, args=args, path_qc=os.path.abspath(path_qc),
+                    process='sct_propseg')
     sct.display_viewer_syntax([fname_input_data, fname_seg], colormaps=['gray', 'red'], opacities=['', '0.7'])
 
 
