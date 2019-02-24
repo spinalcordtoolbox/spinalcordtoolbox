@@ -151,6 +151,7 @@ class QcImage(object):
 
     def no_seg_seg(self, mask):
         fig = plt.imshow(mask, cmap=plt.cm.gray, interpolation=self.interpolation, aspect=self.aspect_mask)
+        self._add_orientation_label(fig)
         fig.axes.get_xaxis().set_visible(False)
         fig.axes.get_yaxis().set_visible(False)
 
@@ -240,12 +241,7 @@ class QcImage(object):
 
             plt.figure()
             fig = plt.imshow(img, cmap=plt.cm.gray, interpolation=self.interpolation, aspect=float(aspect_img))
-            if self.qc_report.qc_params.orientation == 'Axial':
-                # If mosaic of axial slices, display orientation labels
-                fig.axes.text(12, 6, 'A', color='yellow', size=6)
-                fig.axes.text(12, 28, 'P', color='yellow', size=6)
-                fig.axes.text(1, 18, 'L', color='yellow', size=6)
-                fig.axes.text(24, 18, 'R', color='yellow', size=6)
+            self._add_orientation_label(fig)
             fig.axes.get_xaxis().set_visible(False)
             fig.axes.get_yaxis().set_visible(False)
             self._save(self.qc_report.qc_params.abs_bkg_img_path(), dpi=self.qc_report.qc_params.dpi)
@@ -264,6 +260,19 @@ class QcImage(object):
             self.qc_report.update_description_file(img.shape)
 
         return wrapped_f
+
+    def _add_orientation_label(self, fig):
+        """
+        Add orientation labels on the figure
+        :param fig: MPL figure handler
+        :return:
+        """
+        if self.qc_report.qc_params.orientation == 'Axial':
+            # If mosaic of axial slices, display orientation labels
+            fig.axes.text(12, 6, 'A', color='yellow', size=6)
+            fig.axes.text(12, 28, 'P', color='yellow', size=6)
+            fig.axes.text(1, 18, 'L', color='yellow', size=6)
+            fig.axes.text(24, 18, 'R', color='yellow', size=6)
 
     def _save(self, img_path, format='png', bbox_inches='tight', pad_inches=0.00, dpi=300):
         """
