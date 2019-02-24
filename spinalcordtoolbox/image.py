@@ -326,7 +326,6 @@ class Image(object):
         else:
             sct.log.debug("Loaded %s orientation %s shape %s", path, self.orientation, self.data.shape)
 
-
     def change_shape(self, shape, generate_path=False):
         """
         Change data shape (in-place)
