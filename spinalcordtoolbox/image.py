@@ -779,6 +779,10 @@ def find_zmin_zmax(im, threshold=0.1):
     """
     slicer = SlicerOneAxis(im, axis="IS")
 
+    # Make sure image is not empty
+    if not np.any(slicer):
+        sct.log.error('Input image is empty')
+
     # Iterate from bottom to top until we find data
     for zmin in range(0, len(slicer)):
         if np.any(slicer[zmin] > threshold):
