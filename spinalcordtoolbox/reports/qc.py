@@ -481,23 +481,84 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, args=None, path_qc=No
     """
     Generate a QC entry allowing to quickly review results. This function is called by SCT scripts (e.g. sct_propseg).
     """
-    if fname_in2:
-        # there are two input images, therefore the QC output will switch between the two
+    def _label_vertebrae(self, mask):
+        """
+        Draw vertebrae areas, then add text showing the vertebrae names.
+        """
+        import scipy.ndimage
+        self.listed_seg_multicolor(mask)
+        ax = plt.gca()
+        a = [0.0]
+        data = mask
+        for index, val in np.ndenumerate(data):
+            if val not in a:
+                a.append(val)
+                index = int(val)
+                if index in self._labels_regions.values():
+                    color = self._labels_color[index]
+                    y, x = scipy.ndimage.measurements.center_of_mass(np.where(data == val, data, 0))
+                    # Draw text with a shadow
+                    x += 10
+                    label = list(self._labels_regions.keys())[list(self._labels_regions.values()).index(index)]
+                    ax.text(x, y, label, color='black', clip_on=True)
+                    x -= 0.5
+                    y -= 0.5
+                    ax.text(x, y, label, color=color, clip_on=True)
+
+    def _highlight_pmj(self, mask):
+        """
+        Hook to show a rectangle where PMJ is on the slice
+        """
+        import matplotlib.patches as patches
+        y, x = np.where(mask == 50)
+        ax = plt.gca()
+        img = np.full_like(mask, np.nan)
+        ax.imshow(img, cmap='gray', alpha=0)
+        rect = patches.Rectangle((x - 10, y - 10),
+                                 20, 20,
+                                 linewidth=2,
+                                 edgecolor='lime',
+                                 facecolor='none')
+        ax.add_patch(rect)
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
+
+    # Initialization
+    dpi = 300
+    # Get QC specifics based on SCT process
+    if process in ['sct_register_multimodal', 'sct_register_to_template']:
+        # axial orientation, switch between two input images
+        plane = 'Axial'
         qcslice_type = qcslice.Axial([Image(fname_in1), Image(fname_in2), Image(fname_seg)])
         qcslice_operations = [QcImage.no_seg_seg]
         qcslice_layout = lambda x: x.mosaic()[:2]
-    else:
-        # otherwise, the QC output will switch between the image and the segmentation
+    elif process in ['sct_propseg', 'sct_deepseg_sc', 'sct_deepseg_gm']:
+        # axial orientation, switch between the image and the segmentation
+        plane = 'Axial'
         qcslice_type = qcslice.Axial([Image(fname_in1), Image(fname_seg)])
         qcslice_operations = [QcImage.listed_seg]
         qcslice_layout = lambda x: x.mosaic()
+    elif process in ['sct_label_vertebrae']:
+        # sagittal orientation, display vertebral labels
+        plane = 'Sagittal'
+        dpi = 100  # bigger picture is needed for this special case, hence reduce dpi
+        qcslice_type = qcslice.Sagittal([Image(fname_in1), Image(fname_seg)], p_resample=None)
+        qcslice_operations = [_label_vertebrae]
+        qcslice_layout = lambda x: x.single()
+    elif process in ['sct_detect_pmj']:
+        # sagittal orientation, display PMJ box
+        plane = 'Sagittal'
+        qcslice_type = qcslice.Sagittal([Image(fname_in1), Image(fname_seg)], p_resample=None)
+        qcslice_operations = [_highlight_pmj]
+        qcslice_layout = lambda x: x.single()
 
     add_entry(
         src=fname_in1,
         process=process,
         args=args,
         path_qc=path_qc,
-        plane='Axial',
+        plane=plane,
+        dpi=dpi,
         qcslice=qcslice_type,
         qcslice_operations=qcslice_operations,
         qcslice_layout=qcslice_layout,

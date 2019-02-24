@@ -153,7 +153,7 @@ def main():
     im_seg.save(fname_seg)
 
     if path_qc is not None:
-        generate_qc(fname_in1=fname_image, fname_seg=fname_seg, args=args, path_qc=os.path.abspath(path_qc),
+        generate_qc(fname_image, fname_seg=fname_seg, args=args, path_qc=os.path.abspath(path_qc),
                     process='sct_deepseg_sc')
     sct.display_viewer_syntax([fname_image, fname_seg], colormaps=['gray', 'red'], opacities=['', '0.7'])
 
