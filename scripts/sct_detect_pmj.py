@@ -13,7 +13,6 @@ About the license: see the file LICENSE.TXT
 from __future__ import print_function, absolute_import, division
 
 import os
-import shutil
 import sys
 import numpy as np
 from scipy.ndimage.measurements import center_of_mass
@@ -23,6 +22,8 @@ import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
 from msct_parser import Parser
 import sct_utils as sct
+from spinalcordtoolbox.reports.qc import generate_qc
+
 
 def get_parser():
     # Initialize the parser
@@ -290,53 +291,10 @@ def main(args=None):
     # View results
     if fname_out is not None:
         if path_qc is not None:
-            generate_qc(fname_in, fname_out, args, os.path.abspath(path_qc))
+            generate_qc(fname_in, fname_seg=fname_out, args=args, path_qc=os.path.abspath(path_qc),
+                        process='sct_detect_pmj')
 
         sct.display_viewer_syntax([fname_in, fname_out], colormaps=['gray', 'red'])
-
-
-def generate_qc(fname_in, fname_out, args, path_qc):
-    """
-    Generate a QC entry allowing to quickly review the PMJ position
-    """
-
-    import spinalcordtoolbox.reports.qc as qc
-    import spinalcordtoolbox.reports.slice as qcslice
-
-    def highlight_pmj(self, mask):
-        """
-        Hook to show a rectangle where PMJ is on the slice
-        """
-
-        import matplotlib.pyplot as plt
-        import matplotlib.patches as patches
-
-        y, x = np.where(mask == 50)
-
-        ax = plt.gca()
-        img = np.full_like(mask, np.nan)
-        ax.imshow(img, cmap='gray', alpha=0)
-
-        rect = patches.Rectangle((x - 10, y - 10),
-                                 20, 20,
-                                 linewidth=2,
-                                 edgecolor='lime',
-                                 facecolor='none')
-
-        ax.add_patch(rect)
-        ax.get_xaxis().set_visible(False)
-        ax.get_yaxis().set_visible(False)
-
-    qc.add_entry(
-        src=fname_in,
-        process="sct_detect_pmj",
-        args=args,
-        path_qc=path_qc,
-        plane="Sagittal",
-        qcslice=qcslice.Sagittal([Image(fname_in), Image(fname_out)], p_resample=None),
-        qcslice_operations=[highlight_pmj],
-        qcslice_layout=lambda x: x.single(),
-    )
 
 
 if __name__ == "__main__":

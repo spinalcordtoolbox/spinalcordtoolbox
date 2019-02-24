@@ -29,9 +29,11 @@ from spinalcordtoolbox.image import Image
 import sct_utils as sct
 from spinalcordtoolbox.metadata import get_file_label
 from spinalcordtoolbox.vertebrae.detect_c2c3 import detect_c2c3
+from spinalcordtoolbox.reports.qc import generate_qc
+
 
 # get path of SCT
-path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
+path_sct = sct.__sct_dir__
 
 
 def center_of_mass(x):
@@ -351,62 +353,10 @@ def main(args=None):
     if param.path_qc is not None:
         path_qc = os.path.abspath(param.path_qc)
         labeled_seg_file = os.path.join(path_output, file_seg + '_labeled' + ext_seg)
-        generate_qc(fname_in, labeled_seg_file, args, path_qc)
+        generate_qc(fname_in, fname_seg=labeled_seg_file, args=args, path_qc=os.path.abspath(path_qc),
+                    process='sct_label_vertebrae')
 
     sct.display_viewer_syntax([fname_in, fname_seg_labeled], colormaps=['', 'subcortical'], opacities=['1', '0.5'])
-
-
-def generate_qc(fn_in, fn_labeled, args, path_qc):
-    """
-    Generate a quick visualization of vertebral labeling
-    """
-    import spinalcordtoolbox.reports.qc as qc
-    import spinalcordtoolbox.reports.slice as qcslice
-
-    def label_vertebrae(self, mask):
-        """
-        Draw vertebrae areas, then add text showing the vertebrae names.
-        """
-
-        import matplotlib.pyplot as plt
-        import scipy.ndimage
-
-        self.listed_seg_multicolor(mask)
-
-        ax = plt.gca()
-        a = [0.0]
-        data = mask
-        for index, val in np.ndenumerate(data):
-            if val not in a:
-                a.append(val)
-                index = int(val)
-                if index in self._labels_regions.values():
-                    color = self._labels_color[index]
-                    y, x = scipy.ndimage.measurements.center_of_mass(np.where(data == val, data, 0))
-
-                    # Draw text with a shadow
-
-                    x += 10
-
-                    label = list(self._labels_regions.keys())[list(self._labels_regions.values()).index(index)]
-                    ax.text(x, y, label, color='black', clip_on=True)
-
-                    x -= 0.5
-                    y -= 0.5
-
-                    ax.text(x, y, label, color=color, clip_on=True)
-
-    qc.add_entry(
-        src=fn_in,
-        process='sct_label_vertebrae',
-        args=args,
-        path_qc=path_qc,
-        plane='Sagittal',
-        dpi=100,
-        qcslice=qcslice.Sagittal([Image(fn_in), Image(fn_labeled)], p_resample=None),
-        qcslice_operations=[label_vertebrae],
-        qcslice_layout=lambda x: x.single(),
-    )
 
 
 def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1, path_template='', path_output='../'):
