@@ -20,8 +20,11 @@ import skimage
 import skimage.io
 import skimage.exposure
 
-import matplotlib
-matplotlib.use('Agg')
+from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+from matplotlib.figure import Figure
+
+# import matplotlib
+# matplotlib.use('Agg')
 import matplotlib.colorbar as colorbar
 import matplotlib.colors as color
 import matplotlib.pyplot as plt
@@ -95,39 +98,27 @@ class QcImage(object):
     Ex: if 'colorbar' is in the list, the process will generate a color bar in the "img" folder
     """
 
-    def listed_seg(self, mask):
+    def listed_seg(self, mask, ax):
         img = np.rint(np.ma.masked_where(mask < 1, mask))
-        fig = plt.imshow(img,
-                         cmap=color.ListedColormap(self._color_bin_red),
-                         norm=color.Normalize(vmin=0, vmax=1),
-                         interpolation=self.interpolation,
-                         alpha=1,
-                         aspect=float(self.aspect_mask))
-        fig.axes.get_xaxis().set_visible(False)
-        fig.axes.get_yaxis().set_visible(False)
+        ax.imshow(img,
+                  cmap=color.ListedColormap(self._color_bin_red),
+                  norm=color.Normalize(vmin=0, vmax=1),
+                  interpolation=self.interpolation,
+                  alpha=1,
+                  aspect=float(self.aspect_mask))
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
 
-    # TODO: avoid duplication with code above
-    def listed_seg_green(self, mask):
+    def listed_seg_multicolor(self, mask, ax):
         img = np.rint(np.ma.masked_where(mask < 1, mask))
-        fig = plt.imshow(img,
-                         cmap=color.ListedColormap(self._color_bin_green),
-                         norm=color.Normalize(vmin=0, vmax=1),
-                         interpolation=self.interpolation,
-                         alpha=1,
-                         aspect=float(self.aspect_mask))
-        fig.axes.get_xaxis().set_visible(False)
-        fig.axes.get_yaxis().set_visible(False)
-
-    def listed_seg_multicolor(self, mask):
-        img = np.rint(np.ma.masked_where(mask < 1, mask))
-        fig = plt.imshow(img,
-                         cmap=color.ListedColormap(self._labels_color),
-                         norm=color.Normalize(vmin=0, vmax=len(self._labels_color)),
-                         interpolation=self.interpolation,
-                         alpha=1,
-                         aspect=float(self.aspect_mask))
-        fig.axes.get_xaxis().set_visible(False)
-        fig.axes.get_yaxis().set_visible(False)
+        ax.imshow(img,
+                  cmap=color.ListedColormap(self._labels_color),
+                  norm=color.Normalize(vmin=0, vmax=len(self._labels_color)),
+                  interpolation=self.interpolation,
+                  alpha=1,
+                  aspect=float(self.aspect_mask))
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
 
     def template(self, mask):
         """
@@ -149,26 +140,26 @@ class QcImage(object):
         fig.axes.get_xaxis().set_visible(False)
         fig.axes.get_yaxis().set_visible(False)
 
-    def no_seg_seg(self, mask):
-        fig = plt.imshow(mask, cmap=plt.cm.gray, interpolation=self.interpolation, aspect=self.aspect_mask)
-        self._add_orientation_label(fig)
-        fig.axes.get_xaxis().set_visible(False)
-        fig.axes.get_yaxis().set_visible(False)
+    def no_seg_seg(self, mask, ax):
+        ax.imshow(mask, cmap=plt.cm.gray, interpolation=self.interpolation, aspect=self.aspect_mask)
+        self._add_orientation_label(ax)
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
 
-    def sequential_seg(self, mask):
+    def sequential_seg(self, mask, ax):
         values = np.ma.masked_equal(np.rint(mask), 0)
-        fig = plt.imshow(values,
-                         cmap=self._seg_colormap,
-                         interpolation=self.interpolation,
-                         aspect=self.aspect_mask)
-        fig.axes.get_xaxis().set_visible(False)
-        fig.axes.get_yaxis().set_visible(False)
+        ax.imshow(values,
+                  cmap=self._seg_colormap,
+                  interpolation=self.interpolation,
+                  aspect=self.aspect_mask)
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
 
-    def colorbar(self):
-        fig = plt.figure(figsize=(9, 1.5))
-        ax = fig.add_axes([0.05, 0.80, 0.9, 0.15])
-        colorbar.ColorbarBase(ax, cmap=self._seg_colormap, orientation='horizontal')
-        return '{}_colorbar'.format(self.qc_report.img_base_name)
+    # def colorbar(self):
+    #     fig = plt.figure(figsize=(9, 1.5))
+    #     ax = fig.add_axes([0.05, 0.80, 0.9, 0.15])
+    #     colorbar.ColorbarBase(ax, cmap=self._seg_colormap, orientation='horizontal')
+    #     return '{}_colorbar'.format(self.qc_report.img_base_name)
 
     def __call__(self, func):
         """wrapped function (f).
@@ -239,29 +230,35 @@ class QcImage(object):
 
                 img = func_stretch_contrast[self._stretch_contrast_method](img)
 
-            plt.figure()
-            fig = plt.imshow(img, cmap=plt.cm.gray, interpolation=self.interpolation, aspect=float(aspect_img))
-            self._add_orientation_label(fig)
-            fig.axes.get_xaxis().set_visible(False)
-            fig.axes.get_yaxis().set_visible(False)
-            self._save(self.qc_report.qc_params.abs_bkg_img_path(), dpi=self.qc_report.qc_params.dpi)
+            fig = Figure()
+            FigureCanvas(fig)
+            ax = fig.add_subplot(111)
+            # plt.figure()
+            ax.imshow(img, cmap=plt.cm.gray, interpolation=self.interpolation, aspect=float(aspect_img))
+            self._add_orientation_label(ax)
+            ax.get_xaxis().set_visible(False)
+            ax.get_yaxis().set_visible(False)
+            self._save(fig, self.qc_report.qc_params.abs_bkg_img_path(), dpi=self.qc_report.qc_params.dpi)
 
             for action in self.action_list:
                 logger.debug('Action List %s', action.__name__)
-                plt.clf()
-                plt.figure()
+                # plt.clf()
+                # plt.figure()
                 if self._stretch_contrast and action.__name__ in ("no_seg_seg",):
                     print("Mask type %s" % mask.dtype)
                     mask = func_stretch_contrast[self._stretch_contrast_method](mask)
-                action(self, mask)
-                self._save(self.qc_report.qc_params.abs_overlay_img_path(), dpi=self.qc_report.qc_params.dpi)
+                fig = Figure()
+                FigureCanvas(fig)
+                ax = fig.add_subplot(111)
+                action(self, mask, ax)
+                self._save(fig, self.qc_report.qc_params.abs_overlay_img_path(), dpi=self.qc_report.qc_params.dpi)
             plt.close()
 
             self.qc_report.update_description_file(img.shape)
 
         return wrapped_f
 
-    def _add_orientation_label(self, fig):
+    def _add_orientation_label(self, ax):
         """
         Add orientation labels on the figure
         :param fig: MPL figure handler
@@ -269,14 +266,15 @@ class QcImage(object):
         """
         if self.qc_report.qc_params.orientation == 'Axial':
             # If mosaic of axial slices, display orientation labels
-            fig.axes.text(12, 6, 'A', color='yellow', size=6)
-            fig.axes.text(12, 28, 'P', color='yellow', size=6)
-            fig.axes.text(1, 18, 'L', color='yellow', size=6)
-            fig.axes.text(24, 18, 'R', color='yellow', size=6)
+            ax.text(12, 6, 'A', color='yellow', size=6)
+            ax.text(12, 28, 'P', color='yellow', size=6)
+            ax.text(0, 18, 'L', color='yellow', size=6)
+            ax.text(24, 18, 'R', color='yellow', size=6)
 
-    def _save(self, img_path, format='png', bbox_inches='tight', pad_inches=0.00, dpi=300):
+    def _save(self, fig, img_path, format='png', bbox_inches='tight', pad_inches=0.00, dpi=300):
         """
         Save the current figure into an image.
+        :param fig: Figure handler
         :param img_path: str: path of the folder where the image is saved
         :param format: str: image format
         :param bbox_inches: str
@@ -285,7 +283,7 @@ class QcImage(object):
         :return:
         """
         logger.debug('Save image %s', img_path)
-        plt.savefig(img_path,
+        fig.savefig(img_path,
                     format=format,
                     bbox_inches=bbox_inches,
                     pad_inches=pad_inches,
