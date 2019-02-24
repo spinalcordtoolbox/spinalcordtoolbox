@@ -240,6 +240,12 @@ class QcImage(object):
 
             plt.figure()
             fig = plt.imshow(img, cmap=plt.cm.gray, interpolation=self.interpolation, aspect=float(aspect_img))
+            if self.qc_report.qc_params.orientation == 'Axial':
+                # If mosaic of axial slices, display orientation labels
+                fig.axes.text(12, 6, 'A', color='yellow', size=6)
+                fig.axes.text(12, 28, 'P', color='yellow', size=6)
+                fig.axes.text(1, 18, 'L', color='yellow', size=6)
+                fig.axes.text(24, 18, 'R', color='yellow', size=6)
             fig.axes.get_xaxis().set_visible(False)
             fig.axes.get_yaxis().set_visible(False)
             self._save(self.qc_report.qc_params.abs_bkg_img_path(), dpi=self.qc_report.qc_params.dpi)
@@ -463,7 +469,7 @@ def add_entry(src, process, args, path_qc, plane, background=None, foreground=No
 
         report.update_description_file(foreground.shape[:2])
 
-    sct.printv('Sucessfully generated the QC results in %s' % qc_param.qc_results)
+    sct.printv('Successfully generated the QC results in %s' % qc_param.qc_results)
     sct.printv('Use the following command to see the results in a browser:')
     try:
         from sys import platform as _platform
@@ -480,6 +486,14 @@ def add_entry(src, process, args, path_qc, plane, background=None, foreground=No
 def generate_qc(fname_in1, fname_in2=None, fname_seg=None, args=None, path_qc=None, process=None):
     """
     Generate a QC entry allowing to quickly review results. This function is called by SCT scripts (e.g. sct_propseg).
+
+    :param fname_in1: str: File name of input image #1 (mandatory)
+    :param fname_in2: str: File name of input image #2
+    :param fname_seg: str: File name of input segmentation
+    :param args: args from parent function
+    :param path_qc: str: Path to save QC report
+    :param process: str: Name of SCT function. e.g., sct_propseg
+    :return: None
     """
     def _label_vertebrae(self, mask):
         """
