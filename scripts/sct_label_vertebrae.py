@@ -32,10 +32,6 @@ from spinalcordtoolbox.vertebrae.detect_c2c3 import detect_c2c3
 from spinalcordtoolbox.reports.qc import generate_qc
 
 
-# get path of SCT
-path_sct = sct.__sct_dir__
-
-
 def center_of_mass(x):
     """
     :return: array center of mass
@@ -49,7 +45,6 @@ def center_of_mass(x):
 class Param:
     # The constructor
     def __init__(self):
-        # self.path_template = os.path.join(path_sct, 'data', 'template')
         self.shift_AP = 32  # 0#32  # shift the centerline towards the spine (in voxel).
         self.size_AP = 11  # 41#11  # window size in AP direction (=y) (in voxel)
         self.size_RL = 1  # 1 # window size in RL direction (=x) (in voxel)
@@ -100,7 +95,7 @@ def get_parser():
                       type_value="folder",
                       description="Path to template.",
                       mandatory=False,
-                      default_value=os.path.join(path_sct, "data", "PAM50"))
+                      default_value=os.path.join(sct.__data_dir__, 'PAM50'))
     parser.add_option(name="-initz",
                       type_value=[[','], 'int'],
                       description='Initialize using slice number and disc value. Example: 68,4 (slice 68 corresponds to disc C3/C4). WARNING: Slice number should correspond to superior-inferior direction (e.g. Z in RPI orientation, but Y in LIP orientation).',
