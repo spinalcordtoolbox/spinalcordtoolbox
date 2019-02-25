@@ -139,10 +139,10 @@ def get_parser():
     param_default = Param()
     # Initialize parser
     parser = Parser(__file__)
-    parser.usage.set_description('This function warps the template and all atlases to a given image (e.g. fMRI, DTI, MTR, etc.).')
+    parser.usage.set_description('This function warps the template and all atlases to a destination image.')
     parser.add_option(name="-d",
                       type_value="file",
-                      description="destination image the template will be warped into",
+                      description="destination image the template will be warped to",
                       mandatory=True,
                       example="dwi_mean.nii.gz")
     parser.add_option(name="-w",
@@ -152,7 +152,7 @@ def get_parser():
                       example="warp_template2dmri.nii.gz")
     parser.add_option(name="-a",
                       type_value="multiple_choice",
-                      description="warp atlas of white matter",
+                      description="warp atlas of white matter.",
                       mandatory=False,
                       default_value=str(param_default.warp_atlas),
                       example=['0', '1'])
