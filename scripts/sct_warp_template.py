@@ -113,10 +113,14 @@ def warp_label(path_label, folder_label, file_label, fname_src, fname_transfo, p
         # Warp label
         for i in range(0, len(template_label_file)):
             fname_label = os.path.join(path_label, folder_label, template_label_file[i])
-            # check if file exists
-            # sct.check_file_exist(fname_label)
             # apply transfo
-            sct.run('sct_apply_transfo -i ' + fname_label + ' -o ' + os.path.join(path_out, folder_label, template_label_file[i]) + ' -d ' + fname_src + ' -w ' + fname_transfo + ' -x ' + get_interp(template_label_file[i]), param.verbose)
+            sct.run('isct_antsApplyTransforms -d 3 -i %s -r %s -t %s -o %s -n %s' %
+                    (fname_label,
+                     fname_src,
+                     fname_transfo,
+                     os.path.join(path_out, folder_label, template_label_file[i]),
+                     get_interp(template_label_file[i])),
+                    verbose=param.verbose)
         # Copy list.txt
         sct.copy(os.path.join(path_label, folder_label, param.file_info_label), os.path.join(path_out, folder_label))
 
@@ -125,10 +129,10 @@ def warp_label(path_label, folder_label, file_label, fname_src, fname_transfo, p
 # ==========================================================================================
 def get_interp(file_label):
     # default interp
-    interp = 'linear'
+    interp = 'Linear'
     # NN interp
     if any(substring in file_label for substring in param.list_labels_nn):
-        interp = 'nn'
+        interp = 'NearestNeighbor'
     # output
     return interp
 
