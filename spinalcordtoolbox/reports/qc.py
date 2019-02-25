@@ -22,12 +22,7 @@ import skimage.exposure
 
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
-
-# import matplotlib
-# matplotlib.use('Agg')
-import matplotlib.colorbar as colorbar
 import matplotlib.colors as color
-import matplotlib.pyplot as plt
 
 import sct_utils as sct
 from spinalcordtoolbox.image import Image
@@ -69,7 +64,7 @@ class QcImage(object):
                      "#9f89b0", "#e08e08", "#3d2b54",
                      "#7d0434", "#fb1849", "#14aab4",
                      "#a22abd", "#d58240", "#ac2aff"]
-    _seg_colormap = plt.cm.autumn
+    # _seg_colormap = plt.cm.autumn
 
     def __init__(self, qc_report, interpolation, action_list, stretch_contrast=True,
                  stretch_contrast_method='contrast_stretching'):
@@ -99,6 +94,7 @@ class QcImage(object):
     """
 
     def listed_seg(self, mask, ax):
+        """Create figure with red segmentation. Common scenario."""
         img = np.rint(np.ma.masked_where(mask < 1, mask))
         ax.imshow(img,
                   cmap=color.ListedColormap(self._color_bin_red),
@@ -109,39 +105,28 @@ class QcImage(object):
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
 
-    def listed_seg_multicolor(self, mask, ax):
-        img = np.rint(np.ma.masked_where(mask < 1, mask))
-        ax.imshow(img,
-                  cmap=color.ListedColormap(self._labels_color),
-                  norm=color.Normalize(vmin=0, vmax=len(self._labels_color)),
-                  interpolation=self.interpolation,
-                  alpha=1,
-                  aspect=float(self.aspect_mask))
-        ax.get_xaxis().set_visible(False)
-        ax.get_yaxis().set_visible(False)
-
-    def template(self, mask):
-        """
-        Show template statistical atlas
-        """
-        values = mask
-        values[values < 0.5] = 0
-        color_white = color.colorConverter.to_rgba('white', alpha=0.0)
-        color_blue = color.colorConverter.to_rgba('blue', alpha=0.7)
-        color_cyan = color.colorConverter.to_rgba('cyan', alpha=0.8)
-        cmap = color.LinearSegmentedColormap.from_list('cmap_atlas',
-                                                       [color_white, color_blue, color_cyan], N=256)
-
-        fig = plt.imshow(values,
-                         cmap=cmap,
-                         interpolation=self.interpolation,
-                         aspect=self.aspect_mask)
-
-        fig.axes.get_xaxis().set_visible(False)
-        fig.axes.get_yaxis().set_visible(False)
+    # TODO: activate feature below (for sct_warp_template)
+    # def template(self, mask):
+    #     """Show template statistical atlas"""
+    #     values = mask
+    #     values[values < 0.5] = 0
+    #     color_white = color.colorConverter.to_rgba('white', alpha=0.0)
+    #     color_blue = color.colorConverter.to_rgba('blue', alpha=0.7)
+    #     color_cyan = color.colorConverter.to_rgba('cyan', alpha=0.8)
+    #     cmap = color.LinearSegmentedColormap.from_list('cmap_atlas',
+    #                                                    [color_white, color_blue, color_cyan], N=256)
+    #
+    #     fig = plt.imshow(values,
+    #                      cmap=cmap,
+    #                      interpolation=self.interpolation,
+    #                      aspect=self.aspect_mask)
+    #
+    #     fig.axes.get_xaxis().set_visible(False)
+    #     fig.axes.get_yaxis().set_visible(False)
 
     def no_seg_seg(self, mask, ax):
-        ax.imshow(mask, cmap=plt.cm.gray, interpolation=self.interpolation, aspect=self.aspect_mask)
+        """Create figure with image overlay. Notably used by sct_registration_to_template"""
+        ax.imshow(mask, cmap='gray', interpolation=self.interpolation, aspect=self.aspect_mask)
         self._add_orientation_label(ax)
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
@@ -152,6 +137,51 @@ class QcImage(object):
                   cmap=self._seg_colormap,
                   interpolation=self.interpolation,
                   aspect=self.aspect_mask)
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
+
+    def label_vertebrae(self, mask, ax):
+        """Draw vertebrae areas, then add text showing the vertebrae names"""
+        from matplotlib import colors
+        import scipy.ndimage
+        img = np.rint(np.ma.masked_where(mask < 1, mask))
+        ax.imshow(img,
+                  cmap=colors.ListedColormap(self._labels_color),
+                  norm=colors.Normalize(vmin=0, vmax=len(self._labels_color)),
+                  interpolation=self.interpolation,
+                  alpha=1,
+                  aspect=float(self.aspect_mask))
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
+        a = [0.0]
+        data = mask
+        for index, val in np.ndenumerate(data):
+            if val not in a:
+                a.append(val)
+                index = int(val)
+                if index in self._labels_regions.values():
+                    color = self._labels_color[index]
+                    y, x = scipy.ndimage.measurements.center_of_mass(np.where(data == val, data, 0))
+                    # Draw text with a shadow
+                    x += 10
+                    label = list(self._labels_regions.keys())[list(self._labels_regions.values()).index(index)]
+                    ax.text(x, y, label, color='black', clip_on=True)
+                    x -= 0.5
+                    y -= 0.5
+                    ax.text(x, y, label, color=color, clip_on=True)
+
+    def highlight_pmj(self, mask, ax):
+        """Hook to show a rectangle where PMJ is on the slice"""
+        import matplotlib.patches as patches
+        y, x = np.where(mask == 50)
+        img = np.full_like(mask, np.nan)
+        ax.imshow(img, cmap='gray', alpha=0)
+        rect = patches.Rectangle((x - 10, y - 10),
+                                 20, 20,
+                                 linewidth=2,
+                                 edgecolor='lime',
+                                 facecolor='none')
+        ax.add_patch(rect)
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
 
@@ -233,8 +263,7 @@ class QcImage(object):
             fig = Figure()
             FigureCanvas(fig)
             ax = fig.add_subplot(111)
-            # plt.figure()
-            ax.imshow(img, cmap=plt.cm.gray, interpolation=self.interpolation, aspect=float(aspect_img))
+            ax.imshow(img, cmap='gray', interpolation=self.interpolation, aspect=float(aspect_img))
             self._add_orientation_label(ax)
             ax.get_xaxis().set_visible(False)
             ax.get_yaxis().set_visible(False)
@@ -242,8 +271,6 @@ class QcImage(object):
 
             for action in self.action_list:
                 logger.debug('Action List %s', action.__name__)
-                # plt.clf()
-                # plt.figure()
                 if self._stretch_contrast and action.__name__ in ("no_seg_seg",):
                     print("Mask type %s" % mask.dtype)
                     mask = func_stretch_contrast[self._stretch_contrast_method](mask)
@@ -252,7 +279,6 @@ class QcImage(object):
                 ax = fig.add_subplot(111)
                 action(self, mask, ax)
                 self._save(fig, self.qc_report.qc_params.abs_overlay_img_path(), dpi=self.qc_report.qc_params.dpi)
-            plt.close()
 
             self.qc_report.update_description_file(img.shape)
 
@@ -502,49 +528,6 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, args=None, path_qc=No
     :param process: str: Name of SCT function. e.g., sct_propseg
     :return: None
     """
-    def _label_vertebrae(self, mask):
-        """
-        Draw vertebrae areas, then add text showing the vertebrae names.
-        """
-        import scipy.ndimage
-        self.listed_seg_multicolor(mask)
-        ax = plt.gca()
-        a = [0.0]
-        data = mask
-        for index, val in np.ndenumerate(data):
-            if val not in a:
-                a.append(val)
-                index = int(val)
-                if index in self._labels_regions.values():
-                    color = self._labels_color[index]
-                    y, x = scipy.ndimage.measurements.center_of_mass(np.where(data == val, data, 0))
-                    # Draw text with a shadow
-                    x += 10
-                    label = list(self._labels_regions.keys())[list(self._labels_regions.values()).index(index)]
-                    ax.text(x, y, label, color='black', clip_on=True)
-                    x -= 0.5
-                    y -= 0.5
-                    ax.text(x, y, label, color=color, clip_on=True)
-
-    def _highlight_pmj(self, mask):
-        """
-        Hook to show a rectangle where PMJ is on the slice
-        """
-        import matplotlib.patches as patches
-        y, x = np.where(mask == 50)
-        ax = plt.gca()
-        img = np.full_like(mask, np.nan)
-        ax.imshow(img, cmap='gray', alpha=0)
-        rect = patches.Rectangle((x - 10, y - 10),
-                                 20, 20,
-                                 linewidth=2,
-                                 edgecolor='lime',
-                                 facecolor='none')
-        ax.add_patch(rect)
-        ax.get_xaxis().set_visible(False)
-        ax.get_yaxis().set_visible(False)
-
-    # Initialization
     dpi = 300
     # Get QC specifics based on SCT process
     if process in ['sct_register_multimodal', 'sct_register_to_template']:
@@ -564,13 +547,13 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, args=None, path_qc=No
         plane = 'Sagittal'
         dpi = 100  # bigger picture is needed for this special case, hence reduce dpi
         qcslice_type = qcslice.Sagittal([Image(fname_in1), Image(fname_seg)], p_resample=None)
-        qcslice_operations = [_label_vertebrae]
+        qcslice_operations = [QcImage.label_vertebrae]
         qcslice_layout = lambda x: x.single()
     elif process in ['sct_detect_pmj']:
         # sagittal orientation, display PMJ box
         plane = 'Sagittal'
         qcslice_type = qcslice.Sagittal([Image(fname_in1), Image(fname_seg)], p_resample=None)
-        qcslice_operations = [_highlight_pmj]
+        qcslice_operations = [QcImage.highlight_pmj]
         qcslice_layout = lambda x: x.single()
 
     add_entry(
