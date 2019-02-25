@@ -24,9 +24,9 @@ from scipy.ndimage.filters import gaussian_filter
 
 from sct_maths import mutual_information
 from msct_parser import Parser
-import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
 import sct_utils as sct
+from spinalcordtoolbox.resample import resample_file
 from spinalcordtoolbox.metadata import get_file_label
 from spinalcordtoolbox.vertebrae.detect_c2c3 import detect_c2c3
 from spinalcordtoolbox.reports.qc import generate_qc
@@ -283,23 +283,24 @@ def main(args=None):
 
     # resample to 0.5mm isotropic to match template resolution
     sct.printv('\nResample to 0.5mm isotropic...', verbose)
-    s, o = sct.run(['sct_resample', '-i', 'data_straight.nii', '-mm', '0.5x0.5x0.5', '-x', 'linear', '-o', 'data_straightr.nii'], verbose=verbose)
-
+    resample_file('data_straight.nii', 'data_straightr.nii', '0.5x0.5x0.5', 'mm', 'linear', 0)
     # Apply straightening to segmentation
     # N.B. Output is RPI
     sct.printv('\nApply straightening to segmentation...', verbose)
-    s, o = sct.run(['sct_apply_transfo', '-i', 'segmentation.nii.gz', '-d', 'data_straightr.nii', '-w', 'warp_curve2straight.nii.gz', '-o', 'segmentation_straight.nii.gz', '-x', 'linear'], verbose)
+    sct.run('isct_antsApplyTransforms -d 3 -i segmentation.nii.gz -o segmentation_straight.nii.gz -t warp_curve2straight.nii.gz -r data_straightr.nii -n Linear', verbose=verbose)
     # Threshold segmentation at 0.5
     sct.run(['sct_maths', '-i', 'segmentation_straight.nii.gz', '-thr', '0.5', '-o', 'segmentation_straight.nii.gz'], verbose)
-
     # Apply straightening to z-label
     sct.printv('\nAnd apply straightening to label...', verbose)
-    sct.run(['sct_apply_transfo', '-i', file_labelz, '-d', 'data_straightr.nii', '-w', 'warp_curve2straight.nii.gz', '-o', 'labelz_straight.nii.gz', '-x', 'nn'], verbose)
+    sct.run('isct_antsApplyTransforms -d 3 -i labelz.nii.gz -o labelz_straight.nii.gz -t warp_curve2straight.nii.gz -r data_straightr.nii -n NearestNeighbor', verbose=verbose)
     # get z value and disk value to initialize labeling
     sct.printv('\nGet z and disc values from straight label...', verbose)
-    init_disc = get_z_and_disc_values_from_label('labelz_straight.nii.gz')
-    sct.printv('.. ' + str(init_disc), verbose)
-
+    try:
+        init_disc = get_z_and_disc_values_from_label('labelz_straight.nii.gz')
+        sct.printv('.. ' + str(init_disc), verbose)
+    except ValueError:
+        sct.printv('The straightened label is empty. The automatic detection likely failed. We recommend you initialize'
+                   'the disc detection using -initlabel flag.', 1, 'error')
     # denoise data
     if denoise:
         sct.printv('\nDenoise data...', verbose)
@@ -315,7 +316,7 @@ def main(args=None):
 
     # un-straighten labeled spinal cord
     sct.printv('\nUn-straighten labeling...', verbose)
-    sct.run(['sct_apply_transfo', '-i', 'segmentation_straight_labeled.nii.gz', '-d', 'segmentation.nii.gz', '-w', 'warp_straight2curve.nii.gz', '-o', 'segmentation_labeled.nii.gz', '-x', 'nn'], verbose)
+    sct.run('isct_antsApplyTransforms -d 3 -i segmentation_straight_labeled.nii.gz -r segmentation.nii.gz -t warp_straight2curve.nii.gz -o segmentation_labeled.nii.gz -n NearestNeighbor', verbose=verbose)
 
     # Clean labeled segmentation
     sct.printv('\nClean labeled segmentation (correct interpolation errors)...', verbose)
