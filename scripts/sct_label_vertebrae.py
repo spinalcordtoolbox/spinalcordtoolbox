@@ -348,8 +348,7 @@ def main(args=None):
     if param.path_qc is not None:
         path_qc = os.path.abspath(param.path_qc)
         labeled_seg_file = os.path.join(path_output, file_seg + '_labeled' + ext_seg)
-        generate_qc(fname_in, fname_seg=labeled_seg_file, args=args, path_qc=os.path.abspath(path_qc),
-                    process='sct_label_vertebrae')
+
 
     sct.display_viewer_syntax([fname_in, fname_seg_labeled], colormaps=['', 'subcortical'], opacities=['1', '0.5'])
 

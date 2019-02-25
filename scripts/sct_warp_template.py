@@ -13,18 +13,12 @@
 
 from __future__ import absolute_import
 
-import sys, io, os, time
+import sys, os
 
 import spinalcordtoolbox.metadata
-
-from spinalcordtoolbox.image import Image
-
+from spinalcordtoolbox.reports.qc import generate_qc
 from msct_parser import Parser
 import sct_utils as sct
-
-# get path of the script and the toolbox
-path_script = os.path.dirname(__file__)
-path_sct = os.path.dirname(path_script)
 
 
 # DEFAULT PARAMETERS
@@ -33,7 +27,7 @@ class Param:
     def __init__(self):
         self.debug = 0
         self.folder_out = 'label'  # name of output folder
-        self.path_template = os.path.join(path_sct, "data", "PAM50")
+        self.path_template = os.path.join(sct.__data_dir__, "PAM50")
         self.folder_template = 'template'
         self.folder_atlas = 'atlas'
         self.folder_spinal_levels = 'spinal_levels'
@@ -192,26 +186,6 @@ def get_parser():
     return parser
 
 
-def generate_qc(fn_in, fn_wm, args, path_qc):
-    """
-    Generate a QC entry allowing to quickly review the warped template.
-    """
-
-    import spinalcordtoolbox.reports.qc as qc
-    import spinalcordtoolbox.reports.slice as qcslice
-
-    qc.add_entry(
-     src=fn_in,
-     process="sct_warp_template",
-     args=args,
-     path_qc=path_qc,
-     plane='Axial',
-     qcslice=qcslice.Axial([Image(fn_in), Image(fn_wm)]),
-     qcslice_operations=[qc.QcImage.template],
-     qcslice_layout=lambda x: x.mosaic(),
-    )
-
-
 def main(args=None):
 
     parser = get_parser()
@@ -231,12 +205,17 @@ def main(args=None):
     w = WarpTemplate(fname_src, fname_transfo, warp_atlas, warp_spinal_levels, folder_out, path_template, verbose)
 
     path_template = os.path.join(w.folder_out, w.folder_template)
-    if set(spinalcordtoolbox.metadata.get_indiv_label_names(path_template)).issuperset(["white matter", "T2-weighted template", "gray matter"]):
 
+    # Only deal with QC and verbose if white matter was warped (meaning, everything under template/)
+    if "white matter" in spinalcordtoolbox.metadata.get_indiv_label_names(path_template):
+        # Deal with QC report
         if path_qc is not None:
-            fname_wm = os.path.join(w.folder_out, w.folder_template, spinalcordtoolbox.metadata.get_file_label(path_template, 'white matter'))
-            generate_qc(fname_src, fname_wm, sys.argv[1:], os.path.abspath(path_qc))
+            fname_wm = os.path.join(w.folder_out, w.folder_template,
+                                    spinalcordtoolbox.metadata.get_file_label(path_template, 'white matter'))
+            generate_qc(fname_src, fname_seg=fname_wm, args=sys.argv[1:], path_qc=os.path.abspath(path_qc),
+                        process='sct_warp_template')
 
+        # Deal with verbose
         sct.display_viewer_syntax(
          [
           fname_src,

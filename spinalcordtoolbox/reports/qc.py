@@ -105,24 +105,21 @@ class QcImage(object):
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
 
-    # TODO: activate feature below (for sct_warp_template)
-    # def template(self, mask):
-    #     """Show template statistical atlas"""
-    #     values = mask
-    #     values[values < 0.5] = 0
-    #     color_white = color.colorConverter.to_rgba('white', alpha=0.0)
-    #     color_blue = color.colorConverter.to_rgba('blue', alpha=0.7)
-    #     color_cyan = color.colorConverter.to_rgba('cyan', alpha=0.8)
-    #     cmap = color.LinearSegmentedColormap.from_list('cmap_atlas',
-    #                                                    [color_white, color_blue, color_cyan], N=256)
-    #
-    #     fig = plt.imshow(values,
-    #                      cmap=cmap,
-    #                      interpolation=self.interpolation,
-    #                      aspect=self.aspect_mask)
-    #
-    #     fig.axes.get_xaxis().set_visible(False)
-    #     fig.axes.get_yaxis().set_visible(False)
+    def template(self, mask, ax):
+        """Show template statistical atlas"""
+        values = mask
+        values[values < 0.5] = 0
+        color_white = color.colorConverter.to_rgba('white', alpha=0.0)
+        color_blue = color.colorConverter.to_rgba('blue', alpha=0.7)
+        color_cyan = color.colorConverter.to_rgba('cyan', alpha=0.8)
+        cmap = color.LinearSegmentedColormap.from_list('cmap_atlas',
+                                                       [color_white, color_blue, color_cyan], N=256)
+        ax.imshow(values,
+                  cmap=cmap,
+                  interpolation=self.interpolation,
+                  aspect=self.aspect_mask)
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
 
     def no_seg_seg(self, mask, ax):
         """Create figure with image overlay. Notably used by sct_registration_to_template"""
@@ -542,6 +539,12 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, args=None, path_qc=No
         qcslice_type = qcslice.Axial([Image(fname_in1), Image(fname_seg)])
         qcslice_operations = [QcImage.listed_seg]
         qcslice_layout = lambda x: x.mosaic()
+    elif process in ['sct_warp_template']:
+        # axial orientation, switch between the image and the linear segmentation (in blue)
+        plane = 'Axial'
+        qcslice_type = qcslice.Axial([Image(fname_in1), Image(fname_seg)])
+        qcslice_operations = [QcImage.template]
+        qcslice_layout = lambda x: x.mosaic()
     elif process in ['sct_label_vertebrae']:
         # sagittal orientation, display vertebral labels
         plane = 'Sagittal'
@@ -555,6 +558,8 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, args=None, path_qc=No
         qcslice_type = qcslice.Sagittal([Image(fname_in1), Image(fname_seg)], p_resample=None)
         qcslice_operations = [QcImage.highlight_pmj]
         qcslice_layout = lambda x: x.single()
+    else:
+        sct.log.error('Unrecognised process.')
 
     add_entry(
         src=fname_in1,
