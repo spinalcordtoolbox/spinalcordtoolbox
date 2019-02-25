@@ -99,10 +99,11 @@ def warp_label(path_label, folder_label, file_label, fname_src, fname_transfo, p
     :param path_out:
     :return:
     """
-    # read label file and check if file exists
-    sct.printv('\nRead label file...', param.verbose)
     try:
-        template_label_ids, template_label_names, template_label_file, combined_labels_ids, combined_labels_names, combined_labels_id_groups, clusters_apriori = spinalcordtoolbox.metadata.read_label_file(os.path.join(path_label, folder_label), file_label)
+        # Read label file
+        template_label_ids, template_label_names, template_label_file, combined_labels_ids, combined_labels_names, \
+        combined_labels_id_groups, clusters_apriori = \
+            spinalcordtoolbox.metadata.read_label_file(os.path.join(path_label, folder_label), file_label)
     except Exception as error:
         sct.printv('\nWARNING: Cannot warp label ' + folder_label + ': ' + str(error), 1, 'warning')
         raise
@@ -214,7 +215,6 @@ def generate_qc(fn_in, fn_wm, args, path_qc):
 def main(args=None):
 
     parser = get_parser()
-    param = Param()
 
     arguments = parser.parse(sys.argv[1:])
 
