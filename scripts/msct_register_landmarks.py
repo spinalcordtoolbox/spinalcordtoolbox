@@ -256,7 +256,7 @@ def getRigidTransformFromLandmarks(points_dest, points_src, constraints='Tx_Ty_T
     sct.printv('Center:\n' + str(points_src_barycenter))
     sct.printv('Translation:\n' + str(translation_array))
 
-    if path_qc is not None:
+    if verbose == 2 and path_qc is not None:
         sct.create_folder(path_qc)
 
         import matplotlib
