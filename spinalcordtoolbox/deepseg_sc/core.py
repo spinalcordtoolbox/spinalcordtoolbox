@@ -10,7 +10,7 @@ from scipy.ndimage.morphology import binary_fill_holes
 from skimage.exposure import rescale_intensity
 from scipy.ndimage import distance_transform_edt
 
-from spinalcordtoolbox import resample
+from spinalcordtoolbox import resampling
 from cnn_models import nn_architecture_seg, nn_architecture_ctr
 from spinalcordtoolbox.image import Image, empty_like, change_type, zeros_like
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline, _call_viewer_centerline
@@ -85,7 +85,7 @@ def find_centerline(algo, image_fname, contrast_type, brain_bool, folder_output,
         input_resolution = Image(image_fname).dim[4:7]
         new_resolution = 'x'.join(['0.5', '0.5', str(input_resolution[2])])
 
-        resample.resample_file(image_fname, fname_res, new_resolution,
+        resampling.resample_file(image_fname, fname_res, new_resolution,
                                                                'mm', 'linear', verbose=0)
 
         # compute the heatmap
@@ -126,10 +126,10 @@ def find_centerline(algo, image_fname, contrast_type, brain_bool, folder_output,
         input_resolution = Image(image_fname).dim[4:7]
         new_resolution = 'x'.join(['0.5', '0.5', str(input_resolution[2])])
 
-        resample.resample_file(image_fname, fname_res, new_resolution,
+        resampling.resample_file(image_fname, fname_res, new_resolution,
                                                                'mm', 'linear', verbose=0)
 
-        resample.resample_file(centerline_filename, centerline_filename, new_resolution,
+        resampling.resample_file(centerline_filename, centerline_filename, new_resolution,
                                                                'mm', 'linear', verbose=0)
 
     if bool_2d:
@@ -631,7 +631,7 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
         # resample to 0.5mm isotropic
         fname_norm = sct.add_suffix(fname_orient, '_norm')
         fname_res3d = sct.add_suffix(fname_norm, '_resampled3d')
-        resample.resample_file(fname_norm, fname_res3d, '0.5x0.5x0.5',
+        resampling.resample_file(fname_norm, fname_res3d, '0.5x0.5x0.5',
                                                                             'mm', 'linear', verbose=0)
 
         # segment data using 3D convolutions
@@ -648,8 +648,8 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
         # TODO: does this need to be done (if already done below)?
         fname_seg_res2d = sct.add_suffix(fname_seg_crop_res, '_resampled2d')
         initial_2d_resolution = 'x'.join(['0.5', '0.5', str(input_resolution[2])])
-        resample.resample_image(fname_seg_crop_res, fname_seg_res2d,
-                                                                initial_2d_resolution, 'mm', 'linear', verbose=0)
+        resampling.resample_image(fname_seg_crop_res, fname_seg_res2d,
+                                  initial_2d_resolution, 'mm', 'linear', verbose=0)
         seg_crop_data = Image(fname_seg_res2d).data
 
     # reconstruct the segmentation from the crop data
@@ -667,7 +667,7 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
     initial_resolution = 'x'.join([str(input_resolution[0]), str(input_resolution[1]), str(input_resolution[2])])
     fname_res_seg_downsamp = sct.add_suffix(fname_res_seg, '_downsamp')
 
-    resample.resample_file(fname_res_seg, fname_res_seg_downsamp, initial_resolution,
+    resampling.resample_file(fname_res_seg, fname_res_seg_downsamp, initial_resolution,
                                                            'mm', 'linear', verbose=0)
     im_image_res_seg_downsamp = Image(fname_res_seg_downsamp)
 

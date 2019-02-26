@@ -13,7 +13,7 @@ import numpy as np
 from scipy import ndimage
 
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.resample import resample_nipy
+from spinalcordtoolbox.resampling import resample_nipy
 from nibabel.nifti1 import Nifti1Image
 from nipy.io.nifti_ref import nifti2nipy, nipy2nifti
 
