@@ -13,18 +13,12 @@
 
 from __future__ import absolute_import
 
-import sys, io, os, time
+import sys, os
 
 import spinalcordtoolbox.metadata
-
-from spinalcordtoolbox.image import Image
-
+from spinalcordtoolbox.reports.qc import generate_qc
 from msct_parser import Parser
 import sct_utils as sct
-
-# get path of the script and the toolbox
-path_script = os.path.dirname(__file__)
-path_sct = os.path.dirname(path_script)
 
 
 # DEFAULT PARAMETERS
@@ -33,7 +27,7 @@ class Param:
     def __init__(self):
         self.debug = 0
         self.folder_out = 'label'  # name of output folder
-        self.path_template = os.path.join(path_sct, "data", "PAM50")
+        self.path_template = os.path.join(sct.__data_dir__, "PAM50")
         self.folder_template = 'template'
         self.folder_atlas = 'atlas'
         self.folder_spinal_levels = 'spinal_levels'
@@ -99,10 +93,11 @@ def warp_label(path_label, folder_label, file_label, fname_src, fname_transfo, p
     :param path_out:
     :return:
     """
-    # read label file and check if file exists
-    sct.printv('\nRead label file...', param.verbose)
     try:
-        template_label_ids, template_label_names, template_label_file, combined_labels_ids, combined_labels_names, combined_labels_id_groups, clusters_apriori = spinalcordtoolbox.metadata.read_label_file(os.path.join(path_label, folder_label), file_label)
+        # Read label file
+        template_label_ids, template_label_names, template_label_file, combined_labels_ids, combined_labels_names, \
+        combined_labels_id_groups, clusters_apriori = \
+            spinalcordtoolbox.metadata.read_label_file(os.path.join(path_label, folder_label), file_label)
     except Exception as error:
         sct.printv('\nWARNING: Cannot warp label ' + folder_label + ': ' + str(error), 1, 'warning')
         raise
@@ -113,10 +108,14 @@ def warp_label(path_label, folder_label, file_label, fname_src, fname_transfo, p
         # Warp label
         for i in range(0, len(template_label_file)):
             fname_label = os.path.join(path_label, folder_label, template_label_file[i])
-            # check if file exists
-            # sct.check_file_exist(fname_label)
             # apply transfo
-            sct.run('sct_apply_transfo -i ' + fname_label + ' -o ' + os.path.join(path_out, folder_label, template_label_file[i]) + ' -d ' + fname_src + ' -w ' + fname_transfo + ' -x ' + get_interp(template_label_file[i]), param.verbose)
+            sct.run('isct_antsApplyTransforms -d 3 -i %s -r %s -t %s -o %s -n %s' %
+                    (fname_label,
+                     fname_src,
+                     fname_transfo,
+                     os.path.join(path_out, folder_label, template_label_file[i]),
+                     get_interp(template_label_file[i])),
+                    verbose=param.verbose)
         # Copy list.txt
         sct.copy(os.path.join(path_label, folder_label, param.file_info_label), os.path.join(path_out, folder_label))
 
@@ -125,10 +124,10 @@ def warp_label(path_label, folder_label, file_label, fname_src, fname_transfo, p
 # ==========================================================================================
 def get_interp(file_label):
     # default interp
-    interp = 'linear'
+    interp = 'Linear'
     # NN interp
     if any(substring in file_label for substring in param.list_labels_nn):
-        interp = 'nn'
+        interp = 'NearestNeighbor'
     # output
     return interp
 
@@ -140,10 +139,10 @@ def get_parser():
     param_default = Param()
     # Initialize parser
     parser = Parser(__file__)
-    parser.usage.set_description('This function warps the template and all atlases to a given image (e.g. fMRI, DTI, MTR, etc.).')
+    parser.usage.set_description('This function warps the template and all atlases to a destination image.')
     parser.add_option(name="-d",
                       type_value="file",
-                      description="destination image the template will be warped into",
+                      description="destination image the template will be warped to",
                       mandatory=True,
                       example="dwi_mean.nii.gz")
     parser.add_option(name="-w",
@@ -153,7 +152,7 @@ def get_parser():
                       example="warp_template2dmri.nii.gz")
     parser.add_option(name="-a",
                       type_value="multiple_choice",
-                      description="warp atlas of white matter",
+                      description="warp atlas of white matter.",
                       mandatory=False,
                       default_value=str(param_default.warp_atlas),
                       example=['0', '1'])
@@ -187,30 +186,9 @@ def get_parser():
     return parser
 
 
-def generate_qc(fn_in, fn_wm, args, path_qc):
-    """
-    Generate a QC entry allowing to quickly review the warped template.
-    """
-
-    import spinalcordtoolbox.reports.qc as qc
-    import spinalcordtoolbox.reports.slice as qcslice
-
-    qc.add_entry(
-     src=fn_in,
-     process="sct_warp_template",
-     args=args,
-     path_qc=path_qc,
-     plane='Axial',
-     qcslice=qcslice.Axial([Image(fn_in), Image(fn_wm)]),
-     qcslice_operations=[qc.QcImage.template],
-     qcslice_layout=lambda x: x.mosaic(),
-    )
-
-
 def main(args=None):
 
     parser = get_parser()
-    param = Param()
 
     arguments = parser.parse(sys.argv[1:])
 
@@ -227,12 +205,17 @@ def main(args=None):
     w = WarpTemplate(fname_src, fname_transfo, warp_atlas, warp_spinal_levels, folder_out, path_template, verbose)
 
     path_template = os.path.join(w.folder_out, w.folder_template)
-    if set(spinalcordtoolbox.metadata.get_indiv_label_names(path_template)).issuperset(["white matter", "T2-weighted template", "gray matter"]):
 
+    # Only deal with QC and verbose if white matter was warped (meaning, everything under template/)
+    if "white matter" in spinalcordtoolbox.metadata.get_indiv_label_names(path_template):
+        # Deal with QC report
         if path_qc is not None:
-            fname_wm = os.path.join(w.folder_out, w.folder_template, spinalcordtoolbox.metadata.get_file_label(path_template, 'white matter'))
-            generate_qc(fname_src, fname_wm, sys.argv[1:], os.path.abspath(path_qc))
+            fname_wm = os.path.join(w.folder_out, w.folder_template,
+                                    spinalcordtoolbox.metadata.get_file_label(path_template, 'white matter'))
+            generate_qc(fname_src, fname_seg=fname_wm, args=sys.argv[1:], path_qc=os.path.abspath(path_qc),
+                        process='sct_warp_template')
 
+        # Deal with verbose
         sct.display_viewer_syntax(
          [
           fname_src,
