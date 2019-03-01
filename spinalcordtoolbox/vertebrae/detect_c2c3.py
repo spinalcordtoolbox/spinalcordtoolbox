@@ -40,15 +40,14 @@ def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, verbose=1):
     :return:
     """
     # path to the pmj detector
-    path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
-    path_model = os.path.join(path_sct, 'data', 'c2c3_disc_models', '{}_model'.format(contrast))
+    path_model = os.path.join(sct.__data_dir__, 'c2c3_disc_models', '{}_model'.format(contrast))
 
     orientation_init = nii_im.orientation
     z_seg_max = np.max(np.where(nii_seg.change_orientation('PIR').data)[1])
 
     # Flatten sagittal
-    nii_im = flatten_sagittal(nii_im, nii_seg, centerline_fitting='hanning', verbose=verbose)
-    nii_seg_flat = flatten_sagittal(nii_seg, nii_seg, centerline_fitting='hanning', verbose=verbose)
+    nii_im = flatten_sagittal(nii_im, nii_seg,verbose=verbose)
+    nii_seg_flat = flatten_sagittal(nii_seg, nii_seg, verbose=verbose)
 
     # create temporary folder with intermediate results
     sct.log.info("Creating temporary folder...")

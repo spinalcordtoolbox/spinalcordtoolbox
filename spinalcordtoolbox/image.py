@@ -326,7 +326,6 @@ class Image(object):
         else:
             sct.log.debug("Loaded %s orientation %s shape %s", path, self.orientation, self.data.shape)
 
-
     def change_shape(self, shape, generate_path=False):
         """
         Change data shape (in-place)
@@ -778,6 +777,10 @@ def find_zmin_zmax(im, threshold=0.1):
     :return: [zmin, zmax]
     """
     slicer = SlicerOneAxis(im, axis="IS")
+
+    # Make sure image is not empty
+    if not np.any(slicer):
+        sct.log.error('Input image is empty')
 
     # Iterate from bottom to top until we find data
     for zmin in range(0, len(slicer)):

@@ -8,6 +8,7 @@ Contributors: charley
 from __future__ import absolute_import, division
 
 import numpy as np
+import tensorflow as tf
 
 from keras import backend as K
 from keras.engine import Input, Model
