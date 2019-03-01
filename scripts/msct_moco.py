@@ -32,8 +32,6 @@ from spinalcordtoolbox.image import Image
 from sct_image import split_data, concat_data
 import sct_apply_transfo
 
-path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
-
 #=======================================================================================================================
 # moco Function
 #=======================================================================================================================
@@ -48,7 +46,6 @@ def moco(param):
     verbose = param.verbose
 
     # other parameters
-    ext = '.nii'
     file_mask = 'mask.nii'
 
     sct.printv('\nInput parameters:', param.verbose)
@@ -68,14 +65,14 @@ def moco(param):
 
     # Get size of data
     sct.printv('\nData dimensions:', verbose)
-    im_data = Image(file_data + ext)
+    im_data = Image(param.file_data)
     nx, ny, nz, nt, px, py, pz, pt = im_data.dim
     sct.printv(('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz) + ' x ' + str(nt)), verbose)
 
     # copy file_target to a temporary file
     sct.printv('\nCopy file_target to a temporary file...', verbose)
-    sct.copy(file_target + ext, 'target.nii')
-    file_target = 'target'
+    file_target = "target.nii.gz"
+    convert(param.file_target, file_target)
 
     # If scan is sagittal, split src and target along Z (slice)
     if param.is_sagittal:
@@ -87,7 +84,7 @@ def moco(param):
             im_z.save()
             file_data_splitZ.append(im_z.absolutepath)
         # z-split target
-        im_targetz_list = split_data(Image(file_target+ext), dim=dim_sag, squeeze_data=False)
+        im_targetz_list = split_data(Image(file_target), dim=dim_sag, squeeze_data=False)
         file_target_splitZ = []
         for im_targetz in im_targetz_list:
             im_targetz.save()
@@ -100,16 +97,15 @@ def moco(param):
                 im_maskz.save()
                 file_mask_splitZ.append(im_maskz.absolutepath)
         # initialize file list for output matrices
-        file_mat = np.chararray([nz, nt],
-                                itemsize=50)  # itemsize=50 is to accomodate relative path to matrix file name.
+        file_mat = np.empty((nz, nt), dtype=object)
 
     # axial orientation
     else:
-        file_data_splitZ = [file_data + ext]  # TODO: make it absolute like above
-        file_target_splitZ = [file_target + ext]  # TODO: make it absolute like above
+        file_data_splitZ = [file_data]  # TODO: make it absolute like above
+        file_target_splitZ = [file_target]  # TODO: make it absolute like above
         # initialize file list for output matrices
-        file_mat = np.chararray([1, nt],
-                                itemsize=50)  # itemsize=50 is to accomodate relative path to matrix file name.
+        file_mat = np.empty((1, nt), dtype=object)
+
         # deal with mask
         if not param.fname_mask == '':
             convert(param.fname_mask, file_mask, squeeze_data=False)
@@ -117,7 +113,7 @@ def moco(param):
 
     # Loop across file list, where each file is either a 2D volume (if sagittal) or a 3D volume (otherwise)
     # file_mat = tuple([[[] for i in range(nt)] for i in range(nz)])
-    file_mat[:] = ''  # init
+
     file_data_splitZ_moco = []
     sct.printv('\nRegister. Loop across Z (note: there is only one Z if orientation is axial')
     for file in file_data_splitZ:
@@ -177,7 +173,7 @@ def moco(param):
                 sct.copy(file_mat[iz][gT[index_good]] + 'Warp.nii.gz', file_mat[iz][fT[it]] + 'Warp.nii.gz')
                 # apply transformation
                 sct_apply_transfo.main(args=['-i', file_data_splitZ_splitT[fT[it]],
-                                             '-d', file_target + ".nii",
+                                             '-d', file_target,
                                              '-w', file_mat[iz][fT[it]] + 'Warp.nii.gz',
                                              '-o', file_data_splitZ_splitT_moco[fT[it]],
                                              '-x', param.interp])
@@ -195,7 +191,9 @@ def moco(param):
     # If sagittal, merge along Z
     if param.is_sagittal:
         im_out = concat_data(file_data_splitZ_moco, 2)
-        im_out.save(file_data + suffix + ext)
+        dirname, basename, ext = sct.extract_fname(file_data)
+        path_out = os.path.join(dirname, basename + suffix + ext)
+        im_out.save(path_out)
 
     return file_mat
 
@@ -226,6 +224,7 @@ def register(param, file_src, file_dest, file_mat, file_out, im_mask=None):
         metric_radius = '4'
     file_out_concat = file_out
 
+    kw = dict()
     im_data = Image(file_src)  # TODO: pass argument to use antsReg instead of opening Image each time
 
     # register file_src to file_dest
@@ -268,7 +267,12 @@ def register(param, file_src, file_dest, file_mat, file_out, im_mask=None):
                 cmd += ['--mask', im_mask.absolutepath]
         # run command
         if do_registration:
-            status, output = sct.run(cmd, verbose=0)
+            env = dict()
+            env.update(os.environ)
+            env = kw.get("env", env)
+            # reducing the number of CPU used for moco (see issue #201)
+            env["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"] = "1"
+            status, output = sct.run(cmd, verbose=0, **kw)
 
     elif param.todo == 'apply':
         sct_apply_transfo.main(args=['-i', file_src,

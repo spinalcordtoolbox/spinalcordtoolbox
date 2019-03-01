@@ -323,6 +323,8 @@ def pad_image(im, pad_x_i=0, pad_x_f=0, pad_y_i=0, pad_y_f=0, pad_z_i=0, pad_z_f
 
     padded_data[pad_x_i:pad_x_f, pad_y_i:pad_y_f, pad_z_i:pad_z_f] = im.data
     im_out = im.copy()
+    # TODO: Do not copy the Image(), because the dim field and hdr.get_data_shape() will not be updated properly.
+    #   better to just create a new Image() from scratch.
     im_out.data = padded_data  # done after the call of the function
     im_out.absolutepath = sct.add_suffix(im_out.absolutepath, "_pad")
 

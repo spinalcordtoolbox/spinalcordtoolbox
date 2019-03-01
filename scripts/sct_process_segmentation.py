@@ -14,8 +14,8 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-# TODO: update "-p centerline" with new modifs
 # TODO: the import of scipy.misc imsave was moved to the specific cases (orth and ellipse) in order to avoid issue #62. This has to be cleaned in the future.
+# TODO: deal with flag -use-image-coord
 
 from __future__ import absolute_import, division
 
@@ -29,15 +29,15 @@ from spinalcordtoolbox.aggregate_slicewise import aggregate_per_slice_or_level, 
 from spinalcordtoolbox.utils import parse_num_list
 
 
+# TODO: Move this class somewhere else
 class Param:
     def __init__(self):
         self.debug = 0
         self.verbose = 1  # verbose
         self.remove_temp_files = 1
         self.slices = ''
-        self.type_window = 'hanning'  # for smooth_centerline @sct_straighten_spinalcord
         self.window_length = 50  # for smooth_centerline @sct_straighten_spinalcord
-        self.algo_fitting = 'hanning'  # nurbs, hanning
+        self.algo_fitting = 'bspline'  # polyfit, bspline
         self.perslice = None
         self.perlevel = None
 
@@ -58,7 +58,6 @@ def get_parser():
     parser.add_option(name='-p',
                       type_value='multiple_choice',
                       description='type of process to be performed:\n'
-                                  '- centerline: Extract centerline. Output coordinates (.csv), image with one pixel per slice (.nii.gz) and JIM-compatible ROI file (.roi).\n'
                                   '- label-vert: Transform segmentation into vertebral level using a file that contains labels with disc value (flag: -discfile)\n'
                                   '- csa: computes cross-sectional area by counting pixels in each slice and then geometrically adjusting using centerline orientation. Note that it is possible to input a binary mask or a mask comprising values within the range [0,1] to account for partial volume effect.\n'
                                   '- shape: compute spinal shape properties, using scikit-image region measures, including:\n'
@@ -70,7 +69,7 @@ def get_parser():
                                   '  - orientation: angle (in degrees) between the AP axis of the spinal cord and the AP axis of the image\n'
                                   '  - solidity: CSA(spinal_cord) / CSA_convex(spinal_cord). If perfect ellipse, it should be one. This metric is interesting to detect non-convex shape (e.g., in case of strong compression).',
                       mandatory=True,
-                      example=['centerline', 'label-vert', 'csa', 'shape'])
+                      example=['label-vert', 'csa', 'shape'])
     parser.usage.addSection('Optional Arguments')
     parser.add_option(name='-o',
                       type_value='file_output',
@@ -121,12 +120,6 @@ def get_parser():
                       mandatory=False,
                       default_value='1',
                       example=['0', '1'])
-    parser.add_option(name='-a',
-                      type_value='multiple_choice',
-                      description='Algorithm for curve fitting.',
-                      mandatory=False,
-                      default_value='nurbs',
-                      example=['hanning', 'nurbs'])
     parser.add_option(name='-no-angle',
                       type_value='multiple_choice',
                       description='0: angle correction for csa computation. 1: no angle correction. When angle '
@@ -201,8 +194,6 @@ def main(args):
         perslice = arguments['-perslice']
     else:
         perslice = Param().perslice
-    if '-a' in arguments:
-        param.algo_fitting = arguments['-a']
     if '-no-angle' in arguments:
         if arguments['-no-angle'] == '1':
             angle_correction = False
@@ -220,14 +211,8 @@ def main(args):
     if not file_out:
         file_out = name_process + '.csv'
 
-    if name_process == 'centerline':
-        process_seg.extract_centerline(fname_segmentation, verbose=param.verbose,
-                                       algo_fitting=param.algo_fitting, use_phys_coord=use_phys_coord,
-                                       file_out=file_out)
-
     if name_process == 'csa':
         metrics = process_seg.compute_csa(fname_segmentation, algo_fitting=param.algo_fitting,
-                                          type_window=param.type_window, window_length=param.window_length,
                                           angle_correction=angle_correction, use_phys_coord=use_phys_coord,
                                           remove_temp_files=remove_temp_files, verbose=verbose)
 
