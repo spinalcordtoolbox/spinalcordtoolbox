@@ -1,10 +1,12 @@
 # CHANGES TO RELEASE
 
-## v4.0.0 (2019-01-20)
-[View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.2.7...v4.0.0)
+## v4.0.0 (2019-03-01)
+[View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v4.0.0-beta.0...v4.0.0)
 
 **BUG**
 
+ - **sct_dmri_moco,sct_fmri_moco:** Work around "too many open files" by slurping the data. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2163)
+ - **sct_straighten_spinalcord:** Fixed crash caused by wrong estimation of centerline length in case of incomplete segmentation. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2154)
  - **sct_extract_metric:** Fixed bug in method max. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2087)
  - **sct_flatten_sagittal:** Fix bugs related to image scaling. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2070)
  - **sct_label_vertebrae:** Fixed path issue when using -initlabel flag. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2068)
@@ -14,6 +16,8 @@
 
 **ENHANCEMENT**
 
+ - **sct_warp_template:** Faster execution and other minor improvements. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2175)
+ - **sct_process_segmentation:** Major refactoring of centerline routine. **WARNING: Breaks compatibility with previous versions of SCT.** [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2147)
  - **sct_label_vertebrae:** Removed support for -initc2 flag because there is an alternative approach with sct_label_utils. **WARNING: Breaks compatibility with previous versions of SCT.** [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2125)
  - **sct_extract_metric:** Expose aggregate_slicewise() API and various improvements. **WARNING: Breaks compatibility with previous versions of SCT.** [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2115)
  - **sct_register_to_template:** Updated PAM50 template header to be in the same coordinate system as the MNI template. **WARNING: Breaks compatibility with previous versions of SCT.** [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2102)
