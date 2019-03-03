@@ -130,6 +130,14 @@ def get_parser():
                       mandatory=False,
                       default_value='0',
                       example=['0', '1'])
+    parser.add_option(name="-scale-dist",
+                      type_value="float",
+                      description="Scaling factor to adjust the average distance between two adjacent intervertebral "
+                                  "discs. For example, if you are dealing with images from pediatric population, the "
+                                  "distance should be reduced, so you can try a scaling factor of about 0.7.",
+                      mandatory=False,
+                      default_value=1.,
+                      example=1.)
     parser.add_option(name="-param",
                       type_value=[[','], 'str'],
                       description="Advanced parameters. Assign value with \"=\"; Separate arguments with \",\"\n"
@@ -184,6 +192,7 @@ def main(args=None):
     fname_seg = os.path.abspath(arguments['-s'])
     contrast = arguments['-c']
     path_template = arguments['-t']
+    scale_dist = arguments['-scale-dist']
     if '-ofolder' in arguments:
         path_output = arguments['-ofolder']
     else:
@@ -311,7 +320,8 @@ def main(args=None):
         sct.run(['sct_maths', '-i', 'data_straightr.nii', '-laplacian', '1', '-o', 'data_straightr.nii'], verbose)
 
     # detect vertebral levels on straight spinal cord
-    vertebral_detection('data_straightr.nii', 'segmentation_straight.nii.gz', contrast, param, init_disc=init_disc, verbose=verbose, path_template=path_template, path_output=path_output)
+    vertebral_detection('data_straightr.nii', 'segmentation_straight.nii.gz', contrast, param, init_disc=init_disc,
+                        verbose=verbose, path_template=path_template, path_output=path_output, scale_dist=scale_dist)
 
     # un-straighten labeled spinal cord
     sct.printv('\nUn-straighten labeling...', verbose)
@@ -354,7 +364,8 @@ def main(args=None):
     sct.display_viewer_syntax([fname_in, fname_seg_labeled], colormaps=['', 'subcortical'], opacities=['1', '0.5'])
 
 
-def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1, path_template='', path_output='../'):
+def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1, path_template='', path_output='../',
+                        scale_dist=1.):
     """
     Find intervertebral discs in straightened image using template matching
     :param fname: file name of straigthened spinal cord
@@ -365,6 +376,7 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     :param verbose:
     :param path_template:
     :param path_output: output path for verbose=2 pictures
+    :param scale_dist: float: Scaling factor to adjust average distance between two adjacent intervertebral discs
     :return:
     """
     sct.printv('\nLook for template...', verbose)
@@ -415,6 +427,8 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     sct.printv('Z-values for each disc: ' + str(list_disc_z_template), verbose)
     list_distance_template = (
         np.diff(list_disc_z_template) * (-1)).tolist()  # multiplies by -1 to get positive distances
+    # Update distance with scaling factor
+    list_distance_template = [i * scale_dist for i in list_distance_template]
     sct.printv('Distances between discs (in voxel): ' + str(list_distance_template), verbose)
 
     # display init disc
