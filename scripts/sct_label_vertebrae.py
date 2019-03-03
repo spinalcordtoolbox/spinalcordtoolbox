@@ -24,7 +24,6 @@ from scipy.ndimage.filters import gaussian_filter
 
 from sct_maths import mutual_information
 from msct_parser import Parser
-import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
 import sct_utils as sct
 from spinalcordtoolbox.metadata import get_file_label
@@ -297,13 +296,25 @@ def main(args=None):
     # Apply straightening to segmentation
     # N.B. Output is RPI
     sct.printv('\nApply straightening to segmentation...', verbose)
-    s, o = sct.run(['sct_apply_transfo', '-i', 'segmentation.nii.gz', '-d', 'data_straightr.nii', '-w', 'warp_curve2straight.nii.gz', '-o', 'segmentation_straight.nii.gz', '-x', 'linear'], verbose)
+    sct.run('isct_antsApplyTransforms -d 3 -i %s -r %s -t %s -o %s -n %s' %
+            ('segmentation.nii.gz',
+             'data_straightr.nii',
+             'warp_curve2straight.nii.gz',
+             'segmentation_straight.nii.gz',
+             'Linear'),
+            verbose=verbose)
     # Threshold segmentation at 0.5
     sct.run(['sct_maths', '-i', 'segmentation_straight.nii.gz', '-thr', '0.5', '-o', 'segmentation_straight.nii.gz'], verbose)
 
     # Apply straightening to z-label
     sct.printv('\nAnd apply straightening to label...', verbose)
-    sct.run(['sct_apply_transfo', '-i', file_labelz, '-d', 'data_straightr.nii', '-w', 'warp_curve2straight.nii.gz', '-o', 'labelz_straight.nii.gz', '-x', 'nn'], verbose)
+    sct.run('isct_antsApplyTransforms -d 3 -i %s -r %s -t %s -o %s -n %s' %
+            (file_labelz,
+             'data_straightr.nii',
+             'warp_curve2straight.nii.gz',
+             'labelz_straight.nii.gz',
+             'NearestNeighbor'),
+            verbose=verbose)
     # get z value and disk value to initialize labeling
     sct.printv('\nGet z and disc values from straight label...', verbose)
     init_disc = get_z_and_disc_values_from_label('labelz_straight.nii.gz')
@@ -325,7 +336,13 @@ def main(args=None):
 
     # un-straighten labeled spinal cord
     sct.printv('\nUn-straighten labeling...', verbose)
-    sct.run(['sct_apply_transfo', '-i', 'segmentation_straight_labeled.nii.gz', '-d', 'segmentation.nii.gz', '-w', 'warp_straight2curve.nii.gz', '-o', 'segmentation_labeled.nii.gz', '-x', 'nn'], verbose)
+    sct.run('isct_antsApplyTransforms -d 3 -i %s -r %s -t %s -o %s -n %s' %
+            ('segmentation_straight_labeled.nii.gz',
+             'segmentation.nii.gz',
+             'warp_straight2curve.nii.gz',
+             'segmentation_labeled.nii.gz',
+             'NearestNeighbor'),
+            verbose=verbose)
 
     # Clean labeled segmentation
     sct.printv('\nClean labeled segmentation (correct interpolation errors)...', verbose)
