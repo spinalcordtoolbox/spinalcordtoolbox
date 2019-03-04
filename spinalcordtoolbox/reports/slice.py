@@ -368,22 +368,32 @@ class Sagittal(Slice):
 
     def get_center_spit(self, img_idx=-1):
         """Retrieve index of the medial plane (in the R-L direction) for each slice (in the I-S direction) in order
-        to center the spinal cord in the sagittal view."""
-        from spinalcordtoolbox.centerline.core import get_centerline
+        to center the spinal cord in the sagittal view.
+        Exception: if the input mask only has a single label (e.g., for sct_detect_pmj), then output the index that has
+        the sagittal slice centered at that label."""
         image = self._images[img_idx].copy()
-        image.change_orientation('RPI')  # need to do that because get_centerline operates in RPI orientation
-        # Get coordinate of centerline
-        _, arr_ctl_RPI, _ = get_centerline(image, algo_fitting='bspline', minmax=True)
-        # Extend the centerline by copying values below zmin and above zmax to avoid discontinuities
-        zmin, zmax = arr_ctl_RPI[2, :].min().astype(int), arr_ctl_RPI[2, :].max().astype(int)
-        index_RL_in_RPI = np.concatenate([np.ones(zmin) * arr_ctl_RPI[0, 0],
-                                          arr_ctl_RPI[0, 1:],
-                                          np.ones(image.data.shape[2] - zmax) * arr_ctl_RPI[0, -1]])
-        # reorient R-L index to go from RPI to SAL
-        index_RL_in_SAL = image.data.shape[0] - index_RL_in_RPI
-        # then reverse to go from RL to LR
-        index_RL_in_SAL = index_RL_in_SAL[::-1]
-        return index_RL_in_SAL
+        # If mask is empty, raise error
+        if np.argwhere(image.data).shape[0] == 0:
+            logging.error('Mask is empty')
+        # If mask only has one label (e.g., in sct_detect_pmj), return the repmat of the R-L index (assuming SAL orient)
+        elif np.argwhere(image.data).shape[0] == 1:
+            return [np.argwhere(image.data)[0][2]] * image.data.shape[2]
+        # Otherwise, find the center of mass per slice and return the R-L index
+        else:
+            from spinalcordtoolbox.centerline.core import get_centerline
+            image.change_orientation('RPI')  # need to do that because get_centerline operates in RPI orientation
+            # Get coordinate of centerline
+            _, arr_ctl_RPI, _ = get_centerline(image, algo_fitting='bspline', minmax=True)
+            # Extend the centerline by copying values below zmin and above zmax to avoid discontinuities
+            zmin, zmax = arr_ctl_RPI[2, :].min().astype(int), arr_ctl_RPI[2, :].max().astype(int)
+            index_RL_in_RPI = np.concatenate([np.ones(zmin) * arr_ctl_RPI[0, 0],
+                                              arr_ctl_RPI[0, 1:],
+                                              np.ones(image.data.shape[2] - zmax) * arr_ctl_RPI[0, -1]])
+            # reorient R-L index to go from RPI to SAL
+            index_RL_in_SAL = image.data.shape[0] - index_RL_in_RPI
+            # then reverse to go from RL to LR
+            index_RL_in_SAL = index_RL_in_SAL[::-1]
+            return index_RL_in_SAL
 
     def get_center(self, img_idx=-1):
         image = self._images[img_idx]
