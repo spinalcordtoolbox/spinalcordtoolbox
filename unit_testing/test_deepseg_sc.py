@@ -7,7 +7,7 @@ import sct_utils as sct
 from spinalcordtoolbox.image import Image
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.deepseg_sc import core as deepseg_sc
-from spinalcordtoolbox.resample.nipy_resample import resample_file
+from spinalcordtoolbox.resampling import resample_file
 from test_centerline import dummy_centerline_small
 
 
