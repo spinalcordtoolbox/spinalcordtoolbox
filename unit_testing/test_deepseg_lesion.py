@@ -48,6 +48,3 @@ def test_intensity_normalization():
     assert data_out.dtype == np.float32
     assert np.min(data_out) >= min_out
     assert np.max(data_out) <= max_out
-
-
-
