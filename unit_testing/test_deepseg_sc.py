@@ -139,11 +139,30 @@ def test_crop_image_around_centerline():
     assert np.allclose(img_in_z0_crop, img_out.data[:,:,0])
 
 
-def test_fill_z_holes():
-    pass # todo
-
-def test_remove_blobs():
-    pass # todo
-
 def test_uncrop_image():
-    pass # todo
+    input_shape = (100, 100, 100)
+    crop_size = 20
+    data_crop = np.random.randint(0, 2, size=(crop_size, crop_size, input_shape[2]))
+    data_in = np.random.randint(0, 1000, size=input_shape)
+
+    x_crop_lst = list(np.random.randint(0, input_shape[0]-crop_size, input_shape[2]))
+    y_crop_lst = list(np.random.randint(0,input_shape[1]-crop_size, input_shape[2]))
+
+    affine = np.eye(4)
+    nii = nib.nifti1.Nifti1Image(data_in, affine)
+    img_in = Image(data_in, hdr=nii.header, dim=nii.header.get_data_shape())
+
+    img_uncrop = deepseg_sc.uncrop_image(ref_in=img_in,
+                                        data_crop=data_crop,
+                                        x_crop_lst=x_crop_lst,
+                                        y_crop_lst=y_crop_lst)
+
+
+
+    assert img_uncrop.data.shape == input_shape
+    z_rand = np.random.randint(0, input_shape[2])
+    assert np.allclose(img_uncrop.data[x_crop_lst[z_rand]:x_crop_lst[z_rand]+crop_size,
+                                        y_crop_lst[z_rand]:y_crop_lst[z_rand]+crop_size,
+                                        z_rand],
+                        data_crop[:, :, z_rand])
+
