@@ -22,7 +22,7 @@ import sct_maths
 import scipy.ndimage.measurements
 from scipy.ndimage.filters import gaussian_filter
 
-from sct_maths import mutual_information
+from sct_maths import mutual_information, dilate
 from msct_parser import Parser
 from spinalcordtoolbox.image import Image
 import sct_utils as sct
@@ -631,25 +631,24 @@ def clean_labeled_segmentation(fname_labeled_seg, fname_seg, fname_labeled_seg_n
     :param fname_labeled_seg_new: output
     :return: none
     """
-    # TODO: replace the system calls below with something faster
     # remove voxels in segmentation_labeled that are not in segmentation
-    sct.run(['sct_maths', '-i', fname_labeled_seg, '-mul', fname_seg, '-o', 'segmentation_labeled_mul.nii.gz'])
-    # add voxels in segmentation that are not in segmentation_labeled
-    sct.run(['sct_maths', '-i', fname_labeled_seg, '-dilate', '2', '-o', 'segmentation_labeled_dilate.nii.gz'])  # dilate labeled segmentation
-    data_label_dilate = Image('segmentation_labeled_dilate.nii.gz').data
-    sct.run(['sct_maths', '-i', 'segmentation_labeled_mul.nii.gz', '-bin', '0', '-o', 'segmentation_labeled_mul_bin.nii.gz'])
-    data_label_bin = Image('segmentation_labeled_mul_bin.nii.gz').data
-    data_seg = Image(fname_seg).data
-    data_diff = data_seg - data_label_bin
+    img_labeled_seg = Image(fname_labeled_seg)
+    img_seg = Image(fname_seg)
+    data_labeled_seg_mul = img_labeled_seg.data * img_seg.data
+    # dilate to add voxels in segmentation that are not in segmentation_labeled
+    data_labeled_seg_dil = dilate(img_labeled_seg.data, [2])
+    data_labeled_seg_mul_bin = data_labeled_seg_mul > 0
+    data_diff = img_seg.data - data_labeled_seg_mul_bin
     ind_nonzero = np.where(data_diff)
-    im_label = Image('segmentation_labeled_mul.nii.gz')
+    img_labeled_seg_corr = img_labeled_seg.copy()
+    img_labeled_seg_corr.data = data_labeled_seg_mul
     for i_vox in range(len(ind_nonzero[0])):
         # assign closest label value for this voxel
         ix, iy, iz = ind_nonzero[0][i_vox], ind_nonzero[1][i_vox], ind_nonzero[2][i_vox]
-        im_label.data[ix, iy, iz] = data_label_dilate[ix, iy, iz]
+        img_labeled_seg_corr.data[ix, iy, iz] = data_labeled_seg_dil[ix, iy, iz]
     # save new label file (overwrite)
-    im_label.absolutepath = fname_labeled_seg_new
-    im_label.save()
+    img_labeled_seg_corr.absolutepath = fname_labeled_seg_new
+    img_labeled_seg_corr.save()
 
 
 def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, zsize, xtarget, ytarget, ztarget, zrange, verbose, save_suffix, gaussian_std, path_output):
