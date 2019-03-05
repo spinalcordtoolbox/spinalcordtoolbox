@@ -21,7 +21,7 @@ from msct_parser import Parser
 from spinalcordtoolbox.image import Image
 import sct_utils as sct
 from spinalcordtoolbox.vertebrae.core import create_label_z, get_z_and_disc_values_from_label, vertebral_detection, \
-    clean_labeled_segmentation, label_discs
+    clean_labeled_segmentation, label_discs, label_vert
 from spinalcordtoolbox.vertebrae.detect_c2c3 import detect_c2c3
 from spinalcordtoolbox.reports.qc import generate_qc
 
@@ -97,6 +97,10 @@ def get_parser():
     parser.add_option(name="-initlabel",
                       type_value='file',
                       description='Initialize vertebral labeling by providing a nifti file that has a single disc label. An example of such file is a single voxel with value "3", which would be located at the posterior tip of C2-C3 disc. Such label file can be created using: sct_label_utils -i IMAGE_REF -create-viewer 3 ; or by using the Python module "detect_c2c3" implemented in "spinalcordtoolbox/vertebrae/detect_c2c3.py".',
+                      mandatory=False)
+    parser.add_option(name='-discfile',
+                      type_value='image_nifti',
+                      description='File with disc labels, which will be used to transform the input segmentation into a vertebral level file. In that case, there will be no disc detection. The convention for disc labels is the following: value=3 -> disc C2/C3, value=4 -> disc C3/C4, etc.',
                       mandatory=False)
     parser.add_option(name="-ofolder",
                       type_value="folder_creation",
@@ -183,7 +187,10 @@ def main(args=None):
     else:
         path_output = os.curdir
     param.path_qc = arguments.get("-qc", None)
-
+    if '-discfile' in arguments:
+        fname_disc = os.path.abspath(arguments['-discfile'])
+    else:
+        fname_disc = None
     if '-initz' in arguments:
         initz = arguments['-initz']
     if '-initcenter' in arguments:
@@ -213,45 +220,11 @@ def main(args=None):
     # Copying input data to tmp folder
     sct.printv('\nCopying input data to tmp folder...', verbose)
     Image(fname_in).save(os.path.join(path_tmp, "data.nii"))
-    Image(fname_seg).save(os.path.join(path_tmp, "segmentation.nii.gz"))
+    Image(fname_seg).save(os.path.join(path_tmp, "segmentation.nii"))
 
     # Go go temp folder
     curdir = os.getcwd()
     os.chdir(path_tmp)
-
-    # create label to identify disc
-    sct.printv('\nCreate label to identify disc...', verbose)
-    fname_labelz = os.path.join(path_tmp, file_labelz)
-    if initz:
-        create_label_z('segmentation.nii.gz', initz[0], initz[1], fname_labelz=fname_labelz)  # create label located at z_center
-    elif initcenter:
-        # find z centered in FOV
-        nii = Image('segmentation.nii.gz').change_orientation("RPI")
-        nx, ny, nz, nt, px, py, pz, pt = nii.dim  # Get dimensions
-        z_center = int(np.round(nz / 2))  # get z_center
-        create_label_z('segmentation.nii.gz', z_center, initcenter, fname_labelz=fname_labelz)  # create label located at z_center
-    elif fname_initlabel:
-        import sct_label_utils
-        # subtract "1" to label value because due to legacy, in this code the disc C2-C3 has value "2", whereas in the
-        # recent version of SCT it is defined as "3". Therefore, when asking the user to define a label, we point to the
-        # new definition of labels (i.e., C2-C3 = 3).
-        sct_label_utils.main(['-i', fname_initlabel, '-add', '-1', '-o', fname_labelz])
-    else:
-        # automatically finds C2-C3 disc
-        im_data = Image('data.nii')
-        im_seg = Image('segmentation.nii.gz')
-        im_label_c2c3 = detect_c2c3(im_data, im_seg, contrast)
-        ind_label = np.where(im_label_c2c3.data)
-        if not np.size(ind_label) == 0:
-            # subtract "1" to label value because due to legacy, in this code the disc C2-C3 has value "2", whereas in the
-            # recent version of SCT it is defined as "3".
-            im_label_c2c3.data[ind_label] = 2
-        else:
-            sct.printv('Automatic C2-C3 detection failed. Please provide manual label with sct_label_utils', 1, 'error')
-        im_label_c2c3.save(fname_labelz)
-
-    # dilate label so it is not lost when applying warping
-    sct_maths.main(['-i', fname_labelz, '-dilate', '3', '-o', fname_labelz])
 
     # Straighten spinal cord
     sct.printv('\nStraighten spinal cord...', verbose)
@@ -269,7 +242,7 @@ def main(args=None):
         # apply straightening
         s, o = sct.run(['sct_apply_transfo', '-i', 'data.nii', '-w', 'warp_curve2straight.nii.gz', '-d', 'straight_ref.nii.gz', '-o', 'data_straight.nii'])
     else:
-        cmd = ['sct_straighten_spinalcord', '-i', 'data.nii', '-s', 'segmentation.nii.gz', '-r', str(remove_temp_files)]
+        cmd = ['sct_straighten_spinalcord', '-i', 'data.nii', '-s', 'segmentation.nii', '-r', str(remove_temp_files)]
         if param.path_qc is not None and os.environ.get("SCT_RECURSIVE_QC", None) == "1":
             cmd += ['-qc', param.path_qc]
         s, o = sct.run(cmd)
@@ -283,60 +256,109 @@ def main(args=None):
     # N.B. Output is RPI
     sct.printv('\nApply straightening to segmentation...', verbose)
     sct.run('isct_antsApplyTransforms -d 3 -i %s -r %s -t %s -o %s -n %s' %
-            ('segmentation.nii.gz',
+            ('segmentation.nii',
              'data_straightr.nii',
              'warp_curve2straight.nii.gz',
-             'segmentation_straight.nii.gz',
+             'segmentation_straight.nii',
              'Linear'),
             verbose=verbose)
     # Threshold segmentation at 0.5
-    sct.run(['sct_maths', '-i', 'segmentation_straight.nii.gz', '-thr', '0.5', '-o', 'segmentation_straight.nii.gz'], verbose)
+    sct.run(['sct_maths', '-i', 'segmentation_straight.nii', '-thr', '0.5', '-o', 'segmentation_straight.nii'], verbose)
 
-    # Apply straightening to z-label
-    sct.printv('\nAnd apply straightening to label...', verbose)
-    sct.run('isct_antsApplyTransforms -d 3 -i %s -r %s -t %s -o %s -n %s' %
-            (file_labelz,
-             'data_straightr.nii',
-             'warp_curve2straight.nii.gz',
-             'labelz_straight.nii.gz',
-             'NearestNeighbor'),
-            verbose=verbose)
-    # get z value and disk value to initialize labeling
-    sct.printv('\nGet z and disc values from straight label...', verbose)
-    init_disc = get_z_and_disc_values_from_label('labelz_straight.nii.gz')
-    sct.printv('.. ' + str(init_disc), verbose)
+    # If disc label file is provided, label vertebrae using that file instead of automatically
+    if fname_disc:
+        # Apply straightening to disc-label
+        sct.printv('\nApply straightening to disc labels...', verbose)
+        sct.run('isct_antsApplyTransforms -d 3 -i %s -r %s -t %s -o %s -n %s' %
+                (fname_disc,
+                 'data_straightr.nii',
+                 'warp_curve2straight.nii.gz',
+                 'labeldisc_straight.nii.gz',
+                 'NearestNeighbor'),
+                verbose=verbose)
 
-    # denoise data
-    if denoise:
-        sct.printv('\nDenoise data...', verbose)
-        sct.run(['sct_maths', '-i', 'data_straightr.nii', '-denoise', 'h=0.05', '-o', 'data_straightr.nii'], verbose)
+        label_vert('segmentation_straight.nii', 'labeldisc_straight.nii.gz', verbose=1)
 
-    # apply laplacian filtering
-    if laplacian:
-        sct.printv('\nApply Laplacian filter...', verbose)
-        sct.run(['sct_maths', '-i', 'data_straightr.nii', '-laplacian', '1', '-o', 'data_straightr.nii'], verbose)
+    else:
+        # create label to identify disc
+        sct.printv('\nCreate label to identify disc...', verbose)
+        fname_labelz = os.path.join(path_tmp, file_labelz)
+        if initz:
+            create_label_z('segmentation.nii', initz[0], initz[1], fname_labelz=fname_labelz)  # create label located at z_center
+        elif initcenter:
+            # find z centered in FOV
+            nii = Image('segmentation.nii').change_orientation("RPI")
+            nx, ny, nz, nt, px, py, pz, pt = nii.dim  # Get dimensions
+            z_center = int(np.round(nz / 2))  # get z_center
+            create_label_z('segmentation.nii', z_center, initcenter, fname_labelz=fname_labelz)  # create label located at z_center
+        elif fname_initlabel:
+            import sct_label_utils
+            # subtract "1" to label value because due to legacy, in this code the disc C2-C3 has value "2", whereas in the
+            # recent version of SCT it is defined as "3". Therefore, when asking the user to define a label, we point to the
+            # new definition of labels (i.e., C2-C3 = 3).
+            sct_label_utils.main(['-i', fname_initlabel, '-add', '-1', '-o', fname_labelz])
+        else:
+            # automatically finds C2-C3 disc
+            im_data = Image('data.nii')
+            im_seg = Image('segmentation.nii')
+            im_label_c2c3 = detect_c2c3(im_data, im_seg, contrast)
+            ind_label = np.where(im_label_c2c3.data)
+            if not np.size(ind_label) == 0:
+                # subtract "1" to label value because due to legacy, in this code the disc C2-C3 has value "2", whereas in the
+                # recent version of SCT it is defined as "3".
+                im_label_c2c3.data[ind_label] = 2
+            else:
+                sct.printv('Automatic C2-C3 detection failed. Please provide manual label with sct_label_utils', 1, 'error')
+            im_label_c2c3.save(fname_labelz)
 
-    # detect vertebral levels on straight spinal cord
-    vertebral_detection('data_straightr.nii', 'segmentation_straight.nii.gz', contrast, param, init_disc=init_disc,
-                        verbose=verbose, path_template=path_template, path_output=path_output, scale_dist=scale_dist)
+        # dilate label so it is not lost when applying warping
+        sct_maths.main(['-i', fname_labelz, '-dilate', '3', '-o', fname_labelz])
+
+        # Apply straightening to z-label
+        sct.printv('\nAnd apply straightening to label...', verbose)
+        sct.run('isct_antsApplyTransforms -d 3 -i %s -r %s -t %s -o %s -n %s' %
+                (file_labelz,
+                 'data_straightr.nii',
+                 'warp_curve2straight.nii.gz',
+                 'labelz_straight.nii.gz',
+                 'NearestNeighbor'),
+                verbose=verbose)
+        # get z value and disk value to initialize labeling
+        sct.printv('\nGet z and disc values from straight label...', verbose)
+        init_disc = get_z_and_disc_values_from_label('labelz_straight.nii.gz')
+        sct.printv('.. ' + str(init_disc), verbose)
+
+        # denoise data
+        if denoise:
+            sct.printv('\nDenoise data...', verbose)
+            sct.run(['sct_maths', '-i', 'data_straightr.nii', '-denoise', 'h=0.05', '-o', 'data_straightr.nii'], verbose)
+
+        # apply laplacian filtering
+        if laplacian:
+            sct.printv('\nApply Laplacian filter...', verbose)
+            sct.run(['sct_maths', '-i', 'data_straightr.nii', '-laplacian', '1', '-o', 'data_straightr.nii'], verbose)
+
+        # detect vertebral levels on straight spinal cord
+        vertebral_detection('data_straightr.nii', 'segmentation_straight.nii', contrast, param, init_disc=init_disc,
+                            verbose=verbose, path_template=path_template, path_output=path_output, scale_dist=scale_dist)
 
     # un-straighten labeled spinal cord
     sct.printv('\nUn-straighten labeling...', verbose)
     sct.run('isct_antsApplyTransforms -d 3 -i %s -r %s -t %s -o %s -n %s' %
-            ('segmentation_straight_labeled.nii.gz',
-             'segmentation.nii.gz',
+            ('segmentation_straight_labeled.nii',
+             'segmentation.nii',
              'warp_straight2curve.nii.gz',
-             'segmentation_labeled.nii.gz',
+             'segmentation_labeled.nii',
              'NearestNeighbor'),
             verbose=verbose)
 
     # Clean labeled segmentation
     sct.printv('\nClean labeled segmentation (correct interpolation errors)...', verbose)
-    clean_labeled_segmentation('segmentation_labeled.nii.gz', 'segmentation.nii.gz', 'segmentation_labeled.nii.gz')
+    clean_labeled_segmentation('segmentation_labeled.nii', 'segmentation.nii', 'segmentation_labeled.nii')
 
     # label discs
     sct.printv('\nLabel discs...', verbose)
-    label_discs('segmentation_labeled.nii.gz', verbose=verbose)
+    label_discs('segmentation_labeled.nii', verbose=verbose)
 
     # come back
     os.chdir(curdir)
@@ -345,8 +367,8 @@ def main(args=None):
     path_seg, file_seg, ext_seg = sct.extract_fname(fname_seg)
     fname_seg_labeled = os.path.join(path_output, file_seg + '_labeled' + ext_seg)
     sct.printv('\nGenerate output files...', verbose)
-    sct.generate_output_file(os.path.join(path_tmp, "segmentation_labeled.nii.gz"), fname_seg_labeled)
-    sct.generate_output_file(os.path.join(path_tmp, "segmentation_labeled_disc.nii.gz"), os.path.join(path_output, file_seg + '_labeled_discs' + ext_seg))
+    sct.generate_output_file(os.path.join(path_tmp, "segmentation_labeled.nii"), fname_seg_labeled)
+    sct.generate_output_file(os.path.join(path_tmp, "segmentation_labeled_disc.nii"), os.path.join(path_output, file_seg + '_labeled_discs' + ext_seg))
     # copy straightening files in case subsequent SCT functions need them
     sct.generate_output_file(os.path.join(path_tmp, "warp_curve2straight.nii.gz"), os.path.join(path_output, "warp_curve2straight.nii.gz"), verbose)
     sct.generate_output_file(os.path.join(path_tmp, "warp_straight2curve.nii.gz"), os.path.join(path_output, "warp_straight2curve.nii.gz"), verbose)
