@@ -16,6 +16,8 @@ from sct_deepseg_sc import main as sct_deepseg_sc
 from sct_label_vertebrae import  main as sct_label_verterbrae
 from sct_register_to_template import main as sct_register_to_template
 from sct_label_utils import main as sct_label_utils
+from sct_apply_transfo import main as sct_apply_transfo
+from sct_maths import main as sct_maths
 import glob
 
 def get_parser():
@@ -58,6 +60,8 @@ def main(args=None):
     else:
         path_output = os.getcwd()
 
+    file_template_seg = path_output + "/template_seg.nii.gz"
+    sct.copy(sct.__data_dir__ + "/PAM50/template/PAM50_cord.nii.gz", file_template_seg, verbose=0)  # copy in output for latter comparison
 
     for root, dirnames, filenames in os.walk(input_folder):  # searching the given directory
 
@@ -95,6 +99,9 @@ def main(args=None):
                 sct_deepseg_sc(['-i', os.path.join(root, filename), '-c', contrast, '-ofolder', temp])
                 # seg output to temp
 
+            # sct.copy(os.path.join(temp, filename_seg), path_output + "/" + filename_seg, verbose=0)  # copy in output for latter comparison
+            # TODO maybe compare seg anat with seg template registered to anat
+
             file_seg_input = os.path.join(root, filename_seg)  # name and path of fileseg
             file_input = os.path.join(root, filename)
             sct.copy(file_input, temp + "/" + filename, verbose=0)  # copy original file
@@ -117,13 +124,22 @@ def main(args=None):
 
             # HOGancestor registration
             sct_register_to_template(['-i', file_input, '-s', file_seg_input, '-l', filelabelvert_input, '-c', contrast, '-ofolder', temp, '-param', "step=1,type=im_seg,algo=centermassrot,poly=0,slicewise=0"])
-            sct.copy(temp + "/anat2template.nii.gz", path_output + "/" + filename.split(".nii")[0] + "_reg2anat_HOG.nii.gz", verbose=0)
+            sct_apply_transfo(['-i', file_seg_input, '-d', file_template_seg, '-w', temp + "/warp_anat2template.nii.gz", '-o', path_output + "/" + filename.split(".nii")[0] + "seg_reg2anatHOG.nii.gz"])
+            sct_maths(['-i', path_output + "/" + filename.split(".nii")[0] + "seg_reg2anatHOG.nii.gz", '-o', path_output + "/" + filename.split(".nii")[0] + "seg_reg2anatHOG_bin.nii.gz", '-bin', '0.5'])
+            sct.run("sct_dice_coefficient -i " + path_output + "/" + filename.split(".nii")[0] + "seg_reg2anatHOG_bin.nii.gz -d " + file_template_seg + " -bzmax 1 -o " + path_output + "/" + filename.split(".nii")[0] + "HOG.txt")
+
             # PCA registration
             sct_register_to_template(['-i', file_input, '-s', file_seg_input, '-l', filelabelvert_input, '-c', contrast, '-ofolder', temp, '-param', "step=1,type=seg,algo=centermassrot,rot=1,poly=0,slicewise=0"])
-            sct.copy(temp + "/anat2template.nii.gz", path_output + "/" + filename.split(".nii")[0] + "_reg2anat_PCA.nii.gz", verbose=0)
+            sct_apply_transfo(['-i', file_seg_input, '-d', file_template_seg, '-w', temp + "/warp_anat2template.nii.gz", '-o', path_output + "/" + filename.split(".nii")[0] + "seg_reg2anatPCA.nii.gz"])
+            sct_maths(['-i', path_output + "/" + filename.split(".nii")[0] + "seg_reg2anatPCA.nii.gz", '-o', path_output + "/" + filename.split(".nii")[0] + "seg_reg2anatPCA_bin.nii.gz", '-bin', '0.5'])
+            sct.run("sct_dice_coefficient -i " + path_output + "/" + filename.split(".nii")[0] + "seg_reg2anatPCA_bin.nii.gz -d " + file_template_seg + " -bzmax 1 -o " + path_output + "/" + filename.split(".nii")[0] + "PCA.txt")
+
             # No rotation registration
             sct_register_to_template(['-i', file_input, '-s', file_seg_input, '-l', filelabelvert_input, '-c', contrast, '-ofolder', temp, '-param', "step=1,type=seg,algo=centermass,slicewise=0"])
-            sct.copy(temp + "/anat2template.nii.gz", path_output + "/" + filename.split(".nii")[0] + "_reg2anat_NoRot.nii.gz", verbose=0)
+            sct_apply_transfo(['-i', file_seg_input, '-d', file_template_seg, '-w', temp + "/warp_anat2template.nii.gz", '-o', path_output + "/" + filename.split(".nii")[0] + "seg_reg2anatNoRot.nii.gz"])
+            sct_maths(['-i', path_output + "/" + filename.split(".nii")[0] + "seg_reg2anatNoRot.nii.gz", '-o', path_output + "/" + filename.split(".nii")[0] + "seg_reg2anatNoRot_bin.nii.gz", '-bin', '0.5'])
+            sct.run("sct_dice_coefficient -i " + path_output + "/" + filename.split(".nii")[0] + "seg_reg2anatNoRot_bin.nii.gz -d " + file_template_seg + " -bzmax 1 -o " + path_output + "/" + filename.split(".nii")[0] + "NoRot.txt")
+
             sct.rmtree(temp, verbose=0)
 
 
