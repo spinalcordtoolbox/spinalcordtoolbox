@@ -135,6 +135,18 @@ def hog_ancestor(image, nb_bin, grad_ksize=123456789, seg_weighted_mask=None, re
     else:
         return hog_ancest[0].astype(float)  # return only the values of the bins, not the bins (we know them)
 
+def compute_similarity_metric(array1, array2, metric="Dice"):
+
+    if array1.shape != array2.shape:
+        raise Exception("The 2 image do not gave the same dimension")
+
+    if (array1 > 0).sum() + (array2 > 0).sum() == 0:
+        dice_coeff = 1
+    else:
+        dice_coeff = np.true_divide(2*(np.logical_and(array1, array2) > 0).sum(), (array1 > 0).sum() + (array2 > 0).sum())
+
+    return dice_coeff
+
 def generate_2Dimage_line(image, x0, y0, angle, value=0):
 
     """ This function takes an image and a line (defined by a point and an angle) as inputs and outputs the same image
