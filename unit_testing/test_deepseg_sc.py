@@ -7,23 +7,63 @@ import sct_utils as sct
 from spinalcordtoolbox.image import Image
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.deepseg_sc import core as deepseg_sc
+from spinalcordtoolbox.resampling import resample_file
+from test_centerline import dummy_centerline_small
 
 
-def _create_fake_t2_sc(input_size):
-    data = np.zeros(input_size)
-    xx, yy = np.mgrid[:input_size[0], :input_size[1]]
-    circle = (xx - input_size[0] // 2) ** 2 + (yy - input_size[1] // 2) ** 2
+def _preprocess_segment(fname_t2, fname_t2_seg, contrast_test, dim_3=False):
+    tmp_folder = sct.TempFolder()
+    tmp_folder_path = tmp_folder.get_path()
+    tmp_folder.chdir()
 
-    for zz in range(data.shape[2]):
-        data[:,:,zz] += np.logical_and(circle < 400, circle >= 200) * 250 # CSF
-        data[:,:,zz] += (circle < 200) * 100 # SC
-        # Note: values of the fake SC and CSF have been chosen by looking at the normalized intensities of im_norm_in (cf deepseg_sc/core)
+    img = Image(fname_t2)
+    gt = Image(fname_t2_seg)
 
-    affine = np.eye(4)
-    nii = nib.nifti1.Nifti1Image(data, affine)
-    img = Image(data, hdr=nii.header, dim=nii.header.get_data_shape())
+    fname_t2_RPI, fname_t2_seg_RPI = 'img_RPI.nii.gz', 'seg_RPI.nii.gz'
+    img.change_orientation('RPI').save(fname_t2_RPI)
+    gt.change_orientation('RPI').save(fname_t2_seg_RPI)
+    input_resolution = gt.dim[4:7]
+    del img, gt
 
-    return img
+    fname_res, fname_ctr = deepseg_sc.find_centerline(algo='svm',
+                                                        image_fname=fname_t2_RPI,
+                                                        contrast_type=contrast_test,
+                                                        brain_bool=False,
+                                                        folder_output=tmp_folder_path,
+                                                        remove_temp_files=1,
+                                                        centerline_fname=None)
+
+    fname_t2_seg_RPI_res = 'seg_RPI_res.nii.gz'
+    new_resolution = 'x'.join(['0.5', '0.5', str(input_resolution[2])])
+    resample_file(fname_t2_seg_RPI, fname_t2_seg_RPI_res, new_resolution, 'mm', 'linear', verbose=0)
+
+    img, ctr, gt = Image(fname_res), Image(fname_ctr), Image(fname_t2_seg_RPI_res)
+    _, _, img = deepseg_sc.crop_image_around_centerline(im_in=img,
+                                                        ctr_in=ctr,
+                                                        crop_size=64)
+    _, _, gt = deepseg_sc.crop_image_around_centerline(im_in=gt,
+                                                        ctr_in=ctr,
+                                                        crop_size=64)
+    del ctr
+
+    img = deepseg_sc.apply_intensity_normalization(im_in=img)
+
+    if dim_3:  # If 3D kernels
+        fname_t2_RPI_res_crop, fname_t2_seg_RPI_res_crop = 'img_RPI_res_crop.nii.gz', 'seg_RPI_res_crop.nii.gz'
+        img.save(fname_t2_RPI_res_crop)
+        gt.save(fname_t2_seg_RPI_res_crop)
+        del img, gt
+
+        fname_t2_RPI_res_crop_res = 'img_RPI_res_crop_res.nii.gz'
+        fname_t2_seg_RPI_res_crop_res = 'seg_RPI_res_crop_res.nii.gz'
+        resample_file(fname_t2_RPI_res_crop, fname_t2_RPI_res_crop_res, new_resolution, 'mm', 'linear', verbose=0)
+        resample_file(fname_t2_seg_RPI_res_crop, fname_t2_seg_RPI_res_crop_res, new_resolution, 'mm', 'linear', verbose=0)
+        img, gt = Image(fname_t2_RPI_res_crop_res), Image(fname_t2_seg_RPI_res_crop_res)
+
+    tmp_folder.chdir_undo()
+    tmp_folder.cleanup()
+
+    return img, gt
 
 
 def test_segment_2d():
@@ -33,14 +73,96 @@ def test_segment_2d():
     contrast_test = 't2'
     model_path = os.path.join(sct.__sct_dir__, 'data', 'deepseg_sc_models', '{}_sc.h5'.format(contrast_test))   
 
-    img = _create_fake_t2_sc((64,64,1))
+    fname_t2 = os.path.join(sct.__sct_dir__, 'sct_testing_data/t2/t2.nii.gz')  # install: sct_download_data -d sct_testing_data
+    fname_t2_seg = os.path.join(sct.__sct_dir__, 'sct_testing_data/t2/t2_seg.nii.gz')  # install: sct_download_data -d sct_testing_data
+
+    img, gt = _preprocess_segment(fname_t2, fname_t2_seg, contrast_test)
+
     seg = deepseg_sc.segment_2d(model_fname=model_path, contrast_type=contrast_test, input_size=(64,64), im_in=img)
-    
     seg_im = msct_image.zeros_like(img)
-    seg_gt_im = seg_im.copy()
-    seg_gt_im.data = (img.data == 100)
     seg_im.data = seg
 
-    assert np.any(seg[img.data == 100]) == True  # check if SC detected
-    assert np.any(seg[img.data != 100]) == False  # check if no FP
-    assert msct_image.compute_dice(seg_im, seg_gt_im) > 0.80
+    assert msct_image.compute_dice(seg_im, gt) > 0.80
+
+
+def test_segment_3d():
+    from keras import backend as K
+    K.set_image_data_format("channels_last")  # Set at channels_first in test_deepseg_lesion.test_segment()
+
+    contrast_test = 't2'
+    model_path = os.path.join(sct.__sct_dir__, 'data', 'deepseg_sc_models', '{}_sc_3D.h5'.format(contrast_test))   
+
+    fname_t2 = os.path.join(sct.__sct_dir__, 'sct_testing_data/t2/t2.nii.gz')  # install: sct_download_data -d sct_testing_data
+    fname_t2_seg = os.path.join(sct.__sct_dir__, 'sct_testing_data/t2/t2_seg.nii.gz')  # install: sct_download_data -d sct_testing_data
+
+    img, gt = _preprocess_segment(fname_t2, fname_t2_seg, contrast_test, dim_3=True)
+
+    seg_im = deepseg_sc.segment_3d(model_fname=model_path, contrast_type=contrast_test, im_in=img)
+
+    assert msct_image.compute_dice(seg_im, gt) > 0.80
+
+
+def test_intensity_normalization():
+    data_in = np.random.rand(10, 10)
+    min_out, max_out = 0, 255
+
+    data_out = deepseg_sc.scale_intensity(data_in, out_min=0, out_max=255)
+
+    assert data_in.shape == data_out.shape
+    assert np.min(data_out) >= min_out
+    assert np.max(data_out) <= max_out
+
+
+def test_crop_image_around_centerline():
+    input_shape = (100, 100, 100)
+    crop_size = 20
+    crop_size_half = crop_size // 2
+
+    data = np.random.rand(input_shape[0], input_shape[1], input_shape[2])
+    affine = np.eye(4)
+    nii = nib.nifti1.Nifti1Image(data, affine)
+    img = Image(data, hdr=nii.header, dim=nii.header.get_data_shape())
+
+    ctr, _ = dummy_centerline_small(size_arr=input_shape)
+
+    _, _, img_out = deepseg_sc.crop_image_around_centerline(im_in=img.copy(),
+                                                        ctr_in=ctr.copy(),
+                                                        crop_size=crop_size)
+
+    img_in_z0 = img.data[:,:,0]
+    x_ctr_z0, y_ctr_z0 = np.where(ctr.data[:,:,0])[0][0], np.where(ctr.data[:,:,0])[1][0]
+    x_start, x_end = deepseg_sc._find_crop_start_end(x_ctr_z0, crop_size, img.dim[0])
+    y_start, y_end = deepseg_sc._find_crop_start_end(y_ctr_z0, crop_size, img.dim[1])
+    img_in_z0_crop = img_in_z0[x_start:x_end, y_start:y_end]
+
+    assert img_out.data.shape == (crop_size, crop_size, input_shape[2])
+    assert np.allclose(img_in_z0_crop, img_out.data[:,:,0])
+
+
+def test_uncrop_image():
+    input_shape = (100, 100, 100)
+    crop_size = 20
+    data_crop = np.random.randint(0, 2, size=(crop_size, crop_size, input_shape[2]))
+    data_in = np.random.randint(0, 1000, size=input_shape)
+
+    x_crop_lst = list(np.random.randint(0, input_shape[0]-crop_size, input_shape[2]))
+    y_crop_lst = list(np.random.randint(0,input_shape[1]-crop_size, input_shape[2]))
+
+    affine = np.eye(4)
+    nii = nib.nifti1.Nifti1Image(data_in, affine)
+    img_in = Image(data_in, hdr=nii.header, dim=nii.header.get_data_shape())
+
+    img_uncrop = deepseg_sc.uncrop_image(ref_in=img_in,
+                                        data_crop=data_crop,
+                                        x_crop_lst=x_crop_lst,
+                                        y_crop_lst=y_crop_lst)
+
+
+
+    assert img_uncrop.data.shape == input_shape
+    z_rand = np.random.randint(0, input_shape[2])
+    assert np.allclose(img_uncrop.data[x_crop_lst[z_rand]:x_crop_lst[z_rand]+crop_size,
+                                        y_crop_lst[z_rand]:y_crop_lst[z_rand]+crop_size,
+                                        z_rand],
+                        data_crop[:, :, z_rand])
+
