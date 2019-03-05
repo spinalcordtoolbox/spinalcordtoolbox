@@ -114,7 +114,8 @@ def hog_ancestor(image, nb_bin, grad_ksize=123456789, seg_weighted_mask=None, re
     # actually it can be smart but by doing a weighted histogram, not weight the image
 
     grad_mag = ((np.abs(gradx.astype(object)) ** 2 + np.abs(grady.astype(object)) ** 2) ** 0.5)
-    grad_mag = grad_mag / np.max(grad_mag)  # to have map between 0 and 1
+    if np.max(grad_mag) != 0:
+        grad_mag = grad_mag / np.max(grad_mag)  # to have map between 0 and 1
     # TODO: weird data type manipulation, to explain
 
     if seg_weighted_mask is not None:
