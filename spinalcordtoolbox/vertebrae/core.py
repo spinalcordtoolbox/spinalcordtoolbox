@@ -2,6 +2,9 @@
 # -*- coding: utf-8
 # Core functions dealing with vertebral labeling
 
+
+# TODO: remove i/o as much as possible
+
 import os
 import numpy as np
 import scipy.ndimage.measurements
@@ -12,6 +15,33 @@ from sct_maths import mutual_information, dilate
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.metadata import get_file_label
+
+
+def label_vert(fname_seg, fname_label, verbose=1):
+    """
+    Label segmentation using vertebral labeling information. No orientation expected.
+    :param fname_seg: file name of segmentation.
+    :param fname_label: file name for a labelled segmentation that will be used to label the input segmentation
+    :param fname_out: file name of the output labeled segmentation. If empty, will add suffix "_labeled" to fname_seg
+    :param verbose:
+    :return:
+    """
+    # Open labels
+    im_disc = Image(fname_label).change_orientation("RPI")
+    # retrieve all labels
+    coord_label = im_disc.getNonZeroCoordinates()
+    # compute list_disc_z and list_disc_value
+    list_disc_z = []
+    list_disc_value = []
+    for i in range(len(coord_label)):
+        list_disc_z.insert(0, coord_label[i].z)
+        # '-1' to use the convention "disc labelvalue=3 ==> disc C2/C3"
+        list_disc_value.insert(0, coord_label[i].value - 1)
+
+    list_disc_value = [x for (y, x) in sorted(zip(list_disc_z, list_disc_value), reverse=True)]
+    list_disc_z = [y for (y, x) in sorted(zip(list_disc_z, list_disc_value), reverse=True)]
+    # label segmentation
+    label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=verbose)
 
 
 def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1, path_template='', path_output='../',
@@ -236,7 +266,7 @@ def create_label_z(fname_seg, z, value, fname_labelz='labelz.nii.gz'):
     nii = nii.change_orientation("RPI")
     nx, ny, nz, nt, px, py, pz, pt = nii.dim  # Get dimensions
     # find x and y coordinates of the centerline at z using center of mass
-    x, y = center_of_mass(nii.data[:, :, z])
+    x, y = center_of_mass(np.array(nii.data[:, :, z]))
     x, y = int(np.round(x)), int(np.round(y))
     nii.data[:, :, :] = 0
     nii.data[x, y, z] = value
