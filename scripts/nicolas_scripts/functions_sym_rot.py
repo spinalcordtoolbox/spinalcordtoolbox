@@ -44,6 +44,48 @@ def circular_filter_1d(signal, param_filt, filter='gaussian'):
 
     return signal_smoothed
 
+def find_angle(image, centermass, parameters):
+
+    sigmax = parameters['sigmax']
+    sigmay = parameters['sigmay']
+    nb_bin = parameters['nb_bin']
+    kmedian_size = parameters['kmedian_size']
+    angle_range = parameters['angle_range']
+
+    nx, ny = image.shape
+
+    xx, yy = np.mgrid[:nx, :ny]
+    seg_weighted_mask = np.exp(
+        -(((xx - centermass[0]) ** 2) / (2 * (sigmax ** 2)) + ((yy - centermass[1]) ** 2) / (2 * (sigmay ** 2))))
+
+    hog_ancest = hog_ancestor(image, nb_bin=nb_bin, seg_weighted_mask=seg_weighted_mask,
+                                                   return_image=False)
+    hog_ancest_smooth = circular_filter_1d(hog_ancest, kmedian_size,
+                                           filter='median')  # fft than square than ifft to calculate convolution
+    hog_fft2 = np.fft.rfft(hog_ancest_smooth) ** 2
+    hog_conv = np.real(np.fft.irfft(hog_fft2))
+
+    hog_conv_reordered = np.zeros(nb_bin)
+    hog_conv_reordered[0:180] = hog_conv[180:360]
+    hog_conv_reordered[180:360] = hog_conv[0:180]
+    hog_conv_restrained = hog_conv_reordered[
+                          nb_bin / 2 - np.true_divide(angle_range, 180) * nb_bin:nb_bin / 2 + np.true_divide(
+                              angle_range, 180) * nb_bin]
+
+    argmaxs = argrelextrema(hog_conv_restrained, np.greater, mode='wrap', order=kmedian_size)[0]  # get local maxima
+    argmaxs_sorted = np.asarray([tutut for _, tutut in
+                                 sorted(zip(hog_conv_restrained[argmaxs], argmaxs),
+                                        reverse=True)])  # sort maxima based on value
+    argmaxs_sorted = (argmaxs_sorted - nb_bin / 2) * np.true_divide(180,
+                                                                    nb_bin * angle_range)  # angles are computed from -angle_range to angle_range
+    if len(argmaxs_sorted) == 0:  # no angle found
+        angle_found = None
+    else:
+        angle_found = argmaxs_sorted[0]
+
+    return angle_found
+
+
 def hog_ancestor(image, nb_bin, grad_ksize=123456789, seg_weighted_mask=None, return_image=False): # TODO implement selection of gradient's kernel size
 
     """ This function takes an image as an input and return its orientation histogram
