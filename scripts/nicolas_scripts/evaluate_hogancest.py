@@ -19,6 +19,9 @@ from sct_label_utils import main as sct_label_utils
 from sct_apply_transfo import main as sct_apply_transfo
 from sct_maths import main as sct_maths
 import glob
+import csv
+import matplotlib.pyplot as plt
+import matplotlib
 
 def get_parser():
 
@@ -62,6 +65,10 @@ def main(args=None):
 
     file_template_seg = path_output + "/template_seg.nii.gz"
     sct.copy(sct.__data_dir__ + "/PAM50/template/PAM50_cord.nii.gz", file_template_seg, verbose=0)  # copy in output for latter comparison
+
+    dice_coeff_HOG = []
+    dice_coeff_PCA = []
+    dice_coeff_NoRot = []
 
     for root, dirnames, filenames in os.walk(input_folder):  # searching the given directory
 
@@ -126,21 +133,58 @@ def main(args=None):
             sct_register_to_template(['-i', file_input, '-s', file_seg_input, '-l', filelabelvert_input, '-c', contrast, '-ofolder', temp, '-param', "step=1,type=im_seg,algo=centermassrot,poly=0,slicewise=0"])
             sct_apply_transfo(['-i', file_seg_input, '-d', file_template_seg, '-w', temp + "/warp_anat2template.nii.gz", '-o', path_output + "/" + filename.split(".nii")[0] + "seg_reg2anatHOG.nii.gz"])
             sct_maths(['-i', path_output + "/" + filename.split(".nii")[0] + "seg_reg2anatHOG.nii.gz", '-o', path_output + "/" + filename.split(".nii")[0] + "seg_reg2anatHOG_bin.nii.gz", '-bin', '0.5'])
-            sct.run("sct_dice_coefficient -i " + path_output + "/" + filename.split(".nii")[0] + "seg_reg2anatHOG_bin.nii.gz -d " + file_template_seg + " -bzmax 1 -o " + path_output + "/" + filename.split(".nii")[0] + "HOG.txt")
+            seg_anat_reg = Image(path_output + "/" + filename.split(".nii")[0] + "seg_reg2anatHOG_bin.nii.gz").data
+            min_z = np.min(np.nonzero(seg_anat_reg)[2])
+            max_z = np.max(np.nonzero(seg_anat_reg)[2]) + 1  # python indexing
+            seg_temp = Image(file_template_seg).data
+            dice_coeff_HOG.append(compute_similarity_metric(seg_anat_reg[:, :, min_z:max_z], seg_temp[:, :, min_z:max_z]))
 
             # PCA registration
             sct_register_to_template(['-i', file_input, '-s', file_seg_input, '-l', filelabelvert_input, '-c', contrast, '-ofolder', temp, '-param', "step=1,type=seg,algo=centermassrot,rot=1,poly=0,slicewise=0"])
             sct_apply_transfo(['-i', file_seg_input, '-d', file_template_seg, '-w', temp + "/warp_anat2template.nii.gz", '-o', path_output + "/" + filename.split(".nii")[0] + "seg_reg2anatPCA.nii.gz"])
             sct_maths(['-i', path_output + "/" + filename.split(".nii")[0] + "seg_reg2anatPCA.nii.gz", '-o', path_output + "/" + filename.split(".nii")[0] + "seg_reg2anatPCA_bin.nii.gz", '-bin', '0.5'])
-            sct.run("sct_dice_coefficient -i " + path_output + "/" + filename.split(".nii")[0] + "seg_reg2anatPCA_bin.nii.gz -d " + file_template_seg + " -bzmax 1 -o " + path_output + "/" + filename.split(".nii")[0] + "PCA.txt")
+            seg_anat_reg = Image(path_output + "/" + filename.split(".nii")[0] + "seg_reg2anatPCA_bin.nii.gz").data
+            min_z = np.min(np.nonzero(seg_anat_reg)[2])
+            max_z = np.max(np.nonzero(seg_anat_reg)[2]) + 1  # python indexing
+            seg_temp = Image(file_template_seg).data
+            dice_coeff_PCA.append(compute_similarity_metric(seg_anat_reg[:, :, min_z:max_z], seg_temp[:, :, min_z:max_z]))
 
             # No rotation registration
             sct_register_to_template(['-i', file_input, '-s', file_seg_input, '-l', filelabelvert_input, '-c', contrast, '-ofolder', temp, '-param', "step=1,type=seg,algo=centermass,slicewise=0"])
             sct_apply_transfo(['-i', file_seg_input, '-d', file_template_seg, '-w', temp + "/warp_anat2template.nii.gz", '-o', path_output + "/" + filename.split(".nii")[0] + "seg_reg2anatNoRot.nii.gz"])
             sct_maths(['-i', path_output + "/" + filename.split(".nii")[0] + "seg_reg2anatNoRot.nii.gz", '-o', path_output + "/" + filename.split(".nii")[0] + "seg_reg2anatNoRot_bin.nii.gz", '-bin', '0.5'])
-            sct.run("sct_dice_coefficient -i " + path_output + "/" + filename.split(".nii")[0] + "seg_reg2anatNoRot_bin.nii.gz -d " + file_template_seg + " -bzmax 1 -o " + path_output + "/" + filename.split(".nii")[0] + "NoRot.txt")
+            seg_anat_reg = Image(path_output + "/" + filename.split(".nii")[0] + "seg_reg2anatNoRot_bin.nii.gz").data
+            min_z = np.min(np.nonzero(seg_anat_reg)[2])
+            max_z = np.max(np.nonzero(seg_anat_reg)[2]) + 1  # python indexing
+            seg_temp = Image(file_template_seg).data
+            dice_coeff_NoRot.append(compute_similarity_metric(seg_anat_reg[:, :, min_z:max_z], seg_temp[:, :, min_z:max_z]))
 
             sct.rmtree(temp, verbose=0)
+
+    os.chdir(path_output)
+    csvData = [['Dice_coeff_HOG'], dice_coeff_HOG, ['Dice_coeff_PCA'], dice_coeff_PCA, ['Dice_coeff_NoRot'], dice_coeff_NoRot]
+    with open('Dice_result.csv', 'w') as csvFile:
+        writer = csv.writer(csvFile)
+        writer.writerows(csvData)
+    csvFile.close()
+
+    matplotlib.use('Agg')  # prevent display figure
+    plt.figure(figsize=(8, 8))
+    plt.title("Dice coefficient for different files")
+    plt.plot(range(0, len(dice_coeff_HOG)), dice_coeff_HOG, "bo")
+    plt.plot(range(0, len(dice_coeff_PCA)), dice_coeff_PCA, "ro")
+    plt.plot(range(0, len(dice_coeff_NoRot)), dice_coeff_NoRot, "go")
+    plt.legend(("Hogancest", "PCA", "NoRot"))
+    plt.xlabel("file number")
+    plt.ylabel("Dice coefficient")
+    plt.savefig("Dice_coeff.png")
+    plt.close()
+
+    os.chdir(cwd)
+
+    sct.printv("Mean Dice coeff for HOG is : " + str(np.mean(dice_coeff_HOG)))
+    sct.printv("Mean Dice coeff for PCA is : " + str(np.mean(dice_coeff_PCA)))
+    sct.printv("Mean Dice coeff for NoRot is : " + str(np.mean(dice_coeff_NoRot)))
 
 
 
