@@ -112,7 +112,7 @@ def find_centerline(algo, image_fname, contrast_type, brain_bool, folder_output,
         im_centerline, arr_centerline, _ = get_centerline(im_labels)
         centerline_filename = sct.add_suffix(image_fname, "_ctr")
         im_centerline.save(centerline_filename)
-    elif algo == 'manual':
+    elif algo == 'file':
         centerline_filename = sct.add_suffix(image_fname, "_ctr")
         # Re-orient the manual centerline
         Image(centerline_fname).change_orientation('RPI').save(centerline_filename)
@@ -576,7 +576,7 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
     tmp_folder = sct.TempFolder()
     tmp_folder_path = tmp_folder.get_path()
     # fname_image_tmp = tmp_folder.copy_from(fname_image)
-    if ctr_algo == 'manual':  # if the ctr_file is provided
+    if ctr_algo == 'file':  # if the ctr_file is provided
         tmp_folder.copy_from(ctr_file)
         file_ctr = os.path.basename(ctr_file)
     else:
