@@ -132,7 +132,7 @@ def deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo='svm', ctr_file
     sct.log.info("\nCreating temporary folder...")
     tmp_folder = sct.TempFolder()
     tmp_folder_path = tmp_folder.get_path()
-    if ctr_algo == 'manual':  # if the ctr_file is provided
+    if ctr_algo == 'file':  # if the ctr_file is provided
         tmp_folder.copy_from(ctr_file)
         file_ctr = os.path.basename(ctr_file)
     else:
