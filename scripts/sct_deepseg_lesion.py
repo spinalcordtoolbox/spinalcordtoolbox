@@ -121,13 +121,19 @@ def main():
     sct.printv(algo_config_stg)
 
     im_image = Image(fname_image)
-    im_seg = deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo=ctr_algo, ctr_file=manual_centerline_fname,
+    im_seg, im_labels_viewer = deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo=ctr_algo, ctr_file=manual_centerline_fname,
                                         brain_bool=brain_bool, remove_temp_files=remove_temp_files)
 
     # Save segmentation
     fname_seg = os.path.abspath(os.path.join(output_folder, sct.extract_fname(fname_image)[1] + '_lesionseg' +
                                              sct.extract_fname(fname_image)[2]))
     im_seg.save(fname_seg)
+
+    if ctr_algo == 'viewer':
+        # Save labels
+        fname_labels = os.path.abspath(os.path.join(output_folder, sct.extract_fname(fname_image)[1] + '_labels-centerline' +
+                                               sct.extract_fname(fname_image)[2]))
+        im_labels_viewer.save(fname_labels)
 
     sct.display_viewer_syntax([fname_image, fname_seg], colormaps=['gray', 'red'], opacities=['', '0.7'])
 

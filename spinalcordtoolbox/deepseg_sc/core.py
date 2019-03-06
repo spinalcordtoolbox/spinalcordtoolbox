@@ -675,7 +675,7 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
                                                            'mm', 'linear', verbose=0)
     im_image_res_seg_downsamp = Image(fname_res_seg_downsamp)
 
-    if ctr_algo == 'viewer':
+    if ctr_algo == 'viewer':  # resample and reorient the viewer labels
         fname_res_labels = sct.add_suffix(fname_orient, '_labels-centerline')
         resampling.resample_file(fname_res_labels, fname_res_labels, initial_resolution,
                                                            'mm', 'linear', verbose=0)
