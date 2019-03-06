@@ -111,11 +111,15 @@ def find_centerline(algo, image_fname, contrast_type, brain_bool, folder_output,
         im_labels = _call_viewer_centerline(Image(image_fname))
         im_centerline, arr_centerline, _ = get_centerline(im_labels)
         centerline_filename = sct.add_suffix(image_fname, "_ctr")
+        labels_filename = sct.add_suffix(image_fname, "_labels-centerline")
         im_centerline.save(centerline_filename)
+        im_labels.save(labels_filename)
+
     elif algo == 'file':
         centerline_filename = sct.add_suffix(image_fname, "_ctr")
         # Re-orient the manual centerline
         Image(centerline_fname).change_orientation('RPI').save(centerline_filename)
+
     else:
         sct.log.error('The parameter "-centerline" is incorrect. Please try again.')
         sys.exit(1)
@@ -671,6 +675,14 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
                                                            'mm', 'linear', verbose=0)
     im_image_res_seg_downsamp = Image(fname_res_seg_downsamp)
 
+    if ctr_algo == 'viewer':
+        fname_res_labels = sct.add_suffix(fname_orient, '_labels-centerline')
+        resampling.resample_file(fname_res_labels, fname_res_labels, initial_resolution,
+                                                           'mm', 'linear', verbose=0)
+        im_image_res_labels_downsamp = Image(fname_res_labels).change_orientation(original_orientation)
+    else:
+        im_image_res_labels_downsamp = None
+
     # binarize the resampled image to remove interpolation effects
     sct.log.info("Binarizing the segmentation to avoid interpolation effects...")
     thr = 0.0001 if contrast_type in ['t1', 'dwi'] else 0.5
@@ -689,4 +701,4 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
         tmp_folder.cleanup()
 
     # reorient to initial orientation
-    return im_image_res_seg_downsamp_postproc.change_orientation(original_orientation), im_nii, seg_uncrop_nii.change_orientation('RPI')
+    return im_image_res_seg_downsamp_postproc.change_orientation(original_orientation), im_nii, seg_uncrop_nii.change_orientation('RPI'), im_image_res_labels_downsamp

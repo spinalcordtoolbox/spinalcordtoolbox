@@ -143,7 +143,7 @@ def main():
 
     im_image = Image(fname_image)
     # note: below we pass im_image.copy() otherwise the field absolutepath becomes None after execution of this function
-    im_seg, im_image_RPI_upsamp, im_seg_RPI_upsamp = deep_segmentation_spinalcord(
+    im_seg, im_image_RPI_upsamp, im_seg_RPI_upsamp, im_labels_viewer = deep_segmentation_spinalcord(
         im_image.copy(), contrast_type, ctr_algo=ctr_algo, ctr_file=manual_centerline_fname,
         brain_bool=brain_bool, kernel_size=kernel_size, remove_temp_files=remove_temp_files, verbose=verbose)
 
@@ -151,6 +151,12 @@ def main():
     fname_seg = os.path.abspath(os.path.join(output_folder, sct.extract_fname(fname_image)[1] + '_seg' +
                                              sct.extract_fname(fname_image)[2]))
     im_seg.save(fname_seg)
+
+    if ctr_algo == 'viewer':
+        # Save labels
+        fname_labels = os.path.abspath(os.path.join(output_folder, sct.extract_fname(fname_image)[1] + '_labels-centerline' +
+                                               sct.extract_fname(fname_image)[2]))
+        im_labels_viewer.save(fname_labels)
 
     if path_qc is not None:
         generate_qc(fname_image, fname_seg=fname_seg, args=args, path_qc=os.path.abspath(path_qc),
