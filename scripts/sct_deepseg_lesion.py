@@ -40,9 +40,9 @@ def get_parser():
                       example=['t2', 't2_ax', 't2s'])
     parser.add_option(name="-centerline",
                       type_value="multiple_choice",
-                      description="Method used for extracting the centerline.\nsvm: automatic centerline detection, based on Support Vector Machine algorithm.\ncnn: automatic centerline detection, based on Convolutional Neural Network.\nviewer: semi-automatic centerline generation, based on manual selection of a few points using an interactive viewer, then approximation with NURBS.\nmanual: use an existing centerline by specifying its filename with flag -file_centerline (e.g. -file_centerline t2_centerline_manual.nii.gz).\n",
+                      description="Method used for extracting the centerline.\nsvm: automatic centerline detection, based on Support Vector Machine algorithm.\ncnn: automatic centerline detection, based on Convolutional Neural Network.\nviewer: semi-automatic centerline generation, based on manual selection of a few points using an interactive viewer, then approximation with NURBS.\nfile: use an existing centerline by specifying its filename with flag -file_centerline (e.g. -file_centerline t2_centerline_manual.nii.gz).\n",
                       mandatory=False,
-                      example=['svm', 'cnn', 'viewer', 'manual'],
+                      example=['svm', 'cnn', 'viewer', 'file'],
                       default_value="svm")
     parser.add_option(name="-file_centerline",
                       type_value="image_nifti",
@@ -101,13 +101,13 @@ def main():
     else:
         output_folder = arguments["-ofolder"]
 
-    if ctr_algo == 'manual' and "-file_centerline" not in args:
+    if ctr_algo == 'file' and "-file_centerline" not in args:
         sct.log.error('Please use the flag -file_centerline to indicate the centerline filename.')
         sys.exit(1)
     
     if "-file_centerline" in args:
         manual_centerline_fname = arguments["-file_centerline"]
-        ctr_algo = 'manual'
+        ctr_algo = 'file'
     else:
         manual_centerline_fname = None
 
