@@ -215,6 +215,14 @@ def deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo='svm', ctr_file
                                                            'mm', 'linear', verbose=0)
     seg_initres_nii = Image(fname_seg_RPI)
 
+    if ctr_algo == 'viewer':  # resample and reorient the viewer labels
+        fname_res_labels = sct.add_suffix(fname_orient, '_labels-centerline')
+        resampling.resample_file(fname_res_labels, fname_res_labels, initial_resolution,
+                                                           'mm', 'linear', verbose=0)
+        im_image_res_labels_downsamp = Image(fname_res_labels).change_orientation(original_orientation)
+    else:
+        im_image_res_labels_downsamp = None
+
     # binarize the resampled image to remove interpolation effects
     sct.log.info("\nBinarizing the segmentation to avoid interpolation effects...")
     thr = 0.1
@@ -231,4 +239,4 @@ def deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo='svm', ctr_file
         tmp_folder.cleanup()
 
     # reorient to initial orientation
-    return seg_initres_nii.change_orientation(original_orientation)
+    return seg_initres_nii.change_orientation(original_orientation), im_image_res_labels_downsamp
