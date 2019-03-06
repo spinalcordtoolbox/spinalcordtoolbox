@@ -1,20 +1,16 @@
 #!/usr/bin/env python
 
-# @package sct_nurbs
+# @package nurbs
+# Approximate a 3D curve with a B-Spline curve from either a set of data points or a set of control points
 #
-# - python class. Approximate or interpolate a 3D curve with a B-Spline curve from either a set of data points or a set of control points
-#
-#
-# Description about how the function works:
-#
-# If a set of data points is given, it generates a B-spline that either approximates the curve in the least square sens, or interpolates the curve.
-# It also computes the derivative of the 3D curve.
-# getCourbe3D() returns the 3D fitted curve. The fitted z coordonate corresponds to the initial z, and the x and y are averaged for a given z
-# getCourbe3D_deriv() returns the derivative of the 3D fitted curve also averaged along z-axis
+# If a set of data points is given, it generates a B-spline that either approximates the curve in the least square
+# sense or interpolates the curve. It also computes the derivative of the 3D curve.
+# getCourbe3D() returns the 3D fitted curve. The fitted z coordonate corresponds to the initial z, and the x and y are
+# averaged for a given z getCourbe3D_deriv() returns the derivative of the 3D fitted curve also averaged along z-axis.
 #
 # USAGE
 # ---------------------------------------------------------------------------------------
-# from sct_nurbs import *
+# from spinalcordtoolbox.centerline.nurbs import *
 # nurbs=NURBS(degree,precision,data)
 #
 # MANDATORY ARGUMENTS
@@ -23,14 +19,9 @@
 #   precision       number of points before averaging data
 #   data            3D list [x,y,z] of the data requiring fitting
 #
-# OPTIONAL ARGUMENTS
-# ---------------------------------------------------------------------------------------
-#
-#
-#
 # EXAMPLES
 # ---------------------------------------------------------------------------------------
-#   from sct_nurbs import *
+#   from spinalcordtoolbox.centerline.nurbs import *
 #   nurbs = NURBS(3,1000,[[x_centerline[n],y_centerline[n],z_centerline[n]] for n in range(len(x_centerline))])
 #   P = nurbs.getCourbe3D()
 #   x_centerline_fit = P[0]
@@ -40,39 +31,27 @@
 #   x_centerline_fit_der = D[0]
 #   y_centerline_fit_der = D[1]
 #   z_centerline_fit_der = D[2]
-
-#
-# DEPENDENCIES
-# ---------------------------------------------------------------------------------------
-# EXTERNAL PYTHON PACKAGES
-# - scipy: <http://www.scipy.org>
-# - numpy: <http://www.numpy.org>
-#
-# EXTERNAL SOFTWARE
-#
-# none
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2014 NeuroPoly, Polytechnique Montreal <www.neuropoly.info>
 # Authors: Benjamin De Leener, Julien Touati
-# Modified: 2014-07-01
-#
-# License: see the LICENSE.TXT
-# ============================================================================================================
-# check if needed Python libraries are already installed or not
+
 
 from __future__ import division, absolute_import
 
-
+import os
 import numpy as np
 
 import sct_utils as sct
 
+
 class ReconstructionError(RuntimeError):
     pass
 
-class NURBS():
-    def __init__(self, degre=3, precision=1000, liste=None, sens=False, nbControl=None, verbose=1, tolerance=0.01, maxControlPoints=50, all_slices=True, twodim=False, weights=True):
+
+class NURBS:
+    def __init__(self, degre=3, precision=1000, liste=None, sens=False, nbControl=None, verbose=1, tolerance=0.01,
+                 maxControlPoints=50, all_slices=True, twodim=False, weights=True):
         """
         Ce constructeur initialise une NURBS et la construit.
         Si la variable sens est True : On construit la courbe en fonction des points de controle
@@ -92,7 +71,7 @@ class NURBS():
         self.all_slices = all_slices
         self.twodim = twodim
 
-        if sens:                  # si on donne les points de controle#####
+        if sens:  # si on donne les points de controle#####
             if type(liste[0][0]).__name__ == 'list':
                 self.pointsControle = liste
             else:
@@ -115,26 +94,39 @@ class NURBS():
                 self.P_z = P_z
 
             if nbControl is None:
-                # self.nbControl = len(P_z)/5  ## ordre 3 -> len(P_z)/10, 4 -> len/7, 5-> len/5   permet d'obtenir une bonne approximation sans trop "interpoler" la courbe
-                # compute the ideal number of control points based on tolerance
+                # self.nbControl = len(P_z)/5  ## ordre 3 -> len(P_z)/10, 4 -> len/7, 5-> len/5   permet d'obtenir
+                # une bonne approximation sans trop "interpoler" la courbe compute the ideal number of control points
+                # based on tolerance
                 error_curve = 1000.0
                 self.nbControle = self.degre + 1
                 nb_points = len(P_x)
                 if self.nbControle > nb_points - 1:
-                    sct.printv('ERROR : There are too few points to compute. The number of points of the curve must be strictly superior to degre +2 which is: ' + str(self.nbControle) + '. Either change degre to a lower value, either add points to the curve.', type="error")
+                    raise ArithmeticError('There are too few points to compute. The number of points of the curve must '
+                                          'be strictly superior to degre + 2, in this case: ' + str(self.nbControle)
+                                          + '. Either change degree to a lower value, or add points to the curve.')
+                    # self.nbControle = nb_points - 1
+                    # self.degre = self.nbControle - 1
+                    # sct.printv(
+                    #     'ERROR : There are too few points to compute. The number of points of the curve must be '
+                    #     'strictly superior to degre +2 which is: '
+                    #     + str(self.nbControle)
+                    #     + '. Either change degre to a lower value, either add points to the curve.',
+                    #     type="error")
 
                 # compute weights based on curve density
                 w = [1.0] * len(P_x)
                 if weights:
                     if not twodim:
                         for i in range(1, len(P_x) - 1):
-                            dist_before = np.sqrt((P_x[i - 1] - P_x[i])**2 + (P_y[i - 1] - P_y[i])**2 + (P_z[i - 1] - P_z[i])**2)
-                            dist_after = np.sqrt((P_x[i] - P_x[i + 1])**2 + (P_y[i] - P_y[i + 1])**2 + (P_z[i] - P_z[i + 1])**2)
+                            dist_before = np.sqrt(
+                                (P_x[i - 1] - P_x[i]) ** 2 + (P_y[i - 1] - P_y[i]) ** 2 + (P_z[i - 1] - P_z[i]) ** 2)
+                            dist_after = np.sqrt(
+                                (P_x[i] - P_x[i + 1]) ** 2 + (P_y[i] - P_y[i + 1]) ** 2 + (P_z[i] - P_z[i + 1]) ** 2)
                             w[i] = (dist_before + dist_after) / 2.0
                     else:
                         for i in range(1, len(P_x) - 1):
-                            dist_before = np.sqrt((P_x[i - 1] - P_x[i])**2 + (P_y[i - 1] - P_y[i])**2)
-                            dist_after = np.sqrt((P_x[i] - P_x[i + 1])**2 + (P_y[i] - P_y[i + 1])**2)
+                            dist_before = np.sqrt((P_x[i - 1] - P_x[i]) ** 2 + (P_y[i - 1] - P_y[i]) ** 2)
+                            dist_after = np.sqrt((P_x[i] - P_x[i + 1]) ** 2 + (P_y[i] - P_y[i + 1]) ** 2)
                             w[i] = (dist_before + dist_after) / 2.0
                     w[0], w[-1] = w[1], w[-2]
 
@@ -142,7 +134,8 @@ class NURBS():
                 last_error_curve = 0.0
                 second_last_error_curve = 0.0
                 while self.nbControle < len(P_x) and self.nbControle <= self.maxControlPoints:
-                    if abs(error_curve - last_error_curve) <= self.tolerance and abs(error_curve - second_last_error_curve) <= self.tolerance and error_curve <= last_error_curve and error_curve <= second_last_error_curve:
+                    if abs(error_curve - last_error_curve) <= self.tolerance and abs(
+                            error_curve - second_last_error_curve) <= self.tolerance and error_curve <= last_error_curve and error_curve <= second_last_error_curve:
                         break
 
                     second_last_error_curve = last_error_curve
@@ -153,11 +146,15 @@ class NURBS():
                         sct.printv('Test: # of control points = ' + str(self.nbControle))
                     try:
                         if not twodim:
-                            self.pointsControle = self.reconstructGlobalApproximation(P_x, P_y, P_z, self.degre, self.nbControle, w)
-                            self.courbe3D, self.courbe3D_deriv = self.construct3D(self.pointsControle, self.degre, self.precision / 3)  # generate curve with low resolution
+                            self.pointsControle = self.reconstructGlobalApproximation(P_x, P_y, P_z, self.degre,
+                                                                                      self.nbControle, w)
+                            self.courbe3D, self.courbe3D_deriv = self.construct3D(self.pointsControle, self.degre,
+                                                                                  self.precision / 3)  # generate curve with low resolution
                         else:
-                            self.pointsControle = self.reconstructGlobalApproximation2D(P_x, P_y, self.degre, self.nbControle, w)
-                            self.courbe2D, self.courbe2D_deriv = self.construct2D(self.pointsControle, self.degre, self.precision / 3)
+                            self.pointsControle = self.reconstructGlobalApproximation2D(P_x, P_y, self.degre,
+                                                                                        self.nbControle, w)
+                            self.courbe2D, self.courbe2D_deriv = self.construct2D(self.pointsControle, self.degre,
+                                                                                  self.precision / 3)
 
                         # compute error between the input data and the nurbs
                         error_curve = 0.0
@@ -165,7 +162,8 @@ class NURBS():
                             for i in range(0, len(P_x)):
                                 min_dist = 10000.0
                                 for k in range(0, len(self.courbe3D[0])):
-                                    dist = (self.courbe3D[0][k] - P_x[i])**2 + (self.courbe3D[1][k] - P_y[i])**2 + (self.courbe3D[2][k] - P_z[i])**2
+                                    dist = (self.courbe3D[0][k] - P_x[i]) ** 2 + (self.courbe3D[1][k] - P_y[i]) ** 2 + (
+                                                self.courbe3D[2][k] - P_z[i]) ** 2
                                     if dist < min_dist:
                                         min_dist = dist
                                 error_curve += min_dist
@@ -173,7 +171,7 @@ class NURBS():
                             for i in range(0, len(P_x)):
                                 min_dist = 10000.0
                                 for k in range(0, len(self.courbe2D[0])):
-                                    dist = (self.courbe2D[0][k] - P_x[i])**2 + (self.courbe2D[1][k] - P_y[i])**2
+                                    dist = (self.courbe2D[0][k] - P_x[i]) ** 2 + (self.courbe2D[1][k] - P_y[i]) ** 2
                                     if dist < min_dist:
                                         min_dist = dist
                                 error_curve += min_dist
@@ -186,12 +184,14 @@ class NURBS():
                         list_param_that_worked.append([self.nbControle, self.pointsControle, error_curve])
 
                     except ReconstructionError:
-                        sct.printv('WARNING: NURBS instability -> wrong reconstruction', verbose=verbose, type="warning")
+                        sct.printv('WARNING: NURBS instability -> wrong reconstruction', verbose=verbose,
+                                   type="warning")
                         error_curve = last_error_curve + 10000.0
 
                     except np.linalg.LinAlgError as err_linalg:  # if there is a linalg error
-                        if 'singular matrix' in str(err_linalg): # and if it is a singular matrix
-                            sct.printv('Warning: Singular Matrix in NURBS algorithm -> wrong reconstruction', verbose=verbose, type="warning")
+                        if 'singular matrix' in str(err_linalg):  # and if it is a singular matrix
+                            sct.printv('Warning: Singular Matrix in NURBS algorithm -> wrong reconstruction',
+                                       verbose=verbose, type="warning")
                             error_curve = last_error_curve + 10000.0
                         else:
                             raise  # if it is another linalg error, raises it (so it stops the script)
@@ -202,19 +202,25 @@ class NURBS():
 
                 # self.courbe3D, self.courbe3D_deriv = self.construct3D(self.pointsControle, self.degre, self.precision)  # generate curve with hig resolution
                 # select number of control points that gives the best results
-                list_param_that_worked_sorted = sorted(list_param_that_worked, key=lambda list_param_that_worked: list_param_that_worked[2])
+                list_param_that_worked_sorted = sorted(list_param_that_worked,
+                                                       key=lambda list_param_that_worked: list_param_that_worked[2])
                 nbControle_that_last_worked = list_param_that_worked_sorted[0][0]
                 pointsControle_that_last_worked = list_param_that_worked_sorted[0][1]
                 self.error_curve_that_last_worked = list_param_that_worked_sorted[0][2]
                 if not twodim:
-                    self.courbe3D, self.courbe3D_deriv = self.construct3D_uniform(pointsControle_that_last_worked, self.degre, self.precision)  # generate curve with hig resolution
+                    self.courbe3D, self.courbe3D_deriv = self.construct3D_uniform(pointsControle_that_last_worked,
+                                                                                  self.degre,
+                                                                                  self.precision)  # generate curve with hig resolution
                 else:
-                    self.courbe2D, self.courbe2D_deriv = self.construct2D(pointsControle_that_last_worked, self.degre, self.precision)
+                    self.courbe2D, self.courbe2D_deriv = self.construct2D(pointsControle_that_last_worked, self.degre,
+                                                                          self.precision)
                 self.pointsControle = pointsControle_that_last_worked
 
                 if verbose >= 1:
                     if self.nbControle != nbControle_that_last_worked:
-                        sct.printv("The fitting of the curve was done using {} control points: the number that gave the best results. \nError on approximation = {} mm".format(nbControle_that_last_worked, np.round(self.error_curve_that_last_worked, 2)))
+                        sct.printv(
+                            "The fitting of the curve was done using {} control points: the number that gave the best results. \nError on approximation = {} mm".format(
+                                nbControle_that_last_worked, np.round(self.error_curve_that_last_worked, 2)))
                     else:
                         sct.printv('Number of control points of the optimal NURBS = {}'.format(self.nbControle))
             else:
@@ -223,11 +229,15 @@ class NURBS():
                 w = [1.0] * len(P_x)
                 self.nbControl = nbControl  # increase nbeControle if "short data"
                 if not twodim:
-                    self.pointsControle = self.reconstructGlobalApproximation(P_x, P_y, P_z, self.degre, self.nbControle, w)
-                    self.courbe3D, self.courbe3D_deriv = self.construct3D(self.pointsControle, self.degre, self.precision)
+                    self.pointsControle = self.reconstructGlobalApproximation(P_x, P_y, P_z, self.degre,
+                                                                              self.nbControle, w)
+                    self.courbe3D, self.courbe3D_deriv = self.construct3D(self.pointsControle, self.degre,
+                                                                          self.precision)
                 else:
-                    self.pointsControle = self.reconstructGlobalApproximation2D(P_x, P_y, self.degre, self.nbControle, w)
-                    self.courbe2D, self.courbe2D_deriv = self.construct2D(self.pointsControle, self.degre, self.precision)
+                    self.pointsControle = self.reconstructGlobalApproximation2D(P_x, P_y, self.degre, self.nbControle,
+                                                                                w)
+                    self.courbe2D, self.courbe2D_deriv = self.construct2D(self.pointsControle, self.degre,
+                                                                          self.precision)
 
     def getControle(self):
         return self.pointsControle
@@ -309,7 +319,7 @@ class NURBS():
         c = []
         sumC = 0
         for i in range(n):
-            dist = np.sqrt((P[i + 1][0] - P[i][0])**2 + (P[i + 1][1] - P[i][1])**2 + (P[i + 1][2] - P[i][2])**2)
+            dist = np.sqrt((P[i + 1][0] - P[i][0]) ** 2 + (P[i + 1][1] - P[i][1]) ** 2 + (P[i + 1][2] - P[i][2]) ** 2)
             c.append(dist)
             sumC += dist
 
@@ -328,7 +338,7 @@ class NURBS():
         c = []
         sumC = 0
         for i in range(n):
-            dist = np.sqrt((P[i + 1][0] - P[i][0])**2 + (P[i + 1][1] - P[i][1])**2)
+            dist = np.sqrt((P[i + 1][0] - P[i][0]) ** 2 + (P[i + 1][1] - P[i][1]) ** 2)
             c.append(dist)
             sumC += dist
 
@@ -424,19 +434,27 @@ class NURBS():
                     # sct.printv(' Missing z slice ')
                     # sct.printv(i)
                     P_z_temp = np.insert(P_z, np.where(P_z == i - 1)[-1][-1] + 1, i)
-                    P_x_temp = np.insert(P_x, np.where(P_z == i - 1)[-1][-1] + 1, (P_x[np.where(P_z == i - 1)[-1][-1]] + P_x[np.where(P_z == i - 1)[-1][-1] + 1]) / 2)
-                    P_y_temp = np.insert(P_y, np.where(P_z == i - 1)[-1][-1] + 1, (P_y[np.where(P_z == i - 1)[-1][-1]] + P_y[np.where(P_z == i - 1)[-1][-1] + 1]) / 2)
-                    P_x_d_temp = np.insert(P_x_d, np.where(P_z == i - 1)[-1][-1] + 1, (P_x_d[np.where(P_z == i - 1)[-1][-1]] + P_x_d[np.where(P_z == i - 1)[-1][-1] + 1]) / 2)
-                    P_y_d_temp = np.insert(P_y_d, np.where(P_z == i - 1)[-1][-1] + 1, (P_y_d[np.where(P_z == i - 1)[-1][-1]] + P_y_d[np.where(P_z == i - 1)[-1][-1] + 1]) / 2)
-                    P_z_d_temp = np.insert(P_z_d, np.where(P_z == i - 1)[-1][-1] + 1, (P_z_d[np.where(P_z == i - 1)[-1][-1]] + P_z_d[np.where(P_z == i - 1)[-1][-1] + 1]) / 2)
+                    P_x_temp = np.insert(P_x, np.where(P_z == i - 1)[-1][-1] + 1, (
+                                P_x[np.where(P_z == i - 1)[-1][-1]] + P_x[np.where(P_z == i - 1)[-1][-1] + 1]) / 2)
+                    P_y_temp = np.insert(P_y, np.where(P_z == i - 1)[-1][-1] + 1, (
+                                P_y[np.where(P_z == i - 1)[-1][-1]] + P_y[np.where(P_z == i - 1)[-1][-1] + 1]) / 2)
+                    P_x_d_temp = np.insert(P_x_d, np.where(P_z == i - 1)[-1][-1] + 1, (
+                                P_x_d[np.where(P_z == i - 1)[-1][-1]] + P_x_d[np.where(P_z == i - 1)[-1][-1] + 1]) / 2)
+                    P_y_d_temp = np.insert(P_y_d, np.where(P_z == i - 1)[-1][-1] + 1, (
+                                P_y_d[np.where(P_z == i - 1)[-1][-1]] + P_y_d[np.where(P_z == i - 1)[-1][-1] + 1]) / 2)
+                    P_z_d_temp = np.insert(P_z_d, np.where(P_z == i - 1)[-1][-1] + 1, (
+                                P_z_d[np.where(P_z == i - 1)[-1][-1]] + P_z_d[np.where(P_z == i - 1)[-1][-1] + 1]) / 2)
                     P_x, P_y, P_z, P_x_d, P_y_d, P_z_d = P_x_temp, P_y_temp, P_z_temp, P_x_d_temp, P_y_d_temp, P_z_d_temp
 
-            coord_mean = np.array([[np.mean(P_x[P_z == i]), np.mean(P_y[P_z == i]), i] for i in range(min(P_z), max(P_z) + 1, 1)])
+            coord_mean = np.array(
+                [[np.mean(P_x[P_z == i]), np.mean(P_y[P_z == i]), i] for i in range(min(P_z), max(P_z) + 1, 1)])
 
             P_x = coord_mean[:, :][:, 0]
             P_y = coord_mean[:, :][:, 1]
 
-            coord_mean_d = np.array([[np.mean(P_x_d[P_z == i]), np.mean(P_y_d[P_z == i]), np.mean(P_z_d[P_z == i])] for i in range(min(P_z), max(P_z) + 1, 1)])
+            coord_mean_d = np.array(
+                [[np.mean(P_x_d[P_z == i]), np.mean(P_y_d[P_z == i]), np.mean(P_z_d[P_z == i])] for i in
+                 range(min(P_z), max(P_z) + 1, 1)])
 
             P_z = coord_mean[:, :][:, 2]
 
@@ -519,16 +537,20 @@ class NURBS():
             for i in range(min(P_y), max(P_y) + 1, 1):
                 if i not in P_y:
                     P_y_temp = np.insert(P_y, np.where(P_y == i - 1)[-1][-1] + 1, i)
-                    P_x_temp = np.insert(P_x, np.where(P_y == i - 1)[-1][-1] + 1, (P_x[np.where(P_y == i - 1)[-1][-1]] + P_x[np.where(P_y == i - 1)[-1][-1] + 1]) / 2)
-                    P_x_d_temp = np.insert(P_x_d, np.where(P_y == i - 1)[-1][-1] + 1, (P_x_d[np.where(P_y == i - 1)[-1][-1]] + P_x_d[np.where(P_y == i - 1)[-1][-1] + 1]) / 2)
-                    P_y_d_temp = np.insert(P_y_d, np.where(P_y == i - 1)[-1][-1] + 1, (P_y_d[np.where(P_y == i - 1)[-1][-1]] + P_y_d[np.where(P_y == i - 1)[-1][-1] + 1]) / 2)
+                    P_x_temp = np.insert(P_x, np.where(P_y == i - 1)[-1][-1] + 1, (
+                                P_x[np.where(P_y == i - 1)[-1][-1]] + P_x[np.where(P_y == i - 1)[-1][-1] + 1]) / 2)
+                    P_x_d_temp = np.insert(P_x_d, np.where(P_y == i - 1)[-1][-1] + 1, (
+                                P_x_d[np.where(P_y == i - 1)[-1][-1]] + P_x_d[np.where(P_y == i - 1)[-1][-1] + 1]) / 2)
+                    P_y_d_temp = np.insert(P_y_d, np.where(P_y == i - 1)[-1][-1] + 1, (
+                                P_y_d[np.where(P_y == i - 1)[-1][-1]] + P_y_d[np.where(P_y == i - 1)[-1][-1] + 1]) / 2)
                     P_x, P_y, P_x_d, P_y_d = P_x_temp, P_y_temp, P_x_d_temp, P_y_d_temp
 
             coord_mean = np.array([[np.mean(P_x[P_y == i]), i] for i in range(min(P_y), max(P_y) + 1, 1)])
 
             P_x = coord_mean[:, :][:, 0]
 
-            coord_mean_d = np.array([[np.mean(P_x_d[P_y == i]), np.mean(P_y_d[P_y == i])] for i in range(min(P_y), max(P_y) + 1, 1)])
+            coord_mean_d = np.array(
+                [[np.mean(P_x_d[P_y == i]), np.mean(P_y_d[P_y == i])] for i in range(min(P_y), max(P_y) + 1, 1)])
 
             P_y = coord_mean[:, :][:, 1]
 
@@ -562,12 +584,13 @@ class NURBS():
         # Calcul des chords
         di = 0.0
         for k in range(m - 1):
-            di += np.sqrt((P_x[k + 1] - P_x[k])**2 + (P_y[k + 1] - P_y[k])**2 + (P_z[k + 1] - P_z[k])**2)
+            di += np.sqrt((P_x[k + 1] - P_x[k]) ** 2 + (P_y[k + 1] - P_y[k]) ** 2 + (P_z[k + 1] - P_z[k]) ** 2)
         ubar = [0]
         for k in range(m - 1):
             # ubar.append((k+1)/float(m))  # uniform method
             # ubar.append(ubar[-1]+abs((P_x[k+1]-P_x[k])**2 + (P_y[k+1]-P_y[k])**2 + (P_z[k+1]-P_z[k])**2)/di)  # chord length method
-            ubar.append(ubar[-1] + np.sqrt((P_x[k + 1] - P_x[k])**2 + (P_y[k + 1] - P_y[k])**2 + (P_z[k + 1] - P_z[k])**2) / di)  # centripetal method
+            ubar.append(ubar[-1] + np.sqrt((P_x[k + 1] - P_x[k]) ** 2 + (P_y[k + 1] - P_y[k]) ** 2 + (
+                        P_z[k + 1] - P_z[k]) ** 2) / di)  # centripetal method
 
         # the knot vector should reflect the distribution of ubar
         d = (m + 1) / (n - p + 1)
@@ -665,8 +688,10 @@ class NURBS():
         # Typically, control points should be far from the data points. One way to do so is to ensure that the
         from numpy import std
         std_factor = 10.0
-        std_Px, std_Py, std_Pz, std_x, std_y, std_z = std(P_xb), std(P_yb), std(P_zb), std(np.array(P_x)), std(np.array(P_y)), std(np.array(P_z))
-        if std_x >= 0.1 and std_y >= 0.1 and std_z >= 0.1 and (std_Px > std_factor * std_x or std_Py > std_factor * std_y or std_Pz > std_factor * std_z):
+        std_Px, std_Py, std_Pz, std_x, std_y, std_z = std(P_xb), std(P_yb), std(P_zb), std(np.array(P_x)), std(
+            np.array(P_y)), std(np.array(P_z))
+        if std_x >= 0.1 and std_y >= 0.1 and std_z >= 0.1 and (
+                std_Px > std_factor * std_x or std_Py > std_factor * std_y or std_Pz > std_factor * std_z):
             raise ReconstructionError()
 
         P = [[P_xb[i, 0], P_yb[i, 0], P_zb[i, 0]] for i in range(len(P_xb))]
@@ -683,12 +708,13 @@ class NURBS():
         # Calcul des chords
         di = 0.0
         for k in range(m - 1):
-            di += np.sqrt((P_x[k + 1] - P_x[k])**2 + (P_y[k + 1] - P_y[k])**2)
+            di += np.sqrt((P_x[k + 1] - P_x[k]) ** 2 + (P_y[k + 1] - P_y[k]) ** 2)
         ubar = [0]
         for k in range(m - 1):
             # ubar.append((k+1)/float(m))  # uniform method
             # ubar.append(ubar[-1]+abs((P_x[k+1]-P_x[k])**2 + (P_y[k+1]-P_y[k])**2 + (P_z[k+1]-P_z[k])**2)/di)  # chord length method
-            ubar.append(ubar[-1] + np.sqrt((P_x[k + 1] - P_x[k])**2 + (P_y[k + 1] - P_y[k])**2) / di)  # centripetal method
+            ubar.append(
+                ubar[-1] + np.sqrt((P_x[k + 1] - P_x[k]) ** 2 + (P_y[k + 1] - P_y[k]) ** 2) / di)  # centripetal method
 
         # the knot vector should reflect the distribution of ubar
         d = (m + 1) / (n - p + 1)
@@ -800,11 +826,13 @@ class NURBS():
         # Calcul du vecteur de noeuds
         di = 0
         for k in range(n - 1):
-            di += np.sqrt((newPx[k + 1] - newPx[k])**2 + (newPy[k + 1] - newPy[k])**2 + (newPz[k + 1] - newPz[k])**2)
+            di += np.sqrt(
+                (newPx[k + 1] - newPx[k]) ** 2 + (newPy[k + 1] - newPy[k]) ** 2 + (newPz[k + 1] - newPz[k]) ** 2)
         u = [0] * p
         ubar = [0]
         for k in range(n - 1):
-            ubar.append(ubar[-1] + np.sqrt((newPx[k + 1] - newPx[k])**2 + (newPy[k + 1] - newPy[k])**2 + (newPz[k + 1] - newPz[k])**2) / di)
+            ubar.append(ubar[-1] + np.sqrt(
+                (newPx[k + 1] - newPx[k]) ** 2 + (newPy[k + 1] - newPy[k]) ** 2 + (newPz[k + 1] - newPz[k]) ** 2) / di)
         for j in range(n - p):
             sumU = 0
             for i in range(p):
@@ -851,7 +879,7 @@ class NURBS():
 
             for l in range(n - k + 1):  # utilisation que des points non nuls
                 if x[l + k - 1] <= param[i] < x[l + k]:
-                    debut = l
+                    debut = l  # TODO: can yield UnboundLocalError: local variable 'debut' referenced before assignment
             fin = debut + k - 1
 
             for j, point in enumerate(P[debut:fin + 1]):
@@ -939,15 +967,17 @@ class NURBS():
                     # sct.printv(i)
                     P_z_temp = np.insert(P_z, np.where(P_z == i - 1)[-1][-1] + 1, i)
                     P_x_temp = np.insert(P_x, np.where(P_z == i - 1)[-1][-1] + 1,
-                                         (P_x[np.where(P_z == i - 1)[-1][-1]] + P_x[np.where(P_z == i - 1)[-1][-1] + 1]) / 2)
+                                         (P_x[np.where(P_z == i - 1)[-1][-1]] + P_x[
+                                             np.where(P_z == i - 1)[-1][-1] + 1]) / 2)
                     P_y_temp = np.insert(P_y, np.where(P_z == i - 1)[-1][-1] + 1,
-                                         (P_y[np.where(P_z == i - 1)[-1][-1]] + P_y[np.where(P_z == i - 1)[-1][-1] + 1]) / 2)
+                                         (P_y[np.where(P_z == i - 1)[-1][-1]] + P_y[
+                                             np.where(P_z == i - 1)[-1][-1] + 1]) / 2)
                     P_x_d_temp = np.insert(P_x_d, np.where(P_z == i - 1)[-1][-1] + 1, (
-                        P_x_d[np.where(P_z == i - 1)[-1][-1]] + P_x_d[np.where(P_z == i - 1)[-1][-1] + 1]) / 2)
+                            P_x_d[np.where(P_z == i - 1)[-1][-1]] + P_x_d[np.where(P_z == i - 1)[-1][-1] + 1]) / 2)
                     P_y_d_temp = np.insert(P_y_d, np.where(P_z == i - 1)[-1][-1] + 1, (
-                        P_y_d[np.where(P_z == i - 1)[-1][-1]] + P_y_d[np.where(P_z == i - 1)[-1][-1] + 1]) / 2)
+                            P_y_d[np.where(P_z == i - 1)[-1][-1]] + P_y_d[np.where(P_z == i - 1)[-1][-1] + 1]) / 2)
                     P_z_d_temp = np.insert(P_z_d, np.where(P_z == i - 1)[-1][-1] + 1, (
-                        P_z_d[np.where(P_z == i - 1)[-1][-1]] + P_z_d[np.where(P_z == i - 1)[-1][-1] + 1]) / 2)
+                            P_z_d[np.where(P_z == i - 1)[-1][-1]] + P_z_d[np.where(P_z == i - 1)[-1][-1] + 1]) / 2)
                     P_x, P_y, P_z, P_x_d, P_y_d, P_z_d = P_x_temp, P_y_temp, P_z_temp, P_x_d_temp, P_y_d_temp, P_z_d_temp
 
             coord_mean = np.array(
@@ -956,8 +986,9 @@ class NURBS():
             P_x = coord_mean[:, :][:, 0]
             P_y = coord_mean[:, :][:, 1]
 
-            coord_mean_d = np.array([[np.mean(P_x_d[P_z == i]), np.mean(P_y_d[P_z == i]), np.mean(P_z_d[P_z == i])] for i in
-                                     range(min(P_z), max(P_z) + 1, 1)])
+            coord_mean_d = np.array(
+                [[np.mean(P_x_d[P_z == i]), np.mean(P_y_d[P_z == i]), np.mean(P_z_d[P_z == i])] for i in
+                 range(min(P_z), max(P_z) + 1, 1)])
 
             P_z = coord_mean[:, :][:, 2]
 
@@ -979,3 +1010,148 @@ class NURBS():
             P_z_d = np.delete(P_z_d, indexes_to_remove)
 
         return [P_x, P_y, P_z], [P_x_d, P_y_d, P_z_d]
+
+
+def getSize(x, y, z, file_name=None):
+    from math import sqrt
+    # TODO: find another way to get those values (!)
+    # get pixdim
+    if file_name is not None:
+        cmd1 = ['fslval', file_name, 'pixdim1']
+        status, output = sct.run(cmd1)
+        p1 = float(output)
+        cmd2 = ['fslval', file_name, 'pixdim2']
+        status, output = sct.run(cmd2)
+        p2 = float(output)
+        cmd3 = ['fslval', file_name, 'pixdim3']
+        status, output = sct.run(cmd3)
+        p3 = float(output)
+    else:
+        p1, p2, p3 = 1.0, 1.0, 1.0
+
+    # Centerline size
+    s = 0
+    for i in range(len(x) - 1):
+        s += sqrt((p1 * (x[i + 1] - x[i]))**2 + (p2 * (y[i + 1] - y[i]))**2 + (p3 * (z[i + 1] - z[i])**2))
+    # sct.printv("centerline size: ", s)
+    return s
+
+
+def b_spline_nurbs(x, y, z, fname_centerline=None, degree=3, point_number=3000, nbControl=-1, verbose=1,
+                   all_slices=True, path_qc='.'):
+    """
+    3D B-Spline function
+    :param x:
+    :param y:
+    :param z:
+    :param fname_centerline:
+    :param degree:
+    :param point_number:
+    :param nbControl:
+    :param verbose:
+    :param all_slices:
+    :param path_qc:
+    :return:
+    """
+    from math import log
+
+    twodim = False
+    if z is None:
+        twodim = True
+
+    """x.reverse()
+    y.reverse()
+    z.reverse()"""
+
+    sct.printv('\nFitting centerline using B-spline approximation...', verbose)
+    if not twodim:
+        data = [[x[n], y[n], z[n]] for n in range(len(x))]
+    else:
+        data = [[x[n], y[n]] for n in range(len(x))]
+
+    # if control_points == 0:
+    #     nurbs = NURBS(degree, point_number, data) # BE very careful with the spline order that you choose : if order is too high ( > 4 or 5) you need to set a higher number of Control Points (cf sct_nurbs ). For the third argument (number of points), give at least len(z_centerline)+500 or higher
+    # else:
+    #     sct.printv('In b_spline_nurbs we get control_point = ', control_points)
+    #     nurbs = NURBS(degree, point_number, data, False, control_points)
+
+    if nbControl == -1:
+        centerlineSize = getSize(x, y, z, fname_centerline)
+        nbControl = 30 * log(centerlineSize, 10) - 42
+        nbControl = np.round(nbControl)
+
+    nurbs = NURBS(degree, point_number, data, False, nbControl, verbose, all_slices=all_slices, twodim=twodim)
+
+    if not twodim:
+        P = nurbs.getCourbe3D()
+        x_fit = P[0]
+        y_fit = P[1]
+        z_fit = P[2]
+        Q = nurbs.getCourbe3D_deriv()
+        x_deriv = Q[0]
+        y_deriv = Q[1]
+        z_deriv = Q[2]
+    else:
+        P = nurbs.getCourbe2D()
+        x_fit = P[0]
+        y_fit = P[1]
+        Q = nurbs.getCourbe2D_deriv()
+        x_deriv = Q[0]
+        y_deriv = Q[1]
+
+    """x_fit = x_fit[::-1]
+    y_fit = x_fit[::-1]
+    z_fit = x_fit[::-1]
+    x_deriv = x_fit[::-1]
+    y_deriv = x_fit[::-1]
+    z_deriv = x_fit[::-1]"""
+
+    if verbose == 2:
+        # TODO qc
+        PC = nurbs.getControle()
+        PC_x = [p[0] for p in PC]
+        PC_y = [p[1] for p in PC]
+        if not twodim:
+            PC_z = [p[2] for p in PC]
+
+        import matplotlib
+        matplotlib.use('Agg')  # prevent display figure
+        import matplotlib.pyplot as plt
+        if not twodim:
+            plt.figure(1)
+            #ax = plt.subplot(211)
+            plt.subplot(211)
+            plt.plot(z, x, 'r.')
+            plt.plot(z_fit, x_fit)
+            plt.plot(PC_z, PC_x, 'go')
+            # ax.set_aspect('equal')
+            plt.xlabel('z')
+            plt.ylabel('x')
+            plt.legend(["centerline", "NURBS", "control points"])
+            #ay = plt.subplot(212)
+            plt.subplot(212)
+            plt.plot(z, y, 'r.')
+            plt.plot(z_fit, y_fit)
+            plt.plot(PC_z, PC_y, 'go')
+            # ay.set_aspect('equal')
+            plt.xlabel('z')
+            plt.ylabel('y')
+            plt.legend(["centerline", "NURBS", "control points"],loc=4)
+            # plt.show()
+        else:
+            plt.figure(1)
+            plt.plot(y, x, 'r.')
+            plt.plot(y_fit, x_fit)
+            plt.plot(PC_y, PC_x, 'go')
+            # ax.set_aspect('equal')
+            plt.xlabel('y')
+            plt.ylabel('x')
+            plt.legend(["centerline", "NURBS", "control points"])
+            # plt.show()
+        plt.savefig(os.path.join(path_qc, 'fig_b_spline_nurbs.png'))
+        plt.close()
+
+    if not twodim:
+        return x_fit, y_fit, z_fit, x_deriv, y_deriv, z_deriv, nurbs.error_curve_that_last_worked
+    else:
+        return x_fit, y_fit, x_deriv, y_deriv, nurbs.error_curve_that_last_worked

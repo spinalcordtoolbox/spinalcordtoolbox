@@ -12,7 +12,7 @@
 
 from __future__ import absolute_import, division
 
-import sys, io, os, math
+import os, math
 
 import numpy as np
 from scipy.ndimage.measurements import center_of_mass
@@ -20,7 +20,6 @@ from scipy.ndimage.measurements import center_of_mass
 import sct_utils as sct
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
-from pandas import DataFrame
 
 
 def compute_mse(im_true, im_pred):
@@ -62,23 +61,22 @@ def test_integrity(param_test):
     """
     Test integrity of function
     """
-    # initializations
-    mse_detection = float('nan')
-
-    # extract name of output centerline: data_centerline_optic.nii.gz
-    file_ctr = os.path.join(param_test.path_output, sct.add_suffix(param_test.file_input, '_centerline_optic'))
 
     # open ground truth
     im_seg_manual = Image(param_test.fname_gt).change_orientation("RPI")
 
     # Compute center of mass of the SC seg on each axial slice.
-    center_of_mass_x_y_z_lst = [[int(center_of_mass(im_seg_manual.data[:,:,zz])[0]), int(center_of_mass(im_seg_manual.data[:,:,zz])[1]), zz] for zz in range(im_seg_manual.dim[2])]
+    center_of_mass_x_y_z_lst = [[int(center_of_mass(im_seg_manual.data[:, :, zz])[0]),
+                                 int(center_of_mass(im_seg_manual.data[:, :, zz])[1]),
+                                 zz] for zz in range(im_seg_manual.dim[2])]
 
     im_ctr_manual = msct_image.zeros_like(im_seg_manual)
     for x_y_z in center_of_mass_x_y_z_lst:
         im_ctr_manual.data[x_y_z[0], x_y_z[1], x_y_z[2]] = 1
 
     # open output segmentation
+    path_in, file_in, _ = sct.extract_fname(param_test.file_input)
+    file_ctr = os.path.join(param_test.path_data, 't2s', sct.add_suffix(param_test.file_input, '_centerline'))
     im_ctr = Image(file_ctr).change_orientation("RPI")
 
     # compute MSE between generated ctr and ctr from database

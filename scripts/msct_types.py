@@ -130,6 +130,8 @@ class Centerline:
     This class represents a centerline in an image. Its coordinates can be in voxel space as well as in physical space.
     A centerline is defined by its points and the derivatives of each point.
     When initialized, the lenght of the centerline is computed as well as the coordinate reference system of each plane.
+    # TODO: Check if the description above is correct. I've tried to input voxel space coordinates, and it broke the
+    #  code. For example, the method extract_perpendicular_square() is (i think) expecting physical coordinates.
     """
     labels_regions = {'PMJ': 50, 'PMG': 49,
                       'C1': 1, 'C2': 2, 'C3': 3, 'C4': 4, 'C5': 5, 'C6': 6, 'C7': 7,
@@ -174,7 +176,8 @@ class Centerline:
     potential_list_labels = [50, 49, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22,
                              23, 24, 25, 26, 27, 28, 29, 30]
 
-    def __init__(self, points_x=None, points_y=None, points_z=None, deriv_x=None, deriv_y=None, deriv_z=None, fname=None):
+    def __init__(self, points_x=None, points_y=None, points_z=None, deriv_x=None, deriv_y=None, deriv_z=None,
+                 fname=None):
         # initialization of variables
         self.length = 0.0
         self.progressive_length = [0.0]
@@ -618,6 +621,8 @@ class Centerline:
         return coordinate_result
 
     def extract_perpendicular_square(self, image, index, size=20, resolution=0.5, interpolation_mode=0, border='constant', cval=0.0):
+        # TODO: use native resolution instead of forcing to 0.5. In case native is much higher res, we loose precision!!!
+        # TODO: replace with existing function (if exists). There is a lot of arbitrary params in there
         x_grid, y_grid, z_grid = np.mgrid[-size:size:resolution, -size:size:resolution, 0:1]
         coordinates_grid = np.array(list(zip(x_grid.ravel(), y_grid.ravel(), z_grid.ravel())))
         coordinates_phys = self.get_inverse_plans_coordinates(coordinates_grid, np.array([index] * len(coordinates_grid)))

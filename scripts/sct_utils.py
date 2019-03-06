@@ -146,6 +146,7 @@ def _git_info(commit_env='SCT_COMMIT',branch_env='SCT_BRANCH'):
 
     return install_type, sct_commit, sct_branch, version_sct
 
+
 def _version_string():
     install_type, sct_commit, sct_branch, version_sct = _git_info()
     if install_type == "package":
@@ -484,7 +485,7 @@ def display_viewer_syntax(files, colormaps=[], minmax=[], opacities=[], mode='',
     Parameters
     ----------
     files [list:string]: list of NIFTI file names
-    colormaps [list:string]: list of colormaps associated with each file. Available colour maps: blue, blue-lightblue, cool, copper, cortical, green, greyscale, hot, hsv, pink, random, red, red-yellow, render1, render1t, render2, render2t, render3, retino, subcortical, yellow. Default=greyscale.
+    colormaps [list:string]: list of colormaps associated with each file. Available colour maps: see dict_fsleyes
     minmax [list:string]: list of min,max brightness scale associated with each file. Separate with comma.
     opacities [list:string]: list of opacity associated with each file. Between 0 and 1.
 
@@ -498,8 +499,10 @@ def display_viewer_syntax(files, colormaps=[], minmax=[], opacities=[], mode='',
     sct.display_viewer_syntax([file1, file2], colormaps=['gray', 'red'], minmax=['', '0,1'], opacities=['', '0.7'])
     """
     list_viewer = ['fsleyes', 'fslview_deprecated', 'fslview']  # list of known viewers. Can add more.
-    dict_fslview = {'gray': 'Greyscale', 'red-yellow': 'Red-Yellow', 'blue-lightblue': 'Blue-Lightblue', 'red': 'Red', 'random': 'Random-Rainbow', 'hsv': 'hsv', 'subcortical': 'MGH-Subcortical'}
-    dict_fsleyes = {'gray': 'greyscale', 'red-yellow': 'red-yellow', 'blue-lightblue': 'blue-lightblue', 'red': 'red', 'random': 'random', 'hsv': 'hsv', 'subcortical': 'subcortical'}
+    dict_fslview = {'gray': 'Greyscale', 'red-yellow': 'Red-Yellow', 'blue-lightblue': 'Blue-Lightblue', 'red': 'Red',
+                    'green': 'Green', 'random': 'Random-Rainbow', 'hsv': 'hsv', 'subcortical': 'MGH-Subcortical'}
+    dict_fsleyes = {'gray': 'greyscale', 'red-yellow': 'red-yellow', 'blue-lightblue': 'blue-lightblue', 'red': 'red',
+                    'green': 'green', 'random': 'random', 'hsv': 'hsv', 'subcortical': 'subcortical'}
     selected_viewer = None
 
     # find viewer

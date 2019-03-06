@@ -39,7 +39,7 @@ import numpy as np
 
 import sct_utils as sct
 import msct_moco as moco
-from sct_dmri_separate_b0_and_dwi import identify_b0
+import sct_dmri_separate_b0_and_dwi
 from sct_convert import convert
 from spinalcordtoolbox.image import Image
 from sct_image import split_data, concat_data
@@ -282,18 +282,27 @@ def main(args=None):
         param.fname_mask = mask_name + ext_mask
 
     # run moco
-    dmri_moco(param)
+    fname_data_moco_tmp = dmri_moco(param)
+
+    # generate b0_moco_mean and dwi_moco_mean
+    args = ['-i', fname_data_moco_tmp, '-bvec', 'bvecs.txt', '-a', '1', '-v', '0']
+    if not param.fname_bvals == '':
+        # if bvals file is provided
+        args += ['-bval', param.fname_bvals]
+    fname_b0, fname_b0_mean, fname_dwi, fname_dwi_mean = sct_dmri_separate_b0_and_dwi.main(args=args)
 
     # come back
     os.chdir(curdir)
 
     # Generate output files
     fname_dmri_moco = os.path.join(path_out, file_data + param.suffix + ext_data)
+    fname_dmri_moco_b0_mean = sct.add_suffix(fname_dmri_moco, '_b0_mean')
+    fname_dmri_moco_dwi_mean = sct.add_suffix(fname_dmri_moco, '_dwi_mean')
     sct.create_folder(path_out)
     sct.printv('\nGenerate output files...', param.verbose)
-    sct.generate_output_file(os.path.join(path_tmp, dmri_name + param.suffix + ext), os.path.join(path_out, file_data + param.suffix + ext_data), param.verbose)
-    sct.generate_output_file(os.path.join(path_tmp, "b0_mean.nii"), os.path.join(path_out, 'b0' + param.suffix + '_mean' + ext_data), param.verbose)
-    sct.generate_output_file(os.path.join(path_tmp, "dwi_mean.nii"), os.path.join(path_out, 'dwi' + param.suffix + '_mean' + ext_data), param.verbose)
+    sct.generate_output_file(fname_data_moco_tmp, fname_dmri_moco, param.verbose)
+    sct.generate_output_file(fname_b0_mean, fname_dmri_moco_b0_mean, param.verbose)
+    sct.generate_output_file(fname_dwi_mean, fname_dmri_moco_dwi_mean, param.verbose)
 
     # Delete temporary files
     if param.remove_temp_files == 1:
@@ -327,7 +336,7 @@ def dmri_moco(param):
     sct.printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz), param.verbose)
 
     # Identify b=0 and DWI images
-    index_b0, index_dwi, nb_b0, nb_dwi = identify_b0('bvecs.txt', param.fname_bvals, param.bval_min, param.verbose)
+    index_b0, index_dwi, nb_b0, nb_dwi = sct_dmri_separate_b0_and_dwi.identify_b0('bvecs.txt', param.fname_bvals, param.bval_min, param.verbose)
 
     # check if dmri and bvecs are the same size
     if not nb_b0 + nb_dwi == nt:
@@ -347,8 +356,7 @@ def dmri_moco(param):
     im_b0_list = []
     for it in range(nb_b0):
         im_b0_list.append(im_data_split_list[index_b0[it]])
-    im_b0_out = concat_data(im_b0_list, 3) \
-     .save(file_b0 + ext_data)
+    im_b0_out = concat_data(im_b0_list, 3).save(file_b0 + ext_data)
     sct.printv(('  File created: ' + file_b0), param.verbose)
 
     # Average b=0 images
@@ -487,20 +495,14 @@ def dmri_moco(param):
     # copy geometric information from header
     # NB: this is required because WarpImageMultiTransform in 2D mode wrongly sets pixdim(3) to "1".
     im_dmri = Image(file_data + ext_data)
-    im_dmri_moco = Image(file_data + param.suffix + ext_data)
+    fname_data_moco = os.path.abspath(file_data + param.suffix + ext_data)
+    im_dmri_moco = Image(fname_data_moco)
     im_dmri_moco.header = im_dmri.header
     im_dmri_moco.save()
 
-    # generate b0_moco_mean and dwi_moco_mean
-    cmd = ['sct_dmri_separate_b0_and_dwi', '-i', file_data + param.suffix + ext_data, '-bvec', 'bvecs.txt', '-a', '1']
-    if not param.fname_bvals == '':
-        cmd += ['-m', param.fname_bvals]
-    sct.run(cmd, param.verbose)
+    return fname_data_moco
 
 
-#=======================================================================================================================
-# Start program
-#=======================================================================================================================
 if __name__ == "__main__":
     sct.init_sct()
     main()

@@ -42,6 +42,7 @@ def get_parser():
             'sct_testing_data',
             'course_hawaii17',
             'course_paris18', 
+            'course_london19', 
             'PAM50',
             'MNI-Poly-AMU',
             'gm_model',
@@ -52,7 +53,8 @@ def get_parser():
             'binaries_osx', 
             'deepseg_gm_models',
             'deepseg_sc_models',
-            'deepseg_lesion_models'
+            'deepseg_lesion_models',
+            'c2c3_disc_models'
         ])
     parser.add_option(
         name="-v",
@@ -86,8 +88,8 @@ def main(args=None):
                              'https://www.neuro.polymtl.ca/_media/downloads/sct/20180525_sct_example_data.zip'],
         'sct_testing_data': ['https://osf.io/z8gaj/?action=download',
                              'https://www.neuro.polymtl.ca/_media/downloads/sct/20180125_sct_testing_data.zip'],
-        'PAM50': ['https://osf.io/jmfpw/?action=download',
-                  'https://www.neuro.polymtl.ca/_media/downloads/sct/20180813_PAM50.zip'],
+        'PAM50': ['https://osf.io/kc3jx/?action=download',
+                  'https://www.neuro.polymtl.ca/_media/downloads/sct/20181214_PAM50.zip'],
         'MNI-Poly-AMU': ['https://osf.io/sh6h4/?action=download',
                          'https://www.neuro.polymtl.ca/_media/downloads/sct/20170310_MNI-Poly-AMU.zip'],
         'gm_model': ['https://osf.io/ugscu/?action=download',
@@ -96,21 +98,25 @@ def main(args=None):
                          'https://www.neuro.polymtl.ca/_media/downloads/sct/20170413_optic_models.zip'],
         'pmj_models': ['https://osf.io/4gufr/?action=download',
                        'https://www.neuro.polymtl.ca/_media/downloads/sct/20170922_pmj_models.zip'],
-        'binaries_debian': ['https://osf.io/2egh5/?action=download',
-                            'https://www.neuro.polymtl.ca/_media/downloads/sct/20170915_sct_binaries_linux.tar.gz'],
-        'binaries_centos': ['https://osf.io/qngj2/?action=download',
-                            'https://www.neuro.polymtl.ca/_media/downloads/sct/20170915_sct_binaries_linux_centos6.tar.gz'],
-        'binaries_osx': ['https://osf.io/hsa5r/?action=download',
-                         'https://www.neuro.polymtl.ca/_media/downloads/sct/20170915_sct_binaries_osx.tar.gz'],
+        'binaries_debian': ['https://osf.io/z72vn/?action=download',
+                            'https://www.neuro.polymtl.ca/_media/downloads/sct/20181204_sct_binaries_linux.tar.gz'],
+        'binaries_centos': ['https://osf.io/97ybd/?action=download',
+                            'https://www.neuro.polymtl.ca/_media/downloads/sct/20181204_sct_binaries_linux_centos6.tar.gz'],
+        'binaries_osx': ['https://osf.io/zjv4c/?action=download',
+                         'https://www.neuro.polymtl.ca/_media/downloads/sct/20181204_sct_binaries_osx.tar.gz'],
         'course_hawaii17': 'https://osf.io/6exht/?action=download',
         'course_paris18': ['https://osf.io/9bmn5/?action=download',
                            'https://www.neuro.polymtl.ca/_media/downloads/sct/20180612_sct_course-paris18.zip'],
+        'course_london19': ['https://osf.io/4q3u7/?action=download',
+                            'https://www.neuro.polymtl.ca/_media/downloads/sct/20190121_sct_course-london19.zip'],
         'deepseg_gm_models': ['https://osf.io/b9y4x/?action=download',
                               'https://www.neuro.polymtl.ca/_media/downloads/sct/20180205_deepseg_gm_models.zip'],
         'deepseg_sc_models': ['https://osf.io/avf97/?action=download',
                               'https://www.neuro.polymtl.ca/_media/downloads/sct/20180610_deepseg_sc_models.zip'],
         'deepseg_lesion_models': ['https://osf.io/eg7v9/?action=download',
-                              'https://www.neuro.polymtl.ca/_media/downloads/sct/20180613_deepseg_lesion_models.zip']
+                              'https://www.neuro.polymtl.ca/_media/downloads/sct/20180613_deepseg_lesion_models.zip'],
+        'c2c3_disc_models': ['https://osf.io/t97ap/?action=download',
+                            'https://www.neuro.polymtl.ca/_media/downloads/sct/20190117_c2c3_disc_models.zip']
     }
 
     # Get parser info
