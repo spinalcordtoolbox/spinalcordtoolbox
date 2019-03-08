@@ -116,7 +116,7 @@ def segment_3d(model_fname, contrast_type, im):
 
 
 def deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo='svm', ctr_file=None, brain_bool=True,
-                               remove_temp_files=1):
+                               remove_temp_files=1, verbose=1):
     """
     Segment lesions from MRI data.
     :param im_image: Image() object containing the lesions to segment
@@ -130,7 +130,7 @@ def deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo='svm', ctr_file
 
     # create temporary folder with intermediate results
     sct.log.info("\nCreating temporary folder...")
-    tmp_folder = sct.TempFolder()
+    tmp_folder = sct.TempFolder(verbose=verbose)
     tmp_folder_path = tmp_folder.get_path()
     if ctr_algo == 'file':  # if the ctr_file is provided
         tmp_folder.copy_from(ctr_file)
