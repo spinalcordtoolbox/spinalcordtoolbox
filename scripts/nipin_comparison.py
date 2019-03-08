@@ -14,11 +14,11 @@ def get_parser():
                       mandatory=True,
                       example="/home/data")
 
-    parser.add_option(name="-test",  # TODO find better name
+    parser.add_option(name="-multiproc",  # TODO find better name
                       type_value="str",
-                      description="put name of the test you want to run",
+                      description="1 if you want to multiproc, otherwise 0",
                       mandatory=True,
-                      example="src_seg.nii.gz")
+                      example="1")
     parser.add_option(name="-o",
                       type_value="folder",
                       description="output folder for test results",
