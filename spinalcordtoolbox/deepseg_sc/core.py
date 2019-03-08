@@ -578,7 +578,7 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
     # create temporary folder with intermediate results
     sct.log.info("Creating temporary folder...")
     # file_fname = os.path.basename(fname_image)
-    tmp_folder = sct.TempFolder()
+    tmp_folder = sct.TempFolder(verbose=verbose)
     tmp_folder_path = tmp_folder.get_path()
     # fname_image_tmp = tmp_folder.copy_from(fname_image)
     if ctr_algo == 'file':  # if the ctr_file is provided
