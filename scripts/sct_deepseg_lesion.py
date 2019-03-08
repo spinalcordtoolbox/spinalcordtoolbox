@@ -122,7 +122,7 @@ def main():
 
     im_image = Image(fname_image)
     im_seg, im_labels_viewer = deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo=ctr_algo, ctr_file=manual_centerline_fname,
-                                        brain_bool=brain_bool, remove_temp_files=remove_temp_files)
+                                        brain_bool=brain_bool, remove_temp_files=remove_temp_files, verbose=verbose)
 
     # Save segmentation
     fname_seg = os.path.abspath(os.path.join(output_folder, sct.extract_fname(fname_image)[1] + '_lesionseg' +
