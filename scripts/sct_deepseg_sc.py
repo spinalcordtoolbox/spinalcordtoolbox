@@ -74,7 +74,7 @@ def get_parser():
                       default_value='1')
     parser.add_option(name="-v",
                       type_value="multiple_choice",
-                      description="1: display on, 0: display off (default)",
+                      description="1: display on (default), 0: display off, 2: extended",
                       mandatory=False,
                       example=["0", "1", "2"],
                       default_value="1")
@@ -159,7 +159,7 @@ def main():
         im_labels_viewer.save(fname_labels)
 
     if verbose == 2:
-        # Save labels
+        # Save ctr
         fname_ctr = os.path.abspath(os.path.join(output_folder, sct.extract_fname(fname_image)[1] + '_centerline' +
                                                sct.extract_fname(fname_image)[2]))
         im_ctr.save(fname_ctr)

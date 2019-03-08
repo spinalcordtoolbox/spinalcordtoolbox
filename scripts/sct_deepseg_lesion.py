@@ -69,9 +69,9 @@ def get_parser():
                       default_value='1')
     parser.add_option(name="-v",
                       type_value="multiple_choice",
-                      description="1: display on, 0: display off (default)",
+                      description="1: display on (default), 0: display off, 2: extended",
                       mandatory=False,
-                      example=["0", "1"],
+                      example=["0", "1", "2"],
                       default_value="1")
     parser.add_option(name='-igt',
                       type_value='image_nifti',
@@ -113,7 +113,7 @@ def main():
 
     remove_temp_files = int(arguments['-r'])
 
-    verbose = arguments['-v']
+    verbose = int(arguments['-v'])
 
     algo_config_stg = '\nMethod:'
     algo_config_stg += '\n\tCenterline algorithm: ' + str(ctr_algo)
@@ -121,7 +121,7 @@ def main():
     sct.printv(algo_config_stg)
 
     im_image = Image(fname_image)
-    im_seg, im_labels_viewer = deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo=ctr_algo, ctr_file=manual_centerline_fname,
+    im_seg, im_labels_viewer, im_ctr = deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo=ctr_algo, ctr_file=manual_centerline_fname,
                                         brain_bool=brain_bool, remove_temp_files=remove_temp_files, verbose=verbose)
 
     # Save segmentation
@@ -134,6 +134,12 @@ def main():
         fname_labels = os.path.abspath(os.path.join(output_folder, sct.extract_fname(fname_image)[1] + '_labels-centerline' +
                                                sct.extract_fname(fname_image)[2]))
         im_labels_viewer.save(fname_labels)
+
+    if verbose == 2:
+        # Save ctr
+        fname_ctr = os.path.abspath(os.path.join(output_folder, sct.extract_fname(fname_image)[1] + '_centerline' +
+                                               sct.extract_fname(fname_image)[2]))
+        im_ctr.save(fname_ctr)
 
     sct.display_viewer_syntax([fname_image, fname_seg], colormaps=['gray', 'red'], opacities=['', '0.7'])
 
