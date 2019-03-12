@@ -339,6 +339,8 @@ def test_2D_hogancest(file_input, path_output, file_seg_input=None):
     if file_seg_input is None:
         # centermass = image[0].mean(1).round().astype(int)  # will act weird if image is non binary
         centermass = [int(round(image_data.shape[0] / 2)), int(round(image_data.shape[1] / 2))]  # center of image
+        seg_weighted_mask = None
+        (nx, ny) = image_data.shape
     else:
         image_seg_data = load_image(file_input=file_seg_input, dimension=2)
         centermass = np.round(scipy.ndimage.measurements.center_of_mass(image_seg_data))
@@ -354,7 +356,7 @@ def test_2D_hogancest(file_input, path_output, file_seg_input=None):
 
     # Finding axes of symmetry
     hog_ancest, weighting_map = hog_ancestor(image_data, nb_bin=nb_bin,
-                                             seg_weighted_maskp=seg_weighted_mask, return_image=True)
+                                             seg_weighted_mask=seg_weighted_mask, return_image=True)
     # smooth it with median filter
     hog_ancest_smooth = circular_filter_1d(hog_ancest, kmedian_size,
                                            filter='median')  # fft than square than ifft to calculate convolution
@@ -384,10 +386,11 @@ def test_2D_hogancest(file_input, path_output, file_seg_input=None):
     plt.subplot(234)
     plt.imshow(255 - image_data, cmap="Greys")
     plt.title((file_input.split("/")[-1]).split(".nii")[0])
-    plt.subplot(235)
-    plt.imshow(seg_weighted_mask)
-    plt.title("segmentation weighted map")
-    plt.colorbar()
+    if seg_weighted_mask is not None:
+        plt.subplot(235)
+        plt.imshow(seg_weighted_mask)
+        plt.title("segmentation weighted map")
+        plt.colorbar()
     plt.subplot(236)
     plt.imshow(weighting_map)
     plt.colorbar()
@@ -404,16 +407,25 @@ def test_2D_hogancest(file_input, path_output, file_seg_input=None):
 
 
     # Draw axes on image
-    image_wline = image_data
-    for i_angle in range(0, len(angles)):
-        image_wline = generate_2Dimage_line(image_wline, centermass[0], centermass[1], angles[i_angle])
+    # image_wline = image_data
+    # for i_angle in range(0, len(angles)):
+    #     image_wline = generate_2Dimage_line(image_wline, centermass[0], centermass[1], angles[i_angle])
 
-    # Saving image with axes drawn on it
-    save_image(image_wline, "sym_" + (file_input.split("/")[-1]).split(".nii")[0] + ".nii",
-               file_input, ofolder=path_output)  # the character manipulation permits to have the name of the file
-    #  which is at the end of the path ( / ) and just before .nii
+
+    # # Saving image with axes drawn on it
+    # save_image(image_wline, "sym_" + (file_input.split("/")[-1]).split(".nii")[0] + ".nii",
+    #            file_input, ofolder=path_output)  # the character manipulation permits to have the name of the file
+    # #  which is at the end of the path ( / ) and just before .nii
+
+    for i_angle in range(0, len(angles)):
+        mask_rot = generate_2Dimage_line(np.zeros((nx, ny)), centermass[0], centermass[1], angles[i_angle], value=i_angle+1)
+
+    save_image(mask_rot,  (file_input.split("/")[-1]).split(".nii")[0] + "_mask_sym.nii",
+                           file_input, ofolder=path_output)
+    save_image(image_data, file_input.split("/")[-1], file_input, ofolder=path_output) # quick copy of image in output folder
+
     os.chdir(path_output)
-    plt.savefig("results_" + (file_input.split("/")[-1]).split(".nii")[0] + ".png")
+    plt.savefig("nice_fig_" + (file_input.split("/")[-1]).split(".nii")[0] + ".png")
     plt.close()
 
 
