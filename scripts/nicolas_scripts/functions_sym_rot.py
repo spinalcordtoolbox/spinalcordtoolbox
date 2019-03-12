@@ -86,7 +86,7 @@ def find_angle(image, centermass, parameters):
     return angle_found
 
 
-def hog_ancestor(image, nb_bin, grad_ksize=123456789, seg_weighted_mask=None, return_image=False): # TODO implement selection of gradient's kernel size
+def hog_ancestor(image, nb_bin, grad_ksize=123456789, seg_weighted_mask=None, return_image=False): # TODO implement selection of gradient's kernel size, sure that is pertinent ? check wikip image gradient
 
     """ This function takes an image as an input and return its orientation histogram
     inputs :
