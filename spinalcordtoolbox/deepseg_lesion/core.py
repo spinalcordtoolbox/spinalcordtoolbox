@@ -163,9 +163,9 @@ def deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo='svm', ctr_file
     # crop image around the spinal cord centerline
     sct.log.info("\nCropping the image around the spinal cord...")
     crop_size = 48
-    X_CROP_LST, Y_CROP_LST, im_crop_nii = crop_image_around_centerline(im_in=im_nii,
-                                                                      ctr_in=ctr_nii,
-                                                                      crop_size=crop_size)
+    X_CROP_LST, Y_CROP_LST, Z_CROP_LST, im_crop_nii = crop_image_around_centerline(im_in=im_nii,
+                                                                                  ctr_in=ctr_nii,
+                                                                                  crop_size=crop_size)
     del ctr_nii
 
     # normalize the intensity of the images

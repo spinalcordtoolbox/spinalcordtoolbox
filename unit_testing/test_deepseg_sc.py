@@ -38,10 +38,10 @@ def _preprocess_segment(fname_t2, fname_t2_seg, contrast_test, dim_3=False):
     resample_file(fname_t2_seg_RPI, fname_t2_seg_RPI_res, new_resolution, 'mm', 'linear', verbose=0)
 
     img, ctr, gt = Image(fname_res), Image(fname_ctr), Image(fname_t2_seg_RPI_res)
-    _, _, img = deepseg_sc.crop_image_around_centerline(im_in=img,
+    _, _, _, img = deepseg_sc.crop_image_around_centerline(im_in=img,
                                                         ctr_in=ctr,
                                                         crop_size=64)
-    _, _, gt = deepseg_sc.crop_image_around_centerline(im_in=gt,
+    _, _, _, gt = deepseg_sc.crop_image_around_centerline(im_in=gt,
                                                         ctr_in=ctr,
                                                         crop_size=64)
     del ctr
@@ -125,7 +125,7 @@ def test_crop_image_around_centerline():
 
     ctr, _ = dummy_centerline_small(size_arr=input_shape)
 
-    _, _, img_out = deepseg_sc.crop_image_around_centerline(im_in=img.copy(),
+    _, _, _, img_out = deepseg_sc.crop_image_around_centerline(im_in=img.copy(),
                                                         ctr_in=ctr.copy(),
                                                         crop_size=crop_size)
 
