@@ -192,7 +192,7 @@ def crop_image_around_centerline(im_in, ctr_in, crop_size):
 
             x_lst.append(str(x_start))
             y_lst.append(str(y_start))
-            z_lst.append(str(zz))
+            z_lst.append(zz)
 
     im_new.data = data_im_new
     return x_lst, y_lst, z_lst, im_new
@@ -492,15 +492,15 @@ def segment_2d(model_fname, contrast_type, input_size, im_in):
     return seg_crop.data
 
 
-def uncrop_image(ref_in, data_crop, x_crop_lst, y_crop_lst):
+def uncrop_image(ref_in, data_crop, x_crop_lst, y_crop_lst, z_crop_lst):
     """Reconstruc the data from the crop segmentation."""
     seg_unCrop = zeros_like(ref_in, dtype=np.uint8)
 
     crop_size_x, crop_size_y = data_crop.shape[:2]
 
-    for zz in range(len(x_crop_lst)):
+    for i_z, zz in enumerate(z_crop_lst):
         pred_seg = data_crop[:, :, zz]
-        x_start, y_start = int(x_crop_lst[zz]), int(y_crop_lst[zz])
+        x_start, y_start = int(x_crop_lst[i_z]), int(y_crop_lst[i_z])
         x_end = x_start + crop_size_x if x_start + crop_size_x < seg_unCrop.dim[0] else seg_unCrop.dim[0]
         y_end = y_start + crop_size_y if y_start + crop_size_y < seg_unCrop.dim[1] else seg_unCrop.dim[1]
         seg_unCrop.data[x_start:x_end, y_start:y_end, zz] = pred_seg[0:x_end - x_start, 0:y_end - y_start]
@@ -658,7 +658,8 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
     seg_uncrop_nii = uncrop_image(ref_in=im_nii,
                                   data_crop=seg_crop_data,
                                   x_crop_lst=X_CROP_LST,
-                                  y_crop_lst=Y_CROP_LST)
+                                  y_crop_lst=Y_CROP_LST,
+                                  z_crop_lst=Z_CROP_LST)
     fname_res_seg = sct.add_suffix(fname_res, '_seg')
     seg_uncrop_nii.save(fname_res_seg)
     del seg_crop_data
