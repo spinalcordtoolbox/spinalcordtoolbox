@@ -147,6 +147,7 @@ def test_uncrop_image():
 
     x_crop_lst = list(np.random.randint(0, input_shape[0]-crop_size, input_shape[2]))
     y_crop_lst = list(np.random.randint(0,input_shape[1]-crop_size, input_shape[2]))
+    z_crop_lst = range(input_shape[2])
 
     affine = np.eye(4)
     nii = nib.nifti1.Nifti1Image(data_in, affine)
@@ -155,7 +156,8 @@ def test_uncrop_image():
     img_uncrop = deepseg_sc.uncrop_image(ref_in=img_in,
                                         data_crop=data_crop,
                                         x_crop_lst=x_crop_lst,
-                                        y_crop_lst=y_crop_lst)
+                                        y_crop_lst=y_crop_lst,
+                                        z_crop_lst=z_crop_lst)
 
 
 
