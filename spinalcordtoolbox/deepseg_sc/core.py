@@ -175,7 +175,7 @@ def crop_image_around_centerline(im_in, ctr_in, crop_size):
     data_in = im_in.data.astype(np.float32)
     im_new = empty_like(im_in)  # but in fact we're going to crop it
 
-    x_lst, y_lst = [], []
+    x_lst, y_lst, z_lst = [], [], []
     data_im_new = np.zeros((crop_size, crop_size, im_in.dim[2]))
     for zz in range(im_in.dim[2]):
         if np.any(np.array(data_ctr[:, :, zz])):
@@ -192,9 +192,10 @@ def crop_image_around_centerline(im_in, ctr_in, crop_size):
 
             x_lst.append(str(x_start))
             y_lst.append(str(y_start))
+            z_lst.append(str(zz))
 
     im_new.data = data_im_new
-    return x_lst, y_lst, im_new
+    return x_lst, y_lst, z_lst, im_new
 
 
 def _remove_extrem_holes(z_lst, end_z, start_z=0):
@@ -607,9 +608,9 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
     # crop image around the spinal cord centerline
     sct.log.info("Cropping the image around the spinal cord...")
     crop_size = 96 if (kernel_size == '3d' and contrast_type == 't2s') else 64
-    X_CROP_LST, Y_CROP_LST, im_crop_nii = crop_image_around_centerline(im_in=im_nii,
-                                                                       ctr_in=ctr_nii,
-                                                                       crop_size=crop_size)
+    X_CROP_LST, Y_CROP_LST, Z_CROP_LST, im_crop_nii = crop_image_around_centerline(im_in=im_nii,
+                                                                                   ctr_in=ctr_nii,
+                                                                                   crop_size=crop_size)
     del ctr_nii
 
     # normalize the intensity of the images
