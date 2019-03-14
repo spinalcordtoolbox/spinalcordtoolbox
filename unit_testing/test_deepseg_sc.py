@@ -159,8 +159,6 @@ def test_uncrop_image():
                                         y_crop_lst=y_crop_lst,
                                         z_crop_lst=z_crop_lst)
 
-
-
     assert img_uncrop.data.shape == input_shape
     z_rand = np.random.randint(0, input_shape[2])
     assert np.allclose(img_uncrop.data[x_crop_lst[z_rand]:x_crop_lst[z_rand]+crop_size,

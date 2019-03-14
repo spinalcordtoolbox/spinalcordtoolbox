@@ -202,7 +202,7 @@ def deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo='svm', ctr_file
     # reconstruct the segmentation from the crop data
     sct.log.info("\nReassembling the image...")
     seg_uncrop_nii = uncrop_image(ref_in=im_nii, data_crop=seg_crop.copy().data, x_crop_lst=X_CROP_LST,
-                                  y_crop_lst=Y_CROP_LST)
+                                  y_crop_lst=Y_CROP_LST, z_crop_lst=Z_CROP_LST)
     fname_seg_res_RPI = sct.add_suffix(fname_in, '_res_RPI_seg')
     seg_uncrop_nii.save(fname_seg_res_RPI)
     del seg_crop
