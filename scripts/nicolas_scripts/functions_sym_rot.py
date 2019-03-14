@@ -87,6 +87,7 @@ def find_angle(image, centermass, parameters):
 
 
 def hog_ancestor(image, nb_bin, grad_ksize=123456789, seg_weighted_mask=None, return_image=False): # TODO implement selection of gradient's kernel size, sure that is pertinent ? check wikip image gradient
+                                                                                                    # sun et si original say that by increasing the kernel size we reduce the (0, 45, 90) effect
 
     """ This function takes an image as an input and return its orientation histogram
     inputs :
@@ -122,6 +123,9 @@ def hog_ancestor(image, nb_bin, grad_ksize=123456789, seg_weighted_mask=None, re
         weighting_map = np.multiply(seg_weighted_mask, grad_mag)  # include weightning by segmentation
     else:
         weighting_map = grad_mag
+
+    # uncomment following line to have vanilla Sun et al. method
+    #weighting_map = np.ones(grad_mag.shape)
     # compute histogram :
     hog_ancest = np.histogram(np.concatenate(orient), bins=nb_bin, range=(-nb_bin/2, nb_bin/2),
                               weights=np.concatenate(weighting_map))  # check param density that permits outputting a distribution that has integral of 1
