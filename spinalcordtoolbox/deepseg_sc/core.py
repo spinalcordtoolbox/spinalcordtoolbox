@@ -10,11 +10,10 @@ from scipy.ndimage.morphology import binary_fill_holes
 from skimage.exposure import rescale_intensity
 from scipy.ndimage import distance_transform_edt
 
-import spinalcordtoolbox.resample.nipy_resample
+from spinalcordtoolbox import resampling
 from cnn_models import nn_architecture_seg, nn_architecture_ctr
 from spinalcordtoolbox.image import Image, empty_like, change_type, zeros_like
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline, _call_viewer_centerline
-from spinalcordtoolbox.centerline import optic
 
 import sct_utils as sct
 
@@ -86,7 +85,7 @@ def find_centerline(algo, image_fname, contrast_type, brain_bool, folder_output,
         input_resolution = Image(image_fname).dim[4:7]
         new_resolution = 'x'.join(['0.5', '0.5', str(input_resolution[2])])
 
-        spinalcordtoolbox.resample.nipy_resample.resample_file(image_fname, fname_res, new_resolution,
+        resampling.resample_file(image_fname, fname_res, new_resolution,
                                                                'mm', 'linear', verbose=0)
 
         # compute the heatmap
@@ -127,10 +126,10 @@ def find_centerline(algo, image_fname, contrast_type, brain_bool, folder_output,
         input_resolution = Image(image_fname).dim[4:7]
         new_resolution = 'x'.join(['0.5', '0.5', str(input_resolution[2])])
 
-        spinalcordtoolbox.resample.nipy_resample.resample_file(image_fname, fname_res, new_resolution,
+        resampling.resample_file(image_fname, fname_res, new_resolution,
                                                                'mm', 'linear', verbose=0)
 
-        spinalcordtoolbox.resample.nipy_resample.resample_file(centerline_filename, centerline_filename, new_resolution,
+        resampling.resample_file(centerline_filename, centerline_filename, new_resolution,
                                                                'mm', 'linear', verbose=0)
 
     if bool_2d:
@@ -176,7 +175,7 @@ def crop_image_around_centerline(im_in, ctr_in, crop_size):
     data_in = im_in.data.astype(np.float32)
     im_new = empty_like(im_in)  # but in fact we're going to crop it
 
-    x_lst, y_lst = [], []
+    x_lst, y_lst, z_lst = [], [], []
     data_im_new = np.zeros((crop_size, crop_size, im_in.dim[2]))
     for zz in range(im_in.dim[2]):
         if np.any(np.array(data_ctr[:, :, zz])):
@@ -193,9 +192,10 @@ def crop_image_around_centerline(im_in, ctr_in, crop_size):
 
             x_lst.append(str(x_start))
             y_lst.append(str(y_start))
+            z_lst.append(zz)
 
     im_new.data = data_im_new
-    return x_lst, y_lst, im_new
+    return x_lst, y_lst, z_lst, im_new
 
 
 def _remove_extrem_holes(z_lst, end_z, start_z=0):
@@ -492,15 +492,15 @@ def segment_2d(model_fname, contrast_type, input_size, im_in):
     return seg_crop.data
 
 
-def uncrop_image(ref_in, data_crop, x_crop_lst, y_crop_lst):
+def uncrop_image(ref_in, data_crop, x_crop_lst, y_crop_lst, z_crop_lst):
     """Reconstruc the data from the crop segmentation."""
     seg_unCrop = zeros_like(ref_in, dtype=np.uint8)
 
     crop_size_x, crop_size_y = data_crop.shape[:2]
 
-    for zz in range(len(x_crop_lst)):
+    for i_z, zz in enumerate(z_crop_lst):
         pred_seg = data_crop[:, :, zz]
-        x_start, y_start = int(x_crop_lst[zz]), int(y_crop_lst[zz])
+        x_start, y_start = int(x_crop_lst[i_z]), int(y_crop_lst[i_z])
         x_end = x_start + crop_size_x if x_start + crop_size_x < seg_unCrop.dim[0] else seg_unCrop.dim[0]
         y_end = y_start + crop_size_y if y_start + crop_size_y < seg_unCrop.dim[1] else seg_unCrop.dim[1]
         seg_unCrop.data[x_start:x_end, y_start:y_end, zz] = pred_seg[0:x_end - x_start, 0:y_end - y_start]
@@ -608,9 +608,9 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
     # crop image around the spinal cord centerline
     sct.log.info("Cropping the image around the spinal cord...")
     crop_size = 96 if (kernel_size == '3d' and contrast_type == 't2s') else 64
-    X_CROP_LST, Y_CROP_LST, im_crop_nii = crop_image_around_centerline(im_in=im_nii,
-                                                                       ctr_in=ctr_nii,
-                                                                       crop_size=crop_size)
+    X_CROP_LST, Y_CROP_LST, Z_CROP_LST, im_crop_nii = crop_image_around_centerline(im_in=im_nii,
+                                                                                   ctr_in=ctr_nii,
+                                                                                   crop_size=crop_size)
     del ctr_nii
 
     # normalize the intensity of the images
@@ -632,7 +632,7 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
         # resample to 0.5mm isotropic
         fname_norm = sct.add_suffix(fname_orient, '_norm')
         fname_res3d = sct.add_suffix(fname_norm, '_resampled3d')
-        spinalcordtoolbox.resample.nipy_resample.resample_file(fname_norm, fname_res3d, '0.5x0.5x0.5',
+        resampling.resample_file(fname_norm, fname_res3d, '0.5x0.5x0.5',
                                                                             'mm', 'linear', verbose=0)
 
         # segment data using 3D convolutions
@@ -649,8 +649,8 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
         # TODO: does this need to be done (if already done below)?
         fname_seg_res2d = sct.add_suffix(fname_seg_crop_res, '_resampled2d')
         initial_2d_resolution = 'x'.join(['0.5', '0.5', str(input_resolution[2])])
-        spinalcordtoolbox.resample.nipy_resample.resample_image(fname_seg_crop_res, fname_seg_res2d,
-                                                                initial_2d_resolution, 'mm', 'linear', verbose=0)
+        resampling.resample_image(fname_seg_crop_res, fname_seg_res2d,
+                                  initial_2d_resolution, 'mm', 'linear', verbose=0)
         seg_crop_data = Image(fname_seg_res2d).data
 
     # reconstruct the segmentation from the crop data
@@ -658,7 +658,8 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
     seg_uncrop_nii = uncrop_image(ref_in=im_nii,
                                   data_crop=seg_crop_data,
                                   x_crop_lst=X_CROP_LST,
-                                  y_crop_lst=Y_CROP_LST)
+                                  y_crop_lst=Y_CROP_LST,
+                                  z_crop_lst=Z_CROP_LST)
     fname_res_seg = sct.add_suffix(fname_res, '_seg')
     seg_uncrop_nii.save(fname_res_seg)
     del seg_crop_data
@@ -668,7 +669,7 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
     initial_resolution = 'x'.join([str(input_resolution[0]), str(input_resolution[1]), str(input_resolution[2])])
     fname_res_seg_downsamp = sct.add_suffix(fname_res_seg, '_downsamp')
 
-    spinalcordtoolbox.resample.nipy_resample.resample_file(fname_res_seg, fname_res_seg_downsamp, initial_resolution,
+    resampling.resample_file(fname_res_seg, fname_res_seg_downsamp, initial_resolution,
                                                            'mm', 'linear', verbose=0)
     im_image_res_seg_downsamp = Image(fname_res_seg_downsamp)
 

@@ -123,14 +123,11 @@ def generate_qc(im_image, im_seg, args, path_qc):
     )
 
 
-def main(args=None):
+def main():
     """Main function."""
-
-    if args is None:
-        args = sys.argv[1:]
-
     sct.init_sct()
     parser = get_parser()
+    args = sys.argv[1:]
     arguments = parser.parse(args)
 
     fname_image = os.path.abspath(arguments['-i'])

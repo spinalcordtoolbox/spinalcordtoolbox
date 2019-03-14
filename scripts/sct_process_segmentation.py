@@ -58,7 +58,6 @@ def get_parser():
     parser.add_option(name='-p',
                       type_value='multiple_choice',
                       description='type of process to be performed:\n'
-                                  '- label-vert: Transform segmentation into vertebral level using a file that contains labels with disc value (flag: -discfile)\n'
                                   '- csa: computes cross-sectional area by counting pixels in each slice and then geometrically adjusting using centerline orientation. Note that it is possible to input a binary mask or a mask comprising values within the range [0,1] to account for partial volume effect.\n'
                                   '- shape: compute spinal shape properties, using scikit-image region measures, including:\n'
                                   '  - csa: cross-sectional area.\n'
@@ -69,7 +68,7 @@ def get_parser():
                                   '  - orientation: angle (in degrees) between the AP axis of the spinal cord and the AP axis of the image\n'
                                   '  - solidity: CSA(spinal_cord) / CSA_convex(spinal_cord). If perfect ellipse, it should be one. This metric is interesting to detect non-convex shape (e.g., in case of strong compression).',
                       mandatory=True,
-                      example=['label-vert', 'csa', 'shape'])
+                      example=['csa', 'shape'])
     parser.usage.addSection('Optional Arguments')
     parser.add_option(name='-o',
                       type_value='file_output',
@@ -96,7 +95,7 @@ def get_parser():
                       default_value=Param().perslice)
     parser.add_option(name='-vert',
                       type_value='str',
-                      description='Vertebral levels to compute the CSA across (requires \"-p csa\"). Example: 2:9 for C2 to T2.',
+                      description='Vertebral levels to compute the metrics across (requires \"-p csa\"). Example: 2:9 for C2 to T2.',
                       mandatory=False,
                       example='2:9')
     parser.add_option(name='-vertfile',
@@ -110,10 +109,6 @@ def get_parser():
                                   'output metric.',
                       mandatory=False,
                       default_value=Param().perlevel)
-    parser.add_option(name='-discfile',
-                      type_value='image_nifti',
-                      description='Disc labeling with the convention "disc labelvalue=3 ==> disc C2/C3". Only use with -p label-vert',
-                      mandatory=False)
     parser.add_option(name='-r',
                       type_value='multiple_choice',
                       description='Removes the temporary folder and debug folder used for the algorithm at the end of execution',
@@ -224,13 +219,6 @@ def main(args):
         metrics_agg_merged = merge_dict(metrics_agg)
         save_as_csv(metrics_agg_merged, file_out, fname_in=fname_segmentation, append=append)
         sct.printv('\nFile created: '+file_out, verbose=1, type='info')
-
-    if name_process == 'label-vert':
-        if '-discfile' in arguments:
-            fname_discs = arguments['-discfile']
-        else:
-            sct.printv('\nERROR: Disc label file is mandatory (flag: -discfile).\n', 1, 'error')
-        process_seg.label_vert(fname_segmentation, fname_discs, verbose=verbose)
 
     if name_process == 'shape':
         fname_discs = None

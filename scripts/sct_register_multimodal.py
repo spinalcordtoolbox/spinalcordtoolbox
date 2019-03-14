@@ -41,6 +41,7 @@ import sct_utils as sct
 from msct_parser import Parser
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.reports.qc import generate_qc
 
 
 def get_parser(paramreg=None):
@@ -183,6 +184,10 @@ def get_parser(paramreg=None):
                       type_value="image_nifti",
                       description="File name of ground-truth registered data (nifti).",
                       mandatory=False)
+    parser.add_option(name='-qc',
+                      type_value='folder_creation',
+                      description='The path where the quality control generated content will be saved',
+                      default_value=None)
     parser.add_option(name="-r",
                       type_value="multiple_choice",
                       description="""Remove temporary files.""",
@@ -207,12 +212,9 @@ class Param:
         self.debug = 0
         self.outSuffix = "_reg"
         self.padding = 5
-        self.path_qc = os.path.join(os.path.abspath(os.curdir), "qc")
 
 
 # Parameters for registration
-
-
 class Paramreg(object):
     def __init__(self, step=None, type=None, algo='syn', metric='MeanSquares', iter='10', shrink='1', smooth='0',
                  gradStep='0.5', deformation='1x1x0', init='', poly='5', slicewise='0', laplacian='0',
@@ -349,6 +351,7 @@ def main(args=None):
         # update registration parameters
         for paramStep in paramreg_user:
             paramreg.addStep(paramStep)
+    path_qc = arguments.get("-qc", None)
 
     identity = int(arguments['-identity'])
     interp = arguments['-x']
@@ -415,6 +418,8 @@ def main(args=None):
 
     if fname_src_seg:
         Image(fname_src_seg).save(os.path.join(path_tmp, "src_seg.nii"))
+
+    if fname_dest_seg:
         Image(fname_dest_seg).save(os.path.join(path_tmp, "dest_seg.nii"))
 
     if fname_src_label:
@@ -541,6 +546,14 @@ def main(args=None):
     # display elapsed time
     elapsed_time = time.time() - start_time
     sct.printv('\nFinished! Elapsed time: ' + str(int(np.round(elapsed_time))) + 's', verbose)
+
+    if path_qc is not None:
+        if fname_dest_seg:
+            generate_qc(fname_src2dest, fname_in2=fname_dest, fname_seg=fname_dest_seg, args=args,
+                        path_qc=os.path.abspath(path_qc), process='sct_register_multimodal')
+        else:
+            sct.printv('WARNING: Cannot generate QC because it requires destination segmentation.', 1, 'warning')
+
     if generate_warpinv:
         sct.display_viewer_syntax([fname_src, fname_dest2src], verbose=verbose)
     sct.display_viewer_syntax([fname_dest, fname_src2dest], verbose=verbose)
@@ -712,7 +725,6 @@ def register(src, dest, paramreg, param, i_step_str, src_seg=None, dest_seg=None
                                warp_forward_out=warp_forward_out,
                                warp_inverse_out=warp_inverse_out,
                                ants_registration_params=ants_registration_params,
-                               path_qc=param.path_qc,
                                remove_temp_files=param.remove_temp_files,
                                verbose=param.verbose)
 
@@ -764,7 +776,6 @@ def register(src, dest, paramreg, param, i_step_str, src_seg=None, dest_seg=None
                            warp_forward_out=warp_forward_out,
                            warp_inverse_out=warp_inverse_out,
                            ants_registration_params=ants_registration_params,
-                           path_qc=param.path_qc,
                            remove_temp_files=param.remove_temp_files,
                            verbose=param.verbose)
         else:
@@ -795,8 +806,7 @@ def register(src, dest, paramreg, param, i_step_str, src_seg=None, dest_seg=None
                            dest,
                            paramreg.steps[i_step_str].dof,
                            fname_affine=warp_forward_out,
-                           verbose=param.verbose,
-                           path_qc=param.path_qc)
+                           verbose=param.verbose)
 
     if not os.path.isfile(warp_forward_out):
         # no forward warping field for rigid and affine

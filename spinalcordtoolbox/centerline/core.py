@@ -176,6 +176,7 @@ def round_and_clip(arr, clip=None):
 
 
 def _call_viewer_centerline(im_data, interslice_gap=20.0):
+    # TODO: _call_viewer_centerline should not be "internal" anymore, i.e., remove the "_"
     """
     Call Qt viewer for manually selecting labels.
     :param im_data:

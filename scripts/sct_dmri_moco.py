@@ -207,12 +207,6 @@ def main(args=None):
     path_out = '.'
     param = Param()
 
-    # reducing the number of CPU used for moco (see issue #201)
-    os.environ["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"] = "1"
-
-    # get path of the toolbox
-    # status, param.path_sct = sct.run('echo $SCT_DIR')
-
     # check user arguments
     if not args:
         args = sys.argv[1:]
@@ -260,14 +254,12 @@ def main(args=None):
     path_tmp = sct.tmp_create(basename="dmri_moco", verbose=param.verbose)
 
     # names of files in temporary folder
-    ext = '.nii'
-    dmri_name = 'dmri'
     mask_name = 'mask'
     bvecs_fname = 'bvecs.txt'
 
     # Copying input data to tmp folder
     sct.printv('\nCopying input data to tmp folder and convert to nii...', param.verbose)
-    convert(param.fname_data, os.path.join(path_tmp, dmri_name + ext))
+    convert(param.fname_data, os.path.join(path_tmp, "dmri.nii"))
     sct.copy(param.fname_bvecs, os.path.join(path_tmp, bvecs_fname), verbose=param.verbose)
     if param.fname_mask != '':
         sct.copy(param.fname_mask, os.path.join(path_tmp, mask_name + ext_mask), verbose=param.verbose)
@@ -321,17 +313,18 @@ def main(args=None):
 #=======================================================================================================================
 def dmri_moco(param):
 
-    file_data = 'dmri'
-    ext_data = '.nii'
-    file_b0 = 'b0'
-    file_dwi = 'dwi'
+    file_data = 'dmri.nii'
+    file_data_dirname, file_data_basename, file_data_ext = sct.extract_fname(file_data)
+    file_b0 = 'b0.nii'
+    file_dwi = 'dwi.nii'
+    ext_data = '.nii.gz' # workaround "too many open files" by slurping the data
     mat_final = 'mat_final/'
-    file_dwi_group = 'dwi_averaged_groups'  # no extension
+    file_dwi_group = 'dwi_averaged_groups.nii'
     ext_mat = 'Warp.nii.gz'  # warping field
 
     # Get dimensions of data
     sct.printv('\nGet dimensions of data...', param.verbose)
-    im_data = Image(file_data + ext_data)
+    im_data = Image(file_data)
     nx, ny, nz, nt, px, py, pz, pt = im_data.dim
     sct.printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz), param.verbose)
 
@@ -349,6 +342,8 @@ def dmri_moco(param):
     sct.printv('\nSplit along T dimension...', param.verbose)
     im_data_split_list = split_data(im_data, 3)
     for im in im_data_split_list:
+        x_dirname, x_basename, x_ext = sct.extract_fname(im.absolutepath)
+        im.absolutepath = os.path.join(x_dirname, x_basename + ".nii.gz")
         im.save()
 
     # Merge b=0 images
@@ -356,13 +351,13 @@ def dmri_moco(param):
     im_b0_list = []
     for it in range(nb_b0):
         im_b0_list.append(im_data_split_list[index_b0[it]])
-    im_b0_out = concat_data(im_b0_list, 3).save(file_b0 + ext_data)
+    im_b0_out = concat_data(im_b0_list, 3).save(file_b0)
     sct.printv(('  File created: ' + file_b0), param.verbose)
 
     # Average b=0 images
     sct.printv('\nAverage b=0...', param.verbose)
-    file_b0_mean = file_b0 + '_mean'
-    sct.run(['sct_maths', '-i', file_b0 + ext_data, '-o', file_b0_mean + ext_data, '-mean', 't'], param.verbose)
+    file_b0_mean = sct.add_suffix(file_b0, '_mean')
+    sct.run(['sct_maths', '-i', file_b0, '-o', file_b0_mean, '-mean', 't'], param.verbose)
 
     # Number of DWI groups
     nb_groups = int(math.floor(nb_dwi / param.group_size))
@@ -378,6 +373,7 @@ def dmri_moco(param):
         nb_groups += 1
         group_indexes.append(index_dwi[len(index_dwi) - nb_remaining:len(index_dwi)])
 
+    file_dwi_dirname, file_dwi_basename, file_dwi_ext = sct.extract_fname(file_dwi)
     # DWI groups
     file_dwi_mean = []
     for iGroup in tqdm(range(nb_groups), unit='iter', unit_scale=False, desc="Merge within groups", ascii=True, ncols=80):
@@ -385,27 +381,28 @@ def dmri_moco(param):
         index_dwi_i = group_indexes[iGroup]
         nb_dwi_i = len(index_dwi_i)
         # Merge DW Images
-        file_dwi_merge_i = file_dwi + '_' + str(iGroup)
+        file_dwi_merge_i = os.path.join(file_dwi_dirname, file_dwi_basename + '_' + str(iGroup) + ext_data)
         im_dwi_list = []
         for it in range(nb_dwi_i):
             im_dwi_list.append(im_data_split_list[index_dwi_i[it]])
-        im_dwi_out = concat_data(im_dwi_list, 3).save(file_dwi_merge_i + ext_data)
+        im_dwi_out = concat_data(im_dwi_list, 3).save(file_dwi_merge_i)
         # Average DW Images
-        file_dwi_mean.append(file_dwi + '_mean_' + str(iGroup))
-        sct.run(["sct_maths", "-i", file_dwi_merge_i + ext_data, "-o", file_dwi_mean[iGroup] + ext_data, "-mean", "t"], 0)
+        file_dwi_mean_i = os.path.join(file_dwi_dirname, file_dwi_basename + '_mean_' + str(iGroup) + ext_data)
+        file_dwi_mean.append(file_dwi_mean_i)
+        sct.run(["sct_maths", "-i", file_dwi_merge_i, "-o", file_dwi_mean[iGroup], "-mean", "t"], 0)
 
     # Merge DWI groups means
     sct.printv('\nMerging DW files...', param.verbose)
     # file_dwi_groups_means_merge = 'dwi_averaged_groups'
     im_dw_list = []
     for iGroup in range(nb_groups):
-        im_dw_list.append(file_dwi_mean[iGroup] + ext_data)
-    im_dw_out = concat_data(im_dw_list, 3).save(file_dwi_group + ext_data)
+        im_dw_list.append(file_dwi_mean[iGroup])
+    im_dw_out = concat_data(im_dw_list, 3).save(file_dwi_group)
 
     # Average DW Images
     # TODO: USEFULL ???
     sct.printv('\nAveraging all DW images...', param.verbose)
-    sct.run(["sct_maths", "-i", file_dwi_group + ext_data, "-o", file_dwi_group + '_mean' + ext_data, "-mean", "t"], param.verbose)
+    sct.run(["sct_maths", "-i", file_dwi_group, "-o", file_dwi_group + '_mean' + ext_data, "-mean", "t"], param.verbose)
 
     # segment dwi images using otsu algorithm
     if param.otsu:
@@ -414,12 +411,12 @@ def dmri_moco(param):
         otsu = importlib.import_module('sct_otsu')
         # get class from module
         param_otsu = otsu.param()  #getattr(otsu, param)
-        param_otsu.fname_data = file_dwi_group + ext_data
+        param_otsu.fname_data = file_dwi_group
         param_otsu.threshold = param.otsu
         param_otsu.file_suffix = '_seg'
         # run otsu
         otsu.otsu(param_otsu)
-        file_dwi_group = file_dwi_group + '_seg'
+        file_dwi_group = file_dwi_group + '_seg.nii'
 
     # START MOCO
     #===================================================================================================================
@@ -429,15 +426,16 @@ def dmri_moco(param):
     sct.printv('  Estimating motion on b=0 images...', param.verbose)
     sct.printv('-------------------------------------------------------------------------------', param.verbose)
     param_moco = param
-    param_moco.file_data = 'b0'
+    param_moco.file_data = 'b0.nii'
     # identify target image
     if index_dwi[0] != 0:
         # If first DWI is not the first volume (most common), then there is a least one b=0 image before. In that case
         # select it as the target image for registration of all b=0
-        param_moco.file_target = file_data + '_T' + str(index_b0[index_dwi[0] - 1]).zfill(4)
+        param_moco.file_target = os.path.join(file_data_dirname, file_data_basename + '_T' + str(index_b0[index_dwi[0] - 1]).zfill(4) + ext_data)
     else:
         # If first DWI is the first volume, then the target b=0 is the first b=0 from the index_b0.
-        param_moco.file_target = file_data + '_T' + str(index_b0[0]).zfill(4)
+        param_moco.file_target = os.path.join(file_data_dirname, file_data_basename + '_T' + str(index_b0[0]).zfill(4) + ext_data)
+
     param_moco.path_out = ''
     param_moco.todo = 'estimate'
     param_moco.mat_moco = 'mat_b0groups'
@@ -486,7 +484,7 @@ def dmri_moco(param):
     sct.printv('  Apply moco', param.verbose)
     sct.printv('-------------------------------------------------------------------------------', param.verbose)
     param_moco.file_data = file_data
-    param_moco.file_target = file_dwi + '_mean_' + str(0)  # reference for reslicing into proper coordinate system
+    param_moco.file_target = os.path.join(file_dwi_dirname, file_dwi_basename + '_mean_' + str(0) + ext_data)  # reference for reslicing into proper coordinate system
     param_moco.path_out = ''
     param_moco.mat_moco = mat_final
     param_moco.todo = 'apply'
@@ -494,13 +492,14 @@ def dmri_moco(param):
 
     # copy geometric information from header
     # NB: this is required because WarpImageMultiTransform in 2D mode wrongly sets pixdim(3) to "1".
-    im_dmri = Image(file_data + ext_data)
-    fname_data_moco = os.path.abspath(file_data + param.suffix + ext_data)
+    im_dmri = Image(file_data)
+
+    fname_data_moco = os.path.join(file_data_dirname, file_data_basename + param.suffix + '.nii')
     im_dmri_moco = Image(fname_data_moco)
     im_dmri_moco.header = im_dmri.header
     im_dmri_moco.save()
 
-    return fname_data_moco
+    return os.path.abspath(fname_data_moco)
 
 
 if __name__ == "__main__":
