@@ -40,7 +40,7 @@ def get_parser():
                       example=['t1', 't2', 't2s', 'dwi'])
     parser.add_option(name="-centerline",
                       type_value="multiple_choice",
-                      description="Method used for extracting the centerline.\nsvm: automatic centerline detection, based on Support Vector Machine algorithm.\ncnn: automatic centerline detection, based on Convolutional Neural Network.\nviewer: semi-automatic centerline generation, based on manual selection of a few points using an interactive viewer, then approximation with NURBS.\nmanual: use an existing centerline by specifying its filename with flag -file_centerline (e.g. -file_centerline t2_centerline_manual.nii.gz).\n",
+                      description="Method used for extracting the centerline.\nsvm: automatic centerline detection, based on Support Vector Machine algorithm.\ncnn: automatic centerline detection, based on Convolutional Neural Network.\nviewer: semi-automatic centerline generation, based on manual selection of a few points using an interactive viewer, then approximation with NURBS.\nfile: use an existing centerline by specifying its filename with flag -file_centerline (e.g. -file_centerline t2_centerline_manual.nii.gz).\n",
                       mandatory=False,
                       example=['svm', 'cnn', 'viewer', 'file'],
                       default_value="svm")
@@ -74,9 +74,9 @@ def get_parser():
                       default_value='1')
     parser.add_option(name="-v",
                       type_value="multiple_choice",
-                      description="1: display on, 0: display off (default)",
+                      description="1: display on (default), 0: display off, 2: extended",
                       mandatory=False,
-                      example=["0", "1"],
+                      example=["0", "1", "2"],
                       default_value="1")
     parser.add_option(name='-qc',
                       type_value='folder_creation',
@@ -131,7 +131,7 @@ def main():
 
     remove_temp_files = int(arguments['-r'])
 
-    verbose = arguments['-v']
+    verbose = int(arguments['-v'])
 
     path_qc = arguments.get("-qc", None)
 
@@ -143,7 +143,7 @@ def main():
 
     im_image = Image(fname_image)
     # note: below we pass im_image.copy() otherwise the field absolutepath becomes None after execution of this function
-    im_seg, im_image_RPI_upsamp, im_seg_RPI_upsamp = deep_segmentation_spinalcord(
+    im_seg, im_image_RPI_upsamp, im_seg_RPI_upsamp, im_labels_viewer, im_ctr = deep_segmentation_spinalcord(
         im_image.copy(), contrast_type, ctr_algo=ctr_algo, ctr_file=manual_centerline_fname,
         brain_bool=brain_bool, kernel_size=kernel_size, remove_temp_files=remove_temp_files, verbose=verbose)
 
@@ -151,6 +151,18 @@ def main():
     fname_seg = os.path.abspath(os.path.join(output_folder, sct.extract_fname(fname_image)[1] + '_seg' +
                                              sct.extract_fname(fname_image)[2]))
     im_seg.save(fname_seg)
+
+    if ctr_algo == 'viewer':
+        # Save labels
+        fname_labels = os.path.abspath(os.path.join(output_folder, sct.extract_fname(fname_image)[1] + '_labels-centerline' +
+                                               sct.extract_fname(fname_image)[2]))
+        im_labels_viewer.save(fname_labels)
+
+    if verbose == 2:
+        # Save ctr
+        fname_ctr = os.path.abspath(os.path.join(output_folder, sct.extract_fname(fname_image)[1] + '_centerline' +
+                                               sct.extract_fname(fname_image)[2]))
+        im_ctr.save(fname_ctr)
 
     if path_qc is not None:
         generate_qc(fname_image, fname_seg=fname_seg, args=args, path_qc=os.path.abspath(path_qc),
