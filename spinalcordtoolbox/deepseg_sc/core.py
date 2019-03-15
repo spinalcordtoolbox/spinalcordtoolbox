@@ -192,11 +192,7 @@ def crop_image_around_centerline(im_in, ctr_in, crop_size):
 
             x_lst.append(str(x_start))
             y_lst.append(str(y_start))
-<<<<<<< bd4d0bab9ced1ea362be54c8575636822048942f
             z_lst.append(zz)
-=======
-            z_lst.append(str(zz))
->>>>>>> deepseg_sc.crop: output the z coordinates
 
     im_new.data = data_im_new
     return x_lst, y_lst, z_lst, im_new
