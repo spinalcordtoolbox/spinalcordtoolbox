@@ -111,11 +111,15 @@ def find_centerline(algo, image_fname, contrast_type, brain_bool, folder_output,
         im_labels = _call_viewer_centerline(Image(image_fname))
         im_centerline, arr_centerline, _ = get_centerline(im_labels)
         centerline_filename = sct.add_suffix(image_fname, "_ctr")
+        labels_filename = sct.add_suffix(image_fname, "_labels-centerline")
         im_centerline.save(centerline_filename)
-    elif algo == 'manual':
+        im_labels.save(labels_filename)
+
+    elif algo == 'file':
         centerline_filename = sct.add_suffix(image_fname, "_ctr")
         # Re-orient the manual centerline
         Image(centerline_fname).change_orientation('RPI').save(centerline_filename)
+
     else:
         sct.log.error('The parameter "-centerline" is incorrect. Please try again.')
         sys.exit(1)
@@ -572,12 +576,11 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
                                  kernel_size='2d', remove_temp_files=1, verbose=1):
     """Pipeline"""
     # create temporary folder with intermediate results
-    sct.log.info("Creating temporary folder...")
     # file_fname = os.path.basename(fname_image)
-    tmp_folder = sct.TempFolder()
+    tmp_folder = sct.TempFolder(verbose=verbose)
     tmp_folder_path = tmp_folder.get_path()
     # fname_image_tmp = tmp_folder.copy_from(fname_image)
-    if ctr_algo == 'manual':  # if the ctr_file is provided
+    if ctr_algo == 'file':  # if the ctr_file is provided
         tmp_folder.copy_from(ctr_file)
         file_ctr = os.path.basename(ctr_file)
     else:
@@ -673,6 +676,22 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
                                                            'mm', 'linear', verbose=0)
     im_image_res_seg_downsamp = Image(fname_res_seg_downsamp)
 
+    if ctr_algo == 'viewer':  # resample and reorient the viewer labels
+        fname_res_labels = sct.add_suffix(fname_orient, '_labels-centerline')
+        resampling.resample_file(fname_res_labels, fname_res_labels, initial_resolution,
+                                                           'mm', 'linear', verbose=0)
+        im_image_res_labels_downsamp = Image(fname_res_labels).change_orientation(original_orientation)
+    else:
+        im_image_res_labels_downsamp = None
+
+    if verbose == 2:
+        fname_res_ctr = sct.add_suffix(fname_orient, '_ctr')
+        resampling.resample_file(fname_res_ctr, fname_res_ctr, initial_resolution,
+                                                           'mm', 'linear', verbose=0)
+        im_image_res_ctr_downsamp = Image(fname_res_ctr).change_orientation(original_orientation)
+    else:
+        im_image_res_ctr_downsamp = None
+
     # binarize the resampled image to remove interpolation effects
     sct.log.info("Binarizing the segmentation to avoid interpolation effects...")
     thr = 0.0001 if contrast_type in ['t1', 'dwi'] else 0.5
@@ -691,4 +710,4 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
         tmp_folder.cleanup()
 
     # reorient to initial orientation
-    return im_image_res_seg_downsamp_postproc.change_orientation(original_orientation), im_nii, seg_uncrop_nii.change_orientation('RPI')
+    return im_image_res_seg_downsamp_postproc.change_orientation(original_orientation), im_nii, seg_uncrop_nii.change_orientation('RPI'), im_image_res_labels_downsamp, im_image_res_ctr_downsamp

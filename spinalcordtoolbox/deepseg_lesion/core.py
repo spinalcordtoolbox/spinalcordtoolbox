@@ -116,7 +116,7 @@ def segment_3d(model_fname, contrast_type, im):
 
 
 def deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo='svm', ctr_file=None, brain_bool=True,
-                               remove_temp_files=1):
+                               remove_temp_files=1, verbose=1):
     """
     Segment lesions from MRI data.
     :param im_image: Image() object containing the lesions to segment
@@ -129,10 +129,9 @@ def deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo='svm', ctr_file
     """
 
     # create temporary folder with intermediate results
-    sct.log.info("\nCreating temporary folder...")
-    tmp_folder = sct.TempFolder()
+    tmp_folder = sct.TempFolder(verbose=verbose)
     tmp_folder_path = tmp_folder.get_path()
-    if ctr_algo == 'manual':  # if the ctr_file is provided
+    if ctr_algo == 'file':  # if the ctr_file is provided
         tmp_folder.copy_from(ctr_file)
         file_ctr = os.path.basename(ctr_file)
     else:
@@ -215,6 +214,22 @@ def deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo='svm', ctr_file
                                                            'mm', 'linear', verbose=0)
     seg_initres_nii = Image(fname_seg_RPI)
 
+    if ctr_algo == 'viewer':  # resample and reorient the viewer labels
+        fname_res_labels = sct.add_suffix(fname_orient, '_labels-centerline')
+        resampling.resample_file(fname_res_labels, fname_res_labels, initial_resolution,
+                                                           'mm', 'linear', verbose=0)
+        im_image_res_labels_downsamp = Image(fname_res_labels).change_orientation(original_orientation)
+    else:
+        im_image_res_labels_downsamp = None
+
+    if verbose == 2:
+        fname_res_ctr = sct.add_suffix(fname_orient, '_ctr')
+        resampling.resample_file(fname_res_ctr, fname_res_ctr, initial_resolution,
+                                                           'mm', 'linear', verbose=0)
+        im_image_res_ctr_downsamp = Image(fname_res_ctr).change_orientation(original_orientation)
+    else:
+        im_image_res_ctr_downsamp = None
+
     # binarize the resampled image to remove interpolation effects
     sct.log.info("\nBinarizing the segmentation to avoid interpolation effects...")
     thr = 0.1
@@ -231,4 +246,4 @@ def deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo='svm', ctr_file
         tmp_folder.cleanup()
 
     # reorient to initial orientation
-    return seg_initres_nii.change_orientation(original_orientation)
+    return seg_initres_nii.change_orientation(original_orientation), im_image_res_labels_downsamp, im_image_res_ctr_downsamp
