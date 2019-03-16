@@ -492,6 +492,7 @@ def propseg(img_input, options_dict):
         sct.log.error('ERROR: your input image needs to be 3D in order to be segmented.')
 
     path_data, file_data, ext_data = sct.extract_fname(fname_data)
+    path_tmp = sct.tmp_create(basename="label_vertebrae", verbose=verbose)
 
     # rescale header (see issue #1406)
     if rescale_header is not 1:
@@ -545,8 +546,9 @@ def propseg(img_input, options_dict):
                                        '{}_model'.format(contrast_type))
 
         image_centerline = optic.detect_centerline(image_input, contrast_type)
-        image_centerline.save('centerline.nii.gz')
-        cmd += ["-init-centerline", 'centerline.nii.gz']
+        fname_centerline_optic = os.path.join(path_tmp, 'centerline_optic.nii.gz')
+        image_centerline.save(fname_centerline_optic)
+        cmd += ["-init-centerline", fname_centerline_optic]
 
     if init_option is not None:
         if init_option > 1:
