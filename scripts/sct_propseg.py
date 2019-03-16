@@ -609,7 +609,7 @@ def main(arguments):
     if path_qc is not None:
         generate_qc(fname_in1=fname_input_data, fname_seg=fname_seg, args=args, path_qc=os.path.abspath(path_qc),
                     process='sct_propseg')
-    sct.display_viewer_syntax([fname_input_data, fname_seg], colormaps=['gray', 'red'], opacities=['', '0.7'])
+    sct.display_viewer_syntax([fname_input_data, fname_seg], colormaps=['gray', 'red'], opacities=['', '1'])
 
 
 if __name__ == "__main__":
