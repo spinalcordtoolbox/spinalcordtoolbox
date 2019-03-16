@@ -547,6 +547,11 @@ def propseg(img_input, options_dict):
         image_centerline.save('centerline.nii.gz')
         cmd += ["-init-centerline", 'centerline.nii.gz']
 
+    if init_option is not None:
+        if init_option > 1:
+            init_option /= (nz - 1)
+        cmd += ['-init', str(init_option)]
+
     # enabling centerline extraction by default (needed by check_and_correct_segmentation() )
     cmd += ['-centerline-binary']
 
