@@ -486,7 +486,8 @@ def propseg(img_input, options_dict):
 
     # check if input image is in 3D. Otherwise itk image reader will cut the 4D image in 3D volumes and only take the first one.
     image_input = Image(fname_data)
-    nx, ny, nz, nt, px, py, pz, pt = image_input.dim
+    image_input_rpi = image_input.copy().change_orientation('RPI')
+    nx, ny, nz, nt, px, py, pz, pt = image_input_rpi.dim
     if nt > 1:
         sct.log.error('ERROR: your input image needs to be 3D in order to be segmented.')
 
