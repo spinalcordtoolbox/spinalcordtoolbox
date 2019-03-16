@@ -539,12 +539,6 @@ def propseg(img_input, options_dict):
 
     # If using OptiC
     elif use_optic:
-        path_script = os.path.dirname(__file__)
-        path_sct = os.path.dirname(path_script)
-        path_classifier = os.path.join(path_sct,
-                                       'data/optic_models',
-                                       '{}_model'.format(contrast_type))
-
         image_centerline = optic.detect_centerline(image_input, contrast_type)
         fname_centerline_optic = os.path.join(path_tmp, 'centerline_optic.nii.gz')
         image_centerline.save(fname_centerline_optic)
