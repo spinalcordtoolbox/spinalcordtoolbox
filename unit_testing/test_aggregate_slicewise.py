@@ -241,6 +241,28 @@ def test_save_as_csv_per_level(dummy_metrics, dummy_vert_level):
 
 
 # noinspection 801,PyShadowingNames
+def test_save_as_csv_per_slice_then_per_level(dummy_metrics, dummy_vert_level):
+    """Test with and without specifying perlevel. See: https://github.com/neuropoly/spinalcordtoolbox/issues/2141"""
+    agg_metric = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], levels=[3, 4],
+                                                                  perlevel=True,
+                                                                  vert_level=dummy_vert_level,
+                                                                  group_funcs=(('WA', aggregate_slicewise.func_wa),))
+    aggregate_slicewise.save_as_csv(agg_metric, 'tmp_file_out.csv')
+    agg_metric = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], slices=[0],
+                                                                  group_funcs=(('WA', aggregate_slicewise.func_wa),),)
+    aggregate_slicewise.save_as_csv(agg_metric, 'tmp_file_out.csv', append=True)
+    with open('tmp_file_out.csv', 'r') as csvfile:
+        reader = csv.DictReader(csvfile, delimiter=',')
+        row = reader.next()
+        assert row['Slice (I->S)'] == '2:3'
+        assert row['VertLevel'] == '3'
+        reader.next()
+        row = reader.next()
+        assert row['Slice (I->S)'] == '0'
+        assert row['VertLevel'] == ''
+
+
+# noinspection 801,PyShadowingNames
 def test_save_as_csv_sorting(dummy_metrics):
     """Make sure slices are sorted in output csv file"""
     agg_metric = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], perslice=True,
