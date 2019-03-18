@@ -110,6 +110,8 @@ def test_compute_shape_noangle(dummy_segmentation):
     assert np.mean(metrics['eccentricity'].data[30:70]) == pytest.approx(0.8, rel=0.05)
     assert np.mean(metrics['orientation'].data[30:70]) == pytest.approx(0.0, rel=0.05)
     assert np.mean(metrics['solidity'].data[30:70]) == pytest.approx(1.0, rel=0.05)
+    assert np.mean(metrics['angle_AP'].data[30:70]) == pytest.approx(0.0, rel=0.05)
+    assert np.mean(metrics['angle_RL'].data[30:70]) == pytest.approx(0.0, rel=0.05)
 
 
 # noinspection 801,PyShadowingNames

@@ -144,7 +144,10 @@ def compute_shape(segmentation, algo_fitting='bspline', verbose=1):
                      'RL_diameter',
                      'eccentricity',
                      'solidity',
-                     'orientation']
+                     'orientation',
+                     'angle_AP',
+                     'angle_RL'
+                     ]
 
     im_seg = Image(segmentation).change_orientation('RPI')
 
@@ -204,8 +207,11 @@ def compute_shape(segmentation, algo_fitting='bspline', verbose=1):
                                               )
         # compute shape properties on 2D patch
         shape_property = properties2d(current_patch_scaled, [px, py])
-        # loop across properties and assign values for function output
+        # Add custom fields
+        shape_property['angle_AP'] = angle_x
+        shape_property['angle_RL'] = angle_y
         if shape_property is not None:
+            # Loop across properties and assign values for function output
             for property_name in property_list:
                 shape_properties[property_name][iz] = shape_property[property_name]
         else:
