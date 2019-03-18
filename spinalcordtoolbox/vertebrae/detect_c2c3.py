@@ -52,7 +52,6 @@ def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, verbose=1):
     # create temporary folder with intermediate results
     sct.log.info("Creating temporary folder...")
     tmp_folder = sct.TempFolder()
-    # print tmp_folder.path_tmp
     tmp_folder.chdir()
 
     # Extract mid-slice
@@ -86,8 +85,6 @@ def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, verbose=1):
 
     # mask prediction
     pred[midSlice_mask == 0] = 0
-    # dist_medulla = 30.0 if contrast == 't1' else 40.0  # Observation: segmentation ends higher on t2 images than t1
-    # z_seg_max -= int(np.rint(dist_medulla / nii_midSlice.dim[5])) # TODO: take into account the curvature
     pred[:, z_seg_max:] = 0  # Mask above SC segmentation
 
     # assign label to voxel
@@ -96,17 +93,6 @@ def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, verbose=1):
         sct.printv('C2-C3 detected...', verbose)
 
         pred_bin = (pred > 0).astype(np.int_)
-        # labeled_pred, nb_regions = label_regions(pred_bin, return_num=True)
-        # if nb_regions > 1:  # if there are several clusters of voxels detected
-        #     region_idx_top, region_z_top = 0, 0
-        #     for region_idx in range(1, nb_regions+1):
-        #         pred_idx = (labeled_pred == region_idx).astype(np.int_)
-        #         pa_com, is_com = center_of_mass(pred_idx)
-        #         if is_com >= region_z_top:
-        #             region_idx_top = region_idx
-        #             region_z_top = is_com
-        #     pred[labeled_pred != region_idx_top] = 0  # then keep the one located at the top (IS direction)
-
         coord_max = np.where(pred == np.max(pred))
         pa_c2c3, is_c2c3 = coord_max[0][0], coord_max[1][0]
         nii_seg.change_orientation('PIR')
