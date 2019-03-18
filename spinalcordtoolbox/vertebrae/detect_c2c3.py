@@ -36,7 +36,7 @@ def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, remove_temp_files=1, 
     :param nii_im:
     :param nii_seg:
     :param contrast:
-    :parem remove_temp_file:
+    :param remove_temp_file:
     :param verbose:
     :return:
     """
