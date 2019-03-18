@@ -80,7 +80,7 @@ def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, verbose=1):
     for z in range(midSlice_mask.shape[1]):
         row = midSlice_seg[:, z]
         if np.any(row > 0):
-            med_y = int(np.rint(np.median(np.where(row))))
+            med_y = int(np.rint(np.median(np.where(row > 0))))
             midSlice_mask[med_y-mask_halfSize:med_y+mask_halfSize, z] = 1
 
     # mask prediction
