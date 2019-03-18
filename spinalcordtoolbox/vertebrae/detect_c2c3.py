@@ -86,7 +86,7 @@ def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, remove_temp_files=1, 
         if np.any(row > 0):
             med_y = int(np.rint(np.median(np.where(row > 0))))
             midSlice_mask[med_y-mask_halfSize:med_y+mask_halfSize, z] = 1  # 2D data with PI orientation, mid sag slice of the original data
-    # save the created mask
+    # copy the created mask in an Image object
     nii_postPro_mask = nii_midSlice.copy()
     nii_postPro_mask.data = midSlice_mask  # 2D data with PI orientation, mid sag slice of the original data
 
