@@ -74,7 +74,7 @@ def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, remove_temp_files=1, 
     sct.run(cmd_detection, verbose=0, raise_exception=False)
 
     pred = nib.load('data_midSlice_pred_svm.hdr').get_data()
-    # save the prediction data before post-processing
+    # copy the "prediction data before post-processing" in an Image object
     nii_pred_before_postPro = nii_midSlice.copy()
     nii_pred_before_postPro.data = pred
 
@@ -93,7 +93,7 @@ def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, remove_temp_files=1, 
     # mask prediction
     pred[midSlice_mask == 0] = 0
     pred[:, z_seg_max:] = 0  # Mask above SC segmentation
-    # save the prediction data after post-processing
+    # copy the "prediction data after post-processing" in an Image object
     nii_pred_after_postPro = nii_midSlice.copy()
     nii_pred_after_postPro.data = pred
 
