@@ -7,9 +7,6 @@
 from __future__ import absolute_import
 import pytest
 import numpy as np
-import csv
-import tempfile
-import os
 import nibabel as nib
 from skimage.transform import rotate
 from spinalcordtoolbox import process_seg
@@ -114,17 +111,16 @@ def test_compute_shape_noangle(dummy_segmentation):
     assert np.mean(metrics['solidity'].data[30:70]) == pytest.approx(1.0, rel=0.05)
 
 
-# TODO: once PR #1931 is merged, work on the test below.
 # noinspection 801,PyShadowingNames
-# def test_compute_shape(dummy_segmentation):
-#     """Test computation of cross-sectional area from input segmentation."""
-#     # Using hanning because faster
-#     metrics = process_seg.compute_shape(dummy_segmentation(shape='ellipse', angle=15, a=50.0, b=30.0),
-#                                         algo_fitting='hanning', window_length=3, verbose=0)
-#     assert np.mean(metrics['area'].value[30:70]) == pytest.approx(47.01, rel=0.05)
-#     assert np.mean(metrics['AP_diameter'].value[30:70]) == pytest.approx(6.0, rel=0.05)
-#     assert np.mean(metrics['RL_diameter'].value[30:70]) == pytest.approx(10.0, rel=0.05)
-#     assert np.mean(metrics['ratio_minor_major'].value[30:70]) == pytest.approx(0.6, rel=0.05)
-#     assert np.mean(metrics['eccentricity'].value[30:70]) == pytest.approx(0.8, rel=0.05)
-#     assert np.mean(metrics['orientation'].value[30:70]) == pytest.approx(0.0, rel=0.05)
-#     assert np.mean(metrics['solidity'].value[30:70]) == pytest.approx(1.0, rel=0.05)
+def test_compute_shape(dummy_segmentation):
+    """Test computation of cross-sectional area from input segmentation."""
+    # Using hanning because faster
+    metrics = process_seg.compute_shape(dummy_segmentation(shape='ellipse', angle=15, a=50.0, b=30.0),
+                                        algo_fitting=PARAM.algo_fitting, verbose=VERBOSE)
+    assert np.mean(metrics['area'].value[30:70]) == pytest.approx(47.01, rel=0.05)
+    assert np.mean(metrics['AP_diameter'].value[30:70]) == pytest.approx(6.0, rel=0.05)
+    assert np.mean(metrics['RL_diameter'].value[30:70]) == pytest.approx(10.0, rel=0.05)
+    assert np.mean(metrics['ratio_minor_major'].value[30:70]) == pytest.approx(0.6, rel=0.05)
+    assert np.mean(metrics['eccentricity'].value[30:70]) == pytest.approx(0.8, rel=0.05)
+    assert np.mean(metrics['orientation'].value[30:70]) == pytest.approx(0.0, rel=0.05)
+    assert np.mean(metrics['solidity'].value[30:70]) == pytest.approx(1.0, rel=0.05)
