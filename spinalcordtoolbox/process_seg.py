@@ -10,7 +10,7 @@ import numpy as np
 from skimage import measure, filters, transform
 
 import sct_utils as sct
-import spinalcordtoolbox.image as msct_image
+from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.aggregate_slicewise import Metric
 # TODO don't import SCT stuff outside of spinalcordtoolbox/
 from spinalcordtoolbox.centerline.core import get_centerline
@@ -25,6 +25,7 @@ OUTPUT_ANGLE_VOLUME = 0
 
 def compute_csa(segmentation, algo_fitting='bspline', angle_correction=True,
                 use_phys_coord=True, remove_temp_files=1, verbose=1):
+    # TODO: remove this whole section as it will be replaced by the compute_shape
     """
     Compute CSA.
     Note: segmentation can be binary or weighted for partial volume effect.
@@ -139,21 +140,15 @@ def compute_shape(segmentation, algo_fitting='bspline', verbose=1):
     """
     # List of properties to output (in the right order)
     property_list = ['area',
-                     'equivalent_diameter',
                      'AP_diameter',
                      'RL_diameter',
-                     'ratio_minor_major',
                      'eccentricity',
                      'solidity',
                      'orientation']
 
-    im_seg = msct_image.Image(segmentation).change_orientation('RPI')
-    # Extract min and max index in Z direction
-    data_seg = im_seg.data
-    X, Y, Z = (data_seg > 0).nonzero()
-    # min_z_index, max_z_index = min(Z), max(Z)
+    im_seg = Image(segmentation).change_orientation('RPI')
 
-    # Initiating some variables
+    # Getting image dimensions
     nx, ny, nz, nt, px, py, pz, pt = im_seg.dim
 
     # Extract min and max index in Z direction
@@ -161,16 +156,8 @@ def compute_shape(segmentation, algo_fitting='bspline', verbose=1):
     X, Y, Z = (data_seg > 0).nonzero()
     min_z_index, max_z_index = min(Z), max(Z)
 
-    # Define the resampling resolution. Here, we take the minimum of half the pixel size along X or Y in order to have
-    # sufficient precision upon resampling. Since we want isotropic resamping, we take the min between the two dims.
-    # resolution = min(float(px) / 2, float(py) / 2)
-    # resolution = 0.5
-    # Initialize 1d array with nan. Each element corresponds to a slice.
+    # Initialize dictionary of property_list, with 1d array of nan (default value if no property for a given slice).
     shape_properties = {key: np.full_like(np.empty(nz), np.nan, dtype=np.double) for key in property_list}
-    # properties['incremental_length'] = np.full_like(np.empty(nz), np.nan, dtype=np.double)
-    # properties['distance_from_C1'] = np.full_like(np.empty(nz), np.nan, dtype=np.double)
-    # properties['vertebral_level'] = np.full_like(np.empty(nz), np.nan, dtype=np.double)
-    # properties['z_slice'] = []
 
     # compute the spinal cord centerline based on the spinal cord segmentation
     _, arr_ctl, arr_ctl_der = get_centerline(im_seg, algo_fitting=algo_fitting, verbose=verbose)
@@ -188,7 +175,10 @@ def compute_shape(segmentation, algo_fitting='bspline', verbose=1):
         fig = Figure()
         FigureCanvas(fig)
         ax = fig.add_subplot(111)
-        ax.imshow(current_patch)
+        ax.imshow(image)
+        ax.grid()
+        ax.set_xlabel('x')
+        ax.set_ylabel('y')
         fig.savefig('tmp_fig.png')
         """
         # Extract tangent vector to the centerline (i.e. its derivative)
@@ -208,20 +198,16 @@ def compute_shape(segmentation, algo_fitting='bspline', verbose=1):
         tform = transform.AffineTransform(scale=(np.cos(angle_x), np.cos(angle_y)))
         # TODO: make sure pattern does not go extend outside of image border
         current_patch_scaled = transform.warp(current_patch,
-                                    tform.inverse,
-                                    output_shape=current_patch.shape,
-                                    order=1,
-                                    )
+                                              tform.inverse,
+                                              output_shape=current_patch.shape,
+                                              order=1,
+                                              )
         # compute shape properties on 2D patch
-        # TODO: adjust resolution in case anisotropic
-        sc_properties = properties2d(current_patch_scaled, [px, py])
-        # assign AP and RL to minor or major axis, depending on the orientation
-        sc_properties = assign_AP_and_RL_diameter(sc_properties)
+        shape_property = properties2d(current_patch_scaled, [px, py])
         # loop across properties and assign values for function output
-        if sc_properties is not None:
-            # properties['incremental_length'][iz] = centerline.incremental_length[i_centerline]
+        if shape_property is not None:
             for property_name in property_list:
-                shape_properties[property_name][iz] = sc_properties[property_name]
+                shape_properties[property_name][iz] = shape_property[property_name]
         else:
             sct.log.warning('No properties for slice: '.format([iz]))
 
@@ -234,68 +220,48 @@ def compute_shape(segmentation, algo_fitting='bspline', verbose=1):
     return metrics
 
 
-def properties2d(image, resolution=None):
-    label_img = measure.label(np.transpose(image))
-    regions = measure.regionprops(label_img)
-    areas = [r.area for r in regions]
-    ix = np.argsort(areas)
-    if len(regions) != 0:
-        sc_region = regions[ix[-1]]
-        try:
-            ratio_minor_major = sc_region.minor_axis_length / sc_region.major_axis_length
-        except ZeroDivisionError:
-            ratio_minor_major = 0.0
-
-        area = sc_region.area  # TODO: increase precision (currently single decimal)
-        diameter = sc_region.equivalent_diameter
-        major_l = sc_region.major_axis_length
-        minor_l = sc_region.minor_axis_length
-        if resolution is not None:
-            area *= resolution[0] * resolution[1]
-            # TODO: compute length depending on resolution. Here it assume the patch has the same X and Y resolution
-            diameter *= resolution[0]
-            major_l *= resolution[0]
-            minor_l *= resolution[0]
-
-            size_grid = 8.0 / resolution[0]  # assuming the maximum spinal cord radius is 8 mm
-        else:
-            size_grid = int(2.4 * sc_region.major_axis_length)
-
-        """
-        import matplotlib.pyplot as plt
-        plt.imshow(label_img)
-        plt.text(1, 1, sc_region.orientation, color='white')
-        plt.show()
-        """
-
-        sc_properties = {'area': area,
-                         'bbox': sc_region.bbox,
-                         'centroid': sc_region.centroid,
-                         'eccentricity': sc_region.eccentricity,
-                         'equivalent_diameter': diameter,
-                         'euler_number': sc_region.euler_number,
-                         'inertia_tensor': sc_region.inertia_tensor,
-                         'inertia_tensor_eigvals': sc_region.inertia_tensor_eigvals,
-                         'minor_axis_length': minor_l,
-                         'major_axis_length': major_l,
-                         'moments': sc_region.moments,
-                         'moments_central': sc_region.moments_central,
-                         'orientation': sc_region.orientation * 180.0 / math.pi,
-                         'perimeter': sc_region.perimeter,
-                         'ratio_minor_major': ratio_minor_major,
-                         'solidity': sc_region.solidity  # convexity measure
-                         # 'symmetry': dice_symmetry
-                         }
-    else:
-        sc_properties = None
-
-    return sc_properties
-
-
-def assign_AP_and_RL_diameter(properties):
+def properties2d(image, dim):
     """
-    This script checks the orientation of the spinal cord and inverts axis if necessary to make sure the major axis is
-    always labeled as right-left (RL), and the minor antero-posterior (AP).
+    Compute shape property of the input 2D image. Accounts for partial volume information.
+    :param image: 2D input image of uint8 type that has a single object, weighted for partial volume.
+    :param dim: [px, py]: Physical dimension of the image (in mm). X,Y respectively correspond to AP,RL.
+    :return:
+    """
+    # Binarize image using threshold at 0. Necessary input for measure.regionprops
+    image_bin = np.array(image > 0, dtype='uint8')
+    # Get all closed binary regions from the image (normally there is only one)
+    regions = measure.regionprops(image_bin, intensity_image=image)
+    # Check number of regions
+    if len(regions) == 0:
+        sct.log.warning('The slice seems empty.')
+        return None
+    elif len(regions) > 1:
+        sct.log.warning('There is more than one object on this slice.')
+        return None
+    region = regions[0]
+    # Compute metrics
+    area = np.sum(image) * dim[0] * dim[1]
+    major_l = region.major_axis_length * dim[0] # TODO: make sure this is the correct index
+    minor_l = region.minor_axis_length * dim[1]
+    # Fill up dictionary
+    properties = {'area': area,
+                  'centroid': region.centroid,
+                  'eccentricity': region.eccentricity,
+                  'minor_axis_length': minor_l,
+                  'major_axis_length': major_l,
+                  # rotated by 90deg (because image axis are inverted), modulo pi, in deg
+                  'orientation': (region.orientation + math.pi/2 % math.pi) * 180.0 / math.pi,
+                  'solidity': region.solidity  # convexity measure
+    }
+    # Find RL and AP diameter based on major/minor axes and cord orientation=
+    properties = find_AP_and_RL_diameter(properties)
+    return properties
+
+
+def find_AP_and_RL_diameter(properties):
+    """
+    This script checks the orientation of the and assigns the major/minor axis to the appropriate dimension, right-
+    left (RL) or antero-posterior (AP).
     :param properties: dictionary generated by properties2d()
     :return: properties updated with new fields: AP_diameter, RL_diameter
     """

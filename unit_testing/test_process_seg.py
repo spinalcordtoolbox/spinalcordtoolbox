@@ -3,6 +3,8 @@
 # pytest unit tests for spinalcordtoolbox.process_seg
 
 # TODO: add dummy image with different resolution to check impact of input res
+# TODO: add test with known angle (i.e. not found with fitting)
+# TODO: test empty slices and slices with two objects
 
 from __future__ import absolute_import
 import pytest
@@ -105,7 +107,6 @@ def test_compute_shape_noangle(dummy_segmentation):
     assert np.mean(metrics['area'].data[30:70]) == pytest.approx(47.01, rel=0.05)
     assert np.mean(metrics['AP_diameter'].data[30:70]) == pytest.approx(6.0, rel=0.05)
     assert np.mean(metrics['RL_diameter'].data[30:70]) == pytest.approx(10.0, rel=0.05)
-    assert np.mean(metrics['ratio_minor_major'].data[30:70]) == pytest.approx(0.6, rel=0.05)
     assert np.mean(metrics['eccentricity'].data[30:70]) == pytest.approx(0.8, rel=0.05)
     assert np.mean(metrics['orientation'].data[30:70]) == pytest.approx(0.0, rel=0.05)
     assert np.mean(metrics['solidity'].data[30:70]) == pytest.approx(1.0, rel=0.05)
@@ -120,7 +121,6 @@ def test_compute_shape(dummy_segmentation):
     assert np.mean(metrics['area'].data[30:70]) == pytest.approx(47.01, rel=0.05)
     assert np.mean(metrics['AP_diameter'].data[30:70]) == pytest.approx(6.0, rel=0.05)
     assert np.mean(metrics['RL_diameter'].data[30:70]) == pytest.approx(10.0, rel=0.05)
-    assert np.mean(metrics['ratio_minor_major'].data[30:70]) == pytest.approx(0.6, rel=0.05)
     assert np.mean(metrics['eccentricity'].data[30:70]) == pytest.approx(0.8, rel=0.05)
     assert np.mean(metrics['orientation'].data[30:70]) == pytest.approx(0.0, rel=0.05)
     assert np.mean(metrics['solidity'].data[30:70]) == pytest.approx(1.0, rel=0.05)
