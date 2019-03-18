@@ -30,13 +30,12 @@ import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image, zeros_like
 
 
-def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, remove_temp_files=1, verbose=1):
+def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, verbose=1):
     """
     Detect the posterior edge of C2-C3 disc.
     :param nii_im:
     :param nii_seg:
     :param contrast:
-    :param remove_temp_file:
     :param verbose:
     :return:
     """
@@ -117,13 +116,13 @@ def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, remove_temp_files=1, 
     tmp_folder.cleanup()
 
     nii_c2c3.change_orientation(orientation_init)
-    if remove_temp_files:
+    if verbose < 2:
         return nii_c2c3
-    else:
+    else:  # if verbose == 2, then output temporary files
         return nii_c2c3, nii_midSlice, nii_postPro_mask, nii_pred_after_postPro, nii_pred_before_postPro
 
 
-def detect_c2c3_from_file(fname_im, fname_seg, contrast, fname_c2c3=None, remove_temp_files=1, verbose=1):
+def detect_c2c3_from_file(fname_im, fname_seg, contrast, fname_c2c3=None, verbose=1):
     """
     Detect the posterior edge of C2-C3 disc.
     :param fname_im:
@@ -138,16 +137,13 @@ def detect_c2c3_from_file(fname_im, fname_seg, contrast, fname_c2c3=None, remove
     nii_im = Image(fname_im)
     nii_seg = Image(fname_seg)
 
-    remove_temp_files = int(remove_temp_files)
-
     # detect C2-C3
-    if remove_temp_files:
+    if verbose < 2:
         nii_c2c3 = detect_c2c3(nii_im.copy(), nii_seg, contrast, verbose=verbose)
     else:
         nii_c2c3, nii_midSlice, nii_mask, nii_after_postPro, nii_before_postPro = detect_c2c3(nii_im.copy(),
                                                                                                 nii_seg,
                                                                                                 contrast,
-                                                                                                remove_temp_files=remove_temp_files,
                                                                                                 verbose=verbose)
         nii_midSlice.save(os.path.join(os.path.dirname(nii_im.absolutepath), "tmp_midSlice.nii.gz"))
         nii_mask.save(os.path.join(os.path.dirname(nii_im.absolutepath), "tmp_midSlice_mask.nii.gz"))
