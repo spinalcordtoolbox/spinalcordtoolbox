@@ -85,10 +85,16 @@ def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, verbose=1):
         if np.any(row > 0):
             med_y = int(np.rint(np.median(np.where(row > 0))))
             midSlice_mask[med_y-mask_halfSize:med_y+mask_halfSize, z] = 1
+    # save the created mask
+    nii_postPro_mask = nii_midSlice.copy()
+    nii_postPro_mask.data = midSlice_mask
 
     # mask prediction
     pred[midSlice_mask == 0] = 0
     pred[:, z_seg_max:] = 0  # Mask above SC segmentation
+    # save the prediction data after post-processing
+    nii_pred_after_postPro = nii_midSlice.copy()
+    nii_pred_after_postPro.data = pred
 
     # assign label to voxel
     nii_c2c3 = zeros_like(nii_seg_flat)
@@ -110,7 +116,7 @@ def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, verbose=1):
     tmp_folder.cleanup()
 
     nii_c2c3.change_orientation(orientation_init)
-    return nii_c2c3
+    return nii_c2c3, nii_midSlice, nii_postPro_mask, nii_pred_after_postPro, nii_pred_before_postPro
 
 
 def detect_c2c3_from_file(fname_im, fname_seg, contrast, fname_c2c3=None, verbose=1):
