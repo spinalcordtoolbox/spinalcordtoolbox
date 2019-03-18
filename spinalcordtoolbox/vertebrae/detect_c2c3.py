@@ -73,6 +73,9 @@ def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, verbose=1):
     sct.run(cmd_detection, verbose=0, raise_exception=False)
 
     pred = nib.load('data_midSlice_pred_svm.hdr').get_data()
+    # save the prediction data before post-processing
+    nii_pred_before_postPro = nii_midSlice.copy()
+    nii_pred_before_postPro.data = pred
 
     # Create mask along centerline
     midSlice_mask = np.zeros(midSlice_seg.shape)
