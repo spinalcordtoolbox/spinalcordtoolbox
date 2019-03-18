@@ -142,7 +142,15 @@ def detect_c2c3_from_file(fname_im, fname_seg, contrast, fname_c2c3=None, remove
     if remove_temp_file:
         nii_c2c3 = detect_c2c3(nii_im, nii_seg, contrast, verbose=verbose)
     else:
-        nii_c2c3 = detect_c2c3(nii_im, nii_seg, contrast, remove_temp_files=remove_temp_files, verbose=verbose)
+        nii_c2c3, nii_midSlice, nii_mask, nii_after_postPro, nii_before_postPro = detect_c2c3(nii_im,
+                                                                                                nii_seg,
+                                                                                                contrast,
+                                                                                                remove_temp_files=remove_temp_files,
+                                                                                                verbose=verbose)
+        nii_midSlice.save(os.path.join(os.path.dirname(nii_im.absolutepath), "tmp_midSlice.nii.gz"))
+        nii_mask.save(os.path.join(os.path.dirname(nii_im.absolutepath), "tmp_midSlice_mask.nii.gz"))
+        nii_before_postPro.save(os.path.join(os.path.dirname(nii_im.absolutepath), "tmp_midSlice_before_postPro.nii.gz"))
+        nii_after_postPro.save(os.path.join(os.path.dirname(nii_im.absolutepath), "tmp_midSlice_after_postPro.nii.gz"))
 
     # Output C2-C3 disc label
     # by default, output in the same directory as the input images
