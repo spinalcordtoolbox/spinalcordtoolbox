@@ -23,6 +23,7 @@ import numpy as np
 
 import tqdm
 from skimage import measure, filters
+from skimage.transform import warp, AffineTransform
 
 import sct_utils as sct
 from msct_types import Centerline
@@ -143,7 +144,7 @@ def compute_properties_along_centerline(im_seg, smooth_factor=5.0, interpolation
 
     # Define the resampling resolution. Here, we take the minimum of half the pixel size along X or Y in order to have
     # sufficient precision upon resampling. Since we want isotropic resamping, we take the min between the two dims.
-    resolution = min(float(px) / 2, float(py) / 2)
+    # resolution = min(float(px) / 2, float(py) / 2)
     # resolution = 0.5
     # Initialize 1d array with nan. Each element corresponds to a slice.
     properties = {key: np.full_like(np.empty(nz), np.nan, dtype=np.double) for key in property_list}
@@ -154,61 +155,112 @@ def compute_properties_along_centerline(im_seg, smooth_factor=5.0, interpolation
 
     # compute the spinal cord centerline based on the spinal cord segmentation
     _, arr_ctl, arr_ctl_der = get_centerline(im_seg, algo_fitting=algo_fitting, verbose=verbose)
-    # x_centerline_fit, y_centerline_fit, z_centerline = arr_ctl
-    # x_centerline_deriv, y_centerline_deriv = arr_ctl_der
-    # Transform centerline and derivatives to physical coordinate system
-    arr_ctl_phys = im_seg.transfo_pix2phys(
-        [[arr_ctl[0][i], arr_ctl[1][i], arr_ctl[2][i]] for i in range(len(arr_ctl[0]))])
-    x_centerline, y_centerline, z_centerline = arr_ctl_phys[:, 0], arr_ctl_phys[:, 1], arr_ctl_phys[:, 2]
-    x_centerline_deriv, y_centerline_deriv = arr_ctl_der[0][:] * px, arr_ctl_der[1][:] * py
-    # TODO: maybe multiply by pz
-    centerline = Centerline(x_centerline, y_centerline, z_centerline, x_centerline_deriv, y_centerline_deriv,
-                            np.ones_like(x_centerline_deriv))
 
-    sct.printv('Computing spinal cord shape along the spinal cord...')
-    with tqdm.tqdm(total=len(range(min_z_index, max_z_index))) as pbar:
+    angles = np.full_like(np.empty(nz), np.nan, dtype=np.double)
 
-        # Extracting patches perpendicular to the spinal cord and computing spinal cord shape
-        i_centerline = 0  # index of the centerline() object
-        for iz in range(min_z_index, max_z_index-1):
-        # for index in range(centerline.number_of_points):  Julien
-            # value_out = -5.0
-            value_out = 0.0
-            # TODO: correct for angulation using the cosine. The current approach has 2 issues:
-            # - the centerline is not homogeneously sampled along z (which is the reason it is oversampled)
-            # - computationally expensive
-            # - requires resampling to higher resolution --> to check: maybe required with cosine approach
-            current_patch = centerline.extract_perpendicular_square(im_seg, i_centerline, size=size_patch,
-                                                                    resolution=resolution,
-                                                                    interpolation_mode=interpolation_mode,
-                                                                    border='constant', cval=value_out)
+    # Loop across z and compute shape analysis
+    # TODO: add fancy progress bar
+    for iz in range(min_z_index, max_z_index - 1):
+        # Extract 2D patch
+        current_patch = im_seg.data[:, :, iz]
+        """ DEBUG
+        from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+        from matplotlib.figure import Figure
+        fig = Figure()
+        FigureCanvas(fig)
+        ax = fig.add_subplot(111)
+        ax.imshow(current_patch)
+        fig.savefig('tmp_fig.png')
+        """
+        # Extract tangent vector to the centerline (i.e. its derivative)
+        tangent_vect = np.array([arr_ctl_der[0][iz - min_z_index] * px,
+                                 arr_ctl_der[1][iz - min_z_index] * py,
+                                 pz])
+        # Normalize vector by its L2 norm
+        tangent_vect = tangent_vect / np.linalg.norm(tangent_vect)
+        # Compute the angle between the centerline and the normal vector to the slice (i.e. u_z)
+        v0 = [tangent_vect[0], tangent_vect[2]]
+        v1 = [0, 1]
+        angle_x = np.math.atan2(np.linalg.det([v0, v1]), np.dot(v0, v1))
+        v0 = [tangent_vect[1], tangent_vect[2]]
+        v1 = [0, 1]
+        angle_y = np.math.atan2(np.linalg.det([v0, v1]), np.dot(v0, v1))
+        # Apply affine transformation to account for the angle between the cord centerline and the normal to the patch
+        tform = AffineTransform(scale=(np.cos(angle_x), np.cos(angle_y)))
+        # TODO: make sure pattern does not go extend outside of image border
+        current_patch_scaled = warp(current_patch,
+                                    tform.inverse,
+                                    output_shape=current_patch.shape,
+                                    order=1,
+                                    )
+        # compute shape properties on 2D patch
+        # TODO: adjust resolution in case anisotropic
+        sc_properties = properties2d(current_patch_scaled, [px, py])
+        # assign AP and RL to minor or major axis, depending on the orientation
+        sc_properties = assign_AP_and_RL_diameter(sc_properties)
+        # loop across properties and assign values for function output
+        if sc_properties is not None:
+            # properties['incremental_length'][iz] = centerline.incremental_length[i_centerline]
+            for property_name in property_list:
+                properties[property_name][iz] = sc_properties[property_name]
+        else:
+            sct.log.warning('No properties for slice: '.format([iz]))
 
-            # check for pixels close to the spinal cord segmentation that are out of the image
-            patch_zero = np.copy(current_patch)
-            patch_zero[patch_zero == value_out] = 0.0
-            # patch_borders = dilation(patch_zero) - patch_zero
-
-            """
-            if np.count_nonzero(patch_borders + current_patch == value_out + 1.0) != 0:
-                c = image.transfo_phys2pix([centerline.points[index]])[0]
-                print('WARNING: no patch for slice', c[2])
-                continue
-            """
-            # compute shape properties on 2D patch
-            sc_properties = properties2d(patch_zero, [resolution, resolution])
-            # assign AP and RL to minor or major axis, depending on the orientation
-            sc_properties = assign_AP_and_RL_diameter(sc_properties)
-            # loop across properties and assign values for function output
-            if sc_properties is not None:
-                # properties['incremental_length'][iz] = centerline.incremental_length[i_centerline]
-                for property_name in property_list:
-                    properties[property_name][iz] = sc_properties[property_name]
-            else:
-                c = im_seg.transfo_phys2pix([centerline.points[i_centerline]])[0]
-                sct.printv('WARNING: no properties for slice', c[2])
-
-            i_centerline += 1
-            pbar.update(1)
+    # # x_centerline_fit, y_centerline_fit, z_centerline = arr_ctl
+    # # x_centerline_deriv, y_centerline_deriv = arr_ctl_der
+    # # Transform centerline and derivatives to physical coordinate system
+    # arr_ctl_phys = im_seg.transfo_pix2phys(
+    #     [[arr_ctl[0][i], arr_ctl[1][i], arr_ctl[2][i]] for i in range(len(arr_ctl[0]))])
+    # x_centerline, y_centerline, z_centerline = arr_ctl_phys[:, 0], arr_ctl_phys[:, 1], arr_ctl_phys[:, 2]
+    # x_centerline_deriv, y_centerline_deriv = arr_ctl_der[0][:] * px, arr_ctl_der[1][:] * py
+    # # TODO: maybe multiply by pz
+    # centerline = Centerline(x_centerline, y_centerline, z_centerline, x_centerline_deriv, y_centerline_deriv,
+    #                         np.ones_like(x_centerline_deriv))
+    #
+    # sct.printv('Computing spinal cord shape along the spinal cord...')
+    # with tqdm.tqdm(total=len(range(min_z_index, max_z_index))) as pbar:
+    #
+    #     # Extracting patches perpendicular to the spinal cord and computing spinal cord shape
+    #     i_centerline = 0  # index of the centerline() object
+    #     for iz in range(min_z_index, max_z_index-1):
+    #     # for index in range(centerline.number_of_points):  Julien
+    #         # value_out = -5.0
+    #         value_out = 0.0
+    #         # TODO: correct for angulation using the cosine. The current approach has 2 issues:
+    #         # - the centerline is not homogeneously sampled along z (which is the reason it is oversampled)
+    #         # - computationally expensive
+    #         # - requires resampling to higher resolution --> to check: maybe required with cosine approach
+    #         current_patch = centerline.extract_perpendicular_square(im_seg, i_centerline, size=size_patch,
+    #                                                                 resolution=resolution,
+    #                                                                 interpolation_mode=interpolation_mode,
+    #                                                                 border='constant', cval=value_out)
+    #
+    #         # check for pixels close to the spinal cord segmentation that are out of the image
+    #         patch_zero = np.copy(current_patch)
+    #         patch_zero[patch_zero == value_out] = 0.0
+    #         # patch_borders = dilation(patch_zero) - patch_zero
+    #
+    #         """
+    #         if np.count_nonzero(patch_borders + current_patch == value_out + 1.0) != 0:
+    #             c = image.transfo_phys2pix([centerline.points[index]])[0]
+    #             print('WARNING: no patch for slice', c[2])
+    #             continue
+    #         """
+    #         # compute shape properties on 2D patch
+    #         sc_properties = properties2d(patch_zero, [resolution, resolution])
+    #         # assign AP and RL to minor or major axis, depending on the orientation
+    #         sc_properties = assign_AP_and_RL_diameter(sc_properties)
+    #         # loop across properties and assign values for function output
+    #         if sc_properties is not None:
+    #             # properties['incremental_length'][iz] = centerline.incremental_length[i_centerline]
+    #             for property_name in property_list:
+    #                 properties[property_name][iz] = sc_properties[property_name]
+    #         else:
+    #             c = im_seg.transfo_phys2pix([centerline.points[i_centerline]])[0]
+    #             sct.printv('WARNING: no properties for slice', c[2])
+    #
+    #         i_centerline += 1
+    #         pbar.update(1)
 
     # # smooth the spinal cord shape with a gaussian kernel if required
     # # TODO: remove this smoothing
@@ -232,5 +284,6 @@ def compute_properties_along_centerline(im_seg, smooth_factor=5.0, interpolation
     #         averaged_shape[property_name].append(np.mean(
     #             [item for i, item in enumerate(properties[property_name]) if
     #              properties['z_slice'][i] == label]))
+    # TODO: save angles
 
     return properties
