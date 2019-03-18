@@ -76,19 +76,19 @@ def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, remove_temp_files=1, 
     pred = nib.load('data_midSlice_pred_svm.hdr').get_data()
     # copy the "prediction data before post-processing" in an Image object
     nii_pred_before_postPro = nii_midSlice.copy()
-    nii_pred_before_postPro.data = pred
+    nii_pred_before_postPro.data = pred  # 2D data with orientation, mid sag slice of the original data
 
     # Create mask along centerline
     midSlice_mask = np.zeros(midSlice_seg.shape)
     mask_halfSize = int(np.rint(25.0 / nii_midSlice.dim[4]))
     for z in range(midSlice_mask.shape[1]):
-        row = midSlice_seg[:, z]
+        row = midSlice_seg[:, z]  # 2D data with PI orientation, mid sag slice of the original data
         if np.any(row > 0):
             med_y = int(np.rint(np.median(np.where(row > 0))))
-            midSlice_mask[med_y-mask_halfSize:med_y+mask_halfSize, z] = 1
+            midSlice_mask[med_y-mask_halfSize:med_y+mask_halfSize, z] = 1  # 2D data with PI orientation, mid sag slice of the original data
     # save the created mask
     nii_postPro_mask = nii_midSlice.copy()
-    nii_postPro_mask.data = midSlice_mask
+    nii_postPro_mask.data = midSlice_mask  # 2D data with PI orientation, mid sag slice of the original data
 
     # mask prediction
     pred[midSlice_mask == 0] = 0
@@ -98,7 +98,7 @@ def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, remove_temp_files=1, 
     nii_pred_after_postPro.data = pred
 
     # assign label to voxel
-    nii_c2c3 = zeros_like(nii_seg_flat)
+    nii_c2c3 = zeros_like(nii_seg_flat)  # 3D data with PIR orientaion
     if np.any(pred > 0):
         sct.printv('C2-C3 detected...', verbose)
 
