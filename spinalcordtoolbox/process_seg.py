@@ -231,10 +231,13 @@ def properties2d(image, dim):
     :param dim: [px, py]: Physical dimension of the image (in mm). X,Y respectively correspond to AP,RL.
     :return:
     """
+    upscale = 10  # upscale factor for resampling the input image
+    # Oversample image to reach sufficient precision when computing shape metrics on the binary mask
+    image_r = transform.pyramid_expand(image, upscale=upscale, sigma=None, order=1)
     # Binarize image using threshold at 0. Necessary input for measure.regionprops
-    image_bin = np.array(image > 0, dtype='uint8')
+    image_bin = np.array(image_r > 0, dtype='uint8')
     # Get all closed binary regions from the image (normally there is only one)
-    regions = measure.regionprops(image_bin, intensity_image=image)
+    regions = measure.regionprops(image_bin, intensity_image=image_r)
     # Check number of regions
     if len(regions) == 0:
         sct.log.warning('The slice seems empty.')
@@ -244,13 +247,14 @@ def properties2d(image, dim):
         return None
     region = regions[0]
     # Compute area with weighted segmentation and adjust area with physical pixel size
-    area = np.sum(image) * dim[0] * dim[1]
+    area = np.sum(image_r) * dim[0] * dim[1] / upscale
     # Compute ellipse orientation, rotated by 90deg because image axis are inverted, modulo pi, in deg
     orientation = (region.orientation + math.pi / 2 % math.pi) * 180.0 / math.pi
     # Find RL and AP diameter based on major/minor axes and cord orientation=
     [diameter_AP, diameter_RL] = \
-        find_AP_and_RL_diameter(region.major_axis_length, region.minor_axis_length, orientation, dim)
-
+        find_AP_and_RL_diameter(region.major_axis_length, region.minor_axis_length, orientation,
+                                [i / upscale for i in dim])
+    # TODO: compute major_axis_length/minor_axis_length by summing weighted voxels along axis
     # Fill up dictionary
     properties = {'area': area,
                   'diameter_AP': diameter_AP,
