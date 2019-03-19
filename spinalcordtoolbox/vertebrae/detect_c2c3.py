@@ -73,9 +73,11 @@ def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, verbose=1):
     sct.run(cmd_detection, verbose=0, raise_exception=False)
 
     pred = nib.load('data_midSlice_pred_svm.hdr').get_data()
-    # copy the "prediction data before post-processing" in an Image object
-    nii_pred_before_postPro = nii_midSlice.copy()
-    nii_pred_before_postPro.data = pred  # 2D data with orientation, mid sag slice of the original data
+    if verbose >= 2:
+        # copy the "prediction data before post-processing" in an Image object
+        nii_pred_before_postPro = nii_midSlice.copy()
+        nii_pred_before_postPro.data = pred  # 2D data with orientation, mid sag slice of the original data
+        nii_pred_before_postPro.save("pred_midSlice_before_postPro.nii.gz")  # save it)
 
     # Create mask along centerline
     midSlice_mask = np.zeros(midSlice_seg.shape)
@@ -85,16 +87,20 @@ def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, verbose=1):
         if np.any(row > 0):
             med_y = int(np.rint(np.median(np.where(row > 0))))
             midSlice_mask[med_y-mask_halfSize:med_y+mask_halfSize, z] = 1  # 2D data with PI orientation, mid sag slice of the original data
-    # copy the created mask in an Image object
-    nii_postPro_mask = nii_midSlice.copy()
-    nii_postPro_mask.data = midSlice_mask  # 2D data with PI orientation, mid sag slice of the original data
+    if verbose >= 2:
+        # copy the created mask in an Image object
+        nii_postPro_mask = nii_midSlice.copy()
+        nii_postPro_mask.data = midSlice_mask  # 2D data with PI orientation, mid sag slice of the original data
+        nii_postPro_mask.save("mask_midSlice.nii.gz")  # save it
 
     # mask prediction
     pred[midSlice_mask == 0] = 0
     pred[:, z_seg_max:] = 0  # Mask above SC segmentation
-    # copy the "prediction data after post-processing" in an Image object
-    nii_pred_after_postPro = nii_midSlice.copy()
-    nii_pred_after_postPro.data = pred
+    if verbose >= 2:
+        # copy the "prediction data after post-processing" in an Image object
+        nii_pred_after_postPro = nii_midSlice.copy()
+        nii_pred_after_postPro.data = pred
+        nii_pred_after_postPro.save("pred_midSlice_after_postPro.nii.gz")  # save it
 
     # assign label to voxel
     nii_c2c3 = zeros_like(nii_seg_flat)  # 3D data with PIR orientaion
@@ -112,14 +118,12 @@ def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, verbose=1):
 
     # remove temporary files
     tmp_folder.chdir_undo()
-    sct.log.info("Remove temporary files...")
-    tmp_folder.cleanup()
+    if verbose < 2:
+        sct.log.info("Remove temporary files...")
+        tmp_folder.cleanup()
 
     nii_c2c3.change_orientation(orientation_init)
-    if verbose < 2:
-        return nii_c2c3
-    else:  # if verbose == 2, then output temporary files
-        return nii_c2c3, nii_midSlice, nii_postPro_mask, nii_pred_after_postPro, nii_pred_before_postPro
+    return nii_c2c3
 
 
 def detect_c2c3_from_file(fname_im, fname_seg, contrast, fname_c2c3=None, verbose=1):
@@ -138,17 +142,7 @@ def detect_c2c3_from_file(fname_im, fname_seg, contrast, fname_c2c3=None, verbos
     nii_seg = Image(fname_seg)
 
     # detect C2-C3
-    if verbose < 2:
-        nii_c2c3 = detect_c2c3(nii_im.copy(), nii_seg, contrast, verbose=verbose)
-    else:
-        nii_c2c3, nii_midSlice, nii_mask, nii_after_postPro, nii_before_postPro = detect_c2c3(nii_im.copy(),
-                                                                                                nii_seg,
-                                                                                                contrast,
-                                                                                                verbose=verbose)
-        nii_midSlice.save(os.path.join(os.path.dirname(nii_im.absolutepath), "tmp_midSlice.nii.gz"))
-        nii_mask.save(os.path.join(os.path.dirname(nii_im.absolutepath), "tmp_midSlice_mask.nii.gz"))
-        nii_before_postPro.save(os.path.join(os.path.dirname(nii_im.absolutepath), "tmp_midSlice_before_postPro.nii.gz"))
-        nii_after_postPro.save(os.path.join(os.path.dirname(nii_im.absolutepath), "tmp_midSlice_after_postPro.nii.gz"))
+    nii_c2c3 = detect_c2c3(nii_im.copy(), nii_seg, contrast, verbose=verbose)
 
     # Output C2-C3 disc label
     # by default, output in the same directory as the input images
