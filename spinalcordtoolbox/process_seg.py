@@ -8,6 +8,7 @@ import os, math
 
 import numpy as np
 from skimage import measure, filters, transform
+from tqdm import tqdm
 
 import sct_utils as sct
 from spinalcordtoolbox.image import Image
@@ -166,8 +167,8 @@ def compute_shape(segmentation, algo_fitting='bspline', verbose=1):
     _, arr_ctl, arr_ctl_der = get_centerline(im_seg, algo_fitting=algo_fitting, verbose=verbose)
 
     # Loop across z and compute shape analysis
-    # TODO: add fancy progress bar
-    for iz in range(min_z_index, max_z_index - 1):
+    for iz in tqdm(range(min_z_index, max_z_index - 1), unit='iter', unit_scale=False, desc="Compute shape analysis",
+                   ascii=True, ncols=80):
         # Extract 2D patch
         current_patch = im_seg.data[:, :, iz]
         """ DEBUG
@@ -231,11 +232,12 @@ def properties2d(image, dim):
     :param dim: [px, py]: Physical dimension of the image (in mm). X,Y respectively correspond to AP,RL.
     :return:
     """
-    upscale = 10  # upscale factor for resampling the input image
+    # TODO: first, see where the object is, then crop, then upsample --> faster execution
+    upscale = 5  # upscale factor for resampling the input image
     # Oversample image to reach sufficient precision when computing shape metrics on the binary mask
     image_r = transform.pyramid_expand(image, upscale=upscale, sigma=None, order=1)
     # Binarize image using threshold at 0. Necessary input for measure.regionprops
-    image_bin = np.array(image_r > 0, dtype='uint8')
+    image_bin = np.array(image_r > 0.5, dtype='uint8')
     # Get all closed binary regions from the image (normally there is only one)
     regions = measure.regionprops(image_bin, intensity_image=image_r)
     # Check number of regions
@@ -247,7 +249,7 @@ def properties2d(image, dim):
         return None
     region = regions[0]
     # Compute area with weighted segmentation and adjust area with physical pixel size
-    area = np.sum(image_r) * dim[0] * dim[1] / upscale
+    area = np.sum(image_r) * dim[0] * dim[1] / upscale ** 2
     # Compute ellipse orientation, rotated by 90deg because image axis are inverted, modulo pi, in deg
     orientation = (region.orientation + math.pi / 2 % math.pi) * 180.0 / math.pi
     # Find RL and AP diameter based on major/minor axes and cord orientation=
