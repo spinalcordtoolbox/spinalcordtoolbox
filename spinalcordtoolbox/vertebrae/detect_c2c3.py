@@ -52,7 +52,6 @@ def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, verbose=1):
     # create temporary folder with intermediate results
     sct.log.info("Creating temporary folder...")
     tmp_folder = sct.TempFolder()
-    # print tmp_folder.path_tmp
     tmp_folder.chdir()
 
     # Extract mid-slice
@@ -74,39 +73,41 @@ def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, verbose=1):
     sct.run(cmd_detection, verbose=0, raise_exception=False)
 
     pred = nib.load('data_midSlice_pred_svm.hdr').get_data()
+    if verbose >= 2:
+        # copy the "prediction data before post-processing" in an Image object
+        nii_pred_before_postPro = nii_midSlice.copy()
+        nii_pred_before_postPro.data = pred  # 2D data with orientation, mid sag slice of the original data
+        nii_pred_before_postPro.save("pred_midSlice_before_postPro.nii.gz")  # save it)
 
     # Create mask along centerline
     midSlice_mask = np.zeros(midSlice_seg.shape)
     mask_halfSize = int(np.rint(25.0 / nii_midSlice.dim[4]))
     for z in range(midSlice_mask.shape[1]):
-        row = midSlice_seg[:, z]
-        if np.any(row):
-            med_y = int(np.rint(np.median(np.where(row))))
-            midSlice_mask[med_y-mask_halfSize:med_y+mask_halfSize] = 1
+        row = midSlice_seg[:, z]  # 2D data with PI orientation, mid sag slice of the original data
+        if np.any(row > 0):
+            med_y = int(np.rint(np.median(np.where(row > 0))))
+            midSlice_mask[med_y-mask_halfSize:med_y+mask_halfSize, z] = 1  # 2D data with PI orientation, mid sag slice of the original data
+    if verbose >= 2:
+        # copy the created mask in an Image object
+        nii_postPro_mask = nii_midSlice.copy()
+        nii_postPro_mask.data = midSlice_mask  # 2D data with PI orientation, mid sag slice of the original data
+        nii_postPro_mask.save("mask_midSlice.nii.gz")  # save it
 
     # mask prediction
     pred[midSlice_mask == 0] = 0
-    # dist_medulla = 30.0 if contrast == 't1' else 40.0  # Observation: segmentation ends higher on t2 images than t1
-    # z_seg_max -= int(np.rint(dist_medulla / nii_midSlice.dim[5])) # TODO: take into account the curvature
     pred[:, z_seg_max:] = 0  # Mask above SC segmentation
+    if verbose >= 2:
+        # copy the "prediction data after post-processing" in an Image object
+        nii_pred_after_postPro = nii_midSlice.copy()
+        nii_pred_after_postPro.data = pred
+        nii_pred_after_postPro.save("pred_midSlice_after_postPro.nii.gz")  # save it
 
     # assign label to voxel
-    nii_c2c3 = zeros_like(nii_seg_flat)
+    nii_c2c3 = zeros_like(nii_seg_flat)  # 3D data with PIR orientaion
     if np.any(pred > 0):
         sct.printv('C2-C3 detected...', verbose)
 
         pred_bin = (pred > 0).astype(np.int_)
-        # labeled_pred, nb_regions = label_regions(pred_bin, return_num=True)
-        # if nb_regions > 1:  # if there are several clusters of voxels detected
-        #     region_idx_top, region_z_top = 0, 0
-        #     for region_idx in range(1, nb_regions+1):
-        #         pred_idx = (labeled_pred == region_idx).astype(np.int_)
-        #         pa_com, is_com = center_of_mass(pred_idx)
-        #         if is_com >= region_z_top:
-        #             region_idx_top = region_idx
-        #             region_z_top = is_com
-        #     pred[labeled_pred != region_idx_top] = 0  # then keep the one located at the top (IS direction)
-
         coord_max = np.where(pred == np.max(pred))
         pa_c2c3, is_c2c3 = coord_max[0][0], coord_max[1][0]
         nii_seg.change_orientation('PIR')
@@ -117,8 +118,9 @@ def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, verbose=1):
 
     # remove temporary files
     tmp_folder.chdir_undo()
-    sct.log.info("Remove temporary files...")
-    tmp_folder.cleanup()
+    if verbose < 2:
+        sct.log.info("Remove temporary files...")
+        tmp_folder.cleanup()
 
     nii_c2c3.change_orientation(orientation_init)
     return nii_c2c3
@@ -140,7 +142,7 @@ def detect_c2c3_from_file(fname_im, fname_seg, contrast, fname_c2c3=None, verbos
     nii_seg = Image(fname_seg)
 
     # detect C2-C3
-    nii_c2c3 = detect_c2c3(nii_im, nii_seg, contrast, verbose=verbose)
+    nii_c2c3 = detect_c2c3(nii_im.copy(), nii_seg, contrast, verbose=verbose)
 
     # Output C2-C3 disc label
     # by default, output in the same directory as the input images
