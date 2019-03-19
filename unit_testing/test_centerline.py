@@ -14,18 +14,18 @@ from spinalcordtoolbox.centerline.core import get_centerline, ParamCenterline, f
 from spinalcordtoolbox.image import Image
 import sct_utils as sct
 
-from create_test_data import dummy_centerline_small
+from create_test_data import dummy_centerline
 
 VERBOSE = 0
 
 
 # Generate a list of fake centerlines for testing different algorithms
-im_centerlines = [(dummy_centerline_small(size_arr=(41, 7, 9), subsampling=1, orientation='SAL'), 2.),
-                  (dummy_centerline_small(size_arr=(9, 9, 9), subsampling=3), 3.),
-                  (dummy_centerline_small(size_arr=(9, 9, 9), subsampling=1, hasnan=True), 2.),
-                  (dummy_centerline_small(size_arr=(30, 20, 50), subsampling=1), 3.),
-                  (dummy_centerline_small(size_arr=(30, 20, 50), subsampling=5), 4.),
-                  (dummy_centerline_small(size_arr=(30, 20, 50), dilate_ctl=2, subsampling=3, orientation='AIL'), 3.)]
+im_centerlines = [(dummy_centerline(size_arr=(41, 7, 9), subsampling=1, orientation='SAL'), 2.),
+                  (dummy_centerline(size_arr=(9, 9, 9), subsampling=3), 3.),
+                  (dummy_centerline(size_arr=(9, 9, 9), subsampling=1, hasnan=True), 2.),
+                  (dummy_centerline(size_arr=(30, 20, 50), subsampling=1), 3.),
+                  (dummy_centerline(size_arr=(30, 20, 50), subsampling=5), 4.),
+                  (dummy_centerline(size_arr=(30, 20, 50), dilate_ctl=2, subsampling=3, orientation='AIL'), 3.)]
 
 
 # noinspection 801,PyShadowingNames
