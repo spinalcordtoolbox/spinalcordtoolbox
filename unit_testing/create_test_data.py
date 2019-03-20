@@ -2,6 +2,7 @@
 # Collection of functions to create data for testing
 
 import numpy as np
+from datetime import datetime
 import itertools
 import nibabel as nib
 from skimage.transform import rotate
@@ -84,6 +85,7 @@ def dummy_segmentation(size_arr=(256, 256, 256), shape='ellipse', angle=15, a=50
     for i in range(3):
         xform[i][i] = 0.1  # adjust voxel dimension to get realistic spinal cord size (important for some functions)
     nii = nib.nifti1.Nifti1Image(data_rot.astype('float32'), xform)
+    # For debugging add .save() at the end of the command below
     img = Image(nii.get_data(), hdr=nii.header, orientation="RPI", dim=nii.header.get_data_shape(),
-                absolutepath='dummy_segmentation.nii.gz').save()
+                absolutepath='tmp_dummy_seg_'+datetime.now().strftime("%Y%m%d%H%M%S%f")+'.nii.gz')
     return img
