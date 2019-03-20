@@ -18,6 +18,7 @@ from spinalcordtoolbox.centerline.core import get_centerline
 from msct_types import Centerline
 
 # TODO: only use logging, don't use printing, pass images, not filenames, do imports at beginning of file, no chdir()
+# TODO: add degree for poly fitting
 
 # on v3.2.2 and earlier, the following volumes were output by default, which was a waste of time (people don't use it)
 OUTPUT_CSA_VOLUME = 0
@@ -164,8 +165,9 @@ def compute_shape(segmentation, algo_fitting='bspline', angle_correction=True, v
     # Initialize dictionary of property_list, with 1d array of nan (default value if no property for a given slice).
     shape_properties = {key: np.full_like(np.empty(nz), np.nan, dtype=np.double) for key in property_list}
 
-    # compute the spinal cord centerline based on the spinal cord segmentation
-    _, arr_ctl, arr_ctl_der = get_centerline(im_seg, algo_fitting=algo_fitting, verbose=verbose)
+    if angle_correction:
+        # compute the spinal cord centerline based on the spinal cord segmentation
+        _, arr_ctl, arr_ctl_der = get_centerline(im_seg, algo_fitting=algo_fitting, minmax=False, verbose=verbose)
 
     # Loop across z and compute shape analysis
     for iz in tqdm(range(min_z_index, max_z_index + 1), unit='iter', unit_scale=False, desc="Compute shape analysis",
@@ -182,12 +184,12 @@ def compute_shape(segmentation, algo_fitting='bspline', angle_correction=True, v
             # Compute the angle between the centerline and the normal vector to the slice (i.e. u_z)
             v0 = [tangent_vect[0], tangent_vect[2]]
             v1 = [0, 1]
-            angle_x = np.math.atan2(np.linalg.det([v0, v1]), np.dot(v0, v1))
+            angle_x_rad = np.math.atan2(np.linalg.det([v0, v1]), np.dot(v0, v1))
             v0 = [tangent_vect[1], tangent_vect[2]]
             v1 = [0, 1]
-            angle_y = np.math.atan2(np.linalg.det([v0, v1]), np.dot(v0, v1))
+            angle_y_rad = np.math.atan2(np.linalg.det([v0, v1]), np.dot(v0, v1))
             # Apply affine transformation to account for the angle between the cord centerline and the normal to the patch
-            tform = transform.AffineTransform(scale=(np.cos(angle_x), np.cos(angle_y)))
+            tform = transform.AffineTransform(scale=(np.cos(angle_x_rad), np.cos(angle_y_rad)))
             # TODO: make sure pattern does not go extend outside of image border
             current_patch_scaled = transform.warp(current_patch,
                                                   tform.inverse,
@@ -196,12 +198,12 @@ def compute_shape(segmentation, algo_fitting='bspline', angle_correction=True, v
                                                   )
         else:
             current_patch_scaled = current_patch
-            angle_x, angle_y = 0.0, 0.0
+            angle_x_rad, angle_y_rad = 0.0, 0.0
         # compute shape properties on 2D patch
         shape_property = properties2d(current_patch_scaled, [px, py])
         # Add custom fields
-        shape_property['angle_AP'] = angle_x
-        shape_property['angle_RL'] = angle_y
+        shape_property['angle_AP'] = angle_x_rad * 180.0 / math.pi
+        shape_property['angle_RL'] = angle_y_rad * 180.0 / math.pi
         if shape_property is not None:
             # Loop across properties and assign values for function output
             for property_name in property_list:
