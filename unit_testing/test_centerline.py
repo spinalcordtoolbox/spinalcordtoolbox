@@ -19,13 +19,42 @@ from create_test_data import dummy_centerline
 VERBOSE = 0
 
 
-# Generate a list of fake centerlines for testing different algorithms
+# Generate a list of fake centerlines: (dummy_segmentation(params), dict of expected results)
+im_ctl_find_and_sort_coord = [
+    (dummy_centerline(size_arr=(41, 7, 9), subsampling=1, orientation='LPI'), None),
+    ]
+
+im_ctl_zeroslice = [
+    (dummy_centerline(size_arr=(15, 7, 9), zeroslice=[0, 1], orientation='LPI'), (3, 7)),
+    (dummy_centerline(size_arr=(15, 7, 9), zeroslice=[], orientation='LPI'), (3, 9)),
+    ]
+
 im_centerlines = [(dummy_centerline(size_arr=(41, 7, 9), subsampling=1, orientation='SAL'), 2.),
                   (dummy_centerline(size_arr=(9, 9, 9), subsampling=3), 3.),
                   (dummy_centerline(size_arr=(9, 9, 9), subsampling=1, hasnan=True), 2.),
                   (dummy_centerline(size_arr=(30, 20, 50), subsampling=1), 3.),
                   (dummy_centerline(size_arr=(30, 20, 50), subsampling=5), 4.),
                   (dummy_centerline(size_arr=(30, 20, 50), dilate_ctl=2, subsampling=3, orientation='AIL'), 3.)]
+
+
+# noinspection 801,PyShadowingNames
+@pytest.mark.parametrize('img_ctl,expected', im_ctl_find_and_sort_coord)
+def test_find_and_sort_coord(img_ctl, expected):
+    img = img_ctl[0].copy()
+    centermass = find_and_sort_coord(img)
+    assert centermass.shape == (3, 9)
+    assert np.linalg.norm(centermass - img_ctl[2]) == 0
+
+
+# noinspection 801,PyShadowingNames
+@pytest.mark.parametrize('img_ctl,expected', im_ctl_zeroslice)
+def test_get_centerline_polyfit_minmax(img_ctl, expected):
+    """Test centerline fitting with minmax=True"""
+    img, img_sub = [img_ctl[0].copy(), img_ctl[1].copy()]
+    img_out, arr_out, _ = get_centerline(img_sub, algo_fitting='polyfit', param=ParamCenterline(degree=3),
+                                         minmax=True, verbose=VERBOSE)
+    # Assess output size
+    assert arr_out.shape == expected
 
 
 # noinspection 801,PyShadowingNames

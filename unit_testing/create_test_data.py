@@ -10,7 +10,7 @@ from skimage.transform import rotate
 from spinalcordtoolbox.image import Image
 
 
-def dummy_centerline(size_arr=(9, 9, 9), subsampling=1, dilate_ctl=0, hasnan=False, orientation='RPI'):
+def dummy_centerline(size_arr=(9, 9, 9), subsampling=1, dilate_ctl=0, hasnan=False, zeroslice=[], orientation='RPI'):
     """
     Create a dummy Image centerline of small size. Return the full and sub-sampled version along z.
     :param size_arr: tuple: (nx, ny, nz)
@@ -18,6 +18,7 @@ def dummy_centerline(size_arr=(9, 9, 9), subsampling=1, dilate_ctl=0, hasnan=Fal
     :param dilate_ctl: Dilation of centerline. E.g., if dilate_ctl=1, result will be a square of 3x3 per slice.
                          if dilate_ctl=0, result will be a single pixel per slice.
     :param hasnan: Bool: Image has non-numerical values: nan, inf. In this case, do not subsample.
+    :param zeroslice: list int: zero all slices listed in this param
     :param orientation:
     :return:
     """
@@ -28,10 +29,19 @@ def dummy_centerline(size_arr=(9, 9, 9), subsampling=1, dilate_ctl=0, hasnan=Fal
     z = np.array([0, round(nz/2.), nz-1])
     p = poly1d(polyfit(z, x, deg=3))
     data = np.zeros((nx, ny, nz))
+    arr_ctl = np.array([p(range(nz)).astype(np.int),
+                        [round(ny / 4.)] * len(range(nz)),
+                        range(nz)], dtype='uint8')
     # Loop across dilation of centerline. E.g., if dilate_ctl=1, result will be a square of 3x3 per slice.
     for ixiy_ctl in itertools.product(range(-dilate_ctl, dilate_ctl+1, 1), range(-dilate_ctl, dilate_ctl+1, 1)):
-        data[p(range(nz)).astype(np.int) + ixiy_ctl[0], round(ny / 4.) + ixiy_ctl[1], range(nz)] = 1
-    # generate Image object with RPI orientation
+        data[(arr_ctl[0] + ixiy_ctl[0]).tolist(),
+             (arr_ctl[1] + ixiy_ctl[1]).tolist(),
+             arr_ctl[2].tolist()] = 1
+    # Zero specified slices
+    if zeroslice is not []:
+        data[:, :, zeroslice] = 0
+
+    # Create image with default orientation LPI
     affine = np.eye(4)
     nii = nib.nifti1.Nifti1Image(data, affine)
     img = Image(data, hdr=nii.header, dim=nii.header.get_data_shape())
@@ -47,7 +57,7 @@ def dummy_centerline(size_arr=(9, 9, 9), subsampling=1, dilate_ctl=0, hasnan=Fal
     # Update orientation
     img.change_orientation(orientation)
     img_sub.change_orientation(orientation)
-    return img, img_sub
+    return img, img_sub, arr_ctl
 
 
 def dummy_segmentation(size_arr=(256, 256, 256), shape='ellipse', angle=15, a=50.0, b=30.0):
