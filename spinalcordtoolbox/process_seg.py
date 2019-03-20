@@ -130,12 +130,13 @@ def compute_csa(segmentation, algo_fitting='bspline', angle_correction=True,
     return metrics
 
 
-def compute_shape(segmentation, algo_fitting='bspline', verbose=1):
+def compute_shape(segmentation, algo_fitting='bspline', angle_correction=True, verbose=1):
     """
     Compute morphometric measures of the spinal cord in the transverse (axial) plane from the segmentation.
     The segmentation could be binary or weighted for partial volume [0,1].
     :param segmentation: input segmentation. Could be either an Image or a file name.
     :param algo_fitting:
+    :param angle_correction:
     :param verbose:
     :return metrics: Dict of class Metric()
     """
@@ -171,39 +172,31 @@ def compute_shape(segmentation, algo_fitting='bspline', verbose=1):
                    ascii=True, ncols=80):
         # Extract 2D patch
         current_patch = im_seg.data[:, :, iz]
-        """ DEBUG
-        from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
-        from matplotlib.figure import Figure
-        fig = Figure()
-        FigureCanvas(fig)
-        ax = fig.add_subplot(111)
-        ax.imshow(image)
-        ax.grid()
-        ax.set_xlabel('x')
-        ax.set_ylabel('y')
-        fig.savefig('tmp_fig.png')
-        """
-        # Extract tangent vector to the centerline (i.e. its derivative)
-        tangent_vect = np.array([arr_ctl_der[0][iz - min_z_index] * px,
-                                 arr_ctl_der[1][iz - min_z_index] * py,
-                                 pz])
-        # Normalize vector by its L2 norm
-        tangent_vect = tangent_vect / np.linalg.norm(tangent_vect)
-        # Compute the angle between the centerline and the normal vector to the slice (i.e. u_z)
-        v0 = [tangent_vect[0], tangent_vect[2]]
-        v1 = [0, 1]
-        angle_x = np.math.atan2(np.linalg.det([v0, v1]), np.dot(v0, v1))
-        v0 = [tangent_vect[1], tangent_vect[2]]
-        v1 = [0, 1]
-        angle_y = np.math.atan2(np.linalg.det([v0, v1]), np.dot(v0, v1))
-        # Apply affine transformation to account for the angle between the cord centerline and the normal to the patch
-        tform = transform.AffineTransform(scale=(np.cos(angle_x), np.cos(angle_y)))
-        # TODO: make sure pattern does not go extend outside of image border
-        current_patch_scaled = transform.warp(current_patch,
-                                              tform.inverse,
-                                              output_shape=current_patch.shape,
-                                              order=1,
-                                              )
+        if angle_correction:
+            # Extract tangent vector to the centerline (i.e. its derivative)
+            tangent_vect = np.array([arr_ctl_der[0][iz - min_z_index] * px,
+                                     arr_ctl_der[1][iz - min_z_index] * py,
+                                     pz])
+            # Normalize vector by its L2 norm
+            tangent_vect = tangent_vect / np.linalg.norm(tangent_vect)
+            # Compute the angle between the centerline and the normal vector to the slice (i.e. u_z)
+            v0 = [tangent_vect[0], tangent_vect[2]]
+            v1 = [0, 1]
+            angle_x = np.math.atan2(np.linalg.det([v0, v1]), np.dot(v0, v1))
+            v0 = [tangent_vect[1], tangent_vect[2]]
+            v1 = [0, 1]
+            angle_y = np.math.atan2(np.linalg.det([v0, v1]), np.dot(v0, v1))
+            # Apply affine transformation to account for the angle between the cord centerline and the normal to the patch
+            tform = transform.AffineTransform(scale=(np.cos(angle_x), np.cos(angle_y)))
+            # TODO: make sure pattern does not go extend outside of image border
+            current_patch_scaled = transform.warp(current_patch,
+                                                  tform.inverse,
+                                                  output_shape=current_patch.shape,
+                                                  order=1,
+                                                  )
+        else:
+            current_patch_scaled = current_patch
+            angle_x, angle_y = 0.0, 0.0
         # compute shape properties on 2D patch
         shape_property = properties2d(current_patch_scaled, [px, py])
         # Add custom fields
@@ -216,6 +209,18 @@ def compute_shape(segmentation, algo_fitting='bspline', verbose=1):
         else:
             sct.log.warning('No properties for slice: '.format([iz]))
 
+        """ DEBUG
+        from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+        from matplotlib.figure import Figure
+        fig = Figure()
+        FigureCanvas(fig)
+        ax = fig.add_subplot(111)
+        ax.imshow(current_patch_scaled)
+        ax.grid()
+        ax.set_xlabel('x')
+        ax.set_ylabel('y')
+        fig.savefig('tmp_fig.png')
+        """
     metrics = {}
     for key, value in shape_properties.items():
         # Making sure all entries added to metrics have results
