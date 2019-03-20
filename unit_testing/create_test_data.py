@@ -49,16 +49,17 @@ def dummy_centerline(size_arr=(9, 9, 9), subsampling=1, dilate_ctl=0, hasnan=Fal
     return img, img_sub
 
 
-def dummy_segmentation(shape='rectangle', angle=15, a=50.0, b=30.0):
+def dummy_segmentation(size_arr=(256, 256, 256), shape='ellipse', angle=15, a=50.0, b=30.0):
     """Create a dummy Image with a ellipse or ones running from top to bottom in the 3rd dimension, and rotate the image
     to make sure that compute_csa and compute_shape properly estimate the centerline angle.
+    :param size_arr: tuple: (nx, ny, nz)
     :param shape: {'rectangle', 'ellipse'}
     :param angle: int: in deg
     :param a: float: 1st radius
     :param b: float: 2nd radius
     :return: fname_seg: filename of 3D binary image
     """
-    nx, ny, nz = 200, 200, 150  # image dimension
+    nx, ny, nz = size_arr
     data = np.random.random((nx, ny, nz)) * 0.
     xx, yy = np.mgrid[:nx, :ny]
     # loop across slices and add an ellipse of axis length a and b
@@ -70,19 +71,19 @@ def dummy_segmentation(shape='rectangle', angle=15, a=50.0, b=30.0):
             data[:, :, iz] = (((xx - nx / 2) / a) ** 2 + ((yy - ny / 2) / b) ** 2 <= 1) * 1
     # swap x-z axes (to make a rotation within y-z plane)
     data_swap = data.swapaxes(0, 2)
-    # rotate by 15 deg, and re-grid using nearest neighbour interpolation (compute_shape only takes binary iputs)
+    # rotate by 15 deg, and re-grid using linear interpolation
     data_swap_rot = rotate(data_swap, angle, resize=False, center=None, order=1, mode='constant', cval=0,
                            clip=False, preserve_range=False)
     # swap back
     data_rot = data_swap_rot.swapaxes(0, 2)
     # Crop to avoid rotation edge issues
-    data_rot_crop = data_rot[..., 25:nz-25]
+    # data_rot_crop = data_rot[..., 25:nz-25]
     # remove 5 to assess SCT stability if incomplete segmentation
-    data_rot_crop[..., data_rot_crop.shape[2]-5:] = 0
+    # data_rot_crop[..., data_rot_crop.shape[2]-5:] = 0
     xform = np.eye(4)
     for i in range(3):
         xform[i][i] = 0.1  # adjust voxel dimension to get realistic spinal cord size (important for some functions)
-    nii = nib.nifti1.Nifti1Image(data_rot_crop.astype('float32'), xform)
+    nii = nib.nifti1.Nifti1Image(data_rot.astype('float32'), xform)
     img = Image(nii.get_data(), hdr=nii.header, orientation="RPI", dim=nii.header.get_data_shape(),
-                absolutepath='dummy_segmentation.nii.gz')
+                absolutepath='dummy_segmentation.nii.gz').save()
     return img
