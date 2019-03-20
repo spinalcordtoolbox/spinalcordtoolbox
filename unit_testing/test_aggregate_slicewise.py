@@ -199,15 +199,15 @@ def test_save_as_csv(dummy_metrics):
     with open('tmp_file_out.csv', 'r') as csvfile:
         spamreader = csv.reader(csvfile, delimiter=',')
         spamreader.next()  # skip header
-        assert spamreader.next()[1:] == [sct.__version__, 'FakeFile.txt', '3:4', '45.5', '4.5']
+        assert spamreader.next()[1:] == [sct.__version__, 'FakeFile.txt', '3:4', '', '45.5', '4.5']
     # with appending
     aggregate_slicewise.save_as_csv(agg_metric, 'tmp_file_out.csv')
     aggregate_slicewise.save_as_csv(agg_metric, 'tmp_file_out.csv', append=True)
     with open('tmp_file_out.csv', 'r') as csvfile:
         spamreader = csv.reader(csvfile, delimiter=',')
         spamreader.next()  # skip header
-        assert spamreader.next()[1:] == [sct.__version__, '', '3:4', '45.5', '4.5']
-        assert spamreader.next()[1:] == [sct.__version__, '', '3:4', '45.5', '4.5']
+        assert spamreader.next()[1:] == [sct.__version__, '', '3:4', '', '45.5', '4.5']
+        assert spamreader.next()[1:] == [sct.__version__, '', '3:4', '', '45.5', '4.5']
 
 
 # noinspection 801,PyShadowingNames
@@ -223,6 +223,43 @@ def test_save_as_csv_slices(dummy_metrics, dummy_vert_level):
         row = reader.next()
         assert row['Slice (I->S)'] == '2:5'
         assert row['VertLevel'] == '3:4'
+
+
+# noinspection 801,PyShadowingNames
+def test_save_as_csv_per_level(dummy_metrics, dummy_vert_level):
+    """Make sure slices are listed in reduced form"""
+    agg_metric = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], levels=[3, 4],
+                                                                  perlevel=True,
+                                                                  vert_level=dummy_vert_level,
+                                                                  group_funcs=(('WA', aggregate_slicewise.func_wa),))
+    aggregate_slicewise.save_as_csv(agg_metric, 'tmp_file_out.csv')
+    with open('tmp_file_out.csv', 'r') as csvfile:
+        reader = csv.DictReader(csvfile, delimiter=',')
+        row = reader.next()
+        assert row['Slice (I->S)'] == '2:3'
+        assert row['VertLevel'] == '3'
+
+
+# noinspection 801,PyShadowingNames
+def test_save_as_csv_per_slice_then_per_level(dummy_metrics, dummy_vert_level):
+    """Test with and without specifying perlevel. See: https://github.com/neuropoly/spinalcordtoolbox/issues/2141"""
+    agg_metric = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], levels=[3, 4],
+                                                                  perlevel=True,
+                                                                  vert_level=dummy_vert_level,
+                                                                  group_funcs=(('WA', aggregate_slicewise.func_wa),))
+    aggregate_slicewise.save_as_csv(agg_metric, 'tmp_file_out.csv')
+    agg_metric = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], slices=[0],
+                                                                  group_funcs=(('WA', aggregate_slicewise.func_wa),),)
+    aggregate_slicewise.save_as_csv(agg_metric, 'tmp_file_out.csv', append=True)
+    with open('tmp_file_out.csv', 'r') as csvfile:
+        reader = csv.DictReader(csvfile, delimiter=',')
+        row = reader.next()
+        assert row['Slice (I->S)'] == '2:3'
+        assert row['VertLevel'] == '3'
+        reader.next()
+        row = reader.next()
+        assert row['Slice (I->S)'] == '0'
+        assert row['VertLevel'] == ''
 
 
 # noinspection 801,PyShadowingNames
@@ -248,4 +285,4 @@ def test_save_as_csv_extract_metric(dummy_data_and_labels):
     with open('tmp_file_out.csv', 'r') as csvfile:
         spamreader = csv.reader(csvfile, delimiter=',')
         spamreader.next()  # skip header
-        assert spamreader.next()[1:-1] == [sct.__version__, '', '0:4', 'label_0', '2.5', '38.0']
+        assert spamreader.next()[1:-1] == [sct.__version__, '', '0:4', '', 'label_0', '2.5', '38.0']

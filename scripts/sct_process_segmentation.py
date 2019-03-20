@@ -106,7 +106,7 @@ def get_parser():
     parser.add_option(name='-perlevel',
                       type_value='int',
                       description='Set to 1 to output one metric per vertebral level instead of a single '
-                                  'output metric.',
+                                  'output metric. This flag needs to be used with flag -vert.',
                       mandatory=False,
                       default_value=Param().perlevel)
     parser.add_option(name='-r',
