@@ -21,20 +21,20 @@ def find_and_sort_coord(img):
     Find x,y,z coordinate of centerline and output an array which is sorted along SI direction. Removes any duplicate
     along the SI direction by averaging across the same ind_SI.
     :param img: Image(): Input image. Could be any orientation.
-    :return:
+    :return: nx3 numpy array with X, Y, Z coordinates of center of mass
     """
     # TODO: deal with nan, etc.
     # Get indices of non-null values
     arr = np.array(np.where(img.data))
     # Sort indices according to SI axis
     dim_si = [img.orientation.find(x) for x in ['I', 'S'] if img.orientation.find(x) is not -1][0]
-    ind = np.argsort(arr[dim_si])
     # Loop across SI axis and average coordinates within duplicate SI values
     arr_sorted_avg = [np.array([])] * 3
     for i_si in sorted(set(arr[dim_si])):
         # Get indices corresponding to i_si
         ind_si_all = np.where(arr[dim_si] == i_si)
         if len(ind_si_all[0]):
+            # loop across dimensions and average all existing coordinates (equivalent to center of mass)
             for i_dim in range(3):
                 arr_sorted_avg[i_dim] = np.append(arr_sorted_avg[i_dim], arr[i_dim][ind_si_all].mean())
     return np.array(arr_sorted_avg)
