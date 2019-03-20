@@ -107,7 +107,9 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], persli
     # loop across slice group
     for slicegroup in slicegroups:
         # add level info
-        if levels:
+        if vertgroups is None:
+            agg_metric[slicegroup]['VertLevel'] = None
+        else:
             agg_metric[slicegroup]['VertLevel'] = vertgroups[slicegroups.index(slicegroup)]
         # Loop across functions (e.g.: MEAN, STD)
         for (name, func) in group_funcs:
@@ -402,7 +404,7 @@ def save_as_csv(agg_metric, fname_out, fname_in=None, append=False):
     # list_item = ['VertLevel', 'Label', 'MEAN', 'WA', 'BIN', 'ML', 'MAP', 'STD', 'MAX']
     # TODO: The thing below is ugly and needs to be fixed, but this is the only solution I found to order the columns
     #  without refactoring the code with OrderedDict.
-    list_item = ['VertLevel', 'Label', 'Size [vox]', 'MEAN(area)', 'STD(area)', 'MEAN(AP_diameter)', 'STD(AP_diameter)',
+    list_item = ['Label', 'Size [vox]', 'MEAN(area)', 'STD(area)', 'MEAN(AP_diameter)', 'STD(AP_diameter)',
                  'MEAN(RL_diameter)', 'STD(RL_diameter)', 'MEAN(ratio_minor_major)', 'STD(ratio_minor_major)',
                  'MEAN(eccentricity)', 'STD(eccentricity)', 'MEAN(orientation)', 'STD(orientation)',
                  'MEAN(equivalent_diameter)', 'STD(equivalent_diameter)', 'MEAN(solidity)', 'STD(solidity)',
@@ -412,7 +414,7 @@ def save_as_csv(agg_metric, fname_out, fname_in=None, append=False):
     if not append or not os.path.isfile(fname_out):
         with open(fname_out, 'w') as csvfile:
             # spamwriter = csv.writer(csvfile, delimiter=',')
-            header = ['Timestamp', 'SCT Version', 'Filename', 'Slice (I->S)']
+            header = ['Timestamp', 'SCT Version', 'Filename', 'Slice (I->S)', 'VertLevel']
             agg_metric_key = agg_metric[agg_metric.keys()[0]].keys()
             for item in list_item:
                 for key in agg_metric_key:
@@ -431,15 +433,11 @@ def save_as_csv(agg_metric, fname_out, fname_in=None, append=False):
             line.append(sct.__version__)  # SCT Version
             line.append(fname_in)  # file name associated with the results
             line.append(parse_num_list_inv(slicegroup))  # list all slices in slicegroup
+            line.append(parse_num_list_inv(agg_metric[slicegroup]['VertLevel']))  # list vertebral levels
             agg_metric_key = agg_metric[agg_metric.keys()[0]].keys()
             for item in list_item:
                 for key in agg_metric_key:
                     if item in key:
-                        # Special case for VertLevel
-                        if key == 'VertLevel':
-                            line.append(
-                                parse_num_list_inv(agg_metric[slicegroup]['VertLevel']))  # list vertebral levels
-                        else:
-                            line.append(str(agg_metric[slicegroup][key]))
+                        line.append(str(agg_metric[slicegroup][key]))
                         break
             spamwriter.writerow(line)
