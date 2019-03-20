@@ -68,7 +68,7 @@ def get_centerline(im_seg, algo_fitting='polyfit', minmax=True, param=ParamCente
 
     # Crop output centerline to where the segmentation starts/end
     if minmax:
-        z_ref = np.array(range(z_mean.min().astype(int), z_mean.max().astype(int)))
+        z_ref = np.array(range(z_mean.min().astype(int), z_mean.max().astype(int) + 1))
     else:
         z_ref = np.array(range(im_seg.dim[2]))
 
