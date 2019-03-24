@@ -23,7 +23,8 @@ VERBOSE = 0
 # Generate a list of fake segmentation for testing: (dummy_segmentation(params), dict of expected results)
 im_segs_without_angle = [
     (dummy_segmentation(size_arr=(128, 128, 5), shape='ellipse', angle=0, a=50.0, b=30.0),
-     {'area': 47.01, 'angle_AP': 0.0, 'angle_RL': 0.0}),
+     {'area': 47.01, 'angle_AP': 0.0, 'angle_RL': 0.0, 'diameter_AP': 6.0, 'diameter_RL': 10.0, 'eccentricity': 0.8,
+      'orientation': 0.0, 'solidity': 1.0}),
     ]
 
 im_segs_with_angle = [
@@ -71,16 +72,8 @@ def test_compute_shape_without_angle(im_seg, expected):
                                         algo_fitting=PARAM.algo_fitting,
                                         angle_correction=False,
                                         verbose=VERBOSE)
-    assert np.mean(metrics['area'].data) == pytest.approx(expected['area'], rel=0.02)
-    assert np.mean(metrics['angle_AP'].data) == pytest.approx(expected['angle_AP'], rel=0.01)
-    assert np.mean(metrics['angle_RL'].data) == pytest.approx(expected['angle_RL'], rel=0.01)
-    # assert np.mean(metrics['diameter_AP'].data[30:70]) == pytest.approx(6.0, rel=0.05)
-    # assert np.mean(metrics['diameter_RL'].data[30:70]) == pytest.approx(10.0, rel=0.05)
-    # assert np.mean(metrics['eccentricity'].data[30:70]) == pytest.approx(0.8, rel=0.05)
-    # assert np.mean(metrics['orientation'].data[30:70]) == pytest.approx(0.0, rel=0.05)
-    # assert np.mean(metrics['solidity'].data[30:70]) == pytest.approx(1.0, rel=0.05)
-    # assert np.mean(metrics['angle_AP'].data[30:70]) == pytest.approx(0.0, rel=0.05)
-    # assert np.mean(metrics['angle_RL'].data[30:70]) == pytest.approx(0.0, rel=0.05)
+    for key in expected.keys():
+        assert np.mean(metrics[key].data) == pytest.approx(expected[key], rel=0.03)
 
 
 # noinspection 801,PyShadowingNames
