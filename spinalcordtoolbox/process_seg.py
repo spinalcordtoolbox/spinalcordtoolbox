@@ -201,10 +201,10 @@ def compute_shape(segmentation, algo_fitting='bspline', angle_correction=True, v
             angle_x_rad, angle_y_rad = 0.0, 0.0
         # compute shape properties on 2D patch
         shape_property = properties2d(current_patch_scaled, [px, py])
-        # Add custom fields
-        shape_property['angle_AP'] = angle_x_rad * 180.0 / math.pi
-        shape_property['angle_RL'] = angle_y_rad * 180.0 / math.pi
         if shape_property is not None:
+            # Add custom fields
+            shape_property['angle_AP'] = angle_x_rad * 180.0 / math.pi
+            shape_property['angle_RL'] = angle_y_rad * 180.0 / math.pi
             # Loop across properties and assign values for function output
             for property_name in property_list:
                 shape_properties[property_name][iz] = shape_property[property_name]
