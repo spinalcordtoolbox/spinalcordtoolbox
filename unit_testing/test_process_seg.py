@@ -21,17 +21,14 @@ PARAM = Param()
 VERBOSE = 0
 
 # Generate a list of fake segmentation for testing: (dummy_segmentation(params), dict of expected results)
-im_segs_without_angle = [
+im_segs = [
     (dummy_segmentation(size_arr=(128, 128, 5), shape='ellipse', a=50.0, b=30.0),
      {'area': 47.01, 'angle_AP': 0.0, 'angle_RL': 0.0, 'diameter_AP': 6.0, 'diameter_RL': 10.0, 'eccentricity': 0.8,
       'orientation': 0.0, 'solidity': 1.0}),
     (dummy_segmentation(size_arr=(128, 128, 5), pixdim=(0.5, 0.5, 5), shape='rectangle', a=10.0, b=6.0),
-     {'area': 68.25}),
+     {'area': 68.25, 'angle_RL': 0.0}),
     (dummy_segmentation(size_arr=(128, 128, 5), pixdim=(0.5, 0.5, 5), shape='rectangle', angle_IS=15, a=10.0, b=6.0),
-     {'area': 68.25}),
-    ]
-
-im_segs_with_angle = [
+     {'area': 68.25, 'angle_RL': 0.0}),
     (dummy_segmentation(size_arr=(128, 128, 50), shape='ellipse', angle_RL=15, a=50.0, b=30.0),
      {'area': 47.01, 'angle_AP': 0.0, 'angle_RL': 15.0}),
     ]
@@ -70,28 +67,33 @@ im_segs_with_angle = [
 
 
 # noinspection 801,PyShadowingNames
-@pytest.mark.parametrize('im_seg,expected', im_segs_without_angle)
+@pytest.mark.parametrize('im_seg,expected', im_segs)
 def test_compute_shape_without_angle(im_seg, expected):
+    # If input image has a tilted spinal cord about RL axis, then correct for angle while calling the function
+    if expected['angle_RL'] == 0.0:
+        angle_corr = False
+    else:
+        angle_corr = True
     metrics = process_seg.compute_shape(im_seg,
                                         algo_fitting=PARAM.algo_fitting,
-                                        angle_correction=False,
+                                        angle_correction=angle_corr,
                                         verbose=VERBOSE)
     for key in expected.keys():
         assert np.mean(metrics[key].data) == pytest.approx(expected[key], rel=0.03)
-
-
-# noinspection 801,PyShadowingNames
-@pytest.mark.parametrize('im_seg,expected', im_segs_with_angle)
-def test_compute_shape_with_angle_estimated(im_seg, expected):
-    metrics = process_seg.compute_shape(im_seg,
-                                        algo_fitting=PARAM.algo_fitting,
-                                        angle_correction=True,
-                                        verbose=VERBOSE)
-    # Get mid slice to avoid edge effects
-    zmid = int(round(len(metrics['area'].data) / 2.0))
-    assert float(metrics['area'].data[zmid]) == pytest.approx(expected['area'], rel=0.01)
-    assert float(metrics['angle_AP'].data[zmid]) == pytest.approx(expected['angle_AP'], rel=0.01)
-    assert float(metrics['angle_RL'].data[zmid]) == pytest.approx(expected['angle_RL'], rel=0.05)
+#
+#
+# # noinspection 801,PyShadowingNames
+# @pytest.mark.parametrize('im_seg,expected', im_segs_with_angle)
+# def test_compute_shape_with_angle_estimated(im_seg, expected):
+#     metrics = process_seg.compute_shape(im_seg,
+#                                         algo_fitting=PARAM.algo_fitting,
+#                                         angle_correction=True,
+#                                         verbose=VERBOSE)
+#     # Get mid slice to avoid edge effects
+#     zmid = int(round(len(metrics['area'].data) / 2.0))
+#     assert float(metrics['area'].data[zmid]) == pytest.approx(expected['area'], rel=0.01)
+#     assert float(metrics['angle_AP'].data[zmid]) == pytest.approx(expected['angle_AP'], rel=0.01)
+#     assert float(metrics['angle_RL'].data[zmid]) == pytest.approx(expected['angle_RL'], rel=0.05)
     # assert np.mean(metrics['diameter_AP'].data[30:70]) == pytest.approx(6.0, rel=0.05)
     # assert np.mean(metrics['diameter_RL'].data[30:70]) == pytest.approx(10.0, rel=0.05)
     # assert np.mean(metrics['eccentricity'].data[30:70]) == pytest.approx(0.8, rel=0.05)
