@@ -4,10 +4,13 @@
 import numpy as np
 from datetime import datetime
 import itertools
-import nibabel as nib
 from skimage.transform import rotate
 
+import nibabel as nib
+from nipy.io.nifti_ref import nifti2nipy, nipy2nifti
+
 from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.resampling import resample_nipy
 
 
 def dummy_centerline(size_arr=(9, 9, 9), subsampling=1, dilate_ctl=0, hasnan=False, zeroslice=[], orientation='RPI'):
@@ -60,7 +63,7 @@ def dummy_centerline(size_arr=(9, 9, 9), subsampling=1, dilate_ctl=0, hasnan=Fal
     return img, img_sub, arr_ctl
 
 
-def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(0.1, 0.1, 0.1), shape='ellipse', angle_RL=0, angle_IS=0,
+def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), shape='ellipse', angle_RL=0, angle_IS=0,
                        a=50.0, b=30.0):
     """Create a dummy Image with a ellipse or ones running from top to bottom in the 3rd dimension, and rotate the image
     to make sure that compute_csa and compute_shape properly estimate the centerline angle.
@@ -69,14 +72,14 @@ def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(0.1, 0.1, 0.1), shape='
     :param shape: {'rectangle', 'ellipse'}
     :param angle_RL: int: angle around RL axis (in deg)
     :param angle_IS: int: angle around IS axis (in deg)
-    :param a: float: 1st radius. With a, b = 50.0, 30.0 (in pix size), theoretical CSA of ellipse is 4712.4
+    :param a: float: 1st radius. With a, b = 50.0, 30.0 (in mm), theoretical CSA of ellipse is 4712.4
     :param b: float: 2nd radius
     :return: img: Image object
     """
     # Initialization
     padding = 15  # Padding size (isotropic) to avoid edge effect during rotation
     # Create a 3d array, with dimensions corresponding to x: RL, y: AP, z: IS
-    nx, ny, nz = size_arr
+    nx, ny, nz = [int(size_arr[i] * pixdim[i]) for i in range(3)]
     data = np.random.random((nx, ny, nz)) * 0.
     xx, yy = np.mgrid[:nx, :ny]
     # loop across slices and add object
@@ -95,11 +98,11 @@ def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(0.1, 0.1, 0.1), shape='
                          preserve_range=False)
 
     # ROTATION ABOUT RL AXIS
-    # swap x-z axes (to make a rotation within y-z plane, because rotate will apply rotation on the first 2 dims)
+    # Swap x-z axes (to make a rotation within y-z plane, because rotate will apply rotation on the first 2 dims)
     data_rotIS_swap = data_rotIS.swapaxes(0, 2)
     # rotate (in deg), and re-grid using linear interpolation
-    data_rotIS_swap_rotRL = rotate(data_rotIS_swap, angle_RL, resize=False, center=None, order=1, mode='constant', cval=0,
-                           clip=False, preserve_range=False)
+    data_rotIS_swap_rotRL = rotate(data_rotIS_swap, angle_RL, resize=False, center=None, order=1, mode='constant',
+                                   cval=0, clip=False, preserve_range=False)
     # swap back
     data_rotIS_rotRL = data_rotIS_swap_rotRL.swapaxes(0, 2)
 
@@ -109,11 +112,16 @@ def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(0.1, 0.1, 0.1), shape='
     # Create nibabel object
     xform = np.eye(4)
     for i in range(3):
-        xform[i][i] = pixdim[i]
+        xform[i][i] = 1  # in [mm]
     nii = nib.nifti1.Nifti1Image(data_rotIS_rotRL.astype('float32'), xform)
+    # Create nipy object and resample to desired resolution
+    nii_nipy = nifti2nipy(nii)
+    nii_nipy_r = resample_nipy(nii_nipy, new_size='x'.join([str(i) for i in pixdim]), new_size_type='mm',
+                               interpolation='linear')
+    nii_r = nipy2nifti(nii_nipy_r)
     # TODO: orientation is likely LPI (not RPI), so check to make sure...
     # Create Image object
     # For debugging add .save() at the end of the command below
-    img = Image(nii.get_data(), hdr=nii.header, orientation="RPI", dim=nii.header.get_data_shape(),
-                absolutepath='tmp_dummy_seg_'+datetime.now().strftime("%Y%m%d%H%M%S%f")+'.nii.gz')
+    img = Image(nii_r.get_data(), hdr=nii_r.header, orientation="RPI", dim=nii_r.header.get_data_shape(),
+                absolutepath='tmp_dummy_seg_'+datetime.now().strftime("%Y%m%d%H%M%S%f")+'.nii.gz').save()
     return img
