@@ -73,6 +73,8 @@ def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(0.1, 0.1, 0.1), shape='
     :param b: float: 2nd radius
     :return: img: Image object
     """
+    # Initialization
+    padding = 15  # Padding size (isotropic) to avoid edge effect during rotation
     # Create a 3d array, with dimensions corresponding to x: RL, y: AP, z: IS
     nx, ny, nz = size_arr
     data = np.random.random((nx, ny, nz)) * 0.
@@ -84,6 +86,9 @@ def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(0.1, 0.1, 0.1), shape='
         if shape == 'ellipse':
             data[:, :, iz] = (((xx - nx / 2) / a) ** 2 + ((yy - ny / 2) / b) ** 2 <= 1) * 1
 
+    # Pad to avoid edge effect during rotation
+    data = np.pad(data, padding, 'reflect')
+
     # ROTATION ABOUT IS AXIS
     # rotate (in deg), and re-grid using linear interpolation
     data_rotIS = rotate(data, angle_IS, resize=False, center=None, order=1, mode='constant', cval=0, clip=False,
@@ -92,18 +97,23 @@ def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(0.1, 0.1, 0.1), shape='
     # ROTATION ABOUT RL AXIS
     # swap x-z axes (to make a rotation within y-z plane, because rotate will apply rotation on the first 2 dims)
     data_rotIS_swap = data_rotIS.swapaxes(0, 2)
-    # TODO: pad, then crop, to avoid edge effects
     # rotate (in deg), and re-grid using linear interpolation
     data_rotIS_swap_rotRL = rotate(data_rotIS_swap, angle_RL, resize=False, center=None, order=1, mode='constant', cval=0,
                            clip=False, preserve_range=False)
     # swap back
     data_rotIS_rotRL = data_rotIS_swap_rotRL.swapaxes(0, 2)
+
+    # Crop image (to remove padding)
+    data_rotIS_rotRL = data_rotIS_rotRL[padding:nx+padding, padding:ny+padding, padding:nz+padding]
+
+    # Create nibabel object
     xform = np.eye(4)
     for i in range(3):
         xform[i][i] = pixdim[i]
     nii = nib.nifti1.Nifti1Image(data_rotIS_rotRL.astype('float32'), xform)
     # TODO: orientation is likely LPI (not RPI), so check to make sure...
+    # Create Image object
     # For debugging add .save() at the end of the command below
     img = Image(nii.get_data(), hdr=nii.header, orientation="RPI", dim=nii.header.get_data_shape(),
-                absolutepath='tmp_dummy_seg_'+datetime.now().strftime("%Y%m%d%H%M%S%f")+'.nii.gz').save()
+                absolutepath='tmp_dummy_seg_'+datetime.now().strftime("%Y%m%d%H%M%S%f")+'.nii.gz')
     return img
