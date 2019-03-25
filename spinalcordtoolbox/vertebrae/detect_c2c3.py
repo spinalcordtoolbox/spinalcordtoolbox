@@ -111,7 +111,7 @@ def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, verbose=1):
         coord_max = np.where(pred == np.max(pred))
         pa_c2c3, is_c2c3 = coord_max[0][0], coord_max[1][0]
         nii_seg.change_orientation('PIR')
-        rl_c2c3 = int(np.rint(center_of_mass(nii_seg.data[:, is_c2c3, :])[1]))
+        rl_c2c3 = int(np.rint(center_of_mass(np.array(nii_seg.data[:, is_c2c3, :]))[1]))
         nii_c2c3.data[pa_c2c3, is_c2c3, rl_c2c3] = 3
     else:
         sct.printv('C2-C3 not detected...', verbose)
