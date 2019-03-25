@@ -63,8 +63,8 @@ def dummy_centerline(size_arr=(9, 9, 9), subsampling=1, dilate_ctl=0, hasnan=Fal
     return img, img_sub, arr_ctl
 
 
-def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), shape='ellipse', angle_RL=0, angle_IS=0,
-                       radius_RL=50.0, radius_AP=30.0):
+def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), shape='rectangle', angle_RL=0, angle_IS=0,
+                       radius_RL=5.0, radius_AP=3.0, zeroslice=[]):
     """Create a dummy Image with a ellipse or ones running from top to bottom in the 3rd dimension, and rotate the image
     to make sure that compute_csa and compute_shape properly estimate the centerline angle.
     :param size_arr: tuple: (nx, ny, nz)
@@ -74,6 +74,7 @@ def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), shape='ellips
     :param angle_IS: int: angle around IS axis (in deg)
     :param radius_RL: float: 1st radius. With a, b = 50.0, 30.0 (in mm), theoretical CSA of ellipse is 4712.4
     :param radius_AP: float: 2nd radius
+    :param zeroslice: list int: zero all slices listed in this param
     :return: img: Image object
     """
     # Initialization
@@ -108,6 +109,10 @@ def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), shape='ellips
 
     # Crop image (to remove padding)
     data_rotIS_rotRL = data_rotIS_rotRL[padding:nx+padding, padding:ny+padding, padding:nz+padding]
+
+    # Zero specified slices
+    if zeroslice is not []:
+        data_rotIS_rotRL[:, :, zeroslice] = 0
 
     # Create nibabel object
     xform = np.eye(4)
