@@ -25,6 +25,8 @@ im_segs_without_angle = [
     (dummy_segmentation(size_arr=(128, 128, 5), shape='ellipse', angle=0, a=50.0, b=30.0),
      {'area': 47.01, 'angle_AP': 0.0, 'angle_RL': 0.0, 'diameter_AP': 6.0, 'diameter_RL': 10.0, 'eccentricity': 0.8,
       'orientation': 0.0, 'solidity': 1.0}),
+    (dummy_segmentation(size_arr=(128, 128, 5), pixdim=(0.5, 0.5, 5), shape='rectangle', angle=0, a=10.0, b=6.0),
+     {'area': 68.25}),
     ]
 
 im_segs_with_angle = [

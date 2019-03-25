@@ -60,21 +60,21 @@ def dummy_centerline(size_arr=(9, 9, 9), subsampling=1, dilate_ctl=0, hasnan=Fal
     return img, img_sub, arr_ctl
 
 
-def dummy_segmentation(size_arr=(256, 256, 256), shape='ellipse', angle=15, a=50.0, b=30.0):
+def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(0.1, 0.1, 0.1), shape='ellipse', angle=15, a=50.0, b=30.0):
     """Create a dummy Image with a ellipse or ones running from top to bottom in the 3rd dimension, and rotate the image
     to make sure that compute_csa and compute_shape properly estimate the centerline angle.
     :param size_arr: tuple: (nx, ny, nz)
+    :param pixdim: tuple: (px, py, pz)
     :param shape: {'rectangle', 'ellipse'}
     :param angle: int: in deg
-    :param a: float: 1st radius
+    :param a: float: 1st radius. With a, b = 50.0, 30.0 (in pix size), theoretical CSA of ellipse is 4712.4
     :param b: float: 2nd radius
     :return: fname_seg: filename of 3D binary image
     """
     nx, ny, nz = size_arr
     data = np.random.random((nx, ny, nz)) * 0.
     xx, yy = np.mgrid[:nx, :ny]
-    # loop across slices and add an ellipse of axis length a and b
-    # a, b = 50.0, 30.0  # radius of the ellipse (in pix size). Theoretical CSA: 4712.4
+    # loop across slices and add object
     for iz in range(nz):
         if shape == 'rectangle':  # theoretical CSA: (a*2+1)(b*2+1)
             data[:, :, iz] = ((abs(xx - nx / 2) <= a) & (abs(yy - ny / 2) <= b)) * 1
@@ -90,10 +90,10 @@ def dummy_segmentation(size_arr=(256, 256, 256), shape='ellipse', angle=15, a=50
     data_rot = data_swap_rot.swapaxes(0, 2)
     xform = np.eye(4)
     for i in range(3):
-        xform[i][i] = 0.1  # adjust voxel dimension to get realistic spinal cord size (important for some functions)
+        xform[i][i] = pixdim[i]
     nii = nib.nifti1.Nifti1Image(data_rot.astype('float32'), xform)
     # TODO: orientation is likely LPI (not RPI), so check to make sure...
     # For debugging add .save() at the end of the command below
     img = Image(nii.get_data(), hdr=nii.header, orientation="RPI", dim=nii.header.get_data_shape(),
-                absolutepath='tmp_dummy_seg_'+datetime.now().strftime("%Y%m%d%H%M%S%f")+'.nii.gz')
+                absolutepath='tmp_dummy_seg_'+datetime.now().strftime("%Y%m%d%H%M%S%f")+'.nii.gz').save()
     return img
