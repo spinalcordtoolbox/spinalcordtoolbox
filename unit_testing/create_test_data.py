@@ -64,7 +64,7 @@ def dummy_centerline(size_arr=(9, 9, 9), subsampling=1, dilate_ctl=0, hasnan=Fal
 
 
 def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), shape='ellipse', angle_RL=0, angle_IS=0,
-                       a=50.0, b=30.0):
+                       radius_RL=50.0, radius_AP=30.0):
     """Create a dummy Image with a ellipse or ones running from top to bottom in the 3rd dimension, and rotate the image
     to make sure that compute_csa and compute_shape properly estimate the centerline angle.
     :param size_arr: tuple: (nx, ny, nz)
@@ -72,8 +72,8 @@ def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), shape='ellips
     :param shape: {'rectangle', 'ellipse'}
     :param angle_RL: int: angle around RL axis (in deg)
     :param angle_IS: int: angle around IS axis (in deg)
-    :param a: float: 1st radius. With a, b = 50.0, 30.0 (in mm), theoretical CSA of ellipse is 4712.4
-    :param b: float: 2nd radius
+    :param radius_RL: float: 1st radius. With a, b = 50.0, 30.0 (in mm), theoretical CSA of ellipse is 4712.4
+    :param radius_AP: float: 2nd radius
     :return: img: Image object
     """
     # Initialization
@@ -85,9 +85,9 @@ def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), shape='ellips
     # loop across slices and add object
     for iz in range(nz):
         if shape == 'rectangle':  # theoretical CSA: (a*2+1)(b*2+1)
-            data[:, :, iz] = ((abs(xx - nx / 2) <= a) & (abs(yy - ny / 2) <= b)) * 1
+            data[:, :, iz] = ((abs(xx - nx / 2) <= radius_RL) & (abs(yy - ny / 2) <= radius_AP)) * 1
         if shape == 'ellipse':
-            data[:, :, iz] = (((xx - nx / 2) / a) ** 2 + ((yy - ny / 2) / b) ** 2 <= 1) * 1
+            data[:, :, iz] = (((xx - nx / 2) / radius_RL) ** 2 + ((yy - ny / 2) / radius_AP) ** 2 <= 1) * 1
 
     # Pad to avoid edge effect during rotation
     data = np.pad(data, padding, 'reflect')

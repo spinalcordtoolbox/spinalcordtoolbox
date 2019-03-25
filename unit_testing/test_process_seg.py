@@ -2,10 +2,8 @@
 # -*- coding: utf-8
 # pytest unit tests for spinalcordtoolbox.process_seg
 
-# TODO: add dummy image with different resolution to check impact of input res
 # TODO: add test with known angle (i.e. not found with fitting)
 # TODO: test empty slices and slices with two objects
-# TODO: figure out why some metrics need float() for assertion
 
 from __future__ import absolute_import
 import pytest
@@ -22,15 +20,17 @@ VERBOSE = 0
 
 # Generate a list of fake segmentation for testing: (dummy_segmentation(params), dict of expected results)
 im_segs = [
-    (dummy_segmentation(size_arr=(32, 32, 5), pixdim=(1, 1, 1), shape='rectangle', a=5.0, b=3.0),
+    (dummy_segmentation(size_arr=(32, 32, 5), pixdim=(1, 1, 1), shape='rectangle', radius_RL=5.0, radius_AP=3.0),
      {'area': 77, 'angle_RL': 0.0}),
-    (dummy_segmentation(size_arr=(64, 32, 5), pixdim=(0.5, 1, 5), shape='rectangle', a=5.0, b=3.0),
+    (dummy_segmentation(size_arr=(64, 32, 5), pixdim=(0.5, 1, 5), shape='rectangle', radius_RL=5.0, radius_AP=3.0),
      {'area': 77, 'angle_RL': 0.0}),
-    (dummy_segmentation(size_arr=(32, 32, 5), pixdim=(1, 1, 5), shape='rectangle', angle_IS=15, a=5.0, b=3.0),
+    (dummy_segmentation(size_arr=(32, 32, 5), pixdim=(1, 1, 5), shape='rectangle', angle_IS=15, radius_RL=5.0,
+                        radius_AP=3.0),
      {'area': 77, 'angle_RL': 0.0}),
-    (dummy_segmentation(size_arr=(32, 32, 50), pixdim=(1, 1, 1), shape='rectangle', angle_RL=15, a=5.0, b=3.0),
+    (dummy_segmentation(size_arr=(32, 32, 50), pixdim=(1, 1, 1), shape='rectangle', angle_RL=15, radius_RL=5.0,
+                        radius_AP=3.0),
      {'area': 77, 'angle_RL': 15.0}),
-    (dummy_segmentation(size_arr=(128, 128, 5), pixdim=(1, 1, 1), shape='ellipse', a=50.0, b=30.0),
+    (dummy_segmentation(size_arr=(128, 128, 5), pixdim=(1, 1, 1), shape='ellipse', radius_RL=50.0, radius_AP=30.0),
      {'area': 4701, 'angle_AP': 0.0, 'angle_RL': 0.0, 'diameter_AP': 60.0, 'diameter_RL': 100.0, 'eccentricity': 0.8,
       'orientation': 0.0, 'solidity': 1.0}),
     ]
