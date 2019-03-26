@@ -29,13 +29,13 @@ def compute_shape(segmentation, algo_fitting='bspline', angle_correction=True, v
     """
     # List of properties to output (in the right order)
     property_list = ['area',
+                     'angle_AP',
+                     'angle_RL'
                      'diameter_AP',
                      'diameter_RL',
                      'eccentricity',
-                     'solidity',
                      'orientation',
-                     'angle_AP',
-                     'angle_RL'
+                     'solidity',
                      ]
 
     im_seg = Image(segmentation).change_orientation('RPI')
