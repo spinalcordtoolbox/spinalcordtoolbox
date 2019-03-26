@@ -133,11 +133,15 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], persli
                     mask_slicegroup = np.concatenate(arr_tmp_concat, axis=(mask_slicegroup.ndim-1))
                 else:
                     mask_slicegroup[i_nonfinite] = 0.
-                # Run estimation
-                result, _ = func(data_slicegroup, mask_slicegroup, map_clusters)
-                # check if nan
-                if np.isnan(result):
-                    result = 'nan'
+                # Make sure the number of pixels to extract metrics is not null
+                if sum(mask_slicegroup) == 0:
+                    result = None
+                else:
+                    # Run estimation
+                    result, _ = func(data_slicegroup, mask_slicegroup, map_clusters)
+                    # check if nan
+                    if np.isnan(result):
+                        result = None
                 # here we create a field with name: FUNC(METRIC_NAME). Example: MEAN(CSA)
                 agg_metric[slicegroup]['{}({})'.format(name, metric.label)] = result
             except Exception as e:
