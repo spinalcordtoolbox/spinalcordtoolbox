@@ -59,8 +59,6 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], persli
     :param map_clusters: list of list of int: See func_map()
     :return: Aggregated metric
     """
-    # TODO: always add vertLevel if exists
-
     # If user neither specified slices nor levels, set perslice=True, otherwise, the output will likely contain nan
     # because in many cases the segmentation does not span the whole I-S dimension.
     if perslice is None:

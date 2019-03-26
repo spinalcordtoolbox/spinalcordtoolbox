@@ -99,7 +99,7 @@ def compute_shape(segmentation, algo_fitting='bspline', angle_correction=True, v
             for property_name in property_list:
                 shape_properties[property_name][iz] = shape_property[property_name]
         else:
-            sct.log.warning('No properties for slice: '.format([iz]))
+            sct.log.warning('No properties for slice: {}'.format(iz))
 
         """ DEBUG
         from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
