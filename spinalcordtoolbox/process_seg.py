@@ -4,8 +4,7 @@
 
 from __future__ import absolute_import
 
-import os, math
-
+import math
 import numpy as np
 from skimage import measure, filters, transform
 from tqdm import tqdm
@@ -13,12 +12,9 @@ from tqdm import tqdm
 import sct_utils as sct
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.aggregate_slicewise import Metric
-# TODO don't import SCT stuff outside of spinalcordtoolbox/
 from spinalcordtoolbox.centerline.core import get_centerline
-from msct_types import Centerline
 
 # TODO: only use logging, don't use printing, pass images, not filenames, do imports at beginning of file, no chdir()
-# TODO: add degree for poly fitting
 
 
 def compute_shape(segmentation, algo_fitting='bspline', angle_correction=True, verbose=1):
