@@ -87,7 +87,7 @@ sct_warp_template -d t2.nii.gz -w warp_template2anat.nii.gz -a 0
 # Compute cross-sectional area (and other morphometry measures) for each slice
 sct_process_segmentation -i t2_seg.nii.gz
 # Compute cross-sectional area and average between C2 and C3 levels
-sct_process_segmentation -i t2_seg.nii.gz -vert 2:3
+sct_process_segmentation -i t2_seg.nii.gz -vert 2:3 -o csa_c2c3.csv
 # Go back to root folder
 cd ..
 
@@ -248,12 +248,12 @@ cd ..
 # ===========================================================================================
 echo "Ended at: $(date +%x_%r)"
 echo
-echo "t2/CSA:         " `awk -F"," ' {print $6}' t2/csa.csv | tail -1`
+echo "t2/CSA:         " `awk -F"," ' {print $6}' t2/csa_c2c3.csv | tail -1`
 echo "mt/MTR(WM):     " `awk -F"," ' {print $8}' mt/mtr_in_wm.csv | tail -1`
 echo "t2s/CSA_GM:     " `awk -F"," ' {print $6}' t2s/csa_gm.csv | tail -1`
 echo "t2s/CSA_WM:     " `awk -F"," ' {print $6}' t2s/csa_wm.csv | tail -1`
-echo "dmri/FA(CST_r): " `awk -F"," ' {print $7}' dmri/fa_in_cst.csv | tail -1`
-echo "dmri/FA(CST_l): " `awk -F"," ' {print $7}' dmri/fa_in_cst.csv | tail -2 | head -1`
+echo "dmri/FA(CST_r): " `awk -F"," ' {print $8}' dmri/fa_in_cst.csv | tail -1`
+echo "dmri/FA(CST_l): " `awk -F"," ' {print $8}' dmri/fa_in_cst.csv | tail -2 | head -1`
 echo
 
 # Display syntax to open QC report on web browser
