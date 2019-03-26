@@ -54,5 +54,5 @@ def test_compute_shape(im_seg, expected, params):
             assert math.isnan(obtained_value)
             break
         else:
-            expected_value = pytest.approx(expected[key], rel=0.03)
+            expected_value = pytest.approx(expected[key], rel=0.02)
         assert obtained_value == expected_value
