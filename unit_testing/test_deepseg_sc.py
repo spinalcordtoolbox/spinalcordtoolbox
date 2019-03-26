@@ -8,7 +8,7 @@ from spinalcordtoolbox.image import Image
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.deepseg_sc import core as deepseg_sc
 from spinalcordtoolbox.resampling import resample_file
-from test_centerline import dummy_centerline_small
+from create_test_data import dummy_centerline
 
 
 def _preprocess_segment(fname_t2, fname_t2_seg, contrast_test, dim_3=False):
@@ -123,7 +123,7 @@ def test_crop_image_around_centerline():
     nii = nib.nifti1.Nifti1Image(data, affine)
     img = Image(data, hdr=nii.header, dim=nii.header.get_data_shape())
 
-    ctr, _ = dummy_centerline_small(size_arr=input_shape)
+    ctr, _, _ = dummy_centerline(size_arr=input_shape)
 
     _, _, _, img_out = deepseg_sc.crop_image_around_centerline(im_in=img.copy(),
                                                         ctr_in=ctr.copy(),
