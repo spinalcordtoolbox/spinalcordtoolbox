@@ -25,7 +25,7 @@ def compute_shape(segmentation, algo_fitting='bspline', angle_correction=True, v
     :param algo_fitting:
     :param angle_correction:
     :param verbose:
-    :return metrics: Dict of class Metric()
+    :return metrics: Dict of class Metric(). If a metric cannot be calculated, its value will be nan.
     """
     # List of properties to output (in the right order)
     property_list = ['area',
