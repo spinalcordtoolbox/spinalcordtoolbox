@@ -129,5 +129,5 @@ def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.floa
     # Create Image object
     # For debugging add .save() at the end of the command below
     img = Image(nii_r.get_data(), hdr=nii_r.header, orientation="RPI", dim=nii_r.header.get_data_shape(),
-                absolutepath='tmp_dummy_seg_'+datetime.now().strftime("%Y%m%d%H%M%S%f")+'.nii.gz').save()
+                absolutepath='tmp_dummy_seg_'+datetime.now().strftime("%Y%m%d%H%M%S%f")+'.nii.gz')
     return img
