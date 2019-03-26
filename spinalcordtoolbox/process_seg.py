@@ -125,28 +125,30 @@ def compute_shape(segmentation, algo_fitting='bspline', angle_correction=True, v
 def _properties2d(image, dim):
     """
     Compute shape property of the input 2D image. Accounts for partial volume information.
-    :param image: 2D input image of uint8 type that has a single object, weighted for partial volume.
+    :param image: 2D input image in uint8 or float (weighted for partial volume) that has a single object.
     :param dim: [px, py]: Physical dimension of the image (in mm). X,Y respectively correspond to AP,RL.
     :return:
     """
     upscale = 10  # upscale factor for resampling the input image (for better precision)
     pad = 3  # padding used for cropping
+    # Normalize between 0 and 1
+    image_norm = (image - image.min()) / (image.max() - image.min())
     # Binarize image using threshold at 0. Necessary input for measure.regionprops
-    image_bin = np.array(image > 0.5, dtype='uint8')
+    image_bin = np.array(image_norm > 0.5, dtype='uint8')
     # Get all closed binary regions from the image (normally there is only one)
-    regions = measure.regionprops(image_bin, intensity_image=image)
+    regions = measure.regionprops(image_bin, intensity_image=image_norm)
     # Check number of regions
     if len(regions) == 0:
-        sct.log.warning('The slice seems empty.')
+        sct.log.debug('The slice seems empty.')
         return None
     elif len(regions) > 1:
-        sct.log.warning('There is more than one object on this slice.')
+        sct.log.debug('There is more than one object on this slice.')
         return None
     region = regions[0]
     # Get bounding box of the object
     minx, miny, maxx, maxy = region.bbox
     # Use those bounding box coordinates to crop the image (for faster processing)
-    image_crop = image[minx-pad: maxx+pad, miny-pad: maxy+pad]
+    image_crop = image_norm[minx-pad: maxx+pad, miny-pad: maxy+pad]
     # Oversample image to reach sufficient precision when computing shape metrics on the binary mask
     image_crop_r = transform.pyramid_expand(image_crop, upscale=upscale, sigma=None, order=1)
     # Binarize image using threshold at 0. Necessary input for measure.regionprops
