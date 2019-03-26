@@ -109,8 +109,8 @@ def compute_shape(segmentation, algo_fitting='bspline', angle_correction=True, v
         ax = fig.add_subplot(111)
         ax.imshow(current_patch_scaled)
         ax.grid()
-        ax.set_xlabel('x')
-        ax.set_ylabel('y')
+        ax.set_xlabel('y')
+        ax.set_ylabel('x')
         fig.savefig('tmp_fig.png')
         """
     metrics = {}
@@ -129,14 +129,12 @@ def _properties2d(image, dim):
     :param dim: [px, py]: Physical dimension of the image (in mm). X,Y respectively correspond to AP,RL.
     :return:
     """
-    # TODO: first, see where the object is, then crop, then upsample --> faster execution
-    upscale = 5  # upscale factor for resampling the input image
-    # Oversample image to reach sufficient precision when computing shape metrics on the binary mask
-    image_r = transform.pyramid_expand(image, upscale=upscale, sigma=None, order=1)
+    upscale = 10  # upscale factor for resampling the input image (for better precision)
+    pad = 3  # padding used for cropping
     # Binarize image using threshold at 0. Necessary input for measure.regionprops
-    image_bin = np.array(image_r > 0.5, dtype='uint8')
+    image_bin = np.array(image > 0.5, dtype='uint8')
     # Get all closed binary regions from the image (normally there is only one)
-    regions = measure.regionprops(image_bin, intensity_image=image_r)
+    regions = measure.regionprops(image_bin, intensity_image=image)
     # Check number of regions
     if len(regions) == 0:
         sct.log.warning('The slice seems empty.')
@@ -145,8 +143,19 @@ def _properties2d(image, dim):
         sct.log.warning('There is more than one object on this slice.')
         return None
     region = regions[0]
+    # Get bounding box of the object
+    minx, miny, maxx, maxy = region.bbox
+    # Use those bounding box coordinates to crop the image (for faster processing)
+    image_crop = image[minx-pad: maxx+pad, miny-pad: maxy+pad]
+    # Oversample image to reach sufficient precision when computing shape metrics on the binary mask
+    image_crop_r = transform.pyramid_expand(image_crop, upscale=upscale, sigma=None, order=1)
+    # Binarize image using threshold at 0. Necessary input for measure.regionprops
+    image_crop_r_bin = np.array(image_crop_r > 0.5, dtype='uint8')
+    # Get all closed binary regions from the image (normally there is only one)
+    regions = measure.regionprops(image_crop_r_bin, intensity_image=image_crop_r)
+    region = regions[0]
     # Compute area with weighted segmentation and adjust area with physical pixel size
-    area = np.sum(image_r) * dim[0] * dim[1] / upscale ** 2
+    area = np.sum(image_crop_r) * dim[0] * dim[1] / upscale ** 2
     # Compute ellipse orientation, rotated by 90deg because image axis are inverted, modulo pi, in deg
     orientation = (region.orientation + math.pi / 2 % math.pi) * 180.0 / math.pi
     # Find RL and AP diameter based on major/minor axes and cord orientation=
