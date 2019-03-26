@@ -95,7 +95,7 @@ def compute_shape(segmentation, algo_fitting='bspline', angle_correction=True, v
             for property_name in property_list:
                 shape_properties[property_name][iz] = shape_property[property_name]
         else:
-            sct.log.warning('No properties for slice: {}'.format(iz))
+            sct.log.warning('\nNo properties for slice: {}'.format(iz))
 
         """ DEBUG
         from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
@@ -127,17 +127,18 @@ def _properties2d(image, dim):
     """
     upscale = 10  # upscale factor for resampling the input image (for better precision)
     pad = 3  # padding used for cropping
-    # Normalize between 0 and 1
+    # Check if slice is empty
+    if not image.any():
+        sct.log.debug('The slice is empty.')
+        return None
+    # Normalize between 0 and 1 (also check if slice is empty)
     image_norm = (image - image.min()) / (image.max() - image.min())
     # Binarize image using threshold at 0. Necessary input for measure.regionprops
     image_bin = np.array(image_norm > 0.5, dtype='uint8')
     # Get all closed binary regions from the image (normally there is only one)
     regions = measure.regionprops(image_bin, intensity_image=image_norm)
     # Check number of regions
-    if len(regions) == 0:
-        sct.log.debug('The slice seems empty.')
-        return None
-    elif len(regions) > 1:
+    if len(regions) > 1:
         sct.log.debug('There is more than one object on this slice.')
         return None
     region = regions[0]
