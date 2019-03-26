@@ -76,22 +76,22 @@ def compute_shape(segmentation, algo_fitting='bspline', angle_correction=True, v
             v1 = [0, 1]
             angle_RL_rad = np.math.atan2(np.linalg.det([v0, v1]), np.dot(v0, v1))
             # Apply affine transformation to account for the angle between the centerline and the normal to the patch
-            tform = transform.AffineTransform(scale=(np.cos(angle_RL_rad), np.cos(angle_AP_rad)))
+            tform = transform.AffineTransform(scale=(np.cos(angle_AP_rad), np.cos(angle_RL_rad)))
             # TODO: make sure pattern does not go extend outside of image border
             current_patch_scaled = transform.warp(current_patch,
-                                                  tform,
+                                                  tform.inverse,
                                                   output_shape=current_patch.shape,
                                                   order=1,
                                                   )
         else:
             current_patch_scaled = current_patch
-            angle_x_rad, angle_y_rad = 0.0, 0.0
+            angle_AP_rad, angle_RL_rad = 0.0, 0.0
         # compute shape properties on 2D patch
         shape_property = _properties2d(current_patch_scaled, [px, py])
         if shape_property is not None:
             # Add custom fields
-            shape_property['angle_AP'] = angle_x_rad * 180.0 / math.pi
-            shape_property['angle_RL'] = angle_y_rad * 180.0 / math.pi
+            shape_property['angle_AP'] = angle_AP_rad * 180.0 / math.pi
+            shape_property['angle_RL'] = angle_RL_rad * 180.0 / math.pi
             # Loop across properties and assign values for function output
             for property_name in property_list:
                 shape_properties[property_name][iz] = shape_property[property_name]
