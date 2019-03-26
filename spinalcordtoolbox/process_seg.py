@@ -78,7 +78,7 @@ def compute_shape(segmentation, algo_fitting='bspline', angle_correction=True, v
             v0 = [tangent_vect[1], tangent_vect[2]]
             v1 = [0, 1]
             angle_y_rad = np.math.atan2(np.linalg.det([v0, v1]), np.dot(v0, v1))
-            # Apply affine transformation to account for the angle between the cord centerline and the normal to the patch
+            # Apply affine transformation to account for the angle between the centerline and the normal to the patch
             tform = transform.AffineTransform(scale=(np.cos(angle_x_rad), np.cos(angle_y_rad)))
             # TODO: make sure pattern does not go extend outside of image border
             current_patch_scaled = transform.warp(current_patch,
@@ -90,7 +90,7 @@ def compute_shape(segmentation, algo_fitting='bspline', angle_correction=True, v
             current_patch_scaled = current_patch
             angle_x_rad, angle_y_rad = 0.0, 0.0
         # compute shape properties on 2D patch
-        shape_property = properties2d(current_patch_scaled, [px, py])
+        shape_property = _properties2d(current_patch_scaled, [px, py])
         if shape_property is not None:
             # Add custom fields
             shape_property['angle_AP'] = angle_x_rad * 180.0 / math.pi
@@ -122,7 +122,7 @@ def compute_shape(segmentation, algo_fitting='bspline', angle_correction=True, v
     return metrics
 
 
-def properties2d(image, dim):
+def _properties2d(image, dim):
     """
     Compute shape property of the input 2D image. Accounts for partial volume information.
     :param image: 2D input image of uint8 type that has a single object, weighted for partial volume.
@@ -151,8 +151,8 @@ def properties2d(image, dim):
     orientation = (region.orientation + math.pi / 2 % math.pi) * 180.0 / math.pi
     # Find RL and AP diameter based on major/minor axes and cord orientation=
     [diameter_AP, diameter_RL] = \
-        find_AP_and_RL_diameter(region.major_axis_length, region.minor_axis_length, orientation,
-                                [i / upscale for i in dim])
+        _find_AP_and_RL_diameter(region.major_axis_length, region.minor_axis_length, orientation,
+                                 [i / upscale for i in dim])
     # TODO: compute major_axis_length/minor_axis_length by summing weighted voxels along axis
     # Fill up dictionary
     properties = {'area': area,
@@ -167,7 +167,7 @@ def properties2d(image, dim):
     return properties
 
 
-def find_AP_and_RL_diameter(major_axis, minor_axis, orientation, dim):
+def _find_AP_and_RL_diameter(major_axis, minor_axis, orientation, dim):
     """
     This script checks the orientation of the and assigns the major/minor axis to the appropriate dimension, right-
     left (RL) or antero-posterior (AP). It also multiplies by the pixel size in mm.
