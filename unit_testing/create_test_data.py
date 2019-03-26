@@ -63,12 +63,13 @@ def dummy_centerline(size_arr=(9, 9, 9), subsampling=1, dilate_ctl=0, hasnan=Fal
     return img, img_sub, arr_ctl
 
 
-def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), shape='rectangle', angle_RL=0, angle_IS=0,
-                       radius_RL=5.0, radius_AP=3.0, zeroslice=[]):
+def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.float64, shape='rectangle',
+                       angle_RL=0, angle_IS=0, radius_RL=5.0, radius_AP=3.0, zeroslice=[]):
     """Create a dummy Image with a ellipse or ones running from top to bottom in the 3rd dimension, and rotate the image
     to make sure that compute_csa and compute_shape properly estimate the centerline angle.
     :param size_arr: tuple: (nx, ny, nz)
     :param pixdim: tuple: (px, py, pz)
+    :param dtype: Numpy dtype.
     :param shape: {'rectangle', 'ellipse'}
     :param angle_RL: int: angle around RL axis (in deg)
     :param angle_IS: int: angle around IS axis (in deg)
@@ -122,11 +123,11 @@ def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), shape='rectan
     # Create nipy object and resample to desired resolution
     nii_nipy = nifti2nipy(nii)
     nii_nipy_r = resample_nipy(nii_nipy, new_size='x'.join([str(i) for i in pixdim]), new_size_type='mm',
-                               interpolation='linear')
+                               interpolation='linear', dtype=dtype)
     nii_r = nipy2nifti(nii_nipy_r)
     # TODO: orientation is likely LPI (not RPI), so check to make sure...
     # Create Image object
     # For debugging add .save() at the end of the command below
     img = Image(nii_r.get_data(), hdr=nii_r.header, orientation="RPI", dim=nii_r.header.get_data_shape(),
-                absolutepath='tmp_dummy_seg_'+datetime.now().strftime("%Y%m%d%H%M%S%f")+'.nii.gz')
+                absolutepath='tmp_dummy_seg_'+datetime.now().strftime("%Y%m%d%H%M%S%f")+'.nii.gz').save()
     return img
