@@ -58,23 +58,22 @@ def get_parser():
 """)
     parser.add_option(name='-i',
                       type_value='image_nifti',
-                      description='Spinal Cord segmentation',
+                      description='Mask to compute morphometrics from. Could be binary or weighted. E.g., spinal cord segmentation.',
                       mandatory=True,
                       example='seg.nii.gz')
     parser.usage.addSection('Optional Arguments')
     parser.add_option(name='-o',
                       type_value='file_output',
-                      description="Output file name (add extension). Ex: my_csa.csv (with -p csa).",
+                      description="Output file name (add extension). Default: csa.csv.",
                       mandatory=False)
     parser.add_option(name='-append',
                       type_value='int',
-                      description='Append results as a new line in the output csv file instead of overwriting it. This '
-                                  'only concerns processes "csa" and "shape".',
+                      description='Append results as a new line in the output csv file instead of overwriting it.',
                       mandatory=False,
                       default_value=0)
     parser.add_option(name='-z',
                       type_value='str',
-                      description='Slice range to compute the CSA across (requires \"-p csa\").',
+                      description='Slice range to compute the metrics across (requires \"-p csa\").',
                       mandatory=False,
                       example='5:23')
     parser.add_option(name='-perslice',
@@ -87,7 +86,7 @@ def get_parser():
                       default_value=Param().perslice)
     parser.add_option(name='-vert',
                       type_value='str',
-                      description='Vertebral levels to compute the metrics across (requires \"-p csa\"). Example: 2:9 for C2 to T2.',
+                      description='Vertebral levels to compute the metrics across. Example: 2:9 for C2 to T2.',
                       mandatory=False,
                       example='2:9')
     parser.add_option(name='-vertfile',
@@ -103,7 +102,7 @@ def get_parser():
                       default_value=Param().perlevel)
     parser.add_option(name='-r',
                       type_value='multiple_choice',
-                      description='Removes the temporary folder and debug folder used for the algorithm at the end of execution',
+                      description='Removes temporary folder used for the algorithm at the end of execution',
                       mandatory=False,
                       default_value='1',
                       example=['0', '1'])
