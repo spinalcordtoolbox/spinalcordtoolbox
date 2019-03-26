@@ -134,7 +134,7 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], persli
                 else:
                     mask_slicegroup[i_nonfinite] = 0.
                 # Make sure the number of pixels to extract metrics is not null
-                if sum(mask_slicegroup) == 0:
+                if mask_slicegroup.sum() == 0:
                     result = None
                 else:
                     # Run estimation
