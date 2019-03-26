@@ -30,7 +30,7 @@ def compute_shape(segmentation, algo_fitting='bspline', angle_correction=True, v
     # List of properties to output (in the right order)
     property_list = ['area',
                      'angle_AP',
-                     'angle_RL'
+                     'angle_RL',
                      'diameter_AP',
                      'diameter_RL',
                      'eccentricity',
@@ -40,7 +40,7 @@ def compute_shape(segmentation, algo_fitting='bspline', angle_correction=True, v
 
     im_seg = Image(segmentation).change_orientation('RPI')
 
-    # Getting image dimensions
+    # Getting image dimensions. x, y and z respectively correspond to RL, PA and IS.
     nx, ny, nz, nt, px, py, pz, pt = im_seg.dim
 
     # Extract min and max index in Z direction
@@ -67,18 +67,19 @@ def compute_shape(segmentation, algo_fitting='bspline', angle_correction=True, v
                                      pz])
             # Normalize vector by its L2 norm
             tangent_vect = tangent_vect / np.linalg.norm(tangent_vect)
-            # Compute the angle between the centerline and the normal vector to the slice (i.e. u_z)
+            # Compute the angle about AP axis between the centerline and the normal vector to the slice
             v0 = [tangent_vect[0], tangent_vect[2]]
             v1 = [0, 1]
-            angle_x_rad = np.math.atan2(np.linalg.det([v0, v1]), np.dot(v0, v1))
+            angle_AP_rad = np.math.atan2(np.linalg.det([v0, v1]), np.dot(v0, v1))
+            # Compute the angle about RL axis between the centerline and the normal vector to the slice
             v0 = [tangent_vect[1], tangent_vect[2]]
             v1 = [0, 1]
-            angle_y_rad = np.math.atan2(np.linalg.det([v0, v1]), np.dot(v0, v1))
+            angle_RL_rad = np.math.atan2(np.linalg.det([v0, v1]), np.dot(v0, v1))
             # Apply affine transformation to account for the angle between the centerline and the normal to the patch
-            tform = transform.AffineTransform(scale=(np.cos(angle_x_rad), np.cos(angle_y_rad)))
+            tform = transform.AffineTransform(scale=(np.cos(angle_RL_rad), np.cos(angle_AP_rad)))
             # TODO: make sure pattern does not go extend outside of image border
             current_patch_scaled = transform.warp(current_patch,
-                                                  tform.inverse,
+                                                  tform,
                                                   output_shape=current_patch.shape,
                                                   order=1,
                                                   )
