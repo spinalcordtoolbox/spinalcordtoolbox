@@ -179,7 +179,7 @@ def main(args):
     param.verbose = verbose
     metrics_agg = {}
     if not file_out:
-        file_out = 'shape.csv'
+        file_out = 'csa.csv'
 
     metrics = process_seg.compute_shape(fname_segmentation,
                                         algo_fitting='bspline',
