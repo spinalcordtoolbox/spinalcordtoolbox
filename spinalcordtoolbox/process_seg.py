@@ -76,7 +76,7 @@ def compute_shape(segmentation, algo_fitting='bspline', angle_correction=True, v
             v1 = [0, 1]
             angle_RL_rad = np.math.atan2(np.linalg.det([v0, v1]), np.dot(v0, v1))
             # Apply affine transformation to account for the angle between the centerline and the normal to the patch
-            tform = transform.AffineTransform(scale=(np.cos(angle_AP_rad), np.cos(angle_RL_rad)))
+            tform = transform.AffineTransform(scale=(np.cos(angle_RL_rad), np.cos(angle_AP_rad)))
             # TODO: make sure pattern does not go extend outside of image border
             current_patch_scaled = transform.warp(current_patch,
                                                   tform.inverse,
