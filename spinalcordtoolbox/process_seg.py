@@ -156,8 +156,8 @@ def _properties2d(image, dim):
     region = regions[0]
     # Compute area with weighted segmentation and adjust area with physical pixel size
     area = np.sum(image_crop_r) * dim[0] * dim[1] / upscale ** 2
-    # Compute ellipse orientation, rotated by 90deg because image axis are inverted, modulo pi, in deg
-    orientation = (region.orientation + math.pi / 2 % math.pi) * 180.0 / math.pi
+    # Compute ellipse orientation, rotated by 90deg because image axis are inverted, modulo pi, in deg, and between [0, 90]
+    orientation = _fix_orientation(region.orientation)
     # Find RL and AP diameter based on major/minor axes and cord orientation=
     [diameter_AP, diameter_RL] = \
         _find_AP_and_RL_diameter(region.major_axis_length, region.minor_axis_length, orientation,
@@ -176,17 +176,30 @@ def _properties2d(image, dim):
     return properties
 
 
+def _fix_orientation(orientation):
+    """Re-map orientation from skimage.regionprops from [-pi/2,pi/2] to [0,90] and rotate by 90deg because image axis
+    are inverted"""
+    orientation_new = (orientation + math.pi / 2) * 180.0 / math.pi
+    if 360 <= abs(orientation_new) <= 540:
+        orientation_new = 540 - abs(orientation_new)
+    if 180 <= abs(orientation_new) <= 360:
+        orientation_new = 360 - abs(orientation_new)
+    if 90 <= abs(orientation_new) <= 180:
+        orientation_new = 180 - abs(orientation_new)
+    return abs(orientation_new)
+
+
 def _find_AP_and_RL_diameter(major_axis, minor_axis, orientation, dim):
     """
     This script checks the orientation of the and assigns the major/minor axis to the appropriate dimension, right-
     left (RL) or antero-posterior (AP). It also multiplies by the pixel size in mm.
     :param major_axis: major ellipse axis length calculated by regionprops
     :param minor_axis: minor ellipse axis length calculated by regionprops
-    :param orientation: orientation in degree
+    :param orientation: orientation in degree. Ranges between [0, 90]
     :param dim: pixel size in mm.
     :return: diameter_AP, diameter_RL
     """
-    if -45.0 < orientation < 45.0:
+    if 0 <= orientation < 45.0:
         diameter_AP = minor_axis
         diameter_RL = major_axis
     else:
