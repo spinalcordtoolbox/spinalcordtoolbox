@@ -21,20 +21,22 @@ VERBOSE = 0
 
 # Generate a list of fake segmentation for testing: (dummy_segmentation(params), dict of expected results)
 im_segs = [
-    (dummy_segmentation(size_arr=(32, 32, 5)), {'area': 77, 'angle_RL': 0.0}, {'angle_corr': False}),
-    (dummy_segmentation(size_arr=(64, 32, 5), pixdim=(0.5, 1, 5)), {'area': 77, 'angle_RL': 0.0},
-     {'angle_corr': False}),
-    (dummy_segmentation(size_arr=(32, 32, 5), pixdim=(1, 1, 5), angle_IS=15), {'area': 77, 'angle_RL': 0.0},
-     {'angle_corr': False}),
-    (dummy_segmentation(size_arr=(32, 32, 50), angle_RL=15), {'area': 77, 'angle_RL': 15.0},
-     {'angle_corr': True}),
-    (dummy_segmentation(size_arr=(32, 32, 50), dtype=np.uint8, angle_RL=15), {'area': 77, 'angle_RL': 15.0},
-     {'angle_corr': True}),
-    (dummy_segmentation(size_arr=(128, 128, 5), pixdim=(1, 1, 1), shape='ellipse', radius_RL=50.0, radius_AP=30.0),
-     {'area': 4701, 'angle_AP': 0.0, 'angle_RL': 0.0, 'diameter_AP': 60.0, 'diameter_RL': 100.0, 'eccentricity': 0.8,
-      'orientation': 0.0, 'solidity': 1.0}, {'angle_corr': False}),
-    (dummy_segmentation(size_arr=(32, 32, 5), zeroslice=[2]),
-     {'area': np.nan}, {'angle_corr': False, 'slice': 2})
+    # (dummy_segmentation(size_arr=(32, 32, 5)), {'area': 77, 'angle_RL': 0.0}, {'angle_corr': False}),
+    # (dummy_segmentation(size_arr=(64, 32, 5), pixdim=(0.5, 1, 5)), {'area': 77, 'angle_RL': 0.0},
+    #  {'angle_corr': False}),
+    # (dummy_segmentation(size_arr=(32, 32, 5), pixdim=(1, 1, 5), angle_IS=15), {'area': 77, 'angle_RL': 0.0},
+    #  {'angle_corr': False}),
+    # (dummy_segmentation(size_arr=(32, 32, 50), radius_RL=7.0, radius_AP=1.0), {'area': 45, 'angle_RL': 0.0},
+    #  {'angle_corr': False}),
+    (dummy_segmentation(size_arr=(64, 64, 50), shape='ellipse', radius_RL=13.0, radius_AP=5.0, angle_RL=30.0),
+     {'area': 197.0, 'diameter_AP': 10.0, 'diameter_RL': 26.0, 'angle_RL': 30.0}, {'angle_corr': True}),
+    # (dummy_segmentation(size_arr=(32, 32, 50), dtype=np.uint8, angle_RL=15), {'area': 77, 'angle_RL': 15.0},
+    #  {'angle_corr': True}),
+    # (dummy_segmentation(size_arr=(128, 128, 5), pixdim=(1, 1, 1), shape='ellipse', radius_RL=50.0, radius_AP=30.0),
+    #  {'area': 4701, 'angle_AP': 0.0, 'angle_RL': 0.0, 'diameter_AP': 60.0, 'diameter_RL': 100.0, 'eccentricity': 0.8,
+    #   'orientation': 0.0, 'solidity': 1.0}, {'angle_corr': False}),
+    # (dummy_segmentation(size_arr=(32, 32, 5), zeroslice=[2]),
+    #  {'area': np.nan}, {'angle_corr': False, 'slice': 2})
     ]
 
 
@@ -58,3 +60,25 @@ def test_compute_shape(im_seg, expected, params):
         else:
             expected_value = pytest.approx(expected[key], rel=0.02)
         assert obtained_value == expected_value
+
+
+# noinspection 801,PyShadowingNames
+def test_fix_orientation():
+    dict_test_orientation = [
+        {'input': math.pi, 'expected': 90.0},
+        {'input': -math.pi, 'expected': 90.0},
+        {'input': math.pi / 2, 'expected': 0.0},
+        {'input': -math.pi / 2, 'expected': 0.0},
+        {'input': 0.0, 'expected': 90.0},
+        {'input': 2 * math.pi, 'expected': 90.0},
+        {'input': math.pi / 4, 'expected': 45.0},
+        {'input': -math.pi / 4, 'expected': 45.0},
+        {'input': 3 * math.pi / 4, 'expected': 45.0},
+        {'input': -3 * math.pi / 4, 'expected': 45.0},
+        {'input': math.pi / 8, 'expected': 67.5},
+        {'input': -math.pi / 8, 'expected': 67.5},
+        {'input': 3 * math.pi / 8, 'expected': 22.5},
+        {'input': -3 * math.pi / 8, 'expected': 22.5},
+    ]
+    for test_orient in dict_test_orientation:
+        assert process_seg._fix_orientation(test_orient['input']) == pytest.approx(test_orient['expected'], rel=0.0001)
