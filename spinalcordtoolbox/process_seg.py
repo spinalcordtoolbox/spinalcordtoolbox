@@ -126,7 +126,7 @@ def _properties2d(image, dim):
     :param dim: [px, py]: Physical dimension of the image (in mm). X,Y respectively correspond to AP,RL.
     :return:
     """
-    upscale = 10  # upscale factor for resampling the input image (for better precision)
+    upscale = 5  # upscale factor for resampling the input image (for better precision)
     pad = 3  # padding used for cropping
     # Check if slice is empty
     if not image.any():
