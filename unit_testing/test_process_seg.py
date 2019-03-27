@@ -35,6 +35,9 @@ im_segs = [
     # test with angled spinal cord
     (dummy_segmentation(size_arr=(64, 64, 20), shape='ellipse', radius_RL=13.0, radius_AP=5.0, angle_RL=30.0),
      {'area': 197.0, 'diameter_AP': 10.0, 'diameter_RL': 26.0, 'angle_RL': 30.0}, {'angle_corr': True}),
+    # test with angled spinal cord (neg angle)
+    (dummy_segmentation(size_arr=(64, 64, 20), shape='ellipse', radius_RL=13.0, radius_AP=5.0, angle_RL=-30.0),
+     {'area': 197.0, 'diameter_AP': 10.0, 'diameter_RL': 26.0, 'angle_RL': -30.0}, {'angle_corr': True}),
     # test uint8 input
     (dummy_segmentation(size_arr=(32, 32, 50), dtype=np.uint8, angle_RL=15), {'area': 77, 'angle_RL': 15.0},
      {'angle_corr': True}),
