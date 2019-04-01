@@ -191,7 +191,7 @@ def main(args):
                                                         group_funcs=group_funcs)
     metrics_agg_merged = merge_dict(metrics_agg)
     save_as_csv(metrics_agg_merged, file_out, fname_in=fname_segmentation, append=append)
-    sct.printv('\nFile created: ' + file_out, verbose=1, type='info')
+    sct.display_open(file_out)
 
 
 if __name__ == "__main__":
