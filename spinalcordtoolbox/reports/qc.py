@@ -28,6 +28,8 @@ import sct_utils as sct
 from spinalcordtoolbox.image import Image
 import spinalcordtoolbox.reports.slice as qcslice
 
+import portalocker
+
 logger = logging.getLogger("sct.{}".format(__file__))
 
 
@@ -422,7 +424,8 @@ class QcReport(object):
         if os.path.isfile(self.qc_params.qc_results):
             results = json.load(open(self.qc_params.qc_results, 'r'))
         results.append(output)
-        json.dump(results, open(self.qc_params.qc_results, "w"), indent=2)
+        with portalocker.Lock(qc_report_file, "w") as lck_qc_file:
+            json.dump(results, lck_qc_file, indent=2)
         self._update_html_assets(results)
 
     def _update_html_assets(self, json_data):
