@@ -77,6 +77,8 @@ def compute_shape(segmentation, algo_fitting='bspline', angle_correction=True, v
             angle_RL_rad = np.math.atan2(np.linalg.det([v0, v1]), np.dot(v0, v1))
             # Apply affine transformation to account for the angle between the centerline and the normal to the patch
             tform = transform.AffineTransform(scale=(np.cos(angle_RL_rad), np.cos(angle_AP_rad)))
+            # Convert to float64, to avoid problems in image indexation causing issues when applying transform.warp
+            current_patch = current_patch.astype(np.float64)
             # TODO: make sure pattern does not go extend outside of image border
             current_patch_scaled = transform.warp(current_patch,
                                                   tform.inverse,
@@ -134,6 +136,8 @@ def _properties2d(image, dim):
         return None
     # Normalize between 0 and 1 (also check if slice is empty)
     image_norm = (image - image.min()) / (image.max() - image.min())
+    # Convert to float64
+    image_norm = image_norm.astype(np.float64)
     # Binarize image using threshold at 0. Necessary input for measure.regionprops
     image_bin = np.array(image_norm > 0.5, dtype='uint8')
     # Get all closed binary regions from the image (normally there is only one)
