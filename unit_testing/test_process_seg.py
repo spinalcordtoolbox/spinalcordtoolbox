@@ -17,7 +17,8 @@ from create_test_data import dummy_segmentation
 
 # Define global variables
 PARAM = Param()
-VERBOSE = 0
+VERBOSE = 0  # set to 2 to save files
+DEBUG = False
 
 # Generate a list of fake segmentation for testing: (dummy_segmentation(params), dict of expected results)
 im_segs = [
@@ -27,20 +28,21 @@ im_segs = [
     (dummy_segmentation(size_arr=(64, 32, 5), pixdim=(0.5, 1, 5)), {'area': 77, 'angle_RL': 0.0},
      {'angle_corr': False}),
     # test with angle IS
-    (dummy_segmentation(size_arr=(32, 32, 5), pixdim=(1, 1, 5), angle_IS=15), {'area': 77, 'angle_RL': 0.0},
-     {'angle_corr': False}),
+    (dummy_segmentation(size_arr=(32, 32, 5), pixdim=(1, 1, 5), angle_IS=15),
+     {'area': 77, 'angle_RL': 0.0}, {'angle_corr': False}),
     # test with ellipse shape
     (dummy_segmentation(size_arr=(64, 64, 5), shape='ellipse', radius_RL=13.0, radius_AP=5.0, angle_RL=0.0),
      {'area': 197.0, 'diameter_AP': 10.0, 'diameter_RL': 26.0, 'angle_RL': 0.0}, {'angle_corr': False}),
-    # test with angled spinal cord
-    (dummy_segmentation(size_arr=(64, 64, 20), shape='ellipse', radius_RL=13.0, radius_AP=5.0, angle_RL=30.0),
-     {'area': 197.0, 'diameter_AP': 10.0, 'diameter_RL': 26.0, 'angle_RL': 30.0}, {'angle_corr': True}),
+    # test with int16. Different bit ordering, which can cause issue when applying transform.warp()
+    (dummy_segmentation(size_arr=(64, 320, 5), pixdim=(1, 1, 1), dtype=np.int16, orientation='RPI',
+                        shape='rectangle', radius_RL=13.0, radius_AP=5.0, angle_RL=0.0, debug=DEBUG),
+     {'area': 297.0, 'angle_RL': 0.0}, {'angle_corr': False}),
     # test with angled spinal cord (neg angle)
     (dummy_segmentation(size_arr=(64, 64, 20), shape='ellipse', radius_RL=13.0, radius_AP=5.0, angle_RL=-30.0),
      {'area': 197.0, 'diameter_AP': 10.0, 'diameter_RL': 26.0, 'angle_RL': -30.0}, {'angle_corr': True}),
     # test uint8 input
-    (dummy_segmentation(size_arr=(32, 32, 50), dtype=np.uint8, angle_RL=15), {'area': 77, 'angle_RL': 15.0},
-     {'angle_corr': True}),
+    (dummy_segmentation(size_arr=(32, 32, 50), dtype=np.uint8, angle_RL=15),
+     {'area': 77, 'angle_RL': 15.0}, {'angle_corr': True}),
     # test all output params
     (dummy_segmentation(size_arr=(128, 128, 5), pixdim=(1, 1, 1), shape='ellipse', radius_RL=50.0, radius_AP=30.0),
      {'area': 4701, 'angle_AP': 0.0, 'angle_RL': 0.0, 'diameter_AP': 60.0, 'diameter_RL': 100.0, 'eccentricity': 0.8,
