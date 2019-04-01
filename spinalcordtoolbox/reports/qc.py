@@ -422,11 +422,11 @@ class QcReport(object):
         logger.debug('Description file: %s', self.qc_params.qc_results)
         results = []
         with portalocker.Lock(self.qc_params.qc_results, 'r+') as lck_qc_file:
-            results = json.load(qc_report_read)
+            results = json.load(lck_qc_file)
             results.append(output)
             lck_qc_file.seek(0)
             lck_qc_file.truncate()
-            json.dump(results, qc_report_write, indent=2)
+            json.dump(results, lck_qc_file, indent=2)
         self._update_html_assets(results)
 
 
