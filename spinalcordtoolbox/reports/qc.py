@@ -24,11 +24,11 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
 import matplotlib.colors as color
 
+import portalocker
+
 import sct_utils as sct
 from spinalcordtoolbox.image import Image
 import spinalcordtoolbox.reports.slice as qcslice
-
-import portalocker
 
 logger = logging.getLogger("sct.{}".format(__file__))
 
@@ -421,12 +421,14 @@ class QcReport(object):
         }
         logger.debug('Description file: %s', self.qc_params.qc_results)
         results = []
-        if os.path.isfile(self.qc_params.qc_results):
-            results = json.load(open(self.qc_params.qc_results, 'r'))
-        results.append(output)
-        with portalocker.Lock(qc_report_file, "w") as lck_qc_file:
-            json.dump(results, lck_qc_file, indent=2)
+        with portalocker.Lock(self.qc_params.qc_results, 'r+') as lck_qc_file:
+            results = json.load(qc_report_read)
+            results.append(output)
+            lck_qc_file.seek(0)
+            lck_qc_file.truncate()
+            json.dump(results, qc_report_write, indent=2)
         self._update_html_assets(results)
+
 
     def _update_html_assets(self, json_data):
         """Update the html file and assets"""
