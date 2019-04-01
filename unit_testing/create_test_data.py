@@ -63,19 +63,21 @@ def dummy_centerline(size_arr=(9, 9, 9), subsampling=1, dilate_ctl=0, hasnan=Fal
     return img, img_sub, arr_ctl
 
 
-def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.float64, shape='rectangle',
-                       angle_RL=0, angle_IS=0, radius_RL=5.0, radius_AP=3.0, zeroslice=[]):
+def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.float64, orientation='LPI', shape='rectangle',
+                       angle_RL=0, angle_IS=0, radius_RL=5.0, radius_AP=3.0, zeroslice=[], debug=False):
     """Create a dummy Image with a ellipse or ones running from top to bottom in the 3rd dimension, and rotate the image
     to make sure that compute_csa and compute_shape properly estimate the centerline angle.
     :param size_arr: tuple: (nx, ny, nz)
     :param pixdim: tuple: (px, py, pz)
     :param dtype: Numpy dtype.
+    :param orientation: Orientation of the image. Default: LPI
     :param shape: {'rectangle', 'ellipse'}
     :param angle_RL: int: angle around RL axis (in deg)
     :param angle_IS: int: angle around IS axis (in deg)
     :param radius_RL: float: 1st radius. With a, b = 50.0, 30.0 (in mm), theoretical CSA of ellipse is 4712.4
     :param radius_AP: float: 2nd radius
     :param zeroslice: list int: zero all slices listed in this param
+    :param debug: Write temp files for debug
     :return: img: Image object
     """
     # Initialization
@@ -97,7 +99,7 @@ def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.floa
     # ROTATION ABOUT IS AXIS
     # rotate (in deg), and re-grid using linear interpolation
     data_rotIS = rotate(data, angle_IS, resize=False, center=None, order=1, mode='constant', cval=0, clip=False,
-                         preserve_range=False)
+                        preserve_range=False)
 
     # ROTATION ABOUT RL AXIS
     # Swap x-z axes (to make a rotation within y-z plane, because rotate will apply rotation on the first 2 dims)
@@ -125,9 +127,11 @@ def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.floa
     nii_nipy_r = resample_nipy(nii_nipy, new_size='x'.join([str(i) for i in pixdim]), new_size_type='mm',
                                interpolation='linear', dtype=dtype)
     nii_r = nipy2nifti(nii_nipy_r)
-    # TODO: orientation is likely LPI (not RPI), so check to make sure...
-    # Create Image object
+    # Create Image object. Default orientation is LPI.
     # For debugging add .save() at the end of the command below
-    img = Image(nii_r.get_data(), hdr=nii_r.header, orientation="RPI", dim=nii_r.header.get_data_shape(),
-                absolutepath='tmp_dummy_seg_'+datetime.now().strftime("%Y%m%d%H%M%S%f")+'.nii.gz')
+    img = Image(nii_r.get_data(), hdr=nii_r.header, dim=nii_r.header.get_data_shape())
+    # Update orientation
+    img.change_orientation(orientation)
+    if debug:
+        img.save('tmp_dummy_seg_'+datetime.now().strftime("%Y%m%d%H%M%S%f")+'.nii.gz')
     return img
