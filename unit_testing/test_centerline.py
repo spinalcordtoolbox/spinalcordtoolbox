@@ -8,65 +8,53 @@ from __future__ import absolute_import
 
 import os
 import pytest
-import itertools
 import numpy as np
-import nibabel as nib
 
 from spinalcordtoolbox.centerline.core import get_centerline, ParamCenterline, find_and_sort_coord, round_and_clip
 from spinalcordtoolbox.image import Image
 import sct_utils as sct
 
+from create_test_data import dummy_centerline
+
 VERBOSE = 0
 
 
-@pytest.fixture(scope="session")
-def dummy_centerline_small(size_arr=(9, 9, 9), subsampling=1, dilate_ctl=0, hasnan=False, orientation='RPI'):
-    """
-    Create a dummy Image centerline of small size. Return the full and sub-sampled version along z.
-    :param size_arr: tuple: (nx, ny, nz)
-    :param subsampling: int >=1. Subsampling factor along z. 1: no subsampling. 2: centerline defined every other z.
-    :param dilate_ctl: Dilation of centerline. E.g., if dilate_ctl=1, result will be a square of 3x3 per slice.
-                         if dilate_ctl=0, result will be a single pixel per slice.
-    :param hasnan: Bool: Image has non-numerical values: nan, inf. In this case, do not subsample.
-    :param orientation:
-    :return:
-    """
-    from numpy import poly1d, polyfit
-    nx, ny, nz = size_arr
-    # define polynomial-based centerline within X-Z plane, located at y=ny/4
-    x = np.array([round(nx/4.), round(nx/2.), round(3*nx/4.)])
-    z = np.array([0, round(nz/2.), nz-1])
-    p = poly1d(polyfit(z, x, deg=3))
-    data = np.zeros((nx, ny, nz))
-    # Loop across dilation of centerline. E.g., if dilate_ctl=1, result will be a square of 3x3 per slice.
-    for ixiy_ctl in itertools.product(range(-dilate_ctl, dilate_ctl+1, 1), range(-dilate_ctl, dilate_ctl+1, 1)):
-        data[p(range(nz)).astype(np.int) + ixiy_ctl[0], round(ny / 4.) + ixiy_ctl[1], range(nz)] = 1
-    # generate Image object with RPI orientation
-    affine = np.eye(4)
-    nii = nib.nifti1.Nifti1Image(data, affine)
-    img = Image(data, hdr=nii.header, dim=nii.header.get_data_shape())
-    # subsample data
-    img_sub = img.copy()
-    img_sub.data = np.zeros((nx, ny, nz))
-    for iz in range(0, nz, subsampling):
-        img_sub.data[..., iz] = data[..., iz]
-    # Add non-numerical values at the top corner of the image
-    if hasnan:
-        img.data[0, 0, 0] = np.nan
-        img.data[1, 0, 0] = np.inf
-    # Update orientation
-    img.change_orientation(orientation)
-    img_sub.change_orientation(orientation)
-    return img, img_sub
+# Generate a list of fake centerlines: (dummy_segmentation(params), dict of expected results)
+im_ctl_find_and_sort_coord = [
+    (dummy_centerline(size_arr=(41, 7, 9), subsampling=1, orientation='LPI'), None),
+    ]
+
+im_ctl_zeroslice = [
+    (dummy_centerline(size_arr=(15, 7, 9), zeroslice=[0, 1], orientation='LPI'), (3, 7)),
+    (dummy_centerline(size_arr=(15, 7, 9), zeroslice=[], orientation='LPI'), (3, 9)),
+    ]
+
+im_centerlines = [(dummy_centerline(size_arr=(41, 7, 9), subsampling=1, orientation='SAL'), 2.),
+                  (dummy_centerline(size_arr=(9, 9, 9), subsampling=3), 3.),
+                  (dummy_centerline(size_arr=(9, 9, 9), subsampling=1, hasnan=True), 2.),
+                  (dummy_centerline(size_arr=(30, 20, 50), subsampling=1), 3.),
+                  (dummy_centerline(size_arr=(30, 20, 50), subsampling=5), 4.),
+                  (dummy_centerline(size_arr=(30, 20, 50), dilate_ctl=2, subsampling=3, orientation='AIL'), 3.)]
 
 
-# Generate a list of fake centerlines for testing different algorithms
-im_centerlines = [(dummy_centerline_small(size_arr=(41, 7, 9), subsampling=1, orientation='SAL'), 2.),
-                  (dummy_centerline_small(size_arr=(9, 9, 9), subsampling=3), 3.),
-                  (dummy_centerline_small(size_arr=(9, 9, 9), subsampling=1, hasnan=True), 2.),
-                  (dummy_centerline_small(size_arr=(30, 20, 50), subsampling=1), 3.),
-                  (dummy_centerline_small(size_arr=(30, 20, 50), subsampling=5), 4.),
-                  (dummy_centerline_small(size_arr=(30, 20, 50), dilate_ctl=2, subsampling=3, orientation='AIL'), 3.)]
+# noinspection 801,PyShadowingNames
+@pytest.mark.parametrize('img_ctl,expected', im_ctl_find_and_sort_coord)
+def test_find_and_sort_coord(img_ctl, expected):
+    img = img_ctl[0].copy()
+    centermass = find_and_sort_coord(img)
+    assert centermass.shape == (3, 9)
+    assert np.linalg.norm(centermass - img_ctl[2]) == 0
+
+
+# noinspection 801,PyShadowingNames
+@pytest.mark.parametrize('img_ctl,expected', im_ctl_zeroslice)
+def test_get_centerline_polyfit_minmax(img_ctl, expected):
+    """Test centerline fitting with minmax=True"""
+    img, img_sub = [img_ctl[0].copy(), img_ctl[1].copy()]
+    img_out, arr_out, _ = get_centerline(img_sub, algo_fitting='polyfit', param=ParamCenterline(degree=3),
+                                         minmax=True, verbose=VERBOSE)
+    # Assess output size
+    assert arr_out.shape == expected
 
 
 # noinspection 801,PyShadowingNames

@@ -480,6 +480,19 @@ def run(cmd, verbose=1, raise_exception=True, cwd=None, env=None):
     return status, output
 
 
+def display_open(file):
+    """Print the syntax to open a file based on the platform."""
+    if sys.platform == 'linux':
+        printv('\nDone! To view results, type:')
+        printv('xopen ' + file + '\n', verbose=1, type='info')
+    elif sys.platform == 'darwin':
+        printv('\nDone! To view results, type:')
+        printv('open ' + file + '\n', verbose=1, type='info')
+    else:
+        printv('\nDone! To view results, open the following file:')
+        printv(file + '\n', verbose=1, type='info')
+
+
 def display_viewer_syntax(files, colormaps=[], minmax=[], opacities=[], mode='', verbose=1):
     """
     Print the syntax to open a viewer and display images for QC. To use default values, enter empty string: ''
