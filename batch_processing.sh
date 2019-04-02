@@ -84,10 +84,10 @@ sct_register_to_template -i t2.nii.gz -s t2_seg.nii.gz -l labels_vert.nii.gz -c 
 # sct_register_multimodal -i $SCT_DIR/data/PAM50/template/PAM50_t2s.nii.gz -iseg $SCT_DIR/data/PAM50/template/PAM50_cord.nii.gz -d t2s.nii.gz -dseg t2s_seg.nii.gz -param step=1,type=seg,algo=slicereg,smooth=3:step=2,type=seg,algo=bsplinesyn,slicewise=1,iter=3 -initwarp ../t2/warp_template2anat.nii.gz
 # Warp template without the white matter atlas (we don't need it at this point)
 sct_warp_template -d t2.nii.gz -w warp_template2anat.nii.gz -a 0
-# Compute average cross-sectional area and volume between C2 and C3 levels
-sct_process_segmentation -i t2_seg.nii.gz -p csa -vert 2:3
-# Compute spinal cord shape information at each slice (e.g. AP/RL diameter, eccentricity, etc.)
-sct_process_segmentation -i t2_seg.nii.gz -p shape
+# Compute cross-sectional area (and other morphometry measures) for each slice
+sct_process_segmentation -i t2_seg.nii.gz
+# Compute cross-sectional area and average between C2 and C3 levels
+sct_process_segmentation -i t2_seg.nii.gz -vert 2:3 -o csa_c2c3.csv
 # Go back to root folder
 cd ..
 
@@ -108,9 +108,9 @@ mv warp_t2s2PAM50_t2s.nii.gz warp_t2s2template.nii.gz
 sct_warp_template -d t2s.nii.gz -w warp_template2t2s.nii.gz
 # Subtract GM segmentation from cord segmentation to obtain WM segmentation
 sct_maths -i t2s_seg.nii.gz -sub t2s_gmseg.nii.gz -o t2s_wmseg.nii.gz
-# Compute cross-sectional area (CSA) of the gray and white matter between C2 and C5
-sct_process_segmentation -i t2s_wmseg.nii.gz -p csa -vert 2:5 -perlevel 1 -o csa_wm.csv
-sct_process_segmentation -i t2s_gmseg.nii.gz -p csa -vert 2:5 -perlevel 1 -o csa_gm.csv
+# Compute cross-sectional area of the gray and white matter between C2 and C5
+sct_process_segmentation -i t2s_wmseg.nii.gz -vert 2:5 -perlevel 1 -o csa_wm.csv
+sct_process_segmentation -i t2s_gmseg.nii.gz -vert 2:5 -perlevel 1 -o csa_gm.csv
 # OPTIONAL: Update template registration using information from gray matter segmentation
 # # <<<
 # # Register WM/GM template to WM/GM seg
@@ -248,12 +248,12 @@ cd ..
 # ===========================================================================================
 echo "Ended at: $(date +%x_%r)"
 echo
-echo "t2/CSA:         " `awk -F"," ' {print $6}' t2/csa.csv | tail -1`
+echo "t2/CSA:         " `awk -F"," ' {print $6}' t2/csa_c2c3.csv | tail -1`
 echo "mt/MTR(WM):     " `awk -F"," ' {print $8}' mt/mtr_in_wm.csv | tail -1`
 echo "t2s/CSA_GM:     " `awk -F"," ' {print $6}' t2s/csa_gm.csv | tail -1`
 echo "t2s/CSA_WM:     " `awk -F"," ' {print $6}' t2s/csa_wm.csv | tail -1`
-echo "dmri/FA(CST_r): " `awk -F"," ' {print $7}' dmri/fa_in_cst.csv | tail -1`
-echo "dmri/FA(CST_l): " `awk -F"," ' {print $7}' dmri/fa_in_cst.csv | tail -2 | head -1`
+echo "dmri/FA(CST_r): " `awk -F"," ' {print $8}' dmri/fa_in_cst.csv | tail -1`
+echo "dmri/FA(CST_l): " `awk -F"," ' {print $8}' dmri/fa_in_cst.csv | tail -2 | head -1`
 echo
 
 # Display syntax to open QC report on web browser
