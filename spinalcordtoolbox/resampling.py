@@ -19,7 +19,8 @@ from nipy.algorithms.registration.resample import resample as n_resample
 import sct_utils as sct
 
 
-def resample_nipy(img, new_size=None, new_size_type=None, img_dest=None, interpolation='linear', verbose=1):
+def resample_nipy(img, new_size=None, new_size_type=None, img_dest=None, interpolation='linear', dtype=np.float64,
+                  verbose=1):
     """Resample a nipy image object based on a specified resampling factor.
     Can deal with 2d, 3d or 4d image objects.
     :param img: nipy Image.
@@ -32,6 +33,8 @@ def resample_nipy(img, new_size=None, new_size_type=None, img_dest=None, interpo
     :param img_dest: Destination nipy Image to resample the input image to. In this case, new_size and new_size_type are
       ignored
     :param interpolation: {'nn', 'linear', 'spline'}. The interpolation type
+    :param dtype: Numpy dtype
+    :param verbose
     :return: The resampled nipy Image.
     """
     # TODO: deal with 4d (and other dim) data
@@ -88,7 +91,7 @@ def resample_nipy(img, new_size=None, new_size_type=None, img_dest=None, interpo
 
     if img.ndim == 3:
         img_r = n_resample(img, transform=R, reference=reference, mov_voxel_coords=True, ref_voxel_coords=True,
-                           dtype='double', interp_order=dict_interp[interpolation], mode='nearest')
+                           dtype=dtype, interp_order=dict_interp[interpolation], mode='nearest')
 
     elif img.ndim == 4:
         # TODO: Cover img_dest with 4D volumes
@@ -101,7 +104,7 @@ def resample_nipy(img, new_size=None, new_size_type=None, img_dest=None, interpo
             # Create dummy 3d nipy image
             nii_tmp = nib.nifti1.Nifti1Image(img.get_data()[..., it], affine)
             img3d_r = n_resample(nifti2nipy(nii_tmp), transform=R, reference=(shape_r[:-1], affine_r),
-                                 mov_voxel_coords=True, ref_voxel_coords=True, dtype='double',
+                                 mov_voxel_coords=True, ref_voxel_coords=True, dtype=dtype,
                                  interp_order=dict_interp[interpolation], mode='nearest')
             data4d[..., it] = img3d_r.get_data()
         # Create 4d nipy Image
