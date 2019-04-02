@@ -32,6 +32,9 @@ import spinalcordtoolbox.reports.slice as qcslice
 
 logger = logging.getLogger("sct.{}".format(__file__))
 
+def touchopen(filename, *args, **kwargs):
+    fd = os.open(filename, os.O_RDWR|os.O_CREAT)
+    return os.fdopen(fd, *args, **kwargs)
 
 class QcImage(object):
     """
@@ -421,12 +424,14 @@ class QcReport(object):
         }
         logger.debug('Description file: %s', self.qc_params.qc_results)
         results = []
-        with portalocker.Lock(self.qc_params.qc_results, 'r+') as lck_qc_file:
-            results = json.load(lck_qc_file)
-            results.append(output)
-            lck_qc_file.seek(0)
-            lck_qc_file.truncate()
-            json.dump(results, lck_qc_file, indent=2)
+        with portalocker.Lock(self.qc_params.qc_results) as lck_qc_file:
+            with touchopen(lck_qc_file.name, 'r+') as edit_lck_qc:
+                if os.stat(lck_qc_file.name).st_size is not 0:
+                    results = json.load(edit_lck_qc)
+                results.append(output)
+                edit_lck_qc.seek(0)
+                edit_lck_qc.truncate()
+                json.dump(results, edit_lck_qc, indent=2)
         self._update_html_assets(results)
 
 
