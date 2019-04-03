@@ -24,6 +24,7 @@ import subprocess
 import tempfile
 
 import numpy as np
+import portalocker
 
 if os.getenv('SENTRY_DSN', None):
     # do no import if Sentry is not set (i.e., if variable SENTRY_DSN is not defined)
@@ -172,7 +173,7 @@ def init_sct():
 def start_stream_logger():
     """ Log to terminal, by default the formatting is like a print() call
 
-    :return: 
+    :return:
     """
 
     formatter = logging.Formatter(LOG_FORMAT)
@@ -273,8 +274,8 @@ def server_log_handler(client):
 
 def pause_stream_logger():
     """ Pause the log to Terminal
-    
-    :return: 
+
+    :return:
     """
     log.removeHandler(stream_handler)
 
@@ -292,11 +293,11 @@ class NoColorFormatter(logging.Formatter):
 def add_file_handler_to_logger(filename="{}.log".format(__file__), mode='a', log_format=None, log_level=None):
     """ Convenience fct to add a file handler to the sct log
         Will remove colors from prints
-    :param filename: 
-    :param mode: 
-    :param log_format: 
-    :param log_level: 
-    :return: the file handler 
+    :param filename:
+    :param mode:
+    :param log_format:
+    :param log_level:
+    :return: the file handler
     """
     log.debug('Adding file handler {}'.format(filename))
     fh = logging.FileHandler(filename=filename, mode=mode)
@@ -317,9 +318,9 @@ def add_file_handler_to_logger(filename="{}.log".format(__file__), mode='a', log
 
 def remove_handler(handler):
     """ Remore any handler from logs
-    
-    :param handler: 
-    :return: 
+
+    :param handler:
+    :return:
     """
     log.debug("Pause log to {} ".format(handler.baseFilename))
     log.removeHandler(handler)
@@ -1006,7 +1007,7 @@ def check_if_same_space(fname_1, fname_2):
 
 
 def printv(string, verbose=1, type='normal'):
-    """enables to print (color coded messages, depending on verbose status) 
+    """enables to print (color coded messages, depending on verbose status)
     """
 
     colors = {'normal': bcolors.normal, 'info': bcolors.green, 'warning': bcolors.yellow, 'error': bcolors.red,
@@ -1532,3 +1533,23 @@ def cache_save(cachefile, sig):
     """
     with io.open(cachefile, "wb") as f:
         f.write(sig)
+
+class open_with_exclusive_lock(object):
+    """
+    Utility class to prevent the writing of a file by multiple processes.
+
+    :param filename: name of the file to lock
+    :param mode: permission of the file ('w', 'r', 'a', etc.)
+    """
+    def __init__(self, filename, mode):
+        self.filename = filename
+        self.mode = mode
+
+    def __enter__(self):
+        fd = os.open(self.filename, os.O_RDWR|os.O_CREAT)
+        self._f = os.fdopen(fd, self.mode)
+        portalocker.lock(self._f, portalocker.LOCK_EX)
+        return self._f
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        portalocker.unlock(self._f)

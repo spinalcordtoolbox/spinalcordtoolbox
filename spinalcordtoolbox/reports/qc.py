@@ -30,7 +30,6 @@ import spinalcordtoolbox.reports.slice as qcslice
 
 logger = logging.getLogger("sct.{}".format(__file__))
 
-
 class QcImage(object):
     """
     Class used to create a .png file from a 2d image produced by the class "Slice"
@@ -419,11 +418,15 @@ class QcReport(object):
         }
         logger.debug('Description file: %s', self.qc_params.qc_results)
         results = []
-        if os.path.isfile(self.qc_params.qc_results):
-            results = json.load(open(self.qc_params.qc_results, 'r'))
-        results.append(output)
-        json.dump(results, open(self.qc_params.qc_results, "w"), indent=2)
+        with sct.open_with_exclusive_lock(self.qc_params.qc_results, 'r+') as lck_qc_file:
+            if os.path.getsize(self.qc_params.qc_results) != 0:
+                results = json.load(lck_qc_file)
+            results.append(output)
+            lck_qc_file.seek(0)
+            lck_qc_file.truncate()
+            json.dump(results, lck_qc_file, indent=2)
         self._update_html_assets(results)
+
 
     def _update_html_assets(self, json_data):
         """Update the html file and assets"""
