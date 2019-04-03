@@ -24,8 +24,6 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
 import matplotlib.colors as color
 
-import portalocker
-
 import sct_utils as sct
 from spinalcordtoolbox.image import Image
 import spinalcordtoolbox.reports.slice as qcslice
@@ -421,7 +419,7 @@ class QcReport(object):
         logger.debug('Description file: %s', self.qc_params.qc_results)
         results = []
         with sct.open_with_exclusive_lock(self.qc_params.qc_results, 'r+') as lck_qc_file:
-            if os.path.getsize(self.qc_params.qc_results) is not 0:
+            if os.path.getsize(self.qc_params.qc_results) != 0:
                 results = json.load(lck_qc_file)
             results.append(output)
             lck_qc_file.seek(0)
