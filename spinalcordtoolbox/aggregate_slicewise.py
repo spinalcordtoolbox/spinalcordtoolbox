@@ -59,8 +59,6 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], persli
     :param map_clusters: list of list of int: See func_map()
     :return: Aggregated metric
     """
-    # TODO: always add vertLevel if exists
-
     # If user neither specified slices nor levels, set perslice=True, otherwise, the output will likely contain nan
     # because in many cases the segmentation does not span the whole I-S dimension.
     if perslice is None:
@@ -107,7 +105,9 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], persli
     # loop across slice group
     for slicegroup in slicegroups:
         # add level info
-        if levels:
+        if vertgroups is None:
+            agg_metric[slicegroup]['VertLevel'] = None
+        else:
             agg_metric[slicegroup]['VertLevel'] = vertgroups[slicegroups.index(slicegroup)]
         # Loop across functions (e.g.: MEAN, STD)
         for (name, func) in group_funcs:
@@ -133,11 +133,15 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], persli
                     mask_slicegroup = np.concatenate(arr_tmp_concat, axis=(mask_slicegroup.ndim-1))
                 else:
                     mask_slicegroup[i_nonfinite] = 0.
-                # Run estimation
-                result, _ = func(data_slicegroup, mask_slicegroup, map_clusters)
-                # check if nan
-                if np.isnan(result):
-                    result = 'nan'
+                # Make sure the number of pixels to extract metrics is not null
+                if mask_slicegroup.sum() == 0:
+                    result = None
+                else:
+                    # Run estimation
+                    result, _ = func(data_slicegroup, mask_slicegroup, map_clusters)
+                    # check if nan
+                    if np.isnan(result):
+                        result = None
                 # here we create a field with name: FUNC(METRIC_NAME). Example: MEAN(CSA)
                 agg_metric[slicegroup]['{}({})'.format(name, metric.label)] = result
             except Exception as e:
@@ -402,17 +406,16 @@ def save_as_csv(agg_metric, fname_out, fname_in=None, append=False):
     # list_item = ['VertLevel', 'Label', 'MEAN', 'WA', 'BIN', 'ML', 'MAP', 'STD', 'MAX']
     # TODO: The thing below is ugly and needs to be fixed, but this is the only solution I found to order the columns
     #  without refactoring the code with OrderedDict.
-    list_item = ['VertLevel', 'Label', 'Size [vox]', 'MEAN(area)', 'STD(area)', 'MEAN(AP_diameter)', 'STD(AP_diameter)',
-                 'MEAN(RL_diameter)', 'STD(RL_diameter)', 'MEAN(ratio_minor_major)', 'STD(ratio_minor_major)',
+    list_item = ['Label', 'Size [vox]', 'MEAN(area)', 'STD(area)', 'MEAN(angle_AP)', 'STD(angle_AP)', 'MEAN(angle_RL)',
+                 'STD(angle_RL)', 'MEAN(diameter_AP)', 'STD(diameter_AP)', 'MEAN(diameter_RL)', 'STD(diameter_RL)',
                  'MEAN(eccentricity)', 'STD(eccentricity)', 'MEAN(orientation)', 'STD(orientation)',
-                 'MEAN(equivalent_diameter)', 'STD(equivalent_diameter)', 'MEAN(solidity)', 'STD(solidity)',
-                 'MEAN(CSA', 'STD(CSA', 'MEAN(Angle', 'STD(Angle', 'WA()', 'BIN()', 'ML()', 'MAP()', 'STD()', 'MAX()']
+                 'MEAN(solidity)', 'STD(solidity)', 'WA()', 'BIN()', 'ML()', 'MAP()', 'STD()', 'MAX()']
     # TODO: if append=True but file does not exist yet, raise warning and set append=False
     # write header (only if append=False)
     if not append or not os.path.isfile(fname_out):
         with open(fname_out, 'w') as csvfile:
             # spamwriter = csv.writer(csvfile, delimiter=',')
-            header = ['Timestamp', 'SCT Version', 'Filename', 'Slice (I->S)']
+            header = ['Timestamp', 'SCT Version', 'Filename', 'Slice (I->S)', 'VertLevel']
             agg_metric_key = agg_metric[agg_metric.keys()[0]].keys()
             for item in list_item:
                 for key in agg_metric_key:
@@ -431,15 +434,11 @@ def save_as_csv(agg_metric, fname_out, fname_in=None, append=False):
             line.append(sct.__version__)  # SCT Version
             line.append(fname_in)  # file name associated with the results
             line.append(parse_num_list_inv(slicegroup))  # list all slices in slicegroup
+            line.append(parse_num_list_inv(agg_metric[slicegroup]['VertLevel']))  # list vertebral levels
             agg_metric_key = agg_metric[agg_metric.keys()[0]].keys()
             for item in list_item:
                 for key in agg_metric_key:
                     if item in key:
-                        # Special case for VertLevel
-                        if key == 'VertLevel':
-                            line.append(
-                                parse_num_list_inv(agg_metric[slicegroup]['VertLevel']))  # list vertebral levels
-                        else:
-                            line.append(str(agg_metric[slicegroup][key]))
+                        line.append(str(agg_metric[slicegroup][key]))
                         break
             spamwriter.writerow(line)

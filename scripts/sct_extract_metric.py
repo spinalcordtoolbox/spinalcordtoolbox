@@ -131,7 +131,7 @@ max: for each z-slice of the input data, extract the max value for each slice of
     parser.add_option(name='-perlevel',
                       type_value='int',
                       description='Set to 1 to output one metric per vertebral level instead of a single '
-                                  'output metric.',
+                                  'output metric. This flag needs to be used with flag -vert.',
                       mandatory=False,
                       default_value=0)
     parser.add_option(name="-v",
@@ -340,7 +340,7 @@ def main(fname_data, path_label, method, slices, levels, fname_output, labels_us
 
         save_as_csv(agg_metric, fname_output, fname_in=fname_data, append=append)
         append = True  # when looping across labels, need to append results in the same file
-    sct.printv('\nFile created: ' + fname_output, verbose=1, type='info')
+    sct.display_open(fname_output)
 
 
 if __name__ == "__main__":

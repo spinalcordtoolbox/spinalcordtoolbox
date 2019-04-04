@@ -35,3 +35,16 @@ def test_segment():
 
     assert np.any(seg.data[16:22, 16:22, 64:90]) == True  # check if lesion detected
     assert np.any(seg.data[img.data != 1000]) == False  # check if no FP
+
+
+def test_intensity_normalization():
+    data_in = np.random.rand(10, 10)
+    min_out, max_out = 0.0, 2611.0
+    landmarks_lst = sorted(list(np.random.uniform(low=0.0, high=2611.0, size=(11,))))
+
+    data_out = deepseg_lesion.apply_intensity_normalization_model(data_in, landmarks_lst)
+
+    assert data_in.shape == data_out.shape
+    assert data_out.dtype == np.float32
+    assert np.min(data_out) >= min_out
+    assert np.max(data_out) <= max_out
