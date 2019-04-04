@@ -319,9 +319,7 @@ class SpinalCordStraightener(object):
             else:
                 sct.printv('\nPad input volume to account for spinal cord length...', verbose)
 
-                start_point = (z_centerline[0] - middle_slice) * factor_curved_straight + middle_slice
-                end_point = (z_centerline[-1] - middle_slice) * factor_curved_straight + middle_slice
-
+                start_point, end_point = bound_straight[0], bound_straight[1]
                 offset_z = 0
 
                 # if the destination image is resampled, we still create the straight reference space with the native resolution. # TODO: Maybe this if case is not needed?
