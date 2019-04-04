@@ -15,7 +15,6 @@
 #########################################################################################
 
 # TODO: the import of scipy.misc imsave was moved to the specific cases (orth and ellipse) in order to avoid issue #62. This has to be cleaned in the future.
-# TODO: deal with flag -use-image-coord
 
 from __future__ import absolute_import, division
 
@@ -49,41 +48,32 @@ def get_parser():
     # Initialize the parser
     parser = Parser(__file__)
     parser.usage.set_description(
-        """Compute various processes on the spinal cord segmentation, such as cross-sectional area.""")
+        """Compute the following morphometric measures based on the spinal cord segmentation:
+- area [mm^2]: Cross-sectional area, measured by counting pixels in each slice. Partial volume can be accounted for by inputing a mask comprising values within [0,1].
+- angle_AP, angle_RL: Estimated angle between the cord centerline and the axial slice. This angle is used to correct for morphometric information.
+- diameter_AP, diameter_RL: Finds the major and minor axes of the cord and measure their length
+- eccentricity: Eccentricity of the ellipse that has the same second-moments as the spinal cord. The eccentricity is the ratio of the focal distance (distance between focal points) over the major axis length. The value is in the interval [0, 1). When it is 0, the ellipse becomes a circle.
+- orientation: angle (in degrees) between the AP axis of the spinal cord and the AP axis of the image
+- solidity: CSA(spinal_cord) / CSA_convex(spinal_cord). If perfect ellipse, it should be one. This metric is interesting for detecting non-convex shape (e.g., in case of strong compression)
+""")
     parser.add_option(name='-i',
                       type_value='image_nifti',
-                      description='Spinal Cord segmentation',
+                      description='Mask to compute morphometrics from. Could be binary or weighted. E.g., spinal cord segmentation.',
                       mandatory=True,
                       example='seg.nii.gz')
-    parser.add_option(name='-p',
-                      type_value='multiple_choice',
-                      description='type of process to be performed:\n'
-                                  '- label-vert: Transform segmentation into vertebral level using a file that contains labels with disc value (flag: -discfile)\n'
-                                  '- csa: computes cross-sectional area by counting pixels in each slice and then geometrically adjusting using centerline orientation. Note that it is possible to input a binary mask or a mask comprising values within the range [0,1] to account for partial volume effect.\n'
-                                  '- shape: compute spinal shape properties, using scikit-image region measures, including:\n'
-                                  '  - csa: cross-sectional area.\n'
-                                  '  - AP and RL diameters\n'
-                                  '  - ratio_minor_major: AP_axis / RL_axis ratio.\n'
-                                  '  - eccentricity: Eccentricity of the ellipse that has the same second-moments as the spinal cord. The eccentricity is the ratio of the focal distance (distance between focal points) over the major axis length. The value is in the interval [0, 1). When it is 0, the ellipse becomes a circle.\n'
-                                  '  - equivalent diameter: The diameter of a circle with the same area as the spinal cord.\n'
-                                  '  - orientation: angle (in degrees) between the AP axis of the spinal cord and the AP axis of the image\n'
-                                  '  - solidity: CSA(spinal_cord) / CSA_convex(spinal_cord). If perfect ellipse, it should be one. This metric is interesting to detect non-convex shape (e.g., in case of strong compression).',
-                      mandatory=True,
-                      example=['label-vert', 'csa', 'shape'])
     parser.usage.addSection('Optional Arguments')
     parser.add_option(name='-o',
                       type_value='file_output',
-                      description="Output file name (add extension). Ex: my_csa.csv (with -p csa).",
+                      description="Output file name (add extension). Default: csa.csv.",
                       mandatory=False)
     parser.add_option(name='-append',
                       type_value='int',
-                      description='Append results as a new line in the output csv file instead of overwriting it. This '
-                                  'only concerns processes "csa" and "shape".',
+                      description='Append results as a new line in the output csv file instead of overwriting it.',
                       mandatory=False,
                       default_value=0)
     parser.add_option(name='-z',
                       type_value='str',
-                      description='Slice range to compute the CSA across (requires \"-p csa\").',
+                      description='Slice range to compute the metrics across (requires \"-p csa\").',
                       mandatory=False,
                       example='5:23')
     parser.add_option(name='-perslice',
@@ -96,7 +86,7 @@ def get_parser():
                       default_value=Param().perslice)
     parser.add_option(name='-vert',
                       type_value='str',
-                      description='Vertebral levels to compute the CSA across (requires \"-p csa\"). Example: 2:9 for C2 to T2.',
+                      description='Vertebral levels to compute the metrics across. Example: 2:9 for C2 to T2.',
                       mandatory=False,
                       example='2:9')
     parser.add_option(name='-vertfile',
@@ -107,37 +97,24 @@ def get_parser():
     parser.add_option(name='-perlevel',
                       type_value='int',
                       description='Set to 1 to output one metric per vertebral level instead of a single '
-                                  'output metric.',
+                                  'output metric. This flag needs to be used with flag -vert.',
                       mandatory=False,
                       default_value=Param().perlevel)
-    parser.add_option(name='-discfile',
-                      type_value='image_nifti',
-                      description='Disc labeling with the convention "disc labelvalue=3 ==> disc C2/C3". Only use with -p label-vert',
-                      mandatory=False)
     parser.add_option(name='-r',
                       type_value='multiple_choice',
-                      description='Removes the temporary folder and debug folder used for the algorithm at the end of execution',
+                      description='Removes temporary folder used for the algorithm at the end of execution',
                       mandatory=False,
                       default_value='1',
                       example=['0', '1'])
-    parser.add_option(name='-no-angle',
+    parser.add_option(name='-angle-corr',
                       type_value='multiple_choice',
-                      description='0: angle correction for csa computation. 1: no angle correction. When angle '
-                                  'correction is used, the CSA is calculated within the slice by computing the surface '
-                                  'of the segmentation, and then correcting the CSA by the cosine of the angle between '
-                                  'the slice plane and the cord centerline (previously estimated using a regularized '
-                                  'NURBS function). With the flag -no-angle 1, no correction is applied, which is '
-                                  'usually correct for data acquired orthogonally to the cord.',
+                      description='Angle correction for computing morphometric measures. When angle '
+                                  'correction is used, the cord within the slice is stretched/expanded by a factor '
+                                  'corresponding to the cosine of the angle between the centerline and the axial plane.'
+                                  ' If the cord is already quasi-orthogonal to the slab, you can set -angle-corr to 0.',
                       mandatory=False,
                       example=['0', '1'],
-                      default_value='0')
-    parser.add_option(name='-use-image-coord',
-                      type_value='multiple_choice',
-                      description='0: physical coordinates are used to compute CSA. 1: image coordinates are used to compute CSA.\n'
-                                  'Physical coordinates are less prone to instability in CSA computation and should be preferred.',
-                      mandatory=False,
-                      example=['0', '1'],
-                      default_value='0')
+                      default_value='1')
     parser.add_option(name='-v',
                       type_value='multiple_choice',
                       description='1: display on, 0: display off (default)',
@@ -159,12 +136,9 @@ def main(args):
 
     # Initialization
     slices = param.slices
-    angle_correction = True
-    use_phys_coord = True
     group_funcs = (('MEAN', func_wa), ('STD', func_std))  # functions to perform when aggregating metrics along S-I
 
     fname_segmentation = sct.get_absolute_path(arguments['-i'])
-    name_process = arguments['-p']
     fname_vert_levels = ''
     if '-o' in arguments:
         file_out = os.path.abspath(arguments['-o'])
@@ -194,57 +168,30 @@ def main(args):
         perslice = arguments['-perslice']
     else:
         perslice = Param().perslice
-    if '-no-angle' in arguments:
-        if arguments['-no-angle'] == '1':
-            angle_correction = False
-        elif arguments['-no-angle'] == '0':
+    if '-angle-corr' in arguments:
+        if arguments['-angle-corr'] == '1':
             angle_correction = True
-    if '-use-image-coord' in arguments:
-        if arguments['-use-image-coord'] == '1':
-            use_phys_coord = False
-        if arguments['-use-image-coord'] == '0':
-            use_phys_coord = True
+        elif arguments['-angle-corr'] == '0':
+            angle_correction = False
 
     # update fields
     param.verbose = verbose
     metrics_agg = {}
     if not file_out:
-        file_out = name_process + '.csv'
+        file_out = 'csa.csv'
 
-    if name_process == 'csa':
-        metrics = process_seg.compute_csa(fname_segmentation, algo_fitting=param.algo_fitting,
-                                          angle_correction=angle_correction, use_phys_coord=use_phys_coord,
-                                          remove_temp_files=remove_temp_files, verbose=verbose)
-
-        for key in metrics:
-            metrics_agg[key] = aggregate_per_slice_or_level(metrics[key], slices=parse_num_list(slices),
-                                                            levels=parse_num_list(vert_levels), perslice=perslice,
-                                                            perlevel=perlevel, vert_level=fname_vert_levels,
-                                                            group_funcs=group_funcs)
-        metrics_agg_merged = merge_dict(metrics_agg)
-        save_as_csv(metrics_agg_merged, file_out, fname_in=fname_segmentation, append=append)
-        sct.printv('\nFile created: '+file_out, verbose=1, type='info')
-
-    if name_process == 'label-vert':
-        if '-discfile' in arguments:
-            fname_discs = arguments['-discfile']
-        else:
-            sct.printv('\nERROR: Disc label file is mandatory (flag: -discfile).\n', 1, 'error')
-        process_seg.label_vert(fname_segmentation, fname_discs, verbose=verbose)
-
-    if name_process == 'shape':
-        fname_discs = None
-        if '-discfile' in arguments:
-            fname_discs = arguments['-discfile']
-        metrics = process_seg.compute_shape(fname_segmentation, remove_temp_files=remove_temp_files, verbose=verbose)
-        for key in metrics:
-            metrics_agg[key] = aggregate_per_slice_or_level(metrics[key], slices=parse_num_list(slices),
-                                                            levels=parse_num_list(vert_levels), perslice=perslice,
-                                                            perlevel=perlevel, vert_level=fname_vert_levels,
-                                                            group_funcs=group_funcs)
-        metrics_agg_merged = merge_dict(metrics_agg)
-        save_as_csv(metrics_agg_merged, file_out, fname_in=fname_segmentation, append=append)
-        sct.printv('\nFile created: ' + file_out, verbose=1, type='info')
+    metrics = process_seg.compute_shape(fname_segmentation,
+                                        algo_fitting='bspline',
+                                        angle_correction=angle_correction,
+                                        verbose=verbose)
+    for key in metrics:
+        metrics_agg[key] = aggregate_per_slice_or_level(metrics[key], slices=parse_num_list(slices),
+                                                        levels=parse_num_list(vert_levels), perslice=perslice,
+                                                        perlevel=perlevel, vert_level=fname_vert_levels,
+                                                        group_funcs=group_funcs)
+    metrics_agg_merged = merge_dict(metrics_agg)
+    save_as_csv(metrics_agg_merged, file_out, fname_in=fname_segmentation, append=append)
+    sct.display_open(file_out)
 
 
 if __name__ == "__main__":

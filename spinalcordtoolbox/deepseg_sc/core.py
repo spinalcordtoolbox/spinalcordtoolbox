@@ -111,11 +111,15 @@ def find_centerline(algo, image_fname, contrast_type, brain_bool, folder_output,
         im_labels = _call_viewer_centerline(Image(image_fname))
         im_centerline, arr_centerline, _ = get_centerline(im_labels)
         centerline_filename = sct.add_suffix(image_fname, "_ctr")
+        labels_filename = sct.add_suffix(image_fname, "_labels-centerline")
         im_centerline.save(centerline_filename)
-    elif algo == 'manual':
+        im_labels.save(labels_filename)
+
+    elif algo == 'file':
         centerline_filename = sct.add_suffix(image_fname, "_ctr")
         # Re-orient the manual centerline
         Image(centerline_fname).change_orientation('RPI').save(centerline_filename)
+
     else:
         sct.log.error('The parameter "-centerline" is incorrect. Please try again.')
         sys.exit(1)
@@ -175,7 +179,7 @@ def crop_image_around_centerline(im_in, ctr_in, crop_size):
     data_in = im_in.data.astype(np.float32)
     im_new = empty_like(im_in)  # but in fact we're going to crop it
 
-    x_lst, y_lst = [], []
+    x_lst, y_lst, z_lst = [], [], []
     data_im_new = np.zeros((crop_size, crop_size, im_in.dim[2]))
     for zz in range(im_in.dim[2]):
         if np.any(np.array(data_ctr[:, :, zz])):
@@ -192,9 +196,10 @@ def crop_image_around_centerline(im_in, ctr_in, crop_size):
 
             x_lst.append(str(x_start))
             y_lst.append(str(y_start))
+            z_lst.append(zz)
 
     im_new.data = data_im_new
-    return x_lst, y_lst, im_new
+    return x_lst, y_lst, z_lst, im_new
 
 
 def _remove_extrem_holes(z_lst, end_z, start_z=0):
@@ -491,15 +496,15 @@ def segment_2d(model_fname, contrast_type, input_size, im_in):
     return seg_crop.data
 
 
-def uncrop_image(ref_in, data_crop, x_crop_lst, y_crop_lst):
+def uncrop_image(ref_in, data_crop, x_crop_lst, y_crop_lst, z_crop_lst):
     """Reconstruc the data from the crop segmentation."""
     seg_unCrop = zeros_like(ref_in, dtype=np.uint8)
 
     crop_size_x, crop_size_y = data_crop.shape[:2]
 
-    for zz in range(len(x_crop_lst)):
+    for i_z, zz in enumerate(z_crop_lst):
         pred_seg = data_crop[:, :, zz]
-        x_start, y_start = int(x_crop_lst[zz]), int(y_crop_lst[zz])
+        x_start, y_start = int(x_crop_lst[i_z]), int(y_crop_lst[i_z])
         x_end = x_start + crop_size_x if x_start + crop_size_x < seg_unCrop.dim[0] else seg_unCrop.dim[0]
         y_end = y_start + crop_size_y if y_start + crop_size_y < seg_unCrop.dim[1] else seg_unCrop.dim[1]
         seg_unCrop.data[x_start:x_end, y_start:y_end, zz] = pred_seg[0:x_end - x_start, 0:y_end - y_start]
@@ -571,12 +576,11 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
                                  kernel_size='2d', remove_temp_files=1, verbose=1):
     """Pipeline"""
     # create temporary folder with intermediate results
-    sct.log.info("Creating temporary folder...")
     # file_fname = os.path.basename(fname_image)
-    tmp_folder = sct.TempFolder()
+    tmp_folder = sct.TempFolder(verbose=verbose)
     tmp_folder_path = tmp_folder.get_path()
     # fname_image_tmp = tmp_folder.copy_from(fname_image)
-    if ctr_algo == 'manual':  # if the ctr_file is provided
+    if ctr_algo == 'file':  # if the ctr_file is provided
         tmp_folder.copy_from(ctr_file)
         file_ctr = os.path.basename(ctr_file)
     else:
@@ -607,9 +611,9 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
     # crop image around the spinal cord centerline
     sct.log.info("Cropping the image around the spinal cord...")
     crop_size = 96 if (kernel_size == '3d' and contrast_type == 't2s') else 64
-    X_CROP_LST, Y_CROP_LST, im_crop_nii = crop_image_around_centerline(im_in=im_nii,
-                                                                       ctr_in=ctr_nii,
-                                                                       crop_size=crop_size)
+    X_CROP_LST, Y_CROP_LST, Z_CROP_LST, im_crop_nii = crop_image_around_centerline(im_in=im_nii,
+                                                                                   ctr_in=ctr_nii,
+                                                                                   crop_size=crop_size)
     del ctr_nii
 
     # normalize the intensity of the images
@@ -657,7 +661,8 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
     seg_uncrop_nii = uncrop_image(ref_in=im_nii,
                                   data_crop=seg_crop_data,
                                   x_crop_lst=X_CROP_LST,
-                                  y_crop_lst=Y_CROP_LST)
+                                  y_crop_lst=Y_CROP_LST,
+                                  z_crop_lst=Z_CROP_LST)
     fname_res_seg = sct.add_suffix(fname_res, '_seg')
     seg_uncrop_nii.save(fname_res_seg)
     del seg_crop_data
@@ -670,6 +675,22 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
     resampling.resample_file(fname_res_seg, fname_res_seg_downsamp, initial_resolution,
                                                            'mm', 'linear', verbose=0)
     im_image_res_seg_downsamp = Image(fname_res_seg_downsamp)
+
+    if ctr_algo == 'viewer':  # resample and reorient the viewer labels
+        fname_res_labels = sct.add_suffix(fname_orient, '_labels-centerline')
+        resampling.resample_file(fname_res_labels, fname_res_labels, initial_resolution,
+                                                           'mm', 'linear', verbose=0)
+        im_image_res_labels_downsamp = Image(fname_res_labels).change_orientation(original_orientation)
+    else:
+        im_image_res_labels_downsamp = None
+
+    if verbose == 2:
+        fname_res_ctr = sct.add_suffix(fname_orient, '_ctr')
+        resampling.resample_file(fname_res_ctr, fname_res_ctr, initial_resolution,
+                                                           'mm', 'linear', verbose=0)
+        im_image_res_ctr_downsamp = Image(fname_res_ctr).change_orientation(original_orientation)
+    else:
+        im_image_res_ctr_downsamp = None
 
     # binarize the resampled image to remove interpolation effects
     sct.log.info("Binarizing the segmentation to avoid interpolation effects...")
@@ -689,4 +710,4 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
         tmp_folder.cleanup()
 
     # reorient to initial orientation
-    return im_image_res_seg_downsamp_postproc.change_orientation(original_orientation), im_nii, seg_uncrop_nii.change_orientation('RPI')
+    return im_image_res_seg_downsamp_postproc.change_orientation(original_orientation), im_nii, seg_uncrop_nii.change_orientation('RPI'), im_image_res_labels_downsamp, im_image_res_ctr_downsamp
