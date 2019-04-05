@@ -2,6 +2,9 @@
 # -*- coding: utf-8
 # pytest unit tests for spinalcordtoolbox.centerline
 
+# TODO: test with more datapoints
+# TODO: introduce distance unit
+
 
 from __future__ import absolute_import
 
