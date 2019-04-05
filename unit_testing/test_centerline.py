@@ -10,13 +10,13 @@ import os
 import pytest
 import numpy as np
 
-from spinalcordtoolbox.centerline.core import get_centerline, ParamCenterline, find_and_sort_coord, round_and_clip
+from spinalcordtoolbox.centerline.core import get_centerline, find_and_sort_coord, round_and_clip
 from spinalcordtoolbox.image import Image
 import sct_utils as sct
 
 from create_test_data import dummy_centerline
 
-VERBOSE = 0
+VERBOSE = 2  # Set to 2 to save images, 0 otherwise
 
 
 # Generate a list of fake centerlines: (dummy_segmentation(params), dict of expected results)
@@ -34,7 +34,9 @@ im_centerlines = [(dummy_centerline(size_arr=(41, 7, 9), subsampling=1, orientat
                   (dummy_centerline(size_arr=(9, 9, 9), subsampling=1, hasnan=True), 2.),
                   (dummy_centerline(size_arr=(30, 20, 50), subsampling=1), 3.),
                   (dummy_centerline(size_arr=(30, 20, 50), subsampling=5), 4.),
-                  (dummy_centerline(size_arr=(30, 20, 50), dilate_ctl=2, subsampling=3, orientation='AIL'), 3.)]
+                  (dummy_centerline(size_arr=(30, 20, 50), dilate_ctl=2, subsampling=3, orientation='AIL'), 3.),
+                  (dummy_centerline(size_arr=(30, 20, 50), subsampling=1, outlier=[20]), 2.)
+                  ]
 
 
 # noinspection 801,PyShadowingNames
@@ -51,8 +53,7 @@ def test_find_and_sort_coord(img_ctl, expected):
 def test_get_centerline_polyfit_minmax(img_ctl, expected):
     """Test centerline fitting with minmax=True"""
     img, img_sub = [img_ctl[0].copy(), img_ctl[1].copy()]
-    img_out, arr_out, _ = get_centerline(img_sub, algo_fitting='polyfit', param=ParamCenterline(degree=3),
-                                         minmax=True, verbose=VERBOSE)
+    img_out, arr_out, _ = get_centerline(img_sub, algo_fitting='polyfit', degree=3, minmax=True, verbose=VERBOSE)
     # Assess output size
     assert arr_out.shape == expected
 
@@ -61,11 +62,8 @@ def test_get_centerline_polyfit_minmax(img_ctl, expected):
 @pytest.mark.parametrize('img_ctl,expected', im_centerlines)
 def test_get_centerline_polyfit(img_ctl, expected):
     """Test centerline fitting using polyfit"""
-    deg = 3
     img, img_sub = [img_ctl[0].copy(), img_ctl[1].copy()]
-    img_out, arr_out, _ = get_centerline(img_sub, algo_fitting='polyfit', param=ParamCenterline(degree=deg),
-                                         minmax=False, verbose=VERBOSE)
-
+    img_out, arr_out, _ = get_centerline(img_sub, algo_fitting='polyfit', minmax=False, verbose=VERBOSE)
     assert np.linalg.norm(find_and_sort_coord(img) - find_and_sort_coord(img_out)) < expected
     # check arr_out and arr_out_deriv only if input orientation is RPI (because the output array is always in RPI)
     if img.orientation == 'RPI':
@@ -76,10 +74,8 @@ def test_get_centerline_polyfit(img_ctl, expected):
 @pytest.mark.parametrize('img_ctl,expected', im_centerlines)
 def test_get_centerline_bspline(img_ctl, expected):
     """Test centerline fitting using bspline"""
-    deg = 3
     img, img_sub = [img_ctl[0].copy(), img_ctl[1].copy()]
-    img_out, arr_out, _ = get_centerline(img_sub, algo_fitting='bspline', param=ParamCenterline(degree=deg),
-                                         minmax=False, verbose=VERBOSE)
+    img_out, arr_out, _ = get_centerline(img_sub, algo_fitting='bspline', minmax=False, verbose=VERBOSE)
     assert np.linalg.norm(find_and_sort_coord(img) - find_and_sort_coord(img_out)) < expected
 
 
@@ -89,22 +85,21 @@ def test_get_centerline_linear(img_ctl, expected):
     """Test centerline fitting using linear interpolation"""
     deg = 3
     img, img_sub = [img_ctl[0].copy(), img_ctl[1].copy()]
-    img_out, arr_out, _ = get_centerline(img_sub, algo_fitting='linear', param=ParamCenterline(degree=deg),
-                                         minmax=False, verbose=VERBOSE)
+    img_out, arr_out, _ = get_centerline(img_sub, algo_fitting='linear', minmax=False, verbose=VERBOSE)
     assert np.linalg.norm(find_and_sort_coord(img) - find_and_sort_coord(img_out)) < expected
 
 
 # noinspection 801,PyShadowingNames
-@pytest.mark.parametrize('img_ctl,expected', im_centerlines)
-def test_get_centerline_nurbs(img_ctl, expected):
-    """Test centerline fitting using nurbs"""
-    img, img_sub = [img_ctl[0].copy(), img_ctl[1].copy()]
-    # Here we need a try/except because nurbs crashes with too few points.
-    try:
-        img_out, arr_out, _ = get_centerline(img_sub, algo_fitting='nurbs', minmax=False, verbose=VERBOSE)
-        assert np.linalg.norm(find_and_sort_coord(img) - find_and_sort_coord(img_out)) < expected
-    except ArithmeticError as e:
-        print(e)
+# @pytest.mark.parametrize('img_ctl,expected', im_centerlines)
+# def test_get_centerline_nurbs(img_ctl, expected):
+#     """Test centerline fitting using nurbs"""
+#     img, img_sub = [img_ctl[0].copy(), img_ctl[1].copy()]
+#     # Here we need a try/except because nurbs crashes with too few points.
+#     try:
+#         img_out, arr_out, _ = get_centerline(img_sub, algo_fitting='nurbs', minmax=False, verbose=VERBOSE)
+#         assert np.linalg.norm(find_and_sort_coord(img) - find_and_sort_coord(img_out)) < expected
+#     except ArithmeticError as e:
+#         print(e)
 
 
 # noinspection 801,PyShadowingNames
@@ -116,8 +111,7 @@ def test_get_centerline_optic():
     img_t2.change_type('float32')
     img_t2.data[0, 0, 0] = np.nan
     img_t2.data[1, 0, 0] = np.inf
-    img_out, arr_out, _ = get_centerline(img_t2, algo_fitting='optic', param=ParamCenterline(contrast='t2'),
-                                         minmax=False, verbose=VERBOSE)
+    img_out, arr_out, _ = get_centerline(img_t2, algo_fitting='optic', contrast='t2', minmax=False, verbose=VERBOSE)
     # Open ground truth segmentation and compare
     fname_t2_seg = os.path.join(sct.__sct_dir__, 'sct_testing_data/t2/t2_seg.nii.gz')
     img_seg_out, arr_seg_out, _ = get_centerline(Image(fname_t2_seg), algo_fitting='bspline', minmax=False,

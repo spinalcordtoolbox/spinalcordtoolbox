@@ -13,7 +13,8 @@ from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.resampling import resample_nipy
 
 
-def dummy_centerline(size_arr=(9, 9, 9), subsampling=1, dilate_ctl=0, hasnan=False, zeroslice=[], orientation='RPI'):
+def dummy_centerline(size_arr=(9, 9, 9), subsampling=1, dilate_ctl=0, hasnan=False, zeroslice=[], outlier=[],
+                     orientation='RPI'):
     """
     Create a dummy Image centerline of small size. Return the full and sub-sampled version along z.
     :param size_arr: tuple: (nx, ny, nz)
@@ -22,6 +23,7 @@ def dummy_centerline(size_arr=(9, 9, 9), subsampling=1, dilate_ctl=0, hasnan=Fal
                          if dilate_ctl=0, result will be a single pixel per slice.
     :param hasnan: Bool: Image has non-numerical values: nan, inf. In this case, do not subsample.
     :param zeroslice: list int: zero all slices listed in this param
+    :param outlier: list int: replace the current point with an outlier at the corner of the image for the slices listed
     :param orientation:
     :return:
     """
@@ -43,7 +45,12 @@ def dummy_centerline(size_arr=(9, 9, 9), subsampling=1, dilate_ctl=0, hasnan=Fal
     # Zero specified slices
     if zeroslice is not []:
         data[:, :, zeroslice] = 0
-
+    # Add outlier
+    if outlier is not []:
+        # First, zero all the slice
+        data[:, :, outlier] = 0
+        # Then, add point in the corner
+        data[0, 0, outlier] = 1
     # Create image with default orientation LPI
     affine = np.eye(4)
     nii = nib.nifti1.Nifti1Image(data, affine)
