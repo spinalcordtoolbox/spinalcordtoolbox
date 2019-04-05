@@ -13,7 +13,7 @@ from spinalcordtoolbox.centerline import curve_fitting
 
 
 class ParamCenterline:
-    def __init__(self, contrast=None, degree=3):
+    def __init__(self, contrast=None, degree=10):
         self.contrast = contrast
         self.degree = degree  # Degree of polynomial function
 
@@ -88,8 +88,8 @@ def get_centerline(im_seg, algo_fitting='polyfit', minmax=True, param=ParamCente
         x_centerline_fit = curve_fitting.linear(z_mean, x_mean, z_ref)
         y_centerline_fit = curve_fitting.linear(z_mean, y_mean, z_ref)
         # Compute derivatives using polynomial fit due to undefined derivatives using linear interpolation
-        _, x_centerline_deriv = curve_fitting.polyfit_1d(z_mean, x_mean, z_ref, deg=5)
-        _, y_centerline_deriv = curve_fitting.polyfit_1d(z_mean, y_mean, z_ref, deg=5)
+        _, x_centerline_deriv = curve_fitting.polyfit_1d(z_mean, x_mean, z_ref, deg=param.degree)
+        _, y_centerline_deriv = curve_fitting.polyfit_1d(z_mean, y_mean, z_ref, deg=param.degree)
 
     elif algo_fitting == 'nurbs':
         from spinalcordtoolbox.centerline.nurbs import b_spline_nurbs
@@ -109,8 +109,8 @@ def get_centerline(im_seg, algo_fitting='polyfit', minmax=True, param=ParamCente
         x_centerline_fit, y_centerline_fit, z_centerline = find_and_sort_coord(im_centerline)
         # Compute derivatives using polynomial fit
         # TODO: Fix below with reorientation of axes
-        _, x_centerline_deriv = curve_fitting.polyfit_1d(z_centerline, x_centerline_fit, z_centerline, deg=5)
-        _, y_centerline_deriv = curve_fitting.polyfit_1d(z_centerline, y_centerline_fit, z_centerline, deg=5)
+        _, x_centerline_deriv = curve_fitting.polyfit_1d(z_centerline, x_centerline_fit, z_centerline, deg=param.degree)
+        _, y_centerline_deriv = curve_fitting.polyfit_1d(z_centerline, y_centerline_fit, z_centerline, deg=param.degree)
         return im_centerline.change_orientation(native_orientation), \
                np.array([x_centerline_fit, y_centerline_fit, z_centerline]), \
                np.array([x_centerline_deriv, y_centerline_deriv, np.ones_like(z_centerline)]),
