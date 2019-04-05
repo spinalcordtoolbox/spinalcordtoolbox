@@ -5,12 +5,11 @@
 
 # TODO: Add feature to born centerline at min/max z, for compatibility with flatten_sagittal
 
+import logging
 import numpy as np
 
 from spinalcordtoolbox.image import Image, zeros_like
 from spinalcordtoolbox.centerline import curve_fitting
-
-import sct_utils as sct
 
 
 class ParamCenterline:
@@ -117,7 +116,7 @@ def get_centerline(im_seg, algo_fitting='polyfit', minmax=True, param=ParamCente
                np.array([x_centerline_deriv, y_centerline_deriv, np.ones_like(z_centerline)]),
 
     else:
-        sct.log.error('algo_fitting "' + algo_fitting + '" does not exist.')
+        logging.error('algo_fitting "' + algo_fitting + '" does not exist.')
         raise ValueError
 
     # Display fig of fitted curves
