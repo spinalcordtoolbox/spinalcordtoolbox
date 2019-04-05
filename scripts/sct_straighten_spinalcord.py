@@ -12,6 +12,8 @@
 # License: see the LICENSE.TXT
 # ======================================================================================================================
 
+# TODO: make python module
+
 from __future__ import division, absolute_import
 
 import sys, os, time, bisect
@@ -22,7 +24,7 @@ import tqdm
 
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.centerline.core import get_centerline
+from spinalcordtoolbox.centerline.core import get_centerline, ParamCenterline
 from msct_parser import Parser
 from msct_types import Centerline
 from sct_apply_transfo import Transform
@@ -51,9 +53,10 @@ def generate_qc(fn_input, fn_centerline, fn_output, args, path_qc):
     )
 
 
-def _get_centerline(img, algo_fitting, verbose):
+def _get_centerline(img, algo_fitting, degree, verbose):
     nx, ny, nz, nt, px, py, pz, pt = img.dim
-    _, arr_ctl, arr_ctl_der = get_centerline(img, algo_fitting=algo_fitting, minmax=True, verbose=verbose)
+    _, arr_ctl, arr_ctl_der = get_centerline(img, algo_fitting=algo_fitting, minmax=True,
+                                             param=ParamCenterline(degree=degree), verbose=verbose)
     # Transform centerline to physical coordinate system
     arr_ctl_phys = img.transfo_pix2phys(
         [[arr_ctl[0][i], arr_ctl[1][i], arr_ctl[2][i]] for i in range(len(arr_ctl[0]))])
@@ -69,14 +72,14 @@ def _get_centerline(img, algo_fitting, verbose):
 
 class SpinalCordStraightener(object):
 
-    def __init__(self, input_filename, centerline_filename, debug=0, deg_poly=10,
+    def __init__(self, input_filename, centerline_filename, debug=0, degree=3,
                  interpolation_warp='spline', rm_tmp_files=1, verbose=1, algo_fitting='bspline',
                  precision=2.0, threshold_distance=10, output_filename=''):
         self.input_filename = input_filename
         self.centerline_filename = centerline_filename
         self.output_filename = output_filename
         self.debug = debug
-        self.deg_poly = deg_poly  # maximum degree of polynomial function for fitting centerline.
+        self.degree = degree  # maximum degree of polynomial function for fitting centerline.
         # the FOV due to the curvature of the spinal cord
         self.interpolation_warp = interpolation_warp
         self.remove_temp_files = rm_tmp_files  # remove temporary files
@@ -220,7 +223,7 @@ class SpinalCordStraightener(object):
 
             # 2. extract bspline fitting of the centerline, and its derivatives
             img_ctl = Image('centerline_rpi.nii.gz')
-            centerline = _get_centerline(img_ctl, algo_fitting, verbose)
+            centerline = _get_centerline(img_ctl, algo_fitting, self.degree, verbose)
             number_of_points = centerline.number_of_points
 
             # ==========================================================================================
@@ -286,7 +289,7 @@ class SpinalCordStraightener(object):
                 image_centerline_straight = Image('centerline_ref.nii.gz')\
                     .change_orientation("RPI")\
                     .save(fname_ref, mutable=True)
-                centerline_straight = _get_centerline(image_centerline_straight, algo_fitting, verbose)
+                centerline_straight = _get_centerline(image_centerline_straight, algo_fitting, self.degree, verbose)
                 nx_s, ny_s, nz_s, nt_s, px_s, py_s, pz_s, pt_s = image_centerline_straight.dim
 
                 # Prepare warping fields headers
@@ -789,6 +792,7 @@ def get_parser():
                       type_value=[[','], 'str'],
                       description="Parameters for spinal cord straightening. Separate arguments with ','."
                                   "\nalgo_fitting: {polyfit,bspline,nurbs} algorithm for curve fitting. Default=bspline"
+                                  "\ndegree: int: Maximum degree of polynomial function for fitting centerline. Default=3"
                                   "\nprecision: [1.0,inf[. Precision factor of straightening, related to the number of slices. Increasing this parameter increases the precision along with increased computational time. Not taken into account with hanning fitting method. Default=2"
                                   "\nthreshold_distance: [0.0,inf[. Threshold at which voxels are not considered into displacement. Increase this threshold if the image is blackout around the spinal cord too much. Default=10"
                                   "\naccuracy_results: {0, 1} Disable/Enable computation of accuracy results after straightening. Default=0"
@@ -874,6 +878,8 @@ def main(args=None):
             param_split = param.split('=')
             if param_split[0] == 'algo_fitting':
                 sc_straight.algo_fitting = param_split[1]
+            if param_split[0] == 'degree':
+                sc_straight.degree = int(param_split[1])
             if param_split[0] == 'precision':
                 sc_straight.precision = float(param_split[1])
             if param_split[0] == 'threshold_distance':
