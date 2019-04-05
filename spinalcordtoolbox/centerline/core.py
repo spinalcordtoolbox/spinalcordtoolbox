@@ -60,6 +60,14 @@ def get_centerline(im_seg, algo_fitting='polyfit', minmax=True, contrast=None, d
     im_seg.change_orientation('RPI')
     px, py, pz = im_seg.dim[4:7]
 
+    # Assign default degree based on method
+    if not degree:
+        if algo_fitting == 'bspline':
+            degree = 3
+        else:
+            # polyfit, nurbs, optic, etc.
+            degree = 5
+
     # Take the center of mass at each slice to avoid: https://stackoverflow.com/questions/2009379/interpolate-question
     x_mean, y_mean, z_mean = find_and_sort_coord(im_seg)
 
@@ -71,20 +79,20 @@ def get_centerline(im_seg, algo_fitting='polyfit', minmax=True, contrast=None, d
 
     # Choose method
     if algo_fitting == 'polyfit':
-        x_centerline_fit, x_centerline_deriv = curve_fitting.polyfit_1d(z_mean, x_mean, z_ref, deg=param.degree)
-        y_centerline_fit, y_centerline_deriv = curve_fitting.polyfit_1d(z_mean, y_mean, z_ref, deg=param.degree)
+        x_centerline_fit, x_centerline_deriv = curve_fitting.polyfit_1d(z_mean, x_mean, z_ref, deg=degree)
+        y_centerline_fit, y_centerline_deriv = curve_fitting.polyfit_1d(z_mean, y_mean, z_ref, deg=degree)
 
     elif algo_fitting == 'bspline':
-        x_centerline_fit, x_centerline_deriv = curve_fitting.bspline(z_mean, x_mean, z_ref, deg=param.degree_bspline)
-        y_centerline_fit, y_centerline_deriv = curve_fitting.bspline(z_mean, y_mean, z_ref, deg=param.degree_bspline)
+        x_centerline_fit, x_centerline_deriv = curve_fitting.bspline(z_mean, x_mean, z_ref, deg=degree)
+        y_centerline_fit, y_centerline_deriv = curve_fitting.bspline(z_mean, y_mean, z_ref, deg=degree)
 
     elif algo_fitting == 'linear':
         # Simple linear interpolation
         x_centerline_fit = curve_fitting.linear(z_mean, x_mean, z_ref)
         y_centerline_fit = curve_fitting.linear(z_mean, y_mean, z_ref)
         # Compute derivatives using polynomial fit due to undefined derivatives using linear interpolation
-        _, x_centerline_deriv = curve_fitting.polyfit_1d(z_mean, x_mean, z_ref, deg=param.degree)
-        _, y_centerline_deriv = curve_fitting.polyfit_1d(z_mean, y_mean, z_ref, deg=param.degree)
+        _, x_centerline_deriv = curve_fitting.polyfit_1d(z_mean, x_mean, z_ref, deg=degree)
+        _, y_centerline_deriv = curve_fitting.polyfit_1d(z_mean, y_mean, z_ref, deg=degree)
 
     elif algo_fitting == 'nurbs':
         from spinalcordtoolbox.centerline.nurbs import b_spline_nurbs
@@ -100,12 +108,12 @@ def get_centerline(im_seg, algo_fitting='polyfit', minmax=True, contrast=None, d
         # image itself (not the segmentation). Hence, we can bypass the fitting procedure and centerline creation
         # and directly output results.
         from spinalcordtoolbox.centerline import optic
-        im_centerline = optic.detect_centerline(im_seg, param.contrast)
+        im_centerline = optic.detect_centerline(im_seg, contrast)
         x_centerline_fit, y_centerline_fit, z_centerline = find_and_sort_coord(im_centerline)
         # Compute derivatives using polynomial fit
         # TODO: Fix below with reorientation of axes
-        _, x_centerline_deriv = curve_fitting.polyfit_1d(z_centerline, x_centerline_fit, z_centerline, deg=param.degree)
-        _, y_centerline_deriv = curve_fitting.polyfit_1d(z_centerline, y_centerline_fit, z_centerline, deg=param.degree)
+        _, x_centerline_deriv = curve_fitting.polyfit_1d(z_centerline, x_centerline_fit, z_centerline, deg=degree)
+        _, y_centerline_deriv = curve_fitting.polyfit_1d(z_centerline, y_centerline_fit, z_centerline, deg=degree)
         return im_centerline.change_orientation(native_orientation), \
                np.array([x_centerline_fit, y_centerline_fit, z_centerline]), \
                np.array([x_centerline_deriv, y_centerline_deriv, np.ones_like(z_centerline)]),
@@ -122,7 +130,7 @@ def get_centerline(im_seg, algo_fitting='polyfit', minmax=True, contrast=None, d
         import matplotlib.pyplot as plt
         plt.figure()
         plt.subplot(2, 1, 1)
-        plt.title("Algo=%s, Deg=%s" % (algo_fitting, param.degree))
+        plt.title("Algo=%s, Deg=%s" % (algo_fitting, degree))
         plt.plot(z_ref * pz, x_centerline_fit * px)
         plt.plot(z_ref * pz, x_centerline_fit * px, 'b.')
         plt.plot(z_mean * pz, x_mean * px, 'ro')
