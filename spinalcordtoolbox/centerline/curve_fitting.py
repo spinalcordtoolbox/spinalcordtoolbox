@@ -4,7 +4,7 @@
 
 from __future__ import absolute_import
 
-import sct_utils as sct
+import logging
 
 
 def polyfit_1d(x, y, xref, deg=5):
@@ -17,7 +17,7 @@ def polyfit_1d(x, y, xref, deg=5):
     :return: p(xref): Fitted polynomial for each xref point
     :return: p_diff(xref): Derivatives for each xref point
     """
-    from numpy import poly1d, polyfit, polyder
+    from numpy import poly1d, polyfit
     p = poly1d(polyfit(x, y, deg=deg))
     return p(xref), p.deriv(1)(xref)
 
@@ -31,13 +31,18 @@ def bspline(x, y, xref, deg=3):
     :param deg:
     :return:
     """
+    # TODO: add flag to enforce boundaries, using weight flag in bspline function
+    from numpy import sqrt
     from scipy import interpolate
     # Make sure the condition len(x_mean) > k is satisfied. Otherwise, change k to avoid crashing.
     if not len(x) > deg:
         deg = len(x) - 1
-        sct.log.warning('Input array size is smaller than degree. Forcing deg = ' + str(deg))
+        logging.warning('Input array size is smaller than degree. Forcing deg = {}'.format(deg))
+    # Compute smoothing factor
+    s = (len(x) - sqrt(2 * len(x))) * 10
+    logging.debug('Smoothing factor: s={}'.format(s))
     # Then, run bspline interpolation
-    tck = interpolate.splrep(x, y, s=5, k=deg)  # TODO: find s based on pix dim
+    tck = interpolate.splrep(x, y, s=s, k=deg)  # TODO: find s based on pix dim
     y_fit = interpolate.splev(xref, tck, der=0)
     y_fit_der = interpolate.splev(xref, tck, der=1)
     return y_fit, y_fit_der
