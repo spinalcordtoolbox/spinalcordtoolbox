@@ -15,7 +15,6 @@ from tqdm import tqdm
 from nibabel import Nifti1Image, save
 
 import sct_utils as sct
-from sct_apply_transfo import Transform
 from sct_image import pad_image
 from msct_types import Centerline
 
@@ -64,6 +63,32 @@ class SpinalCordStraightener(object):
         self.template_orientation = 0
 
     def straighten(self):
+        """
+        Straighten spinal cord. Steps: (everything is done in physical space)
+        1. open input image and centreline image
+        2. extract bspline fitting of the centreline, and its derivatives
+        3. compute length of centerline
+        4. compute and generate straight space
+        5. compute transformations
+            for each voxel of one space: (done using matrices --> improves speed by a factor x300)
+                a. determine which plane of spinal cord centreline it is included
+                b. compute the position of the voxel in the plane (X and Y distance from centreline, along the plane)
+                c. find the correspondant centreline point in the other space
+                d. find the correspondance of the voxel in the corresponding plane
+        6. generate warping fields for each transformations
+        7. write warping fields and apply them
+
+        step 5.b: how to find the corresponding plane?
+            The centerline plane corresponding to a voxel correspond to the nearest point of the centerline.
+            However, we need to compute the distance between the voxel position and the plane to be sure it is part of the plane and not too distant.
+            If it is more far than a threshold, warping value should be 0.
+
+        step 5.d: how to make the correspondance between centerline point in both images?
+            Both centerline have the same lenght. Therefore, we can map centerline point via their position along the curve.
+            If we use the same number of points uniformely along the spinal cord (1000 for example), the correspondance is straight-forward.
+
+        :return:
+        """
         # Initialization
         fname_anat = self.input_filename
         fname_centerline = self.centerline_filename
@@ -98,15 +123,11 @@ class SpinalCordStraightener(object):
         os.chdir(path_tmp)
 
         # Change orientation of the input centerline into RPI
-        sct.printv("\nOrient centerline to RPI orientation...", verbose)
         image_centerline = Image("centerline.nii.gz").change_orientation("RPI").save("centerline_rpi.nii.gz",
                                                                                      mutable=True)
 
         # Get dimension
-        sct.printv('\nGet dimensions...', verbose)
         nx, ny, nz, nt, px, py, pz, pt = image_centerline.dim
-        sct.printv('.. matrix size: ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz), verbose)
-        sct.printv('.. voxel size:  ' + str(px) + 'mm x ' + str(py) + 'mm x ' + str(pz) + 'mm', verbose)
         if self.speed_factor != 1.0:
             intermediate_resampling = True
             px_r, py_r, pz_r = px * self.speed_factor, py * self.speed_factor, pz * self.speed_factor
@@ -116,7 +137,7 @@ class SpinalCordStraightener(object):
         if intermediate_resampling:
             sct.mv('centerline_rpi.nii.gz', 'centerline_rpi_native.nii.gz')
             pz_native = pz
-
+            # TODO: remove system call
             sct.run(['sct_resample', '-i', 'centerline_rpi_native.nii.gz', '-mm',
                      str(px_r) + 'x' + str(py_r) + 'x' + str(pz_r), '-o', 'centerline_rpi.nii.gz'])
             image_centerline = Image('centerline_rpi.nii.gz')
@@ -127,48 +148,13 @@ class SpinalCordStraightener(object):
             image_centerline.data[image_centerline.data > 1] = 1
             image_centerline.save()
 
-        """
-        Steps: (everything is done in physical space)
-        1. open input image and centreline image
-        2. extract bspline fitting of the centreline, and its derivatives
-        3. compute length of centerline
-        4. compute and generate straight space
-        5. compute transformations
-            for each voxel of one space: (done using matrices --> improves speed by a factor x300)
-                a. determine which plane of spinal cord centreline it is included
-                b. compute the position of the voxel in the plane (X and Y distance from centreline, along the plane)
-                c. find the correspondant centreline point in the other space
-                d. find the correspondance of the voxel in the corresponding plane
-        6. generate warping fields for each transformations
-        7. write warping fields and apply them
-
-        step 5.b: how to find the corresponding plane?
-            The centerline plane corresponding to a voxel correspond to the nearest point of the centerline.
-            However, we need to compute the distance between the voxel position and the plane to be sure it is part of the plane and not too distant.
-            If it is more far than a threshold, warping value should be 0.
-
-        step 5.d: how to make the correspondance between centerline point in both images?
-            Both centerline have the same lenght. Therefore, we can map centerline point via their position along the curve.
-            If we use the same number of points uniformely along the spinal cord (1000 for example), the correspondance is straight-forward.
-        """
-
-        # number of points along the spinal cord
-        if algo_fitting == 'nurbs':
-            number_of_points = int(self.precision * (float(nz) / pz))
-            if number_of_points < 100:
-                number_of_points *= 50
-            if number_of_points == 0:
-                number_of_points = 50
-        else:
-            number_of_points = nz
-
         # 2. extract bspline fitting of the centerline, and its derivatives
         img_ctl = Image('centerline_rpi.nii.gz')
         centerline = _get_centerline(img_ctl, algo_fitting, self.degree, verbose)
         number_of_points = centerline.number_of_points
 
         # ==========================================================================================
-        sct.printv("\nCreate the straight space and the safe zone...", verbose)
+        logging.info('Create the straight space and the safe zone')
         # 3. compute length of centerline
         # compute the length of the spinal cord based on fitted centerline and size of centerline in z direction
 
@@ -209,20 +195,19 @@ class SpinalCordStraightener(object):
         bound_straight = [(z_centerline[inferior_bound] - middle_slice) * factor_curved_straight + middle_slice,
                           (z_centerline[superior_bound] - middle_slice) * factor_curved_straight + middle_slice]
 
-        if verbose == 2:
-            sct.printv("Length of spinal cord = " + str(length_centerline))
-            sct.printv("Size of spinal cord in z direction = " + str(size_z_centerline))
-            sct.printv("Ratio length/size = " + str(factor_curved_straight))
-            sct.printv("Safe zone boundaries: ")
-            sct.printv("Curved space = " + str(bound_curved))
-            sct.printv("Straight space = " + str(bound_straight))
+        logging.info('Length of spinal cord: {}'.format(length_centerline))
+        logging.info('Size of spinal cord in z direction: {}'.format(size_z_centerline))
+        logging.info('Ratio length/size: {}'.format(factor_curved_straight))
+        logging.info('Safe zone boundaries (curved space): {}'.format(bound_curved))
+        logging.info('Safe zone boundaries (straight space): {}'.format(bound_straight))
 
         # 4. compute and generate straight space
         # points along curved centerline are already regularly spaced.
         # calculate position of points along straight centerline
 
-        # Create straight NIFTI volumes. TODO: maybe this if case is not needed?
+        # Create straight NIFTI volumes.
         # ==========================================================================================
+        # TODO: maybe this if case is not needed?
         if self.use_straight_reference:
             image_centerline_pad = Image('centerline_rpi.nii.gz')
             nx, ny, nz, nt, px, py, pz, pt = image_centerline_pad.dim
@@ -262,12 +247,13 @@ class SpinalCordStraightener(object):
                 centerline_straight.save_centerline(image=discs_ref_image, fname_output='discs_ref_image.nii.gz')
 
         else:
-            sct.printv('\nPad input volume to account for spinal cord length...', verbose)
+            logging.info('Pad input volume to account for spinal cord length...')
 
             start_point, end_point = bound_straight[0], bound_straight[1]
             offset_z = 0
 
-            # if the destination image is resampled, we still create the straight reference space with the native resolution.
+            # if the destination image is resampled, we still create the straight reference space with the native
+            # resolution.
             # TODO: Maybe this if case is not needed?
             if intermediate_resampling:
                 padding_z = int(np.ceil(1.5 * ((length_centerline - size_z_centerline) / 2.0) / pz_native))
@@ -334,7 +320,6 @@ class SpinalCordStraightener(object):
             ))
             image_centerline_straight = msct_image.spatial_crop(image_centerline_pad, spec)
 
-            # image_centerline_straight = Image('tmp.centerline_pad_crop.nii.gz')
             nx_s, ny_s, nz_s, nt_s, px_s, py_s, pz_s, pt_s = image_centerline_straight.dim
             hdr_warp_s = image_centerline_straight.hdr.copy()
             hdr_warp_s.set_data_dtype('float32')
@@ -346,7 +331,7 @@ class SpinalCordStraightener(object):
             end_point_coord = image_centerline_pad.transfo_phys2pix([[0, 0, end_point]])[0]
 
             number_of_voxel = nx * ny * nz
-            sct.printv("Number of voxel = " + str(number_of_voxel))
+            logging.debug('Number of voxels: {}'.format(number_of_voxel))
 
             time_centerlines = time.time()
 
@@ -364,9 +349,10 @@ class SpinalCordStraightener(object):
                                              dx_straight, dy_straight, dz_straight)
 
             time_centerlines = time.time() - time_centerlines
-            sct.printv('Time to generate centerline: ' + str(np.round(time_centerlines * 1000.0)) + ' ms', verbose)
+            logging.info('Time to generate centerline: {} ms'.format(np.round(time_centerlines * 1000.0)))
 
         if verbose == 2:
+            # TODO: use OO
             import matplotlib.pyplot as plt
             from datetime import datetime
             curved_points = centerline.progressive_length
@@ -442,7 +428,6 @@ class SpinalCordStraightener(object):
         lookup_straight2curved = np.array(lookup_straight2curved)
 
         # Create volumes containing curved and straight warping fields
-        time_generation_volumes = time.time()
         data_warp_curved2straight = np.zeros((nx_s, ny_s, nz_s, 1, 3))
         data_warp_straight2curved = np.zeros((nx, ny, nz, 1, 3))
 
@@ -477,8 +462,8 @@ class SpinalCordStraightener(object):
                 displacements_straight[:, 2] = -displacements_straight[:, 2]
                 displacements_straight[indexes_out_distance_straight] = [100000.0, 100000.0, 100000.0]
 
-                data_warp_curved2straight[indexes_straight[:, 0], indexes_straight[:, 1], indexes_straight[:, 2], 0,
-                :] = -displacements_straight
+                data_warp_curved2straight[indexes_straight[:, 0], indexes_straight[:, 1], indexes_straight[:, 2], 0, :]\
+                    = -displacements_straight
 
         if self.straight2curved:
             for u in tqdm(range(nz)):
@@ -528,16 +513,16 @@ class SpinalCordStraightener(object):
         if self.curved2straight:
             img = Nifti1Image(data_warp_curved2straight, None, hdr_warp_s)
             save(img, 'tmp.curve2straight.nii.gz')
-            sct.printv('\nDONE ! Warping field generated: tmp.curve2straight.nii.gz', verbose)
+            logging.info('Warping field generated: tmp.curve2straight.nii.gz')
 
         if self.straight2curved:
             img = Nifti1Image(data_warp_straight2curved, None, hdr_warp)
             save(img, 'tmp.straight2curve.nii.gz')
-            sct.printv('\nDONE ! Warping field generated: tmp.straight2curve.nii.gz', verbose)
+            logging.info('Warping field generated: tmp.straight2curve.nii.gz')
 
         image_centerline_straight.save(fname_ref)
         if self.curved2straight:
-            sct.printv('\nApply transformation to input image...', verbose)
+            logging.info('Apply transformation to input image...')
             sct.run(['isct_antsApplyTransforms',
                      '-d', '3',
                      '-r', fname_ref,
@@ -552,10 +537,15 @@ class SpinalCordStraightener(object):
             # compute the error between the straightened centerline/segmentation and the central vertical line.
             # Ideally, the error should be zero.
             # Apply deformation to input image
-            sct.printv('\nApply transformation to centerline image...', verbose)
-            Transform(input_filename='centerline.nii.gz', fname_dest=fname_ref,
-                      output_filename="tmp.centerline_straight.nii.gz", interp="nn",
-                      warp="tmp.curve2straight.nii.gz", verbose=verbose).apply()
+            logging.info('Apply transformation to centerline image...')
+            sct.run(['isct_antsApplyTransforms',
+                     '-d', '3',
+                     '-r', fname_ref,
+                     '-i', 'centerline.nii.gz',
+                     '-o', 'tmp.centerline_straight.nii.gz',
+                     '-t', 'tmp.curve2straight.nii.gz',
+                     '-n', 'NearestNeighbor'],
+                    verbose=verbose)
             file_centerline_straight = Image('tmp.centerline_straight.nii.gz', verbose=verbose)
             nx, ny, nz, nt, px, py, pz, pt = file_centerline_straight.dim
             coordinates_centerline = file_centerline_straight.getNonZeroCoordinates(sorting='z')
@@ -592,7 +582,7 @@ class SpinalCordStraightener(object):
 
         # Generate output file (in current folder)
         # TODO: do not uncompress the warping field, it is too time consuming!
-        sct.printv("\nGenerate output file (in current folder)...", verbose)
+        logging.info('Generate output files...')
         if self.curved2straight:
             sct.generate_output_file(os.path.join(path_tmp, "tmp.curve2straight.nii.gz"),
                                      os.path.join(self.path_output, "warp_curve2straight.nii.gz"), verbose)
@@ -616,23 +606,15 @@ class SpinalCordStraightener(object):
 
         # Remove temporary files
         if remove_temp_files:
-            sct.printv("\nRemove temporary files...", verbose)
+            logging.info('Remove temporary files...')
             sct.rmtree(path_tmp)
 
-        sct.printv('\nDone!\n', verbose)
-
         if self.accuracy_results:
-            sct.printv("Maximum x-y error = " + str(np.round(self.max_distance_straightening, 2)) + " mm", verbose,
-                       "bold")
-            sct.printv("Accuracy of straightening (MSE) = " + str(np.round(self.mse_straightening, 2)) +
-                       " mm", verbose, "bold")
+            logging.info('Maximum x-y error: {} mm'.format(self.max_distance_straightening))
+            logging.info('Accuracy of straightening (MSE): {} mm'.format(self.mse_straightening))
 
         # display elapsed time
-        self.elapsed_time = time.time() - start_time
-        sct.printv("\nFinished! Elapsed time: " + str(int(np.round(self.elapsed_time))) + " s", verbose)
-        if self.accuracy_results:
-            sct.printv('    including ' + str(int(np.round(self.elapsed_time_accuracy))) + ' s spent computing '
-                                                                                           'accuracy results', verbose)
+        self.elapsed_time = int(np.round(time.time() - start_time))
 
         return fname_straight
 
