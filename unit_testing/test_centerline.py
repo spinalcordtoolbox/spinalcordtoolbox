@@ -18,7 +18,7 @@ import sct_utils as sct
 
 from create_test_data import dummy_centerline
 
-VERBOSE = 2  # Set to 2 to save images, 0 otherwise
+VERBOSE = 0  # Set to 2 to save images, 0 otherwise
 
 
 # Generate a list of fake centerlines: (dummy_segmentation(params), dict of expected results)
@@ -31,16 +31,21 @@ im_ctl_zeroslice = [
     (dummy_centerline(size_arr=(15, 7, 9), zeroslice=[], orientation='LPI'), (3, 9)),
     ]
 
-im_centerlines = [(dummy_centerline(size_arr=(41, 7, 9), subsampling=1, orientation='SAL'),
-                   {'median': 0, 'laplacian': 2}),
-                  (dummy_centerline(size_arr=(9, 9, 9), subsampling=3), {'median': 0, 'laplacian': 2}),
-                  (dummy_centerline(size_arr=(9, 9, 9), subsampling=1, hasnan=True), {'median': 0, 'laplacian': 1}),
-                  (dummy_centerline(size_arr=(30, 20, 50), subsampling=1), {'median': 0, 'laplacian': 0.05}),
-                  (dummy_centerline(size_arr=(30, 20, 50), subsampling=5), {'median': 0, 'laplacian': 0.5}),
-                  (dummy_centerline(size_arr=(30, 20, 50), dilate_ctl=2, subsampling=3, orientation='AIL'),
-                   {'median': 0, 'laplacian': 0.1}),
-                  (dummy_centerline(size_arr=(30, 20, 50), subsampling=1, outlier=[20]), {'median': 0, 'laplacian': 0.5})
-                  ]
+im_centerlines = [
+    (dummy_centerline(size_arr=(41, 7, 9), subsampling=1, orientation='SAL'), {'median': 0, 'laplacian': 2}, {}),
+    (dummy_centerline(size_arr=(9, 9, 9), subsampling=3), {'median': 0, 'laplacian': 2}, {}),
+    (dummy_centerline(size_arr=(9, 9, 9), subsampling=1, hasnan=True), {'median': 0, 'laplacian': 1}, {}),
+    (dummy_centerline(size_arr=(30, 20, 50), subsampling=1), {'median': 0, 'laplacian': 0.05}, {}),
+    (dummy_centerline(size_arr=(30, 20, 50), subsampling=5), {'median': 0, 'laplacian': 0.5}, {}),
+    (dummy_centerline(size_arr=(30, 20, 50), dilate_ctl=2, subsampling=3, orientation='AIL'),
+     {'median': 0, 'laplacian': 0.1}, {}),
+    # For the test below, smoothing for fitting needs to be more aggressive
+    (dummy_centerline(size_arr=(30, 20, 10), subsampling=1, outlier=[5]),
+     {'median': 0, 'laplacian': 0.6}, {'degree': 2, 'smooth': 500}),
+    (dummy_centerline(size_arr=(30, 20, 50), subsampling=1, outlier=[20]), {'median': 0, 'laplacian': 0.5}, {}),
+    (dummy_centerline(size_arr=(30, 20, 100), subsampling=1, outlier=[20]), {'median': 0, 'laplacian': 0.5}, {}),
+    (dummy_centerline(size_arr=(30, 20, 500), subsampling=1, outlier=[20]), {'median': 0, 'laplacian': 0.5}, {})
+]
 
 # Specific centerline for nurbs because test does not pas with the previous centerlines
 im_centerlines_nurbs = [
@@ -67,11 +72,15 @@ def test_get_centerline_polyfit_minmax(img_ctl, expected):
 
 
 # noinspection 801,PyShadowingNames
-@pytest.mark.parametrize('img_ctl,expected', im_centerlines)
-def test_get_centerline_polyfit(img_ctl, expected):
+@pytest.mark.parametrize('img_ctl,expected,params', im_centerlines)
+def test_get_centerline_polyfit(img_ctl, expected, params):
     """Test centerline fitting using polyfit"""
     img, img_sub = [img_ctl[0].copy(), img_ctl[1].copy()]
-    img_out, arr_out, arr_deriv_out = get_centerline(img_sub, algo_fitting='polyfit', minmax=False, verbose=VERBOSE)
+    if params:
+        img_out, arr_out, arr_deriv_out = get_centerline(img_sub, algo_fitting='polyfit', minmax=False,
+                                                         degree=params['degree'], verbose=VERBOSE)
+    else:
+        img_out, arr_out, arr_deriv_out = get_centerline(img_sub, algo_fitting='polyfit', minmax=False, verbose=VERBOSE)
     assert np.median(find_and_sort_coord(img) - find_and_sort_coord(img_out)) == expected['median']
     assert np.max(np.absolute(np.diff(arr_deriv_out))) < expected['laplacian']
     # check arr_out and arr_out_deriv only if input orientation is RPI (because the output array is always in RPI)
@@ -80,21 +89,30 @@ def test_get_centerline_polyfit(img_ctl, expected):
 
 
 # noinspection 801,PyShadowingNames
-@pytest.mark.parametrize('img_ctl,expected', im_centerlines)
-def test_get_centerline_bspline(img_ctl, expected):
+@pytest.mark.parametrize('img_ctl,expected,params', im_centerlines)
+def test_get_centerline_bspline(img_ctl, expected, params):
     """Test centerline fitting using bspline"""
     img, img_sub = [img_ctl[0].copy(), img_ctl[1].copy()]
-    img_out, arr_out, arr_deriv_out = get_centerline(img_sub, algo_fitting='bspline', minmax=False, verbose=VERBOSE)
+    if params:
+        img_out, arr_out, arr_deriv_out = get_centerline(img_sub, algo_fitting='bspline', minmax=False,
+                                                         smooth=params['smooth'], verbose=VERBOSE)
+    else:
+        img_out, arr_out, arr_deriv_out = get_centerline(img_sub, algo_fitting='bspline', minmax=False, verbose=VERBOSE)
+
     assert np.median(find_and_sort_coord(img) - find_and_sort_coord(img_out)) == expected['median']
     assert np.max(np.absolute(np.diff(arr_deriv_out))) < expected['laplacian']
 
 
 # noinspection 801,PyShadowingNames
-@pytest.mark.parametrize('img_ctl,expected', im_centerlines)
-def test_get_centerline_linear(img_ctl, expected):
+@pytest.mark.parametrize('img_ctl,expected,params', im_centerlines)
+def test_get_centerline_linear(img_ctl, expected, params):
     """Test centerline fitting using linear interpolation"""
     img, img_sub = [img_ctl[0].copy(), img_ctl[1].copy()]
-    img_out, arr_out, arr_deriv_out = get_centerline(img_sub, algo_fitting='linear', minmax=False, verbose=VERBOSE)
+    if params:
+        img_out, arr_out, arr_deriv_out = get_centerline(img_sub, algo_fitting='polyfit', minmax=False,
+                                                         degree=params['degree'], verbose=VERBOSE)
+    else:
+        img_out, arr_out, arr_deriv_out = get_centerline(img_sub, algo_fitting='polyfit', minmax=False, verbose=VERBOSE)
     assert np.median(find_and_sort_coord(img) - find_and_sort_coord(img_out)) == expected['median']
     assert np.max(np.absolute(np.diff(arr_deriv_out))) < expected['laplacian']
 
