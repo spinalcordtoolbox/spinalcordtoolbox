@@ -126,8 +126,8 @@ def get_parser():
                       default_value=1)
     parser.add_option(name="-xy_size",
                       type_value='float',
-                      description='Change the size of the XY FOV, in mm. The resolution of the destination image is '
-                                  'the same as that of the source image (-i).\n',
+                      description='Size of the output FOV in the RL/AP plane, in mm. The resolution of the destination '
+                                  'image is the same as that of the source image (-i).\n',
                       mandatory=False,
                       default_value=35.0)
     parser.add_option(name="-o",
