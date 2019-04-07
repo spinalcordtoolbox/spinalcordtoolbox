@@ -263,13 +263,12 @@ def main(args=None):
 
     fname_straight = sc_straight.straighten()
 
-    if sc_straight.curved2straight:
+    sct.printv("\nFinished! Elapsed time: {} s".format(sc_straight.elapsed_time), verbose)
 
-        if path_qc is not None:
-           generate_qc(input_filename, centerline_file,
-            fname_straight, args, os.path.abspath(path_qc))
+    if sc_straight.curved2straight and path_qc is not None:
+       generate_qc(input_filename, centerline_file, fname_straight, args, os.path.abspath(path_qc))
 
-        sct.display_viewer_syntax([fname_straight], verbose=verbose)
+    sct.display_viewer_syntax([fname_straight], verbose=verbose)
 
 
 # START PROGRAM
