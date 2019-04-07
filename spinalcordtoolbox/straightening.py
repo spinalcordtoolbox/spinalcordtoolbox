@@ -16,8 +16,10 @@ from nibabel import Nifti1Image, save
 
 import sct_utils as sct
 from sct_apply_transfo import Transform
-import spinalcordtoolbox.image as msct_image
+from sct_image import pad_image
 from msct_types import Centerline
+
+import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.centerline.core import get_centerline
 
@@ -280,7 +282,8 @@ class SpinalCordStraightener(object):
                 start_point, end_point = bound_straight[0], bound_straight[1]
                 offset_z = 0
 
-                # if the destination image is resampled, we still create the straight reference space with the native resolution. # TODO: Maybe this if case is not needed?
+                # if the destination image is resampled, we still create the straight reference space with the native resolution.
+                # TODO: Maybe this if case is not needed?
                 if intermediate_resampling:
                     padding_z = int(np.ceil(1.5 * ((length_centerline - size_z_centerline) / 2.0) / pz_native))
                     sct.run(
@@ -316,10 +319,7 @@ class SpinalCordStraightener(object):
 
                 nx, ny, nz, nt, px, py, pz, pt = image_centerline.dim
                 padding_z = int(np.ceil(1.5 * ((length_centerline - size_z_centerline) / 2.0) / pz)) + offset_z
-                from sct_image import pad_image
                 image_centerline_pad = pad_image(image_centerline, pad_z_i=padding_z, pad_z_f=padding_z)
-                # sct.run(['sct_image', '-i', 'centerline_rpi.nii.gz', '-o', 'tmp.centerline_pad.nii.gz', '-pad', '0,0,' + str(padding_z)])
-                # image_centerline_pad = Image('tmp.centerline_pad.nii.gz')
                 nx, ny, nz = image_centerline_pad.data.shape
                 hdr_warp = image_centerline_pad.hdr.copy()
                 hdr_warp.set_data_dtype('float32')
@@ -347,7 +347,6 @@ class SpinalCordStraightener(object):
                     (1, warp_space_y),
                     (2, (0, end_point_coord[2] - start_point_coord[2] + offset_z)),
                 ))
-                # msct_image.spatial_crop(Image("tmp.centerline_pad.nii.gz"), spec).save("tmp.centerline_pad_crop.nii.gz")
                 image_centerline_straight = msct_image.spatial_crop(image_centerline_pad, spec)
 
                 # image_centerline_straight = Image('tmp.centerline_pad_crop.nii.gz')
