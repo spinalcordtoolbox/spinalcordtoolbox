@@ -22,27 +22,23 @@ def polyfit_1d(x, y, xref, deg=5):
     return p(xref), p.deriv(1)(xref)
 
 
-def bspline(x, y, xref, deg=3):
+def bspline(x, y, xref, smooth=10):
     """
     Bspline interpolation. Length of x needs to be superior to deg.
     :param x:
     :param y:
     :param xref:
-    :param deg:
+    :param smooth: Smoothing factor. 1: no smoothing, 10: moderate smoothing, 100: large smoothing
     :return:
     """
     # TODO: add flag to enforce boundaries, using weight flag in bspline function
     from numpy import sqrt
     from scipy import interpolate
-    # Make sure the condition len(x_mean) > k is satisfied. Otherwise, change k to avoid crashing.
-    if not len(x) > deg:
-        deg = len(x) - 1
-        logging.warning('Input array size is smaller than degree. Forcing deg = {}'.format(deg))
     # Compute smoothing factor
-    s = (len(x) - sqrt(2 * len(x))) * 10
+    s = (len(x) - sqrt(2 * len(x))) * smooth
     logging.debug('Smoothing factor: s={}'.format(s))
     # Then, run bspline interpolation
-    tck = interpolate.splrep(x, y, s=s, k=deg)  # TODO: find s based on pix dim
+    tck = interpolate.splrep(x, y, s=s, k=2)
     y_fit = interpolate.splev(xref, tck, der=0)
     y_fit_der = interpolate.splev(xref, tck, der=1)
     return y_fit, y_fit_der
