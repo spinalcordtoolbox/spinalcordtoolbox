@@ -36,7 +36,7 @@ def find_and_sort_coord(img):
     return np.array(arr_sorted_avg)
 
 
-def get_centerline(im_seg, algo_fitting='polyfit', minmax=True, contrast=None, degree=None, verbose=1):
+def get_centerline(im_seg, algo_fitting='polyfit', minmax=True, contrast=None, degree=5, smooth=10, verbose=1):
     """
     Extract centerline from an image (using optic) or from a binary or weighted segmentation (using the center of mass).
     :param im_seg: Image(): Input segmentation or series of points along the centerline.
@@ -47,6 +47,7 @@ def get_centerline(im_seg, algo_fitting='polyfit', minmax=True, contrast=None, d
     :param minmax: Crop output centerline where the segmentation starts/end. If False, centerline will span all slices.
     :param contrast: Contrast type for algo=optic.
     :param degree: int: Max degree for polynomial fitting.
+    :param smooth: int: Smoothing factor for bspline fitting. 1: none, 10: moderate smoothing, 100: large smoothing
     :param verbose: int: verbose level
     :return: im_centerline: Image: Centerline in discrete coordinate (int)
     :return: arr_centerline: 3x1 array: Centerline in continuous coordinate (float) for each slice in RPI orientation.
@@ -59,14 +60,6 @@ def get_centerline(im_seg, algo_fitting='polyfit', minmax=True, contrast=None, d
     native_orientation = im_seg.orientation
     im_seg.change_orientation('RPI')
     px, py, pz = im_seg.dim[4:7]
-
-    # Assign default degree based on method
-    if not degree:
-        if algo_fitting == 'bspline':
-            degree = 3
-        else:
-            # polyfit, nurbs, optic, etc.
-            degree = 5
 
     # Take the center of mass at each slice to avoid: https://stackoverflow.com/questions/2009379/interpolate-question
     x_mean, y_mean, z_mean = find_and_sort_coord(im_seg)
@@ -83,8 +76,8 @@ def get_centerline(im_seg, algo_fitting='polyfit', minmax=True, contrast=None, d
         y_centerline_fit, y_centerline_deriv = curve_fitting.polyfit_1d(z_mean, y_mean, z_ref, deg=degree)
 
     elif algo_fitting == 'bspline':
-        x_centerline_fit, x_centerline_deriv = curve_fitting.bspline(z_mean, x_mean, z_ref, deg=degree)
-        y_centerline_fit, y_centerline_deriv = curve_fitting.bspline(z_mean, y_mean, z_ref, deg=degree)
+        x_centerline_fit, x_centerline_deriv = curve_fitting.bspline(z_mean, x_mean, z_ref, smooth=smooth)
+        y_centerline_fit, y_centerline_deriv = curve_fitting.bspline(z_mean, y_mean, z_ref, smooth=smooth)
 
     elif algo_fitting == 'linear':
         # Simple linear interpolation
