@@ -264,8 +264,8 @@ class SpinalCordStraightener(object):
                 nx, ny, nz, nt, px, py, pz, pt = image_centerline_pad.dim
                 start_point_coord_native = image_centerline_pad.transfo_phys2pix([[0, 0, start_point]])[0]
                 end_point_coord_native = image_centerline_pad.transfo_phys2pix([[0, 0, end_point]])[0]
-                straight_size_x = int(self.xy_size / px)
-                straight_size_y = int(self.xy_size / py)
+                straight_size_x = int(0.5 * self.xy_size / px)
+                straight_size_y = int(0.5 * self.xy_size / py)
                 warp_space_x = [int(np.round(nx / 2)) - straight_size_x, int(np.round(nx / 2)) + straight_size_x]
                 warp_space_y = [int(np.round(ny / 2)) - straight_size_y, int(np.round(ny / 2)) + straight_size_y]
                 if warp_space_x[0] < 0:
@@ -297,8 +297,8 @@ class SpinalCordStraightener(object):
             start_point_coord = image_centerline_pad.transfo_phys2pix([[0, 0, start_point]])[0]
             end_point_coord = image_centerline_pad.transfo_phys2pix([[0, 0, end_point]])[0]
 
-            straight_size_x = int(self.xy_size / px)
-            straight_size_y = int(self.xy_size / py)
+            straight_size_x = int(0.5 * self.xy_size / px)
+            straight_size_y = int(0.5 * self.xy_size / py)
             warp_space_x = [int(np.round(nx / 2)) - straight_size_x, int(np.round(nx / 2)) + straight_size_x]
             warp_space_y = [int(np.round(ny / 2)) - straight_size_y, int(np.round(ny / 2)) + straight_size_y]
 
