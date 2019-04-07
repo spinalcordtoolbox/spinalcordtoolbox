@@ -405,7 +405,7 @@ def main(args=None):
             # apply straightening
             sct.run(['sct_apply_transfo', '-i', ftmp_seg, '-w', 'warp_curve2straight.nii.gz', '-d', 'straight_ref.nii.gz', '-o', add_suffix(ftmp_seg, '_straight')])
         else:
-            from sct_straighten_spinalcord import SpinalCordStraightener
+            from spinalcordtoolbox.straightening import SpinalCordStraightener
             sc_straight = SpinalCordStraightener(ftmp_seg, ftmp_seg)
             sc_straight.algo_fitting = param.straighten_fitting
             sc_straight.output_filename = add_suffix(ftmp_seg, '_straight')
