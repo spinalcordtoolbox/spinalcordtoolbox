@@ -20,28 +20,30 @@ def get_parser():
         epilog='Examples:\n'
                'sct_qc -i t2.nii.gz -s t2_seg.nii.gz -p sct_deepseg_sc\n'
                'sct_qc -i t2.nii.gz -s t2_seg_labeled.nii.gz -p sct_label_vertebrae'
+               'sct_qc -i t2.nii.gz -d t2_straight.nii.gz -p sct_straighten_spinalcord'
     )
     parser.add_argument('-i',
                         metavar='IMAGE',
-                        help='Input image',
+                        help='Input image #1 (mandatory)',
                         required=True)
     parser.add_argument('-p',
                         help='SCT function associated with the QC report to generate',
                         choices=('sct_propseg', 'sct_deepseg_sc', 'sct_deepseg_gm', 'sct_register_multimodal',
                                  'sct_register_to_template', 'sct_warp_template', 'sct_label_vertebrae',
-                                 'sct_detect_pmj'),
+                                 'sct_detect_pmj', 'sct_straighten_spinalcord'),
                         required=True)
     parser.add_argument('-s',
                         metavar='SEG',
-                        help='Segmentation image',
+                        help='Input segmentation',
                         required=False)
     parser.add_argument('-d',
                         metavar='DEST',
-                        help='Second image to overlay on the first image (requires a segmentation)',
+                        help='Input image #2 to overlay on image #1 (requires a segmentation), or output of another '
+                             'process (e.g., sct_straighten_spinalcord)',
                         required=False)
     parser.add_argument('-qc',
                         metavar='QC',
-                        help='Path to output QC folder. Default: ./qc',
+                        help='Path to save QC report. Default: ./qc',
                         required=False,
                         default='./qc')
     parser.add_argument('-v',

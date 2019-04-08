@@ -12,38 +12,15 @@
 # License: see the LICENSE.TXT
 # ======================================================================================================================
 
-# TODO: remove generate_qc
 
 from __future__ import division, absolute_import
 
 import sys, os
 
-from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.straightening import SpinalCordStraightener
+from spinalcordtoolbox.reports.qc import generate_qc
 from msct_parser import Parser
 import sct_utils as sct
-
-
-def generate_qc(fn_input, fn_centerline, fn_output, args, path_qc):
-    """
-    Generate a QC entry allowing to quickly review the straightening process.
-    """
-
-    import spinalcordtoolbox.reports.qc as qc
-    import spinalcordtoolbox.reports.slice as qcslice
-
-    # Just display the straightened spinal cord
-    img_out = Image(fn_output)
-    foreground = qcslice.Sagittal([img_out]).single()[0]
-
-    qc.add_entry(
-     src=fn_input,
-     process="sct_straighten_spinalcord",
-     args=args,
-     path_qc=path_qc,
-     plane="Sagittal",
-     foreground=foreground,
-    )
 
 
 def get_parser():
@@ -266,7 +243,8 @@ def main(args=None):
     sct.printv("\nFinished! Elapsed time: {} s".format(sc_straight.elapsed_time), verbose)
 
     if sc_straight.curved2straight and path_qc is not None:
-       generate_qc(input_filename, centerline_file, fname_straight, args, os.path.abspath(path_qc))
+        generate_qc(fname_in1=input_filename, fname_in2=fname_straight, args=args, path_qc=os.path.abspath(path_qc),
+                    process='sct_straighten_spinalcord')
 
     sct.display_viewer_syntax([fname_straight], verbose=verbose)
 
