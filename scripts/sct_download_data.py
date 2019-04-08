@@ -18,7 +18,6 @@ import sys
 import tarfile
 import tempfile
 import zipfile
-import shutil
 
 import requests
 from requests.adapters import HTTPAdapter
