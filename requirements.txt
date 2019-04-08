@@ -19,3 +19,4 @@ xlutils
 xlwt
 tqdm
 transforms3d
+portalocker
