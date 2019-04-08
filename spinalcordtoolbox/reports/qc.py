@@ -525,39 +525,39 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, args=None, path_qc=No
     """
     dpi = 300
     # Get QC specifics based on SCT process
+    # Axial orientation, switch between two input images
     if process in ['sct_register_multimodal', 'sct_register_to_template']:
-        # axial orientation, switch between two input images
         plane = 'Axial'
         qcslice_type = qcslice.Axial([Image(fname_in1), Image(fname_in2), Image(fname_seg)])
         qcslice_operations = [QcImage.no_seg_seg]
         qcslice_layout = lambda x: x.mosaic()[:2]
+    # Axial orientation, switch between the image and the segmentation
     elif process in ['sct_propseg', 'sct_deepseg_sc', 'sct_deepseg_gm']:
-        # axial orientation, switch between the image and the segmentation
         plane = 'Axial'
         qcslice_type = qcslice.Axial([Image(fname_in1), Image(fname_seg)])
         qcslice_operations = [QcImage.listed_seg]
         qcslice_layout = lambda x: x.mosaic()
+    # Axial orientation, switch between the image and the white matter segmentation (linear interp, in blue)
     elif process in ['sct_warp_template']:
-        # axial orientation, switch between the image and the linear segmentation (in blue)
         plane = 'Axial'
         qcslice_type = qcslice.Axial([Image(fname_in1), Image(fname_seg)])
         qcslice_operations = [QcImage.template]
         qcslice_layout = lambda x: x.mosaic()
+    # Sagittal orientation, display vertebral labels
     elif process in ['sct_label_vertebrae']:
-        # sagittal orientation, display vertebral labels
         plane = 'Sagittal'
         dpi = 100  # bigger picture is needed for this special case, hence reduce dpi
         qcslice_type = qcslice.Sagittal([Image(fname_in1), Image(fname_seg)], p_resample=None)
         qcslice_operations = [QcImage.label_vertebrae]
         qcslice_layout = lambda x: x.single()
+    # Sagittal orientation, display PMJ box
     elif process in ['sct_detect_pmj']:
-        # sagittal orientation, display PMJ box
         plane = 'Sagittal'
         qcslice_type = qcslice.Sagittal([Image(fname_in1), Image(fname_seg)], p_resample=None)
         qcslice_operations = [QcImage.highlight_pmj]
         qcslice_layout = lambda x: x.single()
     else:
-        sct.log.error('Unrecognised process.')
+        sct.log.error('Unrecognized process.')
 
     add_entry(
         src=fname_in1,
