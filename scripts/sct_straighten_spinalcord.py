@@ -15,10 +15,9 @@
 
 from __future__ import division, absolute_import
 
-import sys, os
+import sys
 
 from spinalcordtoolbox.straightening import SpinalCordStraightener
-from spinalcordtoolbox.reports.qc import generate_qc
 from msct_parser import Parser
 import sct_utils as sct
 
@@ -149,11 +148,6 @@ def get_parser():
                       mandatory=False,
                       example="algo_fitting=nurbs,accuracy_results=1")
 
-    parser.add_option(name='-qc',
-                      type_value='folder_creation',
-                      description='The path where the quality control generated content will be saved',
-                      default_value=None)
-
     return parser
 
 
@@ -207,8 +201,6 @@ def main(args=None):
     # if "-cpu-nb" in arguments:
     #     sc_straight.cpu_number = int(arguments["-cpu-nb"])
 
-    path_qc = arguments.get("-qc", None)
-
     if '-disable-straight2curved' in arguments:
         sc_straight.straight2curved = False
     if '-disable-curved2straight' in arguments:
@@ -241,10 +233,6 @@ def main(args=None):
     fname_straight = sc_straight.straighten()
 
     sct.printv("\nFinished! Elapsed time: {} s".format(sc_straight.elapsed_time), verbose)
-
-    if sc_straight.curved2straight and path_qc is not None:
-        generate_qc(fname_in1=input_filename, fname_in2=fname_straight, args=args, path_qc=os.path.abspath(path_qc),
-                    process='sct_straighten_spinalcord')
 
     sct.display_viewer_syntax([fname_straight], verbose=verbose)
 

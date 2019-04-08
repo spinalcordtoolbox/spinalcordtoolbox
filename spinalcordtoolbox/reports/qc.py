@@ -524,7 +524,6 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, args=None, path_qc=No
     :return: None
     """
     dpi = 300
-    foreground = None
     # Get QC specifics based on SCT process
     # Axial orientation, switch between two input images
     if process in ['sct_register_multimodal', 'sct_register_to_template']:
@@ -544,14 +543,6 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, args=None, path_qc=No
         qcslice_type = qcslice.Axial([Image(fname_in1), Image(fname_seg)])
         qcslice_operations = [QcImage.template]
         qcslice_layout = lambda x: x.mosaic()
-    # Sagittal orientation, only display single image
-    # TODO: Show both coronal and sagittal planes
-    elif process in ['sct_straighten_spinalcord']:
-        plane = 'Sagittal'
-        qcslice_type = None
-        qcslice_operations = None
-        qcslice_layout = None
-        foreground = qcslice.Sagittal([Image(fname_in2)]).single()[0]
     # Sagittal orientation, display vertebral labels
     elif process in ['sct_label_vertebrae']:
         plane = 'Sagittal'
@@ -580,5 +571,4 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, args=None, path_qc=No
         qcslice_operations=qcslice_operations,
         qcslice_layout=qcslice_layout,
         stretch_contrast_method='equalized',
-        foreground=foreground,
     )

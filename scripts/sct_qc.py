@@ -20,7 +20,6 @@ def get_parser():
         epilog='Examples:\n'
                'sct_qc -i t2.nii.gz -s t2_seg.nii.gz -p sct_deepseg_sc\n'
                'sct_qc -i t2.nii.gz -s t2_seg_labeled.nii.gz -p sct_label_vertebrae'
-               'sct_qc -i t2.nii.gz -d t2_straight.nii.gz -p sct_straighten_spinalcord'
     )
     parser.add_argument('-i',
                         metavar='IMAGE',
@@ -30,7 +29,7 @@ def get_parser():
                         help='SCT function associated with the QC report to generate',
                         choices=('sct_propseg', 'sct_deepseg_sc', 'sct_deepseg_gm', 'sct_register_multimodal',
                                  'sct_register_to_template', 'sct_warp_template', 'sct_label_vertebrae',
-                                 'sct_detect_pmj', 'sct_straighten_spinalcord'),
+                                 'sct_detect_pmj'),
                         required=True)
     parser.add_argument('-s',
                         metavar='SEG',
