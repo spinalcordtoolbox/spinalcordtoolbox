@@ -15,14 +15,18 @@ import argparse
 
 def get_parser():
     parser = argparse.ArgumentParser(
-        description='Generate Quality Control (QC) report following SCT processing.'
+        description='Generate Quality Control (QC) report following SCT processing.',
+        formatter_class=argparse.RawTextHelpFormatter,
+        epilog='Examples:\n'
+               'sct_qc -i t2.nii.gz -s t2_seg.nii.gz -p sct_deepseg_sc\n'
+               'sct_qc -i t2.nii.gz -s t2_seg_labeled.nii.gz -p sct_label_vertebrae'
     )
     parser.add_argument('-i',
                         metavar='IMAGE',
                         help='Input image',
                         required=True)
     parser.add_argument('-p',
-                        help='Process (or SCT function) associated with the QC report you would like to generate',
+                        help='SCT function associated with the QC report to generate',
                         choices=('sct_propseg', 'sct_deepseg_sc', 'sct_deepseg_gm', 'sct_register_multimodal',
                                  'sct_register_to_template', 'sct_warp_template', 'sct_label_vertebrae',
                                  'sct_detect_pmj'),
@@ -33,7 +37,7 @@ def get_parser():
                         required=False)
     parser.add_argument('-d',
                         metavar='DEST',
-                        help='Second image to overlay on the first image (requires a segmentation for centering)',
+                        help='Second image to overlay on the first image (requires a segmentation)',
                         required=False)
     parser.add_argument('-qc',
                         metavar='QC',
