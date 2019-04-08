@@ -17,21 +17,31 @@ def get_parser():
     parser = argparse.ArgumentParser(
         description='Generate Quality Control (QC) report following SCT processing.'
     )
-    parser.add_argument("-i",
-                        help="Input image",
+    parser.add_argument('-i',
+                        metavar='IMAGE',
+                        help='Input image',
                         required=True)
-    parser.add_argument("-p",
-                        help="Process (or SCT function) associated with the QC report you would like to generate",
+    parser.add_argument('-p',
+                        help='Process (or SCT function) associated with the QC report you would like to generate',
+                        choices=('sct_propseg', 'sct_deepseg_sc', 'sct_deepseg_gm', 'sct_register_multimodal',
+                                 'sct_register_to_template', 'sct_warp_template', 'sct_label_vertebrae',
+                                 'sct_detect_pmj'),
                         required=True)
-    parser.add_argument("-s",
-                        help="Segmentation",
+    parser.add_argument('-s',
+                        metavar='SEG',
+                        help='Segmentation image',
                         required=False)
-    parser.add_argument("-qc",
-                        help="Path to output QC folder. Default: ./qc",
+    parser.add_argument('-d',
+                        metavar='DEST',
+                        help='Second image to overlay on the first image (requires a segmentation for centering)',
+                        required=False)
+    parser.add_argument('-qc',
+                        metavar='QC',
+                        help='Path to output QC folder. Default: ./qc',
                         required=False,
                         default='./qc')
-    parser.add_argument("-v",
-                        help="Verbose: 0 = no verbosity, 1 = verbose (default).",
+    parser.add_argument('-v',
+                        help='Verbosity: 0: no verbosity, 1: verbosity (default).',
                         choices=('0', '1'),
                         type=int,
                         default=1)
