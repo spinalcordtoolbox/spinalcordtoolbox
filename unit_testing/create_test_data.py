@@ -12,8 +12,11 @@ from nipy.io.nifti_ref import nifti2nipy, nipy2nifti
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.resampling import resample_nipy
 
+DEBUG = False  # Save img_sub
 
-def dummy_centerline(size_arr=(9, 9, 9), subsampling=1, dilate_ctl=0, hasnan=False, zeroslice=[], orientation='RPI'):
+
+def dummy_centerline(size_arr=(9, 9, 9), subsampling=1, dilate_ctl=0, hasnan=False, zeroslice=[], outlier=[],
+                     orientation='RPI', debug=False):
     """
     Create a dummy Image centerline of small size. Return the full and sub-sampled version along z.
     :param size_arr: tuple: (nx, ny, nz)
@@ -22,19 +25,21 @@ def dummy_centerline(size_arr=(9, 9, 9), subsampling=1, dilate_ctl=0, hasnan=Fal
                          if dilate_ctl=0, result will be a single pixel per slice.
     :param hasnan: Bool: Image has non-numerical values: nan, inf. In this case, do not subsample.
     :param zeroslice: list int: zero all slices listed in this param
+    :param outlier: list int: replace the current point with an outlier at the corner of the image for the slices listed
     :param orientation:
+    :param debug: Bool: Write temp files
     :return:
     """
     from numpy import poly1d, polyfit
     nx, ny, nz = size_arr
-    # define polynomial-based centerline within X-Z plane, located at y=ny/4
+    # define array based on a polynomial function, within X-Z plane, located at y=ny/4, based on the following points:
     x = np.array([round(nx/4.), round(nx/2.), round(3*nx/4.)])
     z = np.array([0, round(nz/2.), nz-1])
     p = poly1d(polyfit(z, x, deg=3))
     data = np.zeros((nx, ny, nz))
     arr_ctl = np.array([p(range(nz)).astype(np.int),
                         [round(ny / 4.)] * len(range(nz)),
-                        range(nz)], dtype='uint8')
+                        range(nz)], dtype=np.uint16)
     # Loop across dilation of centerline. E.g., if dilate_ctl=1, result will be a square of 3x3 per slice.
     for ixiy_ctl in itertools.product(range(-dilate_ctl, dilate_ctl+1, 1), range(-dilate_ctl, dilate_ctl+1, 1)):
         data[(arr_ctl[0] + ixiy_ctl[0]).tolist(),
@@ -43,7 +48,12 @@ def dummy_centerline(size_arr=(9, 9, 9), subsampling=1, dilate_ctl=0, hasnan=Fal
     # Zero specified slices
     if zeroslice is not []:
         data[:, :, zeroslice] = 0
-
+    # Add outlier
+    if outlier is not []:
+        # First, zero all the slice
+        data[:, :, outlier] = 0
+        # Then, add point in the corner
+        data[0, 0, outlier] = 1
     # Create image with default orientation LPI
     affine = np.eye(4)
     nii = nib.nifti1.Nifti1Image(data, affine)
@@ -60,6 +70,8 @@ def dummy_centerline(size_arr=(9, 9, 9), subsampling=1, dilate_ctl=0, hasnan=Fal
     # Update orientation
     img.change_orientation(orientation)
     img_sub.change_orientation(orientation)
+    if debug:
+        img_sub.save('tmp_dummy_seg_'+datetime.now().strftime("%Y%m%d%H%M%S%f")+'.nii.gz')
     return img, img_sub, arr_ctl
 
 

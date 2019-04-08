@@ -13,7 +13,7 @@ from scipy.ndimage import distance_transform_edt
 from spinalcordtoolbox import resampling
 from cnn_models import nn_architecture_seg, nn_architecture_ctr
 from spinalcordtoolbox.image import Image, empty_like, change_type, zeros_like
-from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline, _call_viewer_centerline
+from spinalcordtoolbox.centerline.core import get_centerline, _call_viewer_centerline
 
 import sct_utils as sct
 
@@ -49,8 +49,7 @@ def find_centerline(algo, image_fname, contrast_type, brain_bool, folder_output,
         # run optic on a heatmap computed by a trained SVM+HoG algorithm
         # optic_models_fname = os.path.join(path_sct, 'data', 'optic_models', '{}_model'.format(contrast_type))
         # # TODO: replace with get_centerline(method=optic)
-        img_ctl, arr_ctl, _ = get_centerline(Image(image_fname), algo_fitting='optic',
-                                             param=ParamCenterline(contrast=contrast_type))
+        img_ctl, arr_ctl, _ = get_centerline(Image(image_fname), algo_fitting='optic', contrast=contrast_type)
         centerline_filename = sct.add_suffix(image_fname, "_ctr")
         img_ctl.save(centerline_filename)
 
