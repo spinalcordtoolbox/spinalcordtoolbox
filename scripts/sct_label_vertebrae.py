@@ -158,6 +158,14 @@ def get_parser():
                       type_value='folder_creation',
                       description='The path where the quality control generated content will be saved',
                       default_value=param_default.path_qc)
+    parser.add_option(name='-qc-dataset',
+                      type_value='str',
+                      description='If provided, this string will be mentioned in the QC report as the dataset the process was run on',
+                      )
+    parser.add_option(name='-qc-subject',
+                      type_value='str',
+                      description='If provided, this string will be mentioned in the QC report as the subject the process was run on',
+                      )
     return parser
 
 
@@ -389,9 +397,11 @@ def main(args=None):
     # Generate QC report
     if param.path_qc is not None:
         path_qc = os.path.abspath(param.path_qc)
+        qc_dataset = arguments.get("-qc-dataset", None)
+        qc_subject = arguments.get("-qc-subject", None)
         labeled_seg_file = os.path.join(path_output, file_seg + '_labeled' + ext_seg)
         generate_qc(fname_in, fname_seg=labeled_seg_file, args=args, path_qc=os.path.abspath(path_qc),
-                    process='sct_label_vertebrae')
+                    dataset=qc_dataset, subject=qc_subject, process='sct_label_vertebrae')
 
     sct.display_viewer_syntax([fname_in, fname_seg_labeled], colormaps=['', 'subcortical'], opacities=['1', '0.5'])
 
