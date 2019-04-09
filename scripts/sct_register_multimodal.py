@@ -237,7 +237,7 @@ class Paramreg(object):
         self.pca_eigenratio_th = pca_eigenratio_th  # only for algo=centermassrot
 
         # list of possible values for self.type
-        self.type_list = ['im', 'seg', 'label']
+        self.type_list = ['im', 'seg', 'label', 'im_seg']
 
     # update constructor with user's parameters
     def update(self, paramreg_user):
@@ -558,12 +558,20 @@ def main(args=None):
 
 # register images
 # ==========================================================================================
-def register(src, dest, paramreg, param, i_step_str):
+def register(src, dest, paramreg, param, i_step_str, src_seg=None, dest_seg=None):
     # initiate default parameters of antsRegistration transformation
     ants_registration_params = {'rigid': '', 'affine': '', 'compositeaffine': '', 'similarity': '', 'translation': '',
                                 'bspline': ',10', 'gaussiandisplacementfield': ',3,0',
                                 'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',1,3'}
     output = ''  # default output if problem
+
+    if paramreg.steps[i_step_str].type == 'im_seg':
+        src_im = src
+        dest_im = dest
+        del src
+        del dest # to be sure it is not missused later
+        # normally im_seg only if algo = centermassrot
+
 
     # display arguments
     sct.printv('Registration parameters:', param.verbose)
@@ -734,22 +742,50 @@ def register(src, dest, paramreg, param, i_step_str):
         # smooth data
         if not paramreg.steps[i_step_str].smooth == '0':
             sct.printv('\nSmooth data', param.verbose)
-            sct.run(['sct_maths', '-i', src, '-smooth', paramreg.steps[i_step_str].smooth + ','
-                     + paramreg.steps[i_step_str].smooth + ',0', '-o', sct.add_suffix(src, '_smooth')])
-            sct.run(['sct_maths', '-i', dest, '-smooth', paramreg.steps[i_step_str].smooth + ','
-                     + paramreg.steps[i_step_str].smooth + ',0', '-o', sct.add_suffix(dest, '_smooth')])
-            src = sct.add_suffix(src, '_smooth')
-            dest = sct.add_suffix(dest, '_smooth')
+            if paramreg.steps[i_step_str].type == 'im_seg':
+                sct.run(['sct_maths', '-i', src, '-smooth', paramreg.steps[i_step_str].smooth + ','
+                         + paramreg.steps[i_step_str].smooth + ',0', '-o', sct.add_suffix(src, '_smooth')])
+                sct.run(['sct_maths', '-i', dest, '-smooth', paramreg.steps[i_step_str].smooth + ','
+                         + paramreg.steps[i_step_str].smooth + ',0', '-o', sct.add_suffix(dest, '_smooth')])
+                src = sct.add_suffix(src, '_smooth')
+                dest = sct.add_suffix(dest, '_smooth')
+            else:
+                sct.run(['sct_maths', '-i', src_im, '-smooth', paramreg.steps[i_step_str].smooth + ','
+                         + paramreg.steps[i_step_str].smooth + ',0', '-o', sct.add_suffix(src_im, '_smooth')])
+                sct.run(['sct_maths', '-i', src_seg, '-smooth', paramreg.steps[i_step_str].smooth + ','
+                         + paramreg.steps[i_step_str].smooth + ',0', '-o', sct.add_suffix(src_seg, '_smooth')])
+                sct.run(['sct_maths', '-i', dest_im, '-smooth', paramreg.steps[i_step_str].smooth + ','
+                         + paramreg.steps[i_step_str].smooth + ',0', '-o', sct.add_suffix(dest_im, '_smooth')])
+                sct.run(['sct_maths', '-i', dest_seg, '-smooth', paramreg.steps[i_step_str].smooth + ','
+                         + paramreg.steps[i_step_str].smooth + ',0', '-o', sct.add_suffix(dest_seg, '_smooth')])
+                src_im = sct.add_suffix(src_im, '_smooth')
+                dest_im = sct.add_suffix(dest_im, '_smooth')
+                src_seg = sct.add_suffix(src_seg, '_smooth')
+                dest_seg = sct.add_suffix(dest_seg, '_smooth')
         from msct_register import register_slicewise
         warp_forward_out = 'step' + i_step_str + 'Warp.nii.gz'
         warp_inverse_out = 'step' + i_step_str + 'InverseWarp.nii.gz'
-        register_slicewise(src,
+        if paramreg.steps[i_step_str].type != 'im_seg':
+            register_slicewise(src,
                            dest,
                            paramreg=paramreg.steps[i_step_str],
                            fname_mask=fname_mask,
                            warp_forward_out=warp_forward_out,
                            warp_inverse_out=warp_inverse_out,
                            ants_registration_params=ants_registration_params,
+                           remove_temp_files=param.remove_temp_files,
+                           verbose=param.verbose)
+        else:
+            register_slicewise(src_im,
+                           dest_im,
+                           src_seg,
+                           dest_seg,
+                           paramreg=paramreg.steps[i_step_str],
+                           fname_mask=fname_mask,
+                           warp_forward_out=warp_forward_out,
+                           warp_inverse_out=warp_inverse_out,
+                           ants_registration_params=ants_registration_params,
+                           path_qc=param.path_qc,
                            remove_temp_files=param.remove_temp_files,
                            verbose=param.verbose)
 

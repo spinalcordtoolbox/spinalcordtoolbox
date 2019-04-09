@@ -526,6 +526,13 @@ def main(args=None):
                 src = ftmp_seg
                 dest = ftmp_template_seg
                 interp_step = 'nn'
+            elif paramreg.steps[str(i_step)].type == 'im_seg':
+                src = ftmp_data
+                dest = ftmp_template
+                src_seg = ftmp_seg
+                dest_seg = ftmp_template_seg
+                if i_step != 1:
+                    raise Exception("im_seg used not at step 1")
             else:
                 sct.printv('ERROR: Wrong image type.', 1, 'error')
             # if step>1, apply warp_forward_concat to the src image to be used
@@ -536,7 +543,11 @@ def main(args=None):
                 src = add_suffix(src, '_regStep' + str(i_step - 1))
             # register src --> dest
             # TODO: display param for debugging
-            warp_forward_out, warp_inverse_out = register(src, dest, paramreg, param, str(i_step))
+            if not paramreg.steps[str(i_step)].type == 'im_seg':
+                warp_forward_out, warp_inverse_out = register(src, dest, paramreg, param, str(i_step))
+            else:  # im_seg case
+                warp_forward_out, warp_inverse_out = register(src, dest, paramreg, param, str(i_step), src_seg=src_seg, dest_seg=dest_seg)
+
             warp_forward.append(warp_forward_out)
             warp_inverse.append(warp_inverse_out)
 
@@ -616,7 +627,6 @@ def main(args=None):
             warp_forward_out, warp_inverse_out = register(src, dest, paramreg, param, str(i_step))
             warp_forward.append(warp_forward_out)
             warp_inverse.insert(0, warp_inverse_out)
-
         # Concatenate transformations:
         sct.printv('\nConcatenate transformations: template --> subject...', verbose)
         sct.run(['sct_concat_transfo', '-w', ','.join(warp_forward), '-d', 'data.nii', '-o', 'warp_template2anat.nii.gz'], verbose)
