@@ -139,7 +139,7 @@ if __name__ == "__main__":
     # #dice = compute_dice(Image(fname_input1), Image(fname_input2), mode='3d', zboundaries=False)
     # #sct.printv('Dice (python-based) = ' + str(dice), verbose)
 
-    status, output = sct.run(cmd, verbose)
+    status, output = sct.run(cmd, verbose, is_sct_binary=True)
 
     os.chdir(curdir) # go back to original directory
 

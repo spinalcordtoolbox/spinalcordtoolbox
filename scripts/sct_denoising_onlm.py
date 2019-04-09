@@ -12,9 +12,6 @@ import nibabel as nib
 from msct_parser import Parser
 import sct_utils as sct
 
-# Get path of the toolbox
-path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
-
 
 # DEFAULT PARAMETERS
 class Param:

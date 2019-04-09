@@ -115,6 +115,7 @@ def warp_label(path_label, folder_label, file_label, fname_src, fname_transfo, p
                      fname_transfo,
                      os.path.join(path_out, folder_label, template_label_file[i]),
                      get_interp(template_label_file[i])),
+                    is_sct_binary=True,
                     verbose=param.verbose)
         # Copy list.txt
         sct.copy(os.path.join(path_label, folder_label, param.file_info_label), os.path.join(path_out, folder_label))

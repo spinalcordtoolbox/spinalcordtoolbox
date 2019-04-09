@@ -94,7 +94,7 @@ def run_main():
     if param.debug:
         sct.log.warning('\n*** WARNING: DEBUG MODE ON ***\n')
         # get path of the testing data
-        path_sct_data = os.environ.get("SCT_TESTING_DATA_DIR", os.path.join(os.path.dirname(os.path.dirname(__file__))), "testing_data")
+        path_sct_data = os.path.join(sct.__data_dir__, "sct_testing_data")
         param.fname_data = os.path.join(path_sct_data, "fmri", "fmri.nii.gz")
         param.new_size = '2'  # '0.5x0.5x1'
         param.remove_temp_files = 0
