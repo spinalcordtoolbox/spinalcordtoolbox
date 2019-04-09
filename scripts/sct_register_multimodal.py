@@ -190,11 +190,11 @@ def get_parser(paramreg=None):
                       default_value=None)
     parser.add_option(name='-qc-dataset',
                       type_value='str',
-                      description='Name of the dataset to display in the QC report. By default, assumes BIDS.',
+                      description='If provided, this string will be mentioned in the QC report as the dataset the process was run on',
                       )
     parser.add_option(name='-qc-subject',
                       type_value='str',
-                      description='Name of the subject to display in the QC report. By default, assumes BIDS.',
+                      description='If provided, this string will be mentioned in the QC report as the subject the process was run on',
                       )
     parser.add_option(name="-r",
                       type_value="multiple_choice",
