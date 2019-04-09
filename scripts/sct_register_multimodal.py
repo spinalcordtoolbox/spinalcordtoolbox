@@ -566,11 +566,10 @@ def register(src, dest, paramreg, param, i_step_str, src_seg=None, dest_seg=None
     output = ''  # default output if problem
 
     if paramreg.steps[i_step_str].type == 'im_seg':
-        src_im = src
+        src_im = src  # user is expected to input images to src and dest
         dest_im = dest
         del src
-        del dest # to be sure it is not missused later
-        # normally im_seg only if algo = centermassrot
+        del dest  # to be sure it is not missused later
 
 
     # display arguments
@@ -742,7 +741,7 @@ def register(src, dest, paramreg, param, i_step_str, src_seg=None, dest_seg=None
         # smooth data
         if not paramreg.steps[i_step_str].smooth == '0':
             sct.printv('\nSmooth data', param.verbose)
-            if paramreg.steps[i_step_str].type == 'im_seg':
+            if paramreg.steps[i_step_str].type != 'im_seg':
                 sct.run(['sct_maths', '-i', src, '-smooth', paramreg.steps[i_step_str].smooth + ','
                          + paramreg.steps[i_step_str].smooth + ',0', '-o', sct.add_suffix(src, '_smooth')])
                 sct.run(['sct_maths', '-i', dest, '-smooth', paramreg.steps[i_step_str].smooth + ','
@@ -775,7 +774,7 @@ def register(src, dest, paramreg, param, i_step_str, src_seg=None, dest_seg=None
                            ants_registration_params=ants_registration_params,
                            remove_temp_files=param.remove_temp_files,
                            verbose=param.verbose)
-        else:
+        else:  # im_seg case
             register_slicewise(src_im,
                            dest_im,
                            src_seg,
