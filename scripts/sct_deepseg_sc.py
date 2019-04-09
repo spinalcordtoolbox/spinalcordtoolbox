@@ -82,6 +82,14 @@ def get_parser():
                       type_value='folder_creation',
                       description='The path where the quality control generated content will be saved',
                       default_value=None)
+    parser.add_option(name='-qc-dataset',
+                      type_value='str',
+                      description='Name of the dataset to display in the QC report. By default, assumes BIDS.',
+                      )
+    parser.add_option(name='-qc-subject',
+                      type_value='str',
+                      description='Name of the subject to display in the QC report. By default, assumes BIDS.',
+                      )
     parser.add_option(name='-igt',
                       type_value='image_nifti',
                       description='File name of ground-truth segmentation.',
@@ -134,6 +142,8 @@ def main():
     verbose = int(arguments['-v'])
 
     path_qc = arguments.get("-qc", None)
+    qc_dataset = arguments.get("-qc-dataset", None)
+    qc_subject = arguments.get("-qc-subject", None)
 
     algo_config_stg = '\nMethod:'
     algo_config_stg += '\n\tCenterline algorithm: ' + str(ctr_algo)
@@ -166,7 +176,7 @@ def main():
 
     if path_qc is not None:
         generate_qc(fname_image, fname_seg=fname_seg, args=args, path_qc=os.path.abspath(path_qc),
-                    process='sct_deepseg_sc')
+                    dataset=qc_dataset, subject=qc_subject, process='sct_deepseg_sc')
     sct.display_viewer_syntax([fname_image, fname_seg], colormaps=['gray', 'red'], opacities=['', '0.7'])
 
 
