@@ -1,7 +1,0 @@
-nipy
-nibabel
-dipy
-tqdm
-tensorflow
-Keras
-h5py

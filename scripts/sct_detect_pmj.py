@@ -97,8 +97,7 @@ class DetectPMJ:
         self.dection_map_pmj = sct.extract_fname(self.fname_im)[1] + '_map_pmj'  # file resulting from the detection
 
         # path to the pmj detector
-        path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
-        self.pmj_model = os.path.join(path_sct, 'data', 'pmj_models', '{}_model'.format(self.contrast))
+        self.pmj_model = os.path.join(sct.__data_dir__, 'pmj_models', '{}_model'.format(self.contrast))
 
         self.threshold = -0.75 if self.contrast == 't1' else 0.8  # detection map threshold, depends on the contrast
 
@@ -177,7 +176,7 @@ class DetectPMJ:
         os.environ["FSLOUTPUTTYPE"] = "NIFTI_PAIR"
         cmd_pmj = ['isct_spine_detect', self.pmj_model, self.slice2D_im.split('.nii')[0], self.dection_map_pmj]
         print(cmd_pmj)
-        sct.run(cmd_pmj, verbose=0)
+        sct.run(cmd_pmj, verbose=0, is_sct_binary=True)
 
         img = nib.load(self.dection_map_pmj + '_svm.hdr')  # convert .img and .hdr files to .nii
         nib.save(img, self.dection_map_pmj + '.nii')

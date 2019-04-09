@@ -300,9 +300,6 @@ def main(args=None):
 
     start_time = time.time()
 
-    # get path of the toolbox
-    path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
-
     # get default registration parameters
     # step1 = Paramreg(step='1', type='im', algo='syn', metric='MI', iter='5', shrink='1', smooth='0', gradStep='0.5')
     step0 = Paramreg(step='0', type='im', algo='syn', metric='MI', iter='0', shrink='1', smooth='0', gradStep='0.5',
@@ -644,7 +641,7 @@ def register(src, dest, paramreg, param, i_step_str):
             warp_forward_out = 'step' + i_step_str + 'Warp.nii.gz'
             warp_inverse_out = 'step' + i_step_str + 'InverseWarp.nii.gz'
             # run command
-            status, output = sct.run(cmd, param.verbose)
+            status, output = sct.run(cmd, param.verbose, is_sct_binary=True)
 
     # ANTS 3d
     elif paramreg.steps[i_step_str].algo.lower() in ants_registration_params \
@@ -688,7 +685,7 @@ def register(src, dest, paramreg, param, i_step_str):
                 init_dict = {'geometric': '0', 'centermass': '1', 'origin': '2'}
                 cmd += ['-r', '[' + dest + ',' + src + ',' + init_dict[paramreg.steps[i_step_str].init] + ']']
             # run command
-            status, output = sct.run(cmd, param.verbose)
+            status, output = sct.run(cmd, param.verbose, is_sct_binary=True)
             # get appropriate file name for transformation
             if paramreg.steps[i_step_str].algo in ['rigid', 'affine', 'translation']:
                 warp_forward_out = 'step' + i_step_str + '0GenericAffine.mat'

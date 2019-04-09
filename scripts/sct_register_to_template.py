@@ -31,9 +31,6 @@ from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.centerline.core import get_centerline
 from spinalcordtoolbox.reports.qc import generate_qc
 
-# get path of the toolbox
-path_script = os.path.dirname(__file__)
-path_sct = os.path.dirname(path_script)
 
 # DEFAULT PARAMETERS
 
@@ -46,7 +43,7 @@ class Param:
         self.fname_mask = ''  # this field is needed in the function register@sct_register_multimodal
         self.padding = 10  # this field is needed in the function register@sct_register_multimodal
         self.verbose = 1  # verbose
-        self.path_template = os.path.join(path_sct, 'data', 'PAM50')
+        self.path_template = os.path.join(sct.__data_dir__, 'PAM50')
         self.path_qc = None
         self.zsubsample = '0.25'
         self.param_straighten = ''

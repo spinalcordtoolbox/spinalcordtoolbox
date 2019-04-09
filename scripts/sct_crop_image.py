@@ -115,7 +115,7 @@ class ImageCropper(object):
             self.crop_from_mask_with_background()
         else:
             # Run command line
-            sct.run(self.cmd, verb)
+            sct.run(self.cmd, verb, is_sct_binary=True)
 
         self.result = Image(self.output_filename, verbose=self.verbose)
 
