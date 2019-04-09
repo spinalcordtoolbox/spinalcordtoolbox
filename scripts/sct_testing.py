@@ -13,6 +13,7 @@
 from __future__ import print_function, absolute_import
 
 import sys, io, os, time, random, copy, shlex, importlib, multiprocessing, tempfile, shutil
+import traceback, inspect
 import signal, stat
 
 
@@ -23,10 +24,7 @@ from pandas import DataFrame
 from msct_parser import Parser
 import sct_utils as sct
 
-# get path of SCT
-path_script = os.path.dirname(__file__)
-path_sct = os.path.dirname(path_script)
-sys.path.append(os.path.join(path_sct, 'testing'))
+sys.path.append(os.path.join(sct.__sct_dir__, 'testing'))
 
 
 def fs_signature(root):
@@ -184,9 +182,14 @@ def process_function(fname, param):
         # test function
         try:
             param_test = test_function(param_test)
+        except sct.RunError as e:
+            list_status_function.append(1)
+            list_output.append("Got SCT exception:")
+            list_output.append(e.args[0])
         except Exception as e:
             list_status_function.append(1)
-            list_output.append("TODO exception: %s" % e)
+            list_output.append("Got exception: %s" % e)
+            list_output += traceback.format_exc().splitlines()
         else:
             list_status_function.append(param_test.status)
             list_output.append(param_test.output)
@@ -478,7 +481,7 @@ def print_fail():
 
 # write to log file
 # ==========================================================================================
-def write_to_log_file(fname_log, string, mode='w', prepend=False):
+def write_to_log_file(fname_log, string, prepend=False):
     """
     status, output = sct.run('echo $SCT_DIR', 0)
     path_logs_dir = os.path.join(output, "testing", "logs")
@@ -495,14 +498,14 @@ def write_to_log_file(fname_log, string, mode='w', prepend=False):
     try:
         # if prepend, read current file and then overwrite
         if prepend:
-            f = open(fname_log, 'r')
+            f = io.open(fname_log, 'rb')
             # string_to_append = '\n\nOUTPUT:\n--\n' + f.read()
-            string_to_append = f.read()
+            string_to_append = f.read().decode("utf-8")
             f.close()
-        f = open(fname_log, mode)
+        f = io.open(fname_log, 'wb')
     except Exception as ex:
         raise Exception('WARNING: Cannot open log file {}.'.format(os.path.abspath(fname_log)))
-    f.write(string + string_to_append + '\n')
+    f.write((string + string_to_append + '\n').encode("utf-8"))
     f.close()
 
 
@@ -589,7 +592,7 @@ def test_function(param_test):
             if not (os.path.isfile(file_to_check)):
                 param_test.status = 200
                 param_test.output += '\nERROR: This input file does not exist: ' + file_to_check
-                write_to_log_file(param_test.fname_log, param_test.output, 'w')
+                write_to_log_file(param_test.fname_log, param_test.output)
                 return update_param(param_test)
 
     # retrieve ground truth (will be used later for integrity testing)
@@ -599,7 +602,7 @@ def test_function(param_test):
         if not os.path.isfile(param_test.fname_gt):
             param_test.status = 201
             param_test.output += '\nERROR: The following file used for ground truth does not exist: ' + param_test.fname_gt
-            write_to_log_file(param_test.fname_log, param_test.output, 'w')
+            write_to_log_file(param_test.fname_log, param_test.output)
             return update_param(param_test)
 
     # run command
@@ -619,7 +622,7 @@ def test_function(param_test):
     except Exception as err:
         param_test.status = 1
         param_test.output += str(err)
-        write_to_log_file(param_test.fname_log, param_test.output, 'w')
+        write_to_log_file(param_test.fname_log, param_test.output)
         return update_param(param_test)
 
     param_test.output += o
@@ -636,13 +639,13 @@ def test_function(param_test):
             os.chdir(path_testing)
             param_test.status = 2
             param_test.output += str(err)
-            write_to_log_file(param_test.fname_log, param_test.output, 'w')
+            write_to_log_file(param_test.fname_log, param_test.output)
             return update_param(param_test)
 
     # manage stdout
     if param_test.redirect_stdout:
         sct.remove_handler(file_handler)
-        write_to_log_file(param_test.fname_log, param_test.output, mode='r+', prepend=True)
+        write_to_log_file(param_test.fname_log, param_test.output, prepend=True)
 
 
     return update_param(param_test)

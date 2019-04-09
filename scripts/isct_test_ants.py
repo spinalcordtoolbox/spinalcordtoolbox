@@ -90,7 +90,7 @@ def main():
      '-o', '[src2reg,data_src_reg.nii.gz]',
      '-c', '5',
      '-v', '1',
-     '-n', 'NearestNeighbor'], verbose)
+     '-n', 'NearestNeighbor'], verbose, is_sct_binary=True)
 
     # # Apply rigid transformation
     # printv('\nApply rigid transformation to curved landmarks...', verbose)

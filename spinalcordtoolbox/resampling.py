@@ -76,7 +76,7 @@ def resample_nipy(img, new_size=None, new_size_type=None, img_dest=None, interpo
         # Generate 3d affine transformation: R
         affine = img.affine[:4, :4]
         affine[3, :] = np.array([0, 0, 0, 1])  # satisfy to nifti convention. Otherwise it grabs the temporal
-        sct.log.debug('Affine matrix: \n' + str(affine), verbose)
+        sct.log.debug('Affine matrix: \n' + str(affine))
         R = np.eye(4)
         for i in range(3):
             R[i, i] = img.shape[i] / float(shape_r[i])

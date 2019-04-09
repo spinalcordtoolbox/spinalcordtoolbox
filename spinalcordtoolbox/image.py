@@ -319,7 +319,7 @@ class Image(object):
         except nibabel.spatialimages.ImageFileError:
             sct.printv('Error: make sure ' + path + ' is an image.', 1, 'error')
         self.data = self.im_file.get_data()
-        self.hdr = self.im_file.get_header()
+        self.hdr = self.im_file.header
         self.absolutepath = path
         if path != self.absolutepath:
             sct.log.debug("Loaded %s (%s) orientation %s shape %s", path, self.absolutepath, self.orientation, self.data.shape)

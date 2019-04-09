@@ -70,7 +70,7 @@ def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, verbose=1):
     os.environ["FSLOUTPUTTYPE"] = "NIFTI_PAIR"
     cmd_detection = 'isct_spine_detect -ctype=dpdt "%s" "%s" "%s"' % \
                     (path_model, 'data_midSlice', 'data_midSlice_pred')
-    sct.run(cmd_detection, verbose=0, raise_exception=False)
+    sct.run(cmd_detection, verbose=0, is_sct_binary=True, raise_exception=False)
 
     pred = nib.load('data_midSlice_pred_svm.hdr').get_data()
     if verbose >= 2:

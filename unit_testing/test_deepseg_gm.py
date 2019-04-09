@@ -37,7 +37,7 @@ class TestModel(object):
         out_loss = gm_model.dice_coef(var_y_true, var_y_pred)
         res = K.eval(out_loss)
         # Smoothing term makes it never reach zero
-        assert res == pytest.approx(0.0, 0.001)
+        assert res == pytest.approx(0.0, abs=0.001)
 
     def test_dice_loss(self):
         """Test the loss itself, should be negative of upper-bound."""

@@ -15,7 +15,7 @@
 
 from __future__ import print_function, division, absolute_import
 
-import sys, io, os, re, time, datetime
+import sys, io, os, re, time, datetime, platform
 import errno
 import logging
 import logging.config
@@ -40,7 +40,11 @@ else:
         return " ".join(shlex.quote(x) for x in lst)
 
 
+from spinalcordtoolbox import __version__, __sct_dir__, __data_dir__
 
+from spinalcordtoolbox.utils import check_exe
+
+from spinalcordtoolbox.utils import logger as log
 
 """
 Basic logging setup for the sct
@@ -49,7 +53,6 @@ format and level
 """
 
 
-log = logging.getLogger('sct')
 log.setLevel(logging.DEBUG)
 stream_handler = logging.StreamHandler(sys.stdout)
 nh = logging.NullHandler()
@@ -60,106 +63,6 @@ if not LOG_FORMAT:
     LOG_FORMAT = None
 
 
-def check_exe(name):
-    """
-    Ensure that a program exists
-    :type name: string
-    :param name: name or path to program
-    :return: path of the program or None
-    """
-    def is_exe(fpath):
-        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
-
-    fpath, fname = os.path.split(name)
-    if fpath and is_exe(name):
-        return fpath
-    else:
-        for path in os.environ["PATH"].split(os.pathsep):
-            path = path.strip('"')
-            exe_file = os.path.join(path, name)
-            if is_exe(exe_file):
-                return exe_file
-
-    return None
-
-
-def __get_branch():
-    """
-    Fallback if for some reason the value vas no set by sct_launcher
-    :return:
-    """
-
-    p = subprocess.Popen(["git", "rev-parse", "--abbrev-ref", "HEAD"], stdout=subprocess.PIPE,
-                         stderr=subprocess.PIPE, cwd=__sct_dir__)
-    output, _ = p.communicate()
-    status = p.returncode
-
-    if status == 0:
-        return output.decode().strip()
-
-
-def __get_commit():
-    """
-    :return: git commit ID, with trailing '*' if modified
-    """
-    p = subprocess.Popen(["git", "rev-parse", "HEAD"], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                         cwd=__sct_dir__)
-    output, _ = p.communicate()
-    status = p.returncode
-    if status == 0:
-        commit = output.decode().strip()
-    else:
-        commit = "?!?"
-
-    p = subprocess.Popen(["git", "status", "--porcelain"], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                         cwd=__sct_dir__)
-    output, _ = p.communicate()
-    status = p.returncode
-    if status == 0:
-        unclean = True
-        for line in output.decode().strip().splitlines():
-            line = line.rstrip()
-            if line.startswith("??"): # ignore ignored files, they can't hurt
-               continue
-            break
-        else:
-            unclean = False
-        if unclean:
-            commit += "*"
-
-    return commit
-
-def _git_info(commit_env='SCT_COMMIT',branch_env='SCT_BRANCH'):
-
-    sct_commit = os.getenv(commit_env, "unknown")
-    sct_branch = os.getenv(branch_env, "unknown")
-    if check_exe("git") and os.path.isdir(os.path.join(__sct_dir__, ".git")):
-        sct_commit = __get_commit() or sct_commit
-        sct_branch = __get_branch() or sct_branch
-
-    if sct_commit is not 'unknown':
-        install_type = 'git'
-    else:
-        install_type = 'package'
-
-    with io.open(os.path.join(__sct_dir__, 'version.txt'), 'r') as f:
-        version_sct = f.read().rstrip()
-
-    return install_type, sct_commit, sct_branch, version_sct
-
-
-def _version_string():
-    install_type, sct_commit, sct_branch, version_sct = _git_info()
-    if install_type == "package":
-        return version_sct
-    else:
-        return "{install_type}-{sct_branch}-{sct_commit}".format(**locals())
-
-# Basic sct config
-__sct_dir__ = os.getenv("SCT_DIR", os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
-__data_dir__ = os.getenv("SCT_DATA_DIR", os.path.join(__sct_dir__, 'data'))
-__version__ = _version_string()
-
 
 def init_sct():
     """ Initialize the sct for typical terminal usage
@@ -168,6 +71,21 @@ def init_sct():
     """
     start_stream_logger()
     init_error_client()
+    if os.environ.get("SCT_TIMER", None) is not None:
+        add_elapsed_time_counter()
+
+
+def add_elapsed_time_counter():
+    """
+    """
+    import atexit
+    class Timer():
+        def __init__(self):
+            self._t0 = time.time()
+        def atexit(self):
+            print("Elapsed time: %.3f seconds" % (time.time()-self._t0))
+    t = Timer()
+    atexit.register(t.atexit)
 
 
 def start_stream_logger():
@@ -431,8 +349,23 @@ def run_old(cmd, verbose=1):
     else:
         return status, output
 
+def which_sct_binaries():
+    """
+    :return name of the sct binaries to use on this platform
+    """
 
-def run(cmd, verbose=1, raise_exception=True, cwd=None, env=None):
+    if sys.platform.startswith("linux"):
+        distro = platform.linux_distribution()
+        if "CentOS Linux" in distro:
+            return "binaries_centos"
+        if "Red Hat Enterprise Linux Server" in distro:
+            return "binaries_centos"
+        return "binaries_debian"
+    else:
+        return "binaries_osx"
+
+
+def run(cmd, verbose=1, raise_exception=True, cwd=None, env=None, is_sct_binary=False):
     # if verbose == 2:
     #     printv(sys._getframe().f_back.f_code.co_name, 1, 'process')
 
@@ -445,10 +378,34 @@ def run(cmd, verbose=1, raise_exception=True, cwd=None, env=None):
     if sys.hexversion < 0x03000000 and isinstance(cmd, unicode):
         cmd = str(cmd)
 
+
+    if is_sct_binary:
+        name = cmd[0] if isinstance(cmd, list) else cmd.split(" ", 1)[0]
+        path = None
+        #binaries_location_default = os.path.expanduser("~/.cache/spinalcordtoolbox-{}/bin".format(__version__)
+        binaries_location_default = os.path.join(__sct_dir__, "bin")
+        for directory in (
+         #binaries_location_default,
+         os.path.join(__sct_dir__, "bin"),
+         ):
+            candidate = os.path.join(directory, name)
+            if os.path.exists(candidate):
+                path = candidate
+        if path is None:
+            run(["sct_download_data", "-d", which_sct_binaries(), "-o", binaries_location_default])
+            path = os.path.join(binaries_location_default, name)
+
+        if isinstance(cmd, list):
+            cmd[0] = path
+        elif isinstance(cmd, str):
+            rem = cmd.split(" ", 1)[1:]
+            cmd = path if len(rem) == 0 else "{} {}".format(path, rem[0])
+
     if isinstance(cmd, str):
         cmdline = cmd
     else:
         cmdline = list2cmdline(cmd)
+
 
     if verbose:
         printv("%s # in %s" % (cmdline, cwd), 1, 'code')
@@ -646,7 +603,7 @@ def checkRAM(os, verbose=1):
 
         # Iterate processes
         processLines = ps.split('\n')
-        sep = re.compile('[\s]+')
+        sep = re.compile(r'[\s]+')
         rssTotal = 0  # kB
         for row in range(1, len(processLines)):
             rowText = processLines[row].strip()
@@ -659,12 +616,12 @@ def checkRAM(os, verbose=1):
 
         # Process vm_stat
         vmLines = vm.split('\n')
-        sep = re.compile(':[\s]+')
+        sep = re.compile(r':[\s]+')
         vmStats = {}
         for row in range(1, len(vmLines) - 2):
             rowText = vmLines[row].strip()
             rowElements = sep.split(rowText)
-            vmStats[(rowElements[0])] = int(rowElements[1].strip('\.')) * 4096
+            vmStats[(rowElements[0])] = int(rowElements[1].strip(r'\.')) * 4096
 
         if verbose:
             printv('  Wired Memory:\t\t%d MB' % (vmStats["Pages wired down"] / 1024 / 1024))
