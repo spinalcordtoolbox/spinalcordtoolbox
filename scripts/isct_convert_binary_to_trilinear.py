@@ -51,12 +51,9 @@ def main():
     # start timer
     start_time = time.time()
 
-    # get path of the toolbox
-    path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
-
     # Parameters for debug mode
     if param.debug:
-        fname_data = os.path.join(path_sct, 'testing', 'data', 'errsm_23', 't2', 't2_manual_segmentation.nii.gz')
+        fname_data = os.path.join(sct.__data_dir__, 'sct_testing_data', 't2', 't2_seg.nii.gz')
         remove_temp_files = 0
         param.mask_size = 10
     else:

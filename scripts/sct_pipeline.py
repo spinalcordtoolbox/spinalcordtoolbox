@@ -49,9 +49,8 @@ import sys, io, os, types, copy, copy_reg, time, itertools, glob, importlib, pic
 import platform
 import signal
 
-path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
 path_script = os.path.dirname(__file__)
-sys.path.append(os.path.join(path_sct, 'testing'))
+sys.path.append(os.path.join(sct.__sct_dir__, 'testing'))
 
 import concurrent.futures
 if "SCT_MPI_MODE" in os.environ:
@@ -244,8 +243,7 @@ def read_database(folder_dataset, specifications=None, fname_database='', verbos
 
 def function_launcher(args):
     # append local script to PYTHONPATH for import
-    path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
-    sys.path.append(os.path.join(path_sct, "testing"))
+    sys.path.append(os.path.join(sct.__sct_dir__, "testing"))
     # retrieve param class from sct_testing
     param_testing = sct_testing.Param()
     param_testing.function_to_test = args[0]

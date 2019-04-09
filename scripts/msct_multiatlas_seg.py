@@ -32,7 +32,6 @@ from msct_parser import Parser
 from sct_utils import printv
 import sct_utils as sct
 
-path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
 
 def get_parser():
     # Initialize the parser
@@ -140,7 +139,7 @@ class ParamModel:
         self.ind_rm = None
         #
         path_script = os.path.dirname(__file__)
-        self.path_model_to_load = os.path.join(path_sct, 'data', 'gm_model')
+        self.path_model_to_load = os.path.join(sct.__data_dir__, 'gm_model')
 
     def __repr__(self):
         info = 'Model Param:\n'
@@ -452,8 +451,8 @@ class Model:
             path_script = os.path.dirname(__file__)
             printv('ERROR: The GM segmentation model is not compatible with this version of the code.\n'
                    'To update the model, run the following lines:\n\n'
-                   'cd ' + path_sct + '\n'
-                   './install_sct -m -b\n', self.param.verbose, 'error')
+                   'cd ' + sct.__data_dir__ + '\n'
+                   'sct_download_data -d gm_model\n', self.param.verbose, 'error')
 
         # - self.slices = dictionary
         self.slices = pickle.load(gzip.open(model_files['slices'],  'rb'))

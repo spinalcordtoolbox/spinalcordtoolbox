@@ -376,7 +376,7 @@ class NURBS:
             Nikp.append(Nik_temp_deriv[i][-1])
 
         # Calcul de la courbe
-        param = np.linspace(x[0], x[-1], prec)
+        param = np.linspace(x[0], x[-1], int(round(prec)))
         P_x, P_y, P_z = [], [], []  # coord fitees
         P_x_d, P_y_d, P_z_d = [], [], []  # derivees
         for i in range(len(param)):
