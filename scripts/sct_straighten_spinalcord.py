@@ -12,38 +12,14 @@
 # License: see the LICENSE.TXT
 # ======================================================================================================================
 
-# TODO: remove generate_qc
 
 from __future__ import division, absolute_import
 
-import sys, os
+import sys
 
-from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.straightening import SpinalCordStraightener
 from msct_parser import Parser
 import sct_utils as sct
-
-
-def generate_qc(fn_input, fn_centerline, fn_output, args, path_qc):
-    """
-    Generate a QC entry allowing to quickly review the straightening process.
-    """
-
-    import spinalcordtoolbox.reports.qc as qc
-    import spinalcordtoolbox.reports.slice as qcslice
-
-    # Just display the straightened spinal cord
-    img_out = Image(fn_output)
-    foreground = qcslice.Sagittal([img_out]).single()[0]
-
-    qc.add_entry(
-     src=fn_input,
-     process="sct_straighten_spinalcord",
-     args=args,
-     path_qc=path_qc,
-     plane="Sagittal",
-     foreground=foreground,
-    )
 
 
 def get_parser():
@@ -172,11 +148,6 @@ def get_parser():
                       mandatory=False,
                       example="algo_fitting=nurbs,accuracy_results=1")
 
-    parser.add_option(name='-qc',
-                      type_value='folder_creation',
-                      description='The path where the quality control generated content will be saved',
-                      default_value=None)
-
     return parser
 
 
@@ -230,8 +201,6 @@ def main(args=None):
     # if "-cpu-nb" in arguments:
     #     sc_straight.cpu_number = int(arguments["-cpu-nb"])
 
-    path_qc = arguments.get("-qc", None)
-
     if '-disable-straight2curved' in arguments:
         sc_straight.straight2curved = False
     if '-disable-curved2straight' in arguments:
@@ -264,9 +233,6 @@ def main(args=None):
     fname_straight = sc_straight.straighten()
 
     sct.printv("\nFinished! Elapsed time: {} s".format(sc_straight.elapsed_time), verbose)
-
-    if sc_straight.curved2straight and path_qc is not None:
-       generate_qc(input_filename, centerline_file, fname_straight, args, os.path.abspath(path_qc))
 
     sct.display_viewer_syntax([fname_straight], verbose=verbose)
 
