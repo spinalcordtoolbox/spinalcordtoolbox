@@ -1,0 +1,22 @@
+Keras
+dipy
+futures
+h5py
+matplotlib
+nibabel
+nipy
+pandas
+psutil
+raven
+requests
+numpy #==1.11 # warnings if using newer version
+scipy
+scikit-image
+scikit-learn==0.17.1 # PCA pickles incompatibility
+tensorflow==1.3.0 # unfortunately because of numpy limited version
+xlrd
+xlutils
+xlwt
+tqdm
+transforms3d
+portalocker

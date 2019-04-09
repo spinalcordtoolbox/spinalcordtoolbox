@@ -25,9 +25,11 @@ For OSX, there are no prerequisites.
 
 .. TODO minimum system version?
 
+The recommended procedure is to perform the installation `Using the installer`_.
 
-Recommended Procedure
-*********************
+
+Using the Installer
+*******************
 
 When using the recommended procedure, SCT will bundle its own Python
 distribution, installed with all the required packages, and using
@@ -49,8 +51,8 @@ Procedure:
       ./install_sct
 
 
-Installation using git
-**********************
+Using the Installer and Git
+***************************
 
 You may have good reasons to want to install a development version of
 SCT.
@@ -99,6 +101,60 @@ In the context of SCT, it can be used:
 - <your reason here>
 
 See https://github.com/neuropoly/sct_docker for more information.
+
+
+Using pip (experimental)
+************************
+
+SCT can be installed using pip, with some caveats:
+
+- The installation is done in-place, so the folder containing SCT must
+  be kept around
+
+- In order to ensure coexistence with other packages, the dependency
+  specifications are loosened, and it is possible that your package
+  combination has not been tested with SCT.
+
+  So in case of problem, try again with the reference installation,
+  and report a bug indicating the dependency versions retrieved using
+  `sct_check_dependencies`.
+
+
+Procedure:
+
+#. Retrieve the SCT code to a safe place
+
+   Clone the repository and hop inside:
+
+   .. code:: sh
+
+      git clone https://github.com/neuropoly/spinalcordtoolbox
+
+      cd spinalcordtoolbox
+
+#. Checkout the revision of interest, if different from `master`:
+
+   .. code:: sh
+
+      git checkout ${revision_of_interest}
+
+#. If numpy is not already on the system, install it, either using
+   your distribution package manager or pip.
+
+#. Install sct using pip
+
+   If running in a virtualenv:
+
+   .. code:: sh
+
+      pip install -e .
+
+   else:
+
+   .. code:: sh
+
+      pip install --user -e .
+
 
 
 Hard-core Installation-less SCT usage

@@ -44,7 +44,7 @@ def main():
     # Parameters for debug mode
     if param.debug:
         sct.printv('\n*** WARNING: DEBUG MODE ON ***\n')
-        path_sct_data = os.environ.get("SCT_TESTING_DATA_DIR", os.path.join(os.path.dirname(os.path.dirname(__file__))), "testing_data")
+        path_sct_data = os.path.join(sct.__data_dir__, "sct_testing_data")
         fname_warp_list = os.path.join(path_sct_data, 't2', 'warp_template2anat.nii.gz') + '-' + os.path.join(path_sct_data, 'mt', 'warp_template2mt.nii.gz')
         fname_dest = os.path.join(path_sct_data, 'mt', 'mtr.nii.gz')
         verbose = 1
@@ -101,7 +101,7 @@ def main():
     fname_warp_list_invert = functools.reduce(lambda x,y: x+y, fname_warp_list_invert)
 
     cmd = ['isct_ComposeMultiTransform', dimensionality, 'warp_final' + ext_out, '-R', fname_dest] + fname_warp_list_invert
-    status, output = sct.run(cmd, verbose=verbose)
+    status, output = sct.run(cmd, verbose=verbose, is_sct_binary=True)
 
     # check if output was generated
     if not os.path.isfile('warp_final' + ext_out):

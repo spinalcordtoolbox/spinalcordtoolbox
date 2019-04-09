@@ -530,6 +530,7 @@ class SpinalCordStraightener(object):
                      '-o', 'tmp.anat_rigid_warp.nii.gz',
                      '-t', 'tmp.curve2straight.nii.gz',
                      '-n', 'BSpline[3]'],
+                    is_sct_binary=True,
                     verbose=verbose)
 
         if self.accuracy_results:
@@ -545,6 +546,7 @@ class SpinalCordStraightener(object):
                      '-o', 'tmp.centerline_straight.nii.gz',
                      '-t', 'tmp.curve2straight.nii.gz',
                      '-n', 'NearestNeighbor'],
+                    is_sct_binary=True,
                     verbose=verbose)
             file_centerline_straight = Image('tmp.centerline_straight.nii.gz', verbose=verbose)
             nx, ny, nz, nt, px, py, pz, pt = file_centerline_straight.dim
