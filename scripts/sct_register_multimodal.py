@@ -188,6 +188,14 @@ def get_parser(paramreg=None):
                       type_value='folder_creation',
                       description='The path where the quality control generated content will be saved',
                       default_value=None)
+    parser.add_option(name='-qc-dataset',
+                      type_value='str',
+                      description='Name of the dataset to display in the QC report. By default, assumes BIDS.',
+                      )
+    parser.add_option(name='-qc-subject',
+                      type_value='str',
+                      description='Name of the subject to display in the QC report. By default, assumes BIDS.',
+                      )
     parser.add_option(name="-r",
                       type_value="multiple_choice",
                       description="""Remove temporary files.""",
@@ -349,6 +357,8 @@ def main(args=None):
         for paramStep in paramreg_user:
             paramreg.addStep(paramStep)
     path_qc = arguments.get("-qc", None)
+    qc_dataset = arguments.get("-qc-dataset", None)
+    qc_subject = arguments.get("-qc-subject", None)
 
     identity = int(arguments['-identity'])
     interp = arguments['-x']
@@ -547,7 +557,8 @@ def main(args=None):
     if path_qc is not None:
         if fname_dest_seg:
             generate_qc(fname_src2dest, fname_in2=fname_dest, fname_seg=fname_dest_seg, args=args,
-                        path_qc=os.path.abspath(path_qc), process='sct_register_multimodal')
+                        path_qc=os.path.abspath(path_qc), dataset=qc_dataset, subject=qc_subject,
+                        process='sct_register_multimodal')
         else:
             sct.printv('WARNING: Cannot generate QC because it requires destination segmentation.', 1, 'warning')
 
