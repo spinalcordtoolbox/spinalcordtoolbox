@@ -566,8 +566,7 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, args=None, path_qc=No
         qcslice_operations = [QcImage.highlight_pmj]
         qcslice_layout = lambda x: x.single()
     else:
-        sct.log.error('Unrecognized process.')
-        raise ValueError
+        raise ValueError("Unrecognized process: {}".format(process))
 
     add_entry(
         src=fname_in1,
