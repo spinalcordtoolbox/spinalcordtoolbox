@@ -46,7 +46,7 @@ def circular_filter_1d(signal, param_filt, filter='gaussian'):
 
 def find_angle(image, centermass, parameters):
 
-    sigmax = parameters['sigmax']
+    sigmax = parameters['sigmax']  # TODO change this as a class not a dictionnary
     sigmay = parameters['sigmay']
     nb_bin = parameters['nb_bin']
     kmedian_size = parameters['kmedian_size']
