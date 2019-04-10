@@ -76,15 +76,15 @@ def register_slicewise(fname_src,
     # Calculate displacement
     if paramreg.algo == 'centermass':
         # translation of center of mass between source and destination in voxel space
-        register2d_centermassrot('src.nii', 'dest.nii', fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, rot=0, poly=int(paramreg.poly), path_qc=path_qc, verbose=verbose)
+        register2d_centermassrot('src.nii', 'dest.nii', fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, rot=0, polydeg=int(paramreg.poly), path_qc=path_qc, verbose=verbose)
     elif paramreg.algo == 'centermassrot':
         if im_and_seg is False:
             # translation of center of mass and rotation based on source and destination first eigenvectors from PCA.
-            register2d_centermassrot('src.nii', 'dest.nii', fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, rot=paramreg.rot, poly=int(paramreg.poly), path_qc=path_qc, verbose=verbose, pca_eigenratio_th=float(paramreg.pca_eigenratio_th))
+            register2d_centermassrot('src.nii', 'dest.nii', fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, rot=paramreg.rot, polydeg=int(paramreg.poly), path_qc=path_qc, verbose=verbose, pca_eigenratio_th=float(paramreg.pca_eigenratio_th))
         else:
             # translation based of center of mass and rotation based on the symmetry of the image
             register2d_centermassrot('src_im.nii', 'dest_im.nii', 'src_seg.nii', 'dest_seg.nii', fname_warp=warp_forward_out,
-                                     fname_warp_inv=warp_inverse_out, poly=int(paramreg.poly),
+                                     fname_warp_inv=warp_inverse_out, polydeg=int(paramreg.poly),
                                      path_qc=path_qc, verbose=verbose)
     elif paramreg.algo == 'columnwise':
         # scaling R-L, then column-wise center of mass alignment and scaling
