@@ -964,27 +964,24 @@ def check_if_same_space(fname_1, fname_2):
 
 
 def printv(string, verbose=1, type='normal'):
-    """enables to print (color coded messages, depending on verbose status)
+    """
+    Enables to print color coded messages, depending on verbose status. Only use in APIs (e.g., sct_propseg).
     """
 
     colors = {'normal': bcolors.normal, 'info': bcolors.green, 'warning': bcolors.yellow, 'error': bcolors.red,
               'code': bcolors.blue, 'bold': bcolors.bold, 'process': bcolors.magenta}
 
-    if verbose or type=="error":
-        # Print color only if the output is the terminal
-        # Note jcohen: i added a try/except in case stdout does not have isatty field (it did happen to me)
+    if verbose:
+        # The try/except is there in case stdout does not have isatty field (it did happen to me)
         try:
+            # Print color only if the output is the terminal
             if sys.stdout.isatty():
                 color = colors.get(type, bcolors.normal)
-                log.info('{0}{1}{2}'.format(color, string, bcolors.normal))
-
+                print(color + string + bcolors.normal)
             else:
-                log.info(string)
+                print(string)
         except Exception as e:
-            log.info(string)
-
-    if type == 'error':
-        raise RuntimeError("printv(..., type=\"error\")")
+            print(string)
 
 
 def send_email(addr_to, addr_from, passwd, subject, message='', filename=None, html=False, smtp_host=None, smtp_port=None, login=None):
