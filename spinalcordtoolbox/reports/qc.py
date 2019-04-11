@@ -30,7 +30,6 @@ import spinalcordtoolbox.reports.slice as qcslice
 
 logger = logging.getLogger("sct.{}".format(__file__))
 
-
 class QcImage(object):
     """
     Class used to create a .png file from a 2d image produced by the class "Slice"
@@ -311,12 +310,8 @@ class QcImage(object):
 
 class Params(object):
     """Parses and stores the variables that will included into the QC details
-
-    Assuming BIDS convention, we derive the value of the dataset, subject and contrast from the `input_file`
-    by splitting it into `[dataset]/[subject]/[contrast]/input_file`
     """
-
-    def __init__(self, input_file, command, args, orientation, dest_folder, dpi=300):
+    def __init__(self, input_file, command, args, orientation, dest_folder, dpi=300, dataset=None, subject=None):
         """
         Parameters
         :param input_file: str: the input nifti file name
@@ -325,15 +320,21 @@ class Params(object):
         :param orientation: str: The anatomical orientation
         :param dest_folder: str: The absolute path of the QC root
         :param dpi: int: Output resolution of the image
+        :param dataset: str: Dataset name
+        :param subject: str: Subject name
         """
         path_in, file_in, ext_in = sct.extract_fname(os.path.abspath(input_file))
-        # abs_input_path = os.path.dirname(os.path.abspath(input_file))
+        # Assuming BIDS convention, we derive the value of the dataset, subject and contrast from the `input_file`
+        # by splitting it into `[dataset]/[subject]/[contrast]/input_file`
         abs_input_path, contrast = os.path.split(path_in)
-        abs_input_path, subject = os.path.split(abs_input_path)
-        _, dataset = os.path.split(abs_input_path)
+        abs_input_path, subject_tmp = os.path.split(abs_input_path)
+        _, dataset_tmp = os.path.split(abs_input_path)
+        if dataset is None:
+            dataset = dataset_tmp
+        if subject is None:
+            subject = subject_tmp
         if isinstance(args, list):
             args = sct.list2cmdline(args)
-
         self.fname_in = file_in+ext_in
         self.dataset = dataset
         self.subject = subject
@@ -419,11 +420,15 @@ class QcReport(object):
         }
         logger.debug('Description file: %s', self.qc_params.qc_results)
         results = []
-        if os.path.isfile(self.qc_params.qc_results):
-            results = json.load(open(self.qc_params.qc_results, 'r'))
-        results.append(output)
-        json.dump(results, open(self.qc_params.qc_results, "w"), indent=2)
+        with sct.open_with_exclusive_lock(self.qc_params.qc_results, 'r+') as lck_qc_file:
+            if os.path.getsize(self.qc_params.qc_results) != 0:
+                results = json.load(lck_qc_file)
+            results.append(output)
+            lck_qc_file.seek(0)
+            lck_qc_file.truncate()
+            json.dump(results, lck_qc_file, indent=2)
         self._update_html_assets(results)
+
 
     def _update_html_assets(self, json_data):
         """Update the html file and assets"""
@@ -451,7 +456,9 @@ def add_entry(src, process, args, path_qc, plane, background=None, foreground=No
               qcslice_operations=[],
               qcslice_layout=None,
               dpi=300,
-              stretch_contrast_method='contrast_stretching'):
+              stretch_contrast_method='contrast_stretching',
+              dataset=None,
+              subject=None):
     """
     Starting point to QC report creation.
 
@@ -467,10 +474,12 @@ def add_entry(src, process, args, path_qc, plane, background=None, foreground=No
     :param qcslice_layout:
     :param dpi: int: Output resolution of the image
     :param stretch_contrast_method: Method for stretching contrast. See QcImage
+    :param dataset: str: Dataset name
+    :param subject: str: Subject name
     :return:
     """
 
-    qc_param = Params(src, process, args, plane, path_qc, dpi)
+    qc_param = Params(src, process, args, plane, path_qc, dpi, dataset, subject)
     report = QcReport(qc_param, '')
 
     if qcslice is not None:
@@ -508,7 +517,8 @@ def add_entry(src, process, args, path_qc, plane, background=None, foreground=No
         print("WARNING! Platform undetectable.")
 
 
-def generate_qc(fname_in1, fname_in2=None, fname_seg=None, args=None, path_qc=None, process=None):
+def generate_qc(fname_in1, fname_in2=None, fname_seg=None, args=None, path_qc=None, dataset=None, subject=None,
+                process=None):
     """
     Generate a QC entry allowing to quickly review results. This function is called by SCT scripts (e.g. sct_propseg).
 
@@ -517,50 +527,54 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, args=None, path_qc=No
     :param fname_seg: str: File name of input segmentation
     :param args: args from parent function
     :param path_qc: str: Path to save QC report
+    :param dataset: str: Dataset name
+    :param subject: str: Subject name
     :param process: str: Name of SCT function. e.g., sct_propseg
     :return: None
     """
     dpi = 300
     # Get QC specifics based on SCT process
+    # Axial orientation, switch between two input images
     if process in ['sct_register_multimodal', 'sct_register_to_template']:
-        # axial orientation, switch between two input images
         plane = 'Axial'
         qcslice_type = qcslice.Axial([Image(fname_in1), Image(fname_in2), Image(fname_seg)])
         qcslice_operations = [QcImage.no_seg_seg]
         qcslice_layout = lambda x: x.mosaic()[:2]
+    # Axial orientation, switch between the image and the segmentation
     elif process in ['sct_propseg', 'sct_deepseg_sc', 'sct_deepseg_gm']:
-        # axial orientation, switch between the image and the segmentation
         plane = 'Axial'
         qcslice_type = qcslice.Axial([Image(fname_in1), Image(fname_seg)])
         qcslice_operations = [QcImage.listed_seg]
         qcslice_layout = lambda x: x.mosaic()
+    # Axial orientation, switch between the image and the white matter segmentation (linear interp, in blue)
     elif process in ['sct_warp_template']:
-        # axial orientation, switch between the image and the linear segmentation (in blue)
         plane = 'Axial'
         qcslice_type = qcslice.Axial([Image(fname_in1), Image(fname_seg)])
         qcslice_operations = [QcImage.template]
         qcslice_layout = lambda x: x.mosaic()
+    # Sagittal orientation, display vertebral labels
     elif process in ['sct_label_vertebrae']:
-        # sagittal orientation, display vertebral labels
         plane = 'Sagittal'
         dpi = 100  # bigger picture is needed for this special case, hence reduce dpi
         qcslice_type = qcslice.Sagittal([Image(fname_in1), Image(fname_seg)], p_resample=None)
         qcslice_operations = [QcImage.label_vertebrae]
         qcslice_layout = lambda x: x.single()
+    # Sagittal orientation, display PMJ box
     elif process in ['sct_detect_pmj']:
-        # sagittal orientation, display PMJ box
         plane = 'Sagittal'
         qcslice_type = qcslice.Sagittal([Image(fname_in1), Image(fname_seg)], p_resample=None)
         qcslice_operations = [QcImage.highlight_pmj]
         qcslice_layout = lambda x: x.single()
     else:
-        sct.log.error('Unrecognised process.')
+        raise ValueError("Unrecognized process: {}".format(process))
 
     add_entry(
         src=fname_in1,
         process=process,
         args=args,
         path_qc=path_qc,
+        dataset=dataset,
+        subject=subject,
         plane=plane,
         dpi=dpi,
         qcslice=qcslice_type,

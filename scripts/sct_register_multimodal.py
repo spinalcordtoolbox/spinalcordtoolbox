@@ -188,6 +188,14 @@ def get_parser(paramreg=None):
                       type_value='folder_creation',
                       description='The path where the quality control generated content will be saved',
                       default_value=None)
+    parser.add_option(name='-qc-dataset',
+                      type_value='str',
+                      description='If provided, this string will be mentioned in the QC report as the dataset the process was run on',
+                      )
+    parser.add_option(name='-qc-subject',
+                      type_value='str',
+                      description='If provided, this string will be mentioned in the QC report as the subject the process was run on',
+                      )
     parser.add_option(name="-r",
                       type_value="multiple_choice",
                       description="""Remove temporary files.""",
@@ -300,9 +308,6 @@ def main(args=None):
 
     start_time = time.time()
 
-    # get path of the toolbox
-    path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
-
     # get default registration parameters
     # step1 = Paramreg(step='1', type='im', algo='syn', metric='MI', iter='5', shrink='1', smooth='0', gradStep='0.5')
     step0 = Paramreg(step='0', type='im', algo='syn', metric='MI', iter='0', shrink='1', smooth='0', gradStep='0.5',
@@ -352,6 +357,8 @@ def main(args=None):
         for paramStep in paramreg_user:
             paramreg.addStep(paramStep)
     path_qc = arguments.get("-qc", None)
+    qc_dataset = arguments.get("-qc-dataset", None)
+    qc_subject = arguments.get("-qc-subject", None)
 
     identity = int(arguments['-identity'])
     interp = arguments['-x']
@@ -550,7 +557,8 @@ def main(args=None):
     if path_qc is not None:
         if fname_dest_seg:
             generate_qc(fname_src2dest, fname_in2=fname_dest, fname_seg=fname_dest_seg, args=args,
-                        path_qc=os.path.abspath(path_qc), process='sct_register_multimodal')
+                        path_qc=os.path.abspath(path_qc), dataset=qc_dataset, subject=qc_subject,
+                        process='sct_register_multimodal')
         else:
             sct.printv('WARNING: Cannot generate QC because it requires destination segmentation.', 1, 'warning')
 
@@ -652,7 +660,7 @@ def register(src, dest, paramreg, param, i_step_str, src_seg=None, dest_seg=None
             warp_forward_out = 'step' + i_step_str + 'Warp.nii.gz'
             warp_inverse_out = 'step' + i_step_str + 'InverseWarp.nii.gz'
             # run command
-            status, output = sct.run(cmd, param.verbose)
+            status, output = sct.run(cmd, param.verbose, is_sct_binary=True)
 
     # ANTS 3d
     elif paramreg.steps[i_step_str].algo.lower() in ants_registration_params \
@@ -696,7 +704,7 @@ def register(src, dest, paramreg, param, i_step_str, src_seg=None, dest_seg=None
                 init_dict = {'geometric': '0', 'centermass': '1', 'origin': '2'}
                 cmd += ['-r', '[' + dest + ',' + src + ',' + init_dict[paramreg.steps[i_step_str].init] + ']']
             # run command
-            status, output = sct.run(cmd, param.verbose)
+            status, output = sct.run(cmd, param.verbose, is_sct_binary=True)
             # get appropriate file name for transformation
             if paramreg.steps[i_step_str].algo in ['rigid', 'affine', 'translation']:
                 warp_forward_out = 'step' + i_step_str + '0GenericAffine.mat'

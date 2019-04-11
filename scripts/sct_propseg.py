@@ -298,6 +298,14 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       type_value='folder_creation',
                       description='The path where the quality control generated content will be saved',
                       default_value=None)
+    parser.add_option(name='-qc-dataset',
+                      type_value='str',
+                      description='If provided, this string will be mentioned in the QC report as the dataset the process was run on',
+                      )
+    parser.add_option(name='-qc-subject',
+                      type_value='str',
+                      description='If provided, this string will be mentioned in the QC report as the subject the process was run on',
+                      )
     parser.add_option(name='-correct-seg',
                       type_value="multiple_choice",
                       description="Enable (1) or disable (0) the algorithm that checks and correct the output "
@@ -486,11 +494,13 @@ def propseg(img_input, options_dict):
 
     # check if input image is in 3D. Otherwise itk image reader will cut the 4D image in 3D volumes and only take the first one.
     image_input = Image(fname_data)
-    nx, ny, nz, nt, px, py, pz, pt = image_input.dim
+    image_input_rpi = image_input.copy().change_orientation('RPI')
+    nx, ny, nz, nt, px, py, pz, pt = image_input_rpi.dim
     if nt > 1:
         sct.log.error('ERROR: your input image needs to be 3D in order to be segmented.')
 
     path_data, file_data, ext_data = sct.extract_fname(fname_data)
+    path_tmp = sct.tmp_create(basename="label_vertebrae", verbose=verbose)
 
     # rescale header (see issue #1406)
     if rescale_header is not 1:
@@ -537,21 +547,21 @@ def propseg(img_input, options_dict):
 
     # If using OptiC
     elif use_optic:
-        path_script = os.path.dirname(__file__)
-        path_sct = os.path.dirname(path_script)
-        path_classifier = os.path.join(path_sct,
-                                       'data/optic_models',
-                                       '{}_model'.format(contrast_type))
+        image_centerline = optic.detect_centerline(image_input, contrast_type, verbose)
+        fname_centerline_optic = os.path.join(path_tmp, 'centerline_optic.nii.gz')
+        image_centerline.save(fname_centerline_optic)
+        cmd += ["-init-centerline", fname_centerline_optic]
 
-        image_centerline = optic.detect_centerline(image_input, contrast_type)
-        image_centerline.save('centerline.nii.gz')
-        cmd += ["-init-centerline", 'centerline.nii.gz']
+    if init_option is not None:
+        if init_option > 1:
+            init_option /= (nz - 1)
+        cmd += ['-init', str(init_option)]
 
     # enabling centerline extraction by default (needed by check_and_correct_segmentation() )
     cmd += ['-centerline-binary']
 
     # run propseg
-    status, output = sct.run(cmd, verbose, raise_exception=False)
+    status, output = sct.run(cmd, verbose, raise_exception=False, is_sct_binary=True)
 
     # check status is not 0
     if not status == 0:
@@ -600,10 +610,12 @@ def main(arguments):
     img_seg = propseg(img_input, arguments)
     fname_seg = img_seg.absolutepath
     path_qc = arguments.get("-qc", None)
+    qc_dataset = arguments.get("-qc-dataset", None)
+    qc_subject = arguments.get("-qc-subject", None)
     if path_qc is not None:
         generate_qc(fname_in1=fname_input_data, fname_seg=fname_seg, args=args, path_qc=os.path.abspath(path_qc),
-                    process='sct_propseg')
-    sct.display_viewer_syntax([fname_input_data, fname_seg], colormaps=['gray', 'red'], opacities=['', '0.7'])
+                    dataset=qc_dataset, subject=qc_subject, process='sct_propseg')
+    sct.display_viewer_syntax([fname_input_data, fname_seg], colormaps=['gray', 'red'], opacities=['', '1'])
 
 
 if __name__ == "__main__":

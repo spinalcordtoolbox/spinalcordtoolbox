@@ -31,9 +31,6 @@ from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.centerline.core import get_centerline
 from spinalcordtoolbox.reports.qc import generate_qc
 
-# get path of the toolbox
-path_script = os.path.dirname(__file__)
-path_sct = os.path.dirname(path_script)
 
 # DEFAULT PARAMETERS
 
@@ -46,7 +43,7 @@ class Param:
         self.fname_mask = ''  # this field is needed in the function register@sct_register_multimodal
         self.padding = 10  # this field is needed in the function register@sct_register_multimodal
         self.verbose = 1  # verbose
-        self.path_template = os.path.join(path_sct, 'data', 'PAM50')
+        self.path_template = os.path.join(sct.__data_dir__, 'PAM50')
         self.path_qc = None
         self.zsubsample = '0.25'
         self.param_straighten = ''
@@ -151,6 +148,14 @@ def get_parser():
                       type_value='folder_creation',
                       description='The path where the quality control generated content will be saved',
                       default_value=param.path_qc)
+    parser.add_option(name='-qc-dataset',
+                      type_value='str',
+                      description='If provided, this string will be mentioned in the QC report as the dataset the process was run on',
+                      )
+    parser.add_option(name='-qc-subject',
+                      type_value='str',
+                      description='If provided, this string will be mentioned in the QC report as the subject the process was run on',
+                      )
     parser.add_option(name="-igt",
                       type_value="image_nifti",
                       description="File name of ground-truth template cord segmentation (binary nifti).",
@@ -405,7 +410,7 @@ def main(args=None):
             # apply straightening
             sct.run(['sct_apply_transfo', '-i', ftmp_seg, '-w', 'warp_curve2straight.nii.gz', '-d', 'straight_ref.nii.gz', '-o', add_suffix(ftmp_seg, '_straight')])
         else:
-            from sct_straighten_spinalcord import SpinalCordStraightener
+            from spinalcordtoolbox.straightening import SpinalCordStraightener
             sc_straight = SpinalCordStraightener(ftmp_seg, ftmp_seg)
             sc_straight.algo_fitting = param.straighten_fitting
             sc_straight.output_filename = add_suffix(ftmp_seg, '_straight')
@@ -666,9 +671,12 @@ def main(args=None):
     elapsed_time = time.time() - start_time
     sct.printv('\nFinished! Elapsed time: ' + str(int(np.round(elapsed_time))) + 's', verbose)
 
+    qc_dataset = arguments.get("-qc-dataset", None)
+    qc_subject = arguments.get("-qc-subject", None)
     if param.path_qc is not None:
         generate_qc(fname_data, fname_in2=fname_template2anat, fname_seg=fname_seg, args=args,
-                    path_qc=os.path.abspath(param.path_qc), process='sct_register_to_template')
+                    path_qc=os.path.abspath(param.path_qc), dataset=qc_dataset, subject=qc_subject,
+                    process='sct_register_to_template')
     sct.display_viewer_syntax([fname_data, fname_template2anat], verbose=verbose)
     sct.display_viewer_syntax([fname_template, fname_anat2template], verbose=verbose)
 

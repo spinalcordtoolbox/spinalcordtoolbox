@@ -80,7 +80,7 @@ def get_parser():
                       type_value="folder",
                       description="Path to template.",
                       mandatory=False,
-                      default_value=os.path.join(sct.__data_dir__, 'PAM50'))
+                      default_value=os.path.join(sct.__data_dir__, "PAM50"))
     parser.add_option(name="-initz",
                       type_value=[[','], 'int'],
                       description='Initialize using slice number and disc value. Example: 68,4 (slice 68 corresponds to disc C3/C4). WARNING: Slice number should correspond to superior-inferior direction (e.g. Z in RPI orientation, but Y in LIP orientation).',
@@ -158,6 +158,14 @@ def get_parser():
                       type_value='folder_creation',
                       description='The path where the quality control generated content will be saved',
                       default_value=param_default.path_qc)
+    parser.add_option(name='-qc-dataset',
+                      type_value='str',
+                      description='If provided, this string will be mentioned in the QC report as the dataset the process was run on',
+                      )
+    parser.add_option(name='-qc-subject',
+                      type_value='str',
+                      description='If provided, this string will be mentioned in the QC report as the subject the process was run on',
+                      )
     return parser
 
 
@@ -261,7 +269,9 @@ def main(args=None):
              'warp_curve2straight.nii.gz',
              'segmentation_straight.nii',
              'Linear'),
-            verbose=verbose)
+            verbose=verbose,
+            is_sct_binary=True,
+           )
     # Threshold segmentation at 0.5
     sct.run(['sct_maths', '-i', 'segmentation_straight.nii', '-thr', '0.5', '-o', 'segmentation_straight.nii'], verbose)
 
@@ -275,7 +285,9 @@ def main(args=None):
                  'warp_curve2straight.nii.gz',
                  'labeldisc_straight.nii.gz',
                  'NearestNeighbor'),
-                verbose=verbose)
+                 verbose=verbose,
+                 is_sct_binary=True,
+                )
 
         label_vert('segmentation_straight.nii', 'labeldisc_straight.nii.gz', verbose=1)
 
@@ -322,7 +334,9 @@ def main(args=None):
                  'warp_curve2straight.nii.gz',
                  'labelz_straight.nii.gz',
                  'NearestNeighbor'),
-                verbose=verbose)
+                verbose=verbose,
+                is_sct_binary=True,
+               )
         # get z value and disk value to initialize labeling
         sct.printv('\nGet z and disc values from straight label...', verbose)
         init_disc = get_z_and_disc_values_from_label('labelz_straight.nii.gz')
@@ -350,8 +364,9 @@ def main(args=None):
              'warp_straight2curve.nii.gz',
              'segmentation_labeled.nii',
              'NearestNeighbor'),
-            verbose=verbose)
-
+            verbose=verbose,
+            is_sct_binary=True,
+           )
     # Clean labeled segmentation
     sct.printv('\nClean labeled segmentation (correct interpolation errors)...', verbose)
     clean_labeled_segmentation('segmentation_labeled.nii', 'segmentation.nii', 'segmentation_labeled.nii')
@@ -382,9 +397,11 @@ def main(args=None):
     # Generate QC report
     if param.path_qc is not None:
         path_qc = os.path.abspath(param.path_qc)
+        qc_dataset = arguments.get("-qc-dataset", None)
+        qc_subject = arguments.get("-qc-subject", None)
         labeled_seg_file = os.path.join(path_output, file_seg + '_labeled' + ext_seg)
         generate_qc(fname_in, fname_seg=labeled_seg_file, args=args, path_qc=os.path.abspath(path_qc),
-                    process='sct_label_vertebrae')
+                    dataset=qc_dataset, subject=qc_subject, process='sct_label_vertebrae')
 
     sct.display_viewer_syntax([fname_in, fname_seg_labeled], colormaps=['', 'subcortical'], opacities=['1', '0.5'])
 

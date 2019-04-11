@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import sys
+import sys, os
 from setuptools import setup, find_packages
 from codecs import open
 from os import path
@@ -10,7 +10,9 @@ here = path.abspath(path.dirname(__file__))
 with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
-if sys.hexversion < 0x03000000:
+if 1:
+    reqfile = "requirements.txt"
+elif sys.hexversion < 0x03000000:
     reqfile = 'install/requirements/requirementsSetup.txt'
 else:
     reqfile = 'install/requirements/requirementsSetup3.txt'
@@ -43,8 +45,15 @@ setup(
         'Programming Language :: Python :: 2.7',
     ],
     keywords='Magnetic Resonance Imaging MRI spinal cord analysis template',
-    packages=find_packages(exclude=['.git', 'data', 'dev', 'dev.*', 'install', 'testing']),
-    package_data={},
+    packages=[
+     "spinalcordtoolbox",
+    ],
+    #package_data={},
+    data_files=[
+     # <hack>
+     ("sct_scripts", [ os.path.join("scripts", x) for x in os.listdir("scripts") if x.endswith(".py") ]),
+     # </hack>
+    ],
     install_requires=requirements,
     include_package_data=True,
     extras_require={
@@ -53,9 +62,18 @@ setup(
       'sphinxcontrib-programoutput',
       'sphinx_rtd_theme',
      ],
+     'mpi': [
+      'mpich==3.2',
+      'mpi4py==3.0.0',
+     ],
     },
-    # To provide executable scripts, use entry points in preference to the
-    # "scripts" keyword. Entry points provide cross-platform support and allow
-    # pip to create the appropriate form of executable for the target platform.
-    # entry_points={'console_scripts': ['sct_label_image=spinalcordtoolbox.gui.cli:segment_image_cli'], },
+    entry_points=dict(
+     console_scripts=[
+     # <hack>
+     ] + ['{}=spinalcordtoolbox.compat.launcher:main'.format(os.path.splitext(x)[0]) for x in os.listdir("scripts") if x.endswith(".py")] + [
+     # </hack>
+      # TODO add proper command-line entry points from refactored code
+      #'sct_deepseg_gm=spinalcordtoolbox.deepseg_gm.__main__:main',
+     ],
+    ),
 )

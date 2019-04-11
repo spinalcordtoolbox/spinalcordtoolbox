@@ -2,129 +2,96 @@
 # -*- coding: utf-8
 # pytest unit tests for spinalcordtoolbox.process_seg
 
-# TODO: add dummy image with different resolution to check impact of input res
+# TODO: add test with known angle (i.e. not found with fitting)
+# TODO: test empty slices and slices with two objects
 
 from __future__ import absolute_import
 import pytest
+import math
 import numpy as np
-import csv
-import tempfile
-import os
-import nibabel as nib
-from skimage.transform import rotate
 from spinalcordtoolbox import process_seg
-from spinalcordtoolbox.image import Image
 from sct_process_segmentation import Param
+
+from create_test_data import dummy_segmentation
+
 
 # Define global variables
 PARAM = Param()
-VERBOSE = 0
+VERBOSE = 0  # set to 2 to save files
+DEBUG = False
 
-@pytest.fixture(scope="session")
-def dummy_segmentation():
-    """Create a dummy Image with a ellipse or ones running from top to bottom in the 3rd dimension, and rotate the image
-    to make sure that compute_csa and compute_shape properly estimate the centerline angle.
-    :return: fname_seg: filename of 3D binary image
-    """
-    def _dummy_seg(shape='rectangle', angle=15, a=50.0, b=30.0):
-        """
-        Nested function to allow input parameters
-        :param shape: {'rectangle', 'ellipse'}
-        :param angle: int: in deg
-        :param a: float: 1st radius
-        :param b: float: 2nd radius
-        :return:
-        """
-        nx, ny, nz = 200, 200, 150  # image dimension
-        data = np.random.random((nx, ny, nz)) * 0.
-        xx, yy = np.mgrid[:nx, :ny]
-        # loop across slices and add an ellipse of axis length a and b
-        # a, b = 50.0, 30.0  # radius of the ellipse (in pix size). Theoretical CSA: 4712.4
-        for iz in range(nz):
-            if shape == 'rectangle':  # theoretical CSA: (a*2+1)(b*2+1)
-                data[:, :, iz] = ((abs(xx - nx / 2) <= a) & (abs(yy - ny / 2) <= b)) * 1
-            if shape == 'ellipse':
-                data[:, :, iz] = (((xx - nx / 2) / a) ** 2 + ((yy - ny / 2) / b) ** 2 <= 1) * 1
-        # swap x-z axes (to make a rotation within y-z plane)
-        data_swap = data.swapaxes(0, 2)
-        # rotate by 15 deg, and re-grid using nearest neighbour interpolation (compute_shape only takes binary iputs)
-        data_swap_rot = rotate(data_swap, angle, resize=False, center=None, order=1, mode='constant', cval=0,
-                               clip=False, preserve_range=False)
-        # swap back
-        data_rot = data_swap_rot.swapaxes(0, 2)
-        # Crop to avoid rotation edge issues
-        data_rot_crop = data_rot[..., 25:nz-25]
-        # remove 5 to assess SCT stability if incomplete segmentation
-        data_rot_crop[..., data_rot_crop.shape[2]-5:] = 0
-        xform = np.eye(4)
-        for i in range(3):
-            xform[i][i] = 0.1  # adjust voxel dimension to get realistic spinal cord size (important for some functions)
-        nii = nib.nifti1.Nifti1Image(data_rot_crop.astype('float32'), xform)
-        img = Image(nii.get_data(), hdr=nii.header, orientation="RPI", dim=nii.header.get_data_shape(),
-                    absolutepath='dummy_segmentation.nii.gz')
-        return img
-    return _dummy_seg
+# Generate a list of fake segmentation for testing: (dummy_segmentation(params), dict of expected results)
+im_segs = [
+    # test area
+    (dummy_segmentation(size_arr=(32, 32, 5)), {'area': 77, 'angle_RL': 0.0}, {'angle_corr': False}),
+    # test anisotropic pixel dim
+    (dummy_segmentation(size_arr=(64, 32, 5), pixdim=(0.5, 1, 5)), {'area': 77, 'angle_RL': 0.0},
+     {'angle_corr': False}),
+    # test with angle IS
+    (dummy_segmentation(size_arr=(32, 32, 5), pixdim=(1, 1, 5), angle_IS=15),
+     {'area': 77, 'angle_RL': 0.0}, {'angle_corr': False}),
+    # test with ellipse shape
+    (dummy_segmentation(size_arr=(64, 64, 5), shape='ellipse', radius_RL=13.0, radius_AP=5.0, angle_RL=0.0),
+     {'area': 197.0, 'diameter_AP': 10.0, 'diameter_RL': 26.0, 'angle_RL': 0.0}, {'angle_corr': False}),
+    # test with int16. Different bit ordering, which can cause issue when applying transform.warp()
+    (dummy_segmentation(size_arr=(64, 320, 5), pixdim=(1, 1, 1), dtype=np.int16, orientation='RPI',
+                        shape='rectangle', radius_RL=13.0, radius_AP=5.0, angle_RL=0.0, debug=DEBUG),
+     {'area': 297.0, 'angle_RL': 0.0}, {'angle_corr': False}),
+    # test with angled spinal cord (neg angle)
+    (dummy_segmentation(size_arr=(64, 64, 20), shape='ellipse', radius_RL=13.0, radius_AP=5.0, angle_RL=-30.0),
+     {'area': 197.0, 'diameter_AP': 10.0, 'diameter_RL': 26.0, 'angle_RL': -30.0}, {'angle_corr': True}),
+    # test uint8 input
+    (dummy_segmentation(size_arr=(32, 32, 50), dtype=np.uint8, angle_RL=15),
+     {'area': 77, 'angle_RL': 15.0}, {'angle_corr': True}),
+    # test all output params
+    (dummy_segmentation(size_arr=(128, 128, 5), pixdim=(1, 1, 1), shape='ellipse', radius_RL=50.0, radius_AP=30.0),
+     {'area': 4701, 'angle_AP': 0.0, 'angle_RL': 0.0, 'diameter_AP': 60.0, 'diameter_RL': 100.0, 'eccentricity': 0.8,
+      'orientation': 0.0, 'solidity': 1.0}, {'angle_corr': False}),
+    # test with one empty slice
+    (dummy_segmentation(size_arr=(32, 32, 5), zeroslice=[2]),
+     {'area': np.nan}, {'angle_corr': False, 'slice': 2})
+    ]
 
 
 # noinspection 801,PyShadowingNames
-def test_compute_csa_noangle(dummy_segmentation):
-    """Test computation of cross-sectional area from input segmentation"""
-    metrics = process_seg.compute_csa(dummy_segmentation(shape='rectangle', angle=0, a=50.0, b=30.0),
-                                      algo_fitting=PARAM.algo_fitting, angle_correction=True, use_phys_coord=False,
-                                      verbose=VERBOSE)
-    assert np.isnan(metrics['csa'].data[95])
-    assert np.mean(metrics['csa'].data[20:80]) == pytest.approx(61.61, rel=0.01)
-    assert np.mean(metrics['angle'].data[20:80]) == pytest.approx(0.0, rel=0.01)
+@pytest.mark.parametrize('im_seg,expected,params', im_segs)
+def test_compute_shape(im_seg, expected, params):
+    metrics = process_seg.compute_shape(im_seg,
+                                        algo_fitting=PARAM.algo_fitting,
+                                        angle_correction=params['angle_corr'],
+                                        verbose=VERBOSE)
+    for key in expected.keys():
+        # fetch obtained_value
+        if 'slice' in params:
+            obtained_value = float(metrics['area'].data[params['slice']])
+        else:
+            obtained_value = float(np.mean(metrics[key].data))
+        # fetch expected_value
+        if expected[key] is np.nan:
+            assert math.isnan(obtained_value)
+            break
+        else:
+            expected_value = pytest.approx(expected[key], rel=0.05)
+        assert obtained_value == expected_value
 
 
 # noinspection 801,PyShadowingNames
-def test_compute_csa(dummy_segmentation):
-    """Test computation of cross-sectional area from input segmentation
-    Note: here, compared to the previous tests with no angle, we use smaller hanning window and smaller range for
-    computing the mean, because the smoothing creates spurious errors at edges."""
-    metrics = process_seg.compute_csa(dummy_segmentation(shape='rectangle', angle=15, a=50.0, b=30.0),
-                                      algo_fitting=PARAM.algo_fitting, angle_correction=True, use_phys_coord=False,
-                                      verbose=VERBOSE)
-    assert np.mean(metrics['csa'].data[30:70]) == pytest.approx(61.61, rel=0.01)  # theoretical: 61.61
-    assert np.mean(metrics['angle'].data[30:70]) == pytest.approx(15.00, rel=0.02)
-
-
-# noinspection 801,PyShadowingNames
-def test_compute_csa_ellipse(dummy_segmentation):
-    """Test computation of cross-sectional area from input segmentation"""
-    metrics = process_seg.compute_csa(dummy_segmentation(shape='ellipse', angle=0, a=50.0, b=30.0),
-                                      algo_fitting=PARAM.algo_fitting, angle_correction=True, use_phys_coord=False,
-                                      verbose=VERBOSE)
-    assert np.mean(metrics['csa'].data[30:70]) == pytest.approx(47.01, rel=0.01)
-    assert np.mean(metrics['angle'].data[30:70]) == pytest.approx(0.0, rel=0.01)
-
-
-# noinspection 801,PyShadowingNames
-def test_compute_shape_noangle(dummy_segmentation):
-    """Test computation of cross-sectional area from input segmentation."""
-    # Using hanning because faster
-    metrics = process_seg.compute_shape(dummy_segmentation(shape='ellipse', angle=0, a=50.0, b=30.0),
-                                        algo_fitting=PARAM.algo_fitting, verbose=VERBOSE)
-    assert np.mean(metrics['area'].data[30:70]) == pytest.approx(47.01, rel=0.05)
-    assert np.mean(metrics['AP_diameter'].data[30:70]) == pytest.approx(6.0, rel=0.05)
-    assert np.mean(metrics['RL_diameter'].data[30:70]) == pytest.approx(10.0, rel=0.05)
-    assert np.mean(metrics['ratio_minor_major'].data[30:70]) == pytest.approx(0.6, rel=0.05)
-    assert np.mean(metrics['eccentricity'].data[30:70]) == pytest.approx(0.8, rel=0.05)
-    assert np.mean(metrics['orientation'].data[30:70]) == pytest.approx(0.0, rel=0.05)
-    assert np.mean(metrics['solidity'].data[30:70]) == pytest.approx(1.0, rel=0.05)
-
-
-# TODO: once PR #1931 is merged, work on the test below.
-# noinspection 801,PyShadowingNames
-# def test_compute_shape(dummy_segmentation):
-#     """Test computation of cross-sectional area from input segmentation."""
-#     # Using hanning because faster
-#     metrics = process_seg.compute_shape(dummy_segmentation(shape='ellipse', angle=15, a=50.0, b=30.0),
-#                                         algo_fitting='hanning', window_length=3, verbose=0)
-#     assert np.mean(metrics['area'].value[30:70]) == pytest.approx(47.01, rel=0.05)
-#     assert np.mean(metrics['AP_diameter'].value[30:70]) == pytest.approx(6.0, rel=0.05)
-#     assert np.mean(metrics['RL_diameter'].value[30:70]) == pytest.approx(10.0, rel=0.05)
-#     assert np.mean(metrics['ratio_minor_major'].value[30:70]) == pytest.approx(0.6, rel=0.05)
-#     assert np.mean(metrics['eccentricity'].value[30:70]) == pytest.approx(0.8, rel=0.05)
-#     assert np.mean(metrics['orientation'].value[30:70]) == pytest.approx(0.0, rel=0.05)
-#     assert np.mean(metrics['solidity'].value[30:70]) == pytest.approx(1.0, rel=0.05)
+def test_fix_orientation():
+    dict_test_orientation = [
+        {'input': math.pi, 'expected': 90.0},
+        {'input': -math.pi, 'expected': 90.0},
+        {'input': math.pi / 2, 'expected': 0.0},
+        {'input': -math.pi / 2, 'expected': 0.0},
+        {'input': 0.0, 'expected': 90.0},
+        {'input': 2 * math.pi, 'expected': 90.0},
+        {'input': math.pi / 4, 'expected': 45.0},
+        {'input': -math.pi / 4, 'expected': 45.0},
+        {'input': 3 * math.pi / 4, 'expected': 45.0},
+        {'input': -3 * math.pi / 4, 'expected': 45.0},
+        {'input': math.pi / 8, 'expected': 67.5},
+        {'input': -math.pi / 8, 'expected': 67.5},
+        {'input': 3 * math.pi / 8, 'expected': 22.5},
+        {'input': -3 * math.pi / 8, 'expected': 22.5},
+    ]
+    for test_orient in dict_test_orientation:
+        assert process_seg._fix_orientation(test_orient['input']) == pytest.approx(test_orient['expected'], rel=0.0001)
