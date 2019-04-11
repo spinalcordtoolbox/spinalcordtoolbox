@@ -13,7 +13,7 @@ import fnmatch
 import scipy
 from msct_register import compute_pca, angle_between, register2d_centermassrot
 from sct_deepseg_sc import main as sct_deepseg_sc
-from sct_label_vertebrae import  main as sct_label_verterbrae
+from sct_label_vertebrae import  main as sct_label_vertebrae
 from sct_register_to_template import main as sct_register_to_template
 from sct_label_utils import main as sct_label_utils
 from sct_apply_transfo import main as sct_apply_transfo
@@ -118,7 +118,7 @@ def main(args=None):
             else:
                 contrast_label = contrast
             # label the vertebrae
-            sct_label_verterbrae(['-i', file_input, '-s', file_seg_input, '-c', contrast_label, '-ofolder', temp, '-v', '0'])
+            sct_label_vertebrae(['-i', file_input, '-s', file_seg_input, '-c', contrast_label, '-ofolder', temp, '-v', '0'])
             filename_label = filename.split(".nii")[0] + "_seg_labeled.nii" + filename.split(".nii")[1]
             filelabel_input = os.path.join(temp, filename_label)
 
