@@ -965,7 +965,8 @@ def check_if_same_space(fname_1, fname_2):
 
 def printv(string, verbose=1, type='normal'):
     """
-    Enables to print color coded messages, depending on verbose status. Only use in APIs (e.g., sct_propseg).
+    Enables to print color-coded messages, depending on verbose status. Only use in command-line programs (e.g.,
+    sct_propseg).
     """
 
     colors = {'normal': bcolors.normal, 'info': bcolors.green, 'warning': bcolors.yellow, 'error': bcolors.red,
