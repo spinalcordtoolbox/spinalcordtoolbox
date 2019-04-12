@@ -150,7 +150,8 @@ def _properties2d(image, dim):
     # Get bounding box of the object
     minx, miny, maxx, maxy = region.bbox
     # Use those bounding box coordinates to crop the image (for faster processing)
-    image_crop = image_norm[minx-pad: maxx+pad, miny-pad: maxy+pad]
+    image_crop = image_norm[np.clip(minx-pad, 0, image_bin.shape[0]): np.clip(maxx+pad, 0, image_bin.shape[0]),
+                 np.clip(miny-pad, 0, image_bin.shape[1]): np.clip(maxy+pad, 0, image_bin.shape[1])]
     # Oversample image to reach sufficient precision when computing shape metrics on the binary mask
     image_crop_r = transform.pyramid_expand(image_crop, upscale=upscale, sigma=None, order=1)
     # Binarize image using threshold at 0. Necessary input for measure.regionprops
