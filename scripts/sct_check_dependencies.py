@@ -127,15 +127,9 @@ def main():
     arguments = parser.parse_args()
     if arguments.complete:
         complete_test = 1
-    if arguments.generate_log:
-        create_log_file = 1
 
     # use variable "verbose" when calling sct.run for more clarity
     verbose = complete_test
-
-    # redirect to log file
-    if create_log_file:
-        handle_log = sct.ForkStdoutToFile(file_log)
 
     # complete test
     if complete_test:
@@ -357,11 +351,6 @@ def get_parser():
 
     parser.add_argument("--complete", "-c",
                         help="Complete test.",
-                        action="store_true",
-                        )
-
-    parser.add_argument("--generate-log", "-log", "-l",
-                        help="Generate log file.",
                         action="store_true",
                         )
 
