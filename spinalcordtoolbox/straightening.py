@@ -8,7 +8,7 @@
 
 from __future__ import absolute_import
 
-import os, sys, time, logging
+import os, time, logging
 import bisect
 import numpy as np
 from tqdm import tqdm
