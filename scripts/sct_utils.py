@@ -17,13 +17,15 @@ from __future__ import print_function, division, absolute_import
 
 import sys, io, os, re, time, datetime, platform
 import errno
-import logging as log
+import logging
 import shutil
 import subprocess
 import tempfile
 
 import numpy as np
 import portalocker
+
+logger = logging.getLogger(__name__)
 
 if os.getenv('SENTRY_DSN', None):
     # do no import if Sentry is not set (i.e., if variable SENTRY_DSN is not defined)
@@ -43,11 +45,34 @@ from spinalcordtoolbox import __version__, __sct_dir__, __data_dir__
 from spinalcordtoolbox.utils import check_exe
 
 
-def init_sct():
-    """ Initialize the sct for typical terminal usage
-
+def init_sct(log_level='INFO'):
+    """
+    Initialize the sct for typical terminal usage
     :return:
     """
+    # Logging config
+    logger.setLevel(getattr(logging, log_level))
+    logging.root.setLevel(getattr(logging, log_level) + 1)
+    hdlr = logging.StreamHandler(sys.stdout)
+    fmt = logging.Formatter()
+
+    def format_wrap(old_format):
+        def _format(record):
+            res = old_format(record)
+            if record.levelno >= logging.ERROR:
+                res = "\x1B[31;1m{}\x1B[0m".format(res)
+            elif record.levelno >= logging.WARNING:
+                res = "\x1B[33m{}\x1B[0m".format(res)
+            else:
+                pass
+            return res
+        return _format
+
+    fmt.format = format_wrap(fmt.format)
+    hdlr.setFormatter(fmt)
+    logging.root.addHandler(hdlr)
+
+    # Sentry config
     init_error_client()
     if os.environ.get("SCT_TIMER", None) is not None:
         add_elapsed_time_counter()
@@ -72,7 +97,7 @@ def init_error_client():
     :return:
     """
     if os.getenv('SENTRY_DSN'):
-        log.debug('Configuring sentry report')
+        logger.debug('Configuring sentry report')
         try:
             client = raven.Client(
              release=__version__,
@@ -101,7 +126,7 @@ def init_error_client():
             sys.exitfunc = exitfunc
         except raven.exceptions.InvalidDsn:
             # This could happen if sct staff change the dsn
-            log.debug('Sentry DSN not valid anymore, not reporting errors')
+            logger.debug('Sentry DSN not valid anymore, not reporting errors')
 
 
 def traceback_to_server(client):
@@ -124,7 +149,7 @@ def server_log_handler(client):
     """
     from raven.handlers.logging import SentryHandler
 
-    sh = SentryHandler(client=client, level=log.ERROR)
+    sh = SentryHandler(client=client, level=logger.ERROR)
 
     # Don't send Sentry events for command-line usage errors
     old_emit = sh.emit
@@ -138,11 +163,11 @@ def server_log_handler(client):
 
     fmt = ("[%(asctime)s][%(levelname)s] %(filename)s: %(lineno)d | "
             "%(message)s")
-    formatter = log.Formatter(fmt=fmt, datefmt="%H:%M:%S")
+    formatter = logger.Formatter(fmt=fmt, datefmt="%H:%M:%S")
     formatter.converter = time.gmtime
     sh.setFormatter(formatter)
 
-    log.addHandler(sh)
+    logger.addHandler(sh)
     return sh
 
 
