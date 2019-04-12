@@ -8,18 +8,16 @@
 # Authors: Julien Cohen-Adad, Benjamin De Leener, Augustin Roux
 
 # TODO: list functions to test in help (do a search in testing folder)
-# TODO: do something about this ugly 'output.nii.gz'
 
 from __future__ import print_function, absolute_import
 
-import sys, io, os, time, random, copy, shlex, importlib, multiprocessing, tempfile, shutil
-import traceback, inspect
-import signal, stat
+import sys, os, time, copy, shlex, importlib, multiprocessing, tempfile, shutil
+import traceback
+import signal
 
 import numpy as np
 from pandas import DataFrame
 
-from msct_parser import Parser
 import sct_utils as sct
 
 sys.path.append(os.path.join(sct.__sct_dir__, 'testing'))
@@ -477,36 +475,6 @@ def print_fail():
     sct.printv("[" + bcolors.FAIL + "FAIL" + bcolors.ENDC + "]")
 
 
-# write to log file
-# ==========================================================================================
-def write_to_log_file(fname_log, string, prepend=False):
-    """
-    status, output = sct.run('echo $SCT_DIR', 0)
-    path_logs_dir = os.path.join(output, "testing", "logs")
-
-    if not os.path.isdir(path_logs_dir):
-        os.makedirs(path_logs_dir)
-    mode: w: overwrite, a: append, p: prepend
-    """
-    string_to_append = ''
-    string = "test ran at " + time.strftime("%y%m%d%H%M%S") + "\n" \
-             + fname_log \
-             + string
-    # open file
-    try:
-        # if prepend, read current file and then overwrite
-        if prepend:
-            f = io.open(fname_log, 'rb')
-            # string_to_append = '\n\nOUTPUT:\n--\n' + f.read()
-            string_to_append = f.read().decode("utf-8")
-            f.close()
-        f = io.open(fname_log, 'wb')
-    except Exception as ex:
-        raise Exception('WARNING: Cannot open log file {}.'.format(os.path.abspath(fname_log)))
-    f.write((string + string_to_append + '\n').encode("utf-8"))
-    f.close()
-
-
 # init_testing
 # ==========================================================================================
 def test_function(param_test):
@@ -520,7 +488,6 @@ def test_function(param_test):
     -------
     path_output str: path where to output testing data
     """
-    # sct.printv("Starting test function")
 
     # load modules of function to test
     module_function_to_test = importlib.import_module(param_test.function_to_test)
@@ -552,19 +519,7 @@ def test_function(param_test):
     param_test.dict_args_with_path = dict_args_with_path
     param_test.args_with_path = parser.dictionary_to_string(dict_args_with_path)
 
-    # open log file
-    # Note: the statement below is not included in the if, because even if redirection does not occur, we want the file to be create otherwise write_to_log will fail
-
-    if param_test.fname_log is None:
-        param_test.fname_log = os.path.join(param_test.path_output, param_test.function_to_test + '.log')
-
-    # redirect to log file
-    # if param_test.redirect_stdout:
-    #     file_handler = sct.add_file_handler_to_logger(param_test.fname_log)
-    # sct.log.debug("logging to file")
-
     # initialize panda dataframe
-    # sct.printv("Init dataframe")
     param_test.results = DataFrame(index=[subject_folder],
                                    data={'status': 0,
                                          'duration': 0,
@@ -590,7 +545,6 @@ def test_function(param_test):
             if not (os.path.isfile(file_to_check)):
                 param_test.status = 200
                 param_test.output += '\nERROR: This input file does not exist: ' + file_to_check
-                write_to_log_file(param_test.fname_log, param_test.output)
                 return update_param(param_test)
 
     # retrieve ground truth (will be used later for integrity testing)
@@ -600,7 +554,6 @@ def test_function(param_test):
         if not os.path.isfile(param_test.fname_gt):
             param_test.status = 201
             param_test.output += '\nERROR: The following file used for ground truth does not exist: ' + param_test.fname_gt
-            write_to_log_file(param_test.fname_log, param_test.output)
             return update_param(param_test)
 
     # run command
@@ -620,7 +573,6 @@ def test_function(param_test):
     except Exception as err:
         param_test.status = 1
         param_test.output += str(err)
-        write_to_log_file(param_test.fname_log, param_test.output)
         return update_param(param_test)
 
     param_test.output += o
@@ -637,7 +589,6 @@ def test_function(param_test):
             os.chdir(path_testing)
             param_test.status = 2
             param_test.output += str(err)
-            write_to_log_file(param_test.fname_log, param_test.output)
             return update_param(param_test)
 
     return update_param(param_test)
