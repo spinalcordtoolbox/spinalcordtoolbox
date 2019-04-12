@@ -67,6 +67,7 @@ def resolve_module(framework_name):
         'opencv': ('cv2', False),
         'mkl-service': (None, False),
         'pytest-cov': ('pytest_cov', False),
+        'urllib3[secure]': ('urllib3', False),
     }
 
     try:
