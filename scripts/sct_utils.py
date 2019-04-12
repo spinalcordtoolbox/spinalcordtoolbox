@@ -17,8 +17,7 @@ from __future__ import print_function, division, absolute_import
 
 import sys, io, os, re, time, datetime, platform
 import errno
-import logging
-import logging.config
+import logging as log
 import shutil
 import subprocess
 import tempfile
@@ -41,27 +40,7 @@ else:
 
 
 from spinalcordtoolbox import __version__, __sct_dir__, __data_dir__
-
 from spinalcordtoolbox.utils import check_exe
-
-from spinalcordtoolbox.utils import logger as log
-
-"""
-Basic logging setup for the sct
-set SCT_LOG_LEVEL and SCT_LOG_FORMAT in ~/.sctrc to change the sct log
-format and level
-"""
-
-
-log.setLevel(logging.DEBUG)
-stream_handler = logging.StreamHandler(sys.stdout)
-nh = logging.NullHandler()
-log.addHandler(nh)
-LOG_LEVEL = os.getenv('SCT_LOG_LEVEL')
-LOG_FORMAT = os.getenv('SCT_LOG_FORMAT')
-if not LOG_FORMAT:
-    LOG_FORMAT = None
-
 
 
 def init_sct():
@@ -69,7 +48,6 @@ def init_sct():
 
     :return:
     """
-    start_stream_logger()
     init_error_client()
     if os.environ.get("SCT_TIMER", None) is not None:
         add_elapsed_time_counter()
@@ -86,28 +64,6 @@ def add_elapsed_time_counter():
             print("Elapsed time: %.3f seconds" % (time.time()-self._t0))
     t = Timer()
     atexit.register(t.atexit)
-
-
-def start_stream_logger():
-    """ Log to terminal, by default the formatting is like a print() call
-
-    :return:
-    """
-
-    formatter = logging.Formatter(LOG_FORMAT)
-    stream_handler.setFormatter(formatter)
-
-    if LOG_LEVEL == "DISABLE":
-        level = sys.maxsize
-    elif LOG_LEVEL is None:
-        level = logging.INFO
-    else:
-        level = getattr(logging, LOG_LEVEL, None)
-        if level is None:
-            logging.warn("SCT_LOG_LEVEL set to invalid value -> using default")
-            level = logging.INFO
-    stream_handler.setLevel(level)
-    log.addHandler(stream_handler)
 
 
 def init_error_client():
@@ -168,7 +124,7 @@ def server_log_handler(client):
     """
     from raven.handlers.logging import SentryHandler
 
-    sh = SentryHandler(client=client, level=logging.ERROR)
+    sh = SentryHandler(client=client, level=log.ERROR)
 
     # Don't send Sentry events for command-line usage errors
     old_emit = sh.emit
@@ -182,66 +138,13 @@ def server_log_handler(client):
 
     fmt = ("[%(asctime)s][%(levelname)s] %(filename)s: %(lineno)d | "
             "%(message)s")
-    formatter = logging.Formatter(fmt=fmt, datefmt="%H:%M:%S")
+    formatter = log.Formatter(fmt=fmt, datefmt="%H:%M:%S")
     formatter.converter = time.gmtime
     sh.setFormatter(formatter)
 
     log.addHandler(sh)
     return sh
 
-
-def pause_stream_logger():
-    """ Pause the log to Terminal
-
-    :return:
-    """
-    log.removeHandler(stream_handler)
-
-
-class NoColorFormatter(logging.Formatter):
-    """
-    Formater removing terminal specific colors from outputs
-    """
-    def format(self, record):
-        for color in bcolors.colors():
-            record.msg = record.msg.replace(color, "")
-        return super(NoColorFormatter, self).format(record)
-
-
-def add_file_handler_to_logger(filename="{}.log".format(__file__), mode='a', log_format=None, log_level=None):
-    """ Convenience fct to add a file handler to the sct log
-        Will remove colors from prints
-    :param filename:
-    :param mode:
-    :param log_format:
-    :param log_level:
-    :return: the file handler
-    """
-    log.debug('Adding file handler {}'.format(filename))
-    fh = logging.FileHandler(filename=filename, mode=mode)
-
-    if log_format is None:
-        formatter = NoColorFormatter(LOG_FORMAT)  # sct.printv() emulator)
-    else:
-        formatter = logging.Formatter(log_format)
-    fh.setFormatter(formatter)
-
-    if log_level:
-        fh.setLevel(log_level)
-    else:
-        fh.setLevel(logging.INFO)
-    log.addHandler(fh)
-    return fh
-
-
-def remove_handler(handler):
-    """ Remore any handler from logs
-
-    :param handler:
-    :return:
-    """
-    log.debug("Pause log to {} ".format(handler.baseFilename))
-    log.removeHandler(handler)
 
 # define class color
 class bcolors(object):
@@ -257,66 +160,6 @@ class bcolors(object):
     @classmethod
     def colors(cls):
         return [v for k, v in cls.__dict__.items() if not k.startswith("_") and k is not "colors"]
-
-
-def no_new_line_log(msg, *args, **kwargs):
-    """ Log info to stdout without adding new line
-        Useful for progress bar.
-        Monkey patching the sct stream handler
-
-    see logging.info() method for parameters
-
-    """
-
-
-    def my_emit(self, record):
-        """
-        Emit a record.
-        Monkey patcher for progress bar in the sct
-        Do a carriage return \r before the string
-        instead of a new line \n at the end
-
-        """
-        try:
-            unicode
-            _unicode = True
-        except NameError:
-            _unicode = False
-
-        try:
-            msg = self.format(record)
-            stream = self.stream
-            fs = "\r%s"
-            if not _unicode: #if no unicode support...
-                stream.write(fs % msg)
-            else:
-                try:
-                    if (isinstance(msg, unicode) and
-                        getattr(stream, 'encoding', None)):
-                        ufs = u'%s\n'
-                        try:
-                            stream.write(ufs % msg)
-                        except UnicodeEncodeError:
-                            stream.write((ufs % msg).encode(stream.encoding))
-                    else:
-                        stream.write(fs % msg)
-                except UnicodeError:
-                    stream.write(fs % msg.encode("UTF-8"))
-            self.flush()
-        except (KeyboardInterrupt, SystemExit):
-            raise
-        except:
-            self.handleError(record)
-
-    orig_emit = stream_handler.__class__.emit
-    stream_handler.__class__.emit = my_emit
-
-    log.info(msg, *args, **kwargs)
-    if log.handlers:
-        [h.flush() for h in log.handlers]
-
-    stream_handler.__class__.emit = orig_emit
-
 
 
 def add_suffix(fname, suffix):
@@ -631,55 +474,6 @@ def checkRAM(os, verbose=1):
             # printv('Real Mem Total (ps):\t%.3f MB' % ( rssTotal/1024/1024 ))
 
         return ram_total
-
-
-class ForkStdoutToFile(object):
-    """Use to redirect stdout to file
-    Default mode is to send stdout to file AND to terminal
-
-    """
-    def __init__(self, filename="{}.log".format(__file__), to_file_only=False):
-        self.terminal = sys.stdout
-        self.log_file = open(filename, "a")
-        self.filename = filename
-        self.to_file_only = False
-        sys.stdout = self
-
-    def __del__(self):
-        self.pause()
-        self.close()
-
-    def pause(self):
-        sys.stdout = self.terminal
-
-    def restart(self):
-        sys.stdout = self
-
-    def write(self, message):
-        if not self.to_file_only:
-            self.terminal.write(message)
-        self.log_file.write(message)
-
-    def flush(self):
-        if not self.to_file_only:
-            self.terminal.flush()
-        self.log_file.flush()
-
-    def close(self):
-        self.log_file.close()
-        sys.stdout = self.terminal
-
-    def read(self):
-        with open(self.filename, "r") as fp:
-            fp.read()
-
-    # def send_email(self, email, passwd_from=None, subject="file_log", attachment=True):
-    #     if attachment:
-    #         filename = self.filename
-    #     else:
-    #         filename = None
-    #     send_email(email, passwd_from=passwd_from, subject=subject, message=self.read(), filename=filename)
-
 
 
 def extract_fname(fpath):
@@ -1341,6 +1135,7 @@ class Version(object):
 
 
 class MsgUser(object):
+    # TODO: check if should be removed
     __debug = False
     __quiet = False
 
