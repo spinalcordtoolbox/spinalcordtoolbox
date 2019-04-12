@@ -240,6 +240,6 @@ def main(args=None):
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
-    sct.init_sct()
+    sct.init_sct(log_level='DEBUG')
     # call main function
     main()
