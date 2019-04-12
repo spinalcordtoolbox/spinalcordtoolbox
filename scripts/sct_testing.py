@@ -16,8 +16,6 @@ import sys, io, os, time, random, copy, shlex, importlib, multiprocessing, tempf
 import traceback, inspect
 import signal, stat
 
-
-
 import numpy as np
 from pandas import DataFrame
 
@@ -58,7 +56,7 @@ def fs_ok(sig_a, sig_b, exclude=()):
     errors = [ (x,y) for (x,y) in errors if not x.startswith(exclude) ]
     if errors:
         for error in errors:
-            sct.log.error("Error: %s", error)
+            sct.printv("Error: %s", 1, type='error')
         raise RuntimeError()
 
 # Parameters
@@ -468,15 +466,15 @@ def make_dot_lines(string):
 # print in color
 # ==========================================================================================
 def print_ok():
-    sct.log.info("[" + bcolors.OKGREEN + "OK" + bcolors.ENDC + "]")
+    sct.printv("[" + bcolors.OKGREEN + "OK" + bcolors.ENDC + "]")
 
 
 def print_warning():
-    sct.log.warning("[" + bcolors.WARNING + "WARNING" + bcolors.ENDC + "]")
+    sct.printv("[" + bcolors.WARNING + "WARNING" + bcolors.ENDC + "]")
 
 
 def print_fail():
-    sct.log.error("[" + bcolors.FAIL + "FAIL" + bcolors.ENDC + "]")
+    sct.printv("[" + bcolors.FAIL + "FAIL" + bcolors.ENDC + "]")
 
 
 # write to log file
@@ -522,7 +520,7 @@ def test_function(param_test):
     -------
     path_output str: path where to output testing data
     """
-    sct.log.debug("Starting test function")
+    # sct.printv("Starting test function")
 
     # load modules of function to test
     module_function_to_test = importlib.import_module(param_test.function_to_test)
@@ -561,12 +559,12 @@ def test_function(param_test):
         param_test.fname_log = os.path.join(param_test.path_output, param_test.function_to_test + '.log')
 
     # redirect to log file
-    if param_test.redirect_stdout:
-        file_handler = sct.add_file_handler_to_logger(param_test.fname_log)
-    sct.log.debug("logging to file")
+    # if param_test.redirect_stdout:
+    #     file_handler = sct.add_file_handler_to_logger(param_test.fname_log)
+    # sct.log.debug("logging to file")
 
     # initialize panda dataframe
-    sct.log.debug("Init dataframe")
+    # sct.printv("Init dataframe")
     param_test.results = DataFrame(index=[subject_folder],
                                    data={'status': 0,
                                          'duration': 0,
@@ -641,12 +639,6 @@ def test_function(param_test):
             param_test.output += str(err)
             write_to_log_file(param_test.fname_log, param_test.output)
             return update_param(param_test)
-
-    # manage stdout
-    if param_test.redirect_stdout:
-        sct.remove_handler(file_handler)
-        write_to_log_file(param_test.fname_log, param_test.output, prepend=True)
-
 
     return update_param(param_test)
 
