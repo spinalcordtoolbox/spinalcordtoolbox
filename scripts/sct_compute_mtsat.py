@@ -80,8 +80,6 @@ def main(args):
     import sct_utils as sct
     from spinalcordtoolbox.mtsat import mtsat
 
-    sct.start_stream_logger()
-
     fname_mtsat, fname_t1map = mtsat.compute_mtsat_from_file(
         args.mt, args.pd, args.t1, args.trmt, args.trpd, args.trt1, args.famt, args.fapd, args.fat1,
         fname_b1map=args.b1map, fname_mtsat=args.omtsat, fname_t1map=args.ot1map, verbose=1)
