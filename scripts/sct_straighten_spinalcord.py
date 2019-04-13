@@ -196,6 +196,7 @@ def main(args=None):
         sc_straight.path_output = './'
 
     verbose = int(arguments.get("-v", 0))
+    sct.init_sct(log_level=verbose, update=True)  # Update log level
     sc_straight.verbose = verbose
 
     # if "-cpu-nb" in arguments:
@@ -240,6 +241,6 @@ def main(args=None):
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
-    sct.init_sct(log_level='DEBUG')
+    sct.init_sct(log_level=1)
     # call main function
     main()
