@@ -11,6 +11,7 @@
 from __future__ import absolute_import, division
 
 import argparse
+import sct_utils as sct
 
 
 def get_parser():
@@ -45,11 +46,6 @@ def get_parser():
                         help='Path to save QC report. Default: ./qc',
                         required=False,
                         default='./qc')
-    parser.add_argument('-v',
-                        help='Verbosity: 0: no verbosity, 1: verbosity (default).',
-                        choices=('0', '1'),
-                        type=int,
-                        default=1)
     return parser
 
 
@@ -65,6 +61,7 @@ def main(args):
 
 
 if __name__ == '__main__':
+    sct.init()
     parser = get_parser()
     arguments = parser.parse_args()
     main(arguments)
