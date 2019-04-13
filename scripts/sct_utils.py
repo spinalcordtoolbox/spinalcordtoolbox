@@ -155,7 +155,7 @@ def server_log_handler(client):
     """
     from raven.handlers.logging import SentryHandler
 
-    sh = SentryHandler(client=client, level=logger.ERROR)
+    sh = SentryHandler(client=client, level=logging.ERROR)
 
     # Don't send Sentry events for command-line usage errors
     old_emit = sh.emit
@@ -169,7 +169,7 @@ def server_log_handler(client):
 
     fmt = ("[%(asctime)s][%(levelname)s] %(filename)s: %(lineno)d | "
             "%(message)s")
-    formatter = logger.Formatter(fmt=fmt, datefmt="%H:%M:%S")
+    formatter = logging.Formatter(fmt=fmt, datefmt="%H:%M:%S")
     formatter.converter = time.gmtime
     sh.setFormatter(formatter)
 
