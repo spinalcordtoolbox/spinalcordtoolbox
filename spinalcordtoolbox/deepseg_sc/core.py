@@ -2,7 +2,7 @@
 # -*- coding: utf-8
 # Functions dealing with deepseg_sc
 
-import os, sys
+import os, sys, logging
 
 import numpy as np
 from scipy.ndimage.measurements import center_of_mass, label
@@ -19,6 +19,8 @@ import sct_utils as sct
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 BATCH_SIZE = 4
+
+logger = logging.getLogger(__name__)
 
 
 def find_centerline(algo, image_fname, contrast_type, brain_bool, folder_output, remove_temp_files, centerline_fname):

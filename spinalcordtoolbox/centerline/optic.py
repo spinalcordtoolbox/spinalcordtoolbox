@@ -4,12 +4,14 @@
 
 from __future__ import absolute_import, division
 
-import os, datetime
+import os, datetime, logging
 
 import numpy as np
 
 import sct_utils as sct
 from ..image import Image
+
+logger = logging.getLogger(__name__)
 
 
 def centerline2roi(fname_image, folder_output='./', verbose=0):

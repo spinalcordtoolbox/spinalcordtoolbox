@@ -19,6 +19,7 @@
 from __future__ import absolute_import
 
 import os
+import logging
 import sct_utils as sct
 from sct_flatten_sagittal import flatten_sagittal
 import numpy as np
@@ -28,6 +29,8 @@ from skimage.measure import label as label_regions
 
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image, zeros_like
+
+logger = logging.getLogger(__name__)
 
 
 def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, verbose=1):

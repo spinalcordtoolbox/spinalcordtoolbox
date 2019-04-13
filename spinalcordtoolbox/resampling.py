@@ -12,11 +12,14 @@
 
 from __future__ import division, absolute_import
 
+import logging
 import nipy
 import numpy as np
 from nipy.algorithms.registration.resample import resample as n_resample
 
 import sct_utils as sct
+
+logger = logging.getLogger(__name__)
 
 
 def resample_nipy(img, new_size=None, new_size_type=None, img_dest=None, interpolation='linear', dtype=np.float64,

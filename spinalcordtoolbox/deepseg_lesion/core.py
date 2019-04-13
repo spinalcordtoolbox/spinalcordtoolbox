@@ -4,6 +4,7 @@
 
 import os
 import sys
+import logging
 import numpy as np
 
 from scipy.ndimage.measurements import center_of_mass, label
@@ -18,6 +19,8 @@ from spinalcordtoolbox.centerline import optic
 from spinalcordtoolbox.deepseg_sc.core import find_centerline, crop_image_around_centerline, uncrop_image, _normalize_data
 from spinalcordtoolbox import resampling
 from spinalcordtoolbox.deepseg_sc.cnn_models import nn_architecture_ctr
+
+logger = logging.getLogger(__name__)
 
 BATCH_SIZE = 4
 MODEL_LST = ['t2', 't2_ax', 't2s']
