@@ -72,7 +72,7 @@ def detect_centerline(img, contrast, verbose=1):
     # Fetch path to Optic model based on contrast
     optic_models_path = os.path.join(sct.__sct_dir__, 'data', 'optic_models', '{}_model'.format(contrast))
 
-    sct.log.debug('Detecting the spinal cord using OptiC')
+    logger.debug('Detecting the spinal cord using OptiC')
     img_orientation = img.orientation
 
     temp_folder = sct.TempFolder()
@@ -123,7 +123,7 @@ def detect_centerline(img, contrast, verbose=1):
     # return to initial folder
     temp_folder.chdir_undo()
     if verbose < 2:
-        sct.log.info("Remove temporary files...")
+        logger.info("Remove temporary files...")
         temp_folder.cleanup()
 
     return img_ctl

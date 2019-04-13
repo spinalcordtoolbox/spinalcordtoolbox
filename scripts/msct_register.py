@@ -278,7 +278,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
         warp_inv_x[:, :, iz] = np.array([coord_inverse_phy[i, 0] - coord_init_phy[i, 0] for i in range(nx * ny)]).reshape((nx, ny))
         warp_inv_y[:, :, iz] = np.array([coord_inverse_phy[i, 1] - coord_init_phy[i, 1] for i in range(nx * ny)]).reshape((nx, ny))
 
-    sct.log.info('\n Done')
+    logger.info('\n Done')
 
     # Generate forward warping field (defined in destination space)
     generate_warping_field(fname_dest, warp_x, warp_y, fname_warp, verbose)
@@ -732,7 +732,7 @@ def numerotation(nb):
         nb_output: the number of the slice for fslsplit (type: string)
     """
     if nb < 0:
-        sct.log.error('ERROR: the number is negative.')
+        logger.error('ERROR: the number is negative.')
         sys.exit(status=2)
     elif -1 < nb < 10:
         nb_output = '000' + str(nb)
@@ -743,7 +743,7 @@ def numerotation(nb):
     elif 999 < nb < 10000:
         nb_output = str(nb)
     elif nb > 9999:
-        sct.log.error('ERROR: the number is superior to 9999.')
+        logger.error('ERROR: the number is superior to 9999.')
         sys.exit(status = 2)
     return nb_output
 

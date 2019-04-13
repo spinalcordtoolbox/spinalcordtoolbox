@@ -28,7 +28,7 @@ def init(param_test):
     Initialize class: param_test
     """
     # initialization
-    sct.log.debug('init test {}'.format(param_test))
+    logger.debug('init test {}'.format(param_test))
     folder_data = ['t2']
     file_data = ['t2_seg.nii.gz', 't2_seg_labeled.nii.gz']
 
@@ -48,7 +48,7 @@ def test_integrity(param_test):
     Test integrity of function
     """
 
-    sct.log.debug('test integrity {}'.format(param_test.__dict__))
+    logger.debug('test integrity {}'.format(param_test.__dict__))
     # find the test that is performed and check the integrity of the output
     index_args = param_test.default_args.index(param_test.args)
 

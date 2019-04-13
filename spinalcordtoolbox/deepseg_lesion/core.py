@@ -139,7 +139,7 @@ def deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo='svm', ctr_file
     tmp_folder.chdir()
 
     # orientation of the image, should be RPI
-    sct.log.info("\nReorient the image to RPI, if necessary...")
+    logger.info("\nReorient the image to RPI, if necessary...")
     fname_in = im_image.absolutepath
     original_orientation = im_image.orientation
     fname_orient = 'image_in_RPI.nii'
@@ -148,7 +148,7 @@ def deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo='svm', ctr_file
     input_resolution = im_image.dim[4:7]
 
     # find the spinal cord centerline - execute OptiC binary
-    sct.log.info("\nFinding the spinal cord centerline...")
+    logger.info("\nFinding the spinal cord centerline...")
     contrast_type_ctr = contrast_type.split('_')[0]
     fname_res, centerline_filename = find_centerline(algo=ctr_algo,
                                                     image_fname=fname_orient,
@@ -160,7 +160,7 @@ def deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo='svm', ctr_file
     im_nii, ctr_nii = Image(fname_res), Image(centerline_filename)
 
     # crop image around the spinal cord centerline
-    sct.log.info("\nCropping the image around the spinal cord...")
+    logger.info("\nCropping the image around the spinal cord...")
     crop_size = 48
     X_CROP_LST, Y_CROP_LST, Z_CROP_LST, im_crop_nii = crop_image_around_centerline(im_in=im_nii,
                                                                                   ctr_in=ctr_nii,
@@ -168,7 +168,7 @@ def deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo='svm', ctr_file
     del ctr_nii
 
     # normalize the intensity of the images
-    sct.log.info("Normalizing the intensity...")
+    logger.info("Normalizing the intensity...")
     im_norm_in = apply_intensity_normalization(img=im_crop_nii, contrast=contrast_type)
     del im_crop_nii
 
@@ -180,7 +180,7 @@ def deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo='svm', ctr_file
                              verbose=0)
 
     # segment data using 3D convolutions
-    sct.log.info("\nSegmenting the MS lesions using deep learning on 3D patches...")
+    logger.info("\nSegmenting the MS lesions using deep learning on 3D patches...")
     segmentation_model_fname = os.path.join(sct.__sct_dir__, 'data', 'deepseg_lesion_models',
                                             '{}_lesion.h5'.format(contrast_type))
     fname_seg_crop_res = sct.add_suffix(fname_res3d, '_lesionseg')
@@ -199,7 +199,7 @@ def deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo='svm', ctr_file
     seg_crop = Image(fname_seg_res2d)
 
     # reconstruct the segmentation from the crop data
-    sct.log.info("\nReassembling the image...")
+    logger.info("\nReassembling the image...")
     seg_uncrop_nii = uncrop_image(ref_in=im_nii, data_crop=seg_crop.copy().data, x_crop_lst=X_CROP_LST,
                                   y_crop_lst=Y_CROP_LST, z_crop_lst=Z_CROP_LST)
     fname_seg_res_RPI = sct.add_suffix(fname_in, '_res_RPI_seg')
@@ -207,7 +207,7 @@ def deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo='svm', ctr_file
     del seg_crop
 
     # resample to initial resolution
-    sct.log.info("Resampling the segmentation to the original image resolution...")
+    logger.info("Resampling the segmentation to the original image resolution...")
     initial_resolution = 'x'.join([str(input_resolution[0]), str(input_resolution[1]), str(input_resolution[2])])
     fname_seg_RPI = sct.add_suffix(fname_in, '_RPI_seg')
     resampling.resample_file(fname_seg_res_RPI, fname_seg_RPI, initial_resolution,
@@ -231,18 +231,18 @@ def deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo='svm', ctr_file
         im_image_res_ctr_downsamp = None
 
     # binarize the resampled image to remove interpolation effects
-    sct.log.info("\nBinarizing the segmentation to avoid interpolation effects...")
+    logger.info("\nBinarizing the segmentation to avoid interpolation effects...")
     thr = 0.1
     seg_initres_nii.data[np.where(seg_initres_nii.data >= thr)] = 1
     seg_initres_nii.data[np.where(seg_initres_nii.data < thr)] = 0
 
     # reorient to initial orientation
-    sct.log.info("\nReorienting the segmentation to the original image orientation...")
+    logger.info("\nReorienting the segmentation to the original image orientation...")
     tmp_folder.chdir_undo()
 
     # remove temporary files
     if remove_temp_files:
-        sct.log.info("\nRemove temporary files...")
+        logger.info("\nRemove temporary files...")
         tmp_folder.cleanup()
 
     # reorient to initial orientation

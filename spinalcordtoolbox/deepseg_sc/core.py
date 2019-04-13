@@ -79,7 +79,7 @@ def find_centerline(algo, image_fname, contrast_type, brain_bool, folder_output,
                                         dilation_layers=dct_params_ctr[contrast_type]['dilation_layers'])
         ctr_model.load_weights(ctr_model_fname)
 
-        sct.log.info("Resample the image to 0.5 mm isotropic resolution...")
+        logger.info("Resample the image to 0.5 mm isotropic resolution...")
         fname_res = sct.add_suffix(image_fname, '_resampled')
         input_resolution = Image(image_fname).dim[4:7]
         new_resolution = 'x'.join(['0.5', '0.5', str(input_resolution[2])])
@@ -120,11 +120,11 @@ def find_centerline(algo, image_fname, contrast_type, brain_bool, folder_output,
         Image(centerline_fname).change_orientation('RPI').save(centerline_filename)
 
     else:
-        sct.log.error('The parameter "-centerline" is incorrect. Please try again.')
+        logger.error('The parameter "-centerline" is incorrect. Please try again.')
         sys.exit(1)
 
     if algo != 'cnn':
-        sct.log.info("Resample the image to 0.5 mm isotropic resolution...")
+        logger.info("Resample the image to 0.5 mm isotropic resolution...")
         fname_res = sct.add_suffix(image_fname, '_resampled')
         input_resolution = Image(image_fname).dim[4:7]
         new_resolution = 'x'.join(['0.5', '0.5', str(input_resolution[2])])
@@ -249,7 +249,7 @@ def _fill_z_holes(zz_lst, data, z_spaccing):
         denom_interpolation = (lenght_hole + 1)
 
         if phys_lenght_hole < 10:
-            sct.log.warning('Filling a hole in the segmentation around z_slice #:' + str(z_ref_start))
+            logger.warning('Filling a hole in the segmentation around z_slice #:' + str(z_ref_start))
 
             for idx_z, z_hole_cur in enumerate(hole_cur_lst):
                 num_interpolation = (lenght_hole - idx_z - 1) * slice_ref_start  # Contribution of the bottom ref slice
@@ -422,7 +422,7 @@ def heatmap(filename_in, filename_out, model, patch_shape, mean_train, std_train
         data[:, :, zz] = distance_transform_edt(data[:, :, zz])
 
     if not np.any(data):
-        sct.log.error(
+        logger.error(
             '\nSpinal cord was not detected using "-centerline cnn". Please try another "-centerline" method.\n')
         sys.exit(1)
 
@@ -587,7 +587,7 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
     tmp_folder.chdir()
 
     # orientation of the image, should be RPI
-    sct.log.info("Reorient the image to RPI, if necessary...")
+    logger.info("Reorient the image to RPI, if necessary...")
     fname_in = im_image.absolutepath
     original_orientation = im_image.orientation
     fname_orient = 'image_in_RPI.nii'
@@ -596,7 +596,7 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
     input_resolution = im_image.dim[4:7]
 
     # find the spinal cord centerline - execute OptiC binary
-    sct.log.info("Finding the spinal cord centerline...")
+    logger.info("Finding the spinal cord centerline...")
     fname_res, centerline_filename = find_centerline(algo=ctr_algo,
                                                      image_fname=fname_orient,
                                                      contrast_type=contrast_type,
@@ -608,7 +608,7 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
     im_nii, ctr_nii = Image(fname_res), Image(centerline_filename)
 
     # crop image around the spinal cord centerline
-    sct.log.info("Cropping the image around the spinal cord...")
+    logger.info("Cropping the image around the spinal cord...")
     crop_size = 96 if (kernel_size == '3d' and contrast_type == 't2s') else 64
     X_CROP_LST, Y_CROP_LST, Z_CROP_LST, im_crop_nii = crop_image_around_centerline(im_in=im_nii,
                                                                                    ctr_in=ctr_nii,
@@ -616,13 +616,13 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
     del ctr_nii
 
     # normalize the intensity of the images
-    sct.log.info("Normalizing the intensity...")
+    logger.info("Normalizing the intensity...")
     im_norm_in = apply_intensity_normalization(im_in=im_crop_nii)
     del im_crop_nii
 
     if kernel_size == '2d':
         # segment data using 2D convolutions
-        sct.log.info("Segmenting the spinal cord using deep learning on 2D patches...")
+        logger.info("Segmenting the spinal cord using deep learning on 2D patches...")
         segmentation_model_fname = os.path.join(sct.__sct_dir__, 'data', 'deepseg_sc_models', '{}_sc.h5'.format(contrast_type))
         seg_crop_data = segment_2d(model_fname=segmentation_model_fname,
                                    contrast_type=contrast_type,
@@ -638,7 +638,7 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
                                                                             'mm', 'linear', verbose=0)
 
         # segment data using 3D convolutions
-        sct.log.info("Segmenting the spinal cord using deep learning on 3D patches...")
+        logger.info("Segmenting the spinal cord using deep learning on 3D patches...")
         fname_seg_crop_res = sct.add_suffix(fname_res3d, '_seg')
         segmentation_model_fname = os.path.join(sct.__sct_dir__, 'data', 'deepseg_sc_models', '{}_sc_3D.h5'.format(contrast_type))
         seg_crop_nii = segment_3d(model_fname=segmentation_model_fname,
@@ -656,7 +656,7 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
         seg_crop_data = Image(fname_seg_res2d).data
 
     # reconstruct the segmentation from the crop data
-    sct.log.info("Reassembling the image...")
+    logger.info("Reassembling the image...")
     seg_uncrop_nii = uncrop_image(ref_in=im_nii,
                                   data_crop=seg_crop_data,
                                   x_crop_lst=X_CROP_LST,
@@ -667,7 +667,7 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
     del seg_crop_data
 
     # resample to initial resolution
-    sct.log.info("Resampling the segmentation to the original image resolution...")
+    logger.info("Resampling the segmentation to the original image resolution...")
     initial_resolution = 'x'.join([str(input_resolution[0]), str(input_resolution[1]), str(input_resolution[2])])
     fname_res_seg_downsamp = sct.add_suffix(fname_res_seg, '_downsamp')
 
@@ -692,7 +692,7 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
         im_image_res_ctr_downsamp = None
 
     # binarize the resampled image to remove interpolation effects
-    sct.log.info("Binarizing the segmentation to avoid interpolation effects...")
+    logger.info("Binarizing the segmentation to avoid interpolation effects...")
     thr = 0.0001 if contrast_type in ['t1', 'dwi'] else 0.5
     # TODO: optimize speed --> np.where is slow
     im_image_res_seg_downsamp.data[np.where(im_image_res_seg_downsamp.data >= thr)] = 1
@@ -705,7 +705,7 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
 
     # remove temporary files
     if remove_temp_files:
-        sct.log.info("Remove temporary files...")
+        logger.info("Remove temporary files...")
         tmp_folder.cleanup()
 
     # reorient to initial orientation

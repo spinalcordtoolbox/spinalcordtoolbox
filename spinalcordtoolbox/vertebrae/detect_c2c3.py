@@ -50,7 +50,7 @@ def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, verbose=1):
     nii_seg_flat = flatten_sagittal(nii_seg, nii_seg, verbose=verbose)
 
     # create temporary folder with intermediate results
-    sct.log.info("Creating temporary folder...")
+    logger.info("Creating temporary folder...")
     tmp_folder = sct.TempFolder()
     tmp_folder.chdir()
 
@@ -119,7 +119,7 @@ def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, verbose=1):
     # remove temporary files
     tmp_folder.chdir_undo()
     if verbose < 2:
-        sct.log.info("Remove temporary files...")
+        logger.info("Remove temporary files...")
         tmp_folder.cleanup()
 
     nii_c2c3.change_orientation(orientation_init)
