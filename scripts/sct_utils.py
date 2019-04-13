@@ -45,18 +45,16 @@ from spinalcordtoolbox import __version__, __sct_dir__, __data_dir__
 from spinalcordtoolbox.utils import check_exe
 
 
-def init_sct(log_level='INFO'):
+def init_sct(log_level=1, update=False):
     """
     Initialize the sct for typical terminal usage
+    :param log_level: int: 0: warning, 1: info, 2: debug.
+    :param update: Bool: If True, only update logging log level. Otherwise, set logging + Sentry.
     :return:
     """
-    # Logging config
-    logger.setLevel(getattr(logging, log_level))
-    logging.root.setLevel(getattr(logging, log_level) + 1)
-    hdlr = logging.StreamHandler(sys.stdout)
-    fmt = logging.Formatter()
+    dict_log_levels = {0: 'WARNING', 1: 'INFO', 2: 'DEBUG'}
 
-    def format_wrap(old_format):
+    def _format_wrap(old_format):
         def _format(record):
             res = old_format(record)
             if record.levelno >= logging.ERROR:
@@ -68,14 +66,22 @@ def init_sct(log_level='INFO'):
             return res
         return _format
 
-    fmt.format = format_wrap(fmt.format)
-    hdlr.setFormatter(fmt)
-    logging.root.addHandler(hdlr)
+    # Set logging level for logger and increase level for global config (to avoid logging when calling child functions)
+    logger.setLevel(getattr(logging, dict_log_levels[log_level]))
+    logging.root.setLevel(getattr(logging, dict_log_levels[log_level]))
 
-    # Sentry config
-    init_error_client()
-    if os.environ.get("SCT_TIMER", None) is not None:
-        add_elapsed_time_counter()
+    if not update:
+        # Initialize logging
+        hdlr = logging.StreamHandler(sys.stdout)
+        fmt = logging.Formatter()
+        fmt.format = _format_wrap(fmt.format)
+        hdlr.setFormatter(fmt)
+        logging.root.addHandler(hdlr)
+
+        # Sentry config
+        init_error_client()
+        if os.environ.get("SCT_TIMER", None) is not None:
+            add_elapsed_time_counter()
 
 
 def add_elapsed_time_counter():
