@@ -409,11 +409,11 @@ def propseg(img_input, options_dict):
     if "-r" in arguments:
         remove_temp_files = int(arguments["-r"])
 
-    verbose = 0
-    if "-v" in arguments:
-        if arguments["-v"] is "1":
-            verbose = 2
-            cmd += ["-verbose"]
+    verbose = int(arguments.get('-v'))
+    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    # Update for propseg binary
+    if verbose > 0:
+        cmd += ["-verbose"]
 
     # Output options
     if "-mesh" in arguments:

@@ -139,7 +139,8 @@ def main():
 
     remove_temp_files = int(arguments['-r'])
 
-    verbose = int(arguments['-v'])
+    verbose = int(arguments.get('-v'))
+    sct.init_sct(log_level=verbose, update=True)  # Update log level
 
     path_qc = arguments.get("-qc", None)
     qc_dataset = arguments.get("-qc-dataset", None)

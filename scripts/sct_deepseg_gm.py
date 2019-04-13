@@ -105,9 +105,10 @@ def run_main():
         output_filename = sct.add_suffix(input_filename, '_gmseg')
 
     use_tta = "-t" in arguments
-    verbose = arguments["-v"]
     model_name = arguments["-m"]
     threshold = arguments['-thr']
+    verbose = int(arguments.get('-v'))
+    sct.init_sct(log_level=verbose, update=True)  # Update log level
 
     if threshold > 1.0 or threshold < 0.0:
         raise RuntimeError("Threshold should be between 0.0 and 1.0.")

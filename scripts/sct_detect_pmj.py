@@ -270,8 +270,8 @@ def main(args=None):
     # Remove temp folder
     rm_tmp = bool(int(arguments.get("-r", 1)))
 
-    # Verbosity
-    verbose = int(arguments.get("-v", 1))
+    verbose = int(arguments.get('-v'))
+    sct.init_sct(log_level=verbose, update=True)  # Update log level
 
     # Initialize DetectPMJ
     detector = DetectPMJ(fname_im=fname_in,

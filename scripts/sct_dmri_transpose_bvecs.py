@@ -83,7 +83,8 @@ def main(args=None):
         fname_out = arguments['-o']
     else:
         fname_out = ''
-    verbose = int(arguments['-v'])
+    verbose = int(arguments.get('-v'))
+    sct.init_sct(log_level=verbose, update=True)  # Update log level
 
     # get bvecs in proper orientation
     from dipy.io import read_bvals_bvecs

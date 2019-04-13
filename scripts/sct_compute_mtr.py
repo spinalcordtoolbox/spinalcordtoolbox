@@ -57,7 +57,8 @@ def main(args=None):
     fname_mt0 = arguments['-mt0']
     fname_mt1 = arguments['-mt1']
     remove_temp_files = int(arguments['-r'])
-    verbose = int(arguments['-v'])
+    verbose = int(arguments.get('-v'))
+    sct.init_sct(log_level=verbose, update=True)  # Update log level
 
     # Extract path/file/extension
     path_mt0, file_mt0, ext_mt0 = sct.extract_fname(fname_mt0)
