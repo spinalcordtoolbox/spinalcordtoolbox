@@ -103,7 +103,7 @@ def main():
         output_folder = arguments["-ofolder"]
 
     if ctr_algo == 'file' and "-file_centerline" not in args:
-        logger.error('Please use the flag -file_centerline to indicate the centerline filename.')
+        sct.printv('Please use the flag -file_centerline to indicate the centerline filename.', 1, 'error')
         sys.exit(1)
     
     if "-file_centerline" in args:

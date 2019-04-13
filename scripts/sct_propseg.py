@@ -443,7 +443,7 @@ def propseg(img_input, options_dict):
     if "-init" in arguments:
         init_option = float(arguments["-init"])
         if init_option < 0:
-            logger.error('Command-line usage error: ' + str(init_option) + " is not a valid value for '-init'")
+            sct.printv('Command-line usage error: ' + str(init_option) + " is not a valid value for '-init'", 1, 'error')
             sys.exit(1)
     if "-init-centerline" in arguments:
         if str(arguments["-init-centerline"]) == "viewer":
@@ -497,7 +497,7 @@ def propseg(img_input, options_dict):
     image_input_rpi = image_input.copy().change_orientation('RPI')
     nx, ny, nz, nt, px, py, pz, pt = image_input_rpi.dim
     if nt > 1:
-        logger.error('ERROR: your input image needs to be 3D in order to be segmented.')
+        sct.printv('ERROR: your input image needs to be 3D in order to be segmented.', 1, 'error')
 
     path_data, file_data, ext_data = sct.extract_fname(fname_data)
     path_tmp = sct.tmp_create(basename="label_vertebrae", verbose=verbose)
@@ -534,7 +534,7 @@ def propseg(img_input, options_dict):
         fname_labels_viewer = sct.add_suffix(fname_data_propseg, '_labels_viewer')
 
         if not controller.saved:
-            logger.error('The viewer has been closed before entering all manual points. Please try again.')
+            sct.printv('The viewer has been closed before entering all manual points. Please try again.', 1, 'error')
             sys.exit(1)
         # save labels
         controller.as_niftii(fname_labels_viewer)
@@ -565,8 +565,8 @@ def propseg(img_input, options_dict):
 
     # check status is not 0
     if not status == 0:
-        logger.error('Automatic cord detection failed. Please initialize using -init-centerline or '
-                      '-init-mask (see help).')
+        sct.printv('Automatic cord detection failed. Please initialize using -init-centerline or -init-mask (see help)',
+                   1, 'error')
         sys.exit(1)
 
     # build output filename
