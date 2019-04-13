@@ -18,7 +18,7 @@
 
 from __future__ import division, absolute_import
 
-import sys, os, shutil
+import sys, os, shutil, logging
 from math import asin, cos, sin, acos
 import numpy as np
 
@@ -30,6 +30,8 @@ from spinalcordtoolbox.image import Image
 import sct_utils as sct
 from sct_convert import convert
 from sct_register_multimodal import Paramreg
+
+logger = logging.getLogger(__name__)
 
 
 def register_slicewise(fname_src,

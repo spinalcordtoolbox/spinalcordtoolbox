@@ -403,11 +403,11 @@ if __name__ == "__main__":
     if "-g" in arguments:
         exec_choice = bool(int(arguments["-g"]))
 
+    # cropping with GUI
+    cropper = ImageCropper(input_filename)
     cropper.verbose = int(arguments.get('-v'))
     sct.init_sct(log_level=cropper.verbose, update=True)  # Update log level
 
-    # cropping with GUI
-    cropper = ImageCropper(input_filename)
     if exec_choice:
         fname_data = arguments["-i"]
         if "-r" in arguments:
