@@ -195,7 +195,7 @@ def main(args=None):
     else:
         sc_straight.path_output = './'
 
-    verbose = int(arguments.get("-v", 0))
+    verbose = int(arguments.get('-v'))
     sct.init_sct(log_level=verbose, update=True)  # Update log level
     sc_straight.verbose = verbose
 
@@ -241,6 +241,6 @@ def main(args=None):
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
-    sct.init_sct(log_level=1)
+    sct.init_sct()
     # call main function
     main()
