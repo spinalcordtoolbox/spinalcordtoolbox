@@ -199,7 +199,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
 
     # construct 3D warping matrix
     for iz in z_nonzero:
-        # TODO: replace the thing below with tqdm
+        # TODO: replace the thing below with "tqdm-like" logger-based function
         # sct.no_new_line_log('{}/{}..'.format(iz + 1, nz))
         # get indices of x and y coordinates
         row, col = np.indices((nx, ny))
