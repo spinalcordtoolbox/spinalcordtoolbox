@@ -19,4 +19,5 @@ xlutils
 xlwt
 tqdm
 transforms3d
+urllib3[secure]
 portalocker

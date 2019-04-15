@@ -75,8 +75,9 @@ def dummy_centerline(size_arr=(9, 9, 9), subsampling=1, dilate_ctl=0, hasnan=Fal
     return img, img_sub, arr_ctl
 
 
-def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.float64, orientation='LPI', shape='rectangle',
-                       angle_RL=0, angle_IS=0, radius_RL=5.0, radius_AP=3.0, zeroslice=[], debug=False):
+def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.float64, orientation='LPI',
+                       shape='rectangle', angle_RL=0, angle_AP=0, angle_IS=0, radius_RL=5.0, radius_AP=3.0,
+                       zeroslice=[], debug=False):
     """Create a dummy Image with a ellipse or ones running from top to bottom in the 3rd dimension, and rotate the image
     to make sure that compute_csa and compute_shape properly estimate the centerline angle.
     :param size_arr: tuple: (nx, ny, nz)
@@ -85,6 +86,7 @@ def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.floa
     :param orientation: Orientation of the image. Default: LPI
     :param shape: {'rectangle', 'ellipse'}
     :param angle_RL: int: angle around RL axis (in deg)
+    :param angle_AP: int: angle around AP axis (in deg)
     :param angle_IS: int: angle around IS axis (in deg)
     :param radius_RL: float: 1st radius. With a, b = 50.0, 30.0 (in mm), theoretical CSA of ellipse is 4712.4
     :param radius_AP: float: 2nd radius
@@ -122,18 +124,27 @@ def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.floa
     # swap back
     data_rotIS_rotRL = data_rotIS_swap_rotRL.swapaxes(0, 2)
 
+    # ROTATION ABOUT AP AXIS
+    # Swap y-z axes (to make a rotation within x-z plane)
+    data_rotIS_rotRL_swap = data_rotIS_rotRL.swapaxes(1, 2)
+    # rotate (in deg), and re-grid using linear interpolation
+    data_rotIS_rotRL_swap_rotAP = rotate(data_rotIS_rotRL_swap, angle_AP, resize=False, center=None, order=1,
+                                         mode='constant', cval=0, clip=False, preserve_range=False)
+    # swap back
+    data_rot = data_rotIS_rotRL_swap_rotAP.swapaxes(1, 2)
+
     # Crop image (to remove padding)
-    data_rotIS_rotRL = data_rotIS_rotRL[padding:nx+padding, padding:ny+padding, padding:nz+padding]
+    data_rot_crop = data_rot[padding:nx+padding, padding:ny+padding, padding:nz+padding]
 
     # Zero specified slices
     if zeroslice is not []:
-        data_rotIS_rotRL[:, :, zeroslice] = 0
+        data_rot_crop[:, :, zeroslice] = 0
 
     # Create nibabel object
     xform = np.eye(4)
     for i in range(3):
         xform[i][i] = 1  # in [mm]
-    nii = nib.nifti1.Nifti1Image(data_rotIS_rotRL.astype('float32'), xform)
+    nii = nib.nifti1.Nifti1Image(data_rot_crop.astype('float32'), xform)
     # Create nipy object and resample to desired resolution
     nii_nipy = nifti2nipy(nii)
     nii_nipy_r = resample_nipy(nii_nipy, new_size='x'.join([str(i) for i in pixdim]), new_size_type='mm',
