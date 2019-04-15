@@ -18,13 +18,14 @@ from __future__ import print_function, division, absolute_import
 import sys, io, os, re, time, datetime, platform
 import errno
 import logging
-import logging.config
 import shutil
 import subprocess
 import tempfile
 
 import numpy as np
 import portalocker
+
+logger = logging.getLogger(__name__)
 
 if os.getenv('SENTRY_DSN', None):
     # do no import if Sentry is not set (i.e., if variable SENTRY_DSN is not defined)
@@ -41,38 +42,46 @@ else:
 
 
 from spinalcordtoolbox import __version__, __sct_dir__, __data_dir__
-
 from spinalcordtoolbox.utils import check_exe
 
-from spinalcordtoolbox.utils import logger as log
 
-"""
-Basic logging setup for the sct
-set SCT_LOG_LEVEL and SCT_LOG_FORMAT in ~/.sctrc to change the sct log
-format and level
-"""
-
-
-log.setLevel(logging.DEBUG)
-stream_handler = logging.StreamHandler(sys.stdout)
-nh = logging.NullHandler()
-log.addHandler(nh)
-LOG_LEVEL = os.getenv('SCT_LOG_LEVEL')
-LOG_FORMAT = os.getenv('SCT_LOG_FORMAT')
-if not LOG_FORMAT:
-    LOG_FORMAT = None
-
-
-
-def init_sct():
-    """ Initialize the sct for typical terminal usage
-
+def init_sct(log_level=1, update=False):
+    """
+    Initialize the sct for typical terminal usage
+    :param log_level: int: 0: warning, 1: info, 2: debug.
+    :param update: Bool: If True, only update logging log level. Otherwise, set logging + Sentry.
     :return:
     """
-    start_stream_logger()
-    init_error_client()
-    if os.environ.get("SCT_TIMER", None) is not None:
-        add_elapsed_time_counter()
+    dict_log_levels = {0: 'WARNING', 1: 'INFO', 2: 'DEBUG'}
+
+    def _format_wrap(old_format):
+        def _format(record):
+            res = old_format(record)
+            if record.levelno >= logging.ERROR:
+                res = "\x1B[31;1m{}\x1B[0m".format(res)
+            elif record.levelno >= logging.WARNING:
+                res = "\x1B[33m{}\x1B[0m".format(res)
+            else:
+                pass
+            return res
+        return _format
+
+    # Set logging level for logger and increase level for global config (to avoid logging when calling child functions)
+    logger.setLevel(getattr(logging, dict_log_levels[log_level]))
+    logging.root.setLevel(getattr(logging, dict_log_levels[log_level]))
+
+    if not update:
+        # Initialize logging
+        hdlr = logging.StreamHandler(sys.stdout)
+        fmt = logging.Formatter()
+        fmt.format = _format_wrap(fmt.format)
+        hdlr.setFormatter(fmt)
+        logging.root.addHandler(hdlr)
+
+        # Sentry config
+        init_error_client()
+        if os.environ.get("SCT_TIMER", None) is not None:
+            add_elapsed_time_counter()
 
 
 def add_elapsed_time_counter():
@@ -88,35 +97,13 @@ def add_elapsed_time_counter():
     atexit.register(t.atexit)
 
 
-def start_stream_logger():
-    """ Log to terminal, by default the formatting is like a print() call
-
-    :return:
-    """
-
-    formatter = logging.Formatter(LOG_FORMAT)
-    stream_handler.setFormatter(formatter)
-
-    if LOG_LEVEL == "DISABLE":
-        level = sys.maxsize
-    elif LOG_LEVEL is None:
-        level = logging.INFO
-    else:
-        level = getattr(logging, LOG_LEVEL, None)
-        if level is None:
-            logging.warn("SCT_LOG_LEVEL set to invalid value -> using default")
-            level = logging.INFO
-    stream_handler.setLevel(level)
-    log.addHandler(stream_handler)
-
-
 def init_error_client():
     """ Send traceback to neuropoly servers
 
     :return:
     """
     if os.getenv('SENTRY_DSN'):
-        log.debug('Configuring sentry report')
+        logger.debug('Configuring sentry report')
         try:
             client = raven.Client(
              release=__version__,
@@ -145,7 +132,7 @@ def init_error_client():
             sys.exitfunc = exitfunc
         except raven.exceptions.InvalidDsn:
             # This could happen if sct staff change the dsn
-            log.debug('Sentry DSN not valid anymore, not reporting errors')
+            logger.debug('Sentry DSN not valid anymore, not reporting errors')
 
 
 def traceback_to_server(client):
@@ -186,62 +173,9 @@ def server_log_handler(client):
     formatter.converter = time.gmtime
     sh.setFormatter(formatter)
 
-    log.addHandler(sh)
+    logger.addHandler(sh)
     return sh
 
-
-def pause_stream_logger():
-    """ Pause the log to Terminal
-
-    :return:
-    """
-    log.removeHandler(stream_handler)
-
-
-class NoColorFormatter(logging.Formatter):
-    """
-    Formater removing terminal specific colors from outputs
-    """
-    def format(self, record):
-        for color in bcolors.colors():
-            record.msg = record.msg.replace(color, "")
-        return super(NoColorFormatter, self).format(record)
-
-
-def add_file_handler_to_logger(filename="{}.log".format(__file__), mode='a', log_format=None, log_level=None):
-    """ Convenience fct to add a file handler to the sct log
-        Will remove colors from prints
-    :param filename:
-    :param mode:
-    :param log_format:
-    :param log_level:
-    :return: the file handler
-    """
-    log.debug('Adding file handler {}'.format(filename))
-    fh = logging.FileHandler(filename=filename, mode=mode)
-
-    if log_format is None:
-        formatter = NoColorFormatter(LOG_FORMAT)  # sct.printv() emulator)
-    else:
-        formatter = logging.Formatter(log_format)
-    fh.setFormatter(formatter)
-
-    if log_level:
-        fh.setLevel(log_level)
-    else:
-        fh.setLevel(logging.INFO)
-    log.addHandler(fh)
-    return fh
-
-
-def remove_handler(handler):
-    """ Remore any handler from logs
-
-    :param handler:
-    :return:
-    """
-    log.debug("Pause log to {} ".format(handler.baseFilename))
-    log.removeHandler(handler)
 
 # define class color
 class bcolors(object):
@@ -257,66 +191,6 @@ class bcolors(object):
     @classmethod
     def colors(cls):
         return [v for k, v in cls.__dict__.items() if not k.startswith("_") and k is not "colors"]
-
-
-def no_new_line_log(msg, *args, **kwargs):
-    """ Log info to stdout without adding new line
-        Useful for progress bar.
-        Monkey patching the sct stream handler
-
-    see logging.info() method for parameters
-
-    """
-
-
-    def my_emit(self, record):
-        """
-        Emit a record.
-        Monkey patcher for progress bar in the sct
-        Do a carriage return \r before the string
-        instead of a new line \n at the end
-
-        """
-        try:
-            unicode
-            _unicode = True
-        except NameError:
-            _unicode = False
-
-        try:
-            msg = self.format(record)
-            stream = self.stream
-            fs = "\r%s"
-            if not _unicode: #if no unicode support...
-                stream.write(fs % msg)
-            else:
-                try:
-                    if (isinstance(msg, unicode) and
-                        getattr(stream, 'encoding', None)):
-                        ufs = u'%s\n'
-                        try:
-                            stream.write(ufs % msg)
-                        except UnicodeEncodeError:
-                            stream.write((ufs % msg).encode(stream.encoding))
-                    else:
-                        stream.write(fs % msg)
-                except UnicodeError:
-                    stream.write(fs % msg.encode("UTF-8"))
-            self.flush()
-        except (KeyboardInterrupt, SystemExit):
-            raise
-        except:
-            self.handleError(record)
-
-    orig_emit = stream_handler.__class__.emit
-    stream_handler.__class__.emit = my_emit
-
-    log.info(msg, *args, **kwargs)
-    if log.handlers:
-        [h.flush() for h in log.handlers]
-
-    stream_handler.__class__.emit = orig_emit
-
 
 
 def add_suffix(fname, suffix):
@@ -633,55 +507,6 @@ def checkRAM(os, verbose=1):
         return ram_total
 
 
-class ForkStdoutToFile(object):
-    """Use to redirect stdout to file
-    Default mode is to send stdout to file AND to terminal
-
-    """
-    def __init__(self, filename="{}.log".format(__file__), to_file_only=False):
-        self.terminal = sys.stdout
-        self.log_file = open(filename, "a")
-        self.filename = filename
-        self.to_file_only = False
-        sys.stdout = self
-
-    def __del__(self):
-        self.pause()
-        self.close()
-
-    def pause(self):
-        sys.stdout = self.terminal
-
-    def restart(self):
-        sys.stdout = self
-
-    def write(self, message):
-        if not self.to_file_only:
-            self.terminal.write(message)
-        self.log_file.write(message)
-
-    def flush(self):
-        if not self.to_file_only:
-            self.terminal.flush()
-        self.log_file.flush()
-
-    def close(self):
-        self.log_file.close()
-        sys.stdout = self.terminal
-
-    def read(self):
-        with open(self.filename, "r") as fp:
-            fp.read()
-
-    # def send_email(self, email, passwd_from=None, subject="file_log", attachment=True):
-    #     if attachment:
-    #         filename = self.filename
-    #     else:
-    #         filename = None
-    #     send_email(email, passwd_from=passwd_from, subject=subject, message=self.read(), filename=filename)
-
-
-
 def extract_fname(fpath):
     """
     Split a full path into a parent folder component, filename stem and extension.
@@ -964,27 +789,25 @@ def check_if_same_space(fname_1, fname_2):
 
 
 def printv(string, verbose=1, type='normal'):
-    """enables to print (color coded messages, depending on verbose status)
+    """
+    Enables to print color-coded messages, depending on verbose status. Only use in command-line programs (e.g.,
+    sct_propseg).
     """
 
     colors = {'normal': bcolors.normal, 'info': bcolors.green, 'warning': bcolors.yellow, 'error': bcolors.red,
               'code': bcolors.blue, 'bold': bcolors.bold, 'process': bcolors.magenta}
 
-    if verbose or type=="error":
-        # Print color only if the output is the terminal
-        # Note jcohen: i added a try/except in case stdout does not have isatty field (it did happen to me)
+    if verbose:
+        # The try/except is there in case stdout does not have isatty field (it did happen to me)
         try:
+            # Print color only if the output is the terminal
             if sys.stdout.isatty():
                 color = colors.get(type, bcolors.normal)
-                log.info('{0}{1}{2}'.format(color, string, bcolors.normal))
-
+                print(color + string + bcolors.normal)
             else:
-                log.info(string)
+                print(string)
         except Exception as e:
-            log.info(string)
-
-    if type == 'error':
-        raise RuntimeError("printv(..., type=\"error\")")
+            print(string)
 
 
 def send_email(addr_to, addr_from, passwd, subject, message='', filename=None, html=False, smtp_host=None, smtp_port=None, login=None):
@@ -1343,6 +1166,7 @@ class Version(object):
 
 
 class MsgUser(object):
+    # TODO: check if should be removed
     __debug = False
     __quiet = False
 

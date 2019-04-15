@@ -122,7 +122,8 @@ def main(args=None):
     parser = get_parser()
     arguments = parser.parse(args)
     data_name = arguments['-d']
-    verbose = int(arguments['-v'])
+    verbose = int(arguments.get('-v'))
+    sct.init_sct(log_level=verbose, update=True)  # Update log level
     dest_folder = arguments.get('-o', os.path.abspath(os.curdir))
 
     # Download data

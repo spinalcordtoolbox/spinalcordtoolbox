@@ -13,11 +13,11 @@ import operator
 import functools
 import csv
 import datetime
+import logging
 
-import sct_utils as sct
 from spinalcordtoolbox.template import get_slices_from_vertebral_levels, get_vertebral_level_from_slice
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.utils import parse_num_list_inv
+from spinalcordtoolbox.utils import __version__, parse_num_list_inv
 
 
 class Metric:
@@ -145,7 +145,7 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], persli
                 # here we create a field with name: FUNC(METRIC_NAME). Example: MEAN(CSA)
                 agg_metric[slicegroup]['{}({})'.format(name, metric.label)] = result
             except Exception as e:
-                sct.log.warning(e)
+                logging.warning(e)
                 agg_metric[slicegroup]['{}({})'.format(name, metric.label)] = e.message
     return agg_metric
 
@@ -161,7 +161,7 @@ def check_labels(indiv_labels_ids, selected_labels):
 
         # Check if the selected labels are in the available labels ids
         if not set(list_ids_of_labels_of_interest).issubset(set(indiv_labels_ids)):
-            sct.log.error(
+            logging.error(
                 'At least one of the selected labels (' + str(list_ids_of_labels_of_interest) + ') is not available \
                 according to the label list from the text file in the atlas folder.')
 
@@ -431,7 +431,7 @@ def save_as_csv(agg_metric, fname_out, fname_in=None, append=False):
         for slicegroup in sorted(agg_metric.keys()):
             line = list()
             line.append(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))  # Timestamp
-            line.append(sct.__version__)  # SCT Version
+            line.append(__version__)  # SCT Version
             line.append(fname_in)  # file name associated with the results
             line.append(parse_num_list_inv(slicegroup))  # list all slices in slicegroup
             line.append(parse_num_list_inv(agg_metric[slicegroup]['VertLevel']))  # list vertebral levels

@@ -320,8 +320,8 @@ def main(args=None):
         param.dim = arguments['-dim']
     if '-r' in arguments:
         param.rm_tmp = bool(int(arguments['-r']))
-    if '-v' in arguments:
-        param.verbose = bool(int(arguments['-v']))
+    verbose = int(arguments.get('-v'))
+    sct.init_sct(log_level=verbose, update=True)  # Update log level
 
     # create the GLCM constructor
     glcm = ExtractGLCM(param=param, param_glcm=param_glcm)

@@ -290,8 +290,8 @@ def main(args=None):
         transform.interp = arguments["-x"]
     if "-r" in arguments:
         transform.remove_temp_files = int(arguments["-r"])
-    if "-v" in arguments:
-        transform.verbose = int(arguments["-v"])
+    transform.verbose = int(arguments.get('-v'))
+    sct.init_sct(log_level=transform.verbose, update=True)  # Update log level
 
     transform.apply()
 

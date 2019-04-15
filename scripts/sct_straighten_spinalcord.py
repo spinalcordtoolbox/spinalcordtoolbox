@@ -195,7 +195,8 @@ def main(args=None):
     else:
         sc_straight.path_output = './'
 
-    verbose = int(arguments.get("-v", 0))
+    verbose = int(arguments.get('-v'))
+    sct.init_sct(log_level=verbose, update=True)  # Update log level
     sc_straight.verbose = verbose
 
     # if "-cpu-nb" in arguments:

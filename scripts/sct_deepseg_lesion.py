@@ -103,7 +103,7 @@ def main():
         output_folder = arguments["-ofolder"]
 
     if ctr_algo == 'file' and "-file_centerline" not in args:
-        sct.log.error('Please use the flag -file_centerline to indicate the centerline filename.')
+        sct.printv('Please use the flag -file_centerline to indicate the centerline filename.', 1, 'error')
         sys.exit(1)
     
     if "-file_centerline" in args:
@@ -114,7 +114,8 @@ def main():
 
     remove_temp_files = int(arguments['-r'])
 
-    verbose = int(arguments['-v'])
+    verbose = int(arguments.get('-v'))
+    sct.init_sct(log_level=verbose, update=True)  # Update log level
 
     algo_config_stg = '\nMethod:'
     algo_config_stg += '\n\tCenterline algorithm: ' + str(ctr_algo)
