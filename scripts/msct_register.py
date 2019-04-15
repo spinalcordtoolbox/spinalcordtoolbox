@@ -36,8 +36,6 @@ logger = logging.getLogger(__name__)
 
 def register_slicewise(fname_src,
                         fname_dest,
-                        fname_src_seg=None,
-                        fname_dest_seg=None,
                         fname_mask='',
                         warp_forward_out='step0Warp.nii.gz',
                         warp_inverse_out='step0InverseWarp.nii.gz',
@@ -50,8 +48,10 @@ def register_slicewise(fname_src,
     im_and_seg = (paramreg.algo == 'centermassrot') and (paramreg.rot_method != 'PCA')  # bool for simplicity
 
     if im_and_seg is True:
-        fname_src_im = fname_src
-        fname_dest_im = fname_dest
+        fname_src_im = fname_src[0]
+        fname_dest_im = fname_dest[0]
+        fname_src_seg = fname_src[1]
+        fname_dest_seg = fname_dest[1]
         del fname_src
         del fname_dest  # to be sure it is not missused later
 
@@ -109,19 +109,19 @@ def register_slicewise(fname_src,
         sct.rmtree(path_tmp, verbose=verbose)
 
 
-def register2d_centermassrot(fname_src, fname_dest, fname_src_seg=None, fname_dest_seg=None, fname_warp='warp_forward.nii.gz', fname_warp_inv='warp_inverse.nii.gz', rot=1, polydeg=0, path_qc='./', verbose=0, pca_eigenratio_th=1.6):
+def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii.gz', fname_warp_inv='warp_inverse.nii.gz', rot=1, polydeg=0, path_qc='./', verbose=0, pca_eigenratio_th=1.6):
     """
     Rotate the source image to match the orientation of the destination image, using the first and second eigenvector
     of the PCA. This function should be used on segmentations (not images).
     This works for 2D and 3D images.  If 3D, it splits the image and performs the rotation slice-by-slice.
     input:
-        fname_source: name of moving image (type: string)
-        fname_dest: name of fixed image (type: string)
-        fname_src_seg : name of the segmentation of the source image
-        fname_dest_seg : name of the segmentation of the destination image
+        fname_source: name of moving image (type: string), if rot > 1, this needs to be a list with the first element
+        being the image fname and the second the segmentation fname
+        fname_dest: name of fixed image (type: string), if rot > 1, needs to be a list
         fname_warp: name of output 3d forward warping field
         fname_warp_inv: name of output 3d inverse warping field
         rot: estimate rotation with PCA (=1), HOG (=2) or no rotation (=0) Default = 1
+        rot>1 needs image AND segmentation to work
         polydeg: degree of polynomial regularization along z for rotation angle (type: int). 0: no regularization
         verbose:
     output:
@@ -129,8 +129,10 @@ def register2d_centermassrot(fname_src, fname_dest, fname_src_seg=None, fname_de
     """
 
     if rot > 1:  # following method wanting to use both im and seg could be tagged 3, 4, etc.
-        fname_src_im = fname_src
-        fname_dest_im = fname_dest
+        fname_src_im = fname_src[0]
+        fname_dest_im = fname_dest[0]
+        fname_src_seg = fname_src[1]
+        fname_dest_seg = fname_dest[1]
         del fname_src
         del fname_dest  # to be sure it is not missused later
 

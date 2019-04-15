@@ -573,16 +573,18 @@ def main(args=None):
 
 # register images
 # ==========================================================================================
-def register(src, dest, paramreg, param, i_step_str, src_seg=None, dest_seg=None):
+def register(src, dest, paramreg, param, i_step_str):
     # initiate default parameters of antsRegistration transformation
     ants_registration_params = {'rigid': '', 'affine': '', 'compositeaffine': '', 'similarity': '', 'translation': '',
                                 'bspline': ',10', 'gaussiandisplacementfield': ',3,0',
                                 'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',1,3'}
     output = ''  # default output if problem
 
-    if paramreg.steps[i_step_str].rot_method != 'PCA':
-        src_im = src  # user is expected to input images to src and dest
-        dest_im = dest
+    if paramreg.steps[i_step_str].algo == "centermassrot" and paramreg.steps[i_step_str].rot_method != 'PCA':
+        src_im = src[0]  # user is expected to input images to src and dest
+        dest_im = dest[0]
+        src_seg = src[1]
+        dest_seg = dest[1]
         del src
         del dest  # to be sure it is not missused later
 
@@ -791,10 +793,8 @@ def register(src, dest, paramreg, param, i_step_str, src_seg=None, dest_seg=None
                            remove_temp_files=param.remove_temp_files,
                            verbose=param.verbose)
         else:  # im_seg case
-            register_slicewise(src_im,
-                           dest_im,
-                           src_seg,
-                           dest_seg,
+            register_slicewise([src_im, src_seg],
+                           [dest_im, dest_seg],
                            paramreg=paramreg.steps[i_step_str],
                            fname_mask=fname_mask,
                            warp_forward_out=warp_forward_out,
