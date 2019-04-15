@@ -86,7 +86,8 @@ if __name__ == "__main__":
     fname_input1 = arguments['-i']
     fname_input2 = arguments['-d']
 
-    verbose = arguments['-v']
+    verbose = int(arguments.get('-v'))
+    sct.init_sct(log_level=verbose, update=True)  # Update log level
 
     tmp_dir = sct.tmp_create(verbose=verbose)  # create tmp directory
     tmp_dir = os.path.abspath(tmp_dir)

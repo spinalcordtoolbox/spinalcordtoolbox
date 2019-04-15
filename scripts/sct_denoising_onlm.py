@@ -155,8 +155,9 @@ if __name__ == "__main__":
 
     parameter = arguments["-p"]
     remove_temp_files = int(arguments["-r"])
-    verbose = int(arguments["-v"])
     noise_threshold = int(arguments['-d'])
+    verbose = int(arguments.get('-v'))
+    sct.init_sct(log_level=verbose, update=True)  # Update log level
 
     if "-i" in arguments:
         file_to_denoise = arguments["-i"]

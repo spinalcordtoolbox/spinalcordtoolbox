@@ -101,10 +101,8 @@ def run_main():
         path_data, file_data, ext_data = sct.extract_fname(fname_data)
         file_output = os.path.join(path_data, file_data + '_centerline')
 
-    # Verbosity
-    verbose = 0
-    if "-v" in arguments:
-        verbose = int(arguments["-v"])
+    verbose = int(arguments.get('-v'))
+    sct.init_sct(log_level=verbose, update=True)  # Update log level
 
     if method == 'viewer':
         im_labels = _call_viewer_centerline(Image(fname_data), interslice_gap=interslice_gap)

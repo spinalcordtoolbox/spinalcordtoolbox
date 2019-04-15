@@ -195,7 +195,8 @@ def main(args = None):
     arguments = parser.parse(args)
     fname_in = arguments["-i"]
     fname_out = arguments["-o"]
-    verbose = int(arguments['-v'])
+    verbose = int(arguments.get('-v'))
+    sct.init_sct(log_level=verbose, update=True)  # Update log level
     if '-type' in arguments:
         output_type = arguments['-type']
     else:

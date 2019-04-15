@@ -26,7 +26,6 @@ import spinalcordtoolbox.resampling
 class Param:
     # The constructor
     def __init__(self):
-        self.debug = 0
         self.fname_data = ''
         self.fname_out = ''
         self.new_size = ''
@@ -40,6 +39,7 @@ class Param:
 
 # initialize parameters
 param = Param()
+
 
 def get_parser():
     parser = Parser(__file__)
@@ -90,51 +90,42 @@ def get_parser():
 
 
 def run_main():
-    # Parameters for debug mode
-    if param.debug:
-        sct.log.warning('\n*** WARNING: DEBUG MODE ON ***\n')
-        # get path of the testing data
-        path_sct_data = os.path.join(sct.__data_dir__, "sct_testing_data")
-        param.fname_data = os.path.join(path_sct_data, "fmri", "fmri.nii.gz")
-        param.new_size = '2'  # '0.5x0.5x1'
-        param.remove_temp_files = 0
-        param.verbose = 1
+    parser = get_parser()
+    arguments = parser.parse(sys.argv[1:])
+    param.fname_data = arguments["-i"]
+    arg = 0
+    if "-f" in arguments:
+        param.new_size = arguments["-f"]
+        param.new_size_type = 'factor'
+        arg += 1
+    elif "-mm" in arguments:
+        param.new_size = arguments["-mm"]
+        param.new_size_type = 'mm'
+        arg += 1
+    elif "-vox" in arguments:
+        param.new_size = arguments["-vox"]
+        param.new_size_type = 'vox'
+        arg += 1
     else:
-        parser = get_parser()
-        arguments = parser.parse(sys.argv[1:])
-        param.fname_data = arguments["-i"]
-        arg = 0
-        if "-f" in arguments:
-            param.new_size = arguments["-f"]
-            param.new_size_type = 'factor'
-            arg += 1
-        elif "-mm" in arguments:
-            param.new_size = arguments["-mm"]
-            param.new_size_type = 'mm'
-            arg += 1
-        elif "-vox" in arguments:
-            param.new_size = arguments["-vox"]
-            param.new_size_type = 'vox'
-            arg += 1
+        sct.printv(parser.usage.generate(error='ERROR: you need to specify one of those three arguments : -f, -mm or -vox'))
+
+    if arg > 1:
+        sct.printv(parser.usage.generate(error='ERROR: you need to specify ONLY one of those three arguments : -f, -mm or -vox'))
+
+    if "-o" in arguments:
+        param.fname_out = arguments["-o"]
+    if "-x" in arguments:
+        if len(arguments["-x"]) == 1:
+            param.interpolation = int(arguments["-x"])
         else:
-            sct.printv(parser.usage.generate(error='ERROR: you need to specify one of those three arguments : -f, -mm or -vox'))
-
-        if arg > 1:
-            sct.printv(parser.usage.generate(error='ERROR: you need to specify ONLY one of those three arguments : -f, -mm or -vox'))
-
-        if "-o" in arguments:
-            param.fname_out = arguments["-o"]
-        if "-x" in arguments:
-            if len(arguments["-x"]) == 1:
-                param.interpolation = int(arguments["-x"])
-            else:
-                param.interpolation = arguments["-x"]
-        if "-v" in arguments:
-            param.verbose = int(arguments["-v"])
+            param.interpolation = arguments["-x"]
+    param.verbose = int(arguments.get('-v'))
+    sct.init_sct(log_level=param.verbose, update=True)  # Update log level
 
     spinalcordtoolbox.resampling.resample_file(param.fname_data,
                                                param.fname_out, param.new_size, param.new_size_type,
                                                param.interpolation, param.verbose)
+
 
 if __name__ == "__main__":
     sct.init_sct()
