@@ -45,7 +45,8 @@ def register_slicewise(fname_src,
                         remove_temp_files=0,
                         verbose=0):
 
-    im_and_seg = (paramreg.algo == 'centermassrot') and (paramreg.rot_method != 'PCA')  # bool for simplicity
+    im_and_seg = (paramreg.algo == 'centermassrot') and (paramreg.rot_method == 'HOG')  # bool for simplicity
+    # future contributor wanting to implement a method that use both im and seg will add: and (paramreg.rot_method == 'OTHER_METHOD')
 
     if im_and_seg is True:
         fname_src_im = fname_src[0]
