@@ -141,8 +141,8 @@ def main(args=None):
         input_tr_max = arguments["-b"][1]
     if "-tr" in arguments :
         input_tr = arguments["-tr"]
-    if "-v" in arguments :
-        verbose = int(arguments["-v"])
+    verbose = int(arguments.get('-v'))
+    sct.init_sct(log_level=verbose, update=True)  # Update log level
 
     graph = ErnstAngle(input_t1, tr=input_tr, fname_output=input_fname_output)
     if input_tr is not None:

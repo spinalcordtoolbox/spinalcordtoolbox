@@ -4,10 +4,7 @@
 
 from __future__ import absolute_import
 
-import sys, io, os, re
-import time, datetime
-import platform
-import logging
+import io, os, re
 import subprocess
 
 
@@ -112,7 +109,6 @@ __sct_dir__ = os.getenv("SCT_DIR", os.path.dirname(os.path.dirname(os.path.realp
 __version__ = _version_string()
 __data_dir__ = os.getenv("SCT_DATA_DIR", os.path.join(__sct_dir__, 'data'))
 
-logger = logging.getLogger('sct')
 
 def parse_num_list(str_num):
     """

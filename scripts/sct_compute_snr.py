@@ -70,10 +70,10 @@ def get_parser():
                       example=['0', '1'])
     parser.add_option(name="-v",
                       type_value="multiple_choice",
-                      description="""Verbose. 0: nothing. 1: basic.""",
+                      description="Verbose. 0: nothing, 1: basic, 2: extended.",
                       mandatory=False,
-                      default_value='0',
-                      example=['0', '1'])
+                      example=['0', '1', '2'],
+                      default_value='1')
     return parser
 
 
@@ -107,6 +107,8 @@ def main():
         index_vol_user = arguments['-vol']
     else:
         index_vol_user = ''
+    verbose = int(arguments.get('-v'))
+    sct.init_sct(log_level=verbose, update=True)  # Update log level
 
     # Check parameters
     if method == 'diff':

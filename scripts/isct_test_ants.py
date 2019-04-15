@@ -145,7 +145,7 @@ def main():
 #=======================================================================================================================
 def printv(string, verbose):
     if verbose:
-        sct.log.info(string)
+        logger.info(string)
 
 
 # sct.printv(usage)
