@@ -298,6 +298,14 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       type_value='folder_creation',
                       description='The path where the quality control generated content will be saved',
                       default_value=None)
+    parser.add_option(name='-qc-dataset',
+                      type_value='str',
+                      description='If provided, this string will be mentioned in the QC report as the dataset the process was run on',
+                      )
+    parser.add_option(name='-qc-subject',
+                      type_value='str',
+                      description='If provided, this string will be mentioned in the QC report as the subject the process was run on',
+                      )
     parser.add_option(name='-correct-seg',
                       type_value="multiple_choice",
                       description="Enable (1) or disable (0) the algorithm that checks and correct the output "
@@ -602,9 +610,11 @@ def main(arguments):
     img_seg = propseg(img_input, arguments)
     fname_seg = img_seg.absolutepath
     path_qc = arguments.get("-qc", None)
+    qc_dataset = arguments.get("-qc-dataset", None)
+    qc_subject = arguments.get("-qc-subject", None)
     if path_qc is not None:
         generate_qc(fname_in1=fname_input_data, fname_seg=fname_seg, args=args, path_qc=os.path.abspath(path_qc),
-                    process='sct_propseg')
+                    dataset=qc_dataset, subject=qc_subject, process='sct_propseg')
     sct.display_viewer_syntax([fname_input_data, fname_seg], colormaps=['gray', 'red'], opacities=['', '1'])
 
 

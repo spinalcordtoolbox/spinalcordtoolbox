@@ -152,10 +152,12 @@ def get_parser(paramreg=None):
                                   paramreg.steps['1'].poly + "\n"
                                                              "smoothWarpXY: <int> Smooth XY warping field (only for algo=columnwize). Default=" +
                                   paramreg.steps['1'].smoothWarpXY + "\n"
-                                                                     "pca_eigenratio_th: <int> Min ratio between the two eigenvalues for PCA-based angular adjustment (only for algo=centermassrot). Default=" +
+                                                                     "pca_eigenratio_th: <int> Min ratio between the two eigenvalues for PCA-based angular adjustment (only for algo=centermassrot and rot_method=pca). Default=" +
                                   paramreg.steps['1'].pca_eigenratio_th + "\n"
                                                                           "dof: <str> Degree of freedom for type=label. Separate with '_'. Default=" +
-                                  paramreg.steps['0'].dof + "\n",
+                                  paramreg.steps['0'].dof + "\n" +
+                                  paramreg.steps['1'].rot_method + "\n"
+                                                                    "rot_method : rotation method to be used if algo=centermassrot is used, can take the value {pca,hog}",
                       mandatory=False,
                       example="step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=im,algo=syn,metric=MI,iter=5,shrink=2")
     parser.add_option(name="-identity",
@@ -188,6 +190,14 @@ def get_parser(paramreg=None):
                       type_value='folder_creation',
                       description='The path where the quality control generated content will be saved',
                       default_value=None)
+    parser.add_option(name='-qc-dataset',
+                      type_value='str',
+                      description='If provided, this string will be mentioned in the QC report as the dataset the process was run on',
+                      )
+    parser.add_option(name='-qc-subject',
+                      type_value='str',
+                      description='If provided, this string will be mentioned in the QC report as the subject the process was run on',
+                      )
     parser.add_option(name="-r",
                       type_value="multiple_choice",
                       description="""Remove temporary files.""",
@@ -218,7 +228,7 @@ class Param:
 class Paramreg(object):
     def __init__(self, step=None, type=None, algo='syn', metric='MeanSquares', iter='10', shrink='1', smooth='0',
                  gradStep='0.5', deformation='1x1x0', init='', poly='5', slicewise='0', laplacian='0',
-                 dof='Tx_Ty_Tz_Rx_Ry_Rz', smoothWarpXY='2', pca_eigenratio_th='1.6'):
+                 dof='Tx_Ty_Tz_Rx_Ry_Rz', smoothWarpXY='2', pca_eigenratio_th='1.6', rot_method='PCA'):
         self.step = step
         self.type = type
         self.algo = algo
@@ -235,9 +245,10 @@ class Paramreg(object):
         self.dof = dof  # only for type=label
         self.smoothWarpXY = smoothWarpXY  # only for algo=columnwise
         self.pca_eigenratio_th = pca_eigenratio_th  # only for algo=centermassrot
+        self.rot_method = rot_method
 
         # list of possible values for self.type
-        self.type_list = ['im', 'seg', 'label', 'im_seg']
+        self.type_list = ['im', 'seg', 'label']
 
     # update constructor with user's parameters
     def update(self, paramreg_user):
@@ -349,6 +360,8 @@ def main(args=None):
         for paramStep in paramreg_user:
             paramreg.addStep(paramStep)
     path_qc = arguments.get("-qc", None)
+    qc_dataset = arguments.get("-qc-dataset", None)
+    qc_subject = arguments.get("-qc-subject", None)
 
     identity = int(arguments['-identity'])
     interp = arguments['-x']
@@ -547,7 +560,8 @@ def main(args=None):
     if path_qc is not None:
         if fname_dest_seg:
             generate_qc(fname_src2dest, fname_in2=fname_dest, fname_seg=fname_dest_seg, args=args,
-                        path_qc=os.path.abspath(path_qc), process='sct_register_multimodal')
+                        path_qc=os.path.abspath(path_qc), dataset=qc_dataset, subject=qc_subject,
+                        process='sct_register_multimodal')
         else:
             sct.printv('WARNING: Cannot generate QC because it requires destination segmentation.', 1, 'warning')
 
@@ -565,12 +579,11 @@ def register(src, dest, paramreg, param, i_step_str, src_seg=None, dest_seg=None
                                 'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',1,3'}
     output = ''  # default output if problem
 
-    if paramreg.steps[i_step_str].type == 'im_seg':
-        src_im = src
+    if paramreg.steps[i_step_str].rot_method != 'PCA':
+        src_im = src  # user is expected to input images to src and dest
         dest_im = dest
         del src
-        del dest # to be sure it is not missused later
-        # normally im_seg only if algo = centermassrot
+        del dest  # to be sure it is not missused later
 
 
     # display arguments
@@ -589,6 +602,7 @@ def register(src, dest, paramreg, param, i_step_str, src_seg=None, dest_seg=None
     sct.printv('  poly ........... ' + paramreg.steps[i_step_str].poly, param.verbose)
     sct.printv('  dof ............ ' + paramreg.steps[i_step_str].dof, param.verbose)
     sct.printv('  smoothWarpXY ... ' + paramreg.steps[i_step_str].smoothWarpXY, param.verbose)
+    sct.printv('  rot_method ... ' + paramreg.steps[i_step_str].rot_method, param.verbose)
 
     # set metricSize
     if paramreg.steps[i_step_str].metric == 'MI':
@@ -742,7 +756,7 @@ def register(src, dest, paramreg, param, i_step_str, src_seg=None, dest_seg=None
         # smooth data
         if not paramreg.steps[i_step_str].smooth == '0':
             sct.printv('\nSmooth data', param.verbose)
-            if paramreg.steps[i_step_str].type == 'im_seg':
+            if paramreg.steps[i_step_str].rot_method != 'PCA':
                 sct.run(['sct_maths', '-i', src, '-smooth', paramreg.steps[i_step_str].smooth + ','
                          + paramreg.steps[i_step_str].smooth + ',0', '-o', sct.add_suffix(src, '_smooth')])
                 sct.run(['sct_maths', '-i', dest, '-smooth', paramreg.steps[i_step_str].smooth + ','
@@ -765,7 +779,7 @@ def register(src, dest, paramreg, param, i_step_str, src_seg=None, dest_seg=None
         from msct_register import register_slicewise
         warp_forward_out = 'step' + i_step_str + 'Warp.nii.gz'
         warp_inverse_out = 'step' + i_step_str + 'InverseWarp.nii.gz'
-        if paramreg.steps[i_step_str].type != 'im_seg':
+        if paramreg.steps[i_step_str].rot_method != 'PCA':
             register_slicewise(src,
                            dest,
                            paramreg=paramreg.steps[i_step_str],
@@ -775,7 +789,7 @@ def register(src, dest, paramreg, param, i_step_str, src_seg=None, dest_seg=None
                            ants_registration_params=ants_registration_params,
                            remove_temp_files=param.remove_temp_files,
                            verbose=param.verbose)
-        else:
+        else:  # im_seg case
             register_slicewise(src_im,
                            dest_im,
                            src_seg,
