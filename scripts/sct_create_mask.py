@@ -73,8 +73,9 @@ def main(args=None):
         param.fname_out = os.path.abspath(arguments['-o'])
     if '-r' in arguments:
         param.remove_temp_files = int(arguments['-r'])
-    if '-v' in arguments:
-        param.verbose = int(arguments['-v'])
+
+    param.verbose = int(arguments.get('-v'))
+    sct.init_sct(log_level=param.verbose, update=True)  # Update log level
 
     # run main program
     create_mask(param)

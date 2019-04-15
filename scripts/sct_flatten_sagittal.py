@@ -144,7 +144,8 @@ if __name__ == "__main__":
     arguments = parser.parse(sys.argv[1:])
     fname_anat = arguments['-i']
     fname_centerline = arguments['-s']
-    verbose = int(arguments['-v'])
+    verbose = int(arguments.get('-v'))
+    sct.init_sct(log_level=verbose, update=True)  # Update log level
 
     # call main function
     main(fname_anat, fname_centerline, verbose)

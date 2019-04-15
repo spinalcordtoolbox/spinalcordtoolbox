@@ -474,11 +474,11 @@ def get_parser():
                       default_value='hausdorff_distance.txt',
                       example='my_hausdorff_dist.txt')
     parser.add_option(name="-v",
-                      type_value="int",
-                      description="verbose: 0 = nothing, 1 = classic, 2 = expended",
+                      type_value="multiple_choice",
+                      description="Verbose. 0: nothing, 1: basic, 2: extended.",
                       mandatory=False,
-                      default_value=0,
-                      example='1')
+                      example=['0', '1', '2'],
+                      default_value='1')
     return parser
 
 ########################################################################################################################
@@ -509,8 +509,8 @@ if __name__ == "__main__":
             resample_to = arguments["-resampling"]
         if "-o" in arguments:
             output_fname = arguments["-o"]
-        if "-v" in arguments:
-            param.verbose = int(arguments["-v"])
+        param.verbose = int(arguments.get('-v'))
+        sct.init_sct(log_level=param.verbose, update=True)  # Update log level
 
         tmp_dir = sct.tmp_create()
         im1_name = "im1.nii.gz"

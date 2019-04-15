@@ -18,7 +18,7 @@
 
 from __future__ import division, absolute_import
 
-import sys, os, shutil
+import sys, os, shutil, logging
 from math import asin, cos, sin, acos
 import numpy as np
 
@@ -30,6 +30,8 @@ from spinalcordtoolbox.image import Image
 import sct_utils as sct
 from sct_convert import convert
 from sct_register_multimodal import Paramreg
+
+logger = logging.getLogger(__name__)
 
 
 def register_slicewise(fname_src,
@@ -291,7 +293,8 @@ def register2d_centermassrot(fname_src, fname_dest, fname_src_seg=None, fname_de
 
     # construct 3D warping matrix
     for iz in z_nonzero:
-        sct.no_new_line_log('{}/{}..'.format(iz + 1, nz))
+        # TODO: replace the thing below with "tqdm-like" logger-based function
+        # sct.no_new_line_log('{}/{}..'.format(iz + 1, nz))
         # get indices of x and y coordinates
         row, col = np.indices((nx, ny))
         # build 2xn array of coordinates in pixel space
@@ -369,7 +372,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_src_seg=None, fname_de
         warp_inv_x[:, :, iz] = np.array([coord_inverse_phy[i, 0] - coord_init_phy[i, 0] for i in range(nx * ny)]).reshape((nx, ny))
         warp_inv_y[:, :, iz] = np.array([coord_inverse_phy[i, 1] - coord_init_phy[i, 1] for i in range(nx * ny)]).reshape((nx, ny))
 
-    sct.log.info('\n Done')
+    logger.info('\n Done')
 
     # Generate forward warping field (defined in destination space)
     generate_warping_field(fname_dest, warp_x, warp_y, fname_warp, verbose)
@@ -823,7 +826,7 @@ def numerotation(nb):
         nb_output: the number of the slice for fslsplit (type: string)
     """
     if nb < 0:
-        sct.log.error('ERROR: the number is negative.')
+        logger.error('ERROR: the number is negative.')
         sys.exit(status=2)
     elif -1 < nb < 10:
         nb_output = '000' + str(nb)
@@ -834,7 +837,7 @@ def numerotation(nb):
     elif 999 < nb < 10000:
         nb_output = str(nb)
     elif nb > 9999:
-        sct.log.error('ERROR: the number is superior to 9999.')
+        logger.error('ERROR: the number is superior to 9999.')
         sys.exit(status = 2)
     return nb_output
 

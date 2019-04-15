@@ -41,8 +41,6 @@ def main(args):
     import numpy as np
     import matplotlib.pyplot as plt
 
-    sct.start_stream_logger()
-
     # make sure number of inputs and labels are the same
     if len(arguments.input) != len(arguments.label):
         raise RuntimeError("Mismatch between # of files and labels")

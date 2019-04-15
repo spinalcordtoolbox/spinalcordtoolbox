@@ -540,10 +540,8 @@ def main(args=None):
         rm_tmp = True
 
     # Verbosity
-    if '-v' in arguments:
-        verbose = int(arguments['-v'])
-    else:
-        verbose = '1'
+    verbose = int(arguments.get('-v'))
+    sct.init_sct(log_level=verbose, update=True)  # Update log level
 
     # create the Lesion constructor
     lesion_obj = AnalyzeLeion(fname_mask=fname_mask,
