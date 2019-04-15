@@ -119,17 +119,14 @@ def register2d_centermassrot(fname_src, fname_dest, fname_src_seg=None, fname_de
         fname_dest_seg : name of the segmentation of the destination image
         fname_warp: name of output 3d forward warping field
         fname_warp_inv: name of output 3d inverse warping field
-        rot: estimate rotation with PCA (type: int)
+        rot: estimate rotation with PCA (=1), HOG (=2)
         polydeg: degree of polynomial regularization along z for rotation angle (type: int). 0: no regularization
         verbose:
     output:
         none
     """
 
-    im_and_seg = (fname_dest_seg is not None) and (fname_src_seg is not None)  # bool indicating if the user provided
-    # for the source and the destination both the image and the seg
-
-    if im_and_seg is True:
+    if rot > 1:  # following method wanting to use bothe im and seg could be tagged 3, 4, etc.
         fname_src_im = fname_src
         fname_dest_im = fname_dest
         del fname_src
@@ -142,14 +139,14 @@ def register2d_centermassrot(fname_src, fname_dest, fname_src_seg=None, fname_de
 
     # Get image dimensions and retrieve nz
     sct.printv('\nGet image dimensions of destination image...', verbose)
-    if im_and_seg is False:
+    if rot <= 1:
         nx, ny, nz, nt, px, py, pz, pt = Image(fname_dest).dim
     else:
         nx, ny, nz, nt, px, py, pz, pt = Image(fname_dest_im).dim
     sct.printv('  matrix size: ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz), verbose)
     sct.printv('  voxel size:  ' + str(px) + 'mm x ' + str(py) + 'mm x ' + str(pz) + 'mm', verbose)
 
-    if im_and_seg is False:
+    if rot <= 1:
         # Split source volume along z
         sct.printv('\nSplit input volume...', verbose)
         from sct_image import split_data
@@ -217,7 +214,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_src_seg=None, fname_de
     angle_src_dest = np.zeros(nz)
     z_nonzero = []
 
-    if im_and_seg is False:
+    if rot <= 1:
         # Loop across slices
         for iz in range(0, nz):
             try:
@@ -278,7 +275,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_src_seg=None, fname_de
 
     # initialize warping fields
     # N.B. forward transfo is defined in destination space and inverse transfo is defined in the source space
-    if im_and_seg is True:
+    if rot > 1:
         im_src = im_src_im
         im_dest = im_dest_im
         data_dest = data_dest_im
