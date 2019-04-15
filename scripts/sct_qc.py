@@ -20,7 +20,8 @@ def get_parser():
         formatter_class=argparse.RawTextHelpFormatter,
         epilog='Examples:\n'
                'sct_qc -i t2.nii.gz -s t2_seg.nii.gz -p sct_deepseg_sc\n'
-               'sct_qc -i t2.nii.gz -s t2_seg_labeled.nii.gz -p sct_label_vertebrae'
+               'sct_qc -i t2.nii.gz -s t2_seg_labeled.nii.gz -p sct_label_vertebrae\n'
+               'sct_qc -i t2.nii.gz -s t2_seg.nii.gz -p sct_deepseg_sc -qc-dataset mydata -qc-subject sub-45'
     )
     parser.add_argument('-i',
                         metavar='IMAGE',
@@ -46,17 +47,30 @@ def get_parser():
                         help='Path to save QC report. Default: ./qc',
                         required=False,
                         default='./qc')
+    parser.add_argument('-qc-dataset',
+                        metavar='DATASET',
+                        help='If provided, this string will be mentioned in the QC report as the dataset the process '
+                             'was run on',
+                        required=False)
+    parser.add_argument('-qc-subject',
+                        metavar='SUBJECT',
+                        help='If provided, this string will be mentioned in the QC report as the subject the process '
+                             'was run on',
+                        required=False)
     return parser
 
 
 def main(args):
     from spinalcordtoolbox.reports.qc import generate_qc
 
+    print args
     generate_qc(fname_in1=args.i,
                 fname_in2=args.d,
                 fname_seg=args.s,
                 args=None,
                 path_qc=args.qc,
+                dataset=args.qc_dataset,
+                subject=args.qc_subject,
                 process=args.p)
 
 
