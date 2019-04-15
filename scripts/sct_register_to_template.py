@@ -552,7 +552,7 @@ def main(args=None):
             # register src --> dest
             # TODO: display param for debugging
             if paramreg.steps[str(i_step)].algo == 'centermassrot' and paramreg.steps[str(i_step)].rot_method != 'PCA': # im_seg case
-                warp_forward_out, warp_inverse_out = register(src, dest, paramreg, param, str(i_step), src_seg=src_seg, dest_seg=dest_seg)
+                warp_forward_out, warp_inverse_out = register([src, src_seg], [dest, dest_seg], paramreg, param, str(i_step))
             else:
                 warp_forward_out, warp_inverse_out = register(src, dest, paramreg, param, str(i_step))
             warp_forward.append(warp_forward_out)
