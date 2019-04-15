@@ -61,7 +61,7 @@ def main(args):
 
 
 if __name__ == '__main__':
-    sct.init()
+    sct.init_sct()
     parser = get_parser()
     arguments = parser.parse_args()
     main(arguments)
