@@ -363,7 +363,8 @@ def main(args=None):
     identity = int(arguments['-identity'])
     interp = arguments['-x']
     remove_temp_files = int(arguments['-r'])
-    verbose = int(arguments['-v'])
+    verbose = int(arguments.get('-v'))
+    sct.init_sct(log_level=verbose, update=True)  # Update log level
 
     # sct.printv(arguments)
     sct.printv('\nInput parameters:')

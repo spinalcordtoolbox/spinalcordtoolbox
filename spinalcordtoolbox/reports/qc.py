@@ -28,7 +28,8 @@ import sct_utils as sct
 from spinalcordtoolbox.image import Image
 import spinalcordtoolbox.reports.slice as qcslice
 
-logger = logging.getLogger("sct.{}".format(__file__))
+logger = logging.getLogger(__name__)
+
 
 class QcImage(object):
     """

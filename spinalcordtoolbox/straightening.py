@@ -8,7 +8,7 @@
 
 from __future__ import absolute_import
 
-import os, sys, time, logging
+import os, time, logging
 import bisect
 import numpy as np
 from tqdm import tqdm
@@ -21,6 +21,8 @@ from msct_types import Centerline
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.centerline.core import get_centerline
+
+logger = logging.getLogger(__name__)
 
 
 class SpinalCordStraightener(object):
@@ -154,7 +156,7 @@ class SpinalCordStraightener(object):
         number_of_points = centerline.number_of_points
 
         # ==========================================================================================
-        logging.info('Create the straight space and the safe zone')
+        logger.info('Create the straight space and the safe zone')
         # 3. compute length of centerline
         # compute the length of the spinal cord based on fitted centerline and size of centerline in z direction
 
@@ -195,11 +197,11 @@ class SpinalCordStraightener(object):
         bound_straight = [(z_centerline[inferior_bound] - middle_slice) * factor_curved_straight + middle_slice,
                           (z_centerline[superior_bound] - middle_slice) * factor_curved_straight + middle_slice]
 
-        logging.info('Length of spinal cord: {}'.format(length_centerline))
-        logging.info('Size of spinal cord in z direction: {}'.format(size_z_centerline))
-        logging.info('Ratio length/size: {}'.format(factor_curved_straight))
-        logging.info('Safe zone boundaries (curved space): {}'.format(bound_curved))
-        logging.info('Safe zone boundaries (straight space): {}'.format(bound_straight))
+        logger.info('Length of spinal cord: {}'.format(length_centerline))
+        logger.info('Size of spinal cord in z direction: {}'.format(size_z_centerline))
+        logger.info('Ratio length/size: {}'.format(factor_curved_straight))
+        logger.info('Safe zone boundaries (curved space): {}'.format(bound_curved))
+        logger.info('Safe zone boundaries (straight space): {}'.format(bound_straight))
 
         # 4. compute and generate straight space
         # points along curved centerline are already regularly spaced.
@@ -247,7 +249,7 @@ class SpinalCordStraightener(object):
                 centerline_straight.save_centerline(image=discs_ref_image, fname_output='discs_ref_image.nii.gz')
 
         else:
-            logging.info('Pad input volume to account for spinal cord length...')
+            logger.info('Pad input volume to account for spinal cord length...')
 
             start_point, end_point = bound_straight[0], bound_straight[1]
             offset_z = 0
@@ -331,7 +333,7 @@ class SpinalCordStraightener(object):
             end_point_coord = image_centerline_pad.transfo_phys2pix([[0, 0, end_point]])[0]
 
             number_of_voxel = nx * ny * nz
-            logging.debug('Number of voxels: {}'.format(number_of_voxel))
+            logger.debug('Number of voxels: {}'.format(number_of_voxel))
 
             time_centerlines = time.time()
 
@@ -349,7 +351,7 @@ class SpinalCordStraightener(object):
                                              dx_straight, dy_straight, dz_straight)
 
             time_centerlines = time.time() - time_centerlines
-            logging.info('Time to generate centerline: {} ms'.format(np.round(time_centerlines * 1000.0)))
+            logger.info('Time to generate centerline: {} ms'.format(np.round(time_centerlines * 1000.0)))
 
         if verbose == 2:
             # TODO: use OO
@@ -513,16 +515,16 @@ class SpinalCordStraightener(object):
         if self.curved2straight:
             img = Nifti1Image(data_warp_curved2straight, None, hdr_warp_s)
             save(img, 'tmp.curve2straight.nii.gz')
-            logging.info('Warping field generated: tmp.curve2straight.nii.gz')
+            logger.info('Warping field generated: tmp.curve2straight.nii.gz')
 
         if self.straight2curved:
             img = Nifti1Image(data_warp_straight2curved, None, hdr_warp)
             save(img, 'tmp.straight2curve.nii.gz')
-            logging.info('Warping field generated: tmp.straight2curve.nii.gz')
+            logger.info('Warping field generated: tmp.straight2curve.nii.gz')
 
         image_centerline_straight.save(fname_ref)
         if self.curved2straight:
-            logging.info('Apply transformation to input image...')
+            logger.info('Apply transformation to input image...')
             sct.run(['isct_antsApplyTransforms',
                      '-d', '3',
                      '-r', fname_ref,
@@ -538,7 +540,7 @@ class SpinalCordStraightener(object):
             # compute the error between the straightened centerline/segmentation and the central vertical line.
             # Ideally, the error should be zero.
             # Apply deformation to input image
-            logging.info('Apply transformation to centerline image...')
+            logger.info('Apply transformation to centerline image...')
             sct.run(['isct_antsApplyTransforms',
                      '-d', '3',
                      '-r', fname_ref,
@@ -584,7 +586,7 @@ class SpinalCordStraightener(object):
 
         # Generate output file (in current folder)
         # TODO: do not uncompress the warping field, it is too time consuming!
-        logging.info('Generate output files...')
+        logger.info('Generate output files...')
         if self.curved2straight:
             sct.generate_output_file(os.path.join(path_tmp, "tmp.curve2straight.nii.gz"),
                                      os.path.join(self.path_output, "warp_curve2straight.nii.gz"), verbose)
@@ -608,12 +610,12 @@ class SpinalCordStraightener(object):
 
         # Remove temporary files
         if remove_temp_files:
-            logging.info('Remove temporary files...')
+            logger.info('Remove temporary files...')
             sct.rmtree(path_tmp)
 
         if self.accuracy_results:
-            logging.info('Maximum x-y error: {} mm'.format(self.max_distance_straightening))
-            logging.info('Accuracy of straightening (MSE): {} mm'.format(self.mse_straightening))
+            logger.info('Maximum x-y error: {} mm'.format(self.max_distance_straightening))
+            logger.info('Accuracy of straightening (MSE): {} mm'.format(self.mse_straightening))
 
         # display elapsed time
         self.elapsed_time = int(np.round(time.time() - start_time))

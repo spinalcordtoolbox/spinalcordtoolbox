@@ -11,6 +11,7 @@
 from __future__ import absolute_import, division
 
 import argparse
+import sct_utils as sct
 
 
 def get_parser():
@@ -19,7 +20,8 @@ def get_parser():
         formatter_class=argparse.RawTextHelpFormatter,
         epilog='Examples:\n'
                'sct_qc -i t2.nii.gz -s t2_seg.nii.gz -p sct_deepseg_sc\n'
-               'sct_qc -i t2.nii.gz -s t2_seg_labeled.nii.gz -p sct_label_vertebrae'
+               'sct_qc -i t2.nii.gz -s t2_seg_labeled.nii.gz -p sct_label_vertebrae\n'
+               'sct_qc -i t2.nii.gz -s t2_seg.nii.gz -p sct_deepseg_sc -qc-dataset mydata -qc-subject sub-45'
     )
     parser.add_argument('-i',
                         metavar='IMAGE',
@@ -45,11 +47,16 @@ def get_parser():
                         help='Path to save QC report. Default: ./qc',
                         required=False,
                         default='./qc')
-    parser.add_argument('-v',
-                        help='Verbosity: 0: no verbosity, 1: verbosity (default).',
-                        choices=('0', '1'),
-                        type=int,
-                        default=1)
+    parser.add_argument('-qc-dataset',
+                        metavar='DATASET',
+                        help='If provided, this string will be mentioned in the QC report as the dataset the process '
+                             'was run on',
+                        required=False)
+    parser.add_argument('-qc-subject',
+                        metavar='SUBJECT',
+                        help='If provided, this string will be mentioned in the QC report as the subject the process '
+                             'was run on',
+                        required=False)
     return parser
 
 
@@ -61,10 +68,13 @@ def main(args):
                 fname_seg=args.s,
                 args=None,
                 path_qc=args.qc,
+                dataset=args.qc_dataset,
+                subject=args.qc_subject,
                 process=args.p)
 
 
 if __name__ == '__main__':
+    sct.init_sct()
     parser = get_parser()
     arguments = parser.parse_args()
     main(arguments)

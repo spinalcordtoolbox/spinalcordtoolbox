@@ -210,7 +210,8 @@ def main(args=None):
     contrast_template = arguments['-c']
     ref = arguments['-ref']
     remove_temp_files = int(arguments['-r'])
-    verbose = int(arguments['-v'])
+    verbose = int(arguments.get('-v'))
+    sct.init_sct(log_level=verbose, update=True)  # Update log level
     param.verbose = verbose  # TODO: not clean, unify verbose or param.verbose in code, but not both
     # if '-straighten-fitting' in arguments:
     param.straighten_fitting = arguments['-straighten-fitting']

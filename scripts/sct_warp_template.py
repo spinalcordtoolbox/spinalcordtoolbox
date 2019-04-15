@@ -207,7 +207,8 @@ def main(args=None):
     warp_spinal_levels = int(arguments["-s"])
     folder_out = arguments['-ofolder']
     path_template = arguments['-t']
-    verbose = int(arguments['-v'])
+    verbose = int(arguments.get('-v'))
+    sct.init_sct(log_level=verbose, update=True)  # Update log level
     path_qc = arguments.get("-qc", None)
     qc_dataset = arguments.get("-qc-dataset", None)
     qc_subject = arguments.get("-qc-subject", None)

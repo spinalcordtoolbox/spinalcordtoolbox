@@ -76,7 +76,7 @@ def test_integrity(param_test):
         except ValueError:
             # Hack to avoid "too many values to unpack" due to the recent addition of "Total processing time:" at the
             # end of a process. In the future we should simply output dice results as external csv file.
-            sct.log.debug("ValueError: Ignoring this line.")
+            logger.debug("ValueError: Ignoring this line.")
     result_dice_gm = np.mean(gm_dice)
 
     # extracting dice on WM
@@ -97,7 +97,7 @@ def test_integrity(param_test):
         except ValueError:
             # Hack to avoid "too many values to unpack" due to the recent addition of "Total processing time:" at the
             # end of a process. In the future we should simply output dice results as external csv file.
-            sct.log.debug("ValueError: Ignoring this line.")
+            logger.debug("ValueError: Ignoring this line.")
     result_dice_wm = np.mean(wm_dice)
 
     # Extracting hausdorff distance results

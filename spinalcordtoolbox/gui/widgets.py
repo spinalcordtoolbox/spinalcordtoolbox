@@ -18,8 +18,6 @@ from PyQt4 import QtCore, QtGui
 
 from spinalcordtoolbox.gui.base import MissingLabelWarning
 
-
-# logging.basicConfig(level=logging.WARNING)  # default mode: WARNING. debug mode: DEBUG
 logger = logging.getLogger(__name__)
 
 

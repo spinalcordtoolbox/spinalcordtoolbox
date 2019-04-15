@@ -219,7 +219,8 @@ To compute average MTR in a region defined by a single label file (could be bina
 
 def main(fname_data, path_label, method, slices, levels, fname_output, labels_user, append,
          fname_normalizing_label, normalization_method, label_to_fix, adv_param_user, fname_output_metric_map,
-         fname_mask_weight, fname_vertebral_labeling="", perslice=1, perlevel=1, discard_negative_values=False):
+         fname_mask_weight, fname_vertebral_labeling="", perslice=1, perlevel=1, discard_negative_values=False,
+         verbose=1):
     """
     Extract metrics from MRI data based on mask (could be single file of folder to atlas)
     :param fname_data: data to extract metric from
@@ -245,11 +246,9 @@ def main(fname_data, path_label, method, slices, levels, fname_output, labels_us
     :param perlevel: if user selected several levels, then the function outputs a metric within each vertebral level
            instead of a single average output.
     :param discard_negative_values: Bool: Discard negative voxels when computing metrics statistics
+    :param verbose
     :return:
     """
-
-    # Initialization
-    verbose = param_default.verbose
 
     # check if path_label is a file (e.g., single binary mask) instead of a folder (e.g., SCT atlas structure which
     # contains info_label.txt file)
@@ -409,9 +408,11 @@ if __name__ == "__main__":
         fname_mask_weight = ''
     # if 'discard_negative_values' in arguments:
     discard_negative_values = int(arguments['-discard-neg-val'])
+    verbose = int(arguments.get('-v'))
+    sct.init_sct(log_level=verbose, update=True)  # Update log level
 
     # call main function
     main(fname_data, path_label, method, parse_num_list(slices_of_interest), parse_num_list(vertebral_levels),
          fname_output, labels_user, append, fname_normalizing_label, normalization_method, label_to_fix,
          adv_param_user, fname_output_metric_map, fname_mask_weight, fname_vertebral_labeling=fname_vertebral_labeling,
-         perslice=perslice, perlevel=perlevel, discard_negative_values=discard_negative_values)
+         perslice=perslice, perlevel=perlevel, discard_negative_values=discard_negative_values, verbose=verbose)
