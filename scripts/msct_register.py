@@ -121,7 +121,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_src_seg=None, fname_de
         fname_dest_seg : name of the segmentation of the destination image
         fname_warp: name of output 3d forward warping field
         fname_warp_inv: name of output 3d inverse warping field
-        rot: estimate rotation with PCA (=1), HOG (=2)
+        rot: estimate rotation with PCA (=1), HOG (=2) or no rotation (=0) Default = 1
         polydeg: degree of polynomial regularization along z for rotation angle (type: int). 0: no regularization
         verbose:
     output:
