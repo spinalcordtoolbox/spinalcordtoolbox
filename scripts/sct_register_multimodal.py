@@ -782,7 +782,7 @@ def register(src, dest, paramreg, param, i_step_str):
         from msct_register import register_slicewise
         warp_forward_out = 'step' + i_step_str + 'Warp.nii.gz'
         warp_inverse_out = 'step' + i_step_str + 'InverseWarp.nii.gz'
-        if paramreg.steps[i_step_str].rot_method != 'PCA':
+        if paramreg.steps[i_step_str].rot_method == 'PCA':
             register_slicewise(src,
                            dest,
                            paramreg=paramreg.steps[i_step_str],
