@@ -63,7 +63,6 @@ def get_parser():
 def main(args):
     from spinalcordtoolbox.reports.qc import generate_qc
 
-    print args
     generate_qc(fname_in1=args.i,
                 fname_in2=args.d,
                 fname_seg=args.s,
