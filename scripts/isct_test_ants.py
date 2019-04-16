@@ -79,7 +79,7 @@ def main():
     nib.save(img_dest, 'data_dest.nii.gz')
 
     # Estimate rigid transformation
-    printv('\nEstimate rigid transformation between paired landmarks...', verbose)
+    sct.printv('\nEstimate rigid transformation between paired landmarks...', verbose)
     # TODO fixup isct_ants* parsers
     sct.run(['isct_antsRegistration',
      '-d', '3',
@@ -93,32 +93,32 @@ def main():
      '-n', 'NearestNeighbor'], verbose, is_sct_binary=True)
 
     # # Apply rigid transformation
-    # printv('\nApply rigid transformation to curved landmarks...', verbose)
+    # sct.printv('\nApply rigid transformation to curved landmarks...', verbose)
     # sct.run('sct_apply_transfo -i data_src.nii.gz -o data_src_rigid.nii.gz -d data_dest.nii.gz -w curve2straight_rigid.txt -p nn', verbose)
     #
     # # Estimate b-spline transformation curve --> straight
-    # printv('\nEstimate b-spline transformation: curve --> straight...', verbose)
+    # sct.printv('\nEstimate b-spline transformation: curve --> straight...', verbose)
     # sct.run('isct_ANTSLandmarksBSplineTransform data_dest.nii.gz data_src_rigid.nii.gz warp_curve2straight_intermediate.nii.gz 5x5x5 3 2 0', verbose)
     #
     # # Concatenate rigid and non-linear transformations...
-    # printv('\nConcatenate rigid and non-linear transformations...', verbose)
+    # sct.printv('\nConcatenate rigid and non-linear transformations...', verbose)
     # cmd = 'isct_ComposeMultiTransform 3 warp_curve2straight.nii.gz -R data_dest.nii.gz warp_curve2straight_intermediate.nii.gz curve2straight_rigid.txt'
-    # printv('>> '+cmd, verbose)
+    # sct.printv('>> '+cmd, verbose)
     # sct.run(cmd)
     #
     # # Apply deformation to input image
-    # printv('\nApply transformation to input image...', verbose)
+    # sct.printv('\nApply transformation to input image...', verbose)
     # sct.run('sct_apply_transfo -i data_src.nii.gz -o data_src_warp.nii.gz -d data_dest.nii.gz -w warp_curve2straight.nii.gz -p nn', verbose)
     #
     # Compute DICE coefficient between src and dest
-    printv('\nCompute DICE coefficient...', verbose)
+    sct.printv('\nCompute DICE coefficient...', verbose)
     sct.run(["sct_dice_coefficient",
      "-i", "data_dest.nii.gz",
      "-d", "data_src_reg.nii.gz",
      "-o", "dice.txt"], verbose)
     with open("dice.txt", "r") as file_dice:
         dice = float(file_dice.read().replace('3D Dice coefficient = ', ''))
-    printv('Dice coeff = ' + str(dice) + ' (should be above ' + str(dice_acceptable) + ')', verbose)
+    sct.printv('Dice coeff = ' + str(dice) + ' (should be above ' + str(dice_acceptable) + ')', verbose)
 
     # Check if DICE coefficient is above acceptable value
     if dice > dice_acceptable:
@@ -129,26 +129,19 @@ def main():
 
     # Delete temporary files
     if remove_temp_files == 1:
-        printv('\nDelete temporary files...', verbose)
+        sct.printv('\nDelete temporary files...', verbose)
         sct.rmtree(path_tmp)
 
     # output result for parent function
     if test_passed:
-        printv('\nTest passed!\n', verbose)
+        sct.printv('\nTest passed!\n', verbose)
         sys.exit(0)
     else:
-        printv('\nTest failed!\n', verbose)
+        sct.printv('\nTest failed!\n', verbose)
         sys.exit(1)
 
 
-# printv: enables to sct.printv(or not, depending on verbose status)
-#=======================================================================================================================
-def printv(string, verbose):
-    if verbose:
-        logger.info(string)
-
-
-# sct.printv(usage)
+# sct.sct.printv(usage)
 # ==========================================================================================
 def usage():
     print('\n' \
