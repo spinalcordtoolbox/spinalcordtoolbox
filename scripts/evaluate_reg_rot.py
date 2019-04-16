@@ -57,7 +57,7 @@ def main(args=None):
     sct_register_to_template(
         ['-i', fname_image, '-s', fname_seg, '-c', contrast, '-l',
          output_dir + "/" + (fname_seg.split("/")[-1]).split(".nii.gz")[0] + "_labeled.nii.gz", '-ofolder', output_dir, '-param',
-         "step=1,type=im_seg,algo=centermassrot,poly=0,slicewise=1", '-v', '0'])
+         "step=1,type=seg,algo=centermassrot,poly=0,slicewise=1,rot_method=PCA", '-v', '0'])
 
 
     #  TODO : write out dice scores as txt ? then func to agregate them
