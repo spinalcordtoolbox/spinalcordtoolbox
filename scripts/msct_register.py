@@ -86,7 +86,7 @@ def register_slicewise(fname_src,
             register2d_centermassrot('src.nii', 'dest.nii', fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, rot=1, polydeg=int(paramreg.poly), path_qc=path_qc, verbose=verbose, pca_eigenratio_th=float(paramreg.pca_eigenratio_th))
         else:  # here in the futur we can add a condition checking if rot is equal to 2, 3 , etc to choose the appropriate method
             # translation based of center of mass and rotation based on the symmetry of the image
-            register2d_centermassrot('src_im.nii', 'dest_im.nii', 'src_seg.nii', 'dest_seg.nii', fname_warp=warp_forward_out,
+            register2d_centermassrot(['src_im.nii','src_seg.nii'], ['dest_im.nii', 'dest_seg.nii'], fname_warp=warp_forward_out,
                                      fname_warp_inv=warp_inverse_out, rot=2, polydeg=int(paramreg.poly),
                                      path_qc=path_qc, verbose=verbose)
     elif paramreg.algo == 'columnwise':
