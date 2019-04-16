@@ -152,10 +152,12 @@ def get_parser(paramreg=None):
                                   paramreg.steps['1'].poly + "\n"
                                                              "smoothWarpXY: <int> Smooth XY warping field (only for algo=columnwize). Default=" +
                                   paramreg.steps['1'].smoothWarpXY + "\n"
-                                                                     "pca_eigenratio_th: <int> Min ratio between the two eigenvalues for PCA-based angular adjustment (only for algo=centermassrot). Default=" +
+                                                                     "pca_eigenratio_th: <int> Min ratio between the two eigenvalues for PCA-based angular adjustment (only for algo=centermassrot and rot_method=pca). Default=" +
                                   paramreg.steps['1'].pca_eigenratio_th + "\n"
                                                                           "dof: <str> Degree of freedom for type=label. Separate with '_'. Default=" +
-                                  paramreg.steps['0'].dof + "\n",
+                                  paramreg.steps['0'].dof + "\n" +
+                                  paramreg.steps['1'].rot_method + "\n"
+                                                                    "rot_method : rotation method to be used if algo=centermassrot is used, can take the value {pca,hog}",
                       mandatory=False,
                       example="step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=im,algo=syn,metric=MI,iter=5,shrink=2")
     parser.add_option(name="-identity",
@@ -226,7 +228,7 @@ class Param:
 class Paramreg(object):
     def __init__(self, step=None, type=None, algo='syn', metric='MeanSquares', iter='10', shrink='1', smooth='0',
                  gradStep='0.5', deformation='1x1x0', init='', poly='5', slicewise='0', laplacian='0',
-                 dof='Tx_Ty_Tz_Rx_Ry_Rz', smoothWarpXY='2', pca_eigenratio_th='1.6'):
+                 dof='Tx_Ty_Tz_Rx_Ry_Rz', smoothWarpXY='2', pca_eigenratio_th='1.6', rot_method='PCA'):
         self.step = step
         self.type = type
         self.algo = algo
@@ -243,9 +245,10 @@ class Paramreg(object):
         self.dof = dof  # only for type=label
         self.smoothWarpXY = smoothWarpXY  # only for algo=columnwise
         self.pca_eigenratio_th = pca_eigenratio_th  # only for algo=centermassrot
+        self.rot_method = rot_method
 
         # list of possible values for self.type
-        self.type_list = ['im', 'seg', 'label', 'im_seg']
+        self.type_list = ['im', 'seg', 'label']
 
     # update constructor with user's parameters
     def update(self, paramreg_user):
@@ -363,7 +366,8 @@ def main(args=None):
     identity = int(arguments['-identity'])
     interp = arguments['-x']
     remove_temp_files = int(arguments['-r'])
-    verbose = int(arguments['-v'])
+    verbose = int(arguments.get('-v'))
+    sct.init_sct(log_level=verbose, update=True)  # Update log level
 
     # sct.printv(arguments)
     sct.printv('\nInput parameters:')
@@ -569,19 +573,20 @@ def main(args=None):
 
 # register images
 # ==========================================================================================
-def register(src, dest, paramreg, param, i_step_str, src_seg=None, dest_seg=None):
+def register(src, dest, paramreg, param, i_step_str):
     # initiate default parameters of antsRegistration transformation
     ants_registration_params = {'rigid': '', 'affine': '', 'compositeaffine': '', 'similarity': '', 'translation': '',
                                 'bspline': ',10', 'gaussiandisplacementfield': ',3,0',
                                 'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',1,3'}
     output = ''  # default output if problem
 
-    if paramreg.steps[i_step_str].type == 'im_seg':
-        src_im = src
-        dest_im = dest
+    if paramreg.steps[i_step_str].algo == "centermassrot" and paramreg.steps[i_step_str].rot_method != 'PCA':
+        src_im = src[0]  # user is expected to input images to src and dest
+        dest_im = dest[0]
+        src_seg = src[1]
+        dest_seg = dest[1]
         del src
-        del dest # to be sure it is not missused later
-        # normally im_seg only if algo = centermassrot
+        del dest  # to be sure it is not missused later
 
 
     # display arguments
@@ -600,6 +605,7 @@ def register(src, dest, paramreg, param, i_step_str, src_seg=None, dest_seg=None
     sct.printv('  poly ........... ' + paramreg.steps[i_step_str].poly, param.verbose)
     sct.printv('  dof ............ ' + paramreg.steps[i_step_str].dof, param.verbose)
     sct.printv('  smoothWarpXY ... ' + paramreg.steps[i_step_str].smoothWarpXY, param.verbose)
+    sct.printv('  rot_method ... ' + paramreg.steps[i_step_str].rot_method, param.verbose)
 
     # set metricSize
     if paramreg.steps[i_step_str].metric == 'MI':
@@ -753,7 +759,7 @@ def register(src, dest, paramreg, param, i_step_str, src_seg=None, dest_seg=None
         # smooth data
         if not paramreg.steps[i_step_str].smooth == '0':
             sct.printv('\nSmooth data', param.verbose)
-            if paramreg.steps[i_step_str].type == 'im_seg':
+            if paramreg.steps[i_step_str].rot_method != 'PCA':
                 sct.run(['sct_maths', '-i', src, '-smooth', paramreg.steps[i_step_str].smooth + ','
                          + paramreg.steps[i_step_str].smooth + ',0', '-o', sct.add_suffix(src, '_smooth')])
                 sct.run(['sct_maths', '-i', dest, '-smooth', paramreg.steps[i_step_str].smooth + ','
@@ -776,7 +782,7 @@ def register(src, dest, paramreg, param, i_step_str, src_seg=None, dest_seg=None
         from msct_register import register_slicewise
         warp_forward_out = 'step' + i_step_str + 'Warp.nii.gz'
         warp_inverse_out = 'step' + i_step_str + 'InverseWarp.nii.gz'
-        if paramreg.steps[i_step_str].type != 'im_seg':
+        if paramreg.steps[i_step_str].rot_method != 'PCA':
             register_slicewise(src,
                            dest,
                            paramreg=paramreg.steps[i_step_str],
@@ -786,11 +792,9 @@ def register(src, dest, paramreg, param, i_step_str, src_seg=None, dest_seg=None
                            ants_registration_params=ants_registration_params,
                            remove_temp_files=param.remove_temp_files,
                            verbose=param.verbose)
-        else:
-            register_slicewise(src_im,
-                           dest_im,
-                           src_seg,
-                           dest_seg,
+        else:  # im_seg case
+            register_slicewise([src_im, src_seg],
+                           [dest_im, dest_seg],
                            paramreg=paramreg.steps[i_step_str],
                            fname_mask=fname_mask,
                            warp_forward_out=warp_forward_out,

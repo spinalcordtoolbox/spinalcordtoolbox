@@ -19,6 +19,7 @@
 from __future__ import absolute_import
 
 import os
+import logging
 import sct_utils as sct
 from sct_flatten_sagittal import flatten_sagittal
 import numpy as np
@@ -28,6 +29,8 @@ from skimage.measure import label as label_regions
 
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image, zeros_like
+
+logger = logging.getLogger(__name__)
 
 
 def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, verbose=1):
@@ -50,7 +53,7 @@ def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, verbose=1):
     nii_seg_flat = flatten_sagittal(nii_seg, nii_seg, verbose=verbose)
 
     # create temporary folder with intermediate results
-    sct.log.info("Creating temporary folder...")
+    logger.info("Creating temporary folder...")
     tmp_folder = sct.TempFolder()
     tmp_folder.chdir()
 
@@ -119,7 +122,7 @@ def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, verbose=1):
     # remove temporary files
     tmp_folder.chdir_undo()
     if verbose < 2:
-        sct.log.info("Remove temporary files...")
+        logger.info("Remove temporary files...")
         tmp_folder.cleanup()
 
     nii_c2c3.change_orientation(orientation_init)

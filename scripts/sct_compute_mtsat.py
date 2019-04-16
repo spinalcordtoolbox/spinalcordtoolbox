@@ -80,17 +80,18 @@ def main(args):
     import sct_utils as sct
     from spinalcordtoolbox.mtsat import mtsat
 
-    sct.start_stream_logger()
+    verbose = args.v
+    sct.init_sct(log_level=verbose, update=True)  # Update log level
 
     fname_mtsat, fname_t1map = mtsat.compute_mtsat_from_file(
         args.mt, args.pd, args.t1, args.trmt, args.trpd, args.trt1, args.famt, args.fapd, args.fat1,
-        fname_b1map=args.b1map, fname_mtsat=args.omtsat, fname_t1map=args.ot1map, verbose=1)
+        fname_b1map=args.b1map, fname_mtsat=args.omtsat, fname_t1map=args.ot1map, verbose=verbose)
 
     sct.display_viewer_syntax([fname_mtsat, fname_t1map],
                               colormaps=['gray', 'gray'],
                               minmax=['-10,10', '0, 3'],
                               opacities=['1', '1'],
-                              verbose=args.v)
+                              verbose=verbose)
 
 
 if __name__ == '__main__':

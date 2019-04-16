@@ -119,8 +119,8 @@ def main(args=None):
         param.update(arguments['-param'])
     if '-r' in arguments:
         remove_temp_files = int(arguments['-r'])
-    if '-v' in arguments:
-        verbose = int(arguments['-v'])
+    verbose = int(arguments.get('-v'))
+    sct.init_sct(log_level=verbose, update=True)  # Update log level
 
     # Display arguments
     sct.printv('\nCheck input arguments...')

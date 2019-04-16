@@ -160,8 +160,6 @@ def main(args):
         perlevel = arguments['-perlevel']
     else:
         perlevel = Param().perlevel
-    if '-v' in arguments:
-        verbose = int(arguments['-v'])
     if '-z' in arguments:
         slices = arguments['-z']
     if '-perslice' in arguments:
@@ -174,8 +172,10 @@ def main(args):
         elif arguments['-angle-corr'] == '0':
             angle_correction = False
 
+    verbose = int(arguments.get('-v'))
+    sct.init_sct(log_level=verbose, update=True)  # Update log level
+
     # update fields
-    param.verbose = verbose
     metrics_agg = {}
     if not file_out:
         file_out = 'csa.csv'

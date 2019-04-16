@@ -130,7 +130,7 @@ def main(args=None):
             os.chdir(cwd)
 
             # HOGancestor registration
-            sct_register_to_template(['-i', file_input, '-s', file_seg_input, '-l', filelabelvert_input, '-c', contrast, '-ofolder', temp, '-param', "step=1,type=im_seg,algo=centermassrot,poly=0,slicewise=0", '-v', '0'])
+            sct_register_to_template(['-i', file_input, '-s', file_seg_input, '-l', filelabelvert_input, '-c', contrast, '-ofolder', temp, '-param', "step=1,type=im,algo=centermassrot,poly=0,slicewise=0,rot_method=HOG", '-v', '0'])
             sct_apply_transfo(['-i', file_seg_input, '-d', file_template_seg, '-w', temp + "/warp_anat2template.nii.gz", '-o', path_output + "/" + filename.split(".nii")[0] + "seg_reg2anatHOG.nii.gz", '-v', '0'])
             sct_maths(['-i', path_output + "/" + filename.split(".nii")[0] + "seg_reg2anatHOG.nii.gz", '-o', path_output + "/" + filename.split(".nii")[0] + "seg_reg2anatHOG_bin.nii.gz", '-bin', '0.5', '-v', '0'])
             seg_anat_reg = Image(path_output + "/" + filename.split(".nii")[0] + "seg_reg2anatHOG_bin.nii.gz").data
