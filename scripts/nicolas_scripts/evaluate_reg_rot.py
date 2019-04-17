@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+# Script used to process one MRI image at a time (the image and its segmentation), made to be used with wrapper or alone
+
 import sys, sct_utils as sct
 from msct_parser import Parser
 from sct_register_to_template import main as sct_register_to_template
@@ -8,7 +10,7 @@ from sct_label_vertebrae import main as sct_label_vertebrae
 def get_parser():
 
     parser = Parser(__file__)
-    parser.usage.set_description('Blablablabla')
+    parser.usage.set_description('Script to process a MRI image with its segmentation, blablabla what does this script do')
     parser.add_option(name="-i",
                       type_value="file",
                       description="File input",
@@ -51,8 +53,10 @@ def main(args=None):
         sct.printv("Contrast not supported yet for file : " + fname_image)
         return
 
+    # Labelling vertebrae :
     sct_label_vertebrae(['-i', fname_image, '-s', fname_seg, '-c', contrast_label, '-ofolder', output_dir, '-v', '1'])
 
+    # Registering to template with PCA method
     sct_register_to_template(
         ['-i', fname_image, '-s', fname_seg, '-c', contrast, '-l',
          output_dir + "/" + (fname_seg.split("/")[-1]).split(".nii.gz")[0] + "_labeled.nii.gz", '-ofolder', output_dir, '-param',
