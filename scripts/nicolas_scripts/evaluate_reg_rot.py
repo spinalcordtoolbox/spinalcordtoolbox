@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import sys, sct_utils as sct
-from nicolas_scripts.evaluate_hogancest import main as evaluate_hogancest
 from msct_parser import Parser
 from sct_register_to_template import main as sct_register_to_template
 from sct_label_vertebrae import main as sct_label_vertebrae

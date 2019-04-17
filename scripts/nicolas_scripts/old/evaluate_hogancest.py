@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from msct_parser import Parser
 import sct_utils as sct
 import sys, os, shutil
-from functions_sym_rot import *
+from nicolas_scripts.functions_sym_rot import *
 import fnmatch
 import scipy
 from msct_register import compute_pca, angle_between, register2d_centermassrot

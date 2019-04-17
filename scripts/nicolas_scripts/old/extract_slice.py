@@ -1,14 +1,4 @@
-
-import os
-import numpy as np
-from spinalcordtoolbox.image import Image
-import matplotlib.pyplot as plt
-from msct_parser import Parser
-import sct_utils as sct
-import sys, os, shutil
-from functions_sym_rot import *
-from algo_rot_test import *
-import fnmatch
+from nicolas_scripts.old.algo_rot_test import *
 
 
 def get_parser():
