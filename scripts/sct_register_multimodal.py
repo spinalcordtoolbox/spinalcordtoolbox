@@ -126,7 +126,7 @@ def get_parser(paramreg=None):
                                                                                 "  bsplinesyn: syn regularized with b-splines\n"
                                                                                 "  slicereg: regularized translations (see: goo.gl/Sj3ZeU)\n"
                                                                                 "  centermass: slicewise center of mass alignment (seg only).\n"
-                                                                                "  centermassrot: slicewise center of mass and PCA-based rotation alignment (seg only)\n"
+                                                                                "  centermassrot: slicewise center of mass and rotation alignment using method specified in 'rot_method'\n"
                                                                                 "  columnwise: R-L scaling followed by A-P columnwise alignment (seg only).\n"
                                                                                 "slicewise: <int> Slice-by-slice 2d transformation. Default=" +
                                   paramreg.steps['1'].slicewise + "\n"
@@ -157,7 +157,7 @@ def get_parser(paramreg=None):
                                                                           "dof: <str> Degree of freedom for type=label. Separate with '_'. Default=" +
                                   paramreg.steps['0'].dof + "\n" +
                                   paramreg.steps['1'].rot_method + "\n"
-                                                                    "rot_method : rotation method to be used if algo=centermassrot is used, can take the value {pca,hog}",
+                                                                    "rot_method {pca,hog}: rotation method to be used with algo=centermassrot.",
                       mandatory=False,
                       example="step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=im,algo=syn,metric=MI,iter=5,shrink=2")
     parser.add_option(name="-identity",
