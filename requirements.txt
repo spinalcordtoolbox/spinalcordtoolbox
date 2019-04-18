@@ -1,23 +1,25 @@
-Keras
+numpy # need to install first otherwise dependency issues
+cryptography
 dipy
 futures
 h5py
+Keras
 matplotlib
 nibabel
-nipy
 pandas
+portalocker
 psutil
+pyqt5
 raven
 requests
-numpy #==1.11 # warnings if using newer version
 scipy
 scikit-image
-scikit-learn==0.17.1 # PCA pickles incompatibility
-tensorflow==1.3.0 # unfortunately because of numpy limited version
+scikit-learn
+tensorflow
 xlrd
 xlutils
 xlwt
 tqdm
 transforms3d
 urllib3[secure]
-portalocker
+nipy # need to install at the end otherwise won't install
