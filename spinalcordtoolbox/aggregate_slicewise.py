@@ -416,7 +416,7 @@ def save_as_csv(agg_metric, fname_out, fname_in=None, append=False):
         with open(fname_out, 'w') as csvfile:
             # spamwriter = csv.writer(csvfile, delimiter=',')
             header = ['Timestamp', 'SCT Version', 'Filename', 'Slice (I->S)', 'VertLevel']
-            agg_metric_key = agg_metric[agg_metric.keys()[0]].keys()
+            agg_metric_key = [v for i, (k, v) in enumerate(agg_metric.items())][0]
             for item in list_item:
                 for key in agg_metric_key:
                     if item in key:
@@ -435,7 +435,7 @@ def save_as_csv(agg_metric, fname_out, fname_in=None, append=False):
             line.append(fname_in)  # file name associated with the results
             line.append(parse_num_list_inv(slicegroup))  # list all slices in slicegroup
             line.append(parse_num_list_inv(agg_metric[slicegroup]['VertLevel']))  # list vertebral levels
-            agg_metric_key = agg_metric[agg_metric.keys()[0]].keys()
+            agg_metric_key = [v for i, (k, v) in enumerate(agg_metric.items())][0]
             for item in list_item:
                 for key in agg_metric_key:
                     if item in key:
