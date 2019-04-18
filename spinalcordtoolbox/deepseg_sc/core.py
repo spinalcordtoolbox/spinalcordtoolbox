@@ -630,32 +630,14 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
                                    contrast_type=contrast_type,
                                    input_size=(crop_size, crop_size),
                                    im_in=im_norm_in)
-        del im_norm_in
-
     elif kernel_size == '3d':
-        # resample to 0.5mm isotropic
-        fname_norm = sct.add_suffix(fname_orient, '_norm')
-        fname_res3d = sct.add_suffix(fname_norm, '_resampled3d')
-        resampling.resample_file(fname_norm, fname_res3d, '0.5x0.5x0.5',
-                                                                            'mm', 'linear', verbose=0)
-
         # segment data using 3D convolutions
         logger.info("Segmenting the spinal cord using deep learning on 3D patches...")
-        fname_seg_crop_res = sct.add_suffix(fname_res3d, '_seg')
         segmentation_model_fname = os.path.join(sct.__sct_dir__, 'data', 'deepseg_sc_models', '{}_sc_3D.h5'.format(contrast_type))
-        seg_crop_nii = segment_3d(model_fname=segmentation_model_fname,
-                                  contrast_type=contrast_type,
-                                  im_in=Image(fname_res3d).copy())
-        seg_crop_nii.save(fname_seg_crop_res)
-        del seg_crop_nii
-
-        # resample to the initial pz resolution
-        # TODO: does this need to be done (if already done below)?
-        fname_seg_res2d = sct.add_suffix(fname_seg_crop_res, '_resampled2d')
-        initial_2d_resolution = 'x'.join(['0.5', '0.5', str(input_resolution[2])])
-        resampling.resample_image(fname_seg_crop_res, fname_seg_res2d,
-                                  initial_2d_resolution, 'mm', 'linear', verbose=0)
-        seg_crop_data = Image(fname_seg_res2d).data
+        seg_crop_data = segment_3d(model_fname=segmentation_model_fname,
+                                   contrast_type=contrast_type,
+                                   im_in=im_norm_in)
+    del im_norm_in
 
     # reconstruct the segmentation from the crop data
     logger.info("Reassembling the image...")
