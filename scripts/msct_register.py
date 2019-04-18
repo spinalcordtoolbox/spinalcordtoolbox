@@ -45,7 +45,7 @@ def register_slicewise(fname_src,
                         remove_temp_files=0,
                         verbose=0):
 
-    im_and_seg = (paramreg.algo == 'centermassrot') and (paramreg.rot_method == 'HOG')  # bool for simplicity
+    im_and_seg = (paramreg.algo == 'centermassrot') and (paramreg.rot_method == 'hog')  # bool for simplicity
     # future contributor wanting to implement a method that use both im and seg will add: and (paramreg.rot_method == 'OTHER_METHOD')
 
     if im_and_seg is True:
@@ -121,7 +121,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
         fname_dest: name of fixed image (type: string), if rot > 1, needs to be a list
         fname_warp: name of output 3d forward warping field
         fname_warp_inv: name of output 3d inverse warping field
-        rot: estimate rotation with PCA (=1), HOG (=2) or no rotation (=0) Default = 1
+        rot: estimate rotation with pca (=1), hog (=2) or no rotation (=0) Default = 1
         rot>1 needs image AND segmentation to work
         polydeg: degree of polynomial regularization along z for rotation angle (type: int). 0: no regularization
         verbose:

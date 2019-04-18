@@ -538,7 +538,7 @@ def main(args=None):
             else:
                 sct.printv('ERROR: Wrong image type.', 1, 'error')
 
-            if paramreg.steps[str(i_step)].algo == 'centermassrot' and paramreg.steps[str(i_step)].rot_method != 'PCA':  # rot method other than PCA needs both seg and im
+            if paramreg.steps[str(i_step)].algo == 'centermassrot' and paramreg.steps[str(i_step)].rot_method != 'pca':  # rot method other than PCA needs both seg and im
                 src_seg = ftmp_seg
                 dest_seg = ftmp_template_seg
             # if step>1, apply warp_forward_concat to the src image to be used
@@ -546,12 +546,12 @@ def main(args=None):
                 # apply transformation from previous step, to use as new src for registration
                 sct.run(['sct_apply_transfo', '-i', src, '-d', dest, '-w', ','.join(warp_forward), '-o', add_suffix(src, '_regStep' + str(i_step - 1)), '-x', interp_step], verbose)
                 src = add_suffix(src, '_regStep' + str(i_step - 1))
-                if paramreg.steps[str(i_step)].algo == 'centermassrot' and paramreg.steps[str(i_step)].rot_method != 'PCA':  # also apply transformation to the seg
+                if paramreg.steps[str(i_step)].algo == 'centermassrot' and paramreg.steps[str(i_step)].rot_method != 'pca':  # also apply transformation to the seg
                     sct.run(['sct_apply_transfo', '-i', src_seg, '-d', dest_seg, '-w', ','.join(warp_forward), '-o', add_suffix(src, '_regStep' + str(i_step - 1)), '-x', interp_step], verbose)
                     src_seg = add_suffix(src_seg, '_regStep' + str(i_step - 1))
             # register src --> dest
             # TODO: display param for debugging
-            if paramreg.steps[str(i_step)].algo == 'centermassrot' and paramreg.steps[str(i_step)].rot_method != 'PCA': # im_seg case
+            if paramreg.steps[str(i_step)].algo == 'centermassrot' and paramreg.steps[str(i_step)].rot_method != 'pca': # im_seg case
                 warp_forward_out, warp_inverse_out = register([src, src_seg], [dest, dest_seg], paramreg, param, str(i_step))
             else:
                 warp_forward_out, warp_inverse_out = register(src, dest, paramreg, param, str(i_step))

@@ -228,7 +228,7 @@ class Param:
 class Paramreg(object):
     def __init__(self, step=None, type=None, algo='syn', metric='MeanSquares', iter='10', shrink='1', smooth='0',
                  gradStep='0.5', deformation='1x1x0', init='', poly='5', slicewise='0', laplacian='0',
-                 dof='Tx_Ty_Tz_Rx_Ry_Rz', smoothWarpXY='2', pca_eigenratio_th='1.6', rot_method='PCA'):
+                 dof='Tx_Ty_Tz_Rx_Ry_Rz', smoothWarpXY='2', pca_eigenratio_th='1.6', rot_method='pca'):
         self.step = step
         self.type = type
         self.algo = algo
@@ -580,7 +580,7 @@ def register(src, dest, paramreg, param, i_step_str):
                                 'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',1,3'}
     output = ''  # default output if problem
 
-    if paramreg.steps[i_step_str].algo == "centermassrot" and paramreg.steps[i_step_str].rot_method != 'PCA':
+    if paramreg.steps[i_step_str].algo == "centermassrot" and paramreg.steps[i_step_str].rot_method != 'pca':
         src_im = src[0]  # user is expected to input images to src and dest
         dest_im = dest[0]
         src_seg = src[1]
@@ -755,7 +755,7 @@ def register(src, dest, paramreg, param, i_step_str):
         # smooth data
         if not paramreg.steps[i_step_str].smooth == '0':
             sct.printv('\nSmooth data', param.verbose)
-            if paramreg.steps[i_step_str].rot_method != 'PCA':
+            if paramreg.steps[i_step_str].rot_method != 'pca':
                 sct.run(['sct_maths', '-i', src, '-smooth', paramreg.steps[i_step_str].smooth + ','
                          + paramreg.steps[i_step_str].smooth + ',0', '-o', sct.add_suffix(src, '_smooth')])
                 sct.run(['sct_maths', '-i', dest, '-smooth', paramreg.steps[i_step_str].smooth + ','
@@ -778,7 +778,7 @@ def register(src, dest, paramreg, param, i_step_str):
         from msct_register import register_slicewise
         warp_forward_out = 'step' + i_step_str + 'Warp.nii.gz'
         warp_inverse_out = 'step' + i_step_str + 'InverseWarp.nii.gz'
-        if paramreg.steps[i_step_str].rot_method == 'PCA':
+        if paramreg.steps[i_step_str].rot_method == 'pca':
             register_slicewise(src,
                            dest,
                            paramreg=paramreg.steps[i_step_str],
