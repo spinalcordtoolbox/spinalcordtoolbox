@@ -46,6 +46,9 @@ finish ()
     cd ${SCT_SOURCE}
     if [ ${value} -eq 0 ]; then
         echo "Installation finished successfully"
+    elif [ ${value} -eq 99 ]; then
+        # Showing usage with -h
+        echo ""
     else
         echo "Installation failed"
     fi
@@ -148,6 +151,7 @@ usage()
   echo -e "\n\t-m \v Prevent the (re)-installation of the \"python/\" directory "
   echo -e "\n\t-b \v Prevent the (re)-installation of the SCT binaries files "
   echo -e "\n\t-k \v Install SCT with Python 2.7 (Default is Python 3.x)"
+  echo -e "\n\t-v \v Full verbose"
   echo -e "\n\t--mpi,-p \v Will use the MPI interface to run pipelines (Linux support only)"
 }
 
@@ -189,9 +193,13 @@ while getopts ":dmhbpz" opt; do
       echo " SCT will be installed with Python 2.7"
       SCT_MINICONDA=2
       ;;
+    x)
+      echo " Full verbose!"
+      SCT_VERBOSE_INSTALL=yes
+      ;;
     h)
       usage
-      exit 0
+      exit 99
       ;;
     \?)
       usage
