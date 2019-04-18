@@ -142,11 +142,12 @@ download ()
 # Usage of this script
 usage()
 {
-  echo -e "\nUsage: $0 [-d ] [-m ] [-b] [--mpi]" 1>&2;
+  echo -e "\nUsage: $0 [-d] [-m] [-b] [--mpi]" 1>&2;
   echo -e "\nOPTION"
   echo -e "\t-d \v Prevent the (re)-installation of the \"data/\" directory "
   echo -e "\n\t-m \v Prevent the (re)-installation of the \"python/\" directory "
   echo -e "\n\t-b \v Prevent the (re)-installation of the SCT binaries files "
+  echo -e "\n\t-k \v Install SCT with Python 2.7 (Default is Python 3.x)"
   echo -e "\n\t--mpi,-p \v Will use the MPI interface to run pipelines (Linux support only)"
 }
 
@@ -183,6 +184,10 @@ while getopts ":dmhbpz" opt; do
     p)
       echo " Multiprocessing using MPI activated"
       export SCT_MPI_MODE=yes
+      ;;
+    k)
+      echo " SCT will be installed with Python 2.7"
+      SCT_MINICONDA=2
       ;;
     h)
       usage
@@ -224,7 +229,7 @@ if [ "x${SCT_INSTALL_TYPE}" == "x" ]; then
 fi
 
 if [ "x${SCT_MINICONDA}" == "x" ]; then
-  SCT_MINICONDA=2
+  SCT_MINICONDA=3
 fi
 
 
