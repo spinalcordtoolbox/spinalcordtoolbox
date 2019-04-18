@@ -11,7 +11,7 @@ from skimage.exposure import rescale_intensity
 from scipy.ndimage import distance_transform_edt
 
 from spinalcordtoolbox import resampling
-from cnn_models import nn_architecture_seg, nn_architecture_ctr
+from spinalcordtoolbox.deepseg_sc.cnn_models import nn_architecture_seg, nn_architecture_ctr
 from spinalcordtoolbox.image import Image, empty_like, change_type, zeros_like
 from spinalcordtoolbox.centerline.core import get_centerline, _call_viewer_centerline
 
