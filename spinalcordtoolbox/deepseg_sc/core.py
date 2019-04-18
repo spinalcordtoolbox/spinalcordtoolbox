@@ -570,7 +570,7 @@ def segment_3d(model_fname, contrast_type, im_in):
             else:
                 out.data[:, :, zz:z_patch_size + zz] = pred_seg_th
 
-    return out
+    return out.data
 
 
 def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_file=None, brain_bool=True,
