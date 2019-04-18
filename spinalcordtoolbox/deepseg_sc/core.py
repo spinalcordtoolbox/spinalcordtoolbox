@@ -82,7 +82,7 @@ def find_centerline(algo, image_fname, contrast_type, brain_bool, folder_output,
                                         dilation_layers=dct_params_ctr[contrast_type]['dilation_layers'])
         ctr_model.load_weights(ctr_model_fname)
 
-        logger.info("Resample the image to 0.5 mm isotropic resolution...")
+        logger.info("Resample the image to 0.5x0.5 mm in-plane resolution...")
         fname_res = sct.add_suffix(image_fname, '_resampled')
         input_resolution = Image(image_fname).dim[4:7]
         new_resolution = 'x'.join(['0.5', '0.5', str(input_resolution[2])])
@@ -126,7 +126,7 @@ def find_centerline(algo, image_fname, contrast_type, brain_bool, folder_output,
         sys.exit(1)
 
     if algo != 'cnn':
-        logger.info("Resample the image to 0.5 mm isotropic resolution...")
+        logger.info("Resample the image to 0.5x0.5 mm in-plane resolution...")
         fname_res = sct.add_suffix(image_fname, '_resampled')
         input_resolution = Image(image_fname).dim[4:7]
         new_resolution = 'x'.join(['0.5', '0.5', str(input_resolution[2])])
@@ -580,10 +580,8 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
                                  kernel_size='2d', remove_temp_files=1, verbose=1):
     """Pipeline"""
     # create temporary folder with intermediate results
-    # file_fname = os.path.basename(fname_image)
     tmp_folder = sct.TempFolder(verbose=verbose)
     tmp_folder_path = tmp_folder.get_path()
-    # fname_image_tmp = tmp_folder.copy_from(fname_image)
     if ctr_algo == 'file':  # if the ctr_file is provided
         tmp_folder.copy_from(ctr_file)
         file_ctr = os.path.basename(ctr_file)
@@ -591,9 +589,8 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
         file_ctr = None
     tmp_folder.chdir()
 
-    # orientation of the image, should be RPI
+    # re-orient image to RPI
     logger.info("Reorient the image to RPI, if necessary...")
-    fname_in = im_image.absolutepath
     original_orientation = im_image.orientation
     fname_orient = 'image_in_RPI.nii'
     im_image.change_orientation('RPI').save(fname_orient)
