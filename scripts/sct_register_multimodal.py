@@ -744,10 +744,6 @@ def register(src, dest, paramreg, param, i_step_str):
 
     # slice-wise transfo
     elif paramreg.steps[i_step_str].algo in ['centermass', 'centermassrot', 'columnwise']:
-        # if type=im, sends warning
-        if paramreg.steps[i_step_str].type == 'im':
-            sct.printv('\nWARNING: algo ' + paramreg.steps[i_step_str].algo + ' should be used with type=seg.\n', 1,
-                       'warning')
         # if type=label, exit with error
         elif paramreg.steps[i_step_str].type == 'label':
             sct.printv('\nERROR: this algo is not compatible with type=label. Please use type=im or type=seg', 1,
