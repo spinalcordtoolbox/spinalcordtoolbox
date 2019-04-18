@@ -10,6 +10,7 @@ from sct_label_vertebrae import main as sct_label_vertebrae
 from sct_apply_transfo import main as sct_apply_transfo
 from sct_maths import main as sct_maths
 from nicolas_scripts.functions_sym_rot import *
+import csv
 
 def get_parser():
 
@@ -86,8 +87,18 @@ def main(args=None):
     dice_slice_min = min(dice_slice)
     dice_slice_max = max(dice_slice)
     dice_slice_mean = np.mean(dice_slice)
+    dice_slice_std = np.std(dice_slice)
 
-    1
+    os.chdir(output_dir)
+    with open((fname_image.split("/")[-1]).split(".nii")[0] + "_dice.csv", 'wb') as csvfile:
+        filewriter = csv.writer(csvfile, delimiter=',',
+                                quotechar='|', quoting=csv.QUOTE_MINIMAL)
+        filewriter.writerow(['Dice global', dice_glob])
+        filewriter.writerow(['Mean Dice per slice', dice_slice_mean])
+        filewriter.writerow(['Min Dice', dice_slice_min])
+        filewriter.writerow(['Max Dice', dice_slice_max])
+        filewriter.writerow(['STD Dice', dice_slice_std])
+
 
     #  TODO : write out dice scores as txt ? then func to agregate them
 
