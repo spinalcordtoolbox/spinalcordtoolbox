@@ -1,15 +1,6 @@
-
-import os
-import numpy as np
-from spinalcordtoolbox.image import Image
-import matplotlib.pyplot as plt
-from msct_parser import Parser
-import sct_utils as sct
-import sys, os, shutil
-from functions_sym_rot import *
+from nicolas_scripts.functions_sym_rot import *
 import fnmatch
-import scipy
-from extract_slice import main as extract_slice
+from nicolas_scripts.old.extract_slice import main as extract_slice
 from random import randint
 from sct_deepseg_sc import main as sct_deepseg_sc
 

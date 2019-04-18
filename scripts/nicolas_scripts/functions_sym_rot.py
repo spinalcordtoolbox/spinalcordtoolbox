@@ -1,4 +1,4 @@
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 import sys, os, shutil
 from math import asin, cos, sin, acos, pi, atan2, atan, floor
@@ -46,7 +46,7 @@ def circular_filter_1d(signal, param_filt, filter='gaussian'):
 
 def find_angle(image, centermass, parameters):
 
-    sigmax = parameters['sigmax']
+    sigmax = parameters['sigmax']  # TODO change this as a class not a dictionnary
     sigmay = parameters['sigmay']
     nb_bin = parameters['nb_bin']
     kmedian_size = parameters['kmedian_size']
@@ -223,3 +223,49 @@ def generate_2Dimage_line(image, x0, y0, angle, value=0):
     # this
 
     return image_wline
+
+
+def visu3d(array3d, axis=1):
+
+    class IndexTracker(object):
+        def __init__(self, ax, X):
+            self.ax = ax
+            ax.set_title('use scroll wheel to navigate images')
+
+            self.X = X
+            rows, cols, self.slices = X.shape
+            self.ind = self.slices // 2
+
+            if axis == 2:
+                self.im = ax.imshow(self.X[:, :, self.ind])
+            elif axis == 1:
+                self.im = ax.imshow(self.X[:, self.ind, :])
+            else:
+                self.im = ax.imshow(self.X[self.ind, :, :])
+            self.update()
+
+        def onscroll(self, event):
+            # print("%s %s" % (event.button, event.step))
+            if event.button == 'up':
+                self.ind = (self.ind + 1) % self.slices
+            else:
+                self.ind = (self.ind - 1) % self.slices
+            self.update()
+
+        def update(self):
+            if axis == 2:
+                self.im.set_data(self.X[:, :, self.ind])
+            elif axis == 1:
+                self.im.set_data(self.X[:, self.ind, :])
+            else:
+                self.im.set_data(self.X[self.ind, :, :])
+            self.ax.set_ylabel('slice %s' % self.ind)
+            self.im.axes.figure.canvas.draw()
+
+    array3d_np = np.array(array3d)
+    fig, ax = plt.subplots(1, 1)
+    tracker = IndexTracker(ax, array3d_np)
+    fig.canvas.mpl_connect('scroll_event', tracker.onscroll)
+    plt.show()
+
+    return fig, ax, tracker
