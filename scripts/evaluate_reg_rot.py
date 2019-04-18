@@ -45,6 +45,10 @@ def main(args=None):
     fname_seg = arguments['-iseg']
     output_dir = arguments['-o']
 
+    # creating output dir if it does not exist
+    if not os.path.isdir(output_dir):
+        os.mkdir(output_dir)
+
     fname_seg_template = os.path.join(sct.__data_dir__, 'PAM50/template/PAM50_cord.nii.gz')
 
     sct.printv("        Python processing file : " + fname_image + " with seg : " + fname_seg)
@@ -73,11 +77,13 @@ def main(args=None):
     sct_apply_transfo(['-i', fname_seg, '-d', fname_seg_template, '-w', output_dir + "/warp_anat2template.nii.gz", '-o', output_dir + "/" + (fname_seg.split("/")[-1]).split(".nii.gz")[0] + "_reg.nii.gz"])
     sct_maths(['-i', output_dir + "/" + (fname_seg.split("/")[-1]).split(".nii.gz")[0] + "_reg.nii.gz", '-bin', '0.5', '-o', output_dir + "/" + (fname_seg.split("/")[-1]).split(".nii.gz")[0] + "_reg_tresh.nii.gz"])
 
+    # Opening registered segmentation
     data_seg_reg = Image(output_dir + "/" + (fname_seg.split("/")[-1]).split(".nii.gz")[0] + "_reg_tresh.nii.gz").data
     data_seg_template = Image(fname_seg_template).data
     min_z = np.min(np.nonzero(data_seg_reg)[2])
     max_z = np.max(np.nonzero(data_seg_reg)[2])
 
+    # Computing Dice metrics
     dice_slice = []
     dice_glob = compute_similarity_metric(data_seg_reg[:, :, min_z:max_z], data_seg_template[:, :, min_z:max_z], metric="Dice")
 
@@ -89,6 +95,7 @@ def main(args=None):
     dice_slice_mean = np.mean(dice_slice)
     dice_slice_std = np.std(dice_slice)
 
+    # Writing out metrics in csv files
     os.chdir(output_dir)
     with open((fname_image.split("/")[-1]).split(".nii")[0] + "_dice.csv", 'wb') as csvfile:
         filewriter = csv.writer(csvfile, delimiter=',',
