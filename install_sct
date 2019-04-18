@@ -115,13 +115,13 @@ download ()
     is_curl=$?
 
     if [[ ${is_wget} -eq 0 ]] ; then
-        wget -O $1 $2
+        cmd="wget -O $1 $2"; echo ">> "$cmd; $cmd
         e_status=$?
         echo exit status is ${e_status}
     fi
 
     if [[ ${is_curl} -eq 0 && ! -e $1 ]] ; then
-        curl -o $1 -L $2
+        cmd="curl -o $1 -L $2"; echo ">> "$cmd; $cmd
         e_status=$?
         echo exit status is ${e_status}
     fi
@@ -145,7 +145,7 @@ download ()
 # Usage of this script
 usage()
 {
-  echo -e "\nUsage: $0 [-d] [-m] [-b] [--mpi]" 1>&2;
+  echo -e "\nUsage: $0 [-d] [-m] [-b] [-k] [-v] [--mpi]" 1>&2;
   echo -e "\nOPTION"
   echo -e "\t-d \v Prevent the (re)-installation of the \"data/\" directory "
   echo -e "\n\t-m \v Prevent the (re)-installation of the \"python/\" directory "
