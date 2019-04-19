@@ -375,21 +375,32 @@ def make_a_string(item):
         return item
 
 
-def merge_dict(dict_in):
+def _merge_dict(dict_in):
     """
     Merge n dictionaries that are contained at the root key
     Example:
-      dict = {'key1': {'subkey1': dict1}, 'key2': {'subkey2': dict2}} --> {'subkey1': dict1+dict2, ...}
+      dict_in = {
+          'area': {(0): {'Level': 0, 'Mean(area)': 0.5}, (1): {'Level': 1, 'Mean(area)': 0.2}}
+          'angle_RL': {(0): {'Level': 0, 'Mean(angle_RL)': 15}, (1): {'Level': 1, 'Mean(angle_RL)': 12}}
+      }
+      dict_merged = {
+          (0): {'Level': 0, 'Mean(area): 0.5, 'Mean(angle_RL): 15}
+          (1): {'Level': 1, 'Mean(area): 0.2, 'Mean(angle_RL): 12}
+      }
     :param dict_in:
     :return:
     """
     dict_merged = {}
+    metrics = [k for i, (k, v) in enumerate(dict_in.items())]
     # Fetch first parent key (metric), then loop across children keys (slicegroup):
-    for key_children in dict_in[dict_in.keys()[0]].keys():
-        # Loop across remaining parent keys
-        dict_merged[key_children] = dict_in[dict_in.keys()[0]][key_children].copy()
-        for key_parent in dict_in.keys()[1:]:
-            dict_merged[key_children].update(dict_in[key_parent][key_children])
+    dict_first_metric = dict_in[metrics[0]]
+    # Loop across children keys: slicegroup = [(0), (1), ...]
+    for slicegroup in [k for i, (k, v) in enumerate(dict_first_metric.items())]:
+        # Initialize dict with information from first metric
+        dict_merged[slicegroup] = dict_first_metric[slicegroup]
+        # Loop across remaining metrics
+        for metric in metrics:
+            dict_merged[slicegroup].update(dict_in[metric][slicegroup])
     return dict_merged
 
 
