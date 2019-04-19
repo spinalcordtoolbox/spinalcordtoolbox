@@ -21,16 +21,18 @@ import sys, os, time
 import numpy as np
 
 import sct_utils as sct
+import sct_maths
 import sct_label_utils
 from spinalcordtoolbox.metadata import get_file_label
 from sct_utils import add_suffix
 from sct_register_multimodal import Paramreg, ParamregMultiStep, register
 from msct_parser import Parser
+from msct_register_landmarks import register_landmarks
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.centerline.core import get_centerline
 from spinalcordtoolbox.reports.qc import generate_qc
-
+from spinalcordtoolbox.resampling import resample_file
 
 # DEFAULT PARAMETERS
 
@@ -328,17 +330,18 @@ def main(args=None):
     # binarize segmentation (in case it has values below 0 caused by manual editing)
     sct.printv('\nBinarize segmentation', verbose)
     ftmp_seg_, ftmp_seg = ftmp_seg, sct.add_suffix(ftmp_seg, "_bin")
-    sct.run(['sct_maths', '-i', ftmp_seg_, '-bin', '0.5', '-o', ftmp_seg])
-
+    sct_maths.main(['-i', ftmp_seg_,
+                    '-bin', '0.5',
+                    '-o', ftmp_seg])
 
     # Switch between modes: subject->template or template->subject
     if ref == 'template':
 
         # resample data to 1mm isotropic
         sct.printv('\nResample data to 1mm isotropic...', verbose)
-        sct.run(['sct_resample', '-i', ftmp_data, '-mm', '1.0x1.0x1.0', '-x', 'linear', '-o', add_suffix(ftmp_data, '_1mm')])
+        resample_file(ftmp_data, add_suffix(ftmp_data, '_1mm'), '1.0x1.0x1.0', 'mm', 'linear')
         ftmp_data = add_suffix(ftmp_data, '_1mm')
-        sct.run(['sct_resample', '-i', ftmp_seg, '-mm', '1.0x1.0x1.0', '-x', 'linear', '-o', add_suffix(ftmp_seg, '_1mm')])
+        resample_file(ftmp_seg, add_suffix(ftmp_seg, '_1mm'), '1.0x1.0x1.0', 'mm', 'linear')
         ftmp_seg = add_suffix(ftmp_seg, '_1mm')
         # N.B. resampling of labels is more complicated, because they are single-point labels, therefore resampling
         # with nearest neighbour can make them disappear.
@@ -444,7 +447,9 @@ def main(args=None):
 
             # Dilating the input label so they can be straighten without losing them
             sct.printv('\nDilating input labels using 3vox ball radius')
-            sct.run(['sct_maths', '-i', ftmp_label, '-o', add_suffix(ftmp_label, '_dilate'), '-dilate', '3'])
+            sct_maths.main(['-i', ftmp_label,
+                            '-dilate', '3',
+                            '-o', add_suffix(ftmp_label, '_dilate')])
             ftmp_label = add_suffix(ftmp_label, '_dilate')
 
             # Apply straightening to labels
@@ -454,7 +459,6 @@ def main(args=None):
 
             # Compute rigid transformation straight landmarks --> template landmarks
             sct.printv('\nEstimate transformation for step #0...', verbose)
-            from msct_register_landmarks import register_landmarks
             try:
                 register_landmarks(ftmp_label, ftmp_template_label, paramreg.steps['0'].dof, fname_affine='straight2templateAffine.txt', verbose=verbose)
             except Exception:
