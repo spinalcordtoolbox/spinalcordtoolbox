@@ -211,7 +211,7 @@ def main(args=None):
     path_template = arguments['-t']
     contrast_template = arguments['-c']
     ref = arguments['-ref']
-    remove_temp_files = int(arguments.get('-r'))
+    param.remove_temp_files = int(arguments.get('-r'))
     verbose = int(arguments.get('-v'))
     sct.init_sct(log_level=verbose, update=True)  # Update log level
     param.verbose = verbose  # TODO: not clean, unify verbose or param.verbose in code, but not both
@@ -267,7 +267,7 @@ def main(args=None):
     sct.printv('  Landmarks:            ' + fname_landmarks, verbose)
     sct.printv('  Segmentation:         ' + fname_seg, verbose)
     sct.printv('  Path template:        ' + path_template, verbose)
-    sct.printv('  Remove temp files:    ' + str(remove_temp_files), verbose)
+    sct.printv('  Remove temp files:    ' + str(param.remove_temp_files), verbose)
 
     # check input labels
     labels = check_labels(fname_landmarks, label_type=label_type)
@@ -420,7 +420,7 @@ def main(args=None):
             sc_straight.output_filename = add_suffix(ftmp_seg, '_straight')
             sc_straight.path_output = './'
             sc_straight.qc = '0'
-            sc_straight.remove_temp_files = remove_temp_files
+            sc_straight.remove_temp_files = param.remove_temp_files
             sc_straight.verbose = verbose
 
             if vertebral_alignment:
@@ -659,7 +659,7 @@ def main(args=None):
         sct.generate_output_file(os.path.join(path_tmp, "straight_ref.nii.gz"), os.path.join(path_output, "straight_ref.nii.gz"), verbose)
 
     # Delete temporary files
-    if remove_temp_files:
+    if param.remove_temp_files:
         sct.printv('\nDelete temporary files...', verbose)
         sct.rmtree(path_tmp, verbose=verbose)
 
