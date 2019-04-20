@@ -39,9 +39,6 @@ import numpy as np
 
 import sct_utils as sct
 from msct_parser import Parser
-from msct_register import register_slicewise
-from msct_register_landmarks import register_landmarks
-
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.reports.qc import generate_qc
@@ -714,6 +711,7 @@ def register(src, dest, paramreg, param, i_step_str):
             and paramreg.steps[i_step_str].slicewise == '1':
         # make sure type!=label. If type==label, this will be addressed later in the code.
         if not paramreg.steps[i_step_str].type == 'label':
+            from msct_register import register_slicewise
             # if shrink!=1, force it to be 1 (otherwise, it generates a wrong 3d warping field). TODO: fix that!
             if not paramreg.steps[i_step_str].shrink == '1':
                 sct.printv('\nWARNING: when using slicewise with SyN or BSplineSyN, shrink factor needs to be one. '
@@ -754,6 +752,7 @@ def register(src, dest, paramreg, param, i_step_str):
                      + paramreg.steps[i_step_str].smooth + ',0', '-o', sct.add_suffix(dest, '_smooth')])
             src = sct.add_suffix(src, '_smooth')
             dest = sct.add_suffix(dest, '_smooth')
+        from msct_register import register_slicewise
         warp_forward_out = 'step' + i_step_str + 'Warp.nii.gz'
         warp_inverse_out = 'step' + i_step_str + 'InverseWarp.nii.gz'
         register_slicewise(src,
@@ -775,6 +774,7 @@ def register(src, dest, paramreg, param, i_step_str):
         # TODO
         warp_forward_out = 'step' + i_step_str + '0GenericAffine.txt'
         warp_inverse_out = '-step' + i_step_str + '0GenericAffine.txt'
+        from msct_register_landmarks import register_landmarks
         register_landmarks(src,
                            dest,
                            paramreg.steps[i_step_str].dof,
