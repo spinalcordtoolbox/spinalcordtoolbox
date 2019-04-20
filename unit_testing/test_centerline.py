@@ -20,7 +20,7 @@ import sct_utils as sct
 
 from create_test_data import dummy_centerline
 
-VERBOSE = 2  # Set to 2 to save images, 0 otherwise
+VERBOSE = 0  # Set to 2 to save images, 0 otherwise
 
 
 # Generate a list of fake centerlines: (dummy_segmentation(params), dict of expected results)
