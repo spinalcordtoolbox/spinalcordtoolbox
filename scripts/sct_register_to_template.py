@@ -166,7 +166,7 @@ def get_parser():
                       type_value="multiple_choice",
                       description="""Remove temporary files.""",
                       mandatory=False,
-                      default_value='0',
+                      default_value=param.remove_temp_files,
                       example=['0', '1'])
     parser.add_option(name="-v",
                       type_value="multiple_choice",
@@ -211,7 +211,7 @@ def main(args=None):
     path_template = arguments['-t']
     contrast_template = arguments['-c']
     ref = arguments['-ref']
-    remove_temp_files = int(arguments['-r'])
+    remove_temp_files = int(arguments.get('-r'))
     verbose = int(arguments.get('-v'))
     sct.init_sct(log_level=verbose, update=True)  # Update log level
     param.verbose = verbose  # TODO: not clean, unify verbose or param.verbose in code, but not both
