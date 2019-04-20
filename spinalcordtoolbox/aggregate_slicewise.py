@@ -146,7 +146,7 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], persli
                 agg_metric[slicegroup]['{}({})'.format(name, metric.label)] = result
             except Exception as e:
                 logging.warning(e)
-                agg_metric[slicegroup]['{}({})'.format(name, metric.label)] = e.message
+                agg_metric[slicegroup]['{}({})'.format(name, metric.label)] = str(e)
     return agg_metric
 
 
