@@ -82,7 +82,7 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], persli
             vertgroups = [tuple([level]) for level in levels]
         elif perslice:
             # slicegroups = [(0,), (1,), (2,), (3,), (4,), (5,), (6,), (7,), (8,)]
-            slicegroups = [tuple([i]) for i in reduce(operator.concat, slicegroups)]  # reduce to individual tuple
+            slicegroups = [tuple([i]) for i in functools.reduce(operator.concat, slicegroups)]  # reduce to individual tuple
             # vertgroups = [(2,), (2,), (2,), (3,), (3,), (3,), (4,), (4,), (4,)]
             vertgroups = [tuple([get_vertebral_level_from_slice(im_vert_level, i[0])]) for i in slicegroups]
         # output aggregate metric across levels
