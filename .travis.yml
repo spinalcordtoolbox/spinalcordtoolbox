@@ -3,7 +3,7 @@
 
 sudo: false  # To use travis container infrastructure
 
-language: python
+#language: python
 
 notifications:
   slack: neuropoly:YA3mt28aeHN3A0Iu7RvMFigK
@@ -11,40 +11,26 @@ notifications:
     on_failure:always
 
 # this enables to avoid recompilation of dipy if it was already compiled previously
-cache:
-  directories:
-    - ${HOME}/.cache/pip
+#cache:
+#  directories:
+#    - ${HOME}/.cache/pip
 
 matrix:
   include:
-#    - os: linux
-#      python: 2.7 # Just to make travis's UI a bit prettier
-#      env: SCT_MINICONDA=2 SCT_VERBOSE_INSTALL=1
-    - os: linux
+    - os: linux  # list of Linux env: https://docs.travis-ci.com/user/reference/overview/
+      name: "Ubuntu Xenial 16.04"
       dist: xenial
-      python: 2.7
     - os: linux
-      python: 2.7
-      env: SCT_MINICONDA=2
-#    - os: linux
-#      python: 2.7
-#      env: SCT_MINICONDA=3
-    - os: osx
-      language: generic
-      env: SCT_MINICONDA=2
-#    - os: osx
+      name: "Ubuntu Trusty 14.04"
+      dist: trusty
+    - os: osx  # list of OSX env: https://docs.travis-ci.com/user/reference/osx/
+      name: "OSX 10.14"
+      osx_image: xcode10.2
 #      language: generic
-#      env: SCT_MINICONDA=2 SCT_VERBOSE_INSTALL=1
-#    - os: osx
-#      language: generic
-#      env: SCT_MINICONDA=3
-  allow_failures:
-    - os: linux
-      python: 2.7
-      env: SCT_MINICONDA=3
     - os: osx
-      language: generic
-      env: SCT_MINICONDA=3
+      name: "OSX 10.10"
+      osx_image: xcode6.4
+#      language: generic
 
 before_install:
   - echo "HOME="
@@ -57,20 +43,8 @@ install:
 #  - ./update_bin.sh
   - |
     echo Installing SCT
-    if [ "x${SCT_MINICONDA}" == "x" ]; then
-     pip install --upgrade pip
-     #pip install numpy
-     pip install -e .
-     mkdir data
-     cd data
-     for data in PAM50 gm_model optic_models pmj_models deepseg_sc_models deepseg_gm_models deepseg_lesion_models; do
-      sct_download_data -d ${data}
-     done
-     cd -
-    else
-     yes | ASK_REPORT_QUESTION=false ./install_sct
-     PATH="$PATH:$PWD/bin"
-    fi
+    yes | ASK_REPORT_QUESTION=false ./install_sct
+    PATH="$PATH:$PWD/bin"
 
 script:
 # test dependencies
@@ -81,11 +55,7 @@ script:
   - |
     echo Checking
     echo $PATH
-    if [ "x${SCT_MINICONDA}" == "x" ]; then
-      :
-    else
-      ls -lA bin
-    fi
+    ls -lA bin
     sct_download_data -d sct_testing_data # for tests
 
   - |
@@ -100,10 +70,9 @@ script:
     echo -ne "[run]\nconcurrency = multiprocessing\nparallel = True\n" > .coveragerc
 
   - |
-    echo Installing and running pytest
+    echo Running pytest
     PATH_="$PATH"
     PATH="$PWD/python/bin:$PATH"
-    pip install pytest pytest.cov
     PYTHONPATH=scripts pytest -v --cov-append --cov=spinalcordtoolbox --cov=scripts unit_testing/*.py
     PATH="${PATH_}"
 
@@ -133,7 +102,6 @@ script:
     cd documentation/sphinx
     make html
     cd -
-
 
   - pip install coveralls
 
