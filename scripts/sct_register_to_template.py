@@ -339,9 +339,9 @@ def main(args=None):
 
         # resample data to 1mm isotropic
         sct.printv('\nResample data to 1mm isotropic...', verbose)
-        resample_file(ftmp_data, add_suffix(ftmp_data, '_1mm'), '1.0x1.0x1.0', 'mm', 'linear')
+        resample_file(ftmp_data, add_suffix(ftmp_data, '_1mm'), '1.0x1.0x1.0', 'mm', 'linear', verbose)
         ftmp_data = add_suffix(ftmp_data, '_1mm')
-        resample_file(ftmp_seg, add_suffix(ftmp_seg, '_1mm'), '1.0x1.0x1.0', 'mm', 'linear')
+        resample_file(ftmp_seg, add_suffix(ftmp_seg, '_1mm'), '1.0x1.0x1.0', 'mm', 'linear', verbose)
         ftmp_seg = add_suffix(ftmp_seg, '_1mm')
         # N.B. resampling of labels is more complicated, because they are single-point labels, therefore resampling
         # with nearest neighbour can make them disappear.
@@ -460,9 +460,11 @@ def main(args=None):
             # Compute rigid transformation straight landmarks --> template landmarks
             sct.printv('\nEstimate transformation for step #0...', verbose)
             try:
-                register_landmarks(ftmp_label, ftmp_template_label, paramreg.steps['0'].dof, fname_affine='straight2templateAffine.txt', verbose=verbose)
-            except Exception:
-                sct.printv('ERROR: input labels do not seem to be at the right place. Please check the position of the labels. See documentation for more details: https://www.slideshare.net/neuropoly/sct-course-20190121/42', verbose=verbose, type='error')
+                register_landmarks(ftmp_label, ftmp_template_label, paramreg.steps['0'].dof,
+                                   fname_affine='straight2templateAffine.txt', verbose=verbose)
+            except RuntimeError:
+                raise('Input labels do not seem to be at the right place. Please check the position of the labels. '
+                      'See documentation for more details: https://www.slideshare.net/neuropoly/sct-course-20190121/42')
 
             # Concatenate transformations: curve --> straight --> affine
             sct.printv('\nConcatenate transformations: curve --> straight --> affine...', verbose)
@@ -599,7 +601,6 @@ def main(args=None):
 
         # Bring template to subject space using landmark-based transformation
         sct.printv('\nEstimate transformation for step #0...', verbose)
-        from msct_register_landmarks import register_landmarks
         warp_forward = ['template2subjectAffine.txt']
         warp_inverse = ['-template2subjectAffine.txt']
         try:
@@ -745,8 +746,7 @@ def resample_labels(fname_labels, fname_dest, fname_output):
     nxd, nyd, nzd, ntd, pxd, pyd, pzd, ptd = Image(fname_dest).dim
     sampling_factor = [float(nx) / nxd, float(ny) / nyd, float(nz) / nzd]
     # read labels
-    from sct_label_utils import ProcessLabels
-    processor = ProcessLabels(fname_labels)
+    processor = sct_label_utils.ProcessLabels(fname_labels)
     label_list = processor.display_voxel()
     label_new_list = []
     for label in label_list:
