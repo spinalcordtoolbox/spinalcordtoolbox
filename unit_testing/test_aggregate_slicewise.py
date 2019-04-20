@@ -204,16 +204,16 @@ def test_save_as_csv(dummy_metrics):
     aggregate_slicewise.save_as_csv(agg_metric, 'tmp_file_out.csv', fname_in='FakeFile.txt')
     with open('tmp_file_out.csv', 'r') as csvfile:
         spamreader = csv.reader(csvfile, delimiter=',')
-        spamreader.next()  # skip header
-        assert spamreader.next()[1:] == [sct.__version__, 'FakeFile.txt', '3:4', '', '45.5', '4.5']
+        next(spamreader)  # skip header
+        assert next(spamreader)[1:] == [sct.__version__, 'FakeFile.txt', '3:4', '', '45.5', '4.5']
     # with appending
     aggregate_slicewise.save_as_csv(agg_metric, 'tmp_file_out.csv')
     aggregate_slicewise.save_as_csv(agg_metric, 'tmp_file_out.csv', append=True)
     with open('tmp_file_out.csv', 'r') as csvfile:
         spamreader = csv.reader(csvfile, delimiter=',')
-        spamreader.next()  # skip header
-        assert spamreader.next()[1:] == [sct.__version__, '', '3:4', '', '45.5', '4.5']
-        assert spamreader.next()[1:] == [sct.__version__, '', '3:4', '', '45.5', '4.5']
+        next(spamreader)  # skip header
+        assert next(spamreader)[1:] == [sct.__version__, '', '3:4', '', '45.5', '4.5']
+        assert next(spamreader)[1:] == [sct.__version__, '', '3:4', '', '45.5', '4.5']
 
 
 # noinspection 801,PyShadowingNames
@@ -290,5 +290,5 @@ def test_save_as_csv_extract_metric(dummy_data_and_labels):
     aggregate_slicewise.save_as_csv(agg_metric, 'tmp_file_out.csv')
     with open('tmp_file_out.csv', 'r') as csvfile:
         spamreader = csv.reader(csvfile, delimiter=',')
-        spamreader.next()  # skip header
-        assert spamreader.next()[1:-1] == [sct.__version__, '', '0:4', '', 'label_0', '2.5', '38.0']
+        next(spamreader)  # skip header
+        assert next(spamreader)[1:-1] == [sct.__version__, '', '0:4', '', 'label_0', '2.5', '38.0']
