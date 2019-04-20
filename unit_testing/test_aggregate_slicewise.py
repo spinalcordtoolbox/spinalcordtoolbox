@@ -5,16 +5,21 @@
 
 from __future__ import absolute_import
 
+import sys
+import os
 import pytest
 import csv
 
 import numpy as np
 import nibabel as nib
 
-import sct_utils as sct
 from spinalcordtoolbox import aggregate_slicewise
 from spinalcordtoolbox.process_seg import Metric
 from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.utils import __sct_dir__
+
+sys.path.append(os.path.join(__sct_dir__, 'scripts'))
+import sct_utils as sct
 
 
 @pytest.fixture(scope="session")
