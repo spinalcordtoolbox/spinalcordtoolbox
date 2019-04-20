@@ -226,7 +226,7 @@ def test_save_as_csv_slices(dummy_metrics, dummy_vert_level):
     aggregate_slicewise.save_as_csv(agg_metric, 'tmp_file_out.csv')
     with open('tmp_file_out.csv', 'r') as csvfile:
         reader = csv.DictReader(csvfile, delimiter=',')
-        row = reader.next()
+        row = next(reader)
         assert row['Slice (I->S)'] == '2:5'
         assert row['VertLevel'] == '3:4'
 
@@ -241,7 +241,7 @@ def test_save_as_csv_per_level(dummy_metrics, dummy_vert_level):
     aggregate_slicewise.save_as_csv(agg_metric, 'tmp_file_out.csv')
     with open('tmp_file_out.csv', 'r') as csvfile:
         reader = csv.DictReader(csvfile, delimiter=',')
-        row = reader.next()
+        row = next(reader)
         assert row['Slice (I->S)'] == '2:3'
         assert row['VertLevel'] == '3'
 
@@ -259,11 +259,11 @@ def test_save_as_csv_per_slice_then_per_level(dummy_metrics, dummy_vert_level):
     aggregate_slicewise.save_as_csv(agg_metric, 'tmp_file_out.csv', append=True)
     with open('tmp_file_out.csv', 'r') as csvfile:
         reader = csv.DictReader(csvfile, delimiter=',')
-        row = reader.next()
+        row = next(reader)
         assert row['Slice (I->S)'] == '2:3'
         assert row['VertLevel'] == '3'
-        reader.next()
-        row = reader.next()
+        next(reader)
+        row = next(reader)
         assert row['Slice (I->S)'] == '0'
         assert row['VertLevel'] == ''
 
