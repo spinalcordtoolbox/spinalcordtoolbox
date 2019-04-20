@@ -105,7 +105,7 @@ def test_aggregate_across_all_slices(dummy_metrics):
     """Test extraction of metrics aggregation across slices: All slices by default"""
     agg_metric = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], perslice=False,
                                                                   group_funcs=(('WA', aggregate_slicewise.func_wa),))
-    assert agg_metric[agg_metric.keys()[0]]['WA()'] == 38.0
+    assert agg_metric[list(agg_metric)[0]]['WA()'] == 38.0
 
 
 # noinspection 801,PyShadowingNames
@@ -157,31 +157,31 @@ def test_extract_metric(dummy_data_and_labels):
     agg_metric = aggregate_slicewise.extract_metric(dummy_data_and_labels[0], labels=dummy_data_and_labels[1],
                                                     label_struc=dummy_data_and_labels[2], id_label=0,
                                                     perslice=False, method='wa')
-    assert agg_metric[agg_metric.keys()[0]]['WA()'] == 38.0
+    assert agg_metric[list(agg_metric)[0]]['WA()'] == 38.0
 
     # Binarized mask
     agg_metric = aggregate_slicewise.extract_metric(dummy_data_and_labels[0], labels=dummy_data_and_labels[1],
                                                     label_struc=dummy_data_and_labels[2], id_label=0,
                                                     perslice=False, method='bin')
-    assert agg_metric[agg_metric.keys()[0]]['BIN()'] == pytest.approx(36.66, rel=0.01)
+    assert agg_metric[list(agg_metric)[0]]['BIN()'] == pytest.approx(36.66, rel=0.01)
 
     # Maximum Likelihood
     agg_metric = aggregate_slicewise.extract_metric(dummy_data_and_labels[0], labels=dummy_data_and_labels[1],
                                                     label_struc=dummy_data_and_labels[2], id_label=0,
                                                     indiv_labels_ids=[0, 1, 2], perslice=False, method='ml')
-    assert agg_metric[agg_metric.keys()[0]]['ML()'] == pytest.approx(39.9, rel=0.01)
+    assert agg_metric[list(agg_metric)[0]]['ML()'] == pytest.approx(39.9, rel=0.01)
 
     # Maximum A Posteriori
     agg_metric = aggregate_slicewise.extract_metric(dummy_data_and_labels[0], labels=dummy_data_and_labels[1],
                                                     label_struc=dummy_data_and_labels[2], id_label=0,
                                                     indiv_labels_ids=[0, 1, 2], perslice=False, method='map')
-    assert agg_metric[agg_metric.keys()[0]]['MAP()'] == pytest.approx(40.0, rel=0.01)
+    assert agg_metric[list(agg_metric)[0]]['MAP()'] == pytest.approx(40.0, rel=0.01)
 
     # Maximum
     agg_metric = aggregate_slicewise.extract_metric(dummy_data_and_labels[0], labels=dummy_data_and_labels[1],
                                                     label_struc=dummy_data_and_labels[2], id_label=0,
                                                     indiv_labels_ids=[0, 1], perslice=False, method='max')
-    assert agg_metric[agg_metric.keys()[0]]['MAX()'] == 41.0
+    assert agg_metric[list(agg_metric)[0]]['MAX()'] == 41.0
 
 
 # noinspection 801,PyShadowingNames
@@ -190,7 +190,7 @@ def test_extract_metric_2d(dummy_data_and_labels_2d):
     agg_metric = aggregate_slicewise.extract_metric(dummy_data_and_labels_2d[0], labels=dummy_data_and_labels_2d[1],
                                                     label_struc=dummy_data_and_labels_2d[2], id_label=0,
                                                     indiv_labels_ids=0, perslice=False, method='wa')
-    assert agg_metric[agg_metric.keys()[0]]['WA()'] == 5.0
+    assert agg_metric[list(agg_metric)[0]]['WA()'] == 5.0
 
 
 # noinspection 801,PyShadowingNames
