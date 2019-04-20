@@ -1,8 +1,13 @@
 from __future__ import absolute_import
 
 import os
+import sys
+
 import numpy as np
 import nibabel as nib
+
+from spinalcordtoolbox.utils import __sct_dir__
+sys.path.append(os.path.join(__sct_dir__, 'scripts'))
 import sct_utils as sct
 from spinalcordtoolbox.image import Image
 import spinalcordtoolbox.image as msct_image
