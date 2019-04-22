@@ -192,16 +192,11 @@ def main():
             version = getattr(module, "__version__", getattr(module, "__VERSION__", None))
 
             if dep_ver_spec is None and version is not None:
-                ver_conda = dict(get_dependencies(os.path.join(sct.__sct_dir__, "install", "requirements", "requirementsConda.txt"))).get(dep_pkg, None)
                 ver_pip_setup = dict(get_dependencies(os.path.join(sct.__sct_dir__, "requirements.txt"))).get(dep_pkg, None)
-                if ver_conda is None and ver_pip_setup is None:
-                    print_ok(more=(" (%s)" % version))
-                elif ver_conda is not None and fnmatch.fnmatch(version, ver_conda):
-                    print_ok(more=(" (%s)" % version))
-                elif ver_pip_setup is not None and version.startswith(ver_pip_setup):
+                if ver_pip_setup is not None and version.startswith(ver_pip_setup):
                     print_ok(more=(" (%s)" % version))
                 else:
-                    print_warning(more=(" (%s != %s reference version))" % (version, ver_conda or ver_pip_setup)))
+                    print_warning(more=(" (%s != %s reference version))" % (version, ver_pip_setup)))
 
             elif dep_ver_spec == version:
                 print_ok()
