@@ -193,7 +193,9 @@ def main():
 
             if dep_ver_spec is None and version is not None:
                 ver_pip_setup = dict(get_dependencies(os.path.join(sct.__sct_dir__, "requirements.txt"))).get(dep_pkg, None)
-                if ver_pip_setup is not None and version.startswith(ver_pip_setup):
+                if ver_pip_setup is None:
+                    print_ok(more=(" (%s)" % version))
+                elif ver_pip_setup is not None and version.startswith(ver_pip_setup):
                     print_ok(more=(" (%s)" % version))
                 else:
                     print_warning(more=(" (%s != %s reference version))" % (version, ver_pip_setup)))
