@@ -61,7 +61,7 @@ def resolve_module(framework_name):
         'futures': ('concurrent.futures', False),
         'scikit-image': ('skimage', False),
         'scikit-learn': ('sklearn', False),
-        'pyqt': ('PyQt4', False),
+        'pyqt5': ('PyQt5', False),
         'Keras': ('keras', True),
         'futures': ("concurrent.futures", False),
         'opencv': ('cv2', False),
