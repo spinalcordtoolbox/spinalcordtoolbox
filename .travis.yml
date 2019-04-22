@@ -18,17 +18,17 @@ notifications:
 matrix:
   include:
     - os: linux  # list of Linux env: https://docs.travis-ci.com/user/reference/overview/
-      name: "Ubuntu Xenial 16.04"
+      name: "Ubuntu 16.04 (Xenial)"
       dist: xenial
     - os: linux
-      name: "Ubuntu Trusty 14.04"
+      name: "Ubuntu 14.04 (Trusty)"
       dist: trusty
     - os: osx  # list of OSX env: https://docs.travis-ci.com/user/reference/osx/
-      name: "OSX 10.14"
+      name: "OSX 10.14 (Mojave)"
       osx_image: xcode10.2
 #      language: generic
     - os: osx
-      name: "OSX 10.10"
+      name: "OSX 10.10 (Yosemite)"
       osx_image: xcode6.4
 #      language: generic
 
