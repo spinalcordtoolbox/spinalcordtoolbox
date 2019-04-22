@@ -46,50 +46,27 @@ install:
     yes | ASK_REPORT_QUESTION=false ./install_sct
     PATH="$PATH:$PWD/bin"
 
+before_script:
+  - |
+    echo *** CHECK PATH ***
+    echo $PATH  # Make sure PATH includes sct/bin folder
+    ls -lA bin  # Make sure all binaries and aliases are there
+    sct_download_data -d sct_testing_data  # for tests
+    source python/bin/activate  # reactivate conda for the pip install below
+
 script:
-# test dependencies
-#  - sct_check_dependencies
-# test functions & integrity
-#  - bash -c "sudo apt-get install -qq libalglib-dev libinsighttoolkit4-dev; apt-cache show libvtk6-dev && sudo apt-get install -qq libvtk6-dev; apt-cache show libvtk7-dev && sudo apt-get install -qq libvtk7-dev; cd $HOME/build/neuropoly/spinalcordtoolbox/dev/isct_propseg; mkdir -p build; cd build; cmake ..; make; echo"
+  - |
+    echo *** UNIT TESTS ***
+    pip install pytest pytest-cov
+    pytest
 
   - |
-    echo Checking
-    echo $PATH
-    ls -lA bin
-    sct_download_data -d sct_testing_data # for tests
-
-  - |
-    echo Linting
-    pip install pylint
-    bash -c 'PYTHONPATH="$PWD/scripts:$PWD" pylint -j3 --py3k --output-format=parseable --errors-only $(git ls-tree --name-only -r HEAD | sort | grep -E "(spinalcordtoolbox|scripts|testing).*\.py" | xargs); exit $(((($?&3))!=0))'
-
-  - |
-    echo Configuring coverage
+    echo *** INTEGRATION TESTS ***
     pip install coverage
     echo -ne "import coverage\ncov = coverage.process_startup()\n" > sitecustomize.py
     echo -ne "[run]\nconcurrency = multiprocessing\nparallel = True\n" > .coveragerc
-
-  - |
-    echo Running pytest
-    PATH_="$PATH"
-    PATH="$PWD/python/bin:$PATH"
-    PYTHONPATH=scripts pytest -v --cov-append --cov=spinalcordtoolbox --cov=scripts unit_testing/*.py
-    PATH="${PATH_}"
-
-  - |
-    echo Running integration tests
     if [ "${TRAVIS_OS_NAME}" = "osx" ]; then
-      COVERAGE_PROCESS_START="$PWD/.coveragerc" COVERAGE_FILE="$PWD/.coverage" sct_testing -j1 -d 0 --abort-on-failure
-      #brew update;
-      #brew install gdb;
-      #COVERAGE_PROCESS_START="$PWD/.coveragerc" COVERAGE_FILE="$PWD/.coverage" gdb --batch --ex "b __THE_PROCESS_HAS_FORKED_AND_YOU_CANNOT_USE_THIS_COREFOUNDATION_FUNCTIONALITY___YOU_MUST_EXEC__"  -ex r --ex "threads apply all bt" -ex "quit" --args python/bin/python  $(which sct_testing) -d 1 --abort-on-failure
-      #COVERAGE_PROCESS_START="$PWD/.coveragerc" COVERAGE_FILE="$PWD/.coverage" \
-      # lldb --batch \
-      #  -o "breakpoint set --name __THE_PROCESS_HAS_FORKED_AND_YOU_CANNOT_USE_THIS_COREFOUNDATION_FUNCTIONALITY___YOU_MUST_EXEC__" \
-      #  -o "process launch -- scripts/sct_testing.py -j1 -d 1 --abort-on-failure" \
-      #  -o "thread backtrace all" \
-      #  -o "quit" \
-      #  python/bin/python
+      COVERAGE_PROCESS_START="$PWD/.coveragerc" COVERAGE_FILE="$PWD/.coverage" sct_testing -j 1 -d 0 --abort-on-failure
       coverage combine
     else
       COVERAGE_PROCESS_START="$PWD/.coveragerc" COVERAGE_FILE="$PWD/.coverage" sct_testing -d 0 --abort-on-failure
@@ -97,18 +74,23 @@ script:
     fi
 
   - |
-    echo Building docs
+    echo *** ANALYZE CODE ***
+    pip install pylint
+    bash -c 'PYTHONPATH="$PWD/scripts:$PWD" pylint -j3 --py3k --output-format=parseable --errors-only $(git ls-tree --name-only -r HEAD | sort | grep -E "(spinalcordtoolbox|scripts|testing).*\.py" | xargs); exit $(((($?&3))!=0))'
+
+  - |
+    echo *** BUILD DOCUMENTATION ***
     pip install sphinx sphinxcontrib.programoutput sphinx_rtd_theme
     cd documentation/sphinx
     make html
     cd -
 
-  - pip install coveralls
-
 #  - python create_package.py -s ${TRAVIS_OS_NAME}  # test package creation
 #  - cd ../spinalcordtoolbox_v*
 #  - yes | ./install_sct  # test installation of package
-  - echo "This is the end, thanks for reading up to here."
+  - |
+    pip install coveralls
+    echo "This is the end, thanks for reading up to here."
 
 after_success:
   - CI=true TRAVIS=true coveralls
