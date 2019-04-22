@@ -324,7 +324,7 @@ def get_dependencies(requirements_txt=None):
             line = line.rstrip()
             m = re.match("^(?P<pkg>\S+?)(==?(?P<ver>\S+))?\s*(#.*)?$", line)
             if m is None:
-                logger.warn("Invalid requirements.txt line: %s", line)
+                print("WARNING: Invalid requirements.txt line: %s", line)
                 continue
             pkg = m.group("pkg")
             try:
