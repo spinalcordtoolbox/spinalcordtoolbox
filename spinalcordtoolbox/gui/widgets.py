@@ -14,14 +14,14 @@ from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as Navigatio
 from matplotlib.figure import Figure
 from matplotlib.widgets import Cursor
 
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 from spinalcordtoolbox.gui.base import MissingLabelWarning
 
 logger = logging.getLogger(__name__)
 
 
-class VertebraeWidget(QtGui.QWidget):
+class VertebraeWidget(QtWidgets.QWidget):
     """A group of checkboxes that list labels."""
     _unchecked = []
     _checked = []
@@ -38,13 +38,13 @@ class VertebraeWidget(QtGui.QWidget):
         self.refresh()
 
     def _init_ui(self, params):
-        layout = QtGui.QVBoxLayout()
+        layout = QtWidgets.QVBoxLayout()
         self.setLayout(layout)
         font = QtGui.QFont()
         font.setPointSize(10)
 
         for vertebrae in self.vertebraes:
-            rdo = QtGui.QCheckBox('Label {}'.format(vertebrae))
+            rdo = QtWidgets.QCheckBox('Label {}'.format(vertebrae))
             rdo.label = vertebrae
             rdo.setFont(font)
             rdo.setTristate()
@@ -131,8 +131,8 @@ class AnatomicalCanvas(FigureCanvas):
         self._fig = Figure(figsize=(width, height), dpi=dpi)
         super(AnatomicalCanvas, self).__init__(self._fig)
         FigureCanvas.setSizePolicy(self,
-                                   QtGui.QSizePolicy.Expanding,
-                                   QtGui.QSizePolicy.Expanding)
+                                   QtWidgets.QSizePolicy.Expanding,
+                                   QtWidgets.QSizePolicy.Expanding)
         FigureCanvas.updateGeometry(self)
         self.vmin_updated = self._params.vmin
         self.vmax_updated = self._params.vmax
