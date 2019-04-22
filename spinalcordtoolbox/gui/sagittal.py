@@ -10,7 +10,7 @@ from __future__ import absolute_import, division
 import logging
 
 import numpy as np
-from PyQt4 import QtGui
+from PyQt5 import QtGui, QtWidgets
 
 from spinalcordtoolbox.gui import base
 from spinalcordtoolbox.gui import widgets
@@ -42,7 +42,7 @@ class SagittalController(base.BaseController):
 class SagittalDialog(base.BaseDialog):
 
     def _init_canvas(self, parent):
-        layout = QtGui.QHBoxLayout()
+        layout = QtWidgets.QHBoxLayout()
         parent.addLayout(layout)
 
         self.labels = widgets.VertebraeWidget(self, self.params.vertebraes)
@@ -98,7 +98,7 @@ def launch_sagittal_dialog(input_file, output_file, params):
     controller = SagittalController(input_file, params, output_file)
     controller.reformat_image()
 
-    app = QtGui.QApplication([])
+    app = QtWidgets.QApplication([])
     dialog = SagittalDialog(controller)
     dialog.show()
     app.exec_()
