@@ -580,7 +580,7 @@ def register(src, dest, paramreg, param, i_step_str):
                                 'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',1,3'}
     output = ''  # default output if problem
 
-    if paramreg.steps[i_step_str].algo == "centermassrot" and paramreg.steps[i_step_str].rot_method != 'pca':
+    if paramreg.steps[i_step_str].algo == "centermassrot" and paramreg.steps[i_step_str].rot_method == 'hog':
         src_im = src[0]  # user is expected to input images to src and dest
         dest_im = dest[0]
         src_seg = src[1]
@@ -745,7 +745,7 @@ def register(src, dest, paramreg, param, i_step_str):
     # slice-wise transfo
     elif paramreg.steps[i_step_str].algo in ['centermass', 'centermassrot', 'columnwise']:
         # if type=label, exit with error
-        elif paramreg.steps[i_step_str].type == 'label':
+        if paramreg.steps[i_step_str].type == 'label':
             sct.printv('\nERROR: this algo is not compatible with type=label. Please use type=im or type=seg', 1,
                        'error')
         # check if user provided a mask-- if so, inform it will be ignored
@@ -755,7 +755,7 @@ def register(src, dest, paramreg, param, i_step_str):
         # smooth data
         if not paramreg.steps[i_step_str].smooth == '0':
             sct.printv('\nSmooth data', param.verbose)
-            if paramreg.steps[i_step_str].rot_method != 'pca':
+            if paramreg.steps[i_step_str].rot_method == 'pca':
                 sct.run(['sct_maths', '-i', src, '-smooth', paramreg.steps[i_step_str].smooth + ','
                          + paramreg.steps[i_step_str].smooth + ',0', '-o', sct.add_suffix(src, '_smooth')])
                 sct.run(['sct_maths', '-i', dest, '-smooth', paramreg.steps[i_step_str].smooth + ','
@@ -778,7 +778,7 @@ def register(src, dest, paramreg, param, i_step_str):
         from msct_register import register_slicewise
         warp_forward_out = 'step' + i_step_str + 'Warp.nii.gz'
         warp_inverse_out = 'step' + i_step_str + 'InverseWarp.nii.gz'
-        if paramreg.steps[i_step_str].rot_method == 'pca':
+        if paramreg.steps[i_step_str].rot_method == 'pca':  #because pca is the default choice, also includes no rotation
             register_slicewise(src,
                            dest,
                            paramreg=paramreg.steps[i_step_str],
@@ -788,7 +788,7 @@ def register(src, dest, paramreg, param, i_step_str):
                            ants_registration_params=ants_registration_params,
                            remove_temp_files=param.remove_temp_files,
                            verbose=param.verbose)
-        else:  # im_seg case
+        elif paramreg.steps[i_step_str].rot_method == 'hog':  # im_seg case
             register_slicewise([src_im, src_seg],
                            [dest_im, dest_seg],
                            paramreg=paramreg.steps[i_step_str],
@@ -799,6 +799,9 @@ def register(src, dest, paramreg, param, i_step_str):
                            path_qc=param.path_qc,
                            remove_temp_files=param.remove_temp_files,
                            verbose=param.verbose)
+        else:
+            raise ValueError("rot_method " + paramreg.steps[i_step_str].rot_method + " does not exist")
+
 
     else:
         sct.printv('\nERROR: algo ' + paramreg.steps[i_step_str].algo + ' does not exist. Exit program\n', 1, 'error')
