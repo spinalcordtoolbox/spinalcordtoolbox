@@ -28,7 +28,7 @@ do
     if [ -e $file_seg ]; then #segmentation of this file exist
       echo "   Processing file $file with seg $file_seg"
       evaluate_reg_rot -i $file -iseg $file_seg -o $PATH_RESULTS
-    elif [ -e $file_seg ]; then
+    elif [ -e $file_seg_manual ]; then #manual segmentation of this file exist
       echo "   Processing file $file with seg $file_seg_manual"
       evaluate_reg_rot -i $file -iseg $file_seg -o $PATH_RESULTS
     else
