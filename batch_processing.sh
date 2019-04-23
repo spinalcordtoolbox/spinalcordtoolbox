@@ -21,7 +21,7 @@
 #   SCT_BP_QC_FOLDER=/user/toto/my_qc_folder $SCT_DIR/batch_processing.sh
 
 # Abort on error
-set -e
+set -ve
 
 # For full verbose, uncomment the next line
 # set -x
