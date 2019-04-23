@@ -28,6 +28,10 @@ matrix:
       osx_image: xcode10.2
 #      language: generic
     - os: osx
+      name: "OSX 10.13 (High Sierra)"
+      osx_image: xcode9.4
+#      language: generic
+    - os: osx
       name: "OSX 10.10 (Yosemite)"
       osx_image: xcode6.4
 #      language: generic
@@ -43,7 +47,10 @@ install:
 #  - ./update_bin.sh
   - |
     echo Installing SCT
+    set -e  # Error build immediately if install script exits with non-zero
     yes | ASK_REPORT_QUESTION=false ./install_sct
+    echo $?
+    echo "... STATUS"
     PATH="$PATH:$PWD/bin"
 
 before_script:

@@ -1,13 +1,13 @@
-#!/usr/bin/env bash
+#!/bin/bash
 # USAGE
 # > ./install_sct
 #
 # This is the spinalcord toolbox (SCT) installer
 # It downloads the Conda (http://conda.pydata.org/) version
-# of python and install the SCT requirements over it
+# of python and installs the SCT requirements over it
 #
-# The SCT can be install in place where you download it. But then do
-# not delete the source code or you will delete the installation too!
+# The SCT can be installed in the location where you download it. If you choose to do so,
+# do not delete the source code or you will delete the installation too!
 #
 # If you run the installer as super user, the default install is /opt,
 # if you choose this option or any other directory other than the
@@ -15,15 +15,18 @@
 # installation is successful.
 #
 #########################################################################################
-# Copyright (c) 2016 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: PO Quirion
+# Copyright (c) 2019 Polytechnique Montreal <www.neuro.polymtl.ca>
+# Authors: PO Quirion, J Cohen-Adad, J Carretero
 # License: see the file LICENSE.TXT
 #########################################################################################
 
 # N.B. to generate and compress binaries, go to binary folder and type: tar -czf sct_binaries.tar.gz isct_*
 
+#set -e  # v: verbose, e: exit if non-zero output is encountered. Note: using set -e will exit even when trying to remove
+# a folder that already exists, therefore, it should only be used for debugging mode.
 # TODO add some doc to the installer
 # TODO: remove python folder if not empty
+
 
 # functions
 # ========================================================================
