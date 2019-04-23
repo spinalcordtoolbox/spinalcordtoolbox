@@ -487,6 +487,7 @@ def label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=1):
         ind_nonzero = np.nonzero(seg.data[:, :, iz])
         seg.data[ind_nonzero[0], ind_nonzero[1], iz] = vertebral_level
         if verbose == 2:
+            # TODO: the thing below crashes with the py3k move. Fix it when i have time...
             import matplotlib
             matplotlib.use('Agg')
             import matplotlib.pyplot as plt
