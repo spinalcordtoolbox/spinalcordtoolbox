@@ -44,6 +44,8 @@ setup(
      ("sct_scripts", [ os.path.join("scripts", x) for x in os.listdir("scripts") if x.endswith(".py") ]),
      # </hack>
     ],
+    setup_requires=["pytest-runner"],
+    tests_require=["pytest"],
     include_package_data=True,
     extras_require={
      'docs': [
