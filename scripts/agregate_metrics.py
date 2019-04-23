@@ -37,26 +37,20 @@ def main(args=None):
 
     # Loading all csv files :
 
-    dice_glob = []
-    dice_mean = []
-    dice_min = []
-    dice_max = []
-    dice_std = []
+    dice_metrics = {method: {metric: [] for metric in ["dice_global", "dice_mean", "dice_min", "dice_max", "dice_std"]} for method in ["NoRot", "PCA", "HOG"]}  # dictionary for metrics in dictionnary for method containing lists of values
+
     nb_subjects = 0
 
     for root, dirnames, filenames in os.walk(folder):  # searching the given directory
-        # Search for the csv files
-        for filename in fnmatch.filter(filenames, "*.csv"):  # if file with nii extension (.nii or .nii.gz) found
-
-            with open(os.path.join(root, filename), 'r') as csvfile:
-                reader = csv.reader(csvfile)
-                metric_dic = {rows[0]: float(rows[1]) for rows in reader}
-                dice_glob.append(metric_dic['Dice global'])
-                dice_mean.append(metric_dic['Mean Dice per slice'])
-                dice_min.append(metric_dic['Min Dice'])
-                dice_max.append(metric_dic['Max Dice'])
-                dice_std.append(metric_dic['STD Dice'])
-                nb_subjects += 1
+        for method in ["NoRot", "PCA", "HOG"]:
+            # search for csv file
+            for filename in fnmatch.filter(filenames, "*" + method + ".csv"):
+                with open(os.path.join(root, filename), 'r') as csvfile:
+                    reader = csv.reader(csvfile)
+                    metric_dic = {rows[0]: float(rows[1]) for rows in reader}
+                    for metric in ["dice_global", "dice_mean", "dice_min", "dice_max", "dice_std"]:
+                        dice_metrics[method][metric].append(metric_dic[metric])
+                    nb_subjects += 1
 
 
     # Cleaning everything :
@@ -67,34 +61,21 @@ def main(args=None):
     # matplotlib.use('Agg')  # prevent display figure
     fig = plt.figure(figsize=(8, 10))
     fig.suptitle("Histograms of dataset with " + str(nb_subjects) + " images")
-    plt.subplot(231)
-    plt.hist(dice_glob, bins=10, range=(0, 1))
-    plt.title("Global dice histogram")
-    plt.xlabel("dice score")
-    plt.ylabel("count")
-    plt.subplot(232)
-    plt.hist(dice_mean, bins=10, range=(0, 1))
-    plt.title("Mean dice histogram")
-    plt.xlabel("dice score")
-    plt.ylabel("count")
-    plt.subplot(233)
-    plt.hist(dice_min, bins=10, range=(0, 1))
-    plt.title("Min dice histogram")
-    plt.xlabel("dice score")
-    plt.ylabel("count")
-    plt.subplot(234)
-    plt.hist(dice_max, bins=10, range=(0, 1))
-    plt.title("Max dice histogram")
-    plt.xlabel("dice score")
-    plt.ylabel("count")
-    plt.subplot(235)
-    plt.hist(dice_glob, bins=10)
-    plt.title("STD dice histogram")
-    plt.xlabel("dice score")
-    plt.ylabel("count")
+    for k, metric in enumerate(["dice_global", "dice_mean", "dice_min", "dice_max", "dice_std"]):
+        plt.subplot(2, 3, k + 1)
+        if metric == "dice_std":
+            range_metric = None
+            xlabel = "std"
+        else:
+            range_metric = (0, 1)
+            xlabel = "dice score"
+        plt.hist((dice_metrics["NoRot"][metric], dice_metrics["PCA"][metric], dice_metrics["HOG"][metric]), bins=10, range=range_metric)
+        plt.ylabel("count")
+        plt.xlabel(xlabel)
+        plt.title(metric + " histogram")
+        plt.legend(["NoRot", "PCA", "HOG"])
 
     # Saving everything :
-
     plt.savefig(folder + "/histograms.png")
 
 

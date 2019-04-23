@@ -67,47 +67,55 @@ def main(args=None):
     # Labelling vertebrae :
     sct_label_vertebrae(['-i', fname_image, '-s', fname_seg, '-c', contrast_label, '-ofolder', output_dir, '-v', '1'])
 
-    # Registering to template with PCA method
-    sct_register_to_template(
-        ['-i', fname_image, '-s', fname_seg, '-c', contrast, '-l',
-         output_dir + "/" + (fname_seg.split("/")[-1]).split(".nii.gz")[0] + "_labeled.nii.gz", '-ofolder', output_dir, '-param',
-         "step=1,type=seg,algo=centermassrot,poly=0,slicewise=1,rot_method=PCA", '-v', '0'])
+    # Applying same process but for different methods :
 
-    # Applying warping field to segmentation
-    sct_apply_transfo(['-i', fname_seg, '-d', fname_seg_template, '-w', output_dir + "/warp_anat2template.nii.gz", '-o', output_dir + "/" + (fname_seg.split("/")[-1]).split(".nii.gz")[0] + "_reg.nii.gz"])
-    sct_maths(['-i', output_dir + "/" + (fname_seg.split("/")[-1]).split(".nii.gz")[0] + "_reg.nii.gz", '-bin', '0.5', '-o', output_dir + "/" + (fname_seg.split("/")[-1]).split(".nii.gz")[0] + "_reg_tresh.nii.gz"])
+    for method in ["NoRot", "PCA", "HOG"]:
 
-    # Opening registered segmentation
-    data_seg_reg = Image(output_dir + "/" + (fname_seg.split("/")[-1]).split(".nii.gz")[0] + "_reg_tresh.nii.gz").data
-    data_seg_template = Image(fname_seg_template).data
-    min_z = np.min(np.nonzero(data_seg_reg)[2])
-    max_z = np.max(np.nonzero(data_seg_reg)[2])
+        sct.printv("\n\n Registration with " + method)
 
-    # Computing Dice metrics
-    dice_slice = []
-    dice_glob = compute_similarity_metric(data_seg_reg[:, :, min_z:max_z], data_seg_template[:, :, min_z:max_z], metric="Dice")
+        # Registration
+        if method == "NoRot":
+            sct_register_to_template(
+                ['-i', fname_image, '-s', fname_seg, '-c', contrast, '-l',
+                 output_dir + "/" + (fname_seg.split("/")[-1]).split(".nii.gz")[0] + "_labeled.nii.gz", '-ofolder',
+                 output_dir, '-param',
+                 "step=1,type=seg,algo=centermass,poly=0,slicewise=1", '-v', '0'])
+        else:
+            sct_register_to_template(
+                ['-i', fname_image, '-s', fname_seg, '-c', contrast, '-l',
+                 output_dir + "/" + (fname_seg.split("/")[-1]).split(".nii.gz")[0] + "_labeled.nii.gz", '-ofolder', output_dir, '-param',
+                 "step=1,type=seg,algo=centermassrot,poly=0,slicewise=1,rot_method=" + method, '-v', '0'])
 
-    for z in range(min_z, max_z):
-        dice_slice.append(compute_similarity_metric(data_seg_reg[:, :, z], data_seg_template[:, :, z], metric="Dice"))
+        # Applying warping field to segmentation
+        sct_apply_transfo(['-i', fname_seg, '-d', fname_seg_template, '-w', output_dir + "/warp_anat2template.nii.gz", '-o', output_dir + "/" + (fname_seg.split("/")[-1]).split(".nii.gz")[0] + "_reg.nii.gz"])
+        sct_maths(['-i', output_dir + "/" + (fname_seg.split("/")[-1]).split(".nii.gz")[0] + "_reg.nii.gz", '-bin', '0.5', '-o', output_dir + "/" + (fname_seg.split("/")[-1]).split(".nii.gz")[0] + "_reg_tresh.nii.gz"])
 
-    dice_slice_min = min(dice_slice)
-    dice_slice_max = max(dice_slice)
-    dice_slice_mean = np.mean(dice_slice)
-    dice_slice_std = np.std(dice_slice)
+        # Opening registered segmentation
+        data_seg_reg = Image(output_dir + "/" + (fname_seg.split("/")[-1]).split(".nii.gz")[0] + "_reg_tresh.nii.gz").data
+        data_seg_template = Image(fname_seg_template).data
+        min_z = np.min(np.nonzero(data_seg_reg)[2])
+        max_z = np.max(np.nonzero(data_seg_reg)[2])
 
-    # Writing out metrics in csv files
-    os.chdir(output_dir)
-    with open((fname_image.split("/")[-1]).split(".nii")[0] + "_dice.csv", 'wb') as csvfile:
-        filewriter = csv.writer(csvfile, delimiter=',',
-                                quotechar='|', quoting=csv.QUOTE_MINIMAL)
-        filewriter.writerow(['Dice global', dice_glob])
-        filewriter.writerow(['Mean Dice per slice', dice_slice_mean])
-        filewriter.writerow(['Min Dice', dice_slice_min])
-        filewriter.writerow(['Max Dice', dice_slice_max])
-        filewriter.writerow(['STD Dice', dice_slice_std])
+        # Computing Dice metrics
+        dice_slice = []
+        dice_glob = compute_similarity_metric(data_seg_reg[:, :, min_z:max_z], data_seg_template[:, :, min_z:max_z], metric="Dice")
 
+        for z in range(min_z, max_z):
+            dice_slice.append(compute_similarity_metric(data_seg_reg[:, :, z], data_seg_template[:, :, z], metric="Dice"))
 
-    #  TODO : write out dice scores as txt ? then func to agregate them
+        # Writing out metrics in csv files
+        cwd = os.getcwd()
+        os.chdir(output_dir)
+        with open((fname_image.split("/")[-1]).split(".nii")[0] + "_dice_" + method + ".csv", 'wb') as csvfile:
+            filewriter = csv.writer(csvfile, delimiter=',',
+                                    quotechar='|', quoting=csv.QUOTE_MINIMAL)
+            filewriter.writerow(["dice_global", dice_glob])
+            filewriter.writerow(["dice_mean", np.mean(dice_slice)])
+            filewriter.writerow(["dice_min", min(dice_slice)])
+            filewriter.writerow(["dice_max", max(dice_slice)])
+            filewriter.writerow(["dice_std", np.std(dice_slice)])
+        os.chdir(cwd)
+
 
 if __name__ == "__main__":
     sct.init_sct()
