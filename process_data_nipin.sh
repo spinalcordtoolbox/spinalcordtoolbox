@@ -14,7 +14,7 @@ PATH_RESULTS=$2
 PATH_QC=$3
 PATH_LOG=$4
 
-
+cd $SUBJECT
 cd anat/
 
 for file in *.nii.gz
