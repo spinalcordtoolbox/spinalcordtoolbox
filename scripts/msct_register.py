@@ -84,7 +84,7 @@ def register_slicewise(fname_src,
         if im_and_seg is False:
             # translation of center of mass and rotation based on source and destination first eigenvectors from PCA.
             register2d_centermassrot('src.nii', 'dest.nii', fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, rot=1, polydeg=int(paramreg.poly), path_qc=path_qc, verbose=verbose, pca_eigenratio_th=float(paramreg.pca_eigenratio_th))
-        else:  # here in the futur we can add a condition checking if rot is equal to 2, 3 , etc to choose the appropriate method
+        else:
             # translation based of center of mass and rotation based on the symmetry of the image
             register2d_centermassrot(['src_im.nii','src_seg.nii'], ['dest_im.nii', 'dest_seg.nii'], fname_warp=warp_forward_out,
                                      fname_warp_inv=warp_inverse_out, rot=2, polydeg=int(paramreg.poly),
@@ -116,20 +116,20 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
     of the PCA. This function should be used on segmentations (not images).
     This works for 2D and 3D images.  If 3D, it splits the image and performs the rotation slice-by-slice.
     input:
-        fname_source: name of moving image (type: string), if rot > 1, this needs to be a list with the first element
+        fname_source: name of moving image (type: string), if rot  == 2, this needs to be a list with the first element
         being the image fname and the second the segmentation fname
-        fname_dest: name of fixed image (type: string), if rot > 1, needs to be a list
+        fname_dest: name of fixed image (type: string), if rot == 2, needs to be a list
         fname_warp: name of output 3d forward warping field
         fname_warp_inv: name of output 3d inverse warping field
         rot: estimate rotation with pca (=1), hog (=2) or no rotation (=0) Default = 1
-        rot>1 needs image AND segmentation to work
+        Depending on the rotation method, input might be segmentation only or image and segmentation
         polydeg: degree of polynomial regularization along z for rotation angle (type: int). 0: no regularization
         verbose:
     output:
         none
     """
 
-    if rot > 1:  # following method wanting to use both im and seg could be tagged 3, 4, etc.
+    if rot == 2:  # if following methods need im and seg, add "and rot == x"
         fname_src_im = fname_src[0]
         fname_dest_im = fname_dest[0]
         fname_src_seg = fname_src[1]
@@ -144,14 +144,14 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
 
     # Get image dimensions and retrieve nz
     sct.printv('\nGet image dimensions of destination image...', verbose)
-    if rot <= 1:
+    if rot == 1 or rot == 0:
         nx, ny, nz, nt, px, py, pz, pt = Image(fname_dest).dim
     else:
         nx, ny, nz, nt, px, py, pz, pt = Image(fname_dest_im).dim
     sct.printv('  matrix size: ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz), verbose)
     sct.printv('  voxel size:  ' + str(px) + 'mm x ' + str(py) + 'mm x ' + str(pz) + 'mm', verbose)
 
-    if rot <= 1:
+    if rot == 1 or rot == 0:
         # Split source volume along z
         sct.printv('\nSplit input volume...', verbose)
         from sct_image import split_data
@@ -177,7 +177,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
             new_shape = tuple(new_shape)
             data_src = data_src.reshape(new_shape)
             data_dest = data_dest.reshape(new_shape)
-    else:  # im and seg case
+    elif rot == 2:  # im and seg case
         # Split source volume along z
         sct.printv('\nSplit input volume...', verbose)
         from sct_image import split_data
@@ -206,6 +206,8 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
         data_dest_im = im_dest_im.data
         data_src_seg = im_src_seg.data
         data_dest_seg = im_dest_seg.data
+    else:
+        raise ValueError("rot param == " + str(rot) + " not implemented")
 
     # initialize displacement and rotation
     coord_src = [None] * nz
@@ -219,7 +221,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
     angle_src_dest = np.zeros(nz)
     z_nonzero = []
 
-    if rot <= 1:
+    if rot == 1 or rot == 0:
         # Loop across slices
         for iz in range(0, nz):
             try:
@@ -242,7 +244,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
             except ValueError:
                 sct.printv('WARNING: Slice #' + str(iz) + ' is empty. It will be ignored.', verbose, 'warning')
 
-    else:  # im and seg case
+    elif rot == 2:  # im and seg case
 
         raise NotImplementedError("This method is not implemented yet, it will be in a future version")
         # for iz in range(0, nz):
@@ -263,9 +265,11 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
         #
         #     except ValueError:
         #         sct.printv('WARNING: Slice #' + str(iz) + ' is empty. It will be ignored.', verbose, 'warning')
+    else:
+        raise ValueError("rot param == " + str(rot) + " not implemented")
 
     # regularize rotation
-    if not polydeg == 0 and rot == 1:
+    if not polydeg == 0 and (rot == 1 or rot == 2):
         coeffs = np.polyfit(z_nonzero, angle_src_dest[z_nonzero], polydeg)
         poly = np.poly1d(coeffs)
         angle_src_dest_regularized = np.polyval(poly, z_nonzero)        # display
@@ -282,7 +286,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
 
     # initialize warping fields
     # N.B. forward transfo is defined in destination space and inverse transfo is defined in the source space
-    if rot > 1:
+    if rot == 2:
         im_src = im_src_im
         im_dest = im_dest_im
         data_dest = data_dest_im
