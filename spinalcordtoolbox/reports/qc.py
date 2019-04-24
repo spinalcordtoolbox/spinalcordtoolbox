@@ -253,8 +253,10 @@ class QcImage(object):
                 img = func_stretch_contrast[self._stretch_contrast_method](img)
 
             fig = Figure()
+            size_fig = [5, 5 * img.shape[0] / img.shape[1]]
+            fig.set_size_inches(size_fig[0], size_fig[1], forward=True)
             FigureCanvas(fig)
-            ax = fig.add_subplot(111)
+            ax = fig.add_axes((0, 0, 1, 1))
             ax.imshow(img, cmap='gray', interpolation=self.interpolation, aspect=float(aspect_img))
             self._add_orientation_label(ax)
             ax.get_xaxis().set_visible(False)
@@ -267,8 +269,9 @@ class QcImage(object):
                     print("Mask type %s" % mask.dtype)
                     mask = func_stretch_contrast[self._stretch_contrast_method](mask)
                 fig = Figure()
+                fig.set_size_inches(size_fig[0], size_fig[1], forward=True)
                 FigureCanvas(fig)
-                ax = fig.add_subplot(111)
+                ax = fig.add_axes((0, 0, 1, 1))
                 action(self, mask, ax)
                 self._save(fig, self.qc_report.qc_params.abs_overlay_img_path(), dpi=self.qc_report.qc_params.dpi)
 
@@ -303,8 +306,7 @@ class QcImage(object):
         logger.debug('Save image %s', img_path)
         fig.savefig(img_path,
                     format=format,
-                    bbox_inches=bbox_inches,
-                    pad_inches=pad_inches,
+                    bbox_inches=None,
                     transparent=True,
                     dpi=dpi)
 
