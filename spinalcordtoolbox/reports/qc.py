@@ -284,10 +284,10 @@ class QcImage(object):
         """
         if self.qc_report.qc_params.orientation == 'Axial':
             # If mosaic of axial slices, display orientation labels
-            ax.text(12, 6, 'A', color='yellow', size=6)
-            ax.text(12, 28, 'P', color='yellow', size=6)
-            ax.text(0, 18, 'L', color='yellow', size=6)
-            ax.text(24, 18, 'R', color='yellow', size=6)
+            ax.text(12, 6, 'A', color='yellow', size=4)
+            ax.text(12, 28, 'P', color='yellow', size=4)
+            ax.text(0, 18, 'L', color='yellow', size=4)
+            ax.text(24, 18, 'R', color='yellow', size=4)
 
     def _save(self, fig, img_path, format='png', bbox_inches='tight', pad_inches=0.00, dpi=300):
         """
