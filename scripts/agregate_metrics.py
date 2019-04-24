@@ -39,8 +39,6 @@ def main(args=None):
 
     dice_metrics = {method: {metric: [] for metric in ["dice_global", "dice_mean", "dice_min", "dice_max", "dice_std"]} for method in ["NoRot", "PCA", "HOG"]}  # dictionary for metrics in dictionnary for method containing lists of values
 
-    nb_subjects = 0
-
     for root, dirnames, filenames in os.walk(folder):  # searching the given directory
         for method in ["NoRot", "PCA", "HOG"]:
             # search for csv file
@@ -50,7 +48,7 @@ def main(args=None):
                     metric_dic = {rows[0]: float(rows[1]) for rows in reader}
                     for metric in ["dice_global", "dice_mean", "dice_min", "dice_max", "dice_std"]:
                         dice_metrics[method][metric].append(metric_dic[metric])
-                    nb_subjects += 1
+    nb_subjects = len(dice_metrics.itervalues().next().itervalues().next()) # just to get number of subjects
 
 
     # Cleaning everything :
