@@ -10,12 +10,14 @@ trap "echo Caught Keyboard Interrupt within script. Exiting now.; exit" INT
 
 # Retrieve input params
 SUBJECT=$1
-PATH_RESULTS=$2
-PATH_QC=$3
-PATH_LOG=$4
+SITE=$2
+PATH_OUTPUT=$3
+PATH_QC=$4
+PATH_LOG=$5
 
-cd $SUBJECT
-cd anat/
+PATH_RESULTS=$PATH_OUTPUT/$SITE
+
+cd $SUBJECT/anat
 
 for file in *.nii.gz
 do
