@@ -51,8 +51,8 @@ if [ -z "$SCT_BP_NO_REMOVE_QC" -a -d "$SCT_BP_QC_FOLDER" ]; then
   rm -rf "$SCT_BP_QC_FOLDER"
 fi
 
-# display starting time:
-echo "Started at: $(date +%x_%r)"
+# get starting time:
+TIME_START=$(date +%x_%r)
 
 # download example data
 if [ "$SCT_BP_DOWNLOAD" == "1" ]; then
@@ -246,6 +246,8 @@ cd ..
 
 # Display results (to easily compare integrity across SCT versions)
 # ===========================================================================================
+set +v
+echo "Started at: $TIME_START"
 echo "Ended at: $(date +%x_%r)"
 echo
 echo "t2/CSA:         " `awk -F"," ' {print $6}' t2/csa_c2c3.csv | tail -1`
