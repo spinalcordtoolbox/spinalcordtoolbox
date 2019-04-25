@@ -37,8 +37,6 @@ install:
   - |
     echo Installing SCT
     set -e  # Error build immediately if install script exits with non-zero
-    mkdir ~/.matplotlib
-    echo "backend: TkAgg" >> ~/.matplotlib/matplotlibrc  # deal with https://github.com/neuropoly/spinalcordtoolbox/pull/2238#issuecomment-485908006
     yes | ASK_REPORT_QUESTION=false ./install_sct
     echo $?
     echo "... STATUS"
