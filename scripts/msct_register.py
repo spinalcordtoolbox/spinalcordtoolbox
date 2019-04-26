@@ -45,13 +45,30 @@ def register_slicewise(fname_src,
                         remove_temp_files=0,
                         verbose=0):
 
+    im_and_seg = (paramreg.algo == 'centermassrot') and (paramreg.rot_method == 'hog')  # bool for simplicity
+    # future contributor wanting to implement a method that use both im and seg will add: and (paramreg.rot_method == 'OTHER_METHOD')
+
+    if im_and_seg is True:
+        fname_src_im = fname_src[0]
+        fname_dest_im = fname_dest[0]
+        fname_src_seg = fname_src[1]
+        fname_dest_seg = fname_dest[1]
+        del fname_src
+        del fname_dest  # to be sure it is not missused later
+
     # create temporary folder
     path_tmp = sct.tmp_create(basename="register", verbose=verbose)
 
     # copy data to temp folder
     sct.printv('\nCopy input data to temp folder...', verbose)
-    convert(fname_src, os.path.join(path_tmp, "src.nii"))
-    convert(fname_dest, os.path.join(path_tmp, "dest.nii"))
+    if im_and_seg is False:
+        convert(fname_src, os.path.join(path_tmp, "src.nii"))
+        convert(fname_dest, os.path.join(path_tmp, "dest.nii"))
+    else:
+        convert(fname_src_im, os.path.join(path_tmp, "src_im.nii"))
+        convert(fname_dest_im, os.path.join(path_tmp, "dest_im.nii"))
+        convert(fname_src_seg, os.path.join(path_tmp, "src_seg.nii"))
+        convert(fname_dest_seg, os.path.join(path_tmp, "dest_seg.nii"))
     if fname_mask != '':
         convert(fname_mask, os.path.join(path_tmp, "mask.nii.gz"))
 
@@ -64,8 +81,14 @@ def register_slicewise(fname_src,
         # translation of center of mass between source and destination in voxel space
         register2d_centermassrot('src.nii', 'dest.nii', fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, rot=0, polydeg=int(paramreg.poly), path_qc=path_qc, verbose=verbose)
     elif paramreg.algo == 'centermassrot':
-        # translation of center of mass and rotation based on source and destination first eigenvectors from PCA.
-        register2d_centermassrot('src.nii', 'dest.nii', fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, rot=1, polydeg=int(paramreg.poly), path_qc=path_qc, verbose=verbose, pca_eigenratio_th=float(paramreg.pca_eigenratio_th))
+        if im_and_seg is False:
+            # translation of center of mass and rotation based on source and destination first eigenvectors from PCA.
+            register2d_centermassrot('src.nii', 'dest.nii', fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, rot=1, polydeg=int(paramreg.poly), path_qc=path_qc, verbose=verbose, pca_eigenratio_th=float(paramreg.pca_eigenratio_th))
+        else:
+            # translation based of center of mass and rotation based on the symmetry of the image
+            register2d_centermassrot(['src_im.nii','src_seg.nii'], ['dest_im.nii', 'dest_seg.nii'], fname_warp=warp_forward_out,
+                                     fname_warp_inv=warp_inverse_out, rot=2, polydeg=int(paramreg.poly),
+                                     path_qc=path_qc, verbose=verbose)
     elif paramreg.algo == 'columnwise':
         # scaling R-L, then column-wise center of mass alignment and scaling
         register2d_columnwise('src.nii', 'dest.nii', fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, verbose=verbose, path_qc=path_qc, smoothWarpXY=int(paramreg.smoothWarpXY))
@@ -93,16 +116,26 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
     of the PCA. This function should be used on segmentations (not images).
     This works for 2D and 3D images.  If 3D, it splits the image and performs the rotation slice-by-slice.
     input:
-        fname_source: name of moving image (type: string)
-        fname_dest: name of fixed image (type: string)
+        fname_source: name of moving image (type: string), if rot  == 2, this needs to be a list with the first element
+        being the image fname and the second the segmentation fname
+        fname_dest: name of fixed image (type: string), if rot == 2, needs to be a list
         fname_warp: name of output 3d forward warping field
         fname_warp_inv: name of output 3d inverse warping field
-        rot: estimate rotation with PCA (type: int)
+        rot: estimate rotation with pca (=1), hog (=2) or no rotation (=0) Default = 1
+        Depending on the rotation method, input might be segmentation only or image and segmentation
         polydeg: degree of polynomial regularization along z for rotation angle (type: int). 0: no regularization
         verbose:
     output:
         none
     """
+
+    if rot == 2:  # if following methods need im and seg, add "and rot == x"
+        fname_src_im = fname_src[0]
+        fname_dest_im = fname_dest[0]
+        fname_src_seg = fname_src[1]
+        fname_dest_seg = fname_dest[1]
+        del fname_src
+        del fname_dest  # to be sure it is not missused later
 
     if verbose == 2:
         import matplotlib
@@ -111,36 +144,70 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
 
     # Get image dimensions and retrieve nz
     sct.printv('\nGet image dimensions of destination image...', verbose)
-    nx, ny, nz, nt, px, py, pz, pt = Image(fname_dest).dim
+    if rot == 1 or rot == 0:
+        nx, ny, nz, nt, px, py, pz, pt = Image(fname_dest).dim
+    else:
+        nx, ny, nz, nt, px, py, pz, pt = Image(fname_dest_im).dim
     sct.printv('  matrix size: ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz), verbose)
     sct.printv('  voxel size:  ' + str(px) + 'mm x ' + str(py) + 'mm x ' + str(pz) + 'mm', verbose)
 
-    # Split source volume along z
-    sct.printv('\nSplit input volume...', verbose)
-    from sct_image import split_data
-    im_src = Image('src.nii')
-    split_source_list = split_data(im_src, 2)
-    for im in split_source_list:
-        im.save()
+    if rot == 1 or rot == 0:
+        # Split source volume along z
+        sct.printv('\nSplit input volume...', verbose)
+        from sct_image import split_data
+        im_src = Image('src.nii')
+        split_source_list = split_data(im_src, 2)
+        for im in split_source_list:
+            im.save()
 
-    # Split destination volume along z
-    sct.printv('\nSplit destination volume...', verbose)
-    im_dest = Image('dest.nii')
-    split_dest_list = split_data(im_dest, 2)
-    for im in split_dest_list:
-        im.save()
+        # Split destination volume along z
+        sct.printv('\nSplit destination volume...', verbose)
+        im_dest = Image('dest.nii')
+        split_dest_list = split_data(im_dest, 2)
+        for im in split_dest_list:
+            im.save()
 
-    # display image
-    data_src = im_src.data
-    data_dest = im_dest.data
+        # display image
+        data_src = im_src.data
+        data_dest = im_dest.data
+        if len(data_src.shape) == 2:
+            # reshape 2D data into pseudo 3D (only one slice)
+            new_shape = list(data_src.shape)
+            new_shape.append(1)
+            new_shape = tuple(new_shape)
+            data_src = data_src.reshape(new_shape)
+            data_dest = data_dest.reshape(new_shape)
+    elif rot == 2:  # im and seg case
+        # Split source volume along z
+        sct.printv('\nSplit input volume...', verbose)
+        from sct_image import split_data
+        im_src_im = Image('src_im.nii')
+        split_source_list = split_data(im_src_im, 2)
+        for im in split_source_list:
+            im.save()
+        im_src_seg = Image('src_seg.nii')
+        split_source_list = split_data(im_src_seg, 2)
+        for im in split_source_list:
+            im.save()
 
-    if len(data_src.shape) == 2:
-        # reshape 2D data into pseudo 3D (only one slice)
-        new_shape = list(data_src.shape)
-        new_shape.append(1)
-        new_shape = tuple(new_shape)
-        data_src = data_src.reshape(new_shape)
-        data_dest = data_dest.reshape(new_shape)
+        # Split destination volume along z
+        sct.printv('\nSplit destination volume...', verbose)
+        im_dest_im = Image('dest_im.nii')
+        split_dest_list = split_data(im_dest_im, 2)
+        for im in split_dest_list:
+            im.save()
+        im_dest_seg = Image('dest_seg.nii')
+        split_dest_list = split_data(im_dest_seg, 2)
+        for im in split_dest_list:
+            im.save()
+
+        # display image
+        data_src_im = im_src_im.data
+        data_dest_im = im_dest_im.data
+        data_src_seg = im_src_seg.data
+        data_dest_seg = im_dest_seg.data
+    else:
+        raise ValueError("rot param == " + str(rot) + " not implemented")
 
     # initialize displacement and rotation
     coord_src = [None] * nz
@@ -153,39 +220,64 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
     # displacement_inverse = np.zeros([nz, 2])
     angle_src_dest = np.zeros(nz)
     z_nonzero = []
-    # Loop across slices
-    for iz in range(0, nz):
-        try:
-            # compute PCA and get center or mass
-            coord_src[iz], pca_src[iz], centermass_src[iz, :] = compute_pca(data_src[:, :, iz])
-            coord_dest[iz], pca_dest[iz], centermass_dest[iz, :] = compute_pca(data_dest[:, :, iz])
-            # compute (src,dest) angle for first eigenvector
-            if rot == 1:
-                eigenv_src = pca_src[iz].components_.T[0][0], pca_src[iz].components_.T[1][0]  # pca_src.components_.T[0]
-                eigenv_dest = pca_dest[iz].components_.T[0][0], pca_dest[iz].components_.T[1][0]  # pca_dest.components_.T[0]
-                # Make sure first element is always positive (to prevent sign flipping)
-                if eigenv_src[0] <= 0:
-                    eigenv_src = tuple([i * (-1) for i in eigenv_src])
-                if eigenv_dest[0] <= 0:
-                    eigenv_dest = tuple([i * (-1) for i in eigenv_dest])
-                angle_src_dest[iz] = angle_between(eigenv_src, eigenv_dest)
-                # check if ratio between the two eigenvectors is high enough to prevent poor robustness
-                if pca_src[iz].explained_variance_ratio_[0] / pca_src[iz].explained_variance_ratio_[1] < pca_eigenratio_th:
-                    angle_src_dest[iz] = 0
-                if pca_dest[iz].explained_variance_ratio_[0] / pca_dest[iz].explained_variance_ratio_[1] < pca_eigenratio_th:
-                    angle_src_dest[iz] = 0
-            # append to list of z_nonzero
-            z_nonzero.append(iz)
-        # if one of the slice is empty, ignore it
-        except ValueError:
-            sct.printv('WARNING: Slice #' + str(iz) + ' is empty. It will be ignored.', verbose, 'warning')
+
+    if rot == 1 or rot == 0:
+        # Loop across slices
+        for iz in range(0, nz):
+            try:
+                # compute PCA and get center or mass
+                coord_src[iz], pca_src[iz], centermass_src[iz, :] = compute_pca(data_src[:, :, iz])
+                coord_dest[iz], pca_dest[iz], centermass_dest[iz, :] = compute_pca(data_dest[:, :, iz])
+                # compute (src,dest) angle for first eigenvector
+                if rot == 1:
+                    eigenv_src = pca_src[iz].components_.T[0][0], pca_src[iz].components_.T[1][0]  # pca_src.components_.T[0]
+                    eigenv_dest = pca_dest[iz].components_.T[0][0], pca_dest[iz].components_.T[1][0]  # pca_dest.components_.T[0]
+                    # Make sure first element is always positive (to prevent sign flipping)
+                    if eigenv_src[0] <= 0:
+                        eigenv_src = tuple([i * (-1) for i in eigenv_src])
+                    if eigenv_dest[0] <= 0:
+                        eigenv_dest = tuple([i * (-1) for i in eigenv_dest])
+                    angle_src_dest[iz] = angle_between(eigenv_src, eigenv_dest)
+                    # check if ratio between the two eigenvectors is high enough to prevent poor robustness
+                    if pca_src[iz].explained_variance_ratio_[0] / pca_src[iz].explained_variance_ratio_[1] < pca_eigenratio_th:
+                        angle_src_dest[iz] = 0
+                    if pca_dest[iz].explained_variance_ratio_[0] / pca_dest[iz].explained_variance_ratio_[1] < pca_eigenratio_th:
+                        angle_src_dest[iz] = 0
+                # append to list of z_nonzero
+                z_nonzero.append(iz)
+            # if one of the slice is empty, ignore it
+            except ValueError:
+                sct.printv('WARNING: Slice #' + str(iz) + ' is empty. It will be ignored.', verbose, 'warning')
+
+    elif rot == 2:  # im and seg case
+
+        raise NotImplementedError("This method is not implemented yet, it will be in a future version")
+        # for iz in range(0, nz):
+        #     try:
+        #         _, _, centermass_src[iz, :] = compute_pca(data_src_seg[:, :, iz])
+        #         _, _, centermass_dest[iz, :] = compute_pca(data_dest_seg[:, :, iz])
+        #
+        #         # TODO: Here will be put the new method to find the angle
+        #
+        #         #angle_src = find_angle(data_src_im[:, :, iz], centermass_src[iz, :], parameters)
+        #         #angle_dest = find_angle(data_dest_im[:, :, iz], centermass_dest[iz, :], parameters)
+        #
+        #         # if (angle_src is None) or (angle_dest is None):
+        #         #     sct.printv('WARNING: Slice #' + str(iz) + ' no angle found in dest or src. It will be ignored.', verbose, 'warning')
+        #         #     continue
+        #
+        #         # angle_src_dest[iz] = angle_src-angle_dest
+        #
+        #     except ValueError:
+        #         sct.printv('WARNING: Slice #' + str(iz) + ' is empty. It will be ignored.', verbose, 'warning')
+    else:
+        raise ValueError("rot param == " + str(rot) + " not implemented")
 
     # regularize rotation
-    if not polydeg == 0 and rot == 1:
+    if not polydeg == 0 and (rot == 1 or rot == 2):
         coeffs = np.polyfit(z_nonzero, angle_src_dest[z_nonzero], polydeg)
         poly = np.poly1d(coeffs)
-        angle_src_dest_regularized = np.polyval(poly, z_nonzero)
-        # display
+        angle_src_dest_regularized = np.polyval(poly, z_nonzero)        # display
         if verbose == 2:
             plt.plot(180 * angle_src_dest[z_nonzero] / np.pi, 'ob')
             plt.plot(180 * angle_src_dest_regularized / np.pi, 'r', linewidth=2)
@@ -199,6 +291,15 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
 
     # initialize warping fields
     # N.B. forward transfo is defined in destination space and inverse transfo is defined in the source space
+    if rot == 2:
+        im_src = im_src_im
+        im_dest = im_dest_im
+        data_dest = data_dest_im
+        data_src = data_src_im
+        fname_dest = fname_dest_im
+        fname_src = fname_src_im
+        # back to original names for the rest of the process
+
     warp_x = np.zeros(data_dest.shape)
     warp_y = np.zeros(data_dest.shape)
     warp_inv_x = np.zeros(data_src.shape)
