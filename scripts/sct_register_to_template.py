@@ -537,15 +537,24 @@ def main(args=None):
                 interp_step = 'nn'
             else:
                 sct.printv('ERROR: Wrong image type.', 1, 'error')
+
+            if paramreg.steps[str(i_step)].algo == 'centermassrot' and paramreg.steps[str(i_step)].rot_method == 'hog':
+                src_seg = ftmp_seg
+                dest_seg = ftmp_template_seg
             # if step>1, apply warp_forward_concat to the src image to be used
             if i_step > 1:
-                # sct.run('sct_apply_transfo -i '+src+' -d '+dest+' -w '+','.join(warp_forward)+' -o '+sct.add_suffix(src, '_reg')+' -x '+interp_step, verbose)
                 # apply transformation from previous step, to use as new src for registration
                 sct.run(['sct_apply_transfo', '-i', src, '-d', dest, '-w', ','.join(warp_forward), '-o', add_suffix(src, '_regStep' + str(i_step - 1)), '-x', interp_step], verbose)
                 src = add_suffix(src, '_regStep' + str(i_step - 1))
+                if paramreg.steps[str(i_step)].algo == 'centermassrot' and paramreg.steps[str(i_step)].rot_method == 'hog':  # also apply transformation to the seg
+                    sct.run(['sct_apply_transfo', '-i', src_seg, '-d', dest_seg, '-w', ','.join(warp_forward), '-o', add_suffix(src, '_regStep' + str(i_step - 1)), '-x', interp_step], verbose)
+                    src_seg = add_suffix(src_seg, '_regStep' + str(i_step - 1))
             # register src --> dest
             # TODO: display param for debugging
-            warp_forward_out, warp_inverse_out = register(src, dest, paramreg, param, str(i_step))
+            if paramreg.steps[str(i_step)].algo == 'centermassrot' and paramreg.steps[str(i_step)].rot_method == 'hog': # im_seg case
+                warp_forward_out, warp_inverse_out = register([src, src_seg], [dest, dest_seg], paramreg, param, str(i_step))
+            else:
+                warp_forward_out, warp_inverse_out = register(src, dest, paramreg, param, str(i_step))
             warp_forward.append(warp_forward_out)
             warp_inverse.append(warp_inverse_out)
 
@@ -566,8 +575,8 @@ def main(args=None):
 
         # Change orientation of input images to RPI
         sct.printv('\nChange orientation of input images to RPI...', verbose)
-        ftmp_data =  Image(ftmp_data).change_orientation("RPI", generate_path=True).save().absolutepath
-        ftmp_seg =  Image(ftmp_seg).change_orientation("RPI", generate_path=True).save().absolutepath
+        ftmp_data = Image(ftmp_data).change_orientation("RPI", generate_path=True).save().absolutepath
+        ftmp_seg = Image(ftmp_seg).change_orientation("RPI", generate_path=True).save().absolutepath
         ftmp_label = Image(ftmp_label).change_orientation("RPI", generate_path=True).save().absolutepath
 
         # Remove unused label on template. Keep only label present in the input label image

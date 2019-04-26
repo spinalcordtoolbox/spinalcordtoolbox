@@ -126,7 +126,7 @@ def get_parser(paramreg=None):
                                                                                 "  bsplinesyn: syn regularized with b-splines\n"
                                                                                 "  slicereg: regularized translations (see: goo.gl/Sj3ZeU)\n"
                                                                                 "  centermass: slicewise center of mass alignment (seg only).\n"
-                                                                                "  centermassrot: slicewise center of mass and PCA-based rotation alignment (seg only)\n"
+                                                                                "  centermassrot: slicewise center of mass and rotation alignment using method specified in 'rot_method'\n"
                                                                                 "  columnwise: R-L scaling followed by A-P columnwise alignment (seg only).\n"
                                                                                 "slicewise: <int> Slice-by-slice 2d transformation. Default=" +
                                   paramreg.steps['1'].slicewise + "\n"
@@ -152,10 +152,12 @@ def get_parser(paramreg=None):
                                   paramreg.steps['1'].poly + "\n"
                                                              "smoothWarpXY: <int> Smooth XY warping field (only for algo=columnwize). Default=" +
                                   paramreg.steps['1'].smoothWarpXY + "\n"
-                                                                     "pca_eigenratio_th: <int> Min ratio between the two eigenvalues for PCA-based angular adjustment (only for algo=centermassrot). Default=" +
+                                                                     "pca_eigenratio_th: <int> Min ratio between the two eigenvalues for PCA-based angular adjustment (only for algo=centermassrot and rot_method=pca). Default=" +
                                   paramreg.steps['1'].pca_eigenratio_th + "\n"
                                                                           "dof: <str> Degree of freedom for type=label. Separate with '_'. Default=" +
-                                  paramreg.steps['0'].dof + "\n",
+                                  paramreg.steps['0'].dof + "\n" +
+                                  paramreg.steps['1'].rot_method + "\n"
+                                                                    "rot_method {pca,hog}: rotation method to be used with algo=centermassrot.",
                       mandatory=False,
                       example="step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=im,algo=syn,metric=MI,iter=5,shrink=2")
     parser.add_option(name="-identity",
@@ -226,7 +228,7 @@ class Param:
 class Paramreg(object):
     def __init__(self, step=None, type=None, algo='syn', metric='MeanSquares', iter='10', shrink='1', smooth='0',
                  gradStep='0.5', deformation='1x1x0', init='', poly='5', slicewise='0', laplacian='0',
-                 dof='Tx_Ty_Tz_Rx_Ry_Rz', smoothWarpXY='2', pca_eigenratio_th='1.6'):
+                 dof='Tx_Ty_Tz_Rx_Ry_Rz', smoothWarpXY='2', pca_eigenratio_th='1.6', rot_method='pca'):
         self.step = step
         self.type = type
         self.algo = algo
@@ -243,6 +245,7 @@ class Paramreg(object):
         self.dof = dof  # only for type=label
         self.smoothWarpXY = smoothWarpXY  # only for algo=columnwise
         self.pca_eigenratio_th = pca_eigenratio_th  # only for algo=centermassrot
+        self.rot_method = rot_method
 
         # list of possible values for self.type
         self.type_list = ['im', 'seg', 'label']
@@ -577,6 +580,15 @@ def register(src, dest, paramreg, param, i_step_str):
                                 'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',1,3'}
     output = ''  # default output if problem
 
+    if paramreg.steps[i_step_str].algo == "centermassrot" and paramreg.steps[i_step_str].rot_method == 'hog':
+        src_im = src[0]  # user is expected to input images to src and dest
+        dest_im = dest[0]
+        src_seg = src[1]
+        dest_seg = dest[1]
+        del src
+        del dest  # to be sure it is not missused later
+
+
     # display arguments
     sct.printv('Registration parameters:', param.verbose)
     sct.printv('  type ........... ' + paramreg.steps[i_step_str].type, param.verbose)
@@ -593,6 +605,7 @@ def register(src, dest, paramreg, param, i_step_str):
     sct.printv('  poly ........... ' + paramreg.steps[i_step_str].poly, param.verbose)
     sct.printv('  dof ............ ' + paramreg.steps[i_step_str].dof, param.verbose)
     sct.printv('  smoothWarpXY ... ' + paramreg.steps[i_step_str].smoothWarpXY, param.verbose)
+    sct.printv('  rot_method ... ' + paramreg.steps[i_step_str].rot_method, param.verbose)
 
     # set metricSize
     if paramreg.steps[i_step_str].metric == 'MI':
@@ -731,12 +744,8 @@ def register(src, dest, paramreg, param, i_step_str):
 
     # slice-wise transfo
     elif paramreg.steps[i_step_str].algo in ['centermass', 'centermassrot', 'columnwise']:
-        # if type=im, sends warning
-        if paramreg.steps[i_step_str].type == 'im':
-            sct.printv('\nWARNING: algo ' + paramreg.steps[i_step_str].algo + ' should be used with type=seg.\n', 1,
-                       'warning')
         # if type=label, exit with error
-        elif paramreg.steps[i_step_str].type == 'label':
+        if paramreg.steps[i_step_str].type == 'label':
             sct.printv('\nERROR: this algo is not compatible with type=label. Please use type=im or type=seg', 1,
                        'error')
         # check if user provided a mask-- if so, inform it will be ignored
@@ -746,16 +755,31 @@ def register(src, dest, paramreg, param, i_step_str):
         # smooth data
         if not paramreg.steps[i_step_str].smooth == '0':
             sct.printv('\nSmooth data', param.verbose)
-            sct.run(['sct_maths', '-i', src, '-smooth', paramreg.steps[i_step_str].smooth + ','
-                     + paramreg.steps[i_step_str].smooth + ',0', '-o', sct.add_suffix(src, '_smooth')])
-            sct.run(['sct_maths', '-i', dest, '-smooth', paramreg.steps[i_step_str].smooth + ','
-                     + paramreg.steps[i_step_str].smooth + ',0', '-o', sct.add_suffix(dest, '_smooth')])
-            src = sct.add_suffix(src, '_smooth')
-            dest = sct.add_suffix(dest, '_smooth')
+            if paramreg.steps[i_step_str].rot_method == 'pca':
+                sct.run(['sct_maths', '-i', src, '-smooth', paramreg.steps[i_step_str].smooth + ','
+                         + paramreg.steps[i_step_str].smooth + ',0', '-o', sct.add_suffix(src, '_smooth')])
+                sct.run(['sct_maths', '-i', dest, '-smooth', paramreg.steps[i_step_str].smooth + ','
+                         + paramreg.steps[i_step_str].smooth + ',0', '-o', sct.add_suffix(dest, '_smooth')])
+                src = sct.add_suffix(src, '_smooth')
+                dest = sct.add_suffix(dest, '_smooth')
+            else:
+                sct.run(['sct_maths', '-i', src_im, '-smooth', paramreg.steps[i_step_str].smooth + ','
+                         + paramreg.steps[i_step_str].smooth + ',0', '-o', sct.add_suffix(src_im, '_smooth')])
+                sct.run(['sct_maths', '-i', src_seg, '-smooth', paramreg.steps[i_step_str].smooth + ','
+                         + paramreg.steps[i_step_str].smooth + ',0', '-o', sct.add_suffix(src_seg, '_smooth')])
+                sct.run(['sct_maths', '-i', dest_im, '-smooth', paramreg.steps[i_step_str].smooth + ','
+                         + paramreg.steps[i_step_str].smooth + ',0', '-o', sct.add_suffix(dest_im, '_smooth')])
+                sct.run(['sct_maths', '-i', dest_seg, '-smooth', paramreg.steps[i_step_str].smooth + ','
+                         + paramreg.steps[i_step_str].smooth + ',0', '-o', sct.add_suffix(dest_seg, '_smooth')])
+                src_im = sct.add_suffix(src_im, '_smooth')
+                dest_im = sct.add_suffix(dest_im, '_smooth')
+                src_seg = sct.add_suffix(src_seg, '_smooth')
+                dest_seg = sct.add_suffix(dest_seg, '_smooth')
         from msct_register import register_slicewise
         warp_forward_out = 'step' + i_step_str + 'Warp.nii.gz'
         warp_inverse_out = 'step' + i_step_str + 'InverseWarp.nii.gz'
-        register_slicewise(src,
+        if paramreg.steps[i_step_str].rot_method == 'pca':  #because pca is the default choice, also includes no rotation
+            register_slicewise(src,
                            dest,
                            paramreg=paramreg.steps[i_step_str],
                            fname_mask=fname_mask,
@@ -764,6 +788,20 @@ def register(src, dest, paramreg, param, i_step_str):
                            ants_registration_params=ants_registration_params,
                            remove_temp_files=param.remove_temp_files,
                            verbose=param.verbose)
+        elif paramreg.steps[i_step_str].rot_method == 'hog':  # im_seg case
+            register_slicewise([src_im, src_seg],
+                           [dest_im, dest_seg],
+                           paramreg=paramreg.steps[i_step_str],
+                           fname_mask=fname_mask,
+                           warp_forward_out=warp_forward_out,
+                           warp_inverse_out=warp_inverse_out,
+                           ants_registration_params=ants_registration_params,
+                           path_qc=param.path_qc,
+                           remove_temp_files=param.remove_temp_files,
+                           verbose=param.verbose)
+        else:
+            raise ValueError("rot_method " + paramreg.steps[i_step_str].rot_method + " does not exist")
+
 
     else:
         sct.printv('\nERROR: algo ' + paramreg.steps[i_step_str].algo + ' does not exist. Exit program\n', 1, 'error')
