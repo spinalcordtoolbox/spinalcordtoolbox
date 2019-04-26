@@ -20,9 +20,9 @@ matrix:
 #    - os: linux
 #      python: 2.7 # Just to make travis's UI a bit prettier
 #      env: SCT_MINICONDA=2 SCT_VERBOSE_INSTALL=1
-    - os: linux
-      dist: xenial
-      python: 2.7
+#    - os: linux
+#      dist: xenial
+#      python: 2.7
     - os: linux
       python: 2.7
       env: SCT_MINICONDA=2
