@@ -10,12 +10,14 @@ trap "echo Caught Keyboard Interrupt within script. Exiting now.; exit" INT
 
 # Retrieve input params
 SUBJECT=$1
-PATH_RESULTS=$2
-PATH_QC=$3
-PATH_LOG=$4
+SITE=$2
+PATH_OUTPUT=$3
+PATH_QC=$4
+PATH_LOG=$5
 
+PATH_RESULTS=$PATH_OUTPUT/$SITE
 
-cd anat/
+cd $SUBJECT/anat
 
 for file in *.nii.gz
 do
@@ -32,8 +34,19 @@ do
       echo "   Processing file $file with seg $file_seg_manual"
       evaluate_reg_rot -i $file -iseg $file_seg -o $PATH_RESULTS
     else
-      echo "   Segmentation for file $file does not exist"
-      continue
+      echo "Segmentation for file $file does not exist, segmenting with sct_deepseg_sc"
+      if [[ $file == *"T1w"* ]]; then
+        contrast="t1"
+      elif [[ $file == *"T2w"* ]]; then
+        contrast="t2"
+      elif [[ $file == *"T2s"* ]]; then
+        contrast="t2s"
+      else
+        echo "Contrast for file $file not found or not supported"
+        continue
+      fi
+      sct_deepseg_sc -i $file -c $contrast
+      evaluate_reg_rot -i $file -iseg $file_seg -o $PATH_RESULTS
     fi
   fi
 done
