@@ -117,7 +117,8 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
         from matplotlib.figure import Figure
         fig_disc = Figure()
         FigureCanvas(fig_disc)
-        ax_disc = fig_disc.add_axes((0, 0, 1, 1))
+        ax_disc = fig_disc.add_subplot(111)
+        # ax_disc = fig_disc.add_axes((0, 0, 1, 1))
         # get percentile for automatic contrast adjustment
         data_display = np.mean(data[xc - param.size_RL:xc + param.size_RL, :, :], axis=0).transpose()
         percmin = np.percentile(data_display, 10)
@@ -242,10 +243,6 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
 
     # Label segmentation
     label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=verbose)
-
-    # save figure
-    if verbose == 2:
-        fig_disc.savefig(os.path.join(path_output, "fig_anat_straight_with_labels.png"))
 
 
 def center_of_mass(x):
