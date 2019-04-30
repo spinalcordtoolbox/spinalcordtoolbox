@@ -483,12 +483,14 @@ for file in ${SCT_DIR}/python/bin/*sct*; do
   fi
 done
 
+## Update PATH within this script (to launch sct_check_dependencies)
+${UPDATE_PATH}
+
 ## Install binaries
 if [ ${NO_SCT_BIN_INSTALL} ]; then
     echo "SCT binaries will not be (re)-installed"
 else
   echo -e "\nInstalling binaries..."
-  cmd=". ${SCT_DIR}/${PYTHON_DIR}/bin/activate ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
   if [ $OS == "linux" ]; then
     cmd="sct_download_data -d binaries_debian -o ${SCT_DIR}/${BIN_DIR}"; echo ">> "$cmd; $cmd
     e_status=$?
@@ -534,9 +536,6 @@ fi
 
 ## Deactivating conda
 . ${SCT_DIR}/${PYTHON_DIR}/bin/deactivate > /dev/null 2>&1
-
-## Update PATH within this script (to launch sct_check_dependencies)
-${UPDATE_PATH}
 
 ## Validate installation and update .bashrc
 # if sudo=0
