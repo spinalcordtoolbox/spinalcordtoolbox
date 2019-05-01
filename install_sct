@@ -540,6 +540,8 @@ fi
 ## Validate installation and update .bashrc
 # if sudo=0
 if [[ $UID != 0 ]]; then
+  # In case of previous SCT installation (4.0.0-beta.1 or before), remove sct_env declaration in bashrc
+  sed -ie '/sct_env/ s/^#*/#/' ${THE_RC}
   # update PATH environment
   while  [[ ! ${add_to_path} =~ ^([Yy](es)?|[Nn]o?)$ ]] ; do
     echo -e -n "\nDo you want to add the sct_* scripts to your PATH environment? [y]es/[n]o: "
