@@ -128,7 +128,8 @@ class InfoLabel(object):
             raise RuntimeError("Nothing to dump (no labels)")
 
         def w(x):
-            file.write("%s\n" % x)
+            # Writer in bytes encoding (for py3k compatibility)
+            file.write(b"%s\n" % bytes(x.encode()))
 
         if header is not None:
             w("# %s" % header)

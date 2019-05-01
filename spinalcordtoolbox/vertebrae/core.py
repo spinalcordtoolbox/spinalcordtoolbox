@@ -113,21 +113,23 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
 
     # display init disc
     if verbose == 2:
-        import matplotlib
-        matplotlib.use('Agg')
-        import matplotlib.pyplot as plt
+        from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+        from matplotlib.figure import Figure
+        fig_disc = Figure()
+        FigureCanvas(fig_disc)
+        ax_disc = fig_disc.add_subplot(111)
+        # ax_disc = fig_disc.add_axes((0, 0, 1, 1))
         # get percentile for automatic contrast adjustment
         data_display = np.mean(data[xc - param.size_RL:xc + param.size_RL, :, :], axis=0).transpose()
         percmin = np.percentile(data_display, 10)
         percmax = np.percentile(data_display, 90)
         # display image
-        plt.matshow(data_display, fignum=50, cmap=plt.cm.gray, clim=[percmin, percmax], origin='lower')
-        plt.title('Anatomical image')
-        plt.autoscale(enable=False)  # to prevent autoscale of axis when displaying plot
-        plt.figure(50), plt.scatter(yc + param.shift_AP_visu, init_disc[0], c='yellow', s=50)
-        plt.text(yc + param.shift_AP_visu + 4, init_disc[0], str(init_disc[1]) + '/' + str(init_disc[1] + 1),
-                 verticalalignment='center', horizontalalignment='left', color='pink', fontsize=15), plt.draw()
-        # plt.ion()  # enables interactive mode
+        ax_disc.matshow(data_display, cmap='gray', clim=[percmin, percmax], origin='lower')
+        ax_disc.set_title('Anatomical image')
+        # ax.autoscale(enable=False)  # to prevent autoscale of axis when displaying plot
+        ax_disc.scatter(yc + param.shift_AP_visu, init_disc[0], c='yellow', s=10)
+        ax_disc.text(yc + param.shift_AP_visu + 4, init_disc[0], str(init_disc[1]) + '/' + str(init_disc[1] + 1),
+                     verticalalignment='center', horizontalalignment='left', color='pink', fontsize=7)
 
     # FIND DISCS
     # ===========================================================================
@@ -161,8 +163,9 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
 
         # display new disc
         if verbose == 2:
-            plt.figure(50), plt.scatter(yc + param.shift_AP_visu, current_z, c='yellow', s=50)
-            plt.text(yc + param.shift_AP_visu + 4, current_z, str(current_disc) + '/' + str(current_disc + 1), verticalalignment='center', horizontalalignment='left', color='yellow', fontsize=15), plt.draw()
+            ax_disc.scatter(yc + param.shift_AP_visu, current_z, c='yellow', s=10)
+            ax_disc.text(yc + param.shift_AP_visu + 4, current_z, str(current_disc) + '/' + str(current_disc + 1),
+                    verticalalignment='center', horizontalalignment='left', color='yellow', fontsize=7)
 
         # append to main list
         if direction == 'superior':
@@ -220,6 +223,9 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
         if current_z <= 0:
             search_next_disc = False
 
+    if verbose == 2:
+        fig_disc.savefig('fig_label_discs.png')
+
     # if upper disc is not 1, add disc above top disc based on mean_distance_adjusted
     upper_disc = min(list_disc_value)
     # if not upper_disc == 1:
@@ -237,11 +243,6 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
 
     # Label segmentation
     label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=verbose)
-
-    # save figure
-    if verbose == 2:
-        plt.figure(50), plt.savefig(os.path.join(path_output, "fig_anat_straight_with_labels.png"))
-        # plt.close()
 
 
 def center_of_mass(x):
@@ -418,36 +419,36 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
 
     # display patterns and correlation
     if verbose == 2:
-        import matplotlib
-        matplotlib.use('Agg')
-        import matplotlib.pyplot as plt
+        from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+        from matplotlib.figure import Figure
+        fig = Figure(figsize=(15, 7))
+        FigureCanvas(fig)
         # display template pattern
-        plt.figure(11, figsize=(15, 7))
-        plt.subplot(131)
-        plt.imshow(np.flipud(np.mean(pattern[:, :, :], axis=0).transpose()), origin='upper', cmap=plt.cm.gray,
-                   interpolation='none')
-        plt.title('Template pattern')
+        ax = fig.add_subplot(131)
+        ax.imshow(np.flipud(np.mean(pattern[:, :, :], axis=0).transpose()), origin='upper', cmap='gray',
+                  interpolation='none')
+        ax.set_title('Template pattern')
         # display subject pattern at best z
-        plt.subplot(132)
+        ax = fig.add_subplot(132)
         iz = zrange[ind_peak]
         data_chunk3d = src[x - xsize: x + xsize + 1,
                            y + yshift - ysize: y + yshift + ysize + 1,
                            z + iz - zsize: z + iz + zsize + 1]
-        plt.imshow(np.flipud(np.mean(data_chunk3d[:, :, :], axis=0).transpose()), origin='upper', cmap=plt.cm.gray,
-                   clim=[0, 800], interpolation='none')
-        plt.title('Subject at iz=' + str(iz))
+        ax.imshow(np.flipud(np.mean(data_chunk3d[:, :, :], axis=0).transpose()), origin='upper', cmap='gray',
+                  clim=[0, 800], interpolation='none')
+        ax.set_title('Subject at iz=' + str(iz))
         # display correlation curve
-        plt.subplot(133)
-        plt.plot(zrange, I_corr)
-        plt.plot(zrange, I_corr_gauss, 'black', linestyle='dashed')
-        plt.legend(['I_corr', 'I_corr_gauss'])
-        plt.title('Mutual Info, gaussian_std=' + str(gaussian_std))
-        plt.plot(zrange[ind_peak], I_corr_gauss[ind_peak], 'ro'), plt.draw()
-        plt.axvline(x=zrange.index(0), linewidth=1, color='black', linestyle='dashed')
-        plt.axhline(y=thr_corr, linewidth=1, color='r', linestyle='dashed')
-        plt.grid()
+        ax = fig.add_subplot(133)
+        ax.plot(zrange, I_corr)
+        ax.plot(zrange, I_corr_gauss, 'black', linestyle='dashed')
+        ax.legend(['I_corr', 'I_corr_gauss'])
+        ax.set_title('Mutual Info, gaussian_std=' + str(gaussian_std))
+        ax.plot(zrange[ind_peak], I_corr_gauss[ind_peak], 'ro')
+        ax.axvline(x=zrange.index(0), linewidth=1, color='black', linestyle='dashed')
+        ax.axhline(y=thr_corr, linewidth=1, color='r', linestyle='dashed')
+        ax.grid()
         # save figure
-        plt.figure(11), plt.savefig(os.path.join(path_output, "fig_pattern" + save_suffix + '.png')), plt.close()
+        fig.savefig('fig_pattern' + save_suffix + '.png')
 
     # return z-origin (z) + z-displacement minus zshift (to account for non-centered disc)
     return z + zrange[ind_peak] - zshift
@@ -486,12 +487,23 @@ def label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=1):
         # get voxels in mask
         ind_nonzero = np.nonzero(seg.data[:, :, iz])
         seg.data[ind_nonzero[0], ind_nonzero[1], iz] = vertebral_level
-        if verbose == 2:
-            import matplotlib
-            matplotlib.use('Agg')
-            import matplotlib.pyplot as plt
-            plt.figure(50)
-            plt.scatter(int(np.round(ny / 2)), iz, c=vertebral_level, vmin=min(list_disc_value), vmax=max(list_disc_value), cmap='prism', marker='_', s=200)
+        # if verbose == 2:
+        #     # move to OO. No time to finish... (JCA)
+        #     from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+        #     from matplotlib.figure import Figure
+        #     fig = Figure()
+        #     FigureCanvas(fig)
+        #     ax = fig.add_subplot(111)
+        #     ax.scatter(int(np.round(ny / 2)), iz, c=vertebral_level, vmin=min(list_disc_value),
+        #                vmax=max(list_disc_value), cmap='prism', marker='_', s=200)
+        #
+        #     # TODO: the thing below crashes with the py3k move. Fix it when i have time...
+        #     import matplotlib
+        #     matplotlib.use('Agg')
+        #     import matplotlib.pyplot as plt
+        #     plt.figure(50)
+        #     plt.scatter(int(np.round(ny / 2)), iz, c=vertebral_level, vmin=min(list_disc_value), vmax=max(list_disc_value), cmap='prism', marker='_', s=200)
+
     # write file
     seg.change_orientation(init_orientation).save(sct.add_suffix(fname_seg, '_labeled'))
 

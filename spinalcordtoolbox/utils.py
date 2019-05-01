@@ -105,9 +105,9 @@ def _version_string():
         return "{install_type}-{sct_branch}-{sct_commit}".format(**locals())
 
 
-__sct_dir__ = os.getenv("SCT_DIR", os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+__sct_dir__ = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 __version__ = _version_string()
-__data_dir__ = os.getenv("SCT_DATA_DIR", os.path.join(__sct_dir__, 'data'))
+__data_dir__ = os.path.join(__sct_dir__, 'data')
 
 
 def parse_num_list(str_num):
