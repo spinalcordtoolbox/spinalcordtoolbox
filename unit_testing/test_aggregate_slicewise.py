@@ -5,16 +5,22 @@
 
 from __future__ import absolute_import
 
+import sys
+import os
 import pytest
 import csv
 
 import numpy as np
 import nibabel as nib
 
-import sct_utils as sct
+from spinalcordtoolbox.utils import __sct_dir__
+sys.path.append(os.path.join(__sct_dir__, 'scripts'))
+
 from spinalcordtoolbox import aggregate_slicewise
 from spinalcordtoolbox.process_seg import Metric
 from spinalcordtoolbox.image import Image
+
+import sct_utils as sct
 
 
 @pytest.fixture(scope="session")
@@ -99,7 +105,7 @@ def test_aggregate_across_all_slices(dummy_metrics):
     """Test extraction of metrics aggregation across slices: All slices by default"""
     agg_metric = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], perslice=False,
                                                                   group_funcs=(('WA', aggregate_slicewise.func_wa),))
-    assert agg_metric[agg_metric.keys()[0]]['WA()'] == 38.0
+    assert agg_metric[list(agg_metric)[0]]['WA()'] == 38.0
 
 
 # noinspection 801,PyShadowingNames
@@ -151,31 +157,31 @@ def test_extract_metric(dummy_data_and_labels):
     agg_metric = aggregate_slicewise.extract_metric(dummy_data_and_labels[0], labels=dummy_data_and_labels[1],
                                                     label_struc=dummy_data_and_labels[2], id_label=0,
                                                     perslice=False, method='wa')
-    assert agg_metric[agg_metric.keys()[0]]['WA()'] == 38.0
+    assert agg_metric[list(agg_metric)[0]]['WA()'] == 38.0
 
     # Binarized mask
     agg_metric = aggregate_slicewise.extract_metric(dummy_data_and_labels[0], labels=dummy_data_and_labels[1],
                                                     label_struc=dummy_data_and_labels[2], id_label=0,
                                                     perslice=False, method='bin')
-    assert agg_metric[agg_metric.keys()[0]]['BIN()'] == pytest.approx(36.66, rel=0.01)
+    assert agg_metric[list(agg_metric)[0]]['BIN()'] == pytest.approx(36.66, rel=0.01)
 
     # Maximum Likelihood
     agg_metric = aggregate_slicewise.extract_metric(dummy_data_and_labels[0], labels=dummy_data_and_labels[1],
                                                     label_struc=dummy_data_and_labels[2], id_label=0,
                                                     indiv_labels_ids=[0, 1, 2], perslice=False, method='ml')
-    assert agg_metric[agg_metric.keys()[0]]['ML()'] == pytest.approx(39.9, rel=0.01)
+    assert agg_metric[list(agg_metric)[0]]['ML()'] == pytest.approx(39.9, rel=0.01)
 
     # Maximum A Posteriori
     agg_metric = aggregate_slicewise.extract_metric(dummy_data_and_labels[0], labels=dummy_data_and_labels[1],
                                                     label_struc=dummy_data_and_labels[2], id_label=0,
                                                     indiv_labels_ids=[0, 1, 2], perslice=False, method='map')
-    assert agg_metric[agg_metric.keys()[0]]['MAP()'] == pytest.approx(40.0, rel=0.01)
+    assert agg_metric[list(agg_metric)[0]]['MAP()'] == pytest.approx(40.0, rel=0.01)
 
     # Maximum
     agg_metric = aggregate_slicewise.extract_metric(dummy_data_and_labels[0], labels=dummy_data_and_labels[1],
                                                     label_struc=dummy_data_and_labels[2], id_label=0,
                                                     indiv_labels_ids=[0, 1], perslice=False, method='max')
-    assert agg_metric[agg_metric.keys()[0]]['MAX()'] == 41.0
+    assert agg_metric[list(agg_metric)[0]]['MAX()'] == 41.0
 
 
 # noinspection 801,PyShadowingNames
@@ -184,7 +190,7 @@ def test_extract_metric_2d(dummy_data_and_labels_2d):
     agg_metric = aggregate_slicewise.extract_metric(dummy_data_and_labels_2d[0], labels=dummy_data_and_labels_2d[1],
                                                     label_struc=dummy_data_and_labels_2d[2], id_label=0,
                                                     indiv_labels_ids=0, perslice=False, method='wa')
-    assert agg_metric[agg_metric.keys()[0]]['WA()'] == 5.0
+    assert agg_metric[list(agg_metric)[0]]['WA()'] == 5.0
 
 
 # noinspection 801,PyShadowingNames
@@ -198,16 +204,16 @@ def test_save_as_csv(dummy_metrics):
     aggregate_slicewise.save_as_csv(agg_metric, 'tmp_file_out.csv', fname_in='FakeFile.txt')
     with open('tmp_file_out.csv', 'r') as csvfile:
         spamreader = csv.reader(csvfile, delimiter=',')
-        spamreader.next()  # skip header
-        assert spamreader.next()[1:] == [sct.__version__, 'FakeFile.txt', '3:4', '', '45.5', '4.5']
+        next(spamreader)  # skip header
+        assert next(spamreader)[1:] == [sct.__version__, 'FakeFile.txt', '3:4', '', '45.5', '4.5']
     # with appending
     aggregate_slicewise.save_as_csv(agg_metric, 'tmp_file_out.csv')
     aggregate_slicewise.save_as_csv(agg_metric, 'tmp_file_out.csv', append=True)
     with open('tmp_file_out.csv', 'r') as csvfile:
         spamreader = csv.reader(csvfile, delimiter=',')
-        spamreader.next()  # skip header
-        assert spamreader.next()[1:] == [sct.__version__, '', '3:4', '', '45.5', '4.5']
-        assert spamreader.next()[1:] == [sct.__version__, '', '3:4', '', '45.5', '4.5']
+        next(spamreader)  # skip header
+        assert next(spamreader)[1:] == [sct.__version__, '', '3:4', '', '45.5', '4.5']
+        assert next(spamreader)[1:] == [sct.__version__, '', '3:4', '', '45.5', '4.5']
 
 
 # noinspection 801,PyShadowingNames
@@ -220,7 +226,7 @@ def test_save_as_csv_slices(dummy_metrics, dummy_vert_level):
     aggregate_slicewise.save_as_csv(agg_metric, 'tmp_file_out.csv')
     with open('tmp_file_out.csv', 'r') as csvfile:
         reader = csv.DictReader(csvfile, delimiter=',')
-        row = reader.next()
+        row = next(reader)
         assert row['Slice (I->S)'] == '2:5'
         assert row['VertLevel'] == '3:4'
 
@@ -235,7 +241,7 @@ def test_save_as_csv_per_level(dummy_metrics, dummy_vert_level):
     aggregate_slicewise.save_as_csv(agg_metric, 'tmp_file_out.csv')
     with open('tmp_file_out.csv', 'r') as csvfile:
         reader = csv.DictReader(csvfile, delimiter=',')
-        row = reader.next()
+        row = next(reader)
         assert row['Slice (I->S)'] == '2:3'
         assert row['VertLevel'] == '3'
 
@@ -253,11 +259,11 @@ def test_save_as_csv_per_slice_then_per_level(dummy_metrics, dummy_vert_level):
     aggregate_slicewise.save_as_csv(agg_metric, 'tmp_file_out.csv', append=True)
     with open('tmp_file_out.csv', 'r') as csvfile:
         reader = csv.DictReader(csvfile, delimiter=',')
-        row = reader.next()
+        row = next(reader)
         assert row['Slice (I->S)'] == '2:3'
         assert row['VertLevel'] == '3'
-        reader.next()
-        row = reader.next()
+        next(reader)
+        row = next(reader)
         assert row['Slice (I->S)'] == '0'
         assert row['VertLevel'] == ''
 
@@ -284,5 +290,5 @@ def test_save_as_csv_extract_metric(dummy_data_and_labels):
     aggregate_slicewise.save_as_csv(agg_metric, 'tmp_file_out.csv')
     with open('tmp_file_out.csv', 'r') as csvfile:
         spamreader = csv.reader(csvfile, delimiter=',')
-        spamreader.next()  # skip header
-        assert spamreader.next()[1:-1] == [sct.__version__, '', '0:4', '', 'label_0', '2.5', '38.0']
+        next(spamreader)  # skip header
+        assert next(spamreader)[1:-1] == [sct.__version__, '', '0:4', '', 'label_0', '2.5', '38.0']

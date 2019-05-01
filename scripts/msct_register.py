@@ -232,6 +232,11 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
                 if rot == 1:
                     eigenv_src = pca_src[iz].components_.T[0][0], pca_src[iz].components_.T[1][0]  # pca_src.components_.T[0]
                     eigenv_dest = pca_dest[iz].components_.T[0][0], pca_dest[iz].components_.T[1][0]  # pca_dest.components_.T[0]
+                    # Make sure first element is always positive (to prevent sign flipping)
+                    if eigenv_src[0] <= 0:
+                        eigenv_src = tuple([i * (-1) for i in eigenv_src])
+                    if eigenv_dest[0] <= 0:
+                        eigenv_dest = tuple([i * (-1) for i in eigenv_dest])
                     angle_src_dest[iz] = angle_between(eigenv_src, eigenv_dest)
                     # check if ratio between the two eigenvectors is high enough to prevent poor robustness
                     if pca_src[iz].explained_variance_ratio_[0] / pca_src[iz].explained_variance_ratio_[1] < pca_eigenratio_th:
@@ -274,7 +279,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
         poly = np.poly1d(coeffs)
         angle_src_dest_regularized = np.polyval(poly, z_nonzero)        # display
         if verbose == 2:
-            plt.plot(180 * angle_src_dest[z_nonzero] / np.pi)
+            plt.plot(180 * angle_src_dest[z_nonzero] / np.pi, 'ob')
             plt.plot(180 * angle_src_dest_regularized / np.pi, 'r', linewidth=2)
             plt.grid()
             plt.xlabel('z')

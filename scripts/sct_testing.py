@@ -436,10 +436,11 @@ def get_functions_parallelizable():
         # 'sct_pipeline',
         'sct_process_segmentation',
         'sct_propseg',
+        # 'sct_qc',  # had to remove temporarily because using argparse (not msct_parser)
         'sct_register_multimodal',
         'sct_straighten_spinalcord', # deps: sct_apply_transfo
         'sct_register_to_template',
-        'sct_segment_graymatter',
+        # 'sct_segment_graymatter',
         'sct_smooth_spinalcord',
         'sct_label_vertebrae',
     ]

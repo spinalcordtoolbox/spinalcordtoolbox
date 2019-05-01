@@ -10,9 +10,8 @@ from __future__ import absolute_import, division, print_function
 import logging
 
 import numpy as np
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtWidgets
 
-import sct_utils as sct
 from spinalcordtoolbox.gui import base
 from spinalcordtoolbox.gui import widgets
 from spinalcordtoolbox.gui.base import TooManyPointsWarning, InvalidActionWarning
@@ -140,7 +139,7 @@ class Centerline(base.BaseDialog):
         self.axial_canvas.setFocusPolicy(QtCore.Qt.StrongFocus)
 
     def _init_canvas(self, parent):
-        layout = QtGui.QHBoxLayout()
+        layout = QtWidgets.QHBoxLayout()
         parent.addLayout(layout)
         self.sagittal_canvas = widgets.SagittalCanvas(self, plot_points=True, horizontal_nav=True)
         self.sagittal_canvas.title(self.params.subtitle)
@@ -154,11 +153,11 @@ class Centerline(base.BaseDialog):
         self.sagittal_canvas.point_selected_signal.connect(self.on_select_slice)
 
     def _init_controls(self, parent):
-        group = QtGui.QGroupBox()
+        group = QtWidgets.QGroupBox()
         group.setFlat(True)
-        layout = QtGui.QHBoxLayout()
+        layout = QtWidgets.QHBoxLayout()
 
-        custom_mode = QtGui.QRadioButton('Mode Custom')
+        custom_mode = QtWidgets.QRadioButton('Mode Custom')
         custom_mode.setToolTip('Manually select the axis slice on sagittal plane')
         custom_mode.toggled.connect(self.on_toggle_mode)
         custom_mode.mode = 'CUSTOM'
@@ -166,7 +165,7 @@ class Centerline(base.BaseDialog):
         custom_mode.axial_title = 'Select the center of the spinal cord'
         layout.addWidget(custom_mode)
 
-        auto_mode = QtGui.QRadioButton('Mode Auto')
+        auto_mode = QtWidgets.QRadioButton('Mode Auto')
         auto_mode.setToolTip('Automatically move down the axis slice on the sagittal plane')
         auto_mode.toggled.connect(self.on_toggle_mode)
         auto_mode.mode = 'AUTO'
@@ -180,7 +179,7 @@ class Centerline(base.BaseDialog):
 
     def _init_footer(self, parent):
         ctrl_layout = super(Centerline, self)._init_footer(parent)
-        skip = QtGui.QPushButton('Skip')
+        skip = QtWidgets.QPushButton('Skip')
         ctrl_layout.insertWidget(2, skip)
 
         skip.clicked.connect(self.on_skip_slice)
@@ -257,7 +256,7 @@ def launch_centerline_dialog(im_input_orig, im_output, params):
     controller = CenterlineController(im_input, params, im_output)
     controller.reformat_image()
 
-    app = QtGui.QApplication([])
+    app = QtWidgets.QApplication([])
     dialog_ = Centerline(controller)
     dialog_.show()
     app.exec_()

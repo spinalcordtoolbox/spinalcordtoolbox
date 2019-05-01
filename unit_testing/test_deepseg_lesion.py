@@ -1,12 +1,19 @@
 from __future__ import absolute_import
 
 import os
+import sys
+
 import numpy as np
 import nibabel as nib
-import sct_utils as sct
-from spinalcordtoolbox.image import Image
 
+from spinalcordtoolbox.utils import __sct_dir__
+sys.path.append(os.path.join(__sct_dir__, 'scripts'))
+
+from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.deepseg_lesion import core as deepseg_lesion
+
+import sct_utils as sct
+
 
 def test_model_file_exists():
     for model_name in deepseg_lesion.MODEL_LST:
