@@ -48,7 +48,7 @@ def main(args=None):
                     metric_dic = {rows[0]: float(rows[1]) for rows in reader}
                     for metric in ["dice_global", "dice_mean", "dice_min", "dice_max", "dice_std"]:
                         dice_metrics[method][metric].append(metric_dic[metric])
-    nb_subjects = len(dice_metrics.itervalues().next().itervalues().next()) # just to get number of subjects
+    nb_subjects = len(next(iter(next(iter(dice_metrics.values())).values())))  # just to get number of subjects (we access the first element of dic twice)
 
 
     # Cleaning everything :
