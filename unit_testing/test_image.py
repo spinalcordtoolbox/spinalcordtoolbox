@@ -4,7 +4,7 @@
 
 from __future__ import print_function, absolute_import
 
-import sys, os, tempfile
+import sys, os
 
 import pytest
 
@@ -12,6 +12,8 @@ import numpy as np
 import nibabel
 import nibabel.orientations
 
+from spinalcordtoolbox.utils import __sct_dir__
+sys.path.append(os.path.join(__sct_dir__, 'scripts'))
 import sct_utils as sct
 import spinalcordtoolbox.image as msct_image
 

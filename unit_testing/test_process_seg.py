@@ -6,9 +6,14 @@
 # TODO: test empty slices and slices with two objects
 
 from __future__ import absolute_import
+import sys
+import os
 import pytest
 import math
 import numpy as np
+
+from spinalcordtoolbox.utils import __sct_dir__
+sys.path.append(os.path.join(__sct_dir__, 'scripts'))
 from spinalcordtoolbox import process_seg
 from sct_process_segmentation import Param
 
