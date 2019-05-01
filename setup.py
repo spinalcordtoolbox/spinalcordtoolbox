@@ -10,16 +10,6 @@ here = path.abspath(path.dirname(__file__))
 with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
-if 1:
-    reqfile = "requirements.txt"
-elif sys.hexversion < 0x03000000:
-    reqfile = 'install/requirements/requirementsSetup.txt'
-else:
-    reqfile = 'install/requirements/requirementsSetup3.txt'
-
-with open(path.join(here, reqfile)) as f:
-    requirements = f.read().splitlines()
-
 with open(path.join(here, 'version.txt')) as f:
     version = f.read().strip()
 
@@ -54,7 +44,8 @@ setup(
      ("sct_scripts", [ os.path.join("scripts", x) for x in os.listdir("scripts") if x.endswith(".py") ]),
      # </hack>
     ],
-    install_requires=requirements,
+    setup_requires=["pytest-runner"],
+    tests_require=["pytest"],
     include_package_data=True,
     extras_require={
      'docs': [

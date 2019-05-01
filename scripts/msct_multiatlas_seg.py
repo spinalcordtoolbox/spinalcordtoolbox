@@ -455,18 +455,18 @@ class Model:
                    'sct_download_data -d gm_model\n', self.param.verbose, 'error')
 
         # - self.slices = dictionary
-        self.slices = pickle.load(gzip.open(model_files['slices'],  'rb'))
+        self.slices = pickle.load(gzip.open(model_files['slices'],  'rb'), encoding='latin1')
         printv('  ' + str(len(self.slices)) + ' slices in the model dataset', self.param.verbose, 'normal')
         self.mean_image = np.mean([dic_slice.im for dic_slice in self.slices], axis=0)
 
         # - self.intensities = for normalization
-        self.intensities = pickle.load(gzip.open(model_files['intensity'], 'rb'))
+        self.intensities = pickle.load(gzip.open(model_files['intensity'], 'rb'), encoding='latin1')
 
         # - reduced space (pca or isomap)
-        self.fitted_model = pickle.load(gzip.open(model_files['model'], 'rb'))
+        self.fitted_model = pickle.load(gzip.open(model_files['model'], 'rb'), encoding='latin1')
 
         # - fitted data (=eigen vectors or embedding vectors )
-        self.fitted_data = pickle.load(gzip.open(model_files['data'], 'rb'))
+        self.fitted_data = pickle.load(gzip.open(model_files['data'], 'rb'), encoding='latin1')
 
         printv('  model: ' + self.param_model.method)
         printv('  ' + str(self.fitted_data.shape[1]) + ' components kept on ' + str(self.fitted_data.shape[0]), self.param.verbose, 'normal')

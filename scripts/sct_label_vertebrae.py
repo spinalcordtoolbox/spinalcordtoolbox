@@ -251,7 +251,11 @@ def main(args=None):
         # apply straightening
         s, o = sct.run(['sct_apply_transfo', '-i', 'data.nii', '-w', 'warp_curve2straight.nii.gz', '-d', 'straight_ref.nii.gz', '-o', 'data_straight.nii'])
     else:
-        cmd = ['sct_straighten_spinalcord', '-i', 'data.nii', '-s', 'segmentation.nii', '-r', str(remove_temp_files)]
+        cmd = ['sct_straighten_spinalcord',
+               '-i', 'data.nii',
+               '-s', 'segmentation.nii',
+               '-r', str(remove_temp_files),
+               '-xy_size', '60']
         if param.path_qc is not None and os.environ.get("SCT_RECURSIVE_QC", None) == "1":
             cmd += ['-qc', param.path_qc]
         s, o = sct.run(cmd)

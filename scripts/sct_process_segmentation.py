@@ -24,7 +24,7 @@ import sct_utils as sct
 from msct_parser import Parser
 from spinalcordtoolbox import process_seg
 from spinalcordtoolbox.aggregate_slicewise import aggregate_per_slice_or_level, save_as_csv, func_wa, func_std, \
-    merge_dict
+    _merge_dict
 from spinalcordtoolbox.utils import parse_num_list
 
 
@@ -189,7 +189,7 @@ def main(args):
                                                         levels=parse_num_list(vert_levels), perslice=perslice,
                                                         perlevel=perlevel, vert_level=fname_vert_levels,
                                                         group_funcs=group_funcs)
-    metrics_agg_merged = merge_dict(metrics_agg)
+    metrics_agg_merged = _merge_dict(metrics_agg)
     save_as_csv(metrics_agg_merged, file_out, fname_in=fname_segmentation, append=append)
     sct.display_open(file_out)
 
