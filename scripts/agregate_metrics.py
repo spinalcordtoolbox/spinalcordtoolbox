@@ -35,6 +35,7 @@ def main(args=None):
     arguments = parser.parse(args)
     folder = arguments['-i']
 
+    # TODO : replace every [dice_glob dice_mean, ...] and [NoRot, PCA, ...] by a list defined at the beginning
     # Loading all csv files :
 
     dice_metrics = {method: {metric: [] for metric in ["dice_global", "dice_mean", "dice_min", "dice_max", "dice_std"]} for method in ["NoRot", "PCA", "HOG"]}  # dictionary for metrics in dictionnary for method containing lists of values
@@ -57,7 +58,7 @@ def main(args=None):
 
     # Processing data
     # matplotlib.use('Agg')  # prevent display figure
-    fig = plt.figure(figsize=(8, 10))
+    fig = plt.figure(figsize=(20, 40))
     fig.suptitle("Histograms of dataset with " + str(nb_subjects) + " images")
     for k, metric in enumerate(["dice_global", "dice_mean", "dice_min", "dice_max", "dice_std"]):
         plt.subplot(2, 3, k + 1)
@@ -72,6 +73,15 @@ def main(args=None):
         plt.xlabel(xlabel)
         plt.title(metric + " histogram")
         plt.legend(["NoRot", "PCA", "HOG"])
+
+    plt.subplot(2, 3, 6)
+    #Building the np array to plot the table
+    data = np.zeros((5, 3))
+    for col, metric in enumerate(["dice_global", "dice_mean", "dice_min", "dice_max", "dice_std"]):
+        for row, method in enumerate(["NoRot", "PCA", "HOG"]):
+            data[col, row] = np.mean(dice_metrics[method][metric])
+
+    plt.table(cellText=data, colLabels=["NoRot", "PCA", "HOG"], rowLabels=["dice_global", "dice_mean", "dice_min", "dice_max", "dice_std"], loc="center")
 
     # Saving everything :
     plt.savefig(folder + "/histograms.png")
