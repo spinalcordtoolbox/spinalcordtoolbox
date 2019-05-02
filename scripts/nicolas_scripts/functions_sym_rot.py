@@ -47,7 +47,7 @@ def circular_filter_1d(signal, param_filt, filter='gaussian'):
     return signal_smoothed
 
 def create_proba_map(segmentation, pixdim):
-    """segmentation is a binary numpy array"""
+    """segmentation is a binary numpy array, pixdim is a mean voxel dimension"""
 
     constant = 1
 
@@ -58,7 +58,7 @@ def create_proba_map(segmentation, pixdim):
 
     while True:
         coeff = coeff * np.exp(-constant/pixdim)
-        if coeff <= 0.001:
+        if coeff <= 0.01:
             break
         proba_map = proba_map + coeff*(morph.binary_dilation(segmentation) - segmentation)
         segmentation = morph.dilation(segmentation)
