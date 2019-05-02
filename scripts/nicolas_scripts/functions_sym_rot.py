@@ -19,6 +19,8 @@ from msct_parser import Parser
 
 import matplotlib.pyplot as plt
 
+import skimage.morphology as morph
+
 
 
 def circular_filter_1d(signal, param_filt, filter='gaussian'):
@@ -43,6 +45,28 @@ def circular_filter_1d(signal, param_filt, filter='gaussian'):
     signal_smoothed = signal_extended_smooth[length:2*length]  # truncate back the signal
 
     return signal_smoothed
+
+def create_proba_map(segmentation, pixdim):
+    """segmentation is a binary numpy array"""
+
+    constant = 1
+
+    proba_map = segmentation
+    coeff = 1
+    # TODO : maybe do the dil slice by slice
+    # TODO : does not take into account x/y pixdim difference
+
+    while True:
+        coeff = coeff * np.exp(-constant/pixdim)
+        if coeff <= 0.001:
+            break
+        proba_map = proba_map + coeff*(morph.binary_dilation(segmentation) - segmentation)
+        segmentation = morph.dilation(segmentation)
+
+    return proba_map
+
+
+
 
 def find_angle(image, centermass, parameters):
 
@@ -237,11 +261,11 @@ def visu3d(array3d, axis=1):
             self.ind = self.slices // 2
 
             if axis == 2:
-                self.im = ax.imshow(self.X[:, :, self.ind])
+                self.im = ax.imshow(self.X[:, :, self.ind], cmap='Greys')
             elif axis == 1:
-                self.im = ax.imshow(self.X[:, self.ind, :])
+                self.im = ax.imshow(self.X[:, self.ind, :], cmap='Greys')
             else:
-                self.im = ax.imshow(self.X[self.ind, :, :])
+                self.im = ax.imshow(self.X[self.ind, :, :], cmap='Greys')
             self.update()
 
         def onscroll(self, event):
