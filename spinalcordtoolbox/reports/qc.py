@@ -26,6 +26,7 @@ import matplotlib.colors as color
 
 import sct_utils as sct
 from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.utils import open_with_exclusive_lock
 import spinalcordtoolbox.reports.slice as qcslice
 
 logger = logging.getLogger(__name__)
@@ -423,7 +424,7 @@ class QcReport(object):
         }
         logger.debug('Description file: %s', self.qc_params.qc_results)
         results = []
-        with sct.open_with_exclusive_lock(self.qc_params.qc_results, 'r+') as lck_qc_file:
+        with open_with_exclusive_lock(self.qc_params.qc_results, 'r+') as lck_qc_file:
             if os.path.getsize(self.qc_params.qc_results) != 0:
                 results = json.load(lck_qc_file)
             results.append(output)
