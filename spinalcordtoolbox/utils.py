@@ -12,44 +12,6 @@ logger = logging.getLogger(__name__)
 
 # TODO: add test
 
-class open_with_exclusive_lock(object):
-    """
-    Utility class to prevent the writing of a file by multiple processes.
-
-    :param filename: name of the file to lock
-    :param mode: permission of the file ('w', 'r', 'a', etc.)
-    """
-
-    def __init__(self, filename, mode):
-        self.filename = filename
-        self.mode = mode
-        self.lock_name = filename + ".lock/locked_by_sct"
-
-    def __enter__(self):
-        while True:
-            try:
-                os.mkdir(os.path.dirname(self.lock_name))
-            except OSError as e:
-                logger.warning("Access to %s prevented by dir lock", self.filename)
-                time.sleep(0.001)
-                continue
-
-            try:
-                os.symlink("locked_by_sct", self.lock_name)
-            except OSError:
-                logger.warning("Access to %s prevented by link lock", self.filename)
-                time.sleep(0.001)
-                continue
-
-            break
-        fd = os.open(self.filename, os.O_RDWR | os.O_CREAT)
-        self._f = os.fdopen(fd, self.mode)
-        return self._f
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        os.unlink(self.lock_name)
-        os.rmdir(os.path.dirname(self.lock_name))
-
 
 def check_exe(name):
     """
