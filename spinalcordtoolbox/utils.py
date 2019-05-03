@@ -4,11 +4,42 @@
 
 from __future__ import absolute_import
 
-import io, os, re
+import io, os, re, time, logging
 import subprocess
+
+logger = logging.getLogger(__name__)
 
 
 # TODO: add test
+
+class open_with_exclusive_lock(object):
+    """
+    Utility class to prevent the writing of a file by multiple processes.
+
+    :param filename: name of the file to lock
+    :param mode: permission of the file ('w', 'r', 'a', etc.)
+    """
+    def __init__(self, filename, mode):
+        self.filename = filename
+        self.mode = mode
+        self.lock_name = filename + ".lock~"
+
+    def __enter__(self):
+        while True:
+            try:
+                os.symlink("locked_by_sct", self.lock_name)
+            except OSError:
+                logger.warning("Access to %s prevented by lock", self.filename)
+                time.sleep(0.001)
+            else:
+                break
+        fd = os.open(self.filename, os.O_RDWR|os.O_CREAT)
+        self._f = os.fdopen(fd, self.mode)
+        return self._f
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        os.unlink(self.lock_name)
+
 
 def check_exe(name):
     """
