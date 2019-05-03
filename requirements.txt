@@ -7,7 +7,6 @@ Keras
 matplotlib
 nibabel
 pandas
-portalocker
 psutil
 pyqt5
 raven
