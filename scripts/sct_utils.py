@@ -1315,22 +1315,3 @@ def cache_save(cachefile, sig):
     with io.open(cachefile, "wb") as f:
         f.write(sig)
 
-class open_with_exclusive_lock(object):
-    """
-    Utility class to prevent the writing of a file by multiple processes.
-
-    :param filename: name of the file to lock
-    :param mode: permission of the file ('w', 'r', 'a', etc.)
-    """
-    def __init__(self, filename, mode):
-        self.filename = filename
-        self.mode = mode
-
-    def __enter__(self):
-        fd = os.open(self.filename, os.O_RDWR|os.O_CREAT)
-        self._f = os.fdopen(fd, self.mode)
-        portalocker.lock(self._f, portalocker.LOCK_EX)
-        return self._f
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        portalocker.unlock(self._f)
