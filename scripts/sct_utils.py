@@ -23,7 +23,6 @@ import subprocess
 import tempfile
 
 import numpy as np
-import portalocker
 
 logger = logging.getLogger(__name__)
 
