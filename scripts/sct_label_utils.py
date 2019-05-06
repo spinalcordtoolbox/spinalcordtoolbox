@@ -756,11 +756,12 @@ def main(args=None):
         msg = ""
     if '-o' in arguments:
         input_fname_output = arguments['-o']
-    input_verbose = int(arguments['-v'])
+    verbose = int(arguments.get('-v'))
+    sct.init_sct(log_level=verbose, update=True)  # Update log level
 
     processor = ProcessLabels(input_filename, fname_output=input_fname_output, fname_ref=input_fname_ref,
                               cross_radius=input_cross_radius, dilate=input_dilate, coordinates=input_coordinates,
-                              verbose=input_verbose, vertebral_levels=vertebral_levels, value=value, msg=msg)
+                              verbose=verbose, vertebral_levels=vertebral_levels, value=value, msg=msg)
     processor.process(process_type)
 
     # return based on process type

@@ -12,11 +12,14 @@
 
 from __future__ import division, absolute_import
 
+import logging
 import nipy
 import numpy as np
 from nipy.algorithms.registration.resample import resample as n_resample
 
 import sct_utils as sct
+
+logger = logging.getLogger(__name__)
 
 
 def resample_nipy(img, new_size=None, new_size_type=None, img_dest=None, interpolation='linear', dtype=np.float64,
@@ -71,12 +74,12 @@ def resample_nipy(img, new_size=None, new_size_type=None, img_dest=None, interpo
             # compute new shape as: shape_r = shape * (p_r / p)
             shape_r = tuple([int(np.round(shape[i] * float(p[i]) / float(new_size[i]))) for i in range(img.ndim)])
         else:
-            sct.log.error('new_size_type is not recognized.')
+            logger.error('new_size_type is not recognized.')
 
         # Generate 3d affine transformation: R
         affine = img.affine[:4, :4]
         affine[3, :] = np.array([0, 0, 0, 1])  # satisfy to nifti convention. Otherwise it grabs the temporal
-        sct.log.debug('Affine matrix: \n' + str(affine), verbose)
+        logger.debug('Affine matrix: \n' + str(affine))
         R = np.eye(4)
         for i in range(3):
             R[i, i] = img.shape[i] / float(shape_r[i])

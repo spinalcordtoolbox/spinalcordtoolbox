@@ -194,8 +194,8 @@ def main(args=None):
         param.interp = arguments['-x']
     if '-r' in arguments:
         param.rm_tmp = bool(int(arguments['-r']))
-    if '-v' in arguments:
-        param.verbose = arguments['-v']
+    param.verbose = int(arguments.get('-v'))
+    sct.init_sct(log_level=param.verbose, update=True)  # Update log level
 
     # check if list of input files and warping fields have same length
     assert len(list_fname_src) == len(list_fname_warp), "ERROR: list of files are not of the same length"

@@ -115,6 +115,7 @@ def warp_label(path_label, folder_label, file_label, fname_src, fname_transfo, p
                      fname_transfo,
                      os.path.join(path_out, folder_label, template_label_file[i]),
                      get_interp(template_label_file[i])),
+                    is_sct_binary=True,
                     verbose=param.verbose)
         # Copy list.txt
         sct.copy(os.path.join(path_label, folder_label, param.file_info_label), os.path.join(path_out, folder_label))
@@ -177,6 +178,14 @@ def get_parser():
                       type_value='folder_creation',
                       description='The path where the quality control generated content will be saved',
                       default_value=param_default.path_qc)
+    parser.add_option(name='-qc-dataset',
+                      type_value='str',
+                      description='If provided, this string will be mentioned in the QC report as the dataset the process was run on',
+                      )
+    parser.add_option(name='-qc-subject',
+                      type_value='str',
+                      description='If provided, this string will be mentioned in the QC report as the subject the process was run on',
+                      )
     parser.add_option(name="-v",
                       type_value="multiple_choice",
                       description="""Verbose.""",
@@ -198,8 +207,11 @@ def main(args=None):
     warp_spinal_levels = int(arguments["-s"])
     folder_out = arguments['-ofolder']
     path_template = arguments['-t']
-    verbose = int(arguments['-v'])
+    verbose = int(arguments.get('-v'))
+    sct.init_sct(log_level=verbose, update=True)  # Update log level
     path_qc = arguments.get("-qc", None)
+    qc_dataset = arguments.get("-qc-dataset", None)
+    qc_subject = arguments.get("-qc-subject", None)
 
     # call main function
     w = WarpTemplate(fname_src, fname_transfo, warp_atlas, warp_spinal_levels, folder_out, path_template, verbose)
@@ -213,7 +225,7 @@ def main(args=None):
             fname_wm = os.path.join(w.folder_out, w.folder_template,
                                     spinalcordtoolbox.metadata.get_file_label(path_template, 'white matter'))
             generate_qc(fname_src, fname_seg=fname_wm, args=sys.argv[1:], path_qc=os.path.abspath(path_qc),
-                        process='sct_warp_template')
+                        dataset=qc_dataset, subject=qc_subject, process='sct_warp_template')
 
         # Deal with verbose
         sct.display_viewer_syntax(

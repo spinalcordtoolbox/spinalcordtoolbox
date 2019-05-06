@@ -4,9 +4,11 @@
 
 from __future__ import absolute_import
 
+import logging
 import numpy as np
 
-from sct_utils import log
+logger = logging.getLogger(__name__)
+
 
 def get_slices_from_vertebral_levels(im_vertlevel, level):
     """
@@ -49,7 +51,7 @@ def get_vertebral_level_from_slice(im_vertlevel, idx_slice):
         vert_level = int(np.round(np.mean(data_vertlevel[indx, indy, idx_slice])))
     except ValueError as e:
         # slice is empty (no indx found). Do nothing.
-        log.debug('Empty slice: z=%s (%s)', idx_slice, e)
+        logger.debug('Empty slice: z=%s (%s)', idx_slice, e)
         vert_level = None
     return vert_level
 

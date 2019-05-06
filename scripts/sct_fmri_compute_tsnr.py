@@ -98,7 +98,8 @@ def main(args=None):
     arguments = parser.parse(sys.argv[1:])
     fname_src = arguments['-i']
     fname_dst = arguments.get("-o", sct.add_suffix(fname_src, "_tsnr"))
-    verbose = int(arguments['-v'])
+    verbose = int(arguments.get('-v'))
+    sct.init_sct(log_level=verbose, update=True)  # Update log level
 
     # call main function
     tsnr = Tsnr(param=param, fmri=fname_src, out=fname_dst)

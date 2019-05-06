@@ -19,6 +19,7 @@
 from __future__ import absolute_import
 
 import os
+import logging
 import sct_utils as sct
 from sct_flatten_sagittal import flatten_sagittal
 import numpy as np
@@ -28,6 +29,8 @@ from skimage.measure import label as label_regions
 
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image, zeros_like
+
+logger = logging.getLogger(__name__)
 
 
 def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, verbose=1):
@@ -50,7 +53,7 @@ def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, verbose=1):
     nii_seg_flat = flatten_sagittal(nii_seg, nii_seg, verbose=verbose)
 
     # create temporary folder with intermediate results
-    sct.log.info("Creating temporary folder...")
+    logger.info("Creating temporary folder...")
     tmp_folder = sct.TempFolder()
     tmp_folder.chdir()
 
@@ -66,12 +69,13 @@ def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, verbose=1):
     nii_midSlice.save('data_midSlice.nii')
 
     # Run detection
-    sct.printv('Run C2-C3 detector...', verbose)
+    logger.info('Run C2-C3 detector...')
     os.environ["FSLOUTPUTTYPE"] = "NIFTI_PAIR"
     cmd_detection = 'isct_spine_detect -ctype=dpdt "%s" "%s" "%s"' % \
                     (path_model, 'data_midSlice', 'data_midSlice_pred')
-    sct.run(cmd_detection, verbose=0, raise_exception=False)
-
+    # The command below will fail, but we don't care because it will output an image (prediction), which we
+    # will use later on.
+    s, o = sct.run(cmd_detection, verbose=0, is_sct_binary=True, raise_exception=False)
     pred = nib.load('data_midSlice_pred_svm.hdr').get_data()
     if verbose >= 2:
         # copy the "prediction data before post-processing" in an Image object
@@ -105,7 +109,7 @@ def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, verbose=1):
     # assign label to voxel
     nii_c2c3 = zeros_like(nii_seg_flat)  # 3D data with PIR orientaion
     if np.any(pred > 0):
-        sct.printv('C2-C3 detected...', verbose)
+        logger.info('C2-C3 detected...')
 
         pred_bin = (pred > 0).astype(np.int_)
         coord_max = np.where(pred == np.max(pred))
@@ -114,12 +118,12 @@ def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, verbose=1):
         rl_c2c3 = int(np.rint(center_of_mass(np.array(nii_seg.data[:, is_c2c3, :]))[1]))
         nii_c2c3.data[pa_c2c3, is_c2c3, rl_c2c3] = 3
     else:
-        sct.printv('C2-C3 not detected...', verbose)
+        logger.warning('C2-C3 not detected...')
 
     # remove temporary files
     tmp_folder.chdir_undo()
     if verbose < 2:
-        sct.log.info("Remove temporary files...")
+        logger.info("Remove temporary files...")
         tmp_folder.cleanup()
 
     nii_c2c3.change_orientation(orientation_init)
@@ -137,7 +141,7 @@ def detect_c2c3_from_file(fname_im, fname_seg, contrast, fname_c2c3=None, verbos
     :return: fname_c2c3
     """
     # load data
-    sct.printv('Load data...', verbose)
+    logger.info('Load data...')
     nii_im = Image(fname_im)
     nii_seg = Image(fname_seg)
 
@@ -146,7 +150,7 @@ def detect_c2c3_from_file(fname_im, fname_seg, contrast, fname_c2c3=None, verbos
 
     # Output C2-C3 disc label
     # by default, output in the same directory as the input images
-    sct.printv('Generate output file...', verbose)
+    logger.info('Generate output file...')
     if fname_c2c3 is None:
         fname_c2c3 = os.path.join(os.path.dirname(nii_im.absolutepath), "label_c2c3.nii.gz")
     nii_c2c3.save(fname_c2c3)

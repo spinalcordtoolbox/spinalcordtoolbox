@@ -649,8 +649,8 @@ def main(args=None):
 
     if '-r' in arguments:
         param.rm_tmp = bool(int(arguments['-r']))
-    if '-v' in arguments:
-        param.verbose = arguments['-v']
+    param.verbose = int(arguments.get('-v'))
+    sct.init_sct(log_level=param.verbose, update=True)  # Update log level
 
     start_time = time.time()
     seg_gm = SegmentGM(param_seg=param_seg, param_data=param_data, param_model=param_model, param=param)

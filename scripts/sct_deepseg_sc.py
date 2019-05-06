@@ -82,6 +82,14 @@ def get_parser():
                       type_value='folder_creation',
                       description='The path where the quality control generated content will be saved',
                       default_value=None)
+    parser.add_option(name='-qc-dataset',
+                      type_value='str',
+                      description='If provided, this string will be mentioned in the QC report as the dataset the process was run on',
+                      )
+    parser.add_option(name='-qc-subject',
+                      type_value='str',
+                      description='If provided, this string will be mentioned in the QC report as the subject the process was run on',
+                      )
     parser.add_option(name='-igt',
                       type_value='image_nifti',
                       description='File name of ground-truth segmentation.',
@@ -120,7 +128,7 @@ def main():
         output_folder = arguments["-ofolder"]
 
     if ctr_algo == 'file' and "-file_centerline" not in args:
-        sct.log.warning('Please use the flag -file_centerline to indicate the centerline filename.')
+        logger.warning('Please use the flag -file_centerline to indicate the centerline filename.')
         sys.exit(1)
     
     if "-file_centerline" in args:
@@ -131,9 +139,12 @@ def main():
 
     remove_temp_files = int(arguments['-r'])
 
-    verbose = int(arguments['-v'])
+    verbose = int(arguments.get('-v'))
+    sct.init_sct(log_level=verbose, update=True)  # Update log level
 
     path_qc = arguments.get("-qc", None)
+    qc_dataset = arguments.get("-qc-dataset", None)
+    qc_subject = arguments.get("-qc-subject", None)
 
     algo_config_stg = '\nMethod:'
     algo_config_stg += '\n\tCenterline algorithm: ' + str(ctr_algo)
@@ -166,7 +177,7 @@ def main():
 
     if path_qc is not None:
         generate_qc(fname_image, fname_seg=fname_seg, args=args, path_qc=os.path.abspath(path_qc),
-                    process='sct_deepseg_sc')
+                    dataset=qc_dataset, subject=qc_subject, process='sct_deepseg_sc')
     sct.display_viewer_syntax([fname_image, fname_seg], colormaps=['gray', 'red'], opacities=['', '0.7'])
 
 

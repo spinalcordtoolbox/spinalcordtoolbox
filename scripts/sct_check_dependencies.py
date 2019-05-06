@@ -19,22 +19,25 @@
 
 from __future__ import print_function, absolute_import
 
+import argparse
+
+import sys
+import io
+import os
+import re
+import platform
+import fnmatch
+import importlib
+
+import sct_utils as sct
+
+
 # DEFAULT PARAMETERS
 class Param:
     # The constructor
     def __init__(self):
         self.create_log_file = 0
         self.complete_test = 0
-
-import argparse
-
-import sys
-import io
-import os
-import platform
-import importlib
-
-import sct_utils as sct
 
 
 class bcolors:
@@ -58,12 +61,13 @@ def resolve_module(framework_name):
         'futures': ('concurrent.futures', False),
         'scikit-image': ('skimage', False),
         'scikit-learn': ('sklearn', False),
-        'pyqt': ('PyQt4', False),
+        'pyqt5': ('PyQt5', False),
         'Keras': ('keras', True),
         'futures': ("concurrent.futures", False),
         'opencv': ('cv2', False),
         'mkl-service': (None, False),
         'pytest-cov': ('pytest_cov', False),
+        'urllib3[secure]': ('urllib3', False),
     }
 
     try:
@@ -102,10 +106,9 @@ def module_import(module_name, suppress_stderr=False):
 # MAIN
 # ==========================================================================================
 def main():
-    path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
     print("SCT info:")
     print("- version: {}".format(sct.__version__))
-    print("- path: {0}".format(path_sct))
+    print("- path: {0}".format(sct.__sct_dir__))
 
     # initialization
     fsl_is_working = 1
@@ -124,15 +127,9 @@ def main():
     arguments = parser.parse_args()
     if arguments.complete:
         complete_test = 1
-    if arguments.generate_log:
-        create_log_file = 1
 
     # use variable "verbose" when calling sct.run for more clarity
     verbose = complete_test
-
-    # redirect to log file
-    if create_log_file:
-        handle_log = sct.ForkStdoutToFile(file_log)
 
     # complete test
     if complete_test:
@@ -168,7 +165,7 @@ def main():
     # check if Python path is within SCT path
     print_line('Check Python executable')
     path_python = sys.executable
-    if path_sct in path_python:
+    if sct.__sct_dir__ in path_python:
         print_ok()
         print('  Using bundled python {} at {}'.format(sys.version, path_python))
     else:
@@ -177,87 +174,42 @@ def main():
 
     # check if data folder is empty
     print_line('Check if data are installed')
-    if os.listdir(os.path.join(path_sct, "data")):
+    if os.listdir(sct.__data_dir__):
         print_ok()
     else:
         print_fail()
 
-    # loop across python packages -- CONDA
-    version_requirements = get_version_requirements()
-    for i in version_requirements:
-        module_name, suppress_stderr = resolve_module(i)
-        if module_name is None:
-            continue
-        print_line('Check if %s (%s) is installed' % (i, version_requirements.get(i)))
+
+    for dep_pkg, dep_ver_spec in get_dependencies():
+        if dep_ver_spec is None:
+            print_line('Check if %s is installed' % (dep_pkg))
+        else:
+            print_line('Check if %s (%s) is installed' % (dep_pkg, dep_ver_spec))
+
         try:
+            module_name, suppress_stderr = resolve_module(dep_pkg)
             module = module_import(module_name, suppress_stderr)
-            # get version
-            try:
-                version = module.__version__
-            except:
-                try:
-                    version = module.__VERSION__
-                except:
-                    # skip if module doesn't have __version__ nor __VERSION__ (e.g., xlutils)
-                    version = version_requirements[i]
-            # check if version matches requirements
-            if check_package_version(version, version_requirements, i):
+            version = getattr(module, "__version__", getattr(module, "__VERSION__", None))
+
+            if dep_ver_spec is None and version is not None:
+                ver_pip_setup = dict(get_dependencies(os.path.join(sct.__sct_dir__, "requirements.txt"))).get(dep_pkg, None)
+                if ver_pip_setup is None:
+                    print_ok(more=(" (%s)" % version))
+                elif ver_pip_setup is not None and version.startswith(ver_pip_setup):
+                    print_ok(more=(" (%s)" % version))
+                else:
+                    print_warning(more=(" (%s != %s reference version))" % (version, ver_pip_setup)))
+
+            elif dep_ver_spec == version:
                 print_ok()
             else:
-                print_warning()
-                print('  Detected version: ' + version + '. Required version: ' + version_requirements[i])
+                print_warning(more=(" (%s != %s mandated version))" % (version, dep_ver_spec)))
+
         except ImportError:
             print_fail()
             install_software = 1
 
-    # loop across python packages -- PIP
-    version_requirements_pip = get_version_requirements_pip()
-    for i in version_requirements_pip:
 
-        module_name, suppress_stderr = resolve_module(i)
-
-        print_line('Check if ' + i + ' (' + version_requirements_pip.get(i) + ') is installed')
-        try:
-            module = module_import(module_name, suppress_stderr)
-            if module_name in ("raven",):
-                version = module.VERSION
-            else:
-                try:
-                    version = module.__version__
-                except AttributeError:
-                    # Futures package as no embedded version info
-                    version = version_requirements_pip[i]
-
-            # check if version matches requirements
-            if check_package_version(version, version_requirements_pip, i):
-                print_ok()
-            else:
-                print_warning()
-                print('  Detected version: ' + version + '. Required version: ' + version_requirements_pip[i])
-        except ImportError:
-            print_fail()
-            install_software = 1
-
-    # CHECK DEPENDENT MODULES (installed by nibabel/dipy):
-    sys.stdout.write('Check if numpy is installed')
-    sys.stdout.flush()
-    try:
-        np = importlib.import_module('numpy')
-        sys.stdout.write(' ({})'.format(np.__version__).ljust(25, '.'))
-        print_ok()
-    except ImportError:
-        sys.stdout.write(' (........................')
-        print_fail()
-        install_software = 1
-    sys.stdout.write('Check if scipy is installed')
-    sys.stdout.flush()
-    try:
-        sp = importlib.import_module('scipy')
-        sys.stdout.write(' ({})'.format(sp.__version__).ljust(25, '.'))
-        print_ok()
-    except ImportError:
-        print_fail()
-        install_software = 1
     print_line('Check if spinalcordtoolbox is installed')
     try:
         importlib.import_module('spinalcordtoolbox')
@@ -310,7 +262,7 @@ def main():
 
     # check PropSeg compatibility with OS
     print_line('Check PropSeg compatibility with OS ')
-    status, output = sct.run('isct_propseg', verbose=0, raise_exception=False)
+    status, output = sct.run('isct_propseg', verbose=0, raise_exception=False, is_sct_binary=True)
     if status in (0, 1):
         print_ok()
     else:
@@ -331,20 +283,7 @@ def main():
             plt.close()
             print_ok()
         except Exception:
-            if "MPLBACKEND" not in os.environ:
-                print("\nSecond attempt to plot ...")
-                print("\nOverwriting environment variable $MPLBACKEND=agg")
-                try:
-                    os.environ["MPLBACKEND"] = "agg"
-                    plt.figure()
-                    plt.close()
-                    print_ok()
-                except Exception:
-                    print_fail()
-                    print(sys.exc_info())
-            else:
-                print("Please try manually setting environment variable $MPLBACKEND=agg")
-                print_fail()
+            print_fail()
 
     print('')
     sys.exit(e + install_software)
@@ -357,16 +296,16 @@ def print_line(string):
     sys.stdout.flush()
 
 
-def print_ok():
-    print("[" + bcolors.OKGREEN + "OK" + bcolors.ENDC + "]")
+def print_ok(more=None):
+    print("[{}OK{}]{}".format(bcolors.OKGREEN, bcolors.ENDC, more if more is not None else ""))
 
 
-def print_warning():
-    print("[" + bcolors.WARNING + "WARNING" + bcolors.ENDC + "]")
+def print_warning(more=None):
+    print("[{}WARNING{}]{}".format(bcolors.WARNING, bcolors.ENDC, more if more is not None else ""))
 
 
-def print_fail():
-    print("[" + bcolors.FAIL + "FAIL" + bcolors.ENDC + "]")
+def print_fail(more=None):
+    print("[{}FAIL{}]{}".format(bcolors.FAIL, bcolors.ENDC, more if more is not None else ""))
 
 
 def add_bash_profile(string):
@@ -375,45 +314,27 @@ def add_bash_profile(string):
         file_bash.write("\n" + string)
 
 
-def get_version_requirements():
-    path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
-    file = open(os.path.join(path_sct, "install", "requirements", "requirementsConda.txt"))
-    dict = {}
-    while True:
-        line = file.readline().rstrip()
-        if line == "":
-            break  # OH GOD HELP
-        arg = line.split("==")
-        if len(arg) == 1:
-            dict[arg[0]] = None
-        else:
-            dict[arg[0]] = arg[1]
-    file.close()
-    return dict
+def get_dependencies(requirements_txt=None):
+    if requirements_txt is None:
+        requirements_txt = os.path.join(sct.__sct_dir__, "requirements.txt")
 
+    out = list()
+    with io.open(requirements_txt, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.rstrip()
+            m = re.match("^(?P<pkg>\S+?)(==?(?P<ver>\S+))?\s*(#.*)?$", line)
+            if m is None:
+                print("WARNING: Invalid requirements.txt line: %s", line)
+                continue
+            pkg = m.group("pkg")
+            try:
+                ver = m.group("ver")
+            except IndexError:
+                ver = None
+            out.append((pkg, ver))
 
-def get_version_requirements_pip():
-    path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
-    file = open(os.path.join(path_sct, "install", "requirements", "requirementsSetup.txt"))
-    dict = {}
-    while True:
-        line = file.readline()
-        if line == "":
-            break  # OH GOD HELP
-        arg = line.split("==")
-        arg[0] = arg[0].split('[')[0]
-        dict[arg[0]] = arg[1].rstrip("\n")
-    file.close()
-    return dict
+    return out
 
-
-def check_package_version(installed, required, package_name):
-    if package_name in required:
-        if required[package_name] is None:
-            return True
-        if required[package_name] == installed:
-            return True
-        return False
 
 
 # ==========================================================================================
@@ -427,11 +348,6 @@ def get_parser():
 
     parser.add_argument("--complete", "-c",
                         help="Complete test.",
-                        action="store_true",
-                        )
-
-    parser.add_argument("--generate-log", "-log", "-l",
-                        help="Generate log file.",
                         action="store_true",
                         )
 

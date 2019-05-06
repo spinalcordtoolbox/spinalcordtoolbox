@@ -298,6 +298,14 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       type_value='folder_creation',
                       description='The path where the quality control generated content will be saved',
                       default_value=None)
+    parser.add_option(name='-qc-dataset',
+                      type_value='str',
+                      description='If provided, this string will be mentioned in the QC report as the dataset the process was run on',
+                      )
+    parser.add_option(name='-qc-subject',
+                      type_value='str',
+                      description='If provided, this string will be mentioned in the QC report as the subject the process was run on',
+                      )
     parser.add_option(name='-correct-seg',
                       type_value="multiple_choice",
                       description="Enable (1) or disable (0) the algorithm that checks and correct the output "
@@ -388,7 +396,7 @@ def propseg(img_input, options_dict):
         folder_output = './'
     cmd += ['-o', folder_output]
     if not os.path.isdir(folder_output) and os.path.exists(folder_output):
-        sct.log.error("output directory %s is not a valid directory" % folder_output)
+        logger.error("output directory %s is not a valid directory" % folder_output)
     if not os.path.exists(folder_output):
         os.makedirs(folder_output)
 
@@ -401,11 +409,11 @@ def propseg(img_input, options_dict):
     if "-r" in arguments:
         remove_temp_files = int(arguments["-r"])
 
-    verbose = 0
-    if "-v" in arguments:
-        if arguments["-v"] is "1":
-            verbose = 2
-            cmd += ["-verbose"]
+    verbose = int(arguments.get('-v'))
+    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    # Update for propseg binary
+    if verbose > 0:
+        cmd += ["-verbose"]
 
     # Output options
     if "-mesh" in arguments:
@@ -435,7 +443,7 @@ def propseg(img_input, options_dict):
     if "-init" in arguments:
         init_option = float(arguments["-init"])
         if init_option < 0:
-            sct.log.error('Command-line usage error: ' + str(init_option) + " is not a valid value for '-init'")
+            sct.printv('Command-line usage error: ' + str(init_option) + " is not a valid value for '-init'", 1, 'error')
             sys.exit(1)
     if "-init-centerline" in arguments:
         if str(arguments["-init-centerline"]) == "viewer":
@@ -489,7 +497,7 @@ def propseg(img_input, options_dict):
     image_input_rpi = image_input.copy().change_orientation('RPI')
     nx, ny, nz, nt, px, py, pz, pt = image_input_rpi.dim
     if nt > 1:
-        sct.log.error('ERROR: your input image needs to be 3D in order to be segmented.')
+        sct.printv('ERROR: your input image needs to be 3D in order to be segmented.', 1, 'error')
 
     path_data, file_data, ext_data = sct.extract_fname(fname_data)
     path_tmp = sct.tmp_create(basename="label_vertebrae", verbose=verbose)
@@ -526,7 +534,7 @@ def propseg(img_input, options_dict):
         fname_labels_viewer = sct.add_suffix(fname_data_propseg, '_labels_viewer')
 
         if not controller.saved:
-            sct.log.error('The viewer has been closed before entering all manual points. Please try again.')
+            sct.printv('The viewer has been closed before entering all manual points. Please try again.', 1, 'error')
             sys.exit(1)
         # save labels
         controller.as_niftii(fname_labels_viewer)
@@ -539,7 +547,7 @@ def propseg(img_input, options_dict):
 
     # If using OptiC
     elif use_optic:
-        image_centerline = optic.detect_centerline(image_input, contrast_type)
+        image_centerline = optic.detect_centerline(image_input, contrast_type, verbose)
         fname_centerline_optic = os.path.join(path_tmp, 'centerline_optic.nii.gz')
         image_centerline.save(fname_centerline_optic)
         cmd += ["-init-centerline", fname_centerline_optic]
@@ -553,12 +561,12 @@ def propseg(img_input, options_dict):
     cmd += ['-centerline-binary']
 
     # run propseg
-    status, output = sct.run(cmd, verbose, raise_exception=False)
+    status, output = sct.run(cmd, verbose, raise_exception=False, is_sct_binary=True)
 
     # check status is not 0
     if not status == 0:
-        sct.log.error('Automatic cord detection failed. Please initialize using -init-centerline or '
-                      '-init-mask (see help).')
+        sct.printv('Automatic cord detection failed. Please initialize using -init-centerline or -init-mask (see help)',
+                   1, 'error')
         sys.exit(1)
 
     # build output filename
@@ -602,9 +610,11 @@ def main(arguments):
     img_seg = propseg(img_input, arguments)
     fname_seg = img_seg.absolutepath
     path_qc = arguments.get("-qc", None)
+    qc_dataset = arguments.get("-qc-dataset", None)
+    qc_subject = arguments.get("-qc-subject", None)
     if path_qc is not None:
         generate_qc(fname_in1=fname_input_data, fname_seg=fname_seg, args=args, path_qc=os.path.abspath(path_qc),
-                    process='sct_propseg')
+                    dataset=qc_dataset, subject=qc_subject, process='sct_propseg')
     sct.display_viewer_syntax([fname_input_data, fname_seg], colormaps=['gray', 'red'], opacities=['', '1'])
 
 

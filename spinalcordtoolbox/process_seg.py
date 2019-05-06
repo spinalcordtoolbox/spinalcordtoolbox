@@ -6,15 +6,13 @@ from __future__ import absolute_import
 
 import math
 import numpy as np
-from skimage import measure, filters, transform
+from skimage import measure, transform
 from tqdm import tqdm
+import logging
 
-import sct_utils as sct
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.aggregate_slicewise import Metric
 from spinalcordtoolbox.centerline.core import get_centerline
-
-# TODO: only use logging, don't use printing, pass images, not filenames, do imports at beginning of file, no chdir()
 
 
 def compute_shape(segmentation, algo_fitting='bspline', angle_correction=True, verbose=1):
@@ -98,7 +96,7 @@ def compute_shape(segmentation, algo_fitting='bspline', angle_correction=True, v
             for property_name in property_list:
                 shape_properties[property_name][iz] = shape_property[property_name]
         else:
-            sct.log.warning('\nNo properties for slice: {}'.format(iz))
+            logging.warning('\nNo properties for slice: {}'.format(iz))
 
         """ DEBUG
         from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
@@ -132,7 +130,7 @@ def _properties2d(image, dim):
     pad = 3  # padding used for cropping
     # Check if slice is empty
     if not image.any():
-        sct.log.debug('The slice is empty.')
+        logging.debug('The slice is empty.')
         return None
     # Normalize between 0 and 1 (also check if slice is empty)
     image_norm = (image - image.min()) / (image.max() - image.min())
@@ -144,13 +142,14 @@ def _properties2d(image, dim):
     regions = measure.regionprops(image_bin, intensity_image=image_norm)
     # Check number of regions
     if len(regions) > 1:
-        sct.log.debug('There is more than one object on this slice.')
+        logging.debug('There is more than one object on this slice.')
         return None
     region = regions[0]
     # Get bounding box of the object
     minx, miny, maxx, maxy = region.bbox
     # Use those bounding box coordinates to crop the image (for faster processing)
-    image_crop = image_norm[minx-pad: maxx+pad, miny-pad: maxy+pad]
+    image_crop = image_norm[np.clip(minx-pad, 0, image_bin.shape[0]): np.clip(maxx+pad, 0, image_bin.shape[0]),
+                 np.clip(miny-pad, 0, image_bin.shape[1]): np.clip(maxy+pad, 0, image_bin.shape[1])]
     # Oversample image to reach sufficient precision when computing shape metrics on the binary mask
     image_crop_r = transform.pyramid_expand(image_crop, upscale=upscale, sigma=None, order=1)
     # Binarize image using threshold at 0. Necessary input for measure.regionprops

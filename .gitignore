@@ -31,6 +31,8 @@ scripts/.idea/scripts.iml
 scripts/.idea/vcs.xml
 scripts/.idea/workspace.xml
 
+spinalcordtoolbox/sentry_dsn.py
+
 .pytest_cache/
 unit_testing/*.csv
 unit_testing/*.nii.gz

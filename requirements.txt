@@ -1,0 +1,24 @@
+numpy # need to install first otherwise dependency issues
+cryptography
+dipy
+futures
+h5py
+Keras
+matplotlib
+nibabel
+pandas
+psutil
+pyqt5
+raven
+requests
+scipy
+scikit-image
+scikit-learn
+tensorflow
+xlrd
+xlutils
+xlwt
+tqdm
+transforms3d
+urllib3[secure]
+nipy # need to install at the end otherwise won't install

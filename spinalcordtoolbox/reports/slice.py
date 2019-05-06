@@ -17,7 +17,7 @@ from spinalcordtoolbox.resampling import resample_nipy
 from nibabel.nifti1 import Nifti1Image
 from nipy.io.nifti_ref import nifti2nipy, nipy2nifti
 
-logger = logging.getLogger("sct.{}".format(__file__))
+logger = logging.getLogger(__name__)
 
 
 class Slice(object):
