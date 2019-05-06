@@ -15,16 +15,16 @@
 
 from __future__ import print_function, division, absolute_import
 
-import sys, io, os, re, time, datetime
+import sys, io, os, re, time, datetime, platform
 import errno
 import logging
-import logging.config
 import shutil
 import subprocess
 import tempfile
 
 import numpy as np
-import portalocker
+
+logger = logging.getLogger(__name__)
 
 if os.getenv('SENTRY_DSN', None):
     # do no import if Sentry is not set (i.e., if variable SENTRY_DSN is not defined)
@@ -40,156 +40,60 @@ else:
         return " ".join(shlex.quote(x) for x in lst)
 
 
+from spinalcordtoolbox import __version__, __sct_dir__, __data_dir__
+from spinalcordtoolbox.utils import check_exe
 
 
-"""
-Basic logging setup for the sct
-set SCT_LOG_LEVEL and SCT_LOG_FORMAT in ~/.sctrc to change the sct log
-format and level
-"""
-
-
-log = logging.getLogger('sct')
-log.setLevel(logging.DEBUG)
-stream_handler = logging.StreamHandler(sys.stdout)
-nh = logging.NullHandler()
-log.addHandler(nh)
-LOG_LEVEL = os.getenv('SCT_LOG_LEVEL')
-LOG_FORMAT = os.getenv('SCT_LOG_FORMAT')
-if not LOG_FORMAT:
-    LOG_FORMAT = None
-
-
-def check_exe(name):
+def init_sct(log_level=1, update=False):
     """
-    Ensure that a program exists
-    :type name: string
-    :param name: name or path to program
-    :return: path of the program or None
-    """
-    def is_exe(fpath):
-        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
-
-    fpath, fname = os.path.split(name)
-    if fpath and is_exe(name):
-        return fpath
-    else:
-        for path in os.environ["PATH"].split(os.pathsep):
-            path = path.strip('"')
-            exe_file = os.path.join(path, name)
-            if is_exe(exe_file):
-                return exe_file
-
-    return None
-
-
-def __get_branch():
-    """
-    Fallback if for some reason the value vas no set by sct_launcher
+    Initialize the sct for typical terminal usage
+    :param log_level: int: 0: warning, 1: info, 2: debug.
+    :param update: Bool: If True, only update logging log level. Otherwise, set logging + Sentry.
     :return:
     """
+    dict_log_levels = {0: 'WARNING', 1: 'INFO', 2: 'DEBUG'}
 
-    p = subprocess.Popen(["git", "rev-parse", "--abbrev-ref", "HEAD"], stdout=subprocess.PIPE,
-                         stderr=subprocess.PIPE, cwd=__sct_dir__)
-    output, _ = p.communicate()
-    status = p.returncode
+    def _format_wrap(old_format):
+        def _format(record):
+            res = old_format(record)
+            if record.levelno >= logging.ERROR:
+                res = "\x1B[31;1m{}\x1B[0m".format(res)
+            elif record.levelno >= logging.WARNING:
+                res = "\x1B[33m{}\x1B[0m".format(res)
+            else:
+                pass
+            return res
+        return _format
 
-    if status == 0:
-        return output.decode().strip()
+    # Set logging level for logger and increase level for global config (to avoid logging when calling child functions)
+    logger.setLevel(getattr(logging, dict_log_levels[log_level]))
+    logging.root.setLevel(getattr(logging, dict_log_levels[log_level]))
+
+    if not update:
+        # Initialize logging
+        hdlr = logging.StreamHandler(sys.stdout)
+        fmt = logging.Formatter()
+        fmt.format = _format_wrap(fmt.format)
+        hdlr.setFormatter(fmt)
+        logging.root.addHandler(hdlr)
+
+        # Sentry config
+        init_error_client()
+        if os.environ.get("SCT_TIMER", None) is not None:
+            add_elapsed_time_counter()
 
 
-def __get_commit():
+def add_elapsed_time_counter():
     """
-    :return: git commit ID, with trailing '*' if modified
     """
-    p = subprocess.Popen(["git", "rev-parse", "HEAD"], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                         cwd=__sct_dir__)
-    output, _ = p.communicate()
-    status = p.returncode
-    if status == 0:
-        commit = output.decode().strip()
-    else:
-        commit = "?!?"
-
-    p = subprocess.Popen(["git", "status", "--porcelain"], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                         cwd=__sct_dir__)
-    output, _ = p.communicate()
-    status = p.returncode
-    if status == 0:
-        unclean = True
-        for line in output.decode().strip().splitlines():
-            line = line.rstrip()
-            if line.startswith("??"): # ignore ignored files, they can't hurt
-               continue
-            break
-        else:
-            unclean = False
-        if unclean:
-            commit += "*"
-
-    return commit
-
-def _git_info(commit_env='SCT_COMMIT',branch_env='SCT_BRANCH'):
-
-    sct_commit = os.getenv(commit_env, "unknown")
-    sct_branch = os.getenv(branch_env, "unknown")
-    if check_exe("git") and os.path.isdir(os.path.join(__sct_dir__, ".git")):
-        sct_commit = __get_commit() or sct_commit
-        sct_branch = __get_branch() or sct_branch
-
-    if sct_commit is not 'unknown':
-        install_type = 'git'
-    else:
-        install_type = 'package'
-
-    with io.open(os.path.join(__sct_dir__, 'version.txt'), 'r') as f:
-        version_sct = f.read().rstrip()
-
-    return install_type, sct_commit, sct_branch, version_sct
-
-
-def _version_string():
-    install_type, sct_commit, sct_branch, version_sct = _git_info()
-    if install_type == "package":
-        return version_sct
-    else:
-        return "{install_type}-{sct_branch}-{sct_commit}".format(**locals())
-
-# Basic sct config
-__sct_dir__ = os.getenv("SCT_DIR", os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
-__data_dir__ = os.getenv("SCT_DATA_DIR", os.path.join(__sct_dir__, 'data'))
-__version__ = _version_string()
-
-
-def init_sct():
-    """ Initialize the sct for typical terminal usage
-
-    :return:
-    """
-    start_stream_logger()
-    init_error_client()
-
-
-def start_stream_logger():
-    """ Log to terminal, by default the formatting is like a print() call
-
-    :return:
-    """
-
-    formatter = logging.Formatter(LOG_FORMAT)
-    stream_handler.setFormatter(formatter)
-
-    if LOG_LEVEL == "DISABLE":
-        level = sys.maxsize
-    elif LOG_LEVEL is None:
-        level = logging.INFO
-    else:
-        level = getattr(logging, LOG_LEVEL, None)
-        if level is None:
-            logging.warn("SCT_LOG_LEVEL set to invalid value -> using default")
-            level = logging.INFO
-    stream_handler.setLevel(level)
-    log.addHandler(stream_handler)
+    import atexit
+    class Timer():
+        def __init__(self):
+            self._t0 = time.time()
+        def atexit(self):
+            print("Elapsed time: %.3f seconds" % (time.time()-self._t0))
+    t = Timer()
+    atexit.register(t.atexit)
 
 
 def init_error_client():
@@ -198,7 +102,7 @@ def init_error_client():
     :return:
     """
     if os.getenv('SENTRY_DSN'):
-        log.debug('Configuring sentry report')
+        logger.debug('Configuring sentry report')
         try:
             client = raven.Client(
              release=__version__,
@@ -227,7 +131,7 @@ def init_error_client():
             sys.exitfunc = exitfunc
         except raven.exceptions.InvalidDsn:
             # This could happen if sct staff change the dsn
-            log.debug('Sentry DSN not valid anymore, not reporting errors')
+            logger.debug('Sentry DSN not valid anymore, not reporting errors')
 
 
 def traceback_to_server(client):
@@ -268,62 +172,9 @@ def server_log_handler(client):
     formatter.converter = time.gmtime
     sh.setFormatter(formatter)
 
-    log.addHandler(sh)
+    logger.addHandler(sh)
     return sh
 
-
-def pause_stream_logger():
-    """ Pause the log to Terminal
-
-    :return:
-    """
-    log.removeHandler(stream_handler)
-
-
-class NoColorFormatter(logging.Formatter):
-    """
-    Formater removing terminal specific colors from outputs
-    """
-    def format(self, record):
-        for color in bcolors.colors():
-            record.msg = record.msg.replace(color, "")
-        return super(NoColorFormatter, self).format(record)
-
-
-def add_file_handler_to_logger(filename="{}.log".format(__file__), mode='a', log_format=None, log_level=None):
-    """ Convenience fct to add a file handler to the sct log
-        Will remove colors from prints
-    :param filename:
-    :param mode:
-    :param log_format:
-    :param log_level:
-    :return: the file handler
-    """
-    log.debug('Adding file handler {}'.format(filename))
-    fh = logging.FileHandler(filename=filename, mode=mode)
-
-    if log_format is None:
-        formatter = NoColorFormatter(LOG_FORMAT)  # sct.printv() emulator)
-    else:
-        formatter = logging.Formatter(log_format)
-    fh.setFormatter(formatter)
-
-    if log_level:
-        fh.setLevel(log_level)
-    else:
-        fh.setLevel(logging.INFO)
-    log.addHandler(fh)
-    return fh
-
-
-def remove_handler(handler):
-    """ Remore any handler from logs
-
-    :param handler:
-    :return:
-    """
-    log.debug("Pause log to {} ".format(handler.baseFilename))
-    log.removeHandler(handler)
 
 # define class color
 class bcolors(object):
@@ -339,66 +190,6 @@ class bcolors(object):
     @classmethod
     def colors(cls):
         return [v for k, v in cls.__dict__.items() if not k.startswith("_") and k is not "colors"]
-
-
-def no_new_line_log(msg, *args, **kwargs):
-    """ Log info to stdout without adding new line
-        Useful for progress bar.
-        Monkey patching the sct stream handler
-
-    see logging.info() method for parameters
-
-    """
-
-
-    def my_emit(self, record):
-        """
-        Emit a record.
-        Monkey patcher for progress bar in the sct
-        Do a carriage return \r before the string
-        instead of a new line \n at the end
-
-        """
-        try:
-            unicode
-            _unicode = True
-        except NameError:
-            _unicode = False
-
-        try:
-            msg = self.format(record)
-            stream = self.stream
-            fs = "\r%s"
-            if not _unicode: #if no unicode support...
-                stream.write(fs % msg)
-            else:
-                try:
-                    if (isinstance(msg, unicode) and
-                        getattr(stream, 'encoding', None)):
-                        ufs = u'%s\n'
-                        try:
-                            stream.write(ufs % msg)
-                        except UnicodeEncodeError:
-                            stream.write((ufs % msg).encode(stream.encoding))
-                    else:
-                        stream.write(fs % msg)
-                except UnicodeError:
-                    stream.write(fs % msg.encode("UTF-8"))
-            self.flush()
-        except (KeyboardInterrupt, SystemExit):
-            raise
-        except:
-            self.handleError(record)
-
-    orig_emit = stream_handler.__class__.emit
-    stream_handler.__class__.emit = my_emit
-
-    log.info(msg, *args, **kwargs)
-    if log.handlers:
-        [h.flush() for h in log.handlers]
-
-    stream_handler.__class__.emit = orig_emit
-
 
 
 def add_suffix(fname, suffix):
@@ -431,8 +222,23 @@ def run_old(cmd, verbose=1):
     else:
         return status, output
 
+def which_sct_binaries():
+    """
+    :return name of the sct binaries to use on this platform
+    """
 
-def run(cmd, verbose=1, raise_exception=True, cwd=None, env=None):
+    if sys.platform.startswith("linux"):
+        distro = platform.linux_distribution()
+        if "CentOS Linux" in distro:
+            return "binaries_centos"
+        if "Red Hat Enterprise Linux Server" in distro:
+            return "binaries_centos"
+        return "binaries_debian"
+    else:
+        return "binaries_osx"
+
+
+def run(cmd, verbose=1, raise_exception=True, cwd=None, env=None, is_sct_binary=False):
     # if verbose == 2:
     #     printv(sys._getframe().f_back.f_code.co_name, 1, 'process')
 
@@ -445,10 +251,34 @@ def run(cmd, verbose=1, raise_exception=True, cwd=None, env=None):
     if sys.hexversion < 0x03000000 and isinstance(cmd, unicode):
         cmd = str(cmd)
 
+
+    if is_sct_binary:
+        name = cmd[0] if isinstance(cmd, list) else cmd.split(" ", 1)[0]
+        path = None
+        #binaries_location_default = os.path.expanduser("~/.cache/spinalcordtoolbox-{}/bin".format(__version__)
+        binaries_location_default = os.path.join(__sct_dir__, "bin")
+        for directory in (
+         #binaries_location_default,
+         os.path.join(__sct_dir__, "bin"),
+         ):
+            candidate = os.path.join(directory, name)
+            if os.path.exists(candidate):
+                path = candidate
+        if path is None:
+            run(["sct_download_data", "-d", which_sct_binaries(), "-o", binaries_location_default])
+            path = os.path.join(binaries_location_default, name)
+
+        if isinstance(cmd, list):
+            cmd[0] = path
+        elif isinstance(cmd, str):
+            rem = cmd.split(" ", 1)[1:]
+            cmd = path if len(rem) == 0 else "{} {}".format(path, rem[0])
+
     if isinstance(cmd, str):
         cmdline = cmd
     else:
         cmdline = list2cmdline(cmd)
+
 
     if verbose:
         printv("%s # in %s" % (cmdline, cwd), 1, 'code')
@@ -646,7 +476,7 @@ def checkRAM(os, verbose=1):
 
         # Iterate processes
         processLines = ps.split('\n')
-        sep = re.compile('[\s]+')
+        sep = re.compile(r'[\s]+')
         rssTotal = 0  # kB
         for row in range(1, len(processLines)):
             rowText = processLines[row].strip()
@@ -659,12 +489,12 @@ def checkRAM(os, verbose=1):
 
         # Process vm_stat
         vmLines = vm.split('\n')
-        sep = re.compile(':[\s]+')
+        sep = re.compile(r':[\s]+')
         vmStats = {}
         for row in range(1, len(vmLines) - 2):
             rowText = vmLines[row].strip()
             rowElements = sep.split(rowText)
-            vmStats[(rowElements[0])] = int(rowElements[1].strip('\.')) * 4096
+            vmStats[(rowElements[0])] = int(rowElements[1].strip(r'\.')) * 4096
 
         if verbose:
             printv('  Wired Memory:\t\t%d MB' % (vmStats["Pages wired down"] / 1024 / 1024))
@@ -674,55 +504,6 @@ def checkRAM(os, verbose=1):
             # printv('Real Mem Total (ps):\t%.3f MB' % ( rssTotal/1024/1024 ))
 
         return ram_total
-
-
-class ForkStdoutToFile(object):
-    """Use to redirect stdout to file
-    Default mode is to send stdout to file AND to terminal
-
-    """
-    def __init__(self, filename="{}.log".format(__file__), to_file_only=False):
-        self.terminal = sys.stdout
-        self.log_file = open(filename, "a")
-        self.filename = filename
-        self.to_file_only = False
-        sys.stdout = self
-
-    def __del__(self):
-        self.pause()
-        self.close()
-
-    def pause(self):
-        sys.stdout = self.terminal
-
-    def restart(self):
-        sys.stdout = self
-
-    def write(self, message):
-        if not self.to_file_only:
-            self.terminal.write(message)
-        self.log_file.write(message)
-
-    def flush(self):
-        if not self.to_file_only:
-            self.terminal.flush()
-        self.log_file.flush()
-
-    def close(self):
-        self.log_file.close()
-        sys.stdout = self.terminal
-
-    def read(self):
-        with open(self.filename, "r") as fp:
-            fp.read()
-
-    # def send_email(self, email, passwd_from=None, subject="file_log", attachment=True):
-    #     if attachment:
-    #         filename = self.filename
-    #     else:
-    #         filename = None
-    #     send_email(email, passwd_from=passwd_from, subject=subject, message=self.read(), filename=filename)
-
 
 
 def extract_fname(fpath):
@@ -1007,27 +788,25 @@ def check_if_same_space(fname_1, fname_2):
 
 
 def printv(string, verbose=1, type='normal'):
-    """enables to print (color coded messages, depending on verbose status)
+    """
+    Enables to print color-coded messages, depending on verbose status. Only use in command-line programs (e.g.,
+    sct_propseg).
     """
 
     colors = {'normal': bcolors.normal, 'info': bcolors.green, 'warning': bcolors.yellow, 'error': bcolors.red,
               'code': bcolors.blue, 'bold': bcolors.bold, 'process': bcolors.magenta}
 
-    if verbose or type=="error":
-        # Print color only if the output is the terminal
-        # Note jcohen: i added a try/except in case stdout does not have isatty field (it did happen to me)
+    if verbose:
+        # The try/except is there in case stdout does not have isatty field (it did happen to me)
         try:
+            # Print color only if the output is the terminal
             if sys.stdout.isatty():
                 color = colors.get(type, bcolors.normal)
-                log.info('{0}{1}{2}'.format(color, string, bcolors.normal))
-
+                print(color + string + bcolors.normal)
             else:
-                log.info(string)
+                print(string)
         except Exception as e:
-            log.info(string)
-
-    if type == 'error':
-        raise RuntimeError("printv(..., type=\"error\")")
+            print(string)
 
 
 def send_email(addr_to, addr_from, passwd, subject, message='', filename=None, html=False, smtp_host=None, smtp_port=None, login=None):
@@ -1386,6 +1165,7 @@ class Version(object):
 
 
 class MsgUser(object):
+    # TODO: check if should be removed
     __debug = False
     __quiet = False
 
@@ -1505,10 +1285,10 @@ def cache_signature(input_files=[], input_data=[], input_params={}):
         except:
             h.update(str(data))
     for k, v in sorted(input_params.items()):
-        h.update(str(type(k)))
-        h.update(str(k))
-        h.update(str(type(v)))
-        h.update(str(v))
+        h.update(str(type(k)).encode('utf-8'))
+        h.update(str(k).encode('utf-8'))
+        h.update(str(type(v)).encode('utf-8'))
+        h.update(str(v).encode('utf-8'))
 
     return "# Cache file generated by SCT\nDEPENDENCIES_SIG={}\n".format(h.hexdigest()).encode()
 
@@ -1534,22 +1314,3 @@ def cache_save(cachefile, sig):
     with io.open(cachefile, "wb") as f:
         f.write(sig)
 
-class open_with_exclusive_lock(object):
-    """
-    Utility class to prevent the writing of a file by multiple processes.
-
-    :param filename: name of the file to lock
-    :param mode: permission of the file ('w', 'r', 'a', etc.)
-    """
-    def __init__(self, filename, mode):
-        self.filename = filename
-        self.mode = mode
-
-    def __enter__(self):
-        fd = os.open(self.filename, os.O_RDWR|os.O_CREAT)
-        self._f = os.fdopen(fd, self.mode)
-        portalocker.lock(self._f, portalocker.LOCK_EX)
-        return self._f
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        portalocker.unlock(self._f)

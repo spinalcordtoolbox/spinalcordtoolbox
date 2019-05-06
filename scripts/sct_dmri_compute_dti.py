@@ -101,7 +101,8 @@ def main(args = None):
     evecs = bool(arguments['-evecs'])
     if "-m" in arguments:
         file_mask = arguments['-m']
-    param.verbose = int(arguments['-v'])
+    param.verbose = int(arguments.get('-v'))
+    sct.init_sct(log_level=param.verbose, update=True)  # Update log level
 
     # compute DTI
     if not compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, evecs, file_mask):

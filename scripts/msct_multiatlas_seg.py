@@ -32,7 +32,6 @@ from msct_parser import Parser
 from sct_utils import printv
 import sct_utils as sct
 
-path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
 
 def get_parser():
     # Initialize the parser
@@ -140,7 +139,7 @@ class ParamModel:
         self.ind_rm = None
         #
         path_script = os.path.dirname(__file__)
-        self.path_model_to_load = os.path.join(path_sct, 'data', 'gm_model')
+        self.path_model_to_load = os.path.join(sct.__data_dir__, 'gm_model')
 
     def __repr__(self):
         info = 'Model Param:\n'
@@ -452,22 +451,22 @@ class Model:
             path_script = os.path.dirname(__file__)
             printv('ERROR: The GM segmentation model is not compatible with this version of the code.\n'
                    'To update the model, run the following lines:\n\n'
-                   'cd ' + path_sct + '\n'
-                   './install_sct -m -b\n', self.param.verbose, 'error')
+                   'cd ' + sct.__data_dir__ + '\n'
+                   'sct_download_data -d gm_model\n', self.param.verbose, 'error')
 
         # - self.slices = dictionary
-        self.slices = pickle.load(gzip.open(model_files['slices'],  'rb'))
+        self.slices = pickle.load(gzip.open(model_files['slices'],  'rb'), encoding='latin1')
         printv('  ' + str(len(self.slices)) + ' slices in the model dataset', self.param.verbose, 'normal')
         self.mean_image = np.mean([dic_slice.im for dic_slice in self.slices], axis=0)
 
         # - self.intensities = for normalization
-        self.intensities = pickle.load(gzip.open(model_files['intensity'], 'rb'))
+        self.intensities = pickle.load(gzip.open(model_files['intensity'], 'rb'), encoding='latin1')
 
         # - reduced space (pca or isomap)
-        self.fitted_model = pickle.load(gzip.open(model_files['model'], 'rb'))
+        self.fitted_model = pickle.load(gzip.open(model_files['model'], 'rb'), encoding='latin1')
 
         # - fitted data (=eigen vectors or embedding vectors )
-        self.fitted_data = pickle.load(gzip.open(model_files['data'], 'rb'))
+        self.fitted_data = pickle.load(gzip.open(model_files['data'], 'rb'), encoding='latin1')
 
         printv('  model: ' + self.param_model.method)
         printv('  ' + str(self.fitted_data.shape[1]) + ' components kept on ' + str(self.fitted_data.shape[0]), self.param.verbose, 'normal')

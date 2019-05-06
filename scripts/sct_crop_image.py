@@ -115,7 +115,7 @@ class ImageCropper(object):
             self.crop_from_mask_with_background()
         else:
             # Run command line
-            sct.run(self.cmd, verb)
+            sct.run(self.cmd, verb, is_sct_binary=True)
 
         self.result = Image(self.output_filename, verbose=self.verbose)
 
@@ -405,13 +405,13 @@ if __name__ == "__main__":
 
     # cropping with GUI
     cropper = ImageCropper(input_filename)
+    cropper.verbose = int(arguments.get('-v'))
+    sct.init_sct(log_level=cropper.verbose, update=True)  # Update log level
+
     if exec_choice:
         fname_data = arguments["-i"]
         if "-r" in arguments:
             cropper.rm_tmp_files = int(arguments["-r"])
-        if "-v" in arguments:
-            cropper.verbose = int(arguments["-v"])
-
         cropper.crop_with_gui()
 
     # cropping with specified command-line arguments

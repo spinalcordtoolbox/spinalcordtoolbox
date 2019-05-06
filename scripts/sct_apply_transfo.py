@@ -188,7 +188,7 @@ class Transform:
               '-t',
              ] + fname_warp_list_invert + [
              '-r', fname_dest,
-             ] + interp, verbose=verbose)
+             ] + interp, verbose=verbose, is_sct_binary=True)
 
         # if 4d, loop across the T dimension
         else:
@@ -230,7 +230,7 @@ class Transform:
                   '-t',
                  ] + fname_warp_list_invert_tmp + [
                   '-r', file_dest + ext_dest,
-                 ] + interp, verbose)
+                 ] + interp, verbose, is_sct_binary=True)
 
             # Merge files back
             sct.printv('\nMerge file back...', verbose)
@@ -290,8 +290,8 @@ def main(args=None):
         transform.interp = arguments["-x"]
     if "-r" in arguments:
         transform.remove_temp_files = int(arguments["-r"])
-    if "-v" in arguments:
-        transform.verbose = int(arguments["-v"])
+    transform.verbose = int(arguments.get('-v'))
+    sct.init_sct(log_level=transform.verbose, update=True)  # Update log level
 
     transform.apply()
 

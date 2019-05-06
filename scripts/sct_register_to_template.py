@@ -21,19 +21,18 @@ import sys, os, time
 import numpy as np
 
 import sct_utils as sct
+import sct_maths
 import sct_label_utils
 from spinalcordtoolbox.metadata import get_file_label
 from sct_utils import add_suffix
 from sct_register_multimodal import Paramreg, ParamregMultiStep, register
 from msct_parser import Parser
+from msct_register_landmarks import register_landmarks
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.centerline.core import get_centerline
 from spinalcordtoolbox.reports.qc import generate_qc
-
-# get path of the toolbox
-path_script = os.path.dirname(__file__)
-path_sct = os.path.dirname(path_script)
+from spinalcordtoolbox.resampling import resample_file
 
 # DEFAULT PARAMETERS
 
@@ -46,7 +45,7 @@ class Param:
         self.fname_mask = ''  # this field is needed in the function register@sct_register_multimodal
         self.padding = 10  # this field is needed in the function register@sct_register_multimodal
         self.verbose = 1  # verbose
-        self.path_template = os.path.join(path_sct, 'data', 'PAM50')
+        self.path_template = os.path.join(sct.__data_dir__, 'PAM50')
         self.path_qc = None
         self.zsubsample = '0.25'
         self.param_straighten = ''
@@ -151,6 +150,14 @@ def get_parser():
                       type_value='folder_creation',
                       description='The path where the quality control generated content will be saved',
                       default_value=param.path_qc)
+    parser.add_option(name='-qc-dataset',
+                      type_value='str',
+                      description='If provided, this string will be mentioned in the QC report as the dataset the process was run on',
+                      )
+    parser.add_option(name='-qc-subject',
+                      type_value='str',
+                      description='If provided, this string will be mentioned in the QC report as the subject the process was run on',
+                      )
     parser.add_option(name="-igt",
                       type_value="image_nifti",
                       description="File name of ground-truth template cord segmentation (binary nifti).",
@@ -159,7 +166,7 @@ def get_parser():
                       type_value="multiple_choice",
                       description="""Remove temporary files.""",
                       mandatory=False,
-                      default_value='0',
+                      default_value=param.remove_temp_files,
                       example=['0', '1'])
     parser.add_option(name="-v",
                       type_value="multiple_choice",
@@ -204,8 +211,9 @@ def main(args=None):
     path_template = arguments['-t']
     contrast_template = arguments['-c']
     ref = arguments['-ref']
-    remove_temp_files = int(arguments['-r'])
-    verbose = int(arguments['-v'])
+    param.remove_temp_files = int(arguments.get('-r'))
+    verbose = int(arguments.get('-v'))
+    sct.init_sct(log_level=verbose, update=True)  # Update log level
     param.verbose = verbose  # TODO: not clean, unify verbose or param.verbose in code, but not both
     # if '-straighten-fitting' in arguments:
     param.straighten_fitting = arguments['-straighten-fitting']
@@ -259,7 +267,7 @@ def main(args=None):
     sct.printv('  Landmarks:            ' + fname_landmarks, verbose)
     sct.printv('  Segmentation:         ' + fname_seg, verbose)
     sct.printv('  Path template:        ' + path_template, verbose)
-    sct.printv('  Remove temp files:    ' + str(remove_temp_files), verbose)
+    sct.printv('  Remove temp files:    ' + str(param.remove_temp_files), verbose)
 
     # check input labels
     labels = check_labels(fname_landmarks, label_type=label_type)
@@ -322,17 +330,18 @@ def main(args=None):
     # binarize segmentation (in case it has values below 0 caused by manual editing)
     sct.printv('\nBinarize segmentation', verbose)
     ftmp_seg_, ftmp_seg = ftmp_seg, sct.add_suffix(ftmp_seg, "_bin")
-    sct.run(['sct_maths', '-i', ftmp_seg_, '-bin', '0.5', '-o', ftmp_seg])
-
+    sct_maths.main(['-i', ftmp_seg_,
+                    '-bin', '0.5',
+                    '-o', ftmp_seg])
 
     # Switch between modes: subject->template or template->subject
     if ref == 'template':
 
         # resample data to 1mm isotropic
         sct.printv('\nResample data to 1mm isotropic...', verbose)
-        sct.run(['sct_resample', '-i', ftmp_data, '-mm', '1.0x1.0x1.0', '-x', 'linear', '-o', add_suffix(ftmp_data, '_1mm')])
+        resample_file(ftmp_data, add_suffix(ftmp_data, '_1mm'), '1.0x1.0x1.0', 'mm', 'linear', verbose)
         ftmp_data = add_suffix(ftmp_data, '_1mm')
-        sct.run(['sct_resample', '-i', ftmp_seg, '-mm', '1.0x1.0x1.0', '-x', 'linear', '-o', add_suffix(ftmp_seg, '_1mm')])
+        resample_file(ftmp_seg, add_suffix(ftmp_seg, '_1mm'), '1.0x1.0x1.0', 'mm', 'linear', verbose)
         ftmp_seg = add_suffix(ftmp_seg, '_1mm')
         # N.B. resampling of labels is more complicated, because they are single-point labels, therefore resampling
         # with nearest neighbour can make them disappear.
@@ -405,13 +414,13 @@ def main(args=None):
             # apply straightening
             sct.run(['sct_apply_transfo', '-i', ftmp_seg, '-w', 'warp_curve2straight.nii.gz', '-d', 'straight_ref.nii.gz', '-o', add_suffix(ftmp_seg, '_straight')])
         else:
-            from sct_straighten_spinalcord import SpinalCordStraightener
+            from spinalcordtoolbox.straightening import SpinalCordStraightener
             sc_straight = SpinalCordStraightener(ftmp_seg, ftmp_seg)
             sc_straight.algo_fitting = param.straighten_fitting
             sc_straight.output_filename = add_suffix(ftmp_seg, '_straight')
             sc_straight.path_output = './'
             sc_straight.qc = '0'
-            sc_straight.remove_temp_files = remove_temp_files
+            sc_straight.remove_temp_files = param.remove_temp_files
             sc_straight.verbose = verbose
 
             if vertebral_alignment:
@@ -438,7 +447,9 @@ def main(args=None):
 
             # Dilating the input label so they can be straighten without losing them
             sct.printv('\nDilating input labels using 3vox ball radius')
-            sct.run(['sct_maths', '-i', ftmp_label, '-o', add_suffix(ftmp_label, '_dilate'), '-dilate', '3'])
+            sct_maths.main(['-i', ftmp_label,
+                            '-dilate', '3',
+                            '-o', add_suffix(ftmp_label, '_dilate')])
             ftmp_label = add_suffix(ftmp_label, '_dilate')
 
             # Apply straightening to labels
@@ -448,11 +459,12 @@ def main(args=None):
 
             # Compute rigid transformation straight landmarks --> template landmarks
             sct.printv('\nEstimate transformation for step #0...', verbose)
-            from msct_register_landmarks import register_landmarks
             try:
-                register_landmarks(ftmp_label, ftmp_template_label, paramreg.steps['0'].dof, fname_affine='straight2templateAffine.txt', verbose=verbose)
-            except Exception:
-                sct.printv('ERROR: input labels do not seem to be at the right place. Please check the position of the labels. See documentation for more details: https://www.slideshare.net/neuropoly/sct-course-20190121/42', verbose=verbose, type='error')
+                register_landmarks(ftmp_label, ftmp_template_label, paramreg.steps['0'].dof,
+                                   fname_affine='straight2templateAffine.txt', verbose=verbose)
+            except RuntimeError:
+                raise('Input labels do not seem to be at the right place. Please check the position of the labels. '
+                      'See documentation for more details: https://www.slideshare.net/neuropoly/sct-course-20190121/42')
 
             # Concatenate transformations: curve --> straight --> affine
             sct.printv('\nConcatenate transformations: curve --> straight --> affine...', verbose)
@@ -531,15 +543,24 @@ def main(args=None):
                 interp_step = 'nn'
             else:
                 sct.printv('ERROR: Wrong image type.', 1, 'error')
+
+            if paramreg.steps[str(i_step)].algo == 'centermassrot' and paramreg.steps[str(i_step)].rot_method == 'hog':
+                src_seg = ftmp_seg
+                dest_seg = ftmp_template_seg
             # if step>1, apply warp_forward_concat to the src image to be used
             if i_step > 1:
-                # sct.run('sct_apply_transfo -i '+src+' -d '+dest+' -w '+','.join(warp_forward)+' -o '+sct.add_suffix(src, '_reg')+' -x '+interp_step, verbose)
                 # apply transformation from previous step, to use as new src for registration
                 sct.run(['sct_apply_transfo', '-i', src, '-d', dest, '-w', ','.join(warp_forward), '-o', add_suffix(src, '_regStep' + str(i_step - 1)), '-x', interp_step], verbose)
                 src = add_suffix(src, '_regStep' + str(i_step - 1))
+                if paramreg.steps[str(i_step)].algo == 'centermassrot' and paramreg.steps[str(i_step)].rot_method == 'hog':  # also apply transformation to the seg
+                    sct.run(['sct_apply_transfo', '-i', src_seg, '-d', dest_seg, '-w', ','.join(warp_forward), '-o', add_suffix(src, '_regStep' + str(i_step - 1)), '-x', interp_step], verbose)
+                    src_seg = add_suffix(src_seg, '_regStep' + str(i_step - 1))
             # register src --> dest
             # TODO: display param for debugging
-            warp_forward_out, warp_inverse_out = register(src, dest, paramreg, param, str(i_step))
+            if paramreg.steps[str(i_step)].algo == 'centermassrot' and paramreg.steps[str(i_step)].rot_method == 'hog': # im_seg case
+                warp_forward_out, warp_inverse_out = register([src, src_seg], [dest, dest_seg], paramreg, param, str(i_step))
+            else:
+                warp_forward_out, warp_inverse_out = register(src, dest, paramreg, param, str(i_step))
             warp_forward.append(warp_forward_out)
             warp_inverse.append(warp_inverse_out)
 
@@ -560,8 +581,8 @@ def main(args=None):
 
         # Change orientation of input images to RPI
         sct.printv('\nChange orientation of input images to RPI...', verbose)
-        ftmp_data =  Image(ftmp_data).change_orientation("RPI", generate_path=True).save().absolutepath
-        ftmp_seg =  Image(ftmp_seg).change_orientation("RPI", generate_path=True).save().absolutepath
+        ftmp_data = Image(ftmp_data).change_orientation("RPI", generate_path=True).save().absolutepath
+        ftmp_seg = Image(ftmp_seg).change_orientation("RPI", generate_path=True).save().absolutepath
         ftmp_label = Image(ftmp_label).change_orientation("RPI", generate_path=True).save().absolutepath
 
         # Remove unused label on template. Keep only label present in the input label image
@@ -589,7 +610,6 @@ def main(args=None):
 
         # Bring template to subject space using landmark-based transformation
         sct.printv('\nEstimate transformation for step #0...', verbose)
-        from msct_register_landmarks import register_landmarks
         warp_forward = ['template2subjectAffine.txt']
         warp_inverse = ['-template2subjectAffine.txt']
         try:
@@ -648,7 +668,7 @@ def main(args=None):
         sct.generate_output_file(os.path.join(path_tmp, "straight_ref.nii.gz"), os.path.join(path_output, "straight_ref.nii.gz"), verbose)
 
     # Delete temporary files
-    if remove_temp_files:
+    if param.remove_temp_files:
         sct.printv('\nDelete temporary files...', verbose)
         sct.rmtree(path_tmp, verbose=verbose)
 
@@ -656,9 +676,12 @@ def main(args=None):
     elapsed_time = time.time() - start_time
     sct.printv('\nFinished! Elapsed time: ' + str(int(np.round(elapsed_time))) + 's', verbose)
 
+    qc_dataset = arguments.get("-qc-dataset", None)
+    qc_subject = arguments.get("-qc-subject", None)
     if param.path_qc is not None:
         generate_qc(fname_data, fname_in2=fname_template2anat, fname_seg=fname_seg, args=args,
-                    path_qc=os.path.abspath(param.path_qc), process='sct_register_to_template')
+                    path_qc=os.path.abspath(param.path_qc), dataset=qc_dataset, subject=qc_subject,
+                    process='sct_register_to_template')
     sct.display_viewer_syntax([fname_data, fname_template2anat], verbose=verbose)
     sct.display_viewer_syntax([fname_template, fname_anat2template], verbose=verbose)
 
@@ -687,7 +710,9 @@ def project_labels_on_spinalcord(fname_label, fname_seg):
         [im_seg.transfo_pix2phys([[x_centerline_fit[i], y_centerline_fit[i], z_centerline[i]]])[0]
                                  for i in range(len(x_centerline_fit))]
     # transpose list
-    centerline_phys_x, centerline_phys_y, centerline_phys_z = list(map(list, map(None, *centerline_xyz_transposed)))
+    centerline_phys_x = [i[0] for i in centerline_xyz_transposed]
+    centerline_phys_y = [i[1] for i in centerline_xyz_transposed]
+    centerline_phys_z = [i[2] for i in centerline_xyz_transposed]
     # get center of mass of label
     labels = im_label.getCoordinatesAveragedByValue()
     # initialize image of projected labels. Note that we use the space of the seg (not label).
@@ -730,8 +755,7 @@ def resample_labels(fname_labels, fname_dest, fname_output):
     nxd, nyd, nzd, ntd, pxd, pyd, pzd, ptd = Image(fname_dest).dim
     sampling_factor = [float(nx) / nxd, float(ny) / nyd, float(nz) / nzd]
     # read labels
-    from sct_label_utils import ProcessLabels
-    processor = ProcessLabels(fname_labels)
+    processor = sct_label_utils.ProcessLabels(fname_labels)
     label_list = processor.display_voxel()
     label_new_list = []
     for label in label_list:

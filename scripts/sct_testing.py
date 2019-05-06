@@ -8,25 +8,19 @@
 # Authors: Julien Cohen-Adad, Benjamin De Leener, Augustin Roux
 
 # TODO: list functions to test in help (do a search in testing folder)
-# TODO: do something about this ugly 'output.nii.gz'
 
 from __future__ import print_function, absolute_import
 
-import sys, io, os, time, random, copy, shlex, importlib, multiprocessing, tempfile, shutil
-import signal, stat
-
-
+import sys, os, time, copy, shlex, importlib, multiprocessing, tempfile, shutil
+import traceback
+import signal
 
 import numpy as np
 from pandas import DataFrame
 
-from msct_parser import Parser
 import sct_utils as sct
 
-# get path of SCT
-path_script = os.path.dirname(__file__)
-path_sct = os.path.dirname(path_script)
-sys.path.append(os.path.join(path_sct, 'testing'))
+sys.path.append(os.path.join(sct.__sct_dir__, 'testing'))
 
 
 def fs_signature(root):
@@ -60,7 +54,7 @@ def fs_ok(sig_a, sig_b, exclude=()):
     errors = [ (x,y) for (x,y) in errors if not x.startswith(exclude) ]
     if errors:
         for error in errors:
-            sct.log.error("Error: %s", error)
+            sct.printv("Error: %s", 1, type='error')
         raise RuntimeError()
 
 # Parameters
@@ -184,9 +178,14 @@ def process_function(fname, param):
         # test function
         try:
             param_test = test_function(param_test)
+        except sct.RunError as e:
+            list_status_function.append(1)
+            list_output.append("Got SCT exception:")
+            list_output.append(e.args[0])
         except Exception as e:
             list_status_function.append(1)
-            list_output.append("TODO exception: %s" % e)
+            list_output.append("Got exception: %s" % e)
+            list_output += traceback.format_exc().splitlines()
         else:
             list_status_function.append(param_test.status)
             list_output.append(param_test.output)
@@ -223,6 +222,7 @@ def main(args=None):
     jobs = arguments.jobs
 
     param.verbose = arguments.verbose
+    sct.init_sct(log_level=param.verbose, update=True)  # Update log level
 
     start_time = time.time()
 
@@ -436,10 +436,11 @@ def get_functions_parallelizable():
         # 'sct_pipeline',
         'sct_process_segmentation',
         'sct_propseg',
+        # 'sct_qc',  # had to remove temporarily because using argparse (not msct_parser)
         'sct_register_multimodal',
         'sct_straighten_spinalcord', # deps: sct_apply_transfo
         'sct_register_to_template',
-        'sct_segment_graymatter',
+        # 'sct_segment_graymatter',
         'sct_smooth_spinalcord',
         'sct_label_vertebrae',
     ]
@@ -465,45 +466,15 @@ def make_dot_lines(string):
 # print in color
 # ==========================================================================================
 def print_ok():
-    sct.log.info("[" + bcolors.OKGREEN + "OK" + bcolors.ENDC + "]")
+    sct.printv("[" + bcolors.OKGREEN + "OK" + bcolors.ENDC + "]")
 
 
 def print_warning():
-    sct.log.warning("[" + bcolors.WARNING + "WARNING" + bcolors.ENDC + "]")
+    sct.printv("[" + bcolors.WARNING + "WARNING" + bcolors.ENDC + "]")
 
 
 def print_fail():
-    sct.log.error("[" + bcolors.FAIL + "FAIL" + bcolors.ENDC + "]")
-
-
-# write to log file
-# ==========================================================================================
-def write_to_log_file(fname_log, string, mode='w', prepend=False):
-    """
-    status, output = sct.run('echo $SCT_DIR', 0)
-    path_logs_dir = os.path.join(output, "testing", "logs")
-
-    if not os.path.isdir(path_logs_dir):
-        os.makedirs(path_logs_dir)
-    mode: w: overwrite, a: append, p: prepend
-    """
-    string_to_append = ''
-    string = "test ran at " + time.strftime("%y%m%d%H%M%S") + "\n" \
-             + fname_log \
-             + string
-    # open file
-    try:
-        # if prepend, read current file and then overwrite
-        if prepend:
-            f = open(fname_log, 'r')
-            # string_to_append = '\n\nOUTPUT:\n--\n' + f.read()
-            string_to_append = f.read()
-            f.close()
-        f = open(fname_log, mode)
-    except Exception as ex:
-        raise Exception('WARNING: Cannot open log file {}.'.format(os.path.abspath(fname_log)))
-    f.write(string + string_to_append + '\n')
-    f.close()
+    sct.printv("[" + bcolors.FAIL + "FAIL" + bcolors.ENDC + "]")
 
 
 # init_testing
@@ -519,7 +490,6 @@ def test_function(param_test):
     -------
     path_output str: path where to output testing data
     """
-    sct.log.debug("Starting test function")
 
     # load modules of function to test
     module_function_to_test = importlib.import_module(param_test.function_to_test)
@@ -551,19 +521,7 @@ def test_function(param_test):
     param_test.dict_args_with_path = dict_args_with_path
     param_test.args_with_path = parser.dictionary_to_string(dict_args_with_path)
 
-    # open log file
-    # Note: the statement below is not included in the if, because even if redirection does not occur, we want the file to be create otherwise write_to_log will fail
-
-    if param_test.fname_log is None:
-        param_test.fname_log = os.path.join(param_test.path_output, param_test.function_to_test + '.log')
-
-    # redirect to log file
-    if param_test.redirect_stdout:
-        file_handler = sct.add_file_handler_to_logger(param_test.fname_log)
-    sct.log.debug("logging to file")
-
     # initialize panda dataframe
-    sct.log.debug("Init dataframe")
     param_test.results = DataFrame(index=[subject_folder],
                                    data={'status': 0,
                                          'duration': 0,
@@ -589,7 +547,6 @@ def test_function(param_test):
             if not (os.path.isfile(file_to_check)):
                 param_test.status = 200
                 param_test.output += '\nERROR: This input file does not exist: ' + file_to_check
-                write_to_log_file(param_test.fname_log, param_test.output, 'w')
                 return update_param(param_test)
 
     # retrieve ground truth (will be used later for integrity testing)
@@ -599,7 +556,6 @@ def test_function(param_test):
         if not os.path.isfile(param_test.fname_gt):
             param_test.status = 201
             param_test.output += '\nERROR: The following file used for ground truth does not exist: ' + param_test.fname_gt
-            write_to_log_file(param_test.fname_log, param_test.output, 'w')
             return update_param(param_test)
 
     # run command
@@ -619,7 +575,6 @@ def test_function(param_test):
     except Exception as err:
         param_test.status = 1
         param_test.output += str(err)
-        write_to_log_file(param_test.fname_log, param_test.output, 'w')
         return update_param(param_test)
 
     param_test.output += o
@@ -636,14 +591,7 @@ def test_function(param_test):
             os.chdir(path_testing)
             param_test.status = 2
             param_test.output += str(err)
-            write_to_log_file(param_test.fname_log, param_test.output, 'w')
             return update_param(param_test)
-
-    # manage stdout
-    if param_test.redirect_stdout:
-        sct.remove_handler(file_handler)
-        write_to_log_file(param_test.fname_log, param_test.output, mode='r+', prepend=True)
-
 
     return update_param(param_test)
 

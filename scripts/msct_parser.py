@@ -81,8 +81,12 @@
 from __future__ import absolute_import
 
 import os
+import logging
+
 import sct_utils as sct
 from msct_types import Coordinate  # DO NOT REMOVE THIS LINE!!!!!!! IT IS MANDATORY!
+
+logger = logging.getLogger(__name__)
 
 ########################################################################################################################
 # OPTION
@@ -248,7 +252,7 @@ class Option:
         elif no_image:
             return param
         else:
-            sct.log.debug('executed in {}'.format(os.getcwd()))
+            logger.debug('executed in {}'.format(os.getcwd()))
             self.parser.usage.error("Option " + self.name + " file " + param + " does not exist.")
 
     def checkFolder(self, param):
@@ -267,7 +271,7 @@ class Option:
         if result_creation == 2:
             raise OSError("Permission denied for folder creation {}".format(param))
         elif result_creation == 1:
-            sct.log.info("Folder " + param + " has been created.")
+            logger.info("Folder " + param + " has been created.")
         return param
 
 
@@ -386,10 +390,10 @@ class Parser:
                 # for each argument, check if is in the option list.
                 # if so, check the integrity of the argument
                 if self.options[arg].deprecated:
-                    sct.log.warning(" {} is a deprecated argument and will no longer be updated in future versions.".format(arg))
+                    logger.warning(" {} is a deprecated argument and will no longer be updated in future versions.".format(arg))
                 if self.options[arg].deprecated_by is not None:
                     try:
-                        sct.log.warning(arg + " is a deprecated argument and will no longer be updated in future versions. Changing argument to " + self.options[arg].deprecated_by + ".")
+                        logger.warning(arg + " is a deprecated argument and will no longer be updated in future versions. Changing argument to " + self.options[arg].deprecated_by + ".")
                         arg = self.options[arg].deprecated_by
                     except KeyError as e:
                         raise SyntaxError("Argument {} non existent".format(arg))
@@ -596,10 +600,10 @@ class Usage:
         usage = self.header + self.description + self.usage + self.arguments_string
 
         if error:
-            sct.log.info(usage)
-            sct.log.error("Command-line usage error: {}\nAborted...".format(error))
+            logger.info(usage)
+            logger.error("Command-line usage error: {}\nAborted...".format(error))
         else:
-            sct.log.info(usage)
+            logger.info(usage)
 
     def error(self, error=None):
         self.generate(error)

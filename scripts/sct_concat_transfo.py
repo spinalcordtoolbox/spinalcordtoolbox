@@ -15,19 +15,16 @@
 
 from __future__ import absolute_import, division
 
-import sys, io, os, getopt, functools
+import sys, os, functools
 
 import sct_utils as sct
 from msct_parser import Parser
 from spinalcordtoolbox.image import Image
 
-# DEFAULT PARAMETERS
-
 
 class Param:
     # The constructor
     def __init__(self):
-        self.debug = 0
         self.fname_warp_final = 'warp_final.nii.gz'
 
 
@@ -36,29 +33,19 @@ class Param:
 def main():
 
     # Initialization
-    fname_warp_list = ''  # list of warping fields
-    fname_dest = ''  # destination image (fix)
     fname_warp_final = ''  # concatenated transformations
-    verbose = 1
 
-    # Parameters for debug mode
-    if param.debug:
-        sct.printv('\n*** WARNING: DEBUG MODE ON ***\n')
-        path_sct_data = os.environ.get("SCT_TESTING_DATA_DIR", os.path.join(os.path.dirname(os.path.dirname(__file__))), "testing_data")
-        fname_warp_list = os.path.join(path_sct_data, 't2', 'warp_template2anat.nii.gz') + '-' + os.path.join(path_sct_data, 'mt', 'warp_template2mt.nii.gz')
-        fname_dest = os.path.join(path_sct_data, 'mt', 'mtr.nii.gz')
-        verbose = 1
-    else:
-        # Check input parameters
-        parser = get_parser()
-        arguments = parser.parse(sys.argv[1:])
+    # Check input parameters
+    parser = get_parser()
+    arguments = parser.parse(sys.argv[1:])
 
-        fname_dest = arguments['-d']
-        fname_warp_list = arguments['-w']
+    fname_dest = arguments['-d']
+    fname_warp_list = arguments['-w']
 
-        if '-o' in arguments:
-            fname_warp_final = arguments['-o']
-        verbose = int(arguments['-v'])
+    if '-o' in arguments:
+        fname_warp_final = arguments['-o']
+    verbose = int(arguments.get('-v'))
+    sct.init_sct(log_level=verbose, update=True)  # Update log level
 
     # Parse list of warping fields
     sct.printv('\nParse list of transformations...', verbose)
@@ -101,7 +88,7 @@ def main():
     fname_warp_list_invert = functools.reduce(lambda x,y: x+y, fname_warp_list_invert)
 
     cmd = ['isct_ComposeMultiTransform', dimensionality, 'warp_final' + ext_out, '-R', fname_dest] + fname_warp_list_invert
-    status, output = sct.run(cmd, verbose=verbose)
+    status, output = sct.run(cmd, verbose=verbose, is_sct_binary=True)
 
     # check if output was generated
     if not os.path.isfile('warp_final' + ext_out):

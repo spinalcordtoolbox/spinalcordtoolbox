@@ -13,11 +13,11 @@ import operator
 import functools
 import csv
 import datetime
+import logging
 
-import sct_utils as sct
 from spinalcordtoolbox.template import get_slices_from_vertebral_levels, get_vertebral_level_from_slice
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.utils import parse_num_list_inv
+from spinalcordtoolbox.utils import __version__, parse_num_list_inv
 
 
 class Metric:
@@ -82,7 +82,7 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], persli
             vertgroups = [tuple([level]) for level in levels]
         elif perslice:
             # slicegroups = [(0,), (1,), (2,), (3,), (4,), (5,), (6,), (7,), (8,)]
-            slicegroups = [tuple([i]) for i in reduce(operator.concat, slicegroups)]  # reduce to individual tuple
+            slicegroups = [tuple([i]) for i in functools.reduce(operator.concat, slicegroups)]  # reduce to individual tuple
             # vertgroups = [(2,), (2,), (2,), (3,), (3,), (3,), (4,), (4,), (4,)]
             vertgroups = [tuple([get_vertebral_level_from_slice(im_vert_level, i[0])]) for i in slicegroups]
         # output aggregate metric across levels
@@ -145,8 +145,8 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], persli
                 # here we create a field with name: FUNC(METRIC_NAME). Example: MEAN(CSA)
                 agg_metric[slicegroup]['{}({})'.format(name, metric.label)] = result
             except Exception as e:
-                sct.log.warning(e)
-                agg_metric[slicegroup]['{}({})'.format(name, metric.label)] = e.message
+                logging.warning(e)
+                agg_metric[slicegroup]['{}({})'.format(name, metric.label)] = str(e)
     return agg_metric
 
 
@@ -161,7 +161,7 @@ def check_labels(indiv_labels_ids, selected_labels):
 
         # Check if the selected labels are in the available labels ids
         if not set(list_ids_of_labels_of_interest).issubset(set(indiv_labels_ids)):
-            sct.log.error(
+            logging.error(
                 'At least one of the selected labels (' + str(list_ids_of_labels_of_interest) + ') is not available \
                 according to the label list from the text file in the atlas folder.')
 
@@ -375,21 +375,32 @@ def make_a_string(item):
         return item
 
 
-def merge_dict(dict_in):
+def _merge_dict(dict_in):
     """
     Merge n dictionaries that are contained at the root key
     Example:
-      dict = {'key1': {'subkey1': dict1}, 'key2': {'subkey2': dict2}} --> {'subkey1': dict1+dict2, ...}
+      dict_in = {
+          'area': {(0): {'Level': 0, 'Mean(area)': 0.5}, (1): {'Level': 1, 'Mean(area)': 0.2}}
+          'angle_RL': {(0): {'Level': 0, 'Mean(angle_RL)': 15}, (1): {'Level': 1, 'Mean(angle_RL)': 12}}
+      }
+      dict_merged = {
+          (0): {'Level': 0, 'Mean(area): 0.5, 'Mean(angle_RL): 15}
+          (1): {'Level': 1, 'Mean(area): 0.2, 'Mean(angle_RL): 12}
+      }
     :param dict_in:
     :return:
     """
     dict_merged = {}
+    metrics = [k for i, (k, v) in enumerate(dict_in.items())]
     # Fetch first parent key (metric), then loop across children keys (slicegroup):
-    for key_children in dict_in[dict_in.keys()[0]].keys():
-        # Loop across remaining parent keys
-        dict_merged[key_children] = dict_in[dict_in.keys()[0]][key_children].copy()
-        for key_parent in dict_in.keys()[1:]:
-            dict_merged[key_children].update(dict_in[key_parent][key_children])
+    dict_first_metric = dict_in[metrics[0]]
+    # Loop across children keys: slicegroup = [(0), (1), ...]
+    for slicegroup in [k for i, (k, v) in enumerate(dict_first_metric.items())]:
+        # Initialize dict with information from first metric
+        dict_merged[slicegroup] = dict_first_metric[slicegroup]
+        # Loop across remaining metrics
+        for metric in metrics:
+            dict_merged[slicegroup].update(dict_in[metric][slicegroup])
     return dict_merged
 
 
@@ -416,7 +427,7 @@ def save_as_csv(agg_metric, fname_out, fname_in=None, append=False):
         with open(fname_out, 'w') as csvfile:
             # spamwriter = csv.writer(csvfile, delimiter=',')
             header = ['Timestamp', 'SCT Version', 'Filename', 'Slice (I->S)', 'VertLevel']
-            agg_metric_key = agg_metric[agg_metric.keys()[0]].keys()
+            agg_metric_key = [v for i, (k, v) in enumerate(agg_metric.items())][0]
             for item in list_item:
                 for key in agg_metric_key:
                     if item in key:
@@ -431,11 +442,11 @@ def save_as_csv(agg_metric, fname_out, fname_in=None, append=False):
         for slicegroup in sorted(agg_metric.keys()):
             line = list()
             line.append(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))  # Timestamp
-            line.append(sct.__version__)  # SCT Version
+            line.append(__version__)  # SCT Version
             line.append(fname_in)  # file name associated with the results
             line.append(parse_num_list_inv(slicegroup))  # list all slices in slicegroup
             line.append(parse_num_list_inv(agg_metric[slicegroup]['VertLevel']))  # list vertebral levels
-            agg_metric_key = agg_metric[agg_metric.keys()[0]].keys()
+            agg_metric_key = [v for i, (k, v) in enumerate(agg_metric.items())][0]
             for item in list_item:
                 for key in agg_metric_key:
                     if item in key:

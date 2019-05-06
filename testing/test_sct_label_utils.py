@@ -28,7 +28,6 @@ def init(param_test):
     Initialize class: param_test
     """
     # initialization
-    sct.log.debug('init test {}'.format(param_test))
     folder_data = ['t2']
     file_data = ['t2_seg.nii.gz', 't2_seg_labeled.nii.gz']
 
@@ -47,14 +46,12 @@ def test_integrity(param_test):
     """
     Test integrity of function
     """
-
-    sct.log.debug('test integrity {}'.format(param_test.__dict__))
     # find the test that is performed and check the integrity of the output
     index_args = param_test.default_args.index(param_test.args)
 
     # Removed because of:
     # https://travis-ci.org/neuropoly/spinalcordtoolbox/jobs/482061826
-    param_test.output = "NOT TESTED-- SHOULD BE REACTIVATED ASAP"
+    param_test.output += "NOT TESTED-- SHOULD BE REACTIVATED ASAP"
     # if index_args == 1:
     #     # compute center of mass of labeled segmentation
     #     centers_of_mass_image = sct_label_utils.main(['-i', 'test_centerofmass.nii.gz', '-display', '-v', '0'])

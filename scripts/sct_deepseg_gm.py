@@ -44,6 +44,14 @@ def get_parser():
                       description="The path where the quality control generated "
                                   "content will be saved",
                       default_value=None)
+    parser.add_option(name='-qc-dataset',
+                      type_value='str',
+                      description='If provided, this string will be mentioned in the QC report as the dataset the process was run on',
+                      )
+    parser.add_option(name='-qc-subject',
+                      type_value='str',
+                      description='If provided, this string will be mentioned in the QC report as the subject the process was run on',
+                      )
 
     parser.add_option(name="-m",
                       type_value='multiple_choice',
@@ -97,9 +105,10 @@ def run_main():
         output_filename = sct.add_suffix(input_filename, '_gmseg')
 
     use_tta = "-t" in arguments
-    verbose = arguments["-v"]
     model_name = arguments["-m"]
     threshold = arguments['-thr']
+    verbose = int(arguments.get('-v'))
+    sct.init_sct(log_level=verbose, update=True)  # Update log level
 
     if threshold > 1.0 or threshold < 0.0:
         raise RuntimeError("Threshold should be between 0.0 and 1.0.")
@@ -116,9 +125,11 @@ def run_main():
                                         use_tta)
 
     path_qc = arguments.get("-qc", None)
+    qc_dataset = arguments.get("-qc-dataset", None)
+    qc_subject = arguments.get("-qc-subject", None)
     if path_qc is not None:
         generate_qc(fname_in1=input_filename, fname_seg=out_fname, args=sys.argv[1:], path_qc=os.path.abspath(path_qc),
-                    process='sct_deepseg_gm')
+                    dataset=qc_dataset, subject=qc_subject, process='sct_deepseg_gm')
 
     sct.display_viewer_syntax([input_filename, format(out_fname)],
                               colormaps=['gray', 'red'],

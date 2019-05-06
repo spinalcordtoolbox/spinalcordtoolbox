@@ -3,6 +3,7 @@
 
 from __future__ import print_function, absolute_import, division
 
+import glob
 import sys
 import os
 import json
@@ -28,7 +29,8 @@ import sct_utils as sct
 from spinalcordtoolbox.image import Image
 import spinalcordtoolbox.reports.slice as qcslice
 
-logger = logging.getLogger("sct.{}".format(__file__))
+logger = logging.getLogger(__name__)
+
 
 class QcImage(object):
     """
@@ -252,8 +254,10 @@ class QcImage(object):
                 img = func_stretch_contrast[self._stretch_contrast_method](img)
 
             fig = Figure()
+            size_fig = [5, 5 * img.shape[0] / img.shape[1]]
+            fig.set_size_inches(size_fig[0], size_fig[1], forward=True)
             FigureCanvas(fig)
-            ax = fig.add_subplot(111)
+            ax = fig.add_axes((0, 0, 1, 1))
             ax.imshow(img, cmap='gray', interpolation=self.interpolation, aspect=float(aspect_img))
             self._add_orientation_label(ax)
             ax.get_xaxis().set_visible(False)
@@ -266,8 +270,9 @@ class QcImage(object):
                     print("Mask type %s" % mask.dtype)
                     mask = func_stretch_contrast[self._stretch_contrast_method](mask)
                 fig = Figure()
+                fig.set_size_inches(size_fig[0], size_fig[1], forward=True)
                 FigureCanvas(fig)
-                ax = fig.add_subplot(111)
+                ax = fig.add_axes((0, 0, 1, 1))
                 action(self, mask, ax)
                 self._save(fig, self.qc_report.qc_params.abs_overlay_img_path(), dpi=self.qc_report.qc_params.dpi)
 
@@ -283,10 +288,10 @@ class QcImage(object):
         """
         if self.qc_report.qc_params.orientation == 'Axial':
             # If mosaic of axial slices, display orientation labels
-            ax.text(12, 6, 'A', color='yellow', size=6)
-            ax.text(12, 28, 'P', color='yellow', size=6)
-            ax.text(0, 18, 'L', color='yellow', size=6)
-            ax.text(24, 18, 'R', color='yellow', size=6)
+            ax.text(12, 6, 'A', color='yellow', size=4)
+            ax.text(12, 28, 'P', color='yellow', size=4)
+            ax.text(0, 18, 'L', color='yellow', size=4)
+            ax.text(24, 18, 'R', color='yellow', size=4)
 
     def _save(self, fig, img_path, format='png', bbox_inches='tight', pad_inches=0.00, dpi=300):
         """
@@ -302,20 +307,15 @@ class QcImage(object):
         logger.debug('Save image %s', img_path)
         fig.savefig(img_path,
                     format=format,
-                    bbox_inches=bbox_inches,
-                    pad_inches=pad_inches,
+                    bbox_inches=None,
                     transparent=True,
                     dpi=dpi)
 
 
 class Params(object):
     """Parses and stores the variables that will included into the QC details
-
-    Assuming BIDS convention, we derive the value of the dataset, subject and contrast from the `input_file`
-    by splitting it into `[dataset]/[subject]/[contrast]/input_file`
     """
-
-    def __init__(self, input_file, command, args, orientation, dest_folder, dpi=300):
+    def __init__(self, input_file, command, args, orientation, dest_folder, dpi=300, dataset=None, subject=None):
         """
         Parameters
         :param input_file: str: the input nifti file name
@@ -324,15 +324,21 @@ class Params(object):
         :param orientation: str: The anatomical orientation
         :param dest_folder: str: The absolute path of the QC root
         :param dpi: int: Output resolution of the image
+        :param dataset: str: Dataset name
+        :param subject: str: Subject name
         """
         path_in, file_in, ext_in = sct.extract_fname(os.path.abspath(input_file))
-        # abs_input_path = os.path.dirname(os.path.abspath(input_file))
+        # Assuming BIDS convention, we derive the value of the dataset, subject and contrast from the `input_file`
+        # by splitting it into `[dataset]/[subject]/[contrast]/input_file`
         abs_input_path, contrast = os.path.split(path_in)
-        abs_input_path, subject = os.path.split(abs_input_path)
-        _, dataset = os.path.split(abs_input_path)
+        abs_input_path, subject_tmp = os.path.split(abs_input_path)
+        _, dataset_tmp = os.path.split(abs_input_path)
+        if dataset is None:
+            dataset = dataset_tmp
+        if subject is None:
+            subject = subject_tmp
         if isinstance(args, list):
             args = sct.list2cmdline(args)
-
         self.fname_in = file_in+ext_in
         self.dataset = dataset
         self.subject = subject
@@ -345,7 +351,7 @@ class Params(object):
         self.dpi = dpi
         self.root_folder = dest_folder
         self.mod_date = datetime.datetime.strftime(datetime.datetime.now(), '%Y_%m_%d_%H%M%S.%f')
-        self.qc_results = os.path.join(dest_folder, 'qc_results.json')
+        self.qc_results = os.path.join(dest_folder, '_json/qc_'+self.mod_date+'.json')
         self.bkg_img_path = os.path.join(dataset, subject, contrast, command, self.mod_date, 'bkg_img.png')
         self.overlay_img_path = os.path.join(dataset, subject, contrast, command, self.mod_date, 'overlay_img.png')
 
@@ -417,16 +423,15 @@ class QcReport(object):
             'moddate': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
         logger.debug('Description file: %s', self.qc_params.qc_results)
-        results = []
-        with sct.open_with_exclusive_lock(self.qc_params.qc_results, 'r+') as lck_qc_file:
-            if os.path.getsize(self.qc_params.qc_results) != 0:
-                results = json.load(lck_qc_file)
-            results.append(output)
-            lck_qc_file.seek(0)
-            lck_qc_file.truncate()
-            json.dump(results, lck_qc_file, indent=2)
-        self._update_html_assets(results)
-
+        # results = []
+        # Create path to store json files
+        path_json, _ = os.path.split(self.qc_params.qc_results)
+        if not os.path.exists(path_json):
+            os.makedirs(path_json)
+        # Create json file
+        with open(self.qc_params.qc_results, 'w+') as qc_file:
+            json.dump(output, qc_file, indent=1)
+        self._update_html_assets(get_json_data_from_path(path_json))
 
     def _update_html_assets(self, json_data):
         """Update the html file and assets"""
@@ -454,7 +459,9 @@ def add_entry(src, process, args, path_qc, plane, background=None, foreground=No
               qcslice_operations=[],
               qcslice_layout=None,
               dpi=300,
-              stretch_contrast_method='contrast_stretching'):
+              stretch_contrast_method='contrast_stretching',
+              dataset=None,
+              subject=None):
     """
     Starting point to QC report creation.
 
@@ -470,10 +477,12 @@ def add_entry(src, process, args, path_qc, plane, background=None, foreground=No
     :param qcslice_layout:
     :param dpi: int: Output resolution of the image
     :param stretch_contrast_method: Method for stretching contrast. See QcImage
+    :param dataset: str: Dataset name
+    :param subject: str: Subject name
     :return:
     """
 
-    qc_param = Params(src, process, args, plane, path_qc, dpi)
+    qc_param = Params(src, process, args, plane, path_qc, dpi, dataset, subject)
     report = QcReport(qc_param, '')
 
     if qcslice is not None:
@@ -511,7 +520,8 @@ def add_entry(src, process, args, path_qc, plane, background=None, foreground=No
         print("WARNING! Platform undetectable.")
 
 
-def generate_qc(fname_in1, fname_in2=None, fname_seg=None, args=None, path_qc=None, process=None):
+def generate_qc(fname_in1, fname_in2=None, fname_seg=None, args=None, path_qc=None, dataset=None, subject=None,
+                process=None):
     """
     Generate a QC entry allowing to quickly review results. This function is called by SCT scripts (e.g. sct_propseg).
 
@@ -520,50 +530,54 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, args=None, path_qc=No
     :param fname_seg: str: File name of input segmentation
     :param args: args from parent function
     :param path_qc: str: Path to save QC report
+    :param dataset: str: Dataset name
+    :param subject: str: Subject name
     :param process: str: Name of SCT function. e.g., sct_propseg
     :return: None
     """
     dpi = 300
     # Get QC specifics based on SCT process
+    # Axial orientation, switch between two input images
     if process in ['sct_register_multimodal', 'sct_register_to_template']:
-        # axial orientation, switch between two input images
         plane = 'Axial'
         qcslice_type = qcslice.Axial([Image(fname_in1), Image(fname_in2), Image(fname_seg)])
         qcslice_operations = [QcImage.no_seg_seg]
         qcslice_layout = lambda x: x.mosaic()[:2]
+    # Axial orientation, switch between the image and the segmentation
     elif process in ['sct_propseg', 'sct_deepseg_sc', 'sct_deepseg_gm']:
-        # axial orientation, switch between the image and the segmentation
         plane = 'Axial'
         qcslice_type = qcslice.Axial([Image(fname_in1), Image(fname_seg)])
         qcslice_operations = [QcImage.listed_seg]
         qcslice_layout = lambda x: x.mosaic()
+    # Axial orientation, switch between the image and the white matter segmentation (linear interp, in blue)
     elif process in ['sct_warp_template']:
-        # axial orientation, switch between the image and the linear segmentation (in blue)
         plane = 'Axial'
         qcslice_type = qcslice.Axial([Image(fname_in1), Image(fname_seg)])
         qcslice_operations = [QcImage.template]
         qcslice_layout = lambda x: x.mosaic()
+    # Sagittal orientation, display vertebral labels
     elif process in ['sct_label_vertebrae']:
-        # sagittal orientation, display vertebral labels
         plane = 'Sagittal'
         dpi = 100  # bigger picture is needed for this special case, hence reduce dpi
         qcslice_type = qcslice.Sagittal([Image(fname_in1), Image(fname_seg)], p_resample=None)
         qcslice_operations = [QcImage.label_vertebrae]
         qcslice_layout = lambda x: x.single()
+    # Sagittal orientation, display PMJ box
     elif process in ['sct_detect_pmj']:
-        # sagittal orientation, display PMJ box
         plane = 'Sagittal'
         qcslice_type = qcslice.Sagittal([Image(fname_in1), Image(fname_seg)], p_resample=None)
         qcslice_operations = [QcImage.highlight_pmj]
         qcslice_layout = lambda x: x.single()
     else:
-        sct.log.error('Unrecognised process.')
+        raise ValueError("Unrecognized process: {}".format(process))
 
     add_entry(
         src=fname_in1,
         process=process,
         args=args,
         path_qc=path_qc,
+        dataset=dataset,
+        subject=subject,
         plane=plane,
         dpi=dpi,
         qcslice=qcslice_type,
@@ -571,3 +585,13 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, args=None, path_qc=No
         qcslice_layout=qcslice_layout,
         stretch_contrast_method='equalized',
     )
+
+
+def get_json_data_from_path(path_json):
+    """Read all json files present in the given path, and output an aggregated json structure"""
+    results = []
+    for file_json in glob.iglob(os.path.join(path_json, '*.json')):
+        logger.debug('Opening: '+file_json)
+        with open(file_json, 'r+') as fjson:
+            results.append(json.load(fjson))
+    return results

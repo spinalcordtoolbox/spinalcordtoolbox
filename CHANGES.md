@@ -1,11 +1,14 @@
 # CHANGES TO RELEASE
 
-## v4.0.0 (2019-04-04)
-[View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v4.0.0-beta.1...v4.0.0)
+## v4.0.0 (2019-05-05)
+[View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.2.7...v4.0.0)
 
 **BUG**
 
+ - **sct_qc:** Fixed corruption of QC json file when running parallel jobs. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2250)
+ - **sct_label_vertebrae:** Fixed bug that appeared when inputing uncompressed nifti file. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2202)
  - **sct_label_vertebrae:** Fixed bug in the post processing of detect_c2c3. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2201)
+ - **sct_propseg:** Fixed ignored -init flag and minor improvements. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2198)
  - **sct_deepseg_lesion,sct_deepseg_sc:** Fixed bug and clarified usage of -centerline viewer. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2183)
  - **sct_dmri_moco,sct_fmri_moco:** Work around "too many open files" by slurping the data. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2163)
  - **sct_straighten_spinalcord:** Fixed crash caused by wrong estimation of centerline length in case of incomplete segmentation. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2154)
@@ -18,9 +21,15 @@
 
 **ENHANCEMENT**
 
+ - **:** Clarify handling of logger, error and exceptions. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2221)
+ - **msct_register,sct_register_multimodal,sct_register_to_template:** Refactoring to allow use of im AND seg in the registration process. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2218)
+ - **sct_get_centerline,sct_straighten_spinalcord:** Increased smoothness of default bspline centerline fitting algorithm . [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2214)
+ - **sct_get_centerline:** Remove Optic temp files by default. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2212)
+ - **sct_qc:** Lock qc report during generation. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2206)
  - **sct_process_segmentation:** Major modifications to simplify usage and fix various issues with shape analysis. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2200)
  - **sct_process_segmentation:** Minor fix in usage and csv output. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2199)
  - **sct_warp_template:** Faster execution and other minor improvements. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2175)
+ - **sct_qc:** Various improvements on the QC report and resampling module. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2157)
  - **sct_process_segmentation:** Major refactoring of centerline routine. **WARNING: Breaks compatibility with previous versions of SCT.** [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2147)
  - **sct_label_vertebrae:** Removed support for -initc2 flag because there is an alternative approach with sct_label_utils. **WARNING: Breaks compatibility with previous versions of SCT.** [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2125)
  - **sct_extract_metric:** Expose aggregate_slicewise() API and various improvements. **WARNING: Breaks compatibility with previous versions of SCT.** [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2115)
@@ -32,6 +41,7 @@
 
 **FEATURE**
 
+ - **sct_qc:** New API to generate QC reports. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2216)
  - **sct_label_vertebrae:** Added possibility to rescale intervertebral disc distance and various improvements. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2182)
  - **sct_register_to_template:** Now possible to specify the type of algorithm used for cord straightening. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2101)
  - **sct_label_vertebrae:** spinalcordtoolbox/vertebrae/detect_c2c3 -- New module. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2084)
@@ -43,6 +53,16 @@
 
  - **sct_label_vertebrae:** Updated documention on how to create vertebral and disc labels. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2107)
  - **sct_changelog:** Few improvements on automatic Changelog generation. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2077)
+
+**INSTALLATION**
+
+ - **:** Using Python 3.7 for default installation. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2238)
+ - **:** Fixed installation error caused by old SSL module. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2223)
+ - **:** First pass at also supporting pip installations. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1996)
+
+**TESTING**
+
+ - **sct_deepseg_lesion,sct_deepseg_sc:** deepseg_sc and _lesion: add new unit tests. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2159)
 
 
 ## v3.2.7 (2018-10-29)

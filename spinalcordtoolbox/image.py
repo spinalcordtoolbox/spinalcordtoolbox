@@ -13,7 +13,7 @@
 
 from __future__ import division, absolute_import
 
-import sys, io, os, math, itertools, warnings
+import sys, os, itertools, warnings, logging
 
 import nibabel
 import nibabel.orientations
@@ -25,6 +25,8 @@ import transforms3d.affines as affines
 
 from msct_types import Coordinate
 import sct_utils as sct
+
+logger = logging.getLogger(__name__)
 
 
 def _get_permutations(im_src_orientation, im_dst_orientation):
@@ -122,6 +124,7 @@ class Slicer(object):
            raise IndexError("I just have {} slices!".format(self._nb_slices))
 
        return self._data[:,:,idx]
+
 
 class SlicerOneAxis(object):
     """
@@ -319,12 +322,12 @@ class Image(object):
         except nibabel.spatialimages.ImageFileError:
             sct.printv('Error: make sure ' + path + ' is an image.', 1, 'error')
         self.data = self.im_file.get_data()
-        self.hdr = self.im_file.get_header()
+        self.hdr = self.im_file.header
         self.absolutepath = path
         if path != self.absolutepath:
-            sct.log.debug("Loaded %s (%s) orientation %s shape %s", path, self.absolutepath, self.orientation, self.data.shape)
+            logger.debug("Loaded %s (%s) orientation %s shape %s", path, self.absolutepath, self.orientation, self.data.shape)
         else:
-            sct.log.debug("Loaded %s orientation %s shape %s", path, self.orientation, self.data.shape)
+            logger.debug("Loaded %s orientation %s shape %s", path, self.orientation, self.data.shape)
 
     def change_shape(self, shape, generate_path=False):
         """
@@ -449,10 +452,10 @@ class Image(object):
 
         # save file
         if os.path.isabs(path):
-            sct.log.debug("Saving image to %s orientation %s shape %s",
+            logger.debug("Saving image to %s orientation %s shape %s",
              path, self.orientation, data.shape)
         else:
-            sct.log.debug("Saving image to %s (%s) orientation %s shape %s",
+            logger.debug("Saving image to %s (%s) orientation %s shape %s",
              path, os.path.abspath(path), self.orientation, data.shape)
 
         nibabel.save(img, path)
@@ -780,7 +783,7 @@ def find_zmin_zmax(im, threshold=0.1):
 
     # Make sure image is not empty
     if not np.any(slicer):
-        sct.log.error('Input image is empty')
+        logger.error('Input image is empty')
 
     # Iterate from bottom to top until we find data
     for zmin in range(0, len(slicer)):

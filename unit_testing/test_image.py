@@ -4,7 +4,7 @@
 
 from __future__ import print_function, absolute_import
 
-import sys, os, tempfile
+import sys, os
 
 import pytest
 
@@ -12,6 +12,8 @@ import numpy as np
 import nibabel
 import nibabel.orientations
 
+from spinalcordtoolbox.utils import __sct_dir__
+sys.path.append(os.path.join(__sct_dir__, 'scripts'))
 import sct_utils as sct
 import spinalcordtoolbox.image as msct_image
 
@@ -49,7 +51,6 @@ def fake_3dimage_sct_custom(data):
     return img
 
 
-@pytest.fixture(scope="session")
 def fake_3dimage_vis():
     """
     :return: a Nifti1Image (3D) in RAS+ space
@@ -136,8 +137,6 @@ def fake_3dimage_sct_vis():
     )
     return img
 
-
-@pytest.fixture(scope="session")
 def fake_3dimage():
     """
     :return: a Nifti1Image (3D) in RAS+ space
@@ -167,7 +166,10 @@ def fake_3dimage():
     affine = np.eye(4)
     return nibabel.nifti1.Nifti1Image(data, affine)
 
-@pytest.fixture(scope="session")
+@pytest.fixture(name="fake_3dimage", scope="session")
+def fake_3dimage_fixture():
+	return fake_3dimage()
+
 def fake_3dimage2():
     """
     :return: a Nifti1Image (3D) in RAS+ space
@@ -189,7 +191,6 @@ def fake_3dimage2():
     affine = np.eye(4)
     return nibabel.nifti1.Nifti1Image(data, affine)
 
-@pytest.fixture(scope="session")
 def fake_4dimage():
     """
     :return: a Nifti1Image (3D) in RAS+ space

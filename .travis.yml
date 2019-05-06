@@ -3,80 +3,91 @@
 
 sudo: false  # To use travis container infrastructure
 
-language: python
-
 notifications:
   slack: neuropoly:YA3mt28aeHN3A0Iu7RvMFigK
     on_success:change
     on_failure:always
 
 # this enables to avoid recompilation of dipy if it was already compiled previously
-cache:
-  directories:
-    - ${HOME}/.cache/pip
+#cache:
+#  directories:
+#    - ${HOME}/.cache/pip
 
 matrix:
   include:
-#    - os: linux
-#      python: 2.7 # Just to make travis's UI a bit prettier
-#      env: SCT_MINICONDA=2 SCT_VERBOSE_INSTALL=1 MPLBACKEND=Agg
-    - os: linux
+    - os: linux  # list of Linux env: https://docs.travis-ci.com/user/reference/overview/
+      name: "Ubuntu 16.04 (Xenial)"
       dist: xenial
-      python: 2.7
-      env: SCT_MINICONDA=2 MPLBACKEND=Agg
-#    - os: linux
-#      python: 2.7
-#      env: SCT_MINICONDA=3 MPLBACKEND=Agg
+    - os: osx  # list of OSX env: https://docs.travis-ci.com/user/reference/osx/
+      name: "OSX 10.14 (Mojave)"
+      osx_image: xcode10.2
     - os: osx
-      language: generic
-      env: SCT_MINICONDA=2 MPLBACKEND=Agg
-#    - os: osx
-#      language: generic
-#      env: SCT_MINICONDA=2 SCT_VERBOSE_INSTALL=1 MPLBACKEND=Agg
-#    - os: osx
-#      language: generic
-#      env: SCT_MINICONDA=3 MPLBACKEND=Agg
+      name: "OSX 10.13 (High Sierra)"
+      osx_image: xcode9.4
   allow_failures:
     - os: linux
-      python: 2.7
-      env: SCT_MINICONDA=3 MPLBACKEND=Agg
-    - os: osx
-      language: generic
-      env: SCT_MINICONDA=3 MPLBACKEND=Agg
+      name: "Ubuntu 14.04 (Trusty)"
+      dist: trusty
 
 before_install:
   - echo "HOME="
   - echo $HOME
   - sudo apt-get update -qq; sudo apt-get install -qq libopenmpi-dev; echo
 
-
 install:
-# update tools
-#  - ./update_bin.sh
-  - yes | ASK_REPORT_QUESTION=false ./install_sct
-  # run launcher in order to update PATH
-  - source $HOME/build/neuropoly/spinalcordtoolbox/bin/sct_launcher
-  - echo $PATH
+  - |
+    echo Installing SCT
+    set -e  # Error build immediately if install script exits with non-zero
+    yes | ASK_REPORT_QUESTION=false ./install_sct
+    echo $?
+    echo "... STATUS"
+    PATH="$PATH:$PWD/bin"
+
+before_script:
+  - |
+    echo *** CHECK PATH ***
+    echo $PATH  # Make sure PATH includes sct/bin folder
+    ls -lA bin  # Make sure all binaries and aliases are there
+    sct_download_data -d sct_testing_data  # for tests
+    source python/bin/activate  # reactivate conda for the pip install below
 
 script:
-# test dependencies
-#  - sct_check_dependencies
-# test functions & integrity
-#  - bash -c "sudo apt-get install -qq libalglib-dev libinsighttoolkit4-dev; apt-cache show libvtk6-dev && sudo apt-get install -qq libvtk6-dev; apt-cache show libvtk7-dev && sudo apt-get install -qq libvtk7-dev; cd $HOME/build/neuropoly/spinalcordtoolbox/dev/isct_propseg; mkdir -p build; cd build; cmake ..; make; echo"
-  - pip install pylint
-  - bash -c "PYTHONPATH=\"$PWD/scripts:$PWD\" pylint -j3 --py3k --output-format=parseable --errors-only $(git ls-tree --name-only -r HEAD | sort | grep -E '(spinalcordtoolbox|scripts|testing).*\.py' | xargs); exit $(((($?&3))!=0))"
-  - pip install coverage
-  - bash -c 'echo -ne "import coverage\ncov = coverage.process_startup()\n" > sitecustomize.py'
-  - bash -c 'echo -ne "[run]\nconcurrency = multiprocessing\nparallel = True\n" > .coveragerc'
-  - COVERAGE_PROCESS_START="$PWD/.coveragerc" COVERAGE_FILE="$PWD/.coverage" PYTHONPATH="$PWD" sct_testing -d 1 --abort-on-failure
-  - coverage combine
-  - ./unit_testing.sh
-  - bash -c "pip install sphinx sphinxcontrib.programoutput sphinx_rtd_theme; cd $HOME/build/neuropoly/spinalcordtoolbox/documentation/sphinx; make html; echo"
-  - pip install coveralls
+  - |
+    echo *** UNIT TESTS ***
+    pip install pytest pytest-cov
+    pytest
+
+  - |
+    echo *** INTEGRATION TESTS ***
+    pip install coverage
+    echo -ne "import coverage\ncov = coverage.process_startup()\n" > sitecustomize.py
+    echo -ne "[run]\nconcurrency = multiprocessing\nparallel = True\n" > .coveragerc
+    if [ "${TRAVIS_OS_NAME}" = "osx" ]; then
+      COVERAGE_PROCESS_START="$PWD/.coveragerc" COVERAGE_FILE="$PWD/.coverage" sct_testing -j 1 -d 0 --abort-on-failure
+      coverage combine
+    else
+      COVERAGE_PROCESS_START="$PWD/.coveragerc" COVERAGE_FILE="$PWD/.coverage" sct_testing -d 0 --abort-on-failure
+      coverage combine
+    fi
+
+  - |
+    echo *** ANALYZE CODE ***
+    pip install pylint
+    bash -c 'PYTHONPATH="$PWD/scripts:$PWD" pylint -j3 --py3k --output-format=parseable --errors-only $(git ls-tree --name-only -r HEAD | sort | grep -E "(spinalcordtoolbox|scripts|testing).*\.py" | xargs); exit $(((($?&3))!=0))'
+
+#  - |
+#    echo *** BUILD DOCUMENTATION ***
+#    pip install sphinx sphinxcontrib.programoutput sphinx_rtd_theme
+#    cd documentation/sphinx
+#    make html
+#    cd -
+
 #  - python create_package.py -s ${TRAVIS_OS_NAME}  # test package creation
 #  - cd ../spinalcordtoolbox_v*
 #  - yes | ./install_sct  # test installation of package
-  - echo "This is the end, thanks for reading up to here."
+  - |
+    pip install coveralls
+    echo "This is the end, thanks for reading up to here."
 
 after_success:
   - CI=true TRAVIS=true coveralls

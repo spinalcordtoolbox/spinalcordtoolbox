@@ -22,9 +22,9 @@ import sys
 import matplotlib as mpl
 import numpy as np
 
-mpl.use('Qt4Agg')
+mpl.use('Qt5Agg')
 
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 logger = logging.getLogger(__name__)
 
@@ -92,7 +92,7 @@ class AnatomicalParams(object):
         self.end_vertebrae = values[-1]
 
 
-class BaseDialog(QtGui.QDialog):
+class BaseDialog(QtWidgets.QWidget):
     """Abstract base class to a Anatomical GUI.
 
     Attributes
@@ -124,7 +124,7 @@ class BaseDialog(QtGui.QDialog):
     def _init_ui(self):
         self.resize(1200, 800)
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
-        layout = QtGui.QVBoxLayout(self)
+        layout = QtWidgets.QVBoxLayout(self)
 
         self._init_header(layout)
         self._init_canvas(layout)
@@ -142,7 +142,7 @@ class BaseDialog(QtGui.QDialog):
         )
 
         for event, action in events:
-            QtGui.QShortcut(event, self, action)
+            QtWidgets.QShortcut(event, self, action)
 
         self.setWindowTitle(self.params.dialog_title)
 
@@ -200,10 +200,10 @@ class BaseDialog(QtGui.QDialog):
         raise NotImplementedError('Include _init_controls in your class declaration')
 
     def _init_header(self, parent):
-        self.lb_status = QtGui.QLabel('Label Status')
+        self.lb_status = QtWidgets.QLabel('Label Status')
         self.lb_status.setStyleSheet("color:black")
         self.lb_status.setAlignment(QtCore.Qt.AlignCenter)
-        self.lb_warning = QtGui.QLabel()
+        self.lb_warning = QtWidgets.QLabel()
         self.lb_warning.setStyleSheet('color:red')
         self.lb_warning.setAlignment(QtCore.Qt.AlignCenter)
 
@@ -225,15 +225,15 @@ class BaseDialog(QtGui.QDialog):
         -------
             The footer layout created
         """
-        ctrl_layout = QtGui.QHBoxLayout()
+        ctrl_layout = QtWidgets.QHBoxLayout()
 
         if sys.platform.lower() == 'darwin':
             cmd_key = 'Cmd'
         else:
             cmd_key = 'Ctrl'
 
-        self.btn_ok = QtGui.QPushButton('Save and Quit [%s+S]' % cmd_key)
-        self.btn_undo = QtGui.QPushButton('Undo [%s+Z]' % cmd_key)
+        self.btn_ok = QtWidgets.QPushButton('Save and Quit [%s+S]' % cmd_key)
+        self.btn_undo = QtWidgets.QPushButton('Undo [%s+Z]' % cmd_key)
 
         ctrl_layout.addStretch()
         ctrl_layout.addWidget(self.btn_undo)
@@ -403,7 +403,7 @@ class MissingLabelWarning(ValueError):
 
 
 def launch_dialog(controller, dialog_class):
-    app = QtGui.QApplication([])
+    app = QtWidgets.QApplication([])
     dialog = dialog_class(controller)
     dialog.show()
     app.exec_()

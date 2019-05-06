@@ -267,6 +267,7 @@ def register(param, file_src, file_dest, file_mat, file_out, im_mask=None):
                 cmd += ['--mask', im_mask.absolutepath]
         # run command
         if do_registration:
+            kw.update(dict(is_sct_binary=True))
             env = dict()
             env.update(os.environ)
             env = kw.get("env", env)

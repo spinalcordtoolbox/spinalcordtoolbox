@@ -12,9 +12,6 @@ import nibabel as nib
 from msct_parser import Parser
 import sct_utils as sct
 
-# Get path of the toolbox
-path_sct = os.environ.get("SCT_DIR", os.path.dirname(os.path.dirname(__file__)))
-
 
 # DEFAULT PARAMETERS
 class Param:
@@ -158,8 +155,9 @@ if __name__ == "__main__":
 
     parameter = arguments["-p"]
     remove_temp_files = int(arguments["-r"])
-    verbose = int(arguments["-v"])
     noise_threshold = int(arguments['-d'])
+    verbose = int(arguments.get('-v'))
+    sct.init_sct(log_level=verbose, update=True)  # Update log level
 
     if "-i" in arguments:
         file_to_denoise = arguments["-i"]

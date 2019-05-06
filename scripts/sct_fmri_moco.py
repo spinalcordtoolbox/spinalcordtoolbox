@@ -177,8 +177,8 @@ def main(args=None):
         path_out = arguments['-ofolder']
     if '-r' in arguments:
         param.remove_temp_files = int(arguments['-r'])
-    if '-v' in arguments:
-        param.verbose = int(arguments['-v'])
+    param.verbose = int(arguments.get('-v'))
+    sct.init_sct(log_level=param.verbose, update=True)  # Update log level
 
     sct.printv('\nInput parameters:', param.verbose)
     sct.printv('  input file ............' + param.fname_data, param.verbose)
