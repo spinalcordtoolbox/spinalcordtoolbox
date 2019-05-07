@@ -44,6 +44,9 @@ def main(args=None):
         for method in ["NoRot", "PCA", "HOG"]:
             # search for csv file
             for filename in fnmatch.filter(filenames, "*" + method + ".csv"):
+                if not (os.path.isfile(os.path.join(root, filename).replace(method, "NoRot")) and os.path.isfile(os.path.join(root, filename).replace(method, "PCA")) and os.path.isfile(os.path.join(root, filename).replace(method, "HOG"))):
+                    sct.printv("3 csv files not found for file : " + filename)
+                    continue  # this block makes sure that there is csv file for the 3 methods
                 with open(os.path.join(root, filename), 'r') as csvfile:
                     reader = csv.reader(csvfile)
                     metric_dic = {rows[0]: float(rows[1]) for rows in reader}
@@ -76,12 +79,17 @@ def main(args=None):
 
     plt.subplot(2, 3, 6)
     #Building the np array to plot the table
-    data = np.zeros((5, 3))
+    data = np.zeros((6, 3))
     for col, metric in enumerate(["dice_global", "dice_mean", "dice_min", "dice_max", "dice_std"]):
+        list_argmax = list(np.argmax((dice_metrics["NoRot"]["dice_global"], dice_metrics["PCA"]["dice_global"], dice_metrics["HOG"]["dice_global"]), axis=0))
+        nb_NoRot_best = list_argmax.count(0)
+        nb_PCA_best = list_argmax.count(1)
+        nb_HOG_best = list_argmax.count(2)
         for row, method in enumerate(["NoRot", "PCA", "HOG"]):
             data[col, row] = np.mean(dice_metrics[method][metric])
+        data[5, :] = [nb_NoRot_best, nb_PCA_best, nb_HOG_best]
 
-    plt.table(cellText=data, colLabels=["NoRot", "PCA", "HOG"], rowLabels=["dice_global", "dice_mean", "dice_min", "dice_max", "dice_std"], loc="center")
+    plt.table(cellText=data, colLabels=["NoRot", "PCA", "HOG"], rowLabels=["dice_global", "dice_mean", "dice_min", "dice_max", "dice_std", "No times best"], loc="center")
 
     # Saving everything :
     plt.savefig(folder + "/histograms.png")
