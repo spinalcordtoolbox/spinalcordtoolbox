@@ -8,6 +8,7 @@ from msct_parser import Parser
 from sct_register_to_template import main as sct_register_to_template
 from sct_label_vertebrae import main as sct_label_vertebrae
 from sct_apply_transfo import main as sct_apply_transfo
+from sct_label_utils import main as sct_labels_utils
 from sct_maths import main as sct_maths
 from nicolas_scripts.functions_sym_rot import *
 import csv
@@ -35,6 +36,8 @@ def get_parser():
     return parser
 
 def main(args=None):
+
+    #TODO define filenames
 
     # Parser :
     if not args:
@@ -66,6 +69,8 @@ def main(args=None):
 
     # Labelling vertebrae :
     sct_label_vertebrae(['-i', fname_image, '-s', fname_seg, '-c', contrast_label, '-ofolder', output_dir, '-v', '1'])
+    label_max = np.max(Image(output_dir + "/" + (fname_seg.split("/")[-1]).split(".nii.gz")[0] + "_labeled.nii.gz").data)
+    sct_labels_utils(['-i', output_dir + "/" + (fname_seg.split("/")[-1]).split(".nii.gz")[0] + "_labeled.nii.gz", '-vert-body', "1," + str(int(label_max)), '-o', output_dir + "/" + (fname_seg.split("/")[-1]).split(".nii.gz")[0] + "_indiv_labels.nii.gz"])
 
     # Applying same process but for different methods :
 
@@ -77,13 +82,13 @@ def main(args=None):
         if method == "NoRot":
             sct_register_to_template(
                 ['-i', fname_image, '-s', fname_seg, '-c', contrast, '-l',
-                 output_dir + "/" + (fname_seg.split("/")[-1]).split(".nii.gz")[0] + "_labeled.nii.gz", '-ofolder',
+                 output_dir + "/" + (fname_seg.split("/")[-1]).split(".nii.gz")[0] + "_indiv_labels.nii.gz", '-ofolder',
                  output_dir, '-param',
                  "step=1,type=seg,algo=centermass,poly=0,slicewise=1", '-v', '0'])
         else:
             sct_register_to_template(
                 ['-i', fname_image, '-s', fname_seg, '-c', contrast, '-l',
-                 output_dir + "/" + (fname_seg.split("/")[-1]).split(".nii.gz")[0] + "_labeled.nii.gz", '-ofolder', output_dir, '-param',
+                 output_dir + "/" + (fname_seg.split("/")[-1]).split(".nii.gz")[0] + "_indiv_labels.nii.gz", '-ofolder', output_dir, '-param',
                  "step=1,type=seg,algo=centermassrot,poly=0,slicewise=1,rot_method=" + method, '-v', '0'])
 
         # Applying warping field to segmentation
@@ -106,7 +111,7 @@ def main(args=None):
         # Writing out metrics in csv files
         cwd = os.getcwd()
         os.chdir(output_dir)
-        with open((fname_image.split("/")[-1]).split(".nii")[0] + "_dice_" + method + ".csv", 'wb') as csvfile:
+        with open((fname_image.split("/")[-1]).split(".nii")[0] + "_dice_" + method + ".csv", 'w') as csvfile:
             filewriter = csv.writer(csvfile, delimiter=',',
                                     quotechar='|', quoting=csv.QUOTE_MINIMAL)
             filewriter.writerow(["dice_global", dice_glob])
