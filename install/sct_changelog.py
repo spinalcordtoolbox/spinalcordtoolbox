@@ -1,17 +1,12 @@
 #!/usr/bin/env python
 """Create a changelog file from all the merged pull requests
-
 Looking into the latest github milestone, print out all the pull requests for
 neuropoly/spinalcordtoolbox grouped by label and saved in `changlog.[tagId].md`
 in markdown format. The command makes the assumption that the milestone title
 is formatted as `Release v[MAJOR].[MINOR].[PATCH]`
-
 How it works: Once the new tag is ready, you can simply run
-
 `./install/sct_changlog.py`
-
 and copy and paste the content of changlog.[tagId].md to CHANGES.md
-
 """
 import sys, io, logging, datetime, time, collections
 
@@ -126,18 +121,12 @@ if __name__ == '__main__':
         if items:
             lines.append('\n**{}**\n'.format(label.upper()))
             changelog_pr = changelog_pr.union(set([x['html_url'] for x in items]))
-            limit = pulls.get('items')
             for x in pulls.get('items'):
-                if (len(get_sct_function_from_label(x['labels'])) > 0):
-                    items = [" - **%s:** %s. %s[View pull request](%s)" % (
-                    ",".join(get_sct_function_from_label(x['labels'])),
-                    x['title'],
-                    check_compatibility(x['labels']),
-                    x['html_url'])]
-                elif (len(get_sct_function_from_label(x['labels'])) == 0):
-                    items = [ " - %s %s. %s[View pull request](%s)" % (",".join(get_sct_function_from_label(x['labels'])),
-                                                                 x['title'], check_compatibility(x['labels']),
-                                                                 x['html_url'])]
+                items = [" - **%s:** %s. %s[View pull request](%s)" % (",".join(get_sct_function_from_label(x['labels'])),
+                                                                x['title'],check_compatibility(x['labels']),
+                                                                x['html_url'])]
+                if (len(get_sct_function_from_label(x['labels'])) == 0):
+                    items[0] = items[0].replace("**:**","")
                 lines.extend(items)
 
     logging.info('Total number of pull requests with label: %d', len(changelog_pr))
