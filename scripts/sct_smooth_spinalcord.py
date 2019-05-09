@@ -30,7 +30,7 @@ from msct_parser import Parser
 class Param:
     # The constructor
     def __init__(self):
-        self.algo_fitting = 'nurbs'  # Fitting algorithm for centerline. See sct_straighten_spinalcord.
+        self.algo_fitting = 'bspline'  # Fitting algorithm for centerline. See sct_straighten_spinalcord.
 
     # update constructor with user's parameters
     def update(self, param_user):
@@ -82,7 +82,7 @@ def get_parser():
     parser.add_option(name='-param',
                       type_value=[[','], 'str'],
                       description="Advanced parameters. Assign value with \"=\"; Separate params with \",\"\n"
-                                  "algo_fitting {hanning,nurbs}: Algorithm for curve fitting. For more information, see sct_straighten_spinalcord. Default="+ param_default.algo_fitting + ".\n",
+                                  "algo_fitting {bspline, polyfit}: Algorithm for curve fitting. For more information, see sct_straighten_spinalcord. Default="+ param_default.algo_fitting + ".\n",
                       mandatory=False)
     parser.usage.addSection('MISC')
     parser.add_option(name="-r",
