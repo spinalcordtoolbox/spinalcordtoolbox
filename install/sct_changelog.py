@@ -132,7 +132,7 @@ if __name__ == '__main__':
                                                                 check_compatibility(x['labels']),
                                                                 x['html_url'])]
                 if (len(get_sct_function_from_label(x['labels'])) == 0):
-                    items[0] = items[0].replace("**:**","")
+                    items[0] = items[0].replace("**:** ","")
                 lines.extend(items)
 
     logging.info('Total number of pull requests with label: %d', len(changelog_pr))
