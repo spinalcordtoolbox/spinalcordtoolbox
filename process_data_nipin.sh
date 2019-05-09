@@ -45,8 +45,8 @@ do
         echo "Contrast for file $file not found or not supported"
         continue
       fi
-      sct_deepseg_sc -i $file -c $contrast
-      evaluate_reg_rot -i $file -iseg $file_seg -o $PATH_RESULTS
+      sct_deepseg_sc -i $file -c $contrast -ofolder $PATH_RESULTS
+      evaluate_reg_rot -i $file -iseg "${PATH_RESULTS}/${file_seg##*/}" -o $PATH_RESULTS
     fi
   fi
 done
