@@ -1,12 +1,17 @@
 #!/usr/bin/env python
 """Create a changelog file from all the merged pull requests
+
 Looking into the latest github milestone, print out all the pull requests for
 neuropoly/spinalcordtoolbox grouped by label and saved in `changlog.[tagId].md`
 in markdown format. The command makes the assumption that the milestone title
 is formatted as `Release v[MAJOR].[MINOR].[PATCH]`
+
 How it works: Once the new tag is ready, you can simply run
+
 `./install/sct_changlog.py`
+
 and copy and paste the content of changlog.[tagId].md to CHANGES.md
+
 """
 import sys, io, logging, datetime, time, collections
 
