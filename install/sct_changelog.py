@@ -119,6 +119,7 @@ if __name__ == '__main__':
         '[View detailed changelog](%s)' % detailed_changelog(title),
     ]
 
+
     changelog_pr = set()
     for label in ['bug', 'enhancement', 'feature', 'documentation', 'installation', 'testing']:
         pulls = search(milestone['title'], label)
@@ -128,7 +129,8 @@ if __name__ == '__main__':
             changelog_pr = changelog_pr.union(set([x['html_url'] for x in items]))
             for x in pulls.get('items'):
                 items = [" - **%s:** %s. %s[View pull request](%s)" % (",".join(get_sct_function_from_label(x['labels'])),
-                                                                x['title'],check_compatibility(x['labels']),
+                                                                x['title'],
+                                                                check_compatibility(x['labels']),
                                                                 x['html_url'])]
                 if (len(get_sct_function_from_label(x['labels'])) == 0):
                     items[0] = items[0].replace("**:**","")
