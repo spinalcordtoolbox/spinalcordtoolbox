@@ -119,7 +119,6 @@ if __name__ == '__main__':
         '[View detailed changelog](%s)' % detailed_changelog(title),
     ]
 
-
     changelog_pr = set()
     for label in ['bug', 'enhancement', 'feature', 'documentation', 'installation', 'testing']:
         pulls = search(milestone['title'], label)
