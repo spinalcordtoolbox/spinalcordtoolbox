@@ -145,7 +145,7 @@ def get_parser():
                       description="""Algorithm used by the cord straightening procedure for fitting the centerline.""",
                       mandatory=False,
                       default_value='bspline',
-                      example=['nurbs', 'bspline'])
+                      example=['bspline', 'polyfit'])
     parser.add_option(name='-qc',
                       type_value='folder_creation',
                       description='The path where the quality control generated content will be saved',
@@ -215,7 +215,6 @@ def main(args=None):
     verbose = int(arguments.get('-v'))
     sct.init_sct(log_level=verbose, update=True)  # Update log level
     param.verbose = verbose  # TODO: not clean, unify verbose or param.verbose in code, but not both
-    # if '-straighten-fitting' in arguments:
     param.straighten_fitting = arguments['-straighten-fitting']
     # if '-cpu-nb' in arguments:
     #     arg_cpu = ' -cpu-nb '+str(arguments['-cpu-nb'])
