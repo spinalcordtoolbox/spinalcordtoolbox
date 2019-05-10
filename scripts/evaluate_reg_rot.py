@@ -74,7 +74,7 @@ def main(args=None):
 
     # Applying same process but for different methods :
 
-    for method in ["NoRot", "pca", "pca"]:
+    for method in ["NoRot", "pca", "hog"]:
 
         sct.printv("\n\n Registration with " + method)
 
