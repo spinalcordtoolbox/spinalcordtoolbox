@@ -1,5 +1,6 @@
-## v4.0.0 (2019-05-05)
-[View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.2.7...v4.0.0)
+## 4.0.0 (2019-05-09)
+
+[View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v4.0.0-beta.3...4.0.0-beta.4)
 
 **BUG**
 
@@ -19,7 +20,7 @@
 
 **ENHANCEMENT**
 
- - **:** Clarify handling of logger, error and exceptions. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2221)
+ - Clarify handling of logger, error and exceptions. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2221)
  - **msct_register,sct_register_multimodal,sct_register_to_template:** Refactoring to allow use of im AND seg in the registration process. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2218)
  - **sct_get_centerline,sct_straighten_spinalcord:** Increased smoothness of default bspline centerline fitting algorithm . [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2214)
  - **sct_get_centerline:** Remove Optic temp files by default. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2212)
@@ -54,9 +55,9 @@
 
 **INSTALLATION**
 
- - **:** Using Python 3.7 for default installation. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2238)
- - **:** Fixed installation error caused by old SSL module. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2223)
- - **:** First pass at also supporting pip installations. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1996)
+ - Using Python 3.7 for default installation. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2238)
+ - Fixed installation error caused by old SSL module. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2223)
+ - First pass at also supporting pip installations. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1996)
 
 **TESTING**
 
