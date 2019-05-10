@@ -1,5 +1,7 @@
 ## v4.0.0 (2019-05-09)
 
+[View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v4.0.0-beta.3...4.0.0-beta.4)
+
 **BUG**
 
  - **sct_qc:** Fixed corruption of QC json file when running parallel jobs. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2250)
