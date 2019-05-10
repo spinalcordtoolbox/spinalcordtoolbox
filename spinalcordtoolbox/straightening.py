@@ -48,7 +48,7 @@ class SpinalCordStraightener(object):
         self.discs_input_filename = ""
         self.discs_ref_filename = ""
         self.speed_factor = 1.0  # Speed parameter
-        self.xy_size = 35  # in mm
+        self.xy_size = 70  # in mm
 
         # QC metrics
         self.accuracy_results = 0
