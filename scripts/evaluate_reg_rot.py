@@ -68,9 +68,9 @@ def main(args=None):
         return
 
     # Labelling vertebrae :
-    sct_label_vertebrae(['-i', fname_image, '-s', fname_seg, '-c', contrast_label, '-ofolder', output_dir, '-v', '1'])
+    sct_label_vertebrae(['-i', fname_image, '-s', fname_seg, '-c', contrast_label, '-ofolder', output_dir, '-v', '0'])
     label_max = np.max(Image(output_dir + "/" + (fname_seg.split("/")[-1]).split(".nii.gz")[0] + "_labeled.nii.gz").data)
-    sct_labels_utils(['-i', output_dir + "/" + (fname_seg.split("/")[-1]).split(".nii.gz")[0] + "_labeled.nii.gz", '-vert-body', "1," + str(int(label_max)), '-o', output_dir + "/" + (fname_seg.split("/")[-1]).split(".nii.gz")[0] + "_indiv_labels.nii.gz"])
+    sct_labels_utils(['-i', output_dir + "/" + (fname_seg.split("/")[-1]).split(".nii.gz")[0] + "_labeled.nii.gz", '-vert-body', "1," + str(int(label_max)), '-o', output_dir + "/" + (fname_seg.split("/")[-1]).split(".nii.gz")[0] + "_indiv_labels.nii.gz", '-v', str(0)])
 
     # Applying same process but for different methods :
 
@@ -92,8 +92,8 @@ def main(args=None):
                  "step=1,type=seg,algo=centermassrot,poly=0,slicewise=1,rot_method=" + method, '-v', '0'])
 
         # Applying warping field to segmentation
-        sct_apply_transfo(['-i', fname_seg, '-d', fname_seg_template, '-w', output_dir + "/warp_anat2template.nii.gz", '-o', output_dir + "/" + (fname_seg.split("/")[-1]).split(".nii.gz")[0] + "_reg.nii.gz"])
-        sct_maths(['-i', output_dir + "/" + (fname_seg.split("/")[-1]).split(".nii.gz")[0] + "_reg.nii.gz", '-bin', '0.5', '-o', output_dir + "/" + (fname_seg.split("/")[-1]).split(".nii.gz")[0] + "_reg_tresh.nii.gz"])
+        sct_apply_transfo(['-i', fname_seg, '-d', fname_seg_template, '-w', output_dir + "/warp_anat2template.nii.gz", '-o', output_dir + "/" + (fname_seg.split("/")[-1]).split(".nii.gz")[0] + "_reg.nii.gz", '-v', str(0)])
+        sct_maths(['-i', output_dir + "/" + (fname_seg.split("/")[-1]).split(".nii.gz")[0] + "_reg.nii.gz", '-bin', '0.5', '-o', output_dir + "/" + (fname_seg.split("/")[-1]).split(".nii.gz")[0] + "_reg_tresh.nii.gz", '-v', str(0)])
 
         # Opening registered segmentation
         data_seg_reg = Image(output_dir + "/" + (fname_seg.split("/")[-1]).split(".nii.gz")[0] + "_reg_tresh.nii.gz").data

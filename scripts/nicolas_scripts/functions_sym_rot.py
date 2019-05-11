@@ -49,7 +49,7 @@ def circular_filter_1d(signal, param_filt, filter='gaussian'):
 def create_proba_map(segmentation, pixdim):
     """segmentation is a binary numpy array, pixdim is a mean voxel dimension"""
 
-    constant = 1
+    constant = 0.5
 
     proba_map = segmentation
     coeff = 1
@@ -64,8 +64,6 @@ def create_proba_map(segmentation, pixdim):
         segmentation = morph.dilation(segmentation)
 
     return proba_map
-
-
 
 
 def find_angle(image, centermass, parameters):
@@ -93,15 +91,14 @@ def find_angle(image, centermass, parameters):
     hog_conv_reordered[0:180] = hog_conv[180:360]
     hog_conv_reordered[180:360] = hog_conv[0:180]
     hog_conv_restrained = hog_conv_reordered[
-                          nb_bin / 2 - np.true_divide(angle_range, 180) * nb_bin:nb_bin / 2 + np.true_divide(
-                              angle_range, 180) * nb_bin]
+                          int(nb_bin / 2 - np.true_divide(angle_range, 180) * nb_bin):int(nb_bin / 2 + np.true_divide(
+                              angle_range, 180) * nb_bin)]
 
     argmaxs = argrelextrema(hog_conv_restrained, np.greater, mode='wrap', order=kmedian_size)[0]  # get local maxima
     argmaxs_sorted = np.asarray([tutut for _, tutut in
                                  sorted(zip(hog_conv_restrained[argmaxs], argmaxs),
                                         reverse=True)])  # sort maxima based on value
-    argmaxs_sorted = (argmaxs_sorted - nb_bin / 2) * np.true_divide(180,
-                                                                    nb_bin * angle_range)  # angles are computed from -angle_range to angle_range
+    argmaxs_sorted = (argmaxs_sorted - nb_bin / 2) * np.true_divide(180, nb_bin * angle_range)  # angles are computed from -angle_range to angle_range
     if len(argmaxs_sorted) == 0:  # no angle found
         angle_found = None
     else:
@@ -163,6 +160,7 @@ def hog_ancestor(image, nb_bin, grad_ksize=123456789, seg_weighted_mask=None, re
         return hog_ancest[0].astype(float), weighting_map
     else:
         return hog_ancest[0].astype(float)  # return only the values of the bins, not the bins (we know them)
+
 
 def compute_similarity_metric(array1, array2, metric="Dice"):
 
@@ -249,7 +247,7 @@ def generate_2Dimage_line(image, x0, y0, angle, value=0):
     return image_wline
 
 
-def visu3d(array3d, axis=1):
+def visu3d(array3d, axis=2):
 
     class IndexTracker(object):
         def __init__(self, ax, X):
