@@ -35,16 +35,16 @@ def main(args=None):
     arguments = parser.parse(args)
     folder = arguments['-i']
 
-    # TODO : replace every [dice_glob dice_mean, ...] and [NoRot, PCA, ...] by a list defined at the beginning
+    # TODO : replace every [dice_glob dice_mean, ...] and [NoRot, pca, ...] by a list defined at the beginning
     # Loading all csv files :
 
-    dice_metrics = {method: {metric: [] for metric in ["dice_global", "dice_mean", "dice_min", "dice_max", "dice_std"]} for method in ["NoRot", "PCA", "HOG"]}  # dictionary for metrics in dictionnary for method containing lists of values
+    dice_metrics = {method: {metric: [] for metric in ["dice_global", "dice_mean", "dice_min", "dice_max", "dice_std"]} for method in ["NoRot", "pca", "hog"]}  # dictionary for metrics in dictionnary for method containing lists of values
 
     for root, dirnames, filenames in os.walk(folder):  # searching the given directory
-        for method in ["NoRot", "PCA", "HOG"]:
+        for method in ["NoRot", "pca", "hog"]:
             # search for csv file
             for filename in fnmatch.filter(filenames, "*" + method + ".csv"):
-                if not (os.path.isfile(os.path.join(root, filename).replace(method, "NoRot")) and os.path.isfile(os.path.join(root, filename).replace(method, "PCA")) and os.path.isfile(os.path.join(root, filename).replace(method, "HOG"))):
+                if not (os.path.isfile(os.path.join(root, filename).replace(method, "NoRot")) and os.path.isfile(os.path.join(root, filename).replace(method, "pca")) and os.path.isfile(os.path.join(root, filename).replace(method, "hog"))):
                     sct.printv("3 csv files not found for file : " + filename)
                     continue  # this block makes sure that there is csv file for the 3 methods
                 with open(os.path.join(root, filename), 'r') as csvfile:
@@ -71,25 +71,25 @@ def main(args=None):
         else:
             range_metric = (0, 1)
             xlabel = "dice score"
-        plt.hist((dice_metrics["NoRot"][metric], dice_metrics["PCA"][metric], dice_metrics["HOG"][metric]), bins=10, range=range_metric)
+        plt.hist((dice_metrics["NoRot"][metric], dice_metrics["pca"][metric], dice_metrics["hog"][metric]), bins=10, range=range_metric)
         plt.ylabel("count")
         plt.xlabel(xlabel)
         plt.title(metric + " histogram")
-        plt.legend(["NoRot", "PCA", "HOG"])
+        plt.legend(["NoRot", "pca", "hog"])
 
     plt.subplot(2, 3, 6)
     #Building the np array to plot the table
     data = np.zeros((6, 3))
     for col, metric in enumerate(["dice_global", "dice_mean", "dice_min", "dice_max", "dice_std"]):
-        list_argmax = list(np.argmax((dice_metrics["NoRot"]["dice_global"], dice_metrics["PCA"]["dice_global"], dice_metrics["HOG"]["dice_global"]), axis=0))
+        list_argmax = list(np.argmax((dice_metrics["NoRot"]["dice_global"], dice_metrics["pca"]["dice_global"], dice_metrics["hog"]["dice_global"]), axis=0))
         nb_NoRot_best = list_argmax.count(0)
         nb_PCA_best = list_argmax.count(1)
         nb_HOG_best = list_argmax.count(2)
-        for row, method in enumerate(["NoRot", "PCA", "HOG"]):
+        for row, method in enumerate(["NoRot", "pca", "hog"]):
             data[col, row] = np.mean(dice_metrics[method][metric])
         data[5, :] = [nb_NoRot_best, nb_PCA_best, nb_HOG_best]
 
-    plt.table(cellText=data, colLabels=["NoRot", "PCA", "HOG"], rowLabels=["dice_global", "dice_mean", "dice_min", "dice_max", "dice_std", "No times best"], loc="center")
+    plt.table(cellText=data, colLabels=["NoRot", "pca", "hog"], rowLabels=["dice_global", "dice_mean", "dice_min", "dice_max", "dice_std", "No times best"], loc="center")
 
     # Saving everything :
     plt.savefig(folder + "/histograms.png")
