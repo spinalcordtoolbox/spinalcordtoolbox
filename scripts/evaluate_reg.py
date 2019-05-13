@@ -11,6 +11,7 @@ from sct_apply_transfo import main as sct_apply_transfo
 from sct_label_utils import main as sct_labels_utils
 from sct_maths import main as sct_maths
 from nicolas_scripts.functions_sym_rot import *
+from spinalcordtoolbox.reports.qc import generate_qc
 import csv
 
 def get_parser():

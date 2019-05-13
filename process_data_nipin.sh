@@ -29,10 +29,10 @@ do
   file_seg_manual="${file%.nii.gz*}_seg_manual.nii.gz"
     if [ -e $file_seg ]; then #segmentation of this file exist
       echo "   Processing file $file with seg $file_seg"
-      evaluate_reg_rot -i $file -iseg $file_seg -o $PATH_RESULTS
+      evaluate_reg -i $file -iseg $file_seg -o $PATH_RESULTS
     elif [ -e $file_seg_manual ]; then #manual segmentation of this file exist
       echo "   Processing file $file with seg $file_seg_manual"
-      evaluate_reg_rot -i $file -iseg $file_seg -o $PATH_RESULTS
+      evaluate_reg -i $file -iseg $file_seg -o $PATH_RESULTS
     else
       echo "Segmentation for file $file does not exist, segmenting with sct_deepseg_sc"
       if [[ $file == *"T1w"* ]]; then
@@ -46,7 +46,7 @@ do
         continue
       fi
       sct_deepseg_sc -i $file -c $contrast -ofolder $PATH_RESULTS
-      evaluate_reg_rot -i $file -iseg "${PATH_RESULTS}/${file_seg##*/}" -o $PATH_RESULTS
+      evaluate_reg -i $file -iseg "${PATH_RESULTS}/${file_seg##*/}" -o $PATH_RESULTS
     fi
   fi
 done
