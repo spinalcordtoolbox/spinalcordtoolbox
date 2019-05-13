@@ -33,6 +33,10 @@ def get_parser():
                       description="output folder for test results",
                       mandatory=False,
                       example="path/to/output/folder")
+    parser.add_option(name='-qc',
+                      type_value='folder_creation',
+                      description='The path where the quality control generated content will be saved',
+                      mandatory=False)
 
     return parser
 
@@ -48,10 +52,15 @@ def main(args=None):
     fname_image = arguments['-i']
     fname_seg = arguments['-iseg']
     output_dir = arguments['-o']
+    if '-qc' in arguments:
+        path_qc = arguments['-qc']
 
     # creating output dir if it does not exist
     if not os.path.isdir(output_dir):
         os.mkdir(output_dir)
+    # creating qc dir if it does not exist
+    if not os.path.isdir(path_qc):
+        os.mkdir(path_qc)
 
     fname_seg_template = os.path.join(sct.__data_dir__, 'PAM50/template/PAM50_cord.nii.gz')
 
@@ -122,6 +131,7 @@ def main(args=None):
             filewriter.writerow(["dice_std", np.std(dice_slice)])
         os.chdir(cwd)
 
+        # TODO Generate QC but for each operation maybe ?
 
 if __name__ == "__main__":
     sct.init_sct()

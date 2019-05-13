@@ -92,6 +92,17 @@ class QcImage(object):
     It can be seen as "figures" of matplotlib to be shown
     Ex: if 'colorbar' is in the list, the process will generate a color bar in the "img" folder
     """
+    def rotation(self, mask, ax):
+        """Create figure with axis of rotation superposed"""
+        img = np.rint(np.ma.masked_where(mask < 1, mask))
+        ax.imshow(img,
+                  cmap=color.ListedColormap(self._color_bin_red),
+                  norm=color.Normalize(vmin=0, vmax=1),
+                  interpolation=self.interpolation,
+                  alpha=1,
+                  aspect=float(self.aspect_mask))
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
 
     def listed_seg(self, mask, ax):
         """Create figure with red segmentation. Common scenario."""
@@ -543,6 +554,12 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, args=None, path_qc=No
         qcslice_type = qcslice.Axial([Image(fname_in1), Image(fname_in2), Image(fname_seg)])
         qcslice_operations = [QcImage.no_seg_seg]
         qcslice_layout = lambda x: x.mosaic()[:2]
+    # Rotation visualisation
+    elif process in ['rotation']:
+        plane = 'Axial'
+        qcslice_type = qcslice.Axial([Image(fname_in1), Image(fname_in2)])
+        qcslice_operations = [QcImage.listed_seg]
+        qcslice_layout = lambda x: x.mosaic()
     # Axial orientation, switch between the image and the segmentation
     elif process in ['sct_propseg', 'sct_deepseg_sc', 'sct_deepseg_gm']:
         plane = 'Axial'
