@@ -56,6 +56,8 @@ def main(args=None):
 
     fname_mt0 = arguments['-mt0']
     fname_mt1 = arguments['-mt1']
+    fname_mtr = arguments['-omtr']
+    param.file_out, file_out = os.path.split(fname_mtr)[1], os.path.split(fname_mtr)[1]
     remove_temp_files = int(arguments['-r'])
     verbose = int(arguments.get('-v'))
     sct.init_sct(log_level=verbose, update=True)  # Update log level
@@ -74,7 +76,7 @@ def main(args=None):
     convert(fname_mt1, os.path.join(path_tmp, "mt1.nii"), dtype=np.float32)
 
     # go to tmp folder
-    curdir = os.getcwd()
+    curdir = os.path.split(fname_mtr)[0]
     os.chdir(path_tmp)
 
     # compute MTR
@@ -86,15 +88,15 @@ def main(args=None):
     # save MTR file
     nii_mtr = nii_mt1
     nii_mtr.data = data_mtr
-    nii_mtr.save("mtr.nii")
-    # sct.run(fsloutput+'fslmaths -dt double mt0.nii -sub mt1.nii -mul 100 -div mt0.nii -thr 0 -uthr 100 mtr.nii', verbose)
+    nii_mtr.save(file_out + ".nii")
+    # sct.run(fsloutput+'fslmaths -dt double mt0.nii -sub mt1.nii -mul 100 -div mt0.nii -thr 0 -uthr 100 file_out.nii', verbose)
 
     # come back
     os.chdir(curdir)
 
     # Generate output files
     sct.printv('\nGenerate output files...', verbose)
-    sct.generate_output_file(os.path.join(path_tmp, "mtr.nii"), os.path.join(path_out, file_out + ext_out))
+    sct.generate_output_file(os.path.join(path_tmp, file_out + ".nii"), os.path.join(path_out, file_out + ext_out))
 
     # Remove temporary files
     if remove_temp_files == 1:
@@ -141,6 +143,12 @@ def get_parser():
                       mandatory=False,
                       example=['0', '1', '2'],
                       default_value='1')
+    parser.add_option(name="-omtr",
+                      type_value="str",
+                      description="Output file mtr. Default is mtr.nii.gz",
+                      mandatory=False,
+                      example='My_File_Folder/My_File',
+                      default_value=os.path.join(os.getcwd(),'mtr'))
 
     return parser
 
