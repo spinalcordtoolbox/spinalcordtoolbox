@@ -75,9 +75,8 @@ def main(args=None):
     convert(fname_mt0, os.path.join(path_tmp, "mt0.nii"), dtype=np.float32)
     convert(fname_mt1, os.path.join(path_tmp, "mt1.nii"), dtype=np.float32)
 
+    # if changing output file name or location, create folder with mt0 and mt1 files at precised location
     curdir = os.getcwd()
-    sct.printv(curdir)
-    #if changing output file name or location, create folder with mt0 and mt1 files at precised location
     if os.path.split(fname_mtr)[0] != curdir:
         import shutil
         startdir = os.getcwd()
@@ -112,7 +111,7 @@ def main(args=None):
         sct.printv('\nRemove temporary files...')
         sct.rmtree(path_tmp)
 
-    #if output file location changed, notify user to move to file location
+    # if output file location changed, notify user to move to file location
     if os.path.split(fname_mtr)[0] != curdir:
         sct.printv("\n\033[1;31mNotice: \033[0;0mOutput file location has changed. Before issuing the command to view the results, type:")
         sct.printv("\033[0;32mcd " + os.path.split(fname_mtr)[0])
