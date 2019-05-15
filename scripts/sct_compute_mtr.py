@@ -75,8 +75,17 @@ def main(args=None):
     convert(fname_mt0, os.path.join(path_tmp, "mt0.nii"), dtype=np.float32)
     convert(fname_mt1, os.path.join(path_tmp, "mt1.nii"), dtype=np.float32)
 
+    curdir = os.getcwd()
+    sct.printv(curdir)
+    #if changing output file name or location, create folder with mt0 and mt1 files at precised location
+    if os.path.split(fname_mtr)[0] != curdir:
+        import shutil
+        startdir = os.getcwd()
+        os.chdir(os.path.split(fname_mtr)[0])
+        shutil.copy(os.path.join(startdir,fname_mt0),os.path.join(os.path.split(fname_mtr)[0]))
+        shutil.copy(os.path.join(startdir, fname_mt1), os.path.join(os.path.split(fname_mtr)[0]))
+
     # go to tmp folder
-    curdir = os.path.split(fname_mtr)[0]
     os.chdir(path_tmp)
 
     # compute MTR
@@ -92,7 +101,7 @@ def main(args=None):
     # sct.run(fsloutput+'fslmaths -dt double mt0.nii -sub mt1.nii -mul 100 -div mt0.nii -thr 0 -uthr 100 file_out.nii', verbose)
 
     # come back
-    os.chdir(curdir)
+    os.chdir(os.path.split(fname_mtr)[0])
 
     # Generate output files
     sct.printv('\nGenerate output files...', verbose)
@@ -103,6 +112,10 @@ def main(args=None):
         sct.printv('\nRemove temporary files...')
         sct.rmtree(path_tmp)
 
+    #if output file location changed, notify user to move to file location
+    if os.path.split(fname_mtr)[0] != curdir:
+        sct.printv("\n\033[1;31mNotice: \033[0;0mOutput file location has changed. Before issuing the command to view the results, type:")
+        sct.printv("\033[0;32mcd " + os.path.split(fname_mtr)[0])
     sct.display_viewer_syntax([fname_mt0, fname_mt1, file_out])
 
 
@@ -145,10 +158,10 @@ def get_parser():
                       default_value='1')
     parser.add_option(name="-omtr",
                       type_value="str",
-                      description="Output file mtr. Default is mtr.nii.gz",
+                      description="Creates output file with the specified path.",
                       mandatory=False,
-                      example='My_File_Folder/My_File',
-                      default_value=os.path.join(os.getcwd(),'mtr'))
+                      example='My_File_Folder/My_New_File',
+                      default_value=os.path.join(os.getcwd(),param.file_out))
 
     return parser
 
