@@ -160,7 +160,7 @@ def get_parser():
                       description="Creates output file with the specified path.",
                       mandatory=False,
                       example='My_File_Folder/My_New_File',
-                      default_value=os.path.join(os.getcwd(),param.file_out))
+                      default_value=os.path.join(os.getcwd(),'mtr'))
 
     return parser
 
