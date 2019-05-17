@@ -131,7 +131,7 @@ def main(args=None):
             filewriter.writerow(["dice_std", np.std(dice_slice)])
         os.chdir(cwd)
 
-        # TODO Generate QC but for each operation maybe ?
+        # TODO Generate QC for each method ?
 
 if __name__ == "__main__":
     sct.init_sct()
