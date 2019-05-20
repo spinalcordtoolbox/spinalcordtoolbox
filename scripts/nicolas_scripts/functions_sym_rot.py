@@ -66,7 +66,7 @@ def create_proba_map(segmentation, pixdim):
     return proba_map
 
 
-def find_angle(image, centermass, parameters):
+def find_angle_hog(image, centermass, parameters):
 
     sigmax = parameters['sigmax']  # TODO change this as a class not a dictionnary
     sigmay = parameters['sigmay']

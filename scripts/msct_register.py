@@ -257,7 +257,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
                 _, _, centermass_src[iz, :] = compute_pca(data_src_seg[:, :, iz])
                 _, _, centermass_dest[iz, :] = compute_pca(data_dest_seg[:, :, iz])
 
-                from nicolas_scripts.functions_sym_rot import find_angle
+                from nicolas_scripts.functions_sym_rot import find_angle_hog
 
                 parameters = {}
                 parameters['sigmax'] = 10/px
@@ -266,8 +266,8 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
                 parameters['kmedian_size'] = 3
                 parameters['angle_range'] = 15
 
-                angle_src = find_angle(data_src_im[:, :, iz], centermass_src[iz, :], parameters)
-                angle_dest = find_angle(data_dest_im[:, :, iz], centermass_dest[iz, :], parameters)
+                angle_src = find_angle_hog(data_src_im[:, :, iz], centermass_src[iz, :], parameters)
+                angle_dest = find_angle_hog(data_dest_im[:, :, iz], centermass_dest[iz, :], parameters)
 
                 if (angle_src is None) or (angle_dest is None):
                     sct.printv('WARNING: Slice #' + str(iz) + ' no angle found in dest or src. It will be ignored.', verbose, 'warning')
