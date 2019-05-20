@@ -4,11 +4,14 @@
 
 from __future__ import absolute_import
 
-import io, os, re
+import io, os, re, time, logging
 import subprocess
+
+logger = logging.getLogger(__name__)
 
 
 # TODO: add test
+
 
 def check_exe(name):
     """

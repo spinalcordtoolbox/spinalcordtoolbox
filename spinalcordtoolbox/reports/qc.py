@@ -3,6 +3,7 @@
 
 from __future__ import print_function, absolute_import, division
 
+import glob
 import sys
 import os
 import json
@@ -361,7 +362,7 @@ class Params(object):
         self.dpi = dpi
         self.root_folder = dest_folder
         self.mod_date = datetime.datetime.strftime(datetime.datetime.now(), '%Y_%m_%d_%H%M%S.%f')
-        self.qc_results = os.path.join(dest_folder, 'qc_results.json')
+        self.qc_results = os.path.join(dest_folder, '_json/qc_'+self.mod_date+'.json')
         self.bkg_img_path = os.path.join(dataset, subject, contrast, command, self.mod_date, 'bkg_img.png')
         self.overlay_img_path = os.path.join(dataset, subject, contrast, command, self.mod_date, 'overlay_img.png')
 
@@ -433,16 +434,15 @@ class QcReport(object):
             'moddate': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
         logger.debug('Description file: %s', self.qc_params.qc_results)
-        results = []
-        with sct.open_with_exclusive_lock(self.qc_params.qc_results, 'r+') as lck_qc_file:
-            if os.path.getsize(self.qc_params.qc_results) != 0:
-                results = json.load(lck_qc_file)
-            results.append(output)
-            lck_qc_file.seek(0)
-            lck_qc_file.truncate()
-            json.dump(results, lck_qc_file, indent=2)
-        self._update_html_assets(results)
-
+        # results = []
+        # Create path to store json files
+        path_json, _ = os.path.split(self.qc_params.qc_results)
+        if not os.path.exists(path_json):
+            os.makedirs(path_json)
+        # Create json file
+        with open(self.qc_params.qc_results, 'w+') as qc_file:
+            json.dump(output, qc_file, indent=1)
+        self._update_html_assets(get_json_data_from_path(path_json))
 
     def _update_html_assets(self, json_data):
         """Update the html file and assets"""
@@ -602,3 +602,13 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, args=None, path_qc=No
         qcslice_layout=qcslice_layout,
         stretch_contrast_method='equalized',
     )
+
+
+def get_json_data_from_path(path_json):
+    """Read all json files present in the given path, and output an aggregated json structure"""
+    results = []
+    for file_json in glob.iglob(os.path.join(path_json, '*.json')):
+        logger.debug('Opening: '+file_json)
+        with open(file_json, 'r+') as fjson:
+            results.append(json.load(fjson))
+    return results

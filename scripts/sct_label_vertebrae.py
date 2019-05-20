@@ -254,8 +254,7 @@ def main(args=None):
         cmd = ['sct_straighten_spinalcord',
                '-i', 'data.nii',
                '-s', 'segmentation.nii',
-               '-r', str(remove_temp_files),
-               '-xy_size', '60']
+               '-r', str(remove_temp_files)]
         if param.path_qc is not None and os.environ.get("SCT_RECURSIVE_QC", None) == "1":
             cmd += ['-qc', param.path_qc]
         s, o = sct.run(cmd)

@@ -126,11 +126,14 @@ if __name__ == '__main__':
         if items:
             lines.append('\n**{}**\n'.format(label.upper()))
             changelog_pr = changelog_pr.union(set([x['html_url'] for x in items]))
-            items = [" - **%s:** %s. %s[View pull request](%s)" % (",".join(get_sct_function_from_label(x['labels'])),
+            for x in pulls.get('items'):
+                items = [" - **%s:** %s. %s[View pull request](%s)" % (",".join(get_sct_function_from_label(x['labels'])),
                                                                 x['title'],
                                                                 check_compatibility(x['labels']),
-                                                                x['html_url']) for x in pulls.get('items')]
-            lines.extend(items)
+                                                                x['html_url'])]
+                if (len(get_sct_function_from_label(x['labels'])) == 0):
+                    items[0] = items[0].replace("**:** ","")
+                lines.extend(items)
 
     logging.info('Total number of pull requests with label: %d', len(changelog_pr))
     all_pr = set([x['html_url'] for x in search(milestone['title'])['items']])
