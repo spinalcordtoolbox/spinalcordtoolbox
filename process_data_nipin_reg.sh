@@ -24,9 +24,9 @@ do
   if [[ $file == *"_seg"* ]];then #file is a seg
     continue
   else # file is an image
-  echo " ======> Processing $file file.."
-  file_seg="${file%.nii.gz*}_seg.nii.gz"
-  file_seg_manual="${file%.nii.gz*}_seg_manual.nii.gz"
+    echo " ======> Processing $file file.."
+    file_seg="${file%.nii.gz*}_seg.nii.gz"
+    file_seg_manual="${file%.nii.gz*}_seg_manual.nii.gz"
     if [ -e $file_seg ]; then #segmentation of this file exist
       echo "======> Processing file $file with seg $file_seg"
       evaluate_reg -i $file -iseg $file_seg -o $PATH_RESULTS
@@ -49,5 +49,6 @@ do
       echo "======> evaluate_reg with file $file and seg ${PATH_RESULTS}/${file_seg##*/}"
       evaluate_reg -i $file -iseg "${PATH_RESULTS}/${file_seg##*/}" -o $PATH_RESULTS
     fi
+    echo "evaluate_reg done"
   fi
 done
