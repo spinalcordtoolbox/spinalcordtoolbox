@@ -254,8 +254,8 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
         # raise NotImplementedError("This method is not implemented yet, it will be in a future version")
         for iz in range(0, nz):
             try:
-                _, _, centermass_src[iz, :] = compute_pca(data_src_seg[:, :, iz])
-                _, _, centermass_dest[iz, :] = compute_pca(data_dest_seg[:, :, iz])
+                coord_src[iz], _, centermass_src[iz, :] = compute_pca(data_src_seg[:, :, iz])
+                coord_dest[iz], _, centermass_dest[iz, :] = compute_pca(data_dest_seg[:, :, iz])
 
                 from nicolas_scripts.functions_sym_rot import find_angle_hog
 
@@ -274,7 +274,10 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
                     continue
 
                 angle_src_dest[iz] = angle_src-angle_dest
+                # append to list of z_nonzero
+                z_nonzero.append(iz)
 
+            # If one slice is empty it will ignore it
             except ValueError:
                 sct.printv('WARNING: Slice #' + str(iz) + ' is empty. It will be ignored.', verbose, 'warning')
     else:
