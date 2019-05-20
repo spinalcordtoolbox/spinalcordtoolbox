@@ -42,7 +42,8 @@ def get_parser():
 
 def main(args=None):
 
-    #TODO define filenames
+    #TODO define filenames properly at the beginning and use them latter on
+    #TODO add qc, each method ?
 
     # Parser :
     if not args:
@@ -51,16 +52,17 @@ def main(args=None):
     arguments = parser.parse(args)
     fname_image = arguments['-i']
     fname_seg = arguments['-iseg']
-    output_dir = arguments['-o']
     if '-qc' in arguments:
         path_qc = arguments['-qc']
+        # creating qc dir if it does not exist
+        if not os.path.isdir(path_qc):
+            os.mkdir(path_qc)
+    if '-o' in arguments:
+        output_dir = arguments['-o']
+        # creating output dir if it does not exist
+        if not os.path.isdir(output_dir):
+            os.mkdir(output_dir)
 
-    # creating output dir if it does not exist
-    if not os.path.isdir(output_dir):
-        os.mkdir(output_dir)
-    # creating qc dir if it does not exist
-    if not os.path.isdir(path_qc):
-        os.mkdir(path_qc)
 
     fname_seg_template = os.path.join(sct.__data_dir__, 'PAM50/template/PAM50_cord.nii.gz')
 
@@ -131,7 +133,6 @@ def main(args=None):
             filewriter.writerow(["dice_std", np.std(dice_slice)])
         os.chdir(cwd)
 
-        # TODO Generate QC for each method ?
 
 if __name__ == "__main__":
     sct.init_sct()

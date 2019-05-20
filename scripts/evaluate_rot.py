@@ -52,16 +52,16 @@ def main(args=None):
     arguments = parser.parse(args)
     fname_image = arguments['-i']
     fname_seg = arguments['-iseg']
-    output_dir = arguments['-o']
     if '-qc' in arguments:
         path_qc = arguments['-qc']
-
-    # creating output dir if it does not exist
-    if not os.path.isdir(output_dir):
-        os.mkdir(output_dir)
-    # creating qc dir if it does not exist
-    if not os.path.isdir(path_qc):
-        os.mkdir(path_qc)
+        # creating qc dir if it does not exist
+        if not os.path.isdir(path_qc):
+            os.mkdir(path_qc)
+    if '-o' in arguments:
+        output_dir = arguments['-o']
+        # creating output dir if it does not exist
+        if not os.path.isdir(output_dir):
+            os.mkdir(output_dir)
 
     sct.printv("        Python processing file : " + fname_image + " with seg : " + fname_seg)
 
