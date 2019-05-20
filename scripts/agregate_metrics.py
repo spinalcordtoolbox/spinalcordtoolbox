@@ -34,24 +34,46 @@ def main(args=None):
     parser = get_parser()
     arguments = parser.parse(args)
     folder = arguments['-i']
-
-    # TODO : replace every [dice_glob dice_mean, ...] and [NoRot, pca, ...] by a list defined at the beginning
-    # Loading all csv files :
-
+    # init global dic :
     dice_metrics = {method: {metric: [] for metric in ["dice_global", "dice_mean", "dice_min", "dice_max", "dice_std"]} for method in ["NoRot", "pca", "hog"]}  # dictionary for metrics in dictionnary for method containing lists of values
 
     for root, dirnames, filenames in os.walk(folder):  # searching the given directory
-        for method in ["NoRot", "pca", "hog"]:
-            # search for csv file
-            for filename in fnmatch.filter(filenames, "*" + method + ".csv"):
-                if not (os.path.isfile(os.path.join(root, filename).replace(method, "NoRot")) and os.path.isfile(os.path.join(root, filename).replace(method, "pca")) and os.path.isfile(os.path.join(root, filename).replace(method, "hog"))):
-                    sct.printv("3 csv files not found for file : " + filename)
-                    continue  # this block makes sure that there is csv file for the 3 methods
-                with open(os.path.join(root, filename), 'r') as csvfile:
-                    reader = csv.reader(csvfile)
-                    metric_dic = {rows[0]: float(rows[1]) for rows in reader}
-                    for metric in ["dice_global", "dice_mean", "dice_min", "dice_max", "dice_std"]:
-                        dice_metrics[method][metric].append(metric_dic[metric])
+
+        for filename_NoRot in fnmatch.filter(filenames, "*NoRot.csv"):
+
+            filename_pca = os.path.join(root, filename_NoRot.replace("NoRot", "pca"))
+            filename_hog = os.path.join(root, filename_NoRot.replace("NoRot", "hog"))
+            if not (os.path.isfile(filename_pca) and os.path.isfile(filename_hog)):
+                sct.printv("3 csv files not found for file : " + filename_NoRot)
+                continue  # this block makes sure that there is csv file for the 3 methods
+
+            # Open and verify presence of 5 metrics
+            with open(os.path.join(root, filename_NoRot), 'r') as csvfile:
+                reader = csv.reader(csvfile)
+                metric_dic_NoRot = {rows[0]: float(rows[1]) for rows in reader}
+                if len(metric_dic_NoRot) != 5:
+                    sct.printv("5 Metrics not present in csv : " + filename_NoRot)
+                    continue
+            with open(os.path.join(root, filename_pca), 'r') as csvfile:
+                reader = csv.reader(csvfile)
+                metric_dic_pca = {rows[0]: float(rows[1]) for rows in reader}
+                if len(metric_dic_pca) != 5:
+                    sct.printv("5 Metrics not present in csv : " + filename_pca)
+                    continue
+            with open(os.path.join(root, filename_hog), 'r') as csvfile:
+                reader = csv.reader(csvfile)
+                metric_dic_hog = {rows[0]: float(rows[1]) for rows in reader}
+                if len(metric_dic_hog) != 5:
+                    sct.printv("5 Metrics not present in csv : " + filename_hog)
+                    continue
+
+            # Now append the metrics to the general dic, if program arrives at this step it means that the 3 .csv exist and have the 5 metrics inside
+            for metric in ["dice_global", "dice_mean", "dice_min", "dice_max", "dice_std"]:
+                dice_metrics["NoRot"][metric].append(metric_dic_NoRot[metric])
+                dice_metrics["pca"][metric].append(metric_dic_pca[metric])
+                dice_metrics["hog"][metric].append(metric_dic_hog[metric])
+
+
     nb_subjects = len(next(iter(next(iter(dice_metrics.values())).values())))  # just to get number of subjects (we access the first element of dic twice)
 
 
@@ -93,11 +115,6 @@ def main(args=None):
 
     # Saving everything :
     plt.savefig(folder + "/histograms.png")
-
-
-
-
-
 
 
 if __name__ == "__main__":
