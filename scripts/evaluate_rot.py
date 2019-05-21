@@ -106,11 +106,17 @@ def get_memory():
     return free_memory
 
 if __name__ == '__main__':
-    memory_limit() # Limitates maximun memory usage to half
-    try:
+
+    if sys.gettrace() is None:
         sct.init_sct()
         # call main function
         main()
-    except MemoryError:
-        sys.stderr.write('\n\nERROR: Memory Exception\n')
-        sys.exit(1)
+    else:
+        memory_limit()  # Limitates maximun memory usage to half
+        try:
+            sct.init_sct()
+            # call main function
+            main()
+        except MemoryError:
+            sys.stderr.write('\n\nERROR: Memory Exception\n')
+            sys.exit(1)
