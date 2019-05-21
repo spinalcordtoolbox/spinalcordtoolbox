@@ -153,7 +153,7 @@ def get_parser():
                       default_value='1')
     parser.add_option(name="-o",
                       type_value="str",
-                      description="Creates output file with the specified path. Add extension '.nii.gz' to output file name.",
+                      description="Creates output file with the specified path. Add extension to output file name.",
                       mandatory=False,
                       example='Users/john/data/My_New_File.nii.gz',
                       default_value=os.path.join(os.getcwd(),'mtr.nii.gz'))
