@@ -65,6 +65,48 @@ def create_proba_map(segmentation, pixdim):
 
     return proba_map
 
+def find_angle(image, segmentation, px, py, method, return_centermass=False):
+
+    from msct_register import compute_pca
+    coordsrc, pca, centermass = compute_pca(segmentation)
+
+    if method is "pca":
+
+        pca_eigenratio_th = 1.6
+
+        eigenv = pca.components_.T[0][0], pca.components_.T[1][0]  # pca_src.components_.T[0]
+        # # Make sure first element is always positive (to prevent sign flipping)
+        # if eigenv[0] <= 0:
+        #     eigenv = tuple([i * (-1) for i in eigenv])
+        arccos_angle = np.dot(eigenv, [-1, 0]) / np.linalg.norm(eigenv)
+        arccos_angle = 1.0 if arccos_angle > 1.0 else arccos_angle
+        arccos_angle = -1.0 if arccos_angle < -1.0 else arccos_angle
+        sign_angle = np.sign(np.cross(eigenv, [1, 0]))
+        angle_found = sign_angle * acos(arccos_angle)
+        # check if ratio between the two eigenvectors is high enough to prevent poor robustness
+        if pca.explained_variance_ratio_[0] / pca.explained_variance_ratio_[1] < pca_eigenratio_th:
+            angle_found = 0
+        #TODO still some testing to do to be sure
+
+    elif method is "hog":
+
+        parameters = {}
+        parameters['sigmax'] = 10 / px
+        parameters['sigmay'] = 10 / py
+        parameters['nb_bin'] = 360
+        parameters['kmedian_size'] = 3
+        parameters['angle_range'] = 15
+
+        angle_found = find_angle_hog(image, centermass, parameters)
+
+    else:
+        raise Exception("method " + method + " not implemented")
+
+    if return_centermass:
+        return angle_found, centermass
+    else:
+        return angle_found
+
 
 def find_angle_hog(image, centermass, parameters):
 
