@@ -59,13 +59,58 @@ def main(args=None):
             os.mkdir(path_qc)
     if '-o' in arguments:
         output_dir = arguments['-o']
-        # creating output dir if it does not exist
-        if not os.path.isdir(output_dir):
-            os.mkdir(output_dir)
+    else:
+        output_dir = os.getcwd()
 
-    sct.printv("        Python processing file : " + fname_image + " with seg : " + fname_seg)
+    sct.printv("======> Python processing file : " + fname_image + " with seg : " + fname_seg)
 
-if __name__ == "__main__":
-    sct.init_sct()
-    # call main function
-    main()
+    data_image = Image(fname_image).data
+    data_seg = Image(fname_seg).data
+
+    nx, ny, nz, nt, px, py, pz, pt = Image(fname_image).dim
+
+    min_z = np.min(np.nonzero(data_seg)[2])
+    max_z = np.max(np.nonzero(data_seg)[2])
+
+    angles = np.zeros(max_z - min_z)
+
+    methods = ["pca", "hog"]
+
+    for k, method in enumerate(methods):
+
+        axes_image = np.zeros((nx, ny, nz))
+        for z in range(0, max_z-min_z):
+
+            angles[z], centermass = find_angle(data_image, data_seg, px, py, method, return_centermass=True)
+            axes_image[:, :, min_z + z] = generate_2Dimage_line(axes_image[:, :, min_z + z], centermass[0], centermass[1], angles[z], value=k+1)
+
+        name_image_axes = (fname_image.split("/")[-1]).split(".nii.gz")[0] + "_axes_" + method + ".nii.gz"
+        fname_axes = output_dir + "/" + name_image_axes
+        Image(axes_image, hdr=Image(fname_seg).hdr).save(fname_axes)
+
+        generate_qc(fname_in1=fname_image, fname_in2=fname_axes, fname_seg=None, args=None, path_qc=path_qc, dataset=None, subject=None, process="rotation")
+
+
+def memory_limit():
+    import resource
+    soft, hard = resource.getrlimit(resource.RLIMIT_AS)
+    resource.setrlimit(resource.RLIMIT_AS, (get_memory() * 1024 / 2, hard))
+
+def get_memory():
+    with open('/proc/meminfo', 'r') as mem:
+        free_memory = 0
+        for i in mem:
+            sline = i.split()
+            if str(sline[0]) in ('MemFree:', 'Buffers:', 'Cached:'):
+                free_memory += int(sline[1])
+    return free_memory
+
+if __name__ == '__main__':
+    memory_limit() # Limitates maximun memory usage to half
+    try:
+        sct.init_sct()
+        # call main function
+        main()
+    except MemoryError:
+        sys.stderr.write('\n\nERROR: Memory Exception\n')
+        sys.exit(1)

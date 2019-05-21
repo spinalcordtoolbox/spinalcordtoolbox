@@ -558,7 +558,7 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, args=None, path_qc=No
     elif process in ['rotation']:
         plane = 'Axial'
         qcslice_type = qcslice.Axial([Image(fname_in1), Image(fname_in2)])
-        qcslice_operations = [QcImage.listed_seg]
+        qcslice_operations = [QcImage.rotation]
         qcslice_layout = lambda x: x.mosaic()
     # Axial orientation, switch between the image and the segmentation
     elif process in ['sct_propseg', 'sct_deepseg_sc', 'sct_deepseg_gm']:
