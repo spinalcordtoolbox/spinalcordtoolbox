@@ -56,7 +56,7 @@ def main(args=None):
 
     fname_mt0 = arguments['-mt0']
     fname_mt1 = arguments['-mt1']
-    fname_mtr = arguments['-omtr']
+    fname_mtr = arguments['-o']
     param.file_out, file_out = os.path.split(fname_mtr)[1], os.path.split(fname_mtr)[1]
     remove_temp_files = int(arguments['-r'])
     verbose = int(arguments.get('-v'))
@@ -155,7 +155,7 @@ def get_parser():
                       mandatory=False,
                       example=['0', '1', '2'],
                       default_value='1')
-    parser.add_option(name="-omtr",
+    parser.add_option(name="-o",
                       type_value="str",
                       description="Creates output file with the specified path.",
                       mandatory=False,
