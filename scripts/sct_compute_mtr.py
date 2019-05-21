@@ -15,6 +15,7 @@ from __future__ import absolute_import, division
 
 import sys
 import os
+import shutil
 
 import sct_utils as sct
 from msct_parser import Parser
@@ -78,7 +79,6 @@ def main(args=None):
     # if changing output file name or location, create folder with mt0 and mt1 files at precised location
     curdir = os.getcwd()
     if os.path.split(fname_mtr)[0] != curdir:
-        import shutil
         startdir = os.getcwd()
         os.chdir(os.path.split(fname_mtr)[0])
         shutil.copy(os.path.join(startdir,fname_mt0),os.path.join(os.path.split(fname_mtr)[0]))
