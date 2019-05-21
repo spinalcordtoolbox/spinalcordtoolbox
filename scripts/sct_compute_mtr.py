@@ -111,10 +111,6 @@ def main(args=None):
         sct.printv('\nRemove temporary files...')
         sct.rmtree(path_tmp)
 
-    # if output file location changed, notify user to move to file location
-    if os.path.split(fname_mtr)[0] != curdir:
-        sct.printv("\n\033[1;31mNotice: \033[0;0mOutput file location has changed. Before issuing the command to view the results, type:")
-        sct.printv("\033[0;32mcd " + os.path.split(fname_mtr)[0])
     sct.display_viewer_syntax([fname_mt0, fname_mt1, file_out])
 
 
