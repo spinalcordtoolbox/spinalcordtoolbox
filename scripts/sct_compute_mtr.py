@@ -104,7 +104,7 @@ def main(args=None):
 
     # Generate output files
     sct.printv('\nGenerate output files...', verbose)
-    sct.generate_output_file(os.path.join(path_tmp, file_out + ".nii"), os.path.join(path_out, file_out + ext_out))
+    sct.generate_output_file(os.path.join(path_tmp, file_out + ".nii"), os.path.join(path_out, file_out))
 
     # Remove temporary files
     if remove_temp_files == 1:
