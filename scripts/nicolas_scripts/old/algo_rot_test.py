@@ -324,6 +324,31 @@ def test_3D_PCA(file_input, file_seg_input, path_output):
     plt.close()
 
 
+# def test_2d_moment(file_input, path_output):
+#
+#     def compute_moment(image, x_order, y_order, centered=False):
+#         """function that compute the x_order^th y_order^th moment of image, centered or not"""
+#         nx, ny = image.shape()
+#         if centered:
+#             M_00 = compute_moment(image, 0, 0)
+#             M_10 = compute_moment(image, 1, 0)
+#             M_01 = compute_moment(image, 0, 1)
+#             x = np.power(np.arange(nx) - M_10/M_00, x_order)
+#             y = np.power(np.arange(ny) - M_01/M_00, y_order)
+#         else:
+#             x = np.power(np.arange(nx), x_order)
+#             y = np.power(np.arange(ny), y_order)
+#
+#         y.shape = (ny, 1)  # transpose
+#         xy = np.matmul(x, y)
+#         moment = np.matmul(xy, image)
+#
+#         return moment
+#
+#     image_data = load_image(file_input=file_input, dimension=2)
+#     centermass = compute_moment(image_data, 1, 0), compute_moment(image_data, 0, 1)  # center of image
+#
+
 def test_2D_hogancest(file_input, path_output, file_seg_input=None):
 
     # Params
