@@ -4,7 +4,7 @@
 
 
 .. contents:: Table of Contents
-   :depth: 2
+   :depth: 3
 ..
 
 
@@ -77,13 +77,16 @@ Issue Body
   happens (eg. one file among a dataset), and provide this file publicly,
   or if not possible, privately (coordinate with @jcohenadad).
 
-- Feel free to add useful information such as screenshots, etc.
+- Add useful information such as screenshots, etc.
+
+- For copy/pasting terminal output (e.g. showing the syntax + error, installation error) please follow these guidelines for clarity:
+  - If there is less than 10 lines of text, embed it directly in your comment in github. Use "~~~" to format as code.
+  - If there is 10+ lines, either use an [external website](https://pastebin.com/), copy/paste your text and include the URL in your comment, or use [collapsable Github markdown capabilities](https://gist.github.com/ericclemmons/b146fe5da72ca1f706b2ef72a20ac39d#using-details-in-github).
 
 - If you submit a feature request, provide a *usage scenario*, imagining
   how the feature would be used (ideally inputs, a sequence of commands,
   and a desired outcome). Also provide references to any theoretical work to help the reader
   better understand the feature.
-
 
 Issue Labels
 ============
