@@ -1,6 +1,7 @@
 #!/bin/bash
 # USAGE
-# > ./install_sct
+#   ./install_sct
+#   yes | ./install_sct   # will install without interruption with 'yes' as default answer
 #
 # This is the spinalcord toolbox (SCT) installer
 # It downloads the Conda (http://conda.pydata.org/) version
