@@ -8,6 +8,9 @@
 ..
 
 
+Introduction
+############
+
 Thank you for contributing to SCT! Examples of contribution include:
 
 - Reporting issues you encounter
