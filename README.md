@@ -1,8 +1,7 @@
 
-<img src="https://github.com/neuropoly/spinalcordtoolbox/tree/nipin/issue836_axial_rotation/regi1.png" width="300">
-<img src="https://github.com/neuropoly/spinalcordtoolbox/tree/nipin/issue836_axial_rotation/regi2.png" width="300">
+![bip](regi1.png)
 
-
+![bop](regi2.png)
 
 <img src="https://github.com/neuropoly/spinalcordtoolbox/blob/master/documentation/imgs/logo_sct.png" width="300">
 
