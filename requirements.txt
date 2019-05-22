@@ -21,4 +21,4 @@ xlwt
 tqdm
 transforms3d
 urllib3[secure]
-nipy # need to install at the end otherwise won't install
+git+https://github.com/jcohenadad/nipy.git#egg=nipy # need to install at the end otherwise won't install
