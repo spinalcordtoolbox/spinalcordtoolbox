@@ -58,14 +58,11 @@ def main(args=None):
     fname_mt0 = arguments['-mt0']
     fname_mt1 = arguments['-mt1']
     fname_mtr = arguments['-o']
-    param.file_out, file_out = os.path.split(fname_mtr)[1], os.path.split(fname_mtr)[1]
+    file_out = os.path.split(fname_mtr)[1][:os.path.split(fname_mtr)[1].rfind('.nii')]
+    ext_out = os.path.split(fname_mtr)[1][os.path.split(fname_mtr)[1].rfind('.nii'):]
     remove_temp_files = int(arguments['-r'])
     verbose = int(arguments.get('-v'))
     sct.init_sct(log_level=verbose, update=True)  # Update log level
-
-    # Extract path/file/extension
-    path_mt0, file_mt0, ext_mt0 = sct.extract_fname(fname_mt0)
-    path_out, file_out, ext_out = '', file_out, ext_mt0
 
     # create temporary folder
     path_tmp = sct.tmp_create()
@@ -104,14 +101,14 @@ def main(args=None):
 
     # Generate output files
     sct.printv('\nGenerate output files...', verbose)
-    sct.generate_output_file(os.path.join(path_tmp, file_out + ".nii"), os.path.join(path_out, file_out))
+    sct.generate_output_file(os.path.join(path_tmp, file_out + ".nii"), os.path.join(file_out + ext_out))
 
     # Remove temporary files
     if remove_temp_files == 1:
         sct.printv('\nRemove temporary files...')
         sct.rmtree(path_tmp)
 
-    sct.display_viewer_syntax([fname_mt0, fname_mt1, file_out])
+    sct.display_viewer_syntax([fname_mt0, fname_mt1, file_out + ext_out])
 
 
 # ==========================================================================================
