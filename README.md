@@ -1,5 +1,8 @@
+First step of registration evaluation :
 
 ![bip](regi1.png)
+
+Second step :
 
 ![bop](regi2.png)
 
