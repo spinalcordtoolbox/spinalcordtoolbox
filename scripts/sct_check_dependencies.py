@@ -68,6 +68,7 @@ def resolve_module(framework_name):
         'mkl-service': (None, False),
         'pytest-cov': ('pytest_cov', False),
         'urllib3[secure]': ('urllib3', False),
+        'git+https://github.com/jcohenadad/nipy.git': ('nipy', False),
     }
 
     try:
