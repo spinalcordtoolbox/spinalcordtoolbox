@@ -57,7 +57,7 @@ def get_parser():
                       example=['standard', 'restore'])
     parser.add_option(name="-evecs",
                       type_value="multiple_choice",
-                      description="""To output tensor eigenvectors, set to 1.""",
+                      description="""To output tensor eigenvectors and eigenvalues, set to 1.""",
                       mandatory=False,
                       default_value='0',
                       example=['0', '1'])
@@ -98,7 +98,7 @@ def main(args = None):
     fname_bvecs = arguments['-bvec']
     prefix = arguments['-o']
     method = arguments['-method']
-    evecs = bool(arguments['-evecs'])
+    evecs = int(arguments['-evecs'])
     if "-m" in arguments:
         file_mask = arguments['-m']
     param.verbose = int(arguments.get('-v'))
@@ -119,7 +119,7 @@ def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, evecs, file_
     :param bvecs: bvecs txt file
     :param prefix: output prefix. Example: "dti_"
     :param method: algo for computing dti
-    :param evecs: bool: output diffusion tensor eigenvectors
+    :param evecs: bool: output diffusion tensor eigenvectors and eigenvalues
     :return: True/False
     """
     # Open file.
@@ -173,10 +173,13 @@ def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, evecs, file_
     nii.save(prefix + 'AD.nii.gz', dtype='float32')
     if evecs:
         data_evecs = tenfit.evecs
+        data_evals = tenfit.evals
         # output 1st (V1), 2nd (V2) and 3rd (V3) eigenvectors as 4d data
         for idim in range(3):
             nii.data = data_evecs[:, :, :, :, idim]
             nii.save(prefix + 'V' + str(idim+1) + '.nii.gz', dtype="float32")
+            nii.data = data_evals[:, :, :, idim]
+            nii.save(prefix + 'E' + str(idim+1) + '.nii.gz', dtype="float32")
 
     return True
 
