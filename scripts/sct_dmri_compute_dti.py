@@ -98,7 +98,7 @@ def main(args = None):
     fname_bvecs = arguments['-bvec']
     prefix = arguments['-o']
     method = arguments['-method']
-    evecs = bool(arguments['-evecs'])
+    evecs = int(arguments['-evecs'])
     if "-m" in arguments:
         file_mask = arguments['-m']
     param.verbose = int(arguments.get('-v'))
