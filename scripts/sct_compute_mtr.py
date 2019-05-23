@@ -63,22 +63,6 @@ def main(args=None):
     verbose = int(arguments.get('-v'))
     sct.init_sct(log_level=verbose, update=True)  # Update log level
 
-    # Copying input data to output folder and convert to nii
-    sct.printv('\nCopying input data to output folder and convert to nii...', verbose)
-    from sct_convert import convert
-    convert(fname_mt0, os.path.join(os.path.dirname(fname_mtr), "mt0.nii"), dtype=np.float32)
-    convert(fname_mt1, os.path.join(os.path.dirname(fname_mtr), "mt1.nii"), dtype=np.float32)
-
-    # if changing output file name or location, create folder with mt0 and mt1 files at precised location
-    if os.path.dirname(fname_mtr) != '.':
-        startdir = os.getcwd()
-        os.chdir(os.path.dirname(fname_mtr))
-        shutil.copy(os.path.join(startdir, fname_mt0), os.path.dirname(fname_mtr))
-        shutil.copy(os.path.join(startdir, fname_mt1), os.path.dirname(fname_mtr))
-
-    # go to output file directory
-    os.chdir(os.path.dirname(fname_mtr))
-
     # compute MTR
     sct.printv('\nCompute MTR...', verbose)
     nii_mt1 = msct_image.Image('mt1.nii')
@@ -88,8 +72,16 @@ def main(args=None):
     # save MTR file
     nii_mtr = nii_mt1
     nii_mtr.data = data_mtr
-    nii_mtr.save(file_out + ext_out)
+    nii_mtr.save(fname_mtr)
     # sct.run(fsloutput+'fslmaths -dt double mt0.nii -sub mt1.nii -mul 100 -div mt0.nii -thr 0 -uthr 100 file_out.nii', verbose)
+
+    # if changing output file name or location, create folder with mt0.nii.gz and mt1.nii.gz files at precised location
+    if os.path.dirname(fname_mtr) != '.':
+        shutil.copy(os.path.join('.', fname_mt0), os.path.dirname(fname_mtr))
+        shutil.copy(os.path.join('.', fname_mt1), os.path.dirname(fname_mtr))
+
+    # go to output file directory
+    os.chdir(os.path.dirname(fname_mtr))
 
     # Generate output files
     sct.printv('\nGenerate output files...', verbose)
