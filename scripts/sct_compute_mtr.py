@@ -88,12 +88,12 @@ def main(args=None):
     # save MTR file
     nii_mtr = nii_mt1
     nii_mtr.data = data_mtr
-    nii_mtr.save(file_out + ".nii")
+    nii_mtr.save(file_out + ext_out)
     # sct.run(fsloutput+'fslmaths -dt double mt0.nii -sub mt1.nii -mul 100 -div mt0.nii -thr 0 -uthr 100 file_out.nii', verbose)
 
     # Generate output files
     sct.printv('\nGenerate output files...', verbose)
-    sct.generate_output_file(os.path.join('.', file_out + '.nii'), '.')
+    sct.generate_output_file(os.path.join('.', file_out + ext_out), '.')
 
     sct.display_viewer_syntax([fname_mt0, fname_mt1, file_out + ext_out])
 
