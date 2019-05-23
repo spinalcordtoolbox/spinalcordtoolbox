@@ -417,6 +417,7 @@ unset PYTHONPATH
 export PYTHONNOUSERSITE=1
 
 if [ ${NO_CONDA_INSTALL} ]; then
+# TODO: remove this case
   echo "python/ will not be (re)-install"
   # activate miniconda
   cmd=". ${SCT_DIR}/${PYTHON_DIR}/bin/activate ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
@@ -446,11 +447,15 @@ else
     echo -e Conda installation successful
   fi
 
-  # activate miniconda
-  cmd=". ${SCT_DIR}/${PYTHON_DIR}/bin/activate ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
+  # create py3.6 venv (for Keras/TF compatibility with Centos7, see issue #2270)
+  yes | python/bin/conda create -n py36 python=3.6
 
-  conda install --yes anaconda-client
-  conda config --add channels conda-forge
+  # activate miniconda
+  source python/etc/profile.d/conda.sh
+  conda activate py36
+
+#  conda install --yes anaconda-client
+#  conda config --add channels conda-forge
 
   # Install Python dependencies
   echo -e "\nInstalling Python dependencies..."
@@ -475,7 +480,7 @@ fi
 ## Create launchers for Python scripts
 echo -e "\nCreating launchers for Python scripts..."
 mkdir -p ${SCT_DIR}/bin
-for file in ${SCT_DIR}/python/bin/*sct*; do
+for file in ${SCT_DIR}/python/envs/py36/bin/*sct*; do
   cp "$file" "${SCT_DIR}/bin/"
   res=$?
   if [[ $res != 0 ]]; then
