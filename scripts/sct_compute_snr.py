@@ -137,7 +137,7 @@ def main():
     if method == 'mult':
         # Compute mean and STD across time
         data_mean = np.mean(data[:, :, :, index_vol], axis=3)
-        data_std = np.std(data[:, :, :, index_vol], axis=3)
+        data_std = np.std(data[:, :, :, index_vol], axis=3, ddof=1)
         # Generate mask where std is different from 0
         mask_std_nonzero = np.where(data_std > param.almost_zero)
         snr_map = np.zeros_like(data_mean)
