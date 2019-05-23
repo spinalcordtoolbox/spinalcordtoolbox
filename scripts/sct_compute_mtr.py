@@ -58,31 +58,26 @@ def main(args=None):
     fname_mt0 = arguments['-mt0']
     fname_mt1 = arguments['-mt1']
     fname_mtr = arguments['-o']
-    file_out = os.path.split(fname_mtr)[1][:os.path.split(fname_mtr)[1].rfind('.nii')]
-    ext_out = os.path.split(fname_mtr)[1][os.path.split(fname_mtr)[1].rfind('.nii'):]
-    remove_temp_files = int(arguments['-r'])
+    file_out = os.path.basename(fname_mtr)[:os.path.basename(fname_mtr).rfind('.nii')]
+    ext_out = os.path.basename(fname_mtr)[os.path.basename(fname_mtr).rfind('.nii'):]
     verbose = int(arguments.get('-v'))
     sct.init_sct(log_level=verbose, update=True)  # Update log level
 
-    # create temporary folder
-    path_tmp = sct.tmp_create()
-
-    # Copying input data to tmp folder and convert to nii
-    sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
+    # Copying input data to output folder and convert to nii
+    sct.printv('\nCopying input data to output folder and convert to nii...', verbose)
     from sct_convert import convert
-    convert(fname_mt0, os.path.join(path_tmp, "mt0.nii"), dtype=np.float32)
-    convert(fname_mt1, os.path.join(path_tmp, "mt1.nii"), dtype=np.float32)
+    convert(fname_mt0, os.path.join(os.path.dirname(fname_mtr), "mt0.nii"), dtype=np.float32)
+    convert(fname_mt1, os.path.join(os.path.dirname(fname_mtr), "mt1.nii"), dtype=np.float32)
 
     # if changing output file name or location, create folder with mt0 and mt1 files at precised location
-    curdir = os.getcwd()
-    if os.path.split(fname_mtr)[0] != curdir:
+    if os.path.dirname(fname_mtr) != '.':
         startdir = os.getcwd()
-        os.chdir(os.path.split(fname_mtr)[0])
-        shutil.copy(os.path.join(startdir,fname_mt0),os.path.join(os.path.split(fname_mtr)[0]))
-        shutil.copy(os.path.join(startdir, fname_mt1), os.path.join(os.path.split(fname_mtr)[0]))
+        os.chdir(os.path.dirname(fname_mtr))
+        shutil.copy(os.path.join(startdir, fname_mt0), os.path.dirname(fname_mtr))
+        shutil.copy(os.path.join(startdir, fname_mt1), os.path.dirname(fname_mtr))
 
-    # go to tmp folder
-    os.chdir(path_tmp)
+    # go to output file directory
+    os.chdir(os.path.dirname(fname_mtr))
 
     # compute MTR
     sct.printv('\nCompute MTR...', verbose)
@@ -96,17 +91,9 @@ def main(args=None):
     nii_mtr.save(file_out + ".nii")
     # sct.run(fsloutput+'fslmaths -dt double mt0.nii -sub mt1.nii -mul 100 -div mt0.nii -thr 0 -uthr 100 file_out.nii', verbose)
 
-    # come back
-    os.chdir(os.path.split(fname_mtr)[0])
-
     # Generate output files
     sct.printv('\nGenerate output files...', verbose)
-    sct.generate_output_file(os.path.join(path_tmp, file_out + ".nii"), os.path.join(file_out + ext_out))
-
-    # Remove temporary files
-    if remove_temp_files == 1:
-        sct.printv('\nRemove temporary files...')
-        sct.rmtree(path_tmp)
+    sct.generate_output_file(os.path.join('.', file_out + '.nii'), '.')
 
     sct.display_viewer_syntax([fname_mt0, fname_mt1, file_out + ext_out])
 
@@ -150,10 +137,10 @@ def get_parser():
                       default_value='1')
     parser.add_option(name="-o",
                       type_value="str",
-                      description="Creates output file with the specified path. Add extension to output file name.",
+                      description="Path to output file.",
                       mandatory=False,
                       example='Users/john/data/My_New_File.nii.gz',
-                      default_value=os.path.join(os.getcwd(),'mtr.nii.gz'))
+                      default_value=os.path.join('.','mtr.nii.gz'))
 
     return parser
 
