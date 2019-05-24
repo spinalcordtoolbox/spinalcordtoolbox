@@ -6,7 +6,7 @@ import numpy as np
 
 from scipy.ndimage import convolve
 from scipy.io import loadmat
-from scipy.signal import medfilt, find_peaks_cwt, argrelextrema
+from scipy.signal import medfilt, find_peaks_cwt, argrelmax
 from skimage.filters import sobel_h, sobel_v
 from skimage.draw import line
 from nibabel import load, Nifti1Image, save
@@ -65,12 +65,15 @@ def create_proba_map(segmentation, pixdim):
 
     return proba_map
 
-def find_angle(image, segmentation, px, py, method, return_centermass=False):
+def find_angle(image, segmentation, px, py, method, angle_range=None, return_centermass=False, return_proba_map=False):
 
     from msct_register import compute_pca
     coordsrc, pca, centermass = compute_pca(segmentation)
 
     if method is "pca":
+
+        if return_proba_map:
+            sct.printv("cant return proba map with pca")
 
         pca_eigenratio_th = 1.6
 
@@ -78,7 +81,7 @@ def find_angle(image, segmentation, px, py, method, return_centermass=False):
         # # Make sure first element is always positive (to prevent sign flipping)
         # if eigenv[0] <= 0:
         #     eigenv = tuple([i * (-1) for i in eigenv])
-        arccos_angle = np.dot(eigenv, [-1, 0]) / np.linalg.norm(eigenv)
+        arccos_angle = np.dot(eigenv, [1, 0]) / np.linalg.norm(eigenv)
         arccos_angle = 1.0 if arccos_angle > 1.0 else arccos_angle
         arccos_angle = -1.0 if arccos_angle < -1.0 else arccos_angle
         sign_angle = np.sign(np.cross(eigenv, [1, 0]))
@@ -86,7 +89,9 @@ def find_angle(image, segmentation, px, py, method, return_centermass=False):
         # check if ratio between the two eigenvectors is high enough to prevent poor robustness
         if pca.explained_variance_ratio_[0] / pca.explained_variance_ratio_[1] < pca_eigenratio_th:
             angle_found = 0
-        #TODO still some testing to do to be sure
+        if angle_range is not None:
+            if angle_found < -angle_range * pi/180 or angle_found > angle_range * pi/180:
+                angle_found = 0
 
     elif method is "hog":
 
@@ -95,20 +100,29 @@ def find_angle(image, segmentation, px, py, method, return_centermass=False):
         parameters['sigmay'] = 10 / py
         parameters['nb_bin'] = 360
         parameters['kmedian_size'] = 3
-        parameters['angle_range'] = 15
+        parameters['angle_range'] = angle_range
 
-        angle_found = find_angle_hog(image, centermass, parameters)
+        if return_proba_map:
+            angle_found, proba_map = find_angle_hog(image, centermass, parameters, return_proba_map=True)
+        else:
+            angle_found = find_angle_hog(image, centermass, parameters)
 
     else:
         raise Exception("method " + method + " not implemented")
 
     if return_centermass:
-        return angle_found, centermass
+        if return_proba_map:
+            return angle_found, centermass, proba_map
+        else:
+            return angle_found, centermass
     else:
-        return angle_found
+        if return_proba_map:
+            return angle_found, proba_map
+        else:
+            return angle_found
 
 
-def find_angle_hog(image, centermass, parameters):
+def find_angle_hog(image, centermass, parameters, return_proba_map=False):
 
     sigmax = parameters['sigmax']  # TODO change this as a class not a dictionnary
     sigmay = parameters['sigmay']
@@ -116,14 +130,21 @@ def find_angle_hog(image, centermass, parameters):
     kmedian_size = parameters['kmedian_size']
     angle_range = parameters['angle_range']
 
+    confidence_treshold = 1
+
+    if angle_range is None:
+        mode = "wrap"
+        angle_range = 90
+    else:
+        mode = "clip"
+
     nx, ny = image.shape
 
     xx, yy = np.mgrid[:nx, :ny]
     seg_weighted_mask = np.exp(
         -(((xx - centermass[0]) ** 2) / (2 * (sigmax ** 2)) + ((yy - centermass[1]) ** 2) / (2 * (sigmay ** 2))))
 
-    hog_ancest = hog_ancestor(image, nb_bin=nb_bin, seg_weighted_mask=seg_weighted_mask,
-                                                   return_image=False)
+    hog_ancest, proba_map = hog_ancestor(image, nb_bin=nb_bin, seg_weighted_mask=seg_weighted_mask, return_image=True)
     hog_ancest_smooth = circular_filter_1d(hog_ancest, kmedian_size,
                                            filter='median')  # fft than square than ifft to calculate convolution
     hog_fft2 = np.fft.rfft(hog_ancest_smooth) ** 2
@@ -136,17 +157,23 @@ def find_angle_hog(image, centermass, parameters):
                           int(nb_bin / 2 - np.true_divide(angle_range, 180) * nb_bin):int(nb_bin / 2 + np.true_divide(
                               angle_range, 180) * nb_bin)]
 
-    argmaxs = argrelextrema(hog_conv_restrained, np.greater, mode='wrap', order=kmedian_size)[0]  # get local maxima
+    argmaxs = argrelmax(hog_conv_restrained, mode=mode, order=kmedian_size)[0]  # get local maxima
     argmaxs_sorted = np.asarray([tutut for _, tutut in
                                  sorted(zip(hog_conv_restrained[argmaxs], argmaxs),
                                         reverse=True)])  # sort maxima based on value
     argmaxs_sorted = (argmaxs_sorted - nb_bin / 2) * np.true_divide(180, nb_bin * angle_range)  # angles are computed from -angle_range to angle_range
-    if len(argmaxs_sorted) == 0:  # no angle found
+
+    confidence_score = 1
+
+    if len(argmaxs_sorted) == 0 or confidence_score < confidence_treshold:  # no angle found
         angle_found = None
     else:
         angle_found = argmaxs_sorted[0]
 
-    return angle_found
+    if return_proba_map:
+        return angle_found, proba_map
+    else:
+        return angle_found
 
 
 def hog_ancestor(image, nb_bin, grad_ksize=123456789, seg_weighted_mask=None, return_image=False): # TODO implement selection of gradient's kernel size, sure that is pertinent ? check wikip image gradient
@@ -227,7 +254,7 @@ def generate_2Dimage_line(image, x0, y0, angle, value=0):
     outputs :
         - image_wline : base image with the line drawn on it, 2D numpy array"""
 
-    angle = angle *pi/180  # converting to radians
+    # angle = angle *pi/180  # converting to radians
 
     # coordinates of image's borders :
     x_max, y_max = image.shape
@@ -278,15 +305,14 @@ def generate_2Dimage_line(image, x0, y0, angle, value=0):
     coord_linex, coord_liney = line(int(floor(x1)), int(floor(y1)), int(floor(x2)), int(floor(y2)))
     # use the line function from scikit image to acquire pixel coordinates of the line
 
-    image_wline = image
     if value == 0:
-        image_wline[coord_linex, coord_liney] = np.amax(image)  # put the line at full intensity (not really elegant)
+        image[coord_linex, coord_liney] = np.amax(image)  # put the line at full intensity (not really elegant)
     else:
-        image_wline[coord_linex, coord_liney] = value
+        image[coord_linex, coord_liney] = value
     # actually the "copy" is not useful, just used to clarify, because python does not make an actual copy when you do
     # this
 
-    return image_wline
+    return image
 
 
 def visu3d(array3d, axis=2):
