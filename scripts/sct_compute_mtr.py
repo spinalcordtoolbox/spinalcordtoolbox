@@ -15,7 +15,6 @@ from __future__ import absolute_import, division
 
 import sys
 import os
-import shutil
 
 import sct_utils as sct
 from msct_parser import Parser
@@ -65,9 +64,9 @@ def main(args=None):
 
     # compute MTR
     sct.printv('\nCompute MTR...', verbose)
-    nii_mt1 = msct_image.Image('mt1.nii')
+    nii_mt1 = msct_image.Image(fname_mt1)
     data_mt1 = nii_mt1.data
-    data_mt0 = msct_image.Image('mt0.nii').data
+    data_mt0 = msct_image.Image(fname_mt0).data
     data_mtr = 100 * (data_mt0 - data_mt1) / data_mt0
     # save MTR file
     nii_mtr = nii_mt1
@@ -77,8 +76,8 @@ def main(args=None):
 
     # if changing output file name or location, create folder with mt0.nii.gz and mt1.nii.gz files at precised location
     if os.path.dirname(fname_mtr) != '.':
-        shutil.copy(os.path.join('.', fname_mt0), os.path.dirname(fname_mtr))
-        shutil.copy(os.path.join('.', fname_mt1), os.path.dirname(fname_mtr))
+        sct.copy(os.path.join('.', fname_mt0), os.path.dirname(fname_mtr))
+        sct.copy(os.path.join('.', fname_mt1), os.path.dirname(fname_mtr))
 
     # go to output file directory
     os.chdir(os.path.dirname(fname_mtr))
