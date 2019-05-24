@@ -101,6 +101,7 @@ def find_angle(image, segmentation, px, py, method, angle_range=None, return_cen
         parameters['nb_bin'] = 360
         parameters['kmedian_size'] = 3
         parameters['angle_range'] = angle_range
+        parameters['confidence_threshold'] = 1.1
 
         if return_proba_map:
             angle_found, proba_map = find_angle_hog(image, centermass, parameters, return_proba_map=True)
@@ -129,8 +130,7 @@ def find_angle_hog(image, centermass, parameters, return_proba_map=False):
     nb_bin = parameters['nb_bin']
     kmedian_size = parameters['kmedian_size']
     angle_range = parameters['angle_range']
-
-    confidence_treshold = 1
+    confidence_treshold = parameters['confidence_threshold']
 
     if angle_range is None:
         mode = "wrap"
@@ -161,14 +161,15 @@ def find_angle_hog(image, centermass, parameters, return_proba_map=False):
     argmaxs_sorted = np.asarray([tutut for _, tutut in
                                  sorted(zip(hog_conv_restrained[argmaxs], argmaxs),
                                         reverse=True)])  # sort maxima based on value
-    argmaxs_sorted = (argmaxs_sorted - nb_bin / 2) * np.true_divide(180, nb_bin * angle_range)  # angles are computed from -angle_range to angle_range
+    angles_sorted = (argmaxs_sorted - nb_bin / 2) * np.true_divide(180, nb_bin * angle_range)  # angles are computed from -angle_range to angle_range
 
-    confidence_score = 1
+    confidence_score = hog_conv_restrained[argmaxs_sorted[0]]/np.mean(hog_conv_restrained)
+    sct.printv("confidence score is : " + str(confidence_score))
 
-    if len(argmaxs_sorted) == 0 or confidence_score < confidence_treshold:  # no angle found
+    if len(angles_sorted) == 0 or confidence_score < confidence_treshold:  # no angle found
         angle_found = None
     else:
-        angle_found = argmaxs_sorted[0]
+        angle_found = angles_sorted[0]
 
     if return_proba_map:
         return angle_found, proba_map

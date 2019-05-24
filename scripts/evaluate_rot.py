@@ -14,6 +14,7 @@ from nicolas_scripts.functions_sym_rot import *
 from spinalcordtoolbox.reports.qc import generate_qc
 import csv
 import time
+import math
 
 def get_parser():
 
@@ -90,8 +91,8 @@ def main(args=None):
 
             if method is "hog":
                 angles[z], centermass, proba_map[:, :, z] = find_angle(data_image[:, :, min_z + z], data_seg[:, :, min_z + z], px, py, method, angle_range=angle_range, return_centermass=True, return_proba_map=True)
-                if angles[z] is None:
-                    sct.printv("confidence score bellow threshold")
+                if math.isnan(angles[z]):
+                    sct.printv("confidence score bellow threshold (or not found)")
                     angles[z] = 0
             else:
                 angles[z], centermass = find_angle(data_image[:, :, min_z + z], data_seg[:, :, min_z + z],px, py, method, angle_range=angle_range, return_centermass=True, return_proba_map=False)
