@@ -437,11 +437,11 @@ echo -e Conda installation successful
 fi
 
 # create py3.6 venv (for Keras/TF compatibility with Centos7, see issue #2270)
-yes | python/bin/conda create -n py36 python=3.6
+yes | python/bin/conda create -n venv_sct python=3.6
 
 # activate miniconda
 source python/etc/profile.d/conda.sh
-conda activate py36
+conda activate venv_sct
 
 #  conda install --yes anaconda-client
 #  conda config --add channels conda-forge
@@ -467,7 +467,7 @@ fi
 ## Create launchers for Python scripts
 echo -e "\nCreating launchers for Python scripts..."
 mkdir -p ${SCT_DIR}/bin
-for file in ${SCT_DIR}/python/envs/py36/bin/*sct*; do
+for file in ${SCT_DIR}/python/envs/venv_sct/bin/*sct*; do
   cp "$file" "${SCT_DIR}/bin/"
   res=$?
   if [[ $res != 0 ]]; then
