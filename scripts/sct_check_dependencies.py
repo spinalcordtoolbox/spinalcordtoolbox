@@ -175,11 +175,10 @@ def main():
 
     # check if data folder is empty
     print_line('Check if data are installed')
-    if os.listdir(sct.__data_dir__):
+    if os.path.isdir(sct.__data_dir__):
         print_ok()
     else:
         print_fail()
-
 
     for dep_pkg, dep_ver_spec in get_dependencies():
         if dep_ver_spec is None:
