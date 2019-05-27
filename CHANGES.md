@@ -1,5 +1,5 @@
-## 4.0.0 (2019-05-09)
-[View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v4.0.0-beta.3...4.0.0-beta.4)
+## v4.0.0 (2019-05-27)
+[View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.2.7...v4.0.0)
 
 **BUG**
 
@@ -19,6 +19,7 @@
 
 **ENHANCEMENT**
 
+ - **sct_compute_snr:** Make consistent STD calculation between sct_fmri_compute_tsnr and sct_compute_snr. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2263)
  - Clarify handling of logger, error and exceptions. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2221)
  - **msct_register,sct_register_multimodal,sct_register_to_template:** Refactoring to allow use of im AND seg in the registration process. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2218)
  - **sct_get_centerline,sct_straighten_spinalcord:** Increased smoothness of default bspline centerline fitting algorithm . [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2214)
@@ -39,6 +40,7 @@
 
 **FEATURE**
 
+ - **sct_dmri_compute_dti:** Output DTI Eigenvalues. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2274)
  - **sct_qc:** New API to generate QC reports. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2216)
  - **sct_label_vertebrae:** Added possibility to rescale intervertebral disc distance and various improvements. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2182)
  - **sct_register_to_template:** Now possible to specify the type of algorithm used for cord straightening. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2101)
@@ -54,6 +56,7 @@
 
 **INSTALLATION**
 
+ - Fixed Keras/Tensorflow compatibility with CentOS 7 by downgrading to Python 3.6. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2276)
  - Using Python 3.7 for default installation. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2238)
  - Fixed installation error caused by old SSL module. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2223)
  - First pass at also supporting pip installations. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1996)
