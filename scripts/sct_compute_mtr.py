@@ -100,12 +100,6 @@ def get_parser():
                       description="Image with MT pulse (MT1)",
                       mandatory=False,
                       deprecated_by="-mt1")
-    parser.add_option(name="-r",
-                      type_value="multiple_choice",
-                      description='Remove temporary files.',
-                      mandatory=False,
-                      default_value='1',
-                      example=['0', '1'])
     parser.add_option(name="-v",
                       type_value='multiple_choice',
                       description="verbose: 0 = nothing, 1 = classic, 2 = expended",
