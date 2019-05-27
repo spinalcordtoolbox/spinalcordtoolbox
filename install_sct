@@ -151,10 +151,9 @@ download ()
 # Usage of this script
 usage()
 {
-  echo -e "\nUsage: $0 [-d] [-m] [-b] [-k] [-v] [--mpi]" 1>&2;
+  echo -e "\nUsage: $0 [-d] [-b] [-k] [-v] [--mpi]" 1>&2;
   echo -e "\nOPTION"
   echo -e "\t-d \v Prevent the (re)-installation of the \"data/\" directory "
-  echo -e "\n\t-m \v Prevent the (re)-installation of the \"python/\" directory "
   echo -e "\n\t-b \v Prevent the (re)-installation of the SCT binaries files "
   echo -e "\n\t-k \v Install SCT with Python 2.7 (Default is Python 3.x)"
   echo -e "\n\t-v \v Full verbose"
@@ -175,15 +174,11 @@ for arg in "$@"; do
   esac
 done
 
-while getopts ":dmhbpv" opt; do
+while getopts ":dhbpv" opt; do
   case $opt in
     d)
       echo " data directory will not be (re)-installed"
       NO_DATA_INSTALL=yes
-      ;;
-    m)
-      echo " miniconda python will not be (re)-installed "
-      NO_CONDA_INSTALL=yes
       ;;
     b)
       echo " SCT binaries will not be (re)-installed "
@@ -416,52 +411,49 @@ fi
 unset PYTHONPATH
 export PYTHONNOUSERSITE=1
 
-if [ ${NO_CONDA_INSTALL} ]; then
-  echo "python/ will not be (re)-install"
-  # activate miniconda
-  cmd=". ${SCT_DIR}/${PYTHON_DIR}/bin/activate ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
+# Install Python conda
+echo -e "\nInstalling conda..."
+cmd="rm -rf ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
+cmd="mkdir -p ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
+# downloading
+
+case $OS in
+linux*)
+download ${TMP_DIR}/miniconda.sh https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
+;;
+osx)
+download ${TMP_DIR}/miniconda.sh https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
+;;
+esac
+
+# run conda installer
+cmd="bash ${TMP_DIR}/miniconda.sh -p ${SCT_DIR}/${PYTHON_DIR} -b -f"; echo ">> "$cmd; $cmd
+ret_code_conda=$?
+if [[ $ret_code_conda != 0 ]]; then
+echo -e Conda did not installed properly with return code $ret_code_conda
+exit $ret_code_conda
 else
-  # Install Python conda
-  echo -e "\nInstalling conda..."
-  cmd="rm -rf ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
-  cmd="mkdir -p ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
-  # downloading
+echo -e Conda installation successful
+fi
 
-  case $OS in
-    linux*)
-    download ${TMP_DIR}/miniconda.sh https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
-    ;;
-    osx)
-    download ${TMP_DIR}/miniconda.sh https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
-    ;;
-  esac
+# create py3.6 venv (for Keras/TF compatibility with Centos7, see issue #2270)
+yes | python/bin/conda create -n venv_sct python=3.6
 
-  # run conda installer
-  cmd="bash ${TMP_DIR}/miniconda.sh -p ${SCT_DIR}/${PYTHON_DIR} -b -f"; echo ">> "$cmd; $cmd
-  ret_code_conda=$?
-  if [[ $ret_code_conda != 0 ]]; then
-    echo -e Conda did not installed properly with return code $ret_code_conda
-    exit $ret_code_conda
-  else
-    echo -e Conda installation successful
-  fi
+# activate miniconda
+source python/etc/profile.d/conda.sh
+conda activate venv_sct
 
-  # activate miniconda
-  cmd=". ${SCT_DIR}/${PYTHON_DIR}/bin/activate ${SCT_DIR}/${PYTHON_DIR}"; echo ">> "$cmd; $cmd
+#  conda install --yes anaconda-client
+#  conda config --add channels conda-forge
 
-  conda install --yes anaconda-client
-  conda config --add channels conda-forge
+# Install Python dependencies
+echo -e "\nInstalling Python dependencies..."
+pip install numpy  # need to install numpy first, otherwise nipy install within requirements.txt fails
+pip install -r requirements.txt  # we do not include the requirements inside the setup.py because it is much faster to install all dependencies first (uses pre-compiled wheels)
 
-  # Install Python dependencies
-  echo -e "\nInstalling Python dependencies..."
-  pip install numpy  # need to install numpy first, otherwise nipy install within requirements.txt fails
-  pip install -r requirements.txt  # we do not include the requirements inside the setup.py because it is much faster to install all dependencies first (uses pre-compiled wheels)
-
-  if [[ ${SCT_MPI_MODE} ]] ; then
-    echo "Installing MPI libraries for HPC installation"
-      conda install -c conda-forge --yes --file ${SCT_SOURCE}/install/requirements/requirementsMPI.txt
-  fi
-
+if [[ ${SCT_MPI_MODE} ]] ; then
+echo "Installing MPI libraries for HPC installation"
+  conda install -c conda-forge --yes --file ${SCT_SOURCE}/install/requirements/requirementsMPI.txt
 fi
 
 ## Install the spinalcordtoolbox into the Conda venv
@@ -475,7 +467,7 @@ fi
 ## Create launchers for Python scripts
 echo -e "\nCreating launchers for Python scripts..."
 mkdir -p ${SCT_DIR}/bin
-for file in ${SCT_DIR}/python/bin/*sct*; do
+for file in ${SCT_DIR}/python/envs/venv_sct/bin/*sct*; do
   cp "$file" "${SCT_DIR}/bin/"
   res=$?
   if [[ $res != 0 ]]; then

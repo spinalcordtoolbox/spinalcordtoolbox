@@ -49,7 +49,8 @@ before_script:
     echo $PATH  # Make sure PATH includes sct/bin folder
     ls -lA bin  # Make sure all binaries and aliases are there
     sct_download_data -d sct_testing_data  # for tests
-    source python/bin/activate  # reactivate conda for the pip install below
+    source python/etc/profile.d/conda.sh  # to be able to call conda
+    conda activate venv_sct  # reactivate conda for the pip install below
 
 script:
   - |
