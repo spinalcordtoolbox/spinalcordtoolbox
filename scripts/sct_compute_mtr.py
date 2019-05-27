@@ -72,19 +72,14 @@ def main(args=None):
     nii_mtr.save(fname_mtr)
     # sct.run(fsloutput+'fslmaths -dt double mt0.nii -sub mt1.nii -mul 100 -div mt0.nii -thr 0 -uthr 100 fname_mtr', verbose)
 
-    # if changing output file name or location, create folder with mt0.nii.gz and mt1.nii.gz files at precised location
-    if os.path.dirname(fname_mtr) != '.':
-        sct.copy(os.path.join('.', fname_mt0), os.path.dirname(fname_mtr))
-        sct.copy(os.path.join('.', fname_mt1), os.path.dirname(fname_mtr))
-
     # go to output file directory
     os.chdir(os.path.dirname(fname_mtr))
 
     # Generate output files
     sct.printv('\nGenerate output files...', verbose)
-    sct.generate_output_file(os.path.join('.', os.path.basename(fname_mtr)), '.')
+    sct.generate_output_file(os.path.join('.', fname_mtr), '.')
 
-    sct.display_viewer_syntax([fname_mt0, fname_mt1, os.path.basename(fname_mtr)])
+    sct.display_viewer_syntax([fname_mt0, fname_mt1, fname_mtr])
 
 
 # ==========================================================================================
