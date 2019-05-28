@@ -211,12 +211,13 @@ class Slice(object):
         :returns: centers of mass in the x and y axis (tuple of numpy.ndarray of int)
             .
         """
-        axial_dim = self.axial_dim(image)
-        centers_x = np.zeros(axial_dim)
-        centers_y = np.zeros(axial_dim)
-        for i in range(axial_dim):
-            aslice = self.axial_slice(np.array(image.data), i)  # we cast np.array to overcome
-            centers_x[i], centers_y[i] = ndimage.measurements.center_of_mass(aslice)
+        logger.info('Compute center of at each slice.')
+        data = np.array(image.data)  # we cast np.array to overcome problem if inputing nii format
+        nz = image.dim[2]
+        centers_x = np.zeros(nz)
+        centers_y = np.zeros(nz)
+        for i in range(nz):
+            centers_x[i], centers_y[i] = ndimage.measurements.center_of_mass(data[:, :, i])
         try:
             Slice.nan_fill(centers_x)
             Slice.nan_fill(centers_y)
