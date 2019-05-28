@@ -121,7 +121,7 @@ def resample_nipy(img, new_size=None, new_size_type=None, img_dest=None, interpo
     return img_r
 
 
-def resample_file(fname_data, fname_out, new_size, new_size_type, interpolation, verbose):
+def resample_file(fname_data, fname_out, new_size, new_size_type, fname_ref, interpolation, verbose):
     """This function will resample the specified input
     image file to the target size.
     Can deal with 2d, 3d or 4d image objects.
@@ -129,6 +129,7 @@ def resample_file(fname_data, fname_out, new_size, new_size_type, interpolation,
     :param fname_out: The output image filename.
     :param new_size: The target size, i.e. 0.25x0.25
     :param new_size_type: Unit of resample (mm, vox, factor)
+    :param fname_ref: Reference image to resample input image to
     :param interpolation: The interpolation type
     :param verbose: verbosity level
     """
@@ -136,8 +137,12 @@ def resample_file(fname_data, fname_out, new_size, new_size_type, interpolation,
     # Load data
     sct.printv('\nLoad data...', verbose)
     nii = nipy.load_image(fname_data)
+    if fname_ref is not None:
+        nii_ref = nipy.load_image(fname_ref)
+    else:
+        nii_ref = None
 
-    nii_r = resample_nipy(nii, new_size, new_size_type, img_dest=None, interpolation=interpolation, verbose=verbose)
+    nii_r = resample_nipy(nii, new_size, new_size_type, img_dest=nii_ref, interpolation=interpolation, verbose=verbose)
 
     # build output file name
     if fname_out == '':
