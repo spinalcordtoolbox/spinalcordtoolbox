@@ -125,6 +125,10 @@ class ProcessLabels(object):
             self.output_image = self.continuous_vertebral_levels()
         if type_process == 'create-viewer':
             self.output_image = self.launch_sagittal_viewer(self.value)
+        if type_process == 'remove-specific':
+            self.output_image = self.remove_specific_labels(self.value)
+        if type_process == 'keep-specific':
+            self.output_image = self.remove_specific_labels(self.value,isKeep = True)
 
         if self.fname_output is not None:
             if change_orientation:
@@ -598,6 +602,29 @@ class ProcessLabels(object):
 
         return output
 
+    def remove_specific_labels(self, labels, isKeep = False):
+        """
+        This function sets the value of specified labels to 0.0 and removes them from the reference image.
+        The isKeep option keeps the labels specified from the reference image.
+        """
+        image_output = msct_image.zeros_like(self.image_input) if isKeep else  self.image_input.copy()
+        coordinates_input = self.image_input.getNonZeroCoordinates()
+
+        for labelNumber in labels:
+            isInLabels = False
+            for coord in coordinates_input:
+                if labelNumber == coord.value:
+                    new_coord = coord
+                    isInLabels = True
+            if isInLabels:
+                if isKeep:
+                    image_output.data[int(new_coord.x), int(new_coord.y), int(new_coord.z)] = new_coord.value
+                else:
+                    image_output.data[int(new_coord.x), int(new_coord.y), int(new_coord.z)] = 0.0
+            else:
+                sct.printv("ERROR: Label " + str(float(labelNumber)) + " not found in input image.", type='error')
+
+        return image_output
 
 def get_parser():
     # initialize default param
@@ -665,6 +692,14 @@ def get_parser():
     parser.add_option(name='-remove-sym',
                       type_value='file',
                       description='Remove labels from input image (-i) and reference image (specified here) that don\'t match. You must provide two output names separated by ",".',
+                      mandatory=False)
+    parser.add_option(name='-remove-specific',
+                      type_value=[[','], 'int'],
+                      description='Remove labels of specific value (specified here) from reference image',
+                      mandatory=False)
+    parser.add_option(name='-keep-specific',
+                      type_value=[[','], 'int'],
+                      description='Keep labels of specific value (specified here) from reference image',
                       mandatory=False)
 
     parser.usage.addSection("MISC")
@@ -747,6 +782,12 @@ def main(args=None):
     elif '-create-viewer' in arguments:
         process_type = 'create-viewer'
         value = arguments['-create-viewer']
+    elif '-remove-specific' in arguments:
+        process_type = 'remove-specific'
+        value = arguments['-remove-specific']
+    elif '-keep-specific' in arguments:
+        process_type = 'keep-specific'
+        value = arguments['-keep-specific']
     else:
         # no process chosen
         sct.printv('ERROR: No process was chosen.', 1, 'error')
