@@ -125,9 +125,9 @@ class ProcessLabels(object):
             self.output_image = self.continuous_vertebral_levels()
         if type_process == 'create-viewer':
             self.output_image = self.launch_sagittal_viewer(self.value)
-        if type_process == 'remove-specific':
+        if type_process == 'remove-reference':
             self.output_image = self.remove_labels(self.value)
-        if type_process == 'keep-specific':
+        if type_process == 'keep':
             self.output_image = self.remove_labels(self.value,isKeep = True)
 
         if self.fname_output is not None:
@@ -693,11 +693,11 @@ def get_parser():
                       type_value='file',
                       description='Remove labels from input image (-i) and reference image (specified here) that don\'t match. You must provide two output names separated by ",".',
                       mandatory=False)
-    parser.add_option(name='-remove-specific',
+    parser.add_option(name='-remove-reference',
                       type_value=[[','], 'int'],
                       description='Remove labels of specific value (specified here) from reference image',
                       mandatory=False)
-    parser.add_option(name='-keep-specific',
+    parser.add_option(name='-keep',
                       type_value=[[','], 'int'],
                       description='Keep labels of specific value (specified here) from reference image',
                       mandatory=False)
@@ -782,12 +782,12 @@ def main(args=None):
     elif '-create-viewer' in arguments:
         process_type = 'create-viewer'
         value = arguments['-create-viewer']
-    elif '-remove-specific' in arguments:
-        process_type = 'remove-specific'
-        value = arguments['-remove-specific']
-    elif '-keep-specific' in arguments:
-        process_type = 'keep-specific'
-        value = arguments['-keep-specific']
+    elif '-remove-reference' in arguments:
+        process_type = 'remove-reference'
+        value = arguments['-remove-reference']
+    elif '-keep' in arguments:
+        process_type = 'keep'
+        value = arguments['-keep']
     else:
         # no process chosen
         sct.printv('ERROR: No process was chosen.', 1, 'error')
