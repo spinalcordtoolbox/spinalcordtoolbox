@@ -86,15 +86,20 @@ def resample_nipy(img, new_size=None, new_size_type=None, img_dest=None, interpo
         affine_r = np.dot(affine, R)
 
         reference = (shape_r, affine_r)
+        mov_voxel_coords =True
+        ref_voxel_coords = True
 
     else:
         # If reference is provided
         reference = img_dest
         R = None
+        mov_voxel_coords = False
+        ref_voxel_coords = False
 
     if img.ndim == 3:
-        img_r = n_resample(img, transform=R, reference=reference, mov_voxel_coords=True, ref_voxel_coords=True,
-                           dtype=dtype, interp_order=dict_interp[interpolation], mode='nearest')
+        img_r = n_resample(img, transform=R, reference=reference, mov_voxel_coords=mov_voxel_coords,
+                           ref_voxel_coords=ref_voxel_coords, dtype=dtype, interp_order=dict_interp[interpolation],
+                           mode='nearest')
 
     elif img.ndim == 4:
         # TODO: Cover img_dest with 4D volumes
@@ -107,7 +112,7 @@ def resample_nipy(img, new_size=None, new_size_type=None, img_dest=None, interpo
             # Create dummy 3d nipy image
             nii_tmp = nib.nifti1.Nifti1Image(img.get_data()[..., it], affine)
             img3d_r = n_resample(nifti2nipy(nii_tmp), transform=R, reference=(shape_r[:-1], affine_r),
-                                 mov_voxel_coords=True, ref_voxel_coords=True, dtype=dtype,
+                                 mov_voxel_coords=mov_voxel_coords, ref_voxel_coords=ref_voxel_coords, dtype=dtype,
                                  interp_order=dict_interp[interpolation], mode='nearest')
             data4d[..., it] = img3d_r.get_data()
         # Create 4d nipy Image
