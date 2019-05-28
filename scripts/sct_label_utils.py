@@ -98,7 +98,7 @@ class ProcessLabels(object):
         if type_process == 'MSE':
             self.MSE()
             self.fname_output = None
-        if type_process == 'remove':
+        if type_process == 'remove-reference':
             self.output_image = self.remove_label()
         if type_process == 'remove-symm':
             self.output_image = self.remove_label(symmetry=True)
@@ -125,7 +125,7 @@ class ProcessLabels(object):
             self.output_image = self.continuous_vertebral_levels()
         if type_process == 'create-viewer':
             self.output_image = self.launch_sagittal_viewer(self.value)
-        if type_process == 'remove-reference':
+        if type_process == 'remove':
             self.output_image = self.remove_labels(self.value)
         if type_process == 'keep':
             self.output_image = self.remove_labels(self.value,isKeep = True)
@@ -685,7 +685,7 @@ def get_parser():
                       type_value='file',
                       description='Compute Mean Square Error between labels from input and reference image. Specify reference image here.',
                       mandatory=False)
-    parser.add_option(name='-remove',
+    parser.add_option(name='-remove-reference',
                       type_value='file',
                       description='Remove labels from input image (-i) that are not in reference image (specified here).',
                       mandatory=False)
@@ -693,7 +693,7 @@ def get_parser():
                       type_value='file',
                       description='Remove labels from input image (-i) and reference image (specified here) that don\'t match. You must provide two output names separated by ",".',
                       mandatory=False)
-    parser.add_option(name='-remove-reference',
+    parser.add_option(name='-remove',
                       type_value=[[','], 'int'],
                       description='Remove labels of specific value (specified here) from reference image',
                       mandatory=False)
@@ -773,18 +773,18 @@ def main(args=None):
     elif '-MSE' in arguments:
         process_type = 'MSE'
         input_fname_ref = arguments['-r']
-    elif '-remove' in arguments:
-        process_type = 'remove'
-        input_fname_ref = arguments['-remove']
+    elif '-remove-reference' in arguments:
+        process_type = 'remove-reference'
+        input_fname_ref = arguments['-remove-reference']
     elif '-remove-symm' in arguments:
         process_type = 'remove-symm'
         input_fname_ref = arguments['-r']
     elif '-create-viewer' in arguments:
         process_type = 'create-viewer'
         value = arguments['-create-viewer']
-    elif '-remove-reference' in arguments:
-        process_type = 'remove-reference'
-        value = arguments['-remove-reference']
+    elif '-remove' in arguments:
+        process_type = 'remove'
+        value = arguments['-remove']
     elif '-keep' in arguments:
         process_type = 'keep'
         value = arguments['-keep']
