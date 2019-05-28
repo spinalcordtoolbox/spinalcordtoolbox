@@ -126,9 +126,9 @@ class ProcessLabels(object):
         if type_process == 'create-viewer':
             self.output_image = self.launch_sagittal_viewer(self.value)
         if type_process == 'remove':
-            self.output_image = self.remove_labels(self.value)
+            self.output_image = self.remove_or_keep_labels(self.value, action='remove')
         if type_process == 'keep':
-            self.output_image = self.remove_labels(self.value,isKeep = True)
+            self.output_image = self.remove_or_keep_labels(self.value, action='keep')
 
         if self.fname_output is not None:
             if change_orientation:
@@ -602,12 +602,12 @@ class ProcessLabels(object):
 
         return output
 
-    def remove_labels(self, labels, isKeep = False):
+    def remove_or_keep_labels(self, labels, action={'remove','keep'}):
         """
-        This function sets the value of specified labels to 0.0 and removes them from the reference image.
-        The isKeep option keeps the labels specified from the reference image.
+        If action == 'remove', this function sets the value of specified labels to 0.0 and removes them from the reference image.
+        If action == 'keep', this function keeps the labels specified from the reference image.
         """
-        image_output = msct_image.zeros_like(self.image_input) if isKeep else  self.image_input.copy()
+        image_output = msct_image.zeros_like(self.image_input) if action == 'keep' else  self.image_input.copy()
         coordinates_input = self.image_input.getNonZeroCoordinates()
 
         for labelNumber in labels:
@@ -617,7 +617,7 @@ class ProcessLabels(object):
                     new_coord = coord
                     isInLabels = True
             if isInLabels:
-                if isKeep:
+                if action == 'keep':
                     image_output.data[int(new_coord.x), int(new_coord.y), int(new_coord.z)] = new_coord.value
                 else:
                     image_output.data[int(new_coord.x), int(new_coord.y), int(new_coord.z)] = 0.0
