@@ -300,28 +300,30 @@ class Slice(object):
         :param image_ref: Destination Image() to resample image to.
         :return:
         """
-        # If no reference image is provided, create nipy object and resample using resample_nipy()
+        dict_interp = {'im': 'spline', 'seg': 'linear'}
+        # Create nibabel object
+        nii = Nifti1Image(image.data, image.hdr.get_best_affine())
+        img = nifti2nipy(nii)
+        # If no reference image is provided, resample to specified resolution
         if image_ref is None:
-            dict_interp = {'im': 'spline', 'seg': 'linear'}
-            # Create nibabel object
-            nii = Nifti1Image(image.data, image.hdr.get_best_affine())
-            img = nifti2nipy(nii)
             # Resample to px x p_resample x p_resample mm (orientation is SAL by convention in QC module)
             img_r = resample_nipy(img, new_size=str(image.dim[4]) + 'x' + str(p_resample) + 'x' + str(p_resample),
                                   new_size_type='mm', interpolation=dict_interp[type])
-            # If segmentation, binarize using threshold at 0.5
-            if type == 'seg':
-                img_r_data = (img_r.get_data() > 0.5) * 1
-            else:
-                img_r_data = img_r.get_data()
-            nii_r = nipy2nifti(img_r)
-            # Create Image objects
-            image_r = Image(img_r_data, hdr=nii_r.header, dim=nii_r.header.get_data_shape()). \
-                change_orientation(image.orientation)
-        # If resampling to reference image, use Image() built-in resampling function to ref image
+        # Otherwise, resampling to the space of the reference image
         else:
-            dict_interp = {'im': 3, 'seg': 0}
-            image_r = image.interpolate_from_image(image_ref, interpolation_mode=dict_interp[type], border='nearest')
+            # Create nibabel object for reference image
+            nii_ref = Nifti1Image(image_ref.data, image_ref.hdr.get_best_affine())
+            img_ref = nifti2nipy(nii_ref)
+            img_r = resample_nipy(img, img_dest=img_ref, interpolation=dict_interp[type])
+        # If resampled image is a segmentation, binarize using threshold at 0.5
+        if type == 'seg':
+            img_r_data = (img_r.get_data() > 0.5) * 1
+        else:
+            img_r_data = img_r.get_data()
+        nii_r = nipy2nifti(img_r)
+        # Create Image objects
+        image_r = Image(img_r_data, hdr=nii_r.header, dim=nii_r.header.get_data_shape()). \
+            change_orientation(image.orientation)
         return image_r
 
 
