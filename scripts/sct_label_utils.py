@@ -126,9 +126,9 @@ class ProcessLabels(object):
         if type_process == 'create-viewer':
             self.output_image = self.launch_sagittal_viewer(self.value)
         if type_process == 'remove-specific':
-            self.output_image = self.remove_specific_labels(self.value)
+            self.output_image = self.remove_labels(self.value)
         if type_process == 'keep-specific':
-            self.output_image = self.remove_specific_labels(self.value,isKeep = True)
+            self.output_image = self.remove_labels(self.value,isKeep = True)
 
         if self.fname_output is not None:
             if change_orientation:
@@ -602,7 +602,7 @@ class ProcessLabels(object):
 
         return output
 
-    def remove_specific_labels(self, labels, isKeep = False):
+    def remove_labels(self, labels, isKeep = False):
         """
         This function sets the value of specified labels to 0.0 and removes them from the reference image.
         The isKeep option keeps the labels specified from the reference image.
