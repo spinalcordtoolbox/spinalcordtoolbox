@@ -602,7 +602,7 @@ class ProcessLabels(object):
 
         return output
 
-    def remove_or_keep_labels(self, labels, action={'remove','keep'}):
+    def remove_or_keep_labels(self, labels, action):
         """
         If action == 'remove', this function sets the value of specified labels to 0.0 and removes them from the reference image.
         If action == 'keep', this function keeps the labels specified from the reference image.
