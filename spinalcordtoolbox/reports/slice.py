@@ -52,11 +52,11 @@ class Slice(object):
             if p_resample:
                 if i == len(images) - 1:
                     # Last volume corresponds to a segmentation, therefore use linear interpolation here
-                    type = 'seg'
+                    type_img = 'seg'
                 else:
                     # Otherwise it's an image: use spline interpolation
-                    type = 'im'
-                img_r = self._resample(img, p_resample, type=type, image_ref=image_ref)
+                    type_img = 'im'
+                img_r = self._resample(img, p_resample, type_img=type_img, image_ref=image_ref)
             else:
                 img_r = img.copy()
             self._images.append(img_r)
@@ -292,13 +292,13 @@ class Slice(object):
     def aspect(self):
         return [self.get_aspect(x) for x in self._images]
 
-    def _resample(self, image, p_resample, type, image_ref=None):
+    def _resample(self, image, p_resample, type_img, image_ref=None):
         """
         Resample at a fixed resolution to make sure the cord always appears with similar scale, regardless of the native
         resolution of the image. Assumes SAL orientation.
         :param image: Image() to resample
         :param p_resample: float: Resampling resolution in mm
-        :param type: {'im', 'seg'}: If im, interpolate using spline. If seg, interpolate using linear then binarize.
+        :param type_img: {'im', 'seg'}: If im, interpolate using spline. If seg, interpolate using linear then binarize.
         :param image_ref: Destination Image() to resample image to.
         :return:
         """
@@ -310,15 +310,15 @@ class Slice(object):
         if image_ref is None:
             # Resample to px x p_resample x p_resample mm (orientation is SAL by convention in QC module)
             img_r = resample_nipy(img, new_size=str(image.dim[4]) + 'x' + str(p_resample) + 'x' + str(p_resample),
-                                  new_size_type='mm', interpolation=dict_interp[type])
+                                  new_size_type='mm', interpolation=dict_interp[type_img])
         # Otherwise, resampling to the space of the reference image
         else:
             # Create nibabel object for reference image
             nii_ref = Nifti1Image(image_ref.data, image_ref.hdr.get_best_affine())
             img_ref = nifti2nipy(nii_ref)
-            img_r = resample_nipy(img, img_dest=img_ref, interpolation=dict_interp[type])
+            img_r = resample_nipy(img, img_dest=img_ref, interpolation=dict_interp[type_img])
         # If resampled image is a segmentation, binarize using threshold at 0.5
-        if type == 'seg':
+        if type_img == 'seg':
             img_r_data = (img_r.get_data() > 0.5) * 1
         else:
             img_r_data = img_r.get_data()
