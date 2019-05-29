@@ -603,8 +603,8 @@ class ProcessLabels(object):
     def remove_or_keep_labels(self, labels, action):
         """
         Create or remove labels from self.image_input
-        :param list(int): Labels to add or remove
-        :param str: 'remove': remove labels (i.e. set to zero), 'keep': keep labels
+        :param list(int): Labels to keep or remove
+        :param str: 'remove': remove specified labels (i.e. set to zero), 'keep': keep specified labels and remove the others
         """
         image_output = msct_image.zeros_like(self.image_input) if action == 'keep' else  self.image_input.copy()
         coordinates_input = self.image_input.getNonZeroCoordinates()
