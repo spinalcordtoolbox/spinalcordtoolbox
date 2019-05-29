@@ -125,10 +125,8 @@ class ProcessLabels(object):
             self.output_image = self.continuous_vertebral_levels()
         if type_process == 'create-viewer':
             self.output_image = self.launch_sagittal_viewer(self.value)
-        if type_process == 'remove':
-            self.output_image = self.remove_or_keep_labels(self.value, action='remove')
-        if type_process == 'keep':
-            self.output_image = self.remove_or_keep_labels(self.value, action='keep')
+        if type_process in ['remove', 'keep']:
+            self.output_image = self.remove_or_keep_labels(self.value, action=type_process)
 
         if self.fname_output is not None:
             if change_orientation:
