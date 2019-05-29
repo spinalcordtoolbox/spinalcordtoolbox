@@ -621,7 +621,7 @@ class ProcessLabels(object):
                 else:
                     image_output.data[int(new_coord.x), int(new_coord.y), int(new_coord.z)] = 0.0
             else:
-                sct.printv("ERROR: Label " + str(float(labelNumber)) + " not found in input image.", type='error')
+                sct.printv("WARNING: Label " + str(float(labelNumber)) + " not found in input image.", type='warning')
 
         return image_output
 
