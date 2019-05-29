@@ -126,7 +126,7 @@ def resample_nipy(img, new_size=None, new_size_type=None, img_dest=None, interpo
     return img_r
 
 
-def resample_file(fname_data, fname_out, new_size, new_size_type, fname_ref, interpolation, verbose):
+def resample_file(fname_data, fname_out, new_size, new_size_type, interpolation, verbose, fname_ref=None):
     """This function will resample the specified input
     image file to the target size.
     Can deal with 2d, 3d or 4d image objects.
@@ -134,9 +134,9 @@ def resample_file(fname_data, fname_out, new_size, new_size_type, fname_ref, int
     :param fname_out: The output image filename.
     :param new_size: The target size, i.e. 0.25x0.25
     :param new_size_type: Unit of resample (mm, vox, factor)
-    :param fname_ref: Reference image to resample input image to
     :param interpolation: The interpolation type
     :param verbose: verbosity level
+    :param fname_ref: Reference image to resample input image to
     """
 
     # Load data
