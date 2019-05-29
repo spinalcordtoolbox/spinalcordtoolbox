@@ -129,9 +129,8 @@ def run_main():
     param.verbose = int(arguments.get('-v'))
     sct.init_sct(log_level=param.verbose, update=True)  # Update log level
 
-    spinalcordtoolbox.resampling.resample_file(param.fname_data,
-                                               param.fname_out, param.new_size, param.new_size_type, param.ref,
-                                               param.interpolation, param.verbose)
+    spinalcordtoolbox.resampling.resample_file(param.fname_data, param.fname_out, param.new_size, param.new_size_type,
+                                               param.interpolation, param.verbose, fname_ref=param.ref)
 
 
 if __name__ == "__main__":
