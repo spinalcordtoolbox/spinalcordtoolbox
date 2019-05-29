@@ -43,6 +43,7 @@ class Slice(object):
         """
         :param images: list of 3D volumes to be separated into slices.
         """
+        logger.info('Resample images to {}x{} mm'.format(p_resample, p_resample))
         self._images = list()
         image_ref = None  # first pass: we don't have a reference image to resample to
         for i, image in enumerate(images):
@@ -211,7 +212,7 @@ class Slice(object):
         :returns: centers of mass in the x and y axis (tuple of numpy.ndarray of int)
             .
         """
-        logger.info('Compute center of at each slice.')
+        logger.info('Compute center of mass at each slice')
         data = np.array(image.data)  # we cast np.array to overcome problem if inputing nii format
         nz = image.dim[2]
         centers_x = np.zeros(nz)
