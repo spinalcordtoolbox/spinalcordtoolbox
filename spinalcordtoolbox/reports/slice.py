@@ -258,6 +258,7 @@ class Slice(object):
                 x = int(centers_x[i])
                 y = int(centers_y[i])
                 # crop slice around center of mass and add slice to the matrix layout
+                # TODO: resample there after cropping based on physical dimensions
                 self.add_slice(matrix, i, nb_column, size, self.crop(self.get_slice(image.data, i), x, y, size, size))
 
             matrices.append(matrix)
