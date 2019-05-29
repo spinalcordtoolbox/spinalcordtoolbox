@@ -210,15 +210,14 @@ class Slice(object):
 
         :param image : input Image
         :returns: centers of mass in the x and y axis (tuple of numpy.ndarray of int)
-            .
         """
         logger.info('Compute center of mass at each slice')
         data = np.array(image.data)  # we cast np.array to overcome problem if inputing nii format
-        nz = image.dim[2]
+        nz = image.dim[0]  # SAL orientation
         centers_x = np.zeros(nz)
         centers_y = np.zeros(nz)
         for i in range(nz):
-            centers_x[i], centers_y[i] = ndimage.measurements.center_of_mass(data[:, :, i])
+            centers_x[i], centers_y[i] = ndimage.measurements.center_of_mass(data[i, :, :])
         try:
             Slice.nan_fill(centers_x)
             Slice.nan_fill(centers_y)
