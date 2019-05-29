@@ -604,13 +604,9 @@ class ProcessLabels(object):
 
     def remove_or_keep_labels(self, labels, action):
         """
-        Remove or keep specific labels from a reference image by specifying their values.
-        :param labels: List of all the labels to be kept or removed
-        :type labels: list[int]
-        :param str action: Action to be performed by function, can be 'remove' or 'keep'
-        :return: image_output: Image with labels.
-        :raises ValueError: if certain elements within labels are not in reference image
-        :raises TypeError: if labels are not of type int
+        Create or remove labels from self.image_input
+        :param list(int): Labels to add or remove
+        :param str: 'remove': remove labels (i.e. set to zero), 'keep': keep labels
         """
         image_output = msct_image.zeros_like(self.image_input) if action == 'keep' else  self.image_input.copy()
         coordinates_input = self.image_input.getNonZeroCoordinates()
