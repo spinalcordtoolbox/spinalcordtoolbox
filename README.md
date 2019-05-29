@@ -205,6 +205,11 @@ alt="Fsleyes integration" width="240" height="180" border="10" /></a>
 - [Combès et al. Focal and diffuse cervical spinal cord damage in patients with early relapsing-remitting MS: A multicentre magnetisation transfer ratio study. Multiple Sclerosis Journal. 2018](https://www.ncbi.nlm.nih.gov/m/pubmed/29909771/)
 - [Martin et al. Monitoring for myelopathic progression with multiparametric quantitative MRI. PLoS One. 2018 Apr 17;13(4):e0195733](https://www.ncbi.nlm.nih.gov/pubmed/29664964)
 - [Martin et al. Can microstructural MRI detect subclinical tissue injury in subjects with asymptomatic cervical spinal cord compression? A prospective cohort study. BMJ Open. 2018 Apr 13;8(4):e019809](https://www.ncbi.nlm.nih.gov/pubmed/29654015)
+- [Querin et al. The spinal and cerebral profile of adult spinal-muscular atrophy: A multimodal imaging study. NeuroImage Clinical. 2018](https://www.sciencedirect.com/science/article/pii/S2213158218303668)
+- [Shokur et al. Training with brain-machine interfaces, visuo-tactile feedback and assisted locomotion improves sensorimotor, visceral, and psychological signs in chronic paraplegic patients. Plos One. 2018](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0206464)
+- [Panara et al. Correlations between cervical spinal cord magnetic resonance diffusion tensor and diffusion kurtosis imaging metrics and motor performance in patients with chronic ischemic brain lesions of the corticospinal tract. Neuroradiology. 2018](https://link.springer.com/article/10.1007/s00234-018-2139-5)
+- [Moccia et al. Advances in spinal cord imaging in multiple sclerosis. Ther Adv Neurol Disord.2019 Vol. 12: 1–19 DOI: 10.1177/1756285619840593](https://journals.sagepub.com/doi/pdf/10.1177/1756286419840593)
+- [Kitany et al. Functional imaging of rostrocaudal spinal activity during upper limb motor tasks. Neuroimage. 2019 May 17. pii: S1053-8119(19)30428-8.](https://www.sciencedirect.com/science/article/pii/S1053811919304288)
 
 ## Citing spinalcordtoolbox
 
