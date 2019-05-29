@@ -213,7 +213,7 @@ class QcImage(object):
             aspect_img, self.aspect_mask = sct_slice.aspect()[:2]
 
             self.qc_report.make_content_path()
-            logger.info('QC: %s with %s slice', func.__name__, sct_slice.get_name())
+            logger.info('QcImage: %s with %s slice', func.__name__, sct_slice.get_name())
 
             img, mask = func(sct_slice, *args)
 
@@ -463,7 +463,7 @@ def add_entry(src, process, args, path_qc, plane, background=None, foreground=No
               dataset=None,
               subject=None):
     """
-    Starting point to QC report creation.
+    Create QC report.
 
     :param src: Path to input file (only used to populate report metadata)
     :param process:
@@ -523,7 +523,8 @@ def add_entry(src, process, args, path_qc, plane, background=None, foreground=No
 def generate_qc(fname_in1, fname_in2=None, fname_seg=None, args=None, path_qc=None, dataset=None, subject=None,
                 process=None):
     """
-    Generate a QC entry allowing to quickly review results. This function is called by SCT scripts (e.g. sct_propseg).
+    Generate a QC entry allowing to quickly review results. This function is the entry point and is called by SCT
+    scripts (e.g. sct_propseg).
 
     :param fname_in1: str: File name of input image #1 (mandatory)
     :param fname_in2: str: File name of input image #2
@@ -535,6 +536,7 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, args=None, path_qc=No
     :param process: str: Name of SCT function. e.g., sct_propseg
     :return: None
     """
+    logger.info('\n*** Generate Quality Control (QC) html report ***')
     dpi = 300
     # Get QC specifics based on SCT process
     # Axial orientation, switch between two input images
