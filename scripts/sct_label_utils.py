@@ -618,7 +618,7 @@ class ProcessLabels(object):
             if isInLabels:
                 if action == 'keep':
                     image_output.data[int(new_coord.x), int(new_coord.y), int(new_coord.z)] = new_coord.value
-                else:
+                elif action == 'remove':
                     image_output.data[int(new_coord.x), int(new_coord.y), int(new_coord.z)] = 0.0
             else:
                 sct.printv("WARNING: Label " + str(float(labelNumber)) + " not found in input image.", type='warning')
