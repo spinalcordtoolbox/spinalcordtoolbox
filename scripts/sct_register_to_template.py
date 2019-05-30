@@ -442,7 +442,7 @@ def main(args=None):
             # --------------------------------------------------------------------------------
             # Remove unused label on template. Keep only label present in the input label image
             sct.printv('\nRemove unused label on template. Keep only label present in the input label image...', verbose)
-            sct.run(['sct_label_utils', '-i', ftmp_template_label, '-o', ftmp_template_label, '-remove', ftmp_label])
+            sct.run(['sct_label_utils', '-i', ftmp_template_label, '-o', ftmp_template_label, '-remove-reference', ftmp_label])
 
             # Dilating the input label so they can be straighten without losing them
             sct.printv('\nDilating input labels using 3vox ball radius')
@@ -586,7 +586,7 @@ def main(args=None):
 
         # Remove unused label on template. Keep only label present in the input label image
         sct.printv('\nRemove unused label on template. Keep only label present in the input label image...', verbose)
-        sct.run(['sct_label_utils', '-i', ftmp_template_label, '-o', ftmp_template_label, '-remove', ftmp_label])
+        sct.run(['sct_label_utils', '-i', ftmp_template_label, '-o', ftmp_template_label, '-remove-reference', ftmp_label])
 
         # Add one label because at least 3 orthogonal labels are required to estimate an affine transformation. This
         # new label is added at the level of the upper most label (lowest value), at 1cm to the right.
