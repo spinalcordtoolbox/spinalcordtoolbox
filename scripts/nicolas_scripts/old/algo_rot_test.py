@@ -152,8 +152,8 @@ def compare_PCA_Hogancest(file_input, file_seg_input, path_output):
         seg_weighted_mask = np.exp(
             -(((xx - centermass[0]) ** 2) / (2 * (sigmax ** 2)) + ((yy - centermass[1]) ** 2) / (2 * (sigmay ** 2))))
 
-        hog_ancest, slice_weighting_map = hog_ancestor(slice_image, nb_bin=nb_bin, seg_weighted_mask=seg_weighted_mask,
-                                                 return_image=True)
+        hog_ancest, slice_weighting_map = gradient_orientation_histogram(slice_image, nb_bin=nb_bin, seg_weighted_mask=seg_weighted_mask,
+                                                                         return_image=True)
         weighting_map[:, :, zslice] = slice_weighting_map
         hog_ancest_smooth = circular_filter_1d(hog_ancest, kmedian_size,
                                                filter='median')  # fft than square than ifft to calculate convolution
@@ -245,8 +245,8 @@ def test_3D_hogancest(file_input, file_seg_input, path_output):
         seg_weighted_mask = np.exp(
             -(((xx - centermass[0]) ** 2) / (2 * (sigma ** 2)) + ((yy - centermass[1]) ** 2) / (2 * (sigma ** 2))))
 
-        hog_ancest, weighting_map = hog_ancestor(slice_image, nb_bin=nb_bin, seg_weighted_mask=seg_weighted_mask,
-                                                 return_image=True)
+        hog_ancest, weighting_map = gradient_orientation_histogram(slice_image, nb_bin=nb_bin, seg_weighted_mask=seg_weighted_mask,
+                                                                   return_image=True)
 
         hog_ancest_smooth = circular_filter_1d(hog_ancest, kmedian_size,
                                                filter='median')  # fft than square than ifft to calculate convolution
@@ -380,8 +380,8 @@ def test_2D_hogancest(file_input, path_output, file_seg_input=None):
         return  # exit function
 
     # Finding axes of symmetry
-    hog_ancest, weighting_map = hog_ancestor(image_data, nb_bin=nb_bin,
-                                             seg_weighted_mask=seg_weighted_mask, return_image=True)
+    hog_ancest, weighting_map = gradient_orientation_histogram(image_data, nb_bin=nb_bin,
+                                                               seg_weighted_mask=seg_weighted_mask, return_image=True)
     # smooth it with median filter
     hog_ancest_smooth = circular_filter_1d(hog_ancest, kmedian_size,
                                            filter='median')  # fft than square than ifft to calculate convolution
