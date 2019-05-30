@@ -300,7 +300,10 @@ def main(args=None):
         sct.printv('\nCreate label to identify disc...', verbose)
         fname_labelz = os.path.join(path_tmp, file_labelz)
         if initz:
-            create_label_z('segmentation.nii', initz[0], initz[1], fname_labelz=fname_labelz)  # create label located at z_center
+            from .sct_label_utils import ProcessLabels
+            im_label = ProcessLabels('segmentation.nii', coordinates=['{},{}'.format(initz[0], initz[1])])
+
+            # create_label_z('segmentation.nii', initz[0], initz[1], fname_labelz=fname_labelz)  # create label located at z_center
         elif initcenter:
             # find z centered in FOV
             nii = Image('segmentation.nii').change_orientation("RPI")
