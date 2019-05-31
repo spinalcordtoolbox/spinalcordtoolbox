@@ -75,6 +75,7 @@ class ProcessLabels(object):
         self.verbose = verbose
         self.value = value
         self.msg = msg
+        self.output_image = None
 
     def process(self, type_process):
         # for some processes, change orientation of input image to RPI
