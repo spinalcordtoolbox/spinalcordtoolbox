@@ -218,34 +218,26 @@ To compute average MTR in a region defined by a single label file (could be bina
 
 
 def main(fname_data, path_label, method, slices, levels, fname_output, labels_user, append,
-         fname_normalizing_label, normalization_method, label_to_fix, adv_param_user, fname_output_metric_map,
-         fname_mask_weight, fname_vertebral_labeling="", perslice=1, perlevel=1, discard_negative_values=False,
-         verbose=1):
+         fname_vertebral_labeling="", perslice=1, perlevel=1, verbose=1):
     """
     Extract metrics from MRI data based on mask (could be single file of folder to atlas)
     :param fname_data: data to extract metric from
     :param path_label: mask: could be single file or folder to atlas (which contains info_label.txt)
-    :param method:
-    :param slices_of_interest. Accepted format:
+    :param method {'wa', 'bin', 'ml', 'map'}
+    :param slices. Slices of interest. Accepted format:
            "0,1,2,3": slices 0,1,2,3
            "0:3": slices 0,1,2,3
-    :param vertebral_levels: Vertebral levels to extract metrics from. Should be associated with a template
+    :param levels: Vertebral levels to extract metrics from. Should be associated with a template
            (e.g. PAM50/template/) or a specified file: fname_vertebral_labeling. Same format as slices_of_interest.
     :param fname_output:
     :param labels_user:
-    :param overwrite:
+    :param append: Append to csv file
     :param fname_normalizing_label:
-    :param normalization_method:
-    :param label_to_fix:
-    :param adv_param_user:
-    :param fname_output_metric_map:
-    :param fname_mask_weight:
     :param fname_vertebral_labeling: vertebral labeling to be used with vertebral_levels
     :param perslice: if user selected several slices, then the function outputs a metric within each slice
            instead of a single average output.
     :param perlevel: if user selected several levels, then the function outputs a metric within each vertebral level
            instead of a single average output.
-    :param discard_negative_values: Bool: Discard negative voxels when computing metrics statistics
     :param verbose
     :return:
     """
@@ -255,7 +247,6 @@ def main(fname_data, path_label, method, slices, levels, fname_output, labels_us
     if os.path.isfile(path_label):
         # Label is a single file
         indiv_labels_ids = [0]
-        indiv_labels_names = [path_label]
         indiv_labels_files = [path_label]
         combined_labels_ids = []
         combined_labels_names = []
@@ -412,7 +403,6 @@ if __name__ == "__main__":
     sct.init_sct(log_level=verbose, update=True)  # Update log level
 
     # call main function
-    main(fname_data, path_label, method, parse_num_list(slices_of_interest), parse_num_list(vertebral_levels),
-         fname_output, labels_user, append, fname_normalizing_label, normalization_method, label_to_fix,
-         adv_param_user, fname_output_metric_map, fname_mask_weight, fname_vertebral_labeling=fname_vertebral_labeling,
-         perslice=perslice, perlevel=perlevel, discard_negative_values=discard_negative_values, verbose=verbose)
+    main(fname_data=fname_data, path_label=path_label, method=method, slices=parse_num_list(slices_of_interest),
+         levels=parse_num_list(vertebral_levels), fname_output=fname_output, labels_user=labels_user, append=append,
+         fname_vertebral_labeling=fname_vertebral_labeling, perslice=perslice, perlevel=perlevel, verbose=verbose)
