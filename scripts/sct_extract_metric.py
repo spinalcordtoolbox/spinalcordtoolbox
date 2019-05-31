@@ -217,7 +217,7 @@ To compute average MTR in a region defined by a single label file (could be bina
     return parser
 
 
-def main(fname_data, path_label, method, slices, levels, fname_output, labels_user, append,
+def main(fname_data, path_label, method, slices, levels, fname_output, labels_user, append_csv,
          fname_vertebral_labeling="", perslice=1, perlevel=1, verbose=1):
     """
     Extract metrics from MRI data based on mask (could be single file of folder to atlas)
@@ -231,7 +231,7 @@ def main(fname_data, path_label, method, slices, levels, fname_output, labels_us
            (e.g. PAM50/template/) or a specified file: fname_vertebral_labeling. Same format as slices_of_interest.
     :param fname_output:
     :param labels_user:
-    :param append: Append to csv file
+    :param append_csv: Append to csv file
     :param fname_normalizing_label:
     :param fname_vertebral_labeling: vertebral labeling to be used with vertebral_levels
     :param perslice: if user selected several slices, then the function outputs a metric within each slice
@@ -249,9 +249,6 @@ def main(fname_data, path_label, method, slices, levels, fname_output, labels_us
         indiv_labels_ids = [0]
         indiv_labels_files = [path_label]
         combined_labels_ids = []
-        combined_labels_names = []
-        combined_labels_id_groups = []
-        map_clusters = []
         label_struc = {0: LabelStruc(id=0,
                                      name=sct.extract_fname(path_label)[1],
                                      filename=path_label)}
@@ -328,8 +325,8 @@ def main(fname_data, path_label, method, slices, levels, fname_output, labels_us
                                     perlevel=perlevel, vert_level=im_vertebral_labeling, method=method,
                                     label_struc=label_struc, id_label=id_label, indiv_labels_ids=indiv_labels_ids)
 
-        save_as_csv(agg_metric, fname_output, fname_in=fname_data, append=append)
-        append = True  # when looping across labels, need to append results in the same file
+        save_as_csv(agg_metric, fname_output, fname_in=fname_data, append=append_csv)
+        append_csv = True  # when looping across labels, need to append results in the same file
     sct.display_open(fname_output)
 
 
@@ -348,9 +345,9 @@ if __name__ == "__main__":
     method = arguments['-method']
     fname_output = arguments['-o']
     if '-append' in arguments:
-        append = int(arguments['-append'])
+        append_csv = int(arguments['-append'])
     else:
-        append = 0
+        append_csv = 0
     if '-l' in arguments:
         labels_user = arguments['-l']
     else:
@@ -404,5 +401,6 @@ if __name__ == "__main__":
 
     # call main function
     main(fname_data=fname_data, path_label=path_label, method=method, slices=parse_num_list(slices_of_interest),
-         levels=parse_num_list(vertebral_levels), fname_output=fname_output, labels_user=labels_user, append=append,
-         fname_vertebral_labeling=fname_vertebral_labeling, perslice=perslice, perlevel=perlevel, verbose=verbose)
+         levels=parse_num_list(vertebral_levels), fname_output=fname_output, labels_user=labels_user,
+         append_csv=append_csv, fname_vertebral_labeling=fname_vertebral_labeling, perslice=perslice,
+         perlevel=perlevel, verbose=verbose)
