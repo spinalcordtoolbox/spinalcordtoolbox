@@ -49,7 +49,7 @@ class ProcessLabels(object):
         :param fname_output:
         :param fname_ref:
         :param cross_radius:
-        :param dilate:
+        :param dilate:  # TODO: remove dilate (does not seem to be used)
         :param coordinates:
         :param verbose:
         :param vertebral_levels:
