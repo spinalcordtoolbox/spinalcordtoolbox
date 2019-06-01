@@ -26,8 +26,8 @@ from scipy import ndimage
 
 from msct_parser import Parser
 import spinalcordtoolbox.image as msct_image
-from spinalcordtoolbox.image import Image
-from msct_types import CoordinateValue
+from spinalcordtoolbox.image import Image, zeros_like
+from msct_types import Coordinate, CoordinateValue
 import sct_utils as sct
 
 
@@ -49,7 +49,7 @@ class ProcessLabels(object):
         :param fname_output:
         :param fname_ref:
         :param cross_radius:
-        :param dilate:
+        :param dilate:  # TODO: remove dilate (does not seem to be used)
         :param coordinates:
         :param verbose:
         :param vertebral_levels:
@@ -75,6 +75,7 @@ class ProcessLabels(object):
         self.verbose = verbose
         self.value = value
         self.msg = msg
+        self.output_image = None
 
     def process(self, type_process):
         # for some processes, change orientation of input image to RPI
@@ -128,6 +129,7 @@ class ProcessLabels(object):
         if type_process in ['remove', 'keep']:
             self.output_image = self.remove_or_keep_labels(self.value, action=type_process)
 
+        # TODO: do not save here. Create another function save() for that
         if self.fname_output is not None:
             if change_orientation:
                 self.output_image.change_orientation(input_orientation)
@@ -138,6 +140,7 @@ class ProcessLabels(object):
                 self.output_image.save(dtype='minimize_int')
             else:
                 self.output_image.save()
+        return self.output_image
 
     def add(self, value):
         """
@@ -183,37 +186,41 @@ class ProcessLabels(object):
 
     def create_label_along_segmentation(self):
         """
-        Create an image with labels defined along the spinal cord segmentation (or centerline)
+        Create an image with labels defined along the spinal cord segmentation (or centerline).
+        Input image does **not** need to be RPI (re-orientation is done within this function).
         Example:
         object_define=ProcessLabels(fname_segmentation, coordinates=[coord_1, coord_2, coord_i]), where coord_i='z,value'. If z=-1, then use z=nz/2 (i.e. center of FOV in superior-inferior direction)
         Returns
-        -------
-        image_output: Image object with labels.
         """
-
-        image_output = msct_image.zeros_like(self.image_input)
-
+        # reorient input image to RPI
+        im_rpi = self.image_input.copy().change_orientation('RPI')
+        im_output_rpi = zeros_like(im_rpi)
         # loop across labels
-        for i, coord in enumerate(self.coordinates):
+        for ilabel, coord in enumerate(self.coordinates):
             # split coord string
             list_coord = coord.split(',')
             # convert to int() and assign to variable
             z, value = [int(i) for i in list_coord]
+            # update z based on native image orientation (z should represent superior-inferior axis)
+            coord = Coordinate([z, z, z])  # since we don't know which dimension corresponds to the superior-inferior
+            # axis, we put z in all dimensions (we don't care about x and y here)
+            _, _, z_rpi = coord.permute(self.image_input, 'RPI')
             # if z=-1, replace with nz/2
             if z == -1:
-                z = int(np.round(image_output.dim[2] / 2.0))
+                z_rpi = int(np.round(im_output_rpi.dim[2] / 2.0))
             # get center of mass of segmentation at given z
-            x, y = ndimage.measurements.center_of_mass(np.array(self.image_input.data[:, :, z]))
+            x, y = ndimage.measurements.center_of_mass(np.array(im_rpi.data[:, :, z_rpi]))
             # round values to make indices
             x, y = int(np.round(x)), int(np.round(y))
             # display info
-            sct.printv('Label #' + str(i) + ': ' + str(x) + ',' + str(y) + ',' + str(z) + ' --> ' + str(value), 1)
-            if len(image_output.data.shape) == 3:
-                image_output.data[x, y, z] = value
-            elif len(image_output.data.shape) == 2:
+            sct.printv('Label #' + str(ilabel) + ': ' + str(x) + ',' + str(y) + ',' + str(z_rpi) + ' --> ' + str(value), 1)
+            if len(im_output_rpi.data.shape) == 3:
+                im_output_rpi.data[x, y, z_rpi] = value
+            elif len(im_output_rpi.data.shape) == 2:
                 assert str(z) == '0', "ERROR: 2D coordinates should have a Z value of 0. Z coordinate is :" + str(z)
-                image_output.data[x, y] = value
-        return image_output
+                im_output_rpi.data[x, y] = value
+        # change orientation back to native
+        return im_output_rpi.change_orientation(self.image_input.orientation)
 
     def plan(self, width, offset=0, gap=1):
         """
