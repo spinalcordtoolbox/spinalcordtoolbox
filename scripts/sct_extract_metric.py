@@ -288,7 +288,7 @@ def main(fname_data, path_label, method, slices, levels, fname_output, labels_us
                                                                    map_cluster=[indiv_labels_ids[i_label] in map_cluster for
                                                                                 map_cluster in map_clusters].index(True))
     else:
-        sct.printv('\nERROR: ' + path_label + ' does not exist.', 1, 'error')
+        raise RuntimeError(path_label + ' does not exist')
 
     # check syntax of labels asked by user
     labels_id_user = check_labels(indiv_labels_ids + combined_labels_ids, parse_num_list(labels_user))
