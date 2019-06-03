@@ -215,7 +215,9 @@ def main(args=None):
     sct.printv('\nGenerate output files...', param.verbose)
     sct.generate_output_file(os.path.join(path_tmp, "fmri" + param.suffix + '.nii'), fname_fmri_moco, param.verbose)
     sct.generate_output_file(os.path.join(path_tmp, "fmri" + param.suffix + '_mean.nii'), os.path.join(path_out, file_data + param.suffix + '_mean' + ext_data), param.verbose)
-    sct.generate_output_file(os.path.join(path_tmp, "fmri" + param.suffix + '_params.nii'), os.path.join(path_out, file_data + param.suffix + '_params' + ext_data), squeeze_data=False, verbose=param.verbose)
+    sct.generate_output_file(os.path.join(path_tmp, "fmri" + param.suffix + '_params_X.nii'), os.path.join(path_out, file_data + param.suffix + '_params_X' + ext_data), squeeze_data=False, verbose=param.verbose)
+    sct.generate_output_file(os.path.join(path_tmp, "fmri" + param.suffix + '_params_Y.nii'), os.path.join(path_out, file_data + param.suffix + '_params_Y' + ext_data), squeeze_data=False, verbose=param.verbose)
+    sct.mv(os.path.join(path_tmp, 'fmri_moco_params.tsv'), os.path.join(path_out + file_data + param.suffix + '_params.tsv'))
 
     # Delete temporary files
     if param.remove_temp_files == 1:
@@ -385,18 +387,52 @@ def fmri_moco(param):
 
     # Extract and output the motion parameters
     if param.output_motion_param:
-        from sct_crop_image import ImageCropper
-        files_warp = []
+        from sct_image import multicomponent_split
+        import csv
+        #files_warp = []
+        files_warp_X, files_warp_Y = [], []
+        moco_param = []
         for fname_warp in file_mat[0]:
-            fname_warp_crop = fname_warp + '_crop'
-            imCropper = ImageCropper(input_file=fname_warp + ext_mat, output_file=fname_warp_crop + ext_mat,
-                                     start=[1, 1], end=[1, 1], dim=[0, 1],
-                                     verbose=0)
-            imCropper.crop()
-            files_warp.append(fname_warp_crop + ext_mat)
+            # Cropping the image to keep only one voxel in the XY plane
+            im_warp = Image(fname_warp + ext_mat)
+            im_warp.data = np.expand_dims(np.expand_dims(im_warp.data[0, 0, :, :, :], axis=0), axis=0)
 
-        im_warp_concat = concat_data(files_warp, dim=3)
-        im_warp_concat.save('fmri_moco_params.nii')
+            # These three lines allow to generate one file instead of two, containing X, Y and Z moco parameters
+            #fname_warp_crop = fname_warp + '_crop_' + ext_mat
+            #files_warp.append(fname_warp_crop)
+            #im_warp.save(fname_warp_crop)
+
+            # Separating the three components and saving X and Y only (Z is equal to 0 by default).
+            im_warp_XYZ = multicomponent_split(im_warp)
+
+            fname_warp_crop_X = fname_warp + '_crop_X_' + ext_mat
+            im_warp_XYZ[0].save(fname_warp_crop_X)
+            files_warp_X.append(fname_warp_crop_X)
+
+            fname_warp_crop_Y = fname_warp + '_crop_Y_' + ext_mat
+            im_warp_XYZ[1].save(fname_warp_crop_Y)
+            files_warp_Y.append(fname_warp_crop_Y)
+
+            # Calculating the slice-wise average moco estimate to provide a QC file
+            moco_param.append([np.mean(np.ravel(im_warp_XYZ[0].data)), np.mean(np.ravel(im_warp_XYZ[1].data))])
+
+        # These two lines allow to generate one file instead of two, containing X, Y and Z moco parameters
+        #im_warp_concat = concat_data(files_warp, dim=3)
+        #im_warp_concat.save('fmri_moco_params.nii')
+
+        # Concatenating the moco parameters into a time series for X and Y components.
+        im_warp_concat = concat_data(files_warp_X, dim=3)
+        im_warp_concat.save('fmri_moco_params_X.nii')
+
+        im_warp_concat = concat_data(files_warp_Y, dim=3)
+        im_warp_concat.save('fmri_moco_params_Y.nii')
+
+        # Writing a TSV file with the slicewise average estimate of the moco parameters, as it is a useful QC file.
+        with open('fmri_moco_params.tsv', 'wt') as out_file:
+            tsv_writer = csv.writer(out_file, delimiter='\t')
+            tsv_writer.writerow(['X', 'Y'])
+            for mocop in moco_param:
+                tsv_writer.writerow([mocop[0], mocop[1]])
 
     # Average volumes
     sct.printv('\nAveraging data...', param.verbose)
