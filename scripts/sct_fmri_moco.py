@@ -62,6 +62,7 @@ class Param:
         self.iterAvg = 1  # iteratively average target image for more robust moco
         self.num_target = '0'
         self.is_sagittal = False  # if True, then split along Z (right-left) and register each 2D slice (vs. 3D volume)
+        self.output_motion_param = True  # if True, the motion parameters are outputed
 
     # update constructor with user's parameters
     def update(self, param_user):
@@ -214,6 +215,7 @@ def main(args=None):
     sct.printv('\nGenerate output files...', param.verbose)
     sct.generate_output_file(os.path.join(path_tmp, "fmri" + param.suffix + '.nii'), fname_fmri_moco, param.verbose)
     sct.generate_output_file(os.path.join(path_tmp, "fmri" + param.suffix + '_mean.nii'), os.path.join(path_out, file_data + param.suffix + '_mean' + ext_data), param.verbose)
+    sct.generate_output_file(os.path.join(path_tmp, "fmri" + param.suffix + '_params.nii'), os.path.join(path_out, file_data + param.suffix + '_params' + ext_data), param.verbose)
 
     # Delete temporary files
     if param.remove_temp_files == 1:
@@ -372,7 +374,7 @@ def fmri_moco(param):
         param_moco.path_out = ''
         param_moco.mat_moco = mat_final
         param_moco.todo = 'apply'
-        moco.moco(param_moco)
+        file_mat = moco.moco(param_moco)
 
     # copy geometric information from header
     # NB: this is required because WarpImageMultiTransform in 2D mode wrongly sets pixdim(3) to "1".
@@ -380,6 +382,21 @@ def fmri_moco(param):
     im_fmri_moco = Image('fmri_moco.nii')
     im_fmri_moco.header = im_fmri.header
     im_fmri_moco.save()
+
+    # Extract and output the motion parameters
+    if param.output_motion_param:
+        from sct_crop_image import ImageCropper
+        files_warp = []
+        for fname_warp in file_mat[0]:
+            fname_warp_crop = fname_warp + '_crop'
+            imCropper = ImageCropper(input_file=fname_warp + ext_mat, output_file=fname_warp_crop + ext_mat,
+                                     start=[1, 1], end=[1, 1], dim=[0, 1],
+                                     verbose=0)
+            imCropper.crop()
+            files_warp.append(fname_warp_crop + ext_mat)
+
+        im_warp_concat = concat_data(files_warp, dim=3)
+        im_warp_concat.save('fmri_moco_params.nii')
 
     # Average volumes
     sct.printv('\nAveraging data...', param.verbose)
