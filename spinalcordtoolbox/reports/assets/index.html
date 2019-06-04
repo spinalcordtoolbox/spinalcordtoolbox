@@ -77,6 +77,10 @@
 		                  </tr>
 	                </thead>
               </table>
+              <button id="Date" class="btn btn-success" onclick="toggleColumn(id)">Hide Date</button>
+              <button id="Dataset" class="btn btn-primary" onclick="toggleColumn(id)">Hide Dataset</button>
+              <button id="Subject" class="btn btn-primary" onclick="toggleColumn(id)">Hide Subject</button>
+              <button id="Function" class="btn btn-primary" onclick="toggleColumn(id)">Hide Function</button>
           </div>
           <div class="col-md-8">
               <div class="result-body" id="mosaic-container">
@@ -98,4 +102,38 @@
 <script src="_assets/js/bootstrap-table.min.js"></script>
 <script src="_assets/js/main.js"></script>
 <script>var sct_data = $sct_json_data;</script>
+<script>
+ function toggleColumn(theID){
+    var position;
+    position = findPosition(theID);
+    if (document.getElementById(theID).innerHTML == "Hide " + theID){
+            document.getElementById(theID).innerHTML = "Show " + theID;
+            document.getElementsByTagName('TH')[position].style.display = "none";
+            var iTD;
+            for (iTD = position; iTD < document.getElementsByTagName('TD').length; iTD = iTD + 4){
+                document.getElementsByTagName('TD')[iTD].style.display = "none";
+            }
+     }
+    else if (document.getElementById(theID).innerHTML == "Show " + theID){
+            document.getElementById(theID).innerHTML = "Hide " + theID;
+            document.getElementsByTagName('TH')[position].style.display = "table-cell";
+            var iTD;
+            for (iTD = position; iTD < document.getElementsByTagName('TD').length; iTD = iTD + 4){
+                document.getElementsByTagName('TD')[iTD].style.display = "table-cell";
+            }
+    }
+  }
+</script>
+<script>
+    function findPosition(theID){
+        var iTH;
+        var position;
+        for (iTH = 0; iTH < document.getElementsByTagName('TH').length; iTH++){
+            if (theID.valueOf() == document.getElementsByTagName('TH')[iTH].innerText){
+                position = iTH;
+            }
+        }
+        return position;
+     }
+</script>
 </html>
