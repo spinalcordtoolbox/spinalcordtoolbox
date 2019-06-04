@@ -77,10 +77,16 @@
 		                  </tr>
 	                </thead>
               </table>
-              <button id="Date" class="btn btn-success" onclick="toggleColumn(id)">Hide Date</button>
-              <button id="Dataset" class="btn btn-primary" onclick="toggleColumn(id)">Hide Dataset</button>
-              <button id="Subject" class="btn btn-primary" onclick="toggleColumn(id)">Hide Subject</button>
-              <button id="Function" class="btn btn-primary" onclick="toggleColumn(id)">Hide Function</button>
+              <table class="table table-condensed">
+                  <thead>
+                        <tr>
+                                <th><button id="Date" class="btn btn-info btn-block" onclick="toggleColumn(id)">Hide Date</button></th>
+                                <th><button id="Dataset" class="btn btn-info btn-block" onclick="toggleColumn(id)">Hide Dataset</button></th>
+                                <th><button id="Subject" class="btn btn-info btn-block" onclick="toggleColumn(id)">Hide Subject</button></th>
+                                <th><button id="Function" class="btn btn-info btn-block" onclick="toggleColumn(id)">Hide Function</button></th>
+                        </tr>
+                  </thead>
+              </table>
           </div>
           <div class="col-md-8">
               <div class="result-body" id="mosaic-container">
@@ -103,19 +109,25 @@
 <script src="_assets/js/main.js"></script>
 <script>var sct_data = $sct_json_data;</script>
 <script>
- function toggleColumn(theID){
+ function toggleColumn(buttonID){
+    /*
+    This function will hide a specific column of the table if it is on screen
+    or show a specific column if it is not displayed.
+    */
     var position;
-    position = findPosition(theID);
-    if (document.getElementById(theID).innerHTML == "Hide " + theID){
-            document.getElementById(theID).innerHTML = "Show " + theID;
+    position = findPosition(buttonID);
+    if (document.getElementById(buttonID).innerHTML == "Hide " + buttonID){
+            document.getElementById(buttonID).innerHTML = "Show " + buttonID;
+            document.getElementById(buttonID).className = "btn btn-primary btn-block";
             document.getElementsByTagName('TH')[position].style.display = "none";
             var iTD;
             for (iTD = position; iTD < document.getElementsByTagName('TD').length; iTD = iTD + 4){
                 document.getElementsByTagName('TD')[iTD].style.display = "none";
             }
      }
-    else if (document.getElementById(theID).innerHTML == "Show " + theID){
-            document.getElementById(theID).innerHTML = "Hide " + theID;
+    else if (document.getElementById(buttonID).innerHTML == "Show " + buttonID){
+            document.getElementById(buttonID).innerHTML = "Hide " + buttonID;
+            document.getElementById(buttonID).className = "btn btn-info btn-block";
             document.getElementsByTagName('TH')[position].style.display = "table-cell";
             var iTD;
             for (iTD = position; iTD < document.getElementsByTagName('TD').length; iTD = iTD + 4){
@@ -125,11 +137,16 @@
   }
 </script>
 <script>
-    function findPosition(theID){
+    function findPosition(buttonID){
+        /*
+        This function will find the array position
+        of the header cell corresponding to the wanted Id.
+        Return type: number
+        */
         var iTH;
         var position;
         for (iTH = 0; iTH < document.getElementsByTagName('TH').length; iTH++){
-            if (theID.valueOf() == document.getElementsByTagName('TH')[iTH].innerText){
+            if (buttonID.valueOf() == document.getElementsByTagName('TH')[iTH].innerText){
                 position = iTH;
             }
         }
