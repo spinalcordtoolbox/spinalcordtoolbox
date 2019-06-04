@@ -94,6 +94,11 @@ max: for each z-slice of the input data, extract the max value for each slice of
                       description='Append results as a new line in the output csv file instead of overwriting it.',
                       mandatory=False,
                       default_value=0)
+    parser.add_option(name='-combine',
+                      type_value='int',
+                      description='Combine multiple labels into a single estimation.',
+                      mandatory=False,
+                      default_value=0)
     parser.add_option(name='-o',
                       type_value='file_output',
                       description="""File name (including the file extension) of the output result file collecting the metric estimation results. \nThree file types are available: a CSV text file (extension .txt), a MS Excel file (extension .xls) and a pickle file (extension .pickle). Default: """ + param_default.fname_output,
@@ -218,7 +223,7 @@ To compute average MTR in a region defined by a single label file (could be bina
 
 
 def main(fname_data, path_label, method, slices, levels, fname_output, labels_user, append_csv,
-         fname_vertebral_labeling="", perslice=1, perlevel=1, verbose=1):
+         fname_vertebral_labeling="", perslice=1, perlevel=1, verbose=1, combine_labels=True):
     """
     Extract metrics from MRI data based on mask (could be single file of folder to atlas)
     :param fname_data: data to extract metric from
@@ -239,6 +244,7 @@ def main(fname_data, path_label, method, slices, levels, fname_output, labels_us
     :param perlevel: if user selected several levels, then the function outputs a metric within each vertebral level
            instead of a single average output.
     :param verbose
+    :param combine_labels: bool: Combine labels into a single value
     :return:
     """
 
@@ -282,6 +288,8 @@ def main(fname_data, path_label, method, slices, levels, fname_output, labels_us
                                                                 map_cluster=[indiv_labels_ids[i_label] in map_cluster for
                                                                              map_cluster in map_clusters].index(True))
         # fill IDs for combined labels
+        # TODO: problem for defining map_cluster: if labels overlap two regions, e.g. WM and GM (e.g. id=50),
+        #  map_cluster will take value 0, which is wrong.
         for i_label in range(len(combined_labels_ids)):
             label_struc[combined_labels_ids[i_label]] = LabelStruc(id=combined_labels_id_groups[i_label],
                                                                    name=combined_labels_names[i_label],
@@ -311,13 +319,20 @@ def main(fname_data, path_label, method, slices, levels, fname_output, labels_us
     else:
         im_vertebral_labeling = None
 
-        # Get dimensions of data and labels
+    # Get dimensions of data and labels
     nx, ny, nz = data.data.shape
     nx_atlas, ny_atlas, nz_atlas, nt_atlas = labels.shape
 
     # Check dimensions consistency between atlas and data
     if (nx, ny, nz) != (nx_atlas, ny_atlas, nz_atlas):
         sct.printv('\nERROR: Metric data and labels DO NOT HAVE SAME DIMENSIONS.', 1, type='error')
+
+    # Combine individual labels for estimation
+    if combine_labels:
+        # Add entry with internal ID value (99) which corresponds to combined labels
+        label_struc[99] = LabelStruc(id=labels_id_user, name=','.join([str(i) for i in labels_id_user]),
+                                     map_cluster=None)
+        labels_id_user = [99]
 
     for id_label in labels_id_user:
         sct.printv('Estimation for label: '+label_struc[id_label].name, verbose)
@@ -348,6 +363,10 @@ if __name__ == "__main__":
         append_csv = int(arguments['-append'])
     else:
         append_csv = 0
+    if '-combine' in arguments:
+        combine_labels = arguments['-combine']
+    else:
+        combine_labels = 0
     if '-l' in arguments:
         labels_user = arguments['-l']
     else:
@@ -403,4 +422,4 @@ if __name__ == "__main__":
     main(fname_data=fname_data, path_label=path_label, method=method, slices=parse_num_list(slices_of_interest),
          levels=parse_num_list(vertebral_levels), fname_output=fname_output, labels_user=labels_user,
          append_csv=append_csv, fname_vertebral_labeling=fname_vertebral_labeling, perslice=perslice,
-         perlevel=perlevel, verbose=verbose)
+         perlevel=perlevel, verbose=verbose, combine_labels=combine_labels)
