@@ -17,6 +17,7 @@ import sys, os
 
 import numpy as np
 import sct_maths
+from sct_label_utils import ProcessLabels
 from msct_parser import Parser
 from spinalcordtoolbox.image import Image
 import sct_utils as sct
@@ -292,21 +293,26 @@ def main(args=None):
                  verbose=verbose,
                  is_sct_binary=True,
                 )
-
         label_vert('segmentation_straight.nii', 'labeldisc_straight.nii.gz', verbose=1)
 
     else:
         # create label to identify disc
         sct.printv('\nCreate label to identify disc...', verbose)
         fname_labelz = os.path.join(path_tmp, file_labelz)
-        if initz:
-            create_label_z('segmentation.nii', initz[0], initz[1], fname_labelz=fname_labelz)  # create label located at z_center
-        elif initcenter:
-            # find z centered in FOV
-            nii = Image('segmentation.nii').change_orientation("RPI")
-            nx, ny, nz, nt, px, py, pz, pt = nii.dim  # Get dimensions
-            z_center = int(np.round(nz / 2))  # get z_center
-            create_label_z('segmentation.nii', z_center, initcenter, fname_labelz=fname_labelz)  # create label located at z_center
+        if initz or initcenter:
+            if initcenter:
+                # find z centered in FOV
+                nii = Image('segmentation.nii').change_orientation("RPI")
+                nx, ny, nz, nt, px, py, pz, pt = nii.dim  # Get dimensions
+                z_center = int(np.round(nz / 2))  # get z_center
+                initz = [z_center, initcenter]
+            # create single label and output as labels.nii.gz
+            label = ProcessLabels('segmentation.nii', fname_output='tmp.labelz.nii.gz',
+                                      coordinates=['{},{}'.format(initz[0], initz[1])])
+            im_label = label.process('create-seg')
+            im_label.data = sct_maths.dilate(im_label.data, [3])  # TODO: create a dilation method specific to labels,
+            # which does not apply a convolution across all voxels (highly inneficient)
+            im_label.save(fname_labelz)
         elif fname_initlabel:
             import sct_label_utils
             # subtract "1" to label value because due to legacy, in this code the disc C2-C3 has value "2", whereas in the

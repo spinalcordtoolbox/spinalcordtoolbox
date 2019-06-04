@@ -31,7 +31,9 @@ logger = logging.getLogger(__name__)
 
 def _get_permutations(im_src_orientation, im_dst_orientation):
     """
-    :return: list of axes permutations and list of inversions to achive an orientation change
+    :param im_src_orientation str: Orientation of source image. Example: 'RPI'
+    :param im_dest_orientation str: Orientation of destination image. Example: 'SAL'
+    :return: list of axes permutations and list of inversions to achieve an orientation change
     """
 
     opposite_character = {'L': 'R', 'R': 'L', 'A': 'P', 'P': 'A', 'I': 'S', 'S': 'I'}
