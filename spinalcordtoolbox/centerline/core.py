@@ -74,10 +74,12 @@ def get_centerline(im_seg, algo_fitting='polyfit', minmax=True, contrast=None, d
     if algo_fitting == 'polyfit':
         x_centerline_fit, x_centerline_deriv = curve_fitting.polyfit_1d(z_mean, x_mean, z_ref, deg=degree)
         y_centerline_fit, y_centerline_deriv = curve_fitting.polyfit_1d(z_mean, y_mean, z_ref, deg=degree)
+        z_centerline_deriv = np.ones_like(z_ref)
 
     elif algo_fitting == 'bspline':
         x_centerline_fit, x_centerline_deriv = curve_fitting.bspline(z_mean, x_mean, z_ref, smooth=smooth)
         y_centerline_fit, y_centerline_deriv = curve_fitting.bspline(z_mean, y_mean, z_ref, smooth=smooth)
+        z_centerline_deriv = np.ones_like(z_ref)
 
     elif algo_fitting == 'linear':
         # Simple linear interpolation
@@ -86,6 +88,7 @@ def get_centerline(im_seg, algo_fitting='polyfit', minmax=True, contrast=None, d
         # Compute derivatives using polynomial fit due to undefined derivatives using linear interpolation
         _, x_centerline_deriv = curve_fitting.polyfit_1d(z_mean, x_mean, z_ref, deg=degree)
         _, y_centerline_deriv = curve_fitting.polyfit_1d(z_mean, y_mean, z_ref, deg=degree)
+        z_centerline_deriv = np.ones_like(z_ref)
 
     elif algo_fitting == 'nurbs':
         from spinalcordtoolbox.centerline.nurbs import b_spline_nurbs
@@ -121,19 +124,31 @@ def get_centerline(im_seg, algo_fitting='polyfit', minmax=True, contrast=None, d
         import matplotlib
         matplotlib.use('Agg')  # prevent display figure
         import matplotlib.pyplot as plt
-        plt.figure()
-        plt.subplot(2, 1, 1)
+        plt.figure(figsize=(16, 10))
+        plt.subplot(3, 1, 1)
         plt.title("Algo=%s, Deg=%s" % (algo_fitting, degree))
+        plt.plot(z_mean * pz, x_mean * px, 'ro')
         plt.plot(z_ref * pz, x_centerline_fit * px)
         plt.plot(z_ref * pz, x_centerline_fit * px, 'b.')
-        plt.plot(z_mean * pz, x_mean * px, 'ro')
         plt.ylabel("X [mm]")
-        plt.subplot(2, 1, 2)
-        plt.plot(z_ref, y_centerline_fit)
-        plt.plot(z_ref, y_centerline_fit, 'b.')
-        plt.plot(z_mean, y_mean, 'ro')
+        plt.legend(['Reference', 'Fitting', 'Fitting points'])
+
+        plt.subplot(3, 1, 2)
+        plt.plot(z_mean * pz, y_mean * py, 'ro')
+        plt.plot(z_ref * pz, y_centerline_fit * py)
+        plt.plot(z_ref * pz, y_centerline_fit * py, 'b.')
         plt.xlabel("Z [mm]")
         plt.ylabel("Y [mm]")
+        plt.legend(['Reference', 'Fitting', 'Fitting points'])
+
+        plt.subplot(3, 1, 3)
+        plt.plot(z_ref * pz, x_centerline_deriv * px, 'b.')
+        plt.plot(z_ref * pz, y_centerline_deriv * py, 'g.')
+        plt.plot(z_ref * pz, z_centerline_deriv * pz, 'r.')
+        plt.ylabel("XY [mm]")
+        plt.xlabel("Z [mm]")
+        plt.legend(['X-deriv', 'Y-deriv', 'Z-deriv'])
+
         plt.savefig('fig_centerline_' + datetime.now().strftime("%y%m%d%H%M%S%f") + '_' + algo_fitting + '.png')
         plt.close()
 
@@ -161,7 +176,7 @@ def get_centerline(im_seg, algo_fitting='polyfit', minmax=True, contrast=None, d
     #        np.array([ctl_deriv[perm[0]], ctl_deriv[perm[1]], ctl_deriv[perm[2]]])
     return im_centerline, \
            np.array([x_centerline_fit, y_centerline_fit, z_ref]), \
-           np.array([x_centerline_deriv, y_centerline_deriv, np.ones_like(z_ref)])
+           np.array([x_centerline_deriv, y_centerline_deriv, z_centerline_deriv])
 
 
 def round_and_clip(arr, clip=None):
