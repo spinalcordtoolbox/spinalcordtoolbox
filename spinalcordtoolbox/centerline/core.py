@@ -11,6 +11,8 @@ import numpy as np
 from spinalcordtoolbox.image import Image, zeros_like
 from spinalcordtoolbox.centerline import curve_fitting
 
+logger = logging.getLogger(__name__)
+
 
 def find_and_sort_coord(img):
     """
@@ -115,7 +117,7 @@ def get_centerline(im_seg, algo_fitting='polyfit', minmax=True, contrast=None, d
                np.array([x_centerline_deriv, y_centerline_deriv, np.ones_like(z_centerline)]),
 
     else:
-        logging.error('algo_fitting "' + algo_fitting + '" does not exist.')
+        logger.error('algo_fitting "' + algo_fitting + '" does not exist.')
         raise ValueError
 
     # Display fig of fitted curves
