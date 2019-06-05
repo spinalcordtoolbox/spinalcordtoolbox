@@ -685,6 +685,9 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
     # post processing step to z_regularized
     im_image_res_seg_downsamp_postproc = post_processing_volume_wise(im_in=im_image_res_seg_downsamp)
 
+    # change data type
+    im_image_res_seg_downsamp_postproc.change_type(np.uint8)
+
     tmp_folder.chdir_undo()
 
     # remove temporary files
