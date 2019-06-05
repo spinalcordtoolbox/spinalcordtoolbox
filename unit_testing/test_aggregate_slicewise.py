@@ -189,7 +189,7 @@ def test_extract_metric(dummy_data_and_labels):
     agg_metric = aggregate_slicewise.extract_metric(dummy_data_and_labels[0], labels=dummy_data_and_labels[1],
                                                     label_struc=dummy_data_and_labels[2], id_label=99,
                                                     indiv_labels_ids=[0, 1, 2], perslice=False, method='map')
-    assert agg_metric[list(agg_metric)[0]]['MAP()'] == 20.0
+    assert agg_metric[list(agg_metric)[0]]['MAP()'] == pytest.approx(20.0, rel=0.01)
 
 
 # noinspection 801,PyShadowingNames
