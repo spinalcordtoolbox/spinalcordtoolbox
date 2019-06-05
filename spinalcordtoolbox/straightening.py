@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 class SpinalCordStraightener(object):
 
     def __init__(self, input_filename, centerline_filename, debug=0, degree=3,
-                 interpolation_warp='spline', rm_tmp_files=1, verbose=1, algo_fitting='bspline',
+                 interpolation_warp='spline', rm_tmp_files=1, verbose=1, algo_fitting='nurbs',
                  precision=2.0, threshold_distance=10, output_filename=''):
         self.input_filename = input_filename
         self.centerline_filename = centerline_filename
@@ -39,7 +39,7 @@ class SpinalCordStraightener(object):
         self.interpolation_warp = interpolation_warp
         self.remove_temp_files = rm_tmp_files  # remove temporary files
         self.verbose = verbose
-        self.algo_fitting = algo_fitting  # 'bspline' or 'nurbs'
+        self.algo_fitting = algo_fitting  # see: centerline/core
         self.precision = precision
         self.threshold_distance = threshold_distance
         self.path_output = ""
