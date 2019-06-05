@@ -65,6 +65,16 @@
                       Next
                   </span>
               </a>
+             <div class="dropdown">
+                    <button class="btn btn-secondary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    Hide/Show Columns<span class="caret"></span></button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" id="Date" onclick="toggleColumn(id)">Hide Date</a></li>
+                            <li><a class="dropdown-item" id="Dataset" onclick="toggleColumn(id)">Hide Dataset</a></li>
+                            <li><a class="dropdown-item" id="Subject" onclick="toggleColumn(id)">Hide Subject</a></li>
+                            <li><a class="dropdown-item" id="Function" onclick="toggleColumn(id)">Hide Function</a></li>
+                        </ul>
+             </div>
               <table id="table" class="table table-condensed"
                   data-search="true"
                   data-response-handler="responseHandler">
@@ -76,16 +86,6 @@
 			                    <th data-field="command" data-sortable="true">Function</th>
 		                  </tr>
 	                </thead>
-              </table>
-              <table class="table table-condensed">
-                  <thead>
-                        <tr>
-                                <th><button id="Date" class="btn btn-info btn-block" onclick="toggleColumn(id)">Hide Date</button></th>
-                                <th><button id="Dataset" class="btn btn-info btn-block" onclick="toggleColumn(id)">Hide Dataset</button></th>
-                                <th><button id="Subject" class="btn btn-info btn-block" onclick="toggleColumn(id)">Hide Subject</button></th>
-                                <th><button id="Function" class="btn btn-info btn-block" onclick="toggleColumn(id)">Hide Function</button></th>
-                        </tr>
-                  </thead>
               </table>
           </div>
           <div class="col-md-8">
@@ -118,7 +118,6 @@
     position = findPosition(buttonID);
     if (document.getElementById(buttonID).innerHTML == "Hide " + buttonID){
             document.getElementById(buttonID).innerHTML = "Show " + buttonID;
-            document.getElementById(buttonID).className = "btn btn-primary btn-block";
             document.getElementsByTagName('TH')[position].style.display = "none";
             var iTD;
             for (iTD = position; iTD < document.getElementsByTagName('TD').length; iTD = iTD + 4){
@@ -127,7 +126,6 @@
      }
     else if (document.getElementById(buttonID).innerHTML == "Show " + buttonID){
             document.getElementById(buttonID).innerHTML = "Hide " + buttonID;
-            document.getElementById(buttonID).className = "btn btn-info btn-block";
             document.getElementsByTagName('TH')[position].style.display = "table-cell";
             var iTD;
             for (iTD = position; iTD < document.getElementsByTagName('TD').length; iTD = iTD + 4){
