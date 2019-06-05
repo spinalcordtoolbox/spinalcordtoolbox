@@ -239,6 +239,9 @@ def deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo='svm', ctr_file
     seg_initres_nii.data[np.where(seg_initres_nii.data >= thr)] = 1
     seg_initres_nii.data[np.where(seg_initres_nii.data < thr)] = 0
 
+    # change data type
+    seg_initres_nii.change_type(np.uint8)
+
     # reorient to initial orientation
     logger.info("\nReorienting the segmentation to the original image orientation...")
     tmp_folder.chdir_undo()
