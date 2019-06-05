@@ -206,7 +206,7 @@ def extract_metric(data, labels=None, slices=None, levels=None, perslice=True, p
     func_methods = {'ml': ('ML', func_ml), 'map': ('MAP', func_map)}  # TODO: complete dict with other methods
     # If label_struc[id_label].id is a list (i.e. comes from a combined labels), sum all labels
     if isinstance(label_struc[id_label].id, list):
-        labels_sum = np.sum(labels[..., label_struc[id_label].id], axis=3)  # (nx, ny, nz, 1)
+        labels_sum = np.sum(labels[..., label_struc[id_label].id], axis=labels.ndim-1)  # (nx, ny, nz, 1)
     else:
         labels_sum = labels[..., label_struc[id_label].id]
     # expand dim: labels_sum=(..., 1)
