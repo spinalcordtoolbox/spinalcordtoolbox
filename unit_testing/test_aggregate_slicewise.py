@@ -13,14 +13,12 @@ import csv
 import numpy as np
 import nibabel as nib
 
-from spinalcordtoolbox.utils import __sct_dir__
+from spinalcordtoolbox.utils import __sct_dir__, __version__
 sys.path.append(os.path.join(__sct_dir__, 'scripts'))
 
 from spinalcordtoolbox import aggregate_slicewise
 from spinalcordtoolbox.process_seg import Metric
 from spinalcordtoolbox.image import Image
-
-import sct_utils as sct
 
 
 @pytest.fixture(scope="session")
@@ -215,15 +213,15 @@ def test_save_as_csv(dummy_metrics):
     with open('tmp_file_out.csv', 'r') as csvfile:
         spamreader = csv.reader(csvfile, delimiter=',')
         next(spamreader)  # skip header
-        assert next(spamreader)[1:] == [sct.__version__, 'FakeFile.txt', '3:4', '', '45.5', '4.5']
+        assert next(spamreader)[1:] == [__version__, 'FakeFile.txt', '3:4', '', '45.5', '4.5']
     # with appending
     aggregate_slicewise.save_as_csv(agg_metric, 'tmp_file_out.csv')
     aggregate_slicewise.save_as_csv(agg_metric, 'tmp_file_out.csv', append=True)
     with open('tmp_file_out.csv', 'r') as csvfile:
         spamreader = csv.reader(csvfile, delimiter=',')
         next(spamreader)  # skip header
-        assert next(spamreader)[1:] == [sct.__version__, '', '3:4', '', '45.5', '4.5']
-        assert next(spamreader)[1:] == [sct.__version__, '', '3:4', '', '45.5', '4.5']
+        assert next(spamreader)[1:] == [__version__, '', '3:4', '', '45.5', '4.5']
+        assert next(spamreader)[1:] == [__version__, '', '3:4', '', '45.5', '4.5']
 
 
 # noinspection 801,PyShadowingNames
@@ -301,4 +299,4 @@ def test_save_as_csv_extract_metric(dummy_data_and_labels):
     with open('tmp_file_out.csv', 'r') as csvfile:
         spamreader = csv.reader(csvfile, delimiter=',')
         next(spamreader)  # skip header
-        assert next(spamreader)[1:-1] == [sct.__version__, '', '0:4', '', 'label_0', '2.5', '38.0']
+        assert next(spamreader)[1:-1] == [__version__, '', '0:4', '', 'label_0', '2.5', '38.0']
