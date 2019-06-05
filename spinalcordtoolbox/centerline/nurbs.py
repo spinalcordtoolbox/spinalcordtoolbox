@@ -216,13 +216,12 @@ class NURBS:
                                                                           self.precision)
                 self.pointsControle = pointsControle_that_last_worked
 
-                if verbose >= 1:
-                    if self.nbControle != nbControle_that_last_worked:
-                        logger.info("The fitting of the curve was done using {} control points: the number that gave "
-                                    "the best results. \nError on approximation = {} mm".
-                                    format(nbControle_that_last_worked, np.round(self.error_curve_that_last_worked, 2)))
-                    else:
-                        logger.info('Number of control points of the optimal NURBS = {}'.format(self.nbControle))
+                if self.nbControle != nbControle_that_last_worked:
+                    logger.debug("The fitting of the curve was done using {} control points: the number that gave "
+                                 "the best results. \nError on approximation = {} mm".
+                                 format(nbControle_that_last_worked, np.round(self.error_curve_that_last_worked, 2)))
+                else:
+                    logger.debug('Number of control points of the optimal NURBS = {}'.format(self.nbControle))
             else:
                 logger.debug('In NURBS we get nurbs_ctl_points = {}'.format(nbControl))
                 w = [1.0] * len(P_x)
