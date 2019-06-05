@@ -64,7 +64,7 @@ If you experience an error, copy/paste the Terminal output (include your syntax)
 
 - If there is less than 10 lines of text, embed it directly in your comment in github. Use "~~~" to format as code.
 
-- If there is 10+ lines, either use an `external website <https://github.com/PyCQA/pyflakes>`_, copy/paste your text and include the URL in your comment, or use `collapsable Github markdown capabilities <https://gist.github.com/ericclemmons/b146fe5da72ca1f706b2ef72a20ac39d#using-details-in-github>`_.
+- If there is 10+ lines, either use an external website such as `pastebin<https://pastebin.com/>`_ (copy/paste your text and include the URL in your comment), or use `collapsable Github markdown capabilities <https://gist.github.com/ericclemmons/b146fe5da72ca1f706b2ef72a20ac39d#using-details-in-github>`_.
 
 Provide steps to **reproduce** the issue. Try to reproduce your issue using ``sct_testing_data`` or
 ``sct_example_data`` as inputs, and to provide a sequence of commands
