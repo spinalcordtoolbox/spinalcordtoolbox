@@ -20,7 +20,7 @@ import sct_utils as sct
 
 from create_test_data import dummy_centerline
 
-VERBOSE = 2  # Set to 2 to save images, 0 otherwise
+VERBOSE = 0  # Set to 2 to save images, 0 otherwise
 
 
 # Generate a list of fake centerlines: (dummy_segmentation(params), dict of expected results)
@@ -129,10 +129,10 @@ def test_get_centerline_linear(img_ctl, expected, params):
     """Test centerline fitting using linear interpolation"""
     img, img_sub = [img_ctl[0].copy(), img_ctl[1].copy()]
     if params:
-        img_out, arr_out, arr_deriv_out = get_centerline(img_sub, algo_fitting='polyfit', minmax=False,
+        img_out, arr_out, arr_deriv_out = get_centerline(img_sub, algo_fitting='linear', minmax=False,
                                                          degree=params['degree'], verbose=VERBOSE)
     else:
-        img_out, arr_out, arr_deriv_out = get_centerline(img_sub, algo_fitting='polyfit', minmax=False, verbose=VERBOSE)
+        img_out, arr_out, arr_deriv_out = get_centerline(img_sub, algo_fitting='linear', minmax=False, verbose=VERBOSE)
     assert np.median(find_and_sort_coord(img) - find_and_sort_coord(img_out)) == expected['median']
     assert np.max(np.absolute(np.diff(arr_deriv_out))) < expected['laplacian']
 
