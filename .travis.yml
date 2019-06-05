@@ -24,6 +24,9 @@ matrix:
     - os: osx
       name: "OSX 10.13 (High Sierra)"
       osx_image: xcode9.4
+    - os: osx
+      name: "OSX 10.12 (Sierra)"
+      osx_image: xcode9.2
   allow_failures:
     - os: linux
       name: "Ubuntu 14.04 (Trusty)"
