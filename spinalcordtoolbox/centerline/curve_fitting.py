@@ -22,13 +22,14 @@ def polyfit_1d(x, y, xref, deg=5):
     return p(xref), p.deriv(1)(xref)
 
 
-def bspline(x, y, xref, smooth=10):
+def bspline(x, y, xref, smooth=10, deg_bspline=3):
     """
     Bspline interpolation. Length of x needs to be superior to deg.
     :param x:
     :param y:
     :param xref:
-    :param smooth: Smoothing factor. 1: no smoothing, 10: moderate smoothing, 100: large smoothing
+    :param smooth: int: Smoothing factor. 1: no smoothing, 10: moderate smoothing, 100: large smoothing
+    :param deg_bspline: int: Degree of spline
     :return:
     """
     # TODO: add flag to enforce boundaries, using weight flag in bspline function
@@ -38,7 +39,7 @@ def bspline(x, y, xref, smooth=10):
     s = (len(x) - sqrt(2 * len(x))) * smooth
     logging.debug('Smoothing factor: s={}'.format(s))
     # Then, run bspline interpolation
-    tck = interpolate.splrep(x, y, s=s, k=2)
+    tck = interpolate.splrep(x, y, s=s, k=deg_bspline)
     y_fit = interpolate.splev(xref, tck, der=0)
     y_fit_der = interpolate.splev(xref, tck, der=1)
     return y_fit, y_fit_der
