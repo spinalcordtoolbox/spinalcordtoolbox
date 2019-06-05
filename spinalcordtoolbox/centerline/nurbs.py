@@ -41,8 +41,11 @@ from __future__ import division, absolute_import
 
 import os
 import numpy as np
+import logging
 
 import sct_utils as sct
+
+logger = logging.getLogger(__name__)
 
 
 class ReconstructionError(RuntimeError):
@@ -142,8 +145,7 @@ class NURBS:
                     last_error_curve = error_curve
 
                     # compute the nurbs based on input data and number of controle points
-                    if verbose >= 1:
-                        sct.printv('Test: # of control points = ' + str(self.nbControle))
+                    logger.debug('Test: # of control points = ' + str(self.nbControle))
                     try:
                         if not twodim:
                             self.pointsControle = self.reconstructGlobalApproximation(P_x, P_y, P_z, self.degre,
@@ -178,20 +180,18 @@ class NURBS:
                         error_curve /= float(len(P_x))
 
                         if verbose >= 1:
-                            sct.printv('Error on approximation = ' + str(np.round(error_curve, 2)) + ' mm')
+                            logger.info('Error on approximation = ' + str(np.round(error_curve, 2)) + ' mm')
 
                         # Create a list of parameters that have worked in order to call back the last one that has worked
                         list_param_that_worked.append([self.nbControle, self.pointsControle, error_curve])
 
                     except ReconstructionError:
-                        sct.printv('WARNING: NURBS instability -> wrong reconstruction', verbose=verbose,
-                                   type="warning")
+                        logger.warning('NURBS instability -> wrong reconstruction')
                         error_curve = last_error_curve + 10000.0
 
                     except np.linalg.LinAlgError as err_linalg:  # if there is a linalg error
                         if 'singular matrix' in str(err_linalg):  # and if it is a singular matrix
-                            sct.printv('Warning: Singular Matrix in NURBS algorithm -> wrong reconstruction',
-                                       verbose=verbose, type="warning")
+                            logger.warning('Singular Matrix in NURBS algorithm -> wrong reconstruction')
                             error_curve = last_error_curve + 10000.0
                         else:
                             raise  # if it is another linalg error, raises it (so it stops the script)
@@ -218,14 +218,13 @@ class NURBS:
 
                 if verbose >= 1:
                     if self.nbControle != nbControle_that_last_worked:
-                        sct.printv(
-                            "The fitting of the curve was done using {} control points: the number that gave the best results. \nError on approximation = {} mm".format(
-                                nbControle_that_last_worked, np.round(self.error_curve_that_last_worked, 2)))
+                        logger.info("The fitting of the curve was done using {} control points: the number that gave "
+                                    "the best results. \nError on approximation = {} mm".
+                                    format(nbControle_that_last_worked, np.round(self.error_curve_that_last_worked, 2)))
                     else:
-                        sct.printv('Number of control points of the optimal NURBS = {}'.format(self.nbControle))
+                        logger.info('Number of control points of the optimal NURBS = {}'.format(self.nbControle))
             else:
-                if verbose >= 1:
-                    sct.printv('In NURBS we get nurbs_ctl_points = ', nbControl)
+                logger.debug('In NURBS we get nurbs_ctl_points = {}'.format(nbControl))
                 w = [1.0] * len(P_x)
                 self.nbControl = nbControl  # increase nbeControle if "short data"
                 if not twodim:
@@ -431,8 +430,6 @@ class NURBS:
             # not perfect but works (if "enough" points), in order to deal with missing z slices
             for i in range(min(P_z), max(P_z) + 1, 1):
                 if i not in P_z:
-                    # sct.printv(' Missing z slice ')
-                    # sct.printv(i)
                     P_z_temp = np.insert(P_z, np.where(P_z == i - 1)[-1][-1] + 1, i)
                     P_x_temp = np.insert(P_x, np.where(P_z == i - 1)[-1][-1] + 1, (
                                 P_x[np.where(P_z == i - 1)[-1][-1]] + P_x[np.where(P_z == i - 1)[-1][-1] + 1]) / 2)
@@ -963,8 +960,6 @@ class NURBS:
             # not perfect but works (if "enough" points), in order to deal with missing z slices
             for i in range(min(P_z), max(P_z) + 1, 1):
                 if i not in P_z:
-                    # sct.printv(' Missing z slice ')
-                    # sct.printv(i)
                     P_z_temp = np.insert(P_z, np.where(P_z == i - 1)[-1][-1] + 1, i)
                     P_x_temp = np.insert(P_x, np.where(P_z == i - 1)[-1][-1] + 1,
                                          (P_x[np.where(P_z == i - 1)[-1][-1]] + P_x[
@@ -1033,7 +1028,7 @@ def getSize(x, y, z, file_name=None):
     s = 0
     for i in range(len(x) - 1):
         s += sqrt((p1 * (x[i + 1] - x[i]))**2 + (p2 * (y[i + 1] - y[i]))**2 + (p3 * (z[i + 1] - z[i])**2))
-    # sct.printv("centerline size: ", s)
+    logger.debug('centerline size: {}'.format(s))
     return s
 
 
@@ -1063,7 +1058,7 @@ def b_spline_nurbs(x, y, z, fname_centerline=None, degree=3, point_number=3000, 
     y.reverse()
     z.reverse()"""
 
-    sct.printv('\nFitting centerline using B-spline approximation...', verbose)
+    logger.info('Fitting centerline using B-spline approximation')
     if not twodim:
         data = [[x[n], y[n], z[n]] for n in range(len(x))]
     else:
