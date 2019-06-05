@@ -38,7 +38,7 @@ def find_and_sort_coord(img):
     return np.array(arr_sorted_avg)
 
 
-def get_centerline(im_seg, algo_fitting='polyfit', minmax=True, contrast=None, degree=5, smooth=10, verbose=1):
+def get_centerline(im_seg, algo_fitting='polyfit', minmax=True, contrast=None, degree=10, smooth=2, verbose=1):
     """
     Extract centerline from an image (using optic) or from a binary or weighted segmentation (using the center of mass).
     :param im_seg: Image(): Input segmentation or series of points along the centerline.
@@ -77,11 +77,13 @@ def get_centerline(im_seg, algo_fitting='polyfit', minmax=True, contrast=None, d
         x_centerline_fit, x_centerline_deriv = curve_fitting.polyfit_1d(z_mean, x_mean, z_ref, deg=degree)
         y_centerline_fit, y_centerline_deriv = curve_fitting.polyfit_1d(z_mean, y_mean, z_ref, deg=degree)
         z_centerline_deriv = np.ones_like(z_ref)
+        fig_title = 'Algo={}, Deg={}'.format(algo_fitting, degree)
 
     elif algo_fitting == 'bspline':
         x_centerline_fit, x_centerline_deriv = curve_fitting.bspline(z_mean, x_mean, z_ref, smooth=smooth)
         y_centerline_fit, y_centerline_deriv = curve_fitting.bspline(z_mean, y_mean, z_ref, smooth=smooth)
         z_centerline_deriv = np.ones_like(z_ref)
+        fig_title = 'Algo={}, Smooth={}'.format(algo_fitting, smooth)
 
     elif algo_fitting == 'linear':
         # Simple linear interpolation
@@ -91,15 +93,18 @@ def get_centerline(im_seg, algo_fitting='polyfit', minmax=True, contrast=None, d
         _, x_centerline_deriv = curve_fitting.polyfit_1d(z_mean, x_mean, z_ref, deg=degree)
         _, y_centerline_deriv = curve_fitting.polyfit_1d(z_mean, y_mean, z_ref, deg=degree)
         z_centerline_deriv = np.ones_like(z_ref)
+        fig_title = 'Algo={}'.format(algo_fitting)
 
     elif algo_fitting == 'nurbs':
         from spinalcordtoolbox.centerline.nurbs import b_spline_nurbs
+        point_number = 3000
         # Interpolate such that the output centerline has the same length as z_ref
         x_mean_interp = curve_fitting.linear(z_mean, x_mean, z_ref)
         y_mean_interp = curve_fitting.linear(z_mean, y_mean, z_ref)
         x_centerline_fit, y_centerline_fit, z_centerline_fit, x_centerline_deriv, y_centerline_deriv, \
-            z_centerline_deriv, error = b_spline_nurbs(x_mean_interp, y_mean_interp, z_ref, nbControl=None, point_number=3000,
-                                                       all_slices=True)
+            z_centerline_deriv, error = b_spline_nurbs(x_mean_interp, y_mean_interp, z_ref, nbControl=None,
+                                                       point_number=point_number, all_slices=True)
+        fig_title = 'Algo={}, NumberPoints={}'.format(algo_fitting, point_number)
 
     elif algo_fitting == 'optic':
         # This method is particular compared to the previous ones, as here we estimate the centerline based on the
@@ -128,7 +133,7 @@ def get_centerline(im_seg, algo_fitting='polyfit', minmax=True, contrast=None, d
         import matplotlib.pyplot as plt
         plt.figure(figsize=(16, 10))
         plt.subplot(3, 1, 1)
-        plt.title("Algo=%s, Deg=%s" % (algo_fitting, degree))
+        plt.title(fig_title)
         plt.plot(z_mean * pz, x_mean * px, 'ro')
         plt.plot(z_ref * pz, x_centerline_fit * px)
         plt.plot(z_ref * pz, x_centerline_fit * px, 'b.')
