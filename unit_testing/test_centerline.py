@@ -20,7 +20,7 @@ import sct_utils as sct
 
 from create_test_data import dummy_centerline
 
-VERBOSE = 0  # Set to 2 to save images, 0 otherwise
+VERBOSE = 2  # Set to 2 to save images, 0 otherwise
 
 
 # Generate a list of fake centerlines: (dummy_segmentation(params), dict of expected results)
@@ -138,17 +138,13 @@ def test_get_centerline_linear(img_ctl, expected, params):
 
 
 # noinspection 801,PyShadowingNames
-@pytest.mark.parametrize('img_ctl,expected', im_centerlines_nurbs)
-def test_get_centerline_nurbs(img_ctl, expected):
+@pytest.mark.parametrize('img_ctl,expected,params', im_centerlines)
+def test_get_centerline_nurbs(img_ctl, expected, params):
     """Test centerline fitting using nurbs"""
     img, img_sub = [img_ctl[0].copy(), img_ctl[1].copy()]
-    # Here we need a try/except because nurbs crashes with too few points.
-    try:
-        img_out, arr_out, arr_deriv_out = get_centerline(img_sub, algo_fitting='nurbs', minmax=False, verbose=VERBOSE)
-        assert np.median(find_and_sort_coord(img) - find_and_sort_coord(img_out)) == expected['median']
-        assert np.max(np.absolute(np.diff(arr_deriv_out))) < expected['laplacian']
-    except ArithmeticError as e:
-        print(e)
+    img_out, arr_out, arr_deriv_out = get_centerline(img_sub, algo_fitting='nurbs', minmax=False, verbose=VERBOSE)
+    assert np.median(find_and_sort_coord(img) - find_and_sort_coord(img_out)) == expected['median']
+    assert np.max(np.absolute(np.diff(arr_deriv_out))) < expected['laplacian']
 
 
 # noinspection 801,PyShadowingNames
