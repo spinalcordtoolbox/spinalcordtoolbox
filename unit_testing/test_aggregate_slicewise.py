@@ -45,7 +45,8 @@ def dummy_data_and_labels():
     # Create label_struc{}
     label_struc = {0: aggregate_slicewise.LabelStruc(id=0, name='label_0', map_cluster=0),
                    1: aggregate_slicewise.LabelStruc(id=1, name='label_1', map_cluster=1),
-                   2: aggregate_slicewise.LabelStruc(id=2, name='label_2', map_cluster=1)}
+                   2: aggregate_slicewise.LabelStruc(id=2, name='label_2', map_cluster=1),
+                   99: aggregate_slicewise.LabelStruc(id=[1, 2], name='label_1,2', map_cluster=None)}
     return data, labels, label_struc
 
 
@@ -151,7 +152,6 @@ def test_aggregate_per_level(dummy_metrics, dummy_vert_level):
 
 # noinspection 801,PyShadowingNames
 def test_extract_metric(dummy_data_and_labels):
-    # TODO: test with combined labels
     """Test different estimation methods."""
     # Weighted average
     agg_metric = aggregate_slicewise.extract_metric(dummy_data_and_labels[0], labels=dummy_data_and_labels[1],
@@ -182,6 +182,16 @@ def test_extract_metric(dummy_data_and_labels):
                                                     label_struc=dummy_data_and_labels[2], id_label=0,
                                                     indiv_labels_ids=[0, 1], perslice=False, method='max')
     assert agg_metric[list(agg_metric)[0]]['MAX()'] == 41.0
+
+    # Combined labels
+    agg_metric = aggregate_slicewise.extract_metric(dummy_data_and_labels[0], labels=dummy_data_and_labels[1],
+                                                    label_struc=dummy_data_and_labels[2], id_label=99,
+                                                    perslice=False, method='wa')
+    assert agg_metric[list(agg_metric)[0]]['WA()'] == 22.0
+    agg_metric = aggregate_slicewise.extract_metric(dummy_data_and_labels[0], labels=dummy_data_and_labels[1],
+                                                    label_struc=dummy_data_and_labels[2], id_label=99,
+                                                    indiv_labels_ids=[0, 1, 2], perslice=False, method='map')
+    assert agg_metric[list(agg_metric)[0]]['MAP()'] == 20.0
 
 
 # noinspection 801,PyShadowingNames
