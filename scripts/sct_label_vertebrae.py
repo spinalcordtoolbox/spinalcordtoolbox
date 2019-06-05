@@ -323,7 +323,11 @@ def main(args=None):
             # automatically finds C2-C3 disc
             im_data = Image('data.nii')
             im_seg = Image('segmentation.nii')
-            im_label_c2c3 = detect_c2c3(im_data, im_seg, contrast, verbose=verbose)
+            if not remove_temp_files:  # because verbose is here also used for keeping temp files
+                verbose_detect_c2c3 = 2
+            else:
+                verbose_detect_c2c3 = 0
+            im_label_c2c3 = detect_c2c3(im_data, im_seg, contrast, verbose=verbose_detect_c2c3)
             ind_label = np.where(im_label_c2c3.data)
             if not np.size(ind_label) == 0:
                 # subtract "1" to label value because due to legacy, in this code the disc C2-C3 has value "2", whereas in the
