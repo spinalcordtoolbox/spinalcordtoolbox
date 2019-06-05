@@ -331,6 +331,7 @@ def main(args=None):
                 im_label_c2c3.data[ind_label] = 2
             else:
                 sct.printv('Automatic C2-C3 detection failed. Please provide manual label with sct_label_utils', 1, 'error')
+                sys.exit()
             im_label_c2c3.save(fname_labelz)
 
         # dilate label so it is not lost when applying warping
