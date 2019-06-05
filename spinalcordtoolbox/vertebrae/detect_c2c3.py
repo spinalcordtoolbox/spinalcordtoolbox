@@ -125,6 +125,8 @@ def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, verbose=1):
     if verbose < 2:
         logger.info("Remove temporary files...")
         tmp_folder.cleanup()
+    else:
+        logger.info("Temporary files saved to "+tmp_folder.get_path())
 
     nii_c2c3.change_orientation(orientation_init)
     return nii_c2c3
