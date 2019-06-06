@@ -387,7 +387,7 @@ class Sagittal(Slice):
             from spinalcordtoolbox.centerline.core import get_centerline
             image.change_orientation('RPI')  # need to do that because get_centerline operates in RPI orientation
             # Get coordinate of centerline
-            _, arr_ctl_RPI, _ = get_centerline(image, algo_fitting='bspline', minmax=True)
+            _, arr_ctl_RPI, _, _ = get_centerline(image, algo_fitting='bspline', minmax=True)
             # Extend the centerline by copying values below zmin and above zmax to avoid discontinuities
             zmin, zmax = arr_ctl_RPI[2, :].min().astype(int), arr_ctl_RPI[2, :].max().astype(int)
             index_RL_in_RPI = np.concatenate([np.ones(zmin) * arr_ctl_RPI[0, 0],
