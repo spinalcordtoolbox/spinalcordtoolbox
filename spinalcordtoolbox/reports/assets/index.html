@@ -65,16 +65,20 @@
                       Next
                   </span>
               </a>
-             <div class="dropdown">
-                    <button class="btn btn-secondary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    Hide/Show Columns<span class="caret"></span></button>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" id="Date" onclick="toggleColumn(id)">Hide Date</a></li>
-                            <li><a class="dropdown-item" id="Dataset" onclick="toggleColumn(id)">Hide Dataset</a></li>
-                            <li><a class="dropdown-item" id="Subject" onclick="toggleColumn(id)">Hide Subject</a></li>
-                            <li><a class="dropdown-item" id="Function" onclick="toggleColumn(id)">Hide Function</a></li>
-                        </ul>
-             </div>
+              <div id="dropdown" class="dropdown">
+                  <button id="dropdownButton" class="btn btn-info dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true">
+                      Hide Columns <span class="caret"></span></button>
+                  <ul class="dropdown-menu">
+                      <li><a class="dropdown-item" id="Date" onclick="toggleColumn(id)">Hide Date</button></a></li>
+                      <li><a class="dropdown-item" id="Dataset" onclick="toggleColumn(id)">Hide Dataset</a></li>
+                      <li><a class="dropdown-item" id="Subject" onclick="toggleColumn(id)">Hide Subject</a></li>
+                      <li><a class="dropdown-item" id="Function" onclick="toggleColumn(id)">Hide Function</a></li>
+                  </ul>
+                  <script>
+                      var x = document.getElementById('dropdown');
+                      x.style.top = "44px";
+                  </script>
+              </div>
               <table id="table" class="table table-condensed"
                   data-search="true"
                   data-response-handler="responseHandler">
@@ -96,43 +100,33 @@
               <div id="cmdLine"></div>
               <div id="sctVer"></div>
           </div>
-
       </div>
   </div>
-
-</body>
-
-<!-- Latest compiled and minified JavaScript -->
-<script src="_assets/js/jquery-3.1.0.min.js"></script>
-<script src="_assets/js/bootstrap.min.js"></script>
-<script src="_assets/js/bootstrap-table.min.js"></script>
-<script src="_assets/js/main.js"></script>
-<script>var sct_data = $sct_json_data;</script>
-<script>
- function toggleColumn(buttonID){
-    /*
-    This function will hide a specific column of the table if it is on screen
-    or show a specific column if it is not displayed.
-    */
-    var position;
-    position = findPosition(buttonID);
-    if (document.getElementById(buttonID).innerHTML == "Hide " + buttonID){
-            document.getElementById(buttonID).innerHTML = "Show " + buttonID;
-            document.getElementsByTagName('TH')[position].style.display = "none";
-            var iTD;
-            for (iTD = position; iTD < document.getElementsByTagName('TD').length; iTD = iTD + 4){
-                document.getElementsByTagName('TD')[iTD].style.display = "none";
-            }
-     }
-    else if (document.getElementById(buttonID).innerHTML == "Show " + buttonID){
-            document.getElementById(buttonID).innerHTML = "Hide " + buttonID;
-            document.getElementsByTagName('TH')[position].style.display = "table-cell";
-            var iTD;
-            for (iTD = position; iTD < document.getElementsByTagName('TD').length; iTD = iTD + 4){
-                document.getElementsByTagName('TD')[iTD].style.display = "table-cell";
-            }
+  <script>
+    function toggleColumn(buttonID){
+        /*
+        This function will hide a specific column of the table if it is on screen
+        or show a specific column if it is not displayed.
+        */
+        var position;
+        position = findPosition(buttonID);
+        if (document.getElementById(buttonID).innerHTML == "Hide " + buttonID){
+                document.getElementById(buttonID).innerHTML = "Hide " + buttonID + " \u2714";
+                document.getElementsByTagName('TH')[position].style.display = "none";
+                var iTD;
+                for (iTD = position; iTD < document.getElementsByTagName('TD').length; iTD = iTD + 4){
+                    document.getElementsByTagName('TD')[iTD].style.display = "none";
+                }
+        }
+        else if (document.getElementById(buttonID).innerHTML == "Hide " + buttonID + " \u2714"){
+                document.getElementById(buttonID).innerHTML = "Hide " + buttonID;
+                document.getElementsByTagName('TH')[position].style.display = "table-cell";
+                var iTD;
+                for (iTD = position; iTD < document.getElementsByTagName('TD').length; iTD = iTD + 4){
+                    document.getElementsByTagName('TD')[iTD].style.display = "table-cell";
+                }
+        }
     }
-  }
 </script>
 <script>
     function findPosition(buttonID){
@@ -151,4 +145,12 @@
         return position;
      }
 </script>
+</body>
+
+<!-- Latest compiled and minified JavaScript -->
+<script src="_assets/js/jquery-3.1.0.min.js"></script>
+<script src="_assets/js/bootstrap.min.js"></script>
+<script src="_assets/js/bootstrap-table.min.js"></script>
+<script src="_assets/js/main.js"></script>
+<script>var sct_data = $sct_json_data;</script>
 </html>
