@@ -31,6 +31,7 @@ class Param:
         self.new_size = ''
         self.new_size_type = ''
         self.interpolation = 'linear'
+        self.ref = None
         self.x_to_order = {'nn': 0, 'linear': 1, 'spline': 2}
         self.mode = 'reflect'  # How to fill the points outside the boundaries of the input, possible options: constant, nearest, reflect or wrap
         # constant put the superior edges to 0, wrap does something weird with the superior edges, nearest and reflect are fine
@@ -66,7 +67,10 @@ def get_parser():
                       type_value="str",
                       description="Resampling size in number of voxels in each dimensions (x,y,z). Separate with \"x\"",
                       mandatory=False)
-                      # example='50x50x20')
+    parser.add_option(name="-ref",
+                      type_value="str",
+                      description="Reference image to resample input image to. Uses world coordinates.",
+                      mandatory=False)
     parser.usage.addSection('MISC')
     parser.add_option(name="-x",
                       type_value='multiple_choice',
@@ -106,6 +110,9 @@ def run_main():
         param.new_size = arguments["-vox"]
         param.new_size_type = 'vox'
         arg += 1
+    elif "-ref" in arguments:
+        param.ref = arguments["-ref"]
+        arg += 1
     else:
         sct.printv(parser.usage.generate(error='ERROR: you need to specify one of those three arguments : -f, -mm or -vox'))
 
@@ -122,9 +129,8 @@ def run_main():
     param.verbose = int(arguments.get('-v'))
     sct.init_sct(log_level=param.verbose, update=True)  # Update log level
 
-    spinalcordtoolbox.resampling.resample_file(param.fname_data,
-                                               param.fname_out, param.new_size, param.new_size_type,
-                                               param.interpolation, param.verbose)
+    spinalcordtoolbox.resampling.resample_file(param.fname_data, param.fname_out, param.new_size, param.new_size_type,
+                                               param.interpolation, param.verbose, fname_ref=param.ref)
 
 
 if __name__ == "__main__":
