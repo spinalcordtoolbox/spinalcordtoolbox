@@ -43,6 +43,14 @@ class Point(object):
 
 
 class Coordinate(Point):
+    """
+    Class to represent 3D coordinates.
+    :param Point: See class definition above
+    :param mode: 'index', 'continuous'  # TODO: document
+    Example:
+      coord = Coordinate([x, y, z])
+      coord = Coordinate([x, y, z, value])
+    """
     def __init__(self, coord=None, mode='continuous'):
         super(Coordinate, self).__init__()
         if coord is None:
@@ -50,7 +58,8 @@ class Coordinate(Point):
             return
 
         if not isinstance(coord, list) and not isinstance(coord, str):
-            raise TypeError("Coordinates parameter must be a list with coordinates [x, y, z] or [x, y, z, value] or a string with coordinates delimited by commas.")
+            raise TypeError("Coordinates parameter must be a list with coordinates [x, y, z] or [x, y, z, value] or a "
+                            "string with coordinates delimited by commas.")
 
         if isinstance(coord, str):
             # coordinate as a string. Values delimited by a comma.
@@ -92,6 +101,33 @@ class Coordinate(Point):
 
     def hasEqualValue(self, other):
         return self.value == other.value
+
+    def permute(self, img, orient_dest, orient_src=None):
+        """
+        Permute coordinate based on source and destination orientation.
+
+        :param img : spinalcordtoolbox.Image() object
+        :param orient_dest:
+        :param orient_src:
+        :return:
+
+        Example:
+          coord.permute(Image('data.nii.gz'), 'RPI')
+          coord.permute(Image('data.nii.gz'), 'RPI', orient_src='SAL')
+        """
+        # convert coordinates to array
+        coord_arr = np.array([self.x, self.y, self.z])
+        dim_arr = np.array(img.dim[0:3])
+        # permutes
+        from spinalcordtoolbox.image import _get_permutations
+        perm, inversion = _get_permutations(orient_dest, img.orientation)  # we need to invert src and dest for this to work
+        coord_permute = np.array([coord_arr[perm[0]], coord_arr[perm[1]], coord_arr[perm[2]]])
+        dim_permute = np.array([dim_arr[perm[0]], dim_arr[perm[1]], dim_arr[perm[2]]])
+        # invert indices based on maximum dimension for each axis
+        for i in range(3):
+            if inversion[i] == -1:
+                coord_permute[i] = dim_permute[i] - coord_permute[i]
+        return coord_permute
 
     def __add__(self, other):
         if other == 0:  # this check is necessary for using the function sum() of list
