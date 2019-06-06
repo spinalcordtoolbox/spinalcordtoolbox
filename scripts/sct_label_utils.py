@@ -547,7 +547,7 @@ class ProcessLabels(object):
         #   b. for each slice, extract corresponding level
         nx, ny, nz, nt, px, py, pz, pt = im_input.dim
         from spinalcordtoolbox.centerline.core import get_centerline
-        _, arr_ctl, _ = get_centerline(self.image_input, algo_fitting='bspline')
+        _, arr_ctl, _, _ = get_centerline(self.image_input, algo_fitting='bspline')
         x_centerline_fit, y_centerline_fit, z_centerline = arr_ctl
         value_centerline = np.array(
             [im_input.data[int(x_centerline_fit[it]), int(y_centerline_fit[it]), int(z_centerline[it])]
