@@ -6,6 +6,8 @@ from __future__ import absolute_import
 
 import logging
 
+logger = logging.getLogger(__name__)
+
 
 def polyfit_1d(x, y, xref, deg=5):
     """
@@ -22,22 +24,24 @@ def polyfit_1d(x, y, xref, deg=5):
     return p(xref), p.deriv(1)(xref)
 
 
-def bspline(x, y, xref, smooth=10, deg_bspline=3):
+def bspline(x, y, xref, smooth, deg_bspline=3):
     """
     Bspline interpolation. Length of x needs to be superior to deg.
     :param x:
     :param y:
     :param xref:
-    :param smooth: int: Smoothing factor. 1: no smoothing, 10: moderate smoothing, 100: large smoothing
+    :param smooth: float: Smoothing factor. 0: no smoothing, 5: moderate smoothing, 50: large smoothing
     :param deg_bspline: int: Degree of spline
     :return:
     """
     # TODO: add flag to enforce boundaries, using weight flag in bspline function
-    from numpy import sqrt
     from scipy import interpolate
+    if len(x) <= deg_bspline:
+        deg_bspline -= 2
     # Compute smoothing factor
-    s = (len(x) - sqrt(2 * len(x))) * smooth
-    logging.debug('Smoothing factor: s={}'.format(s))
+    # s = (len(x) - sqrt(2 * len(x))) * smooth
+    s = smooth  # TODO: adjust with pz
+    logger.debug('Smoothing factor: smooth={}'.format(s))
     # Then, run bspline interpolation
     tck = interpolate.splrep(x, y, s=s, k=deg_bspline)
     y_fit = interpolate.splev(xref, tck, der=0)
@@ -53,5 +57,6 @@ def linear(x, y, xref):
     :param xref:
     :return:
     """
+    # TODO: implement smoothing
     from numpy import interp
     return interp(xref, x, y, left=None, right=None, period=None)
