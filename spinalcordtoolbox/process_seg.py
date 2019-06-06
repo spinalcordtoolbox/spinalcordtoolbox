@@ -51,7 +51,7 @@ def compute_shape(segmentation, algo_fitting='bspline', angle_correction=True, v
 
     if angle_correction:
         # compute the spinal cord centerline based on the spinal cord segmentation
-        _, arr_ctl, arr_ctl_der = get_centerline(im_seg, algo_fitting=algo_fitting, minmax=False, verbose=verbose)
+        _, arr_ctl, arr_ctl_der, _ = get_centerline(im_seg, algo_fitting=algo_fitting, minmax=False, verbose=verbose)
 
     # Loop across z and compute shape analysis
     for iz in tqdm(range(min_z_index, max_z_index + 1), unit='iter', unit_scale=False, desc="Compute shape analysis",
