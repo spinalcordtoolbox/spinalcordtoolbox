@@ -14,6 +14,15 @@ from spinalcordtoolbox.centerline import curve_fitting
 logger = logging.getLogger(__name__)
 
 
+class FitResults:
+    """
+    Collection of metrics to assess fitting performance
+    """
+    def __init__(self):
+        self.rmse = None  # RMSE
+        self.laplacian_max = None  # Maximum of 2nd derivatives
+
+
 def find_and_sort_coord(img):
     """
     Find x,y,z coordinate of centerline and output an array which is sorted along SI direction. Removes any duplicate
@@ -38,7 +47,7 @@ def find_and_sort_coord(img):
     return np.array(arr_sorted_avg)
 
 
-def get_centerline(im_seg, algo_fitting='polyfit', minmax=True, contrast=None, degree=10, smooth=2, verbose=1):
+def get_centerline(im_seg, algo_fitting='polyfit', minmax=True, contrast=None, degree=5, smooth=2, verbose=1):
     """
     Extract centerline from an image (using optic) or from a binary or weighted segmentation (using the center of mass).
     :param im_seg: Image(): Input segmentation or series of points along the centerline.
@@ -54,6 +63,7 @@ def get_centerline(im_seg, algo_fitting='polyfit', minmax=True, contrast=None, d
     :return: im_centerline: Image: Centerline in discrete coordinate (int)
     :return: arr_centerline: 3x1 array: Centerline in continuous coordinate (float) for each slice in RPI orientation.
     :return: arr_centerline_deriv: 3x1 array: Derivatives of x and y centerline wrt. z for each slice in RPI orient.
+    :return: fit_results: FitResults class
     """
 
     if not isinstance(im_seg, Image):
@@ -71,6 +81,7 @@ def get_centerline(im_seg, algo_fitting='polyfit', minmax=True, contrast=None, d
         z_ref = np.array(range(z_mean.min().astype(int), z_mean.max().astype(int) + 1))
     else:
         z_ref = np.array(range(im_seg.dim[2]))
+    index_mean = np.array([list(z_ref).index(i) for i in z_mean])
 
     # Choose method
     if algo_fitting == 'polyfit':
@@ -80,8 +91,8 @@ def get_centerline(im_seg, algo_fitting='polyfit', minmax=True, contrast=None, d
         fig_title = 'Algo={}, Deg={}'.format(algo_fitting, degree)
 
     elif algo_fitting == 'bspline':
-        x_centerline_fit, x_centerline_deriv = curve_fitting.bspline(z_mean, x_mean, z_ref, smooth=smooth)
-        y_centerline_fit, y_centerline_deriv = curve_fitting.bspline(z_mean, y_mean, z_ref, smooth=smooth)
+        x_centerline_fit, x_centerline_deriv = curve_fitting.bspline(z_mean, x_mean, z_ref, smooth)
+        y_centerline_fit, y_centerline_deriv = curve_fitting.bspline(z_mean, y_mean, z_ref, smooth)
         z_centerline_deriv = np.ones_like(z_ref)
         fig_title = 'Algo={}, Smooth={}'.format(algo_fitting, smooth)
 
@@ -90,6 +101,7 @@ def get_centerline(im_seg, algo_fitting='polyfit', minmax=True, contrast=None, d
         x_centerline_fit = curve_fitting.linear(z_mean, x_mean, z_ref)
         y_centerline_fit = curve_fitting.linear(z_mean, y_mean, z_ref)
         # Compute derivatives using polynomial fit due to undefined derivatives using linear interpolation
+        # TODO: don't use polyfit (unstable)
         _, x_centerline_deriv = curve_fitting.polyfit_1d(z_mean, x_mean, z_ref, deg=degree)
         _, y_centerline_deriv = curve_fitting.polyfit_1d(z_mean, y_mean, z_ref, deg=degree)
         z_centerline_deriv = np.ones_like(z_ref)
@@ -125,6 +137,36 @@ def get_centerline(im_seg, algo_fitting='polyfit', minmax=True, contrast=None, d
         logger.error('algo_fitting "' + algo_fitting + '" does not exist.')
         raise ValueError
 
+    # Create an image with the centerline
+    im_centerline = im_seg.copy()
+    im_centerline.data = np.zeros(im_centerline.data.shape)
+    # Assign value=1 to centerline. Make sure to clip to avoid array overflow.
+    # TODO: check this round and clip-- suspicious
+    im_centerline.data[round_and_clip(x_centerline_fit, clip=[0, im_centerline.data.shape[0]]),
+                       round_and_clip(y_centerline_fit, clip=[0, im_centerline.data.shape[1]]),
+                       z_ref] = 1
+    # reorient centerline to native orientation
+    im_centerline.change_orientation(native_orientation)
+    im_seg.change_orientation(native_orientation)
+    # TODO: Reorient centerline in native orientation. For now, we output the array in RPI. Note that it is tricky to
+    #   reorient in native orientation, because the voxel center is not in the middle, but in the top corner, so this
+    #   needs to be taken into accound during reorientation. The code below does not work properly.
+    # # Get a permutation and inversion based on native orientation
+    # perm, inversion = _get_permutations(im_seg.orientation, native_orientation)
+    # # axes inversion (flip)
+    # # ctl = np.array([x_centerline_fit[::inversion[0]], y_centerline_fit[::inversion[1]], z_ref[::inversion[2]]])
+    # ctl = np.array([x_centerline_fit, y_centerline_fit, z_ref])
+    # ctl_deriv = np.array([x_centerline_deriv[::inversion[0]], y_centerline_deriv[::inversion[1]], np.ones_like(z_ref)])
+    # return im_centerline, \
+    #        np.array([ctl[perm[0]], ctl[perm[1]], ctl[perm[2]]]), \
+    #        np.array([ctl_deriv[perm[0]], ctl_deriv[perm[1]], ctl_deriv[perm[2]]])
+
+    # Compute fitting metrics
+    fit_results = FitResults()
+    fit_results.rmse = np.sqrt(np.mean((x_mean - x_centerline_fit[index_mean]) ** 2) * px +
+                               np.mean((y_mean - y_centerline_fit[index_mean]) ** 2) * py)
+    fit_results.laplacian_max = np.max(np.absolute(np.diff(np.array([x_centerline_deriv, y_centerline_deriv, z_centerline_deriv]))))
+
     # Display fig of fitted curves
     if verbose == 2:
         from datetime import datetime
@@ -133,7 +175,7 @@ def get_centerline(im_seg, algo_fitting='polyfit', minmax=True, contrast=None, d
         import matplotlib.pyplot as plt
         plt.figure(figsize=(16, 10))
         plt.subplot(3, 1, 1)
-        plt.title(fig_title)
+        plt.title(fig_title + '\nRMSE[mm]={:0.2f}, LaplacianMax={:0.2f}'.format(fit_results.rmse, fit_results.laplacian_max))
         plt.plot(z_mean * pz, x_mean * px, 'ro')
         plt.plot(z_ref * pz, x_centerline_fit * px)
         plt.plot(z_ref * pz, x_centerline_fit * px, 'b.')
@@ -159,31 +201,10 @@ def get_centerline(im_seg, algo_fitting='polyfit', minmax=True, contrast=None, d
         plt.savefig('fig_centerline_' + datetime.now().strftime("%y%m%d%H%M%S%f") + '_' + algo_fitting + '.png')
         plt.close()
 
-    # Create an image with the centerline
-    im_centerline = im_seg.copy()
-    im_centerline.data = np.zeros(im_centerline.data.shape)
-    # Assign value=1 to centerline. Make sure to clip to avoid array overflow.
-    # TODO: check this round and clip-- suspicious
-    im_centerline.data[round_and_clip(x_centerline_fit, clip=[0, im_centerline.data.shape[0]]),
-                       round_and_clip(y_centerline_fit, clip=[0, im_centerline.data.shape[1]]),
-                       z_ref] = 1
-    # reorient centerline to native orientation
-    im_centerline.change_orientation(native_orientation)
-    # TODO: Reorient centerline in native orientation. For now, we output the array in RPI. Note that it is tricky to
-    #   reorient in native orientation, because the voxel center is not in the middle, but in the top corner, so this
-    #   needs to be taken into accound during reorientation. The code below does not work properly.
-    # # Get a permutation and inversion based on native orientation
-    # perm, inversion = _get_permutations(im_seg.orientation, native_orientation)
-    # # axes inversion (flip)
-    # # ctl = np.array([x_centerline_fit[::inversion[0]], y_centerline_fit[::inversion[1]], z_ref[::inversion[2]]])
-    # ctl = np.array([x_centerline_fit, y_centerline_fit, z_ref])
-    # ctl_deriv = np.array([x_centerline_deriv[::inversion[0]], y_centerline_deriv[::inversion[1]], np.ones_like(z_ref)])
-    # return im_centerline, \
-    #        np.array([ctl[perm[0]], ctl[perm[1]], ctl[perm[2]]]), \
-    #        np.array([ctl_deriv[perm[0]], ctl_deriv[perm[1]], ctl_deriv[perm[2]]])
     return im_centerline, \
            np.array([x_centerline_fit, y_centerline_fit, z_ref]), \
-           np.array([x_centerline_deriv, y_centerline_deriv, z_centerline_deriv])
+           np.array([x_centerline_deriv, y_centerline_deriv, z_centerline_deriv]), \
+           fit_results
 
 
 def round_and_clip(arr, clip=None):
