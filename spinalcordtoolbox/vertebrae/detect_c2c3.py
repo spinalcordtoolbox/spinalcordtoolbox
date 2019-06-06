@@ -82,6 +82,8 @@ def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, verbose=1):
         nii_pred_before_postPro = nii_midSlice.copy()
         nii_pred_before_postPro.data = pred  # 2D data with orientation, mid sag slice of the original data
         nii_pred_before_postPro.save("pred_midSlice_before_postPro.nii.gz")  # save it)
+    # DEBUG trick: check if the detection succeed by running: fsleyes data_midSlice data_midSlice_pred_svm -cm red -dr 0 100
+    # If a "red cluster" is observed in the neighbourhood of C2C3, then the model detected it.
 
     # Create mask along centerline
     midSlice_mask = np.zeros(midSlice_seg.shape)
@@ -125,6 +127,8 @@ def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, verbose=1):
     if verbose < 2:
         logger.info("Remove temporary files...")
         tmp_folder.cleanup()
+    else:
+        logger.info("Temporary files saved to "+tmp_folder.get_path())
 
     nii_c2c3.change_orientation(orientation_init)
     return nii_c2c3
