@@ -102,10 +102,18 @@
           </div>
       </div>
   </div>
-  <script>
+</body>
+
+<!-- Latest compiled and minified JavaScript -->
+<script src="_assets/js/jquery-3.1.0.min.js"></script>
+<script src="_assets/js/bootstrap.min.js"></script>
+<script src="_assets/js/bootstrap-table.min.js"></script>
+<script src="_assets/js/main.js"></script>
+<script>var sct_data = $sct_json_data;</script>
+<script>
     function toggleColumn(buttonID){
         /*
-        This function will hide a specific column of the table if it is on screen
+        This function will hide a specific column of the table if it is displayed
         or show a specific column if it is not displayed.
         */
         var position;
@@ -127,16 +135,14 @@
                 }
         }
     }
-</script>
-<script>
+
     function findPosition(buttonID){
         /*
         This function will find the array position
         of the header cell corresponding to the wanted Id.
         Return type: number
         */
-        var iTH;
-        var position;
+        var iTH, position;
         for (iTH = 0; iTH < document.getElementsByTagName('TH').length; iTH++){
             if (buttonID.valueOf() == document.getElementsByTagName('TH')[iTH].innerText){
                 position = iTH;
@@ -145,12 +151,30 @@
         return position;
      }
 </script>
-</body>
+<script>
+    let body = document.body;
+    let dropdown = document.querySelector('.dropdown');
+    let btn = document.querySelector('.btn');
 
-<!-- Latest compiled and minified JavaScript -->
-<script src="_assets/js/jquery-3.1.0.min.js"></script>
-<script src="_assets/js/bootstrap.min.js"></script>
-<script src="_assets/js/bootstrap-table.min.js"></script>
-<script src="_assets/js/main.js"></script>
-<script>var sct_data = $sct_json_data;</script>
+    function manualOpenClose(e){
+        /*
+        This function toggles the opening and closing of
+        the dropdown-menu when the button for the dropdown is clicked.
+        */
+        e.stopPropagation();
+        dropdown.classList.toggle('open');
+    }
+
+    function stopDropdownClose(e){
+        /*
+        This function keeps the inside contents of the dropdown-menu
+        open even if the inside contents or the body of the html file are clicked.
+        */
+        e.stopPropagation();
+    }
+
+    body.onclick = stopDropdownClose;
+    btn.onclick = manualOpenClose;
+
+</script>
 </html>
