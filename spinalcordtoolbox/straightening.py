@@ -625,8 +625,8 @@ class SpinalCordStraightener(object):
 
 def _get_centerline(img, algo_fitting, degree, verbose):
     nx, ny, nz, nt, px, py, pz, pt = img.dim
-    _, arr_ctl, arr_ctl_der = get_centerline(img, algo_fitting=algo_fitting, minmax=True, degree=degree,
-                                             verbose=verbose)
+    _, arr_ctl, arr_ctl_der, _ = get_centerline(img, algo_fitting=algo_fitting, minmax=True, degree=degree,
+                                                verbose=verbose)
     # Transform centerline to physical coordinate system
     arr_ctl_phys = img.transfo_pix2phys(
         [[arr_ctl[0][i], arr_ctl[1][i], arr_ctl[2][i]] for i in range(len(arr_ctl[0]))])
