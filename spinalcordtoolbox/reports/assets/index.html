@@ -66,13 +66,12 @@
                   </span>
               </a>
               <div id="dropdown" class="dropdown">
-                  <button id="dropdownButton" class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true">
-                      Hide Columns <span class="caret"></span></button>
+                  <button id="dropdownButton" class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true">Display Columns <span class="caret"></span></button>
                   <ul class="dropdown-menu">
-                      <li><a class="dropdown-item" id="Date" onclick="toggleColumn(id)">Hide Date</button></a></li>
-                      <li><a class="dropdown-item" id="Dataset" onclick="toggleColumn(id)">Hide Dataset</a></li>
-                      <li><a class="dropdown-item" id="Subject" onclick="toggleColumn(id)">Hide Subject</a></li>
-                      <li><a class="dropdown-item" id="Function" onclick="toggleColumn(id)">Hide Function</a></li>
+                      <li><a class="dropdown-item" id="Date" onclick="toggleColumn(id)">Display Date &#10004</button></a></li>
+                      <li><a class="dropdown-item" id="Dataset" onclick="toggleColumn(id)">Display Dataset &#10004</a></li>
+                      <li><a class="dropdown-item" id="Subject" onclick="toggleColumn(id)">Display Subject &#10004</a></li>
+                      <li><a class="dropdown-item" id="Function" onclick="toggleColumn(id)">Display Function &#10004</a></li>
                   </ul>
                   <script>
                       var buttonPosition = document.getElementById('dropdown');
@@ -120,19 +119,19 @@
         */
         var position;
         position = findPosition(buttonID);
-        if (document.getElementById(buttonID).innerHTML == "Hide " + buttonID){
-                document.getElementById(buttonID).innerHTML = "Hide " + buttonID + " \u2714";
+        if (document.getElementById(buttonID).innerHTML == "Display " + buttonID + " \u2714"){
+                document.getElementById(buttonID).innerHTML = "Display " + buttonID;
                 document.getElementsByTagName('TH')[position].style.display = "none";
                 var iTD;
-                for (iTD = position; iTD < document.getElementsByTagName('TD').length; iTD = iTD + 4){
+                for (iTD = position; iTD < document.getElementsByTagName('TD').length; iTD = iTD + document.getElementsByTagName('TH').length){
                     document.getElementsByTagName('TD')[iTD].style.display = "none";
                 }
         }
-        else if (document.getElementById(buttonID).innerHTML == "Hide " + buttonID + " \u2714"){
-                document.getElementById(buttonID).innerHTML = "Hide " + buttonID;
+        else if (document.getElementById(buttonID).innerHTML == "Display " + buttonID){
+                document.getElementById(buttonID).innerHTML = "Display " + buttonID + " \u2714";
                 document.getElementsByTagName('TH')[position].style.display = "table-cell";
                 var iTD;
-                for (iTD = position; iTD < document.getElementsByTagName('TD').length; iTD = iTD + 4){
+                for (iTD = position; iTD < document.getElementsByTagName('TD').length; iTD = iTD + document.getElementsByTagName('TH').length){
                     document.getElementsByTagName('TD')[iTD].style.display = "table-cell";
                 }
         }
