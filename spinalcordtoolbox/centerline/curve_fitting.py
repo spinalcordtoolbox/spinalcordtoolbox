@@ -52,27 +52,35 @@ def bspline(x, y, xref, smooth, deg_bspline=3, pz=1):
     return y_fit, y_fit_der
 
 
-def linear(x, y, xref):
+def linear(x, y, xref, smooth=0, pz=1):
     """
     Linear interpolation.
     :param x:
     :param y:
     :param xref:
+    :param smooth: float: Smoothing factor corresponding to the length of the filter window (in mm). 0: no smoothing.
+    :param pz: float: dimension of pixel along superior-inferior direction (z, assuming RPI orientation)
     :return:
     """
-    # TODO: implement smoothing
     from numpy import interp
     y_fit = interp(xref, x, y, left=None, right=None, period=None)
-    return smooth(y_fit, window_len=5)
+    window_len = round_up_to_odd(smooth / float(pz))
+    logger.debug('Smoothing window: {}'.format(window_len))
+    return smooth1d(y_fit, window_len)
 
 
-def smooth(x, window_len=11, window='hanning'):
+def round_up_to_odd(f):
+    """Round input float to next odd integer."""
+    return int(np.ceil(f) // 2 * 2 + 1)
+
+
+def smooth1d(x, window_len, window='hanning'):
     """smooth the data using a window with requested size.
 
     This method is based on the convolution of a scaled window with the signal.
     The signal is prepared by introducing reflected copies of the signal
     (with the window size) in both ends so that transient parts are minimized
-    in the begining and end part of the output signal.
+    in the beginning and end part of the output signal.
 
     From: https://scipy-cookbook.readthedocs.io/items/SignalSmooth.html
 
@@ -102,9 +110,11 @@ def smooth(x, window_len=11, window='hanning'):
         raise ValueError("smooth only accepts 1 dimension arrays.")
 
     if x.size < window_len:
-        raise ValueError("Input vector needs to be bigger than window size.")
+        window_len = x.size
+        logger.warning("Input vector is bigger than window size. Forcing window_len = x.size")
 
     if window_len < 3:
+        logger.warning("Window length needs to be >= 3. Returning input signal.")
         return x
 
     if not window in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
