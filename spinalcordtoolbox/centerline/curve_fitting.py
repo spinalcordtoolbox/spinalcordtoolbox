@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8
 # Functions dealing with 2d and 3d curve fitting
-# TODO: implement robust fitting, i.e., detection and removal of outliers
+# TODO: implement robust fitting, i.e., detection and removal of outliers. See:
+#  https://github.com/neuropoly/spinalcordtoolbox/blob/24ec6668d623be00194b21038f275134c82122de/scripts/msct_smooth.py#L568
 
 from __future__ import absolute_import
 
@@ -78,11 +79,11 @@ def smooth1d(x, window_len, window='hanning'):
     """smooth the data using a window with requested size.
 
     This method is based on the convolution of a scaled window with the signal.
-    The signal is prepared by introducing reflected copies of the signal
+    The signal is prepared by introducing reflected copies (central symmetry) of the signal
     (with the window size) in both ends so that transient parts are minimized
     in the beginning and end part of the output signal.
 
-    From: https://scipy-cookbook.readthedocs.io/items/SignalSmooth.html
+    Modified from: https://scipy-cookbook.readthedocs.io/items/SignalSmooth.html
 
     input:
         x: the input signal
@@ -103,7 +104,6 @@ def smooth1d(x, window_len, window='hanning'):
 
     numpy.hanning, numpy.hamming, numpy.bartlett, numpy.blackman, numpy.convolve
     scipy.signal.lfilter
-    TODO: use central symmetry (not mirror) to mitigate edge effects
     """
 
     if x.ndim != 1:
@@ -120,7 +120,8 @@ def smooth1d(x, window_len, window='hanning'):
     if not window in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
         raise ValueError("Window is on of 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'")
 
-    s = np.r_[x[window_len - 1:0:-1], x, x[-2:-window_len - 1:-1]]
+    # Pad signal using central symmetry
+    s = np.r_[2 * x[0] - x[window_len - 1:0:-1], x, 2 * x[-1] - x[-2:-window_len - 1:-1]]
     # print(len(s))
     if window == 'flat':  # moving average
         w = np.ones(window_len, 'd')
