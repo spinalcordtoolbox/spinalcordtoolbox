@@ -167,9 +167,13 @@
     body.addEventListener('click', function(e){
         /*
         This function keeps the inside contents of the dropdown-menu
-        open even if the inside contents or the body of the html file are clicked.
+        open even if the inside contents or the body of the html file are clicked
+        but closes the dropdown menu if click is outside of dropdown-menu.
         */
         e.stopPropagation();
+        if (!(15 < e.clientX  && e.clientX < 175 && 172 < e.clientY && e.clientY < 366) && dropdown.className == "dropdown open"){
+            dropdown.classList.toggle('open');
+        }
     });
 
     btn.addEventListener('click', function(e){
