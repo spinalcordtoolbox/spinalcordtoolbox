@@ -68,20 +68,13 @@
               <div id="dropdown" class="dropdown">
                   <button id="dropdownButton" class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true">Display Columns <span class="caret"></span></button>
                   <ul class="dropdown-menu">
-                      <li><a class="dropdown-item" id="Date" onclick="toggleColumn(id)">Display Date</button></a></li>
-                      <li><a class="dropdown-item" id="Dataset" onclick="toggleColumn(id)">Display Dataset</a></li>
-                      <li><a class="dropdown-item" id="Subject" onclick="toggleColumn(id)">Display Subject</a></li>
-                      <li><a class="dropdown-item" id="Function" onclick="toggleColumn(id)">Display Function</a></li>
-                      <li><a class="dropdown-item" id="Python" onclick="toggleColumn(id)">Display Python &#10004</a></li>
-                      <li><a class="dropdown-item" id="Cwd" onclick="toggleColumn(id)">Display Cwd &#10004</a></li>
-                      <li><a class="dropdown-item" id="Commandline" onclick="toggleColumn(id)">Display Commandline &#10004</a></li>
-                      <li><a class="dropdown-item" id="SCT_version" onclick="toggleColumn(id)">Display SCT_version &#10004</a></li>
-                      <li><a class="dropdown-item" id="Contrast" onclick="toggleColumn(id)">Display Contrast &#10004</a></li>
-                      <li><a class="dropdown-item" id="Input_file_name" onclick="toggleColumn(id)">Display Input_file_name &#10004</a></li>
-                      <li><a class="dropdown-item" id="Orientation" onclick="toggleColumn(id)">Display Orientation &#10004</a></li>
-                      <li><a class="dropdown-item" id="Background_image" onclick="toggleColumn(id)">Display Background_image &#10004</a></li>
-                      <li><a class="dropdown-item" id="Overlay_image" onclick="toggleColumn(id)">Display Overlay_image &#10004</a></li>
-                      <li><a class="dropdown-item" id="Dimension" onclick="toggleColumn(id)">Display Dimension &#10004</a></li>
+                      <li><a class="dropdown-item" id="Date" onclick="toggleColumn(id)">Date</button></a></li>
+                      <li><a class="dropdown-item" id="Subject" onclick="toggleColumn(id)">Subject</a></li>
+                      <li><a class="dropdown-item" id="File" onclick="toggleColumn(id)">File</a></li>
+                      <li><a class="dropdown-item" id="Function" onclick="toggleColumn(id)">Function</a></li>
+                      <li><a class="dropdown-item" id="Dataset" onclick="toggleColumn(id)">Dataset &#10004</a></li>
+                      <li><a class="dropdown-item" id="Contrast" onclick="toggleColumn(id)">Contrast &#10004</a></li>
+                      <li><a class="dropdown-item" id="Path" onclick="toggleColumn(id)">Path &#10004</a></li>
                   </ul>
                   <script>
                       var buttonPosition = document.getElementById('dropdown');
@@ -98,17 +91,12 @@
 			                    <th data-field="moddate" data-sortable="true">Date</th>
 			                    <th data-field="dataset" data-sortable="true">Dataset</th>
 			                    <th data-field="subject" data-sortable="true">Subject</th>
-			                    <th data-field="command" data-sortable="true">Function</th>
-                                <th data-field="python" data-sortable="true">Python</th>
-                                <th data-field="cwd" data-sortable="true">Cwd</th>
-                                <th data-field="cmdline" data-sortable="true">Commandline</th>
-                                <th data-field="sct_version" data-sortable="true">SCT_version</th>
+                                <th data-field="fname_in" data-sortable="true">File</th>
                                 <th data-field="contrast" data-sortable="true">Contrast</th>
-                                <th data-field="fname_in" data-sortable="true">Input_file_name</th>
-                                <th data-field="orientation" data-sortable="true">Orientation</th>
-                                <th data-field="background_img" data-sortable="true">Background_image</th>
-                                <th data-field="overlay_img" data-sortable="true">Overlay_image</th>
-                                <th data-field="dimension" data-sortable="true">Dimension</th>
+			                    <th data-field="command" data-sortable="true">Function</th>
+                                <th data-field="Path" data-sortable="true">Path</th>
+
+
 		                  </tr>
 	                </thead>
               </table>
@@ -139,16 +127,16 @@
         */
         var position;
         position = findPosition(buttonID);
-        if (document.getElementById(buttonID).innerHTML == "Display " + buttonID + " \u2714"){
-                document.getElementById(buttonID).innerHTML = "Display " + buttonID;
+        if (document.getElementById(buttonID).innerHTML == buttonID + " \u2714"){
+                document.getElementById(buttonID).innerHTML = buttonID;
                 document.getElementsByTagName('TH')[position].style.display = "none";
                 var iTD;
                 for (iTD = position; iTD < document.getElementsByTagName('TD').length; iTD = iTD + document.getElementsByTagName('TH').length){
                     document.getElementsByTagName('TD')[iTD].style.display = "none";
                 }
         }
-        else if (document.getElementById(buttonID).innerHTML == "Display " + buttonID){
-                document.getElementById(buttonID).innerHTML = "Display " + buttonID + " \u2714";
+        else if (document.getElementById(buttonID).innerHTML == buttonID){
+                document.getElementById(buttonID).innerHTML = buttonID + " \u2714";
                 document.getElementsByTagName('TH')[position].style.display = "table-cell";
                 var iTD;
                 for (iTD = position; iTD < document.getElementsByTagName('TD').length; iTD = iTD + document.getElementsByTagName('TH').length){
