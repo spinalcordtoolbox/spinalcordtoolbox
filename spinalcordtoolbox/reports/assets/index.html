@@ -68,10 +68,20 @@
               <div id="dropdown" class="dropdown">
                   <button id="dropdownButton" class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true">Display Columns <span class="caret"></span></button>
                   <ul class="dropdown-menu">
-                      <li><a class="dropdown-item" id="Date" onclick="toggleColumn(id)">Display Date &#10004</button></a></li>
-                      <li><a class="dropdown-item" id="Dataset" onclick="toggleColumn(id)">Display Dataset &#10004</a></li>
-                      <li><a class="dropdown-item" id="Subject" onclick="toggleColumn(id)">Display Subject &#10004</a></li>
-                      <li><a class="dropdown-item" id="Function" onclick="toggleColumn(id)">Display Function &#10004</a></li>
+                      <li><a class="dropdown-item" id="Date" onclick="toggleColumn(id)">Display Date</button></a></li>
+                      <li><a class="dropdown-item" id="Dataset" onclick="toggleColumn(id)">Display Dataset</a></li>
+                      <li><a class="dropdown-item" id="Subject" onclick="toggleColumn(id)">Display Subject</a></li>
+                      <li><a class="dropdown-item" id="Function" onclick="toggleColumn(id)">Display Function</a></li>
+                      <li><a class="dropdown-item" id="Python" onclick="toggleColumn(id)">Display Python &#10004</a></li>
+                      <li><a class="dropdown-item" id="Cwd" onclick="toggleColumn(id)">Display Cwd &#10004</a></li>
+                      <li><a class="dropdown-item" id="Commandline" onclick="toggleColumn(id)">Display Commandline &#10004</a></li>
+                      <li><a class="dropdown-item" id="SCT_version" onclick="toggleColumn(id)">Display SCT_version &#10004</a></li>
+                      <li><a class="dropdown-item" id="Contrast" onclick="toggleColumn(id)">Display Contrast &#10004</a></li>
+                      <li><a class="dropdown-item" id="Input_file_name" onclick="toggleColumn(id)">Display Input_file_name &#10004</a></li>
+                      <li><a class="dropdown-item" id="Orientation" onclick="toggleColumn(id)">Display Orientation &#10004</a></li>
+                      <li><a class="dropdown-item" id="Background_image" onclick="toggleColumn(id)">Display Background_image &#10004</a></li>
+                      <li><a class="dropdown-item" id="Overlay_image" onclick="toggleColumn(id)">Display Overlay_image &#10004</a></li>
+                      <li><a class="dropdown-item" id="Dimension" onclick="toggleColumn(id)">Display Dimension &#10004</a></li>
                   </ul>
                   <script>
                       var buttonPosition = document.getElementById('dropdown');
@@ -89,6 +99,16 @@
 			                    <th data-field="dataset" data-sortable="true">Dataset</th>
 			                    <th data-field="subject" data-sortable="true">Subject</th>
 			                    <th data-field="command" data-sortable="true">Function</th>
+                                <th data-field="python" data-sortable="true">Python</th>
+                                <th data-field="cwd" data-sortable="true">Cwd</th>
+                                <th data-field="cmdline" data-sortable="true">Commandline</th>
+                                <th data-field="sct_version" data-sortable="true">SCT_version</th>
+                                <th data-field="contrast" data-sortable="true">Contrast</th>
+                                <th data-field="fname_in" data-sortable="true">Input_file_name</th>
+                                <th data-field="orientation" data-sortable="true">Orientation</th>
+                                <th data-field="background_img" data-sortable="true">Background_image</th>
+                                <th data-field="overlay_img" data-sortable="true">Overlay_image</th>
+                                <th data-field="dimension" data-sortable="true">Dimension</th>
 		                  </tr>
 	                </thead>
               </table>
@@ -156,25 +176,35 @@
     let dropdown = document.querySelector('.dropdown');
     let btn = document.querySelector('.btn');
 
-    function manualOpenClose(e){
-        /*
-        This function toggles the opening and closing of
-        the dropdown-menu when the button for the dropdown is clicked.
-        */
-        e.stopPropagation();
-        dropdown.classList.toggle('open');
-    }
-
-    function stopDropdownClose(e){
+    body.addEventListener('click', function(e){
         /*
         This function keeps the inside contents of the dropdown-menu
         open even if the inside contents or the body of the html file are clicked.
         */
         e.stopPropagation();
-    }
+    });
 
-    body.onclick = stopDropdownClose;
-    btn.onclick = manualOpenClose;
+    btn.addEventListener('click', function(e){
+         /*
+        This function toggles the opening and closing of
+        the dropdown-menu when the button for the dropdown is clicked.
+        */
+        e.stopPropagation();
+        dropdown.classList.toggle('open');
+    });
 
+    setTimeout(function(){
+               /*
+               This function removes the columns we do not want to display at
+               the beginning after a certain delay of time after the page loads because after the
+               page loads, the table cells are undefined for a certain period of time, therefore invalidating the onload method.
+               A delay of time is necessary to be able to hide the columns. Replace this time based function call
+               if alternative that is independent from time is found.
+               */
+               var iTH;
+               var dropdownList = document.getElementsByClassName('dropdown-item');
+               for (iTH = 0; iTH < dropdownList.length; iTH++){
+                    toggleColumn(document.getElementsByClassName('dropdown-item')[iTH].id)
+                }},2);
 </script>
 </html>
