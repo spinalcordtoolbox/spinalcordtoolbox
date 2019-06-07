@@ -3,8 +3,6 @@
 # Core functions dealing with centerline extraction from 3D data.
 
 
-# TODO: Add feature to born centerline at min/max z, for compatibility with flatten_sagittal
-
 import logging
 import numpy as np
 
@@ -47,7 +45,7 @@ def find_and_sort_coord(img):
     return np.array(arr_sorted_avg)
 
 
-def get_centerline(im_seg, algo_fitting='polyfit', minmax=True, contrast=None, degree=5, smooth=3, verbose=1):
+def get_centerline(im_seg, algo_fitting='polyfit', minmax=True, contrast=None, degree=5, smooth=10, verbose=1):
     """
     Extract centerline from an image (using optic) or from a binary or weighted segmentation (using the center of mass).
     :param im_seg: Image(): Input segmentation or series of points along the centerline.
@@ -98,14 +96,10 @@ def get_centerline(im_seg, algo_fitting='polyfit', minmax=True, contrast=None, d
 
     elif algo_fitting == 'linear':
         # Simple linear interpolation
-        x_centerline_fit = curve_fitting.linear(z_mean, x_mean, z_ref)
-        y_centerline_fit = curve_fitting.linear(z_mean, y_mean, z_ref)
-        # Compute derivatives using polynomial fit due to undefined derivatives using linear interpolation
-        # TODO: don't use polyfit (unstable)
-        _, x_centerline_deriv = curve_fitting.polyfit_1d(z_mean, x_mean, z_ref, deg=degree)
-        _, y_centerline_deriv = curve_fitting.polyfit_1d(z_mean, y_mean, z_ref, deg=degree)
+        x_centerline_fit, x_centerline_deriv = curve_fitting.linear(z_mean, x_mean, z_ref, smooth, pz=pz)
+        y_centerline_fit, y_centerline_deriv = curve_fitting.linear(z_mean, y_mean, z_ref, smooth, pz=pz)
         z_centerline_deriv = np.ones_like(z_ref)
-        fig_title = 'Algo={}'.format(algo_fitting)
+        fig_title = 'Algo={}, Smooth={}'.format(algo_fitting, smooth)
 
     elif algo_fitting == 'nurbs':
         from spinalcordtoolbox.centerline.nurbs import b_spline_nurbs
