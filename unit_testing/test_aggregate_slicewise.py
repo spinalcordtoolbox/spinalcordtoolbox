@@ -13,14 +13,12 @@ import csv
 import numpy as np
 import nibabel as nib
 
-from spinalcordtoolbox.utils import __sct_dir__
+from spinalcordtoolbox.utils import __sct_dir__, __version__
 sys.path.append(os.path.join(__sct_dir__, 'scripts'))
 
 from spinalcordtoolbox import aggregate_slicewise
 from spinalcordtoolbox.process_seg import Metric
 from spinalcordtoolbox.image import Image
-
-import sct_utils as sct
 
 
 @pytest.fixture(scope="session")
@@ -45,7 +43,8 @@ def dummy_data_and_labels():
     # Create label_struc{}
     label_struc = {0: aggregate_slicewise.LabelStruc(id=0, name='label_0', map_cluster=0),
                    1: aggregate_slicewise.LabelStruc(id=1, name='label_1', map_cluster=1),
-                   2: aggregate_slicewise.LabelStruc(id=2, name='label_2', map_cluster=1)}
+                   2: aggregate_slicewise.LabelStruc(id=2, name='label_2', map_cluster=1),
+                   99: aggregate_slicewise.LabelStruc(id=[1, 2], name='label_1,2', map_cluster=None)}
     return data, labels, label_struc
 
 
@@ -151,7 +150,6 @@ def test_aggregate_per_level(dummy_metrics, dummy_vert_level):
 
 # noinspection 801,PyShadowingNames
 def test_extract_metric(dummy_data_and_labels):
-    # TODO: test with combined labels
     """Test different estimation methods."""
     # Weighted average
     agg_metric = aggregate_slicewise.extract_metric(dummy_data_and_labels[0], labels=dummy_data_and_labels[1],
@@ -183,6 +181,16 @@ def test_extract_metric(dummy_data_and_labels):
                                                     indiv_labels_ids=[0, 1], perslice=False, method='max')
     assert agg_metric[list(agg_metric)[0]]['MAX()'] == 41.0
 
+    # Combined labels
+    agg_metric = aggregate_slicewise.extract_metric(dummy_data_and_labels[0], labels=dummy_data_and_labels[1],
+                                                    label_struc=dummy_data_and_labels[2], id_label=99,
+                                                    perslice=False, method='wa')
+    assert agg_metric[list(agg_metric)[0]]['WA()'] == 22.0
+    agg_metric = aggregate_slicewise.extract_metric(dummy_data_and_labels[0], labels=dummy_data_and_labels[1],
+                                                    label_struc=dummy_data_and_labels[2], id_label=99,
+                                                    indiv_labels_ids=[0, 1, 2], perslice=False, method='map')
+    assert agg_metric[list(agg_metric)[0]]['MAP()'] == pytest.approx(20.0, rel=0.01)
+
 
 # noinspection 801,PyShadowingNames
 def test_extract_metric_2d(dummy_data_and_labels_2d):
@@ -205,15 +213,15 @@ def test_save_as_csv(dummy_metrics):
     with open('tmp_file_out.csv', 'r') as csvfile:
         spamreader = csv.reader(csvfile, delimiter=',')
         next(spamreader)  # skip header
-        assert next(spamreader)[1:] == [sct.__version__, 'FakeFile.txt', '3:4', '', '45.5', '4.5']
+        assert next(spamreader)[1:] == [__version__, 'FakeFile.txt', '3:4', '', '45.5', '4.5']
     # with appending
     aggregate_slicewise.save_as_csv(agg_metric, 'tmp_file_out.csv')
     aggregate_slicewise.save_as_csv(agg_metric, 'tmp_file_out.csv', append=True)
     with open('tmp_file_out.csv', 'r') as csvfile:
         spamreader = csv.reader(csvfile, delimiter=',')
         next(spamreader)  # skip header
-        assert next(spamreader)[1:] == [sct.__version__, '', '3:4', '', '45.5', '4.5']
-        assert next(spamreader)[1:] == [sct.__version__, '', '3:4', '', '45.5', '4.5']
+        assert next(spamreader)[1:] == [__version__, '', '3:4', '', '45.5', '4.5']
+        assert next(spamreader)[1:] == [__version__, '', '3:4', '', '45.5', '4.5']
 
 
 # noinspection 801,PyShadowingNames
@@ -291,4 +299,4 @@ def test_save_as_csv_extract_metric(dummy_data_and_labels):
     with open('tmp_file_out.csv', 'r') as csvfile:
         spamreader = csv.reader(csvfile, delimiter=',')
         next(spamreader)  # skip header
-        assert next(spamreader)[1:-1] == [sct.__version__, '', '0:4', '', 'label_0', '2.5', '38.0']
+        assert next(spamreader)[1:-1] == [__version__, '', '0:4', '', 'label_0', '2.5', '38.0']
