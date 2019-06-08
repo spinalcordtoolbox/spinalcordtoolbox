@@ -8,7 +8,7 @@
 
 from __future__ import absolute_import
 
-import os, time, logging
+import os, time, logging, inspect
 import bisect
 import numpy as np
 from tqdm import tqdm
@@ -26,21 +26,16 @@ logger = logging.getLogger(__name__)
 
 
 class SpinalCordStraightener(object):
-
-    def __init__(self, input_filename, centerline_filename, debug=0, degree=5, smooth=30,
-                 interpolation_warp='spline', rm_tmp_files=1, verbose=1, algo_fitting='bspline',
+    def __init__(self, input_filename, centerline_filename, debug=0, degree=None, smooth=None,
+                 interpolation_warp='spline', rm_tmp_files=1, verbose=1, algo_fitting=None,
                  precision=2.0, threshold_distance=10, output_filename=''):
         self.input_filename = input_filename
         self.centerline_filename = centerline_filename
         self.output_filename = output_filename
         self.debug = debug
-        self.degree = degree  # maximum degree of polynomial function for fitting centerline.
-        self.smooth = smooth  # smoothness parameter for bspline and linear
-        # the FOV due to the curvature of the spinal cord
         self.interpolation_warp = interpolation_warp
         self.remove_temp_files = rm_tmp_files  # remove temporary files
         self.verbose = verbose
-        self.algo_fitting = algo_fitting  # see: centerline/core
         self.precision = precision
         self.threshold_distance = threshold_distance
         self.path_output = ""
@@ -50,6 +45,12 @@ class SpinalCordStraightener(object):
         self.discs_ref_filename = ""
         self.speed_factor = 1.0  # Speed parameter
         self.xy_size = 70  # in mm
+
+        # Centerline
+        for i_param in ['algo_fitting', 'degree', 'smooth']:
+            if eval(i_param) is None:
+                # Fetch default values from spinalcordtoolbox.centerline.core.get_centerline
+                setattr(self, i_param, inspect.signature(get_centerline).parameters[i_param].default)
 
         # QC metrics
         self.accuracy_results = 0
