@@ -19,6 +19,7 @@
 from __future__ import absolute_import, division
 
 import sys, os
+import inspect
 
 import sct_utils as sct
 from msct_parser import Parser
@@ -26,6 +27,7 @@ from spinalcordtoolbox import process_seg
 from spinalcordtoolbox.aggregate_slicewise import aggregate_per_slice_or_level, save_as_csv, func_wa, func_std, \
     _merge_dict
 from spinalcordtoolbox.utils import parse_num_list
+from spinalcordtoolbox.centerline.core import get_centerline
 
 
 # TODO: Move this class somewhere else
@@ -35,8 +37,8 @@ class Param:
         self.verbose = 1  # verbose
         self.remove_temp_files = 1
         self.slices = ''
-        self.window_length = 50  # for smooth_centerline @sct_straighten_spinalcord
-        self.algo_fitting = 'bspline'  # polyfit, bspline, nurbs, smooth
+        self.smooth = inspect.signature(get_centerline).parameters['smooth'].default
+        self.algo_fitting = inspect.signature(get_centerline).parameters['algo_fitting'].default
         self.perslice = None
         self.perlevel = None
 
@@ -181,7 +183,8 @@ def main(args):
         file_out = 'csa.csv'
 
     metrics = process_seg.compute_shape(fname_segmentation,
-                                        algo_fitting='bspline',
+                                        algo_fitting=Param.algo_fitting,
+                                        smooth=Param.smooth,
                                         angle_correction=angle_correction,
                                         verbose=verbose)
     for key in metrics:
