@@ -27,14 +27,15 @@ logger = logging.getLogger(__name__)
 
 class SpinalCordStraightener(object):
 
-    def __init__(self, input_filename, centerline_filename, debug=0, degree=3,
-                 interpolation_warp='spline', rm_tmp_files=1, verbose=1, algo_fitting='nurbs',
+    def __init__(self, input_filename, centerline_filename, debug=0, degree=5, smooth=30,
+                 interpolation_warp='spline', rm_tmp_files=1, verbose=1, algo_fitting='bspline',
                  precision=2.0, threshold_distance=10, output_filename=''):
         self.input_filename = input_filename
         self.centerline_filename = centerline_filename
         self.output_filename = output_filename
         self.debug = debug
         self.degree = degree  # maximum degree of polynomial function for fitting centerline.
+        self.smooth = smooth  # smoothness parameter for bspline and linear
         # the FOV due to the curvature of the spinal cord
         self.interpolation_warp = interpolation_warp
         self.remove_temp_files = rm_tmp_files  # remove temporary files
@@ -152,7 +153,7 @@ class SpinalCordStraightener(object):
 
         # 2. extract bspline fitting of the centerline, and its derivatives
         img_ctl = Image('centerline_rpi.nii.gz')
-        centerline = _get_centerline(img_ctl, algo_fitting, self.degree, verbose)
+        centerline = _get_centerline(img_ctl, algo_fitting, self.degree, self.smooth, verbose)
         number_of_points = centerline.number_of_points
 
         # ==========================================================================================
@@ -623,10 +624,10 @@ class SpinalCordStraightener(object):
         return fname_straight
 
 
-def _get_centerline(img, algo_fitting, degree, verbose):
+def _get_centerline(img, algo_fitting, degree, smooth, verbose):
     nx, ny, nz, nt, px, py, pz, pt = img.dim
     _, arr_ctl, arr_ctl_der, _ = get_centerline(img, algo_fitting=algo_fitting, minmax=True, degree=degree,
-                                                verbose=verbose)
+                                                smooth=smooth, verbose=verbose)
     # Transform centerline to physical coordinate system
     arr_ctl_phys = img.transfo_pix2phys(
         [[arr_ctl[0][i], arr_ctl[1][i], arr_ctl[2][i]] for i in range(len(arr_ctl[0]))])
