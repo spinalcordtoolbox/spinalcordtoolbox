@@ -115,11 +115,11 @@ def smooth1d(x, window_len, window='hanning'):
     """
 
     if x.ndim != 1:
-        raise ValueError("smooth only accepts 1 dimension arrays.")
+        raise ValueError("Smooth only accepts 1 dimension arrays.")
 
     if x.size < window_len:
         window_len = x.size
-        logger.warning("Input vector is bigger than window size. Forcing window_len = x.size")
+        logger.warning("Input vector is smaller than window size. Forcing window_len = x.size")
 
     if window_len < 3:
         logger.warning("Window length needs to be >= 3. Returning input signal.")
