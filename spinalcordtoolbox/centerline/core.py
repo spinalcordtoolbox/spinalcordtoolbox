@@ -45,7 +45,7 @@ def find_and_sort_coord(img):
     return np.array(arr_sorted_avg)
 
 
-def get_centerline(im_seg, algo_fitting='bspline', minmax=True, contrast=None, degree=5, smooth=30, verbose=1):
+def get_centerline(im_seg, algo_fitting='bspline', minmax=True, contrast=None, degree=5, smooth=20, verbose=1):
     """
     Extract centerline from an image (using optic) or from a binary or weighted segmentation (using the center of mass).
     :param im_seg: Image(): Input segmentation or series of points along the centerline.
