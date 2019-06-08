@@ -36,7 +36,7 @@ class Param:
         self.remove_temp_files = 1
         self.slices = ''
         self.window_length = 50  # for smooth_centerline @sct_straighten_spinalcord
-        self.algo_fitting = 'bspline'  # polyfit, bspline
+        self.algo_fitting = 'bspline'  # polyfit, bspline, nurbs, smooth
         self.perslice = None
         self.perlevel = None
 
