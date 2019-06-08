@@ -17,7 +17,7 @@
 from __future__ import division, absolute_import
 
 import sys, os, time
-
+import inspect
 import numpy as np
 
 import sct_utils as sct
@@ -144,8 +144,8 @@ def get_parser():
                       type_value='str',
                       description="""Algorithm used by the cord straightening procedure for fitting the centerline.""",
                       mandatory=False,
-                      default_value='bspline',
-                      example=['bspline', 'polyfit'])
+                      default_value=str(inspect.signature(get_centerline).parameters['algo_fitting'].default),
+                      example=['bspline', 'polyfit', 'linear', 'nurbs'])
     parser.add_option(name='-qc',
                       type_value='folder_creation',
                       description='The path where the quality control generated content will be saved',
