@@ -29,7 +29,13 @@ def polyfit_1d(x, y, xref, deg=5):
 
 def bspline(x, y, xref, smooth, deg_bspline=3, pz=1):
     """
-    Bspline interpolation. Length of x needs to be superior to deg.
+    Bspline interpolation.
+
+    The smoothing factor (s) is calculated based on an empirical formula (made by JCA, based on
+    preliminary results) and is a function of pz, density of points and an input smoothing parameter (smooth). The
+    formula is adjusted such that the parameter (smooth) produces similar smoothing results than a Hanning window with
+    length smooth, as implemented in linear().
+
     :param x:
     :param y:
     :param xref:
@@ -42,9 +48,8 @@ def bspline(x, y, xref, smooth, deg_bspline=3, pz=1):
     from scipy import interpolate
     if len(x) <= deg_bspline:
         deg_bspline -= 2
-    # Compute smoothing factor using an empirical formula (made by JCA, based on trial-and-error)
     density = (float(len(x)) / len(xref)) ** 2
-    s = density * smooth * pz
+    s = density * smooth * pz / float(3)
     logger.debug('Smoothing factor: smooth={}'.format(s))
     # Then, run bspline interpolation
     tck = interpolate.splrep(x, y, s=s, k=deg_bspline)
@@ -55,7 +60,8 @@ def bspline(x, y, xref, smooth, deg_bspline=3, pz=1):
 
 def linear(x, y, xref, smooth=0, pz=1):
     """
-    Linear interpolation.
+    Linear interpolation followed by smoothing.
+
     :param x:
     :param y:
     :param xref:
