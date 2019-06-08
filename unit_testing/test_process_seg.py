@@ -92,6 +92,7 @@ im_segs = [
 def test_compute_shape(im_seg, expected, params):
     metrics = process_seg.compute_shape(im_seg,
                                         algo_fitting=PARAM.algo_fitting,
+                                        smooth=PARAM.smooth,
                                         angle_correction=params['angle_corr'],
                                         verbose=VERBOSE)
     for key in expected.keys():
