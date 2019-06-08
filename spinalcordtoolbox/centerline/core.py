@@ -56,7 +56,7 @@ def get_centerline(im_seg, algo_fitting='bspline', minmax=True, contrast=None, d
     :param minmax: Crop output centerline where the segmentation starts/end. If False, centerline will span all slices.
     :param contrast: Contrast type for algo=optic.
     :param degree: int: Max degree for polynomial fitting.
-    :param smooth: int: Smoothing factor for bspline and linear algorithms. Roughtly corresponds to the size of a
+    :param smooth: int: Smoothing factor for bspline and linear algorithms. Roughly corresponds to the size of a
     Hanning window (in mm).
     :param verbose: int: verbose level
     :return: im_centerline: Image: Centerline in discrete coordinate (int)
@@ -174,14 +174,14 @@ def get_centerline(im_seg, algo_fitting='bspline', minmax=True, contrast=None, d
         plt.subplot(3, 1, 1)
         plt.title(fig_title + '\nRMSE[mm]={:0.2f}, LaplacianMax={:0.2f}'.format(fit_results.rmse, fit_results.laplacian_max))
         plt.plot(z_mean * pz, x_mean * px, 'ro')
-        plt.plot(z_ref * pz, x_centerline_fit * px)
-        plt.plot(z_ref * pz, x_centerline_fit * px, 'b.')
+        plt.plot(z_ref * pz, x_centerline_fit * px, 'k')
+        plt.plot(z_ref * pz, x_centerline_fit * px, 'k.')
         plt.ylabel("X [mm]")
         plt.legend(['Reference', 'Fitting', 'Fitting points'])
 
         plt.subplot(3, 1, 2)
         plt.plot(z_mean * pz, y_mean * py, 'ro')
-        plt.plot(z_ref * pz, y_centerline_fit * py)
+        plt.plot(z_ref * pz, y_centerline_fit * py, 'b')
         plt.plot(z_ref * pz, y_centerline_fit * py, 'b.')
         plt.xlabel("Z [mm]")
         plt.ylabel("Y [mm]")
@@ -189,7 +189,7 @@ def get_centerline(im_seg, algo_fitting='bspline', minmax=True, contrast=None, d
 
         plt.subplot(3, 1, 3)
         plt.plot(z_ref * pz, x_centerline_deriv * px, 'k.')
-        plt.plot(z_ref * pz, y_centerline_deriv * py, 'g.')
+        plt.plot(z_ref * pz, y_centerline_deriv * py, 'b.')
         plt.grid(axis='y', color='grey', linestyle=':', linewidth=1)
         plt.axhline(color='grey', linestyle='-', linewidth=1)
         # plt.plot(z_ref * pz, z_centerline_deriv * pz, 'r.')
