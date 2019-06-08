@@ -45,7 +45,7 @@ def find_and_sort_coord(img):
     return np.array(arr_sorted_avg)
 
 
-def get_centerline(im_seg, algo_fitting='polyfit', minmax=True, contrast=None, degree=5, smooth=10, verbose=1):
+def get_centerline(im_seg, algo_fitting='bspline', minmax=True, contrast=None, degree=5, smooth=30, verbose=1):
     """
     Extract centerline from an image (using optic) or from a binary or weighted segmentation (using the center of mass).
     :param im_seg: Image(): Input segmentation or series of points along the centerline.
@@ -56,7 +56,8 @@ def get_centerline(im_seg, algo_fitting='polyfit', minmax=True, contrast=None, d
     :param minmax: Crop output centerline where the segmentation starts/end. If False, centerline will span all slices.
     :param contrast: Contrast type for algo=optic.
     :param degree: int: Max degree for polynomial fitting.
-    :param smooth: int: Smoothing factor for bspline fitting. 1: none, 10: moderate smoothing, 100: large smoothing
+    :param smooth: int: Smoothing factor for bspline and linear algorithms. Roughtly corresponds to the size of a
+    Hanning window (in mm).
     :param verbose: int: verbose level
     :return: im_centerline: Image: Centerline in discrete coordinate (int)
     :return: arr_centerline: 3x1 array: Centerline in continuous coordinate (float) for each slice in RPI orientation.
@@ -105,8 +106,8 @@ def get_centerline(im_seg, algo_fitting='polyfit', minmax=True, contrast=None, d
         from spinalcordtoolbox.centerline.nurbs import b_spline_nurbs
         point_number = 3000
         # Interpolate such that the output centerline has the same length as z_ref
-        x_mean_interp = curve_fitting.linear(z_mean, x_mean, z_ref)
-        y_mean_interp = curve_fitting.linear(z_mean, y_mean, z_ref)
+        x_mean_interp, _ = curve_fitting.linear(z_mean, x_mean, z_ref, 0)
+        y_mean_interp, _ = curve_fitting.linear(z_mean, y_mean, z_ref, 0)
         x_centerline_fit, y_centerline_fit, z_centerline_fit, x_centerline_deriv, y_centerline_deriv, \
             z_centerline_deriv, error = b_spline_nurbs(x_mean_interp, y_mean_interp, z_ref, nbControl=None,
                                                        point_number=point_number, all_slices=True)
@@ -160,7 +161,7 @@ def get_centerline(im_seg, algo_fitting='polyfit', minmax=True, contrast=None, d
     fit_results.rmse = np.sqrt(np.mean((x_mean - x_centerline_fit[index_mean]) ** 2) * px +
                                np.mean((y_mean - y_centerline_fit[index_mean]) ** 2) * py)
     fit_results.laplacian_max = np.max(
-        np.absolute(np.diff(np.array([x_centerline_deriv * px, y_centerline_deriv * py, z_centerline_deriv * pz]))))
+        np.absolute(np.gradient(np.array([x_centerline_deriv * px, y_centerline_deriv * py, z_centerline_deriv * pz]))))
 
     # Display fig of fitted curves
     if verbose == 2:
