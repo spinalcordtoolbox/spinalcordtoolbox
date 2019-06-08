@@ -16,8 +16,10 @@
 from __future__ import division, absolute_import
 
 import sys
+import inspect
 
 from spinalcordtoolbox.straightening import SpinalCordStraightener
+from spinalcordtoolbox.centerline.core import get_centerline
 from msct_parser import Parser
 import sct_utils as sct
 
@@ -139,9 +141,9 @@ def get_parser():
     parser.add_option(name="-param",
                       type_value=[[','], 'str'],
                       description="Parameters for spinal cord straightening. Separate arguments with ','."
-                                  "\nalgo_fitting: {polyfit, bspline, linear, nurbs}: Algorithm for curve fitting. Default=bspline"
-                                  "\ndegree: int: Maximum degree of polynomial function for fitting centerline. Default=5"
-                                  "\nsmooth: int: Smoothing factor for bspline and linear algorithms. Roughtly corresponds to the size of a Hanning window (in mm). Default=30"
+                                  "\nalgo_fitting: {polyfit, bspline, linear, nurbs}: Algorithm for curve fitting. Default="+str(inspect.signature(get_centerline).parameters['algo_fitting'].default)+
+                                  "\ndegree: int: Maximum degree of polynomial function for fitting centerline. Default="+str(inspect.signature(get_centerline).parameters['degree'].default)+
+                                  "\nsmooth: int: Smoothing factor for bspline and linear algorithms. Roughtly corresponds to the size of a Hanning window (in mm). Default="+str(inspect.signature(get_centerline).parameters['smooth'].default)+
                                   "\nprecision: [1.0,inf[. Precision factor of straightening, related to the number of slices. Increasing this parameter increases the precision along with increased computational time. Not taken into account with hanning fitting method. Default=2"
                                   "\nthreshold_distance: [0.0,inf[. Threshold at which voxels are not considered into displacement. Increase this threshold if the image is blackout around the spinal cord too much. Default=10"
                                   "\naccuracy_results: {0, 1} Disable/Enable computation of accuracy results after straightening. Default=0"
