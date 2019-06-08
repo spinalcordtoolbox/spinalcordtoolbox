@@ -86,20 +86,17 @@ def get_centerline(im_seg, algo_fitting='bspline', minmax=True, contrast=None, d
     if algo_fitting == 'polyfit':
         x_centerline_fit, x_centerline_deriv = curve_fitting.polyfit_1d(z_mean, x_mean, z_ref, deg=degree)
         y_centerline_fit, y_centerline_deriv = curve_fitting.polyfit_1d(z_mean, y_mean, z_ref, deg=degree)
-        z_centerline_deriv = np.ones_like(z_ref)
         fig_title = 'Algo={}, Deg={}'.format(algo_fitting, degree)
 
     elif algo_fitting == 'bspline':
         x_centerline_fit, x_centerline_deriv = curve_fitting.bspline(z_mean, x_mean, z_ref, smooth, pz=pz)
         y_centerline_fit, y_centerline_deriv = curve_fitting.bspline(z_mean, y_mean, z_ref, smooth, pz=pz)
-        z_centerline_deriv = np.ones_like(z_ref)
         fig_title = 'Algo={}, Smooth={}'.format(algo_fitting, smooth)
 
     elif algo_fitting == 'linear':
         # Simple linear interpolation
         x_centerline_fit, x_centerline_deriv = curve_fitting.linear(z_mean, x_mean, z_ref, smooth, pz=pz)
         y_centerline_fit, y_centerline_deriv = curve_fitting.linear(z_mean, y_mean, z_ref, smooth, pz=pz)
-        z_centerline_deriv = np.ones_like(z_ref)
         fig_title = 'Algo={}, Smooth={}'.format(algo_fitting, smooth)
 
     elif algo_fitting == 'nurbs':
@@ -111,6 +108,9 @@ def get_centerline(im_seg, algo_fitting='bspline', minmax=True, contrast=None, d
         x_centerline_fit, y_centerline_fit, z_centerline_fit, x_centerline_deriv, y_centerline_deriv, \
             z_centerline_deriv, error = b_spline_nurbs(x_mean_interp, y_mean_interp, z_ref, nbControl=None,
                                                        point_number=point_number, all_slices=True)
+        # Normalize derivatives to z_deriv
+        x_centerline_deriv = x_centerline_deriv / z_centerline_deriv
+        y_centerline_deriv = y_centerline_deriv / z_centerline_deriv
         fig_title = 'Algo={}, NumberPoints={}'.format(algo_fitting, point_number)
 
     elif algo_fitting == 'optic':
@@ -160,8 +160,9 @@ def get_centerline(im_seg, algo_fitting='bspline', minmax=True, contrast=None, d
     fit_results = FitResults()
     fit_results.rmse = np.sqrt(np.mean((x_mean - x_centerline_fit[index_mean]) ** 2) * px +
                                np.mean((y_mean - y_centerline_fit[index_mean]) ** 2) * py)
-    fit_results.laplacian_max = np.max(
-        np.absolute(np.gradient(np.array([x_centerline_deriv * px, y_centerline_deriv * py, z_centerline_deriv * pz]))))
+    fit_results.laplacian_max = np.max([
+        np.absolute(np.gradient(np.array(x_centerline_deriv * px))).max(),
+        np.absolute(np.gradient(np.array(y_centerline_deriv * py))).max()])
 
     # Display fig of fitted curves
     if verbose == 2:
@@ -187,19 +188,21 @@ def get_centerline(im_seg, algo_fitting='bspline', minmax=True, contrast=None, d
         plt.legend(['Reference', 'Fitting', 'Fitting points'])
 
         plt.subplot(3, 1, 3)
-        plt.plot(z_ref * pz, x_centerline_deriv * px, 'b.')
+        plt.plot(z_ref * pz, x_centerline_deriv * px, 'k.')
         plt.plot(z_ref * pz, y_centerline_deriv * py, 'g.')
-        plt.plot(z_ref * pz, z_centerline_deriv * pz, 'r.')
-        plt.ylabel("XY [mm]")
+        plt.grid(axis='y', color='grey', linestyle=':', linewidth=1)
+        plt.axhline(color='grey', linestyle='-', linewidth=1)
+        # plt.plot(z_ref * pz, z_centerline_deriv * pz, 'r.')
+        plt.ylabel("dX/dZ, dY/dZ")
         plt.xlabel("Z [mm]")
-        plt.legend(['X-deriv', 'Y-deriv', 'Z-deriv'])
+        plt.legend(['X-deriv', 'Y-deriv'])
 
         plt.savefig('fig_centerline_' + datetime.now().strftime("%y%m%d%H%M%S%f") + '_' + algo_fitting + '.png')
         plt.close()
 
     return im_centerline, \
            np.array([x_centerline_fit, y_centerline_fit, z_ref]), \
-           np.array([x_centerline_deriv, y_centerline_deriv, z_centerline_deriv]), \
+           np.array([x_centerline_deriv, y_centerline_deriv, np.ones_like(z_ref)]), \
            fit_results
 
 
