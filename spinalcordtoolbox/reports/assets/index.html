@@ -167,7 +167,7 @@
     body.addEventListener('click', function(e){
         /*
         This function keeps the inside contents of the dropdown-menu
-        open even if the inside contents or the body of the html file are clicked
+        open even if the inside contents of the dropdown-menu are clicked
         but closes the dropdown menu if click is outside of dropdown-menu or on dropdown button.
         */
         e.stopPropagation();
@@ -186,16 +186,14 @@
     });
 
     setTimeout(function(){
-               /*
-               This function removes the columns we do not want to display at
-               the beginning after a certain delay of time after the page loads because after the
-               page loads, the table cells are undefined for a certain period of time, therefore invalidating the onload method.
-               A delay of time is necessary to be able to hide the columns.
-               */
-               var iTH;
-               var dropdownList = document.getElementsByClassName('dropdown-item');
-               for (iTH = 0; iTH < dropdownList.length; iTH++){
-                    toggleColumn(document.getElementsByClassName('dropdown-item')[iTH].id)
-                }},2);
+         /*
+         This function removes the columns we do not want to display at
+         the beginning after a certain delay of time.
+         */
+         var iTH;
+         var dropdownList = document.getElementsByClassName('dropdown-item');
+         for (iTH = 0; iTH < dropdownList.length; iTH++){
+              toggleColumn(document.getElementsByClassName('dropdown-item')[iTH].id)
+         }},2);
 </script>
 </html>
