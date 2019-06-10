@@ -16,7 +16,7 @@ from __future__ import division, absolute_import
 
 import sys
 import numpy as np
-from msct_parser import Parser
+import argparse
 from spinalcordtoolbox.image import Image, empty_like
 from spinalcordtoolbox.utils import parse_num_list
 import sct_utils as sct
@@ -33,48 +33,37 @@ class Param(object):
 def get_parser():
 
     # Initialize the parser
-    parser = Parser(__file__)
-    parser.usage.set_description('Compute SNR using methods described in [Dietrich et al., Measurement of'
+    parser = argparse.ArgumentParser(description='Compute SNR using methods described in [Dietrich et al., Measurement of'
                                  ' signal-to-noise ratios in MR images: Influence of multichannel coils, parallel '
                                  'imaging, and reconstruction filters. J Magn Reson Imaging 2007; 26(2): 375-385].')
-    parser.add_option(name="-i",
-                      type_value='image_nifti',
-                      description="4D data to compute the SNR on (along the 4th dimension).",
-                      mandatory=True,
-                      example="b0s.nii.gz")
-    parser.add_option(name="-m",
-                      type_value='image_nifti',
-                      description='Binary (or weighted) mask within which SNR will be averaged.',
-                      mandatory=False,
-                      default_value='',
-                      example='dwi_moco_mean_seg.nii.gz')
-    parser.add_option(name="-method",
-                      type_value='multiple_choice',
-                      description='Method to use to compute the SNR:\n'
+    parser.add_argument('-i',
+                      help="4D data to compute the SNR on (along the 4th dimension)(e.g.,'b0s.nii.gz').",
+                      required=True)
+    parser.add_argument('-m',
+                      help="Binary (or weighted) mask within which SNR will be averaged (e.g.,'dwi_moco_mean_seg.nii.gz').",
+                      default='')
+    parser.add_argument('-method',
+                      help='Method to use to compute the SNR:\n'
                       '- diff (default): Substract two volumes (defined by -vol) and estimate noise variance within the ROI (flag -m is required).\n'
                       '- mult: Estimate noise variance over time across volumes specified with -vol.',
-                      mandatory=False,
-                      default_value='diff',
-                      example=['diff', 'mult'])
-    parser.add_option(name='-vol',
-                      type_value='str',
-                      description='Volumes to compute SNR from. Separate with "," (e.g. -vol 0,1), or select range '
+                      choices=('diff', 'mult'),
+                      default='diff')
+    parser.add_argument('-vol',
+                      help='Volumes to compute SNR from. Separate with "," (e.g. -vol 0,1), or select range '
                                   'using ":" (e.g. -vol 2:50). By default, all volumes in series are selected.',
-                      mandatory=False,
-                      default_value='')
-    parser.add_option(name="-r",
-                      type_value="multiple_choice",
-                      description='Remove temporary files.',
-                      mandatory=False,
-                      default_value='1',
-                      example=['0', '1'])
-    parser.add_option(name="-v",
-                      type_value="multiple_choice",
-                      description="Verbose. 0: nothing, 1: basic, 2: extended.",
-                      mandatory=False,
-                      example=['0', '1', '2'],
-                      default_value='1')
-    return parser
+                      default='')
+    parser.add_argument('-r',
+                      type=int,
+                      help='Remove temporary files.',
+                      default=1,
+                      choices=(0, 1))
+    parser.add_argument('-v',
+                      help="Verbose. 0: nothing, 1: basic, 2: extended.",
+                      type=int,
+                      choices=(0, 1, 2),
+                      default=1)
+    arguments = parser.parse_args()
+    return arguments
 
 
 def weighted_avg_and_std(values, weights):
@@ -96,18 +85,18 @@ def main():
 
     # Get parser info
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
-    fname_data = arguments['-i']
-    if '-m' in arguments:
-        fname_mask = arguments['-m']
+    arguments = get_parser()
+    fname_data = arguments.i
+    if hasattr(arguments, 'm'):
+        fname_mask = arguments.m
     else:
         fname_mask = ''
-    method = arguments["-method"]
-    if '-vol' in arguments:
-        index_vol_user = arguments['-vol']
+    method = arguments.method
+    if hasattr(arguments, 'vol'):
+        index_vol_user = arguments.vol
     else:
         index_vol_user = ''
-    verbose = int(arguments.get('-v'))
+    verbose = arguments.v
     sct.init_sct(log_level=verbose, update=True)  # Update log level
 
     # Check parameters
