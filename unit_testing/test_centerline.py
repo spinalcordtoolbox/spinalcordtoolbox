@@ -158,8 +158,8 @@ def test_get_centerline_optic():
         img_t2, ParamCenterline(algo_fitting='optic', contrast='t2', minmax=False), verbose=VERBOSE)
     # Open ground truth segmentation and compare
     fname_t2_seg = os.path.join(__sct_dir__, 'sct_testing_data/t2/t2_seg.nii.gz')
-    img_seg_out, arr_seg_out, _, _ = get_centerline(Image(fname_t2_seg), algo_fitting='bspline', minmax=False,
-                                                    verbose=VERBOSE)
+    img_seg_out, arr_seg_out, _, _ = get_centerline(
+        Image(fname_t2_seg), ParamCenterline(algo_fitting='bspline', minmax=False), verbose=VERBOSE)
     assert np.linalg.norm(find_and_sort_coord(img_seg_out) - find_and_sort_coord(img_out)) < 3.5
 
 
