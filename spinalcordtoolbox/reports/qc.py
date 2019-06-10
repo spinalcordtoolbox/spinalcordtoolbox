@@ -315,7 +315,7 @@ class QcImage(object):
 
 
 class Params(object):
-    """Parses and stores the variables that will be  sincluded into the QC details
+    """Parses and stores the variables that will be included into the QC details
     """
     def __init__(self, input_file, command, args, orientation, dest_folder, dpi=300, dataset=None, subject=None):
         """
