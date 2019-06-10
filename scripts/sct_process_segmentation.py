@@ -173,8 +173,8 @@ def _make_figure(metric):
     ax.plot(z, angle_rl, 'r')
     ax.plot(z, angle_rl, 'r.')
     ax.grid(True)
-    ax.set_xlabel('Slice (in superior-inferior direction)')
-    ax.set_ylabel('Angle [deg]')
+    ax.set_xlabel('Slice (Inferior-Superior direction)')
+    ax.set_ylabel('Angle [$deg$]')
     fig.savefig(fname_img)
     return fname_img
 
