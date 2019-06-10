@@ -13,7 +13,7 @@ import numpy as np
 from spinalcordtoolbox import __sct_dir__
 sys.path.append(os.path.join(__sct_dir__, 'scripts'))
 
-from spinalcordtoolbox.centerline.core import get_centerline, find_and_sort_coord, round_and_clip
+from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline, find_and_sort_coord, round_and_clip
 from spinalcordtoolbox.image import Image
 
 from create_test_data import dummy_centerline
@@ -56,7 +56,7 @@ im_centerlines = [
      {'median': 0, 'rmse': 0.8, 'laplacian': 70, 'norm': 13.5},
      {}),
     (dummy_centerline(size_arr=(30, 20, 50), subsampling=3, dilate_ctl=2, orientation='AIL'),
-     {'median': 0, 'rmse': 0.2, 'laplacian': 0.2},
+     {'median': 0, 'rmse': 0.25, 'laplacian': 0.2},
      {}),
     (dummy_centerline(size_arr=(30, 20, 50), subsampling=5),
      {'median': 0, 'rmse': 0.3, 'laplacian': 0.5, 'norm': 3.1},
@@ -91,7 +91,8 @@ def test_find_and_sort_coord(img_ctl, expected):
 def test_get_centerline_polyfit_minmax(img_ctl, expected):
     """Test centerline fitting with minmax=True"""
     img, img_sub = [img_ctl[0].copy(), img_ctl[1].copy()]
-    img_out, arr_out, _, _ = get_centerline(img_sub, algo_fitting='polyfit', degree=3, minmax=True, verbose=VERBOSE)
+    img_out, arr_out, _, _ = get_centerline(
+        img_sub, ParamCenterline(algo_fitting='polyfit', degree=3, minmax=True), verbose=VERBOSE)
     # Assess output size
     assert arr_out.shape == expected
 
@@ -101,12 +102,8 @@ def test_get_centerline_polyfit_minmax(img_ctl, expected):
 def test_get_centerline_polyfit(img_ctl, expected, params):
     """Test centerline fitting using polyfit"""
     img, img_sub = [img_ctl[0].copy(), img_ctl[1].copy()]
-    if params:
-        img_out, arr_out, arr_deriv_out, fit_results = get_centerline(img_sub, algo_fitting='polyfit', minmax=False,
-                                                                      degree=params['degree'], verbose=VERBOSE)
-    else:
-        img_out, arr_out, arr_deriv_out, fit_results = get_centerline(img_sub, algo_fitting='polyfit', minmax=False,
-                                                                      verbose=VERBOSE)
+    img_out, arr_out, arr_deriv_out, fit_results = get_centerline(
+        img_sub, ParamCenterline(algo_fitting='polyfit', minmax=False), verbose=VERBOSE)
     assert np.median(find_and_sort_coord(img) - find_and_sort_coord(img_out)) == expected['median']
     assert np.max(np.absolute(np.diff(arr_deriv_out))) < expected['laplacian']
     # check arr_out only if input orientation is RPI (because the output array is always in RPI)
@@ -119,13 +116,8 @@ def test_get_centerline_polyfit(img_ctl, expected, params):
 def test_get_centerline_bspline(img_ctl, expected, params):
     """Test centerline fitting using bspline"""
     img, img_sub = [img_ctl[0].copy(), img_ctl[1].copy()]
-    if params:
-        img_out, arr_out, arr_deriv_out, fit_results = get_centerline(img_sub, algo_fitting='bspline', minmax=False,
-                                                                      smooth=params['smooth'], verbose=VERBOSE)
-    else:
-        img_out, arr_out, arr_deriv_out, fit_results = get_centerline(img_sub, algo_fitting='bspline', minmax=False,
-                                                                      verbose=VERBOSE)
-
+    img_out, arr_out, arr_deriv_out, fit_results = get_centerline(
+        img_sub, ParamCenterline(algo_fitting='bspline', minmax=False), verbose=VERBOSE)
     assert np.median(find_and_sort_coord(img) - find_and_sort_coord(img_out)) == expected['median']
     assert fit_results.rmse < expected['rmse']
     assert fit_results.laplacian_max < expected['laplacian']
@@ -136,12 +128,8 @@ def test_get_centerline_bspline(img_ctl, expected, params):
 def test_get_centerline_linear(img_ctl, expected, params):
     """Test centerline fitting using linear interpolation"""
     img, img_sub = [img_ctl[0].copy(), img_ctl[1].copy()]
-    if params:
-        img_out, arr_out, arr_deriv_out, fit_results = get_centerline(img_sub, algo_fitting='linear', minmax=False,
-                                                                      degree=params['degree'], verbose=VERBOSE)
-    else:
-        img_out, arr_out, arr_deriv_out, fit_results = get_centerline(img_sub, algo_fitting='linear', minmax=False,
-                                                                      verbose=VERBOSE)
+    img_out, arr_out, arr_deriv_out, fit_results = get_centerline(
+        img_sub, ParamCenterline(algo_fitting='linear', minmax=False), verbose=VERBOSE)
     assert np.median(find_and_sort_coord(img) - find_and_sort_coord(img_out)) == expected['median']
     assert fit_results.laplacian_max < expected['laplacian']
 
@@ -151,8 +139,8 @@ def test_get_centerline_linear(img_ctl, expected, params):
 def test_get_centerline_nurbs(img_ctl, expected, params):
     """Test centerline fitting using nurbs"""
     img, img_sub = [img_ctl[0].copy(), img_ctl[1].copy()]
-    img_out, arr_out, arr_deriv_out, fit_results = get_centerline(img_sub, algo_fitting='nurbs', minmax=False,
-                                                                  verbose=VERBOSE)
+    img_out, arr_out, arr_deriv_out, fit_results = get_centerline(
+        img_sub, ParamCenterline(algo_fitting='nurbs', minmax=False), verbose=VERBOSE)
     assert np.median(find_and_sort_coord(img) - find_and_sort_coord(img_out)) == expected['median']
     assert fit_results.laplacian_max < expected['laplacian']
 
@@ -166,7 +154,8 @@ def test_get_centerline_optic():
     img_t2.change_type('float32')
     img_t2.data[0, 0, 0] = np.nan
     img_t2.data[1, 0, 0] = np.inf
-    img_out, arr_out, _, _ = get_centerline(img_t2, algo_fitting='optic', contrast='t2', minmax=False, verbose=VERBOSE)
+    img_out, arr_out, _, _ = get_centerline(
+        img_t2, ParamCenterline(algo_fitting='optic', contrast='t2', minmax=False), verbose=VERBOSE)
     # Open ground truth segmentation and compare
     fname_t2_seg = os.path.join(__sct_dir__, 'sct_testing_data/t2/t2_seg.nii.gz')
     img_seg_out, arr_seg_out, _, _ = get_centerline(Image(fname_t2_seg), algo_fitting='bspline', minmax=False,
