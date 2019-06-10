@@ -77,11 +77,12 @@ def main(args=None):
     max_z = np.max(np.nonzero(data_seg)[2])
 
     angles = np.zeros(max_z - min_z)
+    conf_score = np.zeros(max_z - min_z)
     proba_map = np.zeros((nx, ny, nz))
 
     methods = ["pca", "hog"]
 
-    angle_range = 15
+    angle_range = 10
 
     for k, method in enumerate(methods):
 
@@ -90,12 +91,12 @@ def main(args=None):
         for z in range(0, max_z-min_z):
 
             if method is "hog":
-                angles[z], centermass, proba_map[:, :, z] = find_angle(data_image[:, :, min_z + z], data_seg[:, :, min_z + z], px, py, method, angle_range=angle_range, return_centermass=True, return_proba_map=True)
+                angles[z], conf_score[z], centermass, fig = find_angle(data_image[:, :, min_z + z], data_seg[:, :, min_z + z], px, py, method, angle_range=angle_range, return_centermass=True, return_proba_map=True)
                 if math.isnan(angles[z]):
                     sct.printv("confidence score bellow threshold (or not found)")
                     angles[z] = 0
             else:
-                angles[z], centermass = find_angle(data_image[:, :, min_z + z], data_seg[:, :, min_z + z],px, py, method, angle_range=angle_range, return_centermass=True, return_proba_map=False)
+                angles[z], conf_score[z], centermass = find_angle(data_image[:, :, min_z + z], data_seg[:, :, min_z + z], px, py, method, angle_range=angle_range, return_centermass=True, return_proba_map=False)
 
             axes_image[:, :, min_z + z] = generate_2Dimage_line(axes_image[:, :, min_z + z], centermass[0], centermass[1], angles[z]-pi/2, value=k+1)
 
@@ -106,8 +107,15 @@ def main(args=None):
         Image(axes_image, hdr=Image(fname_seg).hdr).save(fname_axes)
         if method is "hog":
             Image(proba_map, hdr=Image(fname_seg).hdr).save(output_dir + "/" + sub_and_sequence + "_hog_proba_map.nii.gz")
+            plt.figure(figsize=(6.4*2, 4.8*2))
+            plt.scatter(np.arange(min_z, max_z), angles * 180/pi, c=conf_score, cmap='winter')
+            plt.ylabel("angle in deg")
+            plt.xlabel("z slice")
+            plt.colorbar().ax.set_ylabel("confidence score")
+            plt.savefig(output_dir + "/" + fname_image.split("/")[-4] + "_" + sub_and_sequence + "_angle_conf_score_z.png")  # reliable file name ?
 
-        # generate_qc(fname_in1=fname_image, fname_in2=fname_axes, fname_seg=None, args=None, path_qc=path_qc, dataset=None, subject=None, process="rotation")
+
+        generate_qc(fname_in1=fname_image, fname_in2=fname_axes, fname_seg=None, args=None, path_qc=path_qc, dataset=None, subject=None, process="rotation")
 
         # fsleyes /home/nicolas/unf_test/unf_spineGeneric/sub-01/anat/sub-01_T1w.nii.gz /home/nicolas/test_single_rot/sub-01_T1w_axes_pca.nii.gz -cm blue /home/nicolas/test_single_rot/sub-01_T1w_axes_hog.nii.gz -cm green
 
@@ -127,16 +135,16 @@ def get_memory():
 
 if __name__ == '__main__':
 
-    # if sys.gettrace() is None:
+    if sys.gettrace() is None:
         sct.init_sct()
         # call main function
         main()
-    # else:
-    #     memory_limit()  # Limitates maximun memory usage to half
-    #     try:
-    #         sct.init_sct()
-    #         # call main function
-    #         main()
-    #     except MemoryError:
-    #         sys.stderr.write('\n\nERROR: Memory Exception\n')
-    #         sys.exit(1)
+    else:
+        memory_limit()  # Limitates maximun memory usage to half
+        try:
+            sct.init_sct()
+            # call main function
+            main()
+        except MemoryError:
+            sys.stderr.write('\n\nERROR: Memory Exception\n')
+            sys.exit(1)
