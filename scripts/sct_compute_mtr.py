@@ -17,7 +17,7 @@ import sys
 import os
 
 import sct_utils as sct
-from msct_parser import Parser
+import argparse
 
 # DEFAULT PARAMETERS
 
@@ -29,12 +29,11 @@ class Param:
         # self.register = 1
         self.verbose = 1
         self.file_out = 'mtr'
-        self.remove_temp_files = 1
 
 
 # main
 #=======================================================================================================================
-def main(args=None):
+def main():
     import numpy as np
     import spinalcordtoolbox.image as msct_image
 
@@ -46,18 +45,12 @@ def main(args=None):
     # remove_temp_files = param.remove_temp_files
     # verbose = param.verbose
 
-    # check user arguments
-    if not args:
-        args = sys.argv[1:]
-
     # Check input parameters
-    parser = get_parser()
-    arguments = parser.parse(args)
-
-    fname_mt0 = arguments['-mt0']
-    fname_mt1 = arguments['-mt1']
-    fname_mtr = arguments['-o']
-    verbose = int(arguments.get('-v'))
+    args = get_parser()
+    fname_mt0 = args.mt0
+    fname_mt1 = args.mt1
+    fname_mtr = args.o
+    verbose = args.v
     sct.init_sct(log_level=verbose, update=True)  # Update log level
 
     # compute MTR
@@ -77,43 +70,23 @@ def main(args=None):
 
 # ==========================================================================================
 def get_parser():
-    # Initialize the parser
-    parser = Parser(__file__)
-    parser.usage.set_description('Compute magnetization transfer ratio (MTR). Output is given in percentage.')
-    parser.add_option(name="-mt0",
-                      type_value="file",
-                      description="Image without MT pulse (MT0)",
-                      mandatory=True,
-                      example='mt0.nii.gz')
-    parser.add_option(name="-i",
-                      type_value=None,
-                      description="Image without MT pulse (MT0)",
-                      mandatory=False,
-                      deprecated_by='-mt0')
-    parser.add_option(name="-mt1",
-                      type_value="file",
-                      description="Image with MT pulse (MT1)",
-                      mandatory=True,
-                      example='mt1.nii.gz')
-    parser.add_option(name="-j",
-                      type_value=None,
-                      description="Image with MT pulse (MT1)",
-                      mandatory=False,
-                      deprecated_by="-mt1")
-    parser.add_option(name="-v",
-                      type_value='multiple_choice',
-                      description="verbose: 0 = nothing, 1 = classic, 2 = expended",
-                      mandatory=False,
-                      example=['0', '1', '2'],
-                      default_value='1')
-    parser.add_option(name="-o",
-                      type_value="str",
-                      description="Path to output file.",
-                      mandatory=False,
-                      example='Users/john/data/My_New_File.nii.gz',
-                      default_value=os.path.join('.','mtr.nii.gz'))
-
-    return parser
+    parser = argparse.ArgumentParser(description='Compute magnetization transfer ratio (MTR). Output is given in percentage.')
+    parser.add_argument('-mt0',
+                          help='Image without MT pulse (MT0)',
+                          required=True)
+    parser.add_argument('-mt1',
+                          help='Image with MT pulse (MT1)',
+                          required=True)
+    parser.add_argument('-v',
+                        type=int,
+                        choices=(0, 1, 2),
+                        help='verbose: 0 = nothing, 1 = classic, 2 = expended',
+                        default=1)
+    parser.add_argument('-o',
+                        help='Path to output file.',
+                        default=os.path.join('.','mtr.nii.gz'))
+    args = parser.parse_args()
+    return args
 
 
 #=======================================================================================================================
