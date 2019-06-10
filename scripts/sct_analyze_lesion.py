@@ -22,7 +22,7 @@ from msct_parser import Parser
 from msct_types import Centerline
 import sct_utils as sct
 from sct_utils import extract_fname, printv, tmp_create
-from spinalcordtoolbox.centerline.core import get_centerline
+from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
 
 
 def get_parser():
@@ -406,7 +406,7 @@ class AnalyzeLeion:
         data_seg = im_seg.data
 
         # fit centerline, smooth it and return the first derivative (in physical space)
-        _, arr_ctl, arr_ctl_der, _ = get_centerline(im_seg, algo_fitting='bspline', verbose=1)
+        _, arr_ctl, arr_ctl_der, _ = get_centerline(im_seg, param=ParamCenterline(), verbose=1)
         x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = arr_ctl_der
 
         self.angles = np.full_like(np.empty(nz), np.nan, dtype=np.double)
