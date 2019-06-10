@@ -69,11 +69,11 @@
                   <button id="dropdownButton" class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true">Display Columns <span class="caret"></span></button>
                   <ul class="dropdown-menu">
                       <li><a class="dropdown-item" id="Date" onclick="toggleColumn(id)">Date</button></a></li>
+                      <li><a class="dropdown-item" id="Dataset" onclick="toggleColumn(id)">Dataset &#10004</a></li>
                       <li><a class="dropdown-item" id="Subject" onclick="toggleColumn(id)">Subject</a></li>
                       <li><a class="dropdown-item" id="File" onclick="toggleColumn(id)">File</a></li>
-                      <li><a class="dropdown-item" id="Function" onclick="toggleColumn(id)">Function</a></li>
-                      <li><a class="dropdown-item" id="Dataset" onclick="toggleColumn(id)">Dataset &#10004</a></li>
                       <li><a class="dropdown-item" id="Contrast" onclick="toggleColumn(id)">Contrast &#10004</a></li>
+                      <li><a class="dropdown-item" id="Function" onclick="toggleColumn(id)">Function</a></li>
                       <li><a class="dropdown-item" id="Path" onclick="toggleColumn(id)">Path &#10004</a></li>
                   </ul>
                   <script>
@@ -94,7 +94,7 @@
                                 	    <th data-field="fname_in" data-sortable="true">File</th>
                                 	    <th data-field="contrast" data-sortable="true">Contrast</th>
 			                    <th data-field="command" data-sortable="true">Function</th>
-                                	    <th data-field="Path" data-sortable="true">Path</th>
+                                	    <th data-field="cwd" data-sortable="true">Path</th>
 		                  </tr>
 	                </thead>
               </table>
