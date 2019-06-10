@@ -452,7 +452,7 @@ class QcReport(object):
                              dest_full_path)
 
 
-def add_entry(src, process, args, path_qc, plane, background=None, path_img=None,
+def add_entry(src, process, args, path_qc, plane, path_img=None, path_img_overlay=None,
               qcslice=None,
               qcslice_operations=[],
               qcslice_layout=None,
@@ -468,8 +468,8 @@ def add_entry(src, process, args, path_qc, plane, background=None, path_img=None
     :param args:
     :param path_qc:
     :param plane:
-    :param background:
     :param path_img: Path to image to display
+    :param path_img_overlay: Path to image to display on top of path_img (will flip between the two)
     :param qcslice: spinalcordtoolbox.reports.slice:Axial
     :param qcslice_operations:
     :param qcslice_layout:
@@ -491,19 +491,16 @@ def add_entry(src, process, args, path_qc, plane, background=None, path_img=None
         layout(qcslice)
     elif path_img is not None:
         report.make_content_path()
-
-        # def normalized(img):
-        #     return np.uint8(skimage.exposure.rescale_intensity(img, out_range=np.uint8))
-
-        # skimage.io.imsave(qc_param.abs_overlay_img_path(), normalized(foreground))
-        #
-        # if background is None:
-        #     qc_param.bkg_img_path = qc_param.overlay_img_path
-        # else:
-        #     skimage.io.imsave(qc_param.abs_bkg_img_path(), normalized(background))
-        #
         report.update_description_file((640, 480))  # TODO: fetch dim
-        copyfile(path_img, qc_param.abs_overlay_img_path())
+        copyfile(path_img, qc_param.abs_bkg_img_path())
+        if path_img_overlay is not None:
+            # User specified a second image to overlay
+            copyfile(path_img_overlay, qc_param.abs_overlay_img_path())
+        else:
+            # Copy the image both as "overlay" and "path_img_overlay", so it appears static.
+            # TODO: Leave the possibility in the reports/assets/js files to have static images (instead of having to
+            #  flip between two images).
+            copyfile(path_img, qc_param.abs_overlay_img_path())
 
     sct.printv('Successfully generated the QC results in %s' % qc_param.qc_results)
     sct.printv('Use the following command to see the results in a browser:')
