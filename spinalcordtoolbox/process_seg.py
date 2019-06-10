@@ -12,17 +12,16 @@ import logging
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.aggregate_slicewise import Metric
-from spinalcordtoolbox.centerline.core import get_centerline
+from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
 
 
-def compute_shape(segmentation, algo_fitting, smooth, angle_correction=True, verbose=1):
+def compute_shape(segmentation, angle_correction=True, param_centerline=ParamCenterline(minmax=False), verbose=1):
     """
     Compute morphometric measures of the spinal cord in the transverse (axial) plane from the segmentation.
     The segmentation could be binary or weighted for partial volume [0,1].
     :param segmentation: input segmentation. Could be either an Image or a file name.
-    :param algo_fitting: see centerline.core.get_centerline()
-    :param smooth: see centerline.core.get_centerline()
     :param angle_correction:
+    :param param_centerline: see centerline.core.ParamCenterline()
     :param verbose:
     :return metrics: Dict of class Metric(). If a metric cannot be calculated, its value will be nan.
     """
@@ -52,7 +51,8 @@ def compute_shape(segmentation, algo_fitting, smooth, angle_correction=True, ver
 
     if angle_correction:
         # compute the spinal cord centerline based on the spinal cord segmentation
-        _, arr_ctl, arr_ctl_der, _ = get_centerline(im_seg, algo_fitting=algo_fitting, smooth=smooth, minmax=False, verbose=verbose)
+        # here, param_centerline.minmax needs to be False because we need to retrieve the total number of input slices
+        _, arr_ctl, arr_ctl_der, _ = get_centerline(im_seg, param=param_centerline, verbose=verbose)
 
     # Loop across z and compute shape analysis
     for iz in tqdm(range(min_z_index, max_z_index + 1), unit='iter', unit_scale=False, desc="Compute shape analysis",
