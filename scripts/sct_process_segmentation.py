@@ -27,7 +27,7 @@ from spinalcordtoolbox import process_seg
 from spinalcordtoolbox.aggregate_slicewise import aggregate_per_slice_or_level, save_as_csv, func_wa, func_std, \
     _merge_dict
 from spinalcordtoolbox.utils import parse_num_list
-from spinalcordtoolbox.centerline.core import get_centerline
+from spinalcordtoolbox.centerline.core import ParamCenterline
 
 
 # TODO: Move this class somewhere else
@@ -37,8 +37,6 @@ class Param:
         self.verbose = 1  # verbose
         self.remove_temp_files = 1
         self.slices = ''
-        self.smooth = inspect.signature(get_centerline).parameters['smooth'].default
-        self.algo_fitting = inspect.signature(get_centerline).parameters['algo_fitting'].default
         self.perslice = None
         self.perlevel = None
 
@@ -117,6 +115,22 @@ def get_parser():
                       mandatory=False,
                       example=['0', '1'],
                       default_value='1')
+    parser.add_option(name='-centerline-algo',
+                      type_value='multiple_choice',
+                      description='Algorithm for centerline fitting. Only relevant with -angle-corr 1.',
+                      mandatory=False,
+                      example=['polyfit', 'bspline', 'linear', 'nurbs'],
+                      default_value=ParamCenterline().algo_fitting)
+    parser.add_option(name='-centerline-degree',
+                      type_value='int',
+                      description='Degree of smoothing for centerline fitting. Only use with -centerline-algo polyfit.',
+                      mandatory=False,
+                      default_value=ParamCenterline().degree)
+    parser.add_option(name='-centerline-smooth',
+                      type_value='int',
+                      description='Degree of smoothing for centerline fitting. Only use with -centerline-algo {bspline, linear}.',
+                      mandatory=False,
+                      default_value=ParamCenterline().smooth)
     parser.add_option(name='-v',
                       type_value='multiple_choice',
                       description='1: display on, 0: display off (default)',
@@ -173,6 +187,11 @@ def main(args):
             angle_correction = True
         elif arguments['-angle-corr'] == '0':
             angle_correction = False
+    param_centerline = ParamCenterline(
+        algo_fitting=arguments['-centerline-algo'],
+        degree=arguments['-centerline-degree'],
+        smooth=arguments['-centerline-smooth'],
+        minmax=False)
 
     verbose = int(arguments.get('-v'))
     sct.init_sct(log_level=verbose, update=True)  # Update log level
@@ -183,9 +202,8 @@ def main(args):
         file_out = 'csa.csv'
 
     metrics = process_seg.compute_shape(fname_segmentation,
-                                        algo_fitting=Param.algo_fitting,
-                                        smooth=Param.smooth,
                                         angle_correction=angle_correction,
+                                        param_centerline=param_centerline,
                                         verbose=verbose)
     for key in metrics:
         metrics_agg[key] = aggregate_per_slice_or_level(metrics[key], slices=parse_num_list(slices),
