@@ -491,7 +491,7 @@ def add_entry(src, process, args, path_qc, plane, path_img=None, path_img_overla
         layout(qcslice)
     elif path_img is not None:
         report.make_content_path()
-        report.update_description_file((640, 480))  # TODO: fetch dim
+        report.update_description_file(skimage.io.imread(path_img).shape[:2])
         copyfile(path_img, qc_param.abs_bkg_img_path())
         if path_img_overlay is not None:
             # User specified a second image to overlay
@@ -517,7 +517,7 @@ def add_entry(src, process, args, path_qc, plane, path_img=None, path_img_overla
 
 
 def generate_qc(fname_in1, fname_in2=None, fname_seg=None, args=None, path_qc=None, dataset=None, subject=None,
-                metric=None, process=None):
+                path_img=None, process=None):
     """
     Generate a QC entry allowing to quickly review results. This function is the entry point and is called by SCT
     scripts (e.g. sct_propseg).
@@ -529,7 +529,7 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, args=None, path_qc=No
     :param path_qc: str: Path to save QC report
     :param dataset: str: Dataset name
     :param subject: str: Subject name
-    :param metric: dict: Output metrics
+    :param path_img: dict: Path to image to display (e.g., a graph), instead of computing the image from MRI.
     :param process: str: Name of SCT function. e.g., sct_propseg
     :return: None
     """
@@ -539,7 +539,6 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, args=None, path_qc=No
     qcslice_type = None
     qcslice_operations = None
     qcslice_layout = None
-    img = None
     # Get QC specifics based on SCT process
     # Axial orientation, switch between two input images
     if process in ['sct_register_multimodal', 'sct_register_to_template']:
@@ -574,7 +573,7 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, args=None, path_qc=No
         qcslice_layout = lambda x: x.single()
     # Metric outputs (only graphs)
     elif process in ['sct_process_segmentation']:
-        img = make_figure_from_metric(metric)
+        assert os.path.isfile(path_img)
     else:
         raise ValueError("Unrecognized process: {}".format(process))
 
@@ -586,7 +585,7 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, args=None, path_qc=No
         dataset=dataset,
         subject=subject,
         plane=plane,
-        path_img=img,
+        path_img=path_img,
         dpi=dpi,
         qcslice=qcslice_type,
         qcslice_operations=qcslice_operations,
@@ -603,40 +602,3 @@ def get_json_data_from_path(path_json):
         with open(file_json, 'r+') as fjson:
             results.append(json.load(fjson))
     return results
-
-
-def make_figure_from_metric(metric):
-    """
-    Make a graph from a dictionary of metrics.
-    :param metric:
-    :return: image object
-    """
-    fname_img = 'test.png'
-    z, csa, angle_ap, angle_rl = [], [], [], []
-    for key, value in metric.items():
-        z.append(key[0])
-        csa.append(value['MEAN(area)'])
-        angle_ap.append(value['MEAN(angle_AP)'])
-        angle_rl.append(value['MEAN(angle_RL)'])
-    # Make figure
-    fig = Figure()
-    # size_fig = [5, 8]
-    # fig.set_size_inches(size_fig[0], size_fig[1], forward=True)
-    # FigureCanvas(fig)
-    # ax = fig.add_axes((0, 0, 1, 1))
-    ax = fig.add_subplot(211)
-    ax.plot(z, csa, 'k')
-    ax.plot(z, csa, 'k.')
-    ax.grid(True)
-    ax.set_xlabel('Slice (in superior-inferior direction)')
-    ax.set_ylabel('CSA [$mm^2$]')
-    ax = fig.add_subplot(212)
-    ax.plot(z, angle_ap, 'b')
-    ax.plot(z, angle_ap, 'b.')
-    ax.plot(z, angle_rl, 'r')
-    ax.plot(z, angle_rl, 'r.')
-    ax.grid(True)
-    ax.set_xlabel('Slice (in superior-inferior direction)')
-    ax.set_ylabel('Angle [deg]')
-    fig.savefig(fname_img)
-    return fname_img
