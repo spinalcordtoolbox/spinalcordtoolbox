@@ -142,6 +142,43 @@ def get_parser():
     return parser
 
 
+def _make_figure(metric):
+    """
+    Make a graph showing CSA and angles per slice.
+    :param metric: Dictionary of metrics
+    :return: image object
+    """
+    import tempfile
+    from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+    from matplotlib.figure import Figure
+
+    fname_img = tempfile.NamedTemporaryFile().name + '.png'
+    z, csa, angle_ap, angle_rl = [], [], [], []
+    for key, value in metric.items():
+        z.append(key[0])
+        csa.append(value['MEAN(area)'])
+        angle_ap.append(value['MEAN(angle_AP)'])
+        angle_rl.append(value['MEAN(angle_RL)'])
+    # Make figure
+    fig = Figure()
+    FigureCanvas(fig)
+    ax = fig.add_subplot(211)
+    ax.plot(z, csa, 'k')
+    ax.plot(z, csa, 'k.')
+    ax.grid(True)
+    ax.set_ylabel('CSA [$mm^2$]')
+    ax = fig.add_subplot(212)
+    ax.plot(z, angle_ap, 'b')
+    ax.plot(z, angle_ap, 'b.')
+    ax.plot(z, angle_rl, 'r')
+    ax.plot(z, angle_rl, 'r.')
+    ax.grid(True)
+    ax.set_xlabel('Slice (in superior-inferior direction)')
+    ax.set_ylabel('Angle [deg]')
+    fig.savefig(fname_img)
+    return fname_img
+
+
 def main(args):
     parser = get_parser()
     arguments = parser.parse(args)
@@ -211,7 +248,7 @@ def main(args):
     # QC report (only show CSA for clarity)
     if path_qc is not None:
         generate_qc(fname_segmentation, args=args, path_qc=os.path.abspath(path_qc), dataset=qc_dataset,
-                    subject=qc_subject, metric=metrics_agg_merged, process='sct_process_segmentation')
+                    subject=qc_subject, path_img=_make_figure(metrics_agg_merged), process='sct_process_segmentation')
 
     sct.display_open(file_out)
 
