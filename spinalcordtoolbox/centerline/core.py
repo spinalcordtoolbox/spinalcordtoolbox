@@ -12,6 +12,30 @@ from spinalcordtoolbox.centerline import curve_fitting
 logger = logging.getLogger(__name__)
 
 
+class ParamCenterline:
+    """Default parameters for centerline fitting"""
+    def __init__(self, algo_fitting='bspline', degree=5, smooth=20, contrast=None, minmax=True):
+        """
+        :param algo_fitting:
+          polyfit: Polynomial fitting
+          bspline: b-spline fitting
+          linear: linear interpolation followed by smoothing with Hanning window
+          nurbs: Non-Uniform Rational Basis Splines. See [De Leener et al., MIA, 2016]
+          optic: Automatic segmentation using SVM and HOG. See [Gros et al., MIA 2018].
+        :param degree: Degree of polynomial function. Only for polyfit.
+        :param smooth: Degree of smoothness. Only for bspline and linear. When using algo_fitting=linear, it corresponds
+        :param contrast: Contrast type for algo_fitting=optic.
+        :param minmax: Crop output centerline where the segmentation starts/end. If False, centerline will span all
+          slices.
+        to the size of a Hanning window (in mm).
+        """
+        self.algo_fitting = algo_fitting
+        self.contrast = contrast
+        self.degree = degree
+        self.smooth = smooth
+        self.minmax = minmax
+
+
 class FitResults:
     """
     Collection of metrics to assess fitting performance
@@ -45,19 +69,11 @@ def find_and_sort_coord(img):
     return np.array(arr_sorted_avg)
 
 
-def get_centerline(im_seg, algo_fitting='bspline', minmax=True, contrast=None, degree=5, smooth=20, verbose=1):
+def get_centerline(im_seg, param=ParamCenterline(), verbose=1):
     """
     Extract centerline from an image (using optic) or from a binary or weighted segmentation (using the center of mass).
     :param im_seg: Image(): Input segmentation or series of points along the centerline.
-    :param algo_fitting: str:
-        polyfit: Polynomial fitting
-        nurbs:
-        optic: Automatic segmentation using SVM and HOG. See [Gros et al. MIA 2018].
-    :param minmax: Crop output centerline where the segmentation starts/end. If False, centerline will span all slices.
-    :param contrast: Contrast type for algo=optic.
-    :param degree: int: Max degree for polynomial fitting.
-    :param smooth: int: Smoothing factor for bspline and linear algorithms. Roughly corresponds to the size of a
-    Hanning window (in mm).
+    :param param: ParamCenterline() class:
     :param verbose: int: verbose level
     :return: im_centerline: Image: Centerline in discrete coordinate (int)
     :return: arr_centerline: 3x1 array: Centerline in continuous coordinate (float) for each slice in RPI orientation.
@@ -76,30 +92,30 @@ def get_centerline(im_seg, algo_fitting='bspline', minmax=True, contrast=None, d
     x_mean, y_mean, z_mean = find_and_sort_coord(im_seg)
 
     # Crop output centerline to where the segmentation starts/end
-    if minmax:
+    if param.minmax:
         z_ref = np.array(range(z_mean.min().astype(int), z_mean.max().astype(int) + 1))
     else:
         z_ref = np.array(range(im_seg.dim[2]))
     index_mean = np.array([list(z_ref).index(i) for i in z_mean])
 
     # Choose method
-    if algo_fitting == 'polyfit':
-        x_centerline_fit, x_centerline_deriv = curve_fitting.polyfit_1d(z_mean, x_mean, z_ref, deg=degree)
-        y_centerline_fit, y_centerline_deriv = curve_fitting.polyfit_1d(z_mean, y_mean, z_ref, deg=degree)
-        fig_title = 'Algo={}, Deg={}'.format(algo_fitting, degree)
+    if param.algo_fitting == 'polyfit':
+        x_centerline_fit, x_centerline_deriv = curve_fitting.polyfit_1d(z_mean, x_mean, z_ref, deg=param.degree)
+        y_centerline_fit, y_centerline_deriv = curve_fitting.polyfit_1d(z_mean, y_mean, z_ref, deg=param.degree)
+        fig_title = 'Algo={}, Deg={}'.format(param.algo_fitting, param.degree)
 
-    elif algo_fitting == 'bspline':
-        x_centerline_fit, x_centerline_deriv = curve_fitting.bspline(z_mean, x_mean, z_ref, smooth, pz=pz)
-        y_centerline_fit, y_centerline_deriv = curve_fitting.bspline(z_mean, y_mean, z_ref, smooth, pz=pz)
-        fig_title = 'Algo={}, Smooth={}'.format(algo_fitting, smooth)
+    elif param.algo_fitting == 'bspline':
+        x_centerline_fit, x_centerline_deriv = curve_fitting.bspline(z_mean, x_mean, z_ref, param.smooth, pz=pz)
+        y_centerline_fit, y_centerline_deriv = curve_fitting.bspline(z_mean, y_mean, z_ref, param.smooth, pz=pz)
+        fig_title = 'Algo={}, Smooth={}'.format(param.algo_fitting, param.smooth)
 
-    elif algo_fitting == 'linear':
+    elif param.algo_fitting == 'linear':
         # Simple linear interpolation
-        x_centerline_fit, x_centerline_deriv = curve_fitting.linear(z_mean, x_mean, z_ref, smooth, pz=pz)
-        y_centerline_fit, y_centerline_deriv = curve_fitting.linear(z_mean, y_mean, z_ref, smooth, pz=pz)
-        fig_title = 'Algo={}, Smooth={}'.format(algo_fitting, smooth)
+        x_centerline_fit, x_centerline_deriv = curve_fitting.linear(z_mean, x_mean, z_ref, param.smooth, pz=pz)
+        y_centerline_fit, y_centerline_deriv = curve_fitting.linear(z_mean, y_mean, z_ref, param.smooth, pz=pz)
+        fig_title = 'Algo={}, Smooth={}'.format(param.algo_fitting, param.smooth)
 
-    elif algo_fitting == 'nurbs':
+    elif param.algo_fitting == 'nurbs':
         from spinalcordtoolbox.centerline.nurbs import b_spline_nurbs
         point_number = 3000
         # Interpolate such that the output centerline has the same length as z_ref
@@ -111,25 +127,25 @@ def get_centerline(im_seg, algo_fitting='bspline', minmax=True, contrast=None, d
         # Normalize derivatives to z_deriv
         x_centerline_deriv = x_centerline_deriv / z_centerline_deriv
         y_centerline_deriv = y_centerline_deriv / z_centerline_deriv
-        fig_title = 'Algo={}, NumberPoints={}'.format(algo_fitting, point_number)
+        fig_title = 'Algo={}, NumberPoints={}'.format(param.algo_fitting, point_number)
 
-    elif algo_fitting == 'optic':
+    elif param.algo_fitting == 'optic':
         # This method is particular compared to the previous ones, as here we estimate the centerline based on the
         # image itself (not the segmentation). Hence, we can bypass the fitting procedure and centerline creation
         # and directly output results.
         from spinalcordtoolbox.centerline import optic
-        im_centerline = optic.detect_centerline(im_seg, contrast, verbose)
+        im_centerline = optic.detect_centerline(im_seg, param.contrast, verbose)
         x_centerline_fit, y_centerline_fit, z_centerline = find_and_sort_coord(im_centerline)
         # Compute derivatives using polynomial fit
         # TODO: Fix below with reorientation of axes
-        _, x_centerline_deriv = curve_fitting.polyfit_1d(z_centerline, x_centerline_fit, z_centerline, deg=degree)
-        _, y_centerline_deriv = curve_fitting.polyfit_1d(z_centerline, y_centerline_fit, z_centerline, deg=degree)
+        _, x_centerline_deriv = curve_fitting.polyfit_1d(z_centerline, x_centerline_fit, z_centerline, deg=param.degree)
+        _, y_centerline_deriv = curve_fitting.polyfit_1d(z_centerline, y_centerline_fit, z_centerline, deg=param.degree)
         return im_centerline.change_orientation(native_orientation), \
                np.array([x_centerline_fit, y_centerline_fit, z_centerline]), \
                np.array([x_centerline_deriv, y_centerline_deriv, np.ones_like(z_centerline)]),
 
     else:
-        logger.error('algo_fitting "' + algo_fitting + '" does not exist.')
+        logger.error('algo_fitting "' + param.algo_fitting + '" does not exist.')
         raise ValueError
 
     # Create an image with the centerline
@@ -197,7 +213,7 @@ def get_centerline(im_seg, algo_fitting='bspline', minmax=True, contrast=None, d
         plt.xlabel("Z [mm]")
         plt.legend(['X-deriv', 'Y-deriv'])
 
-        plt.savefig('fig_centerline_' + datetime.now().strftime("%y%m%d%H%M%S%f") + '_' + algo_fitting + '.png')
+        plt.savefig('fig_centerline_' + datetime.now().strftime("%y%m%d%H%M%S%f") + '_' + param.algo_fitting + '.png')
         plt.close()
 
     return im_centerline, \
