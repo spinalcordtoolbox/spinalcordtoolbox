@@ -16,10 +16,9 @@
 from __future__ import division, absolute_import
 
 import sys
-import inspect
 
 from spinalcordtoolbox.straightening import SpinalCordStraightener
-from spinalcordtoolbox.centerline.core import get_centerline
+from spinalcordtoolbox.centerline.core import ParamCenterline
 from msct_parser import Parser
 import sct_utils as sct
 
@@ -119,6 +118,33 @@ def get_parser():
                       description="Output folder (all outputs will go there).",
                       mandatory=False,
                       default_value='')
+
+    parser.add_option(name='-centerline-algo',
+                      type_value='multiple_choice',
+                      description='Algorithm for centerline fitting.',
+                      mandatory=False,
+                      example=['polyfit', 'bspline', 'linear', 'nurbs'],
+                      default_value=ParamCenterline().algo_fitting)
+    parser.add_option(name='-centerline-degree',
+                      type_value='int',
+                      description='Degree of smoothing for centerline fitting. Only use with -centerline-algo polyfit.',
+                      mandatory=False,
+                      default_value=ParamCenterline().degree)
+    parser.add_option(name='-centerline-smooth',
+                      type_value='int',
+                      description='Degree of smoothing for centerline fitting. Only use with -centerline-algo {bspline, linear}.',
+                      mandatory=False,
+                      default_value=ParamCenterline().smooth)
+    parser.add_option(name="-param",
+                      type_value=[[','], 'str'],
+                      description="Parameters for spinal cord straightening. Separate arguments with ','."
+                                  "\nprecision: [1.0,inf[. Precision factor of straightening, related to the number of slices. Increasing this parameter increases the precision along with increased computational time. Not taken into account with hanning fitting method. Default=2"
+                                  "\nthreshold_distance: [0.0,inf[. Threshold at which voxels are not considered into displacement. Increase this threshold if the image is blackout around the spinal cord too much. Default=10"
+                                  "\naccuracy_results: {0, 1} Disable/Enable computation of accuracy results after straightening. Default=0"
+                                  "\ntemplate_orientation: {0, 1} Disable/Enable orientation of the straight image to be the same as the template. Default=0",
+                      mandatory=False,
+                      example="algo_fitting=bspline,accuracy_results=1")
+
     parser.add_option(name="-x",
                       type_value="multiple_choice",
                       description="Final interpolation.",
@@ -137,20 +163,6 @@ def get_parser():
                       mandatory=False,
                       example=['0', '1', '2'],
                       default_value='1')
-    # TODO: fetch default values automatically
-    parser.add_option(name="-param",
-                      type_value=[[','], 'str'],
-                      description="Parameters for spinal cord straightening. Separate arguments with ','."
-                                  "\nalgo_fitting: {polyfit, bspline, linear, nurbs}: Algorithm for curve fitting. Default="+str(inspect.signature(get_centerline).parameters['algo_fitting'].default)+
-                                  "\ndegree: int: Maximum degree of polynomial function for fitting centerline. Default="+str(inspect.signature(get_centerline).parameters['degree'].default)+
-                                  "\nsmooth: int: Smoothing factor for bspline and linear algorithms. Roughtly corresponds to the size of a Hanning window (in mm). Default="+str(inspect.signature(get_centerline).parameters['smooth'].default)+
-                                  "\nprecision: [1.0,inf[. Precision factor of straightening, related to the number of slices. Increasing this parameter increases the precision along with increased computational time. Not taken into account with hanning fitting method. Default=2"
-                                  "\nthreshold_distance: [0.0,inf[. Threshold at which voxels are not considered into displacement. Increase this threshold if the image is blackout around the spinal cord too much. Default=10"
-                                  "\naccuracy_results: {0, 1} Disable/Enable computation of accuracy results after straightening. Default=0"
-                                  "\ntemplate_orientation: {0, 1} Disable/Enable orientation of the straight image to be the same as the template. Default=0",
-                      mandatory=False,
-                      example="algo_fitting=bspline,accuracy_results=1")
-
     return parser
 
 
@@ -216,17 +228,15 @@ def main(args=None):
     if '-xy_size' in arguments:
         sc_straight.xy_size = arguments['-xy_size']
 
+    sc_straight.param_centerline = ParamCenterline(
+        algo_fitting=arguments['-centerline-algo'],
+        degree=arguments['-centerline-degree'],
+        smooth=arguments['-centerline-smooth'])
     if "-param" in arguments:
         params_user = arguments['-param']
         # update registration parameters
         for param in params_user:
             param_split = param.split('=')
-            if param_split[0] == 'algo_fitting':
-                sc_straight.algo_fitting = param_split[1]
-            if param_split[0] == 'degree':
-                sc_straight.degree = int(param_split[1])
-            if param_split[0] == 'smooth':
-                sc_straight.smooth = int(param_split[1])
             if param_split[0] == 'precision':
                 sc_straight.precision = float(param_split[1])
             if param_split[0] == 'threshold_distance':
