@@ -20,15 +20,15 @@ from msct_types import Centerline
 
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.centerline.core import get_centerline
+from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
 
 logger = logging.getLogger(__name__)
 
 
 class SpinalCordStraightener(object):
-    def __init__(self, input_filename, centerline_filename, debug=0, degree=None, smooth=None,
-                 interpolation_warp='spline', rm_tmp_files=1, verbose=1, algo_fitting=None,
-                 precision=2.0, threshold_distance=10, output_filename=''):
+    def __init__(self, input_filename, centerline_filename, debug=0, param_centerline=ParamCenterline(),
+                 interpolation_warp='spline', rm_tmp_files=1, verbose=1, precision=2.0, threshold_distance=10,
+                 output_filename=''):
         self.input_filename = input_filename
         self.centerline_filename = centerline_filename
         self.output_filename = output_filename
@@ -45,12 +45,7 @@ class SpinalCordStraightener(object):
         self.discs_ref_filename = ""
         self.speed_factor = 1.0  # Speed parameter
         self.xy_size = 70  # in mm
-
-        # Centerline
-        for i_param in ['algo_fitting', 'degree', 'smooth']:
-            if eval(i_param) is None:
-                # Fetch default values from spinalcordtoolbox.centerline.core.get_centerline
-                setattr(self, i_param, inspect.signature(get_centerline).parameters[i_param].default)
+        self.param_centerline = param_centerline
 
         # QC metrics
         self.accuracy_results = 0
@@ -99,8 +94,7 @@ class SpinalCordStraightener(object):
         fname_output = self.output_filename
         remove_temp_files = self.remove_temp_files
         verbose = self.verbose
-        interpolation_warp = self.interpolation_warp
-        algo_fitting = self.algo_fitting
+        interpolation_warp = self.interpolation_warp  # TODO: remove this
 
         # start timer
         start_time = time.time()
@@ -154,7 +148,7 @@ class SpinalCordStraightener(object):
 
         # 2. extract bspline fitting of the centerline, and its derivatives
         img_ctl = Image('centerline_rpi.nii.gz')
-        centerline = _get_centerline(img_ctl, algo_fitting, self.degree, self.smooth, verbose)
+        centerline = _get_centerline(img_ctl, self.param_centerline, verbose)
         number_of_points = centerline.number_of_points
 
         # ==========================================================================================
@@ -625,10 +619,9 @@ class SpinalCordStraightener(object):
         return fname_straight
 
 
-def _get_centerline(img, algo_fitting, degree, smooth, verbose):
+def _get_centerline(img, param_centerline, verbose):
     nx, ny, nz, nt, px, py, pz, pt = img.dim
-    _, arr_ctl, arr_ctl_der, _ = get_centerline(img, algo_fitting=algo_fitting, minmax=True, degree=degree,
-                                                smooth=smooth, verbose=verbose)
+    _, arr_ctl, arr_ctl_der, _ = get_centerline(img, param_centerline, verbose=verbose)
     # Transform centerline to physical coordinate system
     arr_ctl_phys = img.transfo_pix2phys(
         [[arr_ctl[0][i], arr_ctl[1][i], arr_ctl[2][i]] for i in range(len(arr_ctl[0]))])
