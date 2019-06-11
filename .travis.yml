@@ -39,7 +39,7 @@ matrix:
 before_install:
   - echo "HOME="
   - echo $HOME
-  - sudo apt-get update -qq; sudo apt-get install -qq libopenmpi-dev; echo
+  - sudo apt-get update -qq; echo
 
 install:
   - |
