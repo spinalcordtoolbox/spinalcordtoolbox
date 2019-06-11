@@ -82,7 +82,8 @@ def __get_commit():
 
     return commit
 
-def _git_info(commit_env='SCT_COMMIT',branch_env='SCT_BRANCH'):
+
+def _git_info(commit_env='SCT_COMMIT', branch_env='SCT_BRANCH'):
 
     sct_commit = os.getenv(commit_env, "unknown")
     sct_branch = os.getenv(branch_env, "unknown")
@@ -99,6 +100,7 @@ def _git_info(commit_env='SCT_COMMIT',branch_env='SCT_BRANCH'):
         version_sct = f.read().rstrip()
 
     return install_type, sct_commit, sct_branch, version_sct
+
 
 def _version_string():
     install_type, sct_commit, sct_branch, version_sct = _git_info()
