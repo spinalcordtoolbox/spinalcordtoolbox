@@ -91,11 +91,11 @@ def find_angle(image, segmentation, px, py, method, angle_range=None, return_cen
             if angle_found < -angle_range * pi/180 or angle_found > angle_range * pi/180:
                 angle_found = 0
 
-        conf_score = None
+        conf_score = round(pca.explained_variance_ratio_[0] / pca.explained_variance_ratio_[1], 2)
 
     elif method is "hog":
 
-        sigma = 1000
+        sigma = 1
         sigmax = sigma / px
         sigmay = sigma / py
         nb_bin = 360
@@ -120,7 +120,7 @@ def find_angle(image, segmentation, px, py, method, angle_range=None, return_cen
 
         # hog_fft2 = np.fft.rfft(grad_orient_histo_smooth) ** 2
         # grad_orient_histo_conv = np.real(np.fft.irfft(hog_fft2))  # TODO implemente circular conv to be sure it does the same thing
-        grad_orient_histo_conv = np.convolve(grad_orient_histo_smooth, grad_orient_histo_smooth, mode='same')
+        grad_orient_histo_conv = np.convolve(grad_orient_histo_smooth, grad_orient_histo_smooth, mode='same')[::-1]
 
         # grad_orient_histo_conv_reordered = np.zeros(nb_bin)  # wtf is the point of this => hog conv with angle [0 pi] instead of [-pi/2 pi/2] like we want
         # grad_orient_histo_conv_reordered[0:nb_bin//2] = grad_orient_histo_conv[nb_bin//2:nb_bin]
@@ -145,7 +145,7 @@ def find_angle(image, segmentation, px, py, method, angle_range=None, return_cen
         if save_figure_path is not None:
 
             # matplotlib.use("Agg")
-            plt.figure(figsize=(6.4*3, 4.8*3))
+            plt.figure(figsize=(6.4*2, 4.8*2))
             plt.suptitle("angle found is : " + str(np.round(angle_found * 180/pi, 1)) + " with conf score = " + str(conf_score))
             plt.subplot(241)
             plt.imshow(np.max(image) - image, cmap="Greys")
@@ -194,95 +194,6 @@ def find_angle(image, segmentation, px, py, method, angle_range=None, return_cen
         return angle_found, conf_score
 
 
-# TODO delete this in future version
-def find_angle_hog(image, centermass, parameters, return_proba_map=False):
-
-    sigmax = parameters['sigmax']  # TODO change this as a class not a dictionnary
-    sigmay = parameters['sigmay']
-    nb_bin = parameters['nb_bin']
-    if nb_bin % 2 != 0:
-        nb_bin = nb_bin - 1
-    kmedian_size = parameters['kmedian_size']
-    angle_range = parameters['angle_range']
-    confidence_treshold = parameters['confidence_threshold']
-
-    nx, ny = image.shape
-
-    xx, yy = np.mgrid[:nx, :ny]
-    seg_weighted_mask = np.exp(
-        -(((xx - centermass[0]) ** 2) / (2 * (sigmax ** 2)) + ((yy - centermass[1]) ** 2) / (2 * (sigmay ** 2))))
-
-    grad_orient_histo, proba_map, orient_image = gradient_orientation_histogram(image, nb_bin=nb_bin, seg_weighted_mask=seg_weighted_mask, return_image=True, return_orient=True)
-
-    edges_hist = np.linspace(-(pi-pi/nb_bin), (pi-pi/nb_bin), nb_bin)
-    repr_hist = np.linspace(-(pi-2*pi/nb_bin), (pi-2*pi/nb_bin), nb_bin-1)
-
-    grad_orient_histo_smooth = circular_filter_1d(grad_orient_histo, kmedian_size, filter='median')  # fft than square than ifft to calculate convolution
-
-    # hog_fft2 = np.fft.rfft(grad_orient_histo_smooth) ** 2
-    # grad_orient_histo_conv = np.real(np.fft.irfft(hog_fft2))  # TODO implemente circular conv to be sure it does the same thing
-    grad_orient_histo_conv = np.convolve(grad_orient_histo_smooth, grad_orient_histo_smooth, mode='same')
-
-    # grad_orient_histo_conv_reordered = np.zeros(nb_bin)  # wtf is the point of this => hog conv with angle [0 pi] instead of [-pi/2 pi/2] like we want
-    # grad_orient_histo_conv_reordered[0:nb_bin//2] = grad_orient_histo_conv[nb_bin//2:nb_bin]
-    # grad_orient_histo_conv_reordered[nb_bin//2:nb_bin] = grad_orient_histo_conv[0:nb_bin//2]
-    grad_orient_histo_conv_reordered = grad_orient_histo_conv
-
-    index_restrain = int(np.ceil(np.true_divide(angle_range, 180) * nb_bin))
-    center = (nb_bin - 1) // 2
-
-    grad_orient_histo_conv_restrained = grad_orient_histo_conv_reordered[center - index_restrain:center + index_restrain + 1]
-
-    index_angle_found = np.argmax(grad_orient_histo_conv_restrained) + (nb_bin//2 - index_restrain) -1
-    angle_found = repr_hist[index_angle_found]
-    angle_found_score = np.amax(grad_orient_histo_conv_restrained)
-
-    confidence_score = angle_found_score/np.mean(grad_orient_histo_conv_reordered)
-    # sct.printv("confidence score is : " + str(confidence_score) + "\n angle associated is : " + str(angles_sorted[0] * 180/pi))
-    # sct.printv("confidence score is : " + str(confidence_score) + "\n angle associated is : " + str(angle_found *180/pi))
-
-    # Plotting stuff :
-
-    # plt.figure(figsize=(6.4*3, 4.8*3))
-    # plt.subplot(241)
-    # plt.imshow(np.max(image) - image, cmap="Greys")
-    # plt.title("image")
-    # plt.subplot(242)
-    # plt.imshow(proba_map)
-    # plt.title("weighting map")
-    # plt.colorbar()
-    # plt.subplot(243)
-    # plt.imshow(np.multiply(orient_image, proba_map > 0) * 180/pi, cmap="hsv")
-    # plt.colorbar()
-    # plt.title("Orientation map")
-    # plt.subplot(244)
-    # plt.bar(repr_hist * 180/pi, grad_orient_histo, width=0.8 * 360/nb_bin)
-    # plt.xlabel("angle")
-    # plt.title("Orientation of weighted gradient histogram")
-    # plt.subplot(245)
-    # plt.bar(repr_hist * 180/pi, grad_orient_histo_smooth, width=0.8 * 360/nb_bin)
-    # plt.xlabel("angle")
-    # plt.title("Orientation of weighted gradient \n histogram smoothed")
-    # plt.subplot(246)
-    # plt.plot(repr_hist * 90/pi, grad_orient_histo_conv_reordered)
-    # plt.xlabel("angle")
-    # plt.title("Convolution of the histogram \n conf_score is : " + str(confidence_score))
-    # plt.subplot(247)
-    # plt.plot(repr_hist[center - index_restrain:center + index_restrain + 1] * 90/pi, grad_orient_histo_conv_restrained)
-    # plt.xlabel("angle")
-    # plt.title("Convolution of the histogram restrained to angle range")
-    # plt.show()
-    # plt.close()
-
-    if confidence_score < confidence_treshold:
-        sct.printv("confidence score bellow threshold")
-        angle_found = None
-
-    if return_proba_map:
-        return angle_found, confidence_score, proba_map
-    else:
-        return angle_found, confidence_score
-
 
 def gradient_orientation_histogram(image, nb_bin, grad_ksize=123456789, seg_weighted_mask=None, return_image=False, return_orient=False):  # TODO implement selection of gradient's kernel size, sure that is pertinent ? check wikip image gradient
                                                                                                     # sun et si original say that by increasing the kernel size we reduce the (0, 45, 90) effect
@@ -322,7 +233,7 @@ def gradient_orientation_histogram(image, nb_bin, grad_ksize=123456789, seg_weig
         weighting_map = grad_mag
 
     # uncomment following line to have vanilla Sun et al. method
-    #weighting_map = np.ones(grad_mag.shape)
+    weighting_map = np.ones(grad_mag.shape)
     # compute histogram :
     grad_orient_histo = np.histogram(np.concatenate(orient), bins=nb_bin-1, range=(-(pi-pi/nb_bin), (pi-pi/nb_bin)), weights=np.concatenate(weighting_map))  # check param density that permits outputting a distribution that has integral of 1
     grad_mag = (grad_mag * 255).astype(float).round()  # just for debbuguing purpose (visualisation)

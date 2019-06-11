@@ -91,12 +91,12 @@ def main(args=None):
         for z in range(0, max_z-min_z):
 
             if method is "hog":
-                angles[z], conf_score[z], centermass, fig = find_angle(data_image[:, :, min_z + z], data_seg[:, :, min_z + z], px, py, method, angle_range=angle_range, return_centermass=True, return_proba_map=True)
+                angles[z], conf_score[z], centermass = find_angle(data_image[:, :, min_z + z], data_seg[:, :, min_z + z], px, py, method, angle_range=angle_range, return_centermass=True)
                 if math.isnan(angles[z]):
                     sct.printv("confidence score bellow threshold (or not found)")
                     angles[z] = 0
             else:
-                angles[z], conf_score[z], centermass = find_angle(data_image[:, :, min_z + z], data_seg[:, :, min_z + z], px, py, method, angle_range=angle_range, return_centermass=True, return_proba_map=False)
+                angles[z], conf_score[z], centermass = find_angle(data_image[:, :, min_z + z], data_seg[:, :, min_z + z], px, py, method, angle_range=angle_range, return_centermass=True)
 
             axes_image[:, :, min_z + z] = generate_2Dimage_line(axes_image[:, :, min_z + z], centermass[0], centermass[1], angles[z]-pi/2, value=k+1)
 
