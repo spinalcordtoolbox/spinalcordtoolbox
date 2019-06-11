@@ -120,7 +120,7 @@ def find_angle(image, segmentation, px, py, method, angle_range=None, return_cen
 
         # hog_fft2 = np.fft.rfft(grad_orient_histo_smooth) ** 2
         # grad_orient_histo_conv = np.real(np.fft.irfft(hog_fft2))  # TODO implemente circular conv to be sure it does the same thing
-        grad_orient_histo_conv = np.convolve(grad_orient_histo_smooth, grad_orient_histo_smooth, mode='same')[::-1]
+        grad_orient_histo_conv = np.convolve(grad_orient_histo_smooth, grad_orient_histo_smooth, mode='same')
 
         # grad_orient_histo_conv_reordered = np.zeros(nb_bin)  # wtf is the point of this => hog conv with angle [0 pi] instead of [-pi/2 pi/2] like we want
         # grad_orient_histo_conv_reordered[0:nb_bin//2] = grad_orient_histo_conv[nb_bin//2:nb_bin]
