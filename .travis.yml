@@ -30,9 +30,11 @@ matrix:
     - os: osx
       name: "OSX 10.12 (Sierra)"
       osx_image: xcode9.2
+    - os: osx
+      name: "OSX 10.11 (El Capitan)"
+      osx_image: xcode8
   allow_failures:
-    - name: "Ubuntu 14.04 (Trusty)"
-    - name: "OSX 10.12 (Sierra)"
+    - name: "OSX 10.11 (El Capitan)"
 
 before_install:
   - echo "HOME="
