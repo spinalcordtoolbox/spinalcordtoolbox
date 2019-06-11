@@ -18,16 +18,21 @@ matrix:
     - os: linux  # list of Linux env: https://docs.travis-ci.com/user/reference/overview/
       name: "Ubuntu 16.04 (Xenial)"
       dist: xenial
+    - os: linux
+      name: "Ubuntu 14.04 (Trusty)"
+      dist: trusty
     - os: osx  # list of OSX env: https://docs.travis-ci.com/user/reference/osx/
       name: "OSX 10.14 (Mojave)"
       osx_image: xcode10.2
     - os: osx
       name: "OSX 10.13 (High Sierra)"
       osx_image: xcode9.4
+    - os: osx
+      name: "OSX 10.12 (Sierra)"
+      osx_image: xcode9.2
   allow_failures:
-    - os: linux
-      name: "Ubuntu 14.04 (Trusty)"
-      dist: trusty
+    - name: "Ubuntu 14.04 (Trusty)"
+    - name: "OSX 10.12 (Sierra)"
 
 before_install:
   - echo "HOME="
