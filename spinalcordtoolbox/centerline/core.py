@@ -140,10 +140,11 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1):
         # TODO: Fix below with reorientation of axes
         _, x_centerline_deriv = curve_fitting.polyfit_1d(z_centerline, x_centerline_fit, z_centerline, deg=param.degree)
         _, y_centerline_deriv = curve_fitting.polyfit_1d(z_centerline, y_centerline_fit, z_centerline, deg=param.degree)
-        return im_centerline.change_orientation(native_orientation), \
-               np.array([x_centerline_fit, y_centerline_fit, z_centerline]), \
-               np.array([x_centerline_deriv, y_centerline_deriv, np.ones_like(z_centerline)]),
-
+        return \
+            im_centerline.change_orientation(native_orientation), \
+            np.array([x_centerline_fit, y_centerline_fit, z_centerline]), \
+            np.array([x_centerline_deriv, y_centerline_deriv, np.ones_like(z_centerline)]), \
+            None
     else:
         logger.error('algo_fitting "' + param.algo_fitting + '" does not exist.')
         raise ValueError
