@@ -168,7 +168,7 @@ def _properties2d(image, dim):
                                  [i / upscale for i in dim])
     # TODO: compute major_axis_length/minor_axis_length by summing weighted voxels along axis
     # Deal with https://github.com/neuropoly/spinalcordtoolbox/issues/2307
-    if 'Darwin-16' in platform.platform():
+    if any(x in platform.platform() for x in ['Darwin-15', 'Darwin-16']):
         solidity = np.nan
     else:
         solidity = region.solidity
