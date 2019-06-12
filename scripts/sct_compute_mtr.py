@@ -33,7 +33,7 @@ class Param:
 
 # main
 #=======================================================================================================================
-def main():
+def main(args):
     import numpy as np
     import spinalcordtoolbox.image as msct_image
 
@@ -46,7 +46,6 @@ def main():
     # verbose = param.verbose
 
     # Check input parameters
-    args = get_parser()
     fname_mt0 = args.mt0
     fname_mt1 = args.mt1
     fname_mtr = args.o
@@ -85,8 +84,7 @@ def get_parser():
     parser.add_argument('-o',
                         help='Path to output file.',
                         default=os.path.join('.','mtr.nii.gz'))
-    args = parser.parse_args()
-    return args
+    return parser
 
 
 #=======================================================================================================================
@@ -94,8 +92,11 @@ def get_parser():
 #=======================================================================================================================
 if __name__ == "__main__":
     sct.init_sct()
+    # parse arguments
+    parser = get_parser()
+    arguments = parser.parse_args()
     # initialize parameters
     param = Param()
     # param_default = Param()
     # call main function
-    main()
+    main(arguments)
