@@ -408,9 +408,9 @@ def get_functions_parallelizable():
         'sct_merge_images',
         'sct_compute_ernst_angle',
         'sct_compute_hausdorff_distance',
-        'sct_compute_mtr',
+        #'sct_compute_mtr', # had to remove temporarily because using argparse (not msct_parser)
         'sct_compute_mscc',
-        'sct_compute_snr',
+        #'sct_compute_snr', # had to remove temporarily because using argparse (not msct_parser)
         'sct_concat_transfo',
         # 'sct_convert_binary_to_trilinear',  # not useful
         'sct_create_mask',
