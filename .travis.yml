@@ -33,8 +33,6 @@ matrix:
     - os: osx
       name: "OSX 10.11 (El Capitan)"
       osx_image: xcode8
-  allow_failures:
-    - name: "OSX 10.11 (El Capitan)"
 
 before_install:
   - echo "HOME="
