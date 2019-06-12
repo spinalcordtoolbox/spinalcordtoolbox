@@ -5,6 +5,7 @@
 from __future__ import absolute_import
 
 import math
+import platform
 import numpy as np
 from skimage import measure, transform
 from tqdm import tqdm
@@ -167,6 +168,11 @@ def _properties2d(image, dim):
         _find_AP_and_RL_diameter(region.major_axis_length, region.minor_axis_length, orientation,
                                  [i / upscale for i in dim])
     # TODO: compute major_axis_length/minor_axis_length by summing weighted voxels along axis
+    # Deal with https://github.com/neuropoly/spinalcordtoolbox/issues/2307
+    if any(x in platform.platform() for x in ['Darwin-15', 'Darwin-16']):
+        solidity = np.nan
+    else:
+        solidity = region.solidity
     # Fill up dictionary
     properties = {'area': area,
                   'diameter_AP': diameter_AP,
@@ -174,7 +180,7 @@ def _properties2d(image, dim):
                   'centroid': region.centroid,
                   'eccentricity': region.eccentricity,
                   'orientation': orientation,
-                  'solidity': region.solidity  # convexity measure
+                  'solidity': solidity  # convexity measure
     }
 
     return properties

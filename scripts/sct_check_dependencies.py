@@ -15,7 +15,6 @@
 # TODO: check chmod of binaries
 # TODO: find another way to create log file. E.g. sct.print(). For color as well.
 # TODO: manage .cshrc files
-# TODO: add linux distrib when checking OS
 
 from __future__ import print_function, absolute_import
 
@@ -26,7 +25,6 @@ import io
 import os
 import re
 import platform
-import fnmatch
 import importlib
 
 import sct_utils as sct
@@ -148,9 +146,9 @@ def main():
 
     # check OS
     platform_running = sys.platform
-    if (platform_running.find('darwin') != -1):
+    if platform_running.find('darwin') != -1:
         os_running = 'osx'
-    elif (platform_running.find('linux') != -1):
+    elif platform_running.find('linux') != -1:
         os_running = 'linux'
 
     print('OS: ' + os_running + ' (' + platform.platform() + ')')
@@ -321,7 +319,13 @@ def get_dependencies(requirements_txt=None):
     out = list()
     with io.open(requirements_txt, "r", encoding="utf-8") as f:
         for line in f:
-            line = line.rstrip()
+            line = line.split('#')[0].strip()
+            # check if conditions (separated by ";")
+            if ';' in line:
+                line, condition = [x.strip() for x in line.split(';')]
+                # check if conditions apply
+                if not _test_condition(condition):
+                    break
             m = re.match("^(?P<pkg>\S+?)(==?(?P<ver>\S+))?\s*(#.*)?$", line)
             if m is None:
                 print("WARNING: Invalid requirements.txt line: %s", line)
@@ -335,6 +339,21 @@ def get_dependencies(requirements_txt=None):
 
     return out
 
+
+def _test_condition(condition):
+    """Test condition formatted in requirements"""
+    # Define Environment markers (https://www.python.org/dev/peps/pep-0508/#environment-markers)
+    os_name = os.name
+    platform_machine = platform.machine()
+    platform_release = platform.release()
+    platform_system = platform.system()
+    platform_version = platform.version()
+    python_full_version = platform.python_version()
+    platform_python_implementation = platform.python_implementation()
+    python_version = platform.python_version()[:3]
+    sys_platform = sys.platform
+    # Test condition
+    return eval(condition)
 
 
 # ==========================================================================================

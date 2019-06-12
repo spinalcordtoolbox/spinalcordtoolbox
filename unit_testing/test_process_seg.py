@@ -77,7 +77,7 @@ im_segs = [
     (dummy_segmentation(size_arr=(128, 128, 5), pixdim=(1, 1, 1), shape='ellipse', radius_RL=50.0, radius_AP=30.0,
                         debug=DEBUG),
      {'area': 4701, 'angle_AP': 0.0, 'angle_RL': 0.0, 'diameter_AP': 60.0, 'diameter_RL': 100.0, 'eccentricity': 0.8,
-      'orientation': 0.0, 'solidity': 1.0},
+      'orientation': 0.0},
      {'angle_corr': False}),
     # test with one empty slice
     (dummy_segmentation(size_arr=(32, 32, 5), zeroslice=[2], debug=DEBUG),
