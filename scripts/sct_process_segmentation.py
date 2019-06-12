@@ -26,6 +26,7 @@ from spinalcordtoolbox import process_seg
 from spinalcordtoolbox.aggregate_slicewise import aggregate_per_slice_or_level, save_as_csv, func_wa, func_std, \
     _merge_dict
 from spinalcordtoolbox.utils import parse_num_list
+from spinalcordtoolbox.reports.qc import generate_qc
 
 
 # TODO: Move this class somewhere else
@@ -115,6 +116,18 @@ def get_parser():
                       mandatory=False,
                       example=['0', '1'],
                       default_value='1')
+    parser.add_option(name='-qc',
+                      type_value='folder_creation',
+                      description='The path where the quality control generated content will be saved',
+                      default_value=None)
+    parser.add_option(name='-qc-dataset',
+                      type_value='str',
+                      description='If provided, this string will be mentioned in the QC report as the dataset the process was run on',
+                      )
+    parser.add_option(name='-qc-subject',
+                      type_value='str',
+                      description='If provided, this string will be mentioned in the QC report as the subject the process was run on',
+                      )
     parser.add_option(name='-v',
                       type_value='multiple_choice',
                       description='1: display on, 0: display off (default)',
@@ -127,6 +140,43 @@ def get_parser():
                       mandatory=False)
 
     return parser
+
+
+def _make_figure(metric):
+    """
+    Make a graph showing CSA and angles per slice.
+    :param metric: Dictionary of metrics
+    :return: image object
+    """
+    import tempfile
+    from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+    from matplotlib.figure import Figure
+
+    fname_img = tempfile.NamedTemporaryFile().name + '.png'
+    z, csa, angle_ap, angle_rl = [], [], [], []
+    for key, value in metric.items():
+        z.append(key[0])
+        csa.append(value['MEAN(area)'])
+        angle_ap.append(value['MEAN(angle_AP)'])
+        angle_rl.append(value['MEAN(angle_RL)'])
+    # Make figure
+    fig = Figure()
+    FigureCanvas(fig)
+    ax = fig.add_subplot(211)
+    ax.plot(z, csa, 'k')
+    ax.plot(z, csa, 'k.')
+    ax.grid(True)
+    ax.set_ylabel('CSA [$mm^2$]')
+    ax = fig.add_subplot(212)
+    ax.plot(z, angle_ap, 'b')
+    ax.plot(z, angle_ap, 'b.')
+    ax.plot(z, angle_rl, 'r')
+    ax.plot(z, angle_rl, 'r.')
+    ax.grid(True)
+    ax.set_xlabel('Slice (Inferior-Superior direction)')
+    ax.set_ylabel('Angle [$deg$]')
+    fig.savefig(fname_img)
+    return fname_img
 
 
 def main(args):
@@ -171,6 +221,9 @@ def main(args):
             angle_correction = True
         elif arguments['-angle-corr'] == '0':
             angle_correction = False
+    path_qc = arguments.get("-qc", None)
+    qc_dataset = arguments.get("-qc-dataset", None)
+    qc_subject = arguments.get("-qc-subject", None)
 
     verbose = int(arguments.get('-v'))
     sct.init_sct(log_level=verbose, update=True)  # Update log level
@@ -191,6 +244,12 @@ def main(args):
                                                         group_funcs=group_funcs)
     metrics_agg_merged = _merge_dict(metrics_agg)
     save_as_csv(metrics_agg_merged, file_out, fname_in=fname_segmentation, append=append)
+
+    # QC report (only show CSA for clarity)
+    if path_qc is not None:
+        generate_qc(fname_segmentation, args=args, path_qc=os.path.abspath(path_qc), dataset=qc_dataset,
+                    subject=qc_subject, path_img=_make_figure(metrics_agg_merged), process='sct_process_segmentation')
+
     sct.display_open(file_out)
 
 
