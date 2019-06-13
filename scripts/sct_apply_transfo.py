@@ -18,7 +18,7 @@ from __future__ import division, absolute_import
 
 import sys, io, os, time, functools
 
-from msct_parser import Parser
+import argparse
 import sct_utils as sct
 import sct_convert
 import sct_image
@@ -36,58 +36,50 @@ class Param:
 # ==========================================================================================
 def get_parser():
     # parser initialisation
-    parser = Parser(__file__)
-    parser.usage.set_description('Apply transformations. This function is a wrapper for antsApplyTransforms (ANTs).')
-    parser.add_option(name="-i",
-                      type_value="file",
-                      description="input image",
-                      mandatory=True,
-                      example="t2.nii.gz")
-    parser.add_option(name="-d",
-                      type_value="file",
-                      description="destination image",
-                      mandatory=True,
-                      example="out.nii.gz")
-    parser.add_option(name="-w",
-                      type_value=[[','], "file"],
-                      description="Transformation, which can be a warping field (nifti image) or an affine transformation matrix (text file).",
-                      mandatory=True,
-                      example="warp1.nii.gz,warp2.nii.gz")
-    parser.add_option(name="-crop",
-                      type_value="multiple_choice",
-                      description="Crop Reference. 0 : no reference. 1 : sets background to 0. 2 : use normal background",
-                      mandatory=False,
-                      default_value='0',
-                      example=['0', '1', '2'])
-    parser.add_option(name="-c",
-                      type_value=None,
-                      description="Crop Reference. 0 : no reference. 1 : sets background to 0. 2 : use normal background",
-                      mandatory=False,
-                      deprecated_by='-crop')
-    parser.add_option(name="-o",
-                      type_value="file_output",
-                      description="registered source.",
-                      mandatory=False,
-                      default_value='',
-                      example="dest.nii.gz")
-    parser.add_option(name="-x",
-                      type_value="multiple_choice",
-                      description="interpolation method",
-                      mandatory=False,
-                      default_value='spline',
-                      example=['nn', 'linear', 'spline'])
-    parser.add_option(name="-r",
-                      type_value="multiple_choice",
-                      description="""Remove temporary files.""",
-                      mandatory=False,
-                      default_value='1',
-                      example=['0', '1'])
-    parser.add_option(name="-v",
-                      type_value="multiple_choice",
-                      description="""Verbose.""",
-                      mandatory=False,
-                      default_value='1',
-                      example=['0', '1', '2'])
+
+    parser = argparse.ArgumentParser(
+        description='Apply transformations. This function is a wrapper for antsApplyTransforms (ANTs).')
+    parser.add_argument("-i",
+                        help="input image (e.g.,\"t2.nii.gz\")",
+                        required = True
+                        )
+    parser.add_argument("-d",
+                        help="destination image (e.g.,\"out.nii.gz\")",
+                        required = True
+                        )
+    parser.add_argument("-w",
+                        help="Transformation, which can be a warping field (nifti image) or an affine transformation matrix (text file). (e.g.,\"warp1.nii.gz, warp2.nii.gz\")",
+                        required = True
+                        )
+    parser.add_argument("-crop",
+                        help="Crop Reference. 0 : no reference. 1 : sets background to 0. 2 : use normal background (e.g.,['0', '1', '2'])",
+                        required=False,
+                        default= 0,
+                        choices=(0, 1, 2))
+    parser.add_argument("-c",
+                        help="Crop Reference. 0 : no reference. 1 : sets background to 0. 2 : use normal background",
+                        required=False,
+                        )
+    parser.add_argument("-o",
+                        help="registered source. (e.g.,\"dest.nii.gz\")",
+                        required = False,
+                        default = ''
+                        )
+    parser.add_argument("-x",
+                        help="interpolation method (e.g.,['nn', 'linear', 'spline'])",
+                        required=False,
+                        default='spline',
+                        choices=('nn', 'linear', 'spline'))
+    parser.add_argument("-r",
+                        help="""Remove temporary files.(e.g., ['0', '1'])""",
+                        required = False,
+                        default = 1,
+                        choices = (0, 1))
+    parser.add_argument("-v",
+                        help="""Verbose.(e.g., ['0', '1', '2'])""",
+                        required = False,
+                        default = 1,
+                        choices = (0, 1, 2))
 
     return parser
 
@@ -267,40 +259,34 @@ class Transform:
 
 # MAIN
 # ==========================================================================================
-def main(args=None):
+def main(arguments):
 
-    # check user arguments
-    if not args:
-        args = sys.argv[1:]
-
-    # Get parser info
-    parser = get_parser()
-    arguments = parser.parse(args)
-    input_filename = arguments["-i"]
-    fname_dest = arguments["-d"]
-    warp_filename = arguments["-w"]
+    input_filename = arguments.i
+    fname_dest = arguments.d
+    warp_filename = arguments.w
 
     transform = Transform(input_filename=input_filename, fname_dest=fname_dest, warp=warp_filename)
 
-    if "-crop" in arguments:
-        transform.crop = arguments["-crop"]
-    if "-o" in arguments:
-        transform.output_filename = arguments["-o"]
-    if "-x" in arguments:
-        transform.interp = arguments["-x"]
-    if "-r" in arguments:
-        transform.remove_temp_files = int(arguments["-r"])
-    transform.verbose = int(arguments.get('-v'))
+    if vars(arguments)["crop"] != None:
+        transform.crop = arguments.crop
+    if vars(arguments)["o"] != None:
+        transform.output_filename = arguments.o
+    if vars(arguments)["x"] != None:
+        transform.interp = arguments.x
+    if vars(arguments)["r"] != None:
+        transform.remove_temp_files = arguments.r
+    transform.verbose = arguments.v
     sct.init_sct(log_level=transform.verbose, update=True)  # Update log level
 
     transform.apply()
-
 
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
     sct.init_sct()
-    # # initialize parameters
+    parser = get_parser()
+    arguments = parser.parse_args()
+    # initialize parameters
     param = Param()
     # call main function
-    main()
+    main(arguments)
