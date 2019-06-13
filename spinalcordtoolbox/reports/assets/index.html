@@ -71,10 +71,11 @@
                       <li><a class="dropdown-item" id="Date" onclick="toggleColumn(id)">Date</button></a></li>
                       <li><a class="dropdown-item" id="Dataset" onclick="toggleColumn(id)">Dataset &#10004</a></li>
                       <li><a class="dropdown-item" id="Subject" onclick="toggleColumn(id)">Subject</a></li>
+                      <li><a class="dropdown-item" id="Path" onclick="toggleColumn(id)">Path &#10004</a></li>
                       <li><a class="dropdown-item" id="File" onclick="toggleColumn(id)">File</a></li>
                       <li><a class="dropdown-item" id="Contrast" onclick="toggleColumn(id)">Contrast &#10004</a></li>
                       <li><a class="dropdown-item" id="Function" onclick="toggleColumn(id)">Function</a></li>
-                      <li><a class="dropdown-item" id="Path" onclick="toggleColumn(id)">Path &#10004</a></li>
+                      <li><a class="dropdown-item" id="Function+Args" onclick="toggleColumn(id)">Function+Args &#10004</a></li>
                   </ul>
                   <script>
                       var buttonPosition = document.getElementById('dropdown');
@@ -82,19 +83,20 @@
                   </script>
               </div>
               <table id="table" class="table table-condensed"
-                  data-search="true"
-		  data-sort-name="moddate"
-                  data-sort-order="asc"
-                  data-response-handler="responseHandler">
-	                <thead>
+                     data-search="true"
+		             data-sort-name="moddate"
+                     data-sort-order="asc"
+                     data-response-handler="responseHandler">
+                     <thead>
 		                  <tr>
 			                    <th data-field="moddate" data-sortable="true">Date</th>
 			                    <th data-field="dataset" data-sortable="true">Dataset</th>
 			                    <th data-field="subject" data-sortable="true">Subject</th>
-                                	    <th data-field="fname_in" data-sortable="true">File</th>
-                                	    <th data-field="contrast" data-sortable="true">Contrast</th>
-			                    <th data-field="command" data-sortable="true">Function</th>
-                                	    <th data-field="cwd" data-sortable="true">Path</th>
+                                <th data-field="cwd" data-sortable="true">Path</th>
+                                <th data-field="fname_in" data-sortable="true">File</th>
+                                <th data-field="contrast" data-sortable="true">Contrast</th>
+			                    <th data-field="function" data-sortable="true">Function</th>
+			                    <th data-field="cmdline" data-sortable="true">Function+Args</th>
 		                  </tr>
 	                </thead>
               </table>
