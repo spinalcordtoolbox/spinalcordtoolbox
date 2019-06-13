@@ -87,12 +87,12 @@ def main():
     parser = get_parser()
     arguments = get_parser()
     fname_data = arguments.i
-    if hasattr(arguments, 'm'):
+    if vars(arguments)['m']:
         fname_mask = arguments.m
     else:
         fname_mask = ''
     method = arguments.method
-    if hasattr(arguments, 'vol'):
+    if vars(arguments)['vol']:
         index_vol_user = arguments.vol
     else:
         index_vol_user = ''
