@@ -18,7 +18,7 @@ from skimage.measure import label
 
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
-from msct_parser import Parser
+import argparse
 from msct_types import Centerline
 import sct_utils as sct
 from sct_utils import extract_fname, printv, tmp_create
@@ -27,53 +27,49 @@ from spinalcordtoolbox.centerline.core import get_centerline
 
 def get_parser():
     # Initialize the parser
-    parser = Parser(__file__)
-    parser.usage.set_description('Compute statistics on lesions of the input binary file (1 for lesion, 0 for background). The function assigns an ID value to each lesion (1, 2, 3, etc.) and outputs morphometric measures for each lesion:'
-                                 '\n- volume [mm^3]'
-                                 '\n- length [mm]: length along the Superior-Inferior axis'
-                                 '\n- max_equivalent_diameter [mm]: maximum diameter of the lesion, when approximating the lesion as a circle in the axial cross-sectional plane orthogonal to the spinal cord'
-                                 '\n\nIf an image (e.g. T2w or T1w image, texture image) is provided, it computes the mean and standard deviation values of this image within each lesion.'
-                                 '\n\nIf a registered template is provided, it computes:'
-                                 '\n- the distribution of each lesion depending on each vertebral level and on each region of the template (eg GM, WM, WM tracts).'
-                                 '\n- the proportion of ROI (eg vertebral level, GM, WM) occupied by lesion.'
-                                 '\nN.B. If the proportion of lesion in each region (e.g., WM and GM) does not sum up to 100%, it means that the registered template does not fully cover the lesion, in that case you might want to check the registration results.')
-    parser.add_option(name="-m",
-                      type_value="file",
-                      description="Lesion mask to analyze",
-                      mandatory=True,
-                      example='t2_lesion.nii.gz')
-    parser.add_option(name="-s",
-                      type_value="file",
-                      description="Spinal cord centerline or segmentation file, which will be used to correct morphometric measures with cord angle with respect to slice.",
-                      mandatory=False,
-                      example='t2_seg.nii.gz')
-    parser.add_option(name="-i",
-                      type_value="file",
-                      description="Image from which to extract average values within lesions (e.g. T2w or T1w image, texture image).",
-                      mandatory=False,
-                      example='t2.nii.gz')
-    parser.add_option(name="-f",
-                      type_value="str",
-                      description="Path to folder containing the atlas/template registered to the anatomical image.",
-                      mandatory=False,
-                      example="./label")
-    parser.add_option(name="-ofolder",
-                      type_value="folder_creation",
-                      description="Output folder",
-                      mandatory=False,
-                      example='./')
-    parser.add_option(name="-r",
-                      type_value="multiple_choice",
-                      description="Remove temporary files.",
-                      mandatory=False,
-                      default_value='1',
-                      example=['0', '1'])
-    parser.add_option(name="-v",
-                      type_value='multiple_choice',
-                      description="Verbose: 0 = nothing, 1 = classic, 2 = expended",
-                      mandatory=False,
-                      example=['0', '1', '2'],
-                      default_value='1')
+
+    parser = argparse.ArgumentParser(
+        description='Compute statistics on lesions of the input binary file (1 for lesion, 0 for background). The function assigns an ID value to each lesion (1, 2, 3, etc.) and outputs morphometric measures for each lesion:'
+                    '\n- volume [mm^3]'
+                    '\n- length [mm]: length along the Superior-Inferior axis'
+                    '\n- max_equivalent_diameter [mm]: maximum diameter of the lesion, when approximating the lesion as a circle in the axial cross-sectional plane orthogonal to the spinal cord'
+                    '\n\nIf an image (e.g. T2w or T1w image, texture image) is provided, it computes the mean and standard deviation values of this image within each lesion.'
+                    '\n\nIf a registered template is provided, it computes:'
+                    '\n- the distribution of each lesion depending on each vertebral level and on each region of the template (eg GM, WM, WM tracts).'
+                    '\n- the proportion of ROI (eg vertebral level, GM, WM) occupied by lesion.'
+                    '\nN.B. If the proportion of lesion in each region (e.g., WM and GM) does not sum up to 100%, it means that the registered template does not fully cover the lesion, in that case you might want to check the registration results.')
+    parser.add_argument("-m",
+                        help="Lesion mask to analyze (e.g.,'t2_lesion.nii.gz')",
+                        required=True
+                        )
+    parser.add_argument("-s",
+                        help="Spinal cord centerline or segmentation file, which will be used to correct morphometric measures with cord angle with respect to slice. (e.g.,'t2_seg.nii.gz')",
+                        required=False
+                        )
+    parser.add_argument("-i",
+                        help="Image from which to extract average values within lesions (e.g. T2w or T1w image, texture image). (e.g.,'t2.nii.gz')",
+                        required=False
+                        )
+    parser.add_argument("-f",
+                        help="Path to folder containing the atlas/template registered to the anatomical image.",
+                        required=False
+                        )
+    parser.add_argument("-ofolder",
+                        help="Output folder (e.g.,'./')",
+                        required=False
+                        )
+    parser.add_argument("-r",
+                        type=int,
+                        help="Remove temporary files. (e.g.,( 0, 1))",
+                        required=False,
+                        default=1,
+                        choices=(0, 1))
+    parser.add_argument("-v",
+                        type=int,
+                        help="Verbose: 0 = nothing, 1 = classic, 2 = expended",
+                        required=False,
+                        choices=(0, 1, 2),
+                        default=1)
 
     return parser
 
@@ -94,7 +90,6 @@ class AnalyzeLeion:
                 printv('WARNING: Empty masked image', self.verbose, 'warning')
             else:
                 printv("ERROR input file %s is not binary file with 0 and 1 values" % fname_mask, 1, 'error')
-
 
         # create tmp directory
         self.tmp_dir = tmp_create(verbose=verbose)  # path to tmp directory
@@ -485,38 +480,32 @@ class AnalyzeLeion:
         os.chdir(self.tmp_dir)  # go to tmp directory
 
 
-def main(args=None):
-    if args is None:
-        args = sys.argv[1:]
-
-    # get parser
-    parser = get_parser()
-    arguments = parser.parse(args)
+def main(arguments):
 
     # set param arguments ad inputted by user
-    fname_mask = arguments["-m"]
+    fname_mask = arguments.m
 
     # SC segmentation
-    if '-s' in arguments:
-        fname_sc = arguments["-s"]
+    if vars(arguments)["s"] != None:
+        fname_sc = arguments.s
         if not os.path.isfile(fname_sc):
             fname_sc = None
-            printv('WARNING: -s input file: "' + arguments['-s'] + '" does not exist.\n', 1, 'warning')
+            printv('WARNING: -s input file: "' + arguments.s + '" does not exist.\n', 1, 'warning')
     else:
         fname_sc = None
 
     # Reference image
-    if '-i' in arguments:
-        fname_ref = arguments["-i"]
+    if vars(arguments)["i"] != None:
+        fname_ref = arguments.i
         if not os.path.isfile(fname_sc):
             fname_ref = None
-            printv('WARNING: -i input file: "' + arguments['-i'] + '" does not exist.\n', 1, 'warning')
+            printv('WARNING: -i input file: "' + arguments.i + '" does not exist.\n', 1, 'warning')
     else:
         fname_ref = None
 
     # Path to template
-    if '-f' in arguments:
-        path_template = arguments["-f"]
+    if vars(arguments)["f"] != None:
+        path_template = arguments.f
         if not os.path.isdir(path_template) and os.path.exists(path_template):
             path_template = None
             printv("ERROR output directory %s is not a valid directory" % path_template, 1, 'error')
@@ -524,8 +513,8 @@ def main(args=None):
         path_template = None
 
     # Output Folder
-    if '-ofolder' in arguments:
-        path_results = arguments["-ofolder"]
+    if vars(arguments)["ofolder"] != None:
+        path_results = arguments.ofolder
         if not os.path.isdir(path_results) and os.path.exists(path_results):
             printv("ERROR output directory %s is not a valid directory" % path_results, 1, 'error')
         if not os.path.exists(path_results):
@@ -534,13 +523,13 @@ def main(args=None):
         path_results = './'
 
     # Remove temp folder
-    if '-r' in arguments:
-        rm_tmp = bool(int(arguments['-r']))
+    if vars(arguments)["r"] != None:
+        rm_tmp = bool(arguments.r)
     else:
         rm_tmp = True
 
     # Verbosity
-    verbose = int(arguments.get('-v'))
+    verbose = arguments.v
     sct.init_sct(log_level=verbose, update=True)  # Update log level
 
     # create the Lesion constructor
@@ -560,11 +549,13 @@ def main(args=None):
 
     printv('\nDone! To view the labeled lesion file (one value per lesion), type:', verbose)
     if fname_ref is not None:
-        printv('fslview ' + fname_mask + ' ' + os.path.join(path_results, lesion_obj.fname_label) + ' -l Red-Yellow -t 0.7 & \n', verbose, 'info')
+        printv('fsleyes ' + fname_mask + ' ' + os.path.join(path_results, lesion_obj.fname_label) + ' -cm red-yellow -a 70.0 & \n', verbose, 'info')
     else:
-        printv('fslview ' + os.path.join(path_results, lesion_obj.fname_label) + ' -l Red-Yellow -t 0.7 & \n', verbose, 'info')
+        printv('fsleyes ' + os.path.join(path_results, lesion_obj.fname_label) + ' -cm red-yellow -a 70.0 & \n', verbose, 'info')
 
 
 if __name__ == "__main__":
     sct.init_sct()
-    main()
+    parser = get_parser()
+    arguments = parser.parse_args()
+    main(arguments)
