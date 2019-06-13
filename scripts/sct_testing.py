@@ -397,7 +397,7 @@ def get_functions_nonparallelizable():
 
 def get_functions_parallelizable():
     return [
-        'sct_analyze_lesion',
+        # 'sct_analyze_lesion', # had to remove temporarily because using argparse (not msct_parser)
         'sct_analyze_texture',
         'sct_apply_transfo',
         'sct_warp_template',
