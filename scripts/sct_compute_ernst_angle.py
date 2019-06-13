@@ -15,7 +15,7 @@ from __future__ import absolute_import, division
 
 import sys
 
-from msct_parser import Parser
+import argparse
 import sct_utils as sct
 
 
@@ -70,78 +70,61 @@ class ErnstAngle:
 
 def get_parser():
     # Initialize the parser
-    parser = Parser(__file__)
-    parser.usage.set_description('Function to compute the Ernst Angle. For examples of T1 values in the brain, see Wansapura et al. NMR relaxation times in the human brain at 3.0 tesla. Journal of magnetic resonance imaging : JMRI (1999) vol. 9 (4) pp. 531-8. \nT1 in WM: 832ms\nT1 in GM: 1331ms')
-    parser.add_option(name="-tr",
-                      type_value='float',
-                      description="Value of TR (in ms) to get the Ernst Angle. ",
-                      mandatory=True,
-                      example='2000')
-    parser.add_option(name="-t1",
-                      type_value="float",
-                      description="T1 value (in ms).",
-                      mandatory=False,
-                      default_value=832.0,
-                      example='832')
-    parser.add_option(name="-b",
-                      type_value=[[','], 'float'],
-                      description="Boundaries TR parameter (in ms) in case -v 2 is used.",
-                      mandatory=False,
-                      example='500,3500')
-    parser.add_option(name="-d",
-                      type_value=None,
-                      description="Display option. The graph isn't display if 0.  ",
-                      deprecated_by="-v",
-                      mandatory=False)
-    parser.add_option(name="-o",
-                      type_value="file_output",
-                      description="Name of the output file containing Ernst angle result.",
-                      mandatory=False,
-                      default_value="ernst_angle.txt")
-    parser.add_option(name="-ofig",
-                      type_value="file_output",
-                      description="Name of the output graph (only if -v 2 is used).",
-                      mandatory=False,
-                      default_value="ernst_angle.png")
-    parser.add_option(name="-v",
-                      type_value='multiple_choice',
-                      description="verbose: 0 = nothing, 1 = classic, 2 = expended (graph)",
-                      mandatory=False,
-                      example=['0', '1', '2'],
-                      default_value='1')
+    parser = argparse.ArgumentParser(description='Function to compute the Ernst Angle. For examples of T1 values in the brain, see Wansapura et al. NMR relaxation times in the human brain at 3.0 tesla. Journal of magnetic resonance imaging : JMRI (1999) vol. 9 (4) pp. 531-8. \nT1 in WM: 832ms\nT1 in GM: 1331ms')
+    parser.add_argument("-tr",
+                        type=float,
+                        help="Value of TR (in ms) to get the Ernst Angle. (e.g.,'2000')",
+                        required=True
+                        )
+    parser.add_argument("-t1",
+                        type=float,
+                        help="T1 value (in ms). (e.g.,832)",
+                        required=False,
+                        default=832.0
+                        )
+    parser.add_argument("-b",
+                        type=float,
+                        nargs='*',
+                        help="Boundaries TR parameter (in ms) in case -v 2 is used. (e.g.,500,3500)",
+                        required=False
+                        )
+    parser.add_argument("-o",
+                        help="Name of the output file containing Ernst angle result.",
+                        required=False,
+                        default="ernst_angle.txt")
+    parser.add_argument("-ofig",
+                        help="Name of the output graph (only if -v 2 is used).",
+                        required=False,
+                        default="ernst_angle.png")
+    parser.add_argument("-v",
+                        type=int,
+                        help="verbose: 0 = nothing, 1 = classic, 2 = expended (graph)",
+                        required=False,
+                        choices=(0, 1, 2),
+                        default = 1)
     return parser
 
 
 # main
 #=======================================================================================================================
-def main(args=None):
-
+def main(arguments):
     # Initialization
     param = Param()
-
-    # check user arguments
-    if not args:
-        args = sys.argv[1:]
-
-    # Check input parameters
-    parser = get_parser()
-    arguments = parser.parse(args)
-
-    input_t1 = arguments["-t1"]
+    input_t1 = arguments.t1
     input_fname_output = None
     input_tr_min = 500
     input_tr_max = 3500
     input_tr = None
     verbose = 1
-    fname_output_file = arguments['-o']
-    if "-ofig" in arguments:
-        input_fname_output = arguments["-ofig"]
-    if "-b" in arguments:
-        input_tr_min = arguments["-b"][0]
-        input_tr_max = arguments["-b"][1]
-    if "-tr" in arguments :
-        input_tr = arguments["-tr"]
-    verbose = int(arguments.get('-v'))
+    fname_output_file = arguments.o
+    if vars(arguments)["ofig"] != None:
+        input_fname_output = arguments.ofig
+    if vars(arguments)["b"] != None:
+        input_tr_min = arguments.b[0]
+        input_tr_max = arguments.b[1]
+    if vars(arguments)["tr"] != None:
+        input_tr = arguments.tr
+    verbose = arguments.v
     sct.init_sct(log_level=verbose, update=True)  # Update log level
 
     graph = ErnstAngle(input_t1, tr=input_tr, fname_output=input_fname_output)
@@ -169,4 +152,6 @@ def main(args=None):
 #=======================================================================================================================
 if __name__ == "__main__":
     sct.init_sct()
-    main()
+    parser = get_parser()
+    arguments = parser.parse_args()
+    main(arguments)
