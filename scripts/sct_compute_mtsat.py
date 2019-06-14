@@ -26,36 +26,37 @@ def get_parser():
                     'Reference: Helms G, Dathe H, Kallenberg K, Dechent P. High-resolution maps of magnetization '
                     'transfer with inherent correction for RF inhomogeneity and T1 relaxation obtained from 3D FLASH '
                     'MRI. Magn Reson Med 2008;60(6):1396-1407.')
-    parser.add_argument("-mt",
+    mandatoryArguments = parser.add_argument_group("\nmandatory arguments")
+    mandatoryArguments.add_argument("-mt",
                         help="Image with MT_ON",
                         required=True)
-    parser.add_argument("-pd",
+    mandatoryArguments.add_argument("-pd",
                         help="Image PD weighted (typically, the MT_OFF)",
                         required=True)
-    parser.add_argument("-t1",
+    mandatoryArguments.add_argument("-t1",
                         help="Image T1-weighted",
                         required=True)
-    parser.add_argument("-trmt",
+    mandatoryArguments.add_argument("-trmt",
                         help="TR [in ms] for mt image.",
                         type=float,
                         required=True)
-    parser.add_argument("-trpd",
+    mandatoryArguments.add_argument("-trpd",
                         help="TR [in ms] for pd image.",
                         type=float,
                         required=True)
-    parser.add_argument("-trt1",
+    mandatoryArguments.add_argument("-trt1",
                         help="TR [in ms] for t1 image.",
                         type=float,
                         required=True)
-    parser.add_argument("-famt",
+    mandatoryArguments.add_argument("-famt",
                         help="Flip angle [in deg] for mt image.",
                         type=float,
                         required=True)
-    parser.add_argument("-fapd",
+    mandatoryArguments.add_argument("-fapd",
                         help="Flip angle [in deg] for pd image.",
                         type=float,
                         required=True)
-    parser.add_argument("-fat1",
+    mandatoryArguments.add_argument("-fat1",
                         help="Flip angle [in deg] for t1 image.",
                         type=float,
                         required=True)
