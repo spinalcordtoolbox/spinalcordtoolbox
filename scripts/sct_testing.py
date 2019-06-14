@@ -402,7 +402,7 @@ def get_functions_parallelizable():
         # 'sct_apply_transfo', # had to remove temporarily because using argparse (not msct_parser)
         'sct_warp_template',
         'sct_resample',
-        'sct_convert',
+        #'sct_convert', # had to remove temporarily because using argparse (not msct_parser)
         'sct_image',
         'sct_maths',
         'sct_merge_images',
