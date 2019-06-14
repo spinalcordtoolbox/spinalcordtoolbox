@@ -413,7 +413,7 @@ def get_functions_parallelizable():
         #'sct_compute_snr', # had to remove temporarily because using argparse (not msct_parser)
         #'sct_concat_transfo', # had to remove temporarily because using argparse (not msct_parser)
         # 'sct_convert_binary_to_trilinear',  # not useful
-        'sct_create_mask',
+        # 'sct_create_mask', # had to remove temporarily because using argparse (not msct_parser)
         'sct_crop_image',
         'sct_dice_coefficient',
         'sct_detect_pmj',
