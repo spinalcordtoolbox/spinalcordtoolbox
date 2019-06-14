@@ -278,11 +278,12 @@ def get_parser():
     # Initialize the parser
 
     parser = argparse.ArgumentParser(description='Create mask along z direction.')
-    parser.add_argument('-i',
+    mandatoryArguments = parser.add_argument_group("\nmandatory arguments")
+    mandatoryArguments.add_argument('-i',
                         help='Image to create mask on. Only used to get header. Must be 3D, E.g.: \'data.nii.gz\')',
                         required = True
                         )
-    parser.add_argument('-p',
+    mandatoryArguments.add_argument('-p',
                         help='Process to generate mask.\n'
                         'coord: X,Y coordinate of center of mask. E.g.: coord,20x15\n'
                         'point: volume that contains a single point. E.g.: point,label.nii.gz\n'
