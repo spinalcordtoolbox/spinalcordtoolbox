@@ -70,10 +70,11 @@ def main(args):
 # ==========================================================================================
 def get_parser():
     parser = argparse.ArgumentParser(description='Compute magnetization transfer ratio (MTR). Output is given in percentage.')
-    parser.add_argument('-mt0',
+    mandatoryArguments = parser.add_argument_group("\nmandatory arguments")
+    mandatoryArguments.add_argument('-mt0',
                           help='Image without MT pulse (MT0)',
                           required=True)
-    parser.add_argument('-mt1',
+    mandatoryArguments.add_argument('-mt1',
                           help='Image with MT pulse (MT1)',
                           required=True)
     parser.add_argument('-v',
