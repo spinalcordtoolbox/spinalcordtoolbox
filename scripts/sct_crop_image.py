@@ -20,7 +20,7 @@ import scipy
 import nibabel
 
 import sct_utils as sct
-from msct_parser import Parser
+import argparse
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
 
@@ -266,107 +266,85 @@ class ImageCropper(object):
 
 
 def get_parser():
-        # Initialize parser
-    parser = Parser(__file__)
 
     # Mandatory arguments
-    parser.usage.set_description('Tools to crop an image. Either through command line or GUI')
-    parser.add_option(name="-i",
-                      type_value="image_nifti",
-                      description="input image.",
-                      mandatory=True,
-                      example="t2.nii.gz")
-    parser.add_option(name="-g",
-                      type_value="multiple_choice",
-                      description="1: use the GUI to crop, 0: use the command line to crop",
-                      mandatory=False,
-                      example=['0', '1'],
-                      default_value='0')
+    parser = argparse.ArgumentParser(description='Tools to crop an image. Either through command line or GUI')
+    mandatoryArguments = parser.add_argument_group("MANDATORY ARGUMENTS")
+    mandatoryArguments.add_argument("-i",
+                        help="input image. (e.g., t2.nii.gz)",
+                        required = True
+                        )
+    mandatoryArguments.add_argument("-g",
+                        type=int,
+                        help="1: use the GUI to crop, 0: use the command line to crop.",
+                        required=False,
+                        choices=(0, 1),
+                        default = 0)
 
     # Command line mandatory arguments
-    parser.usage.addSection("\nCOMMAND LINE RELATED MANDATORY ARGUMENTS")
-    parser.add_option(name="-o",
-                      type_value="file_output",
-                      description="output image. This option is REQUIRED for the command line execution",
-                      mandatory=False,
-                      example=['t1', 't2'])
-
+    requiredCommandArguments = parser.add_argument_group("COMMAND LINE RELATED MANDATORY ARGUMENTS")
+    requiredCommandArguments.add_argument("-o",
+                        help="Output image. This option is REQUIRED for the command line execution (e.g., t1.nii.gz)",
+                        required=False
+                        )
     # Optional arguments section
-    parser.add_option(name="-v",
-                      type_value="multiple_choice",
-                      description="1: display on, 0: display off (default)",
-                      mandatory=False,
-                      example=['0', '1'],
-                      default_value='1')
-
-    parser.add_option(name="-h",
-                      type_value=None,
-                      description="Displays help",
-                      mandatory=False)
-
+    parser.add_argument("-v",
+                        type=int,
+                        help="1: display on, 0: display off (default)",
+                        required=False,
+                        choices=(0, 1),
+                        default = 1
+                        )
     # GUI optional argument
-    parser.usage.addSection("\nGUI RELATED OPTIONAL ARGUMENTS")
-    parser.add_option(name="-r",
-                      type_value="multiple_choice",
-                      description="Remove temporary files. Default = 1",
-                      mandatory=False,
-                      example=['0', '1'])
-
+    guiOptionalArguments = parser.add_argument_group("\nGUI RELATED OPTIONAL ARGUMENTS")
+    guiOptionalArguments.add_argument("-r",
+                        type=int,
+                        help="Remove temporary files. Default = 1",
+                        required=False,
+                        choices=(0, 1)
+                        )
     # Command line optional arguments
-    parser.usage.addSection("\nCOMMAND LINE RELATED OPTIONAL ARGUMENTS")
-    parser.add_option(name="-m",
-                      type_value="file",
-                      description="cropping around the mask",
-                      mandatory=False)
-    parser.add_option(name="-start",
-                      type_value=[[','], 'float'],
-                      description="start slices, ]0,1[: percentage, 0 & >1: slice number",
-                      mandatory=False,
-                      example="40,30,5")
-    parser.add_option(name="-end",
-                      type_value=[[','], 'float'],
-                      description="end slices, ]0,1[: percentage, 0: last slice, >1: slice number, <0: last slice - value",
-                      mandatory=False,
-                      example="60,100,10")
-    parser.add_option(name="-dim",
-                      type_value=[[','], 'int'],
-                      description="dimension to crop, from 0 to n-1, default is 1",
-                      mandatory=False,
-                      example="0,1,2")
-    parser.add_option(name="-shift",
-                      type_value=[[','], 'int'],
-                      description="adding shift when used with mask, default is 0",
-                      mandatory=False,
-                      example="10,10,5")
-    parser.add_option(name="-b",
-                      type_value="float",
-                      description="replace voxels outside cropping region with background value. \n"
-                                  "If both the -m and the -b flags are used : the image is croped \"exactly\" around the mask with a background (and not around a rectangle area including the mask). the shape of the image isn't change.",
-                      mandatory=False)
-    parser.add_option(name="-bmax",
-                      type_value=None,
-                      description="maximize the cropping of the image (provide -dim if you want to specify the dimensions)",
-                      mandatory=False)
-    parser.add_option(name="-ref",
-                      type_value="file",
-                      description="crop input image based on reference image (works only for 3D images)",
-                      mandatory=False,
-                      example="ref.nii.gz")
-    parser.add_option(name="-mesh",
-                      type_value="file",
-                      description="mesh to crop",
-                      mandatory=False)
-    parser.add_option(name="-rof",
-                      type_value="multiple_choice",
-                      description="remove output file created when cropping",
-                      mandatory=False,
-                      default_value='0',
-                      example=['0', '1'])
-    parser.add_option(name="-bzmax",
-                      type_value=None,
-                      description="maximize the cropping of the image (provide -dim if you want to specify the dimensions)",
-                      deprecated_by="-bmax",
-                      mandatory=False)
+    commandOptionalArguments = parser.add_argument_group("\nCOMMAND LINE RELATED OPTIONAL ARGUMENTS")
+    commandOptionalArguments.add_argument("-m",
+                        help="cropping around the mask",
+                        required=False)
+    commandOptionalArguments.add_argument("-start",
+                        help="start slices, ]0,1[: percentage, 0 & >1: slice number (e.g., 40, 30, 5)",
+                        required = False
+                        )
+    commandOptionalArguments.add_argument("-end",
+                        help="end slices, ]0,1[: percentage, 0: last slice, >1: slice number, <0: last slice - value (e.g., 60, 100, 10)",
+                        required = False
+                        )
+    commandOptionalArguments.add_argument("-dim",
+                        help="dimension to crop, from 0 to n-1, default is 1 (e.g., 0, 1, 2)",
+                        required = False
+                        )
+    commandOptionalArguments.add_argument("-shift",
+                        help="adding shift when used with mask, default is 0 (e.g., 10, 10, 5)",
+                        required = False
+                        )
+    commandOptionalArguments.add_argument("-b",
+                        help="replace voxels outside cropping region with background value. \n"
+                             "If both the -m and the -b flags are used : the image is croped \"exactly\" around the mask with a background (and not around a rectangle area including the mask). the shape of the image isn't change.",
+                        required=False)
+    commandOptionalArguments.add_argument("-bmax",
+                        help="maximize the cropping of the image (provide -dim if you want to specify the dimensions)",
+                        required=False)
+    commandOptionalArguments.add_argument("-ref",
+                        help="crop input image based on reference image (works only for 3D images) (e.g.,ref.nii.gz)",
+                        required = False
+                        )
+    commandOptionalArguments.add_argument("-mesh",
+                        help="mesh to crop",
+                        required=False)
+    commandOptionalArguments.add_argument("-rof",
+                        type=int,
+                        help="remove output file created when cropping",
+                        required=False,
+                        default=0,
+                        choices=(0, 1)
+                        )
     return parser
 
 
@@ -394,51 +372,50 @@ def find_mask_boundaries(fname_mask):
 if __name__ == "__main__":
     sct.init_sct()
     parser = get_parser()
-    # Fetching script arguments
-    arguments = parser.parse(sys.argv[1:])
+    arguments = parser.parse_args()
 
     # assigning variables to arguments
-    input_filename = arguments["-i"]
+    input_filename = arguments.i
     exec_choice = 0
-    if "-g" in arguments:
-        exec_choice = bool(int(arguments["-g"]))
+    if vars(arguments)["g"] != None:
+        exec_choice = bool(arguments.g)
 
     # cropping with GUI
     cropper = ImageCropper(input_filename)
-    cropper.verbose = int(arguments.get('-v'))
+    cropper.verbose = arguments.v
     sct.init_sct(log_level=cropper.verbose, update=True)  # Update log level
 
     if exec_choice:
-        fname_data = arguments["-i"]
-        if "-r" in arguments:
-            cropper.rm_tmp_files = int(arguments["-r"])
+        fname_data = arguments.i
+        if vars(arguments)["r"] != None:
+            cropper.rm_tmp_files = arguments.r
         cropper.crop_with_gui()
 
     # cropping with specified command-line arguments
     else:
-        if "-o" in arguments:
-            cropper.output_filename = arguments["-o"]
+        if vars(arguments)["o"] != None:
+            cropper.output_filename = arguments.o
         else:
             sct.printv("An output file needs to be specified using the command line")
             sys.exit(2)
         # Handling optional arguments
-        if "-m" in arguments:
-            cropper.mask = arguments["-m"]
-        if "-start" in arguments:
-            cropper.start = arguments["-start"]
-        if "-end" in arguments:
-            cropper.end = arguments["-end"]
-        if "-dim" in arguments:
-            cropper.dim = arguments["-dim"]
-        if "-shift" in arguments:
-            cropper.shift = arguments["-shift"]
-        if "-b" in arguments:
-            cropper.background = arguments["-b"]
-        if "-bmax" in arguments:
+        if vars(arguments)["m"] != None:
+            cropper.mask = arguments.m
+        if vars(arguments)["start"] != None:
+            cropper.start = arguments.start
+        if vars(arguments)["end"] != None:
+            cropper.end = arguments.end
+        if vars(arguments)["dim"] != None:
+            cropper.dim = arguments.dim
+        if vars(arguments)["shift"] != None:
+            cropper.shift = arguments.shift
+        if vars(arguments)["b"] != None:
+            cropper.background = arguments.b
+        if vars(arguments)["bmax"] != None:
             cropper.bmax = True
-        if "-ref" in arguments:
-            cropper.ref = arguments["-ref"]
-        if "-mesh" in arguments:
-            cropper.mesh = arguments["-mesh"]
+        if vars(arguments)["ref"] != None:
+            cropper.ref = arguments.ref
+        if vars(arguments)["mesh"] != None:
+            cropper.mesh = arguments.mesh
 
         cropper.crop()
