@@ -29,11 +29,12 @@ def get_parser():
 
     parser = argparse.ArgumentParser(
         description='Extraction of grey level co-occurence matrix (GLCM) texture features from an image within a given mask. The textures features are those defined in the sckit-image implementation: http://scikit-image.org/docs/dev/api/skimage.feature.html#greycoprops. This function outputs one nifti file per texture metric (' + ParamGLCM().feature + ') and per orientation called fnameInput_feature_distance_angle.nii.gz. Also, a file averaging each metric across the angles, called fnameInput_feature_distance_mean.nii.gz, is output.')
-    parser.add_argument("-i",
+    mandatoryArguments = parser.add_argument_group("\nmandatory arguments")
+    mandatoryArguments.add_argument("-i",
                         help="Image to analyze. (e.g.,'t2.nii.gz')",
                         required=True
                         )
-    parser.add_argument("-m",
+    mandatoryArguments.add_argument("-m",
                         help="Image mask (e.g., lesion, spinal cord). (e.g.,'t2_seg.nii.gz')",
                         required=True
                         )
