@@ -39,15 +39,17 @@ def get_parser():
 
     parser = argparse.ArgumentParser(
         description='Apply transformations. This function is a wrapper for antsApplyTransforms (ANTs).')
-    parser.add_argument("-i",
+
+    requiredArgs = parser.add_argument_group("\nmandatory arguments")
+    requiredArgs.add_argument("-i",
                         help="input image (e.g.,\"t2.nii.gz\")",
                         required = True
                         )
-    parser.add_argument("-d",
+    requiredArgs.add_argument("-d",
                         help="destination image (e.g.,\"out.nii.gz\")",
                         required = True
                         )
-    parser.add_argument("-w",
+    requiredArgs.add_argument("-w",
                         help="Transformation, which can be a warping field (nifti image) or an affine transformation matrix (text file). (e.g.,\"warp1.nii.gz, warp2.nii.gz\")",
                         required = True
                         )
