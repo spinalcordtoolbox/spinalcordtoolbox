@@ -38,7 +38,8 @@ def get_parser():
                     '\n- the distribution of each lesion depending on each vertebral level and on each region of the template (eg GM, WM, WM tracts).'
                     '\n- the proportion of ROI (eg vertebral level, GM, WM) occupied by lesion.'
                     '\nN.B. If the proportion of lesion in each region (e.g., WM and GM) does not sum up to 100%, it means that the registered template does not fully cover the lesion, in that case you might want to check the registration results.')
-    parser.add_argument("-m",
+    mandatoryArguments = parser.add_argument_group("\nmandatory arguments")
+    mandatoryArguments.add_argument("-m",
                         help="Lesion mask to analyze (e.g.,'t2_lesion.nii.gz')",
                         required=True
                         )
