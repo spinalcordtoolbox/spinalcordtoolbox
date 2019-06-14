@@ -71,7 +71,8 @@ class ErnstAngle:
 def get_parser():
     # Initialize the parser
     parser = argparse.ArgumentParser(description='Function to compute the Ernst Angle. For examples of T1 values in the brain, see Wansapura et al. NMR relaxation times in the human brain at 3.0 tesla. Journal of magnetic resonance imaging : JMRI (1999) vol. 9 (4) pp. 531-8. \nT1 in WM: 832ms\nT1 in GM: 1331ms')
-    parser.add_argument("-tr",
+    mandatoryArguments = parser.add_argument_group("\nmandatory arguments")
+    mandatoryArguments.add_argument("-tr",
                         type=float,
                         help="Value of TR (in ms) to get the Ernst Angle. (e.g.,'2000')",
                         required=True
