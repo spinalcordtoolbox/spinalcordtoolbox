@@ -34,11 +34,12 @@ class Param:
 def get_parser():
     # Initialize the parser
     parser = argparse.ArgumentParser(description='Convert image file to another type.')
-    parser.add_argument("-i",
+    mandatoryArguments = parser.add_argument_group("\nmandatory arguments")
+    mandatoryArguments.add_argument("-i",
                         help="File input (e.g.,'data.nii.gz')",
                         required=True
                         )
-    parser.add_argument("-o",
+    mandatoryArguments.add_argument("-o",
                         help="File output (indicate new extension) (e.g.,'data.nii')",
                         required=True
                         )
