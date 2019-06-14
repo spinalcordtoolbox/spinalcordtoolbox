@@ -18,7 +18,7 @@ import sys
 
 import numpy as np
 
-from msct_parser import Parser
+import argparse
 import sct_utils as sct
 
 
@@ -32,28 +32,22 @@ class Param:
 # PARSER
 # ==========================================================================================
 def get_parser():
-    # parser initialisation
-    parser = Parser(__file__)
-
     # Initialize the parser
-    parser = Parser(__file__)
-    parser.usage.set_description('Convert image file to another type.')
-    parser.add_option(name="-i",
-                      type_value="file",
-                      description="File input",
-                      mandatory=True,
-                      example='data.nii.gz')
-    parser.add_option(name="-o",
-                      type_value="file_output",
-                      description="File output (indicate new extension)",
-                      mandatory=True,
-                      example=['data.nii'])
-    parser.add_option(name="-squeeze",
-                      type_value='multiple_choice',
-                      description='Sueeze data dimension (remove unused dimension).',
-                      mandatory=False,
-                      example=['0', '1'],
-                      default_value='1')
+    parser = argparse.ArgumentParser(description='Convert image file to another type.')
+    parser.add_argument("-i",
+                        help="File input (e.g.,'data.nii.gz')",
+                        required=True
+                        )
+    parser.add_argument("-o",
+                        help="File output (indicate new extension) (e.g.,'data.nii')",
+                        required=True
+                        )
+    parser.add_argument("-squeeze",
+                        type=int,
+                        help='Sueeze data dimension (remove unused dimension) (e.g., ( 0, 1))',
+                        required = False,
+                        choices = (0, 1),
+                        default = 1)
     return parser
 
 
@@ -77,17 +71,12 @@ def convert(fname_in, fname_out, squeeze_data=True, dtype=None, verbose=1):
 
 # MAIN
 # ==========================================================================================
-def main(args=None):
-
-    if not args:
-        args = sys.argv[1:]
+def main(arguments):
 
     # Building the command, do sanity checks
-    parser = get_parser()
-    arguments = parser.parse(args)
-    fname_in = arguments["-i"]
-    fname_out = arguments["-o"]
-    squeeze_data = bool(int(arguments['-squeeze']))
+    fname_in = arguments.i
+    fname_out = arguments.o
+    squeeze_data = bool(arguments.squeeze)
 
     # convert file
     convert(fname_in, fname_out, squeeze_data=squeeze_data)
@@ -97,10 +86,12 @@ def main(args=None):
 # ==========================================================================================
 if __name__ == "__main__":
     sct.init_sct()
+    parser = get_parser()
+    arguments = parser.parse_args()
     # initialize parameters
     param = Param()
     # call main function
-    main()
+    main(arguments)
 
 
 # import os
@@ -120,7 +111,7 @@ if __name__ == "__main__":
 #
 # # main
 # #=======================================================================================================================
-# def main():
+# def main(arguments):
 #
 #     # Initialization
 #     fname_data = ''
