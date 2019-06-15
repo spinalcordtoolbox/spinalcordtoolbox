@@ -41,8 +41,21 @@ class FitResults:
     Collection of metrics to assess fitting performance
     """
     def __init__(self):
+
+        class Data:
+            """Raw and fitted data"""
+            def __init__(self):
+                self.xmean = None
+                self.xfit = None
+                self.ymean = None
+                self.yfit = None
+                self.zmean = None
+                self.zref = None
+
         self.rmse = None  # RMSE
         self.laplacian_max = None  # Maximum of 2nd derivatives
+        self.data = Data()  # Raw and fitted data (for plotting in QC report)
+        self.param = None  # ParamCenterline()
 
 
 def find_and_sort_coord(img):
@@ -180,6 +193,13 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1):
     fit_results.laplacian_max = np.max([
         np.absolute(np.gradient(np.array(x_centerline_deriv * px))).max(),
         np.absolute(np.gradient(np.array(y_centerline_deriv * py))).max()])
+    fit_results.data.zmean = z_mean * pz
+    fit_results.data.zref = z_ref * pz
+    fit_results.data.xmean = x_mean * px
+    fit_results.data.xfit = x_centerline_fit * px
+    fit_results.data.ymean = y_mean * py
+    fit_results.data.yfit = y_centerline_fit * py
+    fit_results.param = param
 
     # Display fig of fitted curves
     if verbose == 2:
