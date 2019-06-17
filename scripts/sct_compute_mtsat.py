@@ -27,7 +27,7 @@ def get_parser():
                     'transfer with inherent correction for RF inhomogeneity and T1 relaxation obtained from 3D FLASH '
                     'MRI. Magn Reson Med 2008;60(6):1396-1407.',
         add_help=False,
-        prog= os.path.basename(__file__).replace(".py", "")
+        prog= os.path.basename(__file__).strip(".py")
     )
     mandatoryArguments = parser.add_argument_group("\nMandatory arguments")
     mandatoryArguments.add_argument("-mt",
