@@ -180,27 +180,16 @@ def _make_figure(metric, fit_results):
     # Make figure
     fig = Figure()
     FigureCanvas(fig)
-    ax = fig.add_subplot(311)
-    ax.plot(z, csa, 'k')
-    ax.plot(z, csa, 'k.')
-    ax.grid(True)
-    ax.set_ylabel('CSA [$mm^2$]')
     # If -angle-corr was set to 1, fit_results exists and centerline fitting results are displayed
     if fit_results is not None:
-        # Remove xticklabels from plot above
-        ax.set_xticklabels([])
-        ax = fig.add_subplot(312)
+        ax = fig.add_subplot(311)
+        ax.plot(z, csa, 'k')
+        ax.plot(z, csa, 'k.')
         ax.grid(True)
-        ax.plot(fit_results.data.zmean, fit_results.data.xmean, 'b.', label='_nolegend_')
-        # ax.plot(fit_results.data.zref, fit_results.data.xfit, 'b', label='_nolegend_')
-        ax.plot(fit_results.data.zref, fit_results.data.xfit, 'b')
-        ax.plot(fit_results.data.zmean, fit_results.data.ymean, 'r.', label='_nolegend_')
-        # ax.plot(fit_results.data.zref, fit_results.data.yfit, 'r', label='_nolegend_')
-        ax.plot(fit_results.data.zref, fit_results.data.yfit, 'r')
-        ax.legend(['Fitted (RL)', 'Fitted (AP)'])
-        ax.set_ylabel('Centerline [$mm$]')
+        ax.set_ylabel('CSA [$mm^2$]')
         ax.set_xticklabels([])
-        ax = fig.add_subplot(313)
+
+        ax = fig.add_subplot(312)
         ax.grid(True)
         ax.plot(z, angle_ap, 'b', label='_nolegend_')
         ax.plot(z, angle_ap, 'b.')
@@ -208,7 +197,22 @@ def _make_figure(metric, fit_results):
         ax.plot(z, angle_rl, 'r.')
         ax.legend(['Rotation about AP axis', 'Rotation about RL axis'])
         ax.set_ylabel('Angle [$deg$]')
+        ax.set_xticklabels([])
+
         ax = fig.add_subplot(313)
+        ax.grid(True)
+        ax.plot(fit_results.data.zmean, fit_results.data.xmean, color='lightblue', marker='.', label='_nolegend_')
+        ax.plot(fit_results.data.zref, fit_results.data.xfit, 'b')
+        ax.plot(fit_results.data.zmean, fit_results.data.ymean, color='pink', marker='.', label='_nolegend_')
+        ax.plot(fit_results.data.zref, fit_results.data.yfit, 'r')
+        ax.legend(['Fitted (RL)', 'Fitted (AP)'])
+        ax.set_ylabel('Centerline [$vox$]')
+    else:
+        ax = fig.add_subplot(111)
+        ax.plot(z, csa, 'k')
+        ax.plot(z, csa, 'k.')
+        ax.grid(True)
+        ax.set_ylabel('CSA [$mm^2$]')
 
     ax.set_xlabel('Slice (Inferior-Superior direction)')
     fig.savefig(fname_img)
@@ -262,7 +266,7 @@ def main(args):
         algo_fitting=arguments['-centerline-algo'],
         degree=arguments['-centerline-degree'],
         smooth=arguments['-centerline-smooth'],
-        minmax=False)
+        minmax=True)
     path_qc = arguments.get("-qc", None)
     qc_dataset = arguments.get("-qc-dataset", None)
     qc_subject = arguments.get("-qc-subject", None)
