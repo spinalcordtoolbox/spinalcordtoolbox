@@ -26,11 +26,8 @@ def get_parser():
                     'transfer with inherent correction for RF inhomogeneity and T1 relaxation obtained from 3D FLASH '
                     'MRI. Magn Reson Med 2008;60(6):1396-1407.',
         add_help=False,
-        usage= '''sct_compute_mtsat [-h] -mt MT -pd PD -t1 T1 -trmt TRMT -trpd TRPD
-                         -trt1 TRT1 -famt FAMT -fapd FAPD -fat1 FAT1
-                         [-b1map B1MAP] [-omtsat OMTSAT] [-ot1map OT1MAP]
-                         [-v {0,1}]'''
-        )
+        prog='sct_compute_mtsat'
+    )
     mandatoryArguments = parser.add_argument_group("\nMandatory arguments")
     mandatoryArguments.add_argument("-mt",
                         help="Image with MT_ON",
