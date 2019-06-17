@@ -16,7 +16,8 @@ def main(args=None):
         args = sys.argv[1:]
 
     image_directory = args[0]
-    list_image_fname = list(set(os.listdir(image_directory)) - set(fnmatch.filter(os.listdir(image_directory), "*sym_*")))  # list files without "sym_" in it
+    list_dir = [f for f in os.listdir(image_directory) if os.path.isfile(os.path.join(image_directory, f))]  # to have files only
+    list_image_fname = list(set(list_dir) - set(fnmatch.filter(list_dir, "*sym_*")))  # list files without "sym_" in it
 
 
     for image_fname in list_image_fname:
@@ -31,7 +32,7 @@ def main(args=None):
 
         seg_image = (image > np.mean(np.concatenate(image))).astype(int)
 
-        angle_hog, conf_score, centermass = find_angle(image, seg_image, 1, 1, "hog", angle_range=90, return_centermass=True, save_figure_path=image_directory + "/fig_sym_" + image_fname)
+        angle_hog, conf_score, centermass = find_angle(image, seg_image, 0.0001, 0.0001, "hog", angle_range=90, return_centermass=True, save_figure_path=image_directory + "/fig_sym_" + image_fname)
         if angle_hog is None:
             angle_hog = 0
         angle_pca, _, centermass = find_angle(image, seg_image, 1, 1, "pca", angle_range=90, return_centermass=True)

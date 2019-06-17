@@ -102,6 +102,7 @@ class QcImage(object):
                   interpolation=self.interpolation,
                   alpha=1,
                   aspect=float(self.aspect_mask))
+        ax.text(0, 0, "okkfopfkez", color='red', clip_on=True)
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
 
