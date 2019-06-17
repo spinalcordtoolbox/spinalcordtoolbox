@@ -25,8 +25,8 @@ def get_parser():
         description='Compute MTsat and T1map. '
                     'Reference: Helms G, Dathe H, Kallenberg K, Dechent P. High-resolution maps of magnetization '
                     'transfer with inherent correction for RF inhomogeneity and T1 relaxation obtained from 3D FLASH '
-                    'MRI. Magn Reson Med 2008;60(6):1396-1407.')
-    mandatoryArguments = parser.add_argument_group("\nmandatory arguments")
+                    'MRI. Magn Reson Med 2008;60(6):1396-1407.', add_help=False)
+    mandatoryArguments = parser.add_argument_group("\nMandatory arguments")
     mandatoryArguments.add_argument("-mt",
                         help="Image with MT_ON",
                         required=True)
@@ -60,16 +60,22 @@ def get_parser():
                         help="Flip angle [in deg] for t1 image.",
                         type=float,
                         required=True)
-    parser.add_argument("-b1map",
+    optional = parser.add_argument_group('\nOptional arguments')
+    optional.add_argument("-h",
+                          "--help",
+                          action="help",
+                          help="show this help message and exit"
+                          )
+    optional.add_argument("-b1map",
                         help="B1 map",
                         default=None)
-    parser.add_argument("-omtsat",
+    optional.add_argument("-omtsat",
                         help="Output file for MTsat. Default is mtsat.nii.gz",
                         default=None)
-    parser.add_argument("-ot1map",
+    optional.add_argument("-ot1map",
                         help="Output file for T1map. Default is t1map.nii.gz",
                         default=None)
-    parser.add_argument("-v",
+    optional.add_argument("-v",
                         help="Verbose: 0 = no verbosity, 1 = verbose (default).",
                         choices=('0', '1'),
                         type=int,
