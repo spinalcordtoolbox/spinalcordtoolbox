@@ -25,6 +25,7 @@ def compute_shape(segmentation, angle_correction=True, param_centerline=ParamCen
     :param param_centerline: see centerline.core.ParamCenterline()
     :param verbose:
     :return metrics: Dict of class Metric(). If a metric cannot be calculated, its value will be nan.
+    :return fit_results: class centerline.core.FitResults()
     """
     # List of properties to output (in the right order)
     property_list = ['area',
@@ -53,7 +54,9 @@ def compute_shape(segmentation, angle_correction=True, param_centerline=ParamCen
     if angle_correction:
         # compute the spinal cord centerline based on the spinal cord segmentation
         # here, param_centerline.minmax needs to be False because we need to retrieve the total number of input slices
-        _, arr_ctl, arr_ctl_der, _ = get_centerline(im_seg, param=param_centerline, verbose=verbose)
+        _, arr_ctl, arr_ctl_der, fit_results = get_centerline(im_seg, param=param_centerline, verbose=verbose)
+    else:
+        fit_results = None
 
     # Loop across z and compute shape analysis
     for iz in tqdm(range(min_z_index, max_z_index + 1), unit='iter', unit_scale=False, desc="Compute shape analysis",
@@ -118,7 +121,7 @@ def compute_shape(segmentation, angle_correction=True, param_centerline=ParamCen
         if not value == []:
             metrics[key] = Metric(data=np.array(value), label=key)
 
-    return metrics
+    return metrics, fit_results
 
 
 def _properties2d(image, dim):
