@@ -16,7 +16,7 @@ from spinalcordtoolbox.aggregate_slicewise import Metric
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
 
 
-def compute_shape(segmentation, angle_correction=True, param_centerline=ParamCenterline(minmax=False), verbose=1):
+def compute_shape(segmentation, angle_correction=True, param_centerline=None, verbose=1):
     """
     Compute morphometric measures of the spinal cord in the transverse (axial) plane from the segmentation.
     The segmentation could be binary or weighted for partial volume [0,1].
