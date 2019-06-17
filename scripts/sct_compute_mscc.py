@@ -15,34 +15,31 @@ from __future__ import absolute_import, division
 import sys
 
 import sct_utils as sct
-from msct_parser import Parser
+import argparse
 
 
 # PARSER
 # ==========================================================================================
 def get_parser():
     # parser initialisation
-    parser = Parser(__file__)
-    parser.usage.set_description('Compute Maximum Spinal Cord Compression (MSCC) as in: Miyanji F, Furlan JC, Aarabi B, Arnold PM, Fehlings MG. Acute cervical traumatic spinal cord injury: MR imaging findings correlated with neurologic outcome--prospective study with 100 consecutive patients. Radiology 2007;243(3):820-827.')
-    parser.add_option(name='-di',
-                      type_value='float',
-                      description='Anteroposterior cord distance at the level of maximum injury',
-                      mandatory=True,
-                      example=6.85)
-    parser.add_option(name='-da',
-                      type_value='float',
-                      description='Anteroposterior cord distance at the nearest normal level above the level of injury',
-                      mandatory=True,
-                      example=7.65)
-    parser.add_option(name='-db',
-                      type_value='float',
-                      description='Anteroposterior cord distance at the nearest normal level below the level of injury',
-                      mandatory=True,
-                      example=7.02)
-    parser.add_option(name="-h",
-                      type_value=None,
-                      description="Display this help",
-                      mandatory=False)
+
+    parser = argparse.ArgumentParser(
+        description='Compute Maximum Spinal Cord Compression (MSCC) as in: Miyanji F, Furlan JC, Aarabi B, Arnold PM, Fehlings MG. Acute cervical traumatic spinal cord injury: MR imaging findings correlated with neurologic outcome--prospective study with 100 consecutive patients. Radiology 2007;243(3):820-827.')
+    parser.add_argument('-di',
+                        type=float,
+                        help='Anteroposterior cord distance at the level of maximum injury, (e.g., 6.85)',
+                        required = True,
+                       )
+    parser.add_argument('-da',
+                        type=float,
+                        help='Anteroposterior cord distance at the nearest normal level above the level of injury, (e.g., 7.65)',
+                        required = True,
+                        )
+    parser.add_argument('-db',
+                        type=float,
+                        help='Anteroposterior cord distance at the nearest normal level below the level of injury, (e.g., 7.02)',
+                        required = True,
+                        )
     return parser
 
 
@@ -52,21 +49,13 @@ def mscc(di, da, db):
 
 # MAIN
 # ==========================================================================================
-def main(args=None):
-
+def main(arguments):
     # initialization
     verbose = 1
-
-    # check user arguments
-    if not args:
-        args = sys.argv[1:]
-
     # Get parser info
-    parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
-    di = arguments['-di']
-    da = arguments['-da']
-    db = arguments['-db']
+    di = arguments.di
+    da = arguments.da
+    db = arguments.db
 
     # Compute MSCC
     MSCC = mscc(di, da, db)
@@ -79,5 +68,7 @@ def main(args=None):
 # ==========================================================================================
 if __name__ == "__main__":
     sct.init_sct()
+    parser = get_parser()
+    arguments = parser.parse_args()
     # call main function
-    main()
+    main(arguments)
