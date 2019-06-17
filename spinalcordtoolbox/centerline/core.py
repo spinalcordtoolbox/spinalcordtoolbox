@@ -193,12 +193,12 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1):
     fit_results.laplacian_max = np.max([
         np.absolute(np.gradient(np.array(x_centerline_deriv * px))).max(),
         np.absolute(np.gradient(np.array(y_centerline_deriv * py))).max()])
-    fit_results.data.zmean = z_mean * pz
-    fit_results.data.zref = z_ref * pz
-    fit_results.data.xmean = x_mean * px
-    fit_results.data.xfit = x_centerline_fit * px
-    fit_results.data.ymean = y_mean * py
-    fit_results.data.yfit = y_centerline_fit * py
+    fit_results.data.zmean = z_mean
+    fit_results.data.zref = z_ref
+    fit_results.data.xmean = x_mean
+    fit_results.data.xfit = x_centerline_fit
+    fit_results.data.ymean = y_mean
+    fit_results.data.yfit = y_centerline_fit
     fit_results.param = param
 
     # Display fig of fitted curves
