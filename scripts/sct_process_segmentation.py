@@ -159,10 +159,11 @@ def get_parser():
     return parser
 
 
-def _make_figure(metric):
+def _make_figure(metric, fit_results):
     """
     Make a graph showing CSA and angles per slice.
     :param metric: Dictionary of metrics
+    :param fit_results: class centerline.core.FitResults()
     :return: image object
     """
     import tempfile
@@ -179,20 +180,39 @@ def _make_figure(metric):
     # Make figure
     fig = Figure()
     FigureCanvas(fig)
-    ax = fig.add_subplot(211)
+    ax = fig.add_subplot(311)
     ax.plot(z, csa, 'k')
     ax.plot(z, csa, 'k.')
     ax.grid(True)
     ax.set_ylabel('CSA [$mm^2$]')
-    ax = fig.add_subplot(212)
-    ax.plot(z, angle_ap, 'b')
-    ax.plot(z, angle_ap, 'b.')
-    ax.plot(z, angle_rl, 'r')
-    ax.plot(z, angle_rl, 'r.')
-    ax.grid(True)
+    # If -angle-corr was set to 1, fit_results exists and centerline fitting results are displayed
+    if fit_results is not None:
+        # Remove xticklabels from plot above
+        ax.set_xticklabels([])
+        ax = fig.add_subplot(312)
+        ax.grid(True)
+        ax.plot(fit_results.data.zmean, fit_results.data.xmean, 'b.', label='_nolegend_')
+        # ax.plot(fit_results.data.zref, fit_results.data.xfit, 'b', label='_nolegend_')
+        ax.plot(fit_results.data.zref, fit_results.data.xfit, 'b')
+        ax.plot(fit_results.data.zmean, fit_results.data.ymean, 'r.', label='_nolegend_')
+        # ax.plot(fit_results.data.zref, fit_results.data.yfit, 'r', label='_nolegend_')
+        ax.plot(fit_results.data.zref, fit_results.data.yfit, 'r')
+        ax.legend(['Fitted (RL)', 'Fitted (AP)'])
+        ax.set_ylabel('Centerline [$mm$]')
+        ax.set_xticklabels([])
+        ax = fig.add_subplot(313)
+        ax.grid(True)
+        ax.plot(z, angle_ap, 'b', label='_nolegend_')
+        ax.plot(z, angle_ap, 'b.')
+        ax.plot(z, angle_rl, 'r', label='_nolegend_')
+        ax.plot(z, angle_rl, 'r.')
+        ax.legend(['Rotation about AP axis', 'Rotation about RL axis'])
+        ax.set_ylabel('Angle [$deg$]')
+        ax = fig.add_subplot(313)
+
     ax.set_xlabel('Slice (Inferior-Superior direction)')
-    ax.set_ylabel('Angle [$deg$]')
     fig.savefig(fname_img)
+
     return fname_img
 
 
@@ -255,10 +275,10 @@ def main(args):
     if not file_out:
         file_out = 'csa.csv'
 
-    metrics = process_seg.compute_shape(fname_segmentation,
-                                        angle_correction=angle_correction,
-                                        param_centerline=param_centerline,
-                                        verbose=verbose)
+    metrics, fit_results = process_seg.compute_shape(fname_segmentation,
+                                                     angle_correction=angle_correction,
+                                                     param_centerline=param_centerline,
+                                                     verbose=verbose)
     for key in metrics:
         metrics_agg[key] = aggregate_per_slice_or_level(metrics[key], slices=parse_num_list(slices),
                                                         levels=parse_num_list(vert_levels), perslice=perslice,
@@ -270,7 +290,8 @@ def main(args):
     # QC report (only show CSA for clarity)
     if path_qc is not None:
         generate_qc(fname_segmentation, args=args, path_qc=os.path.abspath(path_qc), dataset=qc_dataset,
-                    subject=qc_subject, path_img=_make_figure(metrics_agg_merged), process='sct_process_segmentation')
+                    subject=qc_subject, path_img=_make_figure(metrics_agg_merged, fit_results),
+                    process='sct_process_segmentation')
 
     sct.display_open(file_out)
 
