@@ -89,10 +89,10 @@ im_segs = [
 # noinspection 801,PyShadowingNames
 @pytest.mark.parametrize('im_seg,expected,params', im_segs)
 def test_compute_shape(im_seg, expected, params):
-    metrics = process_seg.compute_shape(im_seg,
-                                        angle_correction=params['angle_corr'],
-                                        param_centerline=ParamCenterline(),
-                                        verbose=VERBOSE)
+    metrics, fit_results = process_seg.compute_shape(im_seg,
+                                                     angle_correction=params['angle_corr'],
+                                                     param_centerline=ParamCenterline(),
+                                                     verbose=VERBOSE)
     for key in expected.keys():
         # fetch obtained_value
         if 'slice' in params:
