@@ -37,35 +37,44 @@ def get_parser():
                     '\n\nIf a registered template is provided, it computes:'
                     '\n- the distribution of each lesion depending on each vertebral level and on each region of the template (eg GM, WM, WM tracts).'
                     '\n- the proportion of ROI (eg vertebral level, GM, WM) occupied by lesion.'
-                    '\nN.B. If the proportion of lesion in each region (e.g., WM and GM) does not sum up to 100%, it means that the registered template does not fully cover the lesion, in that case you might want to check the registration results.')
-    mandatoryArguments = parser.add_argument_group("\nmandatory arguments")
+                    '\nN.B. If the proportion of lesion in each region (e.g., WM and GM) does not sum up to 100%, it means that the registered template does not fully cover the lesion, in that case you might want to check the registration results.',
+        add_help=None,
+        prog=os.path.basename(__file__).strip(".py")
+    )
+    mandatoryArguments = parser.add_argument_group("\nMandatory arguments")
     mandatoryArguments.add_argument("-m",
                         help="Lesion mask to analyze (e.g.,'t2_lesion.nii.gz')",
                         required=True
                         )
-    parser.add_argument("-s",
+    optional = parser.add_argument_group("\nOptional arguments")
+    optional.add_argument("-h",
+                          "--help",
+                          action="help",
+                          help="show this help message and exit"
+                          )
+    optional.add_argument("-s",
                         help="Spinal cord centerline or segmentation file, which will be used to correct morphometric measures with cord angle with respect to slice. (e.g.,'t2_seg.nii.gz')",
                         required=False
                         )
-    parser.add_argument("-i",
+    optional.add_argument("-i",
                         help="Image from which to extract average values within lesions (e.g. T2w or T1w image, texture image). (e.g.,'t2.nii.gz')",
                         required=False
                         )
-    parser.add_argument("-f",
+    optional.add_argument("-f",
                         help="Path to folder containing the atlas/template registered to the anatomical image.",
                         required=False
                         )
-    parser.add_argument("-ofolder",
+    optional.add_argument("-ofolder",
                         help="Output folder (e.g.,'./')",
                         required=False
                         )
-    parser.add_argument("-r",
+    optional.add_argument("-r",
                         type=int,
                         help="Remove temporary files. (e.g.,( 0, 1))",
                         required=False,
                         default=1,
                         choices=(0, 1))
-    parser.add_argument("-v",
+    optional.add_argument("-v",
                         type=int,
                         help="Verbose: 0 = nothing, 1 = classic, 2 = expended",
                         required=False,
