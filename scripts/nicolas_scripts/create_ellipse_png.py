@@ -8,6 +8,7 @@ from nicolas_scripts.functions_sym_rot import *
 from scipy import misc
 import skimage.draw as draw
 from skimage.filters import gaussian
+import numpy as np
 
 
 def main(args=None):
@@ -17,11 +18,17 @@ def main(args=None):
 
     path_output = args[0]
 
-    for ratio in [0.6, 0.7, 0.8, 0.9]:
-        for rotation in [-10, -8, -4, -2, 0, 1, 3, 5, 7, 10]:
-            for sigma in [0, 1, 2, 4, 8]:
+    ratio_list = [0.7]
+    rotation_list = np.arange(-45, 45 + 1, 1)
+    sigma_list = [1]
+    dim_list = [256]
 
-                create_ellipse(path_output, dim=256, ratio=ratio, rotation=rotation, sigma=sigma)
+    for ratio in ratio_list:
+        for rotation in rotation_list:
+            for sigma in sigma_list:
+                for dim in dim_list:
+
+                    create_ellipse(path_output, dim=dim, ratio=ratio, rotation=rotation, sigma=sigma)
 
 
 
@@ -37,13 +44,21 @@ def create_ellipse(path_output, dim, ratio, rotation, sigma=4):
     a = dim//4
     b = a * ratio
 
-    name = "ElliTest_ratio_" + str(round(ratio*10)) + "_rot_" + str(rotation) + "_sigma_" + str(round(sigma))
+    name = "ElliTest_ratio_" + str(round(ratio*10)) + "_rot_" + str(rotation) + "_sigma_" + str(round(sigma)) + "_dim_" + str(dim)
 
     coordx, coordy = draw.ellipse(dim//2, dim//2, dim//3, dim//3, rotation=0 * pi/180, shape=shape)
 
     image[coordx, coordy] = 0.5
 
     coordx, coordy = draw.ellipse(dim//2, dim//2, b, a, rotation=rotation * pi/180, shape=shape)
+
+    image[coordx, coordy] = 0.7
+
+    coordx, coordy = draw.ellipse(dim//2, dim//2, b/3*2, a/3*2, rotation=rotation * pi/180, shape=shape)
+
+    image[coordx, coordy] = 0.85
+
+    coordx, coordy = draw.ellipse(dim//2, dim//2, b/3, a/3, rotation=rotation * pi/180, shape=shape)
 
     image[coordx, coordy] = 1
 
