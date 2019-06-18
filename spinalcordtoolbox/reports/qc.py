@@ -256,7 +256,7 @@ class QcImage(object):
                 img = func_stretch_contrast[self._stretch_contrast_method](img)
 
             fig = Figure()
-            size_fig = [5, 5 * img.shape[0] / img.shape[1]]
+            size_fig = [5, 5 * img.shape[0] / img.shape[1]]  # with dpi=300, will give 1500pix width
             fig.set_size_inches(size_fig[0], size_fig[1], forward=True)
             FigureCanvas(fig)
             ax = fig.add_axes((0, 0, 1, 1))
