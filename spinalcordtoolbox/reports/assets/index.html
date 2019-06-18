@@ -88,13 +88,13 @@
                   data-response-handler="responseHandler">
 	                <thead>
 		                  <tr>
-			                    <th data-field="moddate" data-sortable="true">Date</th>
-			                    <th data-field="dataset" data-sortable="true">Dataset</th>
-			                    <th data-field="subject" data-sortable="true">Subject</th>
-                                	    <th data-field="fname_in" data-sortable="true">File</th>
-                                	    <th data-field="contrast" data-sortable="true">Contrast</th>
-			                    <th data-field="command" data-sortable="true">Function</th>
-                                	    <th data-field="cwd" data-sortable="true">Path</th>
+			                    <th data-field="moddate" data-sortable="true" data-searchable="false">Date</th>
+			                    <th data-field="dataset" data-sortable="true" data-searchable="false">Dataset</th>
+			                    <th data-field="subject" data-sortable="true" data-searchable="false">Subject</th>
+                                	    <th data-field="fname_in" data-sortable="true" data-searchable="false">File</th>
+                                	    <th data-field="contrast" data-sortable="true" data-searchable="false">Contrast</th>
+			                    <th data-field="command" data-sortable="true" data-searchable="false">Function</th>
+                                	    <th data-field="cwd" data-sortable="true" data-searchable="false">Path</th>
 		                  </tr>
 	                </thead>
               </table>
@@ -130,6 +130,7 @@
         if (document.getElementById(buttonID).innerHTML == buttonID + " \u2714"){
                 document.getElementById(buttonID).innerHTML = buttonID;
                 document.getElementsByTagName('TH')[position].style.display = "none";
+                document.getElementsByTagName('TH')[position].setAttribute("data-searchable","false");
                 var iTD;
                 for (iTD = position; iTD < document.getElementsByTagName('TD').length; iTD = iTD + document.getElementsByTagName('TH').length){
                     document.getElementsByTagName('TD')[iTD].style.display = "none";
@@ -138,6 +139,7 @@
         else if (document.getElementById(buttonID).innerHTML == buttonID){
                 document.getElementById(buttonID).innerHTML = buttonID + " \u2714";
                 document.getElementsByTagName('TH')[position].style.display = "table-cell";
+                document.getElementsByTagName('TH')[position].setAttribute("data-searchable","true");
                 var iTD;
                 for (iTD = position; iTD < document.getElementsByTagName('TD').length; iTD = iTD + document.getElementsByTagName('TH').length){
                     document.getElementsByTagName('TD')[iTD].style.display = "table-cell";
