@@ -19,6 +19,7 @@ from msct_parser import Parser
 
 import matplotlib.pyplot as plt
 import matplotlib
+import copy
 
 import skimage.morphology as morph
 from matplotlib.colors import hsv_to_rgb
@@ -155,7 +156,6 @@ def find_angle(image, segmentation, px, py, method, angle_range=None, return_cen
             nb_bin = nb_bin - 1
         kmedian_size = 5
         angle_range = angle_range
-        conf_treshold = 1
 
         nx, ny = image.shape
 
@@ -171,26 +171,23 @@ def find_angle(image, segmentation, px, py, method, angle_range=None, return_cen
         grad_orient_histo_smooth = circular_filter_1d(grad_orient_histo, kmedian_size, filter='median')  # fft than square than ifft to calculate convolution
 
         # hog_fft2 = np.fft.rfft(grad_orient_histo_smooth) ** 2
-        # grad_orient_histo_conv = np.real(np.fft.irfft(hog_fft2))  # TODO implemente circular conv to be sure it does the same thing
-        grad_orient_histo_conv = np.convolve(grad_orient_histo_smooth, grad_orient_histo_smooth, mode='same')
-
-        # grad_orient_histo_conv_reordered = np.zeros(nb_bin)  # wtf is the point of this => hog conv with angle [0 pi] instead of [-pi/2 pi/2] like we want
-        # grad_orient_histo_conv_reordered[0:nb_bin//2] = grad_orient_histo_conv[nb_bin//2:nb_bin]
-        # grad_orient_histo_conv_reordered[nb_bin//2:nb_bin] = grad_orient_histo_conv[0:nb_bin//2]
-        grad_orient_histo_conv_reordered = grad_orient_histo_conv
+        # grad_orient_histo_conv = np.real(np.fft.irfft(hog_fft2))
+        grad_orient_histo_conv = circular_conv(grad_orient_histo_smooth, grad_orient_histo_smooth)
 
         index_restrain = int(np.ceil(np.true_divide(angle_range, 180) * nb_bin))
         center = (nb_bin - 1) // 2
 
-        grad_orient_histo_conv_restrained = grad_orient_histo_conv_reordered[center - index_restrain + 1:center + index_restrain + 1]
+        grad_orient_histo_conv_restrained = grad_orient_histo_conv[center - index_restrain + 1:center + index_restrain + 1]
 
         index_angle_found = np.argmax(grad_orient_histo_conv_restrained) + (nb_bin // 2 - index_restrain)
         angle_found = repr_hist[index_angle_found] / 2
         angle_found_score = np.amax(grad_orient_histo_conv_restrained)
 
-        conf_score = angle_found_score / np.mean(grad_orient_histo_conv_reordered)
-        # sct.printv("confidence score is : " + str(confidence_score) + "\n angle associated is : " + str(angles_sorted[0] * 180/pi))
-        # sct.printv("confidence score is : " + str(confidence_score) + "\n angle associated is : " + str(angle_found *180/pi))
+        arg_maxs = argrelmax(grad_orient_histo_conv, order=kmedian_size, mode='wrap')[0]
+        if len(arg_maxs) > 1:
+            conf_score = angle_found_score / grad_orient_histo_conv[arg_maxs[1]]
+        else:
+            conf_score = angle_found_score / np.mean(grad_orient_histo_conv)
 
         # Plotting stuff :
 
@@ -198,7 +195,7 @@ def find_angle(image, segmentation, px, py, method, angle_range=None, return_cen
 
             # matplotlib.use("Agg")
             plt.figure(figsize=(6.4*2, 4.8*2))
-            plt.suptitle("angle found is : " + str(np.round(angle_found * 180/pi, 1)) + " with conf score = " + str(conf_score))
+            plt.suptitle("angle found is : " + str((np.round((2*pi - angle_found + pi/2) * 180/pi, 1))%360) + " with conf score = " + str(conf_score))
             plt.subplot(241)
             plt.imshow(np.max(image) - image, cmap="Greys")
             plt.title("image")
@@ -207,8 +204,9 @@ def find_angle(image, segmentation, px, py, method, angle_range=None, return_cen
             plt.title("weighting map")
             plt.colorbar()
             plt.subplot(243)
-            plt.imshow(np.multiply(orient_image, proba_map > 0) * 180/pi, cmap="hsv")
-            plt.colorbar()
+            orient_image = (orient_image + pi) / (2*pi)
+            rgb_orient = hsv_to_rgb(np.dstack((orient_image, np.ones(orient_image.shape), proba_map/255)))
+            plt.imshow(rgb_orient)
             plt.title("Orientation map")
             plt.subplot(244)
             plt.bar(repr_hist * 180/pi, grad_orient_histo, width=0.8 * 360/nb_bin)
@@ -219,7 +217,7 @@ def find_angle(image, segmentation, px, py, method, angle_range=None, return_cen
             plt.xlabel("angle")
             plt.title("Orientation of weighted gradient \n histogram smoothed")
             plt.subplot(246)
-            plt.plot(repr_hist * 90/pi, grad_orient_histo_conv_reordered)
+            plt.plot(repr_hist * 90/pi, grad_orient_histo_conv)
             plt.xlabel("angle")
             plt.title("Convolution of the histogram")
             plt.subplot(247)
@@ -227,15 +225,11 @@ def find_angle(image, segmentation, px, py, method, angle_range=None, return_cen
             plt.xlabel("angle")
             plt.title("Convolution of the histogram restrained to angle range")
             plt.subplot(248)
-            plt.imshow(np.amax(image) - generate_2Dimage_line(image, centermass[0], centermass[1], angle_found), cmap="Greys")
+            plt.imshow(np.amax(image) - generate_2Dimage_line(copy.copy(image), centermass[0], centermass[1], 2*pi - angle_found + pi/2), cmap="Greys")
             plt.title("Image with axis of rotation superposed")
             plt.show()
             plt.savefig(save_figure_path.split(".")[0] + ".png", format="png")
             plt.close()
-
-        if conf_score < conf_treshold:
-            sct.printv("confidence score bellow threshold")
-            angle_found = 0
 
     else:
         raise Exception("method " + method + " not implemented")
@@ -244,6 +238,22 @@ def find_angle(image, segmentation, px, py, method, angle_range=None, return_cen
         return angle_found, conf_score, centermass
     else:
         return angle_found, conf_score
+
+
+# TODO prove that this is equivalent to DFT and do DFT (faster)
+def circular_conv(signal1, signal2):
+
+    if signal1.shape != signal2.shape :
+        raise Exception("The two signals for circular convolution do not have the same shape")
+
+    signal2_extended = np.concatenate((signal2, signal2, signal2))  # replicate signal at both ends
+
+    signal_conv_extended = np.convolve(signal1, signal2_extended, mode="same")  # median filtering
+
+    length = len(signal1)
+    signal_conv = signal_conv_extended[length:2*length]  # truncate back the signal
+
+    return signal_conv
 
 
 
@@ -285,7 +295,7 @@ def gradient_orientation_histogram(image, nb_bin, grad_ksize=123456789, seg_weig
         weighting_map = grad_mag
 
     # uncomment following line to have vanilla Sun et al. method
-    weighting_map = np.ones(grad_mag.shape)
+    # weighting_map = np.ones(grad_mag.shape)
     # compute histogram :
     grad_orient_histo = np.histogram(np.concatenate(orient), bins=nb_bin-1, range=(-(pi-pi/nb_bin), (pi-pi/nb_bin)), weights=np.concatenate(weighting_map))  # check param density that permits outputting a distribution that has integral of 1
     grad_mag = (grad_mag * 255).astype(float).round()  # just for debbuguing purpose (visualisation)
