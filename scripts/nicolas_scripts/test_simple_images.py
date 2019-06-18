@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from nicolas_scripts.functions_sym_rot import *
 from scipy import misc
+import copy
 
 def main(args=None):
 
@@ -19,7 +20,6 @@ def main(args=None):
     list_dir = [f for f in os.listdir(image_directory) if os.path.isfile(os.path.join(image_directory, f))]  # to have files only
     list_image_fname = list(set(list_dir) - set(fnmatch.filter(list_dir, "*sym_*")))  # list files without "sym_" in it
 
-
     for image_fname in list_image_fname:
 
         image = misc.imread(image_directory + "/" + image_fname).astype(int)
@@ -28,7 +28,7 @@ def main(args=None):
             image = np.mean(image[:, :, 0:2], axis=2)
 
         image_axes = np.zeros((image.shape[0], image.shape[1], 3))
-        image_axes[:, :, 0] = image
+        image_axes[:, :, 0] = copy.copy(image)
 
         seg_image = (image > np.mean(np.concatenate(image))).astype(int)
 
@@ -36,8 +36,8 @@ def main(args=None):
         if angle_hog is None:
             angle_hog = 0
         angle_pca, _, centermass = find_angle(image, seg_image, 1, 1, "pca", angle_range=90, return_centermass=True)
-        image_axes[:, :, 1] = generate_2Dimage_line(image, centermass[0], centermass[1], angle_hog)
-        image_axes[:, :, 2] = generate_2Dimage_line(image, centermass[0], centermass[1], angle_pca)
+        image_axes[:, :, 1] = generate_2Dimage_line(image, centermass[0], centermass[1], 2*pi - angle_hog + pi/2)
+        image_axes[:, :, 2] = generate_2Dimage_line(image, centermass[0], centermass[1], 2*pi - angle_pca)
 
         misc.imsave(image_directory + "/sym_" + image_fname.split(".")[0] + ".png", image_axes, "png")
 
