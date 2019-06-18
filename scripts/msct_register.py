@@ -45,8 +45,8 @@ def register_slicewise(fname_src,
                         remove_temp_files=0,
                         verbose=0):
 
-    im_and_seg = (paramreg.algo == 'centermassrot') and (paramreg.rot_method == 'hog')  # bool for simplicity
-    # future contributor wanting to implement a method that use both im and seg will add: and (paramreg.rot_method == 'OTHER_METHOD')
+    im_and_seg = (paramreg.algo == 'centermassrot') and ((paramreg.rot_method == 'hog') or (paramreg.rot_method == 'auto')) # bool for simplicity
+    # future contributor wanting to implement a method that use both im and seg will add: or (paramreg.rot_method == 'OTHER_METHOD')
 
     if im_and_seg is True:
         fname_src_im = fname_src[0]
@@ -86,8 +86,15 @@ def register_slicewise(fname_src,
             register2d_centermassrot('src.nii', 'dest.nii', fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, rot=1, polydeg=int(paramreg.poly), path_qc=path_qc, verbose=verbose, pca_eigenratio_th=float(paramreg.pca_eigenratio_th))
         else:
             # translation based of center of mass and rotation based on the symmetry of the image
-            register2d_centermassrot(['src_im.nii','src_seg.nii'], ['dest_im.nii', 'dest_seg.nii'], fname_warp=warp_forward_out,
-                                     fname_warp_inv=warp_inverse_out, rot=2, polydeg=int(paramreg.poly),
+            if paramreg.rot_method == 'hog':
+                rot = 2
+            elif paramreg.rot_method == 'auto':
+                rot = 3
+            else:
+                raise Exception("rot_method can only be pca, hog or auto")
+
+            register2d_centermassrot(['src_im.nii', 'src_seg.nii'], ['dest_im.nii', 'dest_seg.nii'], fname_warp=warp_forward_out,
+                                     fname_warp_inv=warp_inverse_out, rot=rot, polydeg=int(paramreg.poly),
                                      path_qc=path_qc, verbose=verbose)
     elif paramreg.algo == 'columnwise':
         # scaling R-L, then column-wise center of mass alignment and scaling
@@ -121,7 +128,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
         fname_dest: name of fixed image (type: string), if rot == 2, needs to be a list
         fname_warp: name of output 3d forward warping field
         fname_warp_inv: name of output 3d inverse warping field
-        rot: estimate rotation with pca (=1), hog (=2) or no rotation (=0) Default = 1
+        rot: estimate rotation with pca (=1), hog (=2), auto (=3) or no rotation (=0) Default = 1
         Depending on the rotation method, input might be segmentation only or image and segmentation
         polydeg: degree of polynomial regularization along z for rotation angle (type: int). 0: no regularization
         verbose:
@@ -129,7 +136,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
         none
     """
 
-    if rot == 2:  # if following methods need im and seg, add "and rot == x"
+    if rot == 2 or rot ==3:  # if following methods need im and seg, add "and rot == x"
         fname_src_im = fname_src[0]
         fname_dest_im = fname_dest[0]
         fname_src_seg = fname_src[1]
@@ -177,7 +184,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
             new_shape = tuple(new_shape)
             data_src = data_src.reshape(new_shape)
             data_dest = data_dest.reshape(new_shape)
-    elif rot == 2:  # im and seg case
+    elif rot == 2 or rot == 3:  # im and seg case
         # Split source volume along z
         sct.printv('\nSplit input volume...', verbose)
         from sct_image import split_data
@@ -249,25 +256,24 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
             except ValueError:
                 sct.printv('WARNING: Slice #' + str(iz) + ' is empty. It will be ignored.', verbose, 'warning')
 
-    elif rot == 2:  # im and seg case
+    elif rot == 2:  # im and seg case (hog)
 
-        # raise NotImplementedError("This method is not implemented yet, it will be in a future version")
+        conf_score_th = 1  # to be in the the range [1, +inf[
+
         for iz in range(0, nz):
             try:
                 coord_src[iz], _, centermass_src[iz, :] = compute_pca(data_src_seg[:, :, iz])
                 coord_dest[iz], _, centermass_dest[iz, :] = compute_pca(data_dest_seg[:, :, iz])
 
-                from nicolas_scripts.functions_sym_rot import find_angle_hog
+                from nicolas_scripts.functions_sym_rot import find_angle
 
-                parameters = {}
-                parameters['sigmax'] = 10/px
-                parameters['sigmay'] = 10/py
-                parameters['nb_bin'] = 360
-                parameters['kmedian_size'] = 3
-                parameters['angle_range'] = 15
+                angle_src, conf_score_src = find_angle(data_src_im[:, :, iz], data_src_seg[:, :, iz], px, py, "hog", angle_range=None)
+                angle_dest, conf_score_dest = find_angle(data_dest_im[:, :, iz], data_dest_seg[:, :, iz], px, py, "hog", angle_range=None)
 
-                angle_src = find_angle_hog(data_src_im[:, :, iz], centermass_src[iz, :], parameters)
-                angle_dest = find_angle_hog(data_dest_im[:, :, iz], centermass_dest[iz, :], parameters)
+                if conf_score_dest < conf_score_th:
+                    angle_dest = None
+                if conf_score_src < conf_score_th:
+                    angle_src = None
 
                 if (angle_src is None) or (angle_dest is None):
                     sct.printv('WARNING: Slice #' + str(iz) + ' no angle found in dest or src. It will be ignored.', verbose, 'warning')
@@ -280,6 +286,60 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
             # If one slice is empty it will ignore it
             except ValueError:
                 sct.printv('WARNING: Slice #' + str(iz) + ' is empty. It will be ignored.', verbose, 'warning')
+
+    elif rot == 3:  # im and seg case (auto)
+
+        pca_eigenratio_th = 1.6
+        conf_score_th = 1
+
+        for iz in range(0, nz):
+            try:
+                coord_src[iz], pca_src[iz], centermass_src[iz, :] = compute_pca(data_src_seg[:, :, iz])
+                coord_dest[iz], pca_dest[iz], centermass_dest[iz, :] = compute_pca(data_dest_seg[:, :, iz])
+
+                # points_src = np.array(np.where(data_src_seg[:, :, iz] > 0.5)).T
+                # n_points_src = len(points_src)
+                #
+                # convex_hull_src = ConvexHull(points_src)
+                # x_hull, _ = skimage.draw.polygon((convex_hull_src.points[convex_hull_src.vertices, 0]).astype(int), (convex_hull_src.points[convex_hull_src.vertices, 1]).astype(int))
+                # n_points_hull_src = len(x_hull)
+                #
+                # convexity_src = n_points_src / n_points_hull_src  # convexity is in range [0, 1]
+
+                if pca_src[iz].explained_variance_ratio_[0] / pca_src[iz].explained_variance_ratio_[1] > pca_eigenratio_th :
+                    # PCA method
+                    eigenv_src = pca_src[iz].components_.T[0][0], pca_src[iz].components_.T[1][0]  # pca_src.components_.T[0]
+                    eigenv_dest = pca_dest[iz].components_.T[0][0], pca_dest[iz].components_.T[1][0]  # pca_dest.components_.T[0]
+                    # Make sure first element is always positive (to prevent sign flipping)
+                    if eigenv_src[0] <= 0:
+                        eigenv_src = tuple([i * (-1) for i in eigenv_src])
+                    if eigenv_dest[0] <= 0:
+                        eigenv_dest = tuple([i * (-1) for i in eigenv_dest])
+                    angle_src_dest[iz] = angle_between(eigenv_src, eigenv_dest)
+                else:
+                    # HOG method
+                    from nicolas_scripts.functions_sym_rot import find_angle
+
+                    angle_src, conf_score_src = find_angle(data_src_im[:, :, iz], data_src_seg[:, :, iz], px, py, "hog", angle_range=None)
+                    angle_dest, conf_score_dest = find_angle(data_dest_im[:, :, iz], data_dest_seg[:, :, iz], px, py, "hog", angle_range=None)
+
+                    if conf_score_dest < conf_score_th:
+                        angle_dest = None
+                    if conf_score_src < conf_score_th:
+                        angle_src = None
+
+                    if (angle_src is None) or (angle_dest is None):
+                        sct.printv('WARNING: Slice #' + str(iz) + ' no angle found in dest or src. It will be ignored.', verbose, 'warning')
+                        continue
+
+                    angle_src_dest[iz] = angle_src - angle_dest
+                    # append to list of z_nonzero
+                    z_nonzero.append(iz)
+
+            # If one slice is empty it will ignore it
+            except ValueError:
+                sct.printv('WARNING: Slice #' + str(iz) + ' is empty. It will be ignored.', verbose, 'warning')
+
     else:
         raise ValueError("rot param == " + str(rot) + " not implemented")
 

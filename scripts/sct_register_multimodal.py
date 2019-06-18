@@ -157,7 +157,7 @@ def get_parser(paramreg=None):
                                                                           "dof: <str> Degree of freedom for type=label. Separate with '_'. Default=" +
                                   paramreg.steps['0'].dof + "\n" +
                                   paramreg.steps['1'].rot_method + "\n"
-                                                                    "rot_method {pca,hog}: rotation method to be used with algo=centermassrot.",
+                                                                    "rot_method {pca,auto}: rotation method to be used with algo=centermassrot.",
                       mandatory=False,
                       example="step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=im,algo=syn,metric=MI,iter=5,shrink=2")
     parser.add_option(name="-identity",
@@ -580,7 +580,7 @@ def register(src, dest, paramreg, param, i_step_str):
                                 'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',1,3'}
     output = ''  # default output if problem
 
-    if paramreg.steps[i_step_str].algo == "centermassrot" and paramreg.steps[i_step_str].rot_method == 'hog':
+    if paramreg.steps[i_step_str].algo == "centermassrot" and paramreg.steps[i_step_str].rot_method == 'auto':
         src_im = src[0]  # user is expected to input images to src and dest
         dest_im = dest[0]
         src_seg = src[1]
@@ -788,7 +788,7 @@ def register(src, dest, paramreg, param, i_step_str):
                            ants_registration_params=ants_registration_params,
                            remove_temp_files=param.remove_temp_files,
                            verbose=param.verbose)
-        elif paramreg.steps[i_step_str].rot_method == 'hog':  # im_seg case
+        elif paramreg.steps[i_step_str].rot_method == 'auto':  # im_seg case
             register_slicewise([src_im, src_seg],
                            [dest_im, dest_seg],
                            paramreg=paramreg.steps[i_step_str],
