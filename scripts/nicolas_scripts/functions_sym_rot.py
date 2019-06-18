@@ -156,6 +156,8 @@ def find_angle(image, segmentation, px, py, method, angle_range=None, return_cen
             nb_bin = nb_bin - 1
         kmedian_size = 5
         angle_range = angle_range
+        if angle_range is None:
+            angle_range = 90
 
         nx, ny = image.shape
 
@@ -188,6 +190,7 @@ def find_angle(image, segmentation, px, py, method, angle_range=None, return_cen
             conf_score = angle_found_score / grad_orient_histo_conv[arg_maxs[1]]
         else:
             conf_score = angle_found_score / np.mean(grad_orient_histo_conv)
+            #TODO doesn't make much sens to take a maximum that is really far away and not in the angle range, restrain to search area
 
         # Plotting stuff :
 
