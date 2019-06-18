@@ -21,6 +21,58 @@ import matplotlib.pyplot as plt
 import matplotlib
 
 import skimage.morphology as morph
+from matplotlib.colors import hsv_to_rgb
+
+
+class ImageSplit:
+
+    def __init__(self, image, center, crop_length, angle):
+
+        """(x0, y0) is the center (can be non integer), (x2, y2) the reflection of (x1, y1) along the line define by the center and the angle
+            image will be cropped around (x0, yo) by crop_length (can be non integer)"""
+
+        if not (-pi/2 < angle < pi/2):
+            raise Exception("angle not in -pi/2 pi/2 range")
+
+        self.image_full = image
+        x0 = center[0]
+        y0 = center[1]
+
+        y_max, x_max = image.shape
+        x_max, y_max = x_max - 1, y_max - 1  # because indexing starts at 0
+        x_min, y_min = 0, 0
+
+        self.image_half1 = np.zeros(image.shape)
+        self.image_half2 = np.zeros(image.shape)
+        self.list_pixels_couple = []
+
+        if angle == 0:
+            x1_max = int(2*x0)
+            y1_max = int(2*y0)
+        else:
+            x_line = np.arange(x_min, x_max)
+            y_line = y0 + (x_line - x0) / np.tan(angle)
+            indice_max = -np.argmax((y_line[-1], y_line[0]))
+            x1_max = int((y_line[indice_max] - y0) * np.tan(angle) + x0)
+            y1_max = int(y_line[indice_max])
+
+        for y1 in np.arange(0, y1_max):
+            for x1 in np.arange(0, x1_max):
+                distance_squared = (y1 - y0)**2 + (x1 - x0)**2
+                if angle > 0:
+                    x2 = np.sqrt(distance_squared / np.tan(angle)**2/2) + x0
+                elif angle < 0:
+                    x2 = -np.sqrt(distance_squared / np.tan(angle) ** 2 / 2) + x0
+                else:
+                    x2 = 2*x0 - x1
+                y2 = y0 - (x2 -x0) * np.tan(angle)
+
+                if x2 <= x_max and y2 <= y_max:
+                    self.image_half1[y1, x1] = image[y1, x1]
+                    self.image_half2[int(y2), int(x2)] = image[int(y2), int(x2)]
+                    self.list_pixels_couple.append((image[y1, x1], image[int(y2), int(x2)]))
+
+
 
 
 
