@@ -178,7 +178,7 @@ def _make_figure(metric, fit_results):
         angle_ap.append(value['MEAN(angle_AP)'])
         angle_rl.append(value['MEAN(angle_RL)'])
     # Make figure
-    fig = Figure()
+    fig = Figure(figsize=(8, 7), tight_layout=True)  # 640x700 pix
     FigureCanvas(fig)
     # If -angle-corr was set to 1, fit_results exists and centerline fitting results are displayed
     if fit_results is not None:
@@ -201,9 +201,9 @@ def _make_figure(metric, fit_results):
 
         ax = fig.add_subplot(313)
         ax.grid(True)
-        ax.plot(fit_results.data.zmean, fit_results.data.xmean, color='lightblue', marker='.', label='_nolegend_')
+        ax.plot(fit_results.data.zmean, fit_results.data.xmean, 'b.', label='_nolegend_')
         ax.plot(fit_results.data.zref, fit_results.data.xfit, 'b')
-        ax.plot(fit_results.data.zmean, fit_results.data.ymean, color='pink', marker='.', label='_nolegend_')
+        ax.plot(fit_results.data.zmean, fit_results.data.ymean, 'r.', label='_nolegend_')
         ax.plot(fit_results.data.zref, fit_results.data.yfit, 'r')
         ax.legend(['Fitted (RL)', 'Fitted (AP)'])
         ax.set_ylabel('Centerline [$vox$]')
