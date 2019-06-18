@@ -136,7 +136,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
         none
     """
 
-    if rot == 2 or rot ==3:  # if following methods need im and seg, add "and rot == x"
+    if rot == 2 or rot == 3:  # if following methods need im and seg, add "and rot == x"
         fname_src_im = fname_src[0]
         fname_dest_im = fname_dest[0]
         fname_src_seg = fname_src[1]
@@ -267,8 +267,8 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
 
                 from nicolas_scripts.functions_sym_rot import find_angle
 
-                angle_src, conf_score_src = find_angle(data_src_im[:, :, iz], data_src_seg[:, :, iz], px, py, "hog", angle_range=None)
-                angle_dest, conf_score_dest = find_angle(data_dest_im[:, :, iz], data_dest_seg[:, :, iz], px, py, "hog", angle_range=None)
+                angle_src, conf_score_src = find_angle(data_src_im[:, :, iz], data_src_seg[:, :, iz], px, py, "hog", angle_range=10)
+                angle_dest, conf_score_dest = find_angle(data_dest_im[:, :, iz], data_dest_seg[:, :, iz], px, py, "hog", angle_range=10)
 
                 if conf_score_dest < conf_score_th:
                     angle_dest = None
@@ -306,7 +306,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
                 #
                 # convexity_src = n_points_src / n_points_hull_src  # convexity is in range [0, 1]
 
-                if pca_src[iz].explained_variance_ratio_[0] / pca_src[iz].explained_variance_ratio_[1] > pca_eigenratio_th :
+                if pca_src[iz].explained_variance_ratio_[0] / pca_src[iz].explained_variance_ratio_[1] > pca_eigenratio_th:
                     # PCA method
                     eigenv_src = pca_src[iz].components_.T[0][0], pca_src[iz].components_.T[1][0]  # pca_src.components_.T[0]
                     eigenv_dest = pca_dest[iz].components_.T[0][0], pca_dest[iz].components_.T[1][0]  # pca_dest.components_.T[0]
@@ -320,8 +320,8 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
                     # HOG method
                     from nicolas_scripts.functions_sym_rot import find_angle
 
-                    angle_src, conf_score_src = find_angle(data_src_im[:, :, iz], data_src_seg[:, :, iz], px, py, "hog", angle_range=None)
-                    angle_dest, conf_score_dest = find_angle(data_dest_im[:, :, iz], data_dest_seg[:, :, iz], px, py, "hog", angle_range=None)
+                    angle_src, conf_score_src = find_angle(data_src_im[:, :, iz], data_src_seg[:, :, iz], px, py, "hog", angle_range=10)
+                    angle_dest, conf_score_dest = find_angle(data_dest_im[:, :, iz], data_dest_seg[:, :, iz], px, py, "hog", angle_range=10)
 
                     if conf_score_dest < conf_score_th:
                         angle_dest = None
@@ -344,7 +344,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
         raise ValueError("rot param == " + str(rot) + " not implemented")
 
     # regularize rotation
-    if not polydeg == 0 and (rot == 1 or rot == 2):
+    if not polydeg == 0 and (rot == 1 or rot == 2 or rot == 3):
         coeffs = np.polyfit(z_nonzero, angle_src_dest[z_nonzero], polydeg)
         poly = np.poly1d(coeffs)
         angle_src_dest_regularized = np.polyval(poly, z_nonzero)        # display
@@ -361,7 +361,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
 
     # initialize warping fields
     # N.B. forward transfo is defined in destination space and inverse transfo is defined in the source space
-    if rot == 2:
+    if rot == 2 or rot == 3:
         im_src = im_src_im
         im_dest = im_dest_im
         data_dest = data_dest_im
