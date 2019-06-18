@@ -11,12 +11,17 @@ def main(args=None):
     path_data = args[0]
 
     images = []
+    criterion = []
 
     filenames = fnmatch.filter(os.listdir(path_data), "fig*ElliTest*")
-
     for filename in filenames:
+        criterion_is = int((filename.split("_sigma")[0]).split("rot_")[-1])
+        criterion.append(criterion_is)
+    filenames_sorted = [file for _, file in sorted(zip(criterion, filenames))]
+
+    for filename in filenames_sorted:
         images.append(imageio.imread(path_data + "/" + filename))
-    imageio.mimsave(path_data + '/Aplot.gif', images, fps=3)
+    imageio.mimsave(path_data + '/Aplot_fancy_rot_sigma3_ratio7_W_med5.gif', images, fps=10)
 
 def memory_limit():
     import resource
