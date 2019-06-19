@@ -155,8 +155,6 @@ def cmd_train(context):
                 loss = criterion(outputs, var_labels)
                 val_loss_total += loss.item()
 
-                val_accuracy += int((var_labels == preds).sum())
-
             num_steps += 1
 
         accuracy = accuracy_score(true_labels, guessed_labels)
