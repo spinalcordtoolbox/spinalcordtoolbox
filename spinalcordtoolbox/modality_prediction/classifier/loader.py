@@ -3,6 +3,7 @@ import torch.utils.data as data
 import numpy as np
 from tqdm import tqdm
 import os
+import nibabel as nib
 
 class Slice():
     def __init__(self, data, label):
