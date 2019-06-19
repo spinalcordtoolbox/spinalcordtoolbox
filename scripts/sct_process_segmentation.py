@@ -30,19 +30,6 @@ from spinalcordtoolbox.centerline.core import ParamCenterline
 from spinalcordtoolbox.reports.qc import generate_qc
 
 
-# TODO: Move this class somewhere else
-class Param:
-    def __init__(self):
-        self.debug = 0
-        self.verbose = 1  # verbose
-        self.remove_temp_files = 1
-        self.slices = ''
-        self.window_length = 50  # for smooth_centerline @sct_straighten_spinalcord
-        self.algo_fitting = 'bspline'  # polyfit, bspline
-        self.perslice = None
-        self.perlevel = None
-
-
 def get_parser():
     """
     :return: Returns the parser with the command line documentation contained in it.
@@ -85,7 +72,7 @@ def get_parser():
                                   'metric per slice and then averaging them all is not the same as outputting a single'
                                   'metric at once across all slices.',
                       mandatory=False,
-                      default_value=Param().perslice)
+                      default_value=None)
     parser.add_option(name='-vert',
                       type_value='str',
                       description='Vertebral levels to compute the metrics across. Example: 2:9 for C2 to T2.',
@@ -101,7 +88,7 @@ def get_parser():
                       description='Set to 1 to output one metric per vertebral level instead of a single '
                                   'output metric. This flag needs to be used with flag -vert.',
                       mandatory=False,
-                      default_value=Param().perlevel)
+                      default_value=None)
     parser.add_option(name='-r',
                       type_value='multiple_choice',
                       description='Removes temporary folder used for the algorithm at the end of execution',
@@ -223,10 +210,9 @@ def _make_figure(metric, fit_results):
 def main(args):
     parser = get_parser()
     arguments = parser.parse(args)
-    param = Param()
 
     # Initialization
-    slices = param.slices
+    slices = ''
     group_funcs = (('MEAN', func_wa), ('STD', func_std))  # functions to perform when aggregating metrics along S-I
 
     fname_segmentation = sct.get_absolute_path(arguments['-i'])
@@ -250,13 +236,13 @@ def main(args):
     if '-perlevel' in arguments:
         perlevel = arguments['-perlevel']
     else:
-        perlevel = Param().perlevel
+        perlevel = None
     if '-z' in arguments:
         slices = arguments['-z']
     if '-perslice' in arguments:
         perslice = arguments['-perslice']
     else:
-        perslice = Param().perslice
+        perslice = None
     if '-angle-corr' in arguments:
         if arguments['-angle-corr'] == '1':
             angle_correction = True
@@ -302,8 +288,5 @@ def main(args):
 
 if __name__ == "__main__":
     sct.init_sct()
-    # initialize parameters
-    param = Param()
-    param_default = Param()
     # call main function
     main(sys.argv[1:])
