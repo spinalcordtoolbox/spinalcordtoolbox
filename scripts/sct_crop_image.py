@@ -268,8 +268,11 @@ class ImageCropper(object):
 def get_parser():
 
     # Mandatory arguments
-    parser = argparse.ArgumentParser(description='Tools to crop an image. Either through command line or GUI')
-    mandatoryArguments = parser.add_argument_group("MANDATORY ARGUMENTS")
+    parser = argparse.ArgumentParser(description='Tools to crop an image. Either through command line or GUI',
+                                     add_help=None,
+                                     prog=os.path.basename(__file__).strip(".py")
+                                     )
+    mandatoryArguments = parser.add_argument_group("Mandatory arguments")
     mandatoryArguments.add_argument("-i",
                         help="input image. (e.g., t2.nii.gz)",
                         required = True
@@ -282,13 +285,19 @@ def get_parser():
                         default = 0)
 
     # Command line mandatory arguments
-    requiredCommandArguments = parser.add_argument_group("COMMAND LINE RELATED MANDATORY ARGUMENTS")
+    requiredCommandArguments = parser.add_argument_group("Command line related mandatory arguments")
     requiredCommandArguments.add_argument("-o",
                         help="Output image. This option is REQUIRED for the command line execution (e.g., t1.nii.gz)",
                         required=False
                         )
     # Optional arguments section
-    parser.add_argument("-v",
+    optional = parser.add_argument_group("\nOptional arguments")
+    optional.add_argument("-h",
+                          "--help",
+                          action="help",
+                          help="show this help message and exit"
+                          )
+    optional.add_argument("-v",
                         type=int,
                         help="1: display on, 0: display off (default)",
                         required=False,
@@ -296,7 +305,7 @@ def get_parser():
                         default = 1
                         )
     # GUI optional argument
-    guiOptionalArguments = parser.add_argument_group("\nGUI RELATED OPTIONAL ARGUMENTS")
+    guiOptionalArguments = parser.add_argument_group("\nGui related optional arguments")
     guiOptionalArguments.add_argument("-r",
                         type=int,
                         help="Remove temporary files. Default = 1",
@@ -304,7 +313,7 @@ def get_parser():
                         choices=(0, 1)
                         )
     # Command line optional arguments
-    commandOptionalArguments = parser.add_argument_group("\nCOMMAND LINE RELATED OPTIONAL ARGUMENTS")
+    commandOptionalArguments = parser.add_argument_group("\nCommand line related optional arguments")
     commandOptionalArguments.add_argument("-m",
                         help="cropping around the mask",
                         required=False)
