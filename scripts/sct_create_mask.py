@@ -281,7 +281,7 @@ def get_parser():
                                      add_help=None,
                                      prog=os.path.basename(__file__).strip(".py")
                                      )
-    mandatoryArguments = parser.add_argument_group("\nmandatory arguments")
+    mandatoryArguments = parser.add_argument_group("\nMandatory arguments")
     mandatoryArguments.add_argument('-i',
                         help='Image to create mask on. Only used to get header. Must be 3D, E.g.: \'data.nii.gz\')',
                         required = True
