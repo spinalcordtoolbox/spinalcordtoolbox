@@ -363,9 +363,16 @@ def get_parser():
     parser = argparse.ArgumentParser(
         description='Check the installation and environment variables of the'
         ' toolbox and its dependencies.',
+        add_help=None,
+        prog=os.path.basename(__file__).strip(".py")
     )
-
-    parser.add_argument("--complete", "-c",
+    optional = parser.add_argument_group("\nOptional arguments")
+    optional.add_argument("-h",
+                          "--help",
+                          action="help",
+                          help="show this help message and exit"
+                          )
+    optional.add_argument("--complete", "-c",
                         help="Complete test.",
                         action="store_true",
                         )
