@@ -227,6 +227,7 @@
          document.getElementById("table").insertRow(-1).insertCell(0).innerHTML = "No matching records found";
          document.getElementsByTagName("td")[document.getElementsByTagName("td").length - 1].colSpan = "7";
          document.getElementsByTagName("td")[document.getElementsByTagName("td").length - 1].style.textAlign = "center";
+         document.getElementsByTagName("td")[document.getElementsByTagName("td").length - 1].style.backgroundColor = "Gainsboro";
          for (iTH = 0; iTH < dropdownList.length; iTH++){
               toggleColumn(document.getElementsByClassName('dropdown-item')[iTH].id)
          }
