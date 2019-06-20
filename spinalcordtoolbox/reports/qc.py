@@ -183,7 +183,7 @@ class QcImage(object):
         """Centered vertical line to assess quality of straightening"""
         img = np.full_like(mask, np.nan)
         ax.imshow(img, cmap='gray', alpha=0, aspect=float(self.aspect_mask))
-        ax.axvline(x=img.shape[0]/2.0, color='r', linewidth=2)
+        ax.axvline(x=img.shape[1]/2.0, color='r', linewidth=2)
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
 
