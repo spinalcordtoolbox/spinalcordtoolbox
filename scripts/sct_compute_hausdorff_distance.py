@@ -434,43 +434,53 @@ def get_parser():
 
     parser = argparse.ArgumentParser(
         description='Compute the Hausdorff\'s distance between two binary images which can be thinned (ie skeletonized)'
-                    'If only one image is inputted, it will be only thinned')
-    parser.add_argument("-i",
+                    'If only one image is inputted, it will be only thinned',
+        add_help=None,
+        prog=os.path.basename(__file__).strip(".py")
+    )
+    mandatoryArguments = parser.add_argument_group("\nMandatory arguments")
+    mandatoryArguments.add_argument("-i",
                         help="First Image on which you want to find the skeleton (e.g.,'t2star_manual_gmseg.nii.gz')",
                         required=True
                         )
-    parser.add_argument("-d",
+    optional = parser.add_argument_group("\nOptional arguments")
+    optional.add_argument("-h",
+                          "--help",
+                          action="help",
+                          help="show this help message and exit"
+                          )
+    optional.add_argument("-d",
                         help="Second Image on which you want to find the skeleton (e.g.,'t2star_manual_gmseg.nii.gz')",
                         required=False,
                         default=None
                         )
-    parser.add_argument("-r",
+    optional.add_argument("-r",
                         help="Second Image on which you want to find the skeleton",
                         required=False,
                         )
-    parser.add_argument("-thinning",
+    optional.add_argument("-thinning",
                         type=int,
-                        help="Thinning : find the skeleton of the binary images using the Zhang-Suen algorithm (1984) and use it to compute the hausdorff's distance (e.g.,['0', '1'])",
+                        help="Thinning : find the skeleton of the binary images using the Zhang-Suen algorithm (1984) and use it to compute the hausdorff's distance",
                         required=False,
                         default=1,
                         choices=(0, 1))
-    parser.add_argument("-t",
+    optional.add_argument("-t",
                         help="Thinning : find the skeleton of the binary images using the Zhang-Suen algorithm (1984) and use it to compute the hausdorff's distance",
                         required = False)
-    parser.add_argument("-resampling",
+    optional.add_argument("-resampling",
                         type=float,
                         help="pixel size in mm to resample to (e.g., 0.5)",
                         required=False,
                         default=0.1,
                         )
-    parser.add_argument("-o",
+    optional.add_argument("-o",
                         help="Name of the output file (e.g.,'my_hausdorff_dist.txt')",
                         required=False,
                         default='hausdorff_distance.txt'
                         )
-    parser.add_argument("-v",
+    optional.add_argument("-v",
                         type=int,
-                        help="Verbose. 0: nothing, 1: basic, 2: extended. (e.g.,['0', '1', '2'])",
+                        help="Verbose. 0: nothing, 1: basic, 2: extended.",
                         required=False,
                         choices=(0, 1, 2),
                         default = 1)
