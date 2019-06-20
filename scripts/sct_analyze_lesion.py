@@ -76,7 +76,7 @@ def get_parser():
                         )
     optional.add_argument("-r",
                         type=int,
-                        help="Remove temporary files. (e.g.,( 0, 1))",
+                        help="Remove temporary files.",
                         required=False,
                         default=1,
                         choices=(0, 1))
