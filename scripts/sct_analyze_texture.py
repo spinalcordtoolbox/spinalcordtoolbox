@@ -76,7 +76,7 @@ def get_parser():
                         help="File name of ground-truth texture metrics.",
                         required=False)
     optional.add_argument("-r",
-                        help="Remove temporary files. (e.g.,['0', '1')",
+                        help="Remove temporary files.",
                         required=False,
                         default=int(Param().rm_tmp)
                         )
