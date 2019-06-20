@@ -69,20 +69,29 @@ def main(args):
 
 # ==========================================================================================
 def get_parser():
-    parser = argparse.ArgumentParser(description='Compute magnetization transfer ratio (MTR). Output is given in percentage.')
-    mandatoryArguments = parser.add_argument_group("\nmandatory arguments")
+    parser = argparse.ArgumentParser(description='Compute magnetization transfer ratio (MTR). Output is given in percentage.',
+                                     add_help=None,
+                                     prog=os.path.basename(__file__).strip(".py")
+                                     )
+    mandatoryArguments = parser.add_argument_group("\nMandatory arguments")
     mandatoryArguments.add_argument('-mt0',
                           help='Image without MT pulse (MT0)',
                           required=True)
     mandatoryArguments.add_argument('-mt1',
                           help='Image with MT pulse (MT1)',
                           required=True)
-    parser.add_argument('-v',
+    optional = parser.add_argument_group("\nOptional arguments")
+    optional.add_argument("-h",
+                          "--help",
+                          action="help",
+                          help="show this help message and exit"
+                          )
+    optional.add_argument('-v',
                         type=int,
                         choices=(0, 1, 2),
-                        help='verbose: 0 = nothing, 1 = classic, 2 = expended',
+                        help='Verbose: 0 = nothing, 1 = classic, 2 = expended',
                         default=1)
-    parser.add_argument('-o',
+    optional.add_argument('-o',
                         help='Path to output file.',
                         default=os.path.join('.','mtr.nii.gz'))
     return parser
