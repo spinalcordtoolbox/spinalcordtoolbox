@@ -15,10 +15,12 @@
 
 from __future__ import division, absolute_import
 
-import sys
+import sys, os
 
 from spinalcordtoolbox.straightening import SpinalCordStraightener
 from spinalcordtoolbox.centerline.core import ParamCenterline
+from spinalcordtoolbox.reports.qc import generate_qc
+
 from msct_parser import Parser
 import sct_utils as sct
 
@@ -151,6 +153,20 @@ def get_parser():
                       mandatory=False,
                       example=["nn", "linear", "spline"],
                       default_value="spline")
+    parser.add_option(name='-qc',
+                      type_value='folder_creation',
+                      description='The path where the quality control generated content will be saved',
+                      default_value=None)
+    parser.add_option(name='-qc-dataset',
+                      type_value='str',
+                      description='If provided, this string will be mentioned in the QC report as the dataset the '
+                                  'process was run on',
+                      )
+    parser.add_option(name='-qc-subject',
+                      type_value='str',
+                      description='If provided, this string will be mentioned in the QC report as the subject the '
+                                  'process was run on',
+                      )
     parser.add_option(name="-r",
                       type_value="multiple_choice",
                       description="remove temporary files.",
@@ -209,7 +225,7 @@ def main(args=None):
         sc_straight.path_output = arguments['-ofolder']
     else:
         sc_straight.path_output = './'
-
+    path_qc = arguments.get("-qc", None)
     verbose = int(arguments.get('-v'))
     sct.init_sct(log_level=verbose, update=True)  # Update log level
     sc_straight.verbose = verbose
@@ -249,6 +265,14 @@ def main(args=None):
     fname_straight = sc_straight.straighten()
 
     sct.printv("\nFinished! Elapsed time: {} s".format(sc_straight.elapsed_time), verbose)
+
+    # Generate QC report
+    if path_qc is not None:
+        path_qc = os.path.abspath(path_qc)
+        qc_dataset = arguments.get("-qc-dataset", None)
+        qc_subject = arguments.get("-qc-subject", None)
+        generate_qc(fname_straight, args=args, path_qc=os.path.abspath(path_qc),
+                    dataset=qc_dataset, subject=qc_subject, process=os.path.basename(__file__.strip('.py')))
 
     sct.display_viewer_syntax([fname_straight], verbose=verbose)
 
