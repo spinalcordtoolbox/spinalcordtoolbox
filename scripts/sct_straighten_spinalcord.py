@@ -137,6 +137,7 @@ def get_parser():
                       description='Degree of smoothing for centerline fitting. Only use with -centerline-algo {bspline, linear}.',
                       mandatory=False,
                       default_value=ParamCenterline().smooth)
+
     parser.add_option(name="-param",
                       type_value=[[','], 'str'],
                       description="Parameters for spinal cord straightening. Separate arguments with ','."
@@ -144,8 +145,7 @@ def get_parser():
                                   "\nthreshold_distance: [0.0,inf[. Threshold at which voxels are not considered into displacement. Increase this threshold if the image is blackout around the spinal cord too much. Default=10"
                                   "\naccuracy_results: {0, 1} Disable/Enable computation of accuracy results after straightening. Default=0"
                                   "\ntemplate_orientation: {0, 1} Disable/Enable orientation of the straight image to be the same as the template. Default=0",
-                      mandatory=False,
-                      example="algo_fitting=bspline,accuracy_results=1")
+                      mandatory=False)
 
     parser.add_option(name="-x",
                       type_value="multiple_choice",
