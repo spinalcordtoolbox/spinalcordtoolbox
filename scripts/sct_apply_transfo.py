@@ -63,7 +63,7 @@ def get_parser():
                           help="show this help message and exit"
                           )
     optional.add_argument("-crop",
-                        help="Crop Reference. 0 : no reference. 1 : sets background to 0. 2 : use normal background (e.g.,['0', '1', '2'])",
+                        help="Crop Reference. 0 : no reference. 1 : sets background to 0. 2 : use normal background",
                         required=False,
                         default= 0,
                         choices=(0, 1, 2))
@@ -82,12 +82,12 @@ def get_parser():
                         default='spline',
                         choices=('nn', 'linear', 'spline'))
     optional.add_argument("-r",
-                        help="""Remove temporary files.(e.g., ['0', '1'])""",
+                        help="""Remove temporary files.""",
                         required = False,
                         default = 1,
                         choices = (0, 1))
     optional.add_argument("-v",
-                        help="""Verbose.(e.g., ['0', '1', '2'])""",
+                        help="Verbose: 0 = nothing, 1 = classic, 2 = expended.",
                         required = False,
                         default = 1,
                         choices = (0, 1, 2))
