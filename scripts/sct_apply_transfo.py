@@ -38,46 +38,55 @@ def get_parser():
     # parser initialisation
 
     parser = argparse.ArgumentParser(
-        description='Apply transformations. This function is a wrapper for antsApplyTransforms (ANTs).')
+        description='Apply transformations. This function is a wrapper for antsApplyTransforms (ANTs).',
+        add_help=None,
+        prog=os.path.basename(__file__).strip(".py")
+    )
 
-    requiredArgs = parser.add_argument_group("\nmandatory arguments")
-    requiredArgs.add_argument("-i",
+    mandatoryArguments = parser.add_argument_group("\nMandatory arguments")
+    mandatoryArguments.add_argument("-i",
                         help="input image (e.g.,\"t2.nii.gz\")",
                         required = True
                         )
-    requiredArgs.add_argument("-d",
+    mandatoryArguments.add_argument("-d",
                         help="destination image (e.g.,\"out.nii.gz\")",
                         required = True
                         )
-    requiredArgs.add_argument("-w",
+    mandatoryArguments.add_argument("-w",
                         help="Transformation, which can be a warping field (nifti image) or an affine transformation matrix (text file). (e.g.,\"warp1.nii.gz, warp2.nii.gz\")",
                         required = True
                         )
-    parser.add_argument("-crop",
+    optional = parser.add_argument_group("\nOptional arguments")
+    optional.add_argument("-h",
+                          "--help",
+                          action="help",
+                          help="show this help message and exit"
+                          )
+    optional.add_argument("-crop",
                         help="Crop Reference. 0 : no reference. 1 : sets background to 0. 2 : use normal background (e.g.,['0', '1', '2'])",
                         required=False,
                         default= 0,
                         choices=(0, 1, 2))
-    parser.add_argument("-c",
+    optional.add_argument("-c",
                         help="Crop Reference. 0 : no reference. 1 : sets background to 0. 2 : use normal background",
                         required=False,
                         )
-    parser.add_argument("-o",
+    optional.add_argument("-o",
                         help="registered source. (e.g.,\"dest.nii.gz\")",
                         required = False,
                         default = ''
                         )
-    parser.add_argument("-x",
+    optional.add_argument("-x",
                         help="interpolation method (e.g.,['nn', 'linear', 'spline'])",
                         required=False,
                         default='spline',
                         choices=('nn', 'linear', 'spline'))
-    parser.add_argument("-r",
+    optional.add_argument("-r",
                         help="""Remove temporary files.(e.g., ['0', '1'])""",
                         required = False,
                         default = 1,
                         choices = (0, 1))
-    parser.add_argument("-v",
+    optional.add_argument("-v",
                         help="""Verbose.(e.g., ['0', '1', '2'])""",
                         required = False,
                         default = 1,
