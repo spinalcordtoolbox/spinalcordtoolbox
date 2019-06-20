@@ -32,13 +32,19 @@ def get_parser():
         description='Compute statistics on lesions of the input binary file (1 for lesion, 0 for background). The function assigns an ID value to each lesion (1, 2, 3, etc.) and outputs morphometric measures for each lesion:'
                     '\n- volume [mm^3]'
                     '\n- length [mm]: length along the Superior-Inferior axis'
-                    '\n- max_equivalent_diameter [mm]: maximum diameter of the lesion, when approximating the lesion as a circle in the axial cross-sectional plane orthogonal to the spinal cord'
+                    '\n- max_equivalent_diameter [mm]: maximum diameter of the lesion, when '
+                    '\n  approximating the lesion as a circle in the axial cross-sectional plane '
+                    '\n  orthogonal to the spinal cord'
                     '\n\nIf an image (e.g. T2w or T1w image, texture image) is provided, it computes the mean and standard deviation values of this image within each lesion.'
                     '\n\nIf a registered template is provided, it computes:'
-                    '\n- the distribution of each lesion depending on each vertebral level and on each region of the template (eg GM, WM, WM tracts).'
+                    '\n- the distribution of each lesion depending on each vertebral level and on each'
+                    '\n  region of the template (eg GM, WM, WM tracts).'
                     '\n- the proportion of ROI (eg vertebral level, GM, WM) occupied by lesion.'
-                    '\nN.B. If the proportion of lesion in each region (e.g., WM and GM) does not sum up to 100%, it means that the registered template does not fully cover the lesion, in that case you might want to check the registration results.',
+                    '\n\nN.B. If the proportion of lesion in each region (e.g., WM and GM) does not sum '
+                    '\nup to 100%, it means that the registered template does not fully cover the '
+                    '\nlesion, in that case you might want to check the registration results.',
         add_help=None,
+        formatter_class =argparse.RawDescriptionHelpFormatter,
         prog=os.path.basename(__file__).strip(".py")
     )
     mandatoryArguments = parser.add_argument_group("\nMandatory arguments")
