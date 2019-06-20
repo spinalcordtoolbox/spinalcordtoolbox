@@ -28,8 +28,11 @@ def get_parser():
     # Initialize the parser
 
     parser = argparse.ArgumentParser(
-        description='Extraction of grey level co-occurence matrix (GLCM) texture features from an image within a given mask. The textures features are those defined in the sckit-image implementation: http://scikit-image.org/docs/dev/api/skimage.feature.html#greycoprops. This function outputs one nifti file per texture metric (' + ParamGLCM().feature + ') and per orientation called fnameInput_feature_distance_angle.nii.gz. Also, a file averaging each metric across the angles, called fnameInput_feature_distance_mean.nii.gz, is output.')
-    mandatoryArguments = parser.add_argument_group("\nmandatory arguments")
+        description='Extraction of grey level co-occurence matrix (GLCM) texture features from an image within a given mask. The textures features are those defined in the sckit-image implementation: http://scikit-image.org/docs/dev/api/skimage.feature.html#greycoprops. This function outputs one nifti file per texture metric (' + ParamGLCM().feature + ') and per orientation called fnameInput_feature_distance_angle.nii.gz. Also, a file averaging each metric across the angles, called fnameInput_feature_distance_mean.nii.gz, is output.',
+        add_help=None,
+        prog=os.path.basename(__file__).strip(".py")
+    )
+    mandatoryArguments = parser.add_argument_group("\nMandatory arguments")
     mandatoryArguments.add_argument("-i",
                         help="Image to analyze. (e.g.,'t2.nii.gz')",
                         required=True
@@ -38,40 +41,46 @@ def get_parser():
                         help="Image mask (e.g., lesion, spinal cord). (e.g.,'t2_seg.nii.gz')",
                         required=True
                         )
-    parser.add_argument("-feature",
+    optional = parser.add_argument_group("\nOptional arguments")
+    optional.add_argument("-h",
+                          "--help",
+                          action="help",
+                          help="show this help message and exit"
+                          )
+    optional.add_argument("-feature",
                         help="List of GLCM texture features (separate arguments with \",\").",
                         required=False,
                         default=ParamGLCM().feature
                         )
-    parser.add_argument("-distance",
+    optional.add_argument("-distance",
                         help="Distance offset for GLCM computation, in pixel (suggested distance values between 1 and 5). (e.g., 1)",
                         required=False,
                         default=ParamGLCM().distance,
                         )
-    parser.add_argument("-angle",
+    optional.add_argument("-angle",
                         help="List of angles for GLCM computation, separate arguments with \",\", in degrees (suggested distance values between 0 and 179). (e.g.,'0,90')",
                         required=False,
                         default=ParamGLCM().angle
                         )
-    parser.add_argument("-dim",
+    optional.add_argument("-dim",
                         help="Compute the texture on the axial (ax), sagittal (sag) or coronal (cor) slices. (e.g.,['ax', 'sag', 'cor')",
                         required=False,
                         default=Param().dim,
                         )
-    parser.add_argument("-ofolder",
+    optional.add_argument("-ofolder",
                         help="Output folder. (e.g.,'/my_texture/')",
                         required=False,
                         default=Param().path_results
                         )
-    parser.add_argument("-igt",
+    optional.add_argument("-igt",
                         help="File name of ground-truth texture metrics.",
                         required=False)
-    parser.add_argument("-r",
+    optional.add_argument("-r",
                         help="Remove temporary files. (e.g.,['0', '1')",
                         required=False,
                         default=int(Param().rm_tmp)
                         )
-    parser.add_argument("-v",
+    optional.add_argument("-v",
                         help="Verbose: 0 = nothing, 1 = classic, 2 = expended.",
                         required=False,
                         choices=(0, 1, 2),
