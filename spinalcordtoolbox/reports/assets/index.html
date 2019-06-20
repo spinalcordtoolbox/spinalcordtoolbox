@@ -65,9 +65,10 @@
                       Next
                   </span>
               </a>
-              <div id="dropdown" class="dropdown">
-                  <button id="dropdownButton" class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true">Display Columns <span class="caret"></span></button>
-                  <ul class="dropdown-menu">
+              <div class="seperation">
+                <div id="dropdown" class="dropdown">
+                    <button id="dropdownButton" class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true">Display Columns <span class="caret"></span></button>
+                    <ul class="dropdown-menu">
                       <li><a class="dropdown-item" id="Date" onclick="toggleColumn(id)">Date</button></a></li>
                       <li><a class="dropdown-item" id="Dataset" onclick="toggleColumn(id)">Dataset &#10004</a></li>
                       <li><a class="dropdown-item" id="Subject" onclick="toggleColumn(id)">Subject</a></li>
@@ -76,27 +77,29 @@
                       <li><a class="dropdown-item" id="Contrast" onclick="toggleColumn(id)">Contrast &#10004</a></li>
                       <li><a class="dropdown-item" id="Function" onclick="toggleColumn(id)">Function</a></li>
                       <li><a class="dropdown-item" id="Function+Args" onclick="toggleColumn(id)">Function+Args &#10004</a></li>
-                  </ul>
-                  <script>
-                      var buttonPosition = document.getElementById('dropdown');
-                      buttonPosition.style.top = "44px";
-                  </script>
+                    </ul>
+                </div>
+                <script>
+                    document.getElementById("dropdown").style.position= "absolute";
+                    document.getElementById("dropdown").style.top = "50px";
+                </script>
+                <input class="searchBar" type="text" id="searchInput" onkeyup="hideNonSearchElements()" placeholder="Search" autocomplete="off">
               </div>
               <table id="table" class="table table-condensed"
-                     data-search="true"
-		             data-sort-name="moddate"
-                     data-sort-order="asc"
-                     data-response-handler="responseHandler">
-                     <thead>
+		  data-sort-name="moddate"
+                  data-sort-order="asc"
+                  data-response-handler="responseHandler">
+	                <thead>
 		                  <tr>
 			                    <th data-field="moddate" data-sortable="true">Date</th>
 			                    <th data-field="dataset" data-sortable="true">Dataset</th>
 			                    <th data-field="subject" data-sortable="true">Subject</th>
-                                <th data-field="cwd" data-sortable="true">Path</th>
-                                <th data-field="fname_in" data-sortable="true">File</th>
-                                <th data-field="contrast" data-sortable="true">Contrast</th>
-			                    <th data-field="function" data-sortable="true">Function</th>
+                          <th data-field="cwd" data-sortable="true">Path</th>
+                          <th data-field="fname_in" data-sortable="true">File</th>
+                          <th data-field="contrast" data-sortable="true">Contrast</th>
+			                    <th data-field="command" data-sortable="true">Function</th>
 			                    <th data-field="cmdline" data-sortable="true">Function+Args</th>
+                          <th data-field="cwd" data-sortable="true">Path</th>
 		                  </tr>
 	                </thead>
               </table>
@@ -139,12 +142,13 @@
         }
         else if (document.getElementById(buttonID).innerHTML == buttonID){
                 document.getElementById(buttonID).innerHTML = buttonID + " \u2714";
-                document.getElementsByTagName('TH')[position].style.display = "table-cell";
+                document.getElementsByTagName('TH')[position].style.display = "";
                 var iTD;
                 for (iTD = position; iTD < document.getElementsByTagName('TD').length; iTD = iTD + document.getElementsByTagName('TH').length){
-                    document.getElementsByTagName('TD')[iTD].style.display = "table-cell";
+                    document.getElementsByTagName('TD')[iTD].style.display = "";
                 }
         }
+        hideNonSearchElements();
     }
 
     function findPosition(buttonID){
@@ -161,6 +165,33 @@
         }
         return position;
      }
+
+    function hideNonSearchElements(){
+        /*
+        This function hides all elements that do not fit
+        the search elements in the searchbar.
+        */
+        var searchInput = document.getElementById("searchInput").value;
+        var tableRows = document.getElementsByTagName("tr");
+        var isEmpty = true;
+
+        var iTableRows;
+        for (iTableRows = 1; iTableRows < tableRows.length; iTableRows++){
+            if (tableRows[iTableRows].innerText.indexOf(searchInput) > -1){
+                tableRows[iTableRows].style.display = "";
+                isEmpty = false;
+            }
+            else{
+                tableRows[iTableRows].style.display = "none";
+            }
+        }
+        if (isEmpty){
+            tableRows[tableRows.length - 2].style.display = "";
+        }
+        else{
+            tableRows[tableRows.length - 2].style.display = "none";
+        }
+    }
 
     let body = document.body;
     let dropdown = document.querySelector('.dropdown');
@@ -190,12 +221,19 @@
     setTimeout(function(){
          /*
          This function removes the columns we do not want to display at
-         the beginning after a certain delay of time.
+         the beginning after a certain delay of time and adds the message
+         for the case where the table should be empty (i.e. when search
+         results correspond to nothing).
          */
          var iTH;
          var dropdownList = document.getElementsByClassName('dropdown-item');
+         document.getElementById("table").insertRow(-1).insertCell(0).innerHTML = "No matching records found";
+         document.getElementsByTagName("td")[document.getElementsByTagName("td").length - 1].colSpan = "7";
+         document.getElementsByTagName("td")[document.getElementsByTagName("td").length - 1].style.textAlign = "center";
+         document.getElementsByTagName("td")[document.getElementsByTagName("td").length - 1].style.backgroundColor = "Gainsboro";
          for (iTH = 0; iTH < dropdownList.length; iTH++){
               toggleColumn(document.getElementsByClassName('dropdown-item')[iTH].id)
-         }},2);
+         }
+     },2);
 </script>
 </html>
