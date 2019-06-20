@@ -274,7 +274,7 @@ def get_parser():
                                      )
     mandatoryArguments = parser.add_argument_group("Mandatory arguments")
     mandatoryArguments.add_argument("-i",
-                        help="input image. (e.g., t2.nii.gz)",
+                        help="input image. (e.g., 't2.nii.gz')",
                         required = True
                         )
     mandatoryArguments.add_argument("-g",
@@ -287,7 +287,7 @@ def get_parser():
     # Command line mandatory arguments
     requiredCommandArguments = parser.add_argument_group("Command line related mandatory arguments")
     requiredCommandArguments.add_argument("-o",
-                        help="Output image. This option is REQUIRED for the command line execution (e.g., t1.nii.gz)",
+                        help="Output image. This option is REQUIRED for the command line execution (e.g., 't1.nii.gz')",
                         required=False
                         )
     # Optional arguments section
@@ -318,19 +318,19 @@ def get_parser():
                         help="cropping around the mask",
                         required=False)
     commandOptionalArguments.add_argument("-start",
-                        help="start slices, ]0,1[: percentage, 0 & >1: slice number (e.g., 40, 30, 5)",
+                        help="start slices, ]0,1[: percentage, 0 & >1: slice number (e.g., '40, 30, 5')",
                         required = False
                         )
     commandOptionalArguments.add_argument("-end",
-                        help="end slices, ]0,1[: percentage, 0: last slice, >1: slice number, <0: last slice - value (e.g., 60, 100, 10)",
+                        help="end slices, ]0,1[: percentage, 0: last slice, >1: slice number, <0: last slice - value (e.g., '60, 100, 10')",
                         required = False
                         )
     commandOptionalArguments.add_argument("-dim",
-                        help="dimension to crop, from 0 to n-1, default is 1 (e.g., 0, 1, 2)",
+                        help="dimension to crop, from 0 to n-1, default is 1 (e.g., '0, 1, 2')",
                         required = False
                         )
     commandOptionalArguments.add_argument("-shift",
-                        help="adding shift when used with mask, default is 0 (e.g., 10, 10, 5)",
+                        help="adding shift when used with mask, default is 0 (e.g., '10, 10, 5')",
                         required = False
                         )
     commandOptionalArguments.add_argument("-b",
@@ -341,7 +341,7 @@ def get_parser():
                         help="maximize the cropping of the image (provide -dim if you want to specify the dimensions)",
                         required=False)
     commandOptionalArguments.add_argument("-ref",
-                        help="crop input image based on reference image (works only for 3D images) (e.g.,ref.nii.gz)",
+                        help="crop input image based on reference image (works only for 3D images) (e.g., 'ref.nii.gz')",
                         required = False
                         )
     commandOptionalArguments.add_argument("-mesh",
