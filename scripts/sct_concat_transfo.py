@@ -122,7 +122,7 @@ def get_parser():
                         )
     optional.add_argument("-v",
                         type=int,
-                        help="Verbose: 0 = nothing, 1 = classic, 2 = expended (e.g.,( 0, 1, 2))",
+                        help="Verbose: 0 = nothing, 1 = classic, 2 = expended",
                         required=False,
                         choices=(0, 1, 2),
                         default = 1)
