@@ -585,9 +585,6 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, args=None, path_qc=No
         qcslice_layout = lambda x: x.single()
     # Sagittal orientation, static image
     # TODO: Add coronal orientation
-    # TODO: Fix the "missing image icon" that appears because the segmentation image is missing (I had to use a hack
-    #  here, by inputing two times the same straightened image)
-    # TODO: add vertical line in the middle of the cord
     elif process in ['sct_straighten_spinalcord']:
         plane = 'Sagittal'
         dpi = 100
