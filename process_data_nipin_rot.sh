@@ -24,15 +24,15 @@ do
   if [[ $file == *"_seg"* ]];then #file is a seg
     continue
   else # file is an image
-    echo " ======> Processing $file file.."
+    echo " ======> Processing $file file from site $SITE"
     file_seg="${file%.nii.gz*}_seg.nii.gz"
     file_seg_manual="${file%.nii.gz*}_seg_manual.nii.gz"
     if [ -e $file_seg ]; then #segmentation of this file exist
       echo "======> Processing file $file with seg $file_seg"
       evaluate_rot -i $file -iseg $file_seg -o $PATH_RESULTS -qc $PATH_QC
     elif [ -e $file_seg_manual ]; then #manual segmentation of this file exist
-      echo "======> Processing file $file with seg $file_seg_manual"
-      evaluate_rot -i $file -iseg $file_seg -o $PATH_RESULTS -qc $PATH_QC
+      echo "======> Processing file $file with manual seg $file_seg_manual"
+      evaluate_rot -i $file -iseg $file_seg_manual -o $PATH_RESULTS -qc $PATH_QC
     else
       echo "======> Segmentation for file $file does not exist, segmenting with sct_deepseg_sc"
       if [[ $file == *"T1w"* ]]; then
