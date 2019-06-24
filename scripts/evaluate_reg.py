@@ -2,6 +2,7 @@
 
 # Script used to process one MRI image at a time (the image and its segmentation), made to be used with wrapper or alone
 
+from __future__ import division, absolute_import
 import sys, os
 import sct_utils as sct
 from msct_parser import Parser
@@ -62,7 +63,6 @@ def main(args=None):
         # creating output dir if it does not exist
         if not os.path.isdir(output_dir):
             os.mkdir(output_dir)
-
 
     fname_seg_template = os.path.join(sct.__data_dir__, 'PAM50/template/PAM50_cord.nii.gz')
 

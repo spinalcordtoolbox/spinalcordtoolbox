@@ -2,6 +2,8 @@
 
 # Script used to process one MRI image at a time (the image and its segmentation), made to be used with wrapper or alone
 
+
+from __future__ import division, absolute_import
 import sys, os
 import sct_utils as sct
 from msct_parser import Parser
@@ -135,16 +137,16 @@ def get_memory():
 
 if __name__ == '__main__':
 
-    if sys.gettrace() is None:
+    # if sys.gettrace() is None:
         sct.init_sct()
         # call main function
         main()
-    else:
-        memory_limit()  # Limitates maximun memory usage to half
-        try:
-            sct.init_sct()
-            # call main function
-            main()
-        except MemoryError:
-            sys.stderr.write('\n\nERROR: Memory Exception\n')
-            sys.exit(1)
+    # else:
+    #     memory_limit()  # Limitates maximun memory usage to half
+    #     try:
+    #         sct.init_sct()
+    #         call main function
+            # main()
+        # except MemoryError:
+        #     sys.stderr.write('\n\nERROR: Memory Exception\n')
+        #     sys.exit(1)
