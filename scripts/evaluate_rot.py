@@ -54,6 +54,7 @@ def main(args=None):
         args = sys.argv[1:]
     parser = get_parser()
     arguments = parser.parse(args)
+    cwd = os.getcwd()
     fname_image = arguments['-i']
     fname_seg = arguments['-iseg']
     if '-qc' in arguments:
@@ -114,12 +115,13 @@ def main(args=None):
             plt.ylabel("angle in deg")
             plt.xlabel("z slice")
             plt.colorbar().ax.set_ylabel("confidence score")
-            plt.savefig(output_dir + "/" + fname_image.split("/")[-4] + "_" + sub_and_sequence + "_angle_conf_score_z.png")  # reliable file name ?
+            plt.savefig(output_dir + "/" + fname_image.split("/")[-1] + "_" + sub_and_sequence + "_angle_conf_score_z.png")  # reliable file name ?
 
 
-        generate_qc(fname_in1=fname_image, fname_in2=fname_axes, fname_seg=None, args=None, path_qc=path_qc, dataset=None, subject=None, process="rotation")
+        # generate_qc(fname_in1=fname_image, fname_in2=fname_axes, fname_seg=None, args=[method], path_qc=path_qc, dataset=None, subject=None, process="rotation")
 
-        # fsleyes /home/nicolas/unf_test/unf_spineGeneric/sub-01/anat/sub-01_T1w.nii.gz /home/nicolas/test_single_rot/sub-01_T1w_axes_pca.nii.gz -cm blue /home/nicolas/test_single_rot/sub-01_T1w_axes_hog.nii.gz -cm green
+    sct.printv("fsleyes " + cwd + "/" + fname_image + " " + cwd + "/" + fname_seg + " -cm red" + " " + output_dir + "/" + sub_and_sequence + "_axes_pca.nii.gz -cm blue " + output_dir + "/" + sub_and_sequence + "_axes_hog.nii.gz -cm green")
+    # fsleyes /home/nicolas/unf_test/unf_spineGeneric/sub-01/anat/sub-01_T1w.nii.gz /home/nicolas/test_single_rot/sub-01_T1w_axes_pca.nii.gz -cm blue /home/nicolas/test_single_rot/sub-01_T1w_axes_hog.nii.gz -cm green
 
 def memory_limit():
     import resource
