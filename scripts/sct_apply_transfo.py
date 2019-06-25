@@ -43,7 +43,7 @@ def get_parser():
         prog=os.path.basename(__file__).strip(".py")
     )
 
-    mandatoryArguments = parser.add_argument_group("\nMandatory arguments")
+    mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatoryArguments.add_argument("-i",
                         help='input image (e.g. "t2.nii.gz")',
                         required = True
@@ -56,7 +56,7 @@ def get_parser():
                         help='Transformation, which can be a warping field (nifti image) or an affine transformation matrix (text file). (e.g. "warp1.nii.gz, warp2.nii.gz")',
                         required = True
                         )
-    optional = parser.add_argument_group("\nOptional arguments")
+    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument("-h",
                           "--help",
                           action="help",
