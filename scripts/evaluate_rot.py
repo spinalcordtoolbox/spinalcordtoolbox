@@ -113,7 +113,8 @@ def main(args=None):
 
             # print("angle " + method + " is " + str(round(angles[z] * 180/pi, 0)))
 
-            axes_image[:, :, min_z + z] = generate_2Dimage_line(axes_image[:, :, min_z + z], centermass[0], centermass[1], angles[z] - pi/2, value=k+1)
+            axes_image[:, :, min_z + z] = generate_2Dimage_line(axes_image[:, :, min_z + z], centermass[0], centermass[1], -angles[z] - pi/2, value=k+1)
+            axes_image[centermass[0], centermass[1], min_z + z] = 100000
 
         # conf_score = conf_score / max(conf_score)
 
@@ -133,7 +134,7 @@ def main(args=None):
             plt.colorbar().ax.set_ylabel("conf score HOG")
             plt.savefig(output_dir + "/" + fname_image.split("/")[-1] + "_" + sub_and_sequence + "_angle_conf_score_z.png")  # reliable file name ?
 
-        # generate_qc(fname_in1=fname_image, fname_in2=fname_axes, fname_seg=None, args=[method], path_qc=path_qc, dataset=None, subject=None, process="rotation")
+        generate_qc(fname_in1=fname_image, fname_in2=fname_axes, fname_seg=None, args=[method], path_qc=path_qc, dataset=None, subject=None, process="rotation")
 
     sct.printv("fsleyes " + cwd + "/" + fname_image + " " + cwd + "/" + fname_seg + " -cm red" + " " + output_dir + "/" + sub_and_sequence + "_axes_pca.nii.gz -cm blue " + output_dir + "/" + sub_and_sequence + "_axes_hog.nii.gz -cm green", type='info')
     # fsleyes /home/nicolas/unf_test/unf_spineGeneric/sub-01/anat/sub-01_T1w.nii.gz /home/nicolas/test_single_rot/sub-01_T1w_axes_pca.nii.gz -cm blue /home/nicolas/test_single_rot/sub-01_T1w_axes_hog.nii.gz -cm green
