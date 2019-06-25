@@ -122,7 +122,7 @@ def main(args=None):
         sct.printv("Max angle is : " + str(max(angles) * 180/pi) + ", min is : " + str(min(angles) * 180/pi) + " and mean is : " + str(np.mean(angles) * 180/pi))
 
         fname_axes = output_dir + "/" + sub_and_sequence + "_axes_" + method + ".nii.gz"
-        Image(axes_image, hdr=Image(fname_seg).hdr).save(fname_axes)
+        Image(axes_image, hdr=Image(fname_seg).hdr).change_orientation("LPI").save(fname_axes)
         if method is "pca":
             plt.figure(figsize=(6.4*2, 4.8*2))
             plt.scatter(np.arange(min_z, max_z), angles * 180/pi, c=conf_score, cmap='PRGn')
