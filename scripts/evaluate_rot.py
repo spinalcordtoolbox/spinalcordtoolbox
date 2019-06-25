@@ -85,7 +85,7 @@ def main(args=None):
     min_z = np.min(np.nonzero(data_seg)[2])
     max_z = np.max(np.nonzero(data_seg)[2])
 
-    methods = ["pca", "hog"]
+    methods = ["pca", "hog", "auto"]
 
     angle_range = 10
     conf_score_th_pca = 1.6
@@ -108,7 +108,7 @@ def main(args=None):
                 if conf_score[z] < conf_score_th_hog:
                     angles[z] = 0
                     conf_score[z] = -5
-            else:
+            elif method is "pca":
                 angles[z], conf_score[z], centermass = find_angle(data_image[:, :, min_z + z], data_seg[:, :, min_z + z], px, py, method, angle_range=angle_range, return_centermass=True)
                 if math.isnan(conf_score[z]) or conf_score[z] is None:
                     conf_score[z] = -10
@@ -116,6 +116,12 @@ def main(args=None):
                 if conf_score[z] < conf_score_th_pca:
                     angles[z] = 0
                     conf_score[z] = -5
+            elif method is "auto":
+                angles[z], conf_score[z], centermass = find_angle(data_image[:, :, min_z + z], data_seg[:, :, min_z + z], px, py, "pca", angle_range=angle_range, return_centermass=True)
+                if conf_score[z] < conf_score_th_pca:
+                    angles[z], conf_score[z], centermass = find_angle(data_image[:, :, min_z + z], data_seg[:, :, min_z + z], px, py, "hog", angle_range=angle_range, return_centermass=True)
+            else:
+                raise Exception("no method named" + method)
 
             # print("angle " + method + " is " + str(round(angles[z] * 180/pi, 0)))
 
@@ -137,14 +143,17 @@ def main(args=None):
             plt.ylabel("angle in deg")
             plt.xlabel("z slice")
             plt.colorbar().ax.set_ylabel("conf score PCA")
-        else:
-            plt.scatter(np.arange(min_z, max_z), angles * 180 / pi, c=conf_score, cmap='coolwarm')
+        elif method is "hog":
+            plt.scatter(np.arange(min_z, max_z), angles * 180 / pi, c=conf_score, cmap='Wistia')
             plt.colorbar().ax.set_ylabel("conf score HOG")
+        else:
+            plt.scatter(np.arange(min_z, max_z), angles * 180 / pi, c=conf_score, cmap='winter')
+            plt.colorbar().ax.set_ylabel("conf score auto")
             plt.savefig(output_dir + "/" + fname_image.split("/")[-1] + "_" + sub_and_sequence + "_angle_conf_score_z.png")  # reliable file name ?
 
         generate_qc(fname_in1=fname_image_output, fname_in2=fname_axes, fname_seg=None, args=[method], path_qc=path_qc, dataset=None, subject=None, process="rotation")
 
-    sct.printv("fsleyes " + fname_image_output + " " + fname_seg_output + " -cm red" + " " + output_dir + "/" + sub_and_sequence + "_axes_pca.nii.gz -cm blue " + output_dir + "/" + sub_and_sequence + "_axes_hog.nii.gz -cm green", type='info')
+    sct.printv("fsleyes " + fname_image_output + " " + fname_seg_output + " -cm red" + " " + output_dir + "/" + sub_and_sequence + "_axes_pca.nii.gz -cm blue " + output_dir + "/" + sub_and_sequence + "_axes_hog.nii.gz -cm green " + output_dir + "/" + sub_and_sequence + "_axes_auto.nii.gz -cm yellow", type='info')
     # fsleyes /home/nicolas/unf_test/unf_spineGeneric/sub-01/anat/sub-01_T1w.nii.gz /home/nicolas/test_single_rot/sub-01_T1w_axes_pca.nii.gz -cm blue /home/nicolas/test_single_rot/sub-01_T1w_axes_hog.nii.gz -cm green
 
 def memory_limit():
