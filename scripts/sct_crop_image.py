@@ -15,10 +15,12 @@ from __future__ import absolute_import, division
 
 import sys, io, os, math, time
 
+import imageio
 import numpy as np
 import scipy
 import nibabel
-
+import matplotlib
+matplotlib.use('tkagg')
 import sct_utils as sct
 from msct_parser import Parser
 import spinalcordtoolbox.image as msct_image
@@ -212,7 +214,7 @@ class ImageCropper(object):
         sct.printv('\nGet image of medial slab...', verbose)
         image_array = nibabel.load('data_rpi.nii').get_data()
         nx, ny, nz = image_array.shape
-        scipy.misc.imsave('image.jpg', image_array[math.floor(nx / 2), :, :])
+        imageio.imwrite('image.jpg', image_array[math.floor(nx / 2), :, :])
 
         # Display the image
         sct.printv('\nDisplay image and get cropping region...', verbose)
