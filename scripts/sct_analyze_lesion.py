@@ -35,12 +35,6 @@ def get_parser():
                     '- length [mm]: length along the Superior-Inferior axis\n'
                     '- max_equivalent_diameter [mm]: maximum diameter of the lesion, when approximating\n'
                     '                                the lesion as a circle in the axial plane.\n\n'
-                    'If an image (e.g. T2w image, texture image) is provided, the function computes the mean\n'
-                    'and standard deviation values of this image within each lesion.\n\n'
-                    'If a registered template is provided, the function computes:\n'
-                    '- the distribution of each lesion depending on each vertebral level and on each\n'
-                    '  region of the template (e.g. GM, WM, WM tracts).\n'
-                    '- the proportion of ROI (e.g. vertebral level, GM, WM) occupied by lesion.\n\n'
                     'N.B. If the proportion of lesion in each region (e.g. WM and GM) does not sum\n'
                     'up to 100%, it means that the registered template does not fully cover the\n'
                     'lesion. In that case you might want to check the registration results.',
@@ -48,11 +42,11 @@ def get_parser():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         prog=os.path.basename(__file__).strip(".py")
     )
-    mandatoryArguments = parser.add_argument_group("\nMandatory arguments")
-    mandatoryArguments.add_argument("-m",
-                                    help='Binary mask of lesions (lesions are labeled as "1").',
-                                    required=True
-                                    )
+    mandatory_arguments = parser.add_argument_group("\nMandatory arguments")
+    mandatory_arguments.add_argument(
+        "-m",
+        help='Binary mask of lesions (lesions are labeled as "1").',
+        required=False)
     optional = parser.add_argument_group("\nOptional arguments")
     optional.add_argument(
         "-h",
@@ -61,15 +55,20 @@ def get_parser():
         help="show this help message and exit")
     optional.add_argument(
         "-s",
-        help="Spinal cord centerline or segmentation file, which will be used to correct morphometric measures with cord angle with respect to slice. (e.g.'t2_seg.nii.gz')",
+        help="Spinal cord centerline or segmentation file, which will be used to correct morphometric measures with "
+             "cord angle with respect to slice. (e.g.'t2_seg.nii.gz')",
         required=False)
     optional.add_argument(
         "-i",
-        help='Image from which to extract average values within lesions (e.g. "t2.nii.gz")',
+        help='Image from which to extract average values within lesions (e.g. "t2.nii.gz"). If provided, the function '
+             'computes the mean and standard deviation values of this image within each lesion.',
         required=False)
     optional.add_argument(
         "-f",
-        help="Path to folder containing the atlas/template registered to the anatomical image.",
+        help="Path to folder containing the atlas/template registered to the anatomical image. If provided, the "
+             "function computes: (i) the distribution of each lesion depending on each vertebral level and on each"
+             "region of the template (e.g. GM, WM, WM tracts) and (ii) the proportion of ROI (e.g. vertebral level, "
+             "GM, WM) occupied by lesion.",
         required=False)
     optional.add_argument(
         "-ofolder",
@@ -576,5 +575,5 @@ def main(arguments):
 if __name__ == "__main__":
     sct.init_sct()
     parser = get_parser()
-    arguments = parser.parse_args()
+    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
     main(arguments)
