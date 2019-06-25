@@ -49,7 +49,7 @@ def get_parser():
     )
     mandatoryArguments = parser.add_argument_group("\nMandatory arguments")
     mandatoryArguments.add_argument("-m",
-                        help="Lesion mask to analyze (e.g.'t2_lesion.nii.gz')",
+                        help="Lesion mask to analyze (e.g. 't2_lesion.nii.gz')",
                         required=True
                         )
     optional = parser.add_argument_group("\nOptional arguments")
