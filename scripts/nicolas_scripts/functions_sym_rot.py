@@ -119,6 +119,7 @@ def create_proba_map(segmentation, pixdim):
 
     return proba_map
 
+
 def find_angle(image, segmentation, px, py, method, angle_range=None, return_centermass=False, save_figure_path=None):
 
     from msct_register import compute_pca

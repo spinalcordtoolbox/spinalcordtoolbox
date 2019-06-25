@@ -71,10 +71,16 @@ def main(args=None):
 
     sub_and_sequence = (fname_image.split("/")[-1]).split(".nii.gz")[0]
 
-    data_image = Image(fname_image).change_orientation("LPI").data
-    data_seg = Image(fname_seg).change_orientation("LPI").data
+    image_object = Image(fname_image).change_orientation("LPI")
+    seg_object = Image(fname_seg).change_orientation("LPI")
 
-    nx, ny, nz, nt, px, py, pz, pt = Image(fname_image).change_orientation("LPI").dim
+    fname_image_output = output_dir + "/" + sub_and_sequence + ".nii.gz"
+    fname_seg_output = output_dir + "/" + sub_and_sequence + "_seg.nii.gz"
+
+    data_image = image_object.data
+    data_seg = seg_object.data
+
+    nx, ny, nz, nt, px, py, pz, pt = seg_object.dim
 
     min_z = np.min(np.nonzero(data_seg)[2])
     max_z = np.max(np.nonzero(data_seg)[2])
@@ -122,7 +128,9 @@ def main(args=None):
         sct.printv("Max angle is : " + str(max(angles) * 180/pi) + ", min is : " + str(min(angles) * 180/pi) + " and mean is : " + str(np.mean(angles) * 180/pi))
 
         fname_axes = output_dir + "/" + sub_and_sequence + "_axes_" + method + ".nii.gz"
-        Image(axes_image, hdr=Image(fname_seg).hdr).change_orientation("LPI").save(fname_axes)
+        Image(axes_image, hdr=image_object.hdr).save(fname_axes)
+        image_object.save(fname_image_output)
+        seg_object.save(fname_seg_output)
         if method is "pca":
             plt.figure(figsize=(6.4*2, 4.8*2))
             plt.scatter(np.arange(min_z, max_z), angles * 180/pi, c=conf_score, cmap='PRGn')
@@ -134,9 +142,9 @@ def main(args=None):
             plt.colorbar().ax.set_ylabel("conf score HOG")
             plt.savefig(output_dir + "/" + fname_image.split("/")[-1] + "_" + sub_and_sequence + "_angle_conf_score_z.png")  # reliable file name ?
 
-        generate_qc(fname_in1=fname_image, fname_in2=fname_axes, fname_seg=None, args=[method], path_qc=path_qc, dataset=None, subject=None, process="rotation")
+        generate_qc(fname_in1=fname_image_output, fname_in2=fname_axes, fname_seg=None, args=[method], path_qc=path_qc, dataset=None, subject=None, process="rotation")
 
-    sct.printv("fsleyes " + cwd + "/" + fname_image + " " + cwd + "/" + fname_seg + " -cm red" + " " + output_dir + "/" + sub_and_sequence + "_axes_pca.nii.gz -cm blue " + output_dir + "/" + sub_and_sequence + "_axes_hog.nii.gz -cm green", type='info')
+    sct.printv("fsleyes " + fname_image_output + " " + fname_seg_output + " -cm red" + " " + output_dir + "/" + sub_and_sequence + "_axes_pca.nii.gz -cm blue " + output_dir + "/" + sub_and_sequence + "_axes_hog.nii.gz -cm green", type='info')
     # fsleyes /home/nicolas/unf_test/unf_spineGeneric/sub-01/anat/sub-01_T1w.nii.gz /home/nicolas/test_single_rot/sub-01_T1w_axes_pca.nii.gz -cm blue /home/nicolas/test_single_rot/sub-01_T1w_axes_hog.nii.gz -cm green
 
 def memory_limit():
