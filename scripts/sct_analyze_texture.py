@@ -35,11 +35,11 @@ def get_parser():
     mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatoryArguments.add_argument(
         "-i",
-        help="Image to analyze. (e.g. \"t2.nii.gz\")",
+        help='Image to analyze. (e.g. "t2.nii.gz")',
         required=True)
     mandatoryArguments.add_argument(
         "-m",
-        help="Image mask (e.g. \"t2_seg.nii.gz\")",
+        help='Image mask (e.g. "t2_seg.nii.gz")',
         required=True)
     optional = parser.add_argument_group("\nOPTIONALS ARGUMENTS")
     optional.add_argument(
@@ -49,17 +49,17 @@ def get_parser():
         help="show this help message and exit")
     optional.add_argument(
         "-feature",
-        help="List of GLCM texture features (separate arguments with \",\").",
+        help='List of GLCM texture features (separate arguments with ",").',
         required=False,
         default=ParamGLCM().feature)
     optional.add_argument(
         "-distance",
-        help="Distance offset for GLCM computation, in pixel (suggested distance values between 1 and 5). (e.g. \"1\")",
+        help='Distance offset for GLCM computation, in pixel (suggested distance values between 1 and 5). (e.g. "1")',
         required=False,
         default=ParamGLCM().distance)
     optional.add_argument(
         "-angle",
-        help="List of angles for GLCM computation, separate arguments with \",\", in degrees (suggested distance values between 0 and 179). (e.g. \"0,90\")",
+        help='List of angles for GLCM computation, separate arguments with ",", in degrees (suggested distance values between 0 and 179). (e.g. "0,90")',
         required=False,
         default=ParamGLCM().angle)
     optional.add_argument(
@@ -69,7 +69,7 @@ def get_parser():
         default=Param().dim)
     optional.add_argument(
         "-ofolder",
-        help="Output folder. (e.g. \"/my_texture/\")",
+        help='Output folder. (e.g. "/my_texture/")',
         required=False,
         default=Param().path_results)
     optional.add_argument(
