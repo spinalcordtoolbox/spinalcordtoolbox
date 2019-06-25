@@ -144,11 +144,6 @@ def get_parser():
                       mandatory=False,
                       example=['polyfit', 'bspline', 'linear', 'nurbs'],
                       default_value=ParamCenterline().algo_fitting)
-    parser.add_option(name='-centerline-degree',
-                      type_value='int',
-                      description='Degree of smoothing for centerline fitting. Only use with -centerline-algo polyfit.',
-                      mandatory=False,
-                      default_value=ParamCenterline().degree)
     parser.add_option(name='-centerline-smooth',
                       type_value='int',
                       description='Degree of smoothing for centerline fitting. Only use with -centerline-algo {bspline, linear}.',
@@ -225,7 +220,6 @@ def main(args=None):
     param.verbose = verbose  # TODO: not clean, unify verbose or param.verbose in code, but not both
     param_centerline = ParamCenterline(
         algo_fitting=arguments['-centerline-algo'],
-        degree=arguments['-centerline-degree'],
         smooth=arguments['-centerline-smooth'])
     # registration parameters
     if '-param' in arguments:
