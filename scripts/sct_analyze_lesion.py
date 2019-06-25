@@ -38,9 +38,9 @@ def get_parser():
                     '\n\nIf an image (e.g. T2w or T1w image, texture image) is provided, it computes the mean and standard deviation values of this image within each lesion.'
                     '\n\nIf a registered template is provided, it computes:'
                     '\n- the distribution of each lesion depending on each vertebral level and on each'
-                    '\n  region of the template (eg GM, WM, WM tracts).'
-                    '\n- the proportion of ROI (eg vertebral level, GM, WM) occupied by lesion.'
-                    '\n\nN.B. If the proportion of lesion in each region (e.g., WM and GM) does not sum '
+                    '\n  region of the template (e.g. GM, WM, WM tracts).'
+                    '\n- the proportion of ROI (e.g. vertebral level, GM, WM) occupied by lesion.'
+                    '\n\nN.B. If the proportion of lesion in each region (e.g. WM and GM) does not sum '
                     '\nup to 100%, it means that the registered template does not fully cover the '
                     '\nlesion, in that case you might want to check the registration results.',
         add_help=None,
@@ -49,7 +49,7 @@ def get_parser():
     )
     mandatoryArguments = parser.add_argument_group("\nMandatory arguments")
     mandatoryArguments.add_argument("-m",
-                        help="Lesion mask to analyze (e.g.,'t2_lesion.nii.gz')",
+                        help="Lesion mask to analyze (e.g.'t2_lesion.nii.gz')",
                         required=True
                         )
     optional = parser.add_argument_group("\nOptional arguments")
@@ -59,11 +59,11 @@ def get_parser():
                           help="show this help message and exit"
                           )
     optional.add_argument("-s",
-                        help="Spinal cord centerline or segmentation file, which will be used to correct morphometric measures with cord angle with respect to slice. (e.g.,'t2_seg.nii.gz')",
+                        help="Spinal cord centerline or segmentation file, which will be used to correct morphometric measures with cord angle with respect to slice. (e.g.'t2_seg.nii.gz')",
                         required=False
                         )
     optional.add_argument("-i",
-                        help="Image from which to extract average values within lesions (e.g. T2w or T1w image, texture image). (e.g.,'t2.nii.gz')",
+                        help="Image from which to extract average values within lesions (e.g. 't2.nii.gz')",
                         required=False
                         )
     optional.add_argument("-f",
@@ -71,7 +71,7 @@ def get_parser():
                         required=False
                         )
     optional.add_argument("-ofolder",
-                        help="Output folder (e.g.,'./')",
+                        help="Output folder (e.g. './')",
                         required=False
                         )
     optional.add_argument("-r",
