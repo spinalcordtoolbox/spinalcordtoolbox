@@ -65,7 +65,7 @@ def get_parser():
         required=False)
     optional.add_argument(
         "-i",
-        help="Image from which to extract average values within lesions (e.g. 't2.nii.gz')",
+        help='Image from which to extract average values within lesions (e.g. "t2.nii.gz")',
         required=False)
     optional.add_argument(
         "-f",
@@ -73,7 +73,7 @@ def get_parser():
         required=False)
     optional.add_argument(
         "-ofolder",
-        help="Output folder (e.g. './')",
+        help='Output folder (e.g. "./")',
         required=False)
     optional.add_argument(
         "-r",
