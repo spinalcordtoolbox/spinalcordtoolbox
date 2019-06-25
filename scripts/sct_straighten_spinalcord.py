@@ -241,7 +241,6 @@ def main(args=None):
 
     sc_straight.param_centerline = ParamCenterline(
         algo_fitting=arguments['-centerline-algo'],
-        degree=arguments['-centerline-degree'],
         smooth=arguments['-centerline-smooth'])
     if "-param" in arguments:
         params_user = arguments['-param']
