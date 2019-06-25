@@ -126,8 +126,6 @@ def find_angle(image, segmentation, px, py, method, angle_range=None, return_cen
 
     if method is "pca":
 
-        pca_eigenratio_th = 1.6
-
         eigenv = pca.components_.T[0][0], pca.components_.T[1][0]  # pca_src.components_.T[0]
         # # Make sure first element is always positive (to prevent sign flipping)
         # if eigenv[0] <= 0:
@@ -137,18 +135,19 @@ def find_angle(image, segmentation, px, py, method, angle_range=None, return_cen
         arccos_angle = -1.0 if arccos_angle < -1.0 else arccos_angle
         sign_angle = np.sign(np.cross(eigenv, [1, 0]))
         angle_found = sign_angle * acos(arccos_angle)
+        if angle_found > pi/2:  # we don't care about the direction of the axis
+            angle_found = pi - angle_found
+        if angle_found < -pi/2:
+            angle_found = pi + angle_found
         # check if ratio between the two eigenvectors is high enough to prevent poor robustness
-        if pca.explained_variance_ratio_[0] / pca.explained_variance_ratio_[1] < pca_eigenratio_th:
-            angle_found = 0
+        conf_score = round(pca.explained_variance_ratio_[0] / pca.explained_variance_ratio_[1], 2)
         if angle_range is not None:
             if angle_found < -angle_range * pi/180 or angle_found > angle_range * pi/180:
-                angle_found = 0
-
-        conf_score = round(pca.explained_variance_ratio_[0] / pca.explained_variance_ratio_[1], 2)
+                conf_score = None
 
     elif method is "hog":
 
-        sigma = 1
+        sigma = 10
         sigmax = sigma / px
         sigmay = sigma / py
         nb_bin = 360
@@ -185,12 +184,15 @@ def find_angle(image, segmentation, px, py, method, angle_range=None, return_cen
         angle_found = repr_hist[index_angle_found] / 2
         angle_found_score = np.amax(grad_orient_histo_conv_restrained)
 
-        arg_maxs = argrelmax(grad_orient_histo_conv, order=kmedian_size, mode='wrap')[0]
+        arg_maxs = argrelmax(grad_orient_histo_conv_restrained, order=kmedian_size, mode='wrap')[0]
         if len(arg_maxs) > 1:
-            conf_score = angle_found_score / grad_orient_histo_conv[arg_maxs[1]]
+            conf_score = angle_found_score / grad_orient_histo_conv_restrained[arg_maxs[1]]
         else:
             conf_score = angle_found_score / np.mean(grad_orient_histo_conv)
             #TODO doesn't make much sens to take a maximum that is really far away and not in the angle range, restrain to search area
+        # if conf_score > 100:
+        #     conf_score = 100
+        # print("conf socre is " + str(conf_score))
 
         # Plotting stuff :
 
@@ -198,7 +200,7 @@ def find_angle(image, segmentation, px, py, method, angle_range=None, return_cen
 
             # matplotlib.use("Agg")
             plt.figure(figsize=(6.4*2, 4.8*2))
-            plt.suptitle("angle found is : " + str((np.round((2*pi - angle_found + pi/2) * 180/pi, 1))%360) + " with conf score = " + str(conf_score))
+            plt.suptitle("angle found is : " + str((np.round((2*pi - angle_found + pi/2) * 180/pi, 1)) % 360) + " with conf score = " + str(conf_score))
             plt.subplot(241)
             plt.imshow(np.max(image) - image, cmap="Greys")
             plt.title("image")
@@ -277,6 +279,9 @@ def gradient_orientation_histogram(image, nb_bin, grad_ksize=123456789, seg_weig
                                                     # this filter is actually separable, maybe could speed up the computation
                                                         # TODO laplacian filter, detect zero? less sensitive to noise
     v_kernel = h_kernel.T
+
+    # Normalization by median, to resolve scaling problems
+    image = image / np.median(image)
 
     # x and y gradients
     gradx = convolve(image, v_kernel)
