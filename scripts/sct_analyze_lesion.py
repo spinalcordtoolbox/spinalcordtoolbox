@@ -42,12 +42,12 @@ def get_parser():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         prog=os.path.basename(__file__).strip(".py")
     )
-    mandatory_arguments = parser.add_argument_group("\nMandatory arguments")
+    mandatory_arguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory_arguments.add_argument(
         "-m",
         help='Binary mask of lesions (lesions are labeled as "1").',
         required=False)
-    optional = parser.add_argument_group("\nOptional arguments")
+    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",
         "--help",
