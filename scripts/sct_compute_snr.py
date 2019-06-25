@@ -42,7 +42,7 @@ def get_parser():
                                      )
     mandatoryArguments = parser.add_argument_group("\nMandatory arguments")
     mandatoryArguments.add_argument('-i',
-                      help="4D data to compute the SNR on (along the 4th dimension)(e.g.,'b0s.nii.gz').",
+                      help="4D data to compute the SNR on (along the 4th dimension)(e.g. 'b0s.nii.gz').",
                       required=True)
     optional = parser.add_argument_group("\nOptional arguments")
     optional.add_argument("-h",
@@ -51,7 +51,7 @@ def get_parser():
                           help="show this help message and exit"
                           )
     optional.add_argument('-m',
-                      help="Binary (or weighted) mask within which SNR will be averaged (e.g.,'dwi_moco_mean_seg.nii.gz').",
+                      help="Binary (or weighted) mask within which SNR will be averaged (e.g. 'dwi_moco_mean_seg.nii.gz').",
                       default='')
     optional.add_argument('-method',
                       help='Method to use to compute the SNR:\n'
