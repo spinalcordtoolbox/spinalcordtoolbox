@@ -147,6 +147,7 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1):
         # image itself (not the segmentation). Hence, we can bypass the fitting procedure and centerline creation
         # and directly output results.
         from spinalcordtoolbox.centerline import optic
+        assert param.contrast is not None
         im_centerline = optic.detect_centerline(im_seg, param.contrast, verbose)
         x_centerline_fit, y_centerline_fit, z_centerline = find_and_sort_coord(im_centerline)
         # Compute derivatives using polynomial fit
