@@ -32,7 +32,7 @@ def get_parser():
         add_help=None,
         prog=os.path.basename(__file__).strip(".py")
     )
-    mandatoryArguments = parser.add_argument_group("\nMandatory arguments")
+    mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatoryArguments.add_argument(
         "-i",
         help="Image to analyze. (e.g. \"t2.nii.gz\")",
@@ -41,7 +41,7 @@ def get_parser():
         "-m",
         help="Image mask (e.g. \"t2_seg.nii.gz\")",
         required=True)
-    optional = parser.add_argument_group("\nOptional arguments")
+    optional = parser.add_argument_group("\nOPTIONALS ARGUMENTS")
     optional.add_argument(
         "-h",
         "--help",
