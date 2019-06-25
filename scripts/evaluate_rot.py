@@ -114,7 +114,7 @@ def main(args=None):
             # print("angle " + method + " is " + str(round(angles[z] * 180/pi, 0)))
 
             axes_image[:, :, min_z + z] = generate_2Dimage_line(axes_image[:, :, min_z + z], centermass[0], centermass[1], -angles[z] - pi/2, value=k+1)
-            axes_image[centermass[0], centermass[1], min_z + z] = 100000
+            axes_image[int(centermass[0]), int(centermass[1]), min_z + z] = 100000
 
         # conf_score = conf_score / max(conf_score)
 
