@@ -46,15 +46,15 @@ def get_parser():
     mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatoryArguments.add_argument("-i",
                         help='input image (e.g. "t2.nii.gz")',
-                        required = True
+                        metavar=''
                         )
     mandatoryArguments.add_argument("-d",
                         help='destination image (e.g. "out.nii.gz")',
-                        required = True
+                        metavar=''
                         )
     mandatoryArguments.add_argument("-w",
                         help='Transformation, which can be a warping field (nifti image) or an affine transformation matrix (text file). (e.g. "warp1.nii.gz, warp2.nii.gz")',
-                        required = True
+                        metavar=''
                         )
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument("-h",
@@ -69,11 +69,11 @@ def get_parser():
                         choices=(0, 1, 2))
     optional.add_argument("-c",
                         help="Crop Reference. 0 : no reference. 1 : sets background to 0. 2 : use normal background",
-                        required=False,
+                          metavar=''
                         )
     optional.add_argument("-o",
                         help='registered source. (e.g. "dest.nii.gz")',
-                        required = False,
+                        metavar='',
                         default = ''
                         )
     optional.add_argument("-x",
