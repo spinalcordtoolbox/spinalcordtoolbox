@@ -47,11 +47,6 @@ def get_parser():
                       mandatory=False,
                       example=['polyfit', 'bspline', 'linear', 'nurbs'],
                       default_value='bspline')
-    parser.add_option(name='-centerline-degree',
-                      type_value='int',
-                      description='Degree of smoothing for centerline fitting. Only for -centerline-algo polyfit.',
-                      mandatory=False,
-                      default_value=5)
     parser.add_option(name='-centerline-smooth',
                       type_value='int',
                       description='Degree of smoothing for centerline fitting. Only for -centerline-algo {bspline, linear}.',
@@ -114,7 +109,6 @@ def run_main():
 
     param_centerline = ParamCenterline(
         algo_fitting=arguments['-centerline-algo'],
-        degree=arguments['-centerline-degree'],
         smooth=arguments['-centerline-smooth'],
         minmax=True)
 
