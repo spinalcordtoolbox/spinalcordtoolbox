@@ -35,12 +35,14 @@ def get_parser():
     mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatoryArguments.add_argument(
         "-i",
+        metavar='',
         help='Image to analyze. (e.g. "t2.nii.gz")',
-        required=True)
+        required=False)
     mandatoryArguments.add_argument(
         "-m",
+        metavar='',
         help='Image mask (e.g. "t2_seg.nii.gz")',
-        required=True)
+        required=False)
     optional = parser.add_argument_group("\nOPTIONALS ARGUMENTS")
     optional.add_argument(
         "-h",
@@ -49,35 +51,42 @@ def get_parser():
         help="show this help message and exit")
     optional.add_argument(
         "-feature",
+        metavar='',
         help='List of GLCM texture features (separate arguments with ",").',
         required=False,
         default=ParamGLCM().feature)
     optional.add_argument(
         "-distance",
+        metavar='',
         help='Distance offset for GLCM computation, in pixel (suggested distance values between 1 and 5). (e.g. "1")',
         required=False,
         default=ParamGLCM().distance)
     optional.add_argument(
         "-angle",
+        metavar='',
         help='List of angles for GLCM computation, separate arguments with ",", in degrees (suggested distance values between 0 and 179). (e.g. "0,90")',
         required=False,
         default=ParamGLCM().angle)
     optional.add_argument(
         "-dim",
+        metavar='',
         help="Compute the texture on the axial (ax), sagittal (sag) or coronal (cor) slices. (e.g. ['ax', 'sag', 'cor')",
         required=False,
         default=Param().dim)
     optional.add_argument(
         "-ofolder",
+        metavar='',
         help='Output folder. (e.g. "/my_texture/")',
         required=False,
         default=Param().path_results)
     optional.add_argument(
         "-igt",
+        metavar='',
         help="File name of ground-truth texture metrics.",
         required=False)
     optional.add_argument(
         "-r",
+        metavar='',
         help="Remove temporary files.",
         required=False,
         default=int(Param().rm_tmp))
