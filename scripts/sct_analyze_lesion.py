@@ -46,6 +46,7 @@ def get_parser():
     mandatory_arguments.add_argument(
         "-m",
         help='Binary mask of lesions (lesions are labeled as "1").',
+        metavar='',
         required=False)
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
@@ -57,11 +58,13 @@ def get_parser():
         "-s",
         help="Spinal cord centerline or segmentation file, which will be used to correct morphometric measures with "
              "cord angle with respect to slice. (e.g.'t2_seg.nii.gz')",
+        metavar='',
         required=False)
     optional.add_argument(
         "-i",
         help='Image from which to extract average values within lesions (e.g. "t2.nii.gz"). If provided, the function '
              'computes the mean and standard deviation values of this image within each lesion.',
+        metavar='',
         required=False)
     optional.add_argument(
         "-f",
@@ -69,10 +72,12 @@ def get_parser():
              "function computes: (i) the distribution of each lesion depending on each vertebral level and on each"
              "region of the template (e.g. GM, WM, WM tracts) and (ii) the proportion of ROI (e.g. vertebral level, "
              "GM, WM) occupied by lesion.",
+        metavar='',
         required=False)
     optional.add_argument(
         "-ofolder",
         help='Output folder (e.g. "./")',
+        metavar='',
         required=False)
     optional.add_argument(
         "-r",
