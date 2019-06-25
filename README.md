@@ -210,7 +210,7 @@ alt="Fsleyes integration" width="240" height="180" border="10" /></a>
 - [Panara et al. Correlations between cervical spinal cord magnetic resonance diffusion tensor and diffusion kurtosis imaging metrics and motor performance in patients with chronic ischemic brain lesions of the corticospinal tract. Neuroradiology. 2018](https://link.springer.com/article/10.1007/s00234-018-2139-5)
 - [Moccia et al. Advances in spinal cord imaging in multiple sclerosis. Ther Adv Neurol Disord.2019 Vol. 12: 1–19 DOI: 10.1177/1756285619840593](https://journals.sagepub.com/doi/pdf/10.1177/1756286419840593)
 - [Kitany et al. Functional imaging of rostrocaudal spinal activity during upper limb motor tasks. Neuroimage. 2019 May 17. pii: S1053-8119(19)30428-8.](https://www.sciencedirect.com/science/article/pii/S1053811919304288)
-- [Lorenzi et al. Cervical spinal cord atrophy and Alzheimer’s disease. bioRxiv. 2019 ](https://www.biorxiv.org/content/biorxiv/early/2019/06/18/673350.full.pdf)
+- [Lorenzi et al. Cervical spinal cord atrophy and Alzheimer’s disease. bioRxiv. 2019](https://www.biorxiv.org/content/biorxiv/early/2019/06/18/673350.full.pdf)
 
 ## Citing spinalcordtoolbox
 
