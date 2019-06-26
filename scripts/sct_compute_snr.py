@@ -102,7 +102,7 @@ def main():
 
     # Get parser info
     parser = get_parser()
-    arguments = parser.parse_args()
+    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
     fname_data = arguments.i
     if vars(arguments)['m']:
         fname_mask = arguments.m
