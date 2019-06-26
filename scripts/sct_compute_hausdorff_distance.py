@@ -441,7 +441,7 @@ def get_parser():
     mandatoryArguments = parser.add_argument_group("\nMandatory arguments")
     mandatoryArguments.add_argument(
         "-i",
-        help="First Image on which you want to find the skeleton (e.g. 't2star_manual_gmseg.nii.gz')",
+        help='First Image on which you want to find the skeleton (e.g. "t2star_manual_gmseg.nii.gz")',
         required=True)
     optional = parser.add_argument_group("\nOptional arguments")
     optional.add_argument(
@@ -451,7 +451,7 @@ def get_parser():
         help="show this help message and exit")
     optional.add_argument(
         "-d",
-        help="Second Image on which you want to find the skeleton (e.g. 't2star_manual_gmseg.nii.gz')",
+        help='Second Image on which you want to find the skeleton (e.g. "t2star_manual_gmseg.nii.gz")',
         required=False,
         default=None)
     optional.add_argument(
@@ -477,7 +477,7 @@ def get_parser():
         default=0.1)
     optional.add_argument(
         "-o",
-        help="Name of the output file (e.g. 'my_hausdorff_dist.txt')",
+        help='Name of the output file (e.g. "my_hausdorff_dist.txt")',
         required=False,
         default='hausdorff_distance.txt')
     optional.add_argument(
@@ -487,6 +487,7 @@ def get_parser():
         required=False,
         choices=(0, 1, 2),
         default = 1)
+
     return parser
 
 
