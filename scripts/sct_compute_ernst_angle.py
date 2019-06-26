@@ -80,7 +80,8 @@ def get_parser():
         "-tr",
         type=float,
         help='Value of TR (in ms) to get the Ernst Angle. (e.g. "2000")',
-        required=True)
+        metavar='',
+        required=False)
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",
@@ -92,22 +93,26 @@ def get_parser():
         type=float,
         help='T1 value (in ms). (e.g. "832.3")',
         required=False,
+        metavar='',
         default=832.0)
     optional.add_argument(
         "-b",
         type=float,
         nargs='*',
+        metavar='',
         help='Boundaries TR parameter (in ms) in case -v 2 is used. (e.g. "500,3500")',
         required=False)
     optional.add_argument(
         "-o",
         help="Name of the output file containing Ernst angle result.",
         required=False,
+        metavar='',
         default="ernst_angle.txt")
     optional.add_argument(
         "-ofig",
         help="Name of the output graph (only if -v 2 is used).",
         required=False,
+        metavar='',
         default="ernst_angle.png")
     optional.add_argument(
         "-v",
