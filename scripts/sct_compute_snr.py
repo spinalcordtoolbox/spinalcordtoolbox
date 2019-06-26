@@ -34,47 +34,53 @@ class Param(object):
 def get_parser():
 
     # Initialize the parser
-    parser = argparse.ArgumentParser(description='Compute SNR using methods described in [Dietrich et al., Measurement of'
-                                 ' signal-to-noise ratios in MR images: Influence of multichannel coils, parallel '
-                                 'imaging, and reconstruction filters. J Magn Reson Imaging 2007; 26(2): 375-385].',
-                                     add_help=None,
-                                     prog=os.path.basename(__file__).strip(".py")
-                                     )
+    parser = argparse.ArgumentParser(
+        description='Compute SNR using methods described in [Dietrich et al., Measurement of'
+                    ' signal-to-noise ratios in MR images: Influence of multichannel coils, parallel '
+                    'imaging, and reconstruction filters. J Magn Reson Imaging 2007; 26(2): 375-385].',
+        add_help=None,
+        prog=os.path.basename(__file__).strip(".py"))
     mandatoryArguments = parser.add_argument_group("\nMandatory arguments")
-    mandatoryArguments.add_argument('-i',
-                      help="4D data to compute the SNR on (along the 4th dimension)(e.g. 'b0s.nii.gz').",
-                      required=True)
+    mandatoryArguments.add_argument(
+        '-i',
+        help="4D data to compute the SNR on (along the 4th dimension)(e.g. 'b0s.nii.gz').",
+        required=True)
     optional = parser.add_argument_group("\nOptional arguments")
-    optional.add_argument("-h",
-                          "--help",
-                          action="help",
-                          help="show this help message and exit"
-                          )
-    optional.add_argument('-m',
-                      help="Binary (or weighted) mask within which SNR will be averaged (e.g. 'dwi_moco_mean_seg.nii.gz').",
-                      default='')
-    optional.add_argument('-method',
-                      help='Method to use to compute the SNR:\n'
-                      '- diff (default): Substract two volumes (defined by -vol) and estimate noise variance within the ROI (flag -m is required).\n'
-                      '- mult: Estimate noise variance over time across volumes specified with -vol.',
-                      choices=('diff', 'mult'),
-                      default='diff')
-    optional.add_argument('-vol',
-                      help='Volumes to compute SNR from. Separate with "," (e.g. \'-vol 0,1\'), or select range '
-                                  'using ":" (e.g. \'-vol 2:50\'). By default, all volumes in series are selected.',
-                      default='')
-    optional.add_argument('-r',
-                      type=int,
-                      help='Remove temporary files.',
-                      default=1,
-                      choices=(0, 1))
-    optional.add_argument('-v',
-                      help="Verbose. 0: nothing, 1: basic, 2: extended.",
-                      type=int,
-                      choices=(0, 1, 2),
-                      default=1)
-    arguments = parser.parse_args()
-    return arguments
+    optional.add_argument(
+        "-h",
+        "--help",
+        action="help",
+        help="show this help message and exit")
+    optional.add_argument(
+        '-m',
+        help="Binary (or weighted) mask within which SNR will be averaged (e.g. 'dwi_moco_mean_seg.nii.gz').",
+        default='')
+    optional.add_argument(
+        '-method',
+        help='Method to use to compute the SNR:\n'
+             '- diff (default): Substract two volumes (defined by -vol) and estimate noise variance within the ROI (flag -m is required).\n'
+             '- mult: Estimate noise variance over time across volumes specified with -vol.',
+        choices=('diff', 'mult'),
+        default='diff')
+    optional.add_argument(
+        '-vol',
+        help='Volumes to compute SNR from. Separate with "," (e.g. \'-vol 0,1\'), or select range '
+             'using ":" (e.g. \'-vol 2:50\'). By default, all volumes in series are selected.',
+        default='')
+    optional.add_argument(
+        '-r',
+        type=int,
+        help='Remove temporary files.',
+        default=1,
+        choices=(0, 1))
+    optional.add_argument(
+        '-v',
+        help="Verbose. 0: nothing, 1: basic, 2: extended.",
+        type=int,
+        choices=(0, 1, 2),
+        default=1)
+
+    return parser
 
 
 def weighted_avg_and_std(values, weights):
@@ -96,7 +102,7 @@ def main():
 
     # Get parser info
     parser = get_parser()
-    arguments = get_parser()
+    arguments = parser.parse_args()
     fname_data = arguments.i
     if vars(arguments)['m']:
         fname_mask = arguments.m
