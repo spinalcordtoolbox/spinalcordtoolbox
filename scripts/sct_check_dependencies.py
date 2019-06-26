@@ -366,16 +366,17 @@ def get_parser():
         add_help=None,
         prog=os.path.basename(__file__).strip(".py")
     )
-    optional = parser.add_argument_group("\nOptional arguments")
-    optional.add_argument("-h",
-                          "--help",
-                          action="help",
-                          help="show this help message and exit"
-                          )
-    optional.add_argument("--complete", "-c",
-                        help="Complete test.",
-                        action="store_true",
-                        )
+    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional.add_argument(
+        "-h",
+        "--help",
+        action="help",
+        help="show this help message and exit")
+    optional.add_argument(
+        "-c",
+        "--complete",
+        help="Complete test.",
+        action="store_true")
 
     return parser
 
