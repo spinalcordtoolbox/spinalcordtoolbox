@@ -155,7 +155,7 @@ def main(args=None):
         plt.colorbar().ax.set_ylabel("conf score " + method)
         plt.savefig(output_dir + "/" + fname_image.split("/")[-1] + "_" + sub_and_sequence + method + "_angle_conf_score_z.png")  # reliable file name ?
 
-        # generate_qc(fname_in1=fname_image_output, fname_in2=fname_axes, fname_seg=None, args=[method], path_qc=path_qc, dataset=None, subject=None, process="rotation")
+        generate_qc(fname_in1=fname_image_output, fname_seg=fname_seg_output, angle_line=angles, args=[method], path_qc=path_qc, dataset=None, subject=None, process="rotation")
 
     sct.printv("fsleyes " + fname_image_output + " " + fname_seg_output + " -cm red" + " " + output_dir + "/" + sub_and_sequence + "_axes_pca.nii.gz -cm blue " + output_dir + "/" + sub_and_sequence + "_axes_hog.nii.gz -cm green " + output_dir + "/" + sub_and_sequence + "_axes_auto.nii.gz -cm yellow", type='info')
     # fsleyes /home/nicolas/unf_test/unf_spineGeneric/sub-01/anat/sub-01_T1w.nii.gz /home/nicolas/test_single_rot/sub-01_T1w_axes_pca.nii.gz -cm blue /home/nicolas/test_single_rot/sub-01_T1w_axes_hog.nii.gz -cm green
