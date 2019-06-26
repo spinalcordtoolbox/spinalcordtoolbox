@@ -285,15 +285,15 @@ def get_parser():
     mandatoryArguments = parser.add_argument_group("\nMandatory arguments")
     mandatoryArguments.add_argument(
         '-i',
-        help='Image to create mask on. Only used to get header. Must be 3D, e.g. \'data.nii.gz\')',
+        help='Image to create mask on. Only used to get header. Must be 3D, (e.g. "data.nii.gz")',
         required = True)
     mandatoryArguments.add_argument(
         '-p',
         help='Process to generate mask.\n'
-             'coord: X,Y coordinate of center of mask. e.g. \'coord,20x15\'\n'
-             'point: volume that contains a single point. e.g. \'point,label.nii.gz\'\n'
+             'coord: X,Y coordinate of center of mask. (e.g. "coord,20x15")\n'
+             'point: volume that contains a single point. (e.g. "point,label.nii.gz")\n'
              'center: mask is created at center of FOV.\n'
-             'centerline: volume that contains centerline or segmentation. (e.g. \'centerline,t2_seg.nii.gz\')',
+             'centerline: volume that contains centerline or segmentation. (e.g. "centerline,t2_seg.nii.gz")',
         required = True,
         default = param_default.process)
     optional = parser.add_argument_group("\nOptional arguments")
@@ -304,7 +304,7 @@ def get_parser():
         help="show this help message and exit")
     optional.add_argument(
         '-size',
-        help='Size of the mask in the axial plane, given in pixel (e.g. \'35\') or in millimeter (e.g. \'35mm\'). If shape=gaussian, size corresponds to "sigma" (e.g. \'45\')',
+        help='Size of the mask in the axial plane, given in pixel (e.g. "35") or in millimeter (e.g. "35mm"). If shape=gaussian, size corresponds to "sigma" (e.g. "45")',
         required = False,
         default = param_default.size)
     optional.add_argument(
@@ -315,7 +315,7 @@ def get_parser():
         choices=('cylinder', 'box', 'gaussian'))
     optional.add_argument(
         '-o',
-        help='Name of output mask, (e.g. data.nii)',
+        help='Name of output mask, (e.g. "data.nii")',
         required = False)
     optional.add_argument(
         "-r",
