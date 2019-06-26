@@ -44,7 +44,8 @@ def get_parser():
     mandatoryArguments.add_argument(
         '-i',
         help='4D data to compute the SNR on (along the 4th dimension)(e.g. "b0s.nii.gz").',
-        required=True)
+        required=False,
+        metavar='')
     optional = parser.add_argument_group("\nOptional arguments")
     optional.add_argument(
         "-h",
@@ -54,6 +55,7 @@ def get_parser():
     optional.add_argument(
         '-m',
         help='Binary (or weighted) mask within which SNR will be averaged (e.g. "dwi_moco_mean_seg.nii.gz").',
+        metavar='',
         default='')
     optional.add_argument(
         '-method',
@@ -66,6 +68,7 @@ def get_parser():
         '-vol',
         help='Volumes to compute SNR from. Separate with "," (e.g. "-vol 0,1"), or select range '
              'using ":" (e.g. "-vol 2:50"). By default, all volumes in series are selected.',
+        metavar='',
         default='')
     optional.add_argument(
         '-r',
