@@ -71,48 +71,52 @@ class ErnstAngle:
 
 def get_parser():
     # Initialize the parser
-    parser = argparse.ArgumentParser(description='Function to compute the Ernst Angle. For examples of T1 values in the brain, see Wansapura et al. NMR relaxation times in the human brain at 3.0 tesla. Journal of magnetic resonance imaging : JMRI (1999) vol. 9 (4) pp. 531-8. \nT1 in WM: 832ms\nT1 in GM: 1331ms',
-                                     add_help=None,
-                                     prog=os.path.basename(__file__).strip(".py")
-                                     )
+    parser = argparse.ArgumentParser(
+        description='Function to compute the Ernst Angle. For examples of T1 values in the brain, see Wansapura et al. NMR relaxation times in the human brain at 3.0 tesla. Journal of magnetic resonance imaging : JMRI (1999) vol. 9 (4) pp. 531-8. \nT1 in WM: 832ms\nT1 in GM: 1331ms',
+        add_help=None,
+        prog=os.path.basename(__file__).strip(".py"))
     mandatoryArguments = parser.add_argument_group("\nMandatory arguments")
-    mandatoryArguments.add_argument("-tr",
-                        type=float,
-                        help="Value of TR (in ms) to get the Ernst Angle. (e.g. '2000')",
-                        required=True
-                        )
+    mandatoryArguments.add_argument(
+        "-tr",
+        type=float,
+        help="Value of TR (in ms) to get the Ernst Angle. (e.g. '2000')",
+        required=True)
     optional = parser.add_argument_group("\nOptional arguments")
-    optional.add_argument("-h",
-                          "--help",
-                          action="help",
-                          help="show this help message and exit"
-                          )
-    optional.add_argument("-t1",
-                        type=float,
-                        help="T1 value (in ms). (e.g. '832.3')",
-                        required=False,
-                        default=832.0
-                        )
-    optional.add_argument("-b",
-                        type=float,
-                        nargs='*',
-                        help="Boundaries TR parameter (in ms) in case -v 2 is used. (e.g. '500,3500')",
-                        required=False
-                        )
-    optional.add_argument("-o",
-                        help="Name of the output file containing Ernst angle result.",
-                        required=False,
-                        default="ernst_angle.txt")
-    optional.add_argument("-ofig",
-                        help="Name of the output graph (only if -v 2 is used).",
-                        required=False,
-                        default="ernst_angle.png")
-    optional.add_argument("-v",
-                        type=int,
-                        help="Verbose: 0 = nothing, 1 = classic, 2 = expended (graph)",
-                        required=False,
-                        choices=(0, 1, 2),
-                        default = 1)
+    optional.add_argument(
+        "-h",
+        "--help",
+        action="help",
+        help="show this help message and exit")
+    optional.add_argument(
+        "-t1",
+        type=float,
+        help="T1 value (in ms). (e.g. '832.3')",
+        required=False,
+        default=832.0)
+    optional.add_argument(
+        "-b",
+        type=float,
+        nargs='*',
+        help="Boundaries TR parameter (in ms) in case -v 2 is used. (e.g. '500,3500')",
+        required=False)
+    optional.add_argument(
+        "-o",
+        help="Name of the output file containing Ernst angle result.",
+        required=False,
+        default="ernst_angle.txt")
+    optional.add_argument(
+        "-ofig",
+        help="Name of the output graph (only if -v 2 is used).",
+        required=False,
+        default="ernst_angle.png")
+    optional.add_argument(
+        "-v",
+        type=int,
+        help="Verbose: 0 = nothing, 1 = classic, 2 = expended (graph)",
+        required=False,
+        choices=(0, 1, 2),
+        default = 1)
+
     return parser
 
 
