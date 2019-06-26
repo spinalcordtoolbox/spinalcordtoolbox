@@ -286,7 +286,8 @@ def get_parser():
     mandatoryArguments.add_argument(
         '-i',
         help='Image to create mask on. Only used to get header. Must be 3D, (e.g. "data.nii.gz")',
-        required = True)
+        metavar='',
+        required = False)
     mandatoryArguments.add_argument(
         '-p',
         help='Process to generate mask.\n'
@@ -294,7 +295,8 @@ def get_parser():
              'point: volume that contains a single point. (e.g. "point,label.nii.gz")\n'
              'center: mask is created at center of FOV.\n'
              'centerline: volume that contains centerline or segmentation. (e.g. "centerline,t2_seg.nii.gz")',
-        required = True,
+        metavar='',
+        required = False,
         default = param_default.process)
     optional = parser.add_argument_group("\nOptional arguments")
     optional.add_argument(
@@ -305,6 +307,7 @@ def get_parser():
     optional.add_argument(
         '-size',
         help='Size of the mask in the axial plane, given in pixel (e.g. "35") or in millimeter (e.g. "35mm"). If shape=gaussian, size corresponds to "sigma" (e.g. "45")',
+        metavar='',
         required = False,
         default = param_default.size)
     optional.add_argument(
@@ -315,6 +318,7 @@ def get_parser():
         choices=('cylinder', 'box', 'gaussian'))
     optional.add_argument(
         '-o',
+        metavar='',
         help='Name of output mask, (e.g. "data.nii")',
         required = False)
     optional.add_argument(
