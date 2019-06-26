@@ -79,7 +79,7 @@ def get_parser():
     mandatoryArguments.add_argument(
         "-tr",
         type=float,
-        help="Value of TR (in ms) to get the Ernst Angle. (e.g. '2000')",
+        help='Value of TR (in ms) to get the Ernst Angle. (e.g. "2000")',
         required=True)
     optional = parser.add_argument_group("\nOptional arguments")
     optional.add_argument(
@@ -90,14 +90,14 @@ def get_parser():
     optional.add_argument(
         "-t1",
         type=float,
-        help="T1 value (in ms). (e.g. '832.3')",
+        help='T1 value (in ms). (e.g. "832.3")',
         required=False,
         default=832.0)
     optional.add_argument(
         "-b",
         type=float,
         nargs='*',
-        help="Boundaries TR parameter (in ms) in case -v 2 is used. (e.g. '500,3500')",
+        help='Boundaries TR parameter (in ms) in case -v 2 is used. (e.g. "500,3500")',
         required=False)
     optional.add_argument(
         "-o",
