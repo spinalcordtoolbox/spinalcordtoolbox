@@ -38,7 +38,7 @@ def get_parser():
         description='Convert image file to another type.',
         add_help=None,
         prog=os.path.basename(__file__).strip(".py"))
-    mandatoryArguments = parser.add_argument_group("\nMandatory arguments")
+    mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatoryArguments.add_argument(
         "-i",
         help='File input (e.g. "data.nii.gz")',
@@ -49,7 +49,7 @@ def get_parser():
         help='File output (indicate new extension) (e.g. "data.nii")',
         metavar='',
         required=True)
-    optional = parser.add_argument_group("\nOptional arguments")
+    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",
         "--help",
