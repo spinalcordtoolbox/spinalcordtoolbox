@@ -41,11 +41,11 @@ def get_parser():
     mandatoryArguments = parser.add_argument_group("\nMandatory arguments")
     mandatoryArguments.add_argument(
         "-i",
-        help="File input (e.g. 'data.nii.gz')",
+        help='File input (e.g. "data.nii.gz")',
         required=True)
     mandatoryArguments.add_argument(
         "-o",
-        help="File output (indicate new extension) (e.g. 'data.nii')",
+        help='File output (indicate new extension) (e.g. "data.nii")',
         required=True)
     optional = parser.add_argument_group("\nOptional arguments")
     optional.add_argument(
