@@ -1,16 +1,15 @@
 import nibabel as nib
-from statistics import mode
+import sys
+import torch
+import numpy as np
+
 import torchvision.transforms.functional as Func
 from torchvision import transforms
 from PIL import Image
+from statistics import mode
 
-import sys
+import model as M
 
-import torch
-
-import numpy as np
-
-from classifier import model as M
 
 class Acquisition():
     
