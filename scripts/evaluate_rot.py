@@ -7,16 +7,12 @@ from __future__ import division, absolute_import
 import sys, os
 import sct_utils as sct
 from msct_parser import Parser
-from sct_register_to_template import main as sct_register_to_template
-from sct_label_vertebrae import main as sct_label_vertebrae
-from sct_apply_transfo import main as sct_apply_transfo
-from sct_label_utils import main as sct_labels_utils
-from sct_maths import main as sct_maths
 from nicolas_scripts.functions_sym_rot import *
 from spinalcordtoolbox.reports.qc import generate_qc
 import csv
 import time
 import math
+from scipy.ndimage.filters import gaussian_filter1d
 
 def get_parser():
 
@@ -88,8 +84,9 @@ def main(args=None):
     methods = ["pca", "hog", "auto"]
 
     angle_range = 10
-    conf_score_th_pca = 1.6
-    conf_score_th_hog = 1
+    conf_score_th_pca = 1.6  # for pca and auto !
+    conf_score_th_hog = 1  # only for hog
+    smooth = True
 
     for k, method in enumerate(methods):
 
@@ -97,19 +94,19 @@ def main(args=None):
         conf_score = np.zeros(max_z - min_z)
         axes_image = np.zeros((nx, ny, nz))
         start_time = time.time()
+        centermass = np.zeros((2, max_z-min_z))
 
         for z in range(0, max_z-min_z):
 
             if method is "hog":
-                angles[z], conf_score[z], centermass = find_angle(data_image[:, :, min_z + z], data_seg[:, :, min_z + z], px, py, method, angle_range=angle_range, return_centermass=True)
+                angles[z], conf_score[z], centermass[:, z] = find_angle(data_image[:, :, min_z + z], data_seg[:, :, min_z + z], px, py, method, angle_range=angle_range, return_centermass=True)
                 if math.isnan(angles[z]) or conf_score[z] is None:
-                    conf_score[z] = -10
-                    angles[z] = 0
+                    raise Exception("this is not supposed to happen, hog is only searching in the angle range, no angle should be outside range")
                 if conf_score[z] < conf_score_th_hog:
                     angles[z] = 0
                     conf_score[z] = -5
             elif method is "pca":
-                angles[z], conf_score[z], centermass = find_angle(data_image[:, :, min_z + z], data_seg[:, :, min_z + z], px, py, method, angle_range=angle_range, return_centermass=True)
+                angles[z], conf_score[z], centermass[:, z] = find_angle(data_image[:, :, min_z + z], data_seg[:, :, min_z + z], px, py, method, angle_range=angle_range, return_centermass=True)
                 if math.isnan(conf_score[z]) or conf_score[z] is None:
                     conf_score[z] = -10
                     angles[z] = 0
@@ -117,18 +114,23 @@ def main(args=None):
                     angles[z] = 0
                     conf_score[z] = -5
             elif method is "auto":
-                angles[z], conf_score[z], centermass = find_angle(data_image[:, :, min_z + z], data_seg[:, :, min_z + z], px, py, "pca", angle_range=angle_range, return_centermass=True)
-                if conf_score[z] < conf_score_th_pca:
-                    angles[z], conf_score[z], centermass = find_angle(data_image[:, :, min_z + z], data_seg[:, :, min_z + z], px, py, "hog", angle_range=angle_range, return_centermass=True)
+                angles[z], conf_score[z], centermass[:, z] = find_angle(data_image[:, :, min_z + z], data_seg[:, :, min_z + z], px, py, "pca", angle_range=angle_range, return_centermass=True)
+                if conf_score[z] < conf_score_th_pca or math.isnan(conf_score[z]) or conf_score[z] is None:
+                    angles[z], conf_score[z], centermass[:, z] = find_angle(data_image[:, :, min_z + z], data_seg[:, :, min_z + z], px, py, "hog", angle_range=angle_range, return_centermass=True)
             else:
                 raise Exception("no method named" + method)
 
-            # print("angle " + method + " is " + str(round(angles[z] * 180/pi, 0)))
+        z_nonzero = range(0, max_z-min_z)
 
-            axes_image[:, :, min_z + z] = generate_2Dimage_line(axes_image[:, :, min_z + z], centermass[0], centermass[1], -angles[z] - pi/2, value=k+1)
+        if smooth:
+            # coeffs = np.polyfit(z_nonzero, angles[z_nonzero], polydeg)
+            # poly = np.poly1d(coeffs)
+            # angles_smoothed = np.polyval(poly, z_nonzero)
+            angles_smoothed = gaussian_filter1d(angles, 3)
+
+        for z in range(0, max_z-min_z):
+            axes_image[:, :, min_z + z] = generate_2Dimage_line(axes_image[:, :, min_z + z], centermass[0, z], centermass[1, z], angles_smoothed[z] - pi/2, value=k+1)
             # axes_image[int(centermass[0]), int(centermass[1]), min_z + z] = 100000
-
-        # conf_score = conf_score / max(conf_score)
 
         sct.printv("Time elapsed for method " + method + " (+ generating axes) : " + str(round(time.time() - start_time, 1)) + " seconds")
         sct.printv("Max angle is : " + str(max(angles) * 180/pi) + ", min is : " + str(min(angles) * 180/pi) + " and mean is : " + str(np.mean(angles) * 180/pi))
@@ -137,21 +139,23 @@ def main(args=None):
         Image(axes_image, hdr=image_object.hdr).save(fname_axes)
         image_object.save(fname_image_output)
         seg_object.save(fname_seg_output)
-        if method is "pca":
-            plt.figure(figsize=(6.4*2, 4.8*2))
-            plt.scatter(np.arange(min_z, max_z), angles * 180/pi, c=conf_score, cmap='PRGn')
-            plt.ylabel("angle in deg")
-            plt.xlabel("z slice")
-            plt.colorbar().ax.set_ylabel("conf score PCA")
-        elif method is "hog":
-            plt.scatter(np.arange(min_z, max_z), angles * 180 / pi, c=conf_score, cmap='Wistia')
-            plt.colorbar().ax.set_ylabel("conf score HOG")
-        else:
-            plt.scatter(np.arange(min_z, max_z), angles * 180 / pi, c=conf_score, cmap='winter')
-            plt.colorbar().ax.set_ylabel("conf score auto")
-            plt.savefig(output_dir + "/" + fname_image.split("/")[-1] + "_" + sub_and_sequence + "_angle_conf_score_z.png")  # reliable file name ?
 
-        generate_qc(fname_in1=fname_image_output, fname_in2=fname_axes, fname_seg=None, args=[method], path_qc=path_qc, dataset=None, subject=None, process="rotation")
+        if method is "pca":
+            cmap = 'PRGn'
+        elif method is "hog":
+            cmap = 'Wistia'
+        else:
+            cmap = 'winter'
+        plt.figure(figsize=(6.4 * 2, 4.8 * 2))
+        plt.scatter(z_nonzero, angles * 180 / pi, c=conf_score, cmap=cmap)
+        if smooth:
+            plt.plot(z_nonzero, angles_smoothed * 180/pi, "r-")
+        plt.ylabel("angle in deg")
+        plt.xlabel("z slice")
+        plt.colorbar().ax.set_ylabel("conf score " + method)
+        plt.savefig(output_dir + "/" + fname_image.split("/")[-1] + "_" + sub_and_sequence + method + "_angle_conf_score_z.png")  # reliable file name ?
+
+        # generate_qc(fname_in1=fname_image_output, fname_in2=fname_axes, fname_seg=None, args=[method], path_qc=path_qc, dataset=None, subject=None, process="rotation")
 
     sct.printv("fsleyes " + fname_image_output + " " + fname_seg_output + " -cm red" + " " + output_dir + "/" + sub_and_sequence + "_axes_pca.nii.gz -cm blue " + output_dir + "/" + sub_and_sequence + "_axes_hog.nii.gz -cm green " + output_dir + "/" + sub_and_sequence + "_axes_auto.nii.gz -cm yellow", type='info')
     # fsleyes /home/nicolas/unf_test/unf_spineGeneric/sub-01/anat/sub-01_T1w.nii.gz /home/nicolas/test_single_rot/sub-01_T1w_axes_pca.nii.gz -cm blue /home/nicolas/test_single_rot/sub-01_T1w_axes_hog.nii.gz -cm green
