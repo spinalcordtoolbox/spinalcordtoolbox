@@ -40,13 +40,13 @@ def get_parser():
                     'imaging, and reconstruction filters. J Magn Reson Imaging 2007; 26(2): 375-385].',
         add_help=None,
         prog=os.path.basename(__file__).strip(".py"))
-    mandatoryArguments = parser.add_argument_group("\nMandatory arguments")
+    mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatoryArguments.add_argument(
         '-i',
         help='4D data to compute the SNR on (along the 4th dimension)(e.g. "b0s.nii.gz").',
         required=False,
         metavar='')
-    optional = parser.add_argument_group("\nOptional arguments")
+    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",
         "--help",
