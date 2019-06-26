@@ -105,11 +105,13 @@ def get_parser():
     mandatoryArguments.add_argument(
         "-d",
         help='Destination image. (e.g. "mt.nii.gz")',
-        required=True)
+        metavar='',
+        required=False)
     mandatoryArguments.add_argument(
         "-w",
         help='List of affine matrix or warping fields separated with "," N.B. if you want to use the inverse matrix, add "-" before matrix file name. N.B. You should NOT use "-" with warping fields (only with matrices). If you want to use an inverse warping field, then input it directly (e.g. "warp_template2anat.nii.gz" instead of "warp_anat2template.nii.gz") ',
-        required = True)
+        metavar='',
+        required = False)
     optional = parser.add_argument_group("\nOptional arguments")
     optional.add_argument(
         "-h",
@@ -119,6 +121,7 @@ def get_parser():
     optional.add_argument(
         "-o",
         help='Name of output warping field (e.g. "warp_template2mt.nii.gz")',
+        metavar='',
         required = False)
     optional.add_argument(
         "-v",
