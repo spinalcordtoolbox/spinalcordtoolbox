@@ -291,10 +291,10 @@ def get_parser():
     mandatoryArguments.add_argument(
         '-p',
         help='Process to generate mask.\n'
-             'coord: X,Y coordinate of center of mask. (e.g. "coord,20x15")\n'
-             'point: volume that contains a single point. (e.g. "point,label.nii.gz")\n'
-             'center: mask is created at center of FOV.\n'
-             'centerline: volume that contains centerline or segmentation. (e.g. "centerline,t2_seg.nii.gz")',
+             '  <coord,XxY>: Center mask at the X,Y coordinates. (e.g. "coord,20x15")\n'
+             '  <point,FILE>: Center mask at the X,Y coordinates of the label defined in input volume FILE. (e.g. "point,label.nii.gz")\n'
+             '  <center>: Center mask in the middle of the FOV (nx/2, ny/2).\n'
+             '  <centerline,FILE>: At each slice, the mask is centered at the spinal cord centerline, defined by the input segmentation FILE. (e.g. "centerline,t2_seg.nii.gz")',
         metavar='',
         required = False,
         default = param_default.process)
