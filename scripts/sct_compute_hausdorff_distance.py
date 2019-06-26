@@ -504,7 +504,7 @@ if __name__ == "__main__":
     else:
         param_default = Param()
         parser = get_parser()
-        arguments = parser.parse_args()
+        arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
         input_fname = arguments.i
         input_second_fname = ''
         output_fname = 'hausdorff_distance.txt'
