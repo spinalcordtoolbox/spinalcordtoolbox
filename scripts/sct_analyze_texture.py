@@ -266,14 +266,14 @@ class ExtractGLCM:
                         pbar.update(1)
 
         for m in self.metric_lst:
-            fname_out = sct.add_suffix(''.join(sct.extract_fname(self.param.fname_im)[1:]), '_' + m)
+            fname_out = sct.add_suffix("".join(sct.extract_fname(self.param.fname_im)[1:]), '_' + m)
             dct_metric[m].save(fname_out)
             self.fname_metric_lst[m] = fname_out
 
     def reorient_data(self):
         for f in self.fname_metric_lst:
-            os.rename(self.fname_metric_lst[f], sct.add_suffix(''.join(sct.extract_fname(self.param.fname_im)[1:]), '_2reorient'))
-            im = Image(sct.add_suffix(''.join(sct.extract_fname(self.param.fname_im)[1:]), '_2reorient')) \
+            os.rename(self.fname_metric_lst[f], sct.add_suffix("".join(sct.extract_fname(self.param.fname_im)[1:]), '_2reorient'))
+            im = Image(sct.add_suffix("".join(sct.extract_fname(self.param.fname_im)[1:]), '_2reorient')) \
              .change_orientation(self.orientation_im) \
              .save(self.fname_metric_lst[f])
 
