@@ -272,7 +272,7 @@ def get_parser():
         description='Tools to crop an image. Either through command line or GUI',
         add_help=None,
         prog=os.path.basename(__file__).strip(".py"))
-    mandatoryArguments = parser.add_argument_group("Mandatory arguments")
+    mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatoryArguments.add_argument(
         "-i",
         help='input image. (e.g. "t2.nii.gz")',
@@ -287,14 +287,14 @@ def get_parser():
         default = 0)
 
     # Command line mandatory arguments
-    requiredCommandArguments = parser.add_argument_group("Command line related mandatory arguments")
+    requiredCommandArguments = parser.add_argument_group("\nCOMMAND LINE RELATED MANDATORY ARGUMENTS")
     requiredCommandArguments.add_argument(
         "-o",
         help='Output image. This option is REQUIRED for the command line execution (e.g. "t1.nii.gz")',
         metavar='',
         required=False)
     # Optional arguments section
-    optional = parser.add_argument_group("\nOptional arguments")
+    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",
         "--help",
@@ -308,7 +308,7 @@ def get_parser():
         choices=(0, 1),
         default = 1)
     # GUI optional argument
-    guiOptionalArguments = parser.add_argument_group("\nGui related optional arguments")
+    guiOptionalArguments = parser.add_argument_group("\nGUI RELATED OPTIONAL ARGUMENTS")
     guiOptionalArguments.add_argument(
         "-r",
         type=int,
@@ -316,7 +316,7 @@ def get_parser():
         required=False,
         choices=(0, 1))
     # Command line optional arguments
-    commandOptionalArguments = parser.add_argument_group("\nCommand line related optional arguments")
+    commandOptionalArguments = parser.add_argument_group("\nCOMMAND LINE RELATED OPTIONAL ARGUMENTS")
     commandOptionalArguments.add_argument(
         "-m",
         help="cropping around the mask",
