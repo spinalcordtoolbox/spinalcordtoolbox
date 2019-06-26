@@ -30,59 +30,73 @@ def get_parser():
         prog= os.path.basename(__file__).strip(".py")
     )
     mandatoryArguments = parser.add_argument_group("\nMandatory arguments")
-    mandatoryArguments.add_argument("-mt",
-                        help="Image with MT_ON",
-                        required=True)
-    mandatoryArguments.add_argument("-pd",
-                        help="Image PD weighted (typically, the MT_OFF)",
-                        required=True)
-    mandatoryArguments.add_argument("-t1",
-                        help="Image T1-weighted",
-                        required=True)
-    mandatoryArguments.add_argument("-trmt",
-                        help="TR [in ms] for mt image.",
-                        type=float,
-                        required=True)
-    mandatoryArguments.add_argument("-trpd",
-                        help="TR [in ms] for pd image.",
-                        type=float,
-                        required=True)
-    mandatoryArguments.add_argument("-trt1",
-                        help="TR [in ms] for t1 image.",
-                        type=float,
-                        required=True)
-    mandatoryArguments.add_argument("-famt",
-                        help="Flip angle [in deg] for mt image.",
-                        type=float,
-                        required=True)
-    mandatoryArguments.add_argument("-fapd",
-                        help="Flip angle [in deg] for pd image.",
-                        type=float,
-                        required=True)
-    mandatoryArguments.add_argument("-fat1",
-                        help="Flip angle [in deg] for t1 image.",
-                        type=float,
-                        required=True)
+    mandatoryArguments.add_argument(
+        "-mt",
+        help="Image with MT_ON",
+        required=True)
+    mandatoryArguments.add_argument(
+        "-pd",
+        help="Image PD weighted (typically, the MT_OFF)",
+        required=True)
+    mandatoryArguments.add_argument(
+        "-t1",
+        help="Image T1-weighted",
+        required=True)
+    mandatoryArguments.add_argument(
+        "-trmt",
+        help="TR [in ms] for mt image.",
+        type=float,
+        required=True)
+    mandatoryArguments.add_argument(
+        "-trpd",
+        help="TR [in ms] for pd image.",
+        type=float,
+        required=True)
+    mandatoryArguments.add_argument(
+        "-trt1",
+        help="TR [in ms] for t1 image.",
+        type=float,
+        required=True)
+    mandatoryArguments.add_argument(
+        "-famt",
+        help="Flip angle [in deg] for mt image.",
+        type=float,
+        required=True)
+    mandatoryArguments.add_argument(
+        "-fapd",
+        help="Flip angle [in deg] for pd image.",
+        type=float,
+        required=True)
+    mandatoryArguments.add_argument(
+        "-fat1",
+        help="Flip angle [in deg] for t1 image.",
+        type=float,
+        required=True)
     optional = parser.add_argument_group('\nOptional arguments')
-    optional.add_argument("-h",
-                          "--help",
-                          action="help",
-                          help="show this help message and exit"
-                          )
-    optional.add_argument("-b1map",
-                        help="B1 map",
-                        default=None)
-    optional.add_argument("-omtsat",
-                        help="Output file for MTsat. Default is mtsat.nii.gz",
-                        default=None)
-    optional.add_argument("-ot1map",
-                        help="Output file for T1map. Default is t1map.nii.gz",
-                        default=None)
-    optional.add_argument("-v",
-                        help="Verbose: 0 = no verbosity, 1 = verbose (default).",
-                        choices=('0', '1'),
-                        type=int,
-                        default=1)
+    optional.add_argument(
+        "-h",
+        "--help",
+        action="help",
+        help="show this help message and exit")
+    optional.add_argument(
+        "-b1map",
+        help="B1 map",
+        default=None)
+    optional.add_argument(
+        "-omtsat",
+        help="Output file for MTsat. Default is mtsat.nii.gz",
+        default=None)
+    optional.add_argument(
+        "-ot1map",
+        help="Output file for T1map. Default is t1map.nii.gz",
+        default=None)
+    optional.add_argument(
+        "-v",
+        help="Verbose: 0 = no verbosity, 1 = verbose (default).",
+        choices=('0', '1'),
+        type=int,
+        default=1)
+
     return parser
 
 
