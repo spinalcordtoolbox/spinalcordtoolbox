@@ -279,7 +279,8 @@ def get_parser():
 
     parser = argparse.ArgumentParser(description='Create mask along z direction.',
                                      add_help=None,
-                                     prog=os.path.basename(__file__).strip(".py")
+                                     prog=os.path.basename(__file__).strip(".py"),
+                                     formatter_class= argparse.RawTextHelpFormatter
                                      )
     mandatoryArguments = parser.add_argument_group("\nMandatory arguments")
     mandatoryArguments.add_argument('-i',
