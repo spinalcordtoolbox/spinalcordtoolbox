@@ -268,92 +268,98 @@ class ImageCropper(object):
 def get_parser():
 
     # Mandatory arguments
-    parser = argparse.ArgumentParser(description='Tools to crop an image. Either through command line or GUI',
-                                     add_help=None,
-                                     prog=os.path.basename(__file__).strip(".py")
-                                     )
+    parser = argparse.ArgumentParser(
+        description='Tools to crop an image. Either through command line or GUI',
+        add_help=None,
+        prog=os.path.basename(__file__).strip(".py"))
     mandatoryArguments = parser.add_argument_group("Mandatory arguments")
-    mandatoryArguments.add_argument("-i",
-                        help="input image. (e.g. 't2.nii.gz')",
-                        required = True
-                        )
-    mandatoryArguments.add_argument("-g",
-                        type=int,
-                        help="1: use the GUI to crop, 0: use the command line to crop.",
-                        required=False,
-                        choices=(0, 1),
-                        default = 0)
+    mandatoryArguments.add_argument(
+        "-i",
+        help="input image. (e.g. 't2.nii.gz')",
+        required = True)
+    mandatoryArguments.add_argument(
+        "-g",
+        type=int,
+        help="1: use the GUI to crop, 0: use the command line to crop.",
+        required=False,
+        choices=(0, 1),
+        default = 0)
 
     # Command line mandatory arguments
     requiredCommandArguments = parser.add_argument_group("Command line related mandatory arguments")
-    requiredCommandArguments.add_argument("-o",
-                        help="Output image. This option is REQUIRED for the command line execution (e.g. 't1.nii.gz')",
-                        required=False
-                        )
+    requiredCommandArguments.add_argument(
+        "-o",
+        help="Output image. This option is REQUIRED for the command line execution (e.g. 't1.nii.gz')",
+        required=False)
     # Optional arguments section
     optional = parser.add_argument_group("\nOptional arguments")
-    optional.add_argument("-h",
-                          "--help",
-                          action="help",
-                          help="show this help message and exit"
-                          )
-    optional.add_argument("-v",
-                        type=int,
-                        help="1: display on, 0: display off (default)",
-                        required=False,
-                        choices=(0, 1),
-                        default = 1
-                        )
+    optional.add_argument(
+        "-h",
+        "--help",
+        action="help",
+        help="show this help message and exit")
+    optional.add_argument(
+        "-v",
+        type=int,
+        help="1: display on, 0: display off (default)",
+        required=False,
+        choices=(0, 1),
+        default = 1)
     # GUI optional argument
     guiOptionalArguments = parser.add_argument_group("\nGui related optional arguments")
-    guiOptionalArguments.add_argument("-r",
-                        type=int,
-                        help="Remove temporary files. Default = 1",
-                        required=False,
-                        choices=(0, 1)
-                        )
+    guiOptionalArguments.add_argument(
+        "-r",
+        type=int,
+        help="Remove temporary files. Default = 1",
+        required=False,
+        choices=(0, 1))
     # Command line optional arguments
     commandOptionalArguments = parser.add_argument_group("\nCommand line related optional arguments")
-    commandOptionalArguments.add_argument("-m",
-                        help="cropping around the mask",
-                        required=False)
-    commandOptionalArguments.add_argument("-start",
-                        help="start slices, ]0,1[: percentage, 0 & >1: slice number (e.g. '40, 30, 5')",
-                        required = False
-                        )
-    commandOptionalArguments.add_argument("-end",
-                        help="end slices, ]0,1[: percentage, 0: last slice, >1: slice number, <0: last slice - value (e.g. '60, 100, 10')",
-                        required = False
-                        )
-    commandOptionalArguments.add_argument("-dim",
-                        help="dimension to crop, from 0 to n-1, default is 1 (e.g. '0, 1, 2')",
-                        required = False
-                        )
-    commandOptionalArguments.add_argument("-shift",
-                        help="adding shift when used with mask, default is 0 (e.g. '10, 10, 5')",
-                        required = False
-                        )
-    commandOptionalArguments.add_argument("-b",
-                        help="replace voxels outside cropping region with background value. \n"
-                             "If both the -m and the -b flags are used : the image is croped \"exactly\" around the mask with a background (and not around a rectangle area including the mask). the shape of the image isn't change.",
-                        required=False)
-    commandOptionalArguments.add_argument("-bmax",
-                        help="maximize the cropping of the image (provide -dim if you want to specify the dimensions)",
-                        required=False)
-    commandOptionalArguments.add_argument("-ref",
-                        help="crop input image based on reference image (works only for 3D images) (e.g. 'ref.nii.gz')",
-                        required = False
-                        )
-    commandOptionalArguments.add_argument("-mesh",
-                        help="mesh to crop",
-                        required=False)
-    commandOptionalArguments.add_argument("-rof",
-                        type=int,
-                        help="remove output file created when cropping",
-                        required=False,
-                        default=0,
-                        choices=(0, 1)
-                        )
+    commandOptionalArguments.add_argument(
+        "-m",
+        help="cropping around the mask",
+        required=False)
+    commandOptionalArguments.add_argument(
+        "-start",
+        help="start slices, ]0,1[: percentage, 0 & >1: slice number (e.g. '40, 30, 5')",
+        required = False)
+    commandOptionalArguments.add_argument(
+        "-end",
+        help="end slices, ]0,1[: percentage, 0: last slice, >1: slice number, <0: last slice - value (e.g. '60, 100, 10')",
+        required = False)
+    commandOptionalArguments.add_argument(
+        "-dim",
+        help="dimension to crop, from 0 to n-1, default is 1 (e.g. '0, 1, 2')",
+        required = False)
+    commandOptionalArguments.add_argument(
+        "-shift",
+        help="adding shift when used with mask, default is 0 (e.g. '10, 10, 5')",
+        required = False)
+    commandOptionalArguments.add_argument(
+        "-b",
+        help="replace voxels outside cropping region with background value. \n"
+             "If both the -m and the -b flags are used : the image is croped \"exactly\" around the mask with a background (and not around a rectangle area including the mask). the shape of the image isn't change.",
+        required=False)
+    commandOptionalArguments.add_argument(
+        "-bmax",
+        help="maximize the cropping of the image (provide -dim if you want to specify the dimensions)",
+        required=False)
+    commandOptionalArguments.add_argument(
+        "-ref",
+        help="crop input image based on reference image (works only for 3D images) (e.g. 'ref.nii.gz')",
+        required = False)
+    commandOptionalArguments.add_argument(
+        "-mesh",
+        help="mesh to crop",
+        required=False)
+    commandOptionalArguments.add_argument(
+        "-rof",
+        type=int,
+        help="remove output file created when cropping",
+        required=False,
+        default=0,
+        choices=(0, 1))
+
     return parser
 
 
