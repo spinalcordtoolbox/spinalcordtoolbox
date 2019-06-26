@@ -101,7 +101,7 @@ def get_parser():
         description='Concatenate transformations. This function is a wrapper for isct_ComposeMultiTransform (ANTs). N.B. Order of input warping fields is important. For example, if you want to concatenate: A->B and B->C to yield A->C, then you have to input warping fields like that: A->B,B->C.',
         add_help=None,
         prog=os.path.basename(__file__).strip(".py"))
-    mandatoryArguments = parser.add_argument_group("\nMandatory arguments")
+    mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatoryArguments.add_argument(
         "-d",
         help='Destination image. (e.g. "mt.nii.gz")',
@@ -112,7 +112,7 @@ def get_parser():
         help='List of affine matrix or warping fields separated with "," N.B. if you want to use the inverse matrix, add "-" before matrix file name. N.B. You should NOT use "-" with warping fields (only with matrices). If you want to use an inverse warping field, then input it directly (e.g. "warp_template2anat.nii.gz" instead of "warp_anat2template.nii.gz") ',
         metavar='',
         required = False)
-    optional = parser.add_argument_group("\nOptional arguments")
+    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",
         "--help",
