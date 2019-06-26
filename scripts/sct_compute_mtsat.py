@@ -34,45 +34,54 @@ def get_parser():
     mandatoryArguments.add_argument(
         "-mt",
         help="Image with MT_ON",
-        required=True)
+        metavar='',
+        required=False)
     mandatoryArguments.add_argument(
         "-pd",
         help="Image PD weighted (typically, the MT_OFF)",
-        required=True)
+        metavar='',
+        required=False)
     mandatoryArguments.add_argument(
         "-t1",
         help="Image T1-weighted",
-        required=True)
+        metavar='',
+        required=False)
     mandatoryArguments.add_argument(
         "-trmt",
         help="TR [in ms] for mt image.",
         type=float,
-        required=True)
+        metavar='',
+        required=False)
     mandatoryArguments.add_argument(
         "-trpd",
         help="TR [in ms] for pd image.",
         type=float,
-        required=True)
+        metavar='',
+        required=False)
     mandatoryArguments.add_argument(
         "-trt1",
         help="TR [in ms] for t1 image.",
         type=float,
-        required=True)
+        metavar='',
+        required=False)
     mandatoryArguments.add_argument(
         "-famt",
         help="Flip angle [in deg] for mt image.",
         type=float,
-        required=True)
+        metavar='',
+        required=False)
     mandatoryArguments.add_argument(
         "-fapd",
         help="Flip angle [in deg] for pd image.",
         type=float,
-        required=True)
+        metavar='',
+        required=False)
     mandatoryArguments.add_argument(
         "-fat1",
         help="Flip angle [in deg] for t1 image.",
         type=float,
-        required=True)
+        metavar='',
+        required=False)
     optional = parser.add_argument_group('\nOptional arguments')
     optional.add_argument(
         "-h",
@@ -82,13 +91,16 @@ def get_parser():
     optional.add_argument(
         "-b1map",
         help="B1 map",
+        metavar='',
         default=None)
     optional.add_argument(
         "-omtsat",
+        metavar='',
         help="Output file for MTsat. Default is mtsat.nii.gz",
         default=None)
     optional.add_argument(
         "-ot1map",
+        metavar='',
         help="Output file for T1map. Default is t1map.nii.gz",
         default=None)
     optional.add_argument(
