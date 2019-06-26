@@ -17,6 +17,7 @@
 
 from __future__ import absolute_import, division
 
+import sys
 import os
 import argparse
 
@@ -120,5 +121,5 @@ def main(args):
 
 if __name__ == '__main__':
     parser = get_parser()
-    arguments = parser.parse_args()
+    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
     main(arguments)
