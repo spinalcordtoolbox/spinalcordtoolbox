@@ -235,6 +235,7 @@ class Slice(object):
         :param nb_column: number of mosaic columns
         :param size: each column size
         :return: tuple of numpy.ndarray containing the mosaics of each slice pixels
+        :return: list of tuples, each tuple representing the center of each square of the mosaic.
         """
 
         # Calculate number of columns to display on the report
@@ -246,6 +247,11 @@ class Slice(object):
 
         # Compute the matrix size of the final mosaic image
         matrix_sz = (int(size * 2 * nb_row), int(size * 2 * nb_column))
+
+        centers_mosaic = []
+        for icol in range(nb_column):
+            for irow in range(nb_row):
+                centers_mosaic.append((irow * size * 2 + size, icol * size * 2 + size))
 
         # Get center of mass for each slice of the image. If the input is the cord segmentation, these coordinates are
         # used to center the image on each panel of the mosaic.
@@ -263,7 +269,7 @@ class Slice(object):
 
             matrices.append(matrix)
 
-        return matrices
+        return matrices, centers_mosaic
 
     def single(self):
         """Obtain the matrices of the single slices. Flatten
