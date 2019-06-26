@@ -42,10 +42,12 @@ def get_parser():
     mandatoryArguments.add_argument(
         "-i",
         help='File input (e.g. "data.nii.gz")',
+        metavar='',
         required=True)
     mandatoryArguments.add_argument(
         "-o",
         help='File output (indicate new extension) (e.g. "data.nii")',
+        metavar='',
         required=True)
     optional = parser.add_argument_group("\nOptional arguments")
     optional.add_argument(
