@@ -43,7 +43,7 @@ def get_parser():
     mandatoryArguments = parser.add_argument_group("\nMandatory arguments")
     mandatoryArguments.add_argument(
         '-i',
-        help="4D data to compute the SNR on (along the 4th dimension)(e.g. 'b0s.nii.gz').",
+        help='4D data to compute the SNR on (along the 4th dimension)(e.g. "b0s.nii.gz").',
         required=True)
     optional = parser.add_argument_group("\nOptional arguments")
     optional.add_argument(
@@ -53,7 +53,7 @@ def get_parser():
         help="show this help message and exit")
     optional.add_argument(
         '-m',
-        help="Binary (or weighted) mask within which SNR will be averaged (e.g. 'dwi_moco_mean_seg.nii.gz').",
+        help='Binary (or weighted) mask within which SNR will be averaged (e.g. "dwi_moco_mean_seg.nii.gz").',
         default='')
     optional.add_argument(
         '-method',
@@ -64,8 +64,8 @@ def get_parser():
         default='diff')
     optional.add_argument(
         '-vol',
-        help='Volumes to compute SNR from. Separate with "," (e.g. \'-vol 0,1\'), or select range '
-             'using ":" (e.g. \'-vol 2:50\'). By default, all volumes in series are selected.',
+        help='Volumes to compute SNR from. Separate with "," (e.g. "-vol 0,1"), or select range '
+             'using ":" (e.g. "-vol 2:50"). By default, all volumes in series are selected.',
         default='')
     optional.add_argument(
         '-r',
