@@ -81,6 +81,6 @@ def main(arguments):
 if __name__ == "__main__":
     sct.init_sct()
     parser = get_parser()
-    arguments = parser.parse_args()
+    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
     # call main function
     main(arguments)
