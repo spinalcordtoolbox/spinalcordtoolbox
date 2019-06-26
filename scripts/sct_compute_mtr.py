@@ -77,11 +77,13 @@ def get_parser():
     mandatoryArguments.add_argument(
         '-mt0',
         help='Image without MT pulse (MT0)',
-        required=True)
+        metavar='',
+        required=False)
     mandatoryArguments.add_argument(
         '-mt1',
         help='Image with MT pulse (MT1)',
-        required=True)
+        metavar='',
+        required=False)
     optional = parser.add_argument_group("\nOptional arguments")
     optional.add_argument(
         "-h",
@@ -97,6 +99,7 @@ def get_parser():
     optional.add_argument(
         '-o',
         help='Path to output file.',
+        metavar='',
         default=os.path.join('.','mtr.nii.gz'))
 
     return parser
