@@ -30,7 +30,7 @@ def get_parser():
         add_help=False,
         prog= os.path.basename(__file__).strip(".py")
     )
-    mandatoryArguments = parser.add_argument_group("\nMandatory arguments")
+    mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatoryArguments.add_argument(
         "-mt",
         help="Image with MT_ON",
@@ -82,7 +82,7 @@ def get_parser():
         type=float,
         metavar='',
         required=False)
-    optional = parser.add_argument_group('\nOptional arguments')
+    optional = parser.add_argument_group('\nOPTIONAL ARGUMENTS')
     optional.add_argument(
         "-h",
         "--help",
