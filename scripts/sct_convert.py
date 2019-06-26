@@ -34,31 +34,33 @@ class Param:
 # ==========================================================================================
 def get_parser():
     # Initialize the parser
-    parser = argparse.ArgumentParser(description='Convert image file to another type.',
-                                     add_help=None,
-                                     prog=os.path.basename(__file__).strip(".py")
-                                     )
+    parser = argparse.ArgumentParser(
+        description='Convert image file to another type.',
+        add_help=None,
+        prog=os.path.basename(__file__).strip(".py"))
     mandatoryArguments = parser.add_argument_group("\nMandatory arguments")
-    mandatoryArguments.add_argument("-i",
-                        help="File input (e.g. 'data.nii.gz')",
-                        required=True
-                        )
-    mandatoryArguments.add_argument("-o",
-                        help="File output (indicate new extension) (e.g. 'data.nii')",
-                        required=True
-                        )
+    mandatoryArguments.add_argument(
+        "-i",
+        help="File input (e.g. 'data.nii.gz')",
+        required=True)
+    mandatoryArguments.add_argument(
+        "-o",
+        help="File output (indicate new extension) (e.g. 'data.nii')",
+        required=True)
     optional = parser.add_argument_group("\nOptional arguments")
-    optional.add_argument("-h",
-                          "--help",
-                          action="help",
-                          help="show this help message and exit"
-                          )
-    optional.add_argument("-squeeze",
-                        type=int,
-                        help='Sueeze data dimension (remove unused dimension)',
-                        required = False,
-                        choices = (0, 1),
-                        default = 1)
+    optional.add_argument(
+        "-h",
+        "--help",
+        action="help",
+        help="show this help message and exit")
+    optional.add_argument(
+        "-squeeze",
+        type=int,
+        help='Sueeze data dimension (remove unused dimension)',
+        required = False,
+        choices = (0, 1),
+        default = 1)
+
     return parser
 
 
