@@ -30,27 +30,28 @@ def get_parser():
         prog=os.path.basename(__file__).strip(".py")
     )
     mandatoryArguments = parser.add_argument_group("\nMandatory arguments")
-    mandatoryArguments.add_argument('-di',
-                        type=float,
-                        help='Anteroposterior cord distance at the level of maximum injury, (e.g., \'6.85\')',
-                        required = True,
-                       )
-    mandatoryArguments.add_argument('-da',
-                        type=float,
-                        help='Anteroposterior cord distance at the nearest normal level above the level of injury, (e.g., \'7.65\')',
-                        required = True,
-                        )
-    mandatoryArguments.add_argument('-db',
-                        type=float,
-                        help='Anteroposterior cord distance at the nearest normal level below the level of injury, (e.g., \'7.02\')',
-                        required = True,
-                        )
+    mandatoryArguments.add_argument(
+        '-di',
+        type=float,
+        help='Anteroposterior cord distance at the level of maximum injury, (e.g., \'6.85\')',
+        required = True)
+    mandatoryArguments.add_argument(
+        '-da',
+        type=float,
+        help='Anteroposterior cord distance at the nearest normal level above the level of injury, (e.g., \'7.65\')',
+        required = True)
+    mandatoryArguments.add_argument(
+        '-db',
+        type=float,
+        help='Anteroposterior cord distance at the nearest normal level below the level of injury, (e.g., \'7.02\')',
+        required = True)
     optional = parser.add_argument_group("\nOptional arguments")
-    optional.add_argument("-h",
-                          "--help",
-                          action="help",
-                          help="show this help message and exit"
-                          )
+    optional.add_argument(
+        "-h",
+        "--help",
+        action="help",
+        help="show this help message and exit")
+
     return parser
 
 
