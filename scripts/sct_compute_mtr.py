@@ -109,7 +109,7 @@ if __name__ == "__main__":
     sct.init_sct()
     # parse arguments
     parser = get_parser()
-    arguments = parser.parse_args()
+    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
     # initialize parameters
     param = Param()
     # param_default = Param()
