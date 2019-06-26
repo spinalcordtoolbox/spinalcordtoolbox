@@ -438,13 +438,13 @@ def get_parser():
         add_help=None,
         prog=os.path.basename(__file__).strip(".py")
     )
-    mandatoryArguments = parser.add_argument_group("\nMandatory arguments")
+    mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatoryArguments.add_argument(
         "-i",
         help='First Image on which you want to find the skeleton (e.g. "t2star_manual_gmseg.nii.gz")',
         metavar='',
         required=False)
-    optional = parser.add_argument_group("\nOptional arguments")
+    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",
         "--help",
