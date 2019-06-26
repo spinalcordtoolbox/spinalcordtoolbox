@@ -282,7 +282,7 @@ def get_parser():
         add_help=None,
         prog=os.path.basename(__file__).strip(".py"),
         formatter_class= argparse.RawTextHelpFormatter)
-    mandatoryArguments = parser.add_argument_group("\nMandatory arguments")
+    mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatoryArguments.add_argument(
         '-i',
         help='Image to create mask on. Only used to get header. Must be 3D, (e.g. "data.nii.gz")',
@@ -298,7 +298,7 @@ def get_parser():
         metavar='',
         required = False,
         default = param_default.process)
-    optional = parser.add_argument_group("\nOptional arguments")
+    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",
         "--help",
