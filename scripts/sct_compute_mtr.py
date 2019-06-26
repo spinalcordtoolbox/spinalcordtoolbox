@@ -73,7 +73,7 @@ def get_parser():
         description='Compute magnetization transfer ratio (MTR). Output is given in percentage.',
         add_help=None,
         prog=os.path.basename(__file__).strip(".py"))
-    mandatoryArguments = parser.add_argument_group("\nMandatory arguments")
+    mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatoryArguments.add_argument(
         '-mt0',
         help='Image without MT pulse (MT0)',
@@ -84,7 +84,7 @@ def get_parser():
         help='Image with MT pulse (MT1)',
         metavar='',
         required=False)
-    optional = parser.add_argument_group("\nOptional arguments")
+    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",
         "--help",
