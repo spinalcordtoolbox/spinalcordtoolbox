@@ -277,60 +277,60 @@ def get_parser():
     param_default = Param()
     # Initialize the parser
 
-    parser = argparse.ArgumentParser(description='Create mask along z direction.',
-                                     add_help=None,
-                                     prog=os.path.basename(__file__).strip(".py"),
-                                     formatter_class= argparse.RawTextHelpFormatter
-                                     )
+    parser = argparse.ArgumentParser(
+        description='Create mask along z direction.',
+        add_help=None,
+        prog=os.path.basename(__file__).strip(".py"),
+        formatter_class= argparse.RawTextHelpFormatter)
     mandatoryArguments = parser.add_argument_group("\nMandatory arguments")
-    mandatoryArguments.add_argument('-i',
-                        help='Image to create mask on. Only used to get header. Must be 3D, e.g. \'data.nii.gz\')',
-                        required = True
-                        )
-    mandatoryArguments.add_argument('-p',
-                        help='Process to generate mask.\n'
-                        'coord: X,Y coordinate of center of mask. e.g. \'coord,20x15\'\n'
-                        'point: volume that contains a single point. e.g. \'point,label.nii.gz\'\n'
-                        'center: mask is created at center of FOV.\n'
-                        'centerline: volume that contains centerline or segmentation. (e.g. \'centerline,t2_seg.nii.gz\')',
-                        required = True,
-                        default = param_default.process,
-                        )
+    mandatoryArguments.add_argument(
+        '-i',
+        help='Image to create mask on. Only used to get header. Must be 3D, e.g. \'data.nii.gz\')',
+        required = True)
+    mandatoryArguments.add_argument(
+        '-p',
+        help='Process to generate mask.\n'
+             'coord: X,Y coordinate of center of mask. e.g. \'coord,20x15\'\n'
+             'point: volume that contains a single point. e.g. \'point,label.nii.gz\'\n'
+             'center: mask is created at center of FOV.\n'
+             'centerline: volume that contains centerline or segmentation. (e.g. \'centerline,t2_seg.nii.gz\')',
+        required = True,
+        default = param_default.process)
     optional = parser.add_argument_group("\nOptional arguments")
-    optional.add_argument("-h",
-                          "--help",
-                          action="help",
-                          help="show this help message and exit"
-                          )
-    optional.add_argument('-size',
-                        help='Size of the mask in the axial plane, given in pixel (e.g. \'35\') or in millimeter (e.g. \'35mm\'). If shape=gaussian, size corresponds to "sigma" (e.g. \'45\')',
-                        required = False,
-                        default = param_default.size,
-                        )
-    optional.add_argument('-f',
-                        help='Shape of the mask',
-                        required = False,
-                        default = param_default.shape,
-                        choices=('cylinder', 'box', 'gaussian')
-                        )
-    optional.add_argument('-o',
-                        help='Name of output mask, (e.g. data.nii)',
-                        required = False,
-                        )
-    optional.add_argument("-r",
-                        type=int,
-                        help='Remove temporary files',
-                        required = False,
-                        default = 1,
-                        choices = (0, 1)
-                        )
-    optional.add_argument("-v",
-                        type=int,
-                        help="Verbose: 0 = nothing, 1 = classic, 2 = expended ",
-                        required=False,
-                        choices=(0, 1, 2),
-                        default = 1
-                        )
+    optional.add_argument(
+        "-h",
+        "--help",
+        action="help",
+        help="show this help message and exit")
+    optional.add_argument(
+        '-size',
+        help='Size of the mask in the axial plane, given in pixel (e.g. \'35\') or in millimeter (e.g. \'35mm\'). If shape=gaussian, size corresponds to "sigma" (e.g. \'45\')',
+        required = False,
+        default = param_default.size)
+    optional.add_argument(
+        '-f',
+        help='Shape of the mask',
+        required = False,
+        default = param_default.shape,
+        choices=('cylinder', 'box', 'gaussian'))
+    optional.add_argument(
+        '-o',
+        help='Name of output mask, (e.g. data.nii)',
+        required = False)
+    optional.add_argument(
+        "-r",
+        type=int,
+        help='Remove temporary files',
+        required = False,
+        default = 1,
+        choices = (0, 1))
+    optional.add_argument(
+        "-v",
+        type=int,
+        help="Verbose: 0 = nothing, 1 = classic, 2 = expended ",
+        required=False,
+        choices=(0, 1, 2),
+        default = 1)
 
     return parser
 
