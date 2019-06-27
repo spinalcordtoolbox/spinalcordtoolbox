@@ -100,11 +100,35 @@ class QcImage(object):
     def line_angle(self, mask, ax):
         """Create figure with line superposed over each mosaic square. The line has an angle encoded in the
         argument self._angle_line"""
+        angles = np.full_like(np.zeros(len(self._centermass)), np.nan)
+        angles[0:len(self._angle_line)] = self._angle_line
         img = np.full_like(mask, np.nan)
         ax.imshow(img, cmap='gray', alpha=0, aspect=float(self.aspect_mask))
-        for center_mosaic in self._centermass:
-            ax.plot([center_mosaic[1]-5, center_mosaic[1]+5], [center_mosaic[0]-5, center_mosaic[0]+5], '-',
-                    color='red', linewidth=1)
+        for nslice, center_mosaic in enumerate(self._centermass):
+            if np.isnan(angles[nslice]):
+                pass
+            else:
+                x0, y0 = center_mosaic[0], center_mosaic[1]
+                angle = angles[nslice]
+                if not (-np.pi <= angle <= np.pi):
+                    raise Exception("angle prompted for angle_line not in the range [-pi pi]")
+                x_min, y_min = x_min, y_min = x0 - 10, y0 - 10
+                x_max, y_max = x0 + 10, y0 + 10
+
+                if -np.pi/4 < angle <= np.pi/4 or -np.pi <= angle <= -3*np.pi/4 or 3*np.pi/4 < angle <= np.pi:
+                    y1 = y_min
+                    y2 = y_max
+                    x1 = (y_min - y0) * np.tan(angle) + x0
+                    x2 = (y_max - y0) * np.tan(angle) + x0
+                else:
+                    x1 = x_min
+                    x2 = x_max
+                    y1 = y0 + (x_min - x0) / np.tan(angle)
+                    y2 = y0 + (x_max - x0) / np.tan(angle)
+
+                ax.text(center_mosaic[0], center_mosaic[1], str(round((angles[nslice]) * 180 / np.pi, 0)), fontsize=3)
+                ax.plot([x1, x2], [y1, y2], '-', color='red', linewidth=0.7)
+
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
 
@@ -541,7 +565,7 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, angle_line=None, args
     :param fname_in1: str: File name of input image #1 (mandatory)
     :param fname_in2: str: File name of input image #2
     :param fname_seg: str: File name of input segmentation
-    :param angle_line: [float]: Angle [in deg, wrt. horizontal line] to apply to the line overlaid on the image, for
+    :param angle_line: [float]: Angle [in rad, wrt. vertical line, must be between -pi and pi] to apply to the line overlaid on the image, for
     each slice. To be used for assessing cord orientation.
     :param args: args from parent function
     :param path_qc: str: Path to save QC report
