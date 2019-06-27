@@ -140,22 +140,26 @@ def main(args=None):
         image_object.save(fname_image_output)
         seg_object.save(fname_seg_output)
 
-        if method is "pca":
-            cmap = 'PRGn'
-        elif method is "hog":
-            cmap = 'Wistia'
-        else:
-            cmap = 'winter'
-        plt.figure(figsize=(6.4 * 2, 4.8 * 2))
-        plt.scatter(z_nonzero, angles * 180 / pi, c=conf_score, cmap=cmap)
-        if smooth:
-            plt.plot(z_nonzero, angles_smoothed * 180/pi, "r-")
-        plt.ylabel("angle in deg")
-        plt.xlabel("z slice")
-        plt.colorbar().ax.set_ylabel("conf score " + method)
-        plt.savefig(output_dir + "/" + fname_image.split("/")[-1] + "_" + sub_and_sequence + method + "_angle_conf_score_z.png")  # reliable file name ?
+        # if method is "pca":
+        #     cmap = 'PRGn'
+        # elif method is "hog":
+        #     cmap = 'Wistia'
+        # else:
+        #     cmap = 'winter'
+        # plt.figure(figsize=(6.4 * 2, 4.8 * 2))
+        # plt.scatter(z_nonzero, angles * 180 / pi, c=conf_score, cmap=cmap)
+        # if smooth:
+        #     plt.plot(z_nonzero, angles_smoothed * 180/pi, "r-")
+        # plt.ylabel("angle in deg")
+        # plt.xlabel("z slice")
+        # plt.colorbar().ax.set_ylabel("conf score " + method)
+        # plt.savefig(output_dir + "/" + fname_image.split("/")[-1] + "_" + sub_and_sequence + method + "_angle_conf_score_z.png")  # reliable file name ?
 
-        generate_qc(fname_in1=fname_image_output, fname_seg=fname_seg_output, angle_line=angles, args=[method], path_qc=path_qc, dataset=None, subject=None, process="rotation")
+        angles_qc = np.zeros(data_image.shape[2])
+        angles_qc[:] = np.nan
+        angles_qc[min_z:max_z] = angles
+
+        generate_qc(fname_in1=fname_image_output, fname_seg=fname_seg_output, angle_line=angles_qc[::-1], args=[method], path_qc=path_qc, dataset=None, subject=None, process="rotation")
 
     sct.printv("fsleyes " + fname_image_output + " " + fname_seg_output + " -cm red" + " " + output_dir + "/" + sub_and_sequence + "_axes_pca.nii.gz -cm blue " + output_dir + "/" + sub_and_sequence + "_axes_hog.nii.gz -cm green " + output_dir + "/" + sub_and_sequence + "_axes_auto.nii.gz -cm yellow", type='info')
     # fsleyes /home/nicolas/unf_test/unf_spineGeneric/sub-01/anat/sub-01_T1w.nii.gz /home/nicolas/test_single_rot/sub-01_T1w_axes_pca.nii.gz -cm blue /home/nicolas/test_single_rot/sub-01_T1w_axes_hog.nii.gz -cm green
