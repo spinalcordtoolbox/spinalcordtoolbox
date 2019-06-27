@@ -126,7 +126,6 @@ class QcImage(object):
                     y1 = y0 + (x_min - x0) / np.tan(angle)
                     y2 = y0 + (x_max - x0) / np.tan(angle)
 
-                ax.text(center_mosaic[0], center_mosaic[1], str(round((angles[nslice]) * 180 / np.pi, 0)), fontsize=3)
                 ax.plot([x1, x2], [y1, y2], '-', color='red', linewidth=0.7)
 
         ax.get_xaxis().set_visible(False)
