@@ -157,7 +157,7 @@ def main(args=None):
 
         angles_qc = np.zeros(data_image.shape[2])
         angles_qc[:] = np.nan
-        angles_qc[min_z:max_z] = angles
+        angles_qc[min_z:max_z] = -angles
 
         generate_qc(fname_in1=fname_image_output, fname_seg=fname_seg_output, angle_line=angles_qc[::-1], args=[method], path_qc=path_qc, dataset=None, subject=None, process="rotation")
 
