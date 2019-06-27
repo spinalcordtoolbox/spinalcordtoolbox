@@ -249,9 +249,9 @@ class Slice(object):
         matrix_sz = (int(size * 2 * nb_row), int(size * 2 * nb_column))
 
         centers_mosaic = []
-        for icol in range(nb_column):
-            for irow in range(nb_row):
-                centers_mosaic.append((irow * size * 2 + size, icol * size * 2 + size))
+        for irow in range(nb_row):
+            for icol in range(nb_column):
+                centers_mosaic.append((icol * size * 2 + size, irow * size * 2 + size))
 
         # Get center of mass for each slice of the image. If the input is the cord segmentation, these coordinates are
         # used to center the image on each panel of the mosaic.
