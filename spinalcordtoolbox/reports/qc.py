@@ -564,8 +564,8 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, angle_line=None, args
     :param fname_in1: str: File name of input image #1 (mandatory)
     :param fname_in2: str: File name of input image #2
     :param fname_seg: str: File name of input segmentation
-    :param angle_line: [float]: Angle [in rad, wrt. vertical line, must be between -pi and pi] to apply to the line overlaid on the image, for
-    each slice. To be used for assessing cord orientation.
+    :param angle_line: [list of float]: Angle [in rad, wrt. vertical line, must be between -pi and pi] to apply to the line overlaid on the image, for
+    each slice, for slice that don't have an angle to display, a nan is expected. To be used for assessing cord orientation.
     :param args: args from parent function
     :param path_qc: str: Path to save QC report
     :param dataset: str: Dataset name
