@@ -20,6 +20,7 @@ import sct_utils as sct
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
 import argparse
+from msct_types import flagTypes
 
 # TODO: display results ==> not only max : with a violin plot of h1 and h2 distribution ? see dev/straightening --> seaborn.violinplot
 # TODO: add the option Hyberbolic Hausdorff's distance : see  choi and seidel paper
@@ -442,7 +443,7 @@ def get_parser():
     mandatoryArguments.add_argument(
         "-i",
         help='First Image on which you want to find the skeleton (e.g. "t2star_manual_gmseg.nii.gz")',
-        metavar='',
+        metavar=flagTypes.file.value,
         required=False)
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
@@ -453,14 +454,9 @@ def get_parser():
     optional.add_argument(
         "-d",
         help='Second Image on which you want to find the skeleton (e.g. "t2star_manual_gmseg.nii.gz")',
-        metavar='',
+        metavar=flagTypes.file.value,
         required=False,
         default=None)
-    optional.add_argument(
-        "-r",
-        help="Second Image on which you want to find the skeleton",
-        metavar='',
-        required=False)
     optional.add_argument(
         "-thinning",
         type=int,
@@ -469,21 +465,16 @@ def get_parser():
         default=1,
         choices=(0, 1))
     optional.add_argument(
-        "-t",
-        help="Thinning : find the skeleton of the binary images using the Zhang-Suen algorithm (1984) and use it to compute the hausdorff's distance",
-        required = False,
-        metavar='')
-    optional.add_argument(
         "-resampling",
         type=float,
         help="pixel size in mm to resample to (e.g. 0.5)",
-        metavar='',
+        metavar=flagTypes.float.value,
         required=False,
         default=0.1)
     optional.add_argument(
         "-o",
         help='Name of the output file (e.g. "my_hausdorff_dist.txt")',
-        metavar='',
+        metavar=flagTypes.str.value,
         required=False,
         default='hausdorff_distance.txt')
     optional.add_argument(
