@@ -23,7 +23,7 @@ import sct_utils as sct
 import argparse
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
-from msct_types import flagTypes
+from spinalcordtoolbox.utils import Metavar
 
 
 class LineBuilder:
@@ -277,7 +277,7 @@ def get_parser():
     mandatoryArguments.add_argument(
         "-i",
         help='input image. (e.g. "t2.nii.gz")',
-        metavar=flagTypes.file.value,
+        metavar=Metavar.file,
         required = False)
     mandatoryArguments.add_argument(
         "-g",
@@ -292,7 +292,7 @@ def get_parser():
     requiredCommandArguments.add_argument(
         "-o",
         help='Output image. This option is REQUIRED for the command line execution (e.g. "t1.nii.gz")',
-        metavar=flagTypes.str.value,
+        metavar=Metavar.str,
         required=False)
     # Optional arguments section
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
@@ -321,33 +321,33 @@ def get_parser():
     commandOptionalArguments.add_argument(
         "-m",
         help="cropping around the mask",
-        metavar=flagTypes.file.value,
+        metavar=Metavar.file,
         required=False)
     commandOptionalArguments.add_argument(
         "-start",
         help='start slices, ]0,1[: percentage, 0 & >1: slice number (e.g. "40, 30, 5")',
-        metavar=flagTypes.list.value,
+        metavar=Metavar.list,
         required = False)
     commandOptionalArguments.add_argument(
         "-end",
         help='end slices, ]0,1[: percentage, 0: last slice, >1: slice number, <0: last slice - value (e.g. "60, 100, 10")',
-        metavar=flagTypes.list.value,
+        metavar=Metavar.list,
         required = False)
     commandOptionalArguments.add_argument(
         "-dim",
         help='dimension to crop, from 0 to n-1, default is 1 (e.g. "0, 1, 2")',
-        metavar=flagTypes.list.value,
+        metavar=Metavar.list,
         required = False)
     commandOptionalArguments.add_argument(
         "-shift",
         help='adding shift when used with mask, default is 0 (e.g. "10, 10, 5")',
-        metavar=flagTypes.list.value,
+        metavar=Metavar.list,
         required = False)
     commandOptionalArguments.add_argument(
         "-b",
         help="replace voxels outside cropping region with background value. \n"
              "If both the -m and the -b flags are used : the image is croped \"exactly\" around the mask with a background (and not around a rectangle area including the mask). the shape of the image isn't change.",
-        metavar=flagTypes.float.value,
+        metavar=Metavar.float,
         required=False)
     commandOptionalArguments.add_argument(
         "-bmax",
@@ -357,12 +357,12 @@ def get_parser():
     commandOptionalArguments.add_argument(
         "-ref",
         help='crop input image based on reference image (works only for 3D images) (e.g. "ref.nii.gz")',
-        metavar=flagTypes.file.value,
+        metavar=Metavar.file,
         required = False)
     commandOptionalArguments.add_argument(
         "-mesh",
         help="mesh to crop",
-        metavar=flagTypes.file.value,
+        metavar=Metavar.file,
         required=False)
     commandOptionalArguments.add_argument(
         "-rof",
