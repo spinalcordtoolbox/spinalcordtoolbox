@@ -29,6 +29,7 @@ import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
 from sct_image import concat_data
 import argparse
+from msct_types import flagTypes
 
 
 # DEFAULT PARAMETERS
@@ -286,7 +287,7 @@ def get_parser():
     mandatoryArguments.add_argument(
         '-i',
         help='Image to create mask on. Only used to get header. Must be 3D, (e.g. "data.nii.gz")',
-        metavar='',
+        metavar=flagTypes.file.value,
         required = False)
     mandatoryArguments.add_argument(
         '-p',
@@ -295,7 +296,7 @@ def get_parser():
              '  <point,FILE>: Center mask at the X,Y coordinates of the label defined in input volume FILE. (e.g. "point,label.nii.gz")\n'
              '  <center>: Center mask in the middle of the FOV (nx/2, ny/2).\n'
              '  <centerline,FILE>: At each slice, the mask is centered at the spinal cord centerline, defined by the input segmentation FILE. (e.g. "centerline,t2_seg.nii.gz")',
-        metavar='',
+        metavar=flagTypes.str.value,
         required = False,
         default = param_default.process)
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
@@ -307,7 +308,7 @@ def get_parser():
     optional.add_argument(
         '-size',
         help='Size of the mask in the axial plane, given in pixel (e.g. "35") or in millimeter (e.g. "35mm"). If shape=gaussian, size corresponds to "sigma" (e.g. "45")',
-        metavar='',
+        metavar=flagTypes.str.value,
         required = False,
         default = param_default.size)
     optional.add_argument(
@@ -318,7 +319,7 @@ def get_parser():
         choices=('cylinder', 'box', 'gaussian'))
     optional.add_argument(
         '-o',
-        metavar='',
+        metavar=flagTypes.str.value,
         help='Name of output mask, (e.g. "data.nii")',
         required = False)
     optional.add_argument(
