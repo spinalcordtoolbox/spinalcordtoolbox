@@ -24,6 +24,7 @@ import sct_convert
 import sct_image
 import spinalcordtoolbox.image as msct_image
 from sct_crop_image import ImageCropper
+from msct_types import flagTypes
 
 
 class Param:
@@ -47,11 +48,11 @@ def get_parser():
     mandatoryArguments.add_argument(
         "-i",
         help='input image (e.g. "t2.nii.gz")',
-        metavar='')
+        metavar=flagTypes.file.value)
     mandatoryArguments.add_argument(
         "-d",
         help='destination image (e.g. "out.nii.gz")',
-        metavar='')
+        metavar=flagTypes.file.value)
     mandatoryArguments.add_argument(
         "-w",
         help='Transformation, which can be a warping field (nifti image) or an affine transformation matrix (text file). (e.g. "warp1.nii.gz, warp2.nii.gz")',
@@ -69,13 +70,9 @@ def get_parser():
         default= 0,
         choices=(0, 1, 2))
     optional.add_argument(
-        "-c",
-        help="Crop Reference. 0 : no reference. 1 : sets background to 0. 2 : use normal background",
-        metavar='')
-    optional.add_argument(
         "-o",
         help='registered source. (e.g. "dest.nii.gz")',
-        metavar='',
+        metavar=flagTypes.file.value,
         default = '')
     optional.add_argument(
         "-x",
