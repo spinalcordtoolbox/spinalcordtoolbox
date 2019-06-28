@@ -21,6 +21,7 @@ from numpy.linalg import norm, inv
 import numpy as np
 from scipy.spatial import cKDTree
 
+from enum import Enum
 
 class Point(object):
     def __init__(self):
@@ -852,3 +853,11 @@ class Centerline:
         std = np.std(distances)
         max = np.max(distances)
         return mse, mean, std, max, distances
+
+class flagTypes(Enum):
+    file = "<file>"
+    str = "<str>"
+    folder = "<folder>"
+    int = "<int>"
+    list = "<list>"
+    float = "<float>"
