@@ -108,12 +108,12 @@ def main():
     parser = get_parser()
     arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
     fname_data = arguments.i
-    if vars(arguments)['m']:
+    if arguments.m is not None:
         fname_mask = arguments.m
     else:
         fname_mask = ''
     method = arguments.method
-    if vars(arguments)['vol']:
+    if arguments.vol is not None:
         index_vol_user = arguments.vol
     else:
         index_vol_user = ''
