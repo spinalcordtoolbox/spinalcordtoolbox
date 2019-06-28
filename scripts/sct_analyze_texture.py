@@ -15,6 +15,7 @@ import shutil
 import sys
 import numpy as np
 import itertools
+import argparse
 
 import tqdm
 from skimage.feature import greycomatrix, greycoprops
@@ -22,7 +23,6 @@ from skimage.feature import greycomatrix, greycoprops
 import sct_utils as sct
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
-import argparse
 from spinalcordtoolbox.utils import Metavar
 
 def get_parser():
