@@ -112,7 +112,7 @@ class QcImage(object):
                 angle = angles[nslice]
                 if not (-np.pi <= angle <= np.pi):
                     raise Exception("angle prompted for angle_line not in the range [-pi pi]")
-                x_min, y_min = x_min, y_min = x0 - 10, y0 - 10
+                x_min, y_min = x0 - 10, y0 - 10
                 x_max, y_max = x0 + 10, y0 + 10
 
                 if -np.pi/4 < angle <= np.pi/4 or -np.pi <= angle <= -3*np.pi/4 or 3*np.pi/4 < angle <= np.pi:
@@ -252,8 +252,12 @@ class QcImage(object):
             self.qc_report.make_content_path()
             logger.info('QcImage: %s with %s slice', func.__name__, sct_slice.get_name())
 
-            [img, mask], centermass = func(sct_slice, *args)
-            self._centermass = centermass
+            if self._angle_line is None:
+                maskimg, centermass = func(sct_slice,    *args)
+                img, mask = maskimg[0], maskimg[1]
+            else:
+                [img, mask], centermass = func(sct_slice, *args)
+                self._centermass = centermass
 
             if self._stretch_contrast:
                 def equalized(a):
