@@ -138,12 +138,12 @@ def main(arguments):
     input_tr = None
     verbose = 1
     fname_output_file = arguments.o
-    if vars(arguments)["ofig"] != None:
+    if arguments.ofig is not None:
         input_fname_output = arguments.ofig
-    if vars(arguments)["b"] != None:
+    if arguments.b is not None:
         input_tr_min = arguments.b[0]
         input_tr_max = arguments.b[1]
-    if vars(arguments)["tr"] != None:
+    if arguments.tr is not None:
         input_tr = arguments.tr
     verbose = arguments.v
     sct.init_sct(log_level=verbose, update=True)  # Update log level
