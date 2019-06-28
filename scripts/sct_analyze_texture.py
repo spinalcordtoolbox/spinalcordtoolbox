@@ -23,6 +23,7 @@ import sct_utils as sct
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
 import argparse
+from msct_types import flagTypes
 
 def get_parser():
     # Initialize the parser
@@ -35,12 +36,12 @@ def get_parser():
     mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatoryArguments.add_argument(
         "-i",
-        metavar='',
+        metavar=flagTypes.file.value,
         help='Image to analyze. (e.g. "t2.nii.gz")',
         required=False)
     mandatoryArguments.add_argument(
         "-m",
-        metavar='',
+        metavar=flagTypes.file.value,
         help='Image mask (e.g. "t2_seg.nii.gz")',
         required=False)
     optional = parser.add_argument_group("\nOPTIONALS ARGUMENTS")
@@ -51,44 +52,44 @@ def get_parser():
         help="show this help message and exit")
     optional.add_argument(
         "-feature",
-        metavar='',
+        metavar=flagTypes.str.value,
         help='List of GLCM texture features (separate arguments with ",").',
         required=False,
         default=ParamGLCM().feature)
     optional.add_argument(
         "-distance",
-        metavar='',
+        metavar=flagTypes.int.value,
         help='Distance offset for GLCM computation, in pixel (suggested distance values between 1 and 5). (e.g. "1")',
         required=False,
         default=ParamGLCM().distance)
     optional.add_argument(
         "-angle",
-        metavar='',
+        metavar=flagTypes.list.value,
         help='List of angles for GLCM computation, separate arguments with ",", in degrees (suggested distance values between 0 and 179). (e.g. "0,90")',
         required=False,
         default=ParamGLCM().angle)
     optional.add_argument(
         "-dim",
-        metavar='',
-        help="Compute the texture on the axial (ax), sagittal (sag) or coronal (cor) slices. (e.g. ['ax', 'sag', 'cor')",
+        help="Compute the texture on the axial (ax), sagittal (sag) or coronal (cor) slices.",
         required=False,
+        choices=('ax','sag','cor'),
         default=Param().dim)
     optional.add_argument(
         "-ofolder",
-        metavar='',
+        metavar=flagTypes.folder.value,
         help='Output folder. (e.g. "/my_texture/")',
         required=False,
         default=Param().path_results)
     optional.add_argument(
         "-igt",
-        metavar='',
+        metavar=flagTypes.str.value,
         help="File name of ground-truth texture metrics.",
         required=False)
     optional.add_argument(
         "-r",
-        metavar='',
         help="Remove temporary files.",
         required=False,
+        choices=(0,1),
         default=int(Param().rm_tmp))
     optional.add_argument(
         "-v",
