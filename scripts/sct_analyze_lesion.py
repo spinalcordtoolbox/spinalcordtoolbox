@@ -510,7 +510,7 @@ def main(arguments):
     fname_mask = arguments.m
 
     # SC segmentation
-    if vars(arguments)["s"] != None:
+    if arguments.s is not None:
         fname_sc = arguments.s
         if not os.path.isfile(fname_sc):
             fname_sc = None
@@ -519,7 +519,7 @@ def main(arguments):
         fname_sc = None
 
     # Reference image
-    if vars(arguments)["i"] != None:
+    if arguments.i is not None:
         fname_ref = arguments.i
         if not os.path.isfile(fname_sc):
             fname_ref = None
@@ -528,7 +528,7 @@ def main(arguments):
         fname_ref = None
 
     # Path to template
-    if vars(arguments)["f"] != None:
+    if arguments.f is not None:
         path_template = arguments.f
         if not os.path.isdir(path_template) and os.path.exists(path_template):
             path_template = None
@@ -537,7 +537,7 @@ def main(arguments):
         path_template = None
 
     # Output Folder
-    if vars(arguments)["ofolder"] != None:
+    if arguments.ofolder is not None:
         path_results = arguments.ofolder
         if not os.path.isdir(path_results) and os.path.exists(path_results):
             printv("ERROR output directory %s is not a valid directory" % path_results, 1, 'error')
@@ -547,7 +547,7 @@ def main(arguments):
         path_results = './'
 
     # Remove temp folder
-    if vars(arguments)["r"] != None:
+    if arguments.r is not None:
         rm_tmp = bool(arguments.r)
     else:
         rm_tmp = True
