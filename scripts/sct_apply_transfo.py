@@ -279,13 +279,13 @@ def main(arguments):
 
     transform = Transform(input_filename=input_filename, fname_dest=fname_dest, warp=warp_filename)
 
-    if vars(arguments)["crop"] != None:
+    if arguments.crop is not None:
         transform.crop = arguments.crop
-    if vars(arguments)["o"] != None:
+    if arguments.o is not None:
         transform.output_filename = arguments.o
-    if vars(arguments)["x"] != None:
+    if arguments.x is not None:
         transform.interp = arguments.x
-    if vars(arguments)["r"] != None:
+    if arguments.r is not None:
         transform.remove_temp_files = arguments.r
     transform.verbose = arguments.v
     sct.init_sct(log_level=transform.verbose, update=True)  # Update log level
