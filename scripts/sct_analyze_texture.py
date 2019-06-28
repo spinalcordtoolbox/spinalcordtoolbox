@@ -308,7 +308,7 @@ def main(arguments):
     param.fname_im = arguments.i
     param.fname_seg = arguments.m
 
-    if vars(arguments)["ofolder"] != None:
+    if arguments.ofolder is not None:
         param.path_results = arguments.ofolder
 
     if not os.path.isdir(param.path_results) and os.path.exists(param.path_results):
@@ -316,16 +316,16 @@ def main(arguments):
     if not os.path.exists(param.path_results):
         os.makedirs(param.path_results)
 
-    if vars(arguments)["feature"] != None:
+    if arguments.feature is not None:
         param_glcm.feature = arguments.feature
-    if vars(arguments)["distance"] != None:
+    if arguments.distance is not None:
         param_glcm.distance = arguments.distance
-    if vars(arguments)["angle"] != None:
+    if arguments.angle is not None:
         param_glcm.angle = arguments.angle
 
-    if vars(arguments)["dim"] != None:
+    if arguments.dim is not None:
         param.dim = arguments.dim
-    if vars(arguments)["r"] != None:
+    if arguments.r is not None:
         param.rm_tmp = bool(arguments.r)
     verbose = arguments.v
     sct.init_sct(log_level=verbose, update=True)  # Update log level
