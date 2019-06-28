@@ -21,6 +21,7 @@ import argparse
 from spinalcordtoolbox.image import Image, empty_like
 from spinalcordtoolbox.utils import parse_num_list
 import sct_utils as sct
+from msct_types import flagTypes
 
 
 # PARAMETERS
@@ -45,7 +46,7 @@ def get_parser():
         '-i',
         help='4D data to compute the SNR on (along the 4th dimension)(e.g. "b0s.nii.gz").',
         required=False,
-        metavar='')
+        metavar=flagTypes.file.value)
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",
@@ -55,7 +56,7 @@ def get_parser():
     optional.add_argument(
         '-m',
         help='Binary (or weighted) mask within which SNR will be averaged (e.g. "dwi_moco_mean_seg.nii.gz").',
-        metavar='',
+        metavar=flagTypes.file.value,
         default='')
     optional.add_argument(
         '-method',
@@ -68,7 +69,7 @@ def get_parser():
         '-vol',
         help='Volumes to compute SNR from. Separate with "," (e.g. "-vol 0,1"), or select range '
              'using ":" (e.g. "-vol 2:50"). By default, all volumes in series are selected.',
-        metavar='',
+        metavar=flagTypes.str.value,
         default='')
     optional.add_argument(
         '-r',
