@@ -43,9 +43,6 @@ def get_parser():
 
 def main(args=None):
 
-    #TODO define filenames properly at the beginning and use them latter on
-    #TODO add qc, each method ?
-
     # Parser :
     if not args:
         args = sys.argv[1:]
@@ -64,17 +61,22 @@ def main(args=None):
         if not os.path.isdir(output_dir):
             os.mkdir(output_dir)
 
+    methods = ["NoRot", "pca", "hog", "auto"]
+
     fname_seg_template = os.path.join(sct.__data_dir__, 'PAM50/template/PAM50_cord.nii.gz')
 
     sct.printv("        Python processing file : " + fname_image + " with seg : " + fname_seg)
 
     # Determining contrast :
-    if ("T1w" in fname_image) or ("t1w" in fname_image):
+    if ("T1w" in fname_image) or ("t1w" in fname_image) or ("MToff" in fname_image):
         contrast, contrast_label = "t1", "t1"
-    elif ("T2w" in fname_image) or ("t2w" in fname_image):
+        fname_image_template = os.path.join(sct.__data_dir__, "PAM50/template/PAM50_t1.nii.gz")
+    elif ("T2w" in fname_image) or ("t2w" in fname_image)or ("MTon" in fname_image):
         contrast, contrast_label = "t2", "t2"
+        fname_image_template = os.path.join(sct.__data_dir__, "PAM50/template/PAM50_t2.nii.gz")
     elif ("T2s" in fname_image) or ("t2s" in fname_image):
         contrast, contrast_label = "t2s", "t2"
+        fname_image_template = os.path.join(sct.__data_dir__, "PAM50/template/PAM50_t2s.nii.gz")
     else:
         sct.printv("Contrast not supported yet for file : " + fname_image)
         return
@@ -86,7 +88,7 @@ def main(args=None):
 
     # Applying same process but for different methods :
 
-    for method in ["NoRot", "pca", "hog"]:
+    for method in methods:
 
         sct.printv("\n\n Registration with " + method)
 
@@ -132,6 +134,10 @@ def main(args=None):
             filewriter.writerow(["dice_max", max(dice_slice)])
             filewriter.writerow(["dice_std", np.std(dice_slice)])
         os.chdir(cwd)
+
+        generate_qc(fname_in1=fname_image, fname_in2=output_dir + "/template2anat.nii.gz", fname_seg=fname_seg, args=args,
+                    path_qc=path_qc, dataset=None, subject=None,
+                    process='sct_register_to_template')
 
 
 if __name__ == "__main__":
