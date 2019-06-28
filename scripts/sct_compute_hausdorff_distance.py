@@ -12,14 +12,13 @@
 
 from __future__ import absolute_import, division
 
-import sys, io, os, time, shutil
+import sys, io, os, time, shutil, argparse
 
 import numpy as np
 
 import sct_utils as sct
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
-import argparse
 from spinalcordtoolbox.utils import Metavar
 
 # TODO: display results ==> not only max : with a violin plot of h1 and h2 distribution ? see dev/straightening --> seaborn.violinplot
