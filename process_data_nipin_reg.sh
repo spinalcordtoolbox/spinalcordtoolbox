@@ -29,15 +29,19 @@ do
     file_seg_manual="${file%.nii.gz*}_seg_manual.nii.gz"
     if [ -e $file_seg ]; then #segmentation of this file exist
       echo "======> Processing file $file with seg $file_seg"
-      evaluate_reg -i $file -iseg $file_seg -o $PATH_RESULTS
+      evaluate_reg -i $file -iseg $file_seg -o $PATH_RESULTS -qc $PATH_QC
     elif [ -e $file_seg_manual ]; then #manual segmentation of this file exist
       echo "======> Processing file $file with seg $file_seg_manual"
-      evaluate_reg -i $file -iseg $file_seg -o $PATH_RESULTS
+      evaluate_reg -i $file -iseg $file_seg -o $PATH_RESULTS -qc $PATH_QC
     else
       echo "======> Segmentation for file $file does not exist, segmenting with sct_deepseg_sc"
       if [[ $file == *"T1w"* ]]; then
         contrast="t1"
+      elif [[ $file == *"MToff"* ]]; then
+        contrast="t1"
       elif [[ $file == *"T2w"* ]]; then
+        contrast="t2"
+      elif [[ $file == *"MTon"* ]]; then
         contrast="t2"
       elif [[ $file == *"T2s"* ]]; then
         contrast="t2s"
@@ -47,7 +51,7 @@ do
       fi
       sct_deepseg_sc -i $file -c $contrast -ofolder $PATH_RESULTS
       echo "======> evaluate_reg with file $file and seg ${PATH_RESULTS}/${file_seg##*/}"
-      evaluate_reg -i $file -iseg "${PATH_RESULTS}/${file_seg##*/}" -o $PATH_RESULTS
+      evaluate_reg -i $file -iseg "${PATH_RESULTS}/${file_seg##*/}" -o $PATH_RESULTS -qc $PATH_QC
     fi
     echo "evaluate_reg done"
   fi

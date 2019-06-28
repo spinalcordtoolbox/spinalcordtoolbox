@@ -83,7 +83,7 @@ def main(args=None):
 
     methods = ["pca", "hog", "auto"]
 
-    angle_range = 10
+    angle_range = 20
     conf_score_th_pca = 1.6  # for pca and auto !
     conf_score_th_hog = 1  # only for hog
     smooth = True
