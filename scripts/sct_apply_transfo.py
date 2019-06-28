@@ -17,8 +17,8 @@
 from __future__ import division, absolute_import
 
 import sys, io, os, time, functools
-
 import argparse
+
 import sct_utils as sct
 import sct_convert
 import sct_image
