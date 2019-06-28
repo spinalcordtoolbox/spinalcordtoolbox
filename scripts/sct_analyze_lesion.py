@@ -11,6 +11,7 @@
 from __future__ import print_function, absolute_import, division
 
 import os, math, sys, pickle, shutil
+import argparse
 
 import numpy as np
 import pandas as pd
@@ -18,7 +19,6 @@ from skimage.measure import label
 
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
-import argparse
 from msct_types import Centerline
 import sct_utils as sct
 from sct_utils import extract_fname, printv, tmp_create
