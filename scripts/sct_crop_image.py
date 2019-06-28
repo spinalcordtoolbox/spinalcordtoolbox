@@ -13,14 +13,13 @@
 
 from __future__ import absolute_import, division
 
-import sys, io, os, math, time
+import sys, io, os, math, time, argparse
 
 import numpy as np
 import scipy
 import nibabel
 
 import sct_utils as sct
-import argparse
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.utils import Metavar
