@@ -189,6 +189,9 @@ def parse_num_list_inv(list_int):
     return str_num
 
 class Metavar(Enum):
+    """
+    This class is used to display intuitive input types via the metavar field of argparse
+    """
     file = "<file>"
     str = "<str>"
     folder = "<folder>"
