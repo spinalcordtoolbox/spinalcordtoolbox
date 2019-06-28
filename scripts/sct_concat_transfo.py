@@ -35,7 +35,7 @@ def main(arguments):
     fname_dest = arguments.d
     fname_warp_list = (arguments.w).split(",")
 
-    if vars(arguments)["o"] != None:
+    if arguments.o is not None:
         fname_warp_final = arguments.o
     verbose = arguments.v
     sct.init_sct(log_level=verbose, update=True)  # Update log level
