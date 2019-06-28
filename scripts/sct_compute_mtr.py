@@ -15,9 +15,9 @@ from __future__ import absolute_import, division
 
 import sys
 import os
+import argparse
 
 import sct_utils as sct
-import argparse
 from spinalcordtoolbox.utils import Metavar
 
 # DEFAULT PARAMETERS
