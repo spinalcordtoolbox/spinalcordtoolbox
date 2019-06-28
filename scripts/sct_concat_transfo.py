@@ -15,10 +15,9 @@
 
 from __future__ import absolute_import, division
 
-import sys, os, functools
+import sys, os, functools, argparse
 
 import sct_utils as sct
-import argparse
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.utils import Metavar
 
