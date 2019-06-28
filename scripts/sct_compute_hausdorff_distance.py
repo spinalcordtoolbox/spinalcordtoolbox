@@ -20,7 +20,7 @@ import sct_utils as sct
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
 import argparse
-from msct_types import flagTypes
+from spinalcordtoolbox.utils import Metavar
 
 # TODO: display results ==> not only max : with a violin plot of h1 and h2 distribution ? see dev/straightening --> seaborn.violinplot
 # TODO: add the option Hyberbolic Hausdorff's distance : see  choi and seidel paper
@@ -443,7 +443,7 @@ def get_parser():
     mandatoryArguments.add_argument(
         "-i",
         help='First Image on which you want to find the skeleton (e.g. "t2star_manual_gmseg.nii.gz")',
-        metavar=flagTypes.file.value,
+        metavar=Metavar.file,
         required=False)
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
@@ -454,7 +454,7 @@ def get_parser():
     optional.add_argument(
         "-d",
         help='Second Image on which you want to find the skeleton (e.g. "t2star_manual_gmseg.nii.gz")',
-        metavar=flagTypes.file.value,
+        metavar=Metavar.file,
         required=False,
         default=None)
     optional.add_argument(
@@ -468,13 +468,13 @@ def get_parser():
         "-resampling",
         type=float,
         help="pixel size in mm to resample to (e.g. 0.5)",
-        metavar=flagTypes.float.value,
+        metavar=Metavar.float,
         required=False,
         default=0.1)
     optional.add_argument(
         "-o",
         help='Name of the output file (e.g. "my_hausdorff_dist.txt")',
-        metavar=flagTypes.str.value,
+        metavar=Metavar.str,
         required=False,
         default='hausdorff_distance.txt')
     optional.add_argument(
