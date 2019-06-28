@@ -18,7 +18,7 @@ import os
 
 import sct_utils as sct
 import argparse
-from msct_types import flagTypes
+from spinalcordtoolbox.utils import Metavar
 
 # DEFAULT PARAMETERS
 
@@ -78,12 +78,12 @@ def get_parser():
     mandatoryArguments.add_argument(
         '-mt0',
         help='Image without MT pulse (MT0)',
-        metavar=flagTypes.float.value,
+        metavar=Metavar.float,
         required=False)
     mandatoryArguments.add_argument(
         '-mt1',
         help='Image with MT pulse (MT1)',
-        metavar=flagTypes.float.value,
+        metavar=Metavar.float,
         required=False)
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
@@ -100,7 +100,7 @@ def get_parser():
     optional.add_argument(
         '-o',
         help='Path to output file.',
-        metavar=flagTypes.str.value,
+        metavar=Metavar.str,
         default=os.path.join('.','mtr.nii.gz'))
 
     return parser
