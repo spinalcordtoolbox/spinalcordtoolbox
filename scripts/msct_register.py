@@ -258,8 +258,6 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
 
     elif rot == 2:  # im and seg case (hog)
 
-        conf_score_th = 1  # to be in the the range [1, +inf[
-
         for iz in range(0, nz):
             try:
                 coord_src[iz], _, centermass_src[iz, :] = compute_pca(data_src_seg[:, :, iz])
@@ -269,11 +267,6 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
 
                 angle_src, conf_score_src = find_angle(data_src_im[:, :, iz], data_src_seg[:, :, iz], px, py, "hog", angle_range=10)
                 angle_dest, conf_score_dest = find_angle(data_dest_im[:, :, iz], data_dest_seg[:, :, iz], px, py, "hog", angle_range=10)
-
-                if conf_score_dest < conf_score_th:
-                    angle_dest = None
-                if conf_score_src < conf_score_th:
-                    angle_src = None
 
                 if (angle_src is None) or (angle_dest is None):
                     sct.printv('WARNING: Slice #' + str(iz) + ' no angle found in dest or src. It will be ignored.', verbose, 'warning')
@@ -289,22 +282,10 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
 
     elif rot == 3:  # im and seg case (auto)
 
-        pca_eigenratio_th = 1.6
-        conf_score_th = 1
-
         for iz in range(0, nz):
             try:
                 coord_src[iz], pca_src[iz], centermass_src[iz, :] = compute_pca(data_src_seg[:, :, iz])
                 coord_dest[iz], pca_dest[iz], centermass_dest[iz, :] = compute_pca(data_dest_seg[:, :, iz])
-
-                # points_src = np.array(np.where(data_src_seg[:, :, iz] > 0.5)).T
-                # n_points_src = len(points_src)
-                #
-                # convex_hull_src = ConvexHull(points_src)
-                # x_hull, _ = skimage.draw.polygon((convex_hull_src.points[convex_hull_src.vertices, 0]).astype(int), (convex_hull_src.points[convex_hull_src.vertices, 1]).astype(int))
-                # n_points_hull_src = len(x_hull)
-                #
-                # convexity_src = n_points_src / n_points_hull_src  # convexity is in range [0, 1]
 
                 if pca_src[iz].explained_variance_ratio_[0] / pca_src[iz].explained_variance_ratio_[1] > pca_eigenratio_th:
                     # PCA method
@@ -319,14 +300,9 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
                 else:
                     # HOG method
                     from nicolas_scripts.functions_sym_rot import find_angle
-
+                    # add angle range as param
                     angle_src, conf_score_src = find_angle(data_src_im[:, :, iz], data_src_seg[:, :, iz], px, py, "hog", angle_range=10)
                     angle_dest, conf_score_dest = find_angle(data_dest_im[:, :, iz], data_dest_seg[:, :, iz], px, py, "hog", angle_range=10)
-
-                    if conf_score_dest < conf_score_th:
-                        angle_dest = None
-                    if conf_score_src < conf_score_th:
-                        angle_src = None
 
                     if (angle_src is None) or (angle_dest is None):
                         sct.printv('WARNING: Slice #' + str(iz) + ' no angle found in dest or src. It will be ignored.', verbose, 'warning')
@@ -345,9 +321,10 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
 
     # regularize rotation
     if not polydeg == 0 and (rot == 1 or rot == 2 or rot == 3):
-        coeffs = np.polyfit(z_nonzero, angle_src_dest[z_nonzero], polydeg)
-        poly = np.poly1d(coeffs)
-        angle_src_dest_regularized = np.polyval(poly, z_nonzero)        # display
+        # coeffs = np.polyfit(z_nonzero, angle_src_dest[z_nonzero], polydeg)
+        # poly = np.poly1d(coeffs)
+        # angle_src_dest_regularized = np.polyval(poly, z_nonzero)        # display
+        angle_src_dest_regularized = ndimage.filters.gaussian_filter1d(angle_src_dest, 3)
         if verbose == 2:
             plt.plot(180 * angle_src_dest[z_nonzero] / np.pi, 'ob')
             plt.plot(180 * angle_src_dest_regularized / np.pi, 'r', linewidth=2)
