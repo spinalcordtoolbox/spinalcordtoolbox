@@ -18,6 +18,7 @@ from __future__ import division, absolute_import
 
 import sys
 import os
+import argparse
 
 import numpy as np
 
@@ -28,7 +29,6 @@ import sct_utils as sct
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
 from sct_image import concat_data
-import argparse
 from spinalcordtoolbox.utils import Metavar
 
 
