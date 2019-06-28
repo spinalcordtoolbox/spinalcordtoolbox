@@ -506,13 +506,13 @@ if __name__ == "__main__":
         output_fname = 'hausdorff_distance.txt'
         resample_to = 0.1
 
-        if vars(arguments)["d"] != None:
+        if arguments.d is not None:
             input_second_fname = arguments.d
-        if vars(arguments)["thinning"] != None:
+        if arguments.thinning is not None:
             param.thinning = bool(arguments.thinning)
-        if vars(arguments)["resampling"] != None:
+        if arguments.resampling is not None:
             resample_to = arguments.resampling
-        if vars(arguments)["o"] != None:
+        if arguments.o is not None:
             output_fname = arguments.o
         param.verbose = arguments.v
         sct.init_sct(log_level=param.verbose, update=True)  # Update log level
