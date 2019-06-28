@@ -17,6 +17,7 @@ import sys
 import sct_utils as sct
 import os
 import argparse
+from msct_types import flagTypes
 
 
 # PARSER
@@ -34,19 +35,19 @@ def get_parser():
         '-di',
         type=float,
         help='Anteroposterior cord distance at the level of maximum injury, (e.g. "6.85")',
-        metavar='',
+        metavar=flagTypes.float.value,
         required = False)
     mandatoryArguments.add_argument(
         '-da',
         type=float,
         help='Anteroposterior cord distance at the nearest normal level above the level of injury, (e.g. "7.65")',
-        metavar='',
+        metavar=flagTypes.float.value,
         required = False)
     mandatoryArguments.add_argument(
         '-db',
         type=float,
         help='Anteroposterior cord distance at the nearest normal level below the level of injury, (e.g. "7.02")',
-        metavar='',
+        metavar=flagTypes.float.value,
         required = False)
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
