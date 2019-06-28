@@ -21,7 +21,7 @@ import numpy as np
 import os
 import argparse
 import sct_utils as sct
-from msct_types import flagTypes
+from spinalcordtoolbox.utils import Metavar
 
 
 # DEFAULT PARAMETERS
@@ -43,12 +43,12 @@ def get_parser():
     mandatoryArguments.add_argument(
         "-i",
         help='File input (e.g. "data.nii.gz")',
-        metavar=flagTypes.file.value,
+        metavar=Metavar.file,
         required=True)
     mandatoryArguments.add_argument(
         "-o",
         help='File output (indicate new extension) (e.g. "data.nii")',
-        metavar=flagTypes.str.value,
+        metavar=Metavar.str,
         required=True)
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
