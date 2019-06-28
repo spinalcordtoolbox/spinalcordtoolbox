@@ -15,11 +15,11 @@
 from __future__ import absolute_import
 
 import sys
+import os
+import argparse
 
 import numpy as np
 
-import os
-import argparse
 import sct_utils as sct
 from spinalcordtoolbox.utils import Metavar
 
