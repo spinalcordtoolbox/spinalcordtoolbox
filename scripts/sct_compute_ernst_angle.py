@@ -18,7 +18,7 @@ import sys
 import os
 import argparse
 import sct_utils as sct
-from msct_types import flagTypes
+from spinalcordtoolbox.utils import Metavar
 
 
 # DEFAULT PARAMETERS
@@ -81,7 +81,7 @@ def get_parser():
         "-tr",
         type=float,
         help='Value of TR (in ms) to get the Ernst Angle. (e.g. "2000")',
-        metavar=flagTypes.float.value,
+        metavar=Metavar.float,
         required=False)
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
@@ -94,26 +94,26 @@ def get_parser():
         type=float,
         help='T1 value (in ms). (e.g. "832.3")',
         required=False,
-        metavar=flagTypes.float.value,
+        metavar=Metavar.float,
         default=832.0)
     optional.add_argument(
         "-b",
         type=float,
         nargs='*',
-        metavar=flagTypes.float.value,
+        metavar=Metavar.float,
         help='Boundaries TR parameter (in ms) in case -v 2 is used. (e.g. "500,3500")',
         required=False)
     optional.add_argument(
         "-o",
         help="Name of the output file containing Ernst angle result.",
         required=False,
-        metavar=flagTypes.str.value,
+        metavar=Metavar.str,
         default="ernst_angle.txt")
     optional.add_argument(
         "-ofig",
         help="Name of the output graph (only if -v 2 is used).",
         required=False,
-        metavar=flagTypes.str.value,
+        metavar=Metavar.str,
         default="ernst_angle.png")
     optional.add_argument(
         "-v",
