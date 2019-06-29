@@ -33,6 +33,13 @@
     right: 15px;
 }
 
+.emptySearch{
+    position: relative;
+    top: 115px;
+    background-color: Gainsboro;
+    text-align: center;
+}
+
 #sprite-img, #overlay-img {
     position: absolute;
     top: 0px;
