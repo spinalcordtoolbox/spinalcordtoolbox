@@ -4,12 +4,8 @@
 
 
 from __future__ import division, absolute_import
-import sys, os
-import sct_utils as sct
-from msct_parser import Parser
-from nicolas_scripts.functions_sym_rot import *
+from functions_sym_rot import *
 from spinalcordtoolbox.reports.qc import generate_qc
-import csv
 import time
 import math
 from scipy.ndimage.filters import gaussian_filter1d

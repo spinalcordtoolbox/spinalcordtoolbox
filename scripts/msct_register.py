@@ -18,7 +18,7 @@
 
 from __future__ import division, absolute_import
 
-import sys, os, shutil, logging
+import sys, os, logging
 from math import asin, cos, sin, acos
 import numpy as np
 
@@ -263,7 +263,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
                 coord_src[iz], _, centermass_src[iz, :] = compute_pca(data_src_seg[:, :, iz])
                 coord_dest[iz], _, centermass_dest[iz, :] = compute_pca(data_dest_seg[:, :, iz])
 
-                from nicolas_scripts.functions_sym_rot import find_angle
+                from functions_sym_rot import find_angle
 
                 angle_src, conf_score_src = find_angle(data_src_im[:, :, iz], data_src_seg[:, :, iz], px, py, "hog", angle_range=10)
                 angle_dest, conf_score_dest = find_angle(data_dest_im[:, :, iz], data_dest_seg[:, :, iz], px, py, "hog", angle_range=10)
@@ -299,7 +299,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
                     angle_src_dest[iz] = angle_between(eigenv_src, eigenv_dest)
                 else:
                     # HOG method
-                    from nicolas_scripts.functions_sym_rot import find_angle
+                    from functions_sym_rot import find_angle
                     # add angle range as param
                     angle_src, conf_score_src = find_angle(data_src_im[:, :, iz], data_src_seg[:, :, iz], px, py, "hog", angle_range=10)
                     angle_dest, conf_score_dest = find_angle(data_dest_im[:, :, iz], data_dest_seg[:, :, iz], px, py, "hog", angle_range=10)

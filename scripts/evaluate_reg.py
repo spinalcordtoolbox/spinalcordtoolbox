@@ -3,15 +3,12 @@
 # Script used to process one MRI image at a time (the image and its segmentation), made to be used with wrapper or alone
 
 from __future__ import division, absolute_import
-import sys, os
-import sct_utils as sct
-from msct_parser import Parser
 from sct_register_to_template import main as sct_register_to_template
 from sct_label_vertebrae import main as sct_label_vertebrae
 from sct_apply_transfo import main as sct_apply_transfo
 from sct_label_utils import main as sct_labels_utils
 from sct_maths import main as sct_maths
-from nicolas_scripts.functions_sym_rot import *
+from functions_sym_rot import *
 from spinalcordtoolbox.reports.qc import generate_qc
 import csv
 
