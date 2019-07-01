@@ -23,6 +23,7 @@ from math import asin, cos, sin, acos
 import numpy as np
 
 from scipy import ndimage
+from scipy.signal import argrelmax, medfilt
 from scipy.io import loadmat
 from nibabel import load, Nifti1Image, save
 
@@ -263,10 +264,8 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
                 coord_src[iz], _, centermass_src[iz, :] = compute_pca(data_src_seg[:, :, iz])
                 coord_dest[iz], _, centermass_dest[iz, :] = compute_pca(data_dest_seg[:, :, iz])
 
-                from functions_sym_rot import find_angle
-
-                angle_src, conf_score_src = find_angle(data_src_im[:, :, iz], data_src_seg[:, :, iz], px, py, "hog", angle_range=10)
-                angle_dest, conf_score_dest = find_angle(data_dest_im[:, :, iz], data_dest_seg[:, :, iz], px, py, "hog", angle_range=10)
+                angle_src, conf_score_src = find_angle_hog(data_src_im[:, :, iz], data_src_seg[:, :, iz], px, py, angle_range=10)
+                angle_dest, conf_score_dest = find_angle_hog(data_dest_im[:, :, iz], data_dest_seg[:, :, iz], px, py, angle_range=10)
 
                 if (angle_src is None) or (angle_dest is None):
                     sct.printv('WARNING: Slice #' + str(iz) + ' no angle found in dest or src. It will be ignored.', verbose, 'warning')
@@ -288,7 +287,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
                 coord_dest[iz], pca_dest[iz], centermass_dest[iz, :] = compute_pca(data_dest_seg[:, :, iz])
 
                 if pca_src[iz].explained_variance_ratio_[0] / pca_src[iz].explained_variance_ratio_[1] > pca_eigenratio_th:
-                    # PCA method
+                    # PCA method  TODO add angle range on PCA !!!
                     eigenv_src = pca_src[iz].components_.T[0][0], pca_src[iz].components_.T[1][0]  # pca_src.components_.T[0]
                     eigenv_dest = pca_dest[iz].components_.T[0][0], pca_dest[iz].components_.T[1][0]  # pca_dest.components_.T[0]
                     # Make sure first element is always positive (to prevent sign flipping)
@@ -299,10 +298,9 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
                     angle_src_dest[iz] = angle_between(eigenv_src, eigenv_dest)
                 else:
                     # HOG method
-                    from functions_sym_rot import find_angle
                     # add angle range as param
-                    angle_src, conf_score_src = find_angle(data_src_im[:, :, iz], data_src_seg[:, :, iz], px, py, "hog", angle_range=10)
-                    angle_dest, conf_score_dest = find_angle(data_dest_im[:, :, iz], data_dest_seg[:, :, iz], px, py, "hog", angle_range=10)
+                    angle_src, conf_score_src = find_angle_hog(data_src_im[:, :, iz], data_src_seg[:, :, iz], px, py, centermass_src[iz, :], angle_range=10)
+                    angle_dest, conf_score_dest = find_angle_hog(data_dest_im[:, :, iz], data_dest_seg[:, :, iz], px, py, centermass_dest[iz, :], angle_range=10)
 
                     if (angle_src is None) or (angle_dest is None):
                         sct.printv('WARNING: Slice #' + str(iz) + ' no angle found in dest or src. It will be ignored.', verbose, 'warning')
@@ -1068,3 +1066,130 @@ def find_index_halfmax(data1d):
     # plt.plot(xmax, 0.5, 'o')
     # plt.savefig('./normalize1d.png')
     return xmin, xmax
+
+def find_angle_hog(image, segmentation, centermass, px, py, angle_range=10):
+
+    sigma = 10
+    sigmax = sigma / px
+    sigmay = sigma / py
+    nb_bin = 360
+    if nb_bin % 2 != 0:
+        nb_bin = nb_bin - 1
+    kmedian_size = 5
+    angle_range = angle_range
+    if angle_range is None:
+        angle_range = 90
+
+    nx, ny = image.shape
+
+    xx, yy = np.mgrid[:nx, :ny]
+    seg_weighted_mask = np.exp(
+        -(((xx - centermass[0]) ** 2) / (2 * (sigmax ** 2)) + ((yy - centermass[1]) ** 2) / (2 * (sigmay ** 2))))
+
+    grad_orient_histo, proba_map, orient_image = gradient_orientation_histogram(image, nb_bin=nb_bin, seg_weighted_mask=seg_weighted_mask, return_image=True, return_orient=True)
+
+    edges_hist = np.linspace(-(np.pi - np.pi / nb_bin), (np.pi - np.pi / nb_bin), nb_bin)
+    repr_hist = np.linspace(-(np.pi - 2 * np.pi / nb_bin), (np.pi - 2 * np.pi / nb_bin), nb_bin - 1)
+
+    grad_orient_histo_smooth = circular_filter_1d(grad_orient_histo, kmedian_size, filter='median')  # fft than square than ifft to calculate convolution
+
+    # hog_fft2 = np.fft.rfft(grad_orient_histo_smooth) ** 2
+    # grad_orient_histo_conv = np.real(np.fft.irfft(hog_fft2))
+    grad_orient_histo_conv = circular_conv(grad_orient_histo_smooth, grad_orient_histo_smooth)
+
+    index_restrain = int(np.ceil(np.true_divide(angle_range, 180) * nb_bin))
+    center = (nb_bin - 1) // 2
+
+    grad_orient_histo_conv_restrained = grad_orient_histo_conv[center - index_restrain + 1:center + index_restrain + 1]
+
+    index_angle_found = np.argmax(grad_orient_histo_conv_restrained) + (nb_bin // 2 - index_restrain)
+    angle_found = repr_hist[index_angle_found] / 2
+    angle_found_score = np.amax(grad_orient_histo_conv_restrained)
+
+    arg_maxs = argrelmax(grad_orient_histo_conv_restrained, order=kmedian_size, mode='wrap')[0]
+    if len(arg_maxs) > 1:
+        conf_score = angle_found_score / grad_orient_histo_conv_restrained[arg_maxs[1]]
+    else:
+        conf_score = angle_found_score / np.mean(grad_orient_histo_conv)
+
+    return angle_found, conf_score
+
+
+def gradient_orientation_histogram(image, nb_bin, seg_weighted_mask=None):
+    """ This function takes an image as an input and return its orientation histogram
+    inputs :
+        - image : the image to compute the orientation histogram from, a 2D numpy array
+        - nb_bin : the number of bins of the histogram, an int, for instance 360 for bins 1 degree large (can be more or less than 360)
+        - seg_weighted_mask : optional, mask weighting the histogram count, base on segemntation, 2D numpy array between 0 and 1
+    outputs :
+        - hog_ancest : the histogram of the orientations of the image, a 1D numpy array of length nb_bin"""
+
+    h_kernel = np.array([[1, 2, 1],
+                         [0, 0, 0],
+                         [-1, -2, -1]]) / 4.0
+    v_kernel = h_kernel.T
+
+    # Normalization by median, to resolve scaling problems
+    image = image / np.median(image)
+
+    # x and y gradients
+    gradx = ndimage.convolve(image, v_kernel)
+    grady = ndimage.convolve(image, h_kernel)
+
+    # orientation gradient
+    orient = np.arctan2(grady, gradx)  # results are in the range -pi pi
+
+    # weight by gradient magnitude :  this step seems dumb, it alters the angles
+    grad_mag = ((np.abs(gradx.astype(object)) ** 2 + np.abs(grady.astype(object)) ** 2) ** 0.5)  # weird data type manipulation, cannot explain why it failed without it
+    if np.max(grad_mag) != 0:
+        grad_mag = grad_mag / np.max(grad_mag)  # to have map between 0 and 1 (and keep consistency with the seg_weihting map if provided
+
+    if seg_weighted_mask is not None:
+        weighting_map = np.multiply(seg_weighted_mask, grad_mag)  # include weightning by segmentation
+    else:
+        weighting_map = grad_mag
+
+    # compute histogram :
+    grad_orient_histo = np.histogram(np.concatenate(orient), bins=nb_bin - 1, range=(-(np.pi - np.pi / nb_bin), (np.pi - np.pi / nb_bin)),
+                                     weights=np.concatenate(weighting_map))
+
+    return grad_orient_histo[0].astype(float)  # return only the values of the bins, not the bins (we know them)
+
+
+def circular_conv(signal1, signal2):
+
+    if signal1.shape != signal2.shape :
+        raise Exception("The two signals for circular convolution do not have the same shape")
+
+    signal2_extended = np.concatenate((signal2, signal2, signal2))  # replicate signal at both ends
+
+    signal_conv_extended = np.convolve(signal1, signal2_extended, mode="same")  # median filtering
+
+    length = len(signal1)
+    signal_conv = signal_conv_extended[length:2*length]  # truncate back the signal
+
+    return signal_conv
+
+
+def circular_filter_1d(signal, param_filt, filter='gaussian'):
+
+    """ This function filters circularly the signal inputted with a median filter of inputted size, in this context
+    circularly means that the signal is wrapped around and then filtered
+    inputs :
+        - signal : 1D numpy array
+        - window_size : size of the median filter, an int
+    outputs :
+        - signal_smoothed : 1D numpy array"""
+
+    signal_extended = np.concatenate((signal, signal, signal))  # replicate signal at both ends
+    if filter == 'gaussian':
+        signal_extended_smooth = ndimage.gaussian_filter(signal_extended, param_filt)  # gaussian
+    elif filter == 'median':
+        signal_extended_smooth = medfilt(signal_extended, param_filt)  # median filtering
+    else:
+        raise Exception("unknow type of filter")
+
+    length = len(signal)
+    signal_smoothed = signal_extended_smooth[length:2*length]  # truncate back the signal
+
+    return signal_smoothed
