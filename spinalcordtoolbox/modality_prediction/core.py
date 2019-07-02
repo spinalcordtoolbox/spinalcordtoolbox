@@ -101,7 +101,9 @@ def classify_acquisition(input_path, model=None):
     numeral=[[preds.count(nb), nb] for nb in preds]
     numeral.sort(key=lambda x:x[0], reverse=True)
     modality = numeral[0][1]
-    return(modality)
+
+    class_names = ["t1", "t2s", "t2"]
+    return(class_names[modality])
 
 
 def run_main():
@@ -119,8 +121,4 @@ def run_main():
     
     class_names = ["T1w", "T2star", "T2w"]   
     
-    print(f"This acquisition is most likely a {class_names[modality]}.")
-    
-    
-if __name__ == "__main__":
-    run_main()
+    return(class_names[modality])
