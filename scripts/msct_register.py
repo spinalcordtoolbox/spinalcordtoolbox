@@ -46,7 +46,7 @@ def register_slicewise(fname_src,
                         remove_temp_files=0,
                         verbose=0):
 
-    im_and_seg = (paramreg.algo == 'centermassrot') and ((paramreg.rot_method == 'hog') or (paramreg.rot_method == 'auto')) # bool for simplicity
+    im_and_seg = (paramreg.algo == 'centermassrot') and ((paramreg.rot_method == 'hog') or (paramreg.rot_method == 'auto'))  # bool for simplicity
     # future contributor wanting to implement a method that use both im and seg will add: or (paramreg.rot_method == 'OTHER_METHOD')
 
     if im_and_seg is True:
@@ -1153,9 +1153,9 @@ def gradient_orientation_histogram(image, nb_bin, seg_weighted_mask=None):
     inputs :
         - image : the image to compute the orientation histogram from, a 2D numpy array
         - nb_bin : the number of bins of the histogram, an int, for instance 360 for bins 1 degree large (can be more or less than 360)
-        - seg_weighted_mask : optional, mask weighting the histogram count, base on segemntation, 2D numpy array between 0 and 1
+        - seg_weighted_mask : optional, mask weighting the histogram count, base on segmentation, 2D numpy array between 0 and 1
     outputs :
-        - hog_ancest : the histogram of the orientations of the image, a 1D numpy array of length nb_bin"""
+        - grad_orient_histo : the histogram of the orientations of the image, a 1D numpy array of length nb_bin"""
 
     h_kernel = np.array([[1, 2, 1],
                          [0, 0, 0],
@@ -1165,7 +1165,7 @@ def gradient_orientation_histogram(image, nb_bin, seg_weighted_mask=None):
     # Normalization by median, to resolve scaling problems
     image = image / np.median(image)
 
-    # x and y gradients
+    # x and y gradients of the image
     gradx = ndimage.convolve(image, v_kernel)
     grady = ndimage.convolve(image, h_kernel)
 
@@ -1175,7 +1175,7 @@ def gradient_orientation_histogram(image, nb_bin, seg_weighted_mask=None):
     # weight by gradient magnitude :  this step seems dumb, it alters the angles
     grad_mag = ((np.abs(gradx.astype(object)) ** 2 + np.abs(grady.astype(object)) ** 2) ** 0.5)  # weird data type manipulation, cannot explain why it failed without it
     if np.max(grad_mag) != 0:
-        grad_mag = grad_mag / np.max(grad_mag)  # to have map between 0 and 1 (and keep consistency with the seg_weihting map if provided
+        grad_mag = grad_mag / np.max(grad_mag)  # to have map between 0 and 1 (and keep consistency with the seg_weihting map if provided)
 
     if seg_weighted_mask is not None:
         weighting_map = np.multiply(seg_weighted_mask, grad_mag)  # include weightning by segmentation
@@ -1190,39 +1190,43 @@ def gradient_orientation_histogram(image, nb_bin, seg_weighted_mask=None):
 
 
 def circular_conv(signal1, signal2):
+    """takes two 1D numpy array and do a circular convolution with them
+    inputs :
+        - signal1 : 1D numpy array
+        - signal2 : 1D numpy array, same length as signal1
+    output :
+        - signal_conv : 1D numpy array, result of circular convolution of signal1 and signal2"""
 
-    if signal1.shape != signal2.shape :
+    if signal1.shape != signal2.shape:
         raise Exception("The two signals for circular convolution do not have the same shape")
 
     signal2_extended = np.concatenate((signal2, signal2, signal2))  # replicate signal at both ends
 
     signal_conv_extended = np.convolve(signal1, signal2_extended, mode="same")  # median filtering
 
-    length = len(signal1)
-    signal_conv = signal_conv_extended[length:2*length]  # truncate back the signal
+    signal_conv = signal_conv_extended[len(signal1):2*len(signal1)]  # truncate back the signal
 
     return signal_conv
 
 
-def circular_filter_1d(signal, param_filt, filter='gaussian'):
+def circular_filter_1d(signal, window_size, kernel='gaussian'):
 
     """ This function filters circularly the signal inputted with a median filter of inputted size, in this context
     circularly means that the signal is wrapped around and then filtered
     inputs :
         - signal : 1D numpy array
-        - window_size : size of the median filter, an int
+        - window_size : size of the kernel, an int
     outputs :
-        - signal_smoothed : 1D numpy array"""
+        - signal_smoothed : 1D numpy array, same size as signal"""
 
     signal_extended = np.concatenate((signal, signal, signal))  # replicate signal at both ends
-    if filter == 'gaussian':
-        signal_extended_smooth = ndimage.gaussian_filter(signal_extended, param_filt)  # gaussian
-    elif filter == 'median':
-        signal_extended_smooth = medfilt(signal_extended, param_filt)  # median filtering
+    if kernel == 'gaussian':
+        signal_extended_smooth = ndimage.gaussian_filter(signal_extended, window_size)  # gaussian
+    elif kernel == 'median':
+        signal_extended_smooth = medfilt(signal_extended, window_size)  # median filtering
     else:
-        raise Exception("unknow type of filter")
+        raise Exception("Unknow type of kernel")
 
-    length = len(signal)
-    signal_smoothed = signal_extended_smooth[length:2*length]  # truncate back the signal
+    signal_smoothed = signal_extended_smooth[len(signal):2*len(signal)]  # truncate back the signal
 
     return signal_smoothed
