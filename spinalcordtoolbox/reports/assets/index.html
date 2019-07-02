@@ -84,6 +84,7 @@
                     document.getElementById("dropdown").style.top = "50px";
                 </script>
                 <input class="searchBar" type="text" id="searchInput" onkeyup="hideNonSearchElements()" placeholder="Search" autocomplete="off">
+                <div class="emptySearch">No matching records found</div>
               </div>
               <table id="table" class="table table-condensed"
 		  data-sort-name="moddate"
@@ -185,16 +186,17 @@
             }
         }
         if (isEmpty){
-            tableRows[tableRows.length - 2].style.display = "";
+            document.querySelector(".emptySearch").style.display = "";
         }
         else{
-            tableRows[tableRows.length - 2].style.display = "none";
+            document.querySelector(".emptySearch").style.display = "none";
         }
     }
 
     let body = document.body;
     let dropdown = document.querySelector('.dropdown');
     let btn = document.querySelector('.btn');
+    let thead = document.querySelector('thead');
 
     body.addEventListener('click', function(e){
         /*
@@ -217,6 +219,24 @@
         dropdown.classList.toggle('open');
     });
 
+    thead.addEventListener('click', function(e){
+        /*
+        This function hides the columns that are not supposed to be displayed when sorting the columns.
+        */
+        setTimeout(function(){
+            var columns = document.getElementsByTagName("th");
+            var iHead;
+            for (iHead = 0; iHead < columns.length; iHead++){
+                if (columns[iHead].style.display == "none"){
+                    var iTD;
+                    for (iTD = iHead; iTD < document.getElementsByTagName("td").length; iTD = iTD + columns.length){
+                        document.getElementsByTagName("td")[iTD].style.display = "none";
+                    }
+                }
+            }
+        }, 4);
+    });
+
     setTimeout(function(){
          /*
          This function removes the columns we do not want to display at
@@ -226,13 +246,9 @@
          */
          var iTH;
          var dropdownList = document.getElementsByClassName('dropdown-item');
-         document.getElementById("table").insertRow(-1).insertCell(0).innerHTML = "No matching records found";
-         document.getElementsByTagName("td")[document.getElementsByTagName("td").length - 1].colSpan = "7";
-         document.getElementsByTagName("td")[document.getElementsByTagName("td").length - 1].style.textAlign = "center";
-         document.getElementsByTagName("td")[document.getElementsByTagName("td").length - 1].style.backgroundColor = "Gainsboro";
          for (iTH = 0; iTH < dropdownList.length; iTH++){
               toggleColumn(document.getElementsByClassName('dropdown-item')[iTH].id)
          }
-     },2);
+     },4);
 </script>
 </html>
