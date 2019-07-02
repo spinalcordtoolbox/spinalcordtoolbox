@@ -8,6 +8,8 @@ from torchvision import transforms
 from PIL import Image
 from statistics import mode
 
+from spinalcordtoolbox.image import Image
+
 import model as M
 
 
@@ -69,6 +71,22 @@ def classify_acquisition(input_path, model=None):
     slices.StandardizeTransform()
     input_slices = slices.ToTensor()
 
+    """
+    # We load the acquisitions from the image module in order to benefit from all existing methods
+    slices = Image()
+    slices.loadFromPath(input_path)
+    slices.change_orientation('RPI')
+    
+    # Then we preprocess the slices
+    acq = Acquisition()
+    acq.loadFromImage(slices)
+    acq.CenterCropTransform()
+    acq.StandardizeTranform()
+    
+    input_slices = acq.ToTensor()
+    """
+
+
     with torch.no_grad():
         
         input_slices = input_slices
@@ -91,7 +109,7 @@ def run_main():
     input_path = sys.argv[1]
     
     model = M.Classifier()
-    model.load_state_dict(torch.load("model.pt"))
+    model.load_state_dict(torch.load("model.pt", map_location='cpu'))
     model.eval()
     
     modality = classify_acquisition(input_path, model)
