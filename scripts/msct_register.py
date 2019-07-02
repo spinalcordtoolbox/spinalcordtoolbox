@@ -229,14 +229,18 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
     angle_src_dest = np.zeros(nz)
     z_nonzero = []
 
-    if rot == 1 or rot == 0:
+    if rot == 1 or rot == 0:  # seg only case, PCA or centermass only
+
+        angle_range = 20
+        angle_range *= np.pi/180
+
         # Loop across slices
         for iz in range(0, nz):
             try:
-                # compute PCA and get center or mass
+                # compute PCA and get center or mass based on segmentation
                 coord_src[iz], pca_src[iz], centermass_src[iz, :] = compute_pca(data_src[:, :, iz])
                 coord_dest[iz], pca_dest[iz], centermass_dest[iz, :] = compute_pca(data_dest[:, :, iz])
-                # compute (src,dest) angle for first eigenvector
+                # compute eigenvector based on src and dest segmentation src and dest
                 if rot == 1:
                     eigenv_src = pca_src[iz].components_.T[0][0], pca_src[iz].components_.T[1][0]  # pca_src.components_.T[0]
                     eigenv_dest = pca_dest[iz].components_.T[0][0], pca_dest[iz].components_.T[1][0]  # pca_dest.components_.T[0]
@@ -245,33 +249,43 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
                         eigenv_src = tuple([i * (-1) for i in eigenv_src])
                     if eigenv_dest[0] <= 0:
                         eigenv_dest = tuple([i * (-1) for i in eigenv_dest])
-                    angle_src_dest[iz] = angle_between(eigenv_src, eigenv_dest)
-                    # check if ratio between the two eigenvectors is high enough to prevent poor robustness
-                    if pca_src[iz].explained_variance_ratio_[0] / pca_src[iz].explained_variance_ratio_[1] < pca_eigenratio_th:
-                        angle_src_dest[iz] = 0
-                    if pca_dest[iz].explained_variance_ratio_[0] / pca_dest[iz].explained_variance_ratio_[1] < pca_eigenratio_th:
-                        angle_src_dest[iz] = 0
+                    angle_src = angle_between(eigenv_src, [1, 0])
+                    angle_dest = angle_between([1, 0], eigenv_dest)
+                    # compute ration between axis of PCA
+                    pca_eigenratio_src = pca_src[iz].explained_variance_ratio_[0] / pca_src[iz].explained_variance_ratio_[1]
+                    pca_eigenratio_dest = pca_dest[iz].explained_variance_ratio_[0] / pca_dest[iz].explained_variance_ratio_[1]
+                    # angle is set to 0 if either ratio between axis is too low or outside angle range
+                    if pca_eigenratio_src < pca_eigenratio_th or angle_src > angle_range or angle_src < -angle_range:
+                        angle_src = 0
+                    if pca_eigenratio_dest < pca_eigenratio_th or angle_dest > angle_range or angle_dest < -angle_range:
+                        angle_dest = 0
+                    angle_src_dest[iz] = angle_src + angle_dest  # angle between src and dest is the same as angle between src and origin + angle between origin and dest
                 # append to list of z_nonzero
                 z_nonzero.append(iz)
             # if one of the slice is empty, ignore it
             except ValueError:
                 sct.printv('WARNING: Slice #' + str(iz) + ' is empty. It will be ignored.', verbose, 'warning')
 
-    elif rot == 2:  # im and seg case (hog)
+    elif rot == 2:  # im and seg case (hog method)
+
+        angle_range = 20 * np.pi/180
 
         for iz in range(0, nz):
             try:
+                # PCA for center of mass
                 coord_src[iz], _, centermass_src[iz, :] = compute_pca(data_src_seg[:, :, iz])
                 coord_dest[iz], _, centermass_dest[iz, :] = compute_pca(data_dest_seg[:, :, iz])
 
-                angle_src, conf_score_src = find_angle_hog(data_src_im[:, :, iz], data_src_seg[:, :, iz], px, py, angle_range=10)
-                angle_dest, conf_score_dest = find_angle_hog(data_dest_im[:, :, iz], data_dest_seg[:, :, iz], px, py, angle_range=10)
+                # HOG method to detect rotation, conf_score not used yet
+                angle_src, conf_score_src = find_angle_hog(data_src_im[:, :, iz], centermass_src[iz, :], px, py, angle_range=angle_range)
+                angle_dest, conf_score_dest = find_angle_hog(data_dest_im[:, :, iz], centermass_dest[iz, :], px, py, angle_range=angle_range)
 
                 if (angle_src is None) or (angle_dest is None):
                     sct.printv('WARNING: Slice #' + str(iz) + ' no angle found in dest or src. It will be ignored.', verbose, 'warning')
+                    # This happens if no maxima is found in the hog method, which should almost never happen
                     continue
 
-                angle_src_dest[iz] = angle_src-angle_dest
+                angle_src_dest[iz] = angle_dest - angle_src  # angle are computed from the origin to X
                 # append to list of z_nonzero
                 z_nonzero.append(iz)
 
@@ -279,36 +293,45 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
             except ValueError:
                 sct.printv('WARNING: Slice #' + str(iz) + ' is empty. It will be ignored.', verbose, 'warning')
 
-    elif rot == 3:  # im and seg case (auto)
+    elif rot == 3:  # im and seg case (auto method)
+
+        angle_range_pca = 20 * np.pi/180
+        angle_range_hog = 10 * np.pi/180
 
         for iz in range(0, nz):
             try:
+                # PCA for center of mass and eigenvectors
                 coord_src[iz], pca_src[iz], centermass_src[iz, :] = compute_pca(data_src_seg[:, :, iz])
                 coord_dest[iz], pca_dest[iz], centermass_dest[iz, :] = compute_pca(data_dest_seg[:, :, iz])
 
-                if pca_src[iz].explained_variance_ratio_[0] / pca_src[iz].explained_variance_ratio_[1] > pca_eigenratio_th:
-                    # PCA method  TODO add angle range on PCA !!!
-                    eigenv_src = pca_src[iz].components_.T[0][0], pca_src[iz].components_.T[1][0]  # pca_src.components_.T[0]
-                    eigenv_dest = pca_dest[iz].components_.T[0][0], pca_dest[iz].components_.T[1][0]  # pca_dest.components_.T[0]
-                    # Make sure first element is always positive (to prevent sign flipping)
-                    if eigenv_src[0] <= 0:
-                        eigenv_src = tuple([i * (-1) for i in eigenv_src])
-                    if eigenv_dest[0] <= 0:
-                        eigenv_dest = tuple([i * (-1) for i in eigenv_dest])
-                    angle_src_dest[iz] = angle_between(eigenv_src, eigenv_dest)
-                else:
-                    # HOG method
-                    # add angle range as param
-                    angle_src, conf_score_src = find_angle_hog(data_src_im[:, :, iz], data_src_seg[:, :, iz], px, py, centermass_src[iz, :], angle_range=10)
-                    angle_dest, conf_score_dest = find_angle_hog(data_dest_im[:, :, iz], data_dest_seg[:, :, iz], px, py, centermass_dest[iz, :], angle_range=10)
+                eigenv_src = pca_src[iz].components_.T[0][0], pca_src[iz].components_.T[1][0]  # pca_src.components_.T[0]
+                eigenv_dest = pca_dest[iz].components_.T[0][0], pca_dest[iz].components_.T[1][0]  # pca_dest.components_.T[0]
+                # Make sure first element is always positive (to prevent sign flipping)
+                if eigenv_src[0] <= 0:
+                    eigenv_src = tuple([i * (-1) for i in eigenv_src])
+                if eigenv_dest[0] <= 0:
+                    eigenv_dest = tuple([i * (-1) for i in eigenv_dest])
+                angle_src = angle_between(eigenv_src, [1, 0])
+                angle_dest = angle_between([1, 0], eigenv_dest)
 
-                    if (angle_src is None) or (angle_dest is None):
+                # compute ration between axis of PCA
+                pca_eigenratio_src = pca_src[iz].explained_variance_ratio_[0] / pca_src[iz].explained_variance_ratio_[1]
+                pca_eigenratio_dest = pca_dest[iz].explained_variance_ratio_[0] / pca_dest[iz].explained_variance_ratio_[1]
+
+                # hog method is used to detect angle if either ratio between axis is too low or outside angle range
+                if pca_eigenratio_src < pca_eigenratio_th or angle_src > angle_range_pca or angle_src < -angle_range_pca:
+                    angle_src, conf_score_src = find_angle_hog(data_src_im[:, :, iz], centermass_src[iz, :], px, py, angle_range=angle_range_hog)
+                    angle_src = -angle_src  # to have same orientation as PCA
+                if pca_eigenratio_dest < pca_eigenratio_th or angle_dest > angle_range_pca or angle_dest < -angle_range_pca:
+                    angle_dest, conf_score_dest = find_angle_hog(data_dest_im[:, :, iz], centermass_dest[iz, :], px, py, angle_range=angle_range_hog)
+
+                if (angle_src is None) or (angle_dest is None):
                         sct.printv('WARNING: Slice #' + str(iz) + ' no angle found in dest or src. It will be ignored.', verbose, 'warning')
                         continue
 
-                    angle_src_dest[iz] = angle_src - angle_dest
-                    # append to list of z_nonzero
-                    z_nonzero.append(iz)
+                angle_src_dest[iz] = angle_src + angle_dest
+                # append to list of z_nonzero
+                z_nonzero.append(iz)
 
             # If one slice is empty it will ignore it
             except ValueError:
@@ -318,11 +341,9 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
         raise ValueError("rot param == " + str(rot) + " not implemented")
 
     # regularize rotation
-    if not polydeg == 0 and (rot == 1 or rot == 2 or rot == 3):
-        # coeffs = np.polyfit(z_nonzero, angle_src_dest[z_nonzero], polydeg)
-        # poly = np.poly1d(coeffs)
-        # angle_src_dest_regularized = np.polyval(poly, z_nonzero)        # display
-        angle_src_dest_regularized = ndimage.filters.gaussian_filter1d(angle_src_dest, 3)
+    if not filter_size == 0 and (rot == 1 or rot == 2 or rot == 3):
+        # Filtering the angles by gaussian filter
+        angle_src_dest_regularized = ndimage.filters.gaussian_filter1d(angle_src_dest, filter_size)
         if verbose == 2:
             plt.plot(180 * angle_src_dest[z_nonzero] / np.pi, 'ob')
             plt.plot(180 * angle_src_dest_regularized / np.pi, 'r', linewidth=2)
@@ -1067,50 +1088,62 @@ def find_index_halfmax(data1d):
     # plt.savefig('./normalize1d.png')
     return xmin, xmax
 
-def find_angle_hog(image, segmentation, centermass, px, py, angle_range=10):
 
-    sigma = 10
+def find_angle_hog(image, centermass, px, py, angle_range=10):
+    """Finds the angle of an image based on the method described by Sun, “Symmetry Detection Using Gradient Information.”
+     Pattern Recognition Letters 16, no. 9 (September 1, 1995): 987–96, and improved by N. Pinon
+     inputs :
+        - image : 2D numpy array to find symmetry axis on
+        - centermass: tuple of floats indicating the center of mass of the image
+        - px, py, dimensions of the pixels in the x and y direction
+        - angle_range : float or None, in deg, the angle will be search in the range [-angle_range, angle_range], if None angle angle might be returned
+     outputs :
+        - angle_found : float, angle found by the method
+        - conf_score : confidence score of the method (Actually a WIP, did not provide sufficient results to be used)
+    """
+
+    # param that can actually be tweeked to influence method performance :
+    sigma = 10  # influence how far away pixels will vote for the orientation, if high far away pixels vote will count more, if low only closest pixels will participate
+    nb_bin = 360  # number of angle bins for the histogram, can be more or less than 360, if high, a higher precision might be achieved but there is the risk of
+    kmedian_size = 5
+
+    # Normalization of sigma relative to pixdim :
     sigmax = sigma / px
     sigmay = sigma / py
-    nb_bin = 360
-    if nb_bin % 2 != 0:
+    if nb_bin % 2 != 0:  # necessary to have even number of bins
         nb_bin = nb_bin - 1
-    kmedian_size = 5
-    angle_range = angle_range
     if angle_range is None:
         angle_range = 90
 
+    # Constructing mask based on center of mass that will influence the weighting of the orientation histogram
     nx, ny = image.shape
-
     xx, yy = np.mgrid[:nx, :ny]
     seg_weighted_mask = np.exp(
         -(((xx - centermass[0]) ** 2) / (2 * (sigmax ** 2)) + ((yy - centermass[1]) ** 2) / (2 * (sigmay ** 2))))
 
-    grad_orient_histo, proba_map, orient_image = gradient_orientation_histogram(image, nb_bin=nb_bin, seg_weighted_mask=seg_weighted_mask, return_image=True, return_orient=True)
-
-    edges_hist = np.linspace(-(np.pi - np.pi / nb_bin), (np.pi - np.pi / nb_bin), nb_bin)
+    # Acquiring the orientation histogram :
+    grad_orient_histo, proba_map, orient_image = gradient_orientation_histogram(image, nb_bin=nb_bin, seg_weighted_mask=seg_weighted_mask)
+    # Bins of the histogram :
     repr_hist = np.linspace(-(np.pi - 2 * np.pi / nb_bin), (np.pi - 2 * np.pi / nb_bin), nb_bin - 1)
-
-    grad_orient_histo_smooth = circular_filter_1d(grad_orient_histo, kmedian_size, filter='median')  # fft than square than ifft to calculate convolution
-
-    # hog_fft2 = np.fft.rfft(grad_orient_histo_smooth) ** 2
-    # grad_orient_histo_conv = np.real(np.fft.irfft(hog_fft2))
+    # Smoothing of the histogram, necessary to avoid digitization effects that will favor angles 0, 45, 90, -45, -90:
+    grad_orient_histo_smooth = circular_filter_1d(grad_orient_histo, kmedian_size, kernel='median')  # fft than square than ifft to calculate convolution
+    # Computing the circular autoconvolution of the histogram to obtain the axis of symmetry of the histogram :
     grad_orient_histo_conv = circular_conv(grad_orient_histo_smooth, grad_orient_histo_smooth)
-
+    # Restraining angle search to the angle range :
     index_restrain = int(np.ceil(np.true_divide(angle_range, 180) * nb_bin))
     center = (nb_bin - 1) // 2
-
     grad_orient_histo_conv_restrained = grad_orient_histo_conv[center - index_restrain + 1:center + index_restrain + 1]
-
+    # Finding the symmetry axis by searching for the maximum in the autoconvolution of the histogram :
     index_angle_found = np.argmax(grad_orient_histo_conv_restrained) + (nb_bin // 2 - index_restrain)
     angle_found = repr_hist[index_angle_found] / 2
     angle_found_score = np.amax(grad_orient_histo_conv_restrained)
-
+    # Finding other maxima to compute confidence score
     arg_maxs = argrelmax(grad_orient_histo_conv_restrained, order=kmedian_size, mode='wrap')[0]
+    # Confidence score is the ratio of the 2 first maxima :
     if len(arg_maxs) > 1:
         conf_score = angle_found_score / grad_orient_histo_conv_restrained[arg_maxs[1]]
     else:
-        conf_score = angle_found_score / np.mean(grad_orient_histo_conv)
+        conf_score = angle_found_score / np.mean(grad_orient_histo_conv)  # if no other maxima  in the region ratio of the maximum to the mean
 
     return angle_found, conf_score
 
