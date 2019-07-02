@@ -55,17 +55,17 @@ def main(arguments):
     param = Param()
     param.fname_data = os.path.abspath(arguments.i)
 
-    if vars(arguments)["p"] != None:
+    if arguments.p is not None:
         param.process = (arguments.p).split(',')
         if param.process[0] not in param.process_list:
             sct.printv(parser.usage.generate(error='ERROR: Process ' + param.process[0] + ' is not recognized.'))
-    if vars(arguments)["size"] != None:
+    if arguments.size is not None:
         param.size = arguments.size
-    if vars(arguments)["f"] != None:
+    if arguments.f is not None:
         param.shape = arguments.f
-    if vars(arguments)["o"] != None:
+    if arguments.o is not None:
         param.fname_out = os.path.abspath(arguments.o)
-    if vars(arguments)["r"] != None:
+    if arguments.r is not None:
         param.remove_temp_files = arguments.r
 
     param.verbose = arguments.v
