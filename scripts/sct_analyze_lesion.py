@@ -504,7 +504,8 @@ class AnalyzeLeion:
         os.chdir(self.tmp_dir)  # go to tmp directory
 
 
-def main(arguments):
+def main():
+    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
 
     # set param arguments ad inputted by user
     fname_mask = arguments.m
@@ -581,5 +582,4 @@ def main(arguments):
 if __name__ == "__main__":
     sct.init_sct()
     parser = get_parser()
-    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
-    main(arguments)
+    main()
