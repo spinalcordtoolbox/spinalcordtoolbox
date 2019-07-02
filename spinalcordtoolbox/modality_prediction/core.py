@@ -3,10 +3,7 @@ import sys
 import torch
 import numpy as np
 
-import torchvision.transforms.functional as Func
-from torchvision import transforms
 from PIL import Image
-from statistics import mode
 
 from spinalcordtoolbox.image import Image
 
@@ -15,7 +12,10 @@ import model as M
 
 class Acquisition():
     
-    def __init__(self, path):
+    def __init__(self, axial_slices):
+        self.slices = axial_slices
+
+    def loadFromPath(self, path):
         """
         This method loads the slices in the slices attribute from the path.
         At this point it is only a list of arrays and will only be converted
@@ -28,7 +28,10 @@ class Acquisition():
         for i in range(nii_original.shape[2]):
             axial_slices.append(nii_original[:,:,i])
         self.slices = axial_slices
-        
+
+    def loadFromImage(self, image):
+        self.slices = image.data
+
     def StandardizeTransform(self):
         """
         This method standardizes each slices individually
