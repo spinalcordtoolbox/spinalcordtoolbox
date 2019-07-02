@@ -148,8 +148,10 @@ def get_parser(paramreg=None):
                                                                     "  geometric: Geometric center of images\n"
                                                                     "  centermass: Center of mass of images\n"
                                                                     "  origin: Physical origin of images\n"
-                                                                    "poly: <int> Polynomial degree of regularization (only for algo=slicereg,centermassrot). Default=" +
+                                                                    "poly: <int> Polynomial degree of regularization (only for algo=slicereg). Default=" +
                                   paramreg.steps['1'].poly + "\n"
+                                                                    "filter_size: <float> Filter size for regularization (only for algo=centermassrot). Default=" +
+                                  paramreg.steps['1'].filter_size + "\n"
                                                              "smoothWarpXY: <int> Smooth XY warping field (only for algo=columnwize). Default=" +
                                   paramreg.steps['1'].smoothWarpXY + "\n"
                                                                      "pca_eigenratio_th: <int> Min ratio between the two eigenvalues for PCA-based angular adjustment (only for algo=centermassrot and rot_method=pca). Default=" +
@@ -227,7 +229,7 @@ class Param:
 # Parameters for registration
 class Paramreg(object):
     def __init__(self, step=None, type=None, algo='syn', metric='MeanSquares', iter='10', shrink='1', smooth='0',
-                 gradStep='0.5', deformation='1x1x0', init='', poly='5', slicewise='0', laplacian='0',
+                 gradStep='0.5', deformation='1x1x0', init='', filter_size='3', poly='5', slicewise='0', laplacian='0',
                  dof='Tx_Ty_Tz_Rx_Ry_Rz', smoothWarpXY='2', pca_eigenratio_th='1.6', rot_method='pca'):
         self.step = step
         self.type = type
@@ -242,10 +244,11 @@ class Paramreg(object):
         self.slicewise = slicewise
         self.init = init
         self.poly = poly  # only for algo=slicereg
+        self.filter_size = filter_size  # only for algo=centermassrot
         self.dof = dof  # only for type=label
         self.smoothWarpXY = smoothWarpXY  # only for algo=columnwise
         self.pca_eigenratio_th = pca_eigenratio_th  # only for algo=centermassrot
-        self.rot_method = rot_method
+        self.rot_method = rot_method  # only for algo=centermassrot
 
         # list of possible values for self.type
         self.type_list = ['im', 'seg', 'label']
@@ -603,9 +606,10 @@ def register(src, dest, paramreg, param, i_step_str):
     sct.printv('  deformation .... ' + paramreg.steps[i_step_str].deformation, param.verbose)
     sct.printv('  init ........... ' + paramreg.steps[i_step_str].init, param.verbose)
     sct.printv('  poly ........... ' + paramreg.steps[i_step_str].poly, param.verbose)
+    sct.printv('  filter_size .... ' + paramreg.steps[i_step_str].filter_size, param.verbose)
     sct.printv('  dof ............ ' + paramreg.steps[i_step_str].dof, param.verbose)
     sct.printv('  smoothWarpXY ... ' + paramreg.steps[i_step_str].smoothWarpXY, param.verbose)
-    sct.printv('  rot_method ... ' + paramreg.steps[i_step_str].rot_method, param.verbose)
+    sct.printv('  rot_method ..... ' + paramreg.steps[i_step_str].rot_method, param.verbose)
 
     # set metricSize
     if paramreg.steps[i_step_str].metric == 'MI':
