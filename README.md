@@ -1,11 +1,3 @@
-First step of registration evaluation :
-
-![bip](regi1.png)
-
-Second step :
-
-![bop](regi2.png)
-
 <img src="https://github.com/neuropoly/spinalcordtoolbox/blob/master/documentation/imgs/logo_sct.png" width="300">
 
 [![Build Status](https://travis-ci.org/neuropoly/spinalcordtoolbox.svg?branch=master)](https://travis-ci.org/neuropoly/spinalcordtoolbox)
