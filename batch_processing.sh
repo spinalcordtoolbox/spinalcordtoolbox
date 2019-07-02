@@ -1,22 +1,22 @@
 #!/bin/bash
 #
 # Example of commands to process multi-parametric data of the spinal cord.
-#
+# 
 # Please note that this batch script has a lot of redundancy and should not
 # be used as a pipeline for regular processing. For example, there is no need
-# to process both t1 and t2 to extract CSA values.
+# to process both t1 and t2 to extract CSA values. 
 #
 # For information about acquisition parameters, see: https://osf.io/wkdym/
-# N.B. The parameters are set for these type of data. With your data, parameters
+# N.B. The parameters are set for these type of data. With your data, parameters 
 # might be slightly different.
 #
 # Usage:
-#
+# 
 #   [option] $SCT_DIR/batch_processing.sh
-#
+# 
 #   Prevent (re-)downloading sct_example_data:
 #   SCT_BP_DOWNLOAD=0 $SCT_DIR/batch_processing.sh
-#
+# 
 #   Specify quality control (QC) folder (Default is ~/qc_batch_processing):
 #   SCT_BP_QC_FOLDER=/user/toto/my_qc_folder $SCT_DIR/batch_processing.sh
 
@@ -70,17 +70,14 @@ sct_propseg -i t2.nii.gz -c t2 -qc "$SCT_BP_QC_FOLDER"
 # sct_deepseg_sc -i t2.nii.gz -c t2 -qc "$SCT_BP_QC_FOLDER"
 # Vertebral labeling
 # Tips: for manual initialization of labeling by clicking at disc C2-C3, use flag -initc2
-echo "tu"
 sct_label_vertebrae -i t2.nii.gz -s t2_seg.nii.gz -c t2 -qc "$SCT_BP_QC_FOLDER"
 # Create labels at in the cord at C2 and C5 mid-vertebral levels
 sct_label_utils -i t2_seg_labeled.nii.gz -vert-body 2,5 -o labels_vert.nii.gz
-echo "ta"
 # Tips: you can also create labels manually using:
 # sct_label_utils -i t2.nii.gz -create-viewer 2,5 -o labels_vert.nii.gz
 # Register to template
 sct_register_to_template -i t2.nii.gz -s t2_seg.nii.gz -l labels_vert.nii.gz -c t2 -qc "$SCT_BP_QC_FOLDER"
-echo "to"
-# Tips: If you are not satisfied with the results, you can tweak registration parameters.
+# Tips: If you are not satisfied with the results, you can tweak registration parameters. 
 # For example here, we would like to take into account the rotation of the cord, as well as
 # adding a 3rd registration step that uses the image intensity (not only cord segmentations).
 # so we could do something like this:
