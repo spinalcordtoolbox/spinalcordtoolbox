@@ -403,7 +403,7 @@ def get_functions_parallelizable():
     return [
         'sct_analyze_lesion',
         'sct_analyze_texture',
-        # 'sct_apply_transfo', # had to remove temporarily because using argparse (not msct_parser)
+        'sct_apply_transfo',
         'sct_warp_template',
         'sct_resample',
         #'sct_convert', # had to remove temporarily because using argparse (not msct_parser)
