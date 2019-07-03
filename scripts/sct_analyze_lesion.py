@@ -60,6 +60,7 @@ def get_parser():
         help="Spinal cord centerline or segmentation file, which will be used to correct morphometric measures with "
              "cord angle with respect to slice. (e.g.'t2_seg.nii.gz')",
         metavar=Metavar.file,
+        default=None,
         required=False)
     optional.add_argument(
         "-i",
@@ -517,8 +518,6 @@ def main():
         if not os.path.isfile(fname_sc):
             fname_sc = None
             printv('WARNING: -s input file: "' + arguments.s + '" does not exist.\n', 1, 'warning')
-    else:
-        fname_sc = None
 
     # Reference image
     if arguments.i is not None:
