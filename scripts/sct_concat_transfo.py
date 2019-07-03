@@ -27,11 +27,18 @@ class Param:
         self.fname_warp_final = 'warp_final.nii.gz'
 
 
-# main
-#=======================================================================================================================
-def main():
+def main(args):
+    """
+    Main function
+    :param args:
+    :return:
+    """
+    # get parser args
+    if args is None:
+        args = None if sys.argv[1:] else ['--help']
     parser = get_parser()
-    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
+    arguments = parser.parse_args(args=args)
+
     # Initialization
     fname_warp_final = ''  # concatenated transformations
     fname_dest = arguments.d
