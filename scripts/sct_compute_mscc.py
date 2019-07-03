@@ -88,4 +88,4 @@ def main():
 if __name__ == "__main__":
     sct.init_sct()
     # call main function
-    main(arguments)
+    main()
