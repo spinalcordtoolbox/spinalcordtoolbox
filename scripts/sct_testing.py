@@ -43,6 +43,7 @@ def fs_signature(root):
             ret[path] = data
     return ret
 
+
 def fs_ok(sig_a, sig_b, exclude=()):
     errors = list()
     for path, data in sig_b.items():
@@ -192,6 +193,7 @@ def process_function(fname, param):
 
     return list_output, list_status_function
 
+
 def process_function_multiproc(fname, param):
     """ Wrapper that makes ^C work in multiprocessing code """
     # Ignore SIGINT, parent will take care of the clean-up
@@ -236,10 +238,12 @@ def main(args=None):
     # display path to data
     sct.printv('\nPath to testing data: ' + param.path_data, param.verbose)
 
-    # create temp folder that will have all results and go in it
+    # create temp folder that will have all results
     path_tmp = os.path.abspath(arguments.execution_folder or sct.tmp_create(verbose=param.verbose))
+
+    # go in path data (where all scripts will be run)
     curdir = os.getcwd()
-    os.chdir(path_tmp)
+    os.chdir(param.path_data)
 
     functions_parallel = list()
     functions_serial = list()
@@ -397,7 +401,7 @@ def get_functions_nonparallelizable():
 
 def get_functions_parallelizable():
     return [
-        # 'sct_analyze_lesion', # had to remove temporarily because using argparse (not msct_parser)
+        'sct_analyze_lesion',
         #'sct_analyze_texture',# had to remove temporarily because using argparse (not msct_parser)
         # 'sct_apply_transfo', # had to remove temporarily because using argparse (not msct_parser)
         'sct_warp_template',
@@ -506,21 +510,21 @@ def test_function(param_test):
     elif not os.path.isdir(param_test.path_output):
         os.makedirs(param_test.path_output)
 
-    # get parser information
-    parser = module_function_to_test.get_parser()
-    if '-ofolder' in parser.options and '-ofolder' not in param_test.args:
-        param_test.args += " -ofolder " + param_test.path_output
-
-    dict_args = parser.parse(shlex.split(param_test.args), check_file_exist=False)
-    # TODO: if file in list does not exist, raise exception and assign status=200
-    # add data path to each input argument
-    dict_args_with_path = parser.add_path_to_file(copy.deepcopy(dict_args), param_test.path_data, input_file=True)
-    # add data path to each output argument
-    dict_args_with_path = parser.add_path_to_file(copy.deepcopy(dict_args_with_path), param_test.path_output, input_file=False, output_file=True)
-    # save into class
-    param_test.dict_args_with_path = dict_args_with_path
-    param_test.args_with_path = parser.dictionary_to_string(dict_args_with_path)
-
+    # # get parser information
+    # parser = module_function_to_test.get_parser()
+    # if '-ofolder' in parser.options and '-ofolder' not in param_test.args:
+    #     param_test.args += " -ofolder " + param_test.path_output
+    #
+    # dict_args = parser.parse(shlex.split(param_test.args), check_file_exist=False)
+    # # TODO: if file in list does not exist, raise exception and assign status=200
+    # # add data path to each input argument
+    # dict_args_with_path = parser.add_path_to_file(copy.deepcopy(dict_args), param_test.path_data, input_file=True)
+    # # add data path to each output argument
+    # dict_args_with_path = parser.add_path_to_file(copy.deepcopy(dict_args_with_path), param_test.path_output, input_file=False, output_file=True)
+    # # save into class
+    # param_test.dict_args_with_path = dict_args_with_path
+    # param_test.args_with_path = parser.dictionary_to_string(dict_args_with_path)
+    #
     # initialize panda dataframe
     param_test.results = DataFrame(index=[subject_folder],
                                    data={'status': 0,
@@ -528,48 +532,48 @@ def test_function(param_test):
                                          'output': '',
                                          'path_data': param_test.path_data,
                                          'path_output': param_test.path_output})
-
-    # retrieve input file (will be used later for integrity testing)
-    if '-i' in dict_args:
-        # check if list in case of multiple input files
-        if not isinstance(dict_args_with_path['-i'], list):
-            list_file_to_check = [dict_args_with_path['-i']]
-            # assign field file_input for integrity testing
-            param_test.file_input = dict_args['-i'].split('/')[-1]
-            # update index of dataframe by appending file name for more clarity
-            param_test.results = param_test.results.rename({subject_folder: os.path.join(subject_folder, dict_args['-i'])})
-        else:
-            list_file_to_check = dict_args_with_path['-i']
-            # TODO: assign field file_input for integrity testing
-        for file_to_check in list_file_to_check:
-            # file_input = file_to_check.split('/')[1]
-            # Check if input files exist
-            if not (os.path.isfile(file_to_check)):
-                param_test.status = 200
-                param_test.output += '\nERROR: This input file does not exist: ' + file_to_check
-                return update_param(param_test)
-
-    # retrieve ground truth (will be used later for integrity testing)
-    if '-igt' in dict_args:
-        param_test.fname_gt = dict_args_with_path['-igt']
-        # Check if ground truth files exist
-        if not os.path.isfile(param_test.fname_gt):
-            param_test.status = 201
-            param_test.output += '\nERROR: The following file used for ground truth does not exist: ' + param_test.fname_gt
-            return update_param(param_test)
+    #
+    # # retrieve input file (will be used later for integrity testing)00
+    # if '-i' in dict_args:
+    #     # check if list in case of multiple input files
+    #     if not isinstance(dict_args_with_path['-i'], list):
+    #         list_file_to_check = [dict_args_with_path['-i']]
+    #         # assign field file_input for integrity testing
+    #         param_test.file_input = dict_args['-i'].split('/')[-1]
+    #         # update index of dataframe by appending file name for more clarity
+    #         param_test.results = param_test.results.rename({subject_folder: os.path.join(subject_folder, dict_args['-i'])})
+    #     else:
+    #         list_file_to_check = dict_args_with_path['-i']
+    #         # TODO: assign field file_input for integrity testing
+    #     for file_to_check in list_file_to_check:
+    #         # file_input = file_to_check.split('/')[1]
+    #         # Check if input files exist
+    #         if not (os.path.isfile(file_to_check)):
+    #             param_test.status = 200
+    #             param_test.output += '\nERROR: This input file does not exist: ' + file_to_check
+    #             return update_param(param_test)
+    #
+    # # retrieve ground truth (will be used later for integrity testing)
+    # if '-igt' in dict_args:
+    #     param_test.fname_gt = dict_args_with_path['-igt']
+    #     # Check if ground truth files exist
+    #     if not os.path.isfile(param_test.fname_gt):
+    #         param_test.status = 201
+    #         param_test.output += '\nERROR: The following file used for ground truth does not exist: ' + param_test.fname_gt
+    #         return update_param(param_test)
 
     # run command
-    cmd = param_test.function_to_test + param_test.args_with_path
-    param_test.output += '\nWill run in %s:' % (os.path.join(path_testing, param_test.path_output))
+    cmd = ' '.join([param_test.function_to_test, param_test.args])
+    # param_test.output += '\nWill run in %s:' % (os.path.join(path_testing, param_test.path_output))
     param_test.output += '\n====================================================================================================\n' + cmd + '\n====================================================================================================\n\n'  # copy command
     time_start = time.time()
     try:
-        os.chdir(param_test.path_output)
-        if not os.path.exists(param_test.path_output):
-            # in case of relative path, we want a subfolder too
-            os.makedirs(param_test.path_output)
-        os.chdir(path_testing)
-        param_test.status, o = sct.run(cmd, cwd=param_test.path_output, verbose=0)
+        # os.chdir(param_test.path_output)
+        # if not os.path.exists(param_test.path_output):
+        #     # in case of relative path, we want a subfolder too
+        #     os.makedirs(param_test.path_output)
+        # os.chdir(path_testing)
+        param_test.status, o = sct.run(cmd, verbose=0)
         if param_test.status:
             raise Exception
     except Exception as err:
