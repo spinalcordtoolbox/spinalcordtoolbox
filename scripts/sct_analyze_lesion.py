@@ -43,12 +43,14 @@ def get_parser():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         prog=os.path.basename(__file__).strip(".py")
     )
+
     mandatory_arguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory_arguments.add_argument(
         "-m",
         help='Binary mask of lesions (lesions are labeled as "1").',
         metavar=Metavar.file,
         required=False)
+
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",
@@ -67,6 +69,7 @@ def get_parser():
         help='Image from which to extract average values within lesions (e.g. "t2.nii.gz"). If provided, the function '
              'computes the mean and standard deviation values of this image within each lesion.',
         metavar=Metavar.file,
+        default=None,
         required=False)
     optional.add_argument(
         "-f",
@@ -75,11 +78,13 @@ def get_parser():
              "region of the template (e.g. GM, WM, WM tracts) and (ii) the proportion of ROI (e.g. vertebral level, "
              "GM, WM) occupied by lesion.",
         metavar=Metavar.str,
+        default=None,
         required=False)
     optional.add_argument(
         "-ofolder",
         help='Output folder (e.g. "./")',
         metavar=Metavar.folder,
+        default='./',
         required=False)
     optional.add_argument(
         "-r",
@@ -509,43 +514,23 @@ def main():
     parser = get_parser()
     arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
 
-    # set param arguments ad inputted by user
     fname_mask = arguments.m
-
-    # SC segmentation
-    if arguments.s is not None:
-        fname_sc = arguments.s
-        if not os.path.isfile(fname_sc):
-            fname_sc = None
-            printv('WARNING: -s input file: "' + arguments.s + '" does not exist.\n', 1, 'warning')
-
-    # Reference image
-    if arguments.i is not None:
-        fname_ref = arguments.i
-        if not os.path.isfile(fname_sc):
-            fname_ref = None
-            printv('WARNING: -i input file: "' + arguments.i + '" does not exist.\n', 1, 'warning')
-    else:
-        fname_ref = None
+    fname_sc = arguments.s
+    fname_ref = arguments.i
 
     # Path to template
-    if arguments.f is not None:
-        path_template = arguments.f
-        if not os.path.isdir(path_template) and os.path.exists(path_template):
-            path_template = None
-            printv("ERROR output directory %s is not a valid directory" % path_template, 1, 'error')
-    else:
-        path_template = None
+    path_template = arguments.f
+    # TODO: check this in the parser
+    # if not os.path.isdir(path_template) and os.path.exists(path_template):
+    #     path_template = None
+    #     printv("ERROR output directory %s is not a valid directory" % path_template, 1, 'error')
 
     # Output Folder
-    if arguments.ofolder is not None:
-        path_results = arguments.ofolder
-        if not os.path.isdir(path_results) and os.path.exists(path_results):
-            printv("ERROR output directory %s is not a valid directory" % path_results, 1, 'error')
-        if not os.path.exists(path_results):
-            os.makedirs(path_results)
-    else:
-        path_results = './'
+    path_results = arguments.ofolder
+    # if not os.path.isdir(path_results) and os.path.exists(path_results):
+    #     printv("ERROR output directory %s is not a valid directory" % path_results, 1, 'error')
+    if not os.path.exists(path_results):
+        os.makedirs(path_results)
 
     # Remove temp folder
     if arguments.r is not None:
