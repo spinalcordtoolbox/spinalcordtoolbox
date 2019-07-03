@@ -29,7 +29,12 @@ def get_parser():
     # Initialize the parser
 
     parser = argparse.ArgumentParser(
-        description='Extraction of grey level co-occurence matrix (GLCM) texture features from an image within a given mask. The textures features are those defined in the sckit-image implementation: http://scikit-image.org/docs/dev/api/skimage.feature.html#greycoprops. This function outputs one nifti file per texture metric (' + ParamGLCM().feature + ') and per orientation called fnameInput_feature_distance_angle.nii.gz. Also, a file averaging each metric across the angles, called fnameInput_feature_distance_mean.nii.gz, is output.',
+        description='Extraction of grey level co-occurence matrix (GLCM) texture features from an image within a given '
+                    'mask. The textures features are those defined in the sckit-image implementation: '
+                    'http://scikit-image.org/docs/dev/api/skimage.feature.html#greycoprops. This function outputs '
+                    'one nifti file per texture metric (' + ParamGLCM().feature + ') and per orientation called '
+                    'fnameInput_feature_distance_angle.nii.gz. Also, a file averaging each metric across the angles, '
+                    'called fnameInput_feature_distance_mean.nii.gz, is output.',
         add_help=None,
         prog=os.path.basename(__file__).strip(".py")
     )
@@ -65,14 +70,15 @@ def get_parser():
     optional.add_argument(
         "-angle",
         metavar=Metavar.list,
-        help='List of angles for GLCM computation, separate arguments with ",", in degrees (suggested distance values between 0 and 179). (e.g. "0,90")',
+        help='List of angles for GLCM computation, separate arguments with ",", in degrees (suggested distance values '
+             'between 0 and 179). (e.g. "0,90")',
         required=False,
         default=ParamGLCM().angle)
     optional.add_argument(
         "-dim",
         help="Compute the texture on the axial (ax), sagittal (sag) or coronal (cor) slices.",
         required=False,
-        choices=('ax','sag','cor'),
+        choices=('ax', 'sag', 'cor'),
         default=Param().dim)
     optional.add_argument(
         "-ofolder",
@@ -89,7 +95,7 @@ def get_parser():
         "-r",
         help="Remove temporary files.",
         required=False,
-        choices=(0,1),
+        choices=(0, 1),
         default=int(Param().rm_tmp))
     optional.add_argument(
         "-v",
