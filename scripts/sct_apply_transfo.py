@@ -271,7 +271,9 @@ class Transform:
 
 # MAIN
 # ==========================================================================================
-def main(arguments):
+def main():
+    parser = get_parser()
+    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
 
     input_filename = arguments.i
     fname_dest = arguments.d
@@ -296,9 +298,7 @@ def main(arguments):
 # ==========================================================================================
 if __name__ == "__main__":
     sct.init_sct()
-    parser = get_parser()
-    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
     # initialize parameters
     param = Param()
     # call main function
-    main(arguments)
+    main()
