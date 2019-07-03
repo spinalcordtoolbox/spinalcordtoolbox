@@ -505,10 +505,10 @@ def test_function(param_test):
     # build path_output variable
     path_testing = os.getcwd()
 
-    if not param_test.path_output:
-        param_test.path_output = sct.tmp_create(basename=(param_test.function_to_test + '_' + subject_folder), verbose=0)
-    elif not os.path.isdir(param_test.path_output):
-        os.makedirs(param_test.path_output)
+    # if not param_test.path_output:
+    #     param_test.path_output = sct.tmp_create(basename=(param_test.function_to_test + '_' + subject_folder), verbose=0)
+    # elif not os.path.isdir(param_test.path_output):
+    #     os.makedirs(param_test.path_output)
 
     # # get parser information
     # parser = module_function_to_test.get_parser()
@@ -588,11 +588,11 @@ def test_function(param_test):
     if param_test.test_integrity:
         param_test.output += '\n\n====================================================================================================\n' + 'INTEGRITY TESTING' + '\n====================================================================================================\n\n'  # copy command
         try:
-            os.chdir(param_test.path_output)
+            # os.chdir(param_test.path_output)
             param_test = module_testing.test_integrity(param_test)
-            os.chdir(path_testing)
+            # os.chdir(path_testing)
         except Exception as err:
-            os.chdir(path_testing)
+            # os.chdir(path_testing)
             param_test.status = 2
             param_test.output += str(err)
             return update_param(param_test)
