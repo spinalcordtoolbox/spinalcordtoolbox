@@ -12,11 +12,9 @@
 
 from __future__ import absolute_import, division
 
-from pandas import DataFrame
 import numpy as np
 
 from spinalcordtoolbox.image import Image
-import sct_utils as sct
 
 
 def init(param_test):
@@ -24,8 +22,10 @@ def init(param_test):
     Initialize class: param_test
     """
     # initialization
-    default_args = ['-i t2/t2.nii.gz -m t2/t2_seg.nii.gz -feature contrast -distance 1 -ofolder . -igt t2/t2_contrast_1_mean_ref.nii.gz']  # default parameters
+    default_args = ['-i t2/t2.nii.gz -m t2/t2_seg.nii.gz -feature contrast -distance 1 -ofolder .']  # default parameters
     param_test.difference_threshold = 0.95
+    param_test.file_texture = 't2_contrast_1_mean.nii.gz'
+    param_test.fname_gt = 't2/t2_contrast_1_mean_ref.nii.gz'
 
     # assign default params
     if not param_test.args:
@@ -38,12 +38,8 @@ def test_integrity(param_test):
     """
     Test integrity of function
     """
-    # extract name of output texture file
-    # file_texture = os.path.join(param_test.path_output, sct.add_suffix(param_test.file_input, '_contrast_1_mean'))
-    file_texture = sct.add_suffix(param_test.file_input, '_contrast_1_mean')
-
     # open output
-    im_texture = Image(file_texture)
+    im_texture = Image(param_test.file_texture)
 
     # open ground truth
     im_texture_ref = Image(param_test.fname_gt)
@@ -57,17 +53,12 @@ def test_integrity(param_test):
     param_test.output += 'Computed difference: ' + str(difference_vox)
     param_test.output += 'Difference threshold (if computed difference lower: fail): ' + str(param_test.difference_threshold)
 
-    # TODO: uncomment the test below -- I did it because of time constraint to deliver a release. Julien 2019-01-20
-    param_test.output += '--> NOT TESTED (temporarily)'
-    # if difference_vox < param_test.difference_threshold:
-        # param_test.status = 99
-    # else:
-    #     param_test.output += '--> PASSED'
+    if difference_vox < param_test.difference_threshold:
+        param_test.status = 99
+    else:
+        param_test.output += '--> PASSED'
 
     # update Panda structure
     param_test.results['difference_vox'] = difference_vox
-
-    # transform results into Pandas structure
-    # param_test.results = DataFrame(index=[param_test.path_data], data={'status': param_test.status, 'output': param_test.output, 'difference_vox': difference_vox, 'duration [s]': param_test.duration})
 
     return param_test
