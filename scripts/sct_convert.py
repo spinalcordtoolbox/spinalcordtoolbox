@@ -87,8 +87,9 @@ def convert(fname_in, fname_out, squeeze_data=True, dtype=None, verbose=1):
 
 # MAIN
 # ==========================================================================================
-def main(arguments):
-
+def main():
+    parser = get_parser()
+    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
     # Building the command, do sanity checks
     fname_in = arguments.i
     fname_out = arguments.o
@@ -102,8 +103,6 @@ def main(arguments):
 # ==========================================================================================
 if __name__ == "__main__":
     sct.init_sct()
-    parser = get_parser()
-    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
     # initialize parameters
     param = Param()
     # call main function
