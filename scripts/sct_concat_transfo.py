@@ -27,7 +27,7 @@ class Param:
         self.fname_warp_final = 'warp_final.nii.gz'
 
 
-def main(args):
+def main(args=None):
     """
     Main function
     :param args:

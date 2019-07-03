@@ -406,7 +406,7 @@ def find_mask_boundaries(fname_mask):
     return ind_start, ind_end, list(range(dim))
 
 
-def main(args):
+def main(args=None):
     """
     Main function
     :param args:

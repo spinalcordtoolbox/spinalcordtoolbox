@@ -306,7 +306,7 @@ class ParamGLCM(object):
         self.angle = '0,45,90,135'  # Rotation angles for co-occurrence matrix
 
 
-def main(args):
+def main(args=None):
     """
     Main function
     :param args:

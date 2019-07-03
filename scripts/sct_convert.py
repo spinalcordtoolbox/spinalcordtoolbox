@@ -85,7 +85,7 @@ def convert(fname_in, fname_out, squeeze_data=True, dtype=None, verbose=1):
     return im
 
 
-def main(args):
+def main(args=None):
     """
     Main function
     :param args:

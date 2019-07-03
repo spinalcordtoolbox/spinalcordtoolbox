@@ -50,7 +50,7 @@ class Param:
         self.offset = '0,0'
 
 
-def main(args):
+def main(args=None):
     """
     Main function
     :param args:

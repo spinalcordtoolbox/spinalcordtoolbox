@@ -510,7 +510,7 @@ class AnalyzeLeion:
         os.chdir(self.tmp_dir)  # go to tmp directory
 
 
-def main(args):
+def main(args=None):
     """
     Main function
     :param args:
