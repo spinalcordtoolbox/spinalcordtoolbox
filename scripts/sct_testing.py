@@ -411,7 +411,7 @@ def get_functions_parallelizable():
         'sct_maths',
         'sct_merge_images',
         'sct_compute_ernst_angle',
-        # 'sct_compute_hausdorff_distance', # had to remove temporarily because using argparse (not msct_parser)
+        'sct_compute_hausdorff_distance',
         #'sct_compute_mtr', # had to remove temporarily because using argparse (not msct_parser)
         #'sct_compute_mscc', # had to remove temporarily because using argparse (not msct_parser)
         #'sct_compute_snr', # had to remove temporarily because using argparse (not msct_parser)
