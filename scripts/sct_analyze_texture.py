@@ -95,12 +95,14 @@ def get_parser():
         "-r",
         help="Remove temporary files.",
         required=False,
+        type=int,
         choices=(0, 1),
         default=int(Param().rm_tmp))
     optional.add_argument(
         "-v",
         help="Verbose: 0 = nothing, 1 = classic, 2 = expended.",
         required=False,
+        type=int,
         choices=(0, 1, 2),
         default=Param().verbose)
 
