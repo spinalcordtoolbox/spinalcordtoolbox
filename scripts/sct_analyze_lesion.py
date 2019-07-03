@@ -510,9 +510,17 @@ class AnalyzeLeion:
         os.chdir(self.tmp_dir)  # go to tmp directory
 
 
-def main():
+def main(args):
+    """
+    Main function
+    :param args:
+    :return:
+    """
+    # get parser args
+    if args is None:
+        args = None if sys.argv[1:] else ['--help']
     parser = get_parser()
-    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
+    arguments = parser.parse_args(args=args)
 
     fname_mask = arguments.m
     fname_sc = arguments.s
