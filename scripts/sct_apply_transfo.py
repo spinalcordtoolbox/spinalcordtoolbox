@@ -275,9 +275,13 @@ class Transform:
 
 # MAIN
 # ==========================================================================================
-def main():
+def main(args=None):
+
+    # get parser args
+    if args is None:
+        args = None if sys.argv[1:] else ['--help']
     parser = get_parser()
-    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
+    arguments = parser.parse_args(args=args)
 
     input_filename = arguments.i
     fname_dest = arguments.d
