@@ -326,26 +326,35 @@ def get_parser():
         required=False)
     commandOptionalArguments.add_argument(
         "-start",
+        type=float,
+        nargs='*',
         help='start slices, ]0,1[: percentage, 0 & >1: slice number (e.g. "40, 30, 5")',
         metavar=Metavar.list,
         required = False)
     commandOptionalArguments.add_argument(
         "-end",
+        type=float,
+        nargs='*',
         help='end slices, ]0,1[: percentage, 0: last slice, >1: slice number, <0: last slice - value (e.g. "60, 100, 10")',
         metavar=Metavar.list,
         required = False)
     commandOptionalArguments.add_argument(
         "-dim",
+        nargs='*',
+        type=int,
         help='dimension to crop, from 0 to n-1, default is 1 (e.g. "0, 1, 2")',
         metavar=Metavar.list,
         required = False)
     commandOptionalArguments.add_argument(
         "-shift",
+        nargs='*',
+        type=int,
         help='adding shift when used with mask, default is 0 (e.g. "10, 10, 5")',
         metavar=Metavar.list,
         required = False)
     commandOptionalArguments.add_argument(
         "-b",
+        type=float,
         help="replace voxels outside cropping region with background value. \n"
              "If both the -m and the -b flags are used : the image is croped \"exactly\" around the mask with a background (and not around a rectangle area including the mask). the shape of the image isn't change.",
         metavar=Metavar.float,
