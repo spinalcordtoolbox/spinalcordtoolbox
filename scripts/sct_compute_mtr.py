@@ -39,7 +39,7 @@ def main():
     import spinalcordtoolbox.image as msct_image
 
     parser = get_parser()
-    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
+    args = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
     # Initialization
     fname_mt0 = ''
     fname_mt1 = ''
