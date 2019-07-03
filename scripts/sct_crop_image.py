@@ -405,7 +405,7 @@ if __name__ == "__main__":
     # assigning variables to arguments
     input_filename = arguments.i
     exec_choice = 0
-    if vars(arguments)["g"] != None:
+    if arguments.g is not None:
         exec_choice = bool(arguments.g)
 
     # cropping with GUI
@@ -415,35 +415,35 @@ if __name__ == "__main__":
 
     if exec_choice:
         fname_data = arguments.i
-        if vars(arguments)["r"] != None:
+        if arguments.r is not None:
             cropper.rm_tmp_files = arguments.r
         cropper.crop_with_gui()
 
     # cropping with specified command-line arguments
     else:
-        if vars(arguments)["o"] != None:
+        if arguments.o is not None:
             cropper.output_filename = arguments.o
         else:
             sct.printv("An output file needs to be specified using the command line")
             sys.exit(2)
         # Handling optional arguments
-        if vars(arguments)["m"] != None:
+        if arguments.m is not None:
             cropper.mask = arguments.m
-        if vars(arguments)["start"] != None:
+        if arguments.start is not None:
             cropper.start = arguments.start
-        if vars(arguments)["end"] != None:
+        if arguments.start is not None:
             cropper.end = arguments.end
-        if vars(arguments)["dim"] != None:
+        if arguments.dim is not None:
             cropper.dim = arguments.dim
-        if vars(arguments)["shift"] != None:
+        if arguments.shift is not None:
             cropper.shift = arguments.shift
-        if vars(arguments)["b"] != None:
+        if arguments.b is not None:
             cropper.background = arguments.b
-        if vars(arguments)["bmax"] != None:
+        if arguments.bmax is not None:
             cropper.bmax = True
-        if vars(arguments)["ref"] != None:
+        if arguments.ref is not None:
             cropper.ref = arguments.ref
-        if vars(arguments)["mesh"] != None:
+        if arguments.mesh is not None:
             cropper.mesh = arguments.mesh
 
         cropper.crop()
