@@ -55,7 +55,8 @@ def get_parser():
         metavar=Metavar.file)
     mandatoryArguments.add_argument(
         "-w",
-        help='Transformation, which can be a warping field (nifti image) or an affine transformation matrix (text file). (e.g. "warp1.nii.gz, warp2.nii.gz")',
+        help='Transformation, which can be a warping field (nifti image) or an affine transformation matrix (text '
+             'file). (e.g. "warp1.nii.gz, warp2.nii.gz")',
         metavar='')
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
@@ -67,13 +68,14 @@ def get_parser():
         "-crop",
         help="Crop Reference. 0 : no reference. 1 : sets background to 0. 2 : use normal background",
         required=False,
-        default= 0,
+        type=int,
+        default=0,
         choices=(0, 1, 2))
     optional.add_argument(
         "-o",
         help='registered source. (e.g. "dest.nii.gz")',
         metavar=Metavar.file,
-        default = '')
+        default='')
     optional.add_argument(
         "-x",
         help="interpolation method (e.g. ['nn', 'linear', 'spline'])",
@@ -83,15 +85,17 @@ def get_parser():
     optional.add_argument(
         "-r",
         help="""Remove temporary files.""",
-        required = False,
-        default = 1,
-        choices = (0, 1))
+        required=False,
+        type=int,
+        default=1,
+        choices=(0, 1))
     optional.add_argument(
         "-v",
         help="Verbose: 0 = nothing, 1 = classic, 2 = expended.",
-        required = False,
-        default = 1,
-        choices = (0, 1, 2))
+        required=False,
+        type=int,
+        default=1,
+        choices=(0, 1, 2))
 
     return parser
 
@@ -281,18 +285,15 @@ def main():
 
     transform = Transform(input_filename=input_filename, fname_dest=fname_dest, warp=warp_filename)
 
-    if arguments.crop is not None:
-        transform.crop = arguments.crop
-    if arguments.o is not None:
-        transform.output_filename = arguments.o
-    if arguments.x is not None:
-        transform.interp = arguments.x
-    if arguments.r is not None:
-        transform.remove_temp_files = arguments.r
+    transform.crop = arguments.crop
+    transform.output_filename = arguments.o
+    transform.interp = arguments.x
+    transform.remove_temp_files = arguments.r
     transform.verbose = arguments.v
     sct.init_sct(log_level=transform.verbose, update=True)  # Update log level
 
     transform.apply()
+
 
 # START PROGRAM
 # ==========================================================================================
