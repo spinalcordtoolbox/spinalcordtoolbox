@@ -114,10 +114,12 @@ def get_parser():
     return parser
 
 
-def main(args):
+def main():
     import sct_utils as sct
     from spinalcordtoolbox.mtsat import mtsat
 
+    parser = get_parser()
+    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
     verbose = args.v
     sct.init_sct(log_level=verbose, update=True)  # Update log level
 
@@ -133,6 +135,4 @@ def main(args):
 
 
 if __name__ == '__main__':
-    parser = get_parser()
-    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
-    main(arguments)
+    main()
