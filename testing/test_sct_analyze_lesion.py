@@ -33,6 +33,9 @@ def test_integrity(param_test):
     Test integrity of function
     """
     # Simply check if output pkl file exists
-    if not os.path.exists('t2_seg_manual_analyzis.pkl'):
+    if os.path.exists('t2_seg_manual_analyzis.pkl'):
+        param_test.output += '--> PASSED'
+    else:
+        param_test.status = 99
         param_test.output += '\nOutput file does not exist.'
     return param_test
