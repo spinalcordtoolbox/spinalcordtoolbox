@@ -106,7 +106,7 @@ if __name__ == "__main__":
     # initialize parameters
     param = Param()
     # call main function
-    main(arguments)
+    main()
 
 
 # import os
