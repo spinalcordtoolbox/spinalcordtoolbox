@@ -34,10 +34,12 @@ class Param:
 
 # main
 #=======================================================================================================================
-def main(args):
+def main():
     import numpy as np
     import spinalcordtoolbox.image as msct_image
 
+    parser = get_parser()
+    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
     # Initialization
     fname_mt0 = ''
     fname_mt1 = ''
@@ -112,10 +114,8 @@ def get_parser():
 if __name__ == "__main__":
     sct.init_sct()
     # parse arguments
-    parser = get_parser()
-    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
     # initialize parameters
     param = Param()
     # param_default = Param()
     # call main function
-    main(arguments)
+    main()
