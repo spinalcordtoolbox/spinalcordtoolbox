@@ -298,7 +298,9 @@ class ParamGLCM(object):
         self.angle = '0,45,90,135'  # Rotation angles for co-occurrence matrix
 
 
-def main(arguments):
+def main():
+    parser = get_parser()
+    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
 
     # create param object
     param = Param()
@@ -344,6 +346,4 @@ def main(arguments):
 
 if __name__ == "__main__":
     sct.init_sct()
-    parser = get_parser()
-    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
-    main(arguments)
+    main()
