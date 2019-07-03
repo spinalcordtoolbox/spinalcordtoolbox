@@ -85,11 +85,17 @@ def convert(fname_in, fname_out, squeeze_data=True, dtype=None, verbose=1):
     return im
 
 
-# MAIN
-# ==========================================================================================
-def main():
+def main(args):
+    """
+    Main function
+    :param args:
+    :return:
+    """
+    # get parser args
+    if args is None:
+        args = None if sys.argv[1:] else ['--help']
     parser = get_parser()
-    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
+    arguments = parser.parse_args(args=args)
     # Building the command, do sanity checks
     fname_in = arguments.i
     fname_out = arguments.o
