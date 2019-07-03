@@ -413,20 +413,20 @@ def get_functions_parallelizable():
         'sct_compute_ernst_angle',
         'sct_compute_hausdorff_distance',
         'sct_compute_mtr',
-        #'sct_compute_mscc', # had to remove temporarily because using argparse (not msct_parser)
-        #'sct_compute_snr', # had to remove temporarily because using argparse (not msct_parser)
-        #'sct_concat_transfo', # had to remove temporarily because using argparse (not msct_parser)
+        'sct_compute_mscc',
+        'sct_compute_snr',
+        'sct_concat_transfo',
         # 'sct_convert_binary_to_trilinear',  # not useful
-        # 'sct_create_mask', # had to remove temporarily because using argparse (not msct_parser)
-        #'sct_crop_image', # had to remove temporarily because using argparse (not msct_parser)
+        'sct_create_mask',
+        'sct_crop_image',
         'sct_dice_coefficient',
-        #'sct_detect_pmj', # removed temporarily: fails due to function call of script that uses argparse
+        'sct_detect_pmj',
         'sct_dmri_compute_dti',
         'sct_dmri_concat_bvals',
         'sct_dmri_concat_bvecs',
         'sct_dmri_create_noisemask',
         'sct_dmri_compute_bvalue',
-        #'sct_dmri_moco', # removed temporarily: fails due to function call of script that uses argparse
+        'sct_dmri_moco',
         'sct_dmri_separate_b0_and_dwi',
         'sct_dmri_transpose_bvecs',
         # 'sct_documentation',
