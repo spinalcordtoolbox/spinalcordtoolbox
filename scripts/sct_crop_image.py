@@ -406,10 +406,17 @@ def find_mask_boundaries(fname_mask):
     return ind_start, ind_end, list(range(dim))
 
 
-if __name__ == "__main__":
-    sct.init_sct()
+def main(args):
+    """
+    Main function
+    :param args:
+    :return:
+    """
+    # get parser args
+    if args is None:
+        args = None if sys.argv[1:] else ['--help']
     parser = get_parser()
-    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
+    arguments = parser.parse_args(args=args)
 
     # assigning variables to arguments
     input_filename = arguments.i
@@ -456,3 +463,8 @@ if __name__ == "__main__":
             cropper.mesh = arguments.mesh
 
         cropper.crop()
+
+if __name__ == "__main__":
+    sct.init_sct()
+    main()
+
