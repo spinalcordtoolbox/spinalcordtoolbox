@@ -20,15 +20,16 @@ import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
 import sct_apply_transfo
 
-default_args = [
- '-i t2/t2.nii.gz -l t2/labels.nii.gz -s t2/t2_seg.nii.gz -param step=1,type=seg,algo=centermassrot,metric=MeanSquares:step=2,type=seg,algo=bsplinesyn,iter=5,metric=MeanSquares -t template -r 0 -igt template/template/PAM50_small_cord.nii.gz -qc testing-qc',
- '-i t2/t2.nii.gz -s t2/t2_seg.nii.gz -ldisc t2/labels.nii.gz -ref subject',
-]
 
 def init(param_test):
     """
     Initialize class: param_test
     """
+    default_args = [
+        '-i t2/t2.nii.gz -l t2/labels.nii.gz -s t2/t2_seg.nii.gz -param step=1,type=seg,algo=centermassrot,metric=MeanSquares:step=2,type=seg,algo=bsplinesyn,iter=5,metric=MeanSquares -t template -r 0 -igt template/template/PAM50_small_cord.nii.gz -qc qc-testing',
+        '-i t2/t2.nii.gz -s t2/t2_seg.nii.gz -ldisc t2/labels.nii.gz -ref subject',
+    ]
+    param_test.file_seg = 't2/t2_seg.nii.gz'
 
     param_test.dice_threshold = 0.9
 
@@ -45,29 +46,29 @@ def test_integrity(param_test):
     """
 
     if param_test.args.startswith(default_args[1]):
-        return param_test # no integrity test
+        return param_test  # no integrity test
 
     # apply transformation to binary mask: template --> anat
     sct_apply_transfo.main(args=[
         '-i', param_test.fname_gt,
-        '-d', param_test.dict_args_with_path['-s'],
-        '-w', os.path.join(param_test.path_output, 'warp_template2anat.nii.gz'),
-        '-o', os.path.join(param_test.path_output, 'test_template2anat.nii.gz'),
+        '-d', param_test.file_seg,
+        '-w', 'warp_template2anat.nii.gz',
+        '-o', 'test_template2anat.nii.gz',
         '-x', 'nn',
         '-v', '0'])
 
     # apply transformation to binary mask: anat --> template
     sct_apply_transfo.main(args=[
-        '-i', param_test.dict_args_with_path['-s'],
+        '-i', param_test.file_seg,
         '-d', param_test.fname_gt,
-        '-w', os.path.join(param_test.path_output, 'warp_anat2template.nii.gz'),
-        '-o', os.path.join(param_test.path_output, 'test_anat2template.nii.gz'),
+        '-w', 'warp_anat2template.nii.gz',
+        '-o', 'test_anat2template.nii.gz',
         '-x', 'nn',
         '-v', '0'])
 
     # compute dice coefficient between template segmentation warped to anat and segmentation from anat
-    im_seg = Image(param_test.dict_args_with_path['-s'])
-    im_template_seg_reg = Image(os.path.join(param_test.path_output, 'test_template2anat.nii.gz'))
+    im_seg = Image(param_test.file_seg)
+    im_template_seg_reg = Image('test_template2anat.nii.gz')
     dice_template2anat = msct_image.compute_dice(im_seg, im_template_seg_reg, mode='3d', zboundaries=True)
     # check
     param_test.output += 'Dice[seg,template_seg_reg]: '+str(dice_template2anat)
@@ -78,7 +79,7 @@ def test_integrity(param_test):
         param_test.output += '\n--> FAILED'
 
     # compute dice coefficient between anat segmentation warped to template and segmentation from template
-    im_seg_reg = Image(os.path.join(param_test.path_output, 'test_anat2template.nii.gz'))
+    im_seg_reg = Image('test_anat2template.nii.gz')
     im_template_seg = Image(param_test.fname_gt)
     dice_anat2template = msct_image.compute_dice(im_seg_reg, im_template_seg, mode='3d', zboundaries=True)
     # check
