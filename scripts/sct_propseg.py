@@ -27,7 +27,7 @@ import sct_utils as sct
 from msct_parser import Parser
 from spinalcordtoolbox.centerline import optic
 from spinalcordtoolbox.reports.qc import generate_qc
-
+from spinalcordtoolbox.modality_prediction import core as modality_detection
 
 def check_and_correct_segmentation(fname_segmentation, fname_centerline, folder_output='', threshold_distance=5.0,
                                    remove_temp_files=1, verbose=0):
