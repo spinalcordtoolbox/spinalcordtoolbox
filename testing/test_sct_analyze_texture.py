@@ -44,7 +44,7 @@ def test_integrity(param_test):
     im_texture_ref = Image(param_test.fname_gt)
     # Compute norm
     norm_img = np.linalg.norm(im_texture.data - im_texture_ref.data)
-    if norm_img < param_test.norm_threshold:
+    if norm_img > param_test.norm_threshold:
         param_test.output += '--> FAILED'
         param_test.status = 99
     else:
