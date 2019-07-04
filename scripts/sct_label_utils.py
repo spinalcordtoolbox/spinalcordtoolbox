@@ -24,10 +24,11 @@ import sys
 import numpy as np
 from scipy import ndimage
 
-from msct_parser import Parser
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image, zeros_like
-from msct_types import Coordinate, CoordinateValue
+from spinalcordtoolbox.types import Coordinate, CoordinateValue
+
+from msct_parser import Parser
 import sct_utils as sct
 
 
@@ -161,12 +162,14 @@ class ProcessLabels(object):
         Create an image with labels listed by the user.
         This method works only if the user inserted correct coordinates.
 
-        self.coordinates is a list of coordinates (class in msct_types).
+        self.coordinates is a list of coordinates (class in spinalcordtoolbox.types).
         a Coordinate contains x, y, z and value.
         If only one label is to be added, coordinates must be completed with '[]'
         examples:
-        For one label:  object_define=ProcessLabels( fname_label, coordinates=[coordi]) where coordi is a 'Coordinate' object from msct_types
-        For two labels: object_define=ProcessLabels( fname_label, coordinates=[coordi1, coordi2]) where coordi1 and coordi2 are 'Coordinate' objects from msct_types
+        For one label:  object_define=ProcessLabels( fname_label, coordinates=[coordi]) where coordi is a 'Coordinate'
+          object from spinalcordtoolbox.types
+        For two labels: object_define=ProcessLabels( fname_label, coordinates=[coordi1, coordi2]) where coordi1 and
+          coordi2 are 'Coordinate' objects from spinalcordtoolbox.types
         """
         image_output = self.image_input.copy() if add else msct_image.zeros_like(self.image_input)
 
@@ -401,7 +404,7 @@ class ProcessLabels(object):
         :param symmetry: boolean,
         :return: intersection of CoordinateValue: list
         """
-        from msct_types import CoordinateValue
+        from spinalcordtoolbox.types import CoordinateValue
         if isinstance(coord_input[0], CoordinateValue) and isinstance(coord_ref[0], CoordinateValue) and symmetry:
             coord_intersection = list(set(coord_input).intersection(set(coord_ref)))
             result_coord_input = [coord for coord in coord_input if coord in coord_intersection]
