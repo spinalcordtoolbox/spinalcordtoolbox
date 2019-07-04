@@ -55,11 +55,20 @@ def get_parser():
         metavar=Metavar.file)
     mandatoryArguments.add_argument(
         "-w",
-        help='Transformation, which can be a warping field (nifti image) or an affine transformation matrix (text '
-             'file). (e.g. "warp1.nii.gz, warp2.nii.gz")',
+        help='Transformation(s), which can be warping fields (nifti image) or affine transformation matrix (text '
+             'file). Separate with space. Example: warp1.nii.gz warp2.nii.gz',
         nargs='+',
-        metavar='')
+        metavar=Metavar.file)
+
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional.add_argument(
+        "-winv",
+        help='Affine transformation(s) listed in flag -w which should be inverted before being used. Note that this'
+             'only concerns affine transformation (not warping fields). If you would like to use an inverse warping'
+             'field, then directly input the inverse warping field in flag -w.',
+        nargs='+',
+        metavar=Metavar.file,
+        default=None)
     optional.add_argument(
         "-h",
         "--help",
@@ -103,12 +112,11 @@ def get_parser():
 
 
 class Transform:
-    def __init__(self, input_filename, warp, fname_dest, output_filename='', verbose=0, crop=0, interp='spline', remove_temp_files=1, debug=0):
+    def __init__(self, input_filename, fname_dest, list_warp, list_warpinv=None, output_filename='', verbose=0, crop=0,
+                 interp='spline', remove_temp_files=1, debug=0):
         self.input_filename = input_filename
-        if isinstance(warp, str):
-            self.warp_input = list([warp])
-        else:
-            self.warp_input = warp
+        self.list_warp = list_warp
+        self.list_warpinv = list_warpinv
         self.fname_dest = fname_dest
         self.output_filename = output_filename
         self.interp = interp
@@ -120,7 +128,7 @@ class Transform:
     def apply(self):
         # Initialization
         fname_src = self.input_filename  # source image (moving)
-        fname_warp_list = self.warp_input  # list of warping fields
+        list_warp = self.list_warp  # list of warping fields
         fname_out = self.output_filename  # output
         fname_dest = self.fname_dest  # destination image (fix)
         verbose = self.verbose
@@ -133,20 +141,20 @@ class Transform:
         sct.printv('\nParse list of warping fields...', verbose)
         use_inverse = []
         fname_warp_list_invert = []
-        # fname_warp_list = fname_warp_list.replace(' ', '')  # remove spaces
-        # fname_warp_list = fname_warp_list.split(",")  # parse with comma
-        for idx_warp, path_warp in enumerate(fname_warp_list):
-            # Check if inverse matrix is specified with '-' at the beginning of file name
-            if path_warp.startswith("-"):
+        # list_warp = list_warp.replace(' ', '')  # remove spaces
+        # list_warp = list_warp.split(",")  # parse with comma
+        for idx_warp, path_warp in enumerate(self.list_warp):
+            # Check if this transformation should be inverted
+            if path_warp in self.list_warpinv:
                 use_inverse.append('-i')
-                fname_warp_list[idx_warp] = path_warp[1:]  # remove '-'
-                fname_warp_list_invert += [[use_inverse[idx_warp], fname_warp_list[idx_warp]]]
+                # list_warp[idx_warp] = path_warp[1:]  # remove '-'
+                fname_warp_list_invert += [[use_inverse[idx_warp], list_warp[idx_warp]]]
             else:
                 use_inverse.append('')
                 fname_warp_list_invert += [[path_warp]]
-            path_warp = fname_warp_list[idx_warp]
+            path_warp = list_warp[idx_warp]
             if path_warp.endswith((".nii", ".nii.gz")) \
-             and msct_image.Image(fname_warp_list[idx_warp]).header.get_intent()[0] != 'vector':
+             and msct_image.Image(list_warp[idx_warp]).header.get_intent()[0] != 'vector':
                 raise ValueError("Displacement field in {} is invalid: should be encoded" \
                  " in a 5D file with vector intent code" \
                  " (see https://nifti.nimh.nih.gov/pub/dist/src/niftilib/nifti1.h" \
@@ -192,13 +200,11 @@ class Transform:
             else:
                 dim = '3'
             sct.run(['isct_antsApplyTransforms',
-              '-d', dim,
-              '-i', fname_src,
-              '-o', fname_out,
-              '-t',
-             ] + fname_warp_list_invert + [
-             '-r', fname_dest,
-             ] + interp, verbose=verbose, is_sct_binary=True)
+                     '-d', dim,
+                     '-i', fname_src,
+                     '-o', fname_out,
+                     '-t'] + fname_warp_list_invert + ['-r', fname_dest] + interp,
+                    verbose=verbose, is_sct_binary=True)
 
         # if 4d, loop across the T dimension
         else:
@@ -209,7 +215,7 @@ class Transform:
             img_src.save(os.path.join(path_tmp, "data.nii"))
             sct.copy(fname_dest, os.path.join(path_tmp, file_dest + ext_dest))
             fname_warp_list_tmp = []
-            for fname_warp in fname_warp_list:
+            for fname_warp in list_warp:
                 path_warp, file_warp, ext_warp = sct.extract_fname(fname_warp)
                 sct.copy(fname_warp, os.path.join(path_tmp, file_warp + ext_warp))
                 fname_warp_list_tmp.append(file_warp + ext_warp)
@@ -288,8 +294,10 @@ def main(args=None):
     input_filename = arguments.i
     fname_dest = arguments.d
     warp_filename = arguments.w
+    warpinv_filename = arguments.winv
 
-    transform = Transform(input_filename=input_filename, fname_dest=fname_dest, warp=warp_filename)
+    transform = Transform(input_filename=input_filename, fname_dest=fname_dest, list_warp=warp_filename,
+                          list_warpinv=warpinv_filename)
 
     transform.crop = arguments.crop
     transform.output_filename = arguments.o
