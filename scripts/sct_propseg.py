@@ -168,7 +168,7 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
     parser.add_option(name="-c",
                       type_value="multiple_choice",
                       description="type of image contrast, if your contrast is not in the available options (t1, t2, t2s, dwi), use t1 (cord bright / CSF dark) or t2 (cord dark / CSF bright)",
-                      mandatory=True,
+                      mandatory=False,
                       example=['t1', 't2', 't2s', 'dwi'])
     parser.usage.addSection("General options")
     parser.add_option(name="-ofolder",
@@ -383,7 +383,12 @@ def propseg(img_input, options_dict):
     arguments = options_dict
     fname_input_data = img_input.absolutepath
     fname_data = os.path.abspath(fname_input_data)
-    contrast_type = arguments["-c"]
+
+    # Automatic detection of contrast
+    if not "-c" in arguments:
+        contrast_type = modality_detection.classify_from_image(img_input)
+    else:
+        contrast_type = arguments["-c"]
     contrast_type_conversion = {'t1': 't1', 't2': 't2', 't2s': 't2', 'dwi': 't1'}
     contrast_type_propseg = contrast_type_conversion[contrast_type]
 
