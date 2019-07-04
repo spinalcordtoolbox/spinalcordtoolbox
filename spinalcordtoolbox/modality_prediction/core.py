@@ -3,8 +3,6 @@ import sys
 import torch
 import numpy as np
 
-from PIL import Image
-
 from spinalcordtoolbox.image import Image
 
 import model as M
@@ -12,7 +10,7 @@ import model as M
 
 class Acquisition():
     
-    def __init__(self, axial_slices):
+    def __init__(self, axial_slices=None):
         self.slices = axial_slices
 
     def loadFromPath(self, path):
@@ -30,7 +28,18 @@ class Acquisition():
         self.slices = axial_slices
 
     def loadFromImage(self, image):
-        self.slices = image.data
+        """
+        This method loads the slices in the slices attribute from a spinalcordtoolbox.image.Image object.
+        At this point it is only a list of arrays and will only be converted
+        to tensor after transformations.
+        """
+        image_original = image.data
+        if image_original.size == 0 :
+            raise RuntimeError(f"Empty slice in subject {image._path}.")
+        axial_slices = []
+        for i in range(image_original.shape[2]):
+            axial_slices.append(image_original[:,:,i])
+        self.slices = axial_slices
 
     def StandardizeTransform(self):
         """
@@ -67,28 +76,23 @@ class Acquisition():
         return(tensor)
 
 
-def classify_acquisition(input_path, model=None):
-       
-    slices = Acquisition(input_path)
-    slices.CenterCropTransform()
-    slices.StandardizeTransform()
-    input_slices = slices.ToTensor()
-
+def classify_acquisition(input_image, model=None):
     """
-    # We load the acquisitions from the image module in order to benefit from all existing methods
-    slices = Image()
-    slices.loadFromPath(input_path)
-    slices.change_orientation('RPI')
-    
-    # Then we preprocess the slices
+    This function takes as input an object from spinalcordtoolbox.image object and the
+    model and outputs the predicted modality.
+
+    :param input_image: the loaded and correctly oriented Image object
+    :param model: the loaded pre-trained model
+    :return (string): name of the class
+    """
+
+    # We preprocess the slices within our Acquisition Class
     acq = Acquisition()
-    acq.loadFromImage(slices)
+    acq.loadFromImage(input_image)
     acq.CenterCropTransform()
-    acq.StandardizeTranform()
+    acq.StandardizeTransform()
     
     input_slices = acq.ToTensor()
-    """
-
 
     with torch.no_grad():
         
@@ -97,7 +101,8 @@ def classify_acquisition(input_path, model=None):
         outputs = model(input_slices)   
         _, preds = torch.max(outputs, 1)
         preds = preds.tolist()
-        
+
+    # We consider the mode of the predictions for each slice
     numeral=[[preds.count(nb), nb] for nb in preds]
     numeral.sort(key=lambda x:x[0], reverse=True)
     modality = numeral[0][1]
@@ -106,19 +111,37 @@ def classify_acquisition(input_path, model=None):
     return(class_names[modality])
 
 
-def run_main():
-    if len(sys.argv) <= 1:
-        print("\nclassify_acquisition [path]\n")
-        return
-    
-    input_path = sys.argv[1]
-    
+def classifier(input_path):
+    """
+    This is our main function that will be called from the sct scripts inside the parser.
+    :param input_path: raw path to the nifti acquisition
+    :return: the predicted modality
+    """
+
+    # We load the acquisitions from the image module in order to benefit from all existing methods
+    slices = Image(input_path)
+    slices.change_orientation('RPI')
+
+    # We load the model
     model = M.Classifier()
     model.load_state_dict(torch.load("model.pt", map_location='cpu'))
     model.eval()
+
+    modality = classify_acquisition(input_image, model)
     
-    modality = classify_acquisition(input_path, model)
-    
-    class_names = ["T1w", "T2star", "T2w"]   
-    
-    return(class_names[modality])
+    return(modality)
+
+"""
+DELETE THIS TEST BEFORE MERGING
+
+model = M.Classifier()
+model.load_state_dict(torch.load("model.pt", map_location='cpu'))
+model.eval()
+
+
+print(classify_acquisition("/Volumes/projects/ivado-medical-imaging/spineGeneric_201907041011/result/sub-amu01/anat/sub-amu01_T1w.nii.gz", model))
+
+
+"""
+
+
