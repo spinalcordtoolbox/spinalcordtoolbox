@@ -57,6 +57,7 @@ def get_parser():
         "-w",
         help='Transformation, which can be a warping field (nifti image) or an affine transformation matrix (text '
              'file). (e.g. "warp1.nii.gz, warp2.nii.gz")',
+        nargs='+',
         metavar='')
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
@@ -74,6 +75,7 @@ def get_parser():
     optional.add_argument(
         "-o",
         help='registered source. (e.g. "dest.nii.gz")',
+        required=False,
         metavar=Metavar.file,
         default='')
     optional.add_argument(
