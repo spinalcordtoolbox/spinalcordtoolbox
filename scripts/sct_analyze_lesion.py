@@ -19,10 +19,10 @@ from skimage.measure import label
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
 from msct_parser import Parser
-from msct_types import Centerline
 import sct_utils as sct
 from sct_utils import extract_fname, printv, tmp_create
 from spinalcordtoolbox.centerline.core import get_centerline
+from spinalcordtoolbox.types import Centerline
 
 
 def get_parser():
