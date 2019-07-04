@@ -42,6 +42,8 @@ from __future__ import division, absolute_import
 import os
 import numpy as np
 
+from spinalcordtoolbox.types import Centerline
+
 import sct_utils as sct
 
 
@@ -947,7 +949,6 @@ class NURBS:
         # reparametrization of the curve
         param = np.linspace(x[0], x[-1], prec)
         P_x, P_y, P_z, P_x_d, P_y_d, P_z_d = self.compute_curve_from_parametrization(P, k, x, Nik, Nikp, param)
-        from msct_types import Centerline
         centerline = Centerline(P_x, P_y, P_z, P_x_d, P_y_d, P_z_d)
         distances_between_points = centerline.progressive_length
         range_points = np.linspace(0.0, 1.0, prec)
