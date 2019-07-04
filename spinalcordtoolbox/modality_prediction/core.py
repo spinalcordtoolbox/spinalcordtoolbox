@@ -1,5 +1,3 @@
-import nibabel as nib
-import sys
 import torch
 import numpy as np
 
@@ -11,20 +9,6 @@ import model as M
 class Acquisition():
     
     def __init__(self, axial_slices=None):
-        self.slices = axial_slices
-
-    def loadFromPath(self, path):
-        """
-        This method loads the slices in the slices attribute from the path.
-        At this point it is only a list of arrays and will only be converted
-        to tensor after transformations.
-        """
-        nii_original = nib.load(path).get_data()
-        if nii_original.size == 0 :
-            raise RuntimeError(f"Empty slice in subject {path}.")
-        axial_slices = []
-        for i in range(nii_original.shape[2]):
-            axial_slices.append(nii_original[:,:,i])
         self.slices = axial_slices
 
     def loadFromImage(self, image):
@@ -140,8 +124,6 @@ model.eval()
 
 
 print(classify_acquisition("/Volumes/projects/ivado-medical-imaging/spineGeneric_201907041011/result/sub-amu01/anat/sub-amu01_T1w.nii.gz", model))
-
-
 """
 
 
