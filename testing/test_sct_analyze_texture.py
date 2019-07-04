@@ -23,7 +23,7 @@ def init(param_test):
     """
     # initialization
     default_args = ['-i t2/t2.nii.gz -m t2/t2_seg.nii.gz -feature contrast -distance 1 -ofolder .']
-    param_test.difference_threshold = 0.001
+    param_test.norm_threshold = 0.001
     param_test.file_texture = 't2_contrast_1_mean.nii.gz'
     param_test.fname_gt = 't2/t2_contrast_1_mean_ref.nii.gz'
 
