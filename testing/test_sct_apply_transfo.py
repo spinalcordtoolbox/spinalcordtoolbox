@@ -22,8 +22,10 @@ def init(param_test):
     Initialize class: param_test
     """
     # initialization
-    default_args = ['-i template/template/PAM50_small_t2.nii.gz -d t2/t2.nii.gz -w t2/warp_template2anat.nii.gz',
-                    '-i dmri/dmri.nii.gz -d t2/t2.nii.gz -w t2/warp_template2anat.nii.gz']
+    default_args = [
+        '-i template/template/PAM50_small_t2.nii.gz -d t2/t2.nii.gz -w t2/warp_template2anat.nii.gz',
+        '-i template/template/PAM50_small_t2.nii.gz -d t2/t2.nii.gz -w t2/warp_template2anat.nii.gz t2/warp_template2anat.nii.gz',
+        '-i dmri/dmri.nii.gz -d t2/t2.nii.gz -w t2/warp_template2anat.nii.gz']
     param_test.input = 'template/template/PAM50_small_t2.nii.gz'
     param_test.ref = 't2/t2.nii.gz'
     param_test.out = 'PAM50_small_t2_reg.nii.gz'
