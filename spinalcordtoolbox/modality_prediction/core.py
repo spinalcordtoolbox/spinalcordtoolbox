@@ -1,12 +1,10 @@
-import torch
 import numpy as np
-
+import torch
 from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.modality_prediction import model as M
 
-import model as M
 
-
-class Acquisition():
+class Acquisition(object):
     
     def __init__(self, axial_slices=None):
         self.slices = axial_slices
@@ -95,7 +93,7 @@ def classify_acquisition(input_image, model=None):
     return(class_names[modality])
 
 
-def classifier(input_path):
+def classify_from_path(input_path):
     """
     This is our main function that will be called from the sct scripts inside the parser.
     :param input_path: raw path to the nifti acquisition
@@ -103,27 +101,48 @@ def classifier(input_path):
     """
 
     # We load the acquisitions from the image module in order to benefit from all existing methods
-    slices = Image(input_path)
-    slices.change_orientation('RPI')
+    input_image = Image(input_path)
+    input_image.change_orientation('RPI')
 
     # We load the model
+    # Here we have to specify the path from which the model can be found when we are in the
+    # actual scripts/ folder. It is probably not the most elegant way to proceed so it might require
+    # to load it somewhere else.
     model = M.Classifier()
-    model.load_state_dict(torch.load("model.pt", map_location='cpu'))
+    model.load_state_dict(torch.load("../spinalcordtoolbox/modality_prediction/model.pt", map_location='cpu'))
     model.eval()
 
     modality = classify_acquisition(input_image, model)
     
     return(modality)
 
+
+def classify_from_image(input_image):
+    """
+    This is our main function that will be called from the sct scripts inside the parser.
+    :param input_image: loaded image of the acquisition
+    :return: the predicted modality
+    """
+
+    # We load the acquisitions from the image module in order to benefit from all existing methods
+    input_image.change_orientation('RPI')
+
+    # We load the model
+    # Here we have to specify the path from which the model can be found when we are in the
+    # actual scripts/ folder. It is probably not the most elegant way to proceed so it might require
+    # to load it somewhere else.
+    model = M.Classifier()
+    model.load_state_dict(torch.load("../spinalcordtoolbox/modality_prediction/model.pt", map_location='cpu'))
+    model.eval()
+
+    modality = classify_acquisition(input_image, model)
+
+    return (modality)
+
 """
 DELETE THIS TEST BEFORE MERGING
 
-model = M.Classifier()
-model.load_state_dict(torch.load("model.pt", map_location='cpu'))
-model.eval()
 
+print(classifier("/Volumes/projects/ivado-medical-imaging/spineGeneric_201907041011/result/sub-amu01/anat/sub-amu01_T1w.nii.gz"))
 
-print(classify_acquisition("/Volumes/projects/ivado-medical-imaging/spineGeneric_201907041011/result/sub-amu01/anat/sub-amu01_T1w.nii.gz", model))
 """
-
-
