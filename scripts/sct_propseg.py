@@ -15,18 +15,17 @@
 
 from __future__ import division, absolute_import
 
-import os
-import sys
+import os, sys
 
 import numpy as np
+from scipy import ndimage as ndi
+
+import spinalcordtoolbox.image as msct_image
+from spinalcordtoolbox.image import Image
 import sct_image
 import sct_utils as sct
-import spinalcordtoolbox.image as msct_image
 from msct_parser import Parser
-from scipy import ndimage as ndi
 from spinalcordtoolbox.centerline import optic
-from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.modality_prediction import core as modality_detection
 from spinalcordtoolbox.reports.qc import generate_qc
 
 
@@ -169,7 +168,7 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
     parser.add_option(name="-c",
                       type_value="multiple_choice",
                       description="type of image contrast, if your contrast is not in the available options (t1, t2, t2s, dwi), use t1 (cord bright / CSF dark) or t2 (cord dark / CSF bright)",
-                      mandatory=False,
+                      mandatory=True,
                       example=['t1', 't2', 't2s', 'dwi'])
     parser.usage.addSection("General options")
     parser.add_option(name="-ofolder",
@@ -384,10 +383,7 @@ def propseg(img_input, options_dict):
     arguments = options_dict
     fname_input_data = img_input.absolutepath
     fname_data = os.path.abspath(fname_input_data)
-    if not "-c" in arguments:
-        contrast_type = modality_detection.classify_from_image(img_input)
-    else:
-        contrast_type = arguments["-c"]
+    contrast_type = arguments["-c"]
     contrast_type_conversion = {'t1': 't1', 't2': 't2', 't2s': 't2', 'dwi': 't1'}
     contrast_type_propseg = contrast_type_conversion[contrast_type]
 
