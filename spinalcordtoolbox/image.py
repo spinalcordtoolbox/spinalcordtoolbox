@@ -23,7 +23,9 @@ from scipy.ndimage import map_coordinates
 
 import transforms3d.affines as affines
 from spinalcordtoolbox.types import Coordinate
+from spinalcordtoolbox.utils import __sct_dir__
 
+sys.path.append(os.path.join(__sct_dir__, 'scripts'))
 import sct_utils as sct
 
 logger = logging.getLogger(__name__)
