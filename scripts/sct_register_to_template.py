@@ -23,11 +23,14 @@ import numpy as np
 import sct_utils as sct
 import sct_maths
 import sct_label_utils
-from spinalcordtoolbox.metadata import get_file_label
+
 from sct_utils import add_suffix
 from sct_register_multimodal import Paramreg, ParamregMultiStep, register
 from msct_parser import Parser
 from msct_register_landmarks import register_landmarks
+import sct_apply_transfo
+
+from spinalcordtoolbox.metadata import get_file_label
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.centerline.core import get_centerline
@@ -411,7 +414,11 @@ def main(args=None):
             sct.copy(fn_warp_straight2curve, 'warp_straight2curve.nii.gz')
             sct.copy(fn_straight_ref, 'straight_ref.nii.gz')
             # apply straightening
-            sct.run(['sct_apply_transfo', '-i', ftmp_seg, '-w', 'warp_curve2straight.nii.gz', '-d', 'straight_ref.nii.gz', '-o', add_suffix(ftmp_seg, '_straight')])
+            sct_apply_transfo.main(args=[
+                '-i', ftmp_seg,
+                '-w', 'warp_curve2straight.nii.gz',
+                '-d', 'straight_ref.nii.gz',
+                '-o', add_suffix(ftmp_seg, '_straight')])
         else:
             from spinalcordtoolbox.straightening import SpinalCordStraightener
             sc_straight = SpinalCordStraightener(ftmp_seg, ftmp_seg)
@@ -453,7 +460,12 @@ def main(args=None):
 
             # Apply straightening to labels
             sct.printv('\nApply straightening to labels...', verbose)
-            sct.run(['sct_apply_transfo', '-i', ftmp_label, '-o', add_suffix(ftmp_label, '_straight'), '-d', add_suffix(ftmp_seg, '_straight'), '-w', 'warp_curve2straight.nii.gz', '-x', 'nn'])
+            sct_apply_transfo.main(args=[
+                '-i', ftmp_label,
+                '-o', add_suffix(ftmp_label, '_straight'),
+                '-d', add_suffix(ftmp_seg, '_straight'),
+                '-w', 'warp_curve2straight.nii.gz',
+                '-x', 'nn'])
             ftmp_label = add_suffix(ftmp_label, '_straight')
 
             # Compute rigid transformation straight landmarks --> template landmarks
@@ -471,9 +483,18 @@ def main(args=None):
 
         # Apply transformation
         sct.printv('\nApply transformation...', verbose)
-        sct.run(['sct_apply_transfo', '-i', ftmp_data, '-o', add_suffix(ftmp_data, '_straightAffine'), '-d', ftmp_template, '-w', 'warp_curve2straightAffine.nii.gz'])
+        sct_apply_transfo.main(args=[
+            '-i', ftmp_data,
+            '-o', add_suffix(ftmp_data, '_straightAffine'),
+            '-d', ftmp_template,
+            '-w', 'warp_curve2straightAffine.nii.gz'])
         ftmp_data = add_suffix(ftmp_data, '_straightAffine')
-        sct.run(['sct_apply_transfo', '-i', ftmp_seg, '-o', add_suffix(ftmp_seg, '_straightAffine'), '-d', ftmp_template, '-w', 'warp_curve2straightAffine.nii.gz', '-x', 'linear'])
+        sct_apply_transfo.main(args=[
+            '-i', ftmp_seg,
+            '-o', add_suffix(ftmp_seg, '_straightAffine'),
+            '-d', ftmp_template,
+            '-w', 'warp_curve2straightAffine.nii.gz',
+            '-x', 'linear'])
         ftmp_seg = add_suffix(ftmp_seg, '_straightAffine')
 
         """
@@ -549,10 +570,20 @@ def main(args=None):
             # if step>1, apply warp_forward_concat to the src image to be used
             if i_step > 1:
                 # apply transformation from previous step, to use as new src for registration
-                sct.run(['sct_apply_transfo', '-i', src, '-d', dest, '-w', ','.join(warp_forward), '-o', add_suffix(src, '_regStep' + str(i_step - 1)), '-x', interp_step], verbose)
+                sct_apply_transfo.main(args=[
+                    '-i', src,
+                    '-d', dest,
+                    '-w', ' '.join(warp_forward),
+                    '-o', add_suffix(src, '_regStep' + str(i_step - 1)),
+                    '-x', interp_step])
                 src = add_suffix(src, '_regStep' + str(i_step - 1))
                 if paramreg.steps[str(i_step)].algo == 'centermassrot' and paramreg.steps[str(i_step)].rot_method == 'hog':  # also apply transformation to the seg
-                    sct.run(['sct_apply_transfo', '-i', src_seg, '-d', dest_seg, '-w', ','.join(warp_forward), '-o', add_suffix(src, '_regStep' + str(i_step - 1)), '-x', interp_step], verbose)
+                    sct_apply_transfo.main(args=[
+                        '-i', src_seg,
+                        '-d', dest_seg,
+                        '-w', ' '.join(warp_forward),
+                        '-o', add_suffix(src, '_regStep' + str(i_step - 1)),
+                        '-x', interp_step])
                     src_seg = add_suffix(src_seg, '_regStep' + str(i_step - 1))
             # register src --> dest
             # TODO: display param for debugging
@@ -631,7 +662,12 @@ def main(args=None):
             else:
                 sct.printv('ERROR: Wrong image type.', 1, 'error')
             # apply transformation from previous step, to use as new src for registration
-            sct.run(['sct_apply_transfo', '-i', src, '-d', dest, '-w', ','.join(warp_forward), '-o', add_suffix(src, '_regStep' + str(i_step - 1)), '-x', interp_step], verbose)
+            sct_apply_transfo.main(args=[
+                '-i', src,
+                '-d', dest,
+                '-w', warp_forward,
+                '-o', add_suffix(src, '_regStep' + str(i_step - 1)),
+                '-x', interp_step])
             src = add_suffix(src, '_regStep' + str(i_step - 1))
             # register src --> dest
             # TODO: display param for debugging
