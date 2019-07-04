@@ -193,7 +193,6 @@ class Metavar(Enum):
     This class is used to display intuitive input types via the metavar field of argparse
     """
     file = "<file>"
-    list_files = "<list of files>"
     str = "<str>"
     folder = "<folder>"
     int = "<int>"
