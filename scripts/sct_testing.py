@@ -429,22 +429,20 @@ def get_functions_parallelizable():
         'sct_dmri_moco',
         'sct_dmri_separate_b0_and_dwi',
         'sct_dmri_transpose_bvecs',
-        # 'sct_documentation',
-        #'sct_extract_metric', # removed temporarily: fails due to function call of script that uses argparse
+        'sct_extract_metric',
         'sct_flatten_sagittal',
         'sct_fmri_compute_tsnr',
-        #'sct_fmri_moco', # removed temporarily: fails due to function call of script that uses argparse
+        'sct_fmri_moco',
         'sct_get_centerline',
-        # 'sct_invert_image',  # function not available from command-line
         'sct_label_utils',
-        # 'sct_pipeline',
+        # 'sct_pipeline',  # not useful-- to remove at some point
         'sct_process_segmentation',
         'sct_propseg',
-        # 'sct_qc',  # had to remove temporarily because using argparse (not msct_parser)
+        'sct_qc',
         'sct_register_multimodal',
         'sct_straighten_spinalcord', # deps: sct_apply_transfo
-        #'sct_register_to_template', # removed temporarily: fails due to function call of script that uses argparse
-        # 'sct_segment_graymatter',
+        'sct_register_to_template',
+        'sct_segment_graymatter',
         'sct_smooth_spinalcord',
         'sct_label_vertebrae',
     ]
