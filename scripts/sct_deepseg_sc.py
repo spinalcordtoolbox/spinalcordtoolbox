@@ -109,7 +109,7 @@ def main():
 
     # Automatic detection of contrast
     if not "-c" in arguments:
-        contrast_type = modality_detection.classify_from_image(img_input)
+        contrast_type = modality_detection.classify_from_path(fname_image)
     else:
         contrast_type = arguments["-c"]
 
