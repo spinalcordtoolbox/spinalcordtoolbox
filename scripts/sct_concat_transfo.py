@@ -15,12 +15,11 @@
 
 from __future__ import absolute_import, division
 
-import sys, os, functools
+import sys, os, functools, argparse
 
 import sct_utils as sct
-from msct_parser import Parser
 from spinalcordtoolbox.image import Image
-
+from spinalcordtoolbox.utils import Metavar
 
 class Param:
     # The constructor
@@ -28,23 +27,26 @@ class Param:
         self.fname_warp_final = 'warp_final.nii.gz'
 
 
-# main
-#=======================================================================================================================
-def main():
+def main(args=None):
+    """
+    Main function
+    :param args:
+    :return:
+    """
+    # get parser args
+    if args is None:
+        args = None if sys.argv[1:] else ['--help']
+    parser = get_parser()
+    arguments = parser.parse_args(args=args)
 
     # Initialization
     fname_warp_final = ''  # concatenated transformations
+    fname_dest = arguments.d
+    fname_warp_list = (arguments.w).split(",")
 
-    # Check input parameters
-    parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
-
-    fname_dest = arguments['-d']
-    fname_warp_list = arguments['-w']
-
-    if '-o' in arguments:
-        fname_warp_final = arguments['-o']
-    verbose = int(arguments.get('-v'))
+    if arguments.o is not None:
+        fname_warp_final = arguments.o
+    verbose = arguments.v
     sct.init_sct(log_level=verbose, update=True)  # Update log level
 
     # Parse list of warping fields
@@ -102,29 +104,40 @@ def main():
 # ==========================================================================================
 def get_parser():
     # Initialize the parser
-    parser = Parser(__file__)
-    parser.usage.set_description('Concatenate transformations. This function is a wrapper for isct_ComposeMultiTransform (ANTs). N.B. Order of input warping fields is important. For example, if you want to concatenate: A->B and B->C to yield A->C, then you have to input warping fields like that: A->B,B->C.')
-    parser.add_option(name="-d",
-                      type_value="file",
-                      description="Destination image.",
-                      mandatory=True,
-                      example='mt.nii.gz')
-    parser.add_option(name="-w",
-                      type_value=[[','], 'file-transfo'],
-                      description='List of affine matrix or warping fields separated with "," N.B. if you want to use the inverse matrix, add "-" before matrix file name. N.B. You should NOT use "-" with warping fields (only with matrices). If you want to use an inverse warping field, then input it directly (e.g., warp_template2anat.nii.gz instead of warp_anat2template.nii.gz) ',
-                      mandatory=True,
-                      example='warp_template2anat.nii.gz,warp_anat2mt.nii.gz')
-    parser.add_option(name="-o",
-                      type_value="file_output",
-                      description='Name of output warping field.',
-                      mandatory=False,
-                      example='warp_template2mt.nii.gz')
-    parser.add_option(name="-v",
-                      type_value='multiple_choice',
-                      description="verbose: 0 = nothing, 1 = classic, 2 = expended",
-                      mandatory=False,
-                      example=['0', '1', '2'],
-                      default_value='1')
+
+    parser = argparse.ArgumentParser(
+        description='Concatenate transformations. This function is a wrapper for isct_ComposeMultiTransform (ANTs). N.B. Order of input warping fields is important. For example, if you want to concatenate: A->B and B->C to yield A->C, then you have to input warping fields like that: A->B,B->C.',
+        add_help=None,
+        prog=os.path.basename(__file__).strip(".py"))
+    mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatoryArguments.add_argument(
+        "-d",
+        help='Destination image. (e.g. "mt.nii.gz")',
+        metavar=Metavar.file,
+        required=False)
+    mandatoryArguments.add_argument(
+        "-w",
+        help='List of affine matrix or warping fields separated with "," N.B. if you want to use the inverse matrix, add "-" before matrix file name. N.B. You should NOT use "-" with warping fields (only with matrices). If you want to use an inverse warping field, then input it directly (e.g. "warp_template2anat.nii.gz" instead of "warp_anat2template.nii.gz") ',
+        metavar=Metavar.list,
+        required = False)
+    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional.add_argument(
+        "-h",
+        "--help",
+        action="help",
+        help="show this help message and exit")
+    optional.add_argument(
+        "-o",
+        help='Name of output warping field (e.g. "warp_template2mt.nii.gz")',
+        metavar=Metavar.str,
+        required = False)
+    optional.add_argument(
+        "-v",
+        type=int,
+        help="Verbose: 0 = nothing, 1 = classic, 2 = expended",
+        required=False,
+        choices=(0, 1, 2),
+        default = 1)
 
     return parser
 
@@ -134,7 +147,6 @@ def get_parser():
 #=======================================================================================================================
 if __name__ == "__main__":
     sct.init_sct()
-    # initialize parameters
     param = Param()
     # call main function
     main()

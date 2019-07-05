@@ -15,6 +15,7 @@ import shutil
 import sys
 import numpy as np
 import itertools
+import argparse
 
 import tqdm
 from skimage.feature import greycomatrix, greycoprops
@@ -22,68 +23,88 @@ from skimage.feature import greycomatrix, greycoprops
 import sct_utils as sct
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
-from msct_parser import Parser
+from spinalcordtoolbox.utils import Metavar
 
 def get_parser():
     # Initialize the parser
-    parser = Parser(__file__)
-    parser.usage.set_description('Extraction of grey level co-occurence matrix (GLCM) texture features from an image within a given mask. The textures features are those defined in the sckit-image implementation: http://scikit-image.org/docs/dev/api/skimage.feature.html#greycoprops. This function outputs one nifti file per texture metric (' + ParamGLCM().feature + ') and per orientation called fnameInput_feature_distance_angle.nii.gz. Also, a file averaging each metric across the angles, called fnameInput_feature_distance_mean.nii.gz, is output.')
-    parser.add_option(name="-i",
-                      type_value="file",
-                      description="Image to analyze.",
-                      mandatory=True,
-                      example='t2.nii.gz')
-    parser.add_option(name="-m",
-                      type_value="file",
-                      description="Image mask (e.g., lesion, spinal cord).",
-                      mandatory=True,
-                      example='t2_seg.nii.gz')
-    parser.add_option(name="-feature",
-                      type_value="str",
-                      description="List of GLCM texture features (separate arguments with \",\").",
-                      mandatory=False,
-                      default_value=ParamGLCM().feature,
-                      example="energy,contrast")
-    parser.add_option(name="-distance",
-                      type_value="int",
-                      description="Distance offset for GLCM computation, in pixel (suggested distance values between 1 and 5).",
-                      mandatory=False,
-                      default_value=ParamGLCM().distance,
-                      example=1)
-    parser.add_option(name="-angle",
-                      type_value="str",
-                      description="List of angles for GLCM computation, separate arguments with \",\", in degrees (suggested distance values between 0 and 179).",
-                      mandatory=False,
-                      default_value=ParamGLCM().angle,
-                      example='0,90')
-    parser.add_option(name="-dim",
-                      type_value='multiple_choice',
-                      description="Compute the texture on the axial (ax), sagittal (sag) or coronal (cor) slices.",
-                      mandatory=False,
-                      default_value=Param().dim,
-                      example=['ax', 'sag', 'cor'])
-    parser.add_option(name="-ofolder",
-                      type_value="folder_creation",
-                      description="Output folder.",
-                      mandatory=False,
-                      default_value=Param().path_results,
-                      example='/my_texture/')
-    parser.add_option(name="-igt",
-                      type_value="image_nifti",
-                      description="File name of ground-truth texture metrics.",
-                      mandatory=False)
-    parser.add_option(name="-r",
-                      type_value="multiple_choice",
-                      description="Remove temporary files.",
-                      mandatory=False,
-                      default_value=str(int(Param().rm_tmp)),
-                      example=['0', '1'])
-    parser.add_option(name="-v",
-                      type_value='multiple_choice',
-                      description="Verbose: 0 = nothing, 1 = classic, 2 = expended.",
-                      mandatory=False,
-                      example=['0', '1', '2'],
-                      default_value=str(Param().verbose))
+
+    parser = argparse.ArgumentParser(
+        description='Extraction of grey level co-occurence matrix (GLCM) texture features from an image within a given '
+                    'mask. The textures features are those defined in the sckit-image implementation: '
+                    'http://scikit-image.org/docs/dev/api/skimage.feature.html#greycoprops. This function outputs '
+                    'one nifti file per texture metric (' + ParamGLCM().feature + ') and per orientation called '
+                    'fnameInput_feature_distance_angle.nii.gz. Also, a file averaging each metric across the angles, '
+                    'called fnameInput_feature_distance_mean.nii.gz, is output.',
+        add_help=None,
+        prog=os.path.basename(__file__).strip(".py")
+    )
+    mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatoryArguments.add_argument(
+        "-i",
+        metavar=Metavar.file,
+        help='Image to analyze. (e.g. "t2.nii.gz")',
+        required=False)
+    mandatoryArguments.add_argument(
+        "-m",
+        metavar=Metavar.file,
+        help='Image mask (e.g. "t2_seg.nii.gz")',
+        required=False)
+    optional = parser.add_argument_group("\nOPTIONALS ARGUMENTS")
+    optional.add_argument(
+        "-h",
+        "--help",
+        action="help",
+        help="show this help message and exit")
+    optional.add_argument(
+        "-feature",
+        metavar=Metavar.str,
+        help='List of GLCM texture features (separate arguments with ",").',
+        required=False,
+        default=ParamGLCM().feature)
+    optional.add_argument(
+        "-distance",
+        metavar=Metavar.int,
+        help='Distance offset for GLCM computation, in pixel (suggested distance values between 1 and 5). (e.g. "1")',
+        required=False,
+        default=ParamGLCM().distance)
+    optional.add_argument(
+        "-angle",
+        metavar=Metavar.list,
+        help='List of angles for GLCM computation, separate arguments with ",", in degrees (suggested distance values '
+             'between 0 and 179). (e.g. "0,90")',
+        required=False,
+        default=ParamGLCM().angle)
+    optional.add_argument(
+        "-dim",
+        help="Compute the texture on the axial (ax), sagittal (sag) or coronal (cor) slices.",
+        required=False,
+        choices=('ax', 'sag', 'cor'),
+        default=Param().dim)
+    optional.add_argument(
+        "-ofolder",
+        metavar=Metavar.folder,
+        help='Output folder. (e.g. "/my_texture/")',
+        required=False,
+        default=Param().path_results)
+    optional.add_argument(
+        "-igt",
+        metavar=Metavar.str,
+        help="File name of ground-truth texture metrics.",
+        required=False)
+    optional.add_argument(
+        "-r",
+        help="Remove temporary files.",
+        required=False,
+        type=int,
+        choices=(0, 1),
+        default=int(Param().rm_tmp))
+    optional.add_argument(
+        "-v",
+        help="Verbose: 0 = nothing, 1 = classic, 2 = expended.",
+        required=False,
+        type=int,
+        choices=(0, 1, 2),
+        default=Param().verbose)
 
     return parser
 
@@ -254,14 +275,14 @@ class ExtractGLCM:
                         pbar.update(1)
 
         for m in self.metric_lst:
-            fname_out = sct.add_suffix(''.join(sct.extract_fname(self.param.fname_im)[1:]), '_' + m)
+            fname_out = sct.add_suffix("".join(sct.extract_fname(self.param.fname_im)[1:]), '_' + m)
             dct_metric[m].save(fname_out)
             self.fname_metric_lst[m] = fname_out
 
     def reorient_data(self):
         for f in self.fname_metric_lst:
-            os.rename(self.fname_metric_lst[f], sct.add_suffix(''.join(sct.extract_fname(self.param.fname_im)[1:]), '_2reorient'))
-            im = Image(sct.add_suffix(''.join(sct.extract_fname(self.param.fname_im)[1:]), '_2reorient')) \
+            os.rename(self.fname_metric_lst[f], sct.add_suffix("".join(sct.extract_fname(self.param.fname_im)[1:]), '_2reorient'))
+            im = Image(sct.add_suffix("".join(sct.extract_fname(self.param.fname_im)[1:]), '_2reorient')) \
              .change_orientation(self.orientation_im) \
              .save(self.fname_metric_lst[f])
 
@@ -271,7 +292,7 @@ class Param:
         self.fname_im = None
         self.fname_seg = None
         self.path_results = './texture/'
-        self.verbose = '1'
+        self.verbose = 1
         self.dim = 'ax'
         self.rm_tmp = True
 
@@ -286,41 +307,45 @@ class ParamGLCM(object):
 
 
 def main(args=None):
+    """
+    Main function
+    :param args:
+    :return:
+    """
+    # get parser args
     if args is None:
-        args = sys.argv[1:]
+        args = None if sys.argv[1:] else ['--help']
+    parser = get_parser()
+    arguments = parser.parse_args(args=args)
 
     # create param object
     param = Param()
     param_glcm = ParamGLCM()
 
-    # get parser
-    parser = get_parser()
-    arguments = parser.parse(args)
-
     # set param arguments ad inputted by user
-    param.fname_im = arguments["-i"]
-    param.fname_seg = arguments["-m"]
+    param.fname_im = arguments.i
+    param.fname_seg = arguments.m
 
-    if '-ofolder' in arguments:
-        param.path_results = arguments["-ofolder"]
+    if arguments.ofolder is not None:
+        param.path_results = arguments.ofolder
 
     if not os.path.isdir(param.path_results) and os.path.exists(param.path_results):
         sct.printv("ERROR output directory %s is not a valid directory" % param.path_results, 1, 'error')
     if not os.path.exists(param.path_results):
         os.makedirs(param.path_results)
 
-    if '-feature' in arguments:
-        param_glcm.feature = arguments['-feature']
-    if '-distance' in arguments:
-        param_glcm.distance = int(arguments['-distance'])
-    if '-angle' in arguments:
-        param_glcm.angle = arguments['-angle']
+    if arguments.feature is not None:
+        param_glcm.feature = arguments.feature
+    if arguments.distance is not None:
+        param_glcm.distance = arguments.distance
+    if arguments.angle is not None:
+        param_glcm.angle = arguments.angle
 
-    if '-dim' in arguments:
-        param.dim = arguments['-dim']
-    if '-r' in arguments:
-        param.rm_tmp = bool(int(arguments['-r']))
-    verbose = int(arguments.get('-v'))
+    if arguments.dim is not None:
+        param.dim = arguments.dim
+    if arguments.r is not None:
+        param.rm_tmp = bool(arguments.r)
+    verbose = arguments.v
     sct.init_sct(log_level=verbose, update=True)  # Update log level
 
     # create the GLCM constructor
@@ -333,8 +358,7 @@ def main(args=None):
         sct.rmtree(glcm.tmp_dir)
 
     sct.printv('\nDone! To view results, type:', param.verbose)
-    sct.printv('fslview ' + arguments["-i"] + ' ' + ' -l Red-Yellow -t 0.7 '.join(fname_out_lst) + ' -l Red-Yellow -t 0.7 & \n', param.verbose, 'info')
-
+    sct.printv('fsleyes ' + arguments.i + ' ' + ' -cm red-yellow -a 70.0 '.join(fname_out_lst) + ' -cm Red-Yellow -a 70.0 & \n', param.verbose, 'info')
 
 if __name__ == "__main__":
     sct.init_sct()

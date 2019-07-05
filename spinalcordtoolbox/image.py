@@ -22,8 +22,10 @@ import numpy as np
 from scipy.ndimage import map_coordinates
 
 import transforms3d.affines as affines
+from spinalcordtoolbox.types import Coordinate
+from spinalcordtoolbox.utils import __sct_dir__
 
-from msct_types import Coordinate
+sys.path.append(os.path.join(__sct_dir__, 'scripts'))
 import sct_utils as sct
 
 logger = logging.getLogger(__name__)
@@ -500,7 +502,7 @@ class Image(object):
             sct.printv('ERROR: Exception ' + str(e) + ' caught while geting non Zeros coordinates', 1, 'error')
 
         if coordValue:
-            from msct_types import CoordinateValue
+            from spinalcordtoolbox.types import CoordinateValue
             if n_dim == 3:
                 list_coordinates = [CoordinateValue([X[i], Y[i], Z[i], self.data[X[i], Y[i], Z[i]]]) for i in range(0, len(X))]
             else:

@@ -47,7 +47,9 @@ def init(param_test):
     Initialize class: param_test
     """
     # initialization
-    default_args = ['-i t2s/t2s.nii.gz -c t2s -igt t2s/t2s_seg.nii.gz']  # default parameters
+    default_args = ['-i t2s/t2s.nii.gz -c t2s']  # default parameters
+    param_test.file_ctr = 't2s/t2s_centerline.nii.gz'
+    param_test.fname_gt = 't2s/t2s_seg.nii.gz'
     param_test.mse_threshold = 3.0
 
     # assign default params
@@ -75,9 +77,7 @@ def test_integrity(param_test):
         im_ctr_manual.data[x_y_z[0], x_y_z[1], x_y_z[2]] = 1
 
     # open output segmentation
-    path_in, file_in, _ = sct.extract_fname(param_test.file_input)
-    file_ctr = os.path.join(param_test.path_data, 't2s', sct.add_suffix(param_test.file_input, '_centerline'))
-    im_ctr = Image(file_ctr).change_orientation("RPI")
+    im_ctr = Image(param_test.file_ctr).change_orientation("RPI")
 
     # compute MSE between generated ctr and ctr from database
     mse_detection = compute_mse(im_ctr, im_ctr_manual)
