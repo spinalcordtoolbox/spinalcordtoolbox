@@ -33,6 +33,7 @@ from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.centerline.core import get_centerline
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.resampling import resample_file
+from spinalcordtoolbox.modality_prediction import core as modality_detection
 
 # DEFAULT PARAMETERS
 
@@ -123,9 +124,8 @@ def get_parser():
                       default_value=param.path_template)
     parser.add_option(name='-c',
                       type_value='multiple_choice',
-                      description='Contrast to use for registration.',
+                      description='Contrast to use for registration, automatically detected but can be manually specified.',
                       mandatory=False,
-                      default_value='t2',
                       example=['t1', 't2', 't2s'])
     parser.add_option(name='-ref',
                       type_value='multiple_choice',
@@ -209,7 +209,13 @@ def main(args=None):
     param.path_qc = arguments.get("-qc", None)
 
     path_template = arguments['-t']
-    contrast_template = arguments['-c']
+
+    # Automatic detection of contrast
+    if not "-c" in arguments:
+        contrast_template = modality_detection.classify_from_path(fname_data)
+    else:
+        contrast_template = arguments["-c"]
+
     ref = arguments['-ref']
     param.remove_temp_files = int(arguments.get('-r'))
     verbose = int(arguments.get('-v'))
