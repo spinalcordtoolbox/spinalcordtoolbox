@@ -573,7 +573,7 @@ def main(args=None):
                 sct_apply_transfo.main(args=[
                     '-i', src,
                     '-d', dest,
-                    '-w', ' '.join(warp_forward),
+                    '-w', warp_forward,
                     '-o', add_suffix(src, '_regStep' + str(i_step - 1)),
                     '-x', interp_step])
                 src = add_suffix(src, '_regStep' + str(i_step - 1))
@@ -581,7 +581,7 @@ def main(args=None):
                     sct_apply_transfo.main(args=[
                         '-i', src_seg,
                         '-d', dest_seg,
-                        '-w', ' '.join(warp_forward),
+                        '-w', warp_forward,
                         '-o', add_suffix(src, '_regStep' + str(i_step - 1)),
                         '-x', interp_step])
                     src_seg = add_suffix(src_seg, '_regStep' + str(i_step - 1))
