@@ -11,6 +11,7 @@ import sct_utils as sct
 from msct_parser import Parser
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.centerline.core import get_centerline, _call_viewer_centerline
+from spinalcordtoolbox.modality_prediction import core as modality_detection
 
 
 def get_parser():
@@ -79,15 +80,12 @@ def run_main():
     if "-method" in arguments:
         method = arguments["-method"]
 
-    # Contrast type
-    contrast_type = ''
-    if "-c" in arguments:
-        contrast_type = arguments["-c"]
-    if method == 'optic' and not contrast_type:
-        # Contrast must be
-        error = 'ERROR: -c is a mandatory argument when using Optic method.'
-        sct.printv(error, type='error')
-        return
+    # Automatic detection of contrast if method is 'optic'
+    if method == 'optic':
+        if not "-c" in arguments:
+            contrast_type = modality_detection.classify_from_path(fname_input_data)
+        else:
+            contrast_type = arguments["-c"]
 
     # Ga between slices
     interslice_gap = 10.0
