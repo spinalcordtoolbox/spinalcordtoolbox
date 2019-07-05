@@ -25,6 +25,7 @@ from spinalcordtoolbox.vertebrae.core import create_label_z, get_z_and_disc_valu
     clean_labeled_segmentation, label_discs, label_vert
 from spinalcordtoolbox.vertebrae.detect_c2c3 import detect_c2c3
 from spinalcordtoolbox.reports.qc import generate_qc
+from spinalcordtoolbox.modality_prediction import core as modality_detection
 
 
 # PARAMETERS
@@ -74,9 +75,9 @@ def get_parser():
                       example="t2_seg.nii.gz")
     parser.add_option(name="-c",
                       type_value="multiple_choice",
-                      description="type of image contrast, t2: cord dark / CSF bright ; t1: cord bright / CSF dark",
-                      mandatory=True,
-                      example=['t1', 't2'])
+                      description="type of image contrast, automatically detected but can be specified manually (t2: cord dark / CSF bright ; t1: cord bright / CSF dark)",
+                      mandatory=False,
+                      example=['t1', 't2', 't2s'])
     parser.add_option(name="-t",
                       type_value="folder",
                       description="Path to template.",
@@ -188,7 +189,15 @@ def main(args=None):
     arguments = parser.parse(args)
     fname_in = os.path.abspath(arguments["-i"])
     fname_seg = os.path.abspath(arguments['-s'])
-    contrast = arguments['-c']
+
+    # Automatic detection of contrast
+    if not "-c" in arguments:
+        contrast_type = modality_detection.classify_from_image(img_input)
+    else:
+        contrast_type = arguments["-c"]
+    contrast_type_conversion = {'t1': 't1', 't2': 't2', 't2s': 't2'}
+    contrast = contrast_type_conversion[contrast_type]
+
     path_template = arguments['-t']
     scale_dist = arguments['-scale-dist']
     if '-ofolder' in arguments:
