@@ -26,7 +26,8 @@ def init(param_test):
     """
     # initialization
     default_args = ['-i t2/t2.nii.gz -c t2 -igt t2/t2_seg_manual.nii.gz -qc testing-qc']  # default parameters
-
+    param_test.file_seg = 'output.nii.gz'
+    param_test.fname_gt = 't2s/t2s_uncropped_gmseg_manual.nii.gz'
     param_test.dice_threshold = 0.8
 
     # assign default params
@@ -40,12 +41,8 @@ def test_integrity(param_test):
     """
     Test integrity of function
     """
-    dice_segmentation = float('nan')
-
-    # extract name of output segmentation: data_seg.nii.gz
-    file_seg = os.path.join(param_test.path_output, sct.add_suffix(param_test.file_input, '_seg'))
     # open output segmentation
-    im_seg = Image(file_seg)
+    im_seg = Image(param_test.file_seg)
     # open ground truth
     im_seg_manual = Image(param_test.fname_gt)
     # compute dice coefficient between generated image and image from database

@@ -11,6 +11,9 @@
 #########################################################################################
 
 
+import os
+
+
 def init(param_test):
     """
     Initialize class: param_test
@@ -29,5 +32,10 @@ def test_integrity(param_test):
     """
     Test integrity of function
     """
-    param_test.output += '\nNot implemented.'
+    # Simply check if output pkl file exists
+    if os.path.exists('t2_seg_manual_analyzis.pkl'):
+        param_test.output += '--> PASSED'
+    else:
+        param_test.status = 99
+        param_test.output += '\nOutput file does not exist.'
     return param_test
