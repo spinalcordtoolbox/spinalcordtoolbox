@@ -17,13 +17,14 @@
 from __future__ import division, absolute_import
 
 import sys, io, os, time, functools
+import argparse
 
-from msct_parser import Parser
 import sct_utils as sct
 import sct_convert
 import sct_image
 import spinalcordtoolbox.image as msct_image
 from sct_crop_image import ImageCropper
+from spinalcordtoolbox.utils import Metavar
 
 
 class Param:
@@ -36,69 +37,86 @@ class Param:
 # ==========================================================================================
 def get_parser():
     # parser initialisation
-    parser = Parser(__file__)
-    parser.usage.set_description('Apply transformations. This function is a wrapper for antsApplyTransforms (ANTs).')
-    parser.add_option(name="-i",
-                      type_value="file",
-                      description="input image",
-                      mandatory=True,
-                      example="t2.nii.gz")
-    parser.add_option(name="-d",
-                      type_value="file",
-                      description="destination image",
-                      mandatory=True,
-                      example="out.nii.gz")
-    parser.add_option(name="-w",
-                      type_value=[[','], "file"],
-                      description="Transformation, which can be a warping field (nifti image) or an affine transformation matrix (text file).",
-                      mandatory=True,
-                      example="warp1.nii.gz,warp2.nii.gz")
-    parser.add_option(name="-crop",
-                      type_value="multiple_choice",
-                      description="Crop Reference. 0 : no reference. 1 : sets background to 0. 2 : use normal background",
-                      mandatory=False,
-                      default_value='0',
-                      example=['0', '1', '2'])
-    parser.add_option(name="-c",
-                      type_value=None,
-                      description="Crop Reference. 0 : no reference. 1 : sets background to 0. 2 : use normal background",
-                      mandatory=False,
-                      deprecated_by='-crop')
-    parser.add_option(name="-o",
-                      type_value="file_output",
-                      description="registered source.",
-                      mandatory=False,
-                      default_value='',
-                      example="dest.nii.gz")
-    parser.add_option(name="-x",
-                      type_value="multiple_choice",
-                      description="interpolation method",
-                      mandatory=False,
-                      default_value='spline',
-                      example=['nn', 'linear', 'spline'])
-    parser.add_option(name="-r",
-                      type_value="multiple_choice",
-                      description="""Remove temporary files.""",
-                      mandatory=False,
-                      default_value='1',
-                      example=['0', '1'])
-    parser.add_option(name="-v",
-                      type_value="multiple_choice",
-                      description="""Verbose.""",
-                      mandatory=False,
-                      default_value='1',
-                      example=['0', '1', '2'])
+
+    parser = argparse.ArgumentParser(
+        description='Apply transformations. This function is a wrapper for antsApplyTransforms (ANTs).',
+        add_help=None,
+        prog=os.path.basename(__file__).strip(".py")
+    )
+
+    mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatoryArguments.add_argument(
+        "-i",
+        help='input image (e.g. "t2.nii.gz")',
+        metavar=Metavar.file)
+    mandatoryArguments.add_argument(
+        "-d",
+        help='destination image (e.g. "out.nii.gz")',
+        metavar=Metavar.file)
+    mandatoryArguments.add_argument(
+        "-w",
+        help='Transformation(s), which can be warping fields (nifti image) or affine transformation matrix (text '
+             'file). Separate with space. Example: warp1.nii.gz warp2.nii.gz',
+        nargs='+',
+        metavar=Metavar.file)
+
+    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional.add_argument(
+        "-winv",
+        help='Affine transformation(s) listed in flag -w which should be inverted before being used. Note that this'
+             'only concerns affine transformation (not warping fields). If you would like to use an inverse warping'
+             'field, then directly input the inverse warping field in flag -w.',
+        nargs='+',
+        metavar=Metavar.file,
+        default=[])
+    optional.add_argument(
+        "-h",
+        "--help",
+        action="help",
+        help="show this help message and exit")
+    optional.add_argument(
+        "-crop",
+        help="Crop Reference. 0 : no reference. 1 : sets background to 0. 2 : use normal background",
+        required=False,
+        type=int,
+        default=0,
+        choices=(0, 1, 2))
+    optional.add_argument(
+        "-o",
+        help='registered source. (e.g. "dest.nii.gz")',
+        required=False,
+        metavar=Metavar.file,
+        default='')
+    optional.add_argument(
+        "-x",
+        help="interpolation method (e.g. ['nn', 'linear', 'spline'])",
+        required=False,
+        default='spline',
+        choices=('nn', 'linear', 'spline'))
+    optional.add_argument(
+        "-r",
+        help="""Remove temporary files.""",
+        required=False,
+        type=int,
+        default=1,
+        choices=(0, 1))
+    optional.add_argument(
+        "-v",
+        help="Verbose: 0 = nothing, 1 = classic, 2 = expended.",
+        required=False,
+        type=int,
+        default=1,
+        choices=(0, 1, 2))
 
     return parser
 
 
 class Transform:
-    def __init__(self, input_filename, warp, fname_dest, output_filename='', verbose=0, crop=0, interp='spline', remove_temp_files=1, debug=0):
+    def __init__(self, input_filename, fname_dest, list_warp, list_warpinv=[], output_filename='', verbose=0, crop=0,
+                 interp='spline', remove_temp_files=1, debug=0):
         self.input_filename = input_filename
-        if isinstance(warp, str):
-            self.warp_input = list([warp])
-        else:
-            self.warp_input = warp
+        self.list_warp = list_warp
+        self.list_warpinv = list_warpinv
         self.fname_dest = fname_dest
         self.output_filename = output_filename
         self.interp = interp
@@ -110,7 +128,7 @@ class Transform:
     def apply(self):
         # Initialization
         fname_src = self.input_filename  # source image (moving)
-        fname_warp_list = self.warp_input  # list of warping fields
+        list_warp = self.list_warp  # list of warping fields
         fname_out = self.output_filename  # output
         fname_dest = self.fname_dest  # destination image (fix)
         verbose = self.verbose
@@ -123,20 +141,20 @@ class Transform:
         sct.printv('\nParse list of warping fields...', verbose)
         use_inverse = []
         fname_warp_list_invert = []
-        # fname_warp_list = fname_warp_list.replace(' ', '')  # remove spaces
-        # fname_warp_list = fname_warp_list.split(",")  # parse with comma
-        for idx_warp, path_warp in enumerate(fname_warp_list):
-            # Check if inverse matrix is specified with '-' at the beginning of file name
-            if path_warp.startswith("-"):
+        # list_warp = list_warp.replace(' ', '')  # remove spaces
+        # list_warp = list_warp.split(",")  # parse with comma
+        for idx_warp, path_warp in enumerate(self.list_warp):
+            # Check if this transformation should be inverted
+            if path_warp in self.list_warpinv:
                 use_inverse.append('-i')
-                fname_warp_list[idx_warp] = path_warp[1:]  # remove '-'
-                fname_warp_list_invert += [[use_inverse[idx_warp], fname_warp_list[idx_warp]]]
+                # list_warp[idx_warp] = path_warp[1:]  # remove '-'
+                fname_warp_list_invert += [[use_inverse[idx_warp], list_warp[idx_warp]]]
             else:
                 use_inverse.append('')
                 fname_warp_list_invert += [[path_warp]]
-            path_warp = fname_warp_list[idx_warp]
+            path_warp = list_warp[idx_warp]
             if path_warp.endswith((".nii", ".nii.gz")) \
-             and msct_image.Image(fname_warp_list[idx_warp]).header.get_intent()[0] != 'vector':
+             and msct_image.Image(list_warp[idx_warp]).header.get_intent()[0] != 'vector':
                 raise ValueError("Displacement field in {} is invalid: should be encoded" \
                  " in a 5D file with vector intent code" \
                  " (see https://nifti.nimh.nih.gov/pub/dist/src/niftilib/nifti1.h" \
@@ -182,13 +200,11 @@ class Transform:
             else:
                 dim = '3'
             sct.run(['isct_antsApplyTransforms',
-              '-d', dim,
-              '-i', fname_src,
-              '-o', fname_out,
-              '-t',
-             ] + fname_warp_list_invert + [
-             '-r', fname_dest,
-             ] + interp, verbose=verbose, is_sct_binary=True)
+                     '-d', dim,
+                     '-i', fname_src,
+                     '-o', fname_out,
+                     '-t'] + fname_warp_list_invert + ['-r', fname_dest] + interp,
+                    verbose=verbose, is_sct_binary=True)
 
         # if 4d, loop across the T dimension
         else:
@@ -199,7 +215,7 @@ class Transform:
             img_src.save(os.path.join(path_tmp, "data.nii"))
             sct.copy(fname_dest, os.path.join(path_tmp, file_dest + ext_dest))
             fname_warp_list_tmp = []
-            for fname_warp in fname_warp_list:
+            for fname_warp in list_warp:
                 path_warp, file_warp, ext_warp = sct.extract_fname(fname_warp)
                 sct.copy(fname_warp, os.path.join(path_tmp, file_warp + ext_warp))
                 fname_warp_list_tmp.append(file_warp + ext_warp)
@@ -268,29 +284,38 @@ class Transform:
 # MAIN
 # ==========================================================================================
 def main(args=None):
+    """
+    Entry point for sct_apply_transfo
+    :param args: list of input arguments. For parameters -w and -winv, args list should include a nested list for every
+    item. Example: args=['-i', 'file.nii', '-w', ['warp1.nii', 'warp2.nii']]
+    :return:
+    """
 
-    # check user arguments
-    if not args:
-        args = sys.argv[1:]
-
-    # Get parser info
+    # get parser args
+    if args is None:
+        args = None if sys.argv[1:] else ['--help']
+    else:
+        # flatten the list of input arguments because -w and -winv carry a nested list
+        lst = []
+        for line in args:
+            lst.append(line) if isinstance(line, str) else lst.extend(line)
+        args = lst
     parser = get_parser()
-    arguments = parser.parse(args)
-    input_filename = arguments["-i"]
-    fname_dest = arguments["-d"]
-    warp_filename = arguments["-w"]
+    arguments = parser.parse_args(args=args)
 
-    transform = Transform(input_filename=input_filename, fname_dest=fname_dest, warp=warp_filename)
+    input_filename = arguments.i
+    fname_dest = arguments.d
+    warp_filename = arguments.w
+    warpinv_filename = arguments.winv
 
-    if "-crop" in arguments:
-        transform.crop = arguments["-crop"]
-    if "-o" in arguments:
-        transform.output_filename = arguments["-o"]
-    if "-x" in arguments:
-        transform.interp = arguments["-x"]
-    if "-r" in arguments:
-        transform.remove_temp_files = int(arguments["-r"])
-    transform.verbose = int(arguments.get('-v'))
+    transform = Transform(input_filename=input_filename, fname_dest=fname_dest, list_warp=warp_filename,
+                          list_warpinv=warpinv_filename)
+
+    transform.crop = arguments.crop
+    transform.output_filename = arguments.o
+    transform.interp = arguments.x
+    transform.remove_temp_files = arguments.r
+    transform.verbose = arguments.v
     sct.init_sct(log_level=transform.verbose, update=True)  # Update log level
 
     transform.apply()
@@ -300,7 +325,7 @@ def main(args=None):
 # ==========================================================================================
 if __name__ == "__main__":
     sct.init_sct()
-    # # initialize parameters
+    # initialize parameters
     param = Param()
     # call main function
     main()
