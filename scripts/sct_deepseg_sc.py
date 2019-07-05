@@ -20,6 +20,7 @@ import sct_utils as sct
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.deepseg_sc.core import deep_segmentation_spinalcord
 from spinalcordtoolbox.reports.qc import generate_qc
+from spinalcordtoolbox.modality_prediction import core as modality_detection
 from msct_parser import Parser
 
 

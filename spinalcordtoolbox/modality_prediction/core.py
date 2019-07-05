@@ -131,7 +131,7 @@ def classify_from_image(input_image):
     # Here we have to specify the path from which the model can be found. It is obviously not the most elegant
     #  way to proceed so it might require to load it somewhere else.
     model = M.Classifier()
-    model.load_state_dict(torch.load("/Users/besau_admin/PycharmProjects/sct/spinalcordtoolbox/modality_prediction/model.pt", map_location='cpu'))
+    model.load_state_dict(torch.load("/home/bsauty/sct/spinalcordtoolbox/modality_prediction/model.pt", map_location='cpu'))
     model.eval()
 
     modality = classify_acquisition(input_image, model)
