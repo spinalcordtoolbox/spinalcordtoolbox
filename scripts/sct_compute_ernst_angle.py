@@ -48,6 +48,8 @@ class ErnstAngle:
 
     # draw the graph
     def draw(self, tr_min, tr_max):
+        import matplotlib
+        matplotlib.use('TkAgg')
         import matplotlib.pyplot as plt
         from numpy import arange
         step = (tr_max - tr_min) / 50
