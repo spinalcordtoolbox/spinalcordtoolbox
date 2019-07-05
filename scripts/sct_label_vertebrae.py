@@ -190,7 +190,7 @@ def main(args=None):
     fname_in = os.path.abspath(arguments["-i"])
     fname_seg = os.path.abspath(arguments['-s'])
     contrast = arguments['-c']
-    path_template = arguments['-t']
+    path_template = os.path.abspath(arguments['-t'])
     scale_dist = arguments['-scale-dist']
     if '-ofolder' in arguments:
         path_output = arguments['-ofolder']

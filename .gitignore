@@ -11,6 +11,7 @@
 *.log
 *.egg-info/
 *.egg
+.eggs/
 
 .idea/*
 .eggs/

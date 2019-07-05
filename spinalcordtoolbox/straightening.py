@@ -14,13 +14,14 @@ import numpy as np
 from tqdm import tqdm
 from nibabel import Nifti1Image, save
 
-import sct_utils as sct
-from sct_image import pad_image
-from msct_types import Centerline
-
+from spinalcordtoolbox.types import Centerline
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
+
+import sct_utils as sct
+from sct_image import pad_image
+
 
 logger = logging.getLogger(__name__)
 
