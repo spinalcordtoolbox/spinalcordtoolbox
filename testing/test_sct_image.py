@@ -37,7 +37,7 @@ def init(param_test):
     param_test.dmri_t_slices = [os.path.join(param_test.folder_data[2], file_fname + '_T' + str(i).zfill(4) + ext_fname) for i in range(7)]
     input_concat = ','.join(param_test.dmri_t_slices)
 
-    default_args = ['-i ' + os.path.join(param_test.folder_data[0], param_test.file_data[0]) + ' -o test.nii.gz' + ' -pad 0,0,'+str(param_test.pad),
+    default_args = ['-i ' + os.path.join(param_test.folder_data[0], param_test.file_data[0]) + ' -o sct_image_out.nii.gz' + ' -pad 0,0,'+str(param_test.pad),
                     '-i ' + os.path.join(param_test.folder_data[1], param_test.file_data[1]) + ' -getorient',  # 3D
                     '-i ' + os.path.join(param_test.folder_data[2], param_test.file_data[2]) + ' -getorient',  # 4D
                     '-i ' + os.path.join(param_test.folder_data[2], param_test.file_data[2]) + ' -split t -o dmri.nii.gz',
@@ -60,7 +60,7 @@ def test_integrity(param_test):
     # checking the integrity of padding an image
     if index_args == 0:
         nx, ny, nz, nt, px, py, pz, pt = Image(os.path.join(param_test.folder_data[0], param_test.file_data[0])).dim
-        nx2, ny2, nz2, nt2, px2, py2, pz2, pt2 = Image('test.nii.gz').dim
+        nx2, ny2, nz2, nt2, px2, py2, pz2, pt2 = Image('sct_image_out.nii.gz').dim
 
         if nz2 != nz + 2 * param_test.pad:
             param_test.status = 99
