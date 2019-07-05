@@ -20,7 +20,12 @@ from __future__ import absolute_import, division
 import sys
 import os
 import argparse
+
 from spinalcordtoolbox.utils import Metavar
+from spinalcordtoolbox.mtsat import mtsat
+
+import sct_utils as sct
+
 
 def get_parser():
     parser = argparse.ArgumentParser(
@@ -107,19 +112,16 @@ def get_parser():
     optional.add_argument(
         "-v",
         help="Verbose: 0 = no verbosity, 1 = verbose (default).",
-        choices=('0', '1'),
         type=int,
+        choices=(0, 1),
         default=1)
 
     return parser
 
 
 def main():
-    import sct_utils as sct
-    from spinalcordtoolbox.mtsat import mtsat
-
     parser = get_parser()
-    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
+    args = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
     verbose = args.v
     sct.init_sct(log_level=verbose, update=True)  # Update log level
 
