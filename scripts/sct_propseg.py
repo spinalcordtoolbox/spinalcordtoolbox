@@ -167,7 +167,7 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       example=['t1', 't2'])
     parser.add_option(name="-c",
                       type_value="multiple_choice",
-                      description="type of image contrast, if your contrast is not in the available options (t1, t2, t2s, dwi), use t1 (cord bright / CSF dark) or t2 (cord dark / CSF bright)",
+                      description="type of image contrast, automaticaly detected but you can manually specify t1 (cord bright / CSF dark) or t2 (cord dark / CSF bright)",
                       mandatory=False,
                       example=['t1', 't2', 't2s', 'dwi'])
     parser.usage.addSection("General options")
