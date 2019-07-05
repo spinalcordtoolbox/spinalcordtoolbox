@@ -35,8 +35,8 @@ def get_parser():
                       example="t1.nii.gz")
     parser.add_option(name="-c",
                       type_value="multiple_choice",
-                      description="type of image contrast.",
-                      mandatory=True,
+                      description="type of image contrast, automatically detected but can be manually specified.",
+                      mandatory=False,
                       example=['t1', 't2', 't2s', 'dwi'])
     parser.add_option(name="-centerline",
                       type_value="multiple_choice",
