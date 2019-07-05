@@ -14,7 +14,6 @@ from __future__ import absolute_import
 
 import os
 
-from pandas import DataFrame
 
 def init(param_test):
     """
@@ -23,6 +22,7 @@ def init(param_test):
     # initialization
     default_args = ['-i t2s/t2s_gmseg_manual.nii.gz -d t2s/t2s_gmseg_manual.nii.gz']
     param_test.max_hausdorff_distance = 1.0
+    param_test.file_out = 'hausdorff_distance.txt'
 
     # assign default params
     if not param_test.args:
@@ -35,14 +35,8 @@ def test_integrity(param_test):
     """
     Test integrity of function
     """
-    # initializations
-    max_hausdorff_distance = float('nan')
-
-    # extract name of output: hausdorff_distance.txt
-    file_hausdorff = os.path.join(param_test.path_output, 'hausdorff_distance.txt')
-
     # open output segmentation
-    hausdorff_txt = open(file_hausdorff, 'r')
+    hausdorff_txt = open(param_test.file_out, 'r')
     hausdorff_distance_lst = []
     for i, line in enumerate(hausdorff_txt):
         if line.startswith('Slice'):

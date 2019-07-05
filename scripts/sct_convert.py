@@ -15,11 +15,13 @@
 from __future__ import absolute_import
 
 import sys
+import os
+import argparse
 
 import numpy as np
 
-from msct_parser import Parser
 import sct_utils as sct
+from spinalcordtoolbox.utils import Metavar
 
 
 # DEFAULT PARAMETERS
@@ -32,28 +34,36 @@ class Param:
 # PARSER
 # ==========================================================================================
 def get_parser():
-    # parser initialisation
-    parser = Parser(__file__)
-
     # Initialize the parser
-    parser = Parser(__file__)
-    parser.usage.set_description('Convert image file to another type.')
-    parser.add_option(name="-i",
-                      type_value="file",
-                      description="File input",
-                      mandatory=True,
-                      example='data.nii.gz')
-    parser.add_option(name="-o",
-                      type_value="file_output",
-                      description="File output (indicate new extension)",
-                      mandatory=True,
-                      example=['data.nii'])
-    parser.add_option(name="-squeeze",
-                      type_value='multiple_choice',
-                      description='Sueeze data dimension (remove unused dimension).',
-                      mandatory=False,
-                      example=['0', '1'],
-                      default_value='1')
+    parser = argparse.ArgumentParser(
+        description='Convert image file to another type.',
+        add_help=None,
+        prog=os.path.basename(__file__).strip(".py"))
+    mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatoryArguments.add_argument(
+        "-i",
+        help='File input (e.g. "data.nii.gz")',
+        metavar=Metavar.file,
+        required=True)
+    mandatoryArguments.add_argument(
+        "-o",
+        help='File output (indicate new extension) (e.g. "data.nii")',
+        metavar=Metavar.str,
+        required=True)
+    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional.add_argument(
+        "-h",
+        "--help",
+        action="help",
+        help="show this help message and exit")
+    optional.add_argument(
+        "-squeeze",
+        type=int,
+        help='Sueeze data dimension (remove unused dimension)',
+        required = False,
+        choices = (0, 1),
+        default = 1)
+
     return parser
 
 
@@ -75,19 +85,21 @@ def convert(fname_in, fname_out, squeeze_data=True, dtype=None, verbose=1):
     return im
 
 
-# MAIN
-# ==========================================================================================
 def main(args=None):
-
-    if not args:
-        args = sys.argv[1:]
-
-    # Building the command, do sanity checks
+    """
+    Main function
+    :param args:
+    :return:
+    """
+    # get parser args
+    if args is None:
+        args = None if sys.argv[1:] else ['--help']
     parser = get_parser()
-    arguments = parser.parse(args)
-    fname_in = arguments["-i"]
-    fname_out = arguments["-o"]
-    squeeze_data = bool(int(arguments['-squeeze']))
+    arguments = parser.parse_args(args=args)
+    # Building the command, do sanity checks
+    fname_in = arguments.i
+    fname_out = arguments.o
+    squeeze_data = bool(arguments.squeeze)
 
     # convert file
     convert(fname_in, fname_out, squeeze_data=squeeze_data)
@@ -120,7 +132,7 @@ if __name__ == "__main__":
 #
 # # main
 # #=======================================================================================================================
-# def main():
+# def main(arguments):
 #
 #     # Initialization
 #     fname_data = ''

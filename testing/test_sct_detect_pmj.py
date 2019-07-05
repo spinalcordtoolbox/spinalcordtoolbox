@@ -24,7 +24,9 @@ def init(param_test):
     Initialize class: param_test
     """
     # initialization
-    default_args = ['-i template/template/PAM50_small_t2.nii.gz -c t2 -igt template/template/PAM50_small_t2_pmj_manual.nii.gz -qc testing-qc']
+    default_args = ['-i template/template/PAM50_small_t2.nii.gz -c t2 -qc testing-qc']
+    param_test.file_out = 'PAM50_small_t2_pmj.nii.gz'
+    param_test.fname_gt = 'template/template/PAM50_small_t2_pmj_manual.nii.gz'
     param_test.dist_threshold = 10.0
 
     # assign default params
@@ -38,14 +40,8 @@ def test_integrity(param_test):
     """
     Test integrity of function
     """
-    # initializations
-    distance_detection = float('nan')
-
-    # extract name of output centerline: data_centerline_optic.nii.gz
-    file_pmj = os.path.join(param_test.path_output, sct.add_suffix(param_test.file_input, '_pmj'))
-
     # open output segmentation
-    im_pmj = Image(file_pmj)
+    im_pmj = Image(param_test.file_out)
 
     # open ground truth
     im_pmj_manual = Image(param_test.fname_gt)
