@@ -105,7 +105,12 @@ def main():
     arguments = parser.parse(args)
 
     fname_image = os.path.abspath(arguments['-i'])
-    contrast_type = arguments['-c']
+
+    # Automatic detection of contrast
+    if not "-c" in arguments:
+        contrast_type = modality_detection.classify_from_image(img_input)
+    else:
+        contrast_type = arguments["-c"]
 
     ctr_algo = arguments["-centerline"]
 
