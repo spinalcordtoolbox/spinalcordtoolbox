@@ -288,6 +288,12 @@ def main(args=None):
     # get parser args
     if args is None:
         args = None if sys.argv[1:] else ['--help']
+    else:
+        # flatten the list of input arguments because -w and -winv carry a nested list
+        lst = []
+        for line in args:
+            lst.append(line) if isinstance(line, str) else lst.extend(line)
+        args = lst
     parser = get_parser()
     arguments = parser.parse_args(args=args)
 
