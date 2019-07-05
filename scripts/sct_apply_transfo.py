@@ -284,6 +284,12 @@ class Transform:
 # MAIN
 # ==========================================================================================
 def main(args=None):
+    """
+    Entry point for sct_apply_transfo
+    :param args: list of input arguments. For parameters -w and -winv, args list should include a nested list for every
+    item. Example: args=['-i', 'file.nii', '-w', ['warp1.nii', 'warp2.nii']]
+    :return:
+    """
 
     # get parser args
     if args is None:
