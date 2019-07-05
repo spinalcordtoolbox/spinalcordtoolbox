@@ -23,6 +23,7 @@ from spinalcordtoolbox.image import Image
 from msct_parser import Parser
 import sct_utils as sct
 from spinalcordtoolbox.reports.qc import generate_qc
+from spinalcordtoolbox.modality_prediction import core as modality_detection
 
 
 def get_parser():
@@ -40,9 +41,9 @@ def get_parser():
                         example="t2.nii.gz")
     parser.add_option(name="-c",
                         type_value="multiple_choice",
-                        description="type of image contrast, if your contrast is not in the available options (t1, t2), use t1 (cord bright / CSF dark) or t2 (cord dark / CSF bright)",
-                        mandatory=True,
-                        example=["t1", "t2"])
+                        description="type of image contrast, automatically detected but can be specified manually (t2: cord dark / CSF bright ; t1: cord bright / CSF dark)",
+                        mandatory=False,
+                        example=["t1", "t2", "t2s"])
     parser.add_option(name="-s",
                         type_value="file",
                         description="SC segmentation or centerline mask. Provide this mask helps the detection of the PMJ by indicating the position of the SC in the Right-to-Left direction.",
@@ -242,9 +243,16 @@ def main(args=None):
     parser = get_parser()
     arguments = parser.parse(args)
 
-    # Set param arguments ad inputted by user
+    # Set param arguments as inputted by user
     fname_in = arguments["-i"]
-    contrast = arguments["-c"]
+
+    # Automatic detection of contrast
+    if not "-c" in arguments:
+        contrast_type = modality_detection.classify_from_image(img_input)
+    else:
+        contrast_type = arguments["-c"]
+    contrast_type_conversion = {'t1': 't1', 't2': 't2', 't2s': 't2'}
+    contrast = contrast_type_conversion[contrast_type]
 
     # Segmentation or Centerline line
     if '-s' in arguments:
