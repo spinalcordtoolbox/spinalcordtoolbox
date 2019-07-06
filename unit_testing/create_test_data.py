@@ -15,11 +15,13 @@ from spinalcordtoolbox.resampling import resample_nipy
 DEBUG = False  # Save img_sub
 
 
-def dummy_centerline(size_arr=(9, 9, 9), subsampling=1, dilate_ctl=0, hasnan=False, zeroslice=[], outlier=[],
-                     orientation='RPI', debug=False):
+def dummy_centerline(size_arr=(9, 9, 9), pixdim=(1, 1, 1), subsampling=1, dilate_ctl=0, hasnan=False, zeroslice=[],
+                     outlier=[], orientation='RPI', debug=False):
     """
-    Create a dummy Image centerline of small size. Return the full and sub-sampled version along z.
+    Create a dummy Image centerline of small size. Return the full and sub-sampled version along z. Voxel resolution
+    on fully-sampled data is 1x1x1 mm (so, 2x undersampled data along z would have resolution of 1x1x2 mm).
     :param size_arr: tuple: (nx, ny, nz)
+    :param pixdim: tuple: (px, py, pz)
     :param subsampling: int >=1. Subsampling factor along z. 1: no subsampling. 2: centerline defined every other z.
     :param dilate_ctl: Dilation of centerline. E.g., if dilate_ctl=1, result will be a square of 3x3 per slice.
                          if dilate_ctl=0, result will be a single pixel per slice.
@@ -56,6 +58,7 @@ def dummy_centerline(size_arr=(9, 9, 9), subsampling=1, dilate_ctl=0, hasnan=Fal
         data[0, 0, outlier] = 1
     # Create image with default orientation LPI
     affine = np.eye(4)
+    affine[0:3, 0:3] = affine[0:3, 0:3] * pixdim
     nii = nib.nifti1.Nifti1Image(data, affine)
     img = Image(data, hdr=nii.header, dim=nii.header.get_data_shape())
     # subsample data

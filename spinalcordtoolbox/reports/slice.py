@@ -384,10 +384,10 @@ class Sagittal(Slice):
             return [np.argwhere(image.data)[0][2]] * image.data.shape[2]
         # Otherwise, find the center of mass per slice and return the R-L index
         else:
-            from spinalcordtoolbox.centerline.core import get_centerline
+            from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
             image.change_orientation('RPI')  # need to do that because get_centerline operates in RPI orientation
             # Get coordinate of centerline
-            _, arr_ctl_RPI, _ = get_centerline(image, algo_fitting='bspline', minmax=True)
+            _, arr_ctl_RPI, _, _ = get_centerline(image, param=ParamCenterline())
             # Extend the centerline by copying values below zmin and above zmax to avoid discontinuities
             zmin, zmax = arr_ctl_RPI[2, :].min().astype(int), arr_ctl_RPI[2, :].max().astype(int)
             index_RL_in_RPI = np.concatenate([np.ones(zmin) * arr_ctl_RPI[0, 0],
