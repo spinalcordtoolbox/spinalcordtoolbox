@@ -26,20 +26,8 @@ from spinalcordtoolbox import process_seg
 from spinalcordtoolbox.aggregate_slicewise import aggregate_per_slice_or_level, save_as_csv, func_wa, func_std, \
     _merge_dict
 from spinalcordtoolbox.utils import parse_num_list
+from spinalcordtoolbox.centerline.core import ParamCenterline
 from spinalcordtoolbox.reports.qc import generate_qc
-
-
-# TODO: Move this class somewhere else
-class Param:
-    def __init__(self):
-        self.debug = 0
-        self.verbose = 1  # verbose
-        self.remove_temp_files = 1
-        self.slices = ''
-        self.window_length = 50  # for smooth_centerline @sct_straighten_spinalcord
-        self.algo_fitting = 'bspline'  # polyfit, bspline
-        self.perslice = None
-        self.perlevel = None
 
 
 def get_parser():
@@ -84,7 +72,7 @@ def get_parser():
                                   'metric per slice and then averaging them all is not the same as outputting a single'
                                   'metric at once across all slices.',
                       mandatory=False,
-                      default_value=Param().perslice)
+                      default_value=None)
     parser.add_option(name='-vert',
                       type_value='str',
                       description='Vertebral levels to compute the metrics across. Example: 2:9 for C2 to T2.',
@@ -100,7 +88,7 @@ def get_parser():
                       description='Set to 1 to output one metric per vertebral level instead of a single '
                                   'output metric. This flag needs to be used with flag -vert.',
                       mandatory=False,
-                      default_value=Param().perlevel)
+                      default_value=None)
     parser.add_option(name='-r',
                       type_value='multiple_choice',
                       description='Removes temporary folder used for the algorithm at the end of execution',
@@ -116,6 +104,17 @@ def get_parser():
                       mandatory=False,
                       example=['0', '1'],
                       default_value='1')
+    parser.add_option(name='-centerline-algo',
+                      type_value='multiple_choice',
+                      description='Algorithm for centerline fitting. Only relevant with -angle-corr 1.',
+                      mandatory=False,
+                      example=['polyfit', 'bspline', 'linear', 'nurbs'],
+                      default_value='bspline')
+    parser.add_option(name='-centerline-smooth',
+                      type_value='int',
+                      description='Degree of smoothing for centerline fitting. Only use with -centerline-algo {bspline, linear}.',
+                      mandatory=False,
+                      default_value=30)
     parser.add_option(name='-qc',
                       type_value='folder_creation',
                       description='The path where the quality control generated content will be saved',
@@ -142,10 +141,11 @@ def get_parser():
     return parser
 
 
-def _make_figure(metric):
+def _make_figure(metric, fit_results):
     """
     Make a graph showing CSA and angles per slice.
     :param metric: Dictionary of metrics
+    :param fit_results: class centerline.core.FitResults()
     :return: image object
     """
     import tempfile
@@ -160,32 +160,54 @@ def _make_figure(metric):
         angle_ap.append(value['MEAN(angle_AP)'])
         angle_rl.append(value['MEAN(angle_RL)'])
     # Make figure
-    fig = Figure()
+    fig = Figure(figsize=(8, 7), tight_layout=True)  # 640x700 pix
     FigureCanvas(fig)
-    ax = fig.add_subplot(211)
-    ax.plot(z, csa, 'k')
-    ax.plot(z, csa, 'k.')
-    ax.grid(True)
-    ax.set_ylabel('CSA [$mm^2$]')
-    ax = fig.add_subplot(212)
-    ax.plot(z, angle_ap, 'b')
-    ax.plot(z, angle_ap, 'b.')
-    ax.plot(z, angle_rl, 'r')
-    ax.plot(z, angle_rl, 'r.')
-    ax.grid(True)
+    # If -angle-corr was set to 1, fit_results exists and centerline fitting results are displayed
+    if fit_results is not None:
+        ax = fig.add_subplot(311)
+        ax.plot(z, csa, 'k')
+        ax.plot(z, csa, 'k.')
+        ax.grid(True)
+        ax.set_ylabel('CSA [$mm^2$]')
+        ax.set_xticklabels([])
+
+        ax = fig.add_subplot(312)
+        ax.grid(True)
+        ax.plot(z, angle_ap, 'b', label='_nolegend_')
+        ax.plot(z, angle_ap, 'b.')
+        ax.plot(z, angle_rl, 'r', label='_nolegend_')
+        ax.plot(z, angle_rl, 'r.')
+        ax.legend(['Rotation about AP axis', 'Rotation about RL axis'])
+        ax.set_ylabel('Angle [$deg$]')
+        ax.set_xticklabels([])
+
+        ax = fig.add_subplot(313)
+        ax.grid(True)
+        ax.plot(fit_results.data.zmean, fit_results.data.xmean, 'b.', label='_nolegend_')
+        ax.plot(fit_results.data.zref, fit_results.data.xfit, 'b')
+        ax.plot(fit_results.data.zmean, fit_results.data.ymean, 'r.', label='_nolegend_')
+        ax.plot(fit_results.data.zref, fit_results.data.yfit, 'r')
+        ax.legend(['Fitted (RL)', 'Fitted (AP)'])
+        ax.set_ylabel('Centerline [$vox$]')
+    else:
+        ax = fig.add_subplot(111)
+        ax.plot(z, csa, 'k')
+        ax.plot(z, csa, 'k.')
+        ax.grid(True)
+        ax.set_ylabel('CSA [$mm^2$]')
+
     ax.set_xlabel('Slice (Inferior-Superior direction)')
-    ax.set_ylabel('Angle [$deg$]')
     fig.savefig(fname_img)
+
     return fname_img
 
 
 def main(args):
     parser = get_parser()
     arguments = parser.parse(args)
-    param = Param()
 
     # Initialization
-    slices = param.slices
+    slices = ''
     group_funcs = (('MEAN', func_wa), ('STD', func_std))  # functions to perform when aggregating metrics along S-I
 
     fname_segmentation = sct.get_absolute_path(arguments['-i'])
@@ -209,18 +231,22 @@ def main(args):
     if '-perlevel' in arguments:
         perlevel = arguments['-perlevel']
     else:
-        perlevel = Param().perlevel
+        perlevel = None
     if '-z' in arguments:
         slices = arguments['-z']
     if '-perslice' in arguments:
         perslice = arguments['-perslice']
     else:
-        perslice = Param().perslice
+        perslice = None
     if '-angle-corr' in arguments:
         if arguments['-angle-corr'] == '1':
             angle_correction = True
         elif arguments['-angle-corr'] == '0':
             angle_correction = False
+    param_centerline = ParamCenterline(
+        algo_fitting=arguments['-centerline-algo'],
+        smooth=arguments['-centerline-smooth'],
+        minmax=True)
     path_qc = arguments.get("-qc", None)
     qc_dataset = arguments.get("-qc-dataset", None)
     qc_subject = arguments.get("-qc-subject", None)
@@ -233,10 +259,10 @@ def main(args):
     if not file_out:
         file_out = 'csa.csv'
 
-    metrics = process_seg.compute_shape(fname_segmentation,
-                                        algo_fitting='bspline',
-                                        angle_correction=angle_correction,
-                                        verbose=verbose)
+    metrics, fit_results = process_seg.compute_shape(fname_segmentation,
+                                                     angle_correction=angle_correction,
+                                                     param_centerline=param_centerline,
+                                                     verbose=verbose)
     for key in metrics:
         metrics_agg[key] = aggregate_per_slice_or_level(metrics[key], slices=parse_num_list(slices),
                                                         levels=parse_num_list(vert_levels), perslice=perslice,
@@ -248,15 +274,13 @@ def main(args):
     # QC report (only show CSA for clarity)
     if path_qc is not None:
         generate_qc(fname_segmentation, args=args, path_qc=os.path.abspath(path_qc), dataset=qc_dataset,
-                    subject=qc_subject, path_img=_make_figure(metrics_agg_merged), process='sct_process_segmentation')
+                    subject=qc_subject, path_img=_make_figure(metrics_agg_merged, fit_results),
+                    process='sct_process_segmentation')
 
     sct.display_open(file_out)
 
 
 if __name__ == "__main__":
     sct.init_sct()
-    # initialize parameters
-    param = Param()
-    param_default = Param()
     # call main function
     main(sys.argv[1:])

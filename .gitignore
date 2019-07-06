@@ -14,7 +14,7 @@
 .eggs/
 
 .idea/*
-
+.eggs/
 /.coverage
 /.cache
 /bin
