@@ -15,9 +15,12 @@
 
 from __future__ import division, absolute_import
 
-import sys
+import sys, os
 
 from spinalcordtoolbox.straightening import SpinalCordStraightener
+from spinalcordtoolbox.centerline.core import ParamCenterline
+from spinalcordtoolbox.reports.qc import generate_qc
+
 from msct_parser import Parser
 import sct_utils as sct
 
@@ -117,12 +120,48 @@ def get_parser():
                       description="Output folder (all outputs will go there).",
                       mandatory=False,
                       default_value='')
+
+    parser.add_option(name='-centerline-algo',
+                      type_value='multiple_choice',
+                      description='Algorithm for centerline fitting.',
+                      mandatory=False,
+                      example=['bspline', 'linear', 'nurbs'],
+                      default_value='nurbs')
+    parser.add_option(name='-centerline-smooth',
+                      type_value='int',
+                      description='Degree of smoothing for centerline fitting. Only use with -centerline-algo {bspline, linear}.',
+                      mandatory=False,
+                      default_value=10)
+
+    parser.add_option(name="-param",
+                      type_value=[[','], 'str'],
+                      description="Parameters for spinal cord straightening. Separate arguments with ','."
+                                  "\nprecision: [1.0,inf[. Precision factor of straightening, related to the number of slices. Increasing this parameter increases the precision along with increased computational time. Not taken into account with hanning fitting method. Default=2"
+                                  "\nthreshold_distance: [0.0,inf[. Threshold at which voxels are not considered into displacement. Increase this threshold if the image is blackout around the spinal cord too much. Default=10"
+                                  "\naccuracy_results: {0, 1} Disable/Enable computation of accuracy results after straightening. Default=0"
+                                  "\ntemplate_orientation: {0, 1} Disable/Enable orientation of the straight image to be the same as the template. Default=0",
+                      mandatory=False)
+
     parser.add_option(name="-x",
                       type_value="multiple_choice",
                       description="Final interpolation.",
                       mandatory=False,
                       example=["nn", "linear", "spline"],
                       default_value="spline")
+    parser.add_option(name='-qc',
+                      type_value='folder_creation',
+                      description='The path where the quality control generated content will be saved',
+                      default_value=None)
+    parser.add_option(name='-qc-dataset',
+                      type_value='str',
+                      description='If provided, this string will be mentioned in the QC report as the dataset the '
+                                  'process was run on',
+                      )
+    parser.add_option(name='-qc-subject',
+                      type_value='str',
+                      description='If provided, this string will be mentioned in the QC report as the subject the '
+                                  'process was run on',
+                      )
     parser.add_option(name="-r",
                       type_value="multiple_choice",
                       description="remove temporary files.",
@@ -135,19 +174,6 @@ def get_parser():
                       mandatory=False,
                       example=['0', '1', '2'],
                       default_value='1')
-
-    parser.add_option(name="-param",
-                      type_value=[[','], 'str'],
-                      description="Parameters for spinal cord straightening. Separate arguments with ','."
-                                  "\nalgo_fitting: {polyfit,bspline} algorithm for curve fitting. Default=bspline"
-                                  "\ndegree: int: Maximum degree of polynomial function for fitting centerline. Default=5"
-                                  "\nprecision: [1.0,inf[. Precision factor of straightening, related to the number of slices. Increasing this parameter increases the precision along with increased computational time. Not taken into account with hanning fitting method. Default=2"
-                                  "\nthreshold_distance: [0.0,inf[. Threshold at which voxels are not considered into displacement. Increase this threshold if the image is blackout around the spinal cord too much. Default=10"
-                                  "\naccuracy_results: {0, 1} Disable/Enable computation of accuracy results after straightening. Default=0"
-                                  "\ntemplate_orientation: {0, 1} Disable/Enable orientation of the straight image to be the same as the template. Default=0",
-                      mandatory=False,
-                      example="algo_fitting=bspline,accuracy_results=1")
-
     return parser
 
 
@@ -194,7 +220,7 @@ def main(args=None):
         sc_straight.path_output = arguments['-ofolder']
     else:
         sc_straight.path_output = './'
-
+    path_qc = arguments.get("-qc", None)
     verbose = int(arguments.get('-v'))
     sct.init_sct(log_level=verbose, update=True)  # Update log level
     sc_straight.verbose = verbose
@@ -213,15 +239,14 @@ def main(args=None):
     if '-xy_size' in arguments:
         sc_straight.xy_size = arguments['-xy_size']
 
+    sc_straight.param_centerline = ParamCenterline(
+        algo_fitting=arguments['-centerline-algo'],
+        smooth=arguments['-centerline-smooth'])
     if "-param" in arguments:
         params_user = arguments['-param']
         # update registration parameters
         for param in params_user:
             param_split = param.split('=')
-            if param_split[0] == 'algo_fitting':
-                sc_straight.algo_fitting = param_split[1]
-            if param_split[0] == 'degree':
-                sc_straight.degree = int(param_split[1])
             if param_split[0] == 'precision':
                 sc_straight.precision = float(param_split[1])
             if param_split[0] == 'threshold_distance':
@@ -234,6 +259,14 @@ def main(args=None):
     fname_straight = sc_straight.straighten()
 
     sct.printv("\nFinished! Elapsed time: {} s".format(sc_straight.elapsed_time), verbose)
+
+    # Generate QC report
+    if path_qc is not None:
+        path_qc = os.path.abspath(path_qc)
+        qc_dataset = arguments.get("-qc-dataset", None)
+        qc_subject = arguments.get("-qc-subject", None)
+        generate_qc(fname_straight, args=args, path_qc=os.path.abspath(path_qc),
+                    dataset=qc_dataset, subject=qc_subject, process=os.path.basename(__file__.strip('.py')))
 
     sct.display_viewer_syntax([fname_straight], verbose=verbose)
 
