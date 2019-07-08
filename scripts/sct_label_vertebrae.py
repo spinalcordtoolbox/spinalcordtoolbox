@@ -190,7 +190,6 @@ def main(args=None):
     arguments = parser.parse(args)
     fname_in = os.path.abspath(arguments["-i"])
     fname_seg = os.path.abspath(arguments['-s'])
-<<<<<<< HEAD
 
     # Automatic detection of contrast
     if not "-c" in arguments:
@@ -201,10 +200,6 @@ def main(args=None):
     contrast = contrast_type_conversion[contrast_type]
 
     path_template = arguments['-t']
-=======
-    contrast = arguments['-c']
-    path_template = os.path.abspath(arguments['-t'])
->>>>>>> origin/master
     scale_dist = arguments['-scale-dist']
     if '-ofolder' in arguments:
         path_output = arguments['-ofolder']
