@@ -94,13 +94,13 @@ class ImageCropper(object):
             self.start, self.end, self.dim = find_mask_boundaries(self.mask)
 
         if self.start is not None:
-            self.cmd += ["-start", ','.join(map(str, self.start))]
+            self.cmd += ["-start", ''.join(map(str, self.start))]
         if self.end is not None:
-            self.cmd += ["-end", ','.join(map(str, self.end))]
+            self.cmd += ["-end", ''.join(map(str, self.end))]
         if self.dim is not None:
-            self.cmd += ["-dim", ','.join(map(str, self.dim))]
+            self.cmd += ["-dim", ''.join(map(str, self.dim))]
         if self.shift is not None:
-            self.cmd += ["-shift", ','.join(map(str, self.shift))]
+            self.cmd += ["-shift", ''.join(map(str, self.shift))]
         if self.background is not None:
             self.cmd += ["-b", str(self.background)]
         if self.bmax is True:
@@ -326,30 +326,22 @@ def get_parser():
         required=False)
     commandOptionalArguments.add_argument(
         "-start",
-        type=float,
-        nargs='*',
-        help='start slices, ]0,1[: percentage, 0 & >1: slice number (e.g. "40, 30, 5")',
+        help='start slices, ]0,1[: percentage, 0 & >1: slice number (e.g. "40,30,5")',
         metavar=Metavar.list,
         required = False)
     commandOptionalArguments.add_argument(
         "-end",
-        type=float,
-        nargs='*',
-        help='end slices, ]0,1[: percentage, 0: last slice, >1: slice number, <0: last slice - value (e.g. "60, 100, 10")',
+        help='end slices, ]0,1[: percentage, 0: last slice, >1: slice number, <0: last slice - value (e.g. "60,100,10")',
         metavar=Metavar.list,
         required = False)
     commandOptionalArguments.add_argument(
         "-dim",
-        nargs='*',
-        type=int,
-        help='dimension to crop, from 0 to n-1, default is 1 (e.g. "0, 1, 2")',
+        help='dimension to crop, from 0 to n-1, default is 1 (e.g. "0,1,2")',
         metavar=Metavar.list,
         required = False)
     commandOptionalArguments.add_argument(
         "-shift",
-        nargs='*',
-        type=int,
-        help='adding shift when used with mask, default is 0 (e.g. "10, 10, 5")',
+        help='adding shift when used with mask, default is 0 (e.g. "10,10,5")',
         metavar=Metavar.list,
         required = False)
     commandOptionalArguments.add_argument(
