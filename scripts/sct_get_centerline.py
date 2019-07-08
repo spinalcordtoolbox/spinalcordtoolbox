@@ -10,7 +10,7 @@ import numpy as np
 import sct_utils as sct
 from msct_parser import Parser
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.centerline.core import get_centerline, _call_viewer_centerline
+from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline, _call_viewer_centerline
 from spinalcordtoolbox.modality_prediction import core as modality_detection
 
 
@@ -37,10 +37,23 @@ def get_parser():
                       type_value="multiple_choice",
                       description="Method used for extracting the centerline.\n"
                                   "optic: automatic spinal cord detection method\n"
-                                  "viewer: manually selected a few points, followed by interpolation with polynoms.",
+                                  "viewer: manual selection a few points followed by interpolation.",
                       mandatory=False,
                       example=['optic', 'viewer'],
                       default_value='optic')
+
+    parser.add_option(name='-centerline-algo',
+                      type_value='multiple_choice',
+                      description='Algorithm for centerline fitting. Only relevant with -angle-corr 1.',
+                      mandatory=False,
+                      example=['polyfit', 'bspline', 'linear', 'nurbs'],
+                      default_value='bspline')
+    parser.add_option(name='-centerline-smooth',
+                      type_value='int',
+                      description='Degree of smoothing for centerline fitting. Only for -centerline-algo {bspline, linear}.',
+                      mandatory=False,
+                      default_value=30)
+
     parser.add_option(name="-o",
                       type_value='file_output',
                       description='File name (without extension) for the centerline output files. By default, output'
@@ -87,10 +100,15 @@ def run_main():
         else:
             contrast_type = arguments["-c"]
 
-    # Ga between slices
+    # Gap between slices
     interslice_gap = 10.0
     if "-gap" in arguments:
         interslice_gap = float(arguments["-gap"])
+
+    param_centerline = ParamCenterline(
+        algo_fitting=arguments['-centerline-algo'],
+        smooth=arguments['-centerline-smooth'],
+        minmax=True)
 
     # Output folder
     if "-o" in arguments:
@@ -103,13 +121,18 @@ def run_main():
     sct.init_sct(log_level=verbose, update=True)  # Update log level
 
     if method == 'viewer':
+        # Manual labeling of cord centerline
         im_labels = _call_viewer_centerline(Image(fname_data), interslice_gap=interslice_gap)
-        im_centerline, arr_centerline, _ = \
-            get_centerline(im_labels, algo_fitting='polyfit', degree=3, minmax=True, verbose=verbose)
     else:
-        im_centerline, arr_centerline, _ = \
-            get_centerline(Image(fname_data), algo_fitting='optic', contrast=contrast_type, minmax=True,
-                           verbose=verbose)
+        # Automatic detection of cord centerline
+        im_labels = Image(fname_data)
+        param_centerline.algo_fitting = 'optic'
+        param_centerline.contrast = contrast_type
+
+    # Extrapolate and regularize (or detect if optic) cord centerline
+    im_centerline, arr_centerline, _, _ = get_centerline(im_labels,
+                                                         param=param_centerline,
+                                                         verbose=verbose)
 
     # save centerline as nifti (discrete) and csv (continuous) files
     im_centerline.save(file_output + '.nii.gz')

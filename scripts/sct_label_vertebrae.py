@@ -25,6 +25,7 @@ from spinalcordtoolbox.vertebrae.core import create_label_z, get_z_and_disc_valu
     clean_labeled_segmentation, label_discs, label_vert
 from spinalcordtoolbox.vertebrae.detect_c2c3 import detect_c2c3
 from spinalcordtoolbox.reports.qc import generate_qc
+import sct_straighten_spinalcord
 from spinalcordtoolbox.modality_prediction import core as modality_detection
 
 
@@ -189,6 +190,7 @@ def main(args=None):
     arguments = parser.parse(args)
     fname_in = os.path.abspath(arguments["-i"])
     fname_seg = os.path.abspath(arguments['-s'])
+<<<<<<< HEAD
 
     # Automatic detection of contrast
     if not "-c" in arguments:
@@ -199,6 +201,10 @@ def main(args=None):
     contrast = contrast_type_conversion[contrast_type]
 
     path_template = arguments['-t']
+=======
+    contrast = arguments['-c']
+    path_template = os.path.abspath(arguments['-t'])
+>>>>>>> origin/master
     scale_dist = arguments['-scale-dist']
     if '-ofolder' in arguments:
         path_output = arguments['-ofolder']
@@ -261,13 +267,12 @@ def main(args=None):
         # apply straightening
         s, o = sct.run(['sct_apply_transfo', '-i', 'data.nii', '-w', 'warp_curve2straight.nii.gz', '-d', 'straight_ref.nii.gz', '-o', 'data_straight.nii'])
     else:
-        cmd = ['sct_straighten_spinalcord',
-               '-i', 'data.nii',
-               '-s', 'segmentation.nii',
-               '-r', str(remove_temp_files)]
-        if param.path_qc is not None and os.environ.get("SCT_RECURSIVE_QC", None) == "1":
-            cmd += ['-qc', param.path_qc]
-        s, o = sct.run(cmd)
+        sct_straighten_spinalcord.main(args=[
+            '-i', 'data.nii',
+            '-s', 'segmentation.nii',
+            '-r', str(remove_temp_files),
+            '-v', str(verbose),
+        ])
         sct.cache_save(cachefile, cache_sig)
 
     # resample to 0.5mm isotropic to match template resolution
