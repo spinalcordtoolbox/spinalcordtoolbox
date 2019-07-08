@@ -199,7 +199,7 @@ def main(args=None):
     contrast_type_conversion = {'t1': 't1', 't2': 't2', 't2s': 't2'}
     contrast = contrast_type_conversion[contrast_type]
 
-    path_template = arguments['-t']
+    path_template = os.path.abspath(arguments['-t'])
     scale_dist = arguments['-scale-dist']
     if '-ofolder' in arguments:
         path_output = arguments['-ofolder']
