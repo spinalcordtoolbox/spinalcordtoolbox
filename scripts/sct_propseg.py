@@ -386,7 +386,7 @@ def propseg(img_input, options_dict):
 
     # Automatic detection of contrast
     if not "-c" in arguments:
-        contrast_type = modality_detection.classify_from_image(img_input)
+        contrast_type = modality_detection.classify_from_path(fname_input_data)
     else:
         contrast_type = arguments["-c"]
     contrast_type_conversion = {'t1': 't1', 't2': 't2', 't2s': 't2', 'dwi': 't1'}

@@ -109,34 +109,13 @@ def classify_from_path(input_path):
     # actual scripts/ folder. It is probably not the most elegant way to proceed so it might require
     # to load it somewhere else.
     model = M.Classifier()
-    model.load_state_dict(torch.load("../spinalcordtoolbox/modality_prediction/model.pt", map_location='cpu'))
+    model.load_state_dict(torch.load("/Users/besau_admin/PycharmProjects/sct/spinalcordtoolbox/modality_prediction/model.pt", map_location='cpu'))
     model.eval()
 
     modality = classify_acquisition(input_image, model)
     
     return(modality)
 
-
-def classify_from_image(input_image):
-    """
-    This is our main function that will be called from the sct scripts inside the parser.
-    :param input_image: loaded image of the acquisition
-    :return: the predicted modality
-    """
-
-    # We load the acquisitions from the image module in order to benefit from all existing methods
-    input_image.change_orientation('RPI')
-
-    # We load the model
-    # Here we have to specify the path from which the model can be found. It is obviously not the most elegant
-    #  way to proceed so it might require to load it somewhere else.
-    model = M.Classifier()
-    model.load_state_dict(torch.load("/home/bsauty/sct/spinalcordtoolbox/modality_prediction/model.pt", map_location='cpu'))
-    model.eval()
-
-    modality = classify_acquisition(input_image, model)
-
-    return (modality)
 
 """
 DELETE THIS TEST BEFORE MERGING
