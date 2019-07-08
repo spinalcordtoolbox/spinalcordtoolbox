@@ -22,7 +22,7 @@ from msct_parser import Parser
 import sct_utils as sct
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.deepseg_lesion.core import deep_segmentation_MSlesion
-
+from spinalcordtoolbox.modality_prediction import core as modality_detection
 
 def get_parser():
     """Initialize the parser."""
@@ -36,8 +36,8 @@ def get_parser():
                       example="t1.nii.gz")
     parser.add_option(name="-c",
                       type_value="multiple_choice",
-                      description="type of image contrast. \nt2: T2w scan with isotropic or anisotropic resolution. \nt2_ax: T2w scan with axial orientation and thick slices. \nt2s: T2*w scan with axial orientation and thick slices.",
-                      mandatory=True,
+                      description="type of image contrast. Automatically detected but can be specified manually, especially for t2ax. \nt2: T2w scan with isotropic or anisotropic resolution. \nt2_ax: T2w scan with axial orientation and thick slices. \nt2s: T2*w scan with axial orientation and thick slices.",
+                      mandatory=False,
                       example=['t2', 't2_ax', 't2s'])
     parser.add_option(name="-centerline",
                       type_value="multiple_choice",
@@ -89,7 +89,16 @@ def main():
     arguments = parser.parse(args)
 
     fname_image = arguments['-i']
-    contrast_type = arguments['-c']
+
+    # Automatic detection of contrast
+    if not "-c" in arguments:
+        contrast_type = modality_detection.classify_from_path(fname_image)
+        if contrast_type == 't1':
+            sct.printv("Error while detecting the contrast, please use -c contrast_type to indicate the contrast.", 1,
+                       'error')
+            sys.exit(1)
+    else:
+        contrast_type = arguments["-c"]
 
     ctr_algo = arguments["-centerline"]
 
