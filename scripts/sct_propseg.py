@@ -147,7 +147,7 @@ def check_and_correct_segmentation(fname_segmentation, fname_centerline, folder_
 def get_parser():
     # Initialize the parser
     parser = Parser(__file__)
-    parser.usage.set_description('''This program segments automatically the spinal cord on T1- and T2-weighted images, for any field of view. You must provide the type of contrast, the image as well as the output folder path.
+    parser.usage.set_description('''This program segments automatically the spinal cord on T1- and T2-weighted images, for any field of view. You must provide the image as well as the output folder path. Contrast is automatically detected except for the dwi images, in which case you should specify it using -c dwi argument.
 The segmentation follows the spinal cord centerline, which is provided by an automatic tool: Optic. The initialization of the segmentation is made on the median slice of the centerline, and can be ajusted using the -init parameter. The initial radius of the tubular mesh that will be propagated should be adapted to size of the spinal cord on the initial propagation slice.
 Primary output is the binary mask of the spinal cord segmentation. This method must provide VTK triangular mesh of the segmentation (option -mesh). Spinal cord centerline is available as a binary image (-centerline-binary) or a text file with coordinates in world referential (-centerline-coord).
 Cross-sectional areas along the spinal cord can be available (-cross).
@@ -167,7 +167,7 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       example=['t1', 't2'])
     parser.add_option(name="-c",
                       type_value="multiple_choice",
-                      description="type of image contrast, automaticaly detected but you can manually specify t1 (cord bright / CSF dark) or t2 (cord dark / CSF bright)",
+                      description="type of image contrast, automaticaly detected except for dwi which you have to specify manually. You can also manually specify t1 (cord bright / CSF dark) or t2 (cord dark / CSF bright)",
                       mandatory=False,
                       example=['t1', 't2', 't2s', 'dwi'])
     parser.usage.addSection("General options")

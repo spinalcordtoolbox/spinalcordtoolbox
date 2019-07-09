@@ -30,7 +30,7 @@ def get_parser():
                       example="t1.nii.gz")
     parser.add_option(name="-c",
                       type_value="multiple_choice",
-                      description="Type of image contrast. Only with method=optic.",
+                      description="Type of image contrast. Only for method=optic and automatically detected, except for dwi images, which you should specify manually.",
                       mandatory=False,
                       example=['t1', 't2', 't2s', 'dwi'])
     parser.add_option(name="-method",
