@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+import os
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.modality_prediction import model as M
 
