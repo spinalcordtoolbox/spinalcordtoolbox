@@ -105,22 +105,12 @@ def classify_from_path(input_path):
     input_image.change_orientation('RPI')
 
     # We load the model
-    # Here we have to specify the path from which the model can be found when we are in the
-    # actual scripts/ folder. It is probably not the most elegant way to proceed so it might require
-    # to load it somewhere else.
     model = M.Classifier()
-    model.load_state_dict(torch.load("/Users/besau_admin/PycharmProjects/sct/spinalcordtoolbox/modality_prediction/model.pt", map_location='cpu'))
+    model_path = os.path.join(sct.__sct_dir__, 'data', 'modality_pred_model')
+    model.load_state_dict(torch.load(model_path, map_location='cpu'))
     model.eval()
 
     modality = classify_acquisition(input_image, model)
     
     return(modality)
 
-
-"""
-DELETE THIS TEST BEFORE MERGING
-
-
-print(classifier("/Volumes/projects/ivado-medical-imaging/spineGeneric_201907041011/result/sub-amu01/anat/sub-amu01_T1w.nii.gz"))
-
-"""
