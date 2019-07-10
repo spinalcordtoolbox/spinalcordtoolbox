@@ -65,7 +65,8 @@ def get_parser():
         default = "svm")
     optional.add_argument(
         "-file_centerline",
-        help='Input centerline file (to use with flag -centerline manual). (e.g.,"t2_centerline_manual.nii.gz")',
+        help='Input centerline file (to use with flag -centerline manual). (e.g. "t2_centerline_manual.nii.gz")',
+        metavar = Metavar.str,
         required = False)
     optional.add_argument(
         "-brain",
@@ -82,6 +83,7 @@ def get_parser():
         "-ofolder",
         help='output folder. (e.g. "My_Output_Folder/ ")',
         required = False,
+        metavar = Metavar.str,
         default = os.getcwd())
     optional.add_argument(
         "-r",
@@ -98,6 +100,7 @@ def get_parser():
         default = 1)
     optional.add_argument(
         '-igt',
+        metavar = Metavar.str,
         help='File name of ground-truth segmentation.',
         required=False)
 
