@@ -12,102 +12,101 @@ from __future__ import absolute_import
 
 import sys
 import os
+import argparse
 
 import sct_utils as sct
-from msct_parser import Parser
+from spinalcordtoolbox.utils import Metavar
+
 from spinalcordtoolbox.reports.qc import generate_qc
 
 
 def get_parser():
-    parser = Parser(__file__)
-    parser.usage.set_description('Spinal Cord Gray Matter (GM) Segmentation using deep dilated convolutions. '
-                                 'Reference: CS Perone, E Calabrese, J Cohen-Adad. Spinal cord gray matter segmentation using deep dilated convolutions (2017). arxiv.org/abs/1710.01269')
-
-    parser.add_option(name="-i",
-                      type_value="file",
-                      description="Image filename to segment (3D volume). "
-                                  "Contrast must be similar to T2*-weighted, "
-                                  "i.e., WM dark, GM bright and CSF bright.",
-                      mandatory=True,
-                      example='t2s.nii.gz')
-
-    parser.add_option(name="-o",
-                      type_value="file_output",
-                      description="Output segmentation file name.",
-                      mandatory=False,
-                      example='sc_gm_seg.nii.gz')
-
-    parser.usage.addSection('\nMISC')
-
-    parser.add_option(name='-qc',
-                      type_value='folder_creation',
-                      description="The path where the quality control generated "
-                                  "content will be saved",
-                      default_value=None)
-    parser.add_option(name='-qc-dataset',
-                      type_value='str',
-                      description='If provided, this string will be mentioned in the QC report as the dataset the process was run on',
-                      )
-    parser.add_option(name='-qc-subject',
-                      type_value='str',
-                      description='If provided, this string will be mentioned in the QC report as the subject the process was run on',
-                      )
-
-    parser.add_option(name="-m",
-                      type_value='multiple_choice',
-                      description="Model to use (large or challenge)."
-                                  "The model 'large' will be slower but "
-                                  "will yield better results. The model "
-                                  "'challenge' was built using data from "
-                                  "the following challenge: goo.gl/h4AVar.",
-                      mandatory=False,
-                      example=['large', 'challenge'],
-                      default_value='large')
-
-    parser.add_option(name="-thr",
-                      type_value='float',
-                      description="Threshold to apply in the segmentation "
-                                  "predictions, use 0 (zero) to disable it.",
-                      mandatory=False,
-                      default_value=0.999,
-                      example=0.999)
-
-    parser.add_option(name='-igt',
-                      type_value='image_nifti',
-                      description='File name of ground-truth segmentation.',
-                      mandatory=False)
-
-    parser.add_option(name="-t",
-                      type_value=None,
-                      description="Enable TTA (test-time augmentation). "
-                                  "Better results, but takes more time and "
-                                  "provides non-deterministic results.",
-                      mandatory=False)
-
-    parser.add_option(name="-v",
-                      type_value='multiple_choice',
-                      description="Verbose: 0 = no verbosity, 1 = verbose.",
-                      mandatory=False,
-                      example=['0', '1'],
-                      default_value='1')
+    parser = argparse.ArgumentParser(
+        description='Spinal Cord Gray Matter (GM) Segmentation using deep dilated convolutions. '
+                    'Reference: CS Perone, E Calabrese, J Cohen-Adad. Spinal cord gray matter segmentation using deep dilated convolutions (2017). arxiv.org/abs/1710.01269',
+        add_help=None,
+        prog=os.path.basename(__file__).strip(".py"))
+    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatory.add_argument(
+        "-i",
+        help="Image filename to segment (3D volume).  (e.g.,'t2s.nii.gz')"
+             "Contrast must be similar to T2*-weighted, "
+             "i.e., WM dark, GM bright and CSF bright.",
+        metavar = Metavar.file)
+    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional.add_argument(
+        "-h",
+        "--help",
+        action="help",
+        help="show this help message and exit")
+    optional.add_argument(
+        "-o",
+        help="Output segmentation file name. (e.g.,'sc_gm_seg.nii.gz')",
+        metavar=Metavar.file)
+    misc = parser.add_argument_group('\nMISC')
+    misc.add_argument(
+        '-qc',
+        help="The path where the quality control generated "
+             "content will be saved",
+        metavar=Metavar.str,
+        default=None)
+    misc.add_argument(
+        '-qc-dataset',
+        help='If provided, this string will be mentioned in the QC report as the dataset the process was run on',
+        metavar=Metavar.str)
+    misc.add_argument(
+        '-qc-subject',
+        help='If provided, this string will be mentioned in the QC report as the subject the process was run on',
+        metavar=Metavar.str)
+    misc.add_argument(
+        "-m",
+        help="Model to use (large or challenge)."
+             "The model 'large' will be slower but "
+             "will yield better results. The model "
+             "'challenge' was built using data from "
+             "the following challenge: goo.gl/h4AVar.",
+        choices=('large', 'challenge'),
+        default = 'large')
+    misc.add_argument(
+        "-thr",
+        type=float,
+        help='Threshold to apply in the segmentation predictions, use 0 (zero) to disable it. (e.g. "0.999")',
+        metavar=Metavar.float,
+        default=0.999)
+    misc.add_argument(
+        '-igt',
+        metavar=Metavar.str,
+        help='File name of ground-truth segmentation.')
+    misc.add_argument(
+        "-t",
+        help="Enable TTA (test-time augmentation). "
+             "Better results, but takes more time and "
+             "provides non-deterministic results.",
+        metavar=Metavar.flag)
+    misc.add_argument(
+        "-v",
+        type=int,
+        help="Verbose: 0 = no verbosity, 1 = verbose.",
+        choices=(0, 1),
+        default = 1)
 
     return parser
 
 
 def run_main():
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
-    input_filename = arguments["-i"]
+    arguments = parser.parse_args(args = None if sys.argv[1:] else ['--help'])
+    input_filename = arguments.i
 
     try:
-        output_filename = arguments["-o"]
+        output_filename = arguments.o
     except KeyError:
         output_filename = sct.add_suffix(input_filename, '_gmseg')
 
     use_tta = "-t" in arguments
-    model_name = arguments["-m"]
-    threshold = arguments['-thr']
-    verbose = int(arguments.get('-v'))
+    model_name = arguments.m
+    threshold = arguments.thr
+    verbose = arguments.v
     sct.init_sct(log_level=verbose, update=True)  # Update log level
 
     if threshold > 1.0 or threshold < 0.0:
@@ -124,9 +123,9 @@ def run_main():
                                         model_name, threshold, int(verbose),
                                         use_tta)
 
-    path_qc = arguments.get("-qc", None)
-    qc_dataset = arguments.get("-qc-dataset", None)
-    qc_subject = arguments.get("-qc-subject", None)
+    path_qc = arguments.qc
+    qc_dataset = arguments.qc_dataset
+    qc_subject = arguments.qc_subject
     if path_qc is not None:
         generate_qc(fname_in1=input_filename, fname_seg=out_fname, args=sys.argv[1:], path_qc=os.path.abspath(path_qc),
                     dataset=qc_dataset, subject=qc_subject, process='sct_deepseg_gm')
