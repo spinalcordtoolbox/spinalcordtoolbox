@@ -17,62 +17,80 @@ import sys
 import numpy as np
 from scipy.ndimage.measurements import center_of_mass
 import nibabel as nib
+import argparse
 
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
-from msct_parser import Parser
+
 import sct_utils as sct
 from spinalcordtoolbox.reports.qc import generate_qc
+from spinalcordtoolbox.utils import Metavar
 
 
 def get_parser():
     # Initialize the parser
-    parser = Parser(__file__)
-    parser.usage.set_description('Detection of the Ponto-Medullary Junction (PMJ).\n'
-                                 ' This method is machine-learning based and adapted for T1w-like or T2w-like images.\n'
-                                 ' If the PMJ is detected from the input image, a nifti mask is output ("*_pmj.nii.gz")\n'
-                                 ' with one voxel (value=50) located at the predicted PMJ position.\n'
-                                 ' If the PMJ is not detected, nothing is output.')
-    parser.add_option(name="-i",
-                        type_value="file",
-                        description="input image.",
-                        mandatory=True,
-                        example="t2.nii.gz")
-    parser.add_option(name="-c",
-                        type_value="multiple_choice",
-                        description="type of image contrast, if your contrast is not in the available options (t1, t2), use t1 (cord bright / CSF dark) or t2 (cord dark / CSF bright)",
-                        mandatory=True,
-                        example=["t1", "t2"])
-    parser.add_option(name="-s",
-                        type_value="file",
-                        description="SC segmentation or centerline mask. Provide this mask helps the detection of the PMJ by indicating the position of the SC in the Right-to-Left direction.",
-                        mandatory=False,
-                        example="t2_seg.nii.gz")
-    parser.add_option(name="-ofolder",
-                        type_value="folder_creation",
-                        description="Output folder",
-                        mandatory=False,
-                        example="My_Output_Folder/")
-    parser.add_option(name='-qc',
-                      type_value='folder_creation',
-                      description='The path where the quality control generated content will be saved',
-                      default_value=None)
-    parser.add_option(name="-igt",
-                      type_value="image_nifti",
-                      description="File name of ground-truth PMJ (single voxel).",
-                      mandatory=False)
-    parser.add_option(name="-r",
-                        type_value="multiple_choice",
-                        description="Remove temporary files.",
-                        mandatory=False,
-                        default_value="1",
-                        example=["0", "1"])
-    parser.add_option(name="-v",
-                        type_value='multiple_choice',
-                        description="Verbose: 0 = nothing, 1 = classic, 2 = expended",
-                        mandatory=False,
-                        example=["0", "1", "2"],
-                        default_value="1")
+
+    parser = argparse.ArgumentParser(
+        description='Detection of the Ponto-Medullary Junction (PMJ).\n'
+                    ' This method is machine-learning based and adapted for T1w-like or T2w-like images.\n'
+                    ' If the PMJ is detected from the input image, a nifti mask is output ("*_pmj.nii.gz")\n'
+                    ' with one voxel (value=50) located at the predicted PMJ position.\n'
+                    ' If the PMJ is not detected, nothing is output.',
+        add_help = None,
+        prog=os.path.basename(__file__).strip(".py"))
+    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatory.add_argument(
+        "-i",
+        metavar = Metavar.file,
+        help='input image. (e.g.,"t2.nii.gz")',
+        required = True)
+    mandatory.add_argument(
+        "-c",
+        help="type of image contrast, if your contrast is not in the available options (t1, t2), use t1 (cord bright / CSF dark) or t2 (cord dark / CSF bright)",
+        required = True,
+        choices = ("t1", "t2"))
+    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional.add_argument(
+        "-h",
+        "--help",
+        action="help",
+        help="show this help message and exit")
+    optional.add_argument(
+        "-s",
+        metavar = Metavar.file,
+        help='SC segmentation or centerline mask. '
+             'Provide this mask helps the detection of the PMJ by indicating the position of the SC '
+             'in the Right-to-Left direction. (e.g.,"t2_seg.nii.gz")',
+        required = False)
+    optional.add_argument(
+        "-ofolder",
+        metavar = Metavar.folder,
+        help='Output folder (e.g.,"My_Output_Folder / ")',
+        required = False)
+    optional.add_argument(
+        '-qc',
+        metavar= Metavar.str,
+        help='The path where the quality control generated content will be saved',
+        default=None)
+    optional.add_argument(
+        "-igt",
+        metavar=Metavar.str,
+        help="File name of ground-truth PMJ (single voxel).",
+        required=False)
+    optional.add_argument(
+        "-r",
+        type=int,
+        help="Remove temporary files.",
+        required = False,
+        default = 1,
+        choices = (0, 1))
+    optional.add_argument(
+        "-v",
+        type=int,
+        help="Verbose: 0 = nothing, 1 = classic, 2 = expended",
+        required = False,
+        choices = (0, 1, 2),
+        default = 1)
 
     return parser
 
@@ -234,30 +252,26 @@ class DetectPMJ:
         os.chdir(self.tmp_dir)  # go to tmp directory
 
 
-def main(args=None):
-    if args is None:
-        args = sys.argv[1:]
-
-    # Get parser
+def main():
     parser = get_parser()
-    arguments = parser.parse(args)
+    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
 
     # Set param arguments ad inputted by user
-    fname_in = arguments["-i"]
-    contrast = arguments["-c"]
+    fname_in = arguments.i
+    contrast = arguments.c
 
     # Segmentation or Centerline line
     if '-s' in arguments:
-        fname_seg = arguments['-s']
+        fname_seg = arguments.s
         if not os.path.isfile(fname_seg):
             fname_seg = None
-            sct.printv('WARNING: -s input file: "' + arguments['-s'] + '" does not exist.\nDetecting PMJ without using segmentation information', 1, 'warning')
+            sct.printv('WARNING: -s input file: "' + arguments.s + '" does not exist.\nDetecting PMJ without using segmentation information', 1, 'warning')
     else:
         fname_seg = None
 
     # Output Folder
     if '-ofolder' in arguments:
-        path_results = arguments["-ofolder"]
+        path_results = arguments.ofolder
         if not os.path.isdir(path_results) and os.path.exists(path_results):
             sct.printv("ERROR output directory %s is not a valid directory" % path_results, 1, 'error')
         if not os.path.exists(path_results):
@@ -265,12 +279,12 @@ def main(args=None):
     else:
         path_results = '.'
 
-    path_qc = arguments.get("-qc", None)
+    path_qc = arguments.qc
 
     # Remove temp folder
-    rm_tmp = bool(int(arguments.get("-r", 1)))
+    rm_tmp = bool(arguments.r)
 
-    verbose = int(arguments.get('-v'))
+    verbose = arguments.v
     sct.init_sct(log_level=verbose, update=True)  # Update log level
 
     # Initialize DetectPMJ
@@ -290,8 +304,7 @@ def main(args=None):
     # View results
     if fname_out is not None:
         if path_qc is not None:
-            generate_qc(fname_in, fname_seg=fname_out, args=args, path_qc=os.path.abspath(path_qc),
-                        process='sct_detect_pmj')
+            generate_qc(fname_in, fname_seg=fname_out, args=sys.argv[1:], path_qc=os.path.abspath(path_qc),process='sct_detect_pmj')
 
         sct.display_viewer_syntax([fname_in, fname_out], colormaps=['gray', 'red'])
 
