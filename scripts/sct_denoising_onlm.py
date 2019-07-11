@@ -2,15 +2,15 @@
 
 from __future__ import absolute_import, division
 
-import sys, io, os
+import sys, io, os, argparse
 from time import time
 
 import numpy as np
 from time import time
 import nibabel as nib
 
-from msct_parser import Parser
 import sct_utils as sct
+from spinalcordtoolbox.utils import Metavar
 
 
 # DEFAULT PARAMETERS
@@ -23,6 +23,68 @@ class Param:
         self.parameter = "Rician"
         self.file_to_denoise = ''
         self.output_file_name = ''
+
+def get_parser():
+    # Initialize the parser
+
+    parser = argparse.ArgumentParser(
+        description='Utility function to denoise images. (Return the denoised image and also the difference between the input and the output.)',
+        add_help = None,
+        prog=os.path.basename(__file__).strip(".py"))
+    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatory.add_argument(
+        "-i",
+        help="Input NIFTI image to be denoised. (e.g.,'image_input.nii.gz')",
+        metavar = Metavar.file,
+        default = None)
+    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional.add_argument(
+        "-h",
+        "--help",
+        action="help",
+        help="show this help message and exit")
+    optional.add_argument(
+        "-p",
+        help='Type of supposed noise: Rician or Gaussian.'
+              ' Default is Rician. (e.g.,["Rician", "Gaussian"])',
+        required = False,
+        choices = ("Rician", "Gaussian"),
+        default = "Rician")
+    optional.add_argument(
+        "-d",
+        type = int,
+        help="Threshold value for what to be considered as noise. "
+             "The standard deviation of the noise is calculated for values below this limit. "
+             "Not relevant if -std value is precised.\n",
+        metavar = Metavar.int,
+        required=False,
+        default="80")
+    optional.add_argument(
+        "-std",
+        type=float,
+        help="Standard deviation of the noise. "
+             "If not precised, it is calculated using a background of point of values "
+             "below the threshold value (parameter d).",
+        metavar=Metavar.float)
+    optional.add_argument(
+        "-o",
+        help="Name of the output NIFTI image.",
+        metavar = Metavar.str,
+        default = None)
+    optional.add_argument(
+        "-r",
+        help="Remove temporary files. Specify 0 to get access to temporary files.",
+        type=int,
+        choices=(0, 1),
+        default = 1)
+    optional.add_argument(
+        "-v",
+        help="Verbose. 0: nothing. 1: basic. 2: extended.",
+        type = int,
+        default = 0,
+        choices = (0, 1, 2))
+
+    return parser
 
 
 def main(file_to_denoise, param, output_file_name) :
@@ -80,7 +142,7 @@ def main(file_to_denoise, param, output_file_name) :
     if '-std' not in arguments:
         difference[~mask[:, :, axial_middle].T] = 0
 
-    if param.verbose == 2 :
+    if param.verbose == 2:
         import matplotlib.pyplot as plt
         fig, ax = plt.subplots(1, 3)
         ax[0].imshow(before, cmap='gray', origin='lower')
@@ -97,7 +159,7 @@ def main(file_to_denoise, param, output_file_name) :
     # Save files
     img_denoise = nib.Nifti1Image(den, None, hdr_0)
     img_diff = nib.Nifti1Image(diff_3d, None, hdr_0)
-    if output_file_name != None :
+    if output_file_name != None:
         output_file_name = output_file_name
     else:
         output_file_name = file + '_denoised' + ext
@@ -105,70 +167,24 @@ def main(file_to_denoise, param, output_file_name) :
     nib.save(img_diff, file + '_difference' + ext)
 
 
-#=======================================================================================================================
+# =======================================================================================================================
 # Start program
-#=======================================================================================================================
+# =======================================================================================================================
 if __name__ == "__main__":
     sct.init_sct()
+    parser = get_parser()
     # initialize parameters
+    arguments = parser.parse_args(args = None if sys.argv[1:] else ['--help'])
 
-    # Initialize the parser
-    parser = Parser(__file__)
-    parser.usage.set_description('Utility function to denoise images. (Return the denoised image and also the difference between the input and the output.)')
-    parser.add_option(name="-i",
-                      type_value='file',
-                      description="Input NIFTI image to be denoised.",
-                      mandatory=True,
-                      example='image_input.nii.gz')
-    parser.add_option(name="-p",
-                      type_value="multiple_choice",
-                      description="Type of supposed noise: Rician or Gaussian. Default is Rician.",
-                      mandatory=False,
-                      example=["Rician", "Gaussian"],
-                      default_value="Rician")
-    parser.add_option(name="-d",
-                      type_value="int",
-                      description="Threshold value for what to be considered as noise. The standard deviation of the noise is calculated for values below this limit. Not relevant if -std value is precised.\n",
-                      mandatory=False,
-                      default_value="80")
-    parser.add_option(name="-std",
-                      type_value="float",
-                      description="Standard deviation of the noise. If not precised, it is calculated using a background of point of values below the threshold value (parameter d).",
-                      mandatory=False)
-    parser.add_option(name="-o",
-                      type_value="file_output",
-                      description="Name of the output NIFTI image.",
-                      mandatory=False)
-    parser.add_option(name="-r",
-                      type_value="multiple_choice",
-                      description="Remove temporary files. Specify 0 to get access to temporary files.",
-                      mandatory=False,
-                      example=['0', '1'],
-                      default_value="1")
-    parser.add_option(name="-v",
-                      type_value="multiple_choice",
-                      description="Verbose. 0: nothing. 1: basic. 2: extended.",
-                      mandatory=False,
-                      default_value='0',
-                      example=['0', '1', '2'])
-    arguments = parser.parse(sys.argv[1:])
-
-    parameter = arguments["-p"]
-    remove_temp_files = int(arguments["-r"])
-    noise_threshold = int(arguments['-d'])
-    verbose = int(arguments.get('-v'))
+    parameter = arguments.p
+    remove_temp_files = arguments.r
+    noise_threshold = arguments.d
+    verbose = arguments.v
     sct.init_sct(log_level=verbose, update=True)  # Update log level
 
-    if "-i" in arguments:
-        file_to_denoise = arguments["-i"]
-    else:
-        file_to_denoise = None
-    if "-o" in arguments:
-        output_file_name = arguments["-o"]
-    else:
-        output_file_name = None
-    if "-std" in arguments:
-        std_noise = float(arguments['-std'])
+    file_to_denoise = arguments.i
+    output_file_name = arguments.o
+    std_noise = arguments.std
 
     param = Param()
     param.verbose = verbose
