@@ -15,78 +15,97 @@ from __future__ import absolute_import
 import sys
 import shutil
 import os
+import argparse
 
-from msct_parser import Parser
 import sct_utils as sct
 from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.utils import Metavar
+
 
 def get_parser():
-    parser = Parser(__file__)
-    parser.usage.set_description('Compute the Dice Coefficient. Note: indexing (in both time and space) starts with 0 not 1! Inputting -1 for a size will set it to the full image extent for that dimension.')
-    parser.add_option(name='-i',
-                      type_value='image_nifti',
-                      description='First input image.',
-                      mandatory=True,
-                      example='t2_seg.nii.gz')
-    parser.add_option(name='-d',
-                      type_value='image_nifti',
-                      description='Second input image.',
-                      mandatory=True,
-                      example='t2_manual_seg.nii.gz')
-    parser.add_option(name='-2d-slices',
-                      type_value='multiple_choice',
-                      description='Compute DC on 2D slices in the specified dimension',
-                      mandatory=False,
-                      example=['0', '1', '2'])
-    parser.add_option(name='-b',
-                      type_value=[[','], 'int'],
-                      description='Bounding box with the coordinates of the origin and the size of the box as follow: x_origin,x_size,y_origin,y_size,z_origin,z_size',
-                      mandatory=False,
-                      example='5,10,5,10,10,15')
-    parser.add_option(name='-bmax',
-                      type_value='multiple_choice',
-                      description='Use maximum bounding box of the images union to compute DC',
-                      mandatory=False,
-                      example=['0', '1'])
-    parser.add_option(name='-bzmax',
-                      type_value='multiple_choice',
-                      description='Use maximum bounding box of the images union in the "Z" direction to compute DC',
-                      mandatory=False,
-                      example=['0', '1'])
-    parser.add_option(name='-bin',
-                      type_value='multiple_choice',
-                      description='Binarize image before computing DC. (Put non-zero-voxels to 1)',
-                      mandatory=False,
-                      example=['0', '1'])
-    parser.add_option(name='-o',
-                      type_value='file_output',
-                      description='Output file with DC results (.txt)',
-                      mandatory=False,
-                      example='dice_coeff.txt')
-    parser.add_option(name="-r",
-                      type_value="multiple_choice",
-                      description="Remove temporary files.",
-                      mandatory=False,
-                      default_value='1',
-                      example=['0', '1'])
-    parser.add_option(name='-v',
-                      type_value='multiple_choice',
-                      description='Verbose.',
-                      mandatory=False,
-                      default_value='1',
-                      example=['0', '1'])
+    parser = argparse.ArgumentParser(
+        description='Compute the Dice Coefficient. Note: indexing (in both time and space) starts with 0 not 1! '
+                    'Inputting -1 for a size will set it to the full image extent for that dimension.',
+        add_help = None,
+        prog = os.path.basename(__file__).strip(".py"))
+    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatory.add_argument(
+        '-i',
+        metavar = Metavar.file,
+        help='First input image.(e.g. "t2_seg.nii.gz")',
+        required = True)
+    mandatory.add_argument(
+        '-d',
+        metavar=Metavar.file,
+        help='Second input image. (e.g. "t2_manual_seg.nii.gz")',
+        required = True)
+    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional.add_argument(
+        "-h",
+        "--help",
+        action="help",
+        help="show this help message and exit")
+    optional.add_argument(
+        '-2d-slices',
+        type = int,
+        help='Compute DC on 2D slices in the specified dimension',
+        required = False,
+        choices = (0, 1, 2))
+    optional.add_argument(
+        '-b',
+        metavar=Metavar.list,
+        help='Bounding box with the coordinates of the origin and the size of the box as follow: '
+             'x_origin,x_size,y_origin,y_size,z_origin,z_size (e.g. "5,10,5,10,10,15")',
+        required = False)
+    optional.add_argument(
+        '-bmax',
+        type=int,
+        help='Use maximum bounding box of the images union to compute DC',
+        required = False,
+        choices = (0, 1))
+    optional.add_argument(
+        '-bzmax',
+        type=int,
+        help='Use maximum bounding box of the images union in the "Z" direction to compute DC',
+        required = False,
+        choices = (0, 1))
+    optional.add_argument(
+        '-bin',
+        type = int,
+        help='Binarize image before computing DC. (Put non-zero-voxels to 1)',
+        required = False,
+        choices = (0, 1))
+    optional.add_argument(
+        '-o',
+        metavar=Metavar.str,
+        help='Output file with DC results (.txt) (e.g., "dice_coeff.txt")',
+        required = False)
+    optional.add_argument(
+        "-r",
+        type = int,
+        help="Remove temporary files.",
+        required=False,
+        default= 1,
+        choices=(0, 1))
+    optional.add_argument(
+        '-v',
+        type = int,
+        help='Verbose.',
+        required = False,
+        default = 1,
+        choices = (0, 1))
 
     return parser
 
 if __name__ == "__main__":
     sct.init_sct()
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
+    arguments = parser.parse_args(args = None if sys.argv[1:] else ['--help'])
 
-    fname_input1 = arguments['-i']
-    fname_input2 = arguments['-d']
+    fname_input1 = arguments.i
+    fname_input2 = arguments.d
 
-    verbose = int(arguments.get('-v'))
+    verbose = arguments.v
     sct.init_sct(log_level=verbose, update=True)  # Update log level
 
     tmp_dir = sct.tmp_create(verbose=verbose)  # create tmp directory
@@ -118,21 +137,20 @@ if __name__ == "__main__":
 
     cmd = ['isct_dice_coefficient', fname_input1, fname_input2]
 
-    if '-2d-slices' in arguments:
-        cmd += ['-2d-slices', arguments['-2d-slices']]
-    if '-b' in arguments:
-        bounding_box = arguments['-b']
+    if vars(arguments)["2d_slices"] is not None:
+        cmd += ['-2d-slices', str(vars(arguments)["2d_slices"])]
+    if arguments.b is not None:
+        bounding_box = arguments.b
         cmd += ['-b'] + bounding_box
-    if '-bmax' in arguments and arguments['-bmax'] == '1':
+    if arguments.bmax is not None and arguments.bmax == 1:
         cmd += ['-bmax']
-    if '-bzmax' in arguments and arguments['-bzmax'] == '1':
+    if arguments.bzmax is not None and arguments.bzmax == 1:
         cmd += ['-bzmax']
-    if '-o' in arguments:
-        path_output, fname_output, ext = sct.extract_fname(arguments['-o'])
+    if arguments.o is not None:
+        path_output, fname_output, ext = sct.extract_fname(arguments.o)
         cmd += ['-o', fname_output + ext]
 
-    if '-r' in arguments:
-        rm_tmp = bool(int(arguments['-r']))
+    rm_tmp = bool(arguments.r)
 
     # # Computation of Dice coefficient using Python implementation.
     # # commented for now as it does not cover all the feature of isct_dice_coefficient
@@ -145,8 +163,8 @@ if __name__ == "__main__":
     os.chdir(curdir) # go back to original directory
 
     # copy output file into original directory
-    if '-o' in arguments:
-        sct.copy(os.path.join(tmp_dir, fname_output+ext), os.path.join(path_output, fname_output+ext))
+    if arguments.o is not None:
+        sct.copy(os.path.join(tmp_dir, fname_output + ext), os.path.join(path_output, fname_output + ext))
 
     # remove tmp_dir
     if rm_tmp:
