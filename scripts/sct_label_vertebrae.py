@@ -78,7 +78,7 @@ def get_parser():
                       type_value="multiple_choice",
                       description="type of image contrast, automatically detected but can be specified manually (t2: cord dark / CSF bright ; t1: cord bright / CSF dark)",
                       mandatory=False,
-                      example=['t1', 't2', 't2s'])
+                      example=['t1', 't2'])
     parser.add_option(name="-t",
                       type_value="folder",
                       description="Path to template.",
