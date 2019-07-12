@@ -109,7 +109,7 @@ def main(file_to_denoise, param, output_file_name) :
 
     from dipy.denoise.nlmeans import nlmeans
 
-    if '-std' in arguments:
+    if arguments.std is not None:
         sigma = std_noise
         # Application of NLM filter to the image
         sct.printv('Applying Non-local mean filter...')
@@ -139,7 +139,7 @@ def main(file_to_denoise, param, output_file_name) :
 
     diff_3d = np.absolute(den.astype('f8') - data.astype('f8'))
     difference = np.absolute(after.astype('f8') - before.astype('f8'))
-    if '-std' not in arguments:
+    if arguments.std is None:
         difference[~mask[:, :, axial_middle].T] = 0
 
     if param.verbose == 2:
