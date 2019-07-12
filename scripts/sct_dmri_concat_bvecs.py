@@ -12,47 +12,58 @@
 
 from __future__ import absolute_import
 
-import sys
+import sys, os, argparse
 
 from dipy.data.fetcher import read_bvals_bvecs
 
-from msct_parser import Parser
 from sct_utils import extract_fname
 import sct_utils as sct
+from spinalcordtoolbox.utils import Metavar
+
 
 # PARSER
 # ==========================================================================================
 
 
 def get_parser():
-
     # Initialize the parser
-    parser = Parser(__file__)
-    parser.usage.set_description('Concatenate bvec files in time. You can either use bvecs in lines or columns.\nN.B.: Return bvecs in lines. If you need it in columns, please use sct_dmri_transpose_bvecs afterwards.')
-    parser.add_option(name="-i",
-                      type_value=[[','], 'file'],
-                      description="List of the bvec files to concatenate.",
-                      mandatory=True,
-                      example="dmri_b700.bvec,dmri_b2000.bvec")
-    parser.add_option(name="-o",
-                      type_value="file_output",
-                      description='Output file with bvecs concatenated.',
-                      mandatory=False,
-                      example='dmri_b700_b2000_concat.bvec')
+
+    parser = argparse.ArgumentParser(
+        description='Concatenate bvec files in time. You can either use bvecs in lines or columns.'
+                    '\nN.B.: Return bvecs in lines. If you need it in columns, please use sct_dmri_transpose_bvecs afterwards.',
+        add_help = None,
+        prog=os.path.basename(__file__).strip(".py"))
+    mandatory = parser.add_argument_group("\n")
+    mandatory.add_argument(
+        "-i",
+        metavar=Metavar.file,
+        help='List of the bvec files to concatenate. (e.g.,"dmri_b700.bvec,dmri_b2000.bvec")',
+        required = True)
+    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional.add_argument(
+        "-h",
+        "--help",
+        action="help",
+        help="show this help message and exit")
+    optional.add_argument(
+        "-o",
+        metavar=Metavar.file,
+        help='Output file with bvecs concatenated. (e.g., "dmri_b700_b2000_concat.bvec")'
+    )
+
     return parser
 
 
 # MAIN
 # ==========================================================================================
 def main():
-
     # Get parser info
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
-    fname_bvecs_list = arguments["-i"]
+    arguments = parser.parse_args(args = None if sys.argv[1:] else ['--help'])
+    fname_bvecs_list = (arguments.i).rsplit(",")
     # Build fname_out
-    if "-o" in arguments:
-        fname_out = arguments["-o"]
+    if arguments.o is not None:
+        fname_out = arguments.o
     else:
         path_in, file_in, ext_in = extract_fname(fname_bvecs_list[0])
         fname_out = path_in + 'bvecs_concat' + ext_in
@@ -82,7 +93,7 @@ def main():
     for i_fname in fname_bvecs_list:
         bval_i, bvec_i = read_bvals_bvecs(None, i_fname)
         for i in range(0, 3):
-            bvecs_all[i] += ' '.join(str(v) for v in map(lambda n: '%.16f'%n, bvec_i[:, i]))
+            bvecs_all[i] += ' '.join(str(v) for v in map(lambda n: '%.16f' % n, bvec_i[:, i]))
             bvecs_all[i] += ' '
 
     # Concatenate
