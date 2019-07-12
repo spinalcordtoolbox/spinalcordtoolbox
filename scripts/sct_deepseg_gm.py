@@ -103,7 +103,7 @@ def run_main():
     except KeyError:
         output_filename = sct.add_suffix(input_filename, '_gmseg')
 
-    use_tta = "-t" in arguments
+    use_tta = arguments.t
     model_name = arguments.m
     threshold = arguments.thr
     verbose = arguments.v
