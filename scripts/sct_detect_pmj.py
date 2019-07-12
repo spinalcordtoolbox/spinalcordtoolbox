@@ -261,7 +261,7 @@ def main():
     contrast = arguments.c
 
     # Segmentation or Centerline line
-    if '-s' in arguments:
+    if arguments.s is not None:
         fname_seg = arguments.s
         if not os.path.isfile(fname_seg):
             fname_seg = None
@@ -270,7 +270,7 @@ def main():
         fname_seg = None
 
     # Output Folder
-    if '-ofolder' in arguments:
+    if arguments.ofolder is not None:
         path_results = arguments.ofolder
         if not os.path.isdir(path_results) and os.path.exists(path_results):
             sct.printv("ERROR output directory %s is not a valid directory" % path_results, 1, 'error')
