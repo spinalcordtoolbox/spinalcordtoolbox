@@ -42,7 +42,8 @@ def main(args=None):
     # Initialization
     fname_warp_final = ''  # concatenated transformations
     fname_dest = arguments.d
-    fname_warp_list = (arguments.w).split(",")
+    fname_warp_list = arguments.w
+    warpinv_filename = arguments.winv
 
     if arguments.o is not None:
         fname_warp_final = arguments.o
@@ -54,15 +55,13 @@ def main(args=None):
     use_inverse = []
     fname_warp_list_invert = []
     for i in range(len(fname_warp_list)):
-        # Check if inverse matrix is specified with '-' at the beginning of file name
-        if fname_warp_list[i].find('-') == 0:
-            use_inverse.append('-i')
-            fname_warp_list[i] = fname_warp_list[i][1:]  # remove '-'
-            fname_warp_list_invert += [[use_inverse[i], fname_warp_list[i]]]
-        else:
-            use_inverse.append('')
-            fname_warp_list_invert += [[fname_warp_list[i]]]
-        sct.printv('  Transfo #' + str(i) + ': ' + use_inverse[i] + fname_warp_list[i], verbose)
+        use_inverse.append('')
+        fname_warp_list_invert += [[fname_warp_list[i]]]
+        sct.printv('  Transfo #' + str(i + 1) + ': ' + use_inverse[i] + fname_warp_list[i], verbose)
+    for i in range(len(warpinv_filename)):
+        use_inverse.append('-i')
+        fname_warp_list_invert += [[use_inverse[i], warpinv_filename[i]]]
+        sct.printv('  Transfo #' + str(i + len(fname_warp_list) + 1) + ': ' + use_inverse[i] + warpinv_filename[i], verbose)
 
     # Check file existence
     sct.printv('\nCheck file existence...', verbose)
@@ -117,10 +116,19 @@ def get_parser():
         required=False)
     mandatoryArguments.add_argument(
         "-w",
-        help='List of affine matrix or warping fields separated with "," N.B. if you want to use the inverse matrix, add "-" before matrix file name. N.B. You should NOT use "-" with warping fields (only with matrices). If you want to use an inverse warping field, then input it directly (e.g. "warp_template2anat.nii.gz" instead of "warp_anat2template.nii.gz") ',
-        metavar=Metavar.list,
-        required = False)
+        help='Transformation(s), which can be warping fields (nifti image) or affine transformation matrix (text '
+             'file). Separate with space. Example: warp1.nii.gz warp2.nii.gz',
+        nargs='+',
+        metavar=Metavar.file)
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional.add_argument(
+        "-winv",
+        help='Affine transformation(s) listed in flag -w which should be inverted before being used. Note that this'
+             'only concerns affine transformation (not warping fields). If you would like to use an inverse warping'
+             'field, then directly input the inverse warping field in flag -w.',
+        nargs='+',
+        metavar=Metavar.file,
+        default=[])
     optional.add_argument(
         "-h",
         "--help",
