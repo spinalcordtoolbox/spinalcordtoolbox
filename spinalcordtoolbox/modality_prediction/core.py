@@ -92,6 +92,7 @@ def classify_acquisition(input_image, model=None):
     modality = numeral[0][1]
 
     class_names = ["t1", "t2s", "t2"]
+    logger.info('Modality detected: {}. If wrong please specify the contrast manually.'.format(modality))
     return(class_names[modality])
 
 
