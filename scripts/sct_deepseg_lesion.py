@@ -119,16 +119,16 @@ def main():
     ctr_algo = args.centerline
 
     brain_bool = bool(args.brain)
-    if "-brain" not in args and contrast_type in ['t2s', 't2_ax']:
+    if args.brain is None and contrast_type in ['t2s', 't2_ax']:
         brain_bool = False
 
     output_folder = args.ofolder
 
-    if ctr_algo == 'file' and "-file_centerline" not in args:
+    if ctr_algo == 'file' and args.file_centerline is None:
         sct.printv('Please use the flag -file_centerline to indicate the centerline filename.', 1, 'error')
         sys.exit(1)
 
-    if "-file_centerline" in args:
+    if args.file_centerline is not None:
         manual_centerline_fname = args.file_centerline
         ctr_algo = 'file'
     else:
