@@ -12,47 +12,55 @@
 
 from __future__ import absolute_import
 
-import sys
+import os, sys, argparse
 
 from dipy.data.fetcher import read_bvals_bvecs
 
-from msct_parser import Parser
 from sct_utils import extract_fname
 import sct_utils as sct
+from spinalcordtoolbox.utils import Metavar
 
 # PARSER
 # ==========================================================================================
 
 
 def get_parser():
-
     # Initialize the parser
-    parser = Parser(__file__)
-    parser.usage.set_description('Concatenate bval files in time.')
-    parser.add_option(name="-i",
-                      type_value=[[','], 'file'],
-                      description="List of the bval files to concatenate.",
-                      mandatory=True,
-                      example="dmri_b700.bval,dmri_b2000.bval")
-    parser.add_option(name="-o",
-                      type_value="file_output",
-                      description='Output file with bvals merged.',
-                      mandatory=False,
-                      example='dmri_b700_b2000_concat.bval')
+
+    parser = argparse.ArgumentParser(
+        description='Concatenate bval files in time.',
+        add_help = None,
+        prog=os.path.basename(__file__).strip(".py"))
+    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatory.add_argument(
+        "-i",
+        help='List of the bval files to concatenate. (e.g.,"dmri_b700.bval,dmri_b2000.bval")',
+        metavar = Metavar.file,
+        required = True)
+    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional.add_argument(
+        "-h",
+        "--help",
+        action="help",
+        help="show this help message and exit")
+    optional.add_argument(
+        "-o",
+        help='Output file with bvals merged. (e.g., "dmri_b700_b2000_concat.bval")',
+        metavar = Metavar.file)
+
     return parser
 
 
 # MAIN
 # ==========================================================================================
 def main():
-
     # Get parser info
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
-    fname_bval_list = arguments["-i"]
+    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
+    fname_bval_list = (arguments.i).rsplit(",")
     # Build fname_out
-    if "-o" in arguments:
-        fname_out = arguments["-o"]
+    if arguments.o is not None:
+        fname_out = arguments.o
     else:
         path_in, file_in, ext_in = extract_fname(fname_bval_list[0])
         fname_out = path_in + 'bvals_concat' + ext_in
