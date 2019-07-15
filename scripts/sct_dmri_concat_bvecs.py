@@ -37,7 +37,7 @@ def get_parser():
     mandatory.add_argument(
         "-i",
         metavar=Metavar.file,
-        help='List of the bvec files to concatenate. (e.g.,"dmri_b700.bvec,dmri_b2000.bvec")',
+        help='List of the bvec files to concatenate. Example dmri_b700.bvec,dmri_b2000.bvec',
         required=True)
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
@@ -48,7 +48,7 @@ def get_parser():
     optional.add_argument(
         "-o",
         metavar=Metavar.file,
-        help='Output file with bvecs concatenated. (e.g., "dmri_b700_b2000_concat.bvec")'
+        help='Output file with bvecs concatenated. Example dmri_b700_b2000_concat.bvec'
     )
 
     return parser
