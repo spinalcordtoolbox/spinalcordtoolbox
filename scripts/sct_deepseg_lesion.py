@@ -59,7 +59,7 @@ def get_parser():
              "\ncnn: automatic centerline detection, based on Convolutional Neural Network."
              "\nviewer: semi-automatic centerline generation, based on manual selection of a few "
              "points using an interactive viewer, then approximation with NURBS."
-             "\nfile: use an existing centerline by specifying its filename with flag -file_centerline (e.g. -file_centerline t2_centerline_manual.nii.gz).\n",
+             "\nfile: use an existing centerline by specifying its filename with flag -file_centerline",
         required=False,
         choices=('svm', 'cnn', 'viewer', 'file'),
         default = "svm")
