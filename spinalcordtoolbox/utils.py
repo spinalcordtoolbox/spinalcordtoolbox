@@ -198,7 +198,6 @@ class Metavar(Enum):
     int = "<int>"
     list = "<list>"
     float = "<float>"
-    flag = "<flag>"
 
     def __str__(self):
         return self.value
