@@ -29,14 +29,14 @@ def get_parser():
 
     parser = argparse.ArgumentParser(
         description='Concatenate bval files in time.',
-        add_help = None,
+        add_help=None,
         prog=os.path.basename(__file__).strip(".py"))
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
         "-i",
         help='List of the bval files to concatenate. (e.g.,"dmri_b700.bval,dmri_b2000.bval")',
-        metavar = Metavar.file,
-        required = True)
+        metavar=Metavar.file,
+        required=True)
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",
@@ -46,7 +46,7 @@ def get_parser():
     optional.add_argument(
         "-o",
         help='Output file with bvals merged. (e.g., "dmri_b700_b2000_concat.bval")',
-        metavar = Metavar.file)
+        metavar=Metavar.file)
 
     return parser
 
