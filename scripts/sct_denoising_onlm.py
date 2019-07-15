@@ -34,7 +34,7 @@ def get_parser():
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
         "-i",
-        help="Input NIFTI image to be denoised. (e.g.,'image_input.nii.gz')",
+        help="Input NIFTI image to be denoised. Example image_input.nii.gz",
         metavar=Metavar.file,
         default=None)
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
@@ -46,7 +46,7 @@ def get_parser():
     optional.add_argument(
         "-p",
         help='Type of supposed noise: Rician or Gaussian.'
-              ' Default is Rician. (e.g.,["Rician", "Gaussian"])',
+              ' Default is Rician. Example ["Rician", "Gaussian"]',
         required=False,
         choices=("Rician", "Gaussian"),
         default="Rician")
