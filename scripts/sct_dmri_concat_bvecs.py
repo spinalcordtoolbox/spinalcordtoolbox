@@ -31,14 +31,14 @@ def get_parser():
     parser = argparse.ArgumentParser(
         description='Concatenate bvec files in time. You can either use bvecs in lines or columns.'
                     '\nN.B.: Return bvecs in lines. If you need it in columns, please use sct_dmri_transpose_bvecs afterwards.',
-        add_help = None,
+        add_help=None,
         prog=os.path.basename(__file__).strip(".py"))
     mandatory = parser.add_argument_group("\n")
     mandatory.add_argument(
         "-i",
         metavar=Metavar.file,
         help='List of the bvec files to concatenate. (e.g.,"dmri_b700.bvec,dmri_b2000.bvec")',
-        required = True)
+        required=True)
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",
@@ -59,7 +59,7 @@ def get_parser():
 def main():
     # Get parser info
     parser = get_parser()
-    arguments = parser.parse_args(args = None if sys.argv[1:] else ['--help'])
+    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
     fname_bvecs_list = (arguments.i).rsplit(",")
     # Build fname_out
     if arguments.o is not None:
