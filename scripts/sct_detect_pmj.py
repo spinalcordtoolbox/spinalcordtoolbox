@@ -42,7 +42,7 @@ def get_parser():
     mandatory.add_argument(
         "-i",
         metavar=Metavar.file,
-        help='input image. (e.g.,"t2.nii.gz")',
+        help='input image. Example t2.nii.gz',
         required=True)
     mandatory.add_argument(
         "-c",
@@ -60,12 +60,12 @@ def get_parser():
         metavar=Metavar.file,
         help='SC segmentation or centerline mask. '
              'Provide this mask helps the detection of the PMJ by indicating the position of the SC '
-             'in the Right-to-Left direction. (e.g.,"t2_seg.nii.gz")',
+             'in the Right-to-Left direction. Example t2_seg.nii.gz',
         required=False)
     optional.add_argument(
         "-ofolder",
         metavar=Metavar.folder,
-        help='Output folder (e.g.,"My_Output_Folder / ")',
+        help='Output folder Example My_Output_Folder/',
         required=False)
     optional.add_argument(
         '-qc',
