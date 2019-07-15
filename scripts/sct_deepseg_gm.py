@@ -82,7 +82,7 @@ def get_parser():
         help="Enable TTA (test-time augmentation). "
              "Better results, but takes more time and "
              "provides non-deterministic results.",
-        metavar=Metavar.flag)
+        metavar='')
     misc.add_argument(
         "-v",
         type=int,
