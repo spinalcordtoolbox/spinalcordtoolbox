@@ -44,9 +44,18 @@ class Acquisition(object):
             starty = y // 2 - (size // 2)
             
             if startx < 0 or starty < 0:
-                raise RuntimeError("Negative crop.")
-            
-            self.slices[i] = self.slices[i][starty:starty + size,
+                # in case the image is too small we need to pad with 0s
+                padded = np.pad(self.slices[i], size//2, 'constant')
+                y, x = padded.shape
+
+                startx = x // 2 - (size // 2)
+                starty = y // 2 - (size // 2)
+
+                self.slices[i] = padded[starty:starty + size,
+                                        startx:startx + size]
+
+            else:
+                self.slices[i] = self.slices[i][starty:starty + size,
                                            startx:startx + size]
     
     def ToTensor(self):
@@ -92,7 +101,7 @@ def classify_acquisition(input_image, model=None):
     modality = numeral[0][1]
 
     class_names = ["t1", "t2s", "t2"]
-    logger.info('Modality detected: {}. If wrong please specify the contrast manually.'.format(modality))
+    sct.printv('Modality detected: {}. If wrong please specify the contrast manually.\n'.format(class_names[modality]))
     return(class_names[modality])
 
 
