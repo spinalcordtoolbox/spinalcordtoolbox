@@ -32,7 +32,7 @@ def get_parser():
         help="Image filename to segment (3D volume).  (e.g.,'t2s.nii.gz')"
              "Contrast must be similar to T2*-weighted, "
              "i.e., WM dark, GM bright and CSF bright.",
-        metavar = Metavar.file)
+        metavar=Metavar.file)
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",
@@ -66,7 +66,7 @@ def get_parser():
              "'challenge' was built using data from "
              "the following challenge: goo.gl/h4AVar.",
         choices=('large', 'challenge'),
-        default = 'large')
+        default='large')
     misc.add_argument(
         "-thr",
         type=float,
@@ -88,14 +88,14 @@ def get_parser():
         type=int,
         help="Verbose: 0 = no verbosity, 1 = verbose.",
         choices=(0, 1),
-        default = 1)
+        default=1)
 
     return parser
 
 
 def run_main():
     parser = get_parser()
-    arguments = parser.parse_args(args = None if sys.argv[1:] else ['--help'])
+    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
     input_filename = arguments.i
 
     try:
