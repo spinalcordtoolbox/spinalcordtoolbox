@@ -34,7 +34,7 @@ def get_parser():
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
         "-i",
-        help='List of the bval files to concatenate. (e.g.,"dmri_b700.bval,dmri_b2000.bval")',
+        help='List of the bval files to concatenate. Example dmri_b700.bval,dmri_b2000.bval',
         metavar=Metavar.file,
         required=True)
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
@@ -45,7 +45,7 @@ def get_parser():
         help="show this help message and exit")
     optional.add_argument(
         "-o",
-        help='Output file with bvals merged. (e.g., "dmri_b700_b2000_concat.bval")',
+        help='Output file with bvals merged. Example dmri_b700_b2000_concat.bval',
         metavar=Metavar.file)
 
     return parser
