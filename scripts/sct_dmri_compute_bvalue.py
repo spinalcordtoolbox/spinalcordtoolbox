@@ -64,19 +64,19 @@ def get_parser():
         "-g",
         type=float,
         metavar=Metavar.float,
-        help="Amplitude of diffusion gradients (in mT/m) (e.g.,'40')",
+        help="Amplitude of diffusion gradients (in mT/m) Example 40",
         required=True)
     mandatory.add_argument(
         "-b",
         metavar=Metavar.float,
         type=float,
-        help="Big delta: time between both diffusion gradients (in ms) (e.g.,'40')",
+        help="Big delta: time between both diffusion gradients (in ms) Example 40",
         required=True)
     mandatory.add_argument(
         "-d",
         type=float,
         metavar=Metavar.float,
-        help="Small delta: duration of each diffusion gradient (in ms) (e.g.,'30')",
+        help="Small delta: duration of each diffusion gradient (in ms) Example 30",
         required=True)
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
