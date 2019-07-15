@@ -32,12 +32,12 @@ def get_parser():
                     "\n\nReference: C Gros, B De Leener, et al. Automatic segmentation of the spinal cord and"
                     " intramedullary multiple sclerosis lesions with convolutional neural networks (2018). "
                     "arxiv.org/abs/1805.06349",
-        add_help = None,
+        add_help=None,
         prog=os.path.basename(__file__).strip(".py"))
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
         "-i",
-        metavar = Metavar.file,
+        metavar=Metavar.file,
         help='input image. (e.g.,"t1.nii.gz")')
     mandatory.add_argument(
         "-c",
@@ -57,10 +57,10 @@ def get_parser():
              "\nviewer: semi-automatic centerline generation, based on manual selection of a few points using an interactive viewer, then approximation with NURBS."
              "\nfile: use an existing centerline by specifying its filename with flag -file_centerline (e.g. -file_centerline t2_centerline_manual.nii.gz).",
         choices=('svm', 'cnn', 'viewer', 'file'),
-        default = "svm")
+        default="svm")
     optional.add_argument(
         "-file_centerline",
-        metavar = Metavar.str,
+        metavar=Metavar.str,
         help='Input centerline file (to use with flag -centerline file). (e.g.,"t2_centerline_manual.nii.gz")')
     optional.add_argument(
         "-brain",
@@ -70,32 +70,32 @@ def get_parser():
              '\n0: no brain section.'
              '\nTo indicate this parameter could speed the segmentation process. '
              'Note that this flag is only effective with -centerline cnn. (e.g.,["0", "1"])',
-        choices = (0, 1))
+        choices=(0, 1))
     optional.add_argument(
         "-kernel",
         help="Choice of 2D or 3D kernels for the segmentation. Note that segmentation with 3D kernels is significantely longer than with 2D kernels.",
         choices=('2d', '3d'),
-        default = "2d")
+        default="2d")
     optional.add_argument(
         "-ofolder",
-        metavar = Metavar.str,
+        metavar=Metavar.str,
         help='Output folder. (e.g.,"My_Output_Folder / ")',
-        default = os.getcwd())
+        default=os.getcwd())
     optional.add_argument(
         "-r",
         type=int,
         help="Remove temporary files.",
         choices=(0, 1),
-        default = 1)
+        default=1)
     optional.add_argument(
         "-v",
         type=int,
         help="1: display on (default), 0: display off, 2: extended",
-        choices = (0, 1, 2),
-        default = 1)
+        choices=(0, 1, 2),
+        default=1)
     optional.add_argument(
         '-qc',
-        metavar = Metavar.str,
+        metavar=Metavar.str,
         help='The path where the quality control generated content will be saved',
         default=None)
     optional.add_argument(
