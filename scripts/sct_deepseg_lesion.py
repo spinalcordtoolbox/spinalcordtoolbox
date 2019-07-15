@@ -38,7 +38,7 @@ def get_parser():
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
         "-i",
-        help='input image. (e.g.,"t1.nii.gz")',
+        help='input image. Example t1.nii.gz',
         metavar=Metavar.file)
     mandatory.add_argument(
         "-c",
@@ -65,7 +65,7 @@ def get_parser():
         default="svm")
     optional.add_argument(
         "-file_centerline",
-        help='Input centerline file (to use with flag -centerline manual). (e.g. "t2_centerline_manual.nii.gz")',
+        help='Input centerline file (to use with flag -centerline manual). Example t2_centerline_manual.nii.gz',
         metavar=Metavar.str,
         required=False)
     optional.add_argument(
@@ -81,7 +81,7 @@ def get_parser():
         default=1)
     optional.add_argument(
         "-ofolder",
-        help='output folder. (e.g. "My_Output_Folder/ ")',
+        help='output folder. Example My_Output_Folder/ ',
         required=False,
         metavar=Metavar.str,
         default=os.getcwd())
