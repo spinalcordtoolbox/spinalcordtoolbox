@@ -36,15 +36,15 @@ def get_parser():
     parser = argparse.ArgumentParser(description='Compute Diffusion Tensor Images (DTI) using dipy.')
     parser.add_argument(
         "-i",
-        help='Input 4d file. (e.g. "dmri.nii.gz")',
+        help='Input 4d file. Example dmri.nii.gz',
         required=True)
     parser.add_argument(
         "-bval",
-        help='Bvals file. (e.g. "bvals.txt")',
+        help='Bvals file. Example bvals.txt',
         required=True)
     parser.add_argument(
         "-bvec",
-        help='Bvecs file. (e.g. "bvecs.txt")',
+        help='Bvecs file. Example bvecs.txt',
         required=True)
     parser.add_argument(
         '-method',
@@ -61,7 +61,7 @@ def get_parser():
         choices=(0, 1))
     parser.add_argument(
         '-m',
-        help='Mask used to compute DTI in for faster processing.(e.g. "mask.nii.gz")',
+        help='Mask used to compute DTI in for faster processing. Example mask.nii.gz',
         required=False)
     parser.add_argument(
         '-o',
