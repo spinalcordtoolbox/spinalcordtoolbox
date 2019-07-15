@@ -26,19 +26,19 @@ def get_parser():
     parser = argparse.ArgumentParser(
         description='Compute the Dice Coefficient. Note: indexing (in both time and space) starts with 0 not 1! '
                     'Inputting -1 for a size will set it to the full image extent for that dimension.',
-        add_help = None,
-        prog = os.path.basename(__file__).strip(".py"))
+        add_help=None,
+        prog=os.path.basename(__file__).strip(".py"))
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
         '-i',
-        metavar = Metavar.file,
+        metavar=Metavar.file,
         help='First input image.(e.g. "t2_seg.nii.gz")',
-        required = True)
+        required=True)
     mandatory.add_argument(
         '-d',
         metavar=Metavar.file,
         help='Second input image. (e.g. "t2_manual_seg.nii.gz")',
-        required = True)
+        required=True)
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",
@@ -47,60 +47,60 @@ def get_parser():
         help="show this help message and exit")
     optional.add_argument(
         '-2d-slices',
-        type = int,
+        type=int,
         help='Compute DC on 2D slices in the specified dimension',
-        required = False,
-        choices = (0, 1, 2))
+        required=False,
+        choices=(0, 1, 2))
     optional.add_argument(
         '-b',
         metavar=Metavar.list,
         help='Bounding box with the coordinates of the origin and the size of the box as follow: '
              'x_origin,x_size,y_origin,y_size,z_origin,z_size (e.g. "5,10,5,10,10,15")',
-        required = False)
+        required=False)
     optional.add_argument(
         '-bmax',
         type=int,
         help='Use maximum bounding box of the images union to compute DC',
-        required = False,
-        choices = (0, 1))
+        required=False,
+        choices=(0, 1))
     optional.add_argument(
         '-bzmax',
         type=int,
         help='Use maximum bounding box of the images union in the "Z" direction to compute DC',
-        required = False,
-        choices = (0, 1))
+        required=False,
+        choices=(0, 1))
     optional.add_argument(
         '-bin',
-        type = int,
+        type=int,
         help='Binarize image before computing DC. (Put non-zero-voxels to 1)',
-        required = False,
-        choices = (0, 1))
+        required=False,
+        choices=(0, 1))
     optional.add_argument(
         '-o',
         metavar=Metavar.str,
         help='Output file with DC results (.txt) (e.g., "dice_coeff.txt")',
-        required = False)
+        required=False)
     optional.add_argument(
         "-r",
-        type = int,
+        type=int,
         help="Remove temporary files.",
         required=False,
-        default= 1,
+        default=1,
         choices=(0, 1))
     optional.add_argument(
         '-v',
-        type = int,
+        type=int,
         help='Verbose.',
-        required = False,
-        default = 1,
-        choices = (0, 1))
+        required=False,
+        default=1,
+        choices=(0, 1))
 
     return parser
 
 if __name__ == "__main__":
     sct.init_sct()
     parser = get_parser()
-    arguments = parser.parse_args(args = None if sys.argv[1:] else ['--help'])
+    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
 
     fname_input1 = arguments.i
     fname_input2 = arguments.d
