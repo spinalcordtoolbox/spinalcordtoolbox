@@ -109,7 +109,7 @@ def classify_from_path(input_path):
 
     # We load the model
     model = M.Classifier()
-    model_path = os.path.join(sct.__sct_dir__, 'data', 'modality_pred_model.pt')
+    model_path = os.path.join(sct.__sct_dir__, 'data', 'modality_pred_model/modality_pred_model.pt')
     model.load_state_dict(torch.load(model_path, map_location='cpu'))
     model.eval()
 
