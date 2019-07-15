@@ -38,7 +38,7 @@ def get_parser():
     mandatory.add_argument(
         "-i",
         metavar=Metavar.file,
-        help='input image. (e.g.,"t1.nii.gz")')
+        help='input image. Example t1.nii.gz')
     mandatory.add_argument(
         "-c",
         help="type of image contrast.",
@@ -55,13 +55,13 @@ def get_parser():
              "\nsvm: automatic centerline detection, based on Support Vector Machine algorithm."
              "\ncnn: automatic centerline detection, based on Convolutional Neural Network."
              "\nviewer: semi-automatic centerline generation, based on manual selection of a few points using an interactive viewer, then approximation with NURBS."
-             "\nfile: use an existing centerline by specifying its filename with flag -file_centerline (e.g. -file_centerline t2_centerline_manual.nii.gz).",
+             "\nfile: use an existing centerline by specifying its filename with flag -file_centerline Example -file_centerline t2_centerline_manual.nii.gz",
         choices=('svm', 'cnn', 'viewer', 'file'),
         default="svm")
     optional.add_argument(
         "-file_centerline",
         metavar=Metavar.str,
-        help='Input centerline file (to use with flag -centerline file). (e.g.,"t2_centerline_manual.nii.gz")')
+        help='Input centerline file (to use with flag -centerline file). Example t2_centerline_manual.nii.gz')
     optional.add_argument(
         "-brain",
         type=int,
@@ -69,7 +69,7 @@ def get_parser():
              '\n1: contains brain section'
              '\n0: no brain section.'
              '\nTo indicate this parameter could speed the segmentation process. '
-             'Note that this flag is only effective with -centerline cnn. (e.g.,["0", "1"])',
+             'Note that this flag is only effective with -centerline cnn. Example ["0", "1"]',
         choices=(0, 1))
     optional.add_argument(
         "-kernel",
@@ -79,7 +79,7 @@ def get_parser():
     optional.add_argument(
         "-ofolder",
         metavar=Metavar.str,
-        help='Output folder. (e.g.,"My_Output_Folder / ")',
+        help='Output folder. Example My_Output_Folder/ ',
         default=os.getcwd())
     optional.add_argument(
         "-r",
