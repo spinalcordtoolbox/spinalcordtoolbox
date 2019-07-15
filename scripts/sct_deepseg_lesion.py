@@ -39,7 +39,7 @@ def get_parser():
     mandatory.add_argument(
         "-i",
         help='input image. (e.g.,"t1.nii.gz")',
-        metavar = Metavar.file)
+        metavar=Metavar.file)
     mandatory.add_argument(
         "-c",
         help='type of image contrast. \nt2: T2w scan with isotropic or anisotropic resolution.'
@@ -62,12 +62,12 @@ def get_parser():
              "\nfile: use an existing centerline by specifying its filename with flag -file_centerline",
         required=False,
         choices=('svm', 'cnn', 'viewer', 'file'),
-        default = "svm")
+        default="svm")
     optional.add_argument(
         "-file_centerline",
         help='Input centerline file (to use with flag -centerline manual). (e.g. "t2_centerline_manual.nii.gz")',
-        metavar = Metavar.str,
-        required = False)
+        metavar=Metavar.str,
+        required=False)
     optional.add_argument(
         "-brain",
         type=int,
@@ -76,31 +76,31 @@ def get_parser():
              '\n0: no brain section.'
              '\nTo indicate this parameter could speed the segmentation process.'
              'Note that this flag is only effective with -centerline cnn.',
-        required = False,
-        choices = (0, 1),
-        default = 1)
+        required=False,
+        choices=(0, 1),
+        default=1)
     optional.add_argument(
         "-ofolder",
         help='output folder. (e.g. "My_Output_Folder/ ")',
-        required = False,
-        metavar = Metavar.str,
-        default = os.getcwd())
+        required=False,
+        metavar=Metavar.str,
+        default=os.getcwd())
     optional.add_argument(
         "-r",
         type=int,
         help="remove temporary files.",
         required=False,
         choices=(0, 1),
-        default = 1)
+        default=1)
     optional.add_argument(
         "-v",
         type=int,
         help="1: display on (default), 0: display off, 2: extended",
-        choices = (0, 1, 2),
-        default = 1)
+        choices=(0, 1, 2),
+        default=1)
     optional.add_argument(
         '-igt',
-        metavar = Metavar.str,
+        metavar=Metavar.str,
         help='File name of ground-truth segmentation.',
         required=False)
 
