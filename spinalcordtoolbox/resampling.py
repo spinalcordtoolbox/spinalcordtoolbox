@@ -120,9 +120,6 @@ def resample_nipy(img, new_size=None, new_size_type=None, img_dest=None, interpo
         # Convert to nipy object
         img_r = nifti2nipy(nii4d)
 
-    # print "HOLA!!!"
-    # print img.coordmap
-    # print img_r.coordmap
     return img_r
 
 
