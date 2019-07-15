@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 import os
+import nipy
 import logging
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox import resampling
@@ -60,7 +61,7 @@ class Acquisition(object):
             else:
                 self.slices[i] = self.slices[i][starty:starty + size,
                                            startx:startx + size]
-    
+
     def ToTensor(self):
         """
         This method returns the tensor in the correct shape to feed the network
@@ -104,7 +105,7 @@ def classify_acquisition(input_image, model=None):
     modality = numeral[0][1]
 
     class_names = ["t1", "t2s", "t2"]
-    logger.info('Modality detected: {}. If wrong please specify the contrast manually.\n'.format(class_names[modality]))
+    sct.printv('Modality detected: {}. If wrong please specify the contrast manually.\n'.format(class_names[modality]))
     return(class_names[modality])
 
 
@@ -116,15 +117,17 @@ def classify_from_path(input_path):
     """
 
     # We use the Image module to load a resampled and well oriented image
+    input_image = Image(input_path)
+    input_image.change_orientation('RPI')
+
     logger.info("Resample the image to 0.5x0.5 mm in-plane resolution...\n")
-    fname_res = sct.add_suffix(input_path, '_resampled')
-    input_resolution = Image(input_path).dim[4:7]
+    input_resolution = input_image.dim[4:7]
     new_resolution = 'x'.join(['0.5', '0.5', str(input_resolution[2])])
 
-    resampling.resample_file(input_path, fname_res, new_resolution, 'mm', 'linear', verbose=0)
-
-    input_image = Image(fname_res)
-    input_image.change_orientation('RPI')
+    input_nipy = nipy.load_image(input_path)
+    res_nipy = resampling.resample_nipy(img=input_nipy, new_size=new_resolution,
+                                        new_size_type='mm', interpolation='linear', verbose=0)
+    input_image.data = res_nipy.get_data()
 
     # We load the model
     model = M.Classifier()
