@@ -29,14 +29,14 @@ def get_parser():
 
     parser = argparse.ArgumentParser(
         description='Utility function to denoise images. (Return the denoised image and also the difference between the input and the output.)',
-        add_help = None,
+        add_help=None,
         prog=os.path.basename(__file__).strip(".py"))
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
         "-i",
         help="Input NIFTI image to be denoised. (e.g.,'image_input.nii.gz')",
-        metavar = Metavar.file,
-        default = None)
+        metavar=Metavar.file,
+        default=None)
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",
@@ -47,16 +47,16 @@ def get_parser():
         "-p",
         help='Type of supposed noise: Rician or Gaussian.'
               ' Default is Rician. (e.g.,["Rician", "Gaussian"])',
-        required = False,
-        choices = ("Rician", "Gaussian"),
-        default = "Rician")
+        required=False,
+        choices=("Rician", "Gaussian"),
+        default="Rician")
     optional.add_argument(
         "-d",
-        type = int,
+        type=int,
         help="Threshold value for what to be considered as noise. "
              "The standard deviation of the noise is calculated for values below this limit. "
              "Not relevant if -std value is precised.\n",
-        metavar = Metavar.int,
+        metavar=Metavar.int,
         required=False,
         default="80")
     optional.add_argument(
@@ -69,20 +69,20 @@ def get_parser():
     optional.add_argument(
         "-o",
         help="Name of the output NIFTI image.",
-        metavar = Metavar.str,
-        default = None)
+        metavar=Metavar.str,
+        default=None)
     optional.add_argument(
         "-r",
         help="Remove temporary files. Specify 0 to get access to temporary files.",
         type=int,
         choices=(0, 1),
-        default = 1)
+        default=1)
     optional.add_argument(
         "-v",
         help="Verbose. 0: nothing. 1: basic. 2: extended.",
-        type = int,
-        default = 0,
-        choices = (0, 1, 2))
+        type=int,
+        default=0,
+        choices=(0, 1, 2))
 
     return parser
 
