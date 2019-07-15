@@ -36,19 +36,19 @@ def get_parser():
                     ' If the PMJ is detected from the input image, a nifti mask is output ("*_pmj.nii.gz")\n'
                     ' with one voxel (value=50) located at the predicted PMJ position.\n'
                     ' If the PMJ is not detected, nothing is output.',
-        add_help = None,
+        add_help=None,
         prog=os.path.basename(__file__).strip(".py"))
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
         "-i",
-        metavar = Metavar.file,
+        metavar=Metavar.file,
         help='input image. (e.g.,"t2.nii.gz")',
-        required = True)
+        required=True)
     mandatory.add_argument(
         "-c",
         help="type of image contrast, if your contrast is not in the available options (t1, t2), use t1 (cord bright / CSF dark) or t2 (cord dark / CSF bright)",
-        required = True,
-        choices = ("t1", "t2"))
+        required=True,
+        choices=("t1", "t2"))
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",
@@ -57,19 +57,19 @@ def get_parser():
         help="show this help message and exit")
     optional.add_argument(
         "-s",
-        metavar = Metavar.file,
+        metavar=Metavar.file,
         help='SC segmentation or centerline mask. '
              'Provide this mask helps the detection of the PMJ by indicating the position of the SC '
              'in the Right-to-Left direction. (e.g.,"t2_seg.nii.gz")',
-        required = False)
+        required=False)
     optional.add_argument(
         "-ofolder",
-        metavar = Metavar.folder,
+        metavar=Metavar.folder,
         help='Output folder (e.g.,"My_Output_Folder / ")',
-        required = False)
+        required=False)
     optional.add_argument(
         '-qc',
-        metavar= Metavar.str,
+        metavar=Metavar.str,
         help='The path where the quality control generated content will be saved',
         default=None)
     optional.add_argument(
@@ -81,16 +81,16 @@ def get_parser():
         "-r",
         type=int,
         help="Remove temporary files.",
-        required = False,
-        default = 1,
-        choices = (0, 1))
+        required=False,
+        default=1,
+        choices=(0, 1))
     optional.add_argument(
         "-v",
         type=int,
         help="Verbose: 0 = nothing, 1 = classic, 2 = expended",
-        required = False,
-        choices = (0, 1, 2),
-        default = 1)
+        required=False,
+        choices=(0, 1, 2),
+        default=1)
 
     return parser
 
