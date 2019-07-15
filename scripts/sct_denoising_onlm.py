@@ -159,7 +159,7 @@ def main(file_to_denoise, param, output_file_name) :
     # Save files
     img_denoise = nib.Nifti1Image(den, None, hdr_0)
     img_diff = nib.Nifti1Image(diff_3d, None, hdr_0)
-    if output_file_name != None:
+    if output_file_name is not None:
         output_file_name = output_file_name
     else:
         output_file_name = file + '_denoised' + ext
