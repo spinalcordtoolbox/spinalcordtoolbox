@@ -29,7 +29,7 @@ def get_parser():
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
         "-i",
-        help="Image filename to segment (3D volume).  (e.g.,'t2s.nii.gz')"
+        help="Image filename to segment (3D volume). Example t2s.nii.gz)"
              "Contrast must be similar to T2*-weighted, "
              "i.e., WM dark, GM bright and CSF bright.",
         metavar=Metavar.file)
@@ -41,7 +41,7 @@ def get_parser():
         help="show this help message and exit")
     optional.add_argument(
         "-o",
-        help="Output segmentation file name. (e.g.,'sc_gm_seg.nii.gz')",
+        help="Output segmentation file name. Example sc_gm_seg.nii.gz",
         metavar=Metavar.file)
     misc = parser.add_argument_group('\nMISC')
     misc.add_argument(
@@ -70,7 +70,7 @@ def get_parser():
     misc.add_argument(
         "-thr",
         type=float,
-        help='Threshold to apply in the segmentation predictions, use 0 (zero) to disable it. (e.g. "0.999")',
+        help='Threshold to apply in the segmentation predictions, use 0 (zero) to disable it. Example 0.999',
         metavar=Metavar.float,
         default=0.999)
     misc.add_argument(
