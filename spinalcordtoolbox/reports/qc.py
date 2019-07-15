@@ -207,11 +207,18 @@ class QcImage(object):
 
     def highlight_pmj(self, mask, ax):
         """Hook to show a rectangle where PMJ is on the slice"""
-        import matplotlib.patches as patches
         y, x = np.where(mask == 50)
         img = np.full_like(mask, np.nan)
         ax.imshow(img, cmap='gray', alpha=0, aspect=float(self.aspect_mask))
         ax.text(x, y, 'X', color='lime', clip_on=True)
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
+
+    def vertical_line(self, mask, ax):
+        """Centered vertical line to assess quality of straightening"""
+        img = np.full_like(mask, np.nan)
+        ax.imshow(img, cmap='gray', alpha=0, aspect=float(self.aspect_mask))
+        ax.axvline(x=img.shape[1]/2.0, color='r', linewidth=2)
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
 
@@ -296,7 +303,12 @@ class QcImage(object):
                 img = func_stretch_contrast[self._stretch_contrast_method](img)
 
             fig = Figure()
-            size_fig = [5, 5 * img.shape[0] / img.shape[1]]
+            # if axial mosaic restrict width
+            if sct_slice.get_name() == 'Axial':
+                size_fig = [5, 5 * img.shape[0] / img.shape[1]]  # with dpi=300, will give 1500pix width
+            # if sagittal orientation restrict height
+            elif sct_slice.get_name() == 'Sagittal':
+                size_fig = [5 * img.shape[1] / img.shape[0], 5]
             fig.set_size_inches(size_fig[0], size_fig[1], forward=True)
             FigureCanvas(fig)
             ax = fig.add_axes((0, 0, 1, 1))
@@ -621,6 +633,14 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, angle_line=None, args
         plane = 'Sagittal'
         qcslice_type = qcslice.Sagittal([Image(fname_in1), Image(fname_seg)], p_resample=None)
         qcslice_operations = [QcImage.highlight_pmj]
+        qcslice_layout = lambda x: x.single()
+    # Sagittal orientation, static image
+    # TODO: Add coronal orientation
+    elif process in ['sct_straighten_spinalcord']:
+        plane = 'Sagittal'
+        dpi = 100
+        qcslice_type = qcslice.Sagittal([Image(fname_in1), Image(fname_in1)], p_resample=None)
+        qcslice_operations = [QcImage.vertical_line]
         qcslice_layout = lambda x: x.single()
     # Metric outputs (only graphs)
     elif process in ['sct_process_segmentation']:

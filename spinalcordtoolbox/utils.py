@@ -6,6 +6,7 @@ from __future__ import absolute_import
 
 import io, os, re, time, logging
 import subprocess
+from enum import Enum
 
 logger = logging.getLogger(__name__)
 
@@ -186,3 +187,17 @@ def parse_num_list_inv(list_int):
             colon_is_present = False
 
     return str_num
+
+class Metavar(Enum):
+    """
+    This class is used to display intuitive input types via the metavar field of argparse
+    """
+    file = "<file>"
+    str = "<str>"
+    folder = "<folder>"
+    int = "<int>"
+    list = "<list>"
+    float = "<float>"
+
+    def __str__(self):
+        return self.value

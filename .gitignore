@@ -11,9 +11,10 @@
 *.log
 *.egg-info/
 *.egg
+.eggs/
 
 .idea/*
-
+.eggs/
 /.coverage
 /.cache
 /bin

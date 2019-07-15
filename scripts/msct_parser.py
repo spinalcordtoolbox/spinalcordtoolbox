@@ -83,8 +83,9 @@ from __future__ import absolute_import
 import os
 import logging
 
+from spinalcordtoolbox.types import Coordinate
+
 import sct_utils as sct
-from msct_types import Coordinate  # DO NOT REMOVE THIS LINE!!!!!!! IT IS MANDATORY!
 
 logger = logging.getLogger(__name__)
 
