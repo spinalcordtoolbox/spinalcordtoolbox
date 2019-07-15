@@ -190,7 +190,7 @@ def main():
 
     if path_qc is not None:
         generate_qc(fname_image, fname_seg=fname_seg, args=sys.argv[1:], path_qc=os.path.abspath(path_qc),
-    dataset = qc_dataset, subject = qc_subject, process = 'sct_deepseg_sc')
+    dataset=qc_dataset, subject=qc_subject, process='sct_deepseg_sc')
     sct.display_viewer_syntax([fname_image, fname_seg], colormaps=['gray', 'red'], opacities=['', '0.7'])
 
 
