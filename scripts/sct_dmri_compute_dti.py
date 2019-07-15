@@ -37,22 +37,22 @@ def get_parser():
     parser.add_argument(
         "-i",
         help='Input 4d file. (e.g. "dmri.nii.gz")',
-        required = True)
+        required=True)
     parser.add_argument(
         "-bval",
         help='Bvals file. (e.g. "bvals.txt")',
-        required = True)
+        required=True)
     parser.add_argument(
         "-bvec",
         help='Bvecs file. (e.g. "bvecs.txt")',
-        required = True)
+        required=True)
     parser.add_argument(
         '-method',
         help='Type of method to calculate the diffusion tensor:\nstandard: Standard equation [Basser, Biophys J 1994]'
              '\nrestore: Robust fitting with outlier detection [Chang, MRM 2005]',
-        required = False,
-        default = 'standard',
-        choices = ('standard', 'restore'))
+        required=False,
+        default='standard',
+        choices=('standard', 'restore'))
     parser.add_argument(
         "-evecs",
         help='To output tensor eigenvectors and eigenvalues, set to 1.',
@@ -71,9 +71,9 @@ def get_parser():
     parser.add_argument(
         "-v",
         help="Verbose. 0: nothing. 1: basic. 2: extended.",
-        required = False,
-        default = param.verbose,
-        choices = (0, 1, 2))
+        required=False,
+        default=param.verbose,
+        choices=(0, 1, 2))
     return parser
 
 
