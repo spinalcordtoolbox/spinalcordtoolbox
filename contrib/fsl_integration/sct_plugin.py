@@ -153,10 +153,13 @@ class SCTPanel(wx.Panel):
 # Run Spinal Cord segmentation using propseg
 class TabPanelPropSeg(SCTPanel):
     DESCRIPTION = """This segmentation tool automatically segment the spinal cord with
-    robustness, accuracy and speed. For more information, please refer to the
-    article below.<br><br>
+    robustness, accuracy and speed.<br><br>
+    <b>Usage</b>:<br>
+    You need to have the raw imaging (T1w, T2w, T2s or DWI) selected, i.e, purple line over the file name
+    and to display the image, click on the eye icon next to it. 
+    For more information, please refer to the article below.<br><br>
     <b>Specific citation</b>:<br>
-    B De Leener, S Kadoury, J Cohen-Adad
+    De Leener et al.
     <i>Robust, accurate and fast automatic segmentation of the spinal cord.
     (2014)</i>. Neuroimage. 
 
@@ -204,8 +207,12 @@ class TabPanelSCSeg(SCTPanel):
     DESCRIPTION = """This segmentation tool is based on Deep Learning and
     a 3D U-Net. For more information, please refer to the
     article below.<br><br>
+    <b>Usage</b>:<br>
+    You need to have the raw imaging (T1w, T2w, T2s or DWI) selected, i.e, purple line over the file name
+    and to display the image, click on the eye icon next to it. 
+    For more information, please refer to the article below.<br><br>
     <b>Specific citation</b>:<br>
-    C Gros, B De Leener et al
+    Gros et al.
     <i>Automatic segmentation of the spinal cord and intramedullary multiple sclerosis lesions with convolutional neural networks.
     (2019)</i>. arXiv:1805.06349.
 
@@ -254,8 +261,12 @@ class TabPanelGMSeg(SCTPanel):
     DESCRIPTION = """This segmentation tool is based on Deep Learning and
     dilated convolutions. For more information, please refer to the
     article below.<br><br>
+    <b>Usage</b>:<br>
+    You need to have the raw T2s imaging selected, i.e, purple line over the file name
+    and to display the image, click on the eye icon next to it. 
+    For more information, please refer to the article below.<br><br>
     <b>Specific citation</b>:<br>
-    CS Perone, E Calabrese, J Cohen-Adad.
+    Perone et al.
     <i>Spinal cord gray matter segmentation using deep dilated convolutions
     (2017)</i>. ArXiv: arxiv.org/abs/1710.01269
     """
@@ -274,11 +285,14 @@ class TabPanelGMSeg(SCTPanel):
     def onButtonGM(self, event):
         selected_overlay = displayCtx.getSelectedOverlay()
         filename_path = selected_overlay.dataSource
-        cmd_line = "sct_deepseg_gm -i {} -o seg.nii.gz".format(filename_path)
+        base_name = os.path.basename(filename_path)
+        fname, fext = base_name.split(os.extsep, 1)
+        seg_name = "{}_gmseg.{}".format(fname, fext)
 
+        cmd_line = "sct_deepseg_gm -i {}".format(filename_path)
         self.call_sct_command(cmd_line)
 
-        outfilename = os.path.join(os.getcwd(), 'seg.nii.gz')
+        outfilename = os.path.join(os.getcwd(), seg_name)
         image = Image(outfilename)
         overlayList.append(image)
 
@@ -290,7 +304,11 @@ class TabPanelCSA(SCTPanel):
     DESCRIPTION = """This tool computes the spinal cord cross-sectional area. 
     For more information, please refer to the article below.<br><br>
     <b>Specific citation</b>:<br>
-    AR Martin, B De Leener, J Cohen-Adad, et al.
+    <b>Usage</b>:<br>
+    You need to have the raw imaging (T1w, T2w or T2s) selected, i.e, purple line over the file name
+    and to display the image, click on the eye icon next to it. 
+    For more information, please refer to the article below.<br><br>
+    Martin et al.
     <i>Can Microstructural MRI detect subclinical tissue injury in subjects with asymptomatic
     cervical spinal cord compression? A prospective cohort study
     (2018)</i>. BMJ Open. 13;8(4)e01980
@@ -396,8 +414,12 @@ class TabPanelVertLB(SCTPanel):
     DESCRIPTION = """This tool automatically identifies the 
     vertebral levels. For more information, please refer to the
     article below.<br><br>
+    <b>Usage</b>:<br>
+    You need to have the raw imaging (T1w, T2w or T2s) selected, i.e, purple line over the file name
+    and to display the image, click on the eye icon next to it. 
+    For more information, please refer to the article below.<br><br>
     <b>Specific citation</b>:<br>
-    E Ullmann, JF Pelletier Paquette, WE Thong, J Cohen-Adad
+    Ullmann et al.
     <i>Automatic labeling of vertebral levels using a robust template-based approach.
     (2014)</i>. Int J Biomed Imaging.
 
@@ -451,8 +473,12 @@ class TabPanelMOCO(SCTPanel):
     DESCRIPTION = """This tool automatically performs
     motion correction in the diffusion-weighted imaging. For more information, please refer to the
     article below.<br><br>
+    <b>Usage</b>:<br>
+    You need to have the raw diffusion-weighted imaging selected, i.e, purple line over the file name
+    and to display the image, click on the eye icon next to it. 
+    For more information, please refer to the article below.<br><br>
     <b>Specific citation</b>:<br>
-    J Xu, S Moeller, EJ Auerbach, et al.
+    Xu et al.
     <i>Evaluation of slice accelerations using multiband echo planar imaging at 3 T.
     (2013)</i>. Neuroimage.
 
@@ -550,8 +576,12 @@ class TabPanelMOCO(SCTPanel):
 class TabPanelCompDTI(SCTPanel):
     DESCRIPTION = """This tool automatically compute the diffusion maps of the spinal cord. 
     For more information, please refer to the article below.<br><br>
+    <b>Usage</b>:<br>
+    You need to have the dwi imaging processed by dMRI Moco selected (subj_crop_moco.nii.gz), i.e, purple line over the file name
+    and to display the image, click on the eye icon next to it. 
+    For more information, please refer to the article below.<br><br>
     <b>Specific citation</b>:<br>
-    E Garyfallidis, M Brett, B Amirbekian, et al.
+    Garyfallidis et al.
     <i>Dipy, a library for the analysis of diffusion MRI data.
     (2014)</i>. Front Neuroinform.
 
@@ -627,8 +657,12 @@ class TabPanelREG(SCTPanel):
     DESCRIPTION = """This tool automatically performs
     the registration between your subject and the PAM50 template. 
     For more information, please refer to the article below.<br><br>
+    <b>Usage</b>:<br>
+    You need to have the raw imaging (T1w, T2w or T2s) selected, i.e, purple line over the file name
+    and to display the image, click on the eye icon next to it. 
+    For more information, please refer to the article below.<br><br>
     <b>Specific citation</b>:<br>
-    B De Lenner, VS Fonov, D Louis Collins, et al.
+    De Lenner et al.
     <i>PAM50: Unbiased multimodal template of the brainstem and spinal cord aligned with the ICBM152 space
     (2017)</i>. Neuroimage.
 
