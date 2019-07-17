@@ -97,6 +97,7 @@ def run_main():
     if method == 'optic':
         if not "-c" in arguments:
             contrast_type = modality_detection.classify_from_path(fname_input_data)
+            sct.printv('Modality detected: {}. If wrong please specify the contrast manually.\n'.format(contrast_type))
         else:
             contrast_type = arguments["-c"]
 

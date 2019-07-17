@@ -2,13 +2,11 @@ import torch
 import numpy as np
 import os
 import nipy
-import logging
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox import resampling
 from spinalcordtoolbox.modality_prediction import model as M
 import sct_utils as sct
 
-logger = logging.getLogger(__name__)
 
 class Acquisition(object):
     
@@ -105,7 +103,6 @@ def classify_acquisition(input_image, model=None):
     modality = numeral[0][1]
 
     class_names = ["t1", "t2s", "t2"]
-    sct.printv('Modality detected: {}. If wrong please specify the contrast manually.\n'.format(class_names[modality]))
     return(class_names[modality])
 
 

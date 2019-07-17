@@ -194,6 +194,7 @@ def main(args=None):
     # Automatic detection of contrast
     if not "-c" in arguments:
         contrast_type = modality_detection.classify_from_path(fname_in)
+        sct.printv('Modality detected: {}. If wrong please specify the contrast manually.\n'.format(contrast_type))
     else:
         contrast_type = arguments["-c"]
     contrast_type_conversion = {'t1': 't1', 't2': 't2', 't2s': 't2'}

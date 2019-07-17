@@ -97,6 +97,7 @@ def main():
             sct.printv("Error while detecting the contrast, please use -c contrast_type to indicate the contrast.", 1,
                        'error')
             sys.exit(1)
+            sct.printv('Modality detected: {}. If wrong please specify the contrast manually.\n'.format(contrast_type))
     else:
         contrast_type = arguments["-c"]
 
