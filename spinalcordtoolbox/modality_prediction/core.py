@@ -117,7 +117,7 @@ def classify_from_path(input_path):
     input_image = Image(input_path)
     input_image.change_orientation('RPI')
 
-    logger.info("Resample the image to 0.5x0.5 mm in-plane resolution...\n")
+    sct.printv("Resample the image to 0.5x0.5 mm in-plane resolution...\n")
     input_resolution = input_image.dim[4:7]
     new_resolution = 'x'.join(['0.5', '0.5', str(input_resolution[2])])
 

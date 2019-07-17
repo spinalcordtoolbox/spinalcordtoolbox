@@ -539,7 +539,8 @@ if [[ $UID != 0 ]]; then
   else
     # For Ubuntu-14.04 we need to export a path to make sure the build does not fail with pytorch
     if uname -a | grep 14.04; then
-    export LD_PRELOAD="/usr/lib/libtcmalloc_minimal.so.4"
+        export LD_PRELOAD="/usr/lib/libtcmalloc_minimal.so.4"
+    fi
     sed -e '/sct_env/ s/^#*/#/' -i ${THE_RC}
   fi
   # update PATH environment
