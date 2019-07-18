@@ -99,9 +99,7 @@ edit_bashrc ()
     echo "export MPLBACKEND=Agg" >> ${THE_BASHRC}
     echo "" >> ${THE_BASHRC}
     if uname -a | grep 14.04; then
-        echo "" >> ${THE_BASHRC}
         echo "export LD_PRELOAD='/usr/lib/libtcmalloc_minimal.so.4'" >> ${THE_BASHRC}
-        echo "" >> ${THE_BASHRC}
     fi
   else
     # (t)csh for good measure
@@ -113,9 +111,7 @@ edit_bashrc ()
     echo "setenv MPLBACKEND Agg" >> ${THE_CSHRC}
     echo "" >> ${THE_CSHRC}
         if uname -a | grep 14.04; then
-        echo "" >> ${THE_CSHRC}
-        echo "export LD_PRELOAD='/usr/lib/libtcmalloc_minimal.so.4'" >> ${THE_CSHRC}
-        echo "" >> ${THE_CSHRC}
+        echo "setenv LD_PRELOAD='/usr/lib/libtcmalloc_minimal.so.4'" >> ${THE_CSHRC}
     fi
   fi
 }
