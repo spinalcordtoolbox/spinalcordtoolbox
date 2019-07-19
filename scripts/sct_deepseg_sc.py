@@ -18,9 +18,6 @@ import sys
 import argparse
 
 import sct_utils as sct
-from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.deepseg_sc.core import deep_segmentation_spinalcord
-from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.utils import Metavar
 
 
@@ -116,7 +113,6 @@ def get_parser():
 
 def main():
     """Main function."""
-    sct.init_sct()
     parser = get_parser()
     args = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
 
@@ -141,7 +137,7 @@ def main():
 
 
     if ctr_algo == 'file' and args.file_centerline is None:
-        logger.warning('Please use the flag -file_centerline to indicate the centerline filename.')
+        sct.printv('Please use the flag -file_centerline to indicate the centerline filename.', 1, 'warning')
         sys.exit(1)
 
     if args.file_centerline is None:
@@ -164,6 +160,11 @@ def main():
     algo_config_stg += '\n\tAssumes brain section included in the image: ' + str(brain_bool)
     algo_config_stg += '\n\tDimension of the segmentation kernel convolutions: ' + kernel_size + '\n'
     sct.printv(algo_config_stg)
+
+    # Segment image
+    from spinalcordtoolbox.image import Image
+    from spinalcordtoolbox.deepseg_sc.core import deep_segmentation_spinalcord
+    from spinalcordtoolbox.reports.qc import generate_qc
 
     im_image = Image(fname_image)
     # note: below we pass im_image.copy() otherwise the field absolutepath becomes None after execution of this function
@@ -195,4 +196,5 @@ def main():
 
 
 if __name__ == "__main__":
+    sct.init_sct()
     main()
