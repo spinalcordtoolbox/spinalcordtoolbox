@@ -22,16 +22,16 @@ from spinalcordtoolbox.reports.qc import generate_qc
 
 def get_parser():
     parser = argparse.ArgumentParser(
-        description='Spinal Cord Gray Matter (GM) Segmentation using deep dilated convolutions. '
-                    'Reference: CS Perone, E Calabrese, J Cohen-Adad. Spinal cord gray matter segmentation using deep dilated convolutions (2017). arxiv.org/abs/1710.01269',
+        description='Spinal Cord Gray Matter (GM) Segmentation using deep dilated convolutions. The contrast of the '
+                    'input image must be similar to a T2*-weighted image: WM dark, GM bright and CSF bright. '
+                    'Reference: Perone CS, Calabrese E, Cohen-Adad J. Spinal cord gray matter segmentation using deep '
+                    'dilated convolutions. Sci Rep 2018;8(1):5966.',
         add_help=None,
         prog=os.path.basename(__file__).strip(".py"))
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
         "-i",
-        help="Image filename to segment (3D volume). Example: t2s.nii.gz)"
-             "Contrast must be similar to T2*-weighted, "
-             "i.e., WM dark, GM bright and CSF bright.",
+        help="Image filename to segment (3D volume). Example: t2s.nii.gz.",
         metavar=Metavar.file)
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
