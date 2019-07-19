@@ -18,10 +18,9 @@ import os
 import sys
 import argparse
 
-import sct_utils as sct
-from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.deepseg_lesion.core import deep_segmentation_MSlesion
 from spinalcordtoolbox.utils import Metavar
+
+import sct_utils as sct
 
 
 def get_parser():
@@ -138,6 +137,9 @@ def main():
     algo_config_stg += '\n\tAssumes brain section included in the image: ' + str(brain_bool) + '\n'
     sct.printv(algo_config_stg)
 
+    # Segment image
+    from spinalcordtoolbox.image import Image
+    from spinalcordtoolbox.deepseg_lesion.core import deep_segmentation_MSlesion
     im_image = Image(fname_image)
     im_seg, im_labels_viewer, im_ctr = deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo=ctr_algo, ctr_file=manual_centerline_fname,
                                         brain_bool=brain_bool, remove_temp_files=remove_temp_files, verbose=verbose)
