@@ -74,10 +74,6 @@ def get_parser():
         metavar=Metavar.float,
         default=0.999)
     misc.add_argument(
-        '-igt',
-        metavar=Metavar.str,
-        help='File name of ground-truth segmentation.')
-    misc.add_argument(
         "-t",
         help="Enable TTA (test-time augmentation). "
              "Better results, but takes more time and "
