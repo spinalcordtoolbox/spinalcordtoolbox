@@ -16,7 +16,6 @@ from __future__ import print_function, absolute_import, division
 
 import os
 import sys
-import numpy as np
 import argparse
 
 import sct_utils as sct
@@ -30,21 +29,21 @@ def get_parser():
 
     parser = argparse.ArgumentParser(
         description='MS lesion Segmentation using convolutional networks.'
-                    '\n\nReference: C Gros, B De Leener, et al. '
-                    'Automatic segmentation of the spinal cord and intramedullary multiple sclerosis lesions with '
-                    'convolutional neural networks (2018). arxiv.org/abs/1805.06349',
+                    'Reference: Gros C et al. Automatic segmentation of the spinal cord and intramedullary multiple '
+                    'sclerosis lesions with convolutional neural networks. Neuroimage. 2018 Oct 6;184:901-915.',
+        formatter_class=argparse.RawTextHelpFormatter,
         add_help=None,
         prog=os.path.basename(__file__).strip(".py"))
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
         "-i",
-        help='input image. Example t1.nii.gz',
+        help='Input image. Example: t1.nii.gz',
         metavar=Metavar.file)
     mandatory.add_argument(
         "-c",
-        help='type of image contrast. \nt2: T2w scan with isotropic or anisotropic resolution.'
-             ' \nt2_ax: T2w scan with axial orientation and thick slices.'
-             ' \nt2s: T2*w scan with axial orientation and thick slices.',
+        help='Type of image contrast. t2: T2w scan with isotropic or anisotropic resolution.'
+             ' t2_ax: T2w scan with axial orientation and thick slices.'
+             ' t2s: T2*w scan with axial orientation and thick slices.',
         choices=('t2', 't2_ax', 't2s'))
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
@@ -54,12 +53,12 @@ def get_parser():
         help="show this help message and exit")
     optional.add_argument(
         "-centerline",
-        help="Method used for extracting the centerline."
-             "\nsvm: automatic centerline detection, based on Support Vector Machine algorithm."
-             "\ncnn: automatic centerline detection, based on Convolutional Neural Network."
-             "\nviewer: semi-automatic centerline generation, based on manual selection of a few "
+        help="Method used for extracting the centerline:"
+             "\n svm: automatic centerline detection, based on Support Vector Machine algorithm."
+             "\n cnn: automatic centerline detection, based on Convolutional Neural Network."
+             "\n viewer: semi-automatic centerline generation, based on manual selection of a few "
              "points using an interactive viewer, then approximation with NURBS."
-             "\nfile: use an existing centerline by specifying its filename with flag -file_centerline",
+             "\n file: use an existing centerline by specifying its filename with flag -file_centerline",
         required=False,
         choices=('svm', 'cnn', 'viewer', 'file'),
         default="svm")
@@ -71,11 +70,8 @@ def get_parser():
     optional.add_argument(
         "-brain",
         type=int,
-        help='indicate if the input image is expected to contain brain sections:'
-             '\n1: contains brain section'
-             '\n0: no brain section.'
-             '\nTo indicate this parameter could speed the segmentation process.'
-             'Note that this flag is only effective with -centerline cnn.',
+        help='Indicate if the input image contains brain sections (to speed up segmentation). Note: this flag is only'
+             'effective with -centerline cnn.',
         required=False,
         choices=(0, 1),
         default=1)
@@ -109,7 +105,6 @@ def get_parser():
 
 def main():
     """Main function."""
-    sct.init_sct()
     parser = get_parser()
     args = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
 
@@ -168,4 +163,5 @@ def main():
 
 
 if __name__ == "__main__":
+    sct.init_sct()
     main()
