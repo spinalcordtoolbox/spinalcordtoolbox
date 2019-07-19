@@ -29,7 +29,7 @@ def get_parser():
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
         "-i",
-        help="Image filename to segment (3D volume). Example t2s.nii.gz)"
+        help="Image filename to segment (3D volume). Example: t2s.nii.gz)"
              "Contrast must be similar to T2*-weighted, "
              "i.e., WM dark, GM bright and CSF bright.",
         metavar=Metavar.file)
@@ -41,8 +41,9 @@ def get_parser():
         help="show this help message and exit")
     optional.add_argument(
         "-o",
-        help="Output segmentation file name. Example sc_gm_seg.nii.gz",
-        metavar=Metavar.file)
+        help="Output segmentation file name. Example: sc_gm_seg.nii.gz",
+        metavar=Metavar.file,
+        default=None)
     misc = parser.add_argument_group('\nMISC')
     misc.add_argument(
         '-qc',
@@ -93,10 +94,9 @@ def run_main():
     parser = get_parser()
     arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
     input_filename = arguments.i
-
-    try:
+    if arguments.o is not None:
         output_filename = arguments.o
-    except KeyError:
+    else:
         output_filename = sct.add_suffix(input_filename, '_gmseg')
 
     use_tta = arguments.t
