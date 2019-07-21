@@ -151,11 +151,10 @@ download ()
 # Usage of this script
 usage()
 {
-  echo -e "\nUsage: $0 [-d] [-b] [-k] [-v] [--mpi]" 1>&2;
+  echo -e "\nUsage: $0 [-d] [-b] [-v] [--mpi]" 1>&2;
   echo -e "\nOPTION"
   echo -e "\t-d \v Prevent the (re)-installation of the \"data/\" directory "
   echo -e "\n\t-b \v Prevent the (re)-installation of the SCT binaries files "
-  echo -e "\n\t-k \v Install SCT with Python 2.7 (Default is Python 3.x)"
   echo -e "\n\t-v \v Full verbose"
   echo -e "\n\t--mpi,-p \v Will use the MPI interface to run pipelines (Linux support only)"
 }
