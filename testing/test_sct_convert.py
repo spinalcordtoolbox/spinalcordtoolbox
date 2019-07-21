@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+0#!/usr/bin/env python
 #########################################################################################
 #
 # Test function for sct_convert
@@ -11,12 +11,16 @@
 #########################################################################################
 
 
+import os
+
+
 def init(param_test):
     """
     Initialize class: param_test
     """
     # initialization
     default_args = ['-i t2/t2.nii.gz -o t2.nii']
+    param_test.file_out = 't2.nii'
 
     # assign default params
     if not param_test.args:
@@ -29,5 +33,10 @@ def test_integrity(param_test):
     """
     Test integrity of function
     """
-    param_test.output += '\nNot implemented.'
+    # Simply check if output file exists
+    if os.path.exists(param_test.file_out):
+        param_test.output += '--> PASSED'
+    else:
+        param_test.status = 99
+        param_test.output += '\nOutput file does not exist.'
     return param_test
