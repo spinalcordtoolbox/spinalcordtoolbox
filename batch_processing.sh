@@ -36,17 +36,17 @@ elif uname -a | grep -i  linux > /dev/null 2>&1; then
 fi
 
 # Check if users wants to use his own data
-if [ -z "$SCT_BP_DOWNLOAD" ]; then
+if [[ -z "$SCT_BP_DOWNLOAD" ]]; then
 	SCT_BP_DOWNLOAD=1
 fi
 
 # QC folder
-if [ -z "$SCT_BP_QC_FOLDER" ]; then
+if [[ -z "$SCT_BP_QC_FOLDER" ]]; then
 	SCT_BP_QC_FOLDER=~/qc_batch_processing
 fi
 
 # Remove QC folder
-if [ -z "$SCT_BP_NO_REMOVE_QC" -a -d "$SCT_BP_QC_FOLDER" ]; then
+if [[ -z "$SCT_BP_NO_REMOVE_QC" -a -d "$SCT_BP_QC_FOLDER" ]]; then
   echo "Removing $SCT_BP_QC_FOLDER folder."
   rm -rf "$SCT_BP_QC_FOLDER"
 fi
@@ -55,7 +55,7 @@ fi
 TIME_START=$(date +%x_%r)
 
 # download example data
-if [ "$SCT_BP_DOWNLOAD" == "1" ]; then
+if [[ "$SCT_BP_DOWNLOAD" == "1" ]]; then
   sct_download_data -d sct_example_data
 fi
 cd sct_example_data
@@ -260,4 +260,4 @@ echo
 
 # Display syntax to open QC report on web browser
 echo "To open Quality Control (QC) report on a web-browser, run the following:"
-echo "${open_command} ${SCT_BP_QC_FOLDER}/index.html"
+echo "$open_command $SCT_BP_QC_FOLDER/index.html"
