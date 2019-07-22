@@ -31,10 +31,10 @@ def get_parser():
     # Initialize the parser
 
     parser = argparse.ArgumentParser(
-        description='Detection of the Ponto-Medullary Junction (PMJ).\n'
-                    ' This method is machine-learning based and adapted for T1w-like or T2w-like images.\n'
-                    ' If the PMJ is detected from the input image, a nifti mask is output ("*_pmj.nii.gz")\n'
-                    ' with one voxel (value=50) located at the predicted PMJ position.\n'
+        description='Detection of the Ponto-Medullary Junction (PMJ).'
+                    ' This method is machine-learning based and adapted for T1w-like or T2w-like images.'
+                    ' If the PMJ is detected from the input image, a nifti mask is output ("*_pmj.nii.gz")'
+                    ' with one voxel (value=50) located at the predicted PMJ position.'
                     ' If the PMJ is not detected, nothing is output.',
         add_help=None,
         prog=os.path.basename(__file__).strip(".py"))
@@ -42,11 +42,12 @@ def get_parser():
     mandatory.add_argument(
         "-i",
         metavar=Metavar.file,
-        help='input image. Example t2.nii.gz',
+        help='Input image. Example: t2.nii.gz',
         required=True)
     mandatory.add_argument(
         "-c",
-        help="type of image contrast, if your contrast is not in the available options (t1, t2), use t1 (cord bright / CSF dark) or t2 (cord dark / CSF bright)",
+        help="Type of image contrast, if your contrast is not in the available options (t1, t2), use t1 (cord bright "
+             "/ CSF dark) or t2 (cord dark / CSF bright)",
         required=True,
         choices=("t1", "t2"))
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
@@ -60,12 +61,12 @@ def get_parser():
         metavar=Metavar.file,
         help='SC segmentation or centerline mask. '
              'Provide this mask helps the detection of the PMJ by indicating the position of the SC '
-             'in the Right-to-Left direction. Example t2_seg.nii.gz',
+             'in the Right-to-Left direction. Example: t2_seg.nii.gz',
         required=False)
     optional.add_argument(
         "-ofolder",
         metavar=Metavar.folder,
-        help='Output folder Example My_Output_Folder/',
+        help='Output folder. Example: My_Output_Folder/',
         required=False)
     optional.add_argument(
         '-qc',
