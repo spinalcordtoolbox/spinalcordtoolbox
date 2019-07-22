@@ -48,9 +48,9 @@ finish ()
     value=$?
     # Get back to starting point
     cd $SCT_SOURCE
-    if [ $value -eq 0 ]; then
+    if [[ $value -eq 0 ]]; then
         echo -e "Installation finished successfully\n"
-    elif [ $value -eq 99 ]; then
+    elif [[ $value -eq 99 ]]; then
         # Showing usage with -h
         echo ""
     else
@@ -66,9 +66,9 @@ trap finish EXIT
 force_bashrc_loading ()
 {
   sourceblock="
-if [ -n \"\$BASH_VERSION\" ]; then
+if [[ -n \"\$BASH_VERSION\" ]]; then
     # include .bashrc if it exists
-    if [ -f \"\$HOME/.bashrc\" ]; then
+    if [[ -f \"\$HOME/.bashrc\" ]]; then
     . \"\$HOME/.bashrc\"
     fi
 fi"
@@ -82,7 +82,7 @@ fi"
     fi
   done
 
-  if [ -z $bidon ] ; then
+  if [[ -z $bidon ]] ; then
     echo "$sourceblock" >> ~/.bash_profile
   fi
 }
@@ -203,9 +203,9 @@ while getopts ":dhbpv" opt; do
 done
 
 # Catch SCT version
-if [ -e "version.txt" ]; then
+if [[ -e "version.txt" ]]; then
   SCT_VERSION=`cat version.txt`
-  if [ $SCT_MPI_MODE ]; then
+  if [[ $SCT_MPI_MODE ]]; then
     SCT_VERSION=$SCT_VERSION_mpi
   fi
 else
@@ -215,8 +215,8 @@ else
 fi
 
 # Get installation type (from git or from package)
-if [ "x$SCT_INSTALL_TYPE" == "x" ]; then
-  if [ -d ".git" ]; then
+if [[ "x$SCT_INSTALL_TYPE" == "x" ]]; then
+  if [[ -d ".git" ]]; then
     # folder .git exist, therefore it is a git installation
     SCT_INSTALL_TYPE="in-place"
   else
@@ -229,11 +229,11 @@ if uname -a | grep -i  darwin > /dev/null 2>&1; then
   # OSX
 
   # Fix for non-English Unicode systems on MAC
-  if [ -z $LC_ALL ]; then
+  if [[ -z $LC_ALL ]]; then
     export LC_ALL=en_US.UTF-8
   fi
 
-  if [ -z $LANG ]; then
+  if [[ -z $LANG ]]; then
     export LANG=en_US.UTF-8
   fi
 
@@ -327,16 +327,16 @@ while true; do
   new_install=${new_install%/}
 
   # Avoid horrible bug, like removing /bin if SCT_DIR "/" or $HOME/bin
-  if [ "$new_install" == "/" ] || [ "$HOME" == "${new_install%/}" ] ; then
+  if [[ "$new_install" == "/" ]] || [[ "$HOME" == "${new_install%/}" ]] ; then
     echo Cannot be installed directly in $new_install
     echo Please pick a full path
     continue
-  elif [ -d "$new_install" ]; then
+  elif [[ -d "$new_install" ]]; then
     # directory exists --> update SCT_DIR and exit loop
     echo -e "WARNING: Directory already exists. Files will be overwritten."
     SCT_DIR=$new_install
     break
-  elif [ ! "$new_install" ]; then
+  elif [[ ! "$new_install" ]]; then
     # If no input, asking again, and again, and again
     continue
   else
@@ -348,9 +348,9 @@ done
 # Create directory
 mkdir -p $SCT_DIR
 # check if directory was created
-if [ -d "$SCT_DIR" ]; then
+if [[ -d "$SCT_DIR" ]]; then
   # check write permission
-  if [ ! -w "$SCT_DIR" ]; then
+  if [[ ! -w "$SCT_DIR" ]]; then
     echo "ERROR: $SCT_DIR exists but does not have write permission."
     exit 1
   fi
@@ -380,7 +380,7 @@ if [[ -z $MPLBACKEND ]] ; then
 fi
 
 # Copy files to destination directory
-if [ "$SCT_DIR" != "$SCT_SOURCE" ]; then
+if [[ "$SCT_DIR" != "$SCT_SOURCE" ]]; then
   echo -e "\nCopying source files from $SCT_SOURCE to $SCT_DIR"
   cp -vR $SCT_INSTALL_CP_OPTIONS "$SCT_SOURCE/"*  "$SCT_DIR/" | while read line; do echo -n "."; done
 
@@ -389,7 +389,7 @@ else
 fi
 
 # Clean old install setup in bin/ if existing
-if [ -x $SCT_DIR/$BIN_DIR ]; then
+if [[ -x $SCT_DIR/$BIN_DIR ]]; then
   echo -e "\nRemoving sct and isct softlink from $SCT_DIR/$BIN_DIR"
   find $SCT_DIR/$BIN_DIR -type l -name "sct_*" -exec rm {} \;
   find $SCT_DIR/$BIN_DIR -type l -name "isct_*" -exec rm {} \;
@@ -399,7 +399,7 @@ fi
 cd $SCT_DIR
 
 # Make sure we are in SCT folder (to avoid deleting folder from user)
-if [ ! -f "version.txt" ]; then
+if [[ ! -f "version.txt" ]]; then
   echo -e "\nERROR: Cannot cd into SCT folder. SCT_DIR="$SCT_DIR
   exit 1
 fi
@@ -458,7 +458,7 @@ fi
 ## Install the spinalcordtoolbox into the Conda venv
 pip install -e $SCT_DIR
 e_status=$?
-if [ $e_status != 0 ]; then
+if [[ $e_status != 0 ]]; then
   echo "Failed to pip install sct."
   exit $e_status
 fi
@@ -479,24 +479,24 @@ done
 $UPDATE_PATH
 
 ## Install binaries
-if [ $NO_SCT_BIN_INSTALL ]; then
+if [[ $NO_SCT_BIN_INSTALL ]]; then
     echo "SCT binaries will not be (re)-installed"
 else
   echo -e "\nInstalling binaries..."
-  if [ $OS == "linux" ]; then
+  if [[ $OS == "linux" ]]; then
     cmd="sct_download_data -d binaries_debian -o $SCT_DIR/$BIN_DIR"; echo ">> "$cmd; $cmd
     e_status=$?
-  elif [ $OS == "linux_centos6" ]; then
+  elif [[ $OS == "linux_centos6" ]]; then
     cmd="sct_download_data -d binaries_centos -o $SCT_DIR/$BIN_DIR"; echo ">> "$cmd; $cmd
     e_status=$?
-  elif [ $OS == "osx" ]; then
+  elif [[ $OS == "osx" ]]; then
     cmd="sct_download_data -d binaries_osx -o $SCT_DIR/$BIN_DIR"; echo ">> "$cmd; $cmd
     e_status=$?
   else
     echo "Unsupported OS $OS: can't install binaries."
     exit 1
   fi
-  if [ $e_status != 0 ]; then
+  if [[ $e_status != 0 ]]; then
     echo "Failed to download SCT binaries."
     exit $e_status
   fi
@@ -505,7 +505,7 @@ fi
 echo -e "All requirements installed!"
 
 ## Install data
-if [ $NO_DATA_INSTALL ]; then
+if [[ $NO_DATA_INSTALL ]]; then
   echo "data/ will not be (re)-install"
 else
   # forcing activation if python is not reinstalled
@@ -519,7 +519,7 @@ else
   for data in PAM50 gm_model optic_models pmj_models deepseg_sc_models deepseg_gm_models deepseg_lesion_models c2c3_disc_models; do
     cmd="sct_download_data -d $data"; echo ">> "$cmd; $cmd
     e_status=$?
-    if [ $e_status != 0 ]; then
+    if [[ $e_status != 0 ]]; then
       echo "Failed to download SCT binaries."
       exit $e_status
     fi
