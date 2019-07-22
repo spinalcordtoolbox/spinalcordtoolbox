@@ -140,7 +140,7 @@ def main():
         sct.printv('Please use the flag -file_centerline to indicate the centerline filename.', 1, 'warning')
         sys.exit(1)
 
-    if args.file_centerline is None:
+    if args.file_centerline is not None:
         manual_centerline_fname = args.file_centerline
         ctr_algo = 'file'
     else:
