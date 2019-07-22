@@ -32,12 +32,12 @@ def get_parser():
     mandatory.add_argument(
         '-i',
         metavar=Metavar.file,
-        help='First input image. Example t2_seg.nii.gz',
+        help='First input image. Example: t2_seg.nii.gz',
         required=True)
     mandatory.add_argument(
         '-d',
         metavar=Metavar.file,
-        help='Second input image. Example t2_manual_seg.nii.gz',
+        help='Second input image. Example: t2_manual_seg.nii.gz',
         required=True)
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
@@ -55,7 +55,7 @@ def get_parser():
         '-b',
         metavar=Metavar.list,
         help='Bounding box with the coordinates of the origin and the size of the box as follow: '
-             'x_origin,x_size,y_origin,y_size,z_origin,z_size Example 5,10,5,10,10,15',
+             'x_origin,x_size,y_origin,y_size,z_origin,z_size Example: 5,10,5,10,10,15',
         required=False)
     optional.add_argument(
         '-bmax',
