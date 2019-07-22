@@ -28,13 +28,14 @@ def get_parser():
     # Initialize the parser
 
     parser = argparse.ArgumentParser(
-        description='Utility function to denoise images. (Return the denoised image and also the difference between the input and the output.)',
+        description='Utility function to denoise images. (Return the denoised image and also the difference '
+                    'between the input and the output.)',
         add_help=None,
         prog=os.path.basename(__file__).strip(".py"))
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
         "-i",
-        help="Input NIFTI image to be denoised. Example image_input.nii.gz",
+        help="Input NIFTI image to be denoised. Example: image_input.nii.gz",
         metavar=Metavar.file,
         default=None)
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
@@ -45,8 +46,7 @@ def get_parser():
         help="show this help message and exit")
     optional.add_argument(
         "-p",
-        help='Type of supposed noise: Rician or Gaussian.'
-              ' Default is Rician. Example ["Rician", "Gaussian"]',
+        help='Type of supposed noise: Rician or Gaussian. Default is Rician.',
         required=False,
         choices=("Rician", "Gaussian"),
         default="Rician")
@@ -55,7 +55,7 @@ def get_parser():
         type=int,
         help="Threshold value for what to be considered as noise. "
              "The standard deviation of the noise is calculated for values below this limit. "
-             "Not relevant if -std value is precised.\n",
+             "Not relevant if -std value is precised. Default is 80.",
         metavar=Metavar.int,
         required=False,
         default="80")
