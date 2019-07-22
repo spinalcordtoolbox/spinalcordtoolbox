@@ -18,7 +18,6 @@ import os
 import argparse
 
 import sct_utils as sct
-from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.utils import Metavar
 
 
@@ -130,6 +129,7 @@ if __name__ == "__main__":
         fname_input2 = fname_input2_bin
 
     # copy header of im_1 to im_2
+    from spinalcordtoolbox.image import Image
     im_1 = Image(fname_input1)
     im_2 = Image(fname_input2)
     im_2.header = im_1.header
