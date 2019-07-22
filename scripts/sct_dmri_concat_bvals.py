@@ -14,9 +14,6 @@ from __future__ import absolute_import
 
 import os, sys, argparse
 
-from dipy.data.fetcher import read_bvals_bvecs
-
-from sct_utils import extract_fname
 import sct_utils as sct
 from spinalcordtoolbox.utils import Metavar
 
@@ -63,6 +60,7 @@ def main():
     if arguments.o is not None:
         fname_out = arguments.o
     else:
+        from sct_utils import extract_fname
         path_in, file_in, ext_in = extract_fname(fname_bval_list[0])
         fname_out = path_in + 'bvals_concat' + ext_in
 
@@ -73,6 +71,7 @@ def main():
     #     for line in f:
     #         bvals_concat += line
     #     f.close()
+    from dipy.data.fetcher import read_bvals_bvecs
     for i_fname in fname_bval_list:
         bval_i, bvec_i = read_bvals_bvecs(i_fname, None)
         bvals_concat += ' '.join(str(v) for v in bval_i)
