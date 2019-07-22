@@ -17,7 +17,7 @@ function askhelp() {
     echo help!
 }
 
-if [ ! ${#@} -gt 0 ]; then
+if [[ ! ${#@} -gt 0 ]]; then
     usage `basename ${0}`
     exit 1
 fi
@@ -32,7 +32,7 @@ path_data=$1
 subfolder=`ls ${path_data}`
 
 # check if temp folder exist
-if [ -e "tmp.data" ]; then
+if [[ -e "tmp.data" ]]; then
   cmd='rm -rf tmp.data'
   echo ">> $cmd"; $cmd
 fi
