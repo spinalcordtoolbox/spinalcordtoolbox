@@ -17,7 +17,6 @@ from __future__ import absolute_import, division
 
 import sys
 import os
-import getopt
 import math
 import argparse
 
