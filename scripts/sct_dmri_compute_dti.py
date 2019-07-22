@@ -12,7 +12,7 @@
 
 from __future__ import absolute_import
 
-import sys, argparse
+import os, sys, argparse
 
 from dipy.io import read_bvals_bvecs
 from dipy.core.gradients import gradient_table
@@ -33,47 +33,57 @@ def get_parser():
 
     # Initialize the parser
 
-    parser = argparse.ArgumentParser(description='Compute Diffusion Tensor Images (DTI) using dipy.')
-    parser.add_argument(
+    parser = argparse.ArgumentParser(
+        description='Compute Diffusion Tensor Images (DTI) using dipy.',
+        formatter_class=argparse.RawTextHelpFormatter,
+        add_help=None,
+        prog=os.path.basename(__file__).strip(".py"))
+    mandatory = parser.add_argument_group("MANDATORY ARGMENTS")
+    mandatory.add_argument(
         "-i",
-        help='Input 4d file. Example dmri.nii.gz',
+        help='Input 4d file. Example: dmri.nii.gz',
         required=True)
-    parser.add_argument(
+    mandatory.add_argument(
         "-bval",
-        help='Bvals file. Example bvals.txt',
+        help='Bvals file. Example: bvals.txt',
         required=True)
-    parser.add_argument(
+    mandatory.add_argument(
         "-bvec",
-        help='Bvecs file. Example bvecs.txt',
+        help='Bvecs file. Example: bvecs.txt',
         required=True)
-    parser.add_argument(
+    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
+    optional.add_argument(
+        "-h",
+        "--help",
+        action="help",
+        help="show this help message and exit")
+    optional.add_argument(
         '-method',
-        help='Type of method to calculate the diffusion tensor:\nstandard: Standard equation [Basser, Biophys J 1994]'
+        help='Type of method to calculate the diffusion tensor:'
+             '\nstandard: Standard equation [Basser, Biophys J 1994]'
              '\nrestore: Robust fitting with outlier detection [Chang, MRM 2005]',
-        required=False,
         default='standard',
         choices=('standard', 'restore'))
-    parser.add_argument(
+    optional.add_argument(
         "-evecs",
         help='To output tensor eigenvectors and eigenvalues, set to 1.',
-        required=False,
         default='0',
         choices=(0, 1))
-    parser.add_argument(
+    optional.add_argument(
         '-m',
-        help='Mask used to compute DTI in for faster processing. Example mask.nii.gz',
-        required=False)
-    parser.add_argument(
+        help='Mask used to compute DTI in for faster processing. Example: mask.nii.gz')
+    optional.add_argument(
         '-o',
         help='Output prefix.',
         required=False,
         default='dti_')
-    parser.add_argument(
+    optional.add_argument(
         "-v",
         help="Verbose. 0: nothing. 1: basic. 2: extended.",
         required=False,
         default=param.verbose,
         choices=(0, 1, 2))
+
     return parser
 
 
