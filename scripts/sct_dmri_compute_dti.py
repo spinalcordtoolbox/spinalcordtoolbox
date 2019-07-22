@@ -14,9 +14,6 @@ from __future__ import absolute_import
 
 import os, sys, argparse
 
-from dipy.io import read_bvals_bvecs
-from dipy.core.gradients import gradient_table
-
 import sct_utils as sct
 
 
@@ -131,7 +128,9 @@ def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, evecs, file_
     sct.printv('data.shape (%d, %d, %d, %d)' % data.shape)
 
     # open bvecs/bvals
+    from dipy.io import read_bvals_bvecs
     bvals, bvecs = read_bvals_bvecs(fname_bvals, fname_bvecs)
+    from dipy.core.gradients import gradient_table
     gtab = gradient_table(bvals, bvecs)
 
     # mask and crop the data. This is a quick way to avoid calculating Tensors on the background of the image.
