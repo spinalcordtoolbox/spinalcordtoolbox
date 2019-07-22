@@ -16,7 +16,6 @@ import os, sys, argparse
 
 from dipy.io import read_bvals_bvecs
 from dipy.core.gradients import gradient_table
-import dipy.reconst.dti as dti
 
 import sct_utils as sct
 
