@@ -3,7 +3,6 @@
 from __future__ import absolute_import, division
 
 import sys, io, os, argparse
-from time import time
 
 import numpy as np
 from time import time
