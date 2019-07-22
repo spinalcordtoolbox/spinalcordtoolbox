@@ -206,7 +206,7 @@ done
 if [[ -e "version.txt" ]]; then
   SCT_VERSION=`cat version.txt`
   if [[ $SCT_MPI_MODE ]]; then
-    SCT_VERSION=$SCT_VERSION_mpi
+    SCT_VERSION=${SCT_VERSION}_mpi
   fi
 else
   echo "ERROR: version.txt not found."
