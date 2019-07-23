@@ -41,9 +41,30 @@ DATA_DIR="data"
 PYTHON_DIR="python"
 BIN_DIR="bin"
 
+function die {
+    echo -e "\n\033[0;31m$1\033[0m\n"
+    exit 1
+}
+
+function check_requirements {
+
+  if [[ ! $( which curl ) && ! $( which wget ) ]] ; then
+      die "You need to install \"curl\" OR \"wget\" before you can install the SPINALCORDTOOLBOX \n
+run \n
+> sudo apt-get install wget \n
+and rerun the installer"
+  fi
+
+  if [[ ! $( which git ) ]]; then
+    die "You need to install \"git\" before you can install the SPINALCORDTOOLBOX \n
+for installation instructions check: https://git-scm.com/book/en/v2/Getting-Started-Installing-Git
+"
+  fi
+
+}
+
 # Force a clean exit
-finish ()
-{
+function finish {
     # Catch the last return code
     value=$?
     # Get back to starting point
@@ -63,8 +84,7 @@ finish ()
 trap finish EXIT
 
 # Force bashrc loading
-force_bashrc_loading ()
-{
+function force_bashrc_loading {
   sourceblock="
 if [[ -n \"\$BASH_VERSION\" ]]; then
     # include .bashrc if it exists
@@ -88,8 +108,7 @@ fi"
 }
 
 # Installation text to insert in .bashrc
-edit_bashrc ()
-{
+function edit_bashrc {
   if [[ -z $THE_CSHRC ]]  ; then
     echo
     echo "" >> $THE_BASHRC
@@ -111,8 +130,7 @@ edit_bashrc ()
 }
 
 # Download from URL using curl/wget
-download ()
-{
+function download {
   # Use curl or wget to download goodies
     e_status=0
 
@@ -133,24 +151,14 @@ download ()
         echo exit status is $e_status
     fi
 
-    if [[ $is_curl -ne 0 && $is_wget -ne 0 ]] ; then
-        echo You need to install "curl" OR "wget" before you can install the SPINALCORDTOOLBOX
-        echo run
-        echo "   > sudo apt-get install wget"
-        echo and rerun the installer
-        exit 1
-    fi
-
     if [[ $e_status -ne 0  || ! -e $1 ]]; then
-        echo "The download of $2 failed"
-        echo "Please check your internet connection before relaunching the installer"
-        exit 1
+      die "The download of $2 failed\n
+Please check your internet connection before relaunching the installer\n"
     fi
 }
 
 # Usage of this script
-usage()
-{
+function usage {
   echo -e "\nUsage: $0 [-d] [-b] [-v] [--mpi]" 1>&2;
   echo -e "\nOPTION"
   echo -e "\t-d \v Prevent the (re)-installation of the \"data/\" directory "
@@ -163,7 +171,7 @@ usage()
 # SCRIPT STARTS HERE
 # ========================================================================
 echo -e "\nWelcome to the SCT installer!"
-
+check_requirements
 # Transform  long option "--long" into short option  "-l"
 for arg in "$@"; do
   shift
@@ -197,7 +205,7 @@ while getopts ":dhbpv" opt; do
       ;;
     \?)
       usage
-      exit 1
+      die
       ;;
   esac
 done
@@ -209,9 +217,8 @@ if [[ -e "version.txt" ]]; then
     SCT_VERSION=${SCT_VERSION}_mpi
   fi
 else
-  echo "ERROR: version.txt not found."
-  echo "The install_sct script must be execute from the source directory"
-  exit 1
+  die "ERROR: version.txt not found. \n
+The install_sct script must be execute from the source directory"
 fi
 
 # Get installation type (from git or from package)
@@ -251,8 +258,7 @@ elif uname -a | grep -i  linux > /dev/null 2>&1; then
     OS=linux
   fi
 else
-  echo Sorry, the installer only supports Linux and OSX, quitting installer
-  exit 1
+  die "Sorry, the installer only supports Linux and OSX, quitting installer"
 fi
 
 # Define sh files
@@ -351,12 +357,10 @@ mkdir -p $SCT_DIR
 if [[ -d "$SCT_DIR" ]]; then
   # check write permission
   if [[ ! -w "$SCT_DIR" ]]; then
-    echo "ERROR: $SCT_DIR exists but does not have write permission."
-    exit 1
+    die "ERROR: $SCT_DIR exists but does not have write permission."
   fi
 else
-  echo "ERROR: $SCT_DIR cannot be created. Make sure you have write permission."
-  exit 1
+  die "ERROR: $SCT_DIR cannot be created. Make sure you have write permission."
 fi
 
 # Update PATH variables based on Shell type
@@ -400,8 +404,7 @@ cd $SCT_DIR
 
 # Make sure we are in SCT folder (to avoid deleting folder from user)
 if [[ ! -f "version.txt" ]]; then
-  echo -e "\nERROR: Cannot cd into SCT folder. SCT_DIR="$SCT_DIR
-  exit 1
+  die "\nERROR: Cannot cd into SCT folder. SCT_DIR="$SCT_DIR
 fi
 
 ## Install Python
@@ -493,8 +496,7 @@ else
     cmd="sct_download_data -d binaries_osx -o $SCT_DIR/$BIN_DIR"; echo ">> "$cmd; $cmd
     e_status=$?
   else
-    echo "Unsupported OS $OS: can't install binaries."
-    exit 1
+    die "Unsupported OS $OS: can't install binaries."
   fi
   if [[ $e_status != 0 ]]; then
     echo "Failed to download SCT binaries."
@@ -562,10 +564,9 @@ if [[ $UID != 0 ]]; then
       echo -e "Open a new Terminal window to load environment variables, or run:\n source $THE_RC\n"
     fi
   else
-    echo -e "Installation validation Failed!"
-    echo -e "Please copy the historic of this Terminal (starting with the command install_sct) and paste it in the SCT Help forum (create a new discussion):"
-    echo -e "http://forum.spinalcordmri.org/c/sct\n"
-    exit 1
+    die "Installation validation Failed!\n
+Please copy the historic of this Terminal (starting with the command install_sct) and paste it in the SCT Help forum (create a new discussion):\n
+http://forum.spinalcordmri.org/c/sct\n"
   fi
 # if sudo=1
 else
