@@ -452,6 +452,7 @@ conda activate venv_sct
 
 # Install Python dependencies
 echo -e "\nInstalling Python dependencies..."
+pip install numpy
 pip install -r requirements.txt  # we do not include the requirements inside the setup.py because it is much faster to install all dependencies first (uses pre-compiled wheels)
 if [[ $? ]]; then
   die "pip install failed"
