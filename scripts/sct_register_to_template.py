@@ -19,16 +19,6 @@ from __future__ import division, absolute_import
 import sys, os, time
 import numpy as np
 
-import sct_utils as sct
-import sct_maths
-import sct_label_utils
-
-from sct_utils import add_suffix
-from sct_register_multimodal import Paramreg, ParamregMultiStep, register
-from msct_parser import Parser
-from msct_register_landmarks import register_landmarks
-import sct_apply_transfo
-
 from spinalcordtoolbox.metadata import get_file_label
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
@@ -36,7 +26,15 @@ from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.resampling import resample_file
 
-# DEFAULT PARAMETERS
+import sct_utils as sct
+import sct_maths
+import sct_label_utils
+from sct_utils import add_suffix
+from sct_register_multimodal import Paramreg, ParamregMultiStep, register
+from msct_parser import Parser
+from msct_register_landmarks import register_landmarks
+import sct_apply_transfo
+import sct_concat_transfo
 
 
 class Param:
@@ -480,7 +478,7 @@ def main(args=None):
 
             # Concatenate transformations: curve --> straight --> affine
             sct.printv('\nConcatenate transformations: curve --> straight --> affine...', verbose)
-            sct.run(['sct_concat_transfo', '-w', 'warp_curve2straight.nii.gz,straight2templateAffine.txt', '-d', 'template.nii', '-o', 'warp_curve2straightAffine.nii.gz'])
+            sct.run(['sct_concat_transfo', '-w', 'warp_curve2straight.nii.gz straight2templateAffine.txt', '-d', 'template.nii', '-o', 'warp_curve2straightAffine.nii.gz'])
 
         # Apply transformation
         sct.printv('\nApply transformation...', verbose)
@@ -597,15 +595,15 @@ def main(args=None):
 
         # Concatenate transformations:
         sct.printv('\nConcatenate transformations: anat --> template...', verbose)
-        sct.run(['sct_concat_transfo', '-w', 'warp_curve2straightAffine.nii.gz,' + ','.join(warp_forward), '-d', 'template.nii', '-o', 'warp_anat2template.nii.gz'], verbose)
+        sct.run(['sct_concat_transfo', '-w', 'warp_curve2straightAffine.nii.gz ' + ' '.join(warp_forward), '-d', 'template.nii', '-o', 'warp_anat2template.nii.gz'], verbose)
         # sct.run('sct_concat_transfo -w warp_curve2straight.nii.gz,straight2templateAffine.txt,'+','.join(warp_forward)+' -d template.nii -o warp_anat2template.nii.gz', verbose)
         sct.printv('\nConcatenate transformations: template --> anat...', verbose)
         warp_inverse.reverse()
 
         if vertebral_alignment:
-            sct.run(['sct_concat_transfo', '-w', ','.join(warp_inverse) + ',warp_straight2curve.nii.gz', '-d', 'data.nii', '-o', 'warp_template2anat.nii.gz'], verbose)
+            sct.run(['sct_concat_transfo', '-w', ' '.join(warp_inverse) + ' warp_straight2curve.nii.gz', '-d', 'data.nii', '-o', 'warp_template2anat.nii.gz'], verbose)
         else:
-            sct.run(['sct_concat_transfo', '-w', ','.join(warp_inverse) + ',-straight2templateAffine.txt,warp_straight2curve.nii.gz', '-d', 'data.nii', '-o', 'warp_template2anat.nii.gz'], verbose)
+            sct.run(['sct_concat_transfo', '-w', ' '.join(warp_inverse) + ' straight2templateAffine.txt warp_straight2curve.nii.gz', '-winv', 'straight2templateAffine.txt', '-d', 'data.nii', '-o', 'warp_template2anat.nii.gz'], verbose)
 
     # register template->subject
     elif ref == 'subject':
@@ -678,9 +676,9 @@ def main(args=None):
 
         # Concatenate transformations:
         sct.printv('\nConcatenate transformations: template --> subject...', verbose)
-        sct.run(['sct_concat_transfo', '-w', ','.join(warp_forward), '-d', 'data.nii', '-o', 'warp_template2anat.nii.gz'], verbose)
+        sct.run(['sct_concat_transfo', '-w', ' '.join(warp_forward), '-d', 'data.nii', '-o', 'warp_template2anat.nii.gz'], verbose)
         sct.printv('\nConcatenate transformations: subject --> template...', verbose)
-        sct.run(['sct_concat_transfo', '-w', ','.join(warp_inverse), '-d', 'template.nii', '-o', 'warp_anat2template.nii.gz'], verbose)
+        sct.run(['sct_concat_transfo', '-w', ' '.join(warp_inverse), '-d', 'template.nii', '-o', 'warp_anat2template.nii.gz'], verbose)
 
     # Apply warping fields to anat and template
     sct.run(['sct_apply_transfo', '-i', 'template.nii', '-o', 'template2anat.nii.gz', '-d', 'data.nii', '-w', 'warp_template2anat.nii.gz', '-crop', '1'], verbose)
