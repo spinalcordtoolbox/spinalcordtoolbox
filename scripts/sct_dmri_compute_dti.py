@@ -15,6 +15,7 @@ from __future__ import absolute_import
 import os, sys, argparse
 
 import sct_utils as sct
+from spinalcordtoolbox.utils import Metavar
 
 
 class Param:
@@ -38,14 +39,17 @@ def get_parser():
     mandatory.add_argument(
         "-i",
         help='Input 4d file. Example: dmri.nii.gz',
+        metavar=Metavar.file,
         required=True)
     mandatory.add_argument(
         "-bval",
         help='Bvals file. Example: bvals.txt',
+        metavar=Metavar.file,
         required=True)
     mandatory.add_argument(
         "-bvec",
         help='Bvecs file. Example: bvecs.txt',
+        metavar=Metavar.file,
         required=True)
     optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
     optional.add_argument(
@@ -63,14 +67,16 @@ def get_parser():
     optional.add_argument(
         "-evecs",
         help='To output tensor eigenvectors and eigenvalues, set to 1.',
-        default='0',
+        default=0,
         choices=(0, 1))
     optional.add_argument(
         '-m',
+        metavar=Metavar.file,
         help='Mask used to compute DTI in for faster processing. Example: mask.nii.gz')
     optional.add_argument(
         '-o',
         help='Output prefix.',
+        metavar=Metavar.str,
         required=False,
         default='dti_')
     optional.add_argument(
