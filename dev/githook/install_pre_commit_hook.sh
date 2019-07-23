@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-if [ -f $SCT_DIR/.git/hooks/pre-commit ];
+if [[ -f $SCT_DIR/.git/hooks/pre-commit ]];
 then
     rm $SCT_DIR/.git/hooks/pre-commit
 fi
