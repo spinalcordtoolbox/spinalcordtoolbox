@@ -482,7 +482,7 @@ def main(args=None):
             # Concatenate transformations: curve --> straight --> affine
             sct.printv('\nConcatenate transformations: curve --> straight --> affine...', verbose)
             sct_concat_transfo.main(args=[
-                '-w', ['warp_curve2straight', 'straight2templateAffine.txt'],
+                '-w', ['warp_curve2straight.nii.gz', 'straight2templateAffine.txt'],
                 '-d', 'template.nii',
                 '-o', 'warp_curve2straightAffine.nii.gz'])
 
