@@ -171,7 +171,9 @@ function usage {
 # SCRIPT STARTS HERE
 # ========================================================================
 echo -e "\nWelcome to the SCT installer!"
+
 check_requirements
+
 # Transform  long option "--long" into short option  "-l"
 for arg in "$@"; do
   shift
@@ -450,8 +452,10 @@ conda activate venv_sct
 
 # Install Python dependencies
 echo -e "\nInstalling Python dependencies..."
-pip install numpy  # need to install numpy first, otherwise nipy install within requirements.txt fails
 pip install -r requirements.txt  # we do not include the requirements inside the setup.py because it is much faster to install all dependencies first (uses pre-compiled wheels)
+if [[ $? ]]; then
+  die "pip install failed"
+fi
 
 if [[ $SCT_MPI_MODE ]] ; then
 echo "Installing MPI libraries for HPC installation"
