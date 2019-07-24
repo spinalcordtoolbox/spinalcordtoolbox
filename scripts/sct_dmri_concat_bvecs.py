@@ -35,8 +35,9 @@ def get_parser():
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
         "-i",
-        metavar=Metavar.file,
         help='List of the bvec files to concatenate. Example: dmri_b700.bvec,dmri_b2000.bvec',
+        nargs='+',
+        metavar=Metavar.file,
         required=True)
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
@@ -58,13 +59,12 @@ def main():
     # Get parser info
     parser = get_parser()
     arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
-    fname_bvecs_list = (arguments.i).rsplit(",")
+    fname_bvecs_list = arguments.i
     # Build fname_out
     if arguments.o is not None:
         fname_out = arguments.o
     else:
-        from sct_utils import extract_fname
-        path_in, file_in, ext_in = extract_fname(fname_bvecs_list[0])
+        path_in, file_in, ext_in = sct.extract_fname(fname_bvecs_list[0])
         fname_out = path_in + 'bvecs_concat' + ext_in
 
     # # Open bvec files and collect values
