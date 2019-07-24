@@ -27,9 +27,9 @@ def get_parser():
     """Initialize the parser."""
 
     parser = argparse.ArgumentParser(
-        description='MS lesion Segmentation using convolutional networks.'
-                    'Reference: Gros C et al. Automatic segmentation of the spinal cord and intramedullary multiple '
-                    'sclerosis lesions with convolutional neural networks. Neuroimage. 2018 Oct 6;184:901-915.',
+        description='MS lesion Segmentation using convolutional networks. Reference: Gros C et al. \n'
+                    'Automatic segmentation of the spinal cord and intramedullary multiple sclerosis \n'
+                    'lesions with convolutional neural networks. Neuroimage. 2018 Oct 6;184:901-915.',
         formatter_class=argparse.RawTextHelpFormatter,
         add_help=None,
         prog=os.path.basename(__file__).strip(".py"))
@@ -40,8 +40,9 @@ def get_parser():
         metavar=Metavar.file)
     mandatory.add_argument(
         "-c",
-        help='Type of image contrast. t2: T2w scan with isotropic or anisotropic resolution.'
-             ' t2_ax: T2w scan with axial orientation and thick slices.'
+        help='Type of image contrast.\n'
+             ' t2: T2w scan with isotropic or anisotropic resolution.\n'
+             ' t2_ax: T2w scan with axial orientation and thick slices.\n'
              ' t2s: T2*w scan with axial orientation and thick slices.',
         choices=('t2', 't2_ax', 't2s'))
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
@@ -49,48 +50,49 @@ def get_parser():
         "-h",
         "--help",
         action="help",
-        help="show this help message and exit")
+        help="Show this help message and exit")
     optional.add_argument(
         "-centerline",
-        help="Method used for extracting the centerline:"
-             "\n svm: automatic centerline detection, based on Support Vector Machine algorithm."
-             "\n cnn: automatic centerline detection, based on Convolutional Neural Network."
-             "\n viewer: semi-automatic centerline generation, based on manual selection of a few "
-             "points using an interactive viewer, then approximation with NURBS."
-             "\n file: use an existing centerline by specifying its filename with flag -file_centerline",
+        help="Method used for extracting the centerline:\n"
+             " svm: Automatic detection using Support Vector Machine algorithm.\n"
+             " cnn: Automatic detection using Convolutional Neural Network.\n"
+             " viewer: Semi-automatic detection using manual selection of a few \n"
+             "         points with an interactive viewer followed by regularization.\n"
+             " file: Use an existing centerline (use with flag -file_centerline)",
         required=False,
         choices=('svm', 'cnn', 'viewer', 'file'),
         default="svm")
     optional.add_argument(
         "-file_centerline",
-        help='Input centerline file (to use with flag -centerline manual). Example t2_centerline_manual.nii.gz',
+        help='Input centerline file (to use with flag -centerline manual). Example:\n'
+             't2_centerline_manual.nii.gz',
         metavar=Metavar.str,
         required=False)
     optional.add_argument(
         "-brain",
         type=int,
-        help='Indicate if the input image contains brain sections (to speed up segmentation). Note: this flag is only'
-             'effective with -centerline cnn.',
+        help='Indicate if the input image contains brain sections (to speed up \n'
+             'segmentation). This flag is only effective with "-centerline cnn".',
         required=False,
         choices=(0, 1),
         default=1)
     optional.add_argument(
         "-ofolder",
-        help='output folder. Example My_Output_Folder/ ',
+        help='Output folder. Example: My_Output_Folder/ ',
         required=False,
         metavar=Metavar.str,
         default=os.getcwd())
     optional.add_argument(
         "-r",
         type=int,
-        help="remove temporary files.",
+        help="Remove temporary files.",
         required=False,
         choices=(0, 1),
         default=1)
     optional.add_argument(
         "-v",
         type=int,
-        help="1: display on (default), 0: display off, 2: extended",
+        help="1: Display on (default), 0: Display off, 2: Extended",
         choices=(0, 1, 2),
         default=1)
     optional.add_argument(
