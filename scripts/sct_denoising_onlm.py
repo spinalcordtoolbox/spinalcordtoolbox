@@ -46,7 +46,7 @@ def get_parser():
         help="Show this help message and exit")
     optional.add_argument(
         "-p",
-        help='Type of supposed noise: Rician or Gaussian. Default is Rician.',
+        help='Type of assumed noise distribution. Default is: Rician.',
         required=False,
         choices=("Rician", "Gaussian"),
         default="Rician")
@@ -63,7 +63,7 @@ def get_parser():
         "-std",
         type=float,
         help="Standard deviation of the noise. "
-             "If not precised, it is calculated using a background of point of values "
+             "If not specified, it is calculated using a background of point of values "
              "below the threshold value (parameter d).",
         metavar=Metavar.float)
     optional.add_argument(
