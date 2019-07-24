@@ -38,6 +38,7 @@ class SmartFormatter(argparse.HelpFormatter):
     """
     Custom formatter that inherits from HelpFormatter, which adjusts the default width to the current Terminal size,
     and that gives the possibility to bypass argparse's default formatting by adding "R|" at the beginning of the text.
+    Inspired from: https://pythonhosted.org/skaff/_modules/skaff/cli.html
     """
     def __init__(self, *args, **kw):
         self._add_defaults = None
