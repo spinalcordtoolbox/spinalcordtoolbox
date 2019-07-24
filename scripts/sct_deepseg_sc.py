@@ -25,10 +25,10 @@ def get_parser():
     """Initialize the parser."""
 
     parser = argparse.ArgumentParser(
-        description="Spinal Cord Segmentation using convolutional networks."
-                    "\n\nReference: C Gros, B De Leener, et al. Automatic segmentation of the spinal cord and"
-                    " intramedullary multiple sclerosis lesions with convolutional neural networks (2018). "
-                    "arxiv.org/abs/1805.06349",
+        description="Spinal Cord Segmentation using convolutional networks. Reference: Gros et al. Automatic \n"
+                    "segmentation of the spinal cord and intramedullary multiple sclerosis lesions with convolutional\n"
+                    "neural networks. Neuroimage. 2018 Oct 6;184:901-915. ",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
         add_help=None,
         prog=os.path.basename(__file__).strip(".py"))
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
@@ -48,11 +48,12 @@ def get_parser():
         help="show this help message and exit")
     optional.add_argument(
         "-centerline",
-        help="Method used for extracting the centerline."
-             "\nsvm: automatic centerline detection, based on Support Vector Machine algorithm."
-             "\ncnn: automatic centerline detection, based on Convolutional Neural Network."
-             "\nviewer: semi-automatic centerline generation, based on manual selection of a few points using an interactive viewer, then approximation with NURBS."
-             "\nfile: use an existing centerline by specifying its filename with flag -file_centerline Example -file_centerline t2_centerline_manual.nii.gz",
+        help="Method used for extracting the centerline.\n"
+             " svm: Automatic detection using Support Vector Machine algorithm.\n"
+             " cnn: Automatic detection using Convolutional Neural Network.\n"
+             " viewer: Semi-automatic detection using manual selection of a few \n"
+             "         points with an interactive viewer followed by regularization.\n"
+             " file: Use an existing centerline (use with flag -file_centerline)",
         choices=('svm', 'cnn', 'viewer', 'file'),
         default="svm")
     optional.add_argument(
@@ -62,21 +63,18 @@ def get_parser():
     optional.add_argument(
         "-brain",
         type=int,
-        help='Indicate if the input image is expected to contain brain sections:'
-             '\n1: contains brain section'
-             '\n0: no brain section.'
-             '\nTo indicate this parameter could speed the segmentation process. '
-             'Note that this flag is only effective with -centerline cnn. Example ["0", "1"]',
+        help='Indicate if the input image contains brain sections (to speed up \n'
+             'segmentation). This flag is only effective with "-centerline cnn".',
         choices=(0, 1))
     optional.add_argument(
         "-kernel",
-        help="Choice of 2D or 3D kernels for the segmentation. Note that segmentation with 3D kernels is significantely longer than with 2D kernels.",
+        help="Choice of kernel shape for the CNN. Segmentation with 3D kernels is longer than with 2D kernels.",
         choices=('2d', '3d'),
         default="2d")
     optional.add_argument(
         "-ofolder",
         metavar=Metavar.str,
-        help='Output folder. Example My_Output_Folder/ ',
+        help='Output folder. Example: My_Output_Folder/ ',
         default=os.getcwd())
     optional.add_argument(
         "-r",
