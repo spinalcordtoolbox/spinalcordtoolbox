@@ -26,8 +26,9 @@ def get_parser():
     # Initialize the parser
 
     parser = argparse.ArgumentParser(
-        description='Concatenate bvec files in time. You can either use bvecs in lines or columns. '
-                    '\nN.B.: Return bvecs in lines. If you need it in columns, please use sct_dmri_transpose_bvecs afterwards.',
+        description='Concatenate bvec files in time. You can either use bvecs in lines or columns. \n'
+                    'N.B.: Return bvecs in lines. If you need it in columns, please use \n'
+                    'sct_dmri_transpose_bvecs afterwards.',
         formatter_class=argparse.RawTextHelpFormatter,
         add_help=None,
         prog=os.path.basename(__file__).strip(".py"))
@@ -35,18 +36,20 @@ def get_parser():
     mandatory.add_argument(
         "-i",
         metavar=Metavar.file,
-        help='List of the bvec files to concatenate. Example: dmri_b700.bvec,dmri_b2000.bvec',
+        help='List of the bvec files to concatenate. \n'
+             'Example: dmri_b700.bvec,dmri_b2000.bvec',
         required=True)
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",
         "--help",
         action="help",
-        help="show this help message and exit")
+        help="Show this help message and exit")
     optional.add_argument(
         "-o",
         metavar=Metavar.file,
-        help='Output file with bvecs concatenated. Example: dmri_b700_b2000_concat.bvec')
+        help='Output file with bvecs concatenated. \n'
+             'Example: dmri_b700_b2000_concat.bvec')
 
     return parser
 
