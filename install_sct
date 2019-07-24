@@ -128,7 +128,7 @@ function edit_bashrc {
 
 # Download from URL using curl/wget
 function download {
-  # Use curl or wget to download goodies
+    # Use curl or wget to download goodies
     e_status=0
 
     if [[ $( which curl ) ]] ; then
@@ -213,7 +213,7 @@ if [[ -e "version.txt" ]]; then
   fi
 else
   die "ERROR: version.txt not found. \n
-The install_sct script must be execute from the source directory"
+The install_sct script must be executed from the source directory"
 fi
 
 # Get installation type (from git or from package)
