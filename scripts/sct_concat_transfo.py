@@ -19,7 +19,7 @@ import sys, os, functools, argparse
 
 import sct_utils as sct
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.utils import Metavar
+from spinalcordtoolbox.utils import Metavar, SmartFormatter
 
 class Param:
     # The constructor
@@ -128,7 +128,9 @@ def get_parser():
     # Initialize the parser
 
     parser = argparse.ArgumentParser(
-        description='Concatenate transformations. This function is a wrapper for isct_ComposeMultiTransform (ANTs). N.B. Order of input warping fields is important. For example, if you want to concatenate: A->B and B->C to yield A->C, then you have to input warping fields like that: A->B,B->C.',
+        description='Concatenate transformations. This function is a wrapper for isct_ComposeMultiTransform (ANTs). '
+                    'N.B. Order of input warping fields is important. For example, if you want to concatenate: '
+                    'A->B and B->C to yield A->C, then you have to input warping fields like that: A->B,B->C.',
         add_help=None,
         prog=os.path.basename(__file__).strip(".py"))
     mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
@@ -146,7 +148,7 @@ def get_parser():
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
         "-winv",
-        help='Affine transformation(s) listed in flag -w which should be inverted before being used. Note that this'
+        help='Affine transformation(s) listed in flag -w which should be inverted before being used. Note that this '
              'only concerns affine transformation (not warping fields). If you would like to use an inverse warping'
              'field, then directly input the inverse warping field in flag -w.',
         nargs='+',
