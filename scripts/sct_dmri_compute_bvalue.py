@@ -21,7 +21,7 @@ import math
 import argparse
 
 import sct_utils as sct
-from spinalcordtoolbox.utils import Metavar
+from spinalcordtoolbox.utils import Metavar, SmartFormatter
 
 # main
 # =======================================================================================================================
@@ -57,7 +57,7 @@ def get_parser():
     parser = argparse.ArgumentParser(
         description='Calculate b-value (in mm^2/s).',
         add_help=None,
-        formatter_class=argparse.RawDescriptionHelpFormatter,
+        formatter_class=SmartFormatter,
         prog=os.path.basename(__file__).strip(".py"))
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
