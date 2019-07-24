@@ -15,7 +15,7 @@ from __future__ import absolute_import
 import os, sys, argparse
 
 import sct_utils as sct
-from spinalcordtoolbox.utils import Metavar
+from spinalcordtoolbox.utils import Metavar, SmartFormatter
 
 # PARSER
 # ==========================================================================================
@@ -26,14 +26,13 @@ def get_parser():
 
     parser = argparse.ArgumentParser(
         description='Concatenate bval files in time.',
-        formatter_class=argparse.RawTextHelpFormatter,
+        formatter_class=SmartFormatter,
         add_help=None,
         prog=os.path.basename(__file__).strip(".py"))
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
         "-i",
-        help='List of the bval files to concatenate. \n'
-             'Example: dmri_b700.bval,dmri_b2000.bval',
+        help='List of the bval files to concatenate. Example: dmri_b700.bval,dmri_b2000.bval',
         metavar=Metavar.file,
         required=True)
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
@@ -44,8 +43,7 @@ def get_parser():
         help="Show this help message and exit")
     optional.add_argument(
         "-o",
-        help='Output file with bvals merged. \n'
-             'Example: dmri_b700_b2000_concat.bval',
+        help='Output file with bvals merged. Example: dmri_b700_b2000_concat.bval',
         metavar=Metavar.file)
 
     return parser
