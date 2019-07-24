@@ -22,9 +22,11 @@ from spinalcordtoolbox.utils import Metavar
 
 def get_parser():
     parser = argparse.ArgumentParser(
-        description='Compute the Dice Coefficient. Note: indexing (in both time and space) starts with 0 not 1! '
-                    'Inputting -1 for a size will set it to the full image extent for that dimension.',
+        description='Compute the Dice Coefficient. \n'
+                    'N.B.: indexing (in both time and space) starts with 0 not 1! Inputting -1 for a \n'
+                    'size will set it to the full image extent for that dimension.',
         add_help=None,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
         prog=os.path.basename(__file__).strip(".py"))
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
@@ -42,7 +44,7 @@ def get_parser():
         "-h",
         "--help",
         action="help",
-        help="show this help message and exit")
+        help="Show this help message and exit")
     optional.add_argument(
         '-2d-slices',
         type=int,
@@ -52,19 +54,20 @@ def get_parser():
     optional.add_argument(
         '-b',
         metavar=Metavar.list,
-        help='Bounding box with the coordinates of the origin and the size of the box as follow: '
-             'x_origin,x_size,y_origin,y_size,z_origin,z_size Example: 5,10,5,10,10,15',
+        help='Bounding box with the coordinates of the origin and the size of the box as follow: \n'
+             'x_origin,x_size,y_origin,y_size,z_origin,z_size. \n'
+             'Example: 5,10,5,10,10,15',
         required=False)
     optional.add_argument(
         '-bmax',
         type=int,
-        help='Use maximum bounding box of the images union to compute DC',
+        help='Use maximum bounding box of the images union to compute DC.',
         required=False,
         choices=(0, 1))
     optional.add_argument(
         '-bzmax',
         type=int,
-        help='Use maximum bounding box of the images union in the "Z" direction to compute DC',
+        help='Use maximum bounding box of the images union in the "Z" direction to compute DC.',
         required=False,
         choices=(0, 1))
     optional.add_argument(
@@ -76,7 +79,7 @@ def get_parser():
     optional.add_argument(
         '-o',
         metavar=Metavar.str,
-        help='Output file with DC results (.txt) Example dice_coeff.txt',
+        help='Output file with DC results (.txt). Example: dice_coeff.txt',
         required=False)
     optional.add_argument(
         "-r",

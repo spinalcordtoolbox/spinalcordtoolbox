@@ -27,9 +27,10 @@ def get_parser():
     # Initialize the parser
 
     parser = argparse.ArgumentParser(
-        description='Utility function to denoise images. (Return the denoised image and also the difference '
-                    'between the input and the output.)',
+        description='Utility function to denoise images. (Return the denoised image and also the \n'
+                    'difference between the input and the output. )',
         add_help=None,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
         prog=os.path.basename(__file__).strip(".py"))
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
@@ -42,7 +43,7 @@ def get_parser():
         "-h",
         "--help",
         action="help",
-        help="show this help message and exit")
+        help="Show this help message and exit")
     optional.add_argument(
         "-p",
         help='Type of supposed noise: Rician or Gaussian. Default is Rician.',
@@ -52,8 +53,8 @@ def get_parser():
     optional.add_argument(
         "-d",
         type=int,
-        help="Threshold value for what to be considered as noise. "
-             "The standard deviation of the noise is calculated for values below this limit. "
+        help="Threshold value for what to be considered as noise. \n"
+             "The standard deviation of the noise is calculated for values below this limit. \n"
              "Not relevant if -std value is precised. Default is 80.",
         metavar=Metavar.int,
         required=False,
@@ -61,8 +62,8 @@ def get_parser():
     optional.add_argument(
         "-std",
         type=float,
-        help="Standard deviation of the noise. "
-             "If not precised, it is calculated using a background of point of values "
+        help="Standard deviation of the noise. \n"
+             "If not precised, it is calculated using a background of point of values \n"
              "below the threshold value (parameter d).",
         metavar=Metavar.float)
     optional.add_argument(
