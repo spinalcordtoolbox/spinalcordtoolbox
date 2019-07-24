@@ -1,22 +1,22 @@
 #!/bin/bash
 #
 # Example of commands to process multi-parametric data of the spinal cord.
-# 
+#
 # Please note that this batch script has a lot of redundancy and should not
 # be used as a pipeline for regular processing. For example, there is no need
-# to process both t1 and t2 to extract CSA values. 
+# to process both t1 and t2 to extract CSA values.
 #
 # For information about acquisition parameters, see: https://osf.io/wkdym/
-# N.B. The parameters are set for these type of data. With your data, parameters 
+# N.B. The parameters are set for these type of data. With your data, parameters
 # might be slightly different.
 #
 # Usage:
-# 
+#
 #   [option] $SCT_DIR/batch_processing.sh
-# 
+#
 #   Prevent (re-)downloading sct_example_data:
 #   SCT_BP_DOWNLOAD=0 $SCT_DIR/batch_processing.sh
-# 
+#
 #   Specify quality control (QC) folder (Default is ~/qc_batch_processing):
 #   SCT_BP_QC_FOLDER=/user/toto/my_qc_folder $SCT_DIR/batch_processing.sh
 
@@ -46,7 +46,7 @@ if [[ -z "$SCT_BP_QC_FOLDER" ]]; then
 fi
 
 # Remove QC folder
-if [[ -z "$SCT_BP_NO_REMOVE_QC" -a -d "$SCT_BP_QC_FOLDER" ]]; then
+if [ -z "$SCT_BP_NO_REMOVE_QC" -a -d "$SCT_BP_QC_FOLDER" ]; then
   echo "Removing $SCT_BP_QC_FOLDER folder."
   rm -rf "$SCT_BP_QC_FOLDER"
 fi
@@ -77,7 +77,7 @@ sct_label_utils -i t2_seg_labeled.nii.gz -vert-body 2,5 -o labels_vert.nii.gz
 # sct_label_utils -i t2.nii.gz -create-viewer 2,5 -o labels_vert.nii.gz
 # Register to template
 sct_register_to_template -i t2.nii.gz -s t2_seg.nii.gz -l labels_vert.nii.gz -c t2 -qc "$SCT_BP_QC_FOLDER"
-# Tips: If you are not satisfied with the results, you can tweak registration parameters. 
+# Tips: If you are not satisfied with the results, you can tweak registration parameters.
 # For example here, we would like to take into account the rotation of the cord, as well as
 # adding a 3rd registration step that uses the image intensity (not only cord segmentations).
 # so we could do something like this:
