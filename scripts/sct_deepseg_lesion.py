@@ -27,9 +27,9 @@ def get_parser():
     """Initialize the parser."""
 
     parser = argparse.ArgumentParser(
-        description='MS lesion Segmentation using convolutional networks. Reference: Gros C et al. \n'
-                    'Automatic segmentation of the spinal cord and intramedullary multiple sclerosis \n'
-                    'lesions with convolutional neural networks. Neuroimage. 2018 Oct 6;184:901-915.',
+        description='MS lesion Segmentation using convolutional networks. Reference: Gros C et al. Automatic\n'
+                    'segmentation of the spinal cord and intramedullary multiple sclerosis lesions with convolutional\n'
+                    'neural networks. Neuroimage. 2018 Oct 6;184:901-915.',
         formatter_class=argparse.RawTextHelpFormatter,
         add_help=None,
         prog=os.path.basename(__file__).strip(".py"))
