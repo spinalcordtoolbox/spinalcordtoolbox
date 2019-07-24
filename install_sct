@@ -49,10 +49,7 @@ function die {
 function check_requirements {
 
   if [[ ! $( which curl ) && ! $( which wget ) ]] ; then
-      die "You need to install \"curl\" OR \"wget\" before you can install the SPINALCORDTOOLBOX \n
-run \n
-> sudo apt-get install wget \n
-and rerun the installer"
+      die "Install \"curl\" OR \"wget\" before you can install the SPINALCORDTOOLBOX"
   fi
 
   if [[ ! $( which git ) ]]; then
