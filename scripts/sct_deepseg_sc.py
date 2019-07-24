@@ -18,27 +18,27 @@ import sys
 import argparse
 
 import sct_utils as sct
-from spinalcordtoolbox.utils import Metavar
+from spinalcordtoolbox.utils import Metavar, SmartFormatter
 
 
 def get_parser():
     """Initialize the parser."""
 
     parser = argparse.ArgumentParser(
-        description="Spinal Cord Segmentation using convolutional networks. Reference: Gros et al. Automatic \n"
-                    "segmentation of the spinal cord and intramedullary multiple sclerosis lesions with convolutional\n"
+        description="Spinal Cord Segmentation using convolutional networks. Reference: Gros et al. Automatic "
+                    "segmentation of the spinal cord and intramedullary multiple sclerosis lesions with convolutional "
                     "neural networks. Neuroimage. 2018 Oct 6;184:901-915. ",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
+        formatter_class=SmartFormatter,
         add_help=None,
         prog=os.path.basename(__file__).strip(".py"))
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
         "-i",
         metavar=Metavar.file,
-        help='input image. Example t1.nii.gz')
+        help='Input image. Example: t1.nii.gz')
     mandatory.add_argument(
         "-c",
-        help="type of image contrast.",
+        help="Type of image contrast.",
         choices=('t1', 't2', 't2s', 'dwi'))
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
@@ -48,23 +48,23 @@ def get_parser():
         help="show this help message and exit")
     optional.add_argument(
         "-centerline",
-        help="Method used for extracting the centerline.\n"
+        help="R|Method used for extracting the centerline:\n"
              " svm: Automatic detection using Support Vector Machine algorithm.\n"
              " cnn: Automatic detection using Convolutional Neural Network.\n"
-             " viewer: Semi-automatic detection using manual selection of a few \n"
-             "         points with an interactive viewer followed by regularization.\n"
+             " viewer: Semi-automatic detection using manual selection of a few points with an interactive viewer "
+             "followed by regularization.\n"
              " file: Use an existing centerline (use with flag -file_centerline)",
         choices=('svm', 'cnn', 'viewer', 'file'),
         default="svm")
     optional.add_argument(
         "-file_centerline",
         metavar=Metavar.str,
-        help='Input centerline file (to use with flag -centerline file). Example t2_centerline_manual.nii.gz')
+        help='Input centerline file (to use with flag -centerline file). Example: t2_centerline_manual.nii.gz')
     optional.add_argument(
         "-brain",
         type=int,
-        help='Indicate if the input image contains brain sections (to speed up \n'
-             'segmentation). This flag is only effective with "-centerline cnn".',
+        help='Indicate if the input image contains brain sections (to speed up segmentation). This flag is only '
+             'effective with "-centerline cnn".',
         choices=(0, 1))
     optional.add_argument(
         "-kernel",
