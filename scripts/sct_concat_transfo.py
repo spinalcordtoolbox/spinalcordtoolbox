@@ -129,10 +129,12 @@ def get_parser():
 
     parser = argparse.ArgumentParser(
         description='Concatenate transformations. This function is a wrapper for isct_ComposeMultiTransform (ANTs). '
-                    'N.B. Order of input warping fields is important. For example, if you want to concatenate: '
-                    'A->B and B->C to yield A->C, then you have to input warping fields like that: A->B,B->C.',
+                    'The order of input warping fields is important. For example, if you want to concatenate: '
+                    'A->B and B->C to yield A->C, then you have to input warping fields in this order: A->B B->C.',
+        formatter_class=SmartFormatter,
         add_help=None,
         prog=os.path.basename(__file__).strip(".py"))
+
     mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatoryArguments.add_argument(
         "-d",
