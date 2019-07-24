@@ -37,7 +37,7 @@ matrix:
 before_install:
   - echo "HOME="
   - echo $HOME
-  - sudo apt-get update -qq; echo
+  - sudo apt-get update -qq
 
 install:
   - |
