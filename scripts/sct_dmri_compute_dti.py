@@ -15,7 +15,7 @@ from __future__ import absolute_import
 import os, sys, argparse
 
 import sct_utils as sct
-from spinalcordtoolbox.utils import Metavar
+from spinalcordtoolbox.utils import Metavar, SmartFormatter
 
 
 class Param:
@@ -32,7 +32,7 @@ def get_parser():
 
     parser = argparse.ArgumentParser(
         description='Compute Diffusion Tensor Images (DTI) using dipy.',
-        formatter_class=argparse.RawTextHelpFormatter,
+        formatter_class=SmartFormatter,
         add_help=None,
         prog=os.path.basename(__file__).strip(".py"))
     mandatory = parser.add_argument_group("MANDATORY ARGMENTS")
@@ -59,10 +59,10 @@ def get_parser():
         help="Show this help message and exit")
     optional.add_argument(
         '-method',
-        help='Type of method to calculate the diffusion tensor:'
-             '\n standard: Standard equation [Basser, Biophys J 1994]'
-             '\n restore: Robust fitting with outlier detection [Chang, '
-             '\n MRM 2005]',
+        help='R|Type of method to calculate the diffusion tensor:\n'
+             ' standard: Standard equation [Basser, Biophys J 1994]\n'
+             ' restore: Robust fitting with outlier detection [Chang,\n'
+             ' MRM 2005]',
         default='standard',
         choices=('standard', 'restore'))
     optional.add_argument(
@@ -73,8 +73,7 @@ def get_parser():
     optional.add_argument(
         '-m',
         metavar=Metavar.file,
-        help='Mask used to compute DTI in for faster processing. \n'
-             'Example: mask.nii.gz')
+        help='Mask used to compute DTI in for faster processing. Example: mask.nii.gz')
     optional.add_argument(
         '-o',
         help='Output prefix.',
