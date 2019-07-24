@@ -32,7 +32,8 @@ def get_parser():
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
         "-i",
-        help='List of the bval files to concatenate. Example: dmri_b700.bval,dmri_b2000.bval',
+        help='List of the bval files to concatenate. Example: dmri_b700.bval dmri_b2000.bval',
+        nargs='+',
         metavar=Metavar.file,
         required=True)
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
@@ -55,13 +56,12 @@ def main():
     # Get parser info
     parser = get_parser()
     arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
-    fname_bval_list = (arguments.i).rsplit(",")
+    fname_bval_list = arguments.i
     # Build fname_out
     if arguments.o is not None:
         fname_out = arguments.o
     else:
-        from sct_utils import extract_fname
-        path_in, file_in, ext_in = extract_fname(fname_bval_list[0])
+        path_in, file_in, ext_in = sct.extract_fname(fname_bval_list[0])
         fname_out = path_in + 'bvals_concat' + ext_in
 
     # Open bval files and concatenate
