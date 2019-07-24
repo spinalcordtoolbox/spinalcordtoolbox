@@ -131,20 +131,16 @@ function download {
   # Use curl or wget to download goodies
     e_status=0
 
-    hash "wget" 2> /dev/null
-    is_wget=$?
-    hash "curl" 2> /dev/null
-    is_curl=$?
-
-    if [[ $is_wget -eq 0 ]] ; then
+    if [[ $( which curl ) ]] ; then
         cmd="wget -O $1 $2"; echo ">> "$cmd; $cmd
         e_status=$?
         echo exit status is $e_status
     fi
 
-    if [[ $is_curl -eq 0 && ! -e $1 ]] ; then
+    if [[ $( which curl ) && ! -e $1 ]] ; then
         cmd="curl -o $1 -L $2"; echo ">> "$cmd; $cmd
         e_status=$?
+
         echo exit status is $e_status
     fi
 
