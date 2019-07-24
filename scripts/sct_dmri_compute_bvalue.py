@@ -57,6 +57,7 @@ def get_parser():
     parser = argparse.ArgumentParser(
         description='Calculate b-value (in mm^2/s).',
         add_help=None,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
         prog=os.path.basename(__file__).strip(".py"))
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
@@ -82,7 +83,7 @@ def get_parser():
         "-h",
         "--help",
         action="help",
-        help="show this help message and exit")
+        help="Show this help message and exit")
 
     return parser
 
