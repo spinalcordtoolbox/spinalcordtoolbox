@@ -15,7 +15,7 @@ from __future__ import absolute_import
 import sys, os, argparse
 
 import sct_utils as sct
-from spinalcordtoolbox.utils import Metavar
+from spinalcordtoolbox.utils import Metavar, SmartFormatter
 
 
 # PARSER
@@ -26,18 +26,17 @@ def get_parser():
     # Initialize the parser
 
     parser = argparse.ArgumentParser(
-        description='Concatenate bvec files in time. You can either use bvecs in lines or columns. \n'
-                    'N.B.: Return bvecs in lines. If you need it in columns, please use \n'
+        description='Concatenate bvec files in time. You can either use bvecs in lines or columns. '
+                    'N.B.: Return bvecs in lines. If you need it in columns, please use '
                     'sct_dmri_transpose_bvecs afterwards.',
-        formatter_class=argparse.RawTextHelpFormatter,
+        formatter_class=SmartFormatter,
         add_help=None,
         prog=os.path.basename(__file__).strip(".py"))
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
         "-i",
         metavar=Metavar.file,
-        help='List of the bvec files to concatenate. \n'
-             'Example: dmri_b700.bvec,dmri_b2000.bvec',
+        help='List of the bvec files to concatenate. Example: dmri_b700.bvec,dmri_b2000.bvec',
         required=True)
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
@@ -48,8 +47,7 @@ def get_parser():
     optional.add_argument(
         "-o",
         metavar=Metavar.file,
-        help='Output file with bvecs concatenated. \n'
-             'Example: dmri_b700_b2000_concat.bvec')
+        help='Output file with bvecs concatenated. Example: dmri_b700_b2000_concat.bvec')
 
     return parser
 
