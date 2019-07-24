@@ -56,12 +56,13 @@ def get_parser():
         "-h",
         "--help",
         action="help",
-        help="show this help message and exit")
+        help="Show this help message and exit")
     optional.add_argument(
         '-method',
         help='Type of method to calculate the diffusion tensor:'
-             '\nstandard: Standard equation [Basser, Biophys J 1994]'
-             '\nrestore: Robust fitting with outlier detection [Chang, MRM 2005]',
+             '\n standard: Standard equation [Basser, Biophys J 1994]'
+             '\n restore: Robust fitting with outlier detection [Chang, '
+             '\n MRM 2005]',
         default='standard',
         choices=('standard', 'restore'))
     optional.add_argument(
@@ -72,7 +73,8 @@ def get_parser():
     optional.add_argument(
         '-m',
         metavar=Metavar.file,
-        help='Mask used to compute DTI in for faster processing. Example: mask.nii.gz')
+        help='Mask used to compute DTI in for faster processing. \n'
+             'Example: mask.nii.gz')
     optional.add_argument(
         '-o',
         help='Output prefix.',
