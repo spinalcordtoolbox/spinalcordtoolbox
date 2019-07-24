@@ -15,7 +15,7 @@ import os
 import argparse
 
 import sct_utils as sct
-from spinalcordtoolbox.utils import Metavar
+from spinalcordtoolbox.utils import Metavar, SmartFormatter
 
 from spinalcordtoolbox.reports.qc import generate_qc
 
@@ -27,6 +27,7 @@ def get_parser():
                     'Reference: Perone CS, Calabrese E, Cohen-Adad J. Spinal cord gray matter segmentation using deep '
                     'dilated convolutions. Sci Rep 2018;8(1):5966.',
         add_help=None,
+        formatter_class=SmartFormatter,
         prog=os.path.basename(__file__).strip(".py"))
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
@@ -38,7 +39,7 @@ def get_parser():
         "-h",
         "--help",
         action="help",
-        help="show this help message and exit")
+        help="Show this help message and exit")
     optional.add_argument(
         "-o",
         help="Output segmentation file name. Example: sc_gm_seg.nii.gz",
@@ -47,8 +48,7 @@ def get_parser():
     misc = parser.add_argument_group('\nMISC')
     misc.add_argument(
         '-qc',
-        help="The path where the quality control generated "
-             "content will be saved",
+        help="The path where the quality control generated content will be saved.",
         metavar=Metavar.str,
         default=None)
     misc.add_argument(
@@ -61,7 +61,7 @@ def get_parser():
         metavar=Metavar.str)
     misc.add_argument(
         "-m",
-        help="Model to use (large or challenge)."
+        help="Model to use (large or challenge). "
              "The model 'large' will be slower but "
              "will yield better results. The model "
              "'challenge' was built using data from "
@@ -71,7 +71,7 @@ def get_parser():
     misc.add_argument(
         "-thr",
         type=float,
-        help='Threshold to apply in the segmentation predictions, use 0 (zero) to disable it. Example 0.999',
+        help='Threshold to apply in the segmentation predictions, use 0 (zero) to disable it. Example: 0.999',
         metavar=Metavar.float,
         default=0.999)
     misc.add_argument(
