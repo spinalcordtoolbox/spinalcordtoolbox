@@ -61,13 +61,12 @@ def get_parser():
         '-method',
         help='R|Type of method to calculate the diffusion tensor:\n'
              ' standard: Standard equation [Basser, Biophys J 1994]\n'
-             ' restore: Robust fitting with outlier detection [Chang,\n'
-             ' MRM 2005]',
+             ' restore: Robust fitting with outlier detection [Chang, MRM 2005]',
         default='standard',
         choices=('standard', 'restore'))
     optional.add_argument(
         "-evecs",
-        help='To output tensor eigenvectors and eigenvalues, set to 1.',
+        help='Output tensor eigenvectors and eigenvalues.',
         default=0,
         choices=(0, 1))
     optional.add_argument(
