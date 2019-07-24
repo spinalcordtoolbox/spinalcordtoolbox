@@ -4,14 +4,55 @@
 
 from __future__ import absolute_import
 
-import io, os, re, time, logging
+import io
+import os
+import re
+import logging
+import argparse
 import subprocess
+import shutil
 from enum import Enum
 
 logger = logging.getLogger(__name__)
 
 
 # TODO: add test
+
+
+class Metavar(Enum):
+    """
+    This class is used to display intuitive input types via the metavar field of argparse
+    """
+    file = "<file>"
+    str = "<str>"
+    folder = "<folder>"
+    int = "<int>"
+    list = "<list>"
+    float = "<float>"
+
+    def __str__(self):
+        return self.value
+
+
+class SmartFormatter(argparse.HelpFormatter):
+    """
+    Custom formatter that inherits from HelpFormatter, which adjusts the default width to the current Terminal size,
+    and that gives the possibility to bypass argparse's default formatting by adding "R|" at the beginning of the text.
+    """
+    def __init__(self, *args, **kw):
+        self._add_defaults = None
+        super(SmartFormatter, self).__init__(*args, **kw)
+        # Update _width to match Terminal width
+        try:
+            self._width = shutil.get_terminal_size()[0]
+        except (KeyError, ValueError):
+            logger.warning('Not able to fetch Terminal width. Using default: %s'.format(self._width))
+
+    def _split_lines(self, text, width):
+        if text.startswith('R|'):
+            return text[2:].splitlines()
+        # this is the RawTextHelpFormatter._split_lines
+        return argparse.HelpFormatter._split_lines(self, text, width)
 
 
 def check_exe(name):
@@ -187,17 +228,3 @@ def parse_num_list_inv(list_int):
             colon_is_present = False
 
     return str_num
-
-class Metavar(Enum):
-    """
-    This class is used to display intuitive input types via the metavar field of argparse
-    """
-    file = "<file>"
-    str = "<str>"
-    folder = "<folder>"
-    int = "<int>"
-    list = "<list>"
-    float = "<float>"
-
-    def __str__(self):
-        return self.value
