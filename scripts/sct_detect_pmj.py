@@ -30,12 +30,15 @@ def get_parser():
     # Initialize the parser
 
     parser = argparse.ArgumentParser(
-        description='Detection of the Ponto-Medullary Junction (PMJ).'
-                    ' This method is machine-learning based and adapted for T1w-like or T2w-like images.'
-                    ' If the PMJ is detected from the input image, a nifti mask is output ("*_pmj.nii.gz")'
-                    ' with one voxel (value=50) located at the predicted PMJ position.'
+        description='Detection of the Ponto-Medullary Junction (PMJ). \n'
+                    ' This method is machine-learning based and adapted for T1w-like or \n'
+                    ' T2w-like images. \n'
+                    ' If the PMJ is detected from the input image, a nifti mask is output \n'
+                    ' ("*_pmj.nii.gz") with one voxel (value=50) located at the predicted PMJ \n'
+                    ' position. \n'
                     ' If the PMJ is not detected, nothing is output.',
         add_help=None,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
         prog=os.path.basename(__file__).strip(".py"))
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
@@ -45,8 +48,8 @@ def get_parser():
         required=True)
     mandatory.add_argument(
         "-c",
-        help="Type of image contrast, if your contrast is not in the available options (t1, t2), use t1 (cord bright "
-             "/ CSF dark) or t2 (cord dark / CSF bright)",
+        help="Type of image contrast, if your contrast is not in the available options (t1, t2), \n"
+             "use t1 (cord bright/ CSF dark) or t2 (cord dark / CSF bright)",
         required=True,
         choices=("t1", "t2"))
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
@@ -54,12 +57,12 @@ def get_parser():
         "-h",
         "--help",
         action="help",
-        help="show this help message and exit")
+        help="Show this help message and exit")
     optional.add_argument(
         "-s",
         metavar=Metavar.file,
-        help='SC segmentation or centerline mask. '
-             'Provide this mask helps the detection of the PMJ by indicating the position of the SC '
+        help='SC segmentation or centerline mask. \n'
+             'Provide this mask helps the detection of the PMJ by indicating the position of the SC \n'
              'in the Right-to-Left direction. Example: t2_seg.nii.gz',
         required=False)
     optional.add_argument(
@@ -70,7 +73,7 @@ def get_parser():
     optional.add_argument(
         '-qc',
         metavar=Metavar.str,
-        help='The path where the quality control generated content will be saved',
+        help='The path where the quality control generated content will be saved.',
         default=None)
     optional.add_argument(
         "-igt",
