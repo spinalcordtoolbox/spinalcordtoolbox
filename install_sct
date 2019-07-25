@@ -155,12 +155,11 @@ Please check your internet connection before relaunching the installer\n"
 
 # Usage of this script
 function usage() {
-  echo -e "\nUsage: $0 [-d] [-b] [-v] [--mpi]" 1>&2
+  echo -e "\nUsage: $0 [-d] [-b] [-v]" 1>&2
   echo -e "\nOPTION"
   echo -e "\t-d \v Prevent the (re)-installation of the \"data/\" directory "
   echo -e "\n\t-b \v Prevent the (re)-installation of the SCT binaries files "
   echo -e "\n\t-v \v Full verbose"
-  echo -e "\n\t--mpi,-p \v Will use the MPI interface to run pipelines (Linux support only)"
 }
 
 # SCRIPT STARTS HERE
@@ -173,7 +172,6 @@ check_requirements
 for arg in "$@"; do
   shift
   case "$arg" in
-    "--mpi") set -- "$@" "-p" ;;
     *)       set -- "$@" "$arg"
   esac
 done
@@ -187,10 +185,6 @@ while getopts ":dhbpv" opt; do
   b)
     echo " SCT binaries will not be (re)-installed "
     NO_SCT_BIN_INSTALL=yes
-    ;;
-  p)
-    echo " Multiprocessing using MPI activated"
-    export SCT_MPI_MODE=yes
     ;;
   v)
     echo " Full verbose!"
@@ -210,9 +204,6 @@ done
 # Catch SCT version
 if [[ -e "version.txt" ]]; then
   SCT_VERSION=$(cat version.txt)
-  if [[ $SCT_MPI_MODE ]]; then
-    SCT_VERSION=${SCT_VERSION}_mpi
-  fi
 else
   die "ERROR: version.txt not found. \n
 The install_sct script must be executed from the source directory"
@@ -457,11 +448,6 @@ pip install numpy
 pip install -r requirements.txt # we do not include the requirements inside the setup.py because it is much faster to install all dependencies first (uses pre-compiled wheels)
 if [[ $? != 0 ]]; then
   die "Failed running pip install -r requirements.txt: $?"
-fi
-
-if [[ $SCT_MPI_MODE ]]; then
-  echo "Installing MPI libraries for HPC installation"
-  conda install -c conda-forge --yes --file $SCT_SOURCE/install/requirements/requirementsMPI.txt
 fi
 
 ## Install the spinalcordtoolbox into the Conda venv
