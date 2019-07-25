@@ -49,10 +49,26 @@ class SmartFormatter(argparse.HelpFormatter):
         except (KeyError, ValueError):
             logger.warning('Not able to fetch Terminal width. Using default: %s'.format(self._width))
 
+    # this is the RawTextHelpFormatter._fill_text
+    def _fill_text(self, text, width, indent):
+        # print("splot",text)
+        if text.startswith('R|'):
+            paragraphs = text[2:].splitlines()
+            rebroken = [argparse._textwrap.wrap(tpar, width) for tpar in paragraphs]
+            rebrokenstr = []
+            for tlinearr in rebroken:
+                if (len(tlinearr) == 0):
+                    rebrokenstr.append("")
+                else:
+                    for tlinepiece in tlinearr:
+                        rebrokenstr.append(tlinepiece)
+            return '\n'.join(rebrokenstr)  # (argparse._textwrap.wrap(text[2:], width))
+        return argparse.RawDescriptionHelpFormatter._fill_text(self, text, width, indent)
+
+    # this is the RawTextHelpFormatter._split_lines
     def _split_lines(self, text, width):
         if text.startswith('R|'):
             return text[2:].splitlines()
-        # this is the RawTextHelpFormatter._split_lines
         return argparse.HelpFormatter._split_lines(self, text, width)
 
 
