@@ -18,7 +18,7 @@ import os
 import argparse
 
 import sct_utils as sct
-from spinalcordtoolbox.utils import Metavar
+from spinalcordtoolbox.utils import Metavar, SmartFormatter
 
 
 # DEFAULT PARAMETERS
@@ -75,8 +75,11 @@ class ErnstAngle:
 def get_parser():
     # Initialize the parser
     parser = argparse.ArgumentParser(
-        description='Function to compute the Ernst Angle. For examples of T1 values in the brain, see Wansapura et al. NMR relaxation times in the human brain at 3.0 tesla. Journal of magnetic resonance imaging : JMRI (1999) vol. 9 (4) pp. 531-8. \nT1 in WM: 832ms\nT1 in GM: 1331ms',
+        description='Function to compute the Ernst Angle. For examples of T1 values in the brain, see Wansapura et al. '
+                    'NMR relaxation times in the human brain at 3.0 tesla. Journal of magnetic resonance imaging : '
+                    'JMRI (1999) vol. 9 (4) pp. 531-8. \nT1 in WM: 832ms\nT1 in GM: 1331ms',
         add_help=None,
+        formatter_class=SmartFormatter,
         prog=os.path.basename(__file__).strip(".py"))
     mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatoryArguments.add_argument(
@@ -90,7 +93,7 @@ def get_parser():
         "-h",
         "--help",
         action="help",
-        help="show this help message and exit")
+        help="Show this help message and exit")
     optional.add_argument(
         "-t1",
         type=float,
@@ -103,7 +106,7 @@ def get_parser():
         type=float,
         nargs='*',
         metavar=Metavar.float,
-        help='Min/Max range of TR (in ms) separated with space. Only use with -v 2. Example 500 3500',
+        help='Min/Max range of TR (in ms) separated with space. Only use with -v 2. Example: 500 3500',
         required=False)
     optional.add_argument(
         "-o",
