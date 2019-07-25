@@ -41,3 +41,5 @@ unit_testing/*.roi
 
 .vscode/settings.json
 test.sh
+sct_course-london19/
+sct_example_data/
