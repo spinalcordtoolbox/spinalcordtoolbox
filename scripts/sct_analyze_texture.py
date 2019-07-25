@@ -36,6 +36,7 @@ def get_parser():
                     'fnameInput_feature_distance_angle.nii.gz. Also, a file averaging each metric across the angles, '
                     'called fnameInput_feature_distance_mean.nii.gz, is output.',
         add_help=None,
+        formatter_class=SmartFormatter,
         prog=os.path.basename(__file__).strip(".py")
     )
     mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
