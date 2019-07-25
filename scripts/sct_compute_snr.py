@@ -53,7 +53,7 @@ def get_parser():
         "-h",
         "--help",
         action="help",
-        help="show this help message and exit")
+        help="Show this help message and exit")
     optional.add_argument(
         '-m',
         help='Binary (or weighted) mask within which SNR will be averaged. Example: dwi_moco_mean_seg.nii.gz',
@@ -62,8 +62,8 @@ def get_parser():
     optional.add_argument(
         '-method',
         help='R|Method to use to compute the SNR:\n'
-             '- diff (default): Substract two volumes (defined by -vol) and estimate noise variance within the ROI (flag -m is required).\n'
-             '- mult: Estimate noise variance over time across volumes specified with -vol.',
+             ' diff (default): Substract two volumes (defined by -vol) and estimate noise variance within the ROI (flag -m is required).\n'
+             ' mult: Estimate noise variance over time across volumes specified with -vol.',
         choices=('diff', 'mult'),
         default='diff')
     optional.add_argument(
