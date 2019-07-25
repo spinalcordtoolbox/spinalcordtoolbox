@@ -18,7 +18,7 @@
 # Authors: Christian S. Perone
 #          Thiago JR Rezende
 # Created: 2 Mar 2018
-# Uptaded: 11 Jul 2019
+#
 #########################################################################################
 
 import os
@@ -155,8 +155,9 @@ class TabPanelPropSeg(SCTPanel):
     DESCRIPTION = """This segmentation tool automatically segment the spinal cord with
     robustness, accuracy and speed.<br><br>
     <b>Usage</b>:<br>
-    You need to have the raw imaging (T1w, T2w, T2s or DWI) selected, i.e, purple line over the file name
-    and to display the image, click on the eye icon next to it. 
+    To launch the script, the upload the raw image (t1, t2, t2s and dwi) into FSLeyes and always keeping it
+    as the first in the Overlay list field from the bottom to the top. If you uploaded more then one image, it is not necessary
+    uploading the images in such order, with the arrows is possible to sort them and only the first imaging will be used. 
     For more information, please refer to the article below.<br><br>
     <b>Specific citation</b>:<br>
     De Leener et al.
@@ -184,15 +185,20 @@ class TabPanelPropSeg(SCTPanel):
         self.SetSizerAndFit(self.sizer_h)
 
     def onButtonSC(self, event):
-        selected_overlay = displayCtx.getSelectedOverlay()
-        filename_path = selected_overlay.dataSource
+
+        overlayORD = displayCtx.overlayOrder
+
+        img1 = overlayORD[0]
+        rawimg = overlayList[img1].dataSource
+        print('Raw Image:', rawimg)
         contrast = self.rbox_contrast.GetStringSelection()
 
-        base_name = os.path.basename(filename_path)
+        base_name = os.path.basename(rawimg)
         fname, fext = base_name.split(os.extsep, 1)
         out_name = "{}_seg.{}".format(fname, fext)
 
-        cmd_line = "sct_propseg -i {} -c {}".format(filename_path, contrast)
+        cmd_line = "sct_propseg -i {} -c {}".format(rawimg, contrast)
+        print('Command line:', cmd_line)
         self.call_sct_command(cmd_line)
 
         outfilename = os.path.join(os.getcwd(), out_name)
@@ -208,8 +214,9 @@ class TabPanelSCSeg(SCTPanel):
     a 3D U-Net. For more information, please refer to the
     article below.<br><br>
     <b>Usage</b>:<br>
-    You need to have the raw imaging (T1w, T2w, T2s or DWI) selected, i.e, purple line over the file name
-    and to display the image, click on the eye icon next to it. 
+    To launch the script, the upload the raw image (t1, t2, t2s and dwi) into FSLeyes and always keeping it
+    as the first in the Overlay list field from the bottom to the top. If you uploaded more then one image, it is not necessary
+    uploading the images in such order, with the arrows is possible to sort them and only the first imaging will be used. 
     For more information, please refer to the article below.<br><br>
     <b>Specific citation</b>:<br>
     Gros et al.
@@ -237,21 +244,26 @@ class TabPanelSCSeg(SCTPanel):
         self.SetSizerAndFit(self.sizer_h)
 
     def onButtonSC(self, event):
-        selected_overlay = displayCtx.getSelectedOverlay()
-        filename_path = selected_overlay.dataSource
+
+        overlayORD = displayCtx.overlayOrder
+
+        img1 = overlayORD[0]
+        rawimg = overlayList[img1].dataSource
+        print('Raw Image:', rawimg)
+
         contrast = self.rbox_contrast.GetStringSelection()
 
-        base_name = os.path.basename(filename_path)
+        base_name = os.path.basename(rawimg)
         fname, fext = base_name.split(os.extsep, 1)
         out_name = "{}_seg.{}".format(fname, fext)
 
-        cmd_line = "sct_deepseg_sc -i {} -c {}".format(filename_path, contrast)
+        cmd_line = "sct_deepseg_sc -i {} -c {}".format(rawimg, contrast)
+        print('Command line:', cmd_line)
         self.call_sct_command(cmd_line)
 
         outfilename = os.path.join(os.getcwd(), out_name)
         image = Image(outfilename)
         overlayList.append(image)
-
         opts = displayCtx.getOpts(image)
         opts.cmap = 'red'
 
@@ -262,8 +274,9 @@ class TabPanelGMSeg(SCTPanel):
     dilated convolutions. For more information, please refer to the
     article below.<br><br>
     <b>Usage</b>:<br>
-    You need to have the raw T2s imaging selected, i.e, purple line over the file name
-    and to display the image, click on the eye icon next to it. 
+    To launch the script, upload the T2s imaging into FSLeyes and always keeping it
+    as the first in the Overlay list field from the bottom to the top. If you uploaded more then one image, it is not necessary
+    uploading the images in such order, with the arrows is possible to sort them and only the first imaging will be used. 
     For more information, please refer to the article below.<br><br>
     <b>Specific citation</b>:<br>
     Perone et al.
@@ -277,25 +290,57 @@ class TabPanelGMSeg(SCTPanel):
         button_gm = wx.Button(self, id=wx.ID_ANY,
                               label="Gray Matter Segmentation")
         button_gm.Bind(wx.EVT_BUTTON, self.onButtonGM)
+
+        hbox1 = wx.BoxSizer(wx.HORIZONTAL)
+        l1 = wx.StaticText(self, wx.ID_ANY, "Output File Name:")
+        hbox1.Add(l1, 1, wx.EXPAND | wx.ALIGN_LEFT | wx.ALL, 5)
+        self.t1 = wx.TextCtrl(self)
+        self.t1.Bind(wx.EVT_TEXT, self.OnKeyTyped)
+        hbox1.Add(self.t1, 1, wx.EXPAND | wx.ALIGN_LEFT | wx.ALL, 5)
+
         sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(hbox1)
         sizer.Add(button_gm, 0, wx.ALL, 5)
         self.sizer_h.Add(sizer)
         self.SetSizerAndFit(self.sizer_h)
 
-    def onButtonGM(self, event):
-        selected_overlay = displayCtx.getSelectedOverlay()
-        filename_path = selected_overlay.dataSource
-        base_name = os.path.basename(filename_path)
-        fname, fext = base_name.split(os.extsep, 1)
-        seg_name = "{}_gmseg.{}".format(fname, fext)
+    def OnKeyTyped(self, event):
+        txt = event.GetString()
 
-        cmd_line = "sct_deepseg_gm -i {}".format(filename_path)
+    def onButtonGM(self, event):
+
+        overlayORD = displayCtx.overlayOrder
+
+        img1 = overlayORD[0]
+        rawimg = overlayList[img1].dataSource
+        gmimg = self.t1.GetValue()
+
+        print('Raw Image:', rawimg)
+
+        if gmimg == '':
+            print('Output file name not defined, standard name will be used.')
+            base_name = os.path.basename(rawimg)
+            fname, fext = base_name.split(os.extsep, 1)
+            gmname = "{}_gmseg.{}".format(fname, fext)
+            print('Output File Name:', gmname)
+
+            #Standard output file name
+            cmd_line = "sct_deepseg_gm -i {}".format(rawimg)
+            print('Command Line:', cmd_line)
+
+        else:
+            gmname = "{}.nii.gz".format(gmimg)
+            print('Output File Name:', gmname)
+
+            #Personalized output file name
+            cmd_line = "sct_deepseg_gm -i {} -o {}".format(rawimg, gmname)
+            print('Command Line:', cmd_line)
+
         self.call_sct_command(cmd_line)
 
-        outfilename = os.path.join(os.getcwd(), seg_name)
+        outfilename = os.path.join(os.getcwd(), gmname)
         image = Image(outfilename)
         overlayList.append(image)
-
         opts = displayCtx.getOpts(image)
         opts.cmap = 'yellow'
 
@@ -305,8 +350,11 @@ class TabPanelCSA(SCTPanel):
     For more information, please refer to the article below.<br><br>
     <b>Specific citation</b>:<br>
     <b>Usage</b>:<br>
-    You need to have the raw imaging (T1w, T2w or T2s) selected, i.e, purple line over the file name
-    and to display the image, click on the eye icon next to it. 
+    To launch the script, upload there are two aways to do that. First, upload the raw imaging (T1w, T2w or T2s) into FSLeyes,
+    followed by the spinal cord segmentation. Always keeps this sequence, raw imaging as the first in the Overlay list field,
+    from the bottom to the top, and segmentation imaging as second. Second, just upload the segmentation imaging.
+    If you uploaded more then one image, it is not necessary uploading the images in such order, with the arrows is possible
+    to sort them and only the first imaging will be used. 
     For more information, please refer to the article below.<br><br>
     Martin et al.
     <i>Can Microstructural MRI detect subclinical tissue injury in subjects with asymptomatic
@@ -318,12 +366,12 @@ class TabPanelCSA(SCTPanel):
     def __init__(self, parent):
         super(TabPanelCSA, self).__init__(parent=parent,
                                           id_=wx.ID_ANY)
-        button_gm = wx.Button(self, id=wx.ID_ANY, label="Cross-Sectional Area")
+        button_gm = wx.Button(self, id=wx.ID_ANY, label="Process Segmentation")
         button_gm.Bind(wx.EVT_BUTTON, self.onButtonCSA, id = button_gm.GetId())
 
-        lbl_contrasts = ['GM', 'WM', 'Total']
-        self.rbox_contrast = wx.RadioBox(self, label='Select tissue:',
-                                         choices=lbl_contrasts,
+        lbl_vertfile = ['Off', 'On']
+        self.rbox_vertfile = wx.RadioBox(self, label='Vertfile:',
+                                         choices=lbl_vertfile,
                                          majorDimension=1,
                                          style=wx.RA_SPECIFY_ROWS)
 
@@ -334,80 +382,197 @@ class TabPanelCSA(SCTPanel):
                                          style=wx.RA_SPECIFY_ROWS)
 
         hbox1 = wx.BoxSizer(wx.HORIZONTAL)
-        l1 = wx.StaticText(self, wx.ID_ANY, "Vertebral Levels")
+        l1 = wx.StaticText(self, wx.ID_ANY, "Vertebral Levels/Slice Range")
         hbox1.Add(l1, 1, wx.EXPAND | wx.ALIGN_LEFT | wx.ALL, 5)
         self.t1 = wx.TextCtrl(self)
         self.t1.Bind(wx.EVT_TEXT, self.OnKeyTyped)
         hbox1.Add(self.t1, 1, wx.EXPAND | wx.ALIGN_LEFT | wx.ALL, 5)
 
+        hbox2 = wx.BoxSizer(wx.HORIZONTAL)
+        l2 = wx.StaticText(self, wx.ID_ANY, "Output Table Name")
+        hbox2.Add(l2, 1, wx.EXPAND | wx.ALIGN_LEFT | wx.ALL, 5)
+        self.t2 = wx.TextCtrl(self)
+        self.t2.Bind(wx.EVT_TEXT, self.OnKeyTyped)
+        hbox2.Add(self.t2, 1, wx.EXPAND | wx.ALIGN_LEFT | wx.ALL, 5)
+
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(self.rbox_contrast, 0, wx.ALL, 5)
         sizer.Add(self.rbox_perlevel, 0, wx.ALL, 5)
         sizer.Add(hbox1)
+        sizer.Add(hbox2)
+        sizer.Add(self.rbox_vertfile, 0, wx.ALL, 5)
         sizer.Add(button_gm, 0, wx.ALL, 5)
         self.sizer_h.Add(sizer)
         self.SetSizerAndFit(self.sizer_h)
 
-
     def OnKeyTyped(self, event):
-        vert = event.GetString()
+        txt = event.GetString()
 
 
     def onButtonCSA(self, event):
-        selected_overlay = displayCtx.getSelectedOverlay()
-        filename_path = selected_overlay.dataSource
-        contrast = self.rbox_contrast.GetStringSelection()
-        perlevel = self.rbox_perlevel.GetStringSelection()
-        vert = self.t1.GetValue()
 
-        print('Contrast:', contrast)
+        overlayORD = displayCtx.overlayOrder
 
-        print('Verts:', vert)
+        print('Overlay Order:', overlayORD)
 
-        print('Perlevel:',perlevel)
+        if len(overlayORD) > 1:
 
-        path_name = os.path.dirname(filename_path)
-        base_name = os.path.basename(filename_path)
-
-        fname, fext = base_name.split(os.extsep, 1)
-        seg_name = "{}_seg.{}".format(fname, fext)
-        segname_path = os.path.join(path_name, seg_name)
-
-        print('Tissue:', contrast)
-
-        if perlevel == 'No':
-
-            if contrast == 'GM':
-                outfilename = os.path.join(os.getcwd(), 'gmCSA.csv')
-
-            elif contrast == 'WM':
-                outfilename = os.path.join(os.getcwd(), 'wmCSA.csv')
-
-            else:
-                outfilename = os.path.join(os.getcwd(), 'totalCSA.csv')
-
-            cmd_line = "sct_process_segmentation -i {} -o {}".format(segname_path, outfilename)
-            print('Command line:', cmd_line)
-            self.call_sct_command(cmd_line)
+            img2 = overlayORD[1]
+            segimg = overlayList[img2].dataSource
 
         else:
 
-            if contrast == 'GM':
-                outfilename = os.path.join(os.getcwd(), 'gmCSA_perlevel.csv')
+            img2 = overlayORD[0]
+            segimg = overlayList[img2].dataSource
 
-            elif contrast == 'WM':
-                outfilename = os.path.join(os.getcwd(), 'wmCSA_perlevel.csv')
+        print('Segmentation:', segimg)
+
+        vertfile = self.rbox_vertfile.GetStringSelection()
+        perlevel = self.rbox_perlevel.GetStringSelection()
+        vert = self.t1.GetValue()
+        tabname = self.t2.GetValue()
+
+        if vert == '':
+            print('Vertebral labeling or slice range not defined.')
+        else:
+            print('Verts:', vert)
+
+        if tabname == '':
+            print('Output table name not defined, standard name will be used.')
+        else:
+            print('Output Table Name:', tabname)
+
+        print('Perlevel:',perlevel)
+
+        #Composition of sct_process_segmentation taken in account flags -z, -vert and -vertfile
+        if perlevel == 'No':
+
+            if tabname == '':
+
+                outfilename = os.path.join(os.getcwd(), 'CSA.csv')
+
+                #Slice Range
+                if vert == '':
+
+                    cmd_line = "sct_process_segmentation -i {} -o {}".format(segimg, outfilename)
+                    print('Command line:', cmd_line)
+                    self.call_sct_command(cmd_line)
+
+                else:
+
+                    cmd_line = "sct_process_segmentation -i {} -z {} -o {}".format(segimg, vert, outfilename)
+                    print('Command line:', cmd_line)
+                    self.call_sct_command(cmd_line)
 
             else:
-                outfilename = os.path.join(os.getcwd(), 'totalCSA_perlevel.csv')
 
-            cmd_line1 = "sct_warp_template -d {} -w warp_template2anat.nii.gz".format(filename_path)
-            print('Command line:', cmd_line1)
-            self.call_sct_command(cmd_line1)
+                outfilename = os.path.join(os.getcwd(), '{}.csv'.format(tabname))
 
-            cmd_line2 = "sct_process_segmentation -i {} -vert {} -perlevel 1 -o {}".format(segname_path, vert, outfilename)
-            print('Command line:', cmd_line2)
-            self.call_sct_command(cmd_line2)
+                if vert == '':
+
+                    cmd_line = "sct_process_segmentation -i {} -o {}".format(segimg, outfilename)
+                    print('Command line:', cmd_line)
+                    self.call_sct_command(cmd_line)
+
+                else:
+
+                    cmd_line = "sct_process_segmentation -i {} -z {} -o {}".format(segimg, vert, outfilename)
+                    print('Command line:', cmd_line)
+                    self.call_sct_command(cmd_line)
+
+        else:
+
+            if vertfile == 'Off':
+
+                if tabname == '':
+
+                    outfilename = os.path.join(os.getcwd(), 'CSA.csv')
+
+                    #Vertebral Levels
+                    if vert == '':
+
+                        print('Error: vert box is empty.')
+
+                    else:
+
+                        cmd_line = "sct_process_segmentation -i {} -vert {} -perlevel 1 -o {}".format(segimg, vert, outfilename)
+                        print('Command line:', cmd_line)
+                        self.call_sct_command(cmd_line)
+
+                else:
+
+                    outfilename = os.path.join(os.getcwd(), '{}.csv'.format(tabname))
+
+                    if vert == '':
+
+                        cmd_line = "sct_process_segmentation -i {} -vert {} -perlevel 1 -o {}".format(segimg, vert, outfilename)
+                        print('Error: vert box is empty.')
+                        self.call_sct_command(cmd_line)
+
+                    else:
+
+                        cmd_line = "sct_process_segmentation -i {} -vert {} -perlevel 1 -o {}".format(segimg, vert, outfilename)
+                        print('Command line:', cmd_line)
+                        self.call_sct_command(cmd_line)
+
+            else:
+
+                try:
+
+                    if len(overlayORD) > 2:
+
+                        img3 = overlayORD[2]
+                        vertfileimg = overlayList[img3].dataSource
+
+                        print('Vert file:', vertfileimg)
+
+                    else:
+
+                        img3 = overlayORD[1]
+                        vertfileimg = overlayList[img3].dataSource
+
+                        print('Vert file:', vertfileimg)
+
+                except:
+
+                    print('Error: Upload PAM50_levels.nii.gz')
+
+                try:
+
+                    if tabname == '':
+
+                        outfilename = os.path.join(os.getcwd(), 'CSA.csv')
+
+                        #Non-standard PAM50_levels.nii.gz
+                        if vert == '':
+
+                            print('Error: vert box is empty.')
+
+                        else:
+
+                            cmd_line = "sct_process_segmentation -i {} -vert {} -perlevel -vertfile {} 1 -o {}".format(
+                                segimg, vert, vertfileimg, outfilename)
+                            print('Command line:', cmd_line)
+                            self.call_sct_command(cmd_line)
+
+                    else:
+
+                        outfilename = os.path.join(os.getcwd(), '{}.csv'.format(tabname))
+
+                        if vert == '':
+
+                            print('Error: vert box is empty.')
+                            self.call_sct_command(cmd_line)
+
+                        else:
+
+                            cmd_line = "sct_process_segmentation -i {} -vert {} -perlevel -vertfile {} 1 -o {}".format(
+                                segimg, vert, vertfileimg, outfilename)
+                            print('Command line:', cmd_line)
+                            self.call_sct_command(cmd_line)
+
+                except:
+
+                    print('Error: Upload PAM50_levels.nii.gz')
 
 #Automatically identifies the vertebral levels
 class TabPanelVertLB(SCTPanel):
@@ -415,8 +580,10 @@ class TabPanelVertLB(SCTPanel):
     vertebral levels. For more information, please refer to the
     article below.<br><br>
     <b>Usage</b>:<br>
-    You need to have the raw imaging (T1w, T2w or T2s) selected, i.e, purple line over the file name
-    and to display the image, click on the eye icon next to it. 
+    To launch the script, the uploaded images into FSLeyes must respect a sequence.
+    In the Overlay list field, the images order is, from the bottom to the top, raw imaging
+    (t1 and t2) and the segmentation imaging (output propseg or deepseg_sc). It is not necessary
+    uploading the images in such order, with the arrows is possible to sort them.
     For more information, please refer to the article below.<br><br>
     <b>Specific citation</b>:<br>
     Ullmann et al.
@@ -431,7 +598,7 @@ class TabPanelVertLB(SCTPanel):
         button_gm = wx.Button(self, id=wx.ID_ANY, label="Vertebral Labeling")
         button_gm.Bind(wx.EVT_BUTTON, self.onButtonVL)
 
-        lbl_contrasts = ['t1', 't2', 't2s']
+        lbl_contrasts = ['t1', 't2']
         self.rbox_contrast = wx.RadioBox(self, label='Select contrast:',
                                          choices=lbl_contrasts,
                                          majorDimension=1,
@@ -444,20 +611,27 @@ class TabPanelVertLB(SCTPanel):
         self.SetSizerAndFit(self.sizer_h)
 
     def onButtonVL(self, event):
-        selected_overlay = displayCtx.getSelectedOverlay()
-        filename_path = selected_overlay.dataSource
-        contrast = self.rbox_contrast.GetStringSelection()
 
-        path_name = os.path.dirname(filename_path)
-        base_name = os.path.basename(filename_path)
+        overlayORD = displayCtx.overlayOrder
+
+        print('Overlay Order:', overlayORD)
+
+        img1 = overlayORD[0]
+        img2 = overlayORD[1]
+        rawimg = overlayList[img1].dataSource
+        segimg = overlayList[img2].dataSource
+
+        print('Raw Image:', rawimg,)
+        print('Segmentation:', segimg)
+
+        contrast = self.rbox_contrast.GetStringSelection()
+        base_name = os.path.basename(segimg)
 
         fname, fext = base_name.split(os.extsep, 1)
-        seg_name = "{}_seg.{}".format(fname, fext)
-        segname_path = os.path.join(path_name, seg_name)
 
-        out_name = "{}_seg_labeled.{}".format(fname, fext)
+        out_name = "{}_labeled.{}".format(fname, fext)
 
-        cmd_line = "sct_label_vertebrae -i {} -s {} -c {}".format(filename_path, segname_path, contrast)
+        cmd_line = "sct_label_vertebrae -i {} -s {} -c {}".format(rawimg, segimg, contrast)
         print('Command:', cmd_line)
         self.call_sct_command(cmd_line)
 
@@ -474,8 +648,10 @@ class TabPanelMOCO(SCTPanel):
     motion correction in the diffusion-weighted imaging. For more information, please refer to the
     article below.<br><br>
     <b>Usage</b>:<br>
-    You need to have the raw diffusion-weighted imaging selected, i.e, purple line over the file name
-    and to display the image, click on the eye icon next to it. 
+    To launch the script, the uploaded images into FSLeyes must respect a sequence.
+    In the Overlay list field, the images order is, from the bottom to the top, the diffusion imaging
+    (dwi) and, if you want, a mask imaging (binary mask to limit voxels considered by the registration metric). 
+    It is not necessary uploading the images in such order, with the arrows is possible to sort them.
     For more information, please refer to the article below.<br><br>
     <b>Specific citation</b>:<br>
     Xu et al.
@@ -490,85 +666,64 @@ class TabPanelMOCO(SCTPanel):
         button_gm = wx.Button(self, id=wx.ID_ANY,
                               label="dMRI Moco")
         button_gm.Bind(wx.EVT_BUTTON, self.onButtonMOCO)
+
+        lbl_mask = ['No', 'Yes']
+        self.rbox_mask = wx.RadioBox(self, label='Select Mask:',
+                                         choices=lbl_mask,
+                                         majorDimension=1,
+                                         style=wx.RA_SPECIFY_ROWS)
+
         sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(self.rbox_mask, 0, wx.ALL, 5)
         sizer.Add(button_gm, 0, wx.ALL, 5)
         self.sizer_h.Add(sizer)
         self.SetSizerAndFit(self.sizer_h)
 
     def onButtonMOCO(self, event):
-        selected_overlay = displayCtx.getSelectedOverlay()
-        filename_path = selected_overlay.dataSource
 
-        path_name = os.path.dirname(filename_path)
-        base_name = os.path.basename(filename_path)
+        overlayORD = displayCtx.overlayOrder
+
+        print('Overlay Order:', overlayORD)
+
+        img1 = overlayORD[0]
+        rawimg = overlayList[img1].dataSource
+        print('Raw Image:', rawimg)
+
+        path_name = os.path.dirname(rawimg)
+        base_name = os.path.basename(rawimg)
 
         fname, fext = base_name.split(os.extsep, 1)
-
-        mean_name = "{}_mean.{}".format(fname,fext)
-        meanname_path = os.path.join(path_name, mean_name)
-
-        seg_name = "{}_mean_seg.{}".format(fname, fext)
-        segname_path = os.path.join(path_name, seg_name)
-
-        mask_name = "mask_{}_mean.{}".format(fname,fext)
-        maskname_path = os.path.join(path_name, mask_name)
-
-        crop_name = "{}_crop.{}".format(fname,fext)
-        cropname_path = os.path.join(path_name, crop_name)
 
         bvec_name = "{}_bvecs.txt".format(fname)
         bvecname_path = os.path.join(path_name, bvec_name)
 
-        out_name = "{}_crop_moco.{}".format(fname, fext)
+        print('Bvec file:', bvecname_path)
+
+        out_name = "{}_moco.{}".format(fname, fext)
         outname_path = os.path.join(path_name, out_name)
 
-        cmd_line1 = "sct_maths -i {} -mean t -o {}".format(filename_path, meanname_path)
-        print('Command:', cmd_line1)
-        self.call_sct_command(cmd_line1)
+        mask = self.rbox_mask.GetStringSelection()
 
-        image = Image(meanname_path)
-        overlayList.append(image)
-        del overlayList[0]
+        if mask == 'Yes':
 
-        opts = displayCtx.getOpts(image)
-        opts.cmap = 'gray'
+            print('Selected Mask: Yes')
+            img2 = overlayORD[1]
+            maskimg = overlayList[img2].dataSource
+            print('Mask:', maskimg)
 
-        cmd_line2 = "sct_deepseg_sc -i {} -c dwi".format(meanname_path)
-        print('Command:', cmd_line2)
-        self.call_sct_command(cmd_line2)
+            cmd_line = "sct_dmri_moco -i {} -bvec {} -m {}".format(rawimg, bvecname_path, maskimg)
+            print('Command line:', cmd_line)
+            self.call_sct_command(cmd_line)
 
-        image = Image(segname_path)
-        overlayList.append(image)
+        else:
 
-        opts = displayCtx.getOpts(image)
-        opts.cmap = 'red'
+            print('Selected Mask: No')
+            cmd_line = "sct_dmri_moco -i {} -bvec {}".format(rawimg, bvecname_path)
+            print('Command line:', cmd_line)
+            self.call_sct_command(cmd_line)
 
-        cmd_line3 = "sct_create_mask -i {} -p centerline,{} -size 35mm".format(meanname_path, segname_path)
-        print('Command:', cmd_line3)
-        self.call_sct_command(cmd_line3)
-
-        del overlayList[1]
-
-        image = Image(maskname_path)
-        overlayList.append(image)
-
-        opts = displayCtx.getOpts(image)
-        opts.cmap = 'red'
-
-        cmd_line4 = "sct_crop_image -i {} -m {} -o {}".format(filename_path, maskname_path, cropname_path)
-        print('Command:', cmd_line4)
-        self.call_sct_command(cmd_line4)
-
-        cmd_line5 = "sct_dmri_moco -i {} -bvec {}".format(cropname_path, bvecname_path)
-        print('Command:', cmd_line5)
-        self.call_sct_command(cmd_line5)
-
-        del overlayList[0]
         image = Image(outname_path)
         overlayList.append(image)
-
-        del overlayList[0]
-
         opts = displayCtx.getOpts(image)
         opts.cmap = 'gray'
 
@@ -577,8 +732,11 @@ class TabPanelCompDTI(SCTPanel):
     DESCRIPTION = """This tool automatically compute the diffusion maps of the spinal cord. 
     For more information, please refer to the article below.<br><br>
     <b>Usage</b>:<br>
-    You need to have the dwi imaging processed by dMRI Moco selected (subj_crop_moco.nii.gz), i.e, purple line over the file name
-    and to display the image, click on the eye icon next to it. 
+    To launch the script, the uploaded the image that you want to compute the diffusion parameters into FSLeyes.
+    If you have more than one imaging uploaded, the first image from the bottom to the top, in the Overlay list field, 
+    will be used to launch this script.
+    It is not necessary uploading the images in such order, with the arrows is possible to sort them.
+    Bvec and bval must be named as subjname_bvecs.txt and subjname_bvals.txt.
     For more information, please refer to the article below.<br><br>
     <b>Specific citation</b>:<br>
     Garyfallidis et al.
@@ -593,42 +751,85 @@ class TabPanelCompDTI(SCTPanel):
         button_gm = wx.Button(self, id=wx.ID_ANY,
                               label="Compute DTI")
         button_gm.Bind(wx.EVT_BUTTON, self.onButtonCDTI)
+
+        hbox1 = wx.BoxSizer(wx.HORIZONTAL)
+        l1 = wx.StaticText(self, wx.ID_ANY, "Output File Name:")
+        hbox1.Add(l1, 1, wx.EXPAND | wx.ALIGN_LEFT | wx.ALL, 5)
+        self.t1 = wx.TextCtrl(self)
+        self.t1.Bind(wx.EVT_TEXT, self.OnKeyTyped)
+        hbox1.Add(self.t1, 1, wx.EXPAND | wx.ALIGN_LEFT | wx.ALL, 5)
+
         sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(hbox1)
         sizer.Add(button_gm, 0, wx.ALL, 5)
         self.sizer_h.Add(sizer)
         self.SetSizerAndFit(self.sizer_h)
 
+    def OnKeyTyped(self, event):
+        txt = event.GetString()
+
     def onButtonCDTI(self, event):
-        selected_overlay = displayCtx.getSelectedOverlay()
-        filename_path = selected_overlay.dataSource
 
-        path_name = os.path.dirname(filename_path)
-        base_name = os.path.basename(filename_path)
+        overlayORD = displayCtx.overlayOrder
 
+        img1 = overlayORD[0]
+        rawimg = overlayList[img1].dataSource
+        print('Input Image:', rawimg)
+
+        outname = self.t1.GetValue()
+
+        path_name = os.path.dirname(rawimg)
+        base_name = os.path.basename(rawimg)
         fnamecrop, fext = base_name.split(os.extsep, 1)
-
         fname = fnamecrop.split('_')[0]
 
         bvec_name = "{}_bvecs.txt".format(fname)
         bvecname_path = os.path.join(path_name, bvec_name)
 
+        print('Bvec file:', bvecname_path)
+
         bval_name = "{}_bvals.txt".format(fname)
         bvalname_path = os.path.join(path_name, bval_name)
 
-        fa_name = "dti_FA.nii.gz"
-        faname_path = os.path.join(os.getcwd(), fa_name)
+        print('Bval file:', bvalname_path)
 
-        ad_name = "dti_AD.nii.gz"
-        adname_path = os.path.join(os.getcwd(), ad_name)
+        if outname == '':
 
-        md_name = "dti_MD.nii.gz"
-        mdname_path = os.path.join(os.getcwd(), md_name)
+            print('Output file name not defined, standard name will be used.')
+            fa_name = "dti_FA.nii.gz"
+            faname_path = os.path.join(os.getcwd(), fa_name)
 
-        rd_name = "dti_RD.nii.gz"
-        rdname_path = os.path.join(os.getcwd(), rd_name)
+            ad_name = "dti_AD.nii.gz"
+            adname_path = os.path.join(os.getcwd(), ad_name)
 
-        cmd_line = "sct_dmri_compute_dti -i {} -bval {} -bvec {}".format(filename_path, bvalname_path, bvecname_path)
-        print('Command:', cmd_line)
+            md_name = "dti_MD.nii.gz"
+            mdname_path = os.path.join(os.getcwd(), md_name)
+
+            rd_name = "dti_RD.nii.gz"
+            rdname_path = os.path.join(os.getcwd(), rd_name)
+
+            cmd_line = "sct_dmri_compute_dti -i {} -bval {} -bvec {}".format(rawimg, bvalname_path,
+                                                                             bvecname_path)
+            print('Command line:', cmd_line)
+
+        else:
+
+            print('Output file name:', outname)
+            fa_name = "{}FA.nii.gz".format(outname)
+            faname_path = os.path.join(os.getcwd(), fa_name)
+
+            ad_name = "{}AD.nii.gz".format(outname)
+            adname_path = os.path.join(os.getcwd(), ad_name)
+
+            md_name = "{}MD.nii.gz".format(outname)
+            mdname_path = os.path.join(os.getcwd(), md_name)
+
+            rd_name = "{}RD.nii.gz".format(outname)
+            rdname_path = os.path.join(os.getcwd(), rd_name)
+
+            cmd_line = "sct_dmri_compute_dti -i {} -bval {} -bvec {} -o {}".format(rawimg, bvalname_path, bvecname_path, outname)
+            print('Command line:', cmd_line)
+
         self.call_sct_command(cmd_line)
 
         image = Image(faname_path)
@@ -658,8 +859,10 @@ class TabPanelREG(SCTPanel):
     the registration between your subject and the PAM50 template. 
     For more information, please refer to the article below.<br><br>
     <b>Usage</b>:<br>
-    You need to have the raw imaging (T1w, T2w or T2s) selected, i.e, purple line over the file name
-    and to display the image, click on the eye icon next to it. 
+    To launch the script, the uploaded images into FSLeyes must respect a sequence.
+    In the Overlay list field, the images order is, from the bottom to the top, raw imaging
+    (t1 and t2) segmentation imaging (output propseg or deepseg_sc) and disc labeling imaging (output label_utils). 
+    It is not necessary uploading the images in such order, with the arrows is possible to sort them. 
     For more information, please refer to the article below.<br><br>
     <b>Specific citation</b>:<br>
     De Lenner et al.
@@ -686,64 +889,46 @@ class TabPanelREG(SCTPanel):
                                       majorDimension=1,
                                       style=wx.RA_SPECIFY_ROWS)
 
-        hbox1 = wx.BoxSizer(wx.HORIZONTAL)
-        l1 = wx.StaticText(self, wx.ID_ANY, "Disc Levels")
-        hbox1.Add(l1, 1, wx.EXPAND | wx.ALIGN_LEFT | wx.ALL, 5)
-        self.t1 = wx.TextCtrl(self)
-        self.t1.Bind(wx.EVT_TEXT, self.OnKeyTyped)
-        hbox1.Add(self.t1, 1, wx.EXPAND | wx.ALIGN_LEFT | wx.ALL, 5)
-
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(self.rbox_contrast, 0, wx.ALL, 5)
         sizer.Add(self.rbox_label, 0, wx.ALL, 5)
-        sizer.Add(hbox1)
         sizer.Add(button_gm, 0, wx.ALL, 5)
         self.sizer_h.Add(sizer)
         self.SetSizerAndFit(self.sizer_h)
 
-    def OnKeyTyped(self, event):
-        vert = event.GetString()
-
 
     def onButtonREG(self, event):
-        selected_overlay = displayCtx.getSelectedOverlay()
-        filename_path = selected_overlay.dataSource
+
+        overlayORD = displayCtx.overlayOrder
+
+        print('Overlay Order:', overlayORD)
+
+        img1 = overlayORD[0]
+        img2 = overlayORD[1]
+        img3 = overlayORD[2]
+        rawimg = overlayList[img1].dataSource
+        segimg = overlayList[img2].dataSource
+        labimg = overlayList[img3].dataSource
+
+        print('Raw Image:', rawimg)
+        print('Segmentation:', segimg)
+        print('Vertenbral Labeling:', labimg)
+
         contrast = self.rbox_contrast.GetStringSelection()
         label = self.rbox_label.GetStringSelection()
-        vert = self.t1.GetValue()
+
+        out_name = 'template2anat.nii.gz'
+        outfilename = os.path.join(os.getcwd(),out_name)
 
         print('Contrast:', contrast)
 
         print('Label:', label)
 
-        print('Vertebral Levels:', vert)
-
-        path_name = os.path.dirname(filename_path)
-        base_name = os.path.basename(filename_path)
-
-        fname, fext = base_name.split(os.extsep, 1)
-
-        seg_name = "{}_seg.{}".format(fname, fext)
-        segname_path = os.path.join(path_name, seg_name)
-
-        out_name = "template2anat.nii.gz"
-        outfilename = os.path.join(os.getcwd(), out_name)
-
         if label == 'Automatic':
 
-            vl_name = "{}_seg_labeled.{}".format(fname, fext)
-            vlname_path = os.path.join(path_name, vl_name)
-
-            vert_name = "{}_labels_vert.{}".format(fname, fext)
-            vertname_path = os.path.join(path_name, vert_name)
-
-            cmd_line1 = "sct_label_utils -i {} -vert-body {} -o {}".format(vlname_path, vert, vertname_path)
-            print('Command:', cmd_line1)
-            self.call_sct_command(cmd_line1)
-
-            cmd_line2 = "sct_register_to_template -i {} -s {} -l {} -c {}".format(filename_path, segname_path, vertname_path, contrast)
-            print('Command:', cmd_line2)
-            self.call_sct_command(cmd_line2)
+            cmd_line = "sct_register_to_template -i {} -s {} -l {} -c {}".format(rawimg, segimg, labimg, contrast)
+            print('Command:', cmd_line)
+            self.call_sct_command(cmd_line)
 
             image = Image(outfilename)
             overlayList.append(image)
@@ -752,17 +937,10 @@ class TabPanelREG(SCTPanel):
 
         else:
 
-            disc_name = "{}_labels_disc.{}".format(fname, fext)
-            discname_path = os.path.join(path_name, disc_name)
-
-            cmd_line1 = "sct_label_utils -i {} -create-viewer {} -o {}".format(filename_path, vert, discname_path)
-            print('Command:', cmd_line1)
-            self.call_sct_command(cmd_line1)
-
-            cmd_line2 = "sct_register_to_template -i {} -s {} -ldisc {} -c {}".format(filename_path, segname_path,
-                                                                                  discname_path, contrast)
-            print('Command:', cmd_line2)
-            self.call_sct_command(cmd_line2)
+            cmd_line = "sct_register_to_template -i {} -s {} -ldisc {} -c {}".format(rawimg, segimg,
+                                                                                  labimg, contrast)
+            print('Command:', cmd_line)
+            self.call_sct_command(cmd_line)
 
             image = Image(outfilename)
             overlayList.append(image)
