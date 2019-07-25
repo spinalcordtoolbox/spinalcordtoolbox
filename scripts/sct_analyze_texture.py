@@ -23,7 +23,7 @@ from skimage.feature import greycomatrix, greycoprops
 import sct_utils as sct
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.utils import Metavar
+from spinalcordtoolbox.utils import Metavar, SmartFormatter
 
 def get_parser():
     # Initialize the parser
@@ -42,19 +42,19 @@ def get_parser():
     mandatoryArguments.add_argument(
         "-i",
         metavar=Metavar.file,
-        help='Image to analyze. (e.g. "t2.nii.gz")',
+        help='Image to analyze. Example: t2.nii.gz',
         required=False)
     mandatoryArguments.add_argument(
         "-m",
         metavar=Metavar.file,
-        help='Image mask (e.g. "t2_seg.nii.gz")',
+        help='Image mask Example: t2_seg.nii.gz',
         required=False)
     optional = parser.add_argument_group("\nOPTIONALS ARGUMENTS")
     optional.add_argument(
         "-h",
         "--help",
         action="help",
-        help="show this help message and exit")
+        help="Show this help message and exit")
     optional.add_argument(
         "-feature",
         metavar=Metavar.str,
@@ -64,14 +64,14 @@ def get_parser():
     optional.add_argument(
         "-distance",
         metavar=Metavar.int,
-        help='Distance offset for GLCM computation, in pixel (suggested distance values between 1 and 5). (e.g. "1")',
+        help='Distance offset for GLCM computation, in pixel (suggested distance values between 1 and 5). Example: 1',
         required=False,
         default=ParamGLCM().distance)
     optional.add_argument(
         "-angle",
         metavar=Metavar.list,
         help='List of angles for GLCM computation, separate arguments with ",", in degrees (suggested distance values '
-             'between 0 and 179). (e.g. "0,90")',
+             'between 0 and 179). Example: 0,90',
         required=False,
         default=ParamGLCM().angle)
     optional.add_argument(
@@ -83,7 +83,7 @@ def get_parser():
     optional.add_argument(
         "-ofolder",
         metavar=Metavar.folder,
-        help='Output folder. (e.g. "/my_texture/")',
+        help='Output folder. Example: /my_texture/',
         required=False,
         default=Param().path_results)
     optional.add_argument(
