@@ -19,7 +19,7 @@ import numpy as np
 import sct_utils as sct
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.utils import Metavar
+from spinalcordtoolbox.utils import Metavar, SmartFormatter
 
 # TODO: display results ==> not only max : with a violin plot of h1 and h2 distribution ? see dev/straightening --> seaborn.violinplot
 # TODO: add the option Hyberbolic Hausdorff's distance : see  choi and seidel paper
@@ -433,15 +433,16 @@ def get_parser():
     # Initialize the parser
 
     parser = argparse.ArgumentParser(
-        description='Compute the Hausdorff\'s distance between two binary images which can be thinned (ie skeletonized)'
-                    'If only one image is inputted, it will be only thinned',
+        description='Compute the Hausdorff\'s distance between two binary images which can be thinned (ie skeletonized).'
+                    ' If only one image is inputted, it will be only thinned',
         add_help=None,
+        formatter_class=SmartFormatter,
         prog=os.path.basename(__file__).strip(".py")
     )
     mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatoryArguments.add_argument(
         "-i",
-        help='First Image on which you want to find the skeleton (e.g. "t2star_manual_gmseg.nii.gz")',
+        help='First Image on which you want to find the skeleton Example: t2star_manual_gmseg.nii.gz',
         metavar=Metavar.file,
         required=False)
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
@@ -452,27 +453,28 @@ def get_parser():
         help="show this help message and exit")
     optional.add_argument(
         "-d",
-        help='Second Image on which you want to find the skeleton (e.g. "t2star_manual_gmseg.nii.gz")',
+        help='Second Image on which you want to find the skeleton Example: t2star_manual_gmseg.nii.gz',
         metavar=Metavar.file,
         required=False,
         default=None)
     optional.add_argument(
         "-thinning",
         type=int,
-        help="Thinning : find the skeleton of the binary images using the Zhang-Suen algorithm (1984) and use it to compute the hausdorff's distance",
+        help="Thinning : find the skeleton of the binary images using the Zhang-Suen algorithm (1984) and use it to "
+             "compute the hausdorff's distance",
         required=False,
         default=1,
         choices=(0, 1))
     optional.add_argument(
         "-resampling",
         type=float,
-        help="pixel size in mm to resample to (e.g. 0.5)",
+        help="pixel size in mm to resample to Example: 0.5",
         metavar=Metavar.float,
         required=False,
         default=0.1)
     optional.add_argument(
         "-o",
-        help='Name of the output file (e.g. "my_hausdorff_dist.txt")',
+        help='Name of the output file Example: my_hausdorff_dist.txt',
         metavar=Metavar.str,
         required=False,
         default='hausdorff_distance.txt')
