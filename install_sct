@@ -158,8 +158,8 @@ Please check your internet connection before relaunching the installer\n"
 ARGPARSE_ALLOW_UNKNOWN_ARGS=true # tell argparse to allow unknown args
 source scripts/argparse.bash
 argparse "$@" <<EOF || exit 1
-parser.add_argument('-d', '--no_data_install', action='store_true', help='-d \v Prevent the (re)-installation of the \"data/\" directory')
-parser.add_argument('-b', '--no_sct_bin_install', action='store_true', help='-b \v Prevent the (re)-installation of the SCT binaries files')
+parser.add_argument('-d', '--no-data-install', action='store_true', help='-d \v Prevent the (re)-installation of the \"data/\" directory')
+parser.add_argument('-b', '--no-sct-bin-install', action='store_true', help='-b \v Prevent the (re)-installation of the SCT binaries files')
 parser.add_argument('-v', '--verbose', action='store_true', help='\n\t-v \v Full verbose')
 EOF
 
