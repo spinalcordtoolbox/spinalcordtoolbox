@@ -21,7 +21,7 @@ import argparse
 from spinalcordtoolbox.image import Image, empty_like
 from spinalcordtoolbox.utils import parse_num_list
 import sct_utils as sct
-from spinalcordtoolbox.utils import Metavar
+from spinalcordtoolbox.utils import Metavar, SmartFormatter
 
 
 # PARAMETERS
@@ -40,11 +40,12 @@ def get_parser():
                     ' signal-to-noise ratios in MR images: Influence of multichannel coils, parallel '
                     'imaging, and reconstruction filters. J Magn Reson Imaging 2007; 26(2): 375-385].',
         add_help=None,
+        formatter_class=SmartFormatter,
         prog=os.path.basename(__file__).strip(".py"))
     mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatoryArguments.add_argument(
         '-i',
-        help='4D data to compute the SNR on (along the 4th dimension)(e.g. "b0s.nii.gz").',
+        help='4D data to compute the SNR on (along the 4th dimension). Example: b0s.nii.gz',
         required=False,
         metavar=Metavar.file)
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
@@ -55,20 +56,20 @@ def get_parser():
         help="show this help message and exit")
     optional.add_argument(
         '-m',
-        help='Binary (or weighted) mask within which SNR will be averaged (e.g. "dwi_moco_mean_seg.nii.gz").',
+        help='Binary (or weighted) mask within which SNR will be averaged. Example: dwi_moco_mean_seg.nii.gz',
         metavar=Metavar.file,
         default='')
     optional.add_argument(
         '-method',
-        help='Method to use to compute the SNR:\n'
+        help='R|Method to use to compute the SNR:\n'
              '- diff (default): Substract two volumes (defined by -vol) and estimate noise variance within the ROI (flag -m is required).\n'
              '- mult: Estimate noise variance over time across volumes specified with -vol.',
         choices=('diff', 'mult'),
         default='diff')
     optional.add_argument(
         '-vol',
-        help='Volumes to compute SNR from. Separate with "," (e.g. "-vol 0,1"), or select range '
-             'using ":" (e.g. "-vol 2:50"). By default, all volumes in series are selected.',
+        help='Volumes to compute SNR from. Separate with "," (Example: -vol 0,1), or select range '
+             'using ":" (Example: -vol 2:50). By default, all volumes in series are selected.',
         metavar=Metavar.str,
         default='')
     optional.add_argument(
