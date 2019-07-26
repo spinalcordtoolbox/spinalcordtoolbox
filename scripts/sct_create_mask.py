@@ -29,7 +29,7 @@ import sct_utils as sct
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
 from sct_image import concat_data
-from spinalcordtoolbox.utils import Metavar
+from spinalcordtoolbox.utils import Metavar, SmartFormatter
 
 
 # DEFAULT PARAMETERS
@@ -292,16 +292,16 @@ def get_parser():
         description='Create mask along z direction.',
         add_help=None,
         prog=os.path.basename(__file__).strip(".py"),
-        formatter_class= argparse.RawTextHelpFormatter)
+        formatter_class= SmartFormatter)
     mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatoryArguments.add_argument(
         '-i',
-        help='Image to create mask on. Only used to get header. Must be 3D, (e.g. "data.nii.gz")',
+        help='Image to create mask on. Only used to get header. Must be 3D. Example: data.nii.gz',
         metavar=Metavar.file,
         required = False)
     mandatoryArguments.add_argument(
         '-p',
-        help='Process to generate mask.\n'
+        help='R|Process to generate mask.\n'
              '  <coord,XxY>: Center mask at the X,Y coordinates. (e.g. "coord,20x15")\n'
              '  <point,FILE>: Center mask at the X,Y coordinates of the label defined in input volume FILE. (e.g. "point,label.nii.gz")\n'
              '  <center>: Center mask in the middle of the FOV (nx/2, ny/2).\n'
@@ -314,10 +314,11 @@ def get_parser():
         "-h",
         "--help",
         action="help",
-        help="show this help message and exit")
+        help="Show this help message and exit")
     optional.add_argument(
         '-size',
-        help='Size of the mask in the axial plane, given in pixel (e.g. "35") or in millimeter (e.g. "35mm"). If shape=gaussian, size corresponds to "sigma" (e.g. "45")',
+        help='Size of the mask in the axial plane, given in pixel (Example: 35) or in millimeter (Example: 35mm). '
+             'If shape=gaussian, size corresponds to "sigma" (Example: 45).',
         metavar=Metavar.str,
         required = False,
         default = param_default.size)
@@ -330,7 +331,7 @@ def get_parser():
     optional.add_argument(
         '-o',
         metavar=Metavar.str,
-        help='Name of output mask, (e.g. "data.nii")',
+        help='Name of output mask, Example: data.nii',
         required = False)
     optional.add_argument(
         "-r",
