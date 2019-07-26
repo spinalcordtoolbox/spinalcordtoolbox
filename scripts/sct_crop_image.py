@@ -94,13 +94,13 @@ class ImageCropper(object):
             self.start, self.end, self.dim = find_mask_boundaries(self.mask)
 
         if self.start is not None:
-            self.cmd += ["-start", ','.join(map(str, self.start))]
+            self.cmd += ["-start", ''.join(map(str, self.start))]
         if self.end is not None:
-            self.cmd += ["-end", ','.join(map(str, self.end))]
+            self.cmd += ["-end", ''.join(map(str, self.end))]
         if self.dim is not None:
-            self.cmd += ["-dim", ','.join(map(str, self.dim))]
+            self.cmd += ["-dim", ''.join(map(str, self.dim))]
         if self.shift is not None:
-            self.cmd += ["-shift", ','.join(map(str, self.shift))]
+            self.cmd += ["-shift", ''.join(map(str, self.shift))]
         if self.background is not None:
             self.cmd += ["-b", str(self.background)]
         if self.bmax is True:
