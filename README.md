@@ -159,7 +159,7 @@ alt="Fsleyes integration" width="240" height="180" border="10" /></a>
 - [Dupont SM, De Leener B, Taso M, Le Troter A, Stikov N, Callot V, Cohen-Adad J. Fully-integrated framework for the segmentation and registration of the spinal cord white and gray matter. Neuroimage 2017](https://www.ncbi.nlm.nih.gov/pubmed/27663988)
 - [Perone et al. Spinal cord gray matter segmentation using deep dilated convolutions. Sci Rep 2018](https://www.nature.com/articles/s41598-018-24304-3)
 - [Gros et al. Automatic spinal cord localization, robust to MRI contrasts using global curve optimization. Med Image Anal 2018](https://www.sciencedirect.com/science/article/pii/S136184151730186X)
-- [Gros et al. Automatic segmentation of the spinal cord and intramedullary multiple sclerosis lesions with convolutional neural networks. arXiv:1805.06349](https://arxiv.org/pdf/1805.06349.pdf)
+- [Gros et al. Automatic segmentation of the spinal cord and intramedullary multiple sclerosis lesions with convolutional neural networks. Neuroimage 2019](https://www.sciencedirect.com/science/article/pii/S1053811918319578)
 
 #### Registration
 - [Cohen-Adad et al. Slice-by-slice regularized registration for spinal cord MRI: SliceReg. Proc ISMRM 2015](https://www.dropbox.com/s/v3bb3etbq4gb1l1/cohenadad_ismrm15_slicereg.pdf?dl=0)
