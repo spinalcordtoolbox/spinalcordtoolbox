@@ -18,7 +18,7 @@ import os
 import argparse
 
 import sct_utils as sct
-from spinalcordtoolbox.utils import Metavar
+from spinalcordtoolbox.utils import Metavar, SmartFormatter
 
 # DEFAULT PARAMETERS
 
@@ -75,6 +75,7 @@ def get_parser():
     parser = argparse.ArgumentParser(
         description='Compute magnetization transfer ratio (MTR). Output is given in percentage.',
         add_help=None,
+        formatter_class=SmartFormatter,
         prog=os.path.basename(__file__).strip(".py"))
     mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatoryArguments.add_argument(
@@ -92,7 +93,7 @@ def get_parser():
         "-h",
         "--help",
         action="help",
-        help="show this help message and exit")
+        help="Show this help message and exit")
     optional.add_argument(
         '-v',
         type=int,

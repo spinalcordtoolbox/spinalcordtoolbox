@@ -15,142 +15,154 @@ from __future__ import division, absolute_import
 
 import os
 import sys
+import argparse
 
 import sct_utils as sct
-from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.deepseg_sc.core import deep_segmentation_spinalcord
-from spinalcordtoolbox.reports.qc import generate_qc
-from msct_parser import Parser
+from spinalcordtoolbox.utils import Metavar, SmartFormatter
 
 
 def get_parser():
     """Initialize the parser."""
-    parser = Parser(__file__)
-    parser.usage.set_description("""Spinal Cord Segmentation using convolutional networks. \n\nReference: C Gros, B De Leener, et al. Automatic segmentation of the spinal cord and intramedullary multiple sclerosis lesions with convolutional neural networks (2018). arxiv.org/abs/1805.06349""")
 
-    parser.add_option(name="-i",
-                      type_value="image_nifti",
-                      description="input image.",
-                      mandatory=True,
-                      example="t1.nii.gz")
-    parser.add_option(name="-c",
-                      type_value="multiple_choice",
-                      description="type of image contrast.",
-                      mandatory=True,
-                      example=['t1', 't2', 't2s', 'dwi'])
-    parser.add_option(name="-centerline",
-                      type_value="multiple_choice",
-                      description="Method used for extracting the centerline.\nsvm: automatic centerline detection, based on Support Vector Machine algorithm.\ncnn: automatic centerline detection, based on Convolutional Neural Network.\nviewer: semi-automatic centerline generation, based on manual selection of a few points using an interactive viewer, then approximation with NURBS.\nfile: use an existing centerline by specifying its filename with flag -file_centerline (e.g. -file_centerline t2_centerline_manual.nii.gz).\n",
-                      mandatory=False,
-                      example=['svm', 'cnn', 'viewer', 'file'],
-                      default_value="svm")
-    parser.add_option(name="-file_centerline",
-                      type_value="image_nifti",
-                      description="Input centerline file (to use with flag -centerline file).",
-                      mandatory=False,
-                      example="t2_centerline_manual.nii.gz")
-    parser.add_option(name="-brain",
-                      type_value="multiple_choice",
-                      description="indicate if the input image is expected to contain brain sections:\n1: contains brain section\n0: no brain section.\nTo indicate this parameter could speed the segmentation process. Note that this flag is only effective with -centerline cnn.",
-                      mandatory=False,
-                      example=["0", "1"])
-    parser.add_option(name="-kernel",
-                      type_value="multiple_choice",
-                      description="choice of 2D or 3D kernels for the segmentation. Note that segmentation with 3D kernels is significantely longer than with 2D kernels.",
-                      mandatory=False,
-                      example=['2d', '3d'],
-                      default_value="2d")
-    parser.add_option(name="-ofolder",
-                      type_value="folder_creation",
-                      description="output folder.",
-                      mandatory=False,
-                      example="My_Output_Folder/",
-                      default_value="")
-    parser.add_option(name="-r",
-                      type_value="multiple_choice",
-                      description="remove temporary files.",
-                      mandatory=False,
-                      example=['0', '1'],
-                      default_value='1')
-    parser.add_option(name="-v",
-                      type_value="multiple_choice",
-                      description="1: display on (default), 0: display off, 2: extended",
-                      mandatory=False,
-                      example=["0", "1", "2"],
-                      default_value="1")
-    parser.add_option(name='-qc',
-                      type_value='folder_creation',
-                      description='The path where the quality control generated content will be saved',
-                      default_value=None)
-    parser.add_option(name='-qc-dataset',
-                      type_value='str',
-                      description='If provided, this string will be mentioned in the QC report as the dataset the process was run on',
-                      )
-    parser.add_option(name='-qc-subject',
-                      type_value='str',
-                      description='If provided, this string will be mentioned in the QC report as the subject the process was run on',
-                      )
-    parser.add_option(name='-igt',
-                      type_value='image_nifti',
-                      description='File name of ground-truth segmentation.',
-                      mandatory=False)
+    parser = argparse.ArgumentParser(
+        description="Spinal Cord Segmentation using convolutional networks. Reference: Gros et al. Automatic "
+                    "segmentation of the spinal cord and intramedullary multiple sclerosis lesions with convolutional "
+                    "neural networks. Neuroimage. 2018 Oct 6;184:901-915. ",
+        formatter_class=SmartFormatter,
+        add_help=None,
+        prog=os.path.basename(__file__).strip(".py"))
+    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatory.add_argument(
+        "-i",
+        metavar=Metavar.file,
+        help='Input image. Example: t1.nii.gz')
+    mandatory.add_argument(
+        "-c",
+        help="Type of image contrast.",
+        choices=('t1', 't2', 't2s', 'dwi'))
+    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional.add_argument(
+        "-h",
+        "--help",
+        action="help",
+        help="show this help message and exit")
+    optional.add_argument(
+        "-centerline",
+        help="R|Method used for extracting the centerline:\n"
+             " svm: Automatic detection using Support Vector Machine algorithm.\n"
+             " cnn: Automatic detection using Convolutional Neural Network.\n"
+             " viewer: Semi-automatic detection using manual selection of a few points with an interactive viewer "
+             "followed by regularization.\n"
+             " file: Use an existing centerline (use with flag -file_centerline)",
+        choices=('svm', 'cnn', 'viewer', 'file'),
+        default="svm")
+    optional.add_argument(
+        "-file_centerline",
+        metavar=Metavar.str,
+        help='Input centerline file (to use with flag -centerline file). Example: t2_centerline_manual.nii.gz')
+    optional.add_argument(
+        "-brain",
+        type=int,
+        help='Indicate if the input image contains brain sections (to speed up segmentation). This flag is only '
+             'effective with "-centerline cnn".',
+        choices=(0, 1))
+    optional.add_argument(
+        "-kernel",
+        help="Choice of kernel shape for the CNN. Segmentation with 3D kernels is longer than with 2D kernels.",
+        choices=('2d', '3d'),
+        default="2d")
+    optional.add_argument(
+        "-ofolder",
+        metavar=Metavar.str,
+        help='Output folder. Example: My_Output_Folder/ ',
+        default=os.getcwd())
+    optional.add_argument(
+        "-r",
+        type=int,
+        help="Remove temporary files.",
+        choices=(0, 1),
+        default=1)
+    optional.add_argument(
+        "-v",
+        type=int,
+        help="1: display on (default), 0: display off, 2: extended",
+        choices=(0, 1, 2),
+        default=1)
+    optional.add_argument(
+        '-qc',
+        metavar=Metavar.str,
+        help='The path where the quality control generated content will be saved',
+        default=None)
+    optional.add_argument(
+        '-qc-dataset',
+        metavar=Metavar.str,
+        help='If provided, this string will be mentioned in the QC report as the dataset the process was run on',)
+    optional.add_argument(
+        '-qc-subject',
+        metavar=Metavar.str,
+        help='If provided, this string will be mentioned in the QC report as the subject the process was run on',)
+    optional.add_argument(
+        '-igt',
+        metavar=Metavar.str,
+        help='File name of ground-truth segmentation.',)
+
     return parser
 
 
 def main():
     """Main function."""
-    sct.init_sct()
     parser = get_parser()
-    args = sys.argv[1:]
-    arguments = parser.parse(args)
+    args = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
 
-    fname_image = os.path.abspath(arguments['-i'])
-    contrast_type = arguments['-c']
+    fname_image = os.path.abspath(args.i)
+    contrast_type = args.c
 
-    ctr_algo = arguments["-centerline"]
+    ctr_algo = args.centerline
 
-    if "-brain" not in args:
+    if args.brain is None:
         if contrast_type in ['t2s', 'dwi']:
             brain_bool = False
         if contrast_type in ['t1', 't2']:
             brain_bool = True
     else:
-        brain_bool = bool(int(arguments["-brain"]))
+        brain_bool = bool(args.brain)
 
-    kernel_size = arguments["-kernel"]
+    kernel_size = args.kernel
     if kernel_size == '3d' and contrast_type == 'dwi':
         kernel_size = '2d'
-        sct.printv('3D kernel model for dwi contrast is not available. 2D kernel model is used instead.', type="warning")
+        sct.printv('3D kernel model for dwi contrast is not available. 2D kernel model is used instead.',
+                   type="warning")
 
-    if '-ofolder' not in args:
-        output_folder = os.getcwd()
-    else:
-        output_folder = arguments["-ofolder"]
 
-    if ctr_algo == 'file' and "-file_centerline" not in args:
-        logger.warning('Please use the flag -file_centerline to indicate the centerline filename.')
+    if ctr_algo == 'file' and args.file_centerline is None:
+        sct.printv('Please use the flag -file_centerline to indicate the centerline filename.', 1, 'warning')
         sys.exit(1)
-    
-    if "-file_centerline" in args:
-        manual_centerline_fname = arguments["-file_centerline"]
+
+    if args.file_centerline is not None:
+        manual_centerline_fname = args.file_centerline
         ctr_algo = 'file'
     else:
         manual_centerline_fname = None
 
-    remove_temp_files = int(arguments['-r'])
-
-    verbose = int(arguments.get('-v'))
+    remove_temp_files = args.r
+    verbose = args.v
     sct.init_sct(log_level=verbose, update=True)  # Update log level
 
-    path_qc = arguments.get("-qc", None)
-    qc_dataset = arguments.get("-qc-dataset", None)
-    qc_subject = arguments.get("-qc-subject", None)
+    path_qc = args.qc
+    qc_dataset = args.qc_dataset
+    qc_subject = args.qc_subject
+    output_folder = args.ofolder
 
     algo_config_stg = '\nMethod:'
     algo_config_stg += '\n\tCenterline algorithm: ' + str(ctr_algo)
     algo_config_stg += '\n\tAssumes brain section included in the image: ' + str(brain_bool)
     algo_config_stg += '\n\tDimension of the segmentation kernel convolutions: ' + kernel_size + '\n'
     sct.printv(algo_config_stg)
+
+    # Segment image
+    from spinalcordtoolbox.image import Image
+    from spinalcordtoolbox.deepseg_sc.core import deep_segmentation_spinalcord
+    from spinalcordtoolbox.reports.qc import generate_qc
 
     im_image = Image(fname_image)
     # note: below we pass im_image.copy() otherwise the field absolutepath becomes None after execution of this function
@@ -176,10 +188,11 @@ def main():
         im_ctr.save(fname_ctr)
 
     if path_qc is not None:
-        generate_qc(fname_image, fname_seg=fname_seg, args=args, path_qc=os.path.abspath(path_qc),
-                    dataset=qc_dataset, subject=qc_subject, process='sct_deepseg_sc')
+        generate_qc(fname_image, fname_seg=fname_seg, args=sys.argv[1:], path_qc=os.path.abspath(path_qc),
+    dataset=qc_dataset, subject=qc_subject, process='sct_deepseg_sc')
     sct.display_viewer_syntax([fname_image, fname_seg], colormaps=['gray', 'red'], opacities=['', '0.7'])
 
 
 if __name__ == "__main__":
+    sct.init_sct()
     main()

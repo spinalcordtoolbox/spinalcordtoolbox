@@ -15,7 +15,7 @@ def init(param_test):
     Initialize class: param_test
     """
     # initialization
-    default_args = ['-i dmri/bvals.txt,dmri/bvals.txt -o bvals_concat.txt']
+    default_args = ['-i dmri/bvals.txt dmri/bvals.txt -o bvals_concat.txt']
     # assign default params
     if not param_test.args:
         param_test.args = default_args
