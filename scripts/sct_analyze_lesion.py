@@ -47,8 +47,7 @@ def get_parser():
     mandatory_arguments.add_argument(
         "-m",
         help='Binary mask of lesions (lesions are labeled as "1").',
-        metavar=Metavar.file,
-        required=False)
+        metavar=Metavar.file)
 
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
