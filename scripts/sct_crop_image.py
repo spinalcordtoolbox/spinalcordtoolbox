@@ -441,13 +441,13 @@ def main(args=None):
         if arguments.m is not None:
             cropper.mask = arguments.m
         if arguments.start is not None:
-            cropper.start = arguments.start
+            cropper.start = (arguments.start).split(",")
         if arguments.start is not None:
-            cropper.end = arguments.end
+            cropper.end = (arguments.end).split(",")
         if arguments.dim is not None:
-            cropper.dim = arguments.dim
+            cropper.dim = (arguments.dim).split(",")
         if arguments.shift is not None:
-            cropper.shift = arguments.shift
+            cropper.shift = (arguments.shift).split(",")
         if arguments.b is not None:
             cropper.background = arguments.b
         if arguments.bmax is not None:
