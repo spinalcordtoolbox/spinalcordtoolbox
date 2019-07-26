@@ -153,17 +153,25 @@ Please check your internet connection before relaunching the installer\n"
   fi
 }
 
-# Usage of this script
-function usage() {
-  echo -e "\nUsage: $0 [-d] [-b] [-v]" 1>&2
-  echo -e "\nOPTION"
-  echo -e "\t-d \v Prevent the (re)-installation of the \"data/\" directory "
-  echo -e "\n\t-b \v Prevent the (re)-installation of the SCT binaries files "
-  echo -e "\n\t-v \v Full verbose"
-}
-
 # SCRIPT STARTS HERE
 # ========================================================================
+ARGPARSE_ALLOW_UNKNOWN_ARGS=true # tell argparse to allow unknown args
+source scripts/argparse.bash
+argparse "$@" <<EOF || exit 1
+parser.add_argument('-d', '--no-data-install', action='store_true', help='-d \v Prevent the (re)-installation of the \"data/\" directory')
+parser.add_argument('-b', '--no-sct-bin-install', action='store_true', help='-b \v Prevent the (re)-installation of the SCT binaries files')
+parser.add_argument('-v', '--verbose', action='store_true', help='\n\t-v \v Full verbose')
+EOF
+
+if [[ $UNKNOWN_ARGS ]]; then
+    sh install_sct -h
+    die "Argument not valid"
+fi
+
+if [[ $VERBOSE ]]; then
+    set -x
+fi
+
 echo -e "\nWelcome to the SCT installer!"
 
 check_requirements
@@ -173,31 +181,6 @@ for arg in "$@"; do
   shift
   case "$arg" in
     *)       set -- "$@" "$arg"
-  esac
-done
-
-while getopts ":dhbpv" opt; do
-  case $opt in
-  d)
-    echo " data directory will not be (re)-installed"
-    NO_DATA_INSTALL=yes
-    ;;
-  b)
-    echo " SCT binaries will not be (re)-installed "
-    NO_SCT_BIN_INSTALL=yes
-    ;;
-  v)
-    echo " Full verbose!"
-    set -x
-    ;;
-  h)
-    usage
-    exit 99
-    ;;
-  \?)
-    usage
-    die
-    ;;
   esac
 done
 
