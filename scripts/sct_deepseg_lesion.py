@@ -16,105 +16,121 @@ from __future__ import print_function, absolute_import, division
 
 import os
 import sys
-import numpy as np
+import argparse
 
-from msct_parser import Parser
+from spinalcordtoolbox.utils import Metavar, SmartFormatter
+
 import sct_utils as sct
-from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.deepseg_lesion.core import deep_segmentation_MSlesion
 
 
 def get_parser():
     """Initialize the parser."""
-    parser = Parser(__file__)
-    parser.usage.set_description("""MS lesion Segmentation using convolutional networks. \n\nReference: C Gros, B De Leener, et al. Automatic segmentation of the spinal cord and intramedullary multiple sclerosis lesions with convolutional neural networks (2018). arxiv.org/abs/1805.06349""")
 
-    parser.add_option(name="-i",
-                      type_value="image_nifti",
-                      description="input image.",
-                      mandatory=True,
-                      example="t1.nii.gz")
-    parser.add_option(name="-c",
-                      type_value="multiple_choice",
-                      description="type of image contrast. \nt2: T2w scan with isotropic or anisotropic resolution. \nt2_ax: T2w scan with axial orientation and thick slices. \nt2s: T2*w scan with axial orientation and thick slices.",
-                      mandatory=True,
-                      example=['t2', 't2_ax', 't2s'])
-    parser.add_option(name="-centerline",
-                      type_value="multiple_choice",
-                      description="Method used for extracting the centerline.\nsvm: automatic centerline detection, based on Support Vector Machine algorithm.\ncnn: automatic centerline detection, based on Convolutional Neural Network.\nviewer: semi-automatic centerline generation, based on manual selection of a few points using an interactive viewer, then approximation with NURBS.\nfile: use an existing centerline by specifying its filename with flag -file_centerline (e.g. -file_centerline t2_centerline_manual.nii.gz).\n",
-                      mandatory=False,
-                      example=['svm', 'cnn', 'viewer', 'file'],
-                      default_value="svm")
-    parser.add_option(name="-file_centerline",
-                      type_value="image_nifti",
-                      description="Input centerline file (to use with flag -centerline manual).",
-                      mandatory=False,
-                      example="t2_centerline_manual.nii.gz")
-    parser.add_option(name="-brain",
-                      type_value="multiple_choice",
-                      description="indicate if the input image is expected to contain brain sections:\n1: contains brain section\n0: no brain section.\nTo indicate this parameter could speed the segmentation process. Note that this flag is only effective with -centerline cnn.",
-                      mandatory=False,
-                      example=["0", "1"],
-                      default_value="1")
-    parser.add_option(name="-ofolder",
-                      type_value="folder_creation",
-                      description="output folder.",
-                      mandatory=False,
-                      example="My_Output_Folder/",
-                      default_value="")
-    parser.add_option(name="-r",
-                      type_value="multiple_choice",
-                      description="remove temporary files.",
-                      mandatory=False,
-                      example=['0', '1'],
-                      default_value='1')
-    parser.add_option(name="-v",
-                      type_value="multiple_choice",
-                      description="1: display on (default), 0: display off, 2: extended",
-                      mandatory=False,
-                      example=["0", "1", "2"],
-                      default_value="1")
-    parser.add_option(name='-igt',
-                      type_value='image_nifti',
-                      description='File name of ground-truth segmentation.',
-                      mandatory=False)
+    parser = argparse.ArgumentParser(
+        description='MS lesion Segmentation using convolutional networks. Reference: Gros C et al. Automatic'
+                    'segmentation of the spinal cord and intramedullary multiple sclerosis lesions with convolutional'
+                    'neural networks. Neuroimage. 2018 Oct 6;184:901-915.',
+        formatter_class=SmartFormatter,
+        add_help=None,
+        prog=os.path.basename(__file__).strip(".py"))
+    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatory.add_argument(
+        "-i",
+        help='Input image. Example: t1.nii.gz',
+        metavar=Metavar.file)
+    mandatory.add_argument(
+        "-c",
+        help='R|Type of image contrast.\n'
+             ' t2: T2w scan with isotropic or anisotropic resolution.\n'
+             ' t2_ax: T2w scan with axial orientation and thick slices.\n'
+             ' t2s: T2*w scan with axial orientation and thick slices.',
+        choices=('t2', 't2_ax', 't2s'))
+    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional.add_argument(
+        "-h",
+        "--help",
+        action="help",
+        help="Show this help message and exit")
+    optional.add_argument(
+        "-centerline",
+        help="R|Method used for extracting the centerline:\n"
+             " svm: Automatic detection using Support Vector Machine algorithm.\n"
+             " cnn: Automatic detection using Convolutional Neural Network.\n"
+             " viewer: Semi-automatic detection using manual selection of a few points with an interactive viewer "
+             "followed by regularization.\n"
+             " file: Use an existing centerline (use with flag -file_centerline)",
+        required=False,
+        choices=('svm', 'cnn', 'viewer', 'file'),
+        default="svm")
+    optional.add_argument(
+        "-file_centerline",
+        help='Input centerline file (to use with flag -centerline manual). Example: t2_centerline_manual.nii.gz',
+        metavar=Metavar.str,
+        required=False)
+    optional.add_argument(
+        "-brain",
+        type=int,
+        help='Indicate if the input image contains brain sections (to speed up segmentation). This flag is only '
+             'effective with "-centerline cnn".',
+        required=False,
+        choices=(0, 1),
+        default=1)
+    optional.add_argument(
+        "-ofolder",
+        help='Output folder. Example: My_Output_Folder/ ',
+        required=False,
+        metavar=Metavar.str,
+        default=os.getcwd())
+    optional.add_argument(
+        "-r",
+        type=int,
+        help="Remove temporary files.",
+        required=False,
+        choices=(0, 1),
+        default=1)
+    optional.add_argument(
+        "-v",
+        type=int,
+        help="1: Display on (default), 0: Display off, 2: Extended",
+        choices=(0, 1, 2),
+        default=1)
+    optional.add_argument(
+        '-igt',
+        metavar=Metavar.str,
+        help='File name of ground-truth segmentation.',
+        required=False)
+
     return parser
 
 
 def main():
     """Main function."""
-    sct.init_sct()
     parser = get_parser()
-    args = sys.argv[1:]
-    arguments = parser.parse(args)
+    args = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
 
-    fname_image = arguments['-i']
-    contrast_type = arguments['-c']
+    fname_image = args.i
+    contrast_type = args.c
 
-    ctr_algo = arguments["-centerline"]
+    ctr_algo = args.centerline
 
-    brain_bool = bool(int(arguments["-brain"]))
-    if "-brain" not in args and contrast_type in ['t2s', 't2_ax']:
+    brain_bool = bool(args.brain)
+    if args.brain is None and contrast_type in ['t2s', 't2_ax']:
         brain_bool = False
 
-    if '-ofolder' not in args:
-        output_folder = os.getcwd()
-    else:
-        output_folder = arguments["-ofolder"]
+    output_folder = args.ofolder
 
-    if ctr_algo == 'file' and "-file_centerline" not in args:
+    if ctr_algo == 'file' and args.file_centerline is None:
         sct.printv('Please use the flag -file_centerline to indicate the centerline filename.', 1, 'error')
         sys.exit(1)
-    
-    if "-file_centerline" in args:
-        manual_centerline_fname = arguments["-file_centerline"]
+
+    if args.file_centerline is not None:
+        manual_centerline_fname = args.file_centerline
         ctr_algo = 'file'
     else:
         manual_centerline_fname = None
 
-    remove_temp_files = int(arguments['-r'])
-
-    verbose = int(arguments.get('-v'))
+    remove_temp_files = args.r
+    verbose = args.v
     sct.init_sct(log_level=verbose, update=True)  # Update log level
 
     algo_config_stg = '\nMethod:'
@@ -122,6 +138,9 @@ def main():
     algo_config_stg += '\n\tAssumes brain section included in the image: ' + str(brain_bool) + '\n'
     sct.printv(algo_config_stg)
 
+    # Segment image
+    from spinalcordtoolbox.image import Image
+    from spinalcordtoolbox.deepseg_lesion.core import deep_segmentation_MSlesion
     im_image = Image(fname_image)
     im_seg, im_labels_viewer, im_ctr = deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo=ctr_algo, ctr_file=manual_centerline_fname,
                                         brain_bool=brain_bool, remove_temp_files=remove_temp_files, verbose=verbose)
@@ -147,4 +166,5 @@ def main():
 
 
 if __name__ == "__main__":
+    sct.init_sct()
     main()

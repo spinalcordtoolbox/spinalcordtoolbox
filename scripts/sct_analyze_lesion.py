@@ -19,7 +19,7 @@ from skimage.measure import label
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
-from spinalcordtoolbox.utils import Metavar
+from spinalcordtoolbox.utils import Metavar, SmartFormatter
 
 import sct_utils as sct
 from sct_utils import extract_fname, printv, tmp_create
@@ -29,17 +29,17 @@ def get_parser():
     # Initialize the parser
 
     parser = argparse.ArgumentParser(
-        description='Compute statistics on segmented lesions. The function assigns an ID value to each\n'
-                    'lesion (1, 2, 3, etc.) and then outputs morphometric measures for each lesion:\n'
+        description='R|Compute statistics on segmented lesions. The function assigns an ID value to each lesion (1, 2, '
+                    '3, etc.) and then outputs morphometric measures for each lesion:\n'
                     '- volume [mm^3]\n'
                     '- length [mm]: length along the Superior-Inferior axis\n'
                     '- max_equivalent_diameter [mm]: maximum diameter of the lesion, when approximating\n'
                     '                                the lesion as a circle in the axial plane.\n\n'
-                    'N.B. If the proportion of lesion in each region (e.g. WM and GM) does not sum\n'
-                    'up to 100%, it means that the registered template does not fully cover the\n'
-                    'lesion. In that case you might want to check the registration results.',
+                    'If the proportion of lesion in each region (e.g. WM and GM) does not sum up to 100%, it means '
+                    'that the registered template does not fully cover the lesion. In that case you might want to '
+                    'check the registration results.',
         add_help=None,
-        formatter_class=argparse.RawDescriptionHelpFormatter,
+        formatter_class=SmartFormatter,
         prog=os.path.basename(__file__).strip(".py")
     )
 
@@ -47,8 +47,12 @@ def get_parser():
     mandatory_arguments.add_argument(
         "-m",
         help='Binary mask of lesions (lesions are labeled as "1").',
-        metavar=Metavar.file,
-        required=False)
+        metavar=Metavar.file)
+    mandatory_arguments.add_argument(
+        "-s",
+        help="Spinal cord centerline or segmentation file, which will be used to correct morphometric measures with "
+             "cord angle with respect to slice. (e.g.'t2_seg.nii.gz')",
+        metavar=Metavar.file)
 
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
@@ -56,13 +60,6 @@ def get_parser():
         "--help",
         action="help",
         help="show this help message and exit")
-    optional.add_argument(
-        "-s",
-        help="Spinal cord centerline or segmentation file, which will be used to correct morphometric measures with "
-             "cord angle with respect to slice. (e.g.'t2_seg.nii.gz')",
-        metavar=Metavar.file,
-        default=None,
-        required=False)
     optional.add_argument(
         "-i",
         help='Image from which to extract average values within lesions (e.g. "t2.nii.gz"). If provided, the function '

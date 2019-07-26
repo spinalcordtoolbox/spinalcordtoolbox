@@ -12,9 +12,6 @@
 
 from __future__ import absolute_import
 
-import os
-
-import sct_utils as sct
 from spinalcordtoolbox.image import Image, compute_dice
 
 
@@ -23,7 +20,7 @@ def init(param_test):
     Initialize class: param_test
     """
     # initialization
-    default_args = ['-i t2s/t2s_uncropped.nii.gz -igt t2s/t2s_uncropped_gmseg_manual.nii.gz -o output.nii.gz -qc testing-qc']
+    default_args = ['-i t2s/t2s_uncropped.nii.gz -o output.nii.gz -qc testing-qc']
     param_test.file_seg = 'output.nii.gz'
     param_test.fname_gt = 't2s/t2s_uncropped_gmseg_manual.nii.gz'
     param_test.dice_threshold = 0.85

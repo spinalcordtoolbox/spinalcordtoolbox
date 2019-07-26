@@ -17,27 +17,25 @@ from __future__ import absolute_import, division
 
 import sys
 import os
-import getopt
 import math
+import argparse
 
-from msct_parser import Parser
 import sct_utils as sct
+from spinalcordtoolbox.utils import Metavar, SmartFormatter
 
 # main
-#=======================================================================================================================
+# =======================================================================================================================
 def main():
-
     # Initialization
+    parser = get_parser()
+    arguments = parser.parse_args(args = None if sys.argv[1:] else ['--help'])
     GYRO = float(42.576 * 10 ** 6)  # gyromagnetic ratio (in Hz.T^-1)
     gradamp = []
     bigdelta = []
     smalldelta = []
-
-    parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
-    gradamp = arguments['-g']
-    bigdelta = arguments['-b']
-    smalldelta = arguments['-d']
+    gradamp = arguments.g
+    bigdelta = arguments.b
+    smalldelta = arguments.d
 
     # sct.printv(arguments)
     sct.printv('\nCheck parameters:')
@@ -47,31 +45,45 @@ def main():
     sct.printv('  gyromagnetic ratio ..... ' + str(GYRO) + ' Hz/T')
     sct.printv('')
 
-    bvalue = (2 * math.pi * GYRO * gradamp * 0.001 * smalldelta * 0.001) ** 2 * (bigdelta * 0.001 - smalldelta * 0.001 / 3)
+    bvalue = (2 * math.pi * GYRO * gradamp * 0.001 * smalldelta * 0.001) ** 2 * (
+    bigdelta * 0.001 - smalldelta * 0.001 / 3)
 
-    sct.printv('b-value = ' + str(bvalue / 10**6) + ' mm^2/s\n')
+    sct.printv('b-value = ' + str(bvalue / 10 ** 6) + ' mm^2/s\n')
     return bvalue
 
 
 def get_parser():
     # Initialize the parser
-    parser = Parser(__file__)
-    parser.usage.set_description('Calculate b-value (in mm^2/s).')
-    parser.add_option(name="-g",
-                      type_value="float",
-                      description="Amplitude of diffusion gradients (in mT/m)",
-                      mandatory=True,
-                      example='40')
-    parser.add_option(name="-b",
-                      type_value="float",
-                      description="Big delta: time between both diffusion gradients (in ms)",
-                      mandatory=True,
-                      example='40')
-    parser.add_option(name="-d",
-                      type_value="float",
-                      description="Small delta: duration of each diffusion gradient (in ms)",
-                      mandatory=True,
-                      example='30')
+    parser = argparse.ArgumentParser(
+        description='Calculate b-value (in mm^2/s).',
+        add_help=None,
+        formatter_class=SmartFormatter,
+        prog=os.path.basename(__file__).strip(".py"))
+    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatory.add_argument(
+        "-g",
+        type=float,
+        metavar=Metavar.float,
+        help="Amplitude of diffusion gradients (in mT/m). Example: 40",
+        required=True)
+    mandatory.add_argument(
+        "-b",
+        metavar=Metavar.float,
+        type=float,
+        help="Big delta: time between both diffusion gradients (in ms). Example: 40",
+        required=True)
+    mandatory.add_argument(
+        "-d",
+        type=float,
+        metavar=Metavar.float,
+        help="Small delta: duration of each diffusion gradient (in ms). Example: 30",
+        required=True)
+    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional.add_argument(
+        "-h",
+        "--help",
+        action="help",
+        help="Show this help message and exit")
 
     return parser
 

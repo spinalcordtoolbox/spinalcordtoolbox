@@ -3,22 +3,17 @@
 # Functions dealing with deepseg_lesion
 
 import os
-import sys
 import logging
 import numpy as np
 
-from scipy.ndimage.measurements import center_of_mass, label
-from scipy.ndimage import distance_transform_edt
 from scipy.interpolate.interpolate import interp1d
 
 import sct_utils as sct
 
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.centerline import optic
 from spinalcordtoolbox.deepseg_sc.core import find_centerline, crop_image_around_centerline, uncrop_image, _normalize_data
 from spinalcordtoolbox import resampling
-from spinalcordtoolbox.deepseg_sc.cnn_models import nn_architecture_ctr
 
 logger = logging.getLogger(__name__)
 
