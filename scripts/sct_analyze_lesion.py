@@ -48,6 +48,11 @@ def get_parser():
         "-m",
         help='Binary mask of lesions (lesions are labeled as "1").',
         metavar=Metavar.file)
+    mandatory_arguments.add_argument(
+        "-s",
+        help="Spinal cord centerline or segmentation file, which will be used to correct morphometric measures with "
+             "cord angle with respect to slice. (e.g.'t2_seg.nii.gz')",
+        metavar=Metavar.file)
 
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
@@ -55,13 +60,6 @@ def get_parser():
         "--help",
         action="help",
         help="show this help message and exit")
-    optional.add_argument(
-        "-s",
-        help="Spinal cord centerline or segmentation file, which will be used to correct morphometric measures with "
-             "cord angle with respect to slice. (e.g.'t2_seg.nii.gz')",
-        metavar=Metavar.file,
-        default=None,
-        required=False)
     optional.add_argument(
         "-i",
         help='Image from which to extract average values within lesions (e.g. "t2.nii.gz"). If provided, the function '
