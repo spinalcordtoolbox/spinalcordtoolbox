@@ -34,11 +34,6 @@ matrix:
       name: "OSX 10.11 (El Capitan)"
       osx_image: xcode8
 
-before_install:
-  - echo "HOME="
-  - echo $HOME
-  - sudo apt-get update -qq; sudo apt-get install -qq libopenmpi-dev; echo
-
 install:
   - |
     echo Installing SCT
