@@ -60,11 +60,11 @@ for installation instructions check: https://git-scm.com/book/en/v2/Getting-Star
 }
 
 function get_shell_rc_path () {
-    local SHELL_PATH=$HOME/.bashrc
+    local RC_FILE_PATH=$HOME/.bashrc
     if [[ $(which zsh) ]]; then
-        SHELL_PATH=$HOME/.zshrc
+        RC_FILE_PATH=$HOME/.zshrc
     fi
-    echo $SHELL_PATH
+    echo $RC_FILE_PATH
 }
 
 # Force a clean exit
@@ -115,12 +115,12 @@ fi"
 function edit_shellrc() {
   if [[ -z $THE_CSHRC ]]; then
     echo
-    echo "" >>$SHELL_PATH
-    echo "# SPINALCORDTOOLBOX (installed on $(date +%Y-%m-%d\ %H:%M:%S))" >>$SHELL_PATH
-    echo $DISPLAY_UPDATE_PATH >>$SHELL_PATH
-    echo "export SCT_DIR=$SCT_DIR" >>$SHELL_PATH
-    echo "export MPLBACKEND=Agg" >>$SHELL_PATH
-    echo "" >>$SHELL_PATH
+    echo "" >>$RC_FILE_PATH
+    echo "# SPINALCORDTOOLBOX (installed on $(date +%Y-%m-%d\ %H:%M:%S))" >>$RC_FILE_PATH
+    echo $DISPLAY_UPDATE_PATH >>$RC_FILE_PATH
+    echo "export SCT_DIR=$SCT_DIR" >>$RC_FILE_PATH
+    echo "export MPLBACKEND=Agg" >>$RC_FILE_PATH
+    echo "" >>$RC_FILE_PATH
   else
     # (t)csh for good measure
     echo
@@ -241,8 +241,8 @@ else
 fi
 
 # Define sh files, by default it will use unix shell
-SHELL_PATH=$(get_shell_rc_path)
-THE_RC=$SHELL_PATH
+RC_FILE_PATH=$(get_shell_rc_path)
+THE_RC=$RC_FILE_PATH
 if echo $(ps -o comm= $PPID) | grep csh; then
   THE_CSHRC=$HOME/.cshrc
   THE_RC=$THE_CSHRC
