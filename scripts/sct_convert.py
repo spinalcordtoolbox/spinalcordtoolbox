@@ -21,7 +21,7 @@ import argparse
 import numpy as np
 
 import sct_utils as sct
-from spinalcordtoolbox.utils import Metavar
+from spinalcordtoolbox.utils import Metavar, SmartFormatter
 
 
 # DEFAULT PARAMETERS
@@ -38,16 +38,17 @@ def get_parser():
     parser = argparse.ArgumentParser(
         description='Convert image file to another type.',
         add_help=None,
+        formatter_class=SmartFormatter,
         prog=os.path.basename(__file__).strip(".py"))
     mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatoryArguments.add_argument(
         "-i",
-        help='File input (e.g. "data.nii.gz")',
+        help='File input. Example: data.nii.gz',
         metavar=Metavar.file,
         required=True)
     mandatoryArguments.add_argument(
         "-o",
-        help='File output (indicate new extension) (e.g. "data.nii")',
+        help='File output (indicate new extension). Example: data.nii',
         metavar=Metavar.str,
         required=True)
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
@@ -55,7 +56,7 @@ def get_parser():
         "-h",
         "--help",
         action="help",
-        help="show this help message and exit")
+        help="Show this help message and exit")
     optional.add_argument(
         "-squeeze",
         type=int,

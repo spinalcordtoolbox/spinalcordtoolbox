@@ -24,7 +24,7 @@ matplotlib.use('tkagg')
 import sct_utils as sct
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.utils import Metavar
+from spinalcordtoolbox.utils import Metavar, SmartFormatter
 
 
 class LineBuilder:
@@ -273,11 +273,12 @@ def get_parser():
     parser = argparse.ArgumentParser(
         description='Tools to crop an image. Either through command line or GUI',
         add_help=None,
+        formatter_class=SmartFormatter,
         prog=os.path.basename(__file__).strip(".py"))
     mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatoryArguments.add_argument(
         "-i",
-        help='input image. (e.g. "t2.nii.gz")',
+        help='Input image. Example: t2.nii.gz',
         metavar=Metavar.file,
         required = False)
     mandatoryArguments.add_argument(
@@ -292,7 +293,7 @@ def get_parser():
     requiredCommandArguments = parser.add_argument_group("\nCOMMAND LINE RELATED MANDATORY ARGUMENTS")
     requiredCommandArguments.add_argument(
         "-o",
-        help='Output image. This option is REQUIRED for the command line execution (e.g. "t1.nii.gz")',
+        help='Output image. This option is REQUIRED for the command line execution Example: t1.nii.gz',
         metavar=Metavar.str,
         required=False)
     # Optional arguments section
@@ -301,7 +302,7 @@ def get_parser():
         "-h",
         "--help",
         action="help",
-        help="show this help message and exit")
+        help="Show this help message and exit")
     optional.add_argument(
         "-v",
         type=int,
@@ -321,63 +322,57 @@ def get_parser():
     commandOptionalArguments = parser.add_argument_group("\nCOMMAND LINE RELATED OPTIONAL ARGUMENTS")
     commandOptionalArguments.add_argument(
         "-m",
-        help="cropping around the mask",
+        help="Cropping around the mask",
         metavar=Metavar.file,
         required=False)
     commandOptionalArguments.add_argument(
         "-start",
-        type=float,
-        nargs='*',
-        help='start slices, ]0,1[: percentage, 0 & >1: slice number (e.g. "40, 30, 5")',
+        help='Start slices, ]0,1[: percentage, 0 & >1: slice number. Example: 40,30,5',
         metavar=Metavar.list,
         required = False)
     commandOptionalArguments.add_argument(
         "-end",
-        type=float,
-        nargs='*',
-        help='end slices, ]0,1[: percentage, 0: last slice, >1: slice number, <0: last slice - value (e.g. "60, 100, 10")',
+        help='End slices, ]0,1[: percentage, 0: last slice, >1: slice number, <0: last slice - value. '
+             'Example: 60,100,10',
         metavar=Metavar.list,
         required = False)
     commandOptionalArguments.add_argument(
         "-dim",
-        nargs='*',
-        type=int,
-        help='dimension to crop, from 0 to n-1, default is 1 (e.g. "0, 1, 2")',
+        help='Dimension to crop, from 0 to n-1, default is 1. Example: 0,1,2',
         metavar=Metavar.list,
         required = False)
     commandOptionalArguments.add_argument(
         "-shift",
-        nargs='*',
-        type=int,
-        help='adding shift when used with mask, default is 0 (e.g. "10, 10, 5")',
+        help='adding shift when used with mask, default is 0. Example: 10,10,5',
         metavar=Metavar.list,
         required = False)
     commandOptionalArguments.add_argument(
         "-b",
         type=float,
-        help="replace voxels outside cropping region with background value. \n"
-             "If both the -m and the -b flags are used : the image is croped \"exactly\" around the mask with a background (and not around a rectangle area including the mask). the shape of the image isn't change.",
+        help="Replace voxels outside cropping region with background value. If both the -m and the -b flags are used, "
+             "the image is croped \"exactly\" around the mask with a background (and not around a rectangle area "
+             "including the mask). The shape of the image does not change.",
         metavar=Metavar.float,
         required=False)
     commandOptionalArguments.add_argument(
         "-bmax",
-        help="maximize the cropping of the image (provide -dim if you want to specify the dimensions)",
+        help="Maximize the cropping of the image (provide -dim if you want to specify the dimensions).",
         metavar='',
         required=False)
     commandOptionalArguments.add_argument(
         "-ref",
-        help='crop input image based on reference image (works only for 3D images) (e.g. "ref.nii.gz")',
+        help='Crop input image based on reference image (works only for 3D images). Example: ref.nii.gz',
         metavar=Metavar.file,
         required = False)
     commandOptionalArguments.add_argument(
         "-mesh",
-        help="mesh to crop",
+        help="Mesh to crop",
         metavar=Metavar.file,
         required=False)
     commandOptionalArguments.add_argument(
         "-rof",
         type=int,
-        help="remove output file created when cropping",
+        help="Remove output file created when cropping",
         required=False,
         default=0,
         choices=(0, 1))
@@ -446,13 +441,13 @@ def main(args=None):
         if arguments.m is not None:
             cropper.mask = arguments.m
         if arguments.start is not None:
-            cropper.start = arguments.start
+            cropper.start = (arguments.start).split(",")
         if arguments.start is not None:
-            cropper.end = arguments.end
+            cropper.end = (arguments.end).split(",")
         if arguments.dim is not None:
-            cropper.dim = arguments.dim
+            cropper.dim = (arguments.dim).split(",")
         if arguments.shift is not None:
-            cropper.shift = arguments.shift
+            cropper.shift = (arguments.shift).split(",")
         if arguments.b is not None:
             cropper.background = arguments.b
         if arguments.bmax is not None:
