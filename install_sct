@@ -59,6 +59,14 @@ for installation instructions check: https://git-scm.com/book/en/v2/Getting-Star
 
 }
 
+function get_shell_rc_path () {
+    local RC_FILE_PATH=$HOME/.bashrc
+    if [[ $(which zsh) ]]; then
+        RC_FILE_PATH=$HOME/.zshrc
+    fi
+    echo $RC_FILE_PATH
+}
+
 # Force a clean exit
 function finish() {
   # Catch the last return code
@@ -103,16 +111,16 @@ fi"
   fi
 }
 
-# Installation text to insert in .bashrc
-function edit_bashrc() {
+# Installation text to insert in shell config file
+function edit_shellrc() {
   if [[ -z $THE_CSHRC ]]; then
     echo
-    echo "" >>$THE_BASHRC
-    echo "# SPINALCORDTOOLBOX (installed on $(date +%Y-%m-%d\ %H:%M:%S))" >>$THE_BASHRC
-    echo $DISPLAY_UPDATE_PATH >>$THE_BASHRC
-    echo "export SCT_DIR=$SCT_DIR" >>$THE_BASHRC
-    echo "export MPLBACKEND=Agg" >>$THE_BASHRC
-    echo "" >>$THE_BASHRC
+    echo "" >>$RC_FILE_PATH
+    echo "# SPINALCORDTOOLBOX (installed on $(date +%Y-%m-%d\ %H:%M:%S))" >>$RC_FILE_PATH
+    echo $DISPLAY_UPDATE_PATH >>$RC_FILE_PATH
+    echo "export SCT_DIR=$SCT_DIR" >>$RC_FILE_PATH
+    echo "export MPLBACKEND=Agg" >>$RC_FILE_PATH
+    echo "" >>$RC_FILE_PATH
   else
     # (t)csh for good measure
     echo
@@ -232,13 +240,12 @@ else
   die "Sorry, the installer only supports Linux and OSX, quitting installer"
 fi
 
-# Define sh files
+# Define sh files, by default it will use unix shell
+RC_FILE_PATH=$(get_shell_rc_path)
+THE_RC=$RC_FILE_PATH
 if echo $(ps -o comm= $PPID) | grep csh; then
   THE_CSHRC=$HOME/.cshrc
   THE_RC=$THE_CSHRC
-else
-  THE_BASHRC=$HOME/.bashrc
-  THE_RC=$THE_BASHRC
 fi
 
 # Display install info
@@ -358,7 +365,6 @@ fi
 if [[ "$SCT_DIR" != "$SCT_SOURCE" ]]; then
   echo -e "\nCopying source files from $SCT_SOURCE to $SCT_DIR"
   cp -vR $SCT_INSTALL_CP_OPTIONS "$SCT_SOURCE/"* "$SCT_DIR/" | while read line; do echo -n "."; done
-
 else
   echo -e "\nSkipping copy of source files (source and destination folders are the same)"
 fi
@@ -538,7 +544,7 @@ if [[ $UID != 0 ]]; then
   done
   echo ""
   if [[ $add_to_path =~ ^[Yy] ]]; then
-    edit_bashrc
+    edit_shellrc
   else
     echo Not adding $SCT_DIR to \$PATH
     echo You can always add it later or call SCT functions with full path $SCT_DIR/$BIN_DIR/sct_function
