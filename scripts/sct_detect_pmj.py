@@ -23,7 +23,7 @@ import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
 
 import sct_utils as sct
-from spinalcordtoolbox.utils import Metavar, SmartFormatter
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder
 
 
 def get_parser():
@@ -68,6 +68,7 @@ def get_parser():
         "-ofolder",
         metavar=Metavar.folder,
         help='Output folder. Example: My_Output_Folder/',
+        action=ActionCreateFolder,
         required=False)
     optional.add_argument(
         '-qc',
