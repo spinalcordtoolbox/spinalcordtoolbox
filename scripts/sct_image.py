@@ -12,15 +12,14 @@
 
 from __future__ import absolute_import
 
-import os, sys, warnings
+import os, sys, warnings, argparse
 
 import numpy as np
 
 import sct_utils as sct
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
-from msct_parser import Parser
-
+from spinalcordtoolbox.utils import Metavar, SmartFormatter
 
 class Param:
     def __init__(self):
@@ -31,122 +30,144 @@ def get_parser():
     # initialize default param
     param_default = Param()
     # Initialize the parser
-    parser = Parser(__file__)
-    parser.usage.set_description('Perform manipulations on images (e.g., pad, change space, split along dimension). Inputs can be a number, a 4d image, or several 3d images separated with ","')
-    parser.add_option(name="-i",
-                      type_value=[[','], 'file'],
-                      description="Input file(s). If several inputs: separate them by a coma without white space.\n",
-                      mandatory=True,
-                      example="data.nii.gz")
-    parser.add_option(name="-o",
-                      type_value='file_output',
-                      description='Output file.',
-                      mandatory=False,
-                      example='data_pad.nii.gz')
 
-    parser.usage.addSection('\nImage operations:')
-    parser.add_option(name="-pad",
-                      type_value="str",
-                      description='Pad 3D image. Specify padding as: "x,y,z" (in voxel)',
-                      mandatory=False,
-                      example='0,0,1')
-    parser.add_option(name="-pad-asym",
-                      type_value="str",
-                      description='Pad 3D image with asymmetric padding. Specify padding as: "x_i,x_f,y_i,y_f,z_i,z_f" (in voxel)',
-                      mandatory=False,
-                      example='0,0,5,10,1,1')
-    parser.add_option(name="-split",
-                      type_value="multiple_choice",
-                      description='Split data along the specified dimension. The suffix _DIM+NUMBER will be added to the intput file name.',
-                      mandatory=False,
-                      example=['x', 'y', 'z', 't'])
-    parser.add_option(name="-concat",
-                      type_value="multiple_choice",
-                      description='Concatenate data along the specified dimension',
-                      mandatory=False,
-                      example=['x', 'y', 'z', 't'])
-    parser.add_option(name='-remove-vol',
-                      type_value=[[','], 'int'],
-                      description='Remove specific volumes from a 4d volume. Separate with ","',
-                      mandatory=False,
-                      example='0,5,10')
-    parser.add_option(name='-keep-vol',
-                      type_value=[[','], 'int'],
-                      description='Keep specific volumes from a 4d volume (remove others). Separate with ","',
-                      mandatory=False,
-                      example='1,2,3,11')
-    parser.add_option(name='-type',
-                      type_value='multiple_choice',
-                      description='Change file type',
-                      mandatory=False,
-                      example=['uint8', 'int16', 'int32', 'float32', 'complex64', 'float64', 'int8', 'uint16', 'uint32', 'int64', 'uint64'])
+    parser = argparse.ArgumentParser(
+        description='Perform manipulations on images (e.g., pad, change space, split along dimension). '
+                    'Inputs can be a number, a 4d image, or several 3d images separated with ","',
+        formatter_class=SmartFormatter,
+        add_help=None,
+        prog=os.path.basename(__file__).strip(".py"))
+    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+    mandatory.add_argument(
+        "-i",
+        nargs="+",
+        metavar=Metavar.file,
+        help='Input file(s). If several inputs: separate them by a coma without white space. Example: "data.nii.gz"',
+        required = True)
+    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
+    optional.add_argument(
+        "-h",
+        "--help",
+        action="help",
+        help="Show this help message and exit")
+    optional.add_argument(
+        "-o",
+        metavar=Metavar.file,
+        help='Output file. Example: data_pad.nii.gz',
+        required = False)
 
-    parser.usage.addSection('\nHeader operations:')
-    parser.add_option(name="-copy-header",
-                      type_value="file",
-                      description='Copy the header of the source image (specified in -i) to the destination image (specified here)',
-                      mandatory=False,
-                      example='data_dest.nii.gz')
+    image = parser.add_argument_group('IMAGE OPERATIONS')
+    image.add_argument(
+        "-pad",
+        metavar=Metavar.list,
+        help='Pad 3D image. Specify padding as: "x,y,z" (in voxel). Example: "0,0,1"',
+        required = False)
+    image.add_argument(
+        "-pad-asym",
+        metavar=Metavar.list,
+        help='Pad 3D image with asymmetric padding. Specify padding as: "x_i,x_f,y_i,y_f,z_i,z_f" (in voxel). '
+             'Example: "0,0,5,10,1,1"',
+        required = False)
+    image.add_argument(
+        "-split",
+        help='Split data along the specified dimension. The suffix _DIM+NUMBER will be added to the intput file name.',
+        required = False,
+        choices = ('x', 'y', 'z', 't'))
+    image.add_argument(
+        "-concat",
+        help='Concatenate data along the specified dimension',
+        required = False,
+        choices = ('x', 'y', 'z', 't'))
+    image.add_argument(
+        '-remove-vol',
+        metavar=Metavar.list,
+        help='Remove specific volumes from a 4d volume. Separate with ",". Example: "0,5,10"',
+    required = False)
+    image.add_argument(
+        '-keep-vol',
+        metavar=Metavar.list,
+        help='Keep specific volumes from a 4d volume (remove others). Separate with ",". Example: "1,2,3,11"',
+        required = False)
+    image.add_argument(
+        '-type',
+        help='Change file type',
+        required = False,
+        choices = ('uint8','int16','int32','float32','complex64','float64','int8','uint16','uint32','int64','uint64'))
 
-    parser.usage.addSection("\nOrientation operations: ")
-    parser.add_option(name="-getorient",
-                      description='Get orientation of the input image',
-                      mandatory=False)
-    parser.add_option(name="-setorient",
-                      type_value="multiple_choice",
-                      description='Set orientation of the input image (only modifies the header).',
-                      mandatory=False,
-                      example='RIP LIP RSP LSP RIA LIA RSA LSA IRP ILP SRP SLP IRA ILA SRA SLA RPI LPI RAI LAI RPS LPS RAS LAS PRI PLI ARI ALI PRS PLS ARS ALS IPR SPR IAR SAR IPL SPL IAL SAL PIR PSR AIR ASR PIL PSL AIL ASL'.split())
-    parser.add_option(name="-setorient-data",
-                      type_value="multiple_choice",
-                      description='Set orientation of the input image\'s data (does NOT modify the header, but the data). Use with care !',
-                      mandatory=False,
-                      example='RIP LIP RSP LSP RIA LIA RSA LSA IRP ILP SRP SLP IRA ILA SRA SLA RPI LPI RAI LAI RPS LPS RAS LAS PRI PLI ARI ALI PRS PLS ARS ALS IPR SPR IAR SAR IPL SPL IAL SAL PIR PSR AIR ASR PIL PSL AIL ASL'.split())
+    header = parser.add_argument_group('HEADER OPERATIONS')
+    header.add_argument(
+        "-copy-header",
+        metavar=Metavar.file,
+        help='Copy the header of the source image (specified in -i) to the destination image (specified here). '
+             'Example: data_dest.nii.gz',
+        required = False)
 
-    parser.usage.addSection("\nMulti-component operations on ITK composite warping fields:")
-    parser.add_option(name='-mcs',
-                      description='Multi-component split: Split ITK warping field into three separate displacement fields. The suffix _X, _Y and _Z will be added to the input file name.',
-                      mandatory=False)
-    parser.add_option(name='-omc',
-                      description='Multi-component merge: Merge inputted images into one multi-component image. Requires several inputs.',
-                      mandatory=False)
+    orientation = parser.add_argument_group("ORIENTATION OPERATIONS")
+    orientation.add_argument(
+        "-getorient",
+        help='Get orientation of the input image',
+        action='store_true',
+        required=False)
+    orientation.add_argument(
+        "-setorient",
+        help='Set orientation of the input image (only modifies the header).',
+        choices='RIP LIP RSP LSP RIA LIA RSA LSA IRP ILP SRP SLP IRA ILA SRA SLA RPI LPI RAI LAI RPS LPS RAS LAS PRI PLI ARI ALI PRS PLS ARS ALS IPR SPR IAR SAR IPL SPL IAL SAL PIR PSR AIR ASR PIL PSL AIL ASL'.split(),
+        required = False)
+    orientation.add_argument(
+        "-setorient-data",
+        help='Set orientation of the input image\'s data (does NOT modify the header, but the data). Use with care !',
+        choices='RIP LIP RSP LSP RIA LIA RSA LSA IRP ILP SRP SLP IRA ILA SRA SLA RPI LPI RAI LAI RPS LPS RAS LAS PRI PLI ARI ALI PRS PLS ARS ALS IPR SPR IAR SAR IPL SPL IAL SAL PIR PSR AIR ASR PIL PSL AIL ASL'.split(),
+        required = False)
 
-    parser.usage.addSection("\nWarping field operations:")
-    parser.add_option(name='-display-warp',
-                      description='Create a grid and deform it using provided warping field.',
-                      mandatory=False)
+    multi = parser.add_argument_group("MULTI-COMPONENT OPERATIONS ON ITK COMPOSITE WARPING FIELDS")
+    multi.add_argument(
+        '-mcs',
+        action='store_true',
+        help='Multi-component split: Split ITK warping field into three separate displacement fields. '
+             'The suffix _X, _Y and _Z will be added to the input file name.',
+        required=False)
+    multi.add_argument(
+        '-omc',
+        action='store_true',
+        help='Multi-component merge: Merge inputted images into one multi-component image. Requires several inputs.',
+        required=False)
 
-    parser.usage.addSection("\nMisc")
-    parser.add_option(name="-v",
-                      type_value="multiple_choice",
-                      description="""Verbose. 0: nothing. 1: basic. 2: extended.""",
-                      mandatory=False,
-                      default_value=param_default.verbose,
-                      example=['0', '1', '2'])
+    warping = parser.add_argument_group("WARPING FIELD OPERATIONSWarping field operations:")
+    warping.add_argument(
+        '-display-warp',
+        action='store_true',
+        help='Create a grid and deform it using provided warping field.',
+        required=False)
+
+    misc = parser.add_argument_group("Misc")
+    misc.add_argument(
+        "-v",
+        type=int,
+        help="Verbose. 0: nothing. 1: basic. 2: extended.",
+        required=False,
+        default=param_default.verbose,
+        choices=(0, 1, 2))
+
     return parser
 
 
-def main(args=None):
+def main():
 
     # initializations
     output_type = None
     param = Param()
     dim_list = ['x', 'y', 'z', 't']
 
-    # check user arguments
-    if not args:
-        args = sys.argv[1:]
-
     # Get parser info
     parser = get_parser()
-    arguments = parser.parse(args)
-    fname_in = arguments["-i"]
+    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
+    fname_in = arguments.i
     n_in = len(fname_in)
-    verbose = int(arguments.get('-v'))
+    verbose = arguments.v
     sct.init_sct(log_level=verbose, update=True)  # Update log level
 
-    if "-o" in arguments:
-        fname_out = arguments["-o"]
+    if arguments.o is not None:
+        fname_out = arguments.o
     else:
         fname_out = None
 
@@ -154,38 +175,38 @@ def main(args=None):
     # im_in_list = [Image(fn) for fn in fname_in]
 
     # run command
-    if "-concat" in arguments:
-        dim = arguments["-concat"]
+    if arguments.concat is not None:
+        dim = arguments.concat
         assert dim in dim_list
         dim = dim_list.index(dim)
         im_out = [concat_data(fname_in, dim)]  # TODO: adapt to fname_in
 
-    elif "-copy-header" in arguments:
+    elif arguments.copy_header is not None:
         im_in = Image(fname_in[0])
-        im_dest = Image(arguments["-copy-header"])
+        im_dest = Image(arguments.copy_header)
         im_dest_new = im_in.copy()
         im_dest_new.data = im_dest.data.copy()
         # im_dest.header = im_in.header
         im_dest_new.absolutepath = im_dest.absolutepath
         im_out = [im_dest_new]
-        fname_out = arguments["-copy-header"]
+        fname_out = arguments.copy_header
 
-    elif '-display-warp' in arguments:
+    elif arguments.display_warp:
         im_in = fname_in[0]
         visualize_warp(im_in, fname_grid=None, step=3, rm_tmp=True)
         im_out = None
 
-    elif "-getorient" in arguments:
+    elif arguments.getorient:
         im_in = Image(fname_in[0])
         orient = im_in.orientation
         im_out = None
 
-    elif '-keep-vol' in arguments:
-        index_vol = arguments['-keep-vol']
+    elif arguments.keep_vol is not None:
+        index_vol = arguments.keep_vol
         im_in = Image(fname_in[0])
         im_out = [remove_vol(im_in, index_vol, todo='keep')]
 
-    elif '-mcs' in arguments:
+    elif arguments.mcs:
         im_in = Image(fname_in[0])
         if n_in != 1:
             sct.printv(parser.usage.generate(error='ERROR: -mcs need only one input'))
@@ -193,7 +214,7 @@ def main(args=None):
             sct.printv(parser.usage.generate(error='ERROR: -mcs input need to be a multi-component image'))
         im_out = multicomponent_split(im_in)
 
-    elif '-omc' in arguments:
+    elif arguments.omc:
         im_ref = Image(fname_in[0])
         for fname in fname_in:
             im = Image(fname)
@@ -202,14 +223,14 @@ def main(args=None):
             del im
         im_out = [multicomponent_merge(fname_in)]  # TODO: adapt to fname_in
 
-    elif "-pad" in arguments:
+    elif arguments.pad is not None:
         im_in = Image(fname_in[0])
         ndims = len(im_in.data.shape)
         if ndims != 3:
             sct.printv('ERROR: you need to specify a 3D input file.', 1, 'error')
             return
 
-        pad_arguments = arguments["-pad"].split(',')
+        pad_arguments = arguments.pad.split(',')
         if len(pad_arguments) != 3:
             sct.printv('ERROR: you need to specify 3 padding values.', 1, 'error')
 
@@ -218,14 +239,14 @@ def main(args=None):
         im_out = [pad_image(im_in, pad_x_i=padx, pad_x_f=padx, pad_y_i=pady,
                             pad_y_f=pady, pad_z_i=padz, pad_z_f=padz)]
 
-    elif "-pad-asym" in arguments:
+    elif arguments.pad_asym is not None:
         im_in = Image(fname_in[0])
         ndims = len(im_in.data.shape)
         if ndims != 3:
             sct.printv('ERROR: you need to specify a 3D input file.', 1, 'error')
             return
 
-        pad_arguments = arguments["-pad-asym"].split(',')
+        pad_arguments = arguments.pad_asym.split(',')
         if len(pad_arguments) != 6:
             sct.printv('ERROR: you need to specify 6 padding values.', 1, 'error')
 
@@ -233,29 +254,29 @@ def main(args=None):
         padxi, padxf, padyi, padyf, padzi, padzf = int(padxi), int(padxf), int(padyi), int(padyf), int(padzi), int(padzf)
         im_out = [pad_image(im_in, pad_x_i=padxi, pad_x_f=padxf, pad_y_i=padyi, pad_y_f=padyf, pad_z_i=padzi, pad_z_f=padzf)]
 
-    elif '-remove-vol' in arguments:
-        index_vol = arguments['-remove-vol']
+    elif arguments.remove_vol is not None:
+        index_vol = arguments.remove_vol
         im_in = Image(fname_in[0])
         im_out = [remove_vol(im_in, index_vol, todo='remove')]
 
-    elif "-setorient" in arguments:
+    elif arguments.setorient is not None:
         sct.printv(fname_in[0])
         im_in = Image(fname_in[0])
-        im_out = [msct_image.change_orientation(im_in, arguments["-setorient"]).save(fname_out)]
+        im_out = [msct_image.change_orientation(im_in, arguments.setorient).save(fname_out)]
 
-    elif "-setorient-data" in arguments:
+    elif arguments.setorient_data is not None:
         im_in = Image(fname_in[0])
-        im_out = [msct_image.change_orientation(im_in, arguments["-setorient-data"], inverse=True).save(fname_out)]
+        im_out = [msct_image.change_orientation(im_in, arguments.setorient_data, inverse=True).save(fname_out)]
 
-    elif "-split" in arguments:
-        dim = arguments["-split"]
+    elif arguments.split is not None:
+        dim = arguments.split
         assert dim in dim_list
         im_in = Image(fname_in[0])
         dim = dim_list.index(dim)
         im_out = split_data(im_in, dim)
 
-    elif '-type' in arguments:
-        output_type = arguments['-type']
+    elif arguments.type is not None:
+        output_type = arguments.type
         im_in = Image(fname_in[0])
         im_out = [im_in]  # TODO: adapt to fname_in
 
@@ -264,7 +285,7 @@ def main(args=None):
         sct.printv(parser.usage.generate(error='ERROR: you need to specify an operation to do on the input image'))
 
     # in case fname_out is not defined, use first element of input file name list
-    if fname_out == None:
+    if fname_out is None:
         fname_out = fname_in[0]
 
     # Write output
@@ -274,14 +295,14 @@ def main(args=None):
         if len(im_out) == 1 and not '-split' in arguments:
             im_out[0].save(fname_out, dtype=output_type, verbose=verbose)
             sct.display_viewer_syntax([fname_out], verbose=verbose)
-        if '-mcs' in arguments:
+        if arguments.mcs:
             # use input file name and add _X, _Y _Z. Keep the same extension
             l_fname_out = []
             for i_dim in range(3):
                 l_fname_out.append(sct.add_suffix(fname_out or fname_in[0], '_' + dim_list[i_dim].upper()))
                 im_out[i_dim].save(l_fname_out[i_dim], verbose=verbose)
             sct.display_viewer_syntax(fname_out)
-        if '-split' in arguments:
+        if arguments.split is not None:
             # use input file name and add _"DIM+NUMBER". Keep the same extension
             l_fname_out = []
             for i, im in enumerate(im_out):
@@ -289,10 +310,10 @@ def main(args=None):
                 im.save(l_fname_out[i])
             sct.display_viewer_syntax(l_fname_out)
 
-    elif "-getorient" in arguments:
+    elif arguments.getorient:
         sct.printv(orient)
 
-    elif '-display-warp' in arguments:
+    elif arguments.display_warp:
         sct.printv('Warping grid generated.', verbose, 'info')
 
 
@@ -525,10 +546,10 @@ def concat_warp2d(fname_list, fname_warp3d, fname_dest):
 
 def multicomponent_split(im):
     """
-    Convert composite image (e.g., ITK warping field, 5dim) into several 3d volumes.
-    Replaces "c3d -mcs warp_comp.nii -oo warp_vecx.nii warp_vecy.nii warp_vecz.nii"
-    :param im:
-    :return:
+        Convert composite image (e.g., ITK warping field, 5dim) into several 3d volumes.
+        Replaces "c3d -mcs warp_comp.nii -oo warp_vecx.nii warp_vecy.nii warp_vecz.nii"
+        :param im:
+        :return:
     """
     data = im.data
     assert len(data.shape) == 5
