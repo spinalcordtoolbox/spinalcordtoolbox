@@ -42,7 +42,7 @@ fi
 
 # QC folder
 if [[ -z "$SCT_BP_QC_FOLDER" ]]; then
-	SCT_BP_QC_FOLDER=~/qc_batch_processing
+	SCT_BP_QC_FOLDER=`pwd`/"qc_example_data"
 fi
 
 # Remove QC folder
