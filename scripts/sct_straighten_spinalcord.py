@@ -44,14 +44,14 @@ def get_parser():
         "-i",
         metavar=Metavar.file,
         help='Input image with curved spinal cord. Example: "t2.nii.gz"',
-        required = True)
+        required=True)
     mandatory.add_argument(
         "-s",
         metavar=Metavar.file,
         help='Spinal cord centerline (or segmentation) of the input image. To obtain the centerline, you can use '
              'sct_get_centerline. To obtain the segmentation you can use sct_propseg or sct_deepseg_sc. '
              'Example: centerline.nii.gz',
-        required = True)
+        required=True)
     optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",
@@ -68,7 +68,7 @@ def get_parser():
              "that the inter-vertebral discs of the input image will match that of the "
              "destination image. This feature is particularly useful for registering to a "
              "template while accounting for disc alignment.",
-        required = False)
+        required=False)
     optional.add_argument(
         "-ldisc-input",
         metavar=Metavar.file,
@@ -78,13 +78,13 @@ def get_parser():
         "6,7). More details about label creation at "
         "http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/. "  # TODO (Julien) update this link
         "This option must be used with the -ldisc_dest parameter.",
-        required = False)
+        required=False)
     optional.add_argument(
         "-ldisc-dest",
         metavar=Metavar.file,
         help="Labels located at the posterior edge of the intervertebral discs, for the destination file (-dest). "
              "The same comments as in -ldisc_input apply. This option must be used with the -ldisc_input parameter.",
-        required = False)
+        required=False)
     optional.add_argument(
         "-disable-straight2curved",
         action='store_true',
@@ -123,8 +123,8 @@ def get_parser():
         "-o",
         metavar=Metavar.file,
         help="Straightened file. Example: data_straight.nii.gz",
-        required = False,
-        default = 'data_straight.nii.gz')
+        required=False,
+        default='data_straight.nii.gz')
     optional.add_argument(
         "-ofolder",
         metavar=Metavar.folder,
@@ -135,8 +135,8 @@ def get_parser():
     optional.add_argument(
         '-centerline-algo',
         help='Algorithm for centerline fitting.',
-        choices = ('bspline', 'linear', 'nurbs'),
-        default = 'nurbs')
+        choices=('bspline', 'linear', 'nurbs'),
+        default='nurbs')
     optional.add_argument(
         '-centerline-smooth',
         metavar=Metavar.int,
@@ -277,9 +277,7 @@ def main():
 
     sct.display_viewer_syntax([fname_straight], verbose=verbose)
 
-# START PROGRAM
-# ==========================================================================================
+
 if __name__ == "__main__":
     sct.init_sct()
-    # call main function
     main()
