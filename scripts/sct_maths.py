@@ -39,13 +39,13 @@ def get_parser():
     mandatory.add_argument(
         "-i",
         metavar=Metavar.file,
-        help="Input file.  Example: data.nii.gz",
-        required = True)
+        help="Input file. Example: data.nii.gz",
+        required=True)
     mandatory.add_argument(
         "-o",
         metavar=Metavar.file,
         help='Output file. Example: data_mean.nii.gz',
-        required = True)
+        required=True)
 
     optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
     optional.add_argument(
@@ -59,39 +59,39 @@ def get_parser():
         "-add",
         metavar='',
         nargs="+",
-        help='Add following input (can be number or image(s). If adding multiple images, seperate each file by a space.)',
+        help='Add following input. Can be a number or multiple images (separated with space).',
         required=False)
     basic.add_argument(
         "-sub",
         metavar='',
-        help='Substract following input (can be number or image)',
+        help='Subtract following input. Can be a number or an image.',
         required=False)
     basic.add_argument(
         "-mul",
         metavar='',
         nargs="+",
-        help='Multiply following input (can be number or image(s). If adding multiple images, seperate each file by a space.))',
+        help='Multiply by following input. Can be a number or multiple images (separated with space).',
         required=False)
     basic.add_argument(
         "-div",
         metavar='',
-        help='Divide following input (can be number or image)',
+        help='Divide by following input. Can be a number or an image.',
         required=False)
     basic.add_argument(
         '-mean',
-        help='Average data across dimension',
-        required = False,
+        help='Average data across dimension.',
+        required=False,
         choices=('x', 'y', 'z', 't'))
     basic.add_argument(
         '-rms',
         help='Compute root-mean-squared across dimension.',
-        required = False,
-        choices = ('x', 'y', 'z', 't'))
+        required=False,
+        choices=('x', 'y', 'z', 't'))
     basic.add_argument(
         '-std',
         help='Compute STD across dimension.',
-        required = False,
-        choices = ('x', 'y', 'z', 't'))
+        required=False,
+        choices=('x', 'y', 'z', 't'))
     basic.add_argument(
         "-bin",
         type=float,
@@ -517,7 +517,7 @@ def get_data_or_scalar(argument, data_in):
     # try to convert argument in float
     try:
         # build data2 with same shape as data
-        data_out = data_in[:, :, :] * 0 + float(argument)
+        data_out = data_in[:, :, :] * 0 + float(argument[0])
     # if conversion fails, it should be a file
     except:
         print(argument)
