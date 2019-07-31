@@ -17,33 +17,24 @@ import sys
 import numpy as np
 import argparse
 
-
 from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.utils import Metavar, SmartFormatter
+
 from sct_utils import printv, extract_fname
 import sct_utils as sct
-from spinalcordtoolbox.utils import Metavar, SmartFormatter
+
 
 ALMOST_ZERO = 0.000000001
 
 
-class Param:
-    def __init__(self):
-        self.verbose = '1'
-
-# PARSER
-# ==========================================================================================
-
-
 def get_parser():
-    param = Param()
-
-    # Initialize the parser
 
     parser = argparse.ArgumentParser(
-        description='Perform mathematical operations on images. Some inputs can be either a number or a 4d image or several 3d images separated with ","',
-        add_help = None,
-        formatter_class = SmartFormatter,
-        prog = os.path.basename(__file__).strip(".py"))
+        description='Perform mathematical operations on images. Some inputs can be either a number or a 4d image or '
+                    'several 3d images separated with ","',
+        add_help=None,
+        formatter_class=SmartFormatter,
+        prog=os.path.basename(__file__).strip(".py"))
     mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
     mandatory.add_argument(
         "-i",
@@ -114,7 +105,7 @@ def get_parser():
         type=int,
         metavar=Metavar.int,
         help='Threshold image using Otsu algorithm.\nnbins: number of bins. Example: 256',
-        required = False)
+        required=False)
     thresholding.add_argument(
         "-otsu-adap",
         metavar=Metavar.list,
@@ -123,9 +114,9 @@ def get_parser():
     thresholding.add_argument(
         "-otsu-median",
         help='R|Threshold image using Median Otsu algorithm. Separate with "," Example: 2,3'
-             '\n- Size of the median filter. Example: 2'
-             '\n- Number of iterations. Example: 3\n',
-        required = False)
+             '\n Size of the median filter. Example: 2'
+             '\n Number of iterations. Example: 3\n',
+        required=False)
     thresholding.add_argument(
         '-percent',
         type=int,
@@ -136,25 +127,30 @@ def get_parser():
         type=float,
         metavar=Metavar.float,
         help='Use following number to threshold image (zero below number).',
-        required = False)
+        required=False)
 
     mathematical = parser.add_argument_group("MATHEMATICAL MORPHOLOGY")
     mathematical.add_argument(
         '-dilate',
         metavar='',
-        help='Dilate binary image. If only one input is given, structured element is a ball with input radius (in voxel). If comma-separated inputs are given (Example: 2,4,5 ), structured element is a box with input dimensions.',
+        help='Dilate binary image. If only one input is given, structured element is a ball with input radius (in '
+             'voxel). If comma-separated inputs are given (Example: 2,4,5 ), structured element is a box with input '
+             'dimensions.',
         required=False)
     mathematical.add_argument(
         '-erode',
         metavar='',
-        help='Erode binary image. If only one input is given, structured element is a ball with input radius (in voxel). If comma-separated inputs are given (Example: 2,4,5), structured element is a box with input dimensions.',
+        help='Erode binary image. If only one input is given, structured element is a ball with input radius (in '
+             'voxel). If comma-separated inputs are given (Example: 2,4,5), structured element is a box with input '
+             'dimensions.',
         required=False)
 
     filtering = parser.add_argument_group("FILTERING METHODS")
     filtering.add_argument(
         "-smooth",
         metavar='',
-        help='Gaussian smoothing filter with specified standard deviations in mm for each axis (Example: 2,2,1) or single value for all axis (Example: 2).',
+        help='Gaussian smoothing filter with specified standard deviations in mm for each axis (Example: 2,2,1) or '
+             'single value for all axis (Example: 2).',
         required = False)
     filtering.add_argument(
         '-laplacian',
@@ -165,9 +161,9 @@ def get_parser():
     filtering.add_argument(
         '-denoise',
         help='R|Non-local means adaptative denoising from P. Coupe et al. as implemented in dipy. Separate with ". Example: p=1,b=3\n'
-             'p: (patch radius) similar patches in the non-local means are searched for locally, inside a cube of side 2*p+1 centered at each voxel of interest. Default: p=1\n'
-             'b: (block radius) the size of the block to be used (2*b+1) in the blockwise non-local means implementation. Default: b=5 '
-             '(Block radius must be smaller than the smaller image dimension: default value is lowered for small images)\n'
+             ' p: (patch radius) similar patches in the non-local means are searched for locally, inside a cube of side 2*p+1 centered at each voxel of interest. Default: p=1\n'
+             ' b: (block radius) the size of the block to be used (2*b+1) in the blockwise non-local means implementation. Default: b=5 '
+             '    Note, block radius must be smaller than the smaller image dimension: default value is lowered for small images)\n'
              'To use default parameters, write -denoise 1',
         required=False)
 
@@ -177,38 +173,38 @@ def get_parser():
         metavar=Metavar.file,
         help='Compute the mutual information (MI) between both input files (-i and -mi) as in: '
              'http://scikit-learn.org/stable/modules/generated/sklearn.metrics.mutual_info_score.html',
-        required = False)
+        required=False)
     similarity.add_argument(
         '-minorm',
         metavar=Metavar.file,
         help='Compute the normalized mutual information (MI) between both input files (-i and -mi) as in: '
              'http://scikit-learn.org/stable/modules/generated/sklearn.metrics.normalized_mutual_info_score.html',
-        required = False)
+        required=False)
     similarity.add_argument(
         '-corr',
         metavar=Metavar.file,
         help='Compute the cross correlation (CC) between both input files (-i and -cc).',
-        required = False)
+        required=False)
 
     misc = parser.add_argument_group("MISC")
     misc.add_argument(
         '-symmetrize',
         type=int,
         help='Symmetrize data along the specified dimension.',
-        required = False,
-        choices = (0, 1, 2))
+        required=False,
+        choices=(0, 1, 2))
     misc.add_argument(
         '-type',
-        required = False,
+        required=False,
         help='Output type.',
-        choices = ('uint8', 'int16', 'int32', 'float32', 'complex64', 'float64', 'int8', 'uint16',
-                   'uint32', 'int64', 'uint64'))
+        choices=('uint8', 'int16', 'int32', 'float32', 'complex64', 'float64', 'int8', 'uint16', 'uint32', 'int64',
+                 'uint64'))
     misc.add_argument(
         "-v",
         type=int,
         help="Verbose. 0: nothing. 1: basic. 2: extended.",
         required=False,
-        default=param.verbose,
+        default=1,
         choices=(0, 1, 2))
 
     return parser
@@ -216,7 +212,7 @@ def get_parser():
 
 # MAIN
 # ==========================================================================================
-def main(args = None):
+def main():
 
     dim_list = ['x', 'y', 'z', 't']
     # Get parser info
@@ -364,7 +360,6 @@ def main(args = None):
         compute_similarity(im.data, im_2.data, fname_out, metric='corr', verbose=verbose)
         data_out = None
 
-
     # if no flag is set
     else:
         data_out = None
@@ -407,7 +402,7 @@ def main(args = None):
     else:
         printv('\nDone! File created: ' + fname_out, verbose, 'info')
 
-# ==========================================================================================
+
 def convert_list_str(string_list, type):
     """
     Receive a string and then converts it into a list of selected type
@@ -420,6 +415,7 @@ def convert_list_str(string_list, type):
             new_type_list[inew_type_list] = float(ele)
 
     return new_type_list
+
 
 def otsu(data, nbins):
     from skimage.filters import threshold_otsu
@@ -759,11 +755,6 @@ def correlation(x, y, type='pearson'):
     # from sklearn.cluster import KMeans
 
 
-# START PROGRAM
-# ==========================================================================================
 if __name__ == "__main__":
     sct.init_sct()
-    # # initialize parameters
-    param = Param()
-    # call main function
     main()
