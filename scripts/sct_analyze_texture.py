@@ -23,7 +23,7 @@ from skimage.feature import greycomatrix, greycoprops
 import sct_utils as sct
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.utils import Metavar, SmartFormatter
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder
 
 def get_parser():
     # Initialize the parser
@@ -85,6 +85,7 @@ def get_parser():
         "-ofolder",
         metavar=Metavar.folder,
         help='Output folder. Example: /my_texture/',
+        action=ActionCreateFolder,
         required=False,
         default=Param().path_results)
     optional.add_argument(
