@@ -116,14 +116,13 @@ Each repository is a pipeline dedicated to a specific research project.
 
 We organize **free** SCT courses, each year after the ISMRM conference. If you'd like to be added to the mailing list, please send an email to `spinalcordtoolbox@gmail.com`. The past courses handouts are listed below:
 
-* [SCT course, London, 2019-01-22 (v4.0.0)](https://osf.io/gvs6f/)
-* [SCT course, Paris, 2018-06-12 (v3.2.2)](https://osf.io/386h7/)
-* [SCT course, Honolulu, 2017-04-28 (v3.0.3)](https://osf.io/fvnjq/)
-* [SCT course, Geneva, 2016-06-28 (v3.0_beta14)](https://sourceforge.net/p/spinalcordtoolbox/wiki/Home/attachment/SCT_Course_20160628.pdf)
-* [SCT course, Singapore, 2016-05-13 (v3.0_beta9)](https://drive.google.com/file/d/0Bx3A13n3Q_EAa3NQYjBOWjhjZm8/view?usp=sharing)
-* [SCT course, Montreal, 2016-04-19 (v3.0_beta1)](https://drive.google.com/file/d/0Bx3A13n3Q_EAenltM2ZvZUNEdjQ/view?usp=sharing)
-* [SCT Hands-on Workshop, Toronto, 2015-06-15 (v2.0.4)](https://www.dropbox.com/s/f9887yrbkcfujn9/sct_handsOn_20150605.pdf?dl=0)
-* [Spine Hack, Milan, 2014-05-16 (v2.0.1)](https://dl.dropboxusercontent.com/u/20592661/sct/20140516_spinehack_milan.pdf).
+* [SCT course (v4.0.0), London, 2019-01-22](https://osf.io/gvs6f/)
+* [SCT course (v3.2.2), Paris, 2018-06-12](https://osf.io/386h7/)
+* [SCT course (v3.0.3), Honolulu, 2017-04-28](https://osf.io/fvnjq/)
+* [SCT course (v3.0_beta14), Geneva, 2016-06-28](https://sourceforge.net/p/spinalcordtoolbox/wiki/Home/attachment/SCT_Course_20160628.pdf)
+* [SCT course (v3.0_beta9), Singapore, 2016-05-13](https://drive.google.com/file/d/0Bx3A13n3Q_EAa3NQYjBOWjhjZm8/view?usp=sharing)
+* [SCT course (v3.0_beta1), Montreal, 2016-04-19](https://drive.google.com/file/d/0Bx3A13n3Q_EAenltM2ZvZUNEdjQ/view?usp=sharing)
+* [SCT Hands-on Workshop (v2.0.4), Toronto, 2015-06-15](https://www.dropbox.com/s/f9887yrbkcfujn9/sct_handsOn_20150605.pdf?dl=0)
 
 ## Video tutorials
 
