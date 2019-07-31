@@ -15,17 +15,19 @@
 
 from __future__ import division, absolute_import
 
-import sys, os, argparse
+import sys
+import os
+import argparse
 
 from spinalcordtoolbox.straightening import SpinalCordStraightener
 from spinalcordtoolbox.centerline.core import ParamCenterline
 from spinalcordtoolbox.reports.qc import generate_qc
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder
 
 import sct_utils as sct
-from spinalcordtoolbox.utils import Metavar, SmartFormatter #TODO ,ActionCreateFolder
+
 
 def get_parser():
-    # Initialize parser
 
     # Mandatory arguments
     parser = argparse.ArgumentParser(
@@ -127,6 +129,7 @@ def get_parser():
         "-ofolder",
         metavar=Metavar.folder,
         help="Output folder (all outputs will go there).",
+        action=ActionCreateFolder,
         required=False,
         default='./')
     optional.add_argument(
