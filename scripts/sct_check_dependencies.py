@@ -28,6 +28,7 @@ import platform
 import importlib
 
 import sct_utils as sct
+from spinalcordtoolbox.utils import SmartFormatter
 
 
 # DEFAULT PARAMETERS
@@ -361,9 +362,9 @@ def get_parser():
     # Initialize the parser
 
     parser = argparse.ArgumentParser(
-        description='Check the installation and environment variables of the'
-        ' toolbox and its dependencies.',
+        description='Check the installation and environment variables of the toolbox and its dependencies.',
         add_help=None,
+        formatter_class=SmartFormatter,
         prog=os.path.basename(__file__).strip(".py")
     )
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
@@ -371,7 +372,7 @@ def get_parser():
         "-h",
         "--help",
         action="help",
-        help="show this help message and exit")
+        help="Show this help message and exit")
     optional.add_argument(
         "-c",
         "--complete",

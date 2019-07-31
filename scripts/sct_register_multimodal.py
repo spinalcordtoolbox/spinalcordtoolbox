@@ -44,6 +44,7 @@ from spinalcordtoolbox.reports.qc import generate_qc
 import sct_utils as sct
 from msct_parser import Parser
 import sct_apply_transfo
+import sct_concat_transfo
 
 
 def get_parser(paramreg=None):
@@ -521,10 +522,14 @@ def main(args=None):
 
     # Concatenate transformations
     sct.printv('\nConcatenate transformations...', verbose)
-    sct.run(['sct_concat_transfo', '-w', ','.join(warp_forward), '-d', 'dest.nii', '-o', 'warp_src2dest.nii.gz'],
-            verbose)
-    sct.run(['sct_concat_transfo', '-w', ','.join(warp_inverse), '-d', 'src.nii', '-o', 'warp_dest2src.nii.gz'],
-            verbose)
+    sct_concat_transfo.main(args=[
+        '-w', warp_forward,
+        '-d', 'dest.nii',
+        '-o', 'warp_src2dest.nii.gz'])
+    sct_concat_transfo.main(args=[
+        '-w', warp_inverse,
+        '-d', 'src.nii',
+        '-o', 'warp_dest2src.nii.gz'])
 
     # Apply warping field to src data
     sct.printv('\nApply transfo source --> dest...', verbose)

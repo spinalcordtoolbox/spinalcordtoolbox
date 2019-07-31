@@ -18,7 +18,7 @@ import argparse
 
 import sct_utils as sct
 
-from spinalcordtoolbox.utils import Metavar
+from spinalcordtoolbox.utils import Metavar, SmartFormatter
 
 
 # PARSER
@@ -32,8 +32,8 @@ def get_parser():
                     'neurologic outcome--prospective study with 100 consecutive patients. Radiology 2007;243(3):820-'
                     '827.',
         add_help=None,
-        prog=os.path.basename(__file__).strip(".py"),
-    )
+        formatter_class=SmartFormatter,
+        prog=os.path.basename(__file__).strip(".py"))
 
     mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatoryArguments.add_argument(
@@ -60,7 +60,7 @@ def get_parser():
         "-h",
         "--help",
         action="help",
-        help="show this help message and exit")
+        help="Show this help message and exit")
 
     return parser
 

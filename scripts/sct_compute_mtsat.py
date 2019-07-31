@@ -21,7 +21,7 @@ import sys
 import os
 import argparse
 
-from spinalcordtoolbox.utils import Metavar
+from spinalcordtoolbox.utils import Metavar, SmartFormatter
 from spinalcordtoolbox.mtsat import mtsat
 
 import sct_utils as sct
@@ -34,6 +34,7 @@ def get_parser():
                     'transfer with inherent correction for RF inhomogeneity and T1 relaxation obtained from 3D FLASH '
                     'MRI. Magn Reson Med 2008;60(6):1396-1407.',
         add_help=False,
+        formatter_class=SmartFormatter,
         prog= os.path.basename(__file__).strip(".py")
     )
     mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
@@ -93,7 +94,7 @@ def get_parser():
         "-h",
         "--help",
         action="help",
-        help="show this help message and exit")
+        help="Show this help message and exit")
     optional.add_argument(
         "-b1map",
         help="B1 map",

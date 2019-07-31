@@ -24,7 +24,7 @@ import sct_convert
 import sct_image
 import spinalcordtoolbox.image as msct_image
 from sct_crop_image import ImageCropper
-from spinalcordtoolbox.utils import Metavar
+from spinalcordtoolbox.utils import Metavar, SmartFormatter
 
 
 class Param:
@@ -41,17 +41,18 @@ def get_parser():
     parser = argparse.ArgumentParser(
         description='Apply transformations. This function is a wrapper for antsApplyTransforms (ANTs).',
         add_help=None,
+        formatter_class=SmartFormatter,
         prog=os.path.basename(__file__).strip(".py")
     )
 
     mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatoryArguments.add_argument(
         "-i",
-        help='input image (e.g. "t2.nii.gz")',
+        help='Input image. Example: t2.nii.gz',
         metavar=Metavar.file)
     mandatoryArguments.add_argument(
         "-d",
-        help='destination image (e.g. "out.nii.gz")',
+        help='Destination image. Example: out.nii.gz',
         metavar=Metavar.file)
     mandatoryArguments.add_argument(
         "-w",
@@ -63,8 +64,8 @@ def get_parser():
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
         "-winv",
-        help='Affine transformation(s) listed in flag -w which should be inverted before being used. Note that this'
-             'only concerns affine transformation (not warping fields). If you would like to use an inverse warping'
+        help='Affine transformation(s) listed in flag -w which should be inverted before being used. Note that this '
+             'only concerns affine transformation (not warping fields). If you would like to use an inverse warping '
              'field, then directly input the inverse warping field in flag -w.',
         nargs='+',
         metavar=Metavar.file,
@@ -73,7 +74,7 @@ def get_parser():
         "-h",
         "--help",
         action="help",
-        help="show this help message and exit")
+        help="Show this help message and exit")
     optional.add_argument(
         "-crop",
         help="Crop Reference. 0 : no reference. 1 : sets background to 0. 2 : use normal background",
@@ -83,13 +84,13 @@ def get_parser():
         choices=(0, 1, 2))
     optional.add_argument(
         "-o",
-        help='registered source. (e.g. "dest.nii.gz")',
+        help='Registered source. Example: dest.nii.gz',
         required=False,
         metavar=Metavar.file,
         default='')
     optional.add_argument(
         "-x",
-        help="interpolation method (e.g. ['nn', 'linear', 'spline'])",
+        help="Interpolation method ",
         required=False,
         default='spline',
         choices=('nn', 'linear', 'spline'))
