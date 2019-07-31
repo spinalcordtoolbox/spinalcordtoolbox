@@ -151,12 +151,18 @@ def get_parser():
     return parser
 
 
-def main():
+def main(arguments=None):
 
     # initializations
     output_type = None
     param = Param()
     dim_list = ['x', 'y', 'z', 't']
+
+    # check user arguments
+    if not arguments:
+        arguments = sys.argv[1:]
+    else:
+        ["--help"]
 
     # Get parser info
     parser = get_parser()
