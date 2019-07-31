@@ -22,7 +22,7 @@ from spinalcordtoolbox.centerline.core import ParamCenterline
 from spinalcordtoolbox.reports.qc import generate_qc
 
 import sct_utils as sct
-from spinalcordtoolbox.utils import Metavar, SmartFormatter
+from spinalcordtoolbox.utils import Metavar, SmartFormatter #TODO ,ActionCreateFolder
 
 def get_parser():
     # Initialize parser
@@ -154,8 +154,8 @@ def get_parser():
     optional.add_argument(
         "-x",
         help="Final interpolation.",
-        choices = ("nn", "linear", "spline"),
-        default = "spline")
+        choices=("nn", "linear", "spline"),
+        default="spline")
     optional.add_argument(
         '-qc',
         metavar=Metavar.str,
@@ -179,14 +179,14 @@ def get_parser():
         help="Remove temporary files.",
         required=False,
         choices=(0, 1),
-        default = 1)
+        default=1)
     optional.add_argument(
         "-v",
         type=int,
         help="Verbose. 0: nothing, 1: basic, 2: extended.",
         required=False,
         choices=(0, 1, 2),
-        default = 1)
+        default=1)
 
     return parser
 
