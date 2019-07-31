@@ -18,7 +18,7 @@ import sys
 import argparse
 
 import sct_utils as sct
-from spinalcordtoolbox.utils import Metavar, SmartFormatter
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder
 
 
 def get_parser():
@@ -75,6 +75,7 @@ def get_parser():
         "-ofolder",
         metavar=Metavar.str,
         help='Output folder. Example: My_Output_Folder/ ',
+        action=ActionCreateFolder,
         default=os.getcwd())
     optional.add_argument(
         "-r",

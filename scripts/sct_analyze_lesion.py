@@ -19,7 +19,7 @@ from skimage.measure import label
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
-from spinalcordtoolbox.utils import Metavar, SmartFormatter
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder
 
 import sct_utils as sct
 from sct_utils import extract_fname, printv, tmp_create
@@ -80,6 +80,7 @@ def get_parser():
         "-ofolder",
         help='Output folder (e.g. "./")',
         metavar=Metavar.folder,
+        action=ActionCreateFolder,
         default='./',
         required=False)
     optional.add_argument(
