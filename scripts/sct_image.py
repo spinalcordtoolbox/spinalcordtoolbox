@@ -12,24 +12,19 @@
 
 from __future__ import absolute_import
 
-import os, sys, warnings, argparse
-
+import os
+import sys
+import argparse
 import numpy as np
 
-import sct_utils as sct
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.utils import Metavar, SmartFormatter
 
-class Param:
-    def __init__(self):
-        self.verbose = '1'
+import sct_utils as sct
 
 
 def get_parser():
-    # initialize default param
-    param_default = Param()
-    # Initialize the parser
 
     parser = argparse.ArgumentParser(
         description='Perform manipulations on images (e.g., pad, change space, split along dimension). '
@@ -82,7 +77,7 @@ def get_parser():
         '-remove-vol',
         metavar=Metavar.list,
         help='Remove specific volumes from a 4d volume. Separate with ",". Example: "0,5,10"',
-    required = False)
+        required = False)
     image.add_argument(
         '-keep-vol',
         metavar=Metavar.list,
@@ -145,24 +140,17 @@ def get_parser():
         type=int,
         help="Verbose. 0: nothing. 1: basic. 2: extended.",
         required=False,
-        default=param_default.verbose,
+        default=1,
         choices=(0, 1, 2))
 
     return parser
 
 
-def main(arguments=None):
+def main():
 
     # initializations
     output_type = None
-    param = Param()
     dim_list = ['x', 'y', 'z', 't']
-
-    # check user arguments
-    if not arguments:
-        arguments = sys.argv[1:]
-    else:
-        ["--help"]
 
     # Get parser info
     parser = get_parser()
@@ -647,7 +635,4 @@ def visualize_warp(fname_warp, fname_grid=None, step=3, rm_tmp=True):
 
 if __name__ == "__main__":
     sct.init_sct()
-    # # initialize parameters
-    param = Param()
-    # call main function
     main()
