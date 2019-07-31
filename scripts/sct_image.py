@@ -552,10 +552,10 @@ def concat_warp2d(fname_list, fname_warp3d, fname_dest):
 
 def multicomponent_split(im):
     """
-        Convert composite image (e.g., ITK warping field, 5dim) into several 3d volumes.
-        Replaces "c3d -mcs warp_comp.nii -oo warp_vecx.nii warp_vecy.nii warp_vecz.nii"
-        :param im:
-        :return:
+    Convert composite image (e.g., ITK warping field, 5dim) into several 3d volumes.
+    Replaces "c3d -mcs warp_comp.nii -oo warp_vecx.nii warp_vecy.nii warp_vecz.nii"
+    :param im:
+    :return:
     """
     data = im.data
     assert len(data.shape) == 5
