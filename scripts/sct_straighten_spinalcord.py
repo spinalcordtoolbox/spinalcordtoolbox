@@ -122,7 +122,7 @@ def get_parser():
         metavar=Metavar.file,
         help="Straightened file. Example: data_straight.nii.gz",
         required = False,
-        default = '')
+        default = 'data_straight.nii.gz')
     optional.add_argument(
         "-ofolder",
         metavar=Metavar.folder,
@@ -221,12 +221,9 @@ def main():
             sc_straight.precision = 4.0
 
     # Handling optional arguments
-    if arguments.r is not None:
-        sc_straight.remove_temp_files = arguments.r
-    if arguments.x is not None:
-        sc_straight.interpolation_warp = arguments.x
-    if arguments.o is not None:
-        sc_straight.output_filename = arguments.o
+    sc_straight.remove_temp_files = arguments.r
+    sc_straight.interpolation_warp = arguments.x
+    sc_straight.output_filename = arguments.o
     sc_straight.path_output = arguments.ofolder
     path_qc = arguments.qc
     verbose = arguments.v
