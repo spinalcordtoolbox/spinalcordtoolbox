@@ -42,7 +42,7 @@ def get_parser():
         "-i",
         nargs="+",
         metavar=Metavar.file,
-        help='Input file(s). If several inputs: separate them by a coma without white space. Example: "data.nii.gz"',
+        help='Input file(s). If several inputs: separate them by white space. Example: "data.nii.gz"',
         required = True)
     optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
     optional.add_argument(
