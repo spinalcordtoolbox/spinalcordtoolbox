@@ -122,9 +122,9 @@ def get_parser():
     optional.add_argument(
         "-o",
         metavar=Metavar.file,
-        help="Straightened file. Example: data_straight.nii.gz",
+        help='Straightened file. By default, the suffix "_straight" will be added to the input file name.',
         required=False,
-        default='data_straight.nii.gz')
+        default='')
     optional.add_argument(
         "-ofolder",
         metavar=Metavar.folder,
