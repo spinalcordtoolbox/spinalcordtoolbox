@@ -12,193 +12,225 @@
 
 from __future__ import division, absolute_import
 
+import os
 import sys
-
 import numpy as np
-from msct_parser import Parser
+import argparse
+
 from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.utils import Metavar, SmartFormatter
+
 from sct_utils import printv, extract_fname
 import sct_utils as sct
+
 
 ALMOST_ZERO = 0.000000001
 
 
-class Param:
-    def __init__(self):
-        self.verbose = '1'
-
-# PARSER
-# ==========================================================================================
-
-
 def get_parser():
-    param = Param()
 
-    # Initialize the parser
-    parser = Parser(__file__)
-    parser.usage.set_description('Perform mathematical operations on images. Some inputs can be either a number or a 4d image or several 3d images separated with ","')
-    parser.add_option(name="-i",
-                      type_value='file',
-                      description="Input file. ",
-                      mandatory=True,
-                      example="data.nii.gz")
-    parser.add_option(name="-o",
-                      type_value='file_output',
-                      description='Output file.',
-                      mandatory=True,
-                      example=['data_mean.nii.gz'])
+    parser = argparse.ArgumentParser(
+        description='Perform mathematical operations on images. Some inputs can be either a number or a 4d image or '
+                    'several 3d images separated with ","',
+        add_help=None,
+        formatter_class=SmartFormatter,
+        prog=os.path.basename(__file__).strip(".py"))
+    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+    mandatory.add_argument(
+        "-i",
+        metavar=Metavar.file,
+        help="Input file. Example: data.nii.gz",
+        required=True)
+    mandatory.add_argument(
+        "-o",
+        metavar=Metavar.file,
+        help='Output file. Example: data_mean.nii.gz',
+        required=True)
 
-    parser.usage.addSection('\nBasic operations:')
-    parser.add_option(name="-add",
-                      type_value='str',
-                      description='Add following input (can be number or image(s))',
-                      mandatory=False)
-    parser.add_option(name="-sub",
-                      type_value='str',
-                      description='Substract following input (can be number or image)',
-                      mandatory=False)
-    parser.add_option(name="-mul",
-                      type_value='str',
-                      description='Multiply following input (can be number or image(s))',
-                      mandatory=False)
-    parser.add_option(name="-div",
-                      type_value='str',
-                      description='Divide following input (can be number or image)',
-                      mandatory=False)
-    parser.add_option(name='-mean',
-                      type_value='multiple_choice',
-                      description='Average data across dimension.',
-                      mandatory=False,
-                      example=['x', 'y', 'z', 't'])
-    parser.add_option(name='-rms',
-                      type_value='multiple_choice',
-                      description='Compute root-mean-squared across dimension.',
-                      mandatory=False,
-                      example=['x', 'y', 'z', 't'])
-    parser.add_option(name='-std',
-                      type_value='multiple_choice',
-                      description='Compute STD across dimension.',
-                      mandatory=False,
-                      example=['x', 'y', 'z', 't'])
-    parser.add_option(name="-bin",
-                      type_value='float',
-                      description='Binarize image using specified threshold. E.g. -bin 0.5',
-                      mandatory=False)
+    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
+    optional.add_argument(
+        "-h",
+        "--help",
+        action="help",
+        help="Show this help message and exit")
 
-    parser.usage.addSection("\nThresholding methods:")
-    parser.add_option(name='-otsu',
-                      type_value='int',
-                      description='Threshold image using Otsu algorithm.\nnbins: number of bins. Example: 256',
-                      mandatory=False,
-                      example="")
-    parser.add_option(name="-otsu_adap",
-                      type_value=[[','], 'int'],
-                      description="Threshold image using Adaptive Otsu algorithm.\nblock_size:\noffset:",
-                      mandatory=False,
-                      example="")
-    parser.add_option(name="-otsu_median",
-                      type_value=[[','], 'int'],
-                      description='Threshold image using Median Otsu algorithm. Separate with ","\n- Size of the median filter. Example: 2\n- Number of iterations. Example: 3\n',
-                      mandatory=False,
-                      example='2,3')
-    parser.add_option(name='-percent',
-                      type_value='int',
-                      description="Threshold image using percentile of its histogram.",
-                      mandatory=False)
-    parser.add_option(name="-thr",
-                      type_value='float',
-                      description='Use following number to threshold image (zero below number).',
-                      mandatory=False,
-                      example="")
+    basic = parser.add_argument_group('BASIC OPERATIONS')
+    basic.add_argument(
+        "-add",
+        metavar='',
+        nargs="+",
+        help='Add following input. Can be a number or multiple images (separated with space).',
+        required=False)
+    basic.add_argument(
+        "-sub",
+        metavar='',
+        help='Subtract following input. Can be a number or an image.',
+        required=False)
+    basic.add_argument(
+        "-mul",
+        metavar='',
+        nargs="+",
+        help='Multiply by following input. Can be a number or multiple images (separated with space).',
+        required=False)
+    basic.add_argument(
+        "-div",
+        metavar='',
+        help='Divide by following input. Can be a number or an image.',
+        required=False)
+    basic.add_argument(
+        '-mean',
+        help='Average data across dimension.',
+        required=False,
+        choices=('x', 'y', 'z', 't'))
+    basic.add_argument(
+        '-rms',
+        help='Compute root-mean-squared across dimension.',
+        required=False,
+        choices=('x', 'y', 'z', 't'))
+    basic.add_argument(
+        '-std',
+        help='Compute STD across dimension.',
+        required=False,
+        choices=('x', 'y', 'z', 't'))
+    basic.add_argument(
+        "-bin",
+        type=float,
+        metavar=Metavar.float,
+        help='Binarize image using specified threshold. Example: 0.5',
+        required=False)
 
-    parser.usage.addSection("\nMathematical morphology")
-    parser.add_option(name='-dilate',
-                      type_value=[[','], 'int'],
-                      description='Dilate binary image. If only one input is given, structured element is a ball with input radius (in voxel). If comma-separated inputs are given (e.g., "2,4,5"), structured element is a box with input dimensions.',
-                      mandatory=False,
-                      example="")
-    parser.add_option(name='-erode',
-                      type_value=[[','], 'int'],
-                      description='Erode binary image. If only one input is given, structured element is a ball with input radius (in voxel). If comma-separated inputs are given (e.g., "2,4,5"), structured element is a box with input dimensions.',
-                      mandatory=False,
-                      example="")
+    thresholding = parser.add_argument_group("THRESHOLDING METHODS")
+    thresholding.add_argument(
+        '-otsu',
+        type=int,
+        metavar=Metavar.int,
+        help='Threshold image using Otsu algorithm.\nnbins: number of bins. Example: 256',
+        required=False)
+    thresholding.add_argument(
+        "-otsu-adap",
+        metavar=Metavar.list,
+        help="Threshold image using Adaptive Otsu algorithm.\nblock_size:\noffset:",
+        required=False)
+    thresholding.add_argument(
+        "-otsu-median",
+        help='R|Threshold image using Median Otsu algorithm. Separate with "," Example: 2,3'
+             '\n Size of the median filter. Example: 2'
+             '\n Number of iterations. Example: 3\n',
+        required=False)
+    thresholding.add_argument(
+        '-percent',
+        type=int,
+        help="Threshold image using percentile of its histogram.",
+        required=False)
+    thresholding.add_argument(
+        "-thr",
+        type=float,
+        metavar=Metavar.float,
+        help='Use following number to threshold image (zero below number).',
+        required=False)
 
-    parser.usage.addSection("\nFiltering methods:")
-    parser.add_option(name="-smooth",
-                      type_value=[[','], 'float'],
-                      description='Gaussian smoothing filter with specified standard deviations in mm for each axis (e.g.: 2,2,1) or single value for all axis (e.g.: 2).',
-                      mandatory=False,
-                      example='0.5')
-    parser.add_option(name='-laplacian',
-                      type_value=[[','], 'float'],
-                      description='Laplacian filtering with specified standard deviations in mm for all axes (e.g.: 2).',
-                      mandatory=False,
-                      example='1')
-    parser.add_option(name='-denoise',
-                      type_value=[[','], 'str'],
-                      description='Non-local means adaptative denoising from P. Coupe et al. as implemented in dipy. Separate with ",". Example: p=1,b=3\n'
-                        'p: (patch radius) similar patches in the non-local means are searched for locally, inside a cube of side 2*p+1 centered at each voxel of interest. Default: p=1\n'
-                        'b: (block radius) the size of the block to be used (2*b+1) in the blockwise non-local means implementation. Default: b=5 '
-                        '(Block radius must be smaller than the smaller image dimension: default value is lowered for small images)\n'
-                        'To use default parameters, write -denoise 1',
-                      mandatory=False,
-                      example="")
+    mathematical = parser.add_argument_group("MATHEMATICAL MORPHOLOGY")
+    mathematical.add_argument(
+        '-dilate',
+        metavar='',
+        help='Dilate binary image. If only one input is given, structured element is a ball with input radius (in '
+             'voxel). If comma-separated inputs are given (Example: 2,4,5 ), structured element is a box with input '
+             'dimensions.',
+        required=False)
+    mathematical.add_argument(
+        '-erode',
+        metavar='',
+        help='Erode binary image. If only one input is given, structured element is a ball with input radius (in '
+             'voxel). If comma-separated inputs are given (Example: 2,4,5), structured element is a box with input '
+             'dimensions.',
+        required=False)
 
-    parser.usage.addSection("\nSimilarity metric")
-    parser.add_option(name='-mi',
-                      type_value='file',
-                      description='Compute the mutual information (MI) between both input files (-i and -mi) as in: http://scikit-learn.org/stable/modules/generated/sklearn.metrics.mutual_info_score.html',
-                      mandatory=False,
-                      example="")
-    parser.add_option(name='-minorm',
-                      type_value='file',
-                      description='Compute the normalized mutual information (MI) between both input files (-i and -mi) as in: http://scikit-learn.org/stable/modules/generated/sklearn.metrics.normalized_mutual_info_score.html',
-                      mandatory=False,
-                      example="")
-    parser.add_option(name='-corr',
-                      type_value='file',
-                      description='Compute the cross correlation (CC) between both input files (-i and -cc).',
-                      mandatory=False,
-                      example="")
+    filtering = parser.add_argument_group("FILTERING METHODS")
+    filtering.add_argument(
+        "-smooth",
+        metavar='',
+        help='Gaussian smoothing filter with specified standard deviations in mm for each axis (Example: 2,2,1) or '
+             'single value for all axis (Example: 2).',
+        required = False)
+    filtering.add_argument(
+        '-laplacian',
+        nargs="+",
+        metavar='',
+        help='Laplacian filtering with specified standard deviations in mm for all axes (Example: 2).',
+        required = False)
+    filtering.add_argument(
+        '-denoise',
+        help='R|Non-local means adaptative denoising from P. Coupe et al. as implemented in dipy. Separate with ". Example: p=1,b=3\n'
+             ' p: (patch radius) similar patches in the non-local means are searched for locally, inside a cube of side 2*p+1 centered at each voxel of interest. Default: p=1\n'
+             ' b: (block radius) the size of the block to be used (2*b+1) in the blockwise non-local means implementation. Default: b=5 '
+             '    Note, block radius must be smaller than the smaller image dimension: default value is lowered for small images)\n'
+             'To use default parameters, write -denoise 1',
+        required=False)
 
-    parser.usage.addSection("\nMisc")
-    parser.add_option(name='-symmetrize',
-                      type_value='multiple_choice',
-                      description='Symmetrize data along the specified dimension.',
-                      mandatory=False,
-                      example=['0', '1', '2'])
-    parser.add_option(name='-type',
-                      type_value='multiple_choice',
-                      description='Output type.',
-                      mandatory=False,
-                      example=['uint8', 'int16', 'int32', 'float32', 'complex64', 'float64', 'int8', 'uint16', 'uint32', 'int64', 'uint64'])
-    parser.add_option(name="-v",
-                      type_value="multiple_choice",
-                      description="""Verbose. 0: nothing. 1: basic. 2: extended.""",
-                      mandatory=False,
-                      default_value=param.verbose,
-                      example=['0', '1', '2'])
+    similarity = parser.add_argument_group("SIMILARITY METRIC")
+    similarity.add_argument(
+        '-mi',
+        metavar=Metavar.file,
+        help='Compute the mutual information (MI) between both input files (-i and -mi) as in: '
+             'http://scikit-learn.org/stable/modules/generated/sklearn.metrics.mutual_info_score.html',
+        required=False)
+    similarity.add_argument(
+        '-minorm',
+        metavar=Metavar.file,
+        help='Compute the normalized mutual information (MI) between both input files (-i and -mi) as in: '
+             'http://scikit-learn.org/stable/modules/generated/sklearn.metrics.normalized_mutual_info_score.html',
+        required=False)
+    similarity.add_argument(
+        '-corr',
+        metavar=Metavar.file,
+        help='Compute the cross correlation (CC) between both input files (-i and -cc).',
+        required=False)
+
+    misc = parser.add_argument_group("MISC")
+    misc.add_argument(
+        '-symmetrize',
+        type=int,
+        help='Symmetrize data along the specified dimension.',
+        required=False,
+        choices=(0, 1, 2))
+    misc.add_argument(
+        '-type',
+        required=False,
+        help='Output type.',
+        choices=('uint8', 'int16', 'int32', 'float32', 'complex64', 'float64', 'int8', 'uint16', 'uint32', 'int64',
+                 'uint64'))
+    misc.add_argument(
+        "-v",
+        type=int,
+        help="Verbose. 0: nothing. 1: basic. 2: extended.",
+        required=False,
+        default=1,
+        choices=(0, 1, 2))
+
     return parser
 
 
 # MAIN
 # ==========================================================================================
-def main(args = None):
-
+def main(args=None):
+    """
+    Main function
+    :param args:
+    :return:
+    """
     dim_list = ['x', 'y', 'z', 't']
 
-    if not args:
-        args = sys.argv[1:]
-
-    # Get parser info
+    # Get parser args
+    if args is None:
+        args = None if sys.argv[1:] else ['--help']
     parser = get_parser()
-    arguments = parser.parse(args)
-    fname_in = arguments["-i"]
-    fname_out = arguments["-o"]
-    verbose = int(arguments.get('-v'))
+    arguments = parser.parse_args(args=args)
+    fname_in = arguments.i
+    fname_out = arguments.o
+    verbose = arguments.v
     sct.init_sct(log_level=verbose, update=True)  # Update log level
     if '-type' in arguments:
-        output_type = arguments['-type']
+        output_type = arguments.type
     else:
         output_type = None
 
@@ -208,42 +240,42 @@ def main(args = None):
     dim = im.dim
 
     # run command
-    if '-otsu' in arguments:
-        param = arguments['-otsu']
+    if arguments.otsu is not None:
+        param = arguments.otsu
         data_out = otsu(data, param)
 
-    elif '-otsu_adap' in arguments:
-        param = arguments['-otsu_adap']
+    elif arguments.otsu_adap is not None:
+        param = convert_list_str(arguments.otsu_adap, "int")
         data_out = otsu_adap(data, param[0], param[1])
 
-    elif '-otsu_median' in arguments:
-        param = arguments['-otsu_median']
+    elif arguments.otsu_median is not None:
+        param = convert_list_str(arguments.otsu_median, "int")
         data_out = otsu_median(data, param[0], param[1])
 
-    elif '-thr' in arguments:
-        param = arguments['-thr']
+    elif arguments.thr is not None:
+        param = arguments.thr
         data_out = threshold(data, param)
 
-    elif '-percent' in arguments:
-        param = arguments['-percent']
+    elif arguments.percent is not None:
+        param = arguments.percent
         data_out = perc(data, param)
 
-    elif '-bin' in arguments:
-        bin_thr = arguments['-bin']
+    elif arguments.bin is not None:
+        bin_thr = arguments.bin
         data_out = binarise(data, bin_thr=bin_thr)
 
-    elif '-add' in arguments:
+    elif arguments.add is not None:
         from numpy import sum
-        data2 = get_data_or_scalar(arguments["-add"], data)
+        data2 = get_data_or_scalar(arguments.add, data)
         data_concat = concatenate_along_4th_dimension(data, data2)
         data_out = sum(data_concat, axis=3)
 
-    elif '-sub' in arguments:
-        data2 = get_data_or_scalar(arguments['-sub'], data)
+    elif arguments.sub is not None:
+        data2 = get_data_or_scalar(arguments.sub, data)
         data_out = data - data2
 
-    elif "-laplacian" in arguments:
-        sigmas = arguments["-laplacian"]
+    elif arguments.laplacian is not None:
+        sigmas = convert_list_str(arguments.laplacian, "float")
         if len(sigmas) == 1:
             sigmas = [sigmas for i in range(len(data.shape))]
         elif len(sigmas) != len(data.shape):
@@ -253,40 +285,40 @@ def main(args = None):
         # smooth data
         data_out = laplacian(data, sigmas)
 
-    elif '-mul' in arguments:
+    elif arguments.mul is not None:
         from numpy import prod
-        data2 = get_data_or_scalar(arguments["-mul"], data)
+        data2 = get_data_or_scalar(arguments.mul, data)
         data_concat = concatenate_along_4th_dimension(data, data2)
         data_out = prod(data_concat, axis=3)
 
-    elif '-div' in arguments:
+    elif arguments.div is not None:
         from numpy import divide
-        data2 = get_data_or_scalar(arguments["-div"], data)
+        data2 = get_data_or_scalar(arguments.div, data)
         data_out = divide(data, data2)
 
-    elif '-mean' in arguments:
+    elif arguments.mean is not None:
         from numpy import mean
-        dim = dim_list.index(arguments['-mean'])
+        dim = dim_list.index(arguments.mean)
         if dim + 1 > len(np.shape(data)):  # in case input volume is 3d and dim=t
             data = data[..., np.newaxis]
         data_out = mean(data, dim)
 
-    elif '-rms' in arguments:
+    elif arguments.rms is not None:
         from numpy import mean, sqrt, square
-        dim = dim_list.index(arguments['-rms'])
+        dim = dim_list.index(arguments.rms)
         if dim + 1 > len(np.shape(data)):  # in case input volume is 3d and dim=t
             data = data[..., np.newaxis]
         data_out = sqrt(mean(square(data.astype(float)), dim))
 
-    elif '-std' in arguments:
+    elif arguments.std is not None:
         from numpy import std
-        dim = dim_list.index(arguments['-std'])
+        dim = dim_list.index(arguments.std)
         if dim + 1 > len(np.shape(data)):  # in case input volume is 3d and dim=t
             data = data[..., np.newaxis]
         data_out = std(data, dim, ddof=1)
 
-    elif "-smooth" in arguments:
-        sigmas = arguments["-smooth"]
+    elif arguments.smooth is not None:
+        sigmas = convert_list_str(arguments.smooth, "float")
         if len(sigmas) == 1:
             sigmas = [sigmas[0] for i in range(len(data.shape))]
         elif len(sigmas) != len(data.shape):
@@ -296,16 +328,16 @@ def main(args = None):
         # smooth data
         data_out = smooth(data, sigmas)
 
-    elif '-dilate' in arguments:
-        data_out = dilate(data, arguments['-dilate'])
+    elif arguments.dilate is not None:
+        data_out = dilate(data, convert_list_str(arguments.dilate, "int"))
 
-    elif '-erode' in arguments:
-        data_out = erode(data, arguments['-erode'])
+    elif arguments.erode is not None:
+        data_out = erode(data, convert_list_str(arguments.erode))
 
-    elif '-denoise' in arguments:
+    elif arguments.denoise is not None:
         # parse denoising arguments
         p, b = 1, 5  # default arguments
-        list_denoise = arguments['-denoise']
+        list_denoise = (arguments.denoise).split(",")
         for i in list_denoise:
             if 'p' in i:
                 p = int(i.split('=')[1])
@@ -313,25 +345,25 @@ def main(args = None):
                 b = int(i.split('=')[1])
         data_out = denoise_nlmeans(data, patch_radius=p, block_radius=b)
 
-    elif '-symmetrize' in arguments:
+    elif arguments.symmetrize is not None:
         data_out = (data + data[list(range(data.shape[0] - 1, -1, -1)), :, :]) / float(2)
 
-    elif '-mi' in arguments:
+    elif arguments.mi is not None:
         # input 1 = from flag -i --> im
         # input 2 = from flag -mi
-        im_2 = Image(arguments['-mi'])
+        im_2 = Image(arguments.mi)
         compute_similarity(im.data, im_2.data, fname_out, metric='mi', verbose=verbose)
         data_out = None
 
-    elif '-minorm' in arguments:
-        im_2 = Image(arguments['-minorm'])
+    elif arguments.minorm is not None:
+        im_2 = Image(arguments.minorm)
         compute_similarity(im.data, im_2.data, fname_out, metric='minorm', verbose=verbose)
         data_out = None
 
-    elif '-corr' in arguments:
+    elif arguments.corr is not None:
         # input 1 = from flag -i --> im
         # input 2 = from flag -mi
-        im_2 = Image(arguments['-corr'])
+        im_2 = Image(arguments.corr)
         compute_similarity(im.data, im_2.data, fname_out, metric='corr', verbose=verbose)
         data_out = None
 
@@ -376,6 +408,21 @@ def main(args = None):
         sct.display_viewer_syntax([fname_out], verbose=verbose)
     else:
         printv('\nDone! File created: ' + fname_out, verbose, 'info')
+
+
+def convert_list_str(string_list, type):
+    """
+    Receive a string and then converts it into a list of selected type
+    """
+    new_type_list = (string_list).split(",")
+    for inew_type_list, ele in enumerate(new_type_list):
+        if type is "int":
+            new_type_list[inew_type_list] = int(ele)
+        elif type is "float":
+            new_type_list[inew_type_list] = float(ele)
+
+    return new_type_list
+
 
 def otsu(data, nbins):
     from skimage.filters import threshold_otsu
@@ -450,11 +497,14 @@ def erode(data, radius):
 
 def get_data(list_fname):
     """
-    Get data from file names separated by ","
+    Get data from list of file names
     :param list_fname:
     :return: 3D or 4D numpy array.
     """
-    nii = [Image(f_in) for f_in in list_fname]
+    try:
+        nii = [Image(f_in) for f_in in list_fname]
+    except Exception as e:
+        sct.printv(str(e), 1, 'error')  # file does not exist, exit program
     data0 = nii[0].data
     data = nii[0].data
     # check that every images have same shape
@@ -477,14 +527,10 @@ def get_data_or_scalar(argument, data_in):
     # try to convert argument in float
     try:
         # build data2 with same shape as data
-        data_out = data_in[:, :, :] * 0 + float(argument)
-    # if conversion fails, it should be a file
-    except:
-        # parse file name and check integrity
-        parser2 = Parser(__file__)
-        parser2.add_option(name='-i', type_value=[[','], 'file'])
-        list_fname = parser2.parse(['-i', argument]).get('-i')
-        data_out = get_data(list_fname)
+        data_out = data_in[:, :, :] * 0 + float(argument[0])
+    # if conversion fails, it should be a string (i.e. file name)
+    except ValueError:
+        data_out = get_data(argument)
     return data_out
 
 
@@ -717,11 +763,6 @@ def correlation(x, y, type='pearson'):
     # from sklearn.cluster import KMeans
 
 
-# START PROGRAM
-# ==========================================================================================
 if __name__ == "__main__":
     sct.init_sct()
-    # # initialize parameters
-    param = Param()
-    # call main function
     main()

@@ -204,7 +204,7 @@ class ExtractGLCM:
 
             # Average across angles and save it as wrk_folder/fnameIn_feature_distance_mean.extension
             fname_out = im_m + str(self.param_glcm.distance) + '_mean' + extension
-            sct.run('sct_image -i ' + ','.join(im2mean_lst) + ' -concat t -o ' + fname_out)
+            sct.run('sct_image -i ' + ' '.join(im2mean_lst) + ' -concat t -o ' + fname_out)
             sct.run('sct_maths -i ' + fname_out + ' -mean t -o ' + fname_out)
             self.fname_metric_lst[im_m + str(self.param_glcm.distance) + '_mean'] = fname_out
 
