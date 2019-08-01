@@ -196,11 +196,17 @@ def get_parser():
 
 # MAIN
 # ==========================================================================================
-def main():
+def main(args=None):
+    """
+    Main function
+    :param args:
+    :return:
+    """
+    # Get parser args
+    if args is None:
+        args = None if sys.argv[1:] else ['--help']
     parser = get_parser()
-    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
-
-    # assigning variables to arguments
+    arguments = parser.parse_args(args=args)
     input_filename = arguments.i
     centerline_file = arguments.s
 
