@@ -59,6 +59,14 @@ for installation instructions check: https://git-scm.com/book/en/v2/Getting-Star
 
 }
 
+function get_shell_rc_path () {
+    local RC_FILE_PATH=$HOME/.bashrc
+    if [[ $(which zsh) ]]; then
+        RC_FILE_PATH=$HOME/.zshrc
+    fi
+    echo $RC_FILE_PATH
+}
+
 # Force a clean exit
 function finish() {
   # Catch the last return code
@@ -103,16 +111,16 @@ fi"
   fi
 }
 
-# Installation text to insert in .bashrc
-function edit_bashrc() {
+# Installation text to insert in shell config file
+function edit_shellrc() {
   if [[ -z $THE_CSHRC ]]; then
     echo
-    echo "" >>$THE_BASHRC
-    echo "# SPINALCORDTOOLBOX (installed on $(date +%Y-%m-%d\ %H:%M:%S))" >>$THE_BASHRC
-    echo $DISPLAY_UPDATE_PATH >>$THE_BASHRC
-    echo "export SCT_DIR=$SCT_DIR" >>$THE_BASHRC
-    echo "export MPLBACKEND=Agg" >>$THE_BASHRC
-    echo "" >>$THE_BASHRC
+    echo "" >>$RC_FILE_PATH
+    echo "# SPINALCORDTOOLBOX (installed on $(date +%Y-%m-%d\ %H:%M:%S))" >>$RC_FILE_PATH
+    echo $DISPLAY_UPDATE_PATH >>$RC_FILE_PATH
+    echo "export SCT_DIR=$SCT_DIR" >>$RC_FILE_PATH
+    echo "export MPLBACKEND=Agg" >>$RC_FILE_PATH
+    echo "" >>$RC_FILE_PATH
   else
     # (t)csh for good measure
     echo
@@ -153,25 +161,17 @@ Please check your internet connection before relaunching the installer\n"
   fi
 }
 
+# Usage of this script
+function usage() {
+  echo -e "\nUsage: $0 [-d] [-b] [-v]" 1>&2
+  echo -e "\nOPTION"
+  echo -e "\t-d \v Prevent the (re)-installation of the \"data/\" directory "
+  echo -e "\n\t-b \v Prevent the (re)-installation of the SCT binaries files "
+  echo -e "\n\t-v \v Full verbose"
+}
+
 # SCRIPT STARTS HERE
 # ========================================================================
-ARGPARSE_ALLOW_UNKNOWN_ARGS=true # tell argparse to allow unknown args
-source scripts/argparse.bash
-argparse "$@" <<EOF || exit 1
-parser.add_argument('-d', '--no-data-install', action='store_true', help='-d \v Prevent the (re)-installation of the \"data/\" directory')
-parser.add_argument('-b', '--no-sct-bin-install', action='store_true', help='-b \v Prevent the (re)-installation of the SCT binaries files')
-parser.add_argument('-v', '--verbose', action='store_true', help='\n\t-v \v Full verbose')
-EOF
-
-if [[ $UNKNOWN_ARGS ]]; then
-    sh install_sct -h
-    die "Argument not valid"
-fi
-
-if [[ $VERBOSE ]]; then
-    set -x
-fi
-
 echo -e "\nWelcome to the SCT installer!"
 
 check_requirements
@@ -181,6 +181,31 @@ for arg in "$@"; do
   shift
   case "$arg" in
     *)       set -- "$@" "$arg"
+  esac
+done
+
+while getopts ":dhbpv" opt; do
+  case $opt in
+  d)
+    echo " data directory will not be (re)-installed"
+    NO_DATA_INSTALL=yes
+    ;;
+  b)
+    echo " SCT binaries will not be (re)-installed "
+    NO_SCT_BIN_INSTALL=yes
+    ;;
+  v)
+    echo " Full verbose!"
+    set -x
+    ;;
+  h)
+    usage
+    exit 99
+    ;;
+  \?)
+    usage
+    die
+    ;;
   esac
 done
 
@@ -232,13 +257,12 @@ else
   die "Sorry, the installer only supports Linux and OSX, quitting installer"
 fi
 
-# Define sh files
+# Define sh files, by default it will use unix shell
+RC_FILE_PATH=$(get_shell_rc_path)
+THE_RC=$RC_FILE_PATH
 if echo $(ps -o comm= $PPID) | grep csh; then
   THE_CSHRC=$HOME/.cshrc
   THE_RC=$THE_CSHRC
-else
-  THE_BASHRC=$HOME/.bashrc
-  THE_RC=$THE_BASHRC
 fi
 
 # Display install info
@@ -358,7 +382,6 @@ fi
 if [[ "$SCT_DIR" != "$SCT_SOURCE" ]]; then
   echo -e "\nCopying source files from $SCT_SOURCE to $SCT_DIR"
   cp -vR $SCT_INSTALL_CP_OPTIONS "$SCT_SOURCE/"* "$SCT_DIR/" | while read line; do echo -n "."; done
-
 else
   echo -e "\nSkipping copy of source files (source and destination folders are the same)"
 fi
@@ -538,7 +561,7 @@ if [[ $UID != 0 ]]; then
   done
   echo ""
   if [[ $add_to_path =~ ^[Yy] ]]; then
-    edit_bashrc
+    edit_shellrc
   else
     echo Not adding $SCT_DIR to \$PATH
     echo You can always add it later or call SCT functions with full path $SCT_DIR/$BIN_DIR/sct_function
