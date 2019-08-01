@@ -146,15 +146,21 @@ def get_parser():
     return parser
 
 
-def main():
-
+def main(args=None):
+    """
+    Main function
+    :param args:
+    :return:
+    """
     # initializations
     output_type = None
     dim_list = ['x', 'y', 'z', 't']
 
-    # Get parser info
+    # Get parser args
+    if args is None:
+        args = None if sys.argv[1:] else ['--help']
     parser = get_parser()
-    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
+    arguments = parser.parse_args(args=args)
     fname_in = arguments.i
     n_in = len(fname_in)
     verbose = arguments.v
