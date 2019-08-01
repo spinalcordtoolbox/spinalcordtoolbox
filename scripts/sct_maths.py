@@ -219,8 +219,8 @@ def main(args=None):
     :return:
     """
     dim_list = ['x', 'y', 'z', 't']
-    # Get parser info
-    # get parser args
+
+    # Get parser args
     if args is None:
         args = None if sys.argv[1:] else ['--help']
     parser = get_parser()
