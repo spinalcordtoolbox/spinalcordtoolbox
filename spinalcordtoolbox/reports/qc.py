@@ -260,8 +260,7 @@ class QcImage(object):
             logger.info('QcImage: %s with %s slice', func.__name__, sct_slice.get_name())
 
             if self._angle_line is None:
-                maskimg, centermass = func(sct_slice,    *args)
-                img, mask = maskimg[0], maskimg[1]
+                img, mask = func(sct_slice,    *args)
             else:
                 [img, mask], centermass = func(sct_slice, *args)
                 self._centermass = centermass
