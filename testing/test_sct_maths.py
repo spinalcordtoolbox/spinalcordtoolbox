@@ -17,7 +17,8 @@ def init(param_test):
     """
     # initialization
     default_args = ['-i mt/mtr.nii.gz -percent 95 -o test.nii.gz',
-                    '-i mt/mtr.nii.gz -add 1 -o test.nii.gz']
+                    '-i mt/mtr.nii.gz -add 1 -o test.nii.gz',
+                    '-i mt/mtr.nii.gz -add mt/mtr.nii.gz mt/mtr.nii.gz -o test.nii.gz']
 
     # assign default params
     if not param_test.args:
