@@ -497,11 +497,14 @@ def erode(data, radius):
 
 def get_data(list_fname):
     """
-    Get data from file names separated by ","
+    Get data from list of file names
     :param list_fname:
     :return: 3D or 4D numpy array.
     """
-    nii = [Image(f_in) for f_in in list_fname]
+    try:
+        nii = [Image(f_in) for f_in in list_fname]
+    except Exception as e:
+        sct.printv(str(e), 1, 'error')  # file does not exist, exit program
     data0 = nii[0].data
     data = nii[0].data
     # check that every images have same shape
@@ -525,11 +528,9 @@ def get_data_or_scalar(argument, data_in):
     try:
         # build data2 with same shape as data
         data_out = data_in[:, :, :] * 0 + float(argument[0])
-    # if conversion fails, it should be a file
-    except:
-        print(argument)
-        list_fname = argument
-        data_out = get_data(list_fname)
+    # if conversion fails, it should be a string (i.e. file name)
+    except ValueError:
+        data_out = get_data(argument)
     return data_out
 
 
