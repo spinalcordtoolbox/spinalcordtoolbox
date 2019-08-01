@@ -19,6 +19,36 @@ logger = logging.getLogger(__name__)
 # TODO: add test
 
 
+class ActionCreateFolder(argparse.Action):
+    """
+    Custom action: creates a new folder if it does not exist. If the folder
+    already exists, do nothing.
+
+    The action will strip off trailing slashes from the folder's name.
+    Source: https://argparse-actions.readthedocs.io/en/latest/
+    """
+    @staticmethod
+    def create_folder(folder_name):
+        """
+        Create a new directory if not exist. The action might throw
+        OSError, along with other kinds of exception
+        """
+        if not os.path.isdir(folder_name):
+            os.mkdir(folder_name)
+
+        folder_name = os.path.normpath(folder_name)
+        return folder_name
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        if type(values) == list:
+            folders = list(map(self.create_folder, values))
+        else:
+            folders = self.create_folder(values)
+
+        # Add the attribute
+        setattr(namespace, self.dest, folders)
+
+
 class Metavar(Enum):
     """
     This class is used to display intuitive input types via the metavar field of argparse
