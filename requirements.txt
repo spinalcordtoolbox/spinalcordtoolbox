@@ -22,4 +22,4 @@ xlwt
 tqdm
 transforms3d
 urllib3[secure]
-git+https://github.com/jcohenadad/nipy.git#egg=nipy # need to install at the end otherwise won't install
+https://github.com/jcohenadad/nipy/tarball/master # need to install at the end otherwise won't install
