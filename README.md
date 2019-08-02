@@ -116,7 +116,8 @@ Each repository is a pipeline dedicated to a specific research project.
 
 We organize **free** SCT courses, each year after the ISMRM conference. If you'd like to be added to the mailing list, please send an email to `spinalcordtoolbox@gmail.com`. The past courses handouts are listed below:
 
-* [SCT course (v4.0.0), London, 2019-01-22](https://osf.io/gvs6f/)
+* [SCT course (v4.0.0), Beijing, 2019-08-02](https://osf.io/arfv7/)
+* [SCT course (v4.0.0_beta.4), London, 2019-01-22](https://osf.io/gvs6f/)
 * [SCT course (v3.2.2), Paris, 2018-06-12](https://osf.io/386h7/)
 * [SCT course (v3.0.3), Honolulu, 2017-04-28](https://osf.io/fvnjq/)
 * [SCT course (v3.0_beta14), Geneva, 2016-06-28](https://sourceforge.net/p/spinalcordtoolbox/wiki/Home/attachment/SCT_Course_20160628.pdf)
