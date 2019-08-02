@@ -4,13 +4,102 @@
 
 from __future__ import absolute_import
 
-import io, os, re, time, logging
+import io
+import os
+import re
+import logging
+import argparse
 import subprocess
+import shutil
+from enum import Enum
 
 logger = logging.getLogger(__name__)
 
 
 # TODO: add test
+
+
+class ActionCreateFolder(argparse.Action):
+    """
+    Custom action: creates a new folder if it does not exist. If the folder
+    already exists, do nothing.
+
+    The action will strip off trailing slashes from the folder's name.
+    Source: https://argparse-actions.readthedocs.io/en/latest/
+    """
+    @staticmethod
+    def create_folder(folder_name):
+        """
+        Create a new directory if not exist. The action might throw
+        OSError, along with other kinds of exception
+        """
+        if not os.path.isdir(folder_name):
+            os.mkdir(folder_name)
+
+        folder_name = os.path.normpath(folder_name)
+        return folder_name
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        if type(values) == list:
+            folders = list(map(self.create_folder, values))
+        else:
+            folders = self.create_folder(values)
+
+        # Add the attribute
+        setattr(namespace, self.dest, folders)
+
+
+class Metavar(Enum):
+    """
+    This class is used to display intuitive input types via the metavar field of argparse
+    """
+    file = "<file>"
+    str = "<str>"
+    folder = "<folder>"
+    int = "<int>"
+    list = "<list>"
+    float = "<float>"
+
+    def __str__(self):
+        return self.value
+
+
+class SmartFormatter(argparse.HelpFormatter):
+    """
+    Custom formatter that inherits from HelpFormatter, which adjusts the default width to the current Terminal size,
+    and that gives the possibility to bypass argparse's default formatting by adding "R|" at the beginning of the text.
+    Inspired from: https://pythonhosted.org/skaff/_modules/skaff/cli.html
+    """
+    def __init__(self, *args, **kw):
+        self._add_defaults = None
+        super(SmartFormatter, self).__init__(*args, **kw)
+        # Update _width to match Terminal width
+        try:
+            self._width = shutil.get_terminal_size()[0]
+        except (KeyError, ValueError):
+            logger.warning('Not able to fetch Terminal width. Using default: %s'.format(self._width))
+
+    # this is the RawTextHelpFormatter._fill_text
+    def _fill_text(self, text, width, indent):
+        # print("splot",text)
+        if text.startswith('R|'):
+            paragraphs = text[2:].splitlines()
+            rebroken = [argparse._textwrap.wrap(tpar, width) for tpar in paragraphs]
+            rebrokenstr = []
+            for tlinearr in rebroken:
+                if (len(tlinearr) == 0):
+                    rebrokenstr.append("")
+                else:
+                    for tlinepiece in tlinearr:
+                        rebrokenstr.append(tlinepiece)
+            return '\n'.join(rebrokenstr)  # (argparse._textwrap.wrap(text[2:], width))
+        return argparse.RawDescriptionHelpFormatter._fill_text(self, text, width, indent)
+
+    # this is the RawTextHelpFormatter._split_lines
+    def _split_lines(self, text, width):
+        if text.startswith('R|'):
+            return text[2:].splitlines()
+        return argparse.HelpFormatter._split_lines(self, text, width)
 
 
 def check_exe(name):
@@ -82,7 +171,8 @@ def __get_commit():
 
     return commit
 
-def _git_info(commit_env='SCT_COMMIT',branch_env='SCT_BRANCH'):
+
+def _git_info(commit_env='SCT_COMMIT', branch_env='SCT_BRANCH'):
 
     sct_commit = os.getenv(commit_env, "unknown")
     sct_branch = os.getenv(branch_env, "unknown")
@@ -99,6 +189,7 @@ def _git_info(commit_env='SCT_COMMIT',branch_env='SCT_BRANCH'):
         version_sct = f.read().rstrip()
 
     return install_type, sct_commit, sct_branch, version_sct
+
 
 def _version_string():
     install_type, sct_commit, sct_branch, version_sct = _git_info()

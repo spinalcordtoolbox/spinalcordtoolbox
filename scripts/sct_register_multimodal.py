@@ -37,11 +37,14 @@ import sys, io, os, time, shutil
 
 import numpy as np
 
-import sct_utils as sct
-from msct_parser import Parser
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.reports.qc import generate_qc
+
+import sct_utils as sct
+from msct_parser import Parser
+import sct_apply_transfo
+import sct_concat_transfo
 
 
 def get_parser(paramreg=None):
@@ -182,10 +185,6 @@ def get_parser(paramreg=None):
                       description="Output folder",
                       mandatory=False,
                       example='reg_results/')
-    parser.add_option(name="-igt",
-                      type_value="image_nifti",
-                      description="File name of ground-truth registered data (nifti).",
-                      mandatory=False)
     parser.add_option(name='-qc',
                       type_value='folder_creation',
                       description='The path where the quality control generated content will be saved',
@@ -506,8 +505,12 @@ def main(args=None):
         # if step>0, apply warp_forward_concat to the src image to be used
         if i_step > 0:
             sct.printv('\nApply transformation from previous step', param.verbose)
-            sct.run(['sct_apply_transfo', '-i', src, '-d', dest, '-w', ','.join(warp_forward), '-o',
-                     sct.add_suffix(src, '_reg'), '-x', interp_step], verbose)
+            sct_apply_transfo.main(args=[
+                '-i', src,
+                '-d', dest,
+                '-w', warp_forward,
+                '-o', sct.add_suffix(src, '_reg'),
+                '-x', interp_step])
             src = sct.add_suffix(src, '_reg')
         # register src --> dest
         warp_forward_out, warp_inverse_out = register(src, dest, paramreg, param, str(i_step))
@@ -516,18 +519,30 @@ def main(args=None):
 
     # Concatenate transformations
     sct.printv('\nConcatenate transformations...', verbose)
-    sct.run(['sct_concat_transfo', '-w', ','.join(warp_forward), '-d', 'dest.nii', '-o', 'warp_src2dest.nii.gz'],
-            verbose)
-    sct.run(['sct_concat_transfo', '-w', ','.join(warp_inverse), '-d', 'src.nii', '-o', 'warp_dest2src.nii.gz'],
-            verbose)
+    sct_concat_transfo.main(args=[
+        '-w', warp_forward,
+        '-d', 'dest.nii',
+        '-o', 'warp_src2dest.nii.gz'])
+    sct_concat_transfo.main(args=[
+        '-w', warp_inverse,
+        '-d', 'src.nii',
+        '-o', 'warp_dest2src.nii.gz'])
 
     # Apply warping field to src data
     sct.printv('\nApply transfo source --> dest...', verbose)
-    sct.run(['sct_apply_transfo', '-i', 'src.nii', '-o', 'src_reg.nii', '-d', 'dest.nii', '-w', 'warp_src2dest.nii.gz',
-             '-x', interp], verbose)
+    sct_apply_transfo.main(args=[
+        '-i', 'src.nii',
+        '-d', 'dest.nii',
+        '-w', 'warp_src2dest.nii.gz',
+        '-o', 'src_reg.nii',
+        '-x', interp])
     sct.printv('\nApply transfo dest --> source...', verbose)
-    sct.run(['sct_apply_transfo', '-i', 'dest.nii', '-o', 'dest_reg.nii', '-d', 'src.nii', '-w', 'warp_dest2src.nii.gz',
-             '-x', interp], verbose)
+    sct_apply_transfo.main(args=[
+        '-i', 'dest.nii',
+        '-d', 'src.nii',
+        '-w', 'warp_dest2src.nii.gz',
+        '-o', 'dest_reg.nii',
+        '-x', interp])
 
     # come back
     os.chdir(curdir)

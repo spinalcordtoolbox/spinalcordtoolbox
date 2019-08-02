@@ -95,6 +95,9 @@ In order to install the SCT in Windows or other unsupported OS, we provide a sol
 
 [Tutorial how to install SCT via Docker](https://github.com/neuropoly/sct_docker#spinal-cord-toolbox-docker)
 
+### Installation in Virtual Machine (VM)
+
+If for some reasons installation with Docker does not work for you, you can always install and run SCT within a VM. We recommend you install the [neurodebian](http://neuro.debian.net/vm.html) VM, which contains useful neuroimaging software such as FSLeyes. 
 
 ## Getting started
 
@@ -113,14 +116,13 @@ Each repository is a pipeline dedicated to a specific research project.
 
 We organize **free** SCT courses, each year after the ISMRM conference. If you'd like to be added to the mailing list, please send an email to `spinalcordtoolbox@gmail.com`. The past courses handouts are listed below:
 
-* [SCT course, London, 2019-01-22](https://osf.io/gvs6f/)
-* [SCT course, Paris, 2018-06-12](https://osf.io/386h7/)
-* [SCT course, Honolulu, 2017-04-28](https://osf.io/fvnjq/)
-* [SCT course, Geneva, 2016-06-28](https://sourceforge.net/p/spinalcordtoolbox/wiki/Home/attachment/SCT_Course_20160628.pdf)
-* [SCT course, Singapore, 2016-05-13](https://drive.google.com/file/d/0Bx3A13n3Q_EAa3NQYjBOWjhjZm8/view?usp=sharing)
-* [SCT course, Montreal, 2016-04-19](https://drive.google.com/file/d/0Bx3A13n3Q_EAenltM2ZvZUNEdjQ/view?usp=sharing)
-* [SCT Hands-on Workshop, Toronto, 2015-06-15](https://www.dropbox.com/s/f9887yrbkcfujn9/sct_handsOn_20150605.pdf?dl=0)
-* [Spine Hack, Milan, 2014-05-16](https://dl.dropboxusercontent.com/u/20592661/sct/20140516_spinehack_milan.pdf).
+* [SCT course (v4.0.0), London, 2019-01-22](https://osf.io/gvs6f/)
+* [SCT course (v3.2.2), Paris, 2018-06-12](https://osf.io/386h7/)
+* [SCT course (v3.0.3), Honolulu, 2017-04-28](https://osf.io/fvnjq/)
+* [SCT course (v3.0_beta14), Geneva, 2016-06-28](https://sourceforge.net/p/spinalcordtoolbox/wiki/Home/attachment/SCT_Course_20160628.pdf)
+* [SCT course (v3.0_beta9), Singapore, 2016-05-13](https://drive.google.com/file/d/0Bx3A13n3Q_EAa3NQYjBOWjhjZm8/view?usp=sharing)
+* [SCT course (v3.0_beta1), Montreal, 2016-04-19](https://drive.google.com/file/d/0Bx3A13n3Q_EAenltM2ZvZUNEdjQ/view?usp=sharing)
+* [SCT Hands-on Workshop (v2.0.4), Toronto, 2015-06-15](https://www.dropbox.com/s/f9887yrbkcfujn9/sct_handsOn_20150605.pdf?dl=0)
 
 ## Video tutorials
 
@@ -156,7 +158,7 @@ alt="Fsleyes integration" width="240" height="180" border="10" /></a>
 - [Dupont SM, De Leener B, Taso M, Le Troter A, Stikov N, Callot V, Cohen-Adad J. Fully-integrated framework for the segmentation and registration of the spinal cord white and gray matter. Neuroimage 2017](https://www.ncbi.nlm.nih.gov/pubmed/27663988)
 - [Perone et al. Spinal cord gray matter segmentation using deep dilated convolutions. Sci Rep 2018](https://www.nature.com/articles/s41598-018-24304-3)
 - [Gros et al. Automatic spinal cord localization, robust to MRI contrasts using global curve optimization. Med Image Anal 2018](https://www.sciencedirect.com/science/article/pii/S136184151730186X)
-- [Gros et al. Automatic segmentation of the spinal cord and intramedullary multiple sclerosis lesions with convolutional neural networks. arXiv:1805.06349](https://arxiv.org/pdf/1805.06349.pdf)
+- [Gros et al. Automatic segmentation of the spinal cord and intramedullary multiple sclerosis lesions with convolutional neural networks. Neuroimage 2019](https://www.sciencedirect.com/science/article/pii/S1053811918319578)
 
 #### Registration
 - [Cohen-Adad et al. Slice-by-slice regularized registration for spinal cord MRI: SliceReg. Proc ISMRM 2015](https://www.dropbox.com/s/v3bb3etbq4gb1l1/cohenadad_ismrm15_slicereg.pdf?dl=0)
@@ -210,6 +212,7 @@ alt="Fsleyes integration" width="240" height="180" border="10" /></a>
 - [Panara et al. Correlations between cervical spinal cord magnetic resonance diffusion tensor and diffusion kurtosis imaging metrics and motor performance in patients with chronic ischemic brain lesions of the corticospinal tract. Neuroradiology. 2018](https://link.springer.com/article/10.1007/s00234-018-2139-5)
 - [Moccia et al. Advances in spinal cord imaging in multiple sclerosis. Ther Adv Neurol Disord.2019 Vol. 12: 1–19 DOI: 10.1177/1756285619840593](https://journals.sagepub.com/doi/pdf/10.1177/1756286419840593)
 - [Kitany et al. Functional imaging of rostrocaudal spinal activity during upper limb motor tasks. Neuroimage. 2019 May 17. pii: S1053-8119(19)30428-8.](https://www.sciencedirect.com/science/article/pii/S1053811919304288)
+- [Lorenzi et al. Cervical spinal cord atrophy and Alzheimer’s disease. bioRxiv. 2019](https://www.biorxiv.org/content/biorxiv/early/2019/06/18/673350.full.pdf)
 
 ## Citing spinalcordtoolbox
 

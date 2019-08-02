@@ -82,6 +82,9 @@ def init_sct(log_level=1, update=False):
         if os.environ.get("SCT_TIMER", None) is not None:
             add_elapsed_time_counter()
 
+        # Display SCT version
+        logger.info('\n--\nSpinal Cord Toolbox ({})\n'.format(__version__))
+
 
 def add_elapsed_time_counter():
     """

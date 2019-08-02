@@ -18,6 +18,7 @@ from __future__ import division, absolute_import
 
 import sys
 import os
+import argparse
 
 import numpy as np
 
@@ -28,7 +29,7 @@ import sct_utils as sct
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
 from sct_image import concat_data
-from msct_parser import Parser
+from spinalcordtoolbox.utils import Metavar, SmartFormatter
 
 
 # DEFAULT PARAMETERS
@@ -50,31 +51,34 @@ class Param:
 
 
 def main(args=None):
-
+    """
+    Main function
+    :param args:
+    :return:
+    """
+    # get parser args
     if args is None:
-        args = sys.argv[1:]
-    param = Param()
-
-    # Check input parameters
+        args = None if sys.argv[1:] else ['--help']
     parser = get_parser()
-    arguments = parser.parse(args)
+    arguments = parser.parse_args(args=args)
 
-    param.fname_data = os.path.abspath(arguments['-i'])
+    param = Param()
+    param.fname_data = os.path.abspath(arguments.i)
 
-    if '-p' in arguments:
-        param.process = arguments['-p']
+    if arguments.p is not None:
+        param.process = (arguments.p).split(',')
         if param.process[0] not in param.process_list:
             sct.printv(parser.usage.generate(error='ERROR: Process ' + param.process[0] + ' is not recognized.'))
-    if '-size' in arguments:
-        param.size = arguments['-size']
-    if '-f' in arguments:
-        param.shape = arguments['-f']
-    if '-o' in arguments:
-        param.fname_out = os.path.abspath(arguments['-o'])
-    if '-r' in arguments:
-        param.remove_temp_files = int(arguments['-r'])
+    if arguments.size is not None:
+        param.size = arguments.size
+    if arguments.f is not None:
+        param.shape = arguments.f
+    if arguments.o is not None:
+        param.fname_out = os.path.abspath(arguments.o)
+    if arguments.r is not None:
+        param.remove_temp_files = arguments.r
 
-    param.verbose = int(arguments.get('-v'))
+    param.verbose = arguments.v
     sct.init_sct(log_level=param.verbose, update=True)  # Update log level
 
     # run main program
@@ -82,7 +86,6 @@ def main(args=None):
 
 
 def create_mask(param):
-
     # parse argument for method
     method_type = param.process[0]
     # check method val
@@ -284,66 +287,66 @@ def get_parser():
     # Initialize default parameters
     param_default = Param()
     # Initialize the parser
-    parser = Parser(__file__)
-    parser.usage.set_description('Create mask along z direction.')
-    parser.add_option(name='-i',
-                      type_value='file',
-                      description='Image to create mask on. Only used to get header. Must be 3D.',
-                      mandatory=True,
-                      example='data.nii.gz')
-    parser.add_option(name='-p',
-                      type_value=[[','], 'str'],
-                      description='Process to generate mask.\n'
-                                  'coord: X,Y coordinate of center of mask. E.g.: coord,20x15\n'
-                                  'point: volume that contains a single point. E.g.: point,label.nii.gz\n'
-                                  'center: mask is created at center of FOV.\n'
-                                  'centerline: volume that contains centerline or segmentation. E.g.: centerline,t2_seg.nii.gz',
-                      mandatory=True,
-                      default_value=param_default.process,
-                      example=['centerline,data_centerline.nii.gz'])
-    parser.add_option(name='-m',
-                      type_value=None,
-                      description='Process to generate mask and associated value.\n'
-                                  '  coord: X,Y coordinate of center of mask. E.g.: coord,20x15'
-                                  '  point: volume that contains a single point. E.g.: point,label.nii.gz'
-                                  '  center: mask is created at center of FOV. In that case, "val" is not required.'
-                                  '  centerline: volume that contains centerline. E.g.: centerline,my_centerline.nii',
-                      mandatory=False,
-                      deprecated_by='-p')
-    parser.add_option(name='-size',
-                      type_value='str',
-                      description='Size of the mask in the axial plane, given in pixel (ex: 35) or in millimeter (ex: 35mm). If shape=gaussian, size corresponds to "sigma"',
-                      mandatory=False,
-                      default_value=param_default.size,
-                      example=['45'])
-    parser.add_option(name='-s',
-                      type_value=None,
-                      description='Size in voxel. Odd values are better (for mask to be symmetrical). If shape=gaussian, size corresponds to "sigma"',
-                      mandatory=False,
-                      deprecated_by='-size')
-    parser.add_option(name='-f',
-                      type_value='multiple_choice',
-                      description='Shape of the mask.',
-                      mandatory=False,
-                      default_value=param_default.shape,
-                      example=param_default.shape_list)
-    parser.add_option(name='-o',
-                      type_value='file_output',
-                      description='Name of output mask.',
-                      mandatory=False,
-                      example=['data.nii'])
-    parser.add_option(name="-r",
-                      type_value="multiple_choice",
-                      description='Remove temporary files.',
-                      mandatory=False,
-                      default_value='1',
-                      example=['0', '1'])
-    parser.add_option(name="-v",
-                      type_value='multiple_choice',
-                      description="verbose: 0 = nothing, 1 = classic, 2 = expended",
-                      mandatory=False,
-                      example=['0', '1', '2'],
-                      default_value='1')
+
+    parser = argparse.ArgumentParser(
+        description='Create mask along z direction.',
+        add_help=None,
+        prog=os.path.basename(__file__).strip(".py"),
+        formatter_class= SmartFormatter)
+    mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatoryArguments.add_argument(
+        '-i',
+        help='Image to create mask on. Only used to get header. Must be 3D. Example: data.nii.gz',
+        metavar=Metavar.file,
+        required = False)
+    mandatoryArguments.add_argument(
+        '-p',
+        help='R|Process to generate mask.\n'
+             '  <coord,XxY>: Center mask at the X,Y coordinates. (e.g. "coord,20x15")\n'
+             '  <point,FILE>: Center mask at the X,Y coordinates of the label defined in input volume FILE. (e.g. "point,label.nii.gz")\n'
+             '  <center>: Center mask in the middle of the FOV (nx/2, ny/2).\n'
+             '  <centerline,FILE>: At each slice, the mask is centered at the spinal cord centerline, defined by the input segmentation FILE. (e.g. "centerline,t2_seg.nii.gz")',
+        metavar=Metavar.str,
+        required = False,
+        default = param_default.process)
+    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional.add_argument(
+        "-h",
+        "--help",
+        action="help",
+        help="Show this help message and exit")
+    optional.add_argument(
+        '-size',
+        help='Size of the mask in the axial plane, given in pixel (Example: 35) or in millimeter (Example: 35mm). '
+             'If shape=gaussian, size corresponds to "sigma" (Example: 45).',
+        metavar=Metavar.str,
+        required = False,
+        default = param_default.size)
+    optional.add_argument(
+        '-f',
+        help='Shape of the mask',
+        required = False,
+        default = param_default.shape,
+        choices=('cylinder', 'box', 'gaussian'))
+    optional.add_argument(
+        '-o',
+        metavar=Metavar.str,
+        help='Name of output mask, Example: data.nii',
+        required = False)
+    optional.add_argument(
+        "-r",
+        type=int,
+        help='Remove temporary files',
+        required = False,
+        default = 1,
+        choices = (0, 1))
+    optional.add_argument(
+        "-v",
+        type=int,
+        help="Verbose: 0 = nothing, 1 = classic, 2 = expended ",
+        required=False,
+        choices=(0, 1, 2),
+        default = 1)
 
     return parser
 

@@ -51,7 +51,7 @@ def test_integrity(param_test):
     param_test.output += '\nTesting ' + param_test.args + '\n'
 
     # Open resulting image and check dimensions and spacing
-    image_result = Image(os.path.join(param_test.path_output, 'resampled.nii.gz'))
+    image_result = Image('resampled.nii.gz')
     dims = image_result.dim
 
     if not np.all(np.round(i, 4) == np.round(j, 4) for i, j in zip(dims, param_test.results_dims[index_args])):
