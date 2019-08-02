@@ -153,7 +153,7 @@ def get_parser():
         help='Affine transformation(s) listed in flag -w which should be inverted before being used. Note that this '
              'only concerns affine transformation (not warping fields). If you would like to use an inverse warping'
              'field, then directly input the inverse warping field in flag -w.',
-        nargs='+',
+        nargs='*',
         metavar=Metavar.file,
         default=[])
     optional.add_argument(
