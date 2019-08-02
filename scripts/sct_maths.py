@@ -64,6 +64,7 @@ def get_parser():
     basic.add_argument(
         "-sub",
         metavar='',
+        nargs="+",
         help='Subtract following input. Can be a number or an image.',
         required=False)
     basic.add_argument(
@@ -75,6 +76,7 @@ def get_parser():
     basic.add_argument(
         "-div",
         metavar='',
+        nargs="+",
         help='Divide by following input. Can be a number or an image.',
         required=False)
     basic.add_argument(
