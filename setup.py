@@ -44,8 +44,6 @@ setup(
      ("sct_scripts", [ os.path.join("scripts", x) for x in os.listdir("scripts") if x.endswith(".py") ]),
      # </hack>
     ],
-    setup_requires=["pytest-runner"],
-    tests_require=["pytest"],
     include_package_data=True,
     extras_require={
      'docs': [
@@ -56,6 +54,10 @@ setup(
      'mpi': [
       'mpich==3.2',
       'mpi4py==3.0.0',
+     ],
+     'test': [
+      "pytest-runner",
+      "pytest",
      ],
     },
     entry_points=dict(
