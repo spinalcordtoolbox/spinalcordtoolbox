@@ -33,6 +33,17 @@ create_folder() {
   fi
 }
 
+# Fetch OS type (used to open QC folder)
+command_open() {
+  if uname -a | grep -i  darwin > /dev/null 2>&1; then
+    # OSX
+    OPEN_CMD="open"
+  elif uname -a | grep -i  linux > /dev/null 2>&1; then
+    # Linux
+    OPEN_CMD="xdg-open"
+  fi
+}
+
 
 # Script starts here
 # =============================================================================
@@ -91,3 +102,8 @@ fi
 echo "FINISHED :-)"
 echo "Started: $time_start"
 echo "Ended  : $(date +%x_%r)"
+
+# Display syntax to open QC report on web browser
+echo; echo "To open Quality Control (QC) report on a web-browser, run the following:"
+command_open
+echo "$OPEN_CMD $PATH_QC/index.html"
