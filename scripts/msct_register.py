@@ -1163,7 +1163,9 @@ def gradient_orientation_histogram(image, nb_bin, seg_weighted_mask=None):
     v_kernel = h_kernel.T
 
     # Normalization by median, to resolve scaling problems
-    image = image / np.median(image)
+    median = np.median(image)
+    if median != 0:
+        image = image / median
 
     # x and y gradients of the image
     gradx = ndimage.convolve(image, v_kernel)
