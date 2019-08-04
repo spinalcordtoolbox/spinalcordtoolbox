@@ -12,9 +12,8 @@
 
 from __future__ import absolute_import
 
-import sys, io, os
+import os
 
-import sct_utils as sct
 from spinalcordtoolbox.image import Image, compute_dice
 
 
@@ -24,7 +23,8 @@ def init(param_test):
     """
     # initialization
     default_args = ['-i t2/t2_seg_manual.nii.gz -d t2/t2_seg_manual.nii.gz']  # default parameters
-    param_test.contrast = 't2'
+    param_test.fname_data = 't2/t2_seg_manual.nii.gz'
+    param_test.dice_value = 1.0
 
     # assign default params
     if not param_test.args:
@@ -37,14 +37,12 @@ def test_integrity(param_test):
     """
     Test integrity of function
     """
-    path_data = os.path.join(param_test.path_data, param_test.contrast, param_test.file_input)
-    integrity_value = 1.0
 
     # open output segmentation
     try:
-        im_seg_manual = Image(path_data)
+        im_seg_manual = Image(param_test.fname_data)
     except:
-        param_test.output += 'ERROR: Cannot open ground truth segmentation: ' + path_data
+        param_test.output += 'ERROR: Cannot open ground truth segmentation: ' + param_test.fname_data
         param_test.status = 99
         return param_test
 
@@ -53,8 +51,8 @@ def test_integrity(param_test):
 
     param_test.output += 'Computed dice: '+str(dice_segmentation)
 
-    if dice_segmentation != integrity_value:
-        param_test.output += '\nERROR: Dice coefficient should be : ' + str(integrity_value)
+    if dice_segmentation != param_test.dice_value:
+        param_test.output += '\nERROR: Dice coefficient should be : ' + str(param_test.dice_value)
         param_test.status = 99
 
     return param_test

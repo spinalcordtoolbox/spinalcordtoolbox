@@ -18,6 +18,28 @@
   margin-right: auto;
 }
 
+.seperation{
+    height: 74px;
+}
+
+.searchBar{
+    position: absolute;
+    border-width: 1px;
+    border-radius: 5px;
+    border-style: solid;
+    border-color: #dbdbdb;
+    height: 34px;
+    top: 50px;
+    right: 15px;
+}
+
+.emptySearch{
+    position: relative;
+    top: 115px;
+    background-color: Gainsboro;
+    text-align: center;
+}
+
 #sprite-img, #overlay-img {
     position: absolute;
     top: 0px;

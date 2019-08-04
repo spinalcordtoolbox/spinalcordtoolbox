@@ -86,15 +86,20 @@ def resample_nipy(img, new_size=None, new_size_type=None, img_dest=None, interpo
         affine_r = np.dot(affine, R)
 
         reference = (shape_r, affine_r)
+        mov_voxel_coords =True
+        ref_voxel_coords = True
 
     else:
         # If reference is provided
         reference = img_dest
         R = None
+        mov_voxel_coords = False
+        ref_voxel_coords = False
 
     if img.ndim == 3:
-        img_r = n_resample(img, transform=R, reference=reference, mov_voxel_coords=True, ref_voxel_coords=True,
-                           dtype=dtype, interp_order=dict_interp[interpolation], mode='nearest')
+        img_r = n_resample(img, transform=R, reference=reference, mov_voxel_coords=mov_voxel_coords,
+                           ref_voxel_coords=ref_voxel_coords, dtype=dtype, interp_order=dict_interp[interpolation],
+                           mode='nearest')
 
     elif img.ndim == 4:
         # TODO: Cover img_dest with 4D volumes
@@ -107,7 +112,7 @@ def resample_nipy(img, new_size=None, new_size_type=None, img_dest=None, interpo
             # Create dummy 3d nipy image
             nii_tmp = nib.nifti1.Nifti1Image(img.get_data()[..., it], affine)
             img3d_r = n_resample(nifti2nipy(nii_tmp), transform=R, reference=(shape_r[:-1], affine_r),
-                                 mov_voxel_coords=True, ref_voxel_coords=True, dtype=dtype,
+                                 mov_voxel_coords=mov_voxel_coords, ref_voxel_coords=ref_voxel_coords, dtype=dtype,
                                  interp_order=dict_interp[interpolation], mode='nearest')
             data4d[..., it] = img3d_r.get_data()
         # Create 4d nipy Image
@@ -121,7 +126,7 @@ def resample_nipy(img, new_size=None, new_size_type=None, img_dest=None, interpo
     return img_r
 
 
-def resample_file(fname_data, fname_out, new_size, new_size_type, interpolation, verbose):
+def resample_file(fname_data, fname_out, new_size, new_size_type, interpolation, verbose, fname_ref=None):
     """This function will resample the specified input
     image file to the target size.
     Can deal with 2d, 3d or 4d image objects.
@@ -131,13 +136,18 @@ def resample_file(fname_data, fname_out, new_size, new_size_type, interpolation,
     :param new_size_type: Unit of resample (mm, vox, factor)
     :param interpolation: The interpolation type
     :param verbose: verbosity level
+    :param fname_ref: Reference image to resample input image to
     """
 
     # Load data
     sct.printv('\nLoad data...', verbose)
     nii = nipy.load_image(fname_data)
+    if fname_ref is not None:
+        nii_ref = nipy.load_image(fname_ref)
+    else:
+        nii_ref = None
 
-    nii_r = resample_nipy(nii, new_size, new_size_type, img_dest=None, interpolation=interpolation, verbose=verbose)
+    nii_r = resample_nipy(nii, new_size, new_size_type, img_dest=nii_ref, interpolation=interpolation, verbose=verbose)
 
     # build output file name
     if fname_out == '':

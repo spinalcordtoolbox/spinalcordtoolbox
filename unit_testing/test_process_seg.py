@@ -15,13 +15,12 @@ import numpy as np
 from spinalcordtoolbox.utils import __sct_dir__
 sys.path.append(os.path.join(__sct_dir__, 'scripts'))
 from spinalcordtoolbox import process_seg
-from sct_process_segmentation import Param
+from spinalcordtoolbox.centerline.core import ParamCenterline
 
 from create_test_data import dummy_segmentation
 
 
 # Define global variables
-PARAM = Param()
 VERBOSE = 0  # set to 2 to save files
 DEBUG = False  # Set to True to save images
 
@@ -78,7 +77,7 @@ im_segs = [
     (dummy_segmentation(size_arr=(128, 128, 5), pixdim=(1, 1, 1), shape='ellipse', radius_RL=50.0, radius_AP=30.0,
                         debug=DEBUG),
      {'area': 4701, 'angle_AP': 0.0, 'angle_RL': 0.0, 'diameter_AP': 60.0, 'diameter_RL': 100.0, 'eccentricity': 0.8,
-      'orientation': 0.0, 'solidity': 1.0},
+      'orientation': 0.0},
      {'angle_corr': False}),
     # test with one empty slice
     (dummy_segmentation(size_arr=(32, 32, 5), zeroslice=[2], debug=DEBUG),
@@ -90,10 +89,10 @@ im_segs = [
 # noinspection 801,PyShadowingNames
 @pytest.mark.parametrize('im_seg,expected,params', im_segs)
 def test_compute_shape(im_seg, expected, params):
-    metrics = process_seg.compute_shape(im_seg,
-                                        algo_fitting=PARAM.algo_fitting,
-                                        angle_correction=params['angle_corr'],
-                                        verbose=VERBOSE)
+    metrics, fit_results = process_seg.compute_shape(im_seg,
+                                                     angle_correction=params['angle_corr'],
+                                                     param_centerline=ParamCenterline(),
+                                                     verbose=VERBOSE)
     for key in expected.keys():
         # fetch obtained_value
         if 'slice' in params:

@@ -43,6 +43,7 @@ class Slice(object):
         """
         :param images: list of 3D volumes to be separated into slices.
         """
+        logger.info('Resample images to {}x{} mm'.format(p_resample, p_resample))
         self._images = list()
         image_ref = None  # first pass: we don't have a reference image to resample to
         for i, image in enumerate(images):
@@ -51,11 +52,11 @@ class Slice(object):
             if p_resample:
                 if i == len(images) - 1:
                     # Last volume corresponds to a segmentation, therefore use linear interpolation here
-                    type = 'seg'
+                    type_img = 'seg'
                 else:
                     # Otherwise it's an image: use spline interpolation
-                    type = 'im'
-                img_r = self._resample(img, p_resample, type=type, image_ref=image_ref)
+                    type_img = 'im'
+                img_r = self._resample(img, p_resample, type_img=type_img, image_ref=image_ref)
             else:
                 img_r = img.copy()
             self._images.append(img_r)
@@ -209,14 +210,14 @@ class Slice(object):
 
         :param image : input Image
         :returns: centers of mass in the x and y axis (tuple of numpy.ndarray of int)
-            .
         """
-        axial_dim = self.axial_dim(image)
-        centers_x = np.zeros(axial_dim)
-        centers_y = np.zeros(axial_dim)
-        for i in range(axial_dim):
-            aslice = self.axial_slice(np.array(image.data), i)  # we cast np.array to overcome
-            centers_x[i], centers_y[i] = ndimage.measurements.center_of_mass(aslice)
+        logger.info('Compute center of mass at each slice')
+        data = np.array(image.data)  # we cast np.array to overcome problem if inputing nii format
+        nz = image.dim[0]  # SAL orientation
+        centers_x = np.zeros(nz)
+        centers_y = np.zeros(nz)
+        for i in range(nz):
+            centers_x[i], centers_y[i] = ndimage.measurements.center_of_mass(data[i, :, :])
         try:
             Slice.nan_fill(centers_x)
             Slice.nan_fill(centers_y)
@@ -257,6 +258,7 @@ class Slice(object):
                 x = int(centers_x[i])
                 y = int(centers_y[i])
                 # crop slice around center of mass and add slice to the matrix layout
+                # TODO: resample there after cropping based on physical dimensions
                 self.add_slice(matrix, i, nb_column, size, self.crop(self.get_slice(image.data, i), x, y, size, size))
 
             matrices.append(matrix)
@@ -290,38 +292,40 @@ class Slice(object):
     def aspect(self):
         return [self.get_aspect(x) for x in self._images]
 
-    def _resample(self, image, p_resample, type, image_ref=None):
+    def _resample(self, image, p_resample, type_img, image_ref=None):
         """
         Resample at a fixed resolution to make sure the cord always appears with similar scale, regardless of the native
         resolution of the image. Assumes SAL orientation.
         :param image: Image() to resample
         :param p_resample: float: Resampling resolution in mm
-        :param type: {'im', 'seg'}: If im, interpolate using spline. If seg, interpolate using linear then binarize.
+        :param type_img: {'im', 'seg'}: If im, interpolate using spline. If seg, interpolate using linear then binarize.
         :param image_ref: Destination Image() to resample image to.
         :return:
         """
-        # If no reference image is provided, create nipy object and resample using resample_nipy()
+        dict_interp = {'im': 'spline', 'seg': 'linear'}
+        # Create nibabel object
+        nii = Nifti1Image(image.data, image.hdr.get_best_affine())
+        img = nifti2nipy(nii)
+        # If no reference image is provided, resample to specified resolution
         if image_ref is None:
-            dict_interp = {'im': 'spline', 'seg': 'linear'}
-            # Create nibabel object
-            nii = Nifti1Image(image.data, image.hdr.get_best_affine())
-            img = nifti2nipy(nii)
             # Resample to px x p_resample x p_resample mm (orientation is SAL by convention in QC module)
             img_r = resample_nipy(img, new_size=str(image.dim[4]) + 'x' + str(p_resample) + 'x' + str(p_resample),
-                                  new_size_type='mm', interpolation=dict_interp[type])
-            # If segmentation, binarize using threshold at 0.5
-            if type == 'seg':
-                img_r_data = (img_r.get_data() > 0.5) * 1
-            else:
-                img_r_data = img_r.get_data()
-            nii_r = nipy2nifti(img_r)
-            # Create Image objects
-            image_r = Image(img_r_data, hdr=nii_r.header, dim=nii_r.header.get_data_shape()). \
-                change_orientation(image.orientation)
-        # If resampling to reference image, use Image() built-in resampling function to ref image
+                                  new_size_type='mm', interpolation=dict_interp[type_img])
+        # Otherwise, resampling to the space of the reference image
         else:
-            dict_interp = {'im': 3, 'seg': 0}
-            image_r = image.interpolate_from_image(image_ref, interpolation_mode=dict_interp[type], border='nearest')
+            # Create nibabel object for reference image
+            nii_ref = Nifti1Image(image_ref.data, image_ref.hdr.get_best_affine())
+            img_ref = nifti2nipy(nii_ref)
+            img_r = resample_nipy(img, img_dest=img_ref, interpolation=dict_interp[type_img])
+        # If resampled image is a segmentation, binarize using threshold at 0.5
+        if type_img == 'seg':
+            img_r_data = (img_r.get_data() > 0.5) * 1
+        else:
+            img_r_data = img_r.get_data()
+        nii_r = nipy2nifti(img_r)
+        # Create Image objects
+        image_r = Image(img_r_data, hdr=nii_r.header, dim=nii_r.header.get_data_shape()). \
+            change_orientation(image.orientation)
         return image_r
 
 
@@ -380,10 +384,10 @@ class Sagittal(Slice):
             return [np.argwhere(image.data)[0][2]] * image.data.shape[2]
         # Otherwise, find the center of mass per slice and return the R-L index
         else:
-            from spinalcordtoolbox.centerline.core import get_centerline
+            from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
             image.change_orientation('RPI')  # need to do that because get_centerline operates in RPI orientation
             # Get coordinate of centerline
-            _, arr_ctl_RPI, _ = get_centerline(image, algo_fitting='bspline', minmax=True)
+            _, arr_ctl_RPI, _, _ = get_centerline(image, param=ParamCenterline())
             # Extend the centerline by copying values below zmin and above zmax to avoid discontinuities
             zmin, zmax = arr_ctl_RPI[2, :].min().astype(int), arr_ctl_RPI[2, :].max().astype(int)
             index_RL_in_RPI = np.concatenate([np.ones(zmin) * arr_ctl_RPI[0, 0],

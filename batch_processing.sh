@@ -1,22 +1,22 @@
 #!/bin/bash
 #
 # Example of commands to process multi-parametric data of the spinal cord.
-# 
+#
 # Please note that this batch script has a lot of redundancy and should not
 # be used as a pipeline for regular processing. For example, there is no need
-# to process both t1 and t2 to extract CSA values. 
+# to process both t1 and t2 to extract CSA values.
 #
 # For information about acquisition parameters, see: https://osf.io/wkdym/
-# N.B. The parameters are set for these type of data. With your data, parameters 
+# N.B. The parameters are set for these type of data. With your data, parameters
 # might be slightly different.
 #
 # Usage:
-# 
+#
 #   [option] $SCT_DIR/batch_processing.sh
-# 
+#
 #   Prevent (re-)downloading sct_example_data:
 #   SCT_BP_DOWNLOAD=0 $SCT_DIR/batch_processing.sh
-# 
+#
 #   Specify quality control (QC) folder (Default is ~/qc_batch_processing):
 #   SCT_BP_QC_FOLDER=/user/toto/my_qc_folder $SCT_DIR/batch_processing.sh
 
@@ -36,13 +36,13 @@ elif uname -a | grep -i  linux > /dev/null 2>&1; then
 fi
 
 # Check if users wants to use his own data
-if [ -z "$SCT_BP_DOWNLOAD" ]; then
+if [[ -z "$SCT_BP_DOWNLOAD" ]]; then
 	SCT_BP_DOWNLOAD=1
 fi
 
 # QC folder
-if [ -z "$SCT_BP_QC_FOLDER" ]; then
-	SCT_BP_QC_FOLDER=~/qc_batch_processing
+if [[ -z "$SCT_BP_QC_FOLDER" ]]; then
+	SCT_BP_QC_FOLDER=`pwd`/"qc_example_data"
 fi
 
 # Remove QC folder
@@ -55,7 +55,7 @@ fi
 TIME_START=$(date +%x_%r)
 
 # download example data
-if [ "$SCT_BP_DOWNLOAD" == "1" ]; then
+if [[ "$SCT_BP_DOWNLOAD" == "1" ]]; then
   sct_download_data -d sct_example_data
 fi
 cd sct_example_data
@@ -65,9 +65,9 @@ cd sct_example_data
 # ===========================================================================================
 cd t2
 # Segment spinal cord
-sct_propseg -i t2.nii.gz -c t2 -qc "$SCT_BP_QC_FOLDER"
+sct_deepseg_sc -i t2.nii.gz -c t2 -qc "$SCT_BP_QC_FOLDER"
 # Tips: If you are not satisfied with the results you can try with another algorithm:
-# sct_deepseg_sc -i t2.nii.gz -c t2 -qc "$SCT_BP_QC_FOLDER"
+# sct_propseg -i t2.nii.gz -c t2 -qc "$SCT_BP_QC_FOLDER"
 # Vertebral labeling
 # Tips: for manual initialization of labeling by clicking at disc C2-C3, use flag -initc2
 sct_label_vertebrae -i t2.nii.gz -s t2_seg.nii.gz -c t2 -qc "$SCT_BP_QC_FOLDER"
@@ -77,7 +77,7 @@ sct_label_utils -i t2_seg_labeled.nii.gz -vert-body 2,5 -o labels_vert.nii.gz
 # sct_label_utils -i t2.nii.gz -create-viewer 2,5 -o labels_vert.nii.gz
 # Register to template
 sct_register_to_template -i t2.nii.gz -s t2_seg.nii.gz -l labels_vert.nii.gz -c t2 -qc "$SCT_BP_QC_FOLDER"
-# Tips: If you are not satisfied with the results, you can tweak registration parameters. 
+# Tips: If you are not satisfied with the results, you can tweak registration parameters.
 # For example here, we would like to take into account the rotation of the cord, as well as
 # adding a 3rd registration step that uses the image intensity (not only cord segmentations).
 # so we could do something like this:
@@ -128,7 +128,7 @@ cd ..
 # ===========================================================================================
 cd t1
 # Segment spinal cord
-sct_propseg -i t1.nii.gz -c t1
+sct_deepseg_sc -i t1.nii.gz -c t1
 # Smooth spinal cord along superior-inferior axis
 sct_smooth_spinalcord -i t1.nii.gz -s t1_seg.nii.gz
 # Flatten cord in the right-left direction (to make nice figure)
@@ -148,7 +148,7 @@ sct_create_mask -i mt1.nii.gz -p centerline,mt1_centerline.nii.gz -size 45mm
 # Crop data for faster processing
 sct_crop_image -i mt1.nii.gz -m mask_mt1.nii.gz -o mt1_crop.nii.gz
 # Segment spinal cord
-sct_propseg -i mt1_crop.nii.gz -c t2 -qc "$SCT_BP_QC_FOLDER"
+sct_deepseg_sc -i mt1_crop.nii.gz -c t2 -qc "$SCT_BP_QC_FOLDER"
 # Register mt0->mt1
 # Tips: here we only use rigid transformation because both images have very similar sequence parameters. We don't want to use SyN/BSplineSyN to avoid introducing spurious deformations.
 # Tips: here we input -dseg because it is needed by the QC report
@@ -195,7 +195,7 @@ sct_crop_image -i dmri.nii.gz -m mask_dmri_mean.nii.gz -o dmri_crop.nii.gz
 # Tips: if data have very low SNR you can increase the number of successive images that are averaged into group with "-g". Also see: sct_dmri_moco -h
 sct_dmri_moco -i dmri_crop.nii.gz -bvec bvecs.txt
 # segmentation with propseg
-sct_propseg -i dmri_crop_moco_dwi_mean.nii.gz -c dwi -qc "$SCT_BP_QC_FOLDER"
+sct_deepseg_sc -i dmri_crop_moco_dwi_mean.nii.gz -c dwi -qc "$SCT_BP_QC_FOLDER"
 # Register template to dwi
 # Tips: Again, here, we prefer to stick to segmentation-based registration. If there are susceptibility distortions in your EPI, then you might consider adding a third step with bsplinesyn or syn transformation for local adjustment.
 sct_register_multimodal -i $SCT_DIR/data/PAM50/template/PAM50_t1.nii.gz -iseg $SCT_DIR/data/PAM50/template/PAM50_cord.nii.gz -d dmri_crop_moco_dwi_mean.nii.gz -dseg dmri_crop_moco_dwi_mean_seg.nii.gz -param step=1,type=seg,algo=centermass:step=2,type=seg,algo=bsplinesyn,metric=MeanSquares,smooth=1,iter=3 -initwarp ../t2/warp_template2anat.nii.gz -initwarpinv ../t2/warp_anat2template.nii.gz -qc "$SCT_BP_QC_FOLDER"
@@ -260,4 +260,4 @@ echo
 
 # Display syntax to open QC report on web browser
 echo "To open Quality Control (QC) report on a web-browser, run the following:"
-echo "${open_command} ${SCT_BP_QC_FOLDER}/index.html"
+echo "$open_command $SCT_BP_QC_FOLDER/index.html"
