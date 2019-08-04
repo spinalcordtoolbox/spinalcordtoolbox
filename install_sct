@@ -476,6 +476,17 @@ for file in $SCT_DIR/python/envs/venv_sct/bin/*sct*; do
   fi
 done
 
+## Create symbolic links for Shell scripts
+echo -e "\nCreating symbolic links for Shell scripts..."
+for file in $SCT_DIR/shell/*; do
+  ln -s "$file" "$SCT_DIR/bin/"
+  res=$?
+  if [[ $res != 0 ]]; then
+    echo "\nProblem creating symlinks!"
+    exit $res
+  fi
+done
+
 ## Update PATH within this script (to launch sct_check_dependencies)
 $UPDATE_PATH
 
