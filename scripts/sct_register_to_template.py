@@ -17,24 +17,24 @@
 from __future__ import division, absolute_import
 
 import sys, os, time
-
 import numpy as np
+
+from spinalcordtoolbox.metadata import get_file_label
+import spinalcordtoolbox.image as msct_image
+from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
+from spinalcordtoolbox.reports.qc import generate_qc
+from spinalcordtoolbox.resampling import resample_file
 
 import sct_utils as sct
 import sct_maths
 import sct_label_utils
-from spinalcordtoolbox.metadata import get_file_label
 from sct_utils import add_suffix
 from sct_register_multimodal import Paramreg, ParamregMultiStep, register
 from msct_parser import Parser
 from msct_register_landmarks import register_landmarks
-import spinalcordtoolbox.image as msct_image
-from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.centerline.core import get_centerline
-from spinalcordtoolbox.reports.qc import generate_qc
-from spinalcordtoolbox.resampling import resample_file
-
-# DEFAULT PARAMETERS
+import sct_apply_transfo
+import sct_concat_transfo
 
 
 class Param:
@@ -48,7 +48,6 @@ class Param:
         self.path_template = os.path.join(sct.__data_dir__, 'PAM50')
         self.path_qc = None
         self.zsubsample = '0.25'
-        self.param_straighten = ''
 
 
 # get default parameters
@@ -140,12 +139,17 @@ def get_parser():
                       \n--\nstep=1\ntype=' + paramreg.steps['1'].type + '\nalgo=' + paramreg.steps['1'].algo + '\nmetric=' + paramreg.steps['1'].metric + '\niter=' + paramreg.steps['1'].iter + '\nsmooth=' + paramreg.steps['1'].smooth + '\ngradStep=' + paramreg.steps['1'].gradStep + '\nslicewise=' + paramreg.steps['1'].slicewise + '\nsmoothWarpXY=' + paramreg.steps['1'].smoothWarpXY + '\npca_eigenratio_th=' + paramreg.steps['1'].pca_eigenratio_th + '\
                       \n--\nstep=2\ntype=' + paramreg.steps['2'].type + '\nalgo=' + paramreg.steps['2'].algo + '\nmetric=' + paramreg.steps['2'].metric + '\niter=' + paramreg.steps['2'].iter + '\nsmooth=' + paramreg.steps['2'].smooth + '\ngradStep=' + paramreg.steps['2'].gradStep + '\nslicewise=' + paramreg.steps['2'].slicewise + '\nsmoothWarpXY=' + paramreg.steps['2'].smoothWarpXY + '\npca_eigenratio_th=' + paramreg.steps['1'].pca_eigenratio_th,
                       mandatory=False)
-    parser.add_option(name="-straighten-fitting",
-                      type_value='str',
-                      description="""Algorithm used by the cord straightening procedure for fitting the centerline.""",
+    parser.add_option(name='-centerline-algo',
+                      type_value='multiple_choice',
+                      description='Algorithm for centerline fitting (when straightening the spinal cord).',
                       mandatory=False,
-                      default_value='bspline',
-                      example=['bspline', 'polyfit'])
+                      example=['polyfit', 'bspline', 'linear', 'nurbs'],
+                      default_value=ParamCenterline().algo_fitting)
+    parser.add_option(name='-centerline-smooth',
+                      type_value='int',
+                      description='Degree of smoothing for centerline fitting. Only use with -centerline-algo {bspline, linear}.',
+                      mandatory=False,
+                      default_value=ParamCenterline().smooth)
     parser.add_option(name='-qc',
                       type_value='folder_creation',
                       description='The path where the quality control generated content will be saved',
@@ -215,11 +219,9 @@ def main(args=None):
     verbose = int(arguments.get('-v'))
     sct.init_sct(log_level=verbose, update=True)  # Update log level
     param.verbose = verbose  # TODO: not clean, unify verbose or param.verbose in code, but not both
-    param.straighten_fitting = arguments['-straighten-fitting']
-    # if '-cpu-nb' in arguments:
-    #     arg_cpu = ' -cpu-nb '+str(arguments['-cpu-nb'])
-    # else:
-    #     arg_cpu = ''
+    param_centerline = ParamCenterline(
+        algo_fitting=arguments['-centerline-algo'],
+        smooth=arguments['-centerline-smooth'])
     # registration parameters
     if '-param' in arguments:
         # reset parameters but keep step=0 (might be overwritten if user specified step=0)
@@ -324,7 +326,7 @@ def main(args=None):
     # Project labels onto the spinal cord centerline because later, an affine transformation is estimated between the
     # template's labels (centered in the cord) and the subject's labels (assumed to be centered in the cord).
     # If labels are not centered, mis-registration errors are observed (see issue #1826)
-    ftmp_label = project_labels_on_spinalcord(ftmp_label, ftmp_seg)
+    ftmp_label = project_labels_on_spinalcord(ftmp_label, ftmp_seg, param_centerline)
 
     # binarize segmentation (in case it has values below 0 caused by manual editing)
     sct.printv('\nBinarize segmentation', verbose)
@@ -411,11 +413,15 @@ def main(args=None):
             sct.copy(fn_warp_straight2curve, 'warp_straight2curve.nii.gz')
             sct.copy(fn_straight_ref, 'straight_ref.nii.gz')
             # apply straightening
-            sct.run(['sct_apply_transfo', '-i', ftmp_seg, '-w', 'warp_curve2straight.nii.gz', '-d', 'straight_ref.nii.gz', '-o', add_suffix(ftmp_seg, '_straight')])
+            sct_apply_transfo.main(args=[
+                '-i', ftmp_seg,
+                '-w', 'warp_curve2straight.nii.gz',
+                '-d', 'straight_ref.nii.gz',
+                '-o', add_suffix(ftmp_seg, '_straight')])
         else:
             from spinalcordtoolbox.straightening import SpinalCordStraightener
             sc_straight = SpinalCordStraightener(ftmp_seg, ftmp_seg)
-            sc_straight.algo_fitting = param.straighten_fitting
+            sc_straight.param_centerline = param_centerline
             sc_straight.output_filename = add_suffix(ftmp_seg, '_straight')
             sc_straight.path_output = './'
             sc_straight.qc = '0'
@@ -433,7 +439,10 @@ def main(args=None):
 
         # N.B. DO NOT UPDATE VARIABLE ftmp_seg BECAUSE TEMPORARY USED LATER
         # re-define warping field using non-cropped space (to avoid issue #367)
-        s, o = sct.run(['sct_concat_transfo', '-w', 'warp_straight2curve.nii.gz', '-d', ftmp_data, '-o', 'warp_straight2curve.nii.gz'])
+        sct_concat_transfo.main(args=[
+            '-w', 'warp_straight2curve.nii.gz',
+            '-d', ftmp_data,
+            '-o', 'warp_straight2curve.nii.gz'])
 
         if vertebral_alignment:
             sct.copy('warp_curve2straight.nii.gz', 'warp_curve2straightAffine.nii.gz')
@@ -442,7 +451,7 @@ def main(args=None):
             # --------------------------------------------------------------------------------
             # Remove unused label on template. Keep only label present in the input label image
             sct.printv('\nRemove unused label on template. Keep only label present in the input label image...', verbose)
-            sct.run(['sct_label_utils', '-i', ftmp_template_label, '-o', ftmp_template_label, '-remove', ftmp_label])
+            sct.run(['sct_label_utils', '-i', ftmp_template_label, '-o', ftmp_template_label, '-remove-reference', ftmp_label])
 
             # Dilating the input label so they can be straighten without losing them
             sct.printv('\nDilating input labels using 3vox ball radius')
@@ -453,7 +462,12 @@ def main(args=None):
 
             # Apply straightening to labels
             sct.printv('\nApply straightening to labels...', verbose)
-            sct.run(['sct_apply_transfo', '-i', ftmp_label, '-o', add_suffix(ftmp_label, '_straight'), '-d', add_suffix(ftmp_seg, '_straight'), '-w', 'warp_curve2straight.nii.gz', '-x', 'nn'])
+            sct_apply_transfo.main(args=[
+                '-i', ftmp_label,
+                '-o', add_suffix(ftmp_label, '_straight'),
+                '-d', add_suffix(ftmp_seg, '_straight'),
+                '-w', 'warp_curve2straight.nii.gz',
+                '-x', 'nn'])
             ftmp_label = add_suffix(ftmp_label, '_straight')
 
             # Compute rigid transformation straight landmarks --> template landmarks
@@ -467,13 +481,25 @@ def main(args=None):
 
             # Concatenate transformations: curve --> straight --> affine
             sct.printv('\nConcatenate transformations: curve --> straight --> affine...', verbose)
-            sct.run(['sct_concat_transfo', '-w', 'warp_curve2straight.nii.gz,straight2templateAffine.txt', '-d', 'template.nii', '-o', 'warp_curve2straightAffine.nii.gz'])
+            sct_concat_transfo.main(args=[
+                '-w', ['warp_curve2straight.nii.gz', 'straight2templateAffine.txt'],
+                '-d', 'template.nii',
+                '-o', 'warp_curve2straightAffine.nii.gz'])
 
         # Apply transformation
         sct.printv('\nApply transformation...', verbose)
-        sct.run(['sct_apply_transfo', '-i', ftmp_data, '-o', add_suffix(ftmp_data, '_straightAffine'), '-d', ftmp_template, '-w', 'warp_curve2straightAffine.nii.gz'])
+        sct_apply_transfo.main(args=[
+            '-i', ftmp_data,
+            '-o', add_suffix(ftmp_data, '_straightAffine'),
+            '-d', ftmp_template,
+            '-w', 'warp_curve2straightAffine.nii.gz'])
         ftmp_data = add_suffix(ftmp_data, '_straightAffine')
-        sct.run(['sct_apply_transfo', '-i', ftmp_seg, '-o', add_suffix(ftmp_seg, '_straightAffine'), '-d', ftmp_template, '-w', 'warp_curve2straightAffine.nii.gz', '-x', 'linear'])
+        sct_apply_transfo.main(args=[
+            '-i', ftmp_seg,
+            '-o', add_suffix(ftmp_seg, '_straightAffine'),
+            '-d', ftmp_template,
+            '-w', 'warp_curve2straightAffine.nii.gz',
+            '-x', 'linear'])
         ftmp_seg = add_suffix(ftmp_seg, '_straightAffine')
 
         """
@@ -549,10 +575,20 @@ def main(args=None):
             # if step>1, apply warp_forward_concat to the src image to be used
             if i_step > 1:
                 # apply transformation from previous step, to use as new src for registration
-                sct.run(['sct_apply_transfo', '-i', src, '-d', dest, '-w', ','.join(warp_forward), '-o', add_suffix(src, '_regStep' + str(i_step - 1)), '-x', interp_step], verbose)
+                sct_apply_transfo.main(args=[
+                    '-i', src,
+                    '-d', dest,
+                    '-w', warp_forward,
+                    '-o', add_suffix(src, '_regStep' + str(i_step - 1)),
+                    '-x', interp_step])
                 src = add_suffix(src, '_regStep' + str(i_step - 1))
                 if paramreg.steps[str(i_step)].algo == 'centermassrot' and paramreg.steps[str(i_step)].rot_method == 'hog':  # also apply transformation to the seg
-                    sct.run(['sct_apply_transfo', '-i', src_seg, '-d', dest_seg, '-w', ','.join(warp_forward), '-o', add_suffix(src, '_regStep' + str(i_step - 1)), '-x', interp_step], verbose)
+                    sct_apply_transfo.main(args=[
+                        '-i', src_seg,
+                        '-d', dest_seg,
+                        '-w', warp_forward,
+                        '-o', add_suffix(src, '_regStep' + str(i_step - 1)),
+                        '-x', interp_step])
                     src_seg = add_suffix(src_seg, '_regStep' + str(i_step - 1))
             # register src --> dest
             # TODO: display param for debugging
@@ -563,17 +599,31 @@ def main(args=None):
             warp_forward.append(warp_forward_out)
             warp_inverse.append(warp_inverse_out)
 
-        # Concatenate transformations:
+        # Concatenate transformations: anat --> template
         sct.printv('\nConcatenate transformations: anat --> template...', verbose)
-        sct.run(['sct_concat_transfo', '-w', 'warp_curve2straightAffine.nii.gz,' + ','.join(warp_forward), '-d', 'template.nii', '-o', 'warp_anat2template.nii.gz'], verbose)
-        # sct.run('sct_concat_transfo -w warp_curve2straight.nii.gz,straight2templateAffine.txt,'+','.join(warp_forward)+' -d template.nii -o warp_anat2template.nii.gz', verbose)
+        warp_forward.insert(0, 'warp_curve2straightAffine.nii.gz')
+        sct_concat_transfo.main(args=[
+            '-w', warp_forward,
+            '-d', 'template.nii',
+            '-o', 'warp_anat2template.nii.gz'])
+
+        # Concatenate transformations: template --> anat
         sct.printv('\nConcatenate transformations: template --> anat...', verbose)
         warp_inverse.reverse()
-
         if vertebral_alignment:
-            sct.run(['sct_concat_transfo', '-w', ','.join(warp_inverse) + ',warp_straight2curve.nii.gz', '-d', 'data.nii', '-o', 'warp_template2anat.nii.gz'], verbose)
+            warp_inverse.append('warp_straight2curve.nii.gz')
+            sct_concat_transfo.main(args=[
+                '-w', warp_inverse,
+                '-d', 'data.nii',
+                '-o', 'warp_template2anat.nii.gz'])
         else:
-            sct.run(['sct_concat_transfo', '-w', ','.join(warp_inverse) + ',-straight2templateAffine.txt,warp_straight2curve.nii.gz', '-d', 'data.nii', '-o', 'warp_template2anat.nii.gz'], verbose)
+            warp_inverse.append('straight2templateAffine.txt')
+            warp_inverse.append('warp_straight2curve.nii.gz')
+            sct_concat_transfo.main(args=[
+                '-w', warp_inverse,
+                '-winv', ['straight2templateAffine.txt'],
+                '-d', 'data.nii',
+                '-o', 'warp_template2anat.nii.gz'])
 
     # register template->subject
     elif ref == 'subject':
@@ -586,7 +636,7 @@ def main(args=None):
 
         # Remove unused label on template. Keep only label present in the input label image
         sct.printv('\nRemove unused label on template. Keep only label present in the input label image...', verbose)
-        sct.run(['sct_label_utils', '-i', ftmp_template_label, '-o', ftmp_template_label, '-remove', ftmp_label])
+        sct.run(['sct_label_utils', '-i', ftmp_template_label, '-o', ftmp_template_label, '-remove-reference', ftmp_label])
 
         # Add one label because at least 3 orthogonal labels are required to estimate an affine transformation. This
         # new label is added at the level of the upper most label (lowest value), at 1cm to the right.
@@ -610,7 +660,7 @@ def main(args=None):
         # Bring template to subject space using landmark-based transformation
         sct.printv('\nEstimate transformation for step #0...', verbose)
         warp_forward = ['template2subjectAffine.txt']
-        warp_inverse = ['-template2subjectAffine.txt']
+        warp_inverse = ['template2subjectAffine.txt']
         try:
             register_landmarks(ftmp_template_label, ftmp_label, paramreg.steps['0'].dof, fname_affine=warp_forward[0], verbose=verbose, path_qc="./")
         except Exception:
@@ -631,7 +681,12 @@ def main(args=None):
             else:
                 sct.printv('ERROR: Wrong image type.', 1, 'error')
             # apply transformation from previous step, to use as new src for registration
-            sct.run(['sct_apply_transfo', '-i', src, '-d', dest, '-w', ','.join(warp_forward), '-o', add_suffix(src, '_regStep' + str(i_step - 1)), '-x', interp_step], verbose)
+            sct_apply_transfo.main(args=[
+                '-i', src,
+                '-d', dest,
+                '-w', warp_forward,
+                '-o', add_suffix(src, '_regStep' + str(i_step - 1)),
+                '-x', interp_step])
             src = add_suffix(src, '_regStep' + str(i_step - 1))
             # register src --> dest
             # TODO: display param for debugging
@@ -641,9 +696,16 @@ def main(args=None):
 
         # Concatenate transformations:
         sct.printv('\nConcatenate transformations: template --> subject...', verbose)
-        sct.run(['sct_concat_transfo', '-w', ','.join(warp_forward), '-d', 'data.nii', '-o', 'warp_template2anat.nii.gz'], verbose)
+        sct_concat_transfo.main(args=[
+            '-w', warp_forward,
+            '-d', 'data.nii',
+            '-o', 'warp_template2anat.nii.gz'])
         sct.printv('\nConcatenate transformations: subject --> template...', verbose)
-        sct.run(['sct_concat_transfo', '-w', ','.join(warp_inverse), '-d', 'template.nii', '-o', 'warp_anat2template.nii.gz'], verbose)
+        sct_concat_transfo.main(args=[
+            '-w', warp_inverse,
+            '-winv', ['template2subjectAffine.txt'],
+            '-d', 'template.nii',
+            '-o', 'warp_anat2template.nii.gz'])
 
     # Apply warping fields to anat and template
     sct.run(['sct_apply_transfo', '-i', 'template.nii', '-o', 'template2anat.nii.gz', '-d', 'data.nii', '-w', 'warp_template2anat.nii.gz', '-crop', '1'], verbose)
@@ -685,7 +747,7 @@ def main(args=None):
     sct.display_viewer_syntax([fname_template, fname_anat2template], verbose=verbose)
 
 
-def project_labels_on_spinalcord(fname_label, fname_seg):
+def project_labels_on_spinalcord(fname_label, fname_seg, param_centerline):
     """
     Project labels orthogonally on the spinal cord centerline. The algorithm works by finding the smallest distance
     between each label and the spinal cord center of mass.
@@ -702,7 +764,7 @@ def project_labels_on_spinalcord(fname_label, fname_seg):
     im_seg.change_orientation("RPI")
 
     # smooth centerline and return fitted coordinates in voxel space
-    _, arr_ctl, _ = get_centerline(im_seg, algo_fitting='bspline')
+    _, arr_ctl, _, _ = get_centerline(im_seg, param_centerline)
     x_centerline_fit, y_centerline_fit, z_centerline = arr_ctl
     # convert pixel into physical coordinates
     centerline_xyz_transposed = \

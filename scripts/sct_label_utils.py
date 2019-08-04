@@ -24,10 +24,11 @@ import sys
 import numpy as np
 from scipy import ndimage
 
-from msct_parser import Parser
 import spinalcordtoolbox.image as msct_image
-from spinalcordtoolbox.image import Image
-from msct_types import CoordinateValue
+from spinalcordtoolbox.image import Image, zeros_like
+from spinalcordtoolbox.types import Coordinate, CoordinateValue
+
+from msct_parser import Parser
 import sct_utils as sct
 
 
@@ -49,7 +50,7 @@ class ProcessLabels(object):
         :param fname_output:
         :param fname_ref:
         :param cross_radius:
-        :param dilate:
+        :param dilate:  # TODO: remove dilate (does not seem to be used)
         :param coordinates:
         :param verbose:
         :param vertebral_levels:
@@ -75,6 +76,7 @@ class ProcessLabels(object):
         self.verbose = verbose
         self.value = value
         self.msg = msg
+        self.output_image = None
 
     def process(self, type_process):
         # for some processes, change orientation of input image to RPI
@@ -98,7 +100,7 @@ class ProcessLabels(object):
         if type_process == 'MSE':
             self.MSE()
             self.fname_output = None
-        if type_process == 'remove':
+        if type_process == 'remove-reference':
             self.output_image = self.remove_label()
         if type_process == 'remove-symm':
             self.output_image = self.remove_label(symmetry=True)
@@ -125,7 +127,10 @@ class ProcessLabels(object):
             self.output_image = self.continuous_vertebral_levels()
         if type_process == 'create-viewer':
             self.output_image = self.launch_sagittal_viewer(self.value)
+        if type_process in ['remove', 'keep']:
+            self.output_image = self.remove_or_keep_labels(self.value, action=type_process)
 
+        # TODO: do not save here. Create another function save() for that
         if self.fname_output is not None:
             if change_orientation:
                 self.output_image.change_orientation(input_orientation)
@@ -136,6 +141,7 @@ class ProcessLabels(object):
                 self.output_image.save(dtype='minimize_int')
             else:
                 self.output_image.save()
+        return self.output_image
 
     def add(self, value):
         """
@@ -156,12 +162,14 @@ class ProcessLabels(object):
         Create an image with labels listed by the user.
         This method works only if the user inserted correct coordinates.
 
-        self.coordinates is a list of coordinates (class in msct_types).
+        self.coordinates is a list of coordinates (class in spinalcordtoolbox.types).
         a Coordinate contains x, y, z and value.
         If only one label is to be added, coordinates must be completed with '[]'
         examples:
-        For one label:  object_define=ProcessLabels( fname_label, coordinates=[coordi]) where coordi is a 'Coordinate' object from msct_types
-        For two labels: object_define=ProcessLabels( fname_label, coordinates=[coordi1, coordi2]) where coordi1 and coordi2 are 'Coordinate' objects from msct_types
+        For one label:  object_define=ProcessLabels( fname_label, coordinates=[coordi]) where coordi is a 'Coordinate'
+          object from spinalcordtoolbox.types
+        For two labels: object_define=ProcessLabels( fname_label, coordinates=[coordi1, coordi2]) where coordi1 and
+          coordi2 are 'Coordinate' objects from spinalcordtoolbox.types
         """
         image_output = self.image_input.copy() if add else msct_image.zeros_like(self.image_input)
 
@@ -181,37 +189,41 @@ class ProcessLabels(object):
 
     def create_label_along_segmentation(self):
         """
-        Create an image with labels defined along the spinal cord segmentation (or centerline)
+        Create an image with labels defined along the spinal cord segmentation (or centerline).
+        Input image does **not** need to be RPI (re-orientation is done within this function).
         Example:
         object_define=ProcessLabels(fname_segmentation, coordinates=[coord_1, coord_2, coord_i]), where coord_i='z,value'. If z=-1, then use z=nz/2 (i.e. center of FOV in superior-inferior direction)
         Returns
-        -------
-        image_output: Image object with labels.
         """
-
-        image_output = msct_image.zeros_like(self.image_input)
-
+        # reorient input image to RPI
+        im_rpi = self.image_input.copy().change_orientation('RPI')
+        im_output_rpi = zeros_like(im_rpi)
         # loop across labels
-        for i, coord in enumerate(self.coordinates):
+        for ilabel, coord in enumerate(self.coordinates):
             # split coord string
             list_coord = coord.split(',')
             # convert to int() and assign to variable
             z, value = [int(i) for i in list_coord]
+            # update z based on native image orientation (z should represent superior-inferior axis)
+            coord = Coordinate([z, z, z])  # since we don't know which dimension corresponds to the superior-inferior
+            # axis, we put z in all dimensions (we don't care about x and y here)
+            _, _, z_rpi = coord.permute(self.image_input, 'RPI')
             # if z=-1, replace with nz/2
             if z == -1:
-                z = int(np.round(image_output.dim[2] / 2.0))
+                z_rpi = int(np.round(im_output_rpi.dim[2] / 2.0))
             # get center of mass of segmentation at given z
-            x, y = ndimage.measurements.center_of_mass(np.array(self.image_input.data[:, :, z]))
+            x, y = ndimage.measurements.center_of_mass(np.array(im_rpi.data[:, :, z_rpi]))
             # round values to make indices
             x, y = int(np.round(x)), int(np.round(y))
             # display info
-            sct.printv('Label #' + str(i) + ': ' + str(x) + ',' + str(y) + ',' + str(z) + ' --> ' + str(value), 1)
-            if len(image_output.data.shape) == 3:
-                image_output.data[x, y, z] = value
-            elif len(image_output.data.shape) == 2:
+            sct.printv('Label #' + str(ilabel) + ': ' + str(x) + ',' + str(y) + ',' + str(z_rpi) + ' --> ' + str(value), 1)
+            if len(im_output_rpi.data.shape) == 3:
+                im_output_rpi.data[x, y, z_rpi] = value
+            elif len(im_output_rpi.data.shape) == 2:
                 assert str(z) == '0', "ERROR: 2D coordinates should have a Z value of 0. Z coordinate is :" + str(z)
-                image_output.data[x, y] = value
-        return image_output
+                im_output_rpi.data[x, y] = value
+        # change orientation back to native
+        return im_output_rpi.change_orientation(self.image_input.orientation)
 
     def plan(self, width, offset=0, gap=1):
         """
@@ -392,7 +404,7 @@ class ProcessLabels(object):
         :param symmetry: boolean,
         :return: intersection of CoordinateValue: list
         """
-        from msct_types import CoordinateValue
+        from spinalcordtoolbox.types import CoordinateValue
         if isinstance(coord_input[0], CoordinateValue) and isinstance(coord_ref[0], CoordinateValue) and symmetry:
             coord_intersection = list(set(coord_input).intersection(set(coord_ref)))
             result_coord_input = [coord for coord in coord_input if coord in coord_intersection]
@@ -537,8 +549,8 @@ class ProcessLabels(object):
         #   a. extract centerline
         #   b. for each slice, extract corresponding level
         nx, ny, nz, nt, px, py, pz, pt = im_input.dim
-        from spinalcordtoolbox.centerline.core import get_centerline
-        _, arr_ctl, _ = get_centerline(self.image_input, algo_fitting='bspline')
+        from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
+        _, arr_ctl, _, _ = get_centerline(self.image_input, param=ParamCenterline())
         x_centerline_fit, y_centerline_fit, z_centerline = arr_ctl
         value_centerline = np.array(
             [im_input.data[int(x_centerline_fit[it]), int(y_centerline_fit[it]), int(z_centerline[it])]
@@ -598,6 +610,33 @@ class ProcessLabels(object):
 
         return output
 
+    def remove_or_keep_labels(self, labels, action):
+        """
+        Create or remove labels from self.image_input
+        :param list(int): Labels to keep or remove
+        :param str: 'remove': remove specified labels (i.e. set to zero), 'keep': keep specified labels and remove the others
+        """
+        if action == 'keep':
+            image_output = msct_image.zeros_like(self.image_input)
+        elif action == 'remove':
+            image_output = self.image_input.copy()
+        coordinates_input = self.image_input.getNonZeroCoordinates()
+
+        for labelNumber in labels:
+            isInLabels = False
+            for coord in coordinates_input:
+                if labelNumber == coord.value:
+                    new_coord = coord
+                    isInLabels = True
+            if isInLabels:
+                if action == 'keep':
+                    image_output.data[int(new_coord.x), int(new_coord.y), int(new_coord.z)] = new_coord.value
+                elif action == 'remove':
+                    image_output.data[int(new_coord.x), int(new_coord.y), int(new_coord.z)] = 0.0
+            else:
+                sct.printv("WARNING: Label " + str(float(labelNumber)) + " not found in input image.", type='warning')
+
+        return image_output
 
 def get_parser():
     # initialize default param
@@ -658,13 +697,21 @@ def get_parser():
                       type_value='file',
                       description='Compute Mean Square Error between labels from input and reference image. Specify reference image here.',
                       mandatory=False)
-    parser.add_option(name='-remove',
+    parser.add_option(name='-remove-reference',
                       type_value='file',
                       description='Remove labels from input image (-i) that are not in reference image (specified here).',
                       mandatory=False)
     parser.add_option(name='-remove-sym',
                       type_value='file',
                       description='Remove labels from input image (-i) and reference image (specified here) that don\'t match. You must provide two output names separated by ",".',
+                      mandatory=False)
+    parser.add_option(name='-remove',
+                      type_value=[[','], 'int'],
+                      description='Remove labels of specific value (specified here) from reference image',
+                      mandatory=False)
+    parser.add_option(name='-keep',
+                      type_value=[[','], 'int'],
+                      description='Keep labels of specific value (specified here) from reference image',
                       mandatory=False)
 
     parser.usage.addSection("MISC")
@@ -738,15 +785,21 @@ def main(args=None):
     elif '-MSE' in arguments:
         process_type = 'MSE'
         input_fname_ref = arguments['-r']
-    elif '-remove' in arguments:
-        process_type = 'remove'
-        input_fname_ref = arguments['-remove']
+    elif '-remove-reference' in arguments:
+        process_type = 'remove-reference'
+        input_fname_ref = arguments['-remove-reference']
     elif '-remove-symm' in arguments:
         process_type = 'remove-symm'
         input_fname_ref = arguments['-r']
     elif '-create-viewer' in arguments:
         process_type = 'create-viewer'
         value = arguments['-create-viewer']
+    elif '-remove' in arguments:
+        process_type = 'remove'
+        value = arguments['-remove']
+    elif '-keep' in arguments:
+        process_type = 'keep'
+        value = arguments['-keep']
     else:
         # no process chosen
         sct.printv('ERROR: No process was chosen.', 1, 'error')

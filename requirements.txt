@@ -14,11 +14,12 @@ requests
 scipy
 scikit-image
 scikit-learn
-tensorflow
+tensorflow; platform_system != 'Darwin' or '15.' not in platform_release
+tensorflow==1.3.0; platform_system == 'Darwin' and '15.' in platform_release
 xlrd
 xlutils
 xlwt
 tqdm
 transforms3d
 urllib3[secure]
-git+https://github.com/jcohenadad/nipy.git#egg=nipy # need to install at the end otherwise won't install
+https://github.com/jcohenadad/nipy/tarball/master # need to install at the end otherwise won't install

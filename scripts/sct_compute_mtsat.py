@@ -17,7 +17,14 @@
 
 from __future__ import absolute_import, division
 
+import sys
+import os
 import argparse
+
+from spinalcordtoolbox.utils import Metavar, SmartFormatter
+from spinalcordtoolbox.mtsat import mtsat
+
+import sct_utils as sct
 
 
 def get_parser():
@@ -25,61 +32,97 @@ def get_parser():
         description='Compute MTsat and T1map. '
                     'Reference: Helms G, Dathe H, Kallenberg K, Dechent P. High-resolution maps of magnetization '
                     'transfer with inherent correction for RF inhomogeneity and T1 relaxation obtained from 3D FLASH '
-                    'MRI. Magn Reson Med 2008;60(6):1396-1407.')
-    parser.add_argument("-mt",
-                        help="Image with MT_ON",
-                        required=True)
-    parser.add_argument("-pd",
-                        help="Image PD weighted (typically, the MT_OFF)",
-                        required=True)
-    parser.add_argument("-t1",
-                        help="Image T1-weighted",
-                        required=True)
-    parser.add_argument("-trmt",
-                        help="TR [in ms] for mt image.",
-                        type=float,
-                        required=True)
-    parser.add_argument("-trpd",
-                        help="TR [in ms] for pd image.",
-                        type=float,
-                        required=True)
-    parser.add_argument("-trt1",
-                        help="TR [in ms] for t1 image.",
-                        type=float,
-                        required=True)
-    parser.add_argument("-famt",
-                        help="Flip angle [in deg] for mt image.",
-                        type=float,
-                        required=True)
-    parser.add_argument("-fapd",
-                        help="Flip angle [in deg] for pd image.",
-                        type=float,
-                        required=True)
-    parser.add_argument("-fat1",
-                        help="Flip angle [in deg] for t1 image.",
-                        type=float,
-                        required=True)
-    parser.add_argument("-b1map",
-                        help="B1 map",
-                        default=None)
-    parser.add_argument("-omtsat",
-                        help="Output file for MTsat. Default is mtsat.nii.gz",
-                        default=None)
-    parser.add_argument("-ot1map",
-                        help="Output file for T1map. Default is t1map.nii.gz",
-                        default=None)
-    parser.add_argument("-v",
-                        help="Verbose: 0 = no verbosity, 1 = verbose (default).",
-                        choices=('0', '1'),
-                        type=int,
-                        default=1)
+                    'MRI. Magn Reson Med 2008;60(6):1396-1407.',
+        add_help=False,
+        formatter_class=SmartFormatter,
+        prog= os.path.basename(__file__).strip(".py")
+    )
+    mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatoryArguments.add_argument(
+        "-mt",
+        help="Image with MT_ON",
+        metavar=Metavar.file,
+        required=False)
+    mandatoryArguments.add_argument(
+        "-pd",
+        help="Image PD weighted (typically, the MT_OFF)",
+        metavar=Metavar.file,
+        required=False)
+    mandatoryArguments.add_argument(
+        "-t1",
+        help="Image T1-weighted",
+        metavar=Metavar.file,
+        required=False)
+    mandatoryArguments.add_argument(
+        "-trmt",
+        help="TR [in ms] for mt image.",
+        type=float,
+        metavar=Metavar.float,
+        required=False)
+    mandatoryArguments.add_argument(
+        "-trpd",
+        help="TR [in ms] for pd image.",
+        type=float,
+        metavar=Metavar.float,
+        required=False)
+    mandatoryArguments.add_argument(
+        "-trt1",
+        help="TR [in ms] for t1 image.",
+        type=float,
+        metavar=Metavar.float,
+        required=False)
+    mandatoryArguments.add_argument(
+        "-famt",
+        help="Flip angle [in deg] for mt image.",
+        type=float,
+        metavar=Metavar.float,
+        required=False)
+    mandatoryArguments.add_argument(
+        "-fapd",
+        help="Flip angle [in deg] for pd image.",
+        type=float,
+        metavar=Metavar.float,
+        required=False)
+    mandatoryArguments.add_argument(
+        "-fat1",
+        help="Flip angle [in deg] for t1 image.",
+        type=float,
+        metavar=Metavar.float,
+        required=False)
+    optional = parser.add_argument_group('\nOPTIONAL ARGUMENTS')
+    optional.add_argument(
+        "-h",
+        "--help",
+        action="help",
+        help="Show this help message and exit")
+    optional.add_argument(
+        "-b1map",
+        help="B1 map",
+        metavar=Metavar.file,
+        default=None)
+    optional.add_argument(
+        "-omtsat",
+        metavar=Metavar.str,
+        help="Output file for MTsat. Default is mtsat.nii.gz",
+        default=None)
+    optional.add_argument(
+        "-ot1map",
+        metavar=Metavar.str,
+        help="Output file for T1map. Default is t1map.nii.gz",
+        default=None)
+    optional.add_argument(
+        "-v",
+        help="Verbose: 0 = no verbosity, 1 = verbose (default).",
+        type=int,
+        choices=(0, 1),
+        default=1)
+
     return parser
 
 
-def main(args):
-    import sct_utils as sct
-    from spinalcordtoolbox.mtsat import mtsat
-
+def main():
+    parser = get_parser()
+    args = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
     verbose = args.v
     sct.init_sct(log_level=verbose, update=True)  # Update log level
 
@@ -95,6 +138,4 @@ def main(args):
 
 
 if __name__ == '__main__':
-    parser = get_parser()
-    arguments = parser.parse_args()
-    main(arguments)
+    main()

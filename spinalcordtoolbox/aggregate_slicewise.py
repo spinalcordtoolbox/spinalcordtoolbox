@@ -195,22 +195,19 @@ def extract_metric(data, labels=None, slices=None, levels=None, perslice=True, p
     :param perlevel:
     :param vert_level:
     :param method:
-    :param label_struc: Label structure defined in sct_extract_metric
+    :param label_struc: LabelStruc class defined above
     :param id_label: int: ID of label to select
     :param indiv_labels_ids: list of int: IDs of labels corresponding to individual (as opposed to combined) labels for
     use with ML or MAP estimation.
-    :param map_clusters: list of list of int: See func_map()
     :return: aggregate_per_slice_or_level()
     """
     # Initializations
     map_clusters = None
-    func_methods = {'ml': ('ML', func_ml), 'map': ('MAP', func_map)}
-    # If label_struc[id_label].id is a list, it means that it comes from a combined labels
+    func_methods = {'ml': ('ML', func_ml), 'map': ('MAP', func_map)}  # TODO: complete dict with other methods
+    # If label_struc[id_label].id is a list (i.e. comes from a combined labels), sum all labels
     if isinstance(label_struc[id_label].id, list):
-        # Sum across labels
-        labels_sum = np.sum(labels[..., label_struc[id_label].id], axis=3)  # (nx, ny, nz, 1)
+        labels_sum = np.sum(labels[..., label_struc[id_label].id], axis=labels.ndim-1)  # (nx, ny, nz, 1)
     else:
-        # Simply extract
         labels_sum = labels[..., label_struc[id_label].id]
     # expand dim: labels_sum=(..., 1)
     ndim = labels_sum.ndim
@@ -218,13 +215,23 @@ def extract_metric(data, labels=None, slices=None, levels=None, perslice=True, p
 
     # Maximum Likelihood or Maximum a Posteriori
     if method in ['ml', 'map']:
+        # Get the complementary list of labels (the ones not asked by the user)
         id_label_compl = diff_between_list_or_int(indiv_labels_ids, label_struc[id_label].id)
-        # Generate a list of map_clusters for each label in mask.
-        # Start with the first label (the one chosed by the user)
-        map_clusters = [label_struc[id_label].map_cluster]
-        # Then append the remaining cluster IDs
-        map_clusters += [label_struc[i].map_cluster for i in id_label_compl]
-        # Concatenate labels: the one asked by the user, followed by the remaining ones
+        # Generate a list of map_clusters for each label. Start with the first label (the one chosen by the user).
+        # Note that the first label could be a combination of several labels (e.g., WM and GM).
+        if isinstance(label_struc[id_label].id, list):
+            # in case there are several labels for this id_label
+            map_clusters = [list(set([label_struc[i].map_cluster for i in label_struc[id_label].id]))]
+        else:
+            # in case there is only one label for this id_label
+            map_clusters = [[label_struc[id_label].map_cluster]]
+        # Append the cluster for each remaining labels (i.e. the ones not included in the combined labels)
+        for i_cluster in [label_struc[i].map_cluster for i in id_label_compl]:
+            map_clusters.append([i_cluster])
+        # Concatenate labels: first, the one asked by the user, then the remaining ones.
+        # Examples of scenario:
+        #   labels_sum = [[0], [1:36]]
+        #   labels_sum = [[3,4], [0,2,5:36]]
         labels_sum = np.concatenate([labels_sum, labels[..., id_label_compl]], axis=ndim)
         mask = Metric(data=labels_sum, label=label_struc[id_label].name)
         group_funcs = (func_methods[method], ('STD', func_std))
@@ -273,38 +280,73 @@ def func_max(data, mask=None, map_clusters=None):
 
 def func_map(data, mask, map_clusters):
     """
-    Compute maximum a posteriori (MAP) for the first label of mask.
+    Compute maximum a posteriori (MAP) by aggregating the last dimension of mask according to a clustering method
+    defined by map_clusters
     :param data: nd-array: input data
     :param mask: (n+1)d-array: input mask. Note: this mask should include ALL labels to satisfy the necessary condition for
     ML-based estimation, i.e., at each voxel, the sum of all labels (across the last dimension) equals the probability
     to be inside the tissue. For example, for a pixel within the spinal cord, the sum of all labels should be 1.
     :param map_clusters: list of list of int: Each sublist corresponds to a cluster of labels where ML estimation will
     be performed to provide the prior beta_0 for MAP estimation.
-    :return: float: beta corresponding to the first label
+    :return: float: beta corresponding to the first label (beta[0])
+    :return: nd-array: matrix of all beta
     """
     # Check number of labels and map_clusters
     assert mask.shape[-1] == len(map_clusters)
-    # Sum across each clustered labels, then concatenate
+
+    # Iterate across all labels (excluding the first one) and generate cluster labels. Examples of input/output:
+    #   [[0], [0], [0], [1], [2], [0]] --> [0, 0, 0, 1, 2, 0]
+    #   [[0, 1], [0], [0], [1], [2]] --> [0, 0, 0, 0, 1]
+    #   [[0, 1], [0], [1], [2], [3]] --> [0, 0, 0, 1, 2]
+    possible_clusters = [map_clusters[0]]
+    id_clusters = [0]  # this one corresponds to the first cluster
+    for i_cluster in map_clusters[1:]:  # skip the first
+        found_index = False
+        for possible_cluster in possible_clusters:
+            if i_cluster[0] in possible_cluster:
+                id_clusters.append(possible_clusters.index(possible_cluster))
+                found_index = True
+        if not found_index:
+            possible_clusters.append(i_cluster)
+            id_clusters.append(possible_clusters.index([i_cluster[0]]))
+
+    # Sum across each clustered labels, then concatenate to generate mask_clusters
+    # mask_clusters has dimension: x, y, z, n_clustered_labels, with n_clustered_labels being equal to the number of
+    # clusters that need to be estimated for ML method. Let's assume:
+    # label_struc = [
+    #   LabelStruc(id=0, map_cluster=0),
+    #   LabelStruc(id=1, map_cluster=0),
+    #   LabelStruc(id=2, map_cluster=0),
+    #   LabelStruc(id=3, map_cluster=1),
+    #   LabelStruc(id=4, map_cluster=2),
+    # ]
+    #
+    # Examples of scenario below for ML estimation:
+    #   labels_id_user = [0,1], mask_clusters = [np.sum(label[0:2]), label[3], label[4]]
+    #   labels_id_user = [3], mask_clusters = [np.sum(label[0:2]), label[3], label[4]]
+    #   labels_id_user = [0,1,2,3], mask_clusters = [np.sum(label(0:3)), label[4]]
     mask_l = []
-    for i_cluster in list(set(map_clusters)):
-        # Get indices for given cluster
-        i_clusters = [i for i in range(len(map_clusters)) if i_cluster == map_clusters[i]]
+    for i_cluster in list(set(id_clusters)):
+        # Get label indices for given cluster
+        id_label_cluster = [i for i in range(len(id_clusters)) if i_cluster == id_clusters[i]]
         # Sum all labels for this cluster
-        mask_l.append(np.expand_dims(np.sum(mask[..., i_clusters], axis=(mask.ndim - 1)), axis=(mask.ndim - 1)))
+        mask_l.append(np.expand_dims(np.sum(mask[..., id_label_cluster], axis=(mask.ndim - 1)), axis=(mask.ndim - 1)))
     mask_clusters = np.concatenate(mask_l, axis=(mask.ndim-1))
+
     # Run ML estimation for each clustered labels
     _, beta_cluster = func_ml(data, mask_clusters)
+
     # MAP estimation:
     #   y [nb_vox x 1]: measurements vector (to which weights are applied)
     #   x [nb_vox x nb_labels]: linear relation between the measurements y
     #   beta_0 [nb_labels]: A priori values estimated per cluster using ML.
-    #   beta [nb_labels] = beta_0 + (Xt . X + 1)^(-1) . Xt . (y - X . beta_0) : The estimated metric value in each label
+    #   beta [nb_labels] = beta_0 + (Xt . X + 1)^(-1) . Xt . (y - X . beta_0): The estimated metric value in each label
     #
     # Note: for simplicity we consider that sigma_noise = sigma_label
     n_vox = functools.reduce(operator.mul, data.shape, 1)
     y = np.reshape(data, n_vox)
     x = np.reshape(mask, (n_vox, mask.shape[mask.ndim-1]))
-    beta_0 = [beta_cluster[map_clusters[i_label]] for i_label in range(mask.shape[-1])]
+    beta_0 = [beta_cluster[id_clusters[i_label]] for i_label in range(mask.shape[-1])]
     beta = beta_0 + np.dot(np.linalg.pinv(np.dot(x.T, x) + np.diag(np.ones(mask.shape[-1]))),
                            np.dot(x.T,
                                   (y - np.dot(x, beta_0))))

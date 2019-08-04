@@ -101,7 +101,8 @@ def test_transfo_null():
 
     print(" Apply")
     path_dst = "warp-dst.nii"
-    xform = sct_apply_transfo.Transform(path_src, path_warp, path_src, path_dst)
+    xform = sct_apply_transfo.Transform(input_filename=path_src, fname_dest=path_src, list_warp=[path_warp],
+                                        output_filename=path_dst)
     xform.apply()
 
     img_src2 = msct_image.Image(path_src)
@@ -152,7 +153,8 @@ def test_transfo_figure_out_ants_frame_exhaustive():
         print(" Affine:\n{}".format(img_warp.header.get_best_affine()))
 
         path_dst = "warp-{}-dst.nii".format(orientation)
-        xform = sct_apply_transfo.Transform(path_src, path_warp, path_src, path_dst)
+        xform = sct_apply_transfo.Transform(input_filename=path_src, fname_dest=path_src, list_warp=[path_warp],
+                                            output_filename=path_dst)
         xform.apply()
 
         img_src2 = msct_image.Image(path_src)
@@ -243,7 +245,8 @@ def test_transfo_exhaustive_wrt_orientations():
         #print(" Affine:\n{}".format(img_warp.header.get_best_affine()))
 
         path_dst = "warp-{}-dst.nii".format(orientation)
-        xform = sct_apply_transfo.Transform(path_src, path_warp, path_ref, path_dst)
+        xform = sct_apply_transfo.Transform(input_filename=path_src, fname_dest=path_src, list_warp=[path_warp],
+                                            output_filename=path_dst)
         xform.apply()
 
         img_src2 = msct_image.Image(path_src)
@@ -331,7 +334,8 @@ def notest_transfo_more_exhaustive_wrt_orientations():
             #print(" Affine:\n{}".format(img_warp.header.get_best_affine()))
 
             path_dst = "warp-{}-{}-dst.nii".format(orientation_src, orientation_ref)
-            xform = sct_apply_transfo.Transform(path_src, path_warp, path_ref, path_dst)
+            xform = sct_apply_transfo.Transform(input_filename=path_src, fname_dest=path_src, list_warp=[path_warp],
+                                                output_filename=path_dst)
             xform.apply()
 
             img_src2 = msct_image.Image(path_src)
@@ -416,7 +420,8 @@ def test_transfo_skip_pix2phys():
     img_warp.save(path_warp)
 
     path_dst = "warp-dst111.nii"
-    xform = sct_apply_transfo.Transform(path_src, path_warp, path_src, path_dst)
+    xform = sct_apply_transfo.Transform(input_filename=path_src, fname_dest=path_src, list_warp=[path_warp],
+                                        output_filename=path_dst)
     xform.apply()
 
     img_src2 = msct_image.Image(path_src)

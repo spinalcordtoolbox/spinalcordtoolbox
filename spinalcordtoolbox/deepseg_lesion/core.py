@@ -3,22 +3,17 @@
 # Functions dealing with deepseg_lesion
 
 import os
-import sys
 import logging
 import numpy as np
 
-from scipy.ndimage.measurements import center_of_mass, label
-from scipy.ndimage import distance_transform_edt
 from scipy.interpolate.interpolate import interp1d
 
 import sct_utils as sct
 
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.centerline import optic
 from spinalcordtoolbox.deepseg_sc.core import find_centerline, crop_image_around_centerline, uncrop_image, _normalize_data
 from spinalcordtoolbox import resampling
-from spinalcordtoolbox.deepseg_sc.cnn_models import nn_architecture_ctr
 
 logger = logging.getLogger(__name__)
 
@@ -238,6 +233,9 @@ def deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo='svm', ctr_file
     thr = 0.1
     seg_initres_nii.data[np.where(seg_initres_nii.data >= thr)] = 1
     seg_initres_nii.data[np.where(seg_initres_nii.data < thr)] = 0
+
+    # change data type
+    seg_initres_nii.change_type(np.uint8)
 
     # reorient to initial orientation
     logger.info("\nReorienting the segmentation to the original image orientation...")

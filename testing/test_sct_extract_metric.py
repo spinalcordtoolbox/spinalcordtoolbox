@@ -22,6 +22,7 @@ def init(param_test):
     """
     # initialization
     default_args = ['-i mt/mtr.nii.gz -f mt/label/atlas -method wa -l 51 -z 1:2 -o quantif_mtr.csv']
+    param_test.file_out = 'quantif_mtr.csv'
     param_test.mtr_groundtruth = 32.6404  # ground truth value
     param_test.threshold_diff = 0.001  # threshold for computing difference between result and ground truth
 
@@ -35,7 +36,7 @@ def test_integrity(param_test):
     """
     Test integrity of function
     """
-    with open(os.path.join(param_test.path_output, "quantif_mtr.csv"), 'r') as csvfile:
+    with open(param_test.file_out, 'r') as csvfile:
         spamreader = csv.DictReader(csvfile, delimiter=',')
         mtr_result = np.float([row['WA()'] for row in spamreader][0])
 

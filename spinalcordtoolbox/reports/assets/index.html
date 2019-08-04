@@ -45,7 +45,7 @@
           <li><p class="navbar-text" id="qc-header"></p></li>
         </ul>
         <ul class="nav navbar-nav navbar-right">
-          <li><a href="https://sourceforge.net/projects/spinalcordtoolbox/">About</a></li>
+          <li><a href="https://github.com/neuropoly/spinalcordtoolbox">About</a></li>
         </ul>
      </div>
     </div>
@@ -65,15 +65,41 @@
                       Next
                   </span>
               </a>
+              <div class="seperation">
+                <div id="dropdown" class="dropdown">
+                    <button id="dropdownButton" class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true">Display Columns <span class="caret"></span></button>
+                    <ul class="dropdown-menu">
+                      <li><a class="dropdown-item" id="Date" onclick="toggleColumn(id)">Date</button></a></li>
+                      <li><a class="dropdown-item" id="Dataset" onclick="toggleColumn(id)">Dataset &#10004</a></li>
+                      <li><a class="dropdown-item" id="Subject" onclick="toggleColumn(id)">Subject</a></li>
+                      <li><a class="dropdown-item" id="Path" onclick="toggleColumn(id)">Path &#10004</a></li>
+                      <li><a class="dropdown-item" id="File" onclick="toggleColumn(id)">File</a></li>
+                      <li><a class="dropdown-item" id="Contrast" onclick="toggleColumn(id)">Contrast &#10004</a></li>
+                      <li><a class="dropdown-item" id="Function" onclick="toggleColumn(id)">Function</a></li>
+                      <li><a class="dropdown-item" id="Function+Args" onclick="toggleColumn(id)">Function+Args &#10004</a></li>
+                    </ul>
+                </div>
+                <script>
+                    document.getElementById("dropdown").style.position= "absolute";
+                    document.getElementById("dropdown").style.top = "50px";
+                </script>
+                <input class="searchBar" type="text" id="searchInput" onkeyup="hideNonSearchElements()" placeholder="Search" autocomplete="off">
+                <div class="emptySearch">No matching records found</div>
+              </div>
               <table id="table" class="table table-condensed"
-                  data-search="true"
+		  data-sort-name="moddate"
+                  data-sort-order="asc"
                   data-response-handler="responseHandler">
 	                <thead>
 		                  <tr>
-			                    <th data-field="moddate" data-sortable="true">Date</th>
-			                    <th data-field="dataset" data-sortable="true">Dataset</th>
-			                    <th data-field="subject" data-sortable="true">Subject</th>
-			                    <th data-field="command" data-sortable="true">Function</th>
+                              <th data-field="moddate" data-sortable="true">Date</th>
+			                  <th data-field="dataset" data-sortable="true">Dataset</th>
+			                  <th data-field="subject" data-sortable="true">Subject</th>
+                              <th data-field="cwd" data-sortable="true">Path</th>
+                              <th data-field="fname_in" data-sortable="true">File</th>
+                              <th data-field="contrast" data-sortable="true">Contrast</th>
+			                  <th data-field="command" data-sortable="true">Function</th>
+			                  <th data-field="cmdline" data-sortable="true">Function+Args</th>
 		                  </tr>
 	                </thead>
               </table>
@@ -98,4 +124,131 @@
 <script src="_assets/js/bootstrap-table.min.js"></script>
 <script src="_assets/js/main.js"></script>
 <script>var sct_data = $sct_json_data;</script>
+<script>
+    function toggleColumn(buttonID){
+        /*
+        This function will hide a specific column of the table if it is displayed
+        or show a specific column if it is not displayed.
+        */
+        var position;
+        position = findPosition(buttonID);
+        if (document.getElementById(buttonID).innerHTML == buttonID + " \u2714"){
+                document.getElementById(buttonID).innerHTML = buttonID;
+                document.getElementsByTagName('TH')[position].style.display = "none";
+                var iTD;
+                for (iTD = position; iTD < document.getElementsByTagName('TD').length; iTD = iTD + document.getElementsByTagName('TH').length){
+                    document.getElementsByTagName('TD')[iTD].style.display = "none";
+                }
+        }
+        else if (document.getElementById(buttonID).innerHTML == buttonID){
+                document.getElementById(buttonID).innerHTML = buttonID + " \u2714";
+                document.getElementsByTagName('TH')[position].style.display = "";
+                var iTD;
+                for (iTD = position; iTD < document.getElementsByTagName('TD').length; iTD = iTD + document.getElementsByTagName('TH').length){
+                    document.getElementsByTagName('TD')[iTD].style.display = "";
+                }
+        }
+        hideNonSearchElements();
+    }
+
+    function findPosition(buttonID){
+        /*
+        This function will find the array position
+        of the header cell corresponding to the wanted Id.
+        Return type: number
+        */
+        var iTH, position;
+        for (iTH = 0; iTH < document.getElementsByTagName('TH').length; iTH++){
+            if (buttonID.valueOf() == document.getElementsByTagName('TH')[iTH].innerText){
+                position = iTH;
+            }
+        }
+        return position;
+     }
+
+    function hideNonSearchElements(){
+        /*
+        This function hides all elements that do not fit
+        the search elements in the searchbar.
+        */
+        var searchInput = document.getElementById("searchInput").value;
+        var tableRows = document.getElementsByTagName("tr");
+        var isEmpty = true;
+
+        var iTableRows;
+        for (iTableRows = 1; iTableRows < tableRows.length; iTableRows++){
+            if (tableRows[iTableRows].innerText.indexOf(searchInput) > -1){
+                tableRows[iTableRows].style.display = "";
+                isEmpty = false;
+            }
+            else{
+                tableRows[iTableRows].style.display = "none";
+            }
+        }
+        if (isEmpty){
+            document.querySelector(".emptySearch").style.display = "";
+        }
+        else{
+            document.querySelector(".emptySearch").style.display = "none";
+        }
+    }
+
+    let body = document.body;
+    let dropdown = document.querySelector('.dropdown');
+    let btn = document.querySelector('.btn');
+    let thead = document.querySelector('thead');
+
+    body.addEventListener('click', function(e){
+        /*
+        This function keeps the inside contents of the dropdown-menu
+        open even if the inside contents of the dropdown-menu are clicked
+        but closes the dropdown menu if click is outside of dropdown-menu or on dropdown button.
+        */
+        e.stopPropagation();
+        if (!(15 < e.clientX  && e.clientX < 175 && 172 < e.clientY && e.clientY < 366) && dropdown.className == "dropdown open"){
+            dropdown.classList.toggle('open');
+        }
+    });
+
+    btn.addEventListener('click', function(e){
+         /*
+        This function toggles the opening and closing of
+        the dropdown-menu when the button for the dropdown is clicked.
+        */
+        e.stopPropagation();
+        dropdown.classList.toggle('open');
+    });
+
+    thead.addEventListener('click', function(e){
+        /*
+        This function hides the columns that are not supposed to be displayed when sorting the columns.
+        */
+        setTimeout(function(){
+            var columns = document.getElementsByTagName("th");
+            var iHead;
+            for (iHead = 0; iHead < columns.length; iHead++){
+                if (columns[iHead].style.display == "none"){
+                    var iTD;
+                    for (iTD = iHead; iTD < document.getElementsByTagName("td").length; iTD = iTD + columns.length){
+                        document.getElementsByTagName("td")[iTD].style.display = "none";
+                    }
+                }
+            }
+        }, 4);
+    });
+
+    setTimeout(function(){
+         /*
+         This function removes the columns we do not want to display at
+         the beginning after a certain delay of time and adds the message
+         for the case where the table should be empty (i.e. when search
+         results correspond to nothing).
+         */
+         var iTH;
+         var dropdownList = document.getElementsByClassName('dropdown-item');
+         for (iTH = 0; iTH < dropdownList.length; iTH++){
+              toggleColumn(document.getElementsByClassName('dropdown-item')[iTH].id)
+         }
+     },4);
+</script>
 </html>

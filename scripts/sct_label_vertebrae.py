@@ -17,6 +17,7 @@ import sys, os
 
 import numpy as np
 import sct_maths
+from sct_label_utils import ProcessLabels
 from msct_parser import Parser
 from spinalcordtoolbox.image import Image
 import sct_utils as sct
@@ -24,6 +25,7 @@ from spinalcordtoolbox.vertebrae.core import create_label_z, get_z_and_disc_valu
     clean_labeled_segmentation, label_discs, label_vert
 from spinalcordtoolbox.vertebrae.detect_c2c3 import detect_c2c3
 from spinalcordtoolbox.reports.qc import generate_qc
+import sct_straighten_spinalcord
 
 
 # PARAMETERS
@@ -188,7 +190,7 @@ def main(args=None):
     fname_in = os.path.abspath(arguments["-i"])
     fname_seg = os.path.abspath(arguments['-s'])
     contrast = arguments['-c']
-    path_template = arguments['-t']
+    path_template = os.path.abspath(arguments['-t'])
     scale_dist = arguments['-scale-dist']
     if '-ofolder' in arguments:
         path_output = arguments['-ofolder']
@@ -251,13 +253,12 @@ def main(args=None):
         # apply straightening
         s, o = sct.run(['sct_apply_transfo', '-i', 'data.nii', '-w', 'warp_curve2straight.nii.gz', '-d', 'straight_ref.nii.gz', '-o', 'data_straight.nii'])
     else:
-        cmd = ['sct_straighten_spinalcord',
-               '-i', 'data.nii',
-               '-s', 'segmentation.nii',
-               '-r', str(remove_temp_files)]
-        if param.path_qc is not None and os.environ.get("SCT_RECURSIVE_QC", None) == "1":
-            cmd += ['-qc', param.path_qc]
-        s, o = sct.run(cmd)
+        sct_straighten_spinalcord.main(args=[
+            '-i', 'data.nii',
+            '-s', 'segmentation.nii',
+            '-r', str(remove_temp_files),
+            '-v', str(verbose),
+        ])
         sct.cache_save(cachefile, cache_sig)
 
     # resample to 0.5mm isotropic to match template resolution
@@ -292,21 +293,26 @@ def main(args=None):
                  verbose=verbose,
                  is_sct_binary=True,
                 )
-
         label_vert('segmentation_straight.nii', 'labeldisc_straight.nii.gz', verbose=1)
 
     else:
         # create label to identify disc
         sct.printv('\nCreate label to identify disc...', verbose)
         fname_labelz = os.path.join(path_tmp, file_labelz)
-        if initz:
-            create_label_z('segmentation.nii', initz[0], initz[1], fname_labelz=fname_labelz)  # create label located at z_center
-        elif initcenter:
-            # find z centered in FOV
-            nii = Image('segmentation.nii').change_orientation("RPI")
-            nx, ny, nz, nt, px, py, pz, pt = nii.dim  # Get dimensions
-            z_center = int(np.round(nz / 2))  # get z_center
-            create_label_z('segmentation.nii', z_center, initcenter, fname_labelz=fname_labelz)  # create label located at z_center
+        if initz or initcenter:
+            if initcenter:
+                # find z centered in FOV
+                nii = Image('segmentation.nii').change_orientation("RPI")
+                nx, ny, nz, nt, px, py, pz, pt = nii.dim  # Get dimensions
+                z_center = int(np.round(nz / 2))  # get z_center
+                initz = [z_center, initcenter]
+            # create single label and output as labels.nii.gz
+            label = ProcessLabels('segmentation.nii', fname_output='tmp.labelz.nii.gz',
+                                      coordinates=['{},{}'.format(initz[0], initz[1])])
+            im_label = label.process('create-seg')
+            im_label.data = sct_maths.dilate(im_label.data, [3])  # TODO: create a dilation method specific to labels,
+            # which does not apply a convolution across all voxels (highly inneficient)
+            im_label.save(fname_labelz)
         elif fname_initlabel:
             import sct_label_utils
             # subtract "1" to label value because due to legacy, in this code the disc C2-C3 has value "2", whereas in the
@@ -317,7 +323,11 @@ def main(args=None):
             # automatically finds C2-C3 disc
             im_data = Image('data.nii')
             im_seg = Image('segmentation.nii')
-            im_label_c2c3 = detect_c2c3(im_data, im_seg, contrast)
+            if not remove_temp_files:  # because verbose is here also used for keeping temp files
+                verbose_detect_c2c3 = 2
+            else:
+                verbose_detect_c2c3 = 0
+            im_label_c2c3 = detect_c2c3(im_data, im_seg, contrast, verbose=verbose_detect_c2c3)
             ind_label = np.where(im_label_c2c3.data)
             if not np.size(ind_label) == 0:
                 # subtract "1" to label value because due to legacy, in this code the disc C2-C3 has value "2", whereas in the
@@ -325,6 +335,7 @@ def main(args=None):
                 im_label_c2c3.data[ind_label] = 2
             else:
                 sct.printv('Automatic C2-C3 detection failed. Please provide manual label with sct_label_utils', 1, 'error')
+                sys.exit()
             im_label_c2c3.save(fname_labelz)
 
         # dilate label so it is not lost when applying warping
