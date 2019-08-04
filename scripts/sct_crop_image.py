@@ -129,7 +129,8 @@ class ImageCropper(object):
                 sct.printv("WARNING : Couldn't remove output file. Either it is opened elsewhere or "
                            "it doesn't exist.", self.verbose, 'warning')
         else:
-            sct.display_viewer_syntax([self.output_filename])
+            if self.verbose >= 1:
+                sct.display_viewer_syntax([self.output_filename])
 
         return self.result
 
