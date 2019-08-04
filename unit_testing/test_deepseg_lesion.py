@@ -50,6 +50,7 @@ def test_intensity_normalization():
     landmarks_lst = sorted(list(np.random.uniform(low=500.0, high=2000.0, size=(11,), )))
 
     data_out = deepseg_lesion.apply_intensity_normalization_model(data_in, landmarks_lst)
+    data_out = np.nan_to_num(data_out)  # replace NaN with zero
 
     assert data_in.shape == data_out.shape
     assert data_out.dtype == np.float32
