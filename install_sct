@@ -476,10 +476,16 @@ for file in $SCT_DIR/python/envs/venv_sct/bin/*sct*; do
   fi
 done
 
+## Make shell scripts executable
+echo -e "\nMake shell scripts executable..."
+for file in $SCT_DIR/shell/*; do
+  chmod 775 "$file"
+done
+
 ## Create symbolic links for Shell scripts (-f: overwrite if exists)
 echo -e "\nCreating symbolic links for Shell scripts..."
-ln -s -f shell/sct_run_batch.sh $SCT_DIR/bin/sct_run_batch
-ln -s -f shell/_run_with_log.sh $SCT_DIR/bin/_run_with_log.sh
+ln -s -f $SCT_DIR/shell/sct_run_batch.sh $SCT_DIR/bin/sct_run_batch
+ln -s -f $SCT_DIR/shell/_run_with_log.sh $SCT_DIR/bin/_run_with_log.sh
 res=$?
 if [[ $res != 0 ]]; then
   echo "\nProblem creating symlinks!"
