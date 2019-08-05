@@ -1,8 +1,10 @@
-## v4.0.0 (2019-05-27)
-[View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.2.7...v4.0.0)
+## 4.0.0 (2019-08-04)
+[View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.2.7...4.0.0)
 
 **BUG**
 
+ - **sct_crop_image:** Fixed bug when using GUI (flag -g). [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2325)
+ - **sct_label_vertebrae:** Fixed misplaced label in non-RPI data for initializing vertebral labeling. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2289)
  - **sct_qc:** Fixed corruption of QC json file when running parallel jobs. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2250)
  - **sct_label_vertebrae:** Fixed bug that appeared when inputing uncompressed nifti file. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2202)
  - **sct_label_vertebrae:** Fixed bug in the post processing of detect_c2c3. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2201)
@@ -19,6 +21,16 @@
 
 **ENHANCEMENT**
 
+ - batch_processing.sh: Replaced propseg by deepseg_sc. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2377)
+ - batch_processing.sh: QC report is now generated locally. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2370)
+ - **msct_parser:** Conversion from msct_parser to argparse. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2315)
+ - **sct_qc:** Allow the possibility to discard column of choice on the output html QC report. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2301)
+ - **sct_process_segmentation,sct_straighten_spinalcord:** Improve quality of straightening. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2299)
+ - **sct_deepseg_lesion,sct_deepseg_sc:** Output segmentation in uint8 when input is float. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2297)
+ - **sct_qc:** Added automatic data sorting in the QC report. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2295)
+ - **sct_fmri_moco:** Enabling the extraction of fMRI motion correction parameters. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2293)
+ - **sct_qc,sct_resample:** Fixed resampling method with reference image and improved speed for generating QC report. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2285)
+ - **sct_compute_mtr:** Added output file and/or folder flag. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2264)
  - **sct_compute_snr:** Make consistent STD calculation between sct_fmri_compute_tsnr and sct_compute_snr. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2263)
  - Clarify handling of logger, error and exceptions. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2221)
  - **msct_register,sct_register_multimodal,sct_register_to_template:** Refactoring to allow use of im AND seg in the registration process. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2218)
@@ -40,6 +52,8 @@
 
 **FEATURE**
 
+ - **sct_qc:** Add CSA results on QC report . [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2306)
+ - **sct_extract_metric:** Added flag to combine all labels. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2291)
  - **sct_dmri_compute_dti:** Output DTI Eigenvalues. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2274)
  - **sct_qc:** New API to generate QC reports. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2216)
  - **sct_label_vertebrae:** Added possibility to rescale intervertebral disc distance and various improvements. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2182)
@@ -51,19 +65,22 @@
 
 **DOCUMENTATION**
 
- - **sct_label_vertebrae:** Updated documention on how to create vertebral and disc labels. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2107)
+ - **sct_label_vertebrae:** Updated documentation on how to create vertebral and disc labels. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2107)
  - **sct_changelog:** Few improvements on automatic Changelog generation. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2077)
 
 **INSTALLATION**
 
+ - Fixed compatibility with OSX 10.11 (El Capitan). [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2309)
  - Fixed Keras/Tensorflow compatibility with CentOS 7 by downgrading to Python 3.6. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2276)
- - Using Python 3.7 for default installation. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2238)
+ - Using Python 3.x for default installation. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2238)
  - Fixed installation error caused by old SSL module. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2223)
  - First pass at also supporting pip installations. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1996)
 
 **TESTING**
 
- - **sct_deepseg_lesion,sct_deepseg_sc:** deepseg_sc and _lesion: add new unit tests. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2159)
+ - Travis: Adding distribs and displaying allow_failures. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2298)
+ - **sct_deepseg_lesion,sct_deepseg_sc:** Added new unit tests. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2159)
+
 
 
 ## v3.2.7 (2018-10-29)
@@ -246,7 +263,7 @@ This release includes: a new example dataset (now includes T2*-w and fMRI data) 
  - Improvements in straightening and registration to the template [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1669)
  - Integration of SCT into fsleyes UI [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1629)
  - Add Sentry error reporting [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/1544)
- 
+
 ## 3.1.1 (2018-02-16)
 [View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.1.0...3.1.1)
 
