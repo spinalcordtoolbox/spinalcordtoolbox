@@ -35,7 +35,7 @@ def init(param_test):
     # test concatenation of data
     path_fname, file_fname, ext_fname = sct.extract_fname(param_test.file_data[2])
     param_test.dmri_t_slices = [os.path.join(param_test.folder_data[2], file_fname + '_T' + str(i).zfill(4) + ext_fname) for i in range(7)]
-    input_concat = ','.join(param_test.dmri_t_slices)
+    input_concat = ' '.join(param_test.dmri_t_slices)
 
     default_args = ['-i ' + os.path.join(param_test.folder_data[0], param_test.file_data[0]) + ' -o sct_image_out.nii.gz' + ' -pad 0,0,'+str(param_test.pad),
                     '-i ' + os.path.join(param_test.folder_data[1], param_test.file_data[1]) + ' -getorient',  # 3D

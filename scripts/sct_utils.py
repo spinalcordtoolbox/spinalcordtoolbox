@@ -705,7 +705,7 @@ def tmp_copy_nifti(fname, path_tmp, fname_out='data.nii', verbose=0):
 #=======================================================================================================================
 # generate_output_file
 #=======================================================================================================================
-def generate_output_file(fname_in, fname_out, verbose=1):
+def generate_output_file(fname_in, fname_out, squeeze_data=True, verbose=1):
     """
     Generate output file. Only works for images (e.g., nifti, nifti_gz)
     :param fname_in:
@@ -740,7 +740,7 @@ def generate_output_file(fname_in, fname_out, verbose=1):
         else:
         '''
         from sct_convert import convert
-        convert(fname_in, fname_out)
+        convert(fname_in, fname_out, squeeze_data=squeeze_data)
     else:
         # Generate output file without changing the extension
         shutil.move(fname_in, fname_out)

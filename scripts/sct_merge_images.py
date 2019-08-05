@@ -20,12 +20,14 @@ import sys
 import os
 import shutil
 import numpy as np
+import argparse
+
 # SCT imports
-from msct_parser import Parser
 import sct_utils as sct
 import sct_apply_transfo
 import spinalcordtoolbox.image as msct_image
 import sct_maths
+from spinalcordtoolbox.utils import Metavar, SmartFormatter
 
 
 class Param:
@@ -41,51 +43,71 @@ class Param:
 # ==========================================================================================
 def get_parser():
     # Initialize the parser
-    parser = Parser(__file__)
-    parser.usage.set_description('Merge images to the same space')
-    parser.add_option(name="-i",
-                      type_value=[[','], 'file'],
-                      description="Input images",
-                      mandatory=True)
-    parser.add_option(name="-d",
-                      type_value='file',
-                      description="Destination image",
-                      mandatory=True)
-    parser.add_option(name="-w",
-                      type_value=[[','], 'file'],
-                      description="List of warping fields from input images to destination image",
-                      mandatory=True)
-    parser.add_option(name="-x",
-                      type_value='str',
-                      description="interpolation for warping the input images to the destination image",
-                      mandatory=False,
-                      default_value=Param().interp)
 
-    parser.add_option(name="-o",
-                      type_value='file_output',
-                      description="Output image",
-                      mandatory=False,
-                      default_value=Param().fname_out)
+    parser = argparse.ArgumentParser(
+        description='Merge images to the same space',
+        add_help=None,
+        formatter_class=SmartFormatter,
+        prog=os.path.basename(__file__).strip(".py"))
+    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+    mandatory.add_argument(
+        "-i",
+        metavar=Metavar.file,
+        nargs="+",
+        help="Input images",
+        required=True)
+    mandatory.add_argument(
+        "-d",
+        metavar=Metavar.file,
+        help="Destination image",
+        required=True)
+    mandatory.add_argument(
+        "-w",
+        nargs="+",
+        metavar=Metavar.file,
+        help="List of warping fields from input images to destination image",
+        required=True)
+    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
+    optional.add_argument(
+        "-h",
+        "--help",
+        action="help",
+        help="Show this help message and exit")
+    optional.add_argument(
+        "-x",
+        metavar=Metavar.str,
+        help="Interpolation for warping the input images to the destination image. Default is linear",
+        required=False,
+        default=Param().interp)
+    optional.add_argument(
+        "-o",
+        metavar=Metavar.file,
+        help="Output image",
+        required=False,
+        default=Param().fname_out)
 
     '''
-    parser.add_option(name="-ofolder",
-                      type_value="folder_creation",
-                      description="Output folder",
-                      mandatory=False)
+    optional.add_argument(
+		"-ofolder",
+                      type="folder_creation",
+                      help="Output folder",
+                      required=False)
     '''
-    parser.usage.addSection('MISC')
-    parser.add_option(name="-r",
-                      type_value="multiple_choice",
-                      description='Remove temporary files.',
-                      mandatory=False,
-                      default_value=str(int(Param().rm_tmp)),
-                      example=['0', '1'])
-    parser.add_option(name="-v",
-                      type_value='multiple_choice',
-                      description="Verbose: 0 = nothing, 1 = classic, 2 = expended",
-                      mandatory=False,
-                      example=['0', '1', '2'],
-                      default_value=str(Param().verbose))
+    misc = parser.add_argument_group('MISC')
+    misc.add_argument(
+        "-r",
+        type=bool,
+        help='Remove temporary files.',
+        required = False,
+        default = Param().rm_tmp,
+        choices = (0, 1))
+    misc.add_argument(
+        "-v",
+        type=int,
+        help="Verbose: 0 = nothing, 1 = classic, 2 = expended",
+        required=False,
+        choices=(0, 1, 2),
+        default = str(Param().verbose))
 
     return parser
 
@@ -112,7 +134,6 @@ def merge_images(list_fname_src, fname_dest, list_fname_warp, param):
     -------
 
     """
-
     # create temporary folder
     path_tmp = sct.tmp_create()
 
@@ -135,8 +156,7 @@ def merge_images(list_fname_src, fname_dest, list_fname_warp, param):
             '-w', list_fname_warp[i_file],
             '-x', param.interp,
             '-o', 'src_' + str(i_file) + '_template.nii.gz',
-            '-v', param.verbose])
-
+            '-v', str(param.verbose)])
         # create binary mask from input file by assigning one to all non-null voxels
         sct_maths.main(args=[
             '-i', fname_src,
@@ -171,30 +191,27 @@ def merge_images(list_fname_src, fname_dest, list_fname_warp, param):
 
 # MAIN
 # ==========================================================================================
-def main(args=None):
-    if args is None:
-        args = sys.argv[1:]
-
+def main():
     # create param objects
     param = Param()
 
     # get parser
     parser = get_parser()
-    arguments = parser.parse(args)
+    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
 
     # set param arguments ad inputted by user
-    list_fname_src = arguments["-i"]
-    fname_dest = arguments["-d"]
-    list_fname_warp = arguments["-w"]
-    param.fname_out = arguments["-o"]
+    list_fname_src = arguments.i
+    fname_dest = arguments.d
+    list_fname_warp = arguments.w
+    param.fname_out = arguments.o
 
     # if '-ofolder' in arguments:
-    #     path_results = arguments['-ofolder']
-    if '-x' in arguments:
-        param.interp = arguments['-x']
-    if '-r' in arguments:
-        param.rm_tmp = bool(int(arguments['-r']))
-    param.verbose = int(arguments.get('-v'))
+    #     path_results = arguments.ofolder
+    if arguments.x is not None:
+        param.interp = arguments.x
+    if arguments.r is not None:
+        param.rm_tmp = arguments.r
+    param.verbose = arguments.v
     sct.init_sct(log_level=param.verbose, update=True)  # Update log level
 
     # check if list of input files and warping fields have same length
