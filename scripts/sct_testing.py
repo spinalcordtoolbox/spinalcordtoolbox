@@ -404,12 +404,7 @@ def get_functions_parallelizable():
         'sct_analyze_lesion',
         'sct_analyze_texture',
         'sct_apply_transfo',
-        'sct_warp_template',
-        'sct_resample',
         'sct_convert',
-        'sct_image',
-        'sct_maths',
-        'sct_merge_images',
         'sct_compute_ernst_angle',
         'sct_compute_hausdorff_distance',
         'sct_compute_mtr',
@@ -434,17 +429,22 @@ def get_functions_parallelizable():
         'sct_fmri_compute_tsnr',
         'sct_fmri_moco',
         'sct_get_centerline',
+        'sct_image',
         'sct_label_utils',
+        'sct_label_vertebrae',
+        'sct_maths',
+        'sct_merge_images',
         # 'sct_pipeline',  # not useful-- to remove at some point
         'sct_process_segmentation',
         'sct_propseg',
         'sct_qc',
         'sct_register_multimodal',
-        'sct_straighten_spinalcord', # deps: sct_apply_transfo
         'sct_register_to_template',
-        # 'sct_segment_graymatter',
+        'sct_resample',
         'sct_smooth_spinalcord',
-        'sct_label_vertebrae',
+        'sct_straighten_spinalcord', # deps: sct_apply_transfo
+        # 'sct_segment_graymatter',
+        'sct_warp_template',
     ]
 
 
