@@ -56,7 +56,8 @@ class SCTCallThread(Thread):
 class ProgressDialog(wx.Dialog):
     def __init__(self, parent):
         wx.Dialog.__init__(self, parent, title="SCT / Processing")
-        self.SetSize((350, 80))
+        self.SetSize((350, 100))
+        self.btns = self.CreateSeparatedButtonSizer(wx.CANCEL)
 
         save_ico = wx.ArtProvider.GetBitmap(wx.ART_INFORMATION,
                                             wx.ART_TOOLBAR,
@@ -69,8 +70,11 @@ class ProgressDialog(wx.Dialog):
                                      label="Please wait while the algorithm is running...")
         sizer.Add(img_info, 0, wx.ALL, 15)
         sizer.Add(self.lbldesc, 0, wx.ALL, 15)
+        sizer_c = wx.BoxSizer(wx.VERTICAL)
+        sizer_c.Add(sizer)
+        sizer_c.Add(self.btns, 0, wx.ALL, 5)
 
-        self.SetSizer(sizer)
+        self.SetSizer(sizer_c)
 
         self.Centre()
         self.CenterOnParent()
@@ -86,12 +90,16 @@ class SCTPanel(wx.Panel):
 
     SCT_DIR_ENV = 'SCT_DIR'
     SCT_LOGO_REL_PATH = 'documentation/imgs/logo_sct.png'
+    SCT_TUTORIAL_PATH = 'documentation/Manual_v1_SCT.pdf'
 
     def __init__(self, parent, id_):
         super(SCTPanel, self).__init__(parent=parent,
                                        id=id_)
         self.img_logo = self.get_logo()
         self.html_desc = self.get_description()
+
+        button_help = wx.Button(self, id=id_, label="Help")
+        button_help.Bind(wx.EVT_BUTTON, self.tutorial)
 
         self.sizer_logo_sct = wx.BoxSizer(wx.VERTICAL)
         self.sizer_logo_sct.Add(self.img_logo, 0, wx.ALL, 5)
@@ -103,7 +111,9 @@ class SCTPanel(wx.Panel):
                                             size=(280, 115),
                                             style=txt_sct_citation)
         html_sct_citation.SetPage(self.DESCRIPTION_SCT)
+
         self.sizer_logo_sct.Add(html_sct_citation, 0, wx.ALL, 5)
+        self.sizer_logo_sct.Add(button_help, 0, wx.ALL, 5)
 
         self.sizer_logo_text = wx.BoxSizer(wx.HORIZONTAL)
         self.sizer_logo_text.Add(self.sizer_logo_sct, 0, wx.ALL, 5)
@@ -111,6 +121,15 @@ class SCTPanel(wx.Panel):
 
         self.sizer_h = wx.BoxSizer(wx.HORIZONTAL)
         self.sizer_h.Add(self.sizer_logo_text)
+
+
+    def tutorial(self,event):
+        pdfpath = os.path.join(os.environ[self.SCT_DIR_ENV],self.SCT_TUTORIAL_PATH)
+        print('PDF path:', pdfpath)
+        cmd_line = "open {}".format(pdfpath)
+        print('Command line:', cmd_line)
+        self.call_sct_command(cmd_line)
+
 
     def get_logo(self):
         logo_file = os.path.join(os.environ[self.SCT_DIR_ENV],
@@ -221,7 +240,7 @@ class TabPanelSCSeg(SCTPanel):
     <b>Specific citation</b>:<br>
     Gros et al.
     <i>Automatic segmentation of the spinal cord and intramedullary multiple sclerosis lesions with convolutional neural networks.
-    (2019)</i>. arXiv:1805.06349.
+    (2019)</i>. Neuroimage. 1;184:901-915.
 
     """
 
@@ -275,13 +294,15 @@ class TabPanelGMSeg(SCTPanel):
     article below.<br><br>
     <b>Usage</b>:<br>
     To launch the script, upload the T2s imaging into FSLeyes and always keeping it
-    as the first in the Overlay list field from the bottom to the top. If you uploaded more then one image, it is not necessary
-    uploading the images in such order, with the arrows is possible to sort them and only the first imaging will be used. 
+    as the first in the Overlay list field from the bottom to the top. If you uploaded more then one image
+    with the arrows is possible to sort them and only the first imaging will be used.
+    If you choose a customized output file name, include the imaging format. 
+    Ex: filename.nii.gz or filename.nii
     For more information, please refer to the article below.<br><br>
     <b>Specific citation</b>:<br>
-    Perone et al.
+    Perone et al. 
     <i>Spinal cord gray matter segmentation using deep dilated convolutions
-    (2017)</i>. ArXiv: arxiv.org/abs/1710.01269
+    (2018)</i>. Sci Rep. 13;8(1):5966.
     """
 
     def __init__(self, parent):
@@ -350,11 +371,10 @@ class TabPanelCSA(SCTPanel):
     For more information, please refer to the article below.<br><br>
     <b>Specific citation</b>:<br>
     <b>Usage</b>:<br>
-    To launch the script, upload there are two aways to do that. First, upload the raw imaging (T1w, T2w or T2s) into FSLeyes,
-    followed by the spinal cord segmentation. Always keeps this sequence, raw imaging as the first in the Overlay list field,
-    from the bottom to the top, and segmentation imaging as second. Second, just upload the segmentation imaging.
-    If you uploaded more then one image, it is not necessary uploading the images in such order, with the arrows is possible
-    to sort them and only the first imaging will be used. 
+    To launch the script, upload the segmentation imaging.
+    If you uploaded more then one image, just keep the binary segmentation in the bottom of the Overlay List field. 
+    With the arrows is possible to sort them and only the first imaging will be used.
+    The table is written in CSV format (.csv). 
     For more information, please refer to the article below.<br><br>
     Martin et al.
     <i>Can Microstructural MRI detect subclinical tissue injury in subjects with asymptomatic
@@ -410,19 +430,8 @@ class TabPanelCSA(SCTPanel):
 
     def onButtonCSA(self, event):
 
-        overlayORD = displayCtx.overlayOrder
-
-        print('Overlay Order:', overlayORD)
-
-        if len(overlayORD) > 1:
-
-            img2 = overlayORD[1]
-            segimg = overlayList[img2].dataSource
-
-        else:
-
-            img2 = overlayORD[0]
-            segimg = overlayList[img2].dataSource
+        img = overlayORD[0]
+        segimg = overlayList[img].dataSource
 
         print('Segmentation:', segimg)
 
@@ -437,7 +446,7 @@ class TabPanelCSA(SCTPanel):
             print('Verts:', vert)
 
         if tabname == '':
-            print('Output table name not defined, standard name will be used.')
+            print('Output table name not defined, standard name, CSA.csv, will be used.')
         else:
             print('Output Table Name:', tabname)
 
@@ -490,7 +499,12 @@ class TabPanelCSA(SCTPanel):
                     #Vertebral Levels
                     if vert == '':
 
-                        print('Error: vert box is empty.')
+                        print('Vertebral levels was not defined, standard value will be used (C2 to C6).')
+
+                        cmd_line = "sct_process_segmentation -i {} -vert 3:7 -perlevel 1 -o {}".format(segimg, vert,
+                                                                                                      outfilename)
+                        print('Command line:', cmd_line)
+                        self.call_sct_command(cmd_line)
 
                     else:
 
@@ -504,8 +518,9 @@ class TabPanelCSA(SCTPanel):
 
                     if vert == '':
 
-                        cmd_line = "sct_process_segmentation -i {} -vert {} -perlevel 1 -o {}".format(segimg, vert, outfilename)
-                        print('Error: vert box is empty.')
+                        print('Vertebral levels was not defined, standard value will be used (C2 to C6).')
+                        cmd_line = "sct_process_segmentation -i {} -vert 3:7 -perlevel 1 -o {}".format(segimg, vert, outfilename)
+                        print(cmd_line)
                         self.call_sct_command(cmd_line)
 
                     else:
@@ -518,19 +533,9 @@ class TabPanelCSA(SCTPanel):
 
                 try:
 
-                    if len(overlayORD) > 2:
-
-                        img3 = overlayORD[2]
-                        vertfileimg = overlayList[img3].dataSource
-
-                        print('Vert file:', vertfileimg)
-
-                    else:
-
-                        img3 = overlayORD[1]
-                        vertfileimg = overlayList[img3].dataSource
-
-                        print('Vert file:', vertfileimg)
+                    img2 = overlayORD[1]
+                    vertfileimg = overlayList[img2].dataSource
+                    print('Vert file:', vertfileimg)
 
                 except:
 
@@ -545,11 +550,15 @@ class TabPanelCSA(SCTPanel):
                         #Non-standard PAM50_levels.nii.gz
                         if vert == '':
 
-                            print('Error: vert box is empty.')
+                            print('Vertebral levels was not defined, standard value will be used (C2 to C6).')
+                            cmd_line = "sct_process_segmentation -i {} -vert 3:7 -perlevel 1 -vertfile {} -o {}".format(
+                                segimg, vert, vertfileimg, outfilename)
+                            print('Command line:', cmd_line)
+                            self.call_sct_command(cmd_line)
 
                         else:
 
-                            cmd_line = "sct_process_segmentation -i {} -vert {} -perlevel -vertfile {} 1 -o {}".format(
+                            cmd_line = "sct_process_segmentation -i {} -vert {} -perlevel 1 -vertfile {} -o {}".format(
                                 segimg, vert, vertfileimg, outfilename)
                             print('Command line:', cmd_line)
                             self.call_sct_command(cmd_line)
@@ -560,12 +569,15 @@ class TabPanelCSA(SCTPanel):
 
                         if vert == '':
 
-                            print('Error: vert box is empty.')
+                            print('Vertebral levels was not defined, standard value will be used (C2 to C6).')
+                            cmd_line = "sct_process_segmentation -i {} -vert 3:7 -perlevel 1 -vertfile {} -o {}".format(
+                                segimg, vert, vertfileimg, outfilename)
+                            print('Command line:', cmd_line)
                             self.call_sct_command(cmd_line)
 
                         else:
 
-                            cmd_line = "sct_process_segmentation -i {} -vert {} -perlevel -vertfile {} 1 -o {}".format(
+                            cmd_line = "sct_process_segmentation -i {} -vert {} -perlevel 1 -vertfile {} -o {}".format(
                                 segimg, vert, vertfileimg, outfilename)
                             print('Command line:', cmd_line)
                             self.call_sct_command(cmd_line)
@@ -588,7 +600,7 @@ class TabPanelVertLB(SCTPanel):
     <b>Specific citation</b>:<br>
     Ullmann et al.
     <i>Automatic labeling of vertebral levels using a robust template-based approach.
-    (2014)</i>. Int J Biomed Imaging.
+    (2014)</i>. Int J Biomed Imaging. 2014:719520.
 
     """
 
@@ -652,11 +664,12 @@ class TabPanelMOCO(SCTPanel):
     In the Overlay list field, the images order is, from the bottom to the top, the diffusion imaging
     (dwi) and, if you want, a mask imaging (binary mask to limit voxels considered by the registration metric). 
     It is not necessary uploading the images in such order, with the arrows is possible to sort them.
+    Bvec and bval must be named as subjname_bvecs.txt and subjname_bvals.txt.
     For more information, please refer to the article below.<br><br>
     <b>Specific citation</b>:<br>
     Xu et al.
     <i>Evaluation of slice accelerations using multiband echo planar imaging at 3 T.
-    (2013)</i>. Neuroimage.
+    (2013)</i>. Neuroimage. 83:991-1001.
 
     """
 
@@ -668,7 +681,7 @@ class TabPanelMOCO(SCTPanel):
         button_gm.Bind(wx.EVT_BUTTON, self.onButtonMOCO)
 
         lbl_mask = ['No', 'Yes']
-        self.rbox_mask = wx.RadioBox(self, label='Select Mask:',
+        self.rbox_mask = wx.RadioBox(self, label='Use Mask:',
                                          choices=lbl_mask,
                                          majorDimension=1,
                                          style=wx.RA_SPECIFY_ROWS)
@@ -741,7 +754,7 @@ class TabPanelCompDTI(SCTPanel):
     <b>Specific citation</b>:<br>
     Garyfallidis et al.
     <i>Dipy, a library for the analysis of diffusion MRI data.
-    (2014)</i>. Front Neuroinform.
+    (2014)</i>. Front Neuroinform. 21;8:8.
 
     """
 
@@ -867,7 +880,7 @@ class TabPanelREG(SCTPanel):
     <b>Specific citation</b>:<br>
     De Lenner et al.
     <i>PAM50: Unbiased multimodal template of the brainstem and spinal cord aligned with the ICBM152 space
-    (2017)</i>. Neuroimage.
+    (2018)</i>. Neuroimage. 15;165:170-179.
 
     """
 
