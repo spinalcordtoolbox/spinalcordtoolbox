@@ -465,7 +465,9 @@ def main(args=None):
 
     # initialize list of warping fields
     warp_forward = []
+    warp_forward_winv = []
     warp_inverse = []
+    warp_inverse_winv = []
 
     # initial warping is specified, update list of warping fields and skip step=0
     if fname_initwarp:
@@ -514,6 +516,14 @@ def main(args=None):
             src = sct.add_suffix(src, '_reg')
         # register src --> dest
         warp_forward_out, warp_inverse_out = register(src, dest, paramreg, param, str(i_step))
+        # deal with transformations with "-" as prefix. They should be inverted with calling sct_concat_transfo.
+        if warp_forward_out[0] == "-":
+            warp_forward_out = warp_forward_out[1:]
+            warp_forward_winv.append(warp_forward_out)
+        if warp_inverse_out[0] == "-":
+            warp_inverse_out = warp_inverse_out[1:]
+            warp_inverse_winv.append(warp_inverse_out)
+        # update list of forward/inverse transformations
         warp_forward.append(warp_forward_out)
         warp_inverse.insert(0, warp_inverse_out)
 
@@ -521,10 +531,12 @@ def main(args=None):
     sct.printv('\nConcatenate transformations...', verbose)
     sct_concat_transfo.main(args=[
         '-w', warp_forward,
+        '-winv', warp_forward_winv,
         '-d', 'dest.nii',
         '-o', 'warp_src2dest.nii.gz'])
     sct_concat_transfo.main(args=[
         '-w', warp_inverse,
+        '-winv', warp_inverse_winv,
         '-d', 'src.nii',
         '-o', 'warp_dest2src.nii.gz'])
 
@@ -589,6 +601,15 @@ def main(args=None):
 # register images
 # ==========================================================================================
 def register(src, dest, paramreg, param, i_step_str):
+    """
+    Register src onto dest image. Output affine transformations that need to be inverted will have the prefix "-".
+    :param src:
+    :param dest:
+    :param paramreg:
+    :param param:
+    :param i_step_str:
+    :return: list: warp_forward, warp_inverse
+    """
     # initiate default parameters of antsRegistration transformation
     ants_registration_params = {'rigid': '', 'affine': '', 'compositeaffine': '', 'similarity': '', 'translation': '',
                                 'bspline': ',10', 'gaussiandisplacementfield': ',3,0',
