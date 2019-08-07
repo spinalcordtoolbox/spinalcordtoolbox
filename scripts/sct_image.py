@@ -77,12 +77,12 @@ def get_parser():
         '-remove-vol',
         metavar=Metavar.list,
         help='Remove specific volumes from a 4d volume. Separate with ",". Example: "0,5,10"',
-        required = False)
+        required=False)
     image.add_argument(
         '-keep-vol',
         metavar=Metavar.list,
         help='Keep specific volumes from a 4d volume (remove others). Separate with ",". Example: "1,2,3,11"',
-        required = False)
+        required=False)
     image.add_argument(
         '-type',
         help='Change file type',
@@ -202,7 +202,9 @@ def main(args=None):
         im_out = None
 
     elif arguments.keep_vol is not None:
-        index_vol = arguments.keep_vol
+        index_vol = (arguments.keep_vol).split(",")
+        for iindex_vol, vol in enumerate(index_vol):
+                index_vol[iindex_vol] = int(vol)
         im_in = Image(fname_in[0])
         im_out = [remove_vol(im_in, index_vol, todo='keep')]
 
@@ -255,7 +257,9 @@ def main(args=None):
         im_out = [pad_image(im_in, pad_x_i=padxi, pad_x_f=padxf, pad_y_i=padyi, pad_y_f=padyf, pad_z_i=padzi, pad_z_f=padzf)]
 
     elif arguments.remove_vol is not None:
-        index_vol = arguments.remove_vol
+        index_vol = (arguments.remove_vol).split(",")
+        for iindex_vol, vol in enumerate(index_vol):
+            index_vol[iindex_vol] = int(vol)
         im_in = Image(fname_in[0])
         im_out = [remove_vol(im_in, index_vol, todo='remove')]
 
