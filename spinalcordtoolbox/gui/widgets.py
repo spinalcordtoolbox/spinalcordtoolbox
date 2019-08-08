@@ -143,7 +143,7 @@ class AnatomicalCanvas(FigureCanvas):
         self._fig.canvas.mpl_connect('button_release_event', self.on_change_intensity)
         self._fig.canvas.mpl_connect('motion_notify_event', self.on_change_intensity)
 
-        self._axes = self._fig.add_axes([0, 0, 1, 1], frameon=True)
+        self._axes = self._fig.add_axes([0, 0, 1, 0.9], frameon=True)
         self._axes.axis('off')
         self.view = self._axes.imshow(
             data,
