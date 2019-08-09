@@ -54,13 +54,6 @@ def compute_shape(segmentation, angle_correction=True, param_centerline=None, ve
     im_segr_nibabel = nipy2nifti(im_segr_nipy)
     im_segr = Image(im_segr_nibabel.get_data(), hdr=im_segr_nibabel.header, orientation='RPI', dim=im_segr_nibabel.header.get_data_shape())
 
-
-    # img = msct_image.Image(i.get_data(), hdr=i.header,
-    #  orientation="LPI",
-    #  dim=i.header.get_data_shape(),
-    # )
-
-
     # Update dimensions from resampled image.
     nx, ny, nz, nt, px, py, pz, pt = im_segr.dim
 
@@ -72,12 +65,12 @@ def compute_shape(segmentation, angle_correction=True, param_centerline=None, ve
     # Initialize dictionary of property_list, with 1d array of nan (default value if no property for a given slice).
     shape_properties = {key: np.full_like(np.empty(nz), np.nan, dtype=np.double) for key in property_list}
 
+    fit_results = None
+
     if angle_correction:
         # compute the spinal cord centerline based on the spinal cord segmentation
         # here, param_centerline.minmax needs to be False because we need to retrieve the total number of input slices
         _, arr_ctl, arr_ctl_der, fit_results = get_centerline(im_segr, param=param_centerline, verbose=verbose)
-    else:
-        fit_results = None
 
     # Loop across z and compute shape analysis
     for iz in tqdm(range(min_z_index, max_z_index + 1), unit='iter', unit_scale=False, desc="Compute shape analysis",
