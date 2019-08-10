@@ -171,9 +171,6 @@ def main(args=None):
     else:
         fname_out = None
 
-    # Open file(s)
-    # im_in_list = [Image(fn) for fn in fname_in]
-
     # run command
     if arguments.concat is not None:
         dim = arguments.concat
@@ -262,11 +259,11 @@ def main(args=None):
     elif arguments.setorient is not None:
         sct.printv(fname_in[0])
         im_in = Image(fname_in[0])
-        im_out = [msct_image.change_orientation(im_in, arguments.setorient).save(fname_out)]
+        im_out = [msct_image.change_orientation(im_in, arguments.setorient)]
 
     elif arguments.setorient_data is not None:
         im_in = Image(fname_in[0])
-        im_out = [msct_image.change_orientation(im_in, arguments.setorient_data, data_only=True).save(fname_out)]
+        im_out = [msct_image.change_orientation(im_in, arguments.setorient_data, data_only=True)]
 
     elif arguments.split is not None:
         dim = arguments.split
