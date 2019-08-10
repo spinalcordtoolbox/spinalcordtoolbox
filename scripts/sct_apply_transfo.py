@@ -270,15 +270,8 @@ class Transform:
 
         # Copy affine matrix from destination space to make sure qform/sform are the same
         sct.printv("Copy affine matrix from destination space to make sure qform/sform are the same.", verbose)
-        im_dest = Image(fname_dest)
         im_src_reg = Image(fname_out)
-        # Copy q/sform and code
-        im_src_reg.hdr.set_qform(im_dest.hdr.get_qform())
-        im_src_reg.hdr._structarr['qform_code'] = im_dest.hdr._structarr['qform_code']
-        im_src_reg.hdr.set_sform(im_dest.hdr.get_sform())
-        im_src_reg.hdr._structarr['sform_code'] = im_dest.hdr._structarr['sform_code']
-
-        # re-save registered image
+        im_src_reg.copy_qform_from_ref(Image(fname_dest))
         im_src_reg.save(verbose=0)  # set verbose=0 to avoid warning message about rewriting file
 
         # 2. crop the resulting image using dimensions from the warping field
