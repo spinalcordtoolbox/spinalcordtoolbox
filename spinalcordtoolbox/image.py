@@ -186,6 +186,7 @@ class SlicerOneAxis(object):
 
        return self.im.data[self._slice(idx)]
 
+
 class SlicerMany(object):
     """
     Image*s* slicer utility class.
@@ -973,6 +974,7 @@ def change_orientation(im_src, orientation, im_dst=None, inverse=False, data_onl
     im_dst.data = data
 
     return im_dst
+
 
 def change_type(im_src, dtype, im_dst=None):
     """
