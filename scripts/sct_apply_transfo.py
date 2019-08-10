@@ -19,12 +19,13 @@ from __future__ import division, absolute_import
 import sys, io, os, time, functools
 import argparse
 
+from spinalcordtoolbox.utils import Metavar, SmartFormatter
+from spinalcordtoolbox.image import Image
+
 import sct_utils as sct
 import sct_convert
 import sct_image
-import spinalcordtoolbox.image as msct_image
 from sct_crop_image import ImageCropper
-from spinalcordtoolbox.utils import Metavar, SmartFormatter
 
 
 class Param:
@@ -155,7 +156,7 @@ class Transform:
                 fname_warp_list_invert += [[path_warp]]
             path_warp = list_warp[idx_warp]
             if path_warp.endswith((".nii", ".nii.gz")) \
-             and msct_image.Image(list_warp[idx_warp]).header.get_intent()[0] != 'vector':
+             and Image(list_warp[idx_warp]).header.get_intent()[0] != 'vector':
                 raise ValueError("Displacement field in {} is invalid: should be encoded" \
                  " in a 5D file with vector intent code" \
                  " (see https://nifti.nimh.nih.gov/pub/dist/src/niftilib/nifti1.h" \
@@ -187,7 +188,7 @@ class Transform:
 
         # Get dimensions of data
         sct.printv('\nGet dimensions of data...', verbose)
-        img_src = msct_image.Image(fname_src)
+        img_src = Image(fname_src)
         nx, ny, nz, nt, px, py, pz, pt = img_src.dim
         # nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_src)
         sct.printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz) + ' x ' + str(nt), verbose)
@@ -228,7 +229,7 @@ class Transform:
             # split along T dimension
             sct.printv('\nSplit along T dimension...', verbose)
 
-            im_dat = msct_image.Image('data.nii')
+            im_dat = Image('data.nii')
             im_header = im_dat.hdr
             data_split_list = sct_image.split_data(im_dat, 3)
             for im in data_split_list:
@@ -266,6 +267,19 @@ class Transform:
             if int(remove_temp_files):
                 sct.printv('\nRemove temporary files...', verbose)
                 sct.rmtree(path_tmp, verbose=verbose)
+
+        # Copy affine matrix from destination space to make sure qform/sform are the same
+        sct.printv("Copy affine matrix from destination space to make sure qform/sform are the same.", verbose)
+        im_dest = Image(fname_dest)
+        im_src_reg = Image(fname_out)
+        # Copy q/sform and code
+        im_src_reg.hdr.set_qform(im_dest.hdr.get_qform())
+        im_src_reg.hdr._structarr['qform_code'] = im_dest.hdr._structarr['qform_code']
+        im_src_reg.hdr.set_sform(im_dest.hdr.get_sform())
+        im_src_reg.hdr._structarr['sform_code'] = im_dest.hdr._structarr['sform_code']
+
+        # re-save registered image
+        im_src_reg.save(verbose=0)  # set verbose=0 to avoid warning message about rewriting file
 
         # 2. crop the resulting image using dimensions from the warping field
         warping_field = fname_warp_list_invert[-1]
