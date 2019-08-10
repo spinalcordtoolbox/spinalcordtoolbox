@@ -266,7 +266,7 @@ def main(args=None):
 
     elif arguments.setorient_data is not None:
         im_in = Image(fname_in[0])
-        im_out = [msct_image.change_orientation(im_in, arguments.setorient_data, inverse=True).save(fname_out)]
+        im_out = [msct_image.change_orientation(im_in, arguments.setorient_data, data_only=True).save(fname_out)]
 
     elif arguments.split is not None:
         dim = arguments.split
