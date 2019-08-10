@@ -888,6 +888,7 @@ def change_shape(im_src, shape, im_dst=None):
     im_dst.hdr = pair.header
     return im_dst
 
+
 def change_orientation(im_src, orientation, im_dst=None, inverse=False):
     """
     :return: an image with changed orientation
@@ -895,7 +896,9 @@ def change_orientation(im_src, orientation, im_dst=None, inverse=False):
     :param orientation: orientation string (SCT "from" convention)
     :param im_dst: destination image (can be the source image for in-place
                    operation, can be unset to generate one)
-
+    :param inverse: if you think backwards, use this to specify that you actually
+                    want to transform *from* the specified orientation, not *to*
+                    it.
     Notes:
 
     - the resulting image has no path member set
