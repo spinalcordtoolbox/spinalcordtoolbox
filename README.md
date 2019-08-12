@@ -214,6 +214,9 @@ alt="Fsleyes integration" width="240" height="180" border="10" /></a>
 - [Moccia et al. Advances in spinal cord imaging in multiple sclerosis. Ther Adv Neurol Disord.2019 Vol. 12: 1–19 DOI: 10.1177/1756285619840593](https://journals.sagepub.com/doi/pdf/10.1177/1756286419840593)
 - [Kitany et al. Functional imaging of rostrocaudal spinal activity during upper limb motor tasks. Neuroimage. 2019 May 17. pii: S1053-8119(19)30428-8.](https://www.sciencedirect.com/science/article/pii/S1053811919304288)
 - [Lorenzi et al. Cervical spinal cord atrophy and Alzheimer’s disease. bioRxiv. 2019](https://www.biorxiv.org/content/biorxiv/early/2019/06/18/673350.full.pdf)
+- [Papinutto et al. Evaluation of Intra- and Interscanner Reliability of MRI Protocols for Spinal Cord Gray Matter and Total Cross-Sectional Area Measurements. J Magn Reson Imaging. 2019 Apr;49(4):1078-1090. doi: 10.1002/jmri.26269. Epub 2018 Sep 9.](https://onlinelibrary.wiley.com/doi/epdf/10.1002/jmri.26269)
+- [Weeda et al. Validation of mean upper cervical cord area (MUCCA) measurement techniques in multiple sclerosis (MS): High reproducibility and robustness to lesions, but large software and scanner effects. NeuroImage: Clinical doi:10.1016/j.nicl.2019.101962. 2019](https://www.sciencedirect.com/science/article/pii/S2213158219303122)
+- [Moccia et al. Longitudinal spinal cord atrophy in multiple sclerosis using the generalised boundary shift integral. Annals of Neurology doi:10.1002/ana.25571](https://onlinelibrary.wiley.com/doi/abs/10.1002/ana.25571)
 
 ## Citing spinalcordtoolbox
 
