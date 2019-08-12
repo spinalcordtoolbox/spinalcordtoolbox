@@ -315,6 +315,18 @@ class Image(object):
         else:
             return deepcopy(self)
 
+    def copy_qform_from_ref(self, im_ref):
+        """
+        Copy qform and sform and associated codes from a reference Image object
+        :param im_ref:
+        :return:
+        """
+        # Copy q/sform and code
+        self.hdr.set_qform(im_ref.hdr.get_qform())
+        self.hdr._structarr['qform_code'] = im_ref.hdr._structarr['qform_code']
+        self.hdr.set_sform(im_ref.hdr.get_sform())
+        self.hdr._structarr['sform_code'] = im_ref.hdr._structarr['sform_code']
+
     def loadFromPath(self, path, verbose):
         """
         This function load an image from an absolute path using nibabel library
