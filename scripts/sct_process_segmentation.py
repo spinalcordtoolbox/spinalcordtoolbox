@@ -183,10 +183,20 @@ def _make_figure(metric, fit_results):
 
         ax = fig.add_subplot(313)
         ax.grid(True)
-        ax.plot(fit_results.data.zmean, fit_results.data.xmean, 'b.', label='_nolegend_')
-        ax.plot(fit_results.data.zref, fit_results.data.xfit, 'b')
-        ax.plot(fit_results.data.zmean, fit_results.data.ymean, 'r.', label='_nolegend_')
-        ax.plot(fit_results.data.zref, fit_results.data.yfit, 'r')
+        #find a way to condense the following lines
+        zmean_list, xmean_list, xfit_list, ymean_list, yfit_list, zref_list = [], [], [], [], [], []
+        for i, value in enumerate(fit_results.data.zref):
+            if value in z:
+                zmean_list.append(fit_results.data.zmean[i])
+                xmean_list.append(fit_results.data.xmean[i])
+                xfit_list.append(fit_results.data.xfit[i])
+                ymean_list.append(fit_results.data.ymean[i])
+                yfit_list.append(fit_results.data.yfit[i])
+                zref_list.append(fit_results.data.zref[i])
+        ax.plot(zmean_list, xmean_list, 'b.', label='_nolegend_')
+        ax.plot(zref_list, xfit_list, 'b')
+        ax.plot(zmean_list, ymean_list, 'r.', label='_nolegend_')
+        ax.plot(zref_list, yfit_list, 'r')
         ax.legend(['Fitted (RL)', 'Fitted (AP)'])
         ax.set_ylabel('Centerline [$vox$]')
     else:
