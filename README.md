@@ -217,6 +217,7 @@ alt="Fsleyes integration" width="240" height="180" border="10" /></a>
 - [Papinutto et al. Evaluation of Intra- and Interscanner Reliability of MRI Protocols for Spinal Cord Gray Matter and Total Cross-Sectional Area Measurements. J Magn Reson Imaging. 2019 Apr;49(4):1078-1090. doi: 10.1002/jmri.26269. Epub 2018 Sep 9.](https://onlinelibrary.wiley.com/doi/epdf/10.1002/jmri.26269)
 - [Weeda et al. Validation of mean upper cervical cord area (MUCCA) measurement techniques in multiple sclerosis (MS): High reproducibility and robustness to lesions, but large software and scanner effects. NeuroImage: Clinical doi:10.1016/j.nicl.2019.101962. 2019](https://www.sciencedirect.com/science/article/pii/S2213158219303122)
 - [Moccia et al. Longitudinal spinal cord atrophy in multiple sclerosis using the generalised boundary shift integral. Annals of Neurology doi:10.1002/ana.25571](https://onlinelibrary.wiley.com/doi/abs/10.1002/ana.25571)
+- [Rasoanandrianina et al. Regional T1 mapping of the whole cervical spinal cord using an optimized MP2RAGE sequence. NMR in Biomedicine doi:10.1002/nbm.4142](https://onlinelibrary.wiley.com/doi/full/10.1002/nbm.4142)
 
 ## Citing spinalcordtoolbox
 
