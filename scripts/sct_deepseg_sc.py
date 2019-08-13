@@ -174,6 +174,9 @@ def main():
     # Save segmentation
     fname_seg = os.path.abspath(os.path.join(output_folder, sct.extract_fname(fname_image)[1] + '_seg' +
                                              sct.extract_fname(fname_image)[2]))
+
+    # copy q/sform from input image to output segmentation
+    im_seg.copy_qform_from_ref(im_image)
     im_seg.save(fname_seg)
 
     if ctr_algo == 'viewer':
