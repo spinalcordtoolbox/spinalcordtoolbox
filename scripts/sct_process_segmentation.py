@@ -19,6 +19,7 @@
 from __future__ import absolute_import, division
 
 import sys, os
+from matplotlib.ticker import MaxNLocator
 
 import sct_utils as sct
 from msct_parser import Parser
@@ -170,6 +171,7 @@ def _make_figure(metric, fit_results):
         ax.grid(True)
         ax.set_ylabel('CSA [$mm^2$]')
         ax.set_xticklabels([])
+        ax.xaxis.set_major_locator(MaxNLocator(integer=True))
 
         ax = fig.add_subplot(312)
         ax.grid(True)
@@ -180,6 +182,7 @@ def _make_figure(metric, fit_results):
         ax.legend(['Rotation about AP axis', 'Rotation about RL axis'])
         ax.set_ylabel('Angle [$deg$]')
         ax.set_xticklabels([])
+        ax.xaxis.set_major_locator(MaxNLocator(integer=True))
 
         ax = fig.add_subplot(313)
         ax.grid(True)
@@ -199,6 +202,7 @@ def _make_figure(metric, fit_results):
         ax.plot(zref_list, yfit_list, 'r')
         ax.legend(['Fitted (RL)', 'Fitted (AP)'])
         ax.set_ylabel('Centerline [$vox$]')
+        ax.xaxis.set_major_locator(MaxNLocator(integer=True))
     else:
         ax = fig.add_subplot(111)
         ax.plot(z, csa, 'k')
