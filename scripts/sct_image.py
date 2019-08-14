@@ -31,45 +31,45 @@ def get_parser():
                     'Inputs can be a number, a 4d image, or several 3d images separated with ","',
         formatter_class=SmartFormatter,
         add_help=None,
-        prog=os.path.basename(__file__).strip(".py"))
-    mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
+        prog=os.path.basename(__file__).strip('.py'))
+    mandatory = parser.add_argument_group('MANDATORY ARGUMENTS')
     mandatory.add_argument(
-        "-i",
-        nargs="+",
+        '-i',
+        nargs='+',
         metavar=Metavar.file,
         help='Input file(s). If several inputs: separate them by white space. Example: "data.nii.gz"',
         required = True)
-    optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
+    optional = parser.add_argument_group('OPTIONAL ARGUMENTS')
     optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="Show this help message and exit")
+        '-h',
+        '--help',
+        action='help',
+        help='Show this help message and exit')
     optional.add_argument(
-        "-o",
+        '-o',
         metavar=Metavar.file,
         help='Output file. Example: data_pad.nii.gz',
         required = False)
 
     image = parser.add_argument_group('IMAGE OPERATIONS')
     image.add_argument(
-        "-pad",
+        '-pad',
         metavar=Metavar.list,
         help='Pad 3D image. Specify padding as: "x,y,z" (in voxel). Example: "0,0,1"',
         required = False)
     image.add_argument(
-        "-pad-asym",
+        '-pad-asym',
         metavar=Metavar.list,
         help='Pad 3D image with asymmetric padding. Specify padding as: "x_i,x_f,y_i,y_f,z_i,z_f" (in voxel). '
              'Example: "0,0,5,10,1,1"',
         required = False)
     image.add_argument(
-        "-split",
+        '-split',
         help='Split data along the specified dimension. The suffix _DIM+NUMBER will be added to the intput file name.',
         required = False,
         choices = ('x', 'y', 'z', 't'))
     image.add_argument(
-        "-concat",
+        '-concat',
         help='Concatenate data along the specified dimension',
         required = False,
         choices = ('x', 'y', 'z', 't'))
@@ -77,12 +77,12 @@ def get_parser():
         '-remove-vol',
         metavar=Metavar.list,
         help='Remove specific volumes from a 4d volume. Separate with ",". Example: "0,5,10"',
-        required = False)
+        required=False)
     image.add_argument(
         '-keep-vol',
         metavar=Metavar.list,
         help='Keep specific volumes from a 4d volume (remove others). Separate with ",". Example: "1,2,3,11"',
-        required = False)
+        required=False)
     image.add_argument(
         '-type',
         help='Change file type',
@@ -91,30 +91,30 @@ def get_parser():
 
     header = parser.add_argument_group('HEADER OPERATIONS')
     header.add_argument(
-        "-copy-header",
+        '-copy-header',
         metavar=Metavar.file,
         help='Copy the header of the source image (specified in -i) to the destination image (specified here). '
              'Example: data_dest.nii.gz',
         required = False)
 
-    orientation = parser.add_argument_group("ORIENTATION OPERATIONS")
+    orientation = parser.add_argument_group('ORIENTATION OPERATIONS')
     orientation.add_argument(
-        "-getorient",
+        '-getorient',
         help='Get orientation of the input image',
         action='store_true',
         required=False)
     orientation.add_argument(
-        "-setorient",
+        '-setorient',
         help='Set orientation of the input image (only modifies the header).',
         choices='RIP LIP RSP LSP RIA LIA RSA LSA IRP ILP SRP SLP IRA ILA SRA SLA RPI LPI RAI LAI RPS LPS RAS LAS PRI PLI ARI ALI PRS PLS ARS ALS IPR SPR IAR SAR IPL SPL IAL SAL PIR PSR AIR ASR PIL PSL AIL ASL'.split(),
         required = False)
     orientation.add_argument(
-        "-setorient-data",
+        '-setorient-data',
         help='Set orientation of the input image\'s data (does NOT modify the header, but the data). Use with care !',
         choices='RIP LIP RSP LSP RIA LIA RSA LSA IRP ILP SRP SLP IRA ILA SRA SLA RPI LPI RAI LAI RPS LPS RAS LAS PRI PLI ARI ALI PRS PLS ARS ALS IPR SPR IAR SAR IPL SPL IAL SAL PIR PSR AIR ASR PIL PSL AIL ASL'.split(),
         required = False)
 
-    multi = parser.add_argument_group("MULTI-COMPONENT OPERATIONS ON ITK COMPOSITE WARPING FIELDS")
+    multi = parser.add_argument_group('MULTI-COMPONENT OPERATIONS ON ITK COMPOSITE WARPING FIELDS')
     multi.add_argument(
         '-mcs',
         action='store_true',
@@ -127,18 +127,18 @@ def get_parser():
         help='Multi-component merge: Merge inputted images into one multi-component image. Requires several inputs.',
         required=False)
 
-    warping = parser.add_argument_group("WARPING FIELD OPERATIONSWarping field operations:")
+    warping = parser.add_argument_group('WARPING FIELD OPERATIONSWarping field operations:')
     warping.add_argument(
         '-display-warp',
         action='store_true',
         help='Create a grid and deform it using provided warping field.',
         required=False)
 
-    misc = parser.add_argument_group("Misc")
+    misc = parser.add_argument_group('Misc')
     misc.add_argument(
-        "-v",
+        '-v',
         type=int,
-        help="Verbose. 0: nothing. 1: basic. 2: extended.",
+        help='Verbose. 0: nothing. 1: basic. 2: extended.',
         required=False,
         default=1,
         choices=(0, 1, 2))
@@ -202,7 +202,9 @@ def main(args=None):
         im_out = None
 
     elif arguments.keep_vol is not None:
-        index_vol = arguments.keep_vol
+        index_vol = (arguments.keep_vol).split(',')
+        for iindex_vol, vol in enumerate(index_vol):
+                index_vol[iindex_vol] = int(vol)
         im_in = Image(fname_in[0])
         im_out = [remove_vol(im_in, index_vol, todo='keep')]
 
@@ -255,7 +257,9 @@ def main(args=None):
         im_out = [pad_image(im_in, pad_x_i=padxi, pad_x_f=padxf, pad_y_i=padyi, pad_y_f=padyf, pad_z_i=padzi, pad_z_f=padzf)]
 
     elif arguments.remove_vol is not None:
-        index_vol = arguments.remove_vol
+        index_vol = (arguments.remove_vol).split(',')
+        for iindex_vol, vol in enumerate(index_vol):
+            index_vol[iindex_vol] = int(vol)
         im_in = Image(fname_in[0])
         im_out = [remove_vol(im_in, index_vol, todo='remove')]
 
@@ -454,10 +458,10 @@ def concat_data(fname_in_list, dim, pixdim=None, squeeze_data=False):
     im_out = msct_image.empty_like(Image(fname_in_list[0]))
     im_out.data = data_concat
     if isinstance(fname_in_list[0], str):
-        im_out.absolutepath = sct.add_suffix(fname_in_list[0], "_concat")
+        im_out.absolutepath = sct.add_suffix(fname_in_list[0], '_concat')
     else:
         if fname_in_list[0].absolutepath:
-            im_out.absolutepath = sct.add_suffix(fname_in_list[0].absolutepath, "_concat")
+            im_out.absolutepath = sct.add_suffix(fname_in_list[0].absolutepath, '_concat')
 
     if pixdim is not None:
         im_out.hdr['pixdim'] = pixdim
@@ -565,7 +569,7 @@ def multicomponent_split(im):
     for i, im in enumerate(im_out):
         im.data = data_out[i]
         im.hdr.set_intent('vector', (), '')
-        im.absolutepath = sct.add_suffix(im.absolutepath, "_{}".format(i))
+        im.absolutepath = sct.add_suffix(im.absolutepath, '_{}'.format(i))
     return im_out
 
 
