@@ -309,8 +309,8 @@ class Slice(object):
         # If no reference image is provided, resample to specified resolution
         if image_ref is None:
             # Resample to px x p_resample x p_resample mm (orientation is SAL by convention in QC module)
-            img_r = resample_nipy(img, new_size=str(image.dim[4]) + 'x' + str(p_resample) + 'x' + str(p_resample),
-                                  new_size_type='mm', interpolation=dict_interp[type_img])
+            img_r = resample_nipy(img, new_size=[image.dim[4], p_resample, p_resample], new_size_type='mm',
+                                  interpolation=dict_interp[type_img])
         # Otherwise, resampling to the space of the reference image
         else:
             # Create nibabel object for reference image

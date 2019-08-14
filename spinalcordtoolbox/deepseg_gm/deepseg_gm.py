@@ -309,7 +309,7 @@ def segment_file(input_filename, output_filename,
     """
     nii_original = nipy.load_image(input_filename)
     pixdim = nii_original.header["pixdim"][3]
-    target_resample = "0.25x0.25x{:.5f}".format(pixdim)
+    target_resample = [0.25, 0.25, pixdim]
 
     nii_resampled = resampling.resample_nipy(nii_original, new_size=target_resample, new_size_type='mm',
                                              interpolation='linear', verbose=verbosity)
@@ -317,10 +317,10 @@ def segment_file(input_filename, output_filename,
     pred_slices = segment_volume(nii_resampled, model_name, threshold,
                                  use_tta)
 
-    original_res = "{:.5f}x{:.5f}x{:.5f}".format(
+    original_res = [
         nii_original.header["pixdim"][1],
         nii_original.header["pixdim"][2],
-        nii_original.header["pixdim"][3])
+        nii_original.header["pixdim"][3]]
 
     volume_affine = nii_resampled.affine
     volume_header = nii_resampled.header
