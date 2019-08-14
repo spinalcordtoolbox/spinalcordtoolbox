@@ -155,7 +155,7 @@ def get_dependencies(requirements_txt=None):
                 line, condition = [x.strip() for x in line.split(';')]
                 # check if conditions apply
                 if not _test_condition(condition):
-                    break
+                    continue
             m = re.match("^(?P<pkg>\S+?)(==?(?P<ver>\S+))?\s*(#.*)?$", line)
             if m is None:
                 print("WARNING: Invalid requirements.txt line: %s", line)
