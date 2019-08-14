@@ -562,45 +562,43 @@ fi
 . $SCT_DIR/$PYTHON_DIR/bin/deactivate >/dev/null 2>&1
 
 ## Validate installation and update .bashrc
-# if sudo=0
-if [[ $UID != 0 ]]; then
-  # In case of previous SCT installation (4.0.0-beta.1 or before), remove sct_env declaration in bashrc
-  if [[ $OS == "osx" ]]; then
-    sed -ie '/sct_env/ s/^#*/#/' $THE_RC
+
+# In case of previous SCT installation (4.0.0-beta.1 or before), remove sct_env declaration in bashrc
+if [[ $OS == "osx" ]]; then
+  sed -ie '/sct_env/ s/^#*/#/' $THE_RC
+else
+  sed -e '/sct_env/ s/^#*/#/' -i $THE_RC
+fi
+
+# update PATH environment
+while [[ ! $add_to_path =~ ^([Yy](es)?|[Nn]o?)$ ]]; do
+  echo -e -n "\nDo you want to add the sct_* scripts to your PATH environment? [y]es/[n]o: "
+  read add_to_path
+done
+
+echo ""
+
+if [[ $add_to_path =~ ^[Yy] ]]; then
+  edit_shellrc
+else
+  echo Not adding $SCT_DIR to \$PATH
+  echo You can always add it later or call SCT functions with full path $SCT_DIR/$BIN_DIR/sct_function
+fi
+
+# run sct_check_dependencies
+echo -e "Validate installation..."
+# We run the sct_check_dependencies in the TMP_DIR so the tmp.XXX output
+# it creates is cleaned properly
+if sct_check_dependencies; then
+  if [[ $add_to_path =~ ^[Nn] ]]; then
+    echo -e "To use SCT, please update your environment by running:\n"
+    echo -e $DISPLAY_UPDATE_PATH
   else
-    sed -e '/sct_env/ s/^#*/#/' -i $THE_RC
+    echo -e "Open a new Terminal window to load environment variables, or run:\n source $THE_RC\n"
   fi
-  # update PATH environment
-  while [[ ! $add_to_path =~ ^([Yy](es)?|[Nn]o?)$ ]]; do
-    echo -e -n "\nDo you want to add the sct_* scripts to your PATH environment? [y]es/[n]o: "
-    read add_to_path
-  done
-  echo ""
-  if [[ $add_to_path =~ ^[Yy] ]]; then
-    edit_shellrc
-  else
-    echo Not adding $SCT_DIR to \$PATH
-    echo You can always add it later or call SCT functions with full path $SCT_DIR/$BIN_DIR/sct_function
-  fi
-  # run sct_check_dependencies
-  echo -e "Validate installation..."
-  # We run the sct_check_dependencies in the TMP_DIR so the tmp.XXX output
-  # it creates is cleaned properly
-  if sct_check_dependencies; then
-    if [[ $add_to_path =~ ^[Nn] ]]; then
-      echo -e "To use SCT, please update your environment by running:\n"
-      echo -e $DISPLAY_UPDATE_PATH
-    else
-      echo -e "Open a new Terminal window to load environment variables, or run:\n source $THE_RC\n"
-    fi
-  else
-    die "Installation validation Failed!\n
+else
+  die "Installation validation Failed!\n
 Please copy the historic of this Terminal (starting with the command install_sct) and paste it in the SCT Help forum (create a new discussion):\n
 http://forum.spinalcordmri.org/c/sct\n"
-  fi
-# if sudo=1
-else
-  echo -e "\nWARNING: sudo mode: Profile file was not edited. To complete installation, please add the following line to $THE_RC:"
-  echo -e $DISPLAY_UPDATE_PATH
-  echo -e "Then, please open a new Terminal and run sct_check_dependencies to make sure SCT is properly installed.\n"
 fi
+
