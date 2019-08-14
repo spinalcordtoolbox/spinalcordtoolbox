@@ -10,10 +10,13 @@ import numpy as np
 from skimage import measure, transform
 from tqdm import tqdm
 import logging
+import nibabel
+from nipy.io.nifti_ref import nifti2nipy, nipy2nifti
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.aggregate_slicewise import Metric
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
+from spinalcordtoolbox.resampling import resample_nipy
 
 
 def compute_shape(segmentation, angle_correction=True, param_centerline=None, verbose=1):
@@ -39,30 +42,41 @@ def compute_shape(segmentation, angle_correction=True, param_centerline=None, ve
                      ]
 
     im_seg = Image(segmentation).change_orientation('RPI')
-
     # Getting image dimensions. x, y and z respectively correspond to RL, PA and IS.
     nx, ny, nz, nt, px, py, pz, pt = im_seg.dim
+    pr = min([px, py])
+    # Resample to isotropic resolution in the axial plane. Use the minimum pixel dimension as target dimension.
+    # Note: need to convert to nibabel, then nipy (input type of resample_nipy)
+    im_seg_nibabel = nibabel.nifti1.Nifti1Image(im_seg.data, im_seg.hdr.get_best_affine())
+    im_segr_nipy = resample_nipy(
+        nifti2nipy(im_seg_nibabel), new_size=[pr, pr, pz], new_size_type='mm', interpolation='linear')
+    # Convert back to Image type
+    im_segr_nibabel = nipy2nifti(im_segr_nipy)
+    im_segr = Image(im_segr_nibabel.get_data(), hdr=im_segr_nibabel.header, orientation='RPI', dim=im_segr_nibabel.header.get_data_shape())
+
+    # Update dimensions from resampled image.
+    nx, ny, nz, nt, px, py, pz, pt = im_segr.dim
 
     # Extract min and max index in Z direction
-    data_seg = im_seg.data
+    data_seg = im_segr.data
     X, Y, Z = (data_seg > 0).nonzero()
     min_z_index, max_z_index = min(Z), max(Z)
 
     # Initialize dictionary of property_list, with 1d array of nan (default value if no property for a given slice).
     shape_properties = {key: np.full_like(np.empty(nz), np.nan, dtype=np.double) for key in property_list}
 
+    fit_results = None
+
     if angle_correction:
         # compute the spinal cord centerline based on the spinal cord segmentation
         # here, param_centerline.minmax needs to be False because we need to retrieve the total number of input slices
-        _, arr_ctl, arr_ctl_der, fit_results = get_centerline(im_seg, param=param_centerline, verbose=verbose)
-    else:
-        fit_results = None
+        _, arr_ctl, arr_ctl_der, fit_results = get_centerline(im_segr, param=param_centerline, verbose=verbose)
 
     # Loop across z and compute shape analysis
     for iz in tqdm(range(min_z_index, max_z_index + 1), unit='iter', unit_scale=False, desc="Compute shape analysis",
                    ascii=True, ncols=80):
         # Extract 2D patch
-        current_patch = im_seg.data[:, :, iz]
+        current_patch = im_segr.data[:, :, iz]
         if angle_correction:
             # Extract tangent vector to the centerline (i.e. its derivative)
             tangent_vect = np.array([arr_ctl_der[0][iz - min_z_index] * px,
