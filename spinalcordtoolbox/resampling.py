@@ -28,7 +28,6 @@ def resample_nipy(img, new_size=None, new_size_type=None, img_dest=None, interpo
     Can deal with 2d, 3d or 4d image objects.
     :param img: nipy Image.
     :param new_size: list of float: Resampling factor, final dimension or resolution, depending on new_size_type.
-    TODO: implement as list.
     :param new_size_type: {'vox', 'factor', 'mm'}: Feature used for resampling. Examples:
       new_size=[128, 128, 90], new_size_type='vox' --> Resampling to a dimension of 128x128x90 voxels
       new_size=[2, 2, 2], new_size_type='factor' --> 2x isotropic upsampling
@@ -49,9 +48,6 @@ def resample_nipy(img, new_size=None, new_size_type=None, img_dest=None, interpo
         # Get dimensions of data
         p = img.header.get_zooms()
         shape = img.header.get_data_shape()
-
-        # parse input argument
-        new_size = new_size.split('x')
 
         if img.ndim == 4:
             new_size += ['1']  # needed because the code below is general, i.e., does not assume 3d input and uses img.shape
@@ -147,7 +143,7 @@ def resample_file(fname_data, fname_out, new_size, new_size_type, interpolation,
     else:
         nii_ref = None
 
-    nii_r = resample_nipy(nii, new_size, new_size_type, img_dest=nii_ref, interpolation=interpolation, verbose=verbose)
+    nii_r = resample_nipy(nii, new_size.split('x'), new_size_type, img_dest=nii_ref, interpolation=interpolation, verbose=verbose)
 
     # build output file name
     if fname_out == '':
