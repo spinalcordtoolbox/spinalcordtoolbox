@@ -97,13 +97,13 @@ for installation instructions check: https://git-scm.com/book/en/v2/Getting-Star
       read -p 'Do you want to install gcc now (accepting to install gcc will also install brew in case it is not installed already)? [y]es/[n]o: ' -r GCC_INSTALL
       if [[ $GCC_INSTALL =~ [Yy](es)? ]]; then
         if [[ ! $(which brew) ]]; then
-          /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+          yes | /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
         fi
-        brew install gcc
+        yes | brew install gcc
       else
         die "Install \"gcc\" before you can install the SPINALCORDTOOLBOX"
       fi
-    else 
+    else
       die "Install \"gcc\" before you can install the SPINALCORDTOOLBOX"
     fi
   fi
