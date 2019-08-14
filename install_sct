@@ -45,6 +45,38 @@ function die() {
   exit 1
 }
 
+function fetch_os_type() {
+  # Fetch OS type
+  if uname -a | grep -i darwin >/dev/null 2>&1; then
+    # OSX
+
+    # Fix for non-English Unicode systems on MAC
+    if [[ -z $LC_ALL ]]; then
+      export LC_ALL=en_US.UTF-8
+    fi
+
+    if [[ -z $LANG ]]; then
+      export LANG=en_US.UTF-8
+    fi
+
+    OS=osx
+    force_bashrc_loading
+  elif uname -a | grep -i linux >/dev/null 2>&1; then
+    if cat /etc/issue | grep -i centos | grep 6. 2>&1; then
+      # CentOS 6.X
+      OS=linux_centos6
+    elif cat /etc/issue | grep -i Red | grep 6. 2>&1; then
+      # RedHat 6.X
+      OS=linux_centos6
+    else
+      # Other Linux
+      OS=linux
+    fi
+  else
+    die "Sorry, the installer only supports Linux and OSX, quitting installer"
+  fi
+}
+
 function check_requirements() {
 
   if [[ ! $(which curl) && ! $(which wget) ]]; then
@@ -55,6 +87,20 @@ function check_requirements() {
     die "You need to install \"git\" before you can install the SPINALCORDTOOLBOX \n
 for installation instructions check: https://git-scm.com/book/en/v2/Getting-Started-Installing-Git
 "
+  fi
+
+  if [[ ! $(which gcc) ]]; then
+    echo "Your OS: $OS"
+    if [[ $OS == "osx" ]]; then
+      read -p 'You need to install gcc before you can use the SPINALCORDTOOLBOX. Do you want to install gcc now? [y]es/[n]o: ' -r GCC_INSTALL
+      if [[ $GCC_INSTALL =~ [Yy](es)? ]]; then
+        brew install gcc
+      else
+        die "Install \"gcc\" before you can install the SPINALCORDTOOLBOX"
+      fi
+    else 
+      die "Install \"gcc\" before you can install the SPINALCORDTOOLBOX"
+    fi
   fi
 
 }
@@ -174,6 +220,7 @@ function usage() {
 # ========================================================================
 echo -e "\nWelcome to the SCT installer!"
 
+fetch_os_type
 check_requirements
 
 # Transform  long option "--long" into short option  "-l"
@@ -225,36 +272,6 @@ if [[ "x$SCT_INSTALL_TYPE" == "x" ]]; then
   else
     SCT_INSTALL_TYPE="package"
   fi
-fi
-
-# Fetch OS type
-if uname -a | grep -i darwin >/dev/null 2>&1; then
-  # OSX
-
-  # Fix for non-English Unicode systems on MAC
-  if [[ -z $LC_ALL ]]; then
-    export LC_ALL=en_US.UTF-8
-  fi
-
-  if [[ -z $LANG ]]; then
-    export LANG=en_US.UTF-8
-  fi
-
-  OS=osx
-  force_bashrc_loading
-elif uname -a | grep -i linux >/dev/null 2>&1; then
-  if cat /etc/issue | grep -i centos | grep 6. 2>&1; then
-    # CentOS 6.X
-    OS=linux_centos6
-  elif cat /etc/issue | grep -i Red | grep 6. 2>&1; then
-    # RedHat 6.X
-    OS=linux_centos6
-  else
-    # Other Linux
-    OS=linux
-  fi
-else
-  die "Sorry, the installer only supports Linux and OSX, quitting installer"
 fi
 
 # Define sh files, by default it will use unix shell
