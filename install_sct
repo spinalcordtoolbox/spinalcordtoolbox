@@ -90,7 +90,6 @@ for installation instructions check: https://git-scm.com/book/en/v2/Getting-Star
   fi
 
   if [[ ! $(which gcc) ]]; then
-    echo "Your OS: $OS"
     if [[ $OS == "osx" ]]; then
       read -p 'You need to install gcc before you can use the SPINALCORDTOOLBOX. Do you want to install gcc now? [y]es/[n]o: ' -r GCC_INSTALL
       if [[ $GCC_INSTALL =~ [Yy](es)? ]]; then
