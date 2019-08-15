@@ -10,7 +10,7 @@ import nibabel as nib
 from nipy.io.nifti_ref import nifti2nipy, nipy2nifti
 
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.resampling import resample_nipy
+from spinalcordtoolbox.resampling import resample_nib
 
 DEBUG = False  # Save img_sub
 
@@ -148,10 +148,8 @@ def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.floa
     for i in range(3):
         xform[i][i] = 1  # in [mm]
     nii = nib.nifti1.Nifti1Image(data_rot_crop.astype('float32'), xform)
-    # Create nipy object and resample to desired resolution
-    nii_nipy = nifti2nipy(nii)
-    nii_nipy_r = resample_nipy(nii_nipy, new_size=pixdim, new_size_type='mm', interpolation='linear', dtype=dtype)
-    nii_r = nipy2nifti(nii_nipy_r)
+    # resample to desired resolution
+    nii_r = resample_nib(nii, new_size=pixdim, new_size_type='mm', interpolation='linear')
     # Create Image object. Default orientation is LPI.
     # For debugging add .save() at the end of the command below
     img = Image(nii_r.get_data(), hdr=nii_r.header, dim=nii_r.header.get_data_shape())
