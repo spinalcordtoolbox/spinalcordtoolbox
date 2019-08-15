@@ -7,7 +7,6 @@ import itertools
 from skimage.transform import rotate
 
 import nibabel as nib
-from nipy.io.nifti_ref import nifti2nipy, nipy2nifti
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.resampling import resample_nib

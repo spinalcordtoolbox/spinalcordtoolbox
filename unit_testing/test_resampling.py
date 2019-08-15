@@ -67,7 +67,7 @@ def test_nib_resample_image_3d(fake_3dimage_nib):
     assert img_r.get_data()[8, 8, 4] == 1.0  # make sure there is no displacement in world coordinate system
     assert img_r.header.get_zooms() == (0.5, 0.5, 1.0)
     # debug
-    # nib.save(nipy2nifti(img_r), 'test_4.nii.gz')
+    # nib.save(img_r, 'test_4.nii.gz')
 
 
 # noinspection 801,PyShadowingNames
