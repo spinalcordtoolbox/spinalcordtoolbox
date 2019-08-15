@@ -22,4 +22,3 @@ xlwt
 tqdm
 transforms3d
 urllib3[secure]
-nipy  # need to install at the end otherwise won't install
