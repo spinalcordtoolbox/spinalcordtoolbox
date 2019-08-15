@@ -11,7 +11,6 @@ from skimage import measure, transform
 from tqdm import tqdm
 import logging
 import nibabel
-from nipy.io.nifti_ref import nifti2nipy, nipy2nifti
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.aggregate_slicewise import Metric
