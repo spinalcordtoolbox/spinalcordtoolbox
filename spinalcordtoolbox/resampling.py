@@ -29,14 +29,14 @@ def resample_nib(img, new_size=None, new_size_type=None, img_dest=None, interpol
     Resample a nibabel image object based on a specified resampling factor.
     Can deal with 2d, 3d or 4d image objects.
 
-    :param img: nipy Image.
+    :param img: nibabel Image.
     :param new_size: list of float: Resampling factor, final dimension or resolution, depending on new_size_type.
     :param new_size_type: {'vox', 'factor', 'mm'}: Feature used for resampling. Examples:
       new_size=[128, 128, 90], new_size_type='vox' --> Resampling to a dimension of 128x128x90 voxels
       new_size=[2, 2, 2], new_size_type='factor' --> 2x isotropic upsampling
       new_size=[1, 1, 5], new_size_type='mm' --> Resampling to a resolution of 1x1x5 mm
-    :param img_dest: Destination nipy Image to resample the input image to. In this case, new_size and new_size_type are
-      ignored
+    :param img_dest: Destination nibabel Image to resample the input image to. In this case, new_size and new_size_type
+    are ignored
     :param interpolation: {'nn', 'linear', 'spline'}. The interpolation type
     :return: The resampled nibabel Image.
     """
@@ -90,12 +90,10 @@ def resample_nib(img, new_size=None, new_size_type=None, img_dest=None, interpol
     elif img.ndim == 4:
         # TODO: Cover img_dest with 4D volumes
         # Import here instead of top of the file because this is an isolated case and nibabel takes time to import
-        import nibabel as nib
-        from nipy.io.nifti_ref import nifti2nipy, nipy2nifti
         data4d = np.zeros(shape_r)
         # Loop across 4th dimension and resample each 3d volume
         for it in range(img.shape[3]):
-            # Create dummy 3d nipy image
+            # Create dummy 3d nibabel image
             nii_tmp = nib.nifti1.Nifti1Image(img.get_data()[..., it], affine)
             img3d_r = resample_from_to(
                 nii_tmp, to_vox_map=(shape_r[:-1], affine_r), order=dict_interp[interpolation], mode='constant',
