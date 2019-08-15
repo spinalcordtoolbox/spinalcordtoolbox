@@ -16,7 +16,7 @@ from nipy.io.nifti_ref import nifti2nipy, nipy2nifti
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.aggregate_slicewise import Metric
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
-from spinalcordtoolbox.resampling import resample_nipy
+from spinalcordtoolbox.resampling import resample_nib
 
 
 def compute_shape(segmentation, angle_correction=True, param_centerline=None, verbose=1):
@@ -46,13 +46,11 @@ def compute_shape(segmentation, angle_correction=True, param_centerline=None, ve
     nx, ny, nz, nt, px, py, pz, pt = im_seg.dim
     pr = min([px, py])
     # Resample to isotropic resolution in the axial plane. Use the minimum pixel dimension as target dimension.
-    # Note: need to convert to nibabel, then nipy (input type of resample_nipy)
-    im_seg_nibabel = nibabel.nifti1.Nifti1Image(im_seg.data, im_seg.hdr.get_best_affine())
-    im_segr_nipy = resample_nipy(
-        nifti2nipy(im_seg_nibabel), new_size=[pr, pr, pz], new_size_type='mm', interpolation='linear')
+    im_seg_nib = nibabel.nifti1.Nifti1Image(im_seg.data, im_seg.hdr.get_best_affine())
+    im_seg_nibr = resample_nib(im_seg_nib, new_size=[pr, pr, pz], new_size_type='mm', interpolation='linear')
     # Convert back to Image type
-    im_segr_nibabel = nipy2nifti(im_segr_nipy)
-    im_segr = Image(im_segr_nibabel.get_data(), hdr=im_segr_nibabel.header, orientation='RPI', dim=im_segr_nibabel.header.get_data_shape())
+    im_segr = Image(
+        im_seg_nibr.get_data(), hdr=im_seg_nibr.header, orientation='RPI', dim=im_seg_nibr.header.get_data_shape())
 
     # Update dimensions from resampled image.
     nx, ny, nz, nt, px, py, pz, pt = im_segr.dim
