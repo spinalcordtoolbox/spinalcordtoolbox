@@ -15,9 +15,7 @@ import os
 import sys
 import io
 
-import nipy
 import nibabel as nib
-from nipy.io.nifti_ref import nipy2nifti, nifti2nipy
 import numpy as np
 
 # Avoid Keras logging
@@ -333,5 +331,5 @@ def segment_file(input_filename, output_filename,
     if threshold is not None:
         res_data = threshold_predictions(res_data, 0.5)
 
-    nipy.save_image(nii_resampled_original, output_filename)
+    nib.save(nii_resampled_original, output_filename)
     return output_filename
