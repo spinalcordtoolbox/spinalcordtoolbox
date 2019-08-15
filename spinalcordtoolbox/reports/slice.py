@@ -15,7 +15,6 @@ from scipy import ndimage
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.resampling import resample_nib
 from nibabel.nifti1 import Nifti1Image
-from nipy.io.nifti_ref import nifti2nipy, nipy2nifti
 
 logger = logging.getLogger(__name__)
 
