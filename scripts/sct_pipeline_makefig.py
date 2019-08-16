@@ -28,7 +28,7 @@ def get_parser():
                         required=True)
     parser.add_argument("-v", "--verbose",
                         help="Verbose: 0 = no verbosity, 1 = verbose (default).",
-                        choices=('0', '1'),
+                        choices=( 0, 1),
                         type=int,
                         default=1)
     return parser
