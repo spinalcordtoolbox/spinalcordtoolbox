@@ -293,12 +293,6 @@ echo -e "\nSCT version ......... "$SCT_VERSION
 echo -e "Installation type ... "$SCT_INSTALL_TYPE
 echo -e "Operating system .... "$OS
 echo -e "Shell ............... "$THE_RC
-# Check if sudo
-if [[ $UID == 0 ]]; then
-  echo -e "sudo mode ........... 1"
-else
-  echo -e "sudo mode ........... 0"
-fi
 
 # If you do not want the crash reports question to be ask,
 # set ASK_REPORT_QUESTION at installation time like this:
