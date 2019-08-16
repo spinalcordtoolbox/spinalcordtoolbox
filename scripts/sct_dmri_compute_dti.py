@@ -66,6 +66,7 @@ def get_parser():
         choices=('standard', 'restore'))
     optional.add_argument(
         "-evecs",
+        type=int,
         help='Output tensor eigenvectors and eigenvalues.',
         default=0,
         choices=(0, 1))
