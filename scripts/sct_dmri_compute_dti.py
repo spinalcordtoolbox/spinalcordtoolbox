@@ -83,6 +83,7 @@ def get_parser():
     optional.add_argument(
         "-v",
         help="Verbose. 0: nothing. 1: basic. 2: extended.",
+        type=int,
         required=False,
         default=param.verbose,
         choices=(0, 1, 2))
