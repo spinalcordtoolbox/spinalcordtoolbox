@@ -81,7 +81,7 @@ function fetch_os_type() {
 # Checks if the necessary tools for SCT are installed on the machine
 function check_requirements() {
 
-  echo "Checking requirements..."
+  echo; echo "Checking requirements..."
   # check curl
   if [[ ! $(which curl) && ! $(which wget) ]]; then
     die "ERROR: neither \"curl\" nor \"wget\" is installed. Please install either of them and restart SCT installation."
@@ -91,8 +91,8 @@ function check_requirements() {
   gcc --version > /dev/null 2>&1  # run silently, then check output status
   if [[ $? ]]; then
     if [[ $OS == "osx" ]]; then
-      echo -e "\nWARNING: \"gcc\" is not installed."
-      read -p 'Do you want to install \"gcc\" now? (accepting to install gcc will also install \"brew\" in case it is not installed already)? [y]es/[n]o: ' -r GCC_INSTALL
+      echo -e "WARNING: \"gcc\" is not installed."
+      read -p 'Do you want to install "gcc" now? (accepting to install "gcc" will also install "brew" in case it is not installed already)? [y]es/[n]o: ' -r GCC_INSTALL
       if [[ $GCC_INSTALL =~ [Yy](es)? ]]; then
         if [[ ! $(which brew) ]]; then
           yes | /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
