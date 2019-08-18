@@ -186,6 +186,7 @@ class SlicerOneAxis(object):
 
        return self.im.data[self._slice(idx)]
 
+
 class SlicerMany(object):
     """
     Image*s* slicer utility class.
@@ -313,6 +314,18 @@ class Image(object):
             self._path = deepcopy(image._path)
         else:
             return deepcopy(self)
+
+    def copy_qform_from_ref(self, im_ref):
+        """
+        Copy qform and sform and associated codes from a reference Image object
+        :param im_ref:
+        :return:
+        """
+        # Copy q/sform and code
+        self.hdr.set_qform(im_ref.hdr.get_qform())
+        self.hdr._structarr['qform_code'] = im_ref.hdr._structarr['qform_code']
+        self.hdr.set_sform(im_ref.hdr.get_sform())
+        self.hdr._structarr['sform_code'] = im_ref.hdr._structarr['sform_code']
 
     def loadFromPath(self, path, verbose):
         """
@@ -888,20 +901,25 @@ def change_shape(im_src, shape, im_dst=None):
     im_dst.hdr = pair.header
     return im_dst
 
-def change_orientation(im_src, orientation, im_dst=None, inverse=False):
+
+def change_orientation(im_src, orientation, im_dst=None, inverse=False, data_only=False):
     """
     :return: an image with changed orientation
     :param im_src: source image
     :param orientation: orientation string (SCT "from" convention)
     :param im_dst: destination image (can be the source image for in-place
                    operation, can be unset to generate one)
-
+    :param inverse: if you think backwards, use this to specify that you actually
+                    want to transform *from* the specified orientation, not *to* it.
+    :param data_only: If you want to only permute the data, not the header. Only use if you know there is a problem
+                      with the native orientation of the input data.
     Notes:
 
     - the resulting image has no path member set
     - if the source image is < 3D, it is reshaped to 3D and the destination is 3D
     """
 
+    # TODO: make sure to cover all cases for setorient-data
     if len(im_src.data.shape) < 3:
         pass # Will reshape to 3D
     elif len(im_src.data.shape) == 3:
@@ -953,7 +971,6 @@ def change_orientation(im_src, orientation, im_dst=None, inverse=False):
     else:
         raise NotImplementedError()
 
-
     # Update header
 
     im_src_aff = im_src.hdr.get_best_affine()
@@ -962,12 +979,14 @@ def change_orientation(im_src, orientation, im_dst=None, inverse=False):
      im_src_data.shape)
     im_dst_aff = np.matmul(im_src_aff, aff)
 
-    im_dst.header.set_qform(im_dst_aff)
-    im_dst.header.set_sform(im_dst_aff)
-    im_dst.header.set_data_shape(data.shape)
+    if not data_only:
+        im_dst.header.set_qform(im_dst_aff)
+        im_dst.header.set_sform(im_dst_aff)
+        im_dst.header.set_data_shape(data.shape)
     im_dst.data = data
 
     return im_dst
+
 
 def change_type(im_src, dtype, im_dst=None):
     """

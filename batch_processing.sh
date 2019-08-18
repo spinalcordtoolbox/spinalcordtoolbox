@@ -85,7 +85,7 @@ sct_register_to_template -i t2.nii.gz -s t2_seg.nii.gz -l labels_vert.nii.gz -c 
 # Warp template without the white matter atlas (we don't need it at this point)
 sct_warp_template -d t2.nii.gz -w warp_template2anat.nii.gz -a 0
 # Compute cross-sectional area (and other morphometry measures) for each slice
-sct_process_segmentation -i t2_seg.nii.gz
+sct_process_segmentation -i t2_seg.nii.gz -qc "$SCT_BP_QC_FOLDER"
 # Compute cross-sectional area and average between C2 and C3 levels
 sct_process_segmentation -i t2_seg.nii.gz -vert 2:3 -o csa_c2c3.csv
 # Go back to root folder
