@@ -45,20 +45,74 @@ function die() {
   exit 1
 }
 
-function check_requirements() {
+# Fetches the OS type
+# @output: OS var is modified with the appropiate OS
+function fetch_os_type() {
+  if uname -a | grep -i darwin >/dev/null 2>&1; then
+    # OSX
 
-  if [[ ! $(which curl) && ! $(which wget) ]]; then
-    die "Install \"curl\" OR \"wget\" before you can install the SPINALCORDTOOLBOX"
+    # Fix for non-English Unicode systems on MAC
+    if [[ -z $LC_ALL ]]; then
+      export LC_ALL=en_US.UTF-8
+    fi
+
+    if [[ -z $LANG ]]; then
+      export LANG=en_US.UTF-8
+    fi
+
+    OS=osx
+    force_bashrc_loading
+  elif uname -a | grep -i linux >/dev/null 2>&1; then
+    if cat /etc/issue | grep -i centos | grep 6. 2>&1; then
+      # CentOS 6.X
+      OS=linux_centos6
+    elif cat /etc/issue | grep -i Red | grep 6. 2>&1; then
+      # RedHat 6.X
+      OS=linux_centos6
+    else
+      # Other Linux
+      OS=linux
+    fi
+  else
+    die "Sorry, the installer only supports Linux and OSX, quitting installer"
   fi
-
-  if [[ ! $(which git) ]]; then
-    die "You need to install \"git\" before you can install the SPINALCORDTOOLBOX \n
-for installation instructions check: https://git-scm.com/book/en/v2/Getting-Started-Installing-Git
-"
-  fi
-
 }
 
+# Checks if the necessary tools for SCT are installed on the machine
+function check_requirements() {
+
+  echo; echo "Checking requirements..."
+  # check curl
+  if [[ ! $(which curl) && ! $(which wget) ]]; then
+    die "ERROR: neither \"curl\" nor \"wget\" is installed. Please install either of them and restart SCT installation."
+  fi
+
+  # check gcc
+  gcc --version > /dev/null 2>&1  # run silently, then check output status
+  if [[ $? -ne 0 ]]; then
+    if [[ $OS == "osx" ]]; then
+      echo -e "WARNING: \"gcc\" is not installed."
+      read -p 'Do you want to install it now? (accepting to install "gcc" will also install "brew" in case it is not installed already)? [y]es/[n]o: ' -r GCC_INSTALL
+      if [[ $GCC_INSTALL =~ [Yy](es)? ]]; then
+        if [[ ! $(which brew) ]]; then
+          yes | /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+        fi
+        yes | brew install gcc
+        # check if gcc install ran properly
+        gcc --version > /dev/null 2>&1  # run silently, then check output status
+        if [[ $? -ne 0 ]]; then
+          die "ERROR: Installation of \"gcc\" failed. Please contact SCT team for assistance."
+        fi
+      else
+        die "Please install \"gcc\" and restart SCT installation."
+      fi
+    else
+      die "Please install \"gcc\" and restart SCT installation."
+    fi
+  fi
+}
+
+# Gets the shell rc file path
 function get_shell_rc_path () {
     local RC_FILE_PATH=$HOME/.bashrc
     if [[ $(which zsh) ]]; then
@@ -174,6 +228,7 @@ function usage() {
 # ========================================================================
 echo -e "\nWelcome to the SCT installer!"
 
+fetch_os_type
 check_requirements
 
 # Transform  long option "--long" into short option  "-l"
@@ -227,36 +282,6 @@ if [[ "x$SCT_INSTALL_TYPE" == "x" ]]; then
   fi
 fi
 
-# Fetch OS type
-if uname -a | grep -i darwin >/dev/null 2>&1; then
-  # OSX
-
-  # Fix for non-English Unicode systems on MAC
-  if [[ -z $LC_ALL ]]; then
-    export LC_ALL=en_US.UTF-8
-  fi
-
-  if [[ -z $LANG ]]; then
-    export LANG=en_US.UTF-8
-  fi
-
-  OS=osx
-  force_bashrc_loading
-elif uname -a | grep -i linux >/dev/null 2>&1; then
-  if cat /etc/issue | grep -i centos | grep 6. 2>&1; then
-    # CentOS 6.X
-    OS=linux_centos6
-  elif cat /etc/issue | grep -i Red | grep 6. 2>&1; then
-    # RedHat 6.X
-    OS=linux_centos6
-  else
-    # Other Linux
-    OS=linux
-  fi
-else
-  die "Sorry, the installer only supports Linux and OSX, quitting installer"
-fi
-
 # Define sh files, by default it will use unix shell
 RC_FILE_PATH=$(get_shell_rc_path)
 THE_RC=$RC_FILE_PATH
@@ -270,12 +295,6 @@ echo -e "\nSCT version ......... "$SCT_VERSION
 echo -e "Installation type ... "$SCT_INSTALL_TYPE
 echo -e "Operating system .... "$OS
 echo -e "Shell ............... "$THE_RC
-# Check if sudo
-if [[ $UID == 0 ]]; then
-  echo -e "sudo mode ........... 1"
-else
-  echo -e "sudo mode ........... 0"
-fi
 
 # If you do not want the crash reports question to be ask,
 # set ASK_REPORT_QUESTION at installation time like this:
@@ -562,45 +581,43 @@ fi
 . $SCT_DIR/$PYTHON_DIR/bin/deactivate >/dev/null 2>&1
 
 ## Validate installation and update .bashrc
-# if sudo=0
-if [[ $UID != 0 ]]; then
-  # In case of previous SCT installation (4.0.0-beta.1 or before), remove sct_env declaration in bashrc
-  if [[ $OS == "osx" ]]; then
-    sed -ie '/sct_env/ s/^#*/#/' $THE_RC
+
+# In case of previous SCT installation (4.0.0-beta.1 or before), remove sct_env declaration in bashrc
+if [[ $OS == "osx" ]]; then
+  sed -ie '/sct_env/ s/^#*/#/' $THE_RC
+else
+  sed -e '/sct_env/ s/^#*/#/' -i $THE_RC
+fi
+
+# update PATH environment
+while [[ ! $add_to_path =~ ^([Yy](es)?|[Nn]o?)$ ]]; do
+  echo -e -n "\nDo you want to add the sct_* scripts to your PATH environment? [y]es/[n]o: "
+  read add_to_path
+done
+
+echo ""
+
+if [[ $add_to_path =~ ^[Yy] ]]; then
+  edit_shellrc
+else
+  echo Not adding $SCT_DIR to \$PATH
+  echo You can always add it later or call SCT functions with full path $SCT_DIR/$BIN_DIR/sct_function
+fi
+
+# run sct_check_dependencies
+echo -e "Validate installation..."
+# We run the sct_check_dependencies in the TMP_DIR so the tmp.XXX output
+# it creates is cleaned properly
+if sct_check_dependencies; then
+  if [[ $add_to_path =~ ^[Nn] ]]; then
+    echo -e "To use SCT, please update your environment by running:\n"
+    echo -e $DISPLAY_UPDATE_PATH
   else
-    sed -e '/sct_env/ s/^#*/#/' -i $THE_RC
+    echo -e "Open a new Terminal window to load environment variables, or run:\n source $THE_RC\n"
   fi
-  # update PATH environment
-  while [[ ! $add_to_path =~ ^([Yy](es)?|[Nn]o?)$ ]]; do
-    echo -e -n "\nDo you want to add the sct_* scripts to your PATH environment? [y]es/[n]o: "
-    read add_to_path
-  done
-  echo ""
-  if [[ $add_to_path =~ ^[Yy] ]]; then
-    edit_shellrc
-  else
-    echo Not adding $SCT_DIR to \$PATH
-    echo You can always add it later or call SCT functions with full path $SCT_DIR/$BIN_DIR/sct_function
-  fi
-  # run sct_check_dependencies
-  echo -e "Validate installation..."
-  # We run the sct_check_dependencies in the TMP_DIR so the tmp.XXX output
-  # it creates is cleaned properly
-  if sct_check_dependencies; then
-    if [[ $add_to_path =~ ^[Nn] ]]; then
-      echo -e "To use SCT, please update your environment by running:\n"
-      echo -e $DISPLAY_UPDATE_PATH
-    else
-      echo -e "Open a new Terminal window to load environment variables, or run:\n source $THE_RC\n"
-    fi
-  else
-    die "Installation validation Failed!\n
+else
+  die "Installation validation Failed!\n
 Please copy the historic of this Terminal (starting with the command install_sct) and paste it in the SCT Help forum (create a new discussion):\n
 http://forum.spinalcordmri.org/c/sct\n"
-  fi
-# if sudo=1
-else
-  echo -e "\nWARNING: sudo mode: Profile file was not edited. To complete installation, please add the following line to $THE_RC:"
-  echo -e $DISPLAY_UPDATE_PATH
-  echo -e "Then, please open a new Terminal and run sct_check_dependencies to make sure SCT is properly installed.\n"
 fi
+

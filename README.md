@@ -116,7 +116,7 @@ Each repository is a pipeline dedicated to a specific research project.
 
 We organize **free** SCT courses, each year after the ISMRM conference. If you'd like to be added to the mailing list, please send an email to `spinalcordtoolbox@gmail.com`. The past courses handouts are listed below:
 
-* [SCT course (v4.0.0), Beijing, 2019-08-02](https://osf.io/arfv7/)
+* [SCT course (v4.0.0), Beijing, 2019-08-02](https://osf.io/arfv7/) | [Slides with Chinese translation](https://osf.io/hnmr2/)
 * [SCT course (v4.0.0_beta.4), London, 2019-01-22](https://osf.io/gvs6f/)
 * [SCT course (v3.2.2), Paris, 2018-06-12](https://osf.io/386h7/)
 * [SCT course (v3.0.3), Honolulu, 2017-04-28](https://osf.io/fvnjq/)
@@ -214,6 +214,10 @@ alt="Fsleyes integration" width="240" height="180" border="10" /></a>
 - [Moccia et al. Advances in spinal cord imaging in multiple sclerosis. Ther Adv Neurol Disord.2019 Vol. 12: 1–19 DOI: 10.1177/1756285619840593](https://journals.sagepub.com/doi/pdf/10.1177/1756286419840593)
 - [Kitany et al. Functional imaging of rostrocaudal spinal activity during upper limb motor tasks. Neuroimage. 2019 May 17. pii: S1053-8119(19)30428-8.](https://www.sciencedirect.com/science/article/pii/S1053811919304288)
 - [Lorenzi et al. Cervical spinal cord atrophy and Alzheimer’s disease. bioRxiv. 2019](https://www.biorxiv.org/content/biorxiv/early/2019/06/18/673350.full.pdf)
+- [Papinutto et al. Evaluation of Intra- and Interscanner Reliability of MRI Protocols for Spinal Cord Gray Matter and Total Cross-Sectional Area Measurements. J Magn Reson Imaging. 2019 Apr;49(4):1078-1090. doi: 10.1002/jmri.26269. Epub 2018 Sep 9.](https://onlinelibrary.wiley.com/doi/epdf/10.1002/jmri.26269)
+- [Weeda et al. Validation of mean upper cervical cord area (MUCCA) measurement techniques in multiple sclerosis (MS): High reproducibility and robustness to lesions, but large software and scanner effects. NeuroImage: Clinical doi:10.1016/j.nicl.2019.101962. 2019](https://www.sciencedirect.com/science/article/pii/S2213158219303122)
+- [Moccia et al. Longitudinal spinal cord atrophy in multiple sclerosis using the generalised boundary shift integral. Annals of Neurology doi:10.1002/ana.25571. 2019](https://onlinelibrary.wiley.com/doi/abs/10.1002/ana.25571)
+- [Rasoanandrianina et al. Regional T1 mapping of the whole cervical spinal cord using an optimized MP2RAGE sequence. NMR in Biomedicine doi:10.1002/nbm.4142. 2019](https://onlinelibrary.wiley.com/doi/full/10.1002/nbm.4142)
 
 ## Citing spinalcordtoolbox
 
