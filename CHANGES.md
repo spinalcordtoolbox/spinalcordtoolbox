@@ -1,3 +1,27 @@
+## 4.0.1 (2019-08-17)
+[View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/4.0.0...4.0.1)
+
+**BUG**
+
+ - **sct_dmri_compute_dti:** Fixed flag '-evecs' not detecting input as of type int. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2417)
+ - **sct_image:** Fixed -setorient-data giving wrong results. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2401)
+ - **sct_image:** Proper handling of int arguments contained in list type input. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2397)
+ - **sct_process_segmentation:** Fixed wrong morphometric measures with anisotropic in-plane resolution. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2396)
+ - Change canvas axes for image placement.. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2389)
+
+**ENHANCEMENT**
+
+ - **sct_process_segmentation:** Corrected wrong slice information on QC output. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2408)
+ - **sct_apply_transfo:** Fixed q/sform on transformed image. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2400)
+
+**INSTALLATION**
+
+ - **sct_resample:** Dropped dependency to nipy. **WARNING: Breaks compatibility with previous versions of SCT.** [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2414)
+ - Check if gcc is installed. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2410)
+ - Modify bashrc on sudo. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2409)
+
+
+
 ## 4.0.0 (2019-08-04)
 [View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v3.2.7...4.0.0)
 
