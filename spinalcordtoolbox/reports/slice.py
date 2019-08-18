@@ -13,9 +13,8 @@ import numpy as np
 from scipy import ndimage
 
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.resampling import resample_nipy
+from spinalcordtoolbox.resampling import resample_nib
 from nibabel.nifti1 import Nifti1Image
-from nipy.io.nifti_ref import nifti2nipy, nipy2nifti
 
 logger = logging.getLogger(__name__)
 
@@ -305,24 +304,21 @@ class Slice(object):
         dict_interp = {'im': 'spline', 'seg': 'linear'}
         # Create nibabel object
         nii = Nifti1Image(image.data, image.hdr.get_best_affine())
-        img = nifti2nipy(nii)
         # If no reference image is provided, resample to specified resolution
         if image_ref is None:
             # Resample to px x p_resample x p_resample mm (orientation is SAL by convention in QC module)
-            img_r = resample_nipy(img, new_size=[image.dim[4], p_resample, p_resample], new_size_type='mm',
-                                  interpolation=dict_interp[type_img])
+            nii_r = resample_nib(nii, new_size=[image.dim[4], p_resample, p_resample], new_size_type='mm',
+                                 interpolation=dict_interp[type_img])
         # Otherwise, resampling to the space of the reference image
         else:
             # Create nibabel object for reference image
             nii_ref = Nifti1Image(image_ref.data, image_ref.hdr.get_best_affine())
-            img_ref = nifti2nipy(nii_ref)
-            img_r = resample_nipy(img, img_dest=img_ref, interpolation=dict_interp[type_img])
+            nii_r = resample_nib(nii, img_dest=nii_ref, interpolation=dict_interp[type_img])
         # If resampled image is a segmentation, binarize using threshold at 0.5
         if type_img == 'seg':
-            img_r_data = (img_r.get_data() > 0.5) * 1
+            img_r_data = (nii_r.get_data() > 0.5) * 1
         else:
-            img_r_data = img_r.get_data()
-        nii_r = nipy2nifti(img_r)
+            img_r_data = nii_r.get_data()
         # Create Image objects
         image_r = Image(img_r_data, hdr=nii_r.header, dim=nii_r.header.get_data_shape()). \
             change_orientation(image.orientation)

@@ -388,7 +388,9 @@ def resample_image(fname, suffix='_resampled.nii.gz', binary=False, npx=0.3, npy
         if binary:
             interpolation = 'nn'
 
-        if nz == 1:  # when data is 2d: we convert it to a 3d image in order to avoid nipy problem of conversion nifti-->nipy with 2d data
+        if nz == 1:
+            # when data is 2d: we convert it to a 3d image in order to avoid conversion problem with 2d data
+            # TODO: check if this above problem is still present (now that we are using nibabel instead of nipy)
             sct.run(['sct_image', '-i', ','.join([fname, fname]), '-concat', 'z', '-o', fname])
 
         sct.run(['sct_resample', '-i', fname, '-mm', str(npx) + 'x' + str(npy) + 'x' + str(pz), '-o', name_resample, '-x', interpolation])
