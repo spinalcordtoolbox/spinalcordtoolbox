@@ -1,4 +1,4 @@
-numpy # need to install first otherwise dependency issues
+numpy  # need to install first otherwise dependency issues
 cryptography
 dipy
 futures
@@ -22,4 +22,3 @@ xlwt
 tqdm
 transforms3d
 urllib3[secure]
-git+https://github.com/jcohenadad/nipy.git#egg=nipy # need to install at the end otherwise won't install

@@ -15,9 +15,7 @@ import os
 import sys
 import io
 
-import nipy
 import nibabel as nib
-from nipy.io.nifti_ref import nipy2nifti, nifti2nipy
 import numpy as np
 
 # Avoid Keras logging
@@ -307,34 +305,31 @@ def segment_file(input_filename, output_filename,
                     or not.
     :return: the output filename.
     """
-    nii_original = nipy.load_image(input_filename)
+    nii_original = nib.load(input_filename)
     pixdim = nii_original.header["pixdim"][3]
-    target_resample = "0.25x0.25x{:.5f}".format(pixdim)
+    target_resample = [0.25, 0.25, pixdim]
 
-    nii_resampled = resampling.resample_nipy(nii_original, new_size=target_resample, new_size_type='mm',
-                                             interpolation='linear', verbose=verbosity)
-    nii_resampled = nipy2nifti(nii_resampled)
+    nii_resampled = resampling.resample_nib(
+        nii_original, new_size=target_resample, new_size_type='mm', interpolation='linear')
     pred_slices = segment_volume(nii_resampled, model_name, threshold,
                                  use_tta)
 
-    original_res = "{:.5f}x{:.5f}x{:.5f}".format(
+    original_res = [
         nii_original.header["pixdim"][1],
         nii_original.header["pixdim"][2],
-        nii_original.header["pixdim"][3])
+        nii_original.header["pixdim"][3]]
 
     volume_affine = nii_resampled.affine
     volume_header = nii_resampled.header
     nii_segmentation = nib.Nifti1Image(pred_slices, volume_affine,
                                        volume_header)
-    nii_segmentation = nifti2nipy(nii_segmentation)
-
-    nii_resampled_original = resampling.resample_nipy(nii_segmentation, new_size=original_res, new_size_type='mm',
-                                                      interpolation='linear', verbose=verbosity)
+    nii_resampled_original = resampling.resample_nib(
+        nii_segmentation, new_size=original_res, new_size_type='mm', interpolation='linear')
     res_data = nii_resampled_original.get_data()
 
     # Threshold after resampling, only if specified
     if threshold is not None:
         res_data = threshold_predictions(res_data, 0.5)
 
-    nipy.save_image(nii_resampled_original, output_filename)
+    nib.save(nii_resampled_original, output_filename)
     return output_filename

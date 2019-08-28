@@ -15,6 +15,7 @@ from __future__ import absolute_import, division
 
 import sys
 import os
+import shutil
 import time
 import math
 from tqdm import tqdm
@@ -57,11 +58,12 @@ class Param:
         self.mat_eddy = ''
         self.min_norm = 0.001
         self.swapXY = 0
-        self.bval_min = 100  # in case user does not have min bvalues at 0, set threshold (where csf disapeared).
+        self.bval_min = 100  # in case user does not have min bvalues at 0, set threshold (where csf disappeared).
         self.otsu = 0  # use otsu algorithm to segment dwi data for better moco. Value coresponds to data threshold. For no segmentation set to 0.
         self.iterAvg = 1  # iteratively average target image for more robust moco
         self.num_target = '0'
         self.is_sagittal = False  # if True, then split along Z (right-left) and register each 2D slice (vs. 3D volume)
+        self.output_motion_param = True  # if True, the motion parameters are outputted
 
     # update constructor with user's parameters
     def update(self, param_user):
@@ -94,7 +96,12 @@ def get_parser():
   - slice-wise regularized along z using polynomial function (-p)
     For more info about the method, type: isct_antsSliceRegularizedRegistration
   - masking (-m)
-  - iterative averaging of target volume""")
+  - iterative averaging of target volume
+The outputs of the motion correction process are:
+  - the motion-corrected fMRI volumes
+  - the time average of the corrected fMRI volumes
+  - a time-series with 1 voxel in the XY plane, for the X and Y motion direction (two separate files), as required for FSL analysis.
+  - a TSV file with the slice-wise average of the motion correction for XY (one file), that can be used for Quality Control.""")
     parser.add_option(name='-i',
                       type_value='image_nifti',
                       description='4D data',
@@ -214,6 +221,9 @@ def main(args=None):
     sct.printv('\nGenerate output files...', param.verbose)
     sct.generate_output_file(os.path.join(path_tmp, "fmri" + param.suffix + '.nii'), fname_fmri_moco, param.verbose)
     sct.generate_output_file(os.path.join(path_tmp, "fmri" + param.suffix + '_mean.nii'), os.path.join(path_out, file_data + param.suffix + '_mean' + ext_data), param.verbose)
+    sct.generate_output_file(os.path.join(path_tmp, "fmri" + param.suffix + '_params_X.nii'), os.path.join(path_out, file_data + param.suffix + '_params_X' + ext_data), squeeze_data=False, verbose=param.verbose)
+    sct.generate_output_file(os.path.join(path_tmp, "fmri" + param.suffix + '_params_Y.nii'), os.path.join(path_out, file_data + param.suffix + '_params_Y' + ext_data), squeeze_data=False, verbose=param.verbose)
+    shutil.copyfile(os.path.join(path_tmp, 'fmri_moco_params.tsv'), os.path.join(path_out + file_data + param.suffix + '_params.tsv'))
 
     # Delete temporary files
     if param.remove_temp_files == 1:
@@ -372,7 +382,7 @@ def fmri_moco(param):
         param_moco.path_out = ''
         param_moco.mat_moco = mat_final
         param_moco.todo = 'apply'
-        moco.moco(param_moco)
+        file_mat = moco.moco(param_moco)
 
     # copy geometric information from header
     # NB: this is required because WarpImageMultiTransform in 2D mode wrongly sets pixdim(3) to "1".
@@ -380,6 +390,55 @@ def fmri_moco(param):
     im_fmri_moco = Image('fmri_moco.nii')
     im_fmri_moco.header = im_fmri.header
     im_fmri_moco.save()
+
+    # Extract and output the motion parameters
+    if param.output_motion_param:
+        from sct_image import multicomponent_split
+        import csv
+        #files_warp = []
+        files_warp_X, files_warp_Y = [], []
+        moco_param = []
+        for fname_warp in file_mat[0]:
+            # Cropping the image to keep only one voxel in the XY plane
+            im_warp = Image(fname_warp + ext_mat)
+            im_warp.data = np.expand_dims(np.expand_dims(im_warp.data[0, 0, :, :, :], axis=0), axis=0)
+
+            # These three lines allow to generate one file instead of two, containing X, Y and Z moco parameters
+            #fname_warp_crop = fname_warp + '_crop_' + ext_mat
+            #files_warp.append(fname_warp_crop)
+            #im_warp.save(fname_warp_crop)
+
+            # Separating the three components and saving X and Y only (Z is equal to 0 by default).
+            im_warp_XYZ = multicomponent_split(im_warp)
+
+            fname_warp_crop_X = fname_warp + '_crop_X_' + ext_mat
+            im_warp_XYZ[0].save(fname_warp_crop_X)
+            files_warp_X.append(fname_warp_crop_X)
+
+            fname_warp_crop_Y = fname_warp + '_crop_Y_' + ext_mat
+            im_warp_XYZ[1].save(fname_warp_crop_Y)
+            files_warp_Y.append(fname_warp_crop_Y)
+
+            # Calculating the slice-wise average moco estimate to provide a QC file
+            moco_param.append([np.mean(np.ravel(im_warp_XYZ[0].data)), np.mean(np.ravel(im_warp_XYZ[1].data))])
+
+        # These two lines allow to generate one file instead of two, containing X, Y and Z moco parameters
+        #im_warp_concat = concat_data(files_warp, dim=3)
+        #im_warp_concat.save('fmri_moco_params.nii')
+
+        # Concatenating the moco parameters into a time series for X and Y components.
+        im_warp_concat = concat_data(files_warp_X, dim=3)
+        im_warp_concat.save('fmri_moco_params_X.nii')
+
+        im_warp_concat = concat_data(files_warp_Y, dim=3)
+        im_warp_concat.save('fmri_moco_params_Y.nii')
+
+        # Writing a TSV file with the slicewise average estimate of the moco parameters, as it is a useful QC file.
+        with open('fmri_moco_params.tsv', 'wt') as out_file:
+            tsv_writer = csv.writer(out_file, delimiter='\t')
+            tsv_writer.writerow(['X', 'Y'])
+            for mocop in moco_param:
+                tsv_writer.writerow([mocop[0], mocop[1]])
 
     # Average volumes
     sct.printv('\nAveraging data...', param.verbose)

@@ -48,6 +48,22 @@ class bcolors:
     ENDC = '\033[0m'
 
 
+def _test_condition(condition):
+    """Test condition formatted in requirements"""
+    # Define Environment markers (https://www.python.org/dev/peps/pep-0508/#environment-markers)
+    os_name = os.name
+    platform_machine = platform.machine()
+    platform_release = platform.release()
+    platform_system = platform.system()
+    platform_version = platform.version()
+    python_full_version = platform.python_version()
+    platform_python_implementation = platform.python_implementation()
+    python_version = platform.python_version()[:3]
+    sys_platform = sys.platform
+    # Test condition
+    return eval(condition)
+
+
 def resolve_module(framework_name):
     """This function will resolve the framework name
     to the module name in cases where it is different.
@@ -67,7 +83,6 @@ def resolve_module(framework_name):
         'mkl-service': (None, False),
         'pytest-cov': ('pytest_cov', False),
         'urllib3[secure]': ('urllib3', False),
-        'git+https://github.com/jcohenadad/nipy.git': ('nipy', False),
     }
 
     try:
@@ -103,8 +118,82 @@ def module_import(module_name, suppress_stderr=False):
     return module
 
 
-# MAIN
-# ==========================================================================================
+def print_line(string):
+    """print without carriage return"""
+    sys.stdout.write(string.ljust(52, '.'))
+    sys.stdout.flush()
+
+
+def print_ok(more=None):
+    print("[{}OK{}]{}".format(bcolors.OKGREEN, bcolors.ENDC, more if more is not None else ""))
+
+
+def print_warning(more=None):
+    print("[{}WARNING{}]{}".format(bcolors.WARNING, bcolors.ENDC, more if more is not None else ""))
+
+
+def print_fail(more=None):
+    print("[{}FAIL{}]{}".format(bcolors.FAIL, bcolors.ENDC, more if more is not None else ""))
+
+
+def add_bash_profile(string):
+    bash_profile = os.path.expanduser("~/bash_profile")
+    with io.open(bash_profile, "a") as file_bash:
+        file_bash.write("\n" + string)
+
+
+def get_dependencies(requirements_txt=None):
+    if requirements_txt is None:
+        requirements_txt = os.path.join(sct.__sct_dir__, "requirements.txt")
+
+    out = list()
+    with io.open(requirements_txt, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.split('#')[0].strip()
+            # check if conditions (separated by ";")
+            if ';' in line:
+                line, condition = [x.strip() for x in line.split(';')]
+                # check if conditions apply
+                if not _test_condition(condition):
+                    continue
+            m = re.match("^(?P<pkg>\S+?)(==?(?P<ver>\S+))?\s*(#.*)?$", line)
+            if m is None:
+                print("WARNING: Invalid requirements.txt line: %s", line)
+                continue
+            pkg = m.group("pkg")
+            try:
+                ver = m.group("ver")
+            except IndexError:
+                ver = None
+            out.append((pkg, ver))
+
+    return out
+
+
+def get_parser():
+    # Initialize the parser
+
+    parser = argparse.ArgumentParser(
+        description='Check the installation and environment variables of the toolbox and its dependencies.',
+        add_help=None,
+        formatter_class=SmartFormatter,
+        prog=os.path.basename(__file__).strip(".py")
+    )
+    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional.add_argument(
+        "-h",
+        "--help",
+        action="help",
+        help="Show this help message and exit")
+    optional.add_argument(
+        "-c",
+        "--complete",
+        help="Complete test.",
+        action="store_true")
+
+    return parser
+
+
 def main():
     print("SCT info:")
     print("- version: {}".format(sct.__version__))
@@ -288,102 +377,6 @@ def main():
     sys.exit(e + install_software)
 
 
-# print without carriage return
-# ==========================================================================================
-def print_line(string):
-    sys.stdout.write(string.ljust(52, '.'))
-    sys.stdout.flush()
-
-
-def print_ok(more=None):
-    print("[{}OK{}]{}".format(bcolors.OKGREEN, bcolors.ENDC, more if more is not None else ""))
-
-
-def print_warning(more=None):
-    print("[{}WARNING{}]{}".format(bcolors.WARNING, bcolors.ENDC, more if more is not None else ""))
-
-
-def print_fail(more=None):
-    print("[{}FAIL{}]{}".format(bcolors.FAIL, bcolors.ENDC, more if more is not None else ""))
-
-
-def add_bash_profile(string):
-    bash_profile = os.path.expanduser("~/bash_profile")
-    with io.open(bash_profile, "a") as file_bash:
-        file_bash.write("\n" + string)
-
-
-def get_dependencies(requirements_txt=None):
-    if requirements_txt is None:
-        requirements_txt = os.path.join(sct.__sct_dir__, "requirements.txt")
-
-    out = list()
-    with io.open(requirements_txt, "r", encoding="utf-8") as f:
-        for line in f:
-            line = line.split('#')[0].strip()
-            # check if conditions (separated by ";")
-            if ';' in line:
-                line, condition = [x.strip() for x in line.split(';')]
-                # check if conditions apply
-                if not _test_condition(condition):
-                    break
-            m = re.match("^(?P<pkg>\S+?)(==?(?P<ver>\S+))?\s*(#.*)?$", line)
-            if m is None:
-                print("WARNING: Invalid requirements.txt line: %s", line)
-                continue
-            pkg = m.group("pkg")
-            try:
-                ver = m.group("ver")
-            except IndexError:
-                ver = None
-            out.append((pkg, ver))
-
-    return out
-
-
-def _test_condition(condition):
-    """Test condition formatted in requirements"""
-    # Define Environment markers (https://www.python.org/dev/peps/pep-0508/#environment-markers)
-    os_name = os.name
-    platform_machine = platform.machine()
-    platform_release = platform.release()
-    platform_system = platform.system()
-    platform_version = platform.version()
-    python_full_version = platform.python_version()
-    platform_python_implementation = platform.python_implementation()
-    python_version = platform.python_version()[:3]
-    sys_platform = sys.platform
-    # Test condition
-    return eval(condition)
-
-
-# ==========================================================================================
-def get_parser():
-    # Initialize the parser
-
-    parser = argparse.ArgumentParser(
-        description='Check the installation and environment variables of the toolbox and its dependencies.',
-        add_help=None,
-        formatter_class=SmartFormatter,
-        prog=os.path.basename(__file__).strip(".py")
-    )
-    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
-    optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="Show this help message and exit")
-    optional.add_argument(
-        "-c",
-        "--complete",
-        help="Complete test.",
-        action="store_true")
-
-    return parser
-
-
-# START PROGRAM
-# ==========================================================================================
 if __name__ == "__main__":
     sct.init_sct()
     # initialize parameters
