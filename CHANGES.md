@@ -1,3 +1,13 @@
+## 4.0.2 (2019-09-04)
+[View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v4.0.0-beta.3...4.0.2)
+
+**BUG**
+
+ - **sct_straighten_spinalcord:** Fixed wrong input arguments. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2427)
+ - **sct_fmri_moco:** Replaced sct.mv with shutil.copyfile for tmp space issue. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2420)
+
+
+
 ## 4.0.1 (2019-08-17)
 [View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/4.0.0...4.0.1)
 
