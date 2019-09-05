@@ -45,6 +45,7 @@ def get_parser():
 - eccentricity: Eccentricity of the ellipse that has the same second-moments as the spinal cord. The eccentricity is the ratio of the focal distance (distance between focal points) over the major axis length. The value is in the interval [0, 1). When it is 0, the ellipse becomes a circle.
 - orientation: angle (in degrees) between the AP axis of the spinal cord and the AP axis of the image
 - solidity: CSA(spinal_cord) / CSA_convex(spinal_cord). If perfect ellipse, it should be one. This metric is interesting for detecting non-convex shape (e.g., in case of strong compression)
+- length: Length of the segmentation, computed by summing the slice thickness (corrected for the centerline angle at each slice) across the specified superior-inferior region.
 """)
     parser.add_option(name='-i',
                       type_value='image_nifti',
