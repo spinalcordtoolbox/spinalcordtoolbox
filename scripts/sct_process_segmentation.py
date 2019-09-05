@@ -25,7 +25,7 @@ import sct_utils as sct
 from msct_parser import Parser
 from spinalcordtoolbox import process_seg
 from spinalcordtoolbox.aggregate_slicewise import aggregate_per_slice_or_level, save_as_csv, func_wa, func_std, \
-    _merge_dict
+    func_sum, _merge_dict
 from spinalcordtoolbox.utils import parse_num_list
 from spinalcordtoolbox.centerline.core import ParamCenterline
 from spinalcordtoolbox.reports.qc import generate_qc
@@ -278,10 +278,18 @@ def main(args):
                                                      param_centerline=param_centerline,
                                                      verbose=verbose)
     for key in metrics:
-        metrics_agg[key] = aggregate_per_slice_or_level(metrics[key], slices=parse_num_list(slices),
-                                                        levels=parse_num_list(vert_levels), perslice=perslice,
-                                                        perlevel=perlevel, vert_level=fname_vert_levels,
-                                                        group_funcs=group_funcs)
+        if key == 'length':
+            # For computing cord length, slice-wise length needs to be summed across slices
+            metrics_agg[key] = aggregate_per_slice_or_level(metrics[key], slices=parse_num_list(slices),
+                                                            levels=parse_num_list(vert_levels), perslice=perslice,
+                                                            perlevel=perlevel, vert_level=fname_vert_levels,
+                                                            group_funcs=(('SUM', func_sum),))
+        else:
+            # For other metrics, we compute the average and standard deviation across slices
+            metrics_agg[key] = aggregate_per_slice_or_level(metrics[key], slices=parse_num_list(slices),
+                                                            levels=parse_num_list(vert_levels), perslice=perslice,
+                                                            perlevel=perlevel, vert_level=fname_vert_levels,
+                                                            group_funcs=group_funcs)
     metrics_agg_merged = _merge_dict(metrics_agg)
     save_as_csv(metrics_agg_merged, file_out, fname_in=fname_segmentation, append=append)
 
