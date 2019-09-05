@@ -28,7 +28,7 @@ DEBUG = False  # Set to True to save images
 im_segs = [
     # test area
     (dummy_segmentation(size_arr=(32, 32, 5), debug=DEBUG),
-     {'area': 77, 'angle_RL': 0.0, 'angle_AP': 0.0},
+     {'area': 77, 'angle_RL': 0.0, 'angle_AP': 0.0, 'length': 5.0},
      {'angle_corr': False}),
     # test anisotropic pixel dim
     (dummy_segmentation(size_arr=(64, 32, 5), pixdim=(0.5, 1, 5), debug=DEBUG),
@@ -51,12 +51,12 @@ im_segs = [
     # test with angled spinal cord (neg angle)
     (dummy_segmentation(size_arr=(64, 64, 20), shape='ellipse', radius_RL=13.0, radius_AP=5.0, angle_RL=-30.0,
                         debug=DEBUG),
-     {'area': 197.0, 'diameter_AP': 10.0, 'diameter_RL': 26.0, 'angle_RL': -30.0, 'angle_AP': 0.0},
+     {'area': 197.0, 'diameter_AP': 10.0, 'diameter_RL': 26.0, 'angle_RL': -30.0, 'angle_AP': 0.0, 'length': 23.15},
      {'angle_corr': True}),
     # test with AP angled spinal cord
     (dummy_segmentation(size_arr=(64, 64, 20), shape='ellipse', radius_RL=13.0, radius_AP=5.0, angle_AP=20.0,
                         debug=DEBUG),
-     {'area': 197.0, 'diameter_AP': 10.0, 'diameter_RL': 26.0, 'angle_RL': 0.0, 'angle_AP': 20.0},
+     {'area': 197.0, 'diameter_AP': 10.0, 'diameter_RL': 26.0, 'angle_RL': 0.0, 'angle_AP': 20.0, 'length': 21.02},
      {'angle_corr': True}),
     # test with RL and AP angled spinal cord
     (dummy_segmentation(size_arr=(64, 64, 50), shape='ellipse', radius_RL=13.0, radius_AP=5.0,
@@ -98,7 +98,12 @@ def test_compute_shape(im_seg, expected, params):
         if 'slice' in params:
             obtained_value = float(metrics['area'].data[params['slice']])
         else:
-            obtained_value = float(np.mean(metrics[key].data))
+            if key == 'length':
+                # when computing length, sums values across slices
+                obtained_value = metrics[key].data.sum()
+            else:
+                # otherwise, average across slices
+                obtained_value = metrics[key].data.mean()
         # fetch expected_value
         if expected[key] is np.nan:
             assert math.isnan(obtained_value)
