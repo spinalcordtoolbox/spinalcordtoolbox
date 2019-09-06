@@ -215,7 +215,7 @@ class SpinalCordStraightener(object):
             image_centerline_straight = Image('centerline_ref.nii.gz') \
                 .change_orientation("RPI") \
                 .save(fname_ref, mutable=True)
-            centerline_straight = _get_centerline(image_centerline_straight, algo_fitting, self.degree, verbose)
+            centerline_straight = _get_centerline(image_centerline_straight, self.param_centerline, verbose)
             nx_s, ny_s, nz_s, nt_s, px_s, py_s, pz_s, pt_s = image_centerline_straight.dim
 
             # Prepare warping fields headers
