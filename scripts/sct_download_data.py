@@ -19,6 +19,9 @@ import tarfile
 import tempfile
 import zipfile
 
+# importing shutil module  
+import shutil
+
 import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util import Retry
