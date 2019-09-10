@@ -128,22 +128,46 @@ def main(args=None):
     verbose = int(arguments.get('-v'))
     sct.init_sct(log_level=verbose, update=True)  # Update log level
     dest_folder = arguments.get('-o', os.path.abspath(os.curdir))
+    dest_tmp_folder = sct.tmp_create()
+    print('Temp folder: ' + dest_tmp_folder)
 
     # Download data
     url = dict_url[data_name]
     tmp_file = download_data(url, verbose)
 
-    # Check if folder already exists
-    sct.printv('\nCheck if folder already exists...', verbose)
-    if os.path.isdir(data_name):
-        sct.printv('WARNING: Folder ' + data_name + ' already exists. Removing it...', 1, 'warning')
-        sct.rmtree(data_name)
-
     # unzip
-    unzip(tmp_file, dest_folder, verbose)
+    unzip(tmp_file, dest_tmp_folder, verbose)
+    print('dest_tmp_folder: '+dest_tmp_folder)
+    extracted_files = []
+    extracted_files_paths = []
+    # Get the name of the extracted files and directories
+    extracted_files = os.listdir(dest_tmp_folder)
+    for extracted_file in extracted_files:
+        extracted_files_paths.append(os.path.join(os.path.abspath(dest_tmp_folder), extracted_file))
 
+    # Check if files and folder already exists
+    sct.printv('\nCheck if folder already exists...', verbose)
+    for data_extracted_name in extracted_files:
+        if os.path.isdir(data_extracted_name):
+            sct.printv(
+                'WARNING: Folder '
+                + data_extracted_name
+                + ' already exists. Removing it...',
+                1,
+                'warning',
+            )
+            sct.rmtree(data_extracted_name)
+    
+    # Destination path
+    for source_path in extracted_files_paths:
+        # Move the content of source to destination
+        shutil.move(source_path, dest_folder, copy_function=shutil.copytree)
+        
     sct.printv('\nRemove temporary file...', verbose)
     os.remove(tmp_file)
+
+    sct.printv('\nRemove temporary directory...', verbose)
+    sct.rmtree(dest_tmp_folder)
 
     sct.printv('Done!\n', verbose)
     return 0
