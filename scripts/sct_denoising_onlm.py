@@ -166,6 +166,9 @@ def main(file_to_denoise, param, output_file_name) :
     nib.save(img_denoise, output_file_name)
     nib.save(img_diff, file + '_difference' + ext)
 
+    sct.printv('\nDone! To view results, type:', param.verbose)
+    sct.printv('fsleyes ' + file_to_denoise + ' ' + output_file_name + ' & \n', param.verbose, 'info')
+
 
 # =======================================================================================================================
 # Start program
