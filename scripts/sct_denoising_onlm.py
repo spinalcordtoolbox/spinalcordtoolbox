@@ -81,7 +81,7 @@ def get_parser():
         "-v",
         help="Verbose. 0: nothing. 1: basic. 2: extended.",
         type=int,
-        default=0,
+        default=1,
         choices=(0, 1, 2))
 
     return parser
