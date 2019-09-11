@@ -81,7 +81,7 @@ def get_parser():
         "-v",
         help="Verbose. 0: nothing. 1: basic. 2: extended.",
         type=int,
-        default=0,
+        default=1,
         choices=(0, 1, 2))
 
     return parser
@@ -132,7 +132,7 @@ def main(file_to_denoise, param, output_file_name) :
     sct.printv("total time: %s" % (time() - t))
     sct.printv("vol size", den.shape)
 
-    axial_middle = data.shape[2] / 2
+    axial_middle = int(data.shape[2] / 2)
 
     before = data[:, :, axial_middle].T
     after = den[:, :, axial_middle].T
@@ -165,6 +165,9 @@ def main(file_to_denoise, param, output_file_name) :
         output_file_name = file + '_denoised' + ext
     nib.save(img_denoise, output_file_name)
     nib.save(img_diff, file + '_difference' + ext)
+
+    sct.printv('\nDone! To view results, type:', param.verbose)
+    sct.printv('fsleyes ' + file_to_denoise + ' ' + output_file_name + ' & \n', param.verbose, 'info')
 
 
 # =======================================================================================================================
