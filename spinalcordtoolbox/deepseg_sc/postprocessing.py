@@ -7,6 +7,9 @@ import logging
 import numpy as np
 from scipy.ndimage.measurements import label
 
+from ..process_seg import compute_shape
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -95,14 +98,43 @@ def _remove_extrem_holes(z_lst, end_z, start_z=0):
     return z_lst
 
 
-def post_processing_volume_wise(im_in):
-    """Post processing function."""
-    data_in = im_in.data.astype(np.int)
+def _remove_isolated_voxels_on_the_edge(im_seg, n_slices=5):
+    """
+    Remove isolated voxels on the edge if the CSA of the edge slice is smaller than half the median of adjacent slices.
+    :param im_seg:
+    :param n_slices: Number of adjacent slices to consider. If not enough slices, this test will be bypassed.
+    :return:
+    """
+    # Compute shape info across segmentation
+    metrics, _ = compute_shape(im_seg, angle_correction=False)
+    # Extract CSA and get min/max index, corresponding to the top/bottom edges of the segmentation
+    ind_nonnan = np.where(np.isnan(metrics['area'].data) == False)[0]
+    ind_min, ind_max = ind_nonnan[0], ind_nonnan[-1]
+    # Check if the CSA at the edge is inferior to half of the median across adjacent slices...
+    # ... for the top slice
+    if metrics['area'].data[ind_min] < np.median(metrics['area'].data[ind_min:n_slices]):
+        im_seg.data[:, :, ind_min] = 0
+        logger.warning('Found isolated voxels on slice %d, Removing them'.format(ind_min))
+    # ... for the bottom slice
+    if metrics['area'].data[ind_max] < np.median(metrics['area'].data[ind_max-n_slices+1:ind_max+1]):
+        im_seg.data[:, :, ind_max] = 0
+        logger.warning('Found isolated voxels on slice %d, Removing them'.format(ind_min))
+    return im_seg
 
-    data_in = _remove_blobs(data_in)
 
-    zz_zeros = [zz for zz in range(im_in.dim[2]) if 1 not in list(np.unique(data_in[:, :, zz]))]
-    zz_holes = _remove_extrem_holes(zz_zeros, im_in.dim[2] - 1, 0)
-    # filling z_holes, i.e. interpolate for z_slice not segmented
-    im_in.data = _fill_z_holes(zz_holes, data_in, im_in.dim[6]) if len(zz_holes) else data_in
-    return im_in
+def post_processing_volume_wise(im_seg):
+    """Post processing function to clean the input segmentation: fill holes, remove edge outlier, etc."""
+    data = im_seg.data.astype(np.int)
+
+    # Remove blobs
+    data = _remove_blobs(data)
+
+    # Fill z_holes, i.e. interpolate for z_slice not segmented
+    zz_zeros = [zz for zz in range(im_seg.dim[2]) if 1 not in list(np.unique(data[:, :, zz]))]
+    zz_holes = _remove_extrem_holes(zz_zeros, im_seg.dim[2] - 1, 0)
+    im_seg.data = _fill_z_holes(zz_holes, data, im_seg.dim[6]) if len(zz_holes) else data
+
+    # Set isolated voxels at edge slices to zero
+    im_seg = _remove_isolated_voxels_on_the_edge(im_seg)
+
+    return im_seg
