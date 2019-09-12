@@ -9,6 +9,7 @@ from scipy.ndimage.measurements import center_of_mass, label
 from scipy.ndimage.morphology import binary_fill_holes
 from skimage.exposure import rescale_intensity
 from scipy.ndimage import distance_transform_edt
+import nibabel as nib
 
 from spinalcordtoolbox import resampling
 from spinalcordtoolbox.deepseg_sc.cnn_models import nn_architecture_seg, nn_architecture_ctr
@@ -115,7 +116,7 @@ def find_centerline(algo, image_fname, contrast_type, brain_bool, folder_output,
         centerline_filename = sct.add_suffix(image_fname, "_ctr")
         labels_filename = sct.add_suffix(image_fname, "_labels-centerline")
         im_centerline.save(centerline_filename)
-        im_labels.save(labels_filename)
+        im_labels.save(labels_filename)  # TODO: don't save them, instead, pass the image
 
     elif algo == 'file':
         centerline_filename = sct.add_suffix(image_fname, "_ctr")
@@ -650,34 +651,45 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
                                   y_crop_lst=Y_CROP_LST,
                                   z_crop_lst=Z_CROP_LST)
     fname_res_seg = sct.add_suffix(fname_res, '_seg')
-    seg_uncrop_nii.save(fname_res_seg)
+    # seg_uncrop_nii.save(fname_res_seg)  # for debugging
     del seg_crop_data
 
     # resample to initial resolution
-    logger.info("Resampling the segmentation to the original image resolution...")
-    initial_resolution = 'x'.join([str(input_resolution[0]), str(input_resolution[1]), str(input_resolution[2])])
-    fname_res_seg_downsamp = sct.add_suffix(fname_res_seg, '_downsamp')
+    logger.info("Resampling the segmentation to the native image resolution using linear interpolation...")
+    # create nibabel object
+    seg_uncrop_nii_nib = nib.nifti1.Nifti1Image(seg_uncrop_nii.data, seg_uncrop_nii.hdr.get_best_affine())
+    seg_uncrop_nii_nibr = resampling.resample_nib(seg_uncrop_nii_nib, new_size=input_resolution, new_size_type='mm',
+                                                  interpolation='linear')
+    # Convert back to Image type
+    im_image_res_seg_downsamp = Image(seg_uncrop_nii_nibr.get_data(), hdr=seg_uncrop_nii_nibr.header, orientation='RPI',
+                                      dim=seg_uncrop_nii_nibr.header.get_data_shape())
 
-    resampling.resample_file(fname_res_seg, fname_res_seg_downsamp, initial_resolution,
-                                                           'mm', 'linear', verbose=0)
-    im_image_res_seg_downsamp = Image(fname_res_seg_downsamp)
+    #
+    # initial_resolution = 'x'.join([str(input_resolution[0]), str(input_resolution[1]), str(input_resolution[2])])
+    # fname_res_seg_downsamp = sct.add_suffix(fname_res_seg, '_downsamp')
+    #
+    # resampling.resample_file(fname_res_seg, fname_res_seg_downsamp, initial_resolution,
+    #                                                        'mm', 'linear', verbose=0)
+    # im_image_res_seg_downsamp = Image(fname_res_seg_downsamp)
 
-    if ctr_algo == 'viewer':  # resample and reorient the viewer labels
-        fname_res_labels = sct.add_suffix(fname_orient, '_labels-centerline')
-        resampling.resample_file(fname_res_labels, fname_res_labels, initial_resolution, 'mm', 'linear', verbose=0)
-        im_image_res_labels_downsamp = Image(fname_res_labels).change_orientation(original_orientation)
-    else:
-        im_image_res_labels_downsamp = None
+    # TODO: Deal with the case below if viewer is used (should pass the im_label variable, not use i/o)
+    # if ctr_algo == 'viewer':  # resample and reorient the viewer labels
+    #     fname_res_labels = sct.add_suffix(fname_orient, '_labels-centerline')
+    #     resampling.resample_file(fname_res_labels, fname_res_labels, initial_resolution, 'mm', 'linear', verbose=0)
+    #     im_image_res_labels_downsamp = Image(fname_res_labels).change_orientation(original_orientation)
+    # else:
+    #     im_image_res_labels_downsamp = None
 
-    if verbose == 2:
-        fname_res_ctr = sct.add_suffix(fname_orient, '_ctr')
-        resampling.resample_file(fname_res_ctr, fname_res_ctr, initial_resolution, 'mm', 'linear', verbose=0)
-        im_image_res_ctr_downsamp = Image(fname_res_ctr).change_orientation(original_orientation)
-    else:
-        im_image_res_ctr_downsamp = None
+    # TODO: Deal with that later-- ideally this file should be written when debugging, not with verbose=2
+    # if verbose == 2:
+    #     fname_res_ctr = sct.add_suffix(fname_orient, '_ctr')
+    #     resampling.resample_file(fname_res_ctr, fname_res_ctr, initial_resolution, 'mm', 'linear', verbose=0)
+    #     im_image_res_ctr_downsamp = Image(fname_res_ctr).change_orientation(original_orientation)
+    # else:
+    #     im_image_res_ctr_downsamp = None
 
-    # binarize the resampled image to remove interpolation effects
-    logger.info("Binarizing the segmentation to avoid interpolation effects...")
+    # Binarize the resampled image to remove interpolation effects
+    logger.info("Binarizing the resampled segmentation...")
     thr = 0.0001 if contrast_type in ['t1', 'dwi'] else 0.5
     # TODO: optimize speed --> np.where is slow
     im_image_res_seg_downsamp.data[np.where(im_image_res_seg_downsamp.data >= thr)] = 1
