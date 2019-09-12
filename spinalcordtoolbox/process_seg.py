@@ -38,6 +38,7 @@ def compute_shape(segmentation, angle_correction=True, param_centerline=None, ve
                      'eccentricity',
                      'orientation',
                      'solidity',
+                     'length'
                      ]
 
     im_seg = Image(segmentation).change_orientation('RPI')
@@ -108,6 +109,7 @@ def compute_shape(segmentation, angle_correction=True, param_centerline=None, ve
             # Add custom fields
             shape_property['angle_AP'] = angle_AP_rad * 180.0 / math.pi
             shape_property['angle_RL'] = angle_RL_rad * 180.0 / math.pi
+            shape_property['length'] = pz / (np.cos(angle_AP_rad) * np.cos(angle_RL_rad))
             # Loop across properties and assign values for function output
             for property_name in property_list:
                 shape_properties[property_name][iz] = shape_property[property_name]

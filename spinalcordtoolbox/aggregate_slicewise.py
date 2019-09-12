@@ -44,8 +44,173 @@ class LabelStruc:
         self.map_cluster = map_cluster
 
 
+def func_bin(data, mask, map_clusters=None):
+    """
+    Get the average of data after binarizing the input mask
+    :param data: nd-array: input data
+    :param mask: (n+1)d-array: input mask
+    :param map_clusters: not used
+    :return:
+    """
+    # Binarize mask
+    mask_bin = np.where(mask >= 0.5, 1, 0)
+    # run weighted average
+    return func_wa(data, mask_bin)
+
+
+def func_max(data, mask=None, map_clusters=None):
+    """
+    Get the max of an array
+    :param data: nd-array: input data
+    :param mask: not used
+    :param map_clusters: not used
+    :return:
+    """
+    return np.max(data), None
+
+
+def func_map(data, mask, map_clusters):
+    """
+    Compute maximum a posteriori (MAP) by aggregating the last dimension of mask according to a clustering method
+    defined by map_clusters
+    :param data: nd-array: input data
+    :param mask: (n+1)d-array: input mask. Note: this mask should include ALL labels to satisfy the necessary condition for
+    ML-based estimation, i.e., at each voxel, the sum of all labels (across the last dimension) equals the probability
+    to be inside the tissue. For example, for a pixel within the spinal cord, the sum of all labels should be 1.
+    :param map_clusters: list of list of int: Each sublist corresponds to a cluster of labels where ML estimation will
+    be performed to provide the prior beta_0 for MAP estimation.
+    :return: float: beta corresponding to the first label (beta[0])
+    :return: nd-array: matrix of all beta
+    """
+    # Check number of labels and map_clusters
+    assert mask.shape[-1] == len(map_clusters)
+
+    # Iterate across all labels (excluding the first one) and generate cluster labels. Examples of input/output:
+    #   [[0], [0], [0], [1], [2], [0]] --> [0, 0, 0, 1, 2, 0]
+    #   [[0, 1], [0], [0], [1], [2]] --> [0, 0, 0, 0, 1]
+    #   [[0, 1], [0], [1], [2], [3]] --> [0, 0, 0, 1, 2]
+    possible_clusters = [map_clusters[0]]
+    id_clusters = [0]  # this one corresponds to the first cluster
+    for i_cluster in map_clusters[1:]:  # skip the first
+        found_index = False
+        for possible_cluster in possible_clusters:
+            if i_cluster[0] in possible_cluster:
+                id_clusters.append(possible_clusters.index(possible_cluster))
+                found_index = True
+        if not found_index:
+            possible_clusters.append(i_cluster)
+            id_clusters.append(possible_clusters.index([i_cluster[0]]))
+
+    # Sum across each clustered labels, then concatenate to generate mask_clusters
+    # mask_clusters has dimension: x, y, z, n_clustered_labels, with n_clustered_labels being equal to the number of
+    # clusters that need to be estimated for ML method. Let's assume:
+    # label_struc = [
+    #   LabelStruc(id=0, map_cluster=0),
+    #   LabelStruc(id=1, map_cluster=0),
+    #   LabelStruc(id=2, map_cluster=0),
+    #   LabelStruc(id=3, map_cluster=1),
+    #   LabelStruc(id=4, map_cluster=2),
+    # ]
+    #
+    # Examples of scenario below for ML estimation:
+    #   labels_id_user = [0,1], mask_clusters = [np.sum(label[0:2]), label[3], label[4]]
+    #   labels_id_user = [3], mask_clusters = [np.sum(label[0:2]), label[3], label[4]]
+    #   labels_id_user = [0,1,2,3], mask_clusters = [np.sum(label(0:3)), label[4]]
+    mask_l = []
+    for i_cluster in list(set(id_clusters)):
+        # Get label indices for given cluster
+        id_label_cluster = [i for i in range(len(id_clusters)) if i_cluster == id_clusters[i]]
+        # Sum all labels for this cluster
+        mask_l.append(np.expand_dims(np.sum(mask[..., id_label_cluster], axis=(mask.ndim - 1)), axis=(mask.ndim - 1)))
+    mask_clusters = np.concatenate(mask_l, axis=(mask.ndim-1))
+
+    # Run ML estimation for each clustered labels
+    _, beta_cluster = func_ml(data, mask_clusters)
+
+    # MAP estimation:
+    #   y [nb_vox x 1]: measurements vector (to which weights are applied)
+    #   x [nb_vox x nb_labels]: linear relation between the measurements y
+    #   beta_0 [nb_labels]: A priori values estimated per cluster using ML.
+    #   beta [nb_labels] = beta_0 + (Xt . X + 1)^(-1) . Xt . (y - X . beta_0): The estimated metric value in each label
+    #
+    # Note: for simplicity we consider that sigma_noise = sigma_label
+    n_vox = functools.reduce(operator.mul, data.shape, 1)
+    y = np.reshape(data, n_vox)
+    x = np.reshape(mask, (n_vox, mask.shape[mask.ndim-1]))
+    beta_0 = [beta_cluster[id_clusters[i_label]] for i_label in range(mask.shape[-1])]
+    beta = beta_0 + np.dot(np.linalg.pinv(np.dot(x.T, x) + np.diag(np.ones(mask.shape[-1]))),
+                           np.dot(x.T,
+                                  (y - np.dot(x, beta_0))))
+    return beta[0], beta
+
+
+def func_ml(data, mask, map_clusters=None):
+    """
+    Compute maximum likelihood (ML) for the first label of mask.
+    :param data: nd-array: input data
+    :param mask: (n+1)d-array: input mask. Note: this mask should include ALL labels to satisfy the necessary condition
+    for ML-based estimation, i.e., at each voxel, the sum of all labels (across the last dimension) equals the
+    probability to be inside the tissue. For example, for a pixel within the spinal cord, the sum of all labels should
+    be 1.
+    :return: float: beta corresponding to the first label
+    """
+    # TODO: support weighted least square
+    # reshape as 1d vector (for data) and 2d vector (for mask)
+    n_vox = functools.reduce(operator.mul, data.shape, 1)
+    # ML estimation:
+    #   y: measurements vector (to which weights are applied)
+    #   x: linear relation between the measurements y
+    #   beta [nb_labels] = (Xt . X)^(-1) . Xt . y: The estimated metric value in each label
+    y = np.reshape(data, n_vox)  # [nb_vox x 1]
+    x = np.reshape(mask, (n_vox, mask.shape[mask.ndim-1]))
+    beta = np.dot(np.linalg.pinv(np.dot(x.T, x)), np.dot(x.T, y))
+    return beta[0], beta
+
+
+def func_std(data, mask=None, map_clusters=None):
+    """
+    Compute standard deviation
+    :param data: nd-array: input data
+    :param mask: (n+1)d-array: input mask
+    :param map_clusters: not used
+    :return:
+    """
+    # Check if mask has an additional dimension (in case it is a label). If so, select the first label
+    if mask.ndim == data.ndim + 1:
+        mask = mask[..., 0]
+    average, _ = func_wa(data, np.expand_dims(mask, axis=mask.ndim))
+    variance = np.average((data - average) ** 2, weights=mask)
+    return math.sqrt(variance), None
+
+
+def func_sum(data, mask=None, map_clusters=None):
+    """
+    Compute sum
+    :param data: nd-array: input data
+    :param mask: not used
+    :param map_clusters: not used
+    :return:
+    """
+    # Check if mask has an additional dimension (in case it is a label). If so, select the first label
+    return np.sum(data), None
+
+
+def func_wa(data, mask=None, map_clusters=None):
+    """
+    Compute weighted average
+    :param data: nd-array: input data
+    :param mask: (n+1)d-array: input mask
+    :param map_clusters: not used
+    :return:
+    """
+    # Check if mask has an additional dimension (in case it is a label). If so, select the first label
+    if mask.ndim == data.ndim + 1:
+        mask = mask[..., 0]
+    return np.average(data, weights=mask), None
+
+
 def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], perslice=None, perlevel=False,
-                                 vert_level=None, group_funcs=(('MEAN', np.mean),), map_clusters=None):
+                                 vert_level=None, group_funcs=(('MEAN', func_wa),), map_clusters=None):
     """
     The aggregation will be performed along the last dimension of 'metric' ndarray.
     :param metric: Class Metric(): data to aggregate.
@@ -55,7 +220,8 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], persli
     :param Bool perslice: Aggregate per slice (True) or across slices (False)
     :param Bool perlevel: Aggregate per level (True) or across levels (False). Has priority over "perslice".
     :param vert_level: Vertebral level. Could be either an Image or a file name.
-    :param tuple group_funcs: Functions to apply on metric. Example: (('mean', np.mean),))
+    :param tuple group_funcs: Name and function to apply on metric. Example: (('MEAN', func_wa),)). Note, the function
+      has special requirements in terms of i/o. See the definition to func_wa and use it as a template.
     :param map_clusters: list of list of int: See func_map()
     :return: Aggregated metric
     """
@@ -253,159 +419,6 @@ def extract_metric(data, labels=None, slices=None, levels=None, perslice=True, p
                                         map_clusters=map_clusters)
 
 
-def func_bin(data, mask, map_clusters=None):
-    """
-    Get the average of data after binarizing the input mask
-    :param data: nd-array: input data
-    :param mask: (n+1)d-array: input mask
-    :param map_clusters: not used
-    :return:
-    """
-    # Binarize mask
-    mask_bin = np.where(mask >= 0.5, 1, 0)
-    # run weighted average
-    return func_wa(data, mask_bin)
-
-
-def func_max(data, mask=None, map_clusters=None):
-    """
-    Get the max of an array
-    :param data: nd-array: input data
-    :param mask: not used
-    :param map_clusters: not used
-    :return:
-    """
-    return np.max(data), None
-
-
-def func_map(data, mask, map_clusters):
-    """
-    Compute maximum a posteriori (MAP) by aggregating the last dimension of mask according to a clustering method
-    defined by map_clusters
-    :param data: nd-array: input data
-    :param mask: (n+1)d-array: input mask. Note: this mask should include ALL labels to satisfy the necessary condition for
-    ML-based estimation, i.e., at each voxel, the sum of all labels (across the last dimension) equals the probability
-    to be inside the tissue. For example, for a pixel within the spinal cord, the sum of all labels should be 1.
-    :param map_clusters: list of list of int: Each sublist corresponds to a cluster of labels where ML estimation will
-    be performed to provide the prior beta_0 for MAP estimation.
-    :return: float: beta corresponding to the first label (beta[0])
-    :return: nd-array: matrix of all beta
-    """
-    # Check number of labels and map_clusters
-    assert mask.shape[-1] == len(map_clusters)
-
-    # Iterate across all labels (excluding the first one) and generate cluster labels. Examples of input/output:
-    #   [[0], [0], [0], [1], [2], [0]] --> [0, 0, 0, 1, 2, 0]
-    #   [[0, 1], [0], [0], [1], [2]] --> [0, 0, 0, 0, 1]
-    #   [[0, 1], [0], [1], [2], [3]] --> [0, 0, 0, 1, 2]
-    possible_clusters = [map_clusters[0]]
-    id_clusters = [0]  # this one corresponds to the first cluster
-    for i_cluster in map_clusters[1:]:  # skip the first
-        found_index = False
-        for possible_cluster in possible_clusters:
-            if i_cluster[0] in possible_cluster:
-                id_clusters.append(possible_clusters.index(possible_cluster))
-                found_index = True
-        if not found_index:
-            possible_clusters.append(i_cluster)
-            id_clusters.append(possible_clusters.index([i_cluster[0]]))
-
-    # Sum across each clustered labels, then concatenate to generate mask_clusters
-    # mask_clusters has dimension: x, y, z, n_clustered_labels, with n_clustered_labels being equal to the number of
-    # clusters that need to be estimated for ML method. Let's assume:
-    # label_struc = [
-    #   LabelStruc(id=0, map_cluster=0),
-    #   LabelStruc(id=1, map_cluster=0),
-    #   LabelStruc(id=2, map_cluster=0),
-    #   LabelStruc(id=3, map_cluster=1),
-    #   LabelStruc(id=4, map_cluster=2),
-    # ]
-    #
-    # Examples of scenario below for ML estimation:
-    #   labels_id_user = [0,1], mask_clusters = [np.sum(label[0:2]), label[3], label[4]]
-    #   labels_id_user = [3], mask_clusters = [np.sum(label[0:2]), label[3], label[4]]
-    #   labels_id_user = [0,1,2,3], mask_clusters = [np.sum(label(0:3)), label[4]]
-    mask_l = []
-    for i_cluster in list(set(id_clusters)):
-        # Get label indices for given cluster
-        id_label_cluster = [i for i in range(len(id_clusters)) if i_cluster == id_clusters[i]]
-        # Sum all labels for this cluster
-        mask_l.append(np.expand_dims(np.sum(mask[..., id_label_cluster], axis=(mask.ndim - 1)), axis=(mask.ndim - 1)))
-    mask_clusters = np.concatenate(mask_l, axis=(mask.ndim-1))
-
-    # Run ML estimation for each clustered labels
-    _, beta_cluster = func_ml(data, mask_clusters)
-
-    # MAP estimation:
-    #   y [nb_vox x 1]: measurements vector (to which weights are applied)
-    #   x [nb_vox x nb_labels]: linear relation between the measurements y
-    #   beta_0 [nb_labels]: A priori values estimated per cluster using ML.
-    #   beta [nb_labels] = beta_0 + (Xt . X + 1)^(-1) . Xt . (y - X . beta_0): The estimated metric value in each label
-    #
-    # Note: for simplicity we consider that sigma_noise = sigma_label
-    n_vox = functools.reduce(operator.mul, data.shape, 1)
-    y = np.reshape(data, n_vox)
-    x = np.reshape(mask, (n_vox, mask.shape[mask.ndim-1]))
-    beta_0 = [beta_cluster[id_clusters[i_label]] for i_label in range(mask.shape[-1])]
-    beta = beta_0 + np.dot(np.linalg.pinv(np.dot(x.T, x) + np.diag(np.ones(mask.shape[-1]))),
-                           np.dot(x.T,
-                                  (y - np.dot(x, beta_0))))
-    return beta[0], beta
-
-
-def func_ml(data, mask, map_clusters=None):
-    """
-    Compute maximum likelihood (ML) for the first label of mask.
-    :param data: nd-array: input data
-    :param mask: (n+1)d-array: input mask. Note: this mask should include ALL labels to satisfy the necessary condition
-    for ML-based estimation, i.e., at each voxel, the sum of all labels (across the last dimension) equals the
-    probability to be inside the tissue. For example, for a pixel within the spinal cord, the sum of all labels should
-    be 1.
-    :return: float: beta corresponding to the first label
-    """
-    # TODO: support weighted least square
-    # reshape as 1d vector (for data) and 2d vector (for mask)
-    n_vox = functools.reduce(operator.mul, data.shape, 1)
-    # ML estimation:
-    #   y: measurements vector (to which weights are applied)
-    #   x: linear relation between the measurements y
-    #   beta [nb_labels] = (Xt . X)^(-1) . Xt . y: The estimated metric value in each label
-    y = np.reshape(data, n_vox)  # [nb_vox x 1]
-    x = np.reshape(mask, (n_vox, mask.shape[mask.ndim-1]))
-    beta = np.dot(np.linalg.pinv(np.dot(x.T, x)), np.dot(x.T, y))
-    return beta[0], beta
-
-
-def func_std(data, mask=None, map_clusters=None):
-    """
-    Compute standard deviation
-    :param data: nd-array: input data
-    :param mask: (n+1)d-array: input mask
-    :param map_clusters: not used
-    :return:
-    """
-    # Check if mask has an additional dimension (in case it is a label). If so, select the first label
-    if mask.ndim == data.ndim + 1:
-        mask = mask[..., 0]
-    average, _ = func_wa(data, np.expand_dims(mask, axis=mask.ndim))
-    variance = np.average((data - average) ** 2, weights=mask)
-    return math.sqrt(variance), None
-
-
-def func_wa(data, mask=None, map_clusters=None):
-    """
-    Compute weighted average
-    :param data: nd-array: input data
-    :param mask: (n+1)d-array: input mask
-    :param map_clusters: not used
-    :return:
-    """
-    # Check if mask has an additional dimension (in case it is a label). If so, select the first label
-    if mask.ndim == data.ndim + 1:
-        mask = mask[..., 0]
-    return np.average(data, weights=mask), None
-
-
 def make_a_string(item):
     """Convert tuple or list or None to a string. Important: elements in tuple or list are separated with ; (not ,)
     for compatibility with csv."""
@@ -462,7 +475,7 @@ def save_as_csv(agg_metric, fname_out, fname_in=None, append=False):
     list_item = ['Label', 'Size [vox]', 'MEAN(area)', 'STD(area)', 'MEAN(angle_AP)', 'STD(angle_AP)', 'MEAN(angle_RL)',
                  'STD(angle_RL)', 'MEAN(diameter_AP)', 'STD(diameter_AP)', 'MEAN(diameter_RL)', 'STD(diameter_RL)',
                  'MEAN(eccentricity)', 'STD(eccentricity)', 'MEAN(orientation)', 'STD(orientation)',
-                 'MEAN(solidity)', 'STD(solidity)', 'WA()', 'BIN()', 'ML()', 'MAP()', 'STD()', 'MAX()']
+                 'MEAN(solidity)', 'STD(solidity)', 'SUM(length)', 'WA()', 'BIN()', 'ML()', 'MAP()', 'STD()', 'MAX()']
     # TODO: if append=True but file does not exist yet, raise warning and set append=False
     # write header (only if append=False)
     if not append or not os.path.isfile(fname_out):
