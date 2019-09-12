@@ -629,48 +629,40 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
         logger.info("Segmenting the spinal cord using deep learning on 2D patches...")
         segmentation_model_fname = \
             os.path.join(sct.__sct_dir__, 'data', 'deepseg_sc_models', '{}_sc.h5'.format(contrast_type))
-        seg_crop_data = segment_2d(model_fname=segmentation_model_fname,
-                                   contrast_type=contrast_type,
-                                   input_size=(crop_size, crop_size),
-                                   im_in=im_norm_in)
+        seg_crop = segment_2d(model_fname=segmentation_model_fname,
+                                 contrast_type=contrast_type,
+                                 input_size=(crop_size, crop_size),
+                                 im_in=im_norm_in)
     elif kernel_size == '3d':
         # segment data using 3D convolutions
         logger.info("Segmenting the spinal cord using deep learning on 3D patches...")
         segmentation_model_fname = \
             os.path.join(sct.__sct_dir__, 'data', 'deepseg_sc_models', '{}_sc_3D.h5'.format(contrast_type))
-        seg_crop_data = segment_3d(model_fname=segmentation_model_fname,
-                                   contrast_type=contrast_type,
-                                   im_in=im_norm_in)
+        seg_crop = segment_3d(model_fname=segmentation_model_fname,
+                                 contrast_type=contrast_type,
+                                 im_in=im_norm_in)
     del im_norm_in
 
     # reconstruct the segmentation from the crop data
     logger.info("Reassembling the image...")
-    seg_uncrop_nii = uncrop_image(ref_in=im_nii,
-                                  data_crop=seg_crop_data,
-                                  x_crop_lst=X_CROP_LST,
-                                  y_crop_lst=Y_CROP_LST,
-                                  z_crop_lst=Z_CROP_LST)
-    fname_res_seg = sct.add_suffix(fname_res, '_seg')
+    im_seg = uncrop_image(ref_in=im_nii,
+                          data_crop=seg_crop,
+                          x_crop_lst=X_CROP_LST,
+                          y_crop_lst=Y_CROP_LST,
+                          z_crop_lst=Z_CROP_LST)
+    # fname_res_seg = sct.add_suffix(fname_res, '_seg')
     # seg_uncrop_nii.save(fname_res_seg)  # for debugging
-    del seg_crop_data
+    del seg_crop
 
     # resample to initial resolution
     logger.info("Resampling the segmentation to the native image resolution using linear interpolation...")
     # create nibabel object
-    seg_uncrop_nii_nib = nib.nifti1.Nifti1Image(seg_uncrop_nii.data, seg_uncrop_nii.hdr.get_best_affine())
+    seg_uncrop_nii_nib = nib.nifti1.Nifti1Image(im_seg.data, im_seg.hdr.get_best_affine())
     seg_uncrop_nii_nibr = resampling.resample_nib(seg_uncrop_nii_nib, new_size=input_resolution, new_size_type='mm',
                                                   interpolation='linear')
     # Convert back to Image type
-    im_image_res_seg_downsamp = Image(seg_uncrop_nii_nibr.get_data(), hdr=seg_uncrop_nii_nibr.header, orientation='RPI',
-                                      dim=seg_uncrop_nii_nibr.header.get_data_shape())
-
-    #
-    # initial_resolution = 'x'.join([str(input_resolution[0]), str(input_resolution[1]), str(input_resolution[2])])
-    # fname_res_seg_downsamp = sct.add_suffix(fname_res_seg, '_downsamp')
-    #
-    # resampling.resample_file(fname_res_seg, fname_res_seg_downsamp, initial_resolution,
-    #                                                        'mm', 'linear', verbose=0)
-    # im_image_res_seg_downsamp = Image(fname_res_seg_downsamp)
+    im_seg_r = Image(seg_uncrop_nii_nibr.get_data(), hdr=seg_uncrop_nii_nibr.header, orientation='RPI',
+                     dim=seg_uncrop_nii_nibr.header.get_data_shape())
 
     # TODO: Deal with the case below if viewer is used (should pass the im_label variable, not use i/o)
     # if ctr_algo == 'viewer':  # resample and reorient the viewer labels
@@ -678,7 +670,7 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
     #     resampling.resample_file(fname_res_labels, fname_res_labels, initial_resolution, 'mm', 'linear', verbose=0)
     #     im_image_res_labels_downsamp = Image(fname_res_labels).change_orientation(original_orientation)
     # else:
-    #     im_image_res_labels_downsamp = None
+    im_image_res_labels_downsamp = None
 
     # TODO: Deal with that later-- ideally this file should be written when debugging, not with verbose=2
     # if verbose == 2:
@@ -686,20 +678,20 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
     #     resampling.resample_file(fname_res_ctr, fname_res_ctr, initial_resolution, 'mm', 'linear', verbose=0)
     #     im_image_res_ctr_downsamp = Image(fname_res_ctr).change_orientation(original_orientation)
     # else:
-    #     im_image_res_ctr_downsamp = None
+    im_image_res_ctr_downsamp = None
 
     # Binarize the resampled image to remove interpolation effects
     logger.info("Binarizing the resampled segmentation...")
     thr = 0.0001 if contrast_type in ['t1', 'dwi'] else 0.5
     # TODO: optimize speed --> np.where is slow
-    im_image_res_seg_downsamp.data[np.where(im_image_res_seg_downsamp.data >= thr)] = 1
-    im_image_res_seg_downsamp.data[np.where(im_image_res_seg_downsamp.data < thr)] = 0
+    im_seg_r.data[np.where(im_seg_r.data >= thr)] = 1
+    im_seg_r.data[np.where(im_seg_r.data < thr)] = 0
 
     # post processing step to z_regularized
-    im_image_res_seg_downsamp_postproc = post_processing_volume_wise(im_in=im_image_res_seg_downsamp)
+    im_seg_r_postproc = post_processing_volume_wise(im_in=im_seg_r)
 
     # change data type
-    im_image_res_seg_downsamp_postproc.change_type(np.uint8)
+    im_seg_r_postproc.change_type(np.uint8)
 
     tmp_folder.chdir_undo()
 
@@ -709,8 +701,8 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
         tmp_folder.cleanup()
 
     # reorient to initial orientation
-    return im_image_res_seg_downsamp_postproc.change_orientation(original_orientation), \
+    return im_seg_r_postproc.change_orientation(original_orientation), \
            im_nii, \
-           seg_uncrop_nii.change_orientation('RPI'), \
+           im_seg.change_orientation('RPI'), \
            im_image_res_labels_downsamp, \
            im_image_res_ctr_downsamp
