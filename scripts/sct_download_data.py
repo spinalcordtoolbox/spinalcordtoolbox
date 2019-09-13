@@ -19,7 +19,7 @@ import tarfile
 import tempfile
 import zipfile
 
-# importing shutil module  
+# importing shutil module
 import shutil
 
 import requests
@@ -43,9 +43,9 @@ def get_parser():
             'sct_example_data',
             'sct_testing_data',
             'course_hawaii17',
-            'course_paris18', 
-            'course_london19', 
-            'sct_course-beijing19',
+            'course_paris18',
+            'course_london19',
+            'course_beijing19',
             'PAM50',
             'MNI-Poly-AMU',
             'gm_model',
@@ -112,8 +112,8 @@ def main(args=None):
                            'https://www.neuro.polymtl.ca/_media/downloads/sct/20180612_sct_course-paris18.zip'],
         'course_london19': ['https://osf.io/4q3u7/?action=download',
                             'https://www.neuro.polymtl.ca/_media/downloads/sct/20190121_sct_course-london19.zip'],
-        'sct_course-beijing19': ['https://osf.io/ef4xz/?action=download',
-                            'https://www.neuro.polymtl.ca/_media/downloads/sct/20190802_sct_course-beijing19.zip'],
+        'course_beijing19': ['https://osf.io/ef4xz/?action=download',
+                             'https://www.neuro.polymtl.ca/_media/downloads/sct/20190802_sct_course-beijing19.zip'],
         'deepseg_gm_models': ['https://osf.io/b9y4x/?action=download',
                               'https://www.neuro.polymtl.ca/_media/downloads/sct/20180205_deepseg_gm_models.zip'],
         'deepseg_sc_models': ['https://osf.io/avf97/?action=download',
@@ -160,12 +160,12 @@ def main(args=None):
                 'warning',
             )
             sct.rmtree(data_extracted_name)
-    
+
     # Destination path
     for source_path in extracted_files_paths:
         # Move the content of source to destination
         shutil.move(source_path, dest_folder, copy_function=shutil.copytree)
-        
+
     sct.printv('\nRemove temporary file...', verbose)
     os.remove(tmp_file)
 
@@ -255,4 +255,3 @@ if __name__ == "__main__":
     sct.init_sct()
     res = main()
     raise SystemExit(res)
-
