@@ -76,7 +76,7 @@ def _remove_blobs(data):
             for obj_id in range(1, num_obj2clean + 1):
                 # if the blob has a volume < 10% of the bigger connected object, then remove it
                 if np.sum(labeled_obj2clean == obj_id) < 0.1 * np.sum(bigger_obj):
-                    logger.info('Removing small objects above slice#' + str(z_max))
+                    logger.warning('Removing small objects above slice #' + str(z_max))
                     data[np.where(labeled_obj2clean == obj_id)] = 0
 
     return data
