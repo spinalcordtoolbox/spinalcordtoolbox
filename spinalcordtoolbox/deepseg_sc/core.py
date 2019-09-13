@@ -487,13 +487,13 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
 
     # find the spinal cord centerline - execute OptiC binary
     logger.info("Finding the spinal cord centerline...")
-    fname_res, centerline_filename = find_centerline(algo=ctr_algo,
-                                                     image_fname=fname_orient,
-                                                     contrast_type=contrast_type,
-                                                     brain_bool=brain_bool,
-                                                     folder_output=tmp_folder_path,
-                                                     remove_temp_files=remove_temp_files,
-                                                     centerline_fname=file_ctr)
+    fname_res, centerline_filename, im_labels_viewer = find_centerline(algo=ctr_algo,
+                                                                        image_fname=fname_orient,
+                                                                        contrast_type=contrast_type,
+                                                                        brain_bool=brain_bool,
+                                                                        folder_output=tmp_folder_path,
+                                                                        remove_temp_files=remove_temp_files,
+                                                                        centerline_fname=file_ctr)
 
     im_nii, ctr_nii = Image(fname_res), Image(centerline_filename)
 
@@ -550,13 +550,14 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
     im_seg_r = Image(seg_uncrop_nii_nibr.get_data(), hdr=seg_uncrop_nii_nibr.header, orientation='RPI',
                      dim=seg_uncrop_nii_nibr.header.get_data_shape())
 
-    # TODO: Deal with the case below if viewer is used (should pass the im_label variable, not use i/o)
-    # if ctr_algo == 'viewer':  # resample and reorient the viewer labels
-    #     fname_res_labels = sct.add_suffix(fname_orient, '_labels-centerline')
-    #     resampling.resample_file(fname_res_labels, fname_res_labels, initial_resolution, 'mm', 'linear', verbose=0)
-    #     im_image_res_labels_downsamp = Image(fname_res_labels).change_orientation(original_orientation)
-    # else:
-    im_image_res_labels_downsamp = None
+    if ctr_algo == 'viewer':  # resample and reorient the viewer labels
+        im_labels_viewer_nib = nib.nifti1.Nifti1Image(im_labels_viewer.data, im_labels_viewer.hdr.get_best_affine())
+        im_viewer_r_nib = resampling.resample_nib(im_labels_viewer_nib, new_size=input_resolution, new_size_type='mm',
+                                                    interpolation='linear')
+        im_viewer = Image(im_viewer_r_nib.get_data(), hdr=im_viewer_r_nib.header, orientation='RPI',
+                            dim=im_viewer_r_nib.header.get_data_shape()).change_orientation(original_orientation)
+    else:
+        im_viewer = None
 
     # TODO: Deal with that later-- ideally this file should be written when debugging, not with verbose=2
     # if verbose == 2:
@@ -590,5 +591,5 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
     return im_seg_r_postproc.change_orientation(original_orientation), \
            im_nii, \
            im_seg.change_orientation('RPI'), \
-           im_image_res_labels_downsamp, \
+           im_viewer, \
            im_image_res_ctr_downsamp
