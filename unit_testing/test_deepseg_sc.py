@@ -30,13 +30,13 @@ def _preprocess_segment(fname_t2, fname_t2_seg, contrast_test, dim_3=False):
     input_resolution = gt.dim[4:7]
     del img, gt
 
-    fname_res, fname_ctr = deepseg_sc.find_centerline(algo='svm',
-                                                        image_fname=fname_t2_RPI,
-                                                        contrast_type=contrast_test,
-                                                        brain_bool=False,
-                                                        folder_output=tmp_folder_path,
-                                                        remove_temp_files=1,
-                                                        centerline_fname=None)
+    fname_res, fname_ctr, _ = deepseg_sc.find_centerline(algo='svm',
+                                                            image_fname=fname_t2_RPI,
+                                                            contrast_type=contrast_test,
+                                                            brain_bool=False,
+                                                            folder_output=tmp_folder_path,
+                                                            remove_temp_files=1,
+                                                            centerline_fname=None)
 
     fname_t2_seg_RPI_res = 'seg_RPI_res.nii.gz'
     new_resolution = 'x'.join(['0.5', '0.5', str(input_resolution[2])])
