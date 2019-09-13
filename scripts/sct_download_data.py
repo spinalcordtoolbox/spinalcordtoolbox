@@ -132,7 +132,6 @@ def main(args=None):
     sct.init_sct(log_level=verbose, update=True)  # Update log level
     dest_folder = arguments.get('-o', os.path.abspath(os.curdir))
     dest_tmp_folder = sct.tmp_create()
-    print('Temp folder: ' + dest_tmp_folder)
 
     # Download data
     url = dict_url[data_name]
