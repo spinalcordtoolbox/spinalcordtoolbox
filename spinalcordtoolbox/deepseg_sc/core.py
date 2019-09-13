@@ -6,14 +6,13 @@ import os, sys, logging
 
 import numpy as np
 from scipy.ndimage.measurements import center_of_mass, label
-from scipy.ndimage.morphology import binary_fill_holes
 from skimage.exposure import rescale_intensity
 from scipy.ndimage import distance_transform_edt
 import nibabel as nib
 
 from spinalcordtoolbox import resampling
 from .cnn_models import nn_architecture_seg, nn_architecture_ctr
-from .postprocessing import post_processing_volume_wise
+from .postprocessing import post_processing_volume_wise, post_processing_slice_wise
 from spinalcordtoolbox.image import Image, empty_like, change_type, zeros_like
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline, _call_viewer_centerline
 
@@ -417,23 +416,6 @@ def uncrop_image(ref_in, data_crop, x_crop_lst, y_crop_lst, z_crop_lst):
         seg_unCrop.data[x_start:x_end, y_start:y_end, zz] = pred_seg[0:x_end - x_start, 0:y_end - y_start]
 
     return seg_unCrop
-
-
-def post_processing_slice_wise(z_slice, x_cOm, y_cOm):
-    """Keep the largest connected obejct per z_slice and fill little holes."""
-    labeled_obj, num_obj = label(z_slice)
-    if num_obj > 1:
-        if x_cOm is None or np.isnan(x_cOm):  # slice 0 or empty slice
-            z_slice = (labeled_obj == (np.bincount(labeled_obj.flat)[1:].argmax() + 1))
-        else:
-            idx_z_minus_1 = np.bincount(labeled_obj.flat)[1:].argmax() + 1
-            for idx in range(1, num_obj + 1):
-                z_idx = labeled_obj == idx
-                if z_idx[int(x_cOm), int(y_cOm)]:
-                    idx_z_minus_1 = idx
-            z_slice = (labeled_obj == idx_z_minus_1)
-
-    return binary_fill_holes(z_slice, structure=np.ones((3, 3))).astype(np.int)
 
 
 def segment_3d(model_fname, contrast_type, im_in):

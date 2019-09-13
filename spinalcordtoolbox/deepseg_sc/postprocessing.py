@@ -6,6 +6,7 @@
 import logging
 import numpy as np
 from scipy.ndimage.measurements import label
+from scipy.ndimage.morphology import binary_fill_holes
 
 from ..process_seg import compute_shape
 
@@ -138,3 +139,20 @@ def post_processing_volume_wise(im_seg):
     im_seg = _remove_isolated_voxels_on_the_edge(im_seg)
 
     return im_seg
+
+
+def post_processing_slice_wise(z_slice, x_cOm, y_cOm):
+    """Keep the largest connected obejct per z_slice and fill little holes."""
+    labeled_obj, num_obj = label(z_slice)
+    if num_obj > 1:
+        if x_cOm is None or np.isnan(x_cOm):  # slice 0 or empty slice
+            z_slice = (labeled_obj == (np.bincount(labeled_obj.flat)[1:].argmax() + 1))
+        else:
+            idx_z_minus_1 = np.bincount(labeled_obj.flat)[1:].argmax() + 1
+            for idx in range(1, num_obj + 1):
+                z_idx = labeled_obj == idx
+                if z_idx[int(x_cOm), int(y_cOm)]:
+                    idx_z_minus_1 = idx
+            z_slice = (labeled_obj == idx_z_minus_1)
+
+    return binary_fill_holes(z_slice, structure=np.ones((3, 3))).astype(np.int)
