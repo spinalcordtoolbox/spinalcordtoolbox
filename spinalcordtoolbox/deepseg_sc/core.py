@@ -114,9 +114,7 @@ def find_centerline(algo, image_fname, contrast_type, brain_bool, folder_output,
         im_labels = _call_viewer_centerline(Image(image_fname))
         im_centerline, arr_centerline, _, _ = get_centerline(im_labels, param=ParamCenterline())
         centerline_filename = sct.add_suffix(image_fname, "_ctr")
-        labels_filename = sct.add_suffix(image_fname, "_labels-centerline")
         im_centerline.save(centerline_filename)
-        im_labels.save(labels_filename)  # TODO: don't save them, instead, pass the image
 
     elif algo == 'file':
         centerline_filename = sct.add_suffix(image_fname, "_ctr")
@@ -141,7 +139,10 @@ def find_centerline(algo, image_fname, contrast_type, brain_bool, folder_output,
         im_split_lst = split_data(Image(centerline_filename), dim=2)
         im_split_lst[0].save(centerline_filename)
 
-    return fname_res, centerline_filename
+    if algo != 'viewer':
+        im_labels = None
+
+    return fname_res, centerline_filename, im_labels
 
 
 def scale_intensity(data, out_min=0, out_max=255):
