@@ -220,7 +220,7 @@ def deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo='svm', ctr_file
                             dim=im_viewer_r_nib.header.get_data_shape()).change_orientation(original_orientation)
 
     else:
-        im_image_res_labels_downsamp = None
+        im_viewer = None
 
     if verbose == 2:
         fname_res_ctr = sct.add_suffix(fname_orient, '_ctr')
