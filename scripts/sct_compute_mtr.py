@@ -60,7 +60,7 @@ def main():
     nii_mt1 = msct_image.Image(fname_mt1)
     data_mt1 = nii_mt1.data
     data_mt0 = msct_image.Image(fname_mt0).data
-    data_mtr = 100 * (data_mt0 - data_mt1) / data_mt0
+    data_mtr = 100 * np.true_divide((data_mt0 - data_mt1), data_mt0)
     # save MTR file
     nii_mtr = nii_mt1
     nii_mtr.data = data_mtr
