@@ -7,12 +7,8 @@
 
 from __future__ import absolute_import, division
 
-import os
-import sct_utils as sct
 import numpy as np
 
-
-from ..image import Image
 
 def compute_mtsat(nii_mt, nii_pd, nii_t1,
                   tr_mt, tr_pd, tr_t1,
@@ -94,50 +90,3 @@ def compute_mtsat(nii_mt, nii_pd, nii_t1,
 
     return nii_mtsat, nii_t1map
 
-
-def compute_mtsat_from_file(fname_mt, fname_pd, fname_t1, tr_mt, tr_pd, tr_t1, fa_mt, fa_pd, fa_t1, fname_b1map=None,
-                            fname_mtsat=None, fname_t1map=None, verbose=1):
-    """
-    Compute MTsat and T1map.
-    :param fname_mt:
-    :param fname_pd:
-    :param fname_t1:
-    :param tr_mt:
-    :param tr_pd:
-    :param tr_t1:
-    :param fa_mt:
-    :param fa_pd:
-    :param fa_t1:
-    :param fname_b1map:
-    :param fname_mtsat:
-    :param fname_t1map:
-    :param verbose:
-    :return: fname_mtsat: file name for MTsat map
-    :return: fname_t1map: file name for T1 map
-    """
-    # load data
-    sct.printv('Load data...', verbose)
-    nii_mt = Image(fname_mt)
-    nii_pd = Image(fname_pd)
-    nii_t1 = Image(fname_t1)
-    if fname_b1map is None:
-        nii_b1map = None
-    else:
-        nii_b1map = Image(fname_b1map)
-
-    # compute MTsat
-    nii_mtsat, nii_t1map = compute_mtsat(nii_mt, nii_pd, nii_t1, tr_mt, tr_pd, tr_t1, fa_mt, fa_pd, fa_t1,
-                                         nii_b1map=nii_b1map, verbose=verbose)
-
-    # Output MTsat and T1 maps
-    # by default, output in the same directory as the input images
-    sct.printv('Generate output files...', verbose)
-    if fname_mtsat is None:
-        fname_mtsat = os.path.join(os.path.dirname(nii_mt.absolutepath), "mtsat.nii.gz")
-    nii_mtsat.save(fname_mtsat)
-    if fname_t1map is None:
-        fname_t1map = os.path.join(os.path.dirname(nii_mt.absolutepath), "t1map.nii.gz")
-
-    nii_t1map.save(fname_t1map)
-
-    return fname_mtsat, fname_t1map

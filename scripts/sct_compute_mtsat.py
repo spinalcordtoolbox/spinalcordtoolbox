@@ -22,7 +22,8 @@ import os
 import argparse
 
 from spinalcordtoolbox.utils import Metavar, SmartFormatter
-from spinalcordtoolbox.mtsat import mtsat
+from spinalcordtoolbox.qmri.mt import compute_mtsat
+from spinalcordtoolbox.image import Image
 
 import sct_utils as sct
 
@@ -126,9 +127,32 @@ def main():
     verbose = args.v
     sct.init_sct(log_level=verbose, update=True)  # Update log level
 
-    fname_mtsat, fname_t1map = mtsat.compute_mtsat_from_file(
-        args.mt, args.pd, args.t1, args.trmt, args.trpd, args.trt1, args.famt, args.fapd, args.fat1,
-        fname_b1map=args.b1map, fname_mtsat=args.omtsat, fname_t1map=args.ot1map, verbose=verbose)
+    sct.printv('Load data...', verbose)
+    nii_mt = Image(args.mt)
+    nii_pd = Image(args.pd)
+    nii_t1 = Image(args.t1)
+    if args.b1map is None:
+        nii_b1map = None
+    else:
+        nii_b1map = Image(args.b1map)
+
+    # compute MTsat
+    nii_mtsat, nii_t1map = compute_mtsat(nii_mt, nii_pd, nii_t1, args.trmt, args.trpd, args.trt1, args.famt, args.fapd, args.fat1,
+                                         nii_b1map=nii_b1map, verbose=verbose)
+
+    # Output MTsat and T1 maps
+    # by default, output in the same directory as the input images
+    sct.printv('Generate output files...', verbose)
+    if args.omtsat is None:
+        fname_mtsat = os.path.join(os.path.dirname(nii_mt.absolutepath), "mtsat.nii.gz")
+    else:
+        fname_mtsat = args.omtsat
+    nii_mtsat.save(fname_mtsat)
+    if args.ot1map is None:
+        fname_t1map = os.path.join(os.path.dirname(nii_mt.absolutepath), "t1map.nii.gz")
+    else:
+        fname_t1map = args.ot1map
+    nii_t1map.save(fname_t1map)
 
     sct.display_viewer_syntax([fname_mtsat, fname_t1map],
                               colormaps=['gray', 'gray'],
