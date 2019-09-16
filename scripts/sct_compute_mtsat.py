@@ -137,8 +137,8 @@ def main():
         nii_b1map = Image(args.b1map)
 
     # compute MTsat
-    nii_mtsat, nii_t1map = compute_mtsat(nii_mt, nii_pd, nii_t1, args.trmt, args.trpd, args.trt1, args.famt, args.fapd, args.fat1,
-                                         nii_b1map=nii_b1map, verbose=verbose)
+    nii_mtsat, nii_t1map = compute_mtsat(nii_mt, nii_pd, nii_t1, args.trmt, args.trpd, args.trt1, args.famt, args.fapd,
+                                         args.fat1, nii_b1map=nii_b1map)
 
     # Output MTsat and T1 maps
     # by default, output in the same directory as the input images

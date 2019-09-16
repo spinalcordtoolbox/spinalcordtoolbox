@@ -7,13 +7,16 @@
 
 from __future__ import absolute_import, division
 
+import logging
 import numpy as np
+
+logger = logging.getLogger(__name__)
 
 
 def compute_mtsat(nii_mt, nii_pd, nii_t1,
                   tr_mt, tr_pd, tr_t1,
                   fa_mt, fa_pd, fa_t1,
-                  nii_b1map=None, verbose=1):
+                  nii_b1map=None):
     """
     Compute MTsat and T1 map based on FLASH scans
     :param nii_mt:
@@ -30,9 +33,11 @@ def compute_mtsat(nii_mt, nii_pd, nii_t1,
     :return:
     """
     # params
-    nii_t1map = None  # it would be possible in the future to input T1 map from elsewhere (e.g. MP2RAGE). Note: this
-                      # T1map needs to be in s unit.
-    b1correctionfactor = 0.4  # empirically defined in https://www.frontiersin.org/articles/10.3389/fnins.2013.00095/full#h3
+    nii_t1map = \
+        None  # it would be possible in the future to input T1 map from elsewhere (e.g. MP2RAGE). Note: this T1map
+    # needs to be in s unit.
+    b1correctionfactor = \
+        0.4  # empirically defined in https://www.frontiersin.org/articles/10.3389/fnins.2013.00095/full#h3
 
     # convert all TRs in s
     tr_mt *= 0.001
@@ -50,7 +55,7 @@ def compute_mtsat(nii_mt, nii_pd, nii_t1,
     # check if a T1 map was given in input; if not, compute R1
     if nii_t1map is None:
         # compute R1
-        sct.printv('Compute T1 map...', verbose)
+        logger.info("Compute T1 map...")
         r1map = 0.5 * np.true_divide((fa_t1_rad / tr_t1) * nii_t1.data - (fa_pd_rad / tr_pd) * nii_pd.data,
                                      nii_pd.data / fa_pd_rad - nii_t1.data / fa_t1_rad)
         # remove nans and clip unrelistic values
@@ -61,17 +66,20 @@ def compute_mtsat(nii_mt, nii_pd, nii_t1,
         nii_t1map = nii_mt.copy()
         nii_t1map.data = 1. / r1map
     else:
-        sct.printv('Use input T1 map.', verbose)
+        logger.info("Use input T1 map.")
         r1map = 1. / nii_t1map.data
 
     # Compute A
-    sct.printv('Compute A...', verbose)
-    a = (tr_pd * fa_t1_rad / fa_pd_rad - tr_t1 * fa_pd_rad / fa_t1_rad) * np.true_divide(np.multiply(nii_pd.data, nii_t1.data, dtype=float), tr_pd * fa_t1_rad * nii_t1.data - tr_t1 * fa_pd_rad * nii_pd.data)
+    logger.info("Compute A...")
+    a = (tr_pd * fa_t1_rad / fa_pd_rad - tr_t1 * fa_pd_rad / fa_t1_rad) * \
+        np.true_divide(np.multiply(nii_pd.data, nii_t1.data, dtype=float),
+                       tr_pd * fa_t1_rad * nii_t1.data - tr_t1 * fa_pd_rad * nii_pd.data)
 
     # Compute MTsat
-    sct.printv('Compute MTsat...', verbose)
+    logger.info("Compute MTsat...")
     nii_mtsat = nii_mt.copy()
-    nii_mtsat.data = tr_mt * np.multiply((fa_mt_rad * np.true_divide(a, nii_mt.data) - 1), r1map, dtype=float) - (fa_mt_rad ** 2) / 2.
+    nii_mtsat.data = tr_mt * np.multiply((fa_mt_rad * np.true_divide(a, nii_mt.data) - 1),
+                                         r1map, dtype=float) - (fa_mt_rad ** 2) / 2.
     # sct.printv('nii_mtsat.data[95,89,14]' + str(nii_mtsat.data[95,89,14]), type='info')
     # remove nans and clip unrelistic values
     nii_mtsat.data = np.nan_to_num(nii_mtsat.data)
@@ -81,9 +89,12 @@ def compute_mtsat(nii_mt, nii_pd, nii_t1,
     nii_mtsat.data *= 100
 
     # Apply B1 correction to result
-    # Weiskopf, N., Suckling, J., Williams, G., Correia, M.M., Inkster, B., Tait, R., Ooi, C., Bullmore, E.T., Lutti, A., 2013. Quantitative multi-parameter mapping of R1, PD(*), MT, and R2(*) at 3T: a multi-center validation. Front. Neurosci. 7, 95.
+    # Weiskopf, N., Suckling, J., Williams, G., Correia, M.M., Inkster, B., Tait, R., Ooi, C., Bullmore, E.T., Lutti,
+    # A., 2013. Quantitative multi-parameter mapping of R1, PD(*), MT, and R2(*) at 3T: a multi-center validation.
+    # Front. Neurosci. 7, 95.
     if nii_b1map is not None:
-        nii_mtsat.data = np.true_divide(nii_mtsat.data * (1 - b1correctionfactor), (1 - b1correctionfactor * nii_b1map.data))
+        nii_mtsat.data = np.true_divide(nii_mtsat.data * (1 - b1correctionfactor),
+                                        (1 - b1correctionfactor * nii_b1map.data))
 
     # set back old seterr settings
     np.seterr(**seterr_old)
