@@ -31,7 +31,7 @@ def compute_mtsat(nii_mt, nii_pd, nii_t1,
                   fa_mt, fa_pd, fa_t1,
                   nii_b1map=None):
     """
-    Compute MTsat and T1 map based on FLASH scans
+    Compute MTsat (in percent) and T1 map (in s) based on FLASH scans
     :param nii_mt: Image object for MTw
     :param nii_pd: Image object for PDw
     :param nii_t1: Image object for T1w
@@ -42,7 +42,7 @@ def compute_mtsat(nii_mt, nii_pd, nii_t1,
     :param fa_pd: Float: Flip angle (in deg) for PDw image
     :param fa_t1: Float: Flip angle (in deg) for T1w image
     :param nii_b1map: Image object for B1-map (optional)
-    :return:
+    :return: MTsat and T1map.
     """
     # params
     nii_t1map = \
@@ -50,6 +50,10 @@ def compute_mtsat(nii_mt, nii_pd, nii_t1,
     # needs to be in s unit.
     b1correctionfactor = \
         0.4  # empirically defined in https://www.frontiersin.org/articles/10.3389/fnins.2013.00095/full#h3
+    # R1 threshold, below which values will be clipped.
+    r1_threshold = 0.01  # R1=0.01 s^-1 corresponds to T1=100s which is a reasonable threshold
+    # Similarly, we also set a threshold for MTsat values
+    mtsat_threshold = 1  # we expect MTsat to be on the order of 0.01
 
     # convert all TRs in s
     tr_mt *= 0.001
@@ -72,8 +76,11 @@ def compute_mtsat(nii_mt, nii_pd, nii_t1,
                                      nii_pd.data / fa_pd_rad - nii_t1.data / fa_t1_rad)
         # remove nans and clip unrelistic values
         r1map = np.nan_to_num(r1map)
-        ind_unrealistic = np.where(r1map < 0.01)  # R1=0.01 s^-1 corresponds to T1=100s which is reasonable to clip
-        r1map[ind_unrealistic] = np.inf  # set to infinity so that these values will be 0 on the T1map
+        ind_unrealistic = np.where(r1map < r1_threshold)
+        if ind_unrealistic[0].size:
+            logger.warning("R1 values were found to be lower than {}. They will be set to inf, producing T1=0 for "
+                           "these voxels.".format(r1_threshold))
+            r1map[ind_unrealistic] = np.inf  # set to infinity so that these values will be 0 on the T1map
         # compute T1
         nii_t1map = nii_mt.copy()
         nii_t1map.data = 1. / r1map
@@ -95,8 +102,11 @@ def compute_mtsat(nii_mt, nii_pd, nii_t1,
     # sct.printv('nii_mtsat.data[95,89,14]' + str(nii_mtsat.data[95,89,14]), type='info')
     # remove nans and clip unrelistic values
     nii_mtsat.data = np.nan_to_num(nii_mtsat.data)
-    ind_unrealistic = np.where(np.abs(nii_mtsat.data) > 1)  # we expect MTsat to be on the order of 0.01
-    nii_mtsat.data[ind_unrealistic] = 0
+    ind_unrealistic = np.where(np.abs(nii_mtsat.data) > mtsat_threshold)
+    if ind_unrealistic[0].size:
+        logger.warning("MTsat values were found to be larger than {}. They will be set to zero for these voxels."
+                       "".format(mtsat_threshold))
+        nii_mtsat.data[ind_unrealistic] = 0
     # convert into percent unit (p.u.)
     nii_mtsat.data *= 100
 
