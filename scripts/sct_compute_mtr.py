@@ -61,13 +61,13 @@ def get_parser():
 
 
 def main():
+    # Check input parameters
     parser = get_parser()
     args = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
-
-    # Check input parameters
     fname_mtr = args.o
     verbose = args.v
+    # Update log level
+    sct.init_sct(log_level=verbose, update=True)
 
     # compute MTR
     sct.printv('\nCompute MTR...', verbose)
