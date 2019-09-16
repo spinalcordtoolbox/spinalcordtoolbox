@@ -13,6 +13,19 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 
+def compute_mtr(nii_mt1, nii_mt0):
+    """
+    Compute Magnetization Transfer Ratio in percentage.
+    :param nii_mt1:
+    :param nii_mt0:
+    :return: nii_mtr
+    """
+    # Initialize Image object
+    nii_mtr = nii_mt1.copy()
+    nii_mtr.data = 100 * np.true_divide((nii_mt0.data - nii_mt1.data), nii_mt0.data)
+    return nii_mtr
+
+
 def compute_mtsat(nii_mt, nii_pd, nii_t1,
                   tr_mt, tr_pd, tr_t1,
                   fa_mt, fa_pd, fa_t1,
