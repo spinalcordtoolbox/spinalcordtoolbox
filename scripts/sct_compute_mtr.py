@@ -22,38 +22,7 @@ from spinalcordtoolbox.utils import Metavar, SmartFormatter
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.qmri.mt import compute_mtr
 
-# DEFAULT PARAMETERS
 
-
-class Param:
-    # The constructor
-    def __init__(self):
-        self.debug = 0
-        # self.register = 1
-        self.verbose = 1
-        self.file_out = 'mtr'
-
-
-# main
-#=======================================================================================================================
-def main():
-    parser = get_parser()
-    args = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
-
-    # Check input parameters
-    fname_mtr = args.o
-    verbose = args.v
-
-    # compute MTR
-    sct.printv('\nCompute MTR...', verbose)
-    nii_mtr = compute_mtr(nii_mt1=Image(args.mt1), nii_mt0=Image(args.mt0))
-    # save MTR file
-    nii_mtr.save(fname_mtr)
-
-    sct.display_viewer_syntax([args.mt0, args.mt1, fname_mtr])
-
-
-# ==========================================================================================
 def get_parser():
     parser = argparse.ArgumentParser(
         description='Compute magnetization transfer ratio (MTR). Output is given in percentage.',
@@ -88,18 +57,26 @@ def get_parser():
         help='Path to output file.',
         metavar=Metavar.str,
         default=os.path.join('.','mtr.nii.gz'))
-
     return parser
 
 
-#=======================================================================================================================
-# Start program
-#=======================================================================================================================
+def main():
+    parser = get_parser()
+    args = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
+    sct.init_sct(log_level=verbose, update=True)  # Update log level
+
+    # Check input parameters
+    fname_mtr = args.o
+    verbose = args.v
+
+    # compute MTR
+    sct.printv('\nCompute MTR...', verbose)
+    nii_mtr = compute_mtr(nii_mt1=Image(args.mt1), nii_mt0=Image(args.mt0))
+    # save MTR file
+    nii_mtr.save(fname_mtr)
+
+    sct.display_viewer_syntax([args.mt0, args.mt1, fname_mtr])
+
+
 if __name__ == "__main__":
-    sct.init_sct()
-    # parse arguments
-    # initialize parameters
-    param = Param()
-    # param_default = Param()
-    # call main function
     main()
