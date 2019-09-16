@@ -16,8 +16,8 @@ logger = logging.getLogger(__name__)
 def compute_mtr(nii_mt1, nii_mt0):
     """
     Compute Magnetization Transfer Ratio in percentage.
-    :param nii_mt1:
-    :param nii_mt0:
+    :param nii_mt1: Image object
+    :param nii_mt0: Image object
     :return: nii_mtr
     """
     # Initialize Image object
@@ -32,17 +32,16 @@ def compute_mtsat(nii_mt, nii_pd, nii_t1,
                   nii_b1map=None):
     """
     Compute MTsat and T1 map based on FLASH scans
-    :param nii_mt:
-    :param nii_pd:
-    :param nii_t1:
-    :param tr_mt:
-    :param tr_pd:
-    :param tr_t1:
-    :param fa_mt:
-    :param fa_pd:
-    :param fa_t1:
-    :param nii_b1map:
-    :param verbose:
+    :param nii_mt: Image object for MTw
+    :param nii_pd: Image object for PDw
+    :param nii_t1: Image object for T1w
+    :param tr_mt: Float: Repetition time for MTw image
+    :param tr_pd: Float: Repetition time for PDw image
+    :param tr_t1: Float: Repetition time for T1w image
+    :param fa_mt: Float: Flip angle (in deg) for MTw image
+    :param fa_pd: Float: Flip angle (in deg) for PDw image
+    :param fa_t1: Float: Flip angle (in deg) for T1w image
+    :param nii_b1map: Image object for B1-map (optional)
     :return:
     """
     # params
