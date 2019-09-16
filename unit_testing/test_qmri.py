@@ -7,6 +7,7 @@ from __future__ import print_function, absolute_import
 
 import numpy as np
 import nibabel
+import pytest
 
 from spinalcordtoolbox.qmri import mt
 from spinalcordtoolbox.image import Image
@@ -36,14 +37,14 @@ def test_compute_mtr():
 
 
 def test_compute_mtsat():
-    img_mtsat = mt.compute_mtsat(nii_mt=make_sct_image(1500),
-                                 nii_pd=make_sct_image(2000),
-                                 nii_t1=make_sct_image(1500),
-                                 tr_mt=30,
-                                 tr_pd=30,
-                                 tr_t1=15,
-                                 fa_mt=9,
-                                 fa_pd=9,
-                                 fa_t1=15
-                                 )
-    assert img_mtsat.data == 0.5 * 100  # output is in percent
+    img_mtsat, img_t1map = mt.compute_mtsat(nii_mt=make_sct_image(1500),
+                                            nii_pd=make_sct_image(2000),
+                                            nii_t1=make_sct_image(1500),
+                                            tr_mt=30,
+                                            tr_pd=30,
+                                            tr_t1=15,
+                                            fa_mt=9,
+                                            fa_pd=9,
+                                            fa_t1=15
+                                            )
+    assert img_mtsat.data == pytest.approx(1.5327, 0.0001)
