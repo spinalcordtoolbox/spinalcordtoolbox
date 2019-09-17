@@ -225,7 +225,7 @@ class Slice(object):
             raise
         return centers_x, centers_y
 
-    def mosaic(self, nb_column=0, size=15):
+    def mosaic(self, nb_column=0, size=15, return_center=False):
         """Obtain matrices of the mosaics
 
         Calculates how many squares will fit in a row based on the column and the size
@@ -234,7 +234,7 @@ class Slice(object):
         :param nb_column: number of mosaic columns
         :param size: each column size
         :return: tuple of numpy.ndarray containing the mosaics of each slice pixels
-        :return: list of tuples, each tuple representing the center of each square of the mosaic.
+        :return: list of tuples, each tuple representing the center of each square of the mosaic. Only with param return_center is True
         """
 
         # Calculate number of columns to display on the report
@@ -267,8 +267,10 @@ class Slice(object):
                 self.add_slice(matrix, i, nb_column, size, self.crop(self.get_slice(image.data, i), x, y, size, size))
 
             matrices.append(matrix)
-
-        return matrices, centers_mosaic
+        if return_center is True:
+            return matrices, centers_mosaic
+        else:
+            return matrices
 
     def single(self):
         """Obtain the matrices of the single slices. Flatten
