@@ -129,13 +129,13 @@ def main(args=None):
     verbose = int(arguments.get('-v'))
     sct.init_sct(log_level=verbose, update=True)  # Update log level
     dest_folder = arguments.get('-o', os.path.abspath(os.curdir))
-    dest_tmp_folder = sct.tmp_create()
 
     # Download data
     url = dict_url[data_name]
     tmp_file = download_data(url, verbose)
 
     # unzip
+    dest_tmp_folder = sct.tmp_create()
     unzip(tmp_file, dest_tmp_folder, verbose)
     extracted_files_paths = []
     # Get the name of the extracted files and directories
@@ -146,10 +146,10 @@ def main(args=None):
     # Check if files and folder already exists
     sct.printv('\nCheck if files or folder already exists on the destination path...', verbose)
     for data_extracted_name in extracted_files:
-        if os.path.isdir(data_extracted_name):
+        if os.path.isdir(os.path.join(dest_folder, data_extracted_name)):
             sct.printv("Folder {} already exists. Removing it...".format(data_extracted_name), 1, 'warning')
             rmtree(data_extracted_name)
-        elif os.path.isfile(data_extracted_name):
+        elif os.path.isfile(os.path.join(dest_folder, data_extracted_name)):
             sct.printv("File {} already exists. Removing it...".format(data_extracted_name), 1, 'warning')
             os.remove(data_extracted_name)
 
