@@ -139,7 +139,6 @@ def main(args=None):
 
     # unzip
     unzip(tmp_file, dest_tmp_folder, verbose)
-    print('dest_tmp_folder: '+dest_tmp_folder)
     extracted_files = []
     extracted_files_paths = []
     # Get the name of the extracted files and directories
