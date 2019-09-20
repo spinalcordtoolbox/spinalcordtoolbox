@@ -146,12 +146,13 @@ def main(args=None):
     # Check if files and folder already exists
     sct.printv('\nCheck if files or folder already exists on the destination path...', verbose)
     for data_extracted_name in extracted_files:
-        if os.path.isdir(os.path.join(dest_folder, data_extracted_name)):
+        fullpath_dest = os.path.join(dest_folder, data_extracted_name)
+        if os.path.isdir(fullpath_dest):
             sct.printv("Folder {} already exists. Removing it...".format(data_extracted_name), 1, 'warning')
-            rmtree(data_extracted_name)
-        elif os.path.isfile(os.path.join(dest_folder, data_extracted_name)):
+            rmtree(fullpath_dest)
+        elif os.path.isfile(fullpath_dest):
             sct.printv("File {} already exists. Removing it...".format(data_extracted_name), 1, 'warning')
-            os.remove(data_extracted_name)
+            os.remove(fullpath_dest)
 
     # Destination path
     for source_path in extracted_files_paths:
