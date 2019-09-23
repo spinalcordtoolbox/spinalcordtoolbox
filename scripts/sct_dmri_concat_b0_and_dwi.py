@@ -110,6 +110,7 @@ def main(args=None):
     # Concatenate NIFTI files
     im_concat = concat_data(fname_in_list=arguments.i, dim=3, squeeze_data=False)
     im_concat.save(arguments.o)
+    sct.printv("Generated file: {}".format(arguments.o))
 
     # Concatenate bvals and bvecs
     bvals_concat = ''
@@ -132,13 +133,16 @@ def main(args=None):
         for i in (0, 1, 2):
             bvecs_concat[i] += ' '.join(str(v) for v in map(lambda n: '%.16f' % n, bvec[:, i]))
             bvecs_concat[i] += ' '
+    bvecs_concat = '\n'.join(str(v) for v in bvecs_concat)  # transform list into lines of strings
     # Write files
     new_f = open(arguments.obval, 'w')
     new_f.write(bvals_concat)
     new_f.close()
+    sct.printv("Generated file: {}".format(arguments.obval))
     new_f = open(arguments.obvec, 'w')
     new_f.write(bvecs_concat)
     new_f.close()
+    sct.printv("Generated file: {}".format(arguments.obvec))
 
 
 if __name__ == "__main__":
