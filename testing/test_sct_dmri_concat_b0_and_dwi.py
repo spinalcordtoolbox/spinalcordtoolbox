@@ -13,8 +13,8 @@ def init(param_test):
     Initialize class: param_test
     """
     # initialization
-    default_args = ['-i dmri_T0000.nii.gz dmri.nii.gz -bvec bvecs.txt -bval bvals.txt -order b0 dwi '
-                    '-o b0_dwi_concat.nii -obval bvals_concat.txt -obvec bvecs_concat.txt']
+    default_args = ['-i dmri/dmri_T0000.nii.gz dmri/dmri.nii.gz -bvec dmri/bvecs.txt -bval dmri/bvals.txt '
+                    '-order b0 dwi -o b0_dwi_concat.nii -obval bvals_concat.txt -obvec bvecs_concat.txt']
     # assign default params
     if not param_test.args:
         param_test.args = default_args
