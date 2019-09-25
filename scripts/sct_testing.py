@@ -417,6 +417,7 @@ def get_functions_parallelizable():
         'sct_dice_coefficient',
         'sct_detect_pmj',
         'sct_dmri_compute_dti',
+        'sct_dmri_concat_b0_and_dwi',
         'sct_dmri_concat_bvals',
         'sct_dmri_concat_bvecs',
         'sct_dmri_create_noisemask',
