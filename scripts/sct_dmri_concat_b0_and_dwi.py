@@ -24,7 +24,7 @@ import sct_utils as sct
 
 def get_parser():
     parser = argparse.ArgumentParser(
-        description="Concatenate b=0 scans with DWI time series and update the bvecs and bvals files."
+        description="Concatenate b=0 scans with DWI time series and update the bvecs and bvals files.",
         formatter_class=SmartFormatter,
         add_help=None,
         prog=os.path.basename(__file__).strip(".py")
