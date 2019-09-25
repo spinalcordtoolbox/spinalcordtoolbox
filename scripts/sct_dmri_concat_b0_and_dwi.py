@@ -24,8 +24,7 @@ import sct_utils as sct
 
 def get_parser():
     parser = argparse.ArgumentParser(
-        description="Concatenate b=0 scans with DWI time series and update the bvecs and bvals files. Note that you can"
-                    "concatenate more than two files (e.g.: b0 dwi1 dw2 dw3).",
+        description="Concatenate b=0 scans with DWI time series and update the bvecs and bvals files."
         formatter_class=SmartFormatter,
         add_help=None,
         prog=os.path.basename(__file__).strip(".py")
@@ -33,7 +32,7 @@ def get_parser():
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
         '-i',
-        help="Input 4d files, separated by space, listed in the right order of concatenation. Example: b0.nii dmri.nii",
+        help="Input 4d files, separated by space, listed in the right order of concatenation. Example: b0.nii dmri1.nii dmri2.nii",
         nargs='+',
         metavar=Metavar.file,
         required=True,
@@ -54,7 +53,7 @@ def get_parser():
     )
     mandatory.add_argument(
         '-order',
-        help="Order of b=0 and DWI files entered in flag '-i', separated by space. Example: b0 dwi",
+        help="Order of b=0 and DWI files entered in flag '-i', separated by space. Example: b0 dwi dwi",
         nargs='+',
         choices=['b0', 'dwi'],
         metavar=Metavar.str,
