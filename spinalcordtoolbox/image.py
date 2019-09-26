@@ -255,6 +255,12 @@ class Image(object):
         else:
             raise TypeError('Image constructor takes at least one argument.')
 
+        # TODO: In the future, we might want to check qform_code and enforce its value. Related to #2454
+        # Check qform_code
+        # if not self.hdr['qform_code'] in [0, 1]:
+        #     # Set to 0 (unknown)
+        #     self.hdr.set_qform(self.hdr.get_qform(), code=0)
+        #     self.header.set_qform(self.hdr.get_qform(), code=0)
 
     @property
     def dim(self):
