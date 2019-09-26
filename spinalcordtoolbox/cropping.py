@@ -3,7 +3,17 @@
 # Functions dealing with image cropping
 
 
-from .image import Image
+import os
+import logging
+
+import numpy as np
+
+from .image import Image, empty_like, zeros_like
+
+import sct_utils as sct
+
+
+logger = logging.getLogger(__name__)
 
 
 class ImageCropper(object):
@@ -41,7 +51,7 @@ class ImageCropper(object):
         if self.mask is not None:
             # if user already specified -start or -end arguments, let him know they will be ignored
             if self.start is not None or self.end is not None:
-                sct.printv('WARNING: Mask was specified for cropping. Arguments -start and -end will be ignored', 1, 'warning')
+                logger.warning("Mask was specified for cropping. Arguments -start and -end will be ignored")
             self.start, self.end, self.dim = find_mask_boundaries(self.mask)
 
         if self.start is not None:
@@ -77,8 +87,7 @@ class ImageCropper(object):
             try:
                 os.remove(self.output_filename)
             except OSError:
-                sct.printv("WARNING : Couldn't remove output file. Either it is opened elsewhere or "
-                           "it doesn't exist.", self.verbose, 'warning')
+                logger.warning("Couldn't remove output file. Either it is opened elsewhere or it doesn't exist.")
         else:
             if self.verbose >= 1:
                 sct.display_viewer_syntax([self.output_filename])
@@ -112,7 +121,7 @@ class ImageCropper(object):
                 data_background = data_mask_inv * data_background
             new_data += data_background
 
-        image_out = msct_image.empty_like(image_in)
+        image_out = empty_like(image_in)
         image_out.data = new_data
         image_out.save(self.output_filename)
 
