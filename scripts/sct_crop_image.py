@@ -276,27 +276,32 @@ def get_parser():
         add_help=None,
         formatter_class=SmartFormatter,
         prog=os.path.basename(__file__).strip(".py"))
+
     mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatoryArguments.add_argument(
         "-i",
+        required=True,
         help='Input image. Example: t2.nii.gz',
         metavar=Metavar.file,
-        required = False)
+        )
     mandatoryArguments.add_argument(
         "-g",
         type=int,
+        required=True,
         help="1: use the GUI to crop, 0: use the command line to crop.",
-        required=False,
         choices=(0, 1),
-        default = 0)
+        default = 0
+    )
 
-    # Command line mandatory arguments
+    # Command line mandatory arguments only for CLI execution
     requiredCommandArguments = parser.add_argument_group("\nCOMMAND LINE RELATED MANDATORY ARGUMENTS")
     requiredCommandArguments.add_argument(
         "-o",
         help='Output image. This option is REQUIRED for the command line execution Example: t1.nii.gz',
         metavar=Metavar.str,
-        required=False)
+        required=False
+    )
+
     # Optional arguments section
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
