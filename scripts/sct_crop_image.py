@@ -193,105 +193,12 @@ class ImageCropper(object):
         # Extract coordinates
         cropping_coord = img_labels.getNonZeroCoordinates(sorting='value')
 
-        # import matplotlib.pyplot as plt
-        # import matplotlib.image as mpimg
-        # # Initialization
-        # fname_data = self.input_filename
-        # suffix_out = '_crop'  # TODO: change that
-        # remove_temp_files = self.rm_tmp_files
-        # verbose = self.verbose
-        #
-        # # Check file existence
-        # sct.printv('\nCheck file existence...', verbose)
-        # sct.check_file_exist(fname_data, verbose)
-        #
-        # # Get dimensions of data
-        # sct.printv('\nGet dimensions of data...', verbose)
-        # nx, ny, nz, nt, px, py, pz, pt = Image(fname_data).dim
-        # sct.printv('.. ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz), verbose)
-        # # check if 4D data
-        # if not nt == 1:
-        #     sct.printv('\nERROR in ' + os.path.basename(__file__) + ': Data should be 3D.\n', 1, 'error')
-        #     sys.exit(2)
-        #
-        # # sct.printv(arguments)
-        # sct.printv('\nCheck parameters:')
-        # sct.printv('  data ................... ' + fname_data)
-        #
-        # # Extract path/file/extension
-        # path_data, file_data, ext_data = sct.extract_fname(fname_data)
-        # path_out, file_out, ext_out = '', file_data + suffix_out, ext_data
-        #
-        # path_tmp = sct.tmp_create() + "/"
-        #
-        # # copy files into tmp folder
-        # from sct_convert import convert
-        # sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
-        # convert(fname_data, os.path.join(path_tmp, "data.nii"))
-        #
-        # # go to tmp folder
-        # curdir = os.getcwd()
-        # os.chdir(path_tmp)
-        #
-        # # change orientation
-        # sct.printv('\nChange orientation to RPI...', verbose)
-        # Image('data.nii').change_orientation("RPI").save('data_rpi.nii')
-        #
-        # # get image of medial slab
-        # sct.printv('\nGet image of medial slab...', verbose)
-        # image_array = nibabel.load('data_rpi.nii').get_data()
-        # nx, ny, nz = image_array.shape
-        # imageio.imwrite('image.jpg', image_array[math.floor(nx / 2), :, :])
-        #
-        # # Display the image
-        # sct.printv('\nDisplay image and get cropping region...', verbose)
-        # fig = plt.figure()
-        # # fig = plt.gcf()
-        # # ax = plt.gca()
-        # ax = fig.add_subplot(111)
-        # img = mpimg.imread("image.jpg")
-        # implot = ax.imshow(img.T)
-        # implot.set_cmap('gray')
-        # plt.gca().invert_yaxis()
-        # # mouse callback
-        # ax.set_title('Left click on the top and bottom of your cropping field.\n Right click to remove last point.\n Close window when your done.')
-        # line, = ax.plot([], [], 'ro')  # empty line
-        # cropping_coordinates = LineBuilder(line)
-        # plt.show()
-        # # disconnect callback
-        # # fig.canvas.mpl_disconnect(line)
-        #
-        # # check if user clicked two times
-        # if len(cropping_coordinates.xs) != 2:
-        #     sct.printv('\nERROR: You have to select two points. Exit program.\n', 1, 'error')
-        #     sys.exit(2)
-        #
-        # # convert coordinates to integer
-        # zcrop = [int(i) for i in cropping_coordinates.ys]
-        #
-        # # sort coordinates
-        # zcrop.sort()
-
         # Crop image
         data_crop = img_in.data[cropping_coord[0].x:cropping_coord[1].x, cropping_coord[0].y:cropping_coord[1].y, :]
         img_out = Image(param=data_crop, hdr=img_in.hdr)
         img_out.change_orientation(native_orientation)
         img_out.absolutepath = 'data_crop.nii'
         img_out.save()
-        # nii.save()
-
-        # come back
-        # os.chdir(curdir)
-
-        # sct.printv('\nGenerate output files...', verbose)
-        # sct.generate_output_file(os.path.join(path_tmp, "data_rpi_crop.nii"), os.path.join(path_out, file_out + ext_out))
-
-        # # Remove temporary files
-        # if remove_temp_files == 1:
-        #     sct.printv('\nRemove temporary files...')
-        #     sct.rmtree(path_tmp)
-
-        # sct.display_viewer_syntax(files=[os.path.join(path_out, file_out + ext_out)])
 
 
 def get_parser():
