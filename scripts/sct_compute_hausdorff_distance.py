@@ -441,12 +441,15 @@ def get_parser():
         formatter_class=SmartFormatter,
         prog=os.path.basename(__file__).strip(".py")
     )
+
     mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatoryArguments.add_argument(
         "-i",
+        required=True,
         help='First Image on which you want to find the skeleton Example: t2star_manual_gmseg.nii.gz',
         metavar=Metavar.file,
-        required=False)
+        )
+
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",
