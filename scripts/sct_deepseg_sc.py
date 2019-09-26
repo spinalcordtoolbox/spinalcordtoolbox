@@ -35,11 +35,15 @@ def get_parser():
     mandatory.add_argument(
         "-i",
         metavar=Metavar.file,
-        help='Input image. Example: t1.nii.gz')
+        help='Input image. Example: t1.nii.gz',
+        required=True
+    )
     mandatory.add_argument(
         "-c",
         help="Type of image contrast.",
-        choices=('t1', 't2', 't2s', 'dwi'))
+        choices=('t1', 't2', 't2s', 'dwi'),
+        required=True
+    )
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",
