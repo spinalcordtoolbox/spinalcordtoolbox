@@ -13,46 +13,16 @@
 
 from __future__ import absolute_import, division
 
-import sys, io, os, math, time, argparse
+import sys
+import os
+import argparse
 
-import imageio
 import numpy as np
-import scipy
-import nibabel
-import matplotlib
-matplotlib.use('tkagg')
-import sct_utils as sct
+
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image, zeros_like
 from spinalcordtoolbox.utils import Metavar, SmartFormatter
-
-
-class LineBuilder:
-    def __init__(self, line):
-        self.line = line
-        self.xs = list(line.get_xdata())
-        self.ys = list(line.get_ydata())
-        self.cid = line.figure.canvas.mpl_connect('button_press_event', self)
-
-    def __call__(self, event):
-        sct.printv('click', event)
-        if event.inaxes != self.line.axes:
-            # if user clicked outside the axis, ignore
-            return
-        if event.button == 2 or event.button == 3:
-            # if right button, remove last point
-            del self.xs[-1]
-            del self.ys[-1]
-        if len(self.xs) >= 2:
-            # if user already clicked 2 times, ignore
-            return
-        if event.button == 1:
-            # if left button, add point
-            self.xs.append(event.xdata)
-            self.ys.append(event.ydata)
-        # update figure
-        self.line.set_data(self.xs, self.ys)
-        self.line.figure.canvas.draw()
+import sct_utils as sct
 
 
 class ImageCropper(object):
