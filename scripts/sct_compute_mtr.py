@@ -29,17 +29,21 @@ def get_parser():
         add_help=None,
         formatter_class=SmartFormatter,
         prog=os.path.basename(__file__).strip(".py"))
+
     mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatoryArguments.add_argument(
         '-mt0',
+        required=True,
         help='Image without MT pulse (MT0)',
         metavar=Metavar.float,
-        required=False)
+        )
     mandatoryArguments.add_argument(
         '-mt1',
+        required=True,
         help='Image with MT pulse (MT1)',
         metavar=Metavar.float,
-        required=False)
+        )
+
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",
