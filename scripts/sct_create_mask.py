@@ -70,7 +70,7 @@ def get_parser():
         )
     mandatoryArguments.add_argument(
         '-p',
-        default=param_default.process
+        default=param_default.process,
         required=True,
         help='R|Process to generate mask.\n'
              '  <coord,XxY>: Center mask at the X,Y coordinates. (e.g. "coord,20x15")\n'
