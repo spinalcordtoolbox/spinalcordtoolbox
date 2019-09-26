@@ -61,32 +61,50 @@ def get_parser():
     optional.add_argument(
         "-v",
         type=int,
-        help="1: display on, 0: display off (default)",
-        required=False,
+        help="0: Verbose off | 1: Verbose on",
         choices=(0, 1),
-        default = 1)
-
+        default=1)
     optional.add_argument(
         "-m",
-        help="Cropping around the mask",
+        help="Binary mask that will be used to extract bounding box for cropping the image.",
         metavar=Metavar.file,
         required=False)
     optional.add_argument(
-        "-start",
-        help='Start slices, ]0,1[: percentage, 0 & >1: slice number. Example: 40,30,5',
-        metavar=Metavar.list,
-        required = False)
+        '-xmin',
+        default=0,
+        help="Lower bound for cropping along X.",
+        metavar=Metavar.int,
+        )
     optional.add_argument(
-        "-end",
-        help='End slices, ]0,1[: percentage, 0: last slice, >1: slice number, <0: last slice - value. '
-             'Example: 60,100,10',
-        metavar=Metavar.list,
-        required = False)
+        '-xmax',
+        default=-1,
+        help="Higher bound for cropping along X. Inputting -1 will set it to the maximum dimension.",
+        metavar=Metavar.int,
+        )
     optional.add_argument(
-        "-dim",
-        help='Dimension to crop, from 0 to n-1, default is 1. Example: 0,1,2',
-        metavar=Metavar.list,
-        required = False)
+        '-ymin',
+        default=0,
+        help="Lower bound for cropping along Y.",
+        metavar=Metavar.int,
+        )
+    optional.add_argument(
+        '-ymax',
+        default=-1,
+        help="Higher bound for cropping along Y. Inputting -1 will set it to the maximum dimension.",
+        metavar=Metavar.int,
+        )
+    optional.add_argument(
+        '-zmin',
+        default=0,
+        help="Lower bound for cropping along Z.",
+        metavar=Metavar.int,
+        )
+    optional.add_argument(
+        '-zmax',
+        default=-1,
+        help="Higher bound for cropping along Z. Inputting -1 will set it to the maximum dimension.",
+        metavar=Metavar.int,
+        )
     optional.add_argument(
         "-shift",
         help='adding shift when used with mask, default is 0. Example: 10,10,5',
@@ -156,12 +174,12 @@ def main(args=None):
     else:
         if arguments.m is not None:
             cropper.mask = arguments.m
-        if arguments.start is not None:
-            cropper.start = (arguments.start).split(",")
-        if arguments.start is not None:
-            cropper.end = (arguments.end).split(",")
-        if arguments.dim is not None:
-            cropper.dim = (arguments.dim).split(",")
+        cropper.xmin = arguments.xmin
+        cropper.xmax = arguments.xmax
+        cropper.ymin = arguments.ymin
+        cropper.ymax = arguments.ymax
+        cropper.zmin = arguments.zmin
+        cropper.zmax = arguments.zmax
         if arguments.shift is not None:
             cropper.shift = (arguments.shift).split(",")
         if arguments.b is not None:

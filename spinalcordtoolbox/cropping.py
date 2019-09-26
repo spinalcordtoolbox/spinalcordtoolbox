@@ -17,13 +17,18 @@ logger = logging.getLogger(__name__)
 
 
 class ImageCropper(object):
-    def __init__(self, input_file, output_file=None, mask=None, start=None, end=None, dim=None, shift=None, background=None, bmax=False, ref=None, mesh=None, rm_tmp_files=1, verbose=1, rm_output_file=0):
+    def __init__(self, input_file, output_file=None, mask=None, xmin=None, xmax=None, ymin=None, ymax=None, zmin=None,
+                 zmax=None, shift=None, background=None, bmax=False, ref=None, mesh=None, rm_tmp_files=1, verbose=1,
+                 rm_output_file=0):
         self.input_filename = input_file
         self.output_filename = output_file
         self.mask = mask
-        self.start = start
-        self.end = end
-        self.dim = dim
+        self.xmin = xmin
+        self.xmax = xmax
+        self.ymin = ymin
+        self.ymax = ymax
+        self.zmin = zmin
+        self.zmax = zmax
         self.shift = shift
         self.background = background
         self.bmax = bmax
