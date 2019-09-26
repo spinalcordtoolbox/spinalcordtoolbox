@@ -42,12 +42,14 @@ def get_parser():
         add_help=None,
         formatter_class=SmartFormatter,
         prog=os.path.basename(__file__).strip(".py"))
+
     mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatoryArguments.add_argument(
         '-i',
+        required=True,
         help='4D data to compute the SNR on (along the 4th dimension). Example: b0s.nii.gz',
-        required=False,
         metavar=Metavar.file)
+
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",
