@@ -84,8 +84,9 @@ def resample_nib(img, new_size=None, new_size_type=None, img_dest=None, interpol
         reference = img_dest
 
     if img.ndim == 3:
+        # we use mode 'nearest' to overcome issue #2453
         img_r = resample_from_to(
-            img, to_vox_map=reference, order=dict_interp[interpolation], mode='constant', cval=0.0, out_class=None)
+            img, to_vox_map=reference, order=dict_interp[interpolation], mode='nearest', cval=0.0, out_class=None)
 
     elif img.ndim == 4:
         # TODO: Cover img_dest with 4D volumes
