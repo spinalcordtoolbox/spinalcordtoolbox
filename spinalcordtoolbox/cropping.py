@@ -49,7 +49,7 @@ class ImageCropper(object):
         """
         Crop image (change dimension)
         """
-        bbox = self.get_bbox()
+        bbox = self.get_voxel_bbox()
 
         # Crop image
         data_crop = img_in.data[self.xmin:self.xmax, cropping_coord[0].y:cropping_coord[1].y, :]
@@ -175,8 +175,8 @@ class ImageCropper(object):
         img_out.absolutepath = self.output_filename
         img_out.save()
 
-    def get_bbox(self):
-        """Get bounding box from coordinates. Replaces -1 with max dim along each axis."""
+    def get_voxel_bbox(self):
+        """Get bounding voxel-based bounding box from coordinates. Replaces -1 with max dim along each axis."""
         a=1
         return 1
 
