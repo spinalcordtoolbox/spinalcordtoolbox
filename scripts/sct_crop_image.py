@@ -167,7 +167,7 @@ class ImageCropper(object):
         data_crop = img_in.data[cropping_coord[0].x:cropping_coord[1].x, cropping_coord[0].y:cropping_coord[1].y, :]
         img_out = Image(param=data_crop, hdr=img_in.hdr)
         img_out.change_orientation(native_orientation)
-        img_out.absolutepath = 'data_crop.nii'
+        img_out.absolutepath = self.output_filename
         img_out.save()
 
 
@@ -319,6 +319,7 @@ def main(args=None):
         cropper.output_filename = arguments.o
 
     # Cropping with GUI vs. CLI
+    # TODO: if not enough CLI arguments for cropping, open GUI
     if arguments.g:
         cropper.crop_with_gui()
     else:
