@@ -17,7 +17,7 @@ import sys
 import os
 import argparse
 
-from spinalcordtoolbox.cropping import ImageCropper
+from spinalcordtoolbox.cropping import ImageCropper, BoundingBox
 from spinalcordtoolbox.image import Image, zeros_like
 from spinalcordtoolbox.utils import Metavar, SmartFormatter
 import sct_utils as sct
@@ -157,7 +157,7 @@ def main(args=None):
     arguments = parser.parse_args(args=args)
 
     # initialize ImageCropper
-    cropper = ImageCropper(arguments.i)
+    cropper = ImageCropper(Image(arguments.i))
     cropper.verbose = arguments.v
     sct.init_sct(log_level=cropper.verbose, update=True)  # Update log level
 
@@ -174,12 +174,9 @@ def main(args=None):
     else:
         if arguments.m is not None:
             cropper.mask = arguments.m
-        cropper.xmin = arguments.xmin
-        cropper.xmax = arguments.xmax
-        cropper.ymin = arguments.ymin
-        cropper.ymax = arguments.ymax
-        cropper.zmin = arguments.zmin
-        cropper.zmax = arguments.zmax
+        cropper.bbox = BoundingBox(arguments.xmin, arguments.xmax,
+                                   arguments.ymin, arguments.ymax,
+                                   arguments.zmin, arguments.zmax)
         if arguments.shift is not None:
             cropper.shift = (arguments.shift).split(",")
         if arguments.b is not None:

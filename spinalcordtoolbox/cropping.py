@@ -16,19 +16,24 @@ import sct_utils as sct
 logger = logging.getLogger(__name__)
 
 
-class ImageCropper(object):
-    def __init__(self, input_file, output_file=None, mask=None, xmin=None, xmax=None, ymin=None, ymax=None, zmin=None,
-                 zmax=None, shift=None, background=None, bmax=False, ref=None, mesh=None, rm_tmp_files=1, verbose=1,
-                 rm_output_file=0):
-        self.input_filename = input_file
-        self.output_filename = output_file
-        self.mask = mask
+class BoundingBox(object):
+    def __init__(self, xmin=None, xmax=None, ymin=None, ymax=None, zmin=None, zmax=None):
         self.xmin = xmin
         self.xmax = xmax
         self.ymin = ymin
         self.ymax = ymax
         self.zmin = zmin
         self.zmax = zmax
+
+
+class ImageCropper(object):
+    def __init__(self, img_in, output_file=None, mask=None, bbox=BoundingBox(), shift=None, background=None,
+                 bmax=False, ref=None, mesh=None, rm_tmp_files=1, verbose=1,
+                 rm_output_file=0):
+        self.img_in = img_in
+        self.output_filename = output_file
+        self.mask = mask
+        self.bbox = bbox
         self.shift = shift
         self.background = background
         self.bmax = bmax
@@ -44,10 +49,15 @@ class ImageCropper(object):
         """
         Crop image (change dimension)
         """
+        bbox = self.get_bbox()
 
-        # create command line
+        # Crop image
+        data_crop = img_in.data[self.xmin:self.xmax, cropping_coord[0].y:cropping_coord[1].y, :]
+        img_out = Image(param=data_crop, hdr=img_in.hdr)
+        img_out.change_orientation(native_orientation)
+        img_out.absolutepath = self.output_filename
+        img_out.save()
 
-        img_in = Image(self.input_filename)
 
         self.cmd = ["isct_crop_image", "-i", self.input_filename, "-o", self.output_filename]
         # Handling optional arguments
@@ -165,6 +175,10 @@ class ImageCropper(object):
         img_out.absolutepath = self.output_filename
         img_out.save()
 
+    def get_bbox(self):
+        """Get bounding box from coordinates. Replaces -1 with max dim along each axis."""
+        a=1
+        return 1
 
 def find_mask_boundaries(fname_mask):
     """
