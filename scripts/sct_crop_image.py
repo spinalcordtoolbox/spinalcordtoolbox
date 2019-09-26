@@ -208,6 +208,12 @@ def get_parser():
         action="help",
         help="Show this help message and exit")
     optional.add_argument(
+        "-o",
+        help='Output image. This option is REQUIRED for the command line execution Example: t1.nii.gz',
+        metavar=Metavar.str,
+    )
+
+    optional.add_argument(
         "-v",
         type=int,
         help="1: display on, 0: display off (default)",
