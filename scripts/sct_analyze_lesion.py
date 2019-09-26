@@ -46,10 +46,13 @@ def get_parser():
     mandatory_arguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory_arguments.add_argument(
         "-m",
+        required=True,
         help='Binary mask of lesions (lesions are labeled as "1").',
-        metavar=Metavar.file)
+        metavar=Metavar.file,
+    )
     mandatory_arguments.add_argument(
         "-s",
+        required=True,
         help="Spinal cord centerline or segmentation file, which will be used to correct morphometric measures with "
              "cord angle with respect to slice. (e.g.'t2_seg.nii.gz')",
         metavar=Metavar.file)
