@@ -50,6 +50,78 @@ class Param:
         self.offset = '0,0'
 
 
+def get_parser():
+    # Initialize default parameters
+    param_default = Param()
+    # Initialize the parser
+
+    parser = argparse.ArgumentParser(
+        description='Create mask along z direction.',
+        add_help=None,
+        prog=os.path.basename(__file__).strip(".py"),
+        formatter_class= SmartFormatter)
+
+    mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatoryArguments.add_argument(
+        '-i',
+        required=True,
+        help='Image to create mask on. Only used to get header. Must be 3D. Example: data.nii.gz',
+        metavar=Metavar.file,
+        )
+    mandatoryArguments.add_argument(
+        '-p',
+        default=param_default.process
+        required=True,
+        help='R|Process to generate mask.\n'
+             '  <coord,XxY>: Center mask at the X,Y coordinates. (e.g. "coord,20x15")\n'
+             '  <point,FILE>: Center mask at the X,Y coordinates of the label defined in input volume FILE. (e.g. "point,label.nii.gz")\n'
+             '  <center>: Center mask in the middle of the FOV (nx/2, ny/2).\n'
+             '  <centerline,FILE>: At each slice, the mask is centered at the spinal cord centerline, defined by the input segmentation FILE. (e.g. "centerline,t2_seg.nii.gz")',
+        metavar=Metavar.str,
+    )
+
+    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional.add_argument(
+        "-h",
+        "--help",
+        action="help",
+        help="Show this help message and exit")
+    optional.add_argument(
+        '-size',
+        help='Size of the mask in the axial plane, given in pixel (Example: 35) or in millimeter (Example: 35mm). '
+             'If shape=gaussian, size corresponds to "sigma" (Example: 45).',
+        metavar=Metavar.str,
+        required = False,
+        default = param_default.size)
+    optional.add_argument(
+        '-f',
+        help='Shape of the mask',
+        required = False,
+        default = param_default.shape,
+        choices=('cylinder', 'box', 'gaussian'))
+    optional.add_argument(
+        '-o',
+        metavar=Metavar.str,
+        help='Name of output mask, Example: data.nii',
+        required = False)
+    optional.add_argument(
+        "-r",
+        type=int,
+        help='Remove temporary files',
+        required = False,
+        default = 1,
+        choices = (0, 1))
+    optional.add_argument(
+        "-v",
+        type=int,
+        help="Verbose: 0 = nothing, 1 = classic, 2 = expended ",
+        required=False,
+        choices=(0, 1, 2),
+        default = 1)
+
+    return parser
+
+
 def main(args=None):
     """
     Main function
@@ -281,74 +353,6 @@ def create_mask2d(param, center, shape, size, im_data):
         mask2d = np.exp(-(((xx + offset[0] - xc)**2) / (2 * (sigma**2)) + ((yy + offset[1] - yc)**2) / (2 * (sigma**2))))
 
     return mask2d
-
-
-def get_parser():
-    # Initialize default parameters
-    param_default = Param()
-    # Initialize the parser
-
-    parser = argparse.ArgumentParser(
-        description='Create mask along z direction.',
-        add_help=None,
-        prog=os.path.basename(__file__).strip(".py"),
-        formatter_class= SmartFormatter)
-    mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
-    mandatoryArguments.add_argument(
-        '-i',
-        help='Image to create mask on. Only used to get header. Must be 3D. Example: data.nii.gz',
-        metavar=Metavar.file,
-        required = False)
-    mandatoryArguments.add_argument(
-        '-p',
-        help='R|Process to generate mask.\n'
-             '  <coord,XxY>: Center mask at the X,Y coordinates. (e.g. "coord,20x15")\n'
-             '  <point,FILE>: Center mask at the X,Y coordinates of the label defined in input volume FILE. (e.g. "point,label.nii.gz")\n'
-             '  <center>: Center mask in the middle of the FOV (nx/2, ny/2).\n'
-             '  <centerline,FILE>: At each slice, the mask is centered at the spinal cord centerline, defined by the input segmentation FILE. (e.g. "centerline,t2_seg.nii.gz")',
-        metavar=Metavar.str,
-        required = False,
-        default = param_default.process)
-    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
-    optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="Show this help message and exit")
-    optional.add_argument(
-        '-size',
-        help='Size of the mask in the axial plane, given in pixel (Example: 35) or in millimeter (Example: 35mm). '
-             'If shape=gaussian, size corresponds to "sigma" (Example: 45).',
-        metavar=Metavar.str,
-        required = False,
-        default = param_default.size)
-    optional.add_argument(
-        '-f',
-        help='Shape of the mask',
-        required = False,
-        default = param_default.shape,
-        choices=('cylinder', 'box', 'gaussian'))
-    optional.add_argument(
-        '-o',
-        metavar=Metavar.str,
-        help='Name of output mask, Example: data.nii',
-        required = False)
-    optional.add_argument(
-        "-r",
-        type=int,
-        help='Remove temporary files',
-        required = False,
-        default = 1,
-        choices = (0, 1))
-    optional.add_argument(
-        "-v",
-        type=int,
-        help="Verbose: 0 = nothing, 1 = classic, 2 = expended ",
-        required=False,
-        choices=(0, 1, 2),
-        default = 1)
-
-    return parser
 
 
 if __name__ == "__main__":
