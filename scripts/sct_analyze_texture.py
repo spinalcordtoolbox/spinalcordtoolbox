@@ -39,7 +39,7 @@ def get_parser():
         formatter_class=SmartFormatter,
         prog=os.path.basename(__file__).strip(".py")
     )
-    
+
     mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatoryArguments.add_argument(
         "-i",
