@@ -188,21 +188,17 @@ def get_parser():
         metavar=Metavar.file,
         )
 
-    # Command line mandatory arguments only for CLI execution
-    requiredCommandArguments = parser.add_argument_group("\nCOMMAND LINE RELATED MANDATORY ARGUMENTS")
-    requiredCommandArguments.add_argument(
-        "-o",
-        help='Output image. This option is REQUIRED for the command line execution Example: t1.nii.gz',
-        metavar=Metavar.str,
-        required=False
-    )
-
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",
         "--help",
         action="help",
         help="Show this help message and exit")
+    optional.add_argument(
+        '-o',
+        help="Output image. By default, the suffix '_crop' will be added to the input image.",
+        metavar=Metavar.str,
+    )
     optional.add_argument(
         "-g",
         type=int,
@@ -217,43 +213,34 @@ def get_parser():
         required=False,
         choices=(0, 1),
         default = 1)
-    # GUI optional argument
-    guiOptionalArguments = parser.add_argument_group("\nGUI RELATED OPTIONAL ARGUMENTS")
-    guiOptionalArguments.add_argument(
-        "-r",
-        type=int,
-        help="Remove temporary files. Default = 1",
-        required=False,
-        choices=(0, 1))
-    # Command line optional arguments
-    commandOptionalArguments = parser.add_argument_group("\nCOMMAND LINE RELATED OPTIONAL ARGUMENTS")
-    commandOptionalArguments.add_argument(
+
+    optional.add_argument(
         "-m",
         help="Cropping around the mask",
         metavar=Metavar.file,
         required=False)
-    commandOptionalArguments.add_argument(
+    optional.add_argument(
         "-start",
         help='Start slices, ]0,1[: percentage, 0 & >1: slice number. Example: 40,30,5',
         metavar=Metavar.list,
         required = False)
-    commandOptionalArguments.add_argument(
+    optional.add_argument(
         "-end",
         help='End slices, ]0,1[: percentage, 0: last slice, >1: slice number, <0: last slice - value. '
              'Example: 60,100,10',
         metavar=Metavar.list,
         required = False)
-    commandOptionalArguments.add_argument(
+    optional.add_argument(
         "-dim",
         help='Dimension to crop, from 0 to n-1, default is 1. Example: 0,1,2',
         metavar=Metavar.list,
         required = False)
-    commandOptionalArguments.add_argument(
+    optional.add_argument(
         "-shift",
         help='adding shift when used with mask, default is 0. Example: 10,10,5',
         metavar=Metavar.list,
         required = False)
-    commandOptionalArguments.add_argument(
+    optional.add_argument(
         "-b",
         type=float,
         help="Replace voxels outside cropping region with background value. If both the -m and the -b flags are used, "
@@ -261,22 +248,22 @@ def get_parser():
              "including the mask). The shape of the image does not change.",
         metavar=Metavar.float,
         required=False)
-    commandOptionalArguments.add_argument(
+    optional.add_argument(
         "-bmax",
         help="Maximize the cropping of the image (provide -dim if you want to specify the dimensions).",
         metavar='',
         required=False)
-    commandOptionalArguments.add_argument(
+    optional.add_argument(
         "-ref",
         help='Crop input image based on reference image (works only for 3D images). Example: ref.nii.gz',
         metavar=Metavar.file,
         required = False)
-    commandOptionalArguments.add_argument(
+    optional.add_argument(
         "-mesh",
         help="Mesh to crop",
         metavar=Metavar.file,
         required=False)
-    commandOptionalArguments.add_argument(
+    optional.add_argument(
         "-rof",
         type=int,
         help="Remove output file created when cropping",
@@ -320,27 +307,21 @@ def main(args=None):
     parser = get_parser()
     arguments = parser.parse_args(args=args)
 
-    # assigning variables to arguments
-    input_filename = arguments.i
-    cropping_with_gui = arguments.g
-
     # initialize ImageCropper
-    cropper = ImageCropper(input_filename)
+    cropper = ImageCropper(arguments.i)
     cropper.verbose = arguments.v
     sct.init_sct(log_level=cropper.verbose, update=True)  # Update log level
 
-    if cropping_with_gui:
-        if arguments.r is not None:
-            cropper.rm_tmp_files = arguments.r
-        cropper.crop_with_gui()
-
+    # set output filename
+    if arguments.o is None:
+        cropper.output_filename = sct.add_suffix(arguments.i, '_crop')
     else:
-        if arguments.o is not None:
-            cropper.output_filename = arguments.o
-        else:
-            sct.printv("An output file needs to be specified using the command line")
-            sys.exit(2)
-        # Handling optional arguments
+        cropper.output_filename = arguments.o
+
+    # Cropping with GUI vs. CLI
+    if arguments.g:
+        cropper.crop_with_gui()
+    else:
         if arguments.m is not None:
             cropper.mask = arguments.m
         if arguments.start is not None:
