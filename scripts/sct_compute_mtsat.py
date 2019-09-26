@@ -38,58 +38,69 @@ def get_parser():
         formatter_class=SmartFormatter,
         prog= os.path.basename(__file__).strip(".py")
     )
+
     mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatoryArguments.add_argument(
         "-mt",
+        required=True,
         help="Image with MT_ON",
         metavar=Metavar.file,
-        required=False)
+        )
     mandatoryArguments.add_argument(
         "-pd",
+        required=True,
         help="Image PD weighted (typically, the MT_OFF)",
         metavar=Metavar.file,
-        required=False)
+        )
     mandatoryArguments.add_argument(
         "-t1",
+        required=True,
         help="Image T1-weighted",
         metavar=Metavar.file,
-        required=False)
+        )
     mandatoryArguments.add_argument(
         "-trmt",
+        required=True,
         help="TR [in ms] for mt image.",
         type=float,
         metavar=Metavar.float,
-        required=False)
+        )
     mandatoryArguments.add_argument(
         "-trpd",
+        required=True,
         help="TR [in ms] for pd image.",
         type=float,
         metavar=Metavar.float,
-        required=False)
+        )
     mandatoryArguments.add_argument(
         "-trt1",
+        required=True,
         help="TR [in ms] for t1 image.",
         type=float,
         metavar=Metavar.float,
-        required=False)
+        )
     mandatoryArguments.add_argument(
         "-famt",
+        required=True,
         help="Flip angle [in deg] for mt image.",
         type=float,
         metavar=Metavar.float,
-        required=False)
+        )
     mandatoryArguments.add_argument(
         "-fapd",
+        required=True,
         help="Flip angle [in deg] for pd image.",
         type=float,
         metavar=Metavar.float,
-        required=False)
+        )
     mandatoryArguments.add_argument(
         "-fat1",
+        required=True,
         help="Flip angle [in deg] for t1 image.",
         type=float,
         metavar=Metavar.float,
-        required=False)
+        )
+
     optional = parser.add_argument_group('\nOPTIONAL ARGUMENTS')
     optional.add_argument(
         "-h",

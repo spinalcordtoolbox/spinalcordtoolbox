@@ -81,13 +81,16 @@ def get_parser():
         add_help=None,
         formatter_class=SmartFormatter,
         prog=os.path.basename(__file__).strip(".py"))
+
     mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatoryArguments.add_argument(
         "-tr",
         type=float,
+        required=True,
         help='Value of TR (in ms) to get the Ernst Angle. Example: 2000',
         metavar=Metavar.float,
-        required=False)
+    )
+
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",
