@@ -40,17 +40,21 @@ def get_parser():
         add_help=None,
         formatter_class=SmartFormatter,
         prog=os.path.basename(__file__).strip(".py"))
+
     mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatoryArguments.add_argument(
         "-i",
+        required=True,
         help='File input. Example: data.nii.gz',
         metavar=Metavar.file,
-        required=True)
+        )
     mandatoryArguments.add_argument(
         "-o",
+        required=True,
         help='File output (indicate new extension). Example: data.nii',
         metavar=Metavar.str,
-        required=True)
+        )
+
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",

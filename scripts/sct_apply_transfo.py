@@ -49,18 +49,24 @@ def get_parser():
     mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatoryArguments.add_argument(
         "-i",
+        required=True,
         help='Input image. Example: t2.nii.gz',
-        metavar=Metavar.file)
+        metavar=Metavar.file,
+    )
     mandatoryArguments.add_argument(
         "-d",
+        required=True,
         help='Destination image. Example: out.nii.gz',
-        metavar=Metavar.file)
+        metavar=Metavar.file,
+    )
     mandatoryArguments.add_argument(
         "-w",
+        nargs='+',
+        required=True,
         help='Transformation(s), which can be warping fields (nifti image) or affine transformation matrix (text '
              'file). Separate with space. Example: warp1.nii.gz warp2.nii.gz',
-        nargs='+',
-        metavar=Metavar.file)
+        metavar=Metavar.file,
+    )
 
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
