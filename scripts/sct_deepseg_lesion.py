@@ -33,24 +33,31 @@ def get_parser():
         formatter_class=SmartFormatter,
         add_help=None,
         prog=os.path.basename(__file__).strip(".py"))
+
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
         "-i",
+        required=True,
         help='Input image. Example: t1.nii.gz',
-        metavar=Metavar.file)
+        metavar=Metavar.file,
+    )
     mandatory.add_argument(
         "-c",
+        required=True,
         help='R|Type of image contrast.\n'
              ' t2: T2w scan with isotropic or anisotropic resolution.\n'
              ' t2_ax: T2w scan with axial orientation and thick slices.\n'
              ' t2s: T2*w scan with axial orientation and thick slices.',
-        choices=('t2', 't2_ax', 't2s'))
+        choices=('t2', 't2_ax', 't2s'),
+    )
+
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",
         "--help",
         action="help",
-        help="Show this help message and exit")
+        help="Show this help message and exit",
+    )
     optional.add_argument(
         "-centerline",
         help="R|Method used for extracting the centerline:\n"

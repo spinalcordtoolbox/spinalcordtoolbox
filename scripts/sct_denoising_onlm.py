@@ -32,12 +32,16 @@ def get_parser():
         add_help=None,
         formatter_class=SmartFormatter,
         prog=os.path.basename(__file__).strip(".py"))
+
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
         "-i",
+        default=None,
+        required=True,
         help="Input NIFTI image to be denoised. Example: image_input.nii.gz",
         metavar=Metavar.file,
-        default=None)
+    )
+
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",

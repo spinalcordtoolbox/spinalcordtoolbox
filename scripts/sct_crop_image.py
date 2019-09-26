@@ -276,34 +276,37 @@ def get_parser():
         add_help=None,
         formatter_class=SmartFormatter,
         prog=os.path.basename(__file__).strip(".py"))
+
     mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatoryArguments.add_argument(
         "-i",
+        required=True,
         help='Input image. Example: t2.nii.gz',
         metavar=Metavar.file,
-        required = False)
-    mandatoryArguments.add_argument(
-        "-g",
-        type=int,
-        help="1: use the GUI to crop, 0: use the command line to crop.",
-        required=False,
-        choices=(0, 1),
-        default = 0)
+        )
 
-    # Command line mandatory arguments
+    # Command line mandatory arguments only for CLI execution
     requiredCommandArguments = parser.add_argument_group("\nCOMMAND LINE RELATED MANDATORY ARGUMENTS")
     requiredCommandArguments.add_argument(
         "-o",
         help='Output image. This option is REQUIRED for the command line execution Example: t1.nii.gz',
         metavar=Metavar.str,
-        required=False)
-    # Optional arguments section
+        required=False
+    )
+
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",
         "--help",
         action="help",
         help="Show this help message and exit")
+    optional.add_argument(
+        "-g",
+        type=int,
+        help="0: Cropping via command line | 1: Cropping via GUI",
+        choices=(0, 1),
+        default=0,
+    )
     optional.add_argument(
         "-v",
         type=int,
@@ -416,22 +419,18 @@ def main(args=None):
 
     # assigning variables to arguments
     input_filename = arguments.i
-    exec_choice = 0
-    if arguments.g is not None:
-        exec_choice = bool(arguments.g)
+    cropping_with_gui = arguments.g
 
-    # cropping with GUI
+    # initialize ImageCropper
     cropper = ImageCropper(input_filename)
     cropper.verbose = arguments.v
     sct.init_sct(log_level=cropper.verbose, update=True)  # Update log level
 
-    if exec_choice:
-        fname_data = arguments.i
+    if cropping_with_gui:
         if arguments.r is not None:
             cropper.rm_tmp_files = arguments.r
         cropper.crop_with_gui()
 
-    # cropping with specified command-line arguments
     else:
         if arguments.o is not None:
             cropper.output_filename = arguments.o
@@ -459,6 +458,7 @@ def main(args=None):
             cropper.mesh = arguments.mesh
 
         cropper.crop()
+
 
 if __name__ == "__main__":
     sct.init_sct()

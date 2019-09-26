@@ -59,25 +59,30 @@ def get_parser():
         add_help=None,
         formatter_class=SmartFormatter,
         prog=os.path.basename(__file__).strip(".py"))
+
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
         "-g",
         type=float,
-        metavar=Metavar.float,
+        required=True,
         help="Amplitude of diffusion gradients (in mT/m). Example: 40",
-        required=True)
+        metavar=Metavar.float,
+        )
     mandatory.add_argument(
         "-b",
-        metavar=Metavar.float,
         type=float,
+        required=True,
         help="Big delta: time between both diffusion gradients (in ms). Example: 40",
-        required=True)
+        metavar=Metavar.float,
+        )
     mandatory.add_argument(
         "-d",
         type=float,
-        metavar=Metavar.float,
+        required=True,
         help="Small delta: duration of each diffusion gradient (in ms). Example: 30",
-        required=True)
+        metavar=Metavar.float,
+        )
+
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",
