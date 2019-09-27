@@ -71,36 +71,42 @@ def get_parser():
         required=False)
     optional.add_argument(
         '-xmin',
+        type=int,
         default=0,
         help="Lower bound for cropping along X.",
         metavar=Metavar.int,
         )
     optional.add_argument(
         '-xmax',
+        type=int,
         default=-1,
         help="Higher bound for cropping along X. Inputting -1 will set it to the maximum dimension.",
         metavar=Metavar.int,
         )
     optional.add_argument(
         '-ymin',
+        type=int,
         default=0,
         help="Lower bound for cropping along Y.",
         metavar=Metavar.int,
         )
     optional.add_argument(
         '-ymax',
+        type=int,
         default=-1,
         help="Higher bound for cropping along Y. Inputting -1 will set it to the maximum dimension.",
         metavar=Metavar.int,
         )
     optional.add_argument(
         '-zmin',
+        type=int,
         default=0,
         help="Lower bound for cropping along Z.",
         metavar=Metavar.int,
         )
     optional.add_argument(
         '-zmax',
+        type=int,
         default=-1,
         help="Higher bound for cropping along Z. Inputting -1 will set it to the maximum dimension.",
         metavar=Metavar.int,
