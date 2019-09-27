@@ -98,6 +98,7 @@ class ImageCropper(object):
         """
         Crop image (change dimension)
         """
+        bbox = self.bbox
         data_crop = self.img_in.data[bbox.xmin:bbox.xmax, bbox.ymin:bbox.ymax, bbox.zmin:bbox.zmax]
         img_out = Image(param=data_crop, hdr=self.img_in.hdr)
         img_out.absolutepath = self.output_filename
@@ -109,7 +110,16 @@ class ImageCropper(object):
         """
         self.bbox = bbox.get_minmax(img=self.img_in)
 
-    # def get_bbox_from_mask(self):
+    def get_bbox_from_mask(self, img_mask):
+        """
+        Get bounding box from input binary mask, by looking at min/max values of the binary object in each dimension.
+        """
+        data_nonzero = np.nonzero(img_mask.data)
+        # find min and max boundaries of the mask
+        dim = len(data_nonzero)
+        self.bbox.xmin, self.bbox.ymin, self.bbox.zmin = [min(data_nonzero[i]) for i in range(dim)]
+        self.bbox.xmax, self.bbox.ymax, self.bbox.zmax = [max(data_nonzero[i]) for i in range(dim)]
+
 
         # self.cmd = ["isct_crop_image", "-i", self.input_filename, "-o", self.output_filename]
         # # Handling optional arguments
