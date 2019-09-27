@@ -177,24 +177,31 @@ def main(args=None):
     # TODO: if not enough CLI arguments for cropping, open GUI
     if arguments.g:
         cropper.crop_with_gui()
+    elif arguments.m:
+        cropper.get_bbox_from_mask(Image(arguments.m))
     else:
-        if arguments.m is not None:
-            cropper.mask = arguments.m
-        cropper.bbox = BoundingBox(arguments.xmin, arguments.xmax,
-                                   arguments.ymin, arguments.ymax,
-                                   arguments.zmin, arguments.zmax)
-        if arguments.shift is not None:
-            cropper.shift = (arguments.shift).split(",")
-        if arguments.b is not None:
-            cropper.background = arguments.b
-        if arguments.bmax is not None:
-            cropper.bmax = True
-        if arguments.ref is not None:
-            cropper.ref = arguments.ref
-        if arguments.mesh is not None:
-            cropper.mesh = arguments.mesh
+        cropper.get_bbox_from_minmax(
+            BoundingBox(arguments.xmin, arguments.xmax,
+                        arguments.ymin, arguments.ymax,
+                        arguments.zmin, arguments.zmax)
+        )
+        # if arguments.m is not None:
+        #     cropper.mask = arguments.m
+        # cropper.bbox = BoundingBox(arguments.xmin, arguments.xmax,
+        #                            arguments.ymin, arguments.ymax,
+        #                            arguments.zmin, arguments.zmax)
+        # if arguments.shift is not None:
+        #     cropper.shift = (arguments.shift).split(",")
+        # if arguments.b is not None:
+        #     cropper.background = arguments.b
+        # if arguments.bmax is not None:
+        #     cropper.bmax = True
+        # if arguments.ref is not None:
+        #     cropper.ref = arguments.ref
+        # if arguments.mesh is not None:
+        #     cropper.mesh = arguments.mesh
 
-        cropper.crop()
+    cropper.crop()
 
 
 if __name__ == "__main__":
