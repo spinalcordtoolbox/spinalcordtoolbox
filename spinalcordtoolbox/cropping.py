@@ -63,8 +63,22 @@ class BoundingBox(object):
 
 class ImageCropper(object):
     def __init__(self, img_in, output_file=None, mask=None, bbox=BoundingBox(), shift=None, background=None,
-                 bmax=False, ref=None, mesh=None, rm_tmp_files=1, verbose=1,
-                 rm_output_file=0):
+                 bmax=False, ref=None, mesh=None, rm_tmp_files=1, verbose=1, rm_output_file=0):
+        """
+
+        :param img_in:
+        :param output_file:
+        :param mask:
+        :param bbox: BoundingBox object with min and max values for each dimension, used for cropping.
+        :param shift:
+        :param background:
+        :param bmax:
+        :param ref:
+        :param mesh:
+        :param rm_tmp_files:
+        :param verbose:
+        :param rm_output_file:
+        """
         self.img_in = img_in
         self.output_filename = output_file
         self.mask = mask
@@ -84,15 +98,18 @@ class ImageCropper(object):
         """
         Crop image (change dimension)
         """
-        # Get bounding box in voxel coordinates
-        bbox = self.bbox.get_minmax(img=self.img_in)
-
-        # Crop image
         data_crop = self.img_in.data[bbox.xmin:bbox.xmax, bbox.ymin:bbox.ymax, bbox.zmin:bbox.zmax]
         img_out = Image(param=data_crop, hdr=self.img_in.hdr)
         img_out.absolutepath = self.output_filename
         img_out.save()
 
+    def get_bbox_from_minmax(self, bbox=None):
+        """
+        Get voxel bounding box from xmin, xmax, ymin, ymax, zmin, zmax user input
+        """
+        self.bbox = bbox.get_minmax(img=self.img_in)
+
+    # def get_bbox_from_mask(self):
 
         # self.cmd = ["isct_crop_image", "-i", self.input_filename, "-o", self.output_filename]
         # # Handling optional arguments
