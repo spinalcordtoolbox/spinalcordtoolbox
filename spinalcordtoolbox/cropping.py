@@ -62,12 +62,11 @@ class BoundingBox(object):
 
 
 class ImageCropper(object):
-    def __init__(self, img_in, output_file=None, mask=None, bbox=BoundingBox(), shift=None, background=None,
-                 bmax=False, ref=None, mesh=None, rm_tmp_files=1, verbose=1, rm_output_file=0):
+    def __init__(self, img_in, mask=None, bbox=BoundingBox(), shift=None, background=None, bmax=False, ref=None,
+                 mesh=None, rm_tmp_files=1, verbose=1, rm_output_file=0):
         """
 
         :param img_in:
-        :param output_file:
         :param mask:
         :param bbox: BoundingBox object with min and max values for each dimension, used for cropping.
         :param shift:
@@ -80,7 +79,6 @@ class ImageCropper(object):
         :param rm_output_file:
         """
         self.img_in = img_in
-        self.output_filename = output_file
         self.mask = mask
         self.bbox = bbox
         self.shift = shift
@@ -97,11 +95,11 @@ class ImageCropper(object):
     def crop(self):
         """
         Crop image (change dimension)
+        :return Image: img_out
         """
         bbox = self.bbox
         data_crop = self.img_in.data[bbox.xmin:bbox.xmax, bbox.ymin:bbox.ymax, bbox.zmin:bbox.zmax]
         img_out = Image(param=data_crop, hdr=self.img_in.hdr)
-        img_out.absolutepath = self.output_filename
 
         # adapt the origin in the sform and qform matrix
         new_origin = np.dot(img_out.hdr.get_qform(), [bbox.xmin, bbox.ymin, bbox.zmin, 1])
@@ -112,7 +110,7 @@ class ImageCropper(object):
         img_out.hdr.structarr['srow_y'][-1] = new_origin[1]
         img_out.hdr.structarr['srow_z'][-1] = new_origin[2]
 
-        img_out.save()
+        return img_out
 
     def get_bbox_from_minmax(self, bbox=None):
         """
@@ -225,62 +223,67 @@ class ImageCropper(object):
         image_out.save(self.output_filename)
 
     # shows the gui to crop the image
-    def crop_with_gui(self):
+    def get_bbox_from_gui(self):
         """
         Launch a GUI. The medial sagittal plane of the image is shown. User selects two points: top-left and bottom-
         right of the cropping window.
+        Note: There is no cropping along the right-left direction.
         :return:
         """
-
         from spinalcordtoolbox.gui import base
         from spinalcordtoolbox.gui.sagittal import launch_sagittal_dialog
 
-        # Change orientation to SAL
-        img_in = Image(self.input_filename)
-        native_orientation = img_in.orientation
-        img_in.change_orientation('SAL')
+        # Change orientation to SAL (for displaying sagittal view in the GUI)
+        # img_in = Image(self.input_filename)
+        native_orientation = self.img_in.orientation
+        self.img_in.change_orientation('SAL')
 
         # Launch GUI
         params = base.AnatomicalParams()
         params.vertebraes = [1, 2]  # TODO: use these labels instead ['top-left (S-A)', 'bottom-right (I-P)']
-        params.input_file_name = self.input_filename
-        params.output_file_name = self.output_filename
+        # params.input_file_name = self.input_filename
+        # params.output_file_name = self.output_filename
         params.subtitle = "Click on the top-left and bottom-right of the image to select your cropping window."
-        img_labels = zeros_like(img_in)
-        launch_sagittal_dialog(img_in, img_labels, params)
+        img_labels = zeros_like(self.img_in)
+        launch_sagittal_dialog(self.img_in, img_labels, params)
 
         # Extract coordinates
+        img_labels.change_orientation(native_orientation)
         cropping_coord = img_labels.getNonZeroCoordinates(sorting='value')
+        # Since there is no cropping along the R-L direction, xmin/xmax are based on image dimension
+        self.bbox.xmin, self.bbox.ymin, self.bbox.zmin = (
+            0,
+            min(cropping_coord[0].y, cropping_coord[1].y),
+            min(cropping_coord[0].z, cropping_coord[1].z),
+        )
+        self.bbox.xmax, self.bbox.ymax, self.bbox.zmax = (
+            img_labels.dim[0],
+            max(cropping_coord[0].y, cropping_coord[1].y),
+            max(cropping_coord[0].z, cropping_coord[1].z),
+        )
+        # Put back input image in native orientation
+        self.img_in.change_orientation(native_orientation)
 
-        # Crop image
-        data_crop = img_in.data[cropping_coord[0].x:cropping_coord[1].x, cropping_coord[0].y:cropping_coord[1].y, :]
-        img_out = Image(param=data_crop, hdr=img_in.hdr)
-        img_out.change_orientation(native_orientation)
-        img_out.absolutepath = self.output_filename
-        img_out.save()
 
-    def get_voxel_bbox(self):
-        """Get bounding voxel-based bounding box from coordinates. Replaces -1 with max dim along each axis."""
-        a=1
-        return 1
 
-def find_mask_boundaries(fname_mask):
-    """
-    Find boundaries of a mask, i.e., min and max indices of non-null voxels in all dimensions.
-    :param fname:
-    :return: float: ind_start, ind_end
-    """
-    from numpy import nonzero, min, max
-    # open mask
-    data = Image(fname_mask).data
-    data_nonzero = nonzero(data)
-    # find min and max boundaries of the mask
-    dim = len(data_nonzero)
-    ind_start = [min(data_nonzero[i]) for i in range(dim)]
-    ind_end = [max(data_nonzero[i]) for i in range(dim)]
-    # create string indices
-    # ind_start = ','.join(str(i) for i in xyzmin)
-    # ind_end = ','.join(str(i) for i in xyzmax)
-    # return values
-    return ind_start, ind_end, list(range(dim))
+
+# def find_mask_boundaries(fname_mask):
+#     """
+#     Find boundaries of a mask, i.e., min and max indices of non-null voxels in all dimensions.
+#     :param fname:
+#     :return: float: ind_start, ind_end
+#     """
+#     from numpy import nonzero, min, max
+#     # open mask
+#     data = Image(fname_mask).data
+#     data_nonzero = nonzero(data)
+#     # find min and max boundaries of the mask
+#     dim = len(data_nonzero)
+#     ind_start = [min(data_nonzero[i]) for i in range(dim)]
+#     ind_end = [max(data_nonzero[i]) for i in range(dim)]
+#     # create string indices
+#     # ind_start = ','.join(str(i) for i in xyzmin)
+#     # ind_end = ','.join(str(i) for i in xyzmax)
+#     # return values
+#     return ind_start, ind_end, list(range(dim))
 
