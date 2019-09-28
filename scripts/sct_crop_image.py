@@ -25,6 +25,15 @@ def get_parser():
     parser = argparse.ArgumentParser(
         description="Tools to crop an image. Either via command line or via a Graphical User Interface (GUI). See "
                     "example usage at the end.",
+        epilog="EXAMPLES:\n"
+               "- To crop an image using the GUI (this does not allow to crop along the right-left dimension):\n"
+               "sct_crop_image -i t2.nii.gz\n\n"
+               "- To crop an image using a binary mask:\n"
+               "sct_crop_image -i t2.nii.gz -m mask.nii.gz\n\n"
+               "- To crop an image using a reference image:\n"
+               "sct_crop_image -i t2.nii.gz -ref mt1.nii.gz\n\n"
+               "- To crop an image by specifying min/max (you don't need to specify all dimensions):\n"
+               "sct_crop_image -i t2.nii.gz -xmin 5 -xmax 60\n\n",
         add_help=None,
         formatter_class=SmartFormatter,
         prog=os.path.basename(__file__).strip('.py'))
