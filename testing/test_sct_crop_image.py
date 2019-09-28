@@ -47,7 +47,7 @@ def test_integrity(param_test):
     if index_args == 0:
         xyz = (57, 8, 52)
     elif index_args == 1:
-        xyz = (10, 54, 12)
+        xyz = (9, 54, 12)
     elif index_args == 2:
         xyz = (36, 54, 33)
 
