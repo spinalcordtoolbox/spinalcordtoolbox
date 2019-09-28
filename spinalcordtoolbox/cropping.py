@@ -58,35 +58,18 @@ class BoundingBox(object):
 
 
 class ImageCropper(object):
-    def __init__(self, img_in, mask=None, bbox=BoundingBox(), shift=None, background=None, bmax=False, ref=None,
-                 mesh=None, rm_tmp_files=1, verbose=1, rm_output_file=0):
+    def __init__(self, img_in, mask=None, bbox=BoundingBox(), ref=None):
         """
 
         :param img_in:
         :param mask:
         :param bbox: BoundingBox object with min and max values for each dimension, used for cropping.
-        :param shift:
-        :param background:
-        :param bmax:
         :param ref:
-        :param mesh:
-        :param rm_tmp_files:
-        :param verbose:
-        :param rm_output_file:
         """
         self.img_in = img_in
         self.mask = mask
         self.bbox = bbox
-        self.shift = shift
-        self.background = background
-        self.bmax = bmax
         self.ref = ref
-        self.mesh = mesh
-        self.rm_tmp_files = rm_tmp_files
-        self.verbose = verbose
-        self.cmd = None
-        self.result = None
-        self.rm_output_file = rm_output_file
 
     def crop(self):
         """
