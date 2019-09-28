@@ -120,6 +120,18 @@ class ImageCropper(object):
         self.bbox.xmin, self.bbox.ymin, self.bbox.zmin = [min(data_nonzero[i]) for i in range(dim)]
         self.bbox.xmax, self.bbox.ymax, self.bbox.zmax = [max(data_nonzero[i]) for i in range(dim)]
 
+    def get_bbox_from_ref(self, img_ref):
+        """
+        Get bounding box from input reference image, by looking at min/max indices in each dimension.
+        """
+        from spinalcordtoolbox.resampling import resample_nib
+        # Fill reference data with ones
+        img_ref.data[:] = 1
+        # Resample new image (in reference coordinates) into input image
+        img_ref_r = resample_nib(img_ref, image_dest=self.img_in, interpolation='nn', mode='constant')
+        img_ref_r.save('test.nii')
+        # Get bbox from this resampled mask
+        self.get_bbox_from_mask(img_ref_r)
 
         # self.cmd = ["isct_crop_image", "-i", self.input_filename, "-o", self.output_filename]
         # # Handling optional arguments
