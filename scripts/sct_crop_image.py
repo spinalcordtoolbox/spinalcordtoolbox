@@ -52,23 +52,22 @@ def get_parser():
         metavar=Metavar.str,
     )
     optional.add_argument(
-        "-g",
+        '-g',
         type=int,
         help="0: Cropping via command line | 1: Cropping via GUI",
         choices=(0, 1),
         default=0,
     )
     optional.add_argument(
-        "-v",
-        type=int,
-        help="0: Verbose off | 1: Verbose on",
-        choices=(0, 1),
-        default=1)
-    optional.add_argument(
-        "-m",
+        '-m',
         help="Binary mask that will be used to extract bounding box for cropping the image.",
         metavar=Metavar.file,
-        required=False)
+        )
+    optional.add_argument(
+        '-ref',
+        help="Image which dimensions will be used as a reference to crop the input image. Only works for 3D images.",
+        metavar=Metavar.file,
+    )
     optional.add_argument(
         '-xmin',
         type=int,
@@ -130,22 +129,18 @@ def get_parser():
         metavar='',
         required=False)
     optional.add_argument(
-        "-ref",
-        help='Crop input image based on reference image (works only for 3D images). Example: ref.nii.gz',
-        metavar=Metavar.file,
-        required = False)
-    optional.add_argument(
         "-mesh",
         help="Mesh to crop",
         metavar=Metavar.file,
-        required=False)
+        required=False
+    )
     optional.add_argument(
-        "-rof",
+        "-v",
         type=int,
-        help="Remove output file created when cropping",
-        required=False,
-        default=0,
-        choices=(0, 1))
+        help="0: Verbose off | 1: Verbose on",
+        choices=(0, 1),
+        default=1
+    )
 
     return parser
 
@@ -179,6 +174,8 @@ def main(args=None):
         cropper.crop_with_gui()
     elif arguments.m:
         cropper.get_bbox_from_mask(Image(arguments.m))
+    elif arguments.ref:
+        cropper.get_bbox_from_ref(Image(arguments.ref))
     else:
         cropper.get_bbox_from_minmax(
             BoundingBox(arguments.xmin, arguments.xmax,
