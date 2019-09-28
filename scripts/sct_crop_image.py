@@ -32,8 +32,9 @@ def get_parser():
                "sct_crop_image -i t2.nii.gz -m mask.nii.gz\n\n"
                "- To crop an image using a reference image:\n"
                "sct_crop_image -i t2.nii.gz -ref mt1.nii.gz\n\n"
-               "- To crop an image by specifying min/max (you don't need to specify all dimensions):\n"
-               "sct_crop_image -i t2.nii.gz -xmin 5 -xmax 60\n\n",
+               "- To crop an image by specifying min/max (you don't need to specify all dimensions). In the example "
+               "below, cropping will occur between x=5 and x=60, and between z=5 and z=zmax-1\n"
+               "sct_crop_image -i t2.nii.gz -xmin 5 -xmax 60 -zmin 5 -zmax -2\n\n",
         add_help=None,
         formatter_class=SmartFormatter,
         prog=os.path.basename(__file__).strip('.py'))
@@ -86,7 +87,8 @@ def get_parser():
         '-xmax',
         type=int,
         default=-1,
-        help="Higher bound for cropping along X. Inputting -1 will set it to the maximum dimension.",
+        help="Higher bound for cropping along X. Setting '-1' will crop to the maximum dimension, '-2' will crop to "
+             "the maximum dimension minus 1 slice, etc.",
         metavar=Metavar.int,
         )
     optional.add_argument(
@@ -100,14 +102,14 @@ def get_parser():
         '-ymax',
         type=int,
         default=-1,
-        help="Higher bound for cropping along Y. Inputting -1 will set it to the maximum dimension.",
+        help="Higher bound for cropping along Y. Follows the same rules as xmax.",
         metavar=Metavar.int,
         )
     optional.add_argument(
         '-zmin',
         type=int,
         default=0,
-        help="Lower bound for cropping along Z.",
+        help="Lower bound for cropping along Z. Follows the same rules as xmax.",
         metavar=Metavar.int,
         )
     optional.add_argument(
