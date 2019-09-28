@@ -65,7 +65,8 @@ def get_parser():
         )
     optional.add_argument(
         '-ref',
-        help="Image which dimensions will be used as a reference to crop the input image. Only works for 3D images.",
+        help="Image which dimensions (in the physical coordinate system) will be used as a reference to crop the "
+             "input image. Only works for 3D images.",
         metavar=Metavar.file,
     )
     optional.add_argument(
