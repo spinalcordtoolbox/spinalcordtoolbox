@@ -163,16 +163,10 @@ def main(args=None):
     cropper.verbose = arguments.v
     sct.init_sct(log_level=cropper.verbose, update=True)  # Update log level
 
-    # set output filename
-    if arguments.o is None:
-        cropper.output_filename = sct.add_suffix(arguments.i, '_crop')
-    else:
-        cropper.output_filename = arguments.o
-
     # Cropping with GUI vs. CLI
     # TODO: if not enough CLI arguments for cropping, open GUI
     if arguments.g:
-        cropper.crop_with_gui()
+        cropper.get_bbox_from_gui()
     elif arguments.m:
         cropper.get_bbox_from_mask(Image(arguments.m))
     elif arguments.ref:
@@ -199,7 +193,17 @@ def main(args=None):
         # if arguments.mesh is not None:
         #     cropper.mesh = arguments.mesh
 
-    cropper.crop()
+    # Crop image
+    img_crop = cropper.crop()
+
+    # Write cropped image to file
+    if arguments.o is None:
+        fname_out = sct.add_suffix(arguments.i, '_crop')
+    else:
+        fname_out = arguments.o
+    img_crop.save(fname_out)
+
+    sct.display_viewer_syntax([arguments.i, fname_out])
 
 
 if __name__ == "__main__":
