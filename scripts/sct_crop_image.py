@@ -27,7 +27,7 @@ def get_parser():
                     "example usage at the end.",
         epilog="EXAMPLES:\n"
                "- To crop an image using the GUI (this does not allow to crop along the right-left dimension):\n"
-               "sct_crop_image -i t2.nii.gz\n\n"
+               "sct_crop_image -i t2.nii.gz -g 1\n\n"
                "- To crop an image using a binary mask:\n"
                "sct_crop_image -i t2.nii.gz -m mask.nii.gz\n\n"
                "- To crop an image using a reference image:\n"
@@ -60,19 +60,19 @@ def get_parser():
     optional.add_argument(
         '-g',
         type=int,
-        help="0: Cropping via command line | 1: Cropping via GUI",
+        help="0: Cropping via command line | 1: Cropping via GUI. Has priority over -m.",
         choices=(0, 1),
         default=0,
     )
     optional.add_argument(
         '-m',
-        help="Binary mask that will be used to extract bounding box for cropping the image.",
+        help="Binary mask that will be used to extract bounding box for cropping the image. Has priority over -ref.",
         metavar=Metavar.file,
         )
     optional.add_argument(
         '-ref',
         help="Image which dimensions (in the physical coordinate system) will be used as a reference to crop the "
-             "input image. Only works for 3D images.",
+             "input image. Only works for 3D images. Has priority over min/max method.",
         metavar=Metavar.file,
     )
     optional.add_argument(
@@ -145,8 +145,7 @@ def main(args=None):
     cropper.verbose = arguments.v
     sct.init_sct(log_level=cropper.verbose, update=True)  # Update log level
 
-    # Cropping with GUI vs. CLI
-    # TODO: if not enough CLI arguments for cropping, open GUI
+    # Switch across cropping methods
     if arguments.g:
         cropper.get_bbox_from_gui()
     elif arguments.m:
@@ -154,7 +153,6 @@ def main(args=None):
     elif arguments.ref:
         cropper.get_bbox_from_ref(Image(arguments.ref))
     else:
-        # TODO: make sure at least one argument is specified
         cropper.get_bbox_from_minmax(
             BoundingBox(arguments.xmin, arguments.xmax,
                         arguments.ymin, arguments.ymax,
