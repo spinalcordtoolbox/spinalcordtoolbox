@@ -25,7 +25,7 @@ import sct_utils as sct
 logger = logging.getLogger(__name__)
 
 
-def resample_nib(image, new_size=None, new_size_type=None, image_dest=None, interpolation='linear'):
+def resample_nib(image, new_size=None, new_size_type=None, image_dest=None, interpolation='linear', mode='nearest'):
     """
     Resample a nibabel or Image object based on a specified resampling factor.
     Can deal with 2d, 3d or 4d image objects.
@@ -39,6 +39,7 @@ def resample_nib(image, new_size=None, new_size_type=None, image_dest=None, inte
     :param image_dest: Destination image to resample the input image to. In this case, new_size and new_size_type
         are ignored
     :param interpolation: {'nn', 'linear', 'spline'}. The interpolation type
+    :param mode: Outside values are filled with 0 ('constant') or nearest value ('nearest').
     :return: The resampled nibabel or Image image (depending on the input object type).
     """
 
@@ -101,7 +102,7 @@ def resample_nib(image, new_size=None, new_size_type=None, image_dest=None, inte
     if img.ndim == 3:
         # we use mode 'nearest' to overcome issue #2453
         img_r = resample_from_to(
-            img, to_vox_map=reference, order=dict_interp[interpolation], mode='nearest', cval=0.0, out_class=None)
+            img, to_vox_map=reference, order=dict_interp[interpolation], mode=mode, cval=0.0, out_class=None)
 
     elif img.ndim == 4:
         # TODO: Cover img_dest with 4D volumes
@@ -112,7 +113,7 @@ def resample_nib(image, new_size=None, new_size_type=None, image_dest=None, inte
             # Create dummy 3d nibabel image
             nii_tmp = nib.nifti1.Nifti1Image(img.get_data()[..., it], affine)
             img3d_r = resample_from_to(
-                nii_tmp, to_vox_map=(shape_r[:-1], affine_r), order=dict_interp[interpolation], mode='constant',
+                nii_tmp, to_vox_map=(shape_r[:-1], affine_r), order=dict_interp[interpolation], mode=mode,
                 cval=0.0, out_class=None)
             data4d[..., it] = img3d_r.get_data()
         # Create 4d nibabel Image
