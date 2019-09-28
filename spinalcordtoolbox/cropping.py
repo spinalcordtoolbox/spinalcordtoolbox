@@ -154,7 +154,8 @@ class ImageCropper(object):
         # Launch GUI
         params = base.AnatomicalParams()
         params.vertebraes = [1, 2]  # TODO: Have user draw a sliding rectangle instead (more intuitive)
-        params.subtitle = "Click on the top-left and bottom-right of the image to select your cropping window."
+        params.subtitle = "Click on the top-left (Label 1) and bottom-right (Label 2) of the image to select your " \
+                          "cropping window."
         img_labels = zeros_like(self.img_in)
         launch_sagittal_dialog(self.img_in, img_labels, params)
 
