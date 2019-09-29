@@ -285,7 +285,7 @@ class Transform:
         # if last warping field is an affine transfo, we need to compute the space of the concatenate warping field:
         if isLastAffine:
             sct.printv('WARNING: the resulting image could have wrong apparent results. You should use an affine transformation as last transformation...', verbose, 'warning')
-        elif crop_reference == 1:
+        # elif crop_reference == 1:
             # Set zero to everything outside the mask
             # TODO: implement
             # img_out = Image(fname_out)
