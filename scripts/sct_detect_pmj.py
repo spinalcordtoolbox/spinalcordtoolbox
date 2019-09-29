@@ -233,7 +233,7 @@ class DetectPMJ:
             self.rl_coord = int(img.dim[2] / 2)  # Right_left coordinate
             del img
 
-        sct.run(['sct_crop_image', '-i', self.fname_im, '-start', str(self.rl_coord), '-end', str(self.rl_coord), '-dim', '2', '-o', self.slice2D_im])
+        sct.run(['sct_crop_image', '-i', self.fname_im, '-zmin', str(self.rl_coord), '-zmax', str(self.rl_coord), '-o', self.slice2D_im])
 
     def orient2pir(self):
         """Orient input data to PIR orientation."""
