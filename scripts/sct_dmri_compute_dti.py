@@ -35,22 +35,27 @@ def get_parser():
         formatter_class=SmartFormatter,
         add_help=None,
         prog=os.path.basename(__file__).strip(".py"))
+
     mandatory = parser.add_argument_group("MANDATORY ARGMENTS")
     mandatory.add_argument(
         "-i",
+        required=True,
         help='Input 4d file. Example: dmri.nii.gz',
         metavar=Metavar.file,
-        required=True)
+        )
     mandatory.add_argument(
         "-bval",
+        required=True,
         help='Bvals file. Example: bvals.txt',
         metavar=Metavar.file,
-        required=True)
+        )
     mandatory.add_argument(
         "-bvec",
+        required=True,
         help='Bvecs file. Example: bvecs.txt',
         metavar=Metavar.file,
-        required=True)
+        )
+
     optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",

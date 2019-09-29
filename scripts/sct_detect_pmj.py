@@ -39,18 +39,22 @@ def get_parser():
         add_help=None,
         formatter_class=SmartFormatter,
         prog=os.path.basename(__file__).strip(".py"))
+
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
         "-i",
+        required=True,
         metavar=Metavar.file,
         help='Input image. Example: t2.nii.gz',
-        required=True)
+        )
     mandatory.add_argument(
         "-c",
+        choices=("t1", "t2"),
+        required=True,
         help="Type of image contrast, if your contrast is not in the available options (t1, t2), "
              "use t1 (cord bright/ CSF dark) or t2 (cord dark / CSF bright)",
-        required=True,
-        choices=("t1", "t2"))
+    )
+
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",

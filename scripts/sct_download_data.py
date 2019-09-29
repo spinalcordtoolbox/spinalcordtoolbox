@@ -18,9 +18,7 @@ import sys
 import tarfile
 import tempfile
 import zipfile
-
-# importing shutil module
-import shutil
+from shutil import rmtree, move, copytree
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -131,16 +129,14 @@ def main(args=None):
     verbose = int(arguments.get('-v'))
     sct.init_sct(log_level=verbose, update=True)  # Update log level
     dest_folder = arguments.get('-o', os.path.abspath(os.curdir))
-    dest_tmp_folder = sct.tmp_create()
 
     # Download data
     url = dict_url[data_name]
     tmp_file = download_data(url, verbose)
 
     # unzip
+    dest_tmp_folder = sct.tmp_create()
     unzip(tmp_file, dest_tmp_folder, verbose)
-    print('dest_tmp_folder: '+dest_tmp_folder)
-    extracted_files = []
     extracted_files_paths = []
     # Get the name of the extracted files and directories
     extracted_files = os.listdir(dest_tmp_folder)
@@ -148,35 +144,31 @@ def main(args=None):
         extracted_files_paths.append(os.path.join(os.path.abspath(dest_tmp_folder), extracted_file))
 
     # Check if files and folder already exists
-    sct.printv('\nCheck if folder already exists...', verbose)
+    sct.printv('\nCheck if files or folder already exists on the destination path...', verbose)
     for data_extracted_name in extracted_files:
-        if os.path.isdir(data_extracted_name):
-            sct.printv(
-                'WARNING: Folder '
-                + data_extracted_name
-                + ' already exists. Removing it...',
-                1,
-                'warning',
-            )
-            sct.rmtree(data_extracted_name)
+        fullpath_dest = os.path.join(dest_folder, data_extracted_name)
+        if os.path.isdir(fullpath_dest):
+            sct.printv("Folder {} already exists. Removing it...".format(data_extracted_name), 1, 'warning')
+            rmtree(fullpath_dest)
+        elif os.path.isfile(fullpath_dest):
+            sct.printv("File {} already exists. Removing it...".format(data_extracted_name), 1, 'warning')
+            os.remove(fullpath_dest)
 
     # Destination path
     for source_path in extracted_files_paths:
         # Move the content of source to destination
-        shutil.move(source_path, dest_folder, copy_function=shutil.copytree)
+        move(source_path, dest_folder, copy_function=copytree)
 
-    sct.printv('\nRemove temporary file...', verbose)
+    sct.printv('\nRemove temporary files...', verbose)
     os.remove(tmp_file)
-
-    sct.printv('\nRemove temporary directory...', verbose)
-    sct.rmtree(dest_tmp_folder)
+    rmtree(dest_tmp_folder)
 
     sct.printv('Done!\n', verbose)
     return 0
 
 
 def unzip(compressed, dest_folder, verbose):
-    """Extract compressed file to the dest_folder"""
+    """Extract compressed file to the dest_folder. Can handle .zip, .tar.gz."""
     sct.printv('\nUnzip data to: %s' % dest_folder, verbose)
     if compressed.endswith('zip'):
         try:

@@ -55,7 +55,7 @@ class Slice(object):
                 else:
                     # Otherwise it's an image: use spline interpolation
                     type_img = 'im'
-                img_r = self._resample(img, p_resample, type_img=type_img, image_ref=image_ref)
+                img_r = self._resample_slicewise(img, p_resample, type_img=type_img, image_ref=image_ref)
             else:
                 img_r = img.copy()
             self._images.append(img_r)
@@ -299,7 +299,7 @@ class Slice(object):
     def aspect(self):
         return [self.get_aspect(x) for x in self._images]
 
-    def _resample(self, image, p_resample, type_img, image_ref=None):
+    def _resample_slicewise(self, image, p_resample, type_img, image_ref=None):
         """
         Resample at a fixed resolution to make sure the cord always appears with similar scale, regardless of the native
         resolution of the image. Assumes SAL orientation.
