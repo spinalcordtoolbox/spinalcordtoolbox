@@ -313,7 +313,7 @@ class Slice(object):
         else:
             # Create nibabel object for reference image
             nii_ref = Nifti1Image(image_ref.data, image_ref.hdr.get_best_affine())
-            nii_r = resample_nib(nii, img_dest=nii_ref, interpolation=dict_interp[type_img])
+            nii_r = resample_nib(nii, image_dest=nii_ref, interpolation=dict_interp[type_img])
         # If resampled image is a segmentation, binarize using threshold at 0.5
         if type_img == 'seg':
             img_r_data = (nii_r.get_data() > 0.5) * 1

@@ -146,7 +146,7 @@ def resample_file(fname_data, fname_out, new_size, new_size_type, interpolation,
     else:
         nii_ref = None
 
-    nii_r = resample_nib(nii, new_size.split('x'), new_size_type, img_dest=nii_ref, interpolation=interpolation)
+    nii_r = resample_nib(nii, new_size.split('x'), new_size_type, image_dest=nii_ref, interpolation=interpolation)
 
     # build output file name
     if fname_out == '':
