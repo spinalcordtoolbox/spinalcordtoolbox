@@ -71,23 +71,30 @@ class ImageCropper(object):
         self.bbox = bbox
         self.ref = ref
 
-    def crop(self):
+    def crop(self, background=None):
         """
         Crop image (change dimension)
+        :param background: int: If set, the output image will not be cropped. Instead, voxels outside the bounding
+        box will be set to the value specified by this parameter.
         :return Image: img_out
         """
         bbox = self.bbox
-        data_crop = self.img_in.data[bbox.xmin:bbox.xmax, bbox.ymin:bbox.ymax, bbox.zmin:bbox.zmax]
-        img_out = Image(param=data_crop, hdr=self.img_in.hdr)
 
-        # adapt the origin in the sform and qform matrix
-        new_origin = np.dot(img_out.hdr.get_qform(), [bbox.xmin, bbox.ymin, bbox.zmin, 1])
-        img_out.hdr.structarr['qoffset_x'] = new_origin[0]
-        img_out.hdr.structarr['qoffset_y'] = new_origin[1]
-        img_out.hdr.structarr['qoffset_z'] = new_origin[2]
-        img_out.hdr.structarr['srow_x'][-1] = new_origin[0]
-        img_out.hdr.structarr['srow_y'][-1] = new_origin[1]
-        img_out.hdr.structarr['srow_z'][-1] = new_origin[2]
+        if background is None:
+            data_crop = self.img_in.data[bbox.xmin:bbox.xmax, bbox.ymin:bbox.ymax, bbox.zmin:bbox.zmax]
+            img_out = Image(param=data_crop, hdr=self.img_in.hdr)
+
+            # adapt the origin in the sform and qform matrix
+            new_origin = np.dot(img_out.hdr.get_qform(), [bbox.xmin, bbox.ymin, bbox.zmin, 1])
+            img_out.hdr.structarr['qoffset_x'] = new_origin[0]
+            img_out.hdr.structarr['qoffset_y'] = new_origin[1]
+            img_out.hdr.structarr['qoffset_z'] = new_origin[2]
+            img_out.hdr.structarr['srow_x'][-1] = new_origin[0]
+            img_out.hdr.structarr['srow_y'][-1] = new_origin[1]
+            img_out.hdr.structarr['srow_z'][-1] = new_origin[2]
+        else:
+            img_out = self.img_in.copy()
+            img_out[bbox.xmin:bbox.xmax, bbox.ymin:bbox.ymax, bbox.zmin:bbox.zmax] = background
 
         return img_out
 

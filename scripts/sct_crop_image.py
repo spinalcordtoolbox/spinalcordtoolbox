@@ -120,6 +120,14 @@ def get_parser():
         metavar=Metavar.int,
         )
     optional.add_argument(
+        '-b',
+        type=int,
+        default=None,
+        help="If this flag is declared, the image will not be cropped. Instead, voxels outside the bounding box will "
+             "be set to the value specified by this flag.",
+        metavar=Metavar.int,
+        )
+    optional.add_argument(
         "-v",
         type=int,
         help="0: Verbose off | 1: Verbose on",
