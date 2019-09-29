@@ -217,6 +217,7 @@ class DetectPMJ:
         If the segmentation is not provided,
             the 2D sagital slice is choosen as the mid-sagital slice of the input image.
         """
+        # TODO: get the mean across multiple sagittal slices to reduce noise
 
         if self.fname_seg is not None:
             img_seg = Image(self.fname_seg)
@@ -233,7 +234,7 @@ class DetectPMJ:
             self.rl_coord = int(img.dim[2] / 2)  # Right_left coordinate
             del img
 
-        sct.run(['sct_crop_image', '-i', self.fname_im, '-zmin', str(self.rl_coord), '-zmax', str(self.rl_coord), '-o', self.slice2D_im])
+        sct.run(['sct_crop_image', '-i', self.fname_im, '-zmin', str(self.rl_coord), '-zmax', str(self.rl_coord + 1), '-o', self.slice2D_im])
 
     def orient2pir(self):
         """Orient input data to PIR orientation."""
