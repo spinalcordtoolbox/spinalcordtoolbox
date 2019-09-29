@@ -287,11 +287,11 @@ class Transform:
             sct.printv('WARNING: the resulting image could have wrong apparent results. You should use an affine transformation as last transformation...', verbose, 'warning')
         # elif crop_reference == 1:
             # Set zero to everything outside the mask
-            # TODO: implement
-            # img_out = Image(fname_out)
-            # cropper = ImageCropper(Image(fname_out))
-            # ImageCropper(input_file=fname_out, output_file=fname_out, ref=warping_field, background=0).crop()
-            # sct.run('sct_crop_image -i '+fname_out+' -o '+fname_out+' -ref '+warping_field+' -b 0')
+            # Crop image
+            cropper = ImageCropper(Image(fname_out))
+            cropper.get_bbox_from_mask(Image(warping_field))
+            img_out = cropper.crop(background=0)
+            img_out.save(fname_out)
         elif crop_reference == 2:
             # Crop image
             cropper = ImageCropper(Image(fname_out))

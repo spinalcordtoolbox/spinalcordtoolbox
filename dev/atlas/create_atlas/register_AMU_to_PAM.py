@@ -105,7 +105,6 @@ sct.run('sct_apply_transfo -i wm_ext.nii.gz -d cord.nii.gz -w warp_wmgm_ext2cord
 
 
 # crop below a certain point
-# TODO: the flag -b 0 is no more supported!
 sct.run('sct_crop_image -i wm_ext_reg.nii.gz -zmmin 0 -zmax 990 -b 0 -o wm_ext_reg_crop.nii.gz')
 
 # rename new file
