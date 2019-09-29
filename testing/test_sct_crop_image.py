@@ -45,11 +45,11 @@ def test_integrity(param_test):
 
     # check if cropping was correct depending on the scenario
     if index_args == 0:
-        xyz = (57, 8, 52)
+        xyz = (58, 9, 52)
     elif index_args == 1:
-        xyz = (9, 54, 12)
+        xyz = (10, 55, 13)
     elif index_args == 2:
-        xyz = (36, 54, 33)
+        xyz = (37, 55, 34)
 
     nx, ny, nz, nt, px, py, pz, pt = Image(param_test.fname_out[index_args]).dim
     if (nx, ny, nz) == xyz:

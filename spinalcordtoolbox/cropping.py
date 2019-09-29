@@ -81,7 +81,7 @@ class ImageCropper(object):
         bbox = self.bbox
 
         if background is None:
-            data_crop = self.img_in.data[bbox.xmin:bbox.xmax, bbox.ymin:bbox.ymax, bbox.zmin:bbox.zmax]
+            data_crop = self.img_in.data[bbox.xmin:bbox.xmax+1, bbox.ymin:bbox.ymax+1, bbox.zmin:bbox.zmax+1]
             img_out = Image(param=data_crop, hdr=self.img_in.hdr)
 
             # adapt the origin in the sform and qform matrix
@@ -94,7 +94,7 @@ class ImageCropper(object):
             img_out.hdr.structarr['srow_z'][-1] = new_origin[2]
         else:
             img_out = self.img_in.copy()
-            img_out[bbox.xmin:bbox.xmax, bbox.ymin:bbox.ymax, bbox.zmin:bbox.zmax] = background
+            img_out[bbox.xmin:bbox.xmax+1, bbox.ymin:bbox.ymax+1, bbox.zmin:bbox.zmax+1] = background
 
         return img_out
 
