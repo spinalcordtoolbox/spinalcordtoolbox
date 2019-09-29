@@ -21,11 +21,11 @@ import argparse
 
 from spinalcordtoolbox.utils import Metavar, SmartFormatter
 from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.cropping import ImageCropper
 
 import sct_utils as sct
 import sct_convert
 import sct_image
-from sct_crop_image import ImageCropper
 
 
 class Param:
@@ -286,11 +286,18 @@ class Transform:
         if isLastAffine:
             sct.printv('WARNING: the resulting image could have wrong apparent results. You should use an affine transformation as last transformation...', verbose, 'warning')
         elif crop_reference == 1:
-            ImageCropper(input_file=fname_out, output_file=fname_out, ref=warping_field, background=0).crop()
+            # Set zero to everything outside the mask
+            # TODO: implement
+            # img_out = Image(fname_out)
+            # cropper = ImageCropper(Image(fname_out))
+            # ImageCropper(input_file=fname_out, output_file=fname_out, ref=warping_field, background=0).crop()
             # sct.run('sct_crop_image -i '+fname_out+' -o '+fname_out+' -ref '+warping_field+' -b 0')
         elif crop_reference == 2:
-            ImageCropper(input_file=fname_out, output_file=fname_out, ref=warping_field).crop()
-            # sct.run('sct_crop_image -i '+fname_out+' -o '+fname_out+' -ref '+warping_field)
+            # Crop image
+            cropper = ImageCropper(Image(fname_out))
+            cropper.get_bbox_from_mask(Image(warping_field))
+            img_out = cropper.crop()
+            img_out.save(fname_out)
 
         sct.display_viewer_syntax([fname_dest, fname_out], verbose=verbose)
 
