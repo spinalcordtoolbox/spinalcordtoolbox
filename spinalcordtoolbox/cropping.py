@@ -94,7 +94,7 @@ class ImageCropper(object):
             img_out.hdr.structarr['srow_z'][-1] = new_origin[2]
         else:
             img_out = self.img_in.copy()
-            img_out[bbox.xmin:bbox.xmax+1, bbox.ymin:bbox.ymax+1, bbox.zmin:bbox.zmax+1] = background
+            img_out.data[bbox.xmin:bbox.xmax+1, bbox.ymin:bbox.ymax+1, bbox.zmin:bbox.zmax+1] = background
 
         return img_out
 
