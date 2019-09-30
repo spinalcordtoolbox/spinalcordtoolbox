@@ -73,7 +73,7 @@ def test_nib_resample_image_3d(fake_3dimage_nib):
 # noinspection 801,PyShadowingNames
 def test_nib_resample_image_3d_to_dest(fake_3dimage_nib, fake_3dimage_nib_big):
     """Test resampling with 3D nibabel image"""
-    img_r = resampling.resample_nib(fake_3dimage_nib, img_dest=fake_3dimage_nib_big, interpolation='linear')
+    img_r = resampling.resample_nib(fake_3dimage_nib, image_dest=fake_3dimage_nib_big, interpolation='linear')
     assert img_r.get_data().shape == (29, 39, 19)
     assert img_r.get_data()[4, 4, 4] == 1.0
 

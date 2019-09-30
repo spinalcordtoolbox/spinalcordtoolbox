@@ -92,8 +92,8 @@ sct.run('cp '+fname_cord+' cord.nii.gz')
 sct.run('sct_maths -i wmgm_ext.nii.gz -bin 0.5 -o wmgm_ext.nii.gz')
 
 # crop for faster registration
-sct.run('sct_crop_image -i cord.nii.gz -start 40,40,40 -end 100,100,990 -dim 0,1,2 -o cord_crop.nii.gz')
-sct.run('sct_crop_image -i wmgm_ext.nii.gz -start 40,40,40 -end 100,100,990 -dim 0,1,2 -o wmgm_ext_crop.nii.gz')
+sct.run('sct_crop_image -i cord.nii.gz -xmin 40 -xmax 100 -ymin 40 -ymax 100 -zmin 40 -zmax 990 -o cord_crop.nii.gz')
+sct.run('sct_crop_image -i wmgm_ext.nii.gz -xmin 40 -xmax 100 -ymin 40 -ymax 100 -zmin 40 -zmax 990 -o wmgm_ext_crop.nii.gz')
 # sct.run('sct_maths -i wmgm_ext.nii.gz -laplacian 1 -o wmgm_ext.nii.gz')
 #sct.run('sct_register_multimodal -i wmgm_ext.nii.gz -d cord.nii.gz -iseg wmgm_ext.nii.gz -dseg cord.nii.gz -param step=1,type=im,algo=bsplinesyn,iter=10,slicewise=1,metric=MeanSquares -x linear -r 0')
 sct.run('sct_register_multimodal -i wmgm_ext_crop.nii.gz -d cord_crop.nii.gz -param step=1,type=im,algo=affine,iter=100,slicewise=1,metric=MeanSquares,smooth=1:step=2,type=im,algo=bsplinesyn,iter=5,slicewise=0,metric=MeanSquares,smooth=0 -x linear -r 0')
@@ -105,7 +105,7 @@ sct.run('sct_apply_transfo -i wm_ext.nii.gz -d cord.nii.gz -w warp_wmgm_ext2cord
 
 
 # crop below a certain point
-sct.run('sct_crop_image -i wm_ext_reg.nii.gz -dim 2 -start 0 -end 990 -b 0 -o wm_ext_reg_crop.nii.gz')
+sct.run('sct_crop_image -i wm_ext_reg.nii.gz -zmmin 0 -zmax 990 -b 0 -o wm_ext_reg_crop.nii.gz')
 
 # rename new file
 sct.run('mv wm_ext_reg_crop.nii.gz PAM50_wm.nii.gz')
