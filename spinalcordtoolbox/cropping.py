@@ -117,13 +117,19 @@ class ImageCropper(object):
     def get_bbox_from_ref(self, img_ref):
         """
         Get bounding box from input reference image, by looking at min/max indices in each dimension.
+        img_ref and self.img_in should have the same dimensions.
         """
         from spinalcordtoolbox.resampling import resample_nib
+        #  Check that img_ref has the same length as img_in
+        if not len(img_ref.data.shape) == len(self.img_in.data.shape):
+            logger.error("Inconsistent dimensions: n_dim(img_ref)={}; n_dim(img_in)={}"
+                         .format(len(img_ref.data.shape), len(self.img_in.data.shape)))
+            raise Exception(ValueError)
         # Fill reference data with ones
         img_ref.data[:] = 1
         # Resample new image (in reference coordinates) into input image
         img_ref_r = resample_nib(img_ref, image_dest=self.img_in, interpolation='nn', mode='constant')
-        img_ref_r.save('test.nii')
+        # img_ref_r.save('test.nii')  # for debug
         # Get bbox from this resampled mask
         self.get_bbox_from_mask(img_ref_r)
 
