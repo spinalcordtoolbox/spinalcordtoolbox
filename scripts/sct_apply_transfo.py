@@ -216,6 +216,7 @@ class Transform:
 
         # if 4d, loop across the T dimension
         else:
+            dim = '4'
             path_tmp = sct.tmp_create(basename="apply_transfo", verbose=verbose)
 
             # convert to nifti into temp folder
@@ -285,18 +286,22 @@ class Transform:
         # if last warping field is an affine transfo, we need to compute the space of the concatenate warping field:
         if isLastAffine:
             sct.printv('WARNING: the resulting image could have wrong apparent results. You should use an affine transformation as last transformation...', verbose, 'warning')
-        elif crop_reference == 1:
-            # Set zero to everything outside the mask
-            cropper = ImageCropper(Image(fname_out))
-            cropper.get_bbox_from_mask(Image(warping_field))
-            img_out = cropper.crop(background=0)
-            img_out.save(fname_out)
-        elif crop_reference == 2:
-            # Crop image
-            cropper = ImageCropper(Image(fname_out))
-            cropper.get_bbox_from_mask(Image(warping_field))
-            img_out = cropper.crop()
-            img_out.save(fname_out)
+        else:
+            if crop_reference in [1, 2]:
+                # Extract only the first ndim of the warping field
+                img_warp = Image(warping_field)
+                if dim == '2':
+                    img_warp_ndim = Image(img_src.data[:, :], hdr=img_warp.hdr)
+                elif dim in ['3', '4']:
+                    img_warp_ndim = Image(img_src.data[:, :, :], hdr=img_warp.hdr)
+                # Set zero to everything outside the warping field
+                cropper = ImageCropper(Image(fname_out))
+                cropper.get_bbox_from_ref(img_warp_ndim)
+                if crop_reference == 1:
+                    img_out = cropper.crop(background=0)
+                elif crop_reference == 2:
+                    img_out = cropper.crop()
+                img_out.save(fname_out)
 
         sct.display_viewer_syntax([fname_dest, fname_out], verbose=verbose)
 
