@@ -221,6 +221,7 @@ alt="Fsleyes integration" width="240" height="180" border="10" /></a>
 - [Rasoanandrianina et al. Regional T1 mapping of the whole cervical spinal cord using an optimized MP2RAGE sequence. NMR in Biomedicine doi:10.1002/nbm.4142. 2019](https://onlinelibrary.wiley.com/doi/full/10.1002/nbm.4142)
 - [Hopkins et al. Machine Learning for the Prediction of Cervical Spondylotic Myelopathy: A Post Hoc Pilot Study of 28 Participants. World Neurosurgery; Volume 127, July 2019, Pages e436-e442doi:10.1016/j.wneu.2019.03.165 ](https://www.sciencedirect.com/science/article/pii/S1878875019308459)
 - [Karbasforoushan et al. Brainstem and spinal cord MRI identifies altered sensorimotor pathways post-stroke. Nat Commun. 2019 Aug 6;10(1):3524. doi: 10.1038/s41467-019-11244-3.](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6684621/)
+- [Seif et al. Guidelines for the conduct of clinical trials in spinal cord injury: Neuroimaging biomarkers.Spinal Cord. 2019 Sep;57(9):717-728. doi: 10.1038/s41393-019-0309-x.](https://www.ncbi.nlm.nih.gov/pubmed/31267015)
 
 ## Citing spinalcordtoolbox
 
