@@ -481,9 +481,13 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
     logger.info("Reorient the image to RPI, if necessary...")
     original_orientation = im_image.orientation
     fname_orient = 'image_in_RPI.nii'
-    im_image.change_orientation('RPI').save(fname_orient)
+    im_image.change_orientation('RPI').save(fname_orient)  # TODO: only save when physical file is needed
 
     input_resolution = im_image.dim[4:7]
+
+    # Resample image to 0.5mm iso
+    im_image_res = \
+        resampling.resample_nib(im_image, new_size=[0.5, 0.5, im_image.dim[6]], new_size_type='mm', interpolation='linear')
 
     # find the spinal cord centerline - execute OptiC binary
     logger.info("Finding the spinal cord centerline...")
