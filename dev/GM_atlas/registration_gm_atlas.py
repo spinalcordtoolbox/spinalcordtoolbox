@@ -61,11 +61,6 @@ def main():
     save_nii_from_png(fname3)
     save_nii_from_png(fname4)
 
-    # Crop image background
-
-    #sct.run('sct_crop_image -i '+ name2 + ext_o +' -dim 0,1 -start 84,0 -end 1581,1029 -b 0 -o binary_gm_crop.nii.gz')
-    #name2 = 'binary_gm_crop'
-
     # Interpolation of the images to set them in the right format
     print'\nInterpolate images to set them in the right format'
     interpolate(name1+ext_o)

@@ -18,11 +18,11 @@ import sys, io, os, time, random, shutil
 
 import numpy as np
 
-import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.cropping import ImageCropper
+
 from sct_utils import extract_fname, printv, add_suffix
 import sct_utils as sct
-from sct_crop_image import ImageCropper
 import sct_create_mask
 import sct_register_multimodal, sct_apply_transfo
 
@@ -143,13 +143,13 @@ def pre_processing(fname_target, fname_sc_seg, fname_level=None, fname_manual_gm
         fname_mask = 'mask_pre_crop.nii.gz'
         sct_create_mask.main(['-i', im_target_rpi.absolutepath, '-p', 'centerline,' + im_sc_seg_rpi.absolutepath, '-f', 'box', '-size', str(size), '-o', fname_mask])
         # crop image
-        fname_target_crop = add_suffix(im_target_rpi.absolutepath, '_pre_crop')
-        crop_im = ImageCropper(input_file=im_target_rpi.absolutepath, output_file=fname_target_crop, mask=fname_mask)
-        im_target_rpi_crop = crop_im.crop()
+        cropper = ImageCropper(im_target_rpi)
+        cropper.get_bbox_from_mask(Image(fname_mask))
+        im_target_rpi_crop = cropper.crop()
         # crop segmentation
-        fname_sc_seg_crop = add_suffix(im_sc_seg_rpi.absolutepath, '_pre_crop')
-        crop_sc_seg = ImageCropper(input_file=im_sc_seg_rpi.absolutepath, output_file=fname_sc_seg_crop, mask=fname_mask)
-        im_sc_seg_rpi_crop = crop_sc_seg.crop()
+        cropper = ImageCropper(im_sc_seg_rpi)
+        cropper.get_bbox_from_mask(Image(fname_mask))
+        im_sc_seg_rpi_crop = cropper.crop()
         # denoising
         from sct_maths import denoise_nlmeans
         block_radius = 3
@@ -384,10 +384,9 @@ def load_manual_gmseg(list_slices_target, list_fname_manual_gmseg, tmp_dir, im_s
         im_manual_gmseg = Image(fname_manual_gmseg).change_orientation("RPI")
 
         if fname_mask is not None:
-            fname_gmseg_crop = add_suffix(im_manual_gmseg.absolutepath, '_pre_crop')
-            crop_im = ImageCropper(input_file=im_manual_gmseg.absolutepath, output_file=fname_gmseg_crop,
-                                   mask=fname_mask)
-            im_manual_gmseg_crop = crop_im.crop()
+            cropper = ImageCropper(im_manual_gmseg)
+            cropper.get_bbox_from_mask(fname_mask)
+            im_manual_gmseg_crop = cropper.crop()
             im_manual_gmseg = im_manual_gmseg_crop
 
         # assert gmseg has the right number of slices
