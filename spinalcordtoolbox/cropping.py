@@ -80,7 +80,12 @@ class ImageCropper(object):
         """
         bbox = self.bbox
 
+        logger.info("Bounding box: x=[{}, {}], y=[{}, {}], z=[{}, {}]"
+                    .format(bbox.xmin, bbox.xmax+1, bbox.ymin, bbox.ymax+1, bbox.zmin, bbox.zmax+1))
+
+        # Crop the image
         if background is None:
+            logger.info("Cropping the image...")
             data_crop = self.img_in.data[bbox.xmin:bbox.xmax+1, bbox.ymin:bbox.ymax+1, bbox.zmin:bbox.zmax+1]
             img_out = Image(param=data_crop, hdr=self.img_in.hdr)
 
@@ -92,9 +97,14 @@ class ImageCropper(object):
             img_out.hdr.structarr['srow_x'][-1] = new_origin[0]
             img_out.hdr.structarr['srow_y'][-1] = new_origin[1]
             img_out.hdr.structarr['srow_z'][-1] = new_origin[2]
+
+        # Set voxels outside the bbox to the value 'background'
         else:
+            logger.info("Setting voxels outside the bounding box to: {}".format(background))
             img_out = self.img_in.copy()
-            img_out.data[bbox.xmin:bbox.xmax+1, bbox.ymin:bbox.ymax+1, bbox.zmin:bbox.zmax+1] = background
+            img_out.data[:] = background
+            img_out.data[bbox.xmin:bbox.xmax+1, bbox.ymin:bbox.ymax+1, bbox.zmin:bbox.zmax+1] = \
+                self.img_in.data[bbox.xmin:bbox.xmax+1, bbox.ymin:bbox.ymax+1, bbox.zmin:bbox.zmax+1]
 
         return img_out
 
