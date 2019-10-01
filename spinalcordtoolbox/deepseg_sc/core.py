@@ -39,11 +39,13 @@ def find_centerline(algo, image_fname, contrast_type, brain_bool, folder_output,
     :return:
     """
 
-    # TODO: remove unnecessary i/o
-    if Image(image_fname).dim[2] == 1:  # isct_spine_detect requires nz > 1
-        im_concat = concat_data([image_fname, image_fname], dim=2)
-        im_concat.save(sct.add_suffix(image_fname, '_concat'))
-        image_fname = sct.add_suffix(image_fname, '_concat')
+    im = Image(image_fname)
+    ctl_absolute_path = sct.add_suffix(im.absolutepath, "_ctr")
+
+    # isct_spine_detect requires nz > 1
+    if im.dim[2] == 1:
+        im = concat_data([im, im], dim=2)
+        im.hdr['dim'][3] = 2  # Needs to be change manually since dim not updated during concat_data
         bool_2d = True
     else:
         bool_2d = False
@@ -53,10 +55,8 @@ def find_centerline(algo, image_fname, contrast_type, brain_bool, folder_output,
         # run optic on a heatmap computed by a trained SVM+HoG algorithm
         # optic_models_fname = os.path.join(path_sct, 'data', 'optic_models', '{}_model'.format(contrast_type))
         # # TODO: replace with get_centerline(method=optic)
-        img_ctl, arr_ctl, _, _ = get_centerline(Image(image_fname),
-                                                ParamCenterline(algo_fitting='optic', contrast=contrast_type))
-        centerline_filename = sct.add_suffix(image_fname, "_ctr")
-        img_ctl.save(centerline_filename)
+        im_ctl, _, _, _ = get_centerline(im,
+                                            ParamCenterline(algo_fitting='optic', contrast=contrast_type))
 
     elif algo == 'cnn':
         # CNN parameters
@@ -111,39 +111,28 @@ def find_centerline(algo, image_fname, contrast_type, brain_bool, folder_output,
                       z_max=z_max if brain_bool else None)
 
     elif algo == 'viewer':
-        im_labels = _call_viewer_centerline(Image(image_fname))
-        im_centerline, arr_centerline, _, _ = get_centerline(im_labels, param=ParamCenterline())
-        centerline_filename = sct.add_suffix(image_fname, "_ctr")
-        im_centerline.save(centerline_filename)
+        im_labels = _call_viewer_centerline(im)
+        im_ctl, _, _, _ = get_centerline(im_labels, param=ParamCenterline())
 
     elif algo == 'file':
-        centerline_filename = sct.add_suffix(image_fname, "_ctr")
-        # Re-orient the manual centerline
-        Image(centerline_fname).change_orientation('RPI').save(centerline_filename)
+        im_ctl = Image(centerline_fname)
+        im_ctl.change_orientation('RPI')
 
     else:
         logger.error('The parameter "-centerline" is incorrect. Please try again.')
         sys.exit(1)
 
-    # if algo != 'cnn':
-    #     logger.info("Resample the image to 0.5x0.5 mm in-plane resolution...")
-    #     fname_res = sct.add_suffix(image_fname, '_resampled')
-    #     input_resolution = Image(image_fname).dim[4:7]
-    #     new_resolution = 'x'.join(['0.5', '0.5', str(input_resolution[2])])
-    #
-    #     resampling.resample_file(image_fname, fname_res, new_resolution, 'mm', 'linear', verbose=0)
-    #
-    #     resampling.resample_file(centerline_filename, centerline_filename, new_resolution, 'mm', 'linear', verbose=0)
+    # TODO: for some reason, when algo == 'file', the absolutepath is changed to None out of the method find_centerline
+    im_ctl.absolutepath = ctl_absolute_path
 
     if bool_2d:
-        im_split_lst = split_data(Image(centerline_filename), dim=2)
-        im_split_lst[0].save(centerline_filename)
+        im_ctl = split_data(im_ctl, dim=2)[0]
 
     if algo != 'viewer':
         im_labels = None
 
     # TODO: remove unecessary return params
-    return "dummy_file_name", centerline_filename, im_labels
+    return "dummy_file_name", im_ctl, im_labels
 
 
 def scale_intensity(data, out_min=0, out_max=255):
@@ -486,7 +475,7 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
 
     input_resolution = im_image.dim[4:7]
 
-    # Resample image to 0.5mm iso
+    # Resample image to 0.5mm in plane
     im_image_res = \
         resampling.resample_nib(im_image, new_size=[0.5, 0.5, im_image.dim[6]], new_size_type='mm', interpolation='linear')
 
@@ -495,22 +484,24 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
 
     # find the spinal cord centerline - execute OptiC binary
     logger.info("Finding the spinal cord centerline...")
-    fname_res, centerline_filename, im_labels_viewer = find_centerline(algo=ctr_algo,
-                                                                        image_fname=fname_orient,
-                                                                        contrast_type=contrast_type,
-                                                                        brain_bool=brain_bool,
-                                                                        folder_output=tmp_folder_path,
-                                                                        remove_temp_files=remove_temp_files,
-                                                                        centerline_fname=file_ctr)
+    _, im_ctl, im_labels_viewer = find_centerline(algo=ctr_algo,
+                                                    image_fname=fname_orient,
+                                                    contrast_type=contrast_type,
+                                                    brain_bool=brain_bool,
+                                                    folder_output=tmp_folder_path,
+                                                    remove_temp_files=remove_temp_files,
+                                                    centerline_fname=file_ctr)
+    
+    if ctr_algo == 'file':
+        im_ctl = \
+            resampling.resample_nib(im_ctl, new_size=[0.5, 0.5, im_image.dim[6]], new_size_type='mm', interpolation='linear')
 
-    # im_nii, ctr_nii = Image(fname_res), Image(centerline_filename)
-    ctr_nii = Image(centerline_filename)
-
+    print(im_ctl.dim, im_image_res.dim, im_ctl.absolutepath)
     # crop image around the spinal cord centerline
     logger.info("Cropping the image around the spinal cord...")
     crop_size = 96 if (kernel_size == '3d' and contrast_type == 't2s') else 64
     X_CROP_LST, Y_CROP_LST, Z_CROP_LST, im_crop_nii = crop_image_around_centerline(im_in=im_image_res,
-                                                                                   ctr_in=ctr_nii,
+                                                                                   ctr_in=im_ctl,
                                                                                    crop_size=crop_size)
     del ctr_nii
 
