@@ -25,31 +25,32 @@ def _preprocess_segment(fname_t2, fname_t2_seg, contrast_test, dim_3=False):
     gt = Image(fname_t2_seg)
 
     fname_t2_RPI, fname_t2_seg_RPI = 'img_RPI.nii.gz', 'seg_RPI.nii.gz'
-    img.change_orientation('RPI').save(fname_t2_RPI)
-    gt.change_orientation('RPI').save(fname_t2_seg_RPI)
-    input_resolution = gt.dim[4:7]
-    del img, gt
 
-    fname_res, fname_ctr, _ = deepseg_sc.find_centerline(algo='svm',
-                                                            image_fname=fname_t2_RPI,
-                                                            contrast_type=contrast_test,
-                                                            brain_bool=False,
-                                                            folder_output=tmp_folder_path,
-                                                            remove_temp_files=1,
-                                                            centerline_fname=None)
+    img.change_orientation('RPI')
+    gt.change_orientation('RPI')
 
-    fname_t2_seg_RPI_res = 'seg_RPI_res.nii.gz'
-    new_resolution = 'x'.join(['0.5', '0.5', str(input_resolution[2])])
-    resample_file(fname_t2_seg_RPI, fname_t2_seg_RPI_res, new_resolution, 'mm', 'linear', verbose=0)
+    img_res = \
+        resampling.resample_nib(img, new_size=[0.5, 0.5, img.dim[6]], new_size_type='mm', interpolation='linear')
+    gt_res = \
+        resampling.resample_nib(gt, new_size=[0.5, 0.5, img.dim[6]], new_size_type='mm', interpolation='linear')
 
-    img, ctr, gt = Image(fname_res), Image(fname_ctr), Image(fname_t2_seg_RPI_res)
-    _, _, _, img = deepseg_sc.crop_image_around_centerline(im_in=img,
-                                                        ctr_in=ctr,
+    img_res.save(fname_t2_RPI)
+
+    _, ctr_im, _ = deepseg_sc.find_centerline(algo='svm',
+                                                image_fname=fname_t2_RPI,
+                                                contrast_type=contrast_test,
+                                                brain_bool=False,
+                                                folder_output=tmp_folder_path,
+                                                remove_temp_files=1,
+                                                centerline_fname=None)
+
+    _, _, _, img = deepseg_sc.crop_image_around_centerline(im_in=img_res,
+                                                        ctr_in=ctr_im,
                                                         crop_size=64)
-    _, _, _, gt = deepseg_sc.crop_image_around_centerline(im_in=gt,
-                                                        ctr_in=ctr,
+    _, _, _, gt = deepseg_sc.crop_image_around_centerline(im_in=gt_res,
+                                                        ctr_in=ctr_im,
                                                         crop_size=64)
-    del ctr
+    del ctr_im
 
     img = deepseg_sc.apply_intensity_normalization(im_in=img)
 

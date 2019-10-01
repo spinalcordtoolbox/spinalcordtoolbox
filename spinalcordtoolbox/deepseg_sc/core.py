@@ -469,8 +469,6 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
     # normalize the intensity of the images
     logger.info("Normalizing the intensity...")
     im_norm_in = apply_intensity_normalization(im_in=im_crop_nii)
-    im_norm_in.save(sct.add_suffix(fname_orient, '_norm'))
-    print(np.mean(im_norm_in.data), np.median(im_norm_in.data), np.max(im_norm_in.data), np.min(im_norm_in.data))
     del im_crop_nii
 
     if kernel_size == '2d':
