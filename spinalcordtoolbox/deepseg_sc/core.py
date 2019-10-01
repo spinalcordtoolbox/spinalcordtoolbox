@@ -56,7 +56,7 @@ def find_centerline(algo, image_fname, contrast_type, brain_bool, folder_output,
         # optic_models_fname = os.path.join(path_sct, 'data', 'optic_models', '{}_model'.format(contrast_type))
         # # TODO: replace with get_centerline(method=optic)
         im_ctl, _, _, _ = get_centerline(im,
-                                            ParamCenterline(algo_fitting='optic', contrast=contrast_type))
+                                        ParamCenterline(algo_fitting='optic', contrast=contrast_type))
 
     elif algo == 'cnn':
         # CNN parameters
@@ -84,31 +84,19 @@ def find_centerline(algo, image_fname, contrast_type, brain_bool, folder_output,
                                         dilation_layers=dct_params_ctr[contrast_type]['dilation_layers'])
         ctr_model.load_weights(ctr_model_fname)
 
-        # logger.info("Resample the image to 0.5x0.5 mm in-plane resolution...")
-        # fname_res = sct.add_suffix(image_fname, '_resampled')
-        # input_resolution = Image(image_fname).dim[4:7]
-        # new_resolution = 'x'.join(['0.5', '0.5', str(input_resolution[2])])
-        #
-        # resampling.resample_file(image_fname, fname_res, new_resolution, 'mm', 'linear', verbose=0)
-        #
         # compute the heatmap
-        fname_heatmap = sct.add_suffix(image_fname, "_heatmap")
-        img_filename = ''.join(sct.extract_fname(fname_heatmap)[:2])
-        fname_heatmap_nii = img_filename + '.nii'
-        z_max = heatmap(filename_in=image_fname,
-                        filename_out=fname_heatmap_nii,
-                        model=ctr_model,
-                        patch_shape=dct_patch_ctr[contrast_type]['size'],
-                        mean_train=dct_patch_ctr[contrast_type]['mean'],
-                        std_train=dct_patch_ctr[contrast_type]['std'],
-                        brain_bool=brain_bool)
+        im_heatmap, z_max = heatmap(im=im,
+                                    model=ctr_model,
+                                    patch_shape=dct_patch_ctr[contrast_type]['size'],
+                                    mean_train=dct_patch_ctr[contrast_type]['mean'],
+                                    std_train=dct_patch_ctr[contrast_type]['std'],
+                                    brain_bool=brain_bool)
+        im_ctl, _, _, _ = get_centerline(im_heatmap,
+                                        ParamCenterline(algo_fitting='optic', contrast=contrast_type))
 
-        # run optic on the heatmap
-        centerline_filename = sct.add_suffix(fname_heatmap, "_ctr")
-        heatmap2optic(fname_heatmap=fname_heatmap_nii,
-                      lambda_value=7 if contrast_type == 't2s' else 1,
-                      fname_out=centerline_filename,
-                      z_max=z_max if brain_bool else None)
+        if z_max is not None:
+            sct.printv('Cropping brain section.')
+            im_ctl.data[:, :, z_max:] = 0
 
     elif algo == 'viewer':
         im_labels = _call_viewer_centerline(im)
@@ -233,9 +221,8 @@ def scan_slice(z_slice, model, mean_train, std_train, coord_lst, patch_shape, z_
     return z_slice_out, x_CoM, y_CoM, coord_lst
 
 
-def heatmap(filename_in, filename_out, model, patch_shape, mean_train, std_train, brain_bool=True):
+def heatmap(im, model, patch_shape, mean_train, std_train, brain_bool=True):
     """Compute the heatmap with CNN_1 representing the SC localization."""
-    im = Image(filename_in)
     data_im = im.data.astype(np.float32)
     im_out = change_type(im, "uint8")
     del im
@@ -324,38 +311,13 @@ def heatmap(filename_in, filename_out, model, patch_shape, mean_train, std_train
         sys.exit(1)
 
     im_out.data = data
-    im_out.save(filename_out)
-    del im_out
 
     # z_max is used to reject brain sections
     z_max = np.max(list(set(np.where(data)[2])))
     if z_max == data.shape[2] - 1:
-        return None
+        return im_out, None
     else:
-        return z_max
-
-
-def heatmap2optic(fname_heatmap, lambda_value, fname_out, z_max, algo='dpdt'):
-    """Run OptiC on the heatmap computed by CNN_1."""
-    import nibabel as nib
-    os.environ["FSLOUTPUTTYPE"] = "NIFTI_PAIR"
-
-    optic_input = fname_heatmap.split('.nii')[0]
-
-    cmd_optic = 'isct_spine_detect -ctype="%s" -lambda="%s" "%s" "%s" "%s"' % \
-                (algo, str(lambda_value), "NONE", optic_input, optic_input)
-    sct.run(cmd_optic, verbose=1)
-
-    optic_hdr_filename = optic_input + '_ctr.hdr'
-    img = nib.load(optic_hdr_filename)
-    nib.save(img, fname_out)
-
-    # crop the centerline if z_max < data.shape[2] and -brain == 1
-    if z_max is not None:
-        sct.printv('Cropping brain section.')
-        ctr_nii = Image(fname_out)
-        ctr_nii.data[:, :, z_max:] = 0
-        ctr_nii.save()
+        return im_out, z_max
 
 
 def _normalize_data(data, mean, std):
@@ -491,19 +453,18 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
                                                     folder_output=tmp_folder_path,
                                                     remove_temp_files=remove_temp_files,
                                                     centerline_fname=file_ctr)
-    
+
     if ctr_algo == 'file':
         im_ctl = \
             resampling.resample_nib(im_ctl, new_size=[0.5, 0.5, im_image.dim[6]], new_size_type='mm', interpolation='linear')
 
-    print(im_ctl.dim, im_image_res.dim, im_ctl.absolutepath)
     # crop image around the spinal cord centerline
     logger.info("Cropping the image around the spinal cord...")
     crop_size = 96 if (kernel_size == '3d' and contrast_type == 't2s') else 64
     X_CROP_LST, Y_CROP_LST, Z_CROP_LST, im_crop_nii = crop_image_around_centerline(im_in=im_image_res,
                                                                                    ctr_in=im_ctl,
                                                                                    crop_size=crop_size)
-    del ctr_nii
+    del im_ctl
 
     # normalize the intensity of the images
     logger.info("Normalizing the intensity...")
@@ -583,7 +544,7 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
 
     # reorient to initial orientation
     return im_seg_r_postproc.change_orientation(original_orientation), \
-           im_nii, \
+           im_image_res, \
            im_seg.change_orientation('RPI'), \
            im_viewer, \
            im_image_res_ctr_downsamp
