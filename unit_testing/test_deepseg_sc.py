@@ -12,7 +12,7 @@ import sct_utils as sct
 from spinalcordtoolbox.image import Image
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.deepseg_sc import core as deepseg_sc
-from spinalcordtoolbox.resampling import resample_file
+from spinalcordtoolbox import resampling
 from create_test_data import dummy_centerline
 
 
@@ -62,8 +62,8 @@ def _preprocess_segment(fname_t2, fname_t2_seg, contrast_test, dim_3=False):
 
         fname_t2_RPI_res_crop_res = 'img_RPI_res_crop_res.nii.gz'
         fname_t2_seg_RPI_res_crop_res = 'seg_RPI_res_crop_res.nii.gz'
-        resample_file(fname_t2_RPI_res_crop, fname_t2_RPI_res_crop_res, new_resolution, 'mm', 'linear', verbose=0)
-        resample_file(fname_t2_seg_RPI_res_crop, fname_t2_seg_RPI_res_crop_res, new_resolution, 'mm', 'linear', verbose=0)
+        resampling.resample_file(fname_t2_RPI_res_crop, fname_t2_RPI_res_crop_res, new_resolution, 'mm', 'linear', verbose=0)
+        resampling.resample_file(fname_t2_seg_RPI_res_crop, fname_t2_seg_RPI_res_crop_res, new_resolution, 'mm', 'linear', verbose=0)
         img, gt = Image(fname_t2_RPI_res_crop_res), Image(fname_t2_seg_RPI_res_crop_res)
 
     tmp_folder.chdir_undo()
