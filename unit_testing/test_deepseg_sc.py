@@ -28,7 +28,8 @@ def _preprocess_segment(fname_t2, fname_t2_seg, contrast_test, dim_3=False):
 
     img.change_orientation('RPI')
     gt.change_orientation('RPI')
-
+    new_resolution = 'x'.join(['0.5', '0.5', str(img.dim[6])])
+    
     img_res = \
         resampling.resample_nib(img, new_size=[0.5, 0.5, img.dim[6]], new_size_type='mm', interpolation='linear')
     gt_res = \
