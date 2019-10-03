@@ -464,7 +464,6 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
     X_CROP_LST, Y_CROP_LST, Z_CROP_LST, im_crop_nii = crop_image_around_centerline(im_in=im_image_res,
                                                                                    ctr_in=im_ctl,
                                                                                    crop_size=crop_size)
-    del im_ctl
 
     # normalize the intensity of the images
     logger.info("Normalizing the intensity...")
@@ -515,12 +514,10 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
         im_viewer = None
 
     # TODO: Deal with that later-- ideally this file should be written when debugging, not with verbose=2
-    # if verbose == 2:
-    #     fname_res_ctr = sct.add_suffix(fname_orient, '_ctr')
-    #     resampling.resample_file(fname_res_ctr, fname_res_ctr, initial_resolution, 'mm', 'linear', verbose=0)
-    #     im_image_res_ctr_downsamp = Image(fname_res_ctr).change_orientation(original_orientation)
-    # else:
-    im_image_res_ctr_downsamp = None
+    if verbose == 2:
+        im_ctl_r = resampling.resample_nib(im_seg, image_dest=im_image, interpolation='linear')
+    else:
+        im_ctl_r = None
 
     # Binarize the resampled image to remove interpolation effects
     logger.info("Binarizing the resampled segmentation...")
@@ -547,4 +544,4 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
            im_image_res, \
            im_seg.change_orientation('RPI'), \
            im_viewer, \
-           im_image_res_ctr_downsamp
+           im_ctl_r
