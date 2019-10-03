@@ -344,7 +344,7 @@ def segment_2d(model_fname, contrast_type, input_size, im_in):
     for zz in range(im_in.dim[2]):
         pred_seg = seg_model.predict(np.expand_dims(np.expand_dims(data_norm[:, :, zz], -1), 0),
                                      batch_size=BATCH_SIZE)[0, :, :, 0]
-        pred_seg_th = (pred_seg > 0.5).astype(int)
+        pred_seg_th = (pred_seg > 0).astype(int)
         pred_seg_pp = post_processing_slice_wise(pred_seg_th, x_cOm, y_cOm)
         seg_crop.data[:, :, zz] = pred_seg_pp
 
@@ -504,20 +504,12 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
     logger.info("Resampling the segmentation to the native image resolution using linear interpolation...")
     im_seg_r = resampling.resample_nib(im_seg, image_dest=im_image, interpolation='linear')
 
-    if ctr_algo == 'viewer':  # resample and reorient the viewer labels
-        im_viewer_r = resampling.resample_nib(im_labels_viewer, new_size=input_resolution, new_size_type='mm',
-                                                    interpolation='linear')
-        # TODO: binarize it?
-    else:
-        im_viewer_r = None
+    if ctr_algo == 'viewer':  # for debugging
+        im_labels_viewer.save(sct.add_suffix(fname_orient, '_labels-viewer'))
 
+    # for debugging
     # TODO: Deal with that later-- ideally this file should be written when debugging, not with verbose=2
-    if verbose == 2:
-        im_ctl_r = resampling.resample_nib(im_ctl, new_size=input_resolution, new_size_type='mm',
-                                                    interpolation='linear')
-        # TODO: binarize it?
-    else:
-        im_ctl_r = None
+    im_ctl.save(sct.add_suffix(fname_orient, '_centerline'))
 
     # Binarize the resampled image to remove interpolation effects
     logger.info("Binarizing the resampled segmentation...")
@@ -542,6 +534,4 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
     # reorient to initial orientation
     return im_seg_r_postproc.change_orientation(original_orientation), \
            im_image_res, \
-           im_seg.change_orientation('RPI'), \
-           im_viewer_r, \
-           im_ctl_r
+           im_seg.change_orientation('RPI')
