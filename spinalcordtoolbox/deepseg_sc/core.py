@@ -505,17 +505,17 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
     im_seg_r = resampling.resample_nib(im_seg, image_dest=im_image, interpolation='linear')
 
     if ctr_algo == 'viewer':  # resample and reorient the viewer labels
-        im_labels_viewer_nib = nib.nifti1.Nifti1Image(im_labels_viewer.data, im_labels_viewer.hdr.get_best_affine())
-        im_viewer_r_nib = resampling.resample_nib(im_labels_viewer_nib, new_size=input_resolution, new_size_type='mm',
+        im_viewer_r = resampling.resample_nib(im_labels_viewer, new_size=input_resolution, new_size_type='mm',
                                                     interpolation='linear')
-        im_viewer = Image(im_viewer_r_nib.get_data(), hdr=im_viewer_r_nib.header, orientation='RPI',
-                            dim=im_viewer_r_nib.header.get_data_shape()).change_orientation(original_orientation)
+        # TODO: binarize it?
     else:
-        im_viewer = None
+        im_viewer_r = None
 
     # TODO: Deal with that later-- ideally this file should be written when debugging, not with verbose=2
     if verbose == 2:
-        im_ctl_r = resampling.resample_nib(im_seg, image_dest=im_image, interpolation='linear')
+        im_ctl_r = resampling.resample_nib(im_ctl, new_size=input_resolution, new_size_type='mm',
+                                                    interpolation='linear')
+        # TODO: binarize it?
     else:
         im_ctl_r = None
 
@@ -543,5 +543,5 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
     return im_seg_r_postproc.change_orientation(original_orientation), \
            im_image_res, \
            im_seg.change_orientation('RPI'), \
-           im_viewer, \
+           im_viewer_r, \
            im_ctl_r
