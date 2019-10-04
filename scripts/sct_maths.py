@@ -107,31 +107,33 @@ def get_parser():
         '-otsu',
         type=int,
         metavar=Metavar.int,
-        help='Threshold image using Otsu algorithm (from skimage).\nnbins: number of bins. Example: 256',
+        help='Threshold image using Otsu algorithm (from skimage). Specify the number of bins (e.g. 16, 64, 128)',
         required=False)
     thresholding.add_argument(
         "-adap",
         metavar=Metavar.list,
         help="R|Threshold image using Adaptive algorithm (from skimage). Separate following arguments with ',':"
-             "\n Block size: Odd size of pixel neighborhood which is used to calculate the threshold value (e.g. 3, 5, 7, ..., 21, ...)"
+             "\n Block size: Odd size of pixel neighborhood which is used to calculate the threshold value (e.g. 3, 7, 21, ...)"
              "\n Offset: Constant subtracted from weighted mean of neighborhood to calculate the local threshold value. Suggested offset is 0.",
         required=False)
     thresholding.add_argument(
         "-otsu-median",
-        help='R|Threshold image using Median Otsu algorithm. Separate with "," Example: 2,3'
-             '\n Size of the median filter. Example: 2'
-             '\n Number of iterations. Example: 3\n',
+        help="R|Threshold image using Median Otsu algorithm. Separate following arguments with ',':"
+             "\n Size of the median filter (e.g. 2, 3)"
+             "\n Number of iterations (e.g. 3, 4, 5)\n",
+        metavar=Metavar.list,
         required=False)
     thresholding.add_argument(
         '-percent',
         type=int,
         help="Threshold image using percentile of its histogram.",
+        metavar=Metavar.int,
         required=False)
     thresholding.add_argument(
         "-thr",
         type=float,
-        metavar=Metavar.float,
         help='Use following number to threshold image (zero below number).',
+        metavar=Metavar.float,
         required=False)
 
     mathematical = parser.add_argument_group("MATHEMATICAL MORPHOLOGY")
@@ -249,9 +251,9 @@ def main(args=None):
         param = arguments.otsu
         data_out = otsu(data, param)
 
-    elif arguments.otsu_adap is not None:
-        param = convert_list_str(arguments.otsu_adap, "int")
-        data_out = otsu_adap(data, param[0], param[1])
+    elif arguments.adap is not None:
+        param = convert_list_str(arguments.adap, "int")
+        data_out = adap(data, param[0], param[1])
 
     elif arguments.otsu_median is not None:
         param = convert_list_str(arguments.otsu_median, "int")
@@ -435,7 +437,7 @@ def otsu(data, nbins):
     return data > thresh
 
 
-def otsu_adap(data, block_size, offset):
+def adap(data, block_size, offset):
     from skimage.filters import threshold_local
     mask = data
     for iz in range(data.shape[2]):
