@@ -35,6 +35,7 @@ def get_parser():
         add_help=None,
         formatter_class=SmartFormatter,
         prog=os.path.basename(__file__).strip(".py"))
+
     mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
     mandatory.add_argument(
         "-i",
@@ -106,12 +107,14 @@ def get_parser():
         '-otsu',
         type=int,
         metavar=Metavar.int,
-        help='Threshold image using Otsu algorithm.\nnbins: number of bins. Example: 256',
+        help='Threshold image using Otsu algorithm (from skimage).\nnbins: number of bins. Example: 256',
         required=False)
     thresholding.add_argument(
-        "-otsu-adap",
+        "-adap",
         metavar=Metavar.list,
-        help="Threshold image using Adaptive Otsu algorithm.\nblock_size:\noffset:",
+        help="R|Threshold image using Adaptive algorithm (from skimage). Separate following arguments with ',':"
+             "\n Block size: Odd size of pixel neighborhood which is used to calculate the threshold value (e.g. 3, 5, 7, ..., 21, ...)"
+             "\n Offset: Constant subtracted from weighted mean of neighborhood to calculate the local threshold value. Suggested offset is 0.",
         required=False)
     thresholding.add_argument(
         "-otsu-median",
@@ -433,12 +436,11 @@ def otsu(data, nbins):
 
 
 def otsu_adap(data, block_size, offset):
-    from skimage.filters import threshold_adaptive
-
+    from skimage.filters import threshold_local
     mask = data
     for iz in range(data.shape[2]):
-        mask[:, :, iz] = threshold_adaptive(data[:, :, iz], block_size, offset)
-        # mask[:, :, iz] = threshold_otsu(data[:, :, iz], 5)
+        adaptive_thresh = threshold_local(data[:, :, iz], block_size, method='gaussian', offset=offset)
+        mask[:, :, iz] = mask[:, :, iz] > adaptive_thresh
     return mask
 
 
