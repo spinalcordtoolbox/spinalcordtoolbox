@@ -375,8 +375,8 @@ def segment_3d(model_fname, contrast_type, im_in):
     """Perform segmentation with 3D convolutions."""
     from spinalcordtoolbox.deepseg_sc.cnn_models_3d import load_trained_model
     dct_patch_sc_3d = {'t2': {'size': (64, 64, 48), 'mean': 65.8562, 'std': 59.7999},
-                        't2s': {'size': (96, 96, 48), 'mean': 87.0212, 'std': 64.425},
-                        't1': {'size': (64, 64, 48), 'mean': 88.5001, 'std': 66.275}}
+                       't2s': {'size': (96, 96, 48), 'mean': 87.0212, 'std': 64.425},
+                       't1': {'size': (64, 64, 48), 'mean': 88.5001, 'std': 66.275}}
     # load 3d model
     seg_model = load_trained_model(model_fname)
 
@@ -435,8 +435,6 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
     # fname_orient = 'image_in_RPI.nii'
     im_image.change_orientation('RPI')
 
-    input_resolution = im_image.dim[4:7]
-
     # Resample image to 0.5mm in plane
     im_image_res = \
         resampling.resample_nib(im_image, new_size=[0.5, 0.5, im_image.dim[6]], new_size_type='mm', interpolation='linear')
@@ -476,17 +474,17 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
         segmentation_model_fname = \
             os.path.join(sct.__sct_dir__, 'data', 'deepseg_sc_models', '{}_sc.h5'.format(contrast_type))
         seg_crop = segment_2d(model_fname=segmentation_model_fname,
-                                 contrast_type=contrast_type,
-                                 input_size=(crop_size, crop_size),
-                                 im_in=im_norm_in)
+                              contrast_type=contrast_type,
+                              input_size=(crop_size, crop_size),
+                              im_in=im_norm_in)
     elif kernel_size == '3d':
         # segment data using 3D convolutions
         logger.info("Segmenting the spinal cord using deep learning on 3D patches...")
         segmentation_model_fname = \
             os.path.join(sct.__sct_dir__, 'data', 'deepseg_sc_models', '{}_sc_3D.h5'.format(contrast_type))
         seg_crop = segment_3d(model_fname=segmentation_model_fname,
-                                 contrast_type=contrast_type,
-                                 im_in=im_norm_in)
+                              contrast_type=contrast_type,
+                              im_in=im_norm_in)
     del im_norm_in
 
     # reconstruct the segmentation from the crop data
@@ -496,8 +494,7 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
                           x_crop_lst=X_CROP_LST,
                           y_crop_lst=Y_CROP_LST,
                           z_crop_lst=Z_CROP_LST)
-    # fname_res_seg = sct.add_suffix(fname_res, '_seg')
-    # seg_uncrop_nii.save(fname_res_seg)  # for debugging
+    # seg_uncrop_nii.save(sct.add_suffix(fname_res, '_seg'))  # for debugging
     del seg_crop
 
     # resample to initial resolution
@@ -512,8 +509,8 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
     logger.info("Binarizing the resampled segmentation...")
     thr = 0.0001 if contrast_type in ['t1', 'dwi'] else 0.5
     # TODO: optimize speed --> np.where is slow
-    im_seg_r.data[np.where(im_seg_r.data >= thr)] = 1
-    im_seg_r.data[np.where(im_seg_r.data < thr)] = 0
+    im_seg_r.data[np.where(im_seg_r.data > thr)] = 1
+    im_seg_r.data[np.where(im_seg_r.data <= thr)] = 0
 
     # post processing step to z_regularized
     im_seg_r_postproc = post_processing_volume_wise(im_seg_r)
