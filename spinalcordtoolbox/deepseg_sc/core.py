@@ -503,13 +503,10 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
     # resample to initial resolution
     logger.info("Resampling the segmentation to the native image resolution using linear interpolation...")
     im_seg_r = resampling.resample_nib(im_seg, image_dest=im_image, interpolation='linear')
+    # TODO: the output is alreay binary! should be linear interp. To check!!
 
     if ctr_algo == 'viewer':  # for debugging
         im_labels_viewer.save(sct.add_suffix(fname_orient, '_labels-viewer'))
-
-    # for debugging
-    # TODO: Deal with that later-- ideally this file should be written when debugging, not with verbose=2
-    im_ctl.save(sct.add_suffix(fname_orient, '_centerline'))
 
     # Binarize the resampled image to remove interpolation effects
     logger.info("Binarizing the resampled segmentation...")
