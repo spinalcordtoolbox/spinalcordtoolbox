@@ -73,7 +73,7 @@ def get_parser():
         choices=(0, 1))
     optional.add_argument(
         "-kernel",
-        help="Choice of kernel shape for the CNN. Segmentation with 3D kernels is longer than with 2D kernels.",
+        help="Choice of kernel shape for the CNN. Segmentation with 3D kernels is slower than with 2D kernels.",
         choices=('2d', '3d'),
         default="2d")
     optional.add_argument(
@@ -138,7 +138,6 @@ def main():
         kernel_size = '2d'
         sct.printv('3D kernel model for dwi contrast is not available. 2D kernel model is used instead.',
                    type="warning")
-
 
     if ctr_algo == 'file' and args.file_centerline is None:
         sct.printv('Please use the flag -file_centerline to indicate the centerline filename.', 1, 'warning')
