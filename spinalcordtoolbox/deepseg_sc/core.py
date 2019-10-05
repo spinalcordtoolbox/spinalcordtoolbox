@@ -497,17 +497,19 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
     # seg_uncrop_nii.save(sct.add_suffix(fname_res, '_seg'))  # for debugging
     del seg_crop
 
+    # Change type uint8 --> float32 otherwise resampling will produce binary output (even with linear interpolation)
+    im_seg.change_type(np.float32)
     # resample to initial resolution
     logger.info("Resampling the segmentation to the native image resolution using linear interpolation...")
     im_seg_r = resampling.resample_nib(im_seg, image_dest=im_image, interpolation='linear')
-    # TODO: the output is alreay binary! should be linear interp. To check!!
 
     if ctr_algo == 'viewer':  # for debugging
         im_labels_viewer.save(sct.add_suffix(fname_orient, '_labels-viewer'))
 
     # Binarize the resampled image to remove interpolation effects
     logger.info("Binarizing the resampled segmentation...")
-    thr = 0.0001 if contrast_type in ['t1', 'dwi'] else 0.5
+    # thr = 0.0001 if contrast_type in ['t1', 'dwi'] else 0.5
+    thr = 0.5
     # TODO: optimize speed --> np.where is slow
     im_seg_r.data[np.where(im_seg_r.data > thr)] = 1
     im_seg_r.data[np.where(im_seg_r.data <= thr)] = 0
