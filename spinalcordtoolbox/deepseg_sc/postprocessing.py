@@ -142,7 +142,11 @@ def post_processing_volume_wise(im_seg):
 
 
 def post_processing_slice_wise(z_slice, x_cOm, y_cOm):
-    """Keep the largest connected obejct per z_slice and fill little holes."""
+    """
+    Keep the largest connected object per z_slice and fill little holes.
+    Note that this processing will necesseraly binarize the input segmentation. If we want to use soft predictions (as
+    opposed to binary predictions), this function needs to be refactored.
+    """
     labeled_obj, num_obj = label(z_slice)
     if num_obj > 1:
         if x_cOm is None or np.isnan(x_cOm):  # slice 0 or empty slice
