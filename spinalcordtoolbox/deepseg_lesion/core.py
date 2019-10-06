@@ -135,35 +135,44 @@ def deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo='svm', ctr_file
     else:
         file_ctr = None
     tmp_folder.chdir()
-
-    # orientation of the image, should be RPI
-    logger.info("\nReorient the image to RPI, if necessary...")
     fname_in = im_image.absolutepath
+
+    # re-orient image to RPI
+    logger.info("Reorient the image to RPI, if necessary...")
     original_orientation = im_image.orientation
-    fname_orient = 'image_in_RPI.nii'
-    im_image.change_orientation('RPI').save(fname_orient)
+    # fname_orient = 'image_in_RPI.nii'
+    im_image.change_orientation('RPI')
 
     input_resolution = im_image.dim[4:7]
+
+    # Resample image to 0.5mm in plane
+    im_image_res = \
+        resampling.resample_nib(im_image, new_size=[0.5, 0.5, im_image.dim[6]], new_size_type='mm', interpolation='linear')
+
+    fname_orient = 'image_in_RPI_res.nii'
+    im_image_res.save(fname_orient)
 
     # find the spinal cord centerline - execute OptiC binary
     logger.info("\nFinding the spinal cord centerline...")
     contrast_type_ctr = contrast_type.split('_')[0]
-    fname_res, centerline_filename, im_labels_viewer = find_centerline(algo=ctr_algo,
-                                                                        image_fname=fname_orient,
-                                                                        contrast_type=contrast_type_ctr,
-                                                                        brain_bool=brain_bool,
-                                                                        folder_output=tmp_folder_path,
-                                                                        remove_temp_files=remove_temp_files,
-                                                                        centerline_fname=file_ctr)
-    im_nii, ctr_nii = Image(fname_res), Image(centerline_filename)
+    _, im_ctl, im_labels_viewer = find_centerline(algo=ctr_algo,
+                                                    image_fname=fname_orient,
+                                                    contrast_type=contrast_type_ctr,
+                                                    brain_bool=brain_bool,
+                                                    folder_output=tmp_folder_path,
+                                                    remove_temp_files=remove_temp_files,
+                                                    centerline_fname=file_ctr)
+    if ctr_algo == 'file':
+        im_ctl = \
+            resampling.resample_nib(im_ctl, new_size=[0.5, 0.5, im_image.dim[6]], new_size_type='mm', interpolation='linear')
 
     # crop image around the spinal cord centerline
     logger.info("\nCropping the image around the spinal cord...")
     crop_size = 48
-    X_CROP_LST, Y_CROP_LST, Z_CROP_LST, im_crop_nii = crop_image_around_centerline(im_in=im_nii,
-                                                                                  ctr_in=ctr_nii,
+    X_CROP_LST, Y_CROP_LST, Z_CROP_LST, im_crop_nii = crop_image_around_centerline(im_in=im_image_res,
+                                                                                  ctr_in=im_ctl,
                                                                                   crop_size=crop_size)
-    del ctr_nii
+    del im_ctl
 
     # normalize the intensity of the images
     logger.info("Normalizing the intensity...")
@@ -198,7 +207,7 @@ def deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo='svm', ctr_file
 
     # reconstruct the segmentation from the crop data
     logger.info("\nReassembling the image...")
-    seg_uncrop_nii = uncrop_image(ref_in=im_nii, data_crop=seg_crop.copy().data, x_crop_lst=X_CROP_LST,
+    seg_uncrop_nii = uncrop_image(ref_in=im_image_res, data_crop=seg_crop.copy().data, x_crop_lst=X_CROP_LST,
                                   y_crop_lst=Y_CROP_LST, z_crop_lst=Z_CROP_LST)
     fname_seg_res_RPI = sct.add_suffix(fname_in, '_res_RPI_seg')
     seg_uncrop_nii.save(fname_seg_res_RPI)
