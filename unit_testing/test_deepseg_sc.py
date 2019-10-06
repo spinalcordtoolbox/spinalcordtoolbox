@@ -12,7 +12,7 @@ import sct_utils as sct
 from spinalcordtoolbox.image import Image
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.deepseg_sc import core as deepseg_sc
-from spinalcordtoolbox.resampling import resample_file
+from spinalcordtoolbox import resampling
 from create_test_data import dummy_centerline
 
 
@@ -25,31 +25,33 @@ def _preprocess_segment(fname_t2, fname_t2_seg, contrast_test, dim_3=False):
     gt = Image(fname_t2_seg)
 
     fname_t2_RPI, fname_t2_seg_RPI = 'img_RPI.nii.gz', 'seg_RPI.nii.gz'
-    img.change_orientation('RPI').save(fname_t2_RPI)
-    gt.change_orientation('RPI').save(fname_t2_seg_RPI)
-    input_resolution = gt.dim[4:7]
-    del img, gt
 
-    fname_res, fname_ctr, _ = deepseg_sc.find_centerline(algo='svm',
-                                                            image_fname=fname_t2_RPI,
-                                                            contrast_type=contrast_test,
-                                                            brain_bool=False,
-                                                            folder_output=tmp_folder_path,
-                                                            remove_temp_files=1,
-                                                            centerline_fname=None)
+    img.change_orientation('RPI')
+    gt.change_orientation('RPI')
+    new_resolution = 'x'.join(['0.5', '0.5', str(img.dim[6])])
+    
+    img_res = \
+        resampling.resample_nib(img, new_size=[0.5, 0.5, img.dim[6]], new_size_type='mm', interpolation='linear')
+    gt_res = \
+        resampling.resample_nib(gt, new_size=[0.5, 0.5, img.dim[6]], new_size_type='mm', interpolation='linear')
 
-    fname_t2_seg_RPI_res = 'seg_RPI_res.nii.gz'
-    new_resolution = 'x'.join(['0.5', '0.5', str(input_resolution[2])])
-    resample_file(fname_t2_seg_RPI, fname_t2_seg_RPI_res, new_resolution, 'mm', 'linear', verbose=0)
+    img_res.save(fname_t2_RPI)
 
-    img, ctr, gt = Image(fname_res), Image(fname_ctr), Image(fname_t2_seg_RPI_res)
-    _, _, _, img = deepseg_sc.crop_image_around_centerline(im_in=img,
-                                                        ctr_in=ctr,
+    _, ctr_im, _ = deepseg_sc.find_centerline(algo='svm',
+                                                image_fname=fname_t2_RPI,
+                                                contrast_type=contrast_test,
+                                                brain_bool=False,
+                                                folder_output=tmp_folder_path,
+                                                remove_temp_files=1,
+                                                centerline_fname=None)
+
+    _, _, _, img = deepseg_sc.crop_image_around_centerline(im_in=img_res,
+                                                        ctr_in=ctr_im,
                                                         crop_size=64)
-    _, _, _, gt = deepseg_sc.crop_image_around_centerline(im_in=gt,
-                                                        ctr_in=ctr,
+    _, _, _, gt = deepseg_sc.crop_image_around_centerline(im_in=gt_res,
+                                                        ctr_in=ctr_im,
                                                         crop_size=64)
-    del ctr
+    del ctr_im
 
     img = deepseg_sc.apply_intensity_normalization(im_in=img)
 
@@ -61,8 +63,8 @@ def _preprocess_segment(fname_t2, fname_t2_seg, contrast_test, dim_3=False):
 
         fname_t2_RPI_res_crop_res = 'img_RPI_res_crop_res.nii.gz'
         fname_t2_seg_RPI_res_crop_res = 'seg_RPI_res_crop_res.nii.gz'
-        resample_file(fname_t2_RPI_res_crop, fname_t2_RPI_res_crop_res, new_resolution, 'mm', 'linear', verbose=0)
-        resample_file(fname_t2_seg_RPI_res_crop, fname_t2_seg_RPI_res_crop_res, new_resolution, 'mm', 'linear', verbose=0)
+        resampling.resample_file(fname_t2_RPI_res_crop, fname_t2_RPI_res_crop_res, new_resolution, 'mm', 'linear', verbose=0)
+        resampling.resample_file(fname_t2_seg_RPI_res_crop, fname_t2_seg_RPI_res_crop_res, new_resolution, 'mm', 'linear', verbose=0)
         img, gt = Image(fname_t2_RPI_res_crop_res), Image(fname_t2_seg_RPI_res_crop_res)
 
     tmp_folder.chdir_undo()
