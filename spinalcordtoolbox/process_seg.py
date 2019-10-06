@@ -46,11 +46,7 @@ def compute_shape(segmentation, angle_correction=True, param_centerline=None, ve
     nx, ny, nz, nt, px, py, pz, pt = im_seg.dim
     pr = min([px, py])
     # Resample to isotropic resolution in the axial plane. Use the minimum pixel dimension as target dimension.
-    im_seg_nib = nibabel.nifti1.Nifti1Image(im_seg.data, im_seg.hdr.get_best_affine())
-    im_seg_nibr = resample_nib(im_seg_nib, new_size=[pr, pr, pz], new_size_type='mm', interpolation='linear')
-    # Convert back to Image type
-    im_segr = Image(
-        im_seg_nibr.get_data(), hdr=im_seg_nibr.header, orientation='RPI', dim=im_seg_nibr.header.get_data_shape())
+    im_segr = resample_nib(im_seg, new_size=[pr, pr, pz], new_size_type='mm', interpolation='linear')
 
     # Update dimensions from resampled image.
     nx, ny, nz, nt, px, py, pz, pt = im_segr.dim

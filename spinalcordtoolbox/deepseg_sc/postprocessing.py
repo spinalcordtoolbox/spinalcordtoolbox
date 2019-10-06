@@ -113,11 +113,11 @@ def _remove_isolated_voxels_on_the_edge(im_seg, n_slices=5):
     ind_min, ind_max = ind_nonnan[0], ind_nonnan[-1]
     # Check if the CSA at the edge is inferior to half of the median across adjacent slices...
     # ... for the top slice
-    if metrics['area'].data[ind_min] < np.median(metrics['area'].data[ind_min:n_slices]):
+    if metrics['area'].data[ind_min] < np.median(metrics['area'].data[ind_min:n_slices])/2:
         im_seg.data[:, :, ind_min] = 0
         logger.warning('Found isolated voxels on slice {}, Removing them'.format(ind_min))
     # ... for the bottom slice
-    if metrics['area'].data[ind_max] < np.median(metrics['area'].data[ind_max-n_slices+1:ind_max+1]):
+    if metrics['area'].data[ind_max] < np.median(metrics['area'].data[ind_max-n_slices+1:ind_max+1])/2:
         im_seg.data[:, :, ind_max] = 0
         logger.warning('Found isolated voxels on slice {}, Removing them'.format(ind_min))
     return im_seg
@@ -142,7 +142,11 @@ def post_processing_volume_wise(im_seg):
 
 
 def post_processing_slice_wise(z_slice, x_cOm, y_cOm):
-    """Keep the largest connected obejct per z_slice and fill little holes."""
+    """
+    Keep the largest connected object per z_slice and fill little holes.
+    Note that this processing will necesseraly binarize the input segmentation. If we want to use soft predictions (as
+    opposed to binary predictions), this function needs to be refactored.
+    """
     labeled_obj, num_obj = label(z_slice)
     if num_obj > 1:
         if x_cOm is None or np.isnan(x_cOm):  # slice 0 or empty slice

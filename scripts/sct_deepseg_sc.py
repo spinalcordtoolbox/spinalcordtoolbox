@@ -73,7 +73,7 @@ def get_parser():
         choices=(0, 1))
     optional.add_argument(
         "-kernel",
-        help="Choice of kernel shape for the CNN. Segmentation with 3D kernels is longer than with 2D kernels.",
+        help="Choice of kernel shape for the CNN. Segmentation with 3D kernels is slower than with 2D kernels.",
         choices=('2d', '3d'),
         default="2d")
     optional.add_argument(
@@ -139,7 +139,6 @@ def main():
         sct.printv('3D kernel model for dwi contrast is not available. 2D kernel model is used instead.',
                    type="warning")
 
-
     if ctr_algo == 'file' and args.file_centerline is None:
         sct.printv('Please use the flag -file_centerline to indicate the centerline filename.', 1, 'warning')
         sys.exit(1)
@@ -172,7 +171,7 @@ def main():
 
     im_image = Image(fname_image)
     # note: below we pass im_image.copy() otherwise the field absolutepath becomes None after execution of this function
-    im_seg, im_image_RPI_upsamp, im_seg_RPI_upsamp, im_labels_viewer, im_ctr = \
+    im_seg, im_image_RPI_upsamp, im_seg_RPI_upsamp = \
         deep_segmentation_spinalcord(im_image.copy(), contrast_type, ctr_algo=ctr_algo,
                                      ctr_file=manual_centerline_fname, brain_bool=brain_bool, kernel_size=kernel_size,
                                      remove_temp_files=remove_temp_files, verbose=verbose)
@@ -184,18 +183,6 @@ def main():
     # copy q/sform from input image to output segmentation
     im_seg.copy_qform_from_ref(im_image)
     im_seg.save(fname_seg)
-
-    if ctr_algo == 'viewer':
-        # Save labels
-        fname_labels = os.path.abspath(os.path.join(output_folder, sct.extract_fname(fname_image)[1] + '_labels-centerline' +
-                                               sct.extract_fname(fname_image)[2]))
-        im_labels_viewer.save(fname_labels)
-
-    if verbose == 2:
-        # Save ctr
-        fname_ctr = os.path.abspath(os.path.join(output_folder, sct.extract_fname(fname_image)[1] + '_centerline' +
-                                               sct.extract_fname(fname_image)[2]))
-        im_ctr.save(fname_ctr)
 
     if path_qc is not None:
         generate_qc(fname_image, fname_seg=fname_seg, args=sys.argv[1:], path_qc=os.path.abspath(path_qc),
