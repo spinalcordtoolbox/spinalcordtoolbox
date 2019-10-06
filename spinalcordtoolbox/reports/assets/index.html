@@ -65,7 +65,7 @@
                       Next
                   </span>
               </a>
-              <div class="seperation">
+              
                 <div id="dropdown" class="dropdown">
                     <button id="dropdownButton" class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true">Display Columns <span class="caret"></span></button>
                     <ul class="dropdown-menu">
@@ -80,12 +80,14 @@
                     </ul>
                 </div>
                 <script>
-                    document.getElementById("dropdown").style.position= "absolute";
-                    document.getElementById("dropdown").style.top = "50px";
+                    document.getElementById("dropdown").style.position= "relative";
+                    document.getElementById("dropdown").style.marginBottom = "-30px";
+
                 </script>
-              </div>
+	  
               <table id="table" class="table table-condensed"
 		  data-sort-name="moddate"
+		  data-toolbar="#dropdown"
                   data-sort-order="asc"
 		  data-search="true"
                   data-response-handler="responseHandler">
