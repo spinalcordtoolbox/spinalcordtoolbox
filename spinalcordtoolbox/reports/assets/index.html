@@ -83,12 +83,11 @@
                     document.getElementById("dropdown").style.position= "absolute";
                     document.getElementById("dropdown").style.top = "50px";
                 </script>
-                <input class="searchBar" type="text" id="searchInput" onkeyup="hideNonSearchElements()" placeholder="Search" autocomplete="off">
-                <div class="emptySearch">No matching records found</div>
               </div>
               <table id="table" class="table table-condensed"
 		  data-sort-name="moddate"
                   data-sort-order="asc"
+		  data-search="true"
                   data-response-handler="responseHandler">
 	                <thead>
 		                  <tr>
@@ -171,7 +170,7 @@
         This function hides all elements that do not fit
         the search elements in the searchbar.
         */
-        var searchInput = document.getElementById("searchInput").value;
+        var searchInput = document.getElementsByClassName("form-control")[0].value;
         var tableRows = document.getElementsByTagName("tr");
         var isEmpty = true;
 
@@ -250,5 +249,6 @@
               toggleColumn(document.getElementsByClassName('dropdown-item')[iTH].id)
          }
      },4);
+	 $(document).ready(function(){document.getElementsByClassName('fixed-table-toolbar')[0].style.marginTop=" -55px";});
 </script>
 </html>
