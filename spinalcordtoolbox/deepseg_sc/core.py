@@ -350,23 +350,6 @@ def segment_2d(model_fname, contrast_type, input_size, im_in):
     return seg_crop.data
 
 
-def uncrop_image(ref_in, data_crop, x_crop_lst, y_crop_lst, z_crop_lst):
-    """Reconstruc the data from the crop segmentation."""
-    # TODO: check if np.uint8 below is OK
-    seg_unCrop = zeros_like(ref_in, dtype=np.uint8)
-
-    crop_size_x, crop_size_y = data_crop.shape[:2]
-
-    for i_z, zz in enumerate(z_crop_lst):
-        pred_seg = data_crop[:, :, zz]
-        x_start, y_start = int(x_crop_lst[i_z]), int(y_crop_lst[i_z])
-        x_end = x_start + crop_size_x if x_start + crop_size_x < seg_unCrop.dim[0] else seg_unCrop.dim[0]
-        y_end = y_start + crop_size_y if y_start + crop_size_y < seg_unCrop.dim[1] else seg_unCrop.dim[1]
-        seg_unCrop.data[x_start:x_end, y_start:y_end, zz] = pred_seg[0:x_end - x_start, 0:y_end - y_start]
-
-    return seg_unCrop
-
-
 def segment_3d(model_fname, contrast_type, im_in):
     """Perform segmentation with 3D convolutions."""
     from spinalcordtoolbox.deepseg_sc.cnn_models_3d import load_trained_model
@@ -406,6 +389,23 @@ def segment_3d(model_fname, contrast_type, im_in):
                 out.data[:, :, zz:z_patch_size + zz] = pred_seg_th
 
     return out.data
+
+
+def uncrop_image(ref_in, data_crop, x_crop_lst, y_crop_lst, z_crop_lst):
+    """Reconstruc the data from the crop segmentation."""
+    # TODO: check if np.uint8 below is OK
+    seg_unCrop = zeros_like(ref_in, dtype=np.uint8)
+
+    crop_size_x, crop_size_y = data_crop.shape[:2]
+
+    for i_z, zz in enumerate(z_crop_lst):
+        pred_seg = data_crop[:, :, zz]
+        x_start, y_start = int(x_crop_lst[i_z]), int(y_crop_lst[i_z])
+        x_end = x_start + crop_size_x if x_start + crop_size_x < seg_unCrop.dim[0] else seg_unCrop.dim[0]
+        y_end = y_start + crop_size_y if y_start + crop_size_y < seg_unCrop.dim[1] else seg_unCrop.dim[1]
+        seg_unCrop.data[x_start:x_end, y_start:y_end, zz] = pred_seg[0:x_end - x_start, 0:y_end - y_start]
+
+    return seg_unCrop
 
 
 def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_file=None, brain_bool=True,
