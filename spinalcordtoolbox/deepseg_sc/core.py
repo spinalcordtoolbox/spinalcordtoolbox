@@ -394,15 +394,16 @@ def segment_3d(model_fname, contrast_type, im_in):
                 _normalize_data(patch_im, dct_patch_sc_3d[contrast_type]['mean'], dct_patch_sc_3d[contrast_type]['std'])
             patch_pred_proba = \
                 seg_model.predict(np.expand_dims(np.expand_dims(patch_norm, 0), 0), batch_size=BATCH_SIZE)
-            pred_seg_th = (patch_pred_proba > 0.5).astype(int)[0, 0, :, :, :]
+            # pred_seg_th = (patch_pred_proba > 0.5).astype(int)[0, 0, :, :, :]
+            pred_seg_th = patch_pred_proba[0, 0, :, :, :]  # TODO: clarified variable (this is not thresholded!)
 
             # TODO: move that part outside of the function (duplicated from segment 2d)
-            x_cOm, y_cOm = None, None
-            for zz_pp in range(z_patch_size):
-                pred_seg_pp = post_processing_slice_wise(pred_seg_th[:, :, zz_pp], x_cOm, y_cOm)
-                pred_seg_th[:, :, zz_pp] = pred_seg_pp
-                x_cOm, y_cOm = center_of_mass(pred_seg_pp)
-                x_cOm, y_cOm = np.round(x_cOm), np.round(y_cOm)
+            # x_cOm, y_cOm = None, None
+            # for zz_pp in range(z_patch_size):
+            #     pred_seg_pp = post_processing_slice_wise(pred_seg_th[:, :, zz_pp], x_cOm, y_cOm)
+            #     pred_seg_th[:, :, zz_pp] = pred_seg_pp
+            #     x_cOm, y_cOm = center_of_mass(pred_seg_pp)
+            #     x_cOm, y_cOm = np.round(x_cOm), np.round(y_cOm)
 
             if zz == z_step_keep[-1]:
                 out.data[:, :, zz:] = pred_seg_th[:, :, :z_patch_extracted]
@@ -483,7 +484,7 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
                               im_in=im_norm_in)
 
     # Postprocessing
-    threshold = 0.5
+    threshold = 0.5  # TODO: make it an argument
     seg_crop_postproc = np.zeros_like(seg_crop)
     x_cOm, y_cOm = None, None
     for zz in range(im_norm_in.dim[2]):
@@ -505,6 +506,7 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
     del seg_crop, seg_crop_postproc, im_norm_in
 
     # TODO: replace float32+thr by uint8 (similar results and faster)
+    # TODO: give the possibility to output soft seg
     # Change type uint8 --> float32 otherwise resampling will produce binary output (even with linear interpolation)
     im_seg.change_type(np.float32)
     # resample to initial resolution
