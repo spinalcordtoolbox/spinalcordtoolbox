@@ -337,26 +337,21 @@ def segment_2d(model_fname, contrast_type, input_size, im_in):
                                     dropout=0.0)
     seg_model.load_weights(model_fname)
 
-    seg_crop = zeros_like(im_in, dtype=np.uint8)
+    seg_crop = zeros_like(im_in, dtype=np.float32)
 
     data_norm = im_in.data
-    x_cOm, y_cOm = None, None
     for zz in range(im_in.dim[2]):
+        # 2D CNN prediction
         pred_seg = seg_model.predict(np.expand_dims(np.expand_dims(data_norm[:, :, zz], -1), 0),
                                      batch_size=BATCH_SIZE)[0, :, :, 0]
-        pred_seg_th = (pred_seg > 0).astype(int)
-        pred_seg_pp = post_processing_slice_wise(pred_seg_th, x_cOm, y_cOm)
-        seg_crop.data[:, :, zz] = pred_seg_pp
-
-        if 1 in pred_seg_pp:
-            x_cOm, y_cOm = center_of_mass(pred_seg_pp)
-            x_cOm, y_cOm = np.round(x_cOm), np.round(y_cOm)
+        seg_crop.data[:, :, zz] = pred_seg
 
     return seg_crop.data
 
 
 def uncrop_image(ref_in, data_crop, x_crop_lst, y_crop_lst, z_crop_lst):
     """Reconstruc the data from the crop segmentation."""
+    # TODO: check if np.uint8 below is OK
     seg_unCrop = zeros_like(ref_in, dtype=np.uint8)
 
     crop_size_x, crop_size_y = data_crop.shape[:2]
@@ -401,6 +396,7 @@ def segment_3d(model_fname, contrast_type, im_in):
                 seg_model.predict(np.expand_dims(np.expand_dims(patch_norm, 0), 0), batch_size=BATCH_SIZE)
             pred_seg_th = (patch_pred_proba > 0.5).astype(int)[0, 0, :, :, :]
 
+            # TODO: move that part outside of the function (duplicated from segment 2d)
             x_cOm, y_cOm = None, None
             for zz_pp in range(z_patch_size):
                 pred_seg_pp = post_processing_slice_wise(pred_seg_th[:, :, zz_pp], x_cOm, y_cOm)
@@ -485,18 +481,30 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
         seg_crop = segment_3d(model_fname=segmentation_model_fname,
                               contrast_type=contrast_type,
                               im_in=im_norm_in)
-    del im_norm_in
+
+    # Postprocessing
+    threshold = 0.5
+    seg_crop_postproc = np.zeros_like(seg_crop)
+    x_cOm, y_cOm = None, None
+    for zz in range(im_norm_in.dim[2]):
+        pred_seg_th = (seg_crop[:, :, zz] > threshold).astype(int)
+        pred_seg_pp = post_processing_slice_wise(pred_seg_th, x_cOm, y_cOm)
+        seg_crop_postproc[:, :, zz] = pred_seg_pp
+        if 1 in pred_seg_pp:
+            x_cOm, y_cOm = center_of_mass(pred_seg_pp)
+            x_cOm, y_cOm = np.round(x_cOm), np.round(y_cOm)
 
     # reconstruct the segmentation from the crop data
     logger.info("Reassembling the image...")
     im_seg = uncrop_image(ref_in=im_image_res,
-                          data_crop=seg_crop,
+                          data_crop=seg_crop_postproc,
                           x_crop_lst=X_CROP_LST,
                           y_crop_lst=Y_CROP_LST,
                           z_crop_lst=Z_CROP_LST)
     # seg_uncrop_nii.save(sct.add_suffix(fname_res, '_seg'))  # for debugging
-    del seg_crop
+    del seg_crop, seg_crop_postproc, im_norm_in
 
+    # TODO: replace float32+thr by uint8 (similar results and faster)
     # Change type uint8 --> float32 otherwise resampling will produce binary output (even with linear interpolation)
     im_seg.change_type(np.float32)
     # resample to initial resolution
