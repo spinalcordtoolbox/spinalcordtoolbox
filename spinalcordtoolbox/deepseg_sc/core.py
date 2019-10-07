@@ -340,6 +340,7 @@ def segment_2d(model_fname, contrast_type, input_size, im_in):
     seg_crop = zeros_like(im_in, dtype=np.float32)
 
     data_norm = im_in.data
+    # TODO: use tqdm
     for zz in range(im_in.dim[2]):
         # 2D CNN prediction
         pred_seg = seg_model.predict(np.expand_dims(np.expand_dims(data_norm[:, :, zz], -1), 0),
@@ -375,11 +376,12 @@ def segment_3d(model_fname, contrast_type, im_in):
     # load 3d model
     seg_model = load_trained_model(model_fname)
 
-    out = zeros_like(im_in, dtype=np.uint8)
+    out = zeros_like(im_in, dtype=np.float32)
 
     # segment the spinal cord
     z_patch_size = dct_patch_sc_3d[contrast_type]['size'][2]
     z_step_keep = list(range(0, im_in.data.shape[2], z_patch_size))
+    # TODO: use tqdm
     for zz in z_step_keep:
         if zz == z_step_keep[-1]:  # deal with instances where the im.data.shape[2] % patch_size_z != 0
             patch_im = np.zeros(dct_patch_sc_3d[contrast_type]['size'])
@@ -397,14 +399,7 @@ def segment_3d(model_fname, contrast_type, im_in):
             # pred_seg_th = (patch_pred_proba > 0.5).astype(int)[0, 0, :, :, :]
             pred_seg_th = patch_pred_proba[0, 0, :, :, :]  # TODO: clarified variable (this is not thresholded!)
 
-            # TODO: move that part outside of the function (duplicated from segment 2d)
-            # x_cOm, y_cOm = None, None
-            # for zz_pp in range(z_patch_size):
-            #     pred_seg_pp = post_processing_slice_wise(pred_seg_th[:, :, zz_pp], x_cOm, y_cOm)
-            #     pred_seg_th[:, :, zz_pp] = pred_seg_pp
-            #     x_cOm, y_cOm = center_of_mass(pred_seg_pp)
-            #     x_cOm, y_cOm = np.round(x_cOm), np.round(y_cOm)
-
+            # TODO: add comment about what the code is doing below
             if zz == z_step_keep[-1]:
                 out.data[:, :, zz:] = pred_seg_th[:, :, :z_patch_extracted]
             else:
