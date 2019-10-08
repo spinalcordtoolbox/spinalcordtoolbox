@@ -141,22 +141,25 @@ def post_processing_volume_wise(im_seg):
     return im_seg
 
 
-def post_processing_slice_wise(z_slice, x_cOm, y_cOm):
+def keep_largest_object(z_slice, x_cOm, y_cOm):
     """
     Keep the largest connected object per z_slice and fill little holes.
-    Note that this processing will necesseraly binarize the input segmentation. If we want to use soft predictions (as
-    opposed to binary predictions), this function needs to be refactored.
     """
-    labeled_obj, num_obj = label(z_slice)
+    z_slice_bin = (z_slice > 0).astype(int)  # compatible with soft segmentation
+    labeled_obj, num_obj = label(z_slice_bin)
     if num_obj > 1:
         if x_cOm is None or np.isnan(x_cOm):  # slice 0 or empty slice
-            z_slice = (labeled_obj == (np.bincount(labeled_obj.flat)[1:].argmax() + 1))
+            z_slice[np.where(labeled_obj != (np.bincount(labeled_obj.flat)[1:].argmax() + 1))] = 0
         else:
             idx_z_minus_1 = np.bincount(labeled_obj.flat)[1:].argmax() + 1
             for idx in range(1, num_obj + 1):
                 z_idx = labeled_obj == idx
                 if z_idx[int(x_cOm), int(y_cOm)]:
                     idx_z_minus_1 = idx
-            z_slice = (labeled_obj == idx_z_minus_1)
+            z_slice[np.where(labeled_obj != idx_z_minus_1)] = 0
 
+    return z_slice
+
+
+def fill_holes(z_slice):
     return binary_fill_holes(z_slice, structure=np.ones((3, 3))).astype(np.int)
