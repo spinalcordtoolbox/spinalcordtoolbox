@@ -125,15 +125,17 @@ def _remove_isolated_voxels_on_the_edge(im_seg, n_slices=5):
 
 def post_processing_volume_wise(im_seg):
     """Post processing function to clean the input segmentation: fill holes, remove edge outlier, etc."""
-    data = im_seg.data.astype(np.int)
+    data_bin = (im_seg.data > 0).astype(np.int)
 
     # Remove blobs
-    data = _remove_blobs(data)
+    data_bin = _remove_blobs(data_bin)
 
     # Fill z_holes, i.e. interpolate for z_slice not segmented
-    zz_zeros = [zz for zz in range(im_seg.dim[2]) if 1 not in list(np.unique(data[:, :, zz]))]
+    zz_zeros = [zz for zz in range(im_seg.dim[2]) if 1 not in list(np.unique(data_bin[:, :, zz]))]
     zz_holes = _remove_extrem_holes(zz_zeros, im_seg.dim[2] - 1, 0)
-    im_seg.data = _fill_z_holes(zz_holes, data, im_seg.dim[6]) if len(zz_holes) else data
+    data_pp = _fill_z_holes(zz_holes, data_bin, im_seg.dim[6]) if len(zz_holes) else data_bin
+
+    im_seg.data[np.where(data_pp == 0)] = 0  # to be compatible with soft segmentation
 
     # Set isolated voxels at edge slices to zero
     im_seg = _remove_isolated_voxels_on_the_edge(im_seg)
