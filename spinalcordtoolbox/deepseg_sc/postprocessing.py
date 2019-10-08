@@ -124,7 +124,10 @@ def _remove_isolated_voxels_on_the_edge(im_seg, n_slices=5):
 
 
 def post_processing_volume_wise(im_seg):
-    """Post processing function to clean the input segmentation: fill holes, remove edge outlier, etc."""
+    """
+    Post processing function to clean the input segmentation: fill holes, remove edge outlier, etc.
+    Note: This function is compatible with soft segmentation (i.e. float between 0-1).
+    """
     data_bin = (im_seg.data > 0).astype(np.int)
 
     # Remove blobs
@@ -146,6 +149,7 @@ def post_processing_volume_wise(im_seg):
 def keep_largest_object(z_slice, x_cOm, y_cOm):
     """
     Keep the largest connected object per z_slice and fill little holes.
+    Note: This function is compatible with soft segmentation (i.e. float between 0-1).
     """
     z_slice_bin = (z_slice > 0).astype(int)  # compatible with soft segmentation
     labeled_obj, num_obj = label(z_slice_bin)
