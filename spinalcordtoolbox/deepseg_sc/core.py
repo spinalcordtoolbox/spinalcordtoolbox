@@ -414,6 +414,20 @@ def uncrop_image(ref_in, data_crop, x_crop_lst, y_crop_lst, z_crop_lst):
 
 def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_file=None, brain_bool=True,
                                  kernel_size='2d', threshold_seg=0.5, remove_temp_files=1, verbose=1):
+    """
+    Main pipeline for CNN-based segmentation of the spinal cord.
+    :param im_image:
+    :param contrast_type:
+    :param ctr_algo:
+    :param ctr_file:
+    :param brain_bool:
+    :param kernel_size:
+    :param threshold_seg: Binarization threshold (between 0 and 1) to apply to the segmentation prediction. Set to -1
+        for no binarization (i.e. soft segmentation output)
+    :param remove_temp_files:
+    :param verbose:
+    :return:
+    """
     """Pipeline"""
     # create temporary folder with intermediate results
     tmp_folder = sct.TempFolder(verbose=verbose)
@@ -510,10 +524,6 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
     # seg_uncrop_nii.save(sct.add_suffix(fname_res, '_seg'))  # for debugging
     del seg_crop, seg_crop_postproc, im_norm_in
 
-    # TODO: replace float32+thr by uint8 (similar results and faster)
-    # TODO: give the possibility to output soft seg
-    # Change type uint8 --> float32 otherwise resampling will produce binary output (even with linear interpolation)
-    # im_seg.change_type(np.float32)
     # resample to initial resolution
     logger.info("Resampling the segmentation to the native image resolution using linear interpolation...")
     im_seg_r = resampling.resample_nib(im_seg, image_dest=im_image, interpolation='linear')
@@ -521,8 +531,8 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
     if ctr_algo == 'viewer':  # for debugging
         im_labels_viewer.save(sct.add_suffix(fname_orient, '_labels-viewer'))
 
+    # Binarize the resampled image (except for soft segmentation, defined by threshold_seg=-1)
     if threshold_seg >= 0:
-        # Binarize the resampled image to remove interpolation effects
         logger.info("Binarizing the resampled segmentation...")
         thr = 0.5
         # TODO: optimize speed --> np.where is slow
