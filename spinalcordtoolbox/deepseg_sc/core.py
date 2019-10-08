@@ -392,19 +392,17 @@ def segment_3d(model_fname, contrast_type, im_in):
 
 
 def uncrop_image(ref_in, data_crop, x_crop_lst, y_crop_lst, z_crop_lst):
-    """Reconstruc the data from the crop segmentation."""
-    # TODO: check if np.uint8 below is OK
-    seg_unCrop = zeros_like(ref_in, dtype=np.uint8)
-
+    """
+    Reconstruct the data from the cropped segmentation.
+    """
+    seg_unCrop = zeros_like(ref_in, dtype=np.float32)
     crop_size_x, crop_size_y = data_crop.shape[:2]
-
     for i_z, zz in enumerate(z_crop_lst):
         pred_seg = data_crop[:, :, zz]
         x_start, y_start = int(x_crop_lst[i_z]), int(y_crop_lst[i_z])
         x_end = x_start + crop_size_x if x_start + crop_size_x < seg_unCrop.dim[0] else seg_unCrop.dim[0]
         y_end = y_start + crop_size_y if y_start + crop_size_y < seg_unCrop.dim[1] else seg_unCrop.dim[1]
         seg_unCrop.data[x_start:x_end, y_start:y_end, zz] = pred_seg[0:x_end - x_start, 0:y_end - y_start]
-
     return seg_unCrop
 
 
