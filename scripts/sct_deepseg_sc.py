@@ -174,7 +174,7 @@ def main():
     if threshold >= 0:
         algo_config_stg += '\n\tBinarization threshold: ' + str(threshold)
     else:
-        algo_config_stg += '\n\tBinarization threshold: None.'
+        algo_config_stg += '\n\tBinarization threshold: None'
     algo_config_stg += '\n\tAssumes brain section included in the image: ' + str(brain_bool)
     algo_config_stg += '\n\tDimension of the segmentation kernel convolutions: ' + kernel_size + '\n'
     sct.printv(algo_config_stg)
