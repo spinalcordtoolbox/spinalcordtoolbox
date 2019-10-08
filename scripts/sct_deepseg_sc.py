@@ -157,7 +157,7 @@ def main():
 
     threshold = args.thr
     if threshold > 1.0 or (threshold < 0.0 and threshold != -1.0):
-        raise RuntimeError("Threshold should be between 0 and 1, or equal to -1 (no threshold)")
+        raise SyntaxError("Threshold should be between 0 and 1, or equal to -1 (no threshold)")
 
     remove_temp_files = args.r
     verbose = args.v
