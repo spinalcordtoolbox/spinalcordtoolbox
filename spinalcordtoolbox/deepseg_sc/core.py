@@ -12,7 +12,7 @@ import nibabel as nib
 
 from spinalcordtoolbox import resampling
 from .cnn_models import nn_architecture_seg, nn_architecture_ctr
-from .postprocessing import post_processing_volume_wise, keep_largest_object, fill_holes
+from .postprocessing import post_processing_volume_wise, keep_largest_object, fill_holes_2d
 from spinalcordtoolbox.image import Image, empty_like, change_type, zeros_like
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline, _call_viewer_centerline
 
@@ -328,7 +328,10 @@ def _normalize_data(data, mean, std):
 
 
 def segment_2d(model_fname, contrast_type, input_size, im_in):
-    """Segment data using 2D convolutions."""
+    """
+    Segment data using 2D convolutions.
+    :return: seg_crop.data: ndarray float32: Output prediction
+    """
     seg_model = nn_architecture_seg(height=input_size[0],
                                     width=input_size[1],
                                     depth=2 if contrast_type != 't2' else 3,
@@ -351,7 +354,10 @@ def segment_2d(model_fname, contrast_type, input_size, im_in):
 
 
 def segment_3d(model_fname, contrast_type, im_in):
-    """Perform segmentation with 3D convolutions."""
+    """
+    Perform segmentation with 3D convolutions.
+    :return: seg_crop.data: ndarray float32: Output prediction
+    """
     from spinalcordtoolbox.deepseg_sc.cnn_models_3d import load_trained_model
     dct_patch_sc_3d = {'t2': {'size': (64, 64, 48), 'mean': 65.8562, 'std': 59.7999},
                        't2s': {'size': (96, 96, 48), 'mean': 87.0212, 'std': 64.425},
@@ -480,19 +486,19 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
     seg_crop_postproc = np.zeros_like(seg_crop)
     x_cOm, y_cOm = None, None
     for zz in range(im_norm_in.dim[2]):
+        # Fill holes (only for binary segmentations)
         if threshold_seg >= 0:
-            pred_seg_th = (seg_crop[:, :, zz] > threshold_seg).astype(int)  # hard prediction
-            pred_seg_th = fill_holes(pred_seg_th)
+            pred_seg_th = fill_holes_2d((seg_crop[:, :, zz] > threshold_seg).astype(int))
+            pred_seg_pp = keep_largest_object(pred_seg_th, x_cOm, y_cOm)
+            # Update center of mass for slice i+1
+            if 1 in pred_seg_pp:
+                x_cOm, y_cOm = center_of_mass(pred_seg_pp)
+                x_cOm, y_cOm = np.round(x_cOm), np.round(y_cOm)
         else:
-            pred_seg_th = seg_crop[:, :, zz]  # soft prediction
-
-        pred_seg_pp = keep_largest_object(pred_seg_th, x_cOm, y_cOm)
+            # If soft segmentation, do nothing
+            pred_seg_pp = seg_crop[:, :, zz]
 
         seg_crop_postproc[:, :, zz] = pred_seg_pp
-
-        if 1 in pred_seg_pp:
-            x_cOm, y_cOm = center_of_mass(pred_seg_pp)
-            x_cOm, y_cOm = np.round(x_cOm), np.round(y_cOm)
 
     # reconstruct the segmentation from the crop data
     logger.info("Reassembling the image...")
@@ -507,7 +513,7 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
     # TODO: replace float32+thr by uint8 (similar results and faster)
     # TODO: give the possibility to output soft seg
     # Change type uint8 --> float32 otherwise resampling will produce binary output (even with linear interpolation)
-    im_seg.change_type(np.float32)
+    # im_seg.change_type(np.float32)
     # resample to initial resolution
     logger.info("Resampling the segmentation to the native image resolution using linear interpolation...")
     im_seg_r = resampling.resample_nib(im_seg, image_dest=im_image, interpolation='linear')
