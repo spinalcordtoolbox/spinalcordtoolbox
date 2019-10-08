@@ -191,9 +191,6 @@ def main():
                                      ctr_file=manual_centerline_fname, brain_bool=brain_bool, kernel_size=kernel_size,
                                      threshold_seg=threshold, remove_temp_files=remove_temp_files, verbose=verbose)
 
-    # copy q/sform from input image to output segmentation
-    im_seg.copy_qform_from_ref(im_image)
-
     # Save segmentation
     fname_seg = os.path.abspath(os.path.join(output_folder, sct.extract_fname(fname_image)[1] + '_seg' +
                                              sct.extract_fname(fname_image)[2]))

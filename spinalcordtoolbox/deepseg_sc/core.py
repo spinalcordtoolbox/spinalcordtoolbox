@@ -533,6 +533,7 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
     im_seg_r_postproc = post_processing_volume_wise(im_seg_r)
 
     # change data type
+    # TODO: probably not needed if dtype is tracked down
     if threshold_seg >= 0:
         im_seg_r_postproc.change_type(np.uint8)
     else:
@@ -546,6 +547,9 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
         tmp_folder.cleanup()
 
     # reorient to initial orientation
-    return im_seg_r_postproc.change_orientation(original_orientation), \
-           im_image_res, \
-           im_seg.change_orientation('RPI')
+    im_seg_r_postproc.change_orientation(original_orientation)
+
+    # copy q/sform from input image to output segmentation
+    im_seg.copy_qform_from_ref(im_image)
+
+    return im_seg_r_postproc, im_image_res, im_seg.change_orientation('RPI')
