@@ -526,10 +526,15 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
         im_seg_r.data[np.where(im_seg_r.data <= thr)] = 0
 
     # post processing step to z_regularized
-    im_seg_r_postproc = post_processing_volume_wise(im_seg_r)
+    # TODO: refactor to allow soft seg
+    #im_seg_r_postproc = post_processing_volume_wise(im_seg_r)
+    im_seg_r_postproc = im_seg_r
 
     # change data type
-    im_seg_r_postproc.change_type(np.uint8)
+    if threshold_seg >= 0:
+        im_seg_r_postproc.change_type(np.uint8)
+    else:
+        im_seg_r_postproc.change_type(np.float32)
 
     tmp_folder.chdir_undo()
 

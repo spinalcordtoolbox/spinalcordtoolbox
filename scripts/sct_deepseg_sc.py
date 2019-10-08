@@ -66,6 +66,12 @@ def get_parser():
         metavar=Metavar.str,
         help='Input centerline file (to use with flag -centerline file). Example: t2_centerline_manual.nii.gz')
     optional.add_argument(
+        "-thr",
+        type=float,
+        help="Binarisation threshold to apply in the segmentation predictions. Use -1.0 to disable it (i.e. output soft segmentation).",
+        metavar=Metavar.float,
+        default=0.5)
+    optional.add_argument(
         "-brain",
         type=int,
         help='Indicate if the input image contains brain sections (to speed up segmentation). This flag is only '
@@ -149,6 +155,10 @@ def main():
     else:
         manual_centerline_fname = None
 
+    threshold = args.thr
+    if threshold > 1.0 or (threshold < 0.0 and threshold != -1.0):
+        raise RuntimeError("Threshold should be between 0.0 and 1.0, or equal to -1.0.")
+
     remove_temp_files = args.r
     verbose = args.v
     sct.init_sct(log_level=verbose, update=True)  # Update log level
@@ -160,6 +170,10 @@ def main():
 
     algo_config_stg = '\nMethod:'
     algo_config_stg += '\n\tCenterline algorithm: ' + str(ctr_algo)
+    if threshold >= 0:
+        algo_config_stg += '\n\tBinarisation threshold: ' + str(threshold)
+    else:
+        algo_config_stg += '\n\tBinarisation threshold: None.'
     algo_config_stg += '\n\tAssumes brain section included in the image: ' + str(brain_bool)
     algo_config_stg += '\n\tDimension of the segmentation kernel convolutions: ' + kernel_size + '\n'
     sct.printv(algo_config_stg)
@@ -174,7 +188,7 @@ def main():
     im_seg, im_image_RPI_upsamp, im_seg_RPI_upsamp = \
         deep_segmentation_spinalcord(im_image.copy(), contrast_type, ctr_algo=ctr_algo,
                                      ctr_file=manual_centerline_fname, brain_bool=brain_bool, kernel_size=kernel_size,
-                                     remove_temp_files=remove_temp_files, verbose=verbose)
+                                     threshold_seg=threshold, remove_temp_files=remove_temp_files, verbose=verbose)
 
     # Save segmentation
     fname_seg = os.path.abspath(os.path.join(output_folder, sct.extract_fname(fname_image)[1] + '_seg' +
