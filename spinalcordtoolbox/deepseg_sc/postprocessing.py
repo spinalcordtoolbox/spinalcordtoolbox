@@ -128,7 +128,7 @@ def post_processing_volume_wise(im_seg):
     Post processing function to clean the input segmentation: fill holes, remove edge outlier, etc.
     Note: This function is compatible with soft segmentation (i.e. float between 0-1).
     """
-    data_bin = (im_seg.data > 0).astype(np.int)
+    data_bin = (im_seg.data > 0).astype(np.int)  # will binarize soft segmentation
 
     # Remove blobs
     data_bin = _remove_blobs(data_bin)
@@ -151,7 +151,7 @@ def keep_largest_object(z_slice, x_cOm, y_cOm):
     Keep the largest connected object per z_slice and fill little holes.
     Note: This function is compatible with soft segmentation (i.e. float between 0-1).
     """
-    z_slice_bin = (z_slice > 0).astype(int)  # compatible with soft segmentation
+    z_slice_bin = (z_slice > 0).astype(int)  # will binarize soft segmentation
     labeled_obj, num_obj = label(z_slice_bin)
     if num_obj > 1:
         if x_cOm is None or np.isnan(x_cOm):  # slice 0 or empty slice
