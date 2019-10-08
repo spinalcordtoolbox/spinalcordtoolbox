@@ -12,7 +12,7 @@ import nibabel as nib
 
 from spinalcordtoolbox import resampling
 from .cnn_models import nn_architecture_seg, nn_architecture_ctr
-from .postprocessing import post_processing_volume_wise, post_processing_slice_wise
+from .postprocessing import post_processing_volume_wise, keep_largest_object, fill_holes
 from spinalcordtoolbox.image import Image, empty_like, change_type, zeros_like
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline, _call_viewer_centerline
 
@@ -483,9 +483,15 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
     x_cOm, y_cOm = None, None
     for zz in range(im_norm_in.dim[2]):
         if threshold_seg >= 0:
-            pred_seg_th = (seg_crop[:, :, zz] > threshold_seg).astype(int)
-        pred_seg_pp = post_processing_slice_wise(pred_seg_th, x_cOm, y_cOm)
+            pred_seg_th = (seg_crop[:, :, zz] > threshold_seg).astype(int)  # hard prediction
+            pred_seg_th = fill_holes(pred_seg_th)
+        else:
+            pred_seg_th = seg_crop[:, :, zz]  # soft prediction
+
+        pred_seg_pp = keep_largest_object(pred_seg_th, x_cOm, y_cOm)
+
         seg_crop_postproc[:, :, zz] = pred_seg_pp
+
         if 1 in pred_seg_pp:
             x_cOm, y_cOm = center_of_mass(pred_seg_pp)
             x_cOm, y_cOm = np.round(x_cOm), np.round(y_cOm)
