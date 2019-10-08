@@ -68,7 +68,8 @@ def get_parser():
     optional.add_argument(
         "-thr",
         type=float,
-        help="Binarisation threshold to apply in the segmentation predictions. Use -1.0 to disable it (i.e. output soft segmentation).",
+        help="Binarization threshold (between 0 and 1) to apply to the segmentation prediction. Set to -1 for no "
+             "binarization (i.e. soft segmentation output). Default: 0.5",
         metavar=Metavar.float,
         default=0.5)
     optional.add_argument(
@@ -171,9 +172,9 @@ def main():
     algo_config_stg = '\nMethod:'
     algo_config_stg += '\n\tCenterline algorithm: ' + str(ctr_algo)
     if threshold >= 0:
-        algo_config_stg += '\n\tBinarisation threshold: ' + str(threshold)
+        algo_config_stg += '\n\tBinarization threshold: ' + str(threshold)
     else:
-        algo_config_stg += '\n\tBinarisation threshold: None.'
+        algo_config_stg += '\n\tBinarization threshold: None.'
     algo_config_stg += '\n\tAssumes brain section included in the image: ' + str(brain_bool)
     algo_config_stg += '\n\tDimension of the segmentation kernel convolutions: ' + kernel_size + '\n'
     sct.printv(algo_config_stg)
