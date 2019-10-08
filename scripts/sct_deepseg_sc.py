@@ -191,17 +191,18 @@ def main():
                                      ctr_file=manual_centerline_fname, brain_bool=brain_bool, kernel_size=kernel_size,
                                      threshold_seg=threshold, remove_temp_files=remove_temp_files, verbose=verbose)
 
+    # copy q/sform from input image to output segmentation
+    im_seg.copy_qform_from_ref(im_image)
+
     # Save segmentation
     fname_seg = os.path.abspath(os.path.join(output_folder, sct.extract_fname(fname_image)[1] + '_seg' +
                                              sct.extract_fname(fname_image)[2]))
-
-    # copy q/sform from input image to output segmentation
-    im_seg.copy_qform_from_ref(im_image)
     im_seg.save(fname_seg)
 
+    # Generate QC report
     if path_qc is not None:
         generate_qc(fname_image, fname_seg=fname_seg, args=sys.argv[1:], path_qc=os.path.abspath(path_qc),
-    dataset=qc_dataset, subject=qc_subject, process='sct_deepseg_sc')
+                    dataset=qc_dataset, subject=qc_subject, process='sct_deepseg_sc')
     sct.display_viewer_syntax([fname_image, fname_seg], colormaps=['gray', 'red'], opacities=['', '0.7'])
 
 
