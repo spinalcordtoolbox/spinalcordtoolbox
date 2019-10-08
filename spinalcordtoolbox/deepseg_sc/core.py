@@ -512,7 +512,7 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
             # If soft segmentation, do nothing
             pred_seg_pp = seg_crop[:, :, zz]
 
-        seg_crop_postproc[:, :, zz] = pred_seg_pp
+        seg_crop_postproc[:, :, zz] = pred_seg_pp  # dtype is float32
 
     # reconstruct the segmentation from the crop data
     logger.info("Reassembling the image...")
@@ -534,20 +534,14 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
     # Binarize the resampled image (except for soft segmentation, defined by threshold_seg=-1)
     if threshold_seg >= 0:
         logger.info("Binarizing the resampled segmentation...")
-        thr = 0.5
-        # TODO: optimize speed --> np.where is slow
-        im_seg_r.data[np.where(im_seg_r.data > thr)] = 1
-        im_seg_r.data[np.where(im_seg_r.data <= thr)] = 0
+        im_seg_r.data = im_seg_r.data.astype(np.uint8)
 
     # post processing step to z_regularized
     im_seg_r_postproc = post_processing_volume_wise(im_seg_r)
 
-    # change data type
-    # TODO: probably not needed if dtype is tracked down
+    # Change data type. By default, dtype is float32
     if threshold_seg >= 0:
         im_seg_r_postproc.change_type(np.uint8)
-    else:
-        im_seg_r_postproc.change_type(np.float32)
 
     tmp_folder.chdir_undo()
 
