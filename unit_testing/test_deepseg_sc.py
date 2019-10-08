@@ -86,9 +86,10 @@ def test_segment_2d():
     img, gt = _preprocess_segment(fname_t2, fname_t2_seg, contrast_test)
 
     seg = deepseg_sc.segment_2d(model_fname=model_path, contrast_type=contrast_test, input_size=(64,64), im_in=img)
+    assert seg.dtype == np.dtype('float32')
+
     seg_im = img.copy()
     seg_im.data = (seg > 0.5).astype(np.uint8)
-
     assert msct_image.compute_dice(seg_im, gt) > 0.80
 
 
@@ -105,9 +106,10 @@ def test_segment_3d():
     img, gt = _preprocess_segment(fname_t2, fname_t2_seg, contrast_test, dim_3=True)
 
     seg = deepseg_sc.segment_3d(model_fname=model_path, contrast_type=contrast_test, im_in=img)
+    assert seg.dtype == np.dtype('float32')
+
     seg_im = img.copy()
     seg_im.data = (seg > 0.5).astype(np.uint8)
-
     assert msct_image.compute_dice(seg_im, gt) > 0.80
 
 
