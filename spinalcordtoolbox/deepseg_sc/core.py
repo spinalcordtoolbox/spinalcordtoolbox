@@ -517,13 +517,13 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
     if ctr_algo == 'viewer':  # for debugging
         im_labels_viewer.save(sct.add_suffix(fname_orient, '_labels-viewer'))
 
-    # Binarize the resampled image to remove interpolation effects
-    logger.info("Binarizing the resampled segmentation...")
-    # thr = 0.0001 if contrast_type in ['t1', 'dwi'] else 0.5
-    thr = 0.5
-    # TODO: optimize speed --> np.where is slow
-    im_seg_r.data[np.where(im_seg_r.data > thr)] = 1
-    im_seg_r.data[np.where(im_seg_r.data <= thr)] = 0
+    if threshold_seg >= 0:
+        # Binarize the resampled image to remove interpolation effects
+        logger.info("Binarizing the resampled segmentation...")
+        thr = 0.5
+        # TODO: optimize speed --> np.where is slow
+        im_seg_r.data[np.where(im_seg_r.data > thr)] = 1
+        im_seg_r.data[np.where(im_seg_r.data <= thr)] = 0
 
     # post processing step to z_regularized
     im_seg_r_postproc = post_processing_volume_wise(im_seg_r)
