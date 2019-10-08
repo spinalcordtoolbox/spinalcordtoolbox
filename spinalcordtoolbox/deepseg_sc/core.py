@@ -409,7 +409,7 @@ def uncrop_image(ref_in, data_crop, x_crop_lst, y_crop_lst, z_crop_lst):
 
 
 def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_file=None, brain_bool=True,
-                                 kernel_size='2d', remove_temp_files=1, verbose=1):
+                                 kernel_size='2d', threshold_seg=0.5, remove_temp_files=1, verbose=1):
     """Pipeline"""
     # create temporary folder with intermediate results
     tmp_folder = sct.TempFolder(verbose=verbose)
@@ -479,11 +479,11 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
                               im_in=im_norm_in)
 
     # Postprocessing
-    threshold = 0.5  # TODO: make it an argument
     seg_crop_postproc = np.zeros_like(seg_crop)
     x_cOm, y_cOm = None, None
     for zz in range(im_norm_in.dim[2]):
-        pred_seg_th = (seg_crop[:, :, zz] > threshold).astype(int)
+        if threshold_seg >= 0:
+            pred_seg_th = (seg_crop[:, :, zz] > threshold_seg).astype(int)
         pred_seg_pp = post_processing_slice_wise(pred_seg_th, x_cOm, y_cOm)
         seg_crop_postproc[:, :, zz] = pred_seg_pp
         if 1 in pred_seg_pp:
