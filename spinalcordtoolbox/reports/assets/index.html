@@ -65,7 +65,7 @@
                       Next
                   </span>
               </a>
-              <div class="seperation">
+
                 <div id="dropdown" class="dropdown">
                     <button id="dropdownButton" class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true">Display Columns <span class="caret"></span></button>
                     <ul class="dropdown-menu">
@@ -80,15 +80,16 @@
                     </ul>
                 </div>
                 <script>
-                    document.getElementById("dropdown").style.position= "absolute";
-                    document.getElementById("dropdown").style.top = "50px";
+                    document.getElementById("dropdown").style.position= "relative";
+                    document.getElementById("dropdown").style.marginBottom = "-30px";
+
                 </script>
-                <input class="searchBar" type="text" id="searchInput" onkeyup="hideNonSearchElements()" placeholder="Search" autocomplete="off">
-                <div class="emptySearch">No matching records found</div>
-              </div>
+
               <table id="table" class="table table-condensed"
 		  data-sort-name="moddate"
+		  data-toolbar="#dropdown"
                   data-sort-order="asc"
+		  data-search="true"
                   data-response-handler="responseHandler">
 	                <thead>
 		                  <tr>
@@ -171,7 +172,7 @@
         This function hides all elements that do not fit
         the search elements in the searchbar.
         */
-        var searchInput = document.getElementById("searchInput").value;
+        var searchInput = document.getElementsByClassName("form-control")[0].value;
         var tableRows = document.getElementsByTagName("tr");
         var isEmpty = true;
 
@@ -185,12 +186,7 @@
                 tableRows[iTableRows].style.display = "none";
             }
         }
-        if (isEmpty){
-            document.querySelector(".emptySearch").style.display = "";
-        }
-        else{
-            document.querySelector(".emptySearch").style.display = "none";
-        }
+
     }
 
     let body = document.body;
@@ -250,5 +246,21 @@
               toggleColumn(document.getElementsByClassName('dropdown-item')[iTH].id)
          }
      },4);
+
+
+     function hideColumns(){
+            var columns = document.getElementsByTagName("th");
+            var iHead;
+            for (iHead = 0; iHead < columns.length; iHead++){
+                if (columns[iHead].style.display == "none"){
+                    var iTD;
+                    for (iTD = iHead; iTD < document.getElementsByTagName("td").length; iTD = iTD + columns.length){
+                        document.getElementsByTagName("td")[iTD].style.display = "none";
+                    }
+                }
+            }
+        }
+
+        
 </script>
 </html>
