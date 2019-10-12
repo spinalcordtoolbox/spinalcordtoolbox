@@ -485,9 +485,9 @@ fi
 
 ## Create launchers for Python scripts
 echo -e "\nCreating launchers for Python scripts..."
-mkdir -p $SCT_DIR/bin
+mkdir -p $SCT_DIR/$BIN_DIR
 for file in $SCT_DIR/python/envs/venv_sct/bin/*sct*; do
-  cp "$file" "$SCT_DIR/bin/"
+  cp "$file" "$SCT_DIR/$BIN_DIR/"
   res=$?
   if [[ $res != 0 ]]; then
     echo "\nProblem creating launchers!"
@@ -503,8 +503,8 @@ done
 
 ## Create symbolic links for Shell scripts (-f: overwrite if exists)
 echo -e "\nCreating symbolic links for Shell scripts..."
-ln -s -f $SCT_DIR/shell/sct_run_batch.sh $SCT_DIR/bin/sct_run_batch
-ln -s -f $SCT_DIR/shell/_run_with_log.sh $SCT_DIR/bin/_run_with_log.sh
+ln -s -f $SCT_DIR/shell/sct_run_batch.sh $SCT_DIR/$BIN_DIR/sct_run_batch
+ln -s -f $SCT_DIR/shell/_run_with_log.sh $SCT_DIR/$BIN_DIR/_run_with_log.sh
 res=$?
 if [[ $res != 0 ]]; then
   echo "\nProblem creating symlinks!"
