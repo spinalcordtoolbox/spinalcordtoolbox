@@ -172,12 +172,6 @@ def main():
     qc_subject = args.qc_subject
     output_folder = args.ofolder
 
-    algo_config_stg = '\nMethod:'
-    algo_config_stg += '\n\tCenterline algorithm: ' + str(ctr_algo)
-    algo_config_stg += '\n\tAssumes brain section included in the image: ' + str(brain_bool)
-    algo_config_stg += '\n\tDimension of the segmentation kernel convolutions: ' + kernel_size + '\n'
-    sct.printv(algo_config_stg)
-
     # Segment image
     from spinalcordtoolbox.image import Image
     from spinalcordtoolbox.deepseg_sc.core import deep_segmentation_spinalcord
