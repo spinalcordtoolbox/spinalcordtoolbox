@@ -69,9 +69,11 @@ def get_parser():
         "-thr",
         type=float,
         help="Binarization threshold (between 0 and 1) to apply to the segmentation prediction. Set to -1 for no "
-             "binarization (i.e. soft segmentation output). Default: 0.5",
+             "binarization (i.e. soft segmentation output). The default threshold is specific to each contrast and was"
+             "estimated using an optimization algorithm. More details at: "
+             "https://github.com/sct-pipeline/deepseg-threshold.",
         metavar=Metavar.float,
-        default=0.5)
+        default=None)
     optional.add_argument(
         "-brain",
         type=int,
@@ -157,8 +159,9 @@ def main():
         manual_centerline_fname = None
 
     threshold = args.thr
-    if threshold > 1.0 or (threshold < 0.0 and threshold != -1.0):
-        raise SyntaxError("Threshold should be between 0 and 1, or equal to -1 (no threshold)")
+    if threshold is not None:
+        if threshold > 1.0 or (threshold < 0.0 and threshold != -1.0):
+            raise SyntaxError("Threshold should be between 0 and 1, or equal to -1 (no threshold)")
 
     remove_temp_files = args.r
     verbose = args.v
@@ -171,10 +174,6 @@ def main():
 
     algo_config_stg = '\nMethod:'
     algo_config_stg += '\n\tCenterline algorithm: ' + str(ctr_algo)
-    if threshold >= 0:
-        algo_config_stg += '\n\tBinarization threshold: ' + str(threshold)
-    else:
-        algo_config_stg += '\n\tBinarization threshold: None'
     algo_config_stg += '\n\tAssumes brain section included in the image: ' + str(brain_bool)
     algo_config_stg += '\n\tDimension of the segmentation kernel convolutions: ' + kernel_size + '\n'
     sct.printv(algo_config_stg)
