@@ -22,6 +22,10 @@ from sct_image import concat_data, split_data
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 BATCH_SIZE = 4
+# Thresholds to apply to binarize segmentations from the output of the 2D CNN. These thresholds were obtained by
+# minimizing the standard deviation of cross-sectional area across contrasts. For more details, see:
+# https://github.com/sct-pipeline/deepseg-threshold
+THR_DEEPSEG = {'t1': 0.74353448, 't2': 0.34353448, 't2s': 0.89008621, 'dwi': 0.01422414}
 
 logger = logging.getLogger(__name__)
 
@@ -413,11 +417,11 @@ def uncrop_image(ref_in, data_crop, x_crop_lst, y_crop_lst, z_crop_lst):
 
 
 def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_file=None, brain_bool=True,
-                                 kernel_size='2d', threshold_seg=0.5, remove_temp_files=1, verbose=1):
+                                 kernel_size='2d', threshold_seg=None, remove_temp_files=1, verbose=1):
     """
     Main pipeline for CNN-based segmentation of the spinal cord.
     :param im_image:
-    :param contrast_type:
+    :param contrast_type: {'t1', 't2', t2s', 'dwi'}
     :param ctr_algo:
     :param ctr_file:
     :param brain_bool:
@@ -428,7 +432,9 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
     :param verbose:
     :return:
     """
-    """Pipeline"""
+    if threshold_seg is None:
+        threshold_seg = THR_DEEPSEG[contrast_type]
+
     # create temporary folder with intermediate results
     tmp_folder = sct.TempFolder(verbose=verbose)
     tmp_folder_path = tmp_folder.get_path()
