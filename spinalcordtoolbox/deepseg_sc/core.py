@@ -435,6 +435,14 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
     if threshold_seg is None:
         threshold_seg = THR_DEEPSEG[contrast_type]
 
+    # Display stuff
+    logger.info("Config deepseg_sc:")
+    logger.info("  Centerline algorithm: {}".format(ctr_algo))
+    logger.info("  Brain in image: {}".format(brain_bool))
+    logger.info("  Kernel dimension: {}".format(kernel_size))
+    logger.info("  Contrast: {}".format(contrast_type))
+    logger.info("  Threshold: {}".format(threshold_seg))
+
     # create temporary folder with intermediate results
     tmp_folder = sct.TempFolder(verbose=verbose)
     tmp_folder_path = tmp_folder.get_path()
