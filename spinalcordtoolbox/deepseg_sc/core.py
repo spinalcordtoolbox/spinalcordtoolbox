@@ -12,7 +12,7 @@ import nibabel as nib
 
 from spinalcordtoolbox import resampling
 from .cnn_models import nn_architecture_seg, nn_architecture_ctr
-from .postprocessing import post_processing_volume_wise, post_processing_slice_wise
+from .postprocessing import post_processing_volume_wise, keep_largest_object, fill_holes_2d
 from spinalcordtoolbox.image import Image, empty_like, change_type, zeros_like
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline, _call_viewer_centerline
 
@@ -22,6 +22,10 @@ from sct_image import concat_data, split_data
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 BATCH_SIZE = 4
+# Thresholds to apply to binarize segmentations from the output of the 2D CNN. These thresholds were obtained by
+# minimizing the standard deviation of cross-sectional area across contrasts. For more details, see:
+# https://github.com/sct-pipeline/deepseg-threshold
+THR_DEEPSEG = {'t1': 0.74353448, 't2': 0.34353448, 't2s': 0.89008621, 'dwi': 0.01422414}
 
 logger = logging.getLogger(__name__)
 
@@ -328,7 +332,10 @@ def _normalize_data(data, mean, std):
 
 
 def segment_2d(model_fname, contrast_type, input_size, im_in):
-    """Segment data using 2D convolutions."""
+    """
+    Segment data using 2D convolutions.
+    :return: seg_crop.data: ndarray float32: Output prediction
+    """
     seg_model = nn_architecture_seg(height=input_size[0],
                                     width=input_size[1],
                                     depth=2 if contrast_type != 't2' else 3,
@@ -337,42 +344,24 @@ def segment_2d(model_fname, contrast_type, input_size, im_in):
                                     dropout=0.0)
     seg_model.load_weights(model_fname)
 
-    seg_crop = zeros_like(im_in, dtype=np.uint8)
+    seg_crop = zeros_like(im_in, dtype=np.float32)
 
     data_norm = im_in.data
-    x_cOm, y_cOm = None, None
+    # TODO: use tqdm
     for zz in range(im_in.dim[2]):
+        # 2D CNN prediction
         pred_seg = seg_model.predict(np.expand_dims(np.expand_dims(data_norm[:, :, zz], -1), 0),
                                      batch_size=BATCH_SIZE)[0, :, :, 0]
-        pred_seg_th = (pred_seg > 0).astype(int)
-        pred_seg_pp = post_processing_slice_wise(pred_seg_th, x_cOm, y_cOm)
-        seg_crop.data[:, :, zz] = pred_seg_pp
-
-        if 1 in pred_seg_pp:
-            x_cOm, y_cOm = center_of_mass(pred_seg_pp)
-            x_cOm, y_cOm = np.round(x_cOm), np.round(y_cOm)
+        seg_crop.data[:, :, zz] = pred_seg
 
     return seg_crop.data
 
 
-def uncrop_image(ref_in, data_crop, x_crop_lst, y_crop_lst, z_crop_lst):
-    """Reconstruc the data from the crop segmentation."""
-    seg_unCrop = zeros_like(ref_in, dtype=np.uint8)
-
-    crop_size_x, crop_size_y = data_crop.shape[:2]
-
-    for i_z, zz in enumerate(z_crop_lst):
-        pred_seg = data_crop[:, :, zz]
-        x_start, y_start = int(x_crop_lst[i_z]), int(y_crop_lst[i_z])
-        x_end = x_start + crop_size_x if x_start + crop_size_x < seg_unCrop.dim[0] else seg_unCrop.dim[0]
-        y_end = y_start + crop_size_y if y_start + crop_size_y < seg_unCrop.dim[1] else seg_unCrop.dim[1]
-        seg_unCrop.data[x_start:x_end, y_start:y_end, zz] = pred_seg[0:x_end - x_start, 0:y_end - y_start]
-
-    return seg_unCrop
-
-
 def segment_3d(model_fname, contrast_type, im_in):
-    """Perform segmentation with 3D convolutions."""
+    """
+    Perform segmentation with 3D convolutions.
+    :return: seg_crop.data: ndarray float32: Output prediction
+    """
     from spinalcordtoolbox.deepseg_sc.cnn_models_3d import load_trained_model
     dct_patch_sc_3d = {'t2': {'size': (64, 64, 48), 'mean': 65.8562, 'std': 59.7999},
                        't2s': {'size': (96, 96, 48), 'mean': 87.0212, 'std': 64.425},
@@ -380,11 +369,12 @@ def segment_3d(model_fname, contrast_type, im_in):
     # load 3d model
     seg_model = load_trained_model(model_fname)
 
-    out = zeros_like(im_in, dtype=np.uint8)
+    out = zeros_like(im_in, dtype=np.float32)
 
     # segment the spinal cord
     z_patch_size = dct_patch_sc_3d[contrast_type]['size'][2]
     z_step_keep = list(range(0, im_in.data.shape[2], z_patch_size))
+    # TODO: use tqdm
     for zz in z_step_keep:
         if zz == z_step_keep[-1]:  # deal with instances where the im.data.shape[2] % patch_size_z != 0
             patch_im = np.zeros(dct_patch_sc_3d[contrast_type]['size'])
@@ -399,15 +389,10 @@ def segment_3d(model_fname, contrast_type, im_in):
                 _normalize_data(patch_im, dct_patch_sc_3d[contrast_type]['mean'], dct_patch_sc_3d[contrast_type]['std'])
             patch_pred_proba = \
                 seg_model.predict(np.expand_dims(np.expand_dims(patch_norm, 0), 0), batch_size=BATCH_SIZE)
-            pred_seg_th = (patch_pred_proba > 0.5).astype(int)[0, 0, :, :, :]
+            # pred_seg_th = (patch_pred_proba > 0.5).astype(int)[0, 0, :, :, :]
+            pred_seg_th = patch_pred_proba[0, 0, :, :, :]  # TODO: clarified variable (this is not thresholded!)
 
-            x_cOm, y_cOm = None, None
-            for zz_pp in range(z_patch_size):
-                pred_seg_pp = post_processing_slice_wise(pred_seg_th[:, :, zz_pp], x_cOm, y_cOm)
-                pred_seg_th[:, :, zz_pp] = pred_seg_pp
-                x_cOm, y_cOm = center_of_mass(pred_seg_pp)
-                x_cOm, y_cOm = np.round(x_cOm), np.round(y_cOm)
-
+            # TODO: add comment about what the code is doing below
             if zz == z_step_keep[-1]:
                 out.data[:, :, zz:] = pred_seg_th[:, :, :z_patch_extracted]
             else:
@@ -416,9 +401,48 @@ def segment_3d(model_fname, contrast_type, im_in):
     return out.data
 
 
+def uncrop_image(ref_in, data_crop, x_crop_lst, y_crop_lst, z_crop_lst):
+    """
+    Reconstruct the data from the cropped segmentation.
+    """
+    seg_unCrop = zeros_like(ref_in, dtype=np.float32)
+    crop_size_x, crop_size_y = data_crop.shape[:2]
+    for i_z, zz in enumerate(z_crop_lst):
+        pred_seg = data_crop[:, :, zz]
+        x_start, y_start = int(x_crop_lst[i_z]), int(y_crop_lst[i_z])
+        x_end = x_start + crop_size_x if x_start + crop_size_x < seg_unCrop.dim[0] else seg_unCrop.dim[0]
+        y_end = y_start + crop_size_y if y_start + crop_size_y < seg_unCrop.dim[1] else seg_unCrop.dim[1]
+        seg_unCrop.data[x_start:x_end, y_start:y_end, zz] = pred_seg[0:x_end - x_start, 0:y_end - y_start]
+    return seg_unCrop
+
+
 def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_file=None, brain_bool=True,
-                                 kernel_size='2d', remove_temp_files=1, verbose=1):
-    """Pipeline"""
+                                 kernel_size='2d', threshold_seg=None, remove_temp_files=1, verbose=1):
+    """
+    Main pipeline for CNN-based segmentation of the spinal cord.
+    :param im_image:
+    :param contrast_type: {'t1', 't2', t2s', 'dwi'}
+    :param ctr_algo:
+    :param ctr_file:
+    :param brain_bool:
+    :param kernel_size:
+    :param threshold_seg: Binarization threshold (between 0 and 1) to apply to the segmentation prediction. Set to -1
+        for no binarization (i.e. soft segmentation output)
+    :param remove_temp_files:
+    :param verbose:
+    :return:
+    """
+    if threshold_seg is None:
+        threshold_seg = THR_DEEPSEG[contrast_type]
+
+    # Display stuff
+    logger.info("Config deepseg_sc:")
+    logger.info("  Centerline algorithm: {}".format(ctr_algo))
+    logger.info("  Brain in image: {}".format(brain_bool))
+    logger.info("  Kernel dimension: {}".format(kernel_size))
+    logger.info("  Contrast: {}".format(contrast_type))
+    logger.info("  Threshold: {}".format(threshold_seg))
+
     # create temporary folder with intermediate results
     tmp_folder = sct.TempFolder(verbose=verbose)
     tmp_folder_path = tmp_folder.get_path()
@@ -485,20 +509,35 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
         seg_crop = segment_3d(model_fname=segmentation_model_fname,
                               contrast_type=contrast_type,
                               im_in=im_norm_in)
-    del im_norm_in
+
+    # Postprocessing
+    seg_crop_postproc = np.zeros_like(seg_crop)
+    x_cOm, y_cOm = None, None
+    for zz in range(im_norm_in.dim[2]):
+        # Fill holes (only for binary segmentations)
+        if threshold_seg >= 0:
+            pred_seg_th = fill_holes_2d((seg_crop[:, :, zz] > threshold_seg).astype(int))
+            pred_seg_pp = keep_largest_object(pred_seg_th, x_cOm, y_cOm)
+            # Update center of mass for slice i+1
+            if 1 in pred_seg_pp:
+                x_cOm, y_cOm = center_of_mass(pred_seg_pp)
+                x_cOm, y_cOm = np.round(x_cOm), np.round(y_cOm)
+        else:
+            # If soft segmentation, do nothing
+            pred_seg_pp = seg_crop[:, :, zz]
+
+        seg_crop_postproc[:, :, zz] = pred_seg_pp  # dtype is float32
 
     # reconstruct the segmentation from the crop data
     logger.info("Reassembling the image...")
     im_seg = uncrop_image(ref_in=im_image_res,
-                          data_crop=seg_crop,
+                          data_crop=seg_crop_postproc,
                           x_crop_lst=X_CROP_LST,
                           y_crop_lst=Y_CROP_LST,
                           z_crop_lst=Z_CROP_LST)
     # seg_uncrop_nii.save(sct.add_suffix(fname_res, '_seg'))  # for debugging
-    del seg_crop
+    del seg_crop, seg_crop_postproc, im_norm_in
 
-    # Change type uint8 --> float32 otherwise resampling will produce binary output (even with linear interpolation)
-    im_seg.change_type(np.float32)
     # resample to initial resolution
     logger.info("Resampling the segmentation to the native image resolution using linear interpolation...")
     im_seg_r = resampling.resample_nib(im_seg, image_dest=im_image, interpolation='linear')
@@ -506,19 +545,17 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
     if ctr_algo == 'viewer':  # for debugging
         im_labels_viewer.save(sct.add_suffix(fname_orient, '_labels-viewer'))
 
-    # Binarize the resampled image to remove interpolation effects
-    logger.info("Binarizing the resampled segmentation...")
-    # thr = 0.0001 if contrast_type in ['t1', 'dwi'] else 0.5
-    thr = 0.5
-    # TODO: optimize speed --> np.where is slow
-    im_seg_r.data[np.where(im_seg_r.data > thr)] = 1
-    im_seg_r.data[np.where(im_seg_r.data <= thr)] = 0
+    # Binarize the resampled image (except for soft segmentation, defined by threshold_seg=-1)
+    if threshold_seg >= 0:
+        logger.info("Binarizing the resampled segmentation...")
+        im_seg_r.data = im_seg_r.data.astype(np.uint8)
 
     # post processing step to z_regularized
     im_seg_r_postproc = post_processing_volume_wise(im_seg_r)
 
-    # change data type
-    im_seg_r_postproc.change_type(np.uint8)
+    # Change data type. By default, dtype is float32
+    if threshold_seg >= 0:
+        im_seg_r_postproc.change_type(np.uint8)
 
     tmp_folder.chdir_undo()
 
@@ -528,6 +565,9 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
         tmp_folder.cleanup()
 
     # reorient to initial orientation
-    return im_seg_r_postproc.change_orientation(original_orientation), \
-           im_image_res, \
-           im_seg.change_orientation('RPI')
+    im_seg_r_postproc.change_orientation(original_orientation)
+
+    # copy q/sform from input image to output segmentation
+    im_seg.copy_qform_from_ref(im_image)
+
+    return im_seg_r_postproc, im_image_res, im_seg.change_orientation('RPI')
