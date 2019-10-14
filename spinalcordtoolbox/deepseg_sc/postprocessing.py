@@ -124,16 +124,21 @@ def _remove_isolated_voxels_on_the_edge(im_seg, n_slices=5):
 
 
 def post_processing_volume_wise(im_seg):
-    """Post processing function to clean the input segmentation: fill holes, remove edge outlier, etc."""
-    data = im_seg.data.astype(np.int)
+    """
+    Post processing function to clean the input segmentation: fill holes, remove edge outlier, etc.
+    Note: This function is compatible with soft segmentation (i.e. float between 0-1).
+    """
+    data_bin = (im_seg.data > 0).astype(np.int)  # will binarize soft segmentation
 
     # Remove blobs
-    data = _remove_blobs(data)
+    data_bin = _remove_blobs(data_bin)
 
     # Fill z_holes, i.e. interpolate for z_slice not segmented
-    zz_zeros = [zz for zz in range(im_seg.dim[2]) if 1 not in list(np.unique(data[:, :, zz]))]
+    zz_zeros = [zz for zz in range(im_seg.dim[2]) if 1 not in list(np.unique(data_bin[:, :, zz]))]
     zz_holes = _remove_extrem_holes(zz_zeros, im_seg.dim[2] - 1, 0)
-    im_seg.data = _fill_z_holes(zz_holes, data, im_seg.dim[6]) if len(zz_holes) else data
+    data_pp = _fill_z_holes(zz_holes, data_bin, im_seg.dim[6]) if len(zz_holes) else data_bin
+
+    im_seg.data[np.where(data_pp == 0)] = 0  # to be compatible with soft segmentation
 
     # Set isolated voxels at edge slices to zero
     im_seg = _remove_isolated_voxels_on_the_edge(im_seg)
@@ -141,22 +146,39 @@ def post_processing_volume_wise(im_seg):
     return im_seg
 
 
-def post_processing_slice_wise(z_slice, x_cOm, y_cOm):
+def keep_largest_object(z_slice_bin, x_cOm, y_cOm):
     """
     Keep the largest connected object per z_slice and fill little holes.
-    Note that this processing will necesseraly binarize the input segmentation. If we want to use soft predictions (as
-    opposed to binary predictions), this function needs to be refactored.
+    Note: This function only works for binary segmentation.
+    :param z_slice: int 2d-array: Input 2d segmentation
+    :param x_cOm: int: X center of mass of the segmentation for the previous 2d slice
+    :param y_cOm: int: Y center of mass of the segmentation for the previous 2d slice
+    :return: z_slice: int 2d-array: Processed 2d segmentation
     """
-    labeled_obj, num_obj = label(z_slice)
+    assert z_slice_bin.dtype == np.dtype('int')
+    # Find number of closed objects using skimage "label"
+    labeled_obj, num_obj = label(z_slice_bin)
+    # If more than one object is found, keep the largest one
     if num_obj > 1:
-        if x_cOm is None or np.isnan(x_cOm):  # slice 0 or empty slice
-            z_slice = (labeled_obj == (np.bincount(labeled_obj.flat)[1:].argmax() + 1))
+        # If the center of mass is not provided (e.g. is first slice, or segmentation is empty), keep the largest object
+        if x_cOm is None or np.isnan(x_cOm):
+            z_slice_bin[np.where(labeled_obj != (np.bincount(labeled_obj.flat)[1:].argmax() + 1))] = 0
+        # If the center of mass is provided,
         else:
             idx_z_minus_1 = np.bincount(labeled_obj.flat)[1:].argmax() + 1
             for idx in range(1, num_obj + 1):
                 z_idx = labeled_obj == idx
                 if z_idx[int(x_cOm), int(y_cOm)]:
                     idx_z_minus_1 = idx
-            z_slice = (labeled_obj == idx_z_minus_1)
+            z_slice_bin[np.where(labeled_obj != idx_z_minus_1)] = 0
+    return z_slice_bin
 
+
+def fill_holes_2d(z_slice):
+    """
+    Fill holes in the segmentation.
+    :param z_slice: int 2d-array: Input 2D segmentation.
+    :return: int 2d-array: Output segmentation with holes filled
+    """
+    assert z_slice.dtype == np.dtype('int')
     return binary_fill_holes(z_slice, structure=np.ones((3, 3))).astype(np.int)
