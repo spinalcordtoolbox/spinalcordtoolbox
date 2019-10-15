@@ -548,7 +548,7 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
     # Binarize the resampled image (except for soft segmentation, defined by threshold_seg=-1)
     if threshold_seg >= 0:
         logger.info("Binarizing the resampled segmentation...")
-        im_seg_r.data = im_seg_r.data.astype(np.uint8)
+        im_seg_r.data = (im_seg_r.data > 0.5).astype(np.uint8)
 
     # post processing step to z_regularized
     im_seg_r_postproc = post_processing_volume_wise(im_seg_r)
