@@ -25,7 +25,7 @@ BATCH_SIZE = 4
 # Thresholds to apply to binarize segmentations from the output of the 2D CNN. These thresholds were obtained by
 # minimizing the standard deviation of cross-sectional area across contrasts. For more details, see:
 # https://github.com/sct-pipeline/deepseg-threshold
-THR_DEEPSEG = {'t1': 0.74353448, 't2': 0.34353448, 't2s': 0.89008621, 'dwi': 0.01422414}
+THR_DEEPSEG = {'t1': 0.15, 't2': 0.7, 't2s': 0.89, 'dwi': 0.01}
 
 logger = logging.getLogger(__name__)
 
