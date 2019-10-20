@@ -9,6 +9,8 @@ nibabel
 pandas
 psutil
 pyqt5
+pytest
+pytest-cov
 raven
 requests
 scipy
