@@ -87,6 +87,28 @@ im_segs = [
 
 
 # noinspection 801,PyShadowingNames
+def test_fix_orientation():
+    dict_test_orientation = [
+        {'input': math.pi, 'expected': 90.0},
+        {'input': -math.pi, 'expected': 90.0},
+        {'input': math.pi / 2, 'expected': 0.0},
+        {'input': -math.pi / 2, 'expected': 0.0},
+        {'input': 0.0, 'expected': 90.0},
+        {'input': 2 * math.pi, 'expected': 90.0},
+        {'input': math.pi / 4, 'expected': 45.0},
+        {'input': -math.pi / 4, 'expected': 45.0},
+        {'input': 3 * math.pi / 4, 'expected': 45.0},
+        {'input': -3 * math.pi / 4, 'expected': 45.0},
+        {'input': math.pi / 8, 'expected': 67.5},
+        {'input': -math.pi / 8, 'expected': 67.5},
+        {'input': 3 * math.pi / 8, 'expected': 22.5},
+        {'input': -3 * math.pi / 8, 'expected': 22.5},
+    ]
+    for test_orient in dict_test_orientation:
+        assert process_seg.fix_orientation(test_orient['input']) == pytest.approx(test_orient['expected'], rel=0.0001)
+
+
+# noinspection 801,PyShadowingNames
 @pytest.mark.parametrize('im_seg,expected,params', im_segs)
 def test_compute_shape(im_seg, expected, params):
     metrics, fit_results = process_seg.compute_shape(im_seg,
@@ -111,25 +133,3 @@ def test_compute_shape(im_seg, expected, params):
         else:
             expected_value = pytest.approx(expected[key], rel=0.05)
         assert obtained_value == expected_value
-
-
-# noinspection 801,PyShadowingNames
-def test_fix_orientation():
-    dict_test_orientation = [
-        {'input': math.pi, 'expected': 90.0},
-        {'input': -math.pi, 'expected': 90.0},
-        {'input': math.pi / 2, 'expected': 0.0},
-        {'input': -math.pi / 2, 'expected': 0.0},
-        {'input': 0.0, 'expected': 90.0},
-        {'input': 2 * math.pi, 'expected': 90.0},
-        {'input': math.pi / 4, 'expected': 45.0},
-        {'input': -math.pi / 4, 'expected': 45.0},
-        {'input': 3 * math.pi / 4, 'expected': 45.0},
-        {'input': -3 * math.pi / 4, 'expected': 45.0},
-        {'input': math.pi / 8, 'expected': 67.5},
-        {'input': -math.pi / 8, 'expected': 67.5},
-        {'input': 3 * math.pi / 8, 'expected': 22.5},
-        {'input': -3 * math.pi / 8, 'expected': 22.5},
-    ]
-    for test_orient in dict_test_orientation:
-        assert process_seg._fix_orientation(test_orient['input']) == pytest.approx(test_orient['expected'], rel=0.0001)
