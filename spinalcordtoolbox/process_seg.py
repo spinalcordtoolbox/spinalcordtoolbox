@@ -173,7 +173,7 @@ def _properties2d(image, dim):
     region = regions[0]
     # Compute area with weighted segmentation and adjust area with physical pixel size
     area = np.sum(image_crop_r) * dim[0] * dim[1] / upscale ** 2
-    # Compute ellipse orientation, rotated by 90deg because image axis are inverted, modulo pi, in deg, and between [0, 90]
+    # Compute ellipse orientation, modulo pi, in deg, and between [0, 90]
     orientation = fix_orientation(region.orientation)
     # Find RL and AP diameter based on major/minor axes and cord orientation=
     [diameter_AP, diameter_RL] = \
@@ -201,7 +201,7 @@ def _properties2d(image, dim):
 def fix_orientation(orientation):
     """Re-map orientation from skimage.regionprops from [-pi/2,pi/2] to [0,90] and rotate by 90deg because image axis
     are inverted"""
-    orientation_new = (orientation + math.pi / 2) * 180.0 / math.pi
+    orientation_new = orientation * 180.0 / math.pi
     if 360 <= abs(orientation_new) <= 540:
         orientation_new = 540 - abs(orientation_new)
     if 180 <= abs(orientation_new) <= 360:
