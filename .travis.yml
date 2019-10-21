@@ -52,7 +52,6 @@ before_script:
 script:
   - |
     echo *** UNIT TESTS ***
-    pip install pytest pytest-cov
     pytest
 
   - |
