@@ -39,9 +39,21 @@ BIN_DIR="bin"
 # ======================================================================================================================
 
 # Elegant exit with colored message
-function die() {
+function die(){
   echo -e "\n\033[0;31m$1\033[0m\n"
   exit 1
+}
+
+# Run a command and display it in color. Exit if error.
+# @input: string: command to run
+function run(){
+  cmd=$1
+  echo -e "\n\033[0;34m${cmd}\033[0m\n"
+  $cmd
+  if [[ $? != 0 ]]; then
+    die "ERROR: Command failed."
+  fi
+
 }
 
 # Fetches the OS type
@@ -193,19 +205,16 @@ trap finish EXIT
 function download() {
   # Use curl or wget to download goodies
   e_status=0
-  # using wget
+  # Try with wget
   if [[ $(which wget) ]]; then
     cmd="wget -O $1 $2"
-    echo ">> "$cmd
-    $cmd
+    echo $cmd; $cmd
     e_status=$?
     echo exit status is $e_status
   fi
-  # using curl
+  # Try with curl
   if [[ $(which curl) && ! -e $1 ]]; then
     cmd="curl -o $1 -L $2"
-    echo ">> "$cmd
-    $cmd
     e_status=$?
     echo exit status is $e_status
   fi
@@ -439,12 +448,8 @@ export PYTHONNOUSERSITE=1
 
 # Remove old python folder
 echo -e "\nInstalling conda..."
-cmd="rm -rf $SCT_DIR/$PYTHON_DIR"
-echo ">> "$cmd
-$cmd
-cmd="mkdir -p $SCT_DIR/$PYTHON_DIR"
-echo ">> "$cmd
-$cmd
+run "rm -rf $SCT_DIR/$PYTHON_DIR"
+run "mkdir -p $SCT_DIR/$PYTHON_DIR"
 
 # Download miniconda
 case $OS in
@@ -457,16 +462,7 @@ osx)
 esac
 
 # Run conda installer
-cmd="bash $TMP_DIR/miniconda.sh -p $SCT_DIR/$PYTHON_DIR -b -f"
-echo ">> "$cmd
-$cmd
-ret_code_conda=$?
-if [[ $ret_code_conda != 0 ]]; then
-  echo -e Conda did not installed properly with return code $ret_code_conda
-  exit $ret_code_conda
-else
-  echo -e Conda installation successful
-fi
+run "bash $TMP_DIR/miniconda.sh -p $SCT_DIR/$PYTHON_DIR -b -f"
 
 # create py3.6 venv (for Keras/TF compatibility with Centos7, see issue #2270)
 yes | python/bin/conda create -n venv_sct python=3.6
@@ -538,26 +534,13 @@ if [[ $NO_SCT_BIN_INSTALL ]]; then
 else
   echo -e "\nInstalling binaries..."
   if [[ $OS == "linux" ]]; then
-    cmd="sct_download_data -d binaries_debian -o $SCT_DIR/$BIN_DIR"
-    echo ">> "$cmd
-    $cmd
-    e_status=$?
+    run "sct_download_data -d binaries_debian -o $SCT_DIR/$BIN_DIR"
   elif [[ $OS == "linux_centos6" ]]; then
-    cmd="sct_download_data -d binaries_centos -o $SCT_DIR/$BIN_DIR"
-    echo ">> "$cmd
-    $cmd
-    e_status=$?
+    run "sct_download_data -d binaries_centos -o $SCT_DIR/$BIN_DIR"
   elif [[ $OS == "osx" ]]; then
-    cmd="sct_download_data -d binaries_osx -o $SCT_DIR/$BIN_DIR"
-    echo ">> "$cmd
-    $cmd
-    e_status=$?
+    run "sct_download_data -d binaries_osx -o $SCT_DIR/$BIN_DIR"
   else
     die "Unsupported OS $OS: can't install binaries."
-  fi
-  if [[ $e_status != 0 ]]; then
-    echo "Failed to download SCT binaries."
-    exit $e_status
   fi
 fi
 echo -e "All requirements installed!"
@@ -567,30 +550,14 @@ if [[ $NO_DATA_INSTALL ]]; then
   echo "data/ will not be (re)-install"
 else
   # forcing activation if python is not reinstalled
-  cmd=". $SCT_DIR/$PYTHON_DIR/bin/activate $SCT_DIR/$PYTHON_DIR"
-  echo ">> "$cmd
-  $cmd
-
+  run ". $SCT_DIR/$PYTHON_DIR/bin/activate $SCT_DIR/$PYTHON_DIR"
   # Download data
   echo -e "\nInstalling data..."
-  cmd="rm -rf $SCT_DIR/$DATA_DIR"
-  echo ">> "$cmd
-  $cmd
-  cmd="mkdir -p $SCT_DIR/$DATA_DIR"
-  echo ">> "$cmd
-  $cmd
-  cmd="cd $SCT_DIR/$DATA_DIR"
-  echo ">> "$cmd
-  $cmd
+  run "rm -rf $SCT_DIR/$DATA_DIR"
+  run "mkdir -p $SCT_DIR/$DATA_DIR"
+  run "cd $SCT_DIR/$DATA_DIR"
   for data in PAM50 gm_model optic_models pmj_models deepseg_sc_models deepseg_gm_models deepseg_lesion_models c2c3_disc_models; do
-    cmd="sct_download_data -d $data"
-    echo ">> "$cmd
-    $cmd
-    e_status=$?
-    if [[ $e_status != 0 ]]; then
-      echo "Failed to download SCT binaries."
-      exit $e_status
-    fi
+    run "sct_download_data -d $data"
   done
 fi
 
