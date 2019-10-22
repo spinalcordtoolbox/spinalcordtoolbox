@@ -112,7 +112,7 @@ function check_requirements() {
   fi
 }
 
-# Gets the shell rc file path
+# Gets the shell rc file path. By default, it is set to .bashrc.
 function get_shell_rc_path () {
     local RC_FILE_PATH=$HOME/.bashrc
     if [[ $(which zsh) ]]; then
@@ -120,26 +120,6 @@ function get_shell_rc_path () {
     fi
     echo $RC_FILE_PATH
 }
-
-# Force a clean exit
-function finish() {
-  # Catch the last return code
-  value=$?
-  # Get back to starting point
-  cd $SCT_SOURCE
-  if [[ $value -eq 0 ]]; then
-    echo -e "Installation finished successfully\n"
-  elif [[ $value -eq 99 ]]; then
-    # Showing usage with -h
-    echo ""
-  else
-    echo -e "Installation failed\n"
-  fi
-  # clean tmp_dir
-  rm -r $TMP_DIR
-  exit $value
-}
-trap finish EXIT
 
 # Force bashrc loading
 function force_bashrc_loading() {
@@ -186,6 +166,26 @@ function edit_shellrc() {
     echo "" >>$THE_CSHRC
   fi
 }
+
+# Force a clean exit
+function finish() {
+  # Catch the last return code
+  value=$?
+  # Get back to starting point
+  cd $SCT_SOURCE
+  if [[ $value -eq 0 ]]; then
+    echo -e "Installation finished successfully\n"
+  elif [[ $value -eq 99 ]]; then
+    # Showing usage with -h
+    echo ""
+  else
+    echo -e "Installation failed\n"
+  fi
+  # clean tmp_dir
+  rm -r $TMP_DIR
+  exit $value
+}
+trap finish EXIT
 
 # Download from URL using curl/wget
 function download() {
