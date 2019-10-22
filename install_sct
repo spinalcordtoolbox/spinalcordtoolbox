@@ -112,13 +112,18 @@ function check_requirements() {
   fi
 }
 
-# Gets the shell rc file path. By default, it is set to .bashrc.
+# Gets the shell rc file path based on the default shell.
 function get_shell_rc_path () {
-    local RC_FILE_PATH=$HOME/.bashrc
-    if [[ $(which zsh) ]]; then
-        RC_FILE_PATH=$HOME/.zshrc
-    fi
-    echo $RC_FILE_PATH
+  if [[ $SHELL == *"bash"* ]]; then
+    RC_FILE_PATH="$HOME/.bashrc"
+  elif [[ $SHELL == *"zsh"* ]]; then
+    RC_FILE_PATH="$HOME/.zshrc"
+  elif [[ $SHELL == *"csh"* ]]; then
+    RC_FILE_PATH="$HOME/.cshrc"
+  else
+    echo "WARNING: Shell was not recognized: $SHELL"
+  fi
+  echo $RC_FILE_PATH
 }
 
 # Force bashrc loading
@@ -224,6 +229,7 @@ function usage() {
   echo -e "\n\t-v \v Full verbose"
 }
 
+
 # SCRIPT STARTS HERE
 # ========================================================================
 echo -e "\nWelcome to the SCT installer!"
@@ -282,13 +288,8 @@ if [[ "x$SCT_INSTALL_TYPE" == "x" ]]; then
   fi
 fi
 
-# Define sh files, by default it will use unix shell
-RC_FILE_PATH=$(get_shell_rc_path)
-THE_RC=$RC_FILE_PATH
-if echo $(ps -o comm= $PPID) | grep csh; then
-  THE_CSHRC=$HOME/.cshrc
-  THE_RC=$THE_CSHRC
-fi
+# Define sh files
+THE_RC=$(get_shell_rc_path $SHELL)
 
 # Display install info
 echo -e "\nSCT version ......... "$SCT_VERSION
