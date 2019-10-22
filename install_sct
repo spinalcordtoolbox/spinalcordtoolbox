@@ -115,15 +115,17 @@ function check_requirements() {
 # Gets the shell rc file path based on the default shell.
 function get_shell_rc_path () {
   if [[ $SHELL == *"bash"* ]]; then
+    THE_RC="bash"
     RC_FILE_PATH="$HOME/.bashrc"
   elif [[ $SHELL == *"zsh"* ]]; then
+    THE_RC="bash"
     RC_FILE_PATH="$HOME/.zshrc"
   elif [[ $SHELL == *"csh"* ]]; then
+    THE_RC="csh"
     RC_FILE_PATH="$HOME/.cshrc"
   else
-    echo "WARNING: Shell was not recognized: $SHELL"
+    die "ERROR: Shell was not recognized: $SHELL"
   fi
-  echo $RC_FILE_PATH
 }
 
 # Force bashrc loading
@@ -152,24 +154,21 @@ fi"
 
 # Installation text to insert in shell config file
 function edit_shellrc() {
-  if [[ -z $THE_CSHRC ]]; then
-    echo
-    echo "" >>$RC_FILE_PATH
-    echo "# SPINALCORDTOOLBOX (installed on $(date +%Y-%m-%d\ %H:%M:%S))" >>$RC_FILE_PATH
-    echo $DISPLAY_UPDATE_PATH >>$RC_FILE_PATH
+  # Write text common to all shells
+  echo
+  echo "" >>$RC_FILE_PATH
+  echo "# SPINALCORDTOOLBOX (installed on $(date +%Y-%m-%d\ %H:%M:%S))" >>$RC_FILE_PATH
+  echo $DISPLAY_UPDATE_PATH >>$RC_FILE_PATH
+  # Switch between shell
+  if [[ $THE_RC == "bash" ]]; then
     echo "export SCT_DIR=$SCT_DIR" >>$RC_FILE_PATH
     echo "export MPLBACKEND=Agg" >>$RC_FILE_PATH
-    echo "" >>$RC_FILE_PATH
-  else
-    # (t)csh for good measure
-    echo
-    echo "" >>$THE_CSHRC
-    echo "# SPINALCORDTOOLBOX (installed on $(date +%Y-%m-%d\ %H:%M:%S))" >>$THE_CSHRC
-    echo $DISPLAY_UPDATE_PATH >>$THE_CSHRC
-    echo "setenv SCT_DIR $SCT_DIR" >>$THE_CSHRC
-    echo "setenv MPLBACKEND Agg" >>$THE_CSHRC
-    echo "" >>$THE_CSHRC
+  elif [[ $THE_RC == "csh" ]]; then
+    echo "setenv SCT_DIR $SCT_DIR" >>$RC_FILE_PATH
+    echo "setenv MPLBACKEND Agg" >>$RC_FILE_PATH
   fi
+  # add line
+  echo "" >>$RC_FILE_PATH
 }
 
 # Force a clean exit
@@ -289,13 +288,13 @@ if [[ "x$SCT_INSTALL_TYPE" == "x" ]]; then
 fi
 
 # Define sh files
-THE_RC=$(get_shell_rc_path $SHELL)
+get_shell_rc_path
 
 # Display install info
 echo -e "\nSCT version ......... "$SCT_VERSION
 echo -e "Installation type ... "$SCT_INSTALL_TYPE
 echo -e "Operating system .... "$OS
-echo -e "Shell ............... "$THE_RC
+echo -e "Shell config ........ "$RC_FILE_PATH
 
 # If you do not want the crash reports question to be ask,
 # set ASK_REPORT_QUESTION at installation time like this:
@@ -379,10 +378,10 @@ else
 fi
 
 # Update PATH variables based on Shell type
-if [[ -z $THE_CSHRC ]]; then
+if [[ $THE_RC == "bash" ]]; then
   UPDATE_PATH="export PATH=$SCT_DIR/$BIN_DIR:$PATH"
   DISPLAY_UPDATE_PATH="export PATH=\"$SCT_DIR/$BIN_DIR:\$PATH\""
-else
+elif [[ $THE_RC == "csh" ]]; then
   UPDATE_PATH="setenv PATH $SCT_DIR/$BIN_DIR:$PATH"
   DISPLAY_UPDATE_PATH="setenv PATH \"$SCT_DIR/$BIN_DIR:\$PATH\""
 fi
@@ -585,9 +584,9 @@ fi
 
 # In case of previous SCT installation (4.0.0-beta.1 or before), remove sct_env declaration in bashrc
 if [[ $OS == "osx" ]]; then
-  sed -ie '/sct_env/ s/^#*/#/' $THE_RC
+  sed -ie '/sct_env/ s/^#*/#/' $RC_FILE_PATH
 else
-  sed -e '/sct_env/ s/^#*/#/' -i $THE_RC
+  sed -e '/sct_env/ s/^#*/#/' -i $RC_FILE_PATH
 fi
 
 # update PATH environment
@@ -614,7 +613,7 @@ if sct_check_dependencies; then
     echo -e "To use SCT, please update your environment by running:\n"
     echo -e $DISPLAY_UPDATE_PATH
   else
-    echo -e "Open a new Terminal window to load environment variables, or run:\n source $THE_RC\n"
+    echo -e "Open a new Terminal window to load environment variables, or run:\n source $RC_FILE_PATH\n"
   fi
 else
   die "Installation validation Failed!\n
