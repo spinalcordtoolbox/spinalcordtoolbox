@@ -128,7 +128,7 @@ cd ..
 # ===========================================================================================
 cd t1
 # Segment spinal cord
-sct_deepseg_sc -i t1.nii.gz -c t1 -qc "$SCT_BP_QC_FOLDER"
+sct_deepseg_sc -i t1.nii.gz -c t1
 # Smooth spinal cord along superior-inferior axis
 sct_smooth_spinalcord -i t1.nii.gz -s t1_seg.nii.gz
 # Flatten cord in the right-left direction (to make nice figure)

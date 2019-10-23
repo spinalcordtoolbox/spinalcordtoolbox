@@ -25,7 +25,7 @@ BATCH_SIZE = 4
 # Thresholds to apply to binarize segmentations from the output of the 2D CNN. These thresholds were obtained by
 # minimizing the standard deviation of cross-sectional area across contrasts. For more details, see:
 # https://github.com/sct-pipeline/deepseg-threshold
-THR_DEEPSEG = {'t1': 0.15, 't2': 0.7, 't2s': 0.89, 'dwi': 0.01}
+THR_DEEPSEG = {'t1': 0.74353448, 't2': 0.34353448, 't2s': 0.89008621, 'dwi': 0.01422414}
 
 logger = logging.getLogger(__name__)
 
@@ -548,7 +548,7 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
     # Binarize the resampled image (except for soft segmentation, defined by threshold_seg=-1)
     if threshold_seg >= 0:
         logger.info("Binarizing the resampled segmentation...")
-        im_seg_r.data = (im_seg_r.data > 0.5).astype(np.uint8)
+        im_seg_r.data = im_seg_r.data.astype(np.uint8)
 
     # post processing step to z_regularized
     im_seg_r_postproc = post_processing_volume_wise(im_seg_r)
