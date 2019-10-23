@@ -608,6 +608,7 @@ fi
 . $SCT_DIR/$PYTHON_DIR/bin/deactivate >/dev/null 2>&1
 
 # In case of previous SCT installation (4.0.0-beta.1 or before), remove sct_env declaration in bashrc
+print info "In case an old version SCT is already installed (4.0.0-beta.1 or before), remove 'sct_env' declaration in RC file"
 if [[ $OS == "osx" ]]; then
   sed -ie '/sct_env/ s/^#*/#/' $RC_FILE_PATH
 else
