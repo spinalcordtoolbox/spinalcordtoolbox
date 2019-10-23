@@ -16,10 +16,10 @@ logger = logging.getLogger(__name__)
 def divide_after_removing_zero(dividend, divisor, threshold, replacement=np.nan):
     """
     Mask zero, divide, look for numbers larger than 'threshold', and replace masked elements.
-    :param dividend:
-    :param divisor:
-    :param threshold:
-    :param replacement: value to replace masked value with.
+    :param dividend: np.array
+    :param divisor: np.array
+    :param threshold: float
+    :param replacement: float: value to replace masked value with.
     :return:
     """
     ind_nonzero = np.where(divisor)
@@ -28,7 +28,7 @@ def divide_after_removing_zero(dividend, divisor, threshold, replacement=np.nan)
     # find aberrant values above threshold
     np.clip(result, -threshold, threshold, out=result)
     # initiate resulting array with replacement values
-    result_full = np.full_like(dividend, fill_value=replacement)
+    result_full = np.full_like(dividend, fill_value=replacement, dtype='float32')
     result_full[ind_nonzero] = result
     return result_full
 
