@@ -80,12 +80,11 @@ def main():
     args = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
     fname_mtr = args.o
     verbose = args.v
-    # Update log level
-    sct.init_sct(log_level=verbose, update=True)
 
     # compute MTR
     sct.printv('\nCompute MTR...', verbose)
     nii_mtr = compute_mtr(nii_mt1=Image(args.mt1), nii_mt0=Image(args.mt0), threshold_mtr=args.thr)
+
     # save MTR file
     nii_mtr.save(fname_mtr, dtype='float32')
 
@@ -93,4 +92,5 @@ def main():
 
 
 if __name__ == "__main__":
+    sct.init_sct()
     main()
