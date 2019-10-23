@@ -48,8 +48,8 @@ def get_parser():
     optional.add_argument(
         "-thr",
         type=float,
-        help="Threshold to clip MTR output values in case of division by small number. This threshold is applied on the"
-             "absolute value. Default: 100.",
+        help="Threshold to clip MTR output values in case of division by small number. This implies that the output image" 
+             "range will be [-thr, +thr]. Default: 100.",
         default=100
         )
     optional.add_argument(
