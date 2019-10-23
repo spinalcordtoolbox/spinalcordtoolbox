@@ -77,7 +77,7 @@ def main():
     sct.printv('\nCompute MTR...', verbose)
     nii_mtr = compute_mtr(nii_mt1=Image(args.mt1), nii_mt0=Image(args.mt0))
     # save MTR file
-    nii_mtr.save(fname_mtr, dtype='float64')
+    nii_mtr.save(fname_mtr, dtype='float32')
 
     sct.display_viewer_syntax([args.mt0, args.mt1, fname_mtr])
 
