@@ -467,6 +467,9 @@ class Image(object):
         if hdr:
             hdr.set_data_shape(data.shape)
 
+        if dtype is not None:
+            hdr.set_data_dtype(dtype)
+
         # nb. that copy() is important because if it were a memory map, save()
         # would corrupt it
         img = Nifti1Image(data.copy(), None, hdr)
