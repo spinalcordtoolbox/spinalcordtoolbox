@@ -23,9 +23,12 @@ def divide_after_removing_zero(dividend, divisor, threshold, replacement=np.nan)
     :return:
     """
     ind_nonzero = np.where(divisor)
+    n_zero = divisor.size - len(ind_nonzero[0])
+    logger.info("Found {} voxels with value=0. These will be replaced by {}.".format(n_zero, replacement))
     # divide without zero element in divisor
     result = np.true_divide(dividend[ind_nonzero], divisor[ind_nonzero])
     # find aberrant values above threshold
+    logger.info("Threshold to clip values: +/- {}".format(threshold))
     np.clip(result, -threshold, threshold, out=result)
     # initiate resulting array with replacement values
     result_full = np.full_like(dividend, fill_value=replacement, dtype='float32')
@@ -43,7 +46,8 @@ def compute_mtr(nii_mt1, nii_mt0, threshold_mtr=100):
     """
     # Initialize Image object
     nii_mtr = nii_mt1.copy()
-    nii_mtr.data = 100 * divide_after_removing_zero((nii_mt0.data - nii_mt1.data), nii_mt0.data, threshold_mtr / 100)
+    # Compute MTR
+    nii_mtr.data = divide_after_removing_zero(100 * (nii_mt0.data - nii_mt1.data), nii_mt0.data, threshold_mtr)
     return nii_mtr
 
 
