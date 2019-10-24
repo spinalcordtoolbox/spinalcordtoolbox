@@ -46,21 +46,31 @@ def get_parser():
 
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
+        "-thr",
+        type=float,
+        help="Threshold to clip MTR output values in case of division by small number. This implies that the output image" 
+             "range will be [-thr, +thr]. Default: 100.",
+        default=100
+        )
+    optional.add_argument(
         "-h",
         "--help",
         action="help",
-        help="Show this help message and exit")
+        help="Show this help message and exit"
+        )
     optional.add_argument(
         '-v',
         type=int,
         choices=(0, 1, 2),
         help='Verbose: 0 = nothing, 1 = classic, 2 = expended',
-        default=1)
+        default=1
+        )
     optional.add_argument(
         '-o',
         help='Path to output file.',
         metavar=Metavar.str,
-        default=os.path.join('.','mtr.nii.gz'))
+        default=os.path.join('.', 'mtr.nii.gz')
+        )
     return parser
 
 
@@ -70,17 +80,17 @@ def main():
     args = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
     fname_mtr = args.o
     verbose = args.v
-    # Update log level
-    sct.init_sct(log_level=verbose, update=True)
 
     # compute MTR
     sct.printv('\nCompute MTR...', verbose)
-    nii_mtr = compute_mtr(nii_mt1=Image(args.mt1), nii_mt0=Image(args.mt0))
+    nii_mtr = compute_mtr(nii_mt1=Image(args.mt1), nii_mt0=Image(args.mt0), threshold_mtr=args.thr)
+
     # save MTR file
-    nii_mtr.save(fname_mtr)
+    nii_mtr.save(fname_mtr, dtype='float32')
 
     sct.display_viewer_syntax([args.mt0, args.mt1, fname_mtr])
 
 
 if __name__ == "__main__":
+    sct.init_sct()
     main()
