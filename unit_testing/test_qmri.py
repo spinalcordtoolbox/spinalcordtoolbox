@@ -24,7 +24,7 @@ def make_sct_image(data):
     data: scalar
     """
     affine = np.eye(4)
-    nii = nibabel.nifti1.Nifti1Image(np.array(data), affine)
+    nii = nibabel.nifti1.Nifti1Image(np.array([data, data]), affine)
     img = Image(nii.get_data(), hdr=nii.header, orientation="LPI", dim=nii.header.get_data_shape())
     return img
 
@@ -33,7 +33,7 @@ def test_compute_mtr():
     img_mtr = mt.compute_mtr(nii_mt1=make_sct_image(10),
                              nii_mt0=make_sct_image(20)
                              )
-    assert img_mtr.data == 0.5 * 100  # output is in percent
+    assert img_mtr.data[0] == 0.5 * 100  # output is in percent
 
 
 def test_compute_mtsat():
@@ -47,4 +47,4 @@ def test_compute_mtsat():
                                             fa_pd=9,
                                             fa_t1=15
                                             )
-    assert img_mtsat.data == pytest.approx(1.5327, 0.0001)
+    assert img_mtsat.data[0] == pytest.approx(1.5327, 0.0001)
