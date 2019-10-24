@@ -78,7 +78,7 @@ def resample_nib(image, new_size=None, new_size_type=None, image_dest=None, inte
             # compute new shape as: shape_r = shape * (p_r / p)
             shape_r = tuple([int(np.round(shape[i] * float(p[i]) / float(new_size[i]))) for i in range(img.ndim)])
         else:
-            logger.error('new_size_type is not recognized.')
+            raise ValueError("'new_size_type' is not recognized.")
 
         # Generate 3d affine transformation: R
         affine = img.affine[:4, :4]
@@ -86,7 +86,13 @@ def resample_nib(image, new_size=None, new_size_type=None, image_dest=None, inte
         logger.debug('Affine matrix: \n' + str(affine))
         R = np.eye(4)
         for i in range(3):
-            R[i, i] = img.shape[i] / float(shape_r[i])
+            try:
+                R[i, i] = img.shape[i] / float(shape_r[i])
+            except ZeroDivisionError:
+                raise ZeroDivisionError("Destination size is zero for dimension {}. You are trying to resample to an "
+                                        "unrealistic dimension. Check your NIFTI pixdim values to make sure they are "
+                                        "not corrupted.".format(i))
+
         affine_r = np.dot(affine, R)
         reference = (shape_r, affine_r)
 
