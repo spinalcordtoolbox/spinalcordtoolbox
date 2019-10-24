@@ -55,10 +55,10 @@ setup(
       'mpich==3.2',
       'mpi4py==3.0.0',
      ],
-     'test': [
-      "pytest-runner",
-      "pytest",
-     ],
+     # 'test': [
+     #  "pytest-runner",
+     #  "pytest",
+     # ],
     },
     entry_points=dict(
      console_scripts=[
