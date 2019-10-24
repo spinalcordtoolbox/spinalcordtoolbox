@@ -21,6 +21,7 @@ import logging
 import shutil
 import subprocess
 import tempfile
+from termcolor import colored
 
 import numpy as np
 
@@ -57,9 +58,11 @@ def init_sct(log_level=1, update=False):
         def _format(record):
             res = old_format(record)
             if record.levelno >= logging.ERROR:
-                res = "\x1B[31;1m{}\x1B[0m".format(res)
+                # res = "\x1B[31;1m{}\x1B[0m".format(res)
+                res = colored(res, 'red') # red color to be used for error
             elif record.levelno >= logging.WARNING:
-                res = "\x1B[33m{}\x1B[0m".format(res)
+                # res = "\x1B[33m{}\x1B[0m".format(res)
+                res = colored(res, 'yellow') # red color to be used for warning
             else:
                 pass
             return res
@@ -190,6 +193,7 @@ class bcolors(object):
     cyan = '\033[96m'
     bold = '\033[1m'
     underline = '\033[4m'
+
     @classmethod
     def colors(cls):
         return [v for k, v in cls.__dict__.items() if not k.startswith("_") and k is not "colors"]
