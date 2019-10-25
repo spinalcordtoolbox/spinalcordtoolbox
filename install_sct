@@ -106,7 +106,7 @@ function finish() {
 # reenable tty echo when user presses keyboard interrupt and output non-zero status for finish() function
 detectKeyboardInterrupt() {
       # reenable tty echo
-      print error "Detected KeyboardInterrupt"
+      print error "Installation aborted by the user."
       stty icanon echo echok
       exit 1
 }
@@ -285,8 +285,6 @@ trap detectKeyboardInterrupt INT
 # Set a trap which, on shell error or shell exit, runs finish()
 trap finish EXIT
 
-die "TEST: blablabla"
-
 print info "
 *******************************
 * Welcome to SCT installation *
@@ -453,6 +451,8 @@ if [[ $THE_RC == "bash" ]]; then
 elif [[ $THE_RC == "csh" ]]; then
   UPDATE_PATH="setenv PATH $SCT_DIR/$BIN_DIR:$PATH"
   DISPLAY_UPDATE_PATH="setenv PATH \"$SCT_DIR/$BIN_DIR:\$PATH\""
+else
+  die "This variable is not recognized: THE_RC=$THE_RC"
 fi
 
 # Update MPLBACKEND on headless system. See: https://github.com/neuropoly/spinalcordtoolbox/issues/2137
@@ -636,7 +636,7 @@ if [[ $add_to_path =~ ^[Yy] ]]; then
   edit_shellrc
 else
   print info "Not adding $SCT_DIR to \$PATH.
-You can always add it later or call SCT functions with full path $SCT_DIR/$BIN_DIR/sct_function"
+You can always add it later or call SCT functions with full path $SCT_DIR/$BIN_DIR/sct_xxx"
 fi
 
 # run sct_check_dependencies
@@ -645,8 +645,8 @@ print info "Validate installation..."
 # it creates is cleaned properly
 if sct_check_dependencies; then
   if [[ $add_to_path =~ ^[Nn] ]]; then
-    print info "To use SCT, please update your environment by running:"
-"$DISPLAY_UPDATE_PATH"
+    print info "To use SCT, please update your environment by running:
+$DISPLAY_UPDATE_PATH"
   else
     print info "Open a new Terminal window to load environment variables, or run:
 source $RC_FILE_PATH"
