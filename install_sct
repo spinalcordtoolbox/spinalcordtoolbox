@@ -20,10 +20,6 @@
 # Authors: PO Quirion, J Cohen-Adad, J Carretero
 # License: see the file LICENSE.TXT
 
-# TODO: when doing ctrl+c during a question (read), the output signal is 0, indicating "installation successfull"
-#  (trap finish EXIT with status=0). That should be fixed.
-
-
 #set -e  # v: verbose, e: exit if non-zero output is encountered. Using set -e will exit even when trying to remove
 # a folder that already exists, therefore, it should only be used for debugging mode.
 
@@ -73,7 +69,7 @@ function print() {
 
 # Elegant exit with colored message
 function die() {
-  print error $1
+  print error "$1"
   exit 1
 }
 
@@ -105,6 +101,14 @@ function finish() {
   # clean tmp_dir
   rm -r $TMP_DIR
   exit $value
+}
+
+# reenable tty echo when user presses keyboard interrupt and output non-zero status for finish() function
+detectKeyboardInterrupt() {
+      # reenable tty echo
+      print error "Detected KeyboardInterrupt"
+      stty icanon echo echok
+      exit 1
 }
 
 # Fetches the OS type
@@ -276,11 +280,18 @@ function usage() {
 # SCRIPT STARTS HERE
 # ======================================================================================================================
 
+# This trap specifically catches keyboardInterrupt and output a non-zero status before running finish()
+trap detectKeyboardInterrupt INT
 # Set a trap which, on shell error or shell exit, runs finish()
 trap finish EXIT
 
-print info "Welcome to the SCT installer!"
+die "TEST: blablabla"
 
+print info "
+*******************************
+* Welcome to SCT installation *
+*******************************
+"
 
 # ----------------------------------------------------------------------------------------------------------------------
 # CLI parser
