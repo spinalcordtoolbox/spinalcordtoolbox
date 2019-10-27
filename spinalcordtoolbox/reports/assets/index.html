@@ -110,6 +110,7 @@
                   <img id="sprite-img" onload="fetch_image_height()"/>
                   <img id="overlay-img"/>
               </div>
+              <button onclick="toggleOverlay()">Toggle overlay</button>
               <div id="cmdLine"></div>
               <div id="sctVer"></div>
           </div>
@@ -215,7 +216,7 @@
         dropdown.classList.toggle('open');
     });
 
-    thead.addEventListener('click', function(e){
+    thead.addEventListener('click', function(e) {
         /*
         This function hides the columns that are not supposed to be displayed when sorting the columns.
         */
@@ -233,7 +234,7 @@
         }, 4);
     });
 
-    setTimeout(function(){
+    setTimeout(function() {
          /*
          This function removes the columns we do not want to display at
          the beginning after a certain delay of time and adds the message
@@ -248,7 +249,7 @@
      },4);
 
 
-     function hideColumns(){
+     function hideColumns() {
             var columns = document.getElementsByTagName("th");
             var iHead;
             for (iHead = 0; iHead < columns.length; iHead++){
@@ -260,6 +261,16 @@
                 }
             }
         }
+
+    function toggleOverlay() {
+        var x = document.getElementById("overlay-img");
+        if (x.style.display === "none") {
+            x.style.display = "inline";
+        }
+        else {
+            x.style.display = "none";
+        }
+    }
 
         
 </script>
