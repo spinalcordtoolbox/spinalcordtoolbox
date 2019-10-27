@@ -6,6 +6,8 @@
 # - Create a voxel for each of the identified spinal level center of mass.
 #	The value of the level is: 2 for spinal level 2, etc.
 #
+# Usage: python create_PAM50_label_spinal_level.py
+#
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2019 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Author: Charley
@@ -16,9 +18,6 @@
 import os
 import numpy as np
 from scipy import ndimage
-import sys
-sys.path.append("/home/charley/sct")
-sys.path.append("/home/charley/sct/scripts")
 
 import sct_utils as sct
 
