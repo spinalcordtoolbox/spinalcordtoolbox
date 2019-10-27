@@ -1,7 +1,4 @@
 #!/bin/bash
-# USAGE
-#   ./install_sct
-#   yes | ./install_sct   # will install without interruption with 'yes' as default answer
 #
 # This is the spinalcord toolbox (SCT) installer
 # It downloads the Conda (http://conda.pydata.org/) version
@@ -15,42 +12,110 @@
 # source location, you can get rid of the source code after the
 # installation is successful.
 #
-#########################################################################################
+# USAGE
+#   ./install_sct
+#   yes | ./install_sct   # will install without interruption with 'yes' as default answer
+#
 # Copyright (c) 2019 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Authors: PO Quirion, J Cohen-Adad, J Carretero
 # License: see the file LICENSE.TXT
-#########################################################################################
-
-# N.B. to generate and compress binaries, go to binary folder and type: tar -czf sct_binaries.tar.gz isct_*
 
 #set -e  # v: verbose, e: exit if non-zero output is encountered. Using set -e will exit even when trying to remove
 # a folder that already exists, therefore, it should only be used for debugging mode.
-# TODO add some doc to the installer
-# TODO: remove python folder if not empty
 
-# functions
-# ========================================================================
 # Where tmp file are stored
 TMP_DIR=$(mktemp -d 2>/dev/null || mktemp -d -t 'TMP_DIR')
 # Start Directory So we go back there at the end of the Script
 SCT_SOURCE=$PWD
-
 SCRIPT_DIR="scripts"
 DATA_DIR="data"
 PYTHON_DIR="python"
 BIN_DIR="bin"
 
+
+# ======================================================================================================================
+# FUNCTIONS
+# ======================================================================================================================
+
+# Print with color
+# @input1: {info, code, error}: type of text
+# @input2: text to print
+function print() {
+  type=$1
+  txt=$2
+  case $type in
+  # Display useful info (green)
+  info)
+    echo -e "\n\033[0;32m${txt}\033[0m\n"
+    ;;
+  # To interact with user (no carriage return) (light green)
+  question)
+    echo -e -n "\n\033[0;92m${txt}\033[0m"
+    ;;
+  # To display code that is being run in the Terminal (blue)
+  code)
+    echo -e "\n\033[0;34m${txt}\033[0m\n"
+    ;;
+  # Warning message (yellow)
+  warning)
+    echo -e "\n\033[0;93m${txt}\033[0m\n"
+    ;;
+  # Error message (red)
+  error)
+    echo -e "\n\033[0;31m${txt}\033[0m\n"
+    ;;
+  esac
+}
+
+# Elegant exit with colored message
 function die() {
-  echo -e "\n\033[0;31m$1\033[0m\n"
+  print error "$1"
   exit 1
 }
 
-# Fetches the OS type
-# @output: OS var is modified with the appropiate OS
-function fetch_os_type() {
-  if uname -a | grep -i darwin >/dev/null 2>&1; then
-    # OSX
+# Run a command and display it in color. Exit if error.
+# @input: string: command to run
+function run() {
+  cmd=$1
+  print code "$cmd"
+  $cmd
+  if [[ $? != 0 ]]; then
+    die "ERROR: Command failed."
+  fi
+}
 
+# Force a clean exit
+function finish() {
+  # Catch the last return code
+  value=$?
+  # Get back to starting point
+  cd $SCT_SOURCE
+  if [[ $value -eq 0 ]]; then
+    print info "Installation finished successfully!"
+  elif [[ $value -eq 99 ]]; then
+    # Showing usage with -h
+    echo ""
+  else
+    print error "Installation failed"
+  fi
+  # clean tmp_dir
+  rm -r $TMP_DIR
+  exit $value
+}
+
+# reenable tty echo when user presses keyboard interrupt and output non-zero status for finish() function
+detectKeyboardInterrupt() {
+      # reenable tty echo
+      print error "Installation aborted by the user."
+      stty icanon echo echok
+      exit 1
+}
+
+# Fetches the OS type
+# @output: OS var is modified with the appropriate OS
+function fetch_os_type() {
+  # OSX
+  if uname -a | grep -i darwin >/dev/null 2>&1; then
     # Fix for non-English Unicode systems on MAC
     if [[ -z $LC_ALL ]]; then
       export LC_ALL=en_US.UTF-8
@@ -59,18 +124,19 @@ function fetch_os_type() {
     if [[ -z $LANG ]]; then
       export LANG=en_US.UTF-8
     fi
-
     OS=osx
+    # make sure bashrc is loaded when starting a new Terminal
     force_bashrc_loading
+  # Linux
   elif uname -a | grep -i linux >/dev/null 2>&1; then
+    # CentOS 6.X
     if cat /etc/issue | grep -i centos | grep 6. 2>&1; then
-      # CentOS 6.X
       OS=linux_centos6
+    # RedHat 6.X
     elif cat /etc/issue | grep -i Red | grep 6. 2>&1; then
-      # RedHat 6.X
       OS=linux_centos6
+    # Other Linux
     else
-      # Other Linux
       OS=linux
     fi
   else
@@ -80,19 +146,20 @@ function fetch_os_type() {
 
 # Checks if the necessary tools for SCT are installed on the machine
 function check_requirements() {
-
-  echo; echo "Checking requirements..."
+  print info "Checking requirements..."
   # check curl
   if [[ ! $(which curl) && ! $(which wget) ]]; then
     die "ERROR: neither \"curl\" nor \"wget\" is installed. Please install either of them and restart SCT installation."
   fi
-
   # check gcc
   gcc --version > /dev/null 2>&1  # run silently, then check output status
   if [[ $? -ne 0 ]]; then
+    print warning "WARNING: \"gcc\" is not installed."
     if [[ $OS == "osx" ]]; then
-      echo -e "WARNING: \"gcc\" is not installed."
-      read -p 'Do you want to install it now? (accepting to install "gcc" will also install "brew" in case it is not installed already)? [y]es/[n]o: ' -r GCC_INSTALL
+      while [[ ! $GCC_INSTALL =~ ^([Yy](es)?|[Nn]o?)$ ]]; do
+        print question "Do you want to install it now? (accepting to install \"gcc\" will also install \"brew\" in case it is not installed already)? [y]es/[n]o: "
+        read GCC_INSTALL
+      done
       if [[ $GCC_INSTALL =~ [Yy](es)? ]]; then
         if [[ ! $(which brew) ]]; then
           yes | /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
@@ -112,34 +179,22 @@ function check_requirements() {
   fi
 }
 
-# Gets the shell rc file path
-function get_shell_rc_path () {
-    local RC_FILE_PATH=$HOME/.bashrc
-    if [[ $(which zsh) ]]; then
-        RC_FILE_PATH=$HOME/.zshrc
-    fi
-    echo $RC_FILE_PATH
-}
-
-# Force a clean exit
-function finish() {
-  # Catch the last return code
-  value=$?
-  # Get back to starting point
-  cd $SCT_SOURCE
-  if [[ $value -eq 0 ]]; then
-    echo -e "Installation finished successfully\n"
-  elif [[ $value -eq 99 ]]; then
-    # Showing usage with -h
-    echo ""
+# Gets the shell rc file path based on the default shell.
+# @output: THE_RC and RC_FILE_PATH vars are modified
+function get_shell_rc_path() {
+  if [[ $SHELL == *"bash"* ]]; then
+    THE_RC="bash"
+    RC_FILE_PATH="$HOME/.bashrc"
+  elif [[ $SHELL == *"zsh"* ]]; then
+    THE_RC="bash"
+    RC_FILE_PATH="$HOME/.zshrc"
+  elif [[ $SHELL == *"csh"* ]]; then
+    THE_RC="csh"
+    RC_FILE_PATH="$HOME/.cshrc"
   else
-    echo -e "Installation failed\n"
+    die "ERROR: Shell was not recognized: $SHELL"
   fi
-  # clean tmp_dir
-  rm -r $TMP_DIR
-  exit $value
 }
-trap finish EXIT
 
 # Force bashrc loading
 function force_bashrc_loading() {
@@ -167,48 +222,44 @@ fi"
 
 # Installation text to insert in shell config file
 function edit_shellrc() {
-  if [[ -z $THE_CSHRC ]]; then
-    echo
-    echo "" >>$RC_FILE_PATH
-    echo "# SPINALCORDTOOLBOX (installed on $(date +%Y-%m-%d\ %H:%M:%S))" >>$RC_FILE_PATH
-    echo $DISPLAY_UPDATE_PATH >>$RC_FILE_PATH
+  # Write text common to all shells
+  echo
+  echo "" >>$RC_FILE_PATH
+  echo "# SPINALCORDTOOLBOX (installed on $(date +%Y-%m-%d\ %H:%M:%S))" >>$RC_FILE_PATH
+  echo $DISPLAY_UPDATE_PATH >>$RC_FILE_PATH
+  # Switch between shell
+  if [[ $THE_RC == "bash" ]]; then
     echo "export SCT_DIR=$SCT_DIR" >>$RC_FILE_PATH
     echo "export MPLBACKEND=Agg" >>$RC_FILE_PATH
-    echo "" >>$RC_FILE_PATH
-  else
-    # (t)csh for good measure
-    echo
-    echo "" >>$THE_CSHRC
-    echo "# SPINALCORDTOOLBOX (installed on $(date +%Y-%m-%d\ %H:%M:%S))" >>$THE_CSHRC
-    echo $DISPLAY_UPDATE_PATH >>$THE_CSHRC
-    echo "setenv SCT_DIR $SCT_DIR" >>$THE_CSHRC
-    echo "setenv MPLBACKEND Agg" >>$THE_CSHRC
-    echo "" >>$THE_CSHRC
+  elif [[ $THE_RC == "csh" ]]; then
+    echo "setenv SCT_DIR $SCT_DIR" >>$RC_FILE_PATH
+    echo "setenv MPLBACKEND Agg" >>$RC_FILE_PATH
   fi
+  # add line
+  echo "" >>$RC_FILE_PATH
 }
 
 # Download from URL using curl/wget
 function download() {
   # Use curl or wget to download goodies
   e_status=0
-
+  # Try with wget
   if [[ $(which wget) ]]; then
     cmd="wget -O $1 $2"
-    echo ">> "$cmd
+    print code "$cmd"
     $cmd
     e_status=$?
     echo exit status is $e_status
   fi
-
+  # Try with curl
   if [[ $(which curl) && ! -e $1 ]]; then
     cmd="curl -o $1 -L $2"
-    echo ">> "$cmd
+    print code "$cmd"
     $cmd
     e_status=$?
-
     echo exit status is $e_status
   fi
-
+  # check success
   if [[ $e_status -ne 0 || ! -e $1 ]]; then
     die "The download of $2 failed\n
 Please check your internet connection before relaunching the installer\n"
@@ -224,9 +275,25 @@ function usage() {
   echo -e "\n\t-v \v Full verbose"
 }
 
+
+# ======================================================================================================================
 # SCRIPT STARTS HERE
-# ========================================================================
-echo -e "\nWelcome to the SCT installer!"
+# ======================================================================================================================
+
+# This trap specifically catches keyboardInterrupt and output a non-zero status before running finish()
+trap detectKeyboardInterrupt INT
+# Set a trap which, on shell error or shell exit, runs finish()
+trap finish EXIT
+
+print info "
+*******************************
+* Welcome to SCT installation *
+*******************************
+"
+
+# ----------------------------------------------------------------------------------------------------------------------
+# CLI parser
+# ----------------------------------------------------------------------------------------------------------------------
 
 fetch_os_type
 check_requirements
@@ -259,10 +326,15 @@ while getopts ":dhbpv" opt; do
     ;;
   \?)
     usage
-    die
+    exit 99
     ;;
   esac
 done
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Prepare installation
+# ----------------------------------------------------------------------------------------------------------------------
 
 # Catch SCT version
 if [[ -e "version.txt" ]]; then
@@ -282,41 +354,34 @@ if [[ "x$SCT_INSTALL_TYPE" == "x" ]]; then
   fi
 fi
 
-# Define sh files, by default it will use unix shell
-RC_FILE_PATH=$(get_shell_rc_path)
-THE_RC=$RC_FILE_PATH
-if echo $(ps -o comm= $PPID) | grep csh; then
-  THE_CSHRC=$HOME/.cshrc
-  THE_RC=$THE_CSHRC
-fi
+# Define sh files
+get_shell_rc_path
 
 # Display install info
 echo -e "\nSCT version ......... "$SCT_VERSION
 echo -e "Installation type ... "$SCT_INSTALL_TYPE
 echo -e "Operating system .... "$OS
-echo -e "Shell ............... "$THE_RC
+echo -e "Shell config ........ "$RC_FILE_PATH
 
 # If you do not want the crash reports question to be ask,
 # set ASK_REPORT_QUESTION at installation time like this:
 # >>> ASK_REPORT_QUESTION=false ./install_sct
 REPORT_STATS=no
 if [[ ! $ASK_REPORT_QUESTION =~ ^([[Ff]alse?|[Nn]o?)$ ]]; then
-  # Send crash statistic and error logs to developers, that is the
-  # Questions
-  echo
-  cat <<EOF
-To improve user experience and fix bugs, the SCT development team is using a
+# Send crash statistic and error logs to developers, that is the question:
+  print question "To improve user experience and fix bugs, the SCT development team is using a
 report system to automatically receive crash reports and errors from users.
 These reports are anonymous.
-EOF
-  read -p 'Do you agree to help us improve SCT? [y]es/[n]o: ' -r REPORT_STATS
+
+Do you agree to help us improve SCT? [y]es/[n]o: "
+  read REPORT_STATS
 fi
 
 if [[ $REPORT_STATS =~ [Yy](es)? ]]; then
   echo -ne '# Auto-generated by install_sct\nimport os\nSENTRY_DSN=os.environ.get("SCT_SENTRY_DSN", "https://5202d7c96ad84f17a24bd2653f1c4f9e:c1394bb176cc426caf0ff6a9095fb955@sentry.io/415369")\n' >spinalcordtoolbox/sentry_dsn.py
-  echo "--> Crash reports will be sent to the SCT development team. Thank you!"
+  print info "--> Crash reports will be sent to the SCT development team. Thank you!"
 else
-  echo "--> Crash reports will not be sent."
+  print info "--> Crash reports will not be sent."
 fi
 
 # if installing from git folder, then becomes default installation folder
@@ -328,16 +393,18 @@ fi
 
 # Set install dir
 while true; do
-  echo -e "\nSCT will be installed here: [$SCT_DIR]"
+#  print info "SCT will be installed here: [$SCT_DIR]"
   while [[ ! $change_default_path =~ ^([Yy](es)?|[Nn]o?)$ ]]; do
-    echo -n "Do you agree? [y]es/[n]o: "
+    print question "SCT will be installed here: [$SCT_DIR]
+
+Do you agree? [y]es/[n]o: "
     read change_default_path
   done
   if [[ $change_default_path =~ ^[Yy] ]]; then
     # user accepts default path --> exit loop
     break
   fi
-  echo -n "Choose install directory. Warning! Give full path (e.g. /usr/django/sct_v3.0): "
+  print question "Choose install directory. Warning! Give full path (e.g. /usr/django/sct_v3.0): \n"
   # user enters new path
   read new_install
 
@@ -348,12 +415,12 @@ while true; do
 
   # Avoid horrible bug, like removing /bin if SCT_DIR "/" or $HOME/bin
   if [[ "$new_install" == "/" ]] || [[ "$HOME" == "${new_install%/}" ]]; then
-    echo Cannot be installed directly in $new_install
-    echo Please pick a full path
+    print info "Cannot be installed directly in $new_install"
+    print info "Please pick a full path"
     continue
   elif [[ -d "$new_install" ]]; then
     # directory exists --> update SCT_DIR and exit loop
-    echo -e "WARNING: Directory already exists. Files will be overwritten."
+    print warning "WARNING: Directory already exists. Files will be overwritten."
     SCT_DIR=$new_install
     break
   elif [[ ! "$new_install" ]]; then
@@ -378,38 +445,40 @@ else
 fi
 
 # Update PATH variables based on Shell type
-if [[ -z $THE_CSHRC ]]; then
+if [[ $THE_RC == "bash" ]]; then
   UPDATE_PATH="export PATH=$SCT_DIR/$BIN_DIR:$PATH"
   DISPLAY_UPDATE_PATH="export PATH=\"$SCT_DIR/$BIN_DIR:\$PATH\""
-else
+elif [[ $THE_RC == "csh" ]]; then
   UPDATE_PATH="setenv PATH $SCT_DIR/$BIN_DIR:$PATH"
   DISPLAY_UPDATE_PATH="setenv PATH \"$SCT_DIR/$BIN_DIR:\$PATH\""
+else
+  die "This variable is not recognized: THE_RC=$THE_RC"
 fi
 
 # Update MPLBACKEND on headless system. See: https://github.com/neuropoly/spinalcordtoolbox/issues/2137
 if [[ -z $MPLBACKEND ]]; then
   # using bash
-  if [[ -z $THE_CSHRC ]]; then
+  if [[ $THE_RC == "bash" ]]; then
     export MPLBACKEND=Agg
   # using (t)csh
-  else
+  elif [[ $THE_RC == "csh" ]]; then
     setenv MPLBACKEND Agg
   fi
 fi
 
 # Copy files to destination directory
 if [[ "$SCT_DIR" != "$SCT_SOURCE" ]]; then
-  echo -e "\nCopying source files from $SCT_SOURCE to $SCT_DIR"
+  print info "Copying source files from $SCT_SOURCE to $SCT_DIR"
   cp -vR $SCT_INSTALL_CP_OPTIONS "$SCT_SOURCE/"* "$SCT_DIR/" | while read line; do echo -n "."; done
 else
-  echo -e "\nSkipping copy of source files (source and destination folders are the same)"
+  print info "Skipping copy of source files (source and destination folders are the same)"
 fi
 
 # Clean old install setup in bin/ if existing
 if [[ -x $SCT_DIR/$BIN_DIR ]]; then
-  echo -e "\nRemoving sct and isct softlink from $SCT_DIR/$BIN_DIR"
-  find $SCT_DIR/$BIN_DIR -type l -name "sct_*" -exec rm {} \;
-  find $SCT_DIR/$BIN_DIR -type l -name "isct_*" -exec rm {} \;
+  print info "Removing sct and isct softlink from $SCT_DIR/$BIN_DIR"
+  find $SCT_DIR/$BIN_DIR -type l -name \"sct_*\" -exec rm {} \;
+  find $SCT_DIR/$BIN_DIR -type l -name \"isct_*\" -exec rm {} \;
 fi
 
 # Go to installation folder
@@ -417,25 +486,24 @@ cd $SCT_DIR
 
 # Make sure we are in SCT folder (to avoid deleting folder from user)
 if [[ ! -f "version.txt" ]]; then
-  die "\nERROR: Cannot cd into SCT folder. SCT_DIR="$SCT_DIR
+  die "ERROR: Cannot cd into SCT folder. SCT_DIR="$SCT_DIR
 fi
 
-## Install Python
-# We make sure that there is no conflict with local python install by unsetting PYTHONPATH
-# and forcing PYTHONNOUSERSITE
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Install Python
+# ----------------------------------------------------------------------------------------------------------------------
+
+# We make sure that there is no conflict with local python install by unsetting PYTHONPATH and forcing PYTHONNOUSERSITE
 unset PYTHONPATH
 export PYTHONNOUSERSITE=1
 
-# Install Python conda
-echo -e "\nInstalling conda..."
-cmd="rm -rf $SCT_DIR/$PYTHON_DIR"
-echo ">> "$cmd
-$cmd
-cmd="mkdir -p $SCT_DIR/$PYTHON_DIR"
-echo ">> "$cmd
-$cmd
-# downloading
+# Remove old python folder
+print info "Installing conda..."
+run "rm -rf $SCT_DIR/$PYTHON_DIR"
+run "mkdir -p $SCT_DIR/$PYTHON_DIR"
 
+# Download miniconda
 case $OS in
 linux*)
   download $TMP_DIR/miniconda.sh https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
@@ -445,17 +513,8 @@ osx)
   ;;
 esac
 
-# run conda installer
-cmd="bash $TMP_DIR/miniconda.sh -p $SCT_DIR/$PYTHON_DIR -b -f"
-echo ">> "$cmd
-$cmd
-ret_code_conda=$?
-if [[ $ret_code_conda != 0 ]]; then
-  echo -e Conda did not installed properly with return code $ret_code_conda
-  exit $ret_code_conda
-else
-  echo -e Conda installation successful
-fi
+# Run conda installer
+run "bash $TMP_DIR/miniconda.sh -p $SCT_DIR/$PYTHON_DIR -b -f"
 
 # create py3.6 venv (for Keras/TF compatibility with Centos7, see issue #2270)
 yes | python/bin/conda create -n venv_sct python=3.6
@@ -464,11 +523,8 @@ yes | python/bin/conda create -n venv_sct python=3.6
 source python/etc/profile.d/conda.sh
 conda activate venv_sct
 
-#  conda install --yes anaconda-client
-#  conda config --add channels conda-forge
-
 # Install Python dependencies
-echo -e "\nInstalling Python dependencies..."
+print info "Installing Python dependencies..."
 pip install numpy
 pip install -r requirements.txt # we do not include the requirements inside the setup.py because it is much faster to install all dependencies first (uses pre-compiled wheels)
 if [[ $? != 0 ]]; then
@@ -479,145 +535,124 @@ fi
 pip install -e $SCT_DIR
 e_status=$?
 if [[ $e_status != 0 ]]; then
-  echo "Failed to pip install sct."
-  exit $e_status
+  die "Failed to pip install sct."
 fi
 
 ## Create launchers for Python scripts
-echo -e "\nCreating launchers for Python scripts..."
-mkdir -p $SCT_DIR/bin
+print info "Creating launchers for Python scripts..."
+mkdir -p $SCT_DIR/$BIN_DIR
 for file in $SCT_DIR/python/envs/venv_sct/bin/*sct*; do
-  cp "$file" "$SCT_DIR/bin/"
+  cp "$file" "$SCT_DIR/$BIN_DIR/"
   res=$?
   if [[ $res != 0 ]]; then
-    echo "\nProblem creating launchers!"
-    exit $res
+    die "Problem creating launchers!"
   fi
 done
 
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Install shell scripts
+# ----------------------------------------------------------------------------------------------------------------------
+
 ## Make shell scripts executable
-echo -e "\nMake shell scripts executable..."
+print info "Make shell scripts executable..."
 for file in $SCT_DIR/shell/*; do
   chmod 775 "$file"
 done
 
 ## Create symbolic links for Shell scripts (-f: overwrite if exists)
-echo -e "\nCreating symbolic links for Shell scripts..."
-ln -s -f $SCT_DIR/shell/sct_run_batch.sh $SCT_DIR/bin/sct_run_batch
-ln -s -f $SCT_DIR/shell/_run_with_log.sh $SCT_DIR/bin/_run_with_log.sh
+print info "Creating symbolic links for Shell scripts..."
+ln -s -f $SCT_DIR/shell/sct_run_batch.sh $SCT_DIR/$BIN_DIR/sct_run_batch
+ln -s -f $SCT_DIR/shell/_run_with_log.sh $SCT_DIR/$BIN_DIR/_run_with_log.sh
 res=$?
 if [[ $res != 0 ]]; then
-  echo "\nProblem creating symlinks!"
-  exit $res
+  die "Problem creating symlinks!"
 fi
 
 ## Update PATH within this script (to launch sct_check_dependencies)
 $UPDATE_PATH
 
-## Install binaries
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Download binaries and data
+# ----------------------------------------------------------------------------------------------------------------------
+
+# Install binaries
 if [[ $NO_SCT_BIN_INSTALL ]]; then
-  echo "SCT binaries will not be (re)-installed"
+  print warning "WARNING: SCT binaries will not be (re)-installed"
 else
-  echo -e "\nInstalling binaries..."
+  print info "Installing binaries..."
   if [[ $OS == "linux" ]]; then
-    cmd="sct_download_data -d binaries_debian -o $SCT_DIR/$BIN_DIR"
-    echo ">> "$cmd
-    $cmd
-    e_status=$?
+    run "sct_download_data -d binaries_debian -o $SCT_DIR/$BIN_DIR"
   elif [[ $OS == "linux_centos6" ]]; then
-    cmd="sct_download_data -d binaries_centos -o $SCT_DIR/$BIN_DIR"
-    echo ">> "$cmd
-    $cmd
-    e_status=$?
+    run "sct_download_data -d binaries_centos -o $SCT_DIR/$BIN_DIR"
   elif [[ $OS == "osx" ]]; then
-    cmd="sct_download_data -d binaries_osx -o $SCT_DIR/$BIN_DIR"
-    echo ">> "$cmd
-    $cmd
-    e_status=$?
+    run "sct_download_data -d binaries_osx -o $SCT_DIR/$BIN_DIR"
   else
     die "Unsupported OS $OS: can't install binaries."
   fi
-  if [[ $e_status != 0 ]]; then
-    echo "Failed to download SCT binaries."
-    exit $e_status
-  fi
 fi
+print info "All requirements installed!"
 
-echo -e "All requirements installed!"
-
-## Install data
+# Install data
 if [[ $NO_DATA_INSTALL ]]; then
-  echo "data/ will not be (re)-install"
+  print warning "WARNING: data/ will not be (re)-install"
 else
   # forcing activation if python is not reinstalled
-  cmd=". $SCT_DIR/$PYTHON_DIR/bin/activate $SCT_DIR/$PYTHON_DIR"
-  echo ">> "$cmd
-  $cmd
-
+  run ". $SCT_DIR/$PYTHON_DIR/bin/activate $SCT_DIR/$PYTHON_DIR"
   # Download data
-  echo -e "\nInstalling data..."
-  cmd="rm -rf $SCT_DIR/$DATA_DIR"
-  echo ">> "$cmd
-  $cmd
-  cmd="mkdir -p $SCT_DIR/$DATA_DIR"
-  echo ">> "$cmd
-  $cmd
-  cmd="cd $SCT_DIR/$DATA_DIR"
-  echo ">> "$cmd
-  $cmd
+  print info "Installing data..."
+  run "rm -rf $SCT_DIR/$DATA_DIR"
+  run "mkdir -p $SCT_DIR/$DATA_DIR"
+  run "cd $SCT_DIR/$DATA_DIR"
   for data in PAM50 gm_model optic_models pmj_models deepseg_sc_models deepseg_gm_models deepseg_lesion_models c2c3_disc_models; do
-    cmd="sct_download_data -d $data"
-    echo ">> "$cmd
-    $cmd
-    e_status=$?
-    if [[ $e_status != 0 ]]; then
-      echo "Failed to download SCT binaries."
-      exit $e_status
-    fi
+    run "sct_download_data -d $data"
   done
 fi
 
-## Deactivating conda
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Validate installation
+# ----------------------------------------------------------------------------------------------------------------------
+
+# Deactivating conda
 . $SCT_DIR/$PYTHON_DIR/bin/deactivate >/dev/null 2>&1
 
-## Validate installation and update .bashrc
-
 # In case of previous SCT installation (4.0.0-beta.1 or before), remove sct_env declaration in bashrc
+print info "In case an old version SCT is already installed (4.0.0-beta.1 or before), remove 'sct_env' declaration in RC file"
 if [[ $OS == "osx" ]]; then
-  sed -ie '/sct_env/ s/^#*/#/' $THE_RC
+  sed -ie '/sct_env/ s/^#*/#/' $RC_FILE_PATH
 else
-  sed -e '/sct_env/ s/^#*/#/' -i $THE_RC
+  sed -e '/sct_env/ s/^#*/#/' -i $RC_FILE_PATH
 fi
 
 # update PATH environment
 while [[ ! $add_to_path =~ ^([Yy](es)?|[Nn]o?)$ ]]; do
-  echo -e -n "\nDo you want to add the sct_* scripts to your PATH environment? [y]es/[n]o: "
+  print question "Do you want to add the sct_* scripts to your PATH environment? [y]es/[n]o: "
   read add_to_path
 done
-
-echo ""
 
 if [[ $add_to_path =~ ^[Yy] ]]; then
   edit_shellrc
 else
-  echo Not adding $SCT_DIR to \$PATH
-  echo You can always add it later or call SCT functions with full path $SCT_DIR/$BIN_DIR/sct_function
+  print info "Not adding $SCT_DIR to \$PATH.
+You can always add it later or call SCT functions with full path $SCT_DIR/$BIN_DIR/sct_xxx"
 fi
 
 # run sct_check_dependencies
-echo -e "Validate installation..."
+print info "Validate installation..."
 # We run the sct_check_dependencies in the TMP_DIR so the tmp.XXX output
 # it creates is cleaned properly
 if sct_check_dependencies; then
   if [[ $add_to_path =~ ^[Nn] ]]; then
-    echo -e "To use SCT, please update your environment by running:\n"
-    echo -e $DISPLAY_UPDATE_PATH
+    print info "To use SCT, please update your environment by running:
+$DISPLAY_UPDATE_PATH"
   else
-    echo -e "Open a new Terminal window to load environment variables, or run:\n source $THE_RC\n"
+    print info "Open a new Terminal window to load environment variables, or run:
+source $RC_FILE_PATH"
   fi
 else
   die "Installation validation Failed!\n
 Please copy the historic of this Terminal (starting with the command install_sct) and paste it in the SCT Help forum (create a new discussion):\n
-http://forum.spinalcordmri.org/c/sct\n"
+http://forum.spinalcordmri.org/c/sct"
 fi
-

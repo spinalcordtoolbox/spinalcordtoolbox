@@ -18,7 +18,7 @@ import argparse
 import numpy as np
 
 import spinalcordtoolbox.image as msct_image
-from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.image import Image, concat_data
 from spinalcordtoolbox.utils import Metavar, SmartFormatter
 
 import sct_utils as sct
@@ -401,75 +401,6 @@ def split_data(im_in, dim, squeeze_data=True):
         im_out_list.append(im_out)
 
     return im_out_list
-
-
-def concat_data(fname_in_list, dim, pixdim=None, squeeze_data=False):
-    """
-    Concatenate data
-    :param im_in_list: list of Images or image filenames
-    :param dim: dimension: 0, 1, 2, 3.
-    :param pixdim: pixel resolution to join to image header
-    :param squeeze_data: bool: if True, remove the last dim if it is a singleton.
-    :return im_out: concatenated image
-    """
-    # WARNING: calling concat_data in python instead of in command line causes a non understood issue (results are different with both options)
-    # from numpy import concatenate, expand_dims
-
-    dat_list = []
-    data_concat_list = []
-
-    # check if shape of first image is smaller than asked dim to concatenate along
-    # data0 = Image(fname_in_list[0]).data
-    # if len(data0.shape) <= dim:
-    #     expand_dim = True
-    # else:
-    #     expand_dim = False
-
-    for i, fname in enumerate(fname_in_list):
-        # if there is more than 100 images to concatenate, then it does it iteratively to avoid memory issue.
-        if i != 0 and i % 100 == 0:
-            data_concat_list.append(np.concatenate(dat_list, axis=dim))
-            im = Image(fname)
-            dat = im.data
-            # if image shape is smaller than asked dim, then expand dim
-            if len(dat.shape) <= dim:
-                dat = np.expand_dims(dat, dim)
-            dat_list = [dat]
-            del im
-            del dat
-        else:
-            im = Image(fname)
-            dat = im.data
-            # if image shape is smaller than asked dim, then expand dim
-            if len(dat.shape) <= dim:
-                dat = np.expand_dims(dat, dim)
-            dat_list.append(dat)
-            del im
-            del dat
-    if data_concat_list:
-        data_concat_list.append(np.concatenate(dat_list, axis=dim))
-        data_concat = np.concatenate(data_concat_list, axis=dim)
-    else:
-        data_concat = np.concatenate(dat_list, axis=dim)
-    # write file
-    im_out = msct_image.empty_like(Image(fname_in_list[0]))
-    im_out.data = data_concat
-    if isinstance(fname_in_list[0], str):
-        im_out.absolutepath = sct.add_suffix(fname_in_list[0], '_concat')
-    else:
-        if fname_in_list[0].absolutepath:
-            im_out.absolutepath = sct.add_suffix(fname_in_list[0].absolutepath, '_concat')
-
-    if pixdim is not None:
-        im_out.hdr['pixdim'] = pixdim
-
-    if squeeze_data and data_concat.shape[dim] == 1:
-        # remove the last dim if it is a singleton.
-        im_out.data = data_concat.reshape(tuple([ x for (idx_shape, x) in enumerate(data_concat.shape) if idx_shape != dim]))
-    else:
-        im_out.data = data_concat
-
-    return im_out
 
 
 def remove_vol(im_in, index_vol_user, todo):

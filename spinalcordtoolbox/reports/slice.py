@@ -55,7 +55,7 @@ class Slice(object):
                 else:
                     # Otherwise it's an image: use spline interpolation
                     type_img = 'im'
-                img_r = self._resample(img, p_resample, type_img=type_img, image_ref=image_ref)
+                img_r = self._resample_slicewise(img, p_resample, type_img=type_img, image_ref=image_ref)
             else:
                 img_r = img.copy()
             self._images.append(img_r)
@@ -291,7 +291,7 @@ class Slice(object):
     def aspect(self):
         return [self.get_aspect(x) for x in self._images]
 
-    def _resample(self, image, p_resample, type_img, image_ref=None):
+    def _resample_slicewise(self, image, p_resample, type_img, image_ref=None):
         """
         Resample at a fixed resolution to make sure the cord always appears with similar scale, regardless of the native
         resolution of the image. Assumes SAL orientation.
@@ -313,7 +313,7 @@ class Slice(object):
         else:
             # Create nibabel object for reference image
             nii_ref = Nifti1Image(image_ref.data, image_ref.hdr.get_best_affine())
-            nii_r = resample_nib(nii, img_dest=nii_ref, interpolation=dict_interp[type_img])
+            nii_r = resample_nib(nii, image_dest=nii_ref, interpolation=dict_interp[type_img])
         # If resampled image is a segmentation, binarize using threshold at 0.5
         if type_img == 'seg':
             img_r_data = (nii_r.get_data() > 0.5) * 1

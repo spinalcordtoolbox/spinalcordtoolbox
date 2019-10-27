@@ -18,33 +18,43 @@ import numpy as np
 import nibabel as nib
 from nibabel.processing import resample_from_to
 
+from spinalcordtoolbox.image import Image
 
 import sct_utils as sct
 
 logger = logging.getLogger(__name__)
 
 
-def resample_nib(img, new_size=None, new_size_type=None, img_dest=None, interpolation='linear'):
+def resample_nib(image, new_size=None, new_size_type=None, image_dest=None, interpolation='linear', mode='nearest'):
     """
-    Resample a nibabel image object based on a specified resampling factor.
+    Resample a nibabel or Image object based on a specified resampling factor.
     Can deal with 2d, 3d or 4d image objects.
 
-    :param img: nibabel Image.
+    :param image: nibabel or Image image.
     :param new_size: list of float: Resampling factor, final dimension or resolution, depending on new_size_type.
     :param new_size_type: {'vox', 'factor', 'mm'}: Feature used for resampling. Examples:
-      new_size=[128, 128, 90], new_size_type='vox' --> Resampling to a dimension of 128x128x90 voxels
-      new_size=[2, 2, 2], new_size_type='factor' --> 2x isotropic upsampling
-      new_size=[1, 1, 5], new_size_type='mm' --> Resampling to a resolution of 1x1x5 mm
-    :param img_dest: Destination nibabel Image to resample the input image to. In this case, new_size and new_size_type
-    are ignored
+        new_size=[128, 128, 90], new_size_type='vox' --> Resampling to a dimension of 128x128x90 voxels
+        new_size=[2, 2, 2], new_size_type='factor' --> 2x isotropic upsampling
+        new_size=[1, 1, 5], new_size_type='mm' --> Resampling to a resolution of 1x1x5 mm
+    :param image_dest: Destination image to resample the input image to. In this case, new_size and new_size_type
+        are ignored
     :param interpolation: {'nn', 'linear', 'spline'}. The interpolation type
-    :return: The resampled nibabel Image.
+    :param mode: Outside values are filled with 0 ('constant') or nearest value ('nearest').
+    :return: The resampled nibabel or Image image (depending on the input object type).
     """
 
     # set interpolation method
     dict_interp = {'nn': 0, 'linear': 1, 'spline': 2}
 
-    if img_dest is None:
+    # If input is an Image object, create nibabel object from it
+    if type(image) == nib.nifti1.Nifti1Image:
+        img = image
+    elif type(image) == Image:
+        img = nib.nifti1.Nifti1Image(image.data, image.hdr.get_best_affine())
+    else:
+        raise Exception(TypeError)
+
+    if image_dest is None:
         # Get dimensions of data
         p = img.header.get_zooms()
         shape = img.header.get_data_shape()
@@ -68,7 +78,7 @@ def resample_nib(img, new_size=None, new_size_type=None, img_dest=None, interpol
             # compute new shape as: shape_r = shape * (p_r / p)
             shape_r = tuple([int(np.round(shape[i] * float(p[i]) / float(new_size[i]))) for i in range(img.ndim)])
         else:
-            logger.error('new_size_type is not recognized.')
+            raise ValueError("'new_size_type' is not recognized.")
 
         # Generate 3d affine transformation: R
         affine = img.affine[:4, :4]
@@ -76,16 +86,29 @@ def resample_nib(img, new_size=None, new_size_type=None, img_dest=None, interpol
         logger.debug('Affine matrix: \n' + str(affine))
         R = np.eye(4)
         for i in range(3):
-            R[i, i] = img.shape[i] / float(shape_r[i])
+            try:
+                R[i, i] = img.shape[i] / float(shape_r[i])
+            except ZeroDivisionError:
+                raise ZeroDivisionError("Destination size is zero for dimension {}. You are trying to resample to an "
+                                        "unrealistic dimension. Check your NIFTI pixdim values to make sure they are "
+                                        "not corrupted.".format(i))
+
         affine_r = np.dot(affine, R)
         reference = (shape_r, affine_r)
+
+    # If reference is provided
     else:
-        # If reference is provided
-        reference = img_dest
+        if type(image_dest) == nib.nifti1.Nifti1Image:
+            reference = image_dest
+        elif type(image_dest) == Image:
+            reference = nib.nifti1.Nifti1Image(image_dest.data, image_dest.hdr.get_best_affine())
+        else:
+            raise Exception(TypeError)
 
     if img.ndim == 3:
+        # we use mode 'nearest' to overcome issue #2453
         img_r = resample_from_to(
-            img, to_vox_map=reference, order=dict_interp[interpolation], mode='constant', cval=0.0, out_class=None)
+            img, to_vox_map=reference, order=dict_interp[interpolation], mode=mode, cval=0.0, out_class=None)
 
     elif img.ndim == 4:
         # TODO: Cover img_dest with 4D volumes
@@ -96,13 +119,17 @@ def resample_nib(img, new_size=None, new_size_type=None, img_dest=None, interpol
             # Create dummy 3d nibabel image
             nii_tmp = nib.nifti1.Nifti1Image(img.get_data()[..., it], affine)
             img3d_r = resample_from_to(
-                nii_tmp, to_vox_map=(shape_r[:-1], affine_r), order=dict_interp[interpolation], mode='constant',
+                nii_tmp, to_vox_map=(shape_r[:-1], affine_r), order=dict_interp[interpolation], mode=mode,
                 cval=0.0, out_class=None)
             data4d[..., it] = img3d_r.get_data()
         # Create 4d nibabel Image
         img_r = nib.nifti1.Nifti1Image(data4d, affine_r)
 
-    return img_r
+    # Convert back to proper type
+    if type(image) == nib.nifti1.Nifti1Image:
+        return img_r
+    elif type(image) == Image:
+        return Image(img_r.get_data(), hdr=img_r.header, orientation=image.orientation, dim=img_r.header.get_data_shape())
 
 
 def resample_file(fname_data, fname_out, new_size, new_size_type, interpolation, verbose, fname_ref=None):
@@ -125,7 +152,7 @@ def resample_file(fname_data, fname_out, new_size, new_size_type, interpolation,
     else:
         nii_ref = None
 
-    nii_r = resample_nib(nii, new_size.split('x'), new_size_type, img_dest=nii_ref, interpolation=interpolation)
+    nii_r = resample_nib(nii, new_size.split('x'), new_size_type, image_dest=nii_ref, interpolation=interpolation)
 
     # build output file name
     if fname_out == '':

@@ -25,7 +25,7 @@ import sct_utils as sct
 from msct_parser import Parser
 from spinalcordtoolbox import process_seg
 from spinalcordtoolbox.aggregate_slicewise import aggregate_per_slice_or_level, save_as_csv, func_wa, func_std, \
-    _merge_dict
+    func_sum, _merge_dict
 from spinalcordtoolbox.utils import parse_num_list
 from spinalcordtoolbox.centerline.core import ParamCenterline
 from spinalcordtoolbox.reports.qc import generate_qc
@@ -45,6 +45,7 @@ def get_parser():
 - eccentricity: Eccentricity of the ellipse that has the same second-moments as the spinal cord. The eccentricity is the ratio of the focal distance (distance between focal points) over the major axis length. The value is in the interval [0, 1). When it is 0, the ellipse becomes a circle.
 - orientation: angle (in degrees) between the AP axis of the spinal cord and the AP axis of the image
 - solidity: CSA(spinal_cord) / CSA_convex(spinal_cord). If perfect ellipse, it should be one. This metric is interesting for detecting non-convex shape (e.g., in case of strong compression)
+- length: Length of the segmentation, computed by summing the slice thickness (corrected for the centerline angle at each slice) across the specified superior-inferior region.
 """)
     parser.add_option(name='-i',
                       type_value='image_nifti',
@@ -278,10 +279,18 @@ def main(args):
                                                      param_centerline=param_centerline,
                                                      verbose=verbose)
     for key in metrics:
-        metrics_agg[key] = aggregate_per_slice_or_level(metrics[key], slices=parse_num_list(slices),
-                                                        levels=parse_num_list(vert_levels), perslice=perslice,
-                                                        perlevel=perlevel, vert_level=fname_vert_levels,
-                                                        group_funcs=group_funcs)
+        if key == 'length':
+            # For computing cord length, slice-wise length needs to be summed across slices
+            metrics_agg[key] = aggregate_per_slice_or_level(metrics[key], slices=parse_num_list(slices),
+                                                            levels=parse_num_list(vert_levels), perslice=perslice,
+                                                            perlevel=perlevel, vert_level=fname_vert_levels,
+                                                            group_funcs=(('SUM', func_sum),))
+        else:
+            # For other metrics, we compute the average and standard deviation across slices
+            metrics_agg[key] = aggregate_per_slice_or_level(metrics[key], slices=parse_num_list(slices),
+                                                            levels=parse_num_list(vert_levels), perslice=perslice,
+                                                            perlevel=perlevel, vert_level=fname_vert_levels,
+                                                            group_funcs=group_funcs)
     metrics_agg_merged = _merge_dict(metrics_agg)
     save_as_csv(metrics_agg_merged, file_out, fname_in=fname_segmentation, append=append)
 

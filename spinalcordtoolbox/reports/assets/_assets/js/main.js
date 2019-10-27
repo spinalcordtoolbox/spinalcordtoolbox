@@ -35,7 +35,7 @@ $(document).ready(function(){
   $('html').keydown( function(evt) {
     var obj = $('#table tr.active');
     if (evt.which == 40) {
-      if (obj.length == 0) {
+      if (obj.length == 0 || obj.text() === "DateDatasetSubjectPathFileContrastFunctionFunction+Args") {
         $('#table tr:first-child').click();
       } else {
         obj.next().click();

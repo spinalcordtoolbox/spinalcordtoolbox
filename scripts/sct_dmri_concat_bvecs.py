@@ -32,13 +32,16 @@ def get_parser():
         formatter_class=SmartFormatter,
         add_help=None,
         prog=os.path.basename(__file__).strip(".py"))
+
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
         "-i",
-        help='List of the bvec files to concatenate. Example: dmri_b700.bvec dmri_b2000.bvec',
         nargs='+',
+        required=True,
+        help='List of the bvec files to concatenate. Example: dmri_b700.bvec dmri_b2000.bvec',
         metavar=Metavar.file,
-        required=True)
+        )
+
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",

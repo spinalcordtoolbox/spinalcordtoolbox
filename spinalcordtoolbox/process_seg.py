@@ -38,6 +38,7 @@ def compute_shape(segmentation, angle_correction=True, param_centerline=None, ve
                      'eccentricity',
                      'orientation',
                      'solidity',
+                     'length'
                      ]
 
     im_seg = Image(segmentation).change_orientation('RPI')
@@ -45,11 +46,7 @@ def compute_shape(segmentation, angle_correction=True, param_centerline=None, ve
     nx, ny, nz, nt, px, py, pz, pt = im_seg.dim
     pr = min([px, py])
     # Resample to isotropic resolution in the axial plane. Use the minimum pixel dimension as target dimension.
-    im_seg_nib = nibabel.nifti1.Nifti1Image(im_seg.data, im_seg.hdr.get_best_affine())
-    im_seg_nibr = resample_nib(im_seg_nib, new_size=[pr, pr, pz], new_size_type='mm', interpolation='linear')
-    # Convert back to Image type
-    im_segr = Image(
-        im_seg_nibr.get_data(), hdr=im_seg_nibr.header, orientation='RPI', dim=im_seg_nibr.header.get_data_shape())
+    im_segr = resample_nib(im_seg, new_size=[pr, pr, pz], new_size_type='mm', interpolation='linear')
 
     # Update dimensions from resampled image.
     nx, ny, nz, nt, px, py, pz, pt = im_segr.dim
@@ -108,6 +105,7 @@ def compute_shape(segmentation, angle_correction=True, param_centerline=None, ve
             # Add custom fields
             shape_property['angle_AP'] = angle_AP_rad * 180.0 / math.pi
             shape_property['angle_RL'] = angle_RL_rad * 180.0 / math.pi
+            shape_property['length'] = pz / (np.cos(angle_AP_rad) * np.cos(angle_RL_rad))
             # Loop across properties and assign values for function output
             for property_name in property_list:
                 shape_properties[property_name][iz] = shape_property[property_name]
@@ -175,8 +173,8 @@ def _properties2d(image, dim):
     region = regions[0]
     # Compute area with weighted segmentation and adjust area with physical pixel size
     area = np.sum(image_crop_r) * dim[0] * dim[1] / upscale ** 2
-    # Compute ellipse orientation, rotated by 90deg because image axis are inverted, modulo pi, in deg, and between [0, 90]
-    orientation = _fix_orientation(region.orientation)
+    # Compute ellipse orientation, modulo pi, in deg, and between [0, 90]
+    orientation = fix_orientation(region.orientation)
     # Find RL and AP diameter based on major/minor axes and cord orientation=
     [diameter_AP, diameter_RL] = \
         _find_AP_and_RL_diameter(region.major_axis_length, region.minor_axis_length, orientation,
@@ -200,10 +198,10 @@ def _properties2d(image, dim):
     return properties
 
 
-def _fix_orientation(orientation):
+def fix_orientation(orientation):
     """Re-map orientation from skimage.regionprops from [-pi/2,pi/2] to [0,90] and rotate by 90deg because image axis
     are inverted"""
-    orientation_new = (orientation + math.pi / 2) * 180.0 / math.pi
+    orientation_new = orientation * 180.0 / math.pi
     if 360 <= abs(orientation_new) <= 540:
         orientation_new = 540 - abs(orientation_new)
     if 180 <= abs(orientation_new) <= 360:

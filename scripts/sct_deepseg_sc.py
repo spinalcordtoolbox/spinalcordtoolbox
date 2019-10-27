@@ -34,12 +34,17 @@ def get_parser():
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
         "-i",
+        required=True,
         metavar=Metavar.file,
-        help='Input image. Example: t1.nii.gz')
+        help='Input image. Example: t1.nii.gz',
+    )
     mandatory.add_argument(
         "-c",
+        required=True,
         help="Type of image contrast.",
-        choices=('t1', 't2', 't2s', 'dwi'))
+        choices=('t1', 't2', 't2s', 'dwi'),
+    )
+
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",
@@ -61,6 +66,15 @@ def get_parser():
         metavar=Metavar.str,
         help='Input centerline file (to use with flag -centerline file). Example: t2_centerline_manual.nii.gz')
     optional.add_argument(
+        "-thr",
+        type=float,
+        help="Binarization threshold (between 0 and 1) to apply to the segmentation prediction. Set to -1 for no "
+             "binarization (i.e. soft segmentation output). The default threshold is specific to each contrast and was"
+             "estimated using an optimization algorithm. More details at: "
+             "https://github.com/sct-pipeline/deepseg-threshold.",
+        metavar=Metavar.float,
+        default=None)
+    optional.add_argument(
         "-brain",
         type=int,
         help='Indicate if the input image contains brain sections (to speed up segmentation). This flag is only '
@@ -68,7 +82,7 @@ def get_parser():
         choices=(0, 1))
     optional.add_argument(
         "-kernel",
-        help="Choice of kernel shape for the CNN. Segmentation with 3D kernels is longer than with 2D kernels.",
+        help="Choice of kernel shape for the CNN. Segmentation with 3D kernels is slower than with 2D kernels.",
         choices=('2d', '3d'),
         default="2d")
     optional.add_argument(
@@ -134,7 +148,6 @@ def main():
         sct.printv('3D kernel model for dwi contrast is not available. 2D kernel model is used instead.',
                    type="warning")
 
-
     if ctr_algo == 'file' and args.file_centerline is None:
         sct.printv('Please use the flag -file_centerline to indicate the centerline filename.', 1, 'warning')
         sys.exit(1)
@@ -145,6 +158,11 @@ def main():
     else:
         manual_centerline_fname = None
 
+    threshold = args.thr
+    if threshold is not None:
+        if threshold > 1.0 or (threshold < 0.0 and threshold != -1.0):
+            raise SyntaxError("Threshold should be between 0 and 1, or equal to -1 (no threshold)")
+
     remove_temp_files = args.r
     verbose = args.v
     sct.init_sct(log_level=verbose, update=True)  # Update log level
@@ -154,12 +172,6 @@ def main():
     qc_subject = args.qc_subject
     output_folder = args.ofolder
 
-    algo_config_stg = '\nMethod:'
-    algo_config_stg += '\n\tCenterline algorithm: ' + str(ctr_algo)
-    algo_config_stg += '\n\tAssumes brain section included in the image: ' + str(brain_bool)
-    algo_config_stg += '\n\tDimension of the segmentation kernel convolutions: ' + kernel_size + '\n'
-    sct.printv(algo_config_stg)
-
     # Segment image
     from spinalcordtoolbox.image import Image
     from spinalcordtoolbox.deepseg_sc.core import deep_segmentation_spinalcord
@@ -167,33 +179,20 @@ def main():
 
     im_image = Image(fname_image)
     # note: below we pass im_image.copy() otherwise the field absolutepath becomes None after execution of this function
-    im_seg, im_image_RPI_upsamp, im_seg_RPI_upsamp, im_labels_viewer, im_ctr = deep_segmentation_spinalcord(
-        im_image.copy(), contrast_type, ctr_algo=ctr_algo, ctr_file=manual_centerline_fname,
-        brain_bool=brain_bool, kernel_size=kernel_size, remove_temp_files=remove_temp_files, verbose=verbose)
+    im_seg, im_image_RPI_upsamp, im_seg_RPI_upsamp = \
+        deep_segmentation_spinalcord(im_image.copy(), contrast_type, ctr_algo=ctr_algo,
+                                     ctr_file=manual_centerline_fname, brain_bool=brain_bool, kernel_size=kernel_size,
+                                     threshold_seg=threshold, remove_temp_files=remove_temp_files, verbose=verbose)
 
     # Save segmentation
     fname_seg = os.path.abspath(os.path.join(output_folder, sct.extract_fname(fname_image)[1] + '_seg' +
                                              sct.extract_fname(fname_image)[2]))
-
-    # copy q/sform from input image to output segmentation
-    im_seg.copy_qform_from_ref(im_image)
     im_seg.save(fname_seg)
 
-    if ctr_algo == 'viewer':
-        # Save labels
-        fname_labels = os.path.abspath(os.path.join(output_folder, sct.extract_fname(fname_image)[1] + '_labels-centerline' +
-                                               sct.extract_fname(fname_image)[2]))
-        im_labels_viewer.save(fname_labels)
-
-    if verbose == 2:
-        # Save ctr
-        fname_ctr = os.path.abspath(os.path.join(output_folder, sct.extract_fname(fname_image)[1] + '_centerline' +
-                                               sct.extract_fname(fname_image)[2]))
-        im_ctr.save(fname_ctr)
-
+    # Generate QC report
     if path_qc is not None:
         generate_qc(fname_image, fname_seg=fname_seg, args=sys.argv[1:], path_qc=os.path.abspath(path_qc),
-    dataset=qc_dataset, subject=qc_subject, process='sct_deepseg_sc')
+                    dataset=qc_dataset, subject=qc_subject, process='sct_deepseg_sc')
     sct.display_viewer_syntax([fname_image, fname_seg], colormaps=['gray', 'red'], opacities=['', '0.7'])
 
 

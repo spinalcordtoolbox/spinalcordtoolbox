@@ -28,17 +28,21 @@ def get_parser():
         add_help=None,
         formatter_class=SmartFormatter,
         prog=os.path.basename(__file__).strip(".py"))
+
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
         '-i',
+        required=True,
         metavar=Metavar.file,
         help='First input image. Example: t2_seg.nii.gz',
-        required=True)
+        )
     mandatory.add_argument(
         '-d',
-        metavar=Metavar.file,
+        required=True,
         help='Second input image. Example: t2_manual_seg.nii.gz',
-        required=True)
+        metavar=Metavar.file,
+        )
+
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",

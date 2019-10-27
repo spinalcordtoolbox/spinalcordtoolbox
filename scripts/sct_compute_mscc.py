@@ -39,21 +39,24 @@ def get_parser():
     mandatoryArguments.add_argument(
         '-di',
         type=float,
+        required=True,
         help='Anteroposterior cord distance (in mm) at the level of maximum injury. Example: 6.85',
         metavar=Metavar.float,
-        required=False)
+        )
     mandatoryArguments.add_argument(
         '-da',
         type=float,
+        required=True,
         help='Anteroposterior cord distance (in mm) at the nearest normal level above the level of injury.',
         metavar=Metavar.float,
-        required=False)
+        )
     mandatoryArguments.add_argument(
         '-db',
         type=float,
+        required=True,
         help='Anteroposterior cord distance (in mm) at the nearest normal level below the level of injury.',
         metavar=Metavar.float,
-        required=False)
+        )
 
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
