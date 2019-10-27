@@ -29,11 +29,15 @@ def get_parser():
         add_help=None,
         formatter_class=SmartFormatter,
         prog=os.path.basename(__file__).strip(".py"))
+
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
         "-i",
+        required=True,
         help="Image filename to segment (3D volume). Example: t2s.nii.gz.",
-        metavar=Metavar.file)
+        metavar=Metavar.file
+    )
+
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",

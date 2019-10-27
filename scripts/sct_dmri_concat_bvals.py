@@ -32,10 +32,12 @@ def get_parser():
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
         "-i",
-        help='List of the bval files to concatenate. Example: dmri_b700.bval dmri_b2000.bval',
         nargs='+',
+        required=True,
+        help='List of the bval files to concatenate. Example: dmri_b700.bval dmri_b2000.bval',
         metavar=Metavar.file,
-        required=True)
+        )
+
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",

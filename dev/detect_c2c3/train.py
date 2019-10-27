@@ -58,7 +58,7 @@ def run_crop(fname_in, fname_out, nb_slice_average=1.0):
         cmd_orient = ['sct_image', '-i', fname_in, '-setorient', 'PIR', '-o', fname_out]
         sct.run(cmd_orient)
 
-    cmd_crop = ['sct_crop_image', '-i', fname_out, '-start', x_start, '-end', x_end, '-dim', '2', '-o', fname_out]
+    cmd_crop = ['sct_crop_image', '-i', fname_out, '-zmin', x_start, '-zmax', x_end, '-o', fname_out]
     sct.run(cmd_crop)
 
     if nb_slice_average_each_side:

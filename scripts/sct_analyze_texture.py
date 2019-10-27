@@ -39,17 +39,21 @@ def get_parser():
         formatter_class=SmartFormatter,
         prog=os.path.basename(__file__).strip(".py")
     )
+
     mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatoryArguments.add_argument(
         "-i",
-        metavar=Metavar.file,
+        required=True,
         help='Image to analyze. Example: t2.nii.gz',
-        required=False)
+        metavar=Metavar.file,
+    )
     mandatoryArguments.add_argument(
         "-m",
+        required=True,
         metavar=Metavar.file,
         help='Image mask Example: t2_seg.nii.gz',
-        required=False)
+    )
+
     optional = parser.add_argument_group("\nOPTIONALS ARGUMENTS")
     optional.add_argument(
         "-h",

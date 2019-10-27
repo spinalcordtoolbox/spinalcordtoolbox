@@ -22,7 +22,8 @@ import os
 import argparse
 
 from spinalcordtoolbox.utils import Metavar, SmartFormatter
-from spinalcordtoolbox.mtsat import mtsat
+from spinalcordtoolbox.qmri.mt import compute_mtsat
+from spinalcordtoolbox.image import Image
 
 import sct_utils as sct
 
@@ -37,58 +38,69 @@ def get_parser():
         formatter_class=SmartFormatter,
         prog= os.path.basename(__file__).strip(".py")
     )
+
     mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatoryArguments.add_argument(
         "-mt",
+        required=True,
         help="Image with MT_ON",
         metavar=Metavar.file,
-        required=False)
+        )
     mandatoryArguments.add_argument(
         "-pd",
+        required=True,
         help="Image PD weighted (typically, the MT_OFF)",
         metavar=Metavar.file,
-        required=False)
+        )
     mandatoryArguments.add_argument(
         "-t1",
+        required=True,
         help="Image T1-weighted",
         metavar=Metavar.file,
-        required=False)
+        )
     mandatoryArguments.add_argument(
         "-trmt",
+        required=True,
         help="TR [in ms] for mt image.",
         type=float,
         metavar=Metavar.float,
-        required=False)
+        )
     mandatoryArguments.add_argument(
         "-trpd",
+        required=True,
         help="TR [in ms] for pd image.",
         type=float,
         metavar=Metavar.float,
-        required=False)
+        )
     mandatoryArguments.add_argument(
         "-trt1",
+        required=True,
         help="TR [in ms] for t1 image.",
         type=float,
         metavar=Metavar.float,
-        required=False)
+        )
     mandatoryArguments.add_argument(
         "-famt",
+        required=True,
         help="Flip angle [in deg] for mt image.",
         type=float,
         metavar=Metavar.float,
-        required=False)
+        )
     mandatoryArguments.add_argument(
         "-fapd",
+        required=True,
         help="Flip angle [in deg] for pd image.",
         type=float,
         metavar=Metavar.float,
-        required=False)
+        )
     mandatoryArguments.add_argument(
         "-fat1",
+        required=True,
         help="Flip angle [in deg] for t1 image.",
         type=float,
         metavar=Metavar.float,
-        required=False)
+        )
+
     optional = parser.add_argument_group('\nOPTIONAL ARGUMENTS')
     optional.add_argument(
         "-h",
@@ -126,9 +138,32 @@ def main():
     verbose = args.v
     sct.init_sct(log_level=verbose, update=True)  # Update log level
 
-    fname_mtsat, fname_t1map = mtsat.compute_mtsat_from_file(
-        args.mt, args.pd, args.t1, args.trmt, args.trpd, args.trt1, args.famt, args.fapd, args.fat1,
-        fname_b1map=args.b1map, fname_mtsat=args.omtsat, fname_t1map=args.ot1map, verbose=verbose)
+    sct.printv('Load data...', verbose)
+    nii_mt = Image(args.mt)
+    nii_pd = Image(args.pd)
+    nii_t1 = Image(args.t1)
+    if args.b1map is None:
+        nii_b1map = None
+    else:
+        nii_b1map = Image(args.b1map)
+
+    # compute MTsat
+    nii_mtsat, nii_t1map = compute_mtsat(nii_mt, nii_pd, nii_t1, args.trmt, args.trpd, args.trt1, args.famt, args.fapd,
+                                         args.fat1, nii_b1map=nii_b1map)
+
+    # Output MTsat and T1 maps
+    # by default, output in the same directory as the input images
+    sct.printv('Generate output files...', verbose)
+    if args.omtsat is None:
+        fname_mtsat = os.path.join(os.path.dirname(nii_mt.absolutepath), "mtsat.nii.gz")
+    else:
+        fname_mtsat = args.omtsat
+    nii_mtsat.save(fname_mtsat)
+    if args.ot1map is None:
+        fname_t1map = os.path.join(os.path.dirname(nii_mt.absolutepath), "t1map.nii.gz")
+    else:
+        fname_t1map = args.ot1map
+    nii_t1map.save(fname_t1map)
 
     sct.display_viewer_syntax([fname_mtsat, fname_t1map],
                               colormaps=['gray', 'gray'],

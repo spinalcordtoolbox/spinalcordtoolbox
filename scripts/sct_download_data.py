@@ -18,6 +18,8 @@ import sys
 import tarfile
 import tempfile
 import zipfile
+from shutil import rmtree
+from distutils.dir_util import copy_tree
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -40,9 +42,9 @@ def get_parser():
             'sct_example_data',
             'sct_testing_data',
             'course_hawaii17',
-            'course_paris18', 
-            'course_london19', 
-            'sct_course-beijing19',
+            'course_paris18',
+            'course_london19',
+            'course_beijing19',
             'PAM50',
             'MNI-Poly-AMU',
             'gm_model',
@@ -98,19 +100,19 @@ def main(args=None):
                          'https://www.neuro.polymtl.ca/_media/downloads/sct/20170413_optic_models.zip'],
         'pmj_models': ['https://osf.io/4gufr/?action=download',
                        'https://www.neuro.polymtl.ca/_media/downloads/sct/20170922_pmj_models.zip'],
-        'binaries_debian': ['https://osf.io/z72vn/?action=download',
-                            'https://www.neuro.polymtl.ca/_media/downloads/sct/20181204_sct_binaries_linux.tar.gz'],
-        'binaries_centos': ['https://osf.io/97ybd/?action=download',
-                            'https://www.neuro.polymtl.ca/_media/downloads/sct/20181204_sct_binaries_linux_centos6.tar.gz'],
-        'binaries_osx': ['https://osf.io/zjv4c/?action=download',
-                         'https://www.neuro.polymtl.ca/_media/downloads/sct/20181204_sct_binaries_osx.tar.gz'],
+        'binaries_debian': ['https://osf.io/bt58d/?action=download',
+                            'https://www.neuro.polymtl.ca/_media/downloads/sct/20190930_sct_binaries_linux.tar.gz'],
+        'binaries_centos': ['https://osf.io/8kpt4/?action=download',
+                            'https://www.neuro.polymtl.ca/_media/downloads/sct/20190930_sct_binaries_linux_centos6.tar.gz'],
+        'binaries_osx': ['https://osf.io/msjb5/?action=download',
+                         'https://www.neuro.polymtl.ca/_media/downloads/sct/20190930_sct_binaries_osx.tar.gz'],
         'course_hawaii17': 'https://osf.io/6exht/?action=download',
         'course_paris18': ['https://osf.io/9bmn5/?action=download',
                            'https://www.neuro.polymtl.ca/_media/downloads/sct/20180612_sct_course-paris18.zip'],
         'course_london19': ['https://osf.io/4q3u7/?action=download',
                             'https://www.neuro.polymtl.ca/_media/downloads/sct/20190121_sct_course-london19.zip'],
-        'sct_course-beijing19': ['https://osf.io/ef4xz/?action=download',
-                            'https://www.neuro.polymtl.ca/_media/downloads/sct/20190802_sct_course-beijing19.zip'],
+        'course_beijing19': ['https://osf.io/ef4xz/?action=download',
+                             'https://www.neuro.polymtl.ca/_media/downloads/sct/20190802_sct_course-beijing19.zip'],
         'deepseg_gm_models': ['https://osf.io/b9y4x/?action=download',
                               'https://www.neuro.polymtl.ca/_media/downloads/sct/20180205_deepseg_gm_models.zip'],
         'deepseg_sc_models': ['https://osf.io/avf97/?action=download',
@@ -133,24 +135,41 @@ def main(args=None):
     url = dict_url[data_name]
     tmp_file = download_data(url, verbose)
 
-    # Check if folder already exists
-    sct.printv('\nCheck if folder already exists...', verbose)
-    if os.path.isdir(data_name):
-        sct.printv('WARNING: Folder ' + data_name + ' already exists. Removing it...', 1, 'warning')
-        sct.rmtree(data_name)
-
     # unzip
-    unzip(tmp_file, dest_folder, verbose)
+    dest_tmp_folder = sct.tmp_create()
+    unzip(tmp_file, dest_tmp_folder, verbose)
+    extracted_files_paths = []
+    # Get the name of the extracted files and directories
+    extracted_files = os.listdir(dest_tmp_folder)
+    for extracted_file in extracted_files:
+        extracted_files_paths.append(os.path.join(os.path.abspath(dest_tmp_folder), extracted_file))
 
-    sct.printv('\nRemove temporary file...', verbose)
-    os.remove(tmp_file)
+    # Check if files and folder already exists
+    sct.printv('\nCheck if folder already exists on the destination path...', verbose)
+    for data_extracted_name in extracted_files:
+        fullpath_dest = os.path.join(dest_folder, data_extracted_name)
+        if os.path.isdir(fullpath_dest):
+            sct.printv("Folder {} already exists. Removing it...".format(data_extracted_name), 1, 'warning')
+            rmtree(fullpath_dest)
+
+    # Destination path
+    # for source_path in extracted_files_paths:
+        # Copy the content of source to destination (and create destination folder)
+    copy_tree(dest_tmp_folder, dest_folder)
+
+    sct.printv("\nRemove temporary folders...", verbose)
+    try:
+        rmtree(os.path.split(tmp_file)[0])
+        rmtree(dest_tmp_folder)
+    except Exception as error:
+        print("Cannot remove temp folder: " + repr(error))
 
     sct.printv('Done!\n', verbose)
     return 0
 
 
 def unzip(compressed, dest_folder, verbose):
-    """Extract compressed file to the dest_folder"""
+    """Extract compressed file to the dest_folder. Can handle .zip, .tar.gz."""
     sct.printv('\nUnzip data to: %s' % dest_folder, verbose)
     if compressed.endswith('zip'):
         try:
@@ -228,4 +247,3 @@ if __name__ == "__main__":
     sct.init_sct()
     res = main()
     raise SystemExit(res)
-

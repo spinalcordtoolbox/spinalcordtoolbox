@@ -30,9 +30,6 @@ matrix:
     - os: osx
       name: "OSX 10.12 (Sierra)"
       osx_image: xcode9.2
-    - os: osx
-      name: "OSX 10.11 (El Capitan)"
-      osx_image: xcode8
 
 install:
   - |
@@ -55,7 +52,6 @@ before_script:
 script:
   - |
     echo *** UNIT TESTS ***
-    pip install pytest pytest-cov
     pytest
 
   - |
