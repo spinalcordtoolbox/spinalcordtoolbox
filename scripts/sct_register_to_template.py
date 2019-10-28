@@ -214,7 +214,7 @@ def main(args=None):
         label_type = 'disc'
     elif '-lspinal' in arguments:
         fname_landmarks = arguments['-lspinal']
-        label_type = 'body'
+        label_type = 'spinal'
     else:
         sct.printv('ERROR: Labels should be provided.', 1, 'error')
     if '-ofolder' in arguments:
@@ -253,7 +253,10 @@ def main(args=None):
     zsubsample = param.zsubsample
 
     # retrieve template file names
-    file_template_vertebral_labeling = get_file_label(os.path.join(path_template, 'template'), 'vertebral labeling')
+    if label_type == 'spinal':
+        file_template_labeling = get_file_label(os.path.join(path_template, 'template'), 'spinal body labeling')
+    else:
+        file_template_labeling = get_file_label(os.path.join(path_template, 'template'), 'vertebral labeling')
     file_template = get_file_label(os.path.join(path_template, 'template'), contrast_template.upper() + '-weighted template')
     file_template_seg = get_file_label(os.path.join(path_template, 'template'), 'spinal cord')
 
@@ -262,7 +265,7 @@ def main(args=None):
 
     # get fname of the template + template objects
     fname_template = os.path.join(path_template, 'template', file_template)
-    fname_template_vertebral_labeling = os.path.join(path_template, 'template', file_template_vertebral_labeling)
+    fname_template_labeling = os.path.join(path_template, 'template', file_template_labeling)
     fname_template_seg = os.path.join(path_template, 'template', file_template_seg)
     fname_template_disc_labeling = os.path.join(path_template, 'template', 'PAM50_label_disc.nii.gz')
 
@@ -270,7 +273,7 @@ def main(args=None):
     # TODO: no need to do that!
     sct.printv('\nCheck template files...')
     sct.check_file_exist(fname_template, verbose)
-    sct.check_file_exist(fname_template_vertebral_labeling, verbose)
+    sct.check_file_exist(fname_template_labeling, verbose)
     sct.check_file_exist(fname_template_seg, verbose)
     path_data, file_data, ext_data = sct.extract_fname(fname_data)
 
@@ -306,7 +309,7 @@ def main(args=None):
     Image(fname_landmarks).save(os.path.join(path_tmp, ftmp_label))
     Image(fname_template).save(os.path.join(path_tmp, ftmp_template))
     Image(fname_template_seg).save(os.path.join(path_tmp, ftmp_template_seg))
-    Image(fname_template_vertebral_labeling).save(os.path.join(path_tmp, ftmp_template_label))
+    Image(fname_template_labeling).save(os.path.join(path_tmp, ftmp_template_label))
     if label_type == 'disc':
         Image(fname_template_disc_labeling).save(os.path.join(path_tmp, ftmp_template_label))
 
@@ -848,7 +851,7 @@ def check_labels(fname_landmarks, label_type='body'):
     Parameters
     ----------
     fname_landmarks: file name of input labels
-    label_type: 'body', 'disc'
+    label_type: 'body', 'disc', 'spinal'
     Returns
     -------
     none
