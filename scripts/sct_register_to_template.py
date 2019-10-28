@@ -110,6 +110,15 @@ def get_parser():
                       mandatory=False,
                       default_value='',
                       example="anat_labels.nii.gz")
+    parser.add_option(name="-lspinal",
+                      type_value="file",
+                      description="Labels located at the center of the spinal cord, on the mid-spinal level slice. If you are using "
+                                  "more than 2 labels, all spinal levels covering the region of interest should be provided. "
+                                  "E.g., if you are interested in levels C2 to C7, then you should provide spinal level labels "
+                                  "2,3,4,5,6,7).",
+                      mandatory=False,
+                      default_value='',
+                      example="anat_labels.nii.gz")
     parser.add_option(name="-ofolder",
                       type_value="folder_creation",
                       description="Output folder.",
