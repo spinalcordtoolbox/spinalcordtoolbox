@@ -187,11 +187,11 @@ def read_label_file_atlas(path_info_label, file_info_label):
     return list(zip(*il._indiv_labels))
 
 
-def get_file_label(path_label='', label='', output='file'):
+def get_file_label(path_label='', id_label='', output='file'):
     """
     Get label file name given based on info_label.txt file.
     :param path_label: folder containing info_label.txt and the files
-    :param label: label to be found
+    :param id_label: ID of the label to be found
     :param output: {file, filewithpath}
     :return: selected output ; if not found, raise a RuntimeError
     """
@@ -202,13 +202,13 @@ def get_file_label(path_label='', label='', output='file'):
     il.load(fname_label)
 
     for _id, _name, _file in il._indiv_labels:
-        if _name == label:
+        if _id == id_label:
             if output == 'file':
                 return _file
             elif output == 'filewithpath':
                 return os.path.join(path_label, _file)
 
-    raise RuntimeError("Label {} not found in {}".format(label, fname_label))
+    raise RuntimeError("ID label {} not found in {}".format(id_label, fname_label))
 
 def get_indiv_label_names(directory):
     """
