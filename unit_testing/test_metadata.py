@@ -56,6 +56,6 @@ def test_read_label_file(info_labels):
 
 def test_get_file_label(info_labels):
     for info_label in info_labels:
-        _in = spinalcordtoolbox.metadata.get_indiv_label_names(os.path.dirname(info_label))
-        spinalcordtoolbox.metadata.get_file_label(os.path.dirname(info_label), _in[0], output="file")
-        spinalcordtoolbox.metadata.get_file_label(os.path.dirname(info_label), _in[0], output="filewithpath")
+        _in = spinalcordtoolbox.metadata.get_indiv_label_ids(os.path.dirname(info_label))
+        spinalcordtoolbox.metadata.get_file_label(os.path.dirname(info_label), id_label=_in[0], output="file")
+        spinalcordtoolbox.metadata.get_file_label(os.path.dirname(info_label), id_label=_in[0], output="filewithpath")
