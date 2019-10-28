@@ -187,11 +187,11 @@ def read_label_file_atlas(path_info_label, file_info_label):
     return list(zip(*il._indiv_labels))
 
 
-def get_file_label(path_label='', id_label='', output='file'):
+def get_file_label(path_label='', id_label=0, output='file'):
     """
     Get label file name given based on info_label.txt file.
     :param path_label: folder containing info_label.txt and the files
-    :param id_label: ID of the label to be found
+    :param id_label: (int) ID of the label to be found
     :param output: {file, filewithpath}
     :return: selected output ; if not found, raise a RuntimeError
     """
