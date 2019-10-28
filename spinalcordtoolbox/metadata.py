@@ -224,3 +224,17 @@ def get_indiv_label_names(directory):
 
     return tuple([_name for (_id, _name, _file) in il._indiv_labels])
 
+def get_indiv_label_ids(directory):
+    """
+    Get all individual label IDs in a folder
+    :param directory: folder containing info_label.txt and the files
+    :return: the ids (int)
+    """
+
+    file_info_label = 'info_label.txt'
+    il = InfoLabel()
+    fname_label = os.path.join(directory, file_info_label)
+    il.load(fname_label)
+
+    return tuple([id_ for (_id, _name, _file) in il._indiv_labels])
+
