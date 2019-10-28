@@ -208,7 +208,7 @@ def get_file_label(path_label='', id_label=0, output='file'):
             elif output == 'filewithpath':
                 return os.path.join(path_label, _file)
 
-    raise RuntimeError("ID label {} not found in {}".format(id_label, fname_label))
+    raise RuntimeError("Label ID {} not found in {}".format(id_label, fname_label))
 
 def get_indiv_label_names(directory):
     """
