@@ -112,10 +112,12 @@ def get_parser():
                       example="anat_labels.nii.gz")
     parser.add_option(name="-lspinal",
                       type_value="file",
-                      description="Labels located at the center of the spinal cord, on the mid-spinal level slice. If you are using "
-                                  "more than 2 labels, all spinal levels covering the region of interest should be provided. "
-                                  "E.g., if you are interested in levels C2 to C7, then you should provide spinal level labels "
-                                  "2,3,4,5,6,7).",
+                      description="Labels located in the center of the spinal cord, at the superior-inferior level " 
+                                  "corresponding to the mid-point of the spinal level. Each label is a single voxel, " 
+                                  "which value corresponds to the spinal level (e.g.: 2 for spinal level 2). If you " 
+                                  "are using more than 2 labels, all spinal levels covering the region of interest " 
+                                  "should be provided (e.g., if you are interested in levels C2 to C7, then you " 
+                                  "should provide spinal level labels 2,3,4,5,6,7).",
                       mandatory=False,
                       default_value='',
                       example="anat_labels.nii.gz")
