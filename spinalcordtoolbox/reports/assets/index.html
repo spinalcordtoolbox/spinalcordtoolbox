@@ -110,7 +110,7 @@
                   <img id="sprite-img" onload="fetch_image_height()"/>
                   <img id="overlay-img"/>
               </div>
-              <button onclick="toggleOverlay()">Toggle overlay</button>
+              <button onclick="toggleOverlay()">Toggle overlay (right arrow)</button>
               <div id="cmdLine"></div>
               <div id="sctVer"></div>
           </div>
@@ -249,19 +249,20 @@
      },4);
 
 
-     function hideColumns() {
-            var columns = document.getElementsByTagName("th");
-            var iHead;
-            for (iHead = 0; iHead < columns.length; iHead++){
-                if (columns[iHead].style.display == "none"){
-                    var iTD;
-                    for (iTD = iHead; iTD < document.getElementsByTagName("td").length; iTD = iTD + columns.length){
-                        document.getElementsByTagName("td")[iTD].style.display = "none";
-                    }
+    function hideColumns() {
+        var columns = document.getElementsByTagName("th");
+        var iHead;
+        for (iHead = 0; iHead < columns.length; iHead++){
+            if (columns[iHead].style.display == "none"){
+                var iTD;
+                for (iTD = iHead; iTD < document.getElementsByTagName("td").length; iTD = iTD + columns.length){
+                    document.getElementsByTagName("td")[iTD].style.display = "none";
                 }
             }
         }
+    }
 
+    <!-- Toggle overlay -->
     function toggleOverlay() {
         var x = document.getElementById("overlay-img");
         if (x.style.display === "none") {
@@ -272,6 +273,13 @@
         }
     }
 
-        
+    <!-- Press right arrow key to toggle overlay -->
+    document.addEventListener('keydown', function (evt) {
+    if (evt.which == 39) {
+        toggleOverlay()
+    }
+});
+
+
 </script>
 </html>
