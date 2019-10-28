@@ -256,11 +256,12 @@ def main(args=None):
 
     # retrieve template file names
     if label_type == 'spinal':
-        file_template_labeling = get_file_label(os.path.join(path_template, 'template'), 'spinal body labeling')
+        file_template_labeling = get_file_label(os.path.join(path_template, 'template'), id_label=14)  # label = point-wise spinal level labels
     else:
-        file_template_labeling = get_file_label(os.path.join(path_template, 'template'), 'vertebral labeling')
-    file_template = get_file_label(os.path.join(path_template, 'template'), contrast_template.upper() + '-weighted template')
-    file_template_seg = get_file_label(os.path.join(path_template, 'template'), 'spinal cord')
+        file_template_labeling = get_file_label(os.path.join(path_template, 'template'), id_label=7)  # label = spinal cord mask with discrete vertebral levels
+    id_label_dct = {'T1': 0, 'T2': 1, 'T2S': 2}
+    file_template = get_file_label(os.path.join(path_template, 'template'), id_label=id_label_dct[contrast_template.upper()])  # label = *-weighted template
+    file_template_seg = get_file_label(os.path.join(path_template, 'template'), id_label=3)  # label = spinal cord mask (binary)
 
     # start timer
     start_time = time.time()
