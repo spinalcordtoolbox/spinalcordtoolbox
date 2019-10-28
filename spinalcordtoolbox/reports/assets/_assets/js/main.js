@@ -34,21 +34,24 @@ $(document).ready(function(){
 
   $('html').keydown( function(evt) {
     var obj = $('#table tr.active');
+    // Arrow down: next subject
     if (evt.which == 40) {
       if (obj.length == 0 || obj.text() === "DateDatasetSubjectPathFileContrastFunctionFunction+Args") {
         $('#table tr:first-child').click();
-      } else {
+      }
+      else {
         obj.next().click();
       }
     }
+    // Arrow up: previous subject
     if (evt.which == 38) {
       if (obj.length == 0) {
         $('#table tr:last-child').click();
-      } else {
+      }
+      else {
         obj.prev().click();
       }
     }
-//    evt.preventDefault();
   });
 
   $("#table").bootstrapTable({
