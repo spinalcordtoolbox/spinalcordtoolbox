@@ -212,6 +212,9 @@ def main(args=None):
     elif '-ldisc' in arguments:
         fname_landmarks = arguments['-ldisc']
         label_type = 'disc'
+    elif '-lspinal' in arguments:
+        fname_landmarks = arguments['-lspinal']
+        label_type = 'body'
     else:
         sct.printv('ERROR: Labels should be provided.', 1, 'error')
     if '-ofolder' in arguments:
