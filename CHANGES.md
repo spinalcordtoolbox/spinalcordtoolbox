@@ -1,5 +1,43 @@
+## 4.1.0 (2019-10-26)
+[View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/4.0.2...4.1.0)
+
+**BUG**
+
+ - **sct_compute_mtr:** Fixed aberrant mtr values. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2503)
+ - **sct_process_segmentation:** Fixed wrong orientation with new version of scikit-image. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2495)
+ - **sct_maths:** Fixed deprecation with adaptative thresholding. **WARNING: Breaks compatibility with previous versions of SCT.** [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2474)
+ - **sct_deepseg_sc:** Fixed segmentation issue that mostly appeared on DWI data. **WARNING: Breaks compatibility with previous versions of SCT.** [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2467)
+ - **sct_qc,sct_resample:** QC report: Fixed shift along slice direction between image and overlay. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2455)
+ - **sct_straighten_spinalcord:** Fixed shape mismatch during straightening. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2444)
+ - **sct_denoising_onlm:** Fix index error and display fsleyes command. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2432)
+
+**ENHANCEMENT**
+
+ - **sct_resample:** Raise error if trying to resampling to size zero. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2507)
+ - **sct_deepseg_sc:** Fix deepseg threshold (again). [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2490)
+ - **sct_deepseg_sc:** Fine-adjustment of threshold for binarization of soft segmentation. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2479)
+ - **sct_qc:** Fixed up/down dysfunction in the qc report . [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2477)
+ - **sct_crop_image:** Improved CLI, fixed bug with the GUI and refactored into module. **WARNING: Breaks compatibility with previous versions of SCT.** [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2459)
+ - **sct_deepseg_sc:** Remove isolated voxels at the edge of the output segmentation. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2437)
+ - **sct_download_data:** Check if folder already exists by checking its actual name, not the name of the entry to -d flag. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2425)
+
+**FEATURE**
+
+ - **sct_qc:** Added button to toggle overlay and removed automatic fading. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2514)
+ - **sct_dmri_concat_b0_and_dwi:** New script to concatenate b0 and dwi data. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2452)
+ - **sct_process_segmentation:** Compute cord length. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2431)
+
+**DOCUMENTATION**
+
+ - Better management of CLI syntax in case mandatory arguments are missing. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2457)
+
+**INSTALLATION**
+
+ - **sct_download_data:** Fixed issue that appeared when trying to remove temporary folder from different file systems. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2473)
+
+
 ## 4.0.2 (2019-09-04)
-[View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v4.0.0-beta.3...4.0.2)
+[View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/4.0.1...4.0.2)
 
 **BUG**
 
