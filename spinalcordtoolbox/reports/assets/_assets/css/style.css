@@ -46,14 +46,17 @@
     left: 0px;
 }
 
+/* -- UNCOMMENT THESE LINES TO HAVE FADING EFFECT OF THE OVERLAY
 @keyframes phase-in-out {
     from { opacity: 1; }
     to { opacity: 0; }
 }
 
+
 #overlay-img {
     animation: phase-in-out .5s infinite alternate ease-in-out;
 }
+*/
 
 .Sagittal, .Axial{
     max-width: 100%;
