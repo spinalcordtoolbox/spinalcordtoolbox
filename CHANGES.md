@@ -1,5 +1,5 @@
 ## 4.1.0 (2019-10-26)
-[View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v4.0.2...4.1.0)
+[View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/4.0.2...4.1.0)
 
 **BUG**
 
@@ -23,6 +23,7 @@
 
 **FEATURE**
 
+ - **sct_qc:** Added button to toggle overlay and removed automatic fading. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2514)
  - **sct_dmri_concat_b0_and_dwi:** New script to concatenate b0 and dwi data. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2452)
  - **sct_process_segmentation:** Compute cord length. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2431)
 
@@ -36,7 +37,7 @@
 
 
 ## 4.0.2 (2019-09-04)
-[View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/v4.0.1...4.0.2)
+[View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/4.0.1...4.0.2)
 
 **BUG**
 
