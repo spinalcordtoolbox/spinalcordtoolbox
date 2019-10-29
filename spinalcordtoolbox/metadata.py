@@ -5,6 +5,7 @@
 from __future__ import absolute_import
 
 import io, os, re
+from operator import itemgetter
 
 from spinalcordtoolbox.utils import parse_num_list
 
@@ -210,11 +211,13 @@ def get_file_label(path_label='', id_label=0, output='file'):
 
     raise RuntimeError("Label ID {} not found in {}".format(id_label, fname_label))
 
-def get_indiv_label_names(directory):
+def get_indiv_label_info(directory):
     """
-    Get all individual label names in a folder
+    Get all individual label info (id, name, filename) in a folder
     :param directory: folder containing info_label.txt and the files
-    :return: the labels (strings)
+    :return: dictionary containing "id_label" the label IDs (int),
+                                    "name_label" the labels (string),
+                                    "file_label" the label filename (string)
     """
 
     file_info_label = 'info_label.txt'
@@ -222,19 +225,12 @@ def get_indiv_label_names(directory):
     fname_label = os.path.join(directory, file_info_label)
     il.load(fname_label)
 
-    return tuple([_name for (_id, _name, _file) in il._indiv_labels])
+    id_lst = list(map(itemgetter(0), il._indiv_labels))
+    name_lst = list(map(itemgetter(1), il._indiv_labels))
+    filename_lst = list(map(itemgetter(2), il._indiv_labels))
 
-def get_indiv_label_ids(directory):
-    """
-    Get all individual label IDs in a folder
-    :param directory: folder containing info_label.txt and the files
-    :return: the ids (int)
-    """
-
-    file_info_label = 'info_label.txt'
-    il = InfoLabel()
-    fname_label = os.path.join(directory, file_info_label)
-    il.load(fname_label)
-
-    return tuple([id_ for (_id, _name, _file) in il._indiv_labels])
+    return {'id_label': tuple(id_lst),
+            'name_label': tuple(name_lst),
+            'file_label': tuple(filename_lst)
+            }
 
