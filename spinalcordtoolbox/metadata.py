@@ -215,9 +215,9 @@ def get_indiv_label_info(directory):
     """
     Get all individual label info (id, name, filename) in a folder
     :param directory: folder containing info_label.txt and the files
-    :return: dictionary containing "id_label" the label IDs (int),
-                                    "name_label" the labels (string),
-                                    "file_label" the label filename (string)
+    :return: dictionary containing "id" the label IDs (int),
+                                    "name" the labels (string),
+                                    "file" the label filename (string)
     """
 
     file_info_label = 'info_label.txt'
@@ -229,8 +229,8 @@ def get_indiv_label_info(directory):
     name_lst = list(map(itemgetter(1), il._indiv_labels))
     filename_lst = list(map(itemgetter(2), il._indiv_labels))
 
-    return {'id_label': tuple(id_lst),
-            'name_label': tuple(name_lst),
-            'file_label': tuple(filename_lst)
+    return {'id': tuple(id_lst),
+            'name': tuple(name_lst),
+            'file': tuple(filename_lst)
             }
 

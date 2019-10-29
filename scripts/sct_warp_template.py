@@ -219,7 +219,7 @@ def main(args=None):
     path_template = os.path.join(w.folder_out, w.folder_template)
 
     # Only deal with QC and verbose if white matter was warped (meaning, everything under template/)
-    if "white matter" in spinalcordtoolbox.metadata.get_indiv_label_info(path_template)['name_label']:
+    if "white matter" in spinalcordtoolbox.metadata.get_indiv_label_info(path_template)['name']:
         # Deal with QC report
         if path_qc is not None:
             fname_wm = os.path.join(w.folder_out, w.folder_template,
