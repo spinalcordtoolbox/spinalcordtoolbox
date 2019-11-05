@@ -59,11 +59,30 @@ PATH_SCRIPT="$( cd "$(dirname "$0")" ; pwd -P )"
 time_start=$(date +%x_%r)
 
 # Load config file
-source $1
-fileparam="`pwd`/$1"
+if [ -f $PATH_SCRIPT/$(echo ${1##*/}) ];then	# ${1##*/} - get everything after last slash (/) from variable $1
+	# Config file is in same folder as this script
+	fileparam=$PATH_SCRIPT/$(echo ${1##*/})
+elif [ -f $1 ];then
+	# Config file is in any another folder
+	fileparam=$1
+else
+	echo "Path to config file is wrong."
+	exit 1
+fi
 
-# build syntax for process execution
-task="`pwd`/$2"
+source $fileparam
+
+# Build syntax for process execution
+if [ -f $PATH_SCRIPT/$(echo ${2##*/}) ];then	# ${2##*/} - get everything after last slash (/) from variable $2
+	# Script is in same folder as this script
+	task=$PATH_SCRIPT/$(echo ${2##*/})
+elif [ -f $2 ];then
+	# Script is in any another folder
+	task=$2
+else
+	echo "Path to script is wrong."
+	exit 1
+fi
 
 # Create folders
 create_folder $PATH_LOG
