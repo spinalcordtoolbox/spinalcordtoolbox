@@ -292,7 +292,7 @@ def main(args=None):
     labels = check_labels(fname_landmarks, label_type=label_type)
 
     vertebral_alignment = False
-    if len(labels) > 2 and label_type == 'disc':
+    if len(labels) > 2 and label_type in ['disc', 'spinal']:
         vertebral_alignment = True
 
     path_tmp = sct.tmp_create(basename="register_to_template", verbose=verbose)
