@@ -43,7 +43,7 @@ class Param:
 
 class ProcessLabels(object):
     def __init__(self, fname_label, fname_output=None, fname_ref=None, cross_radius=5, dilate=False,
-                 coordinates=None, verbose=1, vertebral_levels=None, value=None, msg=""):
+                 coordinates=None, verbose=1, vertebral_levels=None, value=None, msg="",fname_previous=None):
         """
         Collection of processes that deal with label creation/modification.
         :param fname_label:
@@ -69,6 +69,14 @@ class ProcessLabels(object):
                 self.fname_output = fname_output
         else:
             self.fname_output = fname_output
+
+        if isinstance(fname_previous, list):
+            if len(fname_previous) == 1:
+                self.fname_previous = fname_previous[0]
+            else:
+                self.fname_previous = fname_previous
+        else:
+            self.fname_previous = fname_previous
         self.cross_radius = cross_radius
         self.vertebral_levels = vertebral_levels
         self.dilate = dilate
@@ -77,6 +85,7 @@ class ProcessLabels(object):
         self.value = value
         self.msg = msg
         self.output_image = None
+        self.previous_image=None
 
     def process(self, type_process):
         # for some processes, change orientation of input image to RPI
@@ -122,15 +131,38 @@ class ProcessLabels(object):
         if type_process == 'cubic-to-point':
             self.output_image = self.cubic_to_point()
         if type_process == 'vert-body':
+
             self.output_image = self.label_vertebrae(self.vertebral_levels)
         if type_process == 'vert-continuous':
             self.output_image = self.continuous_vertebral_levels()
         if type_process == 'create-viewer':
-            self.output_image = self.launch_sagittal_viewer(self.value)
+            if self.fname_previous is not None:
+                input_orientation = self.image_input.orientation
+            # change orientation
+                self.image_input.change_orientation('RPI')
+                previous_lab=Image(self.fname_previous)
+                
+                previous_points=np.transpose(previous_lab.data.nonzero())
+                previous_label=np.zeros((len(previous_points),4))
+
+
+                
+                for i in range (len(previous_label)):
+                    prev=np.array([previous_points[i][2],previous_points[i][1],previous_points[i][0]])
+                    previous_label[i]=np.append(previous_points[i],np.array([previous_lab.data[previous_points[i][0],previous_points[i][1],previous_points[i][2]]]),axis=-1)
+                
+
+                self.output_image = self.launch_sagittal_viewer(self.value,previous_points=previous_label)
+                print(self.output_image.data.nonzero())
+            else:
+                self.output_image = self.launch_sagittal_viewer(self.value)
+
         if type_process in ['remove', 'keep']:
             self.output_image = self.remove_or_keep_labels(self.value, action=type_process)
 
         # TODO: do not save here. Create another function save() for that
+        
+            
         if self.fname_output is not None:
             if change_orientation:
                 self.output_image.change_orientation(input_orientation)
@@ -595,9 +627,10 @@ class ProcessLabels(object):
 
         return im_output
 
-    def launch_sagittal_viewer(self, labels):
+    def launch_sagittal_viewer(self, labels,previous_points=None):
         from spinalcordtoolbox.gui import base
         from spinalcordtoolbox.gui.sagittal import launch_sagittal_dialog
+
 
         params = base.AnatomicalParams()
         params.vertebraes = labels
@@ -605,8 +638,11 @@ class ProcessLabels(object):
         params.output_file_name = self.fname_output
         params.subtitle = self.msg
         output = msct_image.zeros_like(self.image_input)
+        
+        
         output.absolutepath = self.fname_output
-        launch_sagittal_dialog(self.image_input, output, params)
+        launch_sagittal_dialog(self.image_input, output, params,previous_points)
+
 
         return output
 
@@ -725,6 +761,13 @@ def get_parser():
                       mandatory=False,
                       example="t2_labels_cross.nii.gz",
                       default_value="labels.nii.gz")
+
+    parser.add_option(name="-ilabel",
+                      type_value=[[','], "file"],
+                      description="previous labelisation to correct",
+                      mandatory=False,
+                      example="t2_labels_auto.nii.gz",)
+
     parser.add_option(name="-v",
                       type_value="multiple_choice",
                       description='Verbose. 0: nothing. 1: basic. 2: extended.',
@@ -809,12 +852,19 @@ def main(args=None):
         msg = ""
     if '-o' in arguments:
         input_fname_output = arguments['-o']
+
+    if '-ilabel' in arguments:
+        input_fname_previous=arguments['-ilabel']
+    else:
+        input_fname_previous=None
+    
+
     verbose = int(arguments.get('-v'))
     sct.init_sct(log_level=verbose, update=True)  # Update log level
 
     processor = ProcessLabels(input_filename, fname_output=input_fname_output, fname_ref=input_fname_ref,
                               cross_radius=input_cross_radius, dilate=input_dilate, coordinates=input_coordinates,
-                              verbose=verbose, vertebral_levels=vertebral_levels, value=value, msg=msg)
+                              verbose=verbose, vertebral_levels=vertebral_levels, value=value, msg=msg,fname_previous=input_fname_previous)
     processor.process(process_type)
 
     # return based on process type
