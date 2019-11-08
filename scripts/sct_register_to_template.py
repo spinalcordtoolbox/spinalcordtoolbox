@@ -291,9 +291,9 @@ def main(args=None):
     # check input labels
     labels = check_labels(fname_landmarks, label_type=label_type)
 
-    vertebral_alignment = False
+    level_alignment = False
     if len(labels) > 2 and label_type in ['disc', 'spinal']:
-        vertebral_alignment = True
+        level_alignment = True
 
     path_tmp = sct.tmp_create(basename="register_to_template", verbose=verbose)
 
@@ -376,8 +376,8 @@ def main(args=None):
 
 
         ftmp_seg_, ftmp_seg = ftmp_seg, add_suffix(ftmp_seg, '_crop')
-        if vertebral_alignment:
-            # cropping the segmentation based on the label coverage to ensure good registration with vertebral alignment
+        if level_alignment:
+            # cropping the segmentation based on the label coverage to ensure good registration with level alignment
             # See https://github.com/neuropoly/spinalcordtoolbox/pull/1669 for details
             image_labels = Image(ftmp_label)
             coordinates_labels = image_labels.getNonZeroCoordinates(sorting='z')
@@ -415,7 +415,7 @@ def main(args=None):
         fn_straight_ref = os.path.join(curdir, "straight_ref.nii.gz")
 
         cache_input_files=[ftmp_seg]
-        if vertebral_alignment:
+        if level_alignment:
             cache_input_files += [
              ftmp_template_seg,
              ftmp_label,
@@ -446,7 +446,7 @@ def main(args=None):
             sc_straight.remove_temp_files = param.remove_temp_files
             sc_straight.verbose = verbose
 
-            if vertebral_alignment:
+            if level_alignment:
                 sc_straight.centerline_reference_filename = ftmp_template_seg
                 sc_straight.use_straight_reference = True
                 sc_straight.discs_input_filename = ftmp_label
@@ -462,7 +462,7 @@ def main(args=None):
             '-d', ftmp_data,
             '-o', 'warp_straight2curve.nii.gz'])
 
-        if vertebral_alignment:
+        if level_alignment:
             sct.copy('warp_curve2straight.nii.gz', 'warp_curve2straightAffine.nii.gz')
         else:
             # Label preparation:
@@ -628,7 +628,7 @@ def main(args=None):
         # Concatenate transformations: template --> anat
         sct.printv('\nConcatenate transformations: template --> anat...', verbose)
         warp_inverse.reverse()
-        if vertebral_alignment:
+        if level_alignment:
             warp_inverse.append('warp_straight2curve.nii.gz')
             sct_concat_transfo.main(args=[
                 '-w', warp_inverse,
