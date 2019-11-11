@@ -136,24 +136,21 @@ class ProcessLabels(object):
         if type_process == 'vert-continuous':
             self.output_image = self.continuous_vertebral_levels()
         if type_process == 'create-viewer':
+
             if self.fname_previous is not None:
-                input_orientation = self.image_input.orientation
-            # change orientation
-                self.image_input.change_orientation('RPI')
                 previous_lab=Image(self.fname_previous)
-                
+                previous_lab.change_orientation('SAL')
                 previous_points=np.transpose(previous_lab.data.nonzero())
                 previous_label=np.zeros((len(previous_points),4))
 
-
-                
                 for i in range (len(previous_label)):
                     prev=np.array([previous_points[i][2],previous_points[i][1],previous_points[i][0]])
                     previous_label[i]=np.append(previous_points[i],np.array([previous_lab.data[previous_points[i][0],previous_points[i][1],previous_points[i][2]]]),axis=-1)
                 
+                
 
                 self.output_image = self.launch_sagittal_viewer(self.value,previous_points=previous_label)
-                print(self.output_image.data.nonzero())
+              
             else:
                 self.output_image = self.launch_sagittal_viewer(self.value)
 

@@ -22,9 +22,9 @@ logger = logging.getLogger(__name__)
 class SagittalController(base.BaseController):
     def __init__(self, image, params, init_values=None,previous_point=None):
         super(SagittalController, self).__init__(image, params, init_values)
+        
         if previous_point is not None:
-            for i in range (len(previous_point)):
-                
+            for i in range (len(previous_point)): 
                 self.points.append(previous_point[i])
 
     def select_point(self, x, y, z, label):
@@ -111,5 +111,5 @@ def launch_sagittal_dialog(input_file, output_file, params,previous_points=None)
     dialog = SagittalDialog(controller)
     dialog.show()
     app.exec_()
-    print(controller)
+
     return controller
