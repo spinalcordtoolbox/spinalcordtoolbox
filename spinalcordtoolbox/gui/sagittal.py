@@ -20,9 +20,9 @@ logger = logging.getLogger(__name__)
 
 
 class SagittalController(base.BaseController):
-    def __init__(self, image, params, init_values=None,previous_point=None):
+    def __init__(self, image, params, init_values=None, previous_point=None):
         super(SagittalController, self).__init__(image, params, init_values)
-        
+
         if previous_point is not None:
             for i in range (len(previous_point)): 
                 self.points.append(previous_point[i])
@@ -97,14 +97,14 @@ class SagittalDialog(base.BaseDialog):
         self.sagittal.refresh()
 
 
-def launch_sagittal_dialog(input_file, output_file, params,previous_points=None):
+def launch_sagittal_dialog(input_file, output_file, params, previous_points=None):
     if not params.vertebraes:
         params.vertebraes = [3, 5]
     params.input_file_name = input_file.absolutepath
     params.subtitle += u"[KEYBOARD] Left/Right arrows: Navigate across slices." \
                        "\n[MOUSE] Right click: Change brightness (left/right) and contrast (up/down)." \
                        "\n[MOUSE] Scrolling middle button: Zoom in/out."
-    controller = SagittalController(input_file, params, output_file,previous_points)
+    controller = SagittalController(input_file, params, output_file, previous_points)
     controller.reformat_image()
 
     app = QtWidgets.QApplication([])

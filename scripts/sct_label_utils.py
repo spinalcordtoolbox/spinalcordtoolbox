@@ -43,7 +43,7 @@ class Param:
 
 class ProcessLabels(object):
     def __init__(self, fname_label, fname_output=None, fname_ref=None, cross_radius=5, dilate=False,
-                 coordinates=None, verbose=1, vertebral_levels=None, value=None, msg="",fname_previous=None):
+                 coordinates=None, verbose=1, vertebral_levels=None, value=None, msg="", fname_previous=None):
         """
         Collection of processes that deal with label creation/modification.
         :param fname_label:
@@ -70,13 +70,8 @@ class ProcessLabels(object):
         else:
             self.fname_output = fname_output
 
-        if isinstance(fname_previous, list):
-            if len(fname_previous) == 1:
-                self.fname_previous = fname_previous[0]
-            else:
-                self.fname_previous = fname_previous
-        else:
-            self.fname_previous = fname_previous
+        
+        self.fname_previous = fname_previous
         self.cross_radius = cross_radius
         self.vertebral_levels = vertebral_levels
         self.dilate = dilate
@@ -139,18 +134,18 @@ class ProcessLabels(object):
 
             if self.fname_previous is not None:
                 previous_lab=Image(self.fname_previous)
+                #the inut image is reoriented to 'SAL' when open by the GUI
                 previous_lab.change_orientation('SAL')
+                mid=int(np.round(previous_lab.data.shape[2]/2))
                 previous_points=np.transpose(previous_lab.data.nonzero())
-                previous_label=np.zeros((len(previous_points),4))
+                previous_label=np.zeros((len(previous_points), 4))
 
                 for i in range (len(previous_label)):
-                    prev=np.array([previous_points[i][2],previous_points[i][1],previous_points[i][0]])
-                    previous_label[i]=np.append(previous_points[i],np.array([previous_lab.data[previous_points[i][0],previous_points[i][1],previous_points[i][2]]]),axis=-1)
-                
-                
+                    
+                    previous_label[i]=np.append(previous_points[i], np.array([previous_lab.data[previous_points[i][0], previous_points[i][1], previous_points[i][2]]]), axis=-1)
+                    previous_label[i][2]=mid
 
-                self.output_image = self.launch_sagittal_viewer(self.value,previous_points=previous_label)
-              
+                self.output_image = self.launch_sagittal_viewer(self.value, previous_points=previous_label)
             else:
                 self.output_image = self.launch_sagittal_viewer(self.value)
 
@@ -760,7 +755,7 @@ def get_parser():
                       default_value="labels.nii.gz")
 
     parser.add_option(name="-ilabel",
-                      type_value=[[','], "file"],
+                      type_value= "file",
                       description="previous labelisation to correct",
                       mandatory=False,
                       example="t2_labels_auto.nii.gz",)
@@ -861,7 +856,7 @@ def main(args=None):
 
     processor = ProcessLabels(input_filename, fname_output=input_fname_output, fname_ref=input_fname_ref,
                               cross_radius=input_cross_radius, dilate=input_dilate, coordinates=input_coordinates,
-                              verbose=verbose, vertebral_levels=vertebral_levels, value=value, msg=msg,fname_previous=input_fname_previous)
+                              verbose=verbose, vertebral_levels=vertebral_levels, value=value, msg=msg, fname_previous=input_fname_previous)
     processor.process(process_type)
 
     # return based on process type
