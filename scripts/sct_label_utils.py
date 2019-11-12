@@ -131,7 +131,6 @@ class ProcessLabels(object):
         if type_process == 'vert-continuous':
             self.output_image = self.continuous_vertebral_levels()
         if type_process == 'create-viewer':
-
             if self.fname_previous is not None:
                 previous_lab=Image(self.fname_previous)
                 #the inut image is reoriented to 'SAL' when open by the GUI
@@ -140,7 +139,6 @@ class ProcessLabels(object):
                 previous_points=np.transpose(previous_lab.data.nonzero())
                #boolean used to mark first element to initiate the list. 
                 first=True
-
                 for i in range (len(previous_points)):
                     if previous_lab.data[previous_points[i][0], previous_points[i][1], previous_points[i][2]] in self.value :
                         if first: 
@@ -152,18 +150,14 @@ class ProcessLabels(object):
                             points=np.append(previous_points[i], np.array([previous_lab.data[previous_points[i][0], previous_points[i][1], previous_points[i][2]]]), axis=-1)
                             points=np.reshape(points, (1, 4))
                             previous_label=np.append(previous_label, points, axis=0)
-           
-             
                 #check if variable was created which means the file was not empty and contains some points asked in self.value
                 if 'previous_label' in locals():
                     #project onto mid sagittal plane
                     for i in range (len(previous_label)):
                         previous_label[i][2]=mid
-
                     self.output_image = self.launch_sagittal_viewer(self.value, previous_points=previous_label)
                 else:
                     self.output_image = self.launch_sagittal_viewer(self.value)
-
             else:
                 self.output_image = self.launch_sagittal_viewer(self.value)
 
@@ -171,7 +165,6 @@ class ProcessLabels(object):
             self.output_image = self.remove_or_keep_labels(self.value, action=type_process)
 
         # TODO: do not save here. Create another function save() for that
-        
             
         if self.fname_output is not None:
             if change_orientation:
