@@ -139,11 +139,26 @@ class ProcessLabels(object):
                 mid=int(np.round(previous_lab.data.shape[2]/2))
                 previous_points=np.transpose(previous_lab.data.nonzero())
                 previous_label=np.zeros((len(previous_points), 4))
+                to_del=[]
 
                 for i in range (len(previous_label)):
-                    
-                    previous_label[i]=np.append(previous_points[i], np.array([previous_lab.data[previous_points[i][0], previous_points[i][1], previous_points[i][2]]]), axis=-1)
-                    previous_label[i][2]=mid
+                    if previous_lab.data[previous_points[i][0], previous_points[i][1], previous_points[i][2]] in self.value :
+
+                        previous_label[i]=np.append(previous_points[i], np.array([previous_lab.data[previous_points[i][0], previous_points[i][1], previous_points[i][2]]]), axis=-1)
+                        previous_label[i][2]=mid
+
+                    else:
+                        to_del.append(i)
+                #reverse to work on the list. 
+                to_del.reverse()
+                for x in to_del:
+                    previous_label=np.delete(previous_label,x,axis=0)
+                print(previous_label)
+
+
+                #check if all label have been asked 
+                
+
 
                 self.output_image = self.launch_sagittal_viewer(self.value, previous_points=previous_label)
             else:
