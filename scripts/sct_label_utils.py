@@ -138,7 +138,7 @@ class ProcessLabels(object):
                 previous_lab.change_orientation('SAL')
                 mid=int(np.round(previous_lab.data.shape[2]/2))
                 previous_points=np.transpose(previous_lab.data.nonzero())
-               #boolean used to mark first element t initiate the list. 
+               #boolean used to mark first element to initiate the list. 
                 first=True
 
                 for i in range (len(previous_points)):
