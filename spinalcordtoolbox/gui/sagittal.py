@@ -67,13 +67,10 @@ class SagittalDialog(base.BaseDialog):
     def on_select_point(self, x, y, z):
         try:
             x, y, z = np.array(np.round((x,y,z)), dtype=int)
-            
             label = self.labels.label
             self._controller.select_point(x, y, z, label)
             self.labels.refresh()
-
             self.sagittal.refresh()
-
             index = self.params.vertebraes.index(label)
             if index + 1 < len(self.params.vertebraes):
                 self.labels.label = self.params.vertebraes[index + 1]
