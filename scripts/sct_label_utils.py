@@ -154,8 +154,12 @@ class ProcessLabels(object):
                             previous_label=np.append(previous_label, points, axis=0)
            
              
-                #check if variable was created aka the file was not empty and contains some points asked in self.value
+                #check if variable was created which means the file was not empty and contains some points asked in self.value
                 if 'previous_label' in locals():
+                    #project onto mid sagittal plane
+                    for i in range (len(previous_label)):
+                        previous_label[i][2]=mid
+
                     self.output_image = self.launch_sagittal_viewer(self.value, previous_points=previous_label)
                 else:
                     self.output_image = self.launch_sagittal_viewer(self.value)
