@@ -76,7 +76,7 @@ def resolve_module(framework_name):
         'futures': ('concurrent.futures', False),
         'scikit-image': ('skimage', False),
         'scikit-learn': ('sklearn', False),
-        'pyqt5': ('PyQt5', False),
+        'pyqt5': ('PyQt5.QtCore', False),
         'Keras': ('keras', True),
         'futures': ("concurrent.futures", False),
         'opencv': ('cv2', False),
@@ -114,7 +114,6 @@ def module_import(module_name, suppress_stderr=False):
 
     else:
         module = importlib.import_module(module_name)
-
     return module
 
 
@@ -293,8 +292,9 @@ def main():
             else:
                 print_warning(more=(" (%s != %s mandated version))" % (version, dep_ver_spec)))
 
-        except ImportError:
+        except ImportError as err:
             print_fail()
+            print(err)
             install_software = 1
 
 
