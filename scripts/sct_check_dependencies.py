@@ -76,7 +76,7 @@ def resolve_module(framework_name):
         'futures': ('concurrent.futures', False),
         'scikit-image': ('skimage', False),
         'scikit-learn': ('sklearn', False),
-        'pyqt5': ('PyQt5.QtCore', False),
+        'pyqt5': ('PyQt5.QtCore', False),  # Importing QtCore instead PyQt5 to be able to catch this issue #2523
         'Keras': ('keras', True),
         'futures': ("concurrent.futures", False),
         'opencv': ('cv2', False),
