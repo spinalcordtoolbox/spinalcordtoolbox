@@ -135,8 +135,9 @@ def get_parser():
         required=False)
     multi.add_argument(
         '-world2vox',
-        action='store_true',
-        help='Transform displacement field values from world to voxel coordinate system.',
+        metavar=Metavar.file,
+        help='Transform displacement field values from world to voxel coordinate system. Input the file that will be '
+             'used as the input (source) by FSL applywarp function.',
         required=False)
 
     misc = parser.add_argument_group('Misc')
@@ -289,8 +290,8 @@ def main(args=None):
 
     elif arguments.world2vox is not None:
         im_in = Image(fname_in[0])
-        m = im_in.hdr.get_best_affine()[0:3, 0:3]
-        data_vox = np.dot(im_in.data, m)
+        m = im_in.hdr.get_best_affine()
+        data_vox = np.dot(im_in.data, m[0:3, 0:3])
         # If determinant is positive (+1), reverse L-R displacement (in voxel space)
         # More info at: https://nifti.nimh.nih.gov/nifti-1/support/FSLandNIfTI1/
         if np.linalg.det(im_in.hdr.get_best_affine()) > 0:
@@ -299,6 +300,14 @@ def main(args=None):
             data_vox[..., ind_lr] = -data_vox[..., ind_lr]
         im_out = [im_in.copy()]
         im_out[0].data = data_vox
+        # Write FSL-compatible affine transformation to go from src to dest image
+        m_source = Image(arguments.world2vox).hdr.get_best_affine()
+        m_out = np.dot(m, m_source)
+        np.savetxt('affine_fsl.mat', m_out)
+        # np.eye(4)
+        # m_out[:3, :3] = np.dot(m[:3, :3], m_source[:3, :3])
+        # m_out[:3, 3] = m[:3, 3] + m_source[:3, 3]
+
 
     else:
         im_out = None
