@@ -127,11 +127,16 @@ def get_parser():
         help='Multi-component merge: Merge inputted images into one multi-component image. Requires several inputs.',
         required=False)
 
-    warping = parser.add_argument_group('WARPING FIELD OPERATIONSWarping field operations:')
+    warping = parser.add_argument_group('WARPING FIELD OPERATIONS:')
     warping.add_argument(
         '-display-warp',
         action='store_true',
         help='Create a grid and deform it using provided warping field.',
+        required=False)
+    multi.add_argument(
+        '-world2vox',
+        action='store_true',
+        help='Transform displacement field values from world to voxel coordinate system.',
         required=False)
 
     misc = parser.add_argument_group('Misc')
@@ -171,7 +176,8 @@ def main(args=None):
     else:
         fname_out = None
 
-    # run command
+    # Run command
+    # Arguments are sorted alphabetically (not according to the usage order)
     if arguments.concat is not None:
         dim = arguments.concat
         assert dim in dim_list
@@ -280,6 +286,13 @@ def main(args=None):
         output_type = arguments.type
         im_in = Image(fname_in[0])
         im_out = [im_in]  # TODO: adapt to fname_in
+
+    elif arguments.world2vox is not None:
+        im_in = Image(fname_in[0])
+        m = im_in.hdr.get_best_affine()[0:3, 0:3]
+        data_vox = np.dot(im_in.data, m)
+        im_out = [im_in.copy()]
+        im_out[0].data = data_vox
 
     else:
         im_out = None
