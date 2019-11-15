@@ -111,7 +111,7 @@ def get_parser():
     orientation.add_argument(
         '-setorient-data',
         help='Set orientation of the input image\'s data (does NOT modify the header, but the data). Use with care !',
-        choices='RIP LIP RSP LSP RIA LIA RSA LSA IRP ILP SRP SLP IRA ILA SRA SLA RPI LPI RAI LAI RPS LPS RAS LAS PRI PLI ARI ALI PRS PLS ARS ALS IPR SPR IAR SAR IPL SPL IAL SAL PIR PSR AIR ASR PIL PSL AIL ASL'.split(),
+        choices='RIP LIP RSP LSP RIA LIA RSA LSA IRP ILP SRP SLP IRA ILA SRA SLA RPI LPI RAI LAI RPS LPS RAS LAS PRI PLI ARI ALI PRS PLS ARS ALS IPR SPR IAR SAR IPL SPL IAL SAL PIR PSR AIR ASR PIL PSL AIL00 ASL'.split(),
         required = False)
 
     multi = parser.add_argument_group('MULTI-COMPONENT OPERATIONS ON ITK COMPOSITE WARPING FIELDS')
@@ -291,6 +291,12 @@ def main(args=None):
         im_in = Image(fname_in[0])
         m = im_in.hdr.get_best_affine()[0:3, 0:3]
         data_vox = np.dot(im_in.data, m)
+        # If determinant is positive (+1), reverse L-R displacement (in voxel space)
+        # More info at: https://nifti.nimh.nih.gov/nifti-1/support/FSLandNIfTI1/
+        if np.linalg.det(im_in.hdr.get_best_affine()) > 0:
+            # Get index of L or R (the trick below is to sort, so the '-1' element is first, then we select the last)
+            ind_lr = np.sort([im_in.orientation.find(x) for x in ['L', 'R']])[-1]
+            data_vox[..., ind_lr] = -data_vox[..., ind_lr]
         im_out = [im_in.copy()]
         im_out[0].data = data_vox
 
