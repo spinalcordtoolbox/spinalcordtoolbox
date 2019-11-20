@@ -18,6 +18,10 @@ from __future__ import division, absolute_import
 
 import sys, io, os, time, functools
 import argparse
+import scipy.ndimage.filters as scf
+from skimage.feature import peak_local_max
+import numpy as np
+import math
 
 from spinalcordtoolbox.utils import Metavar, SmartFormatter
 from spinalcordtoolbox.image import Image
@@ -109,6 +113,13 @@ def get_parser():
         default=1,
         choices=(0, 1))
     optional.add_argument(
+        "-label",
+        help="""specify if the file is an image containing keypoints label""",
+        required=False,
+        type=int,
+        default=0,
+        choices=(0, 1))
+    optional.add_argument(
         "-v",
         help="Verbose: 0 = nothing, 1 = classic, 2 = expended.",
         required=False,
@@ -116,11 +127,12 @@ def get_parser():
         default=1,
         choices=(0, 1, 2))
 
+
     return parser
 
 
 class Transform:
-    def __init__(self, input_filename, fname_dest, list_warp, list_warpinv=[], output_filename='', verbose=0, crop=0,
+    def __init__(self, input_filename, fname_dest, list_warp, list_warpinv=[], output_filename='', verbose=0, crop=0,label=0,
                  interp='spline', remove_temp_files=1, debug=0):
         self.input_filename = input_filename
         self.list_warp = list_warp
@@ -132,6 +144,8 @@ class Transform:
         self.verbose = verbose
         self.remove_temp_files = remove_temp_files
         self.debug = debug
+        self.label=label
+        
 
     def apply(self):
         # Initialization
@@ -142,6 +156,8 @@ class Transform:
         verbose = self.verbose
         remove_temp_files = self.remove_temp_files
         crop_reference = self.crop  # if = 1, put 0 everywhere around warping field, if = 2, real crop
+        label=self.label
+        
 
         interp = sct.get_interpolation('isct_antsApplyTransforms', self.interp)
 
@@ -207,6 +223,19 @@ class Transform:
                 dim = '2'
             else:
                 dim = '3'
+            if label==1:
+                path_tmp = sct.tmp_create(basename="apply_transfo", verbose=verbose)
+                list_value=[]
+                coordinates_origin_space=img_src.getNonZeroCoordinates()
+                print(type(coordinates_origin_space[0]))
+                for i in range(len(coordinates_origin_space)):
+                    list_value.append(coordinates_origin_space[i].value)
+                mask=[[[1,1]for i in range (2)]for j in range (2)]
+                img_src.data=scf.convolve(img_src.data,mask)
+             
+                img_src.save(os.path.join(path_tmp, "dilated_data.nii"))
+                fnams_src=os.path.join(path_tmp, "dilated_data.nii")
+
             sct.run(['isct_antsApplyTransforms',
                      '-d', dim,
                      '-i', fname_src,
@@ -305,6 +334,48 @@ class Transform:
 
         sct.display_viewer_syntax([fname_dest, fname_out], verbose=verbose)
 
+        if label==1:
+            label_img=Image(fname_out)
+            image=abs(label_img.data)
+            output=np.zeros(image.shape)
+            middle=int(np.round(image.shape[0]/2))
+            coordinates = peak_local_max(image, min_distance=2, threshold_abs=0.1)
+            coordinates=sorted(coordinates, key=lambda x:x[2])
+            coordinates.reverse()
+            groups_out=[]
+       
+            while len(coordinates)>2:
+                g,coordinates=group_position_by_proximity(coordinates)
+                groups_out.append(g)
+            center_coord=[]
+            for i in range (len(groups_out)):
+                center_coord.append(np.round(np.mean(groups_out[i], axis=0)))
+            center_coord=sorted(center_coord, key=lambda x:x[2])
+            center_coord.reverse()
+            list_value.sort()
+        
+            i=0
+            for x in center_coord:
+                output[middle, int(x[1]), int(x[2])]=list_value[i]
+                i=i+1
+            label_img.data=output
+            label_img.save(fname_out)
+
+def group_position_by_proximity(coordinates):
+    "groups point by distance to the first one. "
+    coordinates_out=[]
+    x=coordinates[0]
+    groups=[x]
+    for y in coordinates:
+        if dist(x, y)<8:
+            groups.append(y)
+        else:
+            coordinates_out.append(y)
+    return groups,coordinates_out
+
+def dist(p, q):
+    "Return the Euclidean distance between points p and q."
+    return math.hypot(p[1] - q[1], p[2] - q[2])
 
 # MAIN
 # ==========================================================================================
@@ -341,6 +412,8 @@ def main(args=None):
     transform.interp = arguments.x
     transform.remove_temp_files = arguments.r
     transform.verbose = arguments.v
+    transform.label=arguments.label
+
     sct.init_sct(log_level=transform.verbose, update=True)  # Update log level
 
     transform.apply()
