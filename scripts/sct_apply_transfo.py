@@ -224,15 +224,18 @@ class Transform:
                 dim = '2'
             else:
                 dim = '3'
+            #if file is a label file
             if label==1:
                 path_tmp = sct.tmp_create(basename="apply_transfo", verbose=verbose)
                 output=os.path.join(path_tmp, "dilated_data.nii")
+                #dilate points
                 sct.run(['sct_maths',
                      '-i', fname_src,
                      '-o', output,
-                     '-dilate','2'])
+                     '-dilate', '2'])
                 tmp_src=os.path.join(path_tmp, "dilated_data.nii")
                 tmp_out=os.path.join(path_tmp, "dilated_data_reg.nii")
+                
                 sct.run(['isct_antsApplyTransforms',
                      '-d', dim,
                      '-i', tmp_src,
@@ -347,9 +350,6 @@ class Transform:
                 sct.printv('\nRemove temporary files...', verbose)
                 sct.rmtree(path_tmp, verbose=verbose)
        
-            
-
-
 # MAIN
 # ==========================================================================================
 def main(args=None):
