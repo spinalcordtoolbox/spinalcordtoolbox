@@ -125,7 +125,6 @@ def get_parser():
         default=1,
         choices=(0, 1, 2))
 
-
     return parser
 
 
@@ -144,7 +143,6 @@ class Transform:
         self.debug = debug
         self.label=label
         
-
     def apply(self):
         # Initialization
         fname_src = self.input_filename  # source image (moving)
@@ -157,10 +155,8 @@ class Transform:
         label=self.label
         if label==1:
             self.interp='nn'
-        
 
         interp = sct.get_interpolation('isct_antsApplyTransforms', self.interp)
-
 
         # Parse list of warping fields
         sct.printv('\nParse list of warping fields...', verbose)
@@ -235,7 +231,7 @@ class Transform:
                      '-dilate', '2'])
                 tmp_src=os.path.join(path_tmp, "dilated_data.nii")
                 tmp_out=os.path.join(path_tmp, "dilated_data_reg.nii")
-                
+
                 sct.run(['isct_antsApplyTransforms',
                      '-d', dim,
                      '-i', tmp_src,
