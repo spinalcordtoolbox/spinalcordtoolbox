@@ -18,10 +18,7 @@ from __future__ import division, absolute_import
 
 import sys, io, os, time, functools
 import argparse
-import scipy.ndimage.filters as scf
-from skimage.feature import peak_local_max
-import numpy as np
-import math
+
 
 from spinalcordtoolbox.utils import Metavar, SmartFormatter
 from spinalcordtoolbox.image import Image
@@ -140,7 +137,7 @@ class Transform:
         self.list_warpinv = list_warpinv
         self.fname_dest = fname_dest
         self.output_filename = output_filename
-        self.interp = insterp
+        self.interp = interp
         self.crop = crop
         self.verbose = verbose
         self.remove_temp_files = remove_temp_files
@@ -234,9 +231,16 @@ class Transform:
                      '-i', fname_src,
                      '-o', output,
                      '-dilate','2'])
-                fname_src=os.path.join(path_tmp, "dilated_data.nii")
-
-            sct.run(['isct_antsApplyTransforms',
+                tmp_src=os.path.join(path_tmp, "dilated_data.nii")
+                tmp_out=os.path.join(path_tmp, "dilated_data_reg.nii")
+                sct.run(['isct_antsApplyTransforms',
+                     '-d', dim,
+                     '-i', tmp_src,
+                     '-o', tmp_out,
+                     '-t'] + fname_warp_list_invert + ['-r', fname_dest] + interp,
+                    verbose=verbose, is_sct_binary=True)
+            else:
+                sct.run(['isct_antsApplyTransforms',
                      '-d', dim,
                      '-i', fname_src,
                      '-o', fname_out,
@@ -336,7 +340,7 @@ class Transform:
 
         if label==1:
             sct.run(['sct_label_utils',
-                     '-i', fname_out,
+                     '-i', tmp_out,
                      '-o', fname_out,
                      '-cubic-to-point'])
        
