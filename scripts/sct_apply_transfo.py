@@ -343,6 +343,9 @@ class Transform:
                      '-i', tmp_out,
                      '-o', fname_out,
                      '-cubic-to-point'])
+            if int(remove_temp_files):
+                sct.printv('\nRemove temporary files...', verbose)
+                sct.rmtree(path_tmp, verbose=verbose)
        
             
 
