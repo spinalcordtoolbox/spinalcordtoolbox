@@ -27,6 +27,7 @@ from spinalcordtoolbox.utils import Metavar, SmartFormatter
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.cropping import ImageCropper
 
+
 import sct_utils as sct
 import sct_convert
 import sct_image
@@ -225,15 +226,12 @@ class Transform:
                 dim = '3'
             if label==1:
                 path_tmp = sct.tmp_create(basename="apply_transfo", verbose=verbose)
-                list_value=[]
-                coordinates_origin_space=img_src.getNonZeroCoordinates()
-                print(type(coordinates_origin_space[0]))
-                for i in range(len(coordinates_origin_space)):
-                    list_value.append(coordinates_origin_space[i].value)
-                mask=[[[1,1]for i in range (2)]for j in range (2)]
-                img_src.data=scf.convolve(img_src.data,mask)
-                img_src.save(os.path.join(path_tmp, "dilated_data.nii"))
-                fnams_src=os.path.join(path_tmp, "dilated_data.nii")
+                output=os.path.join(path_tmp, "dilated_data.nii")
+                sct.run(['sct_maths',
+                     '-i', fname_src,
+                     '-o', output,
+                     '-dilate','2'])
+                fname_src=os.path.join(path_tmp, "dilated_data.nii")
 
             sct.run(['isct_antsApplyTransforms',
                      '-d', dim,
@@ -334,47 +332,13 @@ class Transform:
         sct.display_viewer_syntax([fname_dest, fname_out], verbose=verbose)
 
         if label==1:
-            label_img=Image(fname_out)
-            image=abs(label_img.data)
-            output=np.zeros(image.shape)
-            middle=int(np.round(image.shape[0]/2))
-            coordinates = peak_local_max(image, min_distance=2, threshold_abs=0.1)
-            coordinates=sorted(coordinates, key=lambda x:x[2])
-            coordinates.reverse()
-            groups_out=[]
+            sct.run(['sct_label_utils',
+                     '-i', fname_out,
+                     '-o', fname_out,
+                     '-cubic-to-point'])
        
-            while len(coordinates)>0:
-                g,coordinates=group_position_by_proximity(coordinates)
-                groups_out.append(g)
-            center_coord=[]
-            for i in range (len(groups_out)):
-                center_coord.append(np.round(np.mean(groups_out[i], axis=0)))
-            center_coord=sorted(center_coord, key=lambda x:x[2])
-            center_coord.reverse()
-            list_value.sort()
-        
-            i=0
-            for x in center_coord:
-                output[middle, int(x[1]), int(x[2])]=list_value[i]
-                i=i+1
-            label_img.data=output
-            label_img.save(fname_out)
+            
 
-def group_position_by_proximity(coordinates):
-    "groups point by distance to the first one. "
-    coordinates_out=[]
-    x=coordinates[0]
-    groups=[x]
-    for y in coordinates:
-        if dist(x, y)<8:
-            groups.append(y)
-        else:
-            coordinates_out.append(y)
-    return groups,coordinates_out
-
-def dist(p, q):
-    "Return the Euclidean distance between points p and q."
-    return math.hypot(p[1] - q[1], p[2] - q[2])
 
 # MAIN
 # ==========================================================================================
