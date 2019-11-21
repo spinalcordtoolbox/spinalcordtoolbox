@@ -232,7 +232,6 @@ class Transform:
                     list_value.append(coordinates_origin_space[i].value)
                 mask=[[[1,1]for i in range (2)]for j in range (2)]
                 img_src.data=scf.convolve(img_src.data,mask)
-             
                 img_src.save(os.path.join(path_tmp, "dilated_data.nii"))
                 fnams_src=os.path.join(path_tmp, "dilated_data.nii")
 
@@ -344,7 +343,7 @@ class Transform:
             coordinates.reverse()
             groups_out=[]
        
-            while len(coordinates)>2:
+            while len(coordinates)>0:
                 g,coordinates=group_position_by_proximity(coordinates)
                 groups_out.append(g)
             center_coord=[]
