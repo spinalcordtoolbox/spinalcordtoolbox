@@ -112,11 +112,10 @@ def get_parser():
         choices=(0, 1))
     optional.add_argument(
         "-label",
-        help="""specify if the file is an image containing keypoints label""",
+        help="""specify  if the file is an image containing keypoints label""",
         required=False,
-        type=int,
-        default=0,
-        choices=(0, 1))
+        dest='label',
+        action='store_true')
     optional.add_argument(
         "-v",
         help="Verbose: 0 = nothing, 1 = classic, 2 = expended.",
