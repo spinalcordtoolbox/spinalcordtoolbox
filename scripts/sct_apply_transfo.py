@@ -140,7 +140,7 @@ class Transform:
         self.list_warpinv = list_warpinv
         self.fname_dest = fname_dest
         self.output_filename = output_filename
-        self.interp = interp
+        self.interp = insterp
         self.crop = crop
         self.verbose = verbose
         self.remove_temp_files = remove_temp_files
@@ -158,9 +158,12 @@ class Transform:
         remove_temp_files = self.remove_temp_files
         crop_reference = self.crop  # if = 1, put 0 everywhere around warping field, if = 2, real crop
         label=self.label
+        if label==1:
+            self.interp='nn'
         
 
         interp = sct.get_interpolation('isct_antsApplyTransforms', self.interp)
+
 
         # Parse list of warping fields
         sct.printv('\nParse list of warping fields...', verbose)
