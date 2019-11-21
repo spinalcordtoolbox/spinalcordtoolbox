@@ -146,12 +146,12 @@ class ProcessLabels(object):
                         self.value.append(int(previous_points[i].value))
 
                     if first:   
-                        points=np.array([previous_points[i].x,previous_points[i].y,previous_points[i].z,previous_points[i].value])
+                        points=np.array([previous_points[i]. x,previous_points[i].y, previous_points[i].z, previous_points[i].value])
                         points=np.reshape(points, (1,4))
                         previous_label=points
                         first=False
                     else:
-                        points=np.array([previous_points[i].x,previous_points[i].y,previous_points[i].z,previous_points[i].value])
+                        points=np.array([previous_points[i].x, previous_points[i].y, previous_points[i].z, previous_points[i].value])
                         points=points=np.reshape(points, (1,4))
                         previous_label=np.append(previous_label, points, axis=0)
                     self.value.sort()
