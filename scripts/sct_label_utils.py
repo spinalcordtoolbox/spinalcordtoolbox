@@ -136,20 +136,26 @@ class ProcessLabels(object):
                 #the inut image is reoriented to 'SAL' when open by the GUI
                 previous_lab.change_orientation('SAL')
                 mid=int(np.round(previous_lab.data.shape[2]/2))
-                previous_points=np.transpose(previous_lab.data.nonzero())
+                previous_points=previous_lab.getNonZeroCoordinates()
                #boolean used to mark first element to initiate the list. 
                 first=True
                 for i in range (len(previous_points)):
-                    if previous_lab.data[previous_points[i][0], previous_points[i][1], previous_points[i][2]] in self.value :
-                        if first: 
-                            points=np.append(previous_points[i], np.array([previous_lab.data[previous_points[i][0], previous_points[i][1], previous_points[i][2]]]), axis=-1)
-                            points=np.reshape(points, (1, 4))
-                            previous_label=points
-                            first=False
-                        else:
-                            points=np.append(previous_points[i], np.array([previous_lab.data[previous_points[i][0], previous_points[i][1], previous_points[i][2]]]), axis=-1)
-                            points=np.reshape(points, (1, 4))
-                            previous_label=np.append(previous_label, points, axis=0)
+                    if int(previous_points[i].value) in self.value:
+                        pass
+                    else:
+                        self.value.append(int(previous_points[i].value))
+
+                    if first:   
+                        points=np.array([previous_points[i].x,previous_points[i].y,previous_points[i].z,previous_points[i].value])
+                        points=np.reshape(points, (1,4))
+                        previous_label=points
+                        first=False
+                    else:
+                        points=np.array([previous_points[i].x,previous_points[i].y,previous_points[i].z,previous_points[i].value])
+                        points=points=np.reshape(points, (1,4))
+                        previous_label=np.append(previous_label, points, axis=0)
+                    self.value.sort()
+
                 #check if variable was created which means the file was not empty and contains some points asked in self.value
                 if 'previous_label' in locals():
                     #project onto mid sagittal plane
