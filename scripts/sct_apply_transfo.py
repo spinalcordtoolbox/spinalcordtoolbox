@@ -228,17 +228,12 @@ class Transform:
                          '-i', fname_src,
                          '-o', output,
                          '-dilate', '2'])
-                tmp_src = os.path.join(path_tmp, "dilated_data.nii")
+                fname_src = os.path.join(path_tmp, "dilated_data.nii")
                 tmp_out = os.path.join(path_tmp, "dilated_data_reg.nii")
+                final_out = fname_out
 
-                sct.run(['isct_antsApplyTransforms',
-                         '-d', dim,
-                         '-i', tmp_src,
-                         '-o', tmp_out,
-                         '-t'] + fname_warp_list_invert + ['-r', fname_dest] + interp,
-                        verbose=verbose, is_sct_binary=True)
-            else:
-                sct.run(['isct_antsApplyTransforms',
+
+            sct.run(['isct_antsApplyTransforms',
                          '-d', dim,
                          '-i', fname_src,
                          '-o', fname_out,
@@ -338,8 +333,8 @@ class Transform:
 
         if label == 1:
             sct.run(['sct_label_utils',
-                     '-i', tmp_out,
-                     '-o', fname_out,
+                     '-i', fname_out,
+                     '-o', final_out,
                      '-cubic-to-point'])
             if int(remove_temp_files):
                 sct.printv('\nRemove temporary files...', verbose)
