@@ -19,11 +19,9 @@ from __future__ import division, absolute_import
 import sys, io, os, time, functools
 import argparse
 
-
 from spinalcordtoolbox.utils import Metavar, SmartFormatter
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.cropping import ImageCropper
-
 
 import sct_utils as sct
 import sct_convert
@@ -38,6 +36,8 @@ class Param:
 
 # PARSER
 # ==========================================================================================
+
+
 def get_parser():
     # parser initialisation
 
@@ -112,7 +112,7 @@ def get_parser():
         choices=(0, 1))
     optional.add_argument(
         "-label",
-        help="""specify  if the file is an image containing keypoints label""",
+        help="specify if the file is an image containing keypoints label",
         required=False,
         dest='label',
         action='store_true')
@@ -128,7 +128,7 @@ def get_parser():
 
 
 class Transform:
-    def __init__(self, input_filename, fname_dest, list_warp, list_warpinv=[], output_filename='', verbose=0, crop=0,label=0,
+    def __init__(self, input_filename, fname_dest, list_warp, list_warpinv=[], output_filename='', verbose=0, crop=0, label=0,
                  interp='spline', remove_temp_files=1, debug=0):
         self.input_filename = input_filename
         self.list_warp = list_warp
@@ -140,8 +140,8 @@ class Transform:
         self.verbose = verbose
         self.remove_temp_files = remove_temp_files
         self.debug = debug
-        self.label=label
-        
+        self.label = label
+
     def apply(self):
         # Initialization
         fname_src = self.input_filename  # source image (moving)
@@ -151,9 +151,9 @@ class Transform:
         verbose = self.verbose
         remove_temp_files = self.remove_temp_files
         crop_reference = self.crop  # if = 1, put 0 everywhere around warping field, if = 2, real crop
-        label=self.label
-        if label==1:
-            self.interp='nn'
+        label = self.label
+        if label == 1:
+            self.interp = 'nn'
 
         interp = sct.get_interpolation('isct_antsApplyTransforms', self.interp)
 
@@ -191,7 +191,7 @@ class Transform:
 
         # N.B. Here we take the inverse of the warp list, because sct_WarpImageMultiTransform concatenates in the reverse order
         fname_warp_list_invert.reverse()
-        fname_warp_list_invert = functools.reduce(lambda x,y: x+y, fname_warp_list_invert)
+        fname_warp_list_invert = functools.reduce(lambda x, y: x + y, fname_warp_list_invert)
 
         # Extract path, file and extension
         path_src, file_src, ext_src = sct.extract_fname(fname_src)
@@ -219,31 +219,31 @@ class Transform:
                 dim = '2'
             else:
                 dim = '3'
-            #if file is a label file
-            if label==1:
+            # if file is a label file
+            if label == 1:
                 path_tmp = sct.tmp_create(basename="apply_transfo", verbose=verbose)
-                output=os.path.join(path_tmp, "dilated_data.nii")
-                #dilate points
+                output = os.path.join(path_tmp, "dilated_data.nii")
+                # dilate points
                 sct.run(['sct_maths',
-                     '-i', fname_src,
-                     '-o', output,
-                     '-dilate', '2'])
-                tmp_src=os.path.join(path_tmp, "dilated_data.nii")
-                tmp_out=os.path.join(path_tmp, "dilated_data_reg.nii")
+                         '-i', fname_src,
+                         '-o', output,
+                         '-dilate', '2'])
+                tmp_src = os.path.join(path_tmp, "dilated_data.nii")
+                tmp_out = os.path.join(path_tmp, "dilated_data_reg.nii")
 
                 sct.run(['isct_antsApplyTransforms',
-                     '-d', dim,
-                     '-i', tmp_src,
-                     '-o', tmp_out,
-                     '-t'] + fname_warp_list_invert + ['-r', fname_dest] + interp,
-                    verbose=verbose, is_sct_binary=True)
+                         '-d', dim,
+                         '-i', tmp_src,
+                         '-o', tmp_out,
+                         '-t'] + fname_warp_list_invert + ['-r', fname_dest] + interp,
+                        verbose=verbose, is_sct_binary=True)
             else:
                 sct.run(['isct_antsApplyTransforms',
-                     '-d', dim,
-                     '-i', fname_src,
-                     '-o', fname_out,
-                     '-t'] + fname_warp_list_invert + ['-r', fname_dest] + interp,
-                    verbose=verbose, is_sct_binary=True)
+                         '-d', dim,
+                         '-i', fname_src,
+                         '-o', fname_out,
+                         '-t'] + fname_warp_list_invert + ['-r', fname_dest] + interp,
+                        verbose=verbose, is_sct_binary=True)
 
         # if 4d, loop across the T dimension
         else:
@@ -280,13 +280,13 @@ class Transform:
                 file_data_split_reg = 'data_reg_T' + str(it).zfill(4) + '.nii'
 
                 status, output = sct.run(['isct_antsApplyTransforms',
-                  '-d', '3',
-                  '-i', file_data_split,
-                  '-o', file_data_split_reg,
-                  '-t',
-                 ] + fname_warp_list_invert_tmp + [
-                  '-r', file_dest + ext_dest,
-                 ] + interp, verbose, is_sct_binary=True)
+                                          '-d', '3',
+                                          '-i', file_data_split,
+                                          '-o', file_data_split_reg,
+                                          '-t',
+                                          ] + fname_warp_list_invert_tmp + [
+                    '-r', file_dest + ext_dest,
+                ] + interp, verbose, is_sct_binary=True)
 
             # Merge files back
             sct.printv('\nMerge file back...', verbose)
@@ -336,7 +336,7 @@ class Transform:
 
         sct.display_viewer_syntax([fname_dest, fname_out], verbose=verbose)
 
-        if label==1:
+        if label == 1:
             sct.run(['sct_label_utils',
                      '-i', tmp_out,
                      '-o', fname_out,
@@ -344,9 +344,11 @@ class Transform:
             if int(remove_temp_files):
                 sct.printv('\nRemove temporary files...', verbose)
                 sct.rmtree(path_tmp, verbose=verbose)
-       
+
 # MAIN
 # ==========================================================================================
+
+
 def main(args=None):
     """
     Entry point for sct_apply_transfo
@@ -380,7 +382,7 @@ def main(args=None):
     transform.interp = arguments.x
     transform.remove_temp_files = arguments.r
     transform.verbose = arguments.v
-    transform.label=arguments.label
+    transform.label = arguments.label
 
     sct.init_sct(log_level=transform.verbose, update=True)  # Update log level
 
