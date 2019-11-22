@@ -135,6 +135,7 @@ class Transform:
         self.verbose = verbose
         self.remove_temp_files = remove_temp_files
         self.debug = debug
+        self.label = label
 
     def apply(self):
         # Initialization
@@ -145,6 +146,7 @@ class Transform:
         verbose = self.verbose
         remove_temp_files = self.remove_temp_files
         crop_reference = self.crop  # if = 1, put 0 everywhere around warping field, if = 2, real crop
+        label = self.label
         if self.interp == 'label':
             label = 1
             self.interp = 'nn'
@@ -222,10 +224,9 @@ class Transform:
                          '-i', fname_src,
                          '-o', output,
                          '-dilate', '2'])
-                fname_src = os.path.join(path_tmp, "dilated_data.nii")
-                tmp_out = os.path.join(path_tmp, "dilated_data_reg.nii")
-                final_out = fname_out
 
+                fname_src = os.path.join(path_tmp, "dilated_data.nii")
+                final_out = fname_out
             sct.run(['isct_antsApplyTransforms',
                          '-d', dim,
                          '-i', fname_src,
@@ -368,7 +369,6 @@ def main(args=None):
     transform.interp = arguments.x
     transform.remove_temp_files = arguments.r
     transform.verbose = arguments.v
-
     sct.init_sct(log_level=transform.verbose, update=True)  # Update log level
 
     transform.apply()
