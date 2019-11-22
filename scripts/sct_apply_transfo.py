@@ -99,8 +99,10 @@ def get_parser():
         default='')
     optional.add_argument(
         "-x",
-        help=" Interpolation method. the 'label' interpolation method is designed to improve results on keypoints label file \
-         (e.g., disc label files) by dilating the original label and retrieving key points after the transformation.",
+        help=""" Interpolation method. the 'label' method is to be used if you would like to apply a transformation on a file that has\
+        single-voxel labels (classical interpolation methods won't work, as resampled labels might disappear or their values be altered).\
+        The function will dilate each label, apply the transformation using nearest neighbour interpolation, \
+        and then take the center-of-mass of each "blob" and output a single voxel per blob.""",
         required=False,
         default='spline',
         choices=('nn', 'linear', 'spline', 'label'))
