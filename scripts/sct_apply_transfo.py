@@ -36,8 +36,6 @@ class Param:
 
 # PARSER
 # ==========================================================================================
-
-
 def get_parser():
     # parser initialisation
 
@@ -337,8 +335,6 @@ class Transform:
 
 # MAIN
 # ==========================================================================================
-
-
 def main(args=None):
     """
     Entry point for sct_apply_transfo
