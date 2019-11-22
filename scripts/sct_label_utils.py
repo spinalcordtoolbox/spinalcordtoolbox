@@ -69,7 +69,6 @@ class ProcessLabels(object):
                 self.fname_output = fname_output
         else:
             self.fname_output = fname_output
-
         
         self.fname_previous = fname_previous
         self.cross_radius = cross_radius
@@ -80,7 +79,7 @@ class ProcessLabels(object):
         self.value = value
         self.msg = msg
         self.output_image = None
-        self.previous_image=None
+        self.previous_image = None
 
     def process(self, type_process):
         # for some processes, change orientation of input image to RPI
@@ -132,35 +131,35 @@ class ProcessLabels(object):
             self.output_image = self.continuous_vertebral_levels()
         if type_process == 'create-viewer':
             if self.fname_previous is not None:
-                previous_lab=Image(self.fname_previous)
-                #the inut image is reoriented to 'SAL' when open by the GUI
+                previous_lab = Image(self.fname_previous)
+                # the input image is reoriented to 'SAL' when open by the GUI
                 previous_lab.change_orientation('SAL')
-                mid=int(np.round(previous_lab.data.shape[2]/2))
-                previous_points=previous_lab.getNonZeroCoordinates()
-               #boolean used to mark first element to initiate the list. 
-                first=True
-                for i in range (len(previous_points)):
+                mid = int(np.round(previous_lab.data.shape[2]/2))
+                previous_points = previous_lab.getNonZeroCoordinates()
+                # boolean used to mark first element to initiate the list.
+                first = True
+                for i in range(len(previous_points)):
                     if int(previous_points[i].value) in self.value:
                         pass
                     else:
                         self.value.append(int(previous_points[i].value))
 
-                    if first:   
-                        points=np.array([previous_points[i]. x,previous_points[i].y, previous_points[i].z, previous_points[i].value])
-                        points=np.reshape(points, (1,4))
-                        previous_label=points
-                        first=False
+                    if first:
+                        points = np.array([previous_points[i]. x, previous_points[i].y, previous_points[i].z, previous_points[i].value])
+                        points = np.reshape(points, (1, 4))
+                        previous_label = points
+                        first = False
                     else:
-                        points=np.array([previous_points[i].x, previous_points[i].y, previous_points[i].z, previous_points[i].value])
-                        points=points=np.reshape(points, (1,4))
-                        previous_label=np.append(previous_label, points, axis=0)
+                        points = np.array([previous_points[i].x, previous_points[i].y, previous_points[i].z, previous_points[i].value])
+                        points = np.reshape(points, (1, 4))
+                        previous_label = np.append(previous_label, points, axis=0)
                     self.value.sort()
 
-                #check if variable was created which means the file was not empty and contains some points asked in self.value
+                # check if variable was created which means the file was not empty and contains some points asked in self.value
                 if 'previous_label' in locals():
-                    #project onto mid sagittal plane
-                    for i in range (len(previous_label)):
-                        previous_label[i][2]=mid
+                    # project onto mid sagittal plane
+                    for i in range(len(previous_label)):
+                        previous_label[i][2] = mid
                     self.output_image = self.launch_sagittal_viewer(self.value, previous_points=previous_label)
                 else:
                     self.output_image = self.launch_sagittal_viewer(self.value)
@@ -171,7 +170,7 @@ class ProcessLabels(object):
             self.output_image = self.remove_or_keep_labels(self.value, action=type_process)
 
         # TODO: do not save here. Create another function save() for that
-            
+
         if self.fname_output is not None:
             if change_orientation:
                 self.output_image.change_orientation(input_orientation)
@@ -636,10 +635,9 @@ class ProcessLabels(object):
 
         return im_output
 
-    def launch_sagittal_viewer(self, labels,previous_points=None):
+    def launch_sagittal_viewer(self, labels, previous_points=None):
         from spinalcordtoolbox.gui import base
         from spinalcordtoolbox.gui.sagittal import launch_sagittal_dialog
-
 
         params = base.AnatomicalParams()
         params.vertebraes = labels
@@ -647,11 +645,9 @@ class ProcessLabels(object):
         params.output_file_name = self.fname_output
         params.subtitle = self.msg
         output = msct_image.zeros_like(self.image_input)
-        
-        
-        output.absolutepath = self.fname_output
-        launch_sagittal_dialog(self.image_input, output, params,previous_points)
 
+        output.absolutepath = self.fname_output
+        launch_sagittal_dialog(self.image_input, output, params, previous_points)
 
         return output
 
@@ -682,6 +678,7 @@ class ProcessLabels(object):
                 sct.printv("WARNING: Label " + str(float(labelNumber)) + " not found in input image.", type='warning')
 
         return image_output
+
 
 def get_parser():
     # initialize default param
@@ -772,7 +769,7 @@ def get_parser():
                       default_value="labels.nii.gz")
 
     parser.add_option(name="-ilabel",
-                      type_value= "file",
+                      type_value="file",
                       description="previous labelisation to correct",
                       mandatory=False,
                       example="t2_labels_auto.nii.gz",)
@@ -863,11 +860,10 @@ def main(args=None):
         input_fname_output = arguments['-o']
 
     if '-ilabel' in arguments:
-        input_fname_previous=arguments['-ilabel']
+        input_fname_previous = arguments['-ilabel']
     else:
-        input_fname_previous=None
+        input_fname_previous = None
     
-
     verbose = int(arguments.get('-v'))
     sct.init_sct(log_level=verbose, update=True)  # Update log level
 
