@@ -125,7 +125,6 @@ class ProcessLabels(object):
         if type_process == 'cubic-to-point':
             self.output_image = self.cubic_to_point()
         if type_process == 'vert-body':
-
             self.output_image = self.label_vertebrae(self.vertebral_levels)
         if type_process == 'vert-continuous':
             self.output_image = self.continuous_vertebral_levels()
@@ -143,7 +142,6 @@ class ProcessLabels(object):
                         pass
                     else:
                         self.value.append(int(previous_points[i].value))
-
                     if first:
                         points = np.array([previous_points[i]. x, previous_points[i].y, previous_points[i].z, previous_points[i].value])
                         points = np.reshape(points, (1, 4))
@@ -170,7 +168,6 @@ class ProcessLabels(object):
             self.output_image = self.remove_or_keep_labels(self.value, action=type_process)
 
         # TODO: do not save here. Create another function save() for that
-
         if self.fname_output is not None:
             if change_orientation:
                 self.output_image.change_orientation(input_orientation)
@@ -645,7 +642,6 @@ class ProcessLabels(object):
         params.output_file_name = self.fname_output
         params.subtitle = self.msg
         output = msct_image.zeros_like(self.image_input)
-
         output.absolutepath = self.fname_output
         launch_sagittal_dialog(self.image_input, output, params, previous_points)
 
@@ -678,7 +674,6 @@ class ProcessLabels(object):
                 sct.printv("WARNING: Label " + str(float(labelNumber)) + " not found in input image.", type='warning')
 
         return image_output
-
 
 def get_parser():
     # initialize default param
@@ -767,13 +762,11 @@ def get_parser():
                       mandatory=False,
                       example="t2_labels_cross.nii.gz",
                       default_value="labels.nii.gz")
-
     parser.add_option(name="-ilabel",
                       type_value="file",
-                      description="previous labelisation to correct",
+                      description="File that contain label that you want to correct. It is possible to add new points with this option. Use with -create-viwer",
                       mandatory=False,
                       example="t2_labels_auto.nii.gz",)
-
     parser.add_option(name="-v",
                       type_value="multiple_choice",
                       description='Verbose. 0: nothing. 1: basic. 2: extended.',
@@ -858,7 +851,6 @@ def main(args=None):
         msg = ""
     if '-o' in arguments:
         input_fname_output = arguments['-o']
-
     if '-ilabel' in arguments:
         input_fname_previous = arguments['-ilabel']
     else:

@@ -40,7 +40,6 @@ class SagittalController(base.BaseController):
                 raise TooManyPointsWarning()
             self.points.append((x, y, z, label))
             
-
         self.position = (x, y, z)
 
 
@@ -108,5 +107,4 @@ def launch_sagittal_dialog(input_file, output_file, params, previous_points=None
     dialog = SagittalDialog(controller)
     dialog.show()
     app.exec_()
-
     return controller
