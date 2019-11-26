@@ -17,7 +17,7 @@ scipy
 scikit-image
 scikit-learn
 tensorflow; platform_system != 'Darwin' or '15.' not in platform_release
-tensorflow==1.3.0; platform_system == 'Darwin' and '15.' in platform_release
+tensorflow==1.12.2; platform_system == 'Darwin' and '15.' in platform_release
 xlrd
 xlutils
 xlwt
