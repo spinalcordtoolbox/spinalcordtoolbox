@@ -360,15 +360,24 @@ def main():
     if complete_test:
         print((status, output), '\n')
 
-    # check if figure can be opened (in case running SCT via ssh connection)
-    print_line('Check if figure can be opened with PyQt')
-    from PyQt5.QtWidgets import QApplication, QLabel
+    print_line('Check if DISPLAY variable is set')
     try:
-        app = QApplication([])
-        label = QLabel('Hello World!')
-        label.show()
-        label.close()
+        os.environ['DISPLAY']
         print_ok()
+
+        # Further check with PyQt specifically
+        print_line('Check if figure can be opened with PyQt')
+        from PyQt5.QtWidgets import QApplication, QLabel
+        try:
+            app = QApplication([])
+            label = QLabel('Hello World!')
+            label.show()
+            label.close()
+            print_ok()
+        except Exception as err:
+            print_fail()
+            print(err)
+
     except Exception as err:
         print_fail()
         print(err)
