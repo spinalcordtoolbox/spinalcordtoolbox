@@ -378,9 +378,8 @@ def main():
             print_fail()
             print(err)
 
-    except Exception as err:
+    except KeyError:
         print_fail()
-        print(err)
 
     print('')
     sys.exit(e + install_software)
