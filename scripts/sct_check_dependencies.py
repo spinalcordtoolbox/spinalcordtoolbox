@@ -361,17 +361,17 @@ def main():
         print((status, output), '\n')
 
     # check if figure can be opened (in case running SCT via ssh connection)
-    print_line('Check if figure can be opened')
-    import warnings
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        import matplotlib.pyplot as plt
-        try:
-            plt.figure()
-            plt.close()
-            print_ok()
-        except Exception:
-            print_fail()
+    print_line('Check if figure can be opened with PyQt')
+    from PyQt5.QtWidgets import QApplication, QLabel
+    try:
+        app = QApplication([])
+        label = QLabel('Hello World!')
+        label.show()
+        label.close()
+        print_ok()
+    except Exception as err:
+        print_fail()
+        print(err)
 
     print('')
     sys.exit(e + install_software)
