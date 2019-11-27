@@ -84,7 +84,7 @@ def get_parser():
         help="Show this help message and exit")
     optional.add_argument(
         "-crop",
-        help="Crop Reference. 0 : no reference. 1 : sets background to 0. 2 : use normal background",
+        help="Crop Reference. 0: no reference, 1: sets background to 0, 2: use normal background.",
         required=False,
         type=int,
         default=0,
@@ -97,10 +97,11 @@ def get_parser():
         default='')
     optional.add_argument(
         "-x",
-        help=""" Interpolation method. the 'label' method is to be used if you would like to apply a transformation on a file that has\
-        single-voxel labels (classical interpolation methods won't work, as resampled labels might disappear or their values be altered).\
-        The function will dilate each label, apply the transformation using nearest neighbour interpolation, \
-        and then take the center-of-mass of each "blob" and output a single voxel per blob.""",
+        help=""" Interpolation method. The 'label' method is to be used if you would like to apply a transformation 
+        on a file that has single-voxel labels (classical interpolation methods won't work, as resampled labels might 
+        disappear or their values be altered). The function will dilate each label, apply the transformation using 
+        nearest neighbour interpolation, and then take the center-of-mass of each "blob" and output a single voxel per 
+        blob.""",
         required=False,
         default='spline',
         choices=('nn', 'linear', 'spline', 'label'))
@@ -113,7 +114,7 @@ def get_parser():
         choices=(0, 1))
     optional.add_argument(
         "-v",
-        help="Verbose: 0 = nothing, 1 = classic, 2 = expended.",
+        help="Verbose: 0: nothing, 1: classic, 2: expended.",
         required=False,
         type=int,
         default=1,
