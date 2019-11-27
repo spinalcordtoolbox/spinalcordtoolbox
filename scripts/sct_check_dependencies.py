@@ -213,16 +213,10 @@ def main():
     print("- path: {0}".format(sct.__sct_dir__))
 
     # initialization
-    fsl_is_working = 1
-    # ants_is_installed = 1
     install_software = 0
     e = 0
-    restart_terminal = 0
-    create_log_file = param.create_log_file
-    file_log = 'sct_check_dependencies.log'
     complete_test = param.complete_test
     os_running = 'not identified'
-    dipy_version = '0.10.0dev'
 
     # Check input parameters
     parser = get_parser()
@@ -320,21 +314,6 @@ def main():
         print_fail()
         install_software = 1
 
-    # CHECK EXTERNAL MODULES:
-
-    # Check if dipy is installed
-    # print_line('Check if dipy ('+dipy_version+') is installed')
-    # try:
-    #     module = importlib.import_module('dipy')
-    #     if module.__version__ == dipy_version:
-    #         print_ok()
-    #     else:
-    #         print_warning()
-    #         print('  Detected version: '+version+'. Required version: '+dipy_version)
-    # except ImportError:
-    #     print_fail()
-    #     install_software = 1
-
     # Check ANTs integrity
     print_line('Check ANTs compatibility with OS ')
     cmd = 'isct_test_ants'
@@ -348,19 +327,6 @@ def main():
     if complete_test:
         print('>> ' + cmd)
         print((status, output), '\n')
-
-    # check if ANTs is compatible with OS
-    # print_line('Check ANTs compatibility with OS ')
-    # cmd = 'isct_antsRegistration'
-    # status, output = sct.run(cmd)
-    # if status in [0, 256]:
-    #     print_ok()
-    # else:
-    #     print_fail()
-    #     e = 1
-    # if complete_test:
-    #     print('>> '+cmd)
-    #     print((status, output), '\n')
 
     # check PropSeg compatibility with OS
     print_line('Check PropSeg compatibility with OS ')
