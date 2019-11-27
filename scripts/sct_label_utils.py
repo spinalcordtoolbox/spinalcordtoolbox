@@ -69,7 +69,6 @@ class ProcessLabels(object):
                 self.fname_output = fname_output
         else:
             self.fname_output = fname_output
-        
         self.fname_previous = fname_previous
         self.cross_radius = cross_radius
         self.vertebral_levels = vertebral_levels
@@ -855,7 +854,6 @@ def main(args=None):
         input_fname_previous = arguments['-ilabel']
     else:
         input_fname_previous = None
-    
     verbose = int(arguments.get('-v'))
     sct.init_sct(log_level=verbose, update=True)  # Update log level
 

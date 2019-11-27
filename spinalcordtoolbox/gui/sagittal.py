@@ -39,7 +39,7 @@ class SagittalController(base.BaseController):
             if self.params.num_points and len(self.points) >= self.params.num_points:
                 raise TooManyPointsWarning()
             self.points.append((x, y, z, label))
-            
+
         self.position = (x, y, z)
 
 
@@ -70,6 +70,7 @@ class SagittalDialog(base.BaseDialog):
             self._controller.select_point(x, y, z, label)
             self.labels.refresh()
             self.sagittal.refresh()
+            
             index = self.params.vertebraes.index(label)
             if index + 1 < len(self.params.vertebraes):
                 self.labels.label = self.params.vertebraes[index + 1]
