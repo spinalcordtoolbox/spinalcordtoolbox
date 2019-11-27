@@ -76,7 +76,7 @@ def resolve_module(framework_name):
         'futures': ('concurrent.futures', False),
         'scikit-image': ('skimage', False),
         'scikit-learn': ('sklearn', False),
-        'pyqt5': ('PyQt5.QtCore', False),  # Importing QtCore instead PyQt5 to be able to catch this issue #2523
+        'pyqt5': ('PyQt5.QtCore', False),  # Importing Qt instead PyQt5 to be able to catch this issue #2523
         'Keras': ('keras', True),
         'futures': ("concurrent.futures", False),
         'opencv': ('cv2', False),
@@ -124,8 +124,13 @@ def get_version(module):
     :return: string: the version of the module
     """
     if module.__name__  == 'PyQt5.QtCore':
-        from PyQt5.Qt import PYQT_VERSION_STR
-        version = PYQT_VERSION_STR
+        # Unfortunately importing PyQt5.Qt makes sklearn import crash on Ubuntu 14.04, so we don't display the version
+        # for this distros. See: https://github.com/neuropoly/spinalcordtoolbox/pull/2522#issuecomment-559310454
+        if 'trusty' in platform.platform():
+            version = None
+        else:
+            from PyQt5.Qt import PYQT_VERSION_STR
+            version = PYQT_VERSION_STR
     else:
         version = getattr(module, "__version__", getattr(module, "__VERSION__", None))
     return version
@@ -297,6 +302,7 @@ def main():
 
             elif dep_ver_spec == version:
                 print_ok()
+
             else:
                 print_warning(more=(" (%s != %s mandated version))" % (version, dep_ver_spec)))
 
@@ -304,7 +310,6 @@ def main():
             print_fail()
             print(err)
             install_software = 1
-
 
     print_line('Check if spinalcordtoolbox is installed')
     try:
