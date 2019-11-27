@@ -117,6 +117,20 @@ def module_import(module_name, suppress_stderr=False):
     return module
 
 
+def get_version(module):
+    """
+    Get module version. This function is required due to some exceptions in fetching module versions.
+    :param module: the module to get version from
+    :return: string: the version of the module
+    """
+    if module.__name__  == 'PyQt5.QtCore':
+        from PyQt5.Qt import PYQT_VERSION_STR
+        version = PYQT_VERSION_STR
+    else:
+        version = getattr(module, "__version__", getattr(module, "__VERSION__", None))
+    return version
+
+
 def print_line(string):
     """print without carriage return"""
     sys.stdout.write(string.ljust(52, '.'))
@@ -276,7 +290,7 @@ def main():
         try:
             module_name, suppress_stderr = resolve_module(dep_pkg)
             module = module_import(module_name, suppress_stderr)
-            version = getattr(module, "__version__", getattr(module, "__VERSION__", None))
+            version = get_version(module)
 
             if dep_ver_spec is None and version is not None:
                 ver_pip_setup = dict(get_dependencies(os.path.join(sct.__sct_dir__, "requirements.txt"))).get(dep_pkg, None)
