@@ -24,14 +24,7 @@ from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.cropping import ImageCropper
 
 import sct_utils as sct
-import sct_convert
 import sct_image
-
-
-class Param:
-    def __init__(self):
-        self.verbose = '1'
-        self.remove_temp_files = '1'
 
 
 # PARSER
@@ -124,7 +117,7 @@ def get_parser():
 
 
 class Transform:
-    def __init__(self, input_filename, fname_dest, list_warp, list_warpinv=[], output_filename='', verbose=0, crop=0, label=0,
+    def __init__(self, input_filename, fname_dest, list_warp, list_warpinv=[], output_filename='', verbose=0, crop=0,
                  interp='spline', remove_temp_files=1, debug=0):
         self.input_filename = input_filename
         self.list_warp = list_warp
@@ -136,7 +129,6 @@ class Transform:
         self.verbose = verbose
         self.remove_temp_files = remove_temp_files
         self.debug = debug
-        self.label = label
 
     def apply(self):
         # Initialization
@@ -147,9 +139,10 @@ class Transform:
         verbose = self.verbose
         remove_temp_files = self.remove_temp_files
         crop_reference = self.crop  # if = 1, put 0 everywhere around warping field, if = 2, real crop
-        label = self.label
+
+        islabel = False
         if self.interp == 'label':
-            label = 1
+            islabel = True
             self.interp = 'nn'
 
         interp = sct.get_interpolation('isct_antsApplyTransforms', self.interp)
@@ -216,27 +209,31 @@ class Transform:
                 dim = '2'
             else:
                 dim = '3'
-            # if file is a label file
-            if label == 1:
+            # if labels, dilate before resampling
+            if islabel:
+                sct.printv("\nDilate labels before warping...")
                 path_tmp = sct.tmp_create(basename="apply_transfo", verbose=verbose)
-                output = os.path.join(path_tmp, "dilated_data.nii")
+                fname_dilated_labels = os.path.join(path_tmp, "dilated_data.nii")
                 # dilate points
                 sct.run(['sct_maths',
                          '-i', fname_src,
-                         '-o', output,
+                         '-o', fname_dilated_labels,
                          '-dilate', '2'])
+                fname_src = fname_dilated_labels
 
-                fname_src = os.path.join(path_tmp, "dilated_data.nii")
-                final_out = fname_out
+            sct.printv("\nApply transformation and resample to destination space...")
             sct.run(['isct_antsApplyTransforms',
-                         '-d', dim,
-                         '-i', fname_src,
-                         '-o', fname_out,
-                         '-t'] + fname_warp_list_invert + ['-r', fname_dest] + interp,
-                        verbose=verbose, is_sct_binary=True)
+                     '-d', dim,
+                     '-i', fname_src,
+                     '-o', fname_out,
+                     '-t'
+                     ] + fname_warp_list_invert + ['-r', fname_dest] + interp, verbose=verbose, is_sct_binary=True)
 
         # if 4d, loop across the T dimension
         else:
+            if islabel:
+                raise NotImplementedError
+
             dim = '4'
             path_tmp = sct.tmp_create(basename="apply_transfo", verbose=verbose)
 
@@ -292,7 +289,7 @@ class Transform:
             os.chdir(curdir)
             sct.generate_output_file(os.path.join(path_tmp, name_out + ext_out), fname_out)
             # Delete temporary folder if specified
-            if int(remove_temp_files):
+            if remove_temp_files:
                 sct.printv('\nRemove temporary files...', verbose)
                 sct.rmtree(path_tmp, verbose=verbose)
 
@@ -301,6 +298,16 @@ class Transform:
         im_src_reg = Image(fname_out)
         im_src_reg.copy_qform_from_ref(Image(fname_dest))
         im_src_reg.save(verbose=0)  # set verbose=0 to avoid warning message about rewriting file
+
+        if islabel:
+            sct.printv("\nTake the center of mass of each registered dilated labels...")
+            sct.run(['sct_label_utils',
+                     '-i', fname_out,
+                     '-o', fname_out,
+                     '-cubic-to-point'])
+            if remove_temp_files:
+                sct.printv('\nRemove temporary files...', verbose)
+                sct.rmtree(path_tmp, verbose=verbose)
 
         # 2. crop the resulting image using dimensions from the warping field
         warping_field = fname_warp_list_invert[-1]
@@ -326,14 +333,6 @@ class Transform:
 
         sct.display_viewer_syntax([fname_dest, fname_out], verbose=verbose)
 
-        if label == 1:
-            sct.run(['sct_label_utils',
-                     '-i', fname_out,
-                     '-o', final_out,
-                     '-cubic-to-point'])
-            if int(remove_temp_files):
-                sct.printv('\nRemove temporary files...', verbose)
-                sct.rmtree(path_tmp, verbose=verbose)
 
 # MAIN
 # ==========================================================================================
@@ -379,7 +378,5 @@ def main(args=None):
 # ==========================================================================================
 if __name__ == "__main__":
     sct.init_sct()
-    # initialize parameters
-    param = Param()
     # call main function
     main()
