@@ -640,6 +640,8 @@ class ProcessLabels(object):
         params.input_file_name = self.image_input.absolutepath
         params.output_file_name = self.fname_output
         params.subtitle = self.msg
+        if previous_points is not None: 
+            params.message_warn = 'Please select the label you want to add \nor correct in the list below before clicking \non the image'
         output = msct_image.zeros_like(self.image_input)
         output.absolutepath = self.fname_output
         launch_sagittal_dialog(self.image_input, output, params, previous_points)
@@ -708,6 +710,11 @@ def get_parser():
                       type_value=[[','], 'int'],
                       description='Manually label from a GUI a list of labels IDs, separated with ",". Example: 2,3,4,5',
                       mandatory=False)
+    parser.add_option(name="-ilabel",
+                      type_value="file",
+                      description="File that contain labels that you want to correct. It is possible to add new points with this option. Use with -create-viewer",
+                      mandatory=False,
+                      example="t2_labels_auto.nii.gz",)
     parser.add_option(name='-cubic-to-point',
                       type_value=None,
                       description='Compute the center-of-mass for each label value.',
@@ -761,11 +768,6 @@ def get_parser():
                       mandatory=False,
                       example="t2_labels_cross.nii.gz",
                       default_value="labels.nii.gz")
-    parser.add_option(name="-ilabel",
-                      type_value="file",
-                      description="File that contain label that you want to correct. It is possible to add new points with this option. Use with -create-viwer",
-                      mandatory=False,
-                      example="t2_labels_auto.nii.gz",)
     parser.add_option(name="-v",
                       type_value="multiple_choice",
                       description='Verbose. 0: nothing. 1: basic. 2: extended.',
