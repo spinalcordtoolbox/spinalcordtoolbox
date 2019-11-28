@@ -124,9 +124,10 @@ def get_version(module):
     :return: string: the version of the module
     """
     if module.__name__  == 'PyQt5.QtCore':
-        # Unfortunately importing PyQt5.Qt makes sklearn import crash on Ubuntu 14.04, so we don't display the version
-        # for this distros. See: https://github.com/neuropoly/spinalcordtoolbox/pull/2522#issuecomment-559310454
-        if 'trusty' in platform.platform():
+        # Unfortunately importing PyQt5.Qt makes sklearn import crash on Ubuntu 14.04 (corresponding to Debian's jessie)
+        # so we don't display the version for this distros.
+        # See: https://github.com/neuropoly/spinalcordtoolbox/pull/2522#issuecomment-559310454
+        if 'jessie' in platform.platform():
             version = None
         else:
             from PyQt5.Qt import PYQT_VERSION_STR
