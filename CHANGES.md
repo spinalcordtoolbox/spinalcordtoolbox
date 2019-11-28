@@ -1,3 +1,27 @@
+## 4.1.1 (2019-11-28)
+[View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/4.1.0...4.1.1)
+
+**BUG**
+
+ - **sct_register_to_template:** Fixed cropping of registered image. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2532)
+ - **sct_run_batch:** Fixed issue when passing absolute path to script. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2518)
+
+**FEATURE**
+
+ - **sct_apply_transfo:** Added an option for keypoints transformation. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2533)
+ - **sct_label_utils:** Now possible to add existing label from an external file in the create-viewer option. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2520)
+
+**DOCUMENTATION**
+
+ - README: Added link to Youtube tutorials. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2521)
+
+**INSTALLATION**
+
+ - **sct_viewer:** PyQt5 version downgrade to fix GUI on Debian 8.11 distros. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2524)
+ - **sct_check_dependencies:** Increased sensitivity of dependency testing. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2522)
+
+
+
 ## 4.1.0 (2019-10-26)
 [View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/4.0.2...4.1.0)
 
@@ -34,7 +58,6 @@
 **INSTALLATION**
 
  - **sct_download_data:** Fixed issue that appeared when trying to remove temporary folder from different file systems. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2473)
-
 
 
 ## 4.0.2 (2019-09-04)
