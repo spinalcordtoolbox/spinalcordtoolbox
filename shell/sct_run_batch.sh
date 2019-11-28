@@ -24,11 +24,20 @@ On_Black='\033[40m'  # Black
 
 # Functions
 # =============================================================================
+
+check_file_exist() {
+  local path="$1"
+  if [ ! -f "$path" ]; then
+    printf "\n${Red}${On_Black}ERROR: File does not exist: $path ${Color_Off}\n\n"
+    exit 1
+  fi
+}
+
 create_folder() {
   local folder="$1"
   mkdir -p $folder  # "-p" creates parent folders if needed
   if [ ! -d "$folder" ]; then
-    printf "\n${Red}${On_Black}ERROR: Cannot create folder: $folder. Exit.${Color_Off}\n\n"
+    printf "\n${Red}${On_Black}ERROR: Cannot create folder: $folder ${Color_Off}\n\n"
     exit 1
   fi
 }
@@ -59,6 +68,10 @@ PATH_SCRIPT="$( cd "$(dirname "$0")" ; pwd -P )"
 time_start=$(date +%x_%r)
 
 source $1
+
+# Check existence of input files
+check_file_exist $1
+check_file_exist $2
 
 # Get absolute paths
 fileparam="$(cd "$(dirname "$1")"; pwd)/$(basename "$1")"
