@@ -30,8 +30,6 @@ matrix:
     - os: osx
       name: "OSX 10.12 (Sierra)"
       osx_image: xcode9.2
-  allow_failures:
-    - name: "Ubuntu 14.04 (Trusty)"
 
 install:
   - |
