@@ -43,7 +43,7 @@ class Param:
 
 class ProcessLabels(object):
     def __init__(self, fname_label, fname_output=None, fname_ref=None, cross_radius=5, dilate=False,
-                 coordinates=None, verbose=1, vertebral_levels=None, value=None, msg=""):
+                 coordinates=None, verbose=1, vertebral_levels=None, value=None, msg="", fname_previous=None):
         """
         Collection of processes that deal with label creation/modification.
         :param fname_label:
@@ -69,6 +69,7 @@ class ProcessLabels(object):
                 self.fname_output = fname_output
         else:
             self.fname_output = fname_output
+        self.fname_previous = fname_previous
         self.cross_radius = cross_radius
         self.vertebral_levels = vertebral_levels
         self.dilate = dilate
@@ -77,6 +78,7 @@ class ProcessLabels(object):
         self.value = value
         self.msg = msg
         self.output_image = None
+        self.previous_image = None
 
     def process(self, type_process):
         # for some processes, change orientation of input image to RPI
@@ -126,7 +128,41 @@ class ProcessLabels(object):
         if type_process == 'vert-continuous':
             self.output_image = self.continuous_vertebral_levels()
         if type_process == 'create-viewer':
-            self.output_image = self.launch_sagittal_viewer(self.value)
+            if self.fname_previous is not None:
+                previous_lab = Image(self.fname_previous)
+                # the input image is reoriented to 'SAL' when open by the GUI
+                previous_lab.change_orientation('SAL')
+                mid = int(np.round(previous_lab.data.shape[2]/2))
+                previous_points = previous_lab.getNonZeroCoordinates()
+                # boolean used to mark first element to initiate the list.
+                first = True
+                for i in range(len(previous_points)):
+                    if int(previous_points[i].value) in self.value:
+                        pass
+                    else:
+                        self.value.append(int(previous_points[i].value))
+                    if first:
+                        points = np.array([previous_points[i]. x, previous_points[i].y, previous_points[i].z, previous_points[i].value])
+                        points = np.reshape(points, (1, 4))
+                        previous_label = points
+                        first = False
+                    else:
+                        points = np.array([previous_points[i].x, previous_points[i].y, previous_points[i].z, previous_points[i].value])
+                        points = np.reshape(points, (1, 4))
+                        previous_label = np.append(previous_label, points, axis=0)
+                    self.value.sort()
+
+                # check if variable was created which means the file was not empty and contains some points asked in self.value
+                if 'previous_label' in locals():
+                    # project onto mid sagittal plane
+                    for i in range(len(previous_label)):
+                        previous_label[i][2] = mid
+                    self.output_image = self.launch_sagittal_viewer(self.value, previous_points=previous_label)
+                else:
+                    self.output_image = self.launch_sagittal_viewer(self.value)
+            else:
+                self.output_image = self.launch_sagittal_viewer(self.value)
+
         if type_process in ['remove', 'keep']:
             self.output_image = self.remove_or_keep_labels(self.value, action=type_process)
 
@@ -595,7 +631,7 @@ class ProcessLabels(object):
 
         return im_output
 
-    def launch_sagittal_viewer(self, labels):
+    def launch_sagittal_viewer(self, labels, previous_points=None):
         from spinalcordtoolbox.gui import base
         from spinalcordtoolbox.gui.sagittal import launch_sagittal_dialog
 
@@ -604,9 +640,11 @@ class ProcessLabels(object):
         params.input_file_name = self.image_input.absolutepath
         params.output_file_name = self.fname_output
         params.subtitle = self.msg
+        if previous_points is not None: 
+            params.message_warn = 'Please select the label you want to add \nor correct in the list below before clicking \non the image'
         output = msct_image.zeros_like(self.image_input)
         output.absolutepath = self.fname_output
-        launch_sagittal_dialog(self.image_input, output, params)
+        launch_sagittal_dialog(self.image_input, output, params, previous_points)
 
         return output
 
@@ -672,6 +710,11 @@ def get_parser():
                       type_value=[[','], 'int'],
                       description='Manually label from a GUI a list of labels IDs, separated with ",". Example: 2,3,4,5',
                       mandatory=False)
+    parser.add_option(name="-ilabel",
+                      type_value="file",
+                      description="File that contain labels that you want to correct. It is possible to add new points with this option. Use with -create-viewer",
+                      mandatory=False,
+                      example="t2_labels_auto.nii.gz",)
     parser.add_option(name='-cubic-to-point',
                       type_value=None,
                       description='Compute the center-of-mass for each label value.',
@@ -809,12 +852,16 @@ def main(args=None):
         msg = ""
     if '-o' in arguments:
         input_fname_output = arguments['-o']
+    if '-ilabel' in arguments:
+        input_fname_previous = arguments['-ilabel']
+    else:
+        input_fname_previous = None
     verbose = int(arguments.get('-v'))
     sct.init_sct(log_level=verbose, update=True)  # Update log level
 
     processor = ProcessLabels(input_filename, fname_output=input_fname_output, fname_ref=input_fname_ref,
                               cross_radius=input_cross_radius, dilate=input_dilate, coordinates=input_coordinates,
-                              verbose=verbose, vertebral_levels=vertebral_levels, value=value, msg=msg)
+                              verbose=verbose, vertebral_levels=vertebral_levels, value=value, msg=msg, fname_previous=input_fname_previous)
     processor.process(process_type)
 
     # return based on process type
