@@ -76,7 +76,7 @@ def resolve_module(framework_name):
         'futures': ('concurrent.futures', False),
         'scikit-image': ('skimage', False),
         'scikit-learn': ('sklearn', False),
-        'pyqt5': ('PyQt5', False),
+        'pyqt5': ('PyQt5.QtCore', False),  # Importing Qt instead PyQt5 to be able to catch this issue #2523
         'Keras': ('keras', True),
         'futures': ("concurrent.futures", False),
         'opencv': ('cv2', False),
@@ -114,8 +114,27 @@ def module_import(module_name, suppress_stderr=False):
 
     else:
         module = importlib.import_module(module_name)
-
     return module
+
+
+def get_version(module):
+    """
+    Get module version. This function is required due to some exceptions in fetching module versions.
+    :param module: the module to get version from
+    :return: string: the version of the module
+    """
+    if module.__name__  == 'PyQt5.QtCore':
+        # Unfortunately importing PyQt5.Qt makes sklearn import crash on Ubuntu 14.04 (corresponding to Debian's jessie)
+        # so we don't display the version for this distros.
+        # See: https://github.com/neuropoly/spinalcordtoolbox/pull/2522#issuecomment-559310454
+        if 'jessie' in platform.platform():
+            version = None
+        else:
+            from PyQt5.Qt import PYQT_VERSION_STR
+            version = PYQT_VERSION_STR
+    else:
+        version = getattr(module, "__version__", getattr(module, "__VERSION__", None))
+    return version
 
 
 def print_line(string):
@@ -200,16 +219,10 @@ def main():
     print("- path: {0}".format(sct.__sct_dir__))
 
     # initialization
-    fsl_is_working = 1
-    # ants_is_installed = 1
     install_software = 0
     e = 0
-    restart_terminal = 0
-    create_log_file = param.create_log_file
-    file_log = 'sct_check_dependencies.log'
     complete_test = param.complete_test
     os_running = 'not identified'
-    dipy_version = '0.10.0dev'
 
     # Check input parameters
     parser = get_parser()
@@ -277,7 +290,7 @@ def main():
         try:
             module_name, suppress_stderr = resolve_module(dep_pkg)
             module = module_import(module_name, suppress_stderr)
-            version = getattr(module, "__version__", getattr(module, "__VERSION__", None))
+            version = get_version(module)
 
             if dep_ver_spec is None and version is not None:
                 ver_pip_setup = dict(get_dependencies(os.path.join(sct.__sct_dir__, "requirements.txt"))).get(dep_pkg, None)
@@ -290,13 +303,14 @@ def main():
 
             elif dep_ver_spec == version:
                 print_ok()
+
             else:
                 print_warning(more=(" (%s != %s mandated version))" % (version, dep_ver_spec)))
 
-        except ImportError:
+        except ImportError as err:
             print_fail()
+            print(err)
             install_software = 1
-
 
     print_line('Check if spinalcordtoolbox is installed')
     try:
@@ -305,21 +319,6 @@ def main():
     except ImportError:
         print_fail()
         install_software = 1
-
-    # CHECK EXTERNAL MODULES:
-
-    # Check if dipy is installed
-    # print_line('Check if dipy ('+dipy_version+') is installed')
-    # try:
-    #     module = importlib.import_module('dipy')
-    #     if module.__version__ == dipy_version:
-    #         print_ok()
-    #     else:
-    #         print_warning()
-    #         print('  Detected version: '+version+'. Required version: '+dipy_version)
-    # except ImportError:
-    #     print_fail()
-    #     install_software = 1
 
     # Check ANTs integrity
     print_line('Check ANTs compatibility with OS ')
@@ -335,19 +334,6 @@ def main():
         print('>> ' + cmd)
         print((status, output), '\n')
 
-    # check if ANTs is compatible with OS
-    # print_line('Check ANTs compatibility with OS ')
-    # cmd = 'isct_antsRegistration'
-    # status, output = sct.run(cmd)
-    # if status in [0, 256]:
-    #     print_ok()
-    # else:
-    #     print_fail()
-    #     e = 1
-    # if complete_test:
-    #     print('>> '+cmd)
-    #     print((status, output), '\n')
-
     # check PropSeg compatibility with OS
     print_line('Check PropSeg compatibility with OS ')
     status, output = sct.run('isct_propseg', verbose=0, raise_exception=False, is_sct_binary=True)
@@ -360,18 +346,26 @@ def main():
     if complete_test:
         print((status, output), '\n')
 
-    # check if figure can be opened (in case running SCT via ssh connection)
-    print_line('Check if figure can be opened')
-    import warnings
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        import matplotlib.pyplot as plt
+    print_line('Check if DISPLAY variable is set')
+    try:
+        os.environ['DISPLAY']
+        print_ok()
+
+        # Further check with PyQt specifically
+        print_line('Check if figure can be opened with PyQt')
+        from PyQt5.QtWidgets import QApplication, QLabel
         try:
-            plt.figure()
-            plt.close()
+            app = QApplication([])
+            label = QLabel('Hello World!')
+            label.show()
+            label.close()
             print_ok()
-        except Exception:
+        except Exception as err:
             print_fail()
+            print(err)
+
+    except KeyError:
+        print_fail()
 
     print('')
     sys.exit(e + install_software)
