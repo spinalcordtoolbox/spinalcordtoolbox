@@ -219,11 +219,11 @@ def main(args=None):
     path_template = os.path.join(w.folder_out, w.folder_template)
 
     # Only deal with QC and verbose if white matter was warped (meaning, everything under template/)
-    if "white matter" in spinalcordtoolbox.metadata.get_indiv_label_names(path_template):
+    if "white matter" in spinalcordtoolbox.metadata.get_indiv_label_info(path_template)['name']:
         # Deal with QC report
         if path_qc is not None:
             fname_wm = os.path.join(w.folder_out, w.folder_template,
-                                    spinalcordtoolbox.metadata.get_file_label(path_template, 'white matter'))
+                                    spinalcordtoolbox.metadata.get_file_label(path_template, id_label=4))  # label = 'white matter mask (probabilistic)'
             generate_qc(fname_src, fname_seg=fname_wm, args=sys.argv[1:], path_qc=os.path.abspath(path_qc),
                         dataset=qc_dataset, subject=qc_subject, process='sct_warp_template')
 
@@ -231,9 +231,9 @@ def main(args=None):
         sct.display_viewer_syntax(
          [
           fname_src,
-          spinalcordtoolbox.metadata.get_file_label(path_template, 'T2-weighted template', output="filewithpath"),
-          spinalcordtoolbox.metadata.get_file_label(path_template, 'gray matter', output="filewithpath"),
-          spinalcordtoolbox.metadata.get_file_label(path_template, 'white matter', output="filewithpath")
+          spinalcordtoolbox.metadata.get_file_label(path_template, id_label=1, output="filewithpath"),  # label = 'T2-weighted template'
+          spinalcordtoolbox.metadata.get_file_label(path_template, id_label=5, output="filewithpath"),  # label = 'gray matter mask (probabilistic)'
+          spinalcordtoolbox.metadata.get_file_label(path_template, id_label=4, output="filewithpath")  # label = 'white matter mask (probabilistic)'
          ],
          colormaps=['gray', 'gray', 'red-yellow', 'blue-lightblue'],
          opacities=['1', '1', '0.5', '0.5'],
