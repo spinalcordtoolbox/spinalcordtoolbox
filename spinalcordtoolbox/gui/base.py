@@ -206,9 +206,13 @@ class BaseDialog(QtWidgets.QWidget):
         self.lb_warning = QtWidgets.QLabel()
         self.lb_warning.setStyleSheet('color:red')
         self.lb_warning.setAlignment(QtCore.Qt.AlignCenter)
+        message_label = getattr(self.params, 'message_warn', '')
+        self.Label = QtWidgets.QLabel(message_label)
+        self.Label.setAlignment(QtCore.Qt.AlignLeft)
 
         parent.addWidget(self.lb_status)
         parent.addWidget(self.lb_warning)
+        parent.addWidget(self.Label)
         parent.addStretch()
         message = getattr(self.params, 'init_message', '')
         self.update_status(message)
