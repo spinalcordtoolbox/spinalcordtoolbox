@@ -31,6 +31,8 @@ SCRIPT_DIR="scripts"
 DATA_DIR="data"
 PYTHON_DIR="python"
 BIN_DIR="bin"
+# Misc
+OSXVERSUPPORTED=13
 
 
 # ======================================================================================================================
@@ -116,6 +118,12 @@ detectKeyboardInterrupt() {
 function fetch_os_type() {
   # OSX
   if uname -a | grep -i darwin >/dev/null 2>&1; then
+    # Fetch OSX version
+    OSver=`sw_vers | grep -e ProductVersion | cut -c 20- | cut -c -2`
+    # Make sure OSver us supported
+    if (( "$OSXver" < "$OSXVERSUPPORTED" )); then
+      die "Sorry, this version of OSX (10.$OSver) is no more supported. The minimum version is 10.$OSXVERSUPPORTED".
+    fi
     # Fix for non-English Unicode systems on MAC
     if [[ -z $LC_ALL ]]; then
       export LC_ALL=en_US.UTF-8
