@@ -493,31 +493,40 @@ def main(args=None):
         sct.printv('\n--\nESTIMATE TRANSFORMATION FOR STEP #' + str(i_step), param.verbose)
         # identify which is the src and dest
         if paramreg.steps[str(i_step)].type == 'im':
-            src = 'src.nii'
-            dest = 'dest_RPI.nii'
-            interp_step = 'spline'
+            src = ['src.nii']
+            dest = ['dest_RPI.nii']
+            interp_step = ['spline']
         elif paramreg.steps[str(i_step)].type == 'seg':
-            src = 'src_seg.nii'
-            dest = 'dest_seg_RPI.nii'
-            interp_step = 'nn'
+            src = ['src_seg.nii']
+            dest = ['dest_seg_RPI.nii']
+            interp_step = ['nn']
+        elif paramreg.steps[str(i_step)].type == 'imseg':  # TODO: add this new choice in usage
+            src = ['src.nii', 'src_seg.nii']
+            dest = ['dest_RPI.nii', 'dest_seg_RPI.nii']
+            interp_step = ['spline', 'nn']
         elif paramreg.steps[str(i_step)].type == 'label':
-            src = 'src_label.nii'
-            dest = 'dest_label_RPI.nii'
-            interp_step = 'nn'
+            src = ['src_label.nii']
+            dest = ['dest_label_RPI.nii']
+            interp_step = ['nn']
         else:
             # src = dest = interp_step = None
             sct.printv('ERROR: Wrong image type.', 1, 'error')
         # if step>0, apply warp_forward_concat to the src image to be used
         if i_step > 0:
             sct.printv('\nApply transformation from previous step', param.verbose)
-            sct_apply_transfo.main(args=[
-                '-i', src,
-                '-d', dest,
-                '-w', warp_forward,
-                '-o', sct.add_suffix(src, '_reg'),
-                '-x', interp_step])
-            src = sct.add_suffix(src, '_reg')
+            for ifile in range(len(src)):
+                sct_apply_transfo.main(args=[
+                    '-i', src[ifile],
+                    '-d', dest[ifile],
+                    '-w', warp_forward,
+                    '-o', sct.add_suffix(src[ifile], '_reg'),
+                    '-x', interp_step[ifile]])
+                src[ifile] = sct.add_suffix(src[ifile], '_reg')
         # register src --> dest
+        # TODO: enable to input both image and segmentation. Various possibilities:
+        #  - have src and dest be dict: src={im: 'fname_im', seg: 'fname_seg'}. Advantage: modular, minimum change in i/o. Compute process based on existence of field. Cons: need to inform within register() what to actually use.
+        #  - have src and dest be either a string or a list. If string: no change to the code. If list: fist is im, second is seg. A check at the beginning of register() can be done to assigne variables.
+        #  - create new choice 'imseg' to deal with both input (they both need to be processed above).
         warp_forward_out, warp_inverse_out = register(src, dest, paramreg, param, str(i_step))
         # deal with transformations with "-" as prefix. They should be inverted with calling sct_concat_transfo.
         if warp_forward_out[0] == "-":
@@ -619,13 +628,17 @@ def register(src, dest, paramreg, param, i_step_str):
                                 'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',1,3'}
     output = ''  # default output if problem
 
-    if paramreg.steps[i_step_str].algo == "centermassrot" and (paramreg.steps[i_step_str].rot_method == 'auto' or paramreg.steps[i_step_str].rot_method == 'hog'):
-        src_im = src[0]  # user is expected to input images to src and dest
-        dest_im = dest[0]
-        src_seg = src[1]
-        dest_seg = dest[1]
-        del src
-        del dest  # to be sure it is not missused later
+    # If the input type is either im or seg, we can convert the input list into a string for improved code clarity
+    if not paramreg.steps[i_step_str].type == 'imseg':
+        src = src[0]
+        dest = dest[0]
+    # if paramreg.steps[i_step_str].algo == "centermassrot" and (paramreg.steps[i_step_str].rot_method == 'auto' or paramreg.steps[i_step_str].rot_method == 'hog'):
+    #     src_im = src[0]  # user is expected to input images to src and dest
+    #     dest_im = dest[0]
+    #     src_seg = src[1]
+    #     dest_seg = dest[1]
+    #     del src
+    #     del dest  # to be sure it is not missused later
 
 
     # display arguments
@@ -818,27 +831,17 @@ def register(src, dest, paramreg, param, i_step_str):
         from msct_register import register_slicewise
         warp_forward_out = 'step' + i_step_str + 'Warp.nii.gz'
         warp_inverse_out = 'step' + i_step_str + 'InverseWarp.nii.gz'
+        # TODO: make it a single call and accommodate all methods
         if paramreg.steps[i_step_str].rot_method == 'pca':  # because pca is the default choice, also includes no rotation
             register_slicewise(src,
-                           dest,
-                           paramreg=paramreg.steps[i_step_str],
-                           fname_mask=fname_mask,
-                           warp_forward_out=warp_forward_out,
-                           warp_inverse_out=warp_inverse_out,
-                           ants_registration_params=ants_registration_params,
-                           remove_temp_files=param.remove_temp_files,
-                           verbose=param.verbose)
-        elif paramreg.steps[i_step_str].rot_method == 'auto' or paramreg.steps[i_step_str].rot_method == 'hog':  # im_seg case
-            register_slicewise([src_im, src_seg],
-                           [dest_im, dest_seg],
-                           paramreg=paramreg.steps[i_step_str],
-                           fname_mask=fname_mask,
-                           warp_forward_out=warp_forward_out,
-                           warp_inverse_out=warp_inverse_out,
-                           ants_registration_params=ants_registration_params,
-                           path_qc=param.path_qc,
-                           remove_temp_files=param.remove_temp_files,
-                           verbose=param.verbose)
+                               dest,
+                               paramreg=paramreg.steps[i_step_str],
+                               fname_mask=fname_mask,
+                               warp_forward_out=warp_forward_out,
+                               warp_inverse_out=warp_inverse_out,
+                               ants_registration_params=ants_registration_params,
+                               remove_temp_files=param.remove_temp_files,
+                               verbose=param.verbose)
         else:
             raise ValueError("rot_method " + paramreg.steps[i_step_str].rot_method + " does not exist")
 
