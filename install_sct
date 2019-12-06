@@ -32,7 +32,7 @@ DATA_DIR="data"
 PYTHON_DIR="python"
 BIN_DIR="bin"
 # Misc
-OSXVERSUPPORTED=13
+OSXVERSUPPORTED=12  # minimum version of OSX supported 
 
 
 # ======================================================================================================================
