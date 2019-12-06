@@ -125,7 +125,7 @@ def register_slicewise(fname_src,
 
 def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii.gz',
                              fname_warp_inv='warp_inverse.nii.gz', rot=1, filter_size=0, path_qc='./', verbose=0,
-                             pca_eigenratio_th=1.6):
+                             pca_eigenratio_th=1.6, th_max_angle=40):
     """
     Rotate the source image to match the orientation of the destination image, using the first and second eigenvector
     of the PCA. This function should be used on segmentations (not images).
@@ -144,6 +144,8 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
     :param verbose:
     :param pca_eigenratio_th: threshold for the ratio between the first and second eigenvector of the estimated ellipse
         for the PCA rotation detection method. If below this threshold, the estimation will be discarded (poorly robust)
+    :param th_max_angle: threshold of the absolute value of the estimated rotation using the PCA method, above
+        which the estimation will be discarded (unlikely to happen genuinely and hence considered outlier)
     :return:
     """
 
@@ -236,12 +238,9 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
     # displacement_inverse = np.zeros([nz, 2])
     angle_src_dest = np.zeros(nz)
     z_nonzero = []
+    th_max_angle *= np.pi / 180
 
     if rot == 1 or rot == 0:  # segmentation-only case, PCA or centermass only
-
-        # TODO: make it input param of function
-        angle_range = 20  # max rotation absolute value, which are unlikely to happen genuinely (outlier)
-        angle_range *= np.pi/180
 
         # Loop across slices
         for iz in range(0, nz):
@@ -264,9 +263,9 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
                     pca_eigenratio_src = pca_src[iz].explained_variance_ratio_[0] / pca_src[iz].explained_variance_ratio_[1]
                     pca_eigenratio_dest = pca_dest[iz].explained_variance_ratio_[0] / pca_dest[iz].explained_variance_ratio_[1]
                     # angle is set to 0 if either ratio between axis is too low or outside angle range
-                    if pca_eigenratio_src < pca_eigenratio_th or angle_src > angle_range or angle_src < -angle_range:
+                    if pca_eigenratio_src < pca_eigenratio_th or angle_src > th_max_angle or angle_src < -th_max_angle:
                         angle_src = 0
-                    if pca_eigenratio_dest < pca_eigenratio_th or angle_dest > angle_range or angle_dest < -angle_range:
+                    if pca_eigenratio_dest < pca_eigenratio_th or angle_dest > th_max_angle or angle_dest < -th_max_angle:
                         angle_dest = 0
                     angle_src_dest[iz] = angle_src + angle_dest  # angle between src and dest is the same as angle between src and origin + angle between origin and dest
                 # append to list of z_nonzero
@@ -277,8 +276,6 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
 
     elif rot == 2:  # im and seg case (hog method)
 
-        angle_range = 20 * np.pi/180
-
         for iz in range(0, nz):
             try:
                 # TODO: duplicated code
@@ -287,8 +284,8 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
                 coord_dest[iz], _, centermass_dest[iz, :] = compute_pca(data_dest_seg[:, :, iz])
 
                 # HOG method to detect rotation, conf_score not used yet
-                angle_src, conf_score_src = find_angle_hog(data_src_im[:, :, iz], centermass_src[iz, :], px, py, angle_range=angle_range)
-                angle_dest, conf_score_dest = find_angle_hog(data_dest_im[:, :, iz], centermass_dest[iz, :], px, py, angle_range=angle_range)
+                angle_src, conf_score_src = find_angle_hog(data_src_im[:, :, iz], centermass_src[iz, :], px, py, angle_range=th_max_angle)
+                angle_dest, conf_score_dest = find_angle_hog(data_dest_im[:, :, iz], centermass_dest[iz, :], px, py, angle_range=th_max_angle)
 
                 if (angle_src is None) or (angle_dest is None):
                     sct.printv('WARNING: Slice #' + str(iz) + ' no angle found in dest or src. It will be ignored.', verbose, 'warning')
@@ -305,9 +302,6 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
 
     # TODO remove duplication for the case below (this is essentially a mix of rot=1 and rot=2)
     elif rot == 3:  # im and seg case (auto method)
-
-        angle_range_pca = 20 * np.pi/180
-        angle_range_hog = 10 * np.pi/180
 
         for iz in range(0, nz):
             try:
@@ -330,11 +324,11 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
                 pca_eigenratio_dest = pca_dest[iz].explained_variance_ratio_[0] / pca_dest[iz].explained_variance_ratio_[1]
 
                 # hog method is used to detect angle if either ratio between axis is too low or outside angle range
-                if pca_eigenratio_src < pca_eigenratio_th or angle_src > angle_range_pca or angle_src < -angle_range_pca:
-                    angle_src, conf_score_src = find_angle_hog(data_src_im[:, :, iz], centermass_src[iz, :], px, py, angle_range=angle_range_hog)
+                if pca_eigenratio_src < pca_eigenratio_th or angle_src > th_max_angle or angle_src < -th_max_angle:
+                    angle_src, conf_score_src = find_angle_hog(data_src_im[:, :, iz], centermass_src[iz, :], px, py, angle_range=th_max_angle)
                     angle_src = -angle_src  # to have same orientation as PCA
-                if pca_eigenratio_dest < pca_eigenratio_th or angle_dest > angle_range_pca or angle_dest < -angle_range_pca:
-                    angle_dest, conf_score_dest = find_angle_hog(data_dest_im[:, :, iz], centermass_dest[iz, :], px, py, angle_range=angle_range_hog)
+                if pca_eigenratio_dest < pca_eigenratio_th or angle_dest > th_max_angle or angle_dest < -th_max_angle:
+                    angle_dest, conf_score_dest = find_angle_hog(data_dest_im[:, :, iz], centermass_dest[iz, :], px, py, angle_range=th_max_angle)
 
                 if (angle_src is None) or (angle_dest is None):
                         sct.printv('WARNING: Slice #' + str(iz) + ' no angle found in dest or src. It will be ignored.', verbose, 'warning')
