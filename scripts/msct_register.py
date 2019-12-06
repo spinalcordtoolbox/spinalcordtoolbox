@@ -32,7 +32,7 @@ from spinalcordtoolbox.image import Image
 import sct_utils as sct
 from sct_convert import convert
 from sct_register_multimodal import Paramreg
-from sct_image import split_data
+from sct_image import split_data, concat_warp2d
 
 logger = logging.getLogger(__name__)
 
@@ -236,7 +236,8 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
 
     if rot == 1 or rot == 0:  # segmentation-only case, PCA or centermass only
 
-        angle_range = 20  # max rotation value, which is set for robustness
+        # TODO: make it input param of function
+        angle_range = 20  # max rotation absolute value, which are unlikely to happen genuinely (outlier)
         angle_range *= np.pi/180
 
         # Loop across slices
@@ -277,6 +278,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
 
         for iz in range(0, nz):
             try:
+                # TODO: duplicated code
                 # PCA for center of mass
                 coord_src[iz], _, centermass_src[iz, :] = compute_pca(data_src_seg[:, :, iz])
                 coord_dest[iz], _, centermass_dest[iz, :] = compute_pca(data_dest_seg[:, :, iz])
@@ -298,6 +300,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
             except ValueError:
                 sct.printv('WARNING: Slice #' + str(iz) + ' is empty. It will be ignored.', verbose, 'warning')
 
+    # TODO remove duplication for the case below (this is essentially a mix of rot=1 and rot=2)
     elif rot == 3:  # im and seg case (auto method)
 
         angle_range_pca = 20 * np.pi/180
@@ -497,7 +500,6 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
 
     # Split source volume along z
     sct.printv('\nSplit input volume...', verbose)
-    from sct_image import split_data
     im_src = Image('src.nii')
     split_source_list = split_data(im_src, 2)
     for im in split_source_list:
@@ -773,7 +775,6 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
 
     # Split input volume along z
     sct.printv('\nSplit input volume...', verbose)
-    from sct_image import split_data
     im_src = Image('src.nii')
     split_source_list = split_data(im_src, 2)
     for im in split_source_list:
@@ -893,7 +894,6 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
         generate_warping_field('src.nii', -x_disp_a, -y_disp_a, fname_warp=fname_warp_inv)
 
     if paramreg.algo in ['Rigid', 'Affine', 'BSplineSyN', 'SyN']:
-        from sct_image import concat_warp2d
         # concatenate 2d warping fields along z
         concat_warp2d(list_warp, fname_warp, 'dest.nii')
         concat_warp2d(list_warp_inv, fname_warp_inv, 'src.nii')
