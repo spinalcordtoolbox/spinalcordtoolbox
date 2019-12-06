@@ -28,9 +28,11 @@ from scipy.io import loadmat
 from nibabel import load, Nifti1Image, save
 
 from spinalcordtoolbox.image import Image
+
 import sct_utils as sct
 from sct_convert import convert
 from sct_register_multimodal import Paramreg
+from sct_image import split_data
 
 logger = logging.getLogger(__name__)
 
@@ -46,8 +48,11 @@ def register_slicewise(fname_src,
                         remove_temp_files=0,
                         verbose=0):
 
-    im_and_seg = (paramreg.algo == 'centermassrot') and ((paramreg.rot_method == 'hog') or (paramreg.rot_method == 'auto'))  # bool for simplicity
-    # future contributor wanting to implement a method that use both im and seg will add: or (paramreg.rot_method == 'OTHER_METHOD')
+    # The boolean variable im_and_seg informs if the registration procedure uses both the image and the segmentation
+    im_and_seg = (paramreg.algo == 'centermassrot') \
+                 and ((paramreg.rot_method == 'hog') or (paramreg.rot_method == 'auto'))
+    # NB: Future contributors who wish to implement a method that uses both im and seg will need to add:
+    # or (paramreg.rot_method == 'OTHER_METHOD')
 
     if im_and_seg is True:
         fname_src_im = fname_src[0]
@@ -83,10 +88,10 @@ def register_slicewise(fname_src,
         register2d_centermassrot('src.nii', 'dest.nii', fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, rot=0, filter_size=int(paramreg.filter_size), path_qc=path_qc, verbose=verbose)
     elif paramreg.algo == 'centermassrot':
         if im_and_seg is False:
-            # translation of center of mass and rotation based on source and destination first eigenvectors from PCA.
+            # translation using center of mass and rotation based on source and destination first eigenvectors from PCA.
             register2d_centermassrot('src.nii', 'dest.nii', fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, rot=1, filter_size=int(paramreg.filter_size), path_qc=path_qc, verbose=verbose, pca_eigenratio_th=float(paramreg.pca_eigenratio_th))
         else:
-            # translation based of center of mass and rotation based on the symmetry of the image
+            # translation using center of mass and rotation using symmetry of the image
             if paramreg.rot_method == 'hog':
                 rot = 2
             elif paramreg.rot_method == 'auto':
@@ -118,7 +123,9 @@ def register_slicewise(fname_src,
         sct.rmtree(path_tmp, verbose=verbose)
 
 
-def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii.gz', fname_warp_inv='warp_inverse.nii.gz', rot=1, filter_size=0, path_qc='./', verbose=0, pca_eigenratio_th=1.6):
+def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii.gz',
+                             fname_warp_inv='warp_inverse.nii.gz', rot=1, filter_size=0, path_qc='./', verbose=0,
+                             pca_eigenratio_th=1.6):
     """
     Rotate the source image to match the orientation of the destination image, using the first and second eigenvector
     of the PCA. This function should be used on segmentations (not images).
@@ -129,7 +136,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
         fname_dest: name of fixed image (type: string), if rot == 2, needs to be a list
         fname_warp: name of output 3d forward warping field
         fname_warp_inv: name of output 3d inverse warping field
-        rot: estimate rotation with pca (=1), hog (=2), auto (=3) or no rotation (=0) Default = 1
+        rot: estimate rotation with pca (=1), hog (=2), auto (=3) or no rotation (=0). Default = 1
         Depending on the rotation method, input might be segmentation only or image and segmentation
         filter_size: size of the gaussian filter for regularization along z for rotation angle (type: float). 0: no regularization
         verbose:
@@ -162,7 +169,6 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
     if rot == 1 or rot == 0:
         # Split source volume along z
         sct.printv('\nSplit input volume...', verbose)
-        from sct_image import split_data
         im_src = Image('src.nii')
         split_source_list = split_data(im_src, 2)
         for im in split_source_list:
@@ -188,7 +194,6 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
     elif rot == 2 or rot == 3:  # im and seg case
         # Split source volume along z
         sct.printv('\nSplit input volume...', verbose)
-        from sct_image import split_data
         im_src_im = Image('src_im.nii')
         split_source_list = split_data(im_src_im, 2)
         for im in split_source_list:
@@ -229,9 +234,9 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
     angle_src_dest = np.zeros(nz)
     z_nonzero = []
 
-    if rot == 1 or rot == 0:  # seg only case, PCA or centermass only
+    if rot == 1 or rot == 0:  # segmentation-only case, PCA or centermass only
 
-        angle_range = 20
+        angle_range = 20  # max rotation value, which is set for robustness
         angle_range *= np.pi/180
 
         # Loop across slices
