@@ -116,12 +116,18 @@ detectKeyboardInterrupt() {
 # Fetches the OS type
 # @output: OS var is modified with the appropriate OS
 function fetch_os_type() {
+  print info "Checking OS type and version..."
+  OSver="unknown"  # default value
+  uname_output=`uname -a`
+  echo $uname_output
   # OSX
-  if uname -a | grep -i darwin >/dev/null 2>&1; then
+  if echo $uname_output | grep -i darwin >/dev/null 2>&1; then
     # Fetch OSX version
-    OSver=`sw_vers | grep -e ProductVersion | cut -c 20- | cut -c -2`
+    sw_vers_output=`sw_vers | grep -e ProductVersion`
+    echo "$sw_vers_output"
+    OSver=`echo $sw_vers_output | cut -c 20- | cut -c -2`
     # Make sure OSver us supported
-    if (( "$OSXver" < "$OSXVERSUPPORTED" )); then
+    if (("$OSver" < "$OSXVERSUPPORTED")); then
       die "Sorry, this version of OSX (10.$OSver) is no more supported. The minimum version is 10.$OSXVERSUPPORTED".
     fi
     # Fix for non-English Unicode systems on MAC
@@ -136,7 +142,7 @@ function fetch_os_type() {
     # make sure bashrc is loaded when starting a new Terminal
     force_bashrc_loading
   # Linux
-  elif uname -a | grep -i linux >/dev/null 2>&1; then
+  elif echo $uname_output | grep -i linux >/dev/null 2>&1; then
     # CentOS 6.X
     if cat /etc/issue | grep -i centos | grep 6. 2>&1; then
       OS=linux_centos6
@@ -368,7 +374,7 @@ get_shell_rc_path
 # Display install info
 echo -e "\nSCT version ......... "$SCT_VERSION
 echo -e "Installation type ... "$SCT_INSTALL_TYPE
-echo -e "Operating system .... "$OS
+echo -e "Operating system .... $OS ($OSver)"
 echo -e "Shell config ........ "$RC_FILE_PATH
 
 # If you do not want the crash reports question to be ask,
