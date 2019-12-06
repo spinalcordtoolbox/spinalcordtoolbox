@@ -130,18 +130,21 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
     Rotate the source image to match the orientation of the destination image, using the first and second eigenvector
     of the PCA. This function should be used on segmentations (not images).
     This works for 2D and 3D images.  If 3D, it splits the image and performs the rotation slice-by-slice.
-    input:
-        fname_source: name of moving image (type: string), if rot  == 2, this needs to be a list with the first element
+
+    :param fname_src: name of moving image (type: string), if rot  == 2, this needs to be a list with the first element
         being the image fname and the second the segmentation fname
-        fname_dest: name of fixed image (type: string), if rot == 2, needs to be a list
-        fname_warp: name of output 3d forward warping field
-        fname_warp_inv: name of output 3d inverse warping field
-        rot: estimate rotation with pca (=1), hog (=2), auto (=3) or no rotation (=0). Default = 1
+    :param fname_dest: name of fixed image (type: string), if rot == 2, needs to be a list
+    :param fname_warp: name of output 3d forward warping field
+    :param fname_warp_inv: name of output 3d inverse warping field
+    :param rot: estimate rotation with pca (=1), hog (=2), auto (=3) or no rotation (=0). Default = 1
         Depending on the rotation method, input might be segmentation only or image and segmentation
-        filter_size: size of the gaussian filter for regularization along z for rotation angle (type: float). 0: no regularization
-        verbose:
-    output:
-        none
+    :param filter_size: size of the gaussian filter for regularization along z for rotation angle (type: float).
+        0: no regularization
+    :param path_qc:
+    :param verbose:
+    :param pca_eigenratio_th: threshold for the ratio between the first and second eigenvector of the estimated ellipse
+        for the PCA rotation detection method. If below this threshold, the estimation will be discarded (poorly robust)
+    :return:
     """
 
     if rot == 2 or rot == 3:  # if following methods need im and seg, add "and rot == x"
