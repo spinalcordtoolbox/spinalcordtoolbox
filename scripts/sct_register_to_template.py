@@ -110,6 +110,17 @@ def get_parser():
                       mandatory=False,
                       default_value='',
                       example="anat_labels.nii.gz")
+    parser.add_option(name="-lspinal",
+                      type_value="file",
+                      description="Labels located in the center of the spinal cord, at the superior-inferior level " 
+                                  "corresponding to the mid-point of the spinal level. Each label is a single voxel, " 
+                                  "which value corresponds to the spinal level (e.g.: 2 for spinal level 2). If you " 
+                                  "are using more than 2 labels, all spinal levels covering the region of interest " 
+                                  "should be provided (e.g., if you are interested in levels C2 to C7, then you " 
+                                  "should provide spinal level labels 2,3,4,5,6,7).",
+                      mandatory=False,
+                      default_value='',
+                      example="anat_labels.nii.gz")
     parser.add_option(name="-ofolder",
                       type_value="folder_creation",
                       description="Output folder.",
@@ -203,6 +214,9 @@ def main(args=None):
     elif '-ldisc' in arguments:
         fname_landmarks = arguments['-ldisc']
         label_type = 'disc'
+    elif '-lspinal' in arguments:
+        fname_landmarks = arguments['-lspinal']
+        label_type = 'spinal'
     else:
         sct.printv('ERROR: Labels should be provided.', 1, 'error')
     if '-ofolder' in arguments:
@@ -241,16 +255,20 @@ def main(args=None):
     zsubsample = param.zsubsample
 
     # retrieve template file names
-    file_template_vertebral_labeling = get_file_label(os.path.join(path_template, 'template'), 'vertebral labeling')
-    file_template = get_file_label(os.path.join(path_template, 'template'), contrast_template.upper() + '-weighted template')
-    file_template_seg = get_file_label(os.path.join(path_template, 'template'), 'spinal cord')
+    if label_type == 'spinal':
+        file_template_labeling = get_file_label(os.path.join(path_template, 'template'), id_label=14)  # label = point-wise spinal level labels
+    else:
+        file_template_labeling = get_file_label(os.path.join(path_template, 'template'), id_label=7)  # label = spinal cord mask with discrete vertebral levels
+    id_label_dct = {'T1': 0, 'T2': 1, 'T2S': 2}
+    file_template = get_file_label(os.path.join(path_template, 'template'), id_label=id_label_dct[contrast_template.upper()])  # label = *-weighted template
+    file_template_seg = get_file_label(os.path.join(path_template, 'template'), id_label=3)  # label = spinal cord mask (binary)
 
     # start timer
     start_time = time.time()
 
     # get fname of the template + template objects
     fname_template = os.path.join(path_template, 'template', file_template)
-    fname_template_vertebral_labeling = os.path.join(path_template, 'template', file_template_vertebral_labeling)
+    fname_template_labeling = os.path.join(path_template, 'template', file_template_labeling)
     fname_template_seg = os.path.join(path_template, 'template', file_template_seg)
     fname_template_disc_labeling = os.path.join(path_template, 'template', 'PAM50_label_disc.nii.gz')
 
@@ -258,7 +276,7 @@ def main(args=None):
     # TODO: no need to do that!
     sct.printv('\nCheck template files...')
     sct.check_file_exist(fname_template, verbose)
-    sct.check_file_exist(fname_template_vertebral_labeling, verbose)
+    sct.check_file_exist(fname_template_labeling, verbose)
     sct.check_file_exist(fname_template_seg, verbose)
     path_data, file_data, ext_data = sct.extract_fname(fname_data)
 
@@ -273,9 +291,9 @@ def main(args=None):
     # check input labels
     labels = check_labels(fname_landmarks, label_type=label_type)
 
-    vertebral_alignment = False
-    if len(labels) > 2 and label_type == 'disc':
-        vertebral_alignment = True
+    level_alignment = False
+    if len(labels) > 2 and label_type in ['disc', 'spinal']:
+        level_alignment = True
 
     path_tmp = sct.tmp_create(basename="register_to_template", verbose=verbose)
 
@@ -294,7 +312,7 @@ def main(args=None):
     Image(fname_landmarks).save(os.path.join(path_tmp, ftmp_label))
     Image(fname_template).save(os.path.join(path_tmp, ftmp_template))
     Image(fname_template_seg).save(os.path.join(path_tmp, ftmp_template_seg))
-    Image(fname_template_vertebral_labeling).save(os.path.join(path_tmp, ftmp_template_label))
+    Image(fname_template_labeling).save(os.path.join(path_tmp, ftmp_template_label))
     if label_type == 'disc':
         Image(fname_template_disc_labeling).save(os.path.join(path_tmp, ftmp_template_label))
 
@@ -358,8 +376,8 @@ def main(args=None):
 
 
         ftmp_seg_, ftmp_seg = ftmp_seg, add_suffix(ftmp_seg, '_crop')
-        if vertebral_alignment:
-            # cropping the segmentation based on the label coverage to ensure good registration with vertebral alignment
+        if level_alignment:
+            # cropping the segmentation based on the label coverage to ensure good registration with level alignment
             # See https://github.com/neuropoly/spinalcordtoolbox/pull/1669 for details
             image_labels = Image(ftmp_label)
             coordinates_labels = image_labels.getNonZeroCoordinates(sorting='z')
@@ -397,7 +415,7 @@ def main(args=None):
         fn_straight_ref = os.path.join(curdir, "straight_ref.nii.gz")
 
         cache_input_files=[ftmp_seg]
-        if vertebral_alignment:
+        if level_alignment:
             cache_input_files += [
              ftmp_template_seg,
              ftmp_label,
@@ -428,7 +446,7 @@ def main(args=None):
             sc_straight.remove_temp_files = param.remove_temp_files
             sc_straight.verbose = verbose
 
-            if vertebral_alignment:
+            if level_alignment:
                 sc_straight.centerline_reference_filename = ftmp_template_seg
                 sc_straight.use_straight_reference = True
                 sc_straight.discs_input_filename = ftmp_label
@@ -444,7 +462,7 @@ def main(args=None):
             '-d', ftmp_data,
             '-o', 'warp_straight2curve.nii.gz'])
 
-        if vertebral_alignment:
+        if level_alignment:
             sct.copy('warp_curve2straight.nii.gz', 'warp_curve2straightAffine.nii.gz')
         else:
             # Label preparation:
@@ -610,7 +628,7 @@ def main(args=None):
         # Concatenate transformations: template --> anat
         sct.printv('\nConcatenate transformations: template --> anat...', verbose)
         warp_inverse.reverse()
-        if vertebral_alignment:
+        if level_alignment:
             warp_inverse.append('warp_straight2curve.nii.gz')
             sct_concat_transfo.main(args=[
                 '-w', warp_inverse,
@@ -708,8 +726,8 @@ def main(args=None):
             '-o', 'warp_anat2template.nii.gz'])
 
     # Apply warping fields to anat and template
-    sct.run(['sct_apply_transfo', '-i', 'template.nii', '-o', 'template2anat.nii.gz', '-d', 'data.nii', '-w', 'warp_template2anat.nii.gz', '-crop', '1'], verbose)
-    sct.run(['sct_apply_transfo', '-i', 'data.nii', '-o', 'anat2template.nii.gz', '-d', 'template.nii', '-w', 'warp_anat2template.nii.gz', '-crop', '1'], verbose)
+    sct.run(['sct_apply_transfo', '-i', 'template.nii', '-o', 'template2anat.nii.gz', '-d', 'data.nii', '-w', 'warp_template2anat.nii.gz', '-crop', '0'], verbose)
+    sct.run(['sct_apply_transfo', '-i', 'data.nii', '-o', 'anat2template.nii.gz', '-d', 'template.nii', '-w', 'warp_anat2template.nii.gz', '-crop', '0'], verbose)
 
     # come back
     os.chdir(curdir)
@@ -836,7 +854,7 @@ def check_labels(fname_landmarks, label_type='body'):
     Parameters
     ----------
     fname_landmarks: file name of input labels
-    label_type: 'body', 'disc'
+    label_type: 'body', 'disc', 'spinal'
     Returns
     -------
     none
