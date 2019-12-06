@@ -120,7 +120,7 @@ def get_parser(paramreg=None):
                       type_value=[[':'], 'str'],
                       description="Parameters for registration. Separate arguments with \",\". Separate steps with \":\".\n"
                                   "step: <int> Step number (starts at 1, except for type=label).\n"
-                                  "type: {im,seg,label} type of data used for registration. Use type=label only at step=0.\n"
+                                  "type: {im,seg,imseg,label} type of data used for registration. Use type=label only at step=0.\n"
                                   "algo: Default=" + paramreg.steps['1'].algo + "\n"
                                                                                 "  translation: translation in X-Y plane (2dof)\n"
                                                                                 "  rigid: translation + rotation in X-Y plane (4dof)\n"
@@ -162,7 +162,7 @@ def get_parser(paramreg=None):
                                                                           "dof: <str> Degree of freedom for type=label. Separate with '_'. Default=" +
                                   paramreg.steps['0'].dof + "\n" +
                                   paramreg.steps['1'].rot_method + "\n"
-                                                                    "rot_method {pca,hog,auto}: rotation method to be used with algo=centermassrot.",
+                                                                    "rot_method {pca,hog,auto}: rotation method to be used with algo=centermassrot. If using hog or auto, type should be set to imseg.",
                       mandatory=False,
                       example="step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=im,algo=syn,metric=MI,iter=5,shrink=2")
     parser.add_option(name="-identity",
