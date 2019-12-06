@@ -37,16 +37,24 @@ from sct_image import split_data, concat_warp2d
 logger = logging.getLogger(__name__)
 
 
-def register_slicewise(fname_src,
-                        fname_dest,
-                        fname_mask='',
-                        warp_forward_out='step0Warp.nii.gz',
-                        warp_inverse_out='step0InverseWarp.nii.gz',
-                        paramreg=None,
-                        ants_registration_params=None,
-                        path_qc='./',
-                        remove_temp_files=0,
-                        verbose=0):
+def register_slicewise(fname_src, fname_dest, fname_mask='', warp_forward_out='step0Warp.nii.gz',
+                       warp_inverse_out='step0InverseWarp.nii.gz', paramreg=None, ants_registration_params=None,
+                       path_qc='./', remove_temp_files=0, verbose=0):
+    """
+    Main function that calls various methods for slicewise registration.
+    
+    :param fname_src: Str or List: If List, first element is image, second element is segmentation.
+    :param fname_dest: Str or List: If List, first element is image, second element is segmentation.
+    :param fname_mask:
+    :param warp_forward_out:
+    :param warp_inverse_out:
+    :param paramreg:
+    :param ants_registration_params:
+    :param path_qc:
+    :param remove_temp_files:
+    :param verbose:
+    :return:
+    """
 
     # The boolean variable im_and_seg informs if the registration procedure uses both the image and the segmentation
     im_and_seg = (paramreg.algo == 'centermassrot') \
@@ -54,6 +62,7 @@ def register_slicewise(fname_src,
     # NB: Future contributors who wish to implement a method that uses both im and seg will need to add:
     # or (paramreg.rot_method == 'OTHER_METHOD')
 
+    # TODO: generalize the code below (input of function could be list, or we create additional input params)
     if im_and_seg is True:
         fname_src_im = fname_src[0]
         fname_dest_im = fname_dest[0]
