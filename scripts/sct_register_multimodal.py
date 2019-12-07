@@ -250,7 +250,7 @@ class Paramreg(object):
         self.rot_method = rot_method  # only for algo=centermassrot
 
         # list of possible values for self.type
-        self.type_list = ['im', 'seg', 'label']
+        self.type_list = ['im', 'seg', 'imseg', 'label']
 
     # update constructor with user's parameters
     def update(self, paramreg_user):
@@ -831,20 +831,15 @@ def register(src, dest, paramreg, param, i_step_str):
         from msct_register import register_slicewise
         warp_forward_out = 'step' + i_step_str + 'Warp.nii.gz'
         warp_inverse_out = 'step' + i_step_str + 'InverseWarp.nii.gz'
-        # TODO: make it a single call and accommodate all methods
-        if paramreg.steps[i_step_str].rot_method == 'pca':  # because pca is the default choice, also includes no rotation
-            register_slicewise(src,
-                               dest,
-                               paramreg=paramreg.steps[i_step_str],
-                               fname_mask=fname_mask,
-                               warp_forward_out=warp_forward_out,
-                               warp_inverse_out=warp_inverse_out,
-                               ants_registration_params=ants_registration_params,
-                               remove_temp_files=param.remove_temp_files,
-                               verbose=param.verbose)
-        else:
-            raise ValueError("rot_method " + paramreg.steps[i_step_str].rot_method + " does not exist")
-
+        register_slicewise(src,
+                           dest,
+                           paramreg=paramreg.steps[i_step_str],
+                           fname_mask=fname_mask,
+                           warp_forward_out=warp_forward_out,
+                           warp_inverse_out=warp_inverse_out,
+                           ants_registration_params=ants_registration_params,
+                           remove_temp_files=param.remove_temp_files,
+                           verbose=param.verbose)
 
     else:
         sct.printv('\nERROR: algo ' + paramreg.steps[i_step_str].algo + ' does not exist. Exit program\n', 1, 'error')
