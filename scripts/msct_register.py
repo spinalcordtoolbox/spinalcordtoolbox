@@ -79,42 +79,29 @@ def register_slicewise(fname_src, fname_dest, fname_mask='', warp_forward_out='s
     os.chdir(path_tmp)
 
     # Calculate displacement
-    if paramreg.algo == 'centermass':
+    if paramreg.algo in ['centermass', 'centermassrot']:
         # translation of center of mass between source and destination in voxel space
-        register2d_centermassrot(['src.nii'],
-                                 ['dest.nii'],
+        if paramreg.algo in 'centermass':
+            rot_method = 'none'
+        else:
+            rot_method = paramreg.rot_method
+        if rot_method in ['hog', 'auto']:
+            src_input = ['src_seg.nii', 'src.nii']
+            dest_input = ['dest_seg.nii', 'dest.nii']
+        else:
+            src_input = ['src.nii']
+            dest_input = ['dest.nii']
+        register2d_centermassrot(src_input,
+                                 dest_input,
                                  fname_warp=warp_forward_out,
                                  fname_warp_inv=warp_inverse_out,
-                                 rot=0,
+                                 rot_method=rot_method,
                                  filter_size=int(paramreg.filter_size),
                                  path_qc=path_qc,
                                  verbose=verbose,
+                                 pca_eigenratio_th=float(paramreg.pca_eigenratio_th),
                                  )
-    elif paramreg.algo == 'centermassrot':
-        if paramreg.rot_method in ['pca']:
-            # translation using center of mass and rotation using PCA method
-            register2d_centermassrot(['src.nii'],
-                                     ['dest.nii'],
-                                     fname_warp=warp_forward_out,
-                                     fname_warp_inv=warp_inverse_out,
-                                     rot=1,
-                                     filter_size=int(paramreg.filter_size),
-                                     path_qc=path_qc,
-                                     verbose=verbose,
-                                     pca_eigenratio_th=float(paramreg.pca_eigenratio_th),
-                                     )
-        elif paramreg.rot_method in ['hog', 'auto']:
-            # translation using center of mass and rotation using symmetry of the image or PCA
-            register2d_centermassrot(['src_seg.nii', 'src.nii'],
-                                     ['dest_seg.nii', 'dest.nii'],
-                                     fname_warp=warp_forward_out,
-                                     fname_warp_inv=warp_inverse_out,
-                                     rot=(2 if paramreg.rot_method == 'hog' else 3),
-                                     filter_size=int(paramreg.filter_size),
-                                     path_qc=path_qc,
-                                     verbose=verbose,
-                                     pca_eigenratio_th=float(paramreg.pca_eigenratio_th),
-                                     )
+
     elif paramreg.algo == 'columnwise':
         # scaling R-L, then column-wise center of mass alignment and scaling
         register2d_columnwise('src.nii',
@@ -125,6 +112,8 @@ def register_slicewise(fname_src, fname_dest, fname_mask='', warp_forward_out='s
                               path_qc=path_qc,
                               smoothWarpXY=int(paramreg.smoothWarpXY),
                               )
+
+    # ANTs registration
     else:
         # convert SCT flags into ANTs-compatible flags
         algo_dic = {'translation': 'Translation', 'rigid': 'Rigid', 'affine': 'Affine', 'syn': 'SyN', 'bsplinesyn': 'BSplineSyN', 'centermass': 'centermass'}
@@ -152,8 +141,8 @@ def register_slicewise(fname_src, fname_dest, fname_mask='', warp_forward_out='s
 
 
 def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii.gz',
-                             fname_warp_inv='warp_inverse.nii.gz', rot=1, filter_size=0, path_qc='./', verbose=0,
-                             pca_eigenratio_th=1.6, th_max_angle=40):
+                             fname_warp_inv='warp_inverse.nii.gz', rot_method='pca', filter_size=0, path_qc='./',
+                             verbose=0, pca_eigenratio_th=1.6, th_max_angle=40):
     """
     Rotate the source image to match the orientation of the destination image, using the first and second eigenvector
     of the PCA. This function should be used on segmentations (not images).
@@ -165,8 +154,8 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
         segmentation). If rot=2 or 3, the first element is a segmentation and the second is an image.
     :param fname_warp: name of output 3d forward warping field
     :param fname_warp_inv: name of output 3d inverse warping field
-    :param rot: estimate rotation with pca (=1), hog (=2), auto (=3) or no rotation (=0). Default = 1
-        Depending on the rotation method, input might be segmentation only or image and segmentation
+    :param rot_method: {none, pca, hog, auto}. Depending on the rotation method, input might be segmentation only or
+        segmentation and image.
     :param filter_size: size of the gaussian filter for regularization along z for rotation angle (type: float).
         0: no regularization
     :param path_qc:
@@ -253,7 +242,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
             coord_dest[iz], pca_dest[iz], centermass_dest[iz, :] = compute_pca(data_dest[:, :, iz])
 
             # detect rotation using the HOG method
-            if rot in [2, 3]:
+            if rot_method in ['hog', 'auto']:
                 angle_src_hog, conf_score_src = find_angle_hog(data_src_im[:, :, iz], centermass_src[iz, :],
                                                                px, py, angle_range=th_max_angle)
                 angle_dest_hog, conf_score_dest = find_angle_hog(data_dest_im[:, :, iz], centermass_dest[ iz, : ],
@@ -263,13 +252,12 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
                     sct.printv('WARNING: Slice #' + str(iz) + ' no angle found in dest or src. It will be ignored.',
                                verbose, 'warning')
                     continue
-                # If HOG only
-                if rot == 2:
+                if rot_method == 'hog':
                     angle_src = -angle_src_hog  # flip sign to be consistent with PCA output
                     angle_dest = angle_dest_hog
 
             # Detect rotation using the PCA or PCA-HOG method
-            if rot in [1, 3]:
+            if rot_method in ['pca', 'auto']:
                 eigenv_src = pca_src[iz].components_.T[0][0], pca_src[iz].components_.T[1][0]
                 eigenv_dest = pca_dest[iz].components_.T[0][0], pca_dest[iz].components_.T[1][0]
                 # Make sure first element is always positive (to prevent sign flipping)
@@ -284,14 +272,14 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
                 pca_eigenratio_dest = pca_dest[iz].explained_variance_ratio_[0] / pca_dest[iz].explained_variance_ratio_[1]
                 # angle is set to 0 if either ratio between axis is too low or outside angle range
                 if pca_eigenratio_src < pca_eigenratio_th or angle_src > th_max_angle or angle_src < -th_max_angle:
-                    if rot == 1:
+                    if rot_method == 'pca':
                         angle_src = 0
-                    elif rot == 3:
+                    elif rot_method == 'auto':
                         angle_src = -angle_src_hog  # flip sign to be consistent with PCA output
                 if pca_eigenratio_dest < pca_eigenratio_th or angle_dest > th_max_angle or angle_dest < -th_max_angle:
-                    if rot == 1:
+                    if rot_method == 'pca':
                         angle_dest = 0
-                    elif rot == 3:
+                    elif rot_method == 'auto':
                         angle_dest = angle_dest_hog
 
             # the angle between (src, dest) is the angle between (src, origin) + angle between (origin, dest)
@@ -305,7 +293,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
             sct.printv('WARNING: Slice #' + str(iz) + ' is empty. It will be ignored.', verbose, 'warning')
 
     # regularize rotation
-    if not filter_size == 0 and (rot in [1, 2, 3]):
+    if not filter_size == 0 and (rot_method in ['pca', 'hog', 'auto']):
         # Filtering the angles by gaussian filter
         angle_src_dest_regularized = ndimage.filters.gaussian_filter1d(angle_src_dest, filter_size)
         if verbose == 2:
