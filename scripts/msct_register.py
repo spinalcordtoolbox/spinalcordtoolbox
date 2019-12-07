@@ -42,7 +42,7 @@ def register_slicewise(fname_src, fname_dest, fname_mask='', warp_forward_out='s
                        path_qc='./', remove_temp_files=0, verbose=0):
     """
     Main function that calls various methods for slicewise registration.
-    
+
     :param fname_src: Str or List: If List, first element is image, second element is segmentation.
     :param fname_dest: Str or List: If List, first element is image, second element is segmentation.
     :param fname_mask:
@@ -56,34 +56,35 @@ def register_slicewise(fname_src, fname_dest, fname_mask='', warp_forward_out='s
     :return:
     """
 
-    # The boolean variable im_and_seg informs if the registration procedure uses both the image and the segmentation
-    im_and_seg = (paramreg.algo == 'centermassrot') \
-                 and ((paramreg.rot_method == 'hog') or (paramreg.rot_method == 'auto'))
-    # NB: Future contributors who wish to implement a method that uses both im and seg will need to add:
-    # or (paramreg.rot_method == 'OTHER_METHOD')
+    # # The boolean variable im_and_seg informs if the registration procedure uses both the image and the segmentation
+    # im_and_seg = (paramreg.algo == 'centermassrot') \
+    #              and ((paramreg.rot_method == 'hog') or (paramreg.rot_method == 'auto'))
+    # # NB: Future contributors who wish to implement a method that uses both im and seg will need to add:
+    # # or (paramreg.rot_method == 'OTHER_METHOD')
 
-    # TODO: generalize the code below (input of function could be list, or we create additional input params)
-    if im_and_seg is True:
-        fname_src_im = fname_src[0]
-        fname_dest_im = fname_dest[0]
-        fname_src_seg = fname_src[1]
-        fname_dest_seg = fname_dest[1]
-        del fname_src
-        del fname_dest  # to be sure it is not missused later
+    # # TODO: generalize the code below (input of function could be list, or we create additional input params)
+    # if im_and_seg is True:
+    #     fname_src_im = fname_src[0]
+    #     fname_dest_im = fname_dest[0]
+    #     fname_src_seg = fname_src[1]
+    #     fname_dest_seg = fname_dest[1]
+    #     del fname_src
+    #     del fname_dest  # to be sure it is not missused later
 
     # create temporary folder
     path_tmp = sct.tmp_create(basename="register", verbose=verbose)
 
     # copy data to temp folder
     sct.printv('\nCopy input data to temp folder...', verbose)
-    if im_and_seg is False:
+    if isinstance(fname_src, list):
+        convert(fname_src[0], os.path.join(path_tmp, "src_im.nii"))
+        convert(fname_src[1], os.path.join(path_tmp, "src_seg.nii"))
+        convert(fname_dest[0], os.path.join(path_tmp, "dest_im.nii"))
+        convert(fname_dest[1], os.path.join(path_tmp, "dest_seg.nii"))
+    else:
         convert(fname_src, os.path.join(path_tmp, "src.nii"))
         convert(fname_dest, os.path.join(path_tmp, "dest.nii"))
-    else:
-        convert(fname_src_im, os.path.join(path_tmp, "src_im.nii"))
-        convert(fname_dest_im, os.path.join(path_tmp, "dest_im.nii"))
-        convert(fname_src_seg, os.path.join(path_tmp, "src_seg.nii"))
-        convert(fname_dest_seg, os.path.join(path_tmp, "dest_seg.nii"))
+
     if fname_mask != '':
         convert(fname_mask, os.path.join(path_tmp, "mask.nii.gz"))
 
@@ -94,32 +95,64 @@ def register_slicewise(fname_src, fname_dest, fname_mask='', warp_forward_out='s
     # Calculate displacement
     if paramreg.algo == 'centermass':
         # translation of center of mass between source and destination in voxel space
-        register2d_centermassrot('src.nii', 'dest.nii', fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, rot=0, filter_size=int(paramreg.filter_size), path_qc=path_qc, verbose=verbose)
+        register2d_centermassrot('src.nii',
+                                 'dest.nii',
+                                 fname_warp=warp_forward_out,
+                                 fname_warp_inv=warp_inverse_out,
+                                 rot=0,
+                                 filter_size=int(paramreg.filter_size),
+                                 path_qc=path_qc,
+                                 verbose=verbose,
+                                 )
     elif paramreg.algo == 'centermassrot':
-        if im_and_seg is False:
-            # translation using center of mass and rotation based on source and destination first eigenvectors from PCA.
-            register2d_centermassrot('src.nii', 'dest.nii', fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, rot=1, filter_size=int(paramreg.filter_size), path_qc=path_qc, verbose=verbose, pca_eigenratio_th=float(paramreg.pca_eigenratio_th))
-        else:
-            # translation using center of mass and rotation using symmetry of the image
-            if paramreg.rot_method == 'hog':
-                rot = 2
-            elif paramreg.rot_method == 'auto':
-                rot = 3
-            else:
-                raise Exception("rot_method can only be pca, hog or auto")
-
-            register2d_centermassrot(['src_im.nii', 'src_seg.nii'], ['dest_im.nii', 'dest_seg.nii'], fname_warp=warp_forward_out,
-                                     fname_warp_inv=warp_inverse_out, rot=rot, filter_size=int(paramreg.filter_size),
-                                     path_qc=path_qc, verbose=verbose)
+        if paramreg.rot_method in ['pca']:
+            # translation using center of mass and rotation using PCA method
+            register2d_centermassrot('src.nii',
+                                     'dest.nii',
+                                     fname_warp=warp_forward_out,
+                                     fname_warp_inv=warp_inverse_out,
+                                     rot=1,
+                                     filter_size=int(paramreg.filter_size),
+                                     path_qc=path_qc,
+                                     verbose=verbose,
+                                     pca_eigenratio_th=float(paramreg.pca_eigenratio_th),
+                                     )
+        elif paramreg.rot_method in ['hog', 'auto']:
+            # translation using center of mass and rotation using symmetry of the image or PCA
+            register2d_centermassrot(['src_im.nii', 'src_seg.nii'],
+                                     ['dest_im.nii', 'dest_seg.nii'],
+                                     fname_warp=warp_forward_out,
+                                     fname_warp_inv=warp_inverse_out,
+                                     rot=(2 if paramreg.rot_method == 'hog' else 3),
+                                     filter_size=int(paramreg.filter_size),
+                                     path_qc=path_qc,
+                                     verbose=verbose,
+                                     pca_eigenratio_th=float(paramreg.pca_eigenratio_th),
+                                     )
     elif paramreg.algo == 'columnwise':
         # scaling R-L, then column-wise center of mass alignment and scaling
-        register2d_columnwise('src.nii', 'dest.nii', fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, verbose=verbose, path_qc=path_qc, smoothWarpXY=int(paramreg.smoothWarpXY))
+        register2d_columnwise('src.nii',
+                              'dest.nii',
+                              fname_warp=warp_forward_out,
+                              fname_warp_inv=warp_inverse_out,
+                              verbose=verbose,
+                              path_qc=path_qc,
+                              smoothWarpXY=int(paramreg.smoothWarpXY),
+                              )
     else:
         # convert SCT flags into ANTs-compatible flags
         algo_dic = {'translation': 'Translation', 'rigid': 'Rigid', 'affine': 'Affine', 'syn': 'SyN', 'bsplinesyn': 'BSplineSyN', 'centermass': 'centermass'}
         paramreg.algo = algo_dic[paramreg.algo]
         # run slicewise registration
-        register2d('src.nii', 'dest.nii', fname_mask=fname_mask, fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, paramreg=paramreg, ants_registration_params=ants_registration_params, verbose=verbose)
+        register2d('src.nii',
+                   'dest.nii',
+                   fname_mask=fname_mask,
+                   fname_warp=warp_forward_out,
+                   fname_warp_inv=warp_inverse_out,
+                   paramreg=paramreg,
+                   ants_registration_params=ants_registration_params,
+                   verbose=verbose,
+                   )
 
     sct.printv('\nMove warping fields...', verbose)
     sct.copy(warp_forward_out, curdir)
@@ -205,6 +238,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
             new_shape = tuple(new_shape)
             data_src = data_src.reshape(new_shape)
             data_dest = data_dest.reshape(new_shape)
+            
     elif rot == 2 or rot == 3:  # im and seg case
         # Split source volume along z
         sct.printv('\nSplit input volume...', verbose)
