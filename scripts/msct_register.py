@@ -96,8 +96,8 @@ def register_slicewise(fname_src, fname_dest, fname_mask='', warp_forward_out='s
     # Calculate displacement
     if paramreg.algo == 'centermass':
         # translation of center of mass between source and destination in voxel space
-        register2d_centermassrot('src.nii',
-                                 'dest.nii',
+        register2d_centermassrot(['src.nii'],
+                                 ['dest.nii'],
                                  fname_warp=warp_forward_out,
                                  fname_warp_inv=warp_inverse_out,
                                  rot=0,
@@ -108,8 +108,8 @@ def register_slicewise(fname_src, fname_dest, fname_mask='', warp_forward_out='s
     elif paramreg.algo == 'centermassrot':
         if paramreg.rot_method in ['pca']:
             # translation using center of mass and rotation using PCA method
-            register2d_centermassrot('src.nii',
-                                     'dest.nii',
+            register2d_centermassrot(['src.nii'],
+                                     ['dest.nii'],
                                      fname_warp=warp_forward_out,
                                      fname_warp_inv=warp_inverse_out,
                                      rot=1,
