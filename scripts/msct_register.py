@@ -56,21 +56,6 @@ def register_slicewise(fname_src, fname_dest, fname_mask='', warp_forward_out='s
     :return:
     """
 
-    # # The boolean variable im_and_seg informs if the registration procedure uses both the image and the segmentation
-    # im_and_seg = (paramreg.algo == 'centermassrot') \
-    #              and ((paramreg.rot_method == 'hog') or (paramreg.rot_method == 'auto'))
-    # # NB: Future contributors who wish to implement a method that uses both im and seg will need to add:
-    # # or (paramreg.rot_method == 'OTHER_METHOD')
-
-    # # TODO: generalize the code below (input of function could be list, or we create additional input params)
-    # if im_and_seg is True:
-    #     fname_src_im = fname_src[0]
-    #     fname_dest_im = fname_dest[0]
-    #     fname_src_seg = fname_src[1]
-    #     fname_dest_seg = fname_dest[1]
-    #     del fname_src
-    #     del fname_dest  # to be sure it is not missused later
-
     # create temporary folder
     path_tmp = sct.tmp_create(basename="register", verbose=verbose)
 
@@ -318,77 +303,6 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
         # if one of the slice is empty, ignore it
         except ValueError:
             sct.printv('WARNING: Slice #' + str(iz) + ' is empty. It will be ignored.', verbose, 'warning')
-    #
-    # elif rot == 2:  # im and seg case (hog method)
-    #
-    #     for iz in range(0, nz):
-    #         try:
-    #             # TODO: duplicated code
-    #             # PCA for center of mass
-    #             coord_src[iz], _, centermass_src[iz, :] = compute_pca(data_src_seg[:, :, iz])
-    #             coord_dest[iz], _, centermass_dest[iz, :] = compute_pca(data_dest_seg[:, :, iz])
-    #
-    #             # HOG method to detect rotation, conf_score not used yet
-    #             angle_src, conf_score_src = find_angle_hog(data_src_im[:, :, iz], centermass_src[iz, :], px, py, angle_range=th_max_angle)
-    #             angle_dest, conf_score_dest = find_angle_hog(data_dest_im[:, :, iz], centermass_dest[iz, :], px, py, angle_range=th_max_angle)
-    #
-    #             if (angle_src is None) or (angle_dest is None):
-    #                 sct.printv('WARNING: Slice #' + str(iz) + ' no angle found in dest or src. It will be ignored.', verbose, 'warning')
-    #                 # This happens if no maxima is found in the hog method, which should almost never happen
-    #                 continue
-    #
-    #             angle_src_dest[iz] = angle_dest - angle_src  # angle are computed from the origin to X
-    #             # append to list of z_nonzero
-    #             z_nonzero.append(iz)
-    #
-    #         # If one slice is empty it will ignore it
-    #         except ValueError:
-    #             sct.printv('WARNING: Slice #' + str(iz) + ' is empty. It will be ignored.', verbose, 'warning')
-    #
-    # # TODO remove duplication for the case below (this is essentially a mix of rot=1 and rot=2)
-    # elif rot == 3:  # im and seg case (auto method)
-    #
-    #     for iz in range(0, nz):
-    #         try:
-    #             # PCA for center of mass and eigenvectors
-    #             coord_src[iz], pca_src[iz], centermass_src[iz, :] = compute_pca(data_src_seg[:, :, iz])
-    #             coord_dest[iz], pca_dest[iz], centermass_dest[iz, :] = compute_pca(data_dest_seg[:, :, iz])
-    #
-    #             eigenv_src = pca_src[iz].components_.T[0][0], pca_src[iz].components_.T[1][0]  # pca_src.components_.T[0]
-    #             eigenv_dest = pca_dest[iz].components_.T[0][0], pca_dest[iz].components_.T[1][0]  # pca_dest.components_.T[0]
-    #             # Make sure first element is always positive (to prevent sign flipping)
-    #             if eigenv_src[0] <= 0:
-    #                 eigenv_src = tuple([i * (-1) for i in eigenv_src])
-    #             if eigenv_dest[0] <= 0:
-    #                 eigenv_dest = tuple([i * (-1) for i in eigenv_dest])
-    #             angle_src = angle_between(eigenv_src, [1, 0])
-    #             angle_dest = angle_between([1, 0], eigenv_dest)
-    #
-    #             # compute ration between axis of PCA
-    #             pca_eigenratio_src = pca_src[iz].explained_variance_ratio_[0] / pca_src[iz].explained_variance_ratio_[1]
-    #             pca_eigenratio_dest = pca_dest[iz].explained_variance_ratio_[0] / pca_dest[iz].explained_variance_ratio_[1]
-    #
-    #             # hog method is used to detect angle if either ratio between axis is too low or outside angle range
-    #             if pca_eigenratio_src < pca_eigenratio_th or angle_src > th_max_angle or angle_src < -th_max_angle:
-    #                 angle_src, conf_score_src = find_angle_hog(data_src_im[:, :, iz], centermass_src[iz, :], px, py, angle_range=th_max_angle)
-    #                 angle_src = -angle_src  # to have same orientation as PCA
-    #             if pca_eigenratio_dest < pca_eigenratio_th or angle_dest > th_max_angle or angle_dest < -th_max_angle:
-    #                 angle_dest, conf_score_dest = find_angle_hog(data_dest_im[:, :, iz], centermass_dest[iz, :], px, py, angle_range=th_max_angle)
-    #
-    #             if (angle_src is None) or (angle_dest is None):
-    #                     sct.printv('WARNING: Slice #' + str(iz) + ' no angle found in dest or src. It will be ignored.', verbose, 'warning')
-    #                     continue
-    #
-    #             angle_src_dest[iz] = angle_src + angle_dest
-    #             # append to list of z_nonzero
-    #             z_nonzero.append(iz)
-    #
-    #         # If one slice is empty it will ignore it
-    #         except ValueError:
-    #             sct.printv('WARNING: Slice #' + str(iz) + ' is empty. It will be ignored.', verbose, 'warning')
-
-    # else:
-    #     raise ValueError("rot param == " + str(rot) + " not implemented")
 
     # regularize rotation
     if not filter_size == 0 and (rot in [1, 2, 3]):
@@ -404,17 +318,6 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
             plt.close()
         # update variable
         angle_src_dest[z_nonzero] = angle_src_dest_regularized
-
-    # # initialize warping fields
-    # # N.B. forward transfo is defined in destination space and inverse transfo is defined in the source space
-    # if rot == 2 or rot == 3:
-    #     im_src = im_src_im
-    #     im_dest = im_dest_im
-    #     data_dest = data_dest_im
-    #     data_src = data_src_im
-    #     fname_dest = fname_dest_im
-    #     fname_src = fname_src_im
-    #     # back to original names for the rest of the process
 
     warp_x = np.zeros(data_dest.shape)
     warp_y = np.zeros(data_dest.shape)
