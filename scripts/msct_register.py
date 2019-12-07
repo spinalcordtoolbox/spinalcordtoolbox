@@ -4,7 +4,7 @@
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2015 NeuroPoly, Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: Tanguy Magnan, Julien Cohen-Adad
+# Authors: Tanguy Magnan, Julien Cohen-Adad, Nicolas Pinon
 #
 # License: see the LICENSE.TXT
 #########################################################################################
@@ -12,8 +12,6 @@
 # TODO: before running the PCA, correct for the "stretch" effect caused by curvature
 # TODO: columnwise: check inverse field
 # TODO: columnwise: add regularization: should not binarize at 0.5, especially problematic for edge (because division by zero to compute Sx, Sy).
-# TODO: remove register2d_centermass and generalize register2d_centermassrot
-# TODO: add flag for setting threshold on PCA
 # TODO: clean code for generate_warping_field (unify with centermass_rot)
 
 from __future__ import division, absolute_import
