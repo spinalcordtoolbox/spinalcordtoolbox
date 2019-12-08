@@ -12,6 +12,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+# TODO: change method 'auto' for 'pcahog'
 # TODO: add flag -owarpinv
 # TODO: if user specified -param, then ignore the default paramreg
 # TODO: check syn with shrink=4
@@ -34,17 +35,13 @@
 from __future__ import division, absolute_import
 
 import sys, os, time
-
 import numpy as np
 
-from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.reports.qc import generate_qc
 
 import sct_utils as sct
 from msct_parser import Parser
 from msct_register import Paramreg, ParamregMultiStep, register_wrapper
-import sct_apply_transfo
-import sct_concat_transfo
 
 
 def get_parser(paramreg=None):
@@ -374,17 +371,3 @@ if __name__ == "__main__":
     sct.init_sct()
     # call main function
     main()
-
-# Convert deformation field to 4D volume (readable by fslview)
-# DONE: clean code below-- right now it does not work
-# ===========
-# if convertDeformation:
-#    sct.printv('\nConvert deformation field...'))
-#    cmd = 'sct_image -i tmp.regWarp.nii -mcs  -o tmp.regWarp.nii'
-#    sct.printv(">> "+cmd))
-#    os.system(cmd)
-#    cmd = 'fslmerge -t '+os.path.join(path_out, 'warp_comp.nii') + ' tmp.regWarp_x.nii tmp.regWarp_y.nii
-# tmp.regWarp_z.nii'
-#    sct.printv(">> "+cmd))
-#    os.system(cmd)
-# ===========
