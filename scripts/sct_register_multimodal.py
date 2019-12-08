@@ -12,7 +12,6 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-# TODO: change method 'auto' for 'pcahog'
 # TODO: add flag -owarpinv
 # TODO: if user specified -param, then ignore the default paramreg
 # TODO: check syn with shrink=4

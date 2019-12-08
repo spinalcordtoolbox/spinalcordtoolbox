@@ -706,7 +706,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
         segmentation). If rot=2 or 3, the first element is a segmentation and the second is an image.
     :param fname_warp: name of output 3d forward warping field
     :param fname_warp_inv: name of output 3d inverse warping field
-    :param rot_method: {'none', 'pca', 'hog', 'auto'}. Depending on the rotation method, input might be segmentation
+    :param rot_method: {'none', 'pca', 'hog', 'pcahog'}. Depending on the rotation method, input might be segmentation
         only or segmentation and image.
     :param filter_size: size of the gaussian filter for regularization along z for rotation angle (type: float).
         0: no regularization
@@ -794,7 +794,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
             coord_dest[iz], pca_dest[iz], centermass_dest[iz, :] = compute_pca(data_dest[:, :, iz])
 
             # detect rotation using the HOG method
-            if rot_method in ['hog', 'auto']:
+            if rot_method in ['hog', 'pcahog']:
                 angle_src_hog, conf_score_src = find_angle_hog(data_src_im[:, :, iz], centermass_src[iz, :],
                                                                px, py, angle_range=th_max_angle)
                 angle_dest_hog, conf_score_dest = find_angle_hog(data_dest_im[:, :, iz], centermass_dest[ iz, : ],
@@ -809,7 +809,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
                     angle_dest = angle_dest_hog
 
             # Detect rotation using the PCA or PCA-HOG method
-            if rot_method in ['pca', 'auto']:
+            if rot_method in ['pca', 'pcahog']:
                 eigenv_src = pca_src[iz].components_.T[0][0], pca_src[iz].components_.T[1][0]
                 eigenv_dest = pca_dest[iz].components_.T[0][0], pca_dest[iz].components_.T[1][0]
                 # Make sure first element is always positive (to prevent sign flipping)
@@ -826,12 +826,12 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
                 if pca_eigenratio_src < pca_eigenratio_th or angle_src > th_max_angle or angle_src < -th_max_angle:
                     if rot_method == 'pca':
                         angle_src = 0
-                    elif rot_method == 'auto':
+                    elif rot_method == 'pcahog':
                         angle_src = -angle_src_hog  # flip sign to be consistent with PCA output
                 if pca_eigenratio_dest < pca_eigenratio_th or angle_dest > th_max_angle or angle_dest < -th_max_angle:
                     if rot_method == 'pca':
                         angle_dest = 0
-                    elif rot_method == 'auto':
+                    elif rot_method == 'pcahog':
                         angle_dest = angle_dest_hog
 
             if not rot_method == 'none':
@@ -846,7 +846,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
             sct.printv('WARNING: Slice #' + str(iz) + ' is empty. It will be ignored.', verbose, 'warning')
 
     # regularize rotation
-    if not filter_size == 0 and (rot_method in ['pca', 'hog', 'auto']):
+    if not filter_size == 0 and (rot_method in ['pca', 'hog', 'pcahog']):
         # Filtering the angles by gaussian filter
         angle_src_dest_regularized = ndimage.filters.gaussian_filter1d(angle_src_dest, filter_size)
         if verbose == 2:
