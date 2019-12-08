@@ -466,6 +466,7 @@ def main(args=None):
     # [regAffine,src_regAffine.nii] -n BSpline[3]', verbose)
     # if segmentation, also do it for seg
 
+
     # initialize list of warping fields
     warp_forward = []
     warp_forward_winv = []
