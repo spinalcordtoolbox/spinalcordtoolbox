@@ -29,6 +29,7 @@ from spinalcordtoolbox.image import Image, find_zmin_zmax, spatial_crop
 
 import sct_utils as sct
 import sct_apply_transfo
+import sct_concat_transfo
 from sct_convert import convert
 from sct_image import split_data, concat_warp2d
 
@@ -104,7 +105,11 @@ class ParamregMultiStep:
             sct.printv("ERROR: parameters must contain a type, either 'im' or 'seg'", 1, 'error')
 
 
-def register_wrapper(param, paramreg, fname_initwarp='', fname_initwarpinv=''):
+def register_wrapper(fname_src, fname_dest, param, paramreg, fname_src_seg='', fname_dest_seg='', fname_src_label='',
+                     fname_dest_label='', fname_mask='', fname_initwarp='', fname_initwarpinv='', identity=False,
+                     interp='linear', fname_output='', fname_output_warp='', path_out=''):
+    # TODO: move interp inside param.
+    # TODO: try to merge param inside paramreg
     """
     Wrapper for image registration.
 
@@ -114,6 +119,63 @@ def register_wrapper(param, paramreg, fname_initwarp='', fname_initwarpinv=''):
     :param fname_initwarpinv: str: File name of initial inverse transformation
     :return: warp_forward, warp_inverse, warp_forward_winv, warp_inverse_winv
     """
+
+    # Extract path, file and extension
+    path_src, file_src, ext_src = sct.extract_fname(fname_src)
+    path_dest, file_dest, ext_dest = sct.extract_fname(fname_dest)
+
+    # check if source and destination images have the same name (related to issue #373)
+    # If so, change names to avoid conflict of result files and warns the user
+    suffix_src, suffix_dest = '_reg', '_reg'
+    if file_src == file_dest:
+        suffix_src, suffix_dest = '_src_reg', '_dest_reg'
+
+    # define output folder and file name
+    if fname_output == '':
+        path_out = '' if not path_out else path_out  # output in user's current directory
+        file_out = file_src + suffix_src
+        file_out_inv = file_dest + suffix_dest
+        ext_out = ext_src
+    else:
+        path, file_out, ext_out = sct.extract_fname(fname_output)
+        path_out = path if not path_out else path_out
+        file_out_inv = file_out + '_inv'
+
+    # create temporary folder
+    path_tmp = sct.tmp_create()
+
+    sct.printv('\nCopying input data to tmp folder and convert to nii...', param.verbose)
+    Image(fname_src).save(os.path.join(path_tmp, "src.nii"))
+    Image(fname_dest).save(os.path.join(path_tmp, "dest.nii"))
+
+    if fname_src_seg:
+        Image(fname_src_seg).save(os.path.join(path_tmp, "src_seg.nii"))
+
+    if fname_dest_seg:
+        Image(fname_dest_seg).save(os.path.join(path_tmp, "dest_seg.nii"))
+
+    if fname_src_label:
+        Image(fname_src_label).save(os.path.join(path_tmp, "src_label.nii"))
+        Image(fname_dest_label).save(os.path.join(path_tmp, "dest_label.nii"))
+
+    if fname_mask != '':
+        Image(fname_mask).save(os.path.join(path_tmp, "mask.nii.gz"))
+
+    # go to tmp folder
+    curdir = os.getcwd()
+    os.chdir(path_tmp)
+
+    # reorient destination to RPI
+    Image('dest.nii').change_orientation("RPI").save('dest_RPI.nii')
+    if fname_dest_seg:
+        Image('dest_seg.nii').change_orientation("RPI").save('dest_seg_RPI.nii')
+    if fname_dest_label:
+        Image('dest_label.nii').change_orientation("RPI").save('dest_label_RPI.nii')
+
+    if identity:
+        # overwrite paramreg and only do one identity transformation
+        step0 = Paramreg(step='0', type='im', algo='syn', metric='MI', iter='0', shrink='1', smooth='0', gradStep='0.5')
+        paramreg = ParamregMultiStep([step0])
 
     # initialize list of warping fields
     warp_forward = []
@@ -186,7 +248,61 @@ def register_wrapper(param, paramreg, fname_initwarp='', fname_initwarpinv=''):
         warp_forward.append(warp_forward_out)
         warp_inverse.insert(0, warp_inverse_out)
 
-    return warp_forward, warp_inverse, warp_forward_winv, warp_inverse_winv
+    # Concatenate transformations
+    sct.printv('\nConcatenate transformations...', param.verbose)
+    sct_concat_transfo.main(args=[
+        '-w', warp_forward,
+        '-winv', warp_forward_winv,
+        '-d', 'dest.nii',
+        '-o', 'warp_src2dest.nii.gz'])
+    sct_concat_transfo.main(args=[
+        '-w', warp_inverse,
+        '-winv', warp_inverse_winv,
+        '-d', 'src.nii',
+        '-o', 'warp_dest2src.nii.gz'])
+
+    # Apply warping field to src data
+    sct.printv('\nApply transfo source --> dest...', param.verbose)
+    sct_apply_transfo.main(args=[
+        '-i', 'src.nii',
+        '-d', 'dest.nii',
+        '-w', 'warp_src2dest.nii.gz',
+        '-o', 'src_reg.nii',
+        '-x', interp])
+    sct.printv('\nApply transfo dest --> source...', param.verbose)
+    sct_apply_transfo.main(args=[
+        '-i', 'dest.nii',
+        '-d', 'src.nii',
+        '-w', 'warp_dest2src.nii.gz',
+        '-o', 'dest_reg.nii',
+        '-x', interp])
+
+    # come back
+    os.chdir(curdir)
+
+    # Generate output files
+    sct.printv('\nGenerate output files...', param.verbose)
+    # generate: src_reg
+    fname_src2dest = sct.generate_output_file(os.path.join(path_tmp, "src_reg.nii"),
+                                              os.path.join(path_out, file_out + ext_out), param.verbose)
+    # generate: forward warping field
+    if fname_output_warp == '':
+        fname_output_warp = os.path.join(path_out, 'warp_' + file_src + '2' + file_dest + '.nii.gz')
+    sct.generate_output_file(os.path.join(path_tmp, "warp_src2dest.nii.gz"), fname_output_warp, param.verbose)
+    if generate_warpinv:
+        # generate: dest_reg
+        fname_dest2src = sct.generate_output_file(os.path.join(path_tmp, "dest_reg.nii"),
+                                                  os.path.join(path_out, file_out_inv + ext_dest), param.verbose)
+        # generate: inverse warping field
+        sct.generate_output_file(os.path.join(path_tmp, "warp_dest2src.nii.gz"),
+                                 os.path.join(path_out, 'warp_' + file_dest + '2' + file_src + '.nii.gz'), param.verbose)
+
+    # Delete temporary files
+    if param.remove_temp_files:
+        sct.printv('\nRemove temporary files...', param.verbose)
+        sct.rmtree(path_tmp, verbose=param.verbose)
+
+    return fname_src2dest, fname_dest2src
 
 
 # register images
