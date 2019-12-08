@@ -803,11 +803,13 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
                     if rot_method == 'pca':
                         angle_src = 0
                     elif rot_method == 'pcahog':
+                        logger.info("Switched to method 'hog' for slice: {}".format(iz))
                         angle_src = -angle_src_hog  # flip sign to be consistent with PCA output
                 if pca_eigenratio_dest < pca_eigenratio_th or angle_dest > th_max_angle or angle_dest < -th_max_angle:
                     if rot_method == 'pca':
                         angle_dest = 0
                     elif rot_method == 'pcahog':
+                        logger.info("Switched to method 'hog' for slice: {}".format(iz))
                         angle_dest = angle_dest_hog
 
             if not rot_method == 'none':
