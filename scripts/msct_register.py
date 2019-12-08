@@ -25,15 +25,83 @@ from scipy.signal import argrelmax, medfilt
 from scipy.io import loadmat
 from nibabel import load, Nifti1Image, save
 
-from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.image import Image, find_zmin_zmax, spatial_crop
 
 import sct_utils as sct
 import sct_apply_transfo
 from sct_convert import convert
-from sct_register_multimodal import Paramreg
 from sct_image import split_data, concat_warp2d
 
 logger = logging.getLogger(__name__)
+
+
+# TODO: move this class in msct_register
+# Parameters for registration
+class Paramreg(object):
+    def __init__(self, step=None, type=None, algo='syn', metric='MeanSquares', iter='10', shrink='1', smooth='0',
+                 gradStep='0.5', deformation='1x1x0', init='', filter_size='3', poly='5', slicewise='0', laplacian='0',
+                 dof='Tx_Ty_Tz_Rx_Ry_Rz', smoothWarpXY='2', pca_eigenratio_th='1.6', rot_method='pca'):
+        self.step = step
+        self.type = type
+        self.algo = algo
+        self.metric = metric
+        self.iter = iter
+        self.shrink = shrink
+        self.smooth = smooth
+        self.laplacian = laplacian
+        self.gradStep = gradStep
+        self.deformation = deformation
+        self.slicewise = slicewise
+        self.init = init
+        self.poly = poly  # only for algo=slicereg
+        self.filter_size = filter_size  # only for algo=centermassrot
+        self.dof = dof  # only for type=label
+        self.smoothWarpXY = smoothWarpXY  # only for algo=columnwise
+        self.pca_eigenratio_th = pca_eigenratio_th  # only for algo=centermassrot
+        self.rot_method = rot_method  # only for algo=centermassrot
+
+        # list of possible values for self.type
+        self.type_list = ['im', 'seg', 'imseg', 'label']
+
+    # update constructor with user's parameters
+    def update(self, paramreg_user):
+        list_objects = paramreg_user.split(',')
+        for object in list_objects:
+            if len(object) < 2:
+                sct.printv('Please check parameter -param (usage changed from previous version)', 1, type='error')
+            obj = object.split('=')
+            setattr(self, obj[0], obj[1])
+
+
+class ParamregMultiStep:
+    '''
+    This class contains a dictionary with the params of multiple steps
+    '''
+
+    def __init__(self, listParam=[]):
+        self.steps = dict()
+        for stepParam in listParam:
+            if isinstance(stepParam, Paramreg):
+                self.steps[stepParam.step] = stepParam
+            else:
+                self.addStep(stepParam)
+
+    def addStep(self, stepParam):
+        # this function checks if the step is already present. If it is present, it must update it. If it is not, it
+        # must add it.
+        param_reg = Paramreg()
+        param_reg.update(stepParam)
+        # parameters must contain 'step'
+        if param_reg.step is None:
+            sct.printv("ERROR: parameters must contain 'step'", 1, 'error')
+        else:
+            if param_reg.step in self.steps:
+                self.steps[param_reg.step].update(stepParam)
+            else:
+                self.steps[param_reg.step] = param_reg
+        # parameters must contain 'type'
+        if int(param_reg.step) != 0 and param_reg.type not in param_reg.type_list:
+            sct.printv("ERROR: parameters must contain a type, either 'im' or 'seg'", 1, 'error')
 
 
 def register_wrapper(param, paramreg, fname_initwarp='', fname_initwarpinv=''):
@@ -199,16 +267,16 @@ def register(src, dest, paramreg, param, i_step_str):
             zmin_global, zmax_global = 0, 99999  # this is assuming that typical image has less slice than 99999
             for fname in list_fname:
                 im = Image(fname)
-                zmin, zmax = msct_image.find_zmin_zmax(im, threshold=0.1)
+                zmin, zmax = find_zmin_zmax(im, threshold=0.1)
                 if zmin > zmin_global:
                     zmin_global = zmin
                 if zmax < zmax_global:
                     zmax_global = zmax
             # crop images (see issue #293)
             src_crop = sct.add_suffix(src, '_crop')
-            msct_image.spatial_crop(Image(src), dict(((2, (zmin_global, zmax_global)),))).save(src_crop)
+            spatial_crop(Image(src), dict(((2, (zmin_global, zmax_global)),))).save(src_crop)
             dest_crop = sct.add_suffix(dest, '_crop')
-            msct_image.spatial_crop(Image(dest), dict(((2, (zmin_global, zmax_global)),))).save(dest_crop)
+            spatial_crop(Image(dest), dict(((2, (zmin_global, zmax_global)),))).save(dest_crop)
             # update variables
             src = src_crop
             dest = dest_crop
