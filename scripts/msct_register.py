@@ -474,7 +474,6 @@ def register(src, dest, paramreg, param, i_step_str):
             and paramreg.steps[i_step_str].slicewise == '1':
         # make sure type!=label. If type==label, this will be addressed later in the code.
         if not paramreg.steps[i_step_str].type == 'label':
-            from msct_register import register_slicewise
             # if shrink!=1, force it to be 1 (otherwise, it generates a wrong 3d warping field). TODO: fix that!
             if not paramreg.steps[i_step_str].shrink == '1':
                 sct.printv('\nWARNING: when using slicewise with SyN or BSplineSyN, shrink factor needs to be one. '
@@ -504,28 +503,8 @@ def register(src, dest, paramreg, param, i_step_str):
                        'warning')
         # smooth data
         if not paramreg.steps[i_step_str].smooth == '0':
-            sct.printv('\nSmooth data', param.verbose)
-            if paramreg.steps[i_step_str].rot_method == 'pca':
-                sct.run(['sct_maths', '-i', src, '-smooth', paramreg.steps[i_step_str].smooth + ','
-                         + paramreg.steps[i_step_str].smooth + ',0', '-o', sct.add_suffix(src, '_smooth')])
-                sct.run(['sct_maths', '-i', dest, '-smooth', paramreg.steps[i_step_str].smooth + ','
-                         + paramreg.steps[i_step_str].smooth + ',0', '-o', sct.add_suffix(dest, '_smooth')])
-                src = sct.add_suffix(src, '_smooth')
-                dest = sct.add_suffix(dest, '_smooth')
-            else:
-                sct.run(['sct_maths', '-i', src_im, '-smooth', paramreg.steps[i_step_str].smooth + ','
-                         + paramreg.steps[i_step_str].smooth + ',0', '-o', sct.add_suffix(src_im, '_smooth')])
-                sct.run(['sct_maths', '-i', src_seg, '-smooth', paramreg.steps[i_step_str].smooth + ','
-                         + paramreg.steps[i_step_str].smooth + ',0', '-o', sct.add_suffix(src_seg, '_smooth')])
-                sct.run(['sct_maths', '-i', dest_im, '-smooth', paramreg.steps[i_step_str].smooth + ','
-                         + paramreg.steps[i_step_str].smooth + ',0', '-o', sct.add_suffix(dest_im, '_smooth')])
-                sct.run(['sct_maths', '-i', dest_seg, '-smooth', paramreg.steps[i_step_str].smooth + ','
-                         + paramreg.steps[i_step_str].smooth + ',0', '-o', sct.add_suffix(dest_seg, '_smooth')])
-                src_im = sct.add_suffix(src_im, '_smooth')
-                dest_im = sct.add_suffix(dest_im, '_smooth')
-                src_seg = sct.add_suffix(src_seg, '_smooth')
-                dest_seg = sct.add_suffix(dest_seg, '_smooth')
-        from msct_register import register_slicewise
+            sct.printv('\nWARNING: algo ' + paramreg.steps[i_step_str].algo + ' will ignore the parameter smoothing.\n',
+                       1, 'warning')
         warp_forward_out = 'step' + i_step_str + 'Warp.nii.gz'
         warp_inverse_out = 'step' + i_step_str + 'InverseWarp.nii.gz'
         register_slicewise(src,
