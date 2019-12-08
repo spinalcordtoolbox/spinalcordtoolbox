@@ -706,8 +706,8 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
         segmentation). If rot=2 or 3, the first element is a segmentation and the second is an image.
     :param fname_warp: name of output 3d forward warping field
     :param fname_warp_inv: name of output 3d inverse warping field
-    :param rot_method: {none, pca, hog, auto}. Depending on the rotation method, input might be segmentation only or
-        segmentation and image.
+    :param rot_method: {'none', 'pca', 'hog', 'auto'}. Depending on the rotation method, input might be segmentation
+        only or segmentation and image.
     :param filter_size: size of the gaussian filter for regularization along z for rotation angle (type: float).
         0: no regularization
     :param path_qc:
@@ -834,8 +834,9 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
                     elif rot_method == 'auto':
                         angle_dest = angle_dest_hog
 
-            # the angle between (src, dest) is the angle between (src, origin) + angle between (origin, dest)
-            angle_src_dest[iz] = angle_src + angle_dest
+            if not rot_method == 'none':
+                # the angle between (src, dest) is the angle between (src, origin) + angle between (origin, dest)
+                angle_src_dest[iz] = angle_src + angle_dest
 
             # append to list of z_nonzero
             z_nonzero.append(iz)
