@@ -679,55 +679,70 @@ def main(args=None):
             # im_label.absolutepath = 'label_rpi_modif.nii.gz'
             im_label.save()
 
-        # Bring template to subject space using landmark-based transformation
-        sct.printv('\nEstimate transformation for step #0...', verbose)
-        warp_forward = ['template2subjectAffine.txt']
-        warp_inverse = ['template2subjectAffine.txt']
-        try:
-            register_landmarks(ftmp_template_label, ftmp_label, paramreg.steps['0'].dof, fname_affine=warp_forward[0], verbose=verbose, path_qc="./")
-        except Exception:
-            sct.printv('ERROR: input labels do not seem to be at the right place. Please check the position of the labels. See documentation for more details: https://www.slideshare.net/neuropoly/sct-course-20190121/42', verbose=verbose, type='error')
+        # # Bring template to subject space using landmark-based transformation
+        # sct.printv('\nEstimate transformation for step #0...', verbose)
+        # try:
+        #     register_landmarks(ftmp_template_label, ftmp_label, paramreg.steps['0'].dof,
+        #                        fname_affine='template2subjectAffine.txt', verbose=verbose, path_qc="./")
+        # except Exception:
+        #     sct.printv('ERROR: input labels do not seem to be at the right place. Please check the position of the '
+        #                'labels. See documentation for more details: '
+        #                'https://www.slideshare.net/neuropoly/sct-course-20190121/42', verbose=verbose, type='error')
 
-        # loop across registration steps
-        for i_step in range(1, len(paramreg.steps)):
-            sct.printv('\nEstimate transformation for step #' + str(i_step) + '...', verbose)
-            # identify which is the src and dest
-            if paramreg.steps[str(i_step)].type == 'im':
-                src = ftmp_template
-                dest = ftmp_data
-                interp_step = 'linear'
-            elif paramreg.steps[str(i_step)].type == 'seg':
-                src = ftmp_template_seg
-                dest = ftmp_seg
-                interp_step = 'nn'
-            else:
-                sct.printv('ERROR: Wrong image type.', 1, 'error')
-            # apply transformation from previous step, to use as new src for registration
-            sct_apply_transfo.main(args=[
-                '-i', src,
-                '-d', dest,
-                '-w', warp_forward,
-                '-o', add_suffix(src, '_regStep' + str(i_step - 1)),
-                '-x', interp_step])
-            src = add_suffix(src, '_regStep' + str(i_step - 1))
-            # register src --> dest
-            # TODO: display param for debugging
-            warp_forward_out, warp_inverse_out = register(src, dest, paramreg, param, str(i_step))
-            warp_forward.append(warp_forward_out)
-            warp_inverse.insert(0, warp_inverse_out)
 
-        # Concatenate transformations:
-        sct.printv('\nConcatenate transformations: template --> subject...', verbose)
-        sct_concat_transfo.main(args=[
-            '-w', warp_forward,
-            '-d', 'data.nii',
-            '-o', 'warp_template2anat.nii.gz'])
-        sct.printv('\nConcatenate transformations: subject --> template...', verbose)
-        sct_concat_transfo.main(args=[
-            '-w', warp_inverse,
-            '-winv', ['template2subjectAffine.txt'],
-            '-d', 'template.nii',
-            '-o', 'warp_anat2template.nii.gz'])
+        fname_src2dest, fname_dest2src, warp_forward, warp_inverse = \
+            register_wrapper(ftmp_template,
+                             ftmp_data,
+                             param,
+                             paramreg,
+                             fname_src_seg=ftmp_template_seg,
+                             fname_dest_seg=ftmp_seg,
+                             fname_src_label=ftmp_template_label,
+                             fname_dest_label=ftmp_label,
+                             same_space = False)
+        # Renaming for code compatibility
+        os.rename(warp_forward, 'warp_template2anat.nii.gz')
+        os.rename(warp_inverse, 'warp_anat2template.nii.gz')
+
+        # # loop across registration steps
+        # for i_step in range(1, len(paramreg.steps)):
+        #     sct.printv('\nEstimate transformation for step #' + str(i_step) + '...', verbose)
+        #     # identify which is the src and dest
+        #     if paramreg.steps[str(i_step)].type == 'im':
+        #         src = ftmp_template
+        #         dest = ftmp_data
+        #         interp_step = 'linear'
+        #     elif paramreg.steps[str(i_step)].type == 'seg':
+        #         src = ftmp_template_seg
+        #         dest = ftmp_seg
+        #         interp_step = 'nn'
+        #     else:
+        #         sct.printv('ERROR: Wrong image type.', 1, 'error')
+        #     # apply transformation from previous step, to use as new src for registration
+        #     sct_apply_transfo.main(args=[
+        #         '-i', src,
+        #         '-d', dest,
+        #         '-w', warp_forward,
+        #         '-o', add_suffix(src, '_regStep' + str(i_step - 1)),
+        #         '-x', interp_step])
+        #     src = add_suffix(src, '_regStep' + str(i_step - 1))
+        #     # register src --> dest
+        #     # TODO: display param for debugging
+        #     warp_forward_out, warp_inverse_out = register(src, dest, paramreg, param, str(i_step))
+        #     warp_forward.append(warp_forward_out)
+        #     warp_inverse.insert(0, warp_inverse_out)
+        # # Concatenate transformations:
+        # sct.printv('\nConcatenate transformations: template --> subject...', verbose)
+        # sct_concat_transfo.main(args=[
+        #     '-w', ['template2subjectAffine.txt', warp_forward],
+        #     '-d', 'data.nii',
+        #     '-o', 'warp_template2anat.nii.gz'])
+        # sct.printv('\nConcatenate transformations: subject --> template...', verbose)
+        # sct_concat_transfo.main(args=[
+        #     '-w', [warp_inverse, 'template2subjectAffine.txt'],
+        #     '-winv', ['template2subjectAffine.txt'],
+        #     '-d', 'template.nii',
+        #     '-o', 'warp_anat2template.nii.gz'])
 
     # Apply warping fields to anat and template
     sct.run(['sct_apply_transfo', '-i', 'template.nii', '-o', 'template2anat.nii.gz', '-d', 'data.nii', '-w', 'warp_template2anat.nii.gz', '-crop', '0'], verbose)
