@@ -32,6 +32,7 @@ import sct_apply_transfo
 import sct_concat_transfo
 from sct_convert import convert
 from sct_image import split_data, concat_warp2d
+from msct_register_landmarks import register_landmarks
 
 logger = logging.getLogger(__name__)
 
@@ -526,7 +527,6 @@ def register(src, dest, paramreg, param, i_step_str):
         # TODO
         warp_forward_out = 'step' + i_step_str + '0GenericAffine.txt'
         warp_inverse_out = '-step' + i_step_str + '0GenericAffine.txt'
-        from msct_register_landmarks import register_landmarks
         register_landmarks(src,
                            dest,
                            paramreg.steps[i_step_str].dof,
