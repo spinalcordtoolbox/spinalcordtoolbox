@@ -81,6 +81,8 @@ class ParamregMultiStep:
 
     def __init__(self, listParam=[]):
         self.steps = dict()
+        self.rot_src = None  # this variable is used to set the angle of the cord on the src image if it is known
+        self.dest_src = None  # same as above for the destination image (e.g., if template, should be set to 0)
         for stepParam in listParam:
             if isinstance(stepParam, Paramreg):
                 self.steps[stepParam.step] = stepParam
@@ -108,6 +110,7 @@ class ParamregMultiStep:
 def register_wrapper(fname_src, fname_dest, param, paramreg, fname_src_seg='', fname_dest_seg='', fname_src_label='',
                      fname_dest_label='', fname_mask='', fname_initwarp='', fname_initwarpinv='', identity=False,
                      interp='linear', fname_output='', fname_output_warp='', path_out='', same_space=False):
+    # TODO: doc on all params
     # TODO: move interp inside param.
     # TODO: try to merge param inside paramreg
     """
@@ -474,6 +477,7 @@ def register(src, dest, paramreg, param, i_step_str):
                 paramreg.steps[i_step_str].shrink = '1'
             warp_forward_out = 'step' + i_step_str + 'Warp.nii.gz'
             warp_inverse_out = 'step' + i_step_str + 'InverseWarp.nii.gz'
+
             register_slicewise(src,
                                dest,
                                paramreg=paramreg.steps[i_step_str],
@@ -500,16 +504,10 @@ def register(src, dest, paramreg, param, i_step_str):
                        1, 'warning')
         warp_forward_out = 'step' + i_step_str + 'Warp.nii.gz'
         warp_inverse_out = 'step' + i_step_str + 'InverseWarp.nii.gz'
-        register_slicewise(src,
-                           dest,
-                           paramreg=paramreg.steps[i_step_str],
-                           fname_mask=fname_mask,
-                           warp_forward_out=warp_forward_out,
-                           warp_inverse_out=warp_inverse_out,
-                           ants_registration_params=ants_registration_params,
-                           remove_temp_files=param.remove_temp_files,
-                           verbose=param.verbose)
-
+        register_slicewise(
+            src, dest, paramreg=paramreg.steps[i_step_str], fname_mask=fname_mask, warp_forward_out=warp_forward_out,
+            warp_inverse_out=warp_inverse_out, ants_registration_params=ants_registration_params,
+            remove_temp_files=param.remove_temp_files, verbose=param.verbose)
     else:
         sct.printv('\nERROR: algo ' + paramreg.steps[i_step_str].algo + ' does not exist. Exit program\n', 1, 'error')
 
@@ -557,18 +555,18 @@ def register(src, dest, paramreg, param, i_step_str):
     return warp_forward, warp_inverse
 
 
-def register_slicewise(fname_src, fname_dest, fname_mask='', warp_forward_out='step0Warp.nii.gz',
-                       warp_inverse_out='step0InverseWarp.nii.gz', paramreg=None, ants_registration_params=None,
+def register_slicewise(fname_src, fname_dest, paramreg=None, fname_mask='', warp_forward_out='step0Warp.nii.gz',
+                       warp_inverse_out='step0InverseWarp.nii.gz', ants_registration_params=None,
                        path_qc='./', remove_temp_files=0, verbose=0):
     """
     Main function that calls various methods for slicewise registration.
 
     :param fname_src: Str or List: If List, first element is image, second element is segmentation.
     :param fname_dest: Str or List: If List, first element is image, second element is segmentation.
+    :param paramreg:
     :param fname_mask:
     :param warp_forward_out:
     :param warp_inverse_out:
-    :param paramreg:
     :param ants_registration_params:
     :param path_qc:
     :param remove_temp_files:
@@ -611,16 +609,10 @@ def register_slicewise(fname_src, fname_dest, fname_mask='', warp_forward_out='s
         else:
             src_input = ['src.nii']
             dest_input = ['dest.nii']
-        register2d_centermassrot(src_input,
-                                 dest_input,
-                                 fname_warp=warp_forward_out,
-                                 fname_warp_inv=warp_inverse_out,
-                                 rot_method=rot_method,
-                                 filter_size=int(paramreg.filter_size),
-                                 path_qc=path_qc,
-                                 verbose=verbose,
-                                 pca_eigenratio_th=float(paramreg.pca_eigenratio_th),
-                                 )
+        register2d_centermassrot(
+            src_input, dest_input, paramreg=paramreg, fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out,
+            rot_method=rot_method, filter_size=int(paramreg.filter_size), path_qc=path_qc, verbose=verbose,
+            pca_eigenratio_th=float(paramreg.pca_eigenratio_th), )
 
     elif paramreg.algo == 'columnwise':
         # scaling R-L, then column-wise center of mass alignment and scaling
@@ -660,7 +652,7 @@ def register_slicewise(fname_src, fname_dest, fname_mask='', warp_forward_out='s
         sct.rmtree(path_tmp, verbose=verbose)
 
 
-def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii.gz',
+def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='warp_forward.nii.gz',
                              fname_warp_inv='warp_inverse.nii.gz', rot_method='pca', filter_size=0, path_qc='./',
                              verbose=0, pca_eigenratio_th=1.6, th_max_angle=40):
     """
@@ -805,6 +797,11 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
                         angle_dest = angle_dest_hog
 
             if not rot_method == 'none':
+                # bypass estimation is source or destination angle is known a priori
+                if paramreg.rot_src is not None:
+                    angle_src = paramreg.rot_src
+                if paramreg.dest_src is not None:
+                    angle_dest = paramreg.rot_dest
                 # the angle between (src, dest) is the angle between (src, origin) + angle between (origin, dest)
                 angle_src_dest[iz] = angle_src + angle_dest
 
