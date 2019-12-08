@@ -36,7 +36,6 @@ from sct_image import split_data, concat_warp2d
 logger = logging.getLogger(__name__)
 
 
-# TODO: move this class in msct_register
 # Parameters for registration
 class Paramreg(object):
     def __init__(self, step=None, type=None, algo='syn', metric='MeanSquares', iter='10', shrink='1', smooth='0',
@@ -183,7 +182,6 @@ def register_wrapper(fname_src, fname_dest, param, paramreg, fname_src_seg='', f
     warp_forward_winv = []
     warp_inverse = []
     warp_inverse_winv = []
-    # TODO: deal with the variable below (concat should ideally be done within this wrapper)
     generate_warpinv = 1
 
     # initial warping is specified, update list of warping fields and skip step=0
@@ -217,7 +215,7 @@ def register_wrapper(fname_src, fname_dest, param, paramreg, fname_src_seg='', f
             src = ['src_seg.nii']
             dest = ['dest_seg_RPI.nii']
             interp_step = ['nn']
-        elif paramreg.steps[str(i_step)].type == 'imseg':  # TODO: add this new choice in usage
+        elif paramreg.steps[str(i_step)].type == 'imseg':
             src = ['src.nii', 'src_seg.nii']
             dest = ['dest_RPI.nii', 'dest_seg_RPI.nii']
             interp_step = ['spline', 'nn']
@@ -241,7 +239,6 @@ def register_wrapper(fname_src, fname_dest, param, paramreg, fname_src_seg='', f
         # register src --> dest
         warp_forward_out, warp_inverse_out = register(src, dest, paramreg, param, str(i_step))
         # deal with transformations with "-" as prefix. They should be inverted with calling sct_concat_transfo.
-        # TODO: check if "-" is still part of SCT codebase
         if warp_forward_out[0] == "-":
             warp_forward_out = warp_forward_out[1:]
             warp_forward_winv.append(warp_forward_out)
@@ -637,7 +634,7 @@ def register_slicewise(fname_src, fname_dest, fname_mask='', warp_forward_out='s
             rot_method = 'none'
         else:
             rot_method = paramreg.rot_method
-        if rot_method in ['hog', 'auto']:
+        if rot_method in ['hog', 'pcahog']:
             src_input = ['src_seg.nii', 'src.nii']
             dest_input = ['dest_seg.nii', 'dest.nii']
         else:
