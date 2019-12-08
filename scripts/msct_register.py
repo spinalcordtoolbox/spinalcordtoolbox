@@ -225,7 +225,7 @@ def register_wrapper(fname_src, fname_dest, param, paramreg, fname_src_seg='', f
             dest = ['dest_label_RPI.nii']
             interp_step = ['nn']
         else:
-            sct.printv('ERROR: Wrong image type.', 1, 'error')
+            sct.printv('ERROR: Wrong image type: {}'.format(paramreg.steps[str(i_step)].type), 1, 'error')
         # if step>0, apply warp_forward_concat to the src image to be used
         if (not same_space and i_step > 0) or (same_space and i_step > 1):
             sct.printv('\nApply transformation from previous step', param.verbose)
@@ -330,14 +330,6 @@ def register(src, dest, paramreg, param, i_step_str):
     if not paramreg.steps[i_step_str].type == 'imseg':
         src = src[0]
         dest = dest[0]
-    # if paramreg.steps[i_step_str].algo == "centermassrot" and (paramreg.steps[i_step_str].rot_method == 'auto' or paramreg.steps[i_step_str].rot_method == 'hog'):
-    #     src_im = src[0]  # user is expected to input images to src and dest
-    #     dest_im = dest[0]
-    #     src_seg = src[1]
-    #     dest_seg = dest[1]
-    #     del src
-    #     del dest  # to be sure it is not missused later
-
 
     # display arguments
     sct.printv('Registration parameters:', param.verbose)
