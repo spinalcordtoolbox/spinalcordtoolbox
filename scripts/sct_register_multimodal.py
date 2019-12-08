@@ -342,7 +342,7 @@ def main(args=None):
     # [regAffine,src_regAffine.nii] -n BSpline[3]', verbose)
     # if segmentation, also do it for seg
 
-    fname_src2dest, fname_dest2src = \
+    fname_src2dest, fname_dest2src, _, _ = \
         register_wrapper(fname_src, fname_dest, param, paramreg, fname_src_seg=fname_src_seg,
                          fname_dest_seg=fname_dest_seg, fname_src_label=fname_src_label,
                          fname_dest_label=fname_dest_label, fname_mask=fname_mask, fname_initwarp=fname_initwarp,

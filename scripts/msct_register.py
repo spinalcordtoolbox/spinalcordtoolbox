@@ -107,7 +107,7 @@ class ParamregMultiStep:
 
 def register_wrapper(fname_src, fname_dest, param, paramreg, fname_src_seg='', fname_dest_seg='', fname_src_label='',
                      fname_dest_label='', fname_mask='', fname_initwarp='', fname_initwarpinv='', identity=False,
-                     interp='linear', fname_output='', fname_output_warp='', path_out=''):
+                     interp='linear', fname_output='', fname_output_warp='', path_out='', same_space=False):
     # TODO: move interp inside param.
     # TODO: try to merge param inside paramreg
     """
@@ -117,6 +117,7 @@ def register_wrapper(fname_src, fname_dest, param, paramreg, fname_src_seg='', f
     :param paramreg: Class Paramreg(): See definition in sct_register_multimodal
     :param fname_initwarp: str: File name of initial transformation
     :param fname_initwarpinv: str: File name of initial inverse transformation
+    :param same_space: Bool: Source and destination images are in the same physical space (i.e. same coordinates).
     :return: warp_forward, warp_inverse, warp_forward_winv, warp_inverse_winv
     """
 
@@ -142,7 +143,7 @@ def register_wrapper(fname_src, fname_dest, param, paramreg, fname_src_seg='', f
         file_out_inv = file_out + '_inv'
 
     # create temporary folder
-    path_tmp = sct.tmp_create()
+    path_tmp = sct.tmp_create()  # TODO: use basename "register"
 
     sct.printv('\nCopying input data to tmp folder and convert to nii...', param.verbose)
     Image(fname_src).save(os.path.join(path_tmp, "src.nii"))
@@ -199,7 +200,10 @@ def register_wrapper(fname_src, fname_dest, param, paramreg, fname_src_seg='', f
                        'will NOT be generated.', param.verbose, 'warning')
             generate_warpinv = 0
     else:
-        start_step = 0
+        if same_space:
+            start_step = 1
+        else:
+            start_step = 0
 
     # loop across registration steps
     for i_step in range(start_step, len(paramreg.steps)):
@@ -224,7 +228,7 @@ def register_wrapper(fname_src, fname_dest, param, paramreg, fname_src_seg='', f
         else:
             sct.printv('ERROR: Wrong image type.', 1, 'error')
         # if step>0, apply warp_forward_concat to the src image to be used
-        if i_step > 0:
+        if (not same_space and i_step > 0) or (same_space and i_step > 1):
             sct.printv('\nApply transformation from previous step', param.verbose)
             for ifile in range(len(src)):
                 sct_apply_transfo.main(args=[
@@ -261,6 +265,7 @@ def register_wrapper(fname_src, fname_dest, param, paramreg, fname_src_seg='', f
         '-d', 'src.nii',
         '-o', 'warp_dest2src.nii.gz'])
 
+    # TODO: make the following code optional (or move it to sct_register_multimodal)
     # Apply warping field to src data
     sct.printv('\nApply transfo source --> dest...', param.verbose)
     sct_apply_transfo.main(args=[
@@ -294,15 +299,15 @@ def register_wrapper(fname_src, fname_dest, param, paramreg, fname_src_seg='', f
         fname_dest2src = sct.generate_output_file(os.path.join(path_tmp, "dest_reg.nii"),
                                                   os.path.join(path_out, file_out_inv + ext_dest), param.verbose)
         # generate: inverse warping field
-        sct.generate_output_file(os.path.join(path_tmp, "warp_dest2src.nii.gz"),
-                                 os.path.join(path_out, 'warp_' + file_dest + '2' + file_src + '.nii.gz'), param.verbose)
+        fname_output_warpinv = os.path.join(path_out, 'warp_' + file_dest + '2' + file_src + '.nii.gz')
+        sct.generate_output_file(os.path.join(path_tmp, "warp_dest2src.nii.gz"), fname_output_warpinv, param.verbose)
 
     # Delete temporary files
     if param.remove_temp_files:
         sct.printv('\nRemove temporary files...', param.verbose)
         sct.rmtree(path_tmp, verbose=param.verbose)
 
-    return fname_src2dest, fname_dest2src
+    return fname_src2dest, fname_dest2src, fname_output_warp, fname_output_warpinv
 
 
 # register images
