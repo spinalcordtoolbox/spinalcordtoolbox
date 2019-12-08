@@ -28,7 +28,7 @@ def init(param_test):
                     '-i mt/mt0.nii.gz -d mt/mt1.nii.gz -o mt0_reg.nii.gz -param step=1,algo=slicereg,type=im,iter=5,smooth=0,metric=MeanSquares -x linear -r 0',
                     '-i mt/mt0.nii.gz -iseg mt/mt0_seg.nii.gz -d mt/mt1.nii.gz -dseg mt/mt1_seg.nii.gz -o mt0_reg.nii.gz -param step=1,algo=centermassrot,type=seg,rot_method=pca -x linear -r 0',
                     '-i mt/mt0.nii.gz -iseg mt/mt0_seg.nii.gz -d mt/mt1.nii.gz -dseg mt/mt1_seg.nii.gz -o mt0_reg.nii.gz -param step=1,algo=centermassrot,type=imseg,rot_method=hog -x linear -r 0',
-                    '-i mt/mt0.nii.gz -iseg mt/mt0_seg.nii.gz -d mt/mt1.nii.gz -dseg mt/mt1_seg.nii.gz -o mt0_reg.nii.gz -param step=1,algo=centermassrot,type=imseg,rot_method=auto -x linear -r 0',
+                    '-i mt/mt0.nii.gz -iseg mt/mt0_seg.nii.gz -d mt/mt1.nii.gz -dseg mt/mt1_seg.nii.gz -o mt0_reg.nii.gz -param step=1,algo=centermassrot,type=imseg,rot_method=pcahog -x linear -r 0',
                     '-i mt/mt0.nii.gz -iseg mt/mt0_seg.nii.gz -d mt/mt1.nii.gz -dseg mt/mt1_seg.nii.gz -o mt0_reg.nii.gz -param step=1,algo=columnwise,type=seg,smooth=1 -x linear -r 0']
     # assign default params
     if not param_test.args:
