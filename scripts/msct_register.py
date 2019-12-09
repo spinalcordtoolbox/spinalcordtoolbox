@@ -1232,14 +1232,14 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
 
     # Split input volume along z
     sct.printv('\nSplit input volume...', verbose)
-    im_src = Image('src.nii')
+    im_src = Image(fname_src)
     split_source_list = split_data(im_src, 2)
     for im in split_source_list:
         im.save()
 
     # Split destination volume along z
     sct.printv('\nSplit destination volume...', verbose)
-    im_dest = Image('dest.nii')
+    im_dest = Image(fname_dest)
     split_dest_list = split_data(im_dest, 2)
     for im in split_dest_list:
         im.save()
@@ -1341,14 +1341,14 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
         y_disp_a = np.asarray(y_displacement)
         theta_rot_a = np.asarray(theta_rotation)
         # Generate warping field
-        generate_warping_field('dest.nii', x_disp_a, y_disp_a, fname_warp=fname_warp)  #name_warp= 'step'+str(paramreg.step)
+        generate_warping_field(fname_dest, x_disp_a, y_disp_a, fname_warp=fname_warp)  #name_warp= 'step'+str(paramreg.step)
         # Inverse warping field
-        generate_warping_field('src.nii', -x_disp_a, -y_disp_a, fname_warp=fname_warp_inv)
+        generate_warping_field(fname_src, -x_disp_a, -y_disp_a, fname_warp=fname_warp_inv)
 
     if paramreg.algo in ['Rigid', 'Affine', 'BSplineSyN', 'SyN']:
         # concatenate 2d warping fields along z
-        concat_warp2d(list_warp, fname_warp, 'dest.nii')
-        concat_warp2d(list_warp_inv, fname_warp_inv, 'src.nii')
+        concat_warp2d(list_warp, fname_warp, fname_dest)
+        concat_warp2d(list_warp_inv, fname_warp_inv, fname_src)
 
 
 def numerotation(nb):
