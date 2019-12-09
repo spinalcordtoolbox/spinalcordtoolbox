@@ -77,10 +77,9 @@ class Paramreg(object):
 
 
 class ParamregMultiStep:
-    '''
+    """
     This class contains a dictionary with the params of multiple steps
-    '''
-
+    """
     def __init__(self, listParam=[]):
         self.steps = dict()
         for stepParam in listParam:
@@ -110,19 +109,30 @@ class ParamregMultiStep:
 def register_wrapper(fname_src, fname_dest, param, paramreg, fname_src_seg='', fname_dest_seg='', fname_src_label='',
                      fname_dest_label='', fname_mask='', fname_initwarp='', fname_initwarpinv='', identity=False,
                      interp='linear', fname_output='', fname_output_warp='', path_out='', same_space=False):
-    # TODO: doc on all params
-    # TODO: move interp inside param.
-    # TODO: try to merge param inside paramreg
     """
     Wrapper for image registration.
 
+    :param fname_src:
+    :param fname_dest:
     :param param: Class Param(): See definition in sct_register_multimodal
-    :param paramreg: Class Paramreg(): See definition in sct_register_multimodal
+    :param paramreg: Class Paramreg(): See definition in this file
+    :param fname_src_seg:
+    :param fname_dest_seg:
+    :param fname_src_label:
+    :param fname_dest_label:
+    :param fname_mask:
     :param fname_initwarp: str: File name of initial transformation
     :param fname_initwarpinv: str: File name of initial inverse transformation
+    :param identity:
+    :param interp:
+    :param fname_output:
+    :param fname_output_warp:
+    :param path_out:
     :param same_space: Bool: Source and destination images are in the same physical space (i.e. same coordinates).
-    :return: warp_forward, warp_inverse, warp_forward_winv, warp_inverse_winv
+    :return: fname_src2dest, fname_dest2src, fname_output_warp, fname_output_warpinv
     """
+    # TODO: move interp inside param.
+    # TODO: merge param inside paramregmulti by having a "global" sets of parameters that apply to all steps
 
     # Extract path, file and extension
     path_src, file_src, ext_src = sct.extract_fname(fname_src)
@@ -146,7 +156,7 @@ def register_wrapper(fname_src, fname_dest, param, paramreg, fname_src_seg='', f
         file_out_inv = file_out + '_inv'
 
     # create temporary folder
-    path_tmp = sct.tmp_create()  # TODO: use basename "register"
+    path_tmp = sct.tmp_create(basename="register")
 
     sct.printv('\nCopying input data to tmp folder and convert to nii...', param.verbose)
     Image(fname_src).save(os.path.join(path_tmp, "src.nii"))
@@ -664,6 +674,7 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
         segmentation). If rot=2 or 3, the first element is a segmentation and the second is an image.
     :param fname_dest: List: Name of fixed image. If rot=0 or 1, only the first element is used (should be a
         segmentation). If rot=2 or 3, the first element is a segmentation and the second is an image.
+    :param paramreg: Class Paramreg()
     :param fname_warp: name of output 3d forward warping field
     :param fname_warp_inv: name of output 3d inverse warping field
     :param rot_method: {'none', 'pca', 'hog', 'pcahog'}. Depending on the rotation method, input might be segmentation
