@@ -572,7 +572,9 @@ def main(args=None):
         sct.printv('\nRegister straight spinal cord to template...', verbose)
 
         # TODO: find a way to input initwarp, corresponding to straightening warp
-        paramreg.rot_dest = 0  # Set the angle of the cord on the template (destination image) to 0
+        # Set the angle of the template orientation to 0 (destination image)
+        for key in list(paramreg.steps.keys()) :
+            paramreg.steps[key].rot_dest = 0
         fname_src2dest, fname_dest2src, warp_forward, warp_inverse = register_wrapper(
             ftmp_data, ftmp_template, param, paramreg, fname_src_seg=ftmp_seg, fname_dest_seg=ftmp_template_seg,
             same_space=True)
@@ -631,7 +633,9 @@ def main(args=None):
             # Overwrite label file
             # im_label.absolutepath = 'label_rpi_modif.nii.gz'
             im_label.save()
-        paramreg.rot_src = 0  # Set the angle of the cord on the template (source image) to 0
+        # Set the angle of the template orientation to 0 (source image)
+        for key in list(paramreg.steps.keys()) :
+            paramreg.steps[key].rot_src = 0
         fname_src2dest, fname_dest2src, warp_forward, warp_inverse = register_wrapper(
             ftmp_template, ftmp_data, param, paramreg, fname_src_seg=ftmp_template_seg, fname_dest_seg=ftmp_seg,
             fname_src_label=ftmp_template_label, fname_dest_label=ftmp_label, same_space=False)

@@ -60,6 +60,8 @@ class Paramreg(object):
         self.smoothWarpXY = smoothWarpXY  # only for algo=columnwise
         self.pca_eigenratio_th = pca_eigenratio_th  # only for algo=centermassrot
         self.rot_method = rot_method  # only for algo=centermassrot
+        self.rot_src = None  # this variable is used to set the angle of the cord on the src image if it is known
+        self.rot_dest = None  # same as above for the destination image (e.g., if template, should be set to 0)
 
         # list of possible values for self.type
         self.type_list = ['im', 'seg', 'imseg', 'label']
@@ -81,8 +83,6 @@ class ParamregMultiStep:
 
     def __init__(self, listParam=[]):
         self.steps = dict()
-        self.rot_src = None  # this variable is used to set the angle of the cord on the src image if it is known
-        self.dest_src = None  # same as above for the destination image (e.g., if template, should be set to 0)
         for stepParam in listParam:
             if isinstance(stepParam, Paramreg):
                 self.steps[stepParam.step] = stepParam
@@ -800,7 +800,7 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
                 # bypass estimation is source or destination angle is known a priori
                 if paramreg.rot_src is not None:
                     angle_src = paramreg.rot_src
-                if paramreg.dest_src is not None:
+                if paramreg.rot_dest is not None:
                     angle_dest = paramreg.rot_dest
                 # the angle between (src, dest) is the angle between (src, origin) + angle between (origin, dest)
                 angle_src_dest[iz] = angle_src + angle_dest
