@@ -58,13 +58,13 @@ class Paramreg(object):
         :param init:
         :param filter_size: int: Size of the Gaussian kernel when filtering the cord rotation estimate across z.
         :param poly:
-        :param slicewise:
+        :param slicewise: {'0', '1'}: Slice-by-slice 2d transformation.
         :param laplacian:
         :param dof:
         :param smoothWarpXY:
         :param pca_eigenratio_th:
-        :param rot_method: {'pca', 'hog', 'pcahog'}.  {pca, hog, pcahog}: rotation method to be used with
-            algo=centermassrot. pca: approximate cord segmentation by an ellipse and finds it orientation using PCA's
+        :param rot_method: {'pca', 'hog', 'pcahog'}: Rotation method to be used with algo=centermassrot.
+            pca: approximate cord segmentation by an ellipse and finds it orientation using PCA's
             eigenvectors; hog: finds the orientation using the symmetry of the image; pcahog: tries method pca and if it
             fails, uses method hog. If using hog or pcahog, type should be set to 'imseg'."
         """
