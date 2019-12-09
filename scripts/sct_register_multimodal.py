@@ -43,14 +43,14 @@ from msct_parser import Parser
 from msct_register import Paramreg, ParamregMultiStep, register_wrapper
 
 
-def get_parser(paramreg=None):
+def get_parser(paramregmulti=None):
     # Initialize the parser
 
-    if paramreg is None:
+    if paramregmulti is None:
         step0 = Paramreg(step='0', type='im', algo='syn', metric='MI', iter='0', shrink='1', smooth='0', gradStep='0.5',
                          slicewise='0', dof='Tx_Ty_Tz_Rx_Ry_Rz')  # only used to put src into dest space
         step1 = Paramreg(step='1', type='im')
-        paramreg = ParamregMultiStep([step0, step1])
+        paramregmulti = ParamregMultiStep([step0, step1])
 
     parser = Parser(__file__)
     parser.usage.set_description('This program co-registers two 3D volumes. The deformation is non-rigid and is '
@@ -117,7 +117,7 @@ def get_parser(paramreg=None):
                       description="Parameters for registration. Separate arguments with \",\". Separate steps with \":\".\n"
                                   "step: <int> Step number (starts at 1, except for type=label).\n"
                                   "type: {im, seg, imseg, label} type of data used for registration. Use type=label only at step=0.\n"
-                                  "algo: Default=" + paramreg.steps['1'].algo + "\n"
+                                  "algo: Default=" + paramregmulti.steps['1'].algo + "\n"
                                                                                 "  translation: translation in X-Y plane (2dof)\n"
                                                                                 "  rigid: translation + rotation in X-Y plane (4dof)\n"
                                                                                 "  affine: translation + rotation + scaling in X-Y plane (6dof)\n"
@@ -128,36 +128,36 @@ def get_parser(paramreg=None):
                                                                                 "  centermassrot: slicewise center of mass and rotation alignment using method specified in 'rot_method'\n"
                                                                                 "  columnwise: R-L scaling followed by A-P columnwise alignment (seg only).\n"
                                                                                 "slicewise: <int> Slice-by-slice 2d transformation. Default=" +
-                                  paramreg.steps['1'].slicewise + "\n"
+                                  paramregmulti.steps['1'].slicewise + "\n"
                                                                   "metric: {CC,MI,MeanSquares}. Default=" +
-                                  paramreg.steps['1'].metric + "\n"
+                                  paramregmulti.steps['1'].metric + "\n"
                                                                "iter: <int> Number of iterations. Default=" +
-                                  paramreg.steps['1'].iter + "\n"
+                                  paramregmulti.steps['1'].iter + "\n"
                                                              "shrink: <int> Shrink factor (only for syn/bsplinesyn). Default=" +
-                                  paramreg.steps['1'].shrink + "\n"
+                                  paramregmulti.steps['1'].shrink + "\n"
                                                                "smooth: <int> Smooth factor (in mm). Note: if algo={centermassrot,columnwise} the smoothing kernel is: SxSx0. Otherwise it is SxSxS. Default=" +
-                                  paramreg.steps['1'].smooth + "\n"
+                                  paramregmulti.steps['1'].smooth + "\n"
                                                                "laplacian: <int> Laplacian filter. Default=" +
-                                  paramreg.steps['1'].laplacian + "\n"
+                                  paramregmulti.steps['1'].laplacian + "\n"
                                                                   "gradStep: <float> Gradient step. Default=" +
-                                  paramreg.steps['1'].gradStep + "\n"
+                                  paramregmulti.steps['1'].gradStep + "\n"
                                                                  "deformation: ?x?x?: Restrict deformation (for ANTs algo). Replace ? by 0 (no deformation) or 1 (deformation). Default=" +
-                                  paramreg.steps['1'].deformation + "\n"
+                                  paramregmulti.steps['1'].deformation + "\n"
                                                                     "init: Initial translation alignment based on:\n"
                                                                     "  geometric: Geometric center of images\n"
                                                                     "  centermass: Center of mass of images\n"
                                                                     "  origin: Physical origin of images\n"
                                                                     "poly: <int> Polynomial degree of regularization (only for algo=slicereg). Default=" +
-                                  paramreg.steps['1'].poly + "\n"
+                                  paramregmulti.steps['1'].poly + "\n"
                                                                     "filter_size: <float> Filter size for regularization (only for algo=centermassrot). Default=" +
-                                  paramreg.steps['1'].filter_size + "\n"
+                                  paramregmulti.steps['1'].filter_size + "\n"
                                                              "smoothWarpXY: <int> Smooth XY warping field (only for algo=columnwize). Default=" +
-                                  paramreg.steps['1'].smoothWarpXY + "\n"
+                                  paramregmulti.steps['1'].smoothWarpXY + "\n"
                                                                      "pca_eigenratio_th: <int> Min ratio between the two eigenvalues for PCA-based angular adjustment (only for algo=centermassrot and rot_method=pca). Default=" +
-                                  paramreg.steps['1'].pca_eigenratio_th + "\n"
+                                  paramregmulti.steps['1'].pca_eigenratio_th + "\n"
                                                                           "dof: <str> Degree of freedom for type=label. Separate with '_'. Default=" +
-                                  paramreg.steps['0'].dof + "\n" +
-                                  paramreg.steps['1'].rot_method + "\n"
+                                  paramregmulti.steps['0'].dof + "\n" +
+                                  paramregmulti.steps['1'].rot_method + "\n"
                                                                     "rot_method {pca, hog, pcahog}: rotation method to be used with algo=centermassrot. pca: approximate cord segmentation by an ellipse and finds it orientation using PCA's eigenvectors; hog: finds the orientation using the symmetry of the image; pcahog: tries method pca and if it fails, uses method hog. If using hog or pcahog, type should be set to imseg.",
                       mandatory=False,
                       example="step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=im,algo=syn,metric=MI,iter=5,shrink=2")
@@ -247,9 +247,9 @@ def main(args=None):
     step0 = Paramreg(step='0', type='im', algo='syn', metric='MI', iter='0', shrink='1', smooth='0', gradStep='0.5',
                      slicewise='0', dof='Tx_Ty_Tz_Rx_Ry_Rz')  # only used to put src into dest space
     step1 = Paramreg(step='1', type='im')
-    paramreg = ParamregMultiStep([step0, step1])
+    paramregmulti = ParamregMultiStep([step0, step1])
 
-    parser = get_parser(paramreg=paramreg)
+    parser = get_parser(paramregmulti=paramregmulti)
 
     arguments = parser.parse(args)
 
@@ -286,10 +286,10 @@ def main(args=None):
         fname_mask = ''
     padding = arguments['-z']
     if "-param" in arguments:
-        paramreg_user = arguments['-param']
+        paramregmulti_user = arguments['-param']
         # update registration parameters
-        for paramStep in paramreg_user:
-            paramreg.addStep(paramStep)
+        for paramStep in paramregmulti_user:
+            paramregmulti.addStep(paramStep)
     path_qc = arguments.get("-qc", None)
     qc_dataset = arguments.get("-qc-dataset", None)
     qc_subject = arguments.get("-qc-subject", None)
@@ -307,9 +307,9 @@ def main(args=None):
     sct.printv('  Init transfo ........ ' + fname_initwarp)
     sct.printv('  Mask ................ ' + fname_mask)
     sct.printv('  Output name ......... ' + fname_output)
-    # sct.printv('  Algorithm ........... '+paramreg.algo)
-    # sct.printv('  Number of iterations  '+paramreg.iter)
-    # sct.printv('  Metric .............. '+paramreg.metric)
+    # sct.printv('  Algorithm ........... '+paramregmulti.algo)
+    # sct.printv('  Number of iterations  '+paramregmulti.iter)
+    # sct.printv('  Metric .............. '+paramregmulti.metric)
     sct.printv('  Remove temp files ... ' + str(remove_temp_files))
     sct.printv('  Verbose ............. ' + str(verbose))
 
@@ -325,8 +325,8 @@ def main(args=None):
     sct.check_if_3d(fname_dest)
 
     # Check if user selected type=seg, but did not input segmentation data
-    if 'paramreg_user' in locals():
-        if True in ['type=seg' in paramreg_user[i] for i in range(len(paramreg_user))]:
+    if 'paramregmulti_user' in locals():
+        if True in ['type=seg' in paramregmulti_user[i] for i in range(len(paramregmulti_user))]:
             if fname_src_seg == '' or fname_dest_seg == '':
                 sct.printv('\nERROR: if you select type=seg you must specify -iseg and -dseg flags.\n', 1, 'error')
 
@@ -339,7 +339,7 @@ def main(args=None):
     # if segmentation, also do it for seg
 
     fname_src2dest, fname_dest2src, _, _ = \
-        register_wrapper(fname_src, fname_dest, param, paramreg, fname_src_seg=fname_src_seg,
+        register_wrapper(fname_src, fname_dest, param, paramregmulti, fname_src_seg=fname_src_seg,
                          fname_dest_seg=fname_dest_seg, fname_src_label=fname_src_label,
                          fname_dest_label=fname_dest_label, fname_mask=fname_mask, fname_initwarp=fname_initwarp,
                          fname_initwarpinv=fname_initwarpinv, identity=identity, interp=interp,
