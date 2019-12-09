@@ -40,7 +40,7 @@ logger = logging.getLogger(__name__)
 # Parameters for registration
 class Paramreg(object):
     def __init__(self, step=None, type=None, algo='syn', metric='MeanSquares', iter='10', shrink='1', smooth='0',
-                 gradStep='0.5', deformation='1x1x0', init='', filter_size='3', poly='5', slicewise='0', laplacian='0',
+                 gradStep='0.5', deformation='1x1x0', init='', filter_size=10, poly='5', slicewise='0', laplacian='0',
                  dof='Tx_Ty_Tz_Rx_Ry_Rz', smoothWarpXY='2', pca_eigenratio_th='1.6', rot_method='pca'):
         """
         Class to define registration method.
@@ -55,7 +55,7 @@ class Paramreg(object):
         :param gradStep:
         :param deformation:
         :param init:
-        :param filter_size:
+        :param filter_size: int: Size of the Gaussian kernel when filtering the cord rotation estimate across z.
         :param poly:
         :param slicewise:
         :param laplacian:
@@ -383,7 +383,7 @@ def register(src, dest, paramregmulti, param, i_step_str):
     sct.printv('  deformation .... ' + paramregmulti.steps[i_step_str].deformation, param.verbose)
     sct.printv('  init ........... ' + paramregmulti.steps[i_step_str].init, param.verbose)
     sct.printv('  poly ........... ' + paramregmulti.steps[i_step_str].poly, param.verbose)
-    sct.printv('  filter_size .... ' + paramregmulti.steps[i_step_str].filter_size, param.verbose)
+    sct.printv('  filter_size .... ' + str(paramregmulti.steps[i_step_str].filter_size), param.verbose)
     sct.printv('  dof ............ ' + paramregmulti.steps[i_step_str].dof, param.verbose)
     sct.printv('  smoothWarpXY ... ' + paramregmulti.steps[i_step_str].smoothWarpXY, param.verbose)
     sct.printv('  rot_method ..... ' + paramregmulti.steps[i_step_str].rot_method, param.verbose)
@@ -646,7 +646,7 @@ def register_slicewise(fname_src, fname_dest, paramreg=None, fname_mask='', warp
             dest_input = ['dest.nii']
         register2d_centermassrot(
             src_input, dest_input, paramreg=paramreg, fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out,
-            rot_method=rot_method, filter_size=int(paramreg.filter_size), path_qc=path_qc, verbose=verbose,
+            rot_method=rot_method, filter_size=paramreg.filter_size, path_qc=path_qc, verbose=verbose,
             pca_eigenratio_th=float(paramreg.pca_eigenratio_th), )
 
     elif paramreg.algo == 'columnwise':

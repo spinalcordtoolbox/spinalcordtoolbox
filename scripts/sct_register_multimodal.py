@@ -150,7 +150,7 @@ def get_parser(paramregmulti=None):
                                                                     "poly: <int> Polynomial degree of regularization (only for algo=slicereg). Default=" +
                                   paramregmulti.steps['1'].poly + "\n"
                                                                     "filter_size: <float> Filter size for regularization (only for algo=centermassrot). Default=" +
-                                  paramregmulti.steps['1'].filter_size + "\n"
+                                  str(paramregmulti.steps['1'].filter_size) + "\n"
                                                              "smoothWarpXY: <int> Smooth XY warping field (only for algo=columnwize). Default=" +
                                   paramregmulti.steps['1'].smoothWarpXY + "\n"
                                                                      "pca_eigenratio_th: <int> Min ratio between the two eigenvalues for PCA-based angular adjustment (only for algo=centermassrot and rot_method=pca). Default=" +
