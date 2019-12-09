@@ -57,7 +57,7 @@ class Param:
 step0 = Paramreg(step='0', type='label', dof='Tx_Ty_Tz_Sz')  # if ref=template, we only need translations and z-scaling because the cord is already straight
 step1 = Paramreg(step='1', type='seg', algo='centermass', smooth='2')
 step2 = Paramreg(step='2', type='seg', algo='bsplinesyn', metric='MeanSquares', iter='3', smooth='1')
-paramreg = ParamregMultiStep([step0, step1, step2])
+paramregmulti = ParamregMultiStep([step0, step1, step2])
 
 
 # PARSER
@@ -148,9 +148,9 @@ def get_parser():
     parser.add_option(name="-param",
                       type_value=[[':'], 'str'],
                       description='Parameters for registration (see sct_register_multimodal). Default: \
-                      \n--\nstep=0\ntype=' + paramreg.steps['0'].type + '\ndof=' + paramreg.steps['0'].dof + '\
-                      \n--\nstep=1\ntype=' + paramreg.steps['1'].type + '\nalgo=' + paramreg.steps['1'].algo + '\nmetric=' + paramreg.steps['1'].metric + '\niter=' + paramreg.steps['1'].iter + '\nsmooth=' + paramreg.steps['1'].smooth + '\ngradStep=' + paramreg.steps['1'].gradStep + '\nslicewise=' + paramreg.steps['1'].slicewise + '\nsmoothWarpXY=' + paramreg.steps['1'].smoothWarpXY + '\npca_eigenratio_th=' + paramreg.steps['1'].pca_eigenratio_th + '\
-                      \n--\nstep=2\ntype=' + paramreg.steps['2'].type + '\nalgo=' + paramreg.steps['2'].algo + '\nmetric=' + paramreg.steps['2'].metric + '\niter=' + paramreg.steps['2'].iter + '\nsmooth=' + paramreg.steps['2'].smooth + '\ngradStep=' + paramreg.steps['2'].gradStep + '\nslicewise=' + paramreg.steps['2'].slicewise + '\nsmoothWarpXY=' + paramreg.steps['2'].smoothWarpXY + '\npca_eigenratio_th=' + paramreg.steps['1'].pca_eigenratio_th,
+                      \n--\nstep=0\ntype=' + paramregmulti.steps['0'].type + '\ndof=' + paramregmulti.steps['0'].dof + '\
+                      \n--\nstep=1\ntype=' + paramregmulti.steps['1'].type + '\nalgo=' + paramregmulti.steps['1'].algo + '\nmetric=' + paramregmulti.steps['1'].metric + '\niter=' + paramregmulti.steps['1'].iter + '\nsmooth=' + paramregmulti.steps['1'].smooth + '\ngradStep=' + paramregmulti.steps['1'].gradStep + '\nslicewise=' + paramregmulti.steps['1'].slicewise + '\nsmoothWarpXY=' + paramregmulti.steps['1'].smoothWarpXY + '\npca_eigenratio_th=' + paramregmulti.steps['1'].pca_eigenratio_th + '\
+                      \n--\nstep=2\ntype=' + paramregmulti.steps['2'].type + '\nalgo=' + paramregmulti.steps['2'].algo + '\nmetric=' + paramregmulti.steps['2'].metric + '\niter=' + paramregmulti.steps['2'].iter + '\nsmooth=' + paramregmulti.steps['2'].smooth + '\ngradStep=' + paramregmulti.steps['2'].gradStep + '\nslicewise=' + paramregmulti.steps['2'].slicewise + '\nsmoothWarpXY=' + paramregmulti.steps['2'].smoothWarpXY + '\npca_eigenratio_th=' + paramregmulti.steps['1'].pca_eigenratio_th,
                       mandatory=False)
     parser.add_option(name='-centerline-algo',
                       type_value='multiple_choice',
@@ -241,17 +241,17 @@ def main(args=None):
     # registration parameters
     if '-param' in arguments:
         # reset parameters but keep step=0 (might be overwritten if user specified step=0)
-        paramreg = ParamregMultiStep([step0])
+        paramregmulti = ParamregMultiStep([step0])
         if ref == 'subject':
-            paramreg.steps['0'].dof = 'Tx_Ty_Tz_Rx_Ry_Rz_Sz'
+            paramregmulti.steps['0'].dof = 'Tx_Ty_Tz_Rx_Ry_Rz_Sz'
         # add user parameters
         for paramStep in arguments['-param']:
-            paramreg.addStep(paramStep)
+            paramregmulti.addStep(paramStep)
     else:
-        paramreg = ParamregMultiStep([step0, step1, step2])
+        paramregmulti = ParamregMultiStep([step0, step1, step2])
         # if ref=subject, initialize registration using different affine parameters
         if ref == 'subject':
-            paramreg.steps['0'].dof = 'Tx_Ty_Tz_Rx_Ry_Rz_Sz'
+            paramregmulti.steps['0'].dof = 'Tx_Ty_Tz_Rx_Ry_Rz_Sz'
 
     # initialize other parameters
     zsubsample = param.zsubsample
@@ -339,8 +339,8 @@ def main(args=None):
 
     # if only one label is present, force affine transformation to be Tx,Ty,Tz only (no scaling)
     if len(labels) == 1:
-        paramreg.steps['0'].dof = 'Tx_Ty_Tz'
-        sct.printv('WARNING: Only one label is present. Forcing initial transformation to: ' + paramreg.steps['0'].dof,
+        paramregmulti.steps['0'].dof = 'Tx_Ty_Tz'
+        sct.printv('WARNING: Only one label is present. Forcing initial transformation to: ' + paramregmulti.steps['0'].dof,
                    1, 'warning')
 
     # Project labels onto the spinal cord centerline because later, an affine transformation is estimated between the
@@ -492,7 +492,7 @@ def main(args=None):
             # Compute rigid transformation straight landmarks --> template landmarks
             sct.printv('\nEstimate transformation for step #0...', verbose)
             try:
-                register_landmarks(ftmp_label, ftmp_template_label, paramreg.steps['0'].dof,
+                register_landmarks(ftmp_label, ftmp_template_label, paramregmulti.steps['0'].dof,
                                    fname_affine='straight2templateAffine.txt', verbose=verbose)
             except RuntimeError:
                 raise('Input labels do not seem to be at the right place. Please check the position of the labels. '
@@ -573,10 +573,10 @@ def main(args=None):
 
         # TODO: find a way to input initwarp, corresponding to straightening warp
         # Set the angle of the template orientation to 0 (destination image)
-        for key in list(paramreg.steps.keys()) :
-            paramreg.steps[key].rot_dest = 0
+        for key in list(paramregmulti.steps.keys()) :
+            paramregmulti.steps[key].rot_dest = 0
         fname_src2dest, fname_dest2src, warp_forward, warp_inverse = register_wrapper(
-            ftmp_data, ftmp_template, param, paramreg, fname_src_seg=ftmp_seg, fname_dest_seg=ftmp_template_seg,
+            ftmp_data, ftmp_template, param, paramregmulti, fname_src_seg=ftmp_seg, fname_dest_seg=ftmp_template_seg,
             same_space=True)
 
         # Concatenate transformations: anat --> template
@@ -634,10 +634,10 @@ def main(args=None):
             # im_label.absolutepath = 'label_rpi_modif.nii.gz'
             im_label.save()
         # Set the angle of the template orientation to 0 (source image)
-        for key in list(paramreg.steps.keys()) :
-            paramreg.steps[key].rot_src = 0
+        for key in list(paramregmulti.steps.keys()) :
+            paramregmulti.steps[key].rot_src = 0
         fname_src2dest, fname_dest2src, warp_forward, warp_inverse = register_wrapper(
-            ftmp_template, ftmp_data, param, paramreg, fname_src_seg=ftmp_template_seg, fname_dest_seg=ftmp_seg,
+            ftmp_template, ftmp_data, param, paramregmulti, fname_src_seg=ftmp_template_seg, fname_dest_seg=ftmp_seg,
             fname_src_label=ftmp_template_label, fname_dest_label=ftmp_label, same_space=False)
         # Renaming for code compatibility
         os.rename(warp_forward, 'warp_template2anat.nii.gz')
