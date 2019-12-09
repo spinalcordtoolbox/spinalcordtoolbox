@@ -714,6 +714,8 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
         which the estimation will be discarded (unlikely to happen genuinely and hence considered outlier)
     :return:
     """
+    # TODO: no need to split the src or dest if it is the template (we know its centerline and orientation already)
+
     if verbose == 2:
         import matplotlib
         matplotlib.use('Agg')  # prevent display figure
@@ -851,7 +853,7 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
     # regularize rotation
     if not filter_size == 0 and (rot_method in ['pca', 'hog', 'pcahog']):
         # Filtering the angles by gaussian filter
-        angle_src_dest_regularized = ndimage.filters.gaussian_filter1d(angle_src_dest, filter_size)
+        angle_src_dest_regularized = ndimage.filters.gaussian_filter1d(angle_src_dest[z_nonzero], filter_size)
         if verbose == 2:
             plt.plot(180 * angle_src_dest[z_nonzero] / np.pi, 'ob')
             plt.plot(180 * angle_src_dest_regularized / np.pi, 'r', linewidth=2)
