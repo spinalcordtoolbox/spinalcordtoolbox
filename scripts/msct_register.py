@@ -19,6 +19,7 @@ from __future__ import division, absolute_import
 import sys, os, logging
 from math import asin, cos, sin, acos
 import numpy as np
+from tqdm import tqdm
 
 from scipy import ndimage
 from scipy.signal import argrelmax, medfilt
@@ -785,7 +786,8 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
     th_max_angle *= np.pi / 180
 
     # Loop across slices
-    for iz in range(0, nz):
+    for iz in tqdm(range(0, nz), unit='iter', unit_scale=False, desc="Estimate cord angle for each slice",
+                   ascii=False, ncols=100):
         try:
             # compute PCA and get center or mass based on segmentation
             coord_src[iz], pca_src[iz], centermass_src[iz, :] = compute_pca(data_src[:, :, iz])
@@ -872,9 +874,8 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
     warp_inv_y = np.zeros(data_src.shape)
 
     # construct 3D warping matrix
-    for iz in z_nonzero:
-        # TODO: replace the thing below with "tqdm-like" logger-based function
-        # sct.no_new_line_log('{}/{}..'.format(iz + 1, nz))
+    for iz in tqdm(z_nonzero, unit='iter', unit_scale=False, desc="Build 3D deformation field",
+                   ascii=False, ncols=100):
         # get indices of x and y coordinates
         row, col = np.indices((nx, ny))
         # build 2xn array of coordinates in pixel space
@@ -947,8 +948,6 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
         warp_y[:, :, iz] = np.array([coord_forward_phy[i, 1] - coord_init_phy[i, 1] for i in range(nx * ny)]).reshape((nx, ny))
         warp_inv_x[:, :, iz] = np.array([coord_inverse_phy[i, 0] - coord_init_phy[i, 0] for i in range(nx * ny)]).reshape((nx, ny))
         warp_inv_y[:, :, iz] = np.array([coord_inverse_phy[i, 1] - coord_init_phy[i, 1] for i in range(nx * ny)]).reshape((nx, ny))
-
-    logger.info('\n Done')
 
     # Generate forward warping field (defined in destination space)
     generate_warping_field(fname_dest[0], warp_x, warp_y, fname_warp, verbose)
