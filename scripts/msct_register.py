@@ -855,15 +855,13 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
         # apply inverse transformation (in physical space)
         coord_inverse_phy = np.array(np.dot((coord_init_phy - np.transpose(centermass_src_phy)), R3d.T) + np.transpose(centermass_dest_phy))
         # display rotations
-        if verbose == 2 and not angle_src_dest[iz] == 0:
+        if verbose == 2 and not angle_src_dest[iz] == 0 and not rot_method == 'hog':
             # compute new coordinates
             coord_src_rot = coord_src[iz] * R
             coord_dest_rot = coord_dest[iz] * R.T
             # generate figure
             plt.figure(figsize=(9, 9))
-            plt.title('iz=' + str(iz) + ', angle_src_dest=' + str(angle_src_dest[iz]))
             # plt.ion()  # enables interactive mode (allows keyboard interruption)
-            # plt.title('iz='+str(iz))
             for isub in [221, 222, 223, 224]:
                 # plt.figure
                 plt.subplot(isub)
@@ -874,7 +872,7 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
                                     alpha=0.5)
                         pcaaxis = pca_src[iz].components_.T
                         pca_eigenratio = pca_src[iz].explained_variance_ratio_
-                        plt.title('src: angle={}'.format(angle_src))
+                        plt.title('src')
                     elif isub == 222:
                         plt.scatter([coord_src_rot[i, 0] for i in range(len(coord_src_rot))], [coord_src_rot[i, 1] for i in range(len(coord_src_rot))], s=5, marker='o', zorder=10, color='steelblue', alpha=0.5)
                         pcaaxis = pca_dest[iz].components_.T
@@ -885,7 +883,7 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
                                     alpha=0.5)
                         pcaaxis = pca_dest[iz].components_.T
                         pca_eigenratio = pca_dest[iz].explained_variance_ratio_
-                        plt.title('dest: angle={}'.format(angle_dest))
+                        plt.title('dest')
                     elif isub == 224:
                         plt.scatter([coord_dest_rot[i, 0] for i in range(len(coord_dest_rot))], [coord_dest_rot[i, 1] for i in range(len(coord_dest_rot))], s=5, marker='o', zorder=10, color='red', alpha=0.5)
                         pcaaxis = pca_src[iz].components_.T
@@ -901,10 +899,7 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
                     plt.gca().set_aspect('equal', adjustable='box')
                 except Exception as e:
                     raise Exception
-                    # sct.printv('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), 1, 'warning')
-                    # sct.printv('WARNING: '+str(e), 1, 'warning')
 
-                    # plt.axis('equal')
             plt.savefig(os.path.join(path_qc, 'register2d_centermassrot_pca_z' + str(iz) + '.png'))
             plt.close()
 
