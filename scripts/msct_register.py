@@ -42,6 +42,31 @@ class Paramreg(object):
     def __init__(self, step=None, type=None, algo='syn', metric='MeanSquares', iter='10', shrink='1', smooth='0',
                  gradStep='0.5', deformation='1x1x0', init='', filter_size='3', poly='5', slicewise='0', laplacian='0',
                  dof='Tx_Ty_Tz_Rx_Ry_Rz', smoothWarpXY='2', pca_eigenratio_th='1.6', rot_method='pca'):
+        """
+        Class to define registration method.
+
+        :param step: int: Step number (starts at 1, except for type=label which corresponds to step=0).
+        :param type: {im, seg, imseg, label} Type of data used for registration. Use type=label only at step=0.
+        :param algo:
+        :param metric:
+        :param iter:
+        :param shrink:
+        :param smooth:
+        :param gradStep:
+        :param deformation:
+        :param init:
+        :param filter_size:
+        :param poly:
+        :param slicewise:
+        :param laplacian:
+        :param dof:
+        :param smoothWarpXY:
+        :param pca_eigenratio_th:
+        :param rot_method: {'pca', 'hog', 'pcahog'}.  {pca, hog, pcahog}: rotation method to be used with
+            algo=centermassrot. pca: approximate cord segmentation by an ellipse and finds it orientation using PCA's
+            eigenvectors; hog: finds the orientation using the symmetry of the image; pcahog: tries method pca and if it
+            fails, uses method hog. If using hog or pcahog, type should be set to 'imseg'."
+        """
         self.step = step
         self.type = type
         self.algo = algo
@@ -78,7 +103,7 @@ class Paramreg(object):
 
 class ParamregMultiStep:
     """
-    This class contains a dictionary with the params of multiple steps
+    Class to aggregate multiple Paramreg() classes into a dictionary. The method addStep() is used to build this class.
     """
     def __init__(self, listParam=[]):
         self.steps = dict()
