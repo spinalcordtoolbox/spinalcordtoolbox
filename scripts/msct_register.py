@@ -1187,28 +1187,26 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
     generate_warping_field(fname_src, warp_inv_x, warp_inv_y, fname_warp_inv, verbose)
 
 
-def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.nii.gz', fname_warp_inv='warp_inverse.nii.gz', paramreg=Paramreg(step='0', type='im', algo='Translation', metric='MI', iter='5', shrink='1', smooth='0', gradStep='0.5'),
-                    ants_registration_params={'rigid': '', 'affine': '', 'compositeaffine': '', 'similarity': '', 'translation': '', 'bspline': ',10', 'gaussiandisplacementfield': ',3,0',
-                                              'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',1,3'}, verbose=0):
-    """Slice-by-slice registration of two images.
+def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.nii.gz',
+               fname_warp_inv='warp_inverse.nii.gz',
+               paramreg=Paramreg(step='0', type='im', algo='Translation', metric='MI', iter='5', shrink='1', smooth='0',
+                   gradStep='0.5'),
+               ants_registration_params={'rigid': '', 'affine': '', 'compositeaffine': '', 'similarity': '',
+                                         'translation': '', 'bspline': ',10', 'gaussiandisplacementfield': ',3,0',
+                                         'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',1,3'},
+               verbose=0):
+    """
+    Slice-by-slice registration of two images.
 
-    We first split the 3D images into 2D images (and the mask if inputted). Then we register slices of the two images
-    that physically correspond to one another looking at the physical origin of each image. The images can be of
-    different sizes but the destination image must be smaller thant the input image. We do that using antsRegistration
-    in 2D. Once this has been done for each slices, we gather the results and return them.
-    Algorithms implemented: translation, rigid, affine, syn and BsplineSyn.
-    N.B.: If the mask is inputted, it must also be 3D and it must be in the same space as the destination image.
-
-    input:
-        fname_source: name of moving image (type: string)
-        fname_dest: name of fixed image (type: string)
-        mask[optional]: name of mask file (type: string) (parameter -x of antsRegistration)
-        fname_warp: name of output 3d forward warping field
-        fname_warp_inv: name of output 3d inverse warping field
-        paramreg[optional]: parameters of antsRegistration (type: Paramreg class from sct_register_multimodal)
-        ants_registration_params[optional]: specific algorithm's parameters for antsRegistration (type: dictionary)
-
-    output:
+    :param fname_src: name of moving image (type: string)
+    :param fname_dest: name of fixed image (type: string)
+    :param fname_mask: name of mask file (type: string) (parameter -x of antsRegistration)
+    :param fname_warp: name of output 3d forward warping field
+    :param fname_warp_inv: name of output 3d inverse warping field
+    :param paramreg: Class Paramreg()
+    :param ants_registration_params: dict: specific algorithm's parameters for antsRegistration
+    :param verbose:
+    :return:
         if algo==translation:
             x_displacement: list of translation along x axis for each slice (type: list)
             y_displacement: list of translation along y axis for each slice (type: list)
@@ -1220,7 +1218,6 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
             creation of two 3D warping fields (forward and inverse) that are the concatenations of the slice-by-slice
             warps.
     """
-
     # set metricSize
     if paramreg.metric == 'MI':
         metricSize = '32'  # corresponds to number of bins
@@ -1254,11 +1251,6 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
         split_mask_list = split_data(im_mask, 2)
         for im in split_mask_list:
             im.save()
-
-    # coord_origin_dest = im_dest.transfo_pix2phys([[0,0,0]])
-    # coord_origin_input = im_src.transfo_pix2phys([[0,0,0]])
-    # coord_diff_origin = (np.asarray(coord_origin_dest[0]) - np.asarray(coord_origin_input[0])).tolist()
-    # [x_o, y_o, z_o] = [coord_diff_origin[0] * 1.0/px, coord_diff_origin[1] * 1.0/py, coord_diff_origin[2] * 1.0/pz]
 
     # initialization
     if paramreg.algo in ['Translation']:
