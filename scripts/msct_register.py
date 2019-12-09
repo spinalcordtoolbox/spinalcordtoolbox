@@ -860,7 +860,8 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
             coord_src_rot = coord_src[iz] * R
             coord_dest_rot = coord_dest[iz] * R.T
             # generate figure
-            plt.figure('iz=' + str(iz) + ', angle_src_dest=' + str(angle_src_dest[iz]), figsize=(9, 9))
+            plt.figure(figsize=(9, 9))
+            plt.title('iz=' + str(iz) + ', angle_src_dest=' + str(angle_src_dest[iz]))
             # plt.ion()  # enables interactive mode (allows keyboard interruption)
             # plt.title('iz='+str(iz))
             for isub in [221, 222, 223, 224]:
@@ -873,7 +874,7 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
                                     alpha=0.5)
                         pcaaxis = pca_src[iz].components_.T
                         pca_eigenratio = pca_src[iz].explained_variance_ratio_
-                        plt.title('src')
+                        plt.title('src: angle={}'.format(angle_src))
                     elif isub == 222:
                         plt.scatter([coord_src_rot[i, 0] for i in range(len(coord_src_rot))], [coord_src_rot[i, 1] for i in range(len(coord_src_rot))], s=5, marker='o', zorder=10, color='steelblue', alpha=0.5)
                         pcaaxis = pca_dest[iz].components_.T
@@ -884,7 +885,7 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
                                     alpha=0.5)
                         pcaaxis = pca_dest[iz].components_.T
                         pca_eigenratio = pca_dest[iz].explained_variance_ratio_
-                        plt.title('dest')
+                        plt.title('dest: angle={}'.format(angle_dest))
                     elif isub == 224:
                         plt.scatter([coord_dest_rot[i, 0] for i in range(len(coord_dest_rot))], [coord_dest_rot[i, 1] for i in range(len(coord_dest_rot))], s=5, marker='o', zorder=10, color='red', alpha=0.5)
                         pcaaxis = pca_src[iz].components_.T
