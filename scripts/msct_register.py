@@ -40,7 +40,7 @@ logger = logging.getLogger(__name__)
 # Parameters for registration
 class Paramreg(object):
     def __init__(self, step=None, type=None, algo='syn', metric='MeanSquares', iter='10', shrink='1', smooth='0',
-                 gradStep='0.5', deformation='1x1x0', init='', filter_size=10, poly='5', slicewise='0', laplacian='0',
+                 gradStep='0.5', deformation='1x1x0', init='', filter_size=5, poly='5', slicewise='0', laplacian='0',
                  dof='Tx_Ty_Tz_Rx_Ry_Rz', smoothWarpXY='2', pca_eigenratio_th='1.6', rot_method='pca'):
         """
         Class to define registration method.
@@ -860,6 +860,7 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
             plt.grid()
             plt.xlabel('z')
             plt.ylabel('Angle (deg)')
+            plt.title("Regularized cord angle estimation (filter_size: {})".format(filter_size))
             plt.savefig(os.path.join(path_qc, 'register2d_centermassrot_regularize_rotation.png'))
             plt.close()
         # update variable
