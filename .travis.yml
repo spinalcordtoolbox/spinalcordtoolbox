@@ -85,9 +85,9 @@ script:
 #  - python create_package.py -s ${TRAVIS_OS_NAME}  # test package creation
 #  - cd ../spinalcordtoolbox_v*
 #  - yes | ./install_sct  # test installation of package
-  - |
-    pip install coveralls
-    echo "This is the end, thanks for reading up to here."
+#   - |
+#     pip install coveralls
+#     echo "This is the end, thanks for reading up to here."
 
-after_success:
-  - CI=true TRAVIS=true coveralls
+# after_success:
+#   - CI=true TRAVIS=true coveralls
