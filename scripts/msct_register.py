@@ -4,7 +4,7 @@
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2015 NeuroPoly, Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: Tanguy Magnan, Julien Cohen-Adad
+# Authors: Tanguy Magnan, Julien Cohen-Adad, Nicolas Pinon
 #
 # License: see the LICENSE.TXT
 #########################################################################################
@@ -12,63 +12,619 @@
 # TODO: before running the PCA, correct for the "stretch" effect caused by curvature
 # TODO: columnwise: check inverse field
 # TODO: columnwise: add regularization: should not binarize at 0.5, especially problematic for edge (because division by zero to compute Sx, Sy).
-# TODO: remove register2d_centermass and generalize register2d_centermassrot
-# TODO: add flag for setting threshold on PCA
 # TODO: clean code for generate_warping_field (unify with centermass_rot)
 
 from __future__ import division, absolute_import
 
-import sys, os, shutil, logging
+import sys, os, logging
 from math import asin, cos, sin, acos
 import numpy as np
+from tqdm import tqdm
 
 from scipy import ndimage
+from scipy.signal import argrelmax, medfilt
 from scipy.io import loadmat
 from nibabel import load, Nifti1Image, save
 
-from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.image import Image, find_zmin_zmax, spatial_crop
+
 import sct_utils as sct
+import sct_apply_transfo
+import sct_concat_transfo
 from sct_convert import convert
-from sct_register_multimodal import Paramreg
+from sct_image import split_data, concat_warp2d
+from msct_register_landmarks import register_landmarks
 
 logger = logging.getLogger(__name__)
 
 
-def register_slicewise(fname_src,
-                        fname_dest,
-                        fname_mask='',
-                        warp_forward_out='step0Warp.nii.gz',
-                        warp_inverse_out='step0InverseWarp.nii.gz',
-                        paramreg=None,
-                        ants_registration_params=None,
-                        path_qc='./',
-                        remove_temp_files=0,
-                        verbose=0):
+# Parameters for registration
+class Paramreg(object):
+    def __init__(self, step=None, type=None, algo='syn', metric='MeanSquares', iter='10', shrink='1', smooth='0',
+                 gradStep='0.5', deformation='1x1x0', init='', filter_size=5, poly='5', slicewise='0', laplacian='0',
+                 dof='Tx_Ty_Tz_Rx_Ry_Rz', smoothWarpXY='2', pca_eigenratio_th='1.6', rot_method='pca'):
+        """
+        Class to define registration method.
 
-    im_and_seg = (paramreg.algo == 'centermassrot') and (paramreg.rot_method == 'hog')  # bool for simplicity
-    # future contributor wanting to implement a method that use both im and seg will add: and (paramreg.rot_method == 'OTHER_METHOD')
+        :param step: int: Step number (starts at 1, except for type=label which corresponds to step=0).
+        :param type: {im, seg, imseg, label} Type of data used for registration. Use type=label only at step=0.
+        :param algo:
+        :param metric:
+        :param iter:
+        :param shrink:
+        :param smooth:
+        :param gradStep:
+        :param deformation:
+        :param init:
+        :param filter_size: int: Size of the Gaussian kernel when filtering the cord rotation estimate across z.
+        :param poly:
+        :param slicewise: {'0', '1'}: Slice-by-slice 2d transformation.
+        :param laplacian:
+        :param dof:
+        :param smoothWarpXY:
+        :param pca_eigenratio_th:
+        :param rot_method: {'pca', 'hog', 'pcahog'}: Rotation method to be used with algo=centermassrot.
+            pca: approximate cord segmentation by an ellipse and finds it orientation using PCA's
+            eigenvectors; hog: finds the orientation using the symmetry of the image; pcahog: tries method pca and if it
+            fails, uses method hog. If using hog or pcahog, type should be set to 'imseg'."
+        """
+        self.step = step
+        self.type = type
+        self.algo = algo
+        self.metric = metric
+        self.iter = iter
+        self.shrink = shrink
+        self.smooth = smooth
+        self.laplacian = laplacian
+        self.gradStep = gradStep
+        self.deformation = deformation
+        self.slicewise = slicewise
+        self.init = init
+        self.poly = poly  # only for algo=slicereg
+        self.filter_size = filter_size  # only for algo=centermassrot
+        self.dof = dof  # only for type=label
+        self.smoothWarpXY = smoothWarpXY  # only for algo=columnwise
+        self.pca_eigenratio_th = pca_eigenratio_th  # only for algo=centermassrot
+        self.rot_method = rot_method  # only for algo=centermassrot
+        self.rot_src = None  # this variable is used to set the angle of the cord on the src image if it is known
+        self.rot_dest = None  # same as above for the destination image (e.g., if template, should be set to 0)
 
-    if im_and_seg is True:
-        fname_src_im = fname_src[0]
-        fname_dest_im = fname_dest[0]
-        fname_src_seg = fname_src[1]
-        fname_dest_seg = fname_dest[1]
-        del fname_src
-        del fname_dest  # to be sure it is not missused later
+        # list of possible values for self.type
+        self.type_list = ['im', 'seg', 'imseg', 'label']
+
+    # update constructor with user's parameters
+    def update(self, paramreg_user):
+        list_objects = paramreg_user.split(',')
+        for object in list_objects:
+            if len(object) < 2:
+                sct.printv('Please check parameter -param (usage changed from previous version)', 1, type='error')
+            obj = object.split('=')
+            setattr(self, obj[0], obj[1])
+
+
+class ParamregMultiStep:
+    """
+    Class to aggregate multiple Paramreg() classes into a dictionary. The method addStep() is used to build this class.
+    """
+    def __init__(self, listParam=[]):
+        self.steps = dict()
+        for stepParam in listParam:
+            if isinstance(stepParam, Paramreg):
+                self.steps[stepParam.step] = stepParam
+            else:
+                self.addStep(stepParam)
+
+    def addStep(self, stepParam):
+        # this function checks if the step is already present. If it is present, it must update it. If it is not, it
+        # must add it.
+        param_reg = Paramreg()
+        param_reg.update(stepParam)
+        # parameters must contain 'step'
+        if param_reg.step is None:
+            sct.printv("ERROR: parameters must contain 'step'", 1, 'error')
+        else:
+            if param_reg.step in self.steps:
+                self.steps[param_reg.step].update(stepParam)
+            else:
+                self.steps[param_reg.step] = param_reg
+        # parameters must contain 'type'
+        if int(param_reg.step) != 0 and param_reg.type not in param_reg.type_list:
+            sct.printv("ERROR: parameters must contain a type, either 'im' or 'seg'", 1, 'error')
+
+
+def register_wrapper(fname_src, fname_dest, param, paramregmulti, fname_src_seg='', fname_dest_seg='', fname_src_label='',
+                     fname_dest_label='', fname_mask='', fname_initwarp='', fname_initwarpinv='', identity=False,
+                     interp='linear', fname_output='', fname_output_warp='', path_out='', same_space=False):
+    """
+    Wrapper for image registration.
+
+    :param fname_src:
+    :param fname_dest:
+    :param param: Class Param(): See definition in sct_register_multimodal
+    :param paramregmulti: Class ParamregMultiStep(): See definition in this file
+    :param fname_src_seg:
+    :param fname_dest_seg:
+    :param fname_src_label:
+    :param fname_dest_label:
+    :param fname_mask:
+    :param fname_initwarp: str: File name of initial transformation
+    :param fname_initwarpinv: str: File name of initial inverse transformation
+    :param identity:
+    :param interp:
+    :param fname_output:
+    :param fname_output_warp:
+    :param path_out:
+    :param same_space: Bool: Source and destination images are in the same physical space (i.e. same coordinates).
+    :return: fname_src2dest, fname_dest2src, fname_output_warp, fname_output_warpinv
+    """
+    # TODO: move interp inside param.
+    # TODO: merge param inside paramregmulti by having a "global" sets of parameters that apply to all steps
+
+    # Extract path, file and extension
+    path_src, file_src, ext_src = sct.extract_fname(fname_src)
+    path_dest, file_dest, ext_dest = sct.extract_fname(fname_dest)
+
+    # check if source and destination images have the same name (related to issue #373)
+    # If so, change names to avoid conflict of result files and warns the user
+    suffix_src, suffix_dest = '_reg', '_reg'
+    if file_src == file_dest:
+        suffix_src, suffix_dest = '_src_reg', '_dest_reg'
+
+    # define output folder and file name
+    if fname_output == '':
+        path_out = '' if not path_out else path_out  # output in user's current directory
+        file_out = file_src + suffix_src
+        file_out_inv = file_dest + suffix_dest
+        ext_out = ext_src
+    else:
+        path, file_out, ext_out = sct.extract_fname(fname_output)
+        path_out = path if not path_out else path_out
+        file_out_inv = file_out + '_inv'
+
+    # create temporary folder
+    path_tmp = sct.tmp_create(basename="register")
+
+    sct.printv('\nCopying input data to tmp folder and convert to nii...', param.verbose)
+    Image(fname_src).save(os.path.join(path_tmp, "src.nii"))
+    Image(fname_dest).save(os.path.join(path_tmp, "dest.nii"))
+
+    if fname_src_seg:
+        Image(fname_src_seg).save(os.path.join(path_tmp, "src_seg.nii"))
+
+    if fname_dest_seg:
+        Image(fname_dest_seg).save(os.path.join(path_tmp, "dest_seg.nii"))
+
+    if fname_src_label:
+        Image(fname_src_label).save(os.path.join(path_tmp, "src_label.nii"))
+        Image(fname_dest_label).save(os.path.join(path_tmp, "dest_label.nii"))
+
+    if fname_mask != '':
+        Image(fname_mask).save(os.path.join(path_tmp, "mask.nii.gz"))
+
+    # go to tmp folder
+    curdir = os.getcwd()
+    os.chdir(path_tmp)
+
+    # reorient destination to RPI
+    Image('dest.nii').change_orientation("RPI").save('dest_RPI.nii')
+    if fname_dest_seg:
+        Image('dest_seg.nii').change_orientation("RPI").save('dest_seg_RPI.nii')
+    if fname_dest_label:
+        Image('dest_label.nii').change_orientation("RPI").save('dest_label_RPI.nii')
+
+    if identity:
+        # overwrite paramregmulti and only do one identity transformation
+        step0 = Paramreg(step='0', type='im', algo='syn', metric='MI', iter='0', shrink='1', smooth='0', gradStep='0.5')
+        paramregmulti = ParamregMultiStep([step0])
+
+    # initialize list of warping fields
+    warp_forward = []
+    warp_forward_winv = []
+    warp_inverse = []
+    warp_inverse_winv = []
+    generate_warpinv = 1
+
+    # initial warping is specified, update list of warping fields and skip step=0
+    if fname_initwarp:
+        sct.printv('\nSkip step=0 and replace with initial transformations: ', param.verbose)
+        sct.printv('  ' + fname_initwarp, param.verbose)
+        # sct.copy(fname_initwarp, 'warp_forward_0.nii.gz')
+        warp_forward.append(fname_initwarp)
+        start_step = 1
+        if fname_initwarpinv:
+            warp_inverse.append(fname_initwarpinv)
+        else:
+            sct.printv('\nWARNING: No initial inverse warping field was specified, therefore the inverse warping field '
+                       'will NOT be generated.', param.verbose, 'warning')
+            generate_warpinv = 0
+    else:
+        if same_space:
+            start_step = 1
+        else:
+            start_step = 0
+
+    # loop across registration steps
+    for i_step in range(start_step, len(paramregmulti.steps)):
+        sct.printv('\n--\nESTIMATE TRANSFORMATION FOR STEP #' + str(i_step), param.verbose)
+        # identify which is the src and dest
+        if paramregmulti.steps[str(i_step)].type == 'im':
+            src = ['src.nii']
+            dest = ['dest_RPI.nii']
+            interp_step = ['spline']
+        elif paramregmulti.steps[str(i_step)].type == 'seg':
+            src = ['src_seg.nii']
+            dest = ['dest_seg_RPI.nii']
+            interp_step = ['nn']
+        elif paramregmulti.steps[str(i_step)].type == 'imseg':
+            src = ['src.nii', 'src_seg.nii']
+            dest = ['dest_RPI.nii', 'dest_seg_RPI.nii']
+            interp_step = ['spline', 'nn']
+        elif paramregmulti.steps[str(i_step)].type == 'label':
+            src = ['src_label.nii']
+            dest = ['dest_label_RPI.nii']
+            interp_step = ['nn']
+        else:
+            sct.printv('ERROR: Wrong image type: {}'.format(paramregmulti.steps[str(i_step)].type), 1, 'error')
+        # if step>0, apply warp_forward_concat to the src image to be used
+        if (not same_space and i_step > 0) or (same_space and i_step > 1):
+            sct.printv('\nApply transformation from previous step', param.verbose)
+            for ifile in range(len(src)):
+                sct_apply_transfo.main(args=[
+                    '-i', src[ifile],
+                    '-d', dest[ifile],
+                    '-w', warp_forward,
+                    '-o', sct.add_suffix(src[ifile], '_reg'),
+                    '-x', interp_step[ifile]])
+                src[ifile] = sct.add_suffix(src[ifile], '_reg')
+        # register src --> dest
+        warp_forward_out, warp_inverse_out = register(src, dest, paramregmulti, param, str(i_step))
+        # deal with transformations with "-" as prefix. They should be inverted with calling sct_concat_transfo.
+        if warp_forward_out[0] == "-":
+            warp_forward_out = warp_forward_out[1:]
+            warp_forward_winv.append(warp_forward_out)
+        if warp_inverse_out[0] == "-":
+            warp_inverse_out = warp_inverse_out[1:]
+            warp_inverse_winv.append(warp_inverse_out)
+        # update list of forward/inverse transformations
+        warp_forward.append(warp_forward_out)
+        warp_inverse.insert(0, warp_inverse_out)
+
+    # Concatenate transformations
+    sct.printv('\nConcatenate transformations...', param.verbose)
+    sct_concat_transfo.main(args=[
+        '-w', warp_forward,
+        '-winv', warp_forward_winv,
+        '-d', 'dest.nii',
+        '-o', 'warp_src2dest.nii.gz'])
+    sct_concat_transfo.main(args=[
+        '-w', warp_inverse,
+        '-winv', warp_inverse_winv,
+        '-d', 'src.nii',
+        '-o', 'warp_dest2src.nii.gz'])
+
+    # TODO: make the following code optional (or move it to sct_register_multimodal)
+    # Apply warping field to src data
+    sct.printv('\nApply transfo source --> dest...', param.verbose)
+    sct_apply_transfo.main(args=[
+        '-i', 'src.nii',
+        '-d', 'dest.nii',
+        '-w', 'warp_src2dest.nii.gz',
+        '-o', 'src_reg.nii',
+        '-x', interp])
+    sct.printv('\nApply transfo dest --> source...', param.verbose)
+    sct_apply_transfo.main(args=[
+        '-i', 'dest.nii',
+        '-d', 'src.nii',
+        '-w', 'warp_dest2src.nii.gz',
+        '-o', 'dest_reg.nii',
+        '-x', interp])
+
+    # come back
+    os.chdir(curdir)
+
+    # Generate output files
+    sct.printv('\nGenerate output files...', param.verbose)
+    # generate: src_reg
+    fname_src2dest = sct.generate_output_file(os.path.join(path_tmp, "src_reg.nii"),
+                                              os.path.join(path_out, file_out + ext_out), param.verbose)
+    # generate: forward warping field
+    if fname_output_warp == '':
+        fname_output_warp = os.path.join(path_out, 'warp_' + file_src + '2' + file_dest + '.nii.gz')
+    sct.generate_output_file(os.path.join(path_tmp, "warp_src2dest.nii.gz"), fname_output_warp, param.verbose)
+    if generate_warpinv:
+        # generate: dest_reg
+        fname_dest2src = sct.generate_output_file(os.path.join(path_tmp, "dest_reg.nii"),
+                                                  os.path.join(path_out, file_out_inv + ext_dest), param.verbose)
+        # generate: inverse warping field
+        fname_output_warpinv = os.path.join(path_out, 'warp_' + file_dest + '2' + file_src + '.nii.gz')
+        sct.generate_output_file(os.path.join(path_tmp, "warp_dest2src.nii.gz"), fname_output_warpinv, param.verbose)
+
+    # Delete temporary files
+    if param.remove_temp_files:
+        sct.printv('\nRemove temporary files...', param.verbose)
+        sct.rmtree(path_tmp, verbose=param.verbose)
+
+    return fname_src2dest, fname_dest2src, fname_output_warp, fname_output_warpinv
+
+
+# register images
+# ==========================================================================================
+def register(src, dest, paramregmulti, param, i_step_str):
+    """
+    Register src onto dest image. Output affine transformations that need to be inverted will have the prefix "-".
+    :param src:
+    :param dest:
+    :param paramregmulti: Class ParamregMultiStep()
+    :param param:
+    :param i_step_str:
+    :return: list: warp_forward, warp_inverse
+    """
+    # initiate default parameters of antsRegistration transformation
+    ants_registration_params = {'rigid': '', 'affine': '', 'compositeaffine': '', 'similarity': '', 'translation': '',
+                                'bspline': ',10', 'gaussiandisplacementfield': ',3,0',
+                                'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',1,3'}
+    output = ''  # default output if problem
+
+    # If the input type is either im or seg, we can convert the input list into a string for improved code clarity
+    if not paramregmulti.steps[i_step_str].type == 'imseg':
+        src = src[0]
+        dest = dest[0]
+
+    # display arguments
+    sct.printv('Registration parameters:', param.verbose)
+    sct.printv('  type ........... ' + paramregmulti.steps[i_step_str].type, param.verbose)
+    sct.printv('  algo ........... ' + paramregmulti.steps[i_step_str].algo, param.verbose)
+    sct.printv('  slicewise ...... ' + paramregmulti.steps[i_step_str].slicewise, param.verbose)
+    sct.printv('  metric ......... ' + paramregmulti.steps[i_step_str].metric, param.verbose)
+    sct.printv('  iter ........... ' + paramregmulti.steps[i_step_str].iter, param.verbose)
+    sct.printv('  smooth ......... ' + paramregmulti.steps[i_step_str].smooth, param.verbose)
+    sct.printv('  laplacian ...... ' + paramregmulti.steps[i_step_str].laplacian, param.verbose)
+    sct.printv('  shrink ......... ' + paramregmulti.steps[i_step_str].shrink, param.verbose)
+    sct.printv('  gradStep ....... ' + paramregmulti.steps[i_step_str].gradStep, param.verbose)
+    sct.printv('  deformation .... ' + paramregmulti.steps[i_step_str].deformation, param.verbose)
+    sct.printv('  init ........... ' + paramregmulti.steps[i_step_str].init, param.verbose)
+    sct.printv('  poly ........... ' + paramregmulti.steps[i_step_str].poly, param.verbose)
+    sct.printv('  filter_size .... ' + str(paramregmulti.steps[i_step_str].filter_size), param.verbose)
+    sct.printv('  dof ............ ' + paramregmulti.steps[i_step_str].dof, param.verbose)
+    sct.printv('  smoothWarpXY ... ' + paramregmulti.steps[i_step_str].smoothWarpXY, param.verbose)
+    sct.printv('  rot_method ..... ' + paramregmulti.steps[i_step_str].rot_method, param.verbose)
+
+    # set metricSize
+    if paramregmulti.steps[i_step_str].metric == 'MI':
+        metricSize = '32'  # corresponds to number of bins
+    else:
+        metricSize = '4'  # corresponds to radius (for CC, MeanSquares...)
+
+    # set masking
+    if param.fname_mask:
+        fname_mask = 'mask.nii.gz'
+        masking = ['-x', 'mask.nii.gz']
+    else:
+        fname_mask = ''
+        masking = []
+
+    if paramregmulti.steps[i_step_str].algo == 'slicereg':
+        # check if user used type=label
+        if paramregmulti.steps[i_step_str].type == 'label':
+            sct.printv('\nERROR: this algo is not compatible with type=label. Please use type=im or type=seg', 1,
+                       'error')
+        else:
+            # Find the min (and max) z-slice index below which (and above which) slices only have voxels below a given
+            # threshold.
+            list_fname = [src, dest]
+            if not masking == []:
+                list_fname.append(fname_mask)
+            zmin_global, zmax_global = 0, 99999  # this is assuming that typical image has less slice than 99999
+            for fname in list_fname:
+                im = Image(fname)
+                zmin, zmax = find_zmin_zmax(im, threshold=0.1)
+                if zmin > zmin_global:
+                    zmin_global = zmin
+                if zmax < zmax_global:
+                    zmax_global = zmax
+            # crop images (see issue #293)
+            src_crop = sct.add_suffix(src, '_crop')
+            spatial_crop(Image(src), dict(((2, (zmin_global, zmax_global)),))).save(src_crop)
+            dest_crop = sct.add_suffix(dest, '_crop')
+            spatial_crop(Image(dest), dict(((2, (zmin_global, zmax_global)),))).save(dest_crop)
+            # update variables
+            src = src_crop
+            dest = dest_crop
+            scr_regStep = sct.add_suffix(src, '_regStep' + i_step_str)
+            # estimate transfo
+            # TODO fixup isct_ants* parsers
+            cmd = ['isct_antsSliceRegularizedRegistration',
+                   '-t', 'Translation[' + paramregmulti.steps[i_step_str].gradStep + ']',
+                   '-m',
+                   paramregmulti.steps[i_step_str].metric + '[' + dest + ',' + src + ',1,' + metricSize + ',Regular,0.2]',
+                   '-p', paramregmulti.steps[i_step_str].poly,
+                   '-i', paramregmulti.steps[i_step_str].iter,
+                   '-f', paramregmulti.steps[i_step_str].shrink,
+                   '-s', paramregmulti.steps[i_step_str].smooth,
+                   '-v', '1',  # verbose (verbose=2 does not exist, so we force it to 1)
+                   '-o', '[step' + i_step_str + ',' + scr_regStep + ']',  # here the warp name is stage10 because
+                   # antsSliceReg add "Warp"
+                   ] + masking
+            warp_forward_out = 'step' + i_step_str + 'Warp.nii.gz'
+            warp_inverse_out = 'step' + i_step_str + 'InverseWarp.nii.gz'
+            # run command
+            status, output = sct.run(cmd, param.verbose, is_sct_binary=True)
+
+    # ANTS 3d
+    elif paramregmulti.steps[i_step_str].algo.lower() in ants_registration_params \
+            and paramregmulti.steps[i_step_str].slicewise == '0':
+        # make sure type!=label. If type==label, this will be addressed later in the code.
+        if not paramregmulti.steps[i_step_str].type == 'label':
+            # Pad the destination image (because ants doesn't deform the extremities)
+            # N.B. no need to pad if iter = 0
+            if not paramregmulti.steps[i_step_str].iter == '0':
+                dest_pad = sct.add_suffix(dest, '_pad')
+                sct.run(['sct_image', '-i', dest, '-o', dest_pad, '-pad', '0,0,' + str(param.padding)])
+                dest = dest_pad
+            # apply Laplacian filter
+            if not paramregmulti.steps[i_step_str].laplacian == '0':
+                sct.printv('\nApply Laplacian filter', param.verbose)
+                sct.run(['sct_maths', '-i', src, '-laplacian', paramregmulti.steps[i_step_str].laplacian + ','
+                         + paramregmulti.steps[i_step_str].laplacian + ',0', '-o', sct.add_suffix(src, '_laplacian')])
+                sct.run(['sct_maths', '-i', dest, '-laplacian', paramregmulti.steps[i_step_str].laplacian + ','
+                         + paramregmulti.steps[i_step_str].laplacian + ',0', '-o', sct.add_suffix(dest, '_laplacian')])
+                src = sct.add_suffix(src, '_laplacian')
+                dest = sct.add_suffix(dest, '_laplacian')
+            # Estimate transformation
+            sct.printv('\nEstimate transformation', param.verbose)
+            scr_regStep = sct.add_suffix(src, '_regStep' + i_step_str)
+            # TODO fixup isct_ants* parsers
+            cmd = ['isct_antsRegistration',
+                   '--dimensionality', '3',
+                   '--transform', paramregmulti.steps[i_step_str].algo + '[' + paramregmulti.steps[i_step_str].gradStep
+                   + ants_registration_params[paramregmulti.steps[i_step_str].algo.lower()] + ']',
+                   '--metric', paramregmulti.steps[i_step_str].metric + '[' + dest + ',' + src + ',1,' + metricSize + ']',
+                   '--convergence', paramregmulti.steps[i_step_str].iter,
+                   '--shrink-factors', paramregmulti.steps[i_step_str].shrink,
+                   '--smoothing-sigmas', paramregmulti.steps[i_step_str].smooth + 'mm',
+                   '--restrict-deformation', paramregmulti.steps[i_step_str].deformation,
+                   '--output', '[step' + i_step_str + ',' + scr_regStep + ']',
+                   '--interpolation', 'BSpline[3]',
+                   '--verbose', '1',
+                   ] + masking
+            # add init translation
+            if not paramregmulti.steps[i_step_str].init == '':
+                init_dict = {'geometric': '0', 'centermass': '1', 'origin': '2'}
+                cmd += ['-r', '[' + dest + ',' + src + ',' + init_dict[paramregmulti.steps[i_step_str].init] + ']']
+            # run command
+            status, output = sct.run(cmd, param.verbose, is_sct_binary=True)
+            # get appropriate file name for transformation
+            if paramregmulti.steps[i_step_str].algo in ['rigid', 'affine', 'translation']:
+                warp_forward_out = 'step' + i_step_str + '0GenericAffine.mat'
+                warp_inverse_out = '-step' + i_step_str + '0GenericAffine.mat'
+            else:
+                warp_forward_out = 'step' + i_step_str + '0Warp.nii.gz'
+                warp_inverse_out = 'step' + i_step_str + '0InverseWarp.nii.gz'
+
+    # ANTS 2d
+    elif paramregmulti.steps[i_step_str].algo.lower() in ants_registration_params \
+            and paramregmulti.steps[i_step_str].slicewise == '1':
+        # make sure type!=label. If type==label, this will be addressed later in the code.
+        if not paramregmulti.steps[i_step_str].type == 'label':
+            # if shrink!=1, force it to be 1 (otherwise, it generates a wrong 3d warping field). TODO: fix that!
+            if not paramregmulti.steps[i_step_str].shrink == '1':
+                sct.printv('\nWARNING: when using slicewise with SyN or BSplineSyN, shrink factor needs to be one. '
+                           'Forcing shrink=1.', 1, 'warning')
+                paramregmulti.steps[i_step_str].shrink = '1'
+            warp_forward_out = 'step' + i_step_str + 'Warp.nii.gz'
+            warp_inverse_out = 'step' + i_step_str + 'InverseWarp.nii.gz'
+
+            register_slicewise(src,
+                               dest,
+                               paramreg=paramregmulti.steps[i_step_str],
+                               fname_mask=fname_mask,
+                               warp_forward_out=warp_forward_out,
+                               warp_inverse_out=warp_inverse_out,
+                               ants_registration_params=ants_registration_params,
+                               remove_temp_files=param.remove_temp_files,
+                               verbose=param.verbose)
+
+    # slice-wise transfo
+    elif paramregmulti.steps[i_step_str].algo in ['centermass', 'centermassrot', 'columnwise']:
+        # if type=label, exit with error
+        if paramregmulti.steps[i_step_str].type == 'label':
+            sct.printv('\nERROR: this algo is not compatible with type=label. Please use type=im or type=seg', 1,
+                       'error')
+        # check if user provided a mask-- if so, inform it will be ignored
+        if not fname_mask == '':
+            sct.printv('\nWARNING: algo ' + paramregmulti.steps[i_step_str].algo + ' will ignore the provided mask.\n', 1,
+                       'warning')
+        # smooth data
+        if not paramregmulti.steps[i_step_str].smooth == '0':
+            sct.printv('\nWARNING: algo ' + paramregmulti.steps[i_step_str].algo + ' will ignore the parameter smoothing.\n',
+                       1, 'warning')
+        warp_forward_out = 'step' + i_step_str + 'Warp.nii.gz'
+        warp_inverse_out = 'step' + i_step_str + 'InverseWarp.nii.gz'
+        register_slicewise(
+            src, dest, paramreg=paramregmulti.steps[i_step_str], fname_mask=fname_mask, warp_forward_out=warp_forward_out,
+            warp_inverse_out=warp_inverse_out, ants_registration_params=ants_registration_params,
+            remove_temp_files=param.remove_temp_files, verbose=param.verbose)
+    else:
+        sct.printv('\nERROR: algo ' + paramregmulti.steps[i_step_str].algo + ' does not exist. Exit program\n', 1, 'error')
+
+    # landmark-based registration
+    if paramregmulti.steps[i_step_str].type in ['label']:
+        # check if user specified ilabel and dlabel
+        # TODO
+        warp_forward_out = 'step' + i_step_str + '0GenericAffine.txt'
+        warp_inverse_out = '-step' + i_step_str + '0GenericAffine.txt'
+        register_landmarks(src,
+                           dest,
+                           paramregmulti.steps[i_step_str].dof,
+                           fname_affine=warp_forward_out,
+                           verbose=param.verbose)
+
+    if not os.path.isfile(warp_forward_out):
+        # no forward warping field for rigid and affine
+        sct.printv('\nERROR: file ' + warp_forward_out + ' doesn\'t exist (or is not a file).\n' + output +
+                   '\nERROR: ANTs failed. Exit program.\n', 1, 'error')
+    elif not os.path.isfile(warp_inverse_out) and \
+            paramregmulti.steps[i_step_str].algo not in ['rigid', 'affine', 'translation'] and \
+            paramregmulti.steps[i_step_str].type not in ['label']:
+        # no inverse warping field for rigid and affine
+        sct.printv('\nERROR: file ' + warp_inverse_out + ' doesn\'t exist (or is not a file).\n' + output +
+                   '\nERROR: ANTs failed. Exit program.\n', 1, 'error')
+    else:
+        # rename warping fields
+        if (paramregmulti.steps[i_step_str].algo.lower() in ['rigid', 'affine', 'translation'] and
+                paramregmulti.steps[i_step_str].slicewise == '0'):
+            # if ANTs is used with affine/rigid --> outputs .mat file
+            warp_forward = 'warp_forward_' + i_step_str + '.mat'
+            os.rename(warp_forward_out, warp_forward)
+            warp_inverse = '-warp_forward_' + i_step_str + '.mat'
+        elif paramregmulti.steps[i_step_str].type in ['label']:
+            # if label-based registration is used --> outputs .txt file
+            warp_forward = 'warp_forward_' + i_step_str + '.txt'
+            os.rename(warp_forward_out, warp_forward)
+            warp_inverse = '-warp_forward_' + i_step_str + '.txt'
+        else:
+            warp_forward = 'warp_forward_' + i_step_str + '.nii.gz'
+            warp_inverse = 'warp_inverse_' + i_step_str + '.nii.gz'
+            os.rename(warp_forward_out, warp_forward)
+            os.rename(warp_inverse_out, warp_inverse)
+
+    return warp_forward, warp_inverse
+
+
+def register_slicewise(fname_src, fname_dest, paramreg=None, fname_mask='', warp_forward_out='step0Warp.nii.gz',
+                       warp_inverse_out='step0InverseWarp.nii.gz', ants_registration_params=None,
+                       path_qc='./', remove_temp_files=0, verbose=0):
+    """
+    Main function that calls various methods for slicewise registration.
+
+    :param fname_src: Str or List: If List, first element is image, second element is segmentation.
+    :param fname_dest: Str or List: If List, first element is image, second element is segmentation.
+    :param paramreg: Class Paramreg()
+    :param fname_mask:
+    :param warp_forward_out:
+    :param warp_inverse_out:
+    :param ants_registration_params:
+    :param path_qc:
+    :param remove_temp_files:
+    :param verbose:
+    :return:
+    """
 
     # create temporary folder
     path_tmp = sct.tmp_create(basename="register", verbose=verbose)
 
     # copy data to temp folder
     sct.printv('\nCopy input data to temp folder...', verbose)
-    if im_and_seg is False:
+    if isinstance(fname_src, list):
+        # TODO: swap 0 and 1 (to be consistent with the child function below)
+        convert(fname_src[0], os.path.join(path_tmp, "src.nii"))
+        convert(fname_src[1], os.path.join(path_tmp, "src_seg.nii"))
+        convert(fname_dest[0], os.path.join(path_tmp, "dest.nii"))
+        convert(fname_dest[1], os.path.join(path_tmp, "dest_seg.nii"))
+    else:
         convert(fname_src, os.path.join(path_tmp, "src.nii"))
         convert(fname_dest, os.path.join(path_tmp, "dest.nii"))
-    else:
-        convert(fname_src_im, os.path.join(path_tmp, "src_im.nii"))
-        convert(fname_dest_im, os.path.join(path_tmp, "dest_im.nii"))
-        convert(fname_src_seg, os.path.join(path_tmp, "src_seg.nii"))
-        convert(fname_dest_seg, os.path.join(path_tmp, "dest_seg.nii"))
+
     if fname_mask != '':
         convert(fname_mask, os.path.join(path_tmp, "mask.nii.gz"))
 
@@ -77,27 +633,49 @@ def register_slicewise(fname_src,
     os.chdir(path_tmp)
 
     # Calculate displacement
-    if paramreg.algo == 'centermass':
+    if paramreg.algo in ['centermass', 'centermassrot']:
         # translation of center of mass between source and destination in voxel space
-        register2d_centermassrot('src.nii', 'dest.nii', fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, rot=0, polydeg=int(paramreg.poly), path_qc=path_qc, verbose=verbose)
-    elif paramreg.algo == 'centermassrot':
-        if im_and_seg is False:
-            # translation of center of mass and rotation based on source and destination first eigenvectors from PCA.
-            register2d_centermassrot('src.nii', 'dest.nii', fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, rot=1, polydeg=int(paramreg.poly), path_qc=path_qc, verbose=verbose, pca_eigenratio_th=float(paramreg.pca_eigenratio_th))
+        if paramreg.algo in 'centermass':
+            rot_method = 'none'
         else:
-            # translation based of center of mass and rotation based on the symmetry of the image
-            register2d_centermassrot(['src_im.nii','src_seg.nii'], ['dest_im.nii', 'dest_seg.nii'], fname_warp=warp_forward_out,
-                                     fname_warp_inv=warp_inverse_out, rot=2, polydeg=int(paramreg.poly),
-                                     path_qc=path_qc, verbose=verbose)
+            rot_method = paramreg.rot_method
+        if rot_method in ['hog', 'pcahog']:
+            src_input = ['src_seg.nii', 'src.nii']
+            dest_input = ['dest_seg.nii', 'dest.nii']
+        else:
+            src_input = ['src.nii']
+            dest_input = ['dest.nii']
+        register2d_centermassrot(
+            src_input, dest_input, paramreg=paramreg, fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out,
+            rot_method=rot_method, filter_size=paramreg.filter_size, path_qc=path_qc, verbose=verbose,
+            pca_eigenratio_th=float(paramreg.pca_eigenratio_th), )
+
     elif paramreg.algo == 'columnwise':
         # scaling R-L, then column-wise center of mass alignment and scaling
-        register2d_columnwise('src.nii', 'dest.nii', fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, verbose=verbose, path_qc=path_qc, smoothWarpXY=int(paramreg.smoothWarpXY))
+        register2d_columnwise('src.nii',
+                              'dest.nii',
+                              fname_warp=warp_forward_out,
+                              fname_warp_inv=warp_inverse_out,
+                              verbose=verbose,
+                              path_qc=path_qc,
+                              smoothWarpXY=int(paramreg.smoothWarpXY),
+                              )
+
+    # ANTs registration
     else:
         # convert SCT flags into ANTs-compatible flags
         algo_dic = {'translation': 'Translation', 'rigid': 'Rigid', 'affine': 'Affine', 'syn': 'SyN', 'bsplinesyn': 'BSplineSyN', 'centermass': 'centermass'}
         paramreg.algo = algo_dic[paramreg.algo]
         # run slicewise registration
-        register2d('src.nii', 'dest.nii', fname_mask=fname_mask, fname_warp=warp_forward_out, fname_warp_inv=warp_inverse_out, paramreg=paramreg, ants_registration_params=ants_registration_params, verbose=verbose)
+        register2d('src.nii',
+                   'dest.nii',
+                   fname_mask=fname_mask,
+                   fname_warp=warp_forward_out,
+                   fname_warp_inv=warp_inverse_out,
+                   paramreg=paramreg,
+                   ants_registration_params=ants_registration_params,
+                   verbose=verbose,
+                   )
 
     sct.printv('\nMove warping fields...', verbose)
     sct.copy(warp_forward_out, curdir)
@@ -110,32 +688,34 @@ def register_slicewise(fname_src,
         sct.rmtree(path_tmp, verbose=verbose)
 
 
-def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii.gz', fname_warp_inv='warp_inverse.nii.gz', rot=1, polydeg=0, path_qc='./', verbose=0, pca_eigenratio_th=1.6):
+def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='warp_forward.nii.gz',
+                             fname_warp_inv='warp_inverse.nii.gz', rot_method='pca', filter_size=0, path_qc='./',
+                             verbose=0, pca_eigenratio_th=1.6, th_max_angle=40):
     """
     Rotate the source image to match the orientation of the destination image, using the first and second eigenvector
     of the PCA. This function should be used on segmentations (not images).
     This works for 2D and 3D images.  If 3D, it splits the image and performs the rotation slice-by-slice.
-    input:
-        fname_source: name of moving image (type: string), if rot  == 2, this needs to be a list with the first element
-        being the image fname and the second the segmentation fname
-        fname_dest: name of fixed image (type: string), if rot == 2, needs to be a list
-        fname_warp: name of output 3d forward warping field
-        fname_warp_inv: name of output 3d inverse warping field
-        rot: estimate rotation with pca (=1), hog (=2) or no rotation (=0) Default = 1
-        Depending on the rotation method, input might be segmentation only or image and segmentation
-        polydeg: degree of polynomial regularization along z for rotation angle (type: int). 0: no regularization
-        verbose:
-    output:
-        none
-    """
 
-    if rot == 2:  # if following methods need im and seg, add "and rot == x"
-        fname_src_im = fname_src[0]
-        fname_dest_im = fname_dest[0]
-        fname_src_seg = fname_src[1]
-        fname_dest_seg = fname_dest[1]
-        del fname_src
-        del fname_dest  # to be sure it is not missused later
+    :param fname_src: List: Name of moving image. If rot=0 or 1, only the first element is used (should be a
+        segmentation). If rot=2 or 3, the first element is a segmentation and the second is an image.
+    :param fname_dest: List: Name of fixed image. If rot=0 or 1, only the first element is used (should be a
+        segmentation). If rot=2 or 3, the first element is a segmentation and the second is an image.
+    :param paramreg: Class Paramreg()
+    :param fname_warp: name of output 3d forward warping field
+    :param fname_warp_inv: name of output 3d inverse warping field
+    :param rot_method: {'none', 'pca', 'hog', 'pcahog'}. Depending on the rotation method, input might be segmentation
+        only or segmentation and image.
+    :param filter_size: size of the gaussian filter for regularization along z for rotation angle (type: float).
+        0: no regularization
+    :param path_qc:
+    :param verbose:
+    :param pca_eigenratio_th: threshold for the ratio between the first and second eigenvector of the estimated ellipse
+        for the PCA rotation detection method. If below this threshold, the estimation will be discarded (poorly robust)
+    :param th_max_angle: threshold of the absolute value of the estimated rotation using the PCA method, above
+        which the estimation will be discarded (unlikely to happen genuinely and hence considered outlier)
+    :return:
+    """
+    # TODO: no need to split the src or dest if it is the template (we know its centerline and orientation already)
 
     if verbose == 2:
         import matplotlib
@@ -144,70 +724,53 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
 
     # Get image dimensions and retrieve nz
     sct.printv('\nGet image dimensions of destination image...', verbose)
-    if rot == 1 or rot == 0:
-        nx, ny, nz, nt, px, py, pz, pt = Image(fname_dest).dim
-    else:
-        nx, ny, nz, nt, px, py, pz, pt = Image(fname_dest_im).dim
+    nx, ny, nz, nt, px, py, pz, pt = Image(fname_dest[0]).dim
     sct.printv('  matrix size: ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz), verbose)
     sct.printv('  voxel size:  ' + str(px) + 'mm x ' + str(py) + 'mm x ' + str(pz) + 'mm', verbose)
 
-    if rot == 1 or rot == 0:
-        # Split source volume along z
-        sct.printv('\nSplit input volume...', verbose)
-        from sct_image import split_data
-        im_src = Image('src.nii')
-        split_source_list = split_data(im_src, 2)
-        for im in split_source_list:
-            im.save()
+    # Split source volume along z
+    sct.printv('\nSplit input segmentation...', verbose)
+    im_src = Image(fname_src[0])
+    split_source_list = split_data(im_src, 2)
+    for im in split_source_list:
+        im.save()
 
-        # Split destination volume along z
-        sct.printv('\nSplit destination volume...', verbose)
-        im_dest = Image('dest.nii')
-        split_dest_list = split_data(im_dest, 2)
-        for im in split_dest_list:
-            im.save()
+    # Split destination volume along z
+    sct.printv('\nSplit destination segmentation...', verbose)
+    im_dest = Image(fname_dest[0])
+    split_dest_list = split_data(im_dest, 2)
+    for im in split_dest_list:
+        im.save()
 
-        # display image
-        data_src = im_src.data
-        data_dest = im_dest.data
-        if len(data_src.shape) == 2:
-            # reshape 2D data into pseudo 3D (only one slice)
-            new_shape = list(data_src.shape)
-            new_shape.append(1)
-            new_shape = tuple(new_shape)
-            data_src = data_src.reshape(new_shape)
-            data_dest = data_dest.reshape(new_shape)
-    elif rot == 2:  # im and seg case
+    data_src = im_src.data
+    data_dest = im_dest.data
+
+    # if input data is 2D, reshape into pseudo 3D (only one slice)
+    if len(data_src.shape) == 2:
+        new_shape = list(data_src.shape)
+        new_shape.append(1)
+        new_shape = tuple(new_shape)
+        data_src = data_src.reshape(new_shape)
+        data_dest = data_dest.reshape(new_shape)
+
+    # Deal with cases where both an image and segmentation are input
+    if len(fname_src) > 1:
         # Split source volume along z
-        sct.printv('\nSplit input volume...', verbose)
-        from sct_image import split_data
-        im_src_im = Image('src_im.nii')
+        sct.printv('\nSplit input image...', verbose)
+        im_src_im = Image(fname_src[1])
         split_source_list = split_data(im_src_im, 2)
         for im in split_source_list:
             im.save()
-        im_src_seg = Image('src_seg.nii')
-        split_source_list = split_data(im_src_seg, 2)
-        for im in split_source_list:
-            im.save()
 
         # Split destination volume along z
-        sct.printv('\nSplit destination volume...', verbose)
-        im_dest_im = Image('dest_im.nii')
+        sct.printv('\nSplit destination image...', verbose)
+        im_dest_im = Image(fname_dest[1])
         split_dest_list = split_data(im_dest_im, 2)
         for im in split_dest_list:
             im.save()
-        im_dest_seg = Image('dest_seg.nii')
-        split_dest_list = split_data(im_dest_seg, 2)
-        for im in split_dest_list:
-            im.save()
 
-        # display image
         data_src_im = im_src_im.data
         data_dest_im = im_dest_im.data
-        data_src_seg = im_src_seg.data
-        data_dest_seg = im_dest_seg.data
-    else:
-        raise ValueError("rot param == " + str(rot) + " not implemented")
 
     # initialize displacement and rotation
     coord_src = [None] * nz
@@ -220,85 +783,90 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
     # displacement_inverse = np.zeros([nz, 2])
     angle_src_dest = np.zeros(nz)
     z_nonzero = []
+    th_max_angle *= np.pi / 180
 
-    if rot == 1 or rot == 0:
-        # Loop across slices
-        for iz in range(0, nz):
-            try:
-                # compute PCA and get center or mass
-                coord_src[iz], pca_src[iz], centermass_src[iz, :] = compute_pca(data_src[:, :, iz])
-                coord_dest[iz], pca_dest[iz], centermass_dest[iz, :] = compute_pca(data_dest[:, :, iz])
-                # compute (src,dest) angle for first eigenvector
-                if rot == 1:
-                    eigenv_src = pca_src[iz].components_.T[0][0], pca_src[iz].components_.T[1][0]  # pca_src.components_.T[0]
-                    eigenv_dest = pca_dest[iz].components_.T[0][0], pca_dest[iz].components_.T[1][0]  # pca_dest.components_.T[0]
-                    # Make sure first element is always positive (to prevent sign flipping)
-                    if eigenv_src[0] <= 0:
-                        eigenv_src = tuple([i * (-1) for i in eigenv_src])
-                    if eigenv_dest[0] <= 0:
-                        eigenv_dest = tuple([i * (-1) for i in eigenv_dest])
-                    angle_src_dest[iz] = angle_between(eigenv_src, eigenv_dest)
-                    # check if ratio between the two eigenvectors is high enough to prevent poor robustness
-                    if pca_src[iz].explained_variance_ratio_[0] / pca_src[iz].explained_variance_ratio_[1] < pca_eigenratio_th:
-                        angle_src_dest[iz] = 0
-                    if pca_dest[iz].explained_variance_ratio_[0] / pca_dest[iz].explained_variance_ratio_[1] < pca_eigenratio_th:
-                        angle_src_dest[iz] = 0
-                # append to list of z_nonzero
-                z_nonzero.append(iz)
-            # if one of the slice is empty, ignore it
-            except ValueError:
-                sct.printv('WARNING: Slice #' + str(iz) + ' is empty. It will be ignored.', verbose, 'warning')
+    # Loop across slices
+    for iz in tqdm(range(0, nz), unit='iter', unit_scale=False, desc="Estimate cord angle for each slice",
+                   ascii=False, ncols=100):
+        try:
+            # compute PCA and get center or mass based on segmentation
+            coord_src[iz], pca_src[iz], centermass_src[iz, :] = compute_pca(data_src[:, :, iz])
+            coord_dest[iz], pca_dest[iz], centermass_dest[iz, :] = compute_pca(data_dest[:, :, iz])
 
-    elif rot == 2:  # im and seg case
+            # detect rotation using the HOG method
+            if rot_method in ['hog', 'pcahog']:
+                angle_src_hog, conf_score_src = find_angle_hog(data_src_im[:, :, iz], centermass_src[iz, :],
+                                                               px, py, angle_range=th_max_angle)
+                angle_dest_hog, conf_score_dest = find_angle_hog(data_dest_im[:, :, iz], centermass_dest[ iz, : ],
+                                                                 px, py, angle_range=th_max_angle)
+                # In case no maxima is found (it should never happen)
+                if (angle_src_hog is None) or (angle_dest_hog is None):
+                    sct.printv('WARNING: Slice #' + str(iz) + ' no angle found in dest or src. It will be ignored.',
+                               verbose, 'warning')
+                    continue
+                if rot_method == 'hog':
+                    angle_src = -angle_src_hog  # flip sign to be consistent with PCA output
+                    angle_dest = angle_dest_hog
 
-        raise NotImplementedError("This method is not implemented yet, it will be in a future version")
-        # for iz in range(0, nz):
-        #     try:
-        #         _, _, centermass_src[iz, :] = compute_pca(data_src_seg[:, :, iz])
-        #         _, _, centermass_dest[iz, :] = compute_pca(data_dest_seg[:, :, iz])
-        #
-        #         # TODO: Here will be put the new method to find the angle
-        #
-        #         #angle_src = find_angle(data_src_im[:, :, iz], centermass_src[iz, :], parameters)
-        #         #angle_dest = find_angle(data_dest_im[:, :, iz], centermass_dest[iz, :], parameters)
-        #
-        #         # if (angle_src is None) or (angle_dest is None):
-        #         #     sct.printv('WARNING: Slice #' + str(iz) + ' no angle found in dest or src. It will be ignored.', verbose, 'warning')
-        #         #     continue
-        #
-        #         # angle_src_dest[iz] = angle_src-angle_dest
-        #
-        #     except ValueError:
-        #         sct.printv('WARNING: Slice #' + str(iz) + ' is empty. It will be ignored.', verbose, 'warning')
-    else:
-        raise ValueError("rot param == " + str(rot) + " not implemented")
+            # Detect rotation using the PCA or PCA-HOG method
+            if rot_method in ['pca', 'pcahog']:
+                eigenv_src = pca_src[iz].components_.T[0][0], pca_src[iz].components_.T[1][0]
+                eigenv_dest = pca_dest[iz].components_.T[0][0], pca_dest[iz].components_.T[1][0]
+                # Make sure first element is always positive (to prevent sign flipping)
+                if eigenv_src[0] <= 0:
+                    eigenv_src = tuple([i * (-1) for i in eigenv_src])
+                if eigenv_dest[0] <= 0:
+                    eigenv_dest = tuple([i * (-1) for i in eigenv_dest])
+                angle_src = angle_between(eigenv_src, [1, 0])
+                angle_dest = angle_between([1, 0], eigenv_dest)
+                # compute ratio between axis of PCA
+                pca_eigenratio_src = pca_src[iz].explained_variance_ratio_[0] / pca_src[iz].explained_variance_ratio_[1]
+                pca_eigenratio_dest = pca_dest[iz].explained_variance_ratio_[0] / pca_dest[iz].explained_variance_ratio_[1]
+                # angle is set to 0 if either ratio between axis is too low or outside angle range
+                if pca_eigenratio_src < pca_eigenratio_th or angle_src > th_max_angle or angle_src < -th_max_angle:
+                    if rot_method == 'pca':
+                        angle_src = 0
+                    elif rot_method == 'pcahog':
+                        logger.info("Switched to method 'hog' for slice: {}".format(iz))
+                        angle_src = -angle_src_hog  # flip sign to be consistent with PCA output
+                if pca_eigenratio_dest < pca_eigenratio_th or angle_dest > th_max_angle or angle_dest < -th_max_angle:
+                    if rot_method == 'pca':
+                        angle_dest = 0
+                    elif rot_method == 'pcahog':
+                        logger.info("Switched to method 'hog' for slice: {}".format(iz))
+                        angle_dest = angle_dest_hog
+
+            if not rot_method == 'none':
+                # bypass estimation is source or destination angle is known a priori
+                if paramreg.rot_src is not None:
+                    angle_src = paramreg.rot_src
+                if paramreg.rot_dest is not None:
+                    angle_dest = paramreg.rot_dest
+                # the angle between (src, dest) is the angle between (src, origin) + angle between (origin, dest)
+                angle_src_dest[iz] = angle_src + angle_dest
+
+            # append to list of z_nonzero
+            z_nonzero.append(iz)
+
+        # if one of the slice is empty, ignore it
+        except ValueError:
+            sct.printv('WARNING: Slice #' + str(iz) + ' is empty. It will be ignored.', verbose, 'warning')
 
     # regularize rotation
-    if not polydeg == 0 and (rot == 1 or rot == 2):
-        coeffs = np.polyfit(z_nonzero, angle_src_dest[z_nonzero], polydeg)
-        poly = np.poly1d(coeffs)
-        angle_src_dest_regularized = np.polyval(poly, z_nonzero)        # display
+    if not filter_size == 0 and (rot_method in ['pca', 'hog', 'pcahog']):
+        # Filtering the angles by gaussian filter
+        angle_src_dest_regularized = ndimage.filters.gaussian_filter1d(angle_src_dest[z_nonzero], filter_size)
         if verbose == 2:
             plt.plot(180 * angle_src_dest[z_nonzero] / np.pi, 'ob')
             plt.plot(180 * angle_src_dest_regularized / np.pi, 'r', linewidth=2)
             plt.grid()
             plt.xlabel('z')
             plt.ylabel('Angle (deg)')
+            plt.title("Regularized cord angle estimation (filter_size: {})".format(filter_size))
             plt.savefig(os.path.join(path_qc, 'register2d_centermassrot_regularize_rotation.png'))
             plt.close()
         # update variable
         angle_src_dest[z_nonzero] = angle_src_dest_regularized
-
-    # initialize warping fields
-    # N.B. forward transfo is defined in destination space and inverse transfo is defined in the source space
-    if rot == 2:
-        im_src = im_src_im
-        im_dest = im_dest_im
-        data_dest = data_dest_im
-        data_src = data_src_im
-        fname_dest = fname_dest_im
-        fname_src = fname_src_im
-        # back to original names for the rest of the process
 
     warp_x = np.zeros(data_dest.shape)
     warp_y = np.zeros(data_dest.shape)
@@ -306,9 +874,8 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
     warp_inv_y = np.zeros(data_src.shape)
 
     # construct 3D warping matrix
-    for iz in z_nonzero:
-        # TODO: replace the thing below with "tqdm-like" logger-based function
-        # sct.no_new_line_log('{}/{}..'.format(iz + 1, nz))
+    for iz in tqdm(z_nonzero, unit='iter', unit_scale=False, desc="Build 3D deformation field",
+                   ascii=False, ncols=100):
         # get indices of x and y coordinates
         row, col = np.indices((nx, ny))
         # build 2xn array of coordinates in pixel space
@@ -328,14 +895,13 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
         # apply inverse transformation (in physical space)
         coord_inverse_phy = np.array(np.dot((coord_init_phy - np.transpose(centermass_src_phy)), R3d.T) + np.transpose(centermass_dest_phy))
         # display rotations
-        if verbose == 2 and not angle_src_dest[iz] == 0:
+        if verbose == 2 and not angle_src_dest[iz] == 0 and not rot_method == 'hog':
             # compute new coordinates
             coord_src_rot = coord_src[iz] * R
             coord_dest_rot = coord_dest[iz] * R.T
             # generate figure
-            plt.figure('iz=' + str(iz) + ', angle_src_dest=' + str(angle_src_dest[iz]), figsize=(9, 9))
+            plt.figure(figsize=(9, 9))
             # plt.ion()  # enables interactive mode (allows keyboard interruption)
-            # plt.title('iz='+str(iz))
             for isub in [221, 222, 223, 224]:
                 # plt.figure
                 plt.subplot(isub)
@@ -373,10 +939,7 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
                     plt.gca().set_aspect('equal', adjustable='box')
                 except Exception as e:
                     raise Exception
-                    # sct.printv('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), 1, 'warning')
-                    # sct.printv('WARNING: '+str(e), 1, 'warning')
 
-                    # plt.axis('equal')
             plt.savefig(os.path.join(path_qc, 'register2d_centermassrot_pca_z' + str(iz) + '.png'))
             plt.close()
 
@@ -386,11 +949,9 @@ def register2d_centermassrot(fname_src, fname_dest, fname_warp='warp_forward.nii
         warp_inv_x[:, :, iz] = np.array([coord_inverse_phy[i, 0] - coord_init_phy[i, 0] for i in range(nx * ny)]).reshape((nx, ny))
         warp_inv_y[:, :, iz] = np.array([coord_inverse_phy[i, 1] - coord_init_phy[i, 1] for i in range(nx * ny)]).reshape((nx, ny))
 
-    logger.info('\n Done')
-
     # Generate forward warping field (defined in destination space)
-    generate_warping_field(fname_dest, warp_x, warp_y, fname_warp, verbose)
-    generate_warping_field(fname_src, warp_inv_x, warp_inv_y, fname_warp_inv, verbose)
+    generate_warping_field(fname_dest[0], warp_x, warp_y, fname_warp, verbose)
+    generate_warping_field(fname_src[0], warp_inv_x, warp_inv_y, fname_warp_inv, verbose)
 
 
 def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz', fname_warp_inv='warp_inverse.nii.gz', verbose=0, path_qc='./', smoothWarpXY=1):
@@ -426,7 +987,6 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
 
     # Split source volume along z
     sct.printv('\nSplit input volume...', verbose)
-    from sct_image import split_data
     im_src = Image('src.nii')
     split_source_list = split_data(im_src, 2)
     for im in split_source_list:
@@ -654,28 +1214,26 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
     generate_warping_field(fname_src, warp_inv_x, warp_inv_y, fname_warp_inv, verbose)
 
 
-def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.nii.gz', fname_warp_inv='warp_inverse.nii.gz', paramreg=Paramreg(step='0', type='im', algo='Translation', metric='MI', iter='5', shrink='1', smooth='0', gradStep='0.5'),
-                    ants_registration_params={'rigid': '', 'affine': '', 'compositeaffine': '', 'similarity': '', 'translation': '', 'bspline': ',10', 'gaussiandisplacementfield': ',3,0',
-                                              'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',1,3'}, verbose=0):
-    """Slice-by-slice registration of two images.
+def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.nii.gz',
+               fname_warp_inv='warp_inverse.nii.gz',
+               paramreg=Paramreg(step='0', type='im', algo='Translation', metric='MI', iter='5', shrink='1', smooth='0',
+                   gradStep='0.5'),
+               ants_registration_params={'rigid': '', 'affine': '', 'compositeaffine': '', 'similarity': '',
+                                         'translation': '', 'bspline': ',10', 'gaussiandisplacementfield': ',3,0',
+                                         'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',1,3'},
+               verbose=0):
+    """
+    Slice-by-slice registration of two images.
 
-    We first split the 3D images into 2D images (and the mask if inputted). Then we register slices of the two images
-    that physically correspond to one another looking at the physical origin of each image. The images can be of
-    different sizes but the destination image must be smaller thant the input image. We do that using antsRegistration
-    in 2D. Once this has been done for each slices, we gather the results and return them.
-    Algorithms implemented: translation, rigid, affine, syn and BsplineSyn.
-    N.B.: If the mask is inputted, it must also be 3D and it must be in the same space as the destination image.
-
-    input:
-        fname_source: name of moving image (type: string)
-        fname_dest: name of fixed image (type: string)
-        mask[optional]: name of mask file (type: string) (parameter -x of antsRegistration)
-        fname_warp: name of output 3d forward warping field
-        fname_warp_inv: name of output 3d inverse warping field
-        paramreg[optional]: parameters of antsRegistration (type: Paramreg class from sct_register_multimodal)
-        ants_registration_params[optional]: specific algorithm's parameters for antsRegistration (type: dictionary)
-
-    output:
+    :param fname_src: name of moving image (type: string)
+    :param fname_dest: name of fixed image (type: string)
+    :param fname_mask: name of mask file (type: string) (parameter -x of antsRegistration)
+    :param fname_warp: name of output 3d forward warping field
+    :param fname_warp_inv: name of output 3d inverse warping field
+    :param paramreg: Class Paramreg()
+    :param ants_registration_params: dict: specific algorithm's parameters for antsRegistration
+    :param verbose:
+    :return:
         if algo==translation:
             x_displacement: list of translation along x axis for each slice (type: list)
             y_displacement: list of translation along y axis for each slice (type: list)
@@ -687,7 +1245,6 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
             creation of two 3D warping fields (forward and inverse) that are the concatenations of the slice-by-slice
             warps.
     """
-
     # set metricSize
     if paramreg.metric == 'MI':
         metricSize = '32'  # corresponds to number of bins
@@ -702,15 +1259,14 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
 
     # Split input volume along z
     sct.printv('\nSplit input volume...', verbose)
-    from sct_image import split_data
-    im_src = Image('src.nii')
+    im_src = Image(fname_src)
     split_source_list = split_data(im_src, 2)
     for im in split_source_list:
         im.save()
 
     # Split destination volume along z
     sct.printv('\nSplit destination volume...', verbose)
-    im_dest = Image('dest.nii')
+    im_dest = Image(fname_dest)
     split_dest_list = split_data(im_dest, 2)
     for im in split_dest_list:
         im.save()
@@ -722,11 +1278,6 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
         split_mask_list = split_data(im_mask, 2)
         for im in split_mask_list:
             im.save()
-
-    # coord_origin_dest = im_dest.transfo_pix2phys([[0,0,0]])
-    # coord_origin_input = im_src.transfo_pix2phys([[0,0,0]])
-    # coord_diff_origin = (np.asarray(coord_origin_dest[0]) - np.asarray(coord_origin_input[0])).tolist()
-    # [x_o, y_o, z_o] = [coord_diff_origin[0] * 1.0/px, coord_diff_origin[1] * 1.0/py, coord_diff_origin[2] * 1.0/pz]
 
     # initialization
     if paramreg.algo in ['Translation']:
@@ -817,15 +1368,14 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
         y_disp_a = np.asarray(y_displacement)
         theta_rot_a = np.asarray(theta_rotation)
         # Generate warping field
-        generate_warping_field('dest.nii', x_disp_a, y_disp_a, fname_warp=fname_warp)  #name_warp= 'step'+str(paramreg.step)
+        generate_warping_field(fname_dest, x_disp_a, y_disp_a, fname_warp=fname_warp)  #name_warp= 'step'+str(paramreg.step)
         # Inverse warping field
-        generate_warping_field('src.nii', -x_disp_a, -y_disp_a, fname_warp=fname_warp_inv)
+        generate_warping_field(fname_src, -x_disp_a, -y_disp_a, fname_warp=fname_warp_inv)
 
     if paramreg.algo in ['Rigid', 'Affine', 'BSplineSyN', 'SyN']:
-        from sct_image import concat_warp2d
         # concatenate 2d warping fields along z
-        concat_warp2d(list_warp, fname_warp, 'dest.nii')
-        concat_warp2d(list_warp_inv, fname_warp_inv, 'src.nii')
+        concat_warp2d(list_warp, fname_warp, fname_dest)
+        concat_warp2d(list_warp_inv, fname_warp_inv, fname_src)
 
 
 def numerotation(nb):
@@ -1021,3 +1571,148 @@ def find_index_halfmax(data1d):
     # plt.plot(xmax, 0.5, 'o')
     # plt.savefig('./normalize1d.png')
     return xmin, xmax
+
+
+def find_angle_hog(image, centermass, px, py, angle_range=10):
+    """Finds the angle of an image based on the method described by Sun, “Symmetry Detection Using Gradient Information.”
+     Pattern Recognition Letters 16, no. 9 (September 1, 1995): 987–96, and improved by N. Pinon
+     inputs :
+        - image : 2D numpy array to find symmetry axis on
+        - centermass: tuple of floats indicating the center of mass of the image
+        - px, py, dimensions of the pixels in the x and y direction
+        - angle_range : float or None, in deg, the angle will be search in the range [-angle_range, angle_range], if None angle angle might be returned
+     outputs :
+        - angle_found : float, angle found by the method
+        - conf_score : confidence score of the method (Actually a WIP, did not provide sufficient results to be used)
+    """
+
+    # param that can actually be tweeked to influence method performance :
+    sigma = 10  # influence how far away pixels will vote for the orientation, if high far away pixels vote will count more, if low only closest pixels will participate
+    nb_bin = 360  # number of angle bins for the histogram, can be more or less than 360, if high, a higher precision might be achieved but there is the risk of
+    kmedian_size = 5
+
+    # Normalization of sigma relative to pixdim :
+    sigmax = sigma / px
+    sigmay = sigma / py
+    if nb_bin % 2 != 0:  # necessary to have even number of bins
+        nb_bin = nb_bin - 1
+    if angle_range is None:
+        angle_range = 90
+
+    # Constructing mask based on center of mass that will influence the weighting of the orientation histogram
+    nx, ny = image.shape
+    xx, yy = np.mgrid[:nx, :ny]
+    seg_weighted_mask = np.exp(
+        -(((xx - centermass[0]) ** 2) / (2 * (sigmax ** 2)) + ((yy - centermass[1]) ** 2) / (2 * (sigmay ** 2))))
+
+    # Acquiring the orientation histogram :
+    grad_orient_histo = gradient_orientation_histogram(image, nb_bin=nb_bin, seg_weighted_mask=seg_weighted_mask)
+    # Bins of the histogram :
+    repr_hist = np.linspace(-(np.pi - 2 * np.pi / nb_bin), (np.pi - 2 * np.pi / nb_bin), nb_bin - 1)
+    # Smoothing of the histogram, necessary to avoid digitization effects that will favor angles 0, 45, 90, -45, -90:
+    grad_orient_histo_smooth = circular_filter_1d(grad_orient_histo, kmedian_size, kernel='median')  # fft than square than ifft to calculate convolution
+    # Computing the circular autoconvolution of the histogram to obtain the axis of symmetry of the histogram :
+    grad_orient_histo_conv = circular_conv(grad_orient_histo_smooth, grad_orient_histo_smooth)
+    # Restraining angle search to the angle range :
+    index_restrain = int(np.ceil(np.true_divide(angle_range, 180) * nb_bin))
+    center = (nb_bin - 1) // 2
+    grad_orient_histo_conv_restrained = grad_orient_histo_conv[center - index_restrain + 1:center + index_restrain + 1]
+    # Finding the symmetry axis by searching for the maximum in the autoconvolution of the histogram :
+    index_angle_found = np.argmax(grad_orient_histo_conv_restrained) + (nb_bin // 2 - index_restrain)
+    angle_found = repr_hist[index_angle_found] / 2
+    angle_found_score = np.amax(grad_orient_histo_conv_restrained)
+    # Finding other maxima to compute confidence score
+    arg_maxs = argrelmax(grad_orient_histo_conv_restrained, order=kmedian_size, mode='wrap')[0]
+    # Confidence score is the ratio of the 2 first maxima :
+    if len(arg_maxs) > 1:
+        conf_score = angle_found_score / grad_orient_histo_conv_restrained[arg_maxs[1]]
+    else:
+        conf_score = angle_found_score / np.mean(grad_orient_histo_conv)  # if no other maxima  in the region ratio of the maximum to the mean
+
+    return angle_found, conf_score
+
+
+def gradient_orientation_histogram(image, nb_bin, seg_weighted_mask=None):
+    """ This function takes an image as an input and return its orientation histogram
+    inputs :
+        - image : the image to compute the orientation histogram from, a 2D numpy array
+        - nb_bin : the number of bins of the histogram, an int, for instance 360 for bins 1 degree large (can be more or less than 360)
+        - seg_weighted_mask : optional, mask weighting the histogram count, base on segmentation, 2D numpy array between 0 and 1
+    outputs :
+        - grad_orient_histo : the histogram of the orientations of the image, a 1D numpy array of length nb_bin"""
+
+    h_kernel = np.array([[1, 2, 1],
+                         [0, 0, 0],
+                         [-1, -2, -1]]) / 4.0
+    v_kernel = h_kernel.T
+
+    # Normalization by median, to resolve scaling problems
+    median = np.median(image)
+    if median != 0:
+        image = image / median
+
+    # x and y gradients of the image
+    gradx = ndimage.convolve(image, v_kernel)
+    grady = ndimage.convolve(image, h_kernel)
+
+    # orientation gradient
+    orient = np.arctan2(grady, gradx)  # results are in the range -pi pi
+
+    # weight by gradient magnitude :  this step seems dumb, it alters the angles
+    grad_mag = ((np.abs(gradx.astype(object)) ** 2 + np.abs(grady.astype(object)) ** 2) ** 0.5)  # weird data type manipulation, cannot explain why it failed without it
+    if np.max(grad_mag) != 0:
+        grad_mag = grad_mag / np.max(grad_mag)  # to have map between 0 and 1 (and keep consistency with the seg_weihting map if provided)
+
+    if seg_weighted_mask is not None:
+        weighting_map = np.multiply(seg_weighted_mask, grad_mag)  # include weightning by segmentation
+    else:
+        weighting_map = grad_mag
+
+    # compute histogram :
+    grad_orient_histo = np.histogram(np.concatenate(orient), bins=nb_bin - 1, range=(-(np.pi - np.pi / nb_bin), (np.pi - np.pi / nb_bin)),
+                                     weights=np.concatenate(weighting_map))
+
+    return grad_orient_histo[0].astype(float)  # return only the values of the bins, not the bins (we know them)
+
+
+def circular_conv(signal1, signal2):
+    """takes two 1D numpy array and do a circular convolution with them
+    inputs :
+        - signal1 : 1D numpy array
+        - signal2 : 1D numpy array, same length as signal1
+    output :
+        - signal_conv : 1D numpy array, result of circular convolution of signal1 and signal2"""
+
+    if signal1.shape != signal2.shape:
+        raise Exception("The two signals for circular convolution do not have the same shape")
+
+    signal2_extended = np.concatenate((signal2, signal2, signal2))  # replicate signal at both ends
+
+    signal_conv_extended = np.convolve(signal1, signal2_extended, mode="same")  # median filtering
+
+    signal_conv = signal_conv_extended[len(signal1):2*len(signal1)]  # truncate back the signal
+
+    return signal_conv
+
+
+def circular_filter_1d(signal, window_size, kernel='gaussian'):
+
+    """ This function filters circularly the signal inputted with a median filter of inputted size, in this context
+    circularly means that the signal is wrapped around and then filtered
+    inputs :
+        - signal : 1D numpy array
+        - window_size : size of the kernel, an int
+    outputs :
+        - signal_smoothed : 1D numpy array, same size as signal"""
+
+    signal_extended = np.concatenate((signal, signal, signal))  # replicate signal at both ends
+    if kernel == 'gaussian':
+        signal_extended_smooth = ndimage.gaussian_filter(signal_extended, window_size)  # gaussian
+    elif kernel == 'median':
+        signal_extended_smooth = medfilt(signal_extended, window_size)  # median filtering
+    else:
+        raise Exception("Unknow type of kernel")
+
+    signal_smoothed = signal_extended_smooth[len(signal):2*len(signal)]  # truncate back the signal
+
+    return signal_smoothed

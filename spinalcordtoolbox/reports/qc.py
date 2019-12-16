@@ -70,7 +70,7 @@ class QcImage(object):
     # _seg_colormap = plt.cm.autumn
 
     def __init__(self, qc_report, interpolation, action_list, stretch_contrast=True,
-                 stretch_contrast_method='contrast_stretching'):
+                 stretch_contrast_method='contrast_stretching', angle_line=None):
         """
 
         Parameters
@@ -83,18 +83,53 @@ class QcImage(object):
             List of functions that generates a specific type of images
         stretch_contrast : adjust image so as to improve contrast
         stretch_contrast_method: {'contrast_stretching', 'equalized'}: Method for stretching contrast
+        angle_line: [float]: See generate_qc()
         """
         self.qc_report = qc_report
         self.interpolation = interpolation
         self.action_list = action_list
         self._stretch_contrast = stretch_contrast
         self._stretch_contrast_method = stretch_contrast_method
-
+        self._angle_line = angle_line
+        self._centermass = None  # center of mass returned by slice.Axial.get_center()
     """
     action_list contain the list of images that has to be generated.
     It can be seen as "figures" of matplotlib to be shown
     Ex: if 'colorbar' is in the list, the process will generate a color bar in the "img" folder
     """
+    def line_angle(self, mask, ax):
+        """Create figure with line superposed over each mosaic square. The line has an angle encoded in the
+        argument self._angle_line"""
+        angles = np.full_like(np.zeros(len(self._centermass)), np.nan)
+        angles[0:len(self._angle_line)] = self._angle_line
+        img = np.full_like(mask, np.nan)
+        ax.imshow(img, cmap='gray', alpha=0, aspect=float(self.aspect_mask))
+        for nslice, center_mosaic in enumerate(self._centermass):
+            if np.isnan(angles[nslice]):
+                pass
+            else:
+                x0, y0 = center_mosaic[0], center_mosaic[1]
+                angle = angles[nslice]
+                if not (-np.pi <= angle <= np.pi):
+                    raise Exception("angle prompted for angle_line not in the range [-pi pi]")
+                x_min, y_min = x0 - 10, y0 - 10
+                x_max, y_max = x0 + 10, y0 + 10
+
+                if -np.pi/4 < angle <= np.pi/4 or -np.pi <= angle <= -3*np.pi/4 or 3*np.pi/4 < angle <= np.pi:
+                    y1 = y_min
+                    y2 = y_max
+                    x1 = (y_min - y0) * np.tan(angle) + x0
+                    x2 = (y_max - y0) * np.tan(angle) + x0
+                else:
+                    x1 = x_min
+                    x2 = x_max
+                    y1 = y0 + (x_min - x0) / np.tan(angle)
+                    y2 = y0 + (x_max - x0) / np.tan(angle)
+
+                ax.plot([x1, x2], [y1, y2], '-', color='red', linewidth=0.7)
+
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
 
     def listed_seg(self, mask, ax):
         """Create figure with red segmentation. Common scenario."""
@@ -224,7 +259,11 @@ class QcImage(object):
             self.qc_report.make_content_path()
             logger.info('QcImage: %s with %s slice', func.__name__, sct_slice.get_name())
 
-            img, mask = func(sct_slice, *args)
+            if self._angle_line is None:
+                img, mask = func(sct_slice,    *args)
+            else:
+                [img, mask], centermass = func(sct_slice, *args)
+                self._centermass = centermass
 
             if self._stretch_contrast:
                 def equalized(a):
@@ -470,6 +509,7 @@ def add_entry(src, process, args, path_qc, plane, path_img=None, path_img_overla
               qcslice_layout=None,
               dpi=300,
               stretch_contrast_method='contrast_stretching',
+              angle_line=None,
               dataset=None,
               subject=None):
     """
@@ -487,6 +527,7 @@ def add_entry(src, process, args, path_qc, plane, path_img=None, path_img_overla
     :param qcslice_layout:
     :param dpi: int: Output resolution of the image
     :param stretch_contrast_method: Method for stretching contrast. See QcImage
+    :param angle_line: [float]: See generate_qc()
     :param dataset: str: Dataset name
     :param subject: str: Subject name
     :return:
@@ -496,7 +537,8 @@ def add_entry(src, process, args, path_qc, plane, path_img=None, path_img_overla
     report = QcReport(qc_param, '')
 
     if qcslice is not None:
-        @QcImage(report, 'none', qcslice_operations, stretch_contrast_method=stretch_contrast_method)
+        @QcImage(report, 'none', qcslice_operations, stretch_contrast_method=stretch_contrast_method,
+                 angle_line=angle_line)
         def layout(qslice):
             return qcslice_layout(qslice)
 
@@ -528,8 +570,8 @@ def add_entry(src, process, args, path_qc, plane, path_img=None, path_img_overla
         print("WARNING! Platform undetectable.")
 
 
-def generate_qc(fname_in1, fname_in2=None, fname_seg=None, args=None, path_qc=None, dataset=None, subject=None,
-                path_img=None, process=None):
+def generate_qc(fname_in1, fname_in2=None, fname_seg=None, angle_line=None, args=None, path_qc=None, dataset=None,
+                subject=None, path_img=None, process=None):
     """
     Generate a QC entry allowing to quickly review results. This function is the entry point and is called by SCT
     scripts (e.g. sct_propseg).
@@ -537,6 +579,8 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, args=None, path_qc=No
     :param fname_in1: str: File name of input image #1 (mandatory)
     :param fname_in2: str: File name of input image #2
     :param fname_seg: str: File name of input segmentation
+    :param angle_line: [list of float]: Angle [in rad, wrt. vertical line, must be between -pi and pi] to apply to the line overlaid on the image, for
+    each slice, for slice that don't have an angle to display, a nan is expected. To be used for assessing cord orientation.
     :param args: args from parent function
     :param path_qc: str: Path to save QC report
     :param dataset: str: Dataset name
@@ -558,6 +602,12 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, args=None, path_qc=No
         qcslice_type = qcslice.Axial([Image(fname_in1), Image(fname_in2), Image(fname_seg)])
         qcslice_operations = [QcImage.no_seg_seg]
         qcslice_layout = lambda x: x.mosaic()[:2]
+    # Rotation visualisation
+    elif process in ['rotation']:
+        plane = 'Axial'
+        qcslice_type = qcslice.Axial([Image(fname_in1), Image(fname_seg)])
+        qcslice_operations = [QcImage.line_angle]
+        qcslice_layout = lambda x: x.mosaic(return_center=True)
     # Axial orientation, switch between the image and the segmentation
     elif process in ['sct_propseg', 'sct_deepseg_sc', 'sct_deepseg_gm']:
         plane = 'Axial'
@@ -611,6 +661,7 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, args=None, path_qc=No
         qcslice_operations=qcslice_operations,
         qcslice_layout=qcslice_layout,
         stretch_contrast_method='equalized',
+        angle_line=angle_line
     )
 
 
