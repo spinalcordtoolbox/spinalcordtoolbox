@@ -221,7 +221,7 @@ class Transform:
                          '-dilate', '2'])
                 fname_src = fname_dilated_labels
 
-            sct.printv("\nApply transformation and resample to destination space...")
+            sct.printv("\nApply transformation and resample to destination space...", verbose)
             sct.run(['isct_antsApplyTransforms',
                      '-d', dim,
                      '-i', fname_src,
