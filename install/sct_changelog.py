@@ -60,10 +60,10 @@ def latest_milestone():
 def detailed_changelog(new_tag):
     """Return the Github URL comparing the last tags with the new_tag.
     """
-    tags_url = API_URL + 'tags'
+    tags_url = API_URL + 'releases'
     response = requests.get(tags_url)
-    previous = response.json()[0]
-    return ("https://github.com/neuropoly/spinalcordtoolbox/compare/%s...%s" % (previous['name'], new_tag))
+    previous_tag = response.json()[0]['tag_name']
+    return ("https://github.com/neuropoly/spinalcordtoolbox/compare/%s...%s" % (previous_tag, new_tag))
 
 
 def search(milestone, label=''):
@@ -145,3 +145,4 @@ if __name__ == '__main__':
     with io.open(filename, "wb") as changelog:
         changelog.write('\n'.join(lines).encode("utf-8"))
     logging.info('Changelog saved in %s', filename)
+    print('open {}'.format(filename))
