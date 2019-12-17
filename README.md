@@ -99,7 +99,7 @@ In order to install the SCT in Windows or other unsupported OS, we provide a sol
 
 If for some reasons installation with Docker does not work for you, you can always install and run SCT within a VM. We recommend you install the [neurodebian](http://neuro.debian.net/vm.html) VM, which contains useful neuroimaging software such as FSLeyes. 
 
-Important: When importing the NeuroDebian ova file into VirtualBox, make sure to select the following options:
+Important: After importing the NeuroDebian ova file into VirtualBox, make sure to select the following options:
 - System
   - Base Memory: 2GB or more
 - Display
@@ -107,14 +107,17 @@ Important: When importing the NeuroDebian ova file into VirtualBox, make sure to
   - Graphics Controller: VBoxVGA
   - No acceleration enabled
 
-Then, you need to install driver updates for the video card:
-- Open your NeuroDebian VM, then select: Devices > Insert Guest Additions CD image
-- Open a Terminal and run:
+Then, you need to install driver updates for the video card. Start the VM, open a Terminal and run:
 ~~~
-cd /media/cdrom0/
-sudo sh ./VBoxLinuxAdditions.run
+cd /home/brain
+wget https://download.virtualbox.org/virtualbox/6.0.4/VBoxGuestAdditions_6.0.4.iso
+mkdir disk_VM
+sudo mount VBoxGuestAdditions_6.0.4.iso disk_VM/
+sudo disk_VM/VBoxLinuxAdditions.run
+sudo reboot
 ~~~
-- Restart the VM.
+
+After the VM has restarted, you can install SCT!
 
 
 ## Getting started
