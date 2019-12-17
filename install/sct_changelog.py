@@ -145,3 +145,4 @@ if __name__ == '__main__':
     with io.open(filename, "wb") as changelog:
         changelog.write('\n'.join(lines).encode("utf-8"))
     logging.info('Changelog saved in %s', filename)
+    print('open {}'.format(filename))
