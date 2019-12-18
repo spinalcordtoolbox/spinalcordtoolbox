@@ -540,9 +540,17 @@ conda activate venv_sct
 # Install Python dependencies
 print info "Installing Python dependencies..."
 pip install numpy
-pip install -r requirements.txt # we do not include the requirements inside the setup.py because it is much faster to install all dependencies first (uses pre-compiled wheels)
+# Check if a frozen version of the requirements exist (for release only)
+if [[ -f "requirements-freeze.txt" ]]; then
+  print info "Using requirements-freeze.txt (release installation)"
+  pip install -r requirements-freeze.txt
+else
+  # Not a package
+  print info "Using requirements.txt (git installation)"
+  pip install -r requirements.txt
+fi
 if [[ $? != 0 ]]; then
-  die "Failed running pip install -r requirements.txt: $?"
+  die "Failed running pip install: $?"
 fi
 
 ## Install the spinalcordtoolbox into the Conda venv
