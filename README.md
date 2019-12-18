@@ -52,6 +52,7 @@ pathways. We anticipate that **SCT** will bring together the spinal cord
 neuroimaging community by establishing standard templates and analysis
 procedures.
 
+
 ## Installation
 
 ### Install from package (release)
@@ -133,6 +134,7 @@ process those files and output quantitative parameters.
 If you would like to get more examples about what SCT can do, please visit [this address](https://github.com/sct-pipeline/).
 Each repository is a pipeline dedicated to a specific research project.
 
+
 ## Courses
 
 We organize **free** SCT courses, each year after the ISMRM conference. If you'd like to be added to the mailing list, please send an email to `spinalcordtoolbox@gmail.com`. The past courses handouts are listed below:
@@ -145,6 +147,7 @@ We organize **free** SCT courses, each year after the ISMRM conference. If you'd
 * [SCT course (v3.0_beta9), Singapore, 2016-05-13](https://drive.google.com/file/d/0Bx3A13n3Q_EAa3NQYjBOWjhjZm8/view?usp=sharing)
 * [SCT course (v3.0_beta1), Montreal, 2016-04-19](https://drive.google.com/file/d/0Bx3A13n3Q_EAenltM2ZvZUNEdjQ/view?usp=sharing)
 * [SCT Hands-on Workshop (v2.0.4), Toronto, 2015-06-15](https://www.dropbox.com/s/f9887yrbkcfujn9/sct_handsOn_20150605.pdf?dl=0)
+
 
 ## Video tutorials
 
@@ -234,6 +237,7 @@ Please visit our video tutorials [here](https://www.youtube.com/channel/UC3o_1ar
 - [Karbasforoushan et al. Brainstem and spinal cord MRI identifies altered sensorimotor pathways post-stroke. Nat Commun. 2019 Aug 6;10(1):3524. doi: 10.1038/s41467-019-11244-3.](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6684621/)
 - [Seif et al. Guidelines for the conduct of clinical trials in spinal cord injury: Neuroimaging biomarkers.Spinal Cord. 2019 Sep;57(9):717-728. doi: 10.1038/s41393-019-0309-x.](https://www.ncbi.nlm.nih.gov/pubmed/31267015)
 
+
 ## Citing spinalcordtoolbox
 
 When citing SCT please use this BibTeX entry:
@@ -258,10 +262,12 @@ When citing SCT please use this BibTeX entry:
     keywords = "Open-source ",
     }
 
+
 ## Contributors
 
 This project exists thanks to [all the people who contribute](https://github.com/neuropoly/spinalcordtoolbox/graphs/contributors).
 If you would like to contribute as well, please follow the [contribution guidelines](CONTRIBUTING.rst).
+
 
 ## License
 
