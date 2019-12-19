@@ -1,3 +1,26 @@
+## 4.2.0 (2019-12-19)
+[View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/4.1.1...4.2.0)
+
+**ENHANCEMENT**
+
+ - **sct_register_multimodal,sct_register_to_template:** New method for detecting rotation in centermassrot. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2331)
+
+**FEATURE**
+
+ - **sct_register_to_template:** Spinal-level-based registration to the PAM50. **WARNING: Breaks compatibility with previous versions of SCT.** [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2513)
+
+**DOCUMENTATION**
+
+ - Added info for running SCT via Vbox. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2551)
+
+**INSTALLATION**
+
+ - Now using requirements-freeze.txt for installing stable releases. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2558)
+ - install/sct_changelog: Fixed bug when fetching previous release tag. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2550)
+ - Removed Darwin=15 case in requirements.txt and added OS checks during installation. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2534)
+
+
+
 ## 4.1.1 (2019-11-28)
 [View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/4.1.0...4.1.1)
 
