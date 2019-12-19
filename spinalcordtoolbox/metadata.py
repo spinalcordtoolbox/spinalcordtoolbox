@@ -5,6 +5,7 @@
 from __future__ import absolute_import
 
 import io, os, re
+from operator import itemgetter
 
 from spinalcordtoolbox.utils import parse_num_list
 
@@ -187,11 +188,11 @@ def read_label_file_atlas(path_info_label, file_info_label):
     return list(zip(*il._indiv_labels))
 
 
-def get_file_label(path_label='', label='', output='file'):
+def get_file_label(path_label='', id_label=0, output='file'):
     """
     Get label file name given based on info_label.txt file.
     :param path_label: folder containing info_label.txt and the files
-    :param label: label to be found
+    :param id_label: (int) ID of the label to be found
     :param output: {file, filewithpath}
     :return: selected output ; if not found, raise a RuntimeError
     """
@@ -202,19 +203,21 @@ def get_file_label(path_label='', label='', output='file'):
     il.load(fname_label)
 
     for _id, _name, _file in il._indiv_labels:
-        if _name == label:
+        if _id == id_label:
             if output == 'file':
                 return _file
             elif output == 'filewithpath':
                 return os.path.join(path_label, _file)
 
-    raise RuntimeError("Label {} not found in {}".format(label, fname_label))
+    raise RuntimeError("Label ID {} not found in {}".format(id_label, fname_label))
 
-def get_indiv_label_names(directory):
+def get_indiv_label_info(directory):
     """
-    Get all individual label names in a folder
+    Get all individual label info (id, name, filename) in a folder
     :param directory: folder containing info_label.txt and the files
-    :return: the labels (strings)
+    :return: dictionary containing "id" the label IDs (int),
+                                    "name" the labels (string),
+                                    "file" the label filename (string)
     """
 
     file_info_label = 'info_label.txt'
@@ -222,5 +225,12 @@ def get_indiv_label_names(directory):
     fname_label = os.path.join(directory, file_info_label)
     il.load(fname_label)
 
-    return tuple([_name for (_id, _name, _file) in il._indiv_labels])
+    id_lst = list(map(itemgetter(0), il._indiv_labels))
+    name_lst = list(map(itemgetter(1), il._indiv_labels))
+    filename_lst = list(map(itemgetter(2), il._indiv_labels))
+
+    return {'id': tuple(id_lst),
+            'name': tuple(name_lst),
+            'file': tuple(filename_lst)
+            }
 
