@@ -77,8 +77,8 @@ def get_parser():
     optional.add_argument(
         "-brain",
         type=int,
-        help='Indicate if the input image contains brain sections (to speed up segmentation). This flag is only '
-             'effective with "-centerline cnn".',
+        help='Indicate if the input image contains brain sections (to speed up segmentation). Only use with '
+             '"-centerline cnn".',
         choices=(0, 1))
     optional.add_argument(
         "-kernel",
