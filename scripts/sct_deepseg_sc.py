@@ -142,7 +142,7 @@ def main():
     else:
         brain_bool = bool(args.brain)
 
-    if brain_bool and ctr_algo == 'svm':
+    if bool(args.brain) and ctr_algo == 'svm':
         sct.printv('Please only use the flag "-brain 1" with "-centerline cnn".', 1, 'warning')
         sys.exit(1)
 
