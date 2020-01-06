@@ -323,21 +323,28 @@ def register_wrapper(fname_src, fname_dest, param, paramregmulti, fname_src_seg=
     os.chdir(curdir)
 
     # Generate output files
+    # ------------------------------------------------------------------------------------------------------------------
+
     sct.printv('\nGenerate output files...', param.verbose)
     # generate: src_reg
-    fname_src2dest = sct.generate_output_file(os.path.join(path_tmp, "src_reg.nii"),
-                                              os.path.join(path_out, file_out + ext_out), param.verbose)
+    fname_src2dest = sct.generate_output_file(
+        os.path.join(path_tmp, "src_reg.nii"), os.path.join(path_out, file_out + ext_out), param.verbose)
+
+    # generate: dest_reg
+    fname_dest2src = sct.generate_output_file(
+        os.path.join(path_tmp, "dest_reg.nii"), os.path.join(path_out, file_out_inv + ext_dest), param.verbose)
+
     # generate: forward warping field
     if fname_output_warp == '':
         fname_output_warp = os.path.join(path_out, 'warp_' + file_src + '2' + file_dest + '.nii.gz')
     sct.generate_output_file(os.path.join(path_tmp, "warp_src2dest.nii.gz"), fname_output_warp, param.verbose)
+
+    # generate: inverse warping field
     if generate_warpinv:
-        # generate: dest_reg
-        fname_dest2src = sct.generate_output_file(os.path.join(path_tmp, "dest_reg.nii"),
-                                                  os.path.join(path_out, file_out_inv + ext_dest), param.verbose)
-        # generate: inverse warping field
         fname_output_warpinv = os.path.join(path_out, 'warp_' + file_dest + '2' + file_src + '.nii.gz')
         sct.generate_output_file(os.path.join(path_tmp, "warp_dest2src.nii.gz"), fname_output_warpinv, param.verbose)
+    else:
+        fname_output_warpinv = None
 
     # Delete temporary files
     if param.remove_temp_files:
