@@ -77,8 +77,8 @@ def get_parser():
     optional.add_argument(
         "-brain",
         type=int,
-        help='Indicate if the input image contains brain sections (to speed up segmentation). This flag is only '
-             'effective with "-centerline cnn".',
+        help='Indicate if the input image contains brain sections (to speed up segmentation). Only use with '
+             '"-centerline cnn".',
         choices=(0, 1))
     optional.add_argument(
         "-kernel",
@@ -141,6 +141,10 @@ def main():
             brain_bool = True
     else:
         brain_bool = bool(args.brain)
+
+    if bool(args.brain) and ctr_algo == 'svm':
+        sct.printv('Please only use the flag "-brain 1" with "-centerline cnn".', 1, 'warning')
+        sys.exit(1)
 
     kernel_size = args.kernel
     if kernel_size == '3d' and contrast_type == 'dwi':
