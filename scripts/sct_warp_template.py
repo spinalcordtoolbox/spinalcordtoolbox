@@ -220,22 +220,30 @@ def main(args=None):
 
     # Deal with QC report
     if path_qc is not None:
-        fname_wm = os.path.join(
-            w.folder_out, w.folder_template, spinalcordtoolbox.metadata.get_file_label(path_template, id_label=4))  # label = 'white matter mask (probabilistic)'
-        generate_qc(
-            fname_src, fname_seg=fname_wm, args=sys.argv[1:], path_qc=os.path.abspath(path_qc), dataset=qc_dataset,
-            subject=qc_subject, process='sct_warp_template')
+        try:
+            fname_wm = os.path.join(
+                w.folder_out, w.folder_template, spinalcordtoolbox.metadata.get_file_label(path_template, id_label=4))  # label = 'white matter mask (probabilistic)'
+            generate_qc(
+                fname_src, fname_seg=fname_wm, args=sys.argv[1:], path_qc=os.path.abspath(path_qc), dataset=qc_dataset,
+                subject=qc_subject, process='sct_warp_template')
+        # If label is missing, get_file_label() throws a RuntimeError
+        except RuntimeError:
+            sct.printv("QC not generated since expected labels are missing from template", type="warning")
 
     # Deal with verbose
-    sct.display_viewer_syntax(
-        [fname_src,
-         spinalcordtoolbox.metadata.get_file_label(path_template, id_label=1, output="filewithpath"),  # label = 'T2-weighted template'
-         spinalcordtoolbox.metadata.get_file_label(path_template, id_label=5, output="filewithpath"),  # label = 'gray matter mask (probabilistic)'
-         spinalcordtoolbox.metadata.get_file_label(path_template, id_label=4, output="filewithpath")],  # label = 'white matter mask (probabilistic)'
-        colormaps=['gray', 'gray', 'red-yellow', 'blue-lightblue'],
-        opacities=['1', '1', '0.5', '0.5'],
-        minmax=['', '0,4000', '0.4,1', '0.4,1'],
-        verbose=verbose)
+    try:
+        sct.display_viewer_syntax(
+            [fname_src,
+             spinalcordtoolbox.metadata.get_file_label(path_template, id_label=1, output="filewithpath"),  # label = 'T2-weighted template'
+             spinalcordtoolbox.metadata.get_file_label(path_template, id_label=5, output="filewithpath"),  # label = 'gray matter mask (probabilistic)'
+             spinalcordtoolbox.metadata.get_file_label(path_template, id_label=4, output="filewithpath")],  # label = 'white matter mask (probabilistic)'
+            colormaps=['gray', 'gray', 'red-yellow', 'blue-lightblue'],
+            opacities=['1', '1', '0.5', '0.5'],
+            minmax=['', '0,4000', '0.4,1', '0.4,1'],
+            verbose=verbose)
+    # If label is missing, continue silently
+    except RuntimeError:
+        pass
 
 
 if __name__ == "__main__":
