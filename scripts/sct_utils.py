@@ -317,7 +317,7 @@ def display_open(file):
     """Print the syntax to open a file based on the platform."""
     if sys.platform == 'linux':
         printv('\nDone! To view results, type:')
-        printv('xopen ' + file + '\n', verbose=1, type='info')
+        printv('xdg-open ' + file + '\n', verbose=1, type='info')
     elif sys.platform == 'darwin':
         printv('\nDone! To view results, type:')
         printv('open ' + file + '\n', verbose=1, type='info')
