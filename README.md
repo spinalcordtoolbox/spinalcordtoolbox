@@ -59,9 +59,9 @@ procedures.
 
 The simplest way to install SCT is to do it via a stable release. First, download the [latest release](https://github.com/neuropoly/spinalcordtoolbox/releases). Major changes to each release are listed [here](CHANGES.md).
 
-N.B. We currently cover OS X (10.12 and above) and Debian/Ubuntu/Fedora/RedHat/CentOS platforms. If you have another OS, please see [Installation with Docker](#installation-with-docker).
-
-If you have 10.7 or less, the only incompatibility is with ANTs, which you can compile on your station and then copy the binaries under SCT installation as explained [here](https://github.com/neuropoly/spinalcordtoolbox/wiki/binaries).
+Dependencies:
+- OS requirements: OS X (10.12 and above) or Debian/Ubuntu/Fedora/RedHat/CentOS platforms. If you are using Windows, please see [Installation with Docker](#installation-with-docker).
+- You need to have `gcc` installed. On OS X, we recommend installing [Homebrew](https://brew.sh/) and then run `brew install gcc`. On Linux, we recommend installing it via your package manager. For example on Debian/Ubuntu: `apt install gcc`, and on CentOS/RedHat: `yum -y install gcc`. 
 
 Once you have downloaded SCT, unpack it (note: Safari will automatically unzip it). Then, open a new Terminal, go into the created folder and launch the installer:
 
