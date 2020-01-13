@@ -79,8 +79,13 @@ class ProgressDialog(wx.Dialog):
         self.Centre()
         self.CenterOnParent()
 
-#Creates the standard panel for each tool
+# Creates the standard panel for each tool
 class SCTPanel(wx.Panel):
+    """
+    Creates the standard panel for each tool
+    :param sizer_h: Main wx.BoxSizer object that encloses SCT information, for each panel
+    """
+
     DESCRIPTION_SCT = """
     <b>General citation (please always cite)</b>:<br>
     De Leener B, Levy S, Dupont SM, Fonov VS, Stikov N, Louis Collins D, Callot V,
@@ -90,20 +95,18 @@ class SCTPanel(wx.Panel):
 
     SCT_DIR_ENV = 'SCT_DIR'
     SCT_LOGO_REL_PATH = 'documentation/imgs/logo_sct.png'
-    SCT_TUTORIAL_PATH = 'documentation/Manual_v1_SCT.pdf'
+    SCT_TUTORIAL_PATH = 'documentation/Manual_v1_SCT.pdf'  # TODO: fix this path
 
     def __init__(self, parent, id_):
         super(SCTPanel, self).__init__(parent=parent,
                                        id=id_)
+
+        # Logo
         self.img_logo = self.get_logo()
-        self.html_desc = self.get_description()
-
-        button_help = wx.Button(self, id=id_, label="Help")
-        button_help.Bind(wx.EVT_BUTTON, self.tutorial)
-
         self.sizer_logo_sct = wx.BoxSizer(wx.VERTICAL)
         self.sizer_logo_sct.Add(self.img_logo, 0, wx.ALL, 5)
 
+        # Citation
         txt_sct_citation = wx.VSCROLL | \
                            wx.HSCROLL | wx.TE_READONLY | \
                            wx.BORDER_SIMPLE
@@ -111,11 +114,18 @@ class SCTPanel(wx.Panel):
                                             size=(280, 115),
                                             style=txt_sct_citation)
         html_sct_citation.SetPage(self.DESCRIPTION_SCT)
-
         self.sizer_logo_sct.Add(html_sct_citation, 0, wx.ALL, 5)
+
+        # Help button
+        button_help = wx.Button(self, id=id_, label="Help")
+        button_help.Bind(wx.EVT_BUTTON, self.tutorial)
         self.sizer_logo_sct.Add(button_help, 0, wx.ALL, 5)
 
-        self.sizer_logo_text = wx.BoxSizer(wx.HORIZONTAL)
+        # Get function-specific description
+        self.html_desc = self.get_description()
+
+        # Organize boxes
+        self.sizer_logo_text = wx.BoxSizer(wx.HORIZONTAL)  # create main box
         self.sizer_logo_text.Add(self.sizer_logo_sct, 0, wx.ALL, 5)
         self.sizer_logo_text.Add(self.html_desc, 0, wx.ALL, 5)
 
@@ -169,7 +179,7 @@ class SCTPanel(wx.Panel):
 
         binfo.Destroy()
 
-# Run Spinal Cord segmentation using propseg
+# sct_propseg
 class TabPanelPropSeg(SCTPanel):
     DESCRIPTION = """This segmentation tool automatically segment the spinal cord with
     robustness, accuracy and speed.<br><br>
@@ -186,10 +196,9 @@ class TabPanelPropSeg(SCTPanel):
     """
 
     def __init__(self, parent):
-        super(TabPanelPropSeg, self).__init__(parent=parent,
-                                            id_=wx.ID_ANY)
-        button_gm = wx.Button(self, id=wx.ID_ANY, label="Spinal Cord Segmentation")
-        button_gm.Bind(wx.EVT_BUTTON, self.onButtonSC)
+        super(TabPanelPropSeg, self).__init__(parent=parent, id_=wx.ID_ANY)
+        button_run = wx.Button(self, id=wx.ID_ANY, label="Run")
+        button_run.Bind(wx.EVT_BUTTON, self.onButtonSC)
 
         lbl_contrasts = ['t1', 't2', 't2s', 'dwi']
         self.rbox_contrast = wx.RadioBox(self, label='Select contrast:',
@@ -197,15 +206,47 @@ class TabPanelPropSeg(SCTPanel):
                                          majorDimension=1,
                                          style=wx.RA_SPECIFY_ROWS)
 
+        hbox1 = wx.BoxSizer(wx.HORIZONTAL)
+
+        button_fetch_file = wx.Button(self, -1, label="Input file:")
+        button_fetch_file.Bind(wx.EVT_BUTTON, self.onButtonFetchHighlightedFile)
+
+        # l1 = wx.StaticText(self, wx.ID_ANY, "Input File:")
+        # TODO: shrink button size to its minimum
+        hbox1.Add(button_fetch_file, 1, wx.EXPAND | wx.ALIGN_LEFT | wx.ALL, 5)
+        # hbox1.Add(button_fetch_file, 1, 0, 0)
+        self.t1 = wx.TextCtrl(self, -1, "", wx.DefaultPosition, wx.Size(400, 10))
+        self.t1.Bind(wx.EVT_TEXT, self.OnKeyTyped)
+        hbox1.Add(self.t1, 1, wx.EXPAND | wx.ALIGN_LEFT | wx.ALL, 5)
+        # print("FIXED_MINSIZE: {}".format(hbox1.FIXED_MINSIZE))
+
         sizer = wx.BoxSizer(wx.VERTICAL)
+        # print("FIXED_MINSIZE: {}".format(wx.FIXED_MINSIZE))
+        # print("wx.ALL".format(wx.ALL))
+        sizer.Add(hbox1, 0, wx.ALL, 5)
         sizer.Add(self.rbox_contrast, 0, wx.ALL, 5)
-        sizer.Add(button_gm, 0, wx.ALL, 5)
+        sizer.Add(button_run, 0, wx.ALL, 5)
         self.sizer_h.Add(sizer)
         self.SetSizerAndFit(self.sizer_h)
+
+    def OnKeyTyped(self, event):
+        txt = event.GetString()
+
+    def onButtonFetchHighlightedFile(self, event):
+        """
+        Fetch path to file highlighted in the Overlay list
+        :return: filename_path
+        """
+        selected_overlay = displayCtx.getSelectedOverlay()
+        filename_path = selected_overlay.dataSource
+        print("filename_path: {}".format(filename_path))
+        self.t1.SetValue(filename_path)
 
     def onButtonSC(self, event):
 
         overlayORD = displayCtx.overlayOrder
+        # selected_overlay = displayCtx.getSelectedOverlay()
+        # filename_path = selected_overlay.dataSource
 
         img1 = overlayORD[0]
         rawimg = overlayList[img1].dataSource
@@ -265,6 +306,7 @@ class TabPanelSCSeg(SCTPanel):
     def onButtonSC(self, event):
 
         overlayORD = displayCtx.overlayOrder
+        print("OverlayORD: {}".format(overlayORD))
 
         img1 = overlayORD[0]
         rawimg = overlayList[img1].dataSource
@@ -277,14 +319,14 @@ class TabPanelSCSeg(SCTPanel):
         out_name = "{}_seg.{}".format(fname, fext)
 
         cmd_line = "sct_deepseg_sc -i {} -c {}".format(rawimg, contrast)
-        print('Command line:', cmd_line)
-        self.call_sct_command(cmd_line)
-
-        outfilename = os.path.join(os.getcwd(), out_name)
-        image = Image(outfilename)
-        overlayList.append(image)
-        opts = displayCtx.getOpts(image)
-        opts.cmap = 'red'
+        # print('Command line:', cmd_line)
+        # self.call_sct_command(cmd_line)
+        #
+        # outfilename = os.path.join(os.getcwd(), out_name)
+        # image = Image(outfilename)
+        # overlayList.append(image)
+        # opts = displayCtx.getOpts(image)
+        # opts.cmap = 'red'
 
 
 #Run Gray Matter Segmentation of Spinal Cord
