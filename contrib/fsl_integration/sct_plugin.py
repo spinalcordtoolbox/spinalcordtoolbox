@@ -223,7 +223,7 @@ class TabPanelPropSeg(SCTPanel):
     <b>Usage</b>:
     <br>
     Select an image from the overlay list, then click the "Input file" button to fetch the file name. Then, select the
-    appropriate contrast and click "Run". For more options, please run the Terminal version of the function.
+    appropriate contrast and click "Run". For more options, please use the Terminal version of this function.
     <br><br>
     <b>Specific citation</b>:
     <br>
@@ -287,7 +287,7 @@ class TabPanelSCSeg(SCTPanel):
     <b>Usage</b>:
     <br>
     Select an image from the overlay list, then click the "Input file" button to fetch the file name. Then, select the
-    appropriate contrast and click "Run". For more options, please run the Terminal version of the function.
+    appropriate contrast and click "Run". For more options, please use the Terminal version of this function.
     <br><br>
     <b>Specific citation</b>:
     <br>
@@ -339,83 +339,61 @@ class TabPanelSCSeg(SCTPanel):
         opts.cmap = 'red'
 
 
-#Run Gray Matter Segmentation of Spinal Cord
 class TabPanelGMSeg(SCTPanel):
-    DESCRIPTION = """This segmentation tool is based on Deep Learning and
-    dilated convolutions. For more information, please refer to the
-    article below.<br><br>
-    <b>Usage</b>:<br>
-    To launch the script, upload the T2s imaging into FSLeyes and always keeping it
-    as the first in the Overlay list field from the bottom to the top. If you uploaded more then one image
-    with the arrows is possible to sort them and only the first imaging will be used.
-    If you choose a customized output file name, include the imaging format. 
-    Ex: filename.nii.gz or filename.nii
-    For more information, please refer to the article below.<br><br>
-    <b>Specific citation</b>:<br>
-    Perone et al. 
-    <i>Spinal cord gray matter segmentation using deep dilated convolutions
-    (2018)</i>. Sci Rep. 13;8(1):5966.
+
+    """
+    sct_deepseg_gm
+    """
+
+    DESCRIPTION = """
+    Segment the spinal cord gray matter using deep learning. The convolutional neural network features dilated 
+    convolutions and was trained on 232 subjects (3963 axial slices) from multiple centers, and including various 
+    pathologies (compression, MS, ALS, etc.). 
+    <br><br>
+    <b>Usage</b>:
+    <br>
+    Select an image from the overlay list that has a good white and gray matter contrast (e.g., T2*-weighted image), 
+    then click "Run". For more options, please use the Terminal version of this function.
+    <br><br>
+    <b>Specific citation</b>:
+    <br>
+    Perone et al. <i>Spinal cord gray matter segmentation using deep dilated convolutions.</i> Sci Rep. 2018
     """
 
     def __init__(self, parent):
-        super(TabPanelGMSeg, self).__init__(parent=parent,
-                                            id_=wx.ID_ANY)
-        button_gm = wx.Button(self, id=wx.ID_ANY,
-                              label="Gray Matter Segmentation")
-        button_gm.Bind(wx.EVT_BUTTON, self.onButtonGM)
+        super(TabPanelGMSeg, self).__init__(parent=parent, id_=wx.ID_ANY)
 
-        hbox1 = wx.BoxSizer(wx.HORIZONTAL)
-        l1 = wx.StaticText(self, wx.ID_ANY, "Output File Name:")
-        hbox1.Add(l1, 1, wx.EXPAND | wx.ALIGN_LEFT | wx.ALL, 5)
-        self.t1 = wx.TextCtrl(self)
-        self.t1.Bind(wx.EVT_TEXT, self.get_box_text)
-        hbox1.Add(self.t1, 1, wx.EXPAND | wx.ALIGN_LEFT | wx.ALL, 5)
+        # Fetch input file
+        hbox1 = self.add_fetch_file_button(label="Input file:")
 
+        # Display all options
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(hbox1)
-        sizer.Add(button_gm, 0, wx.ALL, 5)
+        sizer.Add(hbox1, 0, wx.ALL, 5)
+
+        # Run button
+        button_run = wx.Button(self, id=wx.ID_ANY, label="Run")
+        button_run.Bind(wx.EVT_BUTTON, self.on_button_run)
+        sizer.Add(button_run, 0, wx.ALL, 5)
+
+        # Add to main sizer
         self.sizer_h.Add(sizer)
         self.SetSizerAndFit(self.sizer_h)
 
-    def get_box_text(self, event):
-        txt = event.GetString()
-
-    def onButtonGM(self, event):
-
-        overlayORD = displayCtx.overlayOrder
-
-        img1 = overlayORD[0]
-        rawimg = overlayList[img1].dataSource
-        gmimg = self.t1.GetValue()
-
-        print('Raw Image:', rawimg)
-
-        if gmimg == '':
-            print('Output file name not defined, standard name will be used.')
-            base_name = os.path.basename(rawimg)
-            fname, fext = base_name.split(os.extsep, 1)
-            gmname = "{}_gmseg.{}".format(fname, fext)
-            print('Output File Name:', gmname)
-
-            #Standard output file name
-            cmd_line = "sct_deepseg_gm -i {}".format(rawimg)
-            print('Command Line:', cmd_line)
-
-        else:
-            gmname = "{}.nii.gz".format(gmimg)
-            print('Output File Name:', gmname)
-
-            #Personalized output file name
-            cmd_line = "sct_deepseg_gm -i {} -o {}".format(rawimg, gmname)
-            print('Command Line:', cmd_line)
-
+    def on_button_run(self, event):
+        # Build and run SCT command
+        fname_input = self.t1.GetValue()
+        base_name = os.path.basename(fname_input)
+        fname, fext = base_name.split(os.extsep, 1)
+        fname_out = "{}_gmseg.{}".format(fname, fext)
+        cmd_line = "sct_deepseg_gm -i {} -o {}".format(fname_input, fname_out)
         self.call_sct_command(cmd_line)
 
-        outfilename = os.path.join(os.getcwd(), gmname)
-        image = Image(outfilename)
+        # Add output to the list of overlay
+        image = Image(fname_out)  # <class 'fsl.data.image.Image'>
         overlayList.append(image)
         opts = displayCtx.getOpts(image)
         opts.cmap = 'yellow'
+
 
 #Computes Cross-Sectional Area for GM, WM and GM+WM (Total)
 class TabPanelCSA(SCTPanel):
