@@ -179,8 +179,11 @@ class SCTPanel(wx.Panel):
 
         binfo.Destroy()
 
-# sct_propseg
+
 class TabPanelPropSeg(SCTPanel):
+    """
+    Panel: sct_propseg
+    """
     DESCRIPTION = """This segmentation tool automatically segment the spinal cord with
     robustness, accuracy and speed.<br><br>
     <b>Usage</b>:<br>
@@ -192,40 +195,38 @@ class TabPanelPropSeg(SCTPanel):
     De Leener et al.
     <i>Robust, accurate and fast automatic segmentation of the spinal cord.
     (2014)</i>. Neuroimage. 
-
     """
 
     def __init__(self, parent):
         super(TabPanelPropSeg, self).__init__(parent=parent, id_=wx.ID_ANY)
-        button_run = wx.Button(self, id=wx.ID_ANY, label="Run")
-        button_run.Bind(wx.EVT_BUTTON, self.onButtonSC)
 
+        # Fetch input file
+        hbox1 = wx.BoxSizer(wx.HORIZONTAL)
+        button_fetch_file = wx.Button(self, -1, label="Input file:")
+        button_fetch_file.Bind(wx.EVT_BUTTON, self.onButtonFetchHighlightedFile)
+        hbox1.Add(button_fetch_file, proportion=0, flag=wx.ALIGN_LEFT | wx.ALL, border=5)
+        self.t1 = wx.TextCtrl(self, -1, "", wx.DefaultPosition, wx.Size(500, 10))
+        self.t1.Bind(wx.EVT_TEXT, self.OnKeyTyped)
+        hbox1.Add(self.t1, 1, wx.EXPAND | wx.ALIGN_LEFT | wx.ALL, 5)
+
+        # Select contrast
         lbl_contrasts = ['t1', 't2', 't2s', 'dwi']
         self.rbox_contrast = wx.RadioBox(self, label='Select contrast:',
                                          choices=lbl_contrasts,
                                          majorDimension=1,
                                          style=wx.RA_SPECIFY_ROWS)
 
-        hbox1 = wx.BoxSizer(wx.HORIZONTAL)
-
-        button_fetch_file = wx.Button(self, -1, label="Input file:")
-        button_fetch_file.Bind(wx.EVT_BUTTON, self.onButtonFetchHighlightedFile)
-
-        # l1 = wx.StaticText(self, wx.ID_ANY, "Input File:")
-        # TODO: shrink button size to its minimum
-        hbox1.Add(button_fetch_file, 1, wx.EXPAND | wx.ALIGN_LEFT | wx.ALL, 5)
-        # hbox1.Add(button_fetch_file, 1, 0, 0)
-        self.t1 = wx.TextCtrl(self, -1, "", wx.DefaultPosition, wx.Size(400, 10))
-        self.t1.Bind(wx.EVT_TEXT, self.OnKeyTyped)
-        hbox1.Add(self.t1, 1, wx.EXPAND | wx.ALIGN_LEFT | wx.ALL, 5)
-        # print("FIXED_MINSIZE: {}".format(hbox1.FIXED_MINSIZE))
-
+        # Display all options
         sizer = wx.BoxSizer(wx.VERTICAL)
-        # print("FIXED_MINSIZE: {}".format(wx.FIXED_MINSIZE))
-        # print("wx.ALL".format(wx.ALL))
         sizer.Add(hbox1, 0, wx.ALL, 5)
         sizer.Add(self.rbox_contrast, 0, wx.ALL, 5)
+
+        # Run button
+        button_run = wx.Button(self, id=wx.ID_ANY, label="Run")
+        button_run.Bind(wx.EVT_BUTTON, self.onButtonSC)
         sizer.Add(button_run, 0, wx.ALL, 5)
+
+        # Add to main sizer
         self.sizer_h.Add(sizer)
         self.SetSizerAndFit(self.sizer_h)
 
