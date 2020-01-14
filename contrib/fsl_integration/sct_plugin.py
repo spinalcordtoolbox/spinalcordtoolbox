@@ -163,8 +163,17 @@ class SCTPanel(wx.Panel):
         htmlw.SetPage(self.DESCRIPTION)
         return htmlw
 
+    def get_highlighted_file_name(self, event):
+        """
+        Fetch path to file highlighted in the Overlay list
+        :return: filename_path
+        """
+        selected_overlay = displayCtx.getSelectedOverlay()
+        filename_path = selected_overlay.dataSource
+        print("filename_path: {}".format(filename_path))
+        self.t1.SetValue(filename_path)
+
     def call_sct_command(self, command):
-        disable_window = wx.WindowDisabler()
         binfo = ProgressDialog(frame)
         binfo.Show()
 
@@ -180,19 +189,6 @@ class SCTPanel(wx.Panel):
         thr.join()
 
         binfo.Destroy()
-
-    def onKeyTyped(self, event):
-        txt = event.GetString()
-
-    def onButtonFetchHighlightedFile(self, event):
-        """
-        Fetch path to file highlighted in the Overlay list
-        :return: filename_path
-        """
-        selected_overlay = displayCtx.getSelectedOverlay()
-        filename_path = selected_overlay.dataSource
-        print("filename_path: {}".format(filename_path))
-        self.t1.SetValue(filename_path)
 
 
 class TabPanelPropSeg(SCTPanel):
@@ -219,10 +215,9 @@ class TabPanelPropSeg(SCTPanel):
         # Fetch input file
         hbox1 = wx.BoxSizer(wx.HORIZONTAL)
         button_fetch_file = wx.Button(self, -1, label="Input file:")
-        button_fetch_file.Bind(wx.EVT_BUTTON, self.onButtonFetchHighlightedFile)
+        button_fetch_file.Bind(wx.EVT_BUTTON, self.get_highlighted_file_name)
         hbox1.Add(button_fetch_file, proportion=0, flag=wx.ALIGN_LEFT | wx.ALL, border=5)
-        self.t1 = wx.TextCtrl(self, -1, "", wx.DefaultPosition, wx.Size(500, 10))
-        self.t1.Bind(wx.EVT_TEXT, self.onKeyTyped)
+        self.t1 = wx.TextCtrl(self, -1, "", wx.DefaultPosition, wx.Size(1000, 10))
         hbox1.Add(self.t1, 1, wx.EXPAND | wx.ALIGN_LEFT | wx.ALL, 5)
 
         # Select contrast
@@ -357,7 +352,7 @@ class TabPanelGMSeg(SCTPanel):
         l1 = wx.StaticText(self, wx.ID_ANY, "Output File Name:")
         hbox1.Add(l1, 1, wx.EXPAND | wx.ALIGN_LEFT | wx.ALL, 5)
         self.t1 = wx.TextCtrl(self)
-        self.t1.Bind(wx.EVT_TEXT, self.onKeyTyped)
+        self.t1.Bind(wx.EVT_TEXT, self.get_box_text)
         hbox1.Add(self.t1, 1, wx.EXPAND | wx.ALIGN_LEFT | wx.ALL, 5)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
@@ -366,7 +361,7 @@ class TabPanelGMSeg(SCTPanel):
         self.sizer_h.Add(sizer)
         self.SetSizerAndFit(self.sizer_h)
 
-    def onKeyTyped(self, event):
+    def get_box_text(self, event):
         txt = event.GetString()
 
     def onButtonGM(self, event):
@@ -446,14 +441,14 @@ class TabPanelCSA(SCTPanel):
         l1 = wx.StaticText(self, wx.ID_ANY, "Vertebral Levels/Slice Range")
         hbox1.Add(l1, 1, wx.EXPAND | wx.ALIGN_LEFT | wx.ALL, 5)
         self.t1 = wx.TextCtrl(self)
-        self.t1.Bind(wx.EVT_TEXT, self.onKeyTyped)
+        self.t1.Bind(wx.EVT_TEXT, self.get_box_text)
         hbox1.Add(self.t1, 1, wx.EXPAND | wx.ALIGN_LEFT | wx.ALL, 5)
 
         hbox2 = wx.BoxSizer(wx.HORIZONTAL)
         l2 = wx.StaticText(self, wx.ID_ANY, "Output Table Name")
         hbox2.Add(l2, 1, wx.EXPAND | wx.ALIGN_LEFT | wx.ALL, 5)
         self.t2 = wx.TextCtrl(self)
-        self.t2.Bind(wx.EVT_TEXT, self.onKeyTyped)
+        self.t2.Bind(wx.EVT_TEXT, self.get_box_text)
         hbox2.Add(self.t2, 1, wx.EXPAND | wx.ALIGN_LEFT | wx.ALL, 5)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
@@ -465,7 +460,7 @@ class TabPanelCSA(SCTPanel):
         self.sizer_h.Add(sizer)
         self.SetSizerAndFit(self.sizer_h)
 
-    def onKeyTyped(self, event):
+    def get_box_text(self, event):
         txt = event.GetString()
 
 
@@ -810,7 +805,7 @@ class TabPanelCompDTI(SCTPanel):
         l1 = wx.StaticText(self, wx.ID_ANY, "Output File Name:")
         hbox1.Add(l1, 1, wx.EXPAND | wx.ALIGN_LEFT | wx.ALL, 5)
         self.t1 = wx.TextCtrl(self)
-        self.t1.Bind(wx.EVT_TEXT, self.onKeyTyped)
+        self.t1.Bind(wx.EVT_TEXT, self.get_box_text)
         hbox1.Add(self.t1, 1, wx.EXPAND | wx.ALIGN_LEFT | wx.ALL, 5)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
@@ -819,7 +814,7 @@ class TabPanelCompDTI(SCTPanel):
         self.sizer_h.Add(sizer)
         self.SetSizerAndFit(self.sizer_h)
 
-    def onKeyTyped(self, event):
+    def get_box_text(self, event):
         txt = event.GetString()
 
     def onButtonCDTI(self, event):
