@@ -136,14 +136,12 @@ class SCTPanel(wx.Panel):
         self.sizer_h = wx.BoxSizer(wx.HORIZONTAL)
         self.sizer_h.Add(self.sizer_logo_text)
 
-
     def tutorial(self,event):
         pdfpath = os.path.join(os.environ[self.SCT_DIR_ENV],self.SCT_TUTORIAL_PATH)
         print('PDF path:', pdfpath)
         cmd_line = "open {}".format(pdfpath)
         print('Command line:', cmd_line)
         self.call_sct_command(cmd_line)
-
 
     def get_logo(self):
         logo_file = os.path.join(os.environ[self.SCT_DIR_ENV],
@@ -183,6 +181,19 @@ class SCTPanel(wx.Panel):
 
         binfo.Destroy()
 
+    def onKeyTyped(self, event):
+        txt = event.GetString()
+
+    def onButtonFetchHighlightedFile(self, event):
+        """
+        Fetch path to file highlighted in the Overlay list
+        :return: filename_path
+        """
+        selected_overlay = displayCtx.getSelectedOverlay()
+        filename_path = selected_overlay.dataSource
+        print("filename_path: {}".format(filename_path))
+        self.t1.SetValue(filename_path)
+
 
 class TabPanelPropSeg(SCTPanel):
     """
@@ -211,7 +222,7 @@ class TabPanelPropSeg(SCTPanel):
         button_fetch_file.Bind(wx.EVT_BUTTON, self.onButtonFetchHighlightedFile)
         hbox1.Add(button_fetch_file, proportion=0, flag=wx.ALIGN_LEFT | wx.ALL, border=5)
         self.t1 = wx.TextCtrl(self, -1, "", wx.DefaultPosition, wx.Size(500, 10))
-        self.t1.Bind(wx.EVT_TEXT, self.OnKeyTyped)
+        self.t1.Bind(wx.EVT_TEXT, self.onKeyTyped)
         hbox1.Add(self.t1, 1, wx.EXPAND | wx.ALIGN_LEFT | wx.ALL, 5)
 
         # Select contrast
@@ -234,19 +245,6 @@ class TabPanelPropSeg(SCTPanel):
         # Add to main sizer
         self.sizer_h.Add(sizer)
         self.SetSizerAndFit(self.sizer_h)
-
-    def OnKeyTyped(self, event):
-        txt = event.GetString()
-
-    def onButtonFetchHighlightedFile(self, event):
-        """
-        Fetch path to file highlighted in the Overlay list
-        :return: filename_path
-        """
-        selected_overlay = displayCtx.getSelectedOverlay()
-        filename_path = selected_overlay.dataSource
-        print("filename_path: {}".format(filename_path))
-        self.t1.SetValue(filename_path)
 
     def onButtonRun(self, event):
 
@@ -359,7 +357,7 @@ class TabPanelGMSeg(SCTPanel):
         l1 = wx.StaticText(self, wx.ID_ANY, "Output File Name:")
         hbox1.Add(l1, 1, wx.EXPAND | wx.ALIGN_LEFT | wx.ALL, 5)
         self.t1 = wx.TextCtrl(self)
-        self.t1.Bind(wx.EVT_TEXT, self.OnKeyTyped)
+        self.t1.Bind(wx.EVT_TEXT, self.onKeyTyped)
         hbox1.Add(self.t1, 1, wx.EXPAND | wx.ALIGN_LEFT | wx.ALL, 5)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
@@ -368,7 +366,7 @@ class TabPanelGMSeg(SCTPanel):
         self.sizer_h.Add(sizer)
         self.SetSizerAndFit(self.sizer_h)
 
-    def OnKeyTyped(self, event):
+    def onKeyTyped(self, event):
         txt = event.GetString()
 
     def onButtonGM(self, event):
@@ -448,14 +446,14 @@ class TabPanelCSA(SCTPanel):
         l1 = wx.StaticText(self, wx.ID_ANY, "Vertebral Levels/Slice Range")
         hbox1.Add(l1, 1, wx.EXPAND | wx.ALIGN_LEFT | wx.ALL, 5)
         self.t1 = wx.TextCtrl(self)
-        self.t1.Bind(wx.EVT_TEXT, self.OnKeyTyped)
+        self.t1.Bind(wx.EVT_TEXT, self.onKeyTyped)
         hbox1.Add(self.t1, 1, wx.EXPAND | wx.ALIGN_LEFT | wx.ALL, 5)
 
         hbox2 = wx.BoxSizer(wx.HORIZONTAL)
         l2 = wx.StaticText(self, wx.ID_ANY, "Output Table Name")
         hbox2.Add(l2, 1, wx.EXPAND | wx.ALIGN_LEFT | wx.ALL, 5)
         self.t2 = wx.TextCtrl(self)
-        self.t2.Bind(wx.EVT_TEXT, self.OnKeyTyped)
+        self.t2.Bind(wx.EVT_TEXT, self.onKeyTyped)
         hbox2.Add(self.t2, 1, wx.EXPAND | wx.ALIGN_LEFT | wx.ALL, 5)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
@@ -467,7 +465,7 @@ class TabPanelCSA(SCTPanel):
         self.sizer_h.Add(sizer)
         self.SetSizerAndFit(self.sizer_h)
 
-    def OnKeyTyped(self, event):
+    def onKeyTyped(self, event):
         txt = event.GetString()
 
 
@@ -812,7 +810,7 @@ class TabPanelCompDTI(SCTPanel):
         l1 = wx.StaticText(self, wx.ID_ANY, "Output File Name:")
         hbox1.Add(l1, 1, wx.EXPAND | wx.ALIGN_LEFT | wx.ALL, 5)
         self.t1 = wx.TextCtrl(self)
-        self.t1.Bind(wx.EVT_TEXT, self.OnKeyTyped)
+        self.t1.Bind(wx.EVT_TEXT, self.onKeyTyped)
         hbox1.Add(self.t1, 1, wx.EXPAND | wx.ALIGN_LEFT | wx.ALL, 5)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
@@ -821,7 +819,7 @@ class TabPanelCompDTI(SCTPanel):
         self.sizer_h.Add(sizer)
         self.SetSizerAndFit(self.sizer_h)
 
-    def OnKeyTyped(self, event):
+    def onKeyTyped(self, event):
         txt = event.GetString()
 
     def onButtonCDTI(self, event):
@@ -1002,7 +1000,6 @@ class TabPanelREG(SCTPanel):
             overlayList.append(image)
             opts = displayCtx.getOpts(image)
             opts.cmap = 'gray'
-
 
 
 def run_main():
