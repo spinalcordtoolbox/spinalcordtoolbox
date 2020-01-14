@@ -217,7 +217,8 @@ class TabPanelPropSeg(SCTPanel):
     """
 
     DESCRIPTION = """
-    This program segments automatically the spinal cord on any field of view, using a deformable 3D mesh. 
+    Segment the spinal cord using a deformable 3D mesh. This method is fast and robust, but could be prone to "leaking"
+    if the contrast between the cord and the CSF is not high enough. 
     <br><br>
     <b>Usage</b>:
     <br>
@@ -226,7 +227,7 @@ class TabPanelPropSeg(SCTPanel):
     <br><br>
     <b>Specific citation</b>:
     <br>
-    De Leener et al. <i>Robust, accurate and fast automatic segmentation of the spinal cord. (2014)</i>. Neuroimage.
+    De Leener et al. <i>Robust, accurate and fast automatic segmentation of the spinal cord.</i> Neuroimage 2014
     """
 
     def __init__(self, parent):
@@ -274,65 +275,68 @@ class TabPanelPropSeg(SCTPanel):
         opts.cmap = 'red'
 
 
-# Run Spinal Cord segmentation using deep-learning
 class TabPanelSCSeg(SCTPanel):
-    DESCRIPTION = """This segmentation tool is based on Deep Learning and
-    a 3D U-Net. For more information, please refer to the
-    article below.<br><br>
-    <b>Usage</b>:<br>
-    To launch the script, the upload the raw image (t1, t2, t2s and dwi) into FSLeyes and always keeping it
-    as the first in the Overlay list field from the bottom to the top. If you uploaded more then one image, it is not necessary
-    uploading the images in such order, with the arrows is possible to sort them and only the first imaging will be used. 
-    For more information, please refer to the article below.<br><br>
-    <b>Specific citation</b>:<br>
-    Gros et al.
-    <i>Automatic segmentation of the spinal cord and intramedullary multiple sclerosis lesions with convolutional neural networks.
-    (2019)</i>. Neuroimage. 1;184:901-915.
+    """
+    sct_deepseg_sc
+    """
 
+    DESCRIPTION = """
+    Segment the spinal cord using deep learning. The convolutional neural network was trained on ~1,500 subjects 
+    from multiple centers, and including various pathologies (compression, MS, ALS, etc.). 
+    <br><br>
+    <b>Usage</b>:
+    <br>
+    Select an image from the overlay list, then click the "Input file" button to fetch the file name. Then, select the
+    appropriate contrast and click "Run". For more options, please run the Terminal version of the function.
+    <br><br>
+    <b>Specific citation</b>:
+    <br>
+    Gros et al. <i>Automatic segmentation of the spinal cord and intramedullary multiple sclerosis lesions with 
+    convolutional neural networks.</i> Neuroimage 2019
     """
 
     def __init__(self, parent):
-        super(TabPanelSCSeg, self).__init__(parent=parent,
-                                            id_=wx.ID_ANY)
-        button_gm = wx.Button(self, id=wx.ID_ANY, label="Spinal Cord Segmentation")
-        button_gm.Bind(wx.EVT_BUTTON, self.onButtonSC)
+        super(TabPanelSCSeg, self).__init__(parent=parent, id_=wx.ID_ANY)
 
+        # Fetch input file
+        hbox1 = self.add_fetch_file_button(label="Input file:")
+
+        # Select contrast
         lbl_contrasts = ['t1', 't2', 't2s', 'dwi']
         self.rbox_contrast = wx.RadioBox(self, label='Select contrast:',
                                          choices=lbl_contrasts,
                                          majorDimension=1,
                                          style=wx.RA_SPECIFY_ROWS)
 
+        # Display all options
         sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(hbox1, 0, wx.ALL, 5)
         sizer.Add(self.rbox_contrast, 0, wx.ALL, 5)
-        sizer.Add(button_gm, 0, wx.ALL, 5)
+
+        # Run button
+        button_run = wx.Button(self, id=wx.ID_ANY, label="Run")
+        button_run.Bind(wx.EVT_BUTTON, self.on_button_run)
+        sizer.Add(button_run, 0, wx.ALL, 5)
+
+        # Add to main sizer
         self.sizer_h.Add(sizer)
         self.SetSizerAndFit(self.sizer_h)
 
-    def onButtonSC(self, event):
-
-        overlayORD = displayCtx.overlayOrder
-        print("OverlayORD: {}".format(overlayORD))
-
-        img1 = overlayORD[0]
-        rawimg = overlayList[img1].dataSource
-        print('Raw Image:', rawimg)
-
+    def on_button_run(self, event):
+        # Build and run SCT command
+        fname_input = self.t1.GetValue()
         contrast = self.rbox_contrast.GetStringSelection()
-
-        base_name = os.path.basename(rawimg)
+        base_name = os.path.basename(fname_input)
         fname, fext = base_name.split(os.extsep, 1)
-        out_name = "{}_seg.{}".format(fname, fext)
+        fname_out = "{}_seg.{}".format(fname, fext)
+        cmd_line = "sct_deepseg_sc -i {} -c {}".format(fname_input, contrast)
+        self.call_sct_command(cmd_line)
 
-        cmd_line = "sct_deepseg_sc -i {} -c {}".format(rawimg, contrast)
-        # print('Command line:', cmd_line)
-        # self.call_sct_command(cmd_line)
-        #
-        # outfilename = os.path.join(os.getcwd(), out_name)
-        # image = Image(outfilename)
-        # overlayList.append(image)
-        # opts = displayCtx.getOpts(image)
-        # opts.cmap = 'red'
+        # Add output to the list of overlay
+        image = Image(fname_out)  # <class 'fsl.data.image.Image'>
+        overlayList.append(image)
+        opts = displayCtx.getOpts(image)
+        opts.cmap = 'red'
 
 
 #Run Gray Matter Segmentation of Spinal Cord
