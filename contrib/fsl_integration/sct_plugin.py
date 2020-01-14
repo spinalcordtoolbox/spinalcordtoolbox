@@ -234,14 +234,14 @@ class TabPanelPropSeg(SCTPanel):
 
         # Run button
         button_run = wx.Button(self, id=wx.ID_ANY, label="Run")
-        button_run.Bind(wx.EVT_BUTTON, self.onButtonRun)
+        button_run.Bind(wx.EVT_BUTTON, self.on_button_run)
         sizer.Add(button_run, 0, wx.ALL, 5)
 
         # Add to main sizer
         self.sizer_h.Add(sizer)
         self.SetSizerAndFit(self.sizer_h)
 
-    def onButtonRun(self, event):
+    def on_button_run(self, event):
 
         fname_input = self.t1.GetValue()
         print('Input image:', fname_input)
