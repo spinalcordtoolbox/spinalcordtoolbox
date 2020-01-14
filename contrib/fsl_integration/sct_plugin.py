@@ -178,8 +178,21 @@ class SCTPanel(wx.Panel):
         print("Fetched file name: {}".format(filename_path))
         self.t1.SetValue(filename_path)
 
-    def call_sct_command(self, command):
+    def add_fetch_file_button(self, label=""):
+        """
+        Add a button and a text box where user can fetch any highlighted file name from the overlay list.
+        :param label: Text on the button
+        :return: BoxSizer object: hbox:
+        """
+        hbox = wx.BoxSizer(wx.HORIZONTAL)
+        button_fetch_file = wx.Button(self, -1, label=label)
+        button_fetch_file.Bind(wx.EVT_BUTTON, self.get_highlighted_file_name)
+        hbox.Add(button_fetch_file, proportion=0, flag=wx.ALIGN_LEFT | wx.ALL, border=5)
+        self.t1 = wx.TextCtrl(self, -1, "", wx.DefaultPosition, wx.Size(1000, 10))
+        hbox.Add(self.t1, 1, wx.EXPAND | wx.ALIGN_LEFT | wx.ALL, 5)
+        return hbox
 
+    def call_sct_command(self, command):
         print("Running: {}".format(command))
         binfo = ProgressDialog(frame)
         binfo.Show()
@@ -203,29 +216,24 @@ class TabPanelPropSeg(SCTPanel):
     sct_propseg
     """
 
-    DESCRIPTION = """This segmentation tool automatically segment the spinal cord with
-    robustness, accuracy and speed.<br><br>
-    <b>Usage</b>:<br>
-    To launch the script, the upload the raw image (t1, t2, t2s and dwi) into FSLeyes and always keeping it
-    as the first in the Overlay list field from the bottom to the top. If you uploaded more then one image, it is not necessary
-    uploading the images in such order, with the arrows is possible to sort them and only the first imaging will be used. 
-    For more information, please refer to the article below.<br><br>
-    <b>Specific citation</b>:<br>
-    De Leener et al.
-    <i>Robust, accurate and fast automatic segmentation of the spinal cord.
-    (2014)</i>. Neuroimage. 
+    DESCRIPTION = """
+    This program segments automatically the spinal cord on any field of view, using a deformable 3D mesh. 
+    <br><br>
+    <b>Usage</b>:
+    <br>
+    Select an image from the overlay list, then click the "Input file" button to fetch the file name. Then, select the
+    appropriate contrast and click "Run". For more options, please run the Terminal version of the function.
+    <br><br>
+    <b>Specific citation</b>:
+    <br>
+    De Leener et al. <i>Robust, accurate and fast automatic segmentation of the spinal cord. (2014)</i>. Neuroimage.
     """
 
     def __init__(self, parent):
         super(TabPanelPropSeg, self).__init__(parent=parent, id_=wx.ID_ANY)
 
         # Fetch input file
-        hbox1 = wx.BoxSizer(wx.HORIZONTAL)
-        button_fetch_file = wx.Button(self, -1, label="Input file:")
-        button_fetch_file.Bind(wx.EVT_BUTTON, self.get_highlighted_file_name)
-        hbox1.Add(button_fetch_file, proportion=0, flag=wx.ALIGN_LEFT | wx.ALL, border=5)
-        self.t1 = wx.TextCtrl(self, -1, "", wx.DefaultPosition, wx.Size(1000, 10))
-        hbox1.Add(self.t1, 1, wx.EXPAND | wx.ALIGN_LEFT | wx.ALL, 5)
+        hbox1 = self.add_fetch_file_button(label="Input file:")
 
         # Select contrast
         lbl_contrasts = ['t1', 't2', 't2s', 'dwi']
