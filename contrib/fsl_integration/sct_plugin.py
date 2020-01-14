@@ -24,15 +24,18 @@
 # TODO: replace print by logger
 # TODO: display window if process fails
 # TODO: add shortcuts to Run
+# TODO: add help when user leaves cursor on button
 
 import os
 import subprocess
 from threading import Thread
+import logging
 
 import wx
 import wx.lib.agw.aui as aui
 import wx.html as html
 
+logger = logging.getLogger(__name__)
 aui_manager = frame.getAuiManager()
 
 
@@ -49,6 +52,7 @@ class SCTCallThread(Thread):
         p = subprocess.Popen([command], stdout=subprocess.PIPE,
                              shell=True, env=env)
         stdout, stderr = p.communicate()
+        # TODO: better format output by taking into account carriage returns, etc.
         print(stdout)
         print(stderr)
         return stdout, stderr
@@ -82,6 +86,7 @@ class ProgressDialog(wx.Dialog):
 
         self.Centre()
         self.CenterOnParent()
+
 
 # Creates the standard panel for each tool
 class SCTPanel(wx.Panel):
@@ -170,10 +175,12 @@ class SCTPanel(wx.Panel):
         """
         selected_overlay = displayCtx.getSelectedOverlay()
         filename_path = selected_overlay.dataSource
-        print("filename_path: {}".format(filename_path))
+        print("Fetched file name: {}".format(filename_path))
         self.t1.SetValue(filename_path)
 
     def call_sct_command(self, command):
+
+        print("Running: {}".format(command))
         binfo = ProgressDialog(frame)
         binfo.Show()
 
@@ -243,16 +250,13 @@ class TabPanelPropSeg(SCTPanel):
 
     def on_button_run(self, event):
 
+        # Build and run SCT command
         fname_input = self.t1.GetValue()
-        print('Input image:', fname_input)
         contrast = self.rbox_contrast.GetStringSelection()
-
         base_name = os.path.basename(fname_input)
         fname, fext = base_name.split(os.extsep, 1)
         fname_out = "{}_seg.{}".format(fname, fext)
-
         cmd_line = "sct_propseg -i {} -c {}".format(fname_input, contrast)
-        print('Command line:', cmd_line)
         self.call_sct_command(cmd_line)
 
         # Add output to the list of overlay
