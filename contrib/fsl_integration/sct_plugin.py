@@ -21,6 +21,10 @@
 #
 #########################################################################################
 
+# TODO: replace print by logger
+# TODO: display window if process fails
+# TODO: add shortcuts to Run
+
 import os
 import subprocess
 from threading import Thread
@@ -182,8 +186,9 @@ class SCTPanel(wx.Panel):
 
 class TabPanelPropSeg(SCTPanel):
     """
-    Panel: sct_propseg
+    sct_propseg
     """
+
     DESCRIPTION = """This segmentation tool automatically segment the spinal cord with
     robustness, accuracy and speed.<br><br>
     <b>Usage</b>:<br>
@@ -223,7 +228,7 @@ class TabPanelPropSeg(SCTPanel):
 
         # Run button
         button_run = wx.Button(self, id=wx.ID_ANY, label="Run")
-        button_run.Bind(wx.EVT_BUTTON, self.onButtonSC)
+        button_run.Bind(wx.EVT_BUTTON, self.onButtonRun)
         sizer.Add(button_run, 0, wx.ALL, 5)
 
         # Add to main sizer
@@ -243,31 +248,26 @@ class TabPanelPropSeg(SCTPanel):
         print("filename_path: {}".format(filename_path))
         self.t1.SetValue(filename_path)
 
-    def onButtonSC(self, event):
+    def onButtonRun(self, event):
 
-        overlayORD = displayCtx.overlayOrder
-        # selected_overlay = displayCtx.getSelectedOverlay()
-        # filename_path = selected_overlay.dataSource
-
-        img1 = overlayORD[0]
-        rawimg = overlayList[img1].dataSource
-        print('Raw Image:', rawimg)
+        fname_input = self.t1.GetValue()
+        print('Input image:', fname_input)
         contrast = self.rbox_contrast.GetStringSelection()
 
-        base_name = os.path.basename(rawimg)
+        base_name = os.path.basename(fname_input)
         fname, fext = base_name.split(os.extsep, 1)
-        out_name = "{}_seg.{}".format(fname, fext)
+        fname_out = "{}_seg.{}".format(fname, fext)
 
-        cmd_line = "sct_propseg -i {} -c {}".format(rawimg, contrast)
+        cmd_line = "sct_propseg -i {} -c {}".format(fname_input, contrast)
         print('Command line:', cmd_line)
         self.call_sct_command(cmd_line)
 
-        outfilename = os.path.join(os.getcwd(), out_name)
-        image = Image(outfilename)
+        # Add output to the list of overlay
+        image = Image(fname_out)  # <class 'fsl.data.image.Image'>
         overlayList.append(image)
-
         opts = displayCtx.getOpts(image)
         opts.cmap = 'red'
+
 
 # Run Spinal Cord segmentation using deep-learning
 class TabPanelSCSeg(SCTPanel):
