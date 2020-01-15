@@ -1,3 +1,22 @@
+## 4.2.1 (2020-01-14)
+[View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/4.2.0...4.2.1)
+
+**BUG**
+
+ - **sct_warp_template:** Fixed generation of QC report. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2567)
+ - **sct_register_multimodal:** Fixed bug related to missing output file. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2566)
+
+**ENHANCEMENT**
+
+ - sct_utils: Changed default open command for Linux. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2578)
+ - **sct_deepseg_sc,sct_label_vertebrae:** Better error handling if installation files are missing and clarified help. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2560)
+
+**INSTALLATION**
+
+ - Added gcc as installation pre-requisite with useful instructions. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2577)
+
+
+
 ## 4.2.0 (2019-12-19)
 [View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/4.1.1...4.2.0)
 
