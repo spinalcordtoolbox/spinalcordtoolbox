@@ -19,6 +19,7 @@
 from __future__ import absolute_import
 
 import os
+import sys
 import logging
 import sct_utils as sct
 from sct_flatten_sagittal import flatten_sagittal
@@ -44,6 +45,10 @@ def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, verbose=1):
     """
     # path to the pmj detector
     path_model = os.path.join(sct.__data_dir__, 'c2c3_disc_models', '{}_model'.format(contrast))
+    # check if model exists
+    if not os.path.isfile(path_model+'.yml'):
+        raise FileNotFoundError(
+            "The model file {} does not exist. Please download it using sct_download_data".format(path_model+'.yml'))
 
     orientation_init = nii_im.orientation
     z_seg_max = np.max(np.where(nii_seg.change_orientation('PIR').data)[1])

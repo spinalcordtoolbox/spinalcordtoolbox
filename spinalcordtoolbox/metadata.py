@@ -211,6 +211,7 @@ def get_file_label(path_label='', id_label=0, output='file'):
 
     raise RuntimeError("Label ID {} not found in {}".format(id_label, fname_label))
 
+
 def get_indiv_label_info(directory):
     """
     Get all individual label info (id, name, filename) in a folder

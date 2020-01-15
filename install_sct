@@ -188,7 +188,7 @@ function check_requirements() {
         die "Please install \"gcc\" and restart SCT installation."
       fi
     else
-      die "Please install \"gcc\" and restart SCT installation."
+      die "Please install \"gcc\" and restart SCT installation. On Debian/Ubuntu, run: \"apt install gcc\". On CentOS/RedHat, run: \"yum -y install gcc\"."
     fi
   fi
 }

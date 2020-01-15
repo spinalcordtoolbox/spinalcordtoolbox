@@ -59,9 +59,9 @@ procedures.
 
 The simplest way to install SCT is to do it via a stable release. First, download the [latest release](https://github.com/neuropoly/spinalcordtoolbox/releases). Major changes to each release are listed [here](CHANGES.md).
 
-N.B. We currently cover OS X (10.12 and above) and Debian/Ubuntu/Fedora/RedHat/CentOS platforms. If you have another OS, please see [Installation with Docker](#installation-with-docker).
-
-If you have 10.7 or less, the only incompatibility is with ANTs, which you can compile on your station and then copy the binaries under SCT installation as explained [here](https://github.com/neuropoly/spinalcordtoolbox/wiki/binaries).
+Dependencies:
+- OS requirements: OS X (10.12 and above) or Debian/Ubuntu/Fedora/RedHat/CentOS platforms. If you are using Windows, please see [Installation with Docker](#installation-with-docker).
+- You need to have `gcc` installed. On OS X, we recommend installing [Homebrew](https://brew.sh/) and then run `brew install gcc`. On Linux, we recommend installing it via your package manager. For example on Debian/Ubuntu: `apt install gcc`, and on CentOS/RedHat: `yum -y install gcc`. 
 
 Once you have downloaded SCT, unpack it (note: Safari will automatically unzip it). Then, open a new Terminal, go into the created folder and launch the installer:
 
@@ -139,6 +139,7 @@ Each repository is a pipeline dedicated to a specific research project.
 
 We organize **free** SCT courses, each year after the ISMRM conference. If you'd like to be added to the mailing list, please send an email to `spinalcordtoolbox@gmail.com`. The past courses handouts are listed below:
 
+* [SCT course (v4.2.1), London, 2020-01-21](https://www.icloud.com/keynote/0th8lcatyVPkM_W14zpjynr5g#SCT%5FCourse%5F20200121)
 * [SCT course (v4.0.0), Beijing, 2019-08-02](https://osf.io/arfv7/) | [Slides with Chinese translation](https://osf.io/hnmr2/)
 * [SCT course (v4.0.0_beta.4), London, 2019-01-22](https://osf.io/gvs6f/)
 * [SCT course (v3.2.2), Paris, 2018-06-12](https://osf.io/386h7/)
@@ -215,6 +216,7 @@ Please visit our video tutorials [here](https://www.youtube.com/channel/UC3o_1ar
 - [Smith et al. Lateral corticospinal tract damage correlates with motor output in incomplete spinal cord injury. Archives of Physical Medicine and Rehabilitation 2017](http://www.sciencedirect.com/science/article/pii/S0003999317312844)
 - [Peterson et al. Test-Retest and Interreader Reproducibility of Semiautomated Atlas-Based Analysis of Diffusion Tensor Imaging Data in Acute Cervical Spine Trauma in Adult Patients. AJNR Am J Neuroradiol. 2017 Oct;38(10):2015-2020](https://www.ncbi.nlm.nih.gov/pubmed/28818826)
 - [Kafali et al. Phase-correcting non-local means filtering for diffusion-weighted imaging of the spinal cord. Magn Reson Med 2018](http://onlinelibrary.wiley.com/doi/10.1002/mrm.27105/full)
+- [Albrecht et al. Neuroinflammation of the spinal cord and nerve roots in chronic radicular pain patients. Pain. 2018 May;159(5):968-977. doi: 10.1097/j.pain.0000000000001171](https://www.ncbi.nlm.nih.gov/pubmed/29419657)
 - [Hori et al. Application of Quantitative Microstructural MR Imaging with Atlas-based Analysis for the Spinal Cord in Cervical Spondylotic Myelopathy. Sci Rep 2018](https://www.nature.com/articles/s41598-018-23527-8)
 - [Huber et al. Dorsal and ventral horn atrophy is associated with clinical outcome after spinal cord injury. Neurology 2018](https://www.ncbi.nlm.nih.gov/pubmed/29592888)
 - [Dostal et al. Analysis of diffusion tensor measurements of the human cervical spinal cord based on semiautomatic segmentation of the white and gray matter. J Magn Reson Imaging 2018](https://www.ncbi.nlm.nih.gov/pubmed/29707834)
