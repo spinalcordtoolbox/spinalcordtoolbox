@@ -340,7 +340,6 @@ class TabPanelSCSeg(SCTPanel):
 
 
 class TabPanelGMSeg(SCTPanel):
-
     """
     sct_deepseg_gm
     """
@@ -393,6 +392,117 @@ class TabPanelGMSeg(SCTPanel):
         overlayList.append(image)
         opts = displayCtx.getOpts(image)
         opts.cmap = 'yellow'
+
+
+# Automatically identifies the vertebral levels
+class TabPanelVertLB(SCTPanel):
+    """
+    sct_label_vertebrae
+    """
+
+    DESCRIPTION = """
+    Automatically find intervertebral discs and label an input segmentation with vertebral levels. The values on the 
+    output labeled segmentation corresponds to the level, e.g., 2 corresponds to C2, 8 corresponds to T1, etc. 
+    <br><br>
+    <b>Usage</b>:
+    <br>
+    Select an image from the overlay list where discs are clearly visible (e.g., T1w or T2w scans are usually good for
+    this task). Then, select a segmentation associated with the image, select the appropriate contrast and click "Run". 
+    For more options, please use the Terminal version of this function.
+    <br><br>
+    <b>Specific citation</b>:
+    <br>
+    Ullmann et al. <i>Automatic labeling of vertebral levels using a robust template-based approach.</i> Int J Biomed 
+    Imaging 2014
+    """
+
+    def __init__(self, parent):
+        super(TabPanelVertLB, self).__init__(parent=parent, id_=wx.ID_ANY)
+
+        # Fetch input files
+        hbox_im = self.add_fetch_file_button(label="Input image:")
+        hbox_seg = self.add_fetch_file_button(label="Input segmentation:")
+
+        # Select contrast
+        lbl_contrasts = ['t1', 't2']
+        self.rbox_contrast = wx.RadioBox(self, label='Select contrast:',
+                                         choices=lbl_contrasts,
+                                         majorDimension=1,
+                                         style=wx.RA_SPECIFY_ROWS)
+
+        # Display all options
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(hbox_im, 0, wx.ALL, 5)
+        sizer.Add(hbox_seg, 0, wx.ALL, 5)
+        sizer.Add(self.rbox_contrast, 0, wx.ALL, 5)
+
+        # Run button
+        button_run = wx.Button(self, id=wx.ID_ANY, label="Run")
+        button_run.Bind(wx.EVT_BUTTON, self.on_button_run)
+        sizer.Add(button_run, 0, wx.ALL, 5)
+
+        # Add to main sizer
+        self.sizer_h.Add(sizer)
+        self.SetSizerAndFit(self.sizer_h)
+
+    def on_button_run(self, event):
+        # Build and run SCT command
+        fname_input = self.t1.GetValue()
+        base_name = os.path.basename(fname_input)
+        fname, fext = base_name.split(os.extsep, 1)
+        fname_out = "{}_gmseg.{}".format(fname, fext)
+        cmd_line = "sct_deepseg_gm -i {} -o {}".format(fname_input, fname_out)
+        self.call_sct_command(cmd_line)
+
+        # Add output to the list of overlay
+        image = Image(fname_out)  # <class 'fsl.data.image.Image'>
+        overlayList.append(image)
+        opts = displayCtx.getOpts(image)
+        opts.cmap = 'yellow'
+
+
+        lbl_contrasts = ['t1', 't2']
+        self.rbox_contrast = wx.RadioBox(self, label='Select contrast:',
+                                         choices=lbl_contrasts,
+                                         majorDimension=1,
+                                         style=wx.RA_SPECIFY_ROWS)
+
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(self.rbox_contrast, 0, wx.ALL, 5)
+        sizer.Add(button_gm, 0, wx.ALL, 5)
+        self.sizer_h.Add(sizer)
+        self.SetSizerAndFit(self.sizer_h)
+
+    def onButtonVL(self, event):
+        overlayORD = displayCtx.overlayOrder
+
+        print('Overlay Order:', overlayORD)
+
+        img1 = overlayORD[0]
+        img2 = overlayORD[1]
+        rawimg = overlayList[img1].dataSource
+        segimg = overlayList[img2].dataSource
+
+        print('Raw Image:', rawimg, )
+        print('Segmentation:', segimg)
+
+        contrast = self.rbox_contrast.GetStringSelection()
+        base_name = os.path.basename(segimg)
+
+        fname, fext = base_name.split(os.extsep, 1)
+
+        out_name = "{}_labeled.{}".format(fname, fext)
+
+        cmd_line = "sct_label_vertebrae -i {} -s {} -c {}".format(rawimg, segimg, contrast)
+        print('Command:', cmd_line)
+        self.call_sct_command(cmd_line)
+
+        outfilename = os.path.join(os.getcwd(), out_name)
+        image = Image(outfilename)
+        overlayList.append(image)
+
+        opts = displayCtx.getOpts(image)
+        opts.cmap = 'subcortical'
 
 
 #Computes Cross-Sectional Area for GM, WM and GM+WM (Total)
@@ -616,73 +726,6 @@ class TabPanelCSA(SCTPanel):
 
                     print('Error: Upload PAM50_levels.nii.gz')
 
-#Automatically identifies the vertebral levels
-class TabPanelVertLB(SCTPanel):
-    DESCRIPTION = """This tool automatically identifies the 
-    vertebral levels. For more information, please refer to the
-    article below.<br><br>
-    <b>Usage</b>:<br>
-    To launch the script, the uploaded images into FSLeyes must respect a sequence.
-    In the Overlay list field, the images order is, from the bottom to the top, raw imaging
-    (t1 and t2) and the segmentation imaging (output propseg or deepseg_sc). It is not necessary
-    uploading the images in such order, with the arrows is possible to sort them.
-    For more information, please refer to the article below.<br><br>
-    <b>Specific citation</b>:<br>
-    Ullmann et al.
-    <i>Automatic labeling of vertebral levels using a robust template-based approach.
-    (2014)</i>. Int J Biomed Imaging. 2014:719520.
-
-    """
-
-    def __init__(self, parent):
-        super(TabPanelVertLB, self).__init__(parent=parent,
-                                             id_=wx.ID_ANY)
-        button_gm = wx.Button(self, id=wx.ID_ANY, label="Vertebral Labeling")
-        button_gm.Bind(wx.EVT_BUTTON, self.onButtonVL)
-
-        lbl_contrasts = ['t1', 't2']
-        self.rbox_contrast = wx.RadioBox(self, label='Select contrast:',
-                                         choices=lbl_contrasts,
-                                         majorDimension=1,
-                                         style=wx.RA_SPECIFY_ROWS)
-
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(self.rbox_contrast, 0, wx.ALL, 5)
-        sizer.Add(button_gm, 0, wx.ALL, 5)
-        self.sizer_h.Add(sizer)
-        self.SetSizerAndFit(self.sizer_h)
-
-    def onButtonVL(self, event):
-
-        overlayORD = displayCtx.overlayOrder
-
-        print('Overlay Order:', overlayORD)
-
-        img1 = overlayORD[0]
-        img2 = overlayORD[1]
-        rawimg = overlayList[img1].dataSource
-        segimg = overlayList[img2].dataSource
-
-        print('Raw Image:', rawimg,)
-        print('Segmentation:', segimg)
-
-        contrast = self.rbox_contrast.GetStringSelection()
-        base_name = os.path.basename(segimg)
-
-        fname, fext = base_name.split(os.extsep, 1)
-
-        out_name = "{}_labeled.{}".format(fname, fext)
-
-        cmd_line = "sct_label_vertebrae -i {} -s {} -c {}".format(rawimg, segimg, contrast)
-        print('Command:', cmd_line)
-        self.call_sct_command(cmd_line)
-
-        outfilename = os.path.join(os.getcwd(), out_name)
-        image = Image(outfilename)
-        overlayList.append(image)
-
-        opts = displayCtx.getOpts(image)
-        opts.cmap = 'subcortical'
 
 #Motion correction for dwi
 class TabPanelMOCO(SCTPanel):
