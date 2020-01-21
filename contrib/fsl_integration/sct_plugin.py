@@ -32,8 +32,10 @@ class SCTCallThread(Thread):
     @staticmethod
     def sct_call(command):
         env = os.environ.copy()
-        del env["PYTHONHOME"]
-        del env["PYTHONPATH"]
+        if "PYTHONHOME" in os.environ:
+            del env["PYTHONHOME"]
+        if "PYTHONPATH" in os.environ:
+            del env["PYTHONPATH"]
         p = subprocess.Popen([command], stdout=subprocess.PIPE,
                              shell=True, env=env)
         stdout, stderr = p.communicate()
