@@ -21,7 +21,6 @@
 #
 #########################################################################################
 
-# TODO: replace print by logger
 # TODO: display window if process fails
 # TODO: add shortcuts to Run
 # TODO: add help when user leaves cursor on button
@@ -196,30 +195,6 @@ class SCTPanel(wx.Panel):
                                 style=txt_style)
         htmlw.SetPage(self.DESCRIPTION)
         return htmlw
-
-    # def get_highlighted_file_name(self, event):
-    #     """
-    #     Fetch path to file highlighted in the Overlay list. displayCtx is a hidden class from FSLeyes.
-    #     :return: filename_path
-    #     """
-    #     selected_overlay = displayCtx.getSelectedOverlay()
-    #     filename_path = selected_overlay.dataSource
-    #     print("Fetched file name: {}".format(filename_path))
-    #     self.t1.SetValue(filename_path)  # display file name in text box
-    #
-    # def add_fetch_file_button(self, label=""):
-    #     """
-    #     Add a button and a text box where user can fetch any highlighted file name from the overlay list.
-    #     :param label: Text on the button
-    #     :return: BoxSizer object: hbox:
-    #     """
-    #     hbox = wx.BoxSizer(wx.HORIZONTAL)
-    #     button_fetch_file = wx.Button(self, -1, label=label)
-    #     button_fetch_file.Bind(wx.EVT_BUTTON, self.get_highlighted_file_name)
-    #     hbox.Add(button_fetch_file, proportion=0, flag=wx.ALIGN_LEFT | wx.ALL, border=5)
-    #     hbox.Add(self.t1, 1, wx.EXPAND | wx.ALIGN_LEFT | wx.ALL, 5)
-    #     hbox.txt = self.t1.GetValue()
-    #     return hbox
 
     def call_sct_command(self, command):
         print("Running: {}".format(command))
