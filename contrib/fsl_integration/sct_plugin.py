@@ -88,6 +88,36 @@ class ProgressDialog(wx.Dialog):
         self.CenterOnParent()
 
 
+class TextBox:
+    """
+    Create a horizontal box composed of a button (left) and a text box (right). When the button is
+    pressed, the file name highlighted in the list of overlay is fetched and passed into the text box.
+    This file name can be accessed by: TextBox.textctrl.GetValue()
+    """
+    def __init__(self, sctpanel, label=""):
+        """
+        :param sctpanel: SCTPanel Class
+        :param label: Label to display on the button
+        """
+        self.textctrl = wx.TextCtrl(sctpanel, -1, "", wx.DefaultPosition, wx.Size(1000, 10))
+        hbox = wx.BoxSizer(wx.HORIZONTAL)
+        button_fetch_file = wx.Button(sctpanel, -1, label=label)
+        button_fetch_file.Bind(wx.EVT_BUTTON, self.get_highlighted_file_name)
+        hbox.Add(button_fetch_file, proportion=0, flag=wx.ALIGN_LEFT | wx.ALL, border=5)
+        hbox.Add(self.textctrl, 1, wx.EXPAND | wx.ALIGN_LEFT | wx.ALL, 5)
+        self.hbox = hbox
+
+    def get_highlighted_file_name(self, event):
+        """
+        Fetch path to file highlighted in the Overlay list.
+        """
+        selected_overlay = displayCtx.getSelectedOverlay()  # displayCtx is a class from FSLeyes
+        filename_path = selected_overlay.dataSource
+        print("Fetched file name: {}".format(filename_path))
+        # display file name in text box
+        self.textctrl.SetValue(filename_path)
+
+
 # Creates the standard panel for each tool
 class SCTPanel(wx.Panel):
     """
@@ -107,8 +137,7 @@ class SCTPanel(wx.Panel):
     SCT_TUTORIAL_PATH = 'documentation/Manual_v1_SCT.pdf'  # TODO: fix this path
 
     def __init__(self, parent, id_):
-        super(SCTPanel, self).__init__(parent=parent,
-                                       id=id_)
+        super(SCTPanel, self).__init__(parent=parent, id=id_)
 
         # Logo
         self.img_logo = self.get_logo()
@@ -168,29 +197,29 @@ class SCTPanel(wx.Panel):
         htmlw.SetPage(self.DESCRIPTION)
         return htmlw
 
-    def get_highlighted_file_name(self, event):
-        """
-        Fetch path to file highlighted in the Overlay list
-        :return: filename_path
-        """
-        selected_overlay = displayCtx.getSelectedOverlay()
-        filename_path = selected_overlay.dataSource
-        print("Fetched file name: {}".format(filename_path))
-        self.t1.SetValue(filename_path)
-
-    def add_fetch_file_button(self, label=""):
-        """
-        Add a button and a text box where user can fetch any highlighted file name from the overlay list.
-        :param label: Text on the button
-        :return: BoxSizer object: hbox:
-        """
-        hbox = wx.BoxSizer(wx.HORIZONTAL)
-        button_fetch_file = wx.Button(self, -1, label=label)
-        button_fetch_file.Bind(wx.EVT_BUTTON, self.get_highlighted_file_name)
-        hbox.Add(button_fetch_file, proportion=0, flag=wx.ALIGN_LEFT | wx.ALL, border=5)
-        self.t1 = wx.TextCtrl(self, -1, "", wx.DefaultPosition, wx.Size(1000, 10))
-        hbox.Add(self.t1, 1, wx.EXPAND | wx.ALIGN_LEFT | wx.ALL, 5)
-        return hbox
+    # def get_highlighted_file_name(self, event):
+    #     """
+    #     Fetch path to file highlighted in the Overlay list. displayCtx is a hidden class from FSLeyes.
+    #     :return: filename_path
+    #     """
+    #     selected_overlay = displayCtx.getSelectedOverlay()
+    #     filename_path = selected_overlay.dataSource
+    #     print("Fetched file name: {}".format(filename_path))
+    #     self.t1.SetValue(filename_path)  # display file name in text box
+    #
+    # def add_fetch_file_button(self, label=""):
+    #     """
+    #     Add a button and a text box where user can fetch any highlighted file name from the overlay list.
+    #     :param label: Text on the button
+    #     :return: BoxSizer object: hbox:
+    #     """
+    #     hbox = wx.BoxSizer(wx.HORIZONTAL)
+    #     button_fetch_file = wx.Button(self, -1, label=label)
+    #     button_fetch_file.Bind(wx.EVT_BUTTON, self.get_highlighted_file_name)
+    #     hbox.Add(button_fetch_file, proportion=0, flag=wx.ALIGN_LEFT | wx.ALL, border=5)
+    #     hbox.Add(self.t1, 1, wx.EXPAND | wx.ALIGN_LEFT | wx.ALL, 5)
+    #     hbox.txt = self.t1.GetValue()
+    #     return hbox
 
     def call_sct_command(self, command):
         print("Running: {}".format(command))
@@ -234,7 +263,7 @@ class TabPanelPropSeg(SCTPanel):
         super(TabPanelPropSeg, self).__init__(parent=parent, id_=wx.ID_ANY)
 
         # Fetch input file
-        hbox1 = self.add_fetch_file_button(label="Input file:")
+        self.hbox_filein = TextBox(self, label="Input file")
 
         # Select contrast
         lbl_contrasts = ['t1', 't2', 't2s', 'dwi']
@@ -245,7 +274,7 @@ class TabPanelPropSeg(SCTPanel):
 
         # Display all options
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(hbox1, 0, wx.ALL, 5)
+        sizer.Add(self.hbox_filein.hbox, 0, wx.ALL, 5)
         sizer.Add(self.rbox_contrast, 0, wx.ALL, 5)
 
         # Run button
@@ -260,7 +289,7 @@ class TabPanelPropSeg(SCTPanel):
     def on_button_run(self, event):
 
         # Build and run SCT command
-        fname_input = self.t1.GetValue()
+        fname_input = self.hbox_filein.textctrl.GetValue()
         contrast = self.rbox_contrast.GetStringSelection()
         base_name = os.path.basename(fname_input)
         fname, fext = base_name.split(os.extsep, 1)
@@ -420,8 +449,8 @@ class TabPanelVertLB(SCTPanel):
         super(TabPanelVertLB, self).__init__(parent=parent, id_=wx.ID_ANY)
 
         # Fetch input files
-        hbox_im = self.add_fetch_file_button(label="Input image:")
-        hbox_seg = self.add_fetch_file_button(label="Input segmentation:")
+        self.hbox_im = self.add_fetch_file_button(label="Input image:")
+        self.hbox_seg = self.add_fetch_file_button(label="Input segmentation:")
 
         # Select contrast
         lbl_contrasts = ['t1', 't2']
@@ -432,8 +461,8 @@ class TabPanelVertLB(SCTPanel):
 
         # Display all options
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(hbox_im, 0, wx.ALL, 5)
-        sizer.Add(hbox_seg, 0, wx.ALL, 5)
+        sizer.Add(self.hbox_im, 0, wx.ALL, 5)
+        sizer.Add(self.hbox_seg, 0, wx.ALL, 5)
         sizer.Add(self.rbox_contrast, 0, wx.ALL, 5)
 
         # Run button
@@ -447,6 +476,7 @@ class TabPanelVertLB(SCTPanel):
 
     def on_button_run(self, event):
         # Build and run SCT command
+        print("boo {}".format(self.hbox_im.t1.GetValue()))
         fname_input = self.t1.GetValue()
         base_name = os.path.basename(fname_input)
         fname, fext = base_name.split(os.extsep, 1)
@@ -1032,6 +1062,32 @@ class TabPanelREG(SCTPanel):
             overlayList.append(image)
             opts = displayCtx.getOpts(image)
             opts.cmap = 'gray'
+
+#
+# def get_highlighted_file_name(self, event):
+#     """
+#     Fetch path to file highlighted in the Overlay list. displayCtx is a hidden class from FSLeyes.
+#     :return: filename_path
+#     """
+#     selected_overlay = displayCtx.getSelectedOverlay()
+#     filename_path = selected_overlay.dataSource
+#     print("Fetched file name: {}".format(filename_path))
+#     self.t1.SetValue(filename_path)
+#
+#
+# def add_fetch_file_button(hbox, label=""):
+#     """
+#     Add a button and a text box where user can fetch any highlighted file name from the overlay list.
+#     :param label: Text on the button
+#     :return: BoxSizer object: hbox:
+#     """
+#     hbox = wx.BoxSizer(wx.HORIZONTAL)
+#     button_fetch_file = wx.Button(self, -1, label=label)
+#     button_fetch_file.Bind(wx.EVT_BUTTON, self.get_highlighted_file_name)
+#     hbox.Add(button_fetch_file, proportion=0, flag=wx.ALIGN_LEFT | wx.ALL, border=5)
+#     t1 = wx.TextCtrl(self, -1, "", wx.DefaultPosition, wx.Size(1000, 10))
+#     hbox.Add(t1, 1, wx.EXPAND | wx.ALIGN_LEFT | wx.ALL, 5)
+#     return hbox
 
 
 def run_main():
