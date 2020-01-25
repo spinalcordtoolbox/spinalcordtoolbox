@@ -26,6 +26,7 @@
 # TODO: add help when user leaves cursor on button
 
 import os
+import sys
 import subprocess
 from threading import Thread
 import logging
@@ -48,15 +49,18 @@ class SCTCallThread(Thread):
         env = os.environ.copy()
         del env["PYTHONHOME"]
         del env["PYTHONPATH"]
-        p = subprocess.Popen([command], stdout=subprocess.PIPE,
-                             shell=True, env=env)
+        p = subprocess.Popen([command], stdout=subprocess.PIPE, shell=True, env=env)
         stdout, stderr = p.communicate()
-        # TODO: better format output by taking into account carriage returns, etc.
-        print(stdout)
-        print(stderr)
+        # TODO: Print output in blue for stdout and in red for stderr
+        print(stdout.decode('utf-8'))
+        print(stderr.decode('utf-8'))
         return stdout, stderr
 
     def run(self):
+        """
+        overrides Thread.run() function
+        :return:
+        """
         self.sct_call(self.command)
 
 
