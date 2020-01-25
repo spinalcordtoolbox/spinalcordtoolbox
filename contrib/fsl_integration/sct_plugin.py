@@ -328,7 +328,7 @@ class TabPanelSCSeg(SCTPanel):
         super(TabPanelSCSeg, self).__init__(parent=parent, id_=wx.ID_ANY)
 
         # Fetch input file
-        hbox1 = self.add_fetch_file_button(label="Input file:")
+        self.hbox_filein = TextBox(self, label="Input file")
 
         # Select contrast
         lbl_contrasts = ['t1', 't2', 't2s', 'dwi']
@@ -339,7 +339,7 @@ class TabPanelSCSeg(SCTPanel):
 
         # Display all options
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(hbox1, 0, wx.ALL, 5)
+        sizer.Add(self.hbox_filein.hbox, 0, wx.ALL, 5)
         sizer.Add(self.rbox_contrast, 0, wx.ALL, 5)
 
         # Run button
@@ -352,8 +352,9 @@ class TabPanelSCSeg(SCTPanel):
         self.SetSizerAndFit(self.sizer_h)
 
     def on_button_run(self, event):
+
         # Build and run SCT command
-        fname_input = self.t1.GetValue()
+        fname_input = self.hbox_filein.textctrl.GetValue()
         contrast = self.rbox_contrast.GetStringSelection()
         base_name = os.path.basename(fname_input)
         fname, fext = base_name.split(os.extsep, 1)
@@ -392,11 +393,11 @@ class TabPanelGMSeg(SCTPanel):
         super(TabPanelGMSeg, self).__init__(parent=parent, id_=wx.ID_ANY)
 
         # Fetch input file
-        hbox1 = self.add_fetch_file_button(label="Input file:")
+        self.hbox_filein = TextBox(self, label="Input file")
 
         # Display all options
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(hbox1, 0, wx.ALL, 5)
+        sizer.Add(self.hbox_filein.hbox, 0, wx.ALL, 5)
 
         # Run button
         button_run = wx.Button(self, id=wx.ID_ANY, label="Run")
@@ -408,8 +409,9 @@ class TabPanelGMSeg(SCTPanel):
         self.SetSizerAndFit(self.sizer_h)
 
     def on_button_run(self, event):
+
         # Build and run SCT command
-        fname_input = self.t1.GetValue()
+        fname_input = self.hbox_filein.textctrl.GetValue()
         base_name = os.path.basename(fname_input)
         fname, fext = base_name.split(os.extsep, 1)
         fname_out = "{}_gmseg.{}".format(fname, fext)
@@ -423,7 +425,6 @@ class TabPanelGMSeg(SCTPanel):
         opts.cmap = 'yellow'
 
 
-# Automatically identifies the vertebral levels
 class TabPanelVertLB(SCTPanel):
     """
     sct_label_vertebrae
@@ -449,8 +450,8 @@ class TabPanelVertLB(SCTPanel):
         super(TabPanelVertLB, self).__init__(parent=parent, id_=wx.ID_ANY)
 
         # Fetch input files
-        self.hbox_im = self.add_fetch_file_button(label="Input image:")
-        self.hbox_seg = self.add_fetch_file_button(label="Input segmentation:")
+        self.hbox_im = TextBox(self, label="Input image")
+        self.hbox_seg = TextBox(self, label="Input segmentation")
 
         # Select contrast
         lbl_contrasts = ['t1', 't2']
@@ -461,8 +462,8 @@ class TabPanelVertLB(SCTPanel):
 
         # Display all options
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(self.hbox_im, 0, wx.ALL, 5)
-        sizer.Add(self.hbox_seg, 0, wx.ALL, 5)
+        sizer.Add(self.hbox_im.hbox, 0, wx.ALL, 5)
+        sizer.Add(self.hbox_seg.hbox, 0, wx.ALL, 5)
         sizer.Add(self.rbox_contrast, 0, wx.ALL, 5)
 
         # Run button
@@ -475,62 +476,21 @@ class TabPanelVertLB(SCTPanel):
         self.SetSizerAndFit(self.sizer_h)
 
     def on_button_run(self, event):
+
         # Build and run SCT command
-        print("boo {}".format(self.hbox_im.t1.GetValue()))
-        fname_input = self.t1.GetValue()
-        base_name = os.path.basename(fname_input)
+        fname_im = self.hbox_im.textctrl.GetValue()
+        fname_seg = self.hbox_seg.textctrl.GetValue()
+        contrast = self.rbox_contrast.GetStringSelection()
+
+        base_name = os.path.basename(fname_seg)
         fname, fext = base_name.split(os.extsep, 1)
-        fname_out = "{}_gmseg.{}".format(fname, fext)
-        cmd_line = "sct_deepseg_gm -i {} -o {}".format(fname_input, fname_out)
+        fname_out = "{}_labeled.{}".format(fname, fext)
+        cmd_line = "sct_label_vertebrae -i {} -s {} -c {}".format(fname_im, fname_out, contrast)
         self.call_sct_command(cmd_line)
 
         # Add output to the list of overlay
         image = Image(fname_out)  # <class 'fsl.data.image.Image'>
         overlayList.append(image)
-        opts = displayCtx.getOpts(image)
-        opts.cmap = 'yellow'
-
-
-        lbl_contrasts = ['t1', 't2']
-        self.rbox_contrast = wx.RadioBox(self, label='Select contrast:',
-                                         choices=lbl_contrasts,
-                                         majorDimension=1,
-                                         style=wx.RA_SPECIFY_ROWS)
-
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(self.rbox_contrast, 0, wx.ALL, 5)
-        sizer.Add(button_gm, 0, wx.ALL, 5)
-        self.sizer_h.Add(sizer)
-        self.SetSizerAndFit(self.sizer_h)
-
-    def onButtonVL(self, event):
-        overlayORD = displayCtx.overlayOrder
-
-        print('Overlay Order:', overlayORD)
-
-        img1 = overlayORD[0]
-        img2 = overlayORD[1]
-        rawimg = overlayList[img1].dataSource
-        segimg = overlayList[img2].dataSource
-
-        print('Raw Image:', rawimg, )
-        print('Segmentation:', segimg)
-
-        contrast = self.rbox_contrast.GetStringSelection()
-        base_name = os.path.basename(segimg)
-
-        fname, fext = base_name.split(os.extsep, 1)
-
-        out_name = "{}_labeled.{}".format(fname, fext)
-
-        cmd_line = "sct_label_vertebrae -i {} -s {} -c {}".format(rawimg, segimg, contrast)
-        print('Command:', cmd_line)
-        self.call_sct_command(cmd_line)
-
-        outfilename = os.path.join(os.getcwd(), out_name)
-        image = Image(outfilename)
-        overlayList.append(image)
-
         opts = displayCtx.getOpts(image)
         opts.cmap = 'subcortical'
 
