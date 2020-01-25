@@ -52,8 +52,10 @@ class SCTCallThread(Thread):
         p = subprocess.Popen([command], stdout=subprocess.PIPE, shell=True, env=env)
         stdout, stderr = p.communicate()
         # TODO: Print output in blue for stdout and in red for stderr
+        # TODO: Fix: tqdm progress bar causes the printing of stdout to stop
         print(stdout.decode('utf-8'))
-        print(stderr.decode('utf-8'))
+        if stderr is not None:
+            print(stderr.decode('utf-8'))
         return stdout, stderr
 
     def run(self):
@@ -464,7 +466,7 @@ class TabPanelVertLB(SCTPanel):
         base_name = os.path.basename(fname_seg)
         fname, fext = base_name.split(os.extsep, 1)
         fname_out = "{}_labeled.{}".format(fname, fext)
-        cmd_line = "sct_label_vertebrae -i {} -s {} -c {}".format(fname_im, fname_out, contrast)
+        cmd_line = "sct_label_vertebrae -i {} -s {} -c {}".format(fname_im, fname_seg, contrast)
         self.call_sct_command(cmd_line)
 
         # Add output to the list of overlay
