@@ -49,13 +49,12 @@ class SCTCallThread(Thread):
         env = os.environ.copy()
         del env["PYTHONHOME"]
         del env["PYTHONPATH"]
-        p = subprocess.Popen([command], stdout=subprocess.PIPE, shell=True, env=env)
+        p = subprocess.Popen([command], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, env=env)
         stdout, stderr = p.communicate()
-        # TODO: Print output in blue for stdout and in red for stderr
         # TODO: Fix: tqdm progress bar causes the printing of stdout to stop
-        print(stdout.decode('utf-8'))
-        if stderr is not None:
-            print(stderr.decode('utf-8'))
+        print("\n\033[94m{}\033[0m\n".format(stdout.decode('utf-8')))
+        if stderr:
+            print("\n\033[91mERROR: {}\033[0m\n".format(stderr.decode('utf-8')))
         return stdout, stderr
 
     def run(self):
