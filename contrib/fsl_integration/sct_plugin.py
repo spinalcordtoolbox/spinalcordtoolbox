@@ -17,7 +17,6 @@
 # Authors: Christian S. Perone, Thiago JR Rezende, Julien Cohen-Adad
 ##########################################################################################
 
-# TODO: display window if process fails
 # TODO: add shortcuts to Run
 # TODO: add help when user leaves cursor on button
 
@@ -38,14 +37,14 @@ class ErrorDialog(wx.Dialog):
     """
     Panel to display if there is an error, instructing user what to do.
     """
-
     def __init__(self, parent):
         wx.Dialog.__init__(self, parent, title="SCT Error")
-        self.SetSize((500, 150))
+        self.SetSize((500, 160))
         btns = self.CreateSeparatedButtonSizer(wx.OK)
         save_ico = wx.ArtProvider.GetBitmap(wx.ART_ERROR, wx.ART_TOOLBAR, (50, 50))
         img_info = wx.StaticBitmap(self, -1, save_ico, wx.DefaultPosition, (save_ico.GetWidth(), save_ico.GetHeight()))
         sizer = wx.BoxSizer(wx.HORIZONTAL)
+        # TODO: make the Forum URL clickable
         lbldesc = wx.StaticText(self,
                                 id=-1,
                                 label="An error has occurred while running SCT. Please go to the Terminal, copy all "
@@ -57,6 +56,7 @@ class ErrorDialog(wx.Dialog):
         sizer.Add(lbldesc, 0, wx.EXPAND | wx.ALIGN_LEFT | wx.ALL, 5)
         sizer_c = wx.BoxSizer(wx.VERTICAL)
         sizer_c.Add(sizer)
+        # TODO: find a way to place this button at the bottom of the window
         sizer_c.Add(btns, 0, wx.ALL, 5)
         self.SetSizer(sizer_c)
         self.Centre()
@@ -64,30 +64,31 @@ class ErrorDialog(wx.Dialog):
 
 
 class ProgressDialog(wx.Dialog):
+    """
+    Panel to display while running SCT command.
+    """
     def __init__(self, parent):
-        wx.Dialog.__init__(self, parent, title="SCT / Processing")
-        self.SetSize((350, 100))
-        self.btns = self.CreateSeparatedButtonSizer(wx.CANCEL)
-
-        save_ico = wx.ArtProvider.GetBitmap(wx.ART_INFORMATION,
-                                            wx.ART_TOOLBAR,
-                                            (16, 16))
-        img_info = wx.StaticBitmap(self, -1, save_ico, wx.DefaultPosition,
-                                   (save_ico.GetWidth(), save_ico.GetHeight()))
+        # TODO: try to use MessageBox instead, as they already include buttons, icons, etc.
+        wx.Dialog.__init__(self, parent, title="SCT Processing")
+        self.SetSize((400, 130))
 
         sizer = wx.BoxSizer(wx.HORIZONTAL)
-        self.lbldesc = wx.StaticText(self, id=wx.ID_ANY,
-                                     label="Please wait while the algorithm is running...")
-        sizer.Add(img_info, 0, wx.ALL, 15)
-        sizer.Add(self.lbldesc, 0, wx.ALL, 15)
+
+        save_ico = wx.ArtProvider.GetBitmap(wx.ART_INFORMATION, wx.ART_TOOLBAR, (50, 50))
+        img_info = wx.StaticBitmap(self, -1, save_ico, wx.DefaultPosition, (save_ico.GetWidth(), save_ico.GetHeight()))
+        sizer.Add(img_info, 0, wx.ALL, 5)
+
+        lbldesc = wx.StaticText(self, id=wx.ID_ANY, label="\nProcessing, please wait...")
+        sizer.Add(lbldesc, 0, wx.EXPAND, wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL | wx.ALL, 5)
+
         sizer_c = wx.BoxSizer(wx.VERTICAL)
         sizer_c.Add(sizer)
-        sizer_c.Add(self.btns, 0, wx.ALL, 5)
-
+        btns = self.CreateSeparatedButtonSizer(wx.CANCEL)
+        sizer_c.Add(btns, 0, wx.ALL | wx.ALIGN_BOTTOM, 5)
         self.SetSizer(sizer_c)
-
         self.Centre()
         self.CenterOnParent()
+        # TODO: take care of cancel button
 
 
 class SCTCallThread(Thread):
