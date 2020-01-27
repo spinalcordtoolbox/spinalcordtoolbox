@@ -34,32 +34,33 @@ logger = logging.getLogger(__name__)
 aui_manager = frame.getAuiManager()
 
 
-class SCTCallThread(Thread):
-    def __init__(self, command):
-        Thread.__init__(self)
-        self.command = command
+class ErrorDialog(wx.Dialog):
+    """
+    Panel to display if there is an error, instructing user what to do.
+    """
 
-    @staticmethod
-    def sct_call(command):
-        env = os.environ.copy()
-        if 'PYTHONHOME' in env:
-            del env["PYTHONHOME"]
-        if 'PYTHONPATH' in env:
-            del env["PYTHONPATH"]
-        p = subprocess.Popen([command], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, env=env)
-        stdout, stderr = p.communicate()
-        # TODO: Fix: tqdm progress bar causes the printing of stdout to stop
-        print("\n\033[94m{}\033[0m\n".format(stdout.decode('utf-8')))
-        if stderr:
-            print("\n\033[91mERROR: {}\033[0m\n".format(stderr.decode('utf-8')))
-        return stdout, stderr
-
-    def run(self):
-        """
-        overrides Thread.run() function
-        :return:
-        """
-        self.sct_call(self.command)
+    def __init__(self, parent):
+        wx.Dialog.__init__(self, parent, title="SCT Error")
+        self.SetSize((500, 150))
+        btns = self.CreateSeparatedButtonSizer(wx.OK)
+        save_ico = wx.ArtProvider.GetBitmap(wx.ART_ERROR, wx.ART_TOOLBAR, (50, 50))
+        img_info = wx.StaticBitmap(self, -1, save_ico, wx.DefaultPosition, (save_ico.GetWidth(), save_ico.GetHeight()))
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
+        lbldesc = wx.StaticText(self,
+                                id=-1,
+                                label="An error has occurred while running SCT. Please go to the Terminal, copy all "
+                                      "the content and paste it as a new issue in SCT's forum: \n"
+                                      "http://forum.spinalcordmri.org/",
+                                size=(450, 80),
+                                style=wx.ALIGN_LEFT)
+        sizer.Add(img_info, 0, wx.ALL, 5)
+        sizer.Add(lbldesc, 0, wx.EXPAND | wx.ALIGN_LEFT | wx.ALL, 5)
+        sizer_c = wx.BoxSizer(wx.VERTICAL)
+        sizer_c.Add(sizer)
+        sizer_c.Add(btns, 0, wx.ALL, 5)
+        self.SetSizer(sizer_c)
+        self.Centre()
+        self.CenterOnParent()
 
 
 class ProgressDialog(wx.Dialog):
@@ -87,6 +88,37 @@ class ProgressDialog(wx.Dialog):
 
         self.Centre()
         self.CenterOnParent()
+
+
+class SCTCallThread(Thread):
+    def __init__(self, command):
+        Thread.__init__(self)
+        self.command = command
+        self.stdout = ""
+        self.stderr = ""
+
+    @staticmethod
+    def sct_call(command):
+        # command="boo"  # for debug
+        env = os.environ.copy()
+        if 'PYTHONHOME' in env:
+            del env["PYTHONHOME"]
+        if 'PYTHONPATH' in env:
+            del env["PYTHONPATH"]
+        p = subprocess.Popen([command], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, env=env)
+        stdout, stderr = [i.decode('utf-8') for i in p.communicate()]
+        # TODO: Fix: tqdm progress bar causes the printing of stdout to stop
+        print("\n\033[94m{}\033[0m\n".format(stdout))
+        if stderr:
+            print("\n\033[91mERROR: {}\033[0m\n".format(stderr))
+        return stdout, stderr
+
+    def run(self):
+        """
+        overrides Thread.run() function
+        :return:
+        """
+        self.stdout, self.stderr = self.sct_call(self.command)
 
 
 class TextBox:
@@ -215,6 +247,10 @@ class SCTPanel(wx.Panel):
         thr.join()
 
         binfo.Destroy()
+        # Open error dialog if stderr is not empty
+        if thr.stderr:
+            binfo = ErrorDialog(frame)
+            binfo.Show()
 
 
 class TabPanelPropSeg(SCTPanel):
