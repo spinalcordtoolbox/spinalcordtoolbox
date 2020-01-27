@@ -1,7 +1,6 @@
 # coding=utf-8
-
 #########################################################################################
-# This code will provide SCT integration into fsleyes for the following tools:
+# This code provides SCT integration into FSLeyes for the following tools:
 #
 #    - sct_propseg
 #    - sct_deepseg_gm
@@ -15,18 +14,14 @@
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2018 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: Christian S. Perone
-#          Thiago JR Rezende
-# Created: 2 Mar 2018
-#
-#########################################################################################
+# Authors: Christian S. Perone, Thiago JR Rezende, Julien Cohen-Adad
+##########################################################################################
 
 # TODO: display window if process fails
 # TODO: add shortcuts to Run
 # TODO: add help when user leaves cursor on button
 
 import os
-import sys
 import subprocess
 from threading import Thread
 import logging
@@ -47,8 +42,10 @@ class SCTCallThread(Thread):
     @staticmethod
     def sct_call(command):
         env = os.environ.copy()
-        del env["PYTHONHOME"]
-        del env["PYTHONPATH"]
+        if 'PYTHONHOME' in env:
+            del env["PYTHONHOME"]
+        if 'PYTHONPATH' in env:
+            del env["PYTHONPATH"]
         p = subprocess.Popen([command], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, env=env)
         stdout, stderr = p.communicate()
         # TODO: Fix: tqdm progress bar causes the printing of stdout to stop
