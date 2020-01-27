@@ -17,6 +17,7 @@
 # Authors: Christian S. Perone, Thiago JR Rezende, Julien Cohen-Adad
 ##########################################################################################
 
+# TODO: display error if number of input arguments is not correct
 # TODO: add shortcuts to Run
 # TODO: add help when user leaves cursor on button
 
@@ -95,6 +96,7 @@ class SCTCallThread(Thread):
     def __init__(self, command):
         Thread.__init__(self)
         self.command = command
+        self.status = None
         self.stdout = ""
         self.stderr = ""
 
@@ -110,16 +112,16 @@ class SCTCallThread(Thread):
         stdout, stderr = [i.decode('utf-8') for i in p.communicate()]
         # TODO: Fix: tqdm progress bar causes the printing of stdout to stop
         print("\n\033[94m{}\033[0m\n".format(stdout))
-        if stderr:
+        if p.returncode is not 0:
             print("\n\033[91mERROR: {}\033[0m\n".format(stderr))
-        return stdout, stderr
+        return p.returncode, stdout, stderr
 
     def run(self):
         """
         overrides Thread.run() function
         :return:
         """
-        self.stdout, self.stderr = self.sct_call(self.command)
+        self.status, self.stdout, self.stderr = self.sct_call(self.command)
 
 
 class TextBox:
@@ -248,8 +250,8 @@ class SCTPanel(wx.Panel):
         thr.join()
 
         binfo.Destroy()
-        # Open error dialog if stderr is not empty
-        if thr.stderr:
+        # Open error dialog if stderr is not null
+        if thr.status:
             binfo = ErrorDialog(frame)
             binfo.Show()
 
