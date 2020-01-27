@@ -561,11 +561,12 @@ def add_entry(src, process, args, path_qc, plane, path_img=None, path_img_overla
     try:
         from sys import platform as _platform
         if _platform == "linux" or _platform == "linux2":
+            # try catch block. The keyerror is thrown if $DOCKER is not an environment variable 
             try:  
-                os.environ["BROWSER"]
-                sct.printv('xdg-open "{}/index.html"'.format(path_qc), type='info')
+                os.environ["DOCKER"]
+                sct.printv('please go to "{}/" and double click on the "index.html" file'.format(path_qc), type='info')
             except KeyError: 
-                sct.printv('please go to "{}/" and double click on the "index.html file"'.format(path_qc), type='info')
+                sct.printv('xdg-open "{}/index.html"'.format(path_qc), type='info')
             
         elif _platform == "darwin":
             sct.printv('open "{}/index.html"'.format(path_qc), type='info')
