@@ -86,6 +86,7 @@ class ProgressDialog(wx.Dialog):
 
         hbox = wx.BoxSizer(wx.HORIZONTAL)
 
+        # TODO: use a nicer image, showing two gears (similar to ID_EXECUTE)
         save_ico = wx.ArtProvider.GetBitmap(wx.ART_INFORMATION, wx.ART_TOOLBAR, (50, 50))
         img_info = wx.StaticBitmap(self, -1, save_ico, wx.DefaultPosition, (save_ico.GetWidth(), save_ico.GetHeight()))
 
@@ -115,6 +116,7 @@ class SCTCallThread(Thread):
         if 'PYTHONPATH' in env:
             del env["PYTHONPATH"]
         p = subprocess.Popen([command], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, env=env)
+        # TODO: printout process in stdout in real time (instead of dumping the output once done).
         stdout, stderr = [i.decode('utf-8') for i in p.communicate()]
         # TODO: Fix: tqdm progress bar causes the printing of stdout to stop
         print("\n\033[94m{}\033[0m\n".format(stdout))
@@ -141,6 +143,8 @@ class TextBox:
         :param sctpanel: SCTPanel Class
         :param label: Label to display on the button
         """
+        # TODO: instead of this hard-coded 1000 value, extended the text box towards the most right part of the panel
+        #  (include a margin) 
         self.textctrl = wx.TextCtrl(sctpanel, -1, "", wx.DefaultPosition, wx.Size(1000, 10))
         hbox = wx.BoxSizer(wx.HORIZONTAL)
         button_fetch_file = wx.Button(sctpanel, -1, label=label)
@@ -515,6 +519,81 @@ class TabPanelVertLB(SCTPanel):
         overlayList.append(image)
         opts = displayCtx.getOpts(image)
         opts.cmap = 'subcortical'
+
+
+class TabPanelRegisterToTemplate(SCTPanel):
+    """
+    sct_register_to_template
+    """
+
+    DESCRIPTION = """
+    Register an image with the default PAM50 spinal cord MRI template. 
+    <br><br>
+    <b>Usage</b>:
+    <br>
+    Select an image, its segmentation and a label file. The label file contains single-pixel labels located at the 
+    posterior edge of the intervertebral discs. The value of the label corresponds to the lower vertebrae, e.g., label 3
+    corresponds to the C2-C3 disc. Then, select the appropriate contrast and click "Run". 
+    For more options, please use the Terminal version of this function.
+    <br><br>
+    <b>Specific citation</b>:
+    <br>
+    De Leener et al. <i>PAM50: Unbiased multimodal template of the brainstem and spinal cord aligned with the ICBM152 
+    space.</i> Neuroimage 2017
+    """
+
+    def __init__(self, parent):
+        super(TabPanelRegisterToTemplate, self).__init__(parent=parent, id_=wx.ID_ANY)
+
+        # Fetch input files
+        self.hbox_im = TextBox(self, label="Input image")
+        self.hbox_seg = TextBox(self, label="Input segmentation")
+        self.hbox_label = TextBox(self, label="Input labels")
+
+        # Select contrast
+        lbl_contrasts = ['t1', 't2']
+        self.rbox_contrast = wx.RadioBox(self, label='Select contrast:',
+                                         choices=lbl_contrasts,
+                                         majorDimension=1,
+                                         style=wx.RA_SPECIFY_ROWS)
+
+        # Display all options
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(self.hbox_im.hbox, 0, wx.ALL, 5)
+        sizer.Add(self.hbox_seg.hbox, 0, wx.ALL, 5)
+        sizer.Add(self.hbox_label.hbox, 0, wx.ALL, 5)
+        sizer.Add(self.rbox_contrast, 0, wx.ALL, 5)
+
+        # Run button
+        button_run = wx.Button(self, id=wx.ID_ANY, label="Run")
+        button_run.Bind(wx.EVT_BUTTON, self.on_button_run)
+        sizer.Add(button_run, 0, wx.ALL, 5)
+
+        # Add to main sizer
+        self.sizer_h.Add(sizer)
+        self.SetSizerAndFit(self.sizer_h)
+
+    def on_button_run(self, event):
+
+        # Build and run SCT command
+        fname_im = self.hbox_im.textctrl.GetValue()
+        fname_seg = self.hbox_seg.textctrl.GetValue()
+        fname_label = self.hbox_label.textctrl.GetValue()
+        contrast = self.rbox_contrast.GetStringSelection()
+        cmd_line = \
+            "sct_register_to_template -i {} -s {} -ldisc {} -c {}".format(fname_im, fname_seg, fname_label, contrast)
+        self.call_sct_command(cmd_line)
+
+        # Add output to the list of overlay
+        base_name = os.path.basename(fname_im)
+        fname, fext = base_name.split(os.extsep, 1)
+        # TODO: at some point we will modify SCT's function to output the file name below
+        # fname_out = "PAM50_{}_reg.{}".format(contrast, fext)
+        fname_out = 'template2anat.nii.gz'
+        image = Image(fname_out)  # <class 'fsl.data.image.Image'>
+        overlayList.append(image)
+        opts = displayCtx.getOpts(image)
+        opts.cmap = 'gray'
 
 
 #Computes Cross-Sectional Area for GM, WM and GM+WM (Total)
@@ -951,126 +1030,6 @@ class TabPanelCompDTI(SCTPanel):
         opts = displayCtx.getOpts(image)
         opts.cmap = 'gray'
 
-#Registraction between subject imaging (T1w or T2w) with PAM50 template
-class TabPanelREG(SCTPanel):
-    DESCRIPTION = """This tool automatically performs
-    the registration between your subject and the PAM50 template. 
-    For more information, please refer to the article below.<br><br>
-    <b>Usage</b>:<br>
-    To launch the script, the uploaded images into FSLeyes must respect a sequence.
-    In the Overlay list field, the images order is, from the bottom to the top, raw imaging
-    (t1 and t2) segmentation imaging (output propseg or deepseg_sc) and disc labeling imaging (output label_utils). 
-    It is not necessary uploading the images in such order, with the arrows is possible to sort them. 
-    For more information, please refer to the article below.<br><br>
-    <b>Specific citation</b>:<br>
-    De Lenner et al.
-    <i>PAM50: Unbiased multimodal template of the brainstem and spinal cord aligned with the ICBM152 space
-    (2018)</i>. Neuroimage. 15;165:170-179.
-
-    """
-
-    def __init__(self, parent):
-        super(TabPanelREG, self).__init__(parent=parent,
-                                             id_=wx.ID_ANY)
-        button_gm = wx.Button(self, id=wx.ID_ANY, label="Registration")
-        button_gm.Bind(wx.EVT_BUTTON, self.onButtonREG)
-
-        lbl_contrasts = ['t1', 't2', 't2s']
-        self.rbox_contrast = wx.RadioBox(self, label='Select contrast:',
-                                         choices=lbl_contrasts,
-                                         majorDimension=1,
-                                         style=wx.RA_SPECIFY_ROWS)
-
-        lbl_label = ['Automatic', 'Manual']
-        self.rbox_label = wx.RadioBox(self, label='Disc Labeling:',
-                                      choices=lbl_label,
-                                      majorDimension=1,
-                                      style=wx.RA_SPECIFY_ROWS)
-
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(self.rbox_contrast, 0, wx.ALL, 5)
-        sizer.Add(self.rbox_label, 0, wx.ALL, 5)
-        sizer.Add(button_gm, 0, wx.ALL, 5)
-        self.sizer_h.Add(sizer)
-        self.SetSizerAndFit(self.sizer_h)
-
-
-    def onButtonREG(self, event):
-
-        overlayORD = displayCtx.overlayOrder
-
-        print('Overlay Order:', overlayORD)
-
-        img1 = overlayORD[0]
-        img2 = overlayORD[1]
-        img3 = overlayORD[2]
-        rawimg = overlayList[img1].dataSource
-        segimg = overlayList[img2].dataSource
-        labimg = overlayList[img3].dataSource
-
-        print('Raw Image:', rawimg)
-        print('Segmentation:', segimg)
-        print('Vertenbral Labeling:', labimg)
-
-        contrast = self.rbox_contrast.GetStringSelection()
-        label = self.rbox_label.GetStringSelection()
-
-        out_name = 'template2anat.nii.gz'
-        outfilename = os.path.join(os.getcwd(),out_name)
-
-        print('Contrast:', contrast)
-
-        print('Label:', label)
-
-        if label == 'Automatic':
-
-            cmd_line = "sct_register_to_template -i {} -s {} -l {} -c {}".format(rawimg, segimg, labimg, contrast)
-            print('Command:', cmd_line)
-            self.call_sct_command(cmd_line)
-
-            image = Image(outfilename)
-            overlayList.append(image)
-            opts = displayCtx.getOpts(image)
-            opts.cmap = 'gray'
-
-        else:
-
-            cmd_line = "sct_register_to_template -i {} -s {} -ldisc {} -c {}".format(rawimg, segimg,
-                                                                                  labimg, contrast)
-            print('Command:', cmd_line)
-            self.call_sct_command(cmd_line)
-
-            image = Image(outfilename)
-            overlayList.append(image)
-            opts = displayCtx.getOpts(image)
-            opts.cmap = 'gray'
-
-#
-# def get_highlighted_file_name(self, event):
-#     """
-#     Fetch path to file highlighted in the Overlay list. displayCtx is a hidden class from FSLeyes.
-#     :return: filename_path
-#     """
-#     selected_overlay = displayCtx.getSelectedOverlay()
-#     filename_path = selected_overlay.dataSource
-#     print("Fetched file name: {}".format(filename_path))
-#     self.t1.SetValue(filename_path)
-#
-#
-# def add_fetch_file_button(hbox, label=""):
-#     """
-#     Add a button and a text box where user can fetch any highlighted file name from the overlay list.
-#     :param label: Text on the button
-#     :return: BoxSizer object: hbox:
-#     """
-#     hbox = wx.BoxSizer(wx.HORIZONTAL)
-#     button_fetch_file = wx.Button(self, -1, label=label)
-#     button_fetch_file.Bind(wx.EVT_BUTTON, self.get_highlighted_file_name)
-#     hbox.Add(button_fetch_file, proportion=0, flag=wx.ALIGN_LEFT | wx.ALL, border=5)
-#     t1 = wx.TextCtrl(self, -1, "", wx.DefaultPosition, wx.Size(1000, 10))
-#     hbox.Add(t1, 1, wx.EXPAND | wx.ALIGN_LEFT | wx.ALL, 5)
-#     return hbox
-
 
 def run_main():
     window = aui_manager.GetManagedWindow()
@@ -1092,7 +1051,7 @@ def run_main():
     panel_sc = TabPanelSCSeg(notebook)
     panel_gm = TabPanelGMSeg(notebook)
     panel_vlb = TabPanelVertLB(notebook)
-    panel_reg = TabPanelREG(notebook)
+    panel_reg = TabPanelRegisterToTemplate(notebook)
     panel_csa = TabPanelCSA(notebook)
     panel_moco = TabPanelMOCO(notebook)
     panel_cdti = TabPanelCompDTI(notebook)
