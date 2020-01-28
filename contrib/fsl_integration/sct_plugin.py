@@ -144,7 +144,7 @@ class TextBox:
         :param label: Label to display on the button
         """
         # TODO: instead of this hard-coded 1000 value, extended the text box towards the most right part of the panel
-        #  (include a margin) 
+        #  (include a margin)
         self.textctrl = wx.TextCtrl(sctpanel, -1, "", wx.DefaultPosition, wx.Size(1000, 10))
         hbox = wx.BoxSizer(wx.HORIZONTAL)
         button_fetch_file = wx.Button(sctpanel, -1, label=label)
@@ -533,7 +533,9 @@ class TabPanelRegisterToTemplate(SCTPanel):
     <br>
     Select an image, its segmentation and a label file. The label file contains single-pixel labels located at the 
     posterior edge of the intervertebral discs. The value of the label corresponds to the lower vertebrae, e.g., label 3
-    corresponds to the C2-C3 disc. Then, select the appropriate contrast and click "Run". 
+    corresponds to the C2-C3 disc. This label file can be created within FSLeyes by clicking on Tools > Edit mode, then
+    Edit > Create mask. Select the "pen", adjust the size to one pixel width and select the proper label value, then 
+    click on the image and save the label(s): Overlay > save. Then, select the appropriate contrast and click "Run". 
     For more options, please use the Terminal version of this function.
     <br><br>
     <b>Specific citation</b>:
