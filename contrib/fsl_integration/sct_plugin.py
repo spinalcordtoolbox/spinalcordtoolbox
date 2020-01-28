@@ -211,6 +211,7 @@ class SCTPanel(wx.Panel):
         # Organize boxes
         self.sizer_logo_text = wx.BoxSizer(wx.HORIZONTAL)  # create main box
         self.sizer_logo_text.Add(self.sizer_logo_sct, 0, wx.ALL, 5)
+        # TODO: increase the width of the description box
         self.sizer_logo_text.Add(self.html_desc, 0, wx.ALL, 5)
 
         self.sizer_h = wx.BoxSizer(wx.HORIZONTAL)
