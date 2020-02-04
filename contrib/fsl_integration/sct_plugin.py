@@ -42,7 +42,6 @@ class ErrorDialog(wx.Dialog):
         wx.Dialog.__init__(self, parent, title="SCT Error")
         self.SetSize((510, 170))
 
-
         vbox = wx.BoxSizer(wx.VERTICAL)
         lbldesc = wx.StaticText(self,
                                 id=-1,
@@ -52,7 +51,7 @@ class ErrorDialog(wx.Dialog):
                                 size=wx.Size(470, 60),
                                 style=wx.ALIGN_LEFT)
         vbox.Add(lbldesc, 0, wx.ALIGN_LEFT | wx.ALL, 10)
-        
+
         btns = self.CreateSeparatedButtonSizer(wx.OK)
         vbox.Add(btns, 0, wx.ALIGN_LEFT | wx.ALL, 5)
 
