@@ -20,7 +20,7 @@
 # Authors: PO Quirion, J Cohen-Adad, J Carretero
 # License: see the file LICENSE.TXT
 
-#set -e  # v: verbose, e: exit if non-zero output is encountered. Using set -e will exit even when trying to remove
+# set -v  # v: verbose, e: exit if non-zero output is encountered. Using set -e will exit even when trying to remove
 # a folder that already exists, therefore, it should only be used for debugging mode.
 
 # Where tmp file are stored
@@ -32,7 +32,7 @@ DATA_DIR="data"
 PYTHON_DIR="python"
 BIN_DIR="bin"
 # Misc
-OSXVERSUPPORTED=12  # minimum version of OSX supported 
+OSXVERSUPPORTED=12  # minimum version of OSX supported
 
 
 # ======================================================================================================================
@@ -98,7 +98,9 @@ function finish() {
     # Showing usage with -h
     echo ""
   else
-    print error "Installation failed"
+    print error "Installation failed!\n
+Please copy the historic of this Terminal (starting with the command install_sct) and paste it in a new created topic on SCT's forum:\n
+--> http://forum.spinalcordmri.org/c/sct"
   fi
   # clean tmp_dir
   rm -r $TMP_DIR
@@ -188,15 +190,19 @@ function check_requirements() {
         die "Please install \"gcc\" and restart SCT installation."
       fi
     else
-      die "Please install \"gcc\" and restart SCT installation."
+      die "Please install \"gcc\" and restart SCT installation. On Debian/Ubuntu, run: \"apt install gcc\". On CentOS/RedHat, run: \"yum -y install gcc\"."
     fi
   fi
+  print info "OK!"
 }
 
 # Gets the shell rc file path based on the default shell.
 # @output: THE_RC and RC_FILE_PATH vars are modified
 function get_shell_rc_path() {
   if [[ $SHELL == *"bash"* ]]; then
+    THE_RC="bash"
+    RC_FILE_PATH="$HOME/.bashrc"
+  elif [[ $SHELL == *"/sh"* ]]; then
     THE_RC="bash"
     RC_FILE_PATH="$HOME/.bashrc"
   elif [[ $SHELL == *"zsh"* ]]; then
@@ -206,6 +212,7 @@ function get_shell_rc_path() {
     THE_RC="csh"
     RC_FILE_PATH="$HOME/.cshrc"
   else
+    find ~/.* -maxdepth 0 -type f
     die "ERROR: Shell was not recognized: $SHELL"
   fi
 }
@@ -459,11 +466,10 @@ else
 fi
 
 # Update PATH variables based on Shell type
+UPDATE_PATH="export PATH=$SCT_DIR/$BIN_DIR:$PATH"
 if [[ $THE_RC == "bash" ]]; then
-  UPDATE_PATH="export PATH=$SCT_DIR/$BIN_DIR:$PATH"
   DISPLAY_UPDATE_PATH="export PATH=\"$SCT_DIR/$BIN_DIR:\$PATH\""
 elif [[ $THE_RC == "csh" ]]; then
-  UPDATE_PATH="setenv PATH $SCT_DIR/$BIN_DIR:$PATH"
   DISPLAY_UPDATE_PATH="setenv PATH \"$SCT_DIR/$BIN_DIR:\$PATH\""
 else
   die "This variable is not recognized: THE_RC=$THE_RC"
@@ -471,13 +477,7 @@ fi
 
 # Update MPLBACKEND on headless system. See: https://github.com/neuropoly/spinalcordtoolbox/issues/2137
 if [[ -z $MPLBACKEND ]]; then
-  # using bash
-  if [[ $THE_RC == "bash" ]]; then
-    export MPLBACKEND=Agg
-  # using (t)csh
-  elif [[ $THE_RC == "csh" ]]; then
-    setenv MPLBACKEND Agg
-  fi
+  export MPLBACKEND=Agg
 fi
 
 # Copy files to destination directory
@@ -674,7 +674,5 @@ $DISPLAY_UPDATE_PATH"
 source $RC_FILE_PATH"
   fi
 else
-  die "Installation validation Failed!\n
-Please copy the historic of this Terminal (starting with the command install_sct) and paste it in the SCT Help forum (create a new discussion):\n
-http://forum.spinalcordmri.org/c/sct"
+  die "Installation validation Failed!"
 fi
