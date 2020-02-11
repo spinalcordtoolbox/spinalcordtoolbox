@@ -600,22 +600,22 @@ def create_folder(folder):
         return 1
 
 #=======================================================================================================================
-# check_if_3d
+# check_dim
 #=======================================================================================================================
 
-
-def check_if_3d(fname):
+def check_dim(fname, dim_lst=[3]):
     """
-    Check if input volume is 3d or less.
+    Check if input dimension matches the input dimension requirements specified in the dim list. 
+    Example: to check if an image is 2D or 3D: check_dim(my_file, dim_lst=[2, 3])
     :param fname:
     :return: True or False
     """
     from spinalcordtoolbox.image import Image
     dim = Image(fname).hdr['dim'][:4]
 
-    if not dim[0] <= 3:
-        printv('\nERROR: ' + fname + ' is not a 3D volume: {}. Exit program.\n'.format(','.join([str(d) for d in dim])), 
-                1, 'error')
+    if not dim[0] in dim_lst:
+        printv('\nERROR: ' + fname + ' does not match the input dimension requirements: {}. '
+                'Exit program.\n'.format(','.join([str(d) for d in dim])), 1, 'error')
         sys.exit(2)
     else:
         return True
