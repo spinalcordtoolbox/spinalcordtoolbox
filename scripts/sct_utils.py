@@ -611,8 +611,9 @@ def check_if_3d(fname):
     :return: True or False
     """
     from spinalcordtoolbox.image import Image
-    nx, ny, nz, nt, px, py, pz, pt = Image(fname).dim
-    if not nt == 1:
+    dim0, dim1, dim2, dim3 = Image(fname).hdr['dim'][:4]
+
+    if not dim0 == 3:
         printv('\nERROR: ' + fname + ' is not a 3D volume. Exit program.\n', 1, 'error')
     else:
         return True
