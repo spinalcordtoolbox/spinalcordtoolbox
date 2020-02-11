@@ -613,7 +613,7 @@ def check_if_3d(fname):
     from spinalcordtoolbox.image import Image
     dim = Image(fname).hdr['dim'][:4]
 
-    if not dim[0] == 3:
+    if not dim[0] <= 3:
         printv('\nERROR: ' + fname + ' is not a 3D volume: {}. Exit program.\n'.format(','.join([str(d) for d in dim])), 
                 1, 'error')
         sys.exit(2)
