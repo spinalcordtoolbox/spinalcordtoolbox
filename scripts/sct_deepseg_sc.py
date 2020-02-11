@@ -176,8 +176,8 @@ def main():
     qc_subject = args.qc_subject
     output_folder = args.ofolder
 
-    # check if input image is 3D
-    sct.check_if_3d(fname_image)
+    # check if input image is 2D or 3D
+    sct.check_dim(fname_image, dim_lst=[2, 3])
 
     # Segment image
     from spinalcordtoolbox.image import Image
