@@ -321,8 +321,8 @@ def main(args=None):
 
     # Get if input is 3D
     sct.printv('\nCheck if input data are 3D...', verbose)
-    sct.check_if_3d(fname_src)
-    sct.check_if_3d(fname_dest)
+    sct.check_dim(fname_src, dim_lst=[3])
+    sct.check_dim(fname_dest, dim_lst=[3])
 
     # Check if user selected type=seg, but did not input segmentation data
     if 'paramregmulti_user' in locals():
