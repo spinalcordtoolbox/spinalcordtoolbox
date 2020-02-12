@@ -614,8 +614,8 @@ def check_dim(fname, dim_lst=[3]):
     dim = Image(fname).hdr['dim'][:4]
 
     if not dim[0] in dim_lst:
-        printv('\nERROR: ' + fname + ' dimension (={}) does not match the input dimension requirements (={}). '
-                'Exit program.\n'.format(dim, dim_lst), 1, 'error')
+        printv('\nERROR: File ' + fname + ' has {} dimensions. Authorized dimensions are: {}. '
+                'Exit program.\n'.format(dim[0], dim_lst), 1, 'error')
         sys.exit(2)
     else:
         return True
