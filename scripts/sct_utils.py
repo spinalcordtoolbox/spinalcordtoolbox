@@ -615,7 +615,7 @@ def check_dim(fname, dim_lst=[3]):
 
     if not dim[0] in dim_lst:
         printv('\nERROR: ' + fname + ' does not match the input dimension requirements: {}. '
-                'Exit program.\n'.format(','.join([str(d) for d in dim])), 1, 'error')
+                'Exit program.\n'.format(dim), 1, 'error')
         sys.exit(2)
     else:
         return True
