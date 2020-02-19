@@ -87,8 +87,8 @@ def get_parser():
         '-xmax',
         type=int,
         default=-1,
-        help="Higher bound for cropping along X. Setting '-1' will crop to the maximum dimension, '-2' will crop to "
-             "the maximum dimension minus 1 slice, etc.",
+        help="Higher bound for cropping along X. Setting '-1' will crop to the maximum dimension (i.e. no change), "
+             "'-2' will crop to the maximum dimension minus 1 slice, etc.",
         metavar=Metavar.int,
         )
     optional.add_argument(
