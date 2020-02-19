@@ -38,9 +38,9 @@ class BoundingBox(object):
             # If empty, return dim+1 (corresponds to the maximum of the given dimension, e.g. nx)
             if input is None:
                 return dim + 1
-            # If negative sign, return dim+1 if -1, dim if -2, dim-1 if -3, etc.
+            # If negative sign, return dim if -1, dim-1 if -2, dim-2 if -3, etc.
             elif np.sign(input) == -1:
-                return input + dim + 1
+                return input + dim
             # If user specified a non-negative value, use that
             else:
                 return input
