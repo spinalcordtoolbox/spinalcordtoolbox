@@ -35,12 +35,13 @@ class BoundingBox(object):
                 return input
 
         def _get_max_value(input, dim):
-            # If empty, return dim+1 (corresponds to the maximum of the given dimension, e.g. nx)
+            # If empty, return maximum dimension (i.e. no change)
             if input is None:
-                return dim + 1
-            # If negative sign, return dim+1 if -1, dim if -2, dim-1 if -3, etc.
+                return dim
+            # If input is "-1", return maximum dimension (i.e. no change). If input is "-2", returns maximum
+            # dimension minus one, etc.
             elif np.sign(input) == -1:
-                return input + dim + 1
+                return input + dim
             # If user specified a non-negative value, use that
             else:
                 return input
