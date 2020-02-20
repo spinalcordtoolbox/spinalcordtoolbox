@@ -123,8 +123,9 @@ def get_parser():
         '-b',
         type=int,
         default=None,
-        help="If this flag is declared, the image will not be cropped. Instead, voxels outside the bounding box will "
-             "be set to the value specified by this flag.",
+        help="If this flag is declared, the image will not be cropped (i.e. the dimension will not change). Instead, "
+             "voxels outside the bounding box will be set to the value specified by this flag. For example, to have "
+             "zeros outside the bounding box, use: '-b 0'",
         metavar=Metavar.int,
         )
     optional.add_argument(
@@ -170,7 +171,7 @@ def main(args=None):
         )
 
     # Crop image
-    img_crop = cropper.crop()
+    img_crop = cropper.crop(background=arguments.b)
 
     # Write cropped image to file
     if arguments.o is None:
