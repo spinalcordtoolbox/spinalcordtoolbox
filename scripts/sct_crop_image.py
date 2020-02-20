@@ -109,14 +109,14 @@ def get_parser():
         '-zmin',
         type=int,
         default=0,
-        help="Lower bound for cropping along Z. Follows the same rules as xmax.",
+        help="Lower bound for cropping along Z.",
         metavar=Metavar.int,
         )
     optional.add_argument(
         '-zmax',
         type=int,
         default=-1,
-        help="Higher bound for cropping along Z. Inputting -1 will set it to the maximum dimension.",
+        help="Higher bound for cropping along Z. Follows the same rules as xmax.",
         metavar=Metavar.int,
         )
     optional.add_argument(
