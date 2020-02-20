@@ -170,7 +170,7 @@ def main(args=None):
         )
 
     # Crop image
-    img_crop = cropper.crop()
+    img_crop = cropper.crop(background=arguments.b)
 
     # Write cropped image to file
     if arguments.o is None:
