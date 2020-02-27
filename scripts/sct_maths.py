@@ -339,7 +339,7 @@ def main(args=None):
         data_out = dilate(data, convert_list_str(arguments.dilate, "int"))
 
     elif arguments.erode is not None:
-        data_out = erode(data, convert_list_str(arguments.erode))
+        data_out = erode(data, convert_list_str(arguments.erode, "int"))
 
     elif arguments.denoise is not None:
         # parse denoising arguments
