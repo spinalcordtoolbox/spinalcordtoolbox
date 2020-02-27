@@ -417,9 +417,13 @@ def main(args=None):
         printv('\nDone! File created: ' + fname_out, verbose, 'info')
 
 
-def convert_list_str(string_list, type):
+def convert_list_str(string_list, type='int'):
     """
-    Receive a string and then converts it into a list of selected type
+    Receive a string and then converts it into a list of selected type.
+    Example: "2,2,3" --> [2, 2, 3]
+    :param string_list: List of comma-separated string
+    :param type: string: int, float
+    :return:
     """
     new_type_list = (string_list).split(",")
     for inew_type_list, ele in enumerate(new_type_list):
