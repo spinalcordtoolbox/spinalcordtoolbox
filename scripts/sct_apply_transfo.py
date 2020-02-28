@@ -175,9 +175,8 @@ class Transform:
         if ext_fname in ['.txt', '.mat']:
             isLastAffine = True
 
-        # check if destination file is 3d
-        if not sct.check_if_3d(fname_dest):
-            sct.printv('ERROR: Destination data must be 3d')
+        ## check if destination file is 3d
+        # sct.check_dim(fname_dest, dim_lst=[3]) # PR 2598: we decided to skip this line.
 
         # N.B. Here we take the inverse of the warp list, because sct_WarpImageMultiTransform concatenates in the reverse order
         fname_warp_list_invert.reverse()
