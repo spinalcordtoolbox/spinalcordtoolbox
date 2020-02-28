@@ -19,6 +19,7 @@ import argparse
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.utils import Metavar, SmartFormatter
+import spinalcordtoolbox.math as sctmath
 
 from sct_utils import printv, extract_fname
 import sct_utils as sct
@@ -336,10 +337,10 @@ def main(args=None):
         data_out = smooth(data, sigmas)
 
     elif arguments.dilate is not None:
-        data_out = dilate(data, convert_list_str(arguments.dilate, "int"))
+        data_out = sctmath.dilate(data, convert_list_str(arguments.dilate, "int"))
 
     elif arguments.erode is not None:
-        data_out = erode(data, convert_list_str(arguments.erode, "int"))
+        data_out = sctmath.erode(data, convert_list_str(arguments.erode, "int"))
 
     elif arguments.denoise is not None:
         # parse denoising arguments
@@ -469,40 +470,6 @@ def perc(data, perc_value):
 
 def binarise(data, bin_thr=0):
     return data > bin_thr
-
-
-def dilate(data, radius):
-    """
-    Dilate data using ball structuring element
-    :param data: 2d or 3d array
-    :param radius: radius of structuring element OR comma-separated int.
-    :return: data dilated
-    """
-    from skimage.morphology import dilation, ball
-    if len(radius) == 1:
-        # define structured element as a ball
-        selem = ball(radius[0])
-    else:
-        # define structured element as a box with input dimensions
-        selem = np.ones((radius[0], radius[1], radius[2]), dtype=np.dtype)
-    return dilation(data, selem=selem, out=None)
-
-
-def erode(data, radius):
-    """
-    Erode data using ball structuring element
-    :param data: 2d or 3d array
-    :param radius: radius of structuring element
-    :return: data eroded
-    """
-    from skimage.morphology import erosion, ball
-    if len(radius) == 1:
-        # define structured element as a ball
-        selem = ball(radius[0])
-    else:
-        # define structured element as a box with input dimensions
-        selem = np.ones((radius[0], radius[1], radius[2]), dtype=np.dtype)
-    return erosion(data, selem=selem, out=None)
 
 
 def get_data(list_fname):
