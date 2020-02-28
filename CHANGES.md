@@ -1,3 +1,24 @@
+## 4.2.2 (2020-02-28)
+[View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/4.2.1...4.2.2)
+
+**BUG**
+
+ - **sct_maths:** Fixed missing type when using erode feature. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2613)
+ - **sct_crop_image:** Fixed flag -b crops instead of masking. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2606)
+ - **sct_crop_image:** Fixed problem with parameters xmax, ymax and zmax. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2604)
+ - **sct_deepseg_sc,sct_utils:** Check if input data is 3D or 2D. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2598)
+
+**ENHANCEMENT**
+
+ - **sct_deepseg_gm,sct_deepseg_lesion,sct_deepseg_sc:** build(deps): bump tensorflow from 2.0.0 to 2.0.1. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2592)
+ - Added more functions to the FSLeyes plugin. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2581)
+
+**DOCUMENTATION**
+
+ - **sct_qc:** Fixed QC display syntax for Docker users. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2589)
+
+
+
 ## 4.2.1 (2020-01-14)
 [View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/4.2.0...4.2.1)
 
