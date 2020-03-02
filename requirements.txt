@@ -16,7 +16,7 @@ requests
 scipy
 scikit-image
 scikit-learn
-tensorflow==1.5.0
+tensorflow==1.15.2
 xlrd
 xlutils
 xlwt
