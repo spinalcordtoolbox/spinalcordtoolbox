@@ -24,13 +24,10 @@ from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder
 def get_parser():
     """Initialize the parser."""
 
-    parser = argparse.ArgumentParser(
-        description="Segmentation using convolutional networks.",
-        formatter_class=SmartFormatter,
-        add_help=None,
-        prog=os.path.basename(__file__).strip(".py"))
-    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
-    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+
+    parent_parser = argparse.ArgumentParser(add_help=False)
+    mandatory = parent_parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    optional = parent_parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     mandatory.add_argument(
         "-i",
         required=True,
@@ -50,8 +47,15 @@ def get_parser():
         choices=(0, 1, 2),
         default=1)
 
+    parser = argparse.ArgumentParser(
+        description="Segmentation using convolutional networks.",
+        formatter_class=SmartFormatter,
+        add_help=None,
+        prog=os.path.basename(__file__).strip(".py"))
+
+
     subparsers = parser.add_subparsers(help='sub-command help',dest='subparser_name')
-    parser_sc = subparsers.add_parser('sc', help='Spinal Cord segmentation')
+    parser_sc = subparsers.add_parser('sc',  parents = [parent_parser], help='Spinal Cord segmentation')
 
     parser_sc.add_argument(
         "-c",
@@ -124,7 +128,7 @@ def get_parser():
         metavar=Metavar.str,
         help='File name of ground-truth segmentation.',)
 
-    parser_lesion = subparsers.add_parser('lesion', help='MS lesion segmentation')
+    parser_lesion = subparsers.add_parser('lesion', parents = [parent_parser], help='MS lesion segmentation')
 
     parser_lesion.add_argument(
         "-c",
@@ -182,7 +186,7 @@ def get_parser():
         required=False)
 
 
-    parser_gm = subparsers.add_parser('gm', help='Gray matter segmentation')
+    parser_gm = subparsers.add_parser('gm', parents = [parent_parser], help='Gray matter segmentation')
 
     parser_gm.add_argument(
         "-o",
