@@ -26,21 +26,16 @@ def get_parser():
 
 
     parent_parser = argparse.ArgumentParser(add_help=False)
-    mandatory = parent_parser.add_argument_group("\nMANDATORY ARGUMENTS")
-    optional = parent_parser.add_argument_group("\nOPTIONAL ARGUMENTS")
-    mandatory.add_argument(
+    #mandatory = parent_parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    #optional = parent_parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    parent_parser.add_argument(
         "-i",
         required=True,
         metavar=Metavar.file,
         help='Input image. Example: t1.nii.gz',
     )
 
-    optional.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        help="show this help message and exit")
-    optional.add_argument(
+    parent_parser.add_argument(
         "-v",
         type=int,
         help="1: display on (default), 0: display off, 2: extended",
