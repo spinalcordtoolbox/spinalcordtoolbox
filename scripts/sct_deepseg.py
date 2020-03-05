@@ -240,10 +240,10 @@ def main():
     elif args.subparser_name == "gm":
         call_deepseg_gm(args)
     else:
-        print("Error, invalid subparser")
+        sct.printv("Error, invalid subparser")
 
 
-def call_deepseg_sc(args)
+def call_deepseg_sc(args):
 
     fname_image = os.path.abspath(args.i)
     contrast_type = args.c
@@ -318,7 +318,7 @@ def call_deepseg_sc(args)
                     dataset=qc_dataset, subject=qc_subject, process='sct_deepseg_sc')
     sct.display_viewer_syntax([fname_image, fname_seg], colormaps=['gray', 'red'], opacities=['', '0.7'])
 
-def call_deepseg_lesion(args)
+def call_deepseg_lesion(args):
     fname_image = args.i
     contrast_type = args.c
 
@@ -375,7 +375,7 @@ def call_deepseg_lesion(args)
 
     sct.display_viewer_syntax([fname_image, fname_seg], colormaps=['gray', 'red'], opacities=['', '0.7'])
 
-def call_deepseg_gm(arguments)
+def call_deepseg_gm(arguments):
     input_filename = arguments.i
     if arguments.o is not None:
         output_filename = arguments.o
