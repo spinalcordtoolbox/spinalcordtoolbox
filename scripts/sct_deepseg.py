@@ -29,20 +29,21 @@ def get_parser():
         formatter_class=SmartFormatter,
         add_help=None,
         prog=os.path.basename(__file__).strip(".py"))
-    #mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
-    parser.add_argument(
+    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    mandatory.add_argument(
         "-i",
         required=True,
         metavar=Metavar.file,
         help='Input image. Example: t1.nii.gz',
     )
 
-    parser.add_argument(
+    optional.add_argument(
         "-h",
         "--help",
         action="help",
         help="show this help message and exit")
-    parser.add_argument(
+    optional.add_argument(
         "-v",
         type=int,
         help="1: display on (default), 0: display off, 2: extended",
@@ -50,7 +51,7 @@ def get_parser():
         default=1)
 
     subparsers = parser.add_subparsers(help='sub-command help',dest='subparser_name')
-    parser_sc = subparsers.add_parser('sc', help='sc help')
+    parser_sc = subparsers.add_parser('sc', help='Spinal Cord segmentation')
 
     parser_sc.add_argument(
         "-c",
@@ -123,7 +124,7 @@ def get_parser():
         metavar=Metavar.str,
         help='File name of ground-truth segmentation.',)
 
-    parser_lesion = subparsers.add_parser('lesion', help='lesion help')
+    parser_lesion = subparsers.add_parser('lesion', help='MS lesion segmentation')
 
     parser_lesion.add_argument(
         "-c",
@@ -181,7 +182,7 @@ def get_parser():
         required=False)
 
 
-    parser_gm = subparsers.add_parser('gm', help='gm help')
+    parser_gm = subparsers.add_parser('gm', help='Gray matter segmentation')
 
     parser_gm.add_argument(
         "-o",
