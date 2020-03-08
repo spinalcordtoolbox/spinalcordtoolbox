@@ -19,6 +19,7 @@ def gen_qc(i):
 
     qc.generate_qc(fname_in1 = t2_image, fname_seg = t2_seg, path_qc = "/tmp/qc",
                    process = "sct_deepseg_gm")
+    return True
 
 
 def test_many_qc():
@@ -27,7 +28,7 @@ def test_many_qc():
         pytest.skip("Can't test parallel behaviour")
 
     # install: sct_download_data -d sct_testing_data
-    with multiprocessing.Pool(6) as p:
-        p.map(gen_qc, range(300))
+    with multiprocessing.Pool(2) as p:
+        p.map(gen_qc, range(5))
 
 
