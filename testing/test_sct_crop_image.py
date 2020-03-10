@@ -45,7 +45,7 @@ def test_integrity(param_test):
 
     # check if cropping was correct depending on the scenario
     if index_args == 0:
-        xyz = (58, 9, 52)
+        xyz = (57, 9, 52)
     elif index_args == 1:
         xyz = (10, 55, 13)
     elif index_args == 2:
