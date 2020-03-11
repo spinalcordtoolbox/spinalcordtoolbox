@@ -77,7 +77,6 @@ class Param:
         self.bval_min = 100  # in case user does not have min bvalues at 0, set threshold (where csf disapeared).
         self.iterAvg = 1  # iteratively average target image for more robust moco
         self.is_sagittal = False  # if True, then split along Z (right-left) and register each 2D slice (vs. 3D volume)
-# Note: this feature is currently ONLY supported by sct_fmri_moco (not here).
 
     # update constructor with user's parameters
     def update(self, param_user):
@@ -313,6 +312,23 @@ def dmri_moco(param):
     nx, ny, nz, nt, px, py, pz, pt = im_data.dim
     sct.printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz), param.verbose)
 
+    # Get orientation
+    sct.printv('\nData orientation: ' + im_data.orientation, param.verbose)
+    if im_data.orientation[2] in 'LR':
+        param.is_sagittal = True
+        sct.printv('  Treated as sagittal')
+    elif im_data.orientation[2] in 'IS':
+        param.is_sagittal = False
+        sct.printv('  Treated as axial')
+    else:
+        param.is_sagittal = False
+        sct.printv('WARNING: Orientation seems to be neither axial nor sagittal.')
+
+    # Adjust group size in case of sagittal scan
+    if param.is_sagittal and param.group_size != 1:
+        sct.printv('For sagittal data group_size should be one for more robustness. Forcing group_size=1.', 1, 'warning')
+        param.group_size = 1
+
     # Identify b=0 and DWI images
     index_b0, index_dwi, nb_b0, nb_dwi = sct_dmri_separate_b0_and_dwi.identify_b0('bvecs.txt', param.fname_bvals, param.bval_min, param.verbose)
 
@@ -408,7 +424,7 @@ def dmri_moco(param):
         param_moco.file_target = os.path.join(file_data_dirname, file_data_basename + '_T' + str(index_b0[0]).zfill(4) + ext_data)
 
     param_moco.path_out = ''
-    param_moco.todo = 'estimate'
+    param_moco.todo = 'estimate_and_apply'
     param_moco.mat_moco = 'mat_b0groups'
     file_mat_b0 = moco.moco(param_moco)
 

@@ -94,20 +94,20 @@ def moco(param):
         im_z_list = split_data(im_data, dim=dim_sag, squeeze_data=False)
         file_data_splitZ = []
         for im_z in im_z_list:
-            im_z.save()
+            im_z.save(verbose=0)
             file_data_splitZ.append(im_z.absolutepath)
         # z-split target
         im_targetz_list = split_data(Image(file_target), dim=dim_sag, squeeze_data=False)
         file_target_splitZ = []
         for im_targetz in im_targetz_list:
-            im_targetz.save()
+            im_targetz.save(verbose=0)
             file_target_splitZ.append(im_targetz.absolutepath)
         # z-split mask (if exists)
         if not param.fname_mask == '':
             im_maskz_list = split_data(Image(file_mask), dim=dim_sag, squeeze_data=False)
             file_mask_splitZ = []
             for im_maskz in im_maskz_list:
-                im_maskz.save()
+                im_maskz.save(verbose=0)
                 file_mask_splitZ.append(im_maskz.absolutepath)
         # initialize file list for output matrices
         file_mat = np.empty((nz, nt), dtype=object)
@@ -128,7 +128,7 @@ def moco(param):
     # file_mat = tuple([[[] for i in range(nt)] for i in range(nz)])
 
     file_data_splitZ_moco = []
-    sct.printv('\nRegister. Loop across Z (note: there is only one Z if orientation is axial')
+    sct.printv('\nRegister. Loop across Z (note: there is only one Z if orientation is axial)')
     for file in file_data_splitZ:
         iz = file_data_splitZ.index(file)
         # Split data along T dimension
