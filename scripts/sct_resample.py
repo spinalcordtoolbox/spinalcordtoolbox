@@ -114,10 +114,10 @@ def run_main():
         param.ref = arguments["-ref"]
         arg += 1
     else:
-        sct.printv(parser.usage.generate(error='ERROR: you need to specify one of those three arguments : -f, -mm or -vox'))
+        sct.printv(parser.error('ERROR: you need to specify one of those three arguments : -f, -mm or -vox'))
 
     if arg > 1:
-        sct.printv(parser.usage.generate(error='ERROR: you need to specify ONLY one of those three arguments : -f, -mm or -vox'))
+        sct.printv(parser.error('ERROR: you need to specify ONLY one of those three arguments : -f, -mm or -vox'))
 
     if "-o" in arguments:
         param.fname_out = arguments["-o"]

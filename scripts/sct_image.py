@@ -208,9 +208,9 @@ def main(args=None):
     elif arguments.mcs:
         im_in = Image(fname_in[0])
         if n_in != 1:
-            sct.printv(parser.usage.generate(error='ERROR: -mcs need only one input'))
+            sct.printv(parser.error('ERROR: -mcs need only one input'))
         if len(im_in.data.shape) != 5:
-            sct.printv(parser.usage.generate(error='ERROR: -mcs input need to be a multi-component image'))
+            sct.printv(parser.error('ERROR: -mcs input need to be a multi-component image'))
         im_out = multicomponent_split(im_in)
 
     elif arguments.omc:
@@ -218,7 +218,7 @@ def main(args=None):
         for fname in fname_in:
             im = Image(fname)
             if im.data.shape != im_ref.data.shape:
-                sct.printv(parser.usage.generate(error='ERROR: -omc inputs need to have all the same shapes'))
+                sct.printv(parser.error('ERROR: -omc inputs need to have all the same shapes'))
             del im
         im_out = [multicomponent_merge(fname_in)]  # TODO: adapt to fname_in
 
@@ -283,7 +283,7 @@ def main(args=None):
 
     else:
         im_out = None
-        sct.printv(parser.usage.generate(error='ERROR: you need to specify an operation to do on the input image'))
+        sct.printv(parser.error('ERROR: you need to specify an operation to do on the input image'))
 
     # in case fname_out is not defined, use first element of input file name list
     if fname_out is None:
