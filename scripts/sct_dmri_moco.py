@@ -23,7 +23,6 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-# TODO: check if image is sagittal, and if it is, say that it is currently not supported.
 # TODO: Do not merge per group if no group is asked.
 # TODO: make sure slicewise not used with ants, eddy not used with ants
 # TODO: make sure images are axial
@@ -76,7 +75,6 @@ class Param:
         self.min_norm = 0.001
         self.swapXY = 0
         self.bval_min = 100  # in case user does not have min bvalues at 0, set threshold (where csf disapeared).
-        self.otsu = 0  # use otsu algorithm to segment dwi data for better moco. Value coresponds to data threshold. For no segmentation set to 0.
         self.iterAvg = 1  # iteratively average target image for more robust moco
         self.is_sagittal = False  # if True, then split along Z (right-left) and register each 2D slice (vs. 3D volume)
 # Note: this feature is currently ONLY supported by sct_fmri_moco (not here).
@@ -159,17 +157,6 @@ def get_parser():
                                                   "gradStep [float]: Searching step used by registration algorithm. The higher the more deformation allowed. Default=" + param_default.gradStep + ".\n"
                                                     "sample [0-1]: Sampling rate used for registration metric. Default=" + param_default.sampling + ".\n",
                       mandatory=False)
-    parser.add_option(name='-thr',
-                      type_value='float',
-                      description='Segment DW data using OTSU algorithm. Value corresponds to OTSU threshold. For no segmentation set to 0.',
-                      mandatory=False,
-                      default_value=param_default.otsu,
-                      example=['25'])
-    parser.add_option(name='-t',
-                      type_value=None,
-                      description='Segment DW data using OTSU algorithm. Value corresponds to OTSU threshold. For no segmentation set to 0.',
-                      mandatory=False,
-                      deprecated_by='-thr')
     parser.add_option(name='-x',
                       type_value='multiple_choice',
                       description='Final Interpolation.',
@@ -228,8 +215,6 @@ def main(args=None):
         param.fname_mask = arguments['-m']
     if '-param' in arguments:
         param.update(arguments['-param'])
-    if '-thr' in arguments:
-        param.otsu = arguments['-thr']
     if '-x' in arguments:
         param.interp = arguments['-x']
     if '-ofolder' in arguments:
@@ -403,20 +388,6 @@ def dmri_moco(param):
     # TODO: USEFULL ???
     sct.printv('\nAveraging all DW images...', param.verbose)
     sct.run(["sct_maths", "-i", file_dwi_group, "-o", file_dwi_group + '_mean' + ext_data, "-mean", "t"], param.verbose)
-
-    # segment dwi images using otsu algorithm
-    if param.otsu:
-        sct.printv('\nSegment group DWI using OTSU algorithm...', param.verbose)
-        # import module
-        otsu = importlib.import_module('sct_otsu')
-        # get class from module
-        param_otsu = otsu.param()  #getattr(otsu, param)
-        param_otsu.fname_data = file_dwi_group
-        param_otsu.threshold = param.otsu
-        param_otsu.file_suffix = '_seg'
-        # run otsu
-        otsu.otsu(param_otsu)
-        file_dwi_group = file_dwi_group + '_seg.nii'
 
     # START MOCO
     #===================================================================================================================
