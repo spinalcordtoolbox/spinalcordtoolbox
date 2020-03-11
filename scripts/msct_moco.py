@@ -12,6 +12,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+# TODO: no need to pass absolute image path-- makes it difficult to read
 # TODO: check the status of spline()
 # TODO: check the status of combine_matrix()
 # TODO: add tests with sag and ax orientation, with -g 1 and 3, with mask (not covering all slices)
@@ -73,6 +74,17 @@ def moco(param):
     sct.printv('\nCopy file_target to a temporary file...', verbose)
     file_target = "target.nii.gz"
     convert(param.file_target, file_target)
+
+    # Check if use inputed a mask
+    if not param.fname_mask == '':
+        # Check if this mask is soft (i.e., non-binary, such as a Gaussian mask)
+        im_mask = Image(param.fname_mask)
+        if not np.array_equal(im_mask.data, im_mask.data.astype(bool)):
+            # If it is a soft mask, multiply the target by the soft mask.
+            im = Image(file_target)
+            im_masked = im.copy()
+            im_masked.data = im.data * im_mask.data
+            im_masked.save()
 
     # If scan is sagittal, split src and target along Z (slice)
     if param.is_sagittal:
@@ -143,10 +155,20 @@ def moco(param):
             file_mat[iz][it] = os.path.join(folder_mat, "mat.Z") + str(iz).zfill(4) + 'T' + str(it).zfill(4)
             file_data_splitZ_splitT_moco.append(sct.add_suffix(file_data_splitZ_splitT[it], '_moco'))
             # deal with masking
+            input_mask = None
             if not param.fname_mask == '':
-                input_mask = im_maskz_list[iz]
-            else:
-                input_mask = None
+                # Check if mask is binary
+                if np.array_equal(im_maskz_list[iz].data, im_maskz_list[iz].data.astype(bool)):
+                    # If it is, pass this mask into register() to be used
+                    input_mask = im_maskz_list[iz]
+                else:
+                    # If not, do not pass this mask into register() because ANTs cannot handle non-binary masks.
+                    #  Instead, multiply the input data by the Gaussian mask.
+                    im = Image(file_data_splitZ_splitT[it])
+                    im_masked = im.copy()
+                    im_masked.data = im.data * im_maskz_list[iz].data
+                    im_masked.save()
+
             # run 3D registration
             failed_transfo[it] = register(param, file_data_splitZ_splitT[it], file_target_splitZ[iz], file_mat[iz][it],
                                           file_data_splitZ_splitT_moco[it], im_mask=input_mask)
@@ -273,6 +295,7 @@ def register(param, file_src, file_dest, file_mat, file_out, im_mask=None):
             env = kw.get("env", env)
             # reducing the number of CPU used for moco (see issue #201)
             env["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"] = "1"
+            # TODO: display command
             status, output = sct.run(cmd, verbose=0, **kw)
 
     elif param.todo == 'apply':
