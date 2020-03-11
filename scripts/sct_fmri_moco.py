@@ -271,7 +271,7 @@ def fmri_moco(param):
         x_dirname, x_basename, x_ext = sct.extract_fname(im.absolutepath)
         # Make further steps slurp the data to avoid too many open files (#2149)
         im.absolutepath = os.path.join(x_dirname, x_basename + ".nii.gz")
-        im.save()
+        im.save(verbose=0)
 
     # assign an index to each volume
     index_fmri = list(range(0, nt))
@@ -387,7 +387,7 @@ def fmri_moco(param):
     im_fmri = Image('fmri.nii')
     im_fmri_moco = Image('fmri_moco.nii')
     im_fmri_moco.header = im_fmri.header
-    im_fmri_moco.save()
+    im_fmri_moco.save(verbose=0)
 
     # Extract and output the motion parameters
     if param.output_motion_param and not param.is_sagittal:
@@ -440,10 +440,10 @@ def fmri_moco(param):
 
     # Average volumes
     sct.printv('\nAveraging data...', param.verbose)
-    sct_maths.main(args=['-i', 'fmri_moco.nii',
-                         '-o', 'fmri_moco_mean.nii',
-                         '-mean', 't',
-                         '-v', '0'])
+    im = Image('fmri_moco.nii')
+    data_new = np.mean(im.data, 3)
+    im.data = data_new
+    im.save('fmri_moco_mean.nii', verbose=0)
 
 
 if __name__ == "__main__":
