@@ -12,6 +12,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+# TODO: Inform user if soft mask is used
 # TODO: no need to pass absolute image path-- makes it difficult to read
 # TODO: check the status of spline()
 # TODO: check the status of combine_matrix()
@@ -84,7 +85,7 @@ def moco(param):
             im = Image(file_target)
             im_masked = im.copy()
             im_masked.data = im.data * im_mask.data
-            im_masked.save()
+            im_masked.save(verbose=0)  # silence warning about file overwritting
 
     # If scan is sagittal, split src and target along Z (slice)
     if param.is_sagittal:
@@ -167,7 +168,7 @@ def moco(param):
                     im = Image(file_data_splitZ_splitT[it])
                     im_masked = im.copy()
                     im_masked.data = im.data * im_maskz_list[iz].data
-                    im_masked.save()
+                    im_masked.save(verbose=0)  # silence warning about file overwritting
 
             # run 3D registration
             failed_transfo[it] = register(param, file_data_splitZ_splitT[it], file_target_splitZ[iz], file_mat[iz][it],

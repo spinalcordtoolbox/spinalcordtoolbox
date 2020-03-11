@@ -474,7 +474,8 @@ class Image(object):
         # would corrupt it
         img = Nifti1Image(data.copy(), None, hdr)
         if os.path.isfile(path):
-            sct.printv('WARNING: File ' + path + ' already exists. Will overwrite it.', verbose, 'warning')
+            if verbose:
+                logger.warning('File ' + path + ' already exists. Will overwrite it.')
 
         # save file
         if os.path.isabs(path):
