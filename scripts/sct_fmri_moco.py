@@ -219,9 +219,10 @@ def main(args=None):
     sct.printv('\nGenerate output files...', param.verbose)
     sct.generate_output_file(os.path.join(path_tmp, "fmri" + param.suffix + '.nii'), fname_fmri_moco, param.verbose)
     sct.generate_output_file(os.path.join(path_tmp, "fmri" + param.suffix + '_mean.nii'), os.path.join(path_out, file_data + param.suffix + '_mean' + ext_data), param.verbose)
-    sct.generate_output_file(os.path.join(path_tmp, "fmri" + param.suffix + '_params_X.nii'), os.path.join(path_out, file_data + param.suffix + '_params_X' + ext_data), squeeze_data=False, verbose=param.verbose)
-    sct.generate_output_file(os.path.join(path_tmp, "fmri" + param.suffix + '_params_Y.nii'), os.path.join(path_out, file_data + param.suffix + '_params_Y' + ext_data), squeeze_data=False, verbose=param.verbose)
-    shutil.copyfile(os.path.join(path_tmp, 'fmri_moco_params.tsv'), os.path.join(path_out + file_data + param.suffix + '_params.tsv'))
+    if os.path.exists(os.path.join(path_tmp, "fmri" + param.suffix + '_params_X.nii')):
+        sct.generate_output_file(os.path.join(path_tmp, "fmri" + param.suffix + '_params_X.nii'), os.path.join(path_out, file_data + param.suffix + '_params_X' + ext_data), squeeze_data=False, verbose=param.verbose)
+        sct.generate_output_file(os.path.join(path_tmp, "fmri" + param.suffix + '_params_Y.nii'), os.path.join(path_out, file_data + param.suffix + '_params_Y' + ext_data), squeeze_data=False, verbose=param.verbose)
+        shutil.copyfile(os.path.join(path_tmp, 'fmri_moco_params.tsv'), os.path.join(path_out + file_data + param.suffix + '_params.tsv'))
 
     # Delete temporary files
     if param.remove_temp_files == 1:
