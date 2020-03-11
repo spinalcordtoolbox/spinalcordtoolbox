@@ -186,7 +186,8 @@ def main(args=None):
     sct.init_sct(log_level=param.verbose, update=True)  # Update log level
 
     sct.printv('\nInput parameters:', param.verbose)
-    sct.printv('  input file ............' + param.fname_data, param.verbose)
+    sct.printv('  Input file ............ ' + param.fname_data, param.verbose)
+    sct.printv('  Group size ............ {}'.format(param.group_size), param.verbose)
 
     # Get full path
     param.fname_data = os.path.abspath(param.fname_data)
