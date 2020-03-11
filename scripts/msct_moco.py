@@ -74,7 +74,7 @@ def moco(param):
     # copy file_target to a temporary file
     sct.printv('\nCopy file_target to a temporary file...', verbose)
     file_target = "target.nii.gz"
-    convert(param.file_target, file_target)
+    convert(param.file_target, file_target, verbose=0)
 
     # Check if user specified a mask
     if not param.fname_mask == '':
@@ -121,7 +121,7 @@ def moco(param):
 
         # deal with mask
         if not param.fname_mask == '':
-            convert(param.fname_mask, file_mask, squeeze_data=False)
+            convert(param.fname_mask, file_mask, squeeze_data=False, verbose=0)
             im_maskz_list = [Image(file_mask)]  # use a list with single element
 
     # Loop across file list, where each file is either a 2D volume (if sagittal) or a 3D volume (otherwise)
@@ -209,14 +209,14 @@ def moco(param):
         file_data_splitZ_moco.append(sct.add_suffix(file, suffix))
         if todo != 'estimate':
             im_out = concat_data(file_data_splitZ_splitT_moco, 3)
-            im_out.save(file_data_splitZ_moco[iz])
+            im_out.save(file_data_splitZ_moco[iz], verbose=0)
 
     # If sagittal, merge along Z
     if param.is_sagittal:
         im_out = concat_data(file_data_splitZ_moco, 2)
         dirname, basename, ext = sct.extract_fname(file_data)
         path_out = os.path.join(dirname, basename + suffix + ext)
-        im_out.save(path_out)
+        im_out.save(path_out, verbose=0)
 
     return file_mat
 
