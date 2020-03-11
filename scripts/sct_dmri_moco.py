@@ -497,7 +497,7 @@ def dmri_moco(param):
     fname_data_moco = os.path.join(file_data_dirname, file_data_basename + param.suffix + '.nii')
     im_dmri_moco = Image(fname_data_moco)
     im_dmri_moco.header = im_dmri.header
-    im_dmri_moco.save()
+    im_dmri_moco.save(verbose=0)
 
     return os.path.abspath(fname_data_moco)
 
