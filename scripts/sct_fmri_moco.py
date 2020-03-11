@@ -390,7 +390,7 @@ def fmri_moco(param):
     im_fmri_moco.save()
 
     # Extract and output the motion parameters
-    if param.output_motion_param:
+    if param.output_motion_param and not param.is_sagittal:
         from sct_image import multicomponent_split
         import csv
         #files_warp = []
