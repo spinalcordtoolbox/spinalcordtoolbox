@@ -75,7 +75,7 @@ def moco(param):
     file_target = "target.nii.gz"
     convert(param.file_target, file_target)
 
-    # Check if use inputed a mask
+    # Check if user specified a mask
     if not param.fname_mask == '':
         # Check if this mask is soft (i.e., non-binary, such as a Gaussian mask)
         im_mask = Image(param.fname_mask)
@@ -154,9 +154,9 @@ def moco(param):
             it = index[indice_index]
             file_mat[iz][it] = os.path.join(folder_mat, "mat.Z") + str(iz).zfill(4) + 'T' + str(it).zfill(4)
             file_data_splitZ_splitT_moco.append(sct.add_suffix(file_data_splitZ_splitT[it], '_moco'))
-            # deal with masking
+            # deal with masking (except in the 'apply' case, where masking is irrelevant)
             input_mask = None
-            if not param.fname_mask == '':
+            if not param.fname_mask == '' and not param.todo == 'apply':
                 # Check if mask is binary
                 if np.array_equal(im_maskz_list[iz].data, im_maskz_list[iz].data.astype(bool)):
                     # If it is, pass this mask into register() to be used
