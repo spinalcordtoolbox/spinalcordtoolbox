@@ -58,8 +58,6 @@ class Param:
         self.mat_eddy = ''
         self.min_norm = 0.001
         self.swapXY = 0
-        self.bval_min = 100  # in case user does not have min bvalues at 0, set threshold (where csf disappeared).
-        self.otsu = 0  # use otsu algorithm to segment dwi data for better moco. Value coresponds to data threshold. For no segmentation set to 0.
         self.iterAvg = 1  # iteratively average target image for more robust moco
         self.num_target = '0'
         self.is_sagittal = False  # if True, then split along Z (right-left) and register each 2D slice (vs. 3D volume)
