@@ -118,11 +118,6 @@ def get_parser():
                       description='Bvecs file',
                       mandatory=True,
                       example='bvecs.nii.gz')
-    parser.add_option(name='-b',
-                      type_value=None,
-                      description='Bvecs file',
-                      mandatory=False,
-                      deprecated_by='-bvec')
     parser.add_option(name='-bval',
                       type_value='file',
                       description='Bvals file',
@@ -133,12 +128,6 @@ def get_parser():
                       description='B-value threshold (in s/mm2) below which data is considered as b=0.',
                       mandatory=False,
                       example='50')
-    parser.add_option(name='-a',
-                      type_value=None,
-                      description='Bvals file',
-                      mandatory=False,
-                      deprecated_by='-bval')
-
     parser.add_option(name='-g',
                       type_value='int',
                       description='Group nvols successive dMRI volumes for more robustness.',
