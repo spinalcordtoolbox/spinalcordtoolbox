@@ -454,7 +454,7 @@ def dmri_moco(param):
                 im_dmri_moco.data[..., i] = im_dwi_moco.data[..., index_dwi.index(i)]
             else:
                 raise RuntimeError("Index {} not found in index_b0 or index_dwi".format(i))
-        im_dmri_moco.save(verbose=0)
+        im_dmri_moco.save(fname_data_moco, verbose=0)
 
     # if g>1, apply the estimated transformation to each individual 3d volume (no more to groups)
     else:
@@ -505,7 +505,7 @@ def dmri_moco(param):
 
         # copy geometric information from header
         # NB: this is required because WarpImageMultiTransform in 2D mode wrongly sets pixdim(3) to "1".
-        im_dmri_moco = Image(fname_data_moco)
+        # im_dmri_moco = Image(fname_data_moco)
         im_dmri_moco.header = im_data.header
         im_dmri_moco.save(verbose=0)
 
