@@ -1,16 +1,7 @@
 #!/usr/bin/env python
-#########################################################################################
-#
-# List of functions for moco.
-#
-#
-# ---------------------------------------------------------------------------------------
-# Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
+# -*- coding: utf-8
+# Tools for motion correction (moco)
 # Authors: Karun Raju, Tanguy Duval, Julien Cohen-Adad
-# Modified: 2014-10-04
-#
-# About the license: see the file LICENSE.TXT
-#########################################################################################
 
 # TODO: Inform user if soft mask is used
 # TODO: no need to pass absolute image path-- makes it difficult to read
