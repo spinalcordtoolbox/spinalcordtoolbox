@@ -19,7 +19,7 @@ def init(param_test):
     """
     # Reorient image to sagittal for testing another orientation (and crop to save time)
     sct.run('sct_image -i dmri/dmri.nii.gz -setorient AIL -o dmri/dmri_AIL.nii', verbose=0)
-    sct.run('sct_crop_image -i dmri_AIL.nii -zmin 19 -zmax 21 -o dmri_AIL_crop.nii', verbose=0)
+    sct.run('sct_crop_image -i dmri/dmri_AIL.nii -zmin 19 -zmax 21 -o dmri/dmri_AIL_crop.nii', verbose=0)
     # initialization
     default_args = [
         '-i dmri/dmri.nii.gz -bvec dmri/bvecs.txt -g 3 -x nn -r 0',
