@@ -39,7 +39,7 @@ import operator
 import functools
 
 from spinalcordtoolbox.image import Image, concat_data
-from spinalcordtoolbox.moco import moco, spline, combine_matrix, copy_mat_files
+from spinalcordtoolbox.moco import ParamMoco, moco, spline, combine_matrix, copy_mat_files
 
 import sct_utils as sct
 import sct_dmri_separate_b0_and_dwi
@@ -48,58 +48,12 @@ from sct_image import split_data
 from msct_parser import Parser
 
 
-# PARAMETERS
-class Param:
-    # The constructor
-    def __init__(self):
-        self.debug = 0
-        self.fname_data = ''
-        self.fname_bvecs = ''
-        self.fname_bvals = ''
-        self.fname_target = ''
-        self.fname_mask = ''
-        self.mat_final = ''
-        self.todo = ''
-        self.group_size = 3  # number of images averaged for 'dwi' method.
-        self.spline_fitting = 0
-        self.remove_temp_files = 1
-        self.verbose = 1
-        self.plot_graph = 0
-        self.suffix = '_moco'
-        self.poly = '2'  # degree of polynomial function for moco
-        self.smooth = '2'  # smoothing sigma in mm
-        self.gradStep = '1'  # gradientStep for searching algorithm
-        self.iter = '10'  # number of iterations
-        self.metric = 'MI'  # metric: MI, MeanSquares, CC
-        self.sampling = '0.2'  # sampling rate used for registration metric
-        self.interp = 'spline'  # nn, linear, spline
-        self.run_eddy = 0
-        self.mat_eddy = ''
-        self.min_norm = 0.001
-        self.swapXY = 0
-        self.suffix_mat = None  # '0GenericAffine.mat' or 'Warp.nii.gz' depending which transfo algo is used
-        self.bval_min = 100  # in case user does not have min bvalues at 0, set threshold (where csf disapeared).
-        self.iterAvg = 1  # iteratively average target image for more robust moco
-        self.is_sagittal = False  # if True, then split along Z (right-left) and register each 2D slice (vs. 3D volume)
-
-    # update constructor with user's parameters
-    def update(self, param_user):
-        # list_objects = param_user.split(',')
-        for object in param_user:
-            if len(object) < 2:
-                sct.printv('ERROR: Wrong usage.', 1, type='error')
-            obj = object.split('=')
-            setattr(self, obj[0], obj[1])
-
-
-# PARSER
-# ==========================================================================================
 def get_parser():
     # parser initialisation
     parser = Parser(__file__)
 
     # initialize parameters
-    param_default = Param()
+    param_default = ParamMoco()
 
     # Initialize the parser
     parser = Parser(__file__)
@@ -184,7 +138,7 @@ def main(args=None):
     # initialization
     start_time = time.time()
     path_out = '.'
-    param = Param()
+    param = ParamMoco()
 
     # check user arguments
     if not args:

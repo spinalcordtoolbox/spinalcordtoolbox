@@ -3,7 +3,6 @@
 # Tools for motion correction (moco)
 # Authors: Karun Raju, Tanguy Duval, Julien Cohen-Adad
 
-# TODO: move param definition here.
 # TODO: Inform user if soft mask is used
 # TODO: no need to pass absolute image path-- makes it difficult to read
 # TODO: check the status of spline()
@@ -28,6 +27,52 @@ from sct_convert import convert
 from spinalcordtoolbox.image import Image
 from sct_image import split_data, concat_data
 import sct_apply_transfo
+
+
+class ParamMoco:
+    """
+    Class with a bunch of moco-specific parameters
+    """
+    # The constructor
+    def __init__(self):
+        self.debug = 0
+        self.fname_data = ''
+        self.fname_bvecs = ''
+        self.fname_bvals = ''
+        self.fname_target = ''
+        self.fname_mask = ''
+        self.mat_final = ''
+        self.todo = ''
+        self.group_size = 3  # number of images averaged for 'dwi' method.
+        self.spline_fitting = 0
+        self.remove_temp_files = 1
+        self.verbose = 1
+        self.plot_graph = 0
+        self.suffix = '_moco'
+        self.poly = '2'  # degree of polynomial function for moco
+        self.smooth = '2'  # smoothing sigma in mm
+        self.gradStep = '1'  # gradientStep for searching algorithm
+        self.iter = '10'  # number of iterations
+        self.metric = 'MI'  # metric: MI, MeanSquares, CC
+        self.sampling = '0.2'  # sampling rate used for registration metric
+        self.interp = 'spline'  # nn, linear, spline
+        self.run_eddy = 0
+        self.mat_eddy = ''
+        self.min_norm = 0.001
+        self.swapXY = 0
+        self.suffix_mat = None  # '0GenericAffine.mat' or 'Warp.nii.gz' depending which transfo algo is used
+        self.bval_min = 100  # in case user does not have min bvalues at 0, set threshold (where csf disapeared).
+        self.iterAvg = 1  # iteratively average target image for more robust moco
+        self.is_sagittal = False  # if True, then split along Z (right-left) and register each 2D slice (vs. 3D volume)
+
+    # update constructor with user's parameters
+    def update(self, param_user):
+        # list_objects = param_user.split(',')
+        for object in param_user:
+            if len(object) < 2:
+                sct.printv('ERROR: Wrong usage.', 1, type='error')
+            obj = object.split('=')
+            setattr(self, obj[0], obj[1])
 
 
 def copy_mat_files(nt, list_file_mat, index, folder_out, param):
