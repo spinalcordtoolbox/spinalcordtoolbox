@@ -77,6 +77,7 @@ class Param:
         self.mat_eddy = ''
         self.min_norm = 0.001
         self.swapXY = 0
+        self.suffix_mat = None  # '0GenericAffine.mat' or 'Warp.nii.gz' depending which transfo algo is used
         self.bval_min = 100  # in case user does not have min bvalues at 0, set threshold (where csf disapeared).
         self.iterAvg = 1  # iteratively average target image for more robust moco
         self.is_sagittal = False  # if True, then split along Z (right-left) and register each 2D slice (vs. 3D volume)
@@ -451,9 +452,9 @@ def dmri_moco(param):
         file_mat_dwi = file_mat_dwi_group
 
     # Copy transformations to mat_final folder and rename them appropriately
-    suffix_transfo = '0GenericAffine.mat' if param.is_sagittal else 'Warp.nii.gz'
-    copy_mat_files(nt, file_mat_b0, index_b0, suffix_transfo, mat_final)
-    copy_mat_files(nt, file_mat_dwi, index_dwi, suffix_transfo, mat_final)
+    param.suffix_mat = '0GenericAffine.mat' if param.is_sagittal else 'Warp.nii.gz'
+    copy_mat_files(nt, file_mat_b0, index_b0, mat_final, param)
+    copy_mat_files(nt, file_mat_dwi, index_dwi, mat_final, param)
 
     # Apply moco on all dmri data
     sct.printv('\n-------------------------------------------------------------------------------', param.verbose)

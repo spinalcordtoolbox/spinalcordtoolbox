@@ -30,13 +30,13 @@ from sct_image import split_data, concat_data
 import sct_apply_transfo
 
 
-def copy_mat_files(nt, list_file_mat, index, suffix_transfo, folder_out):
+def copy_mat_files(nt, list_file_mat, index, folder_out, param):
     """
     Copy mat file from the grouped folder to the final folder (will be used by all individual ungrouped volumes)
     :param nt: int: Total number of volumes in native 4d data
     :param list_file_mat: list of list: File name of transformations
     :param index: list: Index to associate a given matrix file with a 3d volume (from the 4d native data)
-    :param suffix_transfo: str: could be e.g. Warp.nii.gz or 0Affine.mat, depending on the type of transfo
+    :param param: Param class
     :param folder_out: str: Output folder
     :return: None
     """
@@ -50,10 +50,10 @@ def copy_mat_files(nt, list_file_mat, index, suffix_transfo, folder_out):
             # Check if this index corresponds to a volume listed in the index list
             if it in index:
                 file_mat = list_file_mat[iz][index.index(it)]
-                fsrc = os.path.join(file_mat + suffix_transfo)
+                fsrc = os.path.join(file_mat + param.suffix_mat)
                 # Build final transfo file name
                 file_mat_final = os.path.basename(file_mat)[:-9] + str(iz).zfill(4) + 'T' + str(it).zfill(4)
-                fdest = os.path.join(folder_out, file_mat_final + suffix_transfo)
+                fdest = os.path.join(folder_out, file_mat_final + param.suffix_mat)
                 copyfile(fsrc, fdest)
 
 
@@ -75,16 +75,16 @@ def moco(param):
     file_mask = 'mask.nii'
 
     sct.printv('\nInput parameters:', param.verbose)
-    sct.printv('  Input file ............' + file_data, param.verbose)
-    sct.printv('  Reference file ........' + file_target, param.verbose)
-    sct.printv('  Polynomial degree .....' + param.poly, param.verbose)
-    sct.printv('  Smoothing kernel ......' + param.smooth, param.verbose)
-    sct.printv('  Gradient step .........' + param.gradStep, param.verbose)
-    sct.printv('  Metric ................' + param.metric, param.verbose)
-    sct.printv('  Sampling ..............' + param.sampling, param.verbose)
-    sct.printv('  Todo ..................' + todo, param.verbose)
-    sct.printv('  Mask  .................' + param.fname_mask, param.verbose)
-    sct.printv('  Output mat folder .....' + folder_mat, param.verbose)
+    sct.printv('  Input file ............ ' + file_data, param.verbose)
+    sct.printv('  Reference file ........ ' + file_target, param.verbose)
+    sct.printv('  Polynomial degree ..... ' + param.poly, param.verbose)
+    sct.printv('  Smoothing kernel ...... ' + param.smooth, param.verbose)
+    sct.printv('  Gradient step ......... ' + param.gradStep, param.verbose)
+    sct.printv('  Metric ................ ' + param.metric, param.verbose)
+    sct.printv('  Sampling .............. ' + param.sampling, param.verbose)
+    sct.printv('  Todo .................. ' + todo, param.verbose)
+    sct.printv('  Mask  ................. ' + param.fname_mask, param.verbose)
+    sct.printv('  Output mat folder ..... ' + folder_mat, param.verbose)
 
     # create folder for mat files
     sct.create_folder(folder_mat)
@@ -329,7 +329,7 @@ def register(param, file_src, file_dest, file_mat, file_out, im_mask=None):
     elif param.todo == 'apply':
         sct_apply_transfo.main(args=['-i', file_src,
                                      '-d', file_dest,
-                                     '-w', file_mat + 'Warp.nii.gz',
+                                     '-w', file_mat + param.suffix_mat,
                                      '-o', file_out_concat,
                                      '-x', param.interp,
                                      '-v', '0'])
