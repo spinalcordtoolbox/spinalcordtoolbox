@@ -347,11 +347,10 @@ def fmri_moco(param):
     param_moco.path_out = ''
     param_moco.todo = 'estimate_and_apply'
     param_moco.mat_moco = 'mat_groups'
-    file_mat = moco.moco(param_moco)
+    file_mat, im_out = moco.moco(param_moco)
 
-    # TODO: if g=1, no need to run the block below (already applied)
+    # if flag g=1, the final moco 4d volume has already been generated, so we just need to rename the file
     if param.group_size == 1:
-        # if flag g=1, it means that all images have already been corrected, so we just need to rename the file
         sct.mv('fmri_averaged_groups_moco.nii', 'fmri_moco.nii')
     else:
         # create final mat folder
@@ -382,7 +381,7 @@ def fmri_moco(param):
         param_moco.path_out = ''
         param_moco.mat_moco = mat_final
         param_moco.todo = 'apply'
-        file_mat = moco.moco(param_moco)
+        file_mat, im_out = moco.moco(param_moco)
 
     # copy geometric information from header
     # NB: this is required because WarpImageMultiTransform in 2D mode wrongly sets pixdim(3) to "1".

@@ -40,8 +40,8 @@ import sct_utils as sct
 import msct_moco as moco
 import sct_dmri_separate_b0_and_dwi
 from sct_convert import convert
-from spinalcordtoolbox.image import Image
-from sct_image import split_data, concat_data
+from spinalcordtoolbox.image import Image, concat_data
+from sct_image import split_data
 from msct_parser import Parser
 
 
@@ -352,7 +352,7 @@ def dmri_moco(param):
     im_b0_list = []
     for it in range(nb_b0):
         im_b0_list.append(im_data_split_list[index_b0[it]])
-    im_b0_out = concat_data(im_b0_list, 3).save(file_b0)
+    im_b0_out = concat_data(im_b0_list, 3).save(file_b0, verbose=0)
     sct.printv(('  File created: ' + file_b0), param.verbose)
 
     # Average b=0 images
@@ -386,7 +386,7 @@ def dmri_moco(param):
         im_dwi_list = []
         for it in range(nb_dwi_i):
             im_dwi_list.append(im_data_split_list[index_dwi_i[it]])
-        im_dwi_out = concat_data(im_dwi_list, 3).save(file_dwi_merge_i)
+        im_dwi_out = concat_data(im_dwi_list, 3).save(file_dwi_merge_i, verbose=0)
         # Average DW Images
         file_dwi_mean_i = os.path.join(file_dwi_dirname, file_dwi_basename + '_mean_' + str(iGroup) + ext_data)
         file_dwi_mean.append(file_dwi_mean_i)
@@ -398,12 +398,15 @@ def dmri_moco(param):
     im_dw_list = []
     for iGroup in range(nb_groups):
         im_dw_list.append(file_dwi_mean[iGroup])
-    im_dw_out = concat_data(im_dw_list, 3).save(file_dwi_group)
+    im_dw_out = concat_data(im_dw_list, 3).save(file_dwi_group, verbose=0)
 
     # Average DW Images
     # TODO: USEFULL ???
     sct.printv('\nAveraging all DW images...', param.verbose)
     sct.run(["sct_maths", "-i", file_dwi_group, "-o", file_dwi_group + '_mean' + ext_data, "-mean", "t"], param.verbose)
+
+    # Cleanup
+    del im_data, im, im_data_split_list, im_dwi_out
 
     # START MOCO
     #===================================================================================================================
@@ -426,7 +429,7 @@ def dmri_moco(param):
     param_moco.path_out = ''
     param_moco.todo = 'estimate_and_apply'
     param_moco.mat_moco = 'mat_b0groups'
-    file_mat_b0 = moco.moco(param_moco)
+    file_mat_b0, im_b0_moco = moco.moco(param_moco)
 
     # Estimate moco on dwi groups
     sct.printv('\n-------------------------------------------------------------------------------', param.verbose)
@@ -437,51 +440,73 @@ def dmri_moco(param):
     param_moco.path_out = ''
     param_moco.todo = 'estimate_and_apply'
     param_moco.mat_moco = 'mat_dwigroups'
-    file_mat_dwi = moco.moco(param_moco)
+    file_mat_dwi, im_dwi_moco = moco.moco(param_moco)
 
-    # create final mat folder
-    sct.create_folder(mat_final)
+    fname_data_moco = os.path.join(file_data_dirname, file_data_basename + param.suffix + '.nii')
 
-    # Copy b=0 registration matrices
-    # TODO: use file_mat_b0 and file_mat_dwi instead of the hardcoding below
-    sct.printv('\nCopy b=0 registration matrices...', param.verbose)
-    for it in range(nb_b0):
-        sct.copy('mat_b0groups/' + 'mat.Z0000T' + str(it).zfill(4) + ext_mat,
-                 mat_final + 'mat.Z0000T' + str(index_b0[it]).zfill(4) + ext_mat)
+    # if flag g=1, the each individual 3d volume has already been corrected, so we just need to concatenate into 4d
+    if param.group_size == 1:
+        # Build list of files corresponding to the motion-corrected volumes (sorted as the input volume)
+        list_file_moco = []
+        for i in range(nt):
+            if i in index_b0:
+                list_file_moco.append('b0_Z{}_moco.nii'.format(str(index_b0.index(i)).zfill(4)))
+            elif i in index_dwi:
+                list_file_moco.append('dwi_averaged_groups_Z{}_moco.nii'.format(str(index_dwi.index(i)).zfill(4)))
+            else:
+                raise RuntimeError("Index {} not found in index_b0 or index_dwi".format(i))
+        # Concatenate those 3d volumes into a 4d volume
+        concat_data(list_file_moco, 3).save(fname_data_moco, verbose=0)
 
-    # Copy DWI registration matrices
-    sct.printv('\nCopy DWI registration matrices...', param.verbose)
-    for iGroup in range(nb_groups):
-        for dwi in range(len(group_indexes[iGroup])):  # we cannot use enumerate because group_indexes has 2 dim.
-            sct.copy('mat_dwigroups/' + 'mat.Z0000T' + str(iGroup).zfill(4) + ext_mat,
-                     mat_final + 'mat.Z0000T' + str(group_indexes[iGroup][dwi]).zfill(4) + ext_mat)
+    else:
+        # create final mat folder
+        sct.create_folder(mat_final)
 
-    # Spline Regularization along T
-    if param.spline_fitting:
-        moco.spline(mat_final, nt, nz, param.verbose, np.array(index_b0), param.plot_graph)
+        # Copy b=0 registration matrices
+        sct.printv('\nCopy b=0 registration matrices...', param.verbose)
+        for it in range(nb_b0):
+            # loop across registration matrices and copy to mat_final folder
+            for file_mat_z in file_mat_b0:
+                # we want to copy 'mat_groups/mat.ZXXXXTYYYYWarp.nii.gz' --> 'mat_final/mat.ZXXXXTYYYZWarp.nii.gz'
+                # Notice the Y->Z in the under the T index: the idea here is to use the single matrix from each group,
+                # and apply it to all images belonging to the same group.
+                sct.copy(file_mat_z + ext_mat,
+                         mat_final + file_mat_z[11:20] + 'T' + str(group_indexes[iGroup][data]).zfill(4) + ext_mat)
 
-    # combine Eddy Matrices
-    if param.run_eddy:
-        param.mat_2_combine = 'mat_eddy'
-        param.mat_final = mat_final
-        moco.combine_matrix(param)
+            sct.copy('mat_b0groups/' + 'mat.Z0000T' + str(it).zfill(4) + ext_mat,
+                     mat_final + 'mat.Z0000T' + str(index_b0[it]).zfill(4) + ext_mat)
 
-    # Apply moco on all dmri data
-    sct.printv('\n-------------------------------------------------------------------------------', param.verbose)
-    sct.printv('  Apply moco', param.verbose)
-    sct.printv('-------------------------------------------------------------------------------', param.verbose)
-    param_moco.file_data = file_data
-    param_moco.file_target = os.path.join(file_dwi_dirname, file_dwi_basename + '_mean_' + str(0) + ext_data)  # reference for reslicing into proper coordinate system
-    param_moco.path_out = ''
-    param_moco.mat_moco = mat_final
-    param_moco.todo = 'apply'
-    moco.moco(param_moco)
+        # Copy DWI registration matrices
+        sct.printv('\nCopy DWI registration matrices...', param.verbose)
+        for iGroup in range(nb_groups):
+            for dwi in range(len(group_indexes[iGroup])):  # we cannot use enumerate because group_indexes has 2 dim.
+                sct.copy('mat_dwigroups/' + 'mat.Z0000T' + str(iGroup).zfill(4) + ext_mat,
+                         mat_final + 'mat.Z0000T' + str(group_indexes[iGroup][dwi]).zfill(4) + ext_mat)
+
+        # Spline Regularization along T
+        if param.spline_fitting:
+            moco.spline(mat_final, nt, nz, param.verbose, np.array(index_b0), param.plot_graph)
+
+        # combine Eddy Matrices
+        if param.run_eddy:
+            param.mat_2_combine = 'mat_eddy'
+            param.mat_final = mat_final
+            moco.combine_matrix(param)
+
+        # Apply moco on all dmri data
+        sct.printv('\n-------------------------------------------------------------------------------', param.verbose)
+        sct.printv('  Apply moco', param.verbose)
+        sct.printv('-------------------------------------------------------------------------------', param.verbose)
+        param_moco.file_data = file_data
+        param_moco.file_target = os.path.join(file_dwi_dirname, file_dwi_basename + '_mean_' + str(0) + ext_data)  # reference for reslicing into proper coordinate system
+        param_moco.path_out = ''
+        param_moco.mat_moco = mat_final
+        param_moco.todo = 'apply'
+        _, im_dmri_moco = moco.moco(param_moco)
 
     # copy geometric information from header
     # NB: this is required because WarpImageMultiTransform in 2D mode wrongly sets pixdim(3) to "1".
     im_dmri = Image(file_data)
-
-    fname_data_moco = os.path.join(file_data_dirname, file_data_basename + param.suffix + '.nii')
     im_dmri_moco = Image(fname_data_moco)
     im_dmri_moco.header = im_dmri.header
     im_dmri_moco.save(verbose=0)

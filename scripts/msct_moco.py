@@ -34,11 +34,8 @@ from spinalcordtoolbox.image import Image
 from sct_image import split_data, concat_data
 import sct_apply_transfo
 
-#=======================================================================================================================
-# moco Function
-#=======================================================================================================================
-def moco(param):
 
+def moco(param):
     # retrieve parameters
     file_data = param.file_data
     file_target = param.file_target
@@ -218,7 +215,7 @@ def moco(param):
         path_out = os.path.join(dirname, basename + suffix + ext)
         im_out.save(path_out, verbose=0)
 
-    return file_mat
+    return file_mat, im_out
 
 
 def register(param, file_src, file_dest, file_mat, file_out, im_mask=None):
