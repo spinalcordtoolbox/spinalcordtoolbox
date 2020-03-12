@@ -406,7 +406,7 @@ def dmri_moco(param):
     sct.run(["sct_maths", "-i", file_dwi_group, "-o", file_dwi_group + '_mean' + ext_data, "-mean", "t"], param.verbose)
 
     # Cleanup
-    del im_data, im, im_data_split_list, im_dwi_out
+    del im, im_data_split_list, im_dwi_out
 
     # START MOCO
     #===================================================================================================================
@@ -444,20 +444,19 @@ def dmri_moco(param):
 
     fname_data_moco = os.path.join(file_data_dirname, file_data_basename + param.suffix + '.nii')
 
-    # if flag g=1, the each individual 3d volume has already been corrected, so we just need to concatenate into 4d
+    # if g=1, the each individual 3d volume has already been corrected, so we just need to concatenate into 4d
     if param.group_size == 1:
-        # Build list of files corresponding to the motion-corrected volumes (sorted as the input volume)
-        list_file_moco = []
+        im_dmri_moco = im_data.copy()
         for i in range(nt):
             if i in index_b0:
-                list_file_moco.append('b0_Z{}_moco.nii'.format(str(index_b0.index(i)).zfill(4)))
+                im_dmri_moco.data[..., i] = im_b0_moco.data[..., index_b0.index(i)]
             elif i in index_dwi:
-                list_file_moco.append('dwi_averaged_groups_Z{}_moco.nii'.format(str(index_dwi.index(i)).zfill(4)))
+                im_dmri_moco.data[..., i] = im_dwi_moco.data[..., index_dwi.index(i)]
             else:
                 raise RuntimeError("Index {} not found in index_b0 or index_dwi".format(i))
-        # Concatenate those 3d volumes into a 4d volume
-        concat_data(list_file_moco, 3).save(fname_data_moco, verbose=0)
+        im_dmri_moco.save(verbose=0)
 
+    # if g>1, apply the estimated transformation to each individual 3d volume (no more to groups)
     else:
         # create final mat folder
         sct.create_folder(mat_final)
@@ -504,12 +503,11 @@ def dmri_moco(param):
         param_moco.todo = 'apply'
         _, im_dmri_moco = moco.moco(param_moco)
 
-    # copy geometric information from header
-    # NB: this is required because WarpImageMultiTransform in 2D mode wrongly sets pixdim(3) to "1".
-    im_dmri = Image(file_data)
-    im_dmri_moco = Image(fname_data_moco)
-    im_dmri_moco.header = im_dmri.header
-    im_dmri_moco.save(verbose=0)
+        # copy geometric information from header
+        # NB: this is required because WarpImageMultiTransform in 2D mode wrongly sets pixdim(3) to "1".
+        im_dmri_moco = Image(fname_data_moco)
+        im_dmri_moco.header = im_data.header
+        im_dmri_moco.save(verbose=0)
 
     return os.path.abspath(fname_data_moco)
 

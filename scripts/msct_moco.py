@@ -210,6 +210,7 @@ def moco(param):
 
     # If sagittal, merge along Z
     if param.is_sagittal:
+        # TODO: im_out.dim is incorrect: Z value is one
         im_out = concat_data(file_data_splitZ_moco, 2)
         dirname, basename, ext = sct.extract_fname(file_data)
         path_out = os.path.join(dirname, basename + suffix + ext)
