@@ -206,7 +206,8 @@ def moco(param):
         file_data_splitZ_moco.append(sct.add_suffix(file, suffix))
         if todo != 'estimate':
             im_out = concat_data(file_data_splitZ_splitT_moco, 3)
-            im_out.save(file_data_splitZ_moco[iz], verbose=0)
+            im_out.absolutepath = file_data_splitZ_moco[iz]
+            im_out.save(verbose=0)
 
     # If sagittal, merge along Z
     if param.is_sagittal:
@@ -214,7 +215,8 @@ def moco(param):
         im_out = concat_data(file_data_splitZ_moco, 2)
         dirname, basename, ext = sct.extract_fname(file_data)
         path_out = os.path.join(dirname, basename + suffix + ext)
-        im_out.save(path_out, verbose=0)
+        im_out.absolutepath = path_out
+        im_out.save(verbose=0)
 
     return file_mat, im_out
 

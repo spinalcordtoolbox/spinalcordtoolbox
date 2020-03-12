@@ -32,10 +32,11 @@
 from __future__ import division, absolute_import
 
 import sys, os, time, math
-import importlib
+from shutil import copyfile
 from tqdm import tqdm
 import numpy as np
-
+import operator
+import functools
 import sct_utils as sct
 import msct_moco as moco
 import sct_dmri_separate_b0_and_dwi
@@ -440,47 +441,88 @@ def dmri_moco(param):
     param_moco.path_out = ''
     param_moco.todo = 'estimate_and_apply'
     param_moco.mat_moco = 'mat_dwigroups'
-    file_mat_dwi, im_dwi_moco = moco.moco(param_moco)
+    file_mat_dwi_group, im_dwi_moco = moco.moco(param_moco)
 
+    # If group_size>1, assign transformation to each individual ungrouped 3d volume
+    if param.group_size > 1:
+        file_mat_dwi = []
+        for iz in range(len(file_mat_b0)):
+            # duplicate by factor group_size the transformation file for each it
+            #  example: [mat.Z0000T0001Warp.nii] --> [mat.Z0000T0001Warp.nii, mat.Z0000T0001Warp.nii] for group_size=2
+            file_mat_dwi.append(
+                functools.reduce(operator.iconcat, [[i] * param.group_size for i in file_mat_dwi_group[iz]], []))
+    else:
+         file_mat_dwi = file_mat_dwi_group
+
+    # Build output file name
     fname_data_moco = os.path.join(file_data_dirname, file_data_basename + param.suffix + '.nii')
 
-    # if g=1, the each individual 3d volume has already been corrected, so we just need to concatenate into 4d
-    if param.group_size == 1:
-        im_dmri_moco = im_data.copy()
-        for i in range(nt):
-            if i in index_b0:
-                im_dmri_moco.data[..., i] = im_b0_moco.data[..., index_b0.index(i)]
-            elif i in index_dwi:
-                im_dmri_moco.data[..., i] = im_dwi_moco.data[..., index_dwi.index(i)]
+    # create final mat folder
+    sct.create_folder(mat_final)
+    # Transfo file suffix depends if the image is considered sagittal or not, so we define a dict
+    suffix_transfo_sagittal = {True: '0GenericAffine.mat', False: 'Warp.nii.gz'}
+    # Loop across registration matrices and copy to mat_final folder
+    # First loop is accross z. If axial orientation, there is only one z (i.e., len(file_mat_b0)=1)
+    #  Note that file_mat_b0 and file_mat_dwi should have the same length
+    for iz in range(len(file_mat_b0)):
+        # Second loop is across ALL volumes of the input dmri dataset (corresponds to its 4th dimension: time)
+        for it in range(nt):
+            # Check if this index corresponds to a b0 or a DWI volume
+            # TODO: remove code duplication
+            if it in index_b0:
+                file_mat = file_mat_b0[iz][index_b0.index(it)]
+                fsrc = os.path.join(file_mat + suffix_transfo_sagittal[param.is_sagittal])
+                # Build final transfo file name
+                file_mat_final = os.path.basename(file_mat)[:-9] + str(iz).zfill(4) + 'T' + str(it).zfill(4)
+                fdest = os.path.join(mat_final, file_mat_final + suffix_transfo_sagittal[param.is_sagittal])
+                copyfile(fsrc, fdest)
+            elif it in index_dwi:
+                file_mat = file_mat_dwi[iz][index_dwi.index(it)]
+                fsrc = os.path.join(file_mat + suffix_transfo_sagittal[param.is_sagittal])
+                # Build final transfo file name
+                file_mat_final = os.path.basename(file_mat)[:-9] + str(iz).zfill(4) + 'T' + str(it).zfill(4)
+                fdest = os.path.join(mat_final, file_mat_final + suffix_transfo_sagittal[param.is_sagittal])
+                copyfile(fsrc, fdest)
             else:
                 raise RuntimeError("Index {} not found in index_b0 or index_dwi".format(i))
-        im_dmri_moco.save(fname_data_moco, verbose=0)
-
-    # if g>1, apply the estimated transformation to each individual 3d volume (no more to groups)
-    else:
-        # create final mat folder
-        sct.create_folder(mat_final)
-
-        # Copy b=0 registration matrices
-        sct.printv('\nCopy b=0 registration matrices...', param.verbose)
-        for it in range(nb_b0):
-            # loop across registration matrices and copy to mat_final folder
-            for file_mat_z in file_mat_b0:
-                # we want to copy 'mat_groups/mat.ZXXXXTYYYYWarp.nii.gz' --> 'mat_final/mat.ZXXXXTYYYZWarp.nii.gz'
-                # Notice the Y->Z in the under the T index: the idea here is to use the single matrix from each group,
-                # and apply it to all images belonging to the same group.
-                sct.copy(file_mat_z + ext_mat,
-                         mat_final + file_mat_z[11:20] + 'T' + str(group_indexes[iGroup][data]).zfill(4) + ext_mat)
-
-            sct.copy('mat_b0groups/' + 'mat.Z0000T' + str(it).zfill(4) + ext_mat,
-                     mat_final + 'mat.Z0000T' + str(index_b0[it]).zfill(4) + ext_mat)
-
-        # Copy DWI registration matrices
-        sct.printv('\nCopy DWI registration matrices...', param.verbose)
-        for iGroup in range(nb_groups):
-            for dwi in range(len(group_indexes[iGroup])):  # we cannot use enumerate because group_indexes has 2 dim.
-                sct.copy('mat_dwigroups/' + 'mat.Z0000T' + str(iGroup).zfill(4) + ext_mat,
-                         mat_final + 'mat.Z0000T' + str(group_indexes[iGroup][dwi]).zfill(4) + ext_mat)
+    #
+    # # if g=1, the each individual 3d volume has already been corrected, so we just need to concatenate into 4d
+    # if param.group_size == 1:
+    #     im_dmri_moco = im_data.copy()
+    #     for i in range(nt):
+    #         if i in index_b0:
+    #             im_dmri_moco.data[..., i] = im_b0_moco.data[..., index_b0.index(i)]
+    #         elif i in index_dwi:
+    #             im_dmri_moco.data[..., i] = im_dwi_moco.data[..., index_dwi.index(i)]
+    #         else:
+    #             raise RuntimeError("Index {} not found in index_b0 or index_dwi".format(i))
+    #     im_dmri_moco.save(fname_data_moco, verbose=0)
+    #
+    # # if g>1, apply the estimated transformation to each individual 3d volume (no more to groups)
+    # else:
+    #     # create final mat folder
+    #     sct.create_folder(mat_final)
+    #
+    #     # Copy b=0 registration matrices
+    #     sct.printv('\nCopy b=0 registration matrices...', param.verbose)
+    #     for it in range(nb_b0):
+    #         # loop across registration matrices and copy to mat_final folder
+    #         for file_mat_z in file_mat_b0:
+    #             # we want to copy 'mat_groups/mat.ZXXXXTYYYYWarp.nii.gz' --> 'mat_final/mat.ZXXXXTYYYZWarp.nii.gz'
+    #             # Notice the Y->Z in the under the T index: the idea here is to use the single matrix from each group,
+    #             # and apply it to all images belonging to the same group.
+    #             sct.copy(file_mat_z + ext_mat,
+    #                      mat_final + file_mat_z[11:20] + 'T' + str(group_indexes[iGroup][data]).zfill(4) + ext_mat)
+    #
+    #         sct.copy('mat_b0groups/' + 'mat.Z0000T' + str(it).zfill(4) + ext_mat,
+    #                  mat_final + 'mat.Z0000T' + str(index_b0[it]).zfill(4) + ext_mat)
+    #
+    #     # Copy DWI registration matrices
+    #     sct.printv('\nCopy DWI registration matrices...', param.verbose)
+    #     for iGroup in range(nb_groups):
+    #         for dwi in range(len(group_indexes[iGroup])):  # we cannot use enumerate because group_indexes has 2 dim.
+    #             sct.copy('mat_dwigroups/' + 'mat.Z0000T' + str(iGroup).zfill(4) + ext_mat,
+    #                      mat_final + 'mat.Z0000T' + str(group_indexes[iGroup][dwi]).zfill(4) + ext_mat)
 
         # Spline Regularization along T
         if param.spline_fitting:
@@ -498,7 +540,7 @@ def dmri_moco(param):
         sct.printv('-------------------------------------------------------------------------------', param.verbose)
         param_moco.file_data = file_data
         param_moco.file_target = os.path.join(file_dwi_dirname, file_dwi_basename + '_mean_' + str(0) + ext_data)  # reference for reslicing into proper coordinate system
-        param_moco.path_out = ''
+        param_moco.path_out = ''  # TODO not used in moco.moco()
         param_moco.mat_moco = mat_final
         param_moco.todo = 'apply'
         _, im_dmri_moco = moco.moco(param_moco)
