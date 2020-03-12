@@ -872,6 +872,11 @@ def concat_data(fname_in_list, dim, pixdim=None, squeeze_data=False):
     else:
         im_out.data = data_concat
 
+    # TODO: the line below fails because .dim is immutable. We should find a solution to update dim accordingly
+    #  because as of now, this field contains wrong values (in this case, the dimension should be changed). Also
+    #  see mean()
+    # im_out.dim = im_out.data.shape[:dim] + (1,) + im_out.data.shape[dim:]
+
     return im_out
 
 
