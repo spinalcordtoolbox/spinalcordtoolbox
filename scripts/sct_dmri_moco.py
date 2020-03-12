@@ -359,7 +359,7 @@ def dmri_moco(param):
         nb_groups += 1
         group_indexes.append(index_dwi[len(index_dwi) - nb_remaining:len(index_dwi)])
 
-    file_dwi_dirname, file_dwi_basename, file_dwi_ext = sct.extract_fname(file_dwi)
+    _, file_dwi_basename, file_dwi_ext = sct.extract_fname(file_dwi)
     # DWI groups
     file_dwi_mean = []
     for iGroup in tqdm(range(nb_groups), unit='iter', unit_scale=False, desc="Merge within groups", ascii=True, ncols=80):
@@ -367,13 +367,13 @@ def dmri_moco(param):
         index_dwi_i = group_indexes[iGroup]
         nb_dwi_i = len(index_dwi_i)
         # Merge DW Images
-        file_dwi_merge_i = os.path.join(file_dwi_dirname, file_dwi_basename + '_' + str(iGroup) + ext_data)
+        file_dwi_merge_i = os.path.join(file_dwi_basename + '_' + str(iGroup) + ext_data)
         im_dwi_list = []
         for it in range(nb_dwi_i):
             im_dwi_list.append(im_data_split_list[index_dwi_i[it]])
         im_dwi_out = concat_data(im_dwi_list, 3).save(file_dwi_merge_i, verbose=0)
         # Average across time
-        file_dwi_mean.append(os.path.join(file_dwi_dirname, file_dwi_basename + '_' + str(iGroup) + ext_data))
+        file_dwi_mean.append(os.path.join(file_dwi_basename + '_' + str(iGroup) + ext_data))
         im_dwi_out.mean(dim=3).save(sct.add_suffix(file_dwi_mean[-1], '_mean'))
 
     # Merge DWI groups means
@@ -480,7 +480,7 @@ def dmri_moco(param):
     sct.printv('  Apply moco', param.verbose)
     sct.printv('-------------------------------------------------------------------------------', param.verbose)
     param_moco.file_data = file_data
-    param_moco.file_target = os.path.join(file_dwi_dirname, file_dwi_basename + '_mean_' + str(0) + ext_data)  # reference for reslicing into proper coordinate system
+    param_moco.file_target = os.path.join(file_dwi_basename + '_mean_' + str(0) + ext_data)  # reference for reslicing into proper coordinate system
     param_moco.path_out = ''  # TODO not used in moco()
     param_moco.mat_moco = mat_final
     param_moco.todo = 'apply'
