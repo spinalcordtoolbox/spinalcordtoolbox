@@ -336,18 +336,14 @@ def dmri_moco(param):
         im.absolutepath = os.path.join(x_dirname, x_basename + ".nii.gz")
         im.save()
 
-    # Merge b=0 images
-    sct.printv('\nMerge b=0...', param.verbose)
+    # Merge and average b=0 images
+    sct.printv('\nMerge and average b=0 data...', param.verbose)
     im_b0_list = []
     for it in range(nb_b0):
         im_b0_list.append(im_data_split_list[index_b0[it]])
-    im_b0_out = concat_data(im_b0_list, 3).save(file_b0, verbose=0)
-    sct.printv(('  File created: ' + file_b0), param.verbose)
-
-    # Average b=0 images
-    sct.printv('\nAverage b=0...', param.verbose)
-    file_b0_mean = sct.add_suffix(file_b0, '_mean')
-    sct.run(['sct_maths', '-i', file_b0, '-o', file_b0_mean, '-mean', 't'], param.verbose)
+    im_b0 = concat_data(im_b0_list, 3).save(file_b0, verbose=0)
+    # Average across time
+    im_b0.mean(dim=3).save(sct.add_suffix(file_b0, '_mean'))
 
     # Number of DWI groups
     nb_groups = int(math.floor(nb_dwi / param.group_size))
@@ -376,10 +372,9 @@ def dmri_moco(param):
         for it in range(nb_dwi_i):
             im_dwi_list.append(im_data_split_list[index_dwi_i[it]])
         im_dwi_out = concat_data(im_dwi_list, 3).save(file_dwi_merge_i, verbose=0)
-        # Average DW Images
-        file_dwi_mean_i = os.path.join(file_dwi_dirname, file_dwi_basename + '_mean_' + str(iGroup) + ext_data)
-        file_dwi_mean.append(file_dwi_mean_i)
-        sct.run(["sct_maths", "-i", file_dwi_merge_i, "-o", file_dwi_mean[iGroup], "-mean", "t"], 0)
+        # Average across time
+        file_dwi_mean.append(os.path.join(file_dwi_dirname, file_dwi_basename + '_' + str(iGroup) + ext_data))
+        im_dwi_out.mean(dim=3).save(sct.add_suffix(file_dwi_mean[-1], '_mean'))
 
     # Merge DWI groups means
     sct.printv('\nMerging DW files...', param.verbose)
@@ -387,15 +382,10 @@ def dmri_moco(param):
     im_dw_list = []
     for iGroup in range(nb_groups):
         im_dw_list.append(file_dwi_mean[iGroup])
-    im_dw_out = concat_data(im_dw_list, 3).save(file_dwi_group, verbose=0)
-
-    # Average DW Images
-    # TODO: USEFULL ???
-    sct.printv('\nAveraging all DW images...', param.verbose)
-    sct.run(["sct_maths", "-i", file_dwi_group, "-o", file_dwi_group + '_mean' + ext_data, "-mean", "t"], param.verbose)
+    concat_data(im_dw_list, 3).save(file_dwi_group, verbose=0)
 
     # Cleanup
-    del im, im_data_split_list, im_dwi_out
+    del im, im_data_split_list
 
     # START MOCO
     #===================================================================================================================
@@ -432,6 +422,7 @@ def dmri_moco(param):
     file_mat_dwi_group, im_dwi_moco = moco(param_moco)
 
     # If group_size>1, assign transformation to each individual ungrouped 3d volume
+    # TODO: make sure this code works if the initial number of images is not divisible by group_size
     if param.group_size > 1:
         file_mat_dwi = []
         for iz in range(len(file_mat_b0)):

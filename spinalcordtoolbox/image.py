@@ -732,6 +732,19 @@ class Image(object):
             im_output.save()
         return im_output
 
+    def mean(self, dim):
+        """
+        Average across specified dimension
+        :param dim: int: axis used for averaging
+        :return: Image object
+        """
+        im_out = empty_like(self)
+        im_out.data = np.mean(self.data, dim)
+        # TODO: the line below fails because .dim is immutable. We should find a solution to update dim accordingly
+        #  because as of now, this field contains wrong values (in this case, the dimension should be changed)
+        # im_out.dim = im_out.data.shape[:dim] + (1,) + im_out.data.shape[dim:]
+        return im_out
+
 
 def compute_dice(image1, image2, mode='3d', label=1, zboundaries=False):
     """
@@ -891,7 +904,8 @@ def find_zmin_zmax(im, threshold=0.1):
 
 def get_dimension(im_file, verbose=1):
     """
-    Get dimension from nibabel object. Manages 2D, 3D or 4D images.
+    Get dimension from Image or nibabel object. Manages 2D, 3D or 4D images.
+    :param: im_file: Image or nibabel object
     :return: nx, ny, nz, nt, px, py, pz, pt
     """
     import nibabel.nifti1
@@ -903,7 +917,7 @@ def get_dimension(im_file, verbose=1):
         header = im_file.hdr
     else:
         header = None
-        sct.printv('WARNING: the provided image file isn\'t a nibabel.nifti1.Nifti1Image instance nor a msct_image.Image instance', verbose, 'warning')
+        logger.warning("The provided image file is neither a nibabel.nifti1.Nifti1Image instance nor an Image instance")
 
     nb_dims = len(header.get_data_shape())
     if nb_dims == 2:
