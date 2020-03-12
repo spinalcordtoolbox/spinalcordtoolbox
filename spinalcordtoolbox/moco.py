@@ -3,6 +3,7 @@
 # Tools for motion correction (moco)
 # Authors: Karun Raju, Tanguy Duval, Julien Cohen-Adad
 
+# TODO: move param definition here.
 # TODO: Inform user if soft mask is used
 # TODO: no need to pass absolute image path-- makes it difficult to read
 # TODO: check the status of spline()
@@ -14,7 +15,10 @@
 
 from __future__ import absolute_import
 
-import sys, os, glob
+import sys
+import os
+from shutil import copyfile
+import glob
 from tqdm import tqdm
 import numpy as np
 import scipy.interpolate
@@ -26,7 +30,39 @@ from sct_image import split_data, concat_data
 import sct_apply_transfo
 
 
+def copy_mat_files(nt, list_file_mat, index, suffix_transfo, folder_out):
+    """
+    Copy mat file from the grouped folder to the final folder (will be used by all individual ungrouped volumes)
+    :param nt: int: Total number of volumes in native 4d data
+    :param list_file_mat: list of list: File name of transformations
+    :param index: list: Index to associate a given matrix file with a 3d volume (from the 4d native data)
+    :param suffix_transfo: str: could be e.g. Warp.nii.gz or 0Affine.mat, depending on the type of transfo
+    :param folder_out: str: Output folder
+    :return: None
+    """
+    # create final mat folder
+    sct.create_folder(folder_out)
+    # Loop across registration matrices and copy to mat_final folder
+    # First loop is accross z. If axial orientation, there is only one z (i.e., len(file_mat)=1)
+    for iz in range(len(list_file_mat)):
+        # Second loop is across ALL volumes of the input dmri dataset (corresponds to its 4th dimension: time)
+        for it in range(nt):
+            # Check if this index corresponds to a volume listed in the index list
+            if it in index:
+                file_mat = list_file_mat[iz][index.index(it)]
+                fsrc = os.path.join(file_mat + suffix_transfo)
+                # Build final transfo file name
+                file_mat_final = os.path.basename(file_mat)[:-9] + str(iz).zfill(4) + 'T' + str(it).zfill(4)
+                fdest = os.path.join(folder_out, file_mat_final + suffix_transfo)
+                copyfile(fsrc, fdest)
+
+
 def moco(param):
+    """
+    Main function that performs motion correction.
+    :param param:
+    :return:
+    """
     # retrieve parameters
     file_data = param.file_data
     file_target = param.file_target

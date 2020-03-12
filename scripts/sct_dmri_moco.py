@@ -39,7 +39,7 @@ import operator
 import functools
 
 from spinalcordtoolbox.image import Image, concat_data
-from spinalcordtoolbox.moco import moco, spline, combine_matrix
+from spinalcordtoolbox.moco import moco, spline, combine_matrix, copy_mat_files
 
 import sct_utils as sct
 import sct_dmri_separate_b0_and_dwi
@@ -390,7 +390,7 @@ def dmri_moco(param):
     del im, im_data_split_list
 
     # ==================================================================================================================
-    # Start moco
+    # Estimate moco
     # ==================================================================================================================
 
     # Estimate moco on b0 groups
@@ -424,6 +424,20 @@ def dmri_moco(param):
     param_moco.mat_moco = 'mat_dwigroups'
     file_mat_dwi_group, im_dwi_moco = moco(param_moco)
 
+    # Spline Regularization along T
+    if param.spline_fitting:
+        spline(mat_final, nt, nz, param.verbose, np.array(index_b0), param.plot_graph)
+
+    # combine Eddy Matrices
+    if param.run_eddy:
+        param.mat_2_combine = 'mat_eddy'
+        param.mat_final = mat_final
+        combine_matrix(param)
+
+    # ==================================================================================================================
+    # Apply moco
+    # ==================================================================================================================
+
     # If group_size>1, assign transformation to each individual ungrouped 3d volume
     # TODO: make sure this code works if the initial number of images is not divisible by group_size
     if param.group_size > 1:
@@ -434,49 +448,12 @@ def dmri_moco(param):
             file_mat_dwi.append(
                 functools.reduce(operator.iconcat, [[i] * param.group_size for i in file_mat_dwi_group[iz]], []))
     else:
-         file_mat_dwi = file_mat_dwi_group
+        file_mat_dwi = file_mat_dwi_group
 
-    # Build output file name
-    fname_data_moco = os.path.join(file_data_dirname, file_data_basename + param.suffix + '.nii')
-
-    # create final mat folder
-    sct.create_folder(mat_final)
-    # Transfo file suffix depends if the image is considered sagittal or not, so we define a dict
-    suffix_transfo_sagittal = {True: '0GenericAffine.mat', False: 'Warp.nii.gz'}
-    # Loop across registration matrices and copy to mat_final folder
-    # First loop is accross z. If axial orientation, there is only one z (i.e., len(file_mat_b0)=1)
-    #  Note that file_mat_b0 and file_mat_dwi should have the same length
-    for iz in range(len(file_mat_b0)):
-        # Second loop is across ALL volumes of the input dmri dataset (corresponds to its 4th dimension: time)
-        for it in range(nt):
-            # Check if this index corresponds to a b0 or a DWI volume
-            # TODO: remove code duplication
-            if it in index_b0:
-                file_mat = file_mat_b0[iz][index_b0.index(it)]
-                fsrc = os.path.join(file_mat + suffix_transfo_sagittal[param.is_sagittal])
-                # Build final transfo file name
-                file_mat_final = os.path.basename(file_mat)[:-9] + str(iz).zfill(4) + 'T' + str(it).zfill(4)
-                fdest = os.path.join(mat_final, file_mat_final + suffix_transfo_sagittal[param.is_sagittal])
-                copyfile(fsrc, fdest)
-            elif it in index_dwi:
-                file_mat = file_mat_dwi[iz][index_dwi.index(it)]
-                fsrc = os.path.join(file_mat + suffix_transfo_sagittal[param.is_sagittal])
-                # Build final transfo file name
-                file_mat_final = os.path.basename(file_mat)[:-9] + str(iz).zfill(4) + 'T' + str(it).zfill(4)
-                fdest = os.path.join(mat_final, file_mat_final + suffix_transfo_sagittal[param.is_sagittal])
-                copyfile(fsrc, fdest)
-            else:
-                raise RuntimeError("Index {} not found in index_b0 or index_dwi".format(i))
-
-    # Spline Regularization along T
-    if param.spline_fitting:
-        spline(mat_final, nt, nz, param.verbose, np.array(index_b0), param.plot_graph)
-
-    # combine Eddy Matrices
-    if param.run_eddy:
-        param.mat_2_combine = 'mat_eddy'
-        param.mat_final = mat_final
-        combine_matrix(param)
+    # Copy transformations to mat_final folder and rename them appropriately
+    suffix_transfo = '0GenericAffine.mat' if param.is_sagittal else 'Warp.nii.gz'
+    copy_mat_files(nt, file_mat_b0, index_b0, suffix_transfo, mat_final)
+    copy_mat_files(nt, file_mat_dwi, index_dwi, suffix_transfo, mat_final)
 
     # Apply moco on all dmri data
     sct.printv('\n-------------------------------------------------------------------------------', param.verbose)
@@ -492,9 +469,13 @@ def dmri_moco(param):
     # copy geometric information from header
     # NB: this is required because WarpImageMultiTransform in 2D mode wrongly sets pixdim(3) to "1".
     # im_dmri_moco = Image(fname_data_moco)
+
     im_dmri_moco.header = im_data.header
     im_dmri_moco.save(verbose=0)
 
+    # TODO: output im_dmri_moco.absolutepath
+    # Build output file name
+    fname_data_moco = os.path.join(file_data_dirname, file_data_basename + param.suffix + '.nii')
     return os.path.abspath(fname_data_moco)
 
 
