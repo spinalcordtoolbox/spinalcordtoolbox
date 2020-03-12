@@ -375,8 +375,8 @@ def dmri_moco(param):
             im_dwi_list.append(im_data_split_list[index_dwi_i[it]])
         im_dwi_out = concat_data(im_dwi_list, 3).save(file_dwi_merge_i, verbose=0)
         # Average across time
-        file_dwi_mean.append(os.path.join(file_dwi_basename + '_' + str(iGroup) + ext_data))
-        im_dwi_out.mean(dim=3).save(sct.add_suffix(file_dwi_mean[-1], '_mean'))
+        file_dwi_mean.append(os.path.join(file_dwi_basename + '_' + str(iGroup) + '_mean' + ext_data))
+        im_dwi_out.mean(dim=3).save(file_dwi_mean[-1])
 
     # Merge DWI groups means
     sct.printv('\nMerging DW files...', param.verbose)
@@ -483,7 +483,7 @@ def dmri_moco(param):
     sct.printv('  Apply moco', param.verbose)
     sct.printv('-------------------------------------------------------------------------------', param.verbose)
     param_moco.file_data = file_data
-    param_moco.file_target = os.path.join(file_dwi_basename + '_mean_' + str(0) + ext_data)  # reference for reslicing into proper coordinate system
+    param_moco.file_target = file_dwi_mean[0]  # reference for reslicing into proper coordinate system
     param_moco.path_out = ''  # TODO not used in moco()
     param_moco.mat_moco = mat_final
     param_moco.todo = 'apply'
