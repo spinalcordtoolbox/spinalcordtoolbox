@@ -38,7 +38,7 @@ import operator
 import functools
 
 from spinalcordtoolbox.image import Image, concat_data
-from spinalcordtoolbox.moco import ParamMoco, moco, spline, combine_matrix, copy_mat_files
+from spinalcordtoolbox.moco import ParamMoco, moco_wrapper, moco, spline, combine_matrix, copy_mat_files
 
 import sct_utils as sct
 import sct_dmri_separate_b0_and_dwi
@@ -52,7 +52,7 @@ def get_parser():
     parser = Parser(__file__)
 
     # initialize parameters
-    param_default = ParamMoco()
+    param_default = ParamMoco(is_diffusion=True, group_size=3, metric='MI', smooth='1')
 
     # Initialize the parser
     parser = Parser(__file__)
@@ -137,7 +137,7 @@ def main(args=None):
     # initialization
     start_time = time.time()
     path_out = '.'
-    param = ParamMoco()
+    param = ParamMoco(is_diffusion=True, group_size=3, metric='MI', smooth='1')
 
     # check user arguments
     if not args:
@@ -204,7 +204,7 @@ def main(args=None):
         param.fname_mask = mask_name + ext_mask
 
     # run moco
-    fname_data_moco_tmp = dmri_moco(param)
+    fname_data_moco_tmp = moco_wrapper(param)
 
     # generate b0_moco_mean and dwi_moco_mean
     args = ['-i', fname_data_moco_tmp, '-bvec', 'bvecs.txt', '-a', '1', '-v', '0']
