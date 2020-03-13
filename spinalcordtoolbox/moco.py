@@ -34,7 +34,7 @@ class ParamMoco:
     Class with a bunch of moco-specific parameters
     """
     # The constructor
-    def __init__(self):
+    def __init__(self, group_size=3, metric='MI', smooth='2'):
         self.debug = 0
         self.fname_data = ''
         self.fname_bvecs = ''
@@ -43,27 +43,29 @@ class ParamMoco:
         self.fname_mask = ''
         self.mat_final = ''
         self.todo = ''
-        self.group_size = 3  # number of images averaged for 'dwi' method.
+        self.group_size = group_size  # number of images averaged for 'dwi' method.
         self.spline_fitting = 0
         self.remove_temp_files = 1
         self.verbose = 1
         self.plot_graph = 0
         self.suffix = '_moco'
         self.poly = '2'  # degree of polynomial function for moco
-        self.smooth = '2'  # smoothing sigma in mm
+        self.smooth = smooth  # smoothing sigma in mm
         self.gradStep = '1'  # gradientStep for searching algorithm
         self.iter = '10'  # number of iterations
-        self.metric = 'MI'  # metric: MI, MeanSquares, CC
+        self.metric = metric  # {MI, MeanSquares, CC}: metric to use for registration
         self.sampling = '0.2'  # sampling rate used for registration metric
         self.interp = 'spline'  # nn, linear, spline
         self.run_eddy = 0
         self.mat_eddy = ''
         self.min_norm = 0.001
         self.swapXY = 0
+        self.num_target = '0'
         self.suffix_mat = None  # '0GenericAffine.mat' or 'Warp.nii.gz' depending which transfo algo is used
         self.bval_min = 100  # in case user does not have min bvalues at 0, set threshold (where csf disapeared).
         self.iterAvg = 1  # iteratively average target image for more robust moco
         self.is_sagittal = False  # if True, then split along Z (right-left) and register each 2D slice (vs. 3D volume)
+        self.output_motion_param = True  # if True, the motion parameters are outputted
 
     # update constructor with user's parameters
     def update(self, param_user):

@@ -20,74 +20,23 @@ import time
 import math
 from tqdm import tqdm
 import numpy as np
+
+from spinalcordtoolbox.image import Image, concat_data
+from spinalcordtoolbox.moco import ParamMoco, moco, spline, combine_matrix, copy_mat_files
+
 import sct_utils as sct
-import msct_moco as moco
-import sct_maths
 from sct_convert import convert
-from spinalcordtoolbox.image import Image
-from sct_image import split_data, concat_data
+from sct_image import split_data
 from msct_parser import Parser
 
 
-# PARAMETERS
-class Param:
-    # The constructor
-    def __init__(self):
-        self.debug = 0
-        self.fname_data = ''
-        self.fname_bvecs = ''
-        self.fname_bvals = ''
-        self.fname_target = ''
-        self.fname_mask = ''
-        self.mat_final = ''
-        self.todo = ''
-        self.group_size = 1  # number of images averaged for 'dwi' method.
-        self.spline_fitting = 0
-        self.remove_temp_files = 1
-        self.verbose = 1
-        self.plot_graph = 0
-        self.suffix = '_moco'
-        self.poly = '2'  # degree of polynomial function for moco
-        self.smooth = '0'  # smoothing sigma in mm
-        self.gradStep = '1'  # gradientStep for searching algorithm
-        self.iter = '10'  # number of iterations
-        self.metric = 'MeanSquares'  # metric: MI, MeanSquares, CC
-        self.sampling = '0.2'  # sampling rate used for registration metric
-        self.interp = 'spline'  # nn, linear, spline
-        self.run_eddy = 0
-        self.mat_eddy = ''
-        self.min_norm = 0.001
-        self.swapXY = 0
-        self.iterAvg = 1  # iteratively average target image for more robust moco
-        self.num_target = '0'
-        self.is_sagittal = False  # if True, then split along Z (right-left) and register each 2D slice (vs. 3D volume)
-        self.output_motion_param = True  # if True, the motion parameters are outputted
-
-    # update constructor with user's parameters
-    def update(self, param_user):
-        # list_objects = param_user.split(',')
-        for object in param_user:
-            if len(object) < 2:
-                sct.printv('ERROR: Wrong usage.', 1, type='error')
-            obj = object.split('=')
-            # set type based on default param field
-            # isinstance(i, int)
-            # isinstance(f, float)
-            # isinstance(s, str)
-
-            field = obj[1]
-            if isinstance(getattr(self, obj[0]), int):
-                field = int(field)
-            setattr(self, obj[0], field)
-
-# PARSER
-# ==========================================================================================
 def get_parser():
     # parser initialisation
     parser = Parser(__file__)
 
     # initialize parameters
-    param_default = Param()
+    # TODO: create a class ParamFmriMoco which inheritates from ParamMoco
+    param_default = ParamMoco(group_size=1, metric='MeanSquares', smooth='0')
 
     parser.usage.set_description("""Motion correction of fMRI data. Some robust features include:
   - group-wise (-g)
@@ -120,7 +69,7 @@ The outputs of the motion correction process are:
                                   "poly [int]: Degree of polynomial function used for regularization along Z. For no regularization set to 0. Default=" + param_default.poly + ".\n"
                                   "smooth [mm]: Smoothing kernel. Default=" + param_default.smooth + ".\n"
                                   "iter [int]: Number of iterations. Default=" + param_default.iter + ".\n"
-                                  "metric {MI, MeanSquares, CC}: Metric used for registration. Default=" + param_default.metric + ".\n"
+                                  "metric {MI, MeanSquares, CC}: Metric used for registration. Default=MeanSquares.\n"
                                   "gradStep [float]: Searching step used by registration algorithm. The higher the more deformation allowed. Default=" + param_default.gradStep + ".\n"
                                   "sampling [0-1]: Sampling rate used for registration metric. Default=" + param_default.sampling + ".\n"
                                   "numTarget [int]: Target volume or group (starting with 0). Default=" + param_default.num_target + ".\n"
@@ -159,7 +108,7 @@ def main(args=None):
 
     # initialization
     start_time = time.time()
-    param = Param()
+    param = ParamMoco(group_size=1, metric='MeanSquares', smooth='0')
 
     # check user arguments
     if not args:

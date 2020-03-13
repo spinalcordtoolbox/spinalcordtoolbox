@@ -32,7 +32,6 @@ import sys
 import os
 import time
 import math
-from shutil import copyfile
 from tqdm import tqdm
 import numpy as np
 import operator
