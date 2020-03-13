@@ -159,7 +159,8 @@ def moco_wrapper(param):
     # Copying input data to tmp folder
     sct.printv('\nCopying input data to tmp folder and convert to nii...', param.verbose)
     convert(param.fname_data, os.path.join(path_tmp, file_data))
-    sct.copy(param.fname_bvecs, os.path.join(path_tmp, file_bvec), verbose=param.verbose)
+    if param.is_diffusion:
+        sct.copy(param.fname_bvecs, os.path.join(path_tmp, file_bvec), verbose=param.verbose)
     if param.fname_mask != '':
         sct.copy(param.fname_mask, os.path.join(path_tmp, file_mask), verbose=param.verbose)
         # Update field in param (because used later in another function, and param class will be passed)
@@ -266,7 +267,7 @@ def moco_wrapper(param):
         list_file_group.append(os.path.join(file_dwi_basename + '_' + str(iGroup) + '_mean' + ext_data))
         im_dwi_out.mean(dim=3).save(list_file_group[-1])
 
-    # Merge DWI groups means
+    # Merge across groups
     sct.printv('\nMerge across groups...', param.verbose)
     # file_dwi_groups_means_merge = 'dwi_averaged_groups'
     im_dw_list = []
@@ -350,8 +351,9 @@ def moco_wrapper(param):
 
     # Copy transformations to mat_final folder and rename them appropriately
     param.suffix_mat = '0GenericAffine.mat' if param.is_sagittal else 'Warp.nii.gz'
-    copy_mat_files(nt, file_mat_b0, index_b0, mat_final, param)
     copy_mat_files(nt, file_mat_datasub, index_moco, mat_final, param)
+    if param.is_diffusion:
+        copy_mat_files(nt, file_mat_b0, index_b0, mat_final, param)
 
     # Apply moco on all dmri data
     sct.printv('\n-------------------------------------------------------------------------------', param.verbose)
@@ -442,13 +444,14 @@ def moco_wrapper(param):
     #     shutil.copyfile(os.path.join(path_tmp, 'fmri_moco_params.tsv'), os.path.join(path_out + file_data + param.suffix + '_params.tsv'))
 
     # Generate output files
-    fname_dmri_moco = os.path.join(curdir, param.path_out, sct.add_suffix(param.fname_data, param.suffix))
-    fname_dmri_moco_b0_mean = sct.add_suffix(fname_dmri_moco, '_b0_mean')
-    fname_dmri_moco_dwi_mean = sct.add_suffix(fname_dmri_moco, '_dwi_mean')
     sct.printv('\nGenerate output files...', param.verbose)
+    fname_dmri_moco = os.path.join(curdir, param.path_out, sct.add_suffix(param.fname_data, param.suffix))
     sct.generate_output_file(im_dmri_moco.absolutepath, fname_dmri_moco, 0)
-    sct.generate_output_file(fname_b0_mean, fname_dmri_moco_b0_mean, 0)
-    sct.generate_output_file(fname_dwi_mean, fname_dmri_moco_dwi_mean, 0)
+    if param.is_diffusion:
+        fname_dmri_moco_b0_mean = sct.add_suffix(fname_dmri_moco, '_b0_mean')
+        fname_dmri_moco_dwi_mean = sct.add_suffix(fname_dmri_moco, '_dwi_mean')
+        sct.generate_output_file(fname_b0_mean, fname_dmri_moco_b0_mean, 0)
+        sct.generate_output_file(fname_dwi_mean, fname_dmri_moco_dwi_mean, 0)
 
     # Delete temporary files
     if param.remove_temp_files == 1:
@@ -581,7 +584,7 @@ def moco(param):
 
         # Motion correction: Loop across T
         for indice_index in tqdm(range(nt), unit='iter', unit_scale=False,
-                                 desc="Z=" + str(iz) + "/" + str(len(file_data_splitZ)-1), ascii=True, ncols=80):
+                                 desc="Z=" + str(iz) + "/" + str(len(file_data_splitZ)-1), ascii=False, ncols=80):
 
             # create indices and display stuff
             it = index[indice_index]

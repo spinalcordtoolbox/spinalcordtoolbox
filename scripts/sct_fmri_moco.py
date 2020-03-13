@@ -100,7 +100,6 @@ def main():
     parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
     param.fname_data = arguments['-i']
-    param.fname_bvecs = arguments['-bvec']
     if '-g' in arguments:
         param.group_size = arguments['-g']
     if '-m' in arguments:
