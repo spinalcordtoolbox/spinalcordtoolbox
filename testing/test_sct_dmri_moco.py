@@ -26,7 +26,8 @@ def init(param_test):
     default_args = [
         '-i dmri/dmri.nii.gz -bvec dmri/bvecs.txt -g 3 -x nn -r 0',
         '-i dmri/dmri.nii.gz -bvec dmri/bvecs.txt -g 3 -m dmri/mask.nii -r 0',
-        '-i dmri/dmri_AIL_crop.nii -bvec dmri/bvecs.txt -g 3 -x nn -r 0']
+        '-i dmri/dmri_AIL_crop.nii -bvec dmri/bvecs.txt -x nn -r 0',
+        ]
 
     # assign default params
     if not param_test.args:
