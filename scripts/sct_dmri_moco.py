@@ -118,23 +118,16 @@ def get_parser():
 
 # MAIN
 # ==========================================================================================
-def main(args=None):
+def main():
 
     # initialization
     param = ParamMoco(is_diffusion=True, group_size=3, metric='MI', smooth='1')
 
-    # check user arguments
-    if not args:
-        # TODO: not used...
-        args = sys.argv[1:]
-
-    # Get parser info
+    # Fetch user arguments
     parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
-
     param.fname_data = arguments['-i']
     param.fname_bvecs = arguments['-bvec']
-
     if '-bval' in arguments:
         param.fname_bvals = arguments['-bval']
     if '-bvalmin' in arguments:
@@ -152,7 +145,9 @@ def main(args=None):
     if '-r' in arguments:
         param.remove_temp_files = int(arguments['-r'])
     param.verbose = int(arguments.get('-v'))
-    sct.init_sct(log_level=param.verbose, update=True)  # Update log level
+
+    # Update log level
+    sct.init_sct(log_level=param.verbose, update=True)
 
     # run moco
     moco_wrapper(param)
