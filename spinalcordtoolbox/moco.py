@@ -55,6 +55,7 @@ class ParamMoco:
         self.fname_bvals = ''
         self.fname_target = ''
         self.fname_mask = ''
+        self.path_out = ''
         self.mat_final = ''
         self.todo = ''
         self.group_size = group_size
