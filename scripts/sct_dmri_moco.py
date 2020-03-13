@@ -192,7 +192,7 @@ def main(args=None):
     #     param.fname_mask = mask_name + ext_mask
 
     # run moco
-    fname_data_moco_tmp = moco_wrapper(param)
+    moco_wrapper(param)
 
 #
 # def dmri_moco(param):

@@ -23,11 +23,14 @@ import numpy as np
 import math
 import scipy.interpolate
 import time
+import functools
+import operator
+
+from spinalcordtoolbox.image import Image
 
 import sct_utils as sct
 import sct_dmri_separate_b0_and_dwi
 from sct_convert import convert
-from spinalcordtoolbox.image import Image
 from sct_image import split_data, concat_data
 import sct_apply_transfo
 
@@ -124,12 +127,13 @@ def moco_wrapper(param):
     file_data = 'data.nii'  # corresponds to the full input data (e.g. dmri or fmri)
     file_data_dirname, file_data_basename, file_data_ext = sct.extract_fname(file_data)
     file_b0 = 'b0.nii'
-    file_datasub = 'data-sub.nii'  # corresponds to the full input data minus the b=0 scans (if param.is_diffusion=True)
+    file_datasub = 'datasub.nii'  # corresponds to the full input data minus the b=0 scans (if param.is_diffusion=True)
+    file_datasubgroup = 'datasub-groups.nii'  # concatenation of the average of each file_datasub
     file_bvec = 'bvecs.txt'
     file_mask = 'mask.nii'
     ext_data = '.nii.gz'  # workaround "too many open files" by slurping the data
+    # TODO: check if .nii can be used
     mat_final = 'mat_final/'
-    file_group4d = 'dwi_averaged_groups.nii'
     # ext_mat = 'Warp.nii.gz'  # warping field
 
     # Start timer
@@ -263,7 +267,7 @@ def moco_wrapper(param):
     im_dw_list = []
     for iGroup in range(nb_groups):
         im_dw_list.append(list_file_group[iGroup])
-    concat_data(im_dw_list, 3).save(file_group4d, verbose=0)
+    concat_data(im_dw_list, 3).save(file_datasubgroup, verbose=0)
 
     # Cleanup
     del im, im_data_split_list
@@ -272,12 +276,14 @@ def moco_wrapper(param):
     # Estimate moco
     # ==================================================================================================================
 
+    # Initialize another class instance that will be passed on to the moco() function
+    param_moco = param
+
     if param.is_diffusion:
         # Estimate moco on b0 groups
         sct.printv('\n-------------------------------------------------------------------------------', param.verbose)
         sct.printv('  Estimating motion on b=0 images...', param.verbose)
         sct.printv('-------------------------------------------------------------------------------', param.verbose)
-        param_moco = param
         param_moco.file_data = 'b0.nii'
         # Identify target image
         if index_moco[0] != 0:
@@ -294,28 +300,32 @@ def moco_wrapper(param):
         param_moco.path_out = ''
         param_moco.todo = 'estimate_and_apply'
         param_moco.mat_moco = 'mat_b0groups'
-        file_mat_b0, im_b0_moco = moco(param_moco)
+        file_mat_b0, _ = moco(param_moco)
 
     # Estimate moco across groups
     sct.printv('\n-------------------------------------------------------------------------------', param.verbose)
     sct.printv('  Estimating motion across groups...', param.verbose)
     sct.printv('-------------------------------------------------------------------------------', param.verbose)
-    param_moco.file_data = file_group4d
-    param_moco.file_target = list_file_group[0]  # target is the first DW image (closest to the first b=0)
+    param_moco.file_data = file_datasubgroup
+    param_moco.file_target = list_file_group[0]  # target is the first volume (closest to the first b=0 if DWI scan)
     param_moco.path_out = ''
     param_moco.todo = 'estimate_and_apply'
-    param_moco.mat_moco = 'mat_dwigroups'
-    file_mat_dwi_group, im_dwi_moco = moco(param_moco)
+    param_moco.mat_moco = 'mat_groups'
+    file_mat_datasub_group, _ = moco(param_moco)
 
     # Spline Regularization along T
     if param.spline_fitting:
-        spline(mat_final, nt, nz, param.verbose, np.array(index_b0), param.plot_graph)
+        # TODO: fix this scenario (haven't touched that code for a while-- it is probably buggy)
+        raise NotImplementedError()
+        # spline(mat_final, nt, nz, param.verbose, np.array(index_b0), param.plot_graph)
 
     # combine Eddy Matrices
     if param.run_eddy:
-        param.mat_2_combine = 'mat_eddy'
-        param.mat_final = mat_final
-        combine_matrix(param)
+        # TODO: fix this scenario (haven't touched that code for a while-- it is probably buggy)
+        raise NotImplementedError()
+        # param.mat_2_combine = 'mat_eddy'
+        # param.mat_final = mat_final
+        # combine_matrix(param)
 
     # ==================================================================================================================
     # Apply moco
@@ -324,19 +334,19 @@ def moco_wrapper(param):
     # If group_size>1, assign transformation to each individual ungrouped 3d volume
     # TODO: make sure this code works if the initial number of images is not divisible by group_size
     if param.group_size > 1:
-        file_mat_dwi = []
-        for iz in range(len(file_mat_b0)):
+        file_mat_datasub = []
+        for iz in range(len(file_mat_datasub_group)):
             # duplicate by factor group_size the transformation file for each it
             #  example: [mat.Z0000T0001Warp.nii] --> [mat.Z0000T0001Warp.nii, mat.Z0000T0001Warp.nii] for group_size=2
-            file_mat_dwi.append(
-                functools.reduce(operator.iconcat, [[i] * param.group_size for i in file_mat_dwi_group[iz]], []))
+            file_mat_datasub.append(
+                functools.reduce(operator.iconcat, [[i] * param.group_size for i in file_mat_datasub_group[iz]], []))
     else:
-        file_mat_dwi = file_mat_dwi_group
+        file_mat_datasub = file_mat_datasub_group
 
     # Copy transformations to mat_final folder and rename them appropriately
     param.suffix_mat = '0GenericAffine.mat' if param.is_sagittal else 'Warp.nii.gz'
     copy_mat_files(nt, file_mat_b0, index_b0, mat_final, param)
-    copy_mat_files(nt, file_mat_dwi, index_moco, mat_final, param)
+    copy_mat_files(nt, file_mat_datasub, index_moco, mat_final, param)
 
     # Apply moco on all dmri data
     sct.printv('\n-------------------------------------------------------------------------------', param.verbose)
@@ -356,42 +366,37 @@ def moco_wrapper(param):
     im_dmri_moco.header = im_data.header
     im_dmri_moco.save(verbose=0)
 
-    # TODO: output im_dmri_moco.absolutepath
-    # Build output file name
-    fname_data_moco = os.path.join(file_data_dirname, file_data_basename + param.suffix + '.nii')
-    # return os.path.abspath(fname_data_moco)
-
-    # TODO: work on the thing below
     # generate b0_moco_mean and dwi_moco_mean
-    args = ['-i', fname_data_moco_tmp, '-bvec', 'bvecs.txt', '-a', '1', '-v', '0']
-    if not param.fname_bvals == '':
-        # if bvals file is provided
-        args += ['-bval', param.fname_bvals]
-    fname_b0, fname_b0_mean, fname_dwi, fname_dwi_mean = sct_dmri_separate_b0_and_dwi.main(args=args)
-
-    # come back
-    os.chdir(curdir)
+    if param.is_diffusion:
+        # TODO: work on the thing below
+        args = ['-i', im_dmri_moco.absolutepath, '-bvec', file_bvec, '-a', '1', '-v', '0']
+        if not param.fname_bvals == '':
+            # if bvals file is provided
+            args += ['-bval', param.fname_bvals]
+        fname_b0, fname_b0_mean, fname_dwi, fname_dwi_mean = sct_dmri_separate_b0_and_dwi.main(args=args)
 
     # Generate output files
-    fname_dmri_moco = os.path.join(path_out, file_data + param.suffix + ext_data)
+    fname_dmri_moco = os.path.join(curdir, param.path_out, sct.add_suffix(param.fname_data, param.suffix))
     fname_dmri_moco_b0_mean = sct.add_suffix(fname_dmri_moco, '_b0_mean')
     fname_dmri_moco_dwi_mean = sct.add_suffix(fname_dmri_moco, '_dwi_mean')
-    sct.create_folder(path_out)
     sct.printv('\nGenerate output files...', param.verbose)
-    sct.generate_output_file(fname_data_moco_tmp, fname_dmri_moco, param.verbose)
-    sct.generate_output_file(fname_b0_mean, fname_dmri_moco_b0_mean, param.verbose)
-    sct.generate_output_file(fname_dwi_mean, fname_dmri_moco_dwi_mean, param.verbose)
+    sct.generate_output_file(im_dmri_moco.absolutepath, fname_dmri_moco, 0)
+    sct.generate_output_file(fname_b0_mean, fname_dmri_moco_b0_mean, 0)
+    sct.generate_output_file(fname_dwi_mean, fname_dmri_moco_dwi_mean, 0)
 
     # Delete temporary files
     if param.remove_temp_files == 1:
         sct.printv('\nDelete temporary files...', param.verbose)
         sct.rmtree(path_tmp, verbose=param.verbose)
 
+    # come back to working directory
+    os.chdir(curdir)
+
     # display elapsed time
     elapsed_time = time.time() - start_time
     sct.printv('\nFinished! Elapsed time: ' + str(int(np.round(elapsed_time))) + 's', param.verbose)
 
-    sct.display_viewer_syntax([fname_dmri_moco, file_data], mode='ortho,ortho')
+    sct.display_viewer_syntax([os.path.join(param.path_out, sct.add_suffix(param.fname_data, param.suffix)), param.fname_data], mode='ortho,ortho')
 
 
 def moco(param):

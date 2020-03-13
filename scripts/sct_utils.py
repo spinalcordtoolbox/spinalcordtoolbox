@@ -716,6 +716,7 @@ def generate_output_file(fname_in, fname_out, squeeze_data=True, verbose=1):
     :param verbose:
     :return: fname_out
     """
+    # TODO: if output folder does not exist, make sure to create it
     # import stuff
     import shutil  # for moving files
     path_in, file_in, ext_in = extract_fname(fname_in)
