@@ -744,7 +744,7 @@ def generate_output_file(fname_in, fname_out, squeeze_data=True, verbose=1):
         else:
         '''
         from sct_convert import convert
-        convert(fname_in, fname_out, squeeze_data=squeeze_data)
+        convert(fname_in, fname_out, squeeze_data=squeeze_data, verbose=0)
     else:
         # Generate output file without changing the extension
         shutil.move(fname_in, fname_out)

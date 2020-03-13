@@ -25,13 +25,14 @@ import scipy.interpolate
 import time
 import functools
 import operator
+import csv
 
 from spinalcordtoolbox.image import Image
 
 import sct_utils as sct
 import sct_dmri_separate_b0_and_dwi
 from sct_convert import convert
-from sct_image import split_data, concat_data
+from sct_image import split_data, concat_data, multicomponent_split
 import sct_apply_transfo
 
 
@@ -132,6 +133,9 @@ def moco_wrapper(param):
     file_datasubgroup = 'datasub-groups.nii'  # concatenation of the average of each file_datasub
     file_bvec = 'bvecs.txt'
     file_mask = 'mask.nii'
+    file_moco_params_csv = 'moco_params.tsv'
+    file_moco_params_x = 'moco_params_x.nii.gz'
+    file_moco_params_y = 'moco_params_y.nii.gz'
     ext_data = '.nii.gz'  # workaround "too many open files" by slurping the data
     # TODO: check if .nii can be used
     mat_final = 'mat_final/'
@@ -166,8 +170,9 @@ def moco_wrapper(param):
         # Update field in param (because used later in another function, and param class will be passed)
         param.fname_mask = file_mask
 
-    # go to tmp folder
+    # Build absolute output path and go to tmp folder
     curdir = os.getcwd()
+    path_out_abs = os.path.abspath(param.path_out)
     os.chdir(path_tmp)
 
     # Get dimensions of data
@@ -364,7 +369,7 @@ def moco_wrapper(param):
     param_moco.path_out = ''  # TODO not used in moco()
     param_moco.mat_moco = mat_final
     param_moco.todo = 'apply'
-    _, im_dmri_moco = moco(param_moco)
+    file_mat_data, im_dmri_moco = moco(param_moco)  # TODO change variable name
 
     # copy geometric information from header
     # NB: this is required because WarpImageMultiTransform in 2D mode wrongly sets pixdim(3) to "1".
@@ -380,78 +385,71 @@ def moco_wrapper(param):
             args += ['-bval', param.fname_bvals]
         fname_b0, fname_b0_mean, fname_dwi, fname_dwi_mean = sct_dmri_separate_b0_and_dwi.main(args=args)
 
-    # TODO: implement the thing below
-    #
-    #     # Extract and output the motion parameters
-    #     if param.output_motion_param and not param.is_sagittal:
-    #         from sct_image import multicomponent_split
-    #         import csv
-    #         #files_warp = []
-    #         files_warp_X, files_warp_Y = [], []
-    #         moco_param = []
-    #         for fname_warp in file_mat[0]:
-    #             # Cropping the image to keep only one voxel in the XY plane
-    #             im_warp = Image(fname_warp + ext_mat)
-    #             im_warp.data = np.expand_dims(np.expand_dims(im_warp.data[0, 0, :, :, :], axis=0), axis=0)
-    #
-    #             # These three lines allow to generate one file instead of two, containing X, Y and Z moco parameters
-    #             #fname_warp_crop = fname_warp + '_crop_' + ext_mat
-    #             #files_warp.append(fname_warp_crop)
-    #             #im_warp.save(fname_warp_crop)
-    #
-    #             # Separating the three components and saving X and Y only (Z is equal to 0 by default).
-    #             im_warp_XYZ = multicomponent_split(im_warp)
-    #
-    #             fname_warp_crop_X = fname_warp + '_crop_X_' + ext_mat
-    #             im_warp_XYZ[0].save(fname_warp_crop_X)
-    #             files_warp_X.append(fname_warp_crop_X)
-    #
-    #             fname_warp_crop_Y = fname_warp + '_crop_Y_' + ext_mat
-    #             im_warp_XYZ[1].save(fname_warp_crop_Y)
-    #             files_warp_Y.append(fname_warp_crop_Y)
-    #
-    #             # Calculating the slice-wise average moco estimate to provide a QC file
-    #             moco_param.append([np.mean(np.ravel(im_warp_XYZ[0].data)), np.mean(np.ravel(im_warp_XYZ[1].data))])
-    #
-    #         # These two lines allow to generate one file instead of two, containing X, Y and Z moco parameters
-    #         #im_warp_concat = concat_data(files_warp, dim=3)
-    #         #im_warp_concat.save('fmri_moco_params.nii')
-    #
-    #         # Concatenating the moco parameters into a time series for X and Y components.
-    #         im_warp_concat = concat_data(files_warp_X, dim=3)
-    #         im_warp_concat.save('fmri_moco_params_X.nii')
-    #
-    #         im_warp_concat = concat_data(files_warp_Y, dim=3)
-    #         im_warp_concat.save('fmri_moco_params_Y.nii')
-    #
-    #         # Writing a TSV file with the slicewise average estimate of the moco parameters, as it is a useful QC
-    #         file.
-    #         with open('fmri_moco_params.tsv', 'wt') as out_file:
-    #             tsv_writer = csv.writer(out_file, delimiter='\t')
-    #             tsv_writer.writerow(['X', 'Y'])
-    #             for mocop in moco_param:
-    #                 tsv_writer.writerow([mocop[0], mocop[1]])
-    #
-    # # Generate output files
-    # fname_fmri_moco = os.path.join(path_out, file_data + param.suffix + ext_data)
-    # sct.create_folder(path_out)
-    # sct.printv('\nGenerate output files...', param.verbose)
-    # sct.generate_output_file(os.path.join(path_tmp, "fmri" + param.suffix + '.nii'), fname_fmri_moco, param.verbose)
-    # sct.generate_output_file(os.path.join(path_tmp, "fmri" + param.suffix + '_mean.nii'), os.path.join(path_out, file_data + param.suffix + '_mean' + ext_data), param.verbose)
-    # if os.path.exists(os.path.join(path_tmp, "fmri" + param.suffix + '_params_X.nii')):
-    #     sct.generate_output_file(os.path.join(path_tmp, "fmri" + param.suffix + '_params_X.nii'), os.path.join(path_out, file_data + param.suffix + '_params_X' + ext_data), squeeze_data=False, verbose=param.verbose)
-    #     sct.generate_output_file(os.path.join(path_tmp, "fmri" + param.suffix + '_params_Y.nii'), os.path.join(path_out, file_data + param.suffix + '_params_Y' + ext_data), squeeze_data=False, verbose=param.verbose)
-    #     shutil.copyfile(os.path.join(path_tmp, 'fmri_moco_params.tsv'), os.path.join(path_out + file_data + param.suffix + '_params.tsv'))
+    # Extract and output the motion parameters (doesn't work for sagittal orientation)
+    sct.printv('Extract motion parameters...')
+    if param.output_motion_param:
+        if param.is_sagittal:
+            sct.printv('Motion parameters cannot be generated for sagittal images.', 1, 'warning')
+        else:
+            files_warp_X, files_warp_Y = [], []
+            moco_param = []
+            for fname_warp in file_mat_data[0]:
+                # Cropping the image to keep only one voxel in the XY plane
+                im_warp = Image(fname_warp + param.suffix_mat)
+                im_warp.data = np.expand_dims(np.expand_dims(im_warp.data[0, 0, :, :, :], axis=0), axis=0)
+
+                # These three lines allow to generate one file instead of two, containing X, Y and Z moco parameters
+                #fname_warp_crop = fname_warp + '_crop_' + ext_mat
+                #files_warp.append(fname_warp_crop)
+                #im_warp.save(fname_warp_crop)
+
+                # Separating the three components and saving X and Y only (Z is equal to 0 by default).
+                im_warp_XYZ = multicomponent_split(im_warp)
+
+                fname_warp_crop_X = fname_warp + '_crop_X_' + param.suffix_mat
+                im_warp_XYZ[0].save(fname_warp_crop_X)
+                files_warp_X.append(fname_warp_crop_X)
+
+                fname_warp_crop_Y = fname_warp + '_crop_Y_' + param.suffix_mat
+                im_warp_XYZ[1].save(fname_warp_crop_Y)
+                files_warp_Y.append(fname_warp_crop_Y)
+
+                # Calculating the slice-wise average moco estimate to provide a QC file
+                moco_param.append([np.mean(np.ravel(im_warp_XYZ[0].data)), np.mean(np.ravel(im_warp_XYZ[1].data))])
+
+            # These two lines allow to generate one file instead of two, containing X, Y and Z moco parameters
+            #im_warp_concat = concat_data(files_warp, dim=3)
+            #im_warp_concat.save('fmri_moco_params.nii')
+
+            # Concatenating the moco parameters into a time series for X and Y components.
+            im_warp_concat = concat_data(files_warp_X, dim=3)
+            im_warp_concat.save(file_moco_params_x)
+
+            im_warp_concat = concat_data(files_warp_Y, dim=3)
+            im_warp_concat.save(file_moco_params_y)
+
+            # Writing a TSV file with the slicewise average estimate of the moco parameters. Useful for QC
+            with open(file_moco_params_csv, 'wt') as out_file:
+                tsv_writer = csv.writer(out_file, delimiter='\t')
+                tsv_writer.writerow(['X', 'Y'])
+                for mocop in moco_param:
+                    tsv_writer.writerow([mocop[0], mocop[1]])
 
     # Generate output files
     sct.printv('\nGenerate output files...', param.verbose)
-    fname_dmri_moco = os.path.join(curdir, param.path_out, sct.add_suffix(param.fname_data, param.suffix))
-    sct.generate_output_file(im_dmri_moco.absolutepath, fname_dmri_moco, 0)
+    fname_dmri_moco = os.path.join(path_out_abs, sct.add_suffix(param.fname_data, param.suffix))
+    sct.generate_output_file(im_dmri_moco.absolutepath, fname_dmri_moco)
     if param.is_diffusion:
         fname_dmri_moco_b0_mean = sct.add_suffix(fname_dmri_moco, '_b0_mean')
         fname_dmri_moco_dwi_mean = sct.add_suffix(fname_dmri_moco, '_dwi_mean')
-        sct.generate_output_file(fname_b0_mean, fname_dmri_moco_b0_mean, 0)
-        sct.generate_output_file(fname_dwi_mean, fname_dmri_moco_dwi_mean, 0)
+        sct.generate_output_file(fname_b0_mean, fname_dmri_moco_b0_mean)
+        sct.generate_output_file(fname_dwi_mean, fname_dmri_moco_dwi_mean)
+    if os.path.exists(file_moco_params_csv):
+        sct.generate_output_file(file_moco_params_x, os.path.join(path_out_abs, file_moco_params_x),
+                                 squeeze_data=False)
+        sct.generate_output_file(file_moco_params_y, os.path.join(path_out_abs, file_moco_params_y),
+                                 squeeze_data=False)
+        copyfile(file_moco_params_csv, os.path.join(path_out_abs, file_moco_params_csv))
 
     # Delete temporary files
     if param.remove_temp_files == 1:
