@@ -22,6 +22,7 @@ from tqdm import tqdm
 import numpy as np
 import math
 import scipy.interpolate
+import time
 
 import sct_utils as sct
 import sct_dmri_separate_b0_and_dwi
@@ -115,14 +116,49 @@ def copy_mat_files(nt, list_file_mat, index, folder_out, param):
 
 
 def moco_wrapper(param):
-    file_data = 'dmri.nii'  # TODO
+    """
+    Wrapper that performs motion correction.
+    :param param: ParamMoco class
+    :return: None
+    """
+    file_data = 'data.nii'  # corresponds to the full input data (e.g. dmri or fmri)
     file_data_dirname, file_data_basename, file_data_ext = sct.extract_fname(file_data)
     file_b0 = 'b0.nii'
-    file_dwi = 'dwi.nii'  # TODO: change for file4d
+    file_datasub = 'data-sub.nii'  # corresponds to the full input data minus the b=0 scans (if param.is_diffusion=True)
+    file_bvec = 'bvecs.txt'
+    file_mask = 'mask.nii'
     ext_data = '.nii.gz'  # workaround "too many open files" by slurping the data
     mat_final = 'mat_final/'
-    file_dwi_group = 'dwi_averaged_groups.nii'
-    ext_mat = 'Warp.nii.gz'  # warping field
+    file_group4d = 'dwi_averaged_groups.nii'
+    # ext_mat = 'Warp.nii.gz'  # warping field
+
+    # Start timer
+    start_time = time.time()
+
+    # Get full path
+    # param.fname_data = os.path.abspath(param.fname_data)
+    # param.fname_bvecs = os.path.abspath(param.fname_bvecs)
+    # if param.fname_bvals != '':
+    #     param.fname_bvals = os.path.abspath(param.fname_bvals)
+
+    # Extract path, file and extension
+    # path_data, file_data, ext_data = sct.extract_fname(param.fname_data)
+    # path_mask, file_mask, ext_mask = sct.extract_fname(param.fname_mask)
+
+    path_tmp = sct.tmp_create(basename="moco", verbose=param.verbose)
+
+    # Copying input data to tmp folder
+    sct.printv('\nCopying input data to tmp folder and convert to nii...', param.verbose)
+    convert(param.fname_data, os.path.join(path_tmp, file_data))
+    sct.copy(param.fname_bvecs, os.path.join(path_tmp, file_bvec), verbose=param.verbose)
+    if param.fname_mask != '':
+        sct.copy(param.fname_mask, os.path.join(path_tmp, file_mask), verbose=param.verbose)
+        # Update field in param (because used later in another function, and param class will be passed)
+        param.fname_mask = file_mask
+
+    # go to tmp folder
+    curdir = os.getcwd()
+    os.chdir(path_tmp)
 
     # Get dimensions of data
     sct.printv('\nGet dimensions of data...', param.verbose)
@@ -203,9 +239,9 @@ def moco_wrapper(param):
         nb_groups += 1
         group_indexes.append(index_moco[len(index_moco) - nb_remaining:len(index_moco)])
 
-    _, file_dwi_basename, file_dwi_ext = sct.extract_fname(file_dwi)
+    _, file_dwi_basename, file_dwi_ext = sct.extract_fname(file_datasub)
     # Group data
-    file_group_mean = []
+    list_file_group = []
     for iGroup in tqdm(range(nb_groups), unit='iter', unit_scale=False, desc="Merge within groups", ascii=False,
                        ncols=80):
         # get index
@@ -218,16 +254,16 @@ def moco_wrapper(param):
             im_dwi_list.append(im_data_split_list[index_moco_i[it]])
         im_dwi_out = concat_data(im_dwi_list, 3).save(file_dwi_merge_i, verbose=0)
         # Average across time
-        file_group_mean.append(os.path.join(file_dwi_basename + '_' + str(iGroup) + '_mean' + ext_data))
-        im_dwi_out.mean(dim=3).save(file_group_mean[-1])
+        list_file_group.append(os.path.join(file_dwi_basename + '_' + str(iGroup) + '_mean' + ext_data))
+        im_dwi_out.mean(dim=3).save(list_file_group[-1])
 
     # Merge DWI groups means
     sct.printv('\nMerge across groups...', param.verbose)
     # file_dwi_groups_means_merge = 'dwi_averaged_groups'
     im_dw_list = []
     for iGroup in range(nb_groups):
-        im_dw_list.append(file_group_mean[iGroup])
-    concat_data(im_dw_list, 3).save(file_dwi_group, verbose=0)
+        im_dw_list.append(list_file_group[iGroup])
+    concat_data(im_dw_list, 3).save(file_group4d, verbose=0)
 
     # Cleanup
     del im, im_data_split_list
@@ -260,12 +296,12 @@ def moco_wrapper(param):
         param_moco.mat_moco = 'mat_b0groups'
         file_mat_b0, im_b0_moco = moco(param_moco)
 
-    # Estimate moco on dwi groups
+    # Estimate moco across groups
     sct.printv('\n-------------------------------------------------------------------------------', param.verbose)
-    sct.printv('  Estimating motion on DW images...', param.verbose)
+    sct.printv('  Estimating motion across groups...', param.verbose)
     sct.printv('-------------------------------------------------------------------------------', param.verbose)
-    param_moco.file_data = file_dwi_group
-    param_moco.file_target = file_group_mean[0]  # target is the first DW image (closest to the first b=0)
+    param_moco.file_data = file_group4d
+    param_moco.file_target = list_file_group[0]  # target is the first DW image (closest to the first b=0)
     param_moco.path_out = ''
     param_moco.todo = 'estimate_and_apply'
     param_moco.mat_moco = 'mat_dwigroups'
@@ -307,7 +343,7 @@ def moco_wrapper(param):
     sct.printv('  Apply moco', param.verbose)
     sct.printv('-------------------------------------------------------------------------------', param.verbose)
     param_moco.file_data = file_data
-    param_moco.file_target = file_group_mean[0]  # reference for reslicing into proper coordinate system
+    param_moco.file_target = list_file_group[0]  # reference for reslicing into proper coordinate system
     param_moco.path_out = ''  # TODO not used in moco()
     param_moco.mat_moco = mat_final
     param_moco.todo = 'apply'
@@ -323,7 +359,39 @@ def moco_wrapper(param):
     # TODO: output im_dmri_moco.absolutepath
     # Build output file name
     fname_data_moco = os.path.join(file_data_dirname, file_data_basename + param.suffix + '.nii')
-    return os.path.abspath(fname_data_moco)
+    # return os.path.abspath(fname_data_moco)
+
+    # TODO: work on the thing below
+    # generate b0_moco_mean and dwi_moco_mean
+    args = ['-i', fname_data_moco_tmp, '-bvec', 'bvecs.txt', '-a', '1', '-v', '0']
+    if not param.fname_bvals == '':
+        # if bvals file is provided
+        args += ['-bval', param.fname_bvals]
+    fname_b0, fname_b0_mean, fname_dwi, fname_dwi_mean = sct_dmri_separate_b0_and_dwi.main(args=args)
+
+    # come back
+    os.chdir(curdir)
+
+    # Generate output files
+    fname_dmri_moco = os.path.join(path_out, file_data + param.suffix + ext_data)
+    fname_dmri_moco_b0_mean = sct.add_suffix(fname_dmri_moco, '_b0_mean')
+    fname_dmri_moco_dwi_mean = sct.add_suffix(fname_dmri_moco, '_dwi_mean')
+    sct.create_folder(path_out)
+    sct.printv('\nGenerate output files...', param.verbose)
+    sct.generate_output_file(fname_data_moco_tmp, fname_dmri_moco, param.verbose)
+    sct.generate_output_file(fname_b0_mean, fname_dmri_moco_b0_mean, param.verbose)
+    sct.generate_output_file(fname_dwi_mean, fname_dmri_moco_dwi_mean, param.verbose)
+
+    # Delete temporary files
+    if param.remove_temp_files == 1:
+        sct.printv('\nDelete temporary files...', param.verbose)
+        sct.rmtree(path_tmp, verbose=param.verbose)
+
+    # display elapsed time
+    elapsed_time = time.time() - start_time
+    sct.printv('\nFinished! Elapsed time: ' + str(int(np.round(elapsed_time))) + 's', param.verbose)
+
+    sct.display_viewer_syntax([fname_dmri_moco, file_data], mode='ortho,ortho')
 
 
 def moco(param):
