@@ -167,7 +167,7 @@ def moco_wrapper(param):
     if param.is_diffusion:
         sct.copy(param.fname_bvecs, os.path.join(path_tmp, file_bvec), verbose=param.verbose)
     if param.fname_mask != '':
-        sct.copy(param.fname_mask, os.path.join(path_tmp, file_mask), verbose=param.verbose)
+        convert(param.fname_mask, os.path.join(path_tmp, file_mask), verbose=param.verbose)
         # Update field in param (because used later in another function, and param class will be passed)
         param.fname_mask = file_mask
 
