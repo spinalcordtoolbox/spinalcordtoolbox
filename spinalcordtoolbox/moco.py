@@ -14,6 +14,7 @@
 
 from __future__ import absolute_import
 
+from copy import deepcopy
 import sys
 import os
 from shutil import copyfile
@@ -193,6 +194,9 @@ def moco_wrapper(param):
         param.is_sagittal = False
         sct.printv('WARNING: Orientation seems to be neither axial nor sagittal.')
 
+    # Set suffix of transformation file name (depends on orientation)
+    param.suffix_mat = '0GenericAffine.mat' if param.is_sagittal else 'Warp.nii.gz'
+
     # Adjust group size in case of sagittal scan
     if param.is_sagittal and param.group_size != 1:
         sct.printv('For sagittal data group_size should be one for more robustness. Forcing group_size=1.', 1,
@@ -288,7 +292,7 @@ def moco_wrapper(param):
     # ==================================================================================================================
 
     # Initialize another class instance that will be passed on to the moco() function
-    param_moco = param
+    param_moco = deepcopy(param)
 
     if param.is_diffusion:
         # Estimate moco on b0 groups
@@ -354,7 +358,6 @@ def moco_wrapper(param):
         file_mat_datasub = file_mat_datasub_group
 
     # Copy transformations to mat_final folder and rename them appropriately
-    param.suffix_mat = '0GenericAffine.mat' if param.is_sagittal else 'Warp.nii.gz'
     copy_mat_files(nt, file_mat_datasub, index_moco, mat_final, param)
     if param.is_diffusion:
         copy_mat_files(nt, file_mat_b0, index_b0, mat_final, param)
@@ -435,7 +438,7 @@ def moco_wrapper(param):
 
     # Generate output files
     sct.printv('\nGenerate output files...', param.verbose)
-    fname_dmri_moco = os.path.join(path_out_abs, sct.add_suffix(param.fname_data, param.suffix))
+    fname_dmri_moco = os.path.join(path_out_abs, sct.add_suffix(os.path.basename(param.fname_data), param.suffix))
     sct.generate_output_file(im_dmri_moco.absolutepath, fname_dmri_moco)
     if param.is_diffusion:
         fname_dmri_moco_b0_mean = sct.add_suffix(fname_dmri_moco, '_b0_mean')
@@ -462,7 +465,9 @@ def moco_wrapper(param):
     elapsed_time = time.time() - start_time
     sct.printv('\nFinished! Elapsed time: ' + str(int(np.round(elapsed_time))) + 's', param.verbose)
 
-    sct.display_viewer_syntax([os.path.join(param.path_out, sct.add_suffix(param.fname_data, param.suffix)), param.fname_data], mode='ortho,ortho')
+    sct.display_viewer_syntax(
+        [os.path.join(param.path_out, sct.add_suffix(os.path.basename(param.fname_data), param.suffix)),
+         param.fname_data], mode='ortho,ortho')
 
 
 def moco(param):
