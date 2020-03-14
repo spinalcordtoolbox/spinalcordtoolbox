@@ -343,7 +343,6 @@ def moco_wrapper(param):
     # ==================================================================================================================
 
     # If group_size>1, assign transformation to each individual ungrouped 3d volume
-    # TODO: make sure this code works if the initial number of images is not divisible by group_size
     if param.group_size > 1:
         file_mat_datasub = []
         for iz in range(len(file_mat_datasub_group)):
@@ -378,7 +377,6 @@ def moco_wrapper(param):
 
     # generate b0_moco_mean and dwi_moco_mean
     if param.is_diffusion:
-        # TODO: work on the thing below
         args = ['-i', im_dmri_moco.absolutepath, '-bvec', file_bvec, '-a', '1', '-v', '0']
         if not param.fname_bvals == '':
             # if bvals file is provided
