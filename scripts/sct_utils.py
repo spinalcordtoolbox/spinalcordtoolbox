@@ -21,6 +21,7 @@ import logging
 import shutil
 import subprocess
 import tempfile
+import pathlib
 
 import numpy as np
 
@@ -725,6 +726,8 @@ def generate_output_file(fname_in, fname_out, squeeze_data=True, verbose=1):
     # import stuff
     path_in, file_in, ext_in = extract_fname(fname_in)
     path_out, file_out, ext_out = extract_fname(fname_out)
+    # create output path (ignore if it already exists)
+    pathlib.Path(path_out).mkdir(parents=True, exist_ok=True)
     # if input image does not exist, give error
     if not os.path.isfile(fname_in):
         printv('  ERROR: File ' + fname_in + ' does not exist. Exit program.', 1, 'error')
