@@ -24,6 +24,9 @@ import tempfile
 
 import numpy as np
 
+from sct_convert import convert
+
+
 logger = logging.getLogger(__name__)
 
 if os.getenv('SENTRY_DSN', None):
@@ -710,7 +713,9 @@ def tmp_copy_nifti(fname, path_tmp, fname_out='data.nii', verbose=0):
 #=======================================================================================================================
 def generate_output_file(fname_in, fname_out, squeeze_data=True, verbose=1):
     """
-    Generate output file. Only works for images (e.g., nifti, nifti_gz)
+    Copy fname_in to fname_out with a few convenient checks: make sure input file exists, if fname_out exists send a
+    warning, if input and output NIFTI format are different (nii vs. nii.gz) convert by unzipping or zipping, and
+    display nice message at the end.
     :param fname_in:
     :param fname_out:
     :param verbose:
@@ -718,7 +723,6 @@ def generate_output_file(fname_in, fname_out, squeeze_data=True, verbose=1):
     """
     # TODO: if output folder does not exist, make sure to create it
     # import stuff
-    import shutil  # for moving files
     path_in, file_in, ext_in = extract_fname(fname_in)
     path_out, file_out, ext_out = extract_fname(fname_out)
     # if input image does not exist, give error
@@ -743,7 +747,6 @@ def generate_output_file(fname_in, fname_out, squeeze_data=True, verbose=1):
             os.rename(os.path.join(path_in, file_in + '.nii'), fname_out)
         else:
         '''
-        from sct_convert import convert
         convert(fname_in, fname_out, squeeze_data=squeeze_data, verbose=0)
     else:
         # Generate output file without changing the extension

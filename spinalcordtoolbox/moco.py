@@ -447,7 +447,8 @@ def moco_wrapper(param):
                                  squeeze_data=False)
         sct.generate_output_file(file_moco_params_y, os.path.join(path_out_abs, file_moco_params_y),
                                  squeeze_data=False)
-        copyfile(file_moco_params_csv, os.path.join(path_out_abs, file_moco_params_csv))
+        # TODO: modify generate_output_file to display message for file below
+        sct.generate_output_file(file_moco_params_csv, os.path.join(path_out_abs, file_moco_params_csv))
 
     # Delete temporary files
     if param.remove_temp_files == 1:
