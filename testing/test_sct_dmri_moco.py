@@ -28,15 +28,25 @@ def init(param_test):
 
     # initialization
     default_args = [
-        '-i dmri/dmri.nii.gz -bvec dmri/bvecs.txt -g 3 -x nn -r 0',
-        '-i dmri/dmri.nii.gz -bvec dmri/bvecs.txt -g 3 -m dmri/mask.nii -r 0',
-        '-i dmri/dmri_AIL_crop.nii -bvec dmri/bvecs.txt -x nn -r 0',
+        '-i dmri/dmri.nii.gz -bvec dmri/bvecs.txt -g 3 -x nn -ofolder dmri_test1 -r 0',
+        '-i dmri/dmri.nii.gz -bvec dmri/bvecs.txt -g 3 -m dmri/mask.nii -ofolder dmri_test2 -r 0',
+        '-i dmri/dmri_AIL_crop.nii -bvec dmri/bvecs.txt -x nn -ofolder dmri_test3 -r 0',
+        ]
+
+    # Output moco param files
+    param_test.file_mocoparam = [
+        'dmri_test1/moco_params.tsv',
+        'dmri_test2/moco_params.tsv',
+        None,
         ]
 
     # Ground truth value for integrity testing (corresponds to X motion parameters column)
     param_test.groundtruth = [
         [-0.02831688588348093, 0.010687867678295859, 0.010687867678295859, 0.010687867678295859, -0.09037059326262416,
          -0.09037059326262416, -0.09037059326262416],
+        [0.01895501218220765, 0.013237532481722523, 0.013237532481722523, 0.013237532481722523, -0.051536337647226205,
+         -0.051536337647226205, -0.051536337647226205],
+        None,
         ]
 
     # assign default params
@@ -53,16 +63,18 @@ def test_integrity(param_test):
     index_args = param_test.default_args.index(param_test.args)
 
     # Open motion parameters and compare with ground truth
-    df = read_csv("moco_params.tsv", sep="\t")
-    lresults = list(df['X'][:])
-    lgroundtruth = param_test.groundtruth[index_args]
-    if allclose(lresults, lgroundtruth):
-        param_test.output += "\n--> PASSED"
-    else:
-        param_test.output += "\nMotion parameters do not match: " \
-                             "  results: {}" \
-                             "  ground truth: {}".format(lresults, lgroundtruth)
-        param_test.status = 99
-        param_test.output += "\n--> FAILED"
+    # NB: We skip the test for sagittal images (*_AIL) because there is no output moco params
+    if param_test.file_mocoparam[index_args] is not None:
+        df = read_csv(param_test.file_mocoparam[index_args], sep="\t")
+        lresults = list(df['X'][:])
+        lgroundtruth = param_test.groundtruth[index_args]
+        if allclose(lresults, lgroundtruth):
+            param_test.output += "\n--> PASSED"
+        else:
+            param_test.output += "\nMotion parameters do not match: " \
+                                 "  results: {}" \
+                                 "  ground truth: {}".format(lresults, lgroundtruth)
+            param_test.status = 99
+            param_test.output += "\n--> FAILED"
 
     return param_test
