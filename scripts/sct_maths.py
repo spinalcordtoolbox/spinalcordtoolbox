@@ -286,7 +286,7 @@ def main(args=None):
         if len(sigmas) == 1:
             sigmas = [sigmas for i in range(len(data.shape))]
         elif len(sigmas) != len(data.shape):
-            printv(parser.usage.generate(error='ERROR: -laplacian need the same number of inputs as the number of image dimension OR only one input'))
+            printv(parser.error('ERROR: -laplacian need the same number of inputs as the number of image dimension OR only one input'))
         # adjust sigma based on voxel size
         sigmas = [sigmas[i] / dim[i + 4] for i in range(3)]
         # smooth data
@@ -329,7 +329,7 @@ def main(args=None):
         if len(sigmas) == 1:
             sigmas = [sigmas[0] for i in range(len(data.shape))]
         elif len(sigmas) != len(data.shape):
-            printv(parser.usage.generate(error='ERROR: -smooth need the same number of inputs as the number of image dimension OR only one input'))
+            printv(parser.error('ERROR: -smooth need the same number of inputs as the number of image dimension OR only one input'))
         # adjust sigma based on voxel size
         sigmas = [sigmas[i] / dim[i + 4] for i in range(3)]
         # smooth data
@@ -377,7 +377,7 @@ def main(args=None):
     # if no flag is set
     else:
         data_out = None
-        printv(parser.usage.generate(error='ERROR: you need to specify an operation to do on the input image'))
+        printv(parser.error('ERROR: you need to specify an operation to do on the input image'))
 
     if data_out is not None:
         # Write output

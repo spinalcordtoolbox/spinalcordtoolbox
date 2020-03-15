@@ -1,10 +1,13 @@
 #!/bin/bash
 # Environment variables for use with sct_run_batch
+#
+# Copy this file in your working directory (where outputs will be generated)
+# and rename it as: parameters.sh
 
-# Set every other path relative to this path for convenience
-# Do not add "/" at the end. Path should be absolute (i.e. do not use "~")
-# Example:
-export PATH_PARENT="/Users/julien/sct_course-beijing19/multi_subject"
+# Fetch the path of the parameters.sh file and use it as the parent path for
+# all the other outputs.
+# WE RECOMMEND YOU DO NOT CHANGE THE LINE BELOW
+export PATH_PARENT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 # Path to the folder containing the BIDS dataset.
 # Do not add "/" at the end. Path should be absolute (i.e. do not use "~")
