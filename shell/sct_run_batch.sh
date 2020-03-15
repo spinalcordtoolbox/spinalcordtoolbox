@@ -58,7 +58,7 @@ command_open() {
 # =============================================================================
 
 # Check number of input params
-if [ "$#" -ne 2 ]; then
+if [ "$#" -ne 2 -a "$#" -ne 3 ]; then
     echo "Wrong number of input parameters. Correct usage is: ./run_process.sh <parameters> <script>"
     exit 1
 fi
@@ -95,7 +95,8 @@ else
 fi
 
 # Run processing with or without "GNU parallel", depending if it is installed or not
-if [ -x "$(command -v parallel)" ]; then
+# optional use if flag -p is used
+if [ -x "$(command -v parallel)" -a "$3" = "-p"]; then
   echo 'GNU parallel is installed! Processing subjects in parallel using multiple cores.' >&2
   for path_subject in ${list_path_subject[@]}; do
     subject=`basename $path_subject`
@@ -103,7 +104,7 @@ if [ -x "$(command -v parallel)" ]; then
   done \
   | parallel -j ${JOBS} --halt-on-error soon,fail=1 bash -c "{}"
 else
-  echo 'GNU parallel is not installed. Processing subjects sequentially.' >&2
+  echo 'GNU parallel is not installed or not flagged. Processing subjects sequentially.' >&2
   for path_subject in ${list_path_subject[@]}; do
     subject=`basename $path_subject`
     ${PATH_SCRIPT}/_run_with_log.sh $task $subject $fileparam
