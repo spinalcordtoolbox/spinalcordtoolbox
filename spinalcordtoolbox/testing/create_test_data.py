@@ -14,22 +14,22 @@ from spinalcordtoolbox.resampling import resample_nib
 DEBUG = False  # Save img_sub
 
 
-def dummy_blob(size_arr=(9, 9, 9), pixdim=(1, 1, 1), debug=False):
+def dummy_blob(size_arr=(9, 9, 9), pixdim=(1, 1, 1), coordvox=None, debug=False):
     # nx, ny, nz = size_arr
     data = np.zeros(size_arr)
-    # Add point in the middle
-    data[[round(i / 2) for i in size_arr]] = 1
+    # if not specified, voxel coordinate is set at the middle of the volume
+    if coordvox is None:
+        coordvox = tuple([round(i / 2) for i in size_arr])
+    # Add non-null voxel at specified coordinates
+    data[coordvox] = 1
     # Create image with default orientation LPI
     affine = np.eye(4)
     affine[0:3, 0:3] = affine[0:3, 0:3] * pixdim
     nii = nib.nifti1.Nifti1Image(data, affine)
     img = Image(data, hdr=nii.header, dim=nii.header.get_data_shape())
-    # Update orientation
-    img.change_orientation(orientation)
-    img_sub.change_orientation(orientation)
     if debug:
-        img_sub.save('tmp_dummy_seg_'+datetime.now().strftime("%Y%m%d%H%M%S%f")+'.nii.gz')
-    return img, img_sub, arr_ctl
+        img.save('tmp_dummy_im_'+datetime.now().strftime("%Y%m%d%H%M%S%f")+'.nii.gz')
+    return img
 
 
 def dummy_centerline(size_arr=(9, 9, 9), pixdim=(1, 1, 1), subsampling=1, dilate_ctl=0, hasnan=False, zeroslice=[],

@@ -9,6 +9,7 @@ import os
 import pytest
 import math
 import numpy as np
+from skimage.morphology import erosion, dilation, disk, ball, square, cube
 
 from spinalcordtoolbox.utils import __sct_dir__
 sys.path.append(os.path.join(__sct_dir__, 'scripts'))
@@ -24,11 +25,29 @@ DEBUG = False  # Set to True to save images
 # Generate a list of dummy images with single pixel in the middle
 list_im = [
     # test area
-    (dummy_blob(size_arr=(9, 9, 9), debug=DEBUG)),
+    (dummy_blob(size_arr=(9, 9, 9), coordvox=(4, 4, 4), debug=DEBUG)),
     ]
 
 # noinspection 801,PyShadowingNames
 @pytest.mark.parametrize('im', list_im)
 def test_dilate(im):
-    data_dil = math.dilate(im.data, radius=3, shape='disk', dim=0)
-    a=1
+    # cube (only asserting along one dimension for convenience)
+    data_dil = math.dilate(im.data, size=1, shape='cube')
+    assert np.array_equal(data_dil[4, 2:7, 4], np.array([0, 0, 1, 0, 0]))
+    data_dil = math.dilate(im.data, size=2, shape='cube')
+    assert np.array_equal(data_dil[4, 2:7, 4], np.array([0, 1, 1, 0, 0]))
+    data_dil = math.dilate(im.data, size=3, shape='cube')
+    assert np.array_equal(data_dil[4, 2:7, 4], np.array([0, 1, 1, 1, 0]))
+
+    # cube (only asserting along one dimension for convenience)
+    data_dil = math.dilate(im.data, size=0, shape='ball')
+    assert np.array_equal(data_dil[4, 2:7, 4], np.array([0, 0, 1, 0, 0]))
+    data_dil = math.dilate(im.data, size=1, shape='ball')
+    assert np.array_equal(data_dil[4, 2:7, 4], np.array([0, 1, 1, 1, 0]))
+    data_dil = math.dilate(im.data, size=2, shape='ball')
+    assert np.array_equal(data_dil[4, 2:7, 4], np.array([1, 1, 1, 1, 1]))
+
+    # square in xy plane
+    # data_dil = math.dilate(im.data, size=1, shape='disk', dim=0)
+
+    # assert np.array_equal(data_dil[4, 2:7, 4], np.array([0, 0, 1, 0, 0]))

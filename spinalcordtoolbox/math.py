@@ -13,11 +13,12 @@ from skimage.morphology import erosion, dilation, disk, ball, square, cube
 logger = logging.getLogger(__name__)
 
 
-def dilate(data, radius, shape, dim=None):
+def dilate(data, size, shape, dim=None):
     """
     Dilate data using ball structuring element
     :param data: numpy array: 2d or 3d array
-    :param radius: int: Radius of the structuring element. If 0, the convolution has no effect.
+    :param size: int: If shape={'square', 'cube'}: Corresponds to the length of an edge (size=1 has no effect).
+    If shape={'disk', 'ball'}: Corresponds to the radius, not including the center element (size=0 has no effect).
     :param shape: {'square', 'cube', 'disk', 'ball'}
     :param dim: {0, 1, 2}: Dimension of the array which 2D structural element will be orthogonal to. For example, if
     you wish to apply a 2D disk kernel in the X-Y plane, leaving Z unaffected, parameters will be: shape=disk, dim=2.
@@ -25,10 +26,9 @@ def dilate(data, radius, shape, dim=None):
     """
     # TODO: make a build_selem(radius, shape) function called here
     # TODO: enable custom selem
-    shape = 'ball'
     # Create structuring element of desired shape and radius
     # Note: the trick here is to use the variable shape as the skimage.morphology function itself
-    selem = globals()[shape](radius)
+    selem = globals()[shape](size)
     # else:
     #     # define structured element as a box with input dimensions
     #     selem = np.ones((radius[0], radius[1], radius[2]), dtype=np.dtype)
