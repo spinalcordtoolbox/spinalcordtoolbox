@@ -13,10 +13,11 @@ from skimage.morphology import erosion, dilation, disk, ball, square, cube
 logger = logging.getLogger(__name__)
 
 
-def dilate(data, size, shape, dim=None):
+def morphomath(data, filter, size, shape, dim=None):
     """
     Dilate data using ball structuring element
     :param data: numpy array: 2d or 3d array
+    :param filter: {'dilation', 'erosion'}: Type of filter to apply
     :param size: int: If shape={'square', 'cube'}: Corresponds to the length of an edge (size=1 has no effect).
     If shape={'disk', 'ball'}: Corresponds to the radius, not including the center element (size=0 has no effect).
     :param shape: {'square', 'cube', 'disk', 'ball'}
@@ -42,23 +43,5 @@ def dilate(data, size, shape, dim=None):
         else:
             raise ValueError("dim can only take values: {0, 1, 2}")
         selem = selem3d
-    # else:
-    #     # define structured element as a box with input dimensions
-    #     selem = np.ones((radius[0], radius[1], radius[2]), dtype=np.dtype)
-    return dilation(data, selem=selem, out=None)
-
-
-def erode(data, radius):
-    """
-    Erode data using ball structuring element
-    :param data: 2d or 3d array
-    :param radius: radius of structuring element
-    :return: data eroded
-    """
-    if len(radius) == 1:
-        # define structured element as a ball
-        selem = ball(radius[0])
-    else:
-        # define structured element as a box with input dimensions
-        selem = np.ones((radius[0], radius[1], radius[2]), dtype=np.dtype)
-    return erosion(data, selem=selem, out=None)
+    # Applies the specified filter by running skimage.morphology command
+    return globals()[filter](data, selem=selem, out=None)
