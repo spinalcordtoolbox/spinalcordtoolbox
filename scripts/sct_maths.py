@@ -356,7 +356,7 @@ def main(args=None):
                                       dim=arguments.dim)
 
     elif arguments.erode is not None:
-        data_out = sctmath.morphomath(data, filter='erosion', size=arguments.dilate, shape=arguments.shape,
+        data_out = sctmath.morphomath(data, filter='erosion', size=arguments.erode, shape=arguments.shape,
                                       dim=arguments.dim)
 
     elif arguments.denoise is not None:
