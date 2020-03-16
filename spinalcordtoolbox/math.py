@@ -35,9 +35,9 @@ def morphomath(data, filter, size, shape, dim=None):
         selem3d = np.zeros([selem.shape[0]]*3)  # Note: selem.shape[0] and selem.shape[1] are supposed to be the same
         imid = np.floor(selem.shape[0] / 2).astype(int)
         if dim == 0:
-            selem3d[:, imid, imid] = selem
+            selem3d[imid, :, :] = selem
         elif dim == 1:
-            selem3d[imid, :, imid] = selem
+            selem3d[:, imid, :] = selem
         elif dim == 2:
             selem3d[:, :, imid] = selem
         else:
