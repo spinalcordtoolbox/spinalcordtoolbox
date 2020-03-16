@@ -30,23 +30,25 @@ list_im = [
 
 # noinspection 801,PyShadowingNames
 @pytest.mark.parametrize('im', list_im)
-def test_dilate(im):
+def test_morphomath(im):
     # cube (only asserting along one dimension for convenience)
-    data_dil = math.dilate(im.data, size=1, shape='cube')
+    data_dil = math.morphomath(im.data, filter='dilation', size=1, shape='cube')
     assert np.array_equal(data_dil[4, 2:7, 4], np.array([0, 0, 1, 0, 0]))
-    data_dil = math.dilate(im.data, size=2, shape='cube')
+    data_dil = math.morphomath(im.data, filter='dilation', size=2, shape='cube')
     assert np.array_equal(data_dil[4, 2:7, 4], np.array([0, 1, 1, 0, 0]))
-    data_dil = math.dilate(im.data, size=3, shape='cube')
+    data_dil = math.morphomath(im.data, filter='dilation', size=3, shape='cube')
     assert np.array_equal(data_dil[4, 2:7, 4], np.array([0, 1, 1, 1, 0]))
 
     # cube (only asserting along one dimension for convenience)
-    data_dil = math.dilate(im.data, size=0, shape='ball')
+    data_dil = math.morphomath(im.data, filter='dilation', size=0, shape='ball')
     assert np.array_equal(data_dil[4, 2:7, 4], np.array([0, 0, 1, 0, 0]))
-    data_dil = math.dilate(im.data, size=1, shape='ball')
+    data_dil = math.morphomath(im.data, filter='dilation', size=1, shape='ball')
     assert np.array_equal(data_dil[4, 2:7, 4], np.array([0, 1, 1, 1, 0]))
-    data_dil = math.dilate(im.data, size=2, shape='ball')
+    data_dil = math.morphomath(im.data, filter='dilation', size=2, shape='ball')
     assert np.array_equal(data_dil[4, 2:7, 4], np.array([1, 1, 1, 1, 1]))
 
     # square in xy plane
-    data_dil = math.dilate(im.data, size=1, shape='disk', dim=2)
+    data_dil = math.morphomath(im.data, filter='dilation', size=1, shape='disk', dim=1)
+    assert np.array_equal(data_dil[4, 2:7, 4], np.array([0, 1, 1, 1, 0]))
+    data_dil = math.morphomath(im.data, filter='dilation', size=1, shape='disk', dim=2)
     assert np.array_equal(data_dil[4, 2:7, 4], np.array([0, 1, 1, 1, 0]))
