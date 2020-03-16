@@ -16,7 +16,7 @@ DEBUG = False  # Save img_sub
 
 def dummy_blob(size_arr=(9, 9, 9), pixdim=(1, 1, 1), coordvox=None, debug=False):
     # nx, ny, nz = size_arr
-    data = np.zeros(size_arr)
+    data = np.zeros(size_arr, dtype=np.uint8)
     # if not specified, voxel coordinate is set at the middle of the volume
     if coordvox is None:
         coordvox = tuple([round(i / 2) for i in size_arr])
