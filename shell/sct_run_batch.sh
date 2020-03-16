@@ -52,26 +52,65 @@ command_open() {
     OPEN_CMD="xdg-open"
   fi
 }
+# Check if GNU parallel if the flag -p is used
+check_GNU_parallel() {
+  if [ -x "$(command -v parallel)" ]; then
+    echo 'GNU parallel is installed! Processing subjects in parallel using multiple cores.' >&2
+    par='true'
+  else
+    echo 'GNU parallel is not installed.' >&2
+    par='false'
+    while true; do
+        read -p "Do you wish to continue processing subjects sequentially [y/n]?" yn
+        case $yn in
+            [Yy]* ) break;;
+            [Nn]* ) exit;;
+            * ) echo "Please answer yes or no.";;
+        esac
+    done
+  fi
+}
+
+# Usage of this script
+usage() {
+  echo -e "Correct usage ./sct_run_batch.sh <parameters.sh> <process_data.sh> [-p]"
+  echo -e "-p  Uses GNU-parallel if installed"
+  echo -e "-h  Help"
+  exit 99
+}
+
 
 
 # Script starts here
 # =============================================================================
 
-# Check number of input params
+# check number of input parameters
 if [ "$#" -ne 2 -a "$#" -ne 3 ]; then
-    echo "Wrong number of input parameters. Correct usage is: ./run_process.sh <parameters> <script>"
-    exit 1
-fi
+    echo "Wrong number of input parameters."
+    usage
+ fi
+
+par='false'
+while getopts "ph" opt "$3"; do
+  case $opt in
+    p)  check_GNU_parallel; break;;
+    h)  echo "help instruction:"; usage; exit 99;;
+    *)  echo "incorrect flag entered:"; usage;;
+  esac
+done
+
 
 # Initialization
 PATH_SCRIPT="$( cd "$(dirname "$0")" ; pwd -P )"
+echo $PATH_SCRIPT
 time_start=$(date +%x_%r)
 
-source $1
 
 # Check existence of input files
 check_file_exist $1
 check_file_exist $2
+
+source $1
 
 # Get absolute paths
 fileparam="$(cd "$(dirname "$1")"; pwd)/$(basename "$1")"
@@ -94,17 +133,15 @@ else
   list_path_subject=( "${ONLY_PROCESS_THESE_SUBJECTS[@]/#/${PATH_DATA}/}" )
 fi
 
+
 # Run processing with or without "GNU parallel", depending if it is installed or not
-# optional use if flag -p is used
-if [ -x "$(command -v parallel)" -a "$3" = "-p"]; then
-  echo 'GNU parallel is installed! Processing subjects in parallel using multiple cores.' >&2
+if [[ $par == 'true' ]]; then
   for path_subject in ${list_path_subject[@]}; do
     subject=`basename $path_subject`
     echo "${PATH_SCRIPT}/_run_with_log.sh $task $subject $fileparam"
   done \
   | parallel -j ${JOBS} --halt-on-error soon,fail=1 bash -c "{}"
 else
-  echo 'GNU parallel is not installed or not flagged. Processing subjects sequentially.' >&2
   for path_subject in ${list_path_subject[@]}; do
     subject=`basename $path_subject`
     ${PATH_SCRIPT}/_run_with_log.sh $task $subject $fileparam
