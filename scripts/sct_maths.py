@@ -140,18 +140,33 @@ def get_parser():
     mathematical = parser.add_argument_group("MATHEMATICAL MORPHOLOGY")
     mathematical.add_argument(
         '-dilate',
-        metavar='',
-        help='Dilate binary image. If only one input is given, structured element is a ball with input radius (in '
-             'voxel). If comma-separated inputs are given (Example: 2,4,5 ), structured element is a box with input '
-             'dimensions.',
+        type=int,
+        metavar=Metavar.int,
+        help="Dilate binary image with specified size. If shape={'square', 'cube'}: size corresponds to the length of "
+             "an edge (size=1 has no effect). If shape={'disk', 'ball'}: size corresponds to the radius, not including "
+             "the center element (size=0 has no effect).",
         required=False)
     mathematical.add_argument(
         '-erode',
-        metavar='',
-        help='Erode binary image. If only one input is given, structured element is a ball with input radius (in '
-             'voxel). If comma-separated inputs are given (Example: 2,4,5), structured element is a box with input '
-             'dimensions.',
+        type=int,
+        metavar=Metavar.int,
+        help="Erode binary image with specified size. If shape={'square', 'cube'}: size corresponds to the length of "
+             "an edge (size=1 has no effect). If shape={'disk', 'ball'}: size corresponds to the radius, not including "
+             "the center element (size=0 has no effect).",
         required=False)
+    mathematical.add_argument(
+        '-shape',
+        help="Shape of the structuring element for the mathematical morphology operation.",
+        required=False,
+        choices=('square', 'cube', 'disk', 'ball'))
+    mathematical.add_argument(
+        '-dim',
+        type=int,
+        metavar=Metavar.int,
+        help="Dimension of the array which 2D structural element will be orthogonal to. For example, if you wish to "
+             "apply a 2D disk kernel in the X-Y plane, leaving Z unaffected, parameters will be: shape=disk, dim=2.",
+        required=False,
+        choices=(0, 1, 2))
 
     filtering = parser.add_argument_group("FILTERING METHODS")
     filtering.add_argument(
