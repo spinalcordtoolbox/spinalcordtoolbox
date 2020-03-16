@@ -75,6 +75,7 @@ check_GNU_parallel() {
 usage() {
   echo -e "Correct usage ./sct_run_batch.sh <parameters.sh> <process_data.sh> [-p]"
   echo -e "-p  Uses GNU-parallel if installed"
+  echo -e "-s  processing subjects sequentially"
   echo -e "-h  Help"
   exit 99
 }
@@ -91,11 +92,12 @@ if [ "$#" -ne 2 -a "$#" -ne 3 ]; then
  fi
 
 # getopts processes flag input parmaeters
-par='false'
-while getopts "ph" opt "$3"; do
+par='true'
+while getopts "psh" opt "$3"; do
   case $opt in
-    p)  check_GNU_parallel; break;;
-    h)  echo "help instruction:"; usage; exit 99;;
+    p)  check_GNU_parallel;;
+    s)  par='false';;
+    h)  echo "help instruction:"; usage;;
     *)  echo "incorrect flag entered:"; usage;;
   esac
 done
@@ -136,7 +138,7 @@ fi
 
 
 # Run processing with or without "GNU parallel", depending if it is flagged and installed or not
-if [[ $par == 'true' ]]; then
+if [ -x "$(command -v parallel)" ] && [[ $par == 'true' ]]; then
   for path_subject in ${list_path_subject[@]}; do
     subject=`basename $path_subject`
     echo "${PATH_SCRIPT}/_run_with_log.sh $task $subject $fileparam"
