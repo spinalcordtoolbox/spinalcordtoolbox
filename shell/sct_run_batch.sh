@@ -52,29 +52,10 @@ command_open() {
     OPEN_CMD="xdg-open"
   fi
 }
-# Check if GNU parallel if the flag -p is used
-check_GNU_parallel() {
-  if [ -x "$(command -v parallel)" ]; then
-    echo 'GNU parallel is installed! Processing subjects in parallel using multiple cores.' >&2
-    par='true'
-  else
-    echo 'GNU parallel is not installed.' >&2
-    par='false'
-    while true; do
-        read -p "Do you wish to continue processing subjects sequentially [y/n]?" yn
-        case $yn in
-            [Yy]* ) break;;
-            [Nn]* ) exit;;
-            * ) echo "Please answer yes or no.";;
-        esac
-    done
-  fi
-}
 
 # Usage of this script
 usage() {
-  echo -e "Correct usage ./sct_run_batch.sh <parameters.sh> <process_data.sh> [-p]"
-  echo -e "-p  Uses GNU-parallel if installed"
+  echo -e "Correct usage ./sct_run_batch.sh <parameters.sh> <process_data.sh>"
   echo -e "-s  processing subjects sequentially"
   echo -e "-h  Help"
   exit 99
@@ -92,11 +73,10 @@ if [ "$#" -ne 2 -a "$#" -ne 3 ]; then
  fi
 
 # getopts processes flag input parmaeters
-par='true'
+par=true
 while getopts "psh" opt "$3"; do
   case $opt in
-    p)  check_GNU_parallel;;
-    s)  par='false';;
+    s)  par=false;;
     h)  echo "help instruction:"; usage;;
     *)  echo "incorrect flag entered:"; usage;;
   esac
@@ -138,7 +118,7 @@ fi
 
 
 # Run processing with or without "GNU parallel", depending if it is flagged and installed or not
-if [ -x "$(command -v parallel)" ] && [[ $par == 'true' ]]; then
+if [ -x "$(command -v parallel)" ] && $par; then
   for path_subject in ${list_path_subject[@]}; do
     subject=`basename $path_subject`
     echo "${PATH_SCRIPT}/_run_with_log.sh $task $subject $fileparam"
