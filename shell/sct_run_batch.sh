@@ -55,8 +55,13 @@ command_open() {
 
 # Usage of this script
 usage() {
+  echo -e "This function runs a batch script across multiple subjects that are
+  present in a source folder (as defined in the file parameters.sh). If
+  GNU parallel is installed, it will used by distributing subjects across the
+  available CPU cores. For more information about the file parameters.sh,
+  see the example file: $SCT_DIR/shell/parameters_example.sh."
   echo -e "Correct usage ./sct_run_batch.sh <parameters.sh> <process_data.sh>"
-  echo -e "-s  processing subjects sequentially"
+  echo -e "-s  processing subjects sequentially, without parallel processing."
   echo -e "-h  Help"
   exit 99
 }
@@ -73,10 +78,10 @@ if [ "$#" -ne 2 -a "$#" -ne 3 ]; then
  fi
 
 # getopts processes flag input parmaeters
-par=true
-while getopts "psh" opt "$3"; do
+use_parallel=true
+while getopts "sh" opt "$3"; do
   case $opt in
-    s)  par=false;;
+    s)  use_parallel=false;;
     h)  echo "help instruction:"; usage;;
     *)  echo "incorrect flag entered:"; usage;;
   esac
@@ -118,13 +123,16 @@ fi
 
 
 # Run processing with or without "GNU parallel", depending if it is flagged and installed or not
-if [ -x "$(command -v parallel)" ] && $par; then
+if [ -x "$(command -v parallel)" ] && $use_parallel; then
+  echo "GNU parallel is installed! Processing subjects in parallel"
   for path_subject in ${list_path_subject[@]}; do
     subject=`basename $path_subject`
     echo "${PATH_SCRIPT}/_run_with_log.sh $task $subject $fileparam"
   done \
   | parallel -j ${JOBS} --halt-on-error soon,fail=1 bash -c "{}"
 else
+  echo "GNU parallel is not installed or flag -s has been used!
+   Processing subjects sequentially"
   for path_subject in ${list_path_subject[@]}; do
     subject=`basename $path_subject`
     ${PATH_SCRIPT}/_run_with_log.sh $task $subject $fileparam
