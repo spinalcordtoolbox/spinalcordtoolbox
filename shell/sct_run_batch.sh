@@ -90,6 +90,7 @@ if [ "$#" -ne 2 -a "$#" -ne 3 ]; then
     usage
  fi
 
+# getopts processes flag input parmaeters
 par='false'
 while getopts "ph" opt "$3"; do
   case $opt in
@@ -134,7 +135,7 @@ else
 fi
 
 
-# Run processing with or without "GNU parallel", depending if it is installed or not
+# Run processing with or without "GNU parallel", depending if it is flagged and installed or not
 if [[ $par == 'true' ]]; then
   for path_subject in ${list_path_subject[@]}; do
     subject=`basename $path_subject`
