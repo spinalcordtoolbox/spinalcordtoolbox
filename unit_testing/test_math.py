@@ -48,6 +48,5 @@ def test_dilate(im):
     assert np.array_equal(data_dil[4, 2:7, 4], np.array([1, 1, 1, 1, 1]))
 
     # square in xy plane
-    # data_dil = math.dilate(im.data, size=1, shape='disk', dim=0)
-
-    # assert np.array_equal(data_dil[4, 2:7, 4], np.array([0, 0, 1, 0, 0]))
+    data_dil = math.dilate(im.data, size=1, shape='disk', dim=2)
+    assert np.array_equal(data_dil[4, 2:7, 4], np.array([0, 1, 1, 1, 0]))

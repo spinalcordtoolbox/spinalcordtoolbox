@@ -29,6 +29,19 @@ def dilate(data, size, shape, dim=None):
     # Create structuring element of desired shape and radius
     # Note: the trick here is to use the variable shape as the skimage.morphology function itself
     selem = globals()[shape](size)
+    # If 2d kernel, replicate it along the specified dimension
+    if len(selem.shape) == 2:
+        selem3d = np.zeros([selem.shape[0]]*3)  # Note: selem.shape[0] and selem.shape[1] are supposed to be the same
+        imid = np.floor(selem.shape[0] / 2).astype(int)
+        if dim == 0:
+            selem3d[:, imid, imid] = selem
+        elif dim == 1:
+            selem3d[imid, :, imid] = selem
+        elif dim == 2:
+            selem3d[:, :, imid] = selem
+        else:
+            raise ValueError("dim can only take values: {0, 1, 2}")
+        selem = selem3d
     # else:
     #     # define structured element as a box with input dimensions
     #     selem = np.ones((radius[0], radius[1], radius[2]), dtype=np.dtype)
