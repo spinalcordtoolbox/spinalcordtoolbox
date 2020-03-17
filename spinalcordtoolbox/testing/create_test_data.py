@@ -14,7 +14,7 @@ from spinalcordtoolbox.resampling import resample_nib
 DEBUG = False  # Save img_sub
 
 
-def dummy_blob(size_arr=(9, 9, 9), pixdim=(1, 1, 1), coordvox=None, debug=False):
+def dummy_blob(size_arr=(9, 9, 9), pixdim=(1, 1, 1), coordvox=None):
     # nx, ny, nz = size_arr
     data = np.zeros(size_arr, dtype=np.uint8)
     # if not specified, voxel coordinate is set at the middle of the volume
@@ -27,8 +27,6 @@ def dummy_blob(size_arr=(9, 9, 9), pixdim=(1, 1, 1), coordvox=None, debug=False)
     affine[0:3, 0:3] = affine[0:3, 0:3] * pixdim
     nii = nib.nifti1.Nifti1Image(data, affine)
     img = Image(data, hdr=nii.header, dim=nii.header.get_data_shape())
-    if debug:
-        img.save('tmp_dummy_im_'+datetime.now().strftime("%Y%m%d%H%M%S%f")+'.nii.gz')
     return img
 
 
