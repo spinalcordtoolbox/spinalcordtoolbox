@@ -12,7 +12,7 @@ import datetime
 
 from spinalcordtoolbox.utils import __sct_dir__
 sys.path.append(os.path.join(__sct_dir__, 'scripts'))
-import spinalcordtoolbox as sct
+import spinalcordtoolbox.math as sctmath
 
 from create_test_data import dummy_blob
 
@@ -34,25 +34,25 @@ def test_morphomath(im):
         im.save('tmp_dummy_im_'+datetime.now().strftime("%Y%m%d%H%M%S%f")+'.nii.gz')
 
     # cube (only asserting along one dimension for convenience)
-    data_dil = sct.math.morphomath(im.data, filter='dilation', size=1, shape='cube')
+    data_dil = sctmath.dilate(im.data, size=1, shape='cube')
     assert np.array_equal(data_dil[4, 2:7, 4], np.array([0, 0, 1, 0, 0]))
-    data_dil = sct.math.morphomath(im.data, filter='dilation', size=2, shape='cube')
+    data_dil = sctmath.dilate(im.data, size=2, shape='cube')
     assert np.array_equal(data_dil[4, 2:7, 4], np.array([0, 1, 1, 0, 0]))
-    data_dil = sct.math.morphomath(im.data, filter='dilation', size=3, shape='cube')
+    data_dil = sctmath.dilate(im.data, size=3, shape='cube')
     assert np.array_equal(data_dil[4, 2:7, 4], np.array([0, 1, 1, 1, 0]))
 
     # cube (only asserting along one dimension for convenience)
-    data_dil = sct.math.morphomath(im.data, filter='dilation', size=0, shape='ball')
+    data_dil = sctmath.dilate(im.data, size=0, shape='ball')
     assert np.array_equal(data_dil[4, 2:7, 4], np.array([0, 0, 1, 0, 0]))
-    data_dil = sct.math.morphomath(im.data, filter='dilation', size=1, shape='ball')
+    data_dil = sctmath.dilate(im.data, size=1, shape='ball')
     assert np.array_equal(data_dil[4, 2:7, 4], np.array([0, 1, 1, 1, 0]))
-    data_dil = sct.math.morphomath(im.data, filter='dilation', size=2, shape='ball')
+    data_dil = sctmath.dilate(im.data, size=2, shape='ball')
     assert np.array_equal(data_dil[4, 2:7, 4], np.array([1, 1, 1, 1, 1]))
 
     # square in xy plane
-    data_dil = sct.math.morphomath(im.data, filter='dilation', size=1, shape='disk', dim=1)
+    data_dil = sctmath.dilate(im.data, size=1, shape='disk', dim=1)
     assert np.array_equal(data_dil[2:7, 4, 4], np.array([0, 1, 1, 1, 0]))
     assert np.array_equal(data_dil[4, 4, 2:7], np.array([0, 1, 1, 1, 0]))
-    data_dil = sct.math.morphomath(im.data, filter='dilation', size=1, shape='disk', dim=2)
+    data_dil = sctmath.dilate(im.data, size=1, shape='disk', dim=2)
     assert np.array_equal(data_dil[4, 2:7, 4], np.array([0, 1, 1, 1, 0]))
     assert np.array_equal(data_dil[2:7, 4, 4], np.array([0, 1, 1, 1, 0]))

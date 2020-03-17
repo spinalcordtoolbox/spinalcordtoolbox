@@ -12,23 +12,27 @@ from skimage.morphology import erosion, dilation, disk, ball, square, cube
 logger = logging.getLogger(__name__)
 
 
-def morphomath(data, filter, size, shape, dim=None):
+def _get_selem(shape, size, dim):
     """
-    Dilate data using ball structuring element
-    :param data: numpy array: 2d or 3d array
-    :param filter: {'dilation', 'erosion'}: Type of filter to apply
-    :param size: int: If shape={'square', 'cube'}: Corresponds to the length of an edge (size=1 has no effect).
-    If shape={'disk', 'ball'}: Corresponds to the radius, not including the center element (size=0 has no effect).
-    :param shape: {'square', 'cube', 'disk', 'ball'}
+    Create structuring element of desired shape and radius
+    :param shape: str: Shape of the structuring element. See available options below in the code
+    :param size: int: size of the element.
     :param dim: {0, 1, 2}: Dimension of the array which 2D structural element will be orthogonal to. For example, if
     you wish to apply a 2D disk kernel in the X-Y plane, leaving Z unaffected, parameters will be: shape=disk, dim=2.
-    :return: numpy array: data dilated
+    :return: numpy array: structuring element
     """
-    # TODO: make a build_selem(radius, shape) function called here
     # TODO: enable custom selem
-    # Create structuring element of desired shape and radius
-    # Note: the trick here is to use the variable shape as the skimage.morphology function itself
-    selem = globals()[shape](size)
+    if shape == 'square':
+        selem = square(size)
+    elif shape == 'cube':
+        selem = cube(size)
+    elif shape == 'disk':
+        selem = disk(size)
+    elif shape == 'ball':
+        selem = ball(size)
+    else:
+        ValueError("This shape is not a valid entry: {}".format(shape))
+
     # If 2d kernel, replicate it along the specified dimension
     if len(selem.shape) == 2:
         selem3d = np.zeros([selem.shape[0]]*3)  # Note: selem.shape[0] and selem.shape[1] are supposed to be the same
@@ -42,5 +46,32 @@ def morphomath(data, filter, size, shape, dim=None):
         else:
             raise ValueError("dim can only take values: {0, 1, 2}")
         selem = selem3d
-    # Applies the specified filter by running skimage.morphology command
-    return globals()[filter](data, selem=selem, out=None)
+    return selem
+
+
+def dilate(data, size, shape, dim=None):
+    """
+    Dilate data using ball structuring element
+    :param data: numpy array: 2d or 3d array
+    :param size: int: If shape={'square', 'cube'}: Corresponds to the length of an edge (size=1 has no effect).
+    If shape={'disk', 'ball'}: Corresponds to the radius, not including the center element (size=0 has no effect).
+    :param shape: {'square', 'cube', 'disk', 'ball'}
+    :param dim: {0, 1, 2}: Dimension of the array which 2D structural element will be orthogonal to. For example, if
+    you wish to apply a 2D disk kernel in the X-Y plane, leaving Z unaffected, parameters will be: shape=disk, dim=2.
+    :return: numpy array: data dilated
+    """
+    return dilation(data, selem=_get_selem(shape, size, dim), out=None)
+
+
+def erode(data, size, shape, dim=None):
+    """
+    Dilate data using ball structuring element
+    :param data: numpy array: 2d or 3d array
+    :param size: int: If shape={'square', 'cube'}: Corresponds to the length of an edge (size=1 has no effect).
+    If shape={'disk', 'ball'}: Corresponds to the radius, not including the center element (size=0 has no effect).
+    :param shape: {'square', 'cube', 'disk', 'ball'}
+    :param dim: {0, 1, 2}: Dimension of the array which 2D structural element will be orthogonal to. For example, if
+    you wish to apply a 2D disk kernel in the X-Y plane, leaving Z unaffected, parameters will be: shape=disk, dim=2.
+    :return: numpy array: data dilated
+    """
+    return erosion(data, selem=_get_selem(shape, size, dim), out=None)
