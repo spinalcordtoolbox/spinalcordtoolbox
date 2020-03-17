@@ -9,7 +9,6 @@ import os
 import pytest
 import math
 import numpy as np
-from skimage.morphology import erosion, dilation, disk, ball, square, cube
 
 from spinalcordtoolbox.utils import __sct_dir__
 sys.path.append(os.path.join(__sct_dir__, 'scripts'))
