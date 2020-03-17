@@ -352,12 +352,10 @@ def main(args=None):
         data_out = smooth(data, sigmas)
 
     elif arguments.dilate is not None:
-        data_out = sctmath.morphomath(data, filter='dilation', size=arguments.dilate, shape=arguments.shape,
-                                      dim=arguments.dim)
+        data_out = sctmath.dilate(data, size=arguments.dilate, shape=arguments.shape, dim=arguments.dim)
 
     elif arguments.erode is not None:
-        data_out = sctmath.morphomath(data, filter='erosion', size=arguments.erode, shape=arguments.shape,
-                                      dim=arguments.dim)
+        data_out = sctmath.erode(data, size=arguments.erode, shape=arguments.shape, dim=arguments.dim)
 
     elif arguments.denoise is not None:
         # parse denoising arguments
