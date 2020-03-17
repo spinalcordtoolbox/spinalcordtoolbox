@@ -18,9 +18,8 @@ from spinalcordtoolbox import math
 from create_test_data import dummy_blob
 
 
-# Define global variables
-VERBOSE = 0  # set to 2 to save files
-DEBUG = False  # Set to True to save images
+VERBOSE = int(os.getenv('SCT_VERBOSE', 0))
+DUMP_IMAGES = bool(os.getenv('SCT_DEBUG_IMAGES', False))
 
 # Generate a list of dummy images with single pixel in the middle
 list_im = [
