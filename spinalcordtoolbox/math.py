@@ -6,6 +6,8 @@
 import logging
 import numpy as np
 
+from skimage.morphology import erosion, dilation, disk, ball, square, cube
+
 
 logger = logging.getLogger(__name__)
 
