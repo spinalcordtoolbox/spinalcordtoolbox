@@ -33,9 +33,12 @@ def _get_selem(shape, size, dim):
     else:
         ValueError("This shape is not a valid entry: {}".format(shape))
 
+    if not (len(selem.shape) in [2, 3] and selem.shape[0] == selem.shape[1]):
+        raise ValueError("Invalid shape")
+
     # If 2d kernel, replicate it along the specified dimension
     if len(selem.shape) == 2:
-        selem3d = np.zeros([selem.shape[0]]*3)  # Note: selem.shape[0] and selem.shape[1] are supposed to be the same
+        selem3d = np.zeros([selem.shape[0]]*3)
         imid = np.floor(selem.shape[0] / 2).astype(int)
         if dim == 0:
             selem3d[imid, :, :] = selem
