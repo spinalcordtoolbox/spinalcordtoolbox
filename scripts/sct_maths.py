@@ -17,12 +17,12 @@ import sys
 import numpy as np
 import argparse
 
+import spinalcordtoolbox as sct
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.utils import Metavar, SmartFormatter
-import spinalcordtoolbox.math as sctmath
+import spinalcordtoolbox.math
 
-from sct_utils import printv, extract_fname
-import sct_utils as sct
+from sct_utils import printv, extract_fname, display_viewer_syntax, init_sct
 
 
 ALMOST_ZERO = 0.000000001
@@ -251,7 +251,7 @@ def main(args=None):
     fname_in = arguments.i
     fname_out = arguments.o
     verbose = arguments.v
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    init_sct(log_level=verbose, update=True)  # Update log level
     if '-type' in arguments:
         output_type = arguments.type
     else:
@@ -352,10 +352,10 @@ def main(args=None):
         data_out = smooth(data, sigmas)
 
     elif arguments.dilate is not None:
-        data_out = sctmath.dilate(data, size=arguments.dilate, shape=arguments.shape, dim=arguments.dim)
+        data_out = sct.math.dilate(data, size=arguments.dilate, shape=arguments.shape, dim=arguments.dim)
 
     elif arguments.erode is not None:
-        data_out = sctmath.erode(data, size=arguments.erode, shape=arguments.shape, dim=arguments.dim)
+        data_out = sct.math.erode(data, size=arguments.erode, shape=arguments.shape, dim=arguments.dim)
 
     elif arguments.denoise is not None:
         # parse denoising arguments
@@ -428,7 +428,7 @@ def main(args=None):
 
     # display message
     if data_out is not None:
-        sct.display_viewer_syntax([fname_out], verbose=verbose)
+        display_viewer_syntax([fname_out], verbose=verbose)
     else:
         printv('\nDone! File created: ' + fname_out, verbose, 'info')
 
@@ -496,7 +496,7 @@ def get_data(list_fname):
     try:
         nii = [Image(f_in) for f_in in list_fname]
     except Exception as e:
-        sct.printv(str(e), 1, 'error')  # file does not exist, exit program
+        printv(str(e), 1, 'error')  # file does not exist, exit program
     data0 = nii[0].data
     data = nii[0].data
     # check that every images have same shape
@@ -756,5 +756,5 @@ def correlation(x, y, type='pearson'):
 
 
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     main()
