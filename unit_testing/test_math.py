@@ -2,6 +2,7 @@
 # -*- coding: utf-8
 # pytest unit tests for spinalcordtoolbox.math
 
+# TODO: Add test for erode and for cases when Image are input
 
 from __future__ import absolute_import
 import sys
