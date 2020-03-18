@@ -156,9 +156,10 @@ def get_parser():
         required=False)
     mathematical.add_argument(
         '-shape',
-        help="Shape of the structuring element for the mathematical morphology operation.",
+        help="Shape of the structuring element for the mathematical morphology operation. Default: ball.",
         required=False,
-        choices=('square', 'cube', 'disk', 'ball'))
+        choices=('square', 'cube', 'disk', 'ball'),
+        default='ball')
     mathematical.add_argument(
         '-dim',
         type=int,
