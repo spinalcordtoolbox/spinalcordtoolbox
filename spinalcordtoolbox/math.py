@@ -67,7 +67,7 @@ def dilate(data, size, shape, dim=None):
     """
     if isinstance(data, Image):
         im_out = data.copy()
-        im_out.data = dilation(data.data, selem=_get_selem(shape, size, dim), out=None)
+        im_out.data = dilate(data.data, size, shape, dim)
         return im_out
     else:
         return dilation(data, selem=_get_selem(shape, size, dim), out=None)
