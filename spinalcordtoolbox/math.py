@@ -86,7 +86,7 @@ def erode(data, size, shape, dim=None):
     """
     if isinstance(data, Image):
         im_out = data.copy()
-        im_out.data = erosion(data.data, selem=_get_selem(shape, size, dim), out=None)
+        im_out.data = erode(data.data, size, shape, dim)
         return im_out
     else:
         return erosion(data, selem=_get_selem(shape, size, dim), out=None)
