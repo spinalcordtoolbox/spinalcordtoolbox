@@ -8,6 +8,8 @@ import numpy as np
 
 from skimage.morphology import erosion, dilation, disk, ball, square, cube
 
+from spinalcordtoolbox.image import Image
+
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +57,7 @@ def _get_selem(shape, size, dim):
 def dilate(data, size, shape, dim=None):
     """
     Dilate data using ball structuring element
-    :param data: numpy array: 2d or 3d array
+    :param data: Image or numpy array: 2d or 3d array
     :param size: int: If shape={'square', 'cube'}: Corresponds to the length of an edge (size=1 has no effect).
     If shape={'disk', 'ball'}: Corresponds to the radius, not including the center element (size=0 has no effect).
     :param shape: {'square', 'cube', 'disk', 'ball'}
@@ -63,13 +65,18 @@ def dilate(data, size, shape, dim=None):
     you wish to apply a 2D disk kernel in the X-Y plane, leaving Z unaffected, parameters will be: shape=disk, dim=2.
     :return: numpy array: data dilated
     """
-    return dilation(data, selem=_get_selem(shape, size, dim), out=None)
+    if isinstance(data, Image):
+        im_out = data.copy()
+        im_out.data = dilation(data.data, selem=_get_selem(shape, size, dim), out=None)
+        return im_out
+    else:
+        return dilation(data, selem=_get_selem(shape, size, dim), out=None)
 
 
 def erode(data, size, shape, dim=None):
     """
     Dilate data using ball structuring element
-    :param data: numpy array: 2d or 3d array
+    :param data: Image or numpy array: 2d or 3d array
     :param size: int: If shape={'square', 'cube'}: Corresponds to the length of an edge (size=1 has no effect).
     If shape={'disk', 'ball'}: Corresponds to the radius, not including the center element (size=0 has no effect).
     :param shape: {'square', 'cube', 'disk', 'ball'}
@@ -77,4 +84,9 @@ def erode(data, size, shape, dim=None):
     you wish to apply a 2D disk kernel in the X-Y plane, leaving Z unaffected, parameters will be: shape=disk, dim=2.
     :return: numpy array: data dilated
     """
-    return erosion(data, selem=_get_selem(shape, size, dim), out=None)
+    if isinstance(data, Image):
+        im_out = data.copy()
+        im_out.data = erosion(data.data, selem=_get_selem(shape, size, dim), out=None)
+        return im_out
+    else:
+        return erosion(data, selem=_get_selem(shape, size, dim), out=None)
