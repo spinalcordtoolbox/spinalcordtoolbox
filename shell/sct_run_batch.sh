@@ -53,25 +53,52 @@ command_open() {
   fi
 }
 
+# Usage of this script
+usage() {
+  echo -e "This function runs a batch script across multiple subjects that are
+  present in a source folder (as defined in the file parameters.sh). If
+  GNU parallel is installed, it will used by distributing subjects across the
+  available CPU cores. For more information about the file parameters.sh,
+  see the example file: $SCT_DIR/shell/parameters_example.sh."
+  echo -e "Correct usage ./sct_run_batch.sh <parameters.sh> <process_data.sh>"
+  echo -e "-s  processing subjects sequentially, without parallel processing."
+  echo -e "-h  Help"
+  exit 99
+}
+
+
 
 # Script starts here
 # =============================================================================
 
-# Check number of input params
-if [ "$#" -ne 2 ]; then
-    echo "Wrong number of input parameters. Correct usage is: ./run_process.sh <parameters> <script>"
-    exit 1
-fi
+# check number of input parameters
+if [ "$#" -ne 2 -a "$#" -ne 3 ]; then
+    echo "Wrong number of input parameters."
+    usage
+ fi
+
+# getopts processes flag input parmaeters
+use_parallel=true
+while getopts "sh" opt "$3"; do
+  case $opt in
+    s)  use_parallel=false;;
+    h)  echo "help instruction:"; usage;;
+    *)  echo "incorrect flag entered:"; usage;;
+  esac
+done
+
 
 # Initialization
 PATH_SCRIPT="$( cd "$(dirname "$0")" ; pwd -P )"
+echo $PATH_SCRIPT
 time_start=$(date +%x_%r)
 
-source $1
 
 # Check existence of input files
 check_file_exist $1
 check_file_exist $2
+
+source $1
 
 # Get absolute paths
 fileparam="$(cd "$(dirname "$1")"; pwd)/$(basename "$1")"
@@ -94,16 +121,18 @@ else
   list_path_subject=( "${ONLY_PROCESS_THESE_SUBJECTS[@]/#/${PATH_DATA}/}" )
 fi
 
-# Run processing with or without "GNU parallel", depending if it is installed or not
-if [ -x "$(command -v parallel)" ]; then
-  echo 'GNU parallel is installed! Processing subjects in parallel using multiple cores.' >&2
+
+# Run processing with or without "GNU parallel", depending if it is flagged and installed or not
+if [ -x "$(command -v parallel)" ] && $use_parallel; then
+  echo "GNU parallel is installed! Processing subjects in parallel"
   for path_subject in ${list_path_subject[@]}; do
     subject=`basename $path_subject`
     echo "${PATH_SCRIPT}/_run_with_log.sh $task $subject $fileparam"
   done \
   | parallel -j ${JOBS} --halt-on-error soon,fail=1 bash -c "{}"
 else
-  echo 'GNU parallel is not installed. Processing subjects sequentially.' >&2
+  echo "GNU parallel is not installed or flag -s has been used!
+   Processing subjects sequentially"
   for path_subject in ${list_path_subject[@]}; do
     subject=`basename $path_subject`
     ${PATH_SCRIPT}/_run_with_log.sh $task $subject $fileparam
