@@ -140,14 +140,14 @@ def get_parser():
     mathematical.add_argument(
         '-dilate',
         metavar='',
-        help='Dilate binary image. If only one input is given, structured element is a ball with input radius (in '
+        help='Dilate greyscale or binary image. If only one input is given, structured element is a ball with input radius (in '
              'voxel). If comma-separated inputs are given (Example: 2,4,5 ), structured element is a box with input '
              'dimensions.',
         required=False)
     mathematical.add_argument(
         '-erode',
         metavar='',
-        help='Erode binary image. If only one input is given, structured element is a ball with input radius (in '
+        help='Erode greyscale or binary image. If only one input is given, structured element is a ball with input radius (in '
              'voxel). If comma-separated inputs are given (Example: 2,4,5), structured element is a box with input '
              'dimensions.',
         required=False)
