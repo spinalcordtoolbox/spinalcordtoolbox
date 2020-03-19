@@ -13,7 +13,7 @@ from spinalcordtoolbox.image import Image
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.deepseg_sc import core as deepseg_sc
 from spinalcordtoolbox import resampling
-from create_test_data import dummy_centerline
+from spinalcordtoolbox.testing.create_test_data import dummy_centerline
 
 
 def _preprocess_segment(fname_t2, fname_t2_seg, contrast_test, dim_3=False):
