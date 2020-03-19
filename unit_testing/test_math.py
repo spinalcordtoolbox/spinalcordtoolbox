@@ -2,20 +2,15 @@
 # -*- coding: utf-8
 # pytest unit tests for spinalcordtoolbox.math
 
-# TODO: Add test for erode and for cases when Image are input
 
 from __future__ import absolute_import
-import sys
 import os
 import numpy as np
 import datetime
 
 import spinalcordtoolbox as sct
-from spinalcordtoolbox.utils import __sct_dir__
-sys.path.append(os.path.join(__sct_dir__, 'scripts'))
 import spinalcordtoolbox.math
-
-from create_test_data import dummy_blob
+from spinalcordtoolbox.testing.create_test_data import dummy_blob
 
 
 VERBOSE = int(os.getenv('SCT_VERBOSE', 0))
