@@ -53,6 +53,7 @@ def get_parser():
             'binaries_debian',
             'binaries_centos',
             'binaries_osx',
+            'applywarp',
             'deepseg_gm_models',
             'deepseg_sc_models',
             'deepseg_lesion_models',
@@ -120,7 +121,8 @@ def main(args=None):
         'deepseg_lesion_models': ['https://osf.io/eg7v9/?action=download',
                               'https://www.neuro.polymtl.ca/_media/downloads/sct/20180613_deepseg_lesion_models.zip'],
         'c2c3_disc_models': ['https://osf.io/t97ap/?action=download',
-                            'https://www.neuro.polymtl.ca/_media/downloads/sct/20190117_c2c3_disc_models.zip']
+                             'https://www.neuro.polymtl.ca/_media/downloads/sct/20190117_c2c3_disc_models.zip'],
+        'applywarp': ['https://osf.io/ge65h/download']
     }
 
     # Get parser info
