@@ -157,3 +157,31 @@ def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.floa
     if debug:
         img.save('tmp_dummy_seg_'+datetime.now().strftime("%Y%m%d%H%M%S%f")+'.nii.gz')
     return img
+
+def dummy_deformation(size_arr=(256, 256, 256), dtype=np.float32, orientation='LPI',
+                      affine = np.eye(4,4), vector_scale = 3, debug=False):
+    """Create a dummy 5D deformation field. Generates vector components uniformly distributed on
+    [0,1) which are then stretched to a user specificed scale.
+    :param size_arr: tuple: (nx, ny, nz)
+    :param dtype: Numpy dtype.
+    :param orientation: Orientation of the image. Default: LPI
+    :param affine: A 4x4 affine matrix for the image. Default 4x4 identity. 
+    :param vector_scale: A scalar for how large in world coordinates the largest deformation vector
+    component should be
+    :param debug: Write temp files for debugging
+    :return: img: Image object
+    """
+
+    nx, ny, nz = size_arr
+    data = np.random.random((nx, ny, nz, 1, 3)) * 3
+
+    # Create nibabel object
+    nii = nib.nifti1.Nifti1Image(data.astype(dtype), affine)
+
+    img = Image(nii.get_data(), hdr=nii.header, dim=nii.header.get_data_shape())
+    img.header.set_intent("vector")
+    # Update orientation
+    img.change_orientation(orientation)
+    if debug:
+        img.save('tmp_dummy_deformation_'+datetime.now().strftime("%Y%m%d%H%M%S%f")+'.nii.gz')
+    return img
