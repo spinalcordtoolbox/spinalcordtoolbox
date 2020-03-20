@@ -8,12 +8,13 @@ from __future__ import absolute_import
 import sys
 import os
 import argparse
+import nibabel as nib
 
 from ivadomed.utils import segment_volume
 
 from spinalcordtoolbox.utils import Metavar, SmartFormatter
 
-from sct_utils import init_sct
+from sct_utils import add_suffix, init_sct
 
 
 def get_parser():
@@ -89,7 +90,10 @@ def run_main():
     # TODO: use args to fetch model path. For now, using hardcoded path:
     fname_model = '/Users/julien/code/ivado-medical-imaging/testing_data/model_unet_test.pt'
     fname_model_metadata = '/Users/julien/code/ivado-medical-imaging/testing_data/model_config.json'
-    segment_volume(fname_model, fname_model_metadata, args.i)
+    nii_seg = segment_volume(fname_model, fname_model_metadata, args.i)
+
+    # TODO: use args to get output name
+    nib.save(nii_seg, add_suffix(args.i, '_seg'))
 
 
 if __name__ == '__main__':
