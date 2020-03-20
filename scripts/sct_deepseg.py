@@ -9,6 +9,8 @@ import sys
 import os
 import argparse
 
+from ivadomed.utils import segment_volume
+
 from spinalcordtoolbox.utils import Metavar, SmartFormatter
 
 from sct_utils import init_sct
@@ -28,9 +30,9 @@ def get_parser():
         help="Image to segment.",
         metavar=Metavar.file)
     mandatory.add_argument(
+        # TODO: need to find a better strategy here
         "-m",
-        help="Model to use.",
-        choices=(''),
+        help="Path of the model to use.",
         default='')
 
     paramseg = parser.add_argument_group("\nSEGMENTATION PARAMETERS")
@@ -84,6 +86,10 @@ def get_parser():
 def run_main():
     parser = get_parser()
     args = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
+    # TODO: use args to fetch model path. For now, using hardcoded path:
+    fname_model = '/Users/julien/code/ivado-medical-imaging/testing_data/model_unet_test.pt'
+    fname_model_metadata = '/Users/julien/code/ivado-medical-imaging/testing_data/model_config.json'
+    segment_volume(fname_model, fname_model_metadata, args.i)
 
 
 if __name__ == '__main__':
