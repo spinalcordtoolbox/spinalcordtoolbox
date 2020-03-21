@@ -88,8 +88,8 @@ def run_main():
     parser = get_parser()
     args = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
     # TODO: use args to fetch model path. For now, using hardcoded path:
-    fname_model = '/Users/julien/code/ivado-medical-imaging/testing_data/model_unet_test.pt'
-    fname_model_metadata = '/Users/julien/code/ivado-medical-imaging/testing_data/model_config.json'
+    fname_model = '/Users/julien/Desktop/github_PR155/model_t2star.pt'
+    fname_model_metadata = '/Users/julien/Desktop/github_PR155/model_t2star_metadata.json'
     nii_seg = segment_volume(fname_model, fname_model_metadata, args.i)
 
     # TODO: use args to get output name
