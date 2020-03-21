@@ -142,7 +142,7 @@ def get_parser():
         '-dilate',
         type=int,
         metavar=Metavar.int,
-        help="Dilate binary image with specified size. If shape={'square', 'cube'}: size corresponds to the length of "
+        help="Dilate binary or greyscale image with specified size. If shape={'square', 'cube'}: size corresponds to the length of "
              "an edge (size=1 has no effect). If shape={'disk', 'ball'}: size corresponds to the radius, not including "
              "the center element (size=0 has no effect).",
         required=False)
@@ -150,7 +150,7 @@ def get_parser():
         '-erode',
         type=int,
         metavar=Metavar.int,
-        help="Erode binary image with specified size. If shape={'square', 'cube'}: size corresponds to the length of "
+        help="Erode binary or greyscale image with specified size. If shape={'square', 'cube'}: size corresponds to the length of "
              "an edge (size=1 has no effect). If shape={'disk', 'ball'}: size corresponds to the radius, not including "
              "the center element (size=0 has no effect).",
         required=False)
