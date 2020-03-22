@@ -7,8 +7,6 @@
 # TODO: no need to pass absolute image path-- makes it difficult to read
 # TODO: check the status of spline()
 # TODO: check the status of combine_matrix()
-# TODO: add tests with sag and ax orientation, with -g 1 and 3, with mask (not covering all slices)
-# TODO: make it a spinalcordtoolbox module with im as input
 # TODO: params for ANTS: CC/MI, shrink fact, nb_it
 # TODO: ants: explore optin  --float  for faster computation
 
@@ -371,24 +369,24 @@ def moco_wrapper(param):
     param_moco.path_out = ''  # TODO not used in moco()
     param_moco.mat_moco = mat_final
     param_moco.todo = 'apply'
-    file_mat_data, im_dmri_moco = moco(param_moco)  # TODO change variable name
+    file_mat_data, im_moco = moco(param_moco)
 
     # copy geometric information from header
     # NB: this is required because WarpImageMultiTransform in 2D mode wrongly sets pixdim(3) to "1".
-    im_dmri_moco.header = im_data.header
-    im_dmri_moco.save(verbose=0)
+    im_moco.header = im_data.header
+    im_moco.save(verbose=0)
 
     # Average across time
     if param.is_diffusion:
         # generate b0_moco_mean and dwi_moco_mean
-        args = ['-i', im_dmri_moco.absolutepath, '-bvec', file_bvec, '-a', '1', '-v', '0']
+        args = ['-i', im_moco.absolutepath, '-bvec', file_bvec, '-a', '1', '-v', '0']
         if not param.fname_bvals == '':
             # if bvals file is provided
             args += ['-bval', param.fname_bvals]
         fname_b0, fname_b0_mean, fname_dwi, fname_dwi_mean = sct_dmri_separate_b0_and_dwi.main(args=args)
     else:
-        fname_moco_mean = sct.add_suffix(im_dmri_moco.absolutepath, '_mean')
-        im_dmri_moco.mean(dim=3).save(fname_moco_mean)
+        fname_moco_mean = sct.add_suffix(im_moco.absolutepath, '_mean')
+        im_moco.mean(dim=3).save(fname_moco_mean)
 
     # Extract and output the motion parameters (doesn't work for sagittal orientation)
     sct.printv('Extract motion parameters...')
@@ -442,21 +440,18 @@ def moco_wrapper(param):
 
     # Generate output files
     sct.printv('\nGenerate output files...', param.verbose)
-    fmri_moco = os.path.join(path_out_abs, sct.add_suffix(os.path.basename(param.fname_data), param.suffix))
-    sct.generate_output_file(im_dmri_moco.absolutepath, fmri_moco)
+    fname_moco = os.path.join(path_out_abs, sct.add_suffix(os.path.basename(param.fname_data), param.suffix))
+    sct.generate_output_file(im_moco.absolutepath, fname_moco)
     if param.is_diffusion:
-        fmri_moco_b0_mean = sct.add_suffix(fmri_moco, '_b0_mean')
-        fmri_moco_dwi_mean = sct.add_suffix(fmri_moco, '_dwi_mean')
-        sct.generate_output_file(fname_b0_mean, fmri_moco_b0_mean)
-        sct.generate_output_file(fname_dwi_mean, fmri_moco_dwi_mean)
+        sct.generate_output_file(fname_b0_mean, sct.add_suffix(fname_moco, '_b0_mean'))
+        sct.generate_output_file(fname_dwi_mean, sct.add_suffix(fname_moco, '_dwi_mean'))
     else:
-        sct.generate_output_file(fname_moco_mean, sct.add_suffix(fmri_moco, '_mean'))
+        sct.generate_output_file(fname_moco_mean, sct.add_suffix(fname_moco, '_mean'))
     if os.path.exists(file_moco_params_csv):
         sct.generate_output_file(file_moco_params_x, os.path.join(path_out_abs, file_moco_params_x),
                                  squeeze_data=False)
         sct.generate_output_file(file_moco_params_y, os.path.join(path_out_abs, file_moco_params_y),
                                  squeeze_data=False)
-        # TODO: modify generate_output_file to display message for file below
         sct.generate_output_file(file_moco_params_csv, os.path.join(path_out_abs, file_moco_params_csv))
 
     # Delete temporary files
