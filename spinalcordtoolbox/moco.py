@@ -378,13 +378,17 @@ def moco_wrapper(param):
     im_dmri_moco.header = im_data.header
     im_dmri_moco.save(verbose=0)
 
-    # generate b0_moco_mean and dwi_moco_mean
+    # Average across time
     if param.is_diffusion:
+        # generate b0_moco_mean and dwi_moco_mean
         args = ['-i', im_dmri_moco.absolutepath, '-bvec', file_bvec, '-a', '1', '-v', '0']
         if not param.fname_bvals == '':
             # if bvals file is provided
             args += ['-bval', param.fname_bvals]
         fname_b0, fname_b0_mean, fname_dwi, fname_dwi_mean = sct_dmri_separate_b0_and_dwi.main(args=args)
+    else:
+        fname_moco_mean = sct.add_suffix(im_dmri_moco.absolutepath, '_mean')
+        im_dmri_moco.mean(dim=3).save(fname_moco_mean)
 
     # Extract and output the motion parameters (doesn't work for sagittal orientation)
     sct.printv('Extract motion parameters...')
@@ -438,13 +442,15 @@ def moco_wrapper(param):
 
     # Generate output files
     sct.printv('\nGenerate output files...', param.verbose)
-    fname_dmri_moco = os.path.join(path_out_abs, sct.add_suffix(os.path.basename(param.fname_data), param.suffix))
-    sct.generate_output_file(im_dmri_moco.absolutepath, fname_dmri_moco)
+    fmri_moco = os.path.join(path_out_abs, sct.add_suffix(os.path.basename(param.fname_data), param.suffix))
+    sct.generate_output_file(im_dmri_moco.absolutepath, fmri_moco)
     if param.is_diffusion:
-        fname_dmri_moco_b0_mean = sct.add_suffix(fname_dmri_moco, '_b0_mean')
-        fname_dmri_moco_dwi_mean = sct.add_suffix(fname_dmri_moco, '_dwi_mean')
-        sct.generate_output_file(fname_b0_mean, fname_dmri_moco_b0_mean)
-        sct.generate_output_file(fname_dwi_mean, fname_dmri_moco_dwi_mean)
+        fmri_moco_b0_mean = sct.add_suffix(fmri_moco, '_b0_mean')
+        fmri_moco_dwi_mean = sct.add_suffix(fmri_moco, '_dwi_mean')
+        sct.generate_output_file(fname_b0_mean, fmri_moco_b0_mean)
+        sct.generate_output_file(fname_dwi_mean, fmri_moco_dwi_mean)
+    else:
+        sct.generate_output_file(fname_moco_mean, sct.add_suffix(fmri_moco, '_mean'))
     if os.path.exists(file_moco_params_csv):
         sct.generate_output_file(file_moco_params_x, os.path.join(path_out_abs, file_moco_params_x),
                                  squeeze_data=False)
