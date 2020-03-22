@@ -315,9 +315,6 @@ def main(args=None):
             im_label.save(fname_labelz)
         elif fname_initlabel:
             import sct_label_utils
-            # subtract "1" to label value because due to legacy, in this code the disc C2-C3 has value "2", whereas in the
-            # recent version of SCT it is defined as "3". Therefore, when asking the user to define a label, we point to the
-            # new definition of labels (i.e., C2-C3 = 3).
             sct_label_utils.main(['-i', fname_initlabel, '-add', '-1', '-o', fname_labelz])
         else:
             # automatically finds C2-C3 disc
@@ -330,9 +327,7 @@ def main(args=None):
             im_label_c2c3 = detect_c2c3(im_data, im_seg, contrast, verbose=verbose_detect_c2c3)
             ind_label = np.where(im_label_c2c3.data)
             if not np.size(ind_label) == 0:
-                # subtract "1" to label value because due to legacy, in this code the disc C2-C3 has value "2", whereas in the
-                # recent version of SCT it is defined as "3".
-                im_label_c2c3.data[ind_label] = 2
+                im_label_c2c3.data[ind_label] = 3
             else:
                 sct.printv('Automatic C2-C3 detection failed. Please provide manual label with sct_label_utils', 1, 'error')
                 sys.exit()
