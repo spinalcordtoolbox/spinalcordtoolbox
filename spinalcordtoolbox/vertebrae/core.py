@@ -11,10 +11,11 @@ import scipy.ndimage.measurements
 from scipy.ndimage.filters import gaussian_filter
 
 import sct_utils as sct
-from sct_maths import mutual_information, dilate
+from sct_maths import mutual_information
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.metadata import get_file_label
+from spinalcordtoolbox.math import dilate
 
 
 def label_vert(fname_seg, fname_label, verbose=1):
@@ -273,8 +274,7 @@ def create_label_z(fname_seg, z, value, fname_labelz='labelz.nii.gz'):
     nii.data[:, :, :] = 0
     nii.data[x, y, z] = value
     # dilate label to prevent it from disappearing due to nearestneighbor interpolation
-    from sct_maths import dilate
-    nii.data = dilate(nii.data, [3])
+    nii.data = dilate(nii.data, 3, 'ball')
     nii.change_orientation(orientation_origin)  # put back in original orientation
     nii.save(fname_labelz)
     return fname_labelz
@@ -310,7 +310,7 @@ def clean_labeled_segmentation(fname_labeled_seg, fname_seg, fname_labeled_seg_n
     img_seg = Image(fname_seg)
     data_labeled_seg_mul = img_labeled_seg.data * img_seg.data
     # dilate to add voxels in segmentation that are not in segmentation_labeled
-    data_labeled_seg_dil = dilate(img_labeled_seg.data, [2])
+    data_labeled_seg_dil = dilate(img_labeled_seg.data, 2, 'ball')
     data_labeled_seg_mul_bin = data_labeled_seg_mul > 0
     data_diff = img_seg.data - data_labeled_seg_mul_bin
     ind_nonzero = np.where(data_diff)

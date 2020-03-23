@@ -14,6 +14,36 @@ from spinalcordtoolbox.resampling import resample_nib
 DEBUG = False  # Save img_sub
 
 
+def dummy_blob(size_arr=(9, 9, 9), pixdim=(1, 1, 1), coordvox=None):
+    """
+    Create an image with a non-null voxels at coordinates specified by coordvox.
+    :param size_arr:
+    :param pixdim:
+    :param coordvox: If None: will create a single voxel in the middle of the FOV.
+      If tuple: (x,y,z): Create single voxel at specified coordinate
+      If list of tuples: [(x1,y1,z1), (x2,y2,z2)]: Create multiple voxels.
+    :return: Image object
+    """
+    # nx, ny, nz = size_arr
+    data = np.zeros(size_arr)
+    # if not specified, voxel coordinate is set at the middle of the volume
+    if coordvox is None:
+        coordvox = tuple([round(i / 2) for i in size_arr])
+    elif isinstance(coordvox, list):
+        for icoord in coordvox:
+            data[icoord] = 1
+    elif isinstance(coordvox, tuple):
+        data[coordvox] = 1
+    else:
+        ValueError("Wrong type for coordvox")
+    # Create image with default orientation LPI
+    affine = np.eye(4)
+    affine[0:3, 0:3] = affine[0:3, 0:3] * pixdim
+    nii = nib.nifti1.Nifti1Image(data, affine)
+    img = Image(data, hdr=nii.header, dim=nii.header.get_data_shape())
+    return img
+
+
 def dummy_centerline(size_arr=(9, 9, 9), pixdim=(1, 1, 1), subsampling=1, dilate_ctl=0, hasnan=False, zeroslice=[],
                      outlier=[], orientation='RPI', debug=False):
     """
