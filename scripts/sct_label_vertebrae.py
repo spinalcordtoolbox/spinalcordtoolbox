@@ -14,17 +14,18 @@
 from __future__ import division, absolute_import
 
 import sys, os
-
 import numpy as np
-import sct_maths
-from sct_label_utils import ProcessLabels
-from msct_parser import Parser
+
 from spinalcordtoolbox.image import Image
-import sct_utils as sct
 from spinalcordtoolbox.vertebrae.core import create_label_z, get_z_and_disc_values_from_label, vertebral_detection, \
     clean_labeled_segmentation, label_discs, label_vert
 from spinalcordtoolbox.vertebrae.detect_c2c3 import detect_c2c3
 from spinalcordtoolbox.reports.qc import generate_qc
+from spinalcordtoolbox.math import dilate
+
+from sct_label_utils import ProcessLabels
+from msct_parser import Parser
+import sct_utils as sct
 import sct_straighten_spinalcord
 
 
@@ -310,7 +311,7 @@ def main(args=None):
             label = ProcessLabels('segmentation.nii', fname_output='tmp.labelz.nii.gz',
                                       coordinates=['{},{}'.format(initz[0], initz[1])])
             im_label = label.process('create-seg')
-            im_label.data = sct_maths.dilate(im_label.data, [3])  # TODO: create a dilation method specific to labels,
+            im_label.data = dilate(im_label.data, 3, 'ball')  # TODO: create a dilation method specific to labels,
             # which does not apply a convolution across all voxels (highly inneficient)
             im_label.save(fname_labelz)
         elif fname_initlabel:
@@ -339,7 +340,7 @@ def main(args=None):
             im_label_c2c3.save(fname_labelz)
 
         # dilate label so it is not lost when applying warping
-        sct_maths.main(['-i', fname_labelz, '-dilate', '3', '-o', fname_labelz])
+        dilate(Image(fname_labelz), 3, 'ball').save(fname_labelz)
 
         # Apply straightening to z-label
         sct.printv('\nAnd apply straightening to label...', verbose)
