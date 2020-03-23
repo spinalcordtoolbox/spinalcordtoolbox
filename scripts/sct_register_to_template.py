@@ -25,6 +25,7 @@ from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.resampling import resample_file
+from spinalcordtoolbox.math import dilate
 
 import sct_utils as sct
 import sct_maths
@@ -474,9 +475,7 @@ def main(args=None):
 
             # Dilating the input label so they can be straighten without losing them
             sct.printv('\nDilating input labels using 3vox ball radius')
-            sct_maths.main(['-i', ftmp_label,
-                            '-dilate', '3',
-                            '-o', add_suffix(ftmp_label, '_dilate')])
+            dilate(Image(ftmp_label), 3, 'ball').save(add_suffix(ftmp_label, '_dilate'))
             ftmp_label = add_suffix(ftmp_label, '_dilate')
 
             # Apply straightening to labels
