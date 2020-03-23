@@ -314,8 +314,7 @@ def main(args=None):
             # which does not apply a convolution across all voxels (highly inneficient)
             im_label.save(fname_labelz)
         elif fname_initlabel:
-            import sct_label_utils
-            sct_label_utils.main(['-i', fname_initlabel, '-add', '-1', '-o', fname_labelz])
+            Image(fname_initlabel).save(fname_labelz)
         else:
             # automatically finds C2-C3 disc
             im_data = Image('data.nii')
@@ -363,6 +362,7 @@ def main(args=None):
             sct.run(['sct_maths', '-i', 'data_straightr.nii', '-laplacian', '1', '-o', 'data_straightr.nii'], verbose)
 
         # detect vertebral levels on straight spinal cord
+        init_disc[1]=init_disc[1]-1
         vertebral_detection('data_straightr.nii', 'segmentation_straight.nii', contrast, param, init_disc=init_disc,
                             verbose=verbose, path_template=path_template, path_output=path_output, scale_dist=scale_dist)
 

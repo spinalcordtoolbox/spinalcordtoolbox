@@ -136,7 +136,7 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     sct.printv('\nDetect intervertebral discs...', verbose)
     # assign initial z and disc
     current_z = init_disc[0]
-    current_disc = init_disc[1]-1
+    current_disc = init_disc[1]
     # create list for z and disc
     list_disc_z = []
     list_disc_value = []
