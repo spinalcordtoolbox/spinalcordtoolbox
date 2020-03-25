@@ -104,8 +104,6 @@ In order to install sct on Windows 10, it is possible to install it on windows s
 
 [Tutorial how to install SCT on WSL](https://github.com/neuropoly/spinalcordtoolbox/wiki/SCT-on-Windows-10:-Installation-instruction-for-SCT-on-Windows-subsytem-for-linux)
 
-
-
 ## Getting started
 
 The best way to learn about the main functionalities of SCT is to run a typical processing pipeline, in the form of a 
