@@ -94,31 +94,16 @@ git pull
 
 In order to install the SCT in Windows or other unsupported OS, we provide a solution via Docker. This solution will allow you to use all the resources of SCT including the programs with graphical interface. In addition to the SCT, the Docker image contains the FSLeyes program for the visualization of the NIFTI volumes that you process.
 
-[Tutorial how to install SCT via Docker](https://github.com/neuropoly/sct_docker#spinal-cord-toolbox-docker)
+[Tutorial how to install SCT via Docker](https://github.com/neuropoly/spinalcordtoolbox/wiki/testing#run-docker-image)
 
-### Installation in Virtual Machine (VM)
+[Tutorial How to use GUI with the docker image](https://github.com/neuropoly/spinalcordtoolbox/wiki/testing#run-docker-with-gui)
 
-If for some reasons installation with Docker does not work for you, you can always install and run SCT within a VM. We recommend you install the [neurodebian](http://neuro.debian.net/vm.html) VM, which contains useful neuroimaging software such as FSLeyes. 
+### Installation with Windows Subsystem for Linux (Windows 10). 
 
-Important: After importing the NeuroDebian ova file into VirtualBox, make sure to select the following options:
-- System
-  - Base Memory: 2GB or more
-- Display
-  - Video Memory: 128GB or more
-  - Graphics Controller: VBoxVGA
-  - No acceleration enabled
+In order to install sct on Windows 10, it is possible to install it on windows subsystem for linux (WSL). 
 
-Then, you need to install driver updates for the video card. Start the VM, open a Terminal and run:
-~~~
-cd /home/brain
-wget https://download.virtualbox.org/virtualbox/6.0.4/VBoxGuestAdditions_6.0.4.iso
-mkdir disk_VM
-sudo mount VBoxGuestAdditions_6.0.4.iso disk_VM/
-sudo disk_VM/VBoxLinuxAdditions.run
-sudo reboot
-~~~
+[Tutorial how to install SCT on WSL](https://github.com/neuropoly/spinalcordtoolbox/wiki/SCT-on-Windows-10:-Installation-instruction-for-SCT-on-Windows-subsytem-for-linux)
 
-After the VM has restarted, you can install SCT!
 
 
 ## Getting started
