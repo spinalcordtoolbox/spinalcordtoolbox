@@ -155,8 +155,12 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
             break
         # find next disc
         # N.B. Do not search for C1/C2 disc (because poorly visible), use template distance instead
+        im_hm= Image('/Users/lurou_admin/Desktop/deep_VL_2019/sct_testing_large_handling/db_test/sub-karoTobiasMS044/karoTobiasMS044_HM3d.nii.gz')
+        data_hm = im_hm.data
+        im_lab=Image('/Users/lurou_admin/Desktop/sct/sct/data/PAM50/template/PAM50_label_dilate.nii.gz')
+        data_lab = im_lab.data>=1
         if current_disc != 1:
-            current_z = compute_corr_3d(data, data_template, x=xc, xshift=0, xsize=param.size_RL,
+            current_z = compute_corr_3d(data, im_lab.data, x=xc, xshift=0, xsize=param.size_RL,
                                         y=yc, yshift=param.shift_AP, ysize=param.size_AP,
                                         z=current_z, zshift=0, zsize=param.size_IS,
                                         xtarget=xct, ytarget=yct, ztarget=current_z_template,
@@ -355,7 +359,8 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
     pattern = target[xtarget - xsize: xtarget + xsize + 1,
                      ytarget + yshift - ysize: ytarget + yshift + ysize + 1,
                      ztarget + zshift - zsize: ztarget + zshift + zsize + 1]
-    pattern1d = pattern.ravel()
+    #np.save('patt'+str(x)+'.npy',pattern)
+    pattern1d = np.sum(pattern,axis=(1,2))
     # initializations
     I_corr = np.zeros(len(zrange))
     allzeros = 0
@@ -372,6 +377,7 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
                                z + iz - zsize: z + iz + zsize + 1 - padding_size]
             data_chunk3d = np.pad(data_chunk3d, ((0, 0), (0, 0), (0, padding_size)), 'constant',
                                   constant_values=0)
+            #np.save('dchunk'+str(x)+'.npy',data_chunk3d)
         # if pattern extends towards bottom part of the image, then crop and pad with zeros
         elif z + iz - zsize < 0:
             # sct.printv('iz='+str(iz)+': padding at bottom')
@@ -386,8 +392,8 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
                                y + yshift - ysize: y + yshift + ysize + 1,
                                z + iz - zsize: z + iz + zsize + 1]
 
-        # convert subject pattern to 1d
-        data_chunk1d = data_chunk3d.ravel()
+        # convert subject pattern to 1d profile
+        data_chunk1d = np.sum(data_chunk3d,axis=(1,2))
         # check if data_chunk1d contains at least one non-zero value
         if (data_chunk1d.size == pattern1d.size) and np.any(data_chunk1d):
             I_corr[ind_I] = mutual_information(data_chunk1d, pattern1d, nbins=16, normalized=False)
