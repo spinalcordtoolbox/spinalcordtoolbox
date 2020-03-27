@@ -100,7 +100,7 @@ In order to install the SCT in Windows or other unsupported OS, we provide a sol
 
 ### Installation with Windows Subsystem for Linux (Windows 10). 
 
-In order to install sct on Windows 10, it is possible to install it on windows subsystem for linux (WSL). 
+Windows subsystem for Linux (WSL) is a new Windows 10 feature that enables you to run native Linux command-line tools directly on Windows. That way, it is possible to install a Linux version SCT and use it within your Windows 10 environment. 
 
 [Tutorial how to install SCT on WSL](https://github.com/neuropoly/spinalcordtoolbox/wiki/SCT-on-Windows-10:-Installation-instruction-for-SCT-on-Windows-subsytem-for-linux)
 
