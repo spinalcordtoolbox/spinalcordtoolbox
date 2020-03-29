@@ -16,10 +16,10 @@ from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline, _
 def get_parser():
     # Initialize the parser
     parser = Parser(__file__)
-    parser.usage.set_description("""This function extracts the spinal cord centerline. Two methods are 
+    parser.usage.set_description("""This function extracts the spinal cord centerline. Two methods are
     available: OptiC (automatic) and Viewer (manual). This function outputs (i) a NIFTI file with labels corresponding
     to the discrete centerline, and (ii) a csv file containing the float (more precise) coordinates of the centerline
-    in the RPI orientation. \n\nReference: C Gros, B De Leener, et al. Automatic spinal cord 
+    in the RPI orientation. \n\nReference: C Gros, B De Leener, et al. Automatic spinal cord
     localization, robust to MRI contrast using global curve optimization (2017). doi.org/10.1016/j.media.2017.12.001""")
 
     parser.add_option(name="-i",
@@ -52,7 +52,12 @@ def get_parser():
                       description='Degree of smoothing for centerline fitting. Only for -centerline-algo {bspline, linear}.',
                       mandatory=False,
                       default_value=30)
-
+    parser.add_option(name='-m',
+                      type_value='multiple_choice',
+                      description='Algorithm for centerline fitting. Fits centerline across all slices with input segmentation',
+                      mandatory=False,
+                      example=['polyfit', 'bspline', 'linear', 'nurbs'],
+                      default_value='bspline')
     parser.add_option(name="-o",
                       type_value='file_output',
                       description='File name (without extension) for the centerline output files. By default, output'
@@ -92,6 +97,10 @@ def run_main():
     if "-method" in arguments:
         method = arguments["-method"]
 
+    if "-m" in arguments:
+        method = 'seg'
+        algo_fitting = arguments["-m"]
+
     # Contrast type
     contrast_type = ''
     if "-c" in arguments:
@@ -125,6 +134,9 @@ def run_main():
     if method == 'viewer':
         # Manual labeling of cord centerline
         im_labels = _call_viewer_centerline(Image(fname_data), interslice_gap=interslice_gap)
+    if method == 'seg':
+        im_labels = Image(fname_data)
+        param_centerline.algo_fitting = algo_fitting
     else:
         # Automatic detection of cord centerline
         im_labels = Image(fname_data)
