@@ -133,8 +133,7 @@ def run_main():
         param_centerline.algo_fitting = 'optic'
         param_centerline.contrast = contrast_type
     else:
-        error = 'ERROR: please refer to help'
-        sct.printv(error, type='error')
+        sct.printv("ERROR: The selected method is not available: {}. Please look at the help.".format(method), type='error')
         return
 
 
