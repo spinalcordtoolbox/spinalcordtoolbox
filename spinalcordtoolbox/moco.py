@@ -130,7 +130,6 @@ def moco_wrapper(param):
     file_b0 = 'b0.nii'
     file_datasub = 'datasub.nii'  # corresponds to the full input data minus the b=0 scans (if param.is_diffusion=True)
     file_datasubgroup = 'datasub-groups.nii'  # concatenation of the average of each file_datasub
-    file_bvec = 'bvecs.txt'
     file_mask = 'mask.nii'
     file_moco_params_csv = 'moco_params.tsv'
     file_moco_params_x = 'moco_params_x.nii.gz'
@@ -162,8 +161,6 @@ def moco_wrapper(param):
     # Copying input data to tmp folder
     sct.printv('\nCopying input data to tmp folder and convert to nii...', param.verbose)
     convert(param.fname_data, os.path.join(path_tmp, file_data))
-    if param.is_diffusion:
-        sct.copy(param.fname_bvecs, os.path.join(path_tmp, file_bvec), verbose=param.verbose)
     if param.fname_mask != '':
         convert(param.fname_mask, os.path.join(path_tmp, file_mask), verbose=param.verbose)
         # Update field in param (because used later in another function, and param class will be passed)
@@ -203,8 +200,9 @@ def moco_wrapper(param):
 
     if param.is_diffusion:
         # Identify b=0 and DWI images
-        index_b0, index_dwi, nb_b0, nb_dwi = sct_dmri_separate_b0_and_dwi.identify_b0('bvecs.txt', param.fname_bvals,
-                                                                                      param.bval_min, param.verbose)
+        index_b0, index_dwi, nb_b0, nb_dwi = \
+            sct_dmri_separate_b0_and_dwi.identify_b0(param.fname_bvecs, param.fname_bvals, param.bval_min,
+                                                     param.verbose)
 
         # check if dmri and bvecs are the same size
         if not nb_b0 + nb_dwi == nt:
@@ -379,7 +377,7 @@ def moco_wrapper(param):
     # Average across time
     if param.is_diffusion:
         # generate b0_moco_mean and dwi_moco_mean
-        args = ['-i', im_moco.absolutepath, '-bvec', file_bvec, '-a', '1', '-v', '0']
+        args = ['-i', im_moco.absolutepath, '-bvec', param.fname_bvecs, '-a', '1', '-v', '0']
         if not param.fname_bvals == '':
             # if bvals file is provided
             args += ['-bval', param.fname_bvals]
