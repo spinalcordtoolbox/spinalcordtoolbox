@@ -16,8 +16,8 @@ from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline, _
 def get_parser():
     # Initialize the parser
     parser = Parser(__file__)
-    parser.usage.set_description("""This function extracts the spinal cord centerline. Two methods are
-    available: OptiC (automatic) and Viewer (manual). This function outputs (i) a NIFTI file with labels corresponding
+    parser.usage.set_description("""This function extracts the spinal cord centerline. Three methods are
+    available: OptiC (automatic), Viewer (manual) and Fitseg (applied on segmented image). These functions output (i) a NIFTI file with labels corresponding
     to the discrete centerline, and (ii) a csv file containing the float (more precise) coordinates of the centerline
     in the RPI orientation. \n\nReference: C Gros, B De Leener, et al. Automatic spinal cord
     localization, robust to MRI contrast using global curve optimization (2017). doi.org/10.1016/j.media.2017.12.001""")
@@ -37,7 +37,7 @@ def get_parser():
                       description="Method used for extracting the centerline.\n"
                                   "optic: automatic spinal cord detection method\n"
                                   "viewer: manual selection a few points followed by interpolation\n"
-                                  "fitseg: automatic spinal cord detection method on allready segmented image.",
+                                  "fitseg: fit a regularized centerline on an already-existing cord segmentation. It will interpolate if slices are missing and extrapolate beyond the segmentation boundaries (i.e., every axial slice will exhibit a centerline pixel).",
                       mandatory=False,
                       example=['optic', 'viewer', 'fitseg'],
                       default_value='optic')
@@ -125,13 +125,18 @@ def run_main():
     if method == 'viewer':
         # Manual labeling of cord centerline
         im_labels = _call_viewer_centerline(Image(fname_data), interslice_gap=interslice_gap)
-    if method == 'fitseg':
+    elif method == 'fitseg':
         im_labels = Image(fname_data)
-    else:
+    elif method == 'optic':
         # Automatic detection of cord centerline
         im_labels = Image(fname_data)
         param_centerline.algo_fitting = 'optic'
         param_centerline.contrast = contrast_type
+    else:
+        error = 'ERROR: please refer to help'
+        sct.printv(error, type='error')
+        return
+
 
     # Extrapolate and regularize (or detect if optic) cord centerline
     im_centerline, arr_centerline, _, _ = get_centerline(im_labels,
