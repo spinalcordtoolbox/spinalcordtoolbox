@@ -94,7 +94,6 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     # define mean distance (in voxel) between adjacent discs: [C1/C2 -> C2/C3], [C2/C3 -> C4/C5], ..., [L1/L2 -> L2/L3]
     centerline_level = data_disc_template[xct, yct, :]
     # attribute value to each disc. Starts from max level, then decrease.
-    # NB: value 2 means disc C2/C3 (and so on and so forth).
     min_level = centerline_level[centerline_level.nonzero()].min()
     max_level = centerline_level[centerline_level.nonzero()].max()
     list_disc_value_template = list(range(min_level, max_level))
@@ -550,4 +549,3 @@ def label_discs(fname_seg_labeled, verbose=1):
     # save disc labeled file
     im_seg_labeled.data = data_disc
     im_seg_labeled.change_orientation(orientation_native).save(sct.add_suffix(fname_seg_labeled, '_disc'))
-
