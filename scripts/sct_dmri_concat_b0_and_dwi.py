@@ -125,7 +125,7 @@ def main(args=None):
         elif arguments.order[i_item] == 'dwi':
             # read bval/bvec files
             bval, bvec = read_bvals_bvecs(arguments.bval[i_dwi], arguments.bvec[i_dwi])
-            i_dwi += 1
+        i_dwi += 1
         # Concatenate bvals
         bvals_concat += ' '.join(str(v) for v in bval)
         bvals_concat += ' '
