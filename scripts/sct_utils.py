@@ -728,7 +728,7 @@ def generate_output_file(fname_in, fname_out, squeeze_data=True, verbose=1):
     pathlib.Path(path_out).mkdir(parents=True, exist_ok=True)
     # if input image does not exist, give error
     if not os.path.isfile(fname_in):
-        printv('  ERROR: File ' + fname_in + ' does not exist. Exit program.', 1, 'error')
+        printv('  ERROR: File ' + fname_in + ' is not a regular file. Exit program.', 1, 'error')
         sys.exit(2)
     # if input and output fnames are the same, do nothing and exit function
     if fname_in == fname_out:
