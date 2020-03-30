@@ -8,13 +8,11 @@ from __future__ import absolute_import
 import sys
 import os
 import argparse
-import nibabel as nib
-
-from ivadomed.utils import segment_volume
 
 from spinalcordtoolbox.utils import Metavar, SmartFormatter
+from spinalcordtoolbox.deepseg.core import segment_nifti
 
-from sct_utils import add_suffix, init_sct
+from sct_utils import init_sct
 
 
 def get_parser():
@@ -87,10 +85,7 @@ def get_parser():
 def run_main():
     parser = get_parser()
     args = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
-    nii_seg = segment_volume(args.m, args.i, fname_roi=None)
-
-    # TODO: use args to get output name
-    nib.save(nii_seg, add_suffix(args.i, '_seg'))
+    segment_nifti(args.i, args.m)
 
 
 if __name__ == '__main__':
