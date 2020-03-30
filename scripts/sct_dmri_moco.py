@@ -28,6 +28,7 @@
 
 
 import sys
+import os
 from spinalcordtoolbox.moco import ParamMoco, moco_wrapper
 
 import sct_utils as sct
@@ -124,9 +125,9 @@ def main():
     parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
     param.fname_data = arguments['-i']
-    param.fname_bvecs = arguments['-bvec']
+    param.fname_bvecs = os.path.abspath(arguments['-bvec'])
     if '-bval' in arguments:
-        param.fname_bvals = arguments['-bval']
+        param.fname_bvals = os.path.abspath(arguments['-bval'])
     if '-bvalmin' in arguments:
         param.bval_min = arguments['-bvalmin']
     if '-g' in arguments:
