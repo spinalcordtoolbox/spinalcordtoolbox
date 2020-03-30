@@ -10,7 +10,6 @@
 # TODO: params for ANTS: CC/MI, shrink fact, nb_it
 # TODO: ants: explore optin  --float  for faster computation
 
-from __future__ import absolute_import
 
 from copy import deepcopy
 import sys
