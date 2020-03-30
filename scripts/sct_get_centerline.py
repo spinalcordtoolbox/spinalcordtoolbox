@@ -36,9 +36,10 @@ def get_parser():
                       type_value="multiple_choice",
                       description="Method used for extracting the centerline.\n"
                                   "optic: automatic spinal cord detection method\n"
-                                  "viewer: manual selection a few points followed by interpolation.",
+                                  "viewer: manual selection a few points followed by interpolation\n"
+                                  "fitseg: automatic spinal cord detection method on allready segmented image.",
                       mandatory=False,
-                      example=['optic', 'viewer'],
+                      example=['optic', 'viewer', 'fitseg'],
                       default_value='optic')
 
     parser.add_option(name='-centerline-algo',
@@ -52,12 +53,6 @@ def get_parser():
                       description='Degree of smoothing for centerline fitting. Only for -centerline-algo {bspline, linear}.',
                       mandatory=False,
                       default_value=30)
-    parser.add_option(name='-m',
-                      type_value='multiple_choice',
-                      description='Algorithm for centerline fitting. Fits centerline across all slices with input segmentation',
-                      mandatory=False,
-                      example=['polyfit', 'bspline', 'linear', 'nurbs'],
-                      default_value='bspline')
     parser.add_option(name="-o",
                       type_value='file_output',
                       description='File name (without extension) for the centerline output files. By default, output'
@@ -97,10 +92,6 @@ def run_main():
     if "-method" in arguments:
         method = arguments["-method"]
 
-    if "-m" in arguments:
-        method = 'seg'
-        algo_fitting = arguments["-m"]
-
     # Contrast type
     contrast_type = ''
     if "-c" in arguments:
@@ -134,9 +125,8 @@ def run_main():
     if method == 'viewer':
         # Manual labeling of cord centerline
         im_labels = _call_viewer_centerline(Image(fname_data), interslice_gap=interslice_gap)
-    if method == 'seg':
+    if method == 'fitseg':
         im_labels = Image(fname_data)
-        param_centerline.algo_fitting = algo_fitting
     else:
         # Automatic detection of cord centerline
         im_labels = Image(fname_data)
