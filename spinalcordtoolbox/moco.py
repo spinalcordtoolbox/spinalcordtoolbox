@@ -188,7 +188,11 @@ def moco_wrapper(param):
         param.is_sagittal = False
         sct.printv('WARNING: Orientation seems to be neither axial nor sagittal.')
 
-    # Set suffix of transformation file name (depends on orientation)
+    # Set suffix of transformation file name, which depends on the orientation:
+    # - if the image is axial, the estimated transformation is a 3D warping field, which is composed of a stack of
+    #   2D Tx-Ty transformations)
+    # - if the image is sagittal, the image is split across the R-L direction, and the estimated transformation is a
+    #   2D affine transfo (a .mat file). 
     param.suffix_mat = '0GenericAffine.mat' if param.is_sagittal else 'Warp.nii.gz'
 
     # Adjust group size in case of sagittal scan
