@@ -58,7 +58,7 @@ The outputs of the motion correction process are:
                                   "poly [int]: Degree of polynomial function used for regularization along Z. For no regularization set to 0. Default=" + param_default.poly + ".\n"
                                   "smooth [mm]: Smoothing kernel. Default=" + param_default.smooth + ".\n"
                                   "iter [int]: Number of iterations. Default=" + param_default.iter + ".\n"
-                                  "metric {MI, MeanSquares, CC}: Metric used for registration. Default=MeanSquares.\n"
+                                  "metric {MI, MeanSquares, CC}: Metric used for registration. Default=" + param_default.metric + ".\n"
                                   "gradStep [float]: Searching step used by registration algorithm. The higher the more deformation allowed. Default=" + param_default.gradStep + ".\n"
                                   "sampling [0-1]: Sampling rate used for registration metric. Default=" + param_default.sampling + ".\n"
                                   "numTarget [int]: Target volume or group (starting with 0). Default=" + param_default.num_target + ".\n"
