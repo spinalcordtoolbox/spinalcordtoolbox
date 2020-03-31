@@ -117,15 +117,17 @@ def main(args=None):
     bvecs_concat = ['', '', '']
     i_dwi = 0  # counter for DWI files, to read in bvec/bval files
     for i_item in range(len(arguments.order)):
-        if arguments.order[i_item] == 'b0':
+        # bval file only for DWI volumes passed
+        if arguments.order[i_item] == 'b0' and not len(arguments.bval) == len(arguments.i):
             # count number of b=0
             n_b0 = Image(arguments.i[i_item]).dim[3]
             bval = np.array([0.0] * n_b0)
             bvec = np.array([[0.0, 0.0, 0.0]] * n_b0)
-        elif arguments.order[i_item] == 'dwi':
+        # bval file for b0 and DWI volumes passed
+        else:
             # read bval/bvec files
             bval, bvec = read_bvals_bvecs(arguments.bval[i_dwi], arguments.bvec[i_dwi])
-        i_dwi += 1
+            i_dwi += 1
         # Concatenate bvals
         bvals_concat += ' '.join(str(v) for v in bval)
         bvals_concat += ' '
