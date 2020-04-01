@@ -10,12 +10,15 @@ import os
 import argparse
 
 from spinalcordtoolbox.utils import Metavar, SmartFormatter
-from spinalcordtoolbox.deepseg.core import segment_nifti
+from spinalcordtoolbox.deepseg.core import ParamDeepseg, segment_nifti
 
 from sct_utils import init_sct
 
 
 def get_parser():
+
+    param_default = ParamDeepseg()
+
     parser = argparse.ArgumentParser(
         description="Segmentation using deep learning.",
         add_help=None,
@@ -34,39 +37,12 @@ def get_parser():
         help="Path of the model to use.",
         default='')
 
-    paramseg = parser.add_argument_group("\nSEGMENTATION PARAMETERS")
-    paramseg.add_argument(
-        "-thr",
-        type=float,
-        help='Threshold to apply in the segmentation predictions, use 0 (zero) to disable it. Example: 0.999',
-        metavar=Metavar.float,
-        default=0.999)
-    paramseg.add_argument(
-        "-t",
-        help="Enable TTA (test-time augmentation). "
-             "Better results, but takes more time and "
-             "provides non-deterministic results.",
-        metavar='')
-
     misc = parser.add_argument_group('\nMISC')
     misc.add_argument(
         "-o",
-        help="Output segmentation. In case multi-class segmentation, suffixes will be added.",
-        metavar=Metavar.file,
-        default=None)
-    misc.add_argument(
-        '-qc',
-        help="The path where the quality control generated content will be saved.",
-        metavar=Metavar.str,
-        default=None)
-    misc.add_argument(
-        '-qc-dataset',
-        help='If provided, this string will be mentioned in the QC report as the dataset the process was run on',
-        metavar=Metavar.str)
-    misc.add_argument(
-        '-qc-subject',
-        help='If provided, this string will be mentioned in the QC report as the subject the process was run on',
-        metavar=Metavar.str)
+        help="Output segmentation suffix. In case of multi-class segmentation, class-specific suffixes will be added.",
+        metavar=str,
+        default=param_default.output_suffix)
     misc.add_argument(
         "-v",
         type=int,
@@ -82,12 +58,19 @@ def get_parser():
     return parser
 
 
-def run_main():
+def main():
+    param = ParamDeepseg
+
     parser = get_parser()
     args = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
+    # TODO: instead of assigning each args param, we could pass args while instanciating ParamDeepseg(args), and the
+    #  class would deal with assigning arguments to each field.
+    if 'o' in args:
+        param.output_suffix = args.o
+
     segment_nifti(args.i, args.m)
 
 
 if __name__ == '__main__':
     init_sct()
-    run_main()
+    main()

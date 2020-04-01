@@ -18,6 +18,7 @@ class ParamDeepseg:
     Parameters for deepseg module.
     """
     def __init__(self):
+        self.output_suffix = '_seg'
         self.remove_temp_files = 1
         self.verbose = 1
 
