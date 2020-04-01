@@ -70,8 +70,6 @@ class ParamMoco:
         self.metric = metric
         self.sampling = '0.2'  # sampling rate used for registration metric
         self.interp = 'spline'  # nn, linear, spline
-        self.run_eddy = 0
-        self.mat_eddy = ''
         self.min_norm = 0.001
         self.swapXY = 0
         self.num_target = '0'
@@ -335,14 +333,6 @@ def moco_wrapper(param):
         # TODO: fix this scenario (haven't touched that code for a while-- it is probably buggy)
         raise NotImplementedError()
         # spline(mat_final, nt, nz, param.verbose, np.array(index_b0), param.plot_graph)
-
-    # combine Eddy Matrices
-    if param.run_eddy:
-        # TODO: fix this scenario (haven't touched that code for a while-- it is probably buggy)
-        raise NotImplementedError()
-        # param.mat_2_combine = 'mat_eddy'
-        # param.mat_final = mat_final
-        # combine_matrix(param)
 
     # ==================================================================================================================
     # Apply moco
@@ -860,38 +850,3 @@ def spline(folder_mat, nt, nz, verbose, index_b0 = [], graph=0):
 
     sct.printv('\n...Done. Patient motion has been smoothed', verbose)
     sct.printv('------------------------------------------------------------------------------\n', verbose)
-
-
-def combine_matrix(param):
-
-    # required fields
-    # param.mat_2_combine
-    # param.mat_final
-    # param.verbose
-
-    sct.printv('\nCombine matrices...', param.verbose)
-    # list all mat files in source mat folder
-    m2c_fnames = [fname for fname in os.listdir(param.mat_2_combine) if os.path.isfile(os.path.join(param.mat_2_combine, fname))]
-    # loop across files
-    for fname in m2c_fnames:
-        if os.path.isfile(os.path.join(param.mat_final, fname)):
-            # read source matrix
-            file = open(os.path.join(param.mat_2_combine, fname))
-            Matrix_m2c = np.loadtxt(file)
-            file.close()
-            # read destination matrix
-            file = open(os.path.join(param.mat_final, fname))
-            Matrix_f = np.loadtxt(file)
-            file.close()
-            # initialize final matrix
-            Matrix_final = np.identity(4)
-            # multiplies rotation matrix (3x3)
-            Matrix_final[0:3, 0:3] = Matrix_f[0:3, 0:3] * Matrix_m2c[0:3, 0:3]
-            # add translations matrix (3x1)
-            Matrix_final[0, 3] = Matrix_f[0, 3] + Matrix_m2c[0, 3]
-            Matrix_final[1, 3] = Matrix_f[1, 3] + Matrix_m2c[1, 3]
-            Matrix_final[2, 3] = Matrix_f[2, 3] + Matrix_m2c[2, 3]
-            # write final matrix (overwrite destination)
-            file = open(os.path.join(param.mat_final, fname), 'w')
-            np.savetxt(os.path.join(param.mat_final, fname), Matrix_final, fmt="%s", delimiter='  ', newline='\n')
-            file.close()
