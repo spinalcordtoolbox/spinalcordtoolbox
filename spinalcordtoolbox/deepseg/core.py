@@ -1,5 +1,7 @@
 # coding: utf-8
-# Interface API for the deepseg module, which performs segmentation using deep learning with the ivadomed package.
+"""
+Interface API for the deepseg module, which performs segmentation using deep learning with the ivadomed package.
+"""
 
 
 import logging

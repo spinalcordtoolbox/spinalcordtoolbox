@@ -1,5 +1,7 @@
 # coding: utf-8
-# List of available models.
+"""
+List of available models.
+"""
 
 
 import os
