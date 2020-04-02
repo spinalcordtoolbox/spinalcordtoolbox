@@ -742,6 +742,9 @@ def register(param, file_src, file_dest, file_mat, file_out, im_mask=None):
                                      '-v', '0'])
 
     # check if output file exists
+    # Note (from JCA): In the past, i've tried to catch non-zero output from ANTs function (via the 'status' variable),
+    # but in some OSs, the function can fail while outputing zero. So as a pragmatic approach, I decided to go with
+    # the "output file checking" approach, which is 100% sensitive.
     if not os.path.isfile(file_out_concat):
         # sct.printv(output, verbose, 'error')
         sct.printv('WARNING in ' + os.path.basename(__file__) + ': No output. Maybe related to improper calculation of '
