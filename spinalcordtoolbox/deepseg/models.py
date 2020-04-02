@@ -8,12 +8,15 @@ from spinalcordtoolbox import __sct_dir__
 
 
 MODELS = {
-    'cord-t2star': {'url': 'https://osf.io/8nsa6/',
+    'cord-t2star': {'url': 'https://osf.io/v9hs8/download?version=1',
                     'short_description': 'Cord segmentation on T2*-weighted contrast.',
                     'long_description': 'TODO'},
-    'cord-mouse': {'url': 'URL',
-                   'short_description': 'Cord segmentation on mouse MRI.',
-                   'long_description': 'Long description'}
+    'uqueensland-mice-sc': {'url': 'https://osf.io/nu3ma/download?version=1',
+                   'short_description': 'Cord segmentation on mouse MRI. Data from University of Queensland.',
+                   'long_description': 'Long description'},
+    'uqueensland-mice-gm': {'url': 'https://osf.io/mfxwg/download?version=1',
+                   'short_description': 'Gray matter segmentation on mouse MRI. Data from University of Queensland.',
+                   'long_description': 'Long description'},
     }
 
 
