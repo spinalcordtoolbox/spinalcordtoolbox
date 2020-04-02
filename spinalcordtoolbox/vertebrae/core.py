@@ -155,9 +155,10 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
             break
         # find next disc
         # N.B. Do not search for C1/C2 disc (because poorly visible), use template distance instead
-        im_hm= Image('/Users/lurou_admin/Desktop/deep_VL_2019/sct_testing_large_handling/db_test/sub-karoTobiasMS044/karoTobiasMS044_HM3d_r.nii.gz')
+        sct.run('python ~/luroub_local/lurou_local/deep_VL_2019/ivado_med/scripts_vertebral_labeling/detect_vertebrae.py -i %s -c %s -m 1 -o hm_tmp.nii.gz -net AttU' %(fname,'t2'))
+        im_hm= Image('hm_tmp.nii.gz')
         data_hm = im_hm.data
-        im_lab=Image('/Users/lurou_admin/Desktop/sct/sct/data/PAM50/template/PAM50_label_dilate.nii.gz')
+        im_lab=Image('/home/GRAMES.POLYMTL.CA/luroub/luroub_local/lurou_local/sct/sct/data/PAM50/template/PAM50_label_dilated.nii.gz')
         data_lab=im_lab.data
         if current_disc != 1:
             current_z = compute_corr_3d(data_hm, im_lab.data, x=xc, xshift=0, xsize=param.size_RL,
