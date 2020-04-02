@@ -5,8 +5,11 @@ List of available models.
 
 
 import os
+import logging
 
 from spinalcordtoolbox import __sct_dir__
+
+logger = logging.getLogger(__name__)
 
 
 MODELS = {
@@ -37,10 +40,13 @@ class DeepsegModel:
         """
         Check if model (.pt file) is installed under SCT directory
         """
-        if os.path.exists(os.path.join(self.folder, self.name + '.pt')):
+        if os.path.exists(os.path.join(self.folder, self.name + '.pt')) and \
+                os.path.exists(os.path.join(self.folder, self.name + '.json')):
             return True
         else:
-            return False
+            raise FileNotFoundError("The model is not properly installed. Both the .pt and .json files should be "
+                                    "present, and the basename should be the same as the folder name. Example: "
+                                    "my_model/my_model.pt, my_model/my_model.json")
 
     def install(self):
         """
