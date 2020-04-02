@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8
-# This command-line tool is the interface for the deepseg API that performs segmentation using deep learning from the
-# ivadomed package.
+"""
+This command-line tool is the interface for the deepseg API that performs segmentation using deep learning from the
+ivadomed package.
+"""
 
 # TODO: implement feature with a new flag (e.g. path-to-model) that will give the possibility to point to a model
 #  folder, in case a test model is not on OSF and is not listed in MODELS.
