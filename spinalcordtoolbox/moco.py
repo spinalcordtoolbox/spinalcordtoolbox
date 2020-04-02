@@ -752,7 +752,7 @@ def register(param, file_src, file_dest, file_mat, file_out, im_mask=None):
                                                                 'exists).', param.verbose, 'warning')
         failed_transfo = 1
 
-    # TODO: if sagittal, copy header (because ANTs screws it) and add singleton in 3rd dimension (for z-concatenation)
+    # If sagittal, copy header (because ANTs screws it) and add singleton in 3rd dimension (for z-concatenation)
     if im_data.orientation[2] in 'LR' and do_registration:
         im_out = Image(file_out_concat)
         im_out.header = im_data.header
