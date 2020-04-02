@@ -17,11 +17,12 @@ import sys
 import numpy as np
 import argparse
 
+import spinalcordtoolbox as sct
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.utils import Metavar, SmartFormatter
+import spinalcordtoolbox.math
 
-from sct_utils import printv, extract_fname
-import sct_utils as sct
+from sct_utils import printv, extract_fname, display_viewer_syntax, init_sct
 
 
 ALMOST_ZERO = 0.000000001
@@ -139,18 +140,34 @@ def get_parser():
     mathematical = parser.add_argument_group("MATHEMATICAL MORPHOLOGY")
     mathematical.add_argument(
         '-dilate',
-        metavar='',
-        help='Dilate binary image. If only one input is given, structured element is a ball with input radius (in '
-             'voxel). If comma-separated inputs are given (Example: 2,4,5 ), structured element is a box with input '
-             'dimensions.',
+        type=int,
+        metavar=Metavar.int,
+        help="Dilate binary or greyscale image with specified size. If shape={'square', 'cube'}: size corresponds to the length of "
+             "an edge (size=1 has no effect). If shape={'disk', 'ball'}: size corresponds to the radius, not including "
+             "the center element (size=0 has no effect).",
         required=False)
     mathematical.add_argument(
         '-erode',
-        metavar='',
-        help='Erode binary image. If only one input is given, structured element is a ball with input radius (in '
-             'voxel). If comma-separated inputs are given (Example: 2,4,5), structured element is a box with input '
-             'dimensions.',
+        type=int,
+        metavar=Metavar.int,
+        help="Erode binary or greyscale image with specified size. If shape={'square', 'cube'}: size corresponds to the length of "
+             "an edge (size=1 has no effect). If shape={'disk', 'ball'}: size corresponds to the radius, not including "
+             "the center element (size=0 has no effect).",
         required=False)
+    mathematical.add_argument(
+        '-shape',
+        help="Shape of the structuring element for the mathematical morphology operation. Default: ball.",
+        required=False,
+        choices=('square', 'cube', 'disk', 'ball'),
+        default='ball')
+    mathematical.add_argument(
+        '-dim',
+        type=int,
+        metavar=Metavar.int,
+        help="Dimension of the array which 2D structural element will be orthogonal to. For example, if you wish to "
+             "apply a 2D disk kernel in the X-Y plane, leaving Z unaffected, parameters will be: shape=disk, dim=2.",
+        required=False,
+        choices=(0, 1, 2))
 
     filtering = parser.add_argument_group("FILTERING METHODS")
     filtering.add_argument(
@@ -235,7 +252,7 @@ def main(args=None):
     fname_in = arguments.i
     fname_out = arguments.o
     verbose = arguments.v
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    init_sct(log_level=verbose, update=True)  # Update log level
     if '-type' in arguments:
         output_type = arguments.type
     else:
@@ -336,10 +353,10 @@ def main(args=None):
         data_out = smooth(data, sigmas)
 
     elif arguments.dilate is not None:
-        data_out = dilate(data, convert_list_str(arguments.dilate, "int"))
+        data_out = sct.math.dilate(data, size=arguments.dilate, shape=arguments.shape, dim=arguments.dim)
 
     elif arguments.erode is not None:
-        data_out = erode(data, convert_list_str(arguments.erode, "int"))
+        data_out = sct.math.erode(data, size=arguments.erode, shape=arguments.shape, dim=arguments.dim)
 
     elif arguments.denoise is not None:
         # parse denoising arguments
@@ -412,7 +429,7 @@ def main(args=None):
 
     # display message
     if data_out is not None:
-        sct.display_viewer_syntax([fname_out], verbose=verbose)
+        display_viewer_syntax([fname_out], verbose=verbose)
     else:
         printv('\nDone! File created: ' + fname_out, verbose, 'info')
 
@@ -471,40 +488,6 @@ def binarise(data, bin_thr=0):
     return data > bin_thr
 
 
-def dilate(data, radius):
-    """
-    Dilate data using ball structuring element
-    :param data: 2d or 3d array
-    :param radius: radius of structuring element OR comma-separated int.
-    :return: data dilated
-    """
-    from skimage.morphology import dilation, ball
-    if len(radius) == 1:
-        # define structured element as a ball
-        selem = ball(radius[0])
-    else:
-        # define structured element as a box with input dimensions
-        selem = np.ones((radius[0], radius[1], radius[2]), dtype=np.dtype)
-    return dilation(data, selem=selem, out=None)
-
-
-def erode(data, radius):
-    """
-    Erode data using ball structuring element
-    :param data: 2d or 3d array
-    :param radius: radius of structuring element
-    :return: data eroded
-    """
-    from skimage.morphology import erosion, ball
-    if len(radius) == 1:
-        # define structured element as a ball
-        selem = ball(radius[0])
-    else:
-        # define structured element as a box with input dimensions
-        selem = np.ones((radius[0], radius[1], radius[2]), dtype=np.dtype)
-    return erosion(data, selem=selem, out=None)
-
-
 def get_data(list_fname):
     """
     Get data from list of file names
@@ -514,7 +497,7 @@ def get_data(list_fname):
     try:
         nii = [Image(f_in) for f_in in list_fname]
     except Exception as e:
-        sct.printv(str(e), 1, 'error')  # file does not exist, exit program
+        printv(str(e), 1, 'error')  # file does not exist, exit program
     data0 = nii[0].data
     data = nii[0].data
     # check that every images have same shape
@@ -774,5 +757,5 @@ def correlation(x, y, type='pearson'):
 
 
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     main()

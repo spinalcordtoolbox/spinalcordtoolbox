@@ -22,6 +22,7 @@ import argparse
 from spinalcordtoolbox.utils import Metavar, SmartFormatter
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.cropping import ImageCropper
+from spinalcordtoolbox.math import dilate
 
 import sct_utils as sct
 import sct_image
@@ -214,10 +215,7 @@ class Transform:
                 path_tmp = sct.tmp_create(basename="apply_transfo", verbose=verbose)
                 fname_dilated_labels = os.path.join(path_tmp, "dilated_data.nii")
                 # dilate points
-                sct.run(['sct_maths',
-                         '-i', fname_src,
-                         '-o', fname_dilated_labels,
-                         '-dilate', '2'])
+                dilate(Image(fname_src), 2, 'ball').save(fname_dilated_labels)
                 fname_src = fname_dilated_labels
 
             sct.printv("\nApply transformation and resample to destination space...", verbose)
