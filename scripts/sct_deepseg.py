@@ -11,6 +11,7 @@ import argparse
 
 from spinalcordtoolbox.utils import Metavar, SmartFormatter
 from spinalcordtoolbox.deepseg.core import ParamDeepseg, segment_nifti
+from spinalcordtoolbox.deepseg.models import MODELS
 
 from sct_utils import init_sct
 
@@ -32,10 +33,9 @@ def get_parser():
         help="Image to segment.",
         metavar=Metavar.file)
     mandatory.add_argument(
-        # TODO: need to find a better strategy here
         "-m",
-        help="Path of the model to use.",
-        default='')
+        help="Model to use.",
+        choices=list(MODELS.keys()))
 
     misc = parser.add_argument_group('\nMISC')
     misc.add_argument(
