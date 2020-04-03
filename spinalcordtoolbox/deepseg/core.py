@@ -6,11 +6,11 @@ Interface API for the deepseg module, which performs segmentation using deep lea
 
 import logging
 import nibabel as nib
-
 import ivadomed as imed
 import ivadomed.utils
 
-from spinalcordtoolbox.deepseg.models import DeepsegModel
+import spinalcordtoolbox.deepseg.models
+
 from sct_utils import add_suffix
 
 logger = logging.getLogger(__name__)
@@ -34,13 +34,12 @@ def segment_nifti(fname_image, name_model):
     :param model_name: str: Name of model to use. See deepseg.model.MODELS
     :return: fname_out: str: Output filename.
     """
-    model = DeepsegModel(name_model)
-    if not model.is_installed():
-        if not model.install():
+    if not spinalcordtoolbox.deepseg.models.is_installed(name_model):
+        if not spinalcordtoolbox.deepseg.models.install(name_model):
             logger.error("Model needs to be installed.")
             exit(RuntimeError)
 
-    nii_seg = imed.utils.segment_volume(model.folder, fname_image)
+    nii_seg = imed.utils.segment_volume(spinalcordtoolbox.deepseg.models.folder(name_model), fname_image)
 
     # TODO: use args to get output name
     fname_out = add_suffix(fname_image, '_seg')

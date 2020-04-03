@@ -1,6 +1,6 @@
 # coding: utf-8
 """
-List of available models.
+Deals with models for deepseg module. Available models are listed under MODELS.
 """
 
 
@@ -10,7 +10,6 @@ import logging
 from spinalcordtoolbox import __sct_dir__
 
 logger = logging.getLogger(__name__)
-
 
 MODELS = {
     'cord-t2star':
@@ -25,33 +24,33 @@ MODELS = {
     }
 
 
-class DeepsegModel:
+def folder(name):
     """
-    Main class that deals with deep learning models. When initialized, the class will inherit the subfields from
-    MODELS[modelx] dict.
+    Return absolute path of deep learning models.
+    :param name: str: Name of model.
+    :return:
     """
-    def __init__(self, name_model):
-        self.name = name_model
-        self.folder = os.path.join(__sct_dir__, 'models', name_model)
-        for key in MODELS[name_model]:
-            setattr(self, key, MODELS[name_model][key])
+    return os.path.join(__sct_dir__, 'models', name)
 
-    def is_installed(self):
-        """
-        Check if model (.pt file) is installed under SCT directory
-        """
-        if os.path.exists(os.path.join(self.folder, self.name + '.pt')) and \
-                os.path.exists(os.path.join(self.folder, self.name + '.json')):
-            return True
-        else:
-            raise FileNotFoundError("The model is not properly installed. Both the .pt and .json files should be "
-                                    "present, and the basename should be the same as the folder name. Example: "
-                                    "my_model/my_model.pt, my_model/my_model.json")
 
-    def install(self):
-        """
-        Download and install model under SCT directory
-        :param name_model:
-        :return:
-        """
-        raise NotImplementedError
+def is_installed(name):
+    """
+    Check if model is installed under SCT directory.
+    :param name: str: Name of model.
+    """
+    if os.path.exists(os.path.join(folder(name), name + '.pt')) and \
+            os.path.exists(os.path.join(folder(name), name + '.json')):
+        return True
+    else:
+        raise FileNotFoundError("The model is not properly installed. Both the .pt and .json files should be "
+                                "present, and the basename should be the same as the folder name. Example: "
+                                "my_model/my_model.pt, my_model/my_model.json")
+
+
+def install(name):
+    """
+    Download and install model under SCT directory.
+    :param name: str: Name of model.
+    :return:
+    """
+    raise NotImplementedError
