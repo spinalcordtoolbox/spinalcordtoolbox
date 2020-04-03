@@ -228,8 +228,9 @@ class SCTPanel(wx.Panel):
         logo_file = os.path.join(os.environ[self.SCT_DIR_ENV],
                                  self.SCT_LOGO_REL_PATH)
         png = wx.Image(logo_file,
-                       wx.BITMAP_TYPE_ANY).ConvertToBitmap()
-        png.SetSize((png.GetWidth() // 6, png.GetHeight() // 6))
+                       wx.BITMAP_TYPE_ANY)
+        png = png.Scale(png.GetWidth() // 6, png.GetHeight() // 6,
+                        wx.IMAGE_QUALITY_NORMAL).ConvertToBitmap()
         img_logo = wx.StaticBitmap(self, -1, png, wx.DefaultPosition,
                                    (png.GetWidth(), png.GetHeight()))
         return img_logo
