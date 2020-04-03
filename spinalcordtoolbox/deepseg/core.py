@@ -34,6 +34,8 @@ def segment_nifti(fname_image, name_model):
     :param model_name: str: Name of model to use. See deepseg.model.MODELS
     :return: fname_out: str: Output filename.
     """
+    spinalcordtoolbox.deepseg.models.is_model(name_model)
+
     if not spinalcordtoolbox.deepseg.models.is_installed(name_model):
         if not spinalcordtoolbox.deepseg.models.install(name_model):
             logger.error("Model needs to be installed.")

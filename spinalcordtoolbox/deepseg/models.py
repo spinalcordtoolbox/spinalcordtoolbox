@@ -35,6 +35,17 @@ def folder(name):
     return os.path.join(__sct_dir__, 'models', name)
 
 
+def is_model(name):
+    """
+    Check if model is listed in MODELS
+    :param name: str: Name of model.
+    :return:
+    """
+    if name not in list(MODELS.keys()):
+        raise ValueError("The selected model does not exist: {}".format(name))
+    return True
+
+
 def is_installed(name):
     """
     Check if model is installed under SCT directory.
