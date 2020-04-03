@@ -11,15 +11,17 @@ from spinalcordtoolbox import __sct_dir__
 
 logger = logging.getLogger(__name__)
 
+# List of models. The convention for model names is: (species)_(university)_(contrast)_region
+# Regions could be: sc, gm, lesion, tumor
 MODELS = {
-    'cord-t2star':
-        {'url': 'https://osf.io/v9hs8/download?version=1',
+    't2star_sc':
+        {'url': 'https://osf.io/v9hs8/download?version=2',
          'description': 'Cord segmentation on T2*-weighted contrast.'},
-    'uqueensland-mice-sc':
-        {'url': 'https://osf.io/nu3ma/download?version=1',
+    'uqueensland_mice_sc':
+        {'url': 'https://osf.io/nu3ma/download?version=2',
          'description': 'Cord segmentation on mouse MRI. Data from University of Queensland.'},
-    'uqueensland-mice-gm':
-        {'url': 'https://osf.io/mfxwg/download?version=1',
+    'uqueensland_mice_gm':
+        {'url': 'https://osf.io/mfxwg/download?version=2',
          'description': 'Gray matter segmentation on mouse MRI. Data from University of Queensland.'},
     }
 
