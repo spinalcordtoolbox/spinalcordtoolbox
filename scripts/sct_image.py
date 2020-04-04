@@ -400,7 +400,7 @@ def displacement_to_abs_fsl(disp_im, src, tgt = None):
         shp = disp_im.data.shape
         hdr.set_data_shape(shp)
         disp_nib = Nifti1Image(disp_im.data.copy(), aff(disp_im), hdr)
-        disp_resampled = resample_from_to(disp_nib, (shp, aff(tgt)))
+        disp_resampled = resample_from_to(disp_nib, (shp, aff(tgt)), order = 1)
         disp_im.data = disp_resampled.dataobj.copy()
         disp_im.header = disp_resampled.header.copy()
 
