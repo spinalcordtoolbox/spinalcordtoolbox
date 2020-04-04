@@ -4,7 +4,7 @@
 [![GitHub Release](https://github-basic-badges.herokuapp.com/release/neuropoly/spinalcordtoolbox.svg)](https://github.com/neuropoly/spinalcordtoolbox/releases)
 [![Github Download Count](https://img.shields.io/github/downloads/neuropoly/spinalcordtoolbox/total.svg)](https://github.com/neuropoly/spinalcordtoolbox/releases)
 [![Project Stats](https://www.openhub.net/p/spinalcordtoolbox/widgets/project_thin_badge.gif)](https://www.openhub.net/p/spinalcordtoolbox)
-[![User mailing list](http://img.shields.io/badge/mailing%20list-users-green.svg?style=flat)](https://sourceforge.net/p/spinalcordtoolbox/discussion/help/)
+[![User forum](https://img.shields.io/discourse/status?label=forum&server=http%3A%2F%2Fforum.spinalcordmri.org)](http://forum.spinalcordmri.org/c/sct)
 [![Developer mailing list](http://img.shields.io/badge/mailing%20list-development-green.svg?style=flat)](https://groups.google.com/forum/#!forum/sct_developers)
 [![Coverage Status](https://coveralls.io/repos/github/neuropoly/spinalcordtoolbox/badge.svg?branch=master)](https://coveralls.io/github/neuropoly/spinalcordtoolbox?branch=master)
 
