@@ -136,13 +136,7 @@ def get_parser():
         action='store_true',
         help='Create a grid and deform it using provided warping field.',
         required=False)
-    multi.add_argument(
-        '-world2vox',
-        metavar=Metavar.file,
-        help='Transform displacement field values from world to voxel coordinate system. Input the file that will be '
-             'used as the input (source) by FSL applywarp function.',
-        required=False)
-    multi.add_argument(
+    warping.add_argument(
         '-to-fsl',
         metavar=Metavar.file,
         help='Transform displacement field values to absolute FSL warps. To be used with FSL\'s applywarp function with the '
@@ -302,26 +296,6 @@ def main(args=None):
         output_type = arguments.type
         im_in = Image(fname_in[0])
         im_out = [im_in]  # TODO: adapt to fname_in
-
-    elif arguments.world2vox is not None:
-        im_in = Image(fname_in[0])
-        m = im_in.hdr.get_best_affine()
-        data_vox = np.dot(im_in.data, m[0:3, 0:3])
-        # If determinant is positive (+1), reverse L-R displacement (in voxel space)
-        # More info at: https://nifti.nimh.nih.gov/nifti-1/support/FSLandNIfTI1/
-        if np.linalg.det(im_in.hdr.get_best_affine()) > 0:
-            # Get index of L or R (the trick below is to sort, so the '-1' element is first, then we select the last)
-            ind_lr = np.sort([im_in.orientation.find(x) for x in ['L', 'R']])[-1]
-            data_vox[..., ind_lr] = -data_vox[..., ind_lr]
-        im_out = [im_in.copy()]
-        im_out[0].data = data_vox
-        # Write FSL-compatible affine transformation to go from src to dest image
-        m_source = Image(arguments.world2vox).hdr.get_best_affine()
-        m_out = np.dot(m, m_source)
-        np.savetxt('affine_fsl.mat', m_out)
-        # np.eye(4)
-        # m_out[:3, :3] = np.dot(m[:3, :3], m_source[:3, :3])
-        # m_out[:3, 3] = m[:3, 3] + m_source[:3, 3]
 
     elif arguments.to_fsl is not None:
         space_files = arguments.to_fsl
