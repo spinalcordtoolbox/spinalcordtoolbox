@@ -86,7 +86,7 @@ def convert(fname_in, fname_out, squeeze_data=True, dtype=None, verbose=1):
         im.data = np.squeeze(im.data)
     if dtype:
         im.change_type(dtype)
-    im.save(fname_out, mutable=True)
+    im.save(fname_out, mutable=True, verbose=verbose)
     return im
 
 

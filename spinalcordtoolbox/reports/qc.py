@@ -444,7 +444,7 @@ class QcReport(object):
         target_img_folder = os.path.dirname(self.qc_params.abs_bkg_img_path())
 
         try:
-            os.makedirs(target_img_folder)
+            os.makedirs(target_img_folder, exist_ok = True)
         except OSError as err:
             if not os.path.isdir(target_img_folder):
                 raise err
@@ -476,7 +476,7 @@ class QcReport(object):
         # Create path to store json files
         path_json, _ = os.path.split(self.qc_params.qc_results)
         if not os.path.exists(path_json):
-            os.makedirs(path_json)
+            os.makedirs(path_json, exist_ok = True)
         # Create json file
         with open(self.qc_params.qc_results, 'w+') as qc_file:
             json.dump(output, qc_file, indent=1)
@@ -496,7 +496,7 @@ class QcReport(object):
             src_path = os.path.join(assets_path, '_assets', path)
             dest_full_path = os.path.join(dest_path, '_assets', path)
             if not os.path.exists(dest_full_path):
-                os.makedirs(dest_full_path)
+                os.makedirs(dest_full_path, exist_ok = True)
             for file_ in os.listdir(src_path):
                 if not os.path.isfile(os.path.join(dest_full_path, file_)):
                     sct.copy(os.path.join(src_path, file_),
