@@ -230,7 +230,7 @@ class SCTPanel(wx.Panel):
         png = wx.Image(logo_file,
                        wx.BITMAP_TYPE_ANY)
         png = png.Scale(png.GetWidth() // 6, png.GetHeight() // 6,
-                        wx.IMAGE_QUALITY_NORMAL).ConvertToBitmap()
+                        wx.IMAGE_QUALITY_HIGH).ConvertToBitmap()
         img_logo = wx.StaticBitmap(self, -1, png, wx.DefaultPosition,
                                    (png.GetWidth(), png.GetHeight()))
         return img_logo
