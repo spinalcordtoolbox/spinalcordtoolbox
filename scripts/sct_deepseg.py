@@ -90,6 +90,7 @@ def main():
                 printv("Model needs to be installed.", 1, 'error')
                 exit(RuntimeError)
     elif args.mpath:
+        # TODO: check integrity of folder model
         path_model = args.mpath
 
     sct.deepseg.core.segment_nifti(args.i, path_model)
