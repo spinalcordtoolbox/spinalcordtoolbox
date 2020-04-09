@@ -5,6 +5,7 @@ Deals with models for deepseg module. Available models are listed under MODELS.
 
 
 import os
+import json
 import logging
 
 from spinalcordtoolbox import __sct_dir__
@@ -67,3 +68,15 @@ def install(name):
     :return:
     """
     raise NotImplementedError
+
+
+def get_metadata(folder_model):
+    """
+    Get metadata from json file located in folder_model
+    :param path_model: str: Model folder
+    :return: dict
+    """
+    fname_metadata = os.path.join(folder_model, os.path.basename(folder_model) + '.json')
+    with open(fname_metadata, "r") as fhandle:
+        metadata = json.load(fhandle)
+    return metadata
