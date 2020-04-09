@@ -14,16 +14,17 @@ import sys
 import os
 import argparse
 
+import spinalcordtoolbox as sct
+import spinalcordtoolbox.deepseg.core
+import spinalcordtoolbox.deepseg.models
 from spinalcordtoolbox.utils import Metavar, SmartFormatter
-from spinalcordtoolbox.deepseg.core import ParamDeepseg, segment_nifti
-from spinalcordtoolbox.deepseg.models import MODELS
 
-from sct_utils import init_sct
+from sct_utils import init_sct, printv
 
 
 def get_parser():
 
-    param_default = ParamDeepseg()
+    param_default = sct.deepseg.core.ParamDeepseg()
 
     parser = argparse.ArgumentParser(
         description="Segmentation using deep learning.",
@@ -37,10 +38,17 @@ def get_parser():
         required=True,
         help="Image to segment.",
         metavar=Metavar.file)
-    mandatory.add_argument(
+
+    seg = parser.add_argument_group('\nSEGMENTATION:')
+    seg.add_argument(
         "-m",
-        help="Model to use.",
-        choices=list(MODELS.keys()))
+        help="Model to use, from the list of official SCT models downloaded from the Internet.",
+        choices=list(sct.deepseg.models.MODELS.keys()))
+    seg.add_argument(
+        "-mpath",
+        help="Path to model, in case you would like to use a custom model. The model folder should follow the "
+             "conventions listed in: URL.",
+        metavar=Metavar.folder)
 
     misc = parser.add_argument_group('\nMISC')
     misc.add_argument(
@@ -64,7 +72,7 @@ def get_parser():
 
 
 def main():
-    param = ParamDeepseg
+    param = sct.deepseg.core.ParamDeepseg()
 
     parser = get_parser()
     args = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
@@ -73,7 +81,18 @@ def main():
     if 'o' in args:
         param.output_suffix = args.o
 
-    segment_nifti(args.i, args.m)
+    # Get model path
+    if args.m:
+        name_model = args.m
+        sct.deepseg.models.is_model(name_model)
+        if not spinalcordtoolbox.deepseg.models.is_installed(name_model):
+            if not spinalcordtoolbox.deepseg.models.install(name_model):
+                printv("Model needs to be installed.", 1, 'error')
+                exit(RuntimeError)
+    elif args.mpath:
+        path_model = args.mpath
+
+    sct.deepseg.core.segment_nifti(args.i, path_model)
 
 
 if __name__ == '__main__':
