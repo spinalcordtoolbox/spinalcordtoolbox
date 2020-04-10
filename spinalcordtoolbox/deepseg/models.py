@@ -18,6 +18,8 @@ logger = logging.getLogger(__name__)
 # List of models. The convention for model names is: (species)_(university)_(contrast)_region
 # Regions could be: sc, gm, lesion, tumor
 # TODO: add mirror
+# TODO: add a test to make sure all fields are present in the dict below
+# TODO: deal with "Folder __MACOSX"
 MODELS = {
     't2star_sc':
         {'url': 'https://osf.io/v9hs8/download?version=2',
@@ -39,9 +41,10 @@ def download_default_models():
     Download all default models and install them under SCT installation dir.
     :return:
     """
-    for key, value in MODELS.items():
-        logger.info("\nINSTALLING MODEL: {}".format(key))
-        sct.download.install_data(value['url'], folder(key))
+    for model_name, value in MODELS.items():
+        if value['default']:
+            logger.info("\nINSTALLING MODEL: {}".format(model_name))
+            sct.download.install_data(value['url'], folder(model_name))
 
 
 def folder(name):
