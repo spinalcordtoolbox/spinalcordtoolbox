@@ -70,6 +70,16 @@ def install(name):
     raise NotImplementedError
 
 
+def list_models():
+    """
+    Display available models with description
+    :return:
+    """
+    logger.info("MODEL NAME: DESCRIPTION")
+    for key, value in MODELS.items():
+        logger.info("{}: {}".format(key, value['description']))
+
+
 def get_metadata(folder_model):
     """
     Get metadata from json file located in folder_model
