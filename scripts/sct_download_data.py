@@ -14,12 +14,10 @@ from __future__ import absolute_import
 
 import os
 import sys
-import tarfile
-import zipfile
 from shutil import rmtree
 from distutils.dir_util import copy_tree
 
-from spinalcordtoolbox.utils import download_data
+from spinalcordtoolbox.utils import download_data, unzip
 
 from msct_parser import Parser
 import sct_utils as sct
@@ -128,11 +126,11 @@ def main(args=None):
 
     # Download data
     url = dict_url[data_name]
-    tmp_file = download_data(url, verbose)
+    tmp_file = download_data(url)
 
     # unzip
     dest_tmp_folder = sct.tmp_create()
-    unzip(tmp_file, dest_tmp_folder, verbose)
+    unzip(tmp_file, dest_tmp_folder)
     extracted_files_paths = []
     # Get the name of the extracted files and directories
     extracted_files = os.listdir(dest_tmp_folder)
@@ -161,29 +159,6 @@ def main(args=None):
 
     sct.printv('Done!\n', verbose)
     return 0
-
-
-def unzip(compressed, dest_folder, verbose):
-    """Extract compressed file to the dest_folder. Can handle .zip, .tar.gz."""
-    sct.printv('\nUnzip data to: %s' % dest_folder, verbose)
-    if compressed.endswith('zip'):
-        try:
-            zf = zipfile.ZipFile(compressed)
-            zf.extractall(dest_folder)
-            return
-        except (zipfile.BadZipfile):
-            sct.printv(
-                'ERROR: ZIP package corrupted. Please try downloading again.',
-                verbose, 'error')
-    elif compressed.endswith('tar.gz'):
-        try:
-            tar = tarfile.open(compressed)
-            tar.extractall(path=dest_folder)
-            return
-        except tarfile.TarError:
-            sct.printv('ERROR: ZIP package corrupted. Please try again.', verbose, 'error')
-    else:
-        sct.printv('ERROR: The file %s is of wrong format' % compressed, verbose, 'error')
 
 
 if __name__ == "__main__":

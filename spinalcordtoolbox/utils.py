@@ -12,6 +12,8 @@ import argparse
 import subprocess
 import shutil
 import tempfile
+import tarfile
+import zipfile
 from enum import Enum
 import requests
 from requests.adapters import HTTPAdapter
@@ -222,7 +224,7 @@ __version__ = _version_string()
 __data_dir__ = os.path.join(__sct_dir__, 'data')
 
 
-def download_data(urls, verbose):
+def download_data(urls):
     """Download the binaries from a URL and return the destination filename
 
     Retry downloading if either server or connection errors occur on a SSL
@@ -261,9 +263,8 @@ def download_data(urls, verbose):
                 for chunk in response.iter_content(chunk_size=8192):
                     if chunk:
                         tmp_file.write(chunk)
-                        if verbose > 0:
-                            dl_chunk = len(chunk)
-                            tqdm_bar.update(dl_chunk)
+                        dl_chunk = len(chunk)
+                        tqdm_bar.update(dl_chunk)
 
                 tqdm_bar.close()
             return tmp_path
@@ -345,3 +346,26 @@ def parse_num_list_inv(list_int):
             colon_is_present = False
 
     return str_num
+
+
+def unzip(compressed, dest_folder):
+    """
+    Extract compressed file to the dest_folder. Can handle .zip, .tar.gz.
+    """
+    logger.info('\nUnzip data to: %s' % dest_folder)
+    if compressed.endswith('zip'):
+        try:
+            zf = zipfile.ZipFile(compressed)
+            zf.extractall(dest_folder)
+            return
+        except (zipfile.BadZipfile):
+            logger.error("ZIP package corrupted. Please try downloading again.")
+    elif compressed.endswith('tar.gz'):
+        try:
+            tar = tarfile.open(compressed)
+            tar.extractall(path=dest_folder)
+            return
+        except tarfile.TarError:
+            logger.error("ZIP package corrupted. Please try again.")
+    else:
+        logger.error("The file %s is of wrong format" % compressed)
