@@ -49,6 +49,10 @@ def get_parser():
         action='store_true',
         help="Display a list of available models.")
     seg.add_argument(
+        "-download-default",
+        action='store_true',
+        help="Download all default models. Note: these models are downloaded during normal SCT installation.")
+    seg.add_argument(
         "-mpath",
         help="Path to model, in case you would like to use a custom model. The model folder should follow the "
              "conventions listed in: URL.",
@@ -85,6 +89,10 @@ def main():
 
     if args.list_models:
         sct.deepseg.models.list_models()
+        exit(0)
+
+    if args.download_default:
+        sct.deepseg.models.download_default_models()
         exit(0)
 
     if 'i' not in args:

@@ -8,23 +8,40 @@ import os
 import json
 import logging
 
+import spinalcordtoolbox as sct
 from spinalcordtoolbox import __sct_dir__
+import spinalcordtoolbox.download
+
 
 logger = logging.getLogger(__name__)
 
 # List of models. The convention for model names is: (species)_(university)_(contrast)_region
 # Regions could be: sc, gm, lesion, tumor
+# TODO: add mirror
 MODELS = {
     't2star_sc':
         {'url': 'https://osf.io/v9hs8/download?version=2',
-         'description': 'Cord segmentation on T2*-weighted contrast.'},
+         'description': 'Cord segmentation on T2*-weighted contrast.',
+         'default': True},
     'uqueensland_mice_sc':
         {'url': 'https://osf.io/nu3ma/download?version=2',
-         'description': 'Cord segmentation on mouse MRI. Data from University of Queensland.'},
+         'description': 'Cord segmentation on mouse MRI. Data from University of Queensland.',
+         'default': False},
     'uqueensland_mice_gm':
         {'url': 'https://osf.io/mfxwg/download?version=2',
-         'description': 'Gray matter segmentation on mouse MRI. Data from University of Queensland.'},
+         'description': 'Gray matter segmentation on mouse MRI. Data from University of Queensland.',
+         'default': False},
     }
+
+
+def download_default_models():
+    """
+    Download all default models and install them under SCT installation dir.
+    :return:
+    """
+    for key, value in MODELS.items():
+        logger.info("\nINSTALLING MODEL: {}".format(key))
+        sct.download.install_data(value['url'], folder(key))
 
 
 def folder(name):
@@ -75,6 +92,7 @@ def list_models():
     Display available models with description
     :return:
     """
+    # TODO: separate default/optional
     logger.info("MODEL NAME: DESCRIPTION")
     for key, value in MODELS.items():
         logger.info("{}: {}".format(key, value['description']))
