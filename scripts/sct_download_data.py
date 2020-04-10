@@ -15,7 +15,7 @@ from __future__ import absolute_import
 import os
 import sys
 
-from spinalcordtoolbox.download import install_data
+from spinalcordtoolbox.download import DICT_URL, install_data
 
 from msct_parser import Parser
 import sct_utils as sct
@@ -83,7 +83,8 @@ def main(args=None):
     sct.init_sct(log_level=verbose, update=True)  # Update log level
     dest_folder = arguments.get('-o', os.path.abspath(os.curdir))
 
-    install_data(data_name, dest_folder)
+    url = DICT_URL[data_name]
+    install_data(url, dest_folder)
 
     sct.printv('Done!\n', verbose)
     return 0

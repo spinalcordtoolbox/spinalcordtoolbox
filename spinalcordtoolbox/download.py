@@ -134,10 +134,16 @@ def unzip(compressed, dest_folder):
         logger.error("The file %s is of wrong format" % compressed)
 
 
-def install_data(data_name, dest_folder):
+def install_data(url, dest_folder):
+    """
+    Download data from a URL and install in the appropriate folder. Deals with multiple mirrors, retry download,
+    check if data already exist.
+    :param url: string or list or strings. URL or list of URLs (if mirrors).
+    :param dest_folder:
+    :return:
+    """
 
     # Download data
-    url = DICT_URL[data_name]
     tmp_file = download_data(url)
 
     # unzip
