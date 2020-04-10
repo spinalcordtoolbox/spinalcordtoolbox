@@ -12,19 +12,14 @@
 
 from __future__ import absolute_import
 
-import cgi
 import os
 import sys
 import tarfile
-import tempfile
 import zipfile
 from shutil import rmtree
 from distutils.dir_util import copy_tree
 
-import requests
-from requests.adapters import HTTPAdapter
-from requests.packages.urllib3.util import Retry
-from tqdm import tqdm
+from spinalcordtoolbox.utils import download_data
 
 from msct_parser import Parser
 import sct_utils as sct
@@ -189,58 +184,6 @@ def unzip(compressed, dest_folder, verbose):
             sct.printv('ERROR: ZIP package corrupted. Please try again.', verbose, 'error')
     else:
         sct.printv('ERROR: The file %s is of wrong format' % compressed, verbose, 'error')
-
-
-def download_data(urls, verbose):
-    """Download the binaries from a URL and return the destination filename
-
-    Retry downloading if either server or connection errors occur on a SSL
-    connection
-    urls: list of several urls (mirror servers) or single url (string)
-    """
-
-    # if urls is not a list, make it one
-    if not isinstance(urls, (list, tuple)):
-        urls = [urls]
-
-    # loop through URLs
-    for url in urls:
-        try:
-            sct.printv('\nTrying URL: %s' % url, verbose)
-            retry = Retry(total=3, backoff_factor=0.5, status_forcelist=[500, 503, 504])
-            session = requests.Session()
-            session.mount('https://', HTTPAdapter(max_retries=retry))
-            response = session.get(url, stream=True)
-
-            if "Content-Disposition" in response.headers:
-                _, content = cgi.parse_header(response.headers['Content-Disposition'])
-                filename = content["filename"]
-            else:
-                sct.printv("Unexpected: link doesn't provide a filename", type="warning")
-                continue
-
-            tmp_path = os.path.join(tempfile.mkdtemp(), filename)
-            sct.printv('Downloading %s...' % filename, verbose)
-
-            with open(tmp_path, 'wb') as tmp_file:
-                total = int(response.headers.get('content-length', 1))
-                tqdm_bar = tqdm(total=total, unit='B', unit_scale=True,
-                                desc="Status", ascii=True)
-
-                for chunk in response.iter_content(chunk_size=8192):
-                    if chunk:
-                        tmp_file.write(chunk)
-                        if verbose > 0:
-                            dl_chunk = len(chunk)
-                            tqdm_bar.update(dl_chunk)
-
-                tqdm_bar.close()
-            return tmp_path
-
-        except Exception as e:
-            sct.printv("Link download error, trying next mirror (error was: %s)" % e, type='warning')
-    else:
-        sct.printv('\nDownload error', type='error')
 
 
 if __name__ == "__main__":
