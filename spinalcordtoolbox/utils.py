@@ -2,16 +2,21 @@
 # -*- coding: utf-8
 # Collection of useful functions
 
-from __future__ import absolute_import
 
 import io
+import cgi
 import os
 import re
 import logging
 import argparse
 import subprocess
 import shutil
+import tempfile
 from enum import Enum
+import requests
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util import Retry
+from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 
@@ -215,6 +220,58 @@ def _version_string():
 __sct_dir__ = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 __version__ = _version_string()
 __data_dir__ = os.path.join(__sct_dir__, 'data')
+
+
+def download_data(urls, verbose):
+    """Download the binaries from a URL and return the destination filename
+
+    Retry downloading if either server or connection errors occur on a SSL
+    connection
+    urls: list of several urls (mirror servers) or single url (string)
+    """
+
+    # if urls is not a list, make it one
+    if not isinstance(urls, (list, tuple)):
+        urls = [urls]
+
+    # loop through URLs
+    for url in urls:
+        try:
+            logger.info('\nTrying URL: %s' % url)
+            retry = Retry(total=3, backoff_factor=0.5, status_forcelist=[500, 503, 504])
+            session = requests.Session()
+            session.mount('https://', HTTPAdapter(max_retries=retry))
+            response = session.get(url, stream=True)
+
+            if "Content-Disposition" in response.headers:
+                _, content = cgi.parse_header(response.headers['Content-Disposition'])
+                filename = content["filename"]
+            else:
+                logger.warning("Unexpected: link doesn't provide a filename")
+                continue
+
+            tmp_path = os.path.join(tempfile.mkdtemp(), filename)
+            logger.info('Downloading %s...' % filename)
+
+            with open(tmp_path, 'wb') as tmp_file:
+                total = int(response.headers.get('content-length', 1))
+                tqdm_bar = tqdm(total=total, unit='B', unit_scale=True,
+                                desc="Status", ascii=True)
+
+                for chunk in response.iter_content(chunk_size=8192):
+                    if chunk:
+                        tmp_file.write(chunk)
+                        if verbose > 0:
+                            dl_chunk = len(chunk)
+                            tqdm_bar.update(dl_chunk)
+
+                tqdm_bar.close()
+            return tmp_path
+
+        except Exception as e:
+            logger.warning("Link download error, trying next mirror (error was: %s)" % e)
+    else:
+        logger.error('\nDownload error')
 
 
 def parse_num_list(str_num):
