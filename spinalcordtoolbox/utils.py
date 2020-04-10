@@ -132,85 +132,6 @@ def check_exe(name):
     return None
 
 
-def __get_branch():
-    """
-    Fallback if for some reason the value vas no set by sct_launcher
-    :return:
-    """
-
-    p = subprocess.Popen(["git", "rev-parse", "--abbrev-ref", "HEAD"], stdout=subprocess.PIPE,
-                         stderr=subprocess.PIPE, cwd=__sct_dir__)
-    output, _ = p.communicate()
-    status = p.returncode
-
-    if status == 0:
-        return output.decode().strip()
-
-
-def __get_commit():
-    """
-    :return: git commit ID, with trailing '*' if modified
-    """
-    p = subprocess.Popen(["git", "rev-parse", "HEAD"], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                         cwd=__sct_dir__)
-    output, _ = p.communicate()
-    status = p.returncode
-    if status == 0:
-        commit = output.decode().strip()
-    else:
-        commit = "?!?"
-
-    p = subprocess.Popen(["git", "status", "--porcelain"], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                         cwd=__sct_dir__)
-    output, _ = p.communicate()
-    status = p.returncode
-    if status == 0:
-        unclean = True
-        for line in output.decode().strip().splitlines():
-            line = line.rstrip()
-            if line.startswith("??"): # ignore ignored files, they can't hurt
-               continue
-            break
-        else:
-            unclean = False
-        if unclean:
-            commit += "*"
-
-    return commit
-
-
-def _git_info(commit_env='SCT_COMMIT', branch_env='SCT_BRANCH'):
-
-    sct_commit = os.getenv(commit_env, "unknown")
-    sct_branch = os.getenv(branch_env, "unknown")
-    if check_exe("git") and os.path.isdir(os.path.join(__sct_dir__, ".git")):
-        sct_commit = __get_commit() or sct_commit
-        sct_branch = __get_branch() or sct_branch
-
-    if sct_commit is not 'unknown':
-        install_type = 'git'
-    else:
-        install_type = 'package'
-
-    with io.open(os.path.join(__sct_dir__, 'version.txt'), 'r') as f:
-        version_sct = f.read().rstrip()
-
-    return install_type, sct_commit, sct_branch, version_sct
-
-
-def _version_string():
-    install_type, sct_commit, sct_branch, version_sct = _git_info()
-    if install_type == "package":
-        return version_sct
-    else:
-        return "{install_type}-{sct_branch}-{sct_commit}".format(**locals())
-
-
-__sct_dir__ = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-__version__ = _version_string()
-__data_dir__ = os.path.join(__sct_dir__, 'data')
-
-
 def download_data(urls):
     """Download the binaries from a URL and return the destination filename
 
@@ -356,3 +277,82 @@ def unzip(compressed, dest_folder):
             logger.error("ZIP package corrupted. Please try again.")
     else:
         logger.error("The file %s is of wrong format" % compressed)
+
+
+def __get_branch():
+    """
+    Fallback if for some reason the value vas no set by sct_launcher
+    :return:
+    """
+
+    p = subprocess.Popen(["git", "rev-parse", "--abbrev-ref", "HEAD"], stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE, cwd=__sct_dir__)
+    output, _ = p.communicate()
+    status = p.returncode
+
+    if status == 0:
+        return output.decode().strip()
+
+
+def __get_commit():
+    """
+    :return: git commit ID, with trailing '*' if modified
+    """
+    p = subprocess.Popen(["git", "rev-parse", "HEAD"], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                         cwd=__sct_dir__)
+    output, _ = p.communicate()
+    status = p.returncode
+    if status == 0:
+        commit = output.decode().strip()
+    else:
+        commit = "?!?"
+
+    p = subprocess.Popen(["git", "status", "--porcelain"], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                         cwd=__sct_dir__)
+    output, _ = p.communicate()
+    status = p.returncode
+    if status == 0:
+        unclean = True
+        for line in output.decode().strip().splitlines():
+            line = line.rstrip()
+            if line.startswith("??"): # ignore ignored files, they can't hurt
+               continue
+            break
+        else:
+            unclean = False
+        if unclean:
+            commit += "*"
+
+    return commit
+
+
+def _git_info(commit_env='SCT_COMMIT', branch_env='SCT_BRANCH'):
+
+    sct_commit = os.getenv(commit_env, "unknown")
+    sct_branch = os.getenv(branch_env, "unknown")
+    if check_exe("git") and os.path.isdir(os.path.join(__sct_dir__, ".git")):
+        sct_commit = __get_commit() or sct_commit
+        sct_branch = __get_branch() or sct_branch
+
+    if sct_commit is not 'unknown':
+        install_type = 'git'
+    else:
+        install_type = 'package'
+
+    with io.open(os.path.join(__sct_dir__, 'version.txt'), 'r') as f:
+        version_sct = f.read().rstrip()
+
+    return install_type, sct_commit, sct_branch, version_sct
+
+
+def _version_string():
+    install_type, sct_commit, sct_branch, version_sct = _git_info()
+    if install_type == "package":
+        return version_sct
+    else:
+        return "{install_type}-{sct_branch}-{sct_commit}".format(**locals())
+
+
+__sct_dir__ = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+__version__ = _version_string()
+__data_dir__ = os.path.join(__sct_dir__, 'data')
