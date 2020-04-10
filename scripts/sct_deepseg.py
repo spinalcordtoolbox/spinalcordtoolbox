@@ -36,15 +36,18 @@ def get_parser():
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
         "-i",
-        required=True,
         help="Image to segment.",
         metavar=Metavar.file)
 
-    seg = parser.add_argument_group('\nSEGMENTATION:')
+    seg = parser.add_argument_group('\nMODELS')
     seg.add_argument(
         "-m",
-        help="Model to use, from the list of official SCT models downloaded from the Internet.",
+        help="Model to use. For a description of each available model, please write: 'sct_deepseg -list-models'.",
         choices=list(sct.deepseg.models.MODELS.keys()))
+    seg.add_argument(
+        "-list-models",
+        action='store_true',
+        help="Display a list of available models.")
     seg.add_argument(
         "-mpath",
         help="Path to model, in case you would like to use a custom model. The model folder should follow the "
@@ -79,6 +82,14 @@ def main():
     args = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
     # TODO: instead of assigning each args param, we could pass args while instanciating ParamDeepseg(args), and the
     #  class would deal with assigning arguments to each field.
+
+    if args.list_models:
+        sct.deepseg.models.list_models()
+        exit(0)
+
+    if 'i' not in args:
+        parser.error("the following arguments is required: -i")
+
     if 'o' in args:
         param.output_suffix = args.o
 
