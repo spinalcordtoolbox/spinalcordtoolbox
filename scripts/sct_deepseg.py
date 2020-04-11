@@ -49,6 +49,10 @@ def get_parser():
         action='store_true',
         help="Display a list of available models.")
     seg.add_argument(
+        "-install-model",
+        help="Install specified model.",
+        choices=list(sct.deepseg.models.MODELS.keys()))
+    seg.add_argument(
         "-install-default-models",
         action='store_true',
         help="Install default models. Note: these models are downloaded during normal SCT installation.")
@@ -89,6 +93,10 @@ def main():
 
     if args.list_models:
         sct.deepseg.models.list_models()
+        exit(0)
+
+    if 'install_model' in args:
+        sct.deepseg.models.install_model(args.install_model)
         exit(0)
 
     if args.install_default_models:
