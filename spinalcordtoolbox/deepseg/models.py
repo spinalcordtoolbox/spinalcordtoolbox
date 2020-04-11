@@ -36,24 +36,33 @@ MODELS = {
     }
 
 
-def install_default_models():
-    """
-    Download all default models and install them under SCT installation dir.
-    :return:
-    """
-    for model_name, value in MODELS.items():
-        if value['default']:
-            logger.info("\nINSTALLING MODEL: {}".format(model_name))
-            sct.download.install_data(value['url'], folder(model_name))
-
-
-def folder(name):
+def folder(model_name):
     """
     Return absolute path of deep learning models.
     :param name: str: Name of model.
-    :return:
+    :return: str: Folder to model
     """
-    return os.path.join(__sct_dir__, 'models', name)
+    return os.path.join(__sct_dir__, 'models', model_name)
+
+
+def install_model(model_name):
+    """
+    Download and install specified model under SCT installation dir.
+    :param name: str: Name of model.
+    :return: None
+    """
+    logger.info("\nINSTALLING MODEL: {}".format(model_name))
+    sct.download.install_data(MODELS[model_name]['url'], folder(model_name))
+
+
+def install_default_models():
+    """
+    Download all default models and install them under SCT installation dir.
+    :return: None
+    """
+    for model_name, value in MODELS.items():
+        if value['default']:
+            install_model(model_name)
 
 
 def is_model(name):
