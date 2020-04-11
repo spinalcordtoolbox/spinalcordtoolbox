@@ -65,17 +65,6 @@ def install_default_models():
             install_model(name_model)
 
 
-def is_model(name_model):
-    """
-    Check if model is listed in MODELS
-    :param name_model: str: Name of model.
-    :return:
-    """
-    if name_model not in list(MODELS.keys()):
-        raise ValueError("The selected model does not exist: {}".format(name_model))
-    return True
-
-
 def is_installed(name_model):
     """
     Check if model is installed under SCT directory.
