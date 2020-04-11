@@ -52,7 +52,7 @@ def install_model(model_name):
     :return: None
     """
     logger.info("\nINSTALLING MODEL: {}".format(model_name))
-    sct.download.install_data(MODELS[model_name]['url'], folder(model_name))
+    sct.download.install_data(MODELS[model_name]['url'], os.path.split(folder(model_name))[0])
 
 
 def install_default_models():
