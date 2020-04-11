@@ -95,7 +95,7 @@ def main():
         sct.deepseg.models.list_models()
         exit(0)
 
-    if 'install_model' in args:
+    if args.install_model is not None:
         sct.deepseg.models.install_model(args.install_model)
         exit(0)
 
@@ -112,11 +112,11 @@ def main():
     # Get model path
     if args.m:
         name_model = args.m
-        sct.deepseg.models.is_model(name_model)
+        sct.deepseg.models.is_model(name_model)  # TODO: no need for this (argparse already checks)
         if not spinalcordtoolbox.deepseg.models.is_installed(name_model):
-            if not spinalcordtoolbox.deepseg.models.install(name_model):
-                printv("Model needs to be installed.", 1, 'error')
-                exit(RuntimeError)
+            printv("Model {} is not installed. Installing it now...".format(name_model))
+            spinalcordtoolbox.deepseg.models.install_model(name_model)
+        path_model = spinalcordtoolbox.deepseg.models.folder(name_model)
     elif args.mpath:
         # TODO: check integrity of folder model
         path_model = args.mpath
