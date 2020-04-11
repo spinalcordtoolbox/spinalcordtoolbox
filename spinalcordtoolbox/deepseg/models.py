@@ -36,23 +36,23 @@ MODELS = {
     }
 
 
-def folder(model_name):
+def folder(name_model):
     """
     Return absolute path of deep learning models.
     :param name: str: Name of model.
     :return: str: Folder to model
     """
-    return os.path.join(__sct_dir__, 'models', model_name)
+    return os.path.join(__sct_dir__, 'models', name_model)
 
 
-def install_model(model_name):
+def install_model(name_model):
     """
     Download and install specified model under SCT installation dir.
     :param name: str: Name of model.
     :return: None
     """
-    logger.info("\nINSTALLING MODEL: {}".format(model_name))
-    sct.download.install_data(MODELS[model_name]['url'], os.path.split(folder(model_name))[0])
+    logger.info("\nINSTALLING MODEL: {}".format(name_model))
+    sct.download.install_data(MODELS[name_model]['url'], os.path.split(folder(name_model))[0])
 
 
 def install_default_models():
@@ -60,29 +60,29 @@ def install_default_models():
     Download all default models and install them under SCT installation dir.
     :return: None
     """
-    for model_name, value in MODELS.items():
+    for name_model, value in MODELS.items():
         if value['default']:
-            install_model(model_name)
+            install_model(name_model)
 
 
-def is_model(name):
+def is_model(name_model):
     """
     Check if model is listed in MODELS
-    :param name: str: Name of model.
+    :param name_model: str: Name of model.
     :return:
     """
-    if name not in list(MODELS.keys()):
-        raise ValueError("The selected model does not exist: {}".format(name))
+    if name_model not in list(MODELS.keys()):
+        raise ValueError("The selected model does not exist: {}".format(name_model))
     return True
 
 
-def is_installed(name):
+def is_installed(name_model):
     """
     Check if model is installed under SCT directory.
     :param name: str: Name of model.
     """
-    if os.path.exists(os.path.join(folder(name), name + '.pt')) and \
-            os.path.exists(os.path.join(folder(name), name + '.json')):
+    if os.path.exists(os.path.join(folder(name_model), name_model + '.pt')) and \
+            os.path.exists(os.path.join(folder(name_model), name_model + '.json')):
         return True
     else:
         logger.warning("The model is not properly installed. Both the .pt and .json files should be "
