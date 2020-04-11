@@ -112,7 +112,6 @@ def main():
     # Get model path
     if args.m:
         name_model = args.m
-        sct.deepseg.models.is_model(name_model)  # TODO: no need for this (argparse already checks)
         if not spinalcordtoolbox.deepseg.models.is_installed(name_model):
             printv("Model {} is not installed. Installing it now...".format(name_model))
             spinalcordtoolbox.deepseg.models.install_model(name_model)
