@@ -85,18 +85,10 @@ def is_installed(name):
             os.path.exists(os.path.join(folder(name), name + '.json')):
         return True
     else:
-        raise FileNotFoundError("The model is not properly installed. Both the .pt and .json files should be "
-                                "present, and the basename should be the same as the folder name. Example: "
-                                "my_model/my_model.pt, my_model/my_model.json")
-
-
-def install(name):
-    """
-    Download and install model under SCT directory.
-    :param name: str: Name of model.
-    :return:
-    """
-    raise NotImplementedError
+        logger.warning("The model is not properly installed. Both the .pt and .json files should be "
+                       "present, and the basename should be the same as the folder name. Example: "
+                       "my_model/my_model.pt, my_model/my_model.json")
+        return False
 
 
 def list_models():
