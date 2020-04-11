@@ -36,7 +36,7 @@ MODELS = {
     }
 
 
-def download_default_models():
+def install_default_models():
     """
     Download all default models and install them under SCT installation dir.
     :return:
