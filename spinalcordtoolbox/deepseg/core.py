@@ -23,18 +23,20 @@ class ParamDeepseg:
     Parameters for deepseg module.
     """
     def __init__(self):
+        self.threshold = 0.5
         self.output_suffix = '_seg'
         self.remove_temp_files = 1
         self.verbose = 1
         # TODO: add threshold, keep_big_obj
 
 
-def segment_nifti(fname_image, folder_model):
+def segment_nifti(fname_image, folder_model, param):
     """
     Segment a nifti file.
 
     :param fname_image: str: Filename of the image to segment.
     :param folder_model: str: Folder that encloses the deep learning model.
+    :param param: class ParamDeepseg: Parameter class ParamDeepseg()
     :return: fname_out: str: Output filename.
     """
 
