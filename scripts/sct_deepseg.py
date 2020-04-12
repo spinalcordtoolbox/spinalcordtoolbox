@@ -62,6 +62,14 @@ def get_parser():
              "conventions listed in: URL.",
         metavar=Metavar.folder)
 
+    misc = parser.add_argument_group('\nPARAMETERS')
+    misc.add_argument(
+        "-thr",
+        help="Threshold for output segmentation. Value '-1' outputs a soft segmentation (not binary). Default value "
+             "is model-specific and was set during optimization (https://github.com/sct-pipeline/deepseg-threshold).",
+        metavar=float,
+        default=param_default.threshold)
+
     misc = parser.add_argument_group('\nMISC')
     misc.add_argument(
         "-o",
@@ -109,6 +117,8 @@ def main():
     if 'o' in args:
         param.output_suffix = args.o
 
+    param.threshold = args.thr
+
     # Get model path
     if args.m:
         name_model = args.m
@@ -120,7 +130,7 @@ def main():
         # TODO: check integrity of folder model
         path_model = args.mpath
 
-    sct.deepseg.core.segment_nifti(args.i, path_model)
+    sct.deepseg.core.segment_nifti(args.i, path_model, param)
 
 
 if __name__ == '__main__':
