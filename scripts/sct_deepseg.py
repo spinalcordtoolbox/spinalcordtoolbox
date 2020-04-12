@@ -99,6 +99,7 @@ def main():
     # TODO: instead of assigning each args param, we could pass args while instanciating ParamDeepseg(args), and the
     #  class would deal with assigning arguments to each field.
 
+    # Deal with model
     if args.list_models:
         sct.deepseg.models.list_models()
         exit(0)
@@ -111,10 +112,10 @@ def main():
         sct.deepseg.models.install_default_models()
         exit(0)
 
-    if 'i' not in args:
-        parser.error("the following arguments is required: -i")
+    if args.i is None:
+        parser.error("The following arguments is required: -i")
 
-    if 'o' in args:
+    if args.o is not None:
         param.output_suffix = args.o
 
     param.threshold = args.thr
@@ -129,6 +130,8 @@ def main():
     elif args.mpath:
         # TODO: check integrity of folder model
         path_model = args.mpath
+    else:
+        parser.error("You need to specify either -m or -mpath.")
 
     sct.deepseg.core.segment_nifti(args.i, path_model, param)
 
