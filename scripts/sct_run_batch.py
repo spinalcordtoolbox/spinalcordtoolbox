@@ -30,7 +30,15 @@ from spinalcordtoolbox.utils import Metavar, SmartFormatter
 parser = argparse.ArgumentParser(
   description = 'Wrapper to processing scripts, which loops across subjects. Data should be '
                 'organized according to the BIDS structure: '
-                'https://github.com/sct-pipeline/spine_generic#file-structure',
+                'https://github.com/sct-pipeline/spine_generic#file-structure.\n'
+                'The processing script (task) should accept a subject directory as its only argument. '
+                'Additional information is passed via environment variables \n'
+                'PATH_SEGMANUAL (--path-segmanual)\n'
+                'PATH_DATA (--data-path)\n'
+                'PATH_RESULTS (--out-path)\n'
+                'PATH_LOG (--out-path with log appended)\n'
+                'PATH_QC (--out-path with QC appended)\n'
+                'ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS (--itk-threads)\n',
   formatter_class = SmartFormatter,
   prog=os.path.basename(__file__).strip('.py'))
 
@@ -142,6 +150,6 @@ print("Finished :-)\n"
 
 open_cmd = "open" if sys.platform == "darwin" else "xdg-open"
 
-print("To open Quality Control (QC) report on a web-browser, run the following:\n"
+print("To open the Quality Control (QC) report on a web-browser, run the following:\n"
       "{} {}/index.html".format(open_cmd, qc_path)
 )
