@@ -15,7 +15,8 @@ from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util import Retry
 from tqdm import tqdm
 
-import sct_utils as sct
+import spinalcordtoolbox as sct
+import spinalcordtoolbox.utils
 
 
 logger = logging.getLogger(__name__)
@@ -146,7 +147,7 @@ def install_data(url, dest_folder):
     tmp_file = download_data(url)
 
     # unzip
-    dest_tmp_folder = sct.tmp_create()
+    dest_tmp_folder = sct.utils.tmp_create()
     unzip(tmp_file, dest_tmp_folder)
     extracted_files_paths = []
     # Get the name of the extracted files and directories
