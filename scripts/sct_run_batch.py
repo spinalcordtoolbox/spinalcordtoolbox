@@ -72,7 +72,7 @@ parser.add_argument("task",
 args = parser.parse_args()
 
 # Find subjects and process inclusion/exclusions
-data_dir = os.path.expanduser(args.data_path)
+data_dir = os.path.abspath(os.path.expanduser(args.data_path))
 subject_dirs = [ f for f in os.listdir(data_dir) if f.startswith(args.subject_prefix) ]
 
 if args.include is not None:
@@ -82,7 +82,7 @@ if args.exclude is not None:
   subject_dirs = [ f for f in subject_dirs if re.search(args.exclude, f) is None ]
 
 # Set up output directories and create them if they don't already exist
-out_path = os.path.abspath(args.out_path)
+out_path = os.path.abspath(os.path.expanduser(args.out_path))
 results_path = os.path.join(out_path, "results")
 log_path = os.path.join(out_path, "log")
 qc_path = os.path.join(out_path, "qc")
