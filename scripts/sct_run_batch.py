@@ -67,7 +67,7 @@ parser.add_argument("--itk-threads", default = 1,
                     help = 'Number of threads to use for ITK based programs including ANTs. Set to a low '
                            'number to avoid a large increase in memory. Defaults to 1')
 parser.add_argument("task",
-                    help = 'Script used to process the data, probably process_data.sh or similar')
+                    help = 'Shell script used to process the data.'
 
 args = parser.parse_args()
 
