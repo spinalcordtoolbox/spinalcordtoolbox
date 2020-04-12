@@ -11,9 +11,9 @@ import ivadomed.utils
 import ivadomed.postprocessing
 
 import spinalcordtoolbox as sct
+import spinalcordtoolbox.utils
 import spinalcordtoolbox.deepseg.models
 
-from sct_utils import add_suffix
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +47,6 @@ def segment_nifti(fname_image, folder_model, param):
     imed.postprocessing.threshold_predictions_nib(nii_seg, metadata['threshold'])
 
     # TODO: use args to get output name
-    fname_out = add_suffix(fname_image, '_seg')
+    fname_out = sct.utils.add_suffix(fname_image, '_seg')
     nib.save(nii_seg, fname_out)
     return fname_out

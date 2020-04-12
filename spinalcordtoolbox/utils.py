@@ -6,6 +6,8 @@
 import io
 import os
 import re
+import tempfile
+import datetime
 import logging
 import argparse
 import subprocess
@@ -99,6 +101,23 @@ class SmartFormatter(argparse.HelpFormatter):
         if text.startswith('R|'):
             return text[2:].splitlines()
         return argparse.HelpFormatter._split_lines(self, text, width)
+
+
+def add_suffix(fname, suffix):
+    """
+    Add suffix between end of file name and extension.
+
+    :param fname: absolute or relative file name. Example: t2.nii
+    :param suffix: suffix. Example: _mean
+    :return: file name with suffix. Example: t2_mean.nii
+
+    Examples:
+
+    - add_suffix(t2.nii, _mean) -> t2_mean.nii
+    - add_suffix(t2.nii.gz, a) -> t2a.nii.gz
+    """
+    parent, stem, ext = extract_fname(fname)
+    return os.path.join(parent, stem + suffix + ext)
 
 
 def check_exe(name):
@@ -195,6 +214,17 @@ def parse_num_list_inv(list_int):
             colon_is_present = False
 
     return str_num
+
+
+def tmp_create(basename=None):
+    """Create temporary folder and return its path
+    """
+    prefix = "sct-%s-" % datetime.datetime.now().strftime("%Y%m%d%H%M%S.%f")
+    if basename:
+        prefix += "%s-" % basename
+    tmpdir = tempfile.mkdtemp(prefix=prefix)
+    logger.info("Creating temporary folder (%s)" % tmpdir)
+    return tmpdir
 
 
 def __get_branch():
