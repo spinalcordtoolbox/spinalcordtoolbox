@@ -115,6 +115,9 @@ def main():
     if args.i is None:
         parser.error("The following arguments is required: -i")
 
+    if not os.path.isfile(args.i):
+        parser.error("This file does not exist: {}".format(args.i))
+
     if args.o is not None:
         param.output_suffix = args.o
 
