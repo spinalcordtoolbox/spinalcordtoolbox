@@ -103,24 +103,22 @@ def main():
     if args.list_models:
         sct.deepseg.models.list_models()
         exit(0)
-
     if args.install_model is not None:
         sct.deepseg.models.install_model(args.install_model)
         exit(0)
-
     if args.install_default_models:
         sct.deepseg.models.install_default_models()
         exit(0)
 
+    # Deal with input/output
     if args.i is None:
         parser.error("The following arguments is required: -i")
-
     if not os.path.isfile(args.i):
         parser.error("This file does not exist: {}".format(args.i))
-
     if args.o is not None:
         param.output_suffix = args.o
 
+    # Deal with segmentation parameters
     param.threshold = args.thr
 
     # Get model path
