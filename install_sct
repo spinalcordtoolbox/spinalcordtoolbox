@@ -632,6 +632,9 @@ else
   done
 fi
 
+# Install deep learning models
+sct_deepseg -install-default-models
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Validate installation
