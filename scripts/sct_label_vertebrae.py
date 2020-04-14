@@ -264,8 +264,8 @@ def main(args=None):
         sct.cache_save(cachefile, cache_sig)
 
     # resample to 0.5mm isotropic to match template resolution
-    sct.printv('\nResample to 0.5mm isotropic...', verbose)
-    s, o = sct.run(['sct_resample', '-i', 'data_straight.nii', '-mm', '0.5x0.5x0.5', '-x', 'linear', '-o', 'data_straightr.nii'], verbose=verbose)
+    sct.printv('\nResample to 1mm isotropic...', verbose)
+    s, o = sct.run(['sct_resample', '-i', 'data_straight.nii', '-mm', '2x0.5x0.5', '-x', 'linear', '-o', 'data_straightr.nii'], verbose=verbose)
 
     # Apply straightening to segmentation
     # N.B. Output is RPI
@@ -281,6 +281,7 @@ def main(args=None):
            )
     # Threshold segmentation at 0.5
     sct.run(['sct_maths', '-i', 'segmentation_straight.nii', '-thr', '0.5', '-o', 'segmentation_straight.nii'], verbose)
+    sct.run('sct_resample -i segmentation_straight.nii -mm 0.5 -x nn')
 
     # If disc label file is provided, label vertebrae using that file instead of automatically
     if fname_disc:
@@ -327,10 +328,13 @@ def main(args=None):
                 verbose_detect_c2c3 = 0
             # detection of c2/C3 is applied to strighten image.
             sct.run('pwd')
-            sct.run('python ~/luroub_local/lurou_local/deep_VL_2019/ivado_med/scripts_vertebral_labeling/detect_c2.py -i %s -c %s -image 1 -o %s' %('data_straightr.nii','t2',path_tmp+'/c2_tmp.nii.gz'))
+            sct.run('python ~/luroub_local/lurou_local/deep_VL_2019/ivado_med/scripts_vertebral_labeling/detect_c2.py -i %s -c %s -image 1 -o %s' %('data_straight.nii','t2',path_tmp+'/c2_tmp.nii.gz'))
             im_label_c2c3 = Image('c2_tmp.nii.gz')        
             ind_label = np.where(im_label_c2c3.data)
+            print(ind_label)
             if not np.size(ind_label) == 0:
+                # subtract "1" to label value because due to legacy, in this code the disc C2-C3 has value "2", whereas in the
+                # recent version of SCT it is defined as "3".
                 im_label_c2c3.data[ind_label] = 3
             else:
                 sct.printv('Automatic C2-C3 detection failed. Please provide manual label with sct_label_utils', 1, 'error')
@@ -352,8 +356,9 @@ def main(args=None):
          #       is_sct_binary=True,
          #      )
         # get z value and disk value to initialize labeling
+        sct.run('sct_resample -i labelz_straight.nii.gz -mm 0.5 -x nn')
         sct.printv('\nGet z and disc values from straight label...', verbose)
-        init_disc = get_z_and_disc_values_from_label('labelz_straight.nii.gz')
+        init_disc = get_z_and_disc_values_from_label('labelz_straight_r.nii.gz')
         sct.printv('.. ' + str(init_disc), verbose)
 
         # denoise data
@@ -367,8 +372,7 @@ def main(args=None):
             sct.run(['sct_maths', '-i', 'data_straightr.nii', '-laplacian', '1', '-o', 'data_straightr.nii'], verbose)
 
         # detect vertebral levels on straight spinal cord
-        init_disc[1]=init_disc[1]-1
-        vertebral_detection('data_straightr.nii', 'segmentation_straight.nii', contrast, param, init_disc=init_disc,
+        vertebral_detection('data_straight.nii', 'segmentation_straight_r.nii', contrast, param, init_disc=init_disc,
                             verbose=verbose, path_template=path_template, path_output=path_output, scale_dist=scale_dist)
 
     # un-straighten labeled spinal cord

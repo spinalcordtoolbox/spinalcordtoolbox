@@ -17,6 +17,12 @@ from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.metadata import get_file_label
 from spinalcordtoolbox.math import dilate
 
+#import similaritymeasures as simeas
+from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.metadata import get_file_label
+import logging
+logging.getLogger('matplotlib.font_manager').disabled = True
+
 
 def label_vert(fname_seg, fname_label, verbose=1):
     """
@@ -60,18 +66,20 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     :param scale_dist: float: Scaling factor to adjust average distance between two adjacent intervertebral discs
     :return:
     """
+    path_template = '/home/GRAMES.POLYMTL.CA/luroub/luroub_local/lurou_local/sct/sct/data/PAM50/template/PAM50_label_discPosterior.nii.gz'
+    path_level='/home/GRAMES.POLYMTL.CA/luroub/luroub_local/lurou_local/sct/sct/data/PAM50/template/PAM50_levels.nii.gz'
     sct.printv('\nLook for template...', verbose)
     sct.printv('Path template: ' + path_template, verbose)
 
     # adjust file names if MNI-Poly-AMU template is used (by default: PAM50)
-    fname_level = get_file_label(os.path.join(path_template, 'template'), id_label=7, output='filewithpath')  # label = spinal cord mask with discrete vertebral levels
-    id_label_dct = {'T1': 0, 'T2': 1, 'T2S': 2}
-    fname_template = get_file_label(os.path.join(path_template, 'template'), id_label=id_label_dct[contrast.upper()], output='filewithpath')  # label = *-weighted template
+    #fname_level = get_file_label(os.path.join(path_template, 'template'), id_label=7, output='filewithpath')  # label = spinal cord mask with discrete vertebral levels
+    #id_label_dct = {'T1': 0, 'T2': 1, 'T2S': 2}
+    #fname_template = get_file_label(os.path.join(path_template, 'template'), id_label=id_label_dct[contrast.upper()], output='filewithpath')  # label = *-weighted template
 
     # Open template and vertebral levels
     sct.printv('\nOpen template and vertebral levels...', verbose)
-    data_template = Image(fname_template).data
-    data_disc_template = Image(fname_level).data
+    data_template = Image(path_template).data
+    data_disc_template = Image(path_level).data
 
     # open anatomical volume
     im_input = Image(fname)
@@ -82,6 +90,7 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
 
     # get dimension of src
     nx, ny, nz = data.shape
+    nz = nz*2
     # define xc and yc (centered in the field of view)
     xc = int(np.round(nx / 2))  # direction RL
     yc = int(np.round(ny / 2))  # direction AP
@@ -144,6 +153,12 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     zrange = list(range(-10, 10))
     direction = 'superior'
     search_next_disc = True
+    sct.run('python ~/luroub_local/lurou_local/deep_VL_2019/ivado_med/scripts_vertebral_labeling/detect_vertebrae.py -i %s -c %s -m 1 -o hm_tmp.nii.gz -net CC' %(fname,'t2'))
+    sct.run('sct_resample -i hm_tmp.nii.gz -mm 0.5x0.5x0.5 -x linear')
+    im_hm = Image('hm_tmp_r.nii.gz')
+    data_hm = im_hm.data
+    im_lab=Image('/home/GRAMES.POLYMTL.CA/luroub/luroub_local/lurou_local/sct/sct/data/PAM50/template/PAM50_label_dilated.nii.gz')
+    data_lab=im_lab.data
     while search_next_disc:
         sct.printv('Current disc: ' + str(current_disc) + ' (z=' + str(current_z) + '). Direction: ' + direction, verbose)
         try:
@@ -155,12 +170,7 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
             break
         # find next disc
         # N.B. Do not search for C1/C2 disc (because poorly visible), use template distance instead
-        sct.run('python ~/luroub_local/lurou_local/deep_VL_2019/ivado_med/scripts_vertebral_labeling/detect_vertebrae.py -i %s -c %s -m 1 -o hm_tmp.nii.gz -net AttU' %(fname,'t2'))
-        im_hm= Image('hm_tmp.nii.gz')
-        data_hm = im_hm.data
-        im_lab=Image('/home/GRAMES.POLYMTL.CA/luroub/luroub_local/lurou_local/sct/sct/data/PAM50/template/PAM50_label_dilated.nii.gz')
-        data_lab=im_lab.data
-        if current_disc != 1:
+        if current_disc != 1 and current_disc != 2:
             current_z = compute_corr_3d(data_hm, im_lab.data, x=xc, xshift=0, xsize=param.size_RL,
                                         y=yc, yshift=param.shift_AP, ysize=param.size_AP,
                                         z=current_z, zshift=0, zsize=param.size_IS,
@@ -176,12 +186,14 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
         # append to main list
         if direction == 'superior':
             # append at the beginning
+            print(list_disc_z)
             list_disc_z.insert(0, current_z)
             list_disc_value.insert(0, current_disc)
         elif direction == 'inferior':
             # append at the end
             list_disc_z.append(current_z)
             list_disc_value.append(current_disc)
+            print(list_disc_z)
 
         # adjust correcting factor based on already-identified discs
         if len(list_disc_z) > 1:
@@ -281,6 +293,7 @@ def create_label_z(fname_seg, z, value, fname_labelz='labelz.nii.gz'):
     nii.data = dilate(nii.data, 3, 'ball')
     nii.change_orientation(orientation_origin)  # put back in original orientation
     nii.save(fname_labelz)
+    sct.run('sct_resample -i %s -mm 1x1x1 -x nn '%(fname_labelz))
     return fname_labelz
 
 
@@ -290,6 +303,7 @@ def get_z_and_disc_values_from_label(fname_label):
     :param fname_label: image in RPI orientation that contains label
     :return: [z_label, value_label] int list
     """
+    #sct.run('sct_resample -i %s -mm 1x1x1 -x nn -o %s'%(fname_label,fname_label))
     nii = Image(fname_label)
     # get center of mass of label
     x_label, y_label, z_label = center_of_mass(nii.data)
@@ -353,13 +367,15 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
     :return:
     """
     # parameters
-    thr_corr = 0.1  # disc correlation threshold. Below this value, use template distance.
+    thr_corr = 0.0001  # disc correlation threshold. Below this value, use template distance.
     # get dimensions from src
     nx, ny, nz = src.shape
-    zsize=(9)
+    #zsize=(15)
+    xsize=30
+    ysize=20
     # Get pattern from template
-    pattern = target[xtarget - 10: xtarget + 10 + 1,
-                     ytarget + yshift - 10: ytarget + yshift + 10 + 1,
+    pattern = target[xtarget-xsize:xtarget+xsize,
+                     ytarget + yshift - ysize: ytarget + yshift + ysize + 1,
                      ztarget + zshift - zsize: ztarget + zshift + zsize + 1]
     #np.save('patt'+str(x)+'.npy',pattern)
     pattern1d = np.sum(pattern,axis=(0,1))
@@ -370,14 +386,12 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
     ind_I = 0
     # loop across range of z defined by src
     for iz in zrange:
-        print(zsize)
-        print(zshift)
         # if pattern extends towards the top part of the image, then crop and pad with zeros
         if z + iz + zsize + 1 > nz:
             sct.printv('iz='+str(iz)+': padding on top')
             padding_size = z + iz + zsize + 1 - nz
-            data_chunk3d = src[x - 10: x + 10 + 1,
-                               y + yshift - 10: y + yshift + 10 + 1,
+            data_chunk3d = src[xtarget-xsize:xtarget+xsize,
+                           y + yshift: y + yshift + ysize + 1,
                                z + iz - zsize: z + iz + zsize + 1 - padding_size]
             data_chunk3d = np.pad(data_chunk3d, ((0, 0), (0, 0), (0, padding_size)), 'constant',
                                   constant_values=0)
@@ -386,24 +400,26 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
         elif z + iz - zsize < 0:
             sct.printv('iz='+str(iz)+': padding at bottom')
             padding_size = abs(iz - zsize)
-            data_chunk3d = src[x - 10: x + 10 + 1,
-                               y + yshift - 10: y + yshift + 10 + 1,
+            data_chunk3d = src[xtarget-xsize:xtarget+xsize,
+                           y + yshift - ysize: y + yshift + ysize + 1,
                                z + iz - zsize + padding_size: z + iz + zsize + 1]
             data_chunk3d = np.pad(data_chunk3d, ((0, 0), (0, 0), (padding_size, 0)), 'constant',
                                   constant_values=0)
         else:
-            data_chunk3d = src[x - 10: x + 10 + 1,
-                               :,
+            data_chunk3d = src[:,
+                               :ytarget+10,
                                z + iz - zsize: z + iz + zsize + 1]
-            print(iz)
-            print(zsize)
 
         # convert subject pattern to 1d profile
         data_chunk1d = np.sum(data_chunk3d,axis=(0,1))
-        print(data_chunk3d.shape)
+        #data_chunk1d = np.convolve(data_chunk1d,np.hanning(3))
+        #print(data_chunk3d.shape)
         # check if data_chunk1d contains at least one non-zero value
         if (data_chunk1d.size == pattern1d.size) and np.any(data_chunk1d):
-            I_corr[ind_I] = mutual_information(data_chunk1d, pattern1d, nbins=16, normalized=False)
+            #a = mutual_information(data_chunk1d/np.max(data_chunk1d), pattern1d/np.max(pattern1d),nbins=64,normalized=True)
+            a = np.correlate(data_chunk1d, pattern1d)/np.correlate(pattern1d,pattern1d)
+            print(a)
+            I_corr[ind_I]=a
         else:
             allzeros = 1
         ind_I = ind_I + 1
@@ -415,15 +431,15 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
     from scipy.signal import gaussian
     gaussian_window = gaussian(len(I_corr) * 2, std=len(I_corr) * gaussian_std)
     I_corr_gauss = np.multiply(I_corr, gaussian_window[0:len(I_corr)])
-
+    
     # Find global maximum
     if np.any(I_corr_gauss):
         # if I_corr contains at least a non-zero value
-        ind_peak = [i for i in range(len(I_corr_gauss)) if I_corr_gauss[i] == max(I_corr_gauss)][0]  # index of max along z
+        ind_peak = np.argmax(I_corr_gauss)#[i for i in range(len(I_corr_gauss)) if I_corr_gauss[i] == max(I_corr_gauss)][0]  # index of max along z
+        print(I_corr_gauss)
         ind_dl = np.argmax(data_chunk1d)
-        print(ind_dl)
-        print(data_chunk1d.shape)
-        sct.printv('.. Peak found: z=' + str(zrange[ind_dl]) + ' (correlation = ' + str(I_corr_gauss[ind_peak]) + ')', verbose)
+        print(ind_peak)
+        sct.printv('.. Peak found: z=' + str(zrange[ind_peak]) + ' (correlation = ' + str(I_corr_gauss[ind_peak]) + ')', verbose)
         # check if correlation is high enough
         if I_corr_gauss[ind_peak] < thr_corr:
             sct.printv('.. WARNING: Correlation is too low. Using adjusted template distance.', verbose)
@@ -443,33 +459,51 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
         FigureCanvas(fig)
         # display template pattern
         ax = fig.add_subplot(131)
-        ax.imshow(np.flipud(np.mean(pattern[:, :, :], axis=0).transpose()), origin='upper', cmap='gray',
-                  interpolation='none')
+        ax.plot(pattern1d)
         ax.set_title('Template pattern')
         # display subject pattern at best z
         ax = fig.add_subplot(132)
         iz = zrange[ind_peak]
-        data_chunk3d = src[x - xsize: x + xsize + 1,
+        data_chunk3d = src[:,
                            y + yshift - ysize: y + yshift + ysize + 1,
-                           z + iz - zsize: z + iz + zsize + 1]
-        ax.imshow(np.flipud(np.mean(data_chunk3d[:, :, :], axis=0).transpose()), origin='upper', cmap='gray',
-                  clim=[0, 800], interpolation='none')
-        ax.set_title('Subject at iz=' + str(iz))
+                           z  -iz - zsize: z + iz + zsize + 1]
+        ax.plot(np.sum(data_chunk3d,axis=(0,1)))
+        ax.set_title('Subject accross all iz')
         # display correlation curve
         ax = fig.add_subplot(133)
-        ax.plot(zrange, I_corr)
-        ax.plot(zrange, I_corr_gauss, 'black', linestyle='dashed')
+        ax.plot(range(len(I_corr)), I_corr)
+        ax.plot(range(len(I_corr)), I_corr_gauss, 'black', linestyle='dashed')
         ax.legend(['I_corr', 'I_corr_gauss'])
         ax.set_title('Mutual Info, gaussian_std=' + str(gaussian_std))
-        ax.plot(zrange[ind_peak], I_corr_gauss[ind_peak], 'ro')
+        ax.plot(ind_peak, I_corr_gauss[ind_peak], 'ro')
         ax.axvline(x=zrange.index(0), linewidth=1, color='black', linestyle='dashed')
         ax.axhline(y=thr_corr, linewidth=1, color='r', linestyle='dashed')
         ax.grid()
         # save figure
         fig.savefig('fig_pattern' + save_suffix + '.png')
+        np.save('pattern'+save_suffix+'.npy',pattern1d)
+        #show figure for each iz
+        i=1
+        j=1
+        ind=1
+        fig = Figure(figsize=(15, 15))
+        FigureCanvas(fig)
+        for indic in zrange:
+
+            ax = fig.add_subplot(4,5,ind)
+            iz = zrange[ind_peak]
+            data_chunk3d = src[:,
+                           y + yshift - ysize: y + yshift + ysize + 1,
+                           z  +indic - zsize: z + indic + zsize + 1]
+            ax.plot(np.sum(data_chunk3d,axis=(0,1)))
+            np.save('profiz'+str(indic)+save_suffix+'.npy',np.sum(data_chunk3d,axis=(0,1)))
+            ax.set_title('Subject at iz'+str(indic))
+            ind = ind+1
+        fig.savefig('alliz'+save_suffix+'png')
+
 
     # return z-origin (z) + z-displacement minus zshift (to account for non-centered disc)
-    return z + zrange[ind_dl] - zshift
+    return z + zrange[ind_peak] - zshift
 
 
 def label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=1):
@@ -483,6 +517,8 @@ def label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=1):
     """
 
     # open segmentation
+    #sct.run('sct_resample -i %s -mm 1x1x1 -x nn -o segmentation_straight.nii'%(fname_seg))
+    #fname_seg = 'segmentation_straight.nii'
     seg = Image(fname_seg)
     init_orientation = seg.orientation
     seg.change_orientation("RPI")
@@ -490,6 +526,7 @@ def label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=1):
     dim = seg.dim
     ny = dim[1]
     nz = dim[2]
+    print(list_disc_z)
     # loop across z
     for iz in range(nz):
         # get index of the disc right above iz
@@ -500,7 +537,7 @@ def label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=1):
             vertebral_level = 0
         else:
             # assign vertebral level (add one because iz is BELOW the disk)
-            vertebral_level = list_disc_value[ind_above_iz] + 1
+            vertebral_level = list_disc_value[ind_above_iz]
             # sct.printv(vertebral_level)
         # get voxels in mask
         ind_nonzero = np.nonzero(seg.data[:, :, iz])
@@ -523,7 +560,10 @@ def label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=1):
         #     plt.scatter(int(np.round(ny / 2)), iz, c=vertebral_level, vmin=min(list_disc_value), vmax=max(list_disc_value), cmap='prism', marker='_', s=200)
 
     # write file
+
     seg.change_orientation(init_orientation).save(sct.add_suffix(fname_seg, '_labeled'))
+    sct.run('sct_resample -i segmentation_straight_r_labeled.nii -mm 1x1x1 -x nn -o segmentation_straight_labeled.nii')
+
 
 
 def label_discs(fname_seg_labeled, verbose=1):
