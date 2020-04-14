@@ -18,7 +18,7 @@ import spinalcordtoolbox.deepseg.models
 logger = logging.getLogger(__name__)
 
 # Default values if not asked during CLI call and if not present in json metadata.
-DEFAULT_THRESHOLD = 0.5
+DEFAULT_THRESHOLD = 0.9
 
 
 class ParamDeepseg:
@@ -47,6 +47,8 @@ def segment_nifti(fname_image, folder_model, param):
 
     # TODO: postprocessing based on model (info to add in model's json), and if user asked for it (arg)
     metadata = sct.deepseg.models.get_metadata(folder_model)
+
+    # Threshold the prediction. For no prediction, set threshold to -1.
     if param.threshold:
         threshold = param.threshold
     else:
@@ -55,7 +57,8 @@ def segment_nifti(fname_image, folder_model, param):
         else:
             logger.warning("'threshold' is not defined in the model json file. Using threshold of: {}".format(DEFAULT_THRESHOLD))
             threshold = DEFAULT_THRESHOLD
-    nii_seg = imed.postprocessing.threshold_predictions_nib(nii_seg, threshold)
+    if not threshold == -1:
+        nii_seg = imed.postprocessing.threshold_predictions_nib(nii_seg, threshold)
 
     # TODO: use args to get output name
     fname_out = sct.utils.add_suffix(fname_image, '_seg')
