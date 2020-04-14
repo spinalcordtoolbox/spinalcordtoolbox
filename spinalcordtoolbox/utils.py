@@ -332,3 +332,4 @@ def _version_string():
 __sct_dir__ = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 __version__ = _version_string()
 __data_dir__ = os.path.join(__sct_dir__, 'data')
+__models_dir__ = os.path.join(__sct_dir__, 'models')
