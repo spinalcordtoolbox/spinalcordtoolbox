@@ -65,6 +65,7 @@ def get_parser():
     misc = parser.add_argument_group('\nPARAMETERS')
     misc.add_argument(
         "-thr",
+        type=float,
         help="Threshold for output segmentation. Value '-1' outputs a soft segmentation (not binary). Default value "
              "is model-specific and was set during optimization (https://github.com/sct-pipeline/deepseg-threshold).",
         metavar=float,
