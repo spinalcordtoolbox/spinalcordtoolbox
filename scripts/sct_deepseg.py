@@ -7,6 +7,7 @@ ivadomed package.
 
 # TODO: Add link to example image so users can decide wether their images look "close enought" to some of the proposed
 #  models (e.g., mice, etc.).
+# TODO: Fetch default value (and display) depending on the model that is used.
 
 
 from __future__ import absolute_import
@@ -66,10 +67,17 @@ def get_parser():
     misc.add_argument(
         "-thr",
         type=float,
-        help="Threshold for output segmentation. Value '-1' outputs a soft segmentation (not binary). Default value "
-             "is model-specific and was set during optimization (https://github.com/sct-pipeline/deepseg-threshold).",
+        help="Binarize segmentation with specified threshold. Set to 0 for no thresholding (i.e., soft segmentation). "
+             "Default value is model-specific and was set during optimization "
+             "(more info at https://github.com/sct-pipeline/deepseg-threshold).",
         metavar=float,
         default=param_default.threshold)
+    misc.add_argument(
+        "-keep-largest",
+        type=bool,
+        help="Remove false negative predictions by only keeping the largest blob.",
+        metavar=bool,
+        default=param_default.keep_largest_object)
 
     misc = parser.add_argument_group('\nMISC')
     misc.add_argument(
@@ -121,6 +129,7 @@ def main():
 
     # Deal with segmentation parameters
     param.threshold = args.thr
+    param.keep_largest_object = args.keep_largest
 
     # Get model path
     if args.m:
