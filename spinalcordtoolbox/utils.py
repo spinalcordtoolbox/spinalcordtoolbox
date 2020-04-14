@@ -156,6 +156,21 @@ def check_exe(name):
     return None
 
 
+def extract_fname(fpath):
+    """
+    Split a full path into a parent folder component, filename stem and extension.
+
+    Note: for .nii.gz the extension is understandably .nii.gz, not .gz
+    (``os.path.splitext()`` would want to do the latter, hence the special case).
+    """
+    parent, filename = os.path.split(fpath)
+    if filename.endswith(".nii.gz"):
+        stem, ext = filename[:-7], ".nii.gz"
+    else:
+        stem, ext = os.path.splitext(filename)
+    return parent, stem, ext
+
+
 def parse_num_list(str_num):
     """
     Parse numbers in string based on delimiter: , or :
