@@ -9,7 +9,6 @@ import json
 import logging
 
 import spinalcordtoolbox as sct
-from spinalcordtoolbox import __sct_dir__
 import spinalcordtoolbox.download
 
 
@@ -42,7 +41,7 @@ def folder(name_model):
     :param name: str: Name of model.
     :return: str: Folder to model
     """
-    return os.path.join(__sct_dir__, 'models', name_model)
+    return os.path.join(sct.__models_dir__, name_model)
 
 
 def install_model(name_model):
