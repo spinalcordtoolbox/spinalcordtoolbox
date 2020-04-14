@@ -11,7 +11,6 @@ import ivadomed.utils
 import ivadomed.postprocessing
 
 import spinalcordtoolbox as sct
-import spinalcordtoolbox.utils
 import spinalcordtoolbox.deepseg.models
 
 
@@ -27,6 +26,7 @@ class ParamDeepseg:
     """
     def __init__(self):
         self.threshold = None
+        self.keep_largest_object = True
         self.output_suffix = '_seg'
         self.remove_temp_files = 1
         self.verbose = 1
@@ -48,7 +48,7 @@ def segment_nifti(fname_image, folder_model, param):
     # TODO: postprocessing based on model (info to add in model's json), and if user asked for it (arg)
     metadata = sct.deepseg.models.get_metadata(folder_model)
 
-    # Threshold the prediction. For no prediction, set threshold to -1.
+    # Threshold the prediction. For no prediction, set threshold to 0.
     if param.threshold:
         threshold = param.threshold
     else:
@@ -57,8 +57,25 @@ def segment_nifti(fname_image, folder_model, param):
         else:
             logger.warning("'threshold' is not defined in the model json file. Using threshold of: {}".format(DEFAULT_THRESHOLD))
             threshold = DEFAULT_THRESHOLD
-    if not threshold == -1:
+    if threshold:
         nii_seg = imed.postprocessing.threshold_predictions_nib(nii_seg, threshold)
+
+    # Only keep largest object
+    if param.keep_largest_object:
+        if threshold:
+            # Fetch axis corresponding to superior-inferior direction
+            # TODO: move that code in image
+            affine = nii_seg.get_header().get_best_affine()
+            code = nib.orientations.aff2axcodes(affine)
+            if 'I' in code:
+                axis_infsup = code.index('I')
+            elif 'S' in code:
+                axis_infsup = code.index('S')
+            else:
+                raise ValueError("Neither I nor S is present in code: {}, for affine matrix: {}".format(code, affine))
+            nii_seg = imed.postprocessing.keep_largest_object_per_slice_nib(nii_seg, axis=axis_infsup)
+        else:
+            logger.warning("Algorithm 'keep largest object' can only be run on binary segmentation.")
 
     # TODO: use args to get output name
     fname_out = sct.utils.add_suffix(fname_image, '_seg')
