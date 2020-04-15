@@ -5,6 +5,7 @@ Interface API for the deepseg module, which performs segmentation using deep lea
 
 
 import logging
+import numpy as np
 import nibabel as nib
 import ivadomed as imed
 import ivadomed.utils
@@ -59,7 +60,7 @@ class PostProcessing:
                     DEFAULT_THRESHOLD))
                 thr = DEFAULT_THRESHOLD
         if thr:
-            nii_seg = imed.postprocessing.threshold_predictions_nib(nii_seg, thr)
+            nii_seg = imed.postprocessing.threshold_predictions(nii_seg, thr)
         return nii_seg
 
     def keep_largest_object(self, nii_seg):
@@ -67,7 +68,7 @@ class PostProcessing:
         Only keep largest object
         """
         if self.param.keep_largest_object:
-            if self.threshold:
+            if np.array_equal(nii_seg.get_fdata(), nii_seg.get_fdata().astype(bool)):
                 # Fetch axis corresponding to superior-inferior direction
                 # TODO: move that code in image
                 affine = nii_seg.get_header().get_best_affine()
@@ -79,9 +80,20 @@ class PostProcessing:
                 else:
                     raise ValueError(
                         "Neither I nor S is present in code: {}, for affine matrix: {}".format(code, affine))
-                nii_seg = imed.postprocessing.keep_largest_object_per_slice_nib(nii_seg, axis=axis_infsup)
+                nii_seg = imed.postprocessing.keep_largest_object_per_slice(nii_seg, axis=axis_infsup)
             else:
-                logger.warning("Algorithm 'keep largest object' can only be run on binary segmentation.")
+                logger.warning("Algorithm 'keep largest object' can only be run on binary segmentation. Skipping.")
+            return nii_seg
+
+    def fill_holes(self, nii_seg):
+        """
+        Fill holes
+        """
+        if self.param.fill_holes:
+            if np.array_equal(nii_seg.get_fdata(), nii_seg.get_fdata().astype(bool)):
+                nii_seg = imed.postprocessing.fill_holes(nii_seg)
+            else:
+                logger.warning("Algorithm 'fill holes' can only be run on binary segmentation. Skipping.")
             return nii_seg
 
 
@@ -102,6 +114,7 @@ def segment_nifti(fname_image, folder_model, param):
     postproc = PostProcessing(param, metadata)
     nii_seg = postproc.threshold(nii_seg)
     nii_seg = postproc.keep_largest_object(nii_seg)
+    nii_seg = postproc.fill_holes(nii_seg)
 
     # TODO: use args to get output name
     fname_out = sct.utils.add_suffix(fname_image, '_seg')
