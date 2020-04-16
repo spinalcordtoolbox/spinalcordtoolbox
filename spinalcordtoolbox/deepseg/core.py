@@ -19,6 +19,8 @@ logger = logging.getLogger(__name__)
 
 # Default values if not asked during CLI call and if not present in json metadata.
 DEFAULT_THRESHOLD = 0.9
+DEFAULT_KEEP_LARGEST_OBJECT = True
+DEFAULT_FILL_HOLES = True
 
 
 class ParamDeepseg:
@@ -27,7 +29,8 @@ class ParamDeepseg:
     """
     def __init__(self):
         self.threshold = None
-        self.keep_largest_object = True
+        self.keep_largest_object = None
+        self.fill_holes = None
         self.output_suffix = '_seg'
         self.remove_temp_files = 1
         self.verbose = 1
@@ -36,12 +39,13 @@ class ParamDeepseg:
 
 class PostProcessing:
     """
-    Deals with post-processing of the segmentation.
+    Deals with post-processing of the segmentation. Consider param (i.e. user's flag) with more priority than
+    metadata (i.e. from model's json file).
     """
     def __init__(self, param, metadata):
         """
-        :param param:
-        :param metadata:
+        :param param: class ParamDeepseg: Defined by user's parameter
+        :param metadata: dict: From model's json metadata
         """
         self.param = param
         self.metadata = metadata
@@ -54,7 +58,7 @@ class PostProcessing:
             thr = self.param.threshold
         else:
             if 'threshold' in self.metadata:
-                thr = self.param.threshold
+                thr = self.metadata.threshold
             else:
                 logger.warning("'threshold' is not defined in the model json file. Using threshold of: {}".format(
                     DEFAULT_THRESHOLD))
@@ -67,7 +71,15 @@ class PostProcessing:
         """
         Only keep largest object
         """
-        if self.param.keep_largest_object:
+        # TODO: This if/elif below is ugly. Cannot think of something better for now...
+        do_process = DEFAULT_KEEP_LARGEST_OBJECT
+        if self.param.keep_largest_object is True:
+            do_process = True
+        elif self.param.keep_largest_object is None:
+            if 'keep_largest_object' in self.metadata:
+                do_process = self.metadata.keep_largest_object
+        if do_process:
+            # Make sure input is binary
             if np.array_equal(nii_seg.get_fdata(), nii_seg.get_fdata().astype(bool)):
                 # Fetch axis corresponding to superior-inferior direction
                 # TODO: move that code in image
@@ -83,13 +95,20 @@ class PostProcessing:
                 nii_seg = imed.postprocessing.keep_largest_object_per_slice(nii_seg, axis=axis_infsup)
             else:
                 logger.warning("Algorithm 'keep largest object' can only be run on binary segmentation. Skipping.")
-            return nii_seg
+        return nii_seg
 
     def fill_holes(self, nii_seg):
         """
         Fill holes
         """
-        if self.param.fill_holes:
+        # TODO: This if/elif below is ugly. Cannot think of something better for now...
+        do_process = DEFAULT_FILL_HOLES
+        if self.param.fill_holes is True:
+            do_process = True
+        elif self.param.fill_holes is None:
+            if 'fill_holes' in self.metadata:
+                do_process = self.metadata.fill_holes
+        if do_process:
             if np.array_equal(nii_seg.get_fdata(), nii_seg.get_fdata().astype(bool)):
                 nii_seg = imed.postprocessing.fill_holes(nii_seg)
             else:
@@ -111,6 +130,9 @@ def segment_nifti(fname_image, folder_model, param):
 
     # Postprocessing
     metadata = sct.deepseg.models.get_metadata(folder_model)
+    # TODO: is this PostProcessing class an overkill? Given that this class will only be used here... maybe a better
+    #  alternative would be to create a file deepseg/postprocessing and move all postprocessing functions there,
+    #  instead of having them inside a class.
     postproc = PostProcessing(param, metadata)
     nii_seg = postproc.threshold(nii_seg)
     nii_seg = postproc.keep_largest_object(nii_seg)
