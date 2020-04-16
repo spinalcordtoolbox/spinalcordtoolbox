@@ -32,7 +32,8 @@ parser = argparse.ArgumentParser(
                 'should be organized as folders within a single directory. We recommend '
                 'following the BIDS convention (https://bids.neuroimaging.io/). '
                 'The processing script (task) should accept a subject directory as its only argument. '
-                'Additional information is passed via environment variables \n',
+                'Additional information is passed via environment variables and the arguments '
+                'passed via `--task-args`',
   formatter_class = SmartFormatter,
   prog=os.path.basename(__file__).strip('.py'))
 
@@ -66,6 +67,9 @@ parser.add_argument("--itk-threads", default = 1,
                     help = 'Setting for environment variable: ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS\n'
                            'Number of threads to use for ITK based programs including ANTs. Set to a low '
                            'number to avoid a large increase in memory. Defaults to 1')
+parser.add_argument("--task-args", default = "",
+                    help = 'A quoted string with extra flags and arguments to pass to the task script. '
+                           'The constructed call will look like <task> <subject> <task-args>')
 parser.add_argument("task",
                     help = 'Shell script used to process the data.')
 
@@ -117,7 +121,7 @@ def run_single(subj_dir):
   })
 
   # Ship the job out, merging stdout/stderr and piping to log file
-  res = subprocess.run([args.task, subj_dir],
+  res = subprocess.run([args.task, subj_dir] + args.task_args.split(" "),
                        env = envir,
                        stdout = open(log_file, "w"),
                        stderr = subprocess.STDOUT)
