@@ -28,17 +28,11 @@ from spinalcordtoolbox.image import Image, concat_data
 from spinalcordtoolbox.utils import Metavar, SmartFormatter
 
 parser = argparse.ArgumentParser(
-  description = 'Wrapper to processing scripts, which loops across subjects. Data should be '
-                'organized according to the BIDS structure: '
-                'https://github.com/sct-pipeline/spine_generic#file-structure.\n'
+  description = 'Wrapper to processing scripts, which loops across subjects. Subjects '
+                'should be organized as folders within a single directory. We recommend '
+                'following the BIDS convention (https://bids.neuroimaging.io/). '
                 'The processing script (task) should accept a subject directory as its only argument. '
-                'Additional information is passed via environment variables \n'
-                'PATH_SEGMANUAL (--path-segmanual)\n'
-                'PATH_DATA (--data-path)\n'
-                'PATH_RESULTS (--out-path)\n'
-                'PATH_LOG (--out-path with log appended)\n'
-                'PATH_QC (--out-path with QC appended)\n'
-                'ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS (--itk-threads)\n',
+                'Additional information is passed via environment variables \n',
   formatter_class = SmartFormatter,
   prog=os.path.basename(__file__).strip('.py'))
 
@@ -48,12 +42,16 @@ parser.add_argument("--jobs", type = int, default = 1,
                            'specifying the number of cores, 0 or a negative integer '
                            'specifying number of cores minus that number. For example '
                            '--jobs -1 indicates run ncores - 1 jobs in parallel.')
-parser.add_argument("--data-path", help = 'Path containing subject directories in the BIDS format')
+parser.add_argument("--path-data", help = 'Setting for environment variable: PATH_DATA\n'
+                                          'Path containing subject directories in a consistent format')
 parser.add_argument("--subject-prefix", default = "sub-",
                     help = 'Subject prefix, defaults to "sub-"')
-parser.add_argument("--out-path", default = "./",
-                    help = 'Output path, subdirectories for results, logs, and QC '
-                           'will be generated here')
+parser.add_argument("--path-output", default = "./",
+                    help = 'Base directory for environment variables:\n'
+                           'PATH_RESULTS=' + os.path.join('<path-output>', 'results') + '\n'
+                           'PATH_QC=' + os.path.join('<path-output>', 'QC') + '\n'
+                           'PATH_LOG=' + os.path.join('<path-output>', 'results') + '\n'
+                           'Which are output paths for results, logs, and QC')
 parser.add_argument("--include",
                     help = 'Optional regex used to filter the list of subject directories. Only process '
                            'a subject if they match the regex. Inclusions are processed before exclusions')
@@ -62,18 +60,20 @@ parser.add_argument("--exclude",
                            'a subject if they do not match the regex. Exclusions are processed '
                            'after inclusions')
 parser.add_argument("--path-segmanual", default = ".",
-                    help = 'A path containing manual segmentations to be used by the task program.')                
+                    help = 'Setting for environment variable: PATH_SEGMANUAL\n'
+                           'A path containing manual segmentations to be used by the task program.')                
 parser.add_argument("--itk-threads", default = 1,
-                    help = 'Number of threads to use for ITK based programs including ANTs. Set to a low '
+                    help = 'Setting for environment variable: ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS\n'
+                           'Number of threads to use for ITK based programs including ANTs. Set to a low '
                            'number to avoid a large increase in memory. Defaults to 1')
 parser.add_argument("task",
-                    help = 'Shell script used to process the data.'
+                    help = 'Shell script used to process the data.')
 
 args = parser.parse_args()
 
 # Find subjects and process inclusion/exclusions
-data_dir = os.path.abspath(os.path.expanduser(args.data_path))
-subject_dirs = [ f for f in os.listdir(data_dir) if f.startswith(args.subject_prefix) ]
+path_data = os.path.abspath(os.path.expanduser(args.path_data))
+subject_dirs = [ f for f in os.listdir(path_data) if f.startswith(args.subject_prefix) ]
 
 if args.include is not None:
   subject_dirs = [ f for f in subject_dirs if re.search(args.include, f) is not None ]
@@ -82,12 +82,12 @@ if args.exclude is not None:
   subject_dirs = [ f for f in subject_dirs if re.search(args.exclude, f) is None ]
 
 # Set up output directories and create them if they don't already exist
-out_path = os.path.abspath(os.path.expanduser(args.out_path))
-results_path = os.path.join(out_path, "results")
-log_path = os.path.join(out_path, "log")
-qc_path = os.path.join(out_path, "qc")
+path_output = os.path.abspath(os.path.expanduser(args.path_output))
+path_results = os.path.join(path_output, "results")
+path_log = os.path.join(path_output, "log")
+path_qc = os.path.join(path_output, "qc")
 
-for pth in [out_path, results_path, log_path, qc_path]:
+for pth in [path_output, path_results, path_log, path_qc]:
   if not os.path.exists(pth):
     os.mkdir(pth)
 
@@ -99,8 +99,8 @@ task_base = re.sub("\.sh$", "", os.path.basename(task))
 ## Job function for mapping with multiprocessing
 def run_single(subj_dir):
   subject = os.path.basename(subj_dir)
-  log_file = os.path.join(log_path, "{}_{}.log".format(task_base, subject))
-  err_file = os.path.join(log_path, "err.{}_{}.log".format(task_base, subject))
+  log_file = os.path.join(path_log, "{}_{}.log".format(task_base, subject))
+  err_file = os.path.join(path_log, "err.{}_{}.log".format(task_base, subject))
 
   print("Running {}. See log file {}".format(subject, log_file))
   
@@ -109,10 +109,10 @@ def run_single(subj_dir):
   # Add the script relevant environment variables
   envir.update({
     "PATH_SEGMANUAL" : args.path_segmanual,
-    "PATH_DATA"      : data_dir,
-    "PATH_RESULTS"   : results_path,
-    "PATH_LOG"       : log_path,
-    "PATH_QC"        : qc_path ,
+    "PATH_DATA"      : path_data,
+    "PATH_RESULTS"   : path_results,
+    "PATH_LOG"       : path_log,
+    "PATH_QC"        : path_qc ,
     "ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS" : str(args.itk_threads)
   })
 
@@ -151,5 +151,5 @@ print("Finished :-)\n"
 open_cmd = "open" if sys.platform == "darwin" else "xdg-open"
 
 print("To open the Quality Control (QC) report on a web-browser, run the following:\n"
-      "{} {}/index.html".format(open_cmd, qc_path)
+      "{} {}/index.html".format(open_cmd, path_qc)
 )
