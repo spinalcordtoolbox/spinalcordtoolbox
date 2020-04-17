@@ -94,7 +94,7 @@ def segment_nifti(fname_image, folder_model, param):
     metadata = sct.deepseg.models.get_metadata(folder_model)
     nii_seg = postprocess(nii_seg, param, metadata)
 
-    # TODO: use args to get output name
-    fname_out = sct.utils.add_suffix(fname_image, '_seg')
+    # Save output seg
+    fname_out = sct.utils.add_suffix(fname_image, param['o'])
     nib.save(nii_seg, fname_out)
     return fname_out
