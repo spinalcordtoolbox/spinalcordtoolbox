@@ -28,7 +28,7 @@
 
 import sys
 import os
-from spinalcordtoolbox.moco import ParamMoco, moco_wrapper
+from spinalcordtoolbox.moco import ParamMoco, moco_wrapper, split_to_odd_and_even
 
 import sct_utils as sct
 from msct_parser import Parser
@@ -99,6 +99,12 @@ def get_parser():
                       mandatory=False,
                       default_value=param_default.path_out,
                       example='dmri_moco_results/')
+    parser.add_option(name='-interleaved',
+                      type_value='multiple_choice',
+                      description='Interleaved acquisition: 0 = NOT-interleaved, 1 = interleaved',
+                      mandatory=False,
+                      default_value='0',
+                      example=['0','1'])
     parser.usage.addSection('MISC')
     parser.add_option(name="-r",
                       type_value="multiple_choice",
@@ -141,13 +147,19 @@ def main():
         param.path_out = arguments['-ofolder']
     if '-r' in arguments:
         param.remove_temp_files = int(arguments['-r'])
+    if '-interleaved' in arguments:
+        param.interleaved = int(arguments['-interleaved'])
     param.verbose = int(arguments.get('-v'))
 
     # Update log level
     sct.init_sct(log_level=param.verbose, update=True)
 
     # run moco
-    moco_wrapper(param)
+    if param.interleaved == 1:
+        # split input data to two datasets (even and odd slices), run moco in each sub-dataset and merge back the data
+        split_to_odd_and_even(param)
+    else:
+        moco_wrapper(param)
 
 
 if __name__ == "__main__":

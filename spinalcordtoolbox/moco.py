@@ -78,6 +78,7 @@ class ParamMoco:
         self.iterAvg = 1  # iteratively average target image for more robust moco
         self.is_sagittal = False  # if True, then split along Z (right-left) and register each 2D slice (vs. 3D volume)
         self.output_motion_param = True  # if True, the motion parameters are outputted
+        self.interleaved = 0    # data acquired in interleaved mode
 
     # update constructor with user's parameters
     def update(self, param_user):
@@ -865,3 +866,75 @@ def spline(folder_mat, nt, nz, verbose, index_b0 = [], graph=0):
 
     sct.printv('\n...Done. Patient motion has been smoothed', verbose)
     sct.printv('------------------------------------------------------------------------------\n', verbose)
+
+def split_to_odd_and_even(param):
+    """
+    Split data into two datasets (even and odd slices) and run moco separately
+    :param param: ParamMoco class
+    :return: None
+    """
+
+    file_data = 'data.nii'  # corresponds to the full input data (e.g. dmri or fmri)
+    file_data_dirname, file_data_basename, file_data_ext = sct.extract_fname(file_data)
+    file_data_even = 'data_even.nii'
+    file_data_odd = 'data_odd.nii'
+
+    # Start timer
+    start_time = time.time()
+
+    path_tmp = sct.tmp_create(basename="moco", verbose=param.verbose)
+
+    # Copying input data to tmp folder
+    sct.printv('\nCopying input data to tmp folder and convert to nii...', param.verbose)
+    convert(param.fname_data, os.path.join(path_tmp, file_data))
+
+    # Build absolute output path and go to tmp folder
+    curdir = os.getcwd()
+    path_out_abs = os.path.abspath(param.path_out)
+    os.chdir(path_tmp)
+
+    # Load data and get its dimensions
+    sct.printv('\nGet dimensions of data...', param.verbose)
+    im_data = Image(file_data)
+    nx, ny, nz, nt, px, py, pz, pt = im_data.dim
+    sct.printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz) + ' x ' + str(nt), param.verbose)
+
+    # Split 4D data along T dimension
+    #sct.printv('\nSplit along T dimension...', param.verbose)
+    im_data_split_list = split_data(im_data, 2)  # 0 - x, 1 - y, 2 - z, 3 - t
+
+    sct.printv('\nWARNING: Data were acquired in interleaved mode.', param.verbose, 'warning')
+    sct.printv('Split data into two datasets (even and odd slices) and run moco separately...', param.verbose)
+
+    # Get only even slices across all volumes
+    data_even = []
+    for index_even in range(0, len(im_data_split_list), 2):
+        data_even.append(im_data_split_list[index_even])
+    concat_data(data_even, dim=2).save(file_data_even, verbose=0)  # Concatenate in z-axis and save
+
+    # Get only odd slices across all volumes
+    data_odd = []
+    for index_odd in range(1, len(im_data_split_list), 2):
+        data_odd.append(im_data_split_list[index_odd])
+    concat_data(data_odd, dim=2).save(file_data_odd, verbose=0)  # Concatenate in z-axis and save
+
+    # Run moco only on even slices
+    sct.printv('\nStarting moco on even slices...', param.verbose)
+    param.fname_data = 'data_even.nii'
+    moco_wrapper(param)
+
+    # Run moco only on odd slices
+    sct.printv('\nStarting moco on odd slices...', param.verbose)
+    param.fname_data = 'data_odd.nii'
+    moco_wrapper(param)
+
+    # TODO - merge two sub-dataset back and move data from /tmp to current dir
+    # TODO - files moco_params_x, moco_params_y.nii.gz and moco_params.tsv are overwritten now (even by odd)
+    #  - do we want to preserve these files for both subdatasets or merge them? 
+
+    # come back to working directory
+    os.chdir(curdir)
+
+    # display elapsed time
+    elapsed_time = time.time() - start_time
+    sct.printv('\nFinished! Elapsed time: ' + str(int(np.round(elapsed_time))) + 's', param.verbose)
