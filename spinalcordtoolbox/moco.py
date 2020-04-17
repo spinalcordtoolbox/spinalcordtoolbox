@@ -869,7 +869,7 @@ def spline(folder_mat, nt, nz, verbose, index_b0 = [], graph=0):
 
 def split_to_odd_and_even(param):
     """
-    Split data into two datasets (even and odd slices) and run moco separately
+    Split data into two datasets (even and odd slices) and run moco separately, then merge data back together
     :param param: ParamMoco class
     :return: None
     """
@@ -878,6 +878,7 @@ def split_to_odd_and_even(param):
     file_data_dirname, file_data_basename, file_data_ext = sct.extract_fname(file_data)
     file_data_even = 'data_even.nii'
     file_data_odd = 'data_odd.nii'
+    file_data_merged = 'data_merged.nii'
 
     # Start timer
     start_time = time.time()
@@ -899,8 +900,8 @@ def split_to_odd_and_even(param):
     nx, ny, nz, nt, px, py, pz, pt = im_data.dim
     sct.printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz) + ' x ' + str(nt), param.verbose)
 
-    # Split 4D data along T dimension
-    #sct.printv('\nSplit along T dimension...', param.verbose)
+    # Split 4D data along z dimension
+    #sct.printv('\nSplit along z dimension...', param.verbose)
     im_data_split_list = split_data(im_data, 2)  # 0 - x, 1 - y, 2 - z, 3 - t
 
     sct.printv('\nWARNING: Data were acquired in interleaved mode.', param.verbose, 'warning')
@@ -908,12 +909,14 @@ def split_to_odd_and_even(param):
 
     # Get only even slices across all volumes
     data_even = []
+    # loop across even slices
     for index_even in range(0, len(im_data_split_list), 2):
         data_even.append(im_data_split_list[index_even])
     concat_data(data_even, dim=2).save(file_data_even, verbose=0)  # Concatenate in z-axis and save
 
     # Get only odd slices across all volumes
     data_odd = []
+    # loop across odd slices
     for index_odd in range(1, len(im_data_split_list), 2):
         data_odd.append(im_data_split_list[index_odd])
     concat_data(data_odd, dim=2).save(file_data_odd, verbose=0)  # Concatenate in z-axis and save
@@ -928,9 +931,27 @@ def split_to_odd_and_even(param):
     param.fname_data = 'data_odd.nii'
     moco_wrapper(param)
 
-    # TODO - merge two sub-dataset back and move data from /tmp to current dir
-    # TODO - files moco_params_x, moco_params_y.nii.gz and moco_params.tsv are overwritten now (even by odd)
-    #  - do we want to preserve these files for both subdatasets or merge them? 
+    # TODO: files moco_params_x, moco_params_y.nii.gz and moco_params.tsv are overwritten now (even by odd)
+    #       - Do we want to preserve these files for both subdatasets or merge them?
+
+    # Merge even and odd datasets after moco back together
+    im_data_even = Image(file_data_even)
+    im_data_odd = Image(file_data_odd)
+
+    im_data_merged = im_data.copy()
+    counter_even = 0
+    counter_odd = 0
+    for index in range(0, im_data_merged.dim[2]):
+        if index % 2 == 0:
+            im_data_merged.data[:, :, index, :] = im_data_even.data[:, :, counter_even, :]
+            counter_even += 1
+        elif index % 2 != 0:
+            im_data_merged.data[:, :, index, :] = im_data_odd.data[:, :, counter_odd, :]
+            counter_odd += 1
+
+    im_data_merged.save(file_data_merged, verbose=0)  # Concatenate in z-axis and save
+
+    # TODO - move data from /tmp to current dir and rename them
 
     # come back to working directory
     os.chdir(curdir)
