@@ -7,8 +7,8 @@ ivadomed package.
 
 # TODO: Add link to example image so users can decide wether their images look "close enought" to some of the proposed
 #  models (e.g., mice, etc.).
+# TODO: add test to make sure that all postprocessing flags match the core.DEFAULT dictionary items
 # TODO: Fetch default value (and display) depending on the model that is used.
-
 
 from __future__ import absolute_import
 
@@ -25,8 +25,6 @@ from sct_utils import init_sct, printv
 
 
 def get_parser():
-
-    param_default = sct.deepseg.core.ParamDeepseg()
 
     parser = argparse.ArgumentParser(
         description="Segmentation using deep learning.",
@@ -70,21 +68,24 @@ def get_parser():
         help="Binarize segmentation with specified threshold. Set to 0 for no thresholding (i.e., soft segmentation). "
              "Default value is model-specific and was set during optimization "
              "(more info at https://github.com/sct-pipeline/deepseg-threshold).",
-        metavar=float,
-        default=param_default.threshold)
+        metavar=float)
     misc.add_argument(
-        "-keep-largest",
+        "-keep-largest-object",
         type=bool,
-        help="Remove false negative predictions by only keeping the largest blob.",
-        metavar=bool,
-        default=param_default.keep_largest_object)
+        help="Remove false negative segmentation by only keeping the largest blob.",
+        metavar=bool)
+    misc.add_argument(
+        "-fill-holes",
+        type=bool,
+        help="Fill small holes in the segmentation.",
+        metavar=bool)
 
     misc = parser.add_argument_group('\nMISC')
     misc.add_argument(
         "-o",
         help="Output segmentation suffix. In case of multi-class segmentation, class-specific suffixes will be added.",
         metavar=str,
-        default=param_default.output_suffix)
+        default='_seg')
     misc.add_argument(
         "-v",
         type=int,
@@ -101,50 +102,46 @@ def get_parser():
 
 
 def main():
-    param = sct.deepseg.core.ParamDeepseg()
-
     parser = get_parser()
     args = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
-    # TODO: instead of assigning each args param, we could pass args while instanciating ParamDeepseg(args), and the
-    #  class would deal with assigning arguments to each field.
+    args = {k: v for k, v in vars(args).items() if v is not None}
+    # separate out the segmentation `param` args from the top level args
+    fname_input = args.pop('i')
+    # name_model = args.pop('m')
+    # list_models =
+    # install_model = args.pop('install_model')
+    # install_default_models = args.pop('install_default_models')
 
     # Deal with model
-    if args.list_models:
+    if args['list_models']:
         sct.deepseg.models.list_models()
         exit(0)
-    if args.install_model is not None:
+    if 'install_models' in args:
         sct.deepseg.models.install_model(args.install_model)
         exit(0)
-    if args.install_default_models:
+    if args['install_default_models']:
         sct.deepseg.models.install_default_models()
         exit(0)
 
     # Deal with input/output
-    if args.i is None:
+    if fname_input is None:
         parser.error("The following arguments is required: -i")
-    if not os.path.isfile(args.i):
-        parser.error("This file does not exist: {}".format(args.i))
-    if args.o is not None:
-        param.output_suffix = args.o
-
-    # Deal with segmentation parameters
-    param.threshold = args.thr
-    param.keep_largest_object = args.keep_largest
+    if not os.path.isfile(fname_input):
+        parser.error("This file does not exist: {}".format(fname_input))
 
     # Get model path
-    if args.m:
-        name_model = args.m
-        if not spinalcordtoolbox.deepseg.models.is_installed(name_model):
-            printv("Model {} is not installed. Installing it now...".format(name_model))
-            spinalcordtoolbox.deepseg.models.install_model(name_model)
-        path_model = spinalcordtoolbox.deepseg.models.folder(name_model)
-    elif args.mpath:
+    if 'm' in args:
+        if not spinalcordtoolbox.deepseg.models.is_installed(args['m']):
+            printv("Model {} is not installed. Installing it now...".format(args['m']))
+            spinalcordtoolbox.deepseg.models.install_model(args['m'])
+        path_model = spinalcordtoolbox.deepseg.models.folder(args['m'])
+    elif 'path_model' in args:
         # TODO: check integrity of folder model
-        path_model = args.mpath
+        path_model = args['path_model']
     else:
         parser.error("You need to specify either -m or -mpath.")
 
-    sct.deepseg.core.segment_nifti(args.i, path_model, param)
+    sct.deepseg.core.segment_nifti(fname_input, path_model, args)
 
 
 if __name__ == '__main__':
