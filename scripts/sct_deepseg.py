@@ -19,9 +19,9 @@ import argparse
 import spinalcordtoolbox as sct
 import spinalcordtoolbox.deepseg.core
 import spinalcordtoolbox.deepseg.models
-from spinalcordtoolbox.utils import Metavar, SmartFormatter
+import spinalcordtoolbox.utils
 
-from sct_utils import init_sct, printv
+from sct_utils import init_sct, printv, display_viewer_syntax
 
 
 def get_parser():
@@ -29,14 +29,14 @@ def get_parser():
     parser = argparse.ArgumentParser(
         description="Segmentation using deep learning.",
         add_help=None,
-        formatter_class=SmartFormatter,
+        formatter_class=sct.utils.SmartFormatter,
         prog=os.path.basename(__file__).strip(".py"))
 
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
         "-i",
         help="Image to segment.",
-        metavar=Metavar.file)
+        metavar=sct.utils.Metavar.file)
 
     seg = parser.add_argument_group('\nMODELS')
     seg.add_argument(
@@ -60,7 +60,7 @@ def get_parser():
         "-mpath",
         help="Path to model, in case you would like to use a custom model. The model folder should follow the "
              "conventions listed in: URL.",
-        metavar=Metavar.folder)
+        metavar=sct.utils.Metavar.folder)
 
     misc = parser.add_argument_group('\nPARAMETERS')
     misc.add_argument(
@@ -69,7 +69,7 @@ def get_parser():
         help="Binarize segmentation with specified threshold. Set to 0 for no thresholding (i.e., soft segmentation). "
              "Default value is model-specific and was set during optimization "
              "(more info at https://github.com/sct-pipeline/deepseg-threshold).",
-        metavar=Metavar.float)
+        metavar=sct.utils.Metavar.float)
     misc.add_argument(
         "-keep-largest-object",
         type=int,
@@ -85,7 +85,7 @@ def get_parser():
     misc.add_argument(
         "-o",
         help="Output segmentation suffix. In case of multi-class segmentation, class-specific suffixes will be added.",
-        metavar=Metavar.str,
+        metavar=sct.utils.Metavar.str,
         default='_seg')
     misc.add_argument(
         "-v",
@@ -142,7 +142,9 @@ def main():
     else:
         parser.error("You need to specify either -m or -mpath.")
 
-    sct.deepseg.core.segment_nifti(args['i'], path_model, args)
+    fname_seg = sct.deepseg.core.segment_nifti(args['i'], path_model, args)
+
+    display_viewer_syntax([args['i'], fname_seg], colormaps=['gray', 'red'], opacities=['', '0.7'])
 
 
 if __name__ == '__main__':
