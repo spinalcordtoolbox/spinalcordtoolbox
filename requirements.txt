@@ -3,7 +3,7 @@ cryptography
 dipy
 futures
 h5py
-ivadomed@git+https://github.com/neuropoly/ivado-medical-imaging@cg/postPro-basics
+ivadomed@git+https://github.com/neuropoly/ivado-medical-imaging@master
 Keras==2.1.5
 matplotlib
 nibabel
