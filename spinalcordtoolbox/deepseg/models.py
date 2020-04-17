@@ -89,7 +89,7 @@ def list_models():
     for name_model, value in MODELS.items():
         print("{}{:<25s}{}\033[0m".format(color[is_installed(name_model)], name_model+default[value['default']],
                                           value['description']))
-    print('\nLegend: {}installed\033[0m | {}not installed\033[0m | default: [*]'.format(color[True], color[False]))
+    print('\nLegend: {}installed\033[0m | {}not installed\033[0m | default: [*]\n'.format(color[True], color[False]))
 
 
 def get_metadata(folder_model):
