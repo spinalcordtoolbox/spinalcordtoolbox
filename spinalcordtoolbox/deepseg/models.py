@@ -73,21 +73,23 @@ def is_installed(name_model):
             os.path.exists(os.path.join(folder(name_model), name_model + '.json')):
         return True
     else:
-        logger.warning("The model is not properly installed. Both the .pt and .json files should be "
-                       "present, and the basename should be the same as the folder name. Example: "
-                       "my_model/my_model.pt, my_model/my_model.json")
         return False
 
 
 def list_models():
     """
-    Display available models with description
+    Display available models with description. Color is used to indicate if model is installed or not. For default
+    models, a '*' is added next to the model name.
     :return:
     """
-    # TODO: separate default/optional
-    logger.info("MODEL NAME: DESCRIPTION")
-    for key, value in MODELS.items():
-        logger.info("{}: {}".format(key, value['description']))
+    color = {True: '\033[92m', False: '\033[91m'}
+    default = {True: '[*]', False: ''}
+    print("{:<25s}DESCRIPTION".format("MODEL"))
+    print("-"*80)
+    for name_model, value in MODELS.items():
+        print("{}{:<25s}{}\033[0m".format(color[is_installed(name_model)], name_model+default[value['default']],
+                                          value['description']))
+    print('\nLegend: {}installed\033[0m | {}not installed\033[0m | default: [*]'.format(color[True], color[False]))
 
 
 def get_metadata(folder_model):
