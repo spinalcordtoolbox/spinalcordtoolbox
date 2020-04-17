@@ -107,7 +107,7 @@ def main():
     args = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
     args = {k: v for k, v in vars(args).items() if v is not None}
     # separate out the segmentation `param` args from the top level args
-    fname_input = args.pop('i')
+    # fname_input = args.pop('i')
     # name_model = args.pop('m')
     # list_models =
     # install_model = args.pop('install_model')
@@ -125,10 +125,10 @@ def main():
         exit(0)
 
     # Deal with input/output
-    if fname_input is None:
+    if 'i' not in args:
         parser.error("The following arguments is required: -i")
-    if not os.path.isfile(fname_input):
-        parser.error("This file does not exist: {}".format(fname_input))
+    if not os.path.isfile(args['i']):
+        parser.error("This file does not exist: {}".format(args['i']))
 
     # Get model path
     if 'm' in args:
@@ -142,7 +142,7 @@ def main():
     else:
         parser.error("You need to specify either -m or -mpath.")
 
-    sct.deepseg.core.segment_nifti(fname_input, path_model, args)
+    sct.deepseg.core.segment_nifti(args['i'], path_model, args)
 
 
 if __name__ == '__main__':
