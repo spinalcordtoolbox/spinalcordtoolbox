@@ -69,8 +69,8 @@ def download_data(urls):
     urls: list of several urls (mirror servers) or single url (string)
     """
 
-    # if urls is not a list, make it one
-    if not isinstance(urls, (list, tuple)):
+    # make sure urls becomes a list, in case user inputs a str
+    if isinstance(urls, str):
         urls = [urls]
 
     # loop through URLs
