@@ -54,7 +54,8 @@ def get_parser():
     seg.add_argument(
         "-install-default-models",
         action='store_true',
-        help="Install default models. Note: these models are downloaded during normal SCT installation.")
+        help="Install all default models. Note: default models should already be installed during SCT installation.")
+    # TODO: replace URL below
     seg.add_argument(
         "-mpath",
         help="Path to model, in case you would like to use a custom model. The model folder should follow the "
@@ -68,23 +69,23 @@ def get_parser():
         help="Binarize segmentation with specified threshold. Set to 0 for no thresholding (i.e., soft segmentation). "
              "Default value is model-specific and was set during optimization "
              "(more info at https://github.com/sct-pipeline/deepseg-threshold).",
-        metavar=float)
+        metavar=Metavar.float)
     misc.add_argument(
         "-keep-largest-object",
-        type=bool,
+        type=int,
         help="Remove false negative segmentation by only keeping the largest blob.",
-        metavar=bool)
+        choices=(0, 1))
     misc.add_argument(
         "-fill-holes",
-        type=bool,
+        type=int,
         help="Fill small holes in the segmentation.",
-        metavar=bool)
+        choices=(0, 1))
 
     misc = parser.add_argument_group('\nMISC')
     misc.add_argument(
         "-o",
         help="Output segmentation suffix. In case of multi-class segmentation, class-specific suffixes will be added.",
-        metavar=str,
+        metavar=Metavar.str,
         default='_seg')
     misc.add_argument(
         "-v",
