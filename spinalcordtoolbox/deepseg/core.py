@@ -34,7 +34,7 @@ def postprocess(nii_seg, param, metadata):
     :return:
     """
     def threshold(nii_seg, thr):
-        """Threshold the prediction. For no prediction, set 'threshold' to 0."""
+        """Threshold the prediction. For no threshold, set 'threshold' to 0."""
         if thr:
             nii_seg = imed.postprocessing.threshold_predictions(nii_seg, thr)
         return nii_seg
