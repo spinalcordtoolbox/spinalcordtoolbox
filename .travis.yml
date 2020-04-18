@@ -38,7 +38,7 @@ install:
   - |
     echo Installing SCT
     set -e  # Error build immediately if install script exits with non-zero
-    yes | ASK_REPORT_QUESTION=false ./install_sct
+    yes | ASK_REPORT_QUESTION=false ./install_sct > install.log
     echo $?
     echo "... STATUS"
     PATH="$PATH:$PWD/bin"
