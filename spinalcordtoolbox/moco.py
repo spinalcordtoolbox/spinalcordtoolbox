@@ -465,6 +465,8 @@ def moco_wrapper(param):
         [os.path.join(param.path_out, sct.add_suffix(os.path.basename(param.fname_data), param.suffix)),
          param.fname_data], mode='ortho,ortho')
 
+    return im_moco
+
 
 def moco(param):
     """
@@ -874,6 +876,7 @@ def split_to_odd_and_even(param):
     :return: None
     """
 
+    orig_name = param.fname_data
     file_data = 'data.nii'  # corresponds to the full input data (e.g. dmri or fmri)
     file_data_dirname, file_data_basename, file_data_ext = sct.extract_fname(file_data)
     file_data_even = 'data_even.nii'
@@ -924,20 +927,17 @@ def split_to_odd_and_even(param):
     # Run moco only on even slices
     sct.printv('\nStarting moco on even slices...', param.verbose)
     param.fname_data = 'data_even.nii'
-    moco_wrapper(param)
+    im_data_even = moco_wrapper(param)
 
     # Run moco only on odd slices
     sct.printv('\nStarting moco on odd slices...', param.verbose)
     param.fname_data = 'data_odd.nii'
-    moco_wrapper(param)
+    im_data_odd = moco_wrapper(param)
 
     # TODO: files moco_params_x, moco_params_y.nii.gz and moco_params.tsv are overwritten now (even by odd)
     #       - Do we want to preserve these files for both subdatasets or merge them?
 
     # Merge even and odd datasets after moco back together
-    im_data_even = Image(file_data_even)
-    im_data_odd = Image(file_data_odd)
-
     im_data_merged = im_data.copy()
     counter_even = 0
     counter_odd = 0
@@ -949,9 +949,14 @@ def split_to_odd_and_even(param):
             im_data_merged.data[:, :, index, :] = im_data_odd.data[:, :, counter_odd, :]
             counter_odd += 1
 
-    im_data_merged.save(file_data_merged, verbose=0)  # Concatenate in z-axis and save
+    im_data_merged.save(file_data_merged, verbose=0)  # Save to /tmp dir
 
-    # TODO - move data from /tmp to current dir and rename them
+    # TODO - move data from /tmp to current dir - lines below save to current dir original image instead of image
+    #  after moco - fix it
+    # Generate output files
+    sct.printv('\nGenerate output files...', param.verbose)
+    fname_moco = os.path.join(path_out_abs, sct.add_suffix(os.path.basename(orig_name), param.suffix))
+    sct.generate_output_file(im_data_merged.absolutepath, fname_moco)
 
     # come back to working directory
     os.chdir(curdir)
