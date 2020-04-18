@@ -539,22 +539,22 @@ conda activate venv_sct
 
 # Install Python dependencies
 print info "Installing Python dependencies..."
-pip install numpy
+pip install --progress-bar off numpy
 # Check if a frozen version of the requirements exist (for release only)
 if [[ -f "requirements-freeze.txt" ]]; then
   print info "Using requirements-freeze.txt (release installation)"
-  pip install -r requirements-freeze.txt
+  pip install --progress-bar off -r requirements-freeze.txt
 else
   # Not a package
   print info "Using requirements.txt (git installation)"
-  pip install -r requirements.txt
+  pip install --progress-bar off -r requirements.txt
 fi
 if [[ $? != 0 ]]; then
   die "Failed running pip install: $?"
 fi
 
 ## Install the spinalcordtoolbox into the Conda venv
-pip install -e $SCT_DIR
+pip install --progress-bar off -e $SCT_DIR
 e_status=$?
 if [[ $e_status != 0 ]]; then
   die "Failed to pip install sct."
