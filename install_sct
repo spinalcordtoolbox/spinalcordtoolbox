@@ -539,7 +539,6 @@ conda activate venv_sct
 
 # Install Python dependencies
 print info "Installing Python dependencies..."
-pip install numpy
 # Check if a frozen version of the requirements exist (for release only)
 if [[ -f "requirements-freeze.txt" ]]; then
   print info "Using requirements-freeze.txt (release installation)"
@@ -591,7 +590,7 @@ if [[ $res != 0 ]]; then
   die "Problem creating symlinks!"
 fi
 
-## Update PATH within this script (to launch sct_check_dependencies)
+## Update PATH within this script (to use scripts/)
 $UPDATE_PATH
 
 
@@ -662,20 +661,4 @@ if [[ $add_to_path =~ ^[Yy] ]]; then
 else
   print info "Not adding $SCT_DIR to \$PATH.
 You can always add it later or call SCT functions with full path $SCT_DIR/$BIN_DIR/sct_xxx"
-fi
-
-# run sct_check_dependencies
-print info "Validate installation..."
-# We run the sct_check_dependencies in the TMP_DIR so the tmp.XXX output
-# it creates is cleaned properly
-if sct_check_dependencies; then
-  if [[ $add_to_path =~ ^[Nn] ]]; then
-    print info "To use SCT, please update your environment by running:
-$DISPLAY_UPDATE_PATH"
-  else
-    print info "Open a new Terminal window to load environment variables, or run:
-source $RC_FILE_PATH"
-  fi
-else
-  die "Installation validation Failed!"
 fi
