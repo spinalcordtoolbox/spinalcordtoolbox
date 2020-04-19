@@ -677,5 +677,5 @@ $DISPLAY_UPDATE_PATH"
 source $RC_FILE_PATH"
   fi
 else
-  die "Installation validation Failed!"
+  echo "Installation validation Failed!"
 fi
