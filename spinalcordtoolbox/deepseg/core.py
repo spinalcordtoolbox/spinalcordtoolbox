@@ -21,11 +21,12 @@ logger = logging.getLogger(__name__)
 DEFAULTS = {
     'threshold': 0.9,
     'keep_largest_object': True,
-    'fill_holes': True
+    'fill_holes': True,
+    'o': '_seg',  # output suffix
     }
 
 
-def postprocess(nii_seg, param, metadata):
+def postprocess(nii_seg, options):
     """
     Wrapper to apply postprocessing on the segmentation, depending on user's, metadata or default options.
     :param nii_seg: nibabel: Segmentation
@@ -68,7 +69,6 @@ def postprocess(nii_seg, param, metadata):
             logger.warning("Algorithm 'fill holes' can only be run on binary segmentation. Skipping.")
         return nii_seg
 
-    options = {**DEFAULTS, **metadata, **param}
     if options['threshold']:
         nii_seg = threshold(nii_seg, options['threshold'])
     if options['keep_largest_object']:
@@ -78,13 +78,13 @@ def postprocess(nii_seg, param, metadata):
     return nii_seg
 
 
-def segment_nifti(fname_image, folder_model, param):
+def segment_nifti(fname_image, folder_model, param={}):
     """
     Segment a nifti file.
 
     :param fname_image: str: Filename of the image to segment.
     :param folder_model: str: Folder that encloses the deep learning model.
-    :param param: class ParamDeepseg: Parameter class ParamDeepseg()
+    :param param: dict: Dictionary of user's parameter
     :return: fname_out: str: Output filename.
     """
 
@@ -92,9 +92,10 @@ def segment_nifti(fname_image, folder_model, param):
 
     # Postprocessing
     metadata = sct.deepseg.models.get_metadata(folder_model)
-    nii_seg = postprocess(nii_seg, param, metadata)
+    options = {**DEFAULTS, **metadata, **param}
+    nii_seg = postprocess(nii_seg, options)
 
     # Save output seg
-    fname_out = sct.utils.add_suffix(fname_image, param['o'])
+    fname_out = sct.utils.add_suffix(fname_image, options['o'])
     nib.save(nii_seg, fname_out)
     return fname_out
