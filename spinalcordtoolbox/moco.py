@@ -878,9 +878,12 @@ def split_to_odd_and_even(param):
 
     orig_name = param.fname_data
     file_data = 'data.nii'  # corresponds to the full input data (e.g. dmri or fmri)
+    file_mask = 'mask.nii'
     file_data_dirname, file_data_basename, file_data_ext = sct.extract_fname(file_data)
     file_data_even = 'data_even.nii'
     file_data_odd = 'data_odd.nii'
+    file_mask_even = 'mask_even.nii'
+    file_mask_odd = 'mask_odd.nii'
     file_data_merged = 'data_merged.nii'
 
     # Start timer
@@ -891,6 +894,10 @@ def split_to_odd_and_even(param):
     # Copying input data to tmp folder
     sct.printv('\nCopying input data to tmp folder and convert to nii...', param.verbose)
     convert(param.fname_data, os.path.join(path_tmp, file_data))
+    if param.fname_mask != '':
+        convert(param.fname_mask, os.path.join(path_tmp, file_mask), verbose=param.verbose)
+        # Update field in param (because used later in another function, and param class will be passed)
+        param.fname_mask = file_mask
 
     # Build absolute output path and go to tmp folder
     curdir = os.getcwd()
@@ -924,14 +931,36 @@ def split_to_odd_and_even(param):
         data_odd.append(im_data_split_list[index_odd])
     concat_data(data_odd, dim=2).save(file_data_odd, verbose=0)  # Concatenate in z-axis and save
 
+    # Split mask if was passed
+    if param.fname_mask != '':
+        mask_data = Image(file_mask)
+        # Split 4D data along z dimension
+        im_mask_split_list = split_data(mask_data, 2)  # 0 - x, 1 - y, 2 - z, 3 - t
+
+        mask_even = []
+        # loop across even slices
+        for index_even in range(0, len(im_mask_split_list), 2):
+            mask_even.append(im_mask_split_list[index_even])
+        concat_data(mask_even, dim=2).save(file_mask_even, verbose=0)  # Concatenate in z-axis and save
+
+        mask_odd = []
+        # loop across odd slices
+        for index_odd in range(1, len(im_mask_split_list), 2):
+            mask_odd.append(im_mask_split_list[index_odd])
+        concat_data(mask_odd, dim=2).save(file_mask_odd, verbose=0)  # Concatenate in z-axis and save
+
     # Run moco only on even slices
     sct.printv('\nStarting moco on even slices...', param.verbose)
     param.fname_data = 'data_even.nii'
+    if param.fname_mask != '':
+        param.fname_mask = 'mask_even.nii'
     im_data_even = moco_wrapper(param)
 
     # Run moco only on odd slices
     sct.printv('\nStarting moco on odd slices...', param.verbose)
     param.fname_data = 'data_odd.nii'
+    if param.fname_mask != '':
+        param.fname_mask = 'mask_odd.nii'
     im_data_odd = moco_wrapper(param)
 
     # TODO: files moco_params_x, moco_params_y.nii.gz and moco_params.tsv are overwritten now (even by odd)
