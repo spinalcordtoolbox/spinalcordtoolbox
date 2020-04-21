@@ -145,12 +145,13 @@ function fetch_os_type() {
     force_bashrc_loading
   # Linux
   elif echo $uname_output | grep -i linux >/dev/null 2>&1; then
+    # TODO: look into using /etc/os-release, which has been standardized by most distros
     # CentOS 6.X
     if cat /etc/issue | grep -i centos | grep 6. 2>&1; then
-      OS=linux_centos6
+      OS=centos6
     # RedHat 6.X
     elif cat /etc/issue | grep -i Red | grep 6. 2>&1; then
-      OS=linux_centos6
+      OS=centos6
     # Other Linux
     else
       OS=linux
@@ -604,15 +605,8 @@ if [[ $NO_SCT_BIN_INSTALL ]]; then
   print warning "WARNING: SCT binaries will not be (re)-installed"
 else
   print info "Installing binaries..."
-  if [[ $OS == "linux" ]]; then
-    run "sct_download_data -d binaries_debian -o $SCT_DIR/$BIN_DIR"
-  elif [[ $OS == "linux_centos6" ]]; then
-    run "sct_download_data -d binaries_centos -o $SCT_DIR/$BIN_DIR"
-  elif [[ $OS == "osx" ]]; then
-    run "sct_download_data -d binaries_osx -o $SCT_DIR/$BIN_DIR"
-  else
+  run "sct_download_data -d binaries_"$OS" -o $SCT_DIR/$BIN_DIR" || \
     die "Unsupported OS $OS: can't install binaries."
-  fi
 fi
 print info "All requirements installed!"
 
