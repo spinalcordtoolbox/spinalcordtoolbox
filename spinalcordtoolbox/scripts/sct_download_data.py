@@ -76,13 +76,13 @@ DATASET_DICT = {
     },
     "binaries_linux": {
         "mirrors": [
-            "https://osf.io/cs6zt/?action=download",
+            "https://osf.io/admxy/?action=download",
         ],
         "default_location": __bin_dir__,
     },
     "binaries_osx": {
         "mirrors": [
-            "https://osf.io/874cy?action=download",
+            "https://osf.io/7vx5g/?action=download",
         ],
         "default_location": __bin_dir__,
     },
