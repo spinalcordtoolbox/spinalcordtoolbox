@@ -76,13 +76,13 @@ DATASET_DICT = {
     },
     "binaries_linux": {
         "mirrors": [
-            "https://osf.io/cs6zt/?action=download",
+            "https://github.com/kousu/spinalcordtoolbox-binaries/releases/download/refs%2Fpull%2F3%2Fmerge-85120650/spinalcordtoolbox-binaries_linux.tar.gz",
         ],
         "default_location": __bin_dir__,
     },
     "binaries_osx": {
         "mirrors": [
-            "https://osf.io/874cy?action=download",
+            "https://github.com/kousu/spinalcordtoolbox-binaries/releases/download/refs%2Fpull%2F3%2Fmerge-85120650/spinalcordtoolbox-binaries_osx.tar.gz",
         ],
         "default_location": __bin_dir__,
     },
