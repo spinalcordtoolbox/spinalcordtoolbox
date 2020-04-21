@@ -51,7 +51,6 @@ def get_parser():
             'optic_models',
             'pmj_models',
             'binaries_linux',
-            'binaries_centos6',
             'binaries_osx',
             'deepseg_gm_models',
             'deepseg_sc_models',
@@ -102,6 +101,9 @@ def main(args=None):
                        'https://www.neuro.polymtl.ca/_media/downloads/sct/20170922_pmj_models.zip'],
         'binaries_linux': ['https://osf.io/bt58d/?action=download',
                             'https://www.neuro.polymtl.ca/_media/downloads/sct/20190930_sct_binaries_linux.tar.gz'],
+        # we are temporarily supporting old centos6 for large, slowly-updating compute clusters.
+        # these binaries are *out of date* and do not have the latest algorithms or optimizations.
+        # TODO: drop support when centos6 EOLs
         'binaries_centos6': ['https://osf.io/8kpt4/?action=download',
                             'https://www.neuro.polymtl.ca/_media/downloads/sct/20190930_sct_binaries_linux_centos6.tar.gz'],
         'binaries_osx': ['https://osf.io/msjb5/?action=download',
