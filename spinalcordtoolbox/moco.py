@@ -871,20 +871,14 @@ def spline(folder_mat, nt, nz, verbose, index_b0 = [], graph=0):
 
 def moco_wrapper_interleaved(param):
     """
-    Split data into two datasets (even and odd slices) and run moco separately, then merge data back together
+    Prepare even and odd datasets and run moco separately, then merge data back together
     :param param: ParamMoco class
     :return: None
     """
 
-    orig_name = param.fname_data
-    file_data = 'data.nii'  # corresponds to the full input data (e.g. dmri or fmri)
+    orig_name = param.fname_data    # store orig name passed by user
+    file_data = 'data.nii'          # corresponds to the full input data (e.g. dmri or fmri)
     file_mask = 'mask.nii'
-    file_data_dirname, file_data_basename, file_data_ext = sct.extract_fname(file_data)
-    file_data_even = 'data_even.nii'
-    file_data_odd = 'data_odd.nii'
-    file_mask_even = 'mask_even.nii'
-    file_mask_odd = 'mask_odd.nii'
-    file_data_merged = 'data_merged.nii'
 
     # Start timer
     start_time = time.time()
@@ -896,66 +890,33 @@ def moco_wrapper_interleaved(param):
     convert(param.fname_data, os.path.join(path_tmp, file_data))
     if param.fname_mask != '':
         convert(param.fname_mask, os.path.join(path_tmp, file_mask), verbose=param.verbose)
-        # Update field in param (because used later in another function, and param class will be passed)
-        param.fname_mask = file_mask
 
     # Build absolute output path and go to tmp folder
     curdir = os.getcwd()
     path_out_abs = os.path.abspath(param.path_out)
     os.chdir(path_tmp)
 
-    # Load data and get its dimensions
+    # Load data and get dimensions
     sct.printv('\nGet dimensions of data...', param.verbose)
     im_data = Image(file_data)
     nx, ny, nz, nt, px, py, pz, pt = im_data.dim
     sct.printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz) + ' x ' + str(nt), param.verbose)
 
-    # Split 4D data along SI direction
-    sct.printv('\nSplit data along SI direction...', param.verbose)
-    # change orientation to RPI
-    orig_orientation = im_data.orientation
-    im_data.change_orientation('RPI')
-    im_data_split_list = split_data(im_data, 2)  # 0 - x, 1 - y, 2 - z, 3 - t
-
     sct.printv('\nData were acquired in interleaved mode.', param.verbose)
-    sct.printv('Split data into two datasets (even and odd slices) and run moco separately...', param.verbose)
-
-    # Get only even slices across all volumes
-    data_even = []
-    # loop across even slices
-    for index_even in range(0, len(im_data_split_list), 2):
-        data_even.append(im_data_split_list[index_even])
-    concat_data(data_even, dim=2).save(file_data_even, verbose=0)  # Concatenate in z-axis and save
-
-    # Get only odd slices across all volumes
-    data_odd = []
-    # loop across odd slices
-    for index_odd in range(1, len(im_data_split_list), 2):
-        data_odd.append(im_data_split_list[index_odd])
-    concat_data(data_odd, dim=2).save(file_data_odd, verbose=0)  # Concatenate in z-axis and save
+    sct.printv('Splitting data into two datasets along SI direction'
+        ' (even and odd slices) and run moco separately...', param.verbose)
+    split_to_even_and_odd(im_data, file_data)
 
     # Split mask if was passed
     if param.fname_mask != '':
         mask_data = Image(file_mask)
-        # Split 4D data along z dimension
-        im_mask_split_list = split_data(mask_data, 2)  # 0 - x, 1 - y, 2 - z, 3 - t
-
-        mask_even = []
-        # loop across even slices
-        for index_even in range(0, len(im_mask_split_list), 2):
-            mask_even.append(im_mask_split_list[index_even])
-        concat_data(mask_even, dim=2).save(file_mask_even, verbose=0)  # Concatenate in z-axis and save
-
-        mask_odd = []
-        # loop across odd slices
-        for index_odd in range(1, len(im_mask_split_list), 2):
-            mask_odd.append(im_mask_split_list[index_odd])
-        concat_data(mask_odd, dim=2).save(file_mask_odd, verbose=0)  # Concatenate in z-axis and save
+        split_to_even_and_odd(mask_data, file_mask)
 
     # Run moco only on even slices
     sct.printv('\nStarting moco on even slices...', param.verbose)
     param.fname_data = 'data_even.nii'
     if param.fname_mask != '':
+        # Update field in param (because used later in another function, and param class will be passed)
         param.fname_mask = 'mask_even.nii'
     im_data_even = moco_wrapper(param)
 
@@ -963,11 +924,12 @@ def moco_wrapper_interleaved(param):
     sct.printv('\nStarting moco on odd slices...', param.verbose)
     param.fname_data = 'data_odd.nii'
     if param.fname_mask != '':
+        # Update field in param (because used later in another function, and param class will be passed)
         param.fname_mask = 'mask_odd.nii'
     im_data_odd = moco_wrapper(param)
 
-    # TODO: files moco_params_x, moco_params_y.nii.gz and moco_params.tsv are overwritten now (even by odd)
-    #       - Do we want to preserve these files for both subdatasets or merge them?
+    # TODO: files moco_params_x, moco_params_y.nii.gz and moco_params.tsv are overwritten now (even by odd),
+    #  merge them for posiible usage in GLM
 
     # Merge even and odd datasets after moco back together
     im_data_merged = im_data.copy()
@@ -981,14 +943,13 @@ def moco_wrapper_interleaved(param):
             im_data_merged.data[:, :, index, :] = im_data_odd.data[:, :, counter_odd, :]
             counter_odd += 1
 
-    im_data_merged.save(file_data_merged, verbose=0)  # Save to /tmp dir
+    im_data_merged.save(sct.add_suffix(file_data, '_merged'), verbose=0)  # Save to /tmp dir
 
-    # TODO - move data from /tmp to current dir - lines below save to current dir original image instead of image
-    #  after moco - fix it
     # Generate output files
     sct.printv('\nGenerate output files...', param.verbose)
-    fname_moco = os.path.join(path_out_abs, sct.add_suffix(os.path.basename(orig_name), param.suffix))
-    sct.generate_output_file(im_data_merged.absolutepath, fname_moco)
+    fname_moco = os.path.join(path_out_abs, sct.add_suffix(os.path.basename(orig_name), '_moco'))
+    #sct.generate_output_file(im_data_merged.absolutepath, fname_moco)
+    sct.generate_output_file(os.path.join(os.getcwd(),sct.add_suffix(file_data, '_merged')), fname_moco)
 
     # come back to working directory
     os.chdir(curdir)
@@ -996,3 +957,35 @@ def moco_wrapper_interleaved(param):
     # display elapsed time
     elapsed_time = time.time() - start_time
     sct.printv('\nFinished! Elapsed time: ' + str(int(np.round(elapsed_time))) + 's', param.verbose)
+
+def split_to_even_and_odd(data_to_split, file_name):
+    """
+    Split 4D data along SI direction into two datasets (even and odd slices) and save them
+    :param data_to_split: 4D data to split
+    :param file_name: data filename
+    :return: None
+    """
+    # change orientation to RPI
+    orig_orientation = data_to_split.orientation
+    data_to_split.change_orientation(orientation='RPI',generate_path=True)
+    # split along SI direction
+    im_data_split_list = split_data(data_to_split, 2)
+
+    # Get only even slices across all volumes
+    data_even = []
+    # loop across even slices
+    for index_even in range(0, len(im_data_split_list), 2):
+        data_even.append(im_data_split_list[index_even])
+    # Concatenate in SI and save
+    concat_data(data_even, dim=2).save(sct.add_suffix(file_name, '_even'), verbose=0)
+
+    # Get only odd slices across all volumes
+    data_odd = []
+    # loop across odd slices
+    for index_odd in range(1, len(im_data_split_list), 2):
+        data_odd.append(im_data_split_list[index_odd])
+    # Concatenate in SI and save
+    concat_data(data_odd, dim=2).save(sct.add_suffix(file_name, '_odd'), verbose=0)
+
+    # TODO - reorient data back if they were not RPI
+    # return orig_orientation
