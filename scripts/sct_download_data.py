@@ -68,7 +68,7 @@ def main(args=None):
                          'https://www.neuro.polymtl.ca/_media/downloads/sct/20170413_optic_models.zip'],
         'pmj_models': ['https://osf.io/4gufr/?action=download',
                        'https://www.neuro.polymtl.ca/_media/downloads/sct/20170922_pmj_models.zip'],
-        'binaries_debian': ['https://osf.io/bt58d/?action=download',
+        'binaries_linux': ['https://osf.io/bt58d/?action=download',
                             'https://www.neuro.polymtl.ca/_media/downloads/sct/20190930_sct_binaries_linux.tar.gz'],
         'binaries_osx': ['https://osf.io/msjb5/?action=download',
                          'https://www.neuro.polymtl.ca/_media/downloads/sct/20190930_sct_binaries_osx.tar.gz'],

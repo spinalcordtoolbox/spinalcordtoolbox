@@ -203,7 +203,7 @@ Procedure:
       # Download binary programs
       mkdir bins
       pushd bins
-      sct_download_data -d binaries_debian
+      sct_download_data -d binaries_linux
       popd
       PATH+=":$PWD/bins"
 
