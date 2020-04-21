@@ -28,7 +28,7 @@
 
 import sys
 import os
-from spinalcordtoolbox.moco import ParamMoco, moco_wrapper, split_to_odd_and_even
+from spinalcordtoolbox.moco import ParamMoco, moco_wrapper, moco_wrapper_interleaved
 
 import sct_utils as sct
 from msct_parser import Parser
@@ -157,7 +157,7 @@ def main():
     # run moco
     if param.interleaved == 1:
         # split input data to two datasets (even and odd slices), run moco in each sub-dataset and merge back the data
-        split_to_odd_and_even(param)
+        moco_wrapper_interleaved(param)
     else:
         moco_wrapper(param)
 

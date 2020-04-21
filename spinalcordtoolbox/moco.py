@@ -869,7 +869,7 @@ def spline(folder_mat, nt, nz, verbose, index_b0 = [], graph=0):
     sct.printv('\n...Done. Patient motion has been smoothed', verbose)
     sct.printv('------------------------------------------------------------------------------\n', verbose)
 
-def split_to_odd_and_even(param):
+def moco_wrapper_interleaved(param):
     """
     Split data into two datasets (even and odd slices) and run moco separately, then merge data back together
     :param param: ParamMoco class
@@ -910,11 +910,14 @@ def split_to_odd_and_even(param):
     nx, ny, nz, nt, px, py, pz, pt = im_data.dim
     sct.printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz) + ' x ' + str(nt), param.verbose)
 
-    # Split 4D data along z dimension
-    #sct.printv('\nSplit along z dimension...', param.verbose)
+    # Split 4D data along SI direction
+    sct.printv('\nSplit data along SI direction...', param.verbose)
+    # change orientation to RPI
+    orig_orientation = im_data.orientation
+    im_data.change_orientation('RPI')
     im_data_split_list = split_data(im_data, 2)  # 0 - x, 1 - y, 2 - z, 3 - t
 
-    sct.printv('\nWARNING: Data were acquired in interleaved mode.', param.verbose, 'warning')
+    sct.printv('\nData were acquired in interleaved mode.', param.verbose)
     sct.printv('Split data into two datasets (even and odd slices) and run moco separately...', param.verbose)
 
     # Get only even slices across all volumes
