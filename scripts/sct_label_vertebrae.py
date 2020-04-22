@@ -327,11 +327,11 @@ def main(args=None):
             else:
                 verbose_detect_c2c3 = 0
             # detection of c2/C3 is applied to strighten image.
-            sct.run('pwd')
-            sct.run('python ~/luroub_local/lurou_local/deep_VL_2019/ivado_med/scripts_vertebral_labeling/detect_c2.py -i %s -c %s -image 1 -o %s' %('data_straight.nii','t2',path_tmp+'/c2_tmp.nii.gz'))
-            im_label_c2c3 = Image('c2_tmp.nii.gz')        
+            #sct.run('python ~/luroub_local/lurou_local/deep_VL_2019/ivado_med/scripts_vertebral_labeling/detect_c2.py -i %s -c %s -image 1 -net CC -o %s' %('data_straight.nii','t2',path_tmp+'/c2_tmp.nii.gz'))
+            #im_label_c2c3 = Image('c2_tmp.nii.gz')        
+            #ind_label = np.where(im_label_c2c3.data)
+            im_label_c2c3 = detect_c2c3(im_data, im_seg, contrast, verbose=verbose_detect_c2c3)
             ind_label = np.where(im_label_c2c3.data)
-            print(ind_label)
             if not np.size(ind_label) == 0:
                 # subtract "1" to label value because due to legacy, in this code the disc C2-C3 has value "2", whereas in the
                 # recent version of SCT it is defined as "3".
@@ -339,24 +339,24 @@ def main(args=None):
             else:
                 sct.printv('Automatic C2-C3 detection failed. Please provide manual label with sct_label_utils', 1, 'error')
                 sys.exit()
-            im_label_c2c3.save('labelz_straight.nii.gz')
+            im_label_c2c3.save('labelz.nii.gz')
 
         # dilate label so it is not lost when applying warping
         dilate(Image(fname_labelz), 3, 'ball').save(fname_labelz)
 
         # Apply straightening to z-label
-        #sct.printv('\nAnd apply straightening to label...', verbose)
-        #sct.run('isct_antsApplyTransforms -d 3 -i %s -r %s -t %s -o %s -n %s' %
-         #       (file_labelz,
-         #        'data_straightr.nii',
-         #        'warp_curve2straight.nii.gz',
-         #        'labelz_straight.nii.gz',
-         #        'NearestNeighbor'),
-         #       verbose=verbose,
-         #       is_sct_binary=True,
-         #      )
+        sct.printv('\nAnd apply straightening to label...', verbose)
+        sct.run('isct_antsApplyTransforms -d 3 -i %s -r %s -t %s -o %s -n %s' %
+                (file_labelz,
+                 'data_straightr.nii',
+                 'warp_curve2straight.nii.gz',
+                 'labelz_straight.nii.gz',
+                 'NearestNeighbor'),
+                verbose=verbose,
+                is_sct_binary=True,
+               )
         # get z value and disk value to initialize labeling
-        sct.run('sct_resample -i labelz_straight.nii.gz -mm 0.5 -x nn')
+        sct.run('sct_resample -i labelz_straight.nii.gz -mm 0.5 -x nn -o labelz_straight_r.nii.gz')
         sct.printv('\nGet z and disc values from straight label...', verbose)
         init_disc = get_z_and_disc_values_from_label('labelz_straight_r.nii.gz')
         sct.printv('.. ' + str(init_disc), verbose)

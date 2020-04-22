@@ -150,14 +150,14 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     # create list for z and disc
     list_disc_z = []
     list_disc_value = []
-    zrange = list(range(-10, 10))
+    zrange = list(range(-9, 10))
     direction = 'superior'
     search_next_disc = True
     sct.run('python ~/luroub_local/lurou_local/deep_VL_2019/ivado_med/scripts_vertebral_labeling/detect_vertebrae.py -i %s -c %s -m 1 -o hm_tmp.nii.gz -net CC' %(fname,'t2'))
     sct.run('sct_resample -i hm_tmp.nii.gz -mm 0.5x0.5x0.5 -x linear')
     im_hm = Image('hm_tmp_r.nii.gz')
     data_hm = im_hm.data
-    im_lab=Image('/home/GRAMES.POLYMTL.CA/luroub/luroub_local/lurou_local/sct/sct/data/PAM50/template/PAM50_label_dilated.nii.gz')
+    im_lab=Image('/home/GRAMES.POLYMTL.CA/luroub/luroub_local/lurou_local/sct/sct/data/PAM50/template/PAM50_label_discPosterior.nii.gz')
     data_lab=im_lab.data
     while search_next_disc:
         sct.printv('Current disc: ' + str(current_disc) + ' (z=' + str(current_z) + '). Direction: ' + direction, verbose)
@@ -379,6 +379,10 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
                      ztarget + zshift - zsize: ztarget + zshift + zsize + 1]
     #np.save('patt'+str(x)+'.npy',pattern)
     pattern1d = np.sum(pattern,axis=(0,1))
+    #convolve pattern1d with gaussian to get similar curve as input
+    from scipy.signal import gaussian
+    a = gaussian(30, std=5)
+    pattern1d = np.convolve(pattern1d,a,'same')
     # initializations
     I_corr = np.zeros(len(zrange))
     allzeros = 0
@@ -390,7 +394,7 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
         if z + iz + zsize + 1 > nz:
             sct.printv('iz='+str(iz)+': padding on top')
             padding_size = z + iz + zsize + 1 - nz
-            data_chunk3d = src[xtarget-xsize:xtarget+xsize,
+            data_chunk3d = src[xtarget-10:xtarget+10,
                            y + yshift: y + yshift + ysize + 1,
                                z + iz - zsize: z + iz + zsize + 1 - padding_size]
             data_chunk3d = np.pad(data_chunk3d, ((0, 0), (0, 0), (0, padding_size)), 'constant',
@@ -400,25 +404,25 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
         elif z + iz - zsize < 0:
             sct.printv('iz='+str(iz)+': padding at bottom')
             padding_size = abs(iz - zsize)
-            data_chunk3d = src[xtarget-xsize:xtarget+xsize,
+            data_chunk3d = src[xtarget-10:xtarget+10,
                            y + yshift - ysize: y + yshift + ysize + 1,
                                z + iz - zsize + padding_size: z + iz + zsize + 1]
             data_chunk3d = np.pad(data_chunk3d, ((0, 0), (0, 0), (padding_size, 0)), 'constant',
                                   constant_values=0)
         else:
             data_chunk3d = src[:,
-                               :ytarget+10,
+                               :ytarget+ysize,
                                z + iz - zsize: z + iz + zsize + 1]
 
         # convert subject pattern to 1d profile
         data_chunk1d = np.sum(data_chunk3d,axis=(0,1))
         #data_chunk1d = np.convolve(data_chunk1d,np.hanning(3))
         #print(data_chunk3d.shape)
+        #print(np.any(data_chunk1d))
         # check if data_chunk1d contains at least one non-zero value
         if (data_chunk1d.size == pattern1d.size) and np.any(data_chunk1d):
             #a = mutual_information(data_chunk1d/np.max(data_chunk1d), pattern1d/np.max(pattern1d),nbins=64,normalized=True)
             a = np.correlate(data_chunk1d, pattern1d)/np.correlate(pattern1d,pattern1d)
-            print(a)
             I_corr[ind_I]=a
         else:
             allzeros = 1
@@ -429,6 +433,7 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
 
     # adjust correlation with Gaussian function centered at the right edge of the curve (most rostral point of FOV)
     from scipy.signal import gaussian
+
     gaussian_window = gaussian(len(I_corr) * 2, std=len(I_corr) * gaussian_std)
     I_corr_gauss = np.multiply(I_corr, gaussian_window[0:len(I_corr)])
     
@@ -436,9 +441,7 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
     if np.any(I_corr_gauss):
         # if I_corr contains at least a non-zero value
         ind_peak = np.argmax(I_corr_gauss)#[i for i in range(len(I_corr_gauss)) if I_corr_gauss[i] == max(I_corr_gauss)][0]  # index of max along z
-        print(I_corr_gauss)
         ind_dl = np.argmax(data_chunk1d)
-        print(ind_peak)
         sct.printv('.. Peak found: z=' + str(zrange[ind_peak]) + ' (correlation = ' + str(I_corr_gauss[ind_peak]) + ')', verbose)
         # check if correlation is high enough
         if I_corr_gauss[ind_peak] < thr_corr:
@@ -464,7 +467,7 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
         # display subject pattern at best z
         ax = fig.add_subplot(132)
         iz = zrange[ind_peak]
-        data_chunk3d = src[:,
+        data_chunk3d = src[xtarget-10:xtarget+10,
                            y + yshift - ysize: y + yshift + ysize + 1,
                            z  -iz - zsize: z + iz + zsize + 1]
         ax.plot(np.sum(data_chunk3d,axis=(0,1)))
