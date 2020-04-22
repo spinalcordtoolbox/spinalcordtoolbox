@@ -879,6 +879,9 @@ def moco_wrapper_interleaved(param):
     orig_name = param.fname_data    # store orig name passed by user
     file_data = 'data.nii'          # corresponds to the full input data (e.g. dmri or fmri)
     file_mask = 'mask.nii'
+    file_moco_params_x = 'moco_params_x.nii.gz'
+    file_moco_params_y = 'moco_params_y.nii.gz'
+    file_moco_params_csv = 'moco_params.tsv'
 
     # Start timer
     start_time = time.time()
@@ -919,6 +922,10 @@ def moco_wrapper_interleaved(param):
         # Update field in param (because used later in another function, and param class will be passed)
         param.fname_mask = 'mask_even.nii'
     im_data_even = moco_wrapper(param)
+    if param.output_motion_param:
+        # Rename moco parameters after moco (add _even suffix)
+        for name in file_moco_params_x, file_moco_params_y, file_moco_params_csv:
+            sct.mv(name, sct.add_suffix(name, '_even'))
 
     # Run moco only on odd slices
     sct.printv('\nStarting moco on odd slices...', param.verbose)
@@ -927,9 +934,12 @@ def moco_wrapper_interleaved(param):
         # Update field in param (because used later in another function, and param class will be passed)
         param.fname_mask = 'mask_odd.nii'
     im_data_odd = moco_wrapper(param)
+    if param.output_motion_param:
+        # Rename moco parameters after moco (add _odd suffix)
+        for name in file_moco_params_x, file_moco_params_y, file_moco_params_csv:
+            sct.mv(name, sct.add_suffix(name, '_odd'))
 
-    # TODO: files moco_params_x, moco_params_y.nii.gz and moco_params.tsv are overwritten now (even by odd),
-    #  merge them for posiible usage in GLM
+    # TODO: merge odd and even motion parameters for possible usage in GLM
 
     # Merge even and odd datasets after moco back together
     im_data_merged = im_data.copy()
@@ -948,8 +958,13 @@ def moco_wrapper_interleaved(param):
     # Generate output files
     sct.printv('\nGenerate output files...', param.verbose)
     fname_moco = os.path.join(path_out_abs, sct.add_suffix(os.path.basename(orig_name), '_moco'))
-    #sct.generate_output_file(im_data_merged.absolutepath, fname_moco)
     sct.generate_output_file(os.path.join(os.getcwd(),sct.add_suffix(file_data, '_merged')), fname_moco)
+    # if os.path.exists(file_moco_params_csv):
+    #     sct.generate_output_file(file_moco_params_x, os.path.join(path_out_abs, file_moco_params_x),
+    #                              squeeze_data=False)
+    #     sct.generate_output_file(file_moco_params_y, os.path.join(path_out_abs, file_moco_params_y),
+    #                              squeeze_data=False)
+    #     sct.generate_output_file(file_moco_params_csv, os.path.join(path_out_abs, file_moco_params_csv))
 
     # come back to working directory
     os.chdir(curdir)
