@@ -61,12 +61,12 @@ def fs_ok(sig_a, sig_b, exclude=()):
 # Parameters
 class Param:
     def __init__(self):
-        self.download = 0
+        self.download = False
         self.path_data = 'sct_testing_data'  # path to the testing data
         self.path_output = None
         self.function_to_test = None
-        self.remove_tmp_file = 0
-        self.verbose = 0
+        self.remove_tmp_file = False
+        self.verbose = False
         self.args = []  # list of input arguments to the function
         self.args_with_path = ''  # input arguments to the function, with path
         # self.list_fname_gt = []  # list of fname for ground truth data
@@ -114,7 +114,7 @@ def get_parser():
         return jobs
 
     parser.add_argument("--download", "-d",
-     choices=("0", "1"),
+     action="store_true",
      default=param_default.download,
     )
     parser.add_argument("--path", "-p",
@@ -122,8 +122,8 @@ def get_parser():
      default=param_default.path_data,
     )
     parser.add_argument("--remove-temps", "-r",
-     choices=("0", "1"),
      help='Remove temporary files.',
+     action="store_true",
      default=param_default.remove_tmp_file,
     )
     parser.add_argument("--jobs", "-j",
@@ -132,7 +132,7 @@ def get_parser():
      default=arg_jobs(0),
     )
     parser.add_argument("--verbose", "-v",
-     choices=("0", "1"),
+     action="store_true",
      default=param_default.verbose,
     )
     parser.add_argument("--abort-on-failure",
