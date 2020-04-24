@@ -90,7 +90,7 @@ def main(args=None):
                              'https://www.neuro.polymtl.ca/_media/downloads/sct/20180525_sct_example_data.zip'],
         'sct_testing_data': ['https://osf.io/yutrj/?action=download',
                              'https://www.neuro.polymtl.ca/_media/downloads/sct/20191031_sct_testing_data.zip'],
-        'PAM50': ['https://osf.io/u79sr/?pid=6zbyf/?action=download',
+        'PAM50': ['https://osf.io/u79sr/download',
                   'https://www.neuro.polymtl.ca/_media/downloads/sct/20191029_PAM50.zip'],
         'MNI-Poly-AMU': ['https://osf.io/sh6h4/?action=download',
                          'https://www.neuro.polymtl.ca/_media/downloads/sct/20170310_MNI-Poly-AMU.zip'],
