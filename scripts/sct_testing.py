@@ -232,7 +232,7 @@ def main(args=None):
     param.path_data = os.path.abspath(param.path_data)
 
     # check existence of testing data folder
-    if not os.path.isdir(param.path_data) or param.download:
+    if not os.path.isdir(param.path_data) and param.download:
         downloaddata(param)
 
     # display path to data
