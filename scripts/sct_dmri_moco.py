@@ -84,8 +84,7 @@ def get_parser():
                                   "poly [int]: Degree of polynomial function used for regularization along Z. For no regularization set to 0. Default=" + param_default.poly + ".\n"
                                                 "smooth [mm]: Smoothing kernel. Default=" + param_default.smooth + ".\n"
                                                   "metric {MI, MeanSquares, CC}: Metric used for registration. Default=" + param_default.metric + ".\n"
-                                                  "gradStep [float]: Searching step used by registration algorithm. The higher the more deformation allowed. Default=" + param_default.gradStep + ".\n"
-                                                    "sample [0-1]: Sampling rate used for registration metric. Default=" + param_default.sampling + ".\n",
+                                                  "gradStep [float]: Searching step used by registration algorithm. The higher the more deformation allowed. Default=" + param_default.gradStep + ".\n",
                       mandatory=False)
     parser.add_option(name='-x',
                       type_value='multiple_choice',
