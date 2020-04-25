@@ -920,9 +920,10 @@ def moco_wrapper_interleaved(param):
     # Run moco only on even slices
     # ==================================================================================================================
     sct.printv('\nStarting moco on even slices...', param.verbose)
+    # Update fields in param (because used later in another function, and param class will be passed)
     param.fname_data = 'data_even.nii'
+    param.path_out = ''
     if param.fname_mask != '':
-        # Update field in param (because used later in another function, and param class will be passed)
         param.fname_mask = 'mask_even.nii'
     im_data_even = moco_wrapper(param)
     if param.output_motion_param:
@@ -934,9 +935,10 @@ def moco_wrapper_interleaved(param):
     # Run moco only on odd slices
     # ==================================================================================================================
     sct.printv('\nStarting moco on odd slices...', param.verbose)
+    # Update field in param (because used later in another function, and param class will be passed)
     param.fname_data = 'data_odd.nii'
+    param.path_out = ''
     if param.fname_mask != '':
-        # Update field in param (because used later in another function, and param class will be passed)
         param.fname_mask = 'mask_odd.nii'
     im_data_odd = moco_wrapper(param)
     if param.output_motion_param:
@@ -1010,6 +1012,8 @@ def moco_wrapper_interleaved(param):
                                  os.path.join(path_out_abs, file_moco_params_y), squeeze_data=False)
         sct.generate_output_file(os.path.join(os.getcwd(), sct.add_suffix(file_moco_params_csv, '_merged')),
                                  os.path.join(path_out_abs, file_moco_params_csv), squeeze_data=False)
+
+    # TODO - generate also mean dwi and b0 images (using sct_dmri_separate_b0_and_dwi)
 
     # come back to working directory
     os.chdir(curdir)
