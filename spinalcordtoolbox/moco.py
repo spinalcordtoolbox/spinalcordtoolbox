@@ -68,7 +68,6 @@ class ParamMoco:
         self.gradStep = '1'  # gradientStep for searching algorithm
         self.iter = '10'  # number of iterations
         self.metric = metric
-        self.sampling = '0.2'  # sampling rate used for registration metric
         self.interp = 'spline'  # nn, linear, spline
         self.min_norm = 0.001
         self.swapXY = 0
@@ -489,7 +488,6 @@ def moco(param):
     sct.printv('  Smoothing kernel ...... ' + param.smooth, param.verbose)
     sct.printv('  Gradient step ......... ' + param.gradStep, param.verbose)
     sct.printv('  Metric ................ ' + param.metric, param.verbose)
-    sct.printv('  Sampling .............. ' + param.sampling, param.verbose)
     sct.printv('  Todo .................. ' + todo, param.verbose)
     sct.printv('  Mask  ................. ' + param.fname_mask, param.verbose)
     sct.printv('  Output mat folder ..... ' + folder_mat, param.verbose)
@@ -693,7 +691,7 @@ def register(param, file_src, file_dest, file_mat, file_out, im_mask=None):
             cmd = ['isct_antsRegistration',
                    '-d', '2',
                    '--transform', 'Affine[%s]' %param.gradStep,
-                   '--metric', param.metric + '[' + file_dest + ',' + file_src + ',1,' + metric_radius + ',Regular,' + param.sampling + ']',
+                   '--metric', param.metric + '[' + file_dest + ',' + file_src + ',1,' + metric_radius + ',None]',
                    '--convergence', param.iter,
                    '--shrink-factors', '1',
                    '--smoothing-sigmas', param.smooth,
@@ -714,7 +712,7 @@ def register(param, file_src, file_dest, file_mat, file_out, im_mask=None):
             cmd = ['isct_antsSliceRegularizedRegistration',
                    '--polydegree', param.poly,
                    '--transform', 'Translation[%s]' %param.gradStep,
-                   '--metric', param.metric + '[' + file_dest + ',' + file_src + ',1,' + metric_radius + ',Regular,' + param.sampling + ']',
+                   '--metric', param.metric + '[' + file_dest + ',' + file_src + ',1,' + metric_radius + ',None]',
                    '--iterations', param.iter,
                    '--shrinkFactors', '1',
                    '--smoothingSigmas', param.smooth,
