@@ -882,6 +882,7 @@ def moco_wrapper_interleaved(param):
     file_moco_params_x = 'moco_params_x.nii.gz'
     file_moco_params_y = 'moco_params_y.nii.gz'
     file_moco_params_csv = 'moco_params.tsv'
+    # TODO - switch from tsv to csv in future
 
     # Start timer
     start_time = time.time()
@@ -915,7 +916,9 @@ def moco_wrapper_interleaved(param):
         mask_data = Image(file_mask)
         split_to_even_and_odd(mask_data, file_mask)
 
+    # ==================================================================================================================
     # Run moco only on even slices
+    # ==================================================================================================================
     sct.printv('\nStarting moco on even slices...', param.verbose)
     param.fname_data = 'data_even.nii'
     if param.fname_mask != '':
@@ -927,7 +930,9 @@ def moco_wrapper_interleaved(param):
         for name in file_moco_params_x, file_moco_params_y, file_moco_params_csv:
             sct.mv(name, sct.add_suffix(name, '_even'))
 
+    # ==================================================================================================================
     # Run moco only on odd slices
+    # ==================================================================================================================
     sct.printv('\nStarting moco on odd slices...', param.verbose)
     param.fname_data = 'data_odd.nii'
     if param.fname_mask != '':
@@ -939,9 +944,9 @@ def moco_wrapper_interleaved(param):
         for name in file_moco_params_x, file_moco_params_y, file_moco_params_csv:
             sct.mv(name, sct.add_suffix(name, '_odd'))
 
-    # TODO: merge .tsv motion params file
-
+    # ==================================================================================================================
     # Merge even and odd datasets after moco back together
+    # ==================================================================================================================
     im_data_merged = im_data.copy()
     counter_even = 0
     counter_odd = 0
@@ -957,6 +962,7 @@ def moco_wrapper_interleaved(param):
 
     # Deal with motion parameters
     if param.output_motion_param:
+        # nii motion parameters
         moco_params_x_odd = Image('moco_params_x_odd.nii.gz')
         moco_params_x_even = Image('moco_params_x_even.nii.gz')
         moco_params_x_merged = np.zeros((1, 1, nz, nt), dtype=np.float32)     # create empty array for x motion params
@@ -974,7 +980,7 @@ def moco_wrapper_interleaved(param):
                 moco_params_x_merged[:, :, index, :] = moco_params_x_odd.data[:, :, counter_odd, :]
                 moco_params_y_merged[:, :, index, :] = moco_params_y_odd.data[:, :, counter_odd, :]
                 counter_odd += 1
-        # Save to tmp dir
+        # Save nii to tmp dir
         import nibabel as nib
         # TODO - merged moco params files have isotropic 1mm voxel size instead of voxel size of original image
         img_params_x = nib.Nifti1Image(moco_params_x_merged, None)
@@ -982,8 +988,19 @@ def moco_wrapper_interleaved(param):
         img_params_y = nib.Nifti1Image(moco_params_y_merged, None)
         nib.save(img_params_y, sct.add_suffix(file_moco_params_y, '_merged'))
 
-    # Generate output files
-    sct.printv('\nGenerate output files...', param.verbose)
+        # tsv motion parameters (slice-wise average)
+        moco_param = np.concatenate((np.squeeze(np.mean(moco_params_x_merged, 2)).reshape(-1, 1),
+                                     np.squeeze(np.mean(moco_params_y_merged, 2)).reshape(-1, 1)), axis=1)
+        with open(sct.add_suffix(file_moco_params_csv, '_merged'), 'wt') as out_file:
+            tsv_writer = csv.writer(out_file, delimiter='\t')
+            tsv_writer.writerow(['X', 'Y'])
+            for mocop in moco_param:
+                tsv_writer.writerow([mocop[0], mocop[1]])
+
+    # ==================================================================================================================
+    # Generate merged output files
+    # ==================================================================================================================
+    sct.printv('\nGenerate merged output files...', param.verbose)
     sct.generate_output_file(os.path.join(os.getcwd(),sct.add_suffix(file_data, '_merged')),
                              os.path.join(path_out_abs, sct.add_suffix(os.path.basename(orig_name), '_moco')))
     if param.output_motion_param:
@@ -991,7 +1008,8 @@ def moco_wrapper_interleaved(param):
                                  os.path.join(path_out_abs, file_moco_params_x), squeeze_data=False)
         sct.generate_output_file(os.path.join(os.getcwd(), sct.add_suffix(file_moco_params_y, '_merged')),
                                  os.path.join(path_out_abs, file_moco_params_y), squeeze_data=False)
-    #     sct.generate_output_file(file_moco_params_csv, os.path.join(path_out_abs, file_moco_params_csv))
+        sct.generate_output_file(os.path.join(os.getcwd(), sct.add_suffix(file_moco_params_csv, '_merged')),
+                                 os.path.join(path_out_abs, file_moco_params_csv), squeeze_data=False)
 
     # come back to working directory
     os.chdir(curdir)
