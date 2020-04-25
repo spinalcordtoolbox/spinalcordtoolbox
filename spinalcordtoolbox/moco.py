@@ -943,29 +943,38 @@ def moco_wrapper_interleaved(param):
 
     # Merge even and odd datasets after moco back together
     im_data_merged = im_data.copy()
-    moco_params_x_odd = Image('moco_params_x_odd.nii.gz')
-    moco_params_x_even = Image('moco_params_x_even.nii.gz')
-    moco_params_x_merged = np.zeros((1, 1, nz, nt), dtype=np.float32)     # create empty array for x motion params
-    moco_params_y_odd = Image('moco_params_y_odd.nii.gz')
-    moco_params_y_even = Image('moco_params_y_even.nii.gz')
-    moco_params_y_merged = np.zeros((1, 1, nz, nt), dtype=np.float32)     # create empty array for y motion params
     counter_even = 0
     counter_odd = 0
     for index in range(0, im_data_merged.dim[2]):
         if index % 2 == 0:
             im_data_merged.data[:, :, index, :] = im_data_even.data[:, :, counter_even, :]
-            moco_params_x_merged[:, :, index, :] = moco_params_x_even.data[:,:, counter_even, :]
-            moco_params_y_merged[:, :, index, :] = moco_params_y_even.data[:, :, counter_even, :]
             counter_even += 1
         elif index % 2 != 0:
             im_data_merged.data[:, :, index, :] = im_data_odd.data[:, :, counter_odd, :]
-            moco_params_x_merged[:, :, index, :] = moco_params_x_odd.data[:, :, counter_odd, :]
-            moco_params_y_merged[:, :, index, :] = moco_params_y_odd.data[:, :, counter_odd, :]
             counter_odd += 1
-
     # Save to tmp dir
     im_data_merged.save(sct.add_suffix(file_data, '_merged'), verbose=0)
+
+    # Deal with motion parameters
     if param.output_motion_param:
+        moco_params_x_odd = Image('moco_params_x_odd.nii.gz')
+        moco_params_x_even = Image('moco_params_x_even.nii.gz')
+        moco_params_x_merged = np.zeros((1, 1, nz, nt), dtype=np.float32)     # create empty array for x motion params
+        moco_params_y_odd = Image('moco_params_y_odd.nii.gz')
+        moco_params_y_even = Image('moco_params_y_even.nii.gz')
+        moco_params_y_merged = np.zeros((1, 1, nz, nt), dtype=np.float32)     # create empty array for y motion params
+        counter_even = 0
+        counter_odd = 0
+        for index in range(0, im_data_merged.dim[2]):
+            if index % 2 == 0:
+                moco_params_x_merged[:, :, index, :] = moco_params_x_even.data[:, :, counter_even, :]
+                moco_params_y_merged[:, :, index, :] = moco_params_y_even.data[:, :, counter_even, :]
+                counter_even += 1
+            elif index % 2 != 0:
+                moco_params_x_merged[:, :, index, :] = moco_params_x_odd.data[:, :, counter_odd, :]
+                moco_params_y_merged[:, :, index, :] = moco_params_y_odd.data[:, :, counter_odd, :]
+                counter_odd += 1
+        # Save to tmp dir
         import nibabel as nib
         # TODO - merged moco params files have isotropic 1mm voxel size instead of voxel size of original image
         img_params_x = nib.Nifti1Image(moco_params_x_merged, None)
