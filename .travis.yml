@@ -49,7 +49,7 @@ script:
     pwd
     ls -l
     date # timestamp
-    sct_testing -f sct_dmri_moco # this is needed to generate dmri/mask.nii
+    sct_testing -f sct_dmri_moco || true # this is needed to generate dmri/mask.nii
     for i in `seq 100`; do
       echo `(cd sct_testing_data; sct_dmri_moco -i dmri/dmri.nii.gz -bvec dmri/bvecs.txt -g 3 -m dmri/mask.nii -ofolder dmri_test2 -r 1 2>/dev/null 1>&2; cat dmri_test2/moco_params.tsv | cut -f 1)`
     done |
