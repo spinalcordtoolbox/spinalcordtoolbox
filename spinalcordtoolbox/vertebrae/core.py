@@ -9,7 +9,7 @@ import os
 import numpy as np
 import scipy.ndimage.measurements
 from scipy.ndimage.filters import gaussian_filter
-
+print('core1')
 import sct_utils as sct
 from sct_maths import mutual_information
 
@@ -18,11 +18,14 @@ from spinalcordtoolbox.metadata import get_file_label
 from spinalcordtoolbox.math import dilate
 
 #import similaritymeasures as simeas
+print('core2')
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.metadata import get_file_label
 import logging
+print('core4')
+import spinalcordtoolbox.vertebrae.detect_vertebrae
 logging.getLogger('matplotlib.font_manager').disabled = True
-
+print('core3')
 
 def label_vert(fname_seg, fname_label, verbose=1):
     """
@@ -153,7 +156,7 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     zrange = list(range(-9, 10))
     direction = 'superior'
     search_next_disc = True
-    sct.run('python ~/luroub_local/lurou_local/deep_VL_2019/ivado_med/scripts_vertebral_labeling/detect_vertebrae.py -i %s -c %s -m 1 -o hm_tmp.nii.gz -net CC' %(fname,'t2'))
+    sct.run('python detect_vertebrae -i %s -c %s -m 1 -o hm_tmp.nii.gz -net CC' %(fname,'t2'))
     sct.run('sct_resample -i hm_tmp.nii.gz -mm 0.5x0.5x0.5 -x linear')
     im_hm = Image('hm_tmp_r.nii.gz')
     data_hm = im_hm.data
