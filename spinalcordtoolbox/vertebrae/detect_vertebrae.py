@@ -8,7 +8,7 @@ from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.utils import Metavar, SmartFormatter
 import sct_utils as sct
 print('detect1')
-import torch
+#import torch
 print('detect2')
 from spinalcordtoolbox.vertebrae.models import *
 print('detect3')

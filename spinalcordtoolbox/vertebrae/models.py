@@ -1,8 +1,11 @@
 from __future__ import print_function, division
+
+print('model1')
 import torch.nn as nn
+print('model2')
 import torch.nn.functional as F
 import torch.utils.data
-import torch
+#import torch
 import torch.nn.init as init
 
 class conv_block(nn.Module):

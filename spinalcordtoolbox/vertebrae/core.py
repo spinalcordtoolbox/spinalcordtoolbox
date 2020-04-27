@@ -156,7 +156,8 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     zrange = list(range(-9, 10))
     direction = 'superior'
     search_next_disc = True
-    sct.run('python detect_vertebrae -i %s -c %s -m 1 -o hm_tmp.nii.gz -net CC' %(fname,'t2'))
+    print(sct.run('pwd'))
+    sct.run('detect_vertebrae -i %s -c %s -m 1 -o hm_tmp.nii.gz -net CC' %(fname,'t2'))
     sct.run('sct_resample -i hm_tmp.nii.gz -mm 0.5x0.5x0.5 -x linear')
     im_hm = Image('hm_tmp_r.nii.gz')
     data_hm = im_hm.data
