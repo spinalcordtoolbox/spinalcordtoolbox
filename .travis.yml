@@ -18,21 +18,12 @@ matrix:
     - os: linux  # list of Linux env: https://docs.travis-ci.com/user/reference/overview/
       name: "Ubuntu 18.04 (Bionic Beaver)"
       dist: bionic
-    - os: linux
-      name: "Ubuntu 16.04 (Xenial)"
-      dist: xenial
-    - os: linux
-      name: "Ubuntu 14.04 (Trusty)"
-      dist: trusty
     - os: osx  # list of OSX env: https://docs.travis-ci.com/user/reference/osx/
       name: "OSX 10.14 (Mojave)"
       osx_image: xcode11.2
     - os: osx
       name: "OSX 10.13 (High Sierra)"
       osx_image: xcode9.4
-    - os: osx
-      name: "OSX 10.12 (Sierra)"
-      osx_image: xcode9.2
 
 install:
   - |
@@ -54,40 +45,14 @@ before_script:
 
 script:
   - |
-    echo *** UNIT TESTS ***
-    pytest
-
-  - |
-    echo *** INTEGRATION TESTS ***
-    pip install coverage
-    echo -ne "import coverage\ncov = coverage.process_startup()\n" > sitecustomize.py
-    echo -ne "[run]\nconcurrency = multiprocessing\nparallel = True\n" > .coveragerc
-    if [ "${TRAVIS_OS_NAME}" = "osx" ]; then
-      COVERAGE_PROCESS_START="$PWD/.coveragerc" COVERAGE_FILE="$PWD/.coverage" sct_testing -j 1 --abort-on-failure
-      coverage combine
-    else
-      COVERAGE_PROCESS_START="$PWD/.coveragerc" COVERAGE_FILE="$PWD/.coverage" sct_testing --abort-on-failure
-      coverage combine
-    fi
-
-  - |
-    echo *** ANALYZE CODE ***
-    pip install pylint
-    bash -c 'PYTHONPATH="$PWD/scripts:$PWD" pylint -j3 --py3k --output-format=parseable --errors-only $(git ls-tree --name-only -r HEAD | sort | grep -E "(spinalcordtoolbox|scripts|testing).*\.py" | xargs); exit $(((($?&3))!=0))'
-
-#  - |
-#    echo *** BUILD DOCUMENTATION ***
-#    pip install sphinx sphinxcontrib.programoutput sphinx_rtd_theme
-#    cd documentation/sphinx
-#    make html
-#    cd -
-
-#  - python create_package.py -s ${TRAVIS_OS_NAME}  # test package creation
-#  - cd ../spinalcordtoolbox_v*
-#  - yes | ./install_sct  # test installation of package
-#   - |
-#     pip install coveralls
-#     echo "This is the end, thanks for reading up to here."
-
-# after_success:
-#   - CI=true TRAVIS=true coveralls
+    echo "Test dmri_moco 2"
+    pwd
+    ls -l
+    date # timestamp
+    sct_testing -f sct_dmri_moco || true # this is needed to generate dmri/mask.nii
+    for i in `seq 100`; do
+      echo `(cd sct_testing_data; sct_dmri_moco -i dmri/dmri.nii.gz -bvec dmri/bvecs.txt -g 3 -m dmri/mask.nii -ofolder dmri_test2 -r 1 2>/dev/null 1>&2; cat dmri_test2/moco_params.tsv | cut -f 1)`
+    done |
+    tee /dev/stderr |
+    sort | uniq -c
+    date # timestamp
