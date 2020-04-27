@@ -23,7 +23,7 @@ from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.metadata import get_file_label
 import logging
 print('core4')
-import spinalcordtoolbox.vertebrae.detect_vertebrae
+import spinalcordtoolbox.vertebrae.detect_vertebrae as detect_vert
 logging.getLogger('matplotlib.font_manager').disabled = True
 print('core3')
 
@@ -157,7 +157,7 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     direction = 'superior'
     search_next_disc = True
     print(sct.run('pwd'))
-    sct.run('detect_vertebrae -i %s -c %s -m 1 -o hm_tmp.nii.gz -net CC' %(fname,'t2'))
+    detect_vert.main(args=['-i',fname, '-c' ,'t2', '-m', '1', '-o', 'hm_tmp.nii.gz', '-net',  'CC'])
     sct.run('sct_resample -i hm_tmp.nii.gz -mm 0.5x0.5x0.5 -x linear')
     im_hm = Image('hm_tmp_r.nii.gz')
     data_hm = im_hm.data

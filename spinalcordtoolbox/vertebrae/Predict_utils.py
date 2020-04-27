@@ -4,6 +4,7 @@
 # Main script load a The dataset with data2array. lOad the model and perform the inference on the whole thing.
 # After each inference it compute the different metrics described in Metrics.py and add it to list
 
+from torchvision import transforms
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
@@ -24,6 +25,7 @@ def normalize(arr):
 # Post processing to remove obvious false positive
 # Compute metrics as well and add it to previously existing table
 def prediction_coordinates(Image, model, aim='full', threshold=0.3, heatmap=0, cud_test=False):
+    global cuda_available
     cuda_available = cud_test
     shape_im = Image.shape
     shape_im = sorted(shape_im)

@@ -228,7 +228,7 @@ def main(args=None):
     laplacian = int(arguments['-laplacian'])
 
     path_tmp = sct.tmp_create(basename="label_vertebrae", verbose=verbose)
-    sct.printv('ALLEZ LUCAS CA DECONNE')
+
 
     # Copying input data to tmp folder
     sct.printv('\nCopying input data to tmp folder...', verbose)
@@ -260,7 +260,7 @@ def main(args=None):
             '-s', 'segmentation.nii',
             '-r', str(remove_temp_files),
             '-v', str(verbose),
-        ])
+            ])
         sct.cache_save(cachefile, cache_sig)
 
     # resample to 0.5mm isotropic to match template resolution

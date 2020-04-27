@@ -2,13 +2,13 @@ import sys
 import os
 import argparse
 
-
+from torchvision import transforms
 from spinalcordtoolbox.cropping import ImageCropper, BoundingBox
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.utils import Metavar, SmartFormatter
 import sct_utils as sct
 print('detect1')
-#import torch
+import torch
 print('detect2')
 from spinalcordtoolbox.vertebrae.models import *
 print('detect3')
@@ -95,7 +95,7 @@ def main(args=None):
             model.load_state_dict(torch.load('./checkpoints/Countception_L2T1.model', map_location='cpu')['model_weights'])
 
         elif contrast == 't2':
-            model.load_state_dict(torch.load('./checkpoints/Countception_floatL2T2.model', map_location='cpu')['model_weights'])
+            model.load_state_dict(torch.load(os.path.join(sct.__sct_dir__,'spinalcordtoolbox/vertebrae/checkpoints/Countception_floatL2T2.model'), map_location='cpu')['model_weights'])
 
         else:
             sct.printv('Error...unknown contrast. please select between t2 and t1.')
