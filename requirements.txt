@@ -23,3 +23,6 @@ xlwt
 tqdm
 transforms3d
 urllib3[secure]
+torchvision==0.2.1
+torch==1.2.0
+pillow=6.1
