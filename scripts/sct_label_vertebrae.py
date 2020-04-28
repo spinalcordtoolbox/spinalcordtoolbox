@@ -15,6 +15,8 @@ from __future__ import division, absolute_import
 
 import sys, os
 import numpy as np
+import torch
+import sct_maths
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.vertebrae.core import create_label_z, get_z_and_disc_values_from_label, vertebral_detection, \
         clean_labeled_segmentation, label_discs, label_vert
@@ -26,8 +28,6 @@ from sct_label_utils import ProcessLabels
 from msct_parser import Parser
 import sct_utils as sct
 import sct_straighten_spinalcord
-#sys.path.insert(0,'~/luroub_local/lurou_local/deep_VL_2019/ivado_med/scripts_vertebral_labeling')
-
 
 # PARAMETERS
 class Param:

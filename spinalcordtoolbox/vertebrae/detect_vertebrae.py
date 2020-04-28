@@ -1,7 +1,7 @@
 import sys
 import os
 import argparse
-
+import torchvision
 from torchvision import transforms
 from spinalcordtoolbox.cropping import ImageCropper, BoundingBox
 from spinalcordtoolbox.image import Image

@@ -3,7 +3,7 @@
 # About the license: see the file license.md
 # Main script load a The dataset with data2array. lOad the model and perform the inference on the whole thing.
 # After each inference it compute the different metrics described in Metrics.py and add it to list
-
+import torchvision
 from torchvision import transforms
 import torch
 import numpy as np

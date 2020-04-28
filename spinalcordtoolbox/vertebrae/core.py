@@ -9,7 +9,6 @@ import os
 import numpy as np
 import scipy.ndimage.measurements
 from scipy.ndimage.filters import gaussian_filter
-print('core1')
 import sct_utils as sct
 from sct_maths import mutual_information
 
@@ -18,14 +17,11 @@ from spinalcordtoolbox.metadata import get_file_label
 from spinalcordtoolbox.math import dilate
 
 #import similaritymeasures as simeas
-print('core2')
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.metadata import get_file_label
 import logging
-print('core4')
 import spinalcordtoolbox.vertebrae.detect_vertebrae as detect_vert
 logging.getLogger('matplotlib.font_manager').disabled = True
-print('core3')
 
 def label_vert(fname_seg, fname_label, verbose=1):
     """
@@ -69,8 +65,9 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     :param scale_dist: float: Scaling factor to adjust average distance between two adjacent intervertebral discs
     :return:
     """
-    path_template = '/home/GRAMES.POLYMTL.CA/luroub/luroub_local/lurou_local/sct/sct/data/PAM50/template/PAM50_label_discPosterior.nii.gz'
-    path_level='/home/GRAMES.POLYMTL.CA/luroub/luroub_local/lurou_local/sct/sct/data/PAM50/template/PAM50_levels.nii.gz'
+    path_level = path_template + '/template/PAM50_levels.nii.gz'
+    path_template = path_template + '/template/PAM50_label_discPosterior.nii.gz'
+    #path_level='/home/GRAMES.POLYMTL.CA/luroub/luroub_local/lurou_local/sct/sct/data/PAM50/template/PAM50_levels.nii.gz'
     sct.printv('\nLook for template...', verbose)
     sct.printv('Path template: ' + path_template, verbose)
 
@@ -161,7 +158,8 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     sct.run('sct_resample -i hm_tmp.nii.gz -mm 0.5x0.5x0.5 -x linear')
     im_hm = Image('hm_tmp_r.nii.gz')
     data_hm = im_hm.data
-    im_lab=Image('/home/GRAMES.POLYMTL.CA/luroub/luroub_local/lurou_local/sct/sct/data/PAM50/template/PAM50_label_discPosterior.nii.gz')
+    sct.run('sct_maths -i %s -dilate 3 -o lab_dilate.nii.gz'%(path_template))
+    im_lab=Image('lab_dilate.nii.gz')
     data_lab=im_lab.data
     while search_next_disc:
         sct.printv('Current disc: ' + str(current_disc) + ' (z=' + str(current_z) + '). Direction: ' + direction, verbose)
