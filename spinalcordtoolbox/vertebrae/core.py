@@ -159,7 +159,7 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     im_hm = Image('hm_tmp_r.nii.gz')
     data_hm = im_hm.data
     sct.run('sct_maths -i %s -dilate 3 -o lab_dilate.nii.gz'%(path_template))
-    im_lab=Image('lab_dilate.nii.gz')
+    im_lab=Image(path_template)
     data_lab=im_lab.data
     while search_next_disc:
         sct.printv('Current disc: ' + str(current_disc) + ' (z=' + str(current_z) + '). Direction: ' + direction, verbose)
@@ -368,8 +368,8 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
     :param gaussian_std:
     :return:
     """
-    # parameters
-    thr_corr = 0.0001  # disc correlation threshold. Below this value, use template distance.
+    # parametersi
+    thr_corr = 0.2  # disc correlation threshold. Below this value, use template distance.
     # get dimensions from src
     nx, ny, nz = src.shape
     #zsize=(15)
@@ -469,7 +469,7 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
         # display subject pattern at best z
         ax = fig.add_subplot(132)
         iz = zrange[ind_peak]
-        data_chunk3d = src[xtarget-10:xtarget+10,
+        data_chunk3d = src[:,
                            y + yshift - ysize: y + yshift + ysize + 1,
                            z  -iz - zsize: z + iz + zsize + 1]
         ax.plot(np.sum(data_chunk3d,axis=(0,1)))
