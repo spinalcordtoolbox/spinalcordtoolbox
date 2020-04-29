@@ -70,10 +70,7 @@ parser.add_argument('--itk-threads', type=int, default=1,
                     metavar=Metavar.int)
 parser.add_argument('--task-args', default='',
                     help='A quoted string with extra flags and arguments to pass to the task script. '
-                    'The constructed call will look like <task> <subject> <task-args>. Where <subject> is the '
-                    'base name of the subject directory. For example, if the subject path is '
-                    '/home/path-data/sub-01 then <subject> will be sub-01. `--task-args` can include any number '
-                    'of additional arguments and flags')
+                    'For example \'sct_run_batch -path-data data/ --task-args "-foo bar -baz /qux" process_data.sh \'')
 parser.add_argument('task',
                     help='Shell script used to process the data.')
 
