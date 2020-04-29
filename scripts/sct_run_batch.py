@@ -45,14 +45,14 @@ parser.add_argument("--path-data", help='R|Setting for environment variable: PAT
                                         'Path containing subject directories in a consistent format')
 parser.add_argument('--subject-prefix', default="sub-",
                     help='Subject prefix, defaults to "sub-" which is the prefix used for BIDS directories. '
-                    'If the subject directories do not share a common prefix, and empty string can be '
+                    'If the subject directories do not share a common prefix, an empty string can be '
                     'passed here.')
 parser.add_argument('--path-output', default="./",
                     help='R|Base directory for environment variables:\n'
                     'PATH_RESULTS=' + os.path.join('<path-output>', 'results') + '\n'
                     'PATH_QC=' + os.path.join('<path-output>', 'QC') + '\n'
                     'PATH_LOG=' + os.path.join('<path-output>', 'log') + '\n'
-                    'Which are output paths for results, logs, and QC')
+                    'Which are respectively output paths for results, QC and logs')
 parser.add_argument('--include',
                     help='Optional regex used to filter the list of subject directories. Only process '
                     'a subject if they match the regex. Inclusions are processed before exclusions.')
