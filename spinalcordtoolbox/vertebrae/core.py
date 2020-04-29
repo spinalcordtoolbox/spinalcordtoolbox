@@ -65,16 +65,16 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     :param scale_dist: float: Scaling factor to adjust average distance between two adjacent intervertebral discs
     :return:
     """
-    path_level = path_template + '/template/PAM50_levels.nii.gz'
-    path_template = path_template + '/template/PAM50_label_discPosterior.nii.gz'
+    #path_level = path_template + '/template/PAM50_levels.nii.gz'
+    #path_template = path_template + '/template/PAM50_label_discPosterior.nii.gz'
     #path_level='/home/GRAMES.POLYMTL.CA/luroub/luroub_local/lurou_local/sct/sct/data/PAM50/template/PAM50_levels.nii.gz'
     sct.printv('\nLook for template...', verbose)
     sct.printv('Path template: ' + path_template, verbose)
 
     # adjust file names if MNI-Poly-AMU template is used (by default: PAM50)
-    #fname_level = get_file_label(os.path.join(path_template, 'template'), id_label=7, output='filewithpath')  # label = spinal cord mask with discrete vertebral levels
+    fname_level = get_file_label(os.path.join(path_template, 'template'), id_label=7, output='filewithpath')  # label = spinal cord mask with discrete vertebral levels
     #id_label_dct = {'T1': 0, 'T2': 1, 'T2S': 2}
-    #fname_template = get_file_label(os.path.join(path_template, 'template'), id_label=id_label_dct[contrast.upper()], output='filewithpath')  # label = *-weighted template
+    fname_template = get_file_label(os.path.join(path_template, 'template'), id_label=11, output='filewithpath')  # label = *-weighted template
 
     # Open template and vertebral levels
     sct.printv('\nOpen template and vertebral levels...', verbose)
