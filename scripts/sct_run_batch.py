@@ -42,7 +42,7 @@ parser.add_argument("-jobs", type=int, default=1,
                     '-jobs -1 indicates run ncores - 1 jobs in parallel.',
                     metavar=Metavar.int)
 parser.add_argument("-path-data", help='R|Setting for environment variable: PATH_DATA\n'
-                                        'Path containing subject directories in a consistent format')
+                    'Path containing subject directories in a consistent format')
 parser.add_argument('-subject-prefix', default="sub-",
                     help='Subject prefix, defaults to "sub-" which is the prefix used for BIDS directories. '
                     'If the subject directories do not share a common prefix, an empty string can be '
