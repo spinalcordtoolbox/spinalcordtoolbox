@@ -100,6 +100,7 @@ for pth in [path_output, path_results, path_log, path_qc]:
 # TODO: we should probably strip all extensions
 task = args.task
 task_base = re.sub('\\.sh$', '', os.path.basename(task))
+task_full = os.path.abspath(os.path.expanduser(task))
 
 # Job function for mapping with multiprocessing
 
@@ -124,7 +125,7 @@ def run_single(subj_dir):
     })
 
     # Ship the job out, merging stdout/stderr and piping to log file
-    res = subprocess.run([args.task, subj_dir] + args.task_args.split(' '),
+    res = subprocess.run([task_full, subj_dir] + args.task_args.split(' '),
                          env=envir,
                          stdout=open(log_file, 'w'),
                          stderr=subprocess.STDOUT)
