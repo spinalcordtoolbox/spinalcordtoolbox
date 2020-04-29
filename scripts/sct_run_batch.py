@@ -30,47 +30,47 @@ parser = argparse.ArgumentParser(
                 'following the BIDS convention (https://bids.neuroimaging.io/). '
                 'The processing script (task) should accept a subject directory as its only argument. '
                 'Additional information is passed via environment variables and the arguments '
-                'passed via `--task-args`',
+                'passed via `-task-args`',
     formatter_class=SmartFormatter,
     prog=os.path.basename(__file__).strip('.py'))
 
-parser.add_argument("--jobs", type=int, default=1,
+parser.add_argument("-jobs", type=int, default=1,
                     help='The number of jobs to run in parallel. '
                     'Either an integer greater than or equal to one '
                     'specifying the number of cores, 0 or a negative integer '
                     'specifying number of cores minus that number. For example '
-                    '--jobs -1 indicates run ncores - 1 jobs in parallel.',
+                    '-jobs -1 indicates run ncores - 1 jobs in parallel.',
                     metavar=Metavar.int)
-parser.add_argument("--path-data", help='R|Setting for environment variable: PATH_DATA\n'
+parser.add_argument("-path-data", help='R|Setting for environment variable: PATH_DATA\n'
                                         'Path containing subject directories in a consistent format')
-parser.add_argument('--subject-prefix', default="sub-",
+parser.add_argument('-subject-prefix', default="sub-",
                     help='Subject prefix, defaults to "sub-" which is the prefix used for BIDS directories. '
                     'If the subject directories do not share a common prefix, an empty string can be '
                     'passed here.')
-parser.add_argument('--path-output', default="./",
+parser.add_argument('-path-output', default="./",
                     help='R|Base directory for environment variables:\n'
                     'PATH_RESULTS=' + os.path.join('<path-output>', 'results') + '\n'
                     'PATH_QC=' + os.path.join('<path-output>', 'QC') + '\n'
                     'PATH_LOG=' + os.path.join('<path-output>', 'log') + '\n'
                     'Which are respectively output paths for results, QC and logs')
-parser.add_argument('--include',
+parser.add_argument('-include',
                     help='Optional regex used to filter the list of subject directories. Only process '
                     'a subject if they match the regex. Inclusions are processed before exclusions.')
-parser.add_argument('--exclude',
+parser.add_argument('-exclude',
                     help='Optional regex used to filter the list of subject directories. Only process '
                     'a subject if they do not match the regex. Exclusions are processed '
                     'after inclusions.')
-parser.add_argument('--path-segmanual', default='.',
+parser.add_argument('-path-segmanual', default='.',
                     help='R|Setting for environment variable: PATH_SEGMANUAL\n'
                     'A path containing manual segmentations to be used by the task program.')
-parser.add_argument('--itk-threads', type=int, default=1,
+parser.add_argument('-itk-threads', type=int, default=1,
                     help='R|Setting for environment variable: ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS\n'
                     'Number of threads to use for ITK based programs including ANTs. Set to a low '
                     'number to avoid a large increase in memory. Defaults to 1',
                     metavar=Metavar.int)
-parser.add_argument('--task-args', default='',
+parser.add_argument('-task-args', default='',
                     help='A quoted string with extra flags and arguments to pass to the task script. '
-                    'For example \'sct_run_batch -path-data data/ --task-args "-foo bar -baz /qux" process_data.sh \'')
+                    'For example \'sct_run_batch -path-data data/ -task-args "-foo bar -baz /qux" process_data.sh \'')
 parser.add_argument('task',
                     help='Shell script used to process the data.')
 
