@@ -263,9 +263,9 @@ def main(args=None):
             ])
         sct.cache_save(cachefile, cache_sig)
 
-    # resample to 0.5mm isotropic to match template resolution
+    # resample to 1mm isotropic for network prediction
     sct.printv('\nResample to 1mm isotropic...', verbose)
-    s, o = sct.run(['sct_resample', '-i', 'data_straight.nii', '-mm', '2x0.5x0.5', '-x', 'linear', '-o', 'data_straightr.nii'], verbose=verbose)
+    s, o = sct.run(['sct_resample', '-i', 'data_straight.nii', '-mm', '1x1x1', '-x', 'linear', '-o', 'data_straightr.nii'], verbose=verbose)
 
     # Apply straightening to segmentation
     # N.B. Output is RPI
@@ -281,7 +281,7 @@ def main(args=None):
            )
     # Threshold segmentation at 0.5
     sct.run(['sct_maths', '-i', 'segmentation_straight.nii', '-thr', '0.5', '-o', 'segmentation_straight.nii'], verbose)
-    sct.run('sct_resample -i segmentation_straight.nii -mm 0.5 -x nn')
+    #sct.run('sct_resample -i segmentation_straight.nii -mm 0.5 -x nn')
 
     # If disc label file is provided, label vertebrae using that file instead of automatically
     if fname_disc:
@@ -372,7 +372,7 @@ def main(args=None):
             sct.run(['sct_maths', '-i', 'data_straightr.nii', '-laplacian', '1', '-o', 'data_straightr.nii'], verbose)
 
         # detect vertebral levels on straight spinal cord
-        vertebral_detection('data_straight.nii', 'segmentation_straight_r.nii', contrast, param, init_disc=init_disc,
+        vertebral_detection('data_straightr.nii', 'segmentation_straight.nii', contrast, param, init_disc=init_disc,
                             verbose=verbose, path_template=path_template, path_output=path_output, scale_dist=scale_dist)
 
     # un-straighten labeled spinal cord

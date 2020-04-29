@@ -156,6 +156,7 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     print(sct.run('pwd'))
     detect_vert.main(args=['-i',fname, '-c' ,'t2', '-m', '1', '-o', 'hm_tmp.nii.gz', '-net',  'CC'])
     sct.run('sct_resample -i hm_tmp.nii.gz -mm 0.5x0.5x0.5 -x linear')
+    sct.run('sct_resample -i %s -mm 0.5 -x nn -o %s'%(fname_seg,fname_seg))
     im_hm = Image('hm_tmp_r.nii.gz')
     data_hm = im_hm.data
     sct.run('sct_maths -i %s -dilate 3 -o lab_dilate.nii.gz'%(path_template))
@@ -567,7 +568,7 @@ def label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=1):
     # write file
 
     seg.change_orientation(init_orientation).save(sct.add_suffix(fname_seg, '_labeled'))
-    sct.run('sct_resample -i segmentation_straight_r_labeled.nii -mm 1x1x1 -x nn -o segmentation_straight_labeled.nii')
+    sct.run('sct_resample -i segmentation_straight_labeled.nii -mm 1x1x1 -x nn -o segmentation_straight_labeled.nii')
 
 
 
