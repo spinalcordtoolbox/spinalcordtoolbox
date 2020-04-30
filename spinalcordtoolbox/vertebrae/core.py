@@ -78,8 +78,8 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
 
     # Open template and vertebral levels
     sct.printv('\nOpen template and vertebral levels...', verbose)
-    data_template = Image(path_template).data
-    data_disc_template = Image(path_level).data
+    data_template = Image(fname_template).data
+    data_disc_template = Image(fname_level).data
 
     # open anatomical volume
     im_input = Image(fname)
@@ -159,8 +159,8 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     sct.run('sct_resample -i %s -mm 0.5 -x nn -o %s'%(fname_seg,fname_seg))
     im_hm = Image('hm_tmp_r.nii.gz')
     data_hm = im_hm.data
-    sct.run('sct_maths -i %s -dilate 3 -o lab_dilate.nii.gz'%(path_template))
-    im_lab=Image(path_template)
+    #sct.run('sct_maths -i %s -dilate 3 -o lab_dilate.nii.gz'%(fname_template))
+    im_lab=Image(fname_template)
     data_lab=im_lab.data
     while search_next_disc:
         sct.printv('Current disc: ' + str(current_disc) + ' (z=' + str(current_z) + '). Direction: ' + direction, verbose)

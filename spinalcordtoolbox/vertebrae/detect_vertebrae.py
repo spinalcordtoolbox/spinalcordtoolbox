@@ -7,16 +7,11 @@ from spinalcordtoolbox.cropping import ImageCropper, BoundingBox
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.utils import Metavar, SmartFormatter
 import sct_utils as sct
-print('detect1')
 import torch
-print('detect2')
 from spinalcordtoolbox.vertebrae.models import *
-print('detect3')
 from spinalcordtoolbox.vertebrae.Predict_utils import *
 import numpy as np
-
 import nibabel as nib
-print('detect1')
 
 def get_parser():
     # Mandatory arguments
@@ -92,7 +87,7 @@ def main(args=None):
         model = ModelCountception_v2(inplanes=1, outplanes=1)
 
         if contrast == 't1':
-            model.load_state_dict(torch.load('./checkpoints/Countception_L2T1.model', map_location='cpu')['model_weights'])
+            model.load_state_dict(torch.load(os.path.join(sct.__sct_dir__,'spinalcordtoolbox/vertebrae/checkpoints/Countception_floatT1.model'), map_location='cpu')['model_weights'])
 
         elif contrast == 't2':
             model.load_state_dict(torch.load(os.path.join(sct.__sct_dir__,'spinalcordtoolbox/vertebrae/checkpoints/Countception_floatL2T2.model'), map_location='cpu')['model_weights'])
