@@ -140,7 +140,7 @@ def main(args=None):
     if arguments.p is not None:
         param.process = (arguments.p).split(',')
         if param.process[0] not in param.process_list:
-            sct.printv(parser.usage.generate(error='ERROR: Process ' + param.process[0] + ' is not recognized.'))
+            sct.printv(parser.error('ERROR: Process ' + param.process[0] + ' is not recognized.'))
     if arguments.size is not None:
         param.size = arguments.size
     if arguments.f is not None:

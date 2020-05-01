@@ -4,7 +4,7 @@
 [![GitHub Release](https://github-basic-badges.herokuapp.com/release/neuropoly/spinalcordtoolbox.svg)](https://github.com/neuropoly/spinalcordtoolbox/releases)
 [![Github Download Count](https://img.shields.io/github/downloads/neuropoly/spinalcordtoolbox/total.svg)](https://github.com/neuropoly/spinalcordtoolbox/releases)
 [![Project Stats](https://www.openhub.net/p/spinalcordtoolbox/widgets/project_thin_badge.gif)](https://www.openhub.net/p/spinalcordtoolbox)
-[![User mailing list](http://img.shields.io/badge/mailing%20list-users-green.svg?style=flat)](https://sourceforge.net/p/spinalcordtoolbox/discussion/help/)
+[![User forum](https://img.shields.io/discourse/status?label=forum&server=http%3A%2F%2Fforum.spinalcordmri.org)](http://forum.spinalcordmri.org/c/sct)
 [![Developer mailing list](http://img.shields.io/badge/mailing%20list-development-green.svg?style=flat)](https://groups.google.com/forum/#!forum/sct_developers)
 [![Coverage Status](https://coveralls.io/repos/github/neuropoly/spinalcordtoolbox/badge.svg?branch=master)](https://coveralls.io/github/neuropoly/spinalcordtoolbox?branch=master)
 
@@ -129,7 +129,7 @@ process those files and output quantitative parameters.
 
 - Open a Terminal
 - Run: `$SCT_DIR/batch_processing.sh`
-- While the processing is being done, we encourage you to look at the [batch script](batch_processing.sh) and try to understand the mean of each command line. If you have any question, please do not hesitate to post on the [forum](https://sourceforge.net/p/spinalcordtoolbox/discussion/help/).
+- While the processing is being done, we encourage you to look at the [batch script](batch_processing.sh) and try to understand the mean of each command line. If you have any question, please do not hesitate to post on the [forum](http://forum.spinalcordmri.org/c/sct).
 
 If you would like to get more examples about what SCT can do, please visit [this address](https://github.com/sct-pipeline/).
 Each repository is a pipeline dedicated to a specific research project.
@@ -139,7 +139,7 @@ Each repository is a pipeline dedicated to a specific research project.
 
 We organize **free** SCT courses, each year after the ISMRM conference. If you'd like to be added to the mailing list, please send an email to `spinalcordtoolbox@gmail.com`. The past courses handouts are listed below:
 
-* [SCT course (v4.2.1), London, 2020-01-21](https://www.icloud.com/keynote/0th8lcatyVPkM_W14zpjynr5g#SCT%5FCourse%5F20200121)
+* [SCT course (v4.2.1), London, 2020-01-21](https://www.icloud.com/keynote/0th8lcatyVPkM_W14zpjynr5g#SCT%5FCourse%5F20200121) | [Video recording](https://www.youtube.com/watch?v=whbtjYNtHko&feature=youtu.be)
 * [SCT course (v4.0.0), Beijing, 2019-08-02](https://osf.io/arfv7/) | [Slides with Chinese translation](https://osf.io/hnmr2/)
 * [SCT course (v4.0.0_beta.4), London, 2019-01-22](https://osf.io/gvs6f/)
 * [SCT course (v3.2.2), Paris, 2018-06-12](https://osf.io/386h7/)
@@ -230,7 +230,7 @@ Please visit our video tutorials [here](https://www.youtube.com/channel/UC3o_1ar
 - [Panara et al. Correlations between cervical spinal cord magnetic resonance diffusion tensor and diffusion kurtosis imaging metrics and motor performance in patients with chronic ischemic brain lesions of the corticospinal tract. Neuroradiology. 2018](https://link.springer.com/article/10.1007/s00234-018-2139-5)
 - [Moccia et al. Advances in spinal cord imaging in multiple sclerosis. Ther Adv Neurol Disord.2019 Vol. 12: 1–19 DOI: 10.1177/1756285619840593](https://journals.sagepub.com/doi/pdf/10.1177/1756286419840593)
 - [Kitany et al. Functional imaging of rostrocaudal spinal activity during upper limb motor tasks. Neuroimage. 2019 May 17. pii: S1053-8119(19)30428-8.](https://www.sciencedirect.com/science/article/pii/S1053811919304288)
-- [Lorenzi et al. Cervical spinal cord atrophy and Alzheimer’s disease. bioRxiv. 2019](https://www.biorxiv.org/content/biorxiv/early/2019/06/18/673350.full.pdf)
+- [Lorenzi et al. Unsuspected Involvement of Spinal Cord in Alzheimer Disease. Front. Cell. Neurosci. 2020](https://www.frontiersin.org/articles/10.3389/fncel.2020.00006/full)
 - [Papinutto et al. Evaluation of Intra- and Interscanner Reliability of MRI Protocols for Spinal Cord Gray Matter and Total Cross-Sectional Area Measurements. J Magn Reson Imaging. 2019 Apr;49(4):1078-1090. doi: 10.1002/jmri.26269. Epub 2018 Sep 9.](https://onlinelibrary.wiley.com/doi/epdf/10.1002/jmri.26269)
 - [Weeda et al. Validation of mean upper cervical cord area (MUCCA) measurement techniques in multiple sclerosis (MS): High reproducibility and robustness to lesions, but large software and scanner effects. NeuroImage: Clinical doi:10.1016/j.nicl.2019.101962. 2019](https://www.sciencedirect.com/science/article/pii/S2213158219303122)
 - [Moccia et al. Longitudinal spinal cord atrophy in multiple sclerosis using the generalised boundary shift integral. Annals of Neurology doi:10.1002/ana.25571. 2019](https://onlinelibrary.wiley.com/doi/abs/10.1002/ana.25571)
