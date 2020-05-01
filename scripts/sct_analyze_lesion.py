@@ -516,10 +516,16 @@ def main(args=None):
         args = None if sys.argv[1:] else ['--help']
     parser = get_parser()
     arguments = parser.parse_args(args=args)
-    fname_mask = arguments.m
-    fname_sc = arguments.s
-    fname_ref = arguments.i
+
+    # Input files
+    fname_mask = arguments.m  # Mandatory
+    fname_sc = arguments.s  # Mandatory
+    fname_ref = arguments.i  # Optional
+
+    # Path to template
     path_template = arguments.t
+
+    # Output folder
     path_results = arguments.ofolder
 
     # Remove temp folder
