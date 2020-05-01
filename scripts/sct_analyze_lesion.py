@@ -1,12 +1,9 @@
 #!/usr/bin/env python
+# -*- coding: utf-8
+#
+# Function to analyze lesions or tumours by computing statistics on binary masks.
+#
 
-# Analyze lesions
-#
-# Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Charley
-# Modified: 2017-08-19
-#
-# About the license: see the file LICENSE.TXT
 
 from __future__ import print_function, absolute_import, division
 
