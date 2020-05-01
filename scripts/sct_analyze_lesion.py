@@ -47,7 +47,7 @@ def get_parser():
         metavar=Metavar.file)
     mandatory_arguments.add_argument(
         "-s",
-        required=False,
+        required=True,
         help="Spinal cord centerline or segmentation file, which will be used to correct morphometric measures with "
              "cord angle with respect to slice. (e.g.'t2_seg.nii.gz')",
         metavar=Metavar.file)
@@ -538,6 +538,11 @@ def main(args=None):
     verbose = arguments.v
     sct.init_sct(log_level=verbose, update=True)  # Update log level
 
+    # TODO: CG: I would like to replace AnalyzeLesion by two classes:
+    #               - LesionVolume: which contains all the lesions, an ID assigned to each individual lesion, and
+    #                               and computing / gathering overall (ie across all lesions) metrics
+    #               - Lesion: which is dedicated to one individual lesion and computes / gathers metrics specific to
+    #                           this lesion.
     # create the Lesion constructor
     lesion_obj = AnalyzeLeion(fname_mask=fname_mask,
                               fname_sc=fname_sc,
