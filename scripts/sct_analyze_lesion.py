@@ -520,13 +520,7 @@ def main(args=None):
     fname_sc = arguments.s
     fname_ref = arguments.i
     path_template = arguments.t
-
-    # Output Folder
     path_results = arguments.ofolder
-    # if not os.path.isdir(path_results) and os.path.exists(path_results):
-    #     printv("ERROR output directory %s is not a valid directory" % path_results, 1, 'error')
-    if not os.path.exists(path_results):
-        os.makedirs(path_results)
 
     # Remove temp folder
     if arguments.r is not None:
