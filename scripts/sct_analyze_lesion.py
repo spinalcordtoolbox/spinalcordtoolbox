@@ -66,7 +66,7 @@ def get_parser():
         default=None,
         required=False)
     optional.add_argument(
-        "-f",
+        "-t",
         help="Path to folder containing the atlas/template registered to the anatomical image, which is used by the "
              "function to compute: (i) the distribution of each lesion depending on each vertebral level and on each"
              "region of the template (e.g. GM, WM, WM tracts) and (ii) the proportion of ROI (e.g. vertebral level, "
@@ -519,7 +519,7 @@ def main(args=None):
     fname_mask = arguments.m
     fname_sc = arguments.s
     fname_ref = arguments.i
-    path_template = arguments.f
+    path_template = arguments.t
 
     # Output Folder
     path_results = arguments.ofolder
