@@ -4,7 +4,6 @@
 # Function to analyze lesions or tumours by computing statistics on binary masks.
 #
 
-
 from __future__ import print_function, absolute_import, division
 
 import os, math, sys, pickle, shutil
@@ -49,54 +48,61 @@ def get_parser():
     )
     mandatory_arguments.add_argument(
         "-s",
-        required=True,
+        required=False,
         help="Spinal cord centerline or segmentation file, which will be used to correct morphometric measures with "
              "cord angle with respect to slice. (e.g.'t2_seg.nii.gz')",
-        metavar=Metavar.file)
+        metavar=Metavar.file
+    )
 
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",
         "--help",
         action="help",
-        help="show this help message and exit")
+        help="show this help message and exit"
+    )
     optional.add_argument(
         "-i",
         help='Image from which to extract average values within lesions (e.g. "t2.nii.gz"). If provided, the function '
              'computes the mean and standard deviation values of this image within each lesion.',
         metavar=Metavar.file,
         default=None,
-        required=False)
+        required=False
+    )
     optional.add_argument(
         "-f",
-        help="Path to folder containing the atlas/template registered to the anatomical image. If provided, the "
-             "function computes: (i) the distribution of each lesion depending on each vertebral level and on each"
+        help="Path to folder containing the atlas/template registered to the anatomical image, which is used by the "
+             "function to compute: (i) the distribution of each lesion depending on each vertebral level and on each"
              "region of the template (e.g. GM, WM, WM tracts) and (ii) the proportion of ROI (e.g. vertebral level, "
              "GM, WM) occupied by lesion.",
-        metavar=Metavar.str,
-        default=None,
-        required=False)
+        metavar=Metavar.folder,
+        default=os.path.join(sct.__data_dir__, 'PAM50'),
+        required=False
+    )
     optional.add_argument(
         "-ofolder",
         help='Output folder (e.g. "./")',
         metavar=Metavar.folder,
         action=ActionCreateFolder,
         default='./',
-        required=False)
+        required=False
+    )
     optional.add_argument(
         "-r",
         type=int,
         help="Remove temporary files.",
         required=False,
         default=1,
-        choices=(0, 1))
+        choices=(0, 1)
+    )
     optional.add_argument(
         "-v",
         type=int,
         help="Verbose: 0 = nothing, 1 = classic, 2 = expended",
         required=False,
         choices=(0, 1, 2),
-        default=1)
+        default=1
+    )
 
     return parser
 
@@ -518,7 +524,6 @@ def main(args=None):
         args = None if sys.argv[1:] else ['--help']
     parser = get_parser()
     arguments = parser.parse_args(args=args)
-
     fname_mask = arguments.m
     fname_sc = arguments.s
     fname_ref = arguments.i
