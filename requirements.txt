@@ -21,5 +21,7 @@ xlrd
 xlutils
 xlwt
 tqdm
+pytorch-cpu
+torchvision-cpu
 transforms3d
 urllib3[secure]
