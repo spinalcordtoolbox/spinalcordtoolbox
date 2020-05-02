@@ -109,7 +109,7 @@ def dummy_centerline(size_arr=(9, 9, 9), pixdim=(1, 1, 1), subsampling=1, dilate
 
 def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.float64, orientation='LPI',
                        shape='rectangle', angle_RL=0, angle_AP=0, angle_IS=0, radius_RL=5.0, radius_AP=3.0,
-                       zeroslice=[], debug=False):
+                       interleaved=False, zeroslice=[], debug=False):
     """Create a dummy Image with a ellipse or ones running from top to bottom in the 3rd dimension, and rotate the image
     to make sure that compute_csa and compute_shape properly estimate the centerline angle.
     :param size_arr: tuple: (nx, ny, nz)
@@ -122,6 +122,7 @@ def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.floa
     :param angle_IS: int: angle around IS axis (in deg)
     :param radius_RL: float: 1st radius. With a, b = 50.0, 30.0 (in mm), theoretical CSA of ellipse is 4712.4
     :param radius_AP: float: 2nd radius
+    :param interleaved: bool: use polynomial function to simulate slicewise motion
     :param zeroslice: list int: zero all slices listed in this param
     :param debug: Write temp files for debug
     :return: img: Image object
@@ -132,12 +133,28 @@ def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.floa
     nx, ny, nz = [int(size_arr[i] * pixdim[i]) for i in range(3)]
     data = np.random.random((nx, ny, nz)) * 0.
     xx, yy = np.mgrid[:nx, :ny]
-    # loop across slices and add object
-    for iz in range(nz):
-        if shape == 'rectangle':  # theoretical CSA: (a*2+1)(b*2+1)
-            data[:, :, iz] = ((abs(xx - nx / 2) <= radius_RL) & (abs(yy - ny / 2) <= radius_AP)) * 1
-        if shape == 'ellipse':
-            data[:, :, iz] = (((xx - nx / 2) / radius_RL) ** 2 + ((yy - ny / 2) / radius_AP) ** 2 <= 1) * 1
+    if not interleaved:
+        # loop across slices and add object
+        for iz in range(nz):
+            if shape == 'rectangle':  # theoretical CSA: (a*2+1)(b*2+1)
+                data[:, :, iz] = ((abs(xx - nx / 2) <= radius_RL) & (abs(yy - ny / 2) <= radius_AP)) * 1
+            if shape == 'ellipse':
+                data[:, :, iz] = (((xx - nx / 2) / radius_RL) ** 2 + ((yy - ny / 2) / radius_AP) ** 2 <= 1) * 1
+    elif interleaved:
+        import numpy.matlib
+        from numpy import poly1d, polyfit
+        factor = 2
+        # define array based on a polynomial function, within Y-Z plane to simulate slicewise motion in A-P
+        y = np.matlib.repmat([round(nx / 2.) + factor, round(nx / 2.) - factor], 1, round(nz / 2))
+        y = y.reshape(nz)   # reshape to vector (1,R) -> (R,)
+        z = np.arange(0, nz)
+        p = poly1d(polyfit(z, y, deg=nz))
+        # loop across slices and add object
+        for iz in range(nz):
+            if shape == 'rectangle':  # theoretical CSA: (a*2+1)(b*2+1)
+                data[:, :, iz] = ((abs(xx - nx / 2) <= radius_RL) & (abs(yy - p(iz)) <= radius_AP)) * 1
+            if shape == 'ellipse':
+                data[:, :, iz] = (((xx - nx / 2) / radius_RL) ** 2 + ((yy - p(iz)) / radius_AP) ** 2 <= 1) * 1
 
     # Pad to avoid edge effect during rotation
     data = np.pad(data, padding, 'reflect')
