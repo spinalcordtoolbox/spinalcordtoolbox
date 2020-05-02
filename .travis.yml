@@ -63,10 +63,10 @@ script:
     echo -ne "import coverage\ncov = coverage.process_startup()\n" > sitecustomize.py
     echo -ne "[run]\nconcurrency = multiprocessing\nparallel = True\n" > .coveragerc
     if [ "${TRAVIS_OS_NAME}" = "osx" ]; then
-      COVERAGE_PROCESS_START="$PWD/.coveragerc" COVERAGE_FILE="$PWD/.coverage" sct_testing -j 1 -d 0 --abort-on-failure
+      COVERAGE_PROCESS_START="$PWD/.coveragerc" COVERAGE_FILE="$PWD/.coverage" sct_testing -j 1 --abort-on-failure
       coverage combine
     else
-      COVERAGE_PROCESS_START="$PWD/.coveragerc" COVERAGE_FILE="$PWD/.coverage" sct_testing -d 0 --abort-on-failure
+      COVERAGE_PROCESS_START="$PWD/.coveragerc" COVERAGE_FILE="$PWD/.coverage" sct_testing --abort-on-failure
       coverage combine
     fi
 
