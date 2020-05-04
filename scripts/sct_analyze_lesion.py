@@ -500,9 +500,20 @@ class AnalyzeLeion:
 
         os.chdir(self.tmp_dir)  # go to tmp directory
 
-def check_binary(data):
+def check_binary(arr, fname, verbose=1):
+    """
+    Check if data is binary and not empty. If not, print warning or error message.
 
-def check_not_empty():
+    :param arr: Input data, array.
+    :param fname: Input filename.
+    :param verbose: Verbose.
+    :return:
+    """
+    if not np.array_equal(arr, arr.astype(bool)):
+        if np.max(arr) == 0:
+            printv('WARNING: Empty masked image: {}'.format(fname), verbose, 'warning')
+        else:
+            printv("ERROR input file %s is not binary file with 0 and 1 values".format(fname), 1, 'error')
 
 
 def analyze_lesion(fname_mask, fname_voi, fname_ref=None, path_template=None, path_ofolder="./analyze_lesion", verbose=1):
@@ -517,14 +528,12 @@ def analyze_lesion(fname_mask, fname_voi, fname_ref=None, path_template=None, pa
     :param verbose: Verbose.
     :return: XX
     """
-    # Check if input data is binary
+    im_mask, im_voi = Image(fname_mask), Image(fname_voi)
+    data_mask, data_voi = im_mask.data, im_voi.data
 
-    # Check if input data is not empty
-    if not set(np.unique(Image(fname_mask).data)) == set([0.0, 1.0]):
-        if set(np.unique(Image(fname_mask).data)) == set([0.0]):
-            printv('WARNING: Empty masked image', self.verbose, 'warning')
-        else:
-            printv("ERROR input file %s is not binary file with 0 and 1 values" % fname_mask, 1, 'error')
+    # Check if input data is binary and not empty
+    check_binary(data_mask, fname=fname_mask, verbose=verbose)
+    check_binary(data_voi, fname=fname_voi, verbose=verbose)
 
 
 def main(args=None):
