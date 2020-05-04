@@ -56,7 +56,7 @@ def main(args=None):
     dict_url = {
         'sct_example_data': ['https://osf.io/kjcgs/?action=download',
                              'https://www.neuro.polymtl.ca/_media/downloads/sct/20180525_sct_example_data.zip'],
-        'sct_testing_data': ['https://osf.io/63wba/?action=download',
+        'sct_testing_data': ['https://osf.io/6x5a2/?action=download',
                              'https://www.neuro.polymtl.ca/_media/downloads/sct/20200504_sct_testing_data.zip'],
         'PAM50': ['https://osf.io/u79sr/?pid=6zbyf/?action=download',
                   'https://www.neuro.polymtl.ca/_media/downloads/sct/20191029_PAM50.zip'],
