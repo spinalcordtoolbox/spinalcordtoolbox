@@ -102,19 +102,15 @@ def get_parser():
 class AnalyzeLeion:
     def __init__(self, fname_mask, fname_sc, fname_ref, path_template, path_ofolder, verbose):
         self.fname_mask = fname_mask
-
         self.fname_sc = fname_sc
+
+
         self.fname_ref = fname_ref
         self.path_template = path_template
         self.path_ofolder = path_ofolder
         self.verbose = verbose
         self.wrk_dir = os.getcwd()
 
-        if not set(np.unique(Image(fname_mask).data)) == set([0.0, 1.0]):
-            if set(np.unique(Image(fname_mask).data)) == set([0.0]):
-                printv('WARNING: Empty masked image', self.verbose, 'warning')
-            else:
-                printv("ERROR input file %s is not binary file with 0 and 1 values" % fname_mask, 1, 'error')
 
         # create tmp directory
         self.tmp_dir = tmp_create(verbose=verbose)  # path to tmp directory
@@ -504,6 +500,32 @@ class AnalyzeLeion:
 
         os.chdir(self.tmp_dir)  # go to tmp directory
 
+def check_binary(data):
+
+def check_not_empty():
+
+
+def analyze_lesion(fname_mask, fname_voi, fname_ref=None, path_template=None, path_ofolder="./analyze_lesion", verbose=1):
+    """
+    Analyze lesions or tumours by computing statistics on binary mask.
+
+    :param fname_mask: Lesion binary mask filename.
+    :param fname_voi: Volume of interest binary mask filename.
+    :param fname_ref: Image filename from which to extract average values within lesions.
+    :param path_template: Path to folder containing the atlas/template registered to the anatomical image.
+    :param path_ofolder: Output folder.
+    :param verbose: Verbose.
+    :return: XX
+    """
+    # Check if input data is binary
+
+    # Check if input data is not empty
+    if not set(np.unique(Image(fname_mask).data)) == set([0.0, 1.0]):
+        if set(np.unique(Image(fname_mask).data)) == set([0.0]):
+            printv('WARNING: Empty masked image', self.verbose, 'warning')
+        else:
+            printv("ERROR input file %s is not binary file with 0 and 1 values" % fname_mask, 1, 'error')
+
 
 def main(args=None):
     """
@@ -538,11 +560,7 @@ def main(args=None):
     verbose = arguments.v
     sct.init_sct(log_level=verbose, update=True)  # Update log level
 
-    # TODO: CG: I would like to replace AnalyzeLesion by two classes:
-    #               - LesionVolume: which contains all the lesions, an ID assigned to each individual lesion, and
-    #                               and computing / gathering overall (ie across all lesions) metrics
-    #               - Lesion: which is dedicated to one individual lesion and computes / gathers metrics specific to
-    #                           this lesion.
+
     # create the Lesion constructor
     lesion_obj = AnalyzeLeion(fname_mask=fname_mask,
                               fname_sc=fname_sc,
