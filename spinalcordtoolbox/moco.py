@@ -724,12 +724,9 @@ def register(param, file_src, file_dest, file_mat, file_out, im_mask=None):
         # run command
         if do_registration:
             kw.update(dict(is_sct_binary=True))
-            env = dict()
-            env.update(os.environ)
-            env = kw.get("env", env)
-            # reducing the number of CPU used for moco (see issue #201)
-            env["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"] = "1"
-            status, output = sct.run(cmd, verbose=1 if param.verbose == 2 else 0, **kw)
+            # reducing the number of CPU used for moco (see issue #201 and #2642)
+            env = {**os.environ, **{"ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS": "1"}}
+            status, output = sct.run(cmd, verbose=1 if param.verbose == 2 else 0, env=env, **kw)
 
     elif param.todo == 'apply':
         sct_apply_transfo.main(args=['-i', file_src,
