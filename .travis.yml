@@ -42,16 +42,16 @@ before_script:
     sct_download_data -d sct_testing_data  # for tests
     source python/etc/profile.d/conda.sh  # to be able to call conda
     conda activate venv_sct  # reactivate conda for the pip install below
-    python -c "import multiprocessing; print('There are', multiprocessing.cpu_count(), 'CPUs')"
 
 script:
   - |
     echo "Test dmri_moco 2"
+    python -c "import multiprocessing; print('There are', multiprocessing.cpu_count(), 'CPUs')"
     pwd
     ls -l
     date # timestamp
     sct_testing -f sct_dmri_moco || true # this is needed to generate dmri/mask.nii
-    export ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=1
+    export ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=4
     for i in `seq 100`; do
       echo `(cd sct_testing_data; sct_dmri_moco -i dmri/dmri.nii.gz -bvec dmri/bvecs.txt -g 3 -m dmri/mask.nii -ofolder dmri_test2 -r 1 2>/dev/null 1>&2; cat dmri_test2/moco_params.tsv | cut -f 1)`
     done |
