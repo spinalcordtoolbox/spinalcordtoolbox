@@ -67,12 +67,12 @@ def get_parser():
         required=False)
     optional.add_argument(
         "-t",
-        help="Path to folder containing the atlas/template registered to the anatomical image, which is used by the "
-             "function to compute: (i) the distribution of each lesion depending on each vertebral level and on each"
+        help="Path to folder containing the atlas/template registered to the anatomical image. If provided, the "
+             "function computes: (i) the distribution of each lesion depending on each vertebral level and on each"
              "region of the template (e.g. GM, WM, WM tracts) and (ii) the proportion of ROI (e.g. vertebral level, "
              "GM, WM) occupied by lesion.",
         metavar=Metavar.folder,
-        default=os.path.join(sct.__data_dir__, 'PAM50'),
+        default=None,
         required=False)
     optional.add_argument(
         "-ofolder",
@@ -522,7 +522,7 @@ def main(args=None):
     fname_sc = arguments.s  # Mandatory
     fname_ref = arguments.i  # Optional
 
-    # Path to template
+    # Path to registered template
     path_template = arguments.t
 
     # Output folder
