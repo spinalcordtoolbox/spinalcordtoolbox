@@ -117,6 +117,37 @@ def check_binary(arr, fname, verbose=1):
             printv("ERROR input file %s is not binary file with 0 and 1 values".format(fname), 1, 'error')
 
 
+# TODO: avoid duplication with: https://github.com/neuropoly/spinalcordtoolbox/blob/d1cdb30b231c83701d81a321ce62eb3980062a6f/spinalcordtoolbox/process_seg.py#L74
+def get_angle_correction(im_seg):
+    """
+    Measure spinal cord angle with respect to slice.
+
+    :param im_seg: Spinal cord segmentation image.
+    :return: numpy array, angle for each I-S slice, np.nan when no segmentation.
+    """
+    nx, ny, nz, nt, px, py, pz, pt = im_seg.dim
+
+    # fit centerline, smooth it and return the first derivative (in physical space)
+    _, arr_ctl, arr_ctl_der, _ = get_centerline(im_seg, param=ParamCenterline(), verbose=1)
+    x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = arr_ctl_der
+
+    angle_correction = np.full_like(np.empty(nz), np.nan, dtype=np.double)
+
+    # loop across x_centerline_deriv
+    # (instead of [min_z_index, max_z_index], which could vary after interpolation)
+    for iz in range(x_centerline_deriv.shape[0]):
+        # normalize the tangent vector to the centerline (i.e. its derivative)
+        vect = np.array([x_centerline_deriv[iz] * px, y_centerline_deriv[iz] * py, pz])
+        norm = np.linalg.norm(vect)
+        tangent_vect = vect / norm
+
+        # compute the angle between the normal vector of the plane and the vector z
+        angle = np.arccos(np.vdot(tangent_vect, np.array([0, 0, 1])))
+        angle_correction[iz] = math.degrees(angle)
+
+    return angle_correction
+
+
 def analyze_lesion(fname_mask, fname_voi, fname_ref=None, path_template=None, path_ofolder="./analyze_lesion", verbose=1):
     """
     Analyze lesions or tumours by computing statistics on binary mask.
@@ -141,12 +172,15 @@ def analyze_lesion(fname_mask, fname_voi, fname_ref=None, path_template=None, pa
     im_mask.change_orientation('RPI')
     im_voi.change_orientation('RPI')
 
-    # Label connected regions of the masked image
     logger.info("Label the different lesions on the input mask...")
     # Binary structure
     bin_struct = generate_binary_structure(3, 2)  # 18-connectivity
+    # Label connected regions of the masked image
     im_labeled = im_mask.copy()
-    im_labeled.data = label(im_mask.data.copy(), structure=bin_struct)
+    im_labeled.data, num_lesion = label(im_mask.data.copy(), structure=bin_struct)
+
+    # Spinal cord angle with respect to I-S slice
+    angle_correction = get_angle_correction(im_seg=im_voi.copy())
 
 
 
