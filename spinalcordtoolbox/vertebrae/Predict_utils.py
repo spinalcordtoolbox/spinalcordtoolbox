@@ -31,6 +31,7 @@ def prediction_coordinates(Image, model, aim='full', threshold=0.3, heatmap=0, c
     shape_im = sorted(shape_im)
     if aim == 'c2':
         final, coordinates = infer_image(Image, model, thr=0.99)
+        return(coordinates)
     else:
         final, coordinates = infer_image(Image, model, thr=threshold)
     if heatmap == 1:
@@ -38,7 +39,7 @@ def prediction_coordinates(Image, model, aim='full', threshold=0.3, heatmap=0, c
         return final
     sct.printv('post_processing')
     print(coordinates)
-    if len(coordinates) > 0:
+    if len(coordinates) > 1:
         coord_out = post_processing(coordinates)
 
         if len(coord_out) < 2:

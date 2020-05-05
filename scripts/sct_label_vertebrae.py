@@ -28,6 +28,7 @@ from sct_label_utils import ProcessLabels
 from msct_parser import Parser
 import sct_utils as sct
 import sct_straighten_spinalcord
+from spinalcordtoolbox.vertebrae import detect_c2
 
 # PARAMETERS
 class Param:
@@ -327,11 +328,18 @@ def main(args=None):
             else:
                 verbose_detect_c2c3 = 0
             # detection of c2/C3 is applied to strighten image.
-            #sct.run('python ~/luroub_local/lurou_local/deep_VL_2019/ivado_med/scripts_vertebral_labeling/detect_c2.py -i %s -c %s -image 1 -net CC -o %s' %('data_straight.nii','t2',path_tmp+'/c2_tmp.nii.gz'))
-            #im_label_c2c3 = Image('c2_tmp.nii.gz')        
+            #sct.run('sct_resample -i data_straight.nii.gz -mm 1x1x1 -o data_straight_c2detect.nii')
+            detect_c2.main(args=['-i', 'data_straightr.nii', '-c', contrast, '-net', 'CC', '-o', path_tmp+'/c2_tmp.nii.gz'])
+            if os.path.exists('c2_tmp.nii.gz'):
+                pass
+            else:
+                sct.printv('Automatic C2-C3 detection failed. Please provide manual label with sct_label_utils', 1, 'error')
+                sys.exit()
+            im_label_c2c3 = Image('c2_tmp.nii.gz')        
             #ind_label = np.where(im_label_c2c3.data)
-            im_label_c2c3 = detect_c2c3(im_data, im_seg, contrast, verbose=verbose_detect_c2c3)
+            #im_label_c2c3 = detect_c2c3(im_data, im_seg, contrast, verbose=verbose_detect_c2c3)
             ind_label = np.where(im_label_c2c3.data)
+            print(ind_label)
             if not np.size(ind_label) == 0:
                 # subtract "1" to label value because due to legacy, in this code the disc C2-C3 has value "2", whereas in the
                 # recent version of SCT it is defined as "3".
