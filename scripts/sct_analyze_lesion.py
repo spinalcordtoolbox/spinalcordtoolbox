@@ -137,9 +137,9 @@ def analyze_lesion(fname_mask, fname_voi, fname_ref=None, path_template=None, pa
 
     # re-orient image to RPI
     logger.info("Reorient the image to RPI, if necessary...")
-    original_orientation = im_image.orientation
-    # fname_orient = 'image_in_RPI.nii'
-    im_image.change_orientation('RPI')
+    original_orientation = im_mask.orientation
+    im_mask.change_orientation('RPI')
+    im_voi.change_orientation('RPI')
 
 
 def main(args=None):
