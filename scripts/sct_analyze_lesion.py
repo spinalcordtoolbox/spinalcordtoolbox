@@ -181,16 +181,44 @@ def analyze_lesion(fname_mask, fname_voi, fname_ref=None, path_template=None, pa
 
     # Spinal cord angle with respect to I-S slice
     angle_correction = get_angle_correction(im_seg=im_voi.copy())
+    # Indexes of I-S slices where VOI is present
+    z_voi = [z for z in range(angle_correction.shape[0]) if z != np.nan]
 
     # Initialise result dictionary
-    dict_result = {
-                    "lesion_ID": [],
-                    "volume": [],
-                    "length_IS": [],
-                    "max_equiv_diameter": []
-    }
+    df_results = pd.DataFrame.from_dict({
+                                            "lesion_ID": [],
+                                            "volume": [],
+                                            "length_IS": [],
+                                            "max_equiv_diameter": []
+    })
+
+    # Voxel size
+    px, py, pz = im_labeled.dim[4:7]
 
     # Compute metrics for each lesion
+    for lesion_id in range(1, num_lesion + 1):
+        im_lesion_id = im_labeled.copy()
+        data_lesion_id = (im_lesion_id.data == lesion_id).astype(np.int)
+
+        # Indexes of I-S slices where lesion_id is present
+        z_lesion_cur = [z for z in z_voi if np.any(data_lesion_id[:, :, z])]
+
+        # Volume
+        volume = np.sum(data_lesion_id) * px * py * pz
+        # Inf-Sup length
+        length_is_zz = [np.cos(angle_correction[zz]) * pz[2] for zz in z_lesion_cur]
+        length_is = np.sum(length_is_zz)
+        # Maximum equivalent diameter
+        list_area = [np.sum(data_lesion_id[:, :, zz]) * np.cos(angle_correction[zz]) * px * py for zz in z_lesion_cur]
+        max_equiv_diameter = 2 * np.sqrt(max(list_area) / (4 * np.pi))
+
+        # Info
+        printv('\tVolume: ' + str(np.round(volume, 2)) + ' mm3', verbose, type='info')
+        printv('\t(S-I) length: ' + str(np.round(length_is, 2)) + ' mm', verbose, type='info')
+        printv('\tMax. equivalent diameter : ' + str(np.round(max_equiv_diameter, 2)) + ' mm', verbose, type='info')
+
+        del im_lesion_id
+
 
 def main(args=None):
     """
