@@ -182,7 +182,15 @@ def analyze_lesion(fname_mask, fname_voi, fname_ref=None, path_template=None, pa
     # Spinal cord angle with respect to I-S slice
     angle_correction = get_angle_correction(im_seg=im_voi.copy())
 
+    # Initialise result dictionary
+    dict_result = {
+                    "lesion_ID": [],
+                    "volume": [],
+                    "length_IS": [],
+                    "max_equiv_diameter": []
+    }
 
+    # Compute metrics for each lesion
 
 def main(args=None):
     """
