@@ -6,7 +6,7 @@
 
 from __future__ import print_function, absolute_import, division
 
-import os, math, sys, pickle, shutil
+import os, math, sys, pickle, shutil, logging
 import argparse
 
 import numpy as np
@@ -19,6 +19,8 @@ from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder
 
 import sct_utils as sct
 from sct_utils import extract_fname, printv, tmp_create
+
+logger = logging.getLogger(__name__)
 
 
 def get_parser():
@@ -128,11 +130,16 @@ def analyze_lesion(fname_mask, fname_voi, fname_ref=None, path_template=None, pa
     :return: XX
     """
     im_mask, im_voi = Image(fname_mask), Image(fname_voi)
-    data_mask, data_voi = im_mask.data, im_voi.data
 
     # Check if input data is binary and not empty
-    check_binary(data_mask, fname=fname_mask, verbose=verbose)
-    check_binary(data_voi, fname=fname_voi, verbose=verbose)
+    check_binary(im_mask.data, fname=fname_mask, verbose=verbose)
+    check_binary(im_voi.data, fname=fname_voi, verbose=verbose)
+
+    # re-orient image to RPI
+    logger.info("Reorient the image to RPI, if necessary...")
+    original_orientation = im_image.orientation
+    # fname_orient = 'image_in_RPI.nii'
+    im_image.change_orientation('RPI')
 
 
 def main(args=None):
