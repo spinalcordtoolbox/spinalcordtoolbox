@@ -1,8 +1,6 @@
 # testing file for Travis
 # https://travis-ci.org/neuropoly/spinalcordtoolbox
 
-sudo: false  # To use travis container infrastructure
-
 notifications:
   slack: neuropoly:YA3mt28aeHN3A0Iu7RvMFigK
     on_success:change
@@ -15,6 +13,46 @@ notifications:
 
 matrix:
   include:
+    # To support OSes that Travis doesn't, we mix in Docker images.
+    # Any such OS (CentOS, etc) will be booted in docker instead.
+    # OSes in this case are marked by using IMAGE: instead of dist:.
+    #
+    # Since Docker images are usually very barebones,
+    # these need a DEPS command that should install the
+    # basic dependencies needed for conda etc.
+    #
+    # Testing this way is imperfect -- these docker images are not
+    # identical to freshly installed VMs, and by using docker we're
+    # mismatching kernels, but it is a lot better than not testing.
+    - os: linux
+      dist: bionic  # Arch needs a recent kernel
+      services:
+        - docker
+      name: "ArchLinux"
+      env:
+        - IMAGE="archlinux" DEPS="pacman -Sy --noconfirm which gcc git curl"
+    - os: linux
+      dist: bionic # kernel ~= Centos8
+      services:
+        - docker
+      name: "CentOS 8"
+      env:
+        - DEPS="yum install -y which gcc git curl" IMAGE="centos:8"
+    - os: linux
+      dist: xenial # kernel ~= Centos7
+      services:
+        - docker
+      name: "CentOS 7"
+      env:
+        - DEPS="yum install -y which gcc git curl" IMAGE="centos:7"
+    - os: linux
+      dist: trusty # kernel ~= Centos6
+      services:
+        - docker
+      name: "CentOS 6"
+      env:
+        - DEPS="yum install -y which gcc git curl" IMAGE="centos:6"
+    # The rest of the OSes can use Travis's built-in images:
     - os: linux  # list of Linux env: https://docs.travis-ci.com/user/reference/overview/
       name: "Ubuntu 18.04 (Bionic Beaver)"
       dist: bionic
@@ -34,60 +72,4 @@ matrix:
       name: "OSX 10.12 (Sierra)"
       osx_image: xcode9.2
 
-install:
-  - |
-    echo Installing SCT
-    set -e  # Error build immediately if install script exits with non-zero
-    yes | ASK_REPORT_QUESTION=false ./install_sct
-    echo $?
-    echo "... STATUS"
-    PATH="$PATH:$PWD/bin"
-
-before_script:
-  - |
-    echo *** CHECK PATH ***
-    echo $PATH  # Make sure PATH includes sct/bin folder
-    ls -lA bin  # Make sure all binaries and aliases are there
-    sct_download_data -d sct_testing_data  # for tests
-    source python/etc/profile.d/conda.sh  # to be able to call conda
-    conda activate venv_sct  # reactivate conda for the pip install below
-
-script:
-  - |
-    echo *** UNIT TESTS ***
-    pytest
-
-  - |
-    echo *** INTEGRATION TESTS ***
-    pip install coverage
-    echo -ne "import coverage\ncov = coverage.process_startup()\n" > sitecustomize.py
-    echo -ne "[run]\nconcurrency = multiprocessing\nparallel = True\n" > .coveragerc
-    if [ "${TRAVIS_OS_NAME}" = "osx" ]; then
-      COVERAGE_PROCESS_START="$PWD/.coveragerc" COVERAGE_FILE="$PWD/.coverage" sct_testing -j 1 --abort-on-failure
-      coverage combine
-    else
-      COVERAGE_PROCESS_START="$PWD/.coveragerc" COVERAGE_FILE="$PWD/.coverage" sct_testing --abort-on-failure
-      coverage combine
-    fi
-
-  - |
-    echo *** ANALYZE CODE ***
-    pip install pylint
-    bash -c 'PYTHONPATH="$PWD/scripts:$PWD" pylint -j3 --py3k --output-format=parseable --errors-only $(git ls-tree --name-only -r HEAD | sort | grep -E "(spinalcordtoolbox|scripts|testing).*\.py" | xargs); exit $(((($?&3))!=0))'
-
-#  - |
-#    echo *** BUILD DOCUMENTATION ***
-#    pip install sphinx sphinxcontrib.programoutput sphinx_rtd_theme
-#    cd documentation/sphinx
-#    make html
-#    cd -
-
-#  - python create_package.py -s ${TRAVIS_OS_NAME}  # test package creation
-#  - cd ../spinalcordtoolbox_v*
-#  - yes | ./install_sct  # test installation of package
-#   - |
-#     pip install coveralls
-#     echo "This is the end, thanks for reading up to here."
-
-# after_success:
-#   - CI=true TRAVIS=true coveralls
+script: ./.travis.sh
