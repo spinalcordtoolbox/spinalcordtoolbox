@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8
 #
-# Function to analyze lesions or tumours by computing statistics on binary masks.
+# Function to analyze morphometrics of binary objects. These binary objects could represent lesions, tumours or any other pathology. 
 #
 
 from __future__ import print_function, absolute_import, division
