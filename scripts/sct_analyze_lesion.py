@@ -243,19 +243,26 @@ def main(args=None):
     # Output folder
     path_results = arguments.ofolder
 
+    # Verbosity
+    verbose = arguments.v
+    sct.init_sct(log_level=verbose, update=True)  # Update log level
+
+    # Run analysis
+    analyze_lesion(fname_mask=fname_mask,
+                   fname_voi=fname_sc,
+                   fname_ref=fname_ref,
+                   path_template=path_template,
+                   path_ofolder=path_results,
+                   verbose=verbose)
+
+    # TODO charley: to refactor
+    """
     # Remove temp folder
     if arguments.r is not None:
         rm_tmp = bool(arguments.r)
     else:
         rm_tmp = True
-
-    # Verbosity
-    verbose = arguments.v
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
-
-
-    # TODO charley: to adapt
-    """
+    
     # remove tmp_dir
     if rm_tmp:
         sct.rmtree(lesion_obj.tmp_dir)
@@ -266,6 +273,7 @@ def main(args=None):
     else:
         printv('fsleyes ' + os.path.join(path_results, lesion_obj.fname_label) + ' -cm red-yellow -a 70.0 & \n', verbose, 'info')
     """
+
 
 if __name__ == "__main__":
     sct.init_sct()
