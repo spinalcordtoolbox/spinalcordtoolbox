@@ -11,7 +11,7 @@ import argparse
 
 import numpy as np
 import pandas as pd
-from skimage.measure import label
+from scipy.ndimage import label, generate_binary_structure
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
@@ -140,6 +140,14 @@ def analyze_lesion(fname_mask, fname_voi, fname_ref=None, path_template=None, pa
     original_orientation = im_mask.orientation
     im_mask.change_orientation('RPI')
     im_voi.change_orientation('RPI')
+
+    # Label connected regions of the masked image
+    logger.info("Label the different lesions on the input mask...")
+    # Binary structure
+    bin_struct = generate_binary_structure(3, 2)  # 18-connectivity
+    im_labeled = im_mask.copy()
+    im_labeled.data = label(im_mask.data.copy(), structure=bin_struct)
+
 
 
 def main(args=None):
