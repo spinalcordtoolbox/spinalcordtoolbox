@@ -44,6 +44,7 @@ class WarpTemplate:
     def __init__(self, fname_src, fname_transfo, warp_atlas, warp_spinal_levels, folder_out, path_template, verbose):
 
         # Initialization
+        param = _param if '_param' in globals() else Param()
         self.fname_src = fname_src
         self.fname_transfo = fname_transfo
         self.warp_atlas = warp_atlas
@@ -69,20 +70,20 @@ class WarpTemplate:
 
         # Warp template objects
         sct.printv('\nWARP TEMPLATE:', self.verbose)
-        warp_label(self.path_template, self.folder_template, param.file_info_label, self.fname_src, self.fname_transfo, self.folder_out)
+        warp_label(self.path_template, self.folder_template, param.file_info_label, self.fname_src, self.fname_transfo, self.folder_out, param.list_labels_nn, self.verbose)
 
         # Warp atlas
         if self.warp_atlas == 1:
             sct.printv('\nWARP ATLAS OF WHITE MATTER TRACTS:', self.verbose)
-            warp_label(self.path_template, self.folder_atlas, param.file_info_label, self.fname_src, self.fname_transfo, self.folder_out)
+            warp_label(self.path_template, self.folder_atlas, param.file_info_label, self.fname_src, self.fname_transfo, self.folder_out, param.list_labels_nn, self.verbose)
 
         # Warp spinal levels
         if self.warp_spinal_levels == 1:
             sct.printv('\nWARP SPINAL LEVELS:', self.verbose)
-            warp_label(self.path_template, self.folder_spinal_levels, param.file_info_label, self.fname_src, self.fname_transfo, self.folder_out)
+            warp_label(self.path_template, self.folder_spinal_levels, param.file_info_label, self.fname_src, self.fname_transfo, self.folder_out, param.list_labels_nn, self.verbose)
 
 
-def warp_label(path_label, folder_label, file_label, fname_src, fname_transfo, path_out):
+def warp_label(path_label, folder_label, file_label, fname_src, fname_transfo, path_out, list_labels_nn, verbose):
     """
     Warp label files according to info_label.txt file
     :param path_label:
@@ -114,20 +115,20 @@ def warp_label(path_label, folder_label, file_label, fname_src, fname_transfo, p
                      fname_src,
                      fname_transfo,
                      os.path.join(path_out, folder_label, template_label_file[i]),
-                     get_interp(template_label_file[i])),
+                     get_interp(template_label_file[i], list_labels_nn)),
                     is_sct_binary=True,
-                    verbose=param.verbose)
+                    verbose=verbose)
         # Copy list.txt
-        sct.copy(os.path.join(path_label, folder_label, param.file_info_label), os.path.join(path_out, folder_label))
+        sct.copy(os.path.join(path_label, folder_label, file_label), os.path.join(path_out, folder_label))
 
 
 # Get interpolation method
 # ==========================================================================================
-def get_interp(file_label):
+def get_interp(file_label, list_labels_nn):
     # default interp
     interp = 'Linear'
     # NN interp
-    if any(substring in file_label for substring in param.list_labels_nn):
+    if any(substring in file_label for substring in list_labels_nn):
         interp = 'NearestNeighbor'
     # output
     return interp
@@ -248,5 +249,5 @@ def main(args=None):
 
 if __name__ == "__main__":
     sct.init_sct()
-    param = Param()
+    _param = Param()
     main()
