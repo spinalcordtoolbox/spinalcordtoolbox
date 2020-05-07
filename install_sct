@@ -538,7 +538,9 @@ if [[ -f "requirements-freeze.txt" ]]; then
 else
   # Not a package
   print info "Using requirements.txt (git installation)"
-  pip install -r requirements.txt
+  #issue with the -f option in the requirements with macos. Need to explore further 
+  # best practice https://pip.pypa.io/en/latest/reference/pip_install/#requirements-file-format
+  pip install -r requirements.txt -f https://download.pytorch.org/whl/torch_stable.html
 fi
 if [[ $? != 0 ]]; then
   die "Failed running pip install: $?"
