@@ -313,7 +313,7 @@ def analyze_binary_objects(fname_mask, fname_voi=None, fname_ref=None, path_temp
                                             "volume": [],
                                             "length_IS": [],
                                             "max_equiv_diameter": []
-    })
+    }, columns=["lesion_ID", "volume", "length_IS", "max_equiv_diameter"])
 
     # Voxel size
     px, py, pz = im_labeled.dim[4:7]
@@ -339,5 +339,8 @@ def analyze_binary_objects(fname_mask, fname_voi=None, fname_ref=None, path_temp
         logging.info('\tVolume: ' + str(np.round(volume, 2)) + ' mm3')
         logging.info('\t(S-I) length: ' + str(np.round(length_is, 2)) + ' mm')
         logging.info('\tMax. equivalent diameter : ' + str(np.round(max_equiv_diameter, 2)) + ' mm')
+
+        # Add info to df
+        df_results.loc[len(df_results)] = [lesion_id, volume, length_is, max_equiv_diameter]
 
         del im_lesion_id
