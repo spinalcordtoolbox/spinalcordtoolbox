@@ -98,7 +98,20 @@ class SmartFormatter(argparse.HelpFormatter):
     # this is the RawTextHelpFormatter._split_lines
     def _split_lines(self, text, width):
         if text.startswith('R|'):
-            return text[2:].splitlines()
+            lines = text[2:].splitlines()
+            offsets = [re.match("^[ \t]*", l).group(0) for l in lines]
+            wrapped = []
+            for i in range(len(lines)):
+                li = lines[i]
+                o = offsets[i]
+                ol = len(o)
+                init_wrap = argparse._textwrap.fill(li, width).splitlines()
+                first = init_wrap[0]
+                rest = "\n".join(init_wrap[1:])
+                rest_wrap = argparse._textwrap.fill(rest, width - ol).splitlines()
+                offset_lines = [o + wl for wl in rest_wrap]
+                wrapped = wrapped + [first] + offset_lines
+            return wrapped
         return argparse.HelpFormatter._split_lines(self, text, width)
 
 
