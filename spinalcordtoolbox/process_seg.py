@@ -301,13 +301,11 @@ def analyze_binary_objects(fname_mask, fname_voi=None, fname_ref=None, path_temp
         logging.info("Compute angle correction for CSA based on cord angle with respect to slice...")
         # Spinal cord angle with respect to I-S slice
         angle_correction = get_angle_correction(im_seg=im_voi.copy())
-        # Indexes of I-S slices where VOI is present
-        z_voi = [z for z in range(angle_correction.shape[0]) if z != np.nan]
     else:
-        z_voi = list(range(im_mask.data.shape[2]))
+        angle_correction = np.full_like(np.empty(im_mask.dim[2]), 1.0, dtype=np.double)
 
-
-
+    # Indexes of I-S slices where VOI is present
+    z_voi = [z for z in list(angle_correction) if z != np.nan]
 
     # Initialise result dictionary
     df_results = pd.DataFrame.from_dict({
