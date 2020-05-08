@@ -6,21 +6,15 @@
 
 from __future__ import print_function, absolute_import, division
 
-import os, math, sys, pickle, shutil, logging
+import os, math, sys
 import argparse
 
-import numpy as np
-import pandas as pd
-from scipy.ndimage import label, generate_binary_structure
-
-from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.process_seg import analyze_lesion
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
 from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder
 
 import sct_utils as sct
 from sct_utils import extract_fname, printv, tmp_create
-
-logger = logging.getLogger(__name__)
 
 
 def get_parser():
@@ -146,78 +140,6 @@ def get_angle_correction(im_seg):
         angle_correction[iz] = math.degrees(angle)
 
     return angle_correction
-
-
-def analyze_lesion(fname_mask, fname_voi, fname_ref=None, path_template=None, path_ofolder="./analyze_lesion", verbose=1):
-    """
-    Analyze lesions or tumours by computing statistics on binary mask.
-
-    :param fname_mask: Lesion binary mask filename.
-    :param fname_voi: Volume of interest binary mask filename.
-    :param fname_ref: Image filename from which to extract average values within lesions.
-    :param path_template: Path to folder containing the atlas/template registered to the anatomical image.
-    :param path_ofolder: Output folder.
-    :param verbose: Verbose.
-    :return: XX
-    """
-    im_mask, im_voi = Image(fname_mask), Image(fname_voi)
-
-    # Check if input data is binary and not empty
-    check_binary(im_mask.data, fname=fname_mask, verbose=verbose)
-    check_binary(im_voi.data, fname=fname_voi, verbose=verbose)
-
-    # re-orient image to RPI
-    logger.info("Reorient the image to RPI, if necessary...")
-    original_orientation = im_mask.orientation
-    im_mask.change_orientation('RPI')
-    im_voi.change_orientation('RPI')
-
-    logger.info("Label the different lesions on the input mask...")
-    # Binary structure
-    bin_struct = generate_binary_structure(3, 2)  # 18-connectivity
-    # Label connected regions of the masked image
-    im_labeled = im_mask.copy()
-    im_labeled.data, num_lesion = label(im_mask.data.copy(), structure=bin_struct)
-
-    # Spinal cord angle with respect to I-S slice
-    angle_correction = get_angle_correction(im_seg=im_voi.copy())
-    # Indexes of I-S slices where VOI is present
-    z_voi = [z for z in range(angle_correction.shape[0]) if z != np.nan]
-
-    # Initialise result dictionary
-    df_results = pd.DataFrame.from_dict({
-                                            "lesion_ID": [],
-                                            "volume": [],
-                                            "length_IS": [],
-                                            "max_equiv_diameter": []
-    })
-
-    # Voxel size
-    px, py, pz = im_labeled.dim[4:7]
-
-    # Compute metrics for each lesion
-    for lesion_id in range(1, num_lesion + 1):
-        im_lesion_id = im_labeled.copy()
-        data_lesion_id = (im_lesion_id.data == lesion_id).astype(np.int)
-
-        # Indexes of I-S slices where lesion_id is present
-        z_lesion_cur = [z for z in z_voi if np.any(data_lesion_id[:, :, z])]
-
-        # Volume
-        volume = np.sum(data_lesion_id) * px * py * pz
-        # Inf-Sup length
-        length_is_zz = [np.cos(angle_correction[zz]) * pz[2] for zz in z_lesion_cur]
-        length_is = np.sum(length_is_zz)
-        # Maximum equivalent diameter
-        list_area = [np.sum(data_lesion_id[:, :, zz]) * np.cos(angle_correction[zz]) * px * py for zz in z_lesion_cur]
-        max_equiv_diameter = 2 * np.sqrt(max(list_area) / (4 * np.pi))
-
-        # Info
-        printv('\tVolume: ' + str(np.round(volume, 2)) + ' mm3', verbose, type='info')
-        printv('\t(S-I) length: ' + str(np.round(length_is, 2)) + ' mm', verbose, type='info')
-        printv('\tMax. equivalent diameter : ' + str(np.round(max_equiv_diameter, 2)) + ' mm', verbose, type='info')
-
-        del im_lesion_id
 
 
 def main(args=None):
