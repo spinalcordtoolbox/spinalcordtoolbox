@@ -244,6 +244,17 @@ on the subject.
 Submitting a Pull Request
 *************************
 
+PR tag for work in progress 
+===========================
+You can clearly tag when you’re coding a work in progress.
+When you open a pull request, a dropdown arrow appears next to the 
+“Create pull request” button. Toggle the dropdown arrow whenever you want to create a draft instead.
+
+A draft pull request is styled differently to clearly indicate that it’s in a draft state. 
+Merging is blocked in draft pull requests. Change the status to “Ready for review” near the 
+bottom of your pull request to remove the draft state and allow merging according to your 
+project’s settings. 
+
 PR Title
 ========
 
@@ -256,8 +267,6 @@ for each new release, so please follow the following rules:
 - Do not include the applicable issue number in the title (do it in the `PR Body`_).
 
 - Do not include the function name (use a `PR Labels`_ instead).
-
-- If the PR is not ready for review, add "(WIP)" at the beginning of the title.
 
 
 PR Body
