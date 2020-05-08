@@ -6,11 +6,10 @@
 
 from __future__ import print_function, absolute_import, division
 
-import os, math, sys
+import os, sys
 import argparse
 
 from spinalcordtoolbox.process_seg import analyze_binary_objects
-from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
 from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder
 
 import sct_utils as sct

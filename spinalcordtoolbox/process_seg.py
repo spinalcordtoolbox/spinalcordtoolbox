@@ -265,7 +265,7 @@ def get_angle_correction(im_seg):
     return angle_correction
 
 
-def analyze_binary_objects(fname_mask, fname_voi, fname_ref=None, path_template=None, path_ofolder="./analyze_lesion", verbose=1):
+def analyze_binary_objects(fname_mask, fname_voi=None, fname_ref=None, path_template=None, path_ofolder="./analyze_lesion", verbose=1):
     """
     Analyze lesions or tumours by computing statistics on binary mask.
 
@@ -277,17 +277,16 @@ def analyze_binary_objects(fname_mask, fname_voi, fname_ref=None, path_template=
     :param verbose: Verbose.
     :return: XX
     """
-    im_mask, im_voi = Image(fname_mask), Image(fname_voi)
+    im_mask = Image(fname_mask)
 
     # Check if input data is binary and not empty
-    check_binary(im_mask.data, fname=fname_mask, verbose=verbose)
-    check_binary(im_voi.data, fname=fname_voi, verbose=verbose)
+    if not im_mask.is_binary() or im_mask.is_empty():
+        logging.error("ERROR input file %s is not binary file or is empty".format(fname_mask))
 
     # re-orient image to RPI
     logging.info("Reorient the image to RPI, if necessary...")
     original_orientation = im_mask.orientation
     im_mask.change_orientation('RPI')
-    im_voi.change_orientation('RPI')
 
     logging.info("Label the different lesions on the input mask...")
     # Binary structure
@@ -296,10 +295,19 @@ def analyze_binary_objects(fname_mask, fname_voi, fname_ref=None, path_template=
     im_labeled = im_mask.copy()
     im_labeled.data, num_lesion = label(im_mask.data.copy(), structure=bin_struct)
 
-    # Spinal cord angle with respect to I-S slice
-    angle_correction = get_angle_correction(im_seg=im_voi.copy())
-    # Indexes of I-S slices where VOI is present
-    z_voi = [z for z in range(angle_correction.shape[0]) if z != np.nan]
+    if fname_voi is not None:
+        im_voi = Image(fname_voi)
+        im_voi.change_orientation('RPI')
+        logging.info("Compute angle correction for CSA based on cord angle with respect to slice...")
+        # Spinal cord angle with respect to I-S slice
+        angle_correction = get_angle_correction(im_seg=im_voi.copy())
+        # Indexes of I-S slices where VOI is present
+        z_voi = [z for z in range(angle_correction.shape[0]) if z != np.nan]
+    else:
+        z_voi = list(range(im_mask.data.shape[2]))
+
+
+
 
     # Initialise result dictionary
     df_results = pd.DataFrame.from_dict({
