@@ -295,6 +295,8 @@ def analyze_binary_objects(fname_mask, fname_voi=None, fname_ref=None, path_temp
     im_labeled = im_mask.copy()
     im_labeled.data, num_lesion = label(im_mask.data.copy(), structure=bin_struct)
 
+    columns_result = ["lesion_id", "volume", "length_IS", "max_equivalent_diameter"]
+
     if fname_voi is not None:
         im_voi = Image(fname_voi)
         im_voi.change_orientation('RPI')
@@ -304,16 +306,18 @@ def analyze_binary_objects(fname_mask, fname_voi=None, fname_ref=None, path_temp
     else:
         angle_correction = np.full_like(np.empty(im_mask.dim[2]), 1.0, dtype=np.double)
 
+    if fname_ref is not None:
+        im_ref = Image(fname_ref).change_orientation('RPI')
+        logging.info("Load raw data...")
+        columns_result += ['mean_intensity', 'std_intensity']
+    else:
+        im_ref = None
+
     # Indexes of I-S slices where VOI is present
     z_voi = [z for z in list(angle_correction) if z != np.nan]
 
     # Initialise result dictionary
-    df_results = pd.DataFrame.from_dict({
-                                            "lesion_ID": [],
-                                            "volume": [],
-                                            "length_IS": [],
-                                            "max_equiv_diameter": []
-    }, columns=["lesion_ID", "volume", "length_IS", "max_equiv_diameter"])
+    df_results = pd.DataFrame.from_dict(columns=columns_result)
 
     # Voxel size
     px, py, pz = im_labeled.dim[4:7]
@@ -340,7 +344,16 @@ def analyze_binary_objects(fname_mask, fname_voi=None, fname_ref=None, path_temp
         logging.info('\t(S-I) length: ' + str(np.round(length_is, 2)) + ' mm')
         logging.info('\tMax. equivalent diameter : ' + str(np.round(max_equiv_diameter, 2)) + ' mm')
 
-        # Add info to df
-        df_results.loc[len(df_results)] = [lesion_id, volume, length_is, max_equiv_diameter]
+        list_results = [lesion_id, volume, length_is, max_equiv_diameter]
+
+        # Intensity
+        if im_ref is not None:
+            mean_values = np.mean(im_ref.data[np.where(data_lesion_id)])
+            std_values = np.std(im_ref.data[data_lesion_id == 1])
+            logging.info('\tMean+/-Std values in Reference image:' + str(np.round(mean_values, 2))
+                         + '+/-' + str(np.round(std_values, 2)))
+            list_results += [mean_values, std_values]
+
+        df_results.loc[len(df_results)] = list_results
 
         del im_lesion_id
