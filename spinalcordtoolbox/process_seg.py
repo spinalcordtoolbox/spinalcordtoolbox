@@ -235,7 +235,7 @@ def _find_AP_and_RL_diameter(major_axis, minor_axis, orientation, dim):
     return diameter_AP, diameter_RL
 
 
-def analyze_lesion(fname_mask, fname_voi, fname_ref=None, path_template=None, path_ofolder="./analyze_lesion", verbose=1):
+def analyze_binary_objects(fname_mask, fname_voi, fname_ref=None, path_template=None, path_ofolder="./analyze_lesion", verbose=1):
     """
     Analyze lesions or tumours by computing statistics on binary mask.
 

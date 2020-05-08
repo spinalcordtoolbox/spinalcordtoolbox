@@ -9,7 +9,7 @@ from __future__ import print_function, absolute_import, division
 import os, math, sys
 import argparse
 
-from spinalcordtoolbox.process_seg import analyze_lesion
+from spinalcordtoolbox.process_seg import analyze_binary_objects
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
 from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder
 
@@ -170,12 +170,12 @@ def main(args=None):
     sct.init_sct(log_level=verbose, update=True)  # Update log level
 
     # Run analysis
-    analyze_lesion(fname_mask=fname_mask,
-                   fname_voi=fname_sc,
-                   fname_ref=fname_ref,
-                   path_template=path_template,
-                   path_ofolder=path_results,
-                   verbose=verbose)
+    analyze_binary_objects(fname_mask=fname_mask,
+                           fname_voi=fname_sc,
+                           fname_ref=fname_ref,
+                           path_template=path_template,
+                           path_ofolder=path_results,
+                           verbose=verbose)
 
     # TODO charley: to refactor
     """
