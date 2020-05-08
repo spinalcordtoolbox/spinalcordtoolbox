@@ -109,7 +109,7 @@ def dummy_centerline(size_arr=(9, 9, 9), pixdim=(1, 1, 1), subsampling=1, dilate
 
 def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.float64, orientation='LPI',
                        shape='rectangle', angle_RL=0, angle_AP=0, angle_IS=0, radius_RL=5.0, radius_AP=3.0,
-                       interleaved=False, zeroslice=[], debug=False):
+                       interleaved=False, factor=1, zeroslice=[], debug=False):
     """Create a dummy Image with a ellipse or ones running from top to bottom in the 3rd dimension, and rotate the image
     to make sure that compute_csa and compute_shape properly estimate the centerline angle.
     :param size_arr: tuple: (nx, ny, nz)
@@ -143,10 +143,11 @@ def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.floa
     elif interleaved:
         import numpy.matlib
         from numpy import poly1d, polyfit
-        factor = 2
         # define array based on a polynomial function, within Y-Z plane to simulate slicewise motion in A-P
-        y = np.matlib.repmat([round(nx / 2.) + factor, round(nx / 2.) - factor], 1, round(nz / 2))
-        y = y.reshape(nz)   # reshape to vector (1,R) -> (R,)
+        y = np.matlib.repmat([round(nx / 2.) + pixdim[0]*factor, round(nx / 2.) - pixdim[0]*factor], 1, round(nz / 2))
+        if nz % 2 != 0:         # if z-dimension is odd, add one more element to fit size
+            y = numpy.append(y,round(nx / 2.) + pixdim[0]*factor)
+        y = y.reshape(nz)       # reshape to vector (1,R) -> (R,)
         z = np.arange(0, nz)
         p = poly1d(polyfit(z, y, deg=nz))
         # loop across slices and add object
@@ -204,3 +205,33 @@ def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.floa
     if debug:
         img.save('tmp_dummy_seg_'+datetime.now().strftime("%Y%m%d%H%M%S%f")+'.nii.gz')
     return img
+
+def dummy_4d(vol_num=10, size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.float64, orientation='LPI',
+             shape='rectangle', angle_RL=0, angle_AP=0, angle_IS=0, radius_RL=5.0, radius_AP=3.0,
+             interleaved=False, zeroslice=[], debug=False):
+    """
+    Create a dummy 4D segmentation (dMRI/fMRI)
+    :param vol_num: int: number of volumes in 4D data
+    :return: Image object
+    """
+
+    from random import uniform
+    from sct_image import concat_data
+
+    img_list = []
+
+    # Loop across individual volumes of 4D data
+    for volume in range(0,vol_num):
+        factor = uniform(0.5, 3.0)          # shift in voxels
+        # set debug=True in line below for saving individual volumes into individual nii files
+        img_list.append(dummy_segmentation(size_arr=size_arr, pixdim=pixdim, dtype=dtype, orientation=orientation,
+                                           shape=shape, angle_RL=angle_RL, angle_AP=angle_AP, angle_IS=angle_IS,
+                                           radius_RL=radius_RL, radius_AP=radius_AP, interleaved=interleaved,
+                                           factor=factor, zeroslice=zeroslice, debug=False))
+
+    # Concatenate individual 3D images into 4D data
+    img_4d = concat_data(img_list, 3)
+    if debug:
+        file_4d_data = 'tmp_dummy_4d_' + datetime.now().strftime("%Y%m%d%H%M%S%f") + '.nii.gz'
+        img_4d.save(file_4d_data, verbose=0)
+    return img_4d
