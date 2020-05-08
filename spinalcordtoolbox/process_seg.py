@@ -15,7 +15,7 @@ import pandas as pd
 from scipy.ndimage import label, generate_binary_structure
 
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.aggregate_slicewise import Metric
+from spinalcordtoolbox.aggregate_slicewise import Metric, func_bin, func_std
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
 from spinalcordtoolbox.resampling import resample_nib
 
@@ -348,11 +348,11 @@ def analyze_binary_objects(fname_mask, fname_voi=None, fname_ref=None, path_temp
 
         # Intensity
         if im_ref is not None:
-            mean_values = np.mean(im_ref.data[np.where(data_lesion_id)])
-            std_values = np.std(im_ref.data[data_lesion_id == 1])
-            logging.info('\tMean+/-Std values in Reference image:' + str(np.round(mean_values, 2))
-                         + '+/-' + str(np.round(std_values, 2)))
-            list_results += [mean_values, std_values]
+            avg, _ = func_bin(im_ref.data, data_lesion_id)
+            std, _ = func_std(im_ref.data, data_lesion_id)
+            logging.info('\tMean+/-Std values in Reference image:' + str(np.round(avg, 2))
+                         + '+/-' + str(np.round(std, 2)))
+            list_results += [avg, std]
 
         df_results.loc[len(df_results)] = list_results
 
