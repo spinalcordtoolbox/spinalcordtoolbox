@@ -745,6 +745,26 @@ class Image(object):
         # im_out.dim = im_out.data.shape[:dim] + (1,) + im_out.data.shape[dim:]
         return im_out
 
+    def is_binary(self):
+        """
+        Check if data is binary.
+        :return: Boolean: True if binary, False otherwise.
+        """
+        if np.array_equal(self.data, self.data.astype(bool)):
+            return True
+        else:
+            return False
+
+    def is_empty(self):
+        """
+        Check if data is empty, i.e. filled with zeros only.
+        :return: Boolean: True if empty, False otherwise.
+        """
+        if np.count_nonzero(self.data) == 0:
+            return True
+        else:
+            return False
+
 
 def compute_dice(image1, image2, mode='3d', label=1, zboundaries=False):
     """

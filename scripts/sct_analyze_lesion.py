@@ -95,22 +95,6 @@ def get_parser():
     return parser
 
 
-def check_binary(arr, fname, verbose=1):
-    """
-    Check if data is binary and not empty. If not, print warning or error message.
-
-    :param arr: Input data, array.
-    :param fname: Input filename.
-    :param verbose: Verbose.
-    :return:
-    """
-    if not np.array_equal(arr, arr.astype(bool)):
-        if np.max(arr) == 0:
-            printv('WARNING: Empty masked image: {}'.format(fname), verbose, 'warning')
-        else:
-            printv("ERROR input file %s is not binary file with 0 and 1 values".format(fname), 1, 'error')
-
-
 def main(args=None):
     """
     Main function
