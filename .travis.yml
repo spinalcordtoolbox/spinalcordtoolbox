@@ -45,13 +45,6 @@ matrix:
       name: "CentOS 7"
       env:
         - DEPS="yum install -y which gcc git curl" IMAGE="centos:7"
-    - os: linux
-      dist: trusty # kernel ~= Centos6
-      services:
-        - docker
-      name: "CentOS 6"
-      env:
-        - DEPS="yum install -y which gcc git curl" IMAGE="centos:6"
     # The rest of the OSes can use Travis's built-in images:
     - os: linux  # list of Linux env: https://docs.travis-ci.com/user/reference/overview/
       name: "Ubuntu 18.04 (Bionic Beaver)"
