@@ -2,14 +2,18 @@
 # Collection of functions to create data for testing
 
 import numpy as np
+import numpy.matlib
 from datetime import datetime
 import itertools
 from skimage.transform import rotate
+
+from random import uniform
 
 import nibabel as nib
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.resampling import resample_nib
+from sct_image import concat_data
 
 DEBUG = False  # Save img_sub
 
@@ -61,12 +65,11 @@ def dummy_centerline(size_arr=(9, 9, 9), pixdim=(1, 1, 1), subsampling=1, dilate
     :param debug: Bool: Write temp files
     :return:
     """
-    from numpy import poly1d, polyfit
     nx, ny, nz = size_arr
     # define array based on a polynomial function, within X-Z plane, located at y=ny/4, based on the following points:
     x = np.array([round(nx/4.), round(nx/2.), round(3*nx/4.)])
     z = np.array([0, round(nz/2.), nz-1])
-    p = poly1d(polyfit(z, x, deg=3))
+    p = np.poly1d(np.polyfit(z, x, deg=3))
     data = np.zeros((nx, ny, nz))
     arr_ctl = np.array([p(range(nz)).astype(np.int),
                         [round(ny / 4.)] * len(range(nz)),
@@ -141,15 +144,13 @@ def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.floa
             if shape == 'ellipse':
                 data[:, :, iz] = (((xx - nx / 2) / radius_RL) ** 2 + ((yy - ny / 2) / radius_AP) ** 2 <= 1) * 1
     elif interleaved:
-        import numpy.matlib
-        from numpy import poly1d, polyfit
         # define array based on a polynomial function, within Y-Z plane to simulate slicewise motion in A-P
         y = np.matlib.repmat([round(nx / 2.) + pixdim[0]*factor, round(nx / 2.) - pixdim[0]*factor], 1, round(nz / 2))
         if nz % 2 != 0:         # if z-dimension is odd, add one more element to fit size
             y = numpy.append(y,round(nx / 2.) + pixdim[0]*factor)
         y = y.reshape(nz)       # reshape to vector (1,R) -> (R,)
         z = np.arange(0, nz)
-        p = poly1d(polyfit(z, y, deg=nz))
+        p = np.poly1d(np.polyfit(z, y, deg=nz))
         # loop across slices and add object
         for iz in range(nz):
             if shape == 'rectangle':  # theoretical CSA: (a*2+1)(b*2+1)
@@ -206,7 +207,7 @@ def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.floa
         img.save('tmp_dummy_seg_'+datetime.now().strftime("%Y%m%d%H%M%S%f")+'.nii.gz')
     return img
 
-def dummy_4d(vol_num=10, size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.float64, orientation='LPI',
+def dummy_segmentation_4d(vol_num=10, size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.float64, orientation='LPI',
              shape='rectangle', angle_RL=0, angle_AP=0, angle_IS=0, radius_RL=5.0, radius_AP=3.0,
              interleaved=False, zeroslice=[], debug=False):
     """
@@ -214,9 +215,6 @@ def dummy_4d(vol_num=10, size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.fl
     :param vol_num: int: number of volumes in 4D data
     :return: Image object
     """
-
-    from random import uniform
-    from sct_image import concat_data
 
     img_list = []
 
