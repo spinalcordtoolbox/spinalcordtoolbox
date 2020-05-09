@@ -32,6 +32,41 @@ matrix:
       env:
         - DOCKER_IMAGE="archlinux" DOCKER_DEPS_CMD="pacman -Sy --noconfirm which gcc git curl"
     - os: linux
+      dist: bionic
+      services:
+        - docker
+      name: "Debian Rolling Release"
+      env:
+        - DOCKER_IMAGE="debian:sid"     DOCKER_DEPS_CMD="apt update && apt install -y libglib2.0-0 procps gcc git curl"
+    - os: linux
+      dist: bionic
+      services:
+        - docker
+      name: "Debian Testing"
+      env:
+        - DOCKER_IMAGE="debian:testing" DOCKER_DEPS_CMD="apt update && apt install -y libglib2.0-0 procps gcc git curl"
+    - os: linux
+      dist: bionic # kernel ~= Debian:10
+      services:
+        - docker
+      name: "Debian 10"
+      env:
+        - DOCKER_IMAGE="debian:10"      DOCKER_DEPS_CMD="apt update && apt install -y libglib2.0-0 procps gcc git curl"
+    - os: linux
+      dist: xenial # kernel ~= Debian:9
+      services:
+        - docker
+      name: "Debian 9"
+      env:
+        - DOCKER_IMAGE="debian:9"       DOCKER_DEPS_CMD="apt update && apt install -y libglib2.0-0 procps gcc git curl"
+    - os: linux
+      dist: xenial # kernel ~= Debian:8
+      services:
+        - docker
+      name: "Debian 8"
+      env:
+        - DOCKER_IMAGE="debian:8"       DOCKER_DEPS_CMD="apt update && apt install -y libglib2.0-0 procps gcc git curl"
+    - os: linux
       dist: bionic # kernel ~= Centos8
       services:
         - docker
