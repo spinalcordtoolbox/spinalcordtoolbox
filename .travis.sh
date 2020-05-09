@@ -8,21 +8,24 @@ set -e # Error build immediately if install script exits with non-zero
 # instead of continuing.
 # TODO: figure out and pass needed environment variables individually with -e
 
-if ! [ -z "$IMAGE" ]; then
+if [ -n "$DOCKER_IMAGE" ]; then
    docker run \
      --name container \
      --init \
      -it -d \
      --rm \
      -v `pwd`:/repo -w /repo \
-     "$IMAGE"
+     "$DOCKER_IMAGE"
    trap "docker stop container" EXIT
-   # set up groups to match the owner of /repo, so the installer can't tell
+   # set up a user:group matching that of the volume mount /repo, so the installer isn't confused
    docker exec container groupadd -g "`id -g`" `id -g -n`
    docker exec container useradd -m -u "`id -u`" -g "`id -g`" `id -u -n`
-   docker exec container $DEPS    # install platform-specific dependencies
+   if [ -n "$DOCKER_DEPS_CMD" ]; then
+       docker exec container $DOCKER_DEPS_CMD    # install platform-specific dependencies
+   fi
    # recurse to run the real test script
    # --user `id -u` makes sure the build script is the owner of the files at /repo
+   # TODO: pass through the Travis envs: https://docs.travis-ci.com/user/environment-variables/
    docker exec --user `id -u`:`id -g` container "$0"
    exit 0
 fi
