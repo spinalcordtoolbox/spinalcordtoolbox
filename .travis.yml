@@ -15,7 +15,7 @@ matrix:
   include:
     # To support OSes that Travis doesn't, we mix in Docker images.
     # Any such OS (CentOS, etc) will be booted in docker instead.
-    # OSes in this case are marked by using IMAGE: instead of dist:.
+    # OSes in this case are marked by using DOCKER_IMAGE: instead of dist:.
     #
     # Since Docker images are usually very barebones,
     # these need a DEPS command that should install the
@@ -30,21 +30,21 @@ matrix:
         - docker
       name: "ArchLinux"
       env:
-        - IMAGE="archlinux" DEPS="pacman -Sy --noconfirm which gcc git curl"
+        - DOCKER_IMAGE="archlinux" DOCKER_DEPS_CMD="pacman -Sy --noconfirm which gcc git curl"
     - os: linux
       dist: bionic # kernel ~= Centos8
       services:
         - docker
       name: "CentOS 8"
       env:
-        - DEPS="yum install -y which gcc git curl" IMAGE="centos:8"
+        - DOCKER_IMAGE="centos:8" DOCKER_DEPS_CMD="yum install -y which gcc git curl"
     - os: linux
       dist: xenial # kernel ~= Centos7
       services:
         - docker
       name: "CentOS 7"
       env:
-        - DEPS="yum install -y which gcc git curl" IMAGE="centos:7"
+        - DOCKER_IMAGE="centos:7" DOCKER_DEPS_CMD="yum install -y which gcc git curl"
     # The rest of the OSes can use Travis's built-in images:
     - os: linux  # list of Linux env: https://docs.travis-ci.com/user/reference/overview/
       name: "Ubuntu 18.04 (Bionic Beaver)"
