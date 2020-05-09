@@ -4,29 +4,34 @@
 
 set -e # Error build immediately if install script exits with non-zero
 
-# if this is a docker job, set up and then recurse into the container,
+# if this is a docker job, set up and recurse into the container,
 # instead of continuing.
-# TODO: figure out and pass needed environment variables individually with -e
-
 if [ -n "$DOCKER_IMAGE" ]; then
    docker run \
      --name container \
      --init \
      -it -d \
      --rm \
-     -v `pwd`:/repo -w /repo \
+     -v "`pwd`":/repo -w /repo \
      "$DOCKER_IMAGE"
    trap "docker stop container" EXIT
    # set up a user:group matching that of the volume mount /repo, so the installer isn't confused
-   docker exec container groupadd -g "`id -g`" `id -g -n`
-   docker exec container useradd -m -u "`id -u`" -g "`id -g`" `id -u -n`
+   #
+   # TODO: it would be nice if the volume was mounted at `pwd`/, to further reduce the distinction
+   # between docker/nondocker runs, but docker gets the permissions wrong:
+   # it does `mkdir -p $mountpoint` *as root* so while the contents of the mountpoint are owned by
+   # $USER, its parents are owned by root, usually including /home/$USER which breaks things like pip.
+   # and there's no way to boot a container, `mkdir -p` manually, then attach the volume *after*.
+   docker exec container groupadd -g "`id -g`" "`id -g -n`"
+   docker exec container useradd -m -u "`id -u`" -g "`id -g`" "`id -u -n`"
+   # install platform-specific dependencies
    if [ -n "$DOCKER_DEPS_CMD" ]; then
-       docker exec container $DOCKER_DEPS_CMD    # install platform-specific dependencies
-   fi
+       docker exec container $DOCKER_DEPS_CMD
+  fi
    # recurse to run the real test script
    # --user `id -u` makes sure the build script is the owner of the files at /repo
    # TODO: pass through the Travis envs: https://docs.travis-ci.com/user/environment-variables/
-   docker exec --user `id -u`:`id -g` container "$0"
+   docker exec --user "`id -u`":"`id -g`" container "$0"
    exit 0
 fi
 
