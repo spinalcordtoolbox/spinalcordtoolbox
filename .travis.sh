@@ -51,13 +51,10 @@ echo *** INTEGRATION TESTS ***
 pip install coverage
 echo -ne "import coverage\ncov = coverage.process_startup()\n" > sitecustomize.py
 echo -ne "[run]\nconcurrency = multiprocessing\nparallel = True\n" > .coveragerc
-if [ "${TRAVIS_OS_NAME}" = "osx" ]; then
-  COVERAGE_PROCESS_START="$PWD/.coveragerc" COVERAGE_FILE="$PWD/.coverage" sct_testing -j 1 --abort-on-failure
-  coverage combine
-else
-  COVERAGE_PROCESS_START="$PWD/.coveragerc" COVERAGE_FILE="$PWD/.coverage" sct_testing --abort-on-failure
-  coverage combine
-fi
+COVERAGE_PROCESS_START="$PWD/.coveragerc" COVERAGE_FILE="$PWD/.coverage" \
+  sct_testing --abort-on-failure \
+  $([ "$(uname -s)" = "Darwin" ] && echo -n "-j 1")
+coverage combine
 
 # TODO: move this part to a separate travis job; there's no need for each platform to lint the code
 echo *** ANALYZE CODE ***
