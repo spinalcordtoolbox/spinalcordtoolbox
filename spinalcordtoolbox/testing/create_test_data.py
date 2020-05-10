@@ -207,12 +207,14 @@ def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.floa
         img.save('tmp_dummy_seg_'+datetime.now().strftime("%Y%m%d%H%M%S%f")+'.nii.gz')
     return img
 
-def dummy_segmentation_4d(vol_num=10, size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.float64, orientation='LPI',
-             shape='rectangle', angle_RL=0, angle_AP=0, angle_IS=0, radius_RL=5.0, radius_AP=3.0,
-             interleaved=False, zeroslice=[], debug=False):
+def dummy_segmentation_4d(vol_num=10, create_bvecs=False, size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.float64,
+                          orientation='LPI', shape='rectangle', angle_RL=0, angle_AP=0, angle_IS=0, radius_RL=5.0,
+                          radius_AP=3.0, interleaved=False, zeroslice=[], debug=False):
     """
-    Create a dummy 4D segmentation (dMRI/fMRI)
+    Create a dummy 4D segmentation (dMRI/fMRI) and dummy bvecs file (optional)
     :param vol_num: int: number of volumes in 4D data
+    :param create_bvecs: bool: create dummy bvecs file (necessary e.g. for sct_dmri_moco)
+    other parameters are same as in dummy_segmentation function
     :return: Image object
     """
 
@@ -230,6 +232,26 @@ def dummy_segmentation_4d(vol_num=10, size_arr=(256, 256, 256), pixdim=(1, 1, 1)
     # Concatenate individual 3D images into 4D data
     img_4d = concat_data(img_list, 3)
     if debug:
-        file_4d_data = 'tmp_dummy_4d_' + datetime.now().strftime("%Y%m%d%H%M%S%f") + '.nii.gz'
+        out_name = datetime.now().strftime("%Y%m%d%H%M%S%f")
+        file_4d_data = 'tmp_dummy_4d_' + out_name + '.nii.gz'
         img_4d.save(file_4d_data, verbose=0)
+
+    # Create a dummy bvecs file (necessary e.g. for sct_dmri_moco)
+    if create_bvecs:
+        n_b0 = 1                # number of b0
+        n_dwi = vol_num-n_b0    # number of dwi
+        bvecs_dummy = ['', '', '']
+        bvec_b0 = np.array([[0.0, 0.0, 0.0]] * n_b0)
+        bvec_dwi = np.array([[uniform(0,1), uniform(0,1), uniform(0,1)]] * n_dwi)
+        bvec = np.concatenate((bvec_b0,bvec_dwi),axis=0)
+        # Concatenate bvecs
+        for i in (0, 1, 2):
+            bvecs_dummy[i] += ' '.join(str(v) for v in map(lambda n: '%.16f' % n, bvec[:, i]))
+            bvecs_dummy[i] += ' '
+        bvecs_concat = '\n'.join(str(v) for v in bvecs_dummy)  # transform list into lines of strings
+        if debug:
+            new_f = open('tmp_dummy_4d_' + out_name + '.bvec', 'w')
+            new_f.write(bvecs_concat)
+            new_f.close()
+
     return img_4d
