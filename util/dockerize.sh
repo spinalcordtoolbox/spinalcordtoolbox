@@ -24,7 +24,7 @@ docker exec container groupadd -g "`id -g`" "`id -g -n`"
 docker exec container useradd -m -u "`id -u`" -g "`id -g`" "`id -u -n`"
 # install platform-specific dependencies
 if [ -n "$DOCKER_DEPS_CMD" ]; then
-    docker exec container $DOCKER_DEPS_CMD
+    docker exec container sh -c "$DOCKER_DEPS_CMD"
 fi
 # recurse to run the real test script
 # --user `id -u` makes sure the build script is the owner of the files at /repo
