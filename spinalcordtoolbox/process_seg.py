@@ -235,6 +235,33 @@ def _find_AP_and_RL_diameter(major_axis, minor_axis, orientation, dim):
     return diameter_AP, diameter_RL
 
 
+def get_tangent_vector(im_seg):
+    """
+    Get tangent vector to the centerline.
+
+    :param im_seg: Spinal cord segmentation or centerline image.
+    :return: numpy array, tangent vector for each I-S slice, np.nan when no segmentation.
+    """
+    nx, ny, nz, nt, px, py, pz, pt = im_seg.dim
+
+    # fit centerline, smooth it and return the first derivative (in physical space)
+    _, arr_ctl, arr_ctl_der, _ = get_centerline(im_seg, param=ParamCenterline(), verbose=1)
+    x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = arr_ctl_der
+
+    tangent_vect = np.full_like(np.empty(nz), np.nan, dtype=np.double)
+
+    # loop across x_centerline_deriv
+    # (instead of [min_z_index, max_z_index], which could vary after interpolation)
+    for iz in range(x_centerline_deriv.shape[0]):
+        # normalize the tangent vector to the centerline (i.e. its derivative)
+        vect = np.array([x_centerline_deriv[iz] * px, y_centerline_deriv[iz] * py, pz])
+        # Normalize vector by its L2 norm
+        norm = np.linalg.norm(vect)
+        tangent_vect[iz] = vect / norm
+
+    return tangent_vect
+
+
 def get_angle_correction(im_seg):
     """
     Measure spinal cord angle with respect to slice.
