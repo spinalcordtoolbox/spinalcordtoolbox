@@ -346,26 +346,18 @@ def main():
     if complete_test:
         print((status, output), '\n')
 
-    print_line('Check if DISPLAY variable is set')
+    # Further check with PyQt specifically
+    print_line('Check if figure can be opened with PyQt')
+    from PyQt5.QtWidgets import QApplication, QLabel
     try:
-        os.environ['DISPLAY']
+        app = QApplication([])
+        label = QLabel('Hello World!')
+        label.show()
+        label.close()
         print_ok()
-
-        # Further check with PyQt specifically
-        print_line('Check if figure can be opened with PyQt')
-        from PyQt5.QtWidgets import QApplication, QLabel
-        try:
-            app = QApplication([])
-            label = QLabel('Hello World!')
-            label.show()
-            label.close()
-            print_ok()
-        except Exception as err:
-            print_fail()
-            print(err)
-
-    except KeyError:
+    except Exception as err:
         print_fail()
+        print(err)
 
     print('')
     sys.exit(e + install_software)
