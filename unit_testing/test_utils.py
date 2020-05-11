@@ -18,6 +18,7 @@ def test_splitext():
     assert utils.splitext('folder/image.nii.gz') == ('folder/image', '.nii.gz')
     assert utils.splitext('nice.image.nii.gz') == ('nice.image', '.nii.gz')
     assert utils.splitext('nice.folder/image.nii.gz') == ('nice.folder/image', '.nii.gz')
+    assert utils.splitext('image.tar.gz') == ('image', '.tar.gz')
 
 
 def test_parse_num_list_inv():
