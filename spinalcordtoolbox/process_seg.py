@@ -220,12 +220,14 @@ def _find_AP_and_RL_diameter(major_axis, minor_axis, orientation, dim):
     return diameter_AP, diameter_RL
 
 
-def get_tangent_vector(im_seg):
-    """
-    Get tangent vector to the centerline.
+def get_angle_correction(im_seg):
+    """Measure spinal cord angle with respect to slice.
 
-    :param im_seg: Spinal cord segmentation or centerline image.
-    :return: numpy array, tangent vector for each I-S slice, np.nan when no segmentation.
+    Compute the angle about RL axis between the centerline and the normal vector to the slice.
+    Same for the AP and IS axes.
+
+    :param im_seg: Spinal cord segmentation image.
+    :return: three numpy arrays, angles in radians, np.nan when no segmentation.
     """
     nx, ny, nz, nt, px, py, pz, pt = im_seg.dim
 
@@ -237,8 +239,10 @@ def get_tangent_vector(im_seg):
     _, arr_ctl, arr_ctl_der, _ = get_centerline(im_seg, param=ParamCenterline(), verbose=1)
     x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = arr_ctl_der
 
-    # Init tangent vect
-    tangent_vect = np.full_like(np.empty((nz, 3)), np.nan, dtype=np.double)
+    # Init angles in the three dimensions, shape: (nz,), init with np.nan
+    angle_RL = np.full_like(np.empty(nz), np.nan, dtype=np.double)
+    angle_AP = np.full_like(np.empty(nz), np.nan, dtype=np.double)
+    angle_IS = np.full_like(np.empty(nz), np.nan, dtype=np.double)
 
     # Loop across slices where segmentation is present
     for iz in range(min_z_index, max_z_index+1):
@@ -248,41 +252,20 @@ def get_tangent_vector(im_seg):
                          pz])
         # Normalize vector by its L2 norm
         norm = np.linalg.norm(vect)
-        tangent_vect[iz] = vect / norm
+        tangent_vect = vect / norm
 
-    return tangent_vect
+        # Compute the angle about RL axis between the centerline and the normal vector to the slice
+        v0 = [tangent_vect[1], tangent_vect[2]]
+        v1 = [0, 1]
+        angle_RL[iz] = np.math.atan2(np.linalg.det([v0, v1]), np.dot(v0, v1))
 
+        # Compute the angle about AP axis between the centerline and the normal vector to the slice
+        v0 = [tangent_vect[0], tangent_vect[2]]
+        v1 = [0, 1]
+        angle_AP[iz] = np.math.atan2(np.linalg.det([v0, v1]), np.dot(v0, v1))
 
-def get_angle_correction(im_seg):
-    """Measure spinal cord angle with respect to slice.
-
-    Compute the angle about RL axis between the centerline and the normal vector to the slice.
-    Same for the AP and IS axes.
-
-    :param im_seg: Spinal cord segmentation image.
-    :return: three numpy arrays, angles in radians, np.nan when no segmentation.
-    """
-    # Get tangent vector to the centerline (i.e. its derivative)
-    tangent_vect = get_tangent_vector(im_seg)
-
-    # Init angles in the three dimensions, shape: (nz,), init with np.nan
-    angle_RL = np.full_like(np.empty(tangent_vect.shape[0]), np.nan, dtype=np.double)
-    angle_AP = np.full_like(np.empty(tangent_vect.shape[0]), np.nan, dtype=np.double)
-    angle_IS = np.full_like(np.empty(tangent_vect.shape[0]), np.nan, dtype=np.double)
-
-    for iz, t_v in enumerate(tangent_vect):
-        # If the segmentation is available for this z-slice
-        if not np.any(np.isnan(t_v)):
-            # Compute the angle about RL axis between the centerline and the normal vector to the slice
-            v0 = [t_v[1], t_v[2]]
-            v1 = [0, 1]
-            angle_RL[iz] = np.math.atan2(np.linalg.det([v0, v1]), np.dot(v0, v1))
-            # Compute the angle about AP axis between the centerline and the normal vector to the slice
-            v0 = [t_v[0], t_v[2]]
-            v1 = [0, 1]
-            angle_AP[iz] = np.math.atan2(np.linalg.det([v0, v1]), np.dot(v0, v1))
-            # Compute the angle between the normal vector of the plane and the vector z
-            angle_IS[iz] = np.arccos(np.vdot(t_v, np.array([0, 0, 1])))
+        # Compute the angle between the normal vector of the plane and the vector z
+        angle_IS[iz] = np.arccos(np.vdot(tangent_vect, np.array([0, 0, 1])))
 
     return angle_RL, angle_AP, angle_IS
 
