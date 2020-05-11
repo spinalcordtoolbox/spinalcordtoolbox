@@ -72,9 +72,10 @@ def compute_shape(segmentation, angle_correction=True, param_centerline=None, ve
         # Extract 2D patch
         current_patch = im_segr.data[:, :, iz]
         if angle_correction:
+            angle_RL_rad_iz, angle_AP_rad_iz = angle_RL_rad[iz], angle_AP_rad[iz]
             # Apply affine transformation to account for the angle between the centerline and the normal to the patch
-            tform = transform.AffineTransform(scale=(np.cos(angle_RL_rad[iz - min_z_index]),
-                                                     np.cos(angle_AP_rad[iz - min_z_index])))
+            tform = transform.AffineTransform(scale=(np.cos(angle_RL_rad_iz),
+                                                     np.cos(angle_AP_rad_iz)))
             # Convert to float64, to avoid problems in image indexation causing issues when applying transform.warp
             current_patch = current_patch.astype(np.float64)
             # TODO: make sure pattern does not go extend outside of image border
@@ -85,14 +86,14 @@ def compute_shape(segmentation, angle_correction=True, param_centerline=None, ve
                                                   )
         else:
             current_patch_scaled = current_patch
-            angle_AP_rad, angle_RL_rad = 0.0, 0.0
+            angle_RL_rad_iz, angle_AP_rad_iz = 0.0, 0.0
         # compute shape properties on 2D patch
         shape_property = _properties2d(current_patch_scaled, [px, py])
         if shape_property is not None:
             # Add custom fields
-            shape_property['angle_AP'] = angle_AP_rad * 180.0 / math.pi
-            shape_property['angle_RL'] = angle_RL_rad * 180.0 / math.pi
-            shape_property['length'] = pz / (np.cos(angle_AP_rad) * np.cos(angle_RL_rad))
+            shape_property['angle_AP'] = angle_RL_rad_iz * 180.0 / math.pi
+            shape_property['angle_RL'] = angle_AP_rad_iz * 180.0 / math.pi
+            shape_property['length'] = pz / (np.cos(angle_AP_rad_iz) * np.cos(angle_RL_rad_iz))
             # Loop across properties and assign values for function output
             for property_name in property_list:
                 shape_properties[property_name][iz] = shape_property[property_name]
