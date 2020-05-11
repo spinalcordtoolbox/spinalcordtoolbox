@@ -64,9 +64,7 @@ def compute_shape(segmentation, angle_correction=True, param_centerline=None, ve
     fit_results = None
 
     if angle_correction:
-        # compute the spinal cord centerline based on the spinal cord segmentation
-        # here, param_centerline.minmax needs to be False because we need to retrieve the total number of input slices
-        _, arr_ctl, arr_ctl_der, fit_results = get_centerline(im_segr, param=param_centerline, verbose=verbose)
+        angle_RL_rad, angle_AP_rad, _ = get_angle_correction(im_seg=im_segr)
 
     # Loop across z and compute shape analysis
     for iz in tqdm(range(min_z_index, max_z_index + 1), unit='iter', unit_scale=False, desc="Compute shape analysis",
@@ -74,22 +72,9 @@ def compute_shape(segmentation, angle_correction=True, param_centerline=None, ve
         # Extract 2D patch
         current_patch = im_segr.data[:, :, iz]
         if angle_correction:
-            # Extract tangent vector to the centerline (i.e. its derivative)
-            tangent_vect = np.array([arr_ctl_der[0][iz - min_z_index] * px,
-                                     arr_ctl_der[1][iz - min_z_index] * py,
-                                     pz])
-            # Normalize vector by its L2 norm
-            tangent_vect = tangent_vect / np.linalg.norm(tangent_vect)
-            # Compute the angle about AP axis between the centerline and the normal vector to the slice
-            v0 = [tangent_vect[0], tangent_vect[2]]
-            v1 = [0, 1]
-            angle_AP_rad = np.math.atan2(np.linalg.det([v0, v1]), np.dot(v0, v1))
-            # Compute the angle about RL axis between the centerline and the normal vector to the slice
-            v0 = [tangent_vect[1], tangent_vect[2]]
-            v1 = [0, 1]
-            angle_RL_rad = np.math.atan2(np.linalg.det([v0, v1]), np.dot(v0, v1))
             # Apply affine transformation to account for the angle between the centerline and the normal to the patch
-            tform = transform.AffineTransform(scale=(np.cos(angle_RL_rad), np.cos(angle_AP_rad)))
+            tform = transform.AffineTransform(scale=(np.cos(angle_RL_rad[iz - min_z_index]),
+                                                     np.cos(angle_AP_rad[iz - min_z_index])))
             # Convert to float64, to avoid problems in image indexation causing issues when applying transform.warp
             current_patch = current_patch.astype(np.float64)
             # TODO: make sure pattern does not go extend outside of image border
