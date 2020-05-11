@@ -36,6 +36,7 @@ def download_data(urls):
         urls = [urls]
 
     # loop through URLs
+    exceptions = []
     for url in urls:
         try:
             logger.info('Trying URL: %s' % url)
@@ -71,8 +72,9 @@ def download_data(urls):
 
         except Exception as e:
             logger.warning("Link download error, trying next mirror (error was: %s)" % e)
+            exceptions.append(e)
     else:
-        logger.error('Download error')
+        raise Exception('Download error', exceptions)
 
 
 def unzip(compressed, dest_folder):
