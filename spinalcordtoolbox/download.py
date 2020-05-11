@@ -43,6 +43,7 @@ def download_data(urls):
             session = requests.Session()
             session.mount('https://', HTTPAdapter(max_retries=retry))
             response = session.get(url, stream=True)
+            response.raise_for_status()
 
             filename = os.path.basename(urllib.parse.urlparse(url).path)
             if "Content-Disposition" in response.headers:
