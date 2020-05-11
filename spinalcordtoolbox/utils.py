@@ -229,16 +229,20 @@ def parse_num_list_inv(list_int):
     return str_num
 
 
-def splitext(filename):
+def splitext(fname):
     """
-    Split a filename (folder/file + ext) into a folder/file and extension.
+    Split a fname (folder/file + ext) into a folder/file and extension.
 
     Note: for .nii.gz the extension is understandably .nii.gz, not .gz
     (``os.path.splitext()`` would want to do the latter, hence the special case).
     """
-    dir, filename = os.path.split(filename)
-    stem, ext = filename.split(".", 1)
-    ext = "." + ext
+    dir, filename = os.path.split(fname)
+    for special_ext in ['.nii.gz', '.tar.gz']:
+        if filename.endswith(special_ext):
+            stem, ext = filename[:-len(special_ext)], special_ext
+            return os.path.join(dir, stem), ext
+    # If no special case, behaves like the regular splitext
+    stem, ext = os.path.splitext(filename)
     return os.path.join(dir, stem), ext
 
 
