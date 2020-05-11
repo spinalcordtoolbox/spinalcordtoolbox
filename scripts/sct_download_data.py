@@ -66,27 +66,7 @@ def get_parser():
         type_value="multiple_choice",
         description="Name of the dataset.",
         mandatory=True,
-        # TODO: replace with key dict items
-        example=[
-            'sct_example_data',
-            'sct_testing_data',
-            'course_hawaii17',
-            'course_paris18',
-            'course_london19',
-            'course_beijing19',
-            'PAM50',
-            'MNI-Poly-AMU',
-            'gm_model',
-            'optic_models',
-            'pmj_models',
-            'binaries_debian',
-            'binaries_centos',
-            'binaries_osx',
-            'deepseg_gm_models',
-            'deepseg_sc_models',
-            'deepseg_lesion_models',
-            'c2c3_disc_models'
-        ])
+        example=sorted(DICT_URL))
     parser.add_option(
         name="-v",
         type_value="multiple_choice",
