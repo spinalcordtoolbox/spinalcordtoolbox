@@ -129,8 +129,8 @@ def add_suffix(fname, suffix):
     - add_suffix(t2.nii, _mean) -> t2_mean.nii
     - add_suffix(t2.nii.gz, a) -> t2a.nii.gz
     """
-    parent, stem, ext = extract_fname(fname)
-    return os.path.join(parent, stem + suffix + ext)
+    stem, ext = splitext(fname)
+    return os.path.join(stem + suffix + ext)
 
 
 def check_exe(name):
@@ -154,21 +154,6 @@ def check_exe(name):
                 return exe_file
 
     return None
-
-
-def extract_fname(fpath):
-    """
-    Split a full path into a parent folder component, filename stem and extension.
-
-    Note: for .nii.gz the extension is understandably .nii.gz, not .gz
-    (``os.path.splitext()`` would want to do the latter, hence the special case).
-    """
-    parent, filename = os.path.split(fpath)
-    if filename.endswith(".nii.gz"):
-        stem, ext = filename[:-7], ".nii.gz"
-    else:
-        stem, ext = os.path.splitext(filename)
-    return parent, stem, ext
 
 
 def parse_num_list(str_num):
@@ -242,6 +227,19 @@ def parse_num_list_inv(list_int):
             colon_is_present = False
 
     return str_num
+
+
+def splitext(filename):
+    """
+    Split a filename (folder/file + ext) into a folder/file and extension.
+
+    Note: for .nii.gz the extension is understandably .nii.gz, not .gz
+    (``os.path.splitext()`` would want to do the latter, hence the special case).
+    """
+    dir, filename = os.path.split(filename)
+    stem, ext = filename.split(".", 1)
+    ext = "." + ext
+    return os.path.join(dir, stem), ext
 
 
 def tmp_create(basename=None):
