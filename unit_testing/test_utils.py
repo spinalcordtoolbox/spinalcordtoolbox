@@ -10,6 +10,8 @@ from spinalcordtoolbox import utils
 def test_add_suffix():
     assert utils.add_suffix('t2.nii', '_mean') == 't2_mean.nii'
     assert utils.add_suffix('t2.nii.gz', 'a') == 't2a.nii.gz'
+    assert utils.add_suffix('var/lib/usr/t2.nii.gz', 'sfx') == 'var/lib/usr/t2sfx.nii.gz'
+    assert utils.add_suffix('var/lib.version.3/usr/t2.nii.gz', 'sfx') == 'var/lib.version.3/usr/t2sfx.nii.gz'
 
 
 def test_splitext():
