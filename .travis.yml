@@ -24,65 +24,65 @@ matrix:
     # Testing this way is imperfect -- these docker images are not
     # identical to freshly installed VMs, and by using docker we're
     # mismatching kernels, but it is a lot better than not testing.
-    - os: linux
+    - name: "ArchLinux"
+      os: linux
       dist: bionic  # Arch needs a recent kernel
       services:
         - docker
-      name: "ArchLinux"
       env:
         - DOCKER_IMAGE="archlinux" DOCKER_DEPS_CMD="pacman -Sy --noconfirm which gcc git curl"
-    - os: linux
+    - name: "Debian Rolling Release"
+      os: linux
       dist: bionic
       services:
         - docker
-      name: "Debian Rolling Release"
       env:
         - DOCKER_IMAGE="debian:sid"     DOCKER_DEPS_CMD="apt update && apt install -y libglib2.0-0 procps gcc git curl"
-    - os: linux
+    - name: "Debian Testing"
+      os: linux
       dist: bionic
       services:
         - docker
-      name: "Debian Testing"
       env:
         - DOCKER_IMAGE="debian:testing" DOCKER_DEPS_CMD="apt update && apt install -y libglib2.0-0 procps gcc git curl"
-    - os: linux
+    - name: "Debian 10"
+      os: linux
       dist: bionic # kernel ~= Debian:10
       services:
         - docker
-      name: "Debian 10"
       env:
         - DOCKER_IMAGE="debian:10"      DOCKER_DEPS_CMD="apt update && apt install -y libglib2.0-0 procps gcc git curl"
-    - os: linux
+    - name: "Debian 9"
+      os: linux
       dist: xenial # kernel ~= Debian:9
       services:
         - docker
-      name: "Debian 9"
       env:
         - DOCKER_IMAGE="debian:9"       DOCKER_DEPS_CMD="apt update && apt install -y libglib2.0-0 procps gcc git curl"
-    - os: linux
+    - name: "Debian 8"
+      os: linux
       dist: xenial # kernel ~= Debian:8
       services:
         - docker
-      name: "Debian 8"
       env:
         - DOCKER_IMAGE="debian:8"       DOCKER_DEPS_CMD="apt update && apt install -y libglib2.0-0 procps gcc git curl"
-    - os: linux
+    - name: "CentOS 8"
+      os: linux
       dist: bionic # kernel ~= Centos8
       services:
         - docker
-      name: "CentOS 8"
       env:
         - DOCKER_IMAGE="centos:8" DOCKER_DEPS_CMD="yum install -y which gcc git curl"
-    - os: linux
+    - name: "CentOS 7"
+      os: linux
       dist: xenial # kernel ~= Centos7
       services:
         - docker
-      name: "CentOS 7"
       env:
         - DOCKER_IMAGE="centos:7" DOCKER_DEPS_CMD="yum install -y which gcc git curl"
     # The rest of the OSes can use Travis's built-in images:
-    - os: linux  # list of Linux env: https://docs.travis-ci.com/user/reference/overview/
-      name: "Ubuntu 18.04 (Bionic Beaver)"
+    - name: "Ubuntu 18.04 (Bionic Beaver)"
+      os: linux  # list of Linux env: https://docs.travis-ci.com/user/reference/overview/
       dist: bionic
     - os: linux
       name: "Ubuntu 16.04 (Xenial)"
@@ -90,14 +90,14 @@ matrix:
     - os: linux
       name: "Ubuntu 14.04 (Trusty)"
       dist: trusty
-    - os: osx  # list of OSX env: https://docs.travis-ci.com/user/reference/osx/
-      name: "OSX 10.14 (Mojave)"
+    - name: "OSX 10.14 (Mojave)"
+      os: osx  # list of OSX env: https://docs.travis-ci.com/user/reference/osx/
       osx_image: xcode11.2
-    - os: osx
-      name: "OSX 10.13 (High Sierra)"
+    - name: "OSX 10.13 (High Sierra)"
+      os: osx
       osx_image: xcode9.4
-    - os: osx
-      name: "OSX 10.12 (Sierra)"
+    - name: "OSX 10.12 (Sierra)"
+      os: osx
       osx_image: xcode9.2
 
 script: ./.travis.sh
