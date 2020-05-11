@@ -244,17 +244,23 @@ def get_tangent_vector(im_seg):
     """
     nx, ny, nz, nt, px, py, pz, pt = im_seg.dim
 
+    # Get range of slices where the segmentation is present
+    _, _, Z = (im_seg.data > 0).nonzero()
+    min_z_index, max_z_index = min(Z), max(Z)
+
     # fit centerline, smooth it and return the first derivative (in physical space)
     _, arr_ctl, arr_ctl_der, _ = get_centerline(im_seg, param=ParamCenterline(), verbose=1)
     x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = arr_ctl_der
 
-    tangent_vect = np.full_like(np.empty(nz), np.nan, dtype=np.double)
+    # Init tangent vect
+    tangent_vect = np.full_like(np.empty((nz, 3)), np.nan, dtype=np.double)
 
-    # loop across x_centerline_deriv
-    # (instead of [min_z_index, max_z_index], which could vary after interpolation)
-    for iz in range(x_centerline_deriv.shape[0]):
+    # Loop across slices where segmentation is present
+    for iz in range(min_z_index, max_z_index+1):
         # normalize the tangent vector to the centerline (i.e. its derivative)
-        vect = np.array([x_centerline_deriv[iz] * px, y_centerline_deriv[iz] * py, pz])
+        vect = np.array([x_centerline_deriv[iz - min_z_index] * px,
+                         y_centerline_deriv[iz - min_z_index] * py,
+                         pz])
         # Normalize vector by its L2 norm
         norm = np.linalg.norm(vect)
         tangent_vect[iz] = vect / norm
@@ -263,33 +269,37 @@ def get_tangent_vector(im_seg):
 
 
 def get_angle_correction(im_seg):
-    """
-    Measure spinal cord angle with respect to slice.
+    """Measure spinal cord angle with respect to slice.
+
+    Compute the angle about RL axis between the centerline and the normal vector to the slice.
+    Same for the AP and IS axes.
 
     :param im_seg: Spinal cord segmentation image.
-    :return: numpy array, angle for each I-S slice, np.nan when no segmentation.
+    :return: three numpy arrays, angles in radians, np.nan when no segmentation.
     """
-    nx, ny, nz, nt, px, py, pz, pt = im_seg.dim
+    # Get tangent vector to the centerline (i.e. its derivative)
+    tangent_vect = get_tangent_vector(im_seg)
 
-    # fit centerline, smooth it and return the first derivative (in physical space)
-    _, arr_ctl, arr_ctl_der, _ = get_centerline(im_seg, param=ParamCenterline(), verbose=1)
-    x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = arr_ctl_der
+    # Init angles in the three dimensions, shape: (nz,), init with np.nan
+    angle_RL = np.full_like(np.empty(tangent_vect.shape[0]), np.nan, dtype=np.double)
+    angle_AP = np.full_like(np.empty(tangent_vect.shape[0]), np.nan, dtype=np.double)
+    angle_IS = np.full_like(np.empty(tangent_vect.shape[0]), np.nan, dtype=np.double)
 
-    angle_correction = np.full_like(np.empty(nz), np.nan, dtype=np.double)
+    for iz, t_v in enumerate(tangent_vect):
+        # If the segmentation is available for this z-slice
+        if not np.any(np.isnan(t_v)):
+            # Compute the angle about RL axis between the centerline and the normal vector to the slice
+            v0 = [t_v[1], t_v[2]]
+            v1 = [0, 1]
+            angle_RL[iz] = np.math.atan2(np.linalg.det([v0, v1]), np.dot(v0, v1))
+            # Compute the angle about AP axis between the centerline and the normal vector to the slice
+            v0 = [t_v[0], t_v[2]]
+            v1 = [0, 1]
+            angle_AP[iz] = np.math.atan2(np.linalg.det([v0, v1]), np.dot(v0, v1))
+            # Compute the angle between the normal vector of the plane and the vector z
+            angle_IS[iz] = np.arccos(np.vdot(t_v, np.array([0, 0, 1])))
 
-    # loop across x_centerline_deriv
-    # (instead of [min_z_index, max_z_index], which could vary after interpolation)
-    for iz in range(x_centerline_deriv.shape[0]):
-        # normalize the tangent vector to the centerline (i.e. its derivative)
-        vect = np.array([x_centerline_deriv[iz] * px, y_centerline_deriv[iz] * py, pz])
-        norm = np.linalg.norm(vect)
-        tangent_vect = vect / norm
-
-        # compute the angle between the normal vector of the plane and the vector z
-        angle = np.arccos(np.vdot(tangent_vect, np.array([0, 0, 1])))
-        angle_correction[iz] = math.degrees(angle)
-
-    return angle_correction
+    return angle_RL, angle_AP, angle_IS
 
 
 def analyze_binary_objects(fname_mask, fname_voi=None, fname_ref=None, path_template=None, path_ofolder="./analyze_lesion", verbose=1):
@@ -330,6 +340,7 @@ def analyze_binary_objects(fname_mask, fname_voi=None, fname_ref=None, path_temp
         logging.info("Compute angle correction for CSA based on cord angle with respect to slice...")
         # Spinal cord angle with respect to I-S slice
         angle_correction = get_angle_correction(im_seg=im_voi.copy())
+        # TODO: convert angles to degrees (math.degrees)
     else:
         angle_correction = np.full_like(np.empty(im_mask.dim[2]), 1.0, dtype=np.double)
 
