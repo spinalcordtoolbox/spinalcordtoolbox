@@ -21,7 +21,7 @@ from msct_parser import Parser
 import sct_utils as sct
 
 
-def get_parser():
+def get_parser(dict_url):
     parser = Parser(__file__)
     parser.usage.set_description('''Download binaries from the web.''')
     parser.add_option(
@@ -94,7 +94,7 @@ def main(args=None):
         args = sys.argv[1:]
 
     # Get parser info
-    parser = get_parser()
+    parser = get_parser(dict_url)
     arguments = parser.parse(args)
     data_name = arguments['-d']
     verbose = int(arguments.get('-v'))
