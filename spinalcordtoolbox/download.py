@@ -53,8 +53,13 @@ def download_data(urls):
 
             # protect against directory traversal
             filename = os.path.basename(filename)
+            if not filename:
+                # this handles cases where you're loading something like an index page
+                # instead of a specific file. e.g. https://osf.io/ugscu/?action=view.
+                raise ValueError("Unable to determine target filename for URL: %s" % (url,))
 
             tmp_path = os.path.join(tempfile.mkdtemp(), filename)
+
             logger.info('Downloading: %s' % filename)
 
             with open(tmp_path, 'wb') as tmp_file:
