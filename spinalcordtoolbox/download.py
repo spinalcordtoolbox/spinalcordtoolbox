@@ -8,6 +8,7 @@ import distutils.dir_util
 import logging
 import cgi
 import tempfile
+import urllib.parse
 import tarfile
 import zipfile
 import requests
@@ -43,12 +44,10 @@ def download_data(urls):
             session.mount('https://', HTTPAdapter(max_retries=retry))
             response = session.get(url, stream=True)
 
+            filename = os.path.basename(urllib.parse.urlparse(url).path)
             if "Content-Disposition" in response.headers:
                 _, content = cgi.parse_header(response.headers['Content-Disposition'])
                 filename = content["filename"]
-            else:
-                logger.warning("Unexpected: link doesn't provide a filename")
-                continue
 
             tmp_path = os.path.join(tempfile.mkdtemp(), filename)
             logger.info('Downloading: %s' % filename)
