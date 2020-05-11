@@ -50,6 +50,9 @@ def download_data(urls):
                 _, content = cgi.parse_header(response.headers['Content-Disposition'])
                 filename = content["filename"]
 
+            # protect against directory traversal
+            filename = os.path.basename(filename)
+
             tmp_path = os.path.join(tempfile.mkdtemp(), filename)
             logger.info('Downloading: %s' % filename)
 
