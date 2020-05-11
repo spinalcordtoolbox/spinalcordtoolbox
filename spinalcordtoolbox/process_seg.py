@@ -339,7 +339,9 @@ def analyze_binary_objects(fname_mask, fname_voi=None, fname_ref=None, path_temp
         im_voi.change_orientation('RPI')
         logging.info("Compute angle correction for CSA based on cord angle with respect to slice...")
         # Spinal cord angle with respect to I-S slice
-        angle_correction = get_angle_correction(im_seg=im_voi.copy())
+        _, _, angle_correction_IS_rad = get_angle_correction(im_seg=im_voi.copy())
+        # Convert angles in degrees
+        angle_correction = np.degrees(angle_correction_IS_rad)
         # TODO: convert angles to degrees (math.degrees)
     else:
         angle_correction = np.full_like(np.empty(im_mask.dim[2]), 1.0, dtype=np.double)
