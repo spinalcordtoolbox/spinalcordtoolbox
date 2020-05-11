@@ -80,22 +80,21 @@ def unzip(compressed, dest_folder):
     Extract compressed file to the dest_folder. Can handle .zip, .tar.gz.
     """
     logger.info('Unzip data to: %s' % dest_folder)
-    if compressed.endswith('zip'):
-        try:
-            zf = zipfile.ZipFile(compressed)
-            zf.extractall(dest_folder)
-            return
-        except (zipfile.BadZipfile):
-            logger.error("ZIP package corrupted. Please try downloading again.")
-    elif compressed.endswith('tar.gz'):
-        try:
-            tar = tarfile.open(compressed)
-            tar.extractall(path=dest_folder)
-            return
-        except tarfile.TarError:
-            logger.error("ZIP package corrupted. Please try again.")
+
+    formats = {'.zip': zipfile.ZipFile,
+               '.tar.gz': tarfile.open,
+               '.tgz': tarfile.open}
+    for format, open in formats.items():
+        if compressed.lower().endswith(format):
+            break
     else:
-        logger.error("The file %s is of wrong format" % compressed)
+        raise TypeError('ERROR: The file %s is of wrong format' % (compressed,))
+
+    try:
+        open(compressed).extractall(dest_folder)
+    except:
+        sct.printv('ERROR: ZIP package corrupted. Please try downloading again.', verbose, 'error')
+        raise
 
 
 def install_data(url, dest_folder):
