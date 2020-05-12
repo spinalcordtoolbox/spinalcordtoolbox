@@ -7,6 +7,11 @@
 #
 # e.g. DOCKER_IMAGE="centos:8" .travis.sh
 
+ls -l $HOME/.cache
+ls -l $HOME/.cache/pip
+du -hs $HOME/.cache/pip
+ls -l ~/.cache/pip/wheels/*/*/*/*/*.whl
+
 set -e # Error build immediately if install script exits with non-zero
 
 # if this is a docker job, run in the container instead; but if not just run it here.
