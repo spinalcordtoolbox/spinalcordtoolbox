@@ -347,22 +347,22 @@ def main(args=None):
             else:
                 sct.printv('Automatic C2-C3 detection failed. Please provide manual label with sct_label_utils', 1, 'error')
                 sys.exit()
-            im_label_c2c3.save('labelz.nii.gz')
+            im_label_c2c3.save('labelz_straight.nii.gz')
 
         # dilate label so it is not lost when applying warping
-        dilate(Image(fname_labelz), 3, 'ball').save(fname_labelz)
+        #dilate(Image(fname_labelz), 3, 'ball').save(fname_labelz)
 
         # Apply straightening to z-label
-        sct.printv('\nAnd apply straightening to label...', verbose)
-        sct.run('isct_antsApplyTransforms -d 3 -i %s -r %s -t %s -o %s -n %s' %
-                (file_labelz,
-                 'data_straightr.nii',
-                 'warp_curve2straight.nii.gz',
-                 'labelz_straight.nii.gz',
-                 'NearestNeighbor'),
-                verbose=verbose,
-                is_sct_binary=True,
-               )
+        #sct.printv('\nAnd apply straightening to label...', verbose)
+        #sct.run('isct_antsApplyTransforms -d 3 -i %s -r %s -t %s -o %s -n %s' %
+         #       (file_labelz,
+          #       'data_straightr.nii',
+           #      'warp_curve2straight.nii.gz',
+            #     'labelz_straight.nii.gz',
+            #     'NearestNeighbor'),
+            #    verbose=verbose,
+             #   is_sct_binary=True,
+             #  )
         # get z value and disk value to initialize labeling
         sct.run('sct_resample -i labelz_straight.nii.gz -mm 0.5 -x nn -o labelz_straight_r.nii.gz')
         sct.printv('\nGet z and disc values from straight label...', verbose)
@@ -415,6 +415,7 @@ def main(args=None):
     sct.generate_output_file(os.path.join(path_tmp, "warp_curve2straight.nii.gz"), os.path.join(path_output, "warp_curve2straight.nii.gz"), verbose)
     sct.generate_output_file(os.path.join(path_tmp, "warp_straight2curve.nii.gz"), os.path.join(path_output, "warp_straight2curve.nii.gz"), verbose)
     sct.generate_output_file(os.path.join(path_tmp, "straight_ref.nii.gz"), os.path.join(path_output, "straight_ref.nii.gz"), verbose)
+    sct.generate_output_file(os.path.join(path_tmp, "labelz_straight.nii.gz"), os.path.join(path_output, "c2c3_detect.nii.gz"), verbose)
 
     # Remove temporary files
     if remove_temp_files == 1:
