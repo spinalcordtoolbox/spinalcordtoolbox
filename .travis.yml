@@ -12,6 +12,10 @@ cache:
     - ${HOME}/.cache/pip
     # conda install directory:
     - python/
+before_cache:
+    # these files change run to run, so need to be removed to avoid re-uploading the cache
+    - rm -f python/lib/python3.7/__pycache__/_sysconfigdata_m_linux_x86_64-linux-gnu.cpython-37.pyc
+    - rm -f python/lib/python3.7/__pycache__/_sysconfigdata_m_darwin_darwin.cpython-37.pyc
 
 matrix:
   include:
