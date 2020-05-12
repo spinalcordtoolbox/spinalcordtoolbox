@@ -10,6 +10,8 @@ notifications:
 cache:
   directories:
     - ${HOME}/.cache/pip
+    # conda install directory:
+    - python/
 
 matrix:
   include:

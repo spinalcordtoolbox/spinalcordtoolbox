@@ -11,6 +11,8 @@ ls -l $HOME/.cache
 ls -l $HOME/.cache/pip
 du -hs $HOME/.cache/pip
 ls -l ~/.cache/pip/wheels/*/*/*/*/*.whl
+ls -l python
+du -hs python
 
 set -e # Error build immediately if install script exits with non-zero
 
