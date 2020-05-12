@@ -503,26 +503,31 @@ fi
 unset PYTHONPATH
 export PYTHONNOUSERSITE=1
 
-# Remove old python folder
-print info "Installing conda..."
-run "rm -rf $SCT_DIR/$PYTHON_DIR"
-run "mkdir -p $SCT_DIR/$PYTHON_DIR"
+if [ ! -x "$SCT_DIR/$PYTHON_DIR/bin/conda" ]; then
+    # Remove old python folder
+    print info "Installing conda..."
+    run "rm -rf $SCT_DIR/$PYTHON_DIR"
+    run "mkdir -p $SCT_DIR/$PYTHON_DIR"
 
-# Download miniconda
-case $OS in
-linux*)
-  download $TMP_DIR/miniconda.sh https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
-  ;;
-osx)
-  download $TMP_DIR/miniconda.sh https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
-  ;;
-esac
+    # Download miniconda
+    case $OS in
+    linux*)
+      download $TMP_DIR/miniconda.sh https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
+      ;;
+    osx)
+      download $TMP_DIR/miniconda.sh https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
+      ;;
+    esac
 
-# Run conda installer
-run "bash $TMP_DIR/miniconda.sh -p $SCT_DIR/$PYTHON_DIR -b -f"
+    # Run conda installer
+    run "bash $TMP_DIR/miniconda.sh -p $SCT_DIR/$PYTHON_DIR -b -f"
+fi
 
-# create py3.6 venv (for Keras/TF compatibility with Centos7, see issue #2270)
-yes | python/bin/conda create -n venv_sct python=3.6
+# create py3.6 venv if it doesn't already exist.
+# (we're temporarily pinned to 3.6 for Keras/TF compatibility with Centos7; see issue #2270)
+if ! ( "$SCT_DIR/$PYTHON_DIR/bin/conda" env list | egrep -q "^venv_sct " ) ; then # this grep could be better
+    yes | "$SCT_DIR/$PYTHON_DIR/bin/conda" create -n venv_sct python=3.6
+fi
 
 # activate miniconda
 source python/etc/profile.d/conda.sh
