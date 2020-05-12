@@ -9,7 +9,7 @@ from spinalcordtoolbox.utils import Metavar, SmartFormatter
 import sct_utils as sct
 import torch
 from spinalcordtoolbox.vertebrae.models import *
-from spinalcordtoolbox.vertebrae.Predict_utils import *
+from spinalcordtoolbox.vertebrae.predict_utils import *
 import numpy as np
 import nibabel as nib
 
