@@ -6,10 +6,10 @@ notifications:
     on_success:change
     on_failure:always
 
-# this enables to avoid recompilation of dipy if it was already compiled previously
-#cache:
-#  directories:
-#    - ${HOME}/.cache/pip
+# this slow avoids recompilation of large python packages
+cache:
+  directories:
+    - ${HOME}/.cache/pip
 
 matrix:
   include:

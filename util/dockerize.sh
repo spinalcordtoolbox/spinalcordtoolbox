@@ -5,10 +5,13 @@
 
 set -e # Error build immediately if install script exits with non-zero
 
+mkdir -p $HOME/.cache/pip
+
 CONTAINER=$(docker run \
     --init \
     -it -d \
     --rm \
+    -v "$HOME":"$HOME" \
     -v "`pwd`":/repo -w /repo \
     "$DOCKER_IMAGE")
 trap "docker stop "$CONTAINER"" EXIT
