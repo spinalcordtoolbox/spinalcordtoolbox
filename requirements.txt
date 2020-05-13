@@ -12,6 +12,7 @@ pyqt5==5.11.3
 pytest
 pytest-cov
 raven
+retrying
 requests
 scipy
 scikit-image

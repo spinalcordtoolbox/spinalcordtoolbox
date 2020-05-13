@@ -13,6 +13,7 @@ import datetime
 import io
 from string import Template
 from shutil import copyfile
+from retrying import retry
 
 warnings.filterwarnings("ignore")
 
@@ -480,7 +481,13 @@ class QcReport(object):
         # Create json file
         with open(self.qc_params.qc_results, 'w+') as qc_file:
             json.dump(output, qc_file, indent=1)
-        self._update_html_assets(get_json_data_from_path(path_json))
+
+        @retry(wait_fixed=250, stop_max_attempt_number=3)
+        def get_json_from_qc_path():
+            return get_json_data_from_path(path_json)
+
+        json_data = get_json_from_qc_path()
+        self._update_html_assets(json_data)
 
     def _update_html_assets(self, json_data):
         """Update the html file and assets"""
