@@ -239,13 +239,9 @@ class ProcessLabels(object):
             # split coord string
             list_coord = coord.split(',')
             # convert to int() and assign to variable
-            z, value = [int(i) for i in list_coord]
-            # update z based on native image orientation (z should represent superior-inferior axis)
-            coord = Coordinate([z, z, z])  # since we don't know which dimension corresponds to the superior-inferior
-            # axis, we put z in all dimensions (we don't care about x and y here)
-            _, _, z_rpi = coord.permute(self.image_input, 'RPI')
+            z_rpi, value = [int(i) for i in list_coord]
             # if z=-1, replace with nz/2
-            if z == -1:
+            if z_rpi == -1:
                 z_rpi = int(np.round(im_output_rpi.dim[2] / 2.0))
             # get center of mass of segmentation at given z
             x, y = ndimage.measurements.center_of_mass(np.array(im_rpi.data[:, :, z_rpi]))
