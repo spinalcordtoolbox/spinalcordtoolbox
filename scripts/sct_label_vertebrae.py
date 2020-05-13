@@ -394,6 +394,18 @@ def main(args=None):
             verbose=verbose,
             is_sct_binary=True,
            )
+
+    #un-straighten posterior disc map
+    sct.printv('\nUn-straighten posterior disc map...', verbose)
+    sct.run('sct_apply_transfo -i %s -d %s -w %s -o %s -x %s' %
+            ('disc_posterior_tmp.nii.gz',
+             'segmentation.nii',
+             'warp_straight2curve.nii.gz',
+             'label_disc_posterior.nii.gz',
+             'label'),
+            verbose=verbose
+           )
+
     # Clean labeled segmentation
     sct.printv('\nClean labeled segmentation (correct interpolation errors)...', verbose)
     clean_labeled_segmentation('segmentation_labeled.nii', 'segmentation.nii', 'segmentation_labeled.nii')
@@ -415,7 +427,7 @@ def main(args=None):
     sct.generate_output_file(os.path.join(path_tmp, "warp_curve2straight.nii.gz"), os.path.join(path_output, "warp_curve2straight.nii.gz"), verbose)
     sct.generate_output_file(os.path.join(path_tmp, "warp_straight2curve.nii.gz"), os.path.join(path_output, "warp_straight2curve.nii.gz"), verbose)
     sct.generate_output_file(os.path.join(path_tmp, "straight_ref.nii.gz"), os.path.join(path_output, "straight_ref.nii.gz"), verbose)
-    sct.generate_output_file(os.path.join(path_tmp, "labelz.nii.gz"), os.path.join(path_output, "c2c3_detect.nii.gz"), verbose)
+    sct.generate_output_file(os.path.join(path_tmp, "label_disc_posterior.nii.gz"), os.path.join(path_output, "label_disc_posterior.nii.gz"), verbose)
 
     # Remove temporary files
     if remove_temp_files == 1:

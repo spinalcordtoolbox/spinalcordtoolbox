@@ -264,6 +264,7 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
 
     # Label segmentation
     label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=verbose)
+    label_disc_posterior(list_disc_z,list_disc_value,'hm_tmp_r.nii.gz')
 
 
 def center_of_mass(x):
@@ -613,3 +614,20 @@ def label_discs(fname_seg_labeled, verbose=1):
     # save disc labeled file
     im_seg_labeled.data = data_disc
     im_seg_labeled.change_orientation(orientation_native).save(sct.add_suffix(fname_seg_labeled, '_disc'))
+
+def label_disc_posterior(list_disc_z,list_disc_value,fname_hm):
+    im_hm = Image(fname_hm)
+    nx, ny, nz = im_hm.dim[0], im_hm.dim[1], im_hm.dim[2]
+    data_disc = np.zeros([nx, ny, nz])
+    AP_profile = np.sum(im_hm.data[:,:,:],axis=(0,2))
+    default = np.argmax(AP_profile)
+    for iz in range(len(list_disc_z)):
+        slice = im_hm.data[:,:,list_disc_z[iz]-1]
+
+        if np.any(slice):
+            pos = np.where(slice == np.max(slice))
+            data_disc[pos[0],pos[1],list_disc_z[iz]-1]=list_disc_value[iz]
+        else:
+            print('no_max')
+    im_hm.data = data_disc
+    im_hm.save('disc_posterior_tmp.nii.gz')
