@@ -628,6 +628,8 @@ def label_disc_posterior(list_disc_z,list_disc_value,fname_hm):
             pos = np.where(slice == np.max(slice))
             data_disc[pos[0],pos[1],list_disc_z[iz]-1]=list_disc_value[iz]
         else:
-            print('no_max')
+            #Since the image is supposedly straighten, we can assume that most of the disc are aligned
+            # therefore if the heatmap missed one, we can just use the a default, aligned with the other
+            data_disc[int(nx/2),default,list_disc_z[iz]-1]=list_disc_value[iz]
     im_hm.data = data_disc
     im_hm.save('disc_posterior_tmp.nii.gz')
