@@ -21,15 +21,15 @@ logger = logging.getLogger(__name__)
 # TODO: deal with "Folder __MACOSX"
 MODELS = {
     't2star_sc':
-        {'url': 'https://osf.io/v9hs8/download?version=2',
+        {'url': 'https://osf.io/v9hs8/download',
          'description': 'Cord segmentation on T2*-weighted contrast.',
          'default': True},
     'uqueensland_mice_sc':
-        {'url': 'https://osf.io/nu3ma/download?version=2',
+        {'url': 'https://osf.io/nu3ma/download',
          'description': 'Cord segmentation on mouse MRI. Data from University of Queensland.',
          'default': False},
     'uqueensland_mice_gm':
-        {'url': 'https://osf.io/mfxwg/download?version=2',
+        {'url': 'https://osf.io/mfxwg/download',
          'description': 'Gray matter segmentation on mouse MRI. Data from University of Queensland.',
          'default': False},
     }
