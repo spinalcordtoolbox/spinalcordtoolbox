@@ -12,7 +12,9 @@ set -e # Error build immediately if install script exits with non-zero
 # if this is a docker job, run in the container instead; but if not just run it here.
 if [ -n "$DOCKER_IMAGE" ]; then
     ./util/dockerize.sh ./.ci.sh
+elif [ "${TRAVIS_OS_NAME}" = "windows" ]; then
+    choco install wsl-ubuntu-1804
+    /c/ProgramData/chocolatey/lib/wsl-ubuntu-1804/tools/unzipped/ubuntu1804.exe run ./.ci.sh
 else
     ./.ci.sh
 fi
-
