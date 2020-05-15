@@ -17,8 +17,8 @@ def test_model_dict():
     """
     for key, value in sct.deepseg.models.MODELS.items():
         assert('url' in value)
-        assert ('description' in value)
-        assert ('default' in value)
+        assert('description' in value)
+        assert('default' in value)
 
 
 def test_segment_nifti():
