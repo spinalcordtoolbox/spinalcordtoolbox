@@ -30,8 +30,7 @@ def postprocess(nii_seg, options):
     """
     Wrapper to apply postprocessing on the segmentation, depending on user's, metadata or default options.
     :param nii_seg: nibabel: Segmentation
-    :param param: dict: Defined by user's parameter
-    :param metadata: dict: From model's json metadata
+    :param options: dict: Parameters for postprocessing, including keys such as: threshold, keep_largest_object.
     :return:
     """
     def threshold(nii_seg, thr):
