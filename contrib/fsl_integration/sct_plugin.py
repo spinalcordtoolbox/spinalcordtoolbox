@@ -179,7 +179,7 @@ class SCTPanel(wx.Panel):
     """
 
     SCT_DIR_ENV = 'SCT_DIR'
-    SCT_LOGO_REL_PATH = 'documentation/imgs/logo_sct.png'
+    SCT_LOGO_REL_PATH = 'documentation/imgs/logo_sct_small.png'
     SCT_TUTORIAL_PATH = 'documentation/Manual_v1_SCT.pdf'  # TODO: fix this path
 
     def __init__(self, parent, id_):
@@ -229,7 +229,6 @@ class SCTPanel(wx.Panel):
                                  self.SCT_LOGO_REL_PATH)
         png = wx.Image(logo_file,
                        wx.BITMAP_TYPE_ANY).ConvertToBitmap()
-        png.SetSize((png.GetWidth() // 6, png.GetHeight() // 6))
         img_logo = wx.StaticBitmap(self, -1, png, wx.DefaultPosition,
                                    (png.GetWidth(), png.GetHeight()))
         return img_logo
