@@ -1,4 +1,5 @@
 numpy  # need to install first otherwise dependency issues
+colored
 cryptography
 dipy
 futures

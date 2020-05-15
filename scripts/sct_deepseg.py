@@ -15,6 +15,7 @@ from __future__ import absolute_import
 import sys
 import os
 import argparse
+import colored
 
 import spinalcordtoolbox as sct
 import spinalcordtoolbox.deepseg.core
@@ -116,21 +117,26 @@ def main():
     # Deal with model
     if args['list_models']:
         models = sct.deepseg.models.list_models()
-
-        color = {True: '\033[92m', False: '\033[91m'}
+        # Display beautiful output
+        color = {True: 'green', False: 'red'}
         default = {True: '[*]', False: ''}
         print("{:<25s}DESCRIPTION".format("MODEL"))
         print("-" * 80)
         for name_model, value in models.items():
-            print("{}{:<25s}{}\033[0m".format(color[sct.deepseg.models.is_installed(name_model)],
-                                              name_model + default[value['default']],
-                                              value['description']))
+            print("{:<25s}{}".format(
+                colored.stylize(name_model + default[value['default']], colored.fg(color[sct.deepseg.models.is_installed(name_model)])),
+                colored.stylize(value['description'], colored.fg(color[sct.deepseg.models.is_installed(name_model)]))))
         print(
-            '\nLegend: {}installed\033[0m | {}not installed\033[0m | default: [*]\n'.format(color[True], color[False]))
+            '\nLegend: {} | {} | default: {}\n'.format(
+                colored.stylize("installed", colored.fg(color[True])),
+                colored.stylize("not installed", colored.fg(color[False])),
+                default[True]))
         exit(0)
+
     if 'install_model' in args:
         sct.deepseg.models.install_model(args['install_model'])
         exit(0)
+        
     if args['install_default_models']:
         sct.deepseg.models.install_default_models()
         exit(0)
