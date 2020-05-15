@@ -115,7 +115,18 @@ def main():
 
     # Deal with model
     if args['list_models']:
-        sct.deepseg.models.list_models()
+        models = sct.deepseg.models.list_models()
+
+        color = {True: '\033[92m', False: '\033[91m'}
+        default = {True: '[*]', False: ''}
+        print("{:<25s}DESCRIPTION".format("MODEL"))
+        print("-" * 80)
+        for name_model, value in models.items():
+            print("{}{:<25s}{}\033[0m".format(color[sct.deepseg.models.is_installed(name_model)],
+                                              name_model + default[value['default']],
+                                              value['description']))
+        print(
+            '\nLegend: {}installed\033[0m | {}not installed\033[0m | default: [*]\n'.format(color[True], color[False]))
         exit(0)
     if 'install_model' in args:
         sct.deepseg.models.install_model(args['install_model'])

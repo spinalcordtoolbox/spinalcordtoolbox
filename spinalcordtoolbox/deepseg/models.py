@@ -77,16 +77,9 @@ def list_models():
     """
     Display available models with description. Color is used to indicate if model is installed or not. For default
     models, a '*' is added next to the model name.
-    :return:
+    :return: dict: Models that are installed
     """
-    color = {True: '\033[92m', False: '\033[91m'}
-    default = {True: '[*]', False: ''}
-    print("{:<25s}DESCRIPTION".format("MODEL"))
-    print("-"*80)
-    for name_model, value in MODELS.items():
-        print("{}{:<25s}{}\033[0m".format(color[is_installed(name_model)], name_model+default[value['default']],
-                                          value['description']))
-    print('\nLegend: {}installed\033[0m | {}not installed\033[0m | default: [*]\n'.format(color[True], color[False]))
+    return {name: value for name, value in MODELS.items() if is_installed(name)}
 
 
 def get_metadata(folder_model):
