@@ -69,11 +69,8 @@ def is_installed(name_model):
     Check if model is installed under SCT directory.
     :param name: str: Name of model.
     """
-    if os.path.exists(os.path.join(folder(name_model), name_model + '.pt')) and \
-            os.path.exists(os.path.join(folder(name_model), name_model + '.json')):
-        return True
-    else:
-        return False
+    return os.path.exists(os.path.join(folder(name_model), name_model + '.pt')) and \
+            os.path.exists(os.path.join(folder(name_model), name_model + '.json'))
 
 
 def list_models():
