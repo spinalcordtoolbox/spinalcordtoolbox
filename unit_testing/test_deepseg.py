@@ -26,8 +26,9 @@ def test_segment_nifti():
     Uses the locally-installed sct_testing_data
     :return:
     """
-    sct.deepseg.core.segment_nifti(
+    output = sct.deepseg.core.segment_nifti(
         'sct_testing_data/t2s/t2s.nii.gz',
         os.path.join(sct.__models_dir__, 't2star_sc'))
     # TODO: implement integrity test (for now, just checking if output segmentation file exists)
-    assert os.path.isfile('sct_testing_data/t2s/t2s_seg.nii.gz')
+    assert output == 'sct_testing_data/t2s/t2s_seg.nii.gz'
+    assert os.path.isfile(output)
