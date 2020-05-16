@@ -3,6 +3,7 @@
 Interface API for the deepseg module, which performs segmentation using deep learning with the ivadomed package.
 """
 
+# TODO: deal with multi-class segmentation in segment_nifti()
 
 import logging
 import numpy as np
@@ -22,7 +23,6 @@ DEFAULTS = {
     'threshold': 0.9,
     'keep_largest_object': True,
     'fill_holes': True,
-    'o': '_seg',  # output suffix
     }
 
 
@@ -86,7 +86,6 @@ def segment_nifti(fname_image, folder_model, param={}):
     :param param: dict: Dictionary of user's parameter
     :return: fname_out: str: Output filename.
     """
-
     nii_seg = imed.utils.segment_volume(folder_model, fname_image)
 
     # Postprocessing
@@ -95,6 +94,9 @@ def segment_nifti(fname_image, folder_model, param={}):
     nii_seg = postprocess(nii_seg, options)
 
     # Save output seg
-    fname_out = sct.utils.add_suffix(fname_image, options['o'])
+    if 'o' in options:
+        fname_out = options['o']
+    else:
+        fname_out = ''.join([sct.utils.splitext(fname_image)[0], '_seg.nii.gz'])
     nib.save(nii_seg, fname_out)
     return fname_out

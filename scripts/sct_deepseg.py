@@ -85,9 +85,9 @@ def get_parser():
     misc = parser.add_argument_group('\nMISC')
     misc.add_argument(
         "-o",
-        help="Output segmentation suffix. In case of multi-class segmentation, class-specific suffixes will be added.",
-        metavar=sct.utils.Metavar.str,
-        default='_seg')
+        help="Output file name. In case of multi-class segmentation, class-specific suffixes will be added. By default,"
+             "suffix '_seg' will be added and output extension will be .nii.gz.",
+        metavar=sct.utils.Metavar.str)
     misc.add_argument(
         "-v",
         type=int,
