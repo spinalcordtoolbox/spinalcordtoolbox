@@ -79,7 +79,7 @@ def list_models():
     models, a '*' is added next to the model name.
     :return: dict: Models that are installed
     """
-    return {name: value for name, value in MODELS.items() if is_installed(name)}
+    return {name: value for name, value in MODELS.items()}
 
 
 def get_metadata(folder_model):

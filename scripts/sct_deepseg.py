@@ -136,7 +136,7 @@ def main():
     if 'install_model' in args:
         sct.deepseg.models.install_model(args['install_model'])
         exit(0)
-        
+
     if args['install_default_models']:
         sct.deepseg.models.install_default_models()
         exit(0)
