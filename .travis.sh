@@ -14,6 +14,7 @@ if [ -n "$DOCKER_IMAGE" ]; then
     ./util/dockerize.sh ./.ci.sh
 elif [ "${TRAVIS_OS_NAME}" = "windows" ]; then
     choco install wsl-ubuntu-1804
+    sed -i 's/\r$//' .ci.sh
     /c/ProgramData/chocolatey/lib/wsl-ubuntu-1804/tools/unzipped/ubuntu1804.exe run ./.ci.sh
 else
     ./.ci.sh
