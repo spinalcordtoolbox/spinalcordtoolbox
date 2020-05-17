@@ -288,20 +288,12 @@ def main():
             module = module_import(module_name, suppress_stderr)
             version = get_version(module)
 
-            if dep_ver_spec is None and version is not None:
-                ver_pip_setup = dict(get_dependencies(os.path.join(sct.__sct_dir__, "requirements.txt"))).get(dep_pkg, None)
-                if ver_pip_setup is None:
-                    print_ok(more=(" (%s)" % version))
-                elif ver_pip_setup is not None and version.startswith(ver_pip_setup):
-                    print_ok(more=(" (%s)" % version))
-                else:
-                    print_warning(more=(" (%s != %s reference version))" % (version, ver_pip_setup)))
-
-            elif dep_ver_spec == version:
-                print_ok()
-
-            else:
+            if dep_ver_spec is not None and version is not None and dep_ver_spec != version:
                 print_warning(more=(" (%s != %s mandated version))" % (version, dep_ver_spec)))
+            elif version is not None:
+                print_ok(more=(" (%s)" % version))
+            else:
+                print_ok()
 
         except ImportError as err:
             print_fail()
