@@ -26,6 +26,9 @@ import os
 import re
 import platform
 import importlib
+import warnings
+
+import requirements
 
 import sct_utils as sct
 from spinalcordtoolbox.utils import SmartFormatter
@@ -74,6 +77,7 @@ def resolve_module(framework_name):
     # Framework name : (module name, suppress stderr)
     modules_map = {
         'futures': ('concurrent.futures', False),
+        'requirements-parser': ('requirements', False),
         'scikit-image': ('skimage', False),
         'scikit-learn': ('sklearn', False),
         'pyqt5': ('PyQt5.QtCore', False),  # Importing Qt instead PyQt5 to be able to catch this issue #2523
@@ -165,28 +169,20 @@ def get_dependencies(requirements_txt=None):
     if requirements_txt is None:
         requirements_txt = os.path.join(sct.__sct_dir__, "requirements.txt")
 
-    out = list()
-    with io.open(requirements_txt, "r", encoding="utf-8") as f:
-        for line in f:
-            line = line.split('#')[0].strip()
-            # check if conditions (separated by ";")
-            if ';' in line:
-                line, condition = [x.strip() for x in line.split(';')]
-                # check if conditions apply
-                if not _test_condition(condition):
-                    continue
-            m = re.match("^(?P<pkg>\S+?)(==?(?P<ver>\S+))?\s*(#.*)?$", line)
-            if m is None:
-                print("WARNING: Invalid requirements.txt line: %s", line)
-                continue
-            pkg = m.group("pkg")
-            try:
-                ver = m.group("ver")
-            except IndexError:
-                ver = None
-            out.append((pkg, ver))
+    requirements_txt = open(requirements_txt, "r", encoding="utf-8")
 
-    return out
+    # workaround for https://github.com/davidfischer/requirements-parser/issues/39
+    warnings.filterwarnings(action='ignore', module='requirements')
+
+    for req in requirements.parse(requirements_txt):
+        if ';' in req.line: # handle environment markers; TODO: move this upstream into requirements-parser
+            condition = req.line.split(';',1)[-1].strip()
+            if not _test_condition(condition):
+                continue
+        pkg = req.name
+        # TODO: just return req directly and make sure caller can deal with fancier specs
+        ver = dict(req.specs).get("==", None)
+        yield pkg, ver
 
 
 def get_parser():

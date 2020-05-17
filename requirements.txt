@@ -13,6 +13,7 @@ pytest
 pytest-cov
 raven
 requests
+requirements-parser
 scipy
 scikit-image
 scikit-learn
