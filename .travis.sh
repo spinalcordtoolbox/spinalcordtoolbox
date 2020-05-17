@@ -14,7 +14,10 @@ if [ -n "$DOCKER_IMAGE" ]; then
     ./util/dockerize.sh ./.ci.sh
 elif [ "${TRAVIS_OS_NAME}" = "windows" ]; then
     choco install wsl-ubuntu-1804
-    /c/ProgramData/chocolatey/lib/wsl-ubuntu-1804/tools/unzipped/ubuntu1804.exe run ./.ci.sh
+    wsl apt-get update
+    #wsl apt-get -y upgrade  # this step is probably important, but it's also sooo slow
+    wsl apt-get install -y gcc git curl
+    wsl ./.ci.sh
 else
     ./.ci.sh
 fi
