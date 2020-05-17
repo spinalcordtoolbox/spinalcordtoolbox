@@ -52,10 +52,6 @@ def get_parser():
         "-install-model",
         help="Install specified model.",
         choices=list(sct.deepseg.models.MODELS.keys()))
-    seg.add_argument(
-        "-install-default-models",
-        action='store_true',
-        help="Install all default models. Note: default models should already be installed during SCT installation.")
     # TODO: replace URL below
     seg.add_argument(
         "-mpath",
