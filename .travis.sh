@@ -14,9 +14,9 @@ if [ -n "$DOCKER_IMAGE" ]; then
     ./util/dockerize.sh ./.ci.sh
 elif [ "${TRAVIS_OS_NAME}" = "windows" ]; then
     choco install wsl-ubuntu-1804
-    alias brun="/c/ProgramData/chocolatey/lib/wsl-ubuntu-1804/tools/unzipped/ubuntu1804.exe run"
-    brun sudo apt install gcc
-    brun ./.ci.sh
+    brun="/c/ProgramData/chocolatey/lib/wsl-ubuntu-1804/tools/unzipped/ubuntu1804.exe run"
+    $brun sudo apt install -y gcc
+    $brun ./.ci.sh
 else
     ./.ci.sh
 fi
