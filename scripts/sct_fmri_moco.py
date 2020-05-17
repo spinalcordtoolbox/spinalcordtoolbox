@@ -60,6 +60,7 @@ The outputs of the motion correction process are:
                                   "iter [int]: Number of iterations. Default=" + param_default.iter + ".\n"
                                   "metric {MI, MeanSquares, CC}: Metric used for registration. Default=" + param_default.metric + ".\n"
                                   "gradStep [float]: Searching step used by registration algorithm. The higher the more deformation allowed. Default=" + param_default.gradStep + ".\n"
+                                  "sampling [0-1]: Sampling rate used for registration metric. Default=" + param_default.sampling + ".\n"
                                   "numTarget [int]: Target volume or group (starting with 0). Default=" + param_default.num_target + ".\n"
                                   "iterAvg [int]: Iterative averaging: Target volume is a weighted average of the previously-registered volumes. Default=" + str(param_default.iterAvg) + ".\n",
                       mandatory=False)
