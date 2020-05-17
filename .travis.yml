@@ -6,6 +6,9 @@ notifications:
     on_success:change
     on_failure:always
 
+git:
+  autocrlf: false
+
 # this enables to avoid recompilation of dipy if it was already compiled previously
 #cache:
 #  directories:
