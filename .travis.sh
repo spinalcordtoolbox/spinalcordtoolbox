@@ -16,7 +16,7 @@ elif [ "${TRAVIS_OS_NAME}" = "windows" ]; then
     choco install wsl-ubuntu-1804
     brun="/c/ProgramData/chocolatey/lib/wsl-ubuntu-1804/tools/unzipped/ubuntu1804.exe run"
     $brun sudo apt update
-    $brun sudo apt install -y gcc
+    $brun sudo apt install -y gcc git curl
     $brun ./.ci.sh
 else
     ./.ci.sh
