@@ -5,7 +5,7 @@ This command-line tool is the interface for the deepseg API that performs segmen
 ivadomed package.
 """
 
-# TODO: Add link to example image so users can decide wether their images look "close enought" to some of the proposed
+# TODO: Add link to example image so users can decide wether their images look "close enough" to some of the proposed
 #  models (e.g., mice, etc.).
 # TODO: add test to make sure that all postprocessing flags match the core.DEFAULT dictionary items
 # TODO: Fetch default value (and display) depending on the model that is used.
@@ -103,12 +103,6 @@ def main():
     parser = get_parser()
     args = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
     args = {k: v for k, v in vars(args).items() if v is not None}
-    # separate out the segmentation `param` args from the top level args
-    # fname_input = args.pop('i')
-    # name_model = args.pop('m')
-    # list_models =
-    # install_model = args.pop('install_model')
-    # install_default_models = args.pop('install_default_models')
 
     # Deal with model
     if args['list_models']:
@@ -135,10 +129,6 @@ def main():
     if 'install_model' in args:
         sct.deepseg.models.install_model(args['install_model'])
         exit(0)
-
-    #if args['install_default_models']:
-    #    sct.deepseg.models.install_default_models()
-    #    exit(0)
 
     # Deal with input/output
     if 'i' not in args:
