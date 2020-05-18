@@ -9,6 +9,8 @@ ivadomed package.
 #  models (e.g., mice, etc.).
 # TODO: add test to make sure that all postprocessing flags match the core.DEFAULT dictionary items
 # TODO: Fetch default value (and display) depending on the model that is used.
+# TODO: accommodate multiclass segmentation
+
 
 from __future__ import absolute_import
 
@@ -28,7 +30,7 @@ from sct_utils import init_sct, printv, display_viewer_syntax
 def get_parser():
 
     parser = argparse.ArgumentParser(
-        description="Segmentation using deep learning.",
+        description="Segment an anatomical structure or pathologies according to the specified deep learning model.",
         add_help=None,
         formatter_class=sct.utils.SmartFormatter,
         prog=os.path.basename(__file__).strip(".py"))
