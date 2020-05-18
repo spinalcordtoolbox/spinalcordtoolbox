@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 # Default values if not asked during CLI call and if not present in json metadata.
 DEFAULTS = {
-    'threshold': 0.9,
+    'thr': 0.9,
     'keep_largest_object': True,
     'fill_holes': True,
     }
@@ -68,8 +68,8 @@ def postprocess(nii_seg, options):
             logger.warning("Algorithm 'fill holes' can only be run on binary segmentation. Skipping.")
         return nii_seg
 
-    if options['threshold']:
-        nii_seg = threshold(nii_seg, options['threshold'])
+    if options['thr']:
+        nii_seg = threshold(nii_seg, options['thr'])
     if options['keep_largest_object']:
         nii_seg = keep_largest_object(nii_seg)
     if options['fill_holes']:
