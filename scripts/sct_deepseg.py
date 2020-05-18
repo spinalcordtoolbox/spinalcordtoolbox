@@ -33,6 +33,7 @@ def get_parser():
         formatter_class=sct.utils.SmartFormatter,
         prog=os.path.basename(__file__).strip(".py"))
 
+    # TODO: rename MANDATORY ARGUMENTS
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
         "-i",
@@ -41,9 +42,14 @@ def get_parser():
 
     seg = parser.add_argument_group('\nMODELS')
     seg.add_argument(
+        # TODO: change -m for -model
         "-m",
-        help="Model to use. For a description of each available model, please write: 'sct_deepseg -list-models'.",
-        choices=list(sct.deepseg.models.MODELS.keys()))
+        # TODO: add instructions at: https://github.com/neuropoly/ivado-medical-imaging
+        help="Model to use. It could either be an official SCT model (in that case, simply enter the name of the "
+             "model, example: -m t2_sc), or a path to the directory that contains a model, example: -m my_models/model."
+             "To list official models, run: sct_deepseg -list-models. "
+             "To build your own model, follow instructions at: https://github.com/neuropoly/ivado-medical-imaging",
+        metavar=sct.utils.Metavar.str)
     seg.add_argument(
         "-list-models",
         action='store_true',
@@ -52,12 +58,6 @@ def get_parser():
         "-install-model",
         help="Install specified model.",
         choices=list(sct.deepseg.models.MODELS.keys()))
-    # TODO: replace URL below
-    seg.add_argument(
-        "-mpath",
-        help="Path to model, in case you would like to use a custom model. The model folder should follow the "
-             "conventions listed in: URL.",
-        metavar=sct.utils.Metavar.folder)
 
     misc = parser.add_argument_group('\nPARAMETERS')
     misc.add_argument(
@@ -138,15 +138,20 @@ def main():
 
     # Get model path
     if 'm' in args:
-        if not spinalcordtoolbox.deepseg.models.is_installed(args['m']):
-            printv("Model {} is not installed. Installing it now...".format(args['m']))
-            spinalcordtoolbox.deepseg.models.install_model(args['m'])
-        path_model = spinalcordtoolbox.deepseg.models.folder(args['m'])
-    elif 'path_model' in args:
-        # TODO: check integrity of folder model
-        path_model = args['path_model']
+        # Check if this is an official model
+        if args['m'] in list(sct.deepseg.models.MODELS.keys()):
+            # If it is, check if it is installed
+            path_model = spinalcordtoolbox.deepseg.models.folder(args['m'])
+            if not spinalcordtoolbox.deepseg.models.is_valid(path_model):
+                printv("Model {} is not installed. Installing it now...".format(args['m']))
+                spinalcordtoolbox.deepseg.models.install_model(args['m'])
+        # If it is not, check if this is a path to a valid model
+        else:
+            path_model = os.path.abspath(args['m'])
+            if not sct.deepseg.models.is_valid(path_model):
+                parser.error("The input model is invalid: {}".format(path_model))
     else:
-        parser.error("You need to specify either -m or -mpath.")
+        parser.error("You need to specify a model.")
 
     fname_seg = sct.deepseg.core.segment_nifti(args['i'], path_model, args)
 

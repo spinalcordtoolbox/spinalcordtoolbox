@@ -64,13 +64,15 @@ def install_default_models():
             install_model(name_model)
 
 
-def is_installed(name_model):
+def is_valid(path_model):
     """
-    Check if model is installed under SCT directory.
-    :param name: str: Name of model.
+    Check if model has the necessary files and follow naming conventions:
+    - Folder should have the same name as the enclosed files.
+    :param path_model: str: Path to folder that encloses the model files.
     """
-    return os.path.exists(os.path.join(folder(name_model), name_model + '.pt')) and \
-            os.path.exists(os.path.join(folder(name_model), name_model + '.json'))
+    name_model = path_model.rstrip(os.sep).split(os.sep)[-1]
+    return os.path.exists(os.path.join(path_model, name_model + '.pt')) and \
+           os.path.exists(os.path.join(path_model, name_model + '.json'))
 
 
 def list_models():
