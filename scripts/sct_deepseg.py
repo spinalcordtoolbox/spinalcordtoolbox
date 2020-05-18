@@ -35,21 +35,24 @@ def get_parser():
         formatter_class=sct.utils.SmartFormatter,
         prog=os.path.basename(__file__).strip(".py"))
 
-    # TODO: rename MANDATORY ARGUMENTS
-    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
-    mandatory.add_argument(
+    input_output = parser.add_argument_group("\nINPUT/OUTPUT")
+    input_output.add_argument(
         "-i",
         help="Image to segment.",
         metavar=sct.utils.Metavar.file)
+    input_output.add_argument(
+        "-o",
+        help="Output file name. In case of multi-class segmentation, class-specific suffixes will be added. By default,"
+             "suffix '_seg' will be added and output extension will be .nii.gz.",
+        metavar=sct.utils.Metavar.str)
 
     seg = parser.add_argument_group('\nMODELS')
     seg.add_argument(
-        # TODO: change -m for -model
-        "-m",
+        "-model",
         # TODO: add instructions at: https://github.com/neuropoly/ivado-medical-imaging
         help="Model to use. It could either be an official SCT model (in that case, simply enter the name of the "
-             "model, example: -m t2_sc), or a path to the directory that contains a model, example: -m my_models/model."
-             "To list official models, run: sct_deepseg -list-models. "
+             "model, example: -model t2_sc), or a path to the directory that contains a model, example: "
+             "-model my_models/model. To list official models, run: sct_deepseg -list-models."
              "To build your own model, follow instructions at: https://github.com/neuropoly/ivado-medical-imaging",
         metavar=sct.utils.Metavar.str)
     seg.add_argument(
@@ -82,11 +85,6 @@ def get_parser():
         choices=(0, 1))
 
     misc = parser.add_argument_group('\nMISC')
-    misc.add_argument(
-        "-o",
-        help="Output file name. In case of multi-class segmentation, class-specific suffixes will be added. By default,"
-             "suffix '_seg' will be added and output extension will be .nii.gz.",
-        metavar=sct.utils.Metavar.str)
     misc.add_argument(
         "-v",
         type=int,
@@ -140,17 +138,17 @@ def main():
         parser.error("This file does not exist: {}".format(args['i']))
 
     # Get model path
-    if 'm' in args:
+    if 'model' in args:
         # Check if this is an official model
-        if args['m'] in list(sct.deepseg.models.MODELS.keys()):
+        if args['model'] in list(sct.deepseg.models.MODELS.keys()):
             # If it is, check if it is installed
-            path_model = spinalcordtoolbox.deepseg.models.folder(args['m'])
+            path_model = spinalcordtoolbox.deepseg.models.folder(args['model'])
             if not spinalcordtoolbox.deepseg.models.is_valid(path_model):
-                printv("Model {} is not installed. Installing it now...".format(args['m']))
-                spinalcordtoolbox.deepseg.models.install_model(args['m'])
+                printv("Model {} is not installed. Installing it now...".format(args['model']))
+                spinalcordtoolbox.deepseg.models.install_model(args['model'])
         # If it is not, check if this is a path to a valid model
         else:
-            path_model = os.path.abspath(args['m'])
+            path_model = os.path.abspath(args['model'])
             if not sct.deepseg.models.is_valid(path_model):
                 parser.error("The input model is invalid: {}".format(path_model))
     else:
