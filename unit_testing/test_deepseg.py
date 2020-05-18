@@ -10,6 +10,18 @@ import spinalcordtoolbox.deepseg.core
 import spinalcordtoolbox.deepseg.models
 
 
+def test_install_model():
+    """
+    Download all models, to allow subsequent tests on the model packages.
+    :return:
+    """
+    for name_model, value in sct.deepseg.models.MODELS.items():
+        if value['default']:
+            sct.deepseg.models.install_model(name_model)
+            # Make sure all files are present after unpacking the model
+            assert sct.deepseg.models.is_installed(name_model)
+
+
 def test_model_dict():
     """
     Make sure all fields are present in each model.
