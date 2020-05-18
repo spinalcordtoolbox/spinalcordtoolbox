@@ -5,6 +5,7 @@ Interface API for the deepseg module, which performs segmentation using deep lea
 
 # TODO: deal with multi-class segmentation in segment_nifti()
 
+import os
 import logging
 import numpy as np
 import nibabel as nib
@@ -34,7 +35,7 @@ def postprocess(nii_seg, options):
     :return:
     """
     def threshold(nii_seg, thr):
-        """Threshold the prediction. For no threshold, set 'threshold' to 0."""
+        """Threshold the prediction. For no threshold, set 'thr' to 0."""
         if thr:
             nii_seg = imed.postprocessing.threshold_predictions(nii_seg, thr)
         return nii_seg
@@ -84,7 +85,7 @@ def segment_nifti(fname_image, folder_model, param={}):
     :param fname_image: str: Filename of the image to segment.
     :param folder_model: str: Folder that encloses the deep learning model.
     :param param: dict: Dictionary of user's parameter
-    :return: fname_out: str: Output filename.
+    :return: fname_out: str: Output filename. If directory does not exist, it will be created.
     """
     nii_seg = imed.utils.segment_volume(folder_model, fname_image)
 
@@ -98,5 +99,9 @@ def segment_nifti(fname_image, folder_model, param={}):
         fname_out = options['o']
     else:
         fname_out = ''.join([sct.utils.splitext(fname_image)[0], '_seg.nii.gz'])
+    # If output folder does not exist, create it
+    path_out = os.path.dirname(fname_out)
+    if not os.path.exists(path_out):
+        os.makedirs(path_out)
     nib.save(nii_seg, fname_out)
     return fname_out
