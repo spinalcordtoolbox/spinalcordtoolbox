@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 # TODO: deal with "Folder __MACOSX"
 MODELS = {
     't2star_sc':
-        {'url': 'https://osf.io/v9hs8/download?version=2',
+        {'url': 'https://osf.io/v9hs8/download?version=3',
          'description': 'Cord segmentation on T2*-weighted contrast.',
          'default': True},
     'mice_uqueensland_sc':
