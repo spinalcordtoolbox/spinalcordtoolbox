@@ -68,7 +68,7 @@ def is_valid(path_model):
     """
     Check if model has the necessary files and follow naming conventions:
     - Folder should have the same name as the enclosed files.
-    :param path_model: str: Path to folder that encloses the model files.
+    :param path_model: str: Absolute path to folder that encloses the model files.
     """
     name_model = path_model.rstrip(os.sep).split(os.sep)[-1]
     return os.path.exists(os.path.join(path_model, name_model + '.pt')) and \
