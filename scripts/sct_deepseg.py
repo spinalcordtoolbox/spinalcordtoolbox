@@ -68,10 +68,11 @@ def get_parser():
              "(more info at https://github.com/sct-pipeline/deepseg-threshold).",
         metavar=sct.utils.Metavar.float)
     misc.add_argument(
-        "-keep-largest-object",
+        "-largest",
         type=int,
-        help="Remove false negative segmentation by only keeping the largest blob.",
-        choices=(0, 1))
+        help="Keep the largest connected-objects from the output segmentation. Specify the number of objects to keep."
+             "To keep all objects, set to 0",
+        default=1)
     misc.add_argument(
         "-fill-holes",
         type=int,

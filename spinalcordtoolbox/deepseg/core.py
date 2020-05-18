@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 # Default values if not asked during CLI call and if not present in json metadata.
 DEFAULTS = {
     'thr': 0.9,
-    'keep_largest_object': True,
+    'largest': 1,
     'fill_holes': True,
     }
 
@@ -40,8 +40,11 @@ def postprocess(nii_seg, options):
             nii_seg = imed.postprocessing.threshold_predictions(nii_seg, thr)
         return nii_seg
 
-    def keep_largest_object(nii_seg):
-        """Only keep largest object."""
+    def keep_largest_objects(nii_seg, n_objects):
+        """Only keep the n largest objects."""
+        if n_objects > 1:
+            # TODO: implement the thing below.
+            NotImplementedError("For now, the algorithm can only remove the largest object, no more than that.")
         # Make sure input is binary. If not, skip with verbose.
         if np.array_equal(nii_seg.get_fdata(), nii_seg.get_fdata().astype(bool)):
             # Fetch axis corresponding to superior-inferior direction
@@ -71,8 +74,8 @@ def postprocess(nii_seg, options):
 
     if options['thr']:
         nii_seg = threshold(nii_seg, options['thr'])
-    if options['keep_largest_object']:
-        nii_seg = keep_largest_object(nii_seg)
+    if options['largest']:
+        nii_seg = keep_largest_objects(nii_seg, options['largest'])
     if options['fill_holes']:
         nii_seg = fill_holes(nii_seg)
     return nii_seg
