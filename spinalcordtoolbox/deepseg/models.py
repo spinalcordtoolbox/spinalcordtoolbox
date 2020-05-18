@@ -17,8 +17,6 @@ logger = logging.getLogger(__name__)
 # List of models. The convention for model names is: (species)_(university)_(contrast)_region
 # Regions could be: sc, gm, lesion, tumor
 # TODO: add mirror
-# TODO: add a test to make sure all fields are present in the dict below
-# TODO: deal with "Folder __MACOSX"
 MODELS = {
     't2star_sc':
         {'url': 'https://osf.io/v9hs8/download?version=3',
