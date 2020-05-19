@@ -457,7 +457,7 @@ else
 fi
 
 # Update PATH variables based on Shell type
-UPDATE_PATH="export PATH=$SCT_DIR/$BIN_DIR:$PATH"
+UPDATE_PATH="export PATH=\"$SCT_DIR/$BIN_DIR:\$PATH\""
 if [[ $THE_RC == "bash" ]]; then
   DISPLAY_UPDATE_PATH="export PATH=\"$SCT_DIR/$BIN_DIR:\$PATH\""
 elif [[ $THE_RC == "csh" ]]; then
