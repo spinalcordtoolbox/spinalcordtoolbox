@@ -14,6 +14,14 @@ if [ -n "$DOCKER_IMAGE" ]; then
     ./util/dockerize.sh ./.ci.sh
 elif [ "${TRAVIS_OS_NAME}" = "windows" ]; then
     choco install wsl-ubuntu-1804
+
+    # disable apt's helpful (and build-breaking) interactive mode
+    # https://linuxhint.com/debian_frontend_noninteractive/
+    export DEBIAN_FRONTEND="noninteractive"
+    # Use WSLENV to actually pass it into WSL
+    # https://devblogs.microsoft.com/commandline/share-environment-vars-between-wsl-and-windows/
+    export WSLENV=DEBIAN_FRONTEND
+
     wsl apt-get update
     #wsl apt-get -y upgrade  # this step is probably important, but it's also sooo slow
     wsl apt-get install -y gcc git curl
