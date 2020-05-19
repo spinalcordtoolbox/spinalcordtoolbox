@@ -457,7 +457,6 @@ else
 fi
 
 # Update PATH variables based on Shell type
-UPDATE_PATH="export PATH=\"$SCT_DIR/$BIN_DIR:\$PATH\""
 if [[ $THE_RC == "bash" ]]; then
   DISPLAY_UPDATE_PATH="export PATH=\"$SCT_DIR/$BIN_DIR:\$PATH\""
 elif [[ $THE_RC == "csh" ]]; then
@@ -561,10 +560,6 @@ for file in $SCT_DIR/python/envs/venv_sct/bin/*sct*; do
     die "Problem creating launchers!"
   fi
 done
-
-## Update PATH within this script (to launch sct_check_dependencies)
-$UPDATE_PATH
-
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Download binaries and data
