@@ -106,7 +106,7 @@ Windows subsystem for Linux (WSL) is available on Windows 10 and it makes it pos
 
 ### Installation with Docker
 
-In order to install the SCT unsupported OS, we provide a solution via Docker. This solution will allow you to use all the resources of SCT including the programs with graphical interface. In addition to the SCT, the Docker image contains the FSLeyes program for the visualization of the NIFTI volumes that you process.
+If none of the above solution work, SCT can be installed via Docker. 
 
 [Tutorial to install SCT via Docker](https://github.com/neuropoly/spinalcordtoolbox/wiki/testing#run-docker-image)
 
