@@ -116,7 +116,7 @@ matrix:
       if: branch = release or type = cron
       os: osx
       osx_image: xcode9.2
-    - name: "Windows 10"
+    - name: "Windows Server, 1809"
       language: bash
       os: windows
 
