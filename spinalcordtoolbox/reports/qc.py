@@ -175,6 +175,18 @@ class QcImage(object):
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
 
+    def label_utils(self, mask, ax):
+        """Create figure with red segmentation. Common scenario."""
+        img = np.rint(np.ma.masked_where(mask < 1, mask))
+        ax.imshow(img,
+                  cmap=color.ListedColormap(self._color_bin_red),
+                  norm=color.Normalize(vmin=0, vmax=1),
+                  interpolation=self.interpolation,
+                  alpha=10,
+                  aspect=float(self.aspect_mask))
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
+
     def label_vertebrae(self, mask, ax):
         """Draw vertebrae areas, then add text showing the vertebrae names"""
         from matplotlib import colors
@@ -630,11 +642,18 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, angle_line=None, args
         qcslice_operations = [QcImage.template]
         qcslice_layout = lambda x: x.mosaic()
     # Sagittal orientation, display vertebral labels
-    elif process in ['sct_label_vertebrae']:
+    elif process in ['sct_label_vertebrae',]:
         plane = 'Sagittal'
         dpi = 100  # bigger picture is needed for this special case, hence reduce dpi
         qcslice_type = qcslice.Sagittal([Image(fname_in1), Image(fname_seg)], p_resample=None)
         qcslice_operations = [QcImage.label_vertebrae]
+        qcslice_layout = lambda x: x.single()
+    #  Sagittal orientation, display posterior labels
+    elif process in ['sct_label_utils']:
+        plane = 'Sagittal'
+        dpi = 100  # bigger picture is needed for this special case, hence reduce dpi
+        qcslice_type = qcslice.Sagittal([Image(fname_in1), Image(fname_seg)], p_resample=None)
+        qcslice_operations = [QcImage.label_utils]
         qcslice_layout = lambda x: x.single()
     # Sagittal orientation, display PMJ box
     elif process in ['sct_detect_pmj']:
