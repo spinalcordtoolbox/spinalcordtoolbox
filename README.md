@@ -110,7 +110,6 @@ In order to install the SCT unsupported OS, we provide a solution via Docker. Th
 
 [Tutorial to install SCT via Docker](https://github.com/neuropoly/spinalcordtoolbox/wiki/testing#run-docker-image)
 
-[Tutorial How to use GUI with the docker image](https://github.com/neuropoly/spinalcordtoolbox/wiki/testing#run-docker-with-gui)
 
 
 ## Getting started
