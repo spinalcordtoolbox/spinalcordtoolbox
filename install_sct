@@ -145,16 +145,7 @@ function fetch_os_type() {
     force_bashrc_loading
   # Linux
   elif echo $uname_output | grep -i linux >/dev/null 2>&1; then
-    # CentOS 6.X
-    if cat /etc/issue | grep -i centos | grep 6. 2>&1; then
-      OS=linux_centos6
-    # RedHat 6.X
-    elif cat /etc/issue | grep -i Red | grep 6. 2>&1; then
-      OS=linux_centos6
-    # Other Linux
-    else
-      OS=linux
-    fi
+    OS=linux
   else
     die "Sorry, the installer only supports Linux and OSX, quitting installer"
   fi
@@ -571,26 +562,6 @@ for file in $SCT_DIR/python/envs/venv_sct/bin/*sct*; do
   fi
 done
 
-
-# ----------------------------------------------------------------------------------------------------------------------
-# Install shell scripts
-# ----------------------------------------------------------------------------------------------------------------------
-
-## Make shell scripts executable
-print info "Make shell scripts executable..."
-for file in $SCT_DIR/shell/*; do
-  chmod 775 "$file"
-done
-
-## Create symbolic links for Shell scripts (-f: overwrite if exists)
-print info "Creating symbolic links for Shell scripts..."
-ln -s -f $SCT_DIR/shell/sct_run_batch.sh $SCT_DIR/$BIN_DIR/sct_run_batch
-ln -s -f $SCT_DIR/shell/_run_with_log.sh $SCT_DIR/$BIN_DIR/_run_with_log.sh
-res=$?
-if [[ $res != 0 ]]; then
-  die "Problem creating symlinks!"
-fi
-
 ## Update PATH within this script (to launch sct_check_dependencies)
 $UPDATE_PATH
 
@@ -606,8 +577,6 @@ else
   print info "Installing binaries..."
   if [[ $OS == "linux" ]]; then
     run "sct_download_data -d binaries_debian -o $SCT_DIR/$BIN_DIR"
-  elif [[ $OS == "linux_centos6" ]]; then
-    run "sct_download_data -d binaries_centos -o $SCT_DIR/$BIN_DIR"
   elif [[ $OS == "osx" ]]; then
     run "sct_download_data -d binaries_osx -o $SCT_DIR/$BIN_DIR"
   else

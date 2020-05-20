@@ -21,8 +21,12 @@ import logging
 import shutil
 import subprocess
 import tempfile
+import pathlib
 
 import numpy as np
+
+from sct_convert import convert
+
 
 logger = logging.getLogger(__name__)
 
@@ -231,11 +235,6 @@ def which_sct_binaries():
     """
 
     if sys.platform.startswith("linux"):
-        distro = platform.linux_distribution()
-        if "CentOS Linux" in distro:
-            return "binaries_centos"
-        if "Red Hat Enterprise Linux Server" in distro:
-            return "binaries_centos"
         return "binaries_debian"
     else:
         return "binaries_osx"
@@ -710,19 +709,21 @@ def tmp_copy_nifti(fname, path_tmp, fname_out='data.nii', verbose=0):
 #=======================================================================================================================
 def generate_output_file(fname_in, fname_out, squeeze_data=True, verbose=1):
     """
-    Generate output file. Only works for images (e.g., nifti, nifti_gz)
+    Copy fname_in to fname_out with a few convenient checks: make sure input file exists, if fname_out exists send a
+    warning, if input and output NIFTI format are different (nii vs. nii.gz) convert by unzipping or zipping, and
+    display nice message at the end.
     :param fname_in:
     :param fname_out:
     :param verbose:
     :return: fname_out
     """
-    # import stuff
-    import shutil  # for moving files
     path_in, file_in, ext_in = extract_fname(fname_in)
     path_out, file_out, ext_out = extract_fname(fname_out)
+    # create output path (ignore if it already exists)
+    pathlib.Path(path_out).mkdir(parents=True, exist_ok=True)
     # if input image does not exist, give error
     if not os.path.isfile(fname_in):
-        printv('  ERROR: File ' + fname_in + ' does not exist. Exit program.', 1, 'error')
+        printv('  ERROR: File ' + fname_in + ' is not a regular file. Exit program.', 1, 'error')
         sys.exit(2)
     # if input and output fnames are the same, do nothing and exit function
     if fname_in == fname_out:
@@ -742,8 +743,7 @@ def generate_output_file(fname_in, fname_out, squeeze_data=True, verbose=1):
             os.rename(os.path.join(path_in, file_in + '.nii'), fname_out)
         else:
         '''
-        from sct_convert import convert
-        convert(fname_in, fname_out, squeeze_data=squeeze_data)
+        convert(fname_in, fname_out, squeeze_data=squeeze_data, verbose=0)
     else:
         # Generate output file without changing the extension
         shutil.move(fname_in, fname_out)

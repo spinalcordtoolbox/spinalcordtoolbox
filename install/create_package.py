@@ -43,7 +43,7 @@ if platform.mac_ver()[0]:
 elif platform.linux_distribution()[0]:
     local_os = 'linux'
 
-listOS = ["linux_centos6", "linux", "osx"]
+listOS = ["linux", "osx"]
 deb_fsl = []
 tar_fsl = []
 
