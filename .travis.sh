@@ -13,7 +13,7 @@ set -e # Error build immediately if install script exits with non-zero
 if [ -n "$DOCKER_IMAGE" ]; then
     ./util/dockerize.sh ./.ci.sh
 elif [ "${TRAVIS_OS_NAME}" = "windows" ]; then
-    choco install wsl-ubuntu-1804
+    choco install wsl-ubuntu-1804 -y
      # or, instead of choco, use curl + powershell:
      # https://docs.microsoft.com/en-us/windows/wsl/install-manual#downloading-distros-via-the-command-line
     # wsl --setdefault "Ubuntu-18.04"
