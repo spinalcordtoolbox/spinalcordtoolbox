@@ -99,7 +99,7 @@ git pull
 
 ### Installation with Windows Subsystem for Linux (Windows 10).
 
-Windows subsystem for Linux (WSL) is a new Windows 10 feature that enables you to run native Linux command-line tools directly on Windows. That way, it is possible to install a Linux version SCT and use it within your Windows 10 environment.
+Windows subsystem for Linux (WSL) is available on Windows 10 and it makes it possible to run native Linux programs, such as SCT. 
 
 [Tutorial how to install SCT on WSL](https://github.com/neuropoly/spinalcordtoolbox/wiki/SCT-on-Windows-10:-Installation-instruction-for-SCT-on-Windows-subsytem-for-linux)
 
