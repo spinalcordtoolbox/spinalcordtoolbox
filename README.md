@@ -90,19 +90,22 @@ At anytime, you can update your local SCT installation to the latest version on 
 git pull
 ~~~
 
+
+### Installation with Windows Subsystem for Linux (Windows 10).
+
+Windows subsystem for Linux (WSL) is a new Windows 10 feature that enables you to run native Linux command-line tools directly on Windows. That way, it is possible to install a Linux version SCT and use it within your Windows 10 environment.
+
+[Tutorial how to install SCT on WSL](https://github.com/neuropoly/spinalcordtoolbox/wiki/SCT-on-Windows-10:-Installation-instruction-for-SCT-on-Windows-subsytem-for-linux)
+
+
 ### Installation with Docker
 
-In order to install the SCT in Windows or other unsupported OS, we provide a solution via Docker. This solution will allow you to use all the resources of SCT including the programs with graphical interface. In addition to the SCT, the Docker image contains the FSLeyes program for the visualization of the NIFTI volumes that you process.
+In order to install the SCT unsupported OS, we provide a solution via Docker. This solution will allow you to use all the resources of SCT including the programs with graphical interface. In addition to the SCT, the Docker image contains the FSLeyes program for the visualization of the NIFTI volumes that you process.
 
 [Tutorial how to install SCT via Docker](https://github.com/neuropoly/spinalcordtoolbox/wiki/testing#run-docker-image)
 
 [Tutorial How to use GUI with the docker image](https://github.com/neuropoly/spinalcordtoolbox/wiki/testing#run-docker-with-gui)
 
-### Installation with Windows Subsystem for Linux (Windows 10). 
-
-Windows subsystem for Linux (WSL) is a new Windows 10 feature that enables you to run native Linux command-line tools directly on Windows. That way, it is possible to install a Linux version SCT and use it within your Windows 10 environment. 
-
-[Tutorial how to install SCT on WSL](https://github.com/neuropoly/spinalcordtoolbox/wiki/SCT-on-Windows-10:-Installation-instruction-for-SCT-on-Windows-subsytem-for-linux)
 
 ## Getting started
 
