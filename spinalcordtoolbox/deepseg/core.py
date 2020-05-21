@@ -107,7 +107,7 @@ def segment_nifti(fname_image, folder_model, param={}):
         fname_out = ''.join([sct.utils.splitext(fname_image)[0], '_seg.nii.gz'])
     # If output folder does not exist, create it
     path_out = os.path.dirname(fname_out)
-    if not os.path.exists(path_out):
+    if not (path_out == '' or os.path.exists(path_out)):
         os.makedirs(path_out)
     nib.save(nii_seg, fname_out)
     return fname_out
