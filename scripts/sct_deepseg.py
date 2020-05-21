@@ -71,18 +71,20 @@ def get_parser():
         help="Binarize segmentation with specified threshold. Set to 0 for no thresholding (i.e., soft segmentation). "
              "Default value is model-specific and was set during optimization "
              "(more info at https://github.com/sct-pipeline/deepseg-threshold).",
-        metavar=sct.utils.Metavar.float)
+        metavar=sct.utils.Metavar.float,
+        default=sct.deepseg.core.DEFAULTS['thr'])
     misc.add_argument(
         "-largest",
         type=int,
         help="Keep the largest connected-objects from the output segmentation. Specify the number of objects to keep."
              "To keep all objects, set to 0",
-        default=1)
+        default=sct.deepseg.core.DEFAULTS['largest'])
     misc.add_argument(
         "-fill-holes",
         type=int,
         help="Fill small holes in the segmentation.",
-        choices=(0, 1))
+        choices=(0, 1),
+        default=sct.deepseg.core.DEFAULTS['fill_holes'])
 
     misc = parser.add_argument_group('\nMISC')
     misc.add_argument(

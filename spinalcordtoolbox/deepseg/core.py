@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 DEFAULTS = {
     'thr': 0.9,
     'largest': 1,
-    'fill_holes': True,
+    'fill_holes': 1,
     }
 
 
