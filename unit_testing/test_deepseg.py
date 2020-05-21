@@ -19,7 +19,7 @@ def test_install_model():
         if value['default']:
             sct.deepseg.models.install_model(name_model)
             # Make sure all files are present after unpacking the model
-            assert sct.deepseg.models.is_installed(name_model)
+            assert sct.deepseg.models.is_valid(sct.deepseg.models.folder(name_model))
 
 
 def test_model_dict():
