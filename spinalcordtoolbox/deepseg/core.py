@@ -67,6 +67,7 @@ def postprocess(nii_seg, options):
 
     def fill_holes(nii_seg):
         """Fill holes"""
+        logger.info("Fill holes")
         # Make sure input is binary. If not, skip with verbose.
         if np.array_equal(nii_seg.get_fdata(), nii_seg.get_fdata().astype(bool)):
             nii_seg = imed.postprocessing.fill_holes(nii_seg)
@@ -74,7 +75,7 @@ def postprocess(nii_seg, options):
             logger.warning("Algorithm 'fill holes' can only be run on binary segmentation. Skipping.")
         return nii_seg
 
-    logger.info("\n~~~ Processing segmentation ~~~")
+    logger.info("\nProcessing segmentation\n" + "-"*23)
     if options['thr']:
         nii_seg = threshold(nii_seg, options['thr'])
     if options['largest']:
