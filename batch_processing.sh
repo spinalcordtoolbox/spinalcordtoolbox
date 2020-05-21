@@ -52,7 +52,7 @@ if [ -z "$SCT_BP_NO_REMOVE_QC" -a -d "$SCT_BP_QC_FOLDER" ]; then
 fi
 
 # get starting time:
-TIME_START=$(date +%x_%r)
+start=`date +%s`
 
 # download example data
 if [[ "$SCT_BP_DOWNLOAD" == "1" ]]; then
@@ -247,8 +247,11 @@ cd ..
 # Display results (to easily compare integrity across SCT versions)
 # ===========================================================================================
 set +v
-echo "Started at: $TIME_START"
-echo "Ended at: $(date +%x_%r)"
+end=`date +%s`
+runtime=$((end-start))
+echo "~~~"  # these are used to format as code when copy/pasting in github's markdown
+echo "Ran on: `uname -nsr`"
+echo "Duration: $(($runtime / 3600))hrs $((($runtime / 60) % 60))min $(($runtime % 60))sec"
 echo
 echo "t2/CSA:         " `awk -F"," ' {print $6}' t2/csa_c2c3.csv | tail -1`
 echo "mt/MTR(WM):     " `awk -F"," ' {print $8}' mt/mtr_in_wm.csv | tail -1`
@@ -256,7 +259,7 @@ echo "t2s/CSA_GM:     " `awk -F"," ' {print $6}' t2s/csa_gm.csv | tail -1`
 echo "t2s/CSA_WM:     " `awk -F"," ' {print $6}' t2s/csa_wm.csv | tail -1`
 echo "dmri/FA(CST_r): " `awk -F"," ' {print $8}' dmri/fa_in_cst.csv | tail -1`
 echo "dmri/FA(CST_l): " `awk -F"," ' {print $8}' dmri/fa_in_cst.csv | tail -2 | head -1`
-echo
+echo "~~~"
 
 # Display syntax to open QC report on web browser
 echo "To open Quality Control (QC) report on a web-browser, run the following:"
