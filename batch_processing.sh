@@ -249,10 +249,11 @@ cd ..
 set +v
 end=`date +%s`
 runtime=$((end-start))
+echo "**`sct_version`**"
 echo "~~~"  # these are used to format as code when copy/pasting in github's markdown
-echo "Ran on: `uname -nsr`"
-echo "Duration: $(($runtime / 3600))hrs $((($runtime / 60) % 60))min $(($runtime % 60))sec"
-echo
+echo "Ran on:          `uname -nsr`"
+echo "Duration:        $(($runtime / 3600))hrs $((($runtime / 60) % 60))min $(($runtime % 60))sec"
+echo "---"
 echo "t2/CSA:         " `awk -F"," ' {print $6}' t2/csa_c2c3.csv | tail -1`
 echo "mt/MTR(WM):     " `awk -F"," ' {print $8}' mt/mtr_in_wm.csv | tail -1`
 echo "t2s/CSA_GM:     " `awk -F"," ' {print $6}' t2s/csa_gm.csv | tail -1`
