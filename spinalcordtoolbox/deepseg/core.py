@@ -36,12 +36,14 @@ def postprocess(nii_seg, options):
     """
     def threshold(nii_seg, thr):
         """Threshold the prediction. For no threshold, set 'thr' to 0."""
+        logger.info("Threshold: {}".format(thr))
         if thr:
             nii_seg = imed.postprocessing.threshold_predictions(nii_seg, thr)
         return nii_seg
 
     def keep_largest_objects(nii_seg, n_objects):
         """Only keep the n largest objects."""
+        logger.info("Keep largest objects: {}".format(n_objects))
         if n_objects > 1:
             # TODO: implement the thing below.
             NotImplementedError("For now, the algorithm can only remove the largest object, no more than that.")
@@ -72,6 +74,7 @@ def postprocess(nii_seg, options):
             logger.warning("Algorithm 'fill holes' can only be run on binary segmentation. Skipping.")
         return nii_seg
 
+    logger.info("\n~~~ Processing segmentation ~~~")
     if options['thr']:
         nii_seg = threshold(nii_seg, options['thr'])
     if options['largest']:
