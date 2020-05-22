@@ -235,7 +235,7 @@ def which_sct_binaries():
     """
 
     if sys.platform.startswith("linux"):
-        return "binaries_debian"
+        return "binaries_linux"
     else:
         return "binaries_osx"
 
