@@ -6,6 +6,9 @@ notifications:
     on_success:change
     on_failure:always
 
+git:
+  autocrlf: false
+
 # this enables to avoid recompilation of dipy if it was already compiled previously
 #cache:
 #  directories:
@@ -113,5 +116,8 @@ matrix:
       if: branch = release or type = cron
       os: osx
       osx_image: xcode9.2
+    - name: "Windows Server, 1809"
+      language: bash
+      os: windows
 
 script: ./.travis.sh
