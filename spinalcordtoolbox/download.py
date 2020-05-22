@@ -8,6 +8,7 @@ import distutils.dir_util
 import logging
 import cgi
 import tempfile
+import urllib.parse
 import tarfile
 import zipfile
 import requests
@@ -35,6 +36,7 @@ def download_data(urls):
         urls = [urls]
 
     # loop through URLs
+    exceptions = []
     for url in urls:
         try:
             logger.info('Trying URL: %s' % url)
@@ -42,15 +44,22 @@ def download_data(urls):
             session = requests.Session()
             session.mount('https://', HTTPAdapter(max_retries=retry))
             response = session.get(url, stream=True)
+            response.raise_for_status()
 
+            filename = os.path.basename(urllib.parse.urlparse(url).path)
             if "Content-Disposition" in response.headers:
                 _, content = cgi.parse_header(response.headers['Content-Disposition'])
                 filename = content["filename"]
-            else:
-                logger.warning("Unexpected: link doesn't provide a filename")
-                continue
+
+            # protect against directory traversal
+            filename = os.path.basename(filename)
+            if not filename:
+                # this handles cases where you're loading something like an index page
+                # instead of a specific file. e.g. https://osf.io/ugscu/?action=view.
+                raise ValueError("Unable to determine target filename for URL: %s" % (url,))
 
             tmp_path = os.path.join(tempfile.mkdtemp(), filename)
+
             logger.info('Downloading: %s' % filename)
 
             with open(tmp_path, 'wb') as tmp_file:
@@ -68,8 +77,9 @@ def download_data(urls):
 
         except Exception as e:
             logger.warning("Link download error, trying next mirror (error was: %s)" % e)
+            exceptions.append(e)
     else:
-        logger.error('Download error')
+        raise Exception('Download error', exceptions)
 
 
 def unzip(compressed, dest_folder):
@@ -77,22 +87,21 @@ def unzip(compressed, dest_folder):
     Extract compressed file to the dest_folder. Can handle .zip, .tar.gz.
     """
     logger.info('Unzip data to: %s' % dest_folder)
-    if compressed.endswith('zip'):
-        try:
-            zf = zipfile.ZipFile(compressed)
-            zf.extractall(dest_folder)
-            return
-        except (zipfile.BadZipfile):
-            logger.error("ZIP package corrupted. Please try downloading again.")
-    elif compressed.endswith('tar.gz'):
-        try:
-            tar = tarfile.open(compressed)
-            tar.extractall(path=dest_folder)
-            return
-        except tarfile.TarError:
-            logger.error("ZIP package corrupted. Please try again.")
+
+    formats = {'.zip': zipfile.ZipFile,
+               '.tar.gz': tarfile.open,
+               '.tgz': tarfile.open}
+    for format, open in formats.items():
+        if compressed.lower().endswith(format):
+            break
     else:
-        logger.error("The file %s is of wrong format" % compressed)
+        raise TypeError('ERROR: The file %s is of wrong format' % (compressed,))
+
+    try:
+        open(compressed).extractall(dest_folder)
+    except:
+        sct.printv('ERROR: ZIP package corrupted. Please try downloading again.', verbose, 'error')
+        raise
 
 
 def install_data(url, dest_folder):
