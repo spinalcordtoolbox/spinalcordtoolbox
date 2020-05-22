@@ -592,6 +592,9 @@ else
   done
 fi
 
+# Install deep learning models
+python -c 'import spinalcordtoolbox.deepseg.models; spinalcordtoolbox.deepseg.models.install_default_models()'
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Validate installation
