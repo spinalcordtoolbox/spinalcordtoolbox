@@ -19,6 +19,7 @@
 from __future__ import absolute_import, division
 
 import sys, os
+import numpy as np
 from matplotlib.ticker import MaxNLocator
 
 import sct_utils as sct
@@ -161,6 +162,12 @@ def _make_figure(metric, fit_results):
         csa.append(value['MEAN(area)'])
         angle_ap.append(value['MEAN(angle_AP)'])
         angle_rl.append(value['MEAN(angle_RL)'])
+
+    z_ord = np.argsort(z)
+    z, csa, angle_ap, angle_rl = (
+        [np.array(x)[z_ord] for x in (z, csa, angle_ap, angle_rl)]
+    )
+
     # Make figure
     fig = Figure(figsize=(8, 7), tight_layout=True)  # 640x700 pix
     FigureCanvas(fig)
