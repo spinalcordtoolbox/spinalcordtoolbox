@@ -116,11 +116,12 @@ def main():
         print("{:<25s}DESCRIPTION".format("MODEL"))
         print("-" * 80)
         for name_model, value in models.items():
+            path_model = sct.deepseg.models.folder(name_model)
             print("{}{}".format(
                 colored.stylize(''.join((name_model, default[value['default']])).ljust(25),
-                                colored.fg(color[sct.deepseg.models.is_installed(name_model)])),
+                                colored.fg(color[sct.deepseg.models.is_valid(path_model)])),
                 colored.stylize(value['description'],
-                                colored.fg(color[sct.deepseg.models.is_installed(name_model)]))
+                                colored.fg(color[sct.deepseg.models.is_valid(path_model)]))
                 ))
         print(
             '\nLegend: {} | {} | default: {}\n'.format(
