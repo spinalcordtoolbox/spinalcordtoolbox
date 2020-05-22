@@ -1,8 +1,10 @@
 numpy  # need to install first otherwise dependency issues
+colored
 cryptography
 dipy
 futures
 h5py
+ivadomed
 Keras==2.1.5
 matplotlib
 nibabel
