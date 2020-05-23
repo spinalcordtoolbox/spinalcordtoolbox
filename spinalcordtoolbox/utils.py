@@ -184,7 +184,7 @@ def parse_num_list(str_num):
         if m is not None:
             a = int(m.group("first"))
             b = int(m.group("last"))
-            list_num += [ x for x in range(a, b+1) if x not in list_num ]
+            list_num += [x for x in range(a, b + 1) if x not in list_num]
             continue
         raise ValueError("unexpected group element {} group spec {}".format(element, str_num))
 
@@ -213,10 +213,10 @@ def parse_num_list_inv(list_int):
     # Loop across list elements and build string iteratively
     for i in range(1, len(list_int)):
         # if previous element is the previous integer: I(i-1) = I(i)-1
-        if list_int[i] == list_int[i-1] + 1:
+        if list_int[i] == list_int[i - 1] + 1:
             # if ":" already there, update the last chars (based on the number of digits)
             if colon_is_present:
-                str_num = str_num[:-len(str(list_int[i-1]))] + str(list_int[i])
+                str_num = str_num[:-len(str(list_int[i - 1]))] + str(list_int[i])
             # if not, add it along with the new int value
             else:
                 str_num += ':' + str(list_int[i])
@@ -255,6 +255,7 @@ def tmp_create(basename=None):
     tmpdir = tempfile.mkdtemp(prefix=prefix)
     logger.info("Creating temporary folder (%s)" % tmpdir)
     return tmpdir
+
 
 def send_email(addr_to, addr_from, passwd, subject, message='', filename=None, html=False, smtp_host=None, smtp_port=None, login=None):
     if smtp_host is None:
@@ -347,8 +348,8 @@ def __get_commit():
         unclean = True
         for line in output.decode().strip().splitlines():
             line = line.rstrip()
-            if line.startswith("??"): # ignore ignored files, they can't hurt
-               continue
+            if line.startswith("??"):  # ignore ignored files, they can't hurt
+                continue
             break
         else:
             unclean = False
@@ -366,7 +367,7 @@ def _git_info(commit_env='SCT_COMMIT', branch_env='SCT_BRANCH'):
         sct_commit = __get_commit() or sct_commit
         sct_branch = __get_branch() or sct_branch
 
-    if sct_commit is not 'unknown':
+    if sct_commit != 'unknown':
         install_type = 'git'
     else:
         install_type = 'package'
