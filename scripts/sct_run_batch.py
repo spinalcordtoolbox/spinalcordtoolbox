@@ -23,6 +23,7 @@ import re
 import time
 
 from spinalcordtoolbox.utils import Metavar, SmartFormatter
+import sct_utils as sct
 
 
 def get_parser():
@@ -81,6 +82,8 @@ def get_parser():
 
 
 def main():
+    # Print the sct startup info
+    sct.init_sct()
 
     args = get_parser().parse_args()
     # Find subjects and process inclusion/exclusions
