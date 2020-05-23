@@ -12,6 +12,7 @@ import logging
 import argparse
 import subprocess
 import shutil
+import sys
 from enum import Enum
 
 logger = logging.getLogger(__name__)
@@ -116,6 +117,27 @@ class SmartFormatter(argparse.HelpFormatter):
         return argparse.HelpFormatter._split_lines(self, text, width)
 
 
+# Taken from http://shallowsky.com/blog/programming/python-tee.html
+class Tee:
+    def __init__(self, _fd1, _fd2):
+        self.fd1 = _fd1
+        self.fd2 = _fd2
+
+    def __del__(self):
+        if self.fd1 != sys.stdout and self.fd1 != sys.stderr:
+            self.fd1.close()
+        if self.fd2 != sys.stdout and self.fd2 != sys.stderr:
+            self.fd2.close()
+
+    def write(self, text):
+        self.fd1.write(text)
+        self.fd2.write(text)
+
+    def flush(self):
+        self.fd1.flush()
+        self.fd2.flush()
+
+    
 def add_suffix(fname, suffix):
     """
     Add suffix between end of file name and extension.
