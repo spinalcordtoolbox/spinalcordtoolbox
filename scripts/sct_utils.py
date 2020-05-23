@@ -824,9 +824,9 @@ def send_email(addr_to, addr_from, passwd, subject, message='', filename=None, h
         login = addr_from
 
     import smtplib
-    from email.MIMEMultipart import MIMEMultipart
-    from email.MIMEText import MIMEText
-    from email.MIMEBase import MIMEBase
+    from email.mime.multipart import MIMEMultipart
+    from email.mime.text import MIMEText
+    from email.mime.base import MIMEBase
     from email import encoders
 
     if html:
@@ -842,10 +842,10 @@ def send_email(addr_to, addr_from, passwd, subject, message='', filename=None, h
     if not isinstance(body, bytes):
         body = body.encode("utf-8")
 
-    body_html = b"""
+    body_html = """
 <html><pre style="font: monospace"><body>
 {}
-</body></pre></html>""".format(body)
+</body></pre></html>""".format(body).encode()
 
     if html:
         msg.attach(MIMEText(body_html, 'html', "utf-8"))
