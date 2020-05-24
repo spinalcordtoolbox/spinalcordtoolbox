@@ -22,7 +22,7 @@ import subprocess
 import re
 import time
 
-from spinalcordtoolbox.utils import Metavar, SmartFormatter
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, Tee
 import sct_utils as sct
 
 
@@ -57,6 +57,10 @@ def get_parser():
                         'PATH_QC=' + os.path.join('<path-output>', 'QC') + '\n'
                         'PATH_LOG=' + os.path.join('<path-output>', 'log') + '\n'
                         'Which are respectively output paths for results, QC and logs')
+    parser.add_argument('-batch-log', default='sct_run_batch_log.txt',
+                        help='A log file for all terminal output produced by this script (not '
+                        'necessarily including the individual job outputs. File will be relative '
+                        'to "<path-output>/log".')
     parser.add_argument('-include',
                         help='Optional regex used to filter the list of subject directories. Only process '
                         'a subject if they match the regex. Inclusions are processed before exclusions. '
@@ -104,7 +108,22 @@ def main():
 
     # Parse the command line arguments
     args = get_parser().parse_args()
-    
+
+    # Set up output directories and create them if they don't already exist
+    path_output = os.path.abspath(os.path.expanduser(args.path_output))
+    path_results = os.path.join(path_output, 'results')
+    path_log = os.path.join(path_output, 'log')
+    path_qc = os.path.join(path_output, 'qc')
+
+    for pth in [path_output, path_results, path_log, path_qc]:
+        if not os.path.exists(pth):
+            os.mkdir(pth)
+
+    # Setup overall log
+    batch_log = open(os.path.join(path_log, args.batch_log), 'w')
+    sys.stdout = Tee(batch_log, sys.stdout)
+    sys.stderr = Tee(batch_log, sys.stderr)
+
     # Find subjects and process inclusion/exclusions
     path_data = os.path.abspath(os.path.expanduser(args.path_data))
     subject_dirs = [f for f in os.listdir(path_data) if f.startswith(args.subject_prefix)]
@@ -138,16 +157,6 @@ def main():
     if args.exclude_file is not None:
         exclude_list = [s for s in open(args.exclude_file, 'r')]
         subject_dirs = [f for f in subject_dirs if f not in exclude_list]
-
-    # Set up output directories and create them if they don't already exist
-    path_output = os.path.abspath(os.path.expanduser(args.path_output))
-    path_results = os.path.join(path_output, 'results')
-    path_log = os.path.join(path_output, 'log')
-    path_qc = os.path.join(path_output, 'qc')
-
-    for pth in [path_output, path_results, path_log, path_qc]:
-        if not os.path.exists(pth):
-            os.mkdir(pth)
 
     # Strip the `.sh` extension from the task for building error logs
     # TODO: we should probably strip all extensions
