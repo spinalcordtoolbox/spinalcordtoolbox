@@ -24,6 +24,7 @@ import time
 import functools
 
 from spinalcordtoolbox.utils import Metavar, SmartFormatter, Tee
+from spinalcordtoolbox import __version__
 import sct_utils as sct
 
 
@@ -163,8 +164,17 @@ def main():
 
     # Setup overall log
     batch_log = open(os.path.join(path_log, args.batch_log), 'w')
-    sys.stdout = Tee(batch_log, sys.stdout)
-    sys.stderr = Tee(batch_log, sys.stderr)
+
+    # Duplicate init_sct message to batch_log
+    orig_stdout = sys.stdout
+    orig_stderr = sys.stderr
+    sys.stdout = batch_log
+    sys.stderr = batch_log
+    print('\n--\nSpinal Cord Toolbox ({})\n'.format(__version__), flush=True)
+
+    # Tee IO to batch_log and std(out/err)
+    sys.stdout = Tee(batch_log, orig_stdout)
+    sys.stderr = Tee(batch_log, orig_stderr)
 
     # Find subjects and process inclusion/exclusions
     path_data = os.path.abspath(os.path.expanduser(args.path_data))
