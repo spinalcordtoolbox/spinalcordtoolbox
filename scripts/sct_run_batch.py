@@ -21,6 +21,7 @@ import multiprocessing
 import subprocess
 import re
 import time
+import functools
 
 from spinalcordtoolbox.utils import Metavar, SmartFormatter, Tee
 import sct_utils as sct
@@ -102,6 +103,47 @@ def get_parser():
     return parser
 
 
+def run_single(subj_dir, task, task_args, path_segmanual, path_data, path_results, path_log, path_qc, itk_threads):
+    "Job function for mapping with multiprocessing"
+
+    # Strip the `.sh` extension from the task for building error logs
+    # TODO: we should probably strip all extensions
+    task_base = re.sub('\\.sh$', '', os.path.basename(task))
+    task_full = os.path.abspath(os.path.expanduser(task))
+
+    subject = os.path.basename(subj_dir)
+    log_file = os.path.join(path_log, '{}_{}.log'.format(task_base, subject))
+    err_file = os.path.join(path_log, 'err.{}_{}.log'.format(task_base, subject))
+
+    print('Running {}. See log file {}'.format(subject, log_file), flush=True)
+
+    # A full copy of the environment is needed otherwise sct programs won't necessarily be found
+    envir = os.environ.copy()
+    # Add the script relevant environment variables
+    envir.update({
+        'PATH_SEGMANUAL': path_segmanual,
+        'PATH_DATA': path_data,
+        'PATH_RESULTS': path_results,
+        'PATH_LOG': path_log,
+        'PATH_QC': path_qc,
+        'ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS': str(itk_threads)
+    })
+
+    # Ship the job out, merging stdout/stderr and piping to log file
+    res = subprocess.run([task_full, subj_dir] + task_args.split(' '),
+                         env=envir,
+                         stdout=open(log_file, 'w'),
+                         stderr=subprocess.STDOUT)
+
+    # Check the return code, if it failed rename the log file to indicate
+    # an error
+    if res.returncode != 0:
+        os.rename(log_file, err_file)
+
+    # Assert that the command needs to have run successfully
+    assert res.returncode == 0, 'Processing of subject {} failed'.format(subject)
+
+
 def main():
     # Print the sct startup info
     sct.init_sct()
@@ -158,46 +200,6 @@ def main():
         exclude_list = [s for s in open(args.exclude_file, 'r')]
         subject_dirs = [f for f in subject_dirs if f not in exclude_list]
 
-    # Strip the `.sh` extension from the task for building error logs
-    # TODO: we should probably strip all extensions
-    task = args.task
-    task_base = re.sub('\\.sh$', '', os.path.basename(task))
-    task_full = os.path.abspath(os.path.expanduser(task))
-
-    # Job function for mapping with multiprocessing
-    def run_single(subj_dir):
-        subject = os.path.basename(subj_dir)
-        log_file = os.path.join(path_log, '{}_{}.log'.format(task_base, subject))
-        err_file = os.path.join(path_log, 'err.{}_{}.log'.format(task_base, subject))
-        
-        print('Running {}. See log file {}'.format(subject, log_file))
-
-        # A full copy of the environment is needed otherwise sct programs won't necessarily be found
-        envir = os.environ.copy()
-        # Add the script relevant environment variables
-        envir.update({
-            'PATH_SEGMANUAL': args.path_segmanual,
-            'PATH_DATA': path_data,
-            'PATH_RESULTS': path_results,
-            'PATH_LOG': path_log,
-            'PATH_QC': path_qc,
-            'ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS': str(args.itk_threads)
-        })
-
-        # Ship the job out, merging stdout/stderr and piping to log file
-        res = subprocess.run([task_full, subj_dir] + args.task_args.split(' '),
-                             env=envir,
-                             stdout=open(log_file, 'w'),
-                             stderr=subprocess.STDOUT)
-
-        # Check the return code, if it failed rename the log file to indicate
-        # an error
-        if res.returncode != 0:
-            os.rename(log_file, err_file)
-
-        # Assert that the command needs to have run successfully
-        assert res.returncode == 0, 'Processing of subject {} failed'.format(subject)
-
     # Determine the number of jobs we can run simulataneously
     if args.jobs < 1:
         jobs = multiprocessing.cpu_count() + args.jobs
@@ -207,7 +209,16 @@ def main():
     # Run the jobs, recording start and end times
     start = time.strftime('%H:%M', time.localtime(time.time()))
     with multiprocessing.Pool(jobs) as p:
-        p.map(run_single, subject_dirs)
+        run_single_dir = functools.partial(run_single,
+                                           task=args.task,
+                                           task_args=args.task_args,
+                                           path_segmanual=args.path_segmanual,
+                                           path_data=path_data,
+                                           path_results=path_results,
+                                           path_log=path_log,
+                                           path_qc=path_qc,
+                                           itk_threads=args.itk_threads)
+        p.map(run_single_dir, subject_dirs)
     end = time.strftime('%H:%M', time.localtime(time.time()))
 
     print('Finished :-)\n'
