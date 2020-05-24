@@ -59,11 +59,28 @@ def get_parser():
                         'Which are respectively output paths for results, QC and logs')
     parser.add_argument('-include',
                         help='Optional regex used to filter the list of subject directories. Only process '
-                        'a subject if they match the regex. Inclusions are processed before exclusions.')
+                        'a subject if they match the regex. Inclusions are processed before exclusions. '
+                        'Cannot be used with either `include-list` or `include-file`.')
+    parser.add_argument('-include-list',
+                        help='Optional space separated list of subjects to include. Only process '
+                        'a subject if they are on this list. Inclusions are processed before exclusions. '
+                        'Cannot be used with either `include` or `include-file`.', nargs='+')
+    parser.add_argument('-include-file',
+                        help='Optional file with one line per subject to include. Only process '
+                        'a subject if they are named in this file. Inclusions are processed before exclusions. '
+                        'Cannot be used with either `include` or `include-list`.')
     parser.add_argument('-exclude',
                         help='Optional regex used to filter the list of subject directories. Only process '
                         'a subject if they do not match the regex. Exclusions are processed '
-                        'after inclusions.')
+                        'after inclusions. Cannot be used with `exclude-list` or `exclude-file`')
+    parser.add_argument('-exclude-list',
+                        help='Optional space separated list of subjects to exclude. Only process '
+                        'a subject if they are not on this list. Inclusions are processed before exclusions. '
+                        'Cannot be used with either `exclude` or `exclude-file`.', nargs='+')
+    parser.add_argument('-exclude-file',
+                        help='Optional file with one line per subject to include. Only process '
+                        'a subject if they are not named in this file. Inclusions are processed before exclusions. '
+                        'Cannot be used with either `exclude` or `exclude-list`.')
     parser.add_argument('-path-segmanual', default='.',
                         help='R|Setting for environment variable: PATH_SEGMANUAL\n'
                         'A path containing manual segmentations to be used by the task program.')
@@ -85,16 +102,42 @@ def main():
     # Print the sct startup info
     sct.init_sct()
 
+    # Parse the command line arguments
     args = get_parser().parse_args()
+    
     # Find subjects and process inclusion/exclusions
     path_data = os.path.abspath(os.path.expanduser(args.path_data))
     subject_dirs = [f for f in os.listdir(path_data) if f.startswith(args.subject_prefix)]
 
+    # Handle inclusion lists
+    inclusions = (args.include is not None) + (args.include_file is not None) + (args.include_list is not None)
+    assert inclusions <= 1, "Only one of `include`, `include-list`, and `include-file` can be used`"
+
     if args.include is not None:
         subject_dirs = [f for f in subject_dirs if re.search(args.include, f) is not None]
 
-        if args.exclude is not None:
-            subject_dirs = [f for f in subject_dirs if re.search(args.exclude, f) is None]
+    if args.include_list is not None:
+        # TODO decide if we should warn users if one of their inclusions isn't around
+        subject_dirs = [f for f in subject_dirs if f in args.include_list]
+
+    if args.include_file is not None:
+        # TODO decide if we should warn users if one of their inclusions isn't around
+        include_list = [s for s in open(args.include_file, 'r')]
+        subject_dirs = [f for f in subject_dirs if f in include_list]
+
+    # Handle exclusions
+    exclusions = (args.exclude is not None) + (args.exclude_file is not None) + (args.exclude_list is not None)
+    assert exclusions <= 1, "Only one of `exclude`, `exclude-list`, and `exclude-file` can be used`"
+
+    if args.exclude is not None:
+        subject_dirs = [f for f in subject_dirs if re.search(args.exclude, f) is None]
+
+    if args.exclude_list is not None:
+        subject_dirs = [f for f in subject_dirs if f not in args.exclude_list]
+
+    if args.exclude_file is not None:
+        exclude_list = [s for s in open(args.exclude_file, 'r')]
+        subject_dirs = [f for f in subject_dirs if f not in exclude_list]
 
     # Set up output directories and create them if they don't already exist
     path_output = os.path.abspath(os.path.expanduser(args.path_output))
