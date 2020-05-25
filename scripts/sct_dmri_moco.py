@@ -85,7 +85,7 @@ def get_parser():
                                                 "smooth [mm]: Smoothing kernel. Default=" + param_default.smooth + ".\n"
                                                   "metric {MI, MeanSquares, CC}: Metric used for registration. Default=" + param_default.metric + ".\n"
                                                   "gradStep [float]: Searching step used by registration algorithm. The higher the more deformation allowed. Default=" + param_default.gradStep + ".\n"
-                                                    "sample [0-1]: Sampling rate used for registration metric. Default=" + param_default.sampling + ".\n",
+                                                    "sample [None or 0-1]: Sampling rate used for registration metric. Default=" + param_default.sampling + ".\n",
                       mandatory=False)
     parser.add_option(name='-x',
                       type_value='multiple_choice',

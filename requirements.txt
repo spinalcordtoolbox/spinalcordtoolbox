@@ -1,8 +1,10 @@
 numpy  # need to install first otherwise dependency issues
+colored
 cryptography
 dipy
 futures
 h5py
+ivadomed
 Keras==2.1.5
 matplotlib
 nibabel
@@ -13,10 +15,20 @@ pytest
 pytest-cov
 raven
 requests
+requirements-parser
 scipy
 scikit-image
 scikit-learn
 tensorflow==1.5.0
+# PyTorch's Linux/Windows distribution is very large due to its GPU support,
+# but we only need that for training models. For users, use the CPU-only version
+# (only available directly from the PyTorch project).
+# The OS X version has never had GPU support, so doesn't need the workaround.
+-f https://download.pytorch.org/whl/cpu/torch_stable.html
+torch==1.5.0+cpu; sys_platform != "darwin"
+torch==1.5.0; sys_platform == "darwin"
+torchvision==0.6.0+cpu; sys_platform != "darwin"
+torchvision==0.6.0; sys_platform == "darwin"
 xlrd
 xlutils
 xlwt
