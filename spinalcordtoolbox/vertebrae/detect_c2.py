@@ -130,9 +130,7 @@ def main(args=None):
         return(100)
 
     x = coord
-    print(x)
     if len(x)==1:
-        print(imsh)
         if int(x[0][1]) < imsh[1] and int(x[0][0]) < imsh[2]:
            mask_out[ind, x[0][1], x[0][0]] = 10
     sct.printv('saving image')
@@ -143,6 +141,7 @@ def main(args=None):
         to_save.save(arguments.o)
     else:
         to_save.save('labels_c2.nii')
+    return(0)
 
 
 if __name__ == "__main__":

@@ -21,10 +21,15 @@ def normalize(arr):
     return ((arr - mi) / (ma - mi))
 
 
-# take an Image as input and output the predicted coordinates.
-# Post processing to remove obvious false positive
-# Compute metrics as well and add it to previously existing table
 def prediction_coordinates(Image, model, aim='full', threshold=0.3, heatmap=0, cud_test=False):
+    ''' take an Image as input and output the predicted coordinates.
+     Post processing to remove obvious false positive
+     Compute metrics as well and add it to previously existing table
+     param: aim --> full or c2. Changes the threshold
+     param: threshold --> if heatmap=0 changes the threshold of the relative max to retrieve data points
+     param: Heatmap: if 1 return heatmap else, retrieve point and apply post processing
+     param: cud_test use to specify if you don't want to use cuda (used for performance testing)
+     '''
     global cuda_available
     cuda_available = cud_test
     shape_im = Image.shape
@@ -136,9 +141,12 @@ def post_processing(coordinates):
 
 
 
-# 'c' is a parameter used for clahe clip limit value.
-# thr is a pramater for coordinate retrieval. Relative threshold value in sklearn.peak_local_max
 def infer_image(image, model, c=0.02, thr=0.3):
+    '''Inference function apply transformation to image to feed it to the network
+       param: image input image
+       param model: model object
+       param c: CLAHE clip limit value
+       param thr : relative threshold used for local max retrieval. '''
     coord_out = []
     shape_im = image.shape
     final = np.zeros((shape_im[0], shape_im[1]))
