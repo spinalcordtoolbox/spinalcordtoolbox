@@ -30,6 +30,10 @@ MODELS = {
         {'url': 'https://osf.io/mfxwg/download?version=5',
          'description': 'Gray matter segmentation on mouse MRI. Data from University of Queensland.',
          'default': False},
+    't2_tumor':
+        {'url': 'https://osf.io/uwe7k/download?version=1',
+         'description': 'Cord tumor segmentation on T2-weighted contrast.',
+         'default': False}
     }
 
 
