@@ -479,7 +479,14 @@ class QcReport(object):
             os.makedirs(path_json, exist_ok = True)
         # Create json file
         with open(self.qc_params.qc_results, 'w+') as qc_file:
-            json.dump(output, qc_file, indent=1)
+            qc_file_mem = io.StringIO()
+            json.dump(output, qc_file_mem, indent=1)
+            qc_file_mem.seek(0)
+            while True:
+                import time; time.sleep(.1) # be slow
+                chunk = qc_file_mem.read(128)
+                if not chunk: break
+                qc_file.write(chunk)
         self._update_html_assets(get_json_data_from_path(path_json))
 
     def _update_html_assets(self, json_data):
