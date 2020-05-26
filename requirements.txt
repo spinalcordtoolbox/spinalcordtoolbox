@@ -4,7 +4,7 @@ cryptography
 dipy
 futures
 h5py
-ivadomed>=1.2.1
+ivadomed==1.2.1
 Keras==2.1.5
 matplotlib
 nibabel
