@@ -77,7 +77,7 @@ def main(args=None):
         args = None if sys.argv[1:] else ['--help']
     parser = get_parser()
     arguments = parser.parse_args(args=args)
-    Im_input = Image(arguments.i)
+    im_input = Image(arguments.i)
     contrast = arguments.c
     heatmap = int(arguments.m)
     global cuda_available
@@ -113,9 +113,12 @@ def main(args=None):
     model = model.float()
 
     sct.printv('retrieving input...')
-    Im_input.change_orientation('RPI')
-    arr = np.array(Im_input.data)
+
+    im_input.change_orientation('RPI')
+    arr = np.array(im_input.data)
+
     # debugging
+    # will remove if we go with countception only (needed for Attu)
 
     ind = int(np.round(arr.shape[0] / 2))
     inp = np.mean(arr[ind - 2:ind + 2, :, :], 0)
@@ -131,7 +134,7 @@ def main(args=None):
     if heatmap == 1:
         sct.printv('saving heatmap')
         imsh = arr.shape
-        to_save = Image(param=[imsh[0], imsh[1], imsh[2]], hdr=Im_input.header)
+        to_save = Image(param=[imsh[0], imsh[1], imsh[2]], hdr=im_input.header)
         to_save.data[ind, :, :] = coord[:imsh[1], :imsh[2]]
         if arguments.o is not None:
             to_save.save(arguments.o)
@@ -147,7 +150,7 @@ def main(args=None):
                 mask_out[ind, int(x[1]), int(x[0])] = 10
         sct.printv('saving image')
         imsh = arr.shape
-        to_save = Image(param=[imsh[0], imsh[1], imsh[2]], hdr=Im_input.header)
+        to_save = Image(param=[imsh[0], imsh[1], imsh[2]], hdr=im_input.header)
         to_save.data = mask_out
         if arguments.o is not None:
             to_save.save(arguments.o)

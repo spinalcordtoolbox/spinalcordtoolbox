@@ -67,7 +67,7 @@ def main(args=None):
         args = None if sys.argv[1:] else ['--help']
     parser = get_parser()
     arguments = parser.parse_args(args=args)
-    Im_input = Image(arguments.i)
+    im_input = Image(arguments.i)
     contrast = arguments.c
 
     global cuda_available
@@ -110,10 +110,10 @@ def main(args=None):
     model = model.float()
 
     sct.printv('retrieving input...')
-    Im_input.change_orientation('RPI')
-    arr = np.array(Im_input.data)
+    im_input.change_orientation('RPI')
+    arr = np.array(im_input.data)
     # debugging
-    imsh = arr.shape
+    im_shape = arr.shape
     ind = int(np.round(arr.shape[0] / 2))
     inp = np.mean(arr[ind - 2:ind + 2, :, :], 0)
     pad = int(np.ceil(arr.shape[2] / 32)) * 32
@@ -131,11 +131,11 @@ def main(args=None):
 
     x = coord
     if len(x)==1:
-        if int(x[0][1]) < imsh[1] and int(x[0][0]) < imsh[2]:
+        if int(x[0][1]) < im_shape[1] and int(x[0][0]) < im_shape[2]:
            mask_out[ind, x[0][1], x[0][0]] = 10
     sct.printv('saving image')
-    imsh = arr.shape
-    to_save = Image(param=[imsh[0], imsh[1], imsh[2]], hdr=Im_input.header)
+    im_shape = arr.shape
+    to_save = Image(param=[im_shape[0], im_shape[1], im_shape[2]], hdr=im_input.header)
     to_save.data = mask_out
     if arguments.o is not None:
         to_save.save(arguments.o)
