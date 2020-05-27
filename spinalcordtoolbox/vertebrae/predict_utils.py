@@ -16,7 +16,7 @@ from torchvision import transforms
 def normalize(arr):
     ma = arr.max()
     mi = arr.min()
-    return (arr - mi) / (ma - mi)S
+    return (arr - mi) / (ma - mi)
 
 
 def prediction_coordinates(Image, model, aim='full', threshold=0.3, heatmap=0, cud_test=False):
