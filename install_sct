@@ -457,7 +457,6 @@ else
 fi
 
 # Update PATH variables based on Shell type
-UPDATE_PATH="export PATH=$SCT_DIR/$BIN_DIR:$PATH"
 if [[ $THE_RC == "bash" ]]; then
   DISPLAY_UPDATE_PATH="export PATH=\"$SCT_DIR/$BIN_DIR:\$PATH\""
 elif [[ $THE_RC == "csh" ]]; then
@@ -562,9 +561,8 @@ for file in $SCT_DIR/python/envs/venv_sct/bin/*sct*; do
   fi
 done
 
-## Update PATH within this script (to launch sct_check_dependencies)
-$UPDATE_PATH
-
+# Activate the launchers, particularly sct_download_data and sct_check_requirements
+export PATH="$SCT_DIR/$BIN_DIR:$PATH"
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Download binaries and data
@@ -575,13 +573,8 @@ if [[ $NO_SCT_BIN_INSTALL ]]; then
   print warning "WARNING: SCT binaries will not be (re)-installed"
 else
   print info "Installing binaries..."
-  if [[ $OS == "linux" ]]; then
-    run "sct_download_data -d binaries_debian -o $SCT_DIR/$BIN_DIR"
-  elif [[ $OS == "osx" ]]; then
-    run "sct_download_data -d binaries_osx -o $SCT_DIR/$BIN_DIR"
-  else
+  run "sct_download_data -d binaries_"$OS" -o $SCT_DIR/$BIN_DIR" || \
     die "Unsupported OS $OS: can't install binaries."
-  fi
 fi
 print info "All requirements installed!"
 
@@ -589,8 +582,6 @@ print info "All requirements installed!"
 if [[ $NO_DATA_INSTALL ]]; then
   print warning "WARNING: data/ will not be (re)-install"
 else
-  # forcing activation if python is not reinstalled
-  run ". $SCT_DIR/$PYTHON_DIR/bin/activate $SCT_DIR/$PYTHON_DIR"
   # Download data
   print info "Installing data..."
   run "rm -rf $SCT_DIR/$DATA_DIR"
@@ -600,6 +591,9 @@ else
     run "sct_download_data -d $data"
   done
 fi
+
+# Install deep learning models
+python -c 'import spinalcordtoolbox.deepseg.models; spinalcordtoolbox.deepseg.models.install_default_models()'
 
 
 # ----------------------------------------------------------------------------------------------------------------------
