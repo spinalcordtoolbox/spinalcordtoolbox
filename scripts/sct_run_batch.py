@@ -39,7 +39,7 @@ def get_parser():
         formatter_class=SmartFormatter,
         prog=os.path.basename(__file__).strip('.py'))
 
-    parser.add_argument("-jobs", type=int, default=1,
+    parser.add_argument('-jobs', type=int, default=1,
                         help='The number of jobs to run in parallel. '
                         'Either an integer greater than or equal to one '
                         'specifying the number of cores, 0 or a negative integer '
@@ -47,13 +47,13 @@ def get_parser():
                         '\'-jobs -1\' indicates run ncores - 1 jobs in parallel. Set \'-jobs 0\''
                         'to use all available cores.',
                         metavar=Metavar.int)
-    parser.add_argument("-path-data", help='R|Setting for environment variable: PATH_DATA\n'
+    parser.add_argument('-path-data', help='R|Setting for environment variable: PATH_DATA\n'
                         'Path containing subject directories in a consistent format')
-    parser.add_argument('-subject-prefix', default="sub-",
+    parser.add_argument('-subject-prefix', default='sub-',
                         help='Subject prefix, defaults to "sub-" which is the prefix used for BIDS directories. '
                         'If the subject directories do not share a common prefix, an empty string can be '
                         'passed here.')
-    parser.add_argument('-path-output', default="./",
+    parser.add_argument('-path-output', default='./',
                         help='R|Base directory for environment variables:\n'
                         'PATH_RESULTS=' + os.path.join('<path-output>', 'results') + '\n'
                         'PATH_QC=' + os.path.join('<path-output>', 'QC') + '\n'
@@ -97,7 +97,7 @@ def get_parser():
 
 
 def run_single(subj_dir, task, task_args, path_segmanual, path_data, path_results, path_log, path_qc, itk_threads):
-    "Job function for mapping with multiprocessing"
+    'Job function for mapping with multiprocessing'
 
     # Strip the `.sh` extension from the task for building error logs
     # TODO: we should probably strip all extensions
@@ -174,7 +174,7 @@ def main():
 
     # Handle inclusion lists
     assert not ((args.include is not None) or (args.include_list is not None)),\
-        "Only one of `include` and `include-list` can be used"
+        'Only one of `include` and `include-list` can be used'
 
     if args.include is not None:
         subject_dirs = [f for f in subject_dirs if re.search(args.include, f) is not None]
@@ -185,7 +185,7 @@ def main():
 
     # Handle exclusions
     assert not ((args.exclude is not None) or (args.exclude_list is not None)),\
-        "Only one of `exclude` and `exclude-list` can be used"
+        'Only one of `exclude` and `exclude-list` can be used'
 
     if args.exclude is not None:
         subject_dirs = [f for f in subject_dirs if re.search(args.exclude, f) is None]
@@ -225,5 +225,5 @@ def main():
           '{} {}/index.html'.format(open_cmd, path_qc))
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
