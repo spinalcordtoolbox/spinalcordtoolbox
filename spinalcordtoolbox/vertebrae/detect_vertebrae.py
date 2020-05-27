@@ -1,17 +1,21 @@
-import sys
-import os
+# Author: Lucas
+# Copyright (c) 2018 Polytechnique Montreal <www.neuro.polymtl.ca>
+# About the license: see the file LICENSE.TXT
 import argparse
+import nibabel as nib
+import numpy as np
+import os
+import sct_utils as sct
+import sys
+import torch
 import torchvision
-from torchvision import transforms
 from spinalcordtoolbox.cropping import ImageCropper, BoundingBox
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.utils import Metavar, SmartFormatter
-import sct_utils as sct
-import torch
 from spinalcordtoolbox.vertebrae.models import *
 from spinalcordtoolbox.vertebrae.predict_utils import *
-import numpy as np
-import nibabel as nib
+from torchvision import transforms
+
 
 def get_parser():
     # Mandatory arguments
@@ -62,7 +66,6 @@ def get_parser():
         default='CC',
     )
 
-
     return parser
 
 
@@ -87,10 +90,14 @@ def main(args=None):
         model = ModelCountception_v2(inplanes=1, outplanes=1)
 
         if contrast == 't1':
-            model.load_state_dict(torch.load(os.path.join(sct.__sct_dir__,'spinalcordtoolbox/vertebrae/checkpoints/Countception_floatT1.model'), map_location='cpu')['model_weights'])
+            model.load_state_dict(torch.load(
+                os.path.join(sct.__sct_dir__, 'spinalcordtoolbox/vertebrae/checkpoints/Countception_floatT1.model'),
+                map_location='cpu')['model_weights'])
 
         elif contrast == 't2':
-            model.load_state_dict(torch.load(os.path.join(sct.__sct_dir__,'spinalcordtoolbox/vertebrae/checkpoints/Countception_floatL2T2.model'), map_location='cpu')['model_weights'])
+            model.load_state_dict(torch.load(
+                os.path.join(sct.__sct_dir__, 'spinalcordtoolbox/vertebrae/checkpoints/Countception_floatL2T2.model'),
+                map_location='cpu')['model_weights'])
 
         else:
             sct.printv('Error...unknown contrast. please select between t2 and t1.')
@@ -99,10 +106,13 @@ def main(args=None):
         model = AttU_Net()
 
         if contrast == 't1':
-            model.load_state_dict(torch.load('/home/GRAMES.POLYMTL.CA/luroub/luroub_local/lurou_local/deep_VL_2019/ivado_med/scripts_vertebral_labeling/checkpoints/Countception_L2T1.model', map_location='cpu')['model_weights'])
+            model.load_state_dict(torch.load(
+                '/home/GRAMES.POLYMTL.CA/luroub/luroub_local/lurou_local/deep_VL_2019/ivado_med/scripts_vertebral_labeling/checkpoints/Countception_L2T1.model',
+                map_location='cpu')['model_weights'])
 
         elif contrast == 't2':
-            model.load_state_dict(torch.load('../checkpoints/attunet_fullT2.model', map_location='cpu')['model_weights'])
+            model.load_state_dict(
+                torch.load('../checkpoints/attunet_fullT2.model', map_location='cpu')['model_weights'])
 
         else:
             sct.printv('Error...unknown contrast. please select between t2 and t1.')

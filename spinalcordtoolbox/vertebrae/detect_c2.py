@@ -1,17 +1,18 @@
-import sys
-import os
+# Author: Lucas
+# Copyright (c) 2018 Polytechnique Montreal <www.neuro.polymtl.ca>
+# About the license: see the file LICENSE.TXT
 import argparse
-
+import nibabel as nib
+import numpy as np
+import os
+import scripts.sct_utils as sct
+import sys
+import torch
 from spinalcordtoolbox.cropping import ImageCropper, BoundingBox
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.utils import Metavar, SmartFormatter
-import scripts.sct_utils as sct
-
-import torch
 from spinalcordtoolbox.vertebrae.models import *
 from spinalcordtoolbox.vertebrae.predict_utils import *
-import numpy as np
-import nibabel as nib
 
 
 def get_parser():
@@ -83,7 +84,7 @@ def main(args=None):
 
         elif contrast == 't2':
             model.load_state_dict(torch.load(
-                os.path.join(sct.__sct_dir__,'spinalcordtoolbox/vertebrae/checkpoints/Countception_floatC2T2.model'),
+                os.path.join(sct.__sct_dir__, 'spinalcordtoolbox/vertebrae/checkpoints/Countception_floatC2T2.model'),
                 map_location='cpu')['model_weights'])
 
     elif arguments.net == 'AttU':
@@ -97,9 +98,6 @@ def main(args=None):
             model.load_state_dict(torch.load(
                 '/home/GRAMES.POLYMTL.CA/luroub/luroub_local/lurou_local/deep_VL_2019/ivado_med/scripts_vertebral_labeling/checkpoints/attunet_c2T2.model',
                 map_location='cpu')['model_weights'])
-
-
-
 
     else:
         sct.printv('Error...unknown contrast. please select between t2 and t1.')
@@ -117,7 +115,7 @@ def main(args=None):
     ind = int(np.round(arr.shape[0] / 2))
     inp = np.mean(arr[ind - 2:ind + 2, :, :], 0)
     pad = int(np.ceil(arr.shape[2] / 32)) * 32
-    xpad = int(np.ceil(arr.shape[1] / 32)) * 32 
+    xpad = int(np.ceil(arr.shape[1] / 32)) * 32
     img_tmp = np.zeros((xpad, pad), dtype=np.float64)
     img_tmp[0:inp.shape[0], 0:inp.shape[1]] = inp
     inp = np.expand_dims(img_tmp, -1)
@@ -127,12 +125,12 @@ def main(args=None):
     mask_out = np.zeros(arr.shape)
     if len(coord) < 1 or coord == [0, 0]:
         sct.printv('C2/C3 detection failed. Please provide manual initialisation')
-        return(100)
+        return (100)
 
     x = coord
-    if len(x)==1:
+    if len(x) == 1:
         if int(x[0][1]) < im_shape[1] and int(x[0][0]) < im_shape[2]:
-           mask_out[ind, x[0][1], x[0][0]] = 10
+            mask_out[ind, x[0][1], x[0][0]] = 10
     sct.printv('saving image')
     im_shape = arr.shape
     to_save = Image(param=[im_shape[0], im_shape[1], im_shape[2]], hdr=im_input.header)
@@ -140,8 +138,8 @@ def main(args=None):
     if arguments.o is not None:
         to_save.save(arguments.o)
     else:
-        to_save.save('labels_c2.nii')
-    return(0)
+        to_save.save('labels_detect.nii')
+    return (0)
 
 
 if __name__ == "__main__":

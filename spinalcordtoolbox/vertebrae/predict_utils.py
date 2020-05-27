@@ -1,42 +1,41 @@
-# Author: Lucas
-# Copyright (c) 2020 Polytechnique Montreal <www.neuro.polymtl.ca>
-# About the license: see the file license.md
-# Main script load a The dataset with data2array. lOad the model and perform the inference on the whole thing.
-# After each inference it compute the different metrics described in Metrics.py and add it to list
-import torchvision
-from torchvision import transforms
-import torch
-import numpy as np
+# Author: charley
+# Copyright (c) 2018 Polytechnique Montreal <www.neuro.polymtl.ca>
+# About the license: see the file LICENSE.TXT
 import matplotlib.pyplot as plt
+import numpy as np
+import scripts.sct_utils as sct
+import skimage
+import torch
+import torchvision
+import yaml
 from skimage.feature import peak_local_max
 from spinalcordtoolbox.vertebrae.models import *
-import skimage
-import yaml
-import scripts.sct_utils as sct
+from torchvision import transforms
 
 
 def normalize(arr):
     ma = arr.max()
     mi = arr.min()
-    return ((arr - mi) / (ma - mi))
+    return (arr - mi) / (ma - mi)S
 
 
 def prediction_coordinates(Image, model, aim='full', threshold=0.3, heatmap=0, cud_test=False):
-    ''' take an Image as input and output the predicted coordinates.
+    """ take an Image as input and output the predicted coordinates.
      Post processing to remove obvious false positive
      Compute metrics as well and add it to previously existing table
-     param: aim --> full or c2. Changes the threshold
-     param: threshold --> if heatmap=0 changes the threshold of the relative max to retrieve data points
-     param: Heatmap: if 1 return heatmap else, retrieve point and apply post processing
+     param: aim 'full' or 'c2'. Changes the threshold fro point retrieval
+     param: threshold  when heatmap=0 (label fil is returned)
+     changes the threshold of the relative max to retrieve data points (sklear_peak_local_max function)
+     param: heatmap: if 1 return heatmap image output by the network else, retrieve point and apply post processing
      param: cud_test use to specify if you don't want to use cuda (used for performance testing)
-     '''
+     """
     global cuda_available
     cuda_available = cud_test
     shape_im = Image.shape
     shape_im = sorted(shape_im)
     if aim == 'c2':
         final, coordinates = infer_image(Image, model, thr=0.99)
-        return(coordinates)
+        return (coordinates)
     else:
         final, coordinates = infer_image(Image, model, thr=threshold)
     if heatmap == 1:
@@ -53,7 +52,7 @@ def prediction_coordinates(Image, model, aim='full', threshold=0.3, heatmap=0, c
         else:
             return (coord_out)
     else:
-        return(100)
+        return (100)
 
 
 def post_processing(coordinates):
@@ -139,21 +138,19 @@ def post_processing(coordinates):
     return coord_out
 
 
-
-
 def infer_image(image, model, c=0.02, thr=0.3):
-    '''Inference function apply transformation to image to feed it to the network
+    """Inference function apply transformation to image to feed it to the network
        param: image input image
        param model: model object
        param c: CLAHE clip limit value
-       param thr : relative threshold used for local max retrieval. '''
+       param thr : relative threshold used for local max retrieval. """
     coord_out = []
     shape_im = image.shape
     final = np.zeros((shape_im[0], shape_im[1]))
     # retrieve 2-D for transformation (CLAHE & Normalization )
     patch = image[:, :, 0]
     patch = normalize(patch)
-    #patch = skimage.exposure.equalize_adapthist(patch, kernel_size=10, clip_limit=0.02)
+    # patch = skimage.exposure.equalize_adapthist(patch, kernel_size=10, clip_limit=0.02)
     patch = np.expand_dims(patch, axis=-1)
     patch = transforms.ToTensor()(patch).unsqueeze(0)
     if cuda_available:
@@ -172,8 +169,4 @@ def infer_image(image, model, c=0.02, thr=0.3):
         coord_out.append([x[1], x[0]])
     if coord_out == []:
         coord_out = [0, 0]
-    return (final, coord_out)
-
-
-# main script
-
+    return final, coord_out
