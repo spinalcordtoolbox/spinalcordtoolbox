@@ -117,16 +117,22 @@ class SmartFormatter(argparse.HelpFormatter):
         return argparse.HelpFormatter._split_lines(self, text, width)
 
 
-# Taken from http://shallowsky.com/blog/programming/python-tee.html
+# Modified from http://shallowsky.com/blog/programming/python-tee.html
 class Tee:
     def __init__(self, _fd1, _fd2):
         self.fd1 = _fd1
         self.fd2 = _fd2
 
-    def __del__(self):
-        if self.fd1 != sys.stdout and self.fd1 != sys.stderr:
+    # This is breaking pytest for test_sct_run_batch.py somehow.
+    # I think it is ok to omit this, allowing the fd objects to close themselves
+    # this prevents closing an fd in use elsewhere.
+    # def __del__(self):
+    #     self.close()
+
+    def close(self):
+        if self.fd1 != sys.__stdout__ and self.fd1 != sys.__stderr__:
             self.fd1.close()
-        if self.fd2 != sys.stdout and self.fd2 != sys.stderr:
+        if self.fd2 != sys.__stdout__ and self.fd2 != sys.__stderr__:
             self.fd2.close()
 
     def write(self, text):
@@ -137,7 +143,7 @@ class Tee:
         self.fd1.flush()
         self.fd2.flush()
 
-    
+
 def add_suffix(fname, suffix):
     """
     Add suffix between end of file name and extension.
