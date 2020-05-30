@@ -22,6 +22,9 @@ import subprocess
 import re
 import time
 import functools
+import json
+import yaml
+import warnings
 
 from spinalcordtoolbox.utils import Metavar, SmartFormatter, Tee
 from spinalcordtoolbox import __version__
@@ -39,6 +42,11 @@ def get_parser():
         formatter_class=SmartFormatter,
         prog=os.path.basename(__file__).strip('.py'))
 
+    parser.add_argument('-config', '-c',
+                        help='A json (.json) or yaml (.yml|.yaml) file with arguments. All arguments to the configuration '
+                        'file are the same as the command line arguments, except all dashes (-) are replaced with '
+                        'underscores (_). Using command line flags can be used to override arguments provided in '
+                        'the configuration file, but this is discouraged.')
     parser.add_argument('-jobs', type=int, default=1,
                         help='The number of jobs to run in parallel. '
                         'Either an integer greater than or equal to one '
@@ -137,36 +145,74 @@ def run_single(subj_dir, task, task_args, path_segmanual, path_data, path_result
     assert res.returncode == 0, 'Processing of subject {} failed'.format(subject)
 
 
-def main():
+def main(argv):
     # Print the sct startup info
     sct.init_sct()
 
     # Parse the command line arguments
-    args = get_parser().parse_args()
+    parser = get_parser()
+    args = parser.parse_args(argv)
+
+    # See if there's a configuration file and import those options
+    if args.config is not None:
+        print('configuring')
+        with open(args.config, 'r') as conf:
+            _, ext = os.path.splitext(args.config)
+            if ext == '.json':
+                config = json.load(conf)
+            if ext == '.yml' or ext == '.yaml':
+                config = yaml.load(conf)
+
+        # Warn people if they're overriding their config file
+        if len(vars(args)) > 1:
+            warnings.warn(UserWarning('Using the `-config|-c` flag with additional arguments is discouraged'))
+
+        # Check for unsupported arguments
+        orig_keys = set(vars(args).keys())
+        config_keys = set(config.keys())
+        if orig_keys != config_keys:
+            for k in config_keys.difference(orig_keys):
+                del config[k]  # Remove the unknown key
+                warnings.warn(UserWarning(
+                    'Unknown key "{}" found in your configuration file, ignoring.'.format(k)))
+
+        # Update the default to match the config
+        parser.set_defaults(**config)
+
+        # Reparse the arguments
+        args = parser.parse_args(argv)
 
     # Set up output directories and create them if they don't already exist
     path_output = os.path.abspath(os.path.expanduser(args.path_output))
     path_results = os.path.join(path_output, 'results')
     path_log = os.path.join(path_output, 'log')
     path_qc = os.path.join(path_output, 'qc')
+    task = os.path.abspath(os.path.expanduser(args.task))
 
     for pth in [path_output, path_results, path_log, path_qc]:
         if not os.path.exists(pth):
             os.mkdir(pth)
 
+    # Check that the task can be found
+    if not os.path.exists(task):
+        raise FileNotFoundError('Couldn\'t find the task script at {}'.format(task))
+
     # Setup overall log
     batch_log = open(os.path.join(path_log, args.batch_log), 'w')
 
     # Duplicate init_sct message to batch_log
-    orig_stdout = sys.stdout
-    orig_stderr = sys.stderr
-    sys.stdout = batch_log
-    sys.stderr = batch_log
-    print('\n--\nSpinal Cord Toolbox ({})\n'.format(__version__), flush=True)
+    print('\n--\nSpinal Cord Toolbox ({})\n'.format(__version__), file=batch_log, flush=True)
 
     # Tee IO to batch_log and std(out/err)
+    orig_stdout = sys.stdout
+    orig_stderr = sys.stderr
+
     sys.stdout = Tee(batch_log, orig_stdout)
     sys.stderr = Tee(batch_log, orig_stderr)
+
+    def reset_streams():
+        sys.stdout = orig_stdout
+        sys.stderr = orig_stderr
 
     # Find subjects and process inclusion/exclusions
     path_data = os.path.abspath(os.path.expanduser(args.path_data))
@@ -203,7 +249,7 @@ def main():
     start = time.strftime('%H:%M', time.localtime(time.time()))
     with multiprocessing.Pool(jobs) as p:
         run_single_dir = functools.partial(run_single,
-                                           task=args.task,
+                                           task=task,
                                            task_args=args.task_args,
                                            path_segmanual=args.path_segmanual,
                                            path_data=path_data,
@@ -224,6 +270,9 @@ def main():
     print('To open the Quality Control (QC) report on a web-browser, run the following:\n'
           '{} {}/index.html'.format(open_cmd, path_qc))
 
+    reset_streams()
+    batch_log.close()
+
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv[1:])
