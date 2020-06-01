@@ -68,7 +68,7 @@ class ParamMoco:
         self.gradStep = '1'  # gradientStep for searching algorithm
         self.iter = '10'  # number of iterations
         self.metric = metric
-        self.sampling = '0.2'  # sampling rate used for registration metric
+        self.sampling = 'None'  # sampling rate used for registration metric; 'None' means use 'dense sampling'
         self.interp = 'spline'  # nn, linear, spline
         self.min_norm = 0.001
         self.swapXY = 0
@@ -689,11 +689,26 @@ def register(param, file_src, file_dest, file_mat, file_out, im_mask=None):
     if param.todo == 'estimate' or param.todo == 'estimate_and_apply':
         # If orientation is sagittal, use antsRegistration in 2D mode
         # Note: the parameter --restrict-deformation is irrelevant with affine transfo
+
+        if param.sampling == 'None':
+            # 'None' sampling means 'fully dense' sampling
+            # see https://github.com/ANTsX/ANTs/wiki/antsRegistration-reproducibility-issues
+            sampling = param.sampling
+        else:
+            # param.sampling should be a float in [0,1], and means the
+            # samplingPercentage that chooses a subset of points to
+            # estimate from. We always use 'Regular' (evenly-spaced)
+            # mode, though antsRegistration offers 'Random' as well.
+            # Be aware: even 'Regular' is not fully deterministic:
+            # > Regular includes a random perturbation on the grid sampling
+            # - https://github.com/ANTsX/ANTs/issues/976#issuecomment-602313884
+            sampling = 'Regular,' + param.sampling
+
         if im_data.orientation[2] in 'LR':
             cmd = ['isct_antsRegistration',
                    '-d', '2',
                    '--transform', 'Affine[%s]' %param.gradStep,
-                   '--metric', param.metric + '[' + file_dest + ',' + file_src + ',1,' + metric_radius + ',Regular,' + param.sampling + ']',
+                   '--metric', param.metric + '[' + file_dest + ',' + file_src + ',1,' + metric_radius + ',' + sampling + ']',
                    '--convergence', param.iter,
                    '--shrink-factors', '1',
                    '--smoothing-sigmas', param.smooth,
@@ -714,7 +729,7 @@ def register(param, file_src, file_dest, file_mat, file_out, im_mask=None):
             cmd = ['isct_antsSliceRegularizedRegistration',
                    '--polydegree', param.poly,
                    '--transform', 'Translation[%s]' %param.gradStep,
-                   '--metric', param.metric + '[' + file_dest + ',' + file_src + ',1,' + metric_radius + ',Regular,' + param.sampling + ']',
+                   '--metric', param.metric + '[' + file_dest + ',' + file_src + ',1,' + metric_radius + ',' + sampling + ']',
                    '--iterations', param.iter,
                    '--shrinkFactors', '1',
                    '--smoothingSigmas', param.smooth,
@@ -726,12 +741,9 @@ def register(param, file_src, file_dest, file_mat, file_out, im_mask=None):
         # run command
         if do_registration:
             kw.update(dict(is_sct_binary=True))
-            env = dict()
-            env.update(os.environ)
-            env = kw.get("env", env)
-            # reducing the number of CPU used for moco (see issue #201)
-            env["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"] = "1"
-            status, output = sct.run(cmd, verbose=1 if param.verbose == 2 else 0, **kw)
+            # reducing the number of CPU used for moco (see issue #201 and #2642)
+            env = {**os.environ, **{"ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS": "1"}}
+            status, output = sct.run(cmd, verbose=1 if param.verbose == 2 else 0, env=env, **kw)
 
     elif param.todo == 'apply':
         sct_apply_transfo.main(args=['-i', file_src,

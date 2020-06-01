@@ -6,6 +6,7 @@ from __future__ import print_function, absolute_import, division
 import glob
 import sys
 import os
+import fcntl
 import json
 import logging
 import warnings
@@ -497,10 +498,20 @@ class QcReport(object):
         path_json, _ = os.path.split(self.qc_params.qc_results)
         if not os.path.exists(path_json):
             os.makedirs(path_json, exist_ok = True)
-        # Create json file
-        with open(self.qc_params.qc_results, 'w+') as qc_file:
-            json.dump(output, qc_file, indent=1)
-        self._update_html_assets(get_json_data_from_path(path_json))
+
+        # lock the output directory
+        # because this code may be run in parallel
+        path_json_fd = os.open(path_json, os.O_RDONLY)
+        fcntl.flock(path_json_fd, fcntl.LOCK_EX)
+
+        try:
+            # Create json file
+            with open(self.qc_params.qc_results, 'w+') as qc_file:
+                json.dump(output, qc_file, indent=1)
+            self._update_html_assets(get_json_data_from_path(path_json))
+        finally:
+            #fcntl.flock(path_json_fd, fcntl.LOCK_UN) # technically, redundant, since close() triggers this too.
+            os.close(path_json_fd)
 
     def _update_html_assets(self, json_data):
         """Update the html file and assets"""

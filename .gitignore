@@ -20,6 +20,7 @@
 /bin
 /python
 /data
+/models
 tmp/**/*
 spinalcordtoolbox_v*
 dev/atlas/create_atlas/results

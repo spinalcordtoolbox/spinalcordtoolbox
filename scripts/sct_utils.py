@@ -235,12 +235,7 @@ def which_sct_binaries():
     """
 
     if sys.platform.startswith("linux"):
-        distro = platform.linux_distribution()
-        if "CentOS Linux" in distro:
-            return "binaries_centos"
-        if "Red Hat Enterprise Linux Server" in distro:
-            return "binaries_centos"
-        return "binaries_debian"
+        return "binaries_linux"
     else:
         return "binaries_osx"
 
