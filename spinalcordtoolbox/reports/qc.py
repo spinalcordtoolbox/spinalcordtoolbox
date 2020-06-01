@@ -13,6 +13,7 @@ import datetime
 import io
 from string import Template
 from shutil import copyfile
+import operator 
 
 warnings.filterwarnings("ignore")
 
@@ -177,6 +178,13 @@ class QcImage(object):
 
     def label_utils(self, mask, ax):
         """Create figure with red segmentation. Common scenario."""
+        results_mask_pixels = np.where(mask > 0)
+        listOfCoordinates= list(zip(results_mask_pixels[0], results_mask_pixels[1]))
+        for cord in listOfCoordinates:
+            tuple_pad = {(-1,0),(1,0),(0,-1),(0,1),(-1,-1),(-1,1),(1,-1),(1,1)}
+            for pair in tuple_pad:
+                target = tuple(map(operator.add, cord, pair))
+                mask[target]=mask[cord]
         img = np.rint(np.ma.masked_where(mask < 1, mask))
         ax.imshow(img,
                   cmap=color.ListedColormap(self._color_bin_red),
