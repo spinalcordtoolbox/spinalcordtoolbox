@@ -35,7 +35,7 @@ def get_parser():
                         required=True)
     parser.add_argument('-s',
                         metavar='SEG',
-                        help='Input segmentation',
+                        help='Input segmentation or label'',
                         required=False)
     parser.add_argument('-d',
                         metavar='DEST',
