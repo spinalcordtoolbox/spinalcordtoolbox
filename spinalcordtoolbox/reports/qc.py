@@ -26,6 +26,7 @@ import skimage.exposure
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
 import matplotlib.colors as color
+import matplotlib.pyplot as plt
 
 import sct_utils as sct
 from spinalcordtoolbox.image import Image
@@ -177,14 +178,12 @@ class QcImage(object):
         ax.get_yaxis().set_visible(False)
 
     def label_utils(self, mask, ax):
-        """Create figure with red segmentation. Common scenario."""
+        """Create figure with red label. Common scenario."""
         results_mask_pixels = np.where(mask > 0)
         listOfCoordinates= list(zip(results_mask_pixels[0], results_mask_pixels[1]))
         for cord in listOfCoordinates:
-            tuple_pad = {(-1,0),(1,0),(0,-1),(0,1),(-1,-1),(-1,1),(1,-1),(1,1)}
-            for pair in tuple_pad:
-                target = tuple(map(operator.add, cord, pair))
-                mask[target]=mask[cord]
+            ax.plot(cord[1],cord[0], 'ro', markersize=5)
+            ax.text(cord[1]+5,cord[0]+5, str(mask[cord]), color='lime', clip_on=True)          
         img = np.rint(np.ma.masked_where(mask < 1, mask))
         ax.imshow(img,
                   cmap=color.ListedColormap(self._color_bin_red),
