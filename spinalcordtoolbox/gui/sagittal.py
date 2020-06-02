@@ -85,12 +85,16 @@ class SagittalDialog(base.BaseDialog):
 
     def increment_vertical_nav(self):
         x, y, z = self._controller.position
-        self._controller.position = (x, y, z + 1)
+        z_bound = self._controller.image.dim[2]
+        z_ = z + 1 if (z + 1) < z_bound else -z_bound
+        self._controller.position = (x, y, z_)
         self.sagittal.refresh()
 
     def decrement_vertical_nav(self):
         x, y, z = self._controller.position
-        self._controller.position = (x, y, z - 1)
+        z_bound = self._controller.image.dim[2]
+        z_ = z - 1 if (z - 1) >= -z_bound else z_bound - 1
+        self._controller.position = (x, y, z_)
         self.sagittal.refresh()
 
 
