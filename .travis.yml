@@ -67,14 +67,6 @@ matrix:
         - docker
       env:
         - DOCKER_IMAGE="debian:9"       DOCKER_DEPS_CMD="apt update && apt install -y libglib2.0-0 procps gcc git curl"
-    - name: "Debian 8"
-      if: branch = release or type = cron
-      os: linux
-      dist: xenial # kernel ~= Debian:8
-      services:
-        - docker
-      env:
-        - DOCKER_IMAGE="debian:8"       DOCKER_DEPS_CMD="apt update && apt install -y libglib2.0-0 procps gcc git curl"
     - name: "CentOS 8"
       # runs on all branches
       os: linux
@@ -100,10 +92,6 @@ matrix:
       name: "Ubuntu 16.04 (Xenial)"
       if: branch = release or type = cron
       dist: xenial
-    - os: linux
-      if: branch = release or type = cron
-      name: "Ubuntu 14.04 (Trusty)"
-      dist: trusty
     - name: "OSX 10.14 (Mojave)"
       # runs on all branches
       os: osx  # list of OSX env: https://docs.travis-ci.com/user/reference/osx/
