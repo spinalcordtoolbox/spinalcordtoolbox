@@ -156,14 +156,14 @@ def get_parser():
         required=False)
     mathematical.add_argument(
         '-shape',
-        help="Shape of the structuring element for the mathematical morphology operation. Default: ball.",
+        help="R|Shape of the structuring element for the mathematical morphology operation. Default: ball.\n"
+             "If a 2D shape {'disk', 'square'} is selected, -dim must be specified.",
         required=False,
         choices=('square', 'cube', 'disk', 'ball'),
         default='ball')
     mathematical.add_argument(
         '-dim',
         type=int,
-        metavar=Metavar.int,
         help="Dimension of the array which 2D structural element will be orthogonal to. For example, if you wish to "
              "apply a 2D disk kernel in the X-Y plane, leaving Z unaffected, parameters will be: shape=disk, dim=2.",
         required=False,
@@ -353,9 +353,13 @@ def main(args=None):
         data_out = smooth(data, sigmas)
 
     elif arguments.dilate is not None:
+        if arguments.shape in ['disk', 'square'] and arguments.dim is None:
+            printv(parser.error('ERROR: -dim is required for -dilate with 2D morphological kernel'))
         data_out = sct.math.dilate(data, size=arguments.dilate, shape=arguments.shape, dim=arguments.dim)
 
     elif arguments.erode is not None:
+        if arguments.shape in ['disk', 'square'] and arguments.dim is None:
+            printv(parser.error('ERROR: -dim is required for -erode with 2D morphological kernel'))
         data_out = sct.math.erode(data, size=arguments.erode, shape=arguments.shape, dim=arguments.dim)
 
     elif arguments.denoise is not None:
