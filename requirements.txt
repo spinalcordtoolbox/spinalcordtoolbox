@@ -1,6 +1,5 @@
 numpy  # need to install first otherwise dependency issues
 colored
-cryptography
 dipy
 futures
 h5py
@@ -9,7 +8,6 @@ Keras==2.1.5
 matplotlib
 nibabel
 pandas
-psutil
 pyqt5==5.11.3
 pytest
 pytest-cov
@@ -29,9 +27,6 @@ torch==1.5.0+cpu; sys_platform != "darwin"
 torch==1.5.0; sys_platform == "darwin"
 torchvision==0.6.0+cpu; sys_platform != "darwin"
 torchvision==0.6.0; sys_platform == "darwin"
-xlrd
-xlutils
-xlwt
 tqdm
 transforms3d
 urllib3[secure]
