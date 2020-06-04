@@ -27,6 +27,7 @@ torch==1.5.0+cpu; sys_platform != "darwin"
 torch==1.5.0; sys_platform == "darwin"
 torchvision==0.6.0+cpu; sys_platform != "darwin"
 torchvision==0.6.0; sys_platform == "darwin"
+xlwt
 tqdm
 transforms3d
 urllib3[secure]
