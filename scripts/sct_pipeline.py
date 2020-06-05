@@ -68,6 +68,7 @@ import h5py
 import pandas as pd
 
 import sct_utils as sct
+import spinalcordtoolbox.utils as utils
 import msct_parser
 import sct_testing
 
@@ -684,7 +685,7 @@ if __name__ == "__main__":
             with io.open(fname_log, "r") as fp:
                 message = fp.read()
             # send email
-            sct.send_email(addr_to=addr_to, addr_from=addr_from,
+            utils.send_email(addr_to=addr_to, addr_from=addr_from,
              subject=file_log, message=message, filename=fname_log,
              login=login, passwd=passwd_from, smtp_host=smtp_host, smtp_port=smtp_port,
              html=True)
