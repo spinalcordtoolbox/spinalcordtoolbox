@@ -17,10 +17,8 @@
 # Authors: Christian S. Perone, Thiago JR Rezende, Julien Cohen-Adad
 ##########################################################################################
 
-# TODO: display error if number of input arguments is not correct
-# TODO: add shortcuts to Run
+# TODO: add keyboard shortcuts to Run (ctrl+R)
 # TODO: add help when user leaves cursor on button
-# TODO: a useless comment to jump start the github draft PR process (can't create an empty PR really?)
 
 import os
 import subprocess
@@ -32,8 +30,7 @@ import wx.lib.agw.aui as aui
 import wx.html as html
 
 logger = logging.getLogger(__name__)
-aui_manager = frame.getAuiManager()
-
+aui_manager = frame.getAuiManager() # from FSLeyes context
 
 class ErrorDialog(wx.Dialog):
     """
@@ -98,6 +95,7 @@ class ProgressDialog(wx.Dialog):
         self.Centre()
         self.CenterOnParent()
         # TODO: retrieve action from the cancel button
+
 
 
 class SCTCallThread(Thread):
@@ -274,7 +272,7 @@ class TabPanelPropSeg(SCTPanel):
 
     DESCRIPTION = """
     Segment the spinal cord using a deformable 3D mesh. This method is fast and robust, but could be prone to "leaking"
-    if the contrast between the cord and the CSF is not high enough. 
+    if the contrast between the cord and the CSF is not high enough.
     <br><br>
     <b>Usage</b>:
     <br>
@@ -337,8 +335,8 @@ class TabPanelSCSeg(SCTPanel):
     """
 
     DESCRIPTION = """
-    Segment the spinal cord using deep learning. The convolutional neural network was trained on ~1,500 subjects 
-    from multiple centers, and including various pathologies (compression, MS, ALS, etc.). 
+    Segment the spinal cord using deep learning. The convolutional neural network was trained on ~1,500 subjects
+    from multiple centers, and including various pathologies (compression, MS, ALS, etc.).
     <br><br>
     <b>Usage</b>:
     <br>
@@ -347,7 +345,7 @@ class TabPanelSCSeg(SCTPanel):
     <br><br>
     <b>Specific citation</b>:
     <br>
-    Gros et al. <i>Automatic segmentation of the spinal cord and intramedullary multiple sclerosis lesions with 
+    Gros et al. <i>Automatic segmentation of the spinal cord and intramedullary multiple sclerosis lesions with
     convolutional neural networks.</i> Neuroimage 2019
     """
 
@@ -402,13 +400,13 @@ class TabPanelGMSeg(SCTPanel):
     """
 
     DESCRIPTION = """
-    Segment the spinal cord gray matter using deep learning. The convolutional neural network features dilated 
-    convolutions and was trained on 232 subjects (3963 axial slices) from multiple centers, and including various 
-    pathologies (compression, MS, ALS, etc.). 
+    Segment the spinal cord gray matter using deep learning. The convolutional neural network features dilated
+    convolutions and was trained on 232 subjects (3963 axial slices) from multiple centers, and including various
+    pathologies (compression, MS, ALS, etc.).
     <br><br>
     <b>Usage</b>:
     <br>
-    Select an image from the overlay list that has a good white and gray matter contrast (e.g., T2*-weighted image), 
+    Select an image from the overlay list that has a good white and gray matter contrast (e.g., T2*-weighted image),
     then click "Run". For more options, please use the Terminal version of this function.
     <br><br>
     <b>Specific citation</b>:
@@ -458,18 +456,18 @@ class TabPanelVertLB(SCTPanel):
     """
 
     DESCRIPTION = """
-    Automatically find intervertebral discs and label an input segmentation with vertebral levels. The values on the 
-    output labeled segmentation corresponds to the level, e.g., 2 corresponds to C2, 8 corresponds to T1, etc. 
+    Automatically find intervertebral discs and label an input segmentation with vertebral levels. The values on the
+    output labeled segmentation corresponds to the level, e.g., 2 corresponds to C2, 8 corresponds to T1, etc.
     <br><br>
     <b>Usage</b>:
     <br>
     Select an image from the overlay list where discs are clearly visible (e.g., T1w or T2w scans are usually good for
-    this task). Then, select a segmentation associated with the image, select the appropriate contrast and click "Run". 
+    this task). Then, select a segmentation associated with the image, select the appropriate contrast and click "Run".
     For more options, please use the Terminal version of this function.
     <br><br>
     <b>Specific citation</b>:
     <br>
-    Ullmann et al. <i>Automatic labeling of vertebral levels using a robust template-based approach.</i> Int J Biomed 
+    Ullmann et al. <i>Automatic labeling of vertebral levels using a robust template-based approach.</i> Int J Biomed
     Imaging 2014
     """
 
@@ -528,20 +526,20 @@ class TabPanelRegisterToTemplate(SCTPanel):
     """
 
     DESCRIPTION = """
-    Register an image with the default PAM50 spinal cord MRI template. 
+    Register an image with the default PAM50 spinal cord MRI template.
     <br><br>
     <b>Usage</b>:
     <br>
-    Select an image, its segmentation and a label file. The label file contains single-pixel labels located at the 
+    Select an image, its segmentation and a label file. The label file contains single-pixel labels located at the
     posterior edge of the intervertebral discs. The value of the label corresponds to the lower vertebrae, e.g., label 3
     corresponds to the C2-C3 disc. This label file can be created within FSLeyes by clicking on Tools > Edit mode, then
-    Edit > Create mask. Select the "pen", adjust the size to one pixel width and select the proper label value, then 
-    click on the image and save the label(s): Overlay > save. Then, select the appropriate contrast and click "Run". 
+    Edit > Create mask. Select the "pen", adjust the size to one pixel width and select the proper label value, then
+    click on the image and save the label(s): Overlay > save. Then, select the appropriate contrast and click "Run".
     For more options, please use the Terminal version of this function.
     <br><br>
     <b>Specific citation</b>:
     <br>
-    De Leener et al. <i>PAM50: Unbiased multimodal template of the brainstem and spinal cord aligned with the ICBM152 
+    De Leener et al. <i>PAM50: Unbiased multimodal template of the brainstem and spinal cord aligned with the ICBM152
     space.</i> Neuroimage 2017
     """
 
@@ -613,19 +611,20 @@ def run_main():
         dlg.ShowModal()
         dlg.Destroy()
         return
-    # Adding panels
-    notebook = aui.AuiNotebook(window)
-    panel_propseg = TabPanelPropSeg(notebook)
-    panel_sc = TabPanelSCSeg(notebook)
-    panel_gm = TabPanelGMSeg(notebook)
-    panel_vlb = TabPanelVertLB(notebook)
-    panel_reg = TabPanelRegisterToTemplate(notebook)
 
-    notebook.AddPage(panel_propseg, "sct_propseg", True)
-    notebook.AddPage(panel_sc, "sct_deepseg_sc", False)
-    notebook.AddPage(panel_gm, "sct_deepseg_gm", False)
-    notebook.AddPage(panel_vlb, "sct_label_vertebrae", False)
-    notebook.AddPage(panel_reg, "sct_register_to_template", False)
+    # Adding panels
+    notebook = aui.AuiNotebook(parent=window)
+    panel_propseg = TabPanelPropSeg(parent=notebook)
+    panel_sc = TabPanelSCSeg(parent=notebook)
+    panel_gm = TabPanelGMSeg(parent=notebook)
+    panel_vlb = TabPanelVertLB(parent=notebook)
+    panel_reg = TabPanelRegisterToTemplate(parent=notebook)
+
+    notebook.AddPage(page=panel_propseg, caption="sct_propseg", select=True)
+    notebook.AddPage(page=panel_sc, caption="sct_deepseg_sc", select=False)
+    notebook.AddPage(page=panel_gm, caption="sct_deepseg_gm", select=False)
+    notebook.AddPage(page=panel_vlb, caption="sct_label_vertebrae", select=False)
+    notebook.AddPage(page=panel_reg, caption="sct_register_to_template", select=False)
 
     aui_manager.AddPane(notebook, aui.AuiPaneInfo().Name("notebook_content").CenterPane().PaneBorder(False))
     aui_manager.Update()
