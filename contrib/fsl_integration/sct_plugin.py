@@ -273,9 +273,11 @@ class SCTPanel(wx.Panel):
 
         if progress_dialog:
             progress_dialog.Destroy()
+
+        # show stderr output if an error occurred
         if thr.status:
-            binfo = ErrorDialog(frame)
-            binfo.Show()
+            error_dialog = ErrorDialog(frame, msg=thr.stderr)
+            error_dialog.Show()
 
 
 class TabPanelPropSeg(SCTPanel):
@@ -641,6 +643,5 @@ def run_main():
 
     aui_manager.AddPane(notebook, aui.AuiPaneInfo().Name("notebook_content").CenterPane().PaneBorder(False))
     aui_manager.Update()
-
 
 run_main()
