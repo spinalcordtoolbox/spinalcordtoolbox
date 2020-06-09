@@ -254,8 +254,8 @@ class SCTPanel(wx.Panel):
 
     def call_sct_command(self, command):
         print("Running: {}".format(command))
-        binfo = ProgressDialog(frame)
-        binfo.Show()
+        progress_dialog = ProgressDialog(frame)
+        progress_dialog.Show()
 
         thr = SCTCallThread(command)
         thr.start()
@@ -266,10 +266,13 @@ class SCTPanel(wx.Panel):
             wx.Yield()
             if not thr.isAlive():
                 break
+            if progress_dialog.stop_run:
+                thr.sct_interrupt()
+
         thr.join()
 
-        binfo.Destroy()
-        # Open error dialog if stderr is not null
+        if progress_dialog:
+            progress_dialog.Destroy()
         if thr.status:
             binfo = ErrorDialog(frame)
             binfo.Show()
