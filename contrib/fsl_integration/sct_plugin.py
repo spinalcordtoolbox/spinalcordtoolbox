@@ -22,6 +22,7 @@
 
 import os
 import subprocess
+import signal
 from threading import Thread
 import logging
 
@@ -111,23 +112,26 @@ class SCTCallThread(Thread):
         self.status = None
         self.stdout = ""
         self.stderr = ""
+        self.p = None
 
-    @staticmethod
-    def sct_call(command):
+    def sct_call(self, command):
         # command="boo"  # for debug
         env = os.environ.copy()
         if 'PYTHONHOME' in env:
             del env["PYTHONHOME"]
         if 'PYTHONPATH' in env:
             del env["PYTHONPATH"]
-        p = subprocess.Popen([command], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, env=env)
+        self.p = subprocess.Popen([command], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, env=env)
         # TODO: printout process in stdout in real time (instead of dumping the output once done).
-        stdout, stderr = [i.decode('utf-8') for i in p.communicate()]
+        stdout, stderr = [i.decode('utf-8') for i in self.p.communicate()]
         # TODO: Fix: tqdm progress bar causes the printing of stdout to stop
         print("\n\033[94m{}\033[0m\n".format(stdout))
-        if p.returncode != 0:
+        if self.p.returncode != 0:
             print("\n\033[91mERROR: {}\033[0m\n".format(stderr))
-        return p.returncode, stdout, stderr
+        return self.p.returncode, stdout, stderr
+
+    def sct_interrupt(self):
+        self.p.send_signal(signal.SIGINT)
 
     def run(self):
         """
