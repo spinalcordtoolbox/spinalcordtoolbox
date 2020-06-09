@@ -73,7 +73,7 @@ class ProgressDialog(wx.Dialog):
     Panel to display while running SCT command.
     """
     def __init__(self, parent):
-        # TODO: try to use MessageBox instead, as they already include buttons, icons, etc.
+        self.stop_run = False
         wx.Dialog.__init__(self, parent, title="SCT Processing")
         self.SetSize((300, 120))
 
@@ -81,9 +81,8 @@ class ProgressDialog(wx.Dialog):
         lbldesc = wx.StaticText(self, id=wx.ID_ANY, label="Processing, please wait...")
         vbox.Add(lbldesc, 0, wx.ALIGN_LEFT | wx.ALL, 10)
 
-        btns = self.CreateSeparatedButtonSizer(wx.CANCEL)
-        vbox.Add(btns, 0, wx.ALIGN_LEFT | wx.ALL, 5)
-
+        stop_button = wx.Button(self, wx.ID_CANCEL, 'Stop')
+        vbox.Add(stop_button, 0, wx.ALIGN_LEFT | wx.ALL, 5)
         hbox = wx.BoxSizer(wx.HORIZONTAL)
 
         # TODO: use a nicer image, showing two gears (similar to ID_EXECUTE)
@@ -96,8 +95,13 @@ class ProgressDialog(wx.Dialog):
         self.SetSizer(hbox)
         self.Centre()
         self.CenterOnParent()
-        # TODO: retrieve action from the cancel button
 
+        stop_button.Bind(wx.EVT_BUTTON, self.OnStop)
+
+    def OnStop(self, event):
+        print(f"Stop was pressed. event={event}")
+        self.stop_run = True
+        self.Destroy()
 
 
 class SCTCallThread(Thread):
