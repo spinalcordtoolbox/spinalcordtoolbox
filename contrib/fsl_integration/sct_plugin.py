@@ -121,7 +121,7 @@ class SCTCallThread(Thread):
         stdout, stderr = [i.decode('utf-8') for i in p.communicate()]
         # TODO: Fix: tqdm progress bar causes the printing of stdout to stop
         print("\n\033[94m{}\033[0m\n".format(stdout))
-        if p.returncode is not 0:
+        if p.returncode != 0:
             print("\n\033[91mERROR: {}\033[0m\n".format(stderr))
         return p.returncode, stdout, stderr
 
