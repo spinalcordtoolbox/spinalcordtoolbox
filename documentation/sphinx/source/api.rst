@@ -19,10 +19,29 @@ Segmentation API
 Spinal Cord Segmentation API
 ============================
 
+deepseg API
++++++++++++
+
+.. automodule:: spinalcordtoolbox.deepseg.core
+   :members:
+
+.. automodule:: spinalcordtoolbox.deepseg.models
+   :members:
+
+
 deepseg_sc API
 ++++++++++++++
 
 .. automodule:: spinalcordtoolbox.deepseg_sc.cnn_models
+   :members:
+
+.. automodule:: spinalcordtoolbox.deepseg_sc.cnn_models_3d
+   :members:
+
+.. automodule:: spinalcordtoolbox.deepseg_sc.core
+   :members:
+
+.. automodule:: spinalcordtoolbox.deepseg_sc.postprocessing
    :members:
 
 
@@ -39,11 +58,30 @@ deepseg_gm API
    :members:
 
 
+MS Lesion Segmentation API
+==========================
+
+deepseg_lesion API
+++++++++++++++
+
+.. automodule:: spinalcordtoolbox.deepseg_lesion.core
+   :members:
+
+
 Centerline API
 **************
 
 spinalcordtoolbox.centerline
 ============================
+
+.. automodule:: spinalcordtoolbox.centerline.core
+   :members:
+
+.. automodule:: spinalcordtoolbox.centerline.curve_fitting
+   :members:
+
+.. automodule:: spinalcordtoolbox.centerline.nurbs
+   :members:
 
 .. automodule:: spinalcordtoolbox.centerline.optic
    :members:
