@@ -62,7 +62,7 @@ MS Lesion Segmentation API
 ==========================
 
 deepseg_lesion API
-++++++++++++++
+++++++++++++++++++
 
 .. automodule:: spinalcordtoolbox.deepseg_lesion.core
    :members:
@@ -87,13 +87,13 @@ spinalcordtoolbox.centerline
    :members:
 
 
-Image Processing API
-********************
+QMRI API
+********
 
-spinalcordtoolbox.resample
-==========================
+spinalcordtoolbox.qmri
+======================
 
-.. automodule:: spinalcordtoolbox.resample.nipy_resample
+.. automodule:: spinalcordtoolbox.qmri.mt
    :members:
 
 
@@ -117,4 +117,14 @@ spinalcordtoolbox.reports.slice
    :members:
 
 
-.... autofunction:: spinalcordtoolbox.metadata
+Vertebrae Labeling API
+**********************
+
+spinalcordtoolbox.vertebrae
+===========================
+
+.. automodule:: spinalcordtoolbox.vertebrae.core
+   :members:
+
+.. automodule:: spinalcordtoolbox.vertebrae.detect_c2c3
+   :members:
