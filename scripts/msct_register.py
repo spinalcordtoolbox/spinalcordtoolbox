@@ -211,6 +211,9 @@ def register_wrapper(fname_src, fname_dest, param, paramregmulti, fname_src_seg=
         Image('dest_seg.nii').change_orientation("RPI").save('dest_seg_RPI.nii')
     if fname_dest_label:
         Image('dest_label.nii').change_orientation("RPI").save('dest_label_RPI.nii')
+    if fname_mask:
+        # TODO: change output name
+        Image('mask.nii.gz').change_orientation("RPI").save('mask.nii.gz')
 
     if identity:
         # overwrite paramregmulti and only do one identity transformation

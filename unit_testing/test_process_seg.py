@@ -17,7 +17,7 @@ sys.path.append(os.path.join(__sct_dir__, 'scripts'))
 from spinalcordtoolbox import process_seg
 from spinalcordtoolbox.centerline.core import ParamCenterline
 
-from create_test_data import dummy_segmentation
+from spinalcordtoolbox.testing.create_test_data import dummy_segmentation
 
 
 # Define global variables

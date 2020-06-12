@@ -14,17 +14,18 @@
 from __future__ import division, absolute_import
 
 import sys, os
-
 import numpy as np
-import sct_maths
-from sct_label_utils import ProcessLabels
-from msct_parser import Parser
+
 from spinalcordtoolbox.image import Image
-import sct_utils as sct
 from spinalcordtoolbox.vertebrae.core import create_label_z, get_z_and_disc_values_from_label, vertebral_detection, \
     clean_labeled_segmentation, label_discs, label_vert
 from spinalcordtoolbox.vertebrae.detect_c2c3 import detect_c2c3
 from spinalcordtoolbox.reports.qc import generate_qc
+from spinalcordtoolbox.math import dilate
+
+from sct_label_utils import ProcessLabels
+from msct_parser import Parser
+import sct_utils as sct
 import sct_straighten_spinalcord
 
 
@@ -310,15 +311,11 @@ def main(args=None):
             label = ProcessLabels('segmentation.nii', fname_output='tmp.labelz.nii.gz',
                                       coordinates=['{},{}'.format(initz[0], initz[1])])
             im_label = label.process('create-seg')
-            im_label.data = sct_maths.dilate(im_label.data, [3])  # TODO: create a dilation method specific to labels,
+            im_label.data = dilate(im_label.data, 3, 'ball')  # TODO: create a dilation method specific to labels,
             # which does not apply a convolution across all voxels (highly inneficient)
             im_label.save(fname_labelz)
         elif fname_initlabel:
-            import sct_label_utils
-            # subtract "1" to label value because due to legacy, in this code the disc C2-C3 has value "2", whereas in the
-            # recent version of SCT it is defined as "3". Therefore, when asking the user to define a label, we point to the
-            # new definition of labels (i.e., C2-C3 = 3).
-            sct_label_utils.main(['-i', fname_initlabel, '-add', '-1', '-o', fname_labelz])
+            Image(fname_initlabel).save(fname_labelz)
         else:
             # automatically finds C2-C3 disc
             im_data = Image('data.nii')
@@ -330,16 +327,14 @@ def main(args=None):
             im_label_c2c3 = detect_c2c3(im_data, im_seg, contrast, verbose=verbose_detect_c2c3)
             ind_label = np.where(im_label_c2c3.data)
             if not np.size(ind_label) == 0:
-                # subtract "1" to label value because due to legacy, in this code the disc C2-C3 has value "2", whereas in the
-                # recent version of SCT it is defined as "3".
-                im_label_c2c3.data[ind_label] = 2
+                im_label_c2c3.data[ind_label] = 3
             else:
                 sct.printv('Automatic C2-C3 detection failed. Please provide manual label with sct_label_utils', 1, 'error')
                 sys.exit()
             im_label_c2c3.save(fname_labelz)
 
         # dilate label so it is not lost when applying warping
-        sct_maths.main(['-i', fname_labelz, '-dilate', '3', '-o', fname_labelz])
+        dilate(Image(fname_labelz), 3, 'ball').save(fname_labelz)
 
         # Apply straightening to z-label
         sct.printv('\nAnd apply straightening to label...', verbose)
@@ -368,6 +363,7 @@ def main(args=None):
             sct.run(['sct_maths', '-i', 'data_straightr.nii', '-laplacian', '1', '-o', 'data_straightr.nii'], verbose)
 
         # detect vertebral levels on straight spinal cord
+        init_disc[1]=init_disc[1]-1
         vertebral_detection('data_straightr.nii', 'segmentation_straight.nii', contrast, param, init_disc=init_disc,
                             verbose=verbose, path_template=path_template, path_output=path_output, scale_dist=scale_dist)
 

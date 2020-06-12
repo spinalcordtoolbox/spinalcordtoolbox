@@ -16,7 +16,7 @@ sys.path.append(os.path.join(__sct_dir__, 'scripts'))
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline, find_and_sort_coord, round_and_clip
 from spinalcordtoolbox.image import Image
 
-from create_test_data import dummy_centerline
+from spinalcordtoolbox.testing.create_test_data import dummy_centerline
 from sct_utils import init_sct
 
 init_sct(log_level=2)  # Set logger in debug mode
@@ -50,7 +50,7 @@ im_centerlines = [
     #  {'median': 0, 'rmse': 1, 'laplacian': 5, 'norm': 13.5},
     #  {}),
     (dummy_centerline(size_arr=(30, 20, 50), subsampling=1),
-     {'median': 0, 'rmse': 0.3, 'laplacian': 0.5, 'norm': 2},
+     {'median': 0, 'rmse': 0.3, 'laplacian': 0.5, 'norm': 2.1},
      {}),
     (dummy_centerline(size_arr=(30, 20, 50), subsampling=1, outlier=[20]),
      {'median': 0, 'rmse': 0.8, 'laplacian': 70, 'norm': 13.5},
@@ -59,7 +59,7 @@ im_centerlines = [
      {'median': 0, 'rmse': 0.25, 'laplacian': 0.2},
      {}),
     (dummy_centerline(size_arr=(30, 20, 50), subsampling=5),
-     {'median': 0, 'rmse': 0.3, 'laplacian': 0.5, 'norm': 3.1},
+     {'median': 0, 'rmse': 0.3, 'laplacian': 0.5, 'norm': 3.6},
      {}),
     (dummy_centerline(size_arr=(30, 20, 50), subsampling=10),
      {'median': 0, 'rmse': 0.1, 'laplacian': 0.5, 'norm': 3.8},

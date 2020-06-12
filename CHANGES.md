@@ -1,3 +1,58 @@
+## 4.3 (2020-06-11)
+[View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/4.2.2...4.3)
+
+**BUG**
+
+ - **sct_label_vertebrae:** Fixed -initlabel problem with file naming. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2738)
+ - **sct_utils:** Fix and move send_email. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2729)
+ - **sct_qc:** Fix out of order plots. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2722)
+ - **sct_label_utils:** sagittal dialog: fixes error when trying to access out of bound slice. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2694)
+ - **sct_register_multimodal:** Fixed forgot to reorient mask. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2660)
+ - **sct_label_vertebrae:** -initz flag and label value correction. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2641)
+ - **sct_qc:** Test for parallel qc crash. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2628)
+ - Replace parser.usage.generate with parser.error. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2621)
+
+**ENHANCEMENT**
+
+ - **sct_download_data:** Moved sct_download_data functions to new download module. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2700)
+ - SCT logo fix in FSLeyes. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2657)
+ - **sct_run_batch:** Flag -s added to force sequential analysis even if GNU parallel is installed. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2635)
+
+**FEATURE**
+
+ - Added useful formatting to compare SCT versions; introduced sct_version. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2723)
+ - **sct_get_centerline:** Fit centerline across all slices with input segmentation. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2646)
+ - **sct_deepseg,sct_download_data:** Centralized all deep learning segmentation tasks with new function "sct_deepseg" and refactored sct_download_data. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2639)
+ - **sct_dmri_moco,sct_fmri_moco:** Now possible to use soft mask, bug fixes and various improvements. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2634)
+ - parameters_example.sh: Now defined a relative PATH_PARENT. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2619)
+ - **sct_maths:** Enable 2D kernel for morpho math operations and various improvements. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2616)
+ - **sct_apply_transfo:** Fixed compatibility between SCT/ANTs and FSL warping fields. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2529)
+
+**DOCUMENTATION**
+
+ - Fix argparse linewrap for R| strings. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2685)
+ - Added video recording of the London 2020 course. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2659)
+ - Update badge for discourse forum. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2656)
+ - **sct_dmri_concat_b0_and_dwi:** Clarified documentation. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2650)
+ - Added tutorial to install SCT with WSL for Windows users. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2643)
+ - Fixed README forum link. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2631)
+
+**INSTALLATION**
+
+ - Drop support for 2014-era Linux.. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2731)
+ - Minimal Torch install.. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2715)
+ - **sct_dmri_moco,sct_fmri_moco:** Updated ANTs binaries to solve slow processing in some systems. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2642)
+ - Downgraded TensorFlow to 1.5 to fix AVX incompatibility. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2618)
+
+**TESTING**
+
+ - Added CI for Windows Subsystem for Linux (WSL). [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2698)
+ - **sct_get_centerline:** Relax test tolerance for centerline polyfit. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2686)
+ - Add polynomial function to dummy_segmentation. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2684)
+ - create_test_data: move to spinalcordtoolbox.testing. [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2638)
+
+
+
 ## 4.2.2 (2020-02-28)
 [View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/4.2.1...4.2.2)
 

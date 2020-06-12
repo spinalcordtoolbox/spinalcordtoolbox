@@ -15,7 +15,7 @@ def init(param_test):
     Initialize class: param_test
     """
     # initialization
-    default_args = ['-i fmri/fmri_r.nii.gz -g 5 -x nn -r 0']
+    default_args = ['-i fmri/fmri_r.nii.gz -g 4 -x nn -r 0']
     # assign default params
     if not param_test.args:
         param_test.args = default_args
