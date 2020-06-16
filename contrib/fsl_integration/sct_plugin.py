@@ -21,6 +21,7 @@
 # TODO: add help when user leaves cursor on button
 
 import os
+import select
 import subprocess
 import signal
 from threading import Thread
@@ -122,27 +123,40 @@ class SCTCallThread(Thread):
             del env["PYTHONHOME"]
         if 'PYTHONPATH' in env:
             del env["PYTHONPATH"]
-        self.p = subprocess.Popen([command], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, env=env)
 
-        while True:
-            stdout = self.p.stdout.readline()
-            if stdout:
-                self.stdout += stdout.decode()
-                print(stdout.decode())
-                wx.CallAfter(self.text_window.WriteText, stdout)
+        self.stdout_pipe_r, self.stdout_pipe_w = os.pipe()
+        self.stderr_pipe_r, self.stderr_pipe_w = os.pipe()
 
-            stderr = self.p.stderr.readline()
-            if stderr:
-                self.stderr += stderr.decode()
-                print(stderr.decode())
-                wx.CallAfter(self.text_window.WriteText, stderr)
+        self.p = subprocess.Popen([command], stdout=self.stdout_pipe_w, stderr=self.stderr_pipe_w, shell=True, env=env)
 
-            rc = self.p.poll()
-            if rc is not None:
-                self.status = rc
-                break
+        while self.p.poll() is None:
+            timeout = 1
+            rs = [ self.stdout_pipe_r, self.stderr_pipe_r  ]
+            ws = []
+            xs = []
 
-        return self.status, self.stdout, self.stderr
+            rs, ws, xs = select.select(rs, ws, xs, timeout)
+            for r in rs:
+                if r is self.stdout_pipe_r:
+                    msg = os.read(self.stdout_pipe_r, 1024)
+                    if msg:
+                        self.stdout += msg.decode()
+
+                if r is self.stderr_pipe_r:
+                    msg = os.read(self.stderr_pipe_r, 1024)
+                    if msg:
+                        self.stderr += msg.decode()
+
+                if msg:
+                    wx.CallAfter(self.text_window.WriteText, msg)
+
+        # cleanup
+        os.close(self.stdout_pipe_r)
+        os.close(self.stdout_pipe_w)
+        os.close(self.stderr_pipe_r)
+        os.close(self.stderr_pipe_w)
+
+        return self.p.returncode, self.stdout, self.stderr
 
     def sct_interrupt(self):
         self.p.send_signal(signal.SIGINT)
