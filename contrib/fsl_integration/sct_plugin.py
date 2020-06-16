@@ -107,29 +107,42 @@ class ProgressDialog(wx.Dialog):
 
 
 class SCTCallThread(Thread):
-    def __init__(self, command):
+    def __init__(self, command, text_window_ctrl):
         Thread.__init__(self)
         self.command = command
         self.status = None
         self.stdout = ""
         self.stderr = ""
         self.p = None
+        self.text_window = text_window_ctrl
 
     def sct_call(self, command):
-        # command="boo"  # for debug
         env = os.environ.copy()
         if 'PYTHONHOME' in env:
             del env["PYTHONHOME"]
         if 'PYTHONPATH' in env:
             del env["PYTHONPATH"]
         self.p = subprocess.Popen([command], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, env=env)
-        # TODO: printout process in stdout in real time (instead of dumping the output once done).
-        stdout, stderr = [i.decode('utf-8') for i in self.p.communicate()]
-        # TODO: Fix: tqdm progress bar causes the printing of stdout to stop
-        print("\n\033[94m{}\033[0m\n".format(stdout))
-        if self.p.returncode != 0:
-            print("\n\033[91mERROR: {}\033[0m\n".format(stderr))
-        return self.p.returncode, stdout, stderr
+
+        while True:
+            stdout = self.p.stdout.readline()
+            if stdout:
+                self.stdout += stdout.decode()
+                print(stdout.decode())
+                wx.CallAfter(self.text_window.WriteText, stdout)
+
+            stderr = self.p.stderr.readline()
+            if stderr:
+                self.stderr += stderr.decode()
+                print(stderr.decode())
+                wx.CallAfter(self.text_window.WriteText, stderr)
+
+            rc = self.p.poll()
+            if rc is not None:
+                self.status = rc
+                break
+
+        return self.status, self.stdout, self.stderr
 
     def sct_interrupt(self):
         self.p.send_signal(signal.SIGINT)
@@ -257,17 +270,17 @@ class SCTPanel(wx.Panel):
                     wx.HSCROLL | wx.TE_READONLY | \
                     wx.BORDER_SIMPLE
         htmlw = html.HtmlWindow(self, wx.ID_ANY,
-                                size=(280, 208),
+                                size=(380, 208),
                                 style=txt_style)
         htmlw.SetPage(self.DESCRIPTION)
         return htmlw
 
     def call_sct_command(self, command):
-        print("Running: {}".format(command))
+        self.log_to_window("Running: {}".format(command))
         progress_dialog = ProgressDialog(frame)
         progress_dialog.Show()
 
-        thr = SCTCallThread(command)
+        thr = SCTCallThread(command, self.log_window)
         thr.start()
 
         # No access to app.pending() from here
@@ -281,11 +294,14 @@ class SCTPanel(wx.Panel):
 
         thr.join()
 
+        self.log_to_window("Command completed.")
+
         if progress_dialog:
             progress_dialog.Destroy()
 
         # show stderr output if an error occurred
         if thr.status:
+            self.log_to_window("An error occurred")
             error_dialog = ErrorDialog(frame, msg=thr.stderr)
             error_dialog.Show()
 
