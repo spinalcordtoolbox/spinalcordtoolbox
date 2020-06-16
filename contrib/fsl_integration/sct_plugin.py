@@ -38,23 +38,24 @@ class ErrorDialog(wx.Dialog):
     Panel to display if there is an error, instructing user what to do.
     """
     def __init__(self, parent, msg=None):
-        wx.Dialog.__init__(self, parent, title="SCT Error")
-        self.SetSize((510, 170))
+        wx.Dialog.__init__(self, parent, title="An Error Occurred")
+
+        self.SetSize((600, 250))
 
         if msg is None:
             msg = "An error has occurred while running SCT. Please go to the Terminal, copy all the content and paste it as a new issue in SCT's forum: \
             http://forum.spinalcordmri.org/"
 
         vbox = wx.BoxSizer(wx.VERTICAL)
-        lbldesc = wx.StaticText(self,
-                                id=-1,
-                                label=msg,
-                                size=wx.Size(470, 80),
-                                style=wx.ALIGN_LEFT)
-        vbox.Add(lbldesc, 0, wx.ALIGN_LEFT | wx.ALL, 10)
+
+        error_msg_box = wx.TextCtrl(self, wx.ID_ANY, size=(500,140),
+                          style = wx.TE_MULTILINE|wx.TE_READONLY|wx.HSCROLL)
+
+        error_msg_box.AppendText(msg)
+        vbox.Add(error_msg_box, 0, wx.ALL|wx.EXPAND, 10)
 
         btns = self.CreateSeparatedButtonSizer(wx.OK)
-        vbox.Add(btns, 0, wx.ALIGN_LEFT | wx.ALL, 5)
+        vbox.Add(btns, 0, wx.ALIGN_RIGHT | wx.ALL, 5)
 
         hbox = wx.BoxSizer(wx.HORIZONTAL)
 
