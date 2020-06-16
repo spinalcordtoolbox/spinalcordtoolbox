@@ -214,17 +214,26 @@ class SCTPanel(wx.Panel):
         button_help.Bind(wx.EVT_BUTTON, self.tutorial)
         self.sizer_logo_sct.Add(button_help, 0, wx.ALL, 5)
 
+        self.log_window = wx.TextCtrl(self, wx.ID_ANY, size=(300,200),
+                          style = wx.TE_MULTILINE|wx.TE_READONLY|wx.HSCROLL)
+
         # Get function-specific description
         self.html_desc = self.get_description()
 
         # Organize boxes
         self.sizer_logo_text = wx.BoxSizer(wx.HORIZONTAL)  # create main box
         self.sizer_logo_text.Add(self.sizer_logo_sct, 0, wx.ALL, 5)
-        # TODO: increase the width of the description box
         self.sizer_logo_text.Add(self.html_desc, 0, wx.ALL, 5)
 
+        self.sizer_v = wx.BoxSizer(wx.VERTICAL)
+        self.sizer_v.Add(self.sizer_logo_text,1, wx.ALL, 5)
+        self.sizer_v.Add(self.log_window, 0, wx.ALL|wx.EXPAND, 5)
+
         self.sizer_h = wx.BoxSizer(wx.HORIZONTAL)
-        self.sizer_h.Add(self.sizer_logo_text)
+        self.sizer_h.Add(self.sizer_v)
+
+    def log_to_window(self, msg):
+        self.log_window.AppendText("{}\n".format(msg))
 
     def tutorial(self,event):
         pdfpath = os.path.join(os.environ[self.SCT_DIR_ENV],self.SCT_TUTORIAL_PATH)
