@@ -180,15 +180,14 @@ class TextBox:
         :param sctpanel: SCTPanel Class
         :param label: Label to display on the button
         """
-        # TODO: instead of this hard-coded 1000 value, extended the text box towards the most right part of the panel
-        #  (include a margin)
-        self.textctrl = wx.TextCtrl(sctpanel, -1, "", wx.DefaultPosition, wx.Size(1000, 10))
-        hbox = wx.BoxSizer(wx.HORIZONTAL)
+        self.textctrl = wx.TextCtrl(sctpanel)
+        self.hbox = wx.BoxSizer(wx.HORIZONTAL)
+
         button_fetch_file = wx.Button(sctpanel, -1, label=label)
         button_fetch_file.Bind(wx.EVT_BUTTON, self.get_highlighted_file_name)
-        hbox.Add(button_fetch_file, proportion=0, flag=wx.ALIGN_LEFT | wx.ALL, border=5)
-        hbox.Add(self.textctrl, 1, wx.EXPAND | wx.ALIGN_LEFT | wx.ALL, 5)
-        self.hbox = hbox
+
+        self.hbox.Add(button_fetch_file, 0, wx.ALIGN_LEFT| wx.RIGHT, 10)
+        self.hbox.Add(self.textctrl, 1, wx.ALIGN_LEFT|wx.LEFT, 10)
 
     def get_highlighted_file_name(self, event):
         """
@@ -197,7 +196,6 @@ class TextBox:
         selected_overlay = displayCtx.getSelectedOverlay()  # displayCtx is a class from FSLeyes
         filename_path = selected_overlay.dataSource
         print("Fetched file name: {}".format(filename_path))
-        # display file name in text box
         self.textctrl.SetValue(filename_path)
 
     def get_file_name(self):
@@ -225,43 +223,45 @@ class SCTPanel(wx.Panel):
     def __init__(self, parent, id_):
         super(SCTPanel, self).__init__(parent=parent, id=id_)
 
-        # Logo
-        self.img_logo = self.get_logo()
-        self.sizer_logo_sct = wx.BoxSizer(wx.VERTICAL)
-        self.sizer_logo_sct.Add(self.img_logo, 0, wx.ALL, 5)
+        # main layout consists of one row with 3 main columns
+        self.main_row = wx.BoxSizer(wx.HORIZONTAL)
 
-        # Citation
+        self.column_left = wx.BoxSizer(wx.VERTICAL)
+        self.column_center = wx.BoxSizer(wx.VERTICAL)
+        self.column_right = wx.BoxSizer(wx.VERTICAL)
+
+        sct_logo = self.get_logo()
+        self.column_left.Add(sct_logo, proportion=0, flag=wx.ALL, border=5)
+
         txt_sct_citation = wx.VSCROLL | \
                            wx.HSCROLL | wx.TE_READONLY | \
                            wx.BORDER_SIMPLE
-        html_sct_citation = html.HtmlWindow(self, wx.ID_ANY,
-                                            size=(280, 115),
+        html_sct_citation_window = html.HtmlWindow(self, wx.ID_ANY,
+                                            size=(400, 120),
                                             style=txt_sct_citation)
-        html_sct_citation.SetPage(self.DESCRIPTION_SCT)
-        self.sizer_logo_sct.Add(html_sct_citation, 0, wx.ALL, 5)
+        html_sct_citation_window.SetPage(self.DESCRIPTION_SCT)
+        self.column_left.Add(html_sct_citation_window, 0, wx.ALL, 5)
 
-        # Help button
+        html_desc_window = self.get_description()
+        self.column_left.Add(html_desc_window, 0, wx.ALL, 5)
+
         button_help = wx.Button(self, id=id_, label="Help")
         button_help.Bind(wx.EVT_BUTTON, self.tutorial)
-        self.sizer_logo_sct.Add(button_help, 0, wx.ALL, 5)
+        self.column_left.Add(button_help, 0, wx.ALL, 5)
 
-        self.log_window = wx.TextCtrl(self, wx.ID_ANY, size=(300,200),
+        self.log_window = wx.TextCtrl(self, wx.ID_ANY, size=(100, 300),
                           style = wx.TE_MULTILINE|wx.TE_READONLY|wx.HSCROLL)
 
-        # Get function-specific description
-        self.html_desc = self.get_description()
 
-        # Organize boxes
-        self.sizer_logo_text = wx.BoxSizer(wx.HORIZONTAL)  # create main box
-        self.sizer_logo_text.Add(self.sizer_logo_sct, 0, wx.ALL, 5)
-        self.sizer_logo_text.Add(self.html_desc, 0, wx.ALL, 5)
+        log_window_label = wx.StaticText(self, label="Terminal Output")
+        self.column_right.Add(log_window_label, 0, wx.ALL, 5)
+        self.column_right.Add(self.log_window, 1, wx.EXPAND|wx.ALL, 5)
 
-        self.sizer_v = wx.BoxSizer(wx.VERTICAL)
-        self.sizer_v.Add(self.sizer_logo_text,1, wx.ALL, 5)
-        self.sizer_v.Add(self.log_window, 0, wx.ALL|wx.EXPAND, 5)
+        self.main_row.Add(self.column_left, 0, wx.ALL, 10)
+        self.main_row.Add(self.column_center, 1, wx.ALL, 10)
+        self.main_row.Add(self.column_right, 1, wx.ALL, 10)
 
-        self.sizer_h = wx.BoxSizer(wx.HORIZONTAL)
-        self.sizer_h.Add(self.sizer_v)
+        self.SetSizerAndFit(self.main_row)
 
     def log_to_window(self, msg, level=None):
         if level is None:
@@ -290,7 +290,7 @@ class SCTPanel(wx.Panel):
                     wx.HSCROLL | wx.TE_READONLY | \
                     wx.BORDER_SIMPLE
         htmlw = html.HtmlWindow(self, wx.ID_ANY,
-                                size=(380, 208),
+                                size=(400, 250),
                                 style=txt_style)
         htmlw.SetPage(self.DESCRIPTION)
         return htmlw
@@ -332,6 +332,7 @@ class TabPanelPropSeg(SCTPanel):
     """
 
     DESCRIPTION = """
+    <b>Function description</b>:<br>
     Segment the spinal cord using a deformable 3D mesh. This method is fast and robust, but could be prone to "leaking"
     if the contrast between the cord and the CSF is not high enough.
     <br><br>
@@ -348,29 +349,20 @@ class TabPanelPropSeg(SCTPanel):
     def __init__(self, parent):
         super(TabPanelPropSeg, self).__init__(parent=parent, id_=wx.ID_ANY)
 
-        # Fetch input file
         self.hbox_filein = TextBox(self, label="Input file")
-
-        # Select contrast
         lbl_contrasts = ['t1', 't2', 't2s', 'dwi']
+
         self.rbox_contrast = wx.RadioBox(self, label='Select contrast:',
                                          choices=lbl_contrasts,
                                          majorDimension=1,
                                          style=wx.RA_SPECIFY_ROWS)
 
-        # Display all options
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(self.hbox_filein.hbox, 0, wx.ALL, 5)
-        sizer.Add(self.rbox_contrast, 0, wx.ALL, 5)
-
-        # Run button
         button_run = wx.Button(self, id=wx.ID_ANY, label="Run")
         button_run.Bind(wx.EVT_BUTTON, self.on_button_run)
-        sizer.Add(button_run, 0, wx.ALL, 5)
 
-        # Add to main sizer
-        self.sizer_h.Add(sizer)
-        self.SetSizerAndFit(self.sizer_h)
+        self.column_center.Add(self.hbox_filein.hbox, 0, wx.EXPAND|wx.ALL, 5)
+        self.column_center.Add(self.rbox_contrast, 0, wx.ALL, 5)
+        self.column_center.Add(button_run, 0, wx.ALL, 5)
 
     def on_button_run(self, event):
 
@@ -403,6 +395,7 @@ class TabPanelSCSeg(SCTPanel):
     """
 
     DESCRIPTION = """
+    <b>Function description</b>:<br>
     Segment the spinal cord using deep learning. The convolutional neural network was trained on ~1,500 subjects
     from multiple centers, and including various pathologies (compression, MS, ALS, etc.).
     <br><br>
@@ -420,29 +413,19 @@ class TabPanelSCSeg(SCTPanel):
     def __init__(self, parent):
         super(TabPanelSCSeg, self).__init__(parent=parent, id_=wx.ID_ANY)
 
-        # Fetch input file
         self.hbox_filein = TextBox(self, label="Input file")
-
-        # Select contrast
         lbl_contrasts = ['t1', 't2', 't2s', 'dwi']
         self.rbox_contrast = wx.RadioBox(self, label='Select contrast:',
                                          choices=lbl_contrasts,
                                          majorDimension=1,
                                          style=wx.RA_SPECIFY_ROWS)
 
-        # Display all options
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(self.hbox_filein.hbox, 0, wx.ALL, 5)
-        sizer.Add(self.rbox_contrast, 0, wx.ALL, 5)
-
-        # Run button
         button_run = wx.Button(self, id=wx.ID_ANY, label="Run")
         button_run.Bind(wx.EVT_BUTTON, self.on_button_run)
-        sizer.Add(button_run, 0, wx.ALL, 5)
 
-        # Add to main sizer
-        self.sizer_h.Add(sizer)
-        self.SetSizerAndFit(self.sizer_h)
+        self.column_center.Add(self.hbox_filein.hbox, 0, wx.EXPAND|wx.ALL, 5)
+        self.column_center.Add(self.rbox_contrast, 0, wx.ALL, 5)
+        self.column_center.Add(button_run, 0, wx.ALL, 5)
 
     def on_button_run(self, event):
 
@@ -475,6 +458,7 @@ class TabPanelGMSeg(SCTPanel):
     """
 
     DESCRIPTION = """
+    <b>Function description</b>:<br>
     Segment the spinal cord gray matter using deep learning. The convolutional neural network features dilated
     convolutions and was trained on 232 subjects (3963 axial slices) from multiple centers, and including various
     pathologies (compression, MS, ALS, etc.).
@@ -492,21 +476,13 @@ class TabPanelGMSeg(SCTPanel):
     def __init__(self, parent):
         super(TabPanelGMSeg, self).__init__(parent=parent, id_=wx.ID_ANY)
 
-        # Fetch input file
         self.hbox_filein = TextBox(self, label="Input file")
 
-        # Display all options
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(self.hbox_filein.hbox, 0, wx.ALL, 5)
-
-        # Run button
         button_run = wx.Button(self, id=wx.ID_ANY, label="Run")
         button_run.Bind(wx.EVT_BUTTON, self.on_button_run)
-        sizer.Add(button_run, 0, wx.ALL, 5)
 
-        # Add to main sizer
-        self.sizer_h.Add(sizer)
-        self.SetSizerAndFit(self.sizer_h)
+        self.column_center.Add(self.hbox_filein.hbox, 0, wx.EXPAND|wx.ALL, 5)
+        self.column_center.Add(button_run, 0, wx.ALL, 5)
 
     def on_button_run(self, event):
 
@@ -538,6 +514,7 @@ class TabPanelVertLB(SCTPanel):
     """
 
     DESCRIPTION = """
+    <b>Function description</b>:<br>
     Automatically find intervertebral discs and label an input segmentation with vertebral levels. The values on the
     output labeled segmentation corresponds to the level, e.g., 2 corresponds to C2, 8 corresponds to T1, etc.
     <br><br>
@@ -556,31 +533,23 @@ class TabPanelVertLB(SCTPanel):
     def __init__(self, parent):
         super(TabPanelVertLB, self).__init__(parent=parent, id_=wx.ID_ANY)
 
-        # Fetch input files
         self.hbox_im = TextBox(self, label="Input image")
         self.hbox_seg = TextBox(self, label="Input segmentation")
 
-        # Select contrast
         lbl_contrasts = ['t1', 't2']
         self.rbox_contrast = wx.RadioBox(self, label='Select contrast:',
                                          choices=lbl_contrasts,
                                          majorDimension=1,
                                          style=wx.RA_SPECIFY_ROWS)
 
-        # Display all options
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(self.hbox_im.hbox, 0, wx.ALL, 5)
-        sizer.Add(self.hbox_seg.hbox, 0, wx.ALL, 5)
-        sizer.Add(self.rbox_contrast, 0, wx.ALL, 5)
-
         # Run button
         button_run = wx.Button(self, id=wx.ID_ANY, label="Run")
         button_run.Bind(wx.EVT_BUTTON, self.on_button_run)
-        sizer.Add(button_run, 0, wx.ALL, 5)
 
-        # Add to main sizer
-        self.sizer_h.Add(sizer)
-        self.SetSizerAndFit(self.sizer_h)
+        self.column_center.Add(self.hbox_im.hbox, 0, wx.EXPAND|wx.ALL, 5)
+        self.column_center.Add(self.hbox_seg.hbox, 0, wx.EXPAND|wx.ALL, 5)
+        self.column_center.Add(self.rbox_contrast, 0, wx.ALL, 5)
+        self.column_center.Add(button_run, 0, wx.ALL, 5)
 
     def on_button_run(self, event):
 
@@ -625,6 +594,7 @@ class TabPanelRegisterToTemplate(SCTPanel):
     """
 
     DESCRIPTION = """
+    <b>Function description</b>:<br>
     Register an image with the default PAM50 spinal cord MRI template.
     <br><br>
     <b>Usage</b>:
@@ -645,33 +615,24 @@ class TabPanelRegisterToTemplate(SCTPanel):
     def __init__(self, parent):
         super(TabPanelRegisterToTemplate, self).__init__(parent=parent, id_=wx.ID_ANY)
 
-        # Fetch input files
         self.hbox_im = TextBox(self, label="Input image")
         self.hbox_seg = TextBox(self, label="Input segmentation")
         self.hbox_label = TextBox(self, label="Input labels")
 
-        # Select contrast
         lbl_contrasts = ['t1', 't2']
         self.rbox_contrast = wx.RadioBox(self, label='Select contrast:',
                                          choices=lbl_contrasts,
                                          majorDimension=1,
                                          style=wx.RA_SPECIFY_ROWS)
 
-        # Display all options
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(self.hbox_im.hbox, 0, wx.ALL, 5)
-        sizer.Add(self.hbox_seg.hbox, 0, wx.ALL, 5)
-        sizer.Add(self.hbox_label.hbox, 0, wx.ALL, 5)
-        sizer.Add(self.rbox_contrast, 0, wx.ALL, 5)
-
-        # Run button
         button_run = wx.Button(self, id=wx.ID_ANY, label="Run")
         button_run.Bind(wx.EVT_BUTTON, self.on_button_run)
-        sizer.Add(button_run, 0, wx.ALL, 5)
 
-        # Add to main sizer
-        self.sizer_h.Add(sizer)
-        self.SetSizerAndFit(self.sizer_h)
+        self.column_center.Add(self.hbox_im.hbox, 0, wx.EXPAND|wx.ALL, 5)
+        self.column_center.Add(self.hbox_seg.hbox, 0, wx.EXPAND|wx.ALL, 5)
+        self.column_center.Add(self.hbox_label.hbox, 0, wx.EXPAND|wx.ALL, 5)
+        self.column_center.Add(self.rbox_contrast, 0, wx.ALL, 5)
+        self.column_center.Add(button_run, 0, wx.ALL, 5)
 
     def on_button_run(self, event):
 
