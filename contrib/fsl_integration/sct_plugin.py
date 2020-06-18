@@ -110,11 +110,10 @@ class ProgressDialog(wx.Dialog):
 class SCTCallThread(Thread):
     def __init__(self, command, text_window_ctrl):
         Thread.__init__(self)
-        self.command = command
+        self.command = [command]
         self.status = None
         self.stdout = ""
         self.stderr = ""
-        self.p = None
         self.text_window = text_window_ctrl
 
     def sct_call(self, command):
@@ -124,42 +123,43 @@ class SCTCallThread(Thread):
         if 'PYTHONPATH' in env:
             del env["PYTHONPATH"]
 
-        self.stdout_pipe_r, self.stdout_pipe_w = os.pipe()
-        self.stderr_pipe_r, self.stderr_pipe_w = os.pipe()
+        proc = subprocess.Popen(self.command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, env=env)
+        self.p = proc
 
-        self.p = subprocess.Popen([command], stdout=self.stdout_pipe_w, stderr=self.stderr_pipe_w, shell=True, env=env)
+        stdout_fd = proc.stdout.fileno()
+        stderr_fd = proc.stderr.fileno()
+        os.set_blocking(stdout_fd, False)
+        os.set_blocking(stderr_fd, False)
 
-        while self.p.poll() is None:
+        while proc.poll() is None:
             timeout = 1
-            rs = [ self.stdout_pipe_r, self.stderr_pipe_r  ]
+            rs = [ proc.stdout, proc.stderr ]
             ws = []
             xs = []
 
             rs, ws, xs = select.select(rs, ws, xs, timeout)
             for r in rs:
-                if r is self.stdout_pipe_r:
-                    msg = os.read(self.stdout_pipe_r, 1024)
+                msg = None
+                if r is proc.stdout:
+                    msg = os.read(stdout_fd, 1024)
                     if msg:
-                        self.stdout += msg.decode()
+                        self.stdout += msg.decode('utf-8')
 
-                if r is self.stderr_pipe_r:
-                    msg = os.read(self.stderr_pipe_r, 1024)
+                elif r is proc.stderr:
+                    msg = os.read(stderr_fd, 1024)
                     if msg:
-                        self.stderr += msg.decode()
+                        self.stderr += msg.decode('utf-8')
 
                 if msg:
                     wx.CallAfter(self.text_window.WriteText, msg)
 
-        # cleanup
-        os.close(self.stdout_pipe_r)
-        os.close(self.stdout_pipe_w)
-        os.close(self.stderr_pipe_r)
-        os.close(self.stderr_pipe_w)
-
-        return self.p.returncode, self.stdout, self.stderr
+        return proc.returncode, self.stdout, self.stderr
 
     def sct_interrupt(self):
-        self.p.send_signal(signal.SIGINT)
+        if self.p:
+            self.p.send_signal(signal.SIGINT)
+        else:
+            print("No process running?")
 
     def run(self):
         """
