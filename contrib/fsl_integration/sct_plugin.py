@@ -200,6 +200,9 @@ class TextBox:
         # display file name in text box
         self.textctrl.SetValue(filename_path)
 
+    def get_file_name(self):
+        return self.textctrl.GetValue()
+
 
 # Creates the standard panel for each tool
 class SCTPanel(wx.Panel):
@@ -260,8 +263,11 @@ class SCTPanel(wx.Panel):
         self.sizer_h = wx.BoxSizer(wx.HORIZONTAL)
         self.sizer_h.Add(self.sizer_v)
 
-    def log_to_window(self, msg):
-        self.log_window.AppendText("{}\n".format(msg))
+    def log_to_window(self, msg, level=None):
+        if level is None:
+            self.log_window.AppendText("{}\n".format(msg))
+        else:
+            self.log_window.AppendText("{}: {}\n".format(level, msg))
 
     def tutorial(self,event):
         pdfpath = os.path.join(os.environ[self.SCT_DIR_ENV],self.SCT_TUTORIAL_PATH)
@@ -290,7 +296,7 @@ class SCTPanel(wx.Panel):
         return htmlw
 
     def call_sct_command(self, command):
-        self.log_to_window("Running: {}".format(command))
+        self.log_to_window("Running: {}".format(command), level="INFO")
         progress_dialog = ProgressDialog(frame)
         progress_dialog.Show()
 
@@ -308,14 +314,14 @@ class SCTPanel(wx.Panel):
 
         thr.join()
 
-        self.log_to_window("Command completed.")
+        self.log_to_window("Command completed.", level="INFO")
 
         if progress_dialog:
             progress_dialog.Destroy()
 
         # show stderr output if an error occurred
         if thr.status:
-            self.log_to_window("An error occurred")
+            self.log_to_window("An error occurred", level="ERROR")
             error_dialog = ErrorDialog(frame, msg=thr.stderr)
             error_dialog.Show()
 
@@ -369,7 +375,14 @@ class TabPanelPropSeg(SCTPanel):
     def on_button_run(self, event):
 
         # Build and run SCT command
-        fname_input = self.hbox_filein.textctrl.GetValue()
+        fname_input = self.hbox_filein.get_file_name()
+        if not fname_input:
+            msg = "No input file selected! Select a file from the overlay list and then press Input file."
+            self.log_to_window(msg, level="ERROR")
+            error_dialog = ErrorDialog(frame, msg=msg)
+            error_dialog.Show()
+            return
+
         contrast = self.rbox_contrast.GetStringSelection()
         base_name = os.path.basename(fname_input)
         fname, fext = base_name.split(os.extsep, 1)
@@ -434,7 +447,14 @@ class TabPanelSCSeg(SCTPanel):
     def on_button_run(self, event):
 
         # Build and run SCT command
-        fname_input = self.hbox_filein.textctrl.GetValue()
+        fname_input = self.hbox_filein.get_file_name()
+        if not fname_input:
+            msg = "No input file selected! Select a file from the overlay list and then press Input file."
+            self.log_to_window(msg, level="ERROR")
+            error_dialog = ErrorDialog(frame, msg=msg)
+            error_dialog.Show()
+            return
+
         contrast = self.rbox_contrast.GetStringSelection()
         base_name = os.path.basename(fname_input)
         fname, fext = base_name.split(os.extsep, 1)
@@ -491,7 +511,14 @@ class TabPanelGMSeg(SCTPanel):
     def on_button_run(self, event):
 
         # Build and run SCT command
-        fname_input = self.hbox_filein.textctrl.GetValue()
+        fname_input = self.hbox_filein.get_file_name()
+        if not fname_input:
+            msg = "No input file selected! Select a file from the overlay list and then press Input file."
+            self.log_to_window(msg, level="ERROR")
+            error_dialog = ErrorDialog(frame, msg=msg)
+            error_dialog.Show()
+            return
+
         base_name = os.path.basename(fname_input)
         fname, fext = base_name.split(os.extsep, 1)
         fname_out = "{}_gmseg.{}".format(fname, fext)
@@ -560,6 +587,23 @@ class TabPanelVertLB(SCTPanel):
         # Build and run SCT command
         fname_im = self.hbox_im.textctrl.GetValue()
         fname_seg = self.hbox_seg.textctrl.GetValue()
+
+        fname_im = self.hbox_im.get_file_name()
+        if not fname_im:
+            msg = "No input image selected! Select an image from the overlay list and then press Input image."
+            self.log_to_window(msg, level="ERROR")
+            error_dialog = ErrorDialog(frame, msg=msg)
+            error_dialog.Show()
+            return
+
+        fname_seg = self.hbox_seg.get_file_name()
+        if not fname_seg:
+            msg = "No input segmentation selected! Select a segmentation file from the overlay list and then press Input segmentation."
+            self.log_to_window(msg, level="ERROR")
+            error_dialog = ErrorDialog(frame, msg=msg)
+            error_dialog.Show()
+            return
+
         contrast = self.rbox_contrast.GetStringSelection()
 
         base_name = os.path.basename(fname_seg)
@@ -635,6 +679,34 @@ class TabPanelRegisterToTemplate(SCTPanel):
         fname_im = self.hbox_im.textctrl.GetValue()
         fname_seg = self.hbox_seg.textctrl.GetValue()
         fname_label = self.hbox_label.textctrl.GetValue()
+
+        fname_im = self.hbox_im.textctrl.GetValue()
+        fname_seg = self.hbox_seg.textctrl.GetValue()
+
+        fname_im = self.hbox_im.get_file_name()
+        if not fname_im:
+            msg = "No input image selected! Select an image from the overlay list and then press Input image."
+            self.log_to_window(msg, level="ERROR")
+            error_dialog = ErrorDialog(frame, msg=msg)
+            error_dialog.Show()
+            return
+
+        fname_seg = self.hbox_seg.get_file_name()
+        if not fname_seg:
+            msg = "No input segmentation selected! Select a segmentation file from the overlay list and then press Input segmentation."
+            self.log_to_window(msg, level="ERROR")
+            error_dialog = ErrorDialog(frame, msg=msg)
+            error_dialog.Show()
+            return
+
+        fname_label = self.hbox_label.get_file_name()
+        if not fname_label:
+            msg = "No input labels selected! Select input labels from the overlay list and then press Input labels."
+            self.log_to_window(msg, level="ERROR")
+            error_dialog = ErrorDialog(frame, msg=msg)
+            error_dialog.Show()
+            return
+
         contrast = self.rbox_contrast.GetStringSelection()
         cmd_line = \
             "sct_register_to_template -i {} -s {} -ldisc {} -c {}".format(fname_im, fname_seg, fname_label, contrast)
