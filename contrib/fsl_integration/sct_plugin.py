@@ -41,7 +41,7 @@ class ErrorDialog(wx.Dialog):
     def __init__(self, parent, msg=None):
         wx.Dialog.__init__(self, parent, title="An Error Occurred")
 
-        self.SetSize((600, 250))
+        self.SetSize((600, 275))
 
         if msg is None:
             msg = "An error has occurred while running SCT. Please go to the Terminal, copy all the content and paste it as a new issue in SCT's forum: \
@@ -49,21 +49,21 @@ class ErrorDialog(wx.Dialog):
 
         vbox = wx.BoxSizer(wx.VERTICAL)
 
-        error_msg_box = wx.TextCtrl(self, wx.ID_ANY, size=(500,140),
+        error_msg_box = wx.TextCtrl(self, wx.ID_ANY, size=(500,150),
                           style = wx.TE_MULTILINE|wx.TE_READONLY|wx.HSCROLL)
 
         error_msg_box.AppendText(msg)
-        vbox.Add(error_msg_box, 0, wx.ALL|wx.EXPAND, 10)
+        vbox.Add(error_msg_box, 0, wx.TOP|wx.EXPAND, 20)
 
         btns = self.CreateSeparatedButtonSizer(wx.OK)
-        vbox.Add(btns, 0, wx.ALIGN_RIGHT | wx.ALL, 5)
+        vbox.Add(btns, 0, wx.CENTER|wx.ALL, 10)
 
         hbox = wx.BoxSizer(wx.HORIZONTAL)
 
         save_ico = wx.ArtProvider.GetBitmap(wx.ART_ERROR, wx.ART_TOOLBAR, (50, 50))
         img_info = wx.StaticBitmap(self, -1, save_ico, wx.DefaultPosition, (save_ico.GetWidth(), save_ico.GetHeight()))
 
-        hbox.Add(img_info, 0, wx.ALL, 10)
+        hbox.Add(img_info, 0, wx.ALL, 20)
         hbox.Add(vbox, 0, wx.ALL, 0)
 
         self.SetSizer(hbox)
@@ -82,10 +82,10 @@ class ProgressDialog(wx.Dialog):
 
         vbox = wx.BoxSizer(wx.VERTICAL)
         lbldesc = wx.StaticText(self, id=wx.ID_ANY, label="Processing, please wait...")
-        vbox.Add(lbldesc, 0, wx.ALIGN_LEFT | wx.ALL, 10)
+        vbox.Add(lbldesc, 0, wx.ALIGN_CENTER|wx.ALL, 10)
 
         stop_button = wx.Button(self, wx.ID_CANCEL, 'Stop')
-        vbox.Add(stop_button, 0, wx.ALIGN_LEFT | wx.ALL, 5)
+        vbox.Add(stop_button, 0, wx.CENTER|wx.ALL, 10)
         hbox = wx.BoxSizer(wx.HORIZONTAL)
 
         # TODO: use a nicer image, showing two gears (similar to ID_EXECUTE)
