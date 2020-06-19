@@ -69,6 +69,7 @@ def get_parser():
              "model, example: -model t2_sc), or a path to the directory that contains a model, example: "
              "-model my_models/model. To list official models, run: sct_deepseg -list-models."
              "To build your own model, follow instructions at: https://github.com/neuropoly/ivado-medical-imaging",
+        nargs='+',
         metavar=sct.utils.Metavar.str)
     seg.add_argument(
         "-list-models",
@@ -193,13 +194,10 @@ def main():
 
     # Get pipeline model names
     if 'task' in args:
-        if 'model' in args:
-            # Replace the first model of task by the -model argument
-            name_models = [args['model']] + sct.deepseg.models.TASKS[args['install_task']]['models'].pop(0)
-        else:
-            name_models = sct.deepseg.models.TASKS[args['install_task']]['models']
-    else:
-        name_models = [args['model']]
+        name_models = sct.deepseg.models.TASKS[args['task']]['models']
+
+    if 'model' in args:
+        name_models = args['model']
 
     # Run pipeline by iterating through the models
     fname_prior = None
