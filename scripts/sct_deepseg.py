@@ -202,7 +202,7 @@ def main():
         name_models = [args['model']]
 
     # Run pipeline by iterating through the models
-    fname_tmp = None
+    fname_prior = None
     for name_model in name_models:
         # Check if this is an official model
         if name_model in list(sct.deepseg.models.MODELS.keys()):
@@ -218,9 +218,9 @@ def main():
                 parser.error("The input model is invalid: {}".format(path_model))
 
         # Call segment_nifti
-        fname_seg = sct.deepseg.core.segment_nifti(args['i'], path_model, fname_tmp, args)
+        fname_seg = sct.deepseg.core.segment_nifti(args['i'], path_model, fname_prior, args)
         # Use the result of the current model as additional input of the next model
-        fname_tmp = fname_seg
+        fname_prior = fname_seg
 
     display_viewer_syntax([args['i'], fname_seg], colormaps=['gray', 'red'], opacities=['', '0.7'])
 

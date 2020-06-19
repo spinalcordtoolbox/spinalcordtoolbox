@@ -85,16 +85,17 @@ def postprocess(nii_seg, options):
     return nii_seg
 
 
-def segment_nifti(fname_image, folder_model, param={}):
+def segment_nifti(fname_image, folder_model, fname_prior=None, param={}):
     """
     Segment a nifti file.
 
     :param fname_image: str: Filename of the image to segment.
     :param folder_model: str: Folder that encloses the deep learning model.
+    :param fname_prior: str: Filename of a previous segmentation that is used here as a prior.
     :param param: dict: Dictionary of user's parameter
     :return: fname_out: str: Output filename. If directory does not exist, it will be created.
     """
-    nii_seg = imed.utils.segment_volume(folder_model, fname_image)
+    nii_seg = imed.utils.segment_volume(folder_model, fname_image, fname_prior)
 
     # Postprocessing
     metadata = sct.deepseg.models.get_metadata(folder_model)
