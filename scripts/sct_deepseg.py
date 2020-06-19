@@ -46,6 +46,21 @@ def get_parser():
              "suffix '_seg' will be added and output extension will be .nii.gz.",
         metavar=sct.utils.Metavar.str)
 
+    seg = parser.add_argument_group('\nTASKS')
+    seg.add_argument(
+        "-task",
+        help="Task to perform. It could either be an official SCT task (in that case, simply enter the name of the "
+             "task, example: -task segment_t2star_sc). To list official tasks, run: sct_deepseg -list-tasks.",
+        metavar=sct.utils.Metavar.str)
+    seg.add_argument(
+        "-list-task",
+        action='store_true',
+        help="Display a list of tasks that can be achieved.")
+    seg.add_argument(
+        "-install-task",
+        help="Install models that are required to perform a task.",
+        choices=list(sct.deepseg.models.TASKS.keys()))
+
     seg = parser.add_argument_group('\nMODELS')
     seg.add_argument(
         "-model",
