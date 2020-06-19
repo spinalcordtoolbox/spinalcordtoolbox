@@ -33,8 +33,21 @@ MODELS = {
     't2_tumor':
         {'url': 'https://osf.io/uwe7k/download?version=1',
          'description': 'Cord tumor segmentation on T2-weighted contrast.',
+         'default': False},
+    'findcord_tumor':
+        {'url': None,
+         'description': 'Cord localisation on T2-weighted images with tumor.',
          'default': False}
     }
+
+# List of task. The convention for task names is: action_(animal)_(contrast)_region
+# Regions could be: sc, gm, lesion, tumor
+TASKS = {
+    'segment_t2star_sc': ['t2star_sc'],
+    'segment_mice_sc': ['mice_uqueensland_sc'],
+    'segment_mice_gm': ['mice_uqueensland_gm'],
+    'segment_t2w_tumor': ['findcord_tumor', 't2_tumor']
+}
 
 
 def folder(name_model):
