@@ -191,8 +191,20 @@ def main():
     if 'model' not in args and 'task' not in args:
         parser.error("You need to specify a model or a task.")
 
-    # Get model path
+    # Get pipeline model names
+    if 'task' in args:
+        if 'model' in args:
+            # Replace the first model of task by the -model argument
+            name_models = [args['model']] + sct.deepseg.models.TASKS[args['install_task']]['models'].pop(0)
+        else:
+            name_models = sct.deepseg.models.TASKS[args['install_task']]['models']
+    else:
+        name_models = [args['model']]
+
+
     if 'model' in args:
+        name_models = [args['model']] +
+
         # Check if this is an official model
         if args['model'] in list(sct.deepseg.models.MODELS.keys()):
             # If it is, check if it is installed
@@ -205,7 +217,8 @@ def main():
             path_model = os.path.abspath(args['model'])
             if not sct.deepseg.models.is_valid(path_model):
                 parser.error("The input model is invalid: {}".format(path_model))
-
+        # Add this path as first (and maybe sole) model in the path_models list
+        path_models.append(path_model)
 
     fname_seg = sct.deepseg.core.segment_nifti(args['i'], path_model, args)
 
