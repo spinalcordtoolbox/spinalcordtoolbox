@@ -56,6 +56,10 @@ def get_parser():
         "-list-tasks",
         action='store_true',
         help="Display a list of tasks that can be achieved.")
+    seg.add_argument(
+        "-install-task",
+        help="Install models that are required for specified task.",
+        choices=list(sct.deepseg.models.TASKS.keys()))
 
     seg = parser.add_argument_group('\nMODELS')
     seg.add_argument(
@@ -170,6 +174,11 @@ def main():
 
     if 'install_model' in args:
         sct.deepseg.models.install_model(args['install_model'])
+        exit(0)
+
+    if 'install_task' in args:
+        for name_model in args['install_task']['models']:
+            sct.deepseg.models.install_model(name_model)
         exit(0)
 
     # Deal with input/output
