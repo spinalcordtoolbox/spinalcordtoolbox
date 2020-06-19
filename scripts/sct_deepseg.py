@@ -201,26 +201,23 @@ def main():
     else:
         name_models = [args['model']]
 
-
-    if 'model' in args:
-        name_models = [args['model']] +
-
+    # Run pipeline by iterating through the models
+    for name_model in name_models:
         # Check if this is an official model
-        if args['model'] in list(sct.deepseg.models.MODELS.keys()):
+        if name_model in list(sct.deepseg.models.MODELS.keys()):
             # If it is, check if it is installed
-            path_model = spinalcordtoolbox.deepseg.models.folder(args['model'])
+            path_model = spinalcordtoolbox.deepseg.models.folder(name_model)
             if not spinalcordtoolbox.deepseg.models.is_valid(path_model):
-                printv("Model {} is not installed. Installing it now...".format(args['model']))
-                spinalcordtoolbox.deepseg.models.install_model(args['model'])
+                printv("Model {} is not installed. Installing it now...".format(name_model))
+                spinalcordtoolbox.deepseg.models.install_model(name_model)
         # If it is not, check if this is a path to a valid model
         else:
-            path_model = os.path.abspath(args['model'])
+            path_model = os.path.abspath(name_model)
             if not sct.deepseg.models.is_valid(path_model):
                 parser.error("The input model is invalid: {}".format(path_model))
-        # Add this path as first (and maybe sole) model in the path_models list
-        path_models.append(path_model)
 
-    fname_seg = sct.deepseg.core.segment_nifti(args['i'], path_model, args)
+        # Call segment_nifti
+        fname_seg = sct.deepseg.core.segment_nifti(args['i'], path_model, args)
 
     display_viewer_syntax([args['i'], fname_seg], colormaps=['gray', 'red'], opacities=['', '0.7'])
 
