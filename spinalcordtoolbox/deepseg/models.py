@@ -100,6 +100,14 @@ def list_models():
     return {name: value for name, value in MODELS.items()}
 
 
+def list_tasks():
+    """
+    Display available tasks with description.
+    :return: dict: Tasks that are installed
+    """
+    return {name: value for name, value in TASKS.items()}
+
+
 def get_metadata(folder_model):
     """
     Get metadata from json file located in folder_model
