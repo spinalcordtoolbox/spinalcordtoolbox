@@ -85,7 +85,7 @@ def postprocess(nii_seg, options):
     return nii_seg
 
 
-def segment_nifti(fname_image, folder_model, fname_prior=None, param={}):
+def segment_nifti(fname_image, folder_model, fname_prior=None, param=None):
     """
     Segment a nifti file.
 
