@@ -20,33 +20,42 @@ logger = logging.getLogger(__name__)
 MODELS = {
     't2star_sc':
         {'url': 'https://osf.io/v9hs8/download?version=4',
-         'description': 'Cord segmentation on T2*-weighted contrast.',
+         'description': 'Cord segmentation model on T2*-weighted contrast.',
          'default': True},
     'mice_uqueensland_sc':
         {'url': 'https://osf.io/nu3ma/download?version=5',
-         'description': 'Cord segmentation on mouse MRI. Data from University of Queensland.',
+         'description': 'Cord segmentation model on mouse MRI. Data from University of Queensland.',
          'default': False},
     'mice_uqueensland_gm':
         {'url': 'https://osf.io/mfxwg/download?version=5',
-         'description': 'Gray matter segmentation on mouse MRI. Data from University of Queensland.',
+         'description': 'Gray matter segmentation model on mouse MRI. Data from University of Queensland.',
          'default': False},
     't2_tumor':
         {'url': 'https://osf.io/uwe7k/download?version=1',
-         'description': 'Cord tumor segmentation on T2-weighted contrast.',
+         'description': 'Cord tumor segmentation model, trained on T2-weighted contrast.',
          'default': False},
     'findcord_tumor':
         {'url': None,
-         'description': 'Cord localisation on T2-weighted images with tumor.',
+         'description': 'Cord localisation model, trained on T2-weighted images with tumor.',
          'default': False}
     }
 
 # List of task. The convention for task names is: action_(animal)_(contrast)_region
 # Regions could be: sc, gm, lesion, tumor
 TASKS = {
-    'segment_t2star_sc': ['t2star_sc'],
-    'segment_mice_sc': ['mice_uqueensland_sc'],
-    'segment_mice_gm': ['mice_uqueensland_gm'],
-    'segment_t2w_tumor': ['findcord_tumor', 't2_tumor']
+    'segment_t2star_sc':
+        {'description': 'Cord segmentation on T2*-weighted contrast.',
+         'models': ['t2star_sc']},
+    'segment_mice_sc':
+        {'description': 'Cord segmentation on mouse MRI. Data from University of Queensland.',
+         'models': ['mice_uqueensland_sc']},
+    'segment_mice_gm':
+        {'description': 'Gray matter segmentation on mouse MRI. Data from University of Queensland.',
+         'models': ['mice_uqueensland_gm']},
+    'segment_t2w_tumor':
+        {'description': 'Cord tumor segmentation model, trained on T2-weighted contrast. Two-steps: cord localisation'
+                        ' then tumor segmentation.',
+         'models': ['findcord_tumor', 't2_tumor']}
 }
 
 
