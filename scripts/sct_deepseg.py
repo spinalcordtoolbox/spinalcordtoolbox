@@ -53,13 +53,9 @@ def get_parser():
              "task, example: -task segment_t2star_sc). To list official tasks, run: sct_deepseg -list-tasks.",
         metavar=sct.utils.Metavar.str)
     seg.add_argument(
-        "-list-task",
+        "-list-tasks",
         action='store_true',
         help="Display a list of tasks that can be achieved.")
-    seg.add_argument(
-        "-install-task",
-        help="Install models that are required to perform a task.",
-        choices=list(sct.deepseg.models.TASKS.keys()))
 
     seg = parser.add_argument_group('\nMODELS')
     seg.add_argument(
@@ -138,6 +134,33 @@ def main():
                 colored.stylize(value['description'],
                                 colored.fg(color[sct.deepseg.models.is_valid(path_model)]))
                 ))
+        print(
+            '\nLegend: {} | {} | default: {}\n'.format(
+                colored.stylize("installed", colored.fg(color[True])),
+                colored.stylize("not installed", colored.fg(color[False])),
+                default[True]))
+        exit(0)
+
+    # Deal with task
+    if args['list_tasks']:
+        tasks = sct.deepseg.models.list_tasks()
+        # Display beautiful output
+        color = {True: 'green', False: 'red'}
+        default = {True: '[*]', False: ''}
+        print("{:<20s}{:<50s}MODELS".format("TASK", "DESCRIPTION"))
+        print("-" * 80)
+        for name_task, value in tasks.items():
+            path_models = [sct.deepseg.models.folder(name_model) for name_model in value['models']]
+            are_models_valid = [sct.deepseg.models.is_valid(path_model) for path_model in path_models]
+            task_status = colored.stylize(name_task.ljust(20),
+                                          colored.fg(color[all(are_models_valid)]))
+            description_status = colored.stylize(value['description'].ljust(50),
+                                                 colored.fg(color[all(are_models_valid)]))
+            models_status = ', '.join([colored.stylize(model_name,
+                                                       colored.fg(color[is_valid]))
+                                       for model_name, is_valid in zip(value['models'], are_models_valid)])
+            print("{}{}{}".format(task_status, description_status, models_status))
+
         print(
             '\nLegend: {} | {} | default: {}\n'.format(
                 colored.stylize("installed", colored.fg(color[True])),

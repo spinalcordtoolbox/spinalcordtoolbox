@@ -47,14 +47,13 @@ TASKS = {
         {'description': 'Cord segmentation on T2*-weighted contrast.',
          'models': ['t2star_sc']},
     'segment_mice_sc':
-        {'description': 'Cord segmentation on mouse MRI. Data from University of Queensland.',
+        {'description': 'Cord segmentation on mouse MRI.',
          'models': ['mice_uqueensland_sc']},
     'segment_mice_gm':
-        {'description': 'Gray matter segmentation on mouse MRI. Data from University of Queensland.',
+        {'description': 'Gray matter segmentation on mouse MRI.',
          'models': ['mice_uqueensland_gm']},
     'segment_t2w_tumor':
-        {'description': 'Cord tumor segmentation model, trained on T2-weighted contrast. Two-steps: cord localisation'
-                        ' then tumor segmentation.',
+        {'description': 'Cord tumor segmentation on T2-weighted contrast.',
          'models': ['findcord_tumor', 't2_tumor']}
 }
 
