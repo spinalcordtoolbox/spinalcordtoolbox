@@ -177,7 +177,7 @@ def main():
         exit(0)
 
     if 'install_task' in args:
-        for name_model in args['install_task']['models']:
+        for name_model in sct.deepseg.models.TASKS[args['install_task']]['models']:
             sct.deepseg.models.install_model(name_model)
         exit(0)
 
@@ -186,6 +186,10 @@ def main():
         parser.error("The following arguments is required: -i")
     if not os.path.isfile(args['i']):
         parser.error("This file does not exist: {}".format(args['i']))
+
+    # Check if at least a model or task has been specified
+    if 'model' not in args and 'task' not in args:
+        parser.error("You need to specify a model or a task.")
 
     # Get model path
     if 'model' in args:
@@ -201,8 +205,7 @@ def main():
             path_model = os.path.abspath(args['model'])
             if not sct.deepseg.models.is_valid(path_model):
                 parser.error("The input model is invalid: {}".format(path_model))
-    else:
-        parser.error("You need to specify a model.")
+
 
     fname_seg = sct.deepseg.core.segment_nifti(args['i'], path_model, args)
 
