@@ -49,7 +49,8 @@ def get_parser():
     seg = parser.add_argument_group('\nTASKS')
     seg.add_argument(
         "-task",
-        help="Task to perform. It could either be a pre-installed task, task that could be installed, or a custom task. To list available tasks, run: sct_deepseg -list-tasks",
+        help="Task to perform. It could either be a pre-installed task, task that could be installed, or a custom task."
+             " To list available tasks, run: sct_deepseg -list-tasks",
         metavar=sct.utils.Metavar.str)
     seg.add_argument(
         "-list-tasks",
