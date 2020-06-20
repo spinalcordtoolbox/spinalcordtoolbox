@@ -14,21 +14,19 @@ ivadomed package.
 
 from __future__ import absolute_import
 
-import sys
-import os
 import argparse
-import colored
+import os
+import sys
 
+import colored
 import spinalcordtoolbox as sct
 import spinalcordtoolbox.deepseg.core
 import spinalcordtoolbox.deepseg.models
 import spinalcordtoolbox.utils
-
 from sct_utils import init_sct, printv, display_viewer_syntax
 
 
 def get_parser():
-
     parser = argparse.ArgumentParser(
         description="Segment an anatomical structure or pathologies according to the specified deep learning model.",
         add_help=None,
@@ -138,7 +136,7 @@ def main():
                                 colored.fg(color[sct.deepseg.models.is_valid(path_model)])),
                 colored.stylize(value['description'],
                                 colored.fg(color[sct.deepseg.models.is_valid(path_model)]))
-                ))
+            ))
         print(
             '\nLegend: {} | {} | default: {}\n'.format(
                 colored.stylize("installed", colored.fg(color[True])),
