@@ -5,17 +5,14 @@ Interface API for the deepseg module, which performs segmentation using deep lea
 
 # TODO: deal with multi-class segmentation in segment_nifti()
 
-import os
 import logging
-import numpy as np
-import nibabel as nib
-import ivadomed as imed
-import ivadomed.utils
-import ivadomed.postprocessing
+import os
 
+import ivadomed as imed
+import nibabel as nib
+import numpy as np
 import spinalcordtoolbox as sct
 import spinalcordtoolbox.deepseg.models
-
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +21,7 @@ DEFAULTS = {
     'thr': 0.9,
     'largest': 1,
     'fill_holes': 1,
-    }
+}
 
 
 def postprocess(nii_seg, options):
@@ -34,6 +31,7 @@ def postprocess(nii_seg, options):
     :param options: dict: Parameters for postprocessing, including keys such as: threshold, keep_largest_object.
     :return:
     """
+
     def threshold(nii_seg, thr):
         """Threshold the prediction. For no threshold, set 'thr' to 0."""
         logger.info("Threshold: {}".format(thr))
@@ -75,7 +73,7 @@ def postprocess(nii_seg, options):
             logger.warning("Algorithm 'fill holes' can only be run on binary segmentation. Skipping.")
         return nii_seg
 
-    logger.info("\nProcessing segmentation\n" + "-"*23)
+    logger.info("\nProcessing segmentation\n" + "-" * 23)
     if options['thr']:
         nii_seg = threshold(nii_seg, options['thr'])
     if options['largest']:
