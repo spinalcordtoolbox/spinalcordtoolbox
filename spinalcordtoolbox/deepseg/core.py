@@ -95,6 +95,9 @@ def segment_nifti(fname_image, folder_model, fname_prior=None, param=None):
     :param param: dict: Dictionary of user's parameter
     :return: fname_out: str: Output filename. If directory does not exist, it will be created.
     """
+    if param is None:
+        param = {}
+
     nii_seg = imed.utils.segment_volume(folder_model, fname_image, fname_prior)
 
     # Postprocessing
