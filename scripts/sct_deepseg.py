@@ -139,7 +139,7 @@ def display_list_models():
     exit(0)
 
 
-def display_list_taks():
+def display_list_tasks():
     tasks = sct.deepseg.models.list_tasks()
     # Display beautiful output
     color = {True: 'green', False: 'red'}
@@ -177,7 +177,7 @@ def main():
 
     # Deal with task
     if args['list_tasks']:
-        display_list_taks()
+        display_list_tasks()
 
     if 'install_model' in args:
         sct.deepseg.models.install_model(args['install_model'])
