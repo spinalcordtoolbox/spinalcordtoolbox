@@ -9,6 +9,8 @@ import logging
 import os
 
 import ivadomed as imed
+import ivadomed.utils
+import ivadomed.postprocessing
 import nibabel as nib
 import numpy as np
 import spinalcordtoolbox as sct
