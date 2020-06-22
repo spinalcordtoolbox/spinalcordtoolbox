@@ -96,35 +96,20 @@ At anytime, you can update your local SCT installation to the latest version on 
 git pull
 ~~~
 
+
+### Installation with Windows Subsystem for Linux (Windows 10).
+
+Windows subsystem for Linux (WSL) is available on Windows 10 and it makes it possible to run native Linux programs, such as SCT. 
+
+[Tutorial to install SCT on WSL](https://github.com/neuropoly/spinalcordtoolbox/wiki/SCT-on-Windows-10:-Installation-instruction-for-SCT-on-Windows-subsytem-for-linux)
+
+
 ### Installation with Docker
 
-In order to install the SCT in Windows or other unsupported OS, we provide a solution via Docker. This solution will allow you to use all the resources of SCT including the programs with graphical interface. In addition to the SCT, the Docker image contains the FSLeyes program for the visualization of the NIFTI volumes that you process.
+If none of the above solution work, SCT can be installed via Docker. 
 
-[Tutorial how to install SCT via Docker](https://github.com/neuropoly/sct_docker#spinal-cord-toolbox-docker)
+[Tutorial to install SCT via Docker](https://github.com/neuropoly/spinalcordtoolbox/wiki/testing#run-docker-image)
 
-### Installation in Virtual Machine (VM)
-
-If for some reasons installation with Docker does not work for you, you can always install and run SCT within a VM. We recommend you install the [neurodebian](http://neuro.debian.net/vm.html) VM, which contains useful neuroimaging software such as FSLeyes. 
-
-Important: After importing the NeuroDebian ova file into VirtualBox, make sure to select the following options:
-- System
-  - Base Memory: 2GB or more
-- Display
-  - Video Memory: 128GB or more
-  - Graphics Controller: VBoxVGA
-  - No acceleration enabled
-
-Then, you need to install driver updates for the video card. Start the VM, open a Terminal and run:
-~~~
-cd /home/brain
-wget https://download.virtualbox.org/virtualbox/6.0.4/VBoxGuestAdditions_6.0.4.iso
-mkdir disk_VM
-sudo mount VBoxGuestAdditions_6.0.4.iso disk_VM/
-sudo disk_VM/VBoxLinuxAdditions.run
-sudo reboot
-~~~
-
-After the VM has restarted, you can install SCT!
 
 
 ## Getting started

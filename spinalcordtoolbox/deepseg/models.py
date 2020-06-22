@@ -30,6 +30,10 @@ MODELS = {
         {'url': 'https://osf.io/mfxwg/download?version=5',
          'description': 'Gray matter segmentation on mouse MRI. Data from University of Queensland.',
          'default': False},
+    't2_tumor':
+        {'url': 'https://osf.io/uwe7k/download?version=1',
+         'description': 'Cord tumor segmentation on T2-weighted contrast.',
+         'default': False}
     }
 
 
@@ -69,7 +73,8 @@ def is_valid(path_model):
     :param path_model: str: Absolute path to folder that encloses the model files.
     """
     name_model = path_model.rstrip(os.sep).split(os.sep)[-1]
-    return os.path.exists(os.path.join(path_model, name_model + '.pt')) and \
+    return (os.path.exists(os.path.join(path_model, name_model + '.pt')) or
+           os.path.exists(os.path.join(path_model, name_model + '.onnx'))) and \
            os.path.exists(os.path.join(path_model, name_model + '.json'))
 
 
