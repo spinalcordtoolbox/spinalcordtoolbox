@@ -19,15 +19,15 @@ logger = logging.getLogger(__name__)
 # TODO: add mirror
 MODELS = {
     't2star_sc':
-        {'url': 'https://osf.io/v9hs8/download?version=4',
+        {'url': 'https://osf.io/v9hs8/download?version=5',
          'description': 'Cord segmentation model on T2*-weighted contrast.',
          'default': True},
     'mice_uqueensland_sc':
-        {'url': 'https://osf.io/nu3ma/download?version=5',
+        {'url': 'https://osf.io/nu3ma/download?version=6',
          'description': 'Cord segmentation model on mouse MRI. Data from University of Queensland.',
          'default': False},
     'mice_uqueensland_gm':
-        {'url': 'https://osf.io/mfxwg/download?version=5',
+        {'url': 'https://osf.io/mfxwg/download?version=6',
          'description': 'Gray matter segmentation model on mouse MRI. Data from University of Queensland.',
          'default': False},
     't2_tumor':
