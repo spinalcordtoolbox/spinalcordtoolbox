@@ -285,7 +285,7 @@ def tmp_create(basename=None):
     return tmpdir
 
 
-def send_email(addr_to, addr_from, passwd, subject, message='', filename=None, html=False, smtp_host=None, smtp_port=None, login=None):
+def send_email(addr_to, addr_from, subject, message='', passwd=None, filename=None, html=False, smtp_host=None, smtp_port=None, login=None):
     if smtp_host is None:
         smtp_host = os.environ.get("SCT_SMTP_SERVER", "smtp.gmail.com")
     if smtp_port is None:
@@ -334,7 +334,8 @@ def send_email(addr_to, addr_from, passwd, subject, message='', filename=None, h
     # send email
     server = smtplib.SMTP(smtp_host, smtp_port)
     server.starttls()
-    server.login(login, passwd)
+    if passwd is not None:
+        server.login(login, passwd)
     text = msg.as_string()
     server.sendmail(addr_from, addr_to, text)
     server.quit()

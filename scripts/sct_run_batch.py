@@ -26,7 +26,8 @@ import json
 import yaml
 import warnings
 
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, Tee
+from getpass import getpass
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, Tee, send_email
 from spinalcordtoolbox import __version__
 import sct_utils as sct
 
@@ -98,6 +99,14 @@ def get_parser():
     parser.add_argument('-task-args', default='',
                         help='A quoted string with extra flags and arguments to pass to the task script. '
                         'For example \'sct_run_batch -path-data data/ -task-args "-foo bar -baz /qux" process_data.sh \'')
+    parser.add_argument('-email-to',
+                        help='Optional email address where sct_run_batch can send an alert on completion of the '
+                        'batch processing.')
+    parser.add_argument('-email-from',
+                        help='Optional alternative email to use to send the email. Defaults to the same address as '
+                             '`-email-to`')
+    parser.add_argument('-email-host', default='smtp.gmail.com:587',
+                        help='Optional smtp server and port to use to send the email. Defaults to gmail\'s server')
     parser.add_argument('task',
                         help='Shell script used to process the data.')
 
@@ -182,6 +191,37 @@ def main(argv):
         # Reparse the arguments
         args = parser.parse_args(argv)
 
+    # Set up email notifications if desired
+    do_email = args.email_to is not None
+    if do_email:
+        email_to = args.email_to
+        if args.email_from is not None:
+            email_from = args.email_from
+        else:
+            email_from = args.email_to
+
+        smtp_host, smtp_port = args.email_host.split(":")
+        smtp_port = int(smtp_port)
+        email_pass = getpass('Please input your email password:\n')
+
+        def send_notification(subject, message):
+            send_email(email_to, email_from,
+                       subject=subject,
+                       message=message,
+                       passwd=email_pass,
+                       smtp_host=smtp_host,
+                       smtp_port=smtp_port)
+
+        while True:
+            send_test = input('Would you like to send a test email to validate your settings? [Y/n]:\n')
+            if send_test.lower() in ['y', 'n']:
+                break
+            else:
+                print('Please input y or n')
+
+        if send_test.lower() == 'y':
+            send_notification('sct_run_batch: test notification', 'Looks good')
+
     # Set up output directories and create them if they don't already exist
     path_output = os.path.abspath(os.path.expanduser(args.path_output))
     path_results = os.path.join(path_output, 'results')
@@ -247,23 +287,48 @@ def main(argv):
 
     # Run the jobs, recording start and end times
     start = time.strftime('%H:%M', time.localtime(time.time()))
-    with multiprocessing.Pool(jobs) as p:
-        run_single_dir = functools.partial(run_single,
-                                           task=task,
-                                           task_args=args.task_args,
-                                           path_segmanual=args.path_segmanual,
-                                           path_data=path_data,
-                                           path_results=path_results,
-                                           path_log=path_log,
-                                           path_qc=path_qc,
-                                           itk_threads=args.itk_threads)
-        p.map(run_single_dir, subject_dirs)
+
+    # Trap errors to send an email if a task fails.
+    try:
+        with multiprocessing.Pool(jobs) as p:
+            run_single_dir = functools.partial(run_single,
+                                               task=task,
+                                               task_args=args.task_args,
+                                               path_segmanual=path_segmanual,
+                                               path_data=path_data,
+                                               path_results=path_results,
+                                               path_log=path_log,
+                                               path_qc=path_qc,
+                                               itk_threads=args.itk_threads)
+            p.map(run_single_dir, subject_dirs)
+            end = time.strftime('%H:%M', time.localtime(time.time()))
+    except Exception as e:
+        if do_email is not None:
+            message = ('Oh no there has been the following error in your pipeline:\n\n'
+                       '{}'.format(e))
+            try:
+                # I consider the multiprocessing error more significant than a potential email error, this
+                # ensures that the multiprocessing error is signalled.
+                send_notification('sct_run_batch errored', message)
+            except Exception:
+                raise e
+
+            raise e
+        else:
+            raise e
+
     end = time.strftime('%H:%M', time.localtime(time.time()))
 
-    print('Finished :-)\n'
-          'Started: {}\n'
-          'Ended: {}\n'
-          ''.format(start, end))
+    completed_message = ('Finished :-)\n'
+                         'Started: {}\n'
+                         'Ended: {}\n'
+                         ''.format(start, end))
+
+    print(completed_message)
+
+    if do_email:
+        send_notification('sct_run_batch: Run completed',
+                          'Hooray, your batch completed successfully.\n' + completed_message)
 
     open_cmd = 'open' if sys.platform == 'darwin' else 'xdg-open'
 
