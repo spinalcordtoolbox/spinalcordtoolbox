@@ -20,7 +20,7 @@ from spinalcordtoolbox.testing.create_test_data import dummy_centerline
 from sct_utils import init_sct
 
 init_sct(log_level=2)  # Set logger in debug mode
-VERBOSE = 0  # Set to 2 to save images, 0 otherwise
+VERBOSE = 2  # Set to 2 to save images, 0 otherwise
 
 
 # Generate a list of fake centerlines: (dummy_segmentation(params), dict of expected results)
@@ -71,11 +71,6 @@ im_centerlines = [
     #  {'median': 0, 'rmse': 1, 'laplacian': 0.5, 'norm': 11.5},
     #  {})
 ]
-
-# Specific centerline for nurbs because test does not pas with the previous centerlines
-im_centerlines_nurbs = [
-    (dummy_centerline(size_arr=(9, 9, 9), subsampling=3), {'median': 0, 'laplacian': 2.6})
-    ]
 
 # noinspection 801,PyShadowingNames
 @pytest.mark.parametrize('img_ctl,expected', im_ctl_find_and_sort_coord)
