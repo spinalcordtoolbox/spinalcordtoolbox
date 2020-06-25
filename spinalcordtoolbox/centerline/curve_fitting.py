@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 def polyfit_1d(x, y, xref, deg=5):
     """
-    1d Polynomial fitting using np.polyfit
+    1d Polynomial fitting using numpy's Polynomial.fit
     :param x:
     :param y:
     :param deg:
@@ -22,8 +22,7 @@ def polyfit_1d(x, y, xref, deg=5):
     :return: p(xref): Fitted polynomial for each xref point
     :return: p.deriv(xref): Derivatives for each xref point
     """
-    from numpy import poly1d, polyfit
-    p = poly1d(polyfit(x, y, deg=deg))
+    p = np.polynomial.Polynomial.fit(x, y, deg)
     return p(xref), p.deriv(1)(xref)
 
 
@@ -69,8 +68,7 @@ def linear(x, y, xref, smooth=0, pz=1):
     :param pz: float: dimension of pixel along superior-inferior direction (z, assuming RPI orientation)
     :return:
     """
-    from numpy import interp
-    y_fit = interp(xref, x, y, left=None, right=None, period=None)
+    y_fit = np.interp(xref, x, y, left=None, right=None, period=None)
     window_len = round_up_to_odd(smooth / float(pz))
     logger.debug('Smoothing window: {}'.format(window_len))
     y_fit = smooth1d(y_fit, window_len)
