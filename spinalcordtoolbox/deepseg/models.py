@@ -41,19 +41,19 @@ MODELS = {
          'default': False}
     }
 
-# List of task. The convention for task names is: action_(animal)_(contrast)_region
+# List of task. The convention for task names is: action_(animal)_region_(contrast)
 # Regions could be: sc, gm, lesion, tumor
 TASKS = {
-    'segment_t2star_sc':
+    'seg_sc_t2star':
         {'description': 'Cord segmentation on T2*-weighted contrast.',
          'models': ['t2star_sc']},
-    'segment_mice_sc':
+    'seg_mice_sc':
         {'description': 'Cord segmentation on mouse MRI.',
          'models': ['mice_uqueensland_sc']},
-    'segment_mice_gm':
+    'seg_mice_gm':
         {'description': 'Gray matter segmentation on mouse MRI.',
          'models': ['mice_uqueensland_gm']},
-    'segment_t2w_tumor':
+    'seg_tumor_t2w':
         {'description': 'Cord tumor segmentation on T2-weighted contrast.',
          'models': ['findcord_tumor', 't2_tumor']}
 }
