@@ -235,7 +235,7 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1):
         plt.xlabel("Z [mm]")
         plt.legend(['X-deriv', 'Y-deriv'])
 
-        plt.savefig('fig_centerline_' + datetime.now().strftime("%y%m%d%H%M%S%f") + '_' + param.algo_fitting + '.png')
+        plt.savefig('fig_centerline_' + datetime.now().strftime("%y%m%d-%H%M%S%f") + '_' + param.algo_fitting + '.png')
         plt.close()
 
     return im_centerline, \
