@@ -214,12 +214,12 @@ def main(argv):
 
         while True:
             send_test = input('Would you like to send a test email to validate your settings? [Y/n]:\n')
-            if send_test.lower() in ['y', 'n']:
+            if send_test.lower() in ['', 'y', 'n']:
                 break
             else:
                 print('Please input y or n')
 
-        if send_test.lower() == 'y':
+        if send_test.lower() in ['', 'y']:
             send_notification('sct_run_batch: test notification', 'Looks good')
 
     # Set up output directories and create them if they don't already exist
