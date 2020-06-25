@@ -227,6 +227,7 @@ def main(argv):
     path_results = os.path.join(path_output, 'results')
     path_log = os.path.join(path_output, 'log')
     path_qc = os.path.join(path_output, 'qc')
+    path_segmanual = os.path.abspath(os.path.expanduser(args.path_segmanual))
     task = os.path.abspath(os.path.expanduser(args.task))
 
     for pth in [path_output, path_results, path_log, path_qc]:
