@@ -255,6 +255,10 @@ def main(argv):
         sys.stdout = orig_stdout
         sys.stderr = orig_stderr
 
+    # Log the current arguments (in yaml because it's cleaner)
+    print('sct_run_batch arguments were:')
+    print(yaml.dump(vars(args)))
+
     # Find subjects and process inclusion/exclusions
     path_data = os.path.abspath(os.path.expanduser(args.path_data))
     subject_dirs = [f for f in os.listdir(path_data) if f.startswith(args.subject_prefix)]
