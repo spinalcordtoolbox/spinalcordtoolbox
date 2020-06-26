@@ -53,7 +53,7 @@ TASKS = {
     'seg_mice_gm':
         {'description': 'Gray matter segmentation on mouse MRI.',
          'models': ['mice_uqueensland_gm']},
-    'seg_tumor_t2w':
+    'seg_tumor_t2':
         {'description': 'Cord tumor segmentation on T2-weighted contrast.',
          'models': ['findcord_tumor', 't2_tumor']}
 }
