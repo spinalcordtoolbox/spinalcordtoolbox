@@ -66,11 +66,13 @@ def test_integrity(param_test):
 
     # open ground truth
     im_seg_manual = Image(param_test.fname_gt).change_orientation("RPI")
+    print(im_seg_manual)
 
     # Compute center of mass of the SC seg on each axial slice.
     center_of_mass_x_y_z_lst = [[int(center_of_mass(im_seg_manual.data[:, :, zz])[0]),
                                  int(center_of_mass(im_seg_manual.data[:, :, zz])[1]),
                                  zz] for zz in range(im_seg_manual.dim[2])]
+    print(center_of_mass_x_y_z_lst)
 
     im_ctr_manual = msct_image.zeros_like(im_seg_manual)
     for x_y_z in center_of_mass_x_y_z_lst:
@@ -80,7 +82,9 @@ def test_integrity(param_test):
     im_ctr = Image(param_test.file_ctr).change_orientation("RPI")
 
     # compute MSE between generated ctr and ctr from database
+    print("compute MSE between generated ctr and ctr from database")
     mse_detection = compute_mse(im_ctr, im_ctr_manual)
+    print(mse_detection)
 
     param_test.output += 'Computed MSE: ' + str(mse_detection)
     param_test.output += 'MSE threshold (if computed MSE higher: fail): ' + str(param_test.mse_threshold)
