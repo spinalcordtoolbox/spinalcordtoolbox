@@ -16,7 +16,7 @@ conda activate venv_sct  # reactivate conda for the pip install below
 
 echo *** UNIT TESTS ***
 sct_download_data -d sct_testing_data  # for tests
-pytest
+# pytest
 
 echo *** INTEGRATION TESTS ***
 pip install coverage
@@ -41,4 +41,3 @@ bash -c 'PYTHONPATH="$PWD/scripts:$PWD" pylint -j3 --py3k --output-format=parsea
 # python create_package.py -s ${TRAVIS_OS_NAME}  # test package creation
 # cd ../spinalcordtoolbox_v*
 # yes | ./install_sct  # test installation of package
-
