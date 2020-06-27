@@ -16,7 +16,6 @@ import sys
 import os
 from shutil import copyfile
 import glob
-from tqdm import tqdm
 import numpy as np
 import math
 import scipy.interpolate
@@ -26,6 +25,7 @@ import operator
 import csv
 
 from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.utils import sct_progress_bar
 
 import sct_utils as sct
 import sct_dmri_separate_b0_and_dwi
@@ -261,8 +261,8 @@ def moco_wrapper(param):
     _, file_dwi_basename, file_dwi_ext = sct.extract_fname(file_datasub)
     # Group data
     list_file_group = []
-    for iGroup in tqdm(range(nb_groups), unit='iter', unit_scale=False, desc="Merge within groups", ascii=False,
-                       ncols=80):
+    for iGroup in sct_progress_bar(range(nb_groups), unit='iter', unit_scale=False, desc="Merge within groups", ascii=False,
+                                   ncols=80):
         # get index
         index_moco_i = group_indexes[iGroup]
         n_moco_i = len(index_moco_i)
@@ -580,8 +580,8 @@ def moco(param):
         failed_transfo = [0 for i in range(nt)]
 
         # Motion correction: Loop across T
-        for indice_index in tqdm(range(nt), unit='iter', unit_scale=False,
-                                 desc="Z=" + str(iz) + "/" + str(len(file_data_splitZ)-1), ascii=False, ncols=80):
+        for indice_index in sct_progress_bar(range(nt), unit='iter', unit_scale=False,
+                                             desc="Z=" + str(iz) + "/" + str(len(file_data_splitZ)-1), ascii=False, ncols=80):
 
             # create indices and display stuff
             it = index[indice_index]
