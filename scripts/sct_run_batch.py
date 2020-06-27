@@ -29,6 +29,7 @@ import warnings
 from getpass import getpass
 from spinalcordtoolbox.utils import Metavar, SmartFormatter, Tee, send_email
 from spinalcordtoolbox import __version__
+from textwrap import dedent
 import sct_utils as sct
 
 
@@ -44,10 +45,23 @@ def get_parser():
         prog=os.path.basename(__file__).strip('.py'))
 
     parser.add_argument('-config', '-c',
-                        help='A json (.json) or yaml (.yml|.yaml) file with arguments. All arguments to the configuration '
+                        help='R|' 
+                        'A json (.json) or yaml (.yml|.yaml) file with arguments. All arguments to the configuration '
                         'file are the same as the command line arguments, except all dashes (-) are replaced with '
                         'underscores (_). Using command line flags can be used to override arguments provided in '
-                        'the configuration file, but this is discouraged.')
+                        'the configuration file, but this is discouraged.\n' + dedent(
+                            """
+                            Example YAML configuration:
+                            path_data   : ~/sct_data
+                            path_output : ~/pipeline_results
+                            task        : nature_paper_analysis.sh\n
+                            Example JSON configuration:
+                            {
+                            "path_data"   : "~/sct_data"
+                            "path_output" : "~/pipeline_results"
+                            "task"        : "nature_paper_analysis.sh"
+                            }\n
+                            """))
     parser.add_argument('-jobs', type=int, default=1,
                         help='The number of jobs to run in parallel. '
                         'Either an integer greater than or equal to one '
