@@ -121,7 +121,7 @@ def get_parser():
                              '`-email-to`')
     parser.add_argument('-email-host', default='smtp.gmail.com:587',
                         help='Optional smtp server and port to use to send the email. Defaults to gmail\'s server')
-    parser.add_argument('task',
+    parser.add_argument('-task',
                         help='Shell script used to process the data.')
 
     return parser
