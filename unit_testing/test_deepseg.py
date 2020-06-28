@@ -41,7 +41,7 @@ def test_segment_nifti():
     output = sct.deepseg.core.segment_nifti(
         'sct_testing_data/t2s/t2s.nii.gz',
         os.path.join(sct.__deepseg_dir__, 't2star_sc'),
-        {'o': 't2s_seg_deepseg.nii.gz'})
+        param={'o': 't2s_seg_deepseg.nii.gz'})
     # TODO: implement integrity test (for now, just checking if output segmentation file exists)
     assert output == 't2s_seg_deepseg.nii.gz'
     assert os.path.isfile(output)
