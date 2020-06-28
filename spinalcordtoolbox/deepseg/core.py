@@ -5,17 +5,16 @@ Interface API for the deepseg module, which performs segmentation using deep lea
 
 # TODO: deal with multi-class segmentation in segment_nifti()
 
-import os
 import logging
-import numpy as np
-import nibabel as nib
+import os
+
 import ivadomed as imed
 import ivadomed.utils
 import ivadomed.postprocessing
-
+import nibabel as nib
+import numpy as np
 import spinalcordtoolbox as sct
 import spinalcordtoolbox.deepseg.models
-
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +23,7 @@ DEFAULTS = {
     'thr': 0.9,
     'largest': 1,
     'fill_holes': 1,
-    }
+}
 
 
 def postprocess(nii_seg, options):
@@ -34,6 +33,7 @@ def postprocess(nii_seg, options):
     :param options: dict: Parameters for postprocessing, including keys such as: threshold, keep_largest_object.
     :return:
     """
+
     def threshold(nii_seg, thr):
         """Threshold the prediction. For no threshold, set 'thr' to 0."""
         logger.info("Threshold: {}".format(thr))
@@ -75,7 +75,7 @@ def postprocess(nii_seg, options):
             logger.warning("Algorithm 'fill holes' can only be run on binary segmentation. Skipping.")
         return nii_seg
 
-    logger.info("\nProcessing segmentation\n" + "-"*23)
+    logger.info("\nProcessing segmentation\n" + "-" * 23)
     if options['thr']:
         nii_seg = threshold(nii_seg, options['thr'])
     if options['largest']:
@@ -85,16 +85,20 @@ def postprocess(nii_seg, options):
     return nii_seg
 
 
-def segment_nifti(fname_image, folder_model, param={}):
+def segment_nifti(fname_image, folder_model, fname_prior=None, param=None):
     """
     Segment a nifti file.
 
     :param fname_image: str: Filename of the image to segment.
     :param folder_model: str: Folder that encloses the deep learning model.
+    :param fname_prior: str: Filename of a previous segmentation that is used here as a prior.
     :param param: dict: Dictionary of user's parameter
     :return: fname_out: str: Output filename. If directory does not exist, it will be created.
     """
-    nii_seg = imed.utils.segment_volume(folder_model, fname_image)
+    if param is None:
+        param = {}
+
+    nii_seg = imed.utils.segment_volume(folder_model, fname_image, fname_prior)
 
     # Postprocessing
     metadata = sct.deepseg.models.get_metadata(folder_model)

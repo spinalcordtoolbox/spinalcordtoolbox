@@ -14,21 +14,18 @@ ivadomed package.
 
 from __future__ import absolute_import
 
-import sys
-import os
 import argparse
-import colored
+import os
+import sys
 
 import spinalcordtoolbox as sct
 import spinalcordtoolbox.deepseg.core
 import spinalcordtoolbox.deepseg.models
 import spinalcordtoolbox.utils
-
 from sct_utils import init_sct, printv, display_viewer_syntax
 
 
 def get_parser():
-
     parser = argparse.ArgumentParser(
         description="Segment an anatomical structure or pathologies according to the specified deep learning model.",
         add_help=None,
@@ -46,6 +43,21 @@ def get_parser():
              "suffix '_seg' will be added and output extension will be .nii.gz.",
         metavar=sct.utils.Metavar.str)
 
+    seg = parser.add_argument_group('\nTASKS')
+    seg.add_argument(
+        "-task",
+        help="Task to perform. It could either be a pre-installed task, task that could be installed, or a custom task."
+             " To list available tasks, run: sct_deepseg -list-tasks",
+        metavar=sct.utils.Metavar.str)
+    seg.add_argument(
+        "-list-tasks",
+        action='store_true',
+        help="Display a list of tasks that can be achieved.")
+    seg.add_argument(
+        "-install-task",
+        help="Install models that are required for specified task.",
+        choices=list(sct.deepseg.models.TASKS.keys()))
+
     seg = parser.add_argument_group('\nMODELS')
     seg.add_argument(
         "-model",
@@ -54,6 +66,7 @@ def get_parser():
              "model, example: -model t2_sc), or a path to the directory that contains a model, example: "
              "-model my_models/model. To list official models, run: sct_deepseg -list-models."
              "To build your own model, follow instructions at: https://github.com/neuropoly/ivado-medical-imaging",
+        nargs='+',
         metavar=sct.utils.Metavar.str)
     seg.add_argument(
         "-list-models",
@@ -109,29 +122,19 @@ def main():
 
     # Deal with model
     if args['list_models']:
-        models = sct.deepseg.models.list_models()
-        # Display beautiful output
-        color = {True: 'green', False: 'red'}
-        default = {True: '[*]', False: ''}
-        print("{:<25s}DESCRIPTION".format("MODEL"))
-        print("-" * 80)
-        for name_model, value in models.items():
-            path_model = sct.deepseg.models.folder(name_model)
-            print("{}{}".format(
-                colored.stylize(''.join((name_model, default[value['default']])).ljust(25),
-                                colored.fg(color[sct.deepseg.models.is_valid(path_model)])),
-                colored.stylize(value['description'],
-                                colored.fg(color[sct.deepseg.models.is_valid(path_model)]))
-                ))
-        print(
-            '\nLegend: {} | {} | default: {}\n'.format(
-                colored.stylize("installed", colored.fg(color[True])),
-                colored.stylize("not installed", colored.fg(color[False])),
-                default[True]))
-        exit(0)
+        sct.deepseg.models.display_list_models()
+
+    # Deal with task
+    if args['list_tasks']:
+        sct.deepseg.models.display_list_tasks()
 
     if 'install_model' in args:
         sct.deepseg.models.install_model(args['install_model'])
+        exit(0)
+
+    if 'install_task' in args:
+        for name_model in sct.deepseg.models.TASKS[args['install_task']]['models']:
+            sct.deepseg.models.install_model(name_model)
         exit(0)
 
     # Deal with input/output
@@ -140,24 +143,37 @@ def main():
     if not os.path.isfile(args['i']):
         parser.error("This file does not exist: {}".format(args['i']))
 
-    # Get model path
+    # Check if at least a model or task has been specified
+    if 'model' not in args and 'task' not in args:
+        parser.error("You need to specify a model or a task.")
+
+    # Get pipeline model names
+    if 'task' in args:
+        name_models = sct.deepseg.models.TASKS[args['task']]['models']
+
     if 'model' in args:
+        name_models = args['model']
+
+    # Run pipeline by iterating through the models
+    fname_prior = None
+    for name_model in name_models:
         # Check if this is an official model
-        if args['model'] in list(sct.deepseg.models.MODELS.keys()):
+        if name_model in list(sct.deepseg.models.MODELS.keys()):
             # If it is, check if it is installed
-            path_model = spinalcordtoolbox.deepseg.models.folder(args['model'])
+            path_model = spinalcordtoolbox.deepseg.models.folder(name_model)
             if not spinalcordtoolbox.deepseg.models.is_valid(path_model):
-                printv("Model {} is not installed. Installing it now...".format(args['model']))
-                spinalcordtoolbox.deepseg.models.install_model(args['model'])
+                printv("Model {} is not installed. Installing it now...".format(name_model))
+                spinalcordtoolbox.deepseg.models.install_model(name_model)
         # If it is not, check if this is a path to a valid model
         else:
-            path_model = os.path.abspath(args['model'])
+            path_model = os.path.abspath(name_model)
             if not sct.deepseg.models.is_valid(path_model):
                 parser.error("The input model is invalid: {}".format(path_model))
-    else:
-        parser.error("You need to specify a model.")
 
-    fname_seg = sct.deepseg.core.segment_nifti(args['i'], path_model, args)
+        # Call segment_nifti
+        fname_seg = sct.deepseg.core.segment_nifti(args['i'], path_model, fname_prior, args)
+        # Use the result of the current model as additional input of the next model
+        fname_prior = fname_seg
 
     display_viewer_syntax([args['i'], fname_seg], colormaps=['gray', 'red'], opacities=['', '0.7'])
 
