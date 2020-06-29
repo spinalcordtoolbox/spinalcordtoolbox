@@ -12,6 +12,7 @@ import logging
 import argparse
 import subprocess
 import shutil
+import tqdm
 from enum import Enum
 
 logger = logging.getLogger(__name__)
@@ -384,6 +385,16 @@ def _version_string():
         return version_sct
     else:
         return "{install_type}-{sct_branch}-{sct_commit}".format(**locals())
+
+
+def sct_progress_bar(*args, **kwargs):
+    """Thin wrapper around `tqdm.tqdm` which checks `SCT_PROGRESS_BAR` muffling the progress
+       bar if the user sets it to `no`, `off`, or `false` (case insensitive)."""
+    do_pb = os.environ.get('SCT_PROGRESS_BAR', 'yes')
+    if do_pb.lower() in ['off', 'no', 'false']:
+        kwargs['disable'] = True
+
+    return tqdm.tqdm(*args, **kwargs)
 
 
 __sct_dir__ = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
