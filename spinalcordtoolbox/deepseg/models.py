@@ -17,29 +17,48 @@ logger = logging.getLogger(__name__)
 
 # List of models. The convention for model names is: (species)_(university)_(contrast)_region
 # Regions could be: sc, gm, lesion, tumor
-# TODO: add mirror
 MODELS = {
-    't2star_sc':
-        {'url': 'https://osf.io/v9hs8/download?version=5',
-         'description': 'Cord segmentation model on T2*-weighted contrast.',
-         'default': True},
-    'mice_uqueensland_sc':
-        {'url': 'https://osf.io/nu3ma/download?version=6',
-         'description': 'Cord segmentation model on mouse MRI. Data from University of Queensland.',
-         'default': False},
-    'mice_uqueensland_gm':
-        {'url': 'https://osf.io/mfxwg/download?version=6',
-         'description': 'Gray matter segmentation model on mouse MRI. Data from University of Queensland.',
-         'default': False},
-    't2_tumor':
-        {'url': 'https://osf.io/uwe7k/download?version=2',
-         'description': 'Cord tumor segmentation model, trained on T2-weighted contrast.',
-         'default': False},
-    'findcord_tumor':
-        {'url': 'https://osf.io/qj6d5/download?version=1',
-         'description': 'Cord localisation model, trained on T2-weighted images with tumor.',
-         'default': False}
-    }
+    "t2star_sc": {
+        "url": [
+            "https://github.com/ivadomed/t2star_sc/releases/download/r20200622/r20200622_t2star_sc.zip",
+            "https://osf.io/v9hs8/download?version=5",
+        ],
+        "description": "Cord segmentation model on T2*-weighted contrast.",
+        "default": True,
+    },
+    "mice_uqueensland_sc": {
+        "url": [
+            "https://github.com/ivadomed/mice_uqueensland_sc/releases/download/r20200622/r20200622_mice_uqueensland_sc.zip",
+            "https://osf.io/nu3ma/download?version=6",
+        ],
+        "description": "Cord segmentation model on mouse MRI. Data from University of Queensland.",
+        "default": False,
+    },
+    "mice_uqueensland_gm": {
+        "url": [
+            "https://github.com/ivadomed/mice_uqueensland_gm/releases/download/r20200622/r20200622_mice_uqueensland_gm.zip",
+            "https://osf.io/mfxwg/download?version=6",
+        ],
+        "description": "Gray matter segmentation model on mouse MRI. Data from University of Queensland.",
+        "default": False,
+    },
+    "t2_tumor": {
+        "url": [
+            "https://github.com/ivadomed/t2_tumor/releases/download/r20200621/r20200621_t2_tumor.zip",
+            "https://osf.io/uwe7k/download?version=2",
+        ],
+        "description": "Cord tumor segmentation model, trained on T2-weighted contrast.",
+        "default": False,
+    },
+    "findcord_tumor": {
+        "url": [
+            "https://github.com/ivadomed/findcord_tumor/releases/download/r20200621/r20200621_findcord_tumor.zip",
+            "https://osf.io/qj6d5/download?version=1",
+        ],
+        "description": "Cord localisation model, trained on T2-weighted images with tumor.",
+        "default": False,
+    },
+}
 
 # List of task. The convention for task names is: action_(animal)_region_(contrast)
 # Regions could be: sc, gm, lesion, tumor
