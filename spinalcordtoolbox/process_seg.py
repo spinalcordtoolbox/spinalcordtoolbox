@@ -8,7 +8,6 @@ import math
 import platform
 import numpy as np
 from skimage import measure, transform
-from tqdm import tqdm
 import logging
 import nibabel
 
@@ -16,6 +15,7 @@ from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.aggregate_slicewise import Metric
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
 from spinalcordtoolbox.resampling import resample_nib
+from spinalcordtoolbox.utils import sct_progress_bar
 
 
 def compute_shape(segmentation, angle_correction=True, param_centerline=None, verbose=1):
@@ -67,8 +67,8 @@ def compute_shape(segmentation, angle_correction=True, param_centerline=None, ve
         _, arr_ctl, arr_ctl_der, fit_results = get_centerline(im_segr, param=param_centerline, verbose=verbose)
 
     # Loop across z and compute shape analysis
-    for iz in tqdm(range(min_z_index, max_z_index + 1), unit='iter', unit_scale=False, desc="Compute shape analysis",
-                   ascii=True, ncols=80):
+    for iz in sct_progress_bar(range(min_z_index, max_z_index + 1), unit='iter', unit_scale=False, desc="Compute shape analysis",
+                               ascii=True, ncols=80):
         # Extract 2D patch
         current_patch = im_segr.data[:, :, iz]
         if angle_correction:

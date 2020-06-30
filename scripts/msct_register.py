@@ -19,7 +19,6 @@ from __future__ import division, absolute_import
 import sys, os, logging
 from math import asin, cos, sin, acos
 import numpy as np
-from tqdm import tqdm
 
 from scipy import ndimage
 from scipy.signal import argrelmax, medfilt
@@ -27,6 +26,7 @@ from scipy.io import loadmat
 from nibabel import load, Nifti1Image, save
 
 from spinalcordtoolbox.image import Image, find_zmin_zmax, spatial_crop
+from spinalcordtoolbox.utils import sct_progress_bar
 
 import sct_utils as sct
 import sct_apply_transfo
@@ -796,8 +796,8 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
     th_max_angle *= np.pi / 180
 
     # Loop across slices
-    for iz in tqdm(range(0, nz), unit='iter', unit_scale=False, desc="Estimate cord angle for each slice",
-                   ascii=False, ncols=100):
+    for iz in sct_progress_bar(range(0, nz), unit='iter', unit_scale=False, desc="Estimate cord angle for each slice",
+                               ascii=False, ncols=100):
         try:
             # compute PCA and get center or mass based on segmentation
             coord_src[iz], pca_src[iz], centermass_src[iz, :] = compute_pca(data_src[:, :, iz])
@@ -884,8 +884,8 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
     warp_inv_y = np.zeros(data_src.shape)
 
     # construct 3D warping matrix
-    for iz in tqdm(z_nonzero, unit='iter', unit_scale=False, desc="Build 3D deformation field",
-                   ascii=False, ncols=100):
+    for iz in sct_progress_bar(z_nonzero, unit='iter', unit_scale=False, desc="Build 3D deformation field",
+                               ascii=False, ncols=100):
         # get indices of x and y coordinates
         row, col = np.indices((nx, ny))
         # build 2xn array of coordinates in pixel space

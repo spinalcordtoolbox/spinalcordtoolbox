@@ -11,13 +11,13 @@ from __future__ import absolute_import
 import os, time, logging, inspect
 import bisect
 import numpy as np
-from tqdm import tqdm
 from nibabel import Nifti1Image, save
 
 from spinalcordtoolbox.types import Centerline
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
+from spinalcordtoolbox.utils import sct_progress_bar
 
 import sct_utils as sct
 from sct_image import pad_image
@@ -436,7 +436,7 @@ class SpinalCordStraightener(object):
         # sct.printv(nx * ny * nz, nx_s * ny_s * nz_s)
 
         if self.curved2straight:
-            for u in tqdm(range(nz_s)):
+            for u in sct_progress_bar(range(nz_s)):
                 x_s, y_s, z_s = np.mgrid[0:nx_s, 0:ny_s, u:u + 1]
                 indexes_straight = np.array(list(zip(x_s.ravel(), y_s.ravel(), z_s.ravel())))
                 physical_coordinates_straight = image_centerline_straight.transfo_pix2phys(indexes_straight)
@@ -465,7 +465,7 @@ class SpinalCordStraightener(object):
                     = -displacements_straight
 
         if self.straight2curved:
-            for u in tqdm(range(nz)):
+            for u in sct_progress_bar(range(nz)):
                 x, y, z = np.mgrid[0:nx, 0:ny, u:u + 1]
                 indexes = np.array(list(zip(x.ravel(), y.ravel(), z.ravel())))
                 physical_coordinates = image_centerline_pad.transfo_pix2phys(indexes)

@@ -150,7 +150,8 @@ def run_single(subj_dir, task, task_args, path_segmanual, path_data, path_result
         'PATH_RESULTS': path_results,
         'PATH_LOG': path_log,
         'PATH_QC': path_qc,
-        'ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS': str(itk_threads)
+        'ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS': str(args.itk_threads),
+        'SCT_PROGRESS_BAR': 'off'
     })
 
     # Ship the job out, merging stdout/stderr and piping to log file
