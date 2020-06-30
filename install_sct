@@ -586,9 +586,8 @@ else
   print info "Installing data..."
   run "rm -rf $SCT_DIR/$DATA_DIR"
   run "mkdir -p $SCT_DIR/$DATA_DIR"
-  run "cd $SCT_DIR/$DATA_DIR"
   for data in PAM50 gm_model optic_models pmj_models deepseg_sc_models deepseg_gm_models deepseg_lesion_models c2c3_disc_models; do
-    run "sct_download_data -d $data"
+    run "sct_download_data -d $data -o $SCT_DIR/$DATA_DIR/$data"
   done
 fi
 
