@@ -106,42 +106,75 @@ def unzip(compressed, dest_folder):
 
 def install_data(url, dest_folder):
     """
-    Download data from a URL and install in the appropriate folder. Deals with multiple mirrors, retry download,
-    check if data already exist.
-    :param url: string or list or strings. URL or list of URLs (if mirrors).
-    :param dest_folder:
-    :return:
+    Download a data bundle from a URL and install in the destination folder.
+
+    :param url: URL or sequence thereof (if mirrors).
+    :param dest_folder: destination folder
+    :return: None
+
+    Notes:
+
+    - Uses `download_data()` to retrieve the data.
+    - Uses `unzip()` to extract the bundle.
+    - If destination already exists, it is cleared first,
+      from files that would be in the bundle (not the rest).
     """
 
-    # Download data
     tmp_file = download_data(url)
 
-    # unzip
-    dest_tmp_folder = sct.utils.tmp_create()
-    unzip(tmp_file, dest_tmp_folder)
-    extracted_files_paths = []
-    # Get the name of the extracted files and directories
-    extracted_files = os.listdir(dest_tmp_folder)
-    for extracted_file in extracted_files:
-        extracted_files_paths.append(os.path.join(os.path.abspath(dest_tmp_folder), extracted_file))
+    extraction_folder = sct.utils.tmp_create()
 
-    # Check if files and folder already exists
+    unzip(tmp_file, extraction_folder)
+
+    # Identify whether we have a proper archive or a tarbomb
+    with os.scandir(extraction_folder) as it:
+        has_dir = False
+        nb_entries = 0
+        for entry in it:
+            nb_entries += 1
+            if entry.is_dir():
+                has_dir = True
+
+    if nb_entries == 1 and has_dir:
+        # tarball with single-directory -> go under
+        with os.scandir(extraction_folder) as it:
+            for entry in it:
+                bundle_folder = entry.path
+    else:
+        # bomb scenario -> stay here
+        bundle_folder = extraction_folder
+
     logger.info("Destination folder: {}".format(dest_folder))
-    logger.info("Checking if folder already exists...")
-    for data_extracted_name in extracted_files:
-        fullpath_dest = os.path.join(dest_folder, data_extracted_name)
-        if os.path.isdir(fullpath_dest):
-            logger.warning("Folder {} already exists. Removing it...".format(data_extracted_name))
-            shutil.rmtree(fullpath_dest)
 
-    # Destination path
-    # for source_path in extracted_files_paths:
-        # Copy the content of source to destination (and create destination folder)
-    distutils.dir_util.copy_tree(dest_tmp_folder, dest_folder)
+    os.makedirs(dest_folder, exist_ok=True)
+
+    for cwd, ds, fs in os.walk(bundle_folder):
+        ds.sort()
+        fs.sort()
+        for d in ds:
+            srcpath = os.path.join(cwd, d)
+            relpath = os.path.relpath(srcpath, bundle_folder)
+            dstpath = os.path.join(dest_folder, relpath)
+            if os.path.exists(dstpath):
+                # lazy -- we assume it's a directory, otherwise it will crash safely
+                logger.debug("- d- %s", relpath)
+            else:
+                logger.debug("- d+ %s", relpath)
+                os.makedirs(dstpath)
+
+        for f in fs:
+            srcpath = os.path.join(cwd, f)
+            relpath = os.path.relpath(srcpath, bundle_folder)
+            dstpath = os.path.join(dest_folder, relpath)
+            if os.path.exists(dstpath):
+                logger.debug("- f! %s", relpath)
+                logger.warning("Updating existing %s", dstpath)
+                os.unlink(dstpath)
+            else:
+                logger.debug("- f+ %s", relpath)
+
+            shutil.copy(srcpath, dstpath)
 
     logger.info("Removing temporary folders...")
-    try:
-        shutil.rmtree(os.path.split(tmp_file)[0])
-        shutil.rmtree(dest_tmp_folder)
-    except Exception as error:
-        logger.error("Cannot remove temp folder: " + repr(error))
+    shutil.rmtree(os.path.dirname(tmp_file))
+    shutil.rmtree(extraction_folder)
