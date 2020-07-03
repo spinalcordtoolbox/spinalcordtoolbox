@@ -40,7 +40,7 @@ def get_parser(dict_url):
     parser.add_option(
         name="-o",
         type_value="folder_creation",
-        description="path to save the downloaded data",
+        description="Path where to save the downloaded data (defaults to dataset name in current working directory)",
         mandatory=False)
     parser.add_option(
         name="-h",
@@ -141,7 +141,7 @@ def main(args=None):
     data_name = arguments['-d']
     verbose = int(arguments.get('-v'))
     sct.init_sct(log_level=verbose, update=True)  # Update log level
-    dest_folder = arguments.get('-o', os.path.abspath(os.curdir))
+    dest_folder = arguments.get('-o', os.path.join(os.path.abspath(os.curdir), data_name))
 
     url = dict_url[data_name]
     install_data(url, dest_folder)
