@@ -131,6 +131,8 @@ def install_data(url, dest_folder):
         has_dir = False
         nb_entries = 0
         for entry in it:
+            if entry.name in ("__MACOSX",):
+                continue
             nb_entries += 1
             if entry.is_dir():
                 has_dir = True
@@ -152,6 +154,8 @@ def install_data(url, dest_folder):
         ds.sort()
         fs.sort()
         for d in ds:
+            if d in ("__MACOSX",):
+                continue
             srcpath = os.path.join(cwd, d)
             relpath = os.path.relpath(srcpath, bundle_folder)
             dstpath = os.path.join(dest_folder, relpath)
