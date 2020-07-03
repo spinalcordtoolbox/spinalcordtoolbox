@@ -30,6 +30,7 @@ from getpass import getpass
 from spinalcordtoolbox.utils import Metavar, SmartFormatter, Tee, send_email
 from spinalcordtoolbox import __version__
 from textwrap import dedent
+from types import SimpleNamespace
 import sct_utils as sct
 
 
@@ -121,13 +122,15 @@ def get_parser():
                              '`-email-to`')
     parser.add_argument('-email-host', default='smtp.gmail.com:587',
                         help='Optional smtp server and port to use to send the email. Defaults to gmail\'s server')
+    parser.add_argument('-continue-on-error', type=int, default=1, choices=(0,1),
+                        help='Whether the batch processing should continue if a subject fails.')
     parser.add_argument('-task',
                         help='Shell script used to process the data.')
 
     return parser
 
 
-def run_single(subj_dir, task, task_args, path_segmanual, path_data, path_results, path_log, path_qc, itk_threads):
+def run_single(subj_dir, task, task_args, path_segmanual, path_data, path_results, path_log, path_qc, itk_threads, continue_on_error=False):
     'Job function for mapping with multiprocessing'
 
     # Strip the `.sh` extension from the task for building error logs
@@ -155,19 +158,27 @@ def run_single(subj_dir, task, task_args, path_segmanual, path_data, path_result
     })
 
     # Ship the job out, merging stdout/stderr and piping to log file
-    res = subprocess.run([task_full, subj_dir] + task_args.split(' '),
-                         env=envir,
-                         stdout=open(log_file, 'w'),
-                         stderr=subprocess.STDOUT)
+    try:
+        res = subprocess.run([task_full, subj_dir] + task_args.split(' '),
+                             env=envir,
+                             stdout=open(log_file, 'w'),
+                             stderr=subprocess.STDOUT)
 
-    # Check the return code, if it failed rename the log file to indicate
-    # an error
-    if res.returncode != 0:
-        os.rename(log_file, err_file)
+        assert res.returncode == 0, 'Processing of subject {} failed'.format(subject)
+    except Exception as e:
+        process_completed = res in locals()
+        res = res if process_completed else SimpleNamespace(returncode = -1)
+        process_suceeded = res.returncode == 0
 
-    # Assert that the command needs to have run successfully
-    assert res.returncode == 0, 'Processing of subject {} failed'.format(subject)
+        if not process_suceeded and os.path.exists(log_file):
+            # If the process didn't complete or succeed rename the log file to indicate
+            # the error
+            os.rename(log_file, err_file)
 
+        if process_suceeded or continue_on_error:
+            return res
+        else:
+            raise e
 
 def main(argv):
     # Print the sct startup info
@@ -319,8 +330,9 @@ def main(argv):
                                                path_results=path_results,
                                                path_log=path_log,
                                                path_qc=path_qc,
-                                               itk_threads=args.itk_threads)
-            p.map(run_single_dir, subject_dirs)
+                                               itk_threads=args.itk_threads,
+                                               continue_on_error=args.continue_on_error)
+            results = p.map(run_single_dir, subject_dirs)
             end = time.strftime('%H:%M', time.localtime(time.time()))
     except Exception as e:
         if do_email is not None:
@@ -339,16 +351,26 @@ def main(argv):
 
     end = time.strftime('%H:%M', time.localtime(time.time()))
 
-    completed_message = ('Finished :-)\n'
+    # Check for failed subjects
+    fails = [sd for (sd, ret) in zip(subject_dirs, results) if ret.returncode != 1]
+
+    completed_message = ('Finished ', ':-)\n' if len(fails) == 0 else '\n'
                          'Started: {}\n'
                          'Ended: {}\n'
                          ''.format(start, end))
 
-    print(completed_message)
+    if len(fails) == 0:
+        status_message = 'Hooray your batch completed successfully'
+    else:
+        status_message = ('Your batch completed but some subjects may have not completed '
+                         'successfully, please consult the logs for:\n'
+                         '{}\n'.format('\n'.join(fails)))
+
+    print(status_message + completed_message)
 
     if do_email:
         send_notification('sct_run_batch: Run completed',
-                          'Hooray, your batch completed successfully.\n' + completed_message)
+                          fails_message + completed_message)
 
     open_cmd = 'open' if sys.platform == 'darwin' else 'xdg-open'
 
