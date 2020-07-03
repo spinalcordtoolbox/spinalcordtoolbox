@@ -26,7 +26,7 @@ def test_config_with_args_warning():
         with pytest.warns(UserWarning, match=r'-config.*discouraged'):
             # I'm not sure how to check that argparse is printing the right error here, but I trust
             with pytest.raises(FileNotFoundError):
-                sct_run_batch.main(['-c', config.name, '-include', 'something', 'task'])
+                sct_run_batch.main(['-c', config.name, '-include', 'something', '-task', 'task'])
 
 
 def test_config_extra_value_warning():
@@ -48,7 +48,7 @@ def test_config_extra_value_warning():
         with pytest.warns(UserWarning, match='unknowable'):
             # I'm not sure how to check that argparse is printing the right error here, but I trust
             with pytest.raises(FileNotFoundError):
-                sct_run_batch.main(['-c', config.name, 'task'])
+                sct_run_batch.main(['-c', config.name, '-task', 'task'])
 
 
 def test_only_one_include():
@@ -58,4 +58,5 @@ def test_only_one_include():
             TemporaryDirectory() as out:
         with pytest.raises(AssertionError, match='Only one'):
             sct_run_batch.main(['-include', 'arg', '-include-list',
-                                'arg2', '-path-data', data, '-path-out', out, out])
+                                'arg2', '-path-data', data, '-path-out', out
+                                , '-task', out])
