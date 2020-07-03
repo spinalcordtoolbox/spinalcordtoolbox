@@ -279,7 +279,7 @@ def main(argv):
     subject_dirs = [f for f in os.listdir(path_data) if f.startswith(args.subject_prefix)]
 
     # Handle inclusion lists
-    assert not ((args.include is not None) or (args.include_list is not None)),\
+    assert not ((args.include is not None) and (args.include_list is not None)),\
         'Only one of `include` and `include-list` can be used'
 
     if args.include is not None:
@@ -290,7 +290,7 @@ def main(argv):
         subject_dirs = [f for f in subject_dirs if f in args.include_list]
 
     # Handle exclusions
-    assert not ((args.exclude is not None) or (args.exclude_list is not None)),\
+    assert not ((args.exclude is not None) and (args.exclude_list is not None)),\
         'Only one of `exclude` and `exclude-list` can be used'
 
     if args.exclude is not None:
