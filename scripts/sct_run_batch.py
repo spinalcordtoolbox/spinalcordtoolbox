@@ -166,7 +166,7 @@ def run_single(subj_dir, task, task_args, path_segmanual, path_data, path_result
 
         assert res.returncode == 0, 'Processing of subject {} failed'.format(subject)
     except Exception as e:
-        process_completed = res in locals()
+        process_completed = 'res' in locals()
         res = res if process_completed else SimpleNamespace(returncode = -1)
         process_suceeded = res.returncode == 0
 
