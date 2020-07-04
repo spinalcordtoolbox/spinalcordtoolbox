@@ -180,6 +180,8 @@ def run_single(subj_dir, task, task_args, path_segmanual, path_data, path_result
         else:
             raise e
 
+    return res
+
 def main(argv):
     # Print the sct startup info
     sct.init_sct()
@@ -370,7 +372,7 @@ def main(argv):
 
     if do_email:
         send_notification('sct_run_batch: Run completed',
-                          fails_message + completed_message)
+                          status_message + completed_message)
 
     open_cmd = 'open' if sys.platform == 'darwin' else 'xdg-open'
 
