@@ -186,7 +186,7 @@ def main(argv):
 
     # Parse the command line arguments
     parser = get_parser()
-    args = parser.parse_args(argv)
+    args = parser.parse_args(None if sys.argv[1:] else ['--help'])
 
     # See if there's a configuration file and import those options
     if args.config is not None:
