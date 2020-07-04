@@ -356,10 +356,11 @@ def main(argv):
     # Check for failed subjects
     fails = [sd for (sd, ret) in zip(subject_dirs, results) if ret.returncode != 1]
 
-    completed_message = ('Finished ', ':-)\n' if len(fails) == 0 else '\n'
+    smiley_or_newline =  ':-)\n' if len(fails) == 0 else '\n'
+    completed_message = ('Finished {}'
                          'Started: {}\n'
                          'Ended: {}\n'
-                         ''.format(start, end))
+                         ''.format(smiley_or_newline, start, end))
 
     if len(fails) == 0:
         status_message = 'Hooray your batch completed successfully'
