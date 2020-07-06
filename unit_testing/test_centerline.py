@@ -9,15 +9,18 @@ import os
 import sys
 import pytest
 import numpy as np
+import nibabel
 
+import spinalcordtoolbox as sct
 from spinalcordtoolbox import __sct_dir__
-sys.path.append(os.path.join(__sct_dir__, 'scripts'))
-
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline, find_and_sort_coord, round_and_clip
 from spinalcordtoolbox.image import Image
-
 from spinalcordtoolbox.testing.create_test_data import dummy_centerline
+import spinalcordtoolbox.math
+
+sys.path.append(os.path.join(__sct_dir__, 'scripts'))
 from sct_utils import init_sct
+
 
 init_sct(log_level=2)  # Set logger in debug mode
 VERBOSE = 0  # Set to 2 to save images, 0 otherwise
@@ -64,13 +67,13 @@ im_centerlines = [
     (dummy_centerline(size_arr=(30, 20, 50), subsampling=10),
      {'median': 0, 'rmse': 0.1, 'laplacian': 0.5, 'norm': 3.8},
      {}),
-    # (dummy_centerline(size_arr=(30, 20, 100), subsampling=1, outlier=[20]),
-    #  {'median': 0, 'rmse': 2, 'laplacian': 0.5, 'norm': 11.5},
-    #  {}),
-    # (dummy_centerline(size_arr=(30, 20, 500), subsampling=1, outlier=[20]),
-    #  {'median': 0, 'rmse': 1, 'laplacian': 0.5, 'norm': 11.5},
-    #  {})
 ]
+
+param_optic = [
+    ({'fname_image': 'sct_testing_data/t2/t2.nii.gz',
+      'fname_centerline-optic': 'sct_testing_data/t2/t2_centerline-optic.nii.gz'})
+    ]
+
 
 # noinspection 801,PyShadowingNames
 @pytest.mark.parametrize('img_ctl,expected', im_ctl_find_and_sort_coord)
@@ -145,21 +148,20 @@ def test_get_centerline_nurbs(img_ctl, expected, params):
 
 
 # noinspection 801,PyShadowingNames
-def test_get_centerline_optic():
+@pytest.mark.parametrize('params', param_optic)
+def test_get_centerline_optic(params):
     """Test centerline extraction with optic"""
-    fname_t2 = os.path.join(__sct_dir__, 'sct_testing_data/t2/t2.nii.gz')  # install: sct_download_data -d sct_testing_data
-    img_t2 = Image(fname_t2)
+    # TODO: add assert on the output .csv files for more precision
+    im = Image(params['fname_image'])
     # Add non-numerical values at the top corner of the image for testing purpose
-    img_t2.change_type('float32')
-    img_t2.data[0, 0, 0] = np.nan
-    img_t2.data[1, 0, 0] = np.inf
-    img_out, arr_out, _, _ = get_centerline(
-        img_t2, ParamCenterline(algo_fitting='optic', contrast='t2', minmax=False), verbose=VERBOSE)
+    im.change_type('float32')
+    im.data[0, 0, 0] = np.nan
+    im.data[1, 0, 0] = np.inf
+    im_centerline, arr_out, _, _ = get_centerline(
+        im, ParamCenterline(algo_fitting='optic', contrast='t2', minmax=False), verbose=VERBOSE)
     # Open ground truth segmentation and compare
-    fname_t2_seg = os.path.join(__sct_dir__, 'sct_testing_data/t2/t2_seg-manual.nii.gz')
-    img_seg_out, arr_seg_out, _, _ = get_centerline(
-        Image(fname_t2_seg), ParamCenterline(algo_fitting='bspline', minmax=False), verbose=VERBOSE)
-    assert np.linalg.norm(find_and_sort_coord(img_seg_out) - find_and_sort_coord(img_out)) < 3.5
+    assert sct.math.dice(im_centerline.data,
+                         Image(params['fname_centerline-optic']).data) == 1.0
 
 
 def test_round_and_clip():
