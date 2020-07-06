@@ -6,6 +6,8 @@
 import os
 import pytest
 
+import nibabel
+
 import spinalcordtoolbox as sct
 import spinalcordtoolbox.deepseg.core
 import spinalcordtoolbox.deepseg.models
@@ -55,3 +57,6 @@ def test_segment_nifti(params):
     assert output == fname_out
     # Make sure output file exists
     assert os.path.isfile(output)
+    # Compare with ground-truth
+    assert sct.math.dice(nibabel.load(output).get_fdata(),
+                         nibabel.load(params['fname_seg_manual']).get_fdata()) == 1.0
