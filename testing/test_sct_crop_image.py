@@ -27,7 +27,7 @@ def init(param_test):
     ]
     default_args = [
         '-i t2/t2.nii.gz -o {} -xmin 1 -xmax -3 -ymin 2 -ymax 10'.format(param_test.fname_out[0]),
-        '-i t2/t2.nii.gz -o {} -m t2/t2_seg.nii.gz'.format(param_test.fname_out[1]),
+        '-i t2/t2.nii.gz -o {} -m t2/t2_seg-manual.nii.gz'.format(param_test.fname_out[1]),
         '-i t2/t2.nii.gz -o {} -ref mt/mt0.nii.gz'.format(param_test.fname_out[2]),
     ]
     # assign default params

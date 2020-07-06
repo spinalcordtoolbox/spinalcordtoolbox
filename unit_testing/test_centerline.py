@@ -146,7 +146,7 @@ def test_get_centerline_nurbs(img_ctl, expected, params):
 
 # noinspection 801,PyShadowingNames
 def test_get_centerline_optic():
-    """Test extraction of metrics aggregation across slices: All slices by default"""
+    """Test centerline extraction with optic"""
     fname_t2 = os.path.join(__sct_dir__, 'sct_testing_data/t2/t2.nii.gz')  # install: sct_download_data -d sct_testing_data
     img_t2 = Image(fname_t2)
     # Add non-numerical values at the top corner of the image for testing purpose
@@ -156,7 +156,7 @@ def test_get_centerline_optic():
     img_out, arr_out, _, _ = get_centerline(
         img_t2, ParamCenterline(algo_fitting='optic', contrast='t2', minmax=False), verbose=VERBOSE)
     # Open ground truth segmentation and compare
-    fname_t2_seg = os.path.join(__sct_dir__, 'sct_testing_data/t2/t2_seg.nii.gz')
+    fname_t2_seg = os.path.join(__sct_dir__, 'sct_testing_data/t2/t2_seg-manual.nii.gz')
     img_seg_out, arr_seg_out, _, _ = get_centerline(
         Image(fname_t2_seg), ParamCenterline(algo_fitting='bspline', minmax=False), verbose=VERBOSE)
     assert np.linalg.norm(find_and_sort_coord(img_seg_out) - find_and_sort_coord(img_out)) < 3.5

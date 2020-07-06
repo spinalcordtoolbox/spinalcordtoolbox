@@ -81,7 +81,7 @@ def test_segment_2d():
     model_path = os.path.join(sct.__sct_dir__, 'data', 'deepseg_sc_models', '{}_sc.h5'.format(contrast_test))   
 
     fname_t2 = os.path.join(sct.__sct_dir__, 'sct_testing_data/t2/t2.nii.gz')  # install: sct_download_data -d sct_testing_data
-    fname_t2_seg = os.path.join(sct.__sct_dir__, 'sct_testing_data/t2/t2_seg.nii.gz')  # install: sct_download_data -d sct_testing_data
+    fname_t2_seg = os.path.join(sct.__sct_dir__, 'sct_testing_data/t2/t2_seg-manual.nii.gz')  # install: sct_download_data -d sct_testing_data
 
     img, gt = _preprocess_segment(fname_t2, fname_t2_seg, contrast_test)
 
@@ -101,7 +101,7 @@ def test_segment_3d():
     model_path = os.path.join(sct.__sct_dir__, 'data', 'deepseg_sc_models', '{}_sc_3D.h5'.format(contrast_test))   
 
     fname_t2 = os.path.join(sct.__sct_dir__, 'sct_testing_data/t2/t2.nii.gz')  # install: sct_download_data -d sct_testing_data
-    fname_t2_seg = os.path.join(sct.__sct_dir__, 'sct_testing_data/t2/t2_seg.nii.gz')  # install: sct_download_data -d sct_testing_data
+    fname_t2_seg = os.path.join(sct.__sct_dir__, 'sct_testing_data/t2/t2_seg-manual.nii.gz')  # install: sct_download_data -d sct_testing_data
 
     img, gt = _preprocess_segment(fname_t2, fname_t2_seg, contrast_test, dim_3=True)
 

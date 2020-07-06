@@ -17,10 +17,9 @@ def gen_qc(args):
     i, path_qc = args
 
     t2_image = os.path.join(__sct_dir__, 'sct_testing_data', 't2', 't2.nii.gz')
-    t2_seg = os.path.join(__sct_dir__, 'sct_testing_data', 't2', 't2_seg.nii.gz')
+    t2_seg = os.path.join(__sct_dir__, 'sct_testing_data', 't2', 't2_seg-manual.nii.gz')
 
-    qc.generate_qc(fname_in1 = t2_image, fname_seg = t2_seg, path_qc = path_qc,
-                   process = "sct_deepseg_gm")
+    qc.generate_qc(fname_in1=t2_image, fname_seg=t2_seg, path_qc=path_qc, process="sct_deepseg_gm")
     return True
 
 
