@@ -4,10 +4,18 @@
 
 
 import os
+import pytest
 
 import spinalcordtoolbox as sct
 import spinalcordtoolbox.deepseg.core
 import spinalcordtoolbox.deepseg.models
+
+
+param_deepseg = [
+    ({'fname_image': 'sct_testing_data/t2s/t2s.nii.gz',
+      'model': os.path.join(sct.__deepseg_dir__, 't2star_sc'),
+      'fname_seg_manual': 'sct_testing_data/t2s/t2s_seg-deepseg.nii.gz'}),
+]
 
 
 def test_install_model():
@@ -33,15 +41,17 @@ def test_model_dict():
         assert('default' in value)
 
 
-def test_segment_nifti():
+# noinspection 801,PyShadowingNames
+@pytest.mark.parametrize('params', param_deepseg)
+def test_segment_nifti(params):
     """
     Uses the locally-installed sct_testing_data
-    :return:
     """
+    fname_out = 't2s_seg_deepseg.nii.gz'
     output = sct.deepseg.core.segment_nifti(
-        'sct_testing_data/t2s/t2s.nii.gz',
-        os.path.join(sct.__deepseg_dir__, 't2star_sc'),
-        param={'o': 't2s_seg_deepseg.nii.gz'})
+        params['fname_image'], params['model'], param={'o': fname_out})
     # TODO: implement integrity test (for now, just checking if output segmentation file exists)
-    assert output == 't2s_seg_deepseg.nii.gz'
+    # Make sure output file is correct
+    assert output == fname_out
+    # Make sure output file exists
     assert os.path.isfile(output)
