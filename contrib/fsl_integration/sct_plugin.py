@@ -231,16 +231,21 @@ class SCTPanel(wx.Panel):
         self.column_right = wx.BoxSizer(wx.VERTICAL)
 
         sct_logo = self.get_logo()
-        self.column_left.Add(sct_logo, proportion=0, flag=wx.ALL, border=5)
+        logo_citation_hbox = wx.BoxSizer(wx.HORIZONTAL)
+        logo_citation_hbox.Add(sct_logo, 0, wx.HORIZONTAL, 5)
 
         txt_sct_citation = wx.VSCROLL | \
                            wx.HSCROLL | wx.TE_READONLY | \
                            wx.BORDER_SIMPLE
         html_sct_citation_window = html.HtmlWindow(self, wx.ID_ANY,
-                                            size=(400, 120),
+                                            size=(180, 80),
                                             style=txt_sct_citation)
         html_sct_citation_window.SetPage(self.DESCRIPTION_SCT)
-        self.column_left.Add(html_sct_citation_window, 0, wx.ALL, 5)
+        html_sct_citation_window.SetStandardFonts(size=9)
+
+        logo_citation_hbox.Add(html_sct_citation_window, 0, wx.HORIZONTAL, 5)
+
+        self.column_left.Add(logo_citation_hbox, proportion=0, flag=wx.ALL, border=5)
 
         html_desc_window = self.get_description()
         self.column_left.Add(html_desc_window, 0, wx.ALL, 5)
@@ -252,9 +257,6 @@ class SCTPanel(wx.Panel):
         self.log_window = wx.TextCtrl(self, wx.ID_ANY, size=(100, 300),
                           style = wx.TE_MULTILINE|wx.TE_READONLY|wx.HSCROLL)
 
-
-        log_window_label = wx.StaticText(self, label="Terminal Output")
-        self.column_right.Add(log_window_label, 0, wx.ALL, 5)
         self.column_right.Add(self.log_window, 1, wx.EXPAND|wx.ALL, 5)
 
         self.main_row.Add(self.column_left, 0, wx.ALL, 10)
@@ -293,6 +295,7 @@ class SCTPanel(wx.Panel):
                                 size=(400, 250),
                                 style=txt_style)
         htmlw.SetPage(self.DESCRIPTION)
+        htmlw.SetStandardFonts(size=9)
         return htmlw
 
     def call_sct_command(self, command):
