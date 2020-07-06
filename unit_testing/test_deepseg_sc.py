@@ -16,81 +16,81 @@ from spinalcordtoolbox import resampling
 from spinalcordtoolbox.testing.create_test_data import dummy_centerline
 
 
-def _preprocess_segment(fname_t2, fname_t2_seg, contrast_test, dim_3=False):
-    tmp_folder = sct.TempFolder()
-    tmp_folder_path = tmp_folder.get_path()
-    tmp_folder.chdir()
-
-    img = Image(fname_t2)
-    gt = Image(fname_t2_seg)
-
-    fname_t2_RPI, fname_t2_seg_RPI = 'img_RPI.nii.gz', 'seg_RPI.nii.gz'
-
-    img.change_orientation('RPI')
-    gt.change_orientation('RPI')
-    new_resolution = 'x'.join(['0.5', '0.5', str(img.dim[6])])
-    
-    img_res = \
-        resampling.resample_nib(img, new_size=[0.5, 0.5, img.dim[6]], new_size_type='mm', interpolation='linear')
-    gt_res = \
-        resampling.resample_nib(gt, new_size=[0.5, 0.5, img.dim[6]], new_size_type='mm', interpolation='linear')
-
-    img_res.save(fname_t2_RPI)
-
-    _, ctr_im, _ = deepseg_sc.find_centerline(algo='svm',
-                                                image_fname=fname_t2_RPI,
-                                                contrast_type=contrast_test,
-                                                brain_bool=False,
-                                                folder_output=tmp_folder_path,
-                                                remove_temp_files=1,
-                                                centerline_fname=None)
-
-    _, _, _, img = deepseg_sc.crop_image_around_centerline(im_in=img_res,
-                                                        ctr_in=ctr_im,
-                                                        crop_size=64)
-    _, _, _, gt = deepseg_sc.crop_image_around_centerline(im_in=gt_res,
-                                                        ctr_in=ctr_im,
-                                                        crop_size=64)
-    del ctr_im
-
-    img = deepseg_sc.apply_intensity_normalization(im_in=img)
-
-    if dim_3:  # If 3D kernels
-        fname_t2_RPI_res_crop, fname_t2_seg_RPI_res_crop = 'img_RPI_res_crop.nii.gz', 'seg_RPI_res_crop.nii.gz'
-        img.save(fname_t2_RPI_res_crop)
-        gt.save(fname_t2_seg_RPI_res_crop)
-        del img, gt
-
-        fname_t2_RPI_res_crop_res = 'img_RPI_res_crop_res.nii.gz'
-        fname_t2_seg_RPI_res_crop_res = 'seg_RPI_res_crop_res.nii.gz'
-        resampling.resample_file(fname_t2_RPI_res_crop, fname_t2_RPI_res_crop_res, new_resolution, 'mm', 'linear', verbose=0)
-        resampling.resample_file(fname_t2_seg_RPI_res_crop, fname_t2_seg_RPI_res_crop_res, new_resolution, 'mm', 'linear', verbose=0)
-        img, gt = Image(fname_t2_RPI_res_crop_res), Image(fname_t2_seg_RPI_res_crop_res)
-
-    tmp_folder.chdir_undo()
-    tmp_folder.cleanup()
-
-    return img, gt
+# def _preprocess_segment(fname_t2, fname_t2_seg, contrast_test, dim_3=False):
+#     tmp_folder = sct.TempFolder()
+#     tmp_folder_path = tmp_folder.get_path()
+#     tmp_folder.chdir()
+#
+#     img = Image(fname_t2)
+#     gt = Image(fname_t2_seg)
+#
+#     fname_t2_RPI, fname_t2_seg_RPI = 'img_RPI.nii.gz', 'seg_RPI.nii.gz'
+#
+#     img.change_orientation('RPI')
+#     gt.change_orientation('RPI')
+#     new_resolution = 'x'.join(['0.5', '0.5', str(img.dim[6])])
+#
+#     img_res = \
+#         resampling.resample_nib(img, new_size=[0.5, 0.5, img.dim[6]], new_size_type='mm', interpolation='linear')
+#     gt_res = \
+#         resampling.resample_nib(gt, new_size=[0.5, 0.5, img.dim[6]], new_size_type='mm', interpolation='linear')
+#
+#     img_res.save(fname_t2_RPI)
+#
+#     _, ctr_im, _ = deepseg_sc.find_centerline(algo='svm',
+#                                                 image_fname=fname_t2_RPI,
+#                                                 contrast_type=contrast_test,
+#                                                 brain_bool=False,
+#                                                 folder_output=tmp_folder_path,
+#                                                 remove_temp_files=1,
+#                                                 centerline_fname=None)
+#
+#     _, _, _, img = deepseg_sc.crop_image_around_centerline(im_in=img_res,
+#                                                         ctr_in=ctr_im,
+#                                                         crop_size=64)
+#     _, _, _, gt = deepseg_sc.crop_image_around_centerline(im_in=gt_res,
+#                                                         ctr_in=ctr_im,
+#                                                         crop_size=64)
+#     del ctr_im
+#
+#     img = deepseg_sc.apply_intensity_normalization(im_in=img)
+#
+#     if dim_3:  # If 3D kernels
+#         fname_t2_RPI_res_crop, fname_t2_seg_RPI_res_crop = 'img_RPI_res_crop.nii.gz', 'seg_RPI_res_crop.nii.gz'
+#         img.save(fname_t2_RPI_res_crop)
+#         gt.save(fname_t2_seg_RPI_res_crop)
+#         del img, gt
+#
+#         fname_t2_RPI_res_crop_res = 'img_RPI_res_crop_res.nii.gz'
+#         fname_t2_seg_RPI_res_crop_res = 'seg_RPI_res_crop_res.nii.gz'
+#         resampling.resample_file(fname_t2_RPI_res_crop, fname_t2_RPI_res_crop_res, new_resolution, 'mm', 'linear', verbose=0)
+#         resampling.resample_file(fname_t2_seg_RPI_res_crop, fname_t2_seg_RPI_res_crop_res, new_resolution, 'mm', 'linear', verbose=0)
+#         img, gt = Image(fname_t2_RPI_res_crop_res), Image(fname_t2_seg_RPI_res_crop_res)
+#
+#     tmp_folder.chdir_undo()
+#     tmp_folder.cleanup()
+#
+#     return img, gt
 
 
 def test_segment_2d():
     from keras import backend as K
     K.set_image_data_format("channels_last")  # Set at channels_first in test_deepseg_lesion.test_segment()
 
-    contrast_test = 't2'
-    model_path = os.path.join(sct.__sct_dir__, 'data', 'deepseg_sc_models', '{}_sc.h5'.format(contrast_test))   
+    contrast_type = 't2'
+    # model_path = os.path.join(sct.__sct_dir__, 'data', 'deepseg_sc_models', '{}_sc.h5'.format(contrast_type))
 
-    fname_t2 = os.path.join(sct.__sct_dir__, 'sct_testing_data/t2/t2.nii.gz')  # install: sct_download_data -d sct_testing_data
-    fname_t2_seg = os.path.join(sct.__sct_dir__, 'sct_testing_data/t2/t2_seg-manual.nii.gz')  # install: sct_download_data -d sct_testing_data
+    fname_im = 'sct_testing_data/t2/t2.nii.gz'
+    fname_centerline_manual = 'sct_testing_data/t2/t2_centerline-manual.nii.gz'
+    fname_seg_manual = 'sct_testing_data/t2/t2_seg-manual.nii.gz'
 
-    img, gt = _preprocess_segment(fname_t2, fname_t2_seg, contrast_test)
-
-    seg = deepseg_sc.segment_2d(model_fname=model_path, contrast_type=contrast_test, input_size=(64,64), im_in=img)
-    assert seg.dtype == np.dtype('float32')
-
-    seg_im = img.copy()
-    seg_im.data = (seg > 0.5).astype(np.uint8)
-    assert msct_image.compute_dice(seg_im, gt) > 0.80
+    # img, gt = _preprocess_segment(fname_t2, fname_t2_seg, contrast_test)
+    kernel_size = '2d'
+    im_seg, _, _ = deepseg_sc.deep_segmentation_spinalcord(
+        Image(fname_im), contrast_type, ctr_algo='file', ctr_file=fname_centerline_manual, brain_bool=False,
+        kernel_size=kernel_size, threshold_seg=0.5)
+    assert im_seg.data.dtype == np.dtype('uint8')
+    assert msct_image.compute_dice(im_seg, Image(fname_seg_manual)) == 1.0
 
 
 def test_segment_3d():
