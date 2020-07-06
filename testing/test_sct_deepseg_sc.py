@@ -39,25 +39,6 @@ def init(param_test):
 
 def test_integrity(param_test):
     """
-    Test integrity of function
+    Integrity test has moved to unit_testing/ and is run with pytest
     """
-    # open output segmentation
-    im_seg = Image(param_test.file_seg)
-    # open ground truth
-    im_seg_manual = Image(param_test.fname_gt)
-    # compute dice coefficient between generated image and image from database
-    dice_segmentation = compute_dice(im_seg, im_seg_manual, mode='3d', zboundaries=False)
-    # display
-    param_test.output += 'Computed dice: '+str(dice_segmentation)
-    param_test.output += '\nDice threshold (if computed Dice smaller: fail): '+str(param_test.dice_threshold)
-
-    if dice_segmentation < param_test.dice_threshold:
-        param_test.status = 99
-        param_test.output += '\n--> FAILED'
-    else:
-        param_test.output += '\n--> PASSED'
-
-    # update Panda structure
-    param_test.results['dice'] = dice_segmentation
-
     return param_test
