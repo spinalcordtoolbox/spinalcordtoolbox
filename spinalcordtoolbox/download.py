@@ -153,7 +153,7 @@ def install_data(url, dest_folder):
     for cwd, ds, fs in os.walk(bundle_folder):
         ds.sort()
         fs.sort()
-        ds[:] = [ d for ds if d not in ("__MACOSX",) ]
+        ds[:] = [ d for d in ds if d not in ("__MACOSX",) ]
         for d in ds:
             srcpath = os.path.join(cwd, d)
             relpath = os.path.relpath(srcpath, bundle_folder)
