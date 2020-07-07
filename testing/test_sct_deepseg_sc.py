@@ -26,9 +26,6 @@ def init(param_test):
     """
     # initialization
     default_args = ['-i t2/t2.nii.gz -c t2 -qc testing-qc']  # default parameters
-    param_test.file_seg = 't2_seg.nii.gz'  # output segmentation
-    param_test.fname_gt = 't2/t2_seg-manual.nii.gz'
-    param_test.dice_threshold = 0.8  # TODO: change for 1.0
 
     # assign default params
     if not param_test.args:
