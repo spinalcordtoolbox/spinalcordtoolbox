@@ -11,14 +11,10 @@ import torch
 from spinalcordtoolbox.cropping import ImageCropper, BoundingBox
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.utils import Metavar, SmartFormatter
-<<<<<<< Updated upstream
 from spinalcordtoolbox.vertebrae.models import *
-=======
 import scripts.sct_utils as sct
-
 import torch
 from spinalcordtoolbox.vertebrae.models_c2 import *
->>>>>>> Stashed changes
 from spinalcordtoolbox.vertebrae.predict_utils import *
 
 
