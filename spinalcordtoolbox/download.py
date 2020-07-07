@@ -141,6 +141,8 @@ def install_data(url, dest_folder):
         # tarball with single-directory -> go under
         with os.scandir(extraction_folder) as it:
             for entry in it:
+                if entry.name in ("__MACOSX",):
+                    continue
                 bundle_folder = entry.path
     else:
         # bomb scenario -> stay here
