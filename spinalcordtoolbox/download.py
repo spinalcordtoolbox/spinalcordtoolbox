@@ -109,23 +109,39 @@ def install_data(url, dest_folder, keep=False):
     Download a data bundle from a URL and install in the destination folder.
 
     :param url: URL or sequence thereof (if mirrors).
-    :param dest_folder: destination directory. Will be cleaned if exists,
-                        unless `keep` is True.
+    :param dest_folder: destination directory for the data (to be created).
+    :param keep: whether to keep existing data in the destination folder.
     :return: None
 
     Notes:
 
+    - The function tries to be smart about the data contents.
+
+      Examples:
+
+      a. If the archive only contains a `README.md`, and the destination folder is `${dst}`,
+         `${dst}/README.md` will be created.
+
+         Note: an archive not containing a single folder is commonly known as a "bomb" because
+         it puts files anywhere in the current working directory.
+         https://en.wikipedia.org/wiki/Tar_(computing)#Tarbomb
+
+      b. If the archive contains a `${dir}/README.md`, and the destination folder is `${dst}`,
+         `${dst}/README.md` will be created.
+
+         Note: typically the package will be called `${basename}-${revision}.zip` and contain
+         a root folder named `${basename}-${revision}/` under which all the other files will
+         be located.
+         The right thing to do in this case is to take the files from there and install them
+         in `${dst}`.
+
     - Uses `download_data()` to retrieve the data.
     - Uses `unzip()` to extract the bundle.
-    - If destination already exists, it is cleared first,
-      from files that would be in the bundle (not the rest).
     """
 
     if not keep and os.path.exists(dest_folder):
         shutil.rmtree(dest_folder)
-        os.makedirs(dest_folder)
-    else:
-        os.makedirs(dest_folder, exist_ok=True)
+    os.makedirs(dest_folder, exist_ok=True)
 
     tmp_file = download_data(url)
 
@@ -155,6 +171,7 @@ def install_data(url, dest_folder, keep=False):
         # bomb scenario -> stay here
         bundle_folder = extraction_folder
 
+    # Copy over
     for cwd, ds, fs in os.walk(bundle_folder):
         ds.sort()
         fs.sort()
@@ -164,7 +181,7 @@ def install_data(url, dest_folder, keep=False):
             relpath = os.path.relpath(srcpath, bundle_folder)
             dstpath = os.path.join(dest_folder, relpath)
             if os.path.exists(dstpath):
-                # lazy -- we assume it's a directory, otherwise it will crash safely
+                # lazy -- we assume existing is a directory, otherwise it will crash safely
                 logger.debug("- d- %s", relpath)
             else:
                 logger.debug("- d+ %s", relpath)
