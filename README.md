@@ -205,6 +205,7 @@ Please visit our video tutorials [here](https://www.youtube.com/channel/UC3o_1ar
 - [Grabher et al. Neurodegeneration in the Spinal Ventral Horn Prior to Motor Impairment in Cervical Spondylotic Myelopathy. Journal of Neurotrauma 2017](http://online.liebertpub.com/doi/abs/10.1089/neu.2017.4980)
 - [Duval et al. Scan–rescan of axcaliber, macromolecular tissue volume, and g-ratio in the spinal cord. Magn Reson Med 2017](http://onlinelibrary.wiley.com/doi/10.1002/mrm.26945/full)
 - [Smith et al. Lateral corticospinal tract damage correlates with motor output in incomplete spinal cord injury. Archives of Physical Medicine and Rehabilitation 2017](http://www.sciencedirect.com/science/article/pii/S0003999317312844)
+- [Prados et al. Spinal cord grey matter segmentation challenge. Neuroimage 2017](https://www.sciencedirect.com/science/article/pii/S1053811917302185#f0005)
 - [Peterson et al. Test-Retest and Interreader Reproducibility of Semiautomated Atlas-Based Analysis of Diffusion Tensor Imaging Data in Acute Cervical Spine Trauma in Adult Patients. AJNR Am J Neuroradiol. 2017 Oct;38(10):2015-2020](https://www.ncbi.nlm.nih.gov/pubmed/28818826)
 - [Kafali et al. Phase-correcting non-local means filtering for diffusion-weighted imaging of the spinal cord. Magn Reson Med 2018](http://onlinelibrary.wiley.com/doi/10.1002/mrm.27105/full)
 - [Albrecht et al. Neuroinflammation of the spinal cord and nerve roots in chronic radicular pain patients. Pain. 2018 May;159(5):968-977. doi: 10.1097/j.pain.0000000000001171](https://www.ncbi.nlm.nih.gov/pubmed/29419657)
