@@ -30,7 +30,7 @@ def test_deep_segmentation_spinalcord(params):
         kernel_size=params['kernel'], threshold_seg=0.5)
     assert im_seg.data.dtype == np.dtype('uint8')
     # Compare with ground-truth segmentation
-    assert np.all(im_seg.data == Image(params['fname_seg_manual']))
+    assert np.all(im_seg.data == Image(params['fname_seg_manual']).data)
 
 
 def test_intensity_normalization():
