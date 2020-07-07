@@ -40,7 +40,10 @@ def get_parser(dict_url):
     parser.add_option(
         name="-o",
         type_value="folder_creation",
-        description="Path where to save the downloaded data (defaults to dataset name in current working directory)",
+        description=("Path where to save the downloaded data"
+         " (defaults to ./${dataset-name})."
+         " Directory will be created."
+         " Warning: existing data in the directory will be erased."),
         mandatory=False)
     parser.add_option(
         name="-h",
