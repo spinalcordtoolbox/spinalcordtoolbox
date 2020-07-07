@@ -573,8 +573,8 @@ if [[ $NO_SCT_BIN_INSTALL ]]; then
   print warning "WARNING: SCT binaries will not be (re)-installed"
 else
   print info "Installing binaries..."
-  run "sct_download_data -d binaries_"$OS" -o $SCT_DIR/$BIN_DIR" || \
-    die "Unsupported OS $OS: can't install binaries."
+  run "sct_download_data -d binaries_${OS} -o ${SCT_DIR}/${BIN_DIR} -k" || \
+      die "Unsupported OS $OS: can't install binaries."
 fi
 print info "All requirements installed!"
 
