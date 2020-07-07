@@ -43,12 +43,17 @@ def get_parser(dict_url):
         description=("Path where to save the downloaded data"
          " (defaults to ./${dataset-name})."
          " Directory will be created."
-         " Warning: existing data in the directory will be erased."),
+         " Warning: existing data in the directory will be erased unless -k is provided."),
         mandatory=False)
     parser.add_option(
         name="-h",
         type_value=None,
         description="Display this help",
+        mandatory=False)
+    parser.add_option(
+        name="-k",
+        type_value=None,
+        description="Keep existing data in destination directory",
         mandatory=False)
     return parser
 
@@ -147,7 +152,7 @@ def main(args=None):
     dest_folder = arguments.get('-o', os.path.join(os.path.abspath(os.curdir), data_name))
 
     url = dict_url[data_name]
-    install_data(url, dest_folder)
+    install_data(url, dest_folder, keep=arguments.get("-k", False))
 
     sct.printv('Done!\n', verbose)
     return 0
