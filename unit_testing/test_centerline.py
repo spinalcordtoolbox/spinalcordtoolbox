@@ -71,10 +71,13 @@ im_centerlines = [
 
 param_optic = [
     ({'fname_image': 'sct_testing_data/t2/t2.nii.gz',
+      'contrast': 't2',
       'fname_centerline-optic': 'sct_testing_data/t2/t2_centerline-optic.nii.gz'}),
     ({'fname_image': 'sct_testing_data/t2s/t2s.nii.gz',
+      'contrast': 't2s',
       'fname_centerline-optic': 'sct_testing_data/t2s/t2s_centerline-optic.nii.gz'}),
     ({'fname_image': 'sct_testing_data/dmri/dwi_mean.nii.gz',
+      'contrast': 'dwi',
       'fname_centerline-optic': 'sct_testing_data/dmri/dwi_centerline-optic.nii.gz'}),
     ]
 
@@ -162,10 +165,9 @@ def test_get_centerline_optic(params):
     im.data[0, 0, 0] = np.nan
     im.data[1, 0, 0] = np.inf
     im_centerline, arr_out, _, _ = get_centerline(
-        im, ParamCenterline(algo_fitting='optic', contrast='t2', minmax=False), verbose=VERBOSE)
-    # Open ground truth segmentation and compare
-    assert sct.math.dice(im_centerline.data,
-                         Image(params['fname_centerline-optic']).data) == 1.0
+        im, ParamCenterline(algo_fitting='optic', contrast=params['contrast'], minmax=False), verbose=VERBOSE)
+    # Compare with ground truth centerline
+    assert np.all(im_centerline.data == Image(params['fname_centerline-optic']).data)
 
 
 def test_round_and_clip():
