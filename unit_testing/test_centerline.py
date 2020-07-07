@@ -78,7 +78,7 @@ param_optic = [
       'fname_centerline-optic': 'sct_testing_data/t2s/t2s_centerline-optic.nii.gz'}),
     ({'fname_image': 'sct_testing_data/dmri/dwi_mean.nii.gz',
       'contrast': 'dwi',
-      'fname_centerline-optic': 'sct_testing_data/dmri/dwi_centerline-optic.nii.gz'}),
+      'fname_centerline-optic': 'sct_testing_data/dmri/dwi_mean_centerline-optic.nii.gz'}),
     ]
 
 
