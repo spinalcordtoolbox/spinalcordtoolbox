@@ -14,7 +14,7 @@ import zipfile
 import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util import Retry
-from tqdm import tqdm
+from spinalcordtoolbox.utils import sct_progress_bar
 
 import spinalcordtoolbox as sct
 import spinalcordtoolbox.utils
@@ -64,15 +64,15 @@ def download_data(urls):
 
             with open(tmp_path, 'wb') as tmp_file:
                 total = int(response.headers.get('content-length', 1))
-                tqdm_bar = tqdm(total=total, unit='B', unit_scale=True, desc="Status", ascii=False, position=0)
+                sct_bar = sct_progress_bar(total=total, unit='B', unit_scale=True, desc="Status", ascii=False, position=0)
 
                 for chunk in response.iter_content(chunk_size=8192):
                     if chunk:
                         tmp_file.write(chunk)
                         dl_chunk = len(chunk)
-                        tqdm_bar.update(dl_chunk)
+                        sct_bar.update(dl_chunk)
 
-                tqdm_bar.close()
+                sct_bar.close()
             return tmp_path
 
         except Exception as e:
