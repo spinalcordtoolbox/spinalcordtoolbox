@@ -5,6 +5,7 @@
 
 import os
 import pytest
+import numpy as np
 
 import nibabel
 
@@ -57,6 +58,5 @@ def test_segment_nifti(params):
     assert output == fname_out
     # Make sure output file exists
     assert os.path.isfile(output)
-    # Compare with ground-truth
-    assert sct.math.dice(nibabel.load(output).get_fdata(),
-                         nibabel.load(params['fname_seg_manual']).get_fdata()) == 1.0
+    # Compare with ground-truth segmentation
+    assert np.all(nibabel.load(output).get_fdata() == nibabel.load(params['fname_seg_manual']).get_fdata())
