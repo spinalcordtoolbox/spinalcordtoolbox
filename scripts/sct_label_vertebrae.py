@@ -318,7 +318,7 @@ def main(args=None):
             # which does not apply a convolution across all voxels (highly inneficient)
             im_label.save(fname_labelz)
         elif fname_initlabel:
-            fname_labelz = fname_initlabel
+            Image(fname_initlabel).save(fname_labelz)
         else:
             # automatically finds C2-C3 disc
             im_data = Image('data.nii')

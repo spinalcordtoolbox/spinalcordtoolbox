@@ -12,6 +12,7 @@ import logging
 import argparse
 import subprocess
 import shutil
+import tqdm
 from enum import Enum
 
 logger = logging.getLogger(__name__)
@@ -184,7 +185,7 @@ def parse_num_list(str_num):
         if m is not None:
             a = int(m.group("first"))
             b = int(m.group("last"))
-            list_num += [ x for x in range(a, b+1) if x not in list_num ]
+            list_num += [x for x in range(a, b + 1) if x not in list_num]
             continue
         raise ValueError("unexpected group element {} group spec {}".format(element, str_num))
 
@@ -213,10 +214,10 @@ def parse_num_list_inv(list_int):
     # Loop across list elements and build string iteratively
     for i in range(1, len(list_int)):
         # if previous element is the previous integer: I(i-1) = I(i)-1
-        if list_int[i] == list_int[i-1] + 1:
+        if list_int[i] == list_int[i - 1] + 1:
             # if ":" already there, update the last chars (based on the number of digits)
             if colon_is_present:
-                str_num = str_num[:-len(str(list_int[i-1]))] + str(list_int[i])
+                str_num = str_num[:-len(str(list_int[i - 1]))] + str(list_int[i])
             # if not, add it along with the new int value
             else:
                 str_num += ':' + str(list_int[i])
@@ -257,6 +258,61 @@ def tmp_create(basename=None):
     return tmpdir
 
 
+def send_email(addr_to, addr_from, passwd, subject, message='', filename=None, html=False, smtp_host=None, smtp_port=None, login=None):
+    if smtp_host is None:
+        smtp_host = os.environ.get("SCT_SMTP_SERVER", "smtp.gmail.com")
+    if smtp_port is None:
+        smtp_port = int(os.environ.get("SCT_SMTP_PORT", 587))
+    if login is None:
+        login = addr_from
+
+    import smtplib
+    from email.mime.multipart import MIMEMultipart
+    from email.mime.text import MIMEText
+    from email.mime.base import MIMEBase
+    from email import encoders
+
+    if html:
+        msg = MIMEMultipart("alternative")
+    else:
+        msg = MIMEMultipart()
+
+    msg['From'] = addr_from
+    msg['To'] = addr_to
+    msg['Subject'] = subject
+
+    body = message
+    if not isinstance(body, bytes):
+        body = body.encode("utf-8")
+
+    body_html = """
+<html><pre style="font: monospace"><body>
+{}
+</body></pre></html>""".format(body).encode()
+
+    if html:
+        msg.attach(MIMEText(body_html, 'html', "utf-8"))
+
+    msg.attach(MIMEText(body, 'plain', "utf-8"))
+
+    # filename = "NAME OF THE FILE WITH ITS EXTENSION"
+    if filename:
+        attachment = open(filename, "rb")
+        part = MIMEBase('application', 'octet-stream')
+        part.set_payload((attachment).read())
+        encoders.encode_base64(part)
+        part.add_header('Content-Disposition', "attachment; filename= %s" % filename)
+        msg.attach(part)
+
+    # send email
+    server = smtplib.SMTP(smtp_host, smtp_port)
+    server.starttls()
+    server.login(login, passwd)
+    text = msg.as_string()
+    server.sendmail(addr_from, addr_to, text)
+    server.quit()
+
+
 def __get_branch():
     """
     Fallback if for some reason the value vas no set by sct_launcher
@@ -293,8 +349,8 @@ def __get_commit():
         unclean = True
         for line in output.decode().strip().splitlines():
             line = line.rstrip()
-            if line.startswith("??"): # ignore ignored files, they can't hurt
-               continue
+            if line.startswith("??"):  # ignore ignored files, they can't hurt
+                continue
             break
         else:
             unclean = False
@@ -312,7 +368,7 @@ def _git_info(commit_env='SCT_COMMIT', branch_env='SCT_BRANCH'):
         sct_commit = __get_commit() or sct_commit
         sct_branch = __get_branch() or sct_branch
 
-    if sct_commit is not 'unknown':
+    if sct_commit != 'unknown':
         install_type = 'git'
     else:
         install_type = 'package'
@@ -329,6 +385,16 @@ def _version_string():
         return version_sct
     else:
         return "{install_type}-{sct_branch}-{sct_commit}".format(**locals())
+
+
+def sct_progress_bar(*args, **kwargs):
+    """Thin wrapper around `tqdm.tqdm` which checks `SCT_PROGRESS_BAR` muffling the progress
+       bar if the user sets it to `no`, `off`, or `false` (case insensitive)."""
+    do_pb = os.environ.get('SCT_PROGRESS_BAR', 'yes')
+    if do_pb.lower() in ['off', 'no', 'false']:
+        kwargs['disable'] = True
+
+    return tqdm.tqdm(*args, **kwargs)
 
 
 __sct_dir__ = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
