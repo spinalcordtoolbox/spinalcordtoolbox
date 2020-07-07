@@ -1,17 +1,15 @@
+#!/usr/bin/env python
+# -*- coding: utf-8
+# pytest unit tests for spinalcordtoolbox.deepseg_sc
+
+
 from __future__ import absolute_import
 
-import os
-import sys
 import pytest
-
 import numpy as np
 import nibabel as nib
 
-from spinalcordtoolbox.utils import __sct_dir__
-sys.path.append(os.path.join(__sct_dir__, 'scripts'))
-import sct_utils as sct
 from spinalcordtoolbox.image import Image
-import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.deepseg_sc import core as deepseg_sc
 from spinalcordtoolbox.testing.create_test_data import dummy_centerline
 
@@ -19,7 +17,7 @@ from spinalcordtoolbox.testing.create_test_data import dummy_centerline
 param_deepseg = [
     ({'fname_seg_manual': 'sct_testing_data/t2/t2_seg-deepseg_sc-2d.nii.gz', 'contrast': 't2', 'kernel': '2d'}),
     ({'fname_seg_manual': 'sct_testing_data/t2/t2_seg-deepseg_sc-3d.nii.gz', 'contrast': 't2', 'kernel': '3d'}),
-]
+    ]
 
 # noinspection 801,PyShadowingNames
 @pytest.mark.parametrize('params', param_deepseg)
@@ -31,7 +29,8 @@ def test_deep_segmentation_spinalcord(params):
         Image(fname_im), params['contrast'], ctr_algo='file', ctr_file=fname_centerline_manual, brain_bool=False,
         kernel_size=params['kernel'], threshold_seg=0.5)
     assert im_seg.data.dtype == np.dtype('uint8')
-    assert msct_image.compute_dice(im_seg, Image(params['fname_seg_manual'])) == 1.0
+    # Compare with ground-truth segmentation
+    assert np.all(im_seg.data == Image(params['fname_seg_manual']))
 
 
 def test_intensity_normalization():
@@ -94,7 +93,6 @@ def test_uncrop_image():
     assert img_uncrop.data.shape == input_shape
     z_rand = np.random.randint(0, input_shape[2])
     assert np.allclose(img_uncrop.data[x_crop_lst[z_rand]:x_crop_lst[z_rand]+crop_size,
-                                        y_crop_lst[z_rand]:y_crop_lst[z_rand]+crop_size,
-                                        z_rand],
-                        data_crop[:, :, z_rand])
-
+                       y_crop_lst[z_rand]:y_crop_lst[z_rand]+crop_size,
+                       z_rand],
+                       data_crop[:, :, z_rand])
