@@ -109,7 +109,7 @@ def install_data(url, dest_folder):
     Download a data bundle from a URL and install in the destination folder.
 
     :param url: URL or sequence thereof (if mirrors).
-    :param dest_folder: destination folder
+    :param dest_folder: destination directory. Will be cleaned if exists.
     :return: None
 
     Notes:
@@ -119,6 +119,11 @@ def install_data(url, dest_folder):
     - If destination already exists, it is cleared first,
       from files that would be in the bundle (not the rest).
     """
+
+    if os.path.exists(dest_folder):
+        shutil.rmtree(dest_folder)
+
+    os.makedirs(dest_folder)
 
     tmp_file = download_data(url)
 
@@ -148,10 +153,6 @@ def install_data(url, dest_folder):
         # bomb scenario -> stay here
         bundle_folder = extraction_folder
 
-    logger.info("Destination folder: {}".format(dest_folder))
-
-    os.makedirs(dest_folder, exist_ok=True)
-
     for cwd, ds, fs in os.walk(bundle_folder):
         ds.sort()
         fs.sort()
@@ -160,24 +161,14 @@ def install_data(url, dest_folder):
             srcpath = os.path.join(cwd, d)
             relpath = os.path.relpath(srcpath, bundle_folder)
             dstpath = os.path.join(dest_folder, relpath)
-            if os.path.exists(dstpath):
-                # lazy -- we assume it's a directory, otherwise it will crash safely
-                logger.debug("- d- %s", relpath)
-            else:
-                logger.debug("- d+ %s", relpath)
-                os.makedirs(dstpath)
+            logger.debug("- d+ %s", relpath)
+            os.makedirs(dstpath)
 
         for f in fs:
             srcpath = os.path.join(cwd, f)
             relpath = os.path.relpath(srcpath, bundle_folder)
             dstpath = os.path.join(dest_folder, relpath)
-            if os.path.exists(dstpath):
-                logger.debug("- f! %s", relpath)
-                logger.warning("Updating existing %s", dstpath)
-                os.unlink(dstpath)
-            else:
-                logger.debug("- f+ %s", relpath)
-
+            logger.debug("- f+ %s", relpath)
             shutil.copy(srcpath, dstpath)
 
     logger.info("Removing temporary folders...")
