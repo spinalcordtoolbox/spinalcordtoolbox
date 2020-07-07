@@ -150,7 +150,7 @@ def infer_image(image, model, c=0.02, thr=0.3):
     # retrieve 2-D for transformation (CLAHE & Normalization )
     patch = image[:, :, 0]
     patch = normalize(patch)
-    # patch = skimage.exposure.equalize_adapthist(patch, kernel_size=10, clip_limit=0.02)
+    patch = skimage.exposure.equalize_adapthist(patch, kernel_size=5, clip_limit=0.02)
     patch = np.expand_dims(patch, axis=-1)
     patch = transforms.ToTensor()(patch).unsqueeze(0)
     if cuda_available:

@@ -1,4 +1,6 @@
 import os
+import sys
+sys.path.append('/home/GRAMES.POLYMTL.CA/luroub/luroub_local/lurou_local/sct/sct/scripts')
 import numpy as np
 import pandas as pd
 import sct_utils as sct
@@ -9,7 +11,7 @@ from config_file import config
 
 
 def run_optic(fname_in, contrast, ofolder):
-    cmd = ['sct_get_centerline', '-i', fname_in, '-c', contrast, '-ofolder', ofolder]
+    cmd = ['sct_get_centerline', '-i', fname_in, '-c', contrast, '-o', ofolder]
     sct.run(cmd)
 
 
@@ -68,6 +70,8 @@ def run_crop(fname_in, fname_out, nb_slice_average=1.0):
 
 def preprocessing(df, folder_out, contrast_centerline):
     sct.printv("Preprocessing...")
+    train = []
+    gt =[]
 
     qc_fold = os.path.join(folder_out, 'qc')
     if not os.path.isdir(qc_fold):
@@ -85,12 +89,13 @@ def preprocessing(df, folder_out, contrast_centerline):
             if not os.path.isdir(folder_out_cur):
                 os.makedirs(folder_out_cur)
 
-            ctr = os.path.join(folder_out_cur, img_basename + '_centerline_optic.nii.gz')
+            ctr = os.path.join(folder_out_cur, img_basename + '_centerline_optic')
             if not os.path.isfile(ctr):
-                run_optic(img, contrast_centerline, folder_out_cur)
+                run_optic(img, contrast_centerline, ctr)
 
             flat_in = os.path.join(img_head, img_basename + '_flatten.nii.gz')
             flat = os.path.join(folder_out_cur, img_basename + '_flatten.nii.gz')
+            ctr = os.path.join(folder_out_cur, img_basename + '_centerline_optic.nii.gz')
             if not os.path.isfile(flat) and os.path.isfile(ctr):
                 run_flat(img, ctr, folder_out_cur)
                 sct.mv(flat_in, flat)
@@ -103,17 +108,19 @@ def preprocessing(df, folder_out, contrast_centerline):
                 run_crop(labels, oneslice_gt, 1.0)
 
             if os.path.isfile(oneslice) and os.path.isfile(oneslice_gt):
-                df.loc[idx, 'train'] = os.path.abspath(oneslice)
-                df.loc[idx, 'gt'] = os.path.abspath(oneslice_gt)
+                train.append(os.path.abspath(oneslice))
+                gt.append(os.path.abspath(oneslice_gt))
 
                 qc_file = os.path.join(qc_fold, '_'.join([row.subject, row.contrast]) + '.png')
                 if not os.path.isfile(qc_file):
                     create_qc(oneslice, oneslice_gt, qc_file)
-
+    df['train']=train
+    df['gt'] = gt
+    print(train)
     return df
 
 
-# def train_model(df, model_name):
+#def train_model(df, model_name):
     sct.printv("Training...")
     train_txt = 'train_lst.txt'
     train_gt_txt = 'train_gt_lst.txt'
@@ -134,7 +141,7 @@ def preprocessing(df, folder_out, contrast_centerline):
     if os.path.isfile(model_path):
         sct.rm(model_path)
     cmd_train = 'isct_train_svm -hogsg -incr=20 ' + model_name + ' ' + train_txt + ' ' + train_gt_txt + ' --list True'
-    sct.run(cmd_train, verbose=0, raise_exception=False)
+    sct.run(cmd_train, verbose=0, raise_exception=True)
 
 
 def main():
@@ -143,9 +150,10 @@ def main():
     model_name = config['model_name']
     contrast_centerline = config['contrast_centerline']
 
-    df = preprocessing(df, folder_out, contrast_centerline)
+    df_2 = preprocessing(df, folder_out, contrast_centerline)
+    df_2.to_pickle('df_preprocess_t2.pkl')
 
-    # train_model(df, model_name)
+   # train_model(df_2, model_name)
 
 if __name__ == '__main__':
     main()

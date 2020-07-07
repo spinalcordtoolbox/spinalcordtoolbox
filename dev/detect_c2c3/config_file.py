@@ -10,16 +10,16 @@ config = dict()
 # >> d = {'subject': ['sub-01', 'sub-02'], 'img': ['/Users/JonDoe/data/sub-01/t2.nii.gz', '/Users/JonDoe/data/sub-02/t2_ax.nii.gz'], 'label': ['/Users/JonDoe/data/sub-01/t2_label.nii.gz', '/Users/JonDoe/data/sub-02/t2_ax_label.nii.gz']}
 # >> df = pd.DataFrame(data=d)
 # >> df.to_pickle(file_name)
-config['dataframe_database'] = ''
+config['dataframe_database'] = '/home/GRAMES.POLYMTL.CA/luroub/luroub_local/lurou_local/deep_VL_2019/hog_train/training_set_hog.pkl'
 
 # Folder where the preprocessed data will be saved.
 # Please use absolute folder and add a "/" at the end.
-config['folder_out'] = ''
+config['folder_out'] = '/home/GRAMES.POLYMTL.CA/luroub/luroub_local/lurou_local/deep_VL_2019/hog_train/'
 
 # Basename used to save the model in a file.
 # Example: basename 'model_c2c3' will generate model file: 'model_c2c3.yml'
-config['model_name'] = ''
+config['model_name'] = 'model_c2c3_retrain_lucas'
 
 # Image contrast: 't1' or 't2'
 # The contrast is used by sct_get_centerline during the preprocessing step.
-config['contrast_centerline'] = ''
+config['contrast_centerline'] = 't2'

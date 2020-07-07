@@ -11,7 +11,14 @@ import torch
 from spinalcordtoolbox.cropping import ImageCropper, BoundingBox
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.utils import Metavar, SmartFormatter
+<<<<<<< Updated upstream
 from spinalcordtoolbox.vertebrae.models import *
+=======
+import scripts.sct_utils as sct
+
+import torch
+from spinalcordtoolbox.vertebrae.models_c2 import *
+>>>>>>> Stashed changes
 from spinalcordtoolbox.vertebrae.predict_utils import *
 
 
@@ -75,16 +82,16 @@ def main(args=None):
     cuda_available = torch.cuda.is_available()
 
     if arguments.net == 'CC':
-        model = ModelCountception_v2(inplanes=1, outplanes=1)
+        model = ModelCountception_v3(inplanes=1, outplanes=1)
 
         if contrast == 't1':
             model.load_state_dict(torch.load(
-                os.path.join(sct.__sct_dir__, 'spinalcordtoolbox/vertebrae/checkpoints/Countception_floatC2T2.model'),
+                os.path.join(sct.__sct_dir__, 'spinalcordtoolbox/vertebrae/checkpoints/Countception_C2T1v3.model'),
                 map_location='cpu')['model_weights'])
 
         elif contrast == 't2':
             model.load_state_dict(torch.load(
-                os.path.join(sct.__sct_dir__, 'spinalcordtoolbox/vertebrae/checkpoints/Countception_floatC2T2.model'),
+                os.path.join(sct.__sct_dir__,'spinalcordtoolbox/vertebrae/checkpoints/Countception_C2T2v3.model'),
                 map_location='cpu')['model_weights'])
 
     elif arguments.net == 'AttU':
@@ -96,7 +103,7 @@ def main(args=None):
 
         elif contrast == 't2':
             model.load_state_dict(torch.load(
-                '/home/GRAMES.POLYMTL.CA/luroub/luroub_local/lurou_local/deep_VL_2019/ivado_med/scripts_vertebral_labeling/checkpoints/attunet_c2T2.model',
+                os.path.join(sct.__sct_dir__, 'spinalcordtoolbox/vertebrae/checkpoints/AttU_curveC2T2.model'),
                 map_location='cpu')['model_weights'])
 
     else:
@@ -113,12 +120,12 @@ def main(args=None):
     # debugging
     im_shape = arr.shape
     ind = int(np.round(arr.shape[0] / 2))
-    inp = np.mean(arr[ind - 2:ind + 2, :, :], 0)
-    pad = int(np.ceil(arr.shape[2] / 32)) * 32
-    xpad = int(np.ceil(arr.shape[1] / 32)) * 32
-    img_tmp = np.zeros((xpad, pad), dtype=np.float64)
-    img_tmp[0:inp.shape[0], 0:inp.shape[1]] = inp
-    inp = np.expand_dims(img_tmp, -1)
+    inp = np.mean(arr[ind - 3:ind + 3, :, :], 0)
+   # pad = int(np.ceil(arr.shape[2] / 32)) * 32
+   # xpad = int(np.ceil(arr.shape[1] / 32)) * 32 
+   # img_tmp = np.zeros((xpad, pad), dtype=np.float64)
+   # img_tmp[0:inp.shape[0], 0:inp.shape[1]] = inp
+    inp = np.expand_dims(inp, -1)
     sct.printv('Predicting coordinate')
 
     coord = prediction_coordinates(inp, model, aim='c2', heatmap=0, cud_test=cuda_available)
@@ -128,9 +135,11 @@ def main(args=None):
         return (100)
 
     x = coord
-    if len(x) == 1:
-        if int(x[0][1]) < im_shape[1] and int(x[0][0]) < im_shape[2]:
-            mask_out[ind, x[0][1], x[0][0]] = 10
+    print(x)
+    if len(x)==1:
+        print(imsh)
+        if int(x[0][1]) < imsh[1] and int(x[0][0]) < imsh[2]:
+           mask_out[ind, x[0][1], x[0][0]] = 3
     sct.printv('saving image')
     im_shape = arr.shape
     to_save = Image(param=[im_shape[0], im_shape[1], im_shape[2]], hdr=im_input.header)
