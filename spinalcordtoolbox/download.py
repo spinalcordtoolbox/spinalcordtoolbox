@@ -104,44 +104,102 @@ def unzip(compressed, dest_folder):
         raise
 
 
-def install_data(url, dest_folder):
+def install_data(url, dest_folder, keep=False):
     """
-    Download data from a URL and install in the appropriate folder. Deals with multiple mirrors, retry download,
-    check if data already exist.
-    :param url: string or list or strings. URL or list of URLs (if mirrors).
-    :param dest_folder:
-    :return:
+    Download a data bundle from a URL and install in the destination folder.
+
+    :param url: URL or sequence thereof (if mirrors).
+    :param dest_folder: destination directory for the data (to be created).
+    :param keep: whether to keep existing data in the destination folder.
+    :return: None
+
+    Notes:
+
+    - The function tries to be smart about the data contents.
+
+      Examples:
+
+      a. If the archive only contains a `README.md`, and the destination folder is `${dst}`,
+         `${dst}/README.md` will be created.
+
+         Note: an archive not containing a single folder is commonly known as a "bomb" because
+         it puts files anywhere in the current working directory.
+         https://en.wikipedia.org/wiki/Tar_(computing)#Tarbomb
+
+      b. If the archive contains a `${dir}/README.md`, and the destination folder is `${dst}`,
+         `${dst}/README.md` will be created.
+
+         Note: typically the package will be called `${basename}-${revision}.zip` and contain
+         a root folder named `${basename}-${revision}/` under which all the other files will
+         be located.
+         The right thing to do in this case is to take the files from there and install them
+         in `${dst}`.
+
+    - Uses `download_data()` to retrieve the data.
+    - Uses `unzip()` to extract the bundle.
     """
 
-    # Download data
+    if not keep and os.path.exists(dest_folder):
+        logger.warning("Removing existing destination folder “%s”", dest_folder)
+        shutil.rmtree(dest_folder)
+    os.makedirs(dest_folder, exist_ok=True)
+
     tmp_file = download_data(url)
 
-    # unzip
-    dest_tmp_folder = sct.utils.tmp_create()
-    unzip(tmp_file, dest_tmp_folder)
-    extracted_files_paths = []
-    # Get the name of the extracted files and directories
-    extracted_files = os.listdir(dest_tmp_folder)
-    for extracted_file in extracted_files:
-        extracted_files_paths.append(os.path.join(os.path.abspath(dest_tmp_folder), extracted_file))
+    extraction_folder = sct.utils.tmp_create()
 
-    # Check if files and folder already exists
-    logger.info("Destination folder: {}".format(dest_folder))
-    logger.info("Checking if folder already exists...")
-    for data_extracted_name in extracted_files:
-        fullpath_dest = os.path.join(dest_folder, data_extracted_name)
-        if os.path.isdir(fullpath_dest):
-            logger.warning("Folder {} already exists. Removing it...".format(data_extracted_name))
-            shutil.rmtree(fullpath_dest)
+    unzip(tmp_file, extraction_folder)
 
-    # Destination path
-    # for source_path in extracted_files_paths:
-        # Copy the content of source to destination (and create destination folder)
-    distutils.dir_util.copy_tree(dest_tmp_folder, dest_folder)
+    # Identify whether we have a proper archive or a tarbomb
+    with os.scandir(extraction_folder) as it:
+        has_dir = False
+        nb_entries = 0
+        for entry in it:
+            if entry.name in ("__MACOSX",):
+                continue
+            nb_entries += 1
+            if entry.is_dir():
+                has_dir = True
+
+    if nb_entries == 1 and has_dir:
+        # tarball with single-directory -> go under
+        with os.scandir(extraction_folder) as it:
+            for entry in it:
+                if entry.name in ("__MACOSX",):
+                    continue
+                bundle_folder = entry.path
+    else:
+        # bomb scenario -> stay here
+        bundle_folder = extraction_folder
+
+    # Copy over
+    for cwd, ds, fs in os.walk(bundle_folder):
+        ds.sort()
+        fs.sort()
+        ds[:] = [ d for d in ds if d not in ("__MACOSX",) ]
+        for d in ds:
+            srcpath = os.path.join(cwd, d)
+            relpath = os.path.relpath(srcpath, bundle_folder)
+            dstpath = os.path.join(dest_folder, relpath)
+            if os.path.exists(dstpath):
+                # lazy -- we assume existing is a directory, otherwise it will crash safely
+                logger.debug("- d- %s", relpath)
+            else:
+                logger.debug("- d+ %s", relpath)
+                os.makedirs(dstpath)
+
+        for f in fs:
+            srcpath = os.path.join(cwd, f)
+            relpath = os.path.relpath(srcpath, bundle_folder)
+            dstpath = os.path.join(dest_folder, relpath)
+            if os.path.exists(dstpath):
+                logger.debug("- f! %s", relpath)
+                logger.warning("Updating existing “%s”", dstpath)
+                os.unlink(dstpath)
+            else:
+                logger.debug("- f+ %s", relpath)
+            shutil.copy(srcpath, dstpath)
 
     logger.info("Removing temporary folders...")
-    try:
-        shutil.rmtree(os.path.split(tmp_file)[0])
-        shutil.rmtree(dest_tmp_folder)
-    except Exception as error:
-        logger.error("Cannot remove temp folder: " + repr(error))
+    shutil.rmtree(os.path.dirname(tmp_file))
+    shutil.rmtree(extraction_folder)
