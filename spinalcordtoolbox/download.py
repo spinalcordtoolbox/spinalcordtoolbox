@@ -140,6 +140,7 @@ def install_data(url, dest_folder, keep=False):
     """
 
     if not keep and os.path.exists(dest_folder):
+        logger.warning("Removing existing destination folder “%s”", dest_folder)
         shutil.rmtree(dest_folder)
     os.makedirs(dest_folder, exist_ok=True)
 
@@ -193,7 +194,7 @@ def install_data(url, dest_folder, keep=False):
             dstpath = os.path.join(dest_folder, relpath)
             if os.path.exists(dstpath):
                 logger.debug("- f! %s", relpath)
-                logger.warning("Updating existing %s", dstpath)
+                logger.warning("Updating existing “%s”", dstpath)
                 os.unlink(dstpath)
             else:
                 logger.debug("- f+ %s", relpath)
