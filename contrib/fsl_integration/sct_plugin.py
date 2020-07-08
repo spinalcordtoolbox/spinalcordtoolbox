@@ -26,6 +26,7 @@ import subprocess
 import signal
 from threading import Thread
 import logging
+import webbrowser
 
 import wx
 import wx.lib.agw.aui as aui
@@ -235,8 +236,8 @@ class SCTPanel(wx.Panel):
         logo_help_hbox.Add(sct_logo, 1, wx.HORIZONTAL, 5)
 
         button_help = wx.Button(self, id=id_, label="Help")
-        button_help.Bind(wx.EVT_BUTTON, self.tutorial)
-        logo_help_hbox.Add(button_help, 1, wx.ALIGN_BOTTOM|wx.LEFT|wx.RIGHT, 50)
+        button_help.Bind(wx.EVT_BUTTON, self.help_url)
+        logo_help_hbox.Add(button_help, 0, wx.ALIGN_BOTTOM|wx.LEFT, 90)
 
         self.column_left.Add(logo_help_hbox, proportion=0, flag=wx.ALL, border=5)
 
@@ -266,6 +267,10 @@ class SCTPanel(wx.Panel):
         cmd_line = "open {}".format(pdfpath)
         print('Command line:', cmd_line)
         self.call_sct_command(cmd_line)
+
+    def help_url(self, event):
+        url = "http://forum.spinalcordmri.org/c/sct"
+        webbrowser.open(url)
 
     def get_logo(self):
         logo_file = os.path.join(os.environ[self.SCT_DIR_ENV],
