@@ -9,15 +9,16 @@ import pytest
 import numpy as np
 import nibabel as nib
 
+import spinalcordtoolbox as sct
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.deepseg_sc import core as deepseg_sc
+import spinalcordtoolbox.deepseg_sc.core
 from spinalcordtoolbox.testing.create_test_data import dummy_centerline
 
 
 param_deepseg = [
     ({'fname_seg_manual': 'sct_testing_data/t2/t2_seg-deepseg_sc-2d.nii.gz', 'contrast': 't2', 'kernel': '2d'}),
     ({'fname_seg_manual': 'sct_testing_data/t2/t2_seg-deepseg_sc-3d.nii.gz', 'contrast': 't2', 'kernel': '3d'}),
-    ]
+]
 
 # noinspection 801,PyShadowingNames
 @pytest.mark.parametrize('params', param_deepseg)
@@ -25,7 +26,7 @@ def test_deep_segmentation_spinalcord(params):
     """High level segmentation API"""
     fname_im = 'sct_testing_data/t2/t2.nii.gz'
     fname_centerline_manual = 'sct_testing_data/t2/t2_centerline-manual.nii.gz'
-    im_seg, _, _ = deepseg_sc.deep_segmentation_spinalcord(
+    im_seg, _, _ = sct.deepseg_sc.core.deep_segmentation_spinalcord(
         Image(fname_im), params['contrast'], ctr_algo='file', ctr_file=fname_centerline_manual, brain_bool=False,
         kernel_size=params['kernel'], threshold_seg=0.5)
     assert im_seg.data.dtype == np.dtype('uint8')
@@ -37,7 +38,7 @@ def test_intensity_normalization():
     data_in = np.random.rand(10, 10)
     min_out, max_out = 0, 255
 
-    data_out = deepseg_sc.scale_intensity(data_in, out_min=0, out_max=255)
+    data_out = sct.deepseg_sc.core.scale_intensity(data_in, out_min=0, out_max=255)
 
     assert data_in.shape == data_out.shape
     assert np.min(data_out) >= min_out
@@ -47,7 +48,6 @@ def test_intensity_normalization():
 def test_crop_image_around_centerline():
     input_shape = (100, 100, 100)
     crop_size = 20
-    crop_size_half = crop_size // 2
 
     data = np.random.rand(input_shape[0], input_shape[1], input_shape[2])
     affine = np.eye(4)
@@ -56,14 +56,13 @@ def test_crop_image_around_centerline():
 
     ctr, _, _ = dummy_centerline(size_arr=input_shape)
 
-    _, _, _, img_out = deepseg_sc.crop_image_around_centerline(im_in=img.copy(),
-                                                        ctr_in=ctr.copy(),
-                                                        crop_size=crop_size)
+    _, _, _, img_out = sct.deepseg_sc.core.crop_image_around_centerline(
+        im_in=img.copy(), ctr_in=ctr.copy(), crop_size=crop_size)
 
     img_in_z0 = img.data[:,:,0]
     x_ctr_z0, y_ctr_z0 = np.where(ctr.data[:,:,0])[0][0], np.where(ctr.data[:,:,0])[1][0]
-    x_start, x_end = deepseg_sc._find_crop_start_end(x_ctr_z0, crop_size, img.dim[0])
-    y_start, y_end = deepseg_sc._find_crop_start_end(y_ctr_z0, crop_size, img.dim[1])
+    x_start, x_end = sct.deepseg_sc.core._find_crop_start_end(x_ctr_z0, crop_size, img.dim[0])
+    y_start, y_end = sct.deepseg_sc.core._find_crop_start_end(y_ctr_z0, crop_size, img.dim[1])
     img_in_z0_crop = img_in_z0[x_start:x_end, y_start:y_end]
 
     assert img_out.data.shape == (crop_size, crop_size, input_shape[2])
@@ -84,7 +83,7 @@ def test_uncrop_image():
     nii = nib.nifti1.Nifti1Image(data_in, affine)
     img_in = Image(data_in, hdr=nii.header, dim=nii.header.get_data_shape())
 
-    img_uncrop = deepseg_sc.uncrop_image(ref_in=img_in,
+    img_uncrop = sct.deepseg_sc.core.uncrop_image(ref_in=img_in,
                                         data_crop=data_crop,
                                         x_crop_lst=x_crop_lst,
                                         y_crop_lst=y_crop_lst,
