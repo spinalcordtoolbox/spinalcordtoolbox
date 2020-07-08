@@ -364,7 +364,7 @@ def main(argv):
                          ''.format(smiley_or_newline, start, end))
 
     if len(fails) == 0:
-        status_message = 'Hooray your batch completed successfully'
+        status_message = 'Hooray your batch completed successfully\n'
     else:
         status_message = ('Your batch completed but some subjects may have not completed '
                           'successfully, please consult the logs for:\n'
