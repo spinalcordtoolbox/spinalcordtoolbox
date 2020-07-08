@@ -354,7 +354,7 @@ def main(argv):
     end = time.strftime('%H:%M', time.localtime(time.time()))
 
     # Check for failed subjects
-    fails = [sd for (sd, ret) in zip(subject_dirs, results) if ret.returncode != 1]
+    fails = [sd for (sd, ret) in zip(subject_dirs, results) if ret.returncode != 0]
 
     smiley_or_newline =  ':-)\n' if len(fails) == 0 else '\n'
     completed_message = ('Finished {}'
