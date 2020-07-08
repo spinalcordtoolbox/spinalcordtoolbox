@@ -20,7 +20,7 @@ VERBOSE = 0  # Set to 2 to save images, 0 otherwise
 def test_straighten():
     """Test straightening with default params"""
     fname_t2 = os.path.join(sct.__sct_dir__, 'sct_testing_data/t2/t2.nii.gz')  # sct_download_data -d sct_testing_data
-    fname_t2_seg = os.path.join(sct.__sct_dir__, 'sct_testing_data/t2/t2_seg.nii.gz')
+    fname_t2_seg = os.path.join(sct.__sct_dir__, 'sct_testing_data/t2/t2_seg-manual.nii.gz')
     sc_straight = SpinalCordStraightener(fname_t2, fname_t2_seg)
     sc_straight.accuracy_results = True
     sc_straight.straighten()
