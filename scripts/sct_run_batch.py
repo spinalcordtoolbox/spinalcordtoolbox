@@ -23,8 +23,8 @@ import re
 import time
 import functools
 import json
-import yaml
 import warnings
+import yaml
 
 from getpass import getpass
 from spinalcordtoolbox.utils import Metavar, SmartFormatter, Tee, send_email
@@ -199,7 +199,7 @@ def main(argv):
             if ext == '.json':
                 config = json.load(conf)
             if ext == '.yml' or ext == '.yaml':
-                config = yaml.load(conf)
+                config = yaml.load(conf, Loader=yaml.Loader)
 
         # Warn people if they're overriding their config file
         if len(vars(args)) > 1:
