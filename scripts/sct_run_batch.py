@@ -46,7 +46,7 @@ def get_parser():
         prog=os.path.basename(__file__).strip('.py'))
 
     parser.add_argument('-config', '-c',
-                        help='R|' 
+                        help='R|'
                         'A json (.json) or yaml (.yml|.yaml) file with arguments. All arguments to the configuration '
                         'file are the same as the command line arguments, except all dashes (-) are replaced with '
                         'underscores (_). Using command line flags can be used to override arguments provided in '
@@ -122,7 +122,7 @@ def get_parser():
                              '`-email-to`')
     parser.add_argument('-email-host', default='smtp.gmail.com:587',
                         help='Optional smtp server and port to use to send the email. Defaults to gmail\'s server')
-    parser.add_argument('-continue-on-error', type=int, default=1, choices=(0,1),
+    parser.add_argument('-continue-on-error', type=int, default=1, choices=(0, 1),
                         help='Whether the batch processing should continue if a subject fails.')
     parser.add_argument('-task',
                         help='Shell script used to process the data.')
@@ -167,7 +167,7 @@ def run_single(subj_dir, task, task_args, path_segmanual, path_data, path_result
         assert res.returncode == 0, 'Processing of subject {} failed'.format(subject)
     except Exception as e:
         process_completed = 'res' in locals()
-        res = res if process_completed else SimpleNamespace(returncode = -1)
+        res = res if process_completed else SimpleNamespace(returncode=-1)
         process_suceeded = res.returncode == 0
 
         if not process_suceeded and os.path.exists(log_file):
@@ -181,6 +181,7 @@ def run_single(subj_dir, task, task_args, path_segmanual, path_data, path_result
             raise e
 
     return res
+
 
 def main(argv):
     # Print the sct startup info
@@ -356,7 +357,7 @@ def main(argv):
     # Check for failed subjects
     fails = [sd for (sd, ret) in zip(subject_dirs, results) if ret.returncode != 0]
 
-    smiley_or_newline =  ':-)\n' if len(fails) == 0 else '\n'
+    smiley_or_newline = ':-)\n' if len(fails) == 0 else '\n'
     completed_message = ('Finished {}'
                          'Started: {}\n'
                          'Ended: {}\n'
@@ -366,8 +367,8 @@ def main(argv):
         status_message = 'Hooray your batch completed successfully'
     else:
         status_message = ('Your batch completed but some subjects may have not completed '
-                         'successfully, please consult the logs for:\n'
-                         '{}\n'.format('\n'.join(fails)))
+                          'successfully, please consult the logs for:\n'
+                          '{}\n'.format('\n'.join(fails)))
 
     print(status_message + completed_message)
 
