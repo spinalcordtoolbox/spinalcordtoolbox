@@ -210,7 +210,7 @@ class SCTPanel(wx.Panel):
     """
 
     DESCRIPTION_SCT = """
-    <b>General citation (please always cite)</b>:<br>
+    <br><br><b>General citation (please always cite)</b>:<br>
     De Leener B, Levy S, Dupont SM, Fonov VS, Stikov N, Louis Collins D, Callot V,
     Cohen-Adad J. <i>SCT: Spinal Cord Toolbox, an open-source software for processing
     spinal cord MRI data</i>. Neuroimage. 2017 Jan 15;145(Pt A):24-43.
@@ -231,28 +231,17 @@ class SCTPanel(wx.Panel):
         self.column_right = wx.BoxSizer(wx.VERTICAL)
 
         sct_logo = self.get_logo()
-        logo_citation_hbox = wx.BoxSizer(wx.HORIZONTAL)
-        logo_citation_hbox.Add(sct_logo, 0, wx.HORIZONTAL, 5)
-
-        txt_sct_citation = wx.VSCROLL | \
-                           wx.HSCROLL | wx.TE_READONLY | \
-                           wx.BORDER_SIMPLE
-        html_sct_citation_window = html.HtmlWindow(self, wx.ID_ANY,
-                                            size=(180, 80),
-                                            style=txt_sct_citation)
-        html_sct_citation_window.SetPage(self.DESCRIPTION_SCT)
-        html_sct_citation_window.SetStandardFonts(size=9)
-
-        logo_citation_hbox.Add(html_sct_citation_window, 0, wx.HORIZONTAL, 5)
-
-        self.column_left.Add(logo_citation_hbox, proportion=0, flag=wx.ALL, border=5)
-
-        html_desc_window = self.get_description()
-        self.column_left.Add(html_desc_window, 0, wx.ALL, 5)
+        logo_help_hbox = wx.BoxSizer(wx.HORIZONTAL)
+        logo_help_hbox.Add(sct_logo, 1, wx.HORIZONTAL, 5)
 
         button_help = wx.Button(self, id=id_, label="Help")
         button_help.Bind(wx.EVT_BUTTON, self.tutorial)
-        self.column_left.Add(button_help, 0, wx.ALL, 5)
+        logo_help_hbox.Add(button_help, 1, wx.ALIGN_BOTTOM|wx.LEFT|wx.RIGHT, 50)
+
+        self.column_left.Add(logo_help_hbox, proportion=0, flag=wx.ALL, border=5)
+
+        html_desc_window = self.get_description()
+        self.column_left.Add(html_desc_window, 0, wx.ALL, 5)
 
         self.log_window = wx.TextCtrl(self, wx.ID_ANY, size=(100, 300),
                           style = wx.TE_MULTILINE|wx.TE_READONLY|wx.HSCROLL)
@@ -292,10 +281,11 @@ class SCTPanel(wx.Panel):
                     wx.HSCROLL | wx.TE_READONLY | \
                     wx.BORDER_SIMPLE
         htmlw = html.HtmlWindow(self, wx.ID_ANY,
-                                size=(400, 250),
+                                size=(400, 220),
                                 style=txt_style)
-        htmlw.SetPage(self.DESCRIPTION)
-        htmlw.SetStandardFonts(size=9)
+        htmlw.SetPage(self.DESCRIPTION + self.DESCRIPTION_SCT)
+        htmlw.SetStandardFonts(size=10, normal_face="Noto Sans")
+
         return htmlw
 
     def call_sct_command(self, command):
