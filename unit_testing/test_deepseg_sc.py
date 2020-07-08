@@ -87,11 +87,8 @@ def test_uncrop_image():
     nii = nib.nifti1.Nifti1Image(data_in, affine)
     img_in = Image(data_in, hdr=nii.header, dim=nii.header.get_data_shape())
 
-    img_uncrop = sct.deepseg_sc.core.uncrop_image(ref_in=img_in,
-                                        data_crop=data_crop,
-                                        x_crop_lst=x_crop_lst,
-                                        y_crop_lst=y_crop_lst,
-                                        z_crop_lst=z_crop_lst)
+    img_uncrop = sct.deepseg_sc.core.uncrop_image(
+        ref_in=img_in, data_crop=data_crop, x_crop_lst=x_crop_lst, y_crop_lst=y_crop_lst, z_crop_lst=z_crop_lst)
 
     assert img_uncrop.data.shape == input_shape
     z_rand = np.random.randint(0, input_shape[2])
