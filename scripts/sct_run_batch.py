@@ -50,17 +50,20 @@ def get_parser():
                         'A json (.json) or yaml (.yml|.yaml) file with arguments. All arguments to the configuration '
                         'file are the same as the command line arguments, except all dashes (-) are replaced with '
                         'underscores (_). Using command line flags can be used to override arguments provided in '
-                        'the configuration file, but this is discouraged.\n' + dedent(
+                        'the configuration file, but this is discouraged. Please note that while quotes are optional '
+                        'for strings in YAML omitting them may cause parse errors.\n' + dedent(
                             """
                             Example YAML configuration:
-                            path_data   : ~/sct_data
-                            path_output : ~/pipeline_results
-                            task        : nature_paper_analysis.sh\n
+                            path_data   : "~/sct_data"
+                            path_output : "~/pipeline_results"
+                            task        : "nature_paper_analysis.sh"\n
+                            jobs        : 1
                             Example JSON configuration:
                             {
                             "path_data"   : "~/sct_data"
                             "path_output" : "~/pipeline_results"
                             "task"        : "nature_paper_analysis.sh"
+                            "jobs"        : 1
                             }\n
                             """))
     parser.add_argument('-jobs', type=int, default=1,
