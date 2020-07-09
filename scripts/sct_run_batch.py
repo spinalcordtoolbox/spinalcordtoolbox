@@ -21,6 +21,7 @@ import multiprocessing
 import subprocess
 import re
 import time
+import datetime
 import functools
 import json
 import warnings
@@ -325,7 +326,7 @@ def main(argv):
         jobs = args.jobs
 
     # Run the jobs, recording start and end times
-    start = time.strftime('%H:%M', time.localtime(time.time()))
+    start = datetime.datetime.now()
 
     # Trap errors to send an email if a task fails.
     try:
@@ -357,29 +358,30 @@ def main(argv):
         else:
             raise e
 
-    end = time.strftime('%H:%M', time.localtime(time.time()))
+    end = datetime.datetime.now()
 
     # Check for failed subjects
     fails = [sd for (sd, ret) in zip(subject_dirs, results) if ret.returncode != 0]
 
-    smiley_or_newline = ':-)\n' if len(fails) == 0 else '\n'
-    completed_message = ('Finished {}'
-                         'Started: {}\n'
-                         'Ended: {}\n'
-                         ''.format(smiley_or_newline, start, end))
-
     if len(fails) == 0:
-        status_message = 'Hooray your batch completed successfully\n'
+        status_message = 'Hooray! your batch completed successfully :-)\n'
     else:
         status_message = ('Your batch completed but some subjects may have not completed '
                           'successfully, please consult the logs for:\n'
                           '{}\n'.format('\n'.join(fails)))
+    print(status_message)
 
-    print(status_message + completed_message)
+    # Display timing
+    duration = end - start
+    timing_message = ('Started: {} | Ended: {} | Duration: {}\n'.format(
+        start.strftime('%Hh%Mm%Ss'),
+        end.strftime('%Hh%Mm%Ss'),
+        (datetime.datetime.utcfromtimestamp(0) + duration).strftime('%Hh%Mm%Ss')))
+    print(timing_message)
 
     if do_email:
         send_notification('sct_run_batch: Run completed',
-                          status_message + completed_message)
+                          status_message + timing_message)
 
     open_cmd = 'open' if sys.platform == 'darwin' else 'xdg-open'
 
