@@ -74,9 +74,6 @@ spinalcordtoolbox.centerline
 .. automodule:: spinalcordtoolbox.centerline.curve_fitting
    :members:
 
-.. automodule:: spinalcordtoolbox.centerline.nurbs
-   :members:
-
 .. automodule:: spinalcordtoolbox.centerline.optic
    :members:
 
