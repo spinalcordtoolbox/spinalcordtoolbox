@@ -634,6 +634,12 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, angle_line=None, args
         qcslice_type = qcslice.Axial([Image(fname_in1), Image(fname_seg)])
         qcslice_operations = [QcImage.listed_seg]
         qcslice_layout = lambda x: x.mosaic()
+    # Axial orientation, switch between the image and the centerline
+    elif process in ['sct_get_centerline']:
+        plane = 'Axial'
+        qcslice_type = qcslice.Axial([Image(fname_in1), Image(fname_seg)])
+        qcslice_operations = [QcImage.listed_seg]
+        qcslice_layout = lambda x: x.mosaic()
     # Axial orientation, switch between the image and the white matter segmentation (linear interp, in blue)
     elif process in ['sct_warp_template']:
         plane = 'Axial'
