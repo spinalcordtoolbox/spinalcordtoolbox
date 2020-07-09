@@ -81,6 +81,7 @@ TASKS = {
 def folder(name_model):
     """
     Return absolute path of deep learning models.
+
     :param name: str: Name of model.
     :return: str: Folder to model
     """
@@ -90,6 +91,7 @@ def folder(name_model):
 def install_model(name_model):
     """
     Download and install specified model under SCT installation dir.
+
     :param name: str: Name of model.
     :return: None
     """
@@ -100,6 +102,7 @@ def install_model(name_model):
 def install_default_models():
     """
     Download all default models and install them under SCT installation dir.
+
     :return: None
     """
     for name_model, value in MODELS.items():
@@ -111,6 +114,7 @@ def is_valid(path_model):
     """
     Check if model has the necessary files and follow naming conventions:
     - Folder should have the same name as the enclosed files.
+
     :param path_model: str: Absolute path to folder that encloses the model files.
     """
     name_model = path_model.rstrip(os.sep).split(os.sep)[-1]
@@ -123,6 +127,7 @@ def list_models():
     """
     Display available models with description. Color is used to indicate if model is installed or not. For default
     models, a '*' is added next to the model name.
+
     :return: dict: Models that are installed
     """
     return {name: value for name, value in MODELS.items()}
@@ -189,6 +194,7 @@ def display_list_tasks():
 def get_metadata(folder_model):
     """
     Get metadata from json file located in folder_model
+
     :param path_model: str: Model folder
     :return: dict
     """
