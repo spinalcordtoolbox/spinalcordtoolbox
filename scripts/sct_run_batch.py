@@ -124,7 +124,9 @@ def get_parser():
                         help='Optional alternative email to use to send the email. Defaults to the same address as '
                              '`-email-to`')
     parser.add_argument('-email-host', default='smtp.gmail.com:587',
-                        help='Optional smtp server and port to use to send the email. Defaults to gmail\'s server')
+                        help='Optional smtp server and port to use to send the email. Defaults to gmail\'s server. Note'
+                             ' that gmail server requires "Less secure apps access" to be turned on, which can be done '
+                             ' at https://myaccount.google.com/security')
     parser.add_argument('-continue-on-error', type=int, default=1, choices=(0, 1),
                         help='Whether the batch processing should continue if a subject fails.')
     parser.add_argument('-task',
