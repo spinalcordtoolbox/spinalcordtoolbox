@@ -56,14 +56,14 @@ def get_parser():
                             Example YAML configuration:
                             path_data   : "~/sct_data"
                             path_output : "~/pipeline_results"
-                            task        : "nature_paper_analysis.sh"\n
-                            jobs        : 1
+                            task        : "nature_paper_analysis.sh"
+                            jobs        : -1\n
                             Example JSON configuration:
                             {
                             "path_data"   : "~/sct_data"
                             "path_output" : "~/pipeline_results"
                             "task"        : "nature_paper_analysis.sh"
-                            "jobs"        : 1
+                            "jobs"        : -1
                             }\n
                             """))
     parser.add_argument('-jobs', type=int, default=1,
@@ -71,8 +71,8 @@ def get_parser():
                         'Either an integer greater than or equal to one '
                         'specifying the number of cores, 0 or a negative integer '
                         'specifying number of cores minus that number. For example '
-                        '\'-jobs -1\' indicates run ncores - 1 jobs in parallel. Set \'-jobs 0\''
-                        'to use all available cores.',
+                        '\'-jobs -1\' will run will all the available cores minus one '
+                        'job in parallel. Set \'-jobs 0\' to use all available cores.',
                         metavar=Metavar.int)
     parser.add_argument('-path-data', help='R|Setting for environment variable: PATH_DATA\n'
                         'Path containing subject directories in a consistent format')
