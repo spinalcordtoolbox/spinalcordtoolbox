@@ -70,8 +70,8 @@ def main(args=None):
             "https://www.neuro.polymtl.ca/_media/downloads/sct/20180525_sct_example_data.zip",
         ],
         "sct_testing_data": [
-            "https://github.com/sct-data/sct_testing_data/releases/download/r20200504/20200504_sct_testing_data.zip",
-            "https://osf.io/6x5a2/download",
+            "https://github.com/sct-data/sct_testing_data/releases/download/r20200707232231/sct_testing_data-r20200707232231.zip",
+            "https://osf.io/download/5f053c176cbca300dad363d3/"
         ],
         "PAM50": [
             "https://github.com/sct-data/PAM50/releases/download/r20191029/20191029_pam50.zip",

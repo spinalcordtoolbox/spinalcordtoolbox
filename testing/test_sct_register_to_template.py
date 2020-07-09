@@ -26,10 +26,10 @@ def init(param_test):
     Initialize class: param_test
     """
     default_args = [
-        '-i t2/t2.nii.gz -s t2/t2_seg.nii.gz -l t2/labels.nii.gz -param step=1,type=seg,algo=centermassrot,metric=MeanSquares:step=2,type=seg,algo=bsplinesyn,iter=5,metric=MeanSquares -t template -qc qc-testing',
-        '-i t2/t2.nii.gz -s t2/t2_seg.nii.gz -ldisc t2/labels.nii.gz -ref subject',
+        '-i t2/t2.nii.gz -s t2/t2_seg-manual.nii.gz -l t2/labels.nii.gz -param step=1,type=seg,algo=centermassrot,metric=MeanSquares:step=2,type=seg,algo=bsplinesyn,iter=5,metric=MeanSquares -t template -qc qc-testing',
+        '-i t2/t2.nii.gz -s t2/t2_seg-manual.nii.gz -ldisc t2/labels.nii.gz -ref subject',
     ]
-    param_test.file_seg = 't2/t2_seg.nii.gz'
+    param_test.file_seg = 't2/t2_seg-manual.nii.gz'
     param_test.fname_gt = ['template/template/PAM50_small_cord.nii.gz', os.path.join(__sct_dir__, 'data/PAM50/template/PAM50_cord.nii.gz')]
 
     param_test.dice_threshold = 0.9
