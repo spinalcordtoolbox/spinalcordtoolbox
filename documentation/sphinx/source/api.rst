@@ -119,3 +119,29 @@ spinalcordtoolbox.vertebrae
 
 .. automodule:: spinalcordtoolbox.vertebrae.detect_c2c3
    :members:
+
+
+Metrics Aggregation API
+***********************
+
+spinalcordtoolbox.aggregate_slicewise
+=====================================
+
+.. automodule:: spinalcordtoolbox.aggregate_slicewise
+   :members:
+
+
+Image Manipulation API
+**********************
+
+spinalcordtoolbox.cropping
+==========================
+
+.. automodule:: spinalcordtoolbox.cropping
+   :members:
+
+spinalcordtoolbox.image
+==========================
+
+.. automodule:: spinalcordtoolbox.image
+   :members:

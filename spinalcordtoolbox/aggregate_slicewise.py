@@ -26,6 +26,7 @@ class Metric:
     """
     def __init__(self, data=None, label=''):
         """
+
         :param data: ndarray
         :param label: str
         """
@@ -47,6 +48,7 @@ class LabelStruc:
 def func_bin(data, mask, map_clusters=None):
     """
     Get the average of data after binarizing the input mask
+
     :param data: nd-array: input data
     :param mask: (n+1)d-array: input mask
     :param map_clusters: not used
@@ -61,6 +63,7 @@ def func_bin(data, mask, map_clusters=None):
 def func_max(data, mask=None, map_clusters=None):
     """
     Get the max of an array
+
     :param data: nd-array: input data
     :param mask: not used
     :param map_clusters: not used
@@ -73,11 +76,12 @@ def func_map(data, mask, map_clusters):
     """
     Compute maximum a posteriori (MAP) by aggregating the last dimension of mask according to a clustering method
     defined by map_clusters
+
     :param data: nd-array: input data
-    :param mask: (n+1)d-array: input mask. Note: this mask should include ALL labels to satisfy the necessary condition for
-    ML-based estimation, i.e., at each voxel, the sum of all labels (across the last dimension) equals the probability
+    :param mask: (n+1)d-array: input mask. Note: this mask should include ALL labels to satisfy the necessary condition for\
+    ML-based estimation, i.e., at each voxel, the sum of all labels (across the last dimension) equals the probability\
     to be inside the tissue. For example, for a pixel within the spinal cord, the sum of all labels should be 1.
-    :param map_clusters: list of list of int: Each sublist corresponds to a cluster of labels where ML estimation will
+    :param map_clusters: list of list of int: Each sublist corresponds to a cluster of labels where ML estimation will\
     be performed to provide the prior beta_0 for MAP estimation.
     :return: float: beta corresponding to the first label (beta[0])
     :return: nd-array: matrix of all beta
@@ -147,10 +151,11 @@ def func_map(data, mask, map_clusters):
 def func_ml(data, mask, map_clusters=None):
     """
     Compute maximum likelihood (ML) for the first label of mask.
+
     :param data: nd-array: input data
-    :param mask: (n+1)d-array: input mask. Note: this mask should include ALL labels to satisfy the necessary condition
-    for ML-based estimation, i.e., at each voxel, the sum of all labels (across the last dimension) equals the
-    probability to be inside the tissue. For example, for a pixel within the spinal cord, the sum of all labels should
+    :param mask: (n+1)d-array: input mask. Note: this mask should include ALL labels to satisfy the necessary condition\
+    for ML-based estimation, i.e., at each voxel, the sum of all labels (across the last dimension) equals the\
+    probability to be inside the tissue. For example, for a pixel within the spinal cord, the sum of all labels should\
     be 1.
     :return: float: beta corresponding to the first label
     """
@@ -170,6 +175,7 @@ def func_ml(data, mask, map_clusters=None):
 def func_std(data, mask=None, map_clusters=None):
     """
     Compute standard deviation
+
     :param data: nd-array: input data
     :param mask: (n+1)d-array: input mask
     :param map_clusters: not used
@@ -186,6 +192,7 @@ def func_std(data, mask=None, map_clusters=None):
 def func_sum(data, mask=None, map_clusters=None):
     """
     Compute sum
+
     :param data: nd-array: input data
     :param mask: not used
     :param map_clusters: not used
@@ -198,6 +205,7 @@ def func_sum(data, mask=None, map_clusters=None):
 def func_wa(data, mask=None, map_clusters=None):
     """
     Compute weighted average
+
     :param data: nd-array: input data
     :param mask: (n+1)d-array: input mask
     :param map_clusters: not used
@@ -213,6 +221,7 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], persli
                                  vert_level=None, group_funcs=(('MEAN', func_wa),), map_clusters=None):
     """
     The aggregation will be performed along the last dimension of 'metric' ndarray.
+
     :param metric: Class Metric(): data to aggregate.
     :param mask: Class Metric(): mask to use for aggregating the data. Optional.
     :param slices: List[int]: Slices to aggregate metric from. If empty, select all slices.
@@ -337,9 +346,10 @@ def check_labels(indiv_labels_ids, selected_labels):
 def diff_between_list_or_int(l1, l2):
     """
     Return list l1 minus the elements in l2
-    Examples:
-      ([1, 2, 3], 1) --> [2, 3]
+    Examples:\
+      ([1, 2, 3], 1) --> [2, 3]\
       ([1, 2, 3], [1, 2] --> [3]
+
     :param l1: a list of int
     :param l2: could be a list or an int
     :return:
@@ -353,6 +363,7 @@ def extract_metric(data, labels=None, slices=None, levels=None, perslice=True, p
                    vert_level=None, method=None, label_struc=None, id_label=None, indiv_labels_ids=None):
     """
     Extract metric within a data, using mask and a given method.
+
     :param data: Class Metric(): Data (a.k.a. metric) of n-dimension to extract aggregated value from
     :param labels: Class Metric(): Labels of (n+1)dim. The last dim encloses the labels.
     :param slices:
@@ -363,7 +374,7 @@ def extract_metric(data, labels=None, slices=None, levels=None, perslice=True, p
     :param method:
     :param label_struc: LabelStruc class defined above
     :param id_label: int: ID of label to select
-    :param indiv_labels_ids: list of int: IDs of labels corresponding to individual (as opposed to combined) labels for
+    :param indiv_labels_ids: list of int: IDs of labels corresponding to individual (as opposed to combined) labels for\
     use with ML or MAP estimation.
     :return: aggregate_per_slice_or_level()
     """
@@ -442,6 +453,7 @@ def _merge_dict(dict_in):
           (0): {'Level': 0, 'Mean(area): 0.5, 'Mean(angle_RL): 15}
           (1): {'Level': 1, 'Mean(area): 0.2, 'Mean(angle_RL): 12}
       }
+
     :param dict_in:
     :return:
     """
@@ -462,6 +474,7 @@ def _merge_dict(dict_in):
 def save_as_csv(agg_metric, fname_out, fname_in=None, append=False):
     """
     Write metric structure as csv. If field 'error' exists, it will add a specific column.
+
     :param agg_metric: output of aggregate_per_slice_or_level()
     :param fname_out: output filename. Extention (.csv) will be added if it does not exist.
     :param fname_in: input file to be listed in the csv file (e.g., segmentation file which produced the results).
