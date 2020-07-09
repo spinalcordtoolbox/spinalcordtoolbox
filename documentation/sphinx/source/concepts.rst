@@ -214,7 +214,6 @@ Segmentation of GM/WM
 
 SCT provides several tools to perform GM/WM segmentation:
 
-- :ref:`sct_segment_graymatter`
 - :ref:`sct_deepseg_gm`
 
 The latter one, using a deep learning model, is giving the best results on most
