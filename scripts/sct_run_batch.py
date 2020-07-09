@@ -208,7 +208,7 @@ def main(argv):
                 config = yaml.load(conf, Loader=yaml.Loader)
 
         # Warn people if they're overriding their config file
-        if len(vars(args)) > 1:
+        if len(argv) > 2:
             warnings.warn(UserWarning('Using the `-config|-c` flag with additional arguments is discouraged'))
 
         # Check for unsupported arguments
