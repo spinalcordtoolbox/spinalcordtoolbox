@@ -32,12 +32,6 @@ deepseg API
 deepseg_sc API
 ++++++++++++++
 
-.. automodule:: spinalcordtoolbox.deepseg_sc.cnn_models
-   :members:
-
-.. automodule:: spinalcordtoolbox.deepseg_sc.cnn_models_3d
-   :members:
-
 .. automodule:: spinalcordtoolbox.deepseg_sc.core
    :members:
 
