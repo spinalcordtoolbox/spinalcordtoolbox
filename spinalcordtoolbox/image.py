@@ -991,7 +991,7 @@ def change_shape(im_src, shape, im_dst=None):
     :return: an image with changed shape
 
     .. note::
-        - the resulting image has no path
+        The resulting image has no path
     """
 
     if im_dst is None:

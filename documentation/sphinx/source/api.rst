@@ -78,6 +78,22 @@ spinalcordtoolbox.centerline
    :members:
 
 
+Segmentation Processing API
+***************************
+
+spinalcord.process_seg
+=======================
+
+.. automodule:: spinalcordtoolbox.process_seg
+   :members:
+
+spinalcord.straightening
+========================
+
+.. automodule:: spinalcordtoolbox.straightening
+   :members:
+
+
 QMRI API
 ********
 
@@ -144,4 +160,61 @@ spinalcordtoolbox.image
 ==========================
 
 .. automodule:: spinalcordtoolbox.image
+   :members:
+
+spinalcordtoolbox.resampling
+============================
+
+.. automodule:: spinalcordtoolbox.resampling
+   :members:
+
+
+Motion Correction API
+*********************
+
+spinalcordtoolbox.moco
+======================
+
+.. automodule:: spinalcordtoolbox.moco
+   :members:
+
+
+Helpers and Utilities
+*********************
+
+spinalcordtoolbox.math
+======================
+
+.. automodule:: spinalcordtoolbox.math
+   :members:
+
+spinalcordtoolbox.metadata
+==========================
+
+.. automodule:: spinalcordtoolbox.metadata
+   :members:
+
+spinalcordtoolbox.types
+=======================
+
+.. automodule:: spinalcordtoolbox.types
+   :members:
+
+spinalcordtoolbox.template
+==========================
+
+.. automodule:: spinalcordtoolbox.template
+   :members:
+
+spinalcordtoolbox.utils
+=======================
+
+.. automodule:: spinalcordtoolbox.utils
+   :members:
+
+
+spinalcordtoolbox.download
+==========================
+
+.. automodule:: spinalcordtoolbox.download
    :members:
