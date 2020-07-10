@@ -92,6 +92,7 @@ class ParamMoco:
 def copy_mat_files(nt, list_file_mat, index, folder_out, param):
     """
     Copy mat file from the grouped folder to the final folder (will be used by all individual ungrouped volumes)
+
     :param nt: int: Total number of volumes in native 4d data
     :param list_file_mat: list of list: File name of transformations
     :param index: list: Index to associate a given matrix file with a 3d volume (from the 4d native data)
@@ -119,6 +120,7 @@ def copy_mat_files(nt, list_file_mat, index, folder_out, param):
 def moco_wrapper(param):
     """
     Wrapper that performs motion correction.
+
     :param param: ParamMoco class
     :return: None
     """
@@ -468,6 +470,7 @@ def moco_wrapper(param):
 def moco(param):
     """
     Main function that performs motion correction.
+
     :param param:
     :return:
     """
@@ -660,6 +663,7 @@ def register(param, file_src, file_dest, file_mat, file_out, im_mask=None):
     """
     Register two images by estimating slice-wise Tx and Ty transformations, which are regularized along Z. This function
     uses ANTs' isct_antsSliceRegularizedRegistration.
+
     :param param:
     :param file_src:
     :param file_dest:

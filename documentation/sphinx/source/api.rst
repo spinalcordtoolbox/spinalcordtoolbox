@@ -211,10 +211,3 @@ spinalcordtoolbox.utils
 
 .. automodule:: spinalcordtoolbox.utils
    :members:
-
-
-spinalcordtoolbox.download
-==========================
-
-.. automodule:: spinalcordtoolbox.download
-   :members:
