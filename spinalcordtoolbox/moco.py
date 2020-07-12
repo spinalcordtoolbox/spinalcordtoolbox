@@ -1020,9 +1020,9 @@ def moco_wrapper_interleaved(param):
                              os.path.join(path_out_abs, sct.add_suffix(os.path.basename(orig_name), '_moco')))
     # save b0_moco_mean and dwi_moco_mean
     sct.generate_output_file(fname_b0_mean,
-                             os.path.join(path_out_abs, sct.add_suffix(os.path.basename(orig_name), '_b0_mean')))
+                             os.path.join(path_out_abs, sct.add_suffix(os.path.basename(orig_name), '_moco_b0_mean')))
     sct.generate_output_file(fname_dwi_mean,
-                             os.path.join(path_out_abs, sct.add_suffix(os.path.basename(orig_name), '_dwi_mean')))
+                             os.path.join(path_out_abs, sct.add_suffix(os.path.basename(orig_name), '_moco_dwi_mean')))
     # save motion param files
     if param.output_motion_param:
         sct.generate_output_file(os.path.join(path_tmp,sct.add_suffix(file_moco_params_x, '_merged')),
