@@ -962,6 +962,14 @@ def moco_wrapper_interleaved(param):
     # Save to tmp dir
     im_data_merged.save(sct.add_suffix(file_data, '_merged'), verbose=0)
 
+    # Generate b0_moco_mean and dwi_moco_mean
+    args = ['-i', os.path.join(path_tmp,sct.add_suffix(file_data, '_merged')),
+            '-bvec', param.fname_bvecs, '-a', '1', '-v', '0']
+    if not param.fname_bvals == '':
+        # if bvals file is provided
+        args += ['-bval', param.fname_bvals]
+    fname_b0, fname_b0_mean, fname_dwi, fname_dwi_mean = sct_dmri_separate_b0_and_dwi.main(args=args)
+
     # Deal with motion parameters
     if param.output_motion_param:
         # nii motion parameters
@@ -1000,20 +1008,30 @@ def moco_wrapper_interleaved(param):
                 tsv_writer.writerow([mocop[0], mocop[1]])
 
     # ==================================================================================================================
-    # Generate merged output files
+    # Save merged output files
     # ==================================================================================================================
     sct.printv('\nGenerate merged output files...', param.verbose)
-    sct.generate_output_file(os.path.join(os.getcwd(),sct.add_suffix(file_data, '_merged')),
+    # save moco corrected image
+    sct.generate_output_file(os.path.join(path_tmp,sct.add_suffix(file_data, '_merged')),
                              os.path.join(path_out_abs, sct.add_suffix(os.path.basename(orig_name), '_moco')))
+    # save b0_moco_mean and dwi_moco_mean
+    sct.generate_output_file(fname_b0_mean,
+                             os.path.join(path_out_abs, sct.add_suffix(os.path.basename(orig_name), '_b0_mean')))
+    sct.generate_output_file(fname_dwi_mean,
+                             os.path.join(path_out_abs, sct.add_suffix(os.path.basename(orig_name), '_dwi_mean')))
+    # save motion param files
     if param.output_motion_param:
-        sct.generate_output_file(os.path.join(os.getcwd(),sct.add_suffix(file_moco_params_x, '_merged')),
+        sct.generate_output_file(os.path.join(path_tmp,sct.add_suffix(file_moco_params_x, '_merged')),
                                  os.path.join(path_out_abs, file_moco_params_x), squeeze_data=False)
-        sct.generate_output_file(os.path.join(os.getcwd(), sct.add_suffix(file_moco_params_y, '_merged')),
+        sct.generate_output_file(os.path.join(path_tmp, sct.add_suffix(file_moco_params_y, '_merged')),
                                  os.path.join(path_out_abs, file_moco_params_y), squeeze_data=False)
-        sct.generate_output_file(os.path.join(os.getcwd(), sct.add_suffix(file_moco_params_csv, '_merged')),
+        sct.generate_output_file(os.path.join(path_tmp, sct.add_suffix(file_moco_params_csv, '_merged')),
                                  os.path.join(path_out_abs, file_moco_params_csv), squeeze_data=False)
 
-    # TODO - generate also mean dwi and b0 images (using sct_dmri_separate_b0_and_dwi)
+    # Delete temporary files
+    if param.remove_temp_files == 1:
+        sct.printv('\nDelete temporary files...', param.verbose)
+        sct.rmtree(path_tmp, verbose=param.verbose)
 
     # come back to working directory
     os.chdir(curdir)
