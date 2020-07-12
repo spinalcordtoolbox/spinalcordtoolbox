@@ -909,7 +909,7 @@ def moco_wrapper_interleaved(param):
     sct.printv('\nData were acquired in interleaved mode.', param.verbose)
     sct.printv('Splitting data into two datasets along SI direction'
         ' (even and odd slices) and run moco separately...', param.verbose)
-    split_to_even_and_odd(im_data, file_data)
+    orig_orientation = split_to_even_and_odd(im_data, file_data)
 
     # Split mask if was passed
     if param.fname_mask != '':
@@ -959,6 +959,10 @@ def moco_wrapper_interleaved(param):
         elif index % 2 != 0:
             im_data_merged.data[:, :, index, :] = im_data_odd.data[:, :, counter_odd, :]
             counter_odd += 1
+
+    # reorient back to original orientation
+    if im_data_merged.orientation != orig_orientation:
+        im_data_merged.change_orientation(orientation=orig_orientation, generate_path=True)
     # Save to tmp dir
     im_data_merged.save(sct.add_suffix(file_data, '_merged'), verbose=0)
 
@@ -1045,7 +1049,7 @@ def split_to_even_and_odd(data_to_split, file_name):
     Split 4D data along SI direction into two datasets (even and odd slices) and save them
     :param data_to_split: 4D data to split
     :param file_name: data filename
-    :return: None
+    :return: orig_orientation: original orientation of input data
     """
     # change orientation to RPI
     orig_orientation = data_to_split.orientation
@@ -1069,5 +1073,4 @@ def split_to_even_and_odd(data_to_split, file_name):
     # Concatenate in SI and save
     concat_data(data_odd, dim=2).save(sct.add_suffix(file_name, '_odd'), verbose=0)
 
-    # TODO - reorient data back if they were not RPI
-    # return orig_orientation
+    return orig_orientation
