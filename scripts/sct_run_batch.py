@@ -83,10 +83,12 @@ def get_parser():
                         'passed here.')
     parser.add_argument('-path-output', default='./',
                         help='R|Base directory for environment variables:\n'
+                        'PATH_DATA_PROCESSED=' + os.path.join('<path-output>', 'data_processed') + '\n'
                         'PATH_RESULTS=' + os.path.join('<path-output>', 'results') + '\n'
-                        'PATH_QC=' + os.path.join('<path-output>', 'QC') + '\n'
+                        'PATH_QC=' + os.path.join('<path-output>', 'qc') + '\n'
                         'PATH_LOG=' + os.path.join('<path-output>', 'log') + '\n'
-                        'Which are respectively output paths for results, QC and logs')
+                        'Which are respectively output paths for the processed data, results, quality control (QC) '
+                        'and logs')
     parser.add_argument('-batch-log', default='sct_run_batch_log.txt',
                         help='A log file for all terminal output produced by this script (not '
                         'necessarily including the individual job outputs. File will be relative '
@@ -136,8 +138,23 @@ def get_parser():
     return parser
 
 
-def run_single(subj_dir, task, task_args, path_segmanual, path_data, path_results, path_log, path_qc, itk_threads, continue_on_error=False):
-    'Job function for mapping with multiprocessing'
+def run_single(subj_dir, task, task_args, path_segmanual, path_data, path_data_processed, path_results, path_log,
+               path_qc, itk_threads, continue_on_error=False):
+    """
+    Job function for mapping with multiprocessing
+    :param subj_dir:
+    :param task:
+    :param task_args:
+    :param path_segmanual:
+    :param path_data:
+    :param path_data_processed:
+    :param path_results:
+    :param path_log:
+    :param path_qc:
+    :param itk_threads:
+    :param continue_on_error:
+    :return:
+    """
 
     # Strip the `.sh` extension from the task for building error logs
     # TODO: we should probably strip all extensions
@@ -156,6 +173,7 @@ def run_single(subj_dir, task, task_args, path_segmanual, path_data, path_result
     envir.update({
         'PATH_SEGMANUAL': path_segmanual,
         'PATH_DATA': path_data,
+        'PATH_DATA_PROCESSED': path_data_processed,
         'PATH_RESULTS': path_results,
         'PATH_LOG': path_log,
         'PATH_QC': path_qc,
@@ -260,12 +278,13 @@ def main(argv):
     # Set up output directories and create them if they don't already exist
     path_output = os.path.abspath(os.path.expanduser(args.path_output))
     path_results = os.path.join(path_output, 'results')
+    path_data_processed = os.path.join(path_output, 'data_processed')
     path_log = os.path.join(path_output, 'log')
     path_qc = os.path.join(path_output, 'qc')
     path_segmanual = os.path.abspath(os.path.expanduser(args.path_segmanual))
     task = os.path.abspath(os.path.expanduser(args.task))
 
-    for pth in [path_output, path_results, path_log, path_qc]:
+    for pth in [path_output, path_results, path_data_processed, path_log, path_qc]:
         if not os.path.exists(pth):
             os.mkdir(pth)
 
@@ -336,6 +355,7 @@ def main(argv):
                                                task_args=args.task_args,
                                                path_segmanual=path_segmanual,
                                                path_data=path_data,
+                                               path_data_processed=path_data_processed,
                                                path_results=path_results,
                                                path_log=path_log,
                                                path_qc=path_qc,
