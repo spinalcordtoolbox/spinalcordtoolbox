@@ -363,7 +363,6 @@ def main(argv):
                                                itk_threads=args.itk_threads,
                                                continue_on_error=args.continue_on_error)
             results = p.map(run_single_dir, subject_dirs)
-            end = time.strftime('%H:%M', time.localtime(time.time()))
     except Exception as e:
         if do_email is not None:
             message = ('Oh no there has been the following error in your pipeline:\n\n'
