@@ -2,8 +2,9 @@
 ##############################################################################
 #
 # Wrapper to processing scripts, which loops across subjects. Data should be
-# organized according to the BIDS structure:
-# https://github.com/sct-pipeline/spine_generic#file-structure
+# organized according to the BIDS structure and the processing script should
+# make use of the some of the environment variables passed here. More details
+# at: https://spine-generic.readthedocs.io/en/latest/
 #
 # ----------------------------------------------------------------------------
 # Copyright (c) 2020 Polytechnique Montreal <www.neuro.polymtl.ca>
