@@ -166,7 +166,7 @@ def run_single(subj_dir, task, task_args, path_segmanual, path_data, path_data_p
     log_file = os.path.join(path_log, '{}_{}.log'.format(task_base, subject))
     err_file = os.path.join(path_log, 'err.{}_{}.log'.format(task_base, subject))
 
-    print('Running {}. See log file {}'.format(subject, log_file), flush=True)
+    print('Started at {}: {}. See log file {}'.format(time.strftime('%Hh%Mm%Ss'), subject, log_file), flush=True)
 
     # A full copy of the environment is needed otherwise sct programs won't necessarily be found
     envir = os.environ.copy()
