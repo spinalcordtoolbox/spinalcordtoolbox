@@ -36,7 +36,6 @@ sys.path.append(os.path.join(sct_root, "scripts"))
 # ones.
 extensions = [
  'sphinx.ext.autodoc',
- #'sphinx.ext.autoprogram',
  "sphinxcontrib.programoutput",
     'sphinx.ext.coverage',
     'sphinx.ext.mathjax',
