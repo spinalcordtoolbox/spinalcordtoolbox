@@ -28,6 +28,7 @@ import functools
 import json
 import warnings
 import yaml
+import shutil
 
 from getpass import getpass
 from spinalcordtoolbox.utils import Metavar, SmartFormatter, Tee, send_email, __get_commit
@@ -209,15 +210,6 @@ def run_single(subj_dir, task, task_args, path_segmanual, path_data, path_data_p
     return res
 
 
-def print_script_version(fname_script):
-    """
-    If script is located in a git-versioned folder, output commit information.
-    :param fname_script:
-    :return:
-    """
-    return __get_commit(path_to_git_folder=abspath_script)
-
-
 def main(argv):
     # Print the sct startup info
     sct.init_sct()
@@ -342,9 +334,12 @@ def main(argv):
     print("---------------")
     print(yaml.dump(vars(args)))
 
-    print('\nSCRIPT VERSION')
-    print("--------------")
-    print_script_version(args.task)
+    print("TASK SCRIPT")
+    print("-----------")
+    print("git commit: {}".format(__get_commit(path_to_git_folder=args.task)))
+    print("copying script to output folder:")
+    shutil.copy(args.task, args.path_output)
+    print("{} -> {}\n".format(args.task, os.path.abspath(args.path_output)))
 
     # Find subjects and process inclusion/exclusions
     path_data = os.path.abspath(os.path.expanduser(args.path_data))
