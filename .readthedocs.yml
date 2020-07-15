@@ -11,4 +11,5 @@ sphinx:
 
 python:
   install:
+    - requirements: requirements.txt
     - requirements: documentation/sphinx/source/requirements.txt
