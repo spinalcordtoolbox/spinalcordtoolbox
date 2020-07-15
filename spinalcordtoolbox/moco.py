@@ -881,7 +881,7 @@ def moco_wrapper_interleaved(param):
     file_mask = 'mask.nii'
     file_moco_params_x = 'moco_params_x.nii.gz'
     file_moco_params_y = 'moco_params_y.nii.gz'
-    file_moco_params_csv = 'moco_params.tsv'
+    file_moco_params = 'moco_params.tsv'
     # TODO - switch from tsv to csv in future
 
     # Start timer
@@ -928,7 +928,7 @@ def moco_wrapper_interleaved(param):
     im_data_even = moco_wrapper(param)
     if param.output_motion_param:
         # Rename .nii and tsv moco parameters after moco (add _even suffix)
-        for name in file_moco_params_x, file_moco_params_y, file_moco_params_csv:
+        for name in file_moco_params_x, file_moco_params_y, file_moco_params:
             sct.mv(name, sct.add_suffix(name, '_even'))
 
     # ==================================================================================================================
@@ -943,7 +943,7 @@ def moco_wrapper_interleaved(param):
     im_data_odd = moco_wrapper(param)
     if param.output_motion_param:
         # Rename .nii and tsv moco parameters after moco (add _odd suffix)
-        for name in file_moco_params_x, file_moco_params_y, file_moco_params_csv:
+        for name in file_moco_params_x, file_moco_params_y, file_moco_params:
             sct.mv(name, sct.add_suffix(name, '_odd'))
 
     # ==================================================================================================================
@@ -1005,7 +1005,7 @@ def moco_wrapper_interleaved(param):
         # tsv motion parameters (slice-wise average)
         moco_param = np.concatenate((np.squeeze(np.mean(moco_params_x_merged, 2)).reshape(-1, 1),
                                      np.squeeze(np.mean(moco_params_y_merged, 2)).reshape(-1, 1)), axis=1)
-        with open(sct.add_suffix(file_moco_params_csv, '_merged'), 'wt') as out_file:
+        with open(sct.add_suffix(file_moco_params, '_merged'), 'wt') as out_file:
             tsv_writer = csv.writer(out_file, delimiter='\t')
             tsv_writer.writerow(['X', 'Y'])
             for mocop in moco_param:
@@ -1029,8 +1029,8 @@ def moco_wrapper_interleaved(param):
                                  os.path.join(path_out_abs, file_moco_params_x), squeeze_data=False)
         sct.generate_output_file(os.path.join(path_tmp, sct.add_suffix(file_moco_params_y, '_merged')),
                                  os.path.join(path_out_abs, file_moco_params_y), squeeze_data=False)
-        sct.generate_output_file(os.path.join(path_tmp, sct.add_suffix(file_moco_params_csv, '_merged')),
-                                 os.path.join(path_out_abs, file_moco_params_csv), squeeze_data=False)
+        sct.generate_output_file(os.path.join(path_tmp, sct.add_suffix(file_moco_params, '_merged')),
+                                 os.path.join(path_out_abs, file_moco_params), squeeze_data=False)
 
     # Delete temporary files
     if param.remove_temp_files == 1:
