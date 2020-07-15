@@ -101,10 +101,10 @@ def get_parser():
                       example='dmri_moco_results/')
     parser.add_option(name='-interleaved',
                       type_value='multiple_choice',
-                      description='Interleaved acquisition: 0 = NOT-interleaved, 1 = interleaved',
+                      description='Interleaved acquisition: 0 = NOT-interleaved, 1 = interleaved.',
                       mandatory=False,
                       default_value='0',
-                      example=['0','1'])
+                      example=['0', '1'])
     parser.usage.addSection('MISC')
     parser.add_option(name="-r",
                       type_value="multiple_choice",
@@ -114,7 +114,7 @@ def get_parser():
                       example=['0', '1'])
     parser.add_option(name="-v",
                       type_value='multiple_choice',
-                      description="verbose: 0 = nothing, 1 = classic, 2 = expended",
+                      description="verbose: 0 = nothing, 1 = classic, 2 = expended.",
                       mandatory=False,
                       example=['0', '1', '2'],
                       default_value='1')
