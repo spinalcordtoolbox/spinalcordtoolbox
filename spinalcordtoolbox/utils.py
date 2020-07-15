@@ -361,12 +361,15 @@ def __get_branch():
         return output.decode().strip()
 
 
-def __get_commit():
+def __get_commit(path_to_git_folder=None):
     """
     :return: git commit ID, with trailing '*' if modified
     """
+    if path_to_git_folder is None:
+        path_to_git_folder = __sct_dir__
+
     p = subprocess.Popen(["git", "rev-parse", "HEAD"], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                         cwd=__sct_dir__)
+                         cwd=path_to_git_folder)
     output, _ = p.communicate()
     status = p.returncode
     if status == 0:
@@ -375,7 +378,7 @@ def __get_commit():
         commit = "?!?"
 
     p = subprocess.Popen(["git", "status", "--porcelain"], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                         cwd=__sct_dir__)
+                         cwd=path_to_git_folder)
     output, _ = p.communicate()
     status = p.returncode
     if status == 0:
