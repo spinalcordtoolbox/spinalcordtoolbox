@@ -30,7 +30,7 @@ import warnings
 import yaml
 
 from getpass import getpass
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, Tee, send_email
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, Tee, send_email, __get_commit
 from spinalcordtoolbox import __version__
 from textwrap import dedent
 from types import SimpleNamespace
@@ -209,6 +209,15 @@ def run_single(subj_dir, task, task_args, path_segmanual, path_data, path_data_p
     return res
 
 
+def print_script_version(fname_script):
+    """
+    If script is located in a git-versioned folder, output commit information.
+    :param fname_script:
+    :return:
+    """
+    return __get_commit(path_to_git_folder=abspath_script)
+
+
 def main(argv):
     # Print the sct startup info
     sct.init_sct()
@@ -332,6 +341,10 @@ def main(argv):
     print('\nINPUT ARGUMENTS')
     print("---------------")
     print(yaml.dump(vars(args)))
+
+    print('\nSCRIPT VERSION')
+    print("--------------")
+    print_script_version(args.task)
 
     # Find subjects and process inclusion/exclusions
     path_data = os.path.abspath(os.path.expanduser(args.path_data))
