@@ -21,6 +21,7 @@ from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.metadata import get_file_label
 import logging
 import spinalcordtoolbox.vertebrae.detect_vertebrae as detect_vert
+import spinalcordtoolbox.deepseg as sct_deep
 logging.getLogger('matplotlib.font_manager').disabled = True
 
 def label_vert(fname_seg, fname_label, verbose=1):
@@ -154,8 +155,8 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     direction = 'superior'
     search_next_disc = True
     print(sct.run('pwd'))
-    detect_vert.main(args=['-i',fname, '-c' ,'t2', '-m', '1', '-o', 'hm_tmp.nii.gz', '-net',  'CC'])
-    sct.run('sct_resample -i hm_tmp.nii.gz -mm 0.5x0.5x0.5 -x linear')
+    fname_hm = sct_deepseg.core.segment_nifti('checkpoints/model_test_t2',fname,)
+    sct.run('sct_resample -i %s  -mm 0.5x0.5x0.5 -x linear -o hm_tmp_r.nii.gz'%(fname_hm))
     sct.run('sct_resample -i %s -mm 0.5 -x nn -o %s'%(fname_seg,fname_seg))
     im_hm = Image('hm_tmp_r.nii.gz')
     data_hm = im_hm.data
