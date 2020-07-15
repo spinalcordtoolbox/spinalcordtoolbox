@@ -334,12 +334,18 @@ def main(argv):
     print("---------------")
     print(yaml.dump(vars(args)))
 
+    # Display script version info
     print("TASK SCRIPT")
     print("-----------")
     print("git commit: {}".format(__get_commit(path_to_git_folder=args.task)))
     print("copying script to output folder:")
     shutil.copy(args.task, args.path_output)
     print("{} -> {}\n".format(args.task, os.path.abspath(args.path_output)))
+
+    # Display data version info
+    print("DATA")
+    print("----")
+    print("git commit: {}\n".format(__get_commit(path_to_git_folder=args.path_data)))
 
     # Find subjects and process inclusion/exclusions
     path_data = os.path.abspath(os.path.expanduser(args.path_data))
