@@ -23,6 +23,7 @@ import time
 import functools
 import operator
 import csv
+import nibabel as nib
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.utils import sct_progress_bar
@@ -995,7 +996,6 @@ def moco_wrapper_interleaved(param):
                 moco_params_y_merged[:, :, index, :] = moco_params_y_odd.data[:, :, counter_odd, :]
                 counter_odd += 1
         # Save nii to tmp dir
-        import nibabel as nib
         # TODO - merged moco params files have isotropic 1mm voxel size instead of voxel size of original image
         img_params_x = nib.Nifti1Image(moco_params_x_merged, None)
         nib.save(img_params_x, sct.add_suffix(file_moco_params_x, '_merged'))
