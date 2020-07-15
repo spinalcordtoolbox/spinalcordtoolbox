@@ -20,6 +20,7 @@ import sys
 import argparse
 import multiprocessing
 import subprocess
+import platform
 import re
 import time
 import datetime
@@ -299,6 +300,23 @@ def main(argv):
     # Duplicate init_sct message to batch_log
     print('\n--\nSpinal Cord Toolbox ({})\n'.format(__version__), file=batch_log, flush=True)
 
+    # Display OS
+    print("INFO SYSTEM")
+    print("-----------")
+    platform_running = sys.platform
+    if platform_running.find('darwin') != -1:
+        os_running = 'osx'
+    elif platform_running.find('linux') != -1:
+        os_running = 'linux'
+    print('OS: ' + os_running + ' (' + platform.platform() + ')')
+
+    # Display number of CPU cores
+    output = int(os.getenv('ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS', 0))
+    print('CPU cores: Available: {}, Used by SCT: {}'.format(multiprocessing.cpu_count(), output))
+
+    # Display RAM available
+    sct.checkRAM(os_running, verbose=1)
+
     # Tee IO to batch_log and std(out/err)
     orig_stdout = sys.stdout
     orig_stderr = sys.stderr
@@ -311,7 +329,8 @@ def main(argv):
         sys.stderr = orig_stderr
 
     # Log the current arguments (in yaml because it's cleaner)
-    print('sct_run_batch arguments were:')
+    print('\nINPUT ARGUMENTS')
+    print("---------------")
     print(yaml.dump(vars(args)))
 
     # Find subjects and process inclusion/exclusions
