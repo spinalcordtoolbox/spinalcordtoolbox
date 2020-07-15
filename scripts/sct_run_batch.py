@@ -419,9 +419,9 @@ def main(argv):
     fails = [sd for (sd, ret) in zip(subject_dirs, results) if ret.returncode != 0]
 
     if len(fails) == 0:
-        status_message = 'Hooray! your batch completed successfully :-)\n'
+        status_message = '\nHooray! your batch completed successfully :-)\n'
     else:
-        status_message = ('Your batch completed but some subjects may have not completed '
+        status_message = ('\nYour batch completed but some subjects may have not completed '
                           'successfully, please consult the logs for:\n'
                           '{}\n'.format('\n'.join(fails)))
     print(status_message)
