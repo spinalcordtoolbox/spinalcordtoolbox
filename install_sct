@@ -529,7 +529,6 @@ conda activate venv_sct
 
 # Install Python dependencies
 print info "Installing Python dependencies..."
-pip install numpy
 # Check if a frozen version of the requirements exist (for release only)
 if [[ -f "requirements-freeze.txt" ]]; then
   print info "Using requirements-freeze.txt (release installation)"
@@ -575,8 +574,8 @@ if [[ $NO_SCT_BIN_INSTALL ]]; then
   print warning "WARNING: SCT binaries will not be (re)-installed"
 else
   print info "Installing binaries..."
-  run "sct_download_data -d binaries_"$OS" -o $SCT_DIR/$BIN_DIR" || \
-    die "Unsupported OS $OS: can't install binaries."
+  run "sct_download_data -d binaries_${OS} -o ${SCT_DIR}/${BIN_DIR} -k" || \
+      die "Unsupported OS $OS: can't install binaries."
 fi
 print info "All requirements installed!"
 
@@ -588,9 +587,8 @@ else
   print info "Installing data..."
   run "rm -rf $SCT_DIR/$DATA_DIR"
   run "mkdir -p $SCT_DIR/$DATA_DIR"
-  run "cd $SCT_DIR/$DATA_DIR"
   for data in PAM50 gm_model optic_models pmj_models deepseg_sc_models deepseg_gm_models deepseg_lesion_models c2c3_disc_models; do
-    run "sct_download_data -d $data"
+    run "sct_download_data -d $data -o $SCT_DIR/$DATA_DIR/$data"
   done
 fi
 

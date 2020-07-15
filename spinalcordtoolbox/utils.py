@@ -101,20 +101,52 @@ class SmartFormatter(argparse.HelpFormatter):
     def _split_lines(self, text, width):
         if text.startswith('R|'):
             lines = text[2:].splitlines()
+            while lines[0] == '':  # Discard empty start lines
+                lines = lines[1:]
             offsets = [re.match("^[ \t]*", l).group(0) for l in lines]
             wrapped = []
             for i in range(len(lines)):
                 li = lines[i]
-                o = offsets[i]
-                ol = len(o)
-                init_wrap = argparse._textwrap.fill(li, width).splitlines()
-                first = init_wrap[0]
-                rest = "\n".join(init_wrap[1:])
-                rest_wrap = argparse._textwrap.fill(rest, width - ol).splitlines()
-                offset_lines = [o + wl for wl in rest_wrap]
-                wrapped = wrapped + [first] + offset_lines
+                if len(li) > 0:
+                    o = offsets[i]
+                    ol = len(o)
+                    init_wrap = argparse._textwrap.fill(li, width).splitlines()
+                    first = init_wrap[0]
+                    rest = "\n".join(init_wrap[1:])
+                    rest_wrap = argparse._textwrap.fill(rest, width - ol).splitlines()
+                    offset_lines = [o + wl for wl in rest_wrap]
+                    wrapped = wrapped + [first] + offset_lines
+                else:
+                    wrapped = wrapped + [li]
             return wrapped
         return argparse.HelpFormatter._split_lines(self, text, width)
+
+
+# Modified from http://shallowsky.com/blog/programming/python-tee.html
+class Tee:
+    def __init__(self, _fd1, _fd2):
+        self.fd1 = _fd1
+        self.fd2 = _fd2
+
+    # This is breaking pytest for test_sct_run_batch.py somehow.
+    # I think it is ok to omit this, allowing the fd objects to close themselves
+    # this prevents closing an fd in use elsewhere.
+    # def __del__(self):
+    #     self.close()
+
+    def close(self):
+        if self.fd1 != sys.__stdout__ and self.fd1 != sys.__stderr__:
+            self.fd1.close()
+        if self.fd2 != sys.__stdout__ and self.fd2 != sys.__stderr__:
+            self.fd2.close()
+
+    def write(self, text):
+        self.fd1.write(text)
+        self.fd2.write(text)
+
+    def flush(self):
+        self.fd1.flush()
+        self.fd2.flush()
 
 
 def add_suffix(fname, suffix):
@@ -258,7 +290,7 @@ def tmp_create(basename=None):
     return tmpdir
 
 
-def send_email(addr_to, addr_from, passwd, subject, message='', filename=None, html=False, smtp_host=None, smtp_port=None, login=None):
+def send_email(addr_to, addr_from, subject, message='', passwd=None, filename=None, html=False, smtp_host=None, smtp_port=None, login=None):
     if smtp_host is None:
         smtp_host = os.environ.get("SCT_SMTP_SERVER", "smtp.gmail.com")
     if smtp_port is None:
@@ -307,7 +339,8 @@ def send_email(addr_to, addr_from, passwd, subject, message='', filename=None, h
     # send email
     server = smtplib.SMTP(smtp_host, smtp_port)
     server.starttls()
-    server.login(login, passwd)
+    if passwd is not None:
+        server.login(login, passwd)
     text = msg.as_string()
     server.sendmail(addr_from, addr_to, text)
     server.quit()

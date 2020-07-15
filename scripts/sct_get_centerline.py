@@ -44,7 +44,7 @@ def get_parser():
 
     parser.add_option(name='-centerline-algo',
                       type_value='multiple_choice',
-                      description='Algorithm for centerline fitting. Only relevant with -angle-corr 1.',
+                      description='Algorithm for centerline fitting. Only relevant with -method fitseg',
                       mandatory=False,
                       example=['polyfit', 'bspline', 'linear', 'nurbs'],
                       default_value='bspline')

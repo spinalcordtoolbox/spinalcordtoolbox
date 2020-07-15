@@ -19,7 +19,7 @@ def test(path_data):
 
     # parameters
     folder_data = 't2'
-    file_data = 't2_seg.nii.gz'
+    file_data = 't2_seg-manual.nii.gz'
 
     # define command
     cmd = 'sct_convert_binary_to_trilinear' \
@@ -30,7 +30,7 @@ def test(path_data):
     #return sct.run(cmd, 0)
     return sct.run(cmd)
 
-# call to function
+
 if __name__ == "__main__":
     # call main function
     test()
