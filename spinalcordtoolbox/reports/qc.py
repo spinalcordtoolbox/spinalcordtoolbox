@@ -364,7 +364,22 @@ class QcImage(object):
                     bbox_inches=None,
                     transparent=True,
                     dpi=dpi)
-
+    def label_centerline(self, mask, ax):
+        """Create figure with red label. Common scenario."""
+        results_mask_pixels = np.where(mask > 0)
+        listOfCoordinates= list(zip(results_mask_pixels[0], results_mask_pixels[1]))
+        for cord in listOfCoordinates:
+            ax.plot(cord[1],cord[0], 'ro', markersize=1)
+            # ax.text(cord[1]+5,cord[0]+5, str(mask[cord]), color='lime', clip_on=True)          
+        img = np.rint(np.ma.masked_where(mask < 1, mask))
+        ax.imshow(img,
+                  cmap=color.ListedColormap(self._color_bin_red),
+                  norm=color.Normalize(vmin=0, vmax=1),
+                  interpolation=self.interpolation,
+                  alpha=10,
+                  aspect=float(self.aspect_mask))
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
 
 class Params(object):
     """Parses and stores the variables that will be included into the QC details
@@ -414,6 +429,8 @@ class Params(object):
 
     def abs_overlay_img_path(self):
         return os.path.join(self.root_folder, self.overlay_img_path)
+
+
 
 
 class QcReport(object):
@@ -633,6 +650,12 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, angle_line=None, args
         plane = 'Axial'
         qcslice_type = qcslice.Axial([Image(fname_in1), Image(fname_seg)])
         qcslice_operations = [QcImage.listed_seg]
+        qcslice_layout = lambda x: x.mosaic()
+    # Axial orientation, switch between the image and the centerline
+    elif process in ['sct_get_centerline']:
+        plane = 'Axial'
+        qcslice_type = qcslice.Axial([Image(fname_in1), Image(fname_seg)])
+        qcslice_operations = [QcImage.label_centerline]
         qcslice_layout = lambda x: x.mosaic()
     # Axial orientation, switch between the image and the white matter segmentation (linear interp, in blue)
     elif process in ['sct_warp_template']:
