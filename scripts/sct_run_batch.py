@@ -40,12 +40,14 @@ import sct_utils as sct
 
 def get_parser():
     parser = argparse.ArgumentParser(
-        description='Wrapper to processing scripts, which loops across subjects. Subjects '
-        'should be organized as folders within a single directory. We recommend '
-        'following the BIDS convention (https://bids.neuroimaging.io/). '
-        'The processing script (task) should accept a subject directory as its only argument. '
-        'Additional information is passed via environment variables and the arguments '
-        'passed via `-task-args`',
+        description='Wrapper to processing scripts, which loops across subjects. Subjects should be organized as '
+                    'folders within a single directory. We recommend following the BIDS convention '
+                    '(https://bids.neuroimaging.io/). The processing script (task) should accept a subject directory '
+                    'as its only argument. Additional information is passed via environment variables and the '
+                    'arguments passed via `-task-args`. If the script (task) or the input data are located within a '
+                    'git repository, the git commit is displayed. If the script or data have changed since the latest '
+                    'commit, the symbol "*" is added after the git commit number. If no git repository is found, the '
+                    'git commit version displays "?!?". The script is copied on the output folder (-path-out).',
         formatter_class=SmartFormatter,
         prog=os.path.basename(__file__).strip('.py'))
 
