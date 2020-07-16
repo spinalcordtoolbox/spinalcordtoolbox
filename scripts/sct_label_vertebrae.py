@@ -28,6 +28,7 @@ from sct_label_utils import ProcessLabels
 from msct_parser import Parser
 import sct_utils as sct
 import sct_straighten_spinalcord
+import spinalcordtoolbox
 from spinalcordtoolbox.vertebrae import detect_c2
 
 # PARAMETERS
