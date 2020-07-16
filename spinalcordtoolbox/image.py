@@ -33,6 +33,7 @@ logger = logging.getLogger(__name__)
 
 def _get_permutations(im_src_orientation, im_dst_orientation):
     """
+
     :param im_src_orientation str: Orientation of source image. Example: 'RPI'
     :param im_dest_orientation str: Orientation of destination image. Example: 'SAL'
     :return: list of axes permutations and list of inversions to achieve an orientation change
@@ -72,6 +73,7 @@ class Slicer(object):
     """
     def __init__(self, im, orientation="LPI"):
         """
+
         :param im: image to iterate through
         :param spec: "from" letters to indicate how to slice the image.
                      The slices are done on the last letter axis,
@@ -118,6 +120,7 @@ class Slicer(object):
 
     def __getitem__(self, idx):
        """
+
        :return: an image slice, at slicing index idx
        :param idx: slicing index (according to the slicing direction)
        """
@@ -172,6 +175,7 @@ class SlicerOneAxis(object):
 
     def __getitem__(self, idx):
        """
+
        :return: an image slice, at slicing index idx
        :param idx: slicing index (according to the slicing direction)
        """
@@ -324,6 +328,7 @@ class Image(object):
     def copy_qform_from_ref(self, im_ref):
         """
         Copy qform and sform and associated codes from a reference Image object
+
         :param im_ref:
         :return:
         """
@@ -336,6 +341,7 @@ class Image(object):
     def loadFromPath(self, path, verbose):
         """
         This function load an image from an absolute path using nibabel library
+
         :param path: path of the file from which the image will be loaded
         :return:
         """
@@ -356,10 +362,10 @@ class Image(object):
         """
         Change data shape (in-place)
 
-        :param generate_path: whether to create a derived path name from the
-                              original absolutepath (note: while it will generate
-                              a file suffix, don't expect the suffix but rather
-                              use the Image's absolutepath.
+        :param generate_path: whether to create a derived path name from the\
+                              original absolutepath (note: while it will generate\
+                              a file suffix, don't expect the suffix but rather\
+                              use the Image's absolutepath.\
                               If not set, the absolutepath is voided.
 
         This is mostly useful for adding/removing a fourth dimension,
@@ -382,13 +388,13 @@ class Image(object):
 
         :param orientation: orientation string (SCT "from" convention)
 
-        :param inverse: if you think backwards, use this to specify that you actually
-                        want to transform *from* the specified orientation, not *to*
+        :param inverse: if you think backwards, use this to specify that you actually\
+                        want to transform *from* the specified orientation, not *to*\
                         it.
-        :param generate_path: whether to create a derived path name from the
-                              original absolutepath (note: while it will generate
-                              a file suffix, don't expect the suffix but rather
-                              use the Image's absolutepath.
+        :param generate_path: whether to create a derived path name from the\
+                              original absolutepath (note: while it will generate\
+                              a file suffix, don't expect the suffix but rather\
+                              use the Image's absolutepath.\
                               If not set, the absolutepath is voided.
 
         """
@@ -420,26 +426,26 @@ class Image(object):
         """
         Write an image in a nifti file
 
-        :param path: Where to save the data, if None it will be taken from the
-                     absolutepath member.
-                     If path is a directory, will save to a file under this directory
+        :param path: Where to save the data, if None it will be taken from the\
+                     absolutepath member.\
+                     If path is a directory, will save to a file under this directory\
                      with the basename from the absolutepath member.
 
-        :param dtype: if not set, the image is saved in the same type as input data
-                      if 'minimize', image storage space is minimized
-                        (2, 'uint8', np.uint8, "NIFTI_TYPE_UINT8"),
-                        (4, 'int16', np.int16, "NIFTI_TYPE_INT16"),
-                        (8, 'int32', np.int32, "NIFTI_TYPE_INT32"),
-                        (16, 'float32', np.float32, "NIFTI_TYPE_FLOAT32"),
-                        (32, 'complex64', np.complex64, "NIFTI_TYPE_COMPLEX64"),
-                        (64, 'float64', np.float64, "NIFTI_TYPE_FLOAT64"),
-                        (256, 'int8', np.int8, "NIFTI_TYPE_INT8"),
-                        (512, 'uint16', np.uint16, "NIFTI_TYPE_UINT16"),
-                        (768, 'uint32', np.uint32, "NIFTI_TYPE_UINT32"),
-                        (1024,'int64', np.int64, "NIFTI_TYPE_INT64"),
-                        (1280, 'uint64', np.uint64, "NIFTI_TYPE_UINT64"),
-                        (1536, 'float128', _float128t, "NIFTI_TYPE_FLOAT128"),
-                        (1792, 'complex128', np.complex128, "NIFTI_TYPE_COMPLEX128"),
+        :param dtype: if not set, the image is saved in the same type as input data\
+                      if 'minimize', image storage space is minimized\
+                        (2, 'uint8', np.uint8, "NIFTI_TYPE_UINT8"),\
+                        (4, 'int16', np.int16, "NIFTI_TYPE_INT16"),\
+                        (8, 'int32', np.int32, "NIFTI_TYPE_INT32"),\
+                        (16, 'float32', np.float32, "NIFTI_TYPE_FLOAT32"),\
+                        (32, 'complex64', np.complex64, "NIFTI_TYPE_COMPLEX64"),\
+                        (64, 'float64', np.float64, "NIFTI_TYPE_FLOAT64"),\
+                        (256, 'int8', np.int8, "NIFTI_TYPE_INT8"),\
+                        (512, 'uint16', np.uint16, "NIFTI_TYPE_UINT16"),\
+                        (768, 'uint32', np.uint32, "NIFTI_TYPE_UINT32"),\
+                        (1024,'int64', np.int64, "NIFTI_TYPE_INT64"),\
+                        (1280, 'uint64', np.uint64, "NIFTI_TYPE_UINT64"),\
+                        (1536, 'float128', _float128t, "NIFTI_TYPE_FLOAT128"),\
+                        (1792, 'complex128', np.complex128, "NIFTI_TYPE_COMPLEX128"),\
                         (2048, 'complex256', _complex256t, "NIFTI_TYPE_COMPLEX256"),
 
         :param mutable: whether to update members with newly created path or dtype
@@ -550,6 +556,7 @@ class Image(object):
     def getCoordinatesAveragedByValue(self):
         """
         This function computes the mean coordinate of group of labels in the image. This is especially useful for label's images.
+
         :return: list of coordinates that represent the center of mass of each group of value.
         """
         # 1. Extraction of coordinates from all non-null voxels in the image. Coordinates are sorted by value.
@@ -580,10 +587,13 @@ class Image(object):
         :return: sequence with the physical coordinates of the points in the space of the image.
 
         Example:
-        img = Image('file.nii.gz')
-        coordi_pix = [[1,1,1]]   # for points: (1,1,1). N.B. Important to write [[x,y,z]] instead of [x,y,z]
-        coordi_pix = [[1,1,1],[2,2,2],[4,4,4]]   # for points: (1,1,1), (2,2,2) and (4,4,4)
-        coordi_phys = img.transfo_pix2phys(coordi=coordi_pix)
+
+        .. code:: python
+
+            img = Image('file.nii.gz')
+            coordi_pix = [[1,1,1]]   # for points: (1,1,1). N.B. Important to write [[x,y,z]] instead of [x,y,z]
+            coordi_pix = [[1,1,1],[2,2,2],[4,4,4]]   # for points: (1,1,1), (2,2,2) and (4,4,4)
+            coordi_phys = img.transfo_pix2phys(coordi=coordi_pix)
 
         """
 
@@ -621,6 +631,7 @@ class Image(object):
     def get_values(self, coordi=None, interpolation_mode=0, border='constant', cval=0.0):
         """
         This function returns the intensity value of the image at the position coordi (can be a list of coordinates).
+
         :param coordi: continuouspix
         :param interpolation_mode: 0=nearest neighbor, 1= linear, 2= 2nd-order spline, 3= 2nd-order spline, 4= 2nd-order spline, 5= 5th-order spline
         :return: intensity values at continuouspix with interpolation_mode
@@ -686,8 +697,8 @@ class Image(object):
     def get_directions(self):
         """
         This function return the X, Y, and Z axes of the image
-        Returns:
-            X, Y and Z axes of the image
+
+        return: X, Y and Z axes of the image
         """
         direction_matrix = self.header.get_best_affine()
         T_self, R_self, Sc_self, Sh_self = affines.decompose44(direction_matrix)
@@ -698,13 +709,15 @@ class Image(object):
         This function interpolates an image by following the grid of a reference image.
         Example of use:
 
-        from spinalcordtoolbox.image import Image
-        im_input = Image(fname_input)
-        im_ref = Image(fname_ref)
-        im_input.interpolate_from_image(im_ref, fname_output, interpolation_mode=1)
+        .. code:: python
+
+            from spinalcordtoolbox.image import Image
+            im_input = Image(fname_input)
+            im_ref = Image(fname_ref)
+            im_input.interpolate_from_image(im_ref, fname_output, interpolation_mode=1)
 
         :param im_ref: reference Image that contains the grid on which interpolate.
-        :param border: Points outside the boundaries of the input are filled according
+        :param border: Points outside the boundaries of the input are filled according\
         to the given mode ('constant', 'nearest', 'reflect' or 'wrap')
         :return: a new image that has the same dimensions/grid of the reference image but the data of self image.
         """
@@ -735,6 +748,7 @@ class Image(object):
     def mean(self, dim):
         """
         Average across specified dimension
+
         :param dim: int: axis used for averaging
         :return: Image object
         """
@@ -749,18 +763,16 @@ class Image(object):
 def compute_dice(image1, image2, mode='3d', label=1, zboundaries=False):
     """
     This function computes the Dice coefficient between two binary images.
-    Args:
-        image1: object Image
-        image2: object Image
-        mode: mode of computation of Dice.
-                3d: compute Dice coefficient over the full 3D volume
-                2d-slices: compute the 2D Dice coefficient for each slice of the volumes
-        label: binary label for which Dice coefficient will be computed. Default=1
-        zboundaries: True/False. If True, the Dice coefficient is computed over a Z-ROI where both segmentations are
-                     present. Default=False.
+    :param image1: object Image
+    :param image2: object Image
+    :param mode: mode of computation of Dice.\
+            3d: compute Dice coefficient over the full 3D volume\
+            2d-slices: compute the 2D Dice coefficient for each slice of the volumes\
+    :param: label: binary label for which Dice coefficient will be computed. Default=1
+    :paaram: zboundaries: True/False. If True, the Dice coefficient is computed over a Z-ROI where both segmentations are\
+                 present. Default=False.
 
-    Returns: Dice coefficient as a float between 0 and 1. Raises ValueError exception if an error occurred.
-
+    :return: Dice coefficient as a float between 0 and 1. Raises ValueError exception if an error occurred.
     """
     MODES = ['3d', '2d-slices']
     if mode not in MODES:
@@ -815,6 +827,7 @@ def compute_dice(image1, image2, mode='3d', label=1, zboundaries=False):
 def concat_data(fname_in_list, dim, pixdim=None, squeeze_data=False):
     """
     Concatenate data
+
     :param im_in_list: list of Images or image filenames
     :param dim: dimension: 0, 1, 2, 3.
     :param pixdim: pixel resolution to join to image header
@@ -883,6 +896,7 @@ def concat_data(fname_in_list, dim, pixdim=None, squeeze_data=False):
 def find_zmin_zmax(im, threshold=0.1):
     """
     Find the min (and max) z-slice index below which (and above which) slices only have voxels below a given threshold.
+
     :param im: Image object
     :param threshold: threshold to apply before looking for zmin/zmax, typically corresponding to noise level.
     :return: [zmin, zmax]
@@ -910,6 +924,7 @@ def find_zmin_zmax(im, threshold=0.1):
 def get_dimension(im_file, verbose=1):
     """
     Get dimension from Image or nibabel object. Manages 2D, 3D or 4D images.
+
     :param: im_file: Image or nibabel object
     :return: nx, ny, nz, nt, px, py, pz, pt
     """
@@ -940,6 +955,7 @@ def get_dimension(im_file, verbose=1):
 
 def all_refspace_strings():
     """
+
     :return: all possible orientation strings ['RAI', 'RAS', 'RPI', 'RPS', ...]
     """
     return [x for x in itertools.chain(*[ [ "".join(x) for x in itertools.product(*seq) ] for seq in itertools.permutations(("RL", "AP", "IS"), 3)])]
@@ -947,6 +963,7 @@ def all_refspace_strings():
 
 def get_orientation(im):
     """
+
     :param im: an Image
     :return: reference space string (ie. what's in Image.orientation)
     """
@@ -957,6 +974,7 @@ def get_orientation(im):
 
 def orientation_string_nib2sct(s):
     """
+
     :return: SCT reference space code from nibabel one
     """
     opposite_character = {'L': 'R', 'R': 'L', 'A': 'P', 'P': 'A', 'I': 'S', 'S': 'I'}
@@ -968,12 +986,12 @@ orientation_string_sct2nib = orientation_string_nib2sct
 
 def change_shape(im_src, shape, im_dst=None):
     """
-    :return: an image with changed shape
+
     :param shape: shape to obtain (must be compatible with original one)
+    :return: an image with changed shape
 
-    Notes:
-
-    - the resulting image has no path
+    .. note::
+        The resulting image has no path
     """
 
     if im_dst is None:
@@ -996,7 +1014,7 @@ def change_shape(im_src, shape, im_dst=None):
 
 def change_orientation(im_src, orientation, im_dst=None, inverse=False, data_only=False):
     """
-    :return: an image with changed orientation
+
     :param im_src: source image
     :param orientation: orientation string (SCT "from" convention)
     :param im_dst: destination image (can be the source image for in-place
@@ -1005,10 +1023,11 @@ def change_orientation(im_src, orientation, im_dst=None, inverse=False, data_onl
                     want to transform *from* the specified orientation, not *to* it.
     :param data_only: If you want to only permute the data, not the header. Only use if you know there is a problem
                       with the native orientation of the input data.
-    Notes:
+    :return: an image with changed orientation
 
-    - the resulting image has no path member set
-    - if the source image is < 3D, it is reshaped to 3D and the destination is 3D
+    .. note::
+        - the resulting image has no path member set
+        - if the source image is < 3D, it is reshaped to 3D and the destination is 3D
     """
 
     # TODO: make sure to cover all cases for setorient-data
@@ -1083,22 +1102,23 @@ def change_orientation(im_src, orientation, im_dst=None, inverse=False, data_onl
 def change_type(im_src, dtype, im_dst=None):
     """
     Change the voxel type of the image
-    :param dtype:    if not set, the image is saved in standard type
-                    if 'minimize', image space is minimize
-                    if 'minimize_int', image space is minimize and values are approximated to integers
-                    (2, 'uint8', np.uint8, "NIFTI_TYPE_UINT8"),
-                    (4, 'int16', np.int16, "NIFTI_TYPE_INT16"),
-                    (8, 'int32', np.int32, "NIFTI_TYPE_INT32"),
-                    (16, 'float32', np.float32, "NIFTI_TYPE_FLOAT32"),
-                    (32, 'complex64', np.complex64, "NIFTI_TYPE_COMPLEX64"),
-                    (64, 'float64', np.float64, "NIFTI_TYPE_FLOAT64"),
-                    (256, 'int8', np.int8, "NIFTI_TYPE_INT8"),
-                    (512, 'uint16', np.uint16, "NIFTI_TYPE_UINT16"),
-                    (768, 'uint32', np.uint32, "NIFTI_TYPE_UINT32"),
-                    (1024,'int64', np.int64, "NIFTI_TYPE_INT64"),
-                    (1280, 'uint64', np.uint64, "NIFTI_TYPE_UINT64"),
-                    (1536, 'float128', _float128t, "NIFTI_TYPE_FLOAT128"),
-                    (1792, 'complex128', np.complex128, "NIFTI_TYPE_COMPLEX128"),
+
+    :param dtype:    if not set, the image is saved in standard type\
+                    if 'minimize', image space is minimize\
+                    if 'minimize_int', image space is minimize and values are approximated to integers\
+                    (2, 'uint8', np.uint8, "NIFTI_TYPE_UINT8"),\
+                    (4, 'int16', np.int16, "NIFTI_TYPE_INT16"),\
+                    (8, 'int32', np.int32, "NIFTI_TYPE_INT32"),\
+                    (16, 'float32', np.float32, "NIFTI_TYPE_FLOAT32"),\
+                    (32, 'complex64', np.complex64, "NIFTI_TYPE_COMPLEX64"),\
+                    (64, 'float64', np.float64, "NIFTI_TYPE_FLOAT64"),\
+                    (256, 'int8', np.int8, "NIFTI_TYPE_INT8"),\
+                    (512, 'uint16', np.uint16, "NIFTI_TYPE_UINT16"),\
+                    (768, 'uint32', np.uint32, "NIFTI_TYPE_UINT32"),\
+                    (1024,'int64', np.int64, "NIFTI_TYPE_INT64"),\
+                    (1280, 'uint64', np.uint64, "NIFTI_TYPE_UINT64"),\
+                    (1536, 'float128', _float128t, "NIFTI_TYPE_FLOAT128"),\
+                    (1792, 'complex128', np.complex128, "NIFTI_TYPE_COMPLEX128"),\
                     (2048, 'complex256', _complex256t, "NIFTI_TYPE_COMPLEX256"),
     :return:
     """
@@ -1208,14 +1228,14 @@ def to_dtype(dtype):
 
 def zeros_like(img, dtype=None):
     """
-    :return: an Image with the same shape and header, filled with zeros
+
     :param img: reference image
     :param dtype: desired data type (optional)
+    :return: an Image with the same shape and header, filled with zeros
 
     Similar to numpy.zeros_like(), the goal of the function is to show the developer's
     intent and avoid doing a copy, which is slower than initialization with a constant.
 
-    Feel free to improve the implementation ;)
     """
     dst = change_type(img, dtype)
     dst.data[:] = 0
@@ -1224,15 +1244,14 @@ def zeros_like(img, dtype=None):
 
 def empty_like(img, dtype=None):
     """
-    :return: an Image with the same shape and header, whose data is uninitialized
     :param img: reference image
     :param dtype: desired data type (optional)
+    :return: an Image with the same shape and header, whose data is uninitialized
 
     Similar to numpy.empty_like(), the goal of the function is to show the developer's
     intent and avoid touching the allocated memory, because it will be written to
     afterwards.
 
-    Feel free to improve the implementation ;)
     """
     dst = change_type(img, dtype)
     return dst

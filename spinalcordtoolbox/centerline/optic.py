@@ -66,6 +66,7 @@ def centerline2roi(fname_image, folder_output='./', verbose=0):
 
 def detect_centerline(img, contrast, verbose=1):
     """Detect spinal cord centerline using OptiC.
+
     :param img: input Image() object.
     :param contrast: str: The type of contrast. Will define the path to Optic model.
     :returns: Image(): Output centerline

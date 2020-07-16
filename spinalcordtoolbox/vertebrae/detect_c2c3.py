@@ -37,6 +37,7 @@ logger = logging.getLogger(__name__)
 def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, verbose=1):
     """
     Detect the posterior edge of C2-C3 disc.
+
     :param nii_im:
     :param nii_seg:
     :param contrast:
@@ -142,6 +143,7 @@ def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, verbose=1):
 def detect_c2c3_from_file(fname_im, fname_seg, contrast, fname_c2c3=None, verbose=1):
     """
     Detect the posterior edge of C2-C3 disc.
+
     :param fname_im:
     :param fname_seg:
     :param contrast:
