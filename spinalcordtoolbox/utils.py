@@ -463,11 +463,15 @@ def zipdir(path_to_zip, fname_zip='archive.zip'):
     import zipfile
     import os
 
+    fname_zip = abspath(fname_zip)
     currentDir = os.getcwd()
     try:
+        relroot = abspath(path_to_zip)
         os.chdir(path_to_zip)
         # relroot = os.path.abspath(os.path.join(sourceDirectory, os.pardir))
-        relroot = os.path.abspath(os.path.join(path_to_zip))
+        # relroot = os.path.abspath(os.path.join(path_to_zip))
+        # relroot = os.path.abspath(os.curdir)
+        # relroot = abspath(path_to_zip)
         # with zipfile.ZipFile(outputFilePath, "w", zipfile.ZIP_DEFLATED) as zip:
         with zipfile.ZipFile(fname_zip, "w") as zip:
             for root, dirs, files in os.walk(path_to_zip):
