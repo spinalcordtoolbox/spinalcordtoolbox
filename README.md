@@ -1,4 +1,7 @@
 <img src="https://github.com/neuropoly/spinalcordtoolbox/blob/master/documentation/imgs/logo_sct.png" width="300">
+<!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
+[![All Contributors](https://img.shields.io/badge/all_contributors-1-orange.svg?style=flat-square)](#contributors-)
+<!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 [![Build Status](https://travis-ci.org/neuropoly/spinalcordtoolbox.svg?branch=master)](https://travis-ci.org/neuropoly/spinalcordtoolbox)
 [![GitHub Release](https://github-basic-badges.herokuapp.com/release/neuropoly/spinalcordtoolbox.svg)](https://github.com/neuropoly/spinalcordtoolbox/releases)
@@ -263,6 +266,18 @@ When citing SCT please use this BibTeX entry:
 ## Contributors
 
 This project exists thanks to [all the people who contribute](https://github.com/neuropoly/spinalcordtoolbox/graphs/contributors).
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- prettier-ignore-start -->
+<!-- markdownlint-disable -->
+<table>
+  <tr>
+    <td align="center"><a href="https://github.com/alexfoias"><img src="https://avatars3.githubusercontent.com/u/12564433?v=4" width="100px;" alt=""/><br /><sub><b>Alexandru Foias</b></sub></a><br /><a href="https://github.com/neuropoly/spinalcordtoolbox/commits?author=alexfoias" title="Code">💻</a></td>
+  </tr>
+</table>
+
+<!-- markdownlint-enable -->
+<!-- prettier-ignore-end -->
+<!-- ALL-CONTRIBUTORS-LIST:END -->
 If you would like to contribute as well, please follow the [contribution guidelines](CONTRIBUTING.rst).
 
 
