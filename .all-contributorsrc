@@ -1,0 +1,24 @@
+{
+  "files": [
+    "README.md"
+  ],
+  "imageSize": 100,
+  "commit": false,
+  "contributors": [
+    {
+      "login": "alexfoias",
+      "name": "Alexandru Foias",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/12564433?v=4",
+      "profile": "https://github.com/alexfoias",
+      "contributions": [
+        "code"
+      ]
+    }
+  ],
+  "contributorsPerLine": 7,
+  "projectName": "spinalcordtoolbox",
+  "projectOwner": "neuropoly",
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "skipCi": true
+}
