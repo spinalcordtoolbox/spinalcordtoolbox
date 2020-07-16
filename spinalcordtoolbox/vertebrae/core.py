@@ -155,7 +155,7 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     direction = 'superior'
     search_next_disc = True
     print(sct.run('pwd'))
-    fname_hm = sct_deepseg.segment_nifti(fname,os.path.join(sct.__sct_dir__, 'spinalcordtoolbox/vertebrae/checkpoints/test_t2'))
+    fname_hm = sct_deepseg.segment_nifti(fname,os.path.join(sct.__sct_dir__, 'spinalcordtoolbox/vertebrae/checkpoints/test_t2'),post=False)
     sct.run('sct_resample -i %s  -mm 0.5x0.5x0.5 -x linear -o hm_tmp_r.nii.gz'%(fname_hm))
     sct.run('sct_resample -i %s -mm 0.5 -x nn -o %s'%(fname_seg,fname_seg))
     im_hm = Image('hm_tmp_r.nii.gz')
@@ -373,8 +373,9 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
     """
     # parametersi
     thr_corr = 0.2  # disc correlation threshold. Below this value, use template distance.
+    src = src[:,:,:,0]
     # get dimensions from src
-    nx, ny, nz = src.shape
+    nx, ny, nz  = src.shape
     #zsize=(15)
     xsize=30
     ysize=20

@@ -85,7 +85,7 @@ def postprocess(nii_seg, options):
     return nii_seg
 
 
-def segment_nifti(fname_image, folder_model, fname_prior=None, param=None):
+def segment_nifti(fname_image, folder_model, fname_prior=None, param=None, post=True):
     """
     Segment a nifti file.
 
@@ -103,7 +103,8 @@ def segment_nifti(fname_image, folder_model, fname_prior=None, param=None):
     # Postprocessing
     metadata = sct.deepseg.models.get_metadata(folder_model)
     options = {**DEFAULTS, **metadata, **param}
-    nii_seg = postprocess(nii_seg, options)
+    if post:
+        nii_seg = postprocess(nii_seg, options)
 
     # Save output seg
     if 'o' in options:
