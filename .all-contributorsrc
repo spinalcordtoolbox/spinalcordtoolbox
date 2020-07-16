@@ -1,0 +1,24 @@
+{
+  "files": [
+    "README.md"
+  ],
+  "imageSize": 100,
+  "commit": false,
+  "contributors": [
+    {
+      "login": "jcohenadad",
+      "name": "Julien Cohen-Adad",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/2482071?v=4",
+      "profile": "http://www.neuro.polymtl.ca",
+      "contributions": [
+        "code"
+      ]
+    }
+  ],
+  "contributorsPerLine": 7,
+  "projectName": "spinalcordtoolbox",
+  "projectOwner": "neuropoly",
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "skipCi": true
+}
