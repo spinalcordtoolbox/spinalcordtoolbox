@@ -30,6 +30,7 @@ import tempfile
 import warnings
 import yaml
 import shutil
+import psutil
 
 from getpass import getpass
 from spinalcordtoolbox.utils import Metavar, SmartFormatter, Tee, send_email, __get_commit, zipdir
@@ -307,7 +308,19 @@ def main(argv):
     # Duplicate init_sct message to batch_log
     print('\n--\nSpinal Cord Toolbox ({})\n'.format(__version__), file=batch_log, flush=True)
 
-    # Display OS
+    # Tee IO to batch_log and std(out/err)
+    orig_stdout = sys.stdout
+    orig_stderr = sys.stderr
+
+    sys.stdout = Tee(batch_log, orig_stdout)
+    sys.stderr = Tee(batch_log, orig_stderr)
+
+    def reset_streams():
+        sys.stdout = orig_stdout
+        sys.stderr = orig_stderr
+
+        # Display OS
+
     print("INFO SYSTEM")
     print("-----------")
     platform_running = sys.platform
@@ -319,21 +332,14 @@ def main(argv):
 
     # Display number of CPU cores
     output = int(os.getenv('ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS', 0))
-    print('CPU cores: Available: {}, Used by SCT: {}'.format(multiprocessing.cpu_count(), output))
+    print('CPU cores: Available: {} | Used by SCT: {}'.format(multiprocessing.cpu_count(), output))
 
     # Display RAM available
-    sct.checkRAM(os_running, verbose=1)
-
-    # Tee IO to batch_log and std(out/err)
-    orig_stdout = sys.stdout
-    orig_stderr = sys.stderr
-
-    sys.stdout = Tee(batch_log, orig_stdout)
-    sys.stderr = Tee(batch_log, orig_stderr)
-
-    def reset_streams():
-        sys.stdout = orig_stdout
-        sys.stderr = orig_stderr
+    print("RAM: Total {} MB | Available {} MB | Used {} MB".format(
+        int(psutil.virtual_memory().total / 1024 / 1024),
+        int(psutil.virtual_memory().available / 1024 / 1024),
+        int(psutil.virtual_memory().used / 1024 / 1024),
+        ))
 
     # Log the current arguments (in yaml because it's cleaner)
     print('\nINPUT ARGUMENTS')
