@@ -24,7 +24,6 @@ Segmentation:
 - sct_label_vertebrae_ - Label vertebral levels
 - sct_propseg_ - Segment spinal cord using propagation of deformation model (PropSeg)
 - sct_process_segmentation_ - Perform various types of processing from the spinal cord segmentation.
-- sct_segment_graymatter_ - Segment the white and gray matter on the cervical spinal cord (available in v2.1 and higher).
 
 Registration:
 
@@ -39,7 +38,6 @@ Registration:
 
 Metric processing:
 
-- sct_average_data_within_mask_ - Average data within a mask.
 - sct_extract_metric_ - Estimate metric value within tracts, taking into account partial volume effect.
 
 Diffusion MRI:
@@ -66,7 +64,6 @@ Miscellaneous:
 - sct_compute_ernst_angle_ - Compute Ernst angle.
 - sct_dice_coefficient_ - Compute 2D or 3D DICE coefficient between two binary images.
 - sct_flatten_sagittal_ - Flatten the spinal cord in the sagittal plane (to make nice pictures).
-- sct_flip_data_ - Flip data in a specified dimension (x,y,z or t). N.B. This script will NOT modify the header but the way the data are stored (so be careful!!)
 - sct_label_utils_ - Utility function for label images.
 - sct_image_ - Performs various operations on images (split, pad, etc.).
 - sct_maths_ - Performs mathematical operations on images (threshold, smooth, etc.).
@@ -95,25 +92,6 @@ sct_apply_transfo
 ====================
 
 .. program-output:: sct_apply_transfo -h
-
-
-sct_average_data_within_mask
-===============================
-
-.. program-output:: sct_average_data_within_mask -h
-
-
-sct_change_image_type
-========================
-
-.. program-output:: sct_change_image_type -h
-
-
-sct_check_atlas_integrity
-============================
-
-.. program-output:: sct_check_atlas_integrity -h
-
 
 
 sct_compute_ernst_angle
@@ -240,12 +218,6 @@ sct_dmri_display_bvecs
 .. program-output:: sct_dmri_display_bvecs -h
 
 
-sct_dmri_eddy_correct
-========================
-
-.. program-output:: sct_dmri_eddy_correct -h
-
-
 sct_dmri_moco
 ================
 
@@ -306,12 +278,6 @@ sct_image
 .. program-output:: sct_image -h
 
 
-sct_invert_image
-===================
-
-.. program-output:: sct_invert_image -h
-
-
 sct_label_utils
 ==================
 
@@ -334,12 +300,6 @@ sct_merge_images
 ===================
 
 .. program-output:: sct_merge_images -h
-
-
-sct_nifti_tool
-=================
-
-.. program-output:: sct_nifti_tool -h
 
 
 sct_pipeline
@@ -369,12 +329,6 @@ Notes:
 
 
 
-sct_register_graymatter
-==========================
-
-.. program-output:: sct_register_graymatter -h
-
-
 sct_register_multimodal
 ==========================
 
@@ -391,14 +345,6 @@ sct_resample
 ===============
 
 .. program-output:: sct_resample -h
-
-
-.. _sct_segment_graymatter:
-
-sct_segment_graymatter
-=========================
-
-.. program-output:: sct_segment_graymatter -h
 
 
 sct_smooth_spinalcord
@@ -423,12 +369,6 @@ sct_utils
 ============
 
 .. program-output:: sct_utils -h
-
-
-sct_viewer
-=============
-
-.. program-output:: sct_viewer -h
 
 
 sct_warp_template
@@ -496,28 +436,10 @@ msct_gmseg_utils
 .. program-output:: msct_gmseg_utils -h
 
 
-msct_image
-=============
-
-.. program-output:: msct_image -h
-
-
-msct_moco
-============
-
-.. program-output:: msct_moco -h
-
-
 msct_multiatlas_seg
 ======================
 
 .. program-output:: msct_multiatlas_seg -h
-
-
-msct_nurbs
-=============
-
-.. program-output:: msct_nurbs -h
 
 
 msct_parser
@@ -536,23 +458,3 @@ msct_register_landmarks
 ==========================
 
 .. program-output:: msct_register_landmarks -h
-
-
-msct_shape
-=============
-
-.. program-output:: msct_shape -h
-
-
-msct_smooth
-==============
-
-.. program-output:: msct_smooth -h
-
-
-msct_types
-=============
-
-.. program-output:: msct_types -h
-
-

@@ -22,6 +22,8 @@ from scipy.spatial import cKDTree
 
 
 class Point(object):
+    """
+    """
     def __init__(self):
         self.x = 0
         self.y = 0
@@ -44,11 +46,15 @@ class Point(object):
 class Coordinate(Point):
     """
     Class to represent 3D coordinates.
+
     :param Point: See class definition above
     :param mode: 'index', 'continuous'  # TODO: document
+
     Example:
-      coord = Coordinate([x, y, z])
-      coord = Coordinate([x, y, z, value])
+    .. code:: python
+
+        coord = Coordinate([x, y, z])
+        coord = Coordinate([x, y, z, value])
     """
     def __init__(self, coord=None, mode='continuous'):
         super(Coordinate, self).__init__()
@@ -111,8 +117,10 @@ class Coordinate(Point):
         :return:
 
         Example:
-          coord.permute(Image('data.nii.gz'), 'RPI')
-          coord.permute(Image('data.nii.gz'), 'RPI', orient_src='SAL')
+        .. code:: python
+
+            coord.permute(Image('data.nii.gz'), 'RPI')
+            coord.permute(Image('data.nii.gz'), 'RPI', orient_src='SAL')
         """
         # convert coordinates to array
         coord_arr = np.array([self.x, self.y, self.z])
@@ -285,6 +293,7 @@ class Centerline:
         This function returns the index of the nearest point from centerline.
         Returns None if list of centerline points is empty.
         Raise an exception is the input coordinate has wrong format.
+
         :param coord: must be a numpy array [x, y, z]
         :return: index
         """
@@ -303,6 +312,7 @@ class Centerline:
         """
         Returns the coordinate of centerline at specified index.
         Raise an index error if the index is not in the list.
+
         :param index: int
         :return:
         """
@@ -311,6 +321,7 @@ class Centerline:
     def get_plan_parameters(self, index):
         """
         This function returns the parameters of the parametric equation of the plane at index.
+
         :param index: int
         :return: List of parameters [a, b, c, d], corresponding to plane parametric equation a*x + b*y + c*z + d = 0
         """
@@ -329,9 +340,10 @@ class Centerline:
         """
         This function returns the distance between a coordinate and the plan at index position.
         If the derivative at index is nul (a, b, c = 0, 0, 0), a ValueError exception is raised.
+
         :param coord: must be a numpy array [x, y, z]
         :param index: int
-        :param plane_params: list [a, b, c, d] with plane parameters. If not provided, these parameters are computed
+        :param plane_params: list [a, b, c, d] with plane parameters. If not provided, these parameters are computed\
         from index.
         :return:
         """
@@ -353,6 +365,7 @@ class Centerline:
         """
         This function computes the nearest plane from the point and returns the parameters of its parametric equation
         [a, b, c, d] and the distance between the point and the plane.
+
         :param coord: must be a numpy array [x, y, z]
         :return: index, plane_parameters [a, b, c, d|, distance_from_plane
         """
@@ -366,6 +379,7 @@ class Centerline:
     def compute_coordinate_system(self, index):
         """
         This function computes the cordinate reference system (X, Y, and Z axes) for a given index of centerline.
+
         :param index: int
         :return:
         """
@@ -393,6 +407,7 @@ class Centerline:
     def get_projected_coordinates_on_plane(self, coord, index, plane_params=None):
         """
         This function returns the coordinates of
+
         :param coord: must be a numpy array [x, y, z]
         :param index: int
         :param plane_params:
@@ -413,6 +428,7 @@ class Centerline:
         """
         This function returns the coordinate of the point from coord in the coordinate system of the plane.
         The point must be in the plane (you can use the function get_projected_coordinate_on_plane() to get it.
+
         :param coord: must be a numpy array [x, y, z]
         :param index: int
         :return:
@@ -436,14 +452,10 @@ class Centerline:
         intervertebral disks in space. A reference label can be provided (default is top of C1) so that relative
         distances are computed from this reference.
 
-        Parameters
-        ----------
-        disks_levels: list of coordinates with value [[x, y, z, value], [x, y, z, value], ...]
+        :param disks_levels: list: list of coordinates with value [[x, y, z, value], [x, y, z, value], ...]\
                         the value correspond to the intervertebral disk label
-
-        label_reference: reference label from which relative position will be computed.
+        :param label_reference: reference label from which relative position will be computed.\
                         Must be on of self.labels_regions
-
         """
         self.disks_levels = disks_levels
         self.label_reference = label_reference
@@ -563,14 +575,12 @@ class Centerline:
 
     def get_closest_to_relative_position(self, vertebral_level, relative_position, mode='levels'):
         """
-        Args:
-            vertebral_level: 
-            relative_position: 
-                if mode is 'levels', it is the relative position [0, 1] from upper disk
-                if mode is 'length', it is the relative position [mm] from C1 top
-            mode: {'levels', 'length'}
 
-        Returns:
+        :param vertebral_level:
+        :param relative_position:\
+            if mode is 'levels', it is the relative position [0, 1] from upper disk\
+            if mode is 'length', it is the relative position [mm] from C1 top
+        :param mode: {'levels', 'length'}
         """
         if mode == 'levels':
             indexes_vert = np.argwhere(np.array(self.l_points) == vertebral_level)
@@ -735,8 +745,8 @@ class Centerline:
         The absolute mode display the absolute position of centerline points.
         The relative mode display the centerline position relative to the reference label (default is C1). This mode
         requires the computation of vertebral distribution beforehand.
-        Args:
-            mode: {absolute, relative} see description of function for details
+
+        :param mode: {absolute, relative} see description of function for details
         """
 
         import matplotlib.pyplot as plt
@@ -744,7 +754,7 @@ class Centerline:
         plt.figure(1)
         ax = plt.subplot(211)
 
-        if mode is 'absolute':
+        if mode == 'absolute':
             plt.plot([coord[2] for coord in self.points], [coord[0] for coord in self.points])
         else:
             position_reference = self.points[self.index_disk[self.label_reference]]
@@ -762,7 +772,7 @@ class Centerline:
         plt.ylabel('x')
         ax = plt.subplot(212)
 
-        if mode is 'absolute':
+        if mode == 'absolute':
             plt.plot([coord[2] for coord in self.points], [coord[1] for coord in self.points])
         else:
             position_reference = self.points[self.index_disk[self.label_reference]]
@@ -812,12 +822,10 @@ class Centerline:
         This function compute the mean square error and the maximum distance between two centerlines.
         If a reference image is provided, the distance metrics are computed on each slices where the both centerlines
         are present.
-        Args:
-            other: Centerline object
-            reference_image: Image object
+        :param other: Centerline object
+        :params reference_image: Image object
 
-        Returns:
-            mse, mean, std, max
+        :return: mse, mean, std, max
         """
         distances = []
         mse = 0.0

@@ -34,9 +34,7 @@ Reviewing PRs
 The levels of review of a PR are:
 
 
-#. Basic review with regard to the `PR guidelines
-  <https://github.com/neuropoly/spinalcordtoolbox/blob/master/CONTRIBUTING.rst#contributing-code>`_,
-  label addition.
+#. Basic review with regard to the `PR guidelines <https://github.com/neuropoly/spinalcordtoolbox/blob/master/CONTRIBUTING.rst#contributing-code>`_, label addition.
 
 
 #. Review of the code:

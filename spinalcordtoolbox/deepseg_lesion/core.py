@@ -44,6 +44,9 @@ def apply_intensity_normalization_model(img, landmarks_lst):
 
 
 def exp_model(xs, ys, s2):
+    """
+    FIXME doc
+    """
     x1, x2 = xs
     y1, y2 = ys
     m = (y2 - y1) / (x2 - x1)
@@ -117,6 +120,7 @@ def deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo='svm', ctr_file
                                remove_temp_files=1, verbose=1):
     """
     Segment lesions from MRI data.
+
     :param im_image: Image() object containing the lesions to segment
     :param contrast_type: Constrast of the image. Need to use one supported by the CNN models.
     :param ctr_algo: Algo to find the centerline. See sct_get_centerline
