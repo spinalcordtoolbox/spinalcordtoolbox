@@ -340,12 +340,16 @@ def main(argv):
     print("TASK SCRIPT")
     print("-----------")
     print("git commit: {}".format(__get_commit(path_to_git_folder=os.path.split(args.task)[0])))
-    print("copying script to output folder:")
-    shutil.copy(args.task, args.path_output)
-    print("{} -> {}\n".format(args.task, os.path.abspath(args.path_output)))
+    print("Copying script to output folder...")
+    try:
+        shutil.copy(args.task, args.path_output)
+        print("{} -> {}".format(args.task, os.path.abspath(args.path_output)))
+    except shutil.SameFileError:
+        print("Input and output folder are the same. Skipping copy.")
+        pass
 
     # Display data version info
-    print("DATA")
+    print("\nDATA")
     print("----")
     print("git commit: {}\n".format(__get_commit(path_to_git_folder=args.path_data)))
 
