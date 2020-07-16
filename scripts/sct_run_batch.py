@@ -339,7 +339,7 @@ def main(argv):
     # Display script version info
     print("TASK SCRIPT")
     print("-----------")
-    print("git commit: {}".format(__get_commit(path_to_git_folder=args.task)))
+    print("git commit: {}".format(__get_commit(path_to_git_folder=os.path.split(args.task)[0])))
     print("copying script to output folder:")
     shutil.copy(args.task, args.path_output)
     print("{} -> {}\n".format(args.task, os.path.abspath(args.path_output)))
