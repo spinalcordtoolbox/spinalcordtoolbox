@@ -149,23 +149,21 @@ class Tee:
         self.fd2.flush()
 
 
-def absolute_path(fname):
+def abspath(fname):
     """
-    Get absolute path of input file name or path
+    Get absolute path of input file name or path. Deal with tilde. Checks if folder exists to decide whether the last
+    item after the path separator is a file or a folder.
 
     '~/code/bla' ------------------> '/usr/bob/code/bla'
-    '~/code/bla/pouf.txt' ---------> '/usr/bob/code/bla'
+    '~/code/bla/pouf.txt' ---------> '/usr/bob/code/bla/pouf.txt'
     '/usr/bob/code/bla' -----------> '/usr/bob/code/bla'
-    '/usr/bob/code/bla/pouf.txt' --> '/usr/bob/code/bla'
+    '/usr/bob/code/bla/pouf.txt' --> '/usr/bob/code/bla/pouf.txt'
+
     :param fname:
     :return:
     """
-    # deal with tilde
     if fname[0] == '~':
         fname = os.path.expanduser(fname)
-    # deal with input folder
-    if not os.path.isdir(fname):
-        fname = os.path.dirname(fname)
     return fname
 
 
@@ -388,7 +386,7 @@ def __get_commit(path_to_git_folder=None):
     if path_to_git_folder is None:
         path_to_git_folder = __sct_dir__
     else:
-        path_to_git_folder = absolute_path(path_to_git_folder)
+        path_to_git_folder = abspath(path_to_git_folder)
 
     p = subprocess.Popen(["git", "rev-parse", "HEAD"], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                          cwd=path_to_git_folder)
