@@ -26,12 +26,13 @@ import time
 import datetime
 import functools
 import json
+import tempfile
 import warnings
 import yaml
 import shutil
 
 from getpass import getpass
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, Tee, send_email, __get_commit
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, Tee, send_email, __get_commit, zipdir
 from spinalcordtoolbox import __version__
 from textwrap import dedent
 from types import SimpleNamespace
@@ -139,6 +140,9 @@ def get_parser():
                         help='Whether the batch processing should continue if a subject fails.')
     parser.add_argument('-task',
                         help='Shell script used to process the data.')
+    parser.add_argument('-zip',
+                        action='store_true',
+                        help='Create zip archive of output folders log/, qc/ and results/.')
 
     return parser
 
@@ -446,6 +450,15 @@ def main(argv):
 
     print('To open the Quality Control (QC) report on a web-browser, run the following:\n'
           '{} {}/index.html'.format(open_cmd, path_qc))
+
+    if args.zip:
+        path_tmp = os.path.join(tempfile.mkdtemp(), 'sct_run_batch_{}'.format(time.strftime('%Y%m%d%H%M%S')))
+        os.makedirs(path_tmp)
+        for folder in [path_log, path_qc, path_results]:
+            shutil.copytree(folder, os.path.join(path_tmp, os.path.split(folder)[-1]))
+        fname_zip = zipdir(path_tmp,
+                           os.path.join(path_output, 'sct_run_batch_{}.zip'.format(time.strftime('%Y%m%d%H%M%S'))))
+        print("\nOutput zip archive: {}".format(fname_zip))
 
     reset_streams()
     batch_log.close()
