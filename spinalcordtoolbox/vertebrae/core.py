@@ -15,6 +15,8 @@ from sct_maths import mutual_information
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.metadata import get_file_label
 from spinalcordtoolbox.math import dilate
+from ivadomed import preprocessing as imed_preprocessing
+import nibabel as nib
 
 #import similaritymeasures as simeas
 from spinalcordtoolbox.image import Image
@@ -154,7 +156,8 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     zrange = list(range(-9, 10))
     direction = 'superior'
     search_next_disc = True
-    print(sct.run('pwd'))
+    image_mid = imed_preprocessing.get_midslice_average(fname,26)
+    nib.save(image_mid,fname)
     fname_hm = sct_deepseg.segment_nifti(fname,os.path.join(sct.__sct_dir__, 'spinalcordtoolbox/vertebrae/checkpoints/test_t2'),post=False)
     sct.run('sct_resample -i %s  -mm 0.5x0.5x0.5 -x linear -o hm_tmp_r.nii.gz'%(fname_hm))
     sct.run('sct_resample -i %s -mm 0.5 -x nn -o %s'%(fname_seg,fname_seg))
