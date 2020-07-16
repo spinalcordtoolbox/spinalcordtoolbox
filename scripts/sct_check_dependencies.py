@@ -201,13 +201,11 @@ def get_parser():
         action="help",
         help="Show this help message and exit")
     optional.add_argument(
-        "-c",
-        "--complete",
+        '-complete',
         help="Complete test.",
         action="store_true")
     optional.add_argument(
-        "-s",
-        "--short",
+        "-short",
         help="Short test. Only shows SCT version, CPU cores and RAM available.",
         action="store_true")
 
