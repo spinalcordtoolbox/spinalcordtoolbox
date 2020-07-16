@@ -151,8 +151,7 @@ class Tee:
 
 def abspath(fname):
     """
-    Get absolute path of input file name or path. Deal with tilde. Checks if folder exists to decide whether the last
-    item after the path separator is a file or a folder.
+    Get absolute path of input file name or path. Deals with tilde.
 
     '~/code/bla' ------------------> '/usr/bob/code/bla'
     '~/code/bla/pouf.txt' ---------> '/usr/bob/code/bla/pouf.txt'
@@ -162,9 +161,10 @@ def abspath(fname):
     :param fname:
     :return:
     """
-    if fname[0] == '~':
-        fname = os.path.expanduser(fname)
-    return fname
+    if fname is not '':
+        if fname[0] == '~':
+            fname = os.path.expanduser(fname)
+    return os.path.abspath(fname)
 
 
 def add_suffix(fname, suffix):
