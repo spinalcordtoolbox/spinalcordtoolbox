@@ -5,6 +5,7 @@
 from __future__ import print_function, absolute_import, division
 
 import os
+import shutil
 import tempfile
 import zipfile
 
@@ -64,7 +65,9 @@ def test_zipdir_dir_abspath():
         zipObj.extractall(path_extract)
     assert os.path.isfile(os.path.join(path_extract, folder_temp, 'pouf1.txt'))
     assert os.path.isfile(os.path.join(path_extract, folder_temp, 'dir', 'pouf2.txt'))
-    # TODO: remove folders
+    shutil.rmtree(path_temp)
+    shutil.rmtree(path_extract)
+
 
 def test_zipdir_dir_relativepath():
     path_temp = tempfile.mkdtemp(prefix='sct_test_zipdir_')
@@ -83,3 +86,5 @@ def test_zipdir_dir_relativepath():
     assert os.path.isfile(os.path.join(path_extract, folder_temp, 'pouf1.txt'))
     assert os.path.isfile(os.path.join(path_extract, folder_temp, 'dir', 'pouf2.txt'))
     os.chdir(currentDir)
+    shutil.rmtree(path_temp)
+    shutil.rmtree(path_extract)
