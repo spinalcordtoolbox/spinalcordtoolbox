@@ -885,6 +885,11 @@ def moco_wrapper_interleaved(param):
     file_moco_params = 'moco_params.tsv'
     # TODO - switch from tsv to csv in future
 
+    sct.printv('\nInput parameters:', param.verbose)
+    sct.printv('  Input file ............ ' + param.fname_data, param.verbose)
+    sct.printv('  Group size ............ {}'.format(param.group_size), param.verbose)
+    sct.printv('  Interleaved mode ...... {}'.format(param.interleaved), param.verbose)
+
     # Start timer
     start_time = time.time()
 
