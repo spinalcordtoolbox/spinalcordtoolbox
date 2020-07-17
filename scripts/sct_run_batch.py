@@ -33,7 +33,7 @@ import shutil
 import psutil
 
 from getpass import getpass
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, Tee, send_email, __get_commit, zipdir
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, Tee, send_email, __get_commit
 from spinalcordtoolbox import __version__
 from textwrap import dedent
 from types import SimpleNamespace
