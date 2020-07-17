@@ -22,7 +22,6 @@ import nibabel as nib
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.metadata import get_file_label
 import logging
-import spinalcordtoolbox.vertebrae.detect_vertebrae as detect_vert
 import spinalcordtoolbox.deepseg.core as sct_deepseg
 logging.getLogger('matplotlib.font_manager').disabled = True
 
@@ -158,7 +157,7 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     search_next_disc = True
     image_mid = imed_preprocessing.get_midslice_average(fname,26)
     nib.save(image_mid,fname)
-    fname_hm = sct_deepseg.segment_nifti(fname,os.path.join(sct.__sct_dir__, 'spinalcordtoolbox/vertebrae/checkpoints/test_t2'),post=False)
+    fname_hm = sct_deepseg.segment_nifti(fname,os.path.join(sct.__sct_dir__, 'spinalcordtoolbox/vertebrae/checkpoints/find_disc_t2'),post=False)
     sct.run('sct_resample -i %s  -mm 0.5x0.5x0.5 -x linear -o hm_tmp_r.nii.gz'%(fname_hm))
     sct.run('sct_resample -i %s -mm 0.5 -x nn -o %s'%(fname_seg,fname_seg))
     im_hm = Image('hm_tmp_r.nii.gz')
@@ -377,6 +376,7 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
     # parametersi
     thr_corr = 0.2  # disc correlation threshold. Below this value, use template distance.
     src = src[:,:,:,0]
+    print(src.shape)
     # get dimensions from src
     nx, ny, nz  = src.shape
     #zsize=(15)
