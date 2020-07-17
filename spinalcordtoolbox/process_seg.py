@@ -22,6 +22,7 @@ def compute_shape(segmentation, angle_correction=True, param_centerline=None, ve
     """
     Compute morphometric measures of the spinal cord in the transverse (axial) plane from the segmentation.
     The segmentation could be binary or weighted for partial volume [0,1].
+
     :param segmentation: input segmentation. Could be either an Image or a file name.
     :param angle_correction:
     :param param_centerline: see centerline.core.ParamCenterline()

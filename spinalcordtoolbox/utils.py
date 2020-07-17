@@ -158,9 +158,10 @@ def add_suffix(fname, suffix):
     :return: file name with suffix. Example: t2_mean.nii
 
     Examples:
+    .. code:: python
 
-    - add_suffix(t2.nii, _mean) -> t2_mean.nii
-    - add_suffix(t2.nii.gz, a) -> t2a.nii.gz
+        add_suffix(t2.nii, _mean) -> t2_mean.nii
+        add_suffix(t2.nii.gz, a) -> t2a.nii.gz
     """
     stem, ext = splitext(fname)
     return os.path.join(stem + suffix + ext)
@@ -169,8 +170,8 @@ def add_suffix(fname, suffix):
 def check_exe(name):
     """
     Ensure that a program exists
-    :type name: string
-    :param name: name or path to program
+
+    :param name: str: name or path to program
     :return: path of the program or None
     """
     def is_exe(fpath):
@@ -191,13 +192,16 @@ def check_exe(name):
 
 def parse_num_list(str_num):
     """
-    Parse numbers in string based on delimiter: , or :
-    Examples:
-      '' -> []
-      '1,2,3' -> [1, 2, 3]
-      '1:3,4' -> [1, 2, 3, 4]
-      '1,1:4' -> [1, 2, 3, 4]
-    :param str_num: string
+    Parse numbers in string based on delimiter ',' or ':'
+
+    .. note::
+        Examples:
+        '' -> []
+        '1,2,3' -> [1, 2, 3]
+        '1:3,4' -> [1, 2, 3, 4]
+        '1,1:4' -> [1, 2, 3, 4]
+
+    :param str_num: str
     :return: list of ints
     """
     list_num = list()
@@ -226,13 +230,16 @@ def parse_num_list(str_num):
 
 def parse_num_list_inv(list_int):
     """
-    Take a list of numbers and output a string that reduce this list based on delimiter: ; or :
-    Note: we use ; instead of , for compatibility with csv format.
-    Examples:
-      [] -> ''
-      [1, 2, 3] --> '1:3'
-      [1, 2, 3, 5] -> '1:3;5'
-    :param list_int: list of ints
+    Take a list of numbers and output a string that reduce this list based on delimiter ';' or ':'
+
+    .. note::
+        Note: we use ; instead of , for compatibility with csv format.
+        Examples:
+        [] -> ''
+        [1, 2, 3] --> '1:3'
+        [1, 2, 3, 5] -> '1:3;5'
+
+    :param list_int: list: list of ints
     :return: str_num: string
     """
     # deal with empty list

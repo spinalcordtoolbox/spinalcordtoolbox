@@ -73,18 +73,12 @@ class QcImage(object):
     def __init__(self, qc_report, interpolation, action_list, stretch_contrast=True,
                  stretch_contrast_method='contrast_stretching', angle_line=None):
         """
-
-        Parameters
-        ----------
-        qc_report : QcReport
-            The QC report object
-        interpolation : str
-            Type of interpolation used in matplotlib
-        action_list : list of functions
-            List of functions that generates a specific type of images
-        stretch_contrast : adjust image so as to improve contrast
-        stretch_contrast_method: {'contrast_stretching', 'equalized'}: Method for stretching contrast
-        angle_line: [float]: See generate_qc()
+        :param qc_report: QcReport: The QC report object
+        :param interpolation: str: Type of interpolation used in matplotlib
+        :param action_list: list: List of functions that generates a specific type of images
+        :param stretch_contrast: adjust image so as to improve contrast
+        :param stretch_contrast_method: str: {'contrast_stretching', 'equalized'}: Method for stretching contrast
+        :param angle_line: float: See generate_qc()
         """
         self.qc_report = qc_report
         self.interpolation = interpolation
@@ -233,24 +227,14 @@ class QcImage(object):
         """wrapped function (f).
 
         In this case, it is the "mosaic" or "single" methods of the class "Slice"
-
-        Parameters
-        ----------
-        func : function
-            The wrapped function
         """
+
 
         def wrapped_f(sct_slice, *args):
             """
 
-            Parameters
-            ----------
-            sct_slice : spinalcordtoolbox.report.slice:Slice
-            args : list
-
-            Returns
-            -------
-
+            :param sct_slice: spinalcordtoolbox.report.slice:Slice
+            :param args: list: list of args
             """
             self.qc_report.slice_name = sct_slice.get_name()
 
@@ -337,6 +321,7 @@ class QcImage(object):
     def _add_orientation_label(self, ax):
         """
         Add orientation labels on the figure
+
         :param fig: MPL figure handler
         :return:
         """
@@ -350,6 +335,7 @@ class QcImage(object):
     def _save(self, fig, img_path, format='png', bbox_inches='tight', pad_inches=0.00, dpi=300):
         """
         Save the current figure into an image.
+
         :param fig: Figure handler
         :param img_path: str: path of the folder where the image is saved
         :param format: str: image format
@@ -364,14 +350,29 @@ class QcImage(object):
                     bbox_inches=None,
                     transparent=True,
                     dpi=dpi)
-
+    def label_centerline(self, mask, ax):
+        """Create figure with red label. Common scenario."""
+        results_mask_pixels = np.where(mask > 0)
+        listOfCoordinates= list(zip(results_mask_pixels[0], results_mask_pixels[1]))
+        for cord in listOfCoordinates:
+            ax.plot(cord[1],cord[0], 'ro', markersize=1)
+            # ax.text(cord[1]+5,cord[0]+5, str(mask[cord]), color='lime', clip_on=True)          
+        img = np.rint(np.ma.masked_where(mask < 1, mask))
+        ax.imshow(img,
+                  cmap=color.ListedColormap(self._color_bin_red),
+                  norm=color.Normalize(vmin=0, vmax=1),
+                  interpolation=self.interpolation,
+                  alpha=10,
+                  aspect=float(self.aspect_mask))
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
 
 class Params(object):
     """Parses and stores the variables that will be included into the QC details
     """
     def __init__(self, input_file, command, args, orientation, dest_folder, dpi=300, dataset=None, subject=None):
         """
-        Parameters
+
         :param input_file: str: the input nifti file name
         :param command: str: command name
         :param args: str: the command's arguments
@@ -416,6 +417,8 @@ class Params(object):
         return os.path.join(self.root_folder, self.overlay_img_path)
 
 
+
+
 class QcReport(object):
     """This class generates the quality control report.
 
@@ -425,6 +428,7 @@ class QcReport(object):
     def __init__(self, qc_params, usage):
         """
         Parameters
+
         :param qc_params: arguments of the "-param-qc" option in Terminal
         :param usage: str: description of the process
         """
@@ -579,9 +583,9 @@ def add_entry(src, process, args, path_qc, plane, path_img=None, path_img_overla
                 # https://github.com/neuropoly/sct_docker/blob/master/sct_docker.py#L84
                 os.environ["DOCKER"]
                 sct.printv('please go to "{}/" and double click on the "index.html" file'.format(path_qc), type='info')
-            except KeyError: 
+            except KeyError:
                 sct.printv('xdg-open "{}/index.html"'.format(path_qc), type='info')
-            
+
         elif _platform == "darwin":
             sct.printv('open "{}/index.html"'.format(path_qc), type='info')
         else:
@@ -599,7 +603,7 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, angle_line=None, args
     :param fname_in1: str: File name of input image #1 (mandatory)
     :param fname_in2: str: File name of input image #2
     :param fname_seg: str: File name of input segmentation
-    :param angle_line: [list of float]: Angle [in rad, wrt. vertical line, must be between -pi and pi] to apply to the line overlaid on the image, for
+    :param angle_line: list: Angle [in rad, wrt. vertical line, must be between -pi and pi] to apply to the line overlaid on the image, for\
     each slice, for slice that don't have an angle to display, a nan is expected. To be used for assessing cord orientation.
     :param args: args from parent function
     :param path_qc: str: Path to save QC report
@@ -633,6 +637,12 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, angle_line=None, args
         plane = 'Axial'
         qcslice_type = qcslice.Axial([Image(fname_in1), Image(fname_seg)])
         qcslice_operations = [QcImage.listed_seg]
+        qcslice_layout = lambda x: x.mosaic()
+    # Axial orientation, switch between the image and the centerline
+    elif process in ['sct_get_centerline']:
+        plane = 'Axial'
+        qcslice_type = qcslice.Axial([Image(fname_in1), Image(fname_seg)])
+        qcslice_operations = [QcImage.label_centerline]
         qcslice_layout = lambda x: x.mosaic()
     # Axial orientation, switch between the image and the white matter segmentation (linear interp, in blue)
     elif process in ['sct_warp_template']:

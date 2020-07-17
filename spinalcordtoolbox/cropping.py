@@ -13,6 +13,8 @@ logger = logging.getLogger(__name__)
 
 
 class BoundingBox(object):
+    """
+    """
     def __init__(self, xmin=None, xmax=None, ymin=None, ymax=None, zmin=None, zmax=None):
         self.xmin = xmin
         self.xmax = xmax
@@ -25,6 +27,7 @@ class BoundingBox(object):
         """
         Get voxel-based bounding box from coordinates. Replaces '-1' with max dim along each axis, '-2' with max dim
         minus 1, etc.
+
         :param img: Image object to get dimensions
         :return:
         """
@@ -75,6 +78,7 @@ class ImageCropper(object):
     def crop(self, background=None):
         """
         Crop image (change dimension)
+
         :param background: int: If set, the output image will not be cropped. Instead, voxels outside the bounding
         box will be set to the value specified by this parameter.
         :return Image: img_out
