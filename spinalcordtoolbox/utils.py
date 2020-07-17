@@ -162,10 +162,7 @@ def abspath(fname):
     :param fname:
     :return:
     """
-    if fname is not '':
-        if fname[0] == '~':
-            fname = os.path.expanduser(fname)
-    return os.path.abspath(fname)
+    return os.path.abspath(os.path.expanduser(fname))
 
 
 def add_suffix(fname, suffix):
