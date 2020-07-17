@@ -13,6 +13,7 @@ import argparse
 import subprocess
 import shutil
 import tqdm
+import zipfile
 from enum import Enum
 
 logger = logging.getLogger(__name__)
@@ -147,6 +148,21 @@ class Tee:
     def flush(self):
         self.fd1.flush()
         self.fd2.flush()
+
+
+def abspath(fname):
+    """
+    Get absolute path of input file name or path. Deals with tilde.
+
+    '~/code/bla' ------------------> '/usr/bob/code/bla'
+    '~/code/bla/pouf.txt' ---------> '/usr/bob/code/bla/pouf.txt'
+    '/usr/bob/code/bla' -----------> '/usr/bob/code/bla'
+    '/usr/bob/code/bla/pouf.txt' --> '/usr/bob/code/bla/pouf.txt'
+
+    :param fname:
+    :return:
+    """
+    return os.path.abspath(os.path.expanduser(fname))
 
 
 def add_suffix(fname, suffix):
@@ -368,12 +384,17 @@ def __get_branch():
         return output.decode().strip()
 
 
-def __get_commit():
+def __get_commit(path_to_git_folder=None):
     """
     :return: git commit ID, with trailing '*' if modified
     """
+    if path_to_git_folder is None:
+        path_to_git_folder = __sct_dir__
+    else:
+        path_to_git_folder = abspath(path_to_git_folder)
+
     p = subprocess.Popen(["git", "rev-parse", "HEAD"], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                         cwd=__sct_dir__)
+                         cwd=path_to_git_folder)
     output, _ = p.communicate()
     status = p.returncode
     if status == 0:
@@ -382,7 +403,7 @@ def __get_commit():
         commit = "?!?"
 
     p = subprocess.Popen(["git", "status", "--porcelain"], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                         cwd=__sct_dir__)
+                         cwd=path_to_git_folder)
     output, _ = p.communicate()
     status = p.returncode
     if status == 0:
