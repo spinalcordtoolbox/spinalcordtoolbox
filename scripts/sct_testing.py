@@ -420,7 +420,6 @@ def get_functions_parallelizable():
         'sct_dmri_concat_b0_and_dwi',
         'sct_dmri_concat_bvals',
         'sct_dmri_concat_bvecs',
-        'sct_dmri_create_noisemask',
         'sct_dmri_compute_bvalue',
         'sct_dmri_moco',
         'sct_dmri_separate_b0_and_dwi',
@@ -435,7 +434,6 @@ def get_functions_parallelizable():
         'sct_label_vertebrae',
         'sct_maths',
         'sct_merge_images',
-        # 'sct_pipeline',  # not useful-- to remove at some point
         'sct_process_segmentation',
         'sct_propseg',
         'sct_qc',
@@ -444,7 +442,6 @@ def get_functions_parallelizable():
         'sct_resample',
         'sct_smooth_spinalcord',
         'sct_straighten_spinalcord', # deps: sct_apply_transfo
-        # 'sct_segment_graymatter',
         'sct_warp_template',
     ]
 
