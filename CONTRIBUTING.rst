@@ -1,4 +1,4 @@
-Contributing to SCT
+Contributing to SCT!
 ===================
 
 
