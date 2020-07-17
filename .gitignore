@@ -1,5 +1,7 @@
 .DS_Store
 
+# <edit to test https://github.com/neuropoly/spinalcordtoolbox/pull/2798>
+
 *~
 *.swp
 *.orig
