@@ -18,6 +18,7 @@ from __future__ import absolute_import
 import os
 import sys
 import argparse
+from getpass import getpass
 import multiprocessing
 import subprocess
 import platform
@@ -31,12 +32,12 @@ import warnings
 import yaml
 import shutil
 import psutil
-
-from getpass import getpass
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, Tee, send_email, __get_commit
-from spinalcordtoolbox import __version__
 from textwrap import dedent
 from types import SimpleNamespace
+
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, Tee, send_email, __get_commit
+from spinalcordtoolbox import __version__
+
 import sct_utils as sct
 
 
