@@ -88,3 +88,18 @@ def test_zipdir_dir_relativepath():
     os.chdir(currentDir)
     shutil.rmtree(path_temp)
     shutil.rmtree(path_extract)
+
+
+def test_zipdir_file_abspath():
+    path_temp = tempfile.mkdtemp(prefix='sct_test_zipdir_')
+    folder_temp = os.path.basename(path_temp)
+    open(os.path.join(path_temp, 'pouf1.txt'), "w+").close()
+    # specifying absolute path
+    path_extract = tempfile.mkdtemp(prefix='sct_test_zipdir_')
+    fname_zip = utils.zipdir(os.path.join(path_temp, 'pouf1.txt'), os.path.join(path_extract, 'tmp.zip'))
+    with zipfile.ZipFile(fname_zip, 'r') as zipObj:
+        # Extract all the contents of zip file in current directory
+        zipObj.extractall(path_extract)
+    assert os.path.isfile(os.path.join(path_extract, 'pouf1.txt'))
+    shutil.rmtree(path_temp)
+    shutil.rmtree(path_extract)

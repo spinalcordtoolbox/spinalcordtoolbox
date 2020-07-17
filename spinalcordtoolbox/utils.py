@@ -477,14 +477,19 @@ def zipdir(path_to_zip, fname_zip='archive.zip'):
     try:
         folder_name = os.path.split(path_to_zip)[-1]
         with zipfile.ZipFile(fname_zip, "w") as zip:
-            for root, dirs, files in os.walk(path_to_zip):
-                # add directory (needed for empty dirs)
-                # this is commented out because Tomcat 8 will reject WAR files with "./" in them.
-                for file in files:
-                    filename = os.path.join(root, file)
-                    if os.path.isfile(filename):  # regular files only
-                        arcname = os.path.join(folder_name, _relpath(root, path_to_zip), file)
-                        zip.write(filename, arcname)
+            # if folder_name is a file (instead of a folder), no need for the os.walk below. We just create the archive
+            # and exit
+            if os.path.isfile(folder_name):
+                zip.write(path_to_zip, folder_name)
+            else:
+                for root, dirs, files in os.walk(path_to_zip):
+                    # add directory (needed for empty dirs)
+                    # this is commented out because Tomcat 8 will reject WAR files with "./" in them.
+                    for file in files:
+                        filename = os.path.join(root, file)
+                        if os.path.isfile(filename):  # regular files only
+                            arcname = os.path.join(folder_name, _relpath(root, path_to_zip), file)
+                            zip.write(filename, arcname)
         return fname_zip
     except Exception as e:
         logger.error(
