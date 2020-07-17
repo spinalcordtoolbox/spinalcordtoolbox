@@ -461,13 +461,14 @@ def main(argv):
           '{} {}/index.html'.format(open_cmd, path_qc))
 
     if args.zip:
-        path_tmp = os.path.join(tempfile.mkdtemp(), 'sct_run_batch_{}'.format(time.strftime('%Y%m%d%H%M%S')))
-        os.makedirs(path_tmp)
+        file_zip = 'sct_run_batch_{}'.format(time.strftime('%Y%m%d%H%M%S'))
+        path_tmp = os.path.join(tempfile.mkdtemp(), file_zip)
+        os.makedirs(os.path.join(path_tmp, file_zip))
         for folder in [path_log, path_qc, path_results]:
-            shutil.copytree(folder, os.path.join(path_tmp, os.path.split(folder)[-1]))
-        fname_zip = zipdir(path_tmp,
-                           os.path.join(path_output, 'sct_run_batch_{}.zip'.format(time.strftime('%Y%m%d%H%M%S'))))
-        print("\nOutput zip archive: {}".format(fname_zip))
+            shutil.copytree(folder, os.path.join(path_tmp, file_zip, os.path.split(folder)[-1]))
+        shutil.make_archive(os.path.join(path_output, file_zip), 'zip', path_tmp)
+        shutil.rmtree(path_tmp)
+        print("\nOutput zip archive: {}.zip".format(os.path.join(path_output, file_zip)))
 
     reset_streams()
     batch_log.close()

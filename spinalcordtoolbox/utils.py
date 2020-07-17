@@ -458,42 +458,6 @@ def sct_progress_bar(*args, **kwargs):
     return tqdm.tqdm(*args, **kwargs)
 
 
-def zipdir(path_to_zip, fname_zip='archive.zip'):
-    """
-    Create zip archive.
-    :param path_to_zip: file or directory
-    :param fname_zip: name of output zip archive
-    :return: path to zip archive
-    """
-    def _relpath(path1, path2):
-        if os.path.relpath(path1, path2) == '.':
-            return ''
-        else:
-            return os.path.relpath(path1, path2)
-
-    try:
-        folder_name = os.path.split(path_to_zip)[-1]
-        with zipfile.ZipFile(fname_zip, "w") as zip:
-            # if folder_name is a file (instead of a folder), no need for the os.walk below. We just create the archive
-            # and exit
-            if os.path.isfile(folder_name):
-                zip.write(path_to_zip, folder_name)
-            else:
-                for root, dirs, files in os.walk(path_to_zip):
-                    # add directory (needed for empty dirs)
-                    # this is commented out because Tomcat 8 will reject WAR files with "./" in them.
-                    for file in files:
-                        filename = os.path.join(root, file)
-                        if os.path.isfile(filename):  # regular files only
-                            arcname = os.path.join(folder_name, _relpath(root, path_to_zip), file)
-                            zip.write(filename, arcname)
-        return fname_zip
-    except Exception as e:
-        logger.error(
-            'Error creating zip file "%s" from directory "%s" - %s' % (fname_zip, path_to_zip, e))
-        return False
-
-
 __sct_dir__ = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 __version__ = _version_string()
 __data_dir__ = os.path.join(__sct_dir__, 'data')
