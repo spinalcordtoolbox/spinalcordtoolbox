@@ -357,6 +357,9 @@ def main(argv):
     except shutil.SameFileError:
         print("Input and output folder are the same. Skipping copy.")
         pass
+    except IsADirectoryError:
+        print("Input folder is a directory (not a file). Skipping copy.")
+        pass
 
     # Display data version info
     print("\nDATA")
