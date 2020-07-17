@@ -52,6 +52,7 @@ def test_parse_num_list_inv():
 
 def test_zipdir_dir_abspath():
     path_temp = tempfile.mkdtemp(prefix='sct_test_zipdir_')
+    folder_temp = os.path.basename(path_temp)
     open(os.path.join(path_temp, 'pouf1.txt'), "w+").close()
     os.makedirs(os.path.join(path_temp, 'dir'))
     open(os.path.join(path_temp, 'dir', 'pouf2.txt'), "w+").close()
@@ -61,23 +62,24 @@ def test_zipdir_dir_abspath():
     with zipfile.ZipFile(fname_zip, 'r') as zipObj:
         # Extract all the contents of zip file in current directory
         zipObj.extractall(path_extract)
-    assert os.path.isfile(os.path.join(path_extract, 'pouf1.txt'))
-    assert os.path.isfile(os.path.join(path_extract, 'dir', 'pouf2.txt'))
-
+    assert os.path.isfile(os.path.join(path_extract, folder_temp, 'pouf1.txt'))
+    assert os.path.isfile(os.path.join(path_extract, folder_temp, 'dir', 'pouf2.txt'))
+    # TODO: remove folders
 
 def test_zipdir_dir_relativepath():
     path_temp = tempfile.mkdtemp(prefix='sct_test_zipdir_')
+    folder_temp = os.path.basename(path_temp)
     open(os.path.join(path_temp, 'pouf1.txt'), "w+").close()
     os.makedirs(os.path.join(path_temp, 'dir'))
     open(os.path.join(path_temp, 'dir', 'pouf2.txt'), "w+").close()
     # specifying relative path
     currentDir = os.getcwd()
     os.chdir(os.path.join(path_temp, '../'))
-    fname_zip = utils.zipdir(os.path.basename(path_temp), 'tmp.zip')
+    fname_zip = utils.zipdir(folder_temp, 'tmp.zip')
     path_extract = tempfile.mkdtemp(prefix='sct_test_zipdir_')
     with zipfile.ZipFile(fname_zip, 'r') as zipObj:
         # Extract all the contents of zip file in current directory
         zipObj.extractall(path_extract)
-    assert os.path.isfile(os.path.join(path_extract, 'pouf1.txt'))
-    assert os.path.isfile(os.path.join(path_extract, 'dir', 'pouf2.txt'))
+    assert os.path.isfile(os.path.join(path_extract, folder_temp, 'pouf1.txt'))
+    assert os.path.isfile(os.path.join(path_extract, folder_temp, 'dir', 'pouf2.txt'))
     os.chdir(currentDir)

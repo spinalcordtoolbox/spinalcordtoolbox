@@ -13,6 +13,7 @@ import argparse
 import subprocess
 import shutil
 import tqdm
+import zipfile
 from enum import Enum
 
 logger = logging.getLogger(__name__)
@@ -467,19 +468,23 @@ def zipdir(path_to_zip, fname_zip='archive.zip'):
     :param fname_zip: name of output zip archive
     :return: path to zip archive
     """
-    import zipfile
-    import os
+    def _relpath(path1, path2):
+        if os.path.relpath(path1, path2) == '.':
+            return ''
+        else:
+            return os.path.relpath(path1, path2)
 
-    fname_zip = abspath(fname_zip)
-    currentDir = os.getcwd()
+    # fname_zip = abspath(fname_zip)
+    # currentDir = os.getcwd()
     try:
-        relroot = abspath(path_to_zip)
-        os.chdir(path_to_zip)
+        # relroot = abspath(path_to_zip)
+        # os.chdir(path_to_zip)
         # relroot = os.path.abspath(os.path.join(sourceDirectory, os.pardir))
         # relroot = os.path.abspath(os.path.join(path_to_zip))
         # relroot = os.path.abspath(os.curdir)
         # relroot = abspath(path_to_zip)
         # with zipfile.ZipFile(outputFilePath, "w", zipfile.ZIP_DEFLATED) as zip:
+        folder_name = os.path.split(path_to_zip)[-1]
         with zipfile.ZipFile(fname_zip, "w") as zip:
             for root, dirs, files in os.walk(path_to_zip):
                 # add directory (needed for empty dirs)
@@ -488,13 +493,12 @@ def zipdir(path_to_zip, fname_zip='archive.zip'):
                 for file in files:
                     filename = os.path.join(root, file)
                     if os.path.isfile(filename):  # regular files only
-                        arcname = os.path.join(os.path.relpath(root, relroot), file)
+                        arcname = os.path.join(folder_name, _relpath(root, path_to_zip), file)
+                        # arcname = os.path.join(os.path.relpath(root, relroot), file)
                         zip.write(filename, arcname)
-        os.chdir(currentDir)
+        # os.chdir(currentDir)
         return fname_zip
-
     except Exception as e:
-        os.chdir(currentDir)
         logger.error(
             'Error creating zip file "%s" from directory "%s" - %s' % (fname_zip, path_to_zip, e))
         return False
