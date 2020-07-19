@@ -457,8 +457,11 @@ def sct_progress_bar(*args, **kwargs):
 
     return tqdm.tqdm(*args, **kwargs)
 
-
 __sct_dir__ = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 __version__ = _version_string()
 __data_dir__ = os.path.join(__sct_dir__, 'data')
 __deepseg_dir__ = os.path.join(__data_dir__, 'deepseg_models')
+
+def sct_dir_local_path(*args):
+    'Construct a directory path relative to __sct_dir__'
+    return os.path.join(__sct_dir__, *args)
