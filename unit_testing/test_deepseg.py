@@ -10,14 +10,18 @@ import numpy as np
 import nibabel
 
 import spinalcordtoolbox as sct
+from spinalcordtoolbox.utils import sct_dir_local_path
 import spinalcordtoolbox.deepseg.core
 import spinalcordtoolbox.deepseg.models
 
 
 param_deepseg = [
-    ({'fname_image': 'sct_testing_data/t2s/t2s.nii.gz',
-      'model': os.path.join(sct.__deepseg_dir__, 't2star_sc'),
-      'fname_seg_manual': 'sct_testing_data/t2s/t2s_seg-deepseg.nii.gz'}),
+    ({'fname_image':
+        sct_dir_local_path('sct_testing_data/t2s/t2s.nii.gz'),
+      'model':
+        os.path.join(sct.__deepseg_dir__, 't2star_sc'),
+      'fname_seg_manual':
+        sct_dir_local_path('sct_testing_data/t2s/t2s_seg-deepseg.nii.gz')}),
 ]
 
 
