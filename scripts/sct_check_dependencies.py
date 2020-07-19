@@ -31,7 +31,7 @@ import warnings
 import requirements
 
 import sct_utils as sct
-from spinalcordtoolbox.utils import SmartFormatter
+from spinalcordtoolbox.utils import SmartFormatter, sct_dir_local_path
 
 
 # DEFAULT PARAMETERS
@@ -167,7 +167,7 @@ def add_bash_profile(string):
 
 def get_dependencies(requirements_txt=None):
     if requirements_txt is None:
-        requirements_txt = os.path.join(sct.__sct_dir__, "requirements.txt")
+        requirements_txt = sct_dir_local_path("requirements.txt")
 
     requirements_txt = open(requirements_txt, "r", encoding="utf-8")
 

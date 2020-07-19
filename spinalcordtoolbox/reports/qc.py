@@ -30,7 +30,7 @@ import matplotlib.colors as color
 import sct_utils as sct
 from spinalcordtoolbox.image import Image
 import spinalcordtoolbox.reports.slice as qcslice
-from spinalcordtoolbox import __sct_dir__
+from spinalcordtoolbox.utils import sct_dir_local_path
 
 logger = logging.getLogger(__name__)
 
@@ -436,7 +436,7 @@ class QcReport(object):
         self.slice_name = qc_params.orientation
         self.qc_params = qc_params
         self.usage = usage
-        self.assets_folder = os.path.join(__sct_dir__, 'assets')
+        self.assets_folder = sct_dir_local_path('assets')
         self.img_base_name = 'bkg_img'
         self.description_base_name = "qc_results"
 

@@ -10,6 +10,7 @@ import numpy as np
 
 import sct_utils as sct
 from ..image import Image
+from spinalcordtoolbox.utils import sct_dir_local_path
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +74,7 @@ def detect_centerline(img, contrast, verbose=1):
     """
 
     # Fetch path to Optic model based on contrast
-    optic_models_path = os.path.join(sct.__sct_dir__, 'data', 'optic_models', '{}_model'.format(contrast))
+    optic_models_path = sct_dir_local_path('data', 'optic_models', '{}_model'.format(contrast))
 
     logger.debug('Detecting the spinal cord using OptiC')
     img_orientation = img.orientation
