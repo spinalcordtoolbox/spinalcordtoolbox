@@ -20,7 +20,7 @@ import argparse
 
 import numpy as np
 
-import sct_utils as sct
+from sct_utils import init_sct, printv
 from spinalcordtoolbox.utils import Metavar, SmartFormatter
 
 
@@ -80,7 +80,7 @@ def convert(fname_in, fname_out, squeeze_data=True, dtype=None, verbose=1):
     :return True/False
     """
     import spinalcordtoolbox.image as msct_image
-    sct.printv('sct_convert -i ' + fname_in + ' -o ' + fname_out, verbose, 'code')
+    printv('sct_convert -i ' + fname_in + ' -o ' + fname_out, verbose, 'code')
     im = msct_image.Image(fname_in)
     if squeeze_data:
         im.data = np.squeeze(im.data)
@@ -113,7 +113,7 @@ def main(args=None):
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     # initialize parameters
     param = Param()
     # call main function
@@ -146,7 +146,7 @@ if __name__ == "__main__":
 #
 #     # Parameters for debug mode
 #     if param.debug:
-#         sct.printv('\n*** WARNING: DEBUG MODE ON ***\n')
+#         printv('\n*** WARNING: DEBUG MODE ON ***\n')
 #     else:
 #         # Check input parameters
 #         try:
@@ -172,12 +172,12 @@ if __name__ == "__main__":
 #     cmd = 'which mnc2nii'
 #     status, output = sct.run(cmd)
 #     if not output:
-#         sct.printv('ERROR: minc-toolkit not installed...',1,'error')
+#         printv('ERROR: minc-toolkit not installed...',1,'error')
 #     if output != '/opt/minc/bin/mnc2nii':
-#         sct.printv('ERROR: the minc-toolkit that you use is not the correct one. Please contact SCT administrator.')
+#         printv('ERROR: the minc-toolkit that you use is not the correct one. Please contact SCT administrator.')
 #
 #     # Check file existence
-#     sct.printv('\nCheck file existence...', verbose)
+#     printv('\nCheck file existence...', verbose)
 #     sct.check_file_exist(fname_data, verbose)
 #
 #     # extract names
@@ -213,13 +213,13 @@ if __name__ == "__main__":
 # # Convert file from nifti to minc
 # # ==========================================================================================
 # def nii2mnc(fname_data,fname_out):
-#     sct.printv("Converting from nifti to minc")
+#     printv("Converting from nifti to minc")
 #     sct.run("nii2mnc "+fname_data+" "+fname_out)
 #
 # # Convert file from nifti to minc
 # # ==========================================================================================
 # def niigz2mnc(fname_data,fname_out):
-#     sct.printv("Converting from nifti to minc")
+#     printv("Converting from nifti to minc")
 #     path_in, file_in, ext_in = sct.extract_fname(fname_data)
 #     fname_data_tmp=os.path.join(path_in, "tmp."+file_in+".nii")
 #     sct.run("gunzip -c "+fname_data+" >"+fname_data_tmp)
@@ -228,13 +228,13 @@ if __name__ == "__main__":
 # # Convert file from minc to nifti
 # # ==========================================================================================
 # def mnc2nii(fname_data,fname_out):
-#     sct.printv("Converting from minc to nifti")
+#     printv("Converting from minc to nifti")
 #     sct.run("mnc2nii "+fname_data+" "+fname_out)
 #
 # # Convert file from minc to nifti
 # # ==========================================================================================
 # def mnc2niigz(fname_data,fname_out):
-#     sct.printv("Converting from minc to nifti")
+#     printv("Converting from minc to nifti")
 #     path_out, file_out, ext_out = sct.extract_fname(fname_out)
 #     fname_data_tmp= os.path.join(path_out, file_out+".nii")
 #     sct.run("mnc2nii "+fname_data+" "+fname_data_tmp)
@@ -243,7 +243,7 @@ if __name__ == "__main__":
 # # Convert file from nifti to volumeviewer
 # # ==========================================================================================
 # def nii2volviewer(fname_data,fname_out):
-#     sct.printv("Converting from nifti to volume viewer")
+#     printv("Converting from nifti to volume viewer")
 #     path_in, file_in, ext_in = sct.extract_fname(fname_data)
 #     path_out, file_out, ext_out = sct.extract_fname(fname_out)
 #     fname_data_nii = os.path.join(path_out, "tmp."+file_out+'.mnc')
@@ -253,7 +253,7 @@ if __name__ == "__main__":
 # # Convert file from nifti to volumeviewer
 # # ==========================================================================================
 # def niigz2volviewer(fname_data,fname_out):
-#     sct.printv("Converting from nifti to volume viewer")
+#     printv("Converting from nifti to volume viewer")
 #     path_in, file_in, ext_in = sct.extract_fname(fname_data)
 #     path_out, file_out, ext_out = sct.extract_fname(fname_out)
 #     fname_data_mnc = os.path.join(path_out, "tmp."+file_out+'.mnc')
@@ -263,11 +263,11 @@ if __name__ == "__main__":
 # # Convert file from minc to volumeviewer
 # # ==========================================================================================
 # def mnc2volviewer(fname_data,fname_out):
-#     sct.printv("Converting from minc to volume viewer")
+#     printv("Converting from minc to volume viewer")
 #     sct.run("isct_minc2volume-viewer "+fname_data+" -o "+fname_out)
 #
 #
-# # sct.printv(usage)
+# # printv(usage)
 # # ==========================================================================================
 # def usage():
 #     print("""

@@ -67,8 +67,6 @@ Miscellaneous:
 - sct_label_utils_ - Utility function for label images.
 - sct_image_ - Performs various operations on images (split, pad, etc.).
 - sct_maths_ - Performs mathematical operations on images (threshold, smooth, etc.).
-- sct_pipeline_ - Runs one sct tool on many subjects in one command.
-
 
 
 
@@ -206,11 +204,6 @@ sct_dmri_concat_bvecs
 .. program-output:: sct_dmri_concat_bvecs -h
 
 
-sct_dmri_create_noisemask
-============================
-
-.. program-output:: sct_dmri_create_noisemask -h
-
 
 sct_dmri_display_bvecs
 =========================
@@ -300,12 +293,6 @@ sct_merge_images
 ===================
 
 .. program-output:: sct_merge_images -h
-
-
-sct_pipeline
-===============
-
-.. program-output:: sct_pipeline -h
 
 
 sct_process_segmentation
@@ -434,12 +421,6 @@ msct_gmseg_utils
 ===================
 
 .. program-output:: msct_gmseg_utils -h
-
-
-msct_multiatlas_seg
-======================
-
-.. program-output:: msct_multiatlas_seg -h
 
 
 msct_parser
