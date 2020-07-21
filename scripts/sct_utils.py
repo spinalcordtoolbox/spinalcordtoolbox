@@ -25,8 +25,6 @@ import pathlib
 
 import numpy as np
 
-from sct_convert import convert
-
 
 logger = logging.getLogger(__name__)
 
@@ -717,6 +715,7 @@ def generate_output_file(fname_in, fname_out, squeeze_data=True, verbose=1):
     :param verbose:
     :return: fname_out
     """
+    from sct_convert import convert
     path_in, file_in, ext_in = extract_fname(fname_in)
     path_out, file_out, ext_out = extract_fname(fname_out)
     # create output path (ignore if it already exists)
