@@ -181,6 +181,7 @@ class QcImage(object):
     def label_utils(self, mask, ax):
         """Create figure with red label. Common scenario."""
         results_mask_pixels = np.where(mask > 0)
+        print(results_mask_pixels)
         listOfCoordinates= list(zip(results_mask_pixels[0], results_mask_pixels[1]))
         for cord in listOfCoordinates:
             ax.plot(cord[1],cord[0], 'ro', markersize=5)
@@ -670,7 +671,8 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, angle_line=None, args
     elif process in ['sct_label_utils']:
         plane = 'Sagittal'
         dpi = 100  # bigger picture is needed for this special case, hence reduce dpi
-        qcslice_type = qcslice.Sagittal([Image(fname_in1), Image(fname_seg)], p_resample=None)
+        projected_image = projected(Image(fname_seg))
+        qcslice_type = qcslice.Sagittal([Image(fname_in1), projected_image], p_resample=None)
         qcslice_operations = [QcImage.label_utils]
         qcslice_layout = lambda x: x.single()
     # Sagittal orientation, display PMJ box
@@ -719,3 +721,16 @@ def get_json_data_from_path(path_json):
         with open(file_json, 'r+') as fjson:
             results.append(json.load(fjson))
     return results
+
+def projected(image):
+    print("my code")
+    coordinates_list = np.argwhere(image.data)
+    projected_image = Image(param = [image.data.shape[0],image.data.shape[1], image.data.shape[2]], hdr = image.header) 
+    designated_slice = coordinates_list[0][2]
+    for i in range(len(coordinates_list)):
+        pt = coordinates_list[i]
+        projected_image.data[pt[0],pt[1],designated_slice] = image.data[pt[0],pt[1],pt[2]]
+    print(np.argwhere(projected_image.data))
+#projected_image = Image(param = [projected_data.shape[0],projected_data.shape[1], projected_data.shape[2]], hdr = image.header)
+   # projected_image.data = projected_data
+    return projected_image

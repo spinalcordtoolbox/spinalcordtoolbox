@@ -374,6 +374,11 @@ class Sagittal(Slice):
     def get_dim(self, image):
         return self.sagittal_dim(image)
 
+    def projected(self, img_idx = -1):
+        image = self._images[img_idx]
+        coordinates_list = np.argwhere(image.data)
+        print(coordinates_list)
+
     def get_center_spit(self, img_idx=-1):
         """Retrieve index of the medial plane (in the R-L direction) for each slice (in the I-S direction) in order
         to center the spinal cord in the sagittal view.
@@ -387,6 +392,9 @@ class Sagittal(Slice):
         elif np.argwhere(image.data).shape[0] == 1:
             return [np.argwhere(image.data)[0][2]] * image.data.shape[2]
         # Otherwise, find the center of mass per slice and return the R-L index
+        elif np.argwhere(image.data).shape[0] < 25:
+            print(np.argwhere(image.data))
+            return [np.argwhere(image.data)[0][2]]*image.data.shape[2] 
         else:
             from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
             image.change_orientation('RPI')  # need to do that because get_centerline operates in RPI orientation
