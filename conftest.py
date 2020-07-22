@@ -12,7 +12,7 @@
 
 import sys
 
-from spinalcordtoolbox.utils import sct_dir_local_path
+from spinalcordtoolbox.utils import sct_dir_local_path, sct_test_path
 sys.path.append(sct_dir_local_path('scripts'))
 
 import pytest
@@ -27,4 +27,4 @@ def download_data(request):
     capmanager = request.config.pluginmanager.getplugin("capturemanager")
     with capmanager.global_and_fixture_disabled():
         print('\nDownloading sct testing data.')
-        downloader.main(['-d', 'sct_testing_data'])
+        downloader.main(['-d', 'sct_testing_data', '-o', sct_test_path()])

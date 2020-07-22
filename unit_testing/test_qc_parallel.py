@@ -5,7 +5,7 @@ import pytest
 
 import multiprocessing
 
-from spinalcordtoolbox.utils import sct_dir_local_path
+from spinalcordtoolbox.utils import sct_test_path, sct_dir_local_path
 sys.path.append(sct_dir_local_path('scripts'))
 from spinalcordtoolbox import resampling
 import spinalcordtoolbox.reports.qc as qc
@@ -16,8 +16,8 @@ import spinalcordtoolbox.reports.slice as qcslice
 def gen_qc(args):
     i, path_qc = args
 
-    t2_image = sct_dir_local_path('sct_testing_data', 't2', 't2.nii.gz')
-    t2_seg = sct_dir_local_path('sct_testing_data', 't2', 't2_seg-manual.nii.gz')
+    t2_image = sct_test_path('t2', 't2.nii.gz')
+    t2_seg = sct_test_path('t2', 't2_seg-manual.nii.gz')
 
     qc.generate_qc(fname_in1=t2_image, fname_seg=t2_seg, path_qc=path_qc, process="sct_deepseg_gm")
     return True
