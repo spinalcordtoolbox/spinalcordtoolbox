@@ -116,7 +116,7 @@ def get_parser():
         metavar=Metavar.float,
         type=float,
         help='Size of the output FOV in the RL/AP plane, in mm. The resolution of the destination '
-             'image is the same as that of the source image (-i).',
+             'image is the same as that of the source image (-i). Default: 35.',
         required=False,
         default=35.0)
     optional.add_argument(
@@ -134,14 +134,14 @@ def get_parser():
         default='./')
     optional.add_argument(
         '-centerline-algo',
-        help='Algorithm for centerline fitting.',
+        help='Algorithm for centerline fitting. Default: nurbs.',
         choices=('bspline', 'linear', 'nurbs'),
         default='nurbs')
     optional.add_argument(
         '-centerline-smooth',
         metavar=Metavar.int,
         type=int,
-        help='Degree of smoothing for centerline fitting. Only use with -centerline-algo {bspline, linear}.',
+        help='Degree of smoothing for centerline fitting. Only use with -centerline-algo {bspline, linear}. Default: 10',
         default=10)
 
     optional.add_argument(
@@ -156,7 +156,7 @@ def get_parser():
 
     optional.add_argument(
         "-x",
-        help="Final interpolation.",
+        help="Final interpolation. Default: spline.",
         choices=("nn", "linear", "spline"),
         default="spline")
     optional.add_argument(

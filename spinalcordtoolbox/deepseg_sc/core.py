@@ -33,6 +33,7 @@ logger = logging.getLogger(__name__)
 def find_centerline(algo, image_fname, contrast_type, brain_bool, folder_output, remove_temp_files, centerline_fname):
     """
     Assumes RPI orientation
+
     :param algo:
     :param image_fname:
     :param contrast_type:
@@ -334,6 +335,7 @@ def _normalize_data(data, mean, std):
 def segment_2d(model_fname, contrast_type, input_size, im_in):
     """
     Segment data using 2D convolutions.
+
     :return: seg_crop.data: ndarray float32: Output prediction
     """
     seg_model = nn_architecture_seg(height=input_size[0],
@@ -347,7 +349,7 @@ def segment_2d(model_fname, contrast_type, input_size, im_in):
     seg_crop = zeros_like(im_in, dtype=np.float32)
 
     data_norm = im_in.data
-    # TODO: use tqdm
+    # TODO: use sct_progress_bar
     for zz in range(im_in.dim[2]):
         # 2D CNN prediction
         pred_seg = seg_model.predict(np.expand_dims(np.expand_dims(data_norm[:, :, zz], -1), 0),
@@ -360,6 +362,7 @@ def segment_2d(model_fname, contrast_type, input_size, im_in):
 def segment_3d(model_fname, contrast_type, im_in):
     """
     Perform segmentation with 3D convolutions.
+
     :return: seg_crop.data: ndarray float32: Output prediction
     """
     from spinalcordtoolbox.deepseg_sc.cnn_models_3d import load_trained_model
@@ -374,7 +377,7 @@ def segment_3d(model_fname, contrast_type, im_in):
     # segment the spinal cord
     z_patch_size = dct_patch_sc_3d[contrast_type]['size'][2]
     z_step_keep = list(range(0, im_in.data.shape[2], z_patch_size))
-    # TODO: use tqdm
+    # TODO: use sct_progress_bar
     for zz in z_step_keep:
         if zz == z_step_keep[-1]:  # deal with instances where the im.data.shape[2] % patch_size_z != 0
             patch_im = np.zeros(dct_patch_sc_3d[contrast_type]['size'])
@@ -420,6 +423,7 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
                                  kernel_size='2d', threshold_seg=None, remove_temp_files=1, verbose=1):
     """
     Main pipeline for CNN-based segmentation of the spinal cord.
+
     :param im_image:
     :param contrast_type: {'t1', 't2', t2s', 'dwi'}
     :param ctr_algo:

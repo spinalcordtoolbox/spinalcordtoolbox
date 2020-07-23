@@ -1,10 +1,9 @@
-numpy  # need to install first otherwise dependency issues
+numpy # need to install first otherwise dependency issues
 colored
-cryptography
 dipy
 futures
 h5py
-ivadomed==1.2.1
+ivadomed==2.0.2
 Keras==2.1.5
 matplotlib
 nibabel
@@ -29,8 +28,6 @@ torch==1.5.0+cpu; sys_platform != "darwin"
 torch==1.5.0; sys_platform == "darwin"
 torchvision==0.6.0+cpu; sys_platform != "darwin"
 torchvision==0.6.0; sys_platform == "darwin"
-xlrd
-xlutils
 xlwt
 tqdm
 transforms3d

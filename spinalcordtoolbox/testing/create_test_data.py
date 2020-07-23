@@ -3,6 +3,7 @@
 
 import numpy as np
 import numpy.matlib
+from numpy.polynomial import Polynomial as P
 from datetime import datetime
 import itertools
 from skimage.transform import rotate
@@ -13,8 +14,10 @@ import nibabel as nib
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.resampling import resample_nib
+from spinalcordtoolbox.centerline.curve_fitting import bspline
 from sct_image import concat_data
 
+# TODO: retrieve os.environ['SCT_DEBUG']
 DEBUG = False  # Save img_sub
 
 
@@ -66,12 +69,16 @@ def dummy_centerline(size_arr=(9, 9, 9), pixdim=(1, 1, 1), subsampling=1, dilate
     :return:
     """
     nx, ny, nz = size_arr
-    # define array based on a polynomial function, within X-Z plane, located at y=ny/4, based on the following points:
+    # create regularized curve, within X-Z plane, located at y=ny/4, passing through the following points:
     x = np.array([round(nx/4.), round(nx/2.), round(3*nx/4.)])
     z = np.array([0, round(nz/2.), nz-1])
-    p = np.poly1d(np.polyfit(z, x, deg=3))
+    # we use bspline (instead of poly) in order to avoid bad extrapolation at edges
+    # see: https://github.com/neuropoly/spinalcordtoolbox/pull/2754
+    xfit, _ = bspline(z, x, range(nz), 10)
+    # p = P.fit(z, x, 3)
+    # p = np.poly1d(np.polyfit(z, x, deg=3))
     data = np.zeros((nx, ny, nz))
-    arr_ctl = np.array([p(range(nz)).astype(np.int),
+    arr_ctl = np.array([xfit.astype(np.int),
                         [round(ny / 4.)] * len(range(nz)),
                         range(nz)], dtype=np.uint16)
     # Loop across dilation of centerline. E.g., if dilate_ctl=1, result will be a square of 3x3 per slice.

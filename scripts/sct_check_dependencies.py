@@ -201,9 +201,12 @@ def get_parser():
         action="help",
         help="Show this help message and exit")
     optional.add_argument(
-        "-c",
-        "--complete",
+        '-complete',
         help="Complete test.",
+        action="store_true")
+    optional.add_argument(
+        "-short",
+        help="Short test. Only shows SCT version, CPU cores and RAM available.",
         action="store_true")
 
     return parser
@@ -259,6 +262,9 @@ def main():
 
     # check RAM
     sct.checkRAM(os_running, 0)
+
+    if arguments.short:
+        sys.exit()
 
     # check if Python path is within SCT path
     print_line('Check Python executable')

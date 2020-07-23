@@ -17,13 +17,12 @@ import numpy as np
 import itertools
 import argparse
 
-import tqdm
 from skimage.feature import greycomatrix, greycoprops
 
 import sct_utils as sct
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, sct_progress_bar
 
 def get_parser():
     # Initialize the parser
@@ -251,7 +250,7 @@ class ExtractGLCM:
             dct_metric[m] = im_2save
             # dct_metric[m] = Image(self.fname_metric_lst[m])
 
-        with tqdm.tqdm() as pbar:
+        with sct_progress_bar() as pbar:
             for im_z, seg_z, zz in zip(self.dct_im_seg['im'], self.dct_im_seg['seg'], range(len(self.dct_im_seg['im']))):
                 for xx in range(im_z.shape[0]):
                     for yy in range(im_z.shape[1]):

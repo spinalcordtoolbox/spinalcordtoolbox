@@ -12,6 +12,8 @@ import logging
 import argparse
 import subprocess
 import shutil
+import tqdm
+import zipfile
 from enum import Enum
 
 logger = logging.getLogger(__name__)
@@ -100,20 +102,67 @@ class SmartFormatter(argparse.HelpFormatter):
     def _split_lines(self, text, width):
         if text.startswith('R|'):
             lines = text[2:].splitlines()
+            while lines[0] == '':  # Discard empty start lines
+                lines = lines[1:]
             offsets = [re.match("^[ \t]*", l).group(0) for l in lines]
             wrapped = []
             for i in range(len(lines)):
                 li = lines[i]
-                o = offsets[i]
-                ol = len(o)
-                init_wrap = argparse._textwrap.fill(li, width).splitlines()
-                first = init_wrap[0]
-                rest = "\n".join(init_wrap[1:])
-                rest_wrap = argparse._textwrap.fill(rest, width - ol).splitlines()
-                offset_lines = [o + wl for wl in rest_wrap]
-                wrapped = wrapped + [first] + offset_lines
+                if len(li) > 0:
+                    o = offsets[i]
+                    ol = len(o)
+                    init_wrap = argparse._textwrap.fill(li, width).splitlines()
+                    first = init_wrap[0]
+                    rest = "\n".join(init_wrap[1:])
+                    rest_wrap = argparse._textwrap.fill(rest, width - ol).splitlines()
+                    offset_lines = [o + wl for wl in rest_wrap]
+                    wrapped = wrapped + [first] + offset_lines
+                else:
+                    wrapped = wrapped + [li]
             return wrapped
         return argparse.HelpFormatter._split_lines(self, text, width)
+
+
+# Modified from http://shallowsky.com/blog/programming/python-tee.html
+class Tee:
+    def __init__(self, _fd1, _fd2):
+        self.fd1 = _fd1
+        self.fd2 = _fd2
+
+    # This is breaking pytest for test_sct_run_batch.py somehow.
+    # I think it is ok to omit this, allowing the fd objects to close themselves
+    # this prevents closing an fd in use elsewhere.
+    # def __del__(self):
+    #     self.close()
+
+    def close(self):
+        if self.fd1 != sys.__stdout__ and self.fd1 != sys.__stderr__:
+            self.fd1.close()
+        if self.fd2 != sys.__stdout__ and self.fd2 != sys.__stderr__:
+            self.fd2.close()
+
+    def write(self, text):
+        self.fd1.write(text)
+        self.fd2.write(text)
+
+    def flush(self):
+        self.fd1.flush()
+        self.fd2.flush()
+
+
+def abspath(fname):
+    """
+    Get absolute path of input file name or path. Deals with tilde.
+
+    '~/code/bla' ------------------> '/usr/bob/code/bla'
+    '~/code/bla/pouf.txt' ---------> '/usr/bob/code/bla/pouf.txt'
+    '/usr/bob/code/bla' -----------> '/usr/bob/code/bla'
+    '/usr/bob/code/bla/pouf.txt' --> '/usr/bob/code/bla/pouf.txt'
+
+    :param fname:
+    :return:
+    """
+    return os.path.abspath(os.path.expanduser(fname))
 
 
 def add_suffix(fname, suffix):
@@ -125,9 +174,10 @@ def add_suffix(fname, suffix):
     :return: file name with suffix. Example: t2_mean.nii
 
     Examples:
+    .. code:: python
 
-    - add_suffix(t2.nii, _mean) -> t2_mean.nii
-    - add_suffix(t2.nii.gz, a) -> t2a.nii.gz
+        add_suffix(t2.nii, _mean) -> t2_mean.nii
+        add_suffix(t2.nii.gz, a) -> t2a.nii.gz
     """
     stem, ext = splitext(fname)
     return os.path.join(stem + suffix + ext)
@@ -136,8 +186,8 @@ def add_suffix(fname, suffix):
 def check_exe(name):
     """
     Ensure that a program exists
-    :type name: string
-    :param name: name or path to program
+
+    :param name: str: name or path to program
     :return: path of the program or None
     """
     def is_exe(fpath):
@@ -158,13 +208,16 @@ def check_exe(name):
 
 def parse_num_list(str_num):
     """
-    Parse numbers in string based on delimiter: , or :
-    Examples:
-      '' -> []
-      '1,2,3' -> [1, 2, 3]
-      '1:3,4' -> [1, 2, 3, 4]
-      '1,1:4' -> [1, 2, 3, 4]
-    :param str_num: string
+    Parse numbers in string based on delimiter ',' or ':'
+
+    .. note::
+        Examples:
+        '' -> []
+        '1,2,3' -> [1, 2, 3]
+        '1:3,4' -> [1, 2, 3, 4]
+        '1,1:4' -> [1, 2, 3, 4]
+
+    :param str_num: str
     :return: list of ints
     """
     list_num = list()
@@ -184,7 +237,7 @@ def parse_num_list(str_num):
         if m is not None:
             a = int(m.group("first"))
             b = int(m.group("last"))
-            list_num += [ x for x in range(a, b+1) if x not in list_num ]
+            list_num += [x for x in range(a, b + 1) if x not in list_num]
             continue
         raise ValueError("unexpected group element {} group spec {}".format(element, str_num))
 
@@ -193,13 +246,16 @@ def parse_num_list(str_num):
 
 def parse_num_list_inv(list_int):
     """
-    Take a list of numbers and output a string that reduce this list based on delimiter: ; or :
-    Note: we use ; instead of , for compatibility with csv format.
-    Examples:
-      [] -> ''
-      [1, 2, 3] --> '1:3'
-      [1, 2, 3, 5] -> '1:3;5'
-    :param list_int: list of ints
+    Take a list of numbers and output a string that reduce this list based on delimiter ';' or ':'
+
+    .. note::
+        Note: we use ; instead of , for compatibility with csv format.
+        Examples:
+        [] -> ''
+        [1, 2, 3] --> '1:3'
+        [1, 2, 3, 5] -> '1:3;5'
+
+    :param list_int: list: list of ints
     :return: str_num: string
     """
     # deal with empty list
@@ -213,10 +269,10 @@ def parse_num_list_inv(list_int):
     # Loop across list elements and build string iteratively
     for i in range(1, len(list_int)):
         # if previous element is the previous integer: I(i-1) = I(i)-1
-        if list_int[i] == list_int[i-1] + 1:
+        if list_int[i] == list_int[i - 1] + 1:
             # if ":" already there, update the last chars (based on the number of digits)
             if colon_is_present:
-                str_num = str_num[:-len(str(list_int[i-1]))] + str(list_int[i])
+                str_num = str_num[:-len(str(list_int[i - 1]))] + str(list_int[i])
             # if not, add it along with the new int value
             else:
                 str_num += ':' + str(list_int[i])
@@ -257,6 +313,62 @@ def tmp_create(basename=None):
     return tmpdir
 
 
+def send_email(addr_to, addr_from, subject, message='', passwd=None, filename=None, html=False, smtp_host=None, smtp_port=None, login=None):
+    if smtp_host is None:
+        smtp_host = os.environ.get("SCT_SMTP_SERVER", "smtp.gmail.com")
+    if smtp_port is None:
+        smtp_port = int(os.environ.get("SCT_SMTP_PORT", 587))
+    if login is None:
+        login = addr_from
+
+    import smtplib
+    from email.mime.multipart import MIMEMultipart
+    from email.mime.text import MIMEText
+    from email.mime.base import MIMEBase
+    from email import encoders
+
+    if html:
+        msg = MIMEMultipart("alternative")
+    else:
+        msg = MIMEMultipart()
+
+    msg['From'] = addr_from
+    msg['To'] = addr_to
+    msg['Subject'] = subject
+
+    body = message
+    if not isinstance(body, bytes):
+        body = body.encode("utf-8")
+
+    body_html = """
+<html><pre style="font: monospace"><body>
+{}
+</body></pre></html>""".format(body).encode()
+
+    if html:
+        msg.attach(MIMEText(body_html, 'html', "utf-8"))
+
+    msg.attach(MIMEText(body, 'plain', "utf-8"))
+
+    # filename = "NAME OF THE FILE WITH ITS EXTENSION"
+    if filename:
+        attachment = open(filename, "rb")
+        part = MIMEBase('application', 'octet-stream')
+        part.set_payload((attachment).read())
+        encoders.encode_base64(part)
+        part.add_header('Content-Disposition', "attachment; filename= %s" % filename)
+        msg.attach(part)
+
+    # send email
+    server = smtplib.SMTP(smtp_host, smtp_port)
+    server.starttls()
+    if passwd is not None:
+        server.login(login, passwd)
+    text = msg.as_string()
+    server.sendmail(addr_from, addr_to, text)
+    server.quit()
+
+
 def __get_branch():
     """
     Fallback if for some reason the value vas no set by sct_launcher
@@ -272,12 +384,17 @@ def __get_branch():
         return output.decode().strip()
 
 
-def __get_commit():
+def __get_commit(path_to_git_folder=None):
     """
     :return: git commit ID, with trailing '*' if modified
     """
+    if path_to_git_folder is None:
+        path_to_git_folder = __sct_dir__
+    else:
+        path_to_git_folder = abspath(path_to_git_folder)
+
     p = subprocess.Popen(["git", "rev-parse", "HEAD"], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                         cwd=__sct_dir__)
+                         cwd=path_to_git_folder)
     output, _ = p.communicate()
     status = p.returncode
     if status == 0:
@@ -286,15 +403,15 @@ def __get_commit():
         commit = "?!?"
 
     p = subprocess.Popen(["git", "status", "--porcelain"], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                         cwd=__sct_dir__)
+                         cwd=path_to_git_folder)
     output, _ = p.communicate()
     status = p.returncode
     if status == 0:
         unclean = True
         for line in output.decode().strip().splitlines():
             line = line.rstrip()
-            if line.startswith("??"): # ignore ignored files, they can't hurt
-               continue
+            if line.startswith("??"):  # ignore ignored files, they can't hurt
+                continue
             break
         else:
             unclean = False
@@ -312,7 +429,7 @@ def _git_info(commit_env='SCT_COMMIT', branch_env='SCT_BRANCH'):
         sct_commit = __get_commit() or sct_commit
         sct_branch = __get_branch() or sct_branch
 
-    if sct_commit is not 'unknown':
+    if sct_commit != 'unknown':
         install_type = 'git'
     else:
         install_type = 'package'
@@ -329,6 +446,16 @@ def _version_string():
         return version_sct
     else:
         return "{install_type}-{sct_branch}-{sct_commit}".format(**locals())
+
+
+def sct_progress_bar(*args, **kwargs):
+    """Thin wrapper around `tqdm.tqdm` which checks `SCT_PROGRESS_BAR` muffling the progress
+       bar if the user sets it to `no`, `off`, or `false` (case insensitive)."""
+    do_pb = os.environ.get('SCT_PROGRESS_BAR', 'yes')
+    if do_pb.lower() in ['off', 'no', 'false']:
+        kwargs['disable'] = True
+
+    return tqdm.tqdm(*args, **kwargs)
 
 
 __sct_dir__ = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
