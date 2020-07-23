@@ -370,6 +370,7 @@ class QcImage(object):
                     bbox_inches=None,
                     transparent=True,
                     dpi=dpi)
+
     def label_centerline(self, mask, ax):
         """Create figure with red label. Common scenario."""
         results_mask_pixels = np.where(mask > 0)
@@ -386,6 +387,7 @@ class QcImage(object):
                   aspect=float(self.aspect_mask))
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
+
 
 class Params(object):
     """Parses and stores the variables that will be included into the QC details
@@ -435,8 +437,6 @@ class Params(object):
 
     def abs_overlay_img_path(self):
         return os.path.join(self.root_folder, self.overlay_img_path)
-
-
 
 
 class QcReport(object):
@@ -671,7 +671,7 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, angle_line=None, args
         qcslice_operations = [QcImage.template]
         qcslice_layout = lambda x: x.mosaic()
     # Sagittal orientation, display vertebral labels
-    elif process in ['sct_label_vertebrae',]:
+    elif process in ['sct_label_vertebrae']:
         plane = 'Sagittal'
         dpi = 100  # bigger picture is needed for this special case, hence reduce dpi
         qcslice_type = qcslice.Sagittal([Image(fname_in1), Image(fname_seg)], p_resample=None)
@@ -731,6 +731,7 @@ def get_json_data_from_path(path_json):
         with open(file_json, 'r+') as fjson:
             results.append(json.load(fjson))
     return results
+
 
 def projected(image):
     print("my code")
