@@ -229,6 +229,23 @@ class QcImage(object):
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
 
+    def label_centerline(self, mask, ax):
+        """Create figure with red label. Common scenario."""
+        results_mask_pixels = np.where(mask > 0)
+        listOfCoordinates = list(zip(results_mask_pixels[0], results_mask_pixels[1]))
+        for cord in listOfCoordinates:
+            ax.plot(cord[1], cord[0], 'ro', markersize=1)
+            # ax.text(cord[1]+5,cord[0]+5, str(mask[cord]), color='lime', clip_on=True)
+        img = np.rint(np.ma.masked_where(mask < 1, mask))
+        ax.imshow(img,
+                  cmap=color.ListedColormap(self._color_bin_red),
+                  norm=color.Normalize(vmin=0, vmax=1),
+                  interpolation=self.interpolation,
+                  alpha=10,
+                  aspect=float(self.aspect_mask))
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
+
     def vertical_line(self, mask, ax):
         """Centered vertical line to assess quality of straightening"""
         img = np.full_like(mask, np.nan)
@@ -370,23 +387,6 @@ class QcImage(object):
                     bbox_inches=None,
                     transparent=True,
                     dpi=dpi)
-
-    def label_centerline(self, mask, ax):
-        """Create figure with red label. Common scenario."""
-        results_mask_pixels = np.where(mask > 0)
-        listOfCoordinates= list(zip(results_mask_pixels[0], results_mask_pixels[1]))
-        for cord in listOfCoordinates:
-            ax.plot(cord[1],cord[0], 'ro', markersize=1)
-            # ax.text(cord[1]+5,cord[0]+5, str(mask[cord]), color='lime', clip_on=True)          
-        img = np.rint(np.ma.masked_where(mask < 1, mask))
-        ax.imshow(img,
-                  cmap=color.ListedColormap(self._color_bin_red),
-                  norm=color.Normalize(vmin=0, vmax=1),
-                  interpolation=self.interpolation,
-                  alpha=10,
-                  aspect=float(self.aspect_mask))
-        ax.get_xaxis().set_visible(False)
-        ax.get_yaxis().set_visible(False)
 
 
 class Params(object):
