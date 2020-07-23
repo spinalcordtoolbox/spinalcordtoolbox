@@ -347,11 +347,6 @@ class Axial(Slice):
     def get_dim(self, image):
         return self.axial_dim(image)
 
-    def get_center_spit(self, img_idx=-1):
-        image = self._images[img_idx]
-        size = self.axial_dim(image)
-        return np.ones(size) * size / 2
-
     def get_center(self, img_idx=-1):
         """Get the center of mass of each slice. By default, it assumes that self._images is a list of images, and the
         last item is the segmentation from which the center of mass is computed."""
@@ -416,31 +411,4 @@ class Sagittal(Slice):
         dim = self.get_dim(image)
         size_y = self.axial_dim(image)
         size_x = self.coronal_dim(image)
-        return np.ones(dim) * size_x / 2, np.ones(dim) * size_y / 2
-
-
-class Coronal(Slice):
-    """The coronal representation of a slice"""
-    def get_name(self):
-        return Coronal.__name__
-
-    def get_aspect(self, image):
-        return Slice.coronal_aspect(image)
-
-    def get_slice(self, data, i):
-        return self.coronal_slice(data, i)
-
-    def get_dim(self, image):
-        return self.coronal_dim(image)
-
-    def get_center_spit(self, img_idx=-1):
-        image = self._images[img_idx]
-        x, y = self._axial_center(image)
-        return x
-
-    def get_center(self, img_idx=-1):
-        image = self._images[img_idx]
-        dim = self.get_dim(image)
-        size_y = self.axial_dim(image)
-        size_x = self.sagittal_dim(image)
         return np.ones(dim) * size_x / 2, np.ones(dim) * size_y / 2

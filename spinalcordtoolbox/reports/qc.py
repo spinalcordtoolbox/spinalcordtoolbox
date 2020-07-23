@@ -232,6 +232,7 @@ class QcImage(object):
     def label_centerline(self, mask, ax):
         """Create figure with red label. Common scenario."""
         results_mask_pixels = np.where(mask > 0)
+        # TODO: maybe we only need one pixel per centerline (currently, it's a 1x2 matrix of pixels)
         listOfCoordinates = list(zip(results_mask_pixels[0], results_mask_pixels[1]))
         for cord in listOfCoordinates:
             ax.plot(cord[1], cord[0], 'ro', markersize=1)
@@ -692,7 +693,6 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, angle_line=None, args
         qcslice_operations = [QcImage.highlight_pmj]
         qcslice_layout = lambda x: x.single()
     # Sagittal orientation, static image
-    # TODO: Add coronal orientation
     elif process in ['sct_straighten_spinalcord']:
         plane = 'Sagittal'
         dpi = 100
