@@ -374,10 +374,17 @@ class Sagittal(Slice):
         print(coordinates_list)
 
     def get_center_spit(self, img_idx=-1):
-        """Retrieve index of the medial plane (in the R-L direction) for each slice (in the I-S direction) in order
-        to center the spinal cord in the sagittal view.
-        Exception: if the input mask only has a single label (e.g., for sct_detect_pmj), then output the index that has
-        the sagittal slice centered at that label."""
+        """
+        Retrieve index along in the R-L direction for each S-I slice in order to center the spinal cord in the
+        medial plane, around the labels or segmentation.
+
+        By default, it looks at the latest image in the input list of images, assuming the latest is the labels or
+        segmentation.
+
+        If only one label is found, the cord will be centered at that label.
+
+        :return: index: [int] * n_SI
+        """
         image = self._images[img_idx].copy()
         # If mask is empty, raise error
         if np.argwhere(image.data).shape[0] == 0:
