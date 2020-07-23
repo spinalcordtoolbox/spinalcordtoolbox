@@ -283,7 +283,7 @@ class QcImage(object):
             logger.info('QcImage: %s with %s slice', func.__name__, sct_slice.get_name())
 
             if self._angle_line is None:
-                img, mask = func(sct_slice,    *args)
+                img, mask = func(sct_slice, *args)
             else:
                 [img, mask], centermass = func(sct_slice, *args)
                 self._centermass = centermass
@@ -558,7 +558,7 @@ def add_entry(src, process, args, path_qc, plane, path_img=None, path_img_overla
     :param plane:
     :param path_img: Path to image to display
     :param path_img_overlay: Path to image to display on top of path_img (will flip between the two)
-    :param qcslice: spinalcordtoolbox.reports.slice:Axial
+    :param qcslice: spinalcordtoolbox.reports.slice:Axial or spinalcordtoolbox.reports.slice:Sagittal
     :param qcslice_operations:
     :param qcslice_layout:
     :param dpi: int: Output resolution of the image
@@ -576,6 +576,7 @@ def add_entry(src, process, args, path_qc, plane, path_img=None, path_img_overla
         @QcImage(report, 'none', qcslice_operations, stretch_contrast_method=stretch_contrast_method,
                  angle_line=angle_line)
         def layout(qslice):
+            # This will call qc.__call__(self, func):
             return qcslice_layout(qslice)
 
         layout(qcslice)
@@ -682,8 +683,8 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, angle_line=None, args
     elif process in ['sct_label_utils']:
         plane = 'Sagittal'
         dpi = 100  # bigger picture is needed for this special case, hence reduce dpi
-        projected_image = projected(Image(fname_seg))
-        qcslice_type = qcslice.Sagittal([Image(fname_in1), projected_image], p_resample=None)
+        # projected_image = projected(Image(fname_seg))
+        qcslice_type = qcslice.Sagittal([Image(fname_in1), Image(fname_seg)], p_resample=None)
         qcslice_operations = [QcImage.label_utils]
         qcslice_layout = lambda x: x.single()
     # Sagittal orientation, display PMJ box

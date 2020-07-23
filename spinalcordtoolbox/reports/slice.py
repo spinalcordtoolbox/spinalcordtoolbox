@@ -281,17 +281,16 @@ class Slice(object):
         """
         assert len(set([x.data.shape for x in self._images])) == 1, "Volumes don't have the same size"
 
-        image = self._images[0]
-        dim = self.get_dim(image)
-
         matrices = list()
+        # Retrieve the L-R center of the slice for each row (i.e. in the S-I direction).
         index = self.get_center_spit()
+        # Loop across images and generate matrices for the image and the overlay
         for image in self._images:
-            # Fetch mid-sagittal plane
-            matrix = self.get_slice(image.data, dim / 2)
-            for j in range(len(index)):
+            # Initialize matrix with zeros. This matrix corresponds to the 2d slice shown on the QC report.
+            matrix = np.zeros(image.dim[0:2])
+            for row in range(len(index)):
                 # For each slice, translate in the R-L direction to center the cord
-                matrix[j] = self.get_slice(image.data, int(np.round(index[j])))[j]
+                matrix[row] = self.get_slice(image.data, int(np.round(index[row])))[row]
             matrices.append(matrix)
 
         return matrices
