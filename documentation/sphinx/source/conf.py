@@ -103,17 +103,33 @@ html_theme = "sphinx_rtd_theme"
 # of the sidebar.
 html_logo = '../../imgs/logo_sct.png'
 
+html_theme_options = {
+    "collapse_navigation": True,
+    "display_version": True,
+    "sticky_navigation": True,  # Set to False to disable the sticky nav while scrolling.
+    "logo_only": True,  # if we have a html_logo below, this shows /only/ the logo with no title text
+    "style_nav_header_background": "#FFFFFF",  # background of the logo (top left)
+    }
+
+html_context = {
+    "display_github": True,
+    "github_user": "neuropoly",
+    "github_repo": "spinalcordtoolbox",
+    "github_version": "master",
+    "conf_py_path": "/documentations/",
+}
+
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
 # html_theme_options = {}
-html_theme_options = {
-    # 'logo': '../imgs/logo_sct.png',
+# html_theme_options = {
+#     'logo_only': True,
     #'github_user': 'neuropoly',
     #'github_repo': 'spinalcordtoolbox',
     #'page_width': None,
-}
+# }
 
 
 # Add any paths that contain custom static files (such as style sheets) here,
@@ -121,9 +137,10 @@ html_theme_options = {
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
+html_css_files = ['css/custom.css']
+
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
-#
 # This is required for the alabaster theme
 # refs: http://alabaster.readthedocs.io/en/latest/installation.html#sidebars
 html_sidebars = {
