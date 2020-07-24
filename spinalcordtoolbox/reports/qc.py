@@ -732,17 +732,3 @@ def get_json_data_from_path(path_json):
         with open(file_json, 'r+') as fjson:
             results.append(json.load(fjson))
     return results
-
-
-def projected(image):
-    print("my code")
-    coordinates_list = np.argwhere(image.data)
-    projected_image = Image(param = [image.data.shape[0],image.data.shape[1], image.data.shape[2]], hdr = image.header) 
-    designated_slice = coordinates_list[0][2]
-    for i in range(len(coordinates_list)):
-        pt = coordinates_list[i]
-        projected_image.data[pt[0],pt[1],designated_slice] = image.data[pt[0],pt[1],pt[2]]
-    print(np.argwhere(projected_image.data))
-#projected_image = Image(param = [projected_data.shape[0],projected_data.shape[1], projected_data.shape[2]], hdr = image.header)
-   # projected_image.data = projected_data
-    return projected_image

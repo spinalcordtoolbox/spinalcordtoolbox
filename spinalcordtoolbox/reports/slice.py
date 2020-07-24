@@ -369,11 +369,6 @@ class Sagittal(Slice):
     def get_dim(self, image):
         return self.sagittal_dim(image)
 
-    def projected(self, img_idx = -1):
-        image = self._images[img_idx]
-        coordinates_list = np.argwhere(image.data)
-        print(coordinates_list)
-
     def get_center_spit(self, img_idx=-1):
         """
         Retrieve index along in the R-L direction for each S-I slice in order to center the spinal cord in the
