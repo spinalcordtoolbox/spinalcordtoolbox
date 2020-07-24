@@ -73,7 +73,8 @@ def linear(x, y, xref, smooth=0, pz=1):
     y_fit = np.interp(xref, x, y, left=None, right=None, period=None)
     window_len = round_up_to_odd(smooth / float(pz))
     logger.debug('Smoothing window: {}'.format(window_len))
-    y_fit = smooth1d(y_fit, window_len)
+    if smooth:
+        y_fit = smooth1d(y_fit, window_len)
     y_fit_der = np.gradient(y_fit)
     return y_fit, y_fit_der
 
