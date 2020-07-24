@@ -57,6 +57,9 @@ def get_parser():
                         help='If provided, this string will be mentioned in the QC report as the subject the process '
                              'was run on',
                         required=False)
+    parser.add_argument('-v',
+                        action='store_true',
+                        help="Verbose")
     return parser
 
 
@@ -80,7 +83,6 @@ def main(args):
 
 
 if __name__ == '__main__':
-    sct.init_sct()
-    parser = get_parser()
-    arguments = parser.parse_args()
+    arguments = get_parser().parse_args()
+    sct.init_sct(log_level=2 if arguments.v else 1)
     main(arguments)
