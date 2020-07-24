@@ -11,10 +11,11 @@ import math
 
 import numpy as np
 from scipy import ndimage
+from nibabel.nifti1 import Nifti1Image
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.resampling import resample_nib
-from nibabel.nifti1 import Nifti1Image
+from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
 
 logger = logging.getLogger(__name__)
 
@@ -386,31 +387,24 @@ class Sagittal(Slice):
         :return: index: [int] * n_SI
         """
         image = self._images[img_idx].copy()
+        assert image.orientation == 'SAL'
         # If mask is empty, raise error
         if np.argwhere(image.data).shape[0] == 0:
             logging.error('Mask is empty')
         # If mask only has one label (e.g., in sct_detect_pmj), return the repmat of the R-L index (assuming SAL orient)
         elif np.argwhere(image.data).shape[0] == 1:
             return [np.argwhere(image.data)[0][2]] * image.data.shape[2]
-        # Otherwise, find the center of mass per slice and return the R-L index
-        elif np.argwhere(image.data).shape[0] < 25:
-            print(np.argwhere(image.data))
-            return [np.argwhere(image.data)[0][2]]*image.data.shape[2] 
+        # Otherwise, find the center of mass of each label (per axial plane) and extrapolate linearly
         else:
-            from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
             image.change_orientation('RPI')  # need to do that because get_centerline operates in RPI orientation
             # Get coordinate of centerline
-            _, arr_ctl_RPI, _, _ = get_centerline(image, param=ParamCenterline())
-            # Extend the centerline by copying values below zmin and above zmax to avoid discontinuities
-            zmin, zmax = arr_ctl_RPI[2, :].min().astype(int), arr_ctl_RPI[2, :].max().astype(int)
-            index_RL_in_RPI = np.concatenate([np.ones(zmin) * arr_ctl_RPI[0, 0],
-                                              arr_ctl_RPI[0, 1:],
-                                              np.ones(image.data.shape[2] - zmax) * arr_ctl_RPI[0, -1]])
-            # reorient R-L index to go from RPI to SAL
-            index_RL_in_SAL = image.data.shape[0] - index_RL_in_RPI
-            # then reverse to go from RL to LR
-            index_RL_in_SAL = index_RL_in_SAL[::-1]
-            return index_RL_in_SAL
+            # Here we use smooth=0 because we want the centerline to pass through the labels, and minmax=True extends
+            # the centerline below zmin and above zmax to avoid discontinuities
+            data_ctl_RPI, _, _, _ = get_centerline(
+                image, param=ParamCenterline(algo_fitting='linear', smooth=0, minmax=False))
+            data_ctl_RPI.change_orientation('SAL')
+            index_RL = np.argwhere(data_ctl_RPI.data)
+            return [index_RL[i][2] for i in range(len(index_RL))]
 
     def get_center(self, img_idx=-1):
         image = self._images[img_idx]
