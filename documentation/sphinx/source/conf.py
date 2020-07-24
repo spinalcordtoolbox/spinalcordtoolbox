@@ -99,13 +99,17 @@ todo_include_todos = False
 #html_theme = 'alabaster'
 html_theme = "sphinx_rtd_theme"
 
+# The name of an image file (relative to this directory) to place at the top
+# of the sidebar.
+html_logo = '../../imgs/logo_sct.png'
+
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
 # html_theme_options = {}
 html_theme_options = {
-    #'logo': 'logo.png',
+    # 'logo': '../imgs/logo_sct.png',
     #'github_user': 'neuropoly',
     #'github_repo': 'spinalcordtoolbox',
     #'page_width': None,
