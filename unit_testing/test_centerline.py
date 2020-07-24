@@ -72,20 +72,20 @@ im_centerlines = [
 
 param_optic = [
     ({'fname_image':
-        sct_test_path('t2/t2.nii.gz'),
+        sct_test_path('t2', 't2.nii.gz'),
       'contrast': 't2',
       'fname_centerline-optic':
-        sct_test_path('t2/t2_centerline-optic.nii.gz')}),
+        sct_test_path('t2', 't2_centerline-optic.nii.gz')}),
     ({'fname_image':
-        sct_test_path('t2s/t2s.nii.gz'),
+        sct_test_path('t2s', 't2s.nii.gz'),
       'contrast': 't2s',
       'fname_centerline-optic':
         sct_test_path('t2s/t2s_centerline-optic.nii.gz')}),
     ({'fname_image':
-        sct_test_path('dmri/dwi_mean.nii.gz'),
+        sct_test_path('dmri', 'dwi_mean.nii.gz'),
       'contrast': 'dwi',
       'fname_centerline-optic':
-        sct_test_path('dmri/dwi_mean_centerline-optic.nii.gz')}),
+        sct_test_path('dmri', 'dwi_mean_centerline-optic.nii.gz')}),
 ]
 
 

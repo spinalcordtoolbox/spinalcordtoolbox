@@ -17,11 +17,11 @@ import spinalcordtoolbox.deepseg.models
 
 param_deepseg = [
     ({'fname_image':
-        sct_test_path('t2s/t2s.nii.gz'),
+        sct_test_path('t2s', 't2s.nii.gz'),
       'model':
         os.path.join(sct.__deepseg_dir__, 't2star_sc'),
       'fname_seg_manual':
-        sct_test_path('t2s/t2s_seg-deepseg.nii.gz')}),
+        sct_test_path('t2s', 't2s_seg-deepseg.nii.gz')}),
 ]
 
 
