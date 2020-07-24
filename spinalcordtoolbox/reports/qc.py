@@ -14,7 +14,6 @@ import datetime
 import io
 from string import Template
 from shutil import copyfile
-import operator 
 
 warnings.filterwarnings("ignore")
 
@@ -27,7 +26,6 @@ import skimage.exposure
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
 import matplotlib.colors as color
-import matplotlib.pyplot as plt
 
 import sct_utils as sct
 from spinalcordtoolbox.image import Image
@@ -174,19 +172,15 @@ class QcImage(object):
 
     def label_utils(self, mask, ax):
         """Create figure with red label. Common scenario."""
-        results_mask_pixels = np.where(mask > 0)
-        print(results_mask_pixels)
-        listOfCoordinates= list(zip(results_mask_pixels[0], results_mask_pixels[1]))
-        for cord in listOfCoordinates:
-            ax.plot(cord[1],cord[0], 'ro', markersize=5)
-            ax.text(cord[1]+5,cord[0]+5, str(mask[cord]), color='lime', clip_on=True)          
-        img = np.rint(np.ma.masked_where(mask < 1, mask))
-        ax.imshow(img,
-                  cmap=color.ListedColormap(self._color_bin_red),
-                  norm=color.Normalize(vmin=0, vmax=1),
-                  interpolation=self.interpolation,
-                  alpha=10,
-                  aspect=float(self.aspect_mask))
+        img = np.full_like(mask, np.nan)
+        ax.imshow(img, cmap='gray', alpha=0, aspect=float(self.aspect_mask))
+        non_null_vox = np.where(mask > 0)
+        coord_labels = list(zip(non_null_vox[0], non_null_vox[1]))
+        logger.debug(coord_labels)
+        for coord in coord_labels:
+            ax.plot(coord[1], coord[0], 'o', color='lime', markersize=5)
+            ax.text(coord[1] + 1.5, coord[0], str(round(mask[coord[0], coord[1]])), color='lime', fontsize=15,
+                    verticalalignment='center', clip_on=True)
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
 
