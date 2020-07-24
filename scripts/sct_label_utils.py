@@ -885,9 +885,10 @@ def main(args=None):
     qc_dataset = arguments.get("-qc-dataset", None)
     qc_subject = arguments.get("-qc-subject", None)
     if path_qc is not None:
-        generate_qc(fname_in1=fname_input_data, fname_seg=fname_seg, args=args, path_qc=os.path.abspath(path_qc),
-                    dataset=qc_dataset, subject=qc_subject, process='sct_label_utils')
-    sct.display_viewer_syntax([fname_input_data, fname_seg], colormaps=['gray', 'red'], opacities=['', '1'])
+        generate_qc(fname_in1=input_filename, fname_seg=input_fname_output[0], args=args,
+                    path_qc=os.path.abspath(path_qc), dataset=qc_dataset, subject=qc_subject, process='sct_label_utils')
+
+
 if __name__ == "__main__":
     sct.init_sct()
     # call main function
