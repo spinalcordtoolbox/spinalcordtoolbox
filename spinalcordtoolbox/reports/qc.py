@@ -177,9 +177,11 @@ class QcImage(object):
         non_null_vox = np.where(mask > 0)
         coord_labels = list(zip(non_null_vox[0], non_null_vox[1]))
         logger.debug(coord_labels)
+        # compute horizontal offset based on the resolution of the mask
+        horiz_offset = mask.shape[1] / 50
         for coord in coord_labels:
             ax.plot(coord[1], coord[0], 'o', color='lime', markersize=5)
-            ax.text(coord[1] + 1.5, coord[0], str(round(mask[coord[0], coord[1]])), color='lime', fontsize=15,
+            ax.text(coord[1] + horiz_offset, coord[0], str(round(mask[coord[0], coord[1]])), color='lime', fontsize=15,
                     verticalalignment='center', clip_on=True)
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
