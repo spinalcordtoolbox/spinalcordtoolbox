@@ -17,6 +17,7 @@ from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline, f
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.testing.create_test_data import dummy_centerline
 import spinalcordtoolbox.math
+from spinalcordtoolbox.utils import sct_test_path
 
 sys.path.append(os.path.join(__sct_dir__, 'scripts'))
 from sct_utils import init_sct
@@ -70,16 +71,22 @@ im_centerlines = [
 ]
 
 param_optic = [
-    ({'fname_image': 'sct_testing_data/t2/t2.nii.gz',
+    ({'fname_image':
+        sct_test_path('t2', 't2.nii.gz'),
       'contrast': 't2',
-      'fname_centerline-optic': 'sct_testing_data/t2/t2_centerline-optic.nii.gz'}),
-    ({'fname_image': 'sct_testing_data/t2s/t2s.nii.gz',
+      'fname_centerline-optic':
+        sct_test_path('t2', 't2_centerline-optic.nii.gz')}),
+    ({'fname_image':
+        sct_test_path('t2s', 't2s.nii.gz'),
       'contrast': 't2s',
-      'fname_centerline-optic': 'sct_testing_data/t2s/t2s_centerline-optic.nii.gz'}),
-    ({'fname_image': 'sct_testing_data/dmri/dwi_mean.nii.gz',
+      'fname_centerline-optic':
+        sct_test_path('t2s/t2s_centerline-optic.nii.gz')}),
+    ({'fname_image':
+        sct_test_path('dmri', 'dwi_mean.nii.gz'),
       'contrast': 'dwi',
-      'fname_centerline-optic': 'sct_testing_data/dmri/dwi_mean_centerline-optic.nii.gz'}),
-    ]
+      'fname_centerline-optic':
+        sct_test_path('dmri', 'dwi_mean_centerline-optic.nii.gz')}),
+]
 
 
 # noinspection 801,PyShadowingNames

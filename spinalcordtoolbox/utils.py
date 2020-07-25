@@ -462,3 +462,17 @@ __sct_dir__ = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 __version__ = _version_string()
 __data_dir__ = os.path.join(__sct_dir__, 'data')
 __deepseg_dir__ = os.path.join(__data_dir__, 'deepseg_models')
+
+
+def sct_dir_local_path(*args):
+    """Construct a directory path relative to __sct_dir__"""
+    return os.path.join(__sct_dir__, *args)
+
+
+def sct_test_path(*args):
+    """Construct a directory path relative to the sct testing data. Consults the
+    SCT_TESTING_DATA environment variable, if unset, paths are relative to the
+    current directory."""
+
+    test_path = os.environ.get('SCT_TESTING_DATA', '')
+    return os.path.join(test_path, 'sct_testing_data', *args)
