@@ -1,7 +1,7 @@
 Overview
 ########
 
-IMAGE GOES HERE
+[SLIDE ANIMATION GOES HERE]
 
 SCT tools process MRI data (`NIfTI <https://nifti.nimh.nih.gov/>`_
 files) and can do fully automatic tasks such as:
