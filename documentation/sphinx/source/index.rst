@@ -5,14 +5,21 @@ SCT is a comprehensive, free and open-source software dedicated to the processin
 
 .. toctree::
    :maxdepth: 1
-   :caption: User section
+   :caption: Overview
 
    introduction.rst
+
+
+.. toctree::
+   :maxdepth: 1
+   :caption: User section
+
    installation.rst
    getting-started.rst
    concepts.rst
    support.rst
    command-line.rst
+
 
 .. toctree::
    :maxdepth: 1
