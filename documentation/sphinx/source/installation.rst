@@ -22,7 +22,7 @@ Requirements
   * Ubuntu >= 16.04
   * Fedora >= 19
   * RedHat/CentOS >= 7
-  * Windows, see [Installation with Docker](#installation-with-docker).
+  * Windows, see `Install on Windows 10 with WSL`_.
 
 * You need to have ``gcc`` installed. On OS X, we recommend installing `Homebrew <https://brew.sh/>`_ and then run
   ``brew install gcc``. On Linux, we recommend installing it via your package manager. For example on Debian/Ubuntu:
