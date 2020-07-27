@@ -357,6 +357,37 @@ def register_wrapper(fname_src, fname_dest, param, paramregmulti, fname_src_seg=
     return fname_src2dest, fname_dest2src, fname_output_warp, fname_output_warpinv
 
 
+def register_step_ants_slice_regularized_registration(src, dest, step):
+    """
+    """
+
+def register_step_ants_registration(src, dest, step):
+    """
+    """
+
+def register_step_slicewise(src, dest, step):
+    """
+    """
+
+def register_step_landmarks(src, dest, step):
+    """
+    """
+
+def register_step_image(src, dest, step):
+    """
+    """
+
+def register_step_segmentation(src, dest, step):
+    """
+    """
+
+def register_step_imseg(src, dest, step):
+    """
+    """
+
+def register_step_label(src, dest, step, verbose=1):
+    """
+    """
 # register images
 # ==========================================================================================
 def register(src, dest, paramregmulti, param, i_step_str):
@@ -369,6 +400,7 @@ def register(src, dest, paramregmulti, param, i_step_str):
     :param i_step_str:
     :return: list: warp_forward, warp_inverse
     """
+    raise RuntimeError("Deprecating")
     # initiate default parameters of antsRegistration transformation
     ants_registration_params = {'rigid': '', 'affine': '', 'compositeaffine': '', 'similarity': '', 'translation': '',
                                 'bspline': ',10', 'gaussiandisplacementfield': ',3,0',
