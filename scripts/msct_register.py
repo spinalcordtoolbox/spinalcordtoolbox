@@ -357,7 +357,7 @@ def register_wrapper(fname_src, fname_dest, param, paramregmulti, fname_src_seg=
     return fname_src2dest, fname_dest2src, fname_output_warp, fname_output_warpinv
 
 
-def register_step_ants_slice_regularized_registration(src, dest, step, fname_mask='', metricSize, verbose=1):
+def register_step_ants_slice_regularized_registration(src, dest, step, metricSize, fname_mask='', verbose=1):
     """
     """
     # Find the min (and max) z-slice index below which (and above which) slices only have voxels below a given
@@ -615,8 +615,8 @@ def register(src, dest, step, param):
          src=src,
          dest=dest,
          step=step,
-         fname_mask=fname_mask,
          metricSize=metricSize,
+         fname_mask=fname_mask,
          verbose=param.verbose,
         )
 
@@ -694,6 +694,9 @@ def register(src, dest, step, param):
 
     return warp_forward, warp_inverse
 
+def register_image_slicewise():
+    """
+    """
 
 def register_slicewise(fname_src, fname_dest, paramreg=None, fname_mask='', warp_forward_out='step0Warp.nii.gz',
                        warp_inverse_out='step0InverseWarp.nii.gz', ants_registration_params=None,
