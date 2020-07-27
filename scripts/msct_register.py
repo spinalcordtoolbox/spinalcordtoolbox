@@ -357,9 +357,60 @@ def register_wrapper(fname_src, fname_dest, param, paramregmulti, fname_src_seg=
     return fname_src2dest, fname_dest2src, fname_output_warp, fname_output_warpinv
 
 
-def register_step_ants_slice_regularized_registration(src, dest, step):
+def register_step_ants_slice_regularized_registration(src, dest, step, fname_mask=''):
     """
     """
+    # Find the min (and max) z-slice index below which (and above which) slices only have voxels below a given
+    # threshold.
+    list_fname = [src, dest]
+    if fname_mask:
+        list_fname.append(fname_mask)
+        mask_options = ['-x', fname_mask]
+    else:
+        mask_options = []
+
+    zmin_global, zmax_global = 0, 99999  # this is assuming that typical image has less slice than 99999
+
+    for fname in list_fname:
+        im = Image(fname)
+        zmin, zmax = find_zmin_zmax(im, threshold=0.1)
+        if zmin > zmin_global:
+            zmin_global = zmin
+        if zmax < zmax_global:
+            zmax_global = zmax
+
+    # crop images (see issue #293)
+    src_crop = sct.add_suffix(src, '_crop')
+    spatial_crop(Image(src), dict(((2, (zmin_global, zmax_global)),))).save(src_crop)
+    dest_crop = sct.add_suffix(dest, '_crop')
+    spatial_crop(Image(dest), dict(((2, (zmin_global, zmax_global)),))).save(dest_crop)
+
+    # update variables
+    src = src_crop
+    dest = dest_crop
+    scr_regStep = sct.add_suffix(src, '_regStep' + i_step_str)
+
+    # estimate transfo
+    cmd = ['isct_antsSliceRegularizedRegistration',
+           '-t', 'Translation[' + step.gradStep + ']',
+           '-m',
+           step.metric + '[' + dest + ',' + src + ',1,' + metricSize + ',Regular,0.2]',
+           '-p', step.poly,
+           '-i', step.iter,
+           '-f', step.shrink,
+           '-s', step.smooth,
+           '-v', '1',  # verbose (verbose=2 does not exist, so we force it to 1)
+           '-o', '[step' + i_step_str + ',' + scr_regStep + ']',  # here the warp name is stage10 because
+           # antsSliceReg add "Warp"
+           ] + mask_options
+
+    warp_forward_out = 'step' + i_step_str + 'Warp.nii.gz'
+    warp_inverse_out = 'step' + i_step_str + 'InverseWarp.nii.gz'
+
+    # run command
+    status, output = sct.run(cmd, param.verbose, is_sct_binary=True)
+
+    return warp_forward_out, warp_inverse_out
 
 def register_step_ants_registration(src, dest, step):
     """
@@ -458,51 +509,12 @@ def register(src, dest, paramregmulti, param, i_step_str):
         masking = []
 
     if paramregmulti.steps[i_step_str].algo == 'slicereg':
-        # check if user used type=label
-        if paramregmulti.steps[i_step_str].type == 'label':
-            sct.printv('\nERROR: this algo is not compatible with type=label. Please use type=im or type=seg', 1,
-                       'error')
-        else:
-            # Find the min (and max) z-slice index below which (and above which) slices only have voxels below a given
-            # threshold.
-            list_fname = [src, dest]
-            if not masking == []:
-                list_fname.append(fname_mask)
-            zmin_global, zmax_global = 0, 99999  # this is assuming that typical image has less slice than 99999
-            for fname in list_fname:
-                im = Image(fname)
-                zmin, zmax = find_zmin_zmax(im, threshold=0.1)
-                if zmin > zmin_global:
-                    zmin_global = zmin
-                if zmax < zmax_global:
-                    zmax_global = zmax
-            # crop images (see issue #293)
-            src_crop = sct.add_suffix(src, '_crop')
-            spatial_crop(Image(src), dict(((2, (zmin_global, zmax_global)),))).save(src_crop)
-            dest_crop = sct.add_suffix(dest, '_crop')
-            spatial_crop(Image(dest), dict(((2, (zmin_global, zmax_global)),))).save(dest_crop)
-            # update variables
-            src = src_crop
-            dest = dest_crop
-            scr_regStep = sct.add_suffix(src, '_regStep' + i_step_str)
-            # estimate transfo
-            # TODO fixup isct_ants* parsers
-            cmd = ['isct_antsSliceRegularizedRegistration',
-                   '-t', 'Translation[' + paramregmulti.steps[i_step_str].gradStep + ']',
-                   '-m',
-                   paramregmulti.steps[i_step_str].metric + '[' + dest + ',' + src + ',1,' + metricSize + ',Regular,0.2]',
-                   '-p', paramregmulti.steps[i_step_str].poly,
-                   '-i', paramregmulti.steps[i_step_str].iter,
-                   '-f', paramregmulti.steps[i_step_str].shrink,
-                   '-s', paramregmulti.steps[i_step_str].smooth,
-                   '-v', '1',  # verbose (verbose=2 does not exist, so we force it to 1)
-                   '-o', '[step' + i_step_str + ',' + scr_regStep + ']',  # here the warp name is stage10 because
-                   # antsSliceReg add "Warp"
-                   ] + masking
-            warp_forward_out = 'step' + i_step_str + 'Warp.nii.gz'
-            warp_inverse_out = 'step' + i_step_str + 'InverseWarp.nii.gz'
-            # run command
-            status, output = sct.run(cmd, param.verbose, is_sct_binary=True)
+        warp_forward_out, warp_inverse_out = register_step_ants_slice_regularized_registration(
+         src=src,
+         dest=dest,
+         step=paramregmulti.steps[i_step_str],
+         fname_mask=fname_mask
+        )
 
     # ANTS 3d
     elif paramregmulti.steps[i_step_str].algo.lower() in ants_registration_params \
