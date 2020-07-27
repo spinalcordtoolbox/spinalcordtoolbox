@@ -388,6 +388,18 @@ def register_step_imseg(src, dest, step):
 def register_step_label(src, dest, step, verbose=1):
     """
     """
+    warp_forward_out = 'step' + step.step + '0GenericAffine.txt'
+    warp_inverse_out = '-step' + step.step + '0GenericAffine.txt'
+
+    register_landmarks(src,
+                       dest,
+                       step.dof,
+                       fname_affine=warp_forward_out,
+                       verbose=verbose)
+
+    return warp_forward_out, warp_inverse_out
+
+
 # register images
 # ==========================================================================================
 def register(src, dest, paramregmulti, param, i_step_str):
@@ -589,17 +601,13 @@ def register(src, dest, paramregmulti, param, i_step_str):
     else:
         sct.printv('\nERROR: algo ' + paramregmulti.steps[i_step_str].algo + ' does not exist. Exit program\n', 1, 'error')
 
-    # landmark-based registration
+    # # landmark-based registration
     if paramregmulti.steps[i_step_str].type in ['label']:
-        # check if user specified ilabel and dlabel
-        # TODO
-        warp_forward_out = 'step' + i_step_str + '0GenericAffine.txt'
-        warp_inverse_out = '-step' + i_step_str + '0GenericAffine.txt'
-        register_landmarks(src,
-                           dest,
-                           paramregmulti.steps[i_step_str].dof,
-                           fname_affine=warp_forward_out,
-                           verbose=param.verbose)
+        warp_forward_out, warp_inverse_out = register_step_label(
+         src=src,
+         dest=dest,
+         step=paramregmulti.steps[i_step_str]
+        )
 
     if not os.path.isfile(warp_forward_out):
         # no forward warping field for rigid and affine
