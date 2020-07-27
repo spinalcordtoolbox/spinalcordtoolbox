@@ -412,9 +412,61 @@ def register_step_ants_slice_regularized_registration(src, dest, step, fname_mas
 
     return warp_forward_out, warp_inverse_out
 
-def register_step_ants_registration(src, dest, step):
+def register_step_ants_registration(src, dest, step, masking):
     """
     """
+    # Pad the destination image (because ants doesn't deform the extremities)
+    # N.B. no need to pad if iter = 0
+    if not step.iter == '0':
+        dest_pad = sct.add_suffix(dest, '_pad')
+        sct.run(['sct_image', '-i', dest, '-o', dest_pad, '-pad', '0,0,' + str(param.padding)])
+        dest = dest_pad
+
+    # apply Laplacian filter
+    if not step.laplacian == '0':
+        sct.printv('\nApply Laplacian filter', param.verbose)
+        sct.run(['sct_maths', '-i', src, '-laplacian', step.laplacian + ','
+                 + step.laplacian + ',0', '-o', sct.add_suffix(src, '_laplacian')])
+        sct.run(['sct_maths', '-i', dest, '-laplacian', step.laplacian + ','
+                 + step.laplacian + ',0', '-o', sct.add_suffix(dest, '_laplacian')])
+        src = sct.add_suffix(src, '_laplacian')
+        dest = sct.add_suffix(dest, '_laplacian')
+
+    # Estimate transformation
+    sct.printv('\nEstimate transformation', param.verbose)
+    scr_regStep = sct.add_suffix(src, '_regStep' + i_step_str)
+
+    cmd = ['isct_antsRegistration',
+           '--dimensionality', '3',
+           '--transform', step.algo + '[' + step.gradStep
+           + ants_registration_params[step.algo.lower()] + ']',
+           '--metric', step.metric + '[' + dest + ',' + src + ',1,' + metricSize + ']',
+           '--convergence', step.iter,
+           '--shrink-factors', step.shrink,
+           '--smoothing-sigmas', step.smooth + 'mm',
+           '--restrict-deformation', step.deformation,
+           '--output', '[step' + i_step_str + ',' + scr_regStep + ']',
+           '--interpolation', 'BSpline[3]',
+           '--verbose', '1',
+           ] + masking
+
+    # add init translation
+    if not step.init == '':
+        init_dict = {'geometric': '0', 'centermass': '1', 'origin': '2'}
+        cmd += ['-r', '[' + dest + ',' + src + ',' + init_dict[step.init] + ']']
+
+    # run command
+    status, output = sct.run(cmd, param.verbose, is_sct_binary=True)
+
+    # get appropriate file name for transformation
+    if step.algo in ['rigid', 'affine', 'translation']:
+        warp_forward_out = 'step' + i_step_str + '0GenericAffine.mat'
+        warp_inverse_out = '-step' + i_step_str + '0GenericAffine.mat'
+    else:
+        warp_forward_out = 'step' + i_step_str + '0Warp.nii.gz'
+        warp_inverse_out = 'step' + i_step_str + '0InverseWarp.nii.gz'
+
+    return warp_forward_out, warp_inverse_out
 
 def register_step_slicewise(src, dest, step):
     """
@@ -519,53 +571,13 @@ def register(src, dest, paramregmulti, param, i_step_str):
     # ANTS 3d
     elif paramregmulti.steps[i_step_str].algo.lower() in ants_registration_params \
             and paramregmulti.steps[i_step_str].slicewise == '0':
-        # make sure type!=label. If type==label, this will be addressed later in the code.
-        if not paramregmulti.steps[i_step_str].type == 'label':
-            # Pad the destination image (because ants doesn't deform the extremities)
-            # N.B. no need to pad if iter = 0
-            if not paramregmulti.steps[i_step_str].iter == '0':
-                dest_pad = sct.add_suffix(dest, '_pad')
-                sct.run(['sct_image', '-i', dest, '-o', dest_pad, '-pad', '0,0,' + str(param.padding)])
-                dest = dest_pad
-            # apply Laplacian filter
-            if not paramregmulti.steps[i_step_str].laplacian == '0':
-                sct.printv('\nApply Laplacian filter', param.verbose)
-                sct.run(['sct_maths', '-i', src, '-laplacian', paramregmulti.steps[i_step_str].laplacian + ','
-                         + paramregmulti.steps[i_step_str].laplacian + ',0', '-o', sct.add_suffix(src, '_laplacian')])
-                sct.run(['sct_maths', '-i', dest, '-laplacian', paramregmulti.steps[i_step_str].laplacian + ','
-                         + paramregmulti.steps[i_step_str].laplacian + ',0', '-o', sct.add_suffix(dest, '_laplacian')])
-                src = sct.add_suffix(src, '_laplacian')
-                dest = sct.add_suffix(dest, '_laplacian')
-            # Estimate transformation
-            sct.printv('\nEstimate transformation', param.verbose)
-            scr_regStep = sct.add_suffix(src, '_regStep' + i_step_str)
-            # TODO fixup isct_ants* parsers
-            cmd = ['isct_antsRegistration',
-                   '--dimensionality', '3',
-                   '--transform', paramregmulti.steps[i_step_str].algo + '[' + paramregmulti.steps[i_step_str].gradStep
-                   + ants_registration_params[paramregmulti.steps[i_step_str].algo.lower()] + ']',
-                   '--metric', paramregmulti.steps[i_step_str].metric + '[' + dest + ',' + src + ',1,' + metricSize + ']',
-                   '--convergence', paramregmulti.steps[i_step_str].iter,
-                   '--shrink-factors', paramregmulti.steps[i_step_str].shrink,
-                   '--smoothing-sigmas', paramregmulti.steps[i_step_str].smooth + 'mm',
-                   '--restrict-deformation', paramregmulti.steps[i_step_str].deformation,
-                   '--output', '[step' + i_step_str + ',' + scr_regStep + ']',
-                   '--interpolation', 'BSpline[3]',
-                   '--verbose', '1',
-                   ] + masking
-            # add init translation
-            if not paramregmulti.steps[i_step_str].init == '':
-                init_dict = {'geometric': '0', 'centermass': '1', 'origin': '2'}
-                cmd += ['-r', '[' + dest + ',' + src + ',' + init_dict[paramregmulti.steps[i_step_str].init] + ']']
-            # run command
-            status, output = sct.run(cmd, param.verbose, is_sct_binary=True)
-            # get appropriate file name for transformation
-            if paramregmulti.steps[i_step_str].algo in ['rigid', 'affine', 'translation']:
-                warp_forward_out = 'step' + i_step_str + '0GenericAffine.mat'
-                warp_inverse_out = '-step' + i_step_str + '0GenericAffine.mat'
-            else:
-                warp_forward_out = 'step' + i_step_str + '0Warp.nii.gz'
-                warp_inverse_out = 'step' + i_step_str + '0InverseWarp.nii.gz'
+
+        warp_forward_out, warp_inverse_out = register_step_ants_registration(
+         src=src,
+         dest=dest,
+         step=paramregmulti.steps[i_step_str],
+         masking=masking
+        )
 
     # ANTS 2d
     elif paramregmulti.steps[i_step_str].algo.lower() in ants_registration_params \
