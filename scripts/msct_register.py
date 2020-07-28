@@ -248,26 +248,28 @@ def register_wrapper(fname_src, fname_dest, param, paramregmulti, fname_src_seg=
 
     # loop across registration steps
     for i_step in range(start_step, len(paramregmulti.steps)):
+        step = paramregmulti.steps[str(i_step)]
         sct.printv('\n--\nESTIMATE TRANSFORMATION FOR STEP #' + str(i_step), param.verbose)
         # identify which is the src and dest
-        if paramregmulti.steps[str(i_step)].type == 'im':
+        if step.type == 'im':
             src = ['src.nii']
             dest = ['dest_RPI.nii']
             interp_step = ['spline']
-        elif paramregmulti.steps[str(i_step)].type == 'seg':
+        elif step.type == 'seg':
             src = ['src_seg.nii']
             dest = ['dest_seg_RPI.nii']
             interp_step = ['nn']
-        elif paramregmulti.steps[str(i_step)].type == 'imseg':
+        elif step.type == 'imseg':
             src = ['src.nii', 'src_seg.nii']
             dest = ['dest_RPI.nii', 'dest_seg_RPI.nii']
             interp_step = ['spline', 'nn']
-        elif paramregmulti.steps[str(i_step)].type == 'label':
+        elif step.type == 'label':
             src = ['src_label.nii']
             dest = ['dest_label_RPI.nii']
             interp_step = ['nn']
         else:
-            sct.printv('ERROR: Wrong image type: {}'.format(paramregmulti.steps[str(i_step)].type), 1, 'error')
+            sct.printv('ERROR: Wrong image type: {}'.format(step.type), 1, 'error')
+
         # if step>0, apply warp_forward_concat to the src image to be used
         if (not same_space and i_step > 0) or (same_space and i_step > 1):
             sct.printv('\nApply transformation from previous step', param.verbose)
@@ -279,8 +281,10 @@ def register_wrapper(fname_src, fname_dest, param, paramregmulti, fname_src_seg=
                     '-o', sct.add_suffix(src[ifile], '_reg'),
                     '-x', interp_step[ifile]])
                 src[ifile] = sct.add_suffix(src[ifile], '_reg')
+
         # register src --> dest
-        warp_forward_out, warp_inverse_out = register(src=src, dest=dest, step=paramregmulti.steps[str(i_step)], param=param)
+        warp_forward_out, warp_inverse_out = register(src=src, dest=dest, step=step, param=param)
+
         # deal with transformations with "-" as prefix. They should be inverted with calling sct_concat_transfo.
         if warp_forward_out[0] == "-":
             warp_forward_out = warp_forward_out[1:]
@@ -518,22 +522,6 @@ def register_step_slicewise(src, dest, step, ants_registration_params, remove_te
     )
 
     return warp_forward_out, warp_inverse_out
-
-def register_step_landmarks(src, dest, step):
-    """
-    """
-
-def register_step_image(src, dest, step):
-    """
-    """
-
-def register_step_segmentation(src, dest, step):
-    """
-    """
-
-def register_step_imseg(src, dest, step):
-    """
-    """
 
 def register_step_label(src, dest, step, verbose=1):
     """
