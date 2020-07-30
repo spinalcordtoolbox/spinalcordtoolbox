@@ -901,7 +901,7 @@ class Os(object):
     def __init__(self):
         import os
         if os.name != 'posix':
-            raise UnsupportedOs('We only support OS X/Linux')
+            raise UnsupportedOs('We only support macOS/Linux')
         import platform
         self.os = platform.system().lower()
         self.arch = platform.machine()
