@@ -35,6 +35,16 @@ import psutil
 from textwrap import dedent
 from types import SimpleNamespace
 
+if "SCT_MPI_MODE" in os.environ:
+    from mpi4py.futures import MPIPoolExecutor as PoolExecutor
+    __MPI__ = True
+    sys.path.insert(0, path_script)
+else:
+    import concurrent.futures
+    from concurrent.futures import ProcessPoolExecutor as PoolExecutor
+    __MPI__ = False
+
+
 from spinalcordtoolbox.utils import Metavar, SmartFormatter, Tee, send_email, __get_commit
 from spinalcordtoolbox import __version__
 
@@ -403,7 +413,7 @@ def main(argv):
 
     # Trap errors to send an email if a script fails.
     try:
-        with multiprocessing.Pool(jobs) as p:
+        with PoolExecutor(jobs) as p:
             run_single_dir = functools.partial(run_single,
                                                script=script,
                                                script_args=args.script_args,
@@ -415,7 +425,7 @@ def main(argv):
                                                path_qc=path_qc,
                                                itk_threads=args.itk_threads,
                                                continue_on_error=args.continue_on_error)
-            results = p.map(run_single_dir, subject_dirs)
+            results = list(p.map(run_single_dir, subject_dirs))
     except Exception as e:
         if do_email is not None:
             message = ('Oh no there has been the following error in your pipeline:\n\n'
