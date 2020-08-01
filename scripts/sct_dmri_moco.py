@@ -129,16 +129,16 @@ def get_parser():
     # TODO: Convert -r to flag using action=store_true
     optional.add_argument(
         "-r",
-        metavar=Metavar.int,
-        choices=(0, 1),
-        default=1,
+        metavar=Metavar.str,
+        choices=('0', '1'),
+        default='1',
         help="Remove temporary files. 0 = no, 1 = yes"
     )
     optional.add_argument(
         "-v",
-        metavar=Metavar.int,
-        choices=(0, 1, 2),
-        default=1,
+        metavar=Metavar.str,
+        choices=('0', '1', '2'),
+        default='1',
         help="Verbose: 0 = nothing, 1 = classic, 2 = expanded",
     )
     return parser
