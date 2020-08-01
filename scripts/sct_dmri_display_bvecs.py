@@ -40,6 +40,7 @@ def get_parser():
     mandatory.add_argument(
         '-bvec',
         metavar=Metavar.file,
+        required=True,
         help="Input bvecs file. Example: bvecs.txt",
     )
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
