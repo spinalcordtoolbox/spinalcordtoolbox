@@ -35,7 +35,6 @@ def get_parser():
         formatter_class=SmartFormatter,
         add_help=None,
         prog=os.path.basename(__file__).strip(".py")
-
     )
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
