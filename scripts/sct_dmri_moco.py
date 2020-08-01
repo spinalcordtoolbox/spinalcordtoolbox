@@ -154,23 +154,23 @@ def main():
     arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
     param.fname_data = arguments.i
     param.fname_bvecs = os.path.abspath(arguments.bvec)
-    if '-bval' in arguments:
+    if arguments.bval:
         param.fname_bvals = os.path.abspath(arguments.bval)
-    if '-bvalmin' in arguments:
+    if arguments.bvalmin:
         param.bval_min = arguments.bvalmin
-    if '-g' in arguments:
+    if arguments.g:
         param.group_size = arguments.g
-    if '-m' in arguments:
+    if arguments.m:
         param.fname_mask = arguments.m
-    if '-param' in arguments:
+    if arguments.param:
         param.update(arguments.param)
-    if '-x' in arguments:
+    if arguments.x:
         param.interp = arguments.x
-    if '-ofolder' in arguments:
+    if arguments.ofolder:
         param.path_out = arguments.ofolder
-    if '-r' in arguments:
+    if arguments.r:
         param.remove_temp_files = arguments.r
-    param.verbose = arguments.v
+    param.verbose = int(arguments.v)
 
     # Update log level
     sct.init_sct(log_level=param.verbose, update=True)
