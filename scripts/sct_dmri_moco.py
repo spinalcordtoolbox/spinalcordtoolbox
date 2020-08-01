@@ -154,21 +154,21 @@ def main():
     arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
     param.fname_data = arguments.i
     param.fname_bvecs = os.path.abspath(arguments.bvec)
-    if arguments.bval:
+    if arguments.bval is not None:
         param.fname_bvals = os.path.abspath(arguments.bval)
-    if arguments.bvalmin:
+    if arguments.bvalmin is not None:
         param.bval_min = arguments.bvalmin
-    if arguments.g:
+    if arguments.g is not None:
         param.group_size = arguments.g
-    if arguments.m:
+    if arguments.m is not None:
         param.fname_mask = arguments.m
-    if arguments.param:
+    if arguments.param is not None:
         param.update(arguments.param)
-    if arguments.x:
+    if arguments.x is not None:
         param.interp = arguments.x
-    if arguments.ofolder:
+    if arguments.ofolder is not None:
         param.path_out = arguments.ofolder
-    if arguments.r:
+    if arguments.r is not None:
         param.remove_temp_files = arguments.r
     param.verbose = int(arguments.v)
 
