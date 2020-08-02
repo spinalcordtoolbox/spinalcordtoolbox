@@ -76,4 +76,4 @@ Video tutorials
 
 Please visit our video tutorials `here`_.
 
-.. _here: https://www.youtube.com/channel/UC3o_1ar-yenIlKfuNHitLqw
+.. _here: https://www.youtube.com/playlist?list=PLJ5-Fnq9XpaVgCZfY-GOGJaT0fmZN4vji
