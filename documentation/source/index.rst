@@ -9,6 +9,7 @@ SCT is a comprehensive, free and open-source software dedicated to the processin
 
    overview/introduction.rst
    overview/overview.rst
+   overview/references.rst
 
 
 .. toctree::
