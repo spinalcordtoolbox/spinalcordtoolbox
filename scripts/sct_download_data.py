@@ -98,12 +98,12 @@ def main(args=None):
             "https://www.neuro.polymtl.ca/_media/downloads/sct/20170922_pmj_models.zip",
         ],
         "binaries_linux": [
-            "https://osf.io/mka78/?action=download",
-            "https://www.neuro.polymtl.ca/_media/downloads/sct/20200420_sct_binaries_linux.tar.gz",
+            "https://osf.io/cs6zt/?action=download",
+            "https://www.neuro.polymtl.ca/_media/downloads/sct/20200801_sct_binaries_linux.tar.gz",
         ],
         "binaries_osx": [
-            "https://osf.io/dn67h/?action=download",
-            "https://www.neuro.polymtl.ca/_media/downloads/sct/20200420_sct_binaries_osx.tar.gz",
+            "https://osf.io/874cy?action=download",
+            "https://www.neuro.polymtl.ca/_media/downloads/sct/20200801_sct_binaries_osx.tar.gz",
         ],
         "course_hawaii17": "https://osf.io/6exht/?action=download",
         "course_paris18": [
