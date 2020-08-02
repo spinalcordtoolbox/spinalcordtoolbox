@@ -1,15 +1,28 @@
 .. _references:
 
 References
-----------
+##########
 
-Spinal Cord Toolbox
-^^^^^^^^^^^^^^^^^^^
+If you use SCT in your research or as part of your developments, please always cite the `main reference`_.
+If you use specific tools such as ``sct_deepseg_sc`` or the ``PAM50`` template, please also cite the specific articles
+listed in `specific references`_. You could also see some of the applications of SCT by other groups in `applications`_.
+
+
+.. contents::
+   :local:
+..
+
+
+Main reference
+--------------
 
 -  `De Leener B, Levy S, Dupont SM, Fonov VS, Stikov N, Louis Collins D,
    Callot V, Cohen-Adad J. SCT: Spinal Cord Toolbox, an open-source
    software for processing spinal cord MRI data. Neuroimage
    2017. <https://www.ncbi.nlm.nih.gov/pubmed/27720818>`__
+
+Specific references
+-------------------
 
 Template and Atlas
 ^^^^^^^^^^^^^^^^^^
@@ -76,7 +89,7 @@ Registration
    2017 <https://www.ncbi.nlm.nih.gov/pubmed/28130805>`__
 
 Applications
-^^^^^^^^^^^^
+------------
 
 -  `Kong et al. Intrinsically organized resting state networks in the
    human spinal cord. PNAS
