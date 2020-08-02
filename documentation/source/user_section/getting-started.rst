@@ -69,3 +69,11 @@ below:
 .. _SCT course (v3.0_beta9), Singapore, 2016-05-13: https://drive.google.com/file/d/0Bx3A13n3Q_EAa3NQYjBOWjhjZm8/view?usp=sharing
 .. _SCT course (v3.0_beta1), Montreal, 2016-04-19: https://drive.google.com/file/d/0Bx3A13n3Q_EAenltM2ZvZUNEdjQ/view?usp=sharing
 .. _SCT Hands-on Workshop (v2.0.4), Toronto, 2015-06-15: https://www.dropbox.com/s/f9887yrbkcfujn9/sct_handsOn_20150605.pdf?dl=0
+
+
+Video tutorials
+***************
+
+Please visit our video tutorials `here`_.
+
+.. _here: https://www.youtube.com/channel/UC3o_1ar-yenIlKfuNHitLqw

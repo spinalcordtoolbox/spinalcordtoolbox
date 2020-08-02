@@ -22,10 +22,6 @@ SCT is a comprehensive, free and open-source software dedicated to the processin
 - [License](#license)
 
 
-## Video tutorials
-
-Please visit our video tutorials [here](https://www.youtube.com/channel/UC3o_1ar-yenIlKfuNHitLqw).
-
 
 ## References
 
