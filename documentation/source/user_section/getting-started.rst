@@ -32,7 +32,7 @@ hesitate to ask for :ref:`support`.
 
 The script source is shown below:
 
-.. literalinclude:: ../../batch_processing.sh
+.. literalinclude:: ../../../batch_processing.sh
    :language: sh
 
 If you would like to get more examples about what SCT can do, please visit the `sct-pipeline repository
