@@ -27,7 +27,7 @@ training purposes:
 
 The script source is reasonably documented:
 
-.. literalinclude:: ../../../batch_processing.sh
+.. literalinclude:: ../../batch_processing.sh
    :language: sh
 
 

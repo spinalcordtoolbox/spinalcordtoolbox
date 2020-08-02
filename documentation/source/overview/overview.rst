@@ -1,7 +1,7 @@
 Overview
 ########
 
-.. image:: ../../../imgs/overview.png
+.. image:: ../../imgs/overview.png
   :alt: Alternative text
 
 SCT tools process MRI data (`NIfTI <https://nifti.nimh.nih.gov/>`_
