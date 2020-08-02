@@ -3,7 +3,7 @@
 Installation
 ############
 
-SCT works in OSX, Linux and Windows (see Requirements below). SCT bundles its own Python distribution (Miniconda),
+SCT works in macOS, Linux and Windows (see Requirements below). SCT bundles its own Python distribution (Miniconda),
 installed with all the required packages, and uses specific package versions, in order to ensure reproducibility of
 results. SCT offers various installation methods:
 
@@ -17,14 +17,14 @@ Requirements
 
 * Operating System (OS):
 
-  * OS X >= 10.12
+  * macOS >= 10.12
   * Debian >=9
   * Ubuntu >= 16.04
   * Fedora >= 19
   * RedHat/CentOS >= 7
   * Windows, see `Install on Windows 10 with WSL`_.
 
-* You need to have ``gcc`` installed. On OS X, we recommend installing `Homebrew <https://brew.sh/>`_ and then run
+* You need to have ``gcc`` installed. On macOS, we recommend installing `Homebrew <https://brew.sh/>`_ and then run
   ``brew install gcc``. On Linux, we recommend installing it via your package manager. For example on Debian/Ubuntu:
   ``apt install gcc``, and on CentOS/RedHat: ``yum -y install gcc``.
 
@@ -45,7 +45,7 @@ go into the created folder and launch the installer:
   ./install_sct
 
 .. note::
-  The package installation only works on OSX and Linux.
+  The package installation only works on macOS and Linux.
 
 
 Install from Github (development)
@@ -87,7 +87,7 @@ such as SCT. Checkout the `installation tutorial for WSL <https://github.com/neu
 Install with Docker
 -------------------
 
-`Docker <https://www.docker.com/what-container>`_ is a portable (Linux, OSX, Windows) container platform.
+`Docker <https://www.docker.com/what-container>`_ is a portable (Linux, macOS, Windows) container platform.
 
 In the context of SCT, it can be used:
 
