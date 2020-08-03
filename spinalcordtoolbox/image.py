@@ -1298,3 +1298,12 @@ def spatial_crop(im_src, spec, im_dst=None):
     im_dst.data = new_data
 
     return im_dst
+
+def convert(img: Image, squeeze_data=True, dtype=None):
+    """
+    """
+    if squeeze_data:
+        img.data = np.squeeze(img.data)
+    if dtype:
+        img.change_type(dtype)
+    return img

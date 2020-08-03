@@ -12,7 +12,6 @@ import logging
 import os # FIXME
 from math import asin, cos, sin, acos
 
-
 import numpy as np
 from scipy import ndimage
 from nibabel import load, Nifti1Image, save
@@ -20,12 +19,11 @@ from scipy.signal import argrelmax, medfilt
 from sklearn.decomposition import PCA
 from scipy.io import loadmat
 
-from spinalcordtoolbox.image import Image, find_zmin_zmax, spatial_crop
+from spinalcordtoolbox.image import Image, find_zmin_zmax, spatial_crop, convert
 from spinalcordtoolbox.utils import sct_progress_bar
 
 # imports to refactor
 import sct_utils as sct # FIXME [AJ]
-from sct_convert import convert # FIXME [AJ]
 from sct_image import split_data, concat_warp2d # FIXME [AJ]
 from msct_register_landmarks import register_landmarks # FIXME [AJ]
 
