@@ -342,8 +342,7 @@ def main(argv):
     print('OS: ' + os_running + ' (' + platform.platform() + ')')
 
     # Display number of CPU cores
-    output = int(os.getenv('ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS', 0))
-    print('CPU cores: Available: {} | Used by SCT: {}'.format(multiprocessing.cpu_count(), output))
+    print('CPU cores: Available: {} | Threads used by SCT: {}'.format(multiprocessing.cpu_count(), args.itk_threads))
 
     # Display RAM available
     print("RAM: Total {} MB | Available {} MB | Used {} MB".format(
