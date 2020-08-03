@@ -38,7 +38,6 @@ import sct_label_utils
 from sct_utils import add_suffix
 from sct_convert import convert
 from sct_image import split_data, concat_warp2d
-# from msct_register import Paramreg, ParamregMultiStep, register_wrapper
 
 from msct_parser import Parser
 from msct_register_landmarks import register_landmarks

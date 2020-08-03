@@ -17,6 +17,7 @@ import numpy as np
 from scipy import ndimage
 from nibabel import load, Nifti1Image, save
 from scipy.signal import argrelmax, medfilt
+from sklearn.decomposition import PCA
 from scipy.io import loadmat
 
 from spinalcordtoolbox.image import Image, find_zmin_zmax, spatial_crop
@@ -1203,100 +1204,88 @@ def generate_warping_field(fname_dest, warp_x, warp_y, fname_warp='warping_field
 
 def angle_between(a, b):
     """
-    compute angle in radian between a and b. Throws an exception if a or b has zero magnitude.
-    :param a:
-    :param b:
-    :return:
+    Compute angle in radian between a and b. Throws an exception if a or b has zero magnitude.
+
+    :param a: Coordinates of first point
+    :param b: Coordinates of second point
+    :return: angle in rads
     """
-    # TODO: check if extreme value that can make the function crash-- use "try"
-    # from numpy.linalg import norm
-    # from numpy import dot
-    # import math
     arccosInput = np.dot(a, b) / np.linalg.norm(a) / np.linalg.norm(b)
-    # sct.printv(arccosInput)
     arccosInput = 1.0 if arccosInput > 1.0 else arccosInput
     arccosInput = -1.0 if arccosInput < -1.0 else arccosInput
     sign_angle = np.sign(np.cross(a, b))
-    # sct.printv(sign_angle)
     return sign_angle * acos(arccosInput)
-
-    # @xl_func("numpy_row v1, numpy_row v2: float")
-    # def py_ang(v1, v2):
-    # """ Returns the angle in radians between vectors 'v1' and 'v2'    """
-    # cosang = np.dot(a, b)
-    # sinang = la.norm(np.cross(a, b))
-    # return np.arctan2(sinang, cosang)
-
 
 def compute_pca(data2d):
     """
     Compute PCA using sklearn
+
     :param data2d: 2d array. PCA will be computed on non-zeros values.
-    :return:
-        coordsrc: 2d array: centered non-zero coordinates
-        pca: object: PCA result.
+    :return: coordsrc: 2d array: centered non-zero coordinates\
+        pca: object: PCA result.\
         centermass: 2x1 array: 2d coordinates of the center of mass
     """
     # round it and make it int (otherwise end up with values like 10-7)
     data2d = data2d.round().astype(int)
+
     # get non-zero coordinates, and transpose to obtain nx2 dimensions
     coordsrc = np.array(data2d.nonzero()).T
+
     # get center of mass
     centermass = coordsrc.mean(0)
+
     # center data
     coordsrc = coordsrc - centermass
+
     # normalize data
     coordsrc /= coordsrc.std()
+
     # Performs PCA
-    from sklearn.decomposition import PCA
     pca = PCA(n_components=2, copy=False, whiten=False)
     pca.fit(coordsrc)
-    # pca_score = pca.explained_variance_ratio_
-    # V = pca.components_
+
     return coordsrc, pca, centermass
 
 
 def find_index_halfmax(data1d):
     """
     Find the two indices at half maximum for a bell-type curve (non-parametric). Uses center of mass calculation.
+
     :param data1d:
     :return: xmin, xmax
     """
     # normalize data between 0 and 1
     data1d = data1d / float(np.max(data1d))
+
     # loop across elements and stops when found 0.5
     for i in range(len(data1d)):
         if data1d[i] > 0.5:
             break
+
     # compute center of mass to get coordinate at 0.5
     xmin = i - 1 + (0.5 - data1d[i - 1]) / float(data1d[i] - data1d[i - 1])
+
     # continue for the descending slope
     for i in range(i, len(data1d)):
         if data1d[i] < 0.5:
             break
+
     # compute center of mass to get coordinate at 0.5
     xmax = i - 1 + (0.5 - data1d[i - 1]) / float(data1d[i] - data1d[i - 1])
-    # display
-    # import matplotlib.pyplot as plt
-    # plt.figure()
-    # plt.plot(src1d)
-    # plt.plot(xmin, 0.5, 'o')
-    # plt.plot(xmax, 0.5, 'o')
-    # plt.savefig('./normalize1d.png')
+
     return xmin, xmax
 
 
 def find_angle_hog(image, centermass, px, py, angle_range=10):
-    """Finds the angle of an image based on the method described by Sun, “Symmetry Detection Using Gradient Information.”
-     Pattern Recognition Letters 16, no. 9 (September 1, 1995): 987–96, and improved by N. Pinon
-     inputs :
-        - image : 2D numpy array to find symmetry axis on
-        - centermass: tuple of floats indicating the center of mass of the image
-        - px, py, dimensions of the pixels in the x and y direction
-        - angle_range : float or None, in deg, the angle will be search in the range [-angle_range, angle_range], if None angle angle might be returned
-     outputs :
-        - angle_found : float, angle found by the method
-        - conf_score : confidence score of the method (Actually a WIP, did not provide sufficient results to be used)
+    """
+    Finds the angle of an image based on the method described by Sun, “Symmetry Detection Using Gradient Information.”
+    Pattern Recognition Letters 16, no. 9 (September 1, 1995): 987–96, and improved by N. Pinon
+
+    :param: image : 2D numpy array to find symmetry axis on
+    :param: centermass: tuple of floats indicating the center of mass of the image
+    :param: px, py, dimensions of the pixels in the x and y direction
+    :param: angle_range : float or None, in deg, the angle will be search in the range [-angle_range, angle_range], if None angle angle might be returned
+    :return: angle found and confidence score
     """
 
     # param that can actually be tweeked to influence method performance :
@@ -1320,22 +1309,29 @@ def find_angle_hog(image, centermass, px, py, angle_range=10):
 
     # Acquiring the orientation histogram :
     grad_orient_histo = gradient_orientation_histogram(image, nb_bin=nb_bin, seg_weighted_mask=seg_weighted_mask)
+
     # Bins of the histogram :
     repr_hist = np.linspace(-(np.pi - 2 * np.pi / nb_bin), (np.pi - 2 * np.pi / nb_bin), nb_bin - 1)
+
     # Smoothing of the histogram, necessary to avoid digitization effects that will favor angles 0, 45, 90, -45, -90:
     grad_orient_histo_smooth = circular_filter_1d(grad_orient_histo, kmedian_size, kernel='median')  # fft than square than ifft to calculate convolution
+
     # Computing the circular autoconvolution of the histogram to obtain the axis of symmetry of the histogram :
     grad_orient_histo_conv = circular_conv(grad_orient_histo_smooth, grad_orient_histo_smooth)
+
     # Restraining angle search to the angle range :
     index_restrain = int(np.ceil(np.true_divide(angle_range, 180) * nb_bin))
     center = (nb_bin - 1) // 2
     grad_orient_histo_conv_restrained = grad_orient_histo_conv[center - index_restrain + 1:center + index_restrain + 1]
+
     # Finding the symmetry axis by searching for the maximum in the autoconvolution of the histogram :
     index_angle_found = np.argmax(grad_orient_histo_conv_restrained) + (nb_bin // 2 - index_restrain)
     angle_found = repr_hist[index_angle_found] / 2
     angle_found_score = np.amax(grad_orient_histo_conv_restrained)
+
     # Finding other maxima to compute confidence score
     arg_maxs = argrelmax(grad_orient_histo_conv_restrained, order=kmedian_size, mode='wrap')[0]
+
     # Confidence score is the ratio of the 2 first maxima :
     if len(arg_maxs) > 1:
         conf_score = angle_found_score / grad_orient_histo_conv_restrained[arg_maxs[1]]
@@ -1346,13 +1342,13 @@ def find_angle_hog(image, centermass, px, py, angle_range=10):
 
 
 def gradient_orientation_histogram(image, nb_bin, seg_weighted_mask=None):
-    """ This function takes an image as an input and return its orientation histogram
-    inputs :
-        - image : the image to compute the orientation histogram from, a 2D numpy array
-        - nb_bin : the number of bins of the histogram, an int, for instance 360 for bins 1 degree large (can be more or less than 360)
-        - seg_weighted_mask : optional, mask weighting the histogram count, base on segmentation, 2D numpy array between 0 and 1
-    outputs :
-        - grad_orient_histo : the histogram of the orientations of the image, a 1D numpy array of length nb_bin"""
+    """
+    This function takes an image as an input and return its orientation histogram
+
+    :param image: the image to compute the orientation histogram from, a 2D numpy array
+    :param nb_bin: the number of bins of the histogram, an int, for instance 360 for bins 1 degree large (can be more or less than 360)
+    :param seg_weighted_mask: optional, mask weighting the histogram count, base on segmentation, 2D numpy array between 0 and 1
+    :return grad_orient_histo: the histogram of the orientations of the image, a 1D numpy array of length nb_bin"""
 
     h_kernel = np.array([[1, 2, 1],
                          [0, 0, 0],
@@ -1389,12 +1385,12 @@ def gradient_orientation_histogram(image, nb_bin, seg_weighted_mask=None):
 
 
 def circular_conv(signal1, signal2):
-    """takes two 1D numpy array and do a circular convolution with them
-    inputs :
-        - signal1 : 1D numpy array
-        - signal2 : 1D numpy array, same length as signal1
-    output :
-        - signal_conv : 1D numpy array, result of circular convolution of signal1 and signal2"""
+    """
+    Takes two 1D numpy array and perform a circular convolution with them
+
+    :param signal1: 1D numpy array
+    :param signal2: 1D numpy array, same length as signal1
+    :return: signal_conv : 1D numpy array, result of circular convolution of signal1 and signal2"""
 
     if signal1.shape != signal2.shape:
         raise Exception("The two signals for circular convolution do not have the same shape")
@@ -1409,14 +1405,13 @@ def circular_conv(signal1, signal2):
 
 
 def circular_filter_1d(signal, window_size, kernel='gaussian'):
-
-    """ This function filters circularly the signal inputted with a median filter of inputted size, in this context
+    """
+    This function filters circularly the signal inputted with a median filter of inputted size, in this context\
     circularly means that the signal is wrapped around and then filtered
-    inputs :
-        - signal : 1D numpy array
-        - window_size : size of the kernel, an int
-    outputs :
-        - signal_smoothed : 1D numpy array, same size as signal"""
+
+    :param signal: 1D numpy array
+    :param window_size: size of the kernel, an int
+    :return: signal_smoothed: 1D numpy array, same size as signal"""
 
     signal_extended = np.concatenate((signal, signal, signal))  # replicate signal at both ends
     if kernel == 'gaussian':
