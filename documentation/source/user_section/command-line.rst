@@ -18,7 +18,8 @@ available from SCT, start a new Terminal and type ``sct`` then press
 "tab".
 
 
-Segmentation:
+Segmentation
+============
 
 - sct_create_mask_ - Create mask along z direction.
 - sct_deepseg_ - Segment an anatomical structure or pathologies according using a deep learning model created with
@@ -29,7 +30,8 @@ Segmentation:
 - sct_get_centerline_ - Extracts the spinal cord centerline.
 - sct_propseg_ - Segment spinal cord using propagation of deformation model (PropSeg).
 
-Segmentation analysis:
+Segmentation analysis
+=====================
 
 - sct_analyze_lesion_ - Compute statistics on segmented lesions.
 - sct_compute_hausdorff_distance_ - Compute the Hausdorff's distance between two binary images.
@@ -37,29 +39,27 @@ Segmentation analysis:
 - sct_dice_coefficient_ - Compute the Dice Coefficient to estimate overlap between two binary images.
 - sct_process_segmentation_ - Perform various types of processing from the spinal cord segmentation.
 
-Labeling:
+Labeling
+========
 
 - sct_detect_pmj_ - Detection of the Ponto-Medullary Junction (PMJ).
 - sct_label_vertebrae_ - Label vertebral levels
 - sct_label_utils_ - Collection of tools to create or process labels
 
-Registration:
+Registration
+============
 
 - sct_apply_transfo_ - Apply transformations.
 - sct_concat_transfo_ - Concatenate transformations.
 - sct_get_centerline_ - Reconstruct spinal cord centerline.
 - sct_register_multimodal_ - Register two images together (non-linear, constrained in axial plane)
-- sct_register_to_template_ - Register the template to an anatomical image (t1, t2, t2*).
+- sct_register_to_template_ - Register an image with an anatomical template (eg. the `PAM50 template
+  <https://pubmed.ncbi.nlm.nih.gov/29061527/>`_).
 - sct_straighten_spinalcord_ - Straighten spinal cord from centerline
-- sct_warp_template_ - Warp all the spinal cord tracts of the atlas according to the warping field given as input.
+- sct_warp_template_ - Warps the template and all atlases to a destination image.
 
-Metric processing:
-
-- sct_analyze_texture_ - Extraction of grey level co-occurence matrix (GLCM) texture features from an image within a
-  given mask.
-- sct_extract_metric_ - Estimate metric value within tracts, taking into account partial volume effect.
-
-Diffusion MRI:
+Diffusion MRI
+=============
 
 - sct_dmri_compute_bvalue_ - Calculate b-value (in mm^2/s).
 - sct_dmri_concat_bvals_ - Concatenate bval files in time.
@@ -70,36 +70,51 @@ Diffusion MRI:
 - sct_dmri_separate_b0_and_dwi_ - Separate b=0 and DW images from diffusion dataset.
 - sct_dmri_transpose_bvecs_ - Transpose bvecs file.
 
-Magnetization transfer:
+Magnetization transfer
+======================
 
 - sct_compute_mtr_ - Compute magnetization transfer ratio (MTR).
 - sct_compute_mtsat_ - Compute MTsat and T1map `[Helms et al. Magn Reson Med 2008]
   <https://pubmed.ncbi.nlm.nih.gov/19025906/>`_.
 
-Functional MRI:
+Functional MRI
+==============
 
 - sct_fmri_compute_tsnr_ - Compute the temporal signal-to-noise ratio from fMRI nifti files.
 - sct_fmri_moco_ - Correct fMRI data for motion.
 
-Miscellaneous:
+Metric processing
+=================
 
-- sct_compute_ernst_angle_ - Compute Ernst angle.
-- sct_compute_snr_ - Compute SNR using methods described in `[Dietrich et al. JMRI 2007]
-  <https://pubmed.ncbi.nlm.nih.gov/17622966/>`_.
+- sct_analyze_texture_ - Extraction of grey level co-occurence matrix (GLCM) texture features from an image within a
+  given mask.
+- sct_extract_metric_ - Estimate metric value within tracts, taking into account partial volume effect.
+
+Image manipulation
+==================
+
 - sct_convert_ - Convert image file to another type.
 - sct_crop_image_ - Tools to crop an image, either via command line or via a Graphical User Interface (GUI).
 - sct_denoising_onlm_ - Utility function to denoise images.
-- sct_download_data_ - Download binaries from the web.
 - sct_flatten_sagittal_ - Flatten the spinal cord in the sagittal plane (to make nice pictures).
 - sct_image_ - Performs various operations on images (split, pad, etc.).
 - sct_maths_ - Performs mathematical operations on images (threshold, smooth, etc.).
 - sct_merge_images_ - Merge images to the same space.
-- sct_qc_ - Generate Quality Control (QC) report following SCT processing.
 - sct_resample_ - Anisotropic resampling of 3D or 4D data.
-- sct_run_batch_ - Wrapper to processing scripts, which loops across subjects.
 - sct_smooth_spinalcord_ - Smooth the spinal cord along its centerline.
 
-System tools:
+Miscellaneous
+=============
+
+- sct_compute_ernst_angle_ - Compute Ernst angle.
+- sct_compute_snr_ - Compute SNR using methods described in `[Dietrich et al. JMRI 2007]
+  <https://pubmed.ncbi.nlm.nih.gov/17622966/>`_.
+- sct_download_data_ - Download binaries from the web.
+- sct_qc_ - Generate Quality Control (QC) report following SCT processing.
+- sct_run_batch_ - Wrapper to processing scripts, which loops across subjects.
+
+System tools
+============
 
 - sct_check_dependencies_ - Check installation and compatibility of SCT.
 - sct_testing_ - Runs complete testing to make sure SCT is working properly.
