@@ -1,68 +1,31 @@
 Development Notes
 #################
 
-
-Notes for Core Developers
-*************************
-
-Committing and pushing:
-
-- Direct push to the `master` branch is forbidden.
+This section contains additional notes specific to SCT project's organization.
 
 
-Reporting issues:
+Programming conventions
+***********************
 
-- Data that caused the issue: when possible/relevant, copy the data
-  there: `duke:sct_testing/issues`
+See https://github.com/neuropoly/spinalcordtoolbox/wiki#programming-rules
 
-- Please use label: [BUG] & [function] (see list of labels
-  [here](https://github.com/neuropoly/spinalcordtoolbox/labels))
-
+.. TODO
 
 
+Testing Procedure
+*****************
 
-Issue Triage
-============
+See https://github.com/neuropoly/spinalcordtoolbox/wiki/testing
 
-- Adjust github labels on the issue report, which might not have
-  labels.
-
-
-Reviewing PRs
-=============
-
-The levels of review of a PR are:
+.. TODO
 
 
-#. Basic review with regard to the `PR guidelines <https://github.com/neuropoly/spinalcordtoolbox/blob/master/CONTRIBUTING.rst#contributing-code>`_, label addition.
+Release Procedure
+*****************
 
+See https://github.com/neuropoly/spinalcordtoolbox/wiki/versioning
 
-#. Review of the code:
-
-   Review the code according to the style, best practices, and the
-   “fit” of the code with the rest of SCT.
-
-
-#. Run-time testing:
-
-   On top of the continuous integration jobs, review that the code
-   runs as intended.
-
-   Notes:
-
-   - `batch_processing.sh`, execution on non-public datasets...
-
-   - Only do it after having reviewed the code, even if there is some
-     level of accountability, you don't want to run arbitrary code on your system!
-
-
-#. Scientific review:
-
-   Scientific review of a feature with regard to a paper.
-
-
-Reviewers should coordinate to cover all of the above.
-
+.. TODO
 
 
 Binaries Compilation
@@ -70,11 +33,7 @@ Binaries Compilation
 
 See https://github.com/neuropoly/spinalcordtoolbox/wiki/Binaries-Compilation
 
-.. TODO
-
-
-Release Procedure
-*****************
+See https://github.com/neuropoly/spinalcordtoolbox/wiki/Compile-binaries
 
 .. TODO
 
