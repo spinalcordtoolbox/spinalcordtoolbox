@@ -2,8 +2,7 @@ SCT Concepts
 ############
 
 
-This section documents some SCT concepts and other useful things to know
-when using it.
+This section documents some SCT concepts and other useful things to know.
 
 .. contents::
    :local:
@@ -29,19 +28,16 @@ most software, and where the fastest varying element is indexed last.
 Reference Spaces
 ================
 
-As many other tools, SCT follows a standard nomenclature for reference
+As in many other tools, SCT follows a standard nomenclature for reference
 spaces in which the world or local coordinates are expressed.
 
-The string is formed from character label among:
+The string is formed from character label among (relative to a human subject):
 
 - `L` / `R`: left-right
 - `P` / `A`: posterior-anterior
 - `I` / `S`: inferior-superior
 
-(relative to a human subject).
-
 The character position corresponds to the axis index.
-
 
 SCT uses the "from" convention, which for clarity we postfix by a
 dash.
@@ -109,33 +105,21 @@ documentation.
 References
 ==========
 
-
-- An introduction to the NIFTI file format.
-
-  https://brainder.org/2012/09/23/the-nifti-file-format/
-
+- `An introduction to the NIFTI file format. <https://brainder.org/2012/09/23/the-nifti-file-format/>`_
   See *§ Orientation information* and around.
 
-- Official definition of the nifti1 header
-
-  https://nifti.nimh.nih.gov/pub/dist/src/niftilib/nifti1.h
-
+- `Official definition of the nifti1 header <https://nifti.nimh.nih.gov/pub/dist/src/niftilib/nifti1.h>`_
   See *§ 3D IMAGE (VOLUME) ORIENTATION AND LOCATION IN SPACE*
 
+- `nipy/nibabel's documentation on coordinate systems
+  <http://nipy.org/nibabel/coordinate_systems.html#naming-reference-spaces>`_
 
-- nipy/nibabel's documentation on coordinate systems
+- ITK (`ANTs <https://sourceforge.net/p/advants/discussion/840261/thread/2a1e9307/#fb5a>`_,
+  `Slicer <https://www.slicer.org/wiki/Coordinate_systems>`_) reference coordinate system is different (LPS-).
 
-  http://nipy.org/nibabel/coordinate_systems.html#naming-reference-spaces
+- `Matlab FieldTrip toolbox “How are the different head and MRI coordinate systems defined?”
+  <http://www.fieldtriptoolbox.org/faq/how_are_the_different_head_and_mri_coordinate_systems_defined>`_
 
-
-- ITK (ANTs, Slicer) reference coordinate system is different (LPS-)
-
-  See https://www.slicer.org/wiki/Coordinate_systems,
-  https://sourceforge.net/p/advants/discussion/840261/thread/2a1e9307/#fb5a
-
-- Matlab FieldTrip toolbox “How are the different head and MRI coordinate systems defined?”
-
-  http://www.fieldtriptoolbox.org/faq/how_are_the_different_head_and_mri_coordinate_systems_defined
 
 
 
@@ -144,96 +128,33 @@ Template / Atlas
 
 Background information on templates:
 
-- *A Brief History of Advanced Normalization Tools (ANTs)*
+- `*A Brief History of Advanced Normalization Tools (ANTs)*
   by Brian B. Avants (PENN) and Nicholas J. Tustison (UVA)
+  <https://stnava.github.io/ANTsTalk/#/>`_
 
-  https://stnava.github.io/ANTsTalk/#/
+Repository for creating SCT's templates:
 
+- `PAM50 anatomical template <https://github.com/neuropoly/template>`_
 
-Templates:
+- `White matter atlas <https://github.com/neuropoly/spinalcordtoolbox/tree/master/dev/atlas>`_
 
-- MNI-Poly-AMU - Template of the spinal cord including probabilistic
-  white and gray matter.
-
-  https://sourceforge.net/p/spinalcordtoolbox/wiki/MNI-Poly-AMU/
-
-  .. TODO
-
-- Spinal levels - Spinal levels of the spinal cord.
-
-  https://sourceforge.net/p/spinalcordtoolbox/wiki/Spinal_levels/
-
-  .. TODO
-
-- White Matter atlas - Atlas of white matter spinal pathways.
-
-  https://sourceforge.net/p/spinalcordtoolbox/wiki/White%20Matter%20atlas/
-
-  .. TODO
+- `Spinal levels <https://github.com/neuropoly/spinalcordtoolbox/tree/master/dev/spinal_level>`_
 
 
-Tips & Tricks
-*************
-
-- registration to a metric - Improve the registration of a template to
-  a metric image by taking into account the spinal cord's internal
-  structure
-
-  https://sourceforge.net/p/spinalcordtoolbox/wiki/register_to_metric/
-
-  .. TODO
-
-
-- registration tricks - informations of the parameters available in the registration functions, and how to use them.
-
-  https://sourceforge.net/p/spinalcordtoolbox/wiki/registration_tricks/
-
-  .. TODO
-
-
-Segmentation of the Spinal Cord
-*******************************
-
-SCT provides several tools to perform SC segmentation:
-
-- :ref:`sct_propseg`
-- :ref:`sct_deepseg_sc`
-
-The latter one, using a deep learning model, is giving the best results on most
-cases, but is not configurable.
-
-The former one is the fallback tool. It has lots of options that can
-be useful when segmenting tricky volumes.
-You may use it if :ref:`sct_deepseg_sc` is performing worse results
-than :ref:`sct_propseg` with default parameters.
-
-.. TODO additional information, performance info, paper
-
-Segmentation of GM/WM
-*********************
-
-SCT provides several tools to perform GM/WM segmentation:
-
-- :ref:`sct_deepseg_gm`
-
-The latter one, using a deep learning model, is giving the best results on most
-cases.
-
-The former one is the fallback tool.
-
-.. TODO additional information, performance info, paper
 
 
 Temporary Directories
 *********************
 
-Many SCT commands will create in temporary directories to operate,
+Many SCT commands will create temporary folders to operate,
 and there is an option to avoid removing temporary directories, to be
 used for troubleshooting purposes.
 
 If you don't know where your temporary directory is located, you can
 look at:
 https://docs.python.org/3/library/tempfile.html#tempfile.gettempdir
+
+
 
 
 Matlab Integration on Mac
@@ -250,6 +171,8 @@ Prior to running SCT commands. See
  https://github.com/neuropoly/spinalcordtoolbox/issues/405
 
 
+
+
 .. _qc:
 
 Quality Control
@@ -263,4 +186,3 @@ of entries and allowing to show, for each entry, animated images
 To generate a QC report, add the `-qc` command-line argument,
 with the location (folder, to be created by the SCT tool),
 where the QC files should be generated.
-
