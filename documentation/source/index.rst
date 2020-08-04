@@ -27,6 +27,7 @@ SCT is a comprehensive, free and open-source software dedicated to the processin
    :maxdepth: 1
    :caption: Developer section
 
+   dev_section/CONTRIBUTING.rst
    dev_section/api.rst
    dev_section/concepts.rst
    dev_section/development.rst
