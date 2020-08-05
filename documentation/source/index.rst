@@ -4,7 +4,7 @@ Welcome to Spinal Cord Toolbox's documentation!
 |badge-releases| |badge-forum| |badge-mailing-list| |badge-downloads| |badge-ci| |badge-doc|
 
 
-.. |badge-releases| image:: https://github-basic-badges.herokuapp.com/release/neuropoly/spinalcordtoolbox.svg
+.. |badge-releases| image:: https://img.shields.io/github/v/release/neuropoly/spinalcordtoolbox
     :alt: Releases
     :target: https://github.com/neuropoly/spinalcordtoolbox/releases
 
