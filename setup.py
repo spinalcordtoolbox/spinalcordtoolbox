@@ -50,6 +50,7 @@ setup(
       'sphinx',
       'sphinxcontrib-programoutput',
       'sphinx_rtd_theme',
+      'recommonmark'
      ],
      'mpi': [
       'mpich==3.2',
