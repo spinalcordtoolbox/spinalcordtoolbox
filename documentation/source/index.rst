@@ -28,6 +28,10 @@ Welcome to Spinal Cord Toolbox's documentation!
     :alt: Documentation Status
     :target: https://spinalcordtoolbox.com
 
+.. |badge-doc| image:: https://img.shields.io/github/license/neuropoly/spinalcordtoolbox
+    :alt: License
+    :target: https://github.com/neuropoly/spinalcordtoolbox/blob/master/LICENSE
+
 
 SCT is a comprehensive, free and open-source software dedicated to the processing and analysis of spinal cord MRI data.
 
