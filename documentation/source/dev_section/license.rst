@@ -4,4 +4,4 @@ License
 #######
 
 .. literalinclude:: ../../../LICENSE
-   :language: sh
+   :language: none
