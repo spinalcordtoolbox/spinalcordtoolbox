@@ -289,6 +289,7 @@ Github may suggest you to add particular reviewers to your PR. If that's
 the case and you don't know better, add all of these suggestions. The
 reviewers will be notified when you add them.
 
+
 Versioning
 ----------
 
@@ -306,3 +307,9 @@ MAJOR.MINOR.PATCH-beta.x (with x = 0, 1, 2, etc.) Stable version is
 indicated in the file version.txt. For development version (on master),
 the version is "dev".
 
+
+Contributors
+------------
+
+This project exists thanks to `all the amazing contributors
+<https://github.com/neuropoly/spinalcordtoolbox/graphs/contributors>`_.

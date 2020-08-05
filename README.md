@@ -8,46 +8,7 @@
 [![Developer mailing list](http://img.shields.io/badge/mailing%20list-development-green.svg?style=flat)](https://groups.google.com/forum/#!forum/sct_developers)
 [![Coverage Status](https://coveralls.io/repos/github/neuropoly/spinalcordtoolbox/badge.svg?branch=master)](https://coveralls.io/github/neuropoly/spinalcordtoolbox?branch=master)
 
-SCT is a comprehensive, free and open-source software dedicated to the processing and analysis of spinal cord MRI data.
+SCT is a comprehensive, free and open-source software dedicated to the 
+processing and analysis of spinal cord MRI data.
 
-- [Introduction](#introduction)
-- [List of tools](http://sourceforge.net/p/spinalcordtoolbox/wiki/tools/)
-- [Installation](#installation)
-- [Getting started](#getting-started)
-- [Courses](#courses)
-- [Video tutorials](#video-tutorials)
-- [References](#references)
-- [How to cite SCT](#citing-spinalcordtoolbox)
-- [Contributors](#contributors)
-- [License](#license)
-
-
-## Contributors
-
-This project exists thanks to [all the people who contribute](https://github.com/neuropoly/spinalcordtoolbox/graphs/contributors).
-If you would like to contribute as well, please follow the [contribution guidelines](CONTRIBUTING.rst).
-
-
-## License
-
-The MIT License (MIT)
-
-Copyright (c) 2014 École Polytechnique, Université de Montréal
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+To install and use SCT, please visit the documentation page: https://spinalcordtoolbox.com
