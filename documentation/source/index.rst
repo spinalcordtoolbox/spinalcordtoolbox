@@ -1,6 +1,34 @@
 Welcome to Spinal Cord Toolbox's documentation!
 ###############################################
 
+|badge-releases| |badge-forum| |badge-mailing-list| |badge-downloads| |badge-ci| |badge-doc|
+
+
+.. |badge-releases| image:: https://github-basic-badges.herokuapp.com/release/neuropoly/spinalcordtoolbox.svg
+    :alt: Releases
+    :target: https://github.com/neuropoly/spinalcordtoolbox/releases
+
+.. |badge-forum| image:: https://img.shields.io/discourse/status?label=forum&server=http%3A%2F%2Fforum.spinalcordmri.org
+    :alt: User forum
+    :target: http://forum.spinalcordmri.org/c/sct
+
+.. |badge-mailing-list| image:: http://img.shields.io/badge/mailing%20list-development-green.svg?style=flat
+    :alt: Developers mailing list
+    :target: https://groups.google.com/forum/#!forum/sct_developers
+
+.. |badge-downloads| image:: https://img.shields.io/github/downloads/neuropoly/spinalcordtoolbox/total.svg
+    :alt: Downloads
+    :target: https://github.com/neuropoly/spinalcordtoolbox/releases
+
+.. |badge-ci| image:: https://travis-ci.org/neuropoly/spinalcordtoolbox.svg?branch=master
+    :alt: Travis CI
+    :target: https://travis-ci.org/neuropoly/spinalcordtoolbox
+
+.. |badge-doc| image:: https://readthedocs.org/projects/spinalcordtoolbox/badge/
+    :alt: Documentation Status
+    :target: https://spinalcordtoolbox.com
+
+
 SCT is a comprehensive, free and open-source software dedicated to the processing and analysis of spinal cord MRI data.
 
 .. toctree::
