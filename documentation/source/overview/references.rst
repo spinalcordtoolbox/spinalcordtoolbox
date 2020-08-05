@@ -21,7 +21,7 @@ Main reference
    software for processing spinal cord MRI data. Neuroimage
    2017. <https://www.ncbi.nlm.nih.gov/pubmed/27720818>`__
 
-.. code-block::
+.. code-block:: none
 
   @article{DeLeener201724,
   title = "SCT: Spinal Cord Toolbox, an open-source software for processing spinal cord \{MRI\} data ",
