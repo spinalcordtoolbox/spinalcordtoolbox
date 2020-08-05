@@ -30,6 +30,7 @@ from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.resampling import resample_file
 from spinalcordtoolbox.math import dilate
 from spinalcordtoolbox.register.register import *
+from spinalcordtoolbox.register.landmarks import *
 import spinalcordtoolbox.image as msct_image
 
 import sct_utils as sct
@@ -40,7 +41,6 @@ from sct_convert import convert
 from sct_image import split_data, concat_warp2d
 
 from msct_parser import Parser
-from msct_register_landmarks import register_landmarks
 import sct_apply_transfo
 import sct_concat_transfo
 

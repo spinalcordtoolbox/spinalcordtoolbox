@@ -19,13 +19,13 @@ from scipy.signal import argrelmax, medfilt
 from sklearn.decomposition import PCA
 from scipy.io import loadmat
 
-from spinalcordtoolbox.image import Image, find_zmin_zmax, spatial_crop, convert
+import spinalcordtoolbox.image as image
 from spinalcordtoolbox.utils import sct_progress_bar
+from spinalcordtoolbox.register.landmarks import register_landmarks
 
 # imports to refactor
 import sct_utils as sct # FIXME [AJ]
 from sct_image import split_data, concat_warp2d # FIXME [AJ]
-from msct_register_landmarks import register_landmarks # FIXME [AJ]
 
 logger = logging.getLogger(__name__)
 
@@ -138,7 +138,7 @@ def register_step_ants_slice_regularized_registration(src, dest, step, metricSiz
 
     for fname in list_fname:
         im = Image(fname)
-        zmin, zmax = find_zmin_zmax(im, threshold=0.1)
+        zmin, zmax = image.find_zmin_zmax(im, threshold=0.1)
         if zmin > zmin_global:
             zmin_global = zmin
         if zmax < zmax_global:
@@ -146,9 +146,9 @@ def register_step_ants_slice_regularized_registration(src, dest, step, metricSiz
 
     # crop images (see issue #293)
     src_crop = sct.add_suffix(src, '_crop')
-    spatial_crop(Image(src), dict(((2, (zmin_global, zmax_global)),))).save(src_crop)
+    image.spatial_crop(Image(src), dict(((2, (zmin_global, zmax_global)),))).save(src_crop)
     dest_crop = sct.add_suffix(dest, '_crop')
-    spatial_crop(Image(dest), dict(((2, (zmin_global, zmax_global)),))).save(dest_crop)
+    image.spatial_crop(Image(dest), dict(((2, (zmin_global, zmax_global)),))).save(dest_crop)
 
     # update variables
     src = src_crop
@@ -325,16 +325,27 @@ def register_slicewise(fname_src, fname_dest, paramreg=None, fname_mask='', warp
     sct.printv('\nCopy input data to temp folder...', verbose)
     if isinstance(fname_src, list):
         # TODO: swap 0 and 1 (to be consistent with the child function below)
-        convert(fname_src[0], os.path.join(path_tmp, "src.nii"))
-        convert(fname_src[1], os.path.join(path_tmp, "src_seg.nii"))
-        convert(fname_dest[0], os.path.join(path_tmp, "dest.nii"))
-        convert(fname_dest[1], os.path.join(path_tmp, "dest_seg.nii"))
+        src_img = image.convert(image.Image(fname_src[0]))
+        src_img.save(os.path.join(path_tmp, "src.nii"))
+
+        src_seg = image.convert(image.Image(fname_src[1]))
+        src_seg.save(os.path.join(path_tmp, "src_seg.nii"))
+
+        dest_img = image.convert(image.Image(fname_dest[0]))
+        dest_img.save(os.path.join(path_tmp, "dest.nii"))
+
+        dest_seg = image.convert(image.Image(fname_dest[1]))
+        dest_seg.save(os.path.join(path_tmp, "dest_seg.nii"))
     else:
-        convert(fname_src, os.path.join(path_tmp, "src.nii"))
-        convert(fname_dest, os.path.join(path_tmp, "dest.nii"))
+        src_img = image.convert(image.Image(fname_src))
+        src_img.save(os.path.join(path_tmp, "src.nii"))
+
+        dest_image = image.convert(image.Image(fname_dest))
+        dest_image.save(os.path.join(path_tmp, "dest.nii"))
+
 
     if fname_mask != '':
-        convert(fname_mask, os.path.join(path_tmp, "mask.nii.gz"))
+        image.convert(fname_mask, os.path.join(path_tmp, "mask.nii.gz"))
 
     # go to temporary folder
     curdir = os.getcwd()
