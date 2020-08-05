@@ -18,7 +18,7 @@ Welcome to Spinal Cord Toolbox's documentation!
 
 .. |badge-downloads| image:: https://img.shields.io/github/downloads/neuropoly/spinalcordtoolbox/total.svg
     :alt: Downloads
-    :target: https://github.com/neuropoly/spinalcordtoolbox/releases
+    :target: https://github.com/neuropoly/spinalcordtoolbox/graphs/traffic
 
 .. |badge-ci| image:: https://travis-ci.org/neuropoly/spinalcordtoolbox.svg?branch=master
     :alt: Travis CI
