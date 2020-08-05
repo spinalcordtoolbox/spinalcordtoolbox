@@ -1,7 +1,7 @@
 Welcome to Spinal Cord Toolbox's documentation!
 ###############################################
 
-|badge-releases| |badge-forum| |badge-mailing-list| |badge-downloads| |badge-ci| |badge-doc|
+|badge-releases| |badge-forum| |badge-mailing-list| |badge-downloads| |badge-ci| |badge-doc| |badge-license|
 
 
 .. |badge-releases| image:: https://img.shields.io/github/v/release/neuropoly/spinalcordtoolbox
@@ -28,7 +28,7 @@ Welcome to Spinal Cord Toolbox's documentation!
     :alt: Documentation Status
     :target: https://spinalcordtoolbox.com
 
-.. |badge-doc| image:: https://img.shields.io/github/license/neuropoly/spinalcordtoolbox
+.. |badge-license| image:: https://img.shields.io/github/license/neuropoly/spinalcordtoolbox
     :alt: License
     :target: https://github.com/neuropoly/spinalcordtoolbox/blob/master/LICENSE
 
