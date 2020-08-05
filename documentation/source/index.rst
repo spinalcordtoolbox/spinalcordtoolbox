@@ -48,7 +48,6 @@ SCT is a comprehensive, free and open-source software dedicated to the processin
    user_section/installation.rst
    user_section/getting-started.rst
    user_section/command-line.rst
-   user_section/citing-sct.rst
    user_section/support.rst
 
 
