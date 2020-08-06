@@ -10,7 +10,8 @@ here = path.abspath(path.dirname(__file__))
 with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
-with open(path.join(here, 'version.txt')) as f:
+path_version = path.join(here, 'version.txt')
+with open(path_version) as f:
     version = f.read().strip()
 
 setup(
@@ -36,39 +37,35 @@ setup(
     ],
     keywords='Magnetic Resonance Imaging MRI spinal cord analysis template',
     packages=[
-     "spinalcordtoolbox",
+        "spinalcordtoolbox",
     ],
-    #package_data={},
+    # package_data={'spinalcordtoolbox': ['version.txt']},
     data_files=[
-     # <hack>
-     ("sct_scripts", [ os.path.join("scripts", x) for x in os.listdir("scripts") if x.endswith(".py") ]),
-     # </hack>
+        ('', ['version.txt']),
+        # <hack>
+        ("sct_scripts", [os.path.join("scripts", x) for x in os.listdir("scripts") if x.endswith(".py")]),
+        # </hack>
     ],
     include_package_data=True,
     extras_require={
-     'docs': [
-      'sphinx',
-      'sphinxcontrib-programoutput',
-      'sphinx_rtd_theme',
-     ],
-     'mpi': [
-      'mpich==3.2',
-      'mpi4py==3.0.0',
-     ],
-     # 'test': [
-     #  "pytest-runner",
-     #  "pytest",
-     # ],
+        'docs': [
+        'sphinx',
+        'sphinxcontrib-programoutput',
+        'sphinx_rtd_theme',
+        'recommonmark'
+    ],
+        'mpi': [
+        'mpich==3.2',
+        'mpi4py==3.0.0',
+    ],
     },
     entry_points=dict(
      console_scripts=[
         '{}=spinalcordtoolbox.compat.launcher:main'.format(x) for x in \
         [
-            'isct_check_detection',
             'isct_convert_binary_to_trilinear',
             'isct_minc2volume-viewer',
             'isct_test_ants',
-            'isct_warpmovie_generator',
             'sct_analyze_lesion',
             'sct_analyze_texture',
             'sct_apply_transfo',

@@ -3,66 +3,56 @@
 Installation
 ############
 
+SCT works in macOS, Linux and Windows (see Requirements below). SCT bundles its own Python distribution (Miniconda),
+installed with all the required packages, and uses specific package versions, in order to ensure reproducibility of
+results. SCT offers various installation methods:
+
 .. contents::
    :local:
 ..
 
 
-Prerequisites
-*************
+Requirements
+------------
 
-SCT runs on Linux and OSX;
-`native Windows support is not there
-<https://github.com/neuropoly/spinalcordtoolbox/issues/1682>`_ but
-Docker_ might be used to run a Linux container on Windows.
+* Operating System (OS):
 
-For Linux, the prerequisites should be already available on mainstream
-distributions.
-SCT has been tested on Debian >= 7, Fedora >= 23, Ubuntu >= 14.04,
-Gentoo et al.
+  * macOS >= 10.12
+  * Debian >=9
+  * Ubuntu >= 16.04
+  * Fedora >= 19
+  * RedHat/CentOS >= 7
+  * Windows, see `Install on Windows 10 with WSL`_.
 
-For OSX, there are no prerequisites.
-
-.. TODO minimum system version?
-
-The recommended procedure is to perform the installation `Using the installer`_.
+* You need to have ``gcc`` installed. On macOS, we recommend installing `Homebrew <https://brew.sh/>`_ and then run
+  ``brew install gcc``. On Linux, we recommend installing it via your package manager. For example on Debian/Ubuntu:
+  ``apt install gcc``, and on CentOS/RedHat: ``yum -y install gcc``.
 
 
-Using the Installer
-*******************
 
-When using the recommended procedure, SCT will bundle its own Python
-distribution, installed with all the required packages, and using
-specific package versions, in order to ensure reproducibility of
-results.
+Install from package (recommended)
+----------------------------------
 
-Procedure:
+The simplest way to install SCT is to do it via a stable release. First, download the
+`latest release <https://github.com/neuropoly/spinalcordtoolbox/releases>`_. Major changes to
+each release are listed in the `CHANGES.md <https://github.com/neuropoly/spinalcordtoolbox/blob/master/CHANGES.md>`_ file.
 
-#. Retrieve the SCT code from
-   https://github.com/neuropoly/spinalcordtoolbox/releases
+Once you have downloaded SCT, unpack it (note: Safari will automatically unzip it). Then, open a new Terminal,
+go into the created folder and launch the installer:
 
-   - Unpack it to a folder, then open a shell inside
+.. code:: sh
 
+  ./install_sct
 
-#. Run the installer and follow the instructions
-
-   .. code:: sh
-
-      ./install_sct
+.. note::
+  The package installation only works on macOS and Linux.
 
 
-Using the Installer and Git
-***************************
+Install from Github (development)
+---------------------------------
 
-You may have good reasons to want to install a development version of
-SCT.
-
-SCT will still bundle its own Python distribution, installed with
-all the required packages, and using specific package versions, in
-order to ensure reproducibility of results.
-
-
-Procedure:
+If you wish to benefit from the cutting-edge version of SCT, or if you wish to contribute to the code, we
+recommend you download the Github version.
 
 #. Retrieve the SCT code
 
@@ -87,11 +77,17 @@ Procedure:
       ./install_sct
 
 
-Docker
-******
+Install on Windows 10 with WSL
+------------------------------
 
-`Docker <https://www.docker.com/what-container>`_ is a portable
-(Linux, OSX, Windows) container platform.
+Windows subsystem for Linux (WSL) is available on Windows 10 and it makes it possible to run native Linux programs,
+such as SCT. Checkout the `installation tutorial for WSL <https://github.com/neuropoly/spinalcordtoolbox/wiki/SCT-on-Windows-10:-Installation-instruction-for-SCT-on-Windows-subsytem-for-linux>`_.
+
+
+Install with Docker
+-------------------
+
+`Docker <https://www.docker.com/what-container>`_ is a portable (Linux, macOS, Windows) container platform.
 
 In the context of SCT, it can be used:
 
@@ -100,11 +96,12 @@ In the context of SCT, it can be used:
   virtual machine
 - <your reason here>
 
-See https://github.com/neuropoly/sct_docker for more information.
+See https://github.com/neuropoly/sct_docker for more information. We also provide a
+`tutorial to install SCT via Docker <https://github.com/neuropoly/spinalcordtoolbox/wiki/testing#run-docker-image>`_.
 
 
-Using pip (experimental)
-************************
+Install with pip (experimental)
+-------------------------------
 
 SCT can be installed using pip, with some caveats:
 
@@ -156,9 +153,8 @@ Procedure:
       pip install --user -e .
 
 
-
 Hard-core Installation-less SCT usage
-*************************************
+-------------------------------------
 
 This is completely unsupported.
 
@@ -212,3 +208,20 @@ Procedure:
 
       # Add path to spinalcordtoolbox to PYTHONPATH
       export PYTHONPATH="$PWD:$PWD/scripts"
+
+
+Matlab Integration on Mac
+-------------------------
+
+Matlab took the liberty of setting ``DYLD_LIBRARY_PATH`` and in order
+for SCT to run, you have to run:
+
+.. code:: matlab
+
+   setenv('DYLD_LIBRARY_PATH', '');
+
+Prior to running SCT commands. See
+ https://github.com/neuropoly/spinalcordtoolbox/issues/405
+
+
+

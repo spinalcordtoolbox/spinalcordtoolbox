@@ -1,3 +1,5 @@
+# Changelog
+
 ## 4.3 (2020-06-11)
 [View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/4.2.2...4.3)
 
