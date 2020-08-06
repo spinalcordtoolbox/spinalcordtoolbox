@@ -10,7 +10,7 @@ here = path.abspath(path.dirname(__file__))
 with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
-path_version = path.join(here, 'version.txt')
+path_version = path.join(here, 'spinalcordtoolbox', 'version.txt')
 with open(path_version) as f:
     version = f.read().strip()
 

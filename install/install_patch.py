@@ -85,13 +85,13 @@ def main():
 
     # fetch version of the toolbox
     print 'Fetch version of the toolbox... '
-    with open(os.path.join(path_sct, "version.txt"), "r") as myfile:
+    with open(os.path.join(path_sct, "spinalcordtoolbox", "version.txt"), "r") as myfile:
         version_sct = Version(myfile.read().rstrip())
     print "  toolbox version: "+str(version_sct)
 
     # fetch version of the patch
     print 'Fetch version of the patch... '
-    with open("version.txt", "r") as myfile:
+    with open("spinalcordtoolbox/version.txt", "r") as myfile:
         version_patch = Version(myfile.read().rstrip())
     print "  patch version: "+str(version_patch)
 
