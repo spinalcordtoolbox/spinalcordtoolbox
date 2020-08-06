@@ -10,7 +10,8 @@ here = path.abspath(path.dirname(__file__))
 with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
-with open(path.join(here, 'version.txt')) as f:
+path_version = path.join(here, 'version.txt')
+with open(path_version) as f:
     version = f.read().strip()
 
 setup(
@@ -38,11 +39,12 @@ setup(
     packages=[
      "spinalcordtoolbox",
     ],
-    #package_data={},
+    # package_data={'spinalcordtoolbox': ['version.txt']},
     data_files=[
-     # <hack>
-     ("sct_scripts", [ os.path.join("scripts", x) for x in os.listdir("scripts") if x.endswith(".py") ]),
-     # </hack>
+        ('', ['version.txt']),
+        # <hack>
+        ("sct_scripts", [os.path.join("scripts", x) for x in os.listdir("scripts") if x.endswith(".py")]),
+        # </hack>
     ],
     include_package_data=True,
     extras_require={
