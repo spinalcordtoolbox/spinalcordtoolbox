@@ -10,7 +10,7 @@ Welcome to Spinal Cord Toolbox's documentation!
 
 .. |badge-forum| image:: https://img.shields.io/discourse/status?label=forum&server=http%3A%2F%2Fforum.spinalcordmri.org
     :alt: User forum
-    :target: http://forum.spinalcordmri.org/c/sct
+    :target: https://forum.spinalcordmri.org/c/sct
 
 .. |badge-mailing-list| image:: http://img.shields.io/badge/mailing%20list-development-green.svg?style=flat
     :alt: Developers mailing list
