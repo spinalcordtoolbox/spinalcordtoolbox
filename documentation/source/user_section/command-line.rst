@@ -204,7 +204,7 @@ sct_crop_image
 
 
 sct_deepseg
-===========g
+===========
 
 .. program-output:: sct_deepseg -h
 
