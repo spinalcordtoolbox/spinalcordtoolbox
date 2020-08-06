@@ -157,22 +157,6 @@ https://docs.python.org/3/library/tempfile.html#tempfile.gettempdir
 
 
 
-Matlab Integration on Mac
-*************************
-
-Matlab took the liberty of setting ``DYLD_LIBRARY_PATH`` and in order
-for SCT to run, you have to run:
-
-.. code:: matlab
-
-   setenv('DYLD_LIBRARY_PATH', '');
-
-Prior to running SCT commands. See
- https://github.com/neuropoly/spinalcordtoolbox/issues/405
-
-
-
-
 .. _qc:
 
 Quality Control
