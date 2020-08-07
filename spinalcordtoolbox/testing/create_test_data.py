@@ -14,7 +14,7 @@ import nibabel as nib
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.resampling import resample_nib
-from spinalcordtoolbox.centerline.curve_fitting import bspline
+from spinalcordtoolbox.centerline.curve_fitting import bspline, polyfit_1d
 from sct_image import concat_data
 
 # TODO: retrieve os.environ['SCT_DEBUG']
@@ -141,7 +141,7 @@ def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.floa
     padding = 15  # Padding size (isotropic) to avoid edge effect during rotation
     # Create a 3d array, with dimensions corresponding to x: RL, y: AP, z: IS
     nx, ny, nz = [int(size_arr[i] * pixdim[i]) for i in range(3)]
-    data = np.random.random((nx, ny, nz)) * 0.
+    data = np.zeros((nx, ny, nz))
     xx, yy = np.mgrid[:nx, :ny]
     if not interleaved:
         # loop across slices and add object
@@ -151,19 +151,20 @@ def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.floa
             if shape == 'ellipse':
                 data[:, :, iz] = (((xx - nx / 2) / radius_RL) ** 2 + ((yy - ny / 2) / radius_AP) ** 2 <= 1) * 1
     elif interleaved:
-        # define array based on a polynomial function, within Y-Z plane to simulate slicewise motion in A-P
-        y = np.matlib.repmat([round(nx / 2.) + pixdim[0]*factor, round(nx / 2.) - pixdim[0]*factor], 1, round(nz / 2))
-        if nz % 2 != 0:         # if z-dimension is odd, add one more element to fit size
-            y = numpy.append(y,round(nx / 2.) + pixdim[0]*factor)
-        y = y.reshape(nz)       # reshape to vector (1,R) -> (R,)
-        z = np.arange(0, nz)
-        p = np.poly1d(np.polyfit(z, y, deg=nz))
+        # create regularized curve, within Y-Z plane (A-P), located at x=nx/2, passing through the following points:
+        x = [round(ny / 2.)] * len(range(nz))
+        #y = np.array([round(nx / 2.) - 1, round(nx / 2.), round(nx / 2.) + 1])
+        y = np.array([round(nx / 4.), round(nx / 2.), round(3 * nx / 4.)])
+        z = np.array([0, round(nz / 2.), nz - 1])
+        #yfit, _ = bspline(z, y, range(nz), 10)
+        yfit, _ = polyfit_1d(z, y, range(nz), deg=2)
+        yfit = yfit.astype(np.int)
         # loop across slices and add object
         for iz in range(nz):
             if shape == 'rectangle':  # theoretical CSA: (a*2+1)(b*2+1)
-                data[:, :, iz] = ((abs(xx - nx / 2) <= radius_RL) & (abs(yy - p(iz)) <= radius_AP)) * 1
+                data[:, :, iz] = ((abs(xx - x[iz]) <= radius_RL) & (abs(yy - yfit[iz]) <= radius_AP)) * 1
             if shape == 'ellipse':
-                data[:, :, iz] = (((xx - nx / 2) / radius_RL) ** 2 + ((yy - p(iz)) / radius_AP) ** 2 <= 1) * 1
+                data[:, :, iz] = (((xx - x[iz]) / radius_RL) ** 2 + ((yy - yfit[iz]) / radius_AP) ** 2 <= 1) * 1
 
     # Pad to avoid edge effect during rotation
     data = np.pad(data, padding, 'reflect')
