@@ -18,12 +18,11 @@
 #
 import os
 import sys
-# sys.path.insert(0, os.path.abspath('.'))
 
 sct_root = os.path.abspath('../../')
 print("sct_root: {}".format(sct_root))
 
-sys.path.insert(0, sct_root)
+sys.path.append(sct_root)
 
 # -- General configuration ------------------------------------------------
 
