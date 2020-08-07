@@ -11,10 +11,10 @@ import numpy as np
 
 logger = logging.getLogger(__name__)
 
-
 def polyfit_1d(x, y, xref, deg=5):
     """
     1d Polynomial fitting using numpy's Polynomial.fit
+
     :param x:
     :param y:
     :param deg:
@@ -28,6 +28,7 @@ def polyfit_1d(x, y, xref, deg=5):
 
 def bspline(x, y, xref, smooth, deg_bspline=3, pz=1):
     """
+    FIXME doc
     Bspline interpolation.
 
     The smoothing factor (s) is calculated based on an empirical formula (made by JCA, based on
@@ -59,6 +60,7 @@ def bspline(x, y, xref, smooth, deg_bspline=3, pz=1):
 
 def linear(x, y, xref, smooth=0, pz=1):
     """
+    FIXME doc
     Linear interpolation followed by smoothing.
 
     :param x:
@@ -71,7 +73,8 @@ def linear(x, y, xref, smooth=0, pz=1):
     y_fit = np.interp(xref, x, y, left=None, right=None, period=None)
     window_len = round_up_to_odd(smooth / float(pz))
     logger.debug('Smoothing window: {}'.format(window_len))
-    y_fit = smooth1d(y_fit, window_len)
+    if smooth:
+        y_fit = smooth1d(y_fit, window_len)
     y_fit_der = np.gradient(y_fit)
     return y_fit, y_fit_der
 
@@ -82,7 +85,8 @@ def round_up_to_odd(f):
 
 
 def smooth1d(x, window_len, window='hanning'):
-    """smooth the data using a window with requested size.
+    """
+    Smooth the data using a window with requested size.
 
     This method is based on the convolution of a scaled window with the signal.
     The signal is prepared by introducing reflected copies (central symmetry) of the signal
@@ -91,14 +95,12 @@ def smooth1d(x, window_len, window='hanning'):
 
     Modified from: https://scipy-cookbook.readthedocs.io/items/SignalSmooth.html
 
-    input:
-        x: the input signal
-        window_len: the dimension of the smoothing window; should be an odd integer
-        window: the type of window from 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'
-            flat window will produce a moving average smoothing.
+    :param: x: the input signal
+    :param: window_len: the dimension of the smoothing window; should be an odd integer
+    :param: window: the type of window from 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'\
+        flat window will produce a moving average smoothing.
 
-    output:
-        the smoothed signal
+    :return: the smoothed signal
 
     example:
 

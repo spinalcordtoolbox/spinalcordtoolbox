@@ -136,6 +136,7 @@ def resample_file(fname_data, fname_out, new_size, new_size_type, interpolation,
     """This function will resample the specified input
     image file to the target size.
     Can deal with 2d, 3d or 4d image objects.
+
     :param fname_data: The input image filename.
     :param fname_out: The output image filename.
     :param new_size: The target size, i.e. 0.25x0.25

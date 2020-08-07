@@ -13,6 +13,7 @@ import argparse
 import subprocess
 import shutil
 import tqdm
+import zipfile
 from enum import Enum
 
 logger = logging.getLogger(__name__)
@@ -149,6 +150,21 @@ class Tee:
         self.fd2.flush()
 
 
+def abspath(fname):
+    """
+    Get absolute path of input file name or path. Deals with tilde.
+
+    '~/code/bla' ------------------> '/usr/bob/code/bla'
+    '~/code/bla/pouf.txt' ---------> '/usr/bob/code/bla/pouf.txt'
+    '/usr/bob/code/bla' -----------> '/usr/bob/code/bla'
+    '/usr/bob/code/bla/pouf.txt' --> '/usr/bob/code/bla/pouf.txt'
+
+    :param fname:
+    :return:
+    """
+    return os.path.abspath(os.path.expanduser(fname))
+
+
 def add_suffix(fname, suffix):
     """
     Add suffix between end of file name and extension.
@@ -158,9 +174,10 @@ def add_suffix(fname, suffix):
     :return: file name with suffix. Example: t2_mean.nii
 
     Examples:
+    .. code:: python
 
-    - add_suffix(t2.nii, _mean) -> t2_mean.nii
-    - add_suffix(t2.nii.gz, a) -> t2a.nii.gz
+        add_suffix(t2.nii, _mean) -> t2_mean.nii
+        add_suffix(t2.nii.gz, a) -> t2a.nii.gz
     """
     stem, ext = splitext(fname)
     return os.path.join(stem + suffix + ext)
@@ -169,8 +186,8 @@ def add_suffix(fname, suffix):
 def check_exe(name):
     """
     Ensure that a program exists
-    :type name: string
-    :param name: name or path to program
+
+    :param name: str: name or path to program
     :return: path of the program or None
     """
     def is_exe(fpath):
@@ -191,13 +208,16 @@ def check_exe(name):
 
 def parse_num_list(str_num):
     """
-    Parse numbers in string based on delimiter: , or :
-    Examples:
-      '' -> []
-      '1,2,3' -> [1, 2, 3]
-      '1:3,4' -> [1, 2, 3, 4]
-      '1,1:4' -> [1, 2, 3, 4]
-    :param str_num: string
+    Parse numbers in string based on delimiter ',' or ':'
+
+    .. note::
+        Examples:
+        '' -> []
+        '1,2,3' -> [1, 2, 3]
+        '1:3,4' -> [1, 2, 3, 4]
+        '1,1:4' -> [1, 2, 3, 4]
+
+    :param str_num: str
     :return: list of ints
     """
     list_num = list()
@@ -226,13 +246,16 @@ def parse_num_list(str_num):
 
 def parse_num_list_inv(list_int):
     """
-    Take a list of numbers and output a string that reduce this list based on delimiter: ; or :
-    Note: we use ; instead of , for compatibility with csv format.
-    Examples:
-      [] -> ''
-      [1, 2, 3] --> '1:3'
-      [1, 2, 3, 5] -> '1:3;5'
-    :param list_int: list of ints
+    Take a list of numbers and output a string that reduce this list based on delimiter ';' or ':'
+
+    .. note::
+        Note: we use ; instead of , for compatibility with csv format.
+        Examples:
+        [] -> ''
+        [1, 2, 3] --> '1:3'
+        [1, 2, 3, 5] -> '1:3;5'
+
+    :param list_int: list: list of ints
     :return: str_num: string
     """
     # deal with empty list
@@ -361,12 +384,17 @@ def __get_branch():
         return output.decode().strip()
 
 
-def __get_commit():
+def __get_commit(path_to_git_folder=None):
     """
     :return: git commit ID, with trailing '*' if modified
     """
+    if path_to_git_folder is None:
+        path_to_git_folder = __sct_dir__
+    else:
+        path_to_git_folder = abspath(path_to_git_folder)
+
     p = subprocess.Popen(["git", "rev-parse", "HEAD"], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                         cwd=__sct_dir__)
+                         cwd=path_to_git_folder)
     output, _ = p.communicate()
     status = p.returncode
     if status == 0:
@@ -375,7 +403,7 @@ def __get_commit():
         commit = "?!?"
 
     p = subprocess.Popen(["git", "status", "--porcelain"], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                         cwd=__sct_dir__)
+                         cwd=path_to_git_folder)
     output, _ = p.communicate()
     status = p.returncode
     if status == 0:
@@ -434,3 +462,17 @@ __sct_dir__ = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 __version__ = _version_string()
 __data_dir__ = os.path.join(__sct_dir__, 'data')
 __deepseg_dir__ = os.path.join(__data_dir__, 'deepseg_models')
+
+
+def sct_dir_local_path(*args):
+    """Construct a directory path relative to __sct_dir__"""
+    return os.path.join(__sct_dir__, *args)
+
+
+def sct_test_path(*args):
+    """Construct a directory path relative to the sct testing data. Consults the
+    SCT_TESTING_DATA environment variable, if unset, paths are relative to the
+    current directory."""
+
+    test_path = os.environ.get('SCT_TESTING_DATA', '')
+    return os.path.join(test_path, 'sct_testing_data', *args)

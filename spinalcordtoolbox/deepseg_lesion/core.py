@@ -14,6 +14,7 @@ import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.deepseg_sc.core import find_centerline, crop_image_around_centerline, uncrop_image, _normalize_data
 from spinalcordtoolbox import resampling
+from spinalcordtoolbox.utils import sct_dir_local_path
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +45,9 @@ def apply_intensity_normalization_model(img, landmarks_lst):
 
 
 def exp_model(xs, ys, s2):
+    """
+    FIXME doc
+    """
     x1, x2 = xs
     y1, y2 = ys
     m = (y2 - y1) / (x2 - x1)
@@ -117,6 +121,7 @@ def deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo='svm', ctr_file
                                remove_temp_files=1, verbose=1):
     """
     Segment lesions from MRI data.
+
     :param im_image: Image() object containing the lesions to segment
     :param contrast_type: Constrast of the image. Need to use one supported by the CNN models.
     :param ctr_algo: Algo to find the centerline. See sct_get_centerline
@@ -188,7 +193,7 @@ def deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo='svm', ctr_file
 
     # segment data using 3D convolutions
     logger.info("\nSegmenting the MS lesions using deep learning on 3D patches...")
-    segmentation_model_fname = os.path.join(sct.__sct_dir__, 'data', 'deepseg_lesion_models',
+    segmentation_model_fname = sct_dir_local_path('data', 'deepseg_lesion_models',
                                             '{}_lesion.h5'.format(contrast_type))
     fname_seg_crop_res = sct.add_suffix(fname_res3d, '_lesionseg')
     im_res3d = Image(fname_res3d)

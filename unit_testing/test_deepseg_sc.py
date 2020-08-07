@@ -14,19 +14,24 @@ import spinalcordtoolbox as sct
 from spinalcordtoolbox.image import Image
 import spinalcordtoolbox.deepseg_sc.core
 from spinalcordtoolbox.testing.create_test_data import dummy_centerline
+from spinalcordtoolbox.utils import sct_test_path
 
 
 param_deepseg = [
-    ({'fname_seg_manual': 'sct_testing_data/t2/t2_seg-deepseg_sc-2d.nii.gz', 'contrast': 't2', 'kernel': '2d'}),
-    ({'fname_seg_manual': 'sct_testing_data/t2/t2_seg-deepseg_sc-3d.nii.gz', 'contrast': 't2', 'kernel': '3d'}),
+    ({'fname_seg_manual':
+        sct_test_path('t2', 't2_seg-deepseg_sc-2d.nii.gz'),
+        'contrast': 't2', 'kernel': '2d'}),
+    ({'fname_seg_manual':
+        sct_test_path('t2', 't2_seg-deepseg_sc-3d.nii.gz'),
+        'contrast': 't2', 'kernel': '3d'}),
 ]
 
 # noinspection 801,PyShadowingNames
 @pytest.mark.parametrize('params', param_deepseg)
 def test_deep_segmentation_spinalcord(params):
     """High level segmentation API"""
-    fname_im = 'sct_testing_data/t2/t2.nii.gz'
-    fname_centerline_manual = 'sct_testing_data/t2/t2_centerline-manual.nii.gz'
+    fname_im = sct_test_path('t2', 't2.nii.gz')
+    fname_centerline_manual = sct_test_path('t2', 't2_centerline-manual.nii.gz')
     # Set at channels_first in test_deepseg_lesion.test_segment()
     K.set_image_data_format("channels_last")
     # Call segmentation function

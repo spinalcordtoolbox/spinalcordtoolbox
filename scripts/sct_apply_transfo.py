@@ -306,12 +306,12 @@ class Transform:
                 sct.printv('\nRemove temporary files...', verbose)
                 sct.rmtree(path_tmp, verbose=verbose)
 
-        # 2. crop the resulting image using dimensions from the warping field
+        # Crop the resulting image using dimensions from the warping field
         warping_field = fname_warp_list_invert[-1]
-        # if last warping field is an affine transfo, we need to compute the space of the concatenate warping field:
-        if isLastAffine:
-            sct.printv('WARNING: the resulting image could have wrong apparent results. You should use an affine transformation as last transformation...', verbose, 'warning')
-        else:
+        # If the last transformation is not an affine transfo, we need to compute the matrix space of the concatenated
+        # warping field
+        if not isLastAffine and crop_reference in [1, 2]:
+            sct.printv('Last transformation is not affine.')
             if crop_reference in [1, 2]:
                 # Extract only the first ndim of the warping field
                 img_warp = Image(warping_field)
@@ -323,8 +323,11 @@ class Transform:
                 cropper = ImageCropper(Image(fname_out))
                 cropper.get_bbox_from_ref(img_warp_ndim)
                 if crop_reference == 1:
+                    sct.printv('Cropping strategy is: keep same matrix size, put 0 everywhere around warping field')
                     img_out = cropper.crop(background=0)
                 elif crop_reference == 2:
+                    sct.printv('Cropping strategy is: crop around warping field (the size of warping field will '
+                               'change)')
                     img_out = cropper.crop()
                 img_out.save(fname_out)
 

@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 def _get_selem(shape, size, dim):
     """
     Create structuring element of desired shape and radius
+
     :param shape: str: Shape of the structuring element. See available options below in the code
     :param size: int: size of the element.
     :param dim: {0, 1, 2}: Dimension of the array which 2D structural element will be orthogonal to. For example, if
@@ -57,23 +58,19 @@ def _get_selem(shape, size, dim):
 def dice(im1, im2):
     """
     Computes the Dice coefficient, a measure of set similarity.
-    Parameters
-    ----------
-    im1 : array-like, bool
+
+    :param im1 : array-like, bool\
         Any array of arbitrary size. If not boolean, will be converted.
-    im2 : array-like, bool
+    :param im2 : array-like, bool\
         Any other array of identical size. If not boolean, will be converted.
-    Returns
-    -------
-    dice : float
-        Dice coefficient as a float on range [0,1].
-        Maximum similarity = 1
+    :return dice : float\
+        Dice coefficient as a float on range [0,1].\
+        Maximum similarity = 1\
         No similarity = 0
 
-    Notes
-    -----
-    The order of inputs for `dice` is irrelevant. The result will be
-    identical if `im1` and `im2` are switched.
+    .. note::
+        The order of inputs for `dice` is irrelevant. The result will be
+        identical if `im1` and `im2` are switched.
 
     Source: https://gist.github.com/JDWarner/6730747
     """
@@ -92,11 +89,12 @@ def dice(im1, im2):
 def dilate(data, size, shape, dim=None):
     """
     Dilate data using ball structuring element
+
     :param data: Image or numpy array: 2d or 3d array
-    :param size: int: If shape={'square', 'cube'}: Corresponds to the length of an edge (size=1 has no effect).
-    If shape={'disk', 'ball'}: Corresponds to the radius, not including the center element (size=0 has no effect).
+    :param size: int: If shape={'square', 'cube'}: Corresponds to the length of an edge (size=1 has no effect).\
+        If shape={'disk', 'ball'}: Corresponds to the radius, not including the center element (size=0 has no effect).
     :param shape: {'square', 'cube', 'disk', 'ball'}
-    :param dim: {0, 1, 2}: Dimension of the array which 2D structural element will be orthogonal to. For example, if
+    :param dim: {0, 1, 2}: Dimension of the array which 2D structural element will be orthogonal to. For example, if\
     you wish to apply a 2D disk kernel in the X-Y plane, leaving Z unaffected, parameters will be: shape=disk, dim=2.
     :return: numpy array: data dilated
     """
@@ -111,11 +109,12 @@ def dilate(data, size, shape, dim=None):
 def erode(data, size, shape, dim=None):
     """
     Dilate data using ball structuring element
+
     :param data: Image or numpy array: 2d or 3d array
-    :param size: int: If shape={'square', 'cube'}: Corresponds to the length of an edge (size=1 has no effect).
+    :param size: int: If shape={'square', 'cube'}: Corresponds to the length of an edge (size=1 has no effect).\
     If shape={'disk', 'ball'}: Corresponds to the radius, not including the center element (size=0 has no effect).
     :param shape: {'square', 'cube', 'disk', 'ball'}
-    :param dim: {0, 1, 2}: Dimension of the array which 2D structural element will be orthogonal to. For example, if
+    :param dim: {0, 1, 2}: Dimension of the array which 2D structural element will be orthogonal to. For example, if\
     you wish to apply a 2D disk kernel in the X-Y plane, leaving Z unaffected, parameters will be: shape=disk, dim=2.
     :return: numpy array: data dilated
     """
