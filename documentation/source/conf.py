@@ -20,11 +20,10 @@ import os
 import sys
 # sys.path.insert(0, os.path.abspath('.'))
 
-sct_root = os.path.dirname((os.path.dirname(os.path.abspath('.'))))
+sct_root = os.path.abspath('../../')
 print("sct_root: {}".format(sct_root))
 
-sys.path.append(sct_root)
-sys.path.append(os.path.join(sct_root, "scripts"))
+sys.path.insert(0, sct_root)
 
 # -- General configuration ------------------------------------------------
 
