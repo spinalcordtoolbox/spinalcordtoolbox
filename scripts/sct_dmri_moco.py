@@ -67,7 +67,7 @@ def get_parser():
         '-bvec',
         metavar=Metavar.file,
         required=True,
-        help='Bvecs file. Example: bvecs.nii.gz'
+        help='Bvecs file. Example: bvecs.txt'
     )
 
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
